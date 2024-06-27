@@ -1,11 +1,12 @@
 [package]
-name = "editor"
+name = "Editor"
 version = "0.0.0"
 edition = "2021"
 
 [lib]
-name = "editor_lib"
+name = "Editor"
 crate-type = ["lib", "cdylib", "staticlib"]
+path = "Source/Library.rs"
 
 [build-dependencies]
 tauri-build = { version = "2.0.0-beta", features = [] }
