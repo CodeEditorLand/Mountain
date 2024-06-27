@@ -1,25 +1,31 @@
 {
-	"$schema": "",
+	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
 	"productName": "editor",
 	"version": "0.0.0",
 	"identifier": "com.tauri.dev",
 	"build": {
 		"beforeDevCommand": "pnpm dev",
 		"devUrl": "http://localhost:1420",
-		"beforeBuildCommand": "pnpm build",
-		"frontendDist": "../Seed/Target"
+		"beforeBuildCommand": "pnpm run prepublishOnly",
+		"beforeBundleCommand": "pnpm run prepublishOnly",
+		"frontendDist": "../Seed/Target",
+		"features": [],
+		"runner": ""
 	},
 	"app": {
 		"windows": [
 			{
-				"title": "editor",
+				"title": "Editor",
 				"width": 800,
 				"height": 600
 			}
 		],
 		"security": {
 			"csp": null
-		}
+		},
+		"macOSPrivateApi": false,
+		"trayIcon": null,
+		"withGlobalTauri": false
 	},
 	"bundle": {
 		"active": true,
