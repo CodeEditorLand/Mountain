@@ -1,3 +1,5 @@
+#![allow(non_snake_case)]
+
 #[tauri::command]
 
 fn greet(name: &str) -> String {
