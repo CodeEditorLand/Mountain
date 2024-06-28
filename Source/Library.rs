@@ -15,6 +15,7 @@ pub fn run() {
 		.expect("error while running tauri application");
 }
 
+#[allow(dead_code)]
 fn main() {
 	run();
 }
