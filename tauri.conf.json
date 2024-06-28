@@ -43,6 +43,6 @@
 		"targets": "all"
 	},
 	"identifier": "app.editor.land",
-	"productName": "editor",
+	"productName": "Editor",
 	"version": "0.0.0"
 }
