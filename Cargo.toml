@@ -4,6 +4,10 @@ name = "Editor"
 version = "0.0.0"
 edition = "2021"
 
+[[bin]]
+name = "Editor"
+path = "Source/Library.rs"
+
 [lib]
 name = "Editor"
 crate-type = ["lib", "cdylib", "staticlib"]
