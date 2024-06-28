@@ -2,12 +2,11 @@
 	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
 	"productName": "editor",
 	"version": "0.0.0",
-	"identifier": "com.tauri.dev",
+	"identifier": "app.editor.land",
 	"build": {
-		"beforeDevCommand": "pnpm run Start --filter=@",
+		"beforeDevCommand": "pnpm run Start --filter=@codeeditorland/seed",
 		"devUrl": "http://localhost:9999",
-		"beforeBuildCommand": "pnpm run prepublishOnly",
-		"beforeBundleCommand": "pnpm run prepublishOnly",
+		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/seed",
 		"frontendDist": "../Seed/Target",
 		"features": [],
 		"runner": ""
