@@ -3,5 +3,4 @@
 /target/release/*
 !/target/release/*.deb
 !/target/release/*.exe
-!/target/release/PRun
-!/target/release/Run
+!/target/release/Editor
