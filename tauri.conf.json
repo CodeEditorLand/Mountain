@@ -19,7 +19,7 @@
 		"windows": [
 			{
 				"height": 600,
-				"title": "Editor",
+				"title": "Produce",
 				"width": 800
 			}
 		],
@@ -43,6 +43,6 @@
 		"targets": "all"
 	},
 	"identifier": "app.editor.land",
-	"productName": "Editor",
-	"version": "0.0.0"
+	"productName": "Produce",
+	"version": "0.0.1"
 }
