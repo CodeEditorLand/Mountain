@@ -1,14 +1,14 @@
 [package]
-name = "Editor"
-version = "0.0.0"
+name = "Produce"
+version = "0.0.1"
 edition = "2021"
 
 [[bin]]
-name = "Editor"
+name = "Produce"
 path = "Source/Library.rs"
 
 [lib]
-name = "Editor"
+name = "Produce"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "Source/Library.rs"
 
