@@ -1,22 +1,27 @@
-[package]
-name = "Produce"
-version = "0.0.1"
-edition = "2021"
 
 [[bin]]
 name = "Produce"
 path = "Source/Library.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.0.0-beta.17", features = [] }
+toml = "0.8.14"
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.119"
+
+[dependencies]
+serde = { version = "1.0.203", features = ["derive"] }
+serde_json = "1.0.119"
+tauri = { version = "2.0.0-beta.22", features = [] }
+tauri-plugin-devtools = "2.0.0-beta.3"
+tauri-plugin-shell = "2.0.0-beta.7"
 
 [lib]
 name = "Produce"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "Source/Library.rs"
 
-[build-dependencies]
-tauri-build = { version = "2.0.0-beta.17", features = [] }
-
-[dependencies]
-tauri = { version = "2.0.0-beta.22", features = [] }
-tauri-plugin-shell = "2.0.0-beta.7"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+[package]
+name = "Produce"
+version = "0.0.1"
+edition = "2021"
