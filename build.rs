@@ -16,7 +16,6 @@ struct Package {
 
 fn main() {
 	println!("cargo:rerun-if-changed=Cargo.toml");
-	println!("cargo:rerun-if-changed=tauri.conf.json");
 
 	let Cargo: Toml =
 		toml::from_str(&fs::read_to_string("Cargo.toml").expect("Cannot Cargo.toml."))
