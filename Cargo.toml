@@ -23,5 +23,6 @@ path = "Source/Library.rs"
 
 [package]
 name = "Mountain"
+description = "⛰️ Current —"
 version = "0.0.0"
 edition = "2021"
