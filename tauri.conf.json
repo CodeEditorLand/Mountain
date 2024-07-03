@@ -26,10 +26,10 @@
 		"withGlobalTauri": false
 	},
 	"build": {
-		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/seed",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/seed",
+		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
+		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
 		"devUrl": "http://localhost:9999",
-		"frontendDist": "../Seed/Target"
+		"frontendDist": "../Sky/Target"
 	},
 	"bundle": {
 		"active": true,
