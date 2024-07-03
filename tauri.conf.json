@@ -1,48 +1,48 @@
 {
-  "$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
-  "app": {
-    "macOSPrivateApi": false,
-    "security": {
-      "assetProtocol": {
-        "enable": false,
-        "scope": []
-      },
-      "capabilities": [],
-      "csp": null,
-      "dangerousDisableAssetCspModification": false,
-      "freezePrototype": false,
-      "pattern": {
-        "use": "brownfield"
-      }
-    },
-    "trayIcon": null,
-    "windows": [
-      {
-        "height": 600,
-        "title": "Produce",
-        "width": 800
-      }
-    ],
-    "withGlobalTauri": false
-  },
-  "build": {
-    "beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/seed",
-    "beforeDevCommand": "pnpm run Start --filter=@codeeditorland/seed",
-    "devUrl": "http://localhost:9999",
-    "frontendDist": "../Seed/Target"
-  },
-  "bundle": {
-    "active": true,
-    "icon": [
-      "icons/32x32.png",
-      "icons/128x128.png",
-      "icons/128x128@2x.png",
-      "icons/icon.icns",
-      "icons/icon.ico"
-    ],
-    "targets": "all"
-  },
-  "identifier": "produce.editor.land",
-  "productName": "Produce",
-  "version": "0.0.0"
+	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
+	"app": {
+		"macOSPrivateApi": false,
+		"security": {
+			"assetProtocol": {
+				"enable": false,
+				"scope": []
+			},
+			"capabilities": [],
+			"csp": null,
+			"dangerousDisableAssetCspModification": false,
+			"freezePrototype": false,
+			"pattern": {
+				"use": "brownfield"
+			}
+		},
+		"trayIcon": null,
+		"windows": [
+			{
+				"height": 600,
+				"title": "Produce",
+				"width": 800
+			}
+		],
+		"withGlobalTauri": false
+	},
+	"build": {
+		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/seed",
+		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/seed",
+		"devUrl": "http://localhost:9999",
+		"frontendDist": "../Seed/Target"
+	},
+	"bundle": {
+		"active": true,
+		"icon": [
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
+		],
+		"targets": "all"
+	},
+	"identifier": "produce.editor.land",
+	"productName": "Produce",
+	"version": "0.0.0"
 }
