@@ -19,7 +19,7 @@
 		"windows": [
 			{
 				"height": 600,
-				"title": "Produce",
+				"title": "Mountain",
 				"width": 800
 			}
 		],
@@ -42,7 +42,7 @@
 		],
 		"targets": "all"
 	},
-	"identifier": "produce.editor.land",
-	"productName": "Produce",
+	"identifier": "mountain.editor.land",
+	"productName": "Mountain",
 	"version": "0.0.0"
 }
