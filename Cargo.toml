@@ -3,10 +3,10 @@ name = "Mountain"
 path = "Source/Library.rs"
 
 [build-dependencies]
-tauri-build = { version = "2.0.0-beta.18", features = [] }
-toml = "0.8.14"
 serde = { version = "1.0.203", features = ["derive"] }
 serde_json = "1.0.120"
+tauri-build = { version = "2.0.0-beta.18", features = [] }
+toml = "0.8.14"
 
 [dependencies]
 serde = { version = "1.0.203", features = ["derive"] }
