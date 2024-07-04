@@ -91,16 +91,17 @@ async fn Get(Path: String, State: tauri::State<'_, Arc<Work>>) -> Result<(), Str
 	Ok(())
 }
 
-async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, tx: mpsc::Sender<String>) {
+async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Transmission: mpsc::Sender<String>) {
 	loop {
-		if let Some(task) = Work.Execute().await {
-			match Worker.process(task).await {
-				Ok(result) => {
-					if tx.send(result).await.is_err() {
+		if let Some(Task) = Work.Execute().await {
+			match Worker.Receive(Task).await {
+				Ok(Result) => {
+					if Transmission.send(Result).await.is_err() {
 						break;
 					}
 				}
-				Err(e) => eprintln!("Error processing task: {}", e),
+
+				Err(Error) => eprintln!("Cannot Receive: {}", Error),
 			}
 		} else {
 			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
@@ -145,4 +146,6 @@ async fn main() {
 		.plugin(tauri_plugin_shell::init())
 		.run(tauri::generate_context!())
 		.expect("Cannot Library.");
+
+	join_all(workers).await;
 }
