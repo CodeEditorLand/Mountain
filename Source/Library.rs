@@ -10,7 +10,7 @@ use tokio::{
 	net::TcpStream,
 	sync::{mpsc, Mutex},
 };
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message};
+use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, MaybeTlsStream};
 
 #[async_trait]
 trait Worker: Send + Sync {
@@ -18,7 +18,7 @@ trait Worker: Send + Sync {
 }
 
 struct FileOpWorker {
-	Stream: Arc<Mutex<tokio_tungstenite::WebSocketStream<TcpStream>>>,
+	Stream: Arc<Mutex<tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>>>,
 }
 
 #[async_trait]
@@ -91,12 +91,12 @@ async fn Get(Path: String, State: tauri::State<'_, Arc<Work>>) -> Result<(), Str
 	Ok(())
 }
 
-async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Transmission: mpsc::Sender<String>) {
+async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Acceptance: mpsc::Sender<String>) {
 	loop {
 		if let Some(Task) = Work.Execute().await {
 			match Worker.Receive(Task).await {
 				Ok(Result) => {
-					if Transmission.send(Result).await.is_err() {
+					if Acceptance.send(Result).await.is_err() {
 						break;
 					}
 				}
@@ -113,9 +113,23 @@ async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Transmission: mpsc::Sende
 #[allow(dead_code)]
 #[tokio::main]
 async fn main() {
-	let (Stream, _) = connect_async("ws://localhost:8080").await.expect("Cannot connect_async.");
+	let Stream = Arc::new(Mutex::new(
+		connect_async("ws://localhost:8080").await.expect("Cannot connect_async.").0,
+	));
 
-	let Stream = Arc::new(Mutex::new(Stream));
+	let Work = Arc::new(Work::new());
+	let (Acceptance, mut rx) = mpsc::channel(100);
+
+	// @TODO: Auto-calc number of workers in the force
+	let Force: Vec<_> = (0..4)
+		.map(|_| {
+			tokio::spawn(Job(
+				Arc::new(FileOpWorker { Stream: Stream.clone() }) as Arc<dyn Worker>,
+				Work.clone(),
+				Acceptance.clone(),
+			))
+		})
+		.collect();
 
 	let Builder = tauri::Builder::default();
 
@@ -125,27 +139,22 @@ async fn main() {
 
 	Builder
 		.setup(|app| {
-			let Handle = app.app_handle();
-			let Stream = Stream.clone();
+			let Handle = app.handle().clone();
 
 			tokio::spawn(async move {
-				while let Some(Message) = Stream.lock().await.next().await {
-					if let Ok(msg) = Message {
-						if let Message::Text(Text) = msg {
-							// @TODO: Rewrite the Emit to only emit to a specific webview which then talks to the others
-							Handle.emit("file_content", Payload { Message: Text }).unwrap();
-						}
-					}
+				while let Some(result) = rx.recv().await {
+					// @TODO: Rewrite the Emit to only emit to a specific webview which then talks to the others
+					Handle.emit("file_operation_result", result).unwrap();
 				}
 			});
 
 			Ok(())
 		})
-		.manage(Stream)
+		.manage(Work)
 		.invoke_handler(tauri::generate_handler![Put, Get])
 		.plugin(tauri_plugin_shell::init())
 		.run(tauri::generate_context!())
 		.expect("Cannot Library.");
 
-	join_all(workers).await;
+	join_all(Force).await;
 }
