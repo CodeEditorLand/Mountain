@@ -21,7 +21,7 @@ tokio = "1.38.0"
 tokio-tungstenite = "0.23.1"
 
 [lib]
-name = "Library"
+name = "Mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "Source/Library.rs"
 
