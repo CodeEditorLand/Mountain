@@ -118,7 +118,7 @@ async fn main() {
 	));
 
 	let Work = Arc::new(Work::new());
-	let (Acceptance, mut rx) = mpsc::channel(100);
+	let (Acceptance, mut Receipt) = mpsc::channel(100);
 
 	// @TODO: Auto-calc number of workers in the force
 	let Force: Vec<_> = (0..4)
@@ -140,7 +140,7 @@ async fn main() {
 			let Handle = app.handle().clone();
 
 			tokio::spawn(async move {
-				while let Some(result) = rx.recv().await {
+				while let Some(result) = Receipt.recv().await {
 					// @TODO: Rewrite the Emit to only emit to a specific webview which then talks to the others
 					Handle.emit("file_operation_result", result).unwrap();
 				}
