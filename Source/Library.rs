@@ -113,6 +113,8 @@ async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Transmission: mpsc::Sende
 #[allow(dead_code)]
 #[tokio::main]
 async fn main() {
+
+	
 	let (Stream, _) = connect_async("ws://localhost:8080").await.expect("Cannot connect_async.");
 
 	let Stream = Arc::new(Mutex::new(Stream));
