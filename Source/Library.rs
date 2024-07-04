@@ -131,13 +131,11 @@ async fn main() {
 		})
 		.collect();
 
-	let Builder = tauri::Builder::default();
-
 	// @TODO: FIX THIS
 	// #[cfg(debug_assertions)]
 	// Builder.plugin(tauri_plugin_devtools::init());
 
-	Builder
+	tauri::Builder::default()
 		.setup(|app| {
 			let Handle = app.handle().clone();
 
