@@ -1,48 +1,48 @@
 {
-	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
-	"app": {
-		"macOSPrivateApi": false,
-		"security": {
-			"assetProtocol": {
-				"enable": false,
-				"scope": []
-			},
-			"capabilities": [],
-			"csp": null,
-			"dangerousDisableAssetCspModification": false,
-			"freezePrototype": false,
-			"pattern": {
-				"use": "brownfield"
-			}
-		},
-		"trayIcon": null,
-		"windows": [
-			{
-				"height": 600,
-				"title": "Mountain",
-				"width": 800
-			}
-		],
-		"withGlobalTauri": false
-	},
-	"build": {
-		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
-		"devUrl": "http://localhost:9999",
-		"frontendDist": "../Sky/Target"
-	},
-	"bundle": {
-		"active": true,
-		"icon": [
-			"icons/32x32.png",
-			"icons/128x128.png",
-			"icons/128x128@2x.png",
-			"icons/icon.icns",
-			"icons/icon.ico"
-		],
-		"targets": "all"
-	},
-	"identifier": "mountain.editor.land",
-	"productName": "Mountain",
-	"version": "0.0.0"
+  "$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
+  "app": {
+    "macOSPrivateApi": false,
+    "security": {
+      "assetProtocol": {
+        "enable": false,
+        "scope": []
+      },
+      "capabilities": [],
+      "csp": null,
+      "dangerousDisableAssetCspModification": false,
+      "freezePrototype": false,
+      "pattern": {
+        "use": "brownfield"
+      }
+    },
+    "trayIcon": null,
+    "windows": [
+      {
+        "height": 600,
+        "title": "Mountain",
+        "width": 800
+      }
+    ],
+    "withGlobalTauri": false
+  },
+  "build": {
+    "beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
+    "beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
+    "devUrl": "http://localhost:9999",
+    "frontendDist": "../Sky/Target"
+  },
+  "bundle": {
+    "active": true,
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "targets": "all"
+  },
+  "identifier": "mountain.editor.land",
+  "productName": "Mountain",
+  "version": "0.0.0"
 }
