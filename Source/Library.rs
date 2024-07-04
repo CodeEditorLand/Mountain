@@ -78,9 +78,9 @@ async fn Put(
 }
 
 #[tauri::command]
-async fn Get(Path: String, State: tauri::State<'_, Arc<WorkQueue>>) -> Result<(), String> {
+async fn Get(Path: String, State: tauri::State<'_, Arc<Work>>) -> Result<(), String> {
 	State
-		.push(
+		.Assign(
 			serde_json::json!({
 				"Action": "Get",
 				"Path": Path,
@@ -89,6 +89,23 @@ async fn Get(Path: String, State: tauri::State<'_, Arc<WorkQueue>>) -> Result<()
 		)
 		.await;
 	Ok(())
+}
+
+async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, tx: mpsc::Sender<String>) {
+	loop {
+		if let Some(task) = Work.Execute().await {
+			match Worker.process(task).await {
+				Ok(result) => {
+					if tx.send(result).await.is_err() {
+						break;
+					}
+				}
+				Err(e) => eprintln!("Error processing task: {}", e),
+			}
+		} else {
+			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+		}
+	}
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
