@@ -68,7 +68,6 @@ async fn main() {
 
 	// @TODO: FIX THIS
 	// #[cfg(debug_assertions)]
-
 	// Builder.plugin(tauri_plugin_devtools::init());
 
 	Builder
