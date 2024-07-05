@@ -1,1 +1,1 @@
-pub mod Binary;
+pub mod Tauri;
