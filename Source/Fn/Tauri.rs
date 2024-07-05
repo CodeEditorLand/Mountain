@@ -127,7 +127,7 @@ pub async fn Fn() {
 			))
 		})
 		.collect();
-	
+
 	let Builder = tauri::Builder::default();
 
 	// @TODO: FIX THIS

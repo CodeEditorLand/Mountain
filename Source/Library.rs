@@ -7,10 +7,8 @@
 fn main() {
 	// Fn::Tauri::Fn().await;
 
-	let Builder = tauri::Builder::default();
-
-	Builder
+	tauri::Builder::default()
 		.plugin(tauri_plugin_shell::init())
 		.run(tauri::generate_context!())
-		.expect("Cannot Library.");
+		.expect("Cannot tauri.");
 }
