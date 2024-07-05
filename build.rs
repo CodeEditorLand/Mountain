@@ -19,11 +19,11 @@ fn main() {
 		println!("cargo:rerun-if-changed=Cargo.toml");
 		println!("cargo:rerun-if-changed=tauri.conf.json");
 
-		let Cargo: Toml =
-			toml::from_str(&fs::read_to_string("Cargo.toml").expect("Cannot Cargo.toml."))
-				.expect("Cannot toml.");
-
-		let Version = Cargo.package.version;
+		let Version =
+			toml::from_str::<Toml>(&fs::read_to_string("Cargo.toml").expect("Cannot Cargo.toml."))
+				.expect("Cannot toml.")
+				.package
+				.version;
 
 		let mut Tauri: Value = serde_json::from_str(
 			&fs::read_to_string("tauri.conf.json").expect("Cannot tauri.conf.json."),
