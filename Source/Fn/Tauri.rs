@@ -108,7 +108,6 @@ async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Hire: mpsc::Sender<String
 	}
 }
 
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
 #[allow(dead_code)]
 pub async fn Fn() {
 	let Stream = Arc::new(Mutex::new(
@@ -128,12 +127,14 @@ pub async fn Fn() {
 			))
 		})
 		.collect();
+	
+	let Builder = tauri::Builder::default();
 
 	// @TODO: FIX THIS
 	// #[cfg(debug_assertions)]
 	// Builder.plugin(tauri_plugin_devtools::init());
 
-	tauri::Builder::default()
+	Builder
 		.setup(|app| {
 			let Handle = app.handle().clone();
 
