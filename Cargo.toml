@@ -26,7 +26,7 @@ crate-type = ["lib", "cdylib", "staticlib"]
 path = "Source/Library.rs"
 
 [package]
-name = "codeeditorland"
+name = "mountain"
 description = "⛰️ Mountain —"
 version = "0.0.0"
 edition = "2021"
