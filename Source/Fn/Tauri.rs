@@ -81,9 +81,7 @@ pub async fn Fn() {
 
 			// @TODO: Auto-calc number of workers on the force
 			let Force: Vec<_> = (0..4)
-				.map(|_| {
-					tokio::spawn(Job(Arc::new(Site { Order }) as Arc<dyn Worker>, Work, Approval))
-				})
+				.map(|_| tokio::spawn(Job(Arc::new(Site { Order }), Work, Approval)))
 				.collect();
 
 			let Builder = tauri::Builder::default();
