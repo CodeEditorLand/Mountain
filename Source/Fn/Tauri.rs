@@ -24,7 +24,7 @@ impl Worker for Site {
 		let mut Order = self.Order.lock().await;
 
 		if Order.send(Text(serde_json::to_string(&Action).unwrap())).await.is_err() {
-			return ActionResult { Action, Result: Err("Failed to send message".to_string()) };
+			return ActionResult { Action, Result: Err("Cannot ActionResult.".to_string()) };
 		}
 
 		if let Some(response) = Order.next().await {
@@ -33,10 +33,10 @@ impl Worker for Site {
 					Action,
 					Result: Err("Cannot serde_json.".to_string()),
 				}),
-				_ => ActionResult { Action, Result: Err("Cannot Result.".to_string()) },
+				_ => ActionResult { Action, Result: Err("Cannot ActionResult.".to_string()) },
 			}
 		} else {
-			ActionResult { Action, Result: Err("Cannot Result.".to_string()) }
+			ActionResult { Action, Result: Err("Cannot ActionResult.".to_string()) }
 		}
 	}
 }
