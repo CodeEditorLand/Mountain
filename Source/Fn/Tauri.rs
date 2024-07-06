@@ -1,4 +1,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(non_snake_case)]
 
 use Echo::Fn::Job::{Action, ActionResult, Work, Worker};
 
@@ -60,7 +61,7 @@ async fn Get(Path: String, Work: tauri::State<'_, Arc<Work>>) -> Result<(), Stri
 }
 
 #[allow(dead_code)]
-pub async fn Fn() {
+pub fn Fn() {
 	tokio::runtime::Builder::new_multi_thread()
 		.enable_all()
 		.build()

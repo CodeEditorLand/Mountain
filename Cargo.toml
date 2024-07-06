@@ -23,7 +23,7 @@ tokio-tungstenite = "0.23.1"
 [lib]
 name = "Mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
-path = "Source/Fn/Mountain.rs"
+path = "Source/Fn/Tauri.rs"
 
 [package]
 name = "Mountain"
