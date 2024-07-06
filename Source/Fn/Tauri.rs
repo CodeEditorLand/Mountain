@@ -76,7 +76,7 @@ pub async fn Fn() {
 	let Work = Arc::new(Work::Begin());
 	let (Approval, mut Receipt) = mpsc::channel(100);
 
-	// @TODO: Auto-calc number of workers in the force
+	// @TODO: Auto-calc number of workers
 	let Force: Vec<_> = (0..4)
 		.map(|_| {
 			tokio::spawn(Job(
