@@ -79,14 +79,10 @@ pub async fn Fn() {
 			let Work = Arc::new(Work::Begin());
 			let (Approval, mut Receipt) = mpsc::channel(100);
 
-			// @TODO: Auto-calc number of workers
+			// @TODO: Auto-calc number of workers on the force
 			let Force: Vec<_> = (0..4)
 				.map(|_| {
-					tokio::spawn(Job(
-						Arc::new(Site { Order: Order.clone() }) as Arc<dyn Worker>,
-						Work.clone(),
-						Approval.clone(),
-					))
+					tokio::spawn(Job(Arc::new(Site { Order }) as Arc<dyn Worker>, Work, Approval))
 				})
 				.collect();
 
@@ -97,8 +93,8 @@ pub async fn Fn() {
 			// Builder.plugin(tauri_plugin_devtools::init());
 
 			Builder
-				.setup(|app| {
-					let Handle = app.handle().clone();
+				.setup(|Tauri| {
+					let Handle = Tauri.handle();
 
 					tokio::spawn(async move {
 						while let Some(ActionResult) = Receipt.recv().await {
