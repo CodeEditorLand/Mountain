@@ -1,6 +1,6 @@
 [[bin]]
 name = "Mountain"
-path = "Source/Library.rs"
+path = "Source/Mountain.rs"
 
 [build-dependencies]
 serde = { version = "1.0.203", features = ["derive"] }
@@ -23,7 +23,7 @@ tokio-tungstenite = "0.23.1"
 [lib]
 name = "Mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
-path = "Source/Library.rs"
+path = "Source/Fn/Mountain.rs"
 
 [package]
 name = "Mountain"

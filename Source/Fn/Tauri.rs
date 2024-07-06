@@ -2,8 +2,7 @@
 
 use Echo::Fn::Job::{Action, ActionResult, Work, Worker};
 
-use async_trait::async_trait;
-use futures::{future::join_all, SinkExt, StreamExt};
+use futures::{SinkExt, StreamExt};
 use std::sync::Arc;
 use tauri::Manager;
 use tokio::sync::Mutex;
@@ -19,7 +18,7 @@ struct Site {
 	>,
 }
 
-#[async_trait]
+#[async_trait::async_trait]
 impl Worker for Site {
 	async fn Receive(&self, Action: Action) -> ActionResult {
 		let mut Order = self.Order.lock().await;
@@ -96,7 +95,7 @@ pub async fn Fn() {
 
 			Builder
 				.setup(|Tauri| {
-					let Handle = Tauri.handle();
+					let Handle = Tauri.handle().clone();
 
 					tokio::spawn(async move {
 						while let Some(ActionResult) = Receipt.recv().await {
@@ -113,6 +112,6 @@ pub async fn Fn() {
 				.run(tauri::generate_context!())
 				.expect("Cannot Library.");
 
-			join_all(Force).await;
+			futures::future::join_all(Force).await;
 		});
 }
