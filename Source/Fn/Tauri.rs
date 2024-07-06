@@ -1,24 +1,22 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use Echo::Fn::Job::{Action, ActionResult, Fn as Job, Work, Worker, Yell::Fn as Yell};
+use Echo::Fn::Job::{Action, ActionResult, Work, Worker};
 
 use async_trait::async_trait;
 use futures::{future::join_all, SinkExt, StreamExt};
 use std::sync::Arc;
 use tauri::Manager;
-use tokio::{
-	net::TcpStream,
-	sync::{mpsc, Mutex},
-};
-use tokio_tungstenite::{
-	tungstenite::{protocol::Message, Message::Text},
-	MaybeTlsStream,
-};
-
-use serde_json::json;
+use tokio::sync::Mutex;
+use tokio_tungstenite::tungstenite::Message::Text;
 
 struct Site {
-	Order: Arc<Mutex<tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>>>,
+	Order: Arc<
+		Mutex<
+			tokio_tungstenite::WebSocketStream<
+				tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
+			>,
+		>,
+	>,
 }
 
 #[async_trait]
@@ -69,7 +67,7 @@ pub async fn Fn() {
 		.build()
 		.expect("Cannot new_multi_thread.")
 		.block_on(async {
-			let Order = Arc::new(tokio::sync::Mutex::new(
+			let Order = Arc::new(Mutex::new(
 				tokio_tungstenite::connect_async("ws://localhost:9999")
 					.await
 					.expect("Cannot connect_async.")
@@ -77,11 +75,17 @@ pub async fn Fn() {
 			));
 
 			let Work = Arc::new(Work::Begin());
-			let (Approval, mut Receipt) = mpsc::channel(100);
+			let (Approval, mut Receipt) = tokio::sync::mpsc::unbounded_channel();
 
 			// @TODO: Auto-calc number of workers on the force
 			let Force: Vec<_> = (0..4)
-				.map(|_| tokio::spawn(Job(Arc::new(Site { Order }), Work, Approval)))
+				.map(|_| {
+					tokio::spawn(Echo::Fn::Job::Fn(
+						Arc::new(Site { Order: Order.clone() }) as Arc<dyn Worker>,
+						Work.clone(),
+						Approval.clone(),
+					))
+				})
 				.collect();
 
 			let Builder = tauri::Builder::default();
