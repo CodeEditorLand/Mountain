@@ -1,7 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 // @TODO: Finish this and import proper common libs from echo
-use echo::{Action, ActionResult, Job, WorkQueue, Worker, Yell};
+use Echo::Fn::Job::{Action, ActionResult, Fn as Job, Work, Worker, Yell::Fn as Yell};
 
 use async_trait::async_trait;
 use futures::{future::join_all, SinkExt, StreamExt};
@@ -11,50 +11,37 @@ use tokio::{
 	net::TcpStream,
 	sync::{mpsc, Mutex},
 };
-use tokio_tungstenite::{tungstenite::protocol::Message, MaybeTlsStream};
+use tokio_tungstenite::{
+	tungstenite::{protocol::Message, Message::Text},
+	MaybeTlsStream,
+};
+
+use serde_json::json;
 
 struct Site {
 	Order: Arc<Mutex<tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>>>,
 }
 
-// #[async_trait]
-// trait Worker: Send + Sync {
-// 	async fn Receive(&self, Action: String) -> Result<String, String>;
-// }
-
 #[async_trait]
 impl Worker for Site {
-	async fn Receive(&self, Action: Action) -> Result<String, String> {
+	async fn Receive(&self, Action: Action) -> ActionResult {
 		let mut Order = self.Order.lock().await;
 
-		Order.send(Message::Text(Action)).await.map_err(|Error| Error.to_string())?;
+		if Order.send(Text(serde_json::to_string(&Action).unwrap())).await.is_err() {
+			return ActionResult { Action, Result: Err("Failed to send message".to_string()) };
+		}
 
-		if let Some(Next) = Order.next().await {
-			match Next {
-				Ok(Message::Text(Order)) => Ok(Order),
-				_ => Err("Cannot Next.".to_string()),
+		if let Some(response) = Order.next().await {
+			match response {
+				Ok(Text(text)) => serde_json::from_str(&text).unwrap_or(ActionResult {
+					Action,
+					Result: Err("Cannot serde_json.".to_string()),
+				}),
+				_ => ActionResult { Action, Result: Err("Cannot Result.".to_string()) },
 			}
 		} else {
-			Err("Cannot Order.".to_string())
+			ActionResult { Action, Result: Err("Cannot Result.".to_string()) }
 		}
-	}
-}
-
-struct Work {
-	Queue: Arc<Mutex<Vec<String>>>,
-}
-
-impl Work {
-	fn Begin() -> Self {
-		Work { Queue: Arc::new(Mutex::new(Vec::new())) }
-	}
-
-	async fn Assign(&self, Action: String) {
-		self.Queue.lock().await.push(Action);
-	}
-
-	async fn Execute(&self) -> Option<String> {
-		self.Queue.lock().await.pop()
 	}
 }
 
@@ -62,57 +49,23 @@ impl Work {
 async fn Put(
 	Path: String,
 	Content: String,
-	State: tauri::State<'_, Arc<Work>>,
+	Work: tauri::State<'_, Arc<Work>>,
 ) -> Result<(), String> {
-	State
-		.Assign(
-			serde_json::json!({
-				"Action": "Put",
-				"Path": Path,
-				"Content": Content,
-			})
-			.to_string(),
-		)
-		.await;
+	Work.Assign(Action::Write { Path, Content }).await;
 
 	Ok(())
 }
 
 #[tauri::command]
-async fn Get(Path: String, State: tauri::State<'_, Arc<Work>>) -> Result<(), String> {
-	State
-		.Assign(
-			serde_json::json!({
-				"Action": "Get",
-				"Path": Path,
-			})
-			.to_string(),
-		)
-		.await;
+async fn Get(Path: String, Work: tauri::State<'_, Arc<Work>>) -> Result<(), String> {
+	Work.Assign(Action::Read { Path }).await;
+
 	Ok(())
-}
-
-async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Hire: mpsc::Sender<String>) {
-	loop {
-		if let Some(Action) = Work.Execute().await {
-			match Worker.Receive(Action).await {
-				Ok(Result) => {
-					if Hire.send(Result).await.is_err() {
-						break;
-					}
-				}
-
-				Err(Error) => eprintln!("Cannot Receive: {}", Error),
-			}
-		} else {
-			tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
-		}
-	}
 }
 
 #[allow(dead_code)]
 pub async fn Fn() {
-	let Order = Arc::new(Mutex::new(
+	let Order = Arc::new(tokio::sync::Mutex::new(
 		tokio_tungstenite::connect_async("ws://localhost:9999")
 			.await
 			.expect("Cannot connect_async.")
@@ -120,7 +73,7 @@ pub async fn Fn() {
 	));
 
 	let Work = Arc::new(Work::Begin());
-	let (Hire, mut Receipt) = mpsc::channel(100);
+	let (Approval, mut Receipt) = mpsc::channel(100);
 
 	// @TODO: Auto-calc number of workers in the force
 	let Force: Vec<_> = (0..4)
@@ -128,7 +81,7 @@ pub async fn Fn() {
 			tokio::spawn(Job(
 				Arc::new(Site { Order: Order.clone() }) as Arc<dyn Worker>,
 				Work.clone(),
-				Hire.clone(),
+				Approval.clone(),
 			))
 		})
 		.collect();

@@ -21,12 +21,12 @@ tokio = "1.38.0"
 tokio-tungstenite = "0.23.1"
 
 [lib]
-name = "Library"
+name = "Mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "Source/Library.rs"
 
 [package]
-name = "mountain"
+name = "Mountain"
 description = "⛰️ Mountain —"
 version = "0.0.0"
 edition = "2021"
@@ -34,5 +34,6 @@ autobenches = false
 autobins = false
 autoexamples = false
 autotests = false
+publish = false
 default-run = "Mountain"
 license = "SEE LICENSE IN LICENSE"
