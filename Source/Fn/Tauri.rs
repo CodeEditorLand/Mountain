@@ -64,6 +64,7 @@ async fn Get(Path: String, Work: tauri::State<'_, Arc<Work>>) -> Result<(), Stri
 }
 
 #[allow(dead_code)]
+#[tokio::main]
 pub async fn Fn() {
 	let Order = Arc::new(tokio::sync::Mutex::new(
 		tokio_tungstenite::connect_async("ws://localhost:9999")
@@ -112,4 +113,11 @@ pub async fn Fn() {
 		.expect("Cannot Library.");
 
 	join_all(Force).await;
+
+	// @TODO: Introduce a tokio::runtime instead of tokio::main
+	// let runtime = tokio::runtime::Runtime::new().expect("Failed to create Tokio runtime");
+	//  runtime.block_on(async {
+	//  ...
+	// 	join_all(Force).await;
+	// });
 }
