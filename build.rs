@@ -25,20 +25,19 @@ fn main() {
 				.package
 				.version;
 
-		// let mut Tauri: Value = serde_json::from_str(
-		// 	&fs::read_to_string("tauri.conf.json").expect("Cannot tauri.conf.json."),
-		// )
-		// .expect("Cannot JSON.");
-
-		;
-
-		fs::write("tauri.conf.json", serde_json::to_string_pretty(&serde_json::from_str::<Value>(
-			&fs::read_to_string("tauri.conf.json").expect("Cannot tauri.conf.json."),
+		fs::write(
+			"tauri.conf.json",
+			serde_json::to_string_pretty(
+				&serde_json::from_str::<Value>(
+					&fs::read_to_string("tauri.conf.json").expect("Cannot tauri.conf.json."),
+				)
+				.expect("Cannot JSON.")
+				.get_mut("version")
+				.map(|Entry| *Entry = Value::String(Version.clone())),
+			)
+			.expect("Cannot JSON."),
 		)
-		.expect("Cannot JSON.")
-		.get_mut("version")
-		.map(|Entry| *Entry = Value::String(Version.clone()))).expect("Cannot JSON."))
-			.expect("Cannot tauri.conf.json.");
+		.expect("Cannot tauri.conf.json.");
 
 		println!("cargo:rustc-env=CARGO_PKG_VERSION={}", Version);
 	}

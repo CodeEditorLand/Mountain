@@ -1,39 +1,41 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use async_trait::async_trait;
-use futures::future::join_all;
-use futures_util::{SinkExt, StreamExt};
+use futures::{future::join_all, SinkExt, StreamExt};
 use std::sync::Arc;
 use tauri::Manager;
 use tokio::{
 	net::TcpStream,
 	sync::{mpsc, Mutex},
 };
-use tokio_tungstenite::{connect_async, tungstenite::protocol::Message, MaybeTlsStream};
+use tokio_tungstenite::{tungstenite::protocol::Message, MaybeTlsStream};
 
-#[async_trait]
-trait Worker: Send + Sync {
-	async fn Receive(&self, Task: String) -> Result<String, String>;
+// @TODO: Finish this and import proper common libs from echo
+use echo::{Action, ActionResult, Job, WorkQueue, Worker, Yell};
+
+struct Site {
+	Order: Arc<Mutex<tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>>>,
 }
 
-struct FileOpWorker {
-	Stream: Arc<Mutex<tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>>>,
-}
+// #[async_trait]
+// trait Worker: Send + Sync {
+// 	async fn Receive(&self, Action: String) -> Result<String, String>;
+// }
 
 #[async_trait]
-impl Worker for FileOpWorker {
-	async fn Receive(&self, Task: String) -> Result<String, String> {
-		let mut Stream = self.Stream.lock().await;
+impl Worker for Site {
+	async fn Receive(&self, Action: Action) -> Result<String, String> {
+		let mut Order = self.Order.lock().await;
 
-		Stream.send(Message::Text(Task)).await.map_err(|Error| Error.to_string())?;
+		Order.send(Message::Text(Action)).await.map_err(|Error| Error.to_string())?;
 
-		if let Some(Response) = Stream.next().await {
-			match Response {
-				Ok(Message::Text(Text)) => Ok(Text),
-				_ => Err("Cannot Response.".to_string()),
+		if let Some(Next) = Order.next().await {
+			match Next {
+				Ok(Message::Text(Order)) => Ok(Order),
+				_ => Err("Cannot Next.".to_string()),
 			}
 		} else {
-			Err("Cannot Response.".to_string())
+			Err("Cannot Order.".to_string())
 		}
 	}
 }
@@ -43,12 +45,12 @@ struct Work {
 }
 
 impl Work {
-	fn new() -> Self {
+	fn Begin() -> Self {
 		Work { Queue: Arc::new(Mutex::new(Vec::new())) }
 	}
 
-	async fn Assign(&self, Task: String) {
-		self.Queue.lock().await.push(Task);
+	async fn Assign(&self, Action: String) {
+		self.Queue.lock().await.push(Action);
 	}
 
 	async fn Execute(&self) -> Option<String> {
@@ -92,8 +94,8 @@ async fn Get(Path: String, State: tauri::State<'_, Arc<Work>>) -> Result<(), Str
 
 async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Hire: mpsc::Sender<String>) {
 	loop {
-		if let Some(Task) = Work.Execute().await {
-			match Worker.Receive(Task).await {
+		if let Some(Action) = Work.Execute().await {
+			match Worker.Receive(Action).await {
 				Ok(Result) => {
 					if Hire.send(Result).await.is_err() {
 						break;
@@ -110,18 +112,21 @@ async fn Job(Worker: Arc<dyn Worker>, Work: Arc<Work>, Hire: mpsc::Sender<String
 
 #[allow(dead_code)]
 pub async fn Fn() {
-	let Stream = Arc::new(Mutex::new(
-		connect_async("ws://localhost:8080").await.expect("Cannot connect_async.").0,
+	let Order = Arc::new(Mutex::new(
+		tokio_tungstenite::connect_async("ws://localhost:9999")
+			.await
+			.expect("Cannot connect_async.")
+			.0,
 	));
 
-	let Work = Arc::new(Work::new());
+	let Work = Arc::new(Work::Begin());
 	let (Hire, mut Receipt) = mpsc::channel(100);
 
 	// @TODO: Auto-calc number of workers in the force
 	let Force: Vec<_> = (0..4)
 		.map(|_| {
 			tokio::spawn(Job(
-				Arc::new(FileOpWorker { Stream: Stream.clone() }) as Arc<dyn Worker>,
+				Arc::new(Site { Order: Order.clone() }) as Arc<dyn Worker>,
 				Work.clone(),
 				Hire.clone(),
 			))
@@ -139,9 +144,9 @@ pub async fn Fn() {
 			let Handle = app.handle().clone();
 
 			tokio::spawn(async move {
-				while let Some(result) = Receipt.recv().await {
+				while let Some(ActionResult) = Receipt.recv().await {
 					// @TODO: Rewrite the Emit to only emit to a specific webview which then talks to the others
-					Handle.emit("file_operation_result", result).unwrap();
+					Handle.emit("file_operation_result", ActionResult).unwrap();
 				}
 			});
 
