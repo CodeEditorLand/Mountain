@@ -1,5 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+// @TODO: Finish this and import proper common libs from echo
+use echo::{Action, ActionResult, Job, WorkQueue, Worker, Yell};
+
 use async_trait::async_trait;
 use futures::{future::join_all, SinkExt, StreamExt};
 use std::sync::Arc;
@@ -9,9 +12,6 @@ use tokio::{
 	sync::{mpsc, Mutex},
 };
 use tokio_tungstenite::{tungstenite::protocol::Message, MaybeTlsStream};
-
-// @TODO: Finish this and import proper common libs from echo
-use echo::{Action, ActionResult, Job, WorkQueue, Worker, Yell};
 
 struct Site {
 	Order: Arc<Mutex<tokio_tungstenite::WebSocketStream<MaybeTlsStream<TcpStream>>>>,
