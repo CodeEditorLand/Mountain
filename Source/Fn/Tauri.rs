@@ -46,7 +46,6 @@ struct Site {
 /// - Receiving a response from the WebSocket connection fails.
 /// - Deserializing the response fails.
 ///
-/// ```
 #[async_trait::async_trait]
 impl Worker for Site {
 	async fn Receive(&self, Action: Action) -> ActionResult {
@@ -89,7 +88,6 @@ impl Worker for Site {
 ///
 /// This function will return an `Err` if there is an issue assigning the action to the queue.
 ///
-/// ```
 #[tauri::command]
 async fn Put(
 	Path: String,
@@ -119,7 +117,6 @@ async fn Put(
 ///
 /// This function will return an `Err` if there is an issue assigning the action to the queue.
 ///
-/// ```
 #[tauri::command]
 async fn Get(Path: String, Work: tauri::State<'_, Arc<Work>>) -> Result<(), String> {
 	Work.Assign(Action::Read { Path }).await;
