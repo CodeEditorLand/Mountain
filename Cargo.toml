@@ -9,7 +9,7 @@ tauri-build = { version = "2.0.0-beta.18", features = [] }
 toml = "0.8.14"
 
 [dependencies]
-async-trait = "0.1.80"
+async-trait = "0.1.81"
 Echo = { version = "0.0.0", path = "../Echo" }
 futures = "0.3.30"
 serde = { version = "1.0.204", features = ["derive"] }
