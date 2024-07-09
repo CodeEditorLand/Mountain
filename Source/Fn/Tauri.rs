@@ -163,7 +163,7 @@ pub fn Fn() {
 			let Work = Arc::new(Work::Begin());
 			let (Approval, mut Receipt) = tokio::sync::mpsc::unbounded_channel();
 
-			// @TODO: Auto-calc number of workers on the force
+			// TODO: Auto-calc number of workers on the force
 			let Force: Vec<_> = (0..4)
 				.map(|_| {
 					tokio::spawn(Echo::Fn::Job::Fn(
@@ -176,7 +176,7 @@ pub fn Fn() {
 
 			let Builder = tauri::Builder::default();
 
-			// @TODO: FIX THIS
+			// TODO: FIX THIS
 			// #[cfg(debug_assertions)]
 			// Builder.plugin(tauri_plugin_devtools::init());
 
@@ -186,7 +186,7 @@ pub fn Fn() {
 
 					tokio::spawn(async move {
 						while let Some(ActionResult) = Receipt.recv().await {
-							// @TODO: Rewrite the Emit to only emit to a specific webview which then talks to the others
+							// TODO: Rewrite the Emit to only emit to a specific webview which then talks to the others
 							Handle.emit("ActionResult", ActionResult).unwrap();
 						}
 					});
