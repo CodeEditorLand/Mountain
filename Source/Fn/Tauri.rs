@@ -153,28 +153,27 @@ pub fn Fn() {
 		.build()
 		.expect("Cannot new_multi_thread.")
 		.block_on(async {
-			// TODO: UNCOMMENT THIS
-			// let Order = Arc::new(Mutex::new(
-			// 	tokio_tungstenite::connect_async("ws://localhost:9999")
-			// 		.await
-			// 		.expect("Cannot connect_async.")
-			// 		.0,
-			// ));
+			let Order = match tokio_tungstenite::connect_async("ws://localhost:9999").await {
+				Ok((Stream, _)) => Arc::new(Mutex::new(Stream)),
+				Err(Error) => {
+					eprintln!("Cannot connect_async: {}", Error);
+					return;
+				}
+			};
 
 			let Work = Arc::new(Work::Begin());
 			let (Approval, mut Receipt) = tokio::sync::mpsc::unbounded_channel();
 
 			// TODO: Auto-calc number of workers on the force
-			// TODO: UNCOMMENT THIS
-			// let Force: Vec<_> = (0..4)
-			// 	.map(|_| {
-			// 		tokio::spawn(Echo::Fn::Job::Fn(
-			// 			Arc::new(Site { Order: Order.clone() }) as Arc<dyn Worker>,
-			// 			Work.clone(),
-			// 			Approval.clone(),
-			// 		))
-			// 	})
-			// 	.collect();
+			let Force: Vec<_> = (0..4)
+				.map(|_| {
+					tokio::spawn(Echo::Fn::Job::Fn(
+						Arc::new(Site { Order: Order.clone() }) as Arc<dyn Worker>,
+						Work.clone(),
+						Approval.clone(),
+					))
+				})
+				.collect();
 
 			let Builder = tauri::Builder::default();
 
