@@ -153,13 +153,12 @@ pub fn Fn() {
 		.build()
 		.expect("Cannot new_multi_thread.")
 		.block_on(async {
-			let Order = match tokio_tungstenite::connect_async("ws://localhost:9999").await {
-				Ok((Stream, _)) => Arc::new(Mutex::new(Stream)),
-				Err(Error) => {
-					eprintln!("Cannot connect_async: {}", Error);
-					return;
-				}
-			};
+			let Order = Arc::new(Mutex::new(
+				tokio_tungstenite::connect_async("ws://localhost:9999")
+					.await
+					.expect("Cannot connect_async.")
+					.0,
+			));
 
 			let Work = Arc::new(Work::Begin());
 			let (Approval, mut Receipt) = tokio::sync::mpsc::unbounded_channel();
