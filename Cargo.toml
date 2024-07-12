@@ -1,5 +1,5 @@
 [[bin]]
-name = "Mountain"
+name = "mountain"
 path = "Source/Mountain.rs"
 
 [build-dependencies]
@@ -21,12 +21,12 @@ tokio = "1.38.0"
 tokio-tungstenite = "0.23.1"
 
 [lib]
-name = "Mountain"
+name = "mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "Source/Fn/Tauri.rs"
 
 [package]
-name = "Mountain"
+name = "mountain"
 description = "⛰️ Mountain —"
 version = "0.0.0"
 edition = "2021"
@@ -35,5 +35,5 @@ autobins = false
 autoexamples = false
 autotests = false
 publish = false
-default-run = "Mountain"
+default-run = "mountain"
 license = "SEE LICENSE IN LICENSE"
