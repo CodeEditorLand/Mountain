@@ -186,7 +186,7 @@ pub fn Fn() {
 
 					tokio::spawn(async move {
 						while let Some(ActionResult) = Receipt.recv().await {
-							// TODO: Rewrite the Emit to only emit to a specific webview which then talks to the others
+							// TODO: Rewrite the Emit to only emit to a specific webview which then corresponds with the rest
 							Handle.emit("ActionResult", ActionResult).unwrap();
 						}
 					});
