@@ -4,3 +4,6 @@
 /tauri.build.gradle.kts
 /proguard-tauri.pro
 /tauri.properties
+
+!build/outputs/bundle/universalRelease/app-universal-release.aab
+!build/outputs/apk/universal/release/app-universal-release-unsigned.apk
