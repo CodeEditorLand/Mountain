@@ -18,26 +18,13 @@ key.properties
 /.tauri
 /tauri.settings.gradle
 
-!app/build
 app/build/*
-!app/build/outputs
-app/build/outputs/*
 
 !app/build/outputs/bundle
-app/build/outputs/bundle/*
-
 !app/build/outputs/bundle/universalRelease
-app/build/outputs/bundle/universalRelease/*
-
 !app/build/outputs/bundle/universalRelease/app-universal-release.aab
 
 !app/build/outputs/apk
-app/build/outputs/apk/*
-
 !app/build/outputs/apk/universal
-app/build/outputs/apk/universal/*
-
 !app/build/outputs/apk/universal/release
-app/build/outputs/apk/universal/release/*
-
 !app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
