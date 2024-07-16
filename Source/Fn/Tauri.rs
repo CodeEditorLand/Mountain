@@ -148,31 +148,32 @@ async fn Get(Path: String, Work: tauri::State<'_, Arc<Work>>) -> Result<(), Stri
 /// - Rewrite the emit logic to only emit to a specific webview.
 #[allow(dead_code)]
 pub fn Fn() {
-	tokio::runtime::Builder::new_multi_thread()
-		.enable_all()
-		.build()
-		.expect("Cannot new_multi_thread.")
-		.block_on(async {
-			let Order = Arc::new(Mutex::new(
-				tokio_tungstenite::connect_async("ws://localhost:9999")
-					.await
-					.expect("Cannot connect_async.")
-					.0,
-			));
+	// TODO: UNCOMENT
+	// tokio::runtime::Builder::new_multi_thread()
+	// 	.enable_all()
+	// 	.build()
+	// 	.expect("Cannot new_multi_thread.")
+	// 	.block_on(async {
+	// 		let Order = Arc::new(Mutex::new(
+	// 			tokio_tungstenite::connect_async("ws://localhost:9999")
+	// 				.await
+	// 				.expect("Cannot connect_async.")
+	// 				.0,
+	// 		));
 
-			let Work = Arc::new(Work::Begin());
-			let (Approval, mut Receipt) = tokio::sync::mpsc::unbounded_channel();
+	// 		let Work = Arc::new(Work::Begin());
+	// 		let (Approval, mut Receipt) = tokio::sync::mpsc::unbounded_channel();
 
-			// TODO: Auto-calc number of workers on the force
-			let Force: Vec<_> = (0..4)
-				.map(|_| {
-					tokio::spawn(Echo::Fn::Job::Fn(
-						Arc::new(Site { Order: Order.clone() }) as Arc<dyn Worker>,
-						Work.clone(),
-						Approval.clone(),
-					))
-				})
-				.collect();
+	// 		// TODO: Auto-calc number of workers on the force
+	// 		let Force: Vec<_> = (0..4)
+	// 			.map(|_| {
+	// 				tokio::spawn(Echo::Fn::Job::Fn(
+	// 					Arc::new(Site { Order: Order.clone() }) as Arc<dyn Worker>,
+	// 					Work.clone(),
+	// 					Approval.clone(),
+	// 				))
+	// 			})
+	// 			.collect();
 
 			let Builder = tauri::Builder::default();
 
@@ -181,24 +182,26 @@ pub fn Fn() {
 			// Builder.plugin(tauri_plugin_devtools::init());
 
 			Builder
-				.setup(|Tauri| {
-					let Handle = Tauri.handle().clone();
+				// TODO: UNCOMMENT
+				// .setup(|Tauri| {
+				// 	let Handle = Tauri.handle().clone();
 
-					tokio::spawn(async move {
-						while let Some(ActionResult) = Receipt.recv().await {
-							// TODO: Rewrite the Emit to only emit to a specific webview which then corresponds with the rest
-							Handle.emit("ActionResult", ActionResult).unwrap();
-						}
-					});
+				// 	tokio::spawn(async move {
+				// 		while let Some(ActionResult) = Receipt.recv().await {
+				// 			// TODO: Rewrite the Emit to only emit to a specific webview which then corresponds with the rest
+				// 			Handle.emit("ActionResult", ActionResult).unwrap();
+				// 		}
+				// 	});
 
-					Ok(())
-				})
-				.manage(Work)
-				.invoke_handler(tauri::generate_handler![Put, Get])
+				// 	Ok(())
+				// })
+				// .manage(Work)
+				// .invoke_handler(tauri::generate_handler![Put, Get])
 				.plugin(tauri_plugin_shell::init())
 				.run(tauri::generate_context!())
 				.expect("Cannot Library.");
 
-			futures::future::join_all(Force).await;
-		});
+		// TODO: UNCOMMENT
+		// 	futures::future::join_all(Force).await;
+		// });
 }
