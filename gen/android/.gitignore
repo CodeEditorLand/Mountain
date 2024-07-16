@@ -18,5 +18,5 @@ key.properties
 /.tauri
 /tauri.settings.gradle
 
-!build/outputs/bundle/universalRelease/app-universal-release.aab
-!build/outputs/apk/universal/release/app-universal-release-unsigned.apk
+!app/build/outputs/bundle/universalRelease/app-universal-release.aab
+!app/build/outputs/apk/universal/release/app-universal-release-unsigned.apk
