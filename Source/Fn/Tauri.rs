@@ -4,7 +4,7 @@ use Echo::Fn::Job::{Action, ActionResult, Work, Worker};
 
 use futures::{SinkExt, StreamExt};
 use std::sync::Arc;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use tokio::sync::Mutex;
 use tokio_tungstenite::tungstenite::Message::Text;
 

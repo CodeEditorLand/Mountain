@@ -1,5 +1,5 @@
 [[bin]]
-name = "Mountain"
+name = "mountain"
 path = "Source/Mountain.rs"
 
 [build-dependencies]
@@ -9,7 +9,7 @@ tauri-build = { version = "2.0.0-beta.19", features = [] }
 toml = "0.8.14"
 
 [dependencies]
-Echo = { version = "0.0.0", path = "../Echo" }
+Echo = { version = "0.0.1", path = "../Echo" }
 async-trait = "0.1.81"
 futures = "0.3.30"
 serde = { version = "1.0.204", features = ["derive"] }
@@ -21,19 +21,19 @@ tokio = "1.38.0"
 tokio-tungstenite = "0.23.1"
 
 [lib]
-name = "Mountain"
+name = "mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
-path = "Source/Fn/Tauri.rs"
+path = "Source/Mountain.rs"
 
 [package]
-name = "Mountain"
+name = "mountain"
 description = "⛰️ Mountain —"
-version = "0.0.0"
+version = "0.0.1"
 edition = "2021"
 autobenches = false
 autobins = false
 autoexamples = false
 autotests = false
 publish = false
-default-run = "Mountain"
+default-run = "mountain"
 license = "SEE LICENSE IN LICENSE"
