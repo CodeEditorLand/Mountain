@@ -1,12 +1,12 @@
 [[bin]]
 name = "mountain"
-path = "Source/Mountain.rs"
+path = "Source/Library.rs"
 
 [build-dependencies]
 serde = { version = "1.0.204", features = ["derive"] }
 serde_json = "1.0.120"
 tauri-build = { version = "2.0.0-beta.19", features = [] }
-toml = "0.8.14"
+toml = "0.8.15"
 
 [dependencies]
 Echo = { version = "0.0.1", path = "../Echo" }
@@ -23,7 +23,7 @@ tokio-tungstenite = "0.23.1"
 [lib]
 name = "mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
-path = "Source/Mountain.rs"
+path = "Source/Library.rs"
 
 [package]
 name = "mountain"
