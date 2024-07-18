@@ -2,6 +2,7 @@
 
 pub mod Connect;
 pub mod Get;
+pub mod Put;
 
 /// Initializes and runs a multi-threaded Tokio runtime, sets up a WebSocket connection,
 /// and manages a Tauri application.
@@ -33,21 +34,22 @@ pub fn Fn() {
 		.build()
 		.expect("Cannot new_multi_thread.")
 		.block_on(async {
-			let Order = Arc::new(Mutex::new(
+			let Order = Arc::new(tokio::sync::Mutex::new(
 				tokio_tungstenite::connect_async("ws://localhost:9999")
 					.await
 					.expect("Cannot connect_async.")
 					.0,
 			));
 
-			let Work = Arc::new(Work::Begin());
+			let Work = Arc::new(Echo::Fn::Job::Work::Begin());
 			let (Approval, mut Receipt) = tokio::sync::mpsc::unbounded_channel();
 
 			// TODO: Auto-calc number of workers on the force
 			let Force: Vec<_> = (0..4)
 				.map(|_| {
 					tokio::spawn(Echo::Fn::Job::Fn(
-						Arc::new(crate::Struct::Binary::Site { Order: Order.clone() }) as Arc<dyn Worker>,
+						Arc::new(crate::Struct::Binary::Site::Struct { Order: Order.clone() })
+							as Arc<dyn Echo::Fn::Job::Worker>,
 						Work.clone(),
 						Approval.clone(),
 					))
@@ -74,7 +76,7 @@ pub fn Fn() {
 					Ok(())
 				})
 				.manage(Work)
-				.invoke_handler(tauri::generate_handler![Put, Get])
+				.invoke_handler(tauri::generate_handler![Put::Fn, Get::Fn])
 				.plugin(tauri_plugin_shell::init())
 				.run(tauri::generate_context!())
 				.expect("Cannot Library.");
@@ -83,10 +85,5 @@ pub fn Fn() {
 		});
 }
 
-use Echo::Fn::Job::{Action, ActionResult, Work, Worker};
-
-use futures::{SinkExt, StreamExt};
 use std::sync::Arc;
-use tauri::{Emitter, Manager};
-use tokio::{net::TcpStream, sync::Mutex};
-use tokio_tungstenite::{tungstenite::Message::Text, MaybeTlsStream, WebSocketStream};
+use tauri::Emitter;

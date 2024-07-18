@@ -17,7 +17,10 @@
 /// This function will return an `Err` if there is an issue assigning the action to the queue.
 ///
 #[tauri::command]
-async fn Fn(Path: String, Work: tauri::State<'_, Arc<Work>>) -> Result<(), String> {
+pub async fn Fn(
+	Path: String,
+	Work: tauri::State<'_, std::sync::Arc<Echo::Fn::Job::Work>>,
+) -> Result<(), String> {
 	Work.Assign(Echo::Fn::Job::Action::Read { Path }).await;
 
 	Ok(())

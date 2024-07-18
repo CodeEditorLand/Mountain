@@ -6,8 +6,8 @@
 ///
 pub struct Struct {
 	/// The WebSocket connection wrapped in an `Arc` and `Mutex` for safe concurrent access.
-	Order: Arc<
-		Mutex<
+	pub Order: std::sync::Arc<
+		tokio::sync::Mutex<
 			tokio_tungstenite::WebSocketStream<
 				tokio_tungstenite::MaybeTlsStream<tokio::net::TcpStream>,
 			>,
@@ -37,7 +37,7 @@ pub struct Struct {
 ///
 #[async_trait::async_trait]
 impl Echo::Fn::Job::Worker for Struct {
-	async fn Receive(&self, Action: Action) -> ActionResult {
+	async fn Receive(&self, Action: Echo::Fn::Job::Action) -> ActionResult {
 		let mut Order = self.Order.lock().await;
 
 		if Order.send(Text(serde_json::to_string(&Action).unwrap())).await.is_err() {
@@ -57,3 +57,7 @@ impl Echo::Fn::Job::Worker for Struct {
 		}
 	}
 }
+
+use futures::{SinkExt, StreamExt};
+use tokio_tungstenite::tungstenite::Message::Text;
+use Echo::Fn::Job::ActionResult;
