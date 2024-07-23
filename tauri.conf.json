@@ -1,227 +1,253 @@
 {
-	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
-	"app": {
-		"macOSPrivateApi": false,
-		"security": {
-			"assetProtocol": {
-				"enable": false,
-				"scope": []
-			},
-			"capabilities": [],
-			"csp": null,
-			"dangerousDisableAssetCspModification": false,
-			"freezePrototype": false,
-			"pattern": {
-				"use": "brownfield"
-			}
-		},
-		"trayIcon": null,
-		"windows": [
-			{
-				"height": 600,
-				"title": "Mountain",
-				"width": 800
-			}
-		],
-		"withGlobalTauri": false
-	},
-	"build": {
-		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
-		"beforeBundleCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
-		"devUrl": "http://localhost:9999",
-		"features": [],
-		"frontendDist": "../Sky/Target",
-		"runner": "cargo"
-	},
-	"bundle": {
-		"active": true,
-		"icon": ["icons/icon.ico"],
-		"targets": "all",
-		"android": {
-			"minSdkVersion": 24
-		},
-		"category": "DeveloperTool",
-		"copyright": "PlayForm",
-		"createUpdaterArtifacts": true,
-		"externalBin": [],
-		"fileAssociations": [
-			{
-				"description": "Source",
-				"ext": [
-					".asm",
-					".bash",
-					".bat",
-					".bsh",
-					".c",
-					".cc",
-					".cpp",
-					".cxx",
-					".go",
-					".h",
-					".hpp",
-					".hs",
-					".java",
-					".js",
-					".jsx",
-					".kt",
-					".kts",
-					".lua",
-					".m",
-					".mm",
-					".php",
-					".pl",
-					".pm",
-					".ps1",
-					".py",
-					".r",
-					".rb",
-					".rs",
-					".s",
-					".scala",
-					".sh",
-					".sql",
-					".swift",
-					".ts",
-					".tsx",
-					".v",
-					".vh",
-					".vhd",
-					".vhdl"
-				],
-				"mimeType": "",
-				"name": "Source",
-				"role": "Editor"
-			},
-			{
-				"description": "Configuration",
-				"ext": [
-					".cfg",
-					".cmake",
-					".conf",
-					".dockerignore",
-					".editorconfig",
-					".gitignore",
-					".gradle",
-					".ini",
-					".json",
-					".toml",
-					".travis",
-					".travis.yml",
-					".xml",
-					".yaml",
-					".yml",
-					"CMakeLists.txt",
-					"Dockerfile",
-					"Jenkinsfile",
-					"Makefile"
-				],
-				"mimeType": "",
-				"name": "Configuration",
-				"role": "Editor"
-			},
-			{
-				"description": "Markup",
-				"ext": [
-					".css",
-					".ejs",
-					".hbs",
-					".htm",
-					".html",
-					".less",
-					".markdown",
-					".md",
-					".sass",
-					".scss",
-					".tpl"
-				],
-				"mimeType": "",
-				"name": "Markup",
-				"role": "Editor"
-			},
-			{
-				"description": "Log",
-				"ext": [".log", ".out", ".result", ".trace", ".prof"],
-				"mimeType": "",
-				"name": "Log",
-				"role": "Editor"
-			},
-			{
-				"description": "Data",
-				"ext": [
-					".db",
-					".gif",
-					".h5",
-					".jpeg",
-					".jpg",
-					".otf",
-					".pkl",
-					".png",
-					".sqlite",
-					".svg",
-					".ttf",
-					".woff",
-					".woff2"
-				],
-				"mimeType": "",
-				"name": "Data",
-				"role": "Editor"
-			},
-			{
-				"description": "Backup",
-				"ext": [".bak", ".backup", ".zip", ".tar", ".tar.gz"],
-				"mimeType": "",
-				"name": "Backup",
-				"role": "Editor"
-			},
-			{
-				"description": "Security",
-				"ext": [".key", ".pem", ".crt", ".cert"],
-				"mimeType": "",
-				"name": "Security",
-				"role": "Editor"
-			},
-			{
-				"description": "Documentation",
-				"ext": ["README.md", "LICENSE", "LICENSE.txt", "CHANGELOG.md"],
-				"mimeType": "",
-				"name": "Documentation",
-				"role": "Editor"
-			},
-			{
-				"description": "Miscellaneous",
-				"ext": [
-					".env",
-					".idea",
-					".ipynb",
-					".lock",
-					".project",
-					".vscode",
-					".workspace",
-					".txt",
-					".env",
-					".idea",
-					".ipynb",
-					".lock",
-					".project",
-					".vscode",
-					".workspace",
-					".txt"
-				],
-				"mimeType": "",
-				"name": "Miscellaneous",
-				"role": "Editor"
-			},
-			{
-				"description": "Reserved",
-				"ext": [".land"],
-				"mimeType": "",
-				"name": "Reserved",
-				"role": "Editor"
-			}
-		]
-	},
-	"identifier": "mountain.editor.land",
-	"productName": "Mountain",
-	"version": "0.0.1"
+  "$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
+  "app": {
+    "macOSPrivateApi": false,
+    "security": {
+      "assetProtocol": {
+        "enable": false,
+        "scope": []
+      },
+      "capabilities": [],
+      "csp": null,
+      "dangerousDisableAssetCspModification": false,
+      "freezePrototype": false,
+      "pattern": {
+        "use": "brownfield"
+      }
+    },
+    "trayIcon": null,
+    "windows": [
+      {
+        "height": 600,
+        "title": "Mountain",
+        "width": 800
+      }
+    ],
+    "withGlobalTauri": false
+  },
+  "build": {
+    "beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
+    "beforeBundleCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
+    "beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
+    "devUrl": "http://localhost:9999",
+    "features": [],
+    "frontendDist": "../Sky/Target",
+    "runner": "cargo"
+  },
+  "bundle": {
+    "active": true,
+    "android": {
+      "minSdkVersion": 24
+    },
+    "category": "DeveloperTool",
+    "copyright": "PlayForm",
+    "createUpdaterArtifacts": true,
+    "externalBin": [],
+    "fileAssociations": [
+      {
+        "description": "Source",
+        "ext": [
+          ".asm",
+          ".bash",
+          ".bat",
+          ".bsh",
+          ".c",
+          ".cc",
+          ".cpp",
+          ".cxx",
+          ".go",
+          ".h",
+          ".hpp",
+          ".hs",
+          ".java",
+          ".js",
+          ".jsx",
+          ".kt",
+          ".kts",
+          ".lua",
+          ".m",
+          ".mm",
+          ".php",
+          ".pl",
+          ".pm",
+          ".ps1",
+          ".py",
+          ".r",
+          ".rb",
+          ".rs",
+          ".s",
+          ".scala",
+          ".sh",
+          ".sql",
+          ".swift",
+          ".ts",
+          ".tsx",
+          ".v",
+          ".vh",
+          ".vhd",
+          ".vhdl"
+        ],
+        "mimeType": "",
+        "name": "Source",
+        "role": "Editor"
+      },
+      {
+        "description": "Configuration",
+        "ext": [
+          ".cfg",
+          ".cmake",
+          ".conf",
+          ".dockerignore",
+          ".editorconfig",
+          ".gitignore",
+          ".gradle",
+          ".ini",
+          ".json",
+          ".toml",
+          ".travis",
+          ".travis.yml",
+          ".xml",
+          ".yaml",
+          ".yml",
+          "CMakeLists.txt",
+          "Dockerfile",
+          "Jenkinsfile",
+          "Makefile"
+        ],
+        "mimeType": "",
+        "name": "Configuration",
+        "role": "Editor"
+      },
+      {
+        "description": "Markup",
+        "ext": [
+          ".css",
+          ".ejs",
+          ".hbs",
+          ".htm",
+          ".html",
+          ".less",
+          ".markdown",
+          ".md",
+          ".sass",
+          ".scss",
+          ".tpl"
+        ],
+        "mimeType": "",
+        "name": "Markup",
+        "role": "Editor"
+      },
+      {
+        "description": "Log",
+        "ext": [
+          ".log",
+          ".out",
+          ".result",
+          ".trace",
+          ".prof"
+        ],
+        "mimeType": "",
+        "name": "Log",
+        "role": "Editor"
+      },
+      {
+        "description": "Data",
+        "ext": [
+          ".db",
+          ".gif",
+          ".h5",
+          ".jpeg",
+          ".jpg",
+          ".otf",
+          ".pkl",
+          ".png",
+          ".sqlite",
+          ".svg",
+          ".ttf",
+          ".woff",
+          ".woff2"
+        ],
+        "mimeType": "",
+        "name": "Data",
+        "role": "Editor"
+      },
+      {
+        "description": "Backup",
+        "ext": [
+          ".bak",
+          ".backup",
+          ".zip",
+          ".tar",
+          ".tar.gz"
+        ],
+        "mimeType": "",
+        "name": "Backup",
+        "role": "Editor"
+      },
+      {
+        "description": "Security",
+        "ext": [
+          ".key",
+          ".pem",
+          ".crt",
+          ".cert"
+        ],
+        "mimeType": "",
+        "name": "Security",
+        "role": "Editor"
+      },
+      {
+        "description": "Documentation",
+        "ext": [
+          "README.md",
+          "LICENSE",
+          "LICENSE.txt",
+          "CHANGELOG.md"
+        ],
+        "mimeType": "",
+        "name": "Documentation",
+        "role": "Editor"
+      },
+      {
+        "description": "Miscellaneous",
+        "ext": [
+          ".env",
+          ".idea",
+          ".ipynb",
+          ".lock",
+          ".project",
+          ".vscode",
+          ".workspace",
+          ".txt",
+          ".env",
+          ".idea",
+          ".ipynb",
+          ".lock",
+          ".project",
+          ".vscode",
+          ".workspace",
+          ".txt"
+        ],
+        "mimeType": "",
+        "name": "Miscellaneous",
+        "role": "Editor"
+      },
+      {
+        "description": "Reserved",
+        "ext": [
+          ".land"
+        ],
+        "mimeType": "",
+        "name": "Reserved",
+        "role": "Editor"
+      }
+    ],
+    "icon": [
+      "icons/icon.ico"
+    ],
+    "targets": "all"
+  },
+  "identifier": "mountain.editor.land",
+  "productName": "Mountain",
+  "version": "0.0.1"
 }
