@@ -1,9 +1,5 @@
 #![allow(non_snake_case)]
 
-pub mod Connect;
-pub mod Get;
-pub mod Put;
-
 /// Initializes and runs a multi-threaded Tokio runtime, sets up a WebSocket connection,
 /// and manages a Tauri application.
 ///
@@ -76,7 +72,10 @@ pub fn Fn() {
 					Ok(())
 				})
 				.manage(Work)
-				.invoke_handler(tauri::generate_handler![Put::Fn, Get::Fn])
+				.invoke_handler(tauri::generate_handler![
+					crate::Fn::Library::Binary::Get,
+					crate::Fn::Library::Binary::Put
+				])
 				.plugin(tauri_plugin_shell::init())
 				.run(tauri::generate_context!())
 				.expect("Cannot Library.");
