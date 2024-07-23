@@ -41,7 +41,7 @@
 		},
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
-		"createUpdaterArtifacts": true,
+		"createUpdaterArtifacts": false,
 		"externalBin": [],
 		"fileAssociations": [
 			{
