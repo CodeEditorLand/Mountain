@@ -36,4 +36,4 @@ autoexamples = false
 autotests = false
 publish = false
 default-run = "Mountain"
-license = "SEE LICENSE IN LICENSE"
+license = "MIT"
