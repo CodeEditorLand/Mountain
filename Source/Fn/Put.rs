@@ -20,9 +20,12 @@
 pub async fn Fn(
 	Path: String,
 	Content: String,
-	Work: tauri::State<'_, std::sync::Arc<Echo::Fn::Job::Work>>,
+	Work: tauri::State<'_, std::sync::Arc<Echo::Struct::Job::Work::Struct>>,
 ) -> Result<(), String> {
-	Work.Assign(Echo::Fn::Job::Action::Write { Path, Content }).await;
+	// Work.Assign(Echo::Struct::Job::Action::Struct(Metadata {
+	// 	Write { Path, Content }
+	// })).await;
+	Work.Assign(Echo::Struct::Job::Action::Struct()).await;
 
 	Ok(())
 }
