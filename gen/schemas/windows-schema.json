@@ -7430,6 +7430,475 @@
           "enum": [
             "sql:deny-select"
           ]
+        },
+        {
+          "description": "store:default -> This permission set configures what kind of\noperations are available from the store plugin.\n\n#### Granted Permissions\n\nAll operations are enabled by default.\n\n",
+          "type": "string",
+          "enum": [
+            "store:default"
+          ]
+        },
+        {
+          "description": "store:allow-clear -> Enables the clear command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-clear"
+          ]
+        },
+        {
+          "description": "store:allow-delete -> Enables the delete command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-delete"
+          ]
+        },
+        {
+          "description": "store:allow-entries -> Enables the entries command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-entries"
+          ]
+        },
+        {
+          "description": "store:allow-get -> Enables the get command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-get"
+          ]
+        },
+        {
+          "description": "store:allow-has -> Enables the has command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-has"
+          ]
+        },
+        {
+          "description": "store:allow-keys -> Enables the keys command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-keys"
+          ]
+        },
+        {
+          "description": "store:allow-length -> Enables the length command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-length"
+          ]
+        },
+        {
+          "description": "store:allow-load -> Enables the load command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-load"
+          ]
+        },
+        {
+          "description": "store:allow-reset -> Enables the reset command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-reset"
+          ]
+        },
+        {
+          "description": "store:allow-save -> Enables the save command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-save"
+          ]
+        },
+        {
+          "description": "store:allow-set -> Enables the set command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-set"
+          ]
+        },
+        {
+          "description": "store:allow-values -> Enables the values command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:allow-values"
+          ]
+        },
+        {
+          "description": "store:deny-clear -> Denies the clear command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-clear"
+          ]
+        },
+        {
+          "description": "store:deny-delete -> Denies the delete command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-delete"
+          ]
+        },
+        {
+          "description": "store:deny-entries -> Denies the entries command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-entries"
+          ]
+        },
+        {
+          "description": "store:deny-get -> Denies the get command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-get"
+          ]
+        },
+        {
+          "description": "store:deny-has -> Denies the has command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-has"
+          ]
+        },
+        {
+          "description": "store:deny-keys -> Denies the keys command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-keys"
+          ]
+        },
+        {
+          "description": "store:deny-length -> Denies the length command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-length"
+          ]
+        },
+        {
+          "description": "store:deny-load -> Denies the load command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-load"
+          ]
+        },
+        {
+          "description": "store:deny-reset -> Denies the reset command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-reset"
+          ]
+        },
+        {
+          "description": "store:deny-save -> Denies the save command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-save"
+          ]
+        },
+        {
+          "description": "store:deny-set -> Denies the set command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-set"
+          ]
+        },
+        {
+          "description": "store:deny-values -> Denies the values command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "store:deny-values"
+          ]
+        },
+        {
+          "description": "stronghold:default -> This permission set configures what kind of\noperations are available from the stronghold plugin.\n\n#### Granted Permissions\n\nAll non-destructive operations are enabled by default.\n\n",
+          "type": "string",
+          "enum": [
+            "stronghold:default"
+          ]
+        },
+        {
+          "description": "stronghold:allow-create-client -> Enables the create_client command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-create-client"
+          ]
+        },
+        {
+          "description": "stronghold:allow-destroy -> Enables the destroy command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-destroy"
+          ]
+        },
+        {
+          "description": "stronghold:allow-execute-procedure -> Enables the execute_procedure command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-execute-procedure"
+          ]
+        },
+        {
+          "description": "stronghold:allow-get-store-record -> Enables the get_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-get-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:allow-initialize -> Enables the initialize command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-initialize"
+          ]
+        },
+        {
+          "description": "stronghold:allow-load-client -> Enables the load_client command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-load-client"
+          ]
+        },
+        {
+          "description": "stronghold:allow-remove-secret -> Enables the remove_secret command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-remove-secret"
+          ]
+        },
+        {
+          "description": "stronghold:allow-remove-store-record -> Enables the remove_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-remove-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:allow-save -> Enables the save command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-save"
+          ]
+        },
+        {
+          "description": "stronghold:allow-save-secret -> Enables the save_secret command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-save-secret"
+          ]
+        },
+        {
+          "description": "stronghold:allow-save-store-record -> Enables the save_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:allow-save-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:deny-create-client -> Denies the create_client command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-create-client"
+          ]
+        },
+        {
+          "description": "stronghold:deny-destroy -> Denies the destroy command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-destroy"
+          ]
+        },
+        {
+          "description": "stronghold:deny-execute-procedure -> Denies the execute_procedure command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-execute-procedure"
+          ]
+        },
+        {
+          "description": "stronghold:deny-get-store-record -> Denies the get_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-get-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:deny-initialize -> Denies the initialize command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-initialize"
+          ]
+        },
+        {
+          "description": "stronghold:deny-load-client -> Denies the load_client command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-load-client"
+          ]
+        },
+        {
+          "description": "stronghold:deny-remove-secret -> Denies the remove_secret command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-remove-secret"
+          ]
+        },
+        {
+          "description": "stronghold:deny-remove-store-record -> Denies the remove_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-remove-store-record"
+          ]
+        },
+        {
+          "description": "stronghold:deny-save -> Denies the save command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-save"
+          ]
+        },
+        {
+          "description": "stronghold:deny-save-secret -> Denies the save_secret command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-save-secret"
+          ]
+        },
+        {
+          "description": "stronghold:deny-save-store-record -> Denies the save_store_record command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "stronghold:deny-save-store-record"
+          ]
+        },
+        {
+          "description": "updater:default -> This permission set configures which kind of\nupdater functions are exposed to the frontend.\n\n#### Granted Permissions\n\nThe full workflow from checking for updates to installing them\nis enabled.\n\n",
+          "type": "string",
+          "enum": [
+            "updater:default"
+          ]
+        },
+        {
+          "description": "updater:allow-check -> Enables the check command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "updater:allow-check"
+          ]
+        },
+        {
+          "description": "updater:allow-download -> Enables the download command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "updater:allow-download"
+          ]
+        },
+        {
+          "description": "updater:allow-download-and-install -> Enables the download_and_install command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "updater:allow-download-and-install"
+          ]
+        },
+        {
+          "description": "updater:allow-install -> Enables the install command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "updater:allow-install"
+          ]
+        },
+        {
+          "description": "updater:deny-check -> Denies the check command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "updater:deny-check"
+          ]
+        },
+        {
+          "description": "updater:deny-download -> Denies the download command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "updater:deny-download"
+          ]
+        },
+        {
+          "description": "updater:deny-download-and-install -> Denies the download_and_install command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "updater:deny-download-and-install"
+          ]
+        },
+        {
+          "description": "updater:deny-install -> Denies the install command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "updater:deny-install"
+          ]
+        },
+        {
+          "description": "upload:default -> This permission set configures what kind of\noperations are available from the upload plugin.\n\n#### Granted Permissions\n\nAll operations are enabled by default.\n\n",
+          "type": "string",
+          "enum": [
+            "upload:default"
+          ]
+        },
+        {
+          "description": "upload:allow-download -> Enables the download command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "upload:allow-download"
+          ]
+        },
+        {
+          "description": "upload:allow-upload -> Enables the upload command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "upload:allow-upload"
+          ]
+        },
+        {
+          "description": "upload:deny-download -> Denies the download command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "upload:deny-download"
+          ]
+        },
+        {
+          "description": "upload:deny-upload -> Denies the upload command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "upload:deny-upload"
+          ]
+        },
+        {
+          "description": "websocket:default -> Allows connecting and sending data to a WebSocket server",
+          "type": "string",
+          "enum": [
+            "websocket:default"
+          ]
+        },
+        {
+          "description": "websocket:allow-connect -> Enables the connect command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "websocket:allow-connect"
+          ]
+        },
+        {
+          "description": "websocket:allow-send -> Enables the send command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "websocket:allow-send"
+          ]
+        },
+        {
+          "description": "websocket:deny-connect -> Denies the connect command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "websocket:deny-connect"
+          ]
+        },
+        {
+          "description": "websocket:deny-send -> Denies the send command without any pre-configured scope.",
+          "type": "string",
+          "enum": [
+            "websocket:deny-send"
+          ]
         }
       ]
     },
