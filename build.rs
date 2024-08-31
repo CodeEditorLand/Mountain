@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
-use serde::Deserialize;
-use serde_json::Value;
+use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::fs;
 
 #[derive(Deserialize)]
@@ -31,8 +31,14 @@ fn main() {
 
 		Tauri.get_mut("version").map(|Entry| *Entry = Value::String(Version.clone()));
 
-		fs::write("tauri.conf.json", serde_json::to_string_pretty(&Tauri).expect("Cannot JSON."))
-			.expect("Cannot tauri.conf.json.");
+		let Formatter = serde_json::ser::PrettyFormatter::with_indent(b"	");
+
+		let Buffer = Vec::new();
+		let mut Serializer = serde_json::Serializer::with_formatter(Buffer, Formatter);
+
+		Tauri.serialize(&mut Serializer).expect("Cannot serialize.");
+
+		fs::write("tauri.conf.json", Tauri.to_string()).expect("Cannot tauri.conf.json.");
 
 		println!("cargo:rustc-env=CARGO_PKG_VERSION={}", Version);
 	}

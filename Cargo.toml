@@ -37,12 +37,15 @@ tauri-plugin-os = "2.0.0-rc.0"
 tauri-plugin-process = "2.0.0-rc.0"
 tauri-plugin-shell = "2.0.0-rc.0"
 tauri-plugin-single-instance = "2.0.0-rc.0"
-tauri-plugin-sql = "2.0.0-rc.0"
 tauri-plugin-store = "2.0.0-rc.0"
 tauri-plugin-stronghold = "2.0.0-rc.0"
 tauri-plugin-updater = "2.0.0-rc.0"
 tauri-plugin-upload = "2.0.0-rc.0"
 tauri-plugin-websocket = "2.0.0-rc.0"
+
+# TODO:
+# ^^ use of undeclared type `Db`
+# tauri-plugin-sql = "2.0.0-rc.0"
 
 # TODO:
 # error: failed to select a version for `webkit2gtk-sys`.

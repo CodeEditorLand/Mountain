@@ -3,26 +3,15 @@
 	"app": {
 		"macOSPrivateApi": false,
 		"security": {
-			"assetProtocol": {
-				"enable": false,
-				"scope": []
-			},
+			"assetProtocol": { "enable": false, "scope": [] },
 			"capabilities": [],
 			"csp": null,
 			"dangerousDisableAssetCspModification": false,
 			"freezePrototype": false,
-			"pattern": {
-				"use": "brownfield"
-			}
+			"pattern": { "use": "brownfield" }
 		},
 		"trayIcon": null,
-		"windows": [
-			{
-				"height": 600,
-				"title": "Mountain",
-				"width": 800
-			}
-		],
+		"windows": [{ "height": 600, "title": "Mountain", "width": 800 }],
 		"withGlobalTauri": false
 	},
 	"build": {
@@ -36,9 +25,7 @@
 	},
 	"bundle": {
 		"active": true,
-		"android": {
-			"minSdkVersion": 24
-		},
+		"android": { "minSdkVersion": 24 },
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
