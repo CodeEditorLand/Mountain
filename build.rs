@@ -31,14 +31,18 @@ fn main() {
 
 		Tauri.get_mut("version").map(|Entry| *Entry = Value::String(Version.clone()));
 
-		let Formatter = serde_json::ser::PrettyFormatter::with_indent(b"	");
+		let mut Serializer = serde_json::Serializer::with_formatter(
+			Vec::new(),
+			serde_json::ser::PrettyFormatter::with_indent(b"\t"),
+		);
 
-		let Buffer = Vec::new();
-		let mut Serializer = serde_json::Serializer::with_formatter(Buffer, Formatter);
+		Tauri.serialize(&mut Serializer).expect("Cannot Tauri.");
 
-		Tauri.serialize(&mut Serializer).expect("Cannot serialize.");
-
-		fs::write("tauri.conf.json", Tauri.to_string()).expect("Cannot tauri.conf.json.");
+		fs::write(
+			"tauri.conf.json",
+			String::from_utf8(Serializer.into_inner()).expect("Cannot String."),
+		)
+		.expect("Cannot tauri.conf.json.");
 
 		println!("cargo:rustc-env=CARGO_PKG_VERSION={}", Version);
 	}
