@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 use std::fs;
 
 #[derive(Deserialize)]
