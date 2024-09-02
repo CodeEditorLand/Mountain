@@ -1,3 +1,3 @@
-package mountain.editor.land
+package land.editor.application
 
 class MainActivity : TauriActivity()

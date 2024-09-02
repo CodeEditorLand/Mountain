@@ -191,7 +191,7 @@
 			}
 		]
 	},
-	"identifier": "mountain.editor.land",
+	"identifier": "land.editor.application",
 	"productName": "Mountain",
 	"version": "0.0.1"
 }

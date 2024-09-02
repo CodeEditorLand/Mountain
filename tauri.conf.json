@@ -46,9 +46,7 @@
 		"fileAssociations": [
 			{
 				"description": "Reserved",
-				"ext": [
-					"land"
-				],
+				"ext": ["land"],
 				"mimeType": "text/plain",
 				"name": "Reserved",
 				"role": "Editor"
@@ -61,9 +59,30 @@
 			"icons/icon.icns",
 			"icons/icon.ico"
 		],
+		"macOS": {
+			"dmg": {
+				"appPosition": {
+					"x": 0,
+					"y": 0
+				},
+				"applicationFolderPosition": {
+					"x": 0,
+					"y": 0
+				},
+				"windowSize": {
+					"height": 600,
+					"width": 800
+				}
+			},
+			"entitlements": "./Entitlements.plist",
+			"files": {},
+			"hardenedRuntime": true,
+			"minimumSystemVersion": "10.0"
+		},
+		"publisher": "Land",
 		"targets": "all"
 	},
-	"identifier": "mountain.editor.land",
+	"identifier": "land.editor.application",
 	"productName": "Mountain",
 	"version": "0.0.1"
 }
