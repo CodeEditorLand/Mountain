@@ -41,7 +41,7 @@
 		},
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
-		"createUpdaterArtifacts": false,
+		"createUpdaterArtifacts": true,
 		"externalBin": [],
 		"fileAssociations": [
 			{
@@ -80,9 +80,18 @@
 			"minimumSystemVersion": "10.0"
 		},
 		"publisher": "Land",
-		"targets": "all"
+		"targets": "all",
+		"licenseFile": "LICENSE",
+		"license": "MIT"
 	},
 	"identifier": "land.editor.application",
 	"productName": "Mountain",
-	"version": "0.0.1"
+	"version": "0.0.1",
+	"plugins": {
+		"updater": {
+			"windows": {
+				"installMode": "basicUi"
+			}
+		}
+	}
 }
