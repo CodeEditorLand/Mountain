@@ -41,7 +41,7 @@
 		},
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
-		"createUpdaterArtifacts": true,
+		"createUpdaterArtifacts": false,
 		"externalBin": [],
 		"fileAssociations": [
 			{
@@ -87,14 +87,6 @@
 		"targets": "all"
 	},
 	"identifier": "land.editor.binary",
-	"plugins": {
-		"updater": {
-			"pubkey": "./Mountain.key.pub",
-			"windows": {
-				"installMode": "basicUi"
-			}
-		}
-	},
 	"productName": "Mountain",
 	"version": "0.0.1"
 }
