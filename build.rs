@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::fs;
+use std::fs::read_to_string;
 
 #[derive(Deserialize)]
 struct Toml {
@@ -17,17 +17,26 @@ fn main() {
 	if !tauri_build::is_dev() {
 		println!("cargo:rerun-if-changed=Cargo.toml");
 		println!("cargo:rerun-if-changed=tauri.conf.json");
+		println!("cargo:rerun-if-changed=tauri.conf.json5");
 
 		let Version =
-			toml::from_str::<Toml>(&fs::read_to_string("Cargo.toml").expect("Cannot Cargo.toml."))
+			toml::from_str::<Toml>(&read_to_string("Cargo.toml").expect("Cannot Cargo.toml."))
 				.expect("Cannot toml.")
 				.package
 				.version;
 
-		let mut Tauri: Value = serde_json::from_str(
-			&fs::read_to_string("tauri.conf.json").expect("Cannot tauri.conf.json."),
-		)
-		.expect("Cannot JSON.");
+		let File = if std::path::Path::new("tauri.conf.json5").exists() {
+			"tauri.conf.json5"
+		} else {
+			"tauri.conf.json"
+		};
+
+		let Content = read_to_string(File).expect("Cannot read configuration file.");
+
+		let mut Tauri: Value = match json5::from_str(&Content) {
+			Ok(Value) => Value,
+			Err(_) => serde_json::from_str(&Content).expect("Cannot JSON."),
+		};
 
 		Tauri.get_mut("version").map(|Entry| *Entry = Value::String(Version.clone()));
 
@@ -38,11 +47,8 @@ fn main() {
 
 		Tauri.serialize(&mut Serializer).expect("Cannot Tauri.");
 
-		fs::write(
-			"tauri.conf.json",
-			String::from_utf8(Serializer.into_inner()).expect("Cannot String."),
-		)
-		.expect("Cannot tauri.conf.json.");
+		std::fs::write(File, String::from_utf8(Serializer.into_inner()).expect("Cannot String."))
+			.expect("Cannot tauri.conf.json.");
 
 		println!("cargo:rustc-env=CARGO_PKG_VERSION={}", Version);
 	}

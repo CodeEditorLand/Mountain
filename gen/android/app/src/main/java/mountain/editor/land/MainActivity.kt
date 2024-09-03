@@ -1,3 +1,3 @@
-package land.editor.application
+package land.editor.binary
 
 class MainActivity : TauriActivity()

@@ -5,41 +5,42 @@
 		"security": {
 			"assetProtocol": {
 				"enable": false,
-				"scope": []
+				"scope": [],
 			},
 			"capabilities": [],
 			"csp": null,
 			"dangerousDisableAssetCspModification": false,
 			"freezePrototype": false,
 			"pattern": {
-				"use": "brownfield"
-			}
+				"use": "brownfield",
+			},
 		},
 		"trayIcon": null,
 		"windows": [
 			{
 				"height": 600,
 				"title": "Mountain",
-				"width": 800
-			}
+				"width": 800,
+			},
 		],
-		"withGlobalTauri": false
+		"withGlobalTauri": false,
 	},
 	"build": {
+		// TODO: CHECK AUTOMATICALLY IF SHOULD COMPILE (last compile time < current commit (link current commit to last compile time))
 		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
 		"beforeBundleCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
 		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
 		"devUrl": "http://localhost:9999",
 		"features": [],
 		"frontendDist": "../Sky/Target",
-		"runner": "cargo"
+		"runner": "cargo",
 	},
 	"bundle": {
 		"active": true,
 		"icon": ["icons/icon.ico"],
 		"targets": "all",
 		"android": {
-			"minSdkVersion": 24
+			"minSdkVersion": 24,
 		},
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
@@ -128,11 +129,11 @@
 					".babelrc",
 					".eslintrc",
 					".prettierrc",
-					".stylelintrc"
+					".stylelintrc",
 				],
 				"mimeType": "",
 				"name": "Parsed",
-				"role": "Editor"
+				"role": "Editor",
 			},
 			{
 				"description": "Direct",
@@ -183,15 +184,15 @@
 					".vscode",
 					".workspace",
 					".txt",
-					".land"
+					".land",
 				],
 				"mimeType": "",
 				"name": "Direct",
-				"role": "Editor"
-			}
-		]
+				"role": "Editor",
+			},
+		],
 	},
-	"identifier": "land.editor.application",
+	"identifier": "land.editor.binary",
 	"productName": "Mountain",
-	"version": "0.0.1"
+	"version": "0.0.1",
 }

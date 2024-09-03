@@ -15,6 +15,7 @@ pub fn Fn() {
 
 			Builder
 				.plugin(tauri_plugin_shell::init())
+				.plugin(tauri_plugin_updater::Builder::new().build())
 				.run(tauri::generate_context!())
 				.expect("Cannot Library.");
 		});

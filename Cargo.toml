@@ -6,7 +6,8 @@ path = "Source/Library.rs"
 serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 toml = "0.8.19"
-tauri-build = { version = "2.0.0-rc.7", features = [] }
+tauri-build = { version = "2.0.0-rc.7", features = ["config-json5"] }
+json5 = "0.4.1"
 
 [dependencies]
 async-trait = "0.1.82"
@@ -15,7 +16,7 @@ serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 tokio = "1.40.0"
 tokio-tungstenite = "0.23.1"
-tauri = { version = "2.0.0-rc.8", features = [] }
+tauri = { version = "2.0.0-rc.8", features = ["config-json5"] }
 portpicker = "0.1.1"
 tauri-plugin-authenticator = "2.0.0-rc.1"
 tauri-plugin-autostart = "2.0.0-rc.1"
@@ -35,6 +36,8 @@ tauri-plugin-shell = "2.0.0-rc.3"
 tauri-plugin-single-instance = "2.0.0-rc.1"
 tauri-plugin-store = "2.0.0-rc.3"
 tauri-plugin-stronghold = "2.0.0-rc.1"
+
+# TODO: Problem with the updater as it will hit an API
 tauri-plugin-updater = "2.0.0-rc.2"
 tauri-plugin-upload = "2.0.0-rc.1"
 tauri-plugin-websocket = "2.0.0-rc.1"
