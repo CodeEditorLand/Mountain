@@ -18,6 +18,7 @@
 		"trayIcon": null,
 		"windows": [
 			{
+				"acceptFirstMouse": false,
 				"alwaysOnTop": true,
 				"decorations": false,
 				"height": 600,
