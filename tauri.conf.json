@@ -18,8 +18,11 @@
 		"trayIcon": null,
 		"windows": [
 			{
+				"alwaysOnTop": true,
+				"decorations": false,
 				"height": 600,
 				"title": "Mountain",
+				"titleBarStyle": "Transparent",
 				"width": 800
 			}
 		],
@@ -27,7 +30,7 @@
 	},
 	"build": {
 		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
-		"beforeBundleCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
+		"beforeBundleCommand": "",
 		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
 		"devUrl": "http://localhost:9999",
 		"features": [],
