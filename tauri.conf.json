@@ -1,6 +1,7 @@
 {
-	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/tooling/cli/schema.json",
+	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/crates/tauri-cli/schema.json",
 	"app": {
+		"enableGTKAppId": true,
 		"macOSPrivateApi": false,
 		"security": {
 			"assetProtocol": {
@@ -15,16 +16,60 @@
 				"use": "brownfield"
 			}
 		},
-		"trayIcon": null,
+		"trayIcon": {
+			"iconAsTemplate": false,
+			"iconPath": "Source/Icon/icon.png",
+			"id": "",
+			"menuOnLeftClick": false,
+			"title": "",
+			"tooltip": ""
+		},
 		"windows": [
 			{
 				"acceptFirstMouse": false,
-				"alwaysOnTop": true,
+				"additionalBrowserArgs": "",
+				"alwaysOnBottom": false,
+				"alwaysOnTop": false,
+				"center": false,
+				"closable": false,
+				"contentProtected": true,
 				"decorations": false,
-				"height": 600,
+				"dragDropEnabled": true,
+				"focus": false,
+				"fullscreen": true,
+				"height": 0,
+				"hiddenTitle": true,
+				"incognito": true,
+				"label": "Transparent",
+				"maxHeight": 0,
+				"maxWidth": 0,
+				"maximizable": false,
+				"maximized": false,
+				"minHeight": 0,
+				"minWidth": 0,
+				"minimizable": false,
+				"resizable": false,
+				"shadow": false,
+				"skipTaskbar": true,
+				"tabbingIdentifier": "Transparent",
+				"theme": null,
 				"title": "Mountain",
 				"titleBarStyle": "Transparent",
-				"width": 800
+				"transparent": true,
+				"url": "index.html",
+				"userAgent": "",
+				"visible": true,
+				"visibleOnAllWorkspaces": true,
+				"width": 0,
+				"windowEffects": {
+					"color": null,
+					"effects": [],
+					"radius": 0,
+					"state": null
+				},
+				"x": 0,
+				"y": 0,
+				"zoomHotkeysEnabled": false
 			}
 		],
 		"withGlobalTauri": false
@@ -58,12 +103,19 @@
 				"role": "Editor"
 			}
 		],
+		"homepage": "https://editor.land",
+		"iOS": {
+			"developmentTeam": "Land",
+			"frameworks": [],
+			"minimumSystemVersion": "13.0",
+			"template": ""
+		},
 		"icon": [
-			"icons/32x32.png",
-			"icons/128x128.png",
-			"icons/128x128@2x.png",
-			"icons/icon.icns",
-			"icons/icon.ico"
+			"Source/Icon/32x32.png",
+			"Source/Icon/128x128.png",
+			"Source/Icon/128x128@2x.png",
+			"Source/Icon/icon.icns",
+			"Source/Icon/icon.ico"
 		],
 		"license": "MIT",
 		"licenseFile": "LICENSE",

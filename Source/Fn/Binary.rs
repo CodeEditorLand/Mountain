@@ -5,18 +5,19 @@ pub fn Fn() {
 	tokio::runtime::Builder::new_multi_thread()
 		.enable_all()
 		.build()
-		.expect("Cannot new_multi_thread.")
+		.expect("Cannot build.")
 		.block_on(async {
-			let Builder = tauri::Builder::default();
-
-			// TODO: FIX THIS
-			// #[cfg(debug_assertions)]
-			// Builder.plugin(tauri_plugin_devtools::init());
+			let Builder = if cfg!(debug_assertions) {
+				tauri::Builder::default().plugin(tauri_plugin_devtools::init())
+			} else {
+				tauri::Builder::default()
+			};
 
 			Builder
 				.plugin(tauri_plugin_shell::init())
+				// TODO: FIX THIS
 				// .plugin(tauri_plugin_updater::Builder::new().build())
 				.run(tauri::generate_context!())
-				.expect("Cannot Library.");
+				.expect("Cannot run.");
 		});
 }
