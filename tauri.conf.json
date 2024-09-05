@@ -36,7 +36,7 @@
 				"decorations": false,
 				"dragDropEnabled": true,
 				"focus": false,
-				"fullscreen": true,
+				"fullscreen": false,
 				"height": 0,
 				"hiddenTitle": true,
 				"incognito": true,
