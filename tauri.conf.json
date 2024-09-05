@@ -50,7 +50,7 @@
 				"minimizable": false,
 				"resizable": false,
 				"shadow": false,
-				"skipTaskbar": true,
+				"skipTaskbar": false,
 				"tabbingIdentifier": "Transparent",
 				"theme": null,
 				"title": "Mountain",
@@ -77,7 +77,7 @@
 	"build": {
 		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
 		"beforeBundleCommand": "",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
+		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --filter=@codeeditorland/wind",
 		"devUrl": "http://localhost:9999",
 		"features": [],
 		"frontendDist": "../Sky/Target",
