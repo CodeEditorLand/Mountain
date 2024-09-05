@@ -92,17 +92,6 @@
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
 		"externalBin": [],
-		"fileAssociations": [
-			{
-				"description": "Reserved",
-				"ext": [
-					"land"
-				],
-				"mimeType": "text/plain",
-				"name": "Reserved",
-				"role": "Editor"
-			}
-		],
 		"homepage": "https://editor.land",
 		"iOS": {
 			"developmentTeam": "Land",
