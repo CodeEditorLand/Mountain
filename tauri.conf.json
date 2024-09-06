@@ -53,7 +53,7 @@
 				"skipTaskbar": false,
 				"tabbingIdentifier": "Transparent",
 				"theme": null,
-				"title": "Mountain",
+				"title": "",
 				"titleBarStyle": "Transparent",
 				"transparent": true,
 				"url": "index.html",
