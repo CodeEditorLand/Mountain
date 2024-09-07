@@ -16,7 +16,7 @@ serde = { version = "1.0.209", features = ["derive"] }
 serde_json = "1.0.127"
 tokio = "1.40.0"
 tokio-tungstenite = "0.23.1"
-tauri = { version = "2.0.0-rc.8", features = [ "tray-icon", "config-json5"] }
+tauri = { version = "2.0.0-rc.8", features = ["tray-icon", "config-json5"] }
 portpicker = "0.1.1"
 tauri-plugin-authenticator = "2.0.0-rc.1"
 tauri-plugin-autostart = "2.0.0-rc.1"
@@ -64,6 +64,7 @@ tauri-plugin-websocket = "2.0.0-rc.1"
 # tauri-plugin-window-state = "0.1.1"
 
 Echo = { version = "0.0.1", path = "../Echo" }
+regex = "1.10.6"
 
 [lib]
 name = "Mountain"
