@@ -28,9 +28,9 @@
 		"withGlobalTauri": false
 	},
 	"build": {
-		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky --framework-inference=false",
+		"beforeBuildCommand": "pnpm run prepublishOnly --framework-inference=false --no-daemon --no-cache --filter=@codeeditorland/sky",
 		"beforeBundleCommand": "",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --filter=@codeeditorland/wind --framework-inference=false",
+		"beforeDevCommand": "pnpm run Run --framework-inference=false --no-daemon --no-cache --filter=@codeeditorland/sky --filter=@codeeditorland/wind",
 		"devUrl": "http://localhost:9999",
 		"features": [],
 		"frontendDist": "../Sky/Target",
