@@ -9,26 +9,43 @@
 				"scope": []
 			},
 			"capabilities": [],
-			"csp": null,
+			"csp": {
+				"base-uri": "'self'",
+				"connect-src": "'self'",
+				"default-src": "'self'",
+				"font-src": "'self'",
+				"form-action": "'self'",
+				"frame-ancestors": "'none'",
+				"frame-src": "'none'",
+				"img-src": "'self'",
+				"media-src": "'self'",
+				"object-src": "'none'",
+				"script-src": "'self'",
+				"style-src": "'self'"
+			},
 			"dangerousDisableAssetCspModification": false,
-			"freezePrototype": false,
+			"devCsp": null,
+			"freezePrototype": true,
 			"pattern": {
-				"use": "brownfield"
+				"options": {
+					"dir": "../Sky/Target"
+				},
+				"use": "isolation"
 			}
 		},
 		"trayIcon": {
 			"iconAsTemplate": false,
 			"iconPath": "Source/Icon/icon.png",
-			"id": "",
+			"id": "Tray",
 			"menuOnLeftClick": true,
-			"title": "",
-			"tooltip": ""
+			"title": "Editor",
+			"tooltip": "Open"
 		},
 		"windows": [],
 		"withGlobalTauri": false
 	},
 	"build": {
-		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
+		"beforeBuildCommand": "cross-env TAURI=true pnpm run prepublishOnly --filter=@codeeditorland/sky",
 		"beforeBundleCommand": "",
 		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --filter=@codeeditorland/wind",
 		"devUrl": "http://localhost:9999",
@@ -45,6 +62,7 @@
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
 		"externalBin": [],
+		"fileAssociations": [],
 		"homepage": "HTTPS://Editor.Land",
 		"iOS": {
 			"developmentTeam": "Land",
@@ -61,6 +79,21 @@
 		],
 		"license": "MIT",
 		"licenseFile": "LICENSE",
+		"linux": {
+			"appimage": {
+				"bundleMediaFramework": false,
+				"files": {}
+			},
+			"deb": {
+				"files": {}
+			},
+			"rpm": {
+				"epoch": 0,
+				"files": {},
+				"release": "1"
+			}
+		},
+		"longDescription": "",
 		"macOS": {
 			"dmg": {
 				"appPosition": {
@@ -82,7 +115,123 @@
 			"minimumSystemVersion": "10.0"
 		},
 		"publisher": "Land",
-		"targets": "all"
+		"resources": null,
+		"shortDescription": "",
+		"targets": "all",
+		"windows": {
+			"allowDowngrades": false,
+			"certificateThumbprint": null,
+			"digestAlgorithm": null,
+			"nsis": {
+				"compression": "lzma",
+				"customLanguageFiles": {},
+				"displayLanguageSelector": true,
+				"headerImage": "",
+				"installMode": "currentUser",
+				"installerHooks": "",
+				"installerIcon": "",
+				"languages": [
+					"Afrikaans",
+					"Albanian",
+					"Arabic",
+					"Armenian",
+					"Asturian",
+					"Basque",
+					"Belarusian",
+					"Bosnian",
+					"Breton",
+					"Bulgarian",
+					"Catalan",
+					"Cibemba",
+					"Corsican",
+					"Croatian",
+					"Czech",
+					"Danish",
+					"Dutch",
+					"Efik",
+					"English",
+					"Esperanto",
+					"Estonian",
+					"Farsi",
+					"Finnish",
+					"French",
+					"Galician",
+					"Georgian",
+					"German",
+					"Greek",
+					"Hebrew",
+					"Hindi",
+					"Hungarian",
+					"Icelandic",
+					"Igbo",
+					"Indonesian",
+					"Irish",
+					"Italian",
+					"Japanese",
+					"Khmer",
+					"Korean",
+					"Kurdish",
+					"Latvian",
+					"Lithuanian",
+					"Luxembourgish",
+					"Macedonian",
+					"Malagasy",
+					"Malay",
+					"Mongolian",
+					"Norwegian",
+					"NorwegianNynorsk",
+					"Pashto",
+					"Polish",
+					"Portuguese",
+					"PortugueseBR",
+					"Romanian",
+					"Russian",
+					"ScotsGaelic",
+					"Serbian",
+					"SerbianLatin",
+					"SimpChinese",
+					"Slovak",
+					"Slovenian",
+					"Spanish",
+					"SpanishInternational",
+					"Swahili",
+					"Swedish",
+					"Tatar",
+					"Thai",
+					"TradChinese",
+					"Turkish",
+					"Ukrainian",
+					"Uzbek",
+					"Valencian",
+					"Vietnamese",
+					"Welsh",
+					"Yoruba"
+				],
+				"minimumWebview2Version": "",
+				"sidebarImage": "",
+				"startMenuFolder": "",
+				"template": ""
+			},
+			"signCommand": null,
+			"timestampUrl": null,
+			"tsp": false,
+			"webviewInstallMode": {
+				"silent": false,
+				"type": "embedBootstrapper"
+			},
+			"wix": {
+				"bannerPath": "",
+				"componentGroupRefs": [],
+				"componentRefs": [],
+				"dialogImagePath": "",
+				"enableElevatedUpdateTask": true,
+				"featureGroupRefs": [],
+				"featureRefs": [],
+				"fragmentPaths": [],
+				"language": "en-US",
+				"mergeRefs": []
+			}
+		}
 	},
 	"identifier": "land.editor.binary",
 	"productName": "Mountain",

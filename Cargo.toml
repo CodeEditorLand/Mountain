@@ -6,7 +6,7 @@ path = "Source/Library.rs"
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 toml = "0.8.19"
-tauri-build = { version = "2.0.0-rc.9", features = ["config-json5"] }
+tauri-build = { version = "2.0.0-rc.9", features = [ "isolation", "config-json5"] }
 json5 = "0.4.1"
 
 [dependencies]
@@ -16,7 +16,7 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 tokio = "1.40.0"
 tokio-tungstenite = "0.23.1"
-tauri = { version = "2.0.0-rc.10", features = ["tray-icon", "config-json5"] }
+tauri = { version = "2.0.0-rc.10", features = [ "isolation", "tray-icon", "config-json5"] }
 portpicker = "0.1.1"
 tauri-plugin-authenticator = "2.0.0-rc.1"
 tauri-plugin-autostart = "2.0.0-rc.1"
