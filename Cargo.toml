@@ -1,5 +1,5 @@
 [[bin]]
-name = "mountain"
+name = "Mountain"
 path = "Source/Library.rs"
 
 [build-dependencies]
@@ -66,12 +66,12 @@ tauri-plugin-websocket = "2.0.0-rc.1"
 Echo = { version = "0.0.1", path = "../Echo" }
 
 [lib]
-name = "mountain"
+name = "Mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "Source/Library.rs"
 
 [package]
-name = "mountain"
+name = "Mountain"
 description = "⛰️ Mountain —"
 version = "0.0.1"
 edition = "2021"
@@ -80,5 +80,5 @@ autobins = false
 autoexamples = false
 autotests = false
 publish = false
-default-run = "mountain"
+default-run = "Mountain"
 license = "MIT"
