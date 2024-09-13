@@ -1,12 +1,12 @@
 [[bin]]
-name = "Mountain"
+name = "mountain"
 path = "Source/Library.rs"
 
 [build-dependencies]
 serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 toml = "0.8.19"
-tauri-build = { version = "2.0.0-rc.9", features = [ "config-json5"] }
+tauri-build = { version = "2.0.0-rc.9", features = ["config-json5"] }
 json5 = "0.4.1"
 
 [dependencies]
@@ -16,13 +16,16 @@ serde = { version = "1.0.210", features = ["derive"] }
 serde_json = "1.0.128"
 tokio = "1.40.0"
 tokio-tungstenite = "0.23.1"
-tauri = { version = "2.0.0-rc.10", features = [ "tray-icon", "config-json5"] }
 portpicker = "0.1.1"
+regex = "1.10.6"
+
+
+tauri = { version = "2.0.0-rc.10", features = ["tray-icon", "config-json5"] }
+
 tauri-plugin-authenticator = "2.0.0-rc.1"
 tauri-plugin-autostart = "2.0.0-rc.1"
 tauri-plugin-cli = "2.0.0-rc.1"
 tauri-plugin-clipboard-manager = "2.1.0-beta.7"
-tauri-plugin-deep-link = "0.1.2"
 tauri-plugin-devtools = "2.0.0-rc.1"
 tauri-plugin-dialog = "2.0.0-rc.5"
 tauri-plugin-fs = "2.0.0-rc.3"
@@ -35,40 +38,40 @@ tauri-plugin-process = "2.0.0-rc.1"
 tauri-plugin-shell = "2.0.0-rc.3"
 tauri-plugin-single-instance = "2.0.0-rc.1"
 tauri-plugin-store = "2.0.0-rc.3"
-tauri-plugin-stronghold = "2.0.0-rc.1"
 tauri-plugin-upload = "2.0.0-rc.1"
 tauri-plugin-websocket = "2.0.0-rc.1"
 
-# TODO:
-# ^^ use of undeclared type `Db`
+# TODO: (Issue Windows 11)
+# tauri-plugin-stronghold = "2.0.0-rc.1"
+# error: could not compile `libsodium-sys-stable` (lib) due to 1 previous error
+
+# tauri-plugin-deep-link = "0.1.2"
+# ^^^^^^^^^^^^^ use of undeclared crate or module `platform_impl`
+
 # tauri-plugin-sql = "2.0.0-rc.0"
+# ^^ use of undeclared type `Db`
 
-# TODO:
-# error: failed to select a version for `webkit2gtk-sys`.
 # tauri-plugin-positioner = "1.0.5"
-
-# TODO:
 # error: failed to select a version for `webkit2gtk-sys`.
+
 # tauri-plugin-persisted-scope = "0.1.3"
-
-# TODO:
-# error: failed to select a version for `gtk-sys`.
-# tauri-plugin-localhost = "0.1.0"
-
-# TODO:
 # error: failed to select a version for `webkit2gtk-sys`.
+
+# tauri-plugin-localhost = "0.1.0"
+# error: failed to select a version for `gtk-sys`.
+
 # tauri-plugin-window-state = "0.1.1"
+# error: failed to select a version for `webkit2gtk-sys`.
 
 Echo = { version = "0.0.1", path = "../Echo" }
-regex = "1.10.6"
 
 [lib]
-name = "Mountain"
+name = "mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
 path = "Source/Library.rs"
 
 [package]
-name = "Mountain"
+name = "mountain"
 description = "⛰️ Mountain —"
 version = "0.0.1"
 edition = "2021"
@@ -77,5 +80,5 @@ autobins = false
 autoexamples = false
 autotests = false
 publish = false
-default-run = "Mountain"
+default-run = "mountain"
 license = "MIT"
