@@ -55,15 +55,12 @@ pub fn Fn() {
 						)
 						.accept_first_mouse(false)
 						// .additional_browser_args("")
-						.always_on_bottom(false)
 						// .always_on_top(true)
 						// .center()
-						.closable(false)
 						// .content_protected(true)
-						.decorations(false)
 						// .drag_and_drop(true)
 						// .focused(true)
-						.fullscreen(true)
+						
 						// .incognito(true)
 						// .maximizable(false)
 						// .maximized(false)
@@ -71,21 +68,24 @@ pub fn Fn() {
 						// .resizable(false)
 						// .shadow(false)
 						// .skip_taskbar(true)
-						.theme(Some(tauri::Theme::Light))
-						.title("")
+						
 						.transparent(true)
 						.user_agent("")
-						.visible(true)
 						// .visible_on_all_workspaces(true)
 						// .effects(tauri::utils::config::WindowEffectsConfig {
 						// 	..Default::default()
 						// })
-						.zoom_hotkeys_enabled(false)
+						.zoom_hotkeys_enabled(false);
 						// .inner_size(SizeMonitor.width.into(), SizeMonitor.height.into())
-						// .position(PositionMonitor.x.into(), PositionMonitor.y.into())
-						.position(0.0, 0.0)
+						// .position(PositionMonitor.x.into(), PositionMonitor.y.into());
+
+						#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+						{
 						
-						.build()
+						Daemon = Daemon.position(0.0, 0.0).visible(true).title("").always_on_bottom(false).closable(false).decorations(false).fullscreen(true).theme(Some(tauri::Theme::Light));
+					}
+						
+						Daemon.build()
 						.expect("Cannot build.");
 						
 						// Daemon.set_cursor_grab(false).expect("Cannot set_cursor_grab.");
