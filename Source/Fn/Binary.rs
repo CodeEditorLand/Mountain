@@ -16,7 +16,6 @@ pub fn Fn() {
 
 			Builder
 				.any_thread()
-				.plugin(tauri_plugin_shell::init())
 				.setup(|Tauri| {
 					let Sampler = tauri::WebviewWindowBuilder::new(
 						Tauri,
@@ -30,7 +29,6 @@ pub fn Fn() {
 				.expect("Cannot run.");
 
 			// Builder
-			// 	.plugin(tauri_plugin_shell::init())
 			// 	// TODO: FIX THIS
 			// 	// .plugin(tauri_plugin_updater::Builder::new().build())
 			// 	.setup(|Tauri| {

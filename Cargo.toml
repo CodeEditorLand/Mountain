@@ -34,11 +34,13 @@ tauri-plugin-log = "2.0.0-rc.2"
 tauri-plugin-notification = "2.0.0-rc.3"
 tauri-plugin-os = "2.0.0-rc.1"
 tauri-plugin-process = "2.0.0-rc.1"
-tauri-plugin-shell = "2.0.0-rc.3"
 tauri-plugin-single-instance = "2.0.0-rc.1"
 tauri-plugin-store = "2.0.0-rc.3"
 tauri-plugin-upload = "2.0.0-rc.1"
 tauri-plugin-websocket = "2.0.0-rc.1"
+
+# TODO: Check if needed
+# tauri-plugin-shell = "2.0.0-rc.3"
 
 # TODO: (Issue Windows 11)
 # tauri-plugin-stronghold = "2.0.0-rc.1"
