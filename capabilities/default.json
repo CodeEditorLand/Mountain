@@ -4,8 +4,6 @@
 	"description": "",
 	"windows": ["main"],
 	"permissions": [
-		"shell:allow-open",
-		"shell:allow-execute",
 		"core:path:default",
 		"core:event:default",
 		"core:window:default",
