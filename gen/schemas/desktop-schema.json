@@ -5326,6 +5326,11 @@
           "const": "store:allow-clear"
         },
         {
+          "description": "Enables the create_store command without any pre-configured scope.",
+          "type": "string",
+          "const": "store:allow-create-store"
+        },
+        {
           "description": "Enables the delete command without any pre-configured scope.",
           "type": "string",
           "const": "store:allow-delete"
@@ -5384,6 +5389,11 @@
           "description": "Denies the clear command without any pre-configured scope.",
           "type": "string",
           "const": "store:deny-clear"
+        },
+        {
+          "description": "Denies the create_store command without any pre-configured scope.",
+          "type": "string",
+          "const": "store:deny-create-store"
         },
         {
           "description": "Denies the delete command without any pre-configured scope.",
