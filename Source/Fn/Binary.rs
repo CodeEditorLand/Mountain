@@ -27,7 +27,11 @@ pub fn Fn() {
 					.user_agent("")
 					.zoom_hotkeys_enabled(false);
 
-					#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+					#[cfg(any(
+						target_os = "windows",
+						target_os = "macos",
+						target_os = "linux"
+					))]
 					{
 						Daemon = Daemon
 							.position(0.0, 0.0)
