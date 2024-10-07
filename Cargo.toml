@@ -19,7 +19,7 @@ tokio-tungstenite = "0.24.0"
 portpicker = "0.1.1"
 regex = "1.11.0"
 
-tauri = { version = "2.0.1", features = ["tray-icon", "config-json5"] }
+tauri = { version = "2.0.2", features = ["tray-icon", "config-json5"] }
 
 tauri-plugin-authenticator = "2.0.0-rc.1"
 tauri-plugin-autostart = "2.0.1"
