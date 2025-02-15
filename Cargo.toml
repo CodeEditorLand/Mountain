@@ -3,24 +3,21 @@ name = "Mountain"
 path = "Source/Library.rs"
 
 [build-dependencies]
+json5 = { version = "0.4.1" }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = { version = "1.0.138" }
-toml = { version = "0.8.19" }
 tauri-build = { version = "2.0.5", features = ["config-json5"] }
-json5 = { version = "0.4.1" }
+toml = { version = "0.8.19" }
 
 [dependencies]
+Echo = { version = "0.0.1", path = "../Echo" }
 async-trait = "0.1.85"
 futures = { version = "0.3.31" }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = { version = "1.0.138" }
-tokio = { version = "1.43.0" }
-tokio-tungstenite = "0.26.1"
 portpicker = { version = "0.1.1" }
 regex = { version = "1.11.1" }
-
+serde = { version = "1.0.217", features = ["derive"] }
+serde_json = { version = "1.0.138" }
 tauri = { version = "2.2.5", features = ["tray-icon", "config-json5"] }
-
 tauri-plugin-authenticator = "2.0.0-rc.1"
 tauri-plugin-autostart = "2.2.0"
 tauri-plugin-cli = "2.2.0"
@@ -38,53 +35,28 @@ tauri-plugin-single-instance = "2.2.1"
 tauri-plugin-store = "2.2.0"
 tauri-plugin-upload = "2.2.1"
 tauri-plugin-websocket = "2.3.0"
-
-# TODO: Check if needed
-# tauri-plugin-shell = "2.0.0-rc.3"
-
-# TODO: (Issue Windows 11)
-# tauri-plugin-stronghold = "2.0.0-rc.1"
-# error: could not compile `libsodium-sys-stable` (lib) due to 1 previous error
-
-# tauri-plugin-deep-link = "0.1.2"
-# ^^^^^^^^^^^^^ use of undeclared crate or module `platform_impl`
-
-# tauri-plugin-sql = "2.0.0-rc.0"
-# ^^ use of undeclared type `Db`
-
-# tauri-plugin-positioner = "1.0.5"
-# error: failed to select a version for `webkit2gtk-sys`.
-
-# tauri-plugin-persisted-scope = "0.1.3"
-# error: failed to select a version for `webkit2gtk-sys`.
-
-# tauri-plugin-localhost = "0.1.0"
-# error: failed to select a version for `gtk-sys`.
-
-# tauri-plugin-window-state = "0.1.1"
-# error: failed to select a version for `webkit2gtk-sys`.
-
-Echo = { version = "0.0.1", path = "../Echo" }
+tokio = { version = "1.43.0" }
+tokio-tungstenite = "0.26.1"
 unbug = { version = "0.4.0" }
 
+[features]
+Debug = []
+default = []
+
 [lib]
-name = "Mountain"
 crate-type = ["lib", "cdylib", "staticlib"]
+name = "Mountain"
 path = "Source/Library.rs"
 
 [package]
-name = "Mountain"
-description = "Mountain ⛰️"
-version = "0.0.1"
-edition = "2021"
 autobenches = false
 autobins = false
 autoexamples = false
 autotests = false
-publish = false
 default-run = "Mountain"
+description = "Mountain ⛰️"
+edition = "2021"
 license-file = "LICENSE"
-
-[features]
-default = []
-Debug = []
+name = "Mountain"
+publish = false
+version = "0.0.1"
