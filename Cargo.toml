@@ -7,11 +7,11 @@ json5 = { version = "0.4.1" }
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = { version = "1.0.138" }
 tauri-build = { version = "2.0.5", features = ["config-json5"] }
-toml = { version = "0.8.19" }
+toml = { version = "0.8.20" }
 
 [dependencies]
 Echo = { version = "0.0.1", path = "../Echo" }
-async-trait = "0.1.85"
+async-trait = "0.1.86"
 futures = { version = "0.3.31" }
 portpicker = { version = "0.1.1" }
 regex = { version = "1.11.1" }
@@ -55,7 +55,7 @@ autoexamples = false
 autotests = false
 default-run = "Mountain"
 description = "Mountain ⛰️"
-edition = "2021"
+edition = "2024"
 license-file = "LICENSE"
 name = "Mountain"
 publish = false
