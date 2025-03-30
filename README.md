@@ -1,4 +1,3 @@
-
 ## Funding
 
 This project is funded through
