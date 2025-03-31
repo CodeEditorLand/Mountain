@@ -6,12 +6,12 @@ use serde_json::Value;
 
 #[derive(Deserialize)]
 struct Toml {
-	package:Package,
+	package: Package,
 }
 
 #[derive(Deserialize)]
 struct Package {
-	version:String,
+	version: String,
 }
 
 fn main() {
@@ -22,11 +22,10 @@ fn main() {
 
 		println!("cargo:rerun-if-changed=tauri.conf.json5");
 
-		let Version =
-			toml::from_str::<Toml>(&read_to_string("Cargo.toml").expect("Cannot Cargo.toml."))
-				.expect("Cannot toml.")
-				.package
-				.version;
+		let Version = toml::from_str::<Toml>(&read_to_string("Cargo.toml").expect("Cannot Cargo.toml."))
+			.expect("Cannot toml.")
+			.package
+			.version;
 
 		let File = if std::path::Path::new("tauri.conf.json5").exists() {
 			"tauri.conf.json5"
@@ -36,17 +35,15 @@ fn main() {
 
 		let Content = read_to_string(File).expect("Cannot read configuration file.");
 
-		let mut Tauri:Value = match json5::from_str(&Content) {
+		let mut Tauri: Value = match json5::from_str(&Content) {
 			Ok(Value) => Value,
 			Err(_) => serde_json::from_str(&Content).expect("Cannot JSON."),
 		};
 
 		Tauri.get_mut("version").map(|Entry| *Entry = Value::String(Version.clone()));
 
-		let mut Serializer = serde_json::Serializer::with_formatter(
-			Vec::new(),
-			serde_json::ser::PrettyFormatter::with_indent(b"\t"),
-		);
+		let mut Serializer =
+			serde_json::Serializer::with_formatter(Vec::new(), serde_json::ser::PrettyFormatter::with_indent(b"\t"));
 
 		Tauri.serialize(&mut Serializer).expect("Cannot Tauri.");
 

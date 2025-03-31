@@ -20,15 +20,12 @@ pub fn Fn() {
 
 			Builder
 				.setup(|Tauri| {
-					let mut Daemon = tauri::WebviewWindowBuilder::new(
-						Tauri,
-						"Daemon",
-						tauri::WebviewUrl::App("index.html".into()),
-					)
-					.accept_first_mouse(false)
-					.transparent(true)
-					.user_agent("")
-					.zoom_hotkeys_enabled(false);
+					let mut Daemon =
+						tauri::WebviewWindowBuilder::new(Tauri, "Daemon", tauri::WebviewUrl::App("index.html".into()))
+							.accept_first_mouse(false)
+							.transparent(true)
+							.user_agent("")
+							.zoom_hotkeys_enabled(false);
 
 					#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 					{
