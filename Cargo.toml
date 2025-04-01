@@ -4,39 +4,40 @@ path = "Source/Library.rs"
 
 [build-dependencies]
 json5 = { version = "0.4.1" }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = { version = "1.0.138" }
-tauri-build = { version = "2.0.5", features = ["config-json5"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140" }
+tauri-build = { version = "2.1.0", features = ["config-json5"] }
 toml = { version = "0.8.20" }
 
 [dependencies]
-Echo = { version = "0.0.1", path = "../Echo" }
-async-trait = "0.1.86"
+Echo = { workspace = true }
+async-trait = "0.1.88"
 futures = { version = "0.3.31" }
 portpicker = { version = "0.1.1" }
 regex = { version = "1.11.1" }
-serde = { version = "1.0.217", features = ["derive"] }
-serde_json = { version = "1.0.138" }
-tauri = { version = "2.2.5", features = ["tray-icon", "config-json5"] }
-tauri-plugin-authenticator = "2.0.0-rc.1"
-tauri-plugin-autostart = "2.2.0"
-tauri-plugin-cli = "2.2.0"
-tauri-plugin-clipboard-manager = "2.2.1"
-tauri-plugin-devtools = "2.0.0"
-tauri-plugin-dialog = "2.2.0"
-tauri-plugin-fs = "2.2.0"
-tauri-plugin-global-shortcut = "2.2.0"
-tauri-plugin-http = "2.3.0"
-tauri-plugin-log = "2.2.1"
-tauri-plugin-notification = "2.2.1"
-tauri-plugin-os = "2.2.0"
-tauri-plugin-process = "2.2.0"
-tauri-plugin-single-instance = "2.2.1"
-tauri-plugin-store = "2.2.0"
-tauri-plugin-upload = "2.2.1"
-tauri-plugin-websocket = "2.3.0"
-tokio = { version = "1.43.0" }
-tokio-tungstenite = "0.26.1"
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140" }
+
+tauri = { features = ["tray-icon", "config-json5"], workspace = true }
+tauri-plugin-authenticator = { workspace = true }
+tauri-plugin-autostart = { workspace = true }
+tauri-plugin-cli = { workspace = true }
+tauri-plugin-clipboard-manager = { workspace = true }
+tauri-plugin-dialog = { workspace = true }
+tauri-plugin-fs = { workspace = true }
+tauri-plugin-global-shortcut = { workspace = true }
+tauri-plugin-http = { workspace = true }
+tauri-plugin-log = { workspace = true }
+tauri-plugin-notification = { workspace = true }
+tauri-plugin-os = { workspace = true }
+tauri-plugin-process = { workspace = true }
+tauri-plugin-single-instance = { workspace = true }
+tauri-plugin-store = { workspace = true }
+tauri-plugin-upload = { workspace = true }
+tauri-plugin-websocket = { workspace = true }
+
+tokio = { version = "1.44.1" }
+tokio-tungstenite = "0.26.2"
 unbug = { version = "0.4.0" }
 
 [features]

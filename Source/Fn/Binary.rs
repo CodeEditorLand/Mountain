@@ -7,11 +7,7 @@ pub fn Fn() {
 		.build()
 		.expect("Cannot build.")
 		.block_on(async {
-			let mut Builder = if cfg!(debug_assertions) {
-				tauri::Builder::default().plugin(tauri_plugin_devtools::init())
-			} else {
-				tauri::Builder::default()
-			};
+			let mut Builder = tauri::Builder::default();
 
 			#[cfg(any(windows, target_os = "linux"))]
 			{
