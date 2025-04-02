@@ -29,9 +29,9 @@
 		"withGlobalTauri": false
 	},
 	"build": {
-		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky --no-cache",
+		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
 		"beforeBundleCommand": "",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --filter=@codeeditorland/wind --no-cache",
+		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --filter=@codeeditorland/wind",
 		"devUrl": "http://localhost:9999",
 		"features": [],
 		"frontendDist": "../Sky/Target",
@@ -61,7 +61,7 @@
 			"Source/Icon/icon.icns",
 			"Source/Icon/icon.ico"
 		],
-		"license": "MIT",
+		"license": "CC0",
 		"licenseFile": "LICENSE",
 		"linux": {
 			"appimage": {

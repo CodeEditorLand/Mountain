@@ -4,7 +4,7 @@
 #[allow(dead_code)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 fn main() {
-	Fn::Binary::Fn();
+	Binary::Fn::Fn();
 }
 
-pub mod Fn;
+pub mod Binary;

@@ -3,42 +3,59 @@ name = "Mountain"
 path = "Source/Library.rs"
 
 [build-dependencies]
-json5 = { version = "0.4.1" }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = { version = "1.0.140" }
-tauri-build = { version = "2.1.0", features = ["config-json5"] }
-toml = { version = "0.8.20" }
+json5 = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tauri-build = { version = "2.1.0", features = [] }
+toml = { workspace = true }
 
 [dependencies]
 Echo = { workspace = true }
-async-trait = "0.1.88"
-futures = { version = "0.3.31" }
-portpicker = { version = "0.1.1" }
-regex = { version = "1.11.1" }
-serde = { version = "1.0.219", features = ["derive"] }
-serde_json = { version = "1.0.140" }
+async-trait = { workspace = true }
+futures = { workspace = true }
+portpicker = { workspace = true }
+regex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+unbug = { workspace = true }
 
-tauri = { features = ["tray-icon", "config-json5"], workspace = true }
-tauri-plugin-authenticator = { workspace = true }
-tauri-plugin-autostart = { workspace = true }
-tauri-plugin-cli = { workspace = true }
-tauri-plugin-clipboard-manager = { workspace = true }
-tauri-plugin-dialog = { workspace = true }
-tauri-plugin-fs = { workspace = true }
-tauri-plugin-global-shortcut = { workspace = true }
-tauri-plugin-http = { workspace = true }
-tauri-plugin-log = { workspace = true }
-tauri-plugin-notification = { workspace = true }
-tauri-plugin-os = { workspace = true }
-tauri-plugin-process = { workspace = true }
-tauri-plugin-single-instance = { workspace = true }
-tauri-plugin-store = { workspace = true }
-tauri-plugin-upload = { workspace = true }
-tauri-plugin-websocket = { workspace = true }
+# tauri = { features = ["tray-icon"], workspace = true }
+# tauri-plugin-authenticator = { workspace = true }
+# tauri-plugin-autostart = { workspace = true }
+# tauri-plugin-cli = { workspace = true }
+# tauri-plugin-clipboard-manager = { workspace = true }
+# tauri-plugin-dialog = { workspace = true }
+# tauri-plugin-fs = { workspace = true }
+# tauri-plugin-global-shortcut = { workspace = true }
+# tauri-plugin-http = { workspace = true }
+# tauri-plugin-log = { workspace = true }
+# tauri-plugin-notification = { workspace = true }
+# tauri-plugin-os = { workspace = true }
+# tauri-plugin-process = { workspace = true }
+# tauri-plugin-single-instance = { workspace = true }
+# tauri-plugin-store = { workspace = true }
+# tauri-plugin-upload = { workspace = true }
+# tauri-plugin-websocket = { workspace = true }
 
-tokio = { version = "1.44.1" }
-tokio-tungstenite = "0.26.2"
-unbug = { version = "0.4.0" }
+tauri = { features = ["tray-icon"], version = "2.4.1" }
+tauri-plugin-authenticator = { version = "2.0.0-rc.1" }
+tauri-plugin-autostart = { version = "2.2.0" }
+tauri-plugin-cli = { version = "2.2.0" }
+tauri-plugin-clipboard-manager = { version = "2.2.2" }
+tauri-plugin-dialog = { version = "2.2.0" }
+tauri-plugin-fs = { version = "2.2.0" }
+tauri-plugin-global-shortcut = { version = "2.2.0" }
+tauri-plugin-http = { version = "2.4.2" }
+tauri-plugin-log = { version = "2.3.1" }
+tauri-plugin-notification = { version = "2.2.2" }
+tauri-plugin-os = { version = "2.2.1" }
+tauri-plugin-process = { version = "2.2.0" }
+tauri-plugin-single-instance = { version = "2.2.2" }
+tauri-plugin-store = { version = "2.2.0" }
+tauri-plugin-upload = { version = "2.2.1" }
+tauri-plugin-websocket = { version = "2.3.0" }
 
 [features]
 Debug = []

@@ -36,7 +36,12 @@ pub fn Fn() {
 							.theme(Some(tauri::Theme::Light));
 					}
 
-					Daemon.build().expect("Cannot build.");
+					let Window = Daemon.build().expect("Cannot build.");
+
+					#[cfg(debug_assertions)]
+					{
+						Window.open_devtools();
+					}
 
 					Ok(())
 				})
