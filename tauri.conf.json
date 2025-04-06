@@ -1,5 +1,5 @@
 {
-	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/crates/tauri-cli/schema.json",
+	"$schema": "https://raw.githubusercontent.com/CodeEditorLand/Tauri/Current/crates/tauri-cli/config.schema.json",
 	"app": {
 		"enableGTKAppId": true,
 		"macOSPrivateApi": false,
@@ -21,7 +21,7 @@
 			"iconAsTemplate": false,
 			"iconPath": "Source/Icon/icon.png",
 			"id": "Tray",
-			"menuOnLeftClick": true,
+			"showMenuOnLeftClick": true,
 			"title": "Editor",
 			"tooltip": "Open"
 		},
