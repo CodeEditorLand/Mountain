@@ -31,7 +31,7 @@
 	"build": {
 		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky --force",
 		"beforeBundleCommand": "",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/output --filter=@codeeditorland/shim --filter=@codeeditorland/sky --filter=@codeeditorland/wind --force",
+		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/output --filter=@codeeditorland/shim --filter=@codeeditorland/wind --filter=@codeeditorland/sky --force",
 		"devUrl": "http://localhost:9999",
 		"features": [],
 		"frontendDist": "../Sky/Target",
