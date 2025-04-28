@@ -17,9 +17,9 @@ pub fn Fn() {
 			Builder
 				.setup(|Tauri| {
 					let mut Daemon =
-						tauri::WebviewWindowBuilder::new(Tauri, "Daemon", tauri::WebviewUrl::App("index.html".into()))
+						tauri::WebviewWindowBuilder::new(Tauri, "Daemon", tauri::WebviewUrl::App("VSCode/index.html".into()))
 							.accept_first_mouse(false)
-							.transparent(true)
+							// .transparent(true)
 							.user_agent("")
 							.zoom_hotkeys_enabled(false);
 
@@ -28,11 +28,12 @@ pub fn Fn() {
 						Daemon = Daemon
 							.position(0.0, 0.0)
 							.visible(true)
-							.title("")
-							.always_on_bottom(false)
-							.closable(false)
-							.decorations(false)
-							.fullscreen(true)
+							.title("FIDDEE")
+							// .always_on_bottom(false)
+							// .closable(false)
+							// .decorations(false)
+							// .fullscreen(true)
+							.maximized(true)
 							.theme(Some(tauri::Theme::Light));
 					}
 
