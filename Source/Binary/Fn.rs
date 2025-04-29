@@ -16,28 +16,18 @@ pub fn Fn() {
 
 			Builder
 				.setup(|Tauri| {
-					let mut Daemon =
-						tauri::WebviewWindowBuilder::new(Tauri, "Daemon", tauri::WebviewUrl::App("VSCode/index.html".into()))
-							.accept_first_mouse(false)
-							// .transparent(true)
-							.user_agent("")
-							.zoom_hotkeys_enabled(false);
+					let mut Application = tauri::WebviewWindowBuilder::new(
+						Tauri,
+						"Application",
+						tauri::WebviewUrl::App(std::path::PathBuf::from("Application")),
+					);
 
 					#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 					{
-						Daemon = Daemon
-							.position(0.0, 0.0)
-							.visible(true)
-							.title("FIDDEE")
-							// .always_on_bottom(false)
-							// .closable(false)
-							// .decorations(false)
-							// .fullscreen(true)
-							.maximized(true)
-							.theme(Some(tauri::Theme::Light));
+						Application = Application.title("FIDDEE").maximized(true).theme(Some(tauri::Theme::Light));
 					}
 
-					let Window = Daemon.build().expect("Cannot build.");
+					let Window = Application.build().expect("Cannot build.");
 
 					#[cfg(debug_assertions)]
 					{

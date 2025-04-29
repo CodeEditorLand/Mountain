@@ -29,10 +29,10 @@
 		"withGlobalTauri": false
 	},
 	"build": {
-		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky --force",
+		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
 		"beforeBundleCommand": "",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --force",
-		"devUrl": "http://localhost:9999",
+		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
+		"devUrl": "https://localhost:9999",
 		"features": [],
 		"frontendDist": "../Sky/Target",
 		"runner": "cargo"
