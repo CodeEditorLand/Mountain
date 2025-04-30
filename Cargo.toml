@@ -20,7 +20,7 @@ tokio = { workspace = true }
 tokio-tungstenite = { workspace = true }
 unbug = { workspace = true }
 
-tauri = { version = "2.5.1", features = ["tray-icon", "devtools"] }
+tauri = { version = "2.5.1", features = [ "tray-icon", "devtools"] }
 
 [features]
 Debug = []

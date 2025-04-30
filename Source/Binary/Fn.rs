@@ -1,42 +1,51 @@
 #![allow(non_snake_case)]
 
-#[allow(dead_code)]
+use std::{
+	env,
+	fs,
+	path::{Path, PathBuf},
+	sync::Arc,
+};
+
 pub fn Fn() {
 	tokio::runtime::Builder::new_multi_thread()
 		.enable_all()
 		.build()
 		.expect("Cannot build.")
 		.block_on(async {
-			let mut Builder = tauri::Builder::default();
+			let mut Build = tauri::Builder::default();
 
 			#[cfg(any(windows, target_os = "linux"))]
 			{
-				Builder = Builder.any_thread();
+				Build = Build.any_thread();
 			}
 
-			Builder
+			Build
 				.setup(|Tauri| {
 					let mut Application = tauri::WebviewWindowBuilder::new(
 						Tauri,
 						"Application",
-						tauri::WebviewUrl::App(std::path::PathBuf::from("Application")),
-					);
+						tauri::WebviewUrl::App(PathBuf::from("Application/index.html")),
+					)
+					.use_https_scheme(true);
 
 					#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 					{
-						Application = Application.title("FIDDEE").maximized(true).theme(Some(tauri::Theme::Light));
+						Application = Application.title("FIDDEE").maximized(true);
 					}
 
-					let Window = Application.build().expect("Cannot build.");
+					let Window = Application.build().expect("Cannot build Application window.");
 
-					#[cfg(debug_assertions)]
+					#[cfg(all(debug_assertions, not(any(target_os = "android", target_os = "ios"))))]
 					{
+						println!("Opening DevTools");
+
 						Window.open_devtools();
 					}
 
 					Ok(())
 				})
 				.run(tauri::generate_context!())
-				.expect("Cannot run.");
+				.expect("Error while running Tauri application");
 		});
 }
