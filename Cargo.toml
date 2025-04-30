@@ -20,7 +20,13 @@ tokio = { workspace = true }
 tokio-tungstenite = { workspace = true }
 unbug = { workspace = true }
 
-tauri = { version = "2.5.1", features = [ "tray-icon", "devtools"] }
+tauri = { path = "../../Dependency/Tauri/Dependency/Tauri/crates/tauri", version = "2.5.1", features = [
+	"tray-icon",
+	"devtools",
+] }
+env_logger = "0.11.8"
+log = "0.4.27"
+colored = "3.0.0"
 
 [features]
 Debug = []
