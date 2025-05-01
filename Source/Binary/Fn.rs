@@ -56,6 +56,7 @@ pub fn Fn() {
 						Builder = Builder.title("FIDDEE").maximized(true);
 					}
 
+					#[allow(unused_variables)]
 					let Window = match Builder.build() {
 						Ok(Return) => Return,
 
