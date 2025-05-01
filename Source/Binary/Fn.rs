@@ -1,9 +1,5 @@
 #![allow(non_snake_case)]
 
-use std::borrow::Cow;
-
-use tauri::http::header::{CONTENT_TYPE, HeaderValue};
-
 #[allow(dead_code)]
 pub fn Fn() {
 	env_logger::Builder::new()
@@ -52,62 +48,6 @@ pub fn Fn() {
 						Tauri,
 						"Application",
 						tauri::WebviewUrl::App(std::path::PathBuf::from("Application/index.html")),
-					)
-					.on_web_resource_request(
-						|Request:tauri::http::Request<Vec<u8>>,
-						 Response:&mut tauri::http::Response<Cow<'static, [u8]>>| {
-							let URI = Request.uri();
-
-							let Path = URI.path();
-
-							let Query = URI.query().unwrap_or("");
-
-							if Path.ends_with(".css") {
-								let Skip = Query.contains("Skip=Intercept");
-
-								if Skip {
-									match HeaderValue::from_static("text/css") {
-										Mime => {
-											if Response
-												.headers()
-												.get(CONTENT_TYPE)
-												.map(|Value| Value != &Mime)
-												.unwrap_or(true)
-											{
-												Response.headers_mut().insert(CONTENT_TYPE, Mime);
-											}
-										},
-									}
-								} else {
-									*Response.body_mut() = Cow::Owned(
-										format!(
-											r#"if (typeof window._LOAD_CSS_WORKER === 'function') {{
-	window._LOAD_CSS_WORKER("{}");
-}}
-
-export default {{}};"#,
-											Path
-										)
-										.into_bytes(),
-									);
-
-									let Header = Response.headers_mut();
-
-									Header.insert(
-										CONTENT_TYPE,
-										HeaderValue::from_static("application/javascript; charset=utf-8"),
-									);
-
-									Header.remove(tauri::http::header::CONTENT_LENGTH);
-
-									Header.remove(tauri::http::header::ETAG);
-
-									Header.remove(tauri::http::header::LAST_MODIFIED);
-
-									*Response.status_mut() = tauri::http::StatusCode::OK;
-								}
-							}
-						},
 					)
 					.use_https_scheme(true);
 
