@@ -2,33 +2,36 @@
 
 #[allow(dead_code)]
 pub fn Fn() {
-	env_logger::Builder::new()
-		.filter_level(log::LevelFilter::Debug)
-		.format(|Buffer, Record| {
-			use std::io::Write;
+	#[cfg(debug_assertions)]
+	{
+		env_logger::Builder::new()
+			.filter_level(log::LevelFilter::Debug)
+			.format(|Buffer, Record| {
+				use std::io::Write;
 
-			use colored::Colorize;
+				use colored::Colorize;
 
-			writeln!(
-				Buffer,
-				"[{}] [{}]: {}",
-				"Mountain".red(),
-				match Record.level() {
-					log::Level::Error => "ERROR".red(),
+				writeln!(
+					Buffer,
+					"[{}] [{}]: {}",
+					"Mountain".red(),
+					match Record.level() {
+						log::Level::Error => "ERROR".red(),
 
-					log::Level::Warn => "WARN".yellow(),
+						log::Level::Warn => "WARN".yellow(),
 
-					log::Level::Info => "INFO".green(),
+						log::Level::Info => "INFO".green(),
 
-					log::Level::Debug => "DEBUG".blue(),
+						log::Level::Debug => "DEBUG".blue(),
 
-					log::Level::Trace => "TRACE".magenta(),
-				},
-				Record.args()
-			)
-		})
-		.try_init()
-		.expect("Failed to initialize env_logger");
+						log::Level::Trace => "TRACE".magenta(),
+					},
+					Record.args()
+				)
+			})
+			.try_init()
+			.expect("Failed to initialize env_logger");
+	}
 
 	tokio::runtime::Builder::new_multi_thread()
 		.enable_all()
