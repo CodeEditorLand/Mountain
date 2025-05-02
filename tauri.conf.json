@@ -32,7 +32,7 @@
 		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky --force",
 		"beforeBundleCommand": "",
 		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --force",
-		"devUrl": "https://localhost:9999",
+		"devUrl": null,
 		"features": [],
 		"frontendDist": "../Sky/Target",
 		"runner": "cargo"

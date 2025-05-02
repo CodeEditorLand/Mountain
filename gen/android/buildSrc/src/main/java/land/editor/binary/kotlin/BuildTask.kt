@@ -16,7 +16,7 @@ open class BuildTask : DefaultTask() {
 
     @TaskAction
     fun assemble() {
-        val executable = """pnpm""";
+        val executable = """cargo""";
         try {
             runTauriCli(executable)
         } catch (e: Exception) {
@@ -38,11 +38,7 @@ open class BuildTask : DefaultTask() {
             workingDir(File(project.projectDir, rootDirRel))
             executable(executable)
             args(args)
-            if (project.logger.isEnabled(LogLevel.DEBUG)) {
-                args("-vv")
-            } else if (project.logger.isEnabled(LogLevel.INFO)) {
-                args("-v")
-            }
+            
             if (release) {
                 args("--release")
             }

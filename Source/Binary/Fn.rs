@@ -61,10 +61,12 @@ pub fn Fn() {
 
 					#[allow(unused_variables)]
 					let Window = match Builder.build() {
-						Ok(Return) => Return,
+						Ok(Instance) => Instance,
 
-						Err(_Error) => {
-							panic!("Window build failed: {:?}", _Error);
+						Err(BuildError) => {
+							log::error!("Window build failed: {:?}", BuildError);
+
+							panic!("Window build failed: {:?}", BuildError);
 						},
 					};
 
