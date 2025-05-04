@@ -52,11 +52,14 @@ pub fn Fn() {
 						"Application",
 						tauri::WebviewUrl::App(std::path::PathBuf::from("Application/index.html")),
 					)
-					.use_https_scheme(true);
+					.use_https_scheme(true)
+					.content_protected(true)
+					.zoom_hotkeys_enabled(true)
+					.browser_extensions_enabled(false);
 
 					#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 					{
-						Builder = Builder.title("FIDDEE").maximized(true);
+						Builder = Builder.title("FIDDEE").maximized(true).decorations(false).shadow(true);
 					}
 
 					#[allow(unused_variables)]
