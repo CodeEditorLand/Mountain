@@ -22,7 +22,7 @@
 			"iconPath": "Source/Icon/icon.png",
 			"id": "Tray",
 			"showMenuOnLeftClick": true,
-			"title": "Editor",
+			"title": "FIDDEE",
 			"tooltip": "Open"
 		},
 		"windows": [],
@@ -103,7 +103,7 @@
 		"shortDescription": "",
 		"targets": "all",
 		"windows": {
-			"allowDowngrades": false,
+			"allowDowngrades": true,
 			"certificateThumbprint": null,
 			"digestAlgorithm": null,
 			"signCommand": null,
