@@ -9,7 +9,7 @@
 				"scope": []
 			},
 			"capabilities": [],
-			"csp": null,
+			"csp": "default-src 'none'; script-src 'self' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; manifest-src 'self'; media-src 'self'; frame-src 'self'; connect-src 'self' wss://tauri.localhost; block-all-mixed-content; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController;",
 			"dangerousDisableAssetCspModification": false,
 			"devCsp": "default-src 'none'; script-src 'self' 'unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; manifest-src 'self'; media-src 'self'; frame-src 'self'; connect-src 'self' wss://tauri.localhost; block-all-mixed-content; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController;",
 			"freezePrototype": false,
