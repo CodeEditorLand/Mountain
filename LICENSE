@@ -121,44 +121,47 @@ In this Licence, the following terms have the following meaning:
 
 ## 2\. Scope of the rights granted by the Licence
 
-2.1. **Copyright Grant**: The Licensor hereby grants You a worldwide,
-royalty-free, non-exclusive, sublicensable licence to do the following, for the
-duration of copyright vested in the Work: - use the Work in any circumstance and
-for all usage, - reproduce the Work, - create Modifications and Derivative Works
-based upon the Work, - communicate to the public, including the right to make
-available or display the Work or copies thereof to the public and perform
-publicly, as the case may be, the Work, - distribute the Work or copies
-thereof, - lend and rent the Work or copies thereof, - sublicense rights in the
-Work or copies thereof, provided that any such sublicense is made under the
-terms and conditions of this LPL and imposes no further restrictions on the
-sublicensee than are contained herein. These rights can be exercised on any
-media, supports and formats, whether now known or later invented, as far as
-Applicable Law permits so. In countries where moral rights apply, the Licensor
-and each Contributor waive their right to exercise their moral rights over their
-respective contributions to the Work to the extent allowed by law in order to
-make effective the licence of the economic rights listed above.
-
-2.2. **Patent Grant**: Subject to the terms and conditions of this Licence, each
-Licensor and each Contributor hereby grants to You a perpetual, worldwide,
-non-exclusive, no-charge, royalty-free, irrevocable (except as stated in this
-section and Article 12) patent license to make, have made, use, offer to sell,
-sell, import, and otherwise transfer the Work (specifically, their Contribution
-as part of the Work), where such license applies only to those Patent Claims
-Licensable by such Licensor or Contributor that are necessarily infringed by
-their Contribution(s) alone or by combination of their Contribution(s) with the
-Work to which such Contribution(s) was submitted. This patent grant does not
-extend to: (i) any External Work; (ii) any combination of the Work with an
-External Work or other software if such combination infringes patents not
-necessarily infringed by the Contribution(s) alone; (iii) any patents that may
-be held by contributors to an External Work or other third parties; or (iv) any
-Patent Claims covering subject matter other than the Contribution(s) itself.
-
-2.3. **Defensive Termination of Patent Grant**: If You institute patent
-litigation against any entity (including a cross-claim or counterclaim in a
-lawsuit) alleging that the Work or a Contribution incorporated within the Work
-constitutes direct or contributory patent infringement, then any patent licenses
-granted to You under this Licence for that Work (from all Licensors and
-Contributors) shall terminate as of the date such litigation is filed.
+- 2.1. **Copyright Grant**: The Licensor hereby grants You a worldwide,
+  royalty-free, non-exclusive, sublicensable licence to do the following, for
+  the duration of copyright vested in the Work: - use the Work in any
+  circumstance and for all usage, - reproduce the Work, - create Modifications
+  and Derivative Works based upon the Work, - communicate to the public,
+  including the right to make available or display the Work or copies thereof to
+  the public and perform publicly, as the case may be, the Work, - distribute
+  the Work or copies thereof, - lend and rent the Work or copies thereof, -
+  sublicense rights in the Work or copies thereof, provided that any such
+  sublicense is made under the terms and conditions of this LPL and imposes no
+  further restrictions on the sublicensee than are contained herein. These
+  rights can be exercised on any media, supports and formats, whether now known
+  or later invented, as far as Applicable Law permits so. In countries where
+  moral rights apply, the Licensor and each Contributor waive their right to
+  exercise their moral rights over their respective contributions to the Work to
+  the extent allowed by law in order to make effective the licence of the
+  economic rights listed above.
+- 2.2. **Patent Grant**: Subject to the terms and conditions of this Licence,
+  each Licensor and each Contributor hereby grants to You a perpetual,
+  worldwide, non-exclusive, no-charge, royalty-free, irrevocable (except as
+  stated in this section and Article 12) patent license to make, have made, use,
+  offer to sell, sell, import, and otherwise transfer the Work (specifically,
+  their Contribution as part of the Work), where such license applies only to
+  those Patent Claims Licensable by such Licensor or Contributor that are
+  necessarily infringed by their Contribution(s) alone or by combination of
+  their Contribution(s) with the Work to which such Contribution(s) was
+  submitted. This patent grant does not extend to:
+    - (i) any External Work;
+    - (ii) any combination of the Work with an External Work or other software
+      if such combination infringes patents not necessarily infringed by the
+      Contribution(s) alone;
+    - (iii) any patents that may be held by contributors to an External Work or
+      other third parties;
+    - or (iv) any Patent Claims covering subject matter other than the
+      Contribution(s) itself.
+- 2.3. **Defensive Termination of Patent Grant**: If You institute patent
+  litigation against any entity (including a cross-claim or counterclaim in a
+  lawsuit) alleging that the Work or a Contribution incorporated within the Work
+  constitutes direct or contributory patent infringement, then any patent
+  licenses granted to You under this Licence for that Work (from all Licensors
+  and Contributors) shall terminate as of the date such litigation is filed.
 
 ## 3\. Communication of the Source Code
 
@@ -257,30 +260,33 @@ Applicable Law.
 
 - **Compatibility**:
 
-    - **Inbound (Using External Work within an LPL Project):** If You
-      incorporate an External Work into the Work, You must ensure that the
-      license of the External Work permits such incorporation and further
-      distribution of the Combined Work under terms that allow the LPL-licensed
-      portions to remain under the LPL as specified herein. Permissively
-      licensed External Works (e.g., MIT, BSD, Apache 2.0) are generally
-      suitable. If the External Work is licensed under a strong reciprocal
-      license (e.g., GNU GPL, AGPL), You must comply with all terms of that
-      license, which may require the entire Combined Work to be licensed under
-      that reciprocal license if the LPL is not deemed compatible or subordinate
-      by that license's terms, or if Applicable Law so mandates for derivative
-      works.
+    - **Inbound (Using External Work within an LPL Project):**
+
+    If You incorporate an External Work into the Work, You must ensure that the
+    license of the External Work permits such incorporation and further
+    distribution of the Combined Work under terms that allow the LPL-licensed
+    portions to remain under the LPL as specified herein. Permissively licensed
+    External Works (e.g., MIT, BSD, Apache 2.0) are generally suitable. If the
+    External Work is licensed under a strong reciprocal license (e.g., GNU GPL,
+    AGPL), You must comply with all terms of that license, which may require the
+    entire Combined Work to be licensed under that reciprocal license if the LPL
+    is not deemed compatible or subordinate by that license's terms, or if
+    Applicable Law so mandates for derivative works.
+
     - **Outbound (Using LPL Work within a Project under a Compatible Reciprocal
-      Licence):** Notwithstanding the Copyleft provision above, if You combine
-      or link the Work with a larger work licensed under a Compatible Reciprocal
-      Licence listed in Appendix A, You may distribute the resulting Combined
-      Work under the terms of that Compatible Reciprocal Licence, provided that
-      You comply with all of its terms and conditions, including the provision
-      of Source Code for the LPL-covered components under the terms required by
-      the Compatible Reciprocal Licence. The Source Code of the LPL-covered
-      components must also remain available under the LPL itself (e.g., through
-      dual licensing of these components or by providing them separately under
-      LPL). _(This dual availability needs careful thought and legal validation
-      for practicality and compliance.)_
+      Licence):**
+
+    Notwithstanding the Copyleft provision above, if You combine or link the
+    Work with a larger work licensed under a Compatible Reciprocal Licence
+    listed in Appendix A, You may distribute the resulting Combined Work under
+    the terms of that Compatible Reciprocal Licence, provided that You comply
+    with all of its terms and conditions, including the provision of Source Code
+    for the LPL-covered components under the terms required by the Compatible
+    Reciprocal Licence. The Source Code of the LPL-covered components must also
+    remain available under the LPL itself (e.g., through dual licensing of these
+    components or by providing them separately under LPL). _(This dual
+    availability needs careful thought and legal validation for practicality and
+    compliance.)_
 
 - **No Endorsement**: This Licence does not grant You permission to use the
   trade names, trademarks, service marks, or product names of Land, the
@@ -300,28 +306,29 @@ them to grant this Licence. The Licensor further warrants that they have the
 power and authority to grant this Licence for these contributions.
 
 6.2. **Contributor's Representations and Warranties**: Each Contributor
-represents and warrants that: (a) The copyright in the specific LPL-licensed
-Modifications or contributions to LPL-licensed Derivative Works they provide
-(their "Contribution") is owned by them or they are otherwise legally entitled
-to grant this Licence for their Contribution. (b) To the best of their
-knowledge, information, and belief, their Contribution does not infringe any
-third party's copyright, patent, trademark, or other proprietary rights. This
-representation is based on the Contributor's knowledge at the time the
-Contribution is made. It is not an exhaustive warranty of non-infringement. (c)
-They have the full power and authority to grant this Licence for their
-Contribution. (d) Their Contribution is provided in compliance with the terms of
-this Licence.
+represents and warrants that:
 
-6.3. **Grant by Acceptance**: Each time You accept this Licence, the original
-Licensor and subsequent Contributors grant You a licence to their respective
-contributions to the Work, under the terms of this Licence.
+- (a) The copyright in the specific LPL-licensed Modifications or contributions
+  to LPL-licensed Derivative Works they provide (their "Contribution") is owned
+  by them or they are otherwise legally entitled to grant this Licence for their
+  Contribution. (b) To the best of their knowledge, information, and belief,
+  their Contribution does not infringe any third party's copyright, patent,
+  trademark, or other proprietary rights. This representation is based on the
+  Contributor's knowledge at the time the Contribution is made. It is not an
+  exhaustive warranty of non-infringement. (c) They have the full power and
+  authority to grant this Licence for their Contribution. (d) Their Contribution
+  is provided in compliance with the terms of this Licence.
 
-6.4. **No Warranty for External Works**: This Licence does not provide any
-warranty, representation, or grant any rights concerning any External Work or
-any software other than the Work licensed hereunder. The Licensee is solely
-responsible for ensuring they have the necessary rights to use and combine any
-External Work with the Work and that such combination is compliant with all
-applicable licenses.
+    6.3. **Grant by Acceptance**: Each time You accept this Licence, the
+    original Licensor and subsequent Contributors grant You a licence to their
+    respective contributions to the Work, under the terms of this Licence.
+
+    6.4. **No Warranty for External Works**: This Licence does not provide any
+    warranty, representation, or grant any rights concerning any External Work
+    or any software other than the Work licensed hereunder. The Licensee is
+    solely responsible for ensuring they have the necessary rights to use and
+    combine any External Work with the Work and that such combination is
+    compliant with all applicable licenses.
 
 ## 7\. Disclaimer of Warranty
 
@@ -384,31 +391,35 @@ them by reason of Your accepting any such warranty or additional liability.
 ## 10\. Acceptance of the Licence
 
 You accept this Licence and agree to its terms and conditions by undertaking any
-of the following actions: (a) explicitly agreeing to the terms (e.g., by
-clicking an "I agree" button, signing an agreement, or similar affirmative act);
-or (b) copying, installing, modifying, distributing, communicating, or otherwise
-using the Work or any part thereof. Such action indicates Your clear and
-irrevocable acceptance of this Licence and all of its terms and conditions. If
-You do not agree to all the terms and conditions of this Licence, You do not
-have any rights to the Work under this Licence, and You must immediately cease
-all use, reproduction, modification, and distribution of the Work.
+of the following actions:
+
+- (a) explicitly agreeing to the terms (e.g., by clicking an "I agree" button,
+  signing an agreement, or similar affirmative act); or (b) copying, installing,
+  modifying, distributing, communicating, or otherwise using the Work or any
+  part thereof. Such action indicates Your clear and irrevocable acceptance of
+  this Licence and all of its terms and conditions. If You do not agree to all
+  the terms and conditions of this Licence, You do not have any rights to the
+  Work under this Licence, and You must immediately cease all use, reproduction,
+  modification, and distribution of the Work.
 
 ## 11\. Information to the Public
 
 In case of any Distribution or Communication of the Work by means of electronic
 communication by You (for example, by offering to download the Work from a
 remote location) the distribution channel or media (for example, a website) must
-clearly provide to the public: (a) A complete copy of this Licence (LPL v.1.0),
-including its Preamble and any Appendices, or a hyperlink to its canonical
-location (e.g., on the Land project website). (b) Information identifying the
-Licensor of the Work (or the initial Licensor if different), and a way to
-contact them if reasonably possible. (c) A clear statement that the Work (or
-relevant components) is licensed under this LPL. (d) Information regarding how
-to access the Source Code for the Work as per Article 3 and 5. (e) If
-distributed as part of a Combined Work, clear identification of which components
-constitute the Work under this LPL and which components constitute any External
-Work (and its license), sufficient for a recipient to understand their
-respective rights and obligations.
+clearly provide to the public:
+
+- (a) A complete copy of this Licence (LPL v.1.0), including its Preamble and
+  any Appendices, or a hyperlink to its canonical location (e.g., on the Land
+  project website). (b) Information identifying the Licensor of the Work (or the
+  initial Licensor if different), and a way to contact them if reasonably
+  possible. (c) A clear statement that the Work (or relevant components) is
+  licensed under this LPL. (d) Information regarding how to access the Source
+  Code for the Work as per Article 3 and 5. (e) If distributed as part of a
+  Combined Work, clear identification of which components constitute the Work
+  under this LPL and which components constitute any External Work (and its
+  license), sufficient for a recipient to understand their respective rights and
+  obligations.
 
 ## 12\. Termination of the Licence
 
@@ -582,10 +593,11 @@ statements or updates to this Appendix detailing specific licenses deemed
 compatible and the precise conditions for such compatibility. Such official
 statements will supersede the illustrative nature of this initial Appendix.
 
-**Note on Permissive Licenses as External Works:** As stated in Article 5
-("Compatibility" - "Inbound"), External Works licensed under common permissive
-licenses (such as MIT, BSD variants, Apache License 2.0) can generally be
-incorporated into LPL-licensed projects, with the LPL-licensed Work remaining
-under LPL and the permissively licensed External Work remaining under its
-original terms, subject to the "No Implied Relicensing of External Works" clause
-and Applicable Law.
+**Note on Permissive Licenses as External Works:**
+
+As stated in Article 5 ("Compatibility" - "Inbound"), External Works licensed
+under common permissive licenses (such as MIT, BSD variants, Apache License 2.0)
+can generally be incorporated into LPL-licensed projects, with the LPL-licensed
+Work remaining under LPL and the permissively licensed External Work remaining
+under its original terms, subject to the "No Implied Relicensing of External
+Works" clause and Applicable Law.
