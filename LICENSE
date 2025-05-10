@@ -411,15 +411,17 @@ clearly provide to the public:
 
 - (a) A complete copy of this Licence (LPL v.1.0), including its Preamble and
   any Appendices, or a hyperlink to its canonical location (e.g., on the Land
-  project website). (b) Information identifying the Licensor of the Work (or the
-  initial Licensor if different), and a way to contact them if reasonably
-  possible. (c) A clear statement that the Work (or relevant components) is
-  licensed under this LPL. (d) Information regarding how to access the Source
-  Code for the Work as per Article 3 and 5. (e) If distributed as part of a
-  Combined Work, clear identification of which components constitute the Work
-  under this LPL and which components constitute any External Work (and its
-  license), sufficient for a recipient to understand their respective rights and
-  obligations.
+  project website).
+    - (b) Information identifying the Licensor of the Work (or the initial
+      Licensor if different), and a way to contact them if reasonably possible.
+    - (c) A clear statement that the Work (or relevant components) is licensed
+      under this LPL.
+    - (d) Information regarding how to access the Source Code for the Work as
+      per Article 3 and 5.
+    - (e) If distributed as part of a Combined Work, clear identification of
+      which components constitute the Work under this LPL and which components
+      constitute any External Work (and its license), sufficient for a recipient
+      to understand their respective rights and obligations.
 
 ## 12\. Termination of the Licence
 
