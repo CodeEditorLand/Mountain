@@ -1,10 +1,10 @@
-# Land Public Licence v. 1.0
+# Land Public License v. 1.0
 
-(Hereinafter "LPL" or "the Licence")
+(Hereinafter "LPL" or "the License")
 
 **Preamble**
 
-This Land Public Licence ("LPL" or "Licence") is intended to promote the
+This Land Public License ("LPL" or "License") is intended to promote the
 creation, sharing, and collaborative improvement of software, while ensuring
 that the Work licensed hereunder, including its modifications and derivatives,
 remains open and freely available under these same terms. The LPL aims to grant
@@ -12,26 +12,26 @@ broad permissions to use, study, modify, and distribute the Work, fostering an
 ecosystem of open innovation.
 
 When the Work is combined with an External Work licensed under different terms,
-this Licence is designed to ensure that the LPL-covered components remain
+this License is designed to ensure that the LPL-covered components remain
 governed by the LPL, without imposing LPL terms on the External Work itself,
 provided such separation is respected and legally permissible.
 
 By using, modifying, or distributing the Work, You accept and agree to be bound
-by the terms of this Licence. This Licence is a binding legal agreement between
+by the terms of this License. This License is a binding legal agreement between
 You and the Licensor and any Contributors.
 
 ---
 
-This Land Public Licence (the `Licence` or `LPL`) applies to the Work (as
-defined below) which is provided under the terms of this Licence. Any use of the
-Work, other than as authorised under this Licence or by applicable copyright law
+This Land Public License (the `License` or `LPL`) applies to the Work (as
+defined below) which is provided under the terms of this License. Any use of the
+Work, other than as authorised under this License or by applicable copyright law
 (such as fair use, fair dealing, or other statutory exceptions), is prohibited.
 
-The Work is provided under the terms of this Licence when the Licensor (as
+The Work is provided under the terms of this License when the Licensor (as
 defined below) has placed the following notice immediately following the
 copyright notice for the Work:
 
-_Licensed under the Land Public Licence v. 1.0 (LPL-1.0)_
+_Licensed under the Land Public License v. 1.0 (LPL-1.0)_
 
 or has expressed by any other means their willingness to license the Work under
 the LPL.
@@ -41,14 +41,14 @@ or its designated successor).
 
 ## 1\. Definitions
 
-In this Licence, the following terms have the following meaning:
+In this License, the following terms have the following meaning:
 
-- `The Licence` or `LPL`: This Land Public Licence v. 1.0, including its
+- `The License` or `LPL`: This Land Public License v. 1.0, including its
   Preamble and any Appendices, which are incorporated herein by reference.
-- `Land`: The project or organization acting as steward for this Licence,
+- `Land`: The project or organization acting as steward for this License,
   currently based in Sofia, Bulgaria, or its designated successor.
 - `The Original Work`: The initial version of the work or software distributed
-  or communicated by the Licensor under this Licence.
+  or communicated by the Licensor under this License.
 - `Modifications`: Any addition to, deletion from, or change to the substance or
   structure of the Original Work or any previous LPL-licensed Modifications.
   When the Work licensed under the LPL consists of changes made to a
@@ -56,12 +56,12 @@ In this Licence, the following terms have the following meaning:
   "Modifications" refer specifically to these LPL-licensed changes, which are
   distinct from the External Work.
 - `Derivative Works`: Works created by the Licensee that are based upon, and
-  which would, in the absence of this Licence, constitute an infringement of the
+  which would, in the absence of this License, constitute an infringement of the
   copyright in, the Original Work or LPL-licensed Modifications thereof under
   Applicable Law.
 - `The Work`: The Original Work, its LPL-licensed Modifications, or its
   LPL-licensed Derivative Works, as the context requires, that are licensed
-  under this LPL. The obligations of this Licence, particularly the Copyleft
+  under this LPL. The obligations of this License, particularly the Copyleft
   provisions in Article 5, apply only to The Work and not to any External Work
   with which The Work may be combined, except as expressly stated herein or as
   mandated by Applicable Law.
@@ -73,7 +73,7 @@ In this Licence, the following terms have the following meaning:
   dynamically), or integrating the Work with an External Work, or with any other
   software, where the Work remains an identifiable component governed by this
   LPL, and such combination does not, by itself under Applicable Law (absent the
-  specific terms of this Licence attempting to define this boundary),
+  specific terms of this License attempting to define this boundary),
   necessarily create a single, inseparable derivative work of the External Work
   that would mandate relicensing of the External Work under copyright doctrines.
   _(This definition attempts to align with the intent of Art. 5 but is subject
@@ -96,13 +96,13 @@ In this Licence, the following terms have the following meaning:
   executed by a computer as a program.
 - `The Licensor`: The natural or legal person that holds the copyright to the
   Original Work or initial LPL-licensed Modifications and is the first to
-  distribute or communicate them under this Licence.
+  distribute or communicate them under this License.
 - `Contributor(s)`: Any natural or legal person, other than the Licensor, who
   creates or contributes LPL-licensed Modifications or otherwise contributes to
   the creation of LPL-licensed Derivative Works and distributes or communicates
-  them under this Licence.
+  them under this License.
 - `The Licensee` or `You`: Any natural or legal person who makes any usage of
-  the Work under the terms of this Licence.
+  the Work under the terms of this License.
 - `Distribution` or `Communication`: Any act of selling, giving, lending,
   renting, distributing, communicating, transmitting, or otherwise making
   available, online or offline, copies of the Work or providing access to its
@@ -119,26 +119,29 @@ In this Licence, the following terms have the following meaning:
   of the rights conveyed herein.
 - `Applicable Law`: The law stipulated in Article 15.
 
-## 2\. Scope of the rights granted by the Licence
+## 2\. Scope of the rights granted by the License
 
 - 2.1. **Copyright Grant**: The Licensor hereby grants You a worldwide,
-  royalty-free, non-exclusive, sublicensable licence to do the following, for
-  the duration of copyright vested in the Work: - use the Work in any
-  circumstance and for all usage, - reproduce the Work, - create Modifications
-  and Derivative Works based upon the Work, - communicate to the public,
-  including the right to make available or display the Work or copies thereof to
-  the public and perform publicly, as the case may be, the Work, - distribute
-  the Work or copies thereof, - lend and rent the Work or copies thereof, -
-  sublicense rights in the Work or copies thereof, provided that any such
-  sublicense is made under the terms and conditions of this LPL and imposes no
-  further restrictions on the sublicensee than are contained herein. These
-  rights can be exercised on any media, supports and formats, whether now known
-  or later invented, as far as Applicable Law permits so. In countries where
-  moral rights apply, the Licensor and each Contributor waive their right to
-  exercise their moral rights over their respective contributions to the Work to
-  the extent allowed by law in order to make effective the licence of the
-  economic rights listed above.
-- 2.2. **Patent Grant**: Subject to the terms and conditions of this Licence,
+  royalty-free, non-exclusive, sublicensable license to do the following, for
+  the duration of copyright vested in the Work:
+    - use the Work in any circumstance and for all usage,
+    - reproduce the Work,
+    - create Modifications and Derivative Works based upon the Work,
+    - communicate to the public, including the right to make available or
+      display the Work or copies thereof to the public and perform publicly, as
+      the case may be, the Work,
+    - distribute the Work or copies thereof,
+    - lend and rent the Work or copies thereof,
+    - sublicense rights in the Work or copies thereof, provided that any such
+      sublicense is made under the terms and conditions of this LPL and imposes
+      no further restrictions on the sublicensee than are contained herein.
+      These rights can be exercised on any media, supports and formats, whether
+      now known or later invented, as far as Applicable Law permits so. In
+      countries where moral rights apply, the Licensor and each Contributor
+      waive their right to exercise their moral rights over their respective
+      contributions to the Work to the extent allowed by law in order to make
+      effective the license of the economic rights listed above.
+- 2.2. **Patent Grant**: Subject to the terms and conditions of this License,
   each Licensor and each Contributor hereby grants to You a perpetual,
   worldwide, non-exclusive, no-charge, royalty-free, irrevocable (except as
   stated in this section and Article 12) patent license to make, have made, use,
@@ -160,7 +163,7 @@ In this Licence, the following terms have the following meaning:
   litigation against any entity (including a cross-claim or counterclaim in a
   lawsuit) alleging that the Work or a Contribution incorporated within the Work
   constitutes direct or contributory patent infringement, then any patent
-  licenses granted to You under this Licence for that Work (from all Licensors
+  licenses granted to You under this License for that Work (from all Licensors
   and Contributors) shall terminate as of the date such litigation is filed.
 
 ## 3\. Communication of the Source Code
@@ -175,16 +178,16 @@ accessible for as long as they continue to distribute or communicate the Work.
 The Source Code provided must be the preferred form for making modifications to
 it and must comply with the definition in Article 1.
 
-## 4\. Limitations on Copyright and Scope of Licence
+## 4\. Limitations on Copyright and Scope of License
 
-Nothing in this Licence is intended to deprive the Licensee of the benefits from
+Nothing in this License is intended to deprive the Licensee of the benefits from
 any exception or limitation to the exclusive rights of the copyright owners in
 the Work, such as fair use, fair dealing, or other applicable limitations under
-copyright law. This Licence grants permissions only to the extent of the
+copyright law. This License grants permissions only to the extent of the
 Licensor's and Contributors' copyright and patent rights in the Work and does
 not grant any rights in third-party intellectual property that may be embedded
 in or necessary to use the Work, unless expressly stated. If the Work is
-combined with an External Work, this Licence does not affect any rights,
+combined with an External Work, this License does not affect any rights,
 exceptions, or limitations applicable to the External Work under its own license
 or applicable copyright law.
 
@@ -193,13 +196,13 @@ or applicable copyright law.
 The grant of the rights mentioned in Article 2 is subject to certain
 restrictions and obligations imposed on the Licensee. These obligations are
 triggered when the Licensee engages in an act with respect to the Work that, but
-for this Licence, would constitute copyright infringement of the Work under
+for this License, would constitute copyright infringement of the Work under
 Applicable Law.
 
 - **Attribution Right**: The Licensee shall keep intact all copyright, patent or
   trademarks notices pertaining to the Work, and all notices that refer to this
-  Licence and to the disclaimers herein. The Licensee must include a complete
-  copy of this Licence (including its Preamble, disclaimers, and Appendix, if
+  License and to the disclaimers herein. The Licensee must include a complete
+  copy of this License (including its Preamble, disclaimers, and Appendix, if
   any) with every copy of the Work they distribute or communicate. The Licensee
   must cause any LPL-licensed Derivative Work or LPL-licensed Modifications to
   carry prominent notices stating that the Work has been modified from the
@@ -210,14 +213,14 @@ Applicable Law.
 - **Copyleft**: If the Licensee Distributes or Communicates copies of the Work
   (which includes the Original Work, LPL-licensed Modifications, or LPL-licensed
   Derivative Works), this Distribution or Communication must be done under the
-  terms of this Licence (LPL v.1.0) or, if expressly permitted by the original
+  terms of this License (LPL v.1.0) or, if expressly permitted by the original
   Licensor or Land, a later version of the LPL published by Land. The Licensee
   (when becoming a Licensor of their contributions) cannot offer or impose any
   additional terms or conditions on the distributed Work that alter or restrict
-  the terms of this Licence. This Copyleft obligation applies solely to the Work
+  the terms of this License. This Copyleft obligation applies solely to the Work
   and does not extend to any External Work merely by virtue of it being part of
   a Combined Work, except as may be mandated by Applicable Law overriding the
-  intent of this Licence.
+  intent of this License.
 
 - **Distribution of a Combined Work**:
 
@@ -225,19 +228,19 @@ Applicable Law.
     - When distributing a Combined Work, the Licensee must ensure that all
       components corresponding to any External Work remain governed by, and are
       distributed in full compliance with, their original license terms and
-      applicable copyright law. This Licence does not grant any rights to an
+      applicable copyright law. This License does not grant any rights to an
       External Work nor does it authorize any action that would violate the
       External Work's license or copyright.
-    - The obligations of this Licence (including the Copyleft and Provision of
+    - The obligations of this License (including the Copyleft and Provision of
       Source Code) apply fully and exclusively to those parts of the Combined
       Work that constitute the Work licensed under this LPL.
     - **No Implied Relicensing of External Works (Express Intent)**: For the
       avoidance of all doubt, and notwithstanding any interpretation of
       copyright law concerning derivative works that might otherwise apply to a
-      Combined Work, it is the express intent of this Licence that the act of
+      Combined Work, it is the express intent of this License that the act of
       combining, linking, or distributing the Work with an External Work, or any
       other software, does not, by itself, cause the External Work or such other
-      software to be governed by or subject to the terms of this Licence. The
+      software to be governed by or subject to the terms of this License. The
       licensing terms of the External Work and any other software remain
       independent and unaffected, provided that the Work remains an identifiable
       LPL-licensed component within the Combined Work. If, under Applicable Law,
@@ -245,7 +248,7 @@ Applicable Law.
       a combination unavoidably creates a single derivative work requiring
       relicensing of the External Work under this LPL contrary to this express
       intent, then the permission to create or distribute such a specific
-      Combined Work under this Licence is deemed not to have been granted for
+      Combined Work under this License is deemed not to have been granted for
       that specific combination and circumstance. _(This clause is a very strong
       assertion of intent, and its legal effect and enforceability are highly
       uncertain and require expert legal advice.)_
@@ -274,21 +277,21 @@ Applicable Law.
     Applicable Law so mandates for derivative works.
 
     - **Outbound (Using LPL Work within a Project under a Compatible Reciprocal
-      Licence):**
+      License):**
 
     Notwithstanding the Copyleft provision above, if You combine or link the
-    Work with a larger work licensed under a Compatible Reciprocal Licence
+    Work with a larger work licensed under a Compatible Reciprocal License
     listed in Appendix A, You may distribute the resulting Combined Work under
-    the terms of that Compatible Reciprocal Licence, provided that You comply
+    the terms of that Compatible Reciprocal License, provided that You comply
     with all of its terms and conditions, including the provision of Source Code
     for the LPL-covered components under the terms required by the Compatible
-    Reciprocal Licence. The Source Code of the LPL-covered components must also
+    Reciprocal License. The Source Code of the LPL-covered components must also
     remain available under the LPL itself (e.g., through dual licensing of these
     components or by providing them separately under LPL). _(This dual
     availability needs careful thought and legal validation for practicality and
     compliance.)_
 
-- **No Endorsement**: This Licence does not grant You permission to use the
+- **No Endorsement**: This License does not grant You permission to use the
   trade names, trademarks, service marks, or product names of Land, the
   Licensor, or any Contributors, except as required for reasonable and customary
   use in describing the origin of the Work and reproducing the content of
@@ -301,9 +304,9 @@ Applicable Law.
 
 - 6.1. **Licensor's Warranty**: The original Licensor warrants that the
   copyright in the Original Work or initial LPL-licensed Modifications, as first
-  provided under this Licence, is owned by them or licensed to them in a manner
-  that allows them to grant this Licence. The Licensor further warrants that
-  they have the power and authority to grant this Licence for these
+  provided under this License, is owned by them or licensed to them in a manner
+  that allows them to grant this License. The Licensor further warrants that
+  they have the power and authority to grant this License for these
   contributions.
 
 - 6.2. **Contributor's Representations and Warranties**: Each Contributor
@@ -312,22 +315,22 @@ Applicable Law.
     - (a) The copyright in the specific LPL-licensed Modifications or
       contributions to LPL-licensed Derivative Works they provide (their
       "Contribution") is owned by them or they are otherwise legally entitled to
-      grant this Licence for their Contribution.
+      grant this License for their Contribution.
     - (b) To the best of their knowledge, information, and belief, their
       Contribution does not infringe any third party's copyright, patent,
       trademark, or other proprietary rights. This representation is based on
       the Contributor's knowledge at the time the Contribution is made. It is
       not an exhaustive warranty of non-infringement.
-    - (c) They have the full power and authority to grant this Licence for their
+    - (c) They have the full power and authority to grant this License for their
       Contribution.
     - (d) Their Contribution is provided in compliance with the terms of this
-      Licence.
+      License.
 
-- 6.3. **Grant by Acceptance**: Each time You accept this Licence, the original
-  Licensor and subsequent Contributors grant You a licence to their respective
-  contributions to the Work, under the terms of this Licence.
+- 6.3. **Grant by Acceptance**: Each time You accept this License, the original
+  Licensor and subsequent Contributors grant You a license to their respective
+  contributions to the Work, under the terms of this License.
 
-- 6.4. **No Warranty for External Works**: This Licence does not provide any
+- 6.4. **No Warranty for External Works**: This License does not provide any
   warranty, representation, or grant any rights concerning any External Work or
   any software other than the Work licensed hereunder. The Licensee is solely
   responsible for ensuring they have the necessary rights to use and combine any
@@ -384,7 +387,7 @@ LIMITED UNDER APPLICABLE LAW.
 
 While distributing the Work or LPL-licensed Derivative Works, You may choose to
 offer and charge a fee for acceptance of support, warranty, indemnity, or other
-liability obligations and/or rights consistent with this Licence. However, in
+liability obligations and/or rights consistent with this License. However, in
 doing so, You may act only on Your own behalf and on Your sole responsibility,
 not on behalf of Land, the original Licensor, or any other Contributor. You must
 make it clear that any such additional obligation is offered by You alone, and
@@ -392,18 +395,18 @@ You agree to indemnify, defend, and hold Land, the original Licensor, and each
 Contributor harmless for any liability incurred by, or claims asserted against,
 them by reason of Your accepting any such warranty or additional liability.
 
-## 10\. Acceptance of the Licence
+## 10\. Acceptance of the License
 
-You accept this Licence and agree to its terms and conditions by undertaking any
+You accept this License and agree to its terms and conditions by undertaking any
 of the following actions:
 
 - (a) explicitly agreeing to the terms (e.g., by clicking an "I agree" button,
   signing an agreement, or similar affirmative act); or
 - (b) copying, installing, modifying, distributing, communicating, or otherwise
   using the Work or any part thereof. Such action indicates Your clear and
-  irrevocable acceptance of this Licence and all of its terms and conditions. If
-  You do not agree to all the terms and conditions of this Licence, You do not
-  have any rights to the Work under this Licence, and You must immediately cease
+  irrevocable acceptance of this License and all of its terms and conditions. If
+  You do not agree to all the terms and conditions of this License, You do not
+  have any rights to the Work under this License, and You must immediately cease
   all use, reproduction, modification, and distribution of the Work.
 
 ## 11\. Information to the Public
@@ -413,7 +416,7 @@ communication by You (for example, by offering to download the Work from a
 remote location) the distribution channel or media (for example, a website) must
 clearly provide to the public:
 
-    - (a) A complete copy of this Licence (LPL v.1.0), including its Preamble and
+    - (a) A complete copy of this License (LPL v.1.0), including its Preamble and
     any Appendices, or a hyperlink to its canonical location (e.g., on the Land
     project website).
     - (b) Information identifying the Licensor of the Work (or the initial Licensor
@@ -427,20 +430,20 @@ clearly provide to the public:
     any External Work (and its license), sufficient for a recipient to understand
     their respective rights and obligations.
 
-## 12\. Termination of the Licence
+## 12\. Termination of the License
 
-- 12.1. **Breach**: This Licence and the rights granted hereunder (including
+- 12.1. **Breach**: This License and the rights granted hereunder (including
   copyright and patent licenses) will terminate automatically and immediately
-  with respect to You upon any breach by You of the terms of this Licence.
+  with respect to You upon any breach by You of the terms of this License.
 - 12.2. **Patent Litigation**: Termination of patent rights under Article 2.3 is
   immediate upon filing of the specified patent litigation and is not subject to
   the cure provisions below for other breaches.
 - 12.3. **Effect on Downstream Recipients**: Such termination will not terminate
   the licences of any person who has received the Work from You under this
-  Licence, provided such persons remain in full compliance with this Licence.
+  License, provided such persons remain in full compliance with this License.
   Rights of compliant downstream recipients are not retroactively revoked.
 - 12.4. **Survival**: Provisions which, by their nature, must remain in effect
-  beyond the termination of this Licence shall survive, including but not
+  beyond the termination of this License shall survive, including but not
   limited to Articles 1 (Definitions, to the extent necessary for interpreting
   surviving provisions), 2.2 (Patent Grant, for grants made prior to
   termination, subject to Art 2.3), 6.4 (No Warranty for External Works), 7
@@ -452,7 +455,7 @@ clearly provide to the public:
   of it (or receiving notice of it from Land or a copyright holder), Your
   license is reinstated provisionally. If You are notified of the breach by Land
   or a copyright holder, and this is Your first notification of a breach of this
-  Licence, Your license is reinstated permanently if the breach is cured within
+  License, Your license is reinstated permanently if the breach is cured within
   thirty (30) days of such notice. If this is not Your first notification of a
   breach, or if the breach is not cured within thirty (30) days, Your license is
   permanently terminated. Reinstatement beyond these provisions is at the sole
@@ -460,34 +463,34 @@ clearly provide to the public:
 
 ## 13\. Miscellaneous
 
-13.1. **Entire Agreement**: This Licence (including its Preamble and any
+13.1. **Entire Agreement**: This License (including its Preamble and any
 Appendices, which are incorporated herein by reference) constitutes the entire
 agreement and understanding between You and the Licensor/Contributors concerning
 the subject matter hereof (the Work) and supersedes all prior or contemporaneous
 oral or written understandings, communications, proposals, or agreements not
 specifically incorporated herein.
 
-13.2. **Interpretation**: The Preamble and headings in this Licence are for
+13.2. **Interpretation**: The Preamble and headings in this License are for
 convenience only and shall not affect its interpretation or construction. Unless
 the context otherwise requires, words in the singular shall include the plural
 and vice versa. Any phrase introduced by the terms "including," "include," "in
 particular," "for example," or any similar expression shall be construed as
 illustrative and shall not limit the sense of the words preceding those terms.
-The language of this Licence shall be interpreted as to its fair meaning and not
+The language of this License shall be interpreted as to its fair meaning and not
 strictly for or against any party.
 
 13.3. **No Waiver**: No failure or delay by Land, the Licensor, or any
 Contributor in exercising any right, power, or remedy provided under this
-Licence or by law shall constitute a waiver of that or any other right, power,
+License or by law shall constitute a waiver of that or any other right, power,
 or remedy, nor shall it prevent or restrict the further exercise of that or any
 other right, power, or remedy. No single or partial exercise of such right,
 power, or remedy shall prevent or restrict the further exercise of that or any
 other right, power, or remedy. A waiver of any right, power, or remedy under
-this Licence or by law is only effective if it is in writing and signed by an
+this License or by law is only effective if it is in writing and signed by an
 authorized representative of the waiving party and shall apply only to the
 specific instance for which it is given.
 
-13.4. **Severability**: If any provision or part-of a provision of this Licence
+13.4. **Severability**: If any provision or part-of a provision of this License
 is found by a court of competent jurisdiction (as per Article 14) to be invalid,
 illegal, or unenforceable, that provision or part-provision shall, to the extent
 required, be deemed to be deleted or modified to the minimum extent necessary to
@@ -496,9 +499,9 @@ permissible the original intent and economic effect of the term. If such
 modification is not possible, the relevant provision or part-provision shall be
 deemed deleted. Any modification to or deletion of a provision or part-provision
 under this clause shall not affect the validity and enforceability of the rest
-of this Licence.
+of this License.
 
-13.5. **Stewardship and Future Versions**: This Licence may be updated or
+13.5. **Stewardship and Future Versions**: This License may be updated or
 revised by Land (or its designated successor as steward of the LPL). New
 versions will be given a distinguishing version number. If a new version of the
 LPL is published, Licensees may choose to use the Work under the terms of the
@@ -512,7 +515,7 @@ licensed under a prior version without offering a choice to remain under the
 prior version's terms.
 
 13.6. **Notices**: Any notices required or permitted to be given under this
-Licence to Land shall be in writing and sent to Land's registered address or
+License to Land shall be in writing and sent to Land's registered address or
 such other address as Land may specify for this purpose. Notices to You may be
 provided via electronic means to an address You have provided, or through
 general publication if individual notice is not feasible.
@@ -520,7 +523,7 @@ general publication if individual notice is not feasible.
 ## 14\. Dispute Resolution and Jurisdiction
 
 14.1. **Good Faith Negotiation**: The Parties agree to attempt to resolve any
-dispute, controversy, or claim arising out of or relating to this Licence, its
+dispute, controversy, or claim arising out of or relating to this License, its
 Preamble, its breach, termination or invalidity ("Dispute") amicably through
 good faith negotiations for a period of at least thirty (30) days before
 resorting to more formal dispute resolution mechanisms. Such negotiations shall
@@ -545,14 +548,14 @@ objections to venue or inconvenient forum.
 
 ## 15\. Applicable Law
 
-This Licence, its subject matter, and its formation (and any non-contractual
+This License, its subject matter, and its formation (and any non-contractual
 disputes or claims) shall be governed by and construed in accordance with the
 laws of Bulgaria, without regard to its conflict of law principles or rules that
 would result in the application of the laws of any other jurisdiction. The
 United Nations Convention on Contracts for the International Sale of Goods
-(CISG) of 1980 and any of its successors shall not apply to this Licence.
+(CISG) of 1980 and any of its successors shall not apply to this License.
 
-## Appendix A: Compatible Reciprocal Licences (Illustrative and Subject to Legal Validation)
+## Appendix A: Compatible Reciprocal Licenses (Illustrative and Subject to Legal Validation)
 
 **This Appendix is for illustrative purposes. The specific terms of
 compatibility, and the decision to include or exclude any license, require
@@ -560,14 +563,14 @@ careful legal validation by Land's legal counsel to ensure alignment with LPL's
 goals, legal robustness, and practical implications.**
 
 For the purposes of Article 5 ("Compatibility" - "Outbound"), the following
-licenses may be considered "Compatible Reciprocal Licences" under the specified
+licenses may be considered "Compatible Reciprocal Licenses" under the specified
 conditions. This means Work licensed under the LPL v.1.0 may be combined with a
 larger work licensed under one of these licenses, and the resulting Combined
-Work may be distributed under the terms of that Compatible Reciprocal Licence,
+Work may be distributed under the terms of that Compatible Reciprocal License,
 provided all its conditions are met. The Source Code of the LPL-covered
 components must remain available under LPL v.1.0 as well (e.g., by providing the
 LPL components separately under LPL or ensuring the chosen Compatible Reciprocal
-Licence permits this parallel availability without conflict).
+License permits this parallel availability without conflict).
 
 1.  **GNU General Public License version 3.0 or any later version (GPLv3+):**
     - _Condition for consideration:_ The LPL would need to be assessed by legal
@@ -580,7 +583,7 @@ Licence permits this parallel availability without conflict).
     - _Condition for consideration:_ Similar to GPLv3+, requiring assessment of
       compatibility, particularly regarding network interaction provisions if
       LPL were to have any.
-3.  **European Union Public Licence version 1.2 or any later version
+3.  **European Union Public License version 1.2 or any later version
     (EUPLv1.2+):**
     - _Condition for consideration:_ The EUPL has its own compatibility
       mechanisms. LPL would need to be compatible with EUPL's requirements.
