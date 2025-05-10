@@ -299,36 +299,40 @@ Applicable Law.
 
 ## 6\. Contributor Representations and Chain of Authorship
 
-6.1. **Licensor's Warranty**: The original Licensor warrants that the copyright
-in the Original Work or initial LPL-licensed Modifications, as first provided
-under this Licence, is owned by them or licensed to them in a manner that allows
-them to grant this Licence. The Licensor further warrants that they have the
-power and authority to grant this Licence for these contributions.
+- 6.1. **Licensor's Warranty**: The original Licensor warrants that the
+  copyright in the Original Work or initial LPL-licensed Modifications, as first
+  provided under this Licence, is owned by them or licensed to them in a manner
+  that allows them to grant this Licence. The Licensor further warrants that
+  they have the power and authority to grant this Licence for these
+  contributions.
 
-6.2. **Contributor's Representations and Warranties**: Each Contributor
-represents and warrants that:
+- 6.2. **Contributor's Representations and Warranties**: Each Contributor
+  represents and warrants that:
 
-- (a) The copyright in the specific LPL-licensed Modifications or contributions
-  to LPL-licensed Derivative Works they provide (their "Contribution") is owned
-  by them or they are otherwise legally entitled to grant this Licence for their
-  Contribution. (b) To the best of their knowledge, information, and belief,
-  their Contribution does not infringe any third party's copyright, patent,
-  trademark, or other proprietary rights. This representation is based on the
-  Contributor's knowledge at the time the Contribution is made. It is not an
-  exhaustive warranty of non-infringement. (c) They have the full power and
-  authority to grant this Licence for their Contribution. (d) Their Contribution
-  is provided in compliance with the terms of this Licence.
+    - (a) The copyright in the specific LPL-licensed Modifications or
+      contributions to LPL-licensed Derivative Works they provide (their
+      "Contribution") is owned by them or they are otherwise legally entitled to
+      grant this Licence for their Contribution.
+    - (b) To the best of their knowledge, information, and belief, their
+      Contribution does not infringe any third party's copyright, patent,
+      trademark, or other proprietary rights. This representation is based on
+      the Contributor's knowledge at the time the Contribution is made. It is
+      not an exhaustive warranty of non-infringement.
+    - (c) They have the full power and authority to grant this Licence for their
+      Contribution.
+    - (d) Their Contribution is provided in compliance with the terms of this
+      Licence.
 
-    6.3. **Grant by Acceptance**: Each time You accept this Licence, the
-    original Licensor and subsequent Contributors grant You a licence to their
-    respective contributions to the Work, under the terms of this Licence.
+- 6.3. **Grant by Acceptance**: Each time You accept this Licence, the original
+  Licensor and subsequent Contributors grant You a licence to their respective
+  contributions to the Work, under the terms of this Licence.
 
-    6.4. **No Warranty for External Works**: This Licence does not provide any
-    warranty, representation, or grant any rights concerning any External Work
-    or any software other than the Work licensed hereunder. The Licensee is
-    solely responsible for ensuring they have the necessary rights to use and
-    combine any External Work with the Work and that such combination is
-    compliant with all applicable licenses.
+- 6.4. **No Warranty for External Works**: This Licence does not provide any
+  warranty, representation, or grant any rights concerning any External Work or
+  any software other than the Work licensed hereunder. The Licensee is solely
+  responsible for ensuring they have the necessary rights to use and combine any
+  External Work with the Work and that such combination is compliant with all
+  applicable licenses.
 
 ## 7\. Disclaimer of Warranty
 
@@ -394,13 +398,13 @@ You accept this Licence and agree to its terms and conditions by undertaking any
 of the following actions:
 
 - (a) explicitly agreeing to the terms (e.g., by clicking an "I agree" button,
-  signing an agreement, or similar affirmative act); or (b) copying, installing,
-  modifying, distributing, communicating, or otherwise using the Work or any
-  part thereof. Such action indicates Your clear and irrevocable acceptance of
-  this Licence and all of its terms and conditions. If You do not agree to all
-  the terms and conditions of this Licence, You do not have any rights to the
-  Work under this Licence, and You must immediately cease all use, reproduction,
-  modification, and distribution of the Work.
+  signing an agreement, or similar affirmative act); or
+- (b) copying, installing, modifying, distributing, communicating, or otherwise
+  using the Work or any part thereof. Such action indicates Your clear and
+  irrevocable acceptance of this Licence and all of its terms and conditions. If
+  You do not agree to all the terms and conditions of this Licence, You do not
+  have any rights to the Work under this Licence, and You must immediately cease
+  all use, reproduction, modification, and distribution of the Work.
 
 ## 11\. Information to the Public
 
@@ -409,19 +413,19 @@ communication by You (for example, by offering to download the Work from a
 remote location) the distribution channel or media (for example, a website) must
 clearly provide to the public:
 
-- (a) A complete copy of this Licence (LPL v.1.0), including its Preamble and
-  any Appendices, or a hyperlink to its canonical location (e.g., on the Land
-  project website).
-    - (b) Information identifying the Licensor of the Work (or the initial
-      Licensor if different), and a way to contact them if reasonably possible.
-    - (c) A clear statement that the Work (or relevant components) is licensed
-      under this LPL.
-    - (d) Information regarding how to access the Source Code for the Work as
-      per Article 3 and 5.
-    - (e) If distributed as part of a Combined Work, clear identification of
-      which components constitute the Work under this LPL and which components
-      constitute any External Work (and its license), sufficient for a recipient
-      to understand their respective rights and obligations.
+    - (a) A complete copy of this Licence (LPL v.1.0), including its Preamble and
+    any Appendices, or a hyperlink to its canonical location (e.g., on the Land
+    project website).
+    - (b) Information identifying the Licensor of the Work (or the initial Licensor
+    if different), and a way to contact them if reasonably possible.
+    - (c) A clear statement that the Work (or relevant components) is licensed under
+    this LPL.
+    - (d) Information regarding how to access the Source Code for the Work as per
+    Article 3 and 5.
+    - (e) If distributed as part of a Combined Work, clear identification of which
+    components constitute the Work under this LPL and which components constitute
+    any External Work (and its license), sufficient for a recipient to understand
+    their respective rights and obligations.
 
 ## 12\. Termination of the Licence
 
