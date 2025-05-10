@@ -89,7 +89,7 @@
 			"icons/icon.icns",
 			"icons/icon.ico"
 		],
-		"license": "CC0",
+		"license": "LPL",
 		"licenseFile": "LICENSE",
 		"linux": {
 			"appimage": {
