@@ -9,9 +9,37 @@
 				"scope": []
 			},
 			"capabilities": [],
-			"csp": null,
-			"dangerousDisableAssetCspModification": false,
-			"devCsp": "default-src 'none' ; img-src 'self' data: blob: vscode-remote-resource: vscode-managed-remote-resource: https: ; manifest-src 'self' ; media-src 'self' ; frame-src 'self' vscode-webview: ; script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: ; style-src 'self' 'unsafe-inline' ; connect-src 'self' wss://tauri.localhost https: ; font-src 'self' vscode-remote-resource: vscode-managed-remote-resource: ; block-all-mixed-content ; upgrade-insecure-requests ; require-trusted-types-for 'script' ; trusted-types WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController ;",
+			"csp": {
+				"block-all-mixed-content": "",
+				"connect-src": "'self' wss://tauri.localhost https:",
+				"default-src": "'none'",
+				"font-src": "'self' vscode-remote-resource: vscode-managed-remote-resource:",
+				"frame-src": "'self' vscode-webview:",
+				"img-src": "'self' data: blob: vscode-remote-resource: vscode-managed-remote-resource: https:",
+				"manifest-src": "'self'",
+				"media-src": "'self'",
+				"require-trusted-types-for": "'script'",
+				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob:",
+				"style-src": "'self' 'unsafe-inline'",
+				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController",
+				"upgrade-insecure-requests": ""
+			},
+			"dangerousDisableAssetCspModification": true,
+			"devCsp": {
+				"block-all-mixed-content": "",
+				"connect-src": "'self' wss://tauri.localhost https:",
+				"default-src": "'none'",
+				"font-src": "'self' vscode-remote-resource: vscode-managed-remote-resource:",
+				"frame-src": "'self' vscode-webview:",
+				"img-src": "'self' data: blob: vscode-remote-resource: vscode-managed-remote-resource: https:",
+				"manifest-src": "'self'",
+				"media-src": "'self'",
+				"require-trusted-types-for": "'script'",
+				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob:",
+				"style-src": "'self' 'unsafe-inline'",
+				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController",
+				"upgrade-insecure-requests": ""
+			},
 			"freezePrototype": false,
 			"pattern": {
 				"use": "brownfield"
@@ -19,7 +47,7 @@
 		},
 		"trayIcon": {
 			"iconAsTemplate": false,
-			"iconPath": "Source/Icon/icon.png",
+			"iconPath": "icons/icon.png",
 			"id": "Tray",
 			"showMenuOnLeftClick": true,
 			"title": "FIDDEE",
@@ -29,9 +57,9 @@
 		"withGlobalTauri": false
 	},
 	"build": {
-		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky --force",
+		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky",
 		"beforeBundleCommand": "",
-		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky --force",
+		"beforeDevCommand": "pnpm run Run --filter=@codeeditorland/sky",
 		"devUrl": null,
 		"features": [],
 		"frontendDist": "../Sky/Target",
@@ -55,11 +83,11 @@
 			"template": ""
 		},
 		"icon": [
-			"Source/Icon/32x32.png",
-			"Source/Icon/128x128.png",
-			"Source/Icon/128x128@2x.png",
-			"Source/Icon/icon.icns",
-			"Source/Icon/icon.ico"
+			"icons/32x32.png",
+			"icons/128x128.png",
+			"icons/128x128@2x.png",
+			"icons/icon.icns",
+			"icons/icon.ico"
 		],
 		"license": "CC0",
 		"licenseFile": "LICENSE",

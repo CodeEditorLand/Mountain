@@ -10,16 +10,15 @@ tauri-build = { version = "2.1.1", features = [] }
 toml = { workspace = true }
 
 [dependencies]
-Echo = { workspace = true }
 async-trait = { workspace = true }
+colored = "3.0.0"
+Echo = { workspace = true }
+env_logger = "0.11.8"
 futures = { workspace = true }
+log = "0.4.27"
 regex = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
-tokio = { workspace = true }
-tokio-tungstenite = { workspace = true }
-unbug = { workspace = true }
-
 tauri = { version = "2.5.1", features = [
 	"wry",
 	"tray-icon",
@@ -27,9 +26,9 @@ tauri = { version = "2.5.1", features = [
 	"rustls-tls",
 	"compression",
 ], default-features = false, git = "https://github.com/tauri-apps/tauri", branch = "feat/mobile-dev-cert" }
-env_logger = "0.11.8"
-log = "0.4.27"
-colored = "3.0.0"
+tokio = { workspace = true }
+tokio-tungstenite = { workspace = true }
+unbug = { workspace = true }
 
 [features]
 Debug = []
