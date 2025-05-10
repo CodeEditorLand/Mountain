@@ -575,11 +575,12 @@ Licence permits this parallel availability without conflict).
       LPL permits its code to be distributed under terms that MPL 2.0 requires
       for such combinations.
 
-**Process for Official Compatibility Declarations:** Land, as the steward of the
-LPL, may from time to time publish official statements or updates to this
-Appendix detailing specific licenses deemed compatible and the precise
-conditions for such compatibility. Such official statements will supersede the
-illustrative nature of this initial Appendix.
+**Process for Official Compatibility Declarations:**
+
+Land, as the steward of the LPL, may from time to time publish official
+statements or updates to this Appendix detailing specific licenses deemed
+compatible and the precise conditions for such compatibility. Such official
+statements will supersede the illustrative nature of this initial Appendix.
 
 **Note on Permissive Licenses as External Works:** As stated in Article 5
 ("Compatibility" - "Inbound"), External Works licensed under common permissive
