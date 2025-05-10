@@ -22,7 +22,7 @@ You and the Licensor and any Contributors.
 
 ---
 
-This Land Public Licence (the ‘Licence’ or ‘LPL’) applies to the Work (as
+This Land Public Licence (the `Licence` or `LPL`) applies to the Work (as
 defined below) which is provided under the terms of this Licence. Any use of the
 Work, other than as authorised under this Licence or by applicable copyright law
 (such as fair use, fair dealing, or other statutory exceptions), is prohibited.
@@ -43,89 +43,98 @@ or its designated successor).
 
 In this Licence, the following terms have the following meaning:
 
-— ‘The Licence’ or ‘LPL’: This Land Public Licence v. 1.0, including its
-Preamble and any Appendices, which are incorporated herein by reference. —
-‘Land’: The project or organization acting as steward for this Licence,
-currently based in Sofia, Bulgaria, or its designated successor. — ‘The Original
-Work’: The initial version of the work or software distributed or communicated
-by the Licensor under this Licence. — ‘Modifications’: Any addition to, deletion
-from, or change to the substance or structure of the Original Work or any
-previous LPL-licensed Modifications. When the Work licensed under the LPL
-consists of changes made to a pre-existing work licensed under different terms
-(an "External Work"), "Modifications" refer specifically to these LPL-licensed
-changes, which are distinct from the External Work. — ‘Derivative Works’: Works
-created by the Licensee that are based upon, and which would, in the absence of
-this Licence, constitute an infringement of the copyright in, the Original Work
-or LPL-licensed Modifications thereof under Applicable Law. — ‘The Work’: The
-Original Work, its LPL-licensed Modifications, or its LPL-licensed Derivative
-Works, as the context requires, that are licensed under this LPL. The
-obligations of this Licence, particularly the Copyleft provisions in Article 5,
-apply only to The Work and not to any External Work with which The Work may be
-combined, except as expressly stated herein or as mandated by Applicable Law. —
-‘External Work’: A pre-existing work or software, licensed under terms other
-than this LPL, to which the Work (when it consists of LPL-licensed
-Modifications) has been applied or with which it may be combined. The External
-Work is governed by its own separate license terms. — ‘The Combined Work’: The
-result of combining, linking (statically or dynamically), or integrating the
-Work with an External Work, or with any other software, where the Work remains
-an identifiable component governed by this LPL, and such combination does not,
-by itself under Applicable Law (absent the specific terms of this Licence
-attempting to define this boundary), necessarily create a single, inseparable
-derivative work of the External Work that would mandate relicensing of the
-External Work under copyright doctrines. _(This definition attempts to align
-with the intent of Art. 5 but is subject to legal interpretation of copyright
-law)._ — ‘The Source Code’ (also referred to as ‘Corresponding Source’): The
-human-readable form of the Work which is the most convenient for people to study
-and modify. It includes all modules the Work contains, plus any associated
-interface definition files, scripts used to control compilation and installation
-of the Executable Code, or other materials necessary to generate, install, and
-run the Executable Code from the Source Code. For an Executable Code form of the
-Work, "Source Code" means all the Source Code needed to generate, install, and
-(for an executable work) run the object code and to modify the Work, including
-scripts to control those activities. It does not include parts of the operating
-system on which the Work runs, nor system libraries, nor general-purpose tools
-or generally available free programs which are used unmodified in performing
-those activities but which are not part of the Work. — ‘The Executable Code’:
-Any code pertaining to the Work which has generally been compiled or processed
-into a form primarily intended to be interpreted or executed by a computer as a
-program. — ‘The Licensor’: The natural or legal person that holds the copyright
-to the Original Work or initial LPL-licensed Modifications and is the first to
-distribute or communicate them under this Licence. — ‘Contributor(s)’: Any
-natural or legal person, other than the Licensor, who creates or contributes
-LPL-licensed Modifications or otherwise contributes to the creation of
-LPL-licensed Derivative Works and distributes or communicates them under this
-Licence. — ‘The Licensee’ or ‘You’: Any natural or legal person who makes any
-usage of the Work under the terms of this Licence. — ‘Distribution’ or
-‘Communication’: Any act of selling, giving, lending, renting, distributing,
-communicating, transmitting, or otherwise making available, online or offline,
-copies of the Work or providing access to its essential functionalities at the
-disposal of any other natural or legal person. — ‘Patent Claims’: Means any
-patent claim, now owned or hereafter acquired, including without limitation,
-method, process, and apparatus claims, in any patent Licensable by Licensor or
-Contributor that would be infringed by making, using, selling, offering for
-sale, or importing the Work or any portion thereof as it exists when Licensable
-by said Licensor or Contributor, in the form provided by that Licensor or
-Contributor. — ‘Licensable’: Means having the right to grant, to the maximum
-extent possible, whether at the time of the initial grant or subsequently
-acquired, any and all of the rights conveyed herein. — ‘Applicable Law’: The law
-stipulated in Article 15.
+- `The Licence` or `LPL`: This Land Public Licence v. 1.0, including its
+  Preamble and any Appendices, which are incorporated herein by reference.
+- `Land`: The project or organization acting as steward for this Licence,
+  currently based in Sofia, Bulgaria, or its designated successor.
+- `The Original Work`: The initial version of the work or software distributed
+  or communicated by the Licensor under this Licence.
+- `Modifications`: Any addition to, deletion from, or change to the substance or
+  structure of the Original Work or any previous LPL-licensed Modifications.
+  When the Work licensed under the LPL consists of changes made to a
+  pre-existing work licensed under different terms (an "External Work"),
+  "Modifications" refer specifically to these LPL-licensed changes, which are
+  distinct from the External Work.
+- `Derivative Works`: Works created by the Licensee that are based upon, and
+  which would, in the absence of this Licence, constitute an infringement of the
+  copyright in, the Original Work or LPL-licensed Modifications thereof under
+  Applicable Law.
+- `The Work`: The Original Work, its LPL-licensed Modifications, or its
+  LPL-licensed Derivative Works, as the context requires, that are licensed
+  under this LPL. The obligations of this Licence, particularly the Copyleft
+  provisions in Article 5, apply only to The Work and not to any External Work
+  with which The Work may be combined, except as expressly stated herein or as
+  mandated by Applicable Law.
+- `External Work`: A pre-existing work or software, licensed under terms other
+  than this LPL, to which the Work (when it consists of LPL-licensed
+  Modifications) has been applied or with which it may be combined. The External
+  Work is governed by its own separate license terms.
+- `The Combined Work`: The result of combining, linking (statically or
+  dynamically), or integrating the Work with an External Work, or with any other
+  software, where the Work remains an identifiable component governed by this
+  LPL, and such combination does not, by itself under Applicable Law (absent the
+  specific terms of this Licence attempting to define this boundary),
+  necessarily create a single, inseparable derivative work of the External Work
+  that would mandate relicensing of the External Work under copyright doctrines.
+  _(This definition attempts to align with the intent of Art. 5 but is subject
+  to legal interpretation of copyright law)._
+- `The Source Code` (also referred to as `Corresponding Source`): The
+  human-readable form of the Work which is the most convenient for people to
+  study and modify. It includes all modules the Work contains, plus any
+  associated interface definition files, scripts used to control compilation and
+  installation of the Executable Code, or other materials necessary to generate,
+  install, and run the Executable Code from the Source Code. For an Executable
+  Code form of the Work, "Source Code" means all the Source Code needed to
+  generate, install, and (for an executable work) run the object code and to
+  modify the Work, including scripts to control those activities. It does not
+  include parts of the operating system on which the Work runs, nor system
+  libraries, nor general-purpose tools or generally available free programs
+  which are used unmodified in performing those activities but which are not
+  part of the Work.
+- `The Executable Code`: Any code pertaining to the Work which has generally
+  been compiled or processed into a form primarily intended to be interpreted or
+  executed by a computer as a program.
+- `The Licensor`: The natural or legal person that holds the copyright to the
+  Original Work or initial LPL-licensed Modifications and is the first to
+  distribute or communicate them under this Licence.
+- `Contributor(s)`: Any natural or legal person, other than the Licensor, who
+  creates or contributes LPL-licensed Modifications or otherwise contributes to
+  the creation of LPL-licensed Derivative Works and distributes or communicates
+  them under this Licence.
+- `The Licensee` or `You`: Any natural or legal person who makes any usage of
+  the Work under the terms of this Licence.
+- `Distribution` or `Communication`: Any act of selling, giving, lending,
+  renting, distributing, communicating, transmitting, or otherwise making
+  available, online or offline, copies of the Work or providing access to its
+  essential functionalities at the disposal of any other natural or legal
+  person.
+- `Patent Claims`: Means any patent claim, now owned or hereafter acquired,
+  including without limitation, method, process, and apparatus claims, in any
+  patent Licensable by Licensor or Contributor that would be infringed by
+  making, using, selling, offering for sale, or importing the Work or any
+  portion thereof as it exists when Licensable by said Licensor or Contributor,
+  in the form provided by that Licensor or Contributor.
+- `Licensable`: Means having the right to grant, to the maximum extent possible,
+  whether at the time of the initial grant or subsequently acquired, any and all
+  of the rights conveyed herein.
+- `Applicable Law`: The law stipulated in Article 15.
 
 ## 2\. Scope of the rights granted by the Licence
 
 2.1. **Copyright Grant**: The Licensor hereby grants You a worldwide,
 royalty-free, non-exclusive, sublicensable licence to do the following, for the
-duration of copyright vested in the Work: — use the Work in any circumstance and
-for all usage, — reproduce the Work, — create Modifications and Derivative Works
-based upon the Work, — communicate to the public, including the right to make
+duration of copyright vested in the Work: - use the Work in any circumstance and
+for all usage, - reproduce the Work, - create Modifications and Derivative Works
+based upon the Work, - communicate to the public, including the right to make
 available or display the Work or copies thereof to the public and perform
-publicly, as the case may be, the Work, — distribute the Work or copies thereof,
-— lend and rent the Work or copies thereof, — sublicense rights in the Work or
-copies thereof, provided that any such sublicense is made under the terms and
-conditions of this LPL and imposes no further restrictions on the sublicensee
-than are contained herein. These rights can be exercised on any media, supports
-and formats, whether now known or later invented, as far as Applicable Law
-permits so. In countries where moral rights apply, the Licensor and each
-Contributor waive their right to exercise their moral rights over their
+publicly, as the case may be, the Work, - distribute the Work or copies
+thereof, - lend and rent the Work or copies thereof, - sublicense rights in the
+Work or copies thereof, provided that any such sublicense is made under the
+terms and conditions of this LPL and imposes no further restrictions on the
+sublicensee than are contained herein. These rights can be exercised on any
+media, supports and formats, whether now known or later invented, as far as
+Applicable Law permits so. In countries where moral rights apply, the Licensor
+and each Contributor waive their right to exercise their moral rights over their
 respective contributions to the Work to the extent allowed by law in order to
 make effective the licence of the economic rights listed above.
 
