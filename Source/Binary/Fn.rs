@@ -53,7 +53,7 @@ pub fn Fn() {
 						tauri::WebviewUrl::App(std::path::PathBuf::from("Application/index.html")),
 					)
 					.use_https_scheme(true)
-					.content_protected(true)
+					// .content_protected(true)
 					.zoom_hotkeys_enabled(true)
 					.browser_extensions_enabled(false);
 
