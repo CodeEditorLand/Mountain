@@ -16,6 +16,8 @@
 //   given key path.
 // - Performing a simplified merge of user and workspace/folder configurations.
 // - Sending notifications to Cocoon when configuration changes.
+// - Providing a document selector matching utility with glob support via
+//   `globset`, noting limitations for complex relative/base-URI patterns.
 //
 // Key Interactions:
 // - Called by `environment.rs` (ConfigProvider/ConfigInspector
@@ -29,8 +31,8 @@
 
 use std::{
 	path::{Path, PathBuf},
-	// Arc is not strictly needed here if these are pure helpers called by environment,
-	// but kept from original snippet if there was a reason.
+
+	// Kept from original, though direct use here might be minimal for pure helpers
 	sync::Arc,
 };
 
@@ -38,7 +40,11 @@ use Land_Common::{
 	config_effects::{ConfigurationTarget, IConfigurationOverrides},
 	errors::CommonError,
 };
+// For document selector matching
+use globset::{Error as GlobsetError, Glob, GlobBuilder, GlobMatcher};
 use log::{debug, error, info, trace, warn};
+// For DocumentFilterDto
+use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use tauri::{AppHandle, Manager, Runtime as TauriRuntime};
 // Explicitly use tokio::fs
@@ -48,19 +54,23 @@ use url::Url;
 use crate::{
 	// For updating AppState.configuration
 	app_state::{AppState, ConfigurationState},
+
 	vine,
 };
 
-// --- Helper: Error Creation ---
+// --- Helper: Error Creation & Mapping ---
 fn config_error(operation:&str, message:String) -> CommonError {
 	error!("[ConfigHelpers] Error during {}: {}", operation, message);
 
 	match operation {
 		"path_resolution" => CommonError::ConfigUpdate("path_resolution".to_string(), message),
+
 		"load" => CommonError::ConfigLoad(message),
+
 		"write" | "serialize" | "create_dir" | "create_dir_check" => {
 			CommonError::ConfigUpdate(operation.to_string(), message)
 		},
+
 		_ => CommonError::Unknown(format!("Config operation '{}' failed: {}", operation, message)),
 	}
 }
@@ -77,9 +87,13 @@ fn map_lock_error<T>(e:std::sync::PoisonError<std::sync::MutexGuard<'_, T>>) -> 
 /// in MVP path resolution.
 pub fn get_config_path_for_target<R:TauriRuntime>(
 	app_handle:&AppHandle<R>,
+
 	app_state:&AppState,
+
 	target:ConfigurationTarget,
+
 	overrides:&IConfigurationOverrides,
+
 	_scope_to_language:bool,
 ) -> Result<PathBuf, CommonError> {
 	trace!(
@@ -106,6 +120,7 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 
 			Ok(user_settings_path)
 		},
+
 		ConfigurationTarget::WORKSPACE => {
 			let config_path_guard = app_state.workspace_config_path.lock().map_err(map_lock_error)?;
 
@@ -124,6 +139,7 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 
 			Ok(ws_path)
 		},
+
 		ConfigurationTarget::WORKSPACE_FOLDER => {
 			let resource_uri_val = overrides.resource.as_ref().ok_or_else(|| {
 				config_error(
@@ -143,8 +159,6 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 								.unwrap_or_else(|_| p_str.to_string())
 						} else {
 							p_str.to_string()
-							// if relative, might be problematic. Assume
-							// absolute or full external URI for now.
 						}
 					})
 				})
@@ -196,6 +210,7 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 
 			Ok(folder_settings_path)
 		},
+
 		_ => {
 			warn!(
 				"[ConfigHelpers] ConfigurationTarget {:?} path resolution not implemented for general settings update.",
@@ -229,6 +244,7 @@ pub async fn load_json_file_if_exists_or_default(path:&Path) -> Result<Value, Co
 					.map_err(|e| config_error("load", format!("JSON parse failed for {}: {}", path.display(), e)))
 			}
 		},
+
 		Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
 			debug!(
 				"[ConfigHelpers Io] File not found, returning default empty JSON object: {}",
@@ -237,6 +253,7 @@ pub async fn load_json_file_if_exists_or_default(path:&Path) -> Result<Value, Co
 
 			Ok(json!({}))
 		},
+
 		Err(e) => Err(config_error("load", format!("File read failed for {}: {}", path.display(), e))),
 	}
 }
@@ -269,11 +286,9 @@ pub async fn write_json_file(path:&Path, value:&Value) -> Result<(), CommonError
 	let content = serde_json::to_string_pretty(value)
 		.map_err(|e| config_error("serialize", format!("Failed to serialize JSON for {}: {}", path.display(), e)))?;
 
-	// Use tokio::fs::File for async operations
-	let mut file = fs::File::create(path).await.map_err(|e| {
-		// Use qualified fs::File
-		config_error("write", format!("Failed to create/open for writing {}: {}", path.display(), e))
-	})?;
+	let mut file = fs::File::create(path)
+		.await
+		.map_err(|e| config_error("write", format!("Failed to create/open for writing {}: {}", path.display(), e)))?;
 
 	file.write_all(content.as_bytes())
 		.await
@@ -299,15 +314,12 @@ pub fn update_json_value_at_path(target_value:&mut Value, key_path:&str, value_t
 	let parts:Vec<&str> = key_path.split('.').collect();
 
 	if parts.is_empty() || (parts.len() == 1 && parts[0].is_empty()) {
-		// Handle empty or "." key_path
 		warn!(
 			"[ConfigHelpers Json] Attempted to update with empty or invalid key path: '{}'. Doing nothing.",
 			key_path
 		);
 
 		if key_path.is_empty() && target_value.is_object() && !value_to_set.is_null() && value_to_set.is_object() {
-			// If key_path is empty, replace the whole target_value if it's an object and
-			// value_to_set is an object
 			debug!("[ConfigHelpers Json] Empty key path, replacing entire object.");
 
 			*current = value_to_set;
@@ -322,7 +334,6 @@ pub fn update_json_value_at_path(target_value:&mut Value, key_path:&str, value_t
 		let part_key = part_str.to_string();
 
 		if part_key.is_empty() {
-			// Skip empty segments if "a..b" was passed
 			warn!("[ConfigHelpers Json] Empty segment in key path '{}', skipping.", key_path);
 
 			continue;
@@ -366,11 +377,11 @@ pub fn update_json_value_at_path(target_value:&mut Value, key_path:&str, value_t
 /// and performs a simplified merge for MVP.
 pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 	app_handle:&AppHandle<R>,
+
 	app_state:&AppState,
 ) -> Result<ConfigurationState, CommonError> {
 	info!("[ConfigHelpers Merge] Loading and merging all configurations...");
 
-	// 1. User Configuration (User Local)
 	let user_config_path = get_config_path_for_target(
 		app_handle,
 		app_state,
@@ -387,7 +398,6 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 		user_config_path.display()
 	);
 
-	// 2. Workspace Configuration (if a .code-workspace file is open)
 	let workspace_config_path_opt = app_state.workspace_config_path.lock().map_err(map_lock_error)?.clone();
 
 	if let Some(ws_config_path) = workspace_config_path_opt {
@@ -425,7 +435,6 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 		trace!("[ConfigHelpers Merge] No .code-workspace file configured.");
 	}
 
-	// 3. Workspace Folder Settings (merged for all folders)
 	let folders_guard = app_state.workspace_folders.lock().map_err(map_lock_error)?;
 
 	for folder_state in folders_guard.iter() {
@@ -482,24 +491,17 @@ fn merge_json_values(target:&mut Value, source:&Value) {
 	match (target, source) {
 		(Value::Object(target_map), Value::Object(source_map)) => {
 			for (key, source_val) in source_map {
-				// Get a mutable entry for the key. If it exists, merge into it. If not, insert
-				// source_val cloned.
 				let target_entry = target_map.entry(key.clone()).or_insert_with(|| source_val.clone());
 
-				// If both are objects, recurse. Otherwise, the or_insert_with or subsequent
-				// assignment handles it.
 				if target_entry.is_object() && source_val.is_object() {
 					merge_json_values(target_entry, source_val);
 				} else {
-					// If target_entry was newly inserted or not an object, source_val (already
-					// cloned) is used. If target_entry existed and was not an object, it's
-					// overwritten by source_val.
 					*target_entry = source_val.clone();
 				}
 			}
 		},
+
 		(target_val, source_val) => {
-			// Source is not an object or target is not an object: source overwrites target.
 			*target_val = source_val.clone();
 		},
 	}
@@ -529,39 +531,26 @@ pub async fn notify_config_changed_for_keys<R:TauriRuntime>(app_handle:&AppHandl
 
 		let effective_config = config_guard.data.clone();
 
-		// Construct IConfigurationInitData structure based on VS Code's
-		// extHost.protocol.ts
 		let config_init_data_dto = json!({
+
 			"effective": effective_config,
-			 // Placeholder
+
 			"defaults": { "contents": {} },
-			 // Placeholder
+
 			"user": { "contents": {} },
-			// Placeholder
+
 			"workspace": { "contents": {} },
-			 // Placeholder
+
 			"folders": [],
-			 // Placeholder
+
 			"memory": { "contents": {} },
-			 // Placeholder
+
 			"policy": Value::Null,
-			 // Placeholder
+
 			"configurationScopes": []
 		});
 
-		// Construct IConfigurationChange structure
-		let change_event_dto = json!({
-
-			"keys": affected_keys,
-			 // Placeholder for MVP
-			"overrides": [],
-			 // Example, actual target depends on what changed
-			// "target": ConfigurationTarget::USER_LOCAL as u32,
-			 // Example
-			// "source": ConfigurationTarget::USER_LOCAL as u32,
-			 // Example
-			// "sourceUri": "file:///path/to/settings.json"
-		});
+		let change_event_dto = json!({ "keys": affected_keys, "overrides": [] });
 
 		(config_init_data_dto, change_event_dto)
 	};
@@ -590,41 +579,189 @@ pub async fn notify_config_changed_for_keys<R:TauriRuntime>(app_handle:&AppHandl
 	}
 }
 
-// Crude selector match for MVP - replace with robust VS Code like logic.
-// This is placed here as `language_feature_effects` might need it, and it's a
-// config-like utility. However, a better location might be a shared `utils`
-// module or specific to language features.
-pub fn crude_selector_match(selector_val:&Value, document_uri:&Url, language_id:&str) -> bool {
-	if let Some(selector_str) = selector_val.as_str() {
-		// Simple language ID string
-		return selector_str == language_id || selector_str == "*";
+// DocumentFilter DTO
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DocumentFilterDto {
+	pub language:Option<String>,
+
+	pub scheme:Option<String>,
+
+	pub pattern:Option<String>,
+
+	// UriComponents expected
+	pub base_uri:Option<Value>,
+}
+
+/// Document Selector matching utility using `globset`.
+///
+/// `selector_val`: A `serde_json::Value` representing a `DocumentSelector`.
+/// `document_uri`: The URI of the document to match.
+/// `language_id`: The language ID of the document.
+///
+/// **Current Limitations & TODOs for Glob Patterns:**
+/// - **Base URI Handling:** If `filter.base_uri` is present in a
+///   `DocumentFilterDto`, the `pattern` should ideally be resolved relative to
+///   this base URI before matching against a path derived from `document_uri`.
+///   This is not yet implemented.
+/// - **Workspace-Relative Globs:** If a `pattern` is relative (e.g.,
+///
+///   "src/**/*.ts") and no `base_uri` is specified, VS Code often attempts to
+///   match it against paths relative to each workspace folder root. This
+///   advanced multi-root relative matching is not yet implemented.
+/// - **Current Behavior:** This function primarily matches glob patterns
+///   against the `document_uri.path()` (the full, percent-decoded path). This
+///   works well for:
+///     - Absolute path globs (e.g., `/project/src/**/*.ts`).
+///     - Globs that match the end of a path (e.g., `**/*.ts`, `*.txt` if
+///       written as `**/*.txt`).
+pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_id:&str) -> bool {
+	trace!(
+		"[SelectorMatch] Selector: {:?}, Doc URI: '{}', Lang: '{}'",
+		selector_val.as_str().unwrap_or("<object/array>"),
+		document_uri.as_str(),
+		language_id
+	);
+
+	if let Some(selector_lang_id_str) = selector_val.as_str() {
+		let matches = selector_lang_id_str == language_id || selector_lang_id_str == "*";
+
+		trace!(
+			"[SelectorMatch] String selector '{}' vs lang '{}': {}",
+			selector_lang_id_str, language_id, matches
+		);
+
+		return matches;
 	}
 
 	if let Some(selector_array) = selector_val.as_array() {
-		// Array of filters or strings
-		return selector_array
+		// Any one filter in the array must match
+		let matches = selector_array
 			.iter()
-			.any(|s| crude_selector_match(s, document_uri, language_id));
+			.any(|s_filter| match_document_selector(s_filter, document_uri, language_id));
+
+		trace!("[SelectorMatch] Array selector result: {}", matches);
+
+		return matches;
 	}
 
-	if let Some(filter_obj) = selector_val.as_object() {
-		// DocumentFilter like object
-		if let Some(lang_filter) = filter_obj.get("language").and_then(Value::as_str) {
-			if lang_filter != language_id && lang_filter != "*" {
-				return false;
-			}
-		}
+	if selector_val.is_object() {
+		match serde_json::from_value::<DocumentFilterDto>(selector_val.clone()) {
+			Ok(filter) => {
+				trace!("[SelectorMatch] Parsed DocumentFilterDto: {:?}", filter);
 
-		if let Some(scheme_filter) = filter_obj.get("scheme").and_then(Value::as_str) {
-			if scheme_filter != document_uri.scheme() && scheme_filter != "*" {
-				return false;
-			}
-		}
+				// 1. Language Check
+				if let Some(filter_lang) = &filter.language {
+					if !(filter_lang == language_id || filter_lang == "*") {
+						trace!(
+							"[SelectorMatch] Language mismatch: filter='{}', doc='{}'",
+							filter_lang, language_id
+						);
 
-		// Ignoring pattern for MVP
-		// If checks passed or no relevant fields
-		return true;
+						return false;
+					}
+				}
+
+				trace!("[SelectorMatch] Language match success (or not specified).");
+
+				// 2. Scheme Check
+				if let Some(filter_scheme) = &filter.scheme {
+					if !(filter_scheme == document_uri.scheme() || filter_scheme == "*") {
+						trace!(
+							"[SelectorMatch] Scheme mismatch: filter='{}', doc='{}'",
+							filter_scheme,
+							document_uri.scheme()
+						);
+
+						return false;
+					}
+				}
+
+				trace!("[SelectorMatch] Scheme match success (or not specified).");
+
+				// 3. Pattern Check (Glob)
+				if let Some(filter_pattern_str) = &filter.pattern {
+					if filter.base_uri.is_some() {
+						warn!(
+							"[SelectorMatch] Glob pattern '{}' has a 'base_uri' specified, but base URI resolution \
+							 for globs is NOT YET IMPLEMENTED. Pattern will be matched against the full document path.",
+							filter_pattern_str
+						);
+					}
+
+					let path_to_match = document_uri.path();
+
+					trace!(
+						"[SelectorMatch] Glob: pattern='{}', attempting match against path='{}'",
+						filter_pattern_str, path_to_match
+					);
+
+					let mut glob_builder = GlobBuilder::new(filter_pattern_str);
+
+					if cfg!(windows) {
+						glob_builder.case_insensitive(true);
+					}
+
+					glob_builder.literal_separator(false);
+
+					match glob_builder.build() {
+						Ok(glob) => {
+							let matcher = glob.compile_matcher();
+
+							if !matcher.is_match(path_to_match) {
+								trace!(
+									"[SelectorMatch] Glob pattern '{}' DID NOT MATCH path '{}'",
+									filter_pattern_str, path_to_match
+								);
+
+								return false;
+							}
+
+							trace!(
+								"[SelectorMatch] Glob pattern '{}' MATCHED path '{}'",
+								filter_pattern_str, path_to_match
+							);
+						},
+
+						Err(e) => {
+							error!(
+								"[SelectorMatch] Invalid glob pattern syntax '{}': {}. Treating as non-match.",
+								filter_pattern_str, e
+							);
+
+							return false;
+						},
+					}
+				}
+
+				trace!("[SelectorMatch] Pattern match success (or not specified).");
+
+				info!(
+					"[SelectorMatch] Filter object MATCHED ALL CRITERIA for doc '{}', lang '{}': {:?}",
+					document_uri.as_str(),
+					language_id,
+					filter
+				);
+
+				return true;
+			},
+
+			Err(e) => {
+				warn!(
+					"[SelectorMatch] Failed to deserialize selector object into DocumentFilterDto: {:?}. Error: {}. \
+					 Treating as non-match.",
+					selector_val, e
+				);
+
+				return false;
+			},
+		}
 	}
+
+	warn!(
+		"[SelectorMatch] Unrecognized selector format (not string, array, or filter object), no match: {:?}",
+		selector_val
+	);
 
 	false
 }
