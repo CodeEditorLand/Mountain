@@ -24,7 +24,8 @@
 
 use std::sync::Arc;
 
-use Land_Common::runtime::{DefaultRuntime, Runtime}; // Assuming DefaultRuntime in Common
+// Assuming DefaultRuntime in Common
+use Land_Common::runtime::{DefaultRuntime, Runtime};
 
 use crate::environment::MountainEnvironment;
 
@@ -45,11 +46,12 @@ impl AppRuntime {
 	// Expose the run method
 	pub async fn run<E, Err, Out>(&self, effect:ActionEffect<E, Err, Out>) -> Result<Out, Err>
 	where
-		E: Environment + Send + Sync + 'static, // Ensure Env constraints match Effect
+		// Ensure Env constraints match Effect
+		E: Environment + Send + Sync + 'static,
 		Err: Send + Sync + 'static,
 		Out: Send + Sync + 'static,
-		MountainEnvironment: Requires<E>, // MountainEnv must provide what Effect needs
-	{
+		// MountainEnv must provide what Effect needs
+		MountainEnvironment: Requires<E>, {
 		// Delegate to the common runtime's run method
 		self.inner.run(effect).await
 	}
