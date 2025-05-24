@@ -7,5 +7,11 @@ fn main() { Binary::Fn::Fn(); }
 
 pub mod Binary;
 
+// NEW:
 pub mod app_state;
+
 pub mod environment;
+
+pub mod handlers {
+	pub mod commands;
+}

@@ -22,7 +22,8 @@
 //     handler function).
 //   - If proxied: Sends a request (`commands_executeContributedCommand`) via
 //     Vine to the owning sidecar to execute the command there.
-//   - Returns the result or error from the execution.
+//   - Returns the result or error (formatted using shared error utilities) from
+//     the execution.
 // - Providing functions to register native commands during Mountain startup
 //   (`register_native_command_internal`).
 // - Implementing the actual logic for native commands (e.g.,
@@ -31,58 +32,48 @@
 //
 // Key Interactions:
 // - Interacts heavily with `AppState` to access/modify the `command_registry`.
-// - Called by `track::dispatch_sidecar_request` for RPC methods.
+// - Called by `track::dispatch_sidecar_request` or `rpc.rs` for RPC methods.
 // - Called by `track::dispatch_command` (indirectly via effect) for execution.
-// - Uses `vine::send_request` to proxy command execution back to sidecars.
+// - Uses `vine::send_request_to_sidecar` to proxy command execution.
 // - Executes native command logic directly or via `ActionEffect`s using
 //   `AppRuntime`.
 // --------------------------------------------------------------------------------------------
 
 use std::{
 	collections::HashMap,
-
 	future::Future,
-
 	pin::Pin,
-
-	// Use standard Mutex
 	sync::{Arc, Mutex as StdMutex, MutexGuard},
 };
 
-// Assume Land_Common provides necessary effects if used by native handlers
-use Land_Common::{command_effects, ui_effects, workspace_effects};
-// Use log crate for logging
-use log;
+use Land_Common::{command_effects, errors::CommonError, ui_effects, workspace_effects};
+use log::{debug, error, info, trace, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window};
 
 use crate::{
-	// Import AppState and CommandHandler enum
 	app_state::{AppState, CommandHandler},
+
+	// Use the shared error utilities
+	handlers::error_utils,
 
 	runtime::AppRuntime,
 
-	// Track might not be needed directly if only called by it
-	track,
-
-	// Vine required for proxying back to sidecars
 	vine,
 };
 
 // --- Helper Functions ---
 
-/// Helper to create a structured error JSON string for handler results.
-fn create_handler_error_string(message:String, code:Option<&str>) -> String {
-	json!({ "message": message, "code": code.unwrap_or("EUNKNOWN") }).to_string()
-}
-
 /// Helper to map Mutex lock poisoning errors to the handler's error string
 /// format.
-fn map_lock_error<T>(e:std::sync::PoisonError<MutexGuard<'_, T>>) -> String {
-	create_handler_error_string(format!("Failed to acquire lock on command registry: {}", e), Some("ELOCKED"))
+fn map_app_state_lock_error_to_str<T>(e:std::sync::PoisonError<MutexGuard<'_, T>>, context:&str) -> String {
+	let common_err = CommonError::StateLock(format!("Failed to acquire lock on {}: {}", context, e));
+
+	error_utils::map_common_error_to_rpc_string(common_err, context)
 }
 
-// --- Request Handlers (Called by Track dispatcher for sidecar requests) ---
+// --- Request Handlers (Called by Track dispatcher or rpc.rs for
+// sidecar/frontend requests) ---
 
 /// Handles the `commands_registerCommand` request from a sidecar shim.
 /// Stores the association between the sidecar and the registered command ID.
@@ -96,19 +87,22 @@ pub async fn handle_register_command<R:TauriRuntime>(
 	let command_id = params
 		.get("id")
 		.and_then(|v| v.as_str())
-		.ok_or_else(|| create_handler_error_string("Missing or invalid 'id' parameter".to_string(), Some("EBADARG")))?
+		.ok_or_else(|| error_utils::rpc_param_error_string("handle_register_command", "id", "string", None))?
 		.to_string();
 
 	// Keep: Essential registration action log
-	log::info!("[Cmd Handler] Registering PROXY for '{}' from '{}'", command_id, sidecar_id);
+	info!("[Cmd Handler] Registering PROXY for '{}' from '{}'", command_id, sidecar_id);
 
 	let app_state = app.state::<AppState>();
 
-	let mut registry = app_state.command_registry.lock().map_err(map_lock_error)?;
+	let mut registry = app_state
+		.command_registry
+		.lock()
+		.map_err(|e| map_app_state_lock_error_to_str(e, "command_registry"))?;
 
 	// Keep: Warning for overwrite is useful
 	if registry.contains_key(&command_id) {
-		log::warn!(
+		warn!(
 			"[Cmd Handler] Warning: Command ID '{}' is already registered. Overwriting.",
 			command_id
 		);
@@ -124,11 +118,10 @@ pub async fn handle_register_command<R:TauriRuntime>(
 	);
 
 	// Keep: Confirmation of success
-	log::info!("[Cmd Handler] Command '{}' registered successfully in AppState.", command_id);
+	info!("[Cmd Handler] Command '{}' registered successfully in AppState.", command_id);
 
 	// TODO: Register ownership if implemented
 
-	// Success, void operation
 	Ok(Value::Null)
 }
 
@@ -137,35 +130,38 @@ pub async fn handle_register_command<R:TauriRuntime>(
 pub async fn handle_unregister_command<R:TauriRuntime>(
 	app:AppHandle<R>,
 
+	// Used for logging, potentially for ownership check in future
 	sidecar_id:String,
 
 	params:Value,
 ) -> Result<Value, String> {
-	let command_id = params
+	let command_id_str = params
 		.get("id")
 		.and_then(|v| v.as_str())
-		.ok_or_else(|| create_handler_error_string("Missing or invalid 'id' parameter".to_string(), Some("EBADARG")))?;
+		.ok_or_else(|| error_utils::rpc_param_error_string("handle_unregister_command", "id", "string", None))?;
 
 	// Keep: Essential unregistration action log
-	log::info!(
+	info!(
 		"[Cmd Handler] Unregistering command '{}' from sidecar '{}'",
-		command_id,
-		sidecar_id
+		command_id_str, sidecar_id
 	);
 
 	let app_state = app.state::<AppState>();
 
-	let mut registry = app_state.command_registry.lock().map_err(map_lock_error)?;
+	let mut registry = app_state
+		.command_registry
+		.lock()
+		.map_err(|e| map_app_state_lock_error_to_str(e, "command_registry"))?;
 
 	// TODO: Implement ownership check before removing.
 	// For now, simple removal:
 	// Keep: Confirmation or warning log
-	if registry.remove(command_id).is_some() {
-		log::info!("[Cmd Handler] Command '{}' unregistered.", command_id);
+	if registry.remove(command_id_str).is_some() {
+		info!("[Cmd Handler] Command '{}' unregistered.", command_id_str);
 
 		// TODO: Also remove from ownership map if implemented
 	} else {
-		log::warn!("[Cmd Handler] Command '{}' not found for unregistration.", command_id);
+		warn!("[Cmd Handler] Command '{}' not found for unregistration.", command_id_str);
 	}
 
 	// Success, void operation even if not found
@@ -177,14 +173,18 @@ pub async fn handle_unregister_command<R:TauriRuntime>(
 pub async fn handle_get_commands<R:TauriRuntime>(
 	app:AppHandle<R>,
 
-	// Keep runtime state injection if needed later
+	// Keep for signature consistency with other handlers
 	_runtime:State<'_, Arc<AppRuntime>>,
 ) -> Result<Value, String> {
-	// Reduced logging: log::trace!("[Cmd Handler] Handling getCommands request");
+	// Reduced logging from previous trace! to avoid noise for frequent calls
+	debug!("[Cmd Handler] Handling getCommands request");
 
 	let app_state = app.state::<AppState>();
 
-	let registry = app_state.command_registry.lock().map_err(map_lock_error)?;
+	let registry = app_state
+		.command_registry
+		.lock()
+		.map_err(|e| map_app_state_lock_error_to_str(e, "command_registry"))?;
 
 	let command_list:Vec<String> = registry.keys().cloned().collect();
 
@@ -212,20 +212,25 @@ pub async fn handle_execute_command<R:TauriRuntime>(
 	let command_id = params
 		.get("id")
 		.and_then(|v| v.as_str())
-		.ok_or_else(|| create_handler_error_string("Missing or invalid 'id' parameter".to_string(), Some("EBADARG")))?
+		.ok_or_else(|| error_utils::rpc_param_error_string("handle_execute_command", "id", "string", Some(0)))?
 		.to_string();
 
-	// Default to Null if missing
+	// Default to Null if "args" key is missing or not an array
 	let args = params.get("args").cloned().unwrap_or(Value::Null);
 
 	// Keep: Essential action log
-	log::info!("[Cmd Handler] Handling executeCommand '{}'", command_id);
+	info!("[Cmd Handler] Handling executeCommand '{}'", command_id);
+
+	trace!("[Cmd Handler] Args for {}: {:?}", command_id, args);
 
 	let app_state = app.state::<AppState>();
 
 	// Get handler info while holding lock briefly
 	let handler_info = {
-		let registry = app_state.command_registry.lock().map_err(map_lock_error)?;
+		let registry = app_state
+			.command_registry
+			.lock()
+			.map_err(|e| map_app_state_lock_error_to_str(e, "command_registry"))?;
 
 		registry.get(&command_id).cloned()
 		// Lock released
@@ -234,35 +239,35 @@ pub async fn handle_execute_command<R:TauriRuntime>(
 	match handler_info {
 		Some(CommandHandler::Native(native_handler_fn)) => {
 			// Keep: Distinguishes native execution path
-			log::debug!("[Cmd Handler] Found Native handler for '{}'. Executing...", command_id);
+			debug!("[Cmd Handler] Found Native handler for '{}'. Executing...", command_id);
 
+			// Pass runtime.inner().clone() which is Arc<AppRuntime>
 			native_handler_fn(app, window, runtime.inner().clone(), args).await
 		},
 
 		Some(CommandHandler::Proxied { sidecar_id, command_id: proxied_cmd_id }) => {
 			// Keep: Distinguishes proxied execution path
-			log::debug!(
-				"[Cmd Handler] Found Proxied handler for '{}'. Routing execution to sidecar '{}'",
-				proxied_cmd_id,
-				sidecar_id
+			debug!(
+				"[Cmd Handler] Found Proxied handler for '{}'. Routing to sidecar '{}'",
+				proxied_cmd_id, sidecar_id
 			);
 
 			let request_payload = json!({ "id": proxied_cmd_id, "args": args });
 
 			let sidecar_method = "commands_executeContributedCommand".to_string();
 
-			vine::send_request(&sidecar_id, sidecar_method, request_payload, false, 30000)
+			// Use the more specific vine::send_request_to_sidecar
+			// 30s timeout
+			vine::send_request_to_sidecar(&sidecar_id, sidecar_method, request_payload, 30000)
 				.await
 				.map_err(|e| {
-					log::error!(
+					error!(
 						"[Cmd Handler] Vine error routing command '{}' to sidecar '{}': {}",
-						command_id,
-						sidecar_id,
-						e
+						command_id, sidecar_id, e
 					);
 
-					create_handler_error_string(
-						format!("Failed to route command '{}' to sidecar '{}'", command_id, sidecar_id),
+					error_utils::rpc_error_string(
+						format!("Failed to route command '{}' to sidecar '{}': {}", command_id, sidecar_id, e),
 						Some("EIPC"),
 					)
 				})
@@ -270,13 +275,11 @@ pub async fn handle_execute_command<R:TauriRuntime>(
 
 		None => {
 			// Keep: Important error log
-			log::error!("[Cmd Handler] Command '{}' not found in registry.", command_id);
+			error!("[Cmd Handler] Command '{}' not found in registry.", command_id);
 
-			// Return structured error string
-			Err(create_handler_error_string(
+			Err(error_utils::rpc_error_string(
 				format!("Command '{}' not found.", command_id),
 				Some("ENOCMD"),
-				// Example custom code
 			))
 		},
 	}
@@ -290,6 +293,7 @@ pub fn handle_native_save_all<R:TauriRuntime>(
 
 	_window:Window<R>,
 
+	// Native handlers take Arc<AppRuntime> directly
 	runtime:Arc<AppRuntime>,
 
 	args:Value,
@@ -297,17 +301,23 @@ pub fn handle_native_save_all<R:TauriRuntime>(
 	Box::pin(async move {
 		let include_untitled = args.get(0).and_then(|v| v.as_bool()).unwrap_or(true);
 
-		log::info!("[Native Cmd] Executing saveAll (includeUntitled: {})", include_untitled);
+		info!("[Native Cmd] Executing saveAll (includeUntitled: {})", include_untitled);
 
 		let effect = workspace_effects::save_all(include_untitled);
 
-		runtime.run(effect).await.map(|_| Value::Null).map_err(|e| e.to_string())
+		// The save_all effect returns Vec<bool> indicating success of each save op
+		runtime
+			.run(effect)
+			.await
+			.map(|results_vec_bool| json!(results_vec_bool))
+			.map_err(|e| error_utils::map_common_error_to_rpc_string(e, "native_save_all"))
 	})
 }
 
 /// Native handler for `mountain.action.showAbout`. Runs the effect.
 pub fn handle_native_show_about<R:TauriRuntime>(
-	_app:AppHandle<R>,
+	// Use app_handle to get package_info for version
+	app_handle:AppHandle<R>,
 
 	_window:Window<R>,
 
@@ -316,31 +326,23 @@ pub fn handle_native_show_about<R:TauriRuntime>(
 	_args:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
-		log::info!("[Native Cmd] Executing showAbout");
+		info!("[Native Cmd] Executing showAbout");
 
-		let message = format!("Land Editor (Mountain)\nVersion: {}\nMore info...", env!("CARGO_PKG_VERSION"));
+		let version = app_handle.package_info().version.to_string();
 
+		let message = format!("Land Editor (Mountain)\nVersion: {}\nMore info at our website.", version);
+
+		// Assuming ui_effects::show_message takes options for buttons, etc.
+		// For a simple about dialog, no specific options might be needed if handled by
+		// frontend.
 		let effect = ui_effects::show_message("info".to_string(), message, None);
 
-		runtime.run(effect).await.map(|_| Value::Null).map_err(|e| e.to_string())
-	})
-}
-
-/// Placeholder native handler function.
-pub fn native_placeholder_handler<R:TauriRuntime>(
-	_app:AppHandle<R>,
-
-	_window:Window<R>,
-
-	_runtime:Arc<AppRuntime>,
-
-	args:Value,
-) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-	Box::pin(async move {
-		// Keep: Useful for seeing if placeholder was called
-		log::info!("[Native Cmd Placeholder] Executed with args: {:?}", args);
-
-		Ok(json!("Native Placeholder OK"))
+		// show_message effect returns Option<String> (selected button if any)
+		runtime
+			.run(effect)
+			.await
+			.map(|opt_str_result| json!(opt_str_result))
+			.map_err(|e| error_utils::map_common_error_to_rpc_string(e, "native_show_about"))
 	})
 }
 
@@ -365,14 +367,14 @@ pub fn register_native_command_internal<R:TauriRuntime + 'static>(
 ) {
 	// Keep: Warning for collisions
 	if registry.contains_key(&command_id) {
-		log::warn!(
+		warn!(
 			"[Cmd Registry Init] Warning: Native command ID '{}' collision during registration.",
 			command_id
 		);
 	}
 
 	// Keep: Log registration during init
-	log::info!("[Cmd Registry Init] Registered native command: {}", command_id);
+	info!("[Cmd Registry Init] Registered native command: {}", command_id);
 
 	registry.insert(command_id, CommandHandler::Native(handler));
 }
