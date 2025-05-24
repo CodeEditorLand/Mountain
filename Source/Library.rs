@@ -50,6 +50,8 @@ pub mod handlers {
 	pub mod error_utils;
 
 	pub mod extension_status;
+
+	pub mod sky_ui_responses;
 }
 
 pub mod Entry;
