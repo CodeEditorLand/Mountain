@@ -7,24 +7,31 @@
 // (Sky).
 //
 // Responsibilities:
-// - Handling `$changeMany` RPC calls.
-// - Handling `$clear` RPC calls.
-// - Storing diagnostics state in `AppState`.
-// - Emitting Tauri events (`diagnostics_changed`) to notify Sky.
-// - Handling `$getDiagnostics` RPC calls.
+// - Handling `$changeMany` RPC calls to update or set diagnostics for multiple
+//   resources from a specific owner.
+// - Handling `$clear` RPC calls to remove all diagnostics for a specific owner.
+// - Storing diagnostics state in `AppState.diagnostics_map` (Map<owner,
+
+//   Map<uri_string, Vec<MarkerData>>>).
+// - Emitting Tauri events (`diagnostics_changed`) to notify Sky when
+//   diagnostics are updated, so the UI can refresh.
+// - Handling `$getDiagnostics` RPC calls to retrieve aggregated diagnostics,
+
+//   optionally filtered by resource URI.
 //
 // Key Interactions:
 // - Called by `track::dispatch_sidecar_request` (or effects if these become
 //   effects).
 // - Interacts with `AppState` to read/write `diagnostics_map`.
-// - Uses `serde_json` to deserialize `MarkerData`.
+// - Uses `serde_json` to deserialize `MarkerData` and `RelatedInformation`
+//   DTOs.
 // - Emits Tauri events via `AppHandle::emit_all`.
 // --------------------------------------------------------------------------------------------
 
 use std::{
 	collections::HashMap,
 
-	// StdMutex used if AppState field is direct
+	// StdMutex used for AppState.diagnostics_map
 	sync::{Arc, Mutex as StdMutex, MutexGuard},
 };
 
@@ -38,28 +45,46 @@ use crate::{app_state::AppState, handlers::error_utils};
 
 // --- Helper Functions ---
 
-/// Helper to map Mutex lock poisoning errors for diagnostics state.
-fn map_diag_lock_error_to_str<T>(e:std::sync::PoisonError<MutexGuard<'_, T>>) -> String {
+/// Formats a `PoisonError` resulting from a failed Mutex lock on the
+/// diagnostics state into a standardized RPC error string.
+///
+/// # Arguments
+/// * `e` - The `PoisonError` encountered.
+///
+/// # Returns
+/// A `String` containing a JSON-formatted RPC error.
+fn format_diagnostics_lock_error_for_rpc<T>(e:std::sync::PoisonError<MutexGuard<'_, T>>) -> String {
 	let msg = format!("Failed to acquire lock on diagnostics state: {}", e);
 
-	// Keep specific error log
+	// Keep specific error log for internal diagnostics
 	error!("[Diag Handler LockErr] {}", msg);
 
-	error_utils::rpc_error_string(msg, Some("ELOCKED"))
+	// Specific lock error code
+	error_utils::rpc_error_string(msg, Some("ELOCKED_DIAG"))
 }
 
-/// Helper to get a consistent string key from UriComponents Value received via
-/// JSON RPC. Primarily uses the 'external' property.
-fn get_uri_key_from_components(uri_components:&Value) -> Option<String> {
-	if let Some(ext) = uri_components.get("external").and_then(Value::as_str) {
-		return Some(ext.to_string());
+/// Helper to get a consistent string key (typically the `external` URI string)
+/// from a `serde_json::Value` representing `UriComponents` DTO.
+///
+/// This is used to key diagnostics by resource URI in the `AppState`.
+///
+/// # Arguments
+/// * `uri_components` - A `serde_json::Value` expected to be an object with at
+///   least an `external` field, or fallback to `scheme`, `authority`, `path`.
+///
+/// # Returns
+/// * `Some(String)` with the URI key if successful.
+/// * `None` if essential URI components are missing or not strings.
+fn get_uri_key_from_uri_components_dto(uri_components:&Value) -> Option<String> {
+	// Primary: Use the 'external' field which is the full URI string.
+	if let Some(ext_uri_str) = uri_components.get("external").and_then(Value::as_str) {
+		return Some(ext_uri_str.to_string());
 	}
 
-	// Fallback logic from the first snippet if 'external' isn't always guaranteed.
-	// However, VS Code's UriComponents DTO usually includes 'external'.
-	// For robustness, let's keep a minimal fallback if the primary isn't there.
+	// Fallback: Try to construct from scheme, authority, path if 'external' is
+	// missing. This is less common for VS Code DTOs but provides robustness.
 	warn!(
-		"[Diag Handler] URI components missing 'external' field, attempting fallback: {:?}",
+		"[Diag Helper] URI components DTO missing 'external' field, attempting fallback construction. DTO: {:?}",
 		uri_components
 	);
 
@@ -67,75 +92,116 @@ fn get_uri_key_from_components(uri_components:&Value) -> Option<String> {
 
 	let path = uri_components.get("path").and_then(Value::as_str)?;
 
+	// Authority can be empty for 'file' URIs, default to empty string if missing.
 	let authority = uri_components.get("authority").and_then(Value::as_str).unwrap_or("");
 
 	Some(format!("{}://{}{}", scheme, authority, path))
 }
 
-// --- Data Structures ---
+// --- Data Structures (DTOs matching VS Code's `markers.ts`) ---
 
-// Structure matching vs/platform/markers/common/markers.ts:IMarkerData
+/// Represents a diagnostic marker (problem, warning, info, hint).
+/// Matches `vscode.IMarkerData` (src/vs/platform/markers/common/markers.ts).
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct MarkerData {
-	// Can be string or { value: string, target: UriComponents }
+	/// The owner of the marker (e.g., "typescript", "eslint"). This field seems
+	/// to be part of the `$changeMany` call's top-level args, not per marker
+	/// here. The `source` field below is more common per marker.
+	// This is usually at a higher level in $changeMany
+	// owner: Option<String>,
+
+	/// A code associated with the marker, which can be a string or an object
+	/// `{ value: string, target: UriComponents }` (e.g., for a link to
+	/// documentation).
 	pub code:Option<Value>,
 
-	// Error=8, Warn=4, Info=2, Hint=1
+	/// Severity of the marker (Error=8, Warning=4, Info=2, Hint=1).
+	/// Matches `vscode.MarkerSeverity`.
 	pub severity:u32,
 
 	pub message:String,
 
+	/// The source of the marker (e.g., "tslint", "eslint").
 	pub source:Option<String>,
 
 	#[serde(rename = "startLineNumber")]
-	pub start_line_number:u32,
+	// 1-based
+	pub start_line_number: u32,
 
 	#[serde(rename = "startColumn")]
-	pub start_column:u32,
+	// 1-based
+	pub start_column: u32,
 
 	#[serde(rename = "endLineNumber")]
-	pub end_line_number:u32,
+	// 1-based
+	pub end_line_number: u32,
 
 	#[serde(rename = "endColumn")]
-	pub end_column:u32,
+	// 1-based
+	pub end_column: u32,
 
+	/// Optional version ID of the document model this marker applies to.
 	#[serde(rename = "modelVersionId")]
 	pub model_version_id:Option<u64>,
 
+	/// Optional related information, like quick fixes or secondary locations.
 	#[serde(rename = "relatedInformation")]
 	pub related_information:Option<Vec<RelatedInformation>>,
 
-	// Unnecessary=1, Deprecated=2
+	/// Optional tags indicating special properties (e.g., Unnecessary=1,
+	///
+	///
+	///
+	/// Deprecated=2). Matches `vscode.MarkerTag`.
 	pub tags:Option<Vec<u32>>,
 }
 
-// Structure matching vs/platform/markers/common/markers.ts:IRelatedInformation
+/// Represents related information for a `MarkerData`.
+/// Matches `vscode.IRelatedInformation`
+/// (src/vs/platform/markers/common/markers.ts).
 #[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct RelatedInformation {
-	// UriComponents JSON Value
+	/// The resource URI for this related information (as `UriComponents` JSON
+	/// Value).
 	pub resource:Value,
 
 	pub message:String,
 
 	#[serde(rename = "startLineNumber")]
-	pub start_line_number:u32,
+	// 1-based
+	pub start_line_number: u32,
 
 	#[serde(rename = "startColumn")]
-	pub start_column:u32,
+	// 1-based
+	pub start_column: u32,
 
 	#[serde(rename = "endLineNumber")]
-	pub end_line_number:u32,
+	// 1-based
+	pub end_line_number: u32,
 
 	#[serde(rename = "endColumn")]
-	pub end_column:u32,
+	// 1-based
+	pub end_column: u32,
 }
 
 // --- RPC Handlers ---
 
-/// Handles the `$changeMany` RPC call from a diagnostics provider.
-/// Updates diagnostics state for multiple URIs for a given owner.
-/// Args: `[owner: string, entries: [uriComponents: Value, markers: MarkerData[]
-/// | null][]]`
+/// Handles the `$changeMany` RPC call from a diagnostics provider in Cocoon.
+///
+/// Updates or sets diagnostics for multiple resource URIs under a specific
+/// owner (e.g., "typescript"). If `markers` for an entry is `null` or an empty
+/// array, diagnostics for that URI and owner are cleared.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[owner: string, entries:
+///   [uriComponents: Value, markers: MarkerData[] | null][] ]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)` with a JSON-RPC error if parsing or state update fails.
 pub async fn handle_change_many<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let owner = args
 		.get(0)
@@ -147,82 +213,114 @@ pub async fn handle_change_many<R:Runtime>(app:AppHandle<R>, args:Value) -> Resu
 		.get(1)
 		.ok_or_else(|| error_utils::rpc_param_error_string("diagnostics_changeMany", "entries", "array", Some(1)))?;
 
-	let entries:Vec<(Value, Option<Vec<MarkerData>>)> = serde_json::from_value(entries_val.clone()).map_err(|e| {
-		error_utils::rpc_error_string(format!("Failed to parse 'entries' argument: {}", e), Some("EBADMSG"))
-	})?;
+	// Deserialize entries. Each entry is a tuple: (UriComponents DTO,
+
+	// Option<Vec<MarkerData DTO>>)
+	let entries_deserialized:Vec<(Value, Option<Vec<MarkerData>>)> = serde_json::from_value(entries_val.clone())
+		.map_err(|e| {
+			error_utils::rpc_error_string(
+				format!("Failed to parse 'entries' argument for $changeMany: {}", e),
+				Some("EBADMSG_DIAG_ENTRIES"),
+			)
+		})?;
 
 	// Keep: Log owner and number of entries summary
-	info!("[Diag Handler] changeMany owner='{}', {} entries", owner, entries.len());
+	info!(
+		"[Diag Handler] $changeMany: owner='{}', processing {} resource entries.",
+		owner,
+		entries_deserialized.len()
+	);
 
 	let app_state = app.state::<AppState>();
 
-	let mut changed_uris:Vec<String> = Vec::new();
+	// Store string keys of affected URIs
+	let mut changed_uri_keys:Vec<String> = Vec::new();
 
 	{
-		// Scope for the mutex lock
-		let mut all_owner_diags = app_state.diagnostics_map.lock().map_err(map_diag_lock_error_to_str)?;
+		// Scope for the AppState.diagnostics_map Mutex lock
+		let mut all_diagnostics_map_guard = app_state
+			.diagnostics_map
+			.lock()
+			.map_err(format_diagnostics_lock_error_for_rpc)?;
 
-		let resource_map = all_owner_diags.entry(owner.clone()).or_default();
+		// Get or create the map for the specific owner
+		let owner_specific_diagnostics_map = all_diagnostics_map_guard.entry(owner.clone()).or_default();
 
-		for (uri_components_val, markers_opt) in entries {
-			let uri_str = match get_uri_key_from_components(&uri_components_val) {
+		for (uri_components_dto, markers_opt) in entries_deserialized {
+			let uri_key_str = match get_uri_key_from_uri_components_dto(&uri_components_dto) {
 				Some(s) => s,
 
 				None => {
 					warn!(
-						"[Diag Handler] changeMany: Skipping entry for owner '{}' with invalid URI components: {:?}",
-						owner, uri_components_val
+						"[Diag Handler $changeMany] Skipping entry for owner '{}' due to invalid URI components: {:?}",
+						owner, uri_components_dto
 					);
 
+					// Skip this entry if URI is unparsable
 					continue;
 				},
 			};
 
-			changed_uris.push(uri_str.clone());
+			// Add to list of URIs whose diagnostics changed for this owner.
+			if !changed_uri_keys.contains(&uri_key_str) {
+				changed_uri_keys.push(uri_key_str.clone());
+			}
 
 			match markers_opt {
 				Some(markers) if !markers.is_empty() => {
-					// Log detailed marker info at trace level if needed
 					trace!(
-						"[Diag Handler] Setting {} markers for owner '{}', URI '{}'",
+						"[Diag Handler $changeMany] Setting {} markers for owner '{}', URI '{}'",
 						markers.len(),
 						owner,
-						uri_str
+						uri_key_str
 					);
 
-					resource_map.insert(uri_str, markers);
+					owner_specific_diagnostics_map.insert(uri_key_str, markers);
 				},
 
 				_ => {
-					// Clear markers (received null, undefined, or empty array)
-					trace!("[Diag Handler] Clearing markers for owner '{}', URI '{}'", owner, uri_str);
+					// Clear markers for this URI if markers_opt is None, or Some(empty_vec).
+					trace!(
+						"[Diag Handler $changeMany] Clearing markers for owner '{}', URI '{}'",
+						owner, uri_key_str
+					);
 
-					resource_map.remove(&uri_str);
+					owner_specific_diagnostics_map.remove(&uri_key_str);
 				},
 			}
 		}
 
-		// Clean up owner entry if they have no diagnostics left
-		if resource_map.is_empty() {
+		// If, after updates, an owner has no diagnostics left for any resource,
+
+		// remove the owner's entry from the main map to keep it clean.
+		if owner_specific_diagnostics_map.is_empty() {
 			info!(
-				"[Diag Handler] Owner '{}' has no more diagnostics, removing owner entry.",
+				"[Diag Handler $changeMany] Owner '{}' has no more diagnostics. Removing owner entry from map.",
 				owner
 			);
 
-			all_owner_diags.remove(&owner);
+			all_diagnostics_map_guard.remove(&owner);
 		}
 
-		// Lock released here
+		// Mutex lock released here
 	}
 
-	if !changed_uris.is_empty() {
-		let event_payload = json!({ "owner": owner, "uris": changed_uris });
+	// If any URIs were actually changed for this owner, emit an event.
+	if !changed_uri_keys.is_empty() {
+		// The payload should indicate which owner's diagnostics changed and for which
+		// URIs. Sky can then refetch diagnostics for these URIs or update its view.
+		// The actual diagnostic data is NOT sent in this event; Sky should query if
+		// needed.
+		let event_payload = json!({ "owner": owner, "uris": changed_uri_keys });
 
 		// Keep: Log the event being emitted
-		debug!("[Diag Handler] Emitting diagnostics_changed event: {:?}", event_payload);
+		debug!(
+			"[Diag Handler $changeMany] Emitting 'diagnostics_changed' event: {:?}",
+			event_payload
+		);
 
 		if let Err(e) = app.emit_all("diagnostics_changed", event_payload) {
-			error!("[Diag Handler] Failed to emit diagnostics_changed event: {}", e);
+			error!("[Diag Handler $changeMany] Failed to emit 'diagnostics_changed' event: {}", e);
 		}
 	}
 
@@ -230,8 +328,17 @@ pub async fn handle_change_many<R:Runtime>(app:AppHandle<R>, args:Value) -> Resu
 }
 
 /// Handles the `$clear` RPC call from a diagnostics provider.
-/// Removes all diagnostics associated with the specified owner.
-/// Args: `[owner: string]`
+///
+/// Removes all diagnostics associated with the specified `owner` across all
+/// resources.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[owner: string]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)` with a JSON-RPC error if parsing or state update fails.
 pub async fn handle_clear<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let owner = args
 		.get(0)
@@ -240,101 +347,189 @@ pub async fn handle_clear<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Val
 		.to_string();
 
 	// Keep: Clearing all is significant
-	info!("[Diag Handler] clear owner='{}'", owner);
+	info!(
+		"[Diag Handler] $clear: Attempting to clear all diagnostics for owner='{}'",
+		owner
+	);
 
 	let app_state = app.state::<AppState>();
 
-	let mut cleared_uris:Vec<String> = Vec::new();
+	let mut cleared_uri_keys:Vec<String> = Vec::new();
 
-	let owner_existed:bool;
+	let owner_had_diagnostics:bool;
 
 	{
-		// Scope lock
-		let mut all_owner_diags = app_state.diagnostics_map.lock().map_err(map_diag_lock_error_to_str)?;
+		// Scope for AppState.diagnostics_map Mutex lock
+		let mut all_diagnostics_map_guard = app_state
+			.diagnostics_map
+			.lock()
+			.map_err(format_diagnostics_lock_error_for_rpc)?;
 
-		if let Some(resource_map) = all_owner_diags.get(&owner) {
-			// Get URIs before removal
-			cleared_uris = resource_map.keys().cloned().collect();
+		// Check if the owner exists and get URIs before removal for notification
+		if let Some(owner_specific_diagnostics_map) = all_diagnostics_map_guard.get(&owner) {
+			cleared_uri_keys = owner_specific_diagnostics_map.keys().cloned().collect();
 		}
 
-		// Attempt to remove
-		owner_existed = all_owner_diags.remove(&owner).is_some();
+		// Attempt to remove the owner's entire entry. `remove` returns Some(value) if
+		// key existed.
+		owner_had_diagnostics = all_diagnostics_map_guard.remove(&owner).is_some();
 
-		// Lock released here
+		// Mutex lock released here
 	}
 
-	if owner_existed {
+	if owner_had_diagnostics {
 		// Keep: Confirmation log
-		info!("[Diag Handler] Cleared all diagnostics for owner '{}'.", owner);
+		info!(
+			"[Diag Handler $clear] Cleared all diagnostics for owner '{}'. Affected URIs (if any): {:?}",
+			owner, cleared_uri_keys
+		);
 
-		if !cleared_uris.is_empty() {
-			let event_payload = json!({ "owner": owner, "uris": cleared_uris });
+		// If specific URIs were affected (i.e., the owner had diagnostics for them),
+
+		// notify Sky.
+		if !cleared_uri_keys.is_empty() {
+			let event_payload = json!({ "owner": owner, "uris": cleared_uri_keys });
 
 			// Keep: Log the event being emitted
-			debug!("[Diag Handler] Emitting diagnostics_changed event (clear): {:?}", event_payload);
+			debug!(
+				"[Diag Handler $clear] Emitting 'diagnostics_changed' event (due to clear): {:?}",
+				event_payload
+			);
 
 			if let Err(e) = app.emit_all("diagnostics_changed", event_payload) {
-				error!("[Diag Handler] Failed to emit diagnostics_changed event after clear: {}", e);
+				error!(
+					"[Diag Handler $clear] Failed to emit 'diagnostics_changed' event after clear: {}",
+					e
+				);
 			}
 		}
 	} else {
-		// Keep: Warning log
-		warn!("[Diag Handler] Owner '{}' not found for clearing.", owner);
+		// Keep: Warning log if owner wasn't found (idempotent operation, still
+		// success)
+		warn!(
+			"[Diag Handler $clear] Owner '{}' not found in diagnostics map for clearing (no action taken).",
+			owner
+		);
 	}
 
 	Ok(Value::Null)
 }
 
-/// Handles the `$getDiagnostics` RPC call. Aggregates diagnostics, optionally
-/// filtered. Args: `[resource?: UriComponents]`
+/// Handles the `$getDiagnostics` RPC call from Cocoon.
+///
+/// Aggregates diagnostics from all owners. If `resource_filter_val` (URI
+/// components) is provided, it filters diagnostics to only that resource.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[resource?: UriComponents]`
+///   (resource is optional).
+///
+/// # Returns
+/// * `Ok(Value::Array)` of tuples: `[UriComponents, MarkerData[]][]`.
+/// * `Err(String)` with a JSON-RPC error if state access or serialization
+///   fails.
 pub async fn handle_get_diagnostics<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
-	let resource_filter_val = args.get(0);
+	// Optional UriComponents DTO
+	let resource_uri_filter_val = args.get(0);
 
 	// Keep trace for debugging filter issues
-	trace!("[Diag Handler] getDiagnostics filter='{:?}'", resource_filter_val);
+	trace!("[Diag Handler] $getDiagnostics: filter='{:?}'", resource_uri_filter_val);
 
 	let app_state = app.state::<AppState>();
 
-	let owner_diags = app_state.diagnostics_map.lock().map_err(map_diag_lock_error_to_str)?;
+	let all_diagnostics_map_guard = app_state
+		.diagnostics_map
+		.lock()
+		.map_err(format_diagnostics_lock_error_for_rpc)?;
 
-	let target_uri_str_opt:Option<String> = resource_filter_val
-		 // Treat null as no filter
-		.filter(|v| !v.is_null())
-		.and_then(get_uri_key_from_components);
+	// Parse the filter URI if provided and valid.
+	let target_uri_key_filter_opt:Option<String> = resource_uri_filter_val
+		 // Ensure it's an object, not just any Value
+		.filter(|v| !v.is_null() && v.is_object())
+		.and_then(get_uri_key_from_uri_components_dto);
 
-	let mut aggregated_map:HashMap<String, Vec<MarkerData>> = HashMap::new();
+	if resource_uri_filter_val.is_some() && target_uri_key_filter_opt.is_none() {
+		warn!(
+			"[Diag Handler $getDiagnostics] Invalid or unparsable URI filter provided: {:?}. Proceeding without \
+			 filter.",
+			resource_uri_filter_val
+		);
+	}
 
-	for (_owner, resource_map) in owner_diags.iter() {
-		for (uri_str, markers) in resource_map.iter() {
-			if let Some(target_uri) = &target_uri_str_opt {
-				if uri_str != target_uri {
-					// Apply filter
+	// Aggregate diagnostics. Result is Map<UriString, Vec<MarkerData>>
+	let mut aggregated_diagnostics_for_response:HashMap<String, Vec<MarkerData>> = HashMap::new();
+
+	for (_owner, owner_specific_diagnostics_map) in all_diagnostics_map_guard.iter() {
+		for (uri_key_str, markers_for_uri) in owner_specific_diagnostics_map.iter() {
+			// Apply URI filter if one was successfully parsed
+			if let Some(target_uri_key) = &target_uri_key_filter_opt {
+				if uri_key_str != target_uri_key {
+					// Skip if URI doesn't match filter
 					continue;
 				}
 			}
 
-			aggregated_map
-				.entry(uri_str.clone())
+			// Add or extend markers for this URI key
+			aggregated_diagnostics_for_response
+				.entry(uri_key_str.clone())
 				.or_default()
-				.extend(markers.iter().cloned());
+				.extend(markers_for_uri.iter().cloned());
 		}
 	}
 
-	// Release lock
-	drop(owner_diags);
+	// Mutex lock released here
+	drop(all_diagnostics_map_guard);
 
-	// Convert aggregated map to expected result format: `[UriComponents,
-
-	// MarkerData[]][]` Ensure UriComponents includes $mid as per VS Code DTOs for
-	// revival.
-	let result_list:Vec<(Value, Vec<MarkerData>)> = aggregated_map
+	// Convert aggregated map to the expected RPC result format:
+	// `[UriComponents, MarkerData[]][]`
+	// Ensure UriComponents includes `$mid: 1` as per VS Code DTOs for revival.
+	let result_list_dto:Vec<(Value, Vec<MarkerData>)> = aggregated_diagnostics_for_response
 		.into_iter()
-		.map(|(uri_str, markers)| (json!({ "external": uri_str, "$mid": 1 }), markers))
+		.map(|(uri_key_str, markers)| {
+			// Reconstruct a minimal UriComponents DTO for the response.
+			// Assuming uri_key_str is a full external URI string.
+			// TODO: If uri_key_str is not always a full URI, this needs to parse it back
+			// into components if Sky expects full UriComponents DTO.
+			// For now, sending external URI as 'external' and 'path' (if parsable).
+			let (scheme, path) = Url::parse(&uri_key_str)
+				.map(|u| (u.scheme().to_string(), u.path().to_string()))
+				 // Fallback
+				.unwrap_or_else(|_| ("unknown".to_string(), uri_key_str.clone()));
+
+			let uri_components_dto = json!({
+
+
+
+
+
+
+				"external": uri_key_str,
+
+
+
+				"scheme": scheme,
+
+
+
+				"path": path,
+
+
+
+				 // Important for VS Code client-side revival
+				"$mid": 1
+			});
+
+			(uri_components_dto, markers)
+		})
 		.collect();
 
-	serde_json::to_value(result_list).map_err(|e| {
-		error!("Failed to serialize getDiagnostics result: {}", e);
+	serde_json::to_value(result_list_dto).map_err(|e| {
+		error!("[Diag Handler $getDiagnostics] Failed to serialize result list: {}", e);
 
-		error_utils::rpc_error_string(format!("Failed to serialize diagnostics result: {}", e), Some("ESERIALIZE"))
+		error_utils::rpc_error_string(
+			format!("Failed to serialize diagnostics result for $getDiagnostics: {}", e),
+			Some("ESERIALIZE_DIAG"),
+		)
 	})
 }
