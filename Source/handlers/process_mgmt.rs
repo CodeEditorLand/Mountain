@@ -13,8 +13,7 @@
 // - Initiating `Vine` IPC setup (`vine::setup_sidecar_communication`).
 // - Orchestrating the initial handshake:
 //   - Waiting for `vine://sidecar/ready` event from Cocoon.
-//   - Constructing `IExtensionHostInitData` using `AppState` (now including
-//     scanned extensions and proposed API configs).
+//   - Constructing `IExtensionHostInitData` using `AppState`.
 //   - Sending `initData` to Cocoon via `vine::send_notification_to_sidecar`.
 // - Monitoring process exit and triggering cleanup.
 //
@@ -28,20 +27,18 @@
 // --------------------------------------------------------------------------------------------
 
 use std::{
-	// For activation_events_dto in construct_init_data
 	collections::HashMap,
-
 	path::PathBuf,
-
 	process::Stdio,
-
-	sync::Arc,
-
-	sync::atomic::{AtomicBool, Ordering},
-
+	sync::{
+		Arc,
+		atomic::{AtomicBool, Ordering},
+	},
 	time::Duration,
 };
 
+// For mapping log level in initData
+use log::LevelFilter;
 use log::{debug, error, info, trace, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime};
@@ -51,39 +48,73 @@ use tokio::{
 	sync::mpsc as tokio_mpsc,
 	time::timeout,
 };
-// For constructing file URLs correctly
 use url::Url;
 
 use crate::{
 	app_state::{AppState, ExtensionDescriptionState, WorkspaceFolderState},
+
 	vine,
+	// Not strictly needed for current functions, but available
+	// handlers::error_utils,
 };
+
+// Not directly returned by public
+// use Land_Common::errors::CommonError;
+
+// functions here
 
 // --- Main Launch Function ---
 
 pub async fn launch_and_manage_cocoon<R:Runtime>(app_handle:AppHandle<R>) {
-	info!("[ProcMgmt] Launching Cocoon Sidecar...");
+	info!("[ProcMgmt] Attempting to launch Cocoon Sidecar (Node.js Extension Host)...");
 
 	let sidecar_id = "cocoon-main".to_string();
 
 	// --- Determine Paths ---
-	let node_path_res = app_handle.path_resolver().resolve_resource("bin/node");
+	let path_resolver = app_handle.path_resolver();
 
-	let script_path_res = app_handle.path_resolver().resolve_resource("scripts/cocoon/index.js");
+	let node_path_opt = path_resolver.resolve_resource("bin/node");
 
-	let (node_path_str, script_path_str) = match (node_path_res, script_path_res) {
-		(Some(node), Some(script)) => {
-			info!("[ProcMgmt] Using bundled Node: {}", node.display());
+	let script_path_opt = path_resolver.resolve_resource("scripts/cocoon/index.js");
 
-			info!("[ProcMgmt] Using Cocoon script: {}", script.display());
+	let (node_path_str, script_path_str) = match (node_path_opt, script_path_opt) {
+		(Some(node_path), Some(script_path)) => {
+			if !node_path.exists() || !node_path.is_file() {
+				error!(
+					"[ProcMgmt] CRITICAL_STARTUP_FAILURE: Bundled Node.js executable not found or is not a file at \
+					 resolved path: {}. Cocoon cannot start. Check Tauri 'resources' configuration and ensure the \
+					 file is correctly bundled and executable.",
+					node_path.display()
+				);
 
-			(node.to_string_lossy().into_owned(), script.to_string_lossy().into_owned())
+				return;
+			}
+
+			if !script_path.exists() || !script_path.is_file() {
+				error!(
+					"[ProcMgmt] CRITICAL_STARTUP_FAILURE: Cocoon main script not found or is not a file at resolved \
+					 path: {}. Cocoon cannot start. Check Tauri 'resources' configuration.",
+					script_path.display()
+				);
+
+				return;
+			}
+
+			info!("[ProcMgmt] Using bundled Node: {}", node_path.display());
+
+			info!("[ProcMgmt] Using Cocoon script: {}", script_path.display());
+
+			(
+				node_path.to_string_lossy().into_owned(),
+				script_path.to_string_lossy().into_owned(),
+			)
 		},
 
 		(node_res, script_res) => {
 			error!(
-				"[ProcMgmt] CRITICAL: Failed to resolve bundled paths. Node found: {}, Script found: {}. Check \
-				 tauri.conf.json resources/externalBin and ensure paths are correct.",
+				"[ProcMgmt] CRITICAL_STARTUP_FAILURE: Failed to resolve one or more bundled paths for Cocoon. Node \
+				 resolved: {}, Script resolved: {}. Ensure 'bin/node' and 'scripts/cocoon/index.js' are correctly \
+				 listed in tauri.conf.json's resources/externalBin and are present in the target directory.",
 				node_res.is_some(),
 				script_res.is_some()
 			);
@@ -97,69 +128,88 @@ pub async fn launch_and_manage_cocoon<R:Runtime>(app_handle:AppHandle<R>) {
 
 	command.arg(&script_path_str);
 
+	// Pass Mountain's PID
+	command.arg(format!("--parent-pid={}", std::process::id()));
+
 	command.stdin(Stdio::piped());
 
 	command.stdout(Stdio::piped());
 
+	// Capture stderr
 	command.stderr(Stdio::piped());
 
+	// Ensure child process is killed when Command handle is dropped
 	command.kill_on_drop(true);
 
-	info!("[ProcMgmt] Spawning command: {} {}", node_path_str, script_path_str);
+	info!(
+		"[ProcMgmt] Spawning Cocoon command: {} {} --parent-pid={}",
+		node_path_str,
+		script_path_str,
+		std::process::id()
+	);
 
 	// --- Spawn Process ---
 	match command.spawn() {
-		Ok(mut child) => {
-			let child_pid_log = child.id().map_or_else(|| "unknown (spawned)".into(), |id| id.to_string());
+		Ok(mut child_process) => {
+			let child_pid_opt = child_process.id();
 
-			info!("[ProcMgmt] Cocoon process spawned successfully [PID: {}]", child_pid_log);
+			let child_pid_log = child_pid_opt.map_or_else(|| "unknown (spawned)".to_string(), |pid| pid.to_string());
 
-			if let Some(stderr) = child.stderr.take() {
+			info!("[ProcMgmt] Cocoon process spawned successfully [OS PID: {}]", child_pid_log);
+
+			if let Some(stderr_stream) = child_process.stderr.take() {
 				let stderr_sidecar_id = sidecar_id.clone();
 
-				let stderr_pid_log = child_pid_log.clone();
+				let stderr_pid_for_log = child_pid_log.clone();
 
 				tokio::spawn(async move {
-					let reader = BufReader::new(stderr);
+					info!(
+						"[Cocoon stderr ({})][PID: {}] Stderr monitoring task started.",
+						stderr_sidecar_id, stderr_pid_for_log
+					);
+
+					let reader = BufReader::new(stderr_stream);
 
 					let mut lines = reader.lines();
 
 					while let Ok(Some(line)) = lines.next_line().await {
-						error!("[Cocoon stderr ({})][PID: {}] {}", stderr_sidecar_id, stderr_pid_log, line);
+						error!("[Cocoon stderr ({})][PID: {}] {}", stderr_sidecar_id, stderr_pid_for_log, line);
 					}
 
 					info!(
 						"[Cocoon stderr ({})][PID: {}] Stderr stream closed.",
-						stderr_sidecar_id, stderr_pid_log
+						stderr_sidecar_id, stderr_pid_for_log
 					);
 				});
 			} else {
 				warn!("[ProcMgmt] Could not capture stderr for Cocoon sidecar '{}'.", sidecar_id);
 			}
 
-			match vine::setup_sidecar_communication(sidecar_id.clone(), child, app_handle.clone()) {
+			match vine::setup_sidecar_communication(sidecar_id.clone(), child_process, app_handle.clone()) {
 				Ok(_) => {
 					info!(
-						"[ProcMgmt] Vine communication setup initiated for '{}' [PID: {}]",
+						"[ProcMgmt] Vine communication setup initiated for '{}' [OS PID: {}]",
 						sidecar_id, child_pid_log
 					);
 
 					spawn_init_data_sender(app_handle.clone(), sidecar_id.clone());
 				},
 
-				Err(e) => {
+				Err(vine_error) => {
 					error!(
-						"[ProcMgmt] Failed to setup Vine communication for '{}' [PID: {}]: {}",
-						sidecar_id, child_pid_log, e
+						"[ProcMgmt] CRITICAL_STARTUP_FAILURE: Failed to setup Vine IPC for '{}' [OS PID: {}]: {}. \
+						 Cocoon sidecar will be non-functional.",
+						sidecar_id, child_pid_log, vine_error
 					);
 				},
 			}
 		},
 
-		Err(e) => {
+		Err(spawn_error) => {
 			error!(
-				"[ProcMgmt] CRITICAL: Failed to spawn Cocoon process using Node path '{}': {}",
-				node_path_str, e
+				"[ProcMgmt] CRITICAL_STARTUP_FAILURE: Failed to spawn Cocoon process using Node path '{}'. Error: {}. \
+				 Ensure Node.js is executable, script path is correct, and no permission issues.",
+				node_path_str, spawn_error
 			);
 		},
 	}
@@ -169,7 +219,7 @@ pub async fn launch_and_manage_cocoon<R:Runtime>(app_handle:AppHandle<R>) {
 fn spawn_init_data_sender<R:Runtime>(app_handle:AppHandle<R>, sidecar_id:String) {
 	tokio::spawn(async move {
 		info!(
-			"[ProcMgmt InitSender] Task started for '{}'. Waiting for 'vine://sidecar/ready' signal...",
+			"[ProcMgmt InitSender] Task for '{}' waiting for 'vine://sidecar/ready' signal...",
 			sidecar_id
 		);
 
@@ -177,6 +227,7 @@ fn spawn_init_data_sender<R:Runtime>(app_handle:AppHandle<R>, sidecar_id:String)
 
 		let received_signal_flag = Arc::new(AtomicBool::new(false));
 
+		// Clone for the listener closure
 		let listener_app_handle = app_handle.clone();
 
 		let listener_sidecar_id = sidecar_id.clone();
@@ -196,10 +247,12 @@ fn spawn_init_data_sender<R:Runtime>(app_handle:AppHandle<R>, sidecar_id:String)
 								listener_sidecar_id
 							);
 
-							if let Err(e) = tx_ready_signal.try_send(()) {
+							if tx_ready_signal.try_send(()).is_err() {
+								// Check result of try_send
 								error!(
-									"[ProcMgmt InitSender] Failed to send internal ready confirmation for '{}': {}",
-									listener_sidecar_id, e
+									"[ProcMgmt InitSender] Failed to send internal ready confirmation for '{}' \
+									 (receiver likely dropped due to timeout).",
+									listener_sidecar_id
 								);
 							}
 						} else {
@@ -211,21 +264,24 @@ fn spawn_init_data_sender<R:Runtime>(app_handle:AppHandle<R>, sidecar_id:String)
 					},
 
 					Ok(other_id) => {
+						// Signal for a different sidecar
 						trace!(
-							"[ProcMgmt InitSender] Received 'vine://sidecar/ready' for different sidecar '{}', \
-							 expecting '{}'.",
+							"[ProcMgmt InitSender] 'ready' signal for other sidecar '{}', expecting '{}'.",
 							other_id, listener_sidecar_id
 						);
 					},
 
 					Err(e) => {
+						// Payload parsing error
 						error!(
-							"[ProcMgmt InitSender] Failed to parse 'vine://sidecar/ready' payload '{}': {}",
-							payload_str, e
+							"[ProcMgmt InitSender] Failed to parse 'vine://sidecar/ready' payload as string: '{}'. \
+							 Payload: {}",
+							e, payload_str
 						);
 					},
 				}
 			} else {
+				// Event with no payload
 				warn!(
 					"[ProcMgmt InitSender] Received 'vine://sidecar/ready' event with no payload for '{}'.",
 					listener_sidecar_id
@@ -234,28 +290,31 @@ fn spawn_init_data_sender<R:Runtime>(app_handle:AppHandle<R>, sidecar_id:String)
 		});
 
 		debug!(
-			"[ProcMgmt InitSender] Listening for 'vine://sidecar/ready' from '{}' with listener ID: {}",
+			"[ProcMgmt InitSender] Listening for 'vine://sidecar/ready' from '{}' (Tauri listener ID: {}).",
 			sidecar_id, tauri_event_listener_id
 		);
 
-		let ready_timeout = Duration::from_secs(30);
+		let ready_timeout_duration = Duration::from_secs(30);
 
-		match timeout(ready_timeout, rx_ready_signal.recv()).await {
+		match timeout(ready_timeout_duration, rx_ready_signal.recv()).await {
 			Ok(Some(_)) => {
 				info!(
-					"[ProcMgmt InitSender] Successfully received internal ready confirmation for '{}'.",
+					"[ProcMgmt InitSender] Internal ready confirmation received for '{}'. Proceeding to send initData.",
 					sidecar_id
 				);
 			},
 
 			Ok(None) => {
+				// MPSC channel closed before message, tx_ready_signal likely dropped
 				error!(
-					"[ProcMgmt InitSender] Internal ready signal channel closed unexpectedly for '{}'.",
+					"[ProcMgmt InitSender] Internal ready signal channel for '{}' closed unexpectedly. Aborting \
+					 initData send.",
 					sidecar_id
 				);
 
 				app_handle.unlisten(tauri_event_listener_id);
 
+				// Ensure cleanup
 				vine::unregister_sidecar(&sidecar_id);
 
 				return;
@@ -264,46 +323,103 @@ fn spawn_init_data_sender<R:Runtime>(app_handle:AppHandle<R>, sidecar_id:String)
 			Err(_) => {
 				// Timeout
 				error!(
-					"[ProcMgmt InitSender] Timed out ({:?}) waiting for ready signal from '{}'.",
-					ready_timeout, sidecar_id
+					"[ProcMgmt InitSender] Timed out ({:?}) waiting for ready signal from '{}'. Sidecar might have \
+					 failed. Aborting initData send.",
+					ready_timeout_duration, sidecar_id
 				);
 
 				app_handle.unlisten(tauri_event_listener_id);
 
+				// Important to unregister if sidecar is unresponsive
 				vine::unregister_sidecar(&sidecar_id);
 
 				return;
 			},
 		}
 
+		// Unlisten once signal processed or timed out
 		app_handle.unlisten(tauri_event_listener_id);
 
 		info!(
-			"[ProcMgmt InitSender] Sidecar '{}' is ready. Constructing and sending init data...",
+			"[ProcMgmt InitSender] Constructing and sending initExtensionHost data to '{}'...",
 			sidecar_id
 		);
 
-		let init_data = construct_init_data(&app_handle);
+		let init_data_payload = construct_init_data(&app_handle);
 
+		// Note: construct_init_data uses .expect() on locks, which will panic if
+		// poisoned. For production, this could be changed to return Result and
+		// handled here.
 		trace!(
 			"[ProcMgmt InitSender] Constructed initData for '{}': (Top-level keys: {:?})",
 			sidecar_id,
-			init_data.as_object().map(|o| o.keys().collect::<Vec<_>>())
+			init_data_payload.as_object().map(|o| o.keys().collect::<Vec<_>>())
 		);
 
-		match vine::send_notification_to_sidecar(&sidecar_id, "initExtensionHost".to_string(), init_data).await {
-			Ok(_) => info!("[ProcMgmt InitSender] Init data sent successfully to '{}'.", sidecar_id),
+		match vine::send_notification_to_sidecar(&sidecar_id, "initExtensionHost".to_string(), init_data_payload).await
+		{
+			Ok(_) => {
+				info!(
+					"[ProcMgmt InitSender] initExtensionHost notification sent successfully to '{}'.",
+					sidecar_id
+				)
+			},
 
-			Err(e) => error!("[ProcMgmt InitSender] Failed to send init data to '{}': {}", sidecar_id, e),
+			Err(e) => {
+				error!(
+					"[ProcMgmt InitSender] Failed to send initExtensionHost notification to '{}': {}. Sidecar may not \
+					 initialize correctly.",
+					sidecar_id, e
+				)
+			},
 		}
 	});
 }
 
 /// Constructs the `IExtensionHostInitData` payload.
+/// This function needs access to `AppState` and `PathResolver`.
+/// Panics on lock failure are considered acceptable during this critical
+/// startup phase, but could be refactored to return `Result` for more graceful
+/// degradation if needed.
 fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 	let app_state = app_handle.state::<AppState>();
 
 	info!("[ProcMgmt InitData] Constructing IExtensionHostInitData...");
+
+	// Helper to create UriComponents JSON Value from a PathBuf
+	let path_to_uri_comp_val_fn = |p:PathBuf, is_dir:bool| -> Value {
+		let url_res = if is_dir { Url::from_directory_path(&p) } else { Url::from_file_path(&p) };
+
+		let url = url_res.unwrap_or_else(|_| {
+			warn!(
+				"[ProcMgmt InitData] Failed to create URL from path: {}. Using lossy string.",
+				p.display()
+			);
+
+			Url::parse(&format!("file:///{}", p.to_string_lossy().replace('\\', "/")))
+				.expect("Fallback URL parse for initData path failed")
+		});
+
+		json!({
+
+			"scheme": url.scheme(),
+
+			// Ensure authority is string even if empty
+			"authority": url.host_str().unwrap_or(""),
+
+			"path": url.path(),
+
+			// Keep query if present
+			"query": url.query(),
+
+			// Keep fragment if present
+			"fragment": url.fragment(),
+
+			"external": url.to_string(),
+
+			"$mid": 1
+		})
+	};
 
 	// --- Workspace Data ---
 	let (
@@ -314,9 +430,12 @@ fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 		is_transient,
 		is_untitled,
 	) = {
-		let folders_guard = app_state.workspace_folders.lock().expect("Lock workspace_folders");
+		let folders_guard = app_state.workspace_folders.lock().expect("Lock workspace_folders for initData");
 
-		let config_path_guard = app_state.workspace_config_path.lock().expect("Lock workspace_config_path");
+		let config_path_guard = app_state
+			.workspace_config_path
+			.lock()
+			.expect("Lock workspace_config_path for initData");
 
 		let id = app_state.get_workspace_id_string().unwrap_or_else(|e| {
 			warn!("[ProcMgmt InitData] Failed to get workspace ID string: {}. Using default.", e);
@@ -330,66 +449,93 @@ fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 			"Untitled Workspace".to_string()
 		});
 
+		// Mountain workspaces are not typically transient like in remote dev
 		let transient = false;
 
-		let untitled = config_path_guard.is_none() && folders_guard.len() <= 1;
+		let untitled = config_path_guard.is_none()
+			&& folders_guard.len() <= 1
+			&& (folders_guard.first().map_or(true, |f| f.uri.scheme() == "untitled"));
 
-		let path_to_uri_comp_val_fn = |p:&PathBuf, is_dir:bool| -> Value {
-			let url_res = if is_dir { Url::from_directory_path(p) } else { Url::from_file_path(p) };
-
-			let url = url_res.unwrap_or_else(|_| {
-				Url::parse(&format!("file:///{}", p.to_string_lossy().replace('\\', "/"))).expect("Fallback URL parse")
-			});
-
-			json!({ "scheme": url.scheme(), "path": url.path(), "external": url.to_string(), "$mid": 1 })
-		};
-
-		let config_components = config_path_guard.as_ref().map(|p| path_to_uri_comp_val_fn(p, false));
+		let config_components = config_path_guard.as_ref().map(|p| path_to_uri_comp_val_fn(p.clone(), false));
 
 		let folders_components:Vec<Value> = folders_guard
 			.iter()
-			.map(|f| {
-				json!({
+			.map(|f_state:&WorkspaceFolderState| {
+				let f_uri_comp = json!({
 
+					"scheme": f_state.uri.scheme(),
 
-					"uri": { "scheme": f.uri.scheme(), "path": f.uri.path(), "external": f.uri.to_string(), "$mid": 1 },
+					"authority": f_state.uri.host_str().unwrap_or(""),
 
-					"name": f.name, "index": f.index
-				})
+					"path": f_state.uri.path(),
+
+					"query": f_state.uri.query(),
+
+					"fragment": f_state.uri.fragment(),
+
+					"external": f_state.uri.to_string(),
+
+					"$mid": 1
+				});
+
+				json!({ "uri": f_uri_comp, "name": f_state.name, "index": f_state.index })
 			})
 			.collect();
 
 		debug!(
-			"[ProcMgmt InitData] Workspace: ID='{}', Name='{}', Config Path Present: {}, Num Folders={}",
+			"[ProcMgmt InitData] Workspace: ID='{}', Name='{}', Config Path Present: {}, Num Folders={}, Untitled: {}",
 			id,
 			name,
 			config_components.is_some(),
-			folders_components.len()
+			folders_components.len(),
+			untitled
 		);
 
 		(id, name, config_components, folders_components, transient, untitled)
 	};
 
-	let workspace_data = if workspace_folders_data.is_empty() && workspace_config_uri_components.is_none() {
-		Value::Null
-	} else {
-		json!({ "id": workspace_id, "name": workspace_name, "configuration": workspace_config_uri_components.unwrap_or(Value::Null), "folders": workspace_folders_data, "transient": is_transient, "isUntitled": is_untitled })
-	};
+	let workspace_data_val =
+		if workspace_folders_data.is_empty() && workspace_config_uri_components.is_none() && !is_untitled {
+			// No workspace if no folders, no config, and not explicitly untitled
+			Value::Null
+		} else {
+			json!({
+
+				"id": workspace_id,
+
+				"name": workspace_name,
+
+				"configuration": workspace_config_uri_components.unwrap_or(Value::Null),
+
+				"folders": workspace_folders_data,
+
+				"transient": is_transient,
+
+				"isUntitled": is_untitled
+			})
+		};
 
 	// --- Extensions Data ---
 	let (all_extensions_dto, my_extensions_ids_dto, activation_events_dto) = {
-		let scanned_extensions_guard = app_state.scanned_extensions.lock().expect("Lock scanned_extensions");
+		let scanned_extensions_guard = app_state
+			.scanned_extensions
+			.lock()
+			.expect("Lock scanned_extensions for initData");
 
 		let mut all_ext_descs:Vec<Value> = Vec::new();
 
+		// IDs of extensions for *this* host
 		let mut my_ext_ids:Vec<Value> = Vec::new();
 
 		let mut act_events:HashMap<String, Vec<String>> = HashMap::new();
 
 		for (ext_full_id_str, ext_desc_state) in scanned_extensions_guard.iter() {
+			// Assuming all scanned extensions run in this primary host for now
 			match serde_json::to_value(ext_desc_state.clone()) {
 				Ok(serialized_desc) => {
 					all_ext_descs.push(serialized_desc);
+
+					// identifier is {value, uuid}
 
 					my_ext_ids.push(ext_desc_state.identifier.clone());
 
@@ -417,54 +563,43 @@ fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 		(all_ext_descs, my_ext_ids, act_events)
 	};
 
-	// IExtensionHostInitData.extensions is IExtensionDescriptionSnapshot
 	let extensions_snapshot_data = json!({
 
-
-		// Placeholder, VS Code uses this for deltas for extension changes.
+		// Simple versioning for now
 		"versionId": 1,
 
 		"allExtensions": all_extensions_dto,
 
-		// List of ExtensionIdentifier DTOs
 		"myExtensions": my_extensions_ids_dto,
 
-		// Map from extension ID to its activation events
 		"activationEvents": activation_events_dto
 	});
 
-	// --- Settings Data (Effective configuration for IConfigurationInitData) ---
-	// Note: IExtensionHostInitData itself doesn't directly take settings.
-	// It takes `logLevel` and `logsLocation`.
-	// The `settings` are part of IConfigurationInitData which is sent separately
-	// by `$acceptConfigurationChanged` or similar later if needed, or ext host
-	// requests it. However, some older protocols might have bundled it.
-	// For current VS Code, `settings` is NOT part of `IExtensionHostInitData`.
-	// It's managed by the ConfigurationService which syncs via
-	// `$acceptConfigurationChanged`. The `AppState.configuration` is the
-	// *effective* merged configuration. We'll include it under a
-	// `configurationData` field to be passed to `ExtHostConfiguration` constructor.
+	// --- Configuration Data ---
 	let configuration_data_dto = {
 		let config_guard = app_state.configuration.lock().expect("Lock configuration for initData");
 
 		json!({
 
-
 			"effective": config_guard.data.clone(),
 
-			// Stubs for now
+			// Stub
 			"defaults": { "contents": {} },
 
+			// Stub
 			"user": { "contents": {} },
 
-			"workspace": { "contents": {} },
-
+			"workspace": { "contents": {} },// Stub
+			// Stub
 			"folders": [],
 
+			// Stub
 			"memory": { "contents": {} },
 
+			// Stub
 			"policy": Value::Null,
 
+			// Stub
 			"configurationScopes": []
 		})
 	};
@@ -477,54 +612,40 @@ fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 	// --- Paths ---
 	let path_resolver = app_handle.path_resolver();
 
-	let logs_loc = path_resolver.app_log_dir().unwrap_or_else(|| PathBuf::from("./dev_logs"));
+	let logs_loc = path_resolver
+		.app_log_dir()
+		// Fallback for logs
+		.unwrap_or_else(|| PathBuf::from("./dev_logs_fallback"));
 
-	let app_data_d = path_resolver.app_data_dir().unwrap_or_else(|| PathBuf::from("./dev_appdata"));
+	let app_data_dir_base = path_resolver
+		.app_data_dir()
+		.unwrap_or_else(|| PathBuf::from("./dev_appdata_fallback"));
 
-	// User data root
-	let user_data_d = app_data_d.join("User");
+	let user_data_root = app_data_dir_base.join("User");
 
-	let global_store_home = user_data_d.join("globalStorage");
+	let global_storage_home = user_data_root.join("globalStorage");
 
-	let ws_store_home_id_str = app_state
+	let ws_storage_home_id = app_state
 		.get_workspace_id_string()
 		.unwrap_or_else(|_| "NO_WORKSPACE_ID_FOR_STORAGE".to_string());
 
-	let ws_store_home = user_data_d.join("workspaceStorage").join(ws_store_home_id_str);
+	let workspace_storage_home = user_data_root.join("workspaceStorage").join(ws_storage_home_id);
 
-	let app_root_p = path_resolver
+	let app_root_fallback = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+
+	let app_root_path = path_resolver
 		.app_config_dir()
 		.or_else(|| path_resolver.app_data_dir())
-		.unwrap_or_else(|| {
-			std::env::current_exe()
-				.ok()
-				.and_then(|p| p.parent().map(|pp| pp.to_path_buf()))
-				.unwrap_or_else(|| PathBuf::from("."))
-		});
-
-	let path_to_uri_comp_val_for_init_data_fn = |p:PathBuf, is_dir:bool| -> Value {
-		let url_res = if is_dir { Url::from_directory_path(&p) } else { Url::from_file_path(&p) };
-
-		let url = url_res.unwrap_or_else(|_| {
-			Url::parse(&format!("file:///{}", p.to_string_lossy().replace('\\', "/")))
-				.expect("Fallback URL parse for initData path")
-		});
-
-		json!({ "scheme": url.scheme(), "path": url.path(), "external": url.to_string(), "$mid": 1 })
-	};
+		.unwrap_or(app_root_fallback);
 
 	// --- Proposed APIs ---
 	let enabled_proposed_apis_val = {
-		let guard = app_state.enabled_proposed_apis.lock().expect("Lock proposed APIs");
+		let guard = app_state.enabled_proposed_apis.lock().expect("Lock proposed APIs for initData");
 
-		// VS Code expects `string[]` for global '*' or `{[extId]: string[]}`
-		// This structure should align with `IEnabledApiProposals` in VS Code.
-		// If only '*' is present, send its array. Otherwise, send the map.
 		if guard.len() == 1 && guard.contains_key("*") {
 			json!(guard.get("*").unwrap())
 		} else {
 			json!(*guard)
-			// This serializes the HashMap as a JSON object
 		}
 	};
 
@@ -534,52 +655,42 @@ fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 	);
 
 	// --- Telemetry Info ---
-	// Use get_window which returns Option
-	let main_window_opt = app_handle.get_window("main");
-
-	let machine_id = main_window_opt.as_ref().map_or_else(
-		|| {
-			warn!("[ProcMgmt InitData] Main window not found for machineId, generating UUID.");
-
-			uuid::Uuid::new_v4().to_string()
-		},
-		// Tauri instance ID as a stand-in
-		|w| w.instance_id().to_string(),
-	);
+	// Using Tauri's instance ID
+	let machine_id = app_handle.manager().instance_id().to_string();
 
 	let session_id = uuid::Uuid::new_v4().to_string();
 
+	// ISO 8601 format
 	let first_session_date = chrono::Utc::now().to_rfc3339();
 
-	// --- Assemble Final Payload for IExtensionHostInitData ---
+	// --- Assemble Final Payload (IExtensionHostInitData) ---
 	let final_init_data = json!({
 
-
-		// More specific commit
-		"commit": app_handle.package_info().version.to_string() + "-cocoon-dev-commit-final",
+		"commit": app_handle.package_info().version.to_string() + "-mountain-dev",
 
 		"version": app_handle.package_info().version.to_string(),
 
+		// or "stable", "insiders"
 		"quality": "development",
 
 		"parentPid": std::process::id(),
 
 		"environment": {
 
-
-			// TODO: Set based on debug/dev mode
+			// TODO: Set based on actual debug mode
 			"isExtensionDevelopmentDebug": false,
 
 			"appName": app_handle.package_info().name.clone(),
 
+			// as opposed to "web"
 			"appHost": "desktop",
 
-			"appRoot": path_to_uri_comp_val_for_init_data_fn(app_root_p, true),
+			"appRoot": path_to_uri_comp_val_fn(app_root_path, true),
 
-			// TODO: Get from system or config
+			// TODO: Get from system/user settings
 			"appLanguage": "en",
 
-			// Default to logging only for telemetry
+			// Default to only logging telemetry events, not sending
 			"isExtensionTelemetryLoggingOnly": true,
 
 			"appUriScheme": app_handle.config().tauri.bundle.identifier.split('.').last().unwrap_or("landcode").to_string(),
@@ -590,58 +701,63 @@ fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 			// For running extension tests
 			"extensionTestsLocationURI": Value::Null,
 
-			"globalStorageHome": path_to_uri_comp_val_for_init_data_fn(global_store_home, true),
+			"globalStorageHome": path_to_uri_comp_val_fn(global_storage_home, true),
 
-			"workspaceStorageHome": path_to_uri_comp_val_for_init_data_fn(ws_store_home, true),
+			"workspaceStorageHome": path_to_uri_comp_val_fn(workspace_storage_home, true),
 
+			// Typically false for desktop
 			"useHostProxy": false,
 
-			// Based on Cocoon's index.ts
+			// As per Cocoon's current main.ts
 			"skipWorkspaceStorageLock": true,
 
 			"extensionEnabledProposedApi": enabled_proposed_apis_val,
 
-			// Example: [["publisher.someExtId", "Trace"]]
+			// Optional: e.g., [["publisher.someExtId", "Trace"]]
 			// "extensionLogLevel": []
 		},
 
-		// IStaticWorkspaceData
-		"workspace": workspace_data,
+		// IStaticWorkspaceData or null
+		"workspace": workspace_data_val,
 
 		"remote": { "isRemote": false, "authority": Value::Null, "connectionData": Value::Null },
 
-		// Use .to_level() for Option<Level>
-		"logLevel": match log::max_level().to_level() {
+		// Map log::LevelFilter to VS Code's LogLevel enum (number)
+		"logLevel": match log::max_level() {
 
+			LevelFilter::Trace => 0, LevelFilter::Debug => 1, LevelFilter::Info => 2,
 
-			Some(log::Level::Trace) => 0, Some(log::Level::Debug) => 1, Some(log::Level::Info) => 2,
-
-			// Off
-			Some(log::Level::Warn) => 3, Some(log::Level::Error) => 4, None => 6,
+			// VS Code LogLevel.Off is 5, Critical is 6
+			LevelFilter::Warn  => 3, LevelFilter::Error => 4, LevelFilter::Off   => 5,
 
 		},
 
-		"logsLocation": path_to_uri_comp_val_for_init_data_fn(logs_loc, true),
+		"logsLocation": path_to_uri_comp_val_fn(logs_loc, true),
 
 		// For custom loggers provided by extensions
 		"loggers": [],
 
-		// To start extension activation
+		// To start extension activation immediately
 		"autoStart": true,
 
 		// IExtensionDescriptionSnapshot
 		"extensions": extensions_snapshot_data,
 
+		// For localized strings, not used in MVP
 		"nlsBaseUrl": Value::Null,
 
-		// Pass IConfigurationInitData here
+		// IConfigurationInitData
 		"configurationData": configuration_data_dto,
 
 		"telemetryInfo": {
 
+			"sessionId": session_id,
+
+			// Use the same unique ID for these
+			"machineId": machine_id.clone(),
 
 			// sqmId is legacy
-			"sessionId": session_id, "machineId": machine_id.clone(), "sqmId": machine_id.clone(),
+			"sqmId": machine_id.clone(),
 
 			// devDeviceId is another unique ID
 			"devDeviceId": machine_id,
@@ -652,30 +768,39 @@ fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 			// "msftInternal": false
 		},
 
+		// Linux
 		"os": if cfg!(target_os = "linux") { 3 }
 
+			// MacOS
 			else if cfg!(target_os = "macos") { 2 }
 
+			// Windows
 			else if cfg!(target_os = "windows") { 1 }
 
 			// UnknownOS
 			else { 0 },
 
-		"arch": std::env::consts::ARCH,
+		// e.g., "x86_64", "aarch64"
+		"arch": std::env::consts::ARCH.to_string(),
 
 		// From VS Code's product.json concept
 		"product": {
 
+			// Short name for UI elements
+			"nameShort": "Land",
 
-			"nameShort": "Land", "nameLong": "Land Code Editor",
+			// Full application name
+			"nameLong": "Land Code Editor",
 
+			// Usually 'code' or similar for VS Code
 			"applicationName": app_handle.package_info().name.clone(),
 
 			"version": app_handle.package_info().version.to_string(),
 
-			"commit": app_handle.package_info().version.to_string() + "-cocoon-dev-commit-final",
+			// Placeholder commit
+			"commit": app_handle.package_info().version.to_string() + "-mountain-dev-commit",
 
-			// e.g. ".landcodeeditor"
+			// e.g., ".landcode"
 			"dataFolderName": format!(".{}", app_handle.package_info().name.to_lowercase()),
 
 			// No gallery for MVP
@@ -683,12 +808,12 @@ fn construct_init_data<R:Runtime>(app_handle:&AppHandle<R>) -> Value {
 
 		},
 
-		// UIKind.Desktop (vs UIKind.Web)
+		// UIKind.Desktop (vs UIKind.Web = 2)
 		"uiKind": 1,
 
 	});
 
-	info!("[ProcMgmt InitData] Construction complete. Sending to Cocoon sidecar.");
+	info!("[ProcMgmt InitData] Construction complete.");
 
 	final_init_data
 }

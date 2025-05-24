@@ -26,4 +26,6 @@ pub mod handlers {
 	pub mod native_fs;
 
 	pub mod output;
+
+	pub mod process_mgmt;
 }
