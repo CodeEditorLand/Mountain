@@ -20,4 +20,8 @@ pub mod handlers {
 	pub mod diagnostics;
 
 	pub mod documents;
+
+	pub mod enablement;
+
+	pub mod native_fs;
 }
