@@ -46,6 +46,8 @@ pub mod handlers {
 	pub mod workspace;
 
 	pub mod workspace_fs_api;
+
+	pub mod error_utils;
 }
 
 pub mod Entry;
