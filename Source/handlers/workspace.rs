@@ -42,19 +42,14 @@ use std::{
 	path::{Path, PathBuf},
 
 	sync::{
-		Arc,
-
-		// Standard Mutex for AppState fields
-		Mutex as StdMutex,
-
 		MutexGuard,
 
 		// For is_trusted
-		atomic::{AtomicBool, Ordering as AtomicOrdering},
+		atomic::Ordering as AtomicOrdering,
 	},
 };
 
-use globset::{Error as GlobsetError, Glob, GlobBuilder, GlobMatcher};
+use globset::{Error as GlobsetError, GlobBuilder, GlobMatcher};
 // For directory walking with ignore file support
 use ignore::WalkBuilder;
 use log::{debug, error, info, trace, warn};
@@ -260,7 +255,7 @@ pub async fn handle_get_workspace_folders<R:Runtime>(app:AppHandle<R>) -> Result
 					// Fallback for non-file URIs
 					|| folder_state.uri.path(),
 
-					|p| p.to_string_lossy().into_owned()
+					|p| &p.to_string_lossy().into_owned()
 				),
 
 			});
@@ -697,7 +692,7 @@ pub async fn handle_find_files<R:Runtime>(
 ///
 /// # Arguments
 /// * `app` - The Tauri `AppHandle`.
-pub async fn notify_cocoon_of_workspace_folder_change<R:Runtime>(app:AppHandle<R>) {
+pub async fn notify_cocoon_of_workspace_folder_change<R:Runtime>(_:AppHandle<R>) {
 	info!("[Workspace Handler Notify] Notifying Cocoon of workspace folder change via $onDidChangeWorkspaceFolders");
 
 	// Payload for $onDidChangeWorkspaceFolders is IWorkspaceFoldersChangeEventDto:
@@ -733,7 +728,7 @@ pub async fn notify_cocoon_of_workspace_folder_change<R:Runtime>(app:AppHandle<R
 /// * `_is_trusted` - The new trust state (boolean, currently unused in this
 ///   simple notification).
 pub async fn notify_cocoon_of_workspace_trust_change<R:Runtime>(
-	app:AppHandle<R>,
+	_:AppHandle<R>,
 
 	// Parameter kept for future use if payload needs it
 	_is_trusted:bool,

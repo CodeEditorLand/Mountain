@@ -33,9 +33,6 @@ use log::{debug, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Runtime, Window};
 
-// Use the Vine IPC layer if this were to make actual calls
-use crate::vine;
-
 // TODO: Determine if this handler is still used or if it's a remnant of an
 // earlier design. If unused, it should be removed. If used, its purpose and
 // the structure of `args` need to be clearly defined.

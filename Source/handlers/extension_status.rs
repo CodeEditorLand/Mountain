@@ -20,15 +20,15 @@
 // - Called by `track::dispatch_sidecar_request` for specific notification
 //   methods.
 // - Primarily uses `log` for recording extension lifecycle events.
-// - Emits Tauri events via `AppHandle::emit_all` to inform other parts of
-//   Mountain or the Sky frontend about extension status changes.
+// - Emits Tauri events via `AppHandle::emit` to inform other parts of Mountain
+//   or the Sky frontend about extension status changes.
 // - Does not typically return data back to Cocoon for these notifications.
 // --------------------------------------------------------------------------------------------
 
-use log::{debug, error, info, trace, warn};
+use log::{error, info, trace, warn};
 use serde_json::Value;
-// Manager is needed for app_handle.emit_all
-use tauri::{AppHandle, Manager, Runtime};
+// Manager is needed for app_handle.emit
+use tauri::{AppHandle, Emitter, Runtime};
 
 // For consistent error formatting if this handler itself encounters an issue
 // (e.g., params not being an array).
@@ -181,7 +181,7 @@ pub async fn handle_extension_host_status_notification<R:Runtime>(
 
 			// Emit a Tauri event for other parts of Mountain or Sky to know.
 			if let Err(e) =
-				app_handle.emit_all("mountain://extension/activated", serde_json::json!({ "id": extension_id_str }))
+				app_handle.emit("mountain://extension/activated", serde_json::json!({ "id": extension_id_str }))
 			{
 				warn!(
 					"[ExtStatus Handler] Failed to emit mountain://extension/activated for {}: {}",
@@ -223,7 +223,7 @@ pub async fn handle_extension_host_status_notification<R:Runtime>(
 
 			// AppState.activating_extensions.remove(&extension_id_str);
 
-			if let Err(e) = app_handle.emit_all(
+			if let Err(e) = app_handle.emit(
 				"mountain://extension/activation_error",
 				serde_json::json!({
 
@@ -263,7 +263,7 @@ pub async fn handle_extension_host_status_notification<R:Runtime>(
 			// Potentially disable the extension if it errors too frequently ("bad-actor"
 			// detection).
 
-			if let Err(e) = app_handle.emit_all(
+			if let Err(e) = app_handle.emit(
 				"mountain://extension/runtime_error",
 				serde_json::json!({
 

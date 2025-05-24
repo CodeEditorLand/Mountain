@@ -43,7 +43,7 @@ use std::path::PathBuf;
 use log;
 use serde_json::{Value, json};
 // Tauri imports for handler signatures
-use tauri::{AppHandle, Runtime, Window};
+use tauri::Runtime;
 
 /// Constant error message for deprecated native FS handlers.
 const DEPRECATED_NATIVE_FS_ERROR_MSG:&str =

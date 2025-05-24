@@ -72,7 +72,7 @@
 //   various Mountain components (e.g., `handlers::commands` for proxying,
 
 //   `environment.rs` for IPC effects).
-// - Emits Tauri events using `AppHandle::emit_all` to signal sidecar lifecycle
+// - Emits Tauri events using `AppHandle::emit` to signal sidecar lifecycle
 //   events or relay notifications.
 // --------------------------------------------------------------------------------------------
 
@@ -103,7 +103,7 @@ use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 // Tauri essentials
-use tauri::{AppHandle, Manager, Runtime, Window};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tokio::{
 	// Async I/O utilities
 	io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
@@ -492,7 +492,7 @@ pub async fn send_request_to_sidecar(
 		vine_request_msg
 			.params
 			.as_ref()
-			.map_or("None", |p| p.to_string().chars().take(50).collect::<String>())
+			.map_or("None", |p| &p.to_string().chars().take(50).collect::<String>())
 	);
 
 	// Send the raw message string to the sidecar's writer task.
@@ -595,7 +595,7 @@ pub async fn send_notification_to_sidecar(
 		vine_notification_msg
 			.params
 			.as_ref()
-			.map_or("None", |p| p.to_string().chars().take(50).collect::<String>())
+			.map_or("None", |p| &p.to_string().chars().take(50).collect::<String>())
 	);
 
 	send_raw_vine_message_to_sidecar_writer(target_sidecar_id, vine_notification_msg).await
@@ -874,7 +874,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 						// Get main window and AppRuntime for dispatching.
 						// TODO: Consider if a "headless" mode without a main window is possible or if
 						// sidecar requests always imply UI context.
-						let main_window_opt = app_handle.get_window("main");
+						let main_window_opt = app_handle.get_webview_window("main");
 
 						let app_runtime_state_opt = app_handle.try_state::<Arc<AppRuntime>>();
 
@@ -996,8 +996,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 								);
 
 								// Payload for this event is the sidecar_id string.
-								if let Err(e_emit) =
-									app_handle.emit_all("vine://sidecar/ready", sidecar_id_str.to_string())
+								if let Err(e_emit) = app_handle.emit("vine://sidecar/ready", sidecar_id_str.to_string())
 								{
 									error!(
 										"[Vine ProcessLine][{}] Failed to emit 'vine://sidecar/ready' Tauri event: {}",
@@ -1014,7 +1013,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 								);
 
 								if let Err(e_emit) =
-									app_handle.emit_all("vine://sidecar/initialized", sidecar_id_str.to_string())
+									app_handle.emit("vine://sidecar/initialized", sidecar_id_str.to_string())
 								{
 									error!(
 										"[Vine ProcessLine][{}] Failed to emit 'vine://sidecar/initialized' Tauri \
@@ -1035,7 +1034,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 										log_entry_array.get(1..).map_or_else(Vec::new, |parts_slice| {
 											parts_slice
 												.iter()
-												.map(|val| val.as_str().unwrap_or_else(|| val.to_string()).to_string())
+												.map(|val| val.as_str().unwrap_or_else(|| &val.to_string()).to_string())
 												.collect()
 										});
 
@@ -1072,7 +1071,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 								// General error reporting from sidecar
 								error!("[SidecarError::{}] Reported error: {:?}", sidecar_id_str, params_val);
 
-								if let Err(e_emit) = app_handle.emit_all(
+								if let Err(e_emit) = app_handle.emit(
 									"vine://sidecar/error",
 									json!({ "sidecarId": sidecar_id_str, "errorDetails": params_val }),
 								) {
@@ -1120,7 +1119,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 									params_val.to_string().chars().take(50).collect::<String>()
 								);
 
-								if let Err(e_emit) = app_handle.emit_all(&tauri_event_name, params_val) {
+								if let Err(e_emit) = app_handle.emit(&tauri_event_name, params_val) {
 									error!(
 										"[Vine ProcessLine][{}] Failed to emit generic Tauri event '{}': {}",
 										sidecar_id_str, tauri_event_name, e_emit

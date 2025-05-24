@@ -49,8 +49,8 @@
 use Land_Common::errors::CommonError;
 use log::{debug, error, info, trace, warn};
 // `json!` macro might not be used here, but `Value` is.
-use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime};
+use serde_json::Value;
+use tauri::{AppHandle, Manager};
 
 // For formatting errors returned by this Tauri command itself (not the oneshot result)
 use crate::{app_state::AppState, handlers::error_utils};

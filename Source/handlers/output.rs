@@ -28,7 +28,7 @@
 // - Interacts with `AppState.output_channels` (a `HashMap<String,
 
 //   OutputChannelState>`) for state management.
-// - Emits Tauri events via `AppHandle::emit_all` to Sky.
+// - Emits Tauri events via `AppHandle::emit` to Sky.
 // - Uses `handlers::error_utils` for consistent RPC error formatting.
 // --------------------------------------------------------------------------------------------
 
@@ -36,12 +36,12 @@ use std::{
 	collections::HashMap,
 
 	// StdMutex is used for AppState.output_channels
-	sync::{Arc, Mutex as StdMutex, MutexGuard},
+	sync::MutexGuard,
 };
 
-use log::{debug, error, info, trace, warn};
+use log::{error, info, trace, warn};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 use crate::{
 	app_state::{AppState, OutputChannelState},
@@ -145,7 +145,7 @@ pub async fn handle_register_output_channel<R:Runtime>(app:AppHandle<R>, args:Va
 		event_payload
 	);
 
-	app.emit_all("output_channel_registered", event_payload).map_err(|e| {
+	app.emit("output_channel_registered", event_payload).map_err(|e| {
 		let msg = format!("Failed to emit output_channel_registered event: {}", e);
 
 		error!("[Output Handler] {}", msg);
@@ -228,7 +228,7 @@ pub async fn handle_append_to_output_channel<R:Runtime>(app:AppHandle<R>, args:V
 			value_to_append.len()
 		);
 
-		app.emit_all("output_channel_append", payload).map_err(|e| {
+		app.emit("output_channel_append", payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_append event: {}", e);
 
 			error!("[Output Handler] {}", msg);
@@ -290,7 +290,7 @@ pub async fn handle_clear_output_channel<R:Runtime>(app:AppHandle<R>, args:Value
 		// Keep: Log event emission.
 		trace!("[Output Handler] Emitting 'output_channel_clear' event: {:?}", event_payload);
 
-		app.emit_all("output_channel_clear", event_payload).map_err(|e| {
+		app.emit("output_channel_clear", event_payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_clear event: {}", e);
 
 			error!("[Output Handler] {}", msg);
@@ -356,7 +356,7 @@ pub async fn handle_replace_output_channel_content<R:Runtime>(app:AppHandle<R>, 
 		// Keep: Log event emission.
 		trace!("[Output Handler] Emitting 'output_channel_replace' event: id={}", channel_id);
 
-		app.emit_all("output_channel_replace", payload).map_err(|e| {
+		app.emit("output_channel_replace", payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_replace event: {}", e);
 
 			error!("[Output Handler] {}", msg);
@@ -425,7 +425,7 @@ pub async fn handle_reveal_output_channel<R:Runtime>(app:AppHandle<R>, args:Valu
 		// Keep: Log event emission.
 		trace!("[Output Handler] Emitting 'output_channel_reveal' event: {:?}", event_payload);
 
-		app.emit_all("output_channel_reveal", event_payload).map_err(|e| {
+		app.emit("output_channel_reveal", event_payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_reveal event: {}", e);
 
 			error!("[Output Handler] {}", msg);
@@ -488,7 +488,7 @@ pub async fn handle_close_output_channel_view<R:Runtime>(app:AppHandle<R>, args:
 		// Keep: Log event emission.
 		trace!("[Output Handler] Emitting 'output_channel_close' event: {:?}", event_payload);
 
-		app.emit_all("output_channel_close", event_payload).map_err(|e| {
+		app.emit("output_channel_close", event_payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_close event: {}", e);
 
 			error!("[Output Handler] {}", msg);
@@ -548,7 +548,7 @@ pub async fn handle_dispose_output_channel<R:Runtime>(app:AppHandle<R>, args:Val
 		// Keep: Log event emission.
 		trace!("[Output Handler] Emitting 'output_channel_disposed' event: {:?}", event_payload);
 
-		app.emit_all("output_channel_disposed", event_payload).map_err(|e| {
+		app.emit("output_channel_disposed", event_payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_disposed event: {}", e);
 
 			error!("[Output Handler] {}", msg);

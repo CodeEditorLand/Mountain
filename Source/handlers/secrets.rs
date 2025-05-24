@@ -46,7 +46,7 @@ use crate::handlers::error_utils;
 /// Maps errors from the `keyring` crate to a structured JSON-RPC error string.
 ///
 /// This function provides detailed error messages and specific error codes
-/// based on the `keyring::ErrorKind`.
+/// based on the `keyring::Error`.
 ///
 /// # Arguments
 /// * `e` - The `keyring::Error` to map.
@@ -64,14 +64,14 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 	error!("{}: {}", error_message_prefix, e);
 
 	let (specific_message, code_str) = match e.kind() {
-		keyring::ErrorKind::NoEntry => {
+		keyring::Error::NoEntry => {
 			(
 				format!("{}: Secret not found in keychain.", error_message_prefix),
 				"ESECRET_NOENTRY",
 			)
 		},
 
-		keyring::ErrorKind::Ambiguous => {
+		keyring::Error::Ambiguous(_) => {
 			(
 				format!(
 					"{}: Ambiguous result; multiple entries found (this is unexpected for extension secrets).",
@@ -81,14 +81,14 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 			)
 		},
 
-		keyring::ErrorKind::BadEncoding(_) => {
+		keyring::Error::BadEncoding(_) => {
 			(
 				format!("{}: Data encoding or decoding error with keychain.", error_message_prefix),
 				"ESECRET_ENCODING",
 			)
 		},
 
-		keyring::ErrorKind::InvalidAppId => {
+		keyring::Error::Invalid(..) => {
 			(
 				format!(
 					"{}: Invalid application identifier configuration for keyring access.",
@@ -98,7 +98,7 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 			)
 		},
 
-		keyring::ErrorKind::InvalidServiceName(_) => {
+		keyring::Error::InvalidServiceName(_) => {
 			(
 				format!(
 					"{}: Invalid service name configuration for keyring access.",
@@ -108,7 +108,7 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 			)
 		},
 
-		keyring::ErrorKind::PlatformFailure(_) => {
+		keyring::Error::PlatformFailure(_) => {
 			(
 				format!(
 					"{}: Underlying OS platform failure during keyring operation.",
@@ -118,7 +118,7 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 			)
 		},
 
-		keyring::ErrorKind::NoBackend => {
+		keyring::Error::NoStorageAccess(_) => {
 			(
 				format!(
 					"{}: No suitable OS keychain or credential backend could be found or accessed.",
@@ -128,7 +128,7 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 			)
 		},
 
-		keyring::ErrorKind::BadPassword => {
+		keyring::Error::PlatformFailure(_) => {
 			(
 				// This might mean the keychain is locked or requires user authentication.
 				format!(
@@ -139,26 +139,25 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 			)
 		},
 
-		keyring::ErrorKind::Duplicate => {
-			(
-				format!(
-					"{}: Attempted to create a duplicate secret entry where one already exists.",
-					error_message_prefix
-				),
-				"ESECRET_DUP",
-			)
-		},
+		// keyring::Error:: => {
+		// 	(
+		// 		format!(
+		// 			"{}: Attempted to create a duplicate secret entry where one already exists.",
+		// 			error_message_prefix
+		// 		),
+		// 		"ESECRET_DUP",
+		// 	)
+		// },
 
-		keyring::ErrorKind::Cancelled => {
-			(
-				format!(
-					"{}: Keyring operation was cancelled by the user or system (e.g., a prompt was dismissed).",
-					error_message_prefix
-				),
-				"ESECRET_CANCELLED",
-			)
-		},
-
+		// keyring::Error::Cancelled => {
+		// 	(
+		// 		format!(
+		// 			"{}: Keyring operation was cancelled by the user or system (e.g., a prompt was dismissed).",
+		// 			error_message_prefix
+		// 		),
+		// 		"ESECRET_CANCELLED",
+		// 	)
+		// },
 		_ => {
 			(
 				// Catch-all for other/new keyring error kinds
@@ -190,7 +189,7 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 /// "com.example.landeditor.publisher.myextension").
 fn get_keyring_service_name_for_extension<R:Runtime>(app:&AppHandle<R>, extension_id:&str) -> String {
 	// Use the app's bundle identifier (e.g., "com.example.landeditor") as a prefix.
-	let app_bundle_id = app.config().tauri.bundle.identifier.clone();
+	let app_bundle_id = app.config().identifier.clone();
 
 	// Append the extension ID to create a unique service name.
 	format!("{}.{}", app_bundle_id, extension_id)
@@ -249,7 +248,7 @@ pub async fn handle_get_secret<R:Runtime>(app:AppHandle<R>, params:Value) -> Res
 			Ok(json!(password))
 		},
 
-		Err(keyring::Error { kind: keyring::ErrorKind::NoEntry, .. }) => {
+		Err(keyring::Error::NoEntry) => {
 			trace!(
 				"[Secrets Handler] Secret not found for extension_id='{}', key='{}' (NoEntry). Returning null.",
 				extension_id, key
@@ -371,7 +370,7 @@ pub async fn handle_delete_secret<R:Runtime>(app:AppHandle<R>, params:Value) -> 
 		map_keyring_error_to_rpc_string(e, "keyring entry creation (for delete)", &key_context_for_error_log)
 	})?;
 
-	match entry.delete_password() {
+	match entry.delete_credential() {
 		Ok(_) => {
 			info!(
 				"[Secrets Handler] Secret deleted successfully for extension_id='{}', key='{}'",
@@ -381,7 +380,7 @@ pub async fn handle_delete_secret<R:Runtime>(app:AppHandle<R>, params:Value) -> 
 			Ok(Value::Null)
 		},
 
-		Err(keyring::Error { kind: keyring::ErrorKind::NoEntry, .. }) => {
+		Err(keyring::Error::NoEntry) => {
 			info!(
 				"[Secrets Handler] Secret not found for deletion (extension_id='{}', key='{}'). Considered success \
 				 (idempotent).",

@@ -57,7 +57,7 @@ use tokio::{
 use url::Url;
 
 use crate::{
-	app_state::{AppState, ExtensionDescriptionState, WorkspaceFolderState},
+	app_state::{AppState, WorkspaceFolderState},
 
 	vine,
 	// error_utils is not strictly needed here as public functions don't return Result<_, String>

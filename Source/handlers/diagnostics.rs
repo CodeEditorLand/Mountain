@@ -25,20 +25,20 @@
 // - Interacts with `AppState` to read/write `diagnostics_map`.
 // - Uses `serde_json` to deserialize `MarkerData` and `RelatedInformation`
 //   DTOs.
-// - Emits Tauri events via `AppHandle::emit_all`.
+// - Emits Tauri events via `AppHandle::emit`.
 // --------------------------------------------------------------------------------------------
 
 use std::{
 	collections::HashMap,
 
 	// StdMutex used for AppState.diagnostics_map
-	sync::{Arc, Mutex as StdMutex, MutexGuard},
+	sync::MutexGuard,
 };
 
 use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 
 // Use shared error utilities
 use crate::{app_state::AppState, handlers::error_utils};
@@ -319,7 +319,7 @@ pub async fn handle_change_many<R:Runtime>(app:AppHandle<R>, args:Value) -> Resu
 			event_payload
 		);
 
-		if let Err(e) = app.emit_all("diagnostics_changed", event_payload) {
+		if let Err(e) = app.emit("diagnostics_changed", event_payload) {
 			error!("[Diag Handler $changeMany] Failed to emit 'diagnostics_changed' event: {}", e);
 		}
 	}
@@ -396,7 +396,7 @@ pub async fn handle_clear<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Val
 				event_payload
 			);
 
-			if let Err(e) = app.emit_all("diagnostics_changed", event_payload) {
+			if let Err(e) = app.emit("diagnostics_changed", event_payload) {
 				error!(
 					"[Diag Handler $clear] Failed to emit 'diagnostics_changed' event after clear: {}",
 					e

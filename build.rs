@@ -6,12 +6,12 @@ use serde_json::Value;
 
 #[derive(Deserialize)]
 struct Toml {
-	package: Package,
+	package:Package,
 }
 
 #[derive(Deserialize)]
 struct Package {
-	version: String,
+	version:String,
 }
 
 fn main() {
@@ -35,7 +35,7 @@ fn main() {
 
 		let Content = read_to_string(File).expect("Cannot read configuration file.");
 
-		let mut Tauri: Value = match json5::from_str(&Content) {
+		let mut Tauri:Value = match json5::from_str(&Content) {
 			Ok(Value) => Value,
 			Err(_) => serde_json::from_str(&Content).expect("Cannot JSON."),
 		};

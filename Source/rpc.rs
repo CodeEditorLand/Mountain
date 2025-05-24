@@ -90,7 +90,7 @@ use log::{debug, error, info, trace, warn};
 // use serde::Deserialize;
 use serde_json::{Value, json};
 // Tauri essentials
-use tauri::{AppHandle, Manager, Runtime as TauriRuntime, Window, Wry};
+use tauri::{AppHandle, Emitter, Manager, Runtime as TauriRuntime, Wry};
 
 use crate::{
 	// `AppState` is accessed indirectly via `AppHandle` or `AppRuntime`.
@@ -306,7 +306,7 @@ impl MainThreadCommandsHandler {
 			args.to_string().chars().take(100).collect::<String>()
 		);
 
-		let main_window = self.app_handle.get_window("main").ok_or_else(|| {
+		let main_window = self.app_handle.get_webview_window("main").ok_or_else(|| {
 			error_utils::rpc_error_string(
 				"Main window not found for command execution".to_string(),
 				Some("ENOWINDOW_CMDEXEC"),
@@ -848,7 +848,7 @@ impl MainThreadWindowHandler {
 	pub async fn focusWindow(&self, _args:Value) -> Result<Value, String> {
 		info!("[RPC MainThreadWindow] <= $focusWindow");
 
-		if let Some(main_window) = self.app_handle.get_window("main") {
+		if let Some(main_window) = self.app_handle.get_webview_window("main") {
 			main_window.set_focus().map_err(|e_tauri| {
 				error_utils::rpc_error_string(
 					format!("Failed to focus main window: {}", e_tauri),
@@ -892,7 +892,7 @@ impl MainThreadStatusBarHandler {
 
 		// Emit a Tauri event for Sky to update the status bar UI.
 		// Sky will need to parse the IStatusbarEntryDto structure.
-		if let Err(e_emit) = self.app_handle.emit_all("mountain://statusbar/set", status_bar_entry_dto) {
+		if let Err(e_emit) = self.app_handle.emit("mountain://statusbar/set", status_bar_entry_dto) {
 			error!(
 				"[RPC MainThreadStatusBar] Failed to emit 'mountain://statusbar/set' event for entry '{}': {}",
 				entry_id, e_emit
@@ -919,7 +919,7 @@ impl MainThreadStatusBarHandler {
 
 		if let Err(e_emit) = self
 			.app_handle
-			.emit_all("mountain://statusbar/dispose", json!({ "id": entry_id_to_dispose }))
+			.emit("mountain://statusbar/dispose", json!({ "id": entry_id_to_dispose }))
 		{
 			error!(
 				"[RPC MainThreadStatusBar] Failed to emit 'mountain://statusbar/dispose' event for entry '{}': {}",

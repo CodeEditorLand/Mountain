@@ -54,12 +54,8 @@
 // --------------------------------------------------------------------------------------------
 
 use std::{
-	collections::HashMap,
-
 	// For `pty_master_writer.flush()`
 	io::Write as StdIoWrite,
-
-	path::PathBuf,
 
 	sync::Arc,
 	// `process::Stdio` from `std` is not directly needed as `portable-pty` handles PTY setup.
@@ -72,18 +68,13 @@ use log::{debug, error, info, trace, warn};
 use portable_pty::{Child as PtyChild, CommandBuilder, MasterPty, NativePtySystem, PtyPair, PtySize, PtySystem};
 use serde_json::{Value, json};
 // `State` is not directly used in handler signatures here.
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Manager, Runtime};
 use tokio::{
 	// `AsyncWriteExt` not directly needed for `MasterPty`'s writer if using its `Write` trait.
 	// AsyncReadExt for read_exact or read_buf
-	io::{AsyncBufReadExt, AsyncReadExt, BufReader},
+	io::AsyncReadExt,
 
 	sync::{Mutex as TokioMutex, mpsc as TokioMpsc},
-
-	task::JoinHandle,
-
-	// For sleep in placeholder reader
-	time::Duration as TokioDuration,
 };
 
 // For consistent RPC error formatting
@@ -759,7 +750,7 @@ pub async fn handle_show_terminal<R:Runtime>(app_handle:AppHandle<R>, args:Value
 	// Emit an event for the Sky frontend to handle the UI aspect of showing the
 	// terminal.
 	app_handle
-		.emit_all(
+		.emit(
 			// Custom event name for Sky
 			"mountain://terminal/reveal",
 			json!({"id": terminal_id, "preserveFocus": preserve_focus}),

@@ -101,7 +101,7 @@ use log::{debug, error, info, trace, warn};
 // `serde::Deserialize` might be used if parsing complex DTOs from `args` directly in Track.
 // use serde::Deserialize;
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window, command};
+use tauri::{AppHandle, Runtime as TauriRuntime, State, Window, command};
 // For handling URIs in effect parameters
 use url::Url;
 

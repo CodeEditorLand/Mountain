@@ -55,7 +55,7 @@ use std::{path::PathBuf, sync::Arc};
 // Logging facade
 use log::{debug, error, info, trace, warn};
 // Tauri essentials
-use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window, Wry};
+use tauri::Manager;
 
 // --- Application Modules ---
 // These would typically be `mod module_name;` declarations if in a library crate,
@@ -232,7 +232,7 @@ async fn main() {
 				
 				/* 4. Load initial merged configuration into AppState. */
 				/*    This reads user, workspace, and folder settings.json files and merges them. */
-                match handlers::config::load_and_merge_configurations_internal(&post_setup_app_handle_clone, &app_state).await {
+                match crate::handlers::config::load_and_merge_configurations_internal(&post_setup_app_handle_clone, &app_state).await {
                     Ok(merged_config_state) => {
                         app_state.configuration.lock()
                             .expect("FATAL: Failed to lock AppState.configuration for init load during setup.")
@@ -251,7 +251,7 @@ async fn main() {
                 }
 				
 				/* 5. Update workspace memento path based on initial workspace (if any) and app data dir. */
-                if let Some(app_data_dir_for_memento) = post_setup_app_handle_clone.path_resolver().app_data_dir() {
+                if let app_data_dir_for_memento = post_setup_app_handle_clone.path().app_data_dir().expect("") {
                     debug!("[Mountain Setup Task] Attempting to initialize workspace memento path using app data dir: {}", app_data_dir_for_memento.display());
 					
                     if let Err(e) = app_state.update_workspace_memento_path_and_reload(&app_data_dir_for_memento) {

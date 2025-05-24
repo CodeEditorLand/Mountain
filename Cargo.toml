@@ -4,51 +4,149 @@ path = "Source/Library.rs"
 
 [build-dependencies]
 json5 = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = { version = "1.0.140" }
 tauri-build = { version = "2.1.1", features = [] }
 toml = { workspace = true }
 
 [dependencies]
+# Core Async & Concurrency
+tokio = { workspace = true, features = [
+	# Enables all features: rt, rt-multi-thread, io-util, io-std, net, time, sync, macros, process, fs, signal, test-util
+	"full",
+
+] }
 async-trait = { workspace = true }
-colored = "3.0.0"
-Echo = { workspace = true }
-env_logger = "0.11.8"
-futures = { workspace = true }
-log = "0.4.27"
-regex = { workspace = true }
-serde = { workspace = true }
-serde_json = { workspace = true }
+
+# For SinkExt, StreamExt
+futures-util = { workspace = true, features = ["sink", "std"] }
+
+# For lazy static initialization
+once_cell = { workspace = true }
+
+# Tauri
+
+# Using your specified version and git source
 tauri = { version = "2.5.1", features = [
+	# Webview rendering via WRY
 	"wry",
+
 	"tray-icon",
+
+	# Essential for development
 	"devtools",
+
+	# TLS backend using rustls
 	"rustls-tls",
+
+	# For payload compression
 	"compression",
 ], default-features = false, git = "https://github.com/tauri-apps/tauri", branch = "feat/mobile-dev-cert" }
-tokio = { workspace = true }
-tokio-tungstenite = { workspace = true }
-unbug = { workspace = true }
-base64 = "0.22.1"
+
+# Logging
+
+# Use the version from your workspace
+log = { workspace = true }
+
+# Use the version from your workspace
+env_logger = { workspace = true }
+
+# For colored logs
+colored = { workspace = true }
+# Networking & WebSockets (for Mist & Vine)
+
+# Or "rustls-tls-webpki-roots"
+tokio-tungstenite = { workspace = true, features = ["rustls-tls-native-roots"] }
+
+# Filesystem & Paths
+
+# For system directories
+dirs = { workspace = true }
+
+# For .gitignore style walking
+ignore = { workspace = true }
+
+# For glob pattern matching
+globset = { workspace = true }
+keyring.workspace = true
+base64 = { workspace = true }
+
+# Utility
+
+# Enable serde support for Url
+url = { workspace = true, features = ["serde"] }
+
+# For v4 UUIDs and serde support
+uuid = { workspace = true, features = ["v4", "serde"] }
+
+# For timestamps and serde support
+chrono = { workspace = true, features = ["serde"] }
+
+# For custom error types
+thiserror = { workspace = true }
+
+# Workspace Crates (assuming these are defined in your root Cargo.toml's [workspace.dependencies])
+# Land_Common = { workspace = true }
+
+Echo = { workspace = true }
+
+serde_json = { version = "1.0.140" }
+serde = { version = "1.0.219" }
+toml = { version = "0.8.22" }
+
+# regex = { workspace = true }
+# unbug = { workspace = true }
 
 [features]
+default = [
+	# "custom-protocol" # Tauri's custom-protocol feature is implicitly enabled by using `app.protocol()`
+
+	# Enable Cocoon by default
+	"extension_host_cocoon",
+
+	# Enable native Mist WebSocket server by default
+	"mist_native",
+]
+
+# Enable this feature if you want to build without Cocoon
+extension_host_cocoon = []
+
+# Enable this feature if you want to build with the native Mist WebSocket server
+mist_native = []
+
 Debug = []
-default = []
 
 [lib]
-crate-type = ["lib", "cdylib", "staticlib"]
+# Library name if also built as a lib
 name = "Mountain"
+
+# Path to the library root (e.g., lib.rs or your Source/Library.rs if it's a lib)
 path = "Source/Library.rs"
 
+crate-type = ["lib"]
+
 [package]
-autobenches = false
+name = "Mountain"
+version = "0.0.1"
+description = "Mountain ⛰️"
+
+# Add your authors field
+authors = ["Your Name <you@example.com>"]
+
+# Changed from 2024, as 2024 is very new. Stick to 2021 unless you need specific 2024 features.
+edition = "2024"
+
+# Ensure LICENSE file exists
+license-file = "LICENSE"
+
+# Good for private/application crates
+publish = false
+
+# Matches the [[bin]] name
+default-run = "Mountain"
+
+# These prevent Cargo from trying to auto-discover targets if you don't have them.
 autobins = false
 autoexamples = false
 autotests = false
-default-run = "Mountain"
-description = "Mountain ⛰️"
-edition = "2024"
-license-file = "LICENSE"
-name = "Mountain"
-publish = false
-version = "0.0.1"
+autobenches = false

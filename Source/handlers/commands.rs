@@ -43,7 +43,7 @@ use std::{
 	collections::HashMap,
 	future::Future,
 	pin::Pin,
-	sync::{Arc, Mutex as StdMutex, MutexGuard},
+	sync::{Arc, MutexGuard},
 };
 
 use Land_Common::{command_effects, errors::CommonError, ui_effects, workspace_effects};

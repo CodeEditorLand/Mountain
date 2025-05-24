@@ -48,7 +48,7 @@
 // For logging
 use log::{debug, info, warn};
 // `json!` macro likely unused here, `Value` is key.
-use serde_json::{Value, json};
+use serde_json::Value;
 use tauri::{Runtime, Window};
 
 // TODO: Review if this `handle_show_message_basic` is still the primary way

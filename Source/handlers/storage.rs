@@ -50,7 +50,7 @@ use std::{
 };
 
 use log::{debug, error, info, trace, warn};
-use serde_json::{Value, json};
+use serde_json::Value;
 // `State` is not directly used in RPC handler signatures here as `AppHandle` gives access.
 use tauri::{AppHandle, Manager, Runtime};
 // Tokio fs for async operations

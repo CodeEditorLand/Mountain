@@ -56,7 +56,7 @@
 //   `NEXT_CONN_ID` (atomic counter), using `once_cell::sync::Lazy` for lazy
 //   initialization and `Arc<StdMutex<_>>` for thread-safe access to
 //   `CONNECTIONS`.
-// - Emits Tauri events using `AppHandle::emit_all` to decouple message
+// - Emits Tauri events using `AppHandle::emit` to decouple message
 //   processing from direct calls into other Mountain systems.
 // - The `send_message_to_client_by_id` function provides an outbound API for
 //   other parts of Mountain.
@@ -90,7 +90,7 @@ use once_cell::sync::Lazy;
 // For constructing JSON payloads for Tauri events
 use serde_json::{Value, json};
 // Tauri essentials
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Emitter, Runtime};
 use tokio::{
 	net::{TcpListener, TcpStream},
 
@@ -282,7 +282,7 @@ async fn handle_websocket_connection<R:Runtime>(tcp_stream:TcpStream, peer_addr:
 			}
 
 			// Emit a Tauri event signalling a new client connection.
-			if let Err(e) = app_handle.emit_all(
+			if let Err(e) = app_handle.emit(
 				// Event name for frontend/listeners
 				"mist_client_connected",
 				json!({ "connId": connection_id, "peerAddr": peer_addr.to_string() }),
@@ -329,7 +329,7 @@ async fn handle_websocket_connection<R:Runtime>(tcp_stream:TcpStream, peer_addr:
 
 									// Emit a Tauri event with the received message.
 									// Other parts of Mountain or Sky can listen for "mist://message".
-									if let Err(e_emit) = app_handle_for_reader_task.emit_all(
+									if let Err(e_emit) = app_handle_for_reader_task.emit(
 										// Convention: "mist://<type>" or similar for events
 										"mist://message",
 										json!({"connId": connection_id, "payload": parsed_payload_value}),
@@ -350,7 +350,7 @@ async fn handle_websocket_connection<R:Runtime>(tcp_stream:TcpStream, peer_addr:
 
 									// TODO: Handle binary messages if the protocol requires it.
 									//       For now, just acknowledge and potentially emit basic info.
-									if let Err(e_emit) = app_handle_for_reader_task.emit_all(
+									if let Err(e_emit) = app_handle_for_reader_task.emit(
 										// Different event for binary?
 										"mist://message_binary",
 										json!({"connId": connection_id, "binaryDataLength": bin_payload.len()}),
@@ -541,7 +541,7 @@ async fn handle_websocket_connection<R:Runtime>(tcp_stream:TcpStream, peer_addr:
 			}
 
 			// Emit a Tauri event signalling client disconnection.
-			if let Err(e) = app_handle.emit_all(
+			if let Err(e) = app_handle.emit(
 				"mist_client_disconnected",
 				json!({ "connId": connection_id, "peerAddr": peer_addr.to_string() }),
 			) {

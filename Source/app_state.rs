@@ -85,8 +85,6 @@ use std::{
 		// Standard Mutex for thread-safe interior mutability
 		Mutex as StdMutex,
 
-		MutexGuard,
-
 		atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering as AtomicOrdering},
 	},
 };
@@ -99,7 +97,7 @@ use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 // Tauri essentials
-use tauri::{AppHandle, Manager, Runtime, Wry};
+use tauri::{Manager, Wry};
 use tokio::sync::{
 	// Tokio Mutex for JoinHandle wrappers in TerminalState
 	Mutex as TokioMutex,
@@ -115,22 +113,17 @@ use tokio::task::JoinHandle;
 // For URI handling in various state DTOs
 use url::Url;
 
-use crate::{
-	handlers::{
-		commands::{
-			// Make module directly accessible
-			self,
+use crate::handlers::{
+	commands::{
+		// Make module directly accessible
+		self,
 
-			// Enum for native/proxied command handlers
-			CommandHandler,
-		},
-
-		// DTO for diagnostic markers
-		diagnostics::MarkerData,
+		// Enum for native/proxied command handlers
+		CommandHandler,
 	},
 
-	// Needed for native command handler signature
-	runtime::AppRuntime,
+	// DTO for diagnostic markers
+	diagnostics::MarkerData,
 };
 
 // --- Type Aliases for Clarity ---
@@ -1158,7 +1151,7 @@ fn load_initial_memento_storage_from_disk(storage_file_path:&Path) -> MementoSto
 /// Renamed to be specific to its use in `DocumentState` context.
 /// This is a simplified version;
 /// `handlers::documents::analyze_text_lines_and_eol` might be more robust.
-fn analyze_text_lines_and_eol_for_document_state(text:&str) -> (Vec<String>, String) {
+pub fn analyze_text_lines_and_eol_for_document_state(text:&str) -> (Vec<String>, String) {
 	// Simplified EOL detection for DocumentState initialization or full
 	// replacement. Prefers \r\n > \n. Pure \r is treated as \n.
 	let detected_eol = if text.contains("\r\n") {

@@ -29,19 +29,14 @@
 // - Uses `vine` to send notifications to sidecars.
 // --------------------------------------------------------------------------------------------
 
-use std::{
-	path::{Path, PathBuf},
-
-	// Kept from original, though direct use here might be minimal for pure helpers
-	sync::Arc,
-};
+use std::path::{Path, PathBuf};
 
 use Land_Common::{
 	config_effects::{ConfigurationTarget, IConfigurationOverrides},
 	errors::CommonError,
 };
 // For document selector matching
-use globset::{Error as GlobsetError, Glob, GlobBuilder, GlobMatcher};
+use globset::GlobBuilder;
 use log::{debug, error, info, trace, warn};
 // For DocumentFilterDto
 use serde::Deserialize;

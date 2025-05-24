@@ -23,13 +23,13 @@ use std::{path::PathBuf, sync::Arc};
 use Land_Common::documents_effects;
 // For error mapping
 use Land_Common::errors::CommonError;
-use log::{debug, error, info, trace, warn};
+use log::{error, info, trace, warn};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime, State};
+use tauri::{AppHandle, Manager, Runtime};
 use url::Url;
 
 use crate::{
-	app_state::{AppState, DocumentState},
+	app_state::DocumentState,
 
 	// Use shared error utilities
 	handlers::error_utils,
@@ -253,7 +253,7 @@ pub async fn handle_try_open_document<R:Runtime>(app_handle:AppHandle<R>, args:V
 					|| url_result.path(),
 
 
-					|p| p.to_string_lossy().into_owned()
+					|p| &p.to_string_lossy().into_owned()
 				)
 			})
 		})
@@ -330,7 +330,7 @@ pub async fn handle_try_create_document<R:Runtime>(app_handle:AppHandle<R>, args
 					|| url_result.path(),
 
 
-					|p| p.to_string_lossy().into_owned()
+					|p| &p.to_string_lossy().into_owned()
 				)
 			})
 		})
@@ -466,7 +466,7 @@ pub async fn handle_try_save_document_as<R:Runtime>(
 					"fsPath": new_uri.to_file_path().ok().as_ref().map_or_else(
 						|| new_uri.path(),
 
-						|p| p.to_string_lossy().into_owned()
+						|p| &p.to_string_lossy().into_owned()
 					)
 				})
 			})
@@ -536,7 +536,7 @@ pub async fn handle_save_all<R:Runtime>(
 /// # Arguments
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `doc_state` - The `DocumentState` of the newly added document.
-pub async fn notify_model_added<R:Runtime>(app_handle:AppHandle<R>, doc_state:&DocumentState) {
+pub async fn notify_model_added<R:Runtime>(_:AppHandle<R>, doc_state:&DocumentState) {
 	info!("[DocNotify] Sending $acceptModelAdded for: {}", doc_state.uri);
 
 	trace!("[DocNotify] $acceptModelAdded state: {:?}", doc_state);
@@ -554,7 +554,7 @@ pub async fn notify_model_added<R:Runtime>(app_handle:AppHandle<R>, doc_state:&D
 		"fsPath": doc_state.uri.to_file_path().ok().as_ref().map_or_else(
 			|| doc_state.uri.path(),
 
-			|p| p.to_string_lossy().into_owned()
+			|p| &p.to_string_lossy().into_owned()
 		)
 	});
 
@@ -633,7 +633,7 @@ pub async fn notify_model_changed<R:Runtime>(
 		"fsPath": doc_uri.to_file_path().ok().as_ref().map_or_else(
 			|| doc_uri.path(),
 
-			|p| p.to_string_lossy().into_owned()
+			|p| &p.to_string_lossy().into_owned()
 		)
 	});
 
@@ -689,7 +689,7 @@ pub async fn notify_model_saved<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url) {
 		"fsPath": uri.to_file_path().ok().as_ref().map_or_else(
 			|| uri.path(),
 
-			|p| p.to_string_lossy().into_owned()
+			|p| &p.to_string_lossy().into_owned()
 		)
 	});
 
@@ -735,7 +735,7 @@ pub async fn notify_dirty_state_changed<R:Runtime>(_app_handle:AppHandle<R>, uri
 		"fsPath": uri.to_file_path().ok().as_ref().map_or_else(
 			|| uri.path(),
 
-			|p| p.to_string_lossy().into_owned()
+			|p| &p.to_string_lossy().into_owned()
 		)
 	});
 
@@ -770,7 +770,7 @@ pub async fn notify_model_removed<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url)
 		"fsPath": uri.to_file_path().ok().as_ref().map_or_else(
 			|| uri.path(),
 
-			|p| p.to_string_lossy().into_owned()
+			|p| &p.to_string_lossy().into_owned()
 		)
 	});
 
@@ -809,7 +809,7 @@ pub async fn notify_language_changed<R:Runtime>(_app_handle:AppHandle<R>, uri:&U
 		"fsPath": uri.to_file_path().ok().as_ref().map_or_else(
 			|| uri.path(),
 
-			|p| p.to_string_lossy().into_owned()
+			|p| &p.to_string_lossy().into_owned()
 		)
 	});
 
@@ -846,7 +846,7 @@ pub async fn notify_encoding_changed<R:Runtime>(_app_handle:AppHandle<R>, uri:&U
 		"fsPath": uri.to_file_path().ok().as_ref().map_or_else(
 			|| uri.path(),
 
-			|p| p.to_string_lossy().into_owned()
+			|p| &p.to_string_lossy().into_owned()
 		)
 	});
 

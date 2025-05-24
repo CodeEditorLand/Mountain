@@ -88,17 +88,12 @@
 // --------------------------------------------------------------------------------------------
 
 use std::{
-	collections::HashMap,
-
 	// For Path::extension()
 	ffi::OsStr,
 
 	path::{Path, PathBuf},
 
-	sync::{Arc, Mutex as StdMutex, MutexGuard},
-
-	// Standard library Duration
-	time::Duration as StdDuration,
+	sync::{Arc, MutexGuard},
 };
 
 // Common effect traits and error types from Land_Common
@@ -172,16 +167,13 @@ use Land_Common::{
 use async_trait::async_trait;
 use log::{debug, error, info, trace, warn};
 // For DTOs used in UiProvider event payloads
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::{Map as JsonMap, Value, json};
 // Tauri essentials
-use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window, Wry};
+use tauri::{AppHandle, Emitter, Manager, State, Wry};
 use tokio::{
 	// Tokio's async filesystem operations
 	fs,
-
-	// For File::write_all
-	io::AsyncWriteExt,
 
 	// For UiProvider async request-response with Sky
 	sync::oneshot as TokioOneshot,
@@ -207,14 +199,6 @@ use crate::{
 		LanguageProviderType as AppStateLanguageProviderType,
 
 		MementoStorageMap,
-
-		MergedConfigurationState,
-
-		OutputChannelState,
-
-		ProviderRegistration,
-
-		WorkspaceFolderState,
 	},
 
 	// Access to various handler modules
@@ -862,7 +846,7 @@ impl FsWriter for MountainEnvironment {
 		// TODO: Emit filesystem_changed event via AppHandle. This is important if this
 		// write       bypasses higher-level document management logic that would
 		// normally emit such events.       Example:
-		// self.app_handle.emit_all("mountain://filesystem/changed", json!({"uri":
+		// self.app_handle.emit("mountain://filesystem/changed", json!({"uri":
 		// path_to_uri(path), "type": "changed"}));
 
 		Ok(())
@@ -2317,7 +2301,7 @@ impl UiProvider for MountainEnvironment {
 		if use_simple_dialog {
 			let window_main = self
 				.app_handle
-				.get_window("main")
+				.get_webview_window("main")
 				.ok_or_else(|| CommonError::UiInteraction("Main window not found for simple dialog.".to_string()))?;
 
 			let title_str = format!("Land Editor - {}", severity_str.to_uppercase());
@@ -2379,7 +2363,7 @@ impl UiProvider for MountainEnvironment {
 		};
 
 		self.app_handle
-			.emit_all("sky://ui/show-message-request", sky_event_full_payload)
+			.emit("sky://ui/show-message-request", sky_event_full_payload)
 			.map_err(|e_emit| {
 				CommonError::UiInteraction(format!("Failed to emit 'sky://ui/show-message-request' event: {}", e_emit))
 			})?;
@@ -2467,7 +2451,7 @@ impl UiProvider for MountainEnvironment {
 		let event_payload = UiRequestToSkyPayload { request_id:request_id.clone(), payload:options.clone() };
 
 		self.app_handle
-			.emit_all("sky://ui/show-open-dialog-request", event_payload)
+			.emit("sky://ui/show-open-dialog-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_open_dialog request: {}", e)))?;
 
 		let result = match tokio_timeout(TokioDuration::from_secs(300), rx).await {
@@ -2535,7 +2519,7 @@ impl UiProvider for MountainEnvironment {
 		let event_payload = UiRequestToSkyPayload { request_id:request_id.clone(), payload:options.clone() };
 
 		self.app_handle
-			.emit_all("sky://ui/show-save-dialog-request", event_payload)
+			.emit("sky://ui/show-save-dialog-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_save_dialog request: {}", e)))?;
 
 		let result = match tokio_timeout(TokioDuration::from_secs(300), rx).await {
@@ -2610,7 +2594,7 @@ impl UiProvider for MountainEnvironment {
 		let event_payload = UiRequestToSkyPayload { request_id:request_id.clone(), payload:payload_data };
 
 		self.app_handle
-			.emit_all("sky://ui/show-quick-pick-request", event_payload)
+			.emit("sky://ui/show-quick-pick-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_quick_pick request: {}", e)))?;
 
 		let result = match tokio_timeout(TokioDuration::from_secs(300), rx).await {
@@ -2689,7 +2673,7 @@ impl UiProvider for MountainEnvironment {
 		let event_payload = UiRequestToSkyPayload { request_id:request_id.clone(), payload:options.clone() };
 
 		self.app_handle
-			.emit_all("sky://ui/show-input-box-request", event_payload)
+			.emit("sky://ui/show-input-box-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_input_box request: {}", e)))?;
 
 		let result = match tokio_timeout(TokioDuration::from_secs(300), rx).await {
@@ -3055,7 +3039,7 @@ impl CommandExecutor for MountainEnvironment {
 
 		let main_window = self
 			.app_handle
-			.get_window("main")
+			.get_webview_window("main")
 			.ok_or_else(|| CommonError::UiInteraction("Main window not found for command execution".to_string()))?;
 
 		let app_runtime_state = self.app_handle.state::<Arc<AppRuntime>>();

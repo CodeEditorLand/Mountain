@@ -65,11 +65,9 @@ use Land_Common::{
 };
 // `futures::stream::TryStreamExt` is not needed if FsReader/FsWriter handles streams internally.
 // Logging
-use log::{debug, error, trace, warn};
+use log::debug;
 // For JSON manipulation
 use serde_json::{Value, json};
-// Tauri imports
-use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window};
 
 // `url::Url` is not directly used here as path_from_uri_components_for_fs_api primarily extracts path string.
 use crate::{
