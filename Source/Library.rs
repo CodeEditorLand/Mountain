@@ -42,4 +42,6 @@ pub mod handlers {
 	pub mod terminal;
 
 	pub mod ui;
+
+	pub mod workspace;
 }

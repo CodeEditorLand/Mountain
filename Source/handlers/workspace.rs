@@ -2,397 +2,480 @@
 // Mountain Workspace Handlers (handlers/workspace.rs)
 // --------------------------------------------------------------------------------------------
 // Handles RPC requests from Cocoon's `workspace-shim.js` related to workspace
-// information, state, and file searching. It also includes logic for notifying
-// Cocoon when workspace state changes within Mountain.
+// information, state, and file searching. Also includes logic for notifying
+// Cocoon when workspace state changes.
 //
 // Responsibilities:
-// - Handling `$getWorkspaceFolders` RPC calls: Retrieves the current list of
-//   `WorkspaceFolderState` from `AppState` and serializes them into the
-//   expected `UriComponents` + name/index format.
-// - Handling `$requestWorkspaceTrust` RPC calls: Returns the current trust
-//   state from `AppState.is_trusted`.
-// - Handling `$findFiles` RPC calls: Parses glob patterns and options, uses the
-//   `ignore` crate to search files within workspace folders respecting ignore
-//   files, and returns matching file URIs.
-// - Providing internal helper functions (`notify_cocoon_of_folder_change`,
-//   `notify_cocoon_of_trust_change`) to be called when Mountain modifies
-//   workspace state, which then send notifications
-//   (`$onDidChangeWorkspaceFolders`, `$onDidGrantWorkspaceTrust`) via Vine to
-//   Cocoon.
+// - Handling `$getWorkspaceFolders`, `$requestWorkspaceTrust`, `$findFiles` RPC
+//   calls.
+// - Interacting with `AppState` for workspace data.
+// - Using `ignore` and `globset` for `findFiles`.
+// - Notifying Cocoon of changes.
 //
 // Key Interactions:
 // - Called by `track::dispatch_sidecar_request` (or workspace effects).
-// - Interacts with `AppState` to read workspace folders and trust state.
-// - Uses `vine::send_notification` to push state changes to Cocoon.
-// - Uses `ignore` and `globset` crates for `findFiles` implementation.
-// - Relies on `WorkspaceFolderState` definition in `app_state.rs`.
+// - Accesses `AppState`.
+// - Uses `vine::send_notification_to_sidecar`.
+// - Uses `ignore`, `globset` crates.
 // --------------------------------------------------------------------------------------------
 
 use std::{
-	path::PathBuf,
+	path::{Path, PathBuf},
 	sync::{
 		Arc,
 		Mutex as StdMutex,
-		atomic::{AtomicBool, Ordering}, // Added for trust state
+		MutexGuard,
+		atomic::{AtomicBool, Ordering},
 	},
 };
 
-use globset::{Glob, GlobMatcher}; // Added for findFiles
-use ignore::WalkBuilder; // Added for findFiles, respecting ignore files
-use log; // Use log crate
-use serde::Deserialize; // Added for findFiles options deserialization
+use globset::{Error as GlobsetError, Glob, GlobBuilder, GlobMatcher};
+use ignore::WalkBuilder;
+use log::{debug, error, info, trace, warn};
+use serde::Deserialize;
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime, State}; // State might be needed if runtime injected later
-use url::Url; // Use Url for consistency
+// Removed State as not directly used
+use tauri::{AppHandle, Manager, Runtime};
+use url::Url;
 
 use crate::{
-	app_state::{AppState, WorkspaceFolderState}, // Import AppState and nested structs
-	vine,                                        // For sending notifications
+	app_state::{AppState, WorkspaceFolderState},
+
+	// Use shared error utilities
+	handlers::error_utils,
+
+	vine,
 };
+
+// Not directly returned by these
+// use Land_Common::errors::CommonError;
+
+// handlers
 
 // --- Helper Structs/Enums ---
 
-/// Options for the `findFiles` operation, mirroring VS Code's API.
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 struct FindFilesOptions {
 	max_results:Option<usize>,
-	use_ignore_files:Option<bool>,        // Respect .gitignore, .ignore?
-	use_global_ignore_files:Option<bool>, // Respect global gitignore?
-	use_parent_ignore_files:Option<bool>, // Respect ignore files in parent dirs? (Less common)
-	follow_symlinks:Option<bool>,         /* Follow symbolic links?
-	                                       * TODO: Add other options like `excludes` from settings? */
+
+	use_ignore_files:Option<bool>,
+
+	use_global_ignore_files:Option<bool>,
+
+	use_parent_ignore_files:Option<bool>,
+
+	follow_symlinks:Option<bool>,
+	// VS Code also has `useExcludeSettings` (true by default) and `sortBy` (none, file, type, mtime etc.)
+	// Consider adding `useExcludeSettings` if we have a general exclude mechanism in Mountain config.
 }
 
-/// Represents the glob pattern parameter, which can be a simple string
-/// or an object with `pattern` and optional `base` URI components.
 #[derive(Deserialize, Debug)]
-#[serde(untagged)] // Allows parsing string OR object into this enum
+// Allows parsing string OR object into this enum
+#[serde(untagged)]
 enum GlobParam {
 	String(String),
-	Pattern { pattern:String, base:Option<Value> }, // Base is expected as UriComponents JSON Value
+
+	// base is UriComponents JSON Value
+	Pattern { pattern:String, base:Option<Value> },
 }
 
 // --- Helper Functions ---
 
-/// Creates a structured error JSON string for RPC error responses.
-fn create_error_string(message:String, code:Option<&str>) -> String {
+/// Helper to map Mutex lock poisoning errors for workspace state.
+fn map_workspace_lock_error_to_str<T>(e:std::sync::PoisonError<MutexGuard<'_, T>>, context:&str) -> String {
+	let msg = format!("[Workspace Handler LockErr] Failed to acquire lock on {}: {}", context, e);
+
+	error!("{}", msg);
+
+	error_utils::rpc_error_string(msg, Some("ELOCKED_WORKSPACE"))
+}
+
+/// Helper to convert Path to file UriComponents JSON Value.
+/// Ensures consistent `$mid: 1` for VS Code compatibility.
+fn path_to_uri_components_value(p:&Path) -> Value {
+	let uri_str = Url::from_file_path(p).map(|url| url.to_string()).unwrap_or_else(|_| {
+		warn!(
+			"[Workspace Handler] Failed to create file URL from path: {}. Using lossy string.",
+			p.display()
+		);
+
+		format!("file:///{}", p.to_string_lossy().replace('\\', "/"))
+	});
+
 	json!({
-		 "message": message,
-		 "code": code.unwrap_or("EUNKNOWN")
+		// Important for VS Code URI marshalling
+		"$mid": 1,
+
+		"scheme": "file",
+
+		// Path as string
+		"path": p.to_str().unwrap_or(""),
+
+		// Full URI string
+		"external": uri_str,
+
+		// OS-specific path, often included by VS Code
+		"fsPath": p.to_str().unwrap_or("")
 	})
-	.to_string()
 }
 
-/// Helper to convert PathBuf to file UriComponents JSON Value.
-fn path_to_uri_components(p:&PathBuf) -> Option<Value> {
-	p.to_str().map(|s| {
-		json!({
-			"scheme": "file",
-			"path": s,
-			"external": format!("file://{}", s) // Include external string form
-		})
-	})
-}
+// --- Request Handlers (Called by Track dispatcher or rpc.rs) ---
 
-// --- Request Handlers (Called by Track dispatcher) ---
-
-/// Handles the `workspace_getWorkspaceFolders` request from Cocoon.
-/// Retrieves the current list of workspace folders from AppState.
 pub async fn handle_get_workspace_folders<R:Runtime>(app:AppHandle<R>) -> Result<Value, String> {
-	log::info!("[Workspace Handler] Handling getWorkspaceFolders request");
+	info!("[Workspace Handler] Handling getWorkspaceFolders request");
+
 	let app_state = app.state::<AppState>();
 
-	// Access the workspace folders stored in the AppState.
-	let folders_lock = app_state.workspace_folders.lock().map_err(|e| {
-		log::error!("Failed to acquire lock on workspace folders state: {}", e);
-		create_error_string(format!("Internal error locking workspace state: {}", e), None)
-	})?;
+	let folders_lock = app_state
+		.workspace_folders
+		.lock()
+		.map_err(|e| map_workspace_lock_error_to_str(e, "workspace_folders"))?;
 
-	// Serialize the folder data into the JSON format expected by VS Code API
 	let folders_json:Vec<Value> = folders_lock
 		.iter()
 		.map(|folder:&WorkspaceFolderState| {
-			json!({
-				// Include $mid only if strictly necessary for VS Code marshalling
-				// "$mid": 1,
+			// Construct the URI components object for the folder's URI
+			let folder_uri_components = json!({
+
+
+				"$mid": 1,
+
 				"scheme": folder.uri.scheme(),
-				"authority": folder.uri.host_str(), // host_str() returns Option<&str>
+
+				"authority": folder.uri.host_str().unwrap_or(""),
+
 				"path": folder.uri.path(),
+
+				// Include query if present
 				"query": folder.uri.query(),
+
+				// Include fragment if present
 				"fragment": folder.uri.fragment(),
+
+				"external": folder.uri.to_string(),
+
+				// Attempt to get fsPath, fallback to path if it's not a file URI or conversion fails
+				"fsPath": folder.uri.to_file_path().ok().as_ref().map_or_else(
+					// Fallback for non-file URIs or conversion errors
+					|| folder.uri.path(),
+
+					|p| p.to_str().unwrap_or("")
+				),
+
+			});
+
+			json!({
+
+
+				// Nest uri components under a "uri" key
+				"uri": folder_uri_components,
+
 				"name": folder.name,
+
 				"index": folder.index,
-				"external": folder.uri.to_string(), // Include external form
+
 			})
 		})
 		.collect();
 
-	// Drop lock explicitly before returning (good practice)
+	// Release lock
 	drop(folders_lock);
 
-	Ok(json!(folders_json)) // Return the JSON array
+	Ok(json!(folders_json))
 }
 
-/// Handles the `workspace_getWorkspaceFolder` request from Cocoon (STUBBED).
-/// Should retrieve a specific workspace folder based on a provided URI.
 pub async fn handle_get_workspace_folder<R:Runtime>(
-	app:AppHandle<R>,
-	params:Value, // Expects URI components of the resource to check
+	// Not used in this stub
+	_app:AppHandle<R>,
+
+	// Expects Value::Array([uriComponentsToMatch]) or just uriComponentsToMatch
+	params_val:Value,
 ) -> Result<Value, String> {
-	log::warn!("[Workspace Handler] Handling getWorkspaceFolder request (STUBBED)");
-	// TODO: Parse the target URI from `params`.
-	// TODO: Implement the logic from `workspace-shim.js`'s getWorkspaceFolder
-	//       on the native side using `AppState.workspace_folders`.
-	// TODO: Serialize the found folder (matching the format in
-	// handle_get_workspace_folders)       or return Value::Null if not found.
-	Err(create_error_string(
+	let uri_components_to_match = params_val.as_array().and_then(|a| a.get(0)).unwrap_or(params_val);
+
+	warn!(
+		"[Workspace Handler] Handling getWorkspaceFolder request (STUBBED): {:?}",
+		uri_components_to_match.get("external")
+	);
+
+	// TODO:
+	// 1. Parse `uri_components_to_match` into a `Url`.
+	// 2. Access `app.state::<AppState>().workspace_folders`.
+	// 3. Iterate through the folders and find one whose `folder.uri` is an ancestor
+	//    of or equal to the target URI. VS Code's
+	//    `IExtHostFileSystemInfo#isEqualOrParent` logic is relevant here.
+	// 4. If found, serialize that `WorkspaceFolderState` similar to
+	//    `handle_get_workspace_folders` and return it.
+	// 5. Otherwise, return `Value::Null`.
+	Err(error_utils::rpc_error_string(
 		"getWorkspaceFolder not fully implemented".to_string(),
 		Some("ENOSYS"),
 	))
 }
 
-/// Handles the `workspace_requestTrust` request from Cocoon.
-/// Returns the current workspace trust state from Mountain's AppState.
 pub async fn handle_request_trust<R:Runtime>(
 	app:AppHandle<R>,
-	_params:Value, // Params might contain details about the trust request in future
+
+	// Params might contain details about the trust request in future
+	_params:Value,
 ) -> Result<Value, String> {
-	log::info!("[Workspace Handler] Handling requestWorkspaceTrust request");
+	info!("[Workspace Handler] Handling requestWorkspaceTrust request");
+
 	let app_state = app.state::<AppState>();
-	// For MVP, just return the current boolean state stored atomically.
-	// A real implementation might involve checks or prompting the user via UI
-	// effects.
+
 	let is_trusted = app_state.is_trusted.load(Ordering::Relaxed);
-	log::debug!("[Workspace Handler] Current trust state: {}", is_trusted);
+
+	debug!("[Workspace Handler] Current trust state: {}", is_trusted);
+
+	// For MVP, this returns the current state. A full impl might show a dialog
+	// and then call `notify_cocoon_of_trust_change`.
 	Ok(json!(is_trusted))
 }
 
-/// Handles `workspace_findFiles` request from Cocoon.
-/// Performs a file search within the workspace using glob patterns and
-/// respecting ignore files. Args: `[include: GlobParam, exclude?: GlobParam |
-/// null, options?: FindFilesOptions]`
-pub async fn handle_find_files<R:Runtime>(app:AppHandle<R>, params:Value) -> Result<Value, String> {
-	// --- Argument Parsing ---
-	let params_array = params
-		.as_array()
-		.ok_or_else(|| create_error_string("Invalid parameters: Expected JSON array".to_string(), Some("EBADARG")))?;
+pub async fn handle_find_files<R:Runtime>(app_handle:AppHandle<R>, params:Value) -> Result<Value, String> {
+	let params_array = params.as_array().ok_or_else(|| {
+		error_utils::rpc_param_error_string("findFiles", "params", "array of [include, exclude?, options?]", None)
+	})?;
 
-	let include_param_val = params_array
-		.get(0)
-		.cloned()
-		.ok_or_else(|| create_error_string("Missing 'include' pattern parameter".to_string(), Some("EBADARG")))?;
-	let exclude_param_val = params_array.get(1).cloned(); // Optional
-	let options_val = params_array.get(2).cloned(); // Optional
+	let include_param_val = params_array.get(0).cloned().ok_or_else(|| {
+		error_utils::rpc_param_error_string("findFiles", "include pattern", "GlobParam (string or object)", Some(0))
+	})?;
 
-	// Deserialize parameters
-	let include_param:GlobParam = serde_json::from_value(include_param_val)
-		.map_err(|e| create_error_string(format!("Invalid include pattern: {}", e), Some("EBADARG")))?;
+	// Optional
+	let exclude_param_val = params_array.get(1).cloned();
 
-	let exclude_param_opt:Option<GlobParam> = exclude_param_val
-		.filter(|v| !v.is_null()) // Treat null as None
-		.map(serde_json::from_value)
-		.transpose() // Convert Option<Result> to Result<Option>
-		.map_err(|e| create_error_string(format!("Invalid exclude pattern: {}", e), Some("EBADARG")))?;
+	// Optional
+	let options_val = params_array.get(2).cloned();
+
+	let include_param:GlobParam = serde_json::from_value(include_param_val).map_err(|e| {
+		error_utils::rpc_error_string(format!("Invalid 'include' pattern parameter: {}", e), Some("EBADARG_INCLUDE"))
+	})?;
+
+	// Treat null as None
+	let exclude_param_opt:Option<GlobParam> = exclude_param_val.filter(|v| !v.is_null())
+        // Convert Option<Result> to Result<Option>
+		.map(serde_json::from_value).transpose()
+		.map_err(|e| error_utils::rpc_error_string(format!("Invalid 'exclude' pattern parameter: {}", e), Some("EBADARG_EXCLUDE")))?;
 
 	let options:FindFilesOptions = options_val
 		.map(serde_json::from_value)
 		.transpose()
-		.map_err(|e| create_error_string(format!("Invalid options object: {}", e), Some("EBADARG")))?
-		.unwrap_or_default(); // Use default options if not provided or null
+		.map_err(|e| {
+			error_utils::rpc_error_string(format!("Invalid 'options' object: {}", e), Some("EBADARG_OPTIONS"))
+		})?
+		.unwrap_or_default();
 
-	log::info!(
-		"[Workspace Handler] Handling findFiles request: include={:?}, exclude={:?}, options={:?}",
-		include_param,
-		exclude_param_opt,
-		options
+	info!(
+		"[Workspace Handler] findFiles: include={:?}, exclude={:?}, options={:?}",
+		include_param, exclude_param_opt, options
 	);
 
-	// --- Check Workspace Folders ---
-	let app_state = app.state::<AppState>();
-	let folders_guard = app_state.workspace_folders.lock().map_err(|e| {
-		log::error!("Failed to lock workspace folders: {}", e);
-		create_error_string("Internal error locking workspace state".to_string(), None)
-	})?;
+	let app_state = app_handle.state::<AppState>();
+
+	let folders_guard = app_state
+		.workspace_folders
+		.lock()
+		.map_err(|e| map_workspace_lock_error_to_str(e, "workspace_folders for findFiles"))?;
 
 	if folders_guard.is_empty() {
-		log::info!("[Workspace Handler] findFiles: No workspace folders open.");
-		return Ok(json!([])); // No folders -> no results
+		info!("[Workspace Handler] findFiles: No workspace folders open. Returning empty result.");
+
+		// No folders -> no results
+		return Ok(json!([]));
 	}
 
-	// --- Build Glob Matchers ---
-	// Helper to build GlobMatcher from GlobParam, handling potential base paths
-	let build_matcher = |param:&GlobParam| -> Result<(GlobMatcher, Option<PathBuf>), String> {
-		let (pattern_str, base_val_opt) = match param {
+	// Helper to build GlobMatcher, resolving base paths for globs.
+	// The returned PathBuf is the effective root for walking if a base was used,
+
+	// otherwise the folder_root.
+	let build_matcher = |param:&GlobParam, current_folder_root:&Path| -> Result<(GlobMatcher, PathBuf), String> {
+		let (pattern_str, base_uri_components_opt) = match param {
 			GlobParam::String(s) => (s.as_str(), None),
+
 			GlobParam::Pattern { pattern, base } => (pattern.as_str(), base.as_ref()),
 		};
 
-		// Parse base path if provided
-		let base_path_opt = if let Some(base_val) = base_val_opt {
-			// Reuse handler's URI component parsing logic (if made public or duplicated)
-			// For now, assume it returns a PathBuf Result
-			fn temp_path_from_uri(uri_val:&Value) -> Result<PathBuf, String> {
-				// Simplified version of the helper in fs_api handlers
-				let scheme = uri_val.get("scheme").and_then(|v| v.as_str()).unwrap_or("file");
-				if scheme != "file" && !scheme.is_empty() {
-					return Err("Base must be file scheme".into());
-				}
-				let path_str = uri_val.get("path").and_then(|v| v.as_str()).ok_or("Missing base path")?;
-				Ok(PathBuf::from(path_str))
+		let mut effective_glob_base_path:PathBuf;
+
+		if let Some(base_val) = base_uri_components_opt {
+			// Base URI is provided in the glob parameter itself
+			let scheme = base_val.get("scheme").and_then(Value::as_str).unwrap_or("file");
+
+			if scheme != "file" {
+				return Err(error_utils::rpc_error_string(
+					format!("Glob base URI must be 'file' scheme, got '{}'", scheme),
+					Some("EBADARG_BASE"),
+				));
 			}
-			Some(temp_path_from_uri(base_val)?)
+			let base_path_str = base_val.get("path").and_then(Value::as_str).ok_or_else(|| {
+				error_utils::rpc_error_string(
+					"Glob base URI 'path' field missing or not a string".to_string(),
+					Some("EBADARG_BASE"),
+				)
+			})?;
+
+			effective_glob_base_path = PathBuf::from(base_path_str);
+
+			// Ensure this base path is within the current_folder_root for security/scoping
+			if !effective_glob_base_path.starts_with(current_folder_root) {
+				warn!(
+					"[Workspace Handler] Glob base '{}' is outside current folder root '{}'. Using folder root as \
+					 base.",
+					effective_glob_base_path.display(),
+					current_folder_root.display()
+				);
+
+				effective_glob_base_path = current_folder_root.to_path_buf();
+			}
 		} else {
-			None
-		};
-
-		let glob = Glob::new(pattern_str).map_err(|e| {
-			create_error_string(format!("Invalid glob pattern '{}': {}", pattern_str, e), Some("EBADGLOB"))
-		})?; // Custom code for bad glob
-
-		Ok((glob.compile_matcher(), base_path_opt))
-	};
-
-	let (include_matcher, include_base) = build_matcher(&include_param)?;
-	let exclude_opt = exclude_param_opt.as_ref().map(build_matcher).transpose()?;
-	let exclude_matcher = exclude_opt.as_ref().map(|(m, _b)| m); // We only need the matcher part
-	// TODO: Handle exclude_base correctly if needed (rarely used with exclude?)
-
-	// --- Perform Search ---
-	let mut results:Vec<Value> = Vec::new();
-	let max_results = options.max_results.unwrap_or(usize::MAX);
-
-	// Iterate over each workspace folder
-	for folder in folders_guard.iter() {
-		let folder_root = PathBuf::from(folder.uri.path()); // Assumes file URI
-		log::debug!("[Workspace Handler] Searching in folder: {}", folder_root.display());
-
-		// Determine the effective search root (folder root or include base if specified
-		// and inside folder)
-		let search_root = include_base
-			.as_ref()
-			.filter(|base| base.starts_with(&folder_root)) // Ensure base is within folder
-			.unwrap_or(&folder_root);
-
-		// Configure the directory walker from the `ignore` crate
-		let mut walker_builder = WalkBuilder::new(search_root);
-		walker_builder.standard_filters(options.use_ignore_files.unwrap_or(true)); // Respect .gitignore, .ignore
-		walker_builder.git_global(options.use_global_ignore_files.unwrap_or(true)); // Respect global gitignore
-		walker_builder.git_ignore(options.use_ignore_files.unwrap_or(true));
-		walker_builder.git_exclude(options.use_ignore_files.unwrap_or(true));
-		walker_builder.follow_links(options.follow_symlinks.unwrap_or(false)); // Option to follow symlinks
-		if let Some(parent_ignore) = options.use_parent_ignore_files {
-			walker_builder.parents(parent_ignore); // Respect ignore files in parent dirs
+			// No explicit base, use the current workspace folder root
+			effective_glob_base_path = current_folder_root.to_path_buf();
 		}
 
-		// Walk the directory
+		// If pattern_str is absolute, it defines its own base. Otherwise, it's relative
+		// to effective_glob_base_path.
+		let glob_pattern_to_compile = if Path::new(pattern_str).is_absolute() {
+			pattern_str.to_string()
+		} else {
+			// Join with base. Glob patterns usually use forward slashes.
+			// Convert to string ensuring OS-specific separators are handled if necessary by
+			// globset, though globset generally expects POSIX-style paths for patterns.
+			effective_glob_base_path
+				.join(pattern_str.replace('\\', "/"))
+				.to_string_lossy()
+				.into_owned()
+		};
+
+		trace!(
+			"[Workspace Handler] Compiling glob: '{}' (original pattern: '{}', effective base for walk: '{}')",
+			glob_pattern_to_compile,
+			pattern_str,
+			effective_glob_base_path.display()
+		);
+
+		let glob = GlobBuilder::new(&glob_pattern_to_compile)
+            // OS-dependent case sensitivity for paths
+			.case_insensitive(cfg!(windows))
+            // On Windows, treat `\` as literal if not escaping. `false` means `/` and `\` are separators.
+			.literal_separator(cfg!(windows))
+            .build()
+            .map_err(|e: GlobsetError| error_utils::rpc_error_string(format!("Invalid glob pattern syntax '{}': {}", glob_pattern_to_compile, e), Some("EBADGLOB_SYNTAX")))?;
+
+		// The path returned is the one WalkBuilder should use as root for this glob
+		Ok((glob.compile_matcher(), effective_glob_base_path))
+	};
+
+	let mut results:Vec<Value> = Vec::new();
+
+	let max_results = options.max_results.unwrap_or(usize::MAX);
+
+	for folder in folders_guard.iter() {
+		if results.len() >= max_results {
+			break;
+
+			// Check before processing next folder
+		}
+		if folder.uri.scheme() != "file" {
+			warn!("[Workspace Handler] findFiles: Skipping non-file scheme folder: {}", folder.uri);
+
+			continue;
+		}
+		let folder_root = PathBuf::from(folder.uri.path());
+
+		debug!("[Workspace Handler] Searching in folder: {}", folder_root.display());
+
+		// Build matchers relative to the current folder_root for this iteration
+		let (current_include_matcher, walk_root_for_include) = build_matcher(&include_param, Some(&folder_root))?;
+
+		let current_exclude_matcher_opt = exclude_param_opt.as_ref()
+            // Exclude base usually same as include for this setup
+			.map(|ex_param| build_matcher(ex_param, Some(&folder_root)).map(|(m, _)| m))
+            .transpose()?;
+
+		// Walk from the determined root for this include glob
+		let mut walker_builder = WalkBuilder::new(walk_root_for_include.clone());
+
+		// Respect .gitignore etc.
+		walker_builder.standard_filters(options.use_ignore_files.unwrap_or(true));
+
+		if options.use_global_ignore_files.unwrap_or(true) {
+			// VSCode default is often true for this
+			walker_builder.git_global(true);
+		}
+		walker_builder.follow_links(options.follow_symlinks.unwrap_or(false));
+
+		if let Some(use_parent_ignore) = options.use_parent_ignore_files {
+			walker_builder.parents(use_parent_ignore);
+		}
+		// TODO: Add option `useExcludeSettings` (from VSCode) to respect files.exclude
+		// from settings.
+
 		for result_entry in walker_builder.build() {
 			if results.len() >= max_results {
 				break;
-			} // Stop if max results reached
-
+			}
 			match result_entry {
 				Ok(entry) => {
 					let absolute_path = entry.path();
-					// Skip the root directory itself if include base wasn't used explicitly
-					if include_base.is_none() && absolute_path == folder_root {
-						continue;
-					}
 
-					// Match against globs using path relative to the *folder root* for consistency
-					if let Ok(relative_path) = absolute_path.strip_prefix(&folder_root) {
-						if include_matcher.is_match(relative_path) {
-							if exclude_matcher.map_or(false, |ex| ex.is_match(relative_path)) {
-								continue; // Skip if excluded
-							}
+					// The glob patterns compiled by `build_matcher` are effectively absolute or
+					// rooted. So, we match them against the absolute path of the entry.
+					if current_include_matcher.is_match(absolute_path) {
+						if current_exclude_matcher_opt
+							.as_ref()
+							.map_or(false, |ex| ex.is_match(absolute_path))
+						{
+							trace!("[Workspace Handler] Excluded by exclude pattern: {}", absolute_path.display());
 
-							// Convert absolute path back to file URI components
-							if let Some(uri_components) = path_to_uri_components(&absolute_path.to_path_buf()) {
-								results.push(uri_components);
-							} else {
-								log::warn!(
-									"[Workspace Handler] findFiles: Failed to convert result path {} to file URI \
-									 components",
-									absolute_path.display()
-								);
-							}
+							continue;
 						}
-					} else {
-						// This might happen for paths outside the folder root if symlinks are followed
-						// excessively
-						log::warn!(
-							"[Workspace Handler] findFiles: Found path {} outside folder root {}",
-							absolute_path.display(),
-							folder_root.display()
-						);
+						results.push(path_to_uri_components_value(absolute_path));
 					}
 				},
+
 				Err(e) => {
-					log::error!(
-						"[Workspace Handler] findFiles: Error walking directory {}: {}",
-						folder_root.display(),
+					error!(
+						"[Workspace Handler] findFiles: Error during directory walk in {}: {}",
+						walk_root_for_include.display(),
 						e
 					)
 				},
 			}
 		}
-		if results.len() >= max_results {
-			break;
-		} // Stop iterating folders if max results reached
 	}
-
-	// Drop lock after iteration
+	// Release lock
 	drop(folders_guard);
 
-	log::info!("[Workspace Handler] findFiles found {} results.", results.len());
-	Ok(json!(results)) // Return JSON array of UriComponents
+	info!("[Workspace Handler] findFiles complete. Found {} results.", results.len());
+
+	Ok(json!(results))
 }
 
 // --- Notification Helpers (Called internally by Mountain) ---
-
-/// Notifies Cocoon when workspace folders change.
-/// Sends the `$onDidChangeWorkspaceFolders` notification via Vine.
 pub async fn notify_cocoon_of_folder_change<R:Runtime>(app:AppHandle<R>) {
-	log::info!("[Workspace Handler] Notifying Cocoon of workspace folder change");
-	// Payload for this notification is typically empty according to VS Code
-	// protocol, it just signals that the shim should re-request the folders.
-	let notification_method = "$onDidChangeWorkspaceFolders".to_string();
-	let sidecar_id = "cocoon-main"; // Target the main extension host sidecar
+	info!("[Workspace Handler] Notifying Cocoon of workspace folder change");
 
-	// Send notification via Vine IPC.
-	if let Err(e) = vine::send_notification(sidecar_id, notification_method, json!({})).await {
-		log::error!(
-			"[Workspace Handler] Failed to send folder change notification to {}: {}",
-			sidecar_id,
-			e
-		);
+	// Payload for $onDidChangeWorkspaceFolders is IWorkspaceFoldersChangeEventDto
+	// We can send an empty event, or compute added/removed if that info is readily
+	// available. For MVP, empty event signals Cocoon to re-request.
+	// Minimal event
+	let event_payload = json!({ "added": [], "removed": [] });
+
+	if let Err(e) =
+		vine::send_notification_to_sidecar("cocoon-main", "$onDidChangeWorkspaceFolders".to_string(), event_payload)
+			.await
+	{
+		error!("[Workspace Handler] Failed to send folder change notification: {}", e);
 	}
 }
-
-/// Notifies Cocoon when workspace trust state changes.
-/// Sends the `$onDidGrantWorkspaceTrust` notification via Vine.
 pub async fn notify_cocoon_of_trust_change<R:Runtime>(app:AppHandle<R>, _is_trusted:bool) {
-	log::info!("[Workspace Handler] Notifying Cocoon of workspace trust change");
-	// Payload for this notification is empty according to VS Code protocol.
-	let notification_method = "$onDidGrantWorkspaceTrust".to_string();
-	let sidecar_id = "cocoon-main";
+	info!("[Workspace Handler] Notifying Cocoon of workspace trust change");
 
-	if let Err(e) = vine::send_notification(sidecar_id, notification_method, json!({})).await {
-		log::error!(
-			"[Workspace Handler] Failed to send trust change notification to {}: {}",
-			sidecar_id,
-			e
-		);
+	// Payload for $onDidGrantWorkspaceTrust is void (empty)
+	if let Err(e) =
+		vine::send_notification_to_sidecar("cocoon-main", "$onDidGrantWorkspaceTrust".to_string(), json!({})).await
+	{
+		error!("[Workspace Handler] Failed to send trust change notification: {}", e);
 	}
 }
-
-// Example usage within Mountain after state change:
-// let handle = self.app_handle.clone();
-// tokio::spawn(async move {
-//     handlers::workspace::notify_cocoon_of_folder_change(handle).await;
-// });
-// let trust_state = app_state.is_trusted.load(Ordering::Relaxed);
-// let handle = self.app_handle.clone();
-// tokio::spawn(async move {
-//     handlers::workspace::notify_cocoon_of_trust_change(handle,
-// trust_state).await; });
