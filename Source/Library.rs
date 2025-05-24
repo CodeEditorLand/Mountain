@@ -53,3 +53,5 @@ pub mod Entry;
 pub mod mist;
 
 pub mod track;
+
+pub mod rpc;
