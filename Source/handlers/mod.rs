@@ -1,0 +1,3 @@
+// Add the new module
+pub mod workspace_fs_api;
+// ... other pub mods ...
