@@ -49,3 +49,5 @@ pub mod handlers {
 }
 
 pub mod Entry;
+
+pub mod mist;
