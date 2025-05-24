@@ -24,4 +24,6 @@ pub mod handlers {
 	pub mod enablement;
 
 	pub mod native_fs;
+
+	pub mod output;
 }
