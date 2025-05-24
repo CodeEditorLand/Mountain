@@ -103,12 +103,14 @@ pub async fn dispatch_command<R:TauriRuntime>(
 	args:Value,
 ) -> Result<Value, String> {
 	info!("[Track FrontendCmd] Dispatching: '{}'", command);
+
 	trace!("[Track FrontendCmd] Args: {:?}", args);
 
 	match create_effect_for_frontend_command(&app_handle, &window, &command, args) {
 		Ok(effect) => {
 			runtime.run(effect).await.map_err(|e| {
 				error!("[Track FrontendCmd] Error running effect for '{}': {}", command, e);
+
 				map_common_error_to_handler_string(e, &format!("frontend_cmd_{}", command))
 			})
 		},
@@ -116,6 +118,7 @@ pub async fn dispatch_command<R:TauriRuntime>(
 		Err(e_str) => {
 			// EffectCreationError for frontend is String (already JSON error string)
 			error!("[Track FrontendCmd] Error creating effect for '{}': {}", command, e_str);
+
 			// If e_str is already a JSON error string from rpc_param_error_string, it's
 			// fine. Otherwise, wrap it. Assuming create_effect_for_frontend_command now
 			// returns JSON error strings.
@@ -141,9 +144,11 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 	request:Value,
 ) -> Result<Value, String> {
 	let method = request.get("method").and_then(Value::as_str).unwrap_or("");
+
 	let params_val = request.get("params").cloned().unwrap_or(Value::Null);
 
 	info!("[Track SidecarReq] From '{}': Method='{}'", sidecar_id, method);
+
 	trace!(
 		"[Track SidecarReq] Params (type='{:?}'): {}...",
 		params_val.kind(),
@@ -156,6 +161,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 			"[Track SidecarReq] Routing terminal notification '{}' directly to handler.",
 			method
 		);
+
 		return match method {
 			"terminal_setEnvironmentVariable" => {
 				handlers::terminal::handle_set_environment_variable(app_handle, params_val).await
@@ -171,6 +177,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 			_ => {
 				warn!("[Track SidecarReq] Unknown direct terminal notification: {}", method);
+
 				Err(error_utils::rpc_error_string(
 					format!("Unknown direct terminal notification: {}", method),
 					Some("ENOSYS_TERM_NOTIF"),
@@ -182,6 +189,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 	match method {
 		"$log" | "$logExtensionHostActivation" | "$logExtensionHostRequest" => {
 			let rpc_handler = rpc::MainThreadLogHandler { app_handle, runtime:runtime.inner().clone() };
+
 			return rpc_handler.log(params_val).await;
 		},
 
@@ -190,6 +198,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 		| "$onExtensionActivationError"
 		| "$onExtensionRuntimeError" => {
 			let params_array = params_val.as_array().cloned().unwrap_or_default();
+
 			return handlers::extension_status::handle_ext_host_status(app_handle, method, Value::Array(params_array))
 				.await;
 		},
@@ -199,11 +208,14 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 	// --- Attempt Effect Creation for RPC Requests ($methods) ---
 	let params_array_for_effects = params_val.as_array().cloned().unwrap_or_else(|| vec![params_val.clone()]);
+
 	match create_effect_for_sidecar_request(&sidecar_id, method, params_array_for_effects.clone()) {
 		Ok(effect) => {
 			debug!("[Track SidecarReq] Running effect for: '{}'", method);
+
 			return runtime.run(effect).await.map_err(|e| {
 				error!("[Track SidecarReq] Error running effect for '{}': {}", method, e);
+
 				map_common_error_to_handler_string(e, &format!("sidecar_effect_{}", method))
 			});
 		},
@@ -218,16 +230,20 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 		Err(EffectCreationError::ParamParseError(e_str)) => {
 			// e_str is already a JSON error string
 			error!("[Track SidecarReq] Parameter parsing error for effect '{}': {}", method, e_str);
+
 			return Err(e_str);
 		},
 	}
 
 	// --- Direct RPC Handler Fallback/Implementation ---
 	debug!("[Track SidecarReq] Attempting direct RPC handler for: '{}'", method);
+
 	let rpc_runtime_clone = runtime.inner().clone();
+
 	match method {
 		"$executeCommand" | "$getCommands" | "$registerCommand" | "$unregisterCommand" => {
 			let handler = rpc::MainThreadCommandsHandler { app_handle, runtime:rpc_runtime_clone };
+
 			match method {
 				"$executeCommand" => handler.executeCommand(params_val).await,
 
@@ -243,6 +259,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 		"$resolveWorkspaceFolder" => {
 			let handler = rpc::MainThreadWorkspaceHandler { app_handle, runtime:rpc_runtime_clone };
+
 			handler.resolveWorkspaceFolder(params_val).await
 		},
 
@@ -253,6 +270,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 				"[Track SidecarReq] Language feature registration '{}' fell back to RPC handler (should be an effect).",
 				method
 			);
+
 			// This path should ideally not be hit if create_effect_for_sidecar_request
 			// covers all registrations. If it is, it implies a missing effect mapping.
 			Err(error_utils::rpc_error_string(
@@ -266,11 +284,13 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 		"$showMessage" => {
 			let handler = rpc::MainThreadMessageHandler { app_handle, runtime:rpc_runtime_clone };
+
 			handler.showMessage(params_val).await
 		},
 
 		"$showOpenDialog" | "$showSaveDialog" => {
 			let handler = rpc::MainThreadDialogsHandler { app_handle, runtime:rpc_runtime_clone };
+
 			match method {
 				"$showOpenDialog" => handler.showOpenDialog(params_val).await,
 
@@ -282,11 +302,13 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 		"$focusWindow" => {
 			let handler = rpc::MainThreadWindowHandler { app_handle, runtime:rpc_runtime_clone };
+
 			handler.focusWindow(params_val).await
 		},
 
 		"$setEntry" | "$disposeEntry" if method == "$setEntry" || method == "$disposeEntry" => {
 			let handler = rpc::MainThreadStatusBarHandler { app_handle, runtime:rpc_runtime_clone };
+
 			match method {
 				"$setEntry" => handler.setEntry(params_val).await,
 
@@ -299,6 +321,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 		"$stat" | "$readDirectory" | "$readFile" | "$writeFile" | "$createDirectory" | "$delete" | "$rename"
 		| "$copy" => {
 			let fs_handler = rpc::MainThreadFileSystemApiHandler { app_handle, runtime:rpc_runtime_clone };
+
 			match method {
 				"$stat" => fs_handler.stat(params_val).await,
 
@@ -330,6 +353,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 				.and_then(|a| a.get(0))
 				.cloned()
 				.ok_or_else(|| arg_parse_error_str(method, "uriComponents", "Value", Some(0)))?;
+
 			handlers::documents::handle_try_save_document(app_handle, uri_val).await
 		},
 
@@ -339,6 +363,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 				.and_then(|a| a.get(0))
 				.cloned()
 				.ok_or_else(|| arg_parse_error_str(method, "uriComponents", "Value", Some(0)))?;
+
 			handlers::documents::handle_try_save_document_as(app_handle, uri_val).await
 		},
 
@@ -348,6 +373,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 				.and_then(|a| a.get(0))
 				.and_then(Value::as_bool)
 				.unwrap_or(true);
+
 			handlers::documents::handle_save_all(app_handle, include_untitled).await
 		},
 
@@ -380,6 +406,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 					.map_or(false, |arr| arr.get(0).map_or(false, |p| p.is_string())) =>
 		{
 			info!("[Track SidecarReq] Assuming '$clear' is for Output channel due to string param (fallback).");
+
 			handlers::output::handle_clear(app_handle, params_val).await
 		},
 
@@ -390,6 +417,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 					.map_or(false, |arr| arr.get(0).map_or(false, |p| p.is_string())) =>
 		{
 			info!("[Track SidecarReq] Assuming '$dispose' is for Output channel due to string param (fallback).");
+
 			handlers::output::handle_dispose(app_handle, params_val).await
 		},
 
@@ -407,6 +435,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 		"$createTerminal" | "$show" | "$hide" | "$sendText" => {
 			// Terminal RPCs via RPC struct
 			let rpc_handler = rpc::MainThreadTerminalServiceHandler { app_handle, runtime:rpc_runtime_clone };
+
 			match method {
 				"$createTerminal" => rpc_handler.createTerminal(params_val).await,
 
@@ -427,7 +456,9 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 				&& method == "$dispose" =>
 		{
 			let rpc_handler = rpc::MainThreadTerminalServiceHandler { app_handle, runtime:rpc_runtime_clone };
+
 			info!("[Track SidecarReq] Assuming '$dispose' is for Terminal due to u64 param (fallback).");
+
 			rpc_handler.dispose(params_val).await
 		},
 
@@ -437,6 +468,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 				 handler.",
 				method, sidecar_id
 			);
+
 			Err(error_utils::rpc_error_string(
 				format!("Method '{}' not implemented or mapped in Track dispatcher.", method),
 				Some("ENOSYS_TRACK"),
@@ -468,15 +500,20 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 ) -> Result<ActionEffect<Arc<AppRuntime>, CommonError, Value>, String> {
 	// Errors are JSON strings
 	let param_err_fn = |name:&str| -> String { arg_parse_error_str(command, name, "specific type", None) };
+
 	let get_str_arg = |key:&str| {
 		args.get(key)
 			.and_then(Value::as_str)
 			.map(String::from)
 			.ok_or_else(|| param_err_fn(key))
 	};
+
 	let get_path_arg = |key:&str| get_str_arg(key).map(PathBuf::from);
+
 	let get_i64_arg = |key:&str| args.get(key).and_then(Value::as_i64).ok_or_else(|| param_err_fn(key));
+
 	let get_bool_arg = |key:&str, default_val:bool| args.get(key).and_then(Value::as_bool).unwrap_or(default_val);
+
 	let get_opt_val_arg = |key:&str| args.get(key).cloned();
 
 	trace!("[Track CreateEffect Frontend] Command='{}', Args='{:?}'", command, args);
@@ -484,12 +521,16 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 	match command {
 		Land_Echo::REQUEST_READ_FILE => {
 			let path = get_path_arg("path")?;
+
 			let effect = fs_effects::read_file(path);
+
 			// Wrap effect to return base64 encoded string
 			Ok(ActionEffect::new(Arc::new(move |env_accessor| {
 				let effect_clone = effect.clone();
+
 				Box::pin(async move {
 					let fs_reader_env:Arc<dyn FsReader + Send + Sync> = env_accessor.require();
+
 					fs_reader_env
 						.run_effect(effect_clone)
 						.await
@@ -528,10 +569,13 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 
 		Land_Echo::REQUEST_RENAME_PATH => {
 			let old_path = get_path_arg("oldPath")?;
+
 			let new_name = get_str_arg("newName")?;
+
 			let parent = old_path
 				.parent()
 				.ok_or_else(|| param_err_fn(&format!("parent of oldPath '{}'", old_path.display())))?;
+
 			Ok(fs_effects::rename(
 				old_path,
 				parent.join(new_name),
@@ -623,6 +667,7 @@ fn create_effect_for_sidecar_request(
 	let param_err_fn = |name:&str, idx:usize| {
 		EffectCreationError::ParamParseError(arg_parse_error_str(method, name, "specific type", Some(idx)))
 	};
+
 	let get_str_param = |idx:usize, name:&str| {
 		params
 			.get(idx)
@@ -630,6 +675,7 @@ fn create_effect_for_sidecar_request(
 			.map(String::from)
 			.ok_or_else(|| param_err_fn(name, idx))
 	};
+
 	let get_u32_param = |idx:usize, name:&str| {
 		params
 			.get(idx)
@@ -637,7 +683,9 @@ fn create_effect_for_sidecar_request(
 			.map(|v| v as u32)
 			.ok_or_else(|| param_err_fn(name, idx))
 	};
+
 	let get_opt_param = |idx:usize| params.get(idx).cloned();
+
 	let get_req_param = |idx:usize, name:&str| params.get(idx).cloned().ok_or_else(|| param_err_fn(name, idx));
 
 	trace!(
@@ -651,10 +699,14 @@ fn create_effect_for_sidecar_request(
 	let lang_feat_reg_effect = |effect_u32: ActionEffect<Arc<AppRuntime>, CommonError, u32>|
         -> Result<ActionEffect<Arc<AppRuntime>, CommonError, Value>, EffectCreationError> {
 
+
         Ok(ActionEffect::new(Arc::new(move |env_accessor| {
 
+
             let effect_clone = effect_u32.clone();
+
             Box::pin(async move {
+
 
                 env_accessor.run(effect_clone).await.map(Value::from) // CORRECTED and idiomatic
                 // or even more concisely:
@@ -667,9 +719,12 @@ fn create_effect_for_sidecar_request(
 	let lang_feat_void_effect = |effect_void: ActionEffect<Arc<AppRuntime>, CommonError, ()>|
     -> Result<ActionEffect<Arc<AppRuntime>, CommonError, Value>, EffectCreationError> {
 
+
         Ok(ActionEffect::new(Arc::new(move |env_accessor| {
 
+
             let effect_clone = effect_void.clone();
+
             Box::pin(async move { env_accessor.run(effect_clone).await.map(|_| Value::Null) })
         })))
     };

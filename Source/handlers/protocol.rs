@@ -42,10 +42,9 @@ use tauri::{
 
 	Runtime,
 
+	http::{Response as ResponseBuilder, StatusCode},
 	// Renamed to avoid conflict
-	api::ipc::{Request, Response as TauriResponse},
-
-	http::{ResponseBuilder, StatusCode},
+	ipc::{Request, Response as TauriResponse},
 };
 use url::Url;
 
@@ -271,7 +270,7 @@ pub fn handle_vscode_protocol<R:Runtime>(
 				});
 
 				// Successfully dispatched an action (or attempted to), return 200 OK to OS.
-				ResponseBuilder::new().status(StatusCode::OK).body(Vec::new())
+				ResponseBuilder::builder().status(StatusCode::OK).body(Vec::new())
 			} else {
 				// This is an RPC error string
 				let err_msg_json = effect_to_run_result.unwrap_err();
@@ -293,7 +292,7 @@ pub fn handle_vscode_protocol<R:Runtime>(
 					StatusCode::NOT_FOUND
 				};
 
-				ResponseBuilder::new().status(status_code).body(err_msg_json.into_bytes())
+				ResponseBuilder::builder().status(status_code).body(err_msg_json.into_bytes())
 			}
 		},
 
@@ -305,7 +304,7 @@ pub fn handle_vscode_protocol<R:Runtime>(
 
 			let response_body = error_utils::rpc_error_string(err_msg, Some("EBADURI_PARSE"));
 
-			ResponseBuilder::new()
+			ResponseBuilder::builder()
 				.status(StatusCode::BAD_REQUEST)
 				.body(response_body.into_bytes())
 		},
