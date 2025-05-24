@@ -25,15 +25,21 @@ use tauri::{Runtime, Window};
 
 // Handler for ui_showMessage proxied from Cocoon shim
 pub async fn handle_show_message<R:Runtime>(window:Window<R>, params:Value) -> Result<Value, String> {
-	let severity = params.get("severity").and_then(|v| v.as_u64()).unwrap_or(2); // Default Info
+	// Default Info
+	let severity = params.get("severity").and_then(|v| v.as_u64()).unwrap_or(2);
+
 	let message = params.get("message").and_then(|v| v.as_str()).unwrap_or("");
+
 	println!("[UI Handler] ShowMessage severity={}, message={}", severity, message);
 
 	// Map severity if needed
 	let title = match severity {
-		1 => "Extension Warning", // Warn
-		0 => "Extension Error",   // Error
-		_ => "Extension Info",    // Info/default
+		// Warn
+		1 => "Extension Warning",
+		// Error
+		0 => "Extension Error",
+		// Info/default
+		_ => "Extension Info",
 	};
 
 	// Use Tauri's dialog API

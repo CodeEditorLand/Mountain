@@ -40,4 +40,6 @@ pub mod handlers {
 	pub mod storage;
 
 	pub mod terminal;
+
+	pub mod ui;
 }
