@@ -44,4 +44,6 @@ pub mod handlers {
 	pub mod ui;
 
 	pub mod workspace;
+
+	pub mod workspace_fs_api;
 }
