@@ -6,3 +6,5 @@
 fn main() { Binary::Fn::Fn(); }
 
 pub mod Binary;
+
+pub mod app_state;
