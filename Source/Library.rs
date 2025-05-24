@@ -38,4 +38,6 @@ pub mod handlers {
 	pub mod secrets;
 
 	pub mod storage;
+
+	pub mod terminal;
 }
