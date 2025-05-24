@@ -42,32 +42,50 @@ use std::{path::PathBuf, sync::Arc};
 // Land_Common imports primarily for types used in effect results or specific DTOs
 // and core functionalities like FsReader/FsWriter.
 use Land_Common::{
-	errors::CommonError,              // Used by error_utils::map_common_error_to_rpc_string
-	fs_effects::{FsReader, FsWriter}, // For MainThreadFileSystemApiHandler
-	language_feature_effects,         // Potentially for complex/fallback language feature RPCs if any remain
-	ui_effects::{self, MessageSeverity, OpenDialogOptions, SaveDialogOptions}, // For Dialogs/Messages
+	// Used by error_utils::map_common_error_to_rpc_string
+	errors::CommonError,
+
+	// For MainThreadFileSystemApiHandler
+	fs_effects::{FsReader, FsWriter},
+
+	// language_feature_effects are now primarily created in track.rs
+	// For Dialogs/Messages if handled here
+	ui_effects::{self, MessageSeverity, OpenDialogOptions, SaveDialogOptions},
 };
 use log::{debug, error, info, trace, warn};
+// For DTOs if any are deserialized here (e.g. IConfigurationOverrides)
 use serde::Deserialize;
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window, Wry}; // Window for MainThreadCommands
+// Window for MainThreadCommands
+use tauri::{AppHandle, Manager, Runtime as TauriRuntime, Window, Wry};
 
 use crate::{
-	app_state::AppState,   // Though not directly used as State<T> here, kept for broader context
-	handlers,              // For direct handler calls & error_utils
-	handlers::error_utils, // Centralized RPC error utilities
-	runtime::AppRuntime,
+	// Though not directly used as State<T> here, kept for broader context
+	app_state::AppState,
 
-	vine,
+	// For direct handler calls & error_utils
+	handlers,
+
+	// Centralized RPC error utilities
+	handlers::error_utils,
+
+	runtime::AppRuntime,
+	// Not directly used by RPC methods themselves, but by Track/handlers
+	// vine,
 };
 
 // Helper to convert path to UriComponents JSON Value for dialog responses
 fn path_to_uri_components_value(path:&PathBuf) -> Value {
-	let uri_str = url::Url::from_file_path(path)
-		.map(|url| url.to_string())
-		.unwrap_or_else(|_| format!("file:///{}", path.to_string_lossy().replace('\\', "/")));
+	let uri_str = url::Url::from_file_path(path).map(|url| url.to_string()).unwrap_or_else(|_| {
+		warn!(
+			"[RPC Helper] Failed to create file URL from path: {}. Using lossy string.",
+			path.display()
+		);
 
-	json!({"scheme": "file", "path": path.to_str().unwrap_or(""), "external": uri_str, "$mid": 1 })
+		format!("file:///{}", path.to_string_lossy().replace('\\', "/"))
+	});
+
+	json!({"$mid": 1, "scheme": "file", "path": path.to_str().unwrap_or(""), "external": uri_str, "fsPath": path.to_str().unwrap_or("") })
 }
 
 // --- MainThread Handler Structs ---
@@ -121,6 +139,7 @@ pub struct MainThreadExtensionServiceHandler {
 	pub runtime:Arc<AppRuntime>,
 }
 
+// These are mostly placeholders as track.rs calls handlers::* directly
 #[derive(Clone)]
 pub struct MainThreadOutputServiceHandler {
 	pub app_handle:AppHandle<Wry>,
@@ -247,10 +266,12 @@ impl MainThreadCommandsHandler {
 
 		info!("[RPC Cmds] <= $registerCommand: id={}", id);
 
-		// TODO: Get sidecar_id from request context if becomes multi-sidecar
-		let sidecar_id = "cocoon-main".to_string();
-
-		handlers::commands::handle_register_command(self.app_handle.clone(), sidecar_id, json!({ "id": id })).await
+		handlers::commands::handle_register_command(
+			self.app_handle.clone(),
+			"cocoon-main".to_string(),
+			json!({ "id": id }),
+		)
+		.await
 	}
 
 	pub async fn unregisterCommand(&self, args:Value) -> Result<Value, String> {
@@ -266,19 +287,22 @@ impl MainThreadCommandsHandler {
 
 		info!("[RPC Cmds] <= $unregisterCommand: id={}", id);
 
-		let sidecar_id = "cocoon-main".to_string();
-
-		handlers::commands::handle_unregister_command(self.app_handle.clone(), sidecar_id, json!({ "id": id })).await
+		handlers::commands::handle_unregister_command(
+			self.app_handle.clone(),
+			"cocoon-main".to_string(),
+			json!({ "id": id }),
+		)
+		.await
 	}
 }
 
 impl MainThreadWorkspaceHandler {
 	pub async fn resolveWorkspaceFolder(&self, args:Value) -> Result<Value, String> {
-		warn!("[RPC Ws] <= $resolveWorkspaceFolder (delegating to handler): {:?}", args);
-
 		let uri_components_val = args.as_array().and_then(|a| a.get(0)).cloned().ok_or_else(|| {
 			error_utils::rpc_param_error_string("$resolveWorkspaceFolder", "uriComponents", "Value", Some(0))
 		})?;
+
+		info!("[RPC Ws] <= $resolveWorkspaceFolder: {:?}", uri_components_val.get("external"));
 
 		handlers::workspace::handle_get_workspace_folder(self.app_handle.clone(), uri_components_val).await
 	}
@@ -292,107 +316,55 @@ impl MainThreadWorkspaceHandler {
 		handlers::workspace::handle_find_files(self.app_handle.clone(), args).await
 	}
 
-	// $getWorkspaceFolders, $requestWorkspaceTrust are typically effects created in
-	// track.rs
+	// $getWorkspaceFolders, $requestWorkspaceTrust are effects created in track.rs
+}
+
+// Helper for RPC method stubs that should now be effects created by track.rs
+fn rpc_method_should_be_effect(method_name:&str, args:Value) -> Result<Value, String> {
+	warn!(
+		"[RPC Handler] {} called (should be an effect created by Track). Args: {:?}",
+		method_name, args
+	);
+
+	Err(error_utils::rpc_error_string(
+		format!("{} should be handled by an effect created in Track.", method_name),
+		Some("ENOSYS_EFFECT_FALLBACK"),
+	))
 }
 
 impl MainThreadConfigurationHandler {
-	// All configuration methods ($getConfiguration, $updateConfigurationOption,
-
-	// $removeConfigurationOption, $inspect) are effects created directly in
-	// track.rs. These stubs are fallbacks in case they are unexpectedly routed
-	// here.
 	pub async fn getConfiguration(&self, args:Value) -> Result<Value, String> {
-		warn!("[RPC Config] $getConfiguration called (should be effect). Args: {:?}", args);
-
-		Err(error_utils::rpc_error_string(
-			"$getConfiguration should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
+		rpc_method_should_be_effect("$getConfiguration", args)
 	}
 
 	pub async fn updateConfigurationOption(&self, args:Value) -> Result<Value, String> {
-		warn!(
-			"[RPC Config] $updateConfigurationOption called (should be effect). Args: {:?}",
-			args
-		);
-
-		Err(error_utils::rpc_error_string(
-			"$updateConfigurationOption should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
+		rpc_method_should_be_effect("$updateConfigurationOption", args)
 	}
 
 	pub async fn removeConfigurationOption(&self, args:Value) -> Result<Value, String> {
-		warn!(
-			"[RPC Config] $removeConfigurationOption called (should be effect). Args: {:?}",
-			args
-		);
-
-		Err(error_utils::rpc_error_string(
-			"$removeConfigurationOption should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
+		rpc_method_should_be_effect("$removeConfigurationOption", args)
 	}
 
-	pub async fn inspect(&self, args:Value) -> Result<Value, String> {
-		warn!("[RPC Config] $inspect called (should be effect). Args: {:?}", args);
-
-		Err(error_utils::rpc_error_string(
-			"$inspect should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
-	}
+	pub async fn inspect(&self, args:Value) -> Result<Value, String> { rpc_method_should_be_effect("$inspect", args) }
 }
 
 impl MainThreadStorageHandler {
-	// $getValue and $setValue are effects created in track.rs.
-	pub async fn getValue(&self, args:Value) -> Result<Value, String> {
-		warn!("[RPC Storage] $getValue called (should be an effect). Args: {:?}", args);
+	pub async fn getValue(&self, args:Value) -> Result<Value, String> { rpc_method_should_be_effect("$getValue", args) }
 
-		Err(error_utils::rpc_error_string(
-			"$getValue should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
-	}
-
-	pub async fn setValue(&self, args:Value) -> Result<Value, String> {
-		warn!("[RPC Storage] $setValue called (should be an effect). Args: {:?}", args);
-
-		Err(error_utils::rpc_error_string(
-			"$setValue should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
-	}
+	pub async fn setValue(&self, args:Value) -> Result<Value, String> { rpc_method_should_be_effect("$setValue", args) }
 }
 
 impl MainThreadSecretsHandler {
-	// $getPassword, $setPassword, $deletePassword are effects created in track.rs.
 	pub async fn getPassword(&self, args:Value) -> Result<Value, String> {
-		warn!("[RPC Secrets] $getPassword called (should be an effect). Args: {:?}", args);
-
-		Err(error_utils::rpc_error_string(
-			"$getPassword should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
+		rpc_method_should_be_effect("$getPassword", args)
 	}
 
 	pub async fn setPassword(&self, args:Value) -> Result<Value, String> {
-		warn!("[RPC Secrets] $setPassword called (should be an effect). Args: {:?}", args);
-
-		Err(error_utils::rpc_error_string(
-			"$setPassword should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
+		rpc_method_should_be_effect("$setPassword", args)
 	}
 
 	pub async fn deletePassword(&self, args:Value) -> Result<Value, String> {
-		warn!("[RPC Secrets] $deletePassword called (should be an effect). Args: {:?}", args);
-
-		Err(error_utils::rpc_error_string(
-			"$deletePassword should be an effect created in Track.".to_string(),
-			Some("ENOSYS_EFFECT_FALLBACK"),
-		))
+		rpc_method_should_be_effect("$deletePassword", args)
 	}
 }
 
@@ -402,7 +374,9 @@ impl MainThreadLogHandler {
 			.as_array()
 			.ok_or_else(|| error_utils::rpc_param_error_string("$log", "args array", "array", None))?;
 
-		let level_num = args_array.get(0).and_then(Value::as_u64).unwrap_or(2); // VS Code LogLevel: Info = 2
+		// VS Code LogLevel: Info = 2
+		let level_num = args_array.get(0).and_then(Value::as_u64).unwrap_or(2);
+
 		let message_val = args_array.get(1);
 
 		let message_str = match message_val {
@@ -414,12 +388,17 @@ impl MainThreadLogHandler {
 		};
 
 		match level_num {
-			// VS Code LogLevel mapping
-			0 => trace!("[Cocoon EH Log] {}", message_str),     // Trace
-			1 => debug!("[Cocoon EH Log] {}", message_str),     // Debug
-			2 => info!("[Cocoon EH Log] {}", message_str),      // Info
-			3 => warn!("[Cocoon EH Log] {}", message_str),      // Warning
-			4 | 5 => error!("[Cocoon EH Log] {}", message_str), // Error, Critical
+			0 => trace!("[Cocoon EH Log] {}", message_str),
+
+			1 => debug!("[Cocoon EH Log] {}", message_str),
+
+			2 => info!("[Cocoon EH Log] {}", message_str),
+
+			3 => warn!("[Cocoon EH Log] {}", message_str),
+
+			// VS Code Error/Critical
+			4 | 5 => error!("[Cocoon EH Log] {}", message_str),
+
 			_ => info!("[Cocoon EH Log] (Unknown Level {}) {}", level_num, message_str),
 		}
 
@@ -428,8 +407,8 @@ impl MainThreadLogHandler {
 }
 
 impl MainThreadExtensionServiceHandler {
-	// Notifications like $onWillActivateExtension are handled directly by track.rs
-	// routing to handlers::extension_status. These are stubs.
+	// Notifications handled by handlers::extension_status via track.rs dispatcher.
+	// These are stubs in case track.rs accidentally routes them here.
 	pub async fn onWillActivateExtension(&self, args:Value) -> Result<Value, String> {
 		warn!(
 			"[RPC ExtSvc] $onWillActivateExtension called (should be direct notification). Args: {:?}",
@@ -467,149 +446,45 @@ impl MainThreadExtensionServiceHandler {
 	}
 }
 
+// Stubs as track.rs calls handlers::* directly or creates effects.
 impl MainThreadOutputServiceHandler {
-	// All methods are routed by track.rs directly to handlers::output.
-	// This struct is a placeholder; no methods expected here.
+	// All methods are direct handlers in handlers::output.rs via track.rs
 }
 
 impl MainThreadDiagnosticsHandler {
-	// Methods like $changeMany are routed by track.rs to handlers::diagnostics.
-	// $clear is an effect created in track.rs.
-	// This struct is a placeholder; no methods expected here unless for complex
-	// fallbacks.
+	// Methods are direct handlers in handlers::diagnostics.rs or effects via
+	// track.rs
 }
 
 impl MainThreadDocumentsHandler {
-	// Methods like $tryOpenDocument, $trySaveDocument are routed by track.rs
-	// directly to handlers::documents.
-	// This struct is a placeholder.
-}
-
-// Helper for language feature registration stubs
-fn warn_and_error_lang_feat_registration_rpc(method_name:&str, args:Value) -> Result<Value, String> {
-	warn!(
-		"[RPC LangFeat] {} called (should be an effect created by Track). Args: {:?}",
-		method_name, args
-	);
-
-	Err(error_utils::rpc_error_string(
-		format!("{} should be an effect created in Track.", method_name),
-		Some("ENOSYS_EFFECT_FALLBACK"),
-	))
+	// Methods are direct handlers in handlers::documents.rs via track.rs
 }
 
 impl MainThreadLanguageFeaturesHandler {
 	// All common $register...Provider methods are now effects created in track.rs.
-	// These methods are stubs indicating they should not be reached if track.rs is
-	// correct. The method names here match extHost.protocol.ts.
-	pub async fn registerHoverProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerHoverProvider", args)
-	}
+	// This method is a catch-all stub for any registration that might unexpectedly
+	// fall through. Note: Specific provider types ($registerHoverProvider, etc.)
+	// are not explicitly listed here as individual stubs anymore, relying on
+	// track.rs to map them to effects. If a specific $register... method is NOT an
+	// effect and needs an RPC impl, it would be added here.
+	pub async fn CatchAllRegisterProvider(&self, method_name:&str, args:Value) -> Result<Value, String> {
+		warn!(
+			"[RPC LangFeat] {} called (should be an effect created by Track). Args: {:?}",
+			method_name, args
+		);
 
-	pub async fn registerCompletionsProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerCompletionsProvider", args)
-	}
-
-	pub async fn registerDefinitionProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDefinitionProvider", args)
-	}
-
-	pub async fn registerDeclarationProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDeclarationProvider", args)
-	}
-
-	pub async fn registerImplementationProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerImplementationProvider", args)
-	}
-
-	pub async fn registerTypeDefinitionProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerTypeDefinitionProvider", args)
-	}
-
-	pub async fn registerCodeActionProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerCodeActionProvider", args)
-	}
-
-	pub async fn registerCodeLensProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerCodeLensProvider", args)
-	}
-
-	pub async fn registerDocumentFormattingEditProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDocumentFormattingEditProvider", args)
-	}
-
-	pub async fn registerDocumentRangeFormattingEditProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDocumentRangeFormattingEditProvider", args)
-	}
-
-	pub async fn registerOnTypeFormattingEditProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerOnTypeFormattingEditProvider", args)
-	}
-
-	pub async fn registerRenameProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerRenameProvider", args)
-	}
-
-	pub async fn registerDocumentLinkProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDocumentLinkProvider", args)
-	}
-
-	pub async fn registerDocumentColorProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDocumentColorProvider", args)
-	}
-
-	pub async fn registerFoldingRangeProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerFoldingRangeProvider", args)
-	}
-
-	pub async fn registerSelectionRangeProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerSelectionRangeProvider", args)
-	}
-
-	pub async fn registerCallHierarchyProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerCallHierarchyProvider", args)
-	}
-
-	pub async fn registerTypeHierarchyProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerTypeHierarchyProvider", args)
-	}
-
-	pub async fn registerLinkedEditingRangeProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerLinkedEditingRangeProvider", args)
-	}
-
-	pub async fn registerInlayHintsProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerInlayHintsProvider", args)
-	}
-
-	pub async fn registerDocumentSymbolProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDocumentSymbolProvider", args)
-	}
-
-	pub async fn registerWorkspaceSymbolProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerWorkspaceSymbolProvider", args)
-	}
-
-	pub async fn registerReferencesProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerReferencesProvider", args)
-	}
-
-	pub async fn registerDocumentHighlightProvider(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDocumentHighlightProvider", args)
-	}
-
-	// Methods with "Support" in their name were often older or internal ways of
-	// phrasing, the protocol uses "Provider". Included stubs for common ones found
-	// in snippets for completeness.
-	pub async fn registerDefinitionSupport(&self, args:Value) -> Result<Value, String> {
-		warn_and_error_lang_feat_registration_rpc("$registerDefinitionSupport", args)
+		Err(error_utils::rpc_error_string(
+			format!("{} should be an effect created in Track.", method_name),
+			Some("ENOSYS_EFFECT_FALLBACK"),
+		))
 	}
 
 	pub async fn unregister(&self, args:Value) -> Result<Value, String> {
+		// $unregister is an effect
 		warn!("[RPC LangFeat] $unregister called (should be an effect). Args: {:?}", args);
 
 		Err(error_utils::rpc_error_string(
-			"$unregister for language features should be an effect created in Track.".to_string(),
+			"$unregister for language features should be an effect.".to_string(),
 			Some("ENOSYS_EFFECT_FALLBACK"),
 		))
 	}
@@ -632,7 +507,7 @@ impl MainThreadMessageHandler {
 			.ok_or_else(|| error_utils::rpc_param_error_string("$showMessage", "message", "string", Some(1)))?
 			.to_string();
 
-		let options_val = params_array.get(2).cloned(); // DTO: MainThreadMessageOptions
+		let options_val = params_array.get(2).cloned();
 
 		info!(
 			"[RPC MsgSvc] <= $showMessage: severity={}, msg_len={}",
@@ -640,14 +515,15 @@ impl MainThreadMessageHandler {
 			message.len()
 		);
 
-		trace!("[RPC MsgSvc] $showMessage options: {:?}", options_val);
-
 		let severity_effect = match severity_num {
-			1 => MessageSeverity::Info,    // VS Code Severity.Info
-			2 => MessageSeverity::Warning, // VS Code Severity.Warning
-			3 => MessageSeverity::Error,   // VS Code Severity.Error
+			1 => MessageSeverity::Info,
+
+			2 => MessageSeverity::Warning,
+
+			3 => MessageSeverity::Error,
+
 			s => {
-				warn!("[RPC MsgSvc] Unknown severity {} from $showMessage, defaulting to Info.", s);
+				warn!("[RPC MsgSvc] Unknown severity {}, defaulting to Info.", s);
 
 				MessageSeverity::Info
 			},
@@ -733,40 +609,8 @@ impl MainThreadWindowHandler {
 		}
 	}
 
-	pub async fn openUri(&self, args:Value) -> Result<Value, String> {
-		warn!(
-			"[RPC Window] $openUri called (should be an effect or direct handler). Args: {:?}",
-			args
-		);
-
-		// Example:
-		// let uri_dto = args.as_array().and_then(|a| a.get(0)).cloned().ok_or_else(||
-		// error_utils::rpc_param_error_string("$openUri", "uri", "Value", Some(0)))?;
-
-		// let options = args.as_array().and_then(|a| a.get(1)).cloned();
-
-		// let effect = ui_effects::open_external(uri_dto, options); // Assuming such an
-		// effect exists self.runtime.run(effect).await.map(|success|
-		// json!(success)).map_err(|e| error_utils::map_common_error_to_rpc_string(e,
-
-		// "$openUri"))
-		Err(error_utils::rpc_error_string(
-			"$openUri not fully implemented, should be an effect or direct handler.".to_string(),
-			Some("ENOSYS"),
-		))
-	}
-
-	pub async fn asExternalUri(&self, args:Value) -> Result<Value, String> {
-		warn!(
-			"[RPC Window] $asExternalUri called (should be an effect or direct handler). Args: {:?}",
-			args
-		);
-
-		Err(error_utils::rpc_error_string(
-			"$asExternalUri not fully implemented, should be an effect or direct handler.".to_string(),
-			Some("ENOSYS"),
-		))
-	}
+	// TODO: $openUri, $asExternalUri if they are to be RPCs and not direct effects
+	// from Track.
 }
 
 impl MainThreadStatusBarHandler {
@@ -780,25 +624,15 @@ impl MainThreadStatusBarHandler {
 			.and_then(Value::as_str)
 			.ok_or_else(|| error_utils::rpc_param_error_string("$setEntry", "id", "string", Some(0)))?;
 
-		// Index 4 for 'text' is based on IStatusbarEntry DTO in VS Code's protocol
-		let text_val = params_array
-			.get(4)
-			.cloned()
-			.ok_or_else(|| error_utils::rpc_param_error_string("$setEntry", "text", "Value", Some(4)))?;
-
-		info!(
-			"[RPC StatusBar] <= $setEntry: id='{}', text(brief)='{}...'",
-			id,
-			text_val.as_str().unwrap_or("").chars().take(30).collect::<String>()
-		);
+		// VS Code protocol for IStatusbarEntryDto is complex. `args` here is the whole
+		// DTO from Cocoon.
+		info!("[RPC StatusBar] <= $setEntry: id='{}'", id);
 
 		trace!("[RPC StatusBar] $setEntry full args: {:?}", args);
 
 		if let Err(e) = self.app_handle.emit_all("mountain://statusbar/set", args.clone()) {
+			// Pass full DTO
 			error!("[RPC StatusBar] Failed to emit statusbar/set event for {}: {}", id, e);
-
-			// Not returning error to client, as this is a fire-and-forget UI
-			// update
 		}
 
 		Ok(Value::Null)
@@ -824,30 +658,52 @@ impl MainThreadStatusBarHandler {
 	}
 }
 
+impl MainThreadTerminalServiceHandler {
+	// These now call the more complete handlers in handlers::terminal
+	pub async fn createTerminal(&self, params_val:Value) -> Result<Value, String> {
+		// params_val for $createTerminal is the options object, not an array
+		handlers::terminal::handle_create_terminal(self.app_handle.clone(), params_val).await
+	}
+
+	pub async fn show(&self, params_val:Value) -> Result<Value, String> {
+		handlers::terminal::handle_show(self.app_handle.clone(), params_val).await
+	}
+
+	pub async fn hide(&self, params_val:Value) -> Result<Value, String> {
+		handlers::terminal::handle_hide(self.app_handle.clone(), params_val).await
+	}
+
+	pub async fn sendText(&self, params_val:Value) -> Result<Value, String> {
+		handlers::terminal::handle_send_text(self.app_handle.clone(), params_val).await
+	}
+
+	pub async fn dispose(&self, params_val:Value) -> Result<Value, String> {
+		handlers::terminal::handle_dispose(self.app_handle.clone(), params_val).await
+	}
+}
+
 // Nested module for MainThreadFileSystemApiHandler's helper
 mod fs_api_helpers {
 
-	use super::{PathBuf, Value, error_utils}; // Use error_utils from parent scope
+	use super::{PathBuf, Value, error_utils};
 
 	pub fn path_from_uri_components_for_fs_api(uri_val:&Value) -> Result<PathBuf, String> {
 		let scheme = uri_val.get("scheme").and_then(Value::as_str).unwrap_or("file");
 
 		match scheme {
 			"file" | "" => {
-				let path_str = uri_val.get("path").and_then(Value::as_str).ok_or_else(|| {
+				Ok(PathBuf::from(uri_val.get("path").and_then(Value::as_str).ok_or_else(|| {
 					error_utils::rpc_error_string(
 						"Missing 'path' in URI components for FS API".to_string(),
-						Some("EBADARG"),
+						Some("EBADARG_PATH"),
 					)
-				})?;
-
-				Ok(PathBuf::from(path_str))
+				})?))
 			},
 
 			_ => {
 				Err(error_utils::rpc_error_string(
 					format!("WorkspaceFS API currently only supports 'file' scheme, got '{}'", scheme),
-					Some("ENOTSUP"),
+					Some("ENOTSUP_SCHEME"),
 				))
 			},
 		}
@@ -855,8 +711,9 @@ mod fs_api_helpers {
 }
 
 impl MainThreadFileSystemApiHandler {
-	// Method names here are Rust-idiomatic, as called by track.rs mapping from
-	// workspacefs_$methodName
+	// Methods are Rust-idiomatic, called by track.rs mapping from
+	// workspacefs_$methodName All these methods parse array params:
+	// [uri_components, options_or_content]
 	pub async fn stat(&self, params_val:Value) -> Result<Value, String> {
 		let uri_components = params_val.as_array().and_then(|a| a.get(0)).cloned().ok_or_else(|| {
 			error_utils::rpc_param_error_string("workspacefs_stat", "uriComponents", "Value", Some(0))
@@ -882,8 +739,6 @@ impl MainThreadFileSystemApiHandler {
 
 		let path = fs_api_helpers::path_from_uri_components_for_fs_api(&uri_components)?;
 
-		debug!("[RPC FsApiHandler] -> readDirectory: {}", path.display());
-
 		let fs_reader:Arc<dyn FsReader + Send + Sync> = self.runtime.get_environment().require();
 
 		fs_reader
@@ -900,14 +755,12 @@ impl MainThreadFileSystemApiHandler {
 
 		let path = fs_api_helpers::path_from_uri_components_for_fs_api(&uri_components)?;
 
-		debug!("[RPC FsApiHandler] -> readFile: {}", path.display());
-
 		let fs_reader:Arc<dyn FsReader + Send + Sync> = self.runtime.get_environment().require();
 
 		fs_reader
 			.read_file(&path)
 			.await
-			.map(|bytes| json!(base64::encode(&bytes))) // Cocoon expects base64 encoded content
+			.map(|bytes| json!(base64::encode(&bytes)))
 			.map_err(|e| error_utils::map_common_error_to_rpc_string(e, "fs.readFile"))
 	}
 
@@ -924,15 +777,16 @@ impl MainThreadFileSystemApiHandler {
 			error_utils::rpc_param_error_string("workspacefs_writeFile", "contentBase64", "string", Some(1))
 		})?;
 
+		// IFileWriteOptions
 		let options_val = params_array.get(2).cloned().unwrap_or(Value::Null);
 
+		// VS Code default for create is true for fs provider
 		let create = options_val.get("create").and_then(Value::as_bool).unwrap_or(true);
 
+		// VS Code default for overwrite is false
 		let overwrite = options_val.get("overwrite").and_then(Value::as_bool).unwrap_or(false);
 
 		let path = fs_api_helpers::path_from_uri_components_for_fs_api(&uri_components)?;
-
-		debug!("[RPC FsApiHandler] -> writeFile: {}", path.display());
 
 		let bytes = base64::decode(content_b64)
 			.map_err(|e| error_utils::rpc_error_string(format!("Invalid base64 content: {}", e), Some("EBADMSG")))?;
@@ -953,11 +807,9 @@ impl MainThreadFileSystemApiHandler {
 
 		let path = fs_api_helpers::path_from_uri_components_for_fs_api(&uri_components)?;
 
-		debug!("[RPC FsApiHandler] -> createDirectory: {}", path.display());
-
 		let fs_writer:Arc<dyn FsWriter + Send + Sync> = self.runtime.get_environment().require();
 
-		// VS Code workspace.fs.createDirectory is implicitly recursive.
+		// vscode.workspace.fs.createDirectory is recursive
 		fs_writer
 			.create_directory(&path, true)
 			.await
@@ -974,6 +826,7 @@ impl MainThreadFileSystemApiHandler {
 			error_utils::rpc_param_error_string("workspacefs_delete", "uriComponents", "Value", Some(0))
 		})?;
 
+		// IFileDeleteOptions
 		let options_val = params_array.get(1).cloned().unwrap_or(Value::Null);
 
 		let recursive = options_val.get("recursive").and_then(Value::as_bool).unwrap_or(false);
@@ -981,13 +834,6 @@ impl MainThreadFileSystemApiHandler {
 		let use_trash = options_val.get("useTrash").and_then(Value::as_bool).unwrap_or(false);
 
 		let path = fs_api_helpers::path_from_uri_components_for_fs_api(&uri_components)?;
-
-		debug!(
-			"[RPC FsApiHandler] -> delete: {}, recursive: {}, useTrash: {}",
-			path.display(),
-			recursive,
-			use_trash
-		);
 
 		let fs_writer:Arc<dyn FsWriter + Send + Sync> = self.runtime.get_environment().require();
 
@@ -1013,6 +859,7 @@ impl MainThreadFileSystemApiHandler {
 			.cloned()
 			.ok_or_else(|| error_utils::rpc_param_error_string("workspacefs_rename", "targetUri", "Value", Some(1)))?;
 
+		// IFileOverwriteOptions
 		let options_val = params_array.get(2).cloned().unwrap_or(Value::Null);
 
 		let overwrite = options_val.get("overwrite").and_then(Value::as_bool).unwrap_or(false);
@@ -1020,13 +867,6 @@ impl MainThreadFileSystemApiHandler {
 		let source_path = fs_api_helpers::path_from_uri_components_for_fs_api(&source_uri_comp)?;
 
 		let target_path = fs_api_helpers::path_from_uri_components_for_fs_api(&target_uri_comp)?;
-
-		debug!(
-			"[RPC FsApiHandler] -> rename: {} to {}, overwrite: {}",
-			source_path.display(),
-			target_path.display(),
-			overwrite
-		);
 
 		let fs_writer:Arc<dyn FsWriter + Send + Sync> = self.runtime.get_environment().require();
 
@@ -1052,6 +892,7 @@ impl MainThreadFileSystemApiHandler {
 			.cloned()
 			.ok_or_else(|| error_utils::rpc_param_error_string("workspacefs_copy", "targetUri", "Value", Some(1)))?;
 
+		// IFileOverwriteOptions
 		let options_val = params_array.get(2).cloned().unwrap_or(Value::Null);
 
 		let overwrite = options_val.get("overwrite").and_then(Value::as_bool).unwrap_or(false);
@@ -1059,13 +900,6 @@ impl MainThreadFileSystemApiHandler {
 		let source_path = fs_api_helpers::path_from_uri_components_for_fs_api(&source_uri_comp)?;
 
 		let target_path = fs_api_helpers::path_from_uri_components_for_fs_api(&target_uri_comp)?;
-
-		debug!(
-			"[RPC FsApiHandler] -> copy: {} to {}, overwrite: {}",
-			source_path.display(),
-			target_path.display(),
-			overwrite
-		);
 
 		let fs_writer:Arc<dyn FsWriter + Send + Sync> = self.runtime.get_environment().require();
 
@@ -1077,93 +911,10 @@ impl MainThreadFileSystemApiHandler {
 	}
 }
 
-impl MainThreadTerminalServiceHandler {
-	// These are stubs; actual terminal implementation would be complex.
-	pub async fn createTerminal(&self, params_val:Value) -> Result<Value, String> {
-		warn!("[RPC TerminalHandler] $createTerminal STUBBED: {:?}", params_val);
-
-		let name = params_val.get("name").and_then(Value::as_str).unwrap_or("Terminal");
-
-		let terminal_id = rand::random::<u64>(); // Placeholder ID
-		Ok(json!({ "id": terminal_id, "name": name }))
-	}
-
-	pub async fn show(&self, params_val:Value) -> Result<Value, String> {
-		let id = params_val
-			.as_array()
-			.and_then(|a| a.get(0))
-			.and_then(Value::as_u64)
-			.ok_or_else(|| error_utils::rpc_param_error_string("$show (terminal)", "terminalId", "u64", Some(0)))?;
-
-		warn!("[RPC TerminalHandler] $show STUBBED for terminal ID: {}", id);
-
-		self.app_handle
-			.emit_all(
-				"mountain://terminal/reveal",
-				json!({
-
-					"id": id,
-
-					"preserveFocus": params_val.as_array().and_then(|a|a.get(1)).and_then(Value::as_bool).unwrap_or(false)
-				}),
-			)
-			.ok();
-
-		Ok(Value::Null)
-	}
-
-	pub async fn hide(&self, params_val:Value) -> Result<Value, String> {
-		let id = params_val
-			.as_array()
-			.and_then(|a| a.get(0))
-			.and_then(Value::as_u64)
-			.ok_or_else(|| error_utils::rpc_param_error_string("$hide (terminal)", "terminalId", "u64", Some(0)))?;
-
-		warn!("[RPC TerminalHandler] $hide STUBBED for terminal ID: {}", id);
-
-		Ok(Value::Null)
-	}
-
-	pub async fn sendText(&self, params_val:Value) -> Result<Value, String> {
-		let id = params_val
-			.as_array()
-			.and_then(|a| a.get(0))
-			.and_then(Value::as_u64)
-			.ok_or_else(|| error_utils::rpc_param_error_string("$sendText (terminal)", "terminalId", "u64", Some(0)))?;
-
-		let text = params_val
-			.as_array()
-			.and_then(|a| a.get(1))
-			.and_then(Value::as_str)
-			.ok_or_else(|| error_utils::rpc_param_error_string("$sendText (terminal)", "text", "string", Some(1)))?;
-
-		warn!(
-			"[RPC TerminalHandler] $sendText STUBBED for terminal ID: {}, text: '{}...'",
-			id,
-			text.chars().take(30).collect::<String>()
-		);
-
-		Ok(Value::Null)
-	}
-
-	pub async fn dispose(&self, params_val:Value) -> Result<Value, String> {
-		let id = params_val
-			.as_array()
-			.and_then(|a| a.get(0))
-			.and_then(Value::as_u64)
-			.ok_or_else(|| error_utils::rpc_param_error_string("$dispose (terminal)", "terminalId", "u64", Some(0)))?;
-
-		warn!("[RPC TerminalHandler] $dispose STUBBED for terminal ID: {}", id);
-
-		Ok(Value::Null)
-	}
-}
-
 // --- Setup Function ---
 pub fn setup_mountain_rpc_server<R:TauriRuntime>(_app_handle:AppHandle<R>, _runtime:Arc<AppRuntime>) {
 	info!("[RPC Setup] Mountain RPC handlers are conceptually available for Track dispatcher.");
 
-	// No explicit registration or server start needed here.
-	// Track.rs dynamically instantiates these handlers or calls their methods
-	// based on RPC method names, or creates effects directly.
+	// Track.rs will instantiate these handler structs as needed when an RPC
+	// call falls through.
 }
