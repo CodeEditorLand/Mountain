@@ -47,8 +47,8 @@ use log::{debug, error, info, trace, warn};
 use serde::Deserialize;
 use serde_json::{Map, Value, json};
 use tauri::{AppHandle, Manager, Runtime as TauriRuntime};
-// Explicitly use tokio::fs
-use tokio::fs;
+// Explicitly use tokio::fs and add tokio::io::AsyncWriteExt
+use tokio::{fs, io::AsyncWriteExt};
 use url::Url;
 
 use crate::{
@@ -59,8 +59,21 @@ use crate::{
 };
 
 // --- Helper: Error Creation & Mapping ---
-fn config_error(operation:&str, message:String) -> CommonError {
-	error!("[ConfigHelpers] Error during {}: {}", operation, message);
+
+/// Creates a `CommonError` specific to configuration operations.
+///
+/// # Arguments
+/// * `operation` - A string slice describing the config operation (e.g.,
+///
+///
+///   "path_resolution", "load").
+/// * `message` - The specific error message.
+///
+/// # Returns
+/// A `CommonError` instance.
+fn create_config_error(operation:&str, message:String) -> CommonError {
+	// Log the error when it's created for internal diagnostics
+	error!("[ConfigHelpers Error] During '{}': {}", operation, message);
 
 	match operation {
 		"path_resolution" => CommonError::ConfigUpdate("path_resolution".to_string(), message),
@@ -75,16 +88,42 @@ fn config_error(operation:&str, message:String) -> CommonError {
 	}
 }
 
-// Map lock errors for AppState access
-fn map_lock_error<T>(e:std::sync::PoisonError<std::sync::MutexGuard<'_, T>>) -> CommonError {
-	CommonError::StateLock(format!("Config helper AppState lock error: {}", e))
+/// Maps a `PoisonError` from `AppState` Mutex locks to a `CommonError`.
+///
+/// # Arguments
+/// * `e` - The `PoisonError`.
+///
+/// # Returns
+/// A `CommonError::StateLock`.
+fn map_app_state_lock_error_to_common_error<T>(e:std::sync::PoisonError<std::sync::MutexGuard<'_, T>>) -> CommonError {
+	let err_msg = format!("Config helper AppState lock error: {}", e);
+
+	// Log the specific lock error
+	error!("[ConfigHelpers LockErr] {}", err_msg);
+
+	CommonError::StateLock(err_msg)
 }
 
 // --- Public Helper Functions ---
 
 /// Resolves the absolute path to the `settings.json` file for a given target
-/// and scope. `_scope_to_language` is present for API consistency but not used
-/// in MVP path resolution.
+/// and optional resource override.
+///
+/// The `_scope_to_language` parameter is currently unused in this MVP
+/// implementation but is present for API consistency with VS Code's concepts.
+///
+/// # Arguments
+/// * `app_handle` - Tauri `AppHandle` for path resolution.
+/// * `app_state` - Reference to `AppState` for workspace-specific paths.
+/// * `target` - The `ConfigurationTarget` (User, Workspace, WorkspaceFolder).
+/// * `overrides` - `IConfigurationOverrides` containing optional resource URI
+///   for `WORKSPACE_FOLDER` target.
+/// * `_scope_to_language` - Boolean indicating if the update is
+///   language-specific (currently unused).
+///
+/// # Returns
+/// * `Ok(PathBuf)` with the absolute path to the settings file.
+/// * `Err(CommonError)` if path resolution fails or target is unsupported.
 pub fn get_config_path_for_target<R:TauriRuntime>(
 	app_handle:&AppHandle<R>,
 
@@ -94,19 +133,22 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 
 	overrides:&IConfigurationOverrides,
 
+	// Unused in MVP path resolution
 	_scope_to_language:bool,
 ) -> Result<PathBuf, CommonError> {
 	trace!(
-		"[ConfigHelpers] Resolving config path: target={:?}, overrides.resource={:?}, overrides.langId={:?}",
+		"[ConfigHelpers Path] Resolving config path: target={:?}, overrides.resource={:?}, overrides.langId={:?}",
 		target,
 		overrides.resource.as_ref().and_then(|v| v.get("external")),
+		// languageId
 		overrides.override_identifier
 	);
 
 	let path_resolver = app_handle.path_resolver();
 
+	// Base directory for user-level settings (e.g., ~/.config/YourApp/User/)
 	let base_user_config_dir = path_resolver.app_config_dir().ok_or_else(|| {
-		config_error(
+		create_config_error(
 			"path_resolution",
 			"Cannot resolve app config directory (for User settings)".to_string(),
 		)
@@ -114,18 +156,28 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 
 	match target {
 		ConfigurationTarget::USER_LOCAL | ConfigurationTarget::USER => {
+			// VS Code often has settings directly in AppData/User/settings.json
+			// or AppData/User/profiles/<profile>/settings.json
+			// For simplicity, using AppData/User/settings.json
+			// TODO: Add support for profiles if that feature is planned.
 			let user_settings_path = base_user_config_dir.join("User").join("settings.json");
 
-			debug!("[ConfigHelpers] Resolved User settings path: {}", user_settings_path.display());
+			debug!(
+				"[ConfigHelpers Path] Resolved User settings path: {}",
+				user_settings_path.display()
+			);
 
 			Ok(user_settings_path)
 		},
 
 		ConfigurationTarget::WORKSPACE => {
-			let config_path_guard = app_state.workspace_config_path.lock().map_err(map_lock_error)?;
+			let config_path_guard = app_state
+				.workspace_config_path
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?;
 
 			let ws_path = config_path_guard.as_ref().cloned().ok_or_else(|| {
-				config_error(
+				create_config_error(
 					"path_resolution",
 					"No workspace configuration file (.code-workspace) loaded. Cannot target WORKSPACE settings."
 						.to_string(),
@@ -133,7 +185,7 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 			})?;
 
 			debug!(
-				"[ConfigHelpers] Resolved Workspace settings path (from .code-workspace): {}",
+				"[ConfigHelpers Path] Resolved Workspace settings path (from .code-workspace): {}",
 				ws_path.display()
 			);
 
@@ -142,22 +194,26 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 
 		ConfigurationTarget::WORKSPACE_FOLDER => {
 			let resource_uri_val = overrides.resource.as_ref().ok_or_else(|| {
-				config_error(
+				create_config_error(
 					"path_resolution",
 					"Missing resource URI for WORKSPACE_FOLDER target".to_string(),
 				)
 			})?;
 
+			// Attempt to parse the resource URI from the override
 			let resource_uri_str = resource_uri_val
 				.get("external")
 				.and_then(Value::as_str)
 				.or_else(|| {
+					// Fallback to 'path' if 'external' is missing
 					resource_uri_val.get("path").and_then(Value::as_str).map(|p_str| {
 						if Path::new(p_str).is_absolute() {
 							Url::from_file_path(p_str)
 								.map(|u| u.to_string())
+								 // Fallback to raw string if path->URL fails
 								.unwrap_or_else(|_| p_str.to_string())
 						} else {
+							// Assume it's a scheme or opaque URI
 							p_str.to_string()
 						}
 					})
@@ -170,27 +226,33 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 					)
 				})?;
 
-			let resource_uri = Url::parse(resource_uri_str).map_err(|_| {
+			let resource_uri = Url::parse(resource_uri_str).map_err(|e| {
 				CommonError::InvalidArg(
 					"resource".to_string(),
-					format!("Invalid resource URI in overrides: {}", resource_uri_str),
+					format!("Invalid resource URI in overrides: '{}', error: {}", resource_uri_str, e),
 				)
 			})?;
 
-			let folders_guard = app_state.workspace_folders.lock().map_err(map_lock_error)?;
+			let folders_guard = app_state
+				.workspace_folders
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?;
 
 			let containing_folder = folders_guard
 				.iter()
-				.find(|f| resource_uri.scheme() == f.uri.scheme() && resource_uri.path().starts_with(f.uri.path()))
+				.find(|f| {
+					// Check scheme and if the resource URI's path starts with the folder's path
+					resource_uri.scheme() == f.uri.scheme() && resource_uri.path().starts_with(f.uri.path())
+				})
 				.ok_or_else(|| {
-					config_error(
+					create_config_error(
 						"path_resolution",
 						format!("Resource URI '{}' does not belong to any known workspace folder.", resource_uri),
 					)
 				})?;
 
 			if containing_folder.uri.scheme() != "file" {
-				return Err(config_error(
+				return Err(create_config_error(
 					"path_resolution",
 					format!(
 						"Cannot get folder settings for non-file scheme folder: {}",
@@ -199,12 +261,13 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 				));
 			}
 
+			// Path to .vscode/settings.json within the folder
 			let folder_settings_path = PathBuf::from(containing_folder.uri.path())
 				.join(".vscode")
 				.join("settings.json");
 
 			debug!(
-				"[ConfigHelpers] Resolved Workspace Folder settings path: {}",
+				"[ConfigHelpers Path] Resolved Workspace Folder settings path: {}",
 				folder_settings_path.display()
 			);
 
@@ -212,8 +275,11 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 		},
 
 		_ => {
+			// Other targets like MEMORY, POLICY are not handled for direct file path
+			// resolution
 			warn!(
-				"[ConfigHelpers] ConfigurationTarget {:?} path resolution not implemented for general settings update.",
+				"[ConfigHelpers Path] ConfigurationTarget {:?} path resolution not implemented for general settings \
+				 update.",
 				target
 			);
 
@@ -225,86 +291,127 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 	}
 }
 
-/// Asynchronously loads JSON content from a file. Returns an empty JSON object
-/// if not found or if file is empty.
+/// Asynchronously loads JSON content from a file.
+///
+/// If the file does not exist or is empty, it returns a default empty JSON
+/// object (`{}`).
+///
+/// # Arguments
+/// * `path` - The `Path` to the JSON file.
+///
+/// # Returns
+/// * `Ok(Value)` with the parsed JSON data or an empty object.
+/// * `Err(CommonError)` if file reading or JSON parsing fails (other than
+///   NotFound).
 pub async fn load_json_file_if_exists_or_default(path:&Path) -> Result<Value, CommonError> {
-	trace!("[ConfigHelpers Io] Attempting to load JSON from: {}", path.display());
+	trace!("[ConfigHelpers IO] Attempting to load JSON from: {}", path.display());
 
 	match fs::read_to_string(path).await {
 		Ok(content) => {
 			if content.trim().is_empty() {
 				debug!(
-					"[ConfigHelpers Io] File is empty, returning default empty JSON object: {}",
+					"[ConfigHelpers IO] File is empty, returning default empty JSON object: {}",
 					path.display()
 				);
 
+				// Default to empty object if file is empty
 				Ok(json!({}))
 			} else {
-				serde_json::from_str(&content)
-					.map_err(|e| config_error("load", format!("JSON parse failed for {}: {}", path.display(), e)))
+				serde_json::from_str(&content).map_err(|e| {
+					create_config_error("load", format!("JSON parse failed for {}: {}", path.display(), e))
+				})
 			}
 		},
 
 		Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
 			debug!(
-				"[ConfigHelpers Io] File not found, returning default empty JSON object: {}",
+				"[ConfigHelpers IO] File not found, returning default empty JSON object: {}",
 				path.display()
 			);
 
+			// Default to empty object if not found
 			Ok(json!({}))
 		},
 
-		Err(e) => Err(config_error("load", format!("File read failed for {}: {}", path.display(), e))),
+		Err(e) => {
+			Err(create_config_error(
+				"load",
+				format!("File read failed for {}: {}", path.display(), e),
+			))
+		},
 	}
 }
 
 /// Asynchronously writes a `serde_json::Value` to a file, pretty-printed.
+///
 /// Creates parent directories if they don't exist.
+///
+/// # Arguments
+/// * `path` - The `Path` to write the JSON file to.
+/// * `value` - The `serde_json::Value` to serialize and write.
+///
+/// # Returns
+/// * `Ok(())` on success.
+/// * `Err(CommonError)` if directory creation, serialization, or file writing
+///   fails.
 pub async fn write_json_file(path:&Path, value:&Value) -> Result<(), CommonError> {
-	trace!("[ConfigHelpers Io] Attempting to write JSON to: {}", path.display());
+	trace!("[ConfigHelpers IO] Attempting to write JSON to: {}", path.display());
 
 	let parent = path
 		.parent()
-		.ok_or_else(|| config_error("write", format!("Invalid path (has no parent): {}", path.display())))?;
+		.ok_or_else(|| create_config_error("write", format!("Invalid path (has no parent): {}", path.display())))?;
 
+	// Check if parent directory exists, create if not
 	if !fs::try_exists(parent).await.map_err(|e| {
-		config_error(
+		create_config_error(
 			"create_dir_check",
 			format!("Failed to check existence of {}: {}", parent.display(), e),
 		)
 	})? {
 		debug!(
-			"[ConfigHelpers Io] Creating parent directory for config file: {}",
+			"[ConfigHelpers IO] Creating parent directory for config file: {}",
 			parent.display()
 		);
 
 		fs::create_dir_all(parent).await.map_err(|e| {
-			config_error("create_dir", format!("Failed to create directory {}: {}", parent.display(), e))
+			create_config_error("create_dir", format!("Failed to create directory {}: {}", parent.display(), e))
 		})?;
 	}
 
-	let content = serde_json::to_string_pretty(value)
-		.map_err(|e| config_error("serialize", format!("Failed to serialize JSON for {}: {}", path.display(), e)))?;
+	let content = serde_json::to_string_pretty(value).map_err(|e| {
+		create_config_error("serialize", format!("Failed to serialize JSON for {}: {}", path.display(), e))
+	})?;
 
-	let mut file = fs::File::create(path)
-		.await
-		.map_err(|e| config_error("write", format!("Failed to create/open for writing {}: {}", path.display(), e)))?;
+	// Use tokio::fs::File for async writing
+	let mut file = fs::File::create(path).await.map_err(|e| {
+		create_config_error("write", format!("Failed to create/open for writing {}: {}", path.display(), e))
+	})?;
 
 	file.write_all(content.as_bytes())
 		.await
-		.map_err(|e| config_error("write", format!("Failed to write to {}: {}", path.display(), e)))?;
+		.map_err(|e| create_config_error("write", format!("Failed to write to {}: {}", path.display(), e)))?;
 
-	info!("[ConfigHelpers Io] Successfully wrote JSON to {}", path.display());
+	info!("[ConfigHelpers IO] Successfully wrote JSON to {}", path.display());
 
 	Ok(())
 }
 
 /// Updates a value in a `serde_json::Value` (assumed to be an Object) at a
-/// given dot-separated key path. If `value_to_set` is `Value::Null`, the key is
-/// removed. Intermediate objects are created if they don't exist.
+/// given dot-separated key path.
+///
+/// If `value_to_set` is `Value::Null`, the key at the specified path is
+/// removed. Intermediate objects along the path are created if they don't exist
+/// when setting a value.
+///
+/// # Arguments
+/// * `target_value` - A mutable reference to the `serde_json::Value` to update.
+/// * `key_path` - A dot-separated string representing the path to the key
+///   (e.g., "editor.fontSize").
+/// * `value_to_set` - The `serde_json::Value` to set at the key path. If
+///   `Null`, the key is removed.
 pub fn update_json_value_at_path(target_value:&mut Value, key_path:&str, value_to_set:Value) {
 	trace!(
-		"[ConfigHelpers Json] Updating value at path: '{}', new value (is_null): {}",
+		"[ConfigHelpers Json] Updating value at path: '{}', new value (is_null: {})",
 		key_path,
 		value_to_set.is_null()
 	);
@@ -315,11 +422,13 @@ pub fn update_json_value_at_path(target_value:&mut Value, key_path:&str, value_t
 
 	if parts.is_empty() || (parts.len() == 1 && parts[0].is_empty()) {
 		warn!(
-			"[ConfigHelpers Json] Attempted to update with empty or invalid key path: '{}'. Doing nothing.",
+			"[ConfigHelpers Json] Attempted to update with empty or invalid key path: '{}'.",
 			key_path
 		);
 
-		if key_path.is_empty() && target_value.is_object() && !value_to_set.is_null() && value_to_set.is_object() {
+		// If key_path is empty and target is an object, replace the whole object
+		// if value_to_set is also an object.
+		if key_path.is_empty() && current.is_object() && !value_to_set.is_null() && value_to_set.is_object() {
 			debug!("[ConfigHelpers Json] Empty key path, replacing entire object.");
 
 			*current = value_to_set;
@@ -336,45 +445,82 @@ pub fn update_json_value_at_path(target_value:&mut Value, key_path:&str, value_t
 		if part_key.is_empty() {
 			warn!("[ConfigHelpers Json] Empty segment in key path '{}', skipping.", key_path);
 
+			// Skip empty segments
 			continue;
 		}
 
 		if i == last_part_index {
+			// At the final key segment
 			if let Some(obj) = current.as_object_mut() {
 				if value_to_set.is_null() {
 					trace!("[ConfigHelpers Json] Removing key: '{}'", part_key);
 
 					obj.remove(&part_key);
 				} else {
-					trace!("[ConfigHelpers Json] Setting key: '{}'", part_key);
+					trace!(
+						"[ConfigHelpers Json] Setting key: '{}' to value (type: {:?})",
+						part_key,
+						value_to_set.kind()
+					);
 
 					obj.insert(part_key, value_to_set);
 				}
 			} else {
 				warn!(
-					"[ConfigHelpers Json] Cannot set key '{}' in path '{}' because parent is not an object.",
-					part_key, key_path
+					"[ConfigHelpers Json] Cannot set key '{}' in path '{}' because parent is not an object (current \
+					 type: {:?}).",
+					part_key,
+					key_path,
+					current.kind()
 				);
 			}
 
+			// Operation complete or failed at last part
 			return;
 		} else {
+			// Traversing or creating intermediate objects
 			if !current.is_object() {
+				// Current part is not an object, but we need to go deeper.
+				// Overwrite current with an empty object to proceed.
 				debug!(
-					"[ConfigHelpers Json] Path segment '{}' in '{}' is not an object, creating new object node.",
-					part_key, key_path
+					"[ConfigHelpers Json] Path segment '{}' in '{}' is not an object (is {:?}), creating new object \
+					 node.",
+					part_key,
+					key_path,
+					current.kind()
 				);
 
 				*current = json!({});
 			}
 
-			current = current.as_object_mut().unwrap().entry(part_key).or_insert_with(|| json!({}));
+			// Now `current` is guaranteed to be an object.
+			current = current
+				.as_object_mut()
+				 // Should not panic due to the check above
+				.unwrap()
+				.entry(part_key)
+				 // Create intermediate object if it doesn't exist
+				.or_insert_with(|| json!({}));
 		}
 	}
 }
 
-/// Loads configurations from user, workspace, and folder settings,
-/// and performs a simplified merge for MVP.
+/// Loads configurations from user, workspace, and workspace folder settings,
+///
+///
+/// and performs a simplified merge.
+///
+/// The merge order is: User -> Workspace (.code-workspace `settings` key) ->
+/// Workspace Folder (`.vscode/settings.json`). Later sources override earlier
+/// ones.
+///
+/// # Arguments
+/// * `app_handle` - Tauri `AppHandle`.
+/// * `app_state` - Reference to `AppState`.
+///
+/// # Returns
+/// * `Ok(ConfigurationState)` with the merged configuration.
+/// * `Err(CommonError)` if any configuration loading or merging step fails.
 pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 	app_handle:&AppHandle<R>,
 
@@ -382,11 +528,15 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 ) -> Result<ConfigurationState, CommonError> {
 	info!("[ConfigHelpers Merge] Loading and merging all configurations...");
 
+	// 1. Load User settings
 	let user_config_path = get_config_path_for_target(
 		app_handle,
 		app_state,
+		// Or USER, effectively same for file path
 		ConfigurationTarget::USER_LOCAL,
+		// No overrides for user general
 		&IConfigurationOverrides::default(),
+		// Not language-scoped for general user
 		false,
 	)?;
 
@@ -394,28 +544,36 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 
 	debug!(
 		"[ConfigHelpers Merge] Loaded user config ({} top-level keys) from: {}",
-		merged_config_data.as_object().map_or(0, |m| m.len()),
+		merged_config_data.as_object().map_or(0, Map::len),
 		user_config_path.display()
 	);
 
-	let workspace_config_path_opt = app_state.workspace_config_path.lock().map_err(map_lock_error)?.clone();
+	// 2. Load Workspace settings (from .code-workspace file, if any)
+	let workspace_config_path_opt = app_state
+		.workspace_config_path
+		.lock()
+		.map_err(map_app_state_lock_error_to_common_error)?
+		.clone();
 
 	if let Some(ws_config_path) = workspace_config_path_opt {
+		// Check if the .code-workspace file itself exists and is a file
 		if fs::try_exists(&ws_config_path).await.unwrap_or(false) && ws_config_path.is_file() {
 			let workspace_file_values = load_json_file_if_exists_or_default(&ws_config_path).await?;
 
-			if let Some(settings_in_workspace_file) = workspace_file_values.get("settings").cloned() {
+			// Workspace settings are typically under a "settings" key in the
+			// .code-workspace file
+			if let Some(settings_in_workspace_file) = workspace_file_values.get("settings") {
 				if settings_in_workspace_file.is_object() {
 					debug!(
 						"[ConfigHelpers Merge] Loaded workspace settings ({} top-level keys) from .code-workspace: {}",
-						settings_in_workspace_file.as_object().map_or(0, |m| m.len()),
+						settings_in_workspace_file.as_object().map_or(0, Map::len),
 						ws_config_path.display()
 					);
 
-					merge_json_values(&mut merged_config_data, &settings_in_workspace_file);
+					merge_json_values(&mut merged_config_data, settings_in_workspace_file);
 				} else {
 					warn!(
-						"[ConfigHelpers Merge] 'settings' key in {} is not an object.",
+						"[ConfigHelpers Merge] 'settings' key in {} is not an object. Skipping workspace settings.",
 						ws_config_path.display()
 					);
 				}
@@ -427,7 +585,7 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 			}
 		} else {
 			warn!(
-				"[ConfigHelpers Merge] Workspace config path {} does not exist or is not a file.",
+				"[ConfigHelpers Merge] Workspace config path {} does not exist or is not a file. Skipping.",
 				ws_config_path.display()
 			);
 		}
@@ -435,7 +593,11 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 		trace!("[ConfigHelpers Merge] No .code-workspace file configured.");
 	}
 
-	let folders_guard = app_state.workspace_folders.lock().map_err(map_lock_error)?;
+	// 3. Load Workspace Folder settings (from each folder's .vscode/settings.json)
+	let folders_guard = app_state
+		.workspace_folders
+		.lock()
+		.map_err(map_app_state_lock_error_to_common_error)?;
 
 	for folder_state in folders_guard.iter() {
 		if folder_state.uri.scheme() == "file" {
@@ -448,7 +610,7 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 
 				debug!(
 					"[ConfigHelpers Merge] Loaded folder settings ({} top-level keys) for '{}' from: {}",
-					folder_values.as_object().map_or(0, |m| m.len()),
+					folder_values.as_object().map_or(0, Map::len),
 					folder_state.name,
 					folder_settings_path.display()
 				);
@@ -469,45 +631,76 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 		}
 	}
 
+	// Release lock
 	drop(folders_guard);
 
 	info!(
 		"[ConfigHelpers Merge] Configuration merge complete. Effective top-level keys: {}",
-		merged_config_data.as_object().map_or(0, |m| m.len())
+		merged_config_data.as_object().map_or(0, Map::len)
 	);
 
 	trace!(
 		"[ConfigHelpers Merge] Final merged data (sample): {}",
-		merged_config_data.to_string().chars().take(200).collect::<String>()
+		merged_config_data
+			.to_string()
+			.chars()
+			 // Log a sample
+			.take(200)
+			.collect::<String>()
 	);
 
 	Ok(ConfigurationState::new(merged_config_data))
 }
 
-/// Simple recursive merge for JSON values. `source` overrides `target`.
-/// Arrays in source will replace arrays in target. Nulls in source will replace
-/// values in target.
+/// Performs a simple recursive merge of two `serde_json::Value`s.
+///
+/// Values from `source` override corresponding values in `target`.
+/// - If both `target` and `source` are objects at a given key, their fields are
+///   merged recursively.
+/// - If `source` contains an array, it replaces the `target`'s value at that
+///   key (arrays are not merged element-wise).
+/// - If `source` contains a null, it replaces the `target`'s value.
+///
+/// # Arguments
+/// * `target` - A mutable reference to the `Value` to be merged into.
+/// * `source` - A reference to the `Value` whose contents will override
+///   `target`.
 fn merge_json_values(target:&mut Value, source:&Value) {
 	match (target, source) {
 		(Value::Object(target_map), Value::Object(source_map)) => {
 			for (key, source_val) in source_map {
+				// Get or insert the value from source if key doesn't exist in target
 				let target_entry = target_map.entry(key.clone()).or_insert_with(|| source_val.clone());
 
+				// If both are objects, recurse. Otherwise, source_val (cloned into
+				// target_entry if new, or explicit assignment below) takes precedence.
 				if target_entry.is_object() && source_val.is_object() {
 					merge_json_values(target_entry, source_val);
 				} else {
+					// Source overrides target if not both objects or if target_entry was just
+					// inserted
 					*target_entry = source_val.clone();
 				}
 			}
 		},
 
 		(target_val, source_val) => {
+			// For non-object types or mismatched types, source completely overrides target.
 			*target_val = source_val.clone();
 		},
 	}
 }
 
 /// Notifies Cocoon (via Vine) that specified configuration keys have changed.
+///
+/// The notification payload includes the full effective configuration and a
+/// list of affected keys, matching VS Code's `$acceptConfigurationChanged`
+/// protocol.
+///
+/// # Arguments
+/// * `app_handle` - Tauri `AppHandle`.
+/// * `affected_keys` - A `Vec<String>` of dot-separated configuration keys that
+///   have changed.
 pub async fn notify_config_changed_for_keys<R:TauriRuntime>(app_handle:&AppHandle<R>, affected_keys:Vec<String>) {
 	if affected_keys.is_empty() {
 		trace!("[ConfigHelpers Notify] notify_config_changed_for_keys called with no keys. Skipping.");
@@ -526,46 +719,84 @@ pub async fn notify_config_changed_for_keys<R:TauriRuntime>(app_handle:&AppHandl
 		let config_guard = app_state
 			.configuration
 			.lock()
-			.map_err(map_lock_error)
-			.expect("Config lock failed for notification");
+			.map_err(map_app_state_lock_error_to_common_error)
+			// Panicking here because if config state is unrecoverable, app is likely broken.
+			.expect("Config lock failed for notification; AppState potentially poisoned.");
 
 		let effective_config = config_guard.data.clone();
 
+		// Construct IConfigurationInitData DTO (simplified for MVP)
+		// TODO: Populate 'defaults', 'user', 'workspace', 'folders' with actual content
+		//       if/when Mountain has a more sophisticated multi-file config model.
+		//       For now, only 'effective' is crucial for Cocoon's immediate needs.
 		let config_init_data_dto = json!({
+
+
+
 
 			"effective": effective_config,
 
+
+			 // Stub
 			"defaults": { "contents": {} },
 
+
+			 // Stub
 			"user": { "contents": {} },
 
-			"workspace": { "contents": {} },
 
+			"workspace": { "contents": {} },// Stub
+			 // Stub
 			"folders": [],
 
+
+			 // Stub
 			"memory": { "contents": {} },
 
+
+			 // Stub
 			"policy": Value::Null,
 
+
+			 // Stub
 			"configurationScopes": []
 		});
 
-		let change_event_dto = json!({ "keys": affected_keys, "overrides": [] });
+		// Construct IConfigurationChangeEvent DTO
+		let change_event_dto = json!({
+
+
+
+
+			"keys": affected_keys,
+
+
+			// TODO: Populate 'overrides' if the change affects specific resources/languages
+			 // Stub
+			"overrides": []
+		});
 
 		(config_init_data_dto, change_event_dto)
 	};
 
+	// Payload for $acceptConfigurationChanged is [IConfigurationInitData,
+
+	// IConfigurationChangeEvent]
 	let payload_to_send = json!([config_init_data_dto, change_event_dto]);
 
 	trace!(
 		"[ConfigHelpers Notify] $acceptConfigurationChanged payload (brief): keys: {:?}, effective keys: {}",
 		affected_keys,
-		payload_to_send[0]["effective"].as_object().map_or(0, |o| o.keys().len())
+		payload_to_send[0]["effective"].as_object().map_or(0, Map::len)
 	);
 
-	if let Err(e) =
-		vine::send_notification_to_sidecar("cocoon-main", "$acceptConfigurationChanged".to_string(), payload_to_send)
-			.await
+	if let Err(e) = vine::send_notification_to_sidecar(
+		// TODO: Make sidecar ID configurable if multiple sidecars can exist
+		"cocoon-main",
+		"$acceptConfigurationChanged".to_string(),
+		payload_to_send,
+	)
+	.await
 	{
 		error!(
 			"[ConfigHelpers Notify] Failed to send $acceptConfigurationChanged notification: {}",
@@ -579,7 +810,8 @@ pub async fn notify_config_changed_for_keys<R:TauriRuntime>(app_handle:&AppHandl
 	}
 }
 
-// DocumentFilter DTO
+/// DTO for deserializing a `DocumentFilter` from `serde_json::Value`.
+/// Mirrors `vscode.DocumentFilter`.
 #[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct DocumentFilterDto {
@@ -589,22 +821,35 @@ pub struct DocumentFilterDto {
 
 	pub pattern:Option<String>,
 
-	// UriComponents expected
+	/// `UriComponents` JSON Value, e.g., `{"scheme":"file",
+	///
+	///
+	/// "path":"/base/dir"}`
 	pub base_uri:Option<Value>,
 }
 
-/// Document Selector matching utility using `globset`.
+/// Matches a document against a `DocumentSelector` (which can be a string, an
+/// array of filters, or a single filter object).
 ///
-/// `selector_val`: A `serde_json::Value` representing a `DocumentSelector`.
-/// `document_uri`: The URI of the document to match.
-/// `language_id`: The language ID of the document.
+/// Uses `globset` for pattern matching.
 ///
-/// **Current Limitations & TODOs for Glob Patterns:**
+/// # Arguments
+/// * `selector_val` - A `serde_json::Value` representing the
+///   `DocumentSelector`.
+/// * `document_uri` - The `Url` of the document to match.
+/// * `language_id` - The language ID string of the document.
+///
+/// # Returns
+/// `true` if the document matches the selector, `false` otherwise.
+///
+/// # Current Limitations & TODOs for Glob Patterns:
 /// - **Base URI Handling:** If `filter.base_uri` is present in a
 ///   `DocumentFilterDto`, the `pattern` should ideally be resolved relative to
 ///   this base URI before matching against a path derived from `document_uri`.
-///   This is not yet implemented.
+///   This is not yet fully implemented; patterns are matched against the full
+///   document path.
 /// - **Workspace-Relative Globs:** If a `pattern` is relative (e.g.,
+///
 ///
 ///   "src/**/*.ts") and no `base_uri` is specified, VS Code often attempts to
 ///   match it against paths relative to each workspace folder root. This
@@ -618,11 +863,13 @@ pub struct DocumentFilterDto {
 pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_id:&str) -> bool {
 	trace!(
 		"[SelectorMatch] Selector: {:?}, Doc URI: '{}', Lang: '{}'",
-		selector_val.as_str().unwrap_or("<object/array>"),
+		// More descriptive for non-string
+		selector_val.as_str().unwrap_or("<object/array selector>"),
 		document_uri.as_str(),
 		language_id
 	);
 
+	// Case 1: Selector is a simple language ID string (or "*")
 	if let Some(selector_lang_id_str) = selector_val.as_str() {
 		let matches = selector_lang_id_str == language_id || selector_lang_id_str == "*";
 
@@ -634,8 +881,10 @@ pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_
 		return matches;
 	}
 
+	// Case 2: Selector is an array of filters (DocumentFilterDto or language ID
+	// string)
 	if let Some(selector_array) = selector_val.as_array() {
-		// Any one filter in the array must match
+		// Any one filter in the array must match for the selector to match
 		let matches = selector_array
 			.iter()
 			.any(|s_filter| match_document_selector(s_filter, document_uri, language_id));
@@ -645,6 +894,7 @@ pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_
 		return matches;
 	}
 
+	// Case 3: Selector is a DocumentFilterDto object
 	if selector_val.is_object() {
 		match serde_json::from_value::<DocumentFilterDto>(selector_val.clone()) {
 			Ok(filter) => {
@@ -662,7 +912,7 @@ pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_
 					}
 				}
 
-				trace!("[SelectorMatch] Language match success (or not specified).");
+				trace!("[SelectorMatch] Language check passed (or no language filter).");
 
 				// 2. Scheme Check
 				if let Some(filter_scheme) = &filter.scheme {
@@ -677,18 +927,31 @@ pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_
 					}
 				}
 
-				trace!("[SelectorMatch] Scheme match success (or not specified).");
+				trace!("[SelectorMatch] Scheme check passed (or no scheme filter).");
 
 				// 3. Pattern Check (Glob)
 				if let Some(filter_pattern_str) = &filter.pattern {
+					// TODO: Implement full base_uri relative glob matching.
+					//       If `filter.base_uri` is Some, `filter_pattern_str` should be
+					//       interpreted relative to that base. The `document_uri.path()`
+					//       would then need to be made relative to that same base before matching.
+					//       This requires careful path arithmetic.
 					if filter.base_uri.is_some() {
 						warn!(
 							"[SelectorMatch] Glob pattern '{}' has a 'base_uri' specified, but base URI resolution \
 							 for globs is NOT YET IMPLEMENTED. Pattern will be matched against the full document path.",
 							filter_pattern_str
 						);
+
+						// For now, ignore base_uri and match pattern against
+						// full document_uri.path()
 					}
 
+					// TODO: Implement workspace-folder-relative glob matching if no base_uri.
+					//       This would involve iterating app_state.workspace_folders, making
+					//       document_uri.path() relative to each folder root, and trying to match.
+
+					// Full, percent-decoded path
 					let path_to_match = document_uri.path();
 
 					trace!(
@@ -698,10 +961,11 @@ pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_
 
 					let mut glob_builder = GlobBuilder::new(filter_pattern_str);
 
-					if cfg!(windows) {
-						glob_builder.case_insensitive(true);
-					}
+					// Case insensitivity should match filesystem behavior (e.g., true on Windows)
+					glob_builder.case_insensitive(cfg!(windows));
 
+					// On Windows, `\` can be a literal or separator. `false` means `\` is a
+					// separator. `globset` generally expects POSIX-style paths in patterns.
 					glob_builder.literal_separator(false);
 
 					match glob_builder.build() {
@@ -729,13 +993,15 @@ pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_
 								filter_pattern_str, e
 							);
 
+							// Invalid glob means no match
 							return false;
 						},
 					}
 				}
 
-				trace!("[SelectorMatch] Pattern match success (or not specified).");
+				trace!("[SelectorMatch] Pattern check passed (or no pattern filter).");
 
+				// If all checks passed
 				info!(
 					"[SelectorMatch] Filter object MATCHED ALL CRITERIA for doc '{}', lang '{}': {:?}",
 					document_uri.as_str(),
@@ -758,6 +1024,7 @@ pub fn match_document_selector(selector_val:&Value, document_uri:&Url, language_
 		}
 	}
 
+	// Fallback for unrecognized selector format
 	warn!(
 		"[SelectorMatch] Unrecognized selector format (not string, array, or filter object), no match: {:?}",
 		selector_val
