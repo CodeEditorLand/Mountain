@@ -29,6 +29,7 @@ tauri = { version = "2.5.1", features = [
 tokio = { workspace = true }
 tokio-tungstenite = { workspace = true }
 unbug = { workspace = true }
+base64 = "0.22.1"
 
 [features]
 Debug = []
