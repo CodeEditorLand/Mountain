@@ -8,60 +8,60 @@ fn main() { Binary::Fn::Fn(); }
 pub mod Binary;
 
 // NEW:
-pub mod app_state;
+// pub mod app_state;
 
-pub mod environment;
+// pub mod environment;
 
-pub mod handlers {
-	pub mod commands;
+// pub mod handlers {
+// 	pub mod commands;
 
-	pub mod config;
+// 	pub mod config;
 
-	pub mod diagnostics;
+// 	pub mod diagnostics;
 
-	pub mod documents;
+// 	pub mod documents;
 
-	pub mod enablement;
+// 	pub mod enablement;
 
-	pub mod native_fs;
+// 	pub mod native_fs;
 
-	pub mod output;
+// 	pub mod output;
 
-	pub mod process_mgmt;
+// 	pub mod process_mgmt;
 
-	pub mod protocol;
+// 	pub mod protocol;
 
-	pub mod proxy;
+// 	pub mod proxy;
 
-	pub mod registry;
+// 	pub mod registry;
 
-	pub mod secrets;
+// 	pub mod secrets;
 
-	pub mod storage;
+// 	pub mod storage;
 
-	pub mod terminal;
+// 	pub mod terminal;
 
-	pub mod ui;
+// 	pub mod ui;
 
-	pub mod workspace;
+// 	pub mod workspace;
 
-	pub mod workspace_fs_api;
+// 	pub mod workspace_fs_api;
 
-	pub mod error_utils;
+// 	pub mod error_utils;
 
-	pub mod extension_status;
+// 	pub mod extension_status;
 
-	pub mod sky_ui_responses;
-}
+// 	pub mod sky_ui_responses;
+// }
 
-pub mod Entry;
+// pub mod Entry;
 
-pub mod mist;
+// pub mod mist;
 
-pub mod track;
+// pub mod track;
 
-pub mod rpc;
+// pub mod rpc;
 
-pub mod runtime;
+// pub mod runtime;
 
-pub mod vine;
+// pub mod vine;
