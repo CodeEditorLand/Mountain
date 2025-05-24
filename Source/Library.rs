@@ -47,3 +47,5 @@ pub mod handlers {
 
 	pub mod workspace_fs_api;
 }
+
+pub mod Entry;
