@@ -21,10 +21,12 @@
 // - Routing incoming `Request` messages *from* sidecars to
 //   `track::dispatch_sidecar_request`.
 // - Processing incoming `Notification` messages *from* sidecars (readiness,
+
 //   logs, errors) and emitting Tauri events or delegating.
 // - Processing incoming `Response`/`Error` messages *from* sidecars to resolve
 //   pending Mountain requests.
 // - Providing public functions (`send_request_to_sidecar`,
+
 //   `send_notification_to_sidecar`) for Mountain components.
 // - Managing registration/unregistration of active sidecar communication
 //   channels.
@@ -55,7 +57,8 @@ use log::{debug, error, info, trace, warn};
 use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime};
+// Added Window for dispatch_sidecar_request
+use tauri::{AppHandle, Manager, Runtime, Window};
 use tokio::{
 	io::{AsyncBufReadExt, AsyncWriteExt, BufReader},
 	process::{Child, ChildStdin, ChildStdout},
@@ -63,6 +66,7 @@ use tokio::{
 	time::timeout,
 };
 
+// AppRuntime for track
 use crate::{runtime::AppRuntime, track};
 
 // --- Error Type ---
@@ -81,6 +85,7 @@ pub enum VineError {
 	Serialization(#[from] serde_json::Error),
 
 	#[error("Deserialization error: {0}")]
+	// Keep as String for detailed serde errors
 	Deserialization(String),
 
 	#[error("Request {id} to sidecar '{sidecar_id}' (method: '{method}') timed out after {duration_ms}ms")]
@@ -129,7 +134,8 @@ struct VineMessage {
 	params:Option<Value>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
-	error:Option<Value>,
+	// For Error responses
+	error: Option<Value>,
 }
 
 // --- Internal State ---
@@ -148,6 +154,7 @@ static NEXT_REQUEST_ID:Lazy<AtomicU64> = Lazy::new(|| AtomicU64::new(1));
 pub fn setup_sidecar_communication<R:Runtime>(
 	sidecar_id:String,
 
+	// Takes ownership of the Child process struct
 	mut child:Child,
 
 	app_handle:AppHandle<R>,
@@ -169,6 +176,7 @@ pub fn setup_sidecar_communication<R:Runtime>(
 		.take()
 		.ok_or_else(|| VineError::Communication(format!("Failed to take stdin for sidecar '{}'", sidecar_id)))?;
 
+	// Buffer for writer task
 	let (tx_to_sidecar_writer, rx_for_sidecar_writer) = mpsc::channel::<String>(100);
 
 	register_sidecar_sender(sidecar_id.clone(), tx_to_sidecar_writer.clone());
@@ -179,11 +187,15 @@ pub fn setup_sidecar_communication<R:Runtime>(
 		sidecar_id.clone(),
 		child_pid_log.clone(),
 		stdout,
+		// Clone Arc for reader
 		PENDING_RESPONSES.clone(),
+		// Pass sender for sending responses back from reader context
 		tx_to_sidecar_writer,
+		// Clone AppHandle for reader
 		app_handle.clone(),
 	);
 
+	// Monitor child process exit
 	let sidecar_id_monitor = sidecar_id.clone();
 
 	let child_pid_monitor = child_pid_log.clone();
@@ -205,6 +217,7 @@ pub fn setup_sidecar_communication<R:Runtime>(
 			},
 		}
 
+		// Ensure unregistration happens when process exits
 		unregister_sidecar(&sidecar_id_monitor);
 	});
 
@@ -232,18 +245,15 @@ pub fn unregister_sidecar(sidecar_id:&str) {
 
 		let mut requests_to_remove = Vec::new();
 
-		// TODO: To make this more robust for multiple sidecars, PENDING_RESPONSES
-		// would need to store (sidecar_id, oneshot_sender) or have separate maps.
-		// For now, it assumes any pending request might be affected if *any* sidecar
-		// unregisters, which is only safe if there's effectively one request-response
-		// sidecar at a time or requests are globally unique.
+		// Iterate and attempt to cancel pending requests.
+		// TODO: This needs refinement if PENDING_RESPONSES stores requests for multiple
+		// sidecars. Currently, it cancels ALL pending requests when ANY sidecar
+		// unregisters. A better map key or value for PENDING_RESPONSES would include
+		// the target sidecar_id.
 		for (req_id, sender) in pending_guard.iter() {
-			// This cancellation is broad. A more targeted approach would only cancel
-			// requests *sent to* this specific sidecar_id. This requires
-			// PENDING_RESPONSES to associate req_id with the target sidecar_id.
 			warn!(
-				"[Vine] Cancelling pending request ID {} because sidecar '{}' is being unregistered (broad \
-				 cancellation).",
+				"[Vine] Cancelling pending request ID {} because sidecar '{}' is being unregistered (current logic is \
+				 broad).",
 				req_id, sidecar_id
 			);
 
@@ -251,6 +261,7 @@ pub fn unregister_sidecar(sidecar_id:&str) {
 				id:*req_id,
 
 				sidecar_id:sidecar_id.to_string(),
+				// Ignore error if receiver already dropped
 			}));
 
 			requests_to_remove.push(*req_id);
@@ -291,6 +302,7 @@ pub async fn send_request_to_sidecar(
 
 		id:Some(request_id),
 
+		// Clone method for timeout error context
 		method:Some(method.clone()),
 
 		params:Some(params),
@@ -301,6 +313,7 @@ pub async fn send_request_to_sidecar(
 	let (response_tx, response_rx) = oneshot::channel();
 
 	{
+		// Scope for lock
 		let mut pending_guard = PENDING_RESPONSES.lock().map_err(VineError::from)?;
 
 		pending_guard.insert(request_id, response_tx);
@@ -318,6 +331,7 @@ pub async fn send_request_to_sidecar(
 	);
 
 	if let Err(e) = send_raw_message_to_sidecar(sidecar_id, request_msg).await {
+		// If send_raw_message fails, remove the pending response entry
 		PENDING_RESPONSES.lock().map_err(VineError::from)?.remove(&request_id);
 
 		error!("[Vine SendRequest] Failed for ID={} To='{}': {}", request_id, sidecar_id, e);
@@ -326,25 +340,30 @@ pub async fn send_request_to_sidecar(
 	}
 
 	match timeout(Duration::from_millis(timeout_ms), response_rx).await {
+		// Result<Value, VineError> from oneshot
 		Ok(Ok(res_result)) => res_result,
 
 		Ok(Err(_recv_err)) => {
+			// oneshot sender was dropped
 			warn!(
 				"[Vine SendRequest] Response channel closed for ID={} (Sidecar '{}' likely exited/unregistered)",
 				request_id, sidecar_id
 			);
 
+			// Cleanup
 			PENDING_RESPONSES.lock().map_err(VineError::from)?.remove(&request_id);
 
 			Err(VineError::ProcessNotFoundOrClosed(sidecar_id.to_string()))
 		},
 
 		Err(_timeout_err) => {
+			// tokio::time::error::Elapsed
 			error!(
 				"[Vine SendRequest] ID={} Method='{}' To='{}' timed out after {}ms",
 				request_id, method, sidecar_id, timeout_ms
 			);
 
+			// Cleanup
 			PENDING_RESPONSES.lock().map_err(VineError::from)?.remove(&request_id);
 
 			Err(VineError::Timeout { id:request_id, sidecar_id:sidecar_id.to_string(), method, duration_ms:timeout_ms })
@@ -405,10 +424,12 @@ fn spawn_vine_writer(
 					sidecar_id, child_pid_log, e
 				);
 
+				// Exit loop on write error
 				break;
 			}
 
 			if let Err(e) = stdin.flush().await {
+				// Important to flush after write
 				error!(
 					"[Vine Writer {}][PID: {}] Failed to flush stdin: {}. Stopping writer.",
 					sidecar_id, child_pid_log, e
@@ -423,8 +444,10 @@ fn spawn_vine_writer(
 			sidecar_id, child_pid_log
 		);
 
+		// Ensure cleanup if writer task stops
 		unregister_sidecar(&sidecar_id);
 
+		// Close stdin pipe
 		drop(stdin);
 	});
 }
@@ -438,6 +461,7 @@ fn spawn_vine_reader<R:Runtime>(
 
 	pending_responses:PendingResponseMap,
 
+	// Used for sending responses back to this sidecar
 	tx_to_own_sidecar_writer:mpsc::Sender<String>,
 
 	app_handle:AppHandle<R>,
@@ -471,7 +495,7 @@ fn spawn_vine_reader<R:Runtime>(
 
 				Ok(None) => {
 					info!(
-						"[Vine Reader {}][PID: {}] Stdout stream ended (EOF).",
+						"[Vine Reader {}][PID: {}] Stdout stream ended (EOF). Sidecar likely terminated.",
 						sidecar_id, child_pid_log
 					);
 
@@ -491,6 +515,7 @@ fn spawn_vine_reader<R:Runtime>(
 
 		info!("[Vine Reader {}][PID: {}] Reader task exiting.", sidecar_id, child_pid_log);
 
+		// Ensure cleanup when reader stops
 		unregister_sidecar(&sidecar_id);
 	});
 }
@@ -502,6 +527,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 
 	pending_responses:PendingResponseMap,
 
+	// Renamed for clarity
 	tx_to_own_sidecar_writer:mpsc::Sender<String>,
 
 	app_handle:AppHandle<R>,
@@ -530,6 +556,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 
 								Ok(message.params.unwrap_or(Value::Null))
 							} else {
+								// VineMessageType::Error
 								warn!(
 									"[Vine ProcessLine {}] Received ERROR response for req ID {}: {:?}",
 									sidecar_id, id, message.error
@@ -543,11 +570,12 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 								))
 							};
 
-							if let Err(e) = sender.send(result) {
+							if sender.send(result).is_err() {
+								// Check if send failed (receiver dropped)
 								error!(
 									"[Vine ProcessLine {}] Failed to send processed response/error for req ID {} to \
-									 internal awaiter: {:?}",
-									sidecar_id, id, e
+									 internal awaiter (receiver dropped).",
+									sidecar_id, id
 								);
 							}
 						} else {
@@ -573,14 +601,13 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 
 						let params = params_opt.unwrap_or(Value::Null);
 
+						// This is what track::dispatch_sidecar_request expects
 						let request_payload = json!({ "method": method, "params": params });
 
 						let response_message_to_sidecar:VineMessage = match app_handle.get_window("main") {
 							Some(window) => {
 								match app_handle.try_state::<Arc<AppRuntime>>() {
-									// Use try_state
 									Some(runtime_state) if runtime_state.inner().is_some() => {
-										// Check Option inside Arc
 										match track::dispatch_sidecar_request(
 											app_handle.clone(),
 											window,
@@ -606,11 +633,14 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 											},
 
 											Err(err_string) => {
+												// err_string is a JSON error string from Track
 												let error_payload = match serde_json::from_str::<Value>(&err_string) {
+													// Already a structured error
 													Ok(json_error) => json_error,
 
 													Err(_) => {
-														json!({ "message": err_string, "code": "EUNKNOWN_HANDLER_ERROR" })
+														json!({ "message": err_string, "code": "EUNPARSABLE_HANDLER_ERROR" })
+														// Fallback
 													},
 												};
 
@@ -630,10 +660,9 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 									},
 
 									_ => {
-										// Catches None from try_state or if AppRuntime inside Arc is None
 										error!(
-											"[Vine ProcessLine {}] AppRuntime state unavailable or unusable for \
-											 request ID {}.",
+											"[Vine ProcessLine {}] AppRuntime state unavailable/unusable for request \
+											 ID {}.",
 											sidecar_id, id
 										);
 
@@ -690,7 +719,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 						}
 					} else {
 						error!(
-							"[Vine ProcessLine {}] Received invalid Request message: {:?}",
+							"[Vine ProcessLine {}] Received invalid Request message (missing id or method): {:?}",
 							sidecar_id, message
 						);
 					}
@@ -705,11 +734,13 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 						match method.as_str() {
 							"extHostReadyForInit" => {
 								info!(
-									"[Vine ProcessLine {}] Sidecar '{}' signaled 'extHostReadyForInit'.",
+									"[Vine ProcessLine {}] Sidecar '{}' signaled 'extHostReadyForInit'. Emitting \
+									 'vine://sidecar/ready'.",
 									sidecar_id, sidecar_id
 								);
 
 								if let Err(e) = app_handle.emit_all("vine://sidecar/ready", sidecar_id.to_string()) {
+									// Send sidecar_id as payload
 									error!(
 										"[Vine ProcessLine {}] Failed to emit 'vine://sidecar/ready': {}",
 										sidecar_id, e
@@ -719,7 +750,8 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 
 							"extHostInitialized" => {
 								info!(
-									"[Vine ProcessLine {}] Sidecar '{}' signaled 'extHostInitialized'.",
+									"[Vine ProcessLine {}] Sidecar '{}' signaled 'extHostInitialized'. Emitting \
+									 'vine://sidecar/initialized'.",
 									sidecar_id, sidecar_id
 								);
 
@@ -734,30 +766,55 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 							},
 
 							"log" => {
-								if let Some(log_entry) = params.as_object() {
-									let level = log_entry.get("level").and_then(Value::as_str).unwrap_or("INFO");
+								// Standardized log format from Cocoon/VS Code
+								if let Some(log_entry_array) = params.as_array() {
+									// VS Code LogLevel (Info=2)
+									let level_num = log_entry_array.get(0).and_then(Value::as_u64).unwrap_or(2);
 
-									let log_message = log_entry.get("message").and_then(Value::as_str).unwrap_or("");
+									let message_parts:Vec<String> =
+										log_entry_array.get(1..).map_or_else(Vec::new, |parts_slice| {
+											parts_slice
+												.iter()
+												.map(|v| v.to_string().trim_matches('"').to_string())
+												.collect()
+										});
 
-									match level.to_uppercase().as_str() {
-										"TRACE" => trace!("[{} Log] {}", sidecar_id, log_message),
+									let log_message = message_parts.join(" ");
 
-										"DEBUG" => debug!("[{} Log] {}", sidecar_id, log_message),
+									match level_num {
+										// Trace
+										0 => trace!("[{} Log] {}", sidecar_id, log_message),
 
-										"INFO" => info!("[{} Log] {}", sidecar_id, log_message),
+										// Debug
+										1 => debug!("[{} Log] {}", sidecar_id, log_message),
 
-										"WARN" => warn!("[{} Log] {}", sidecar_id, log_message),
+										// Info
+										2 => info!("[{} Log] {}", sidecar_id, log_message),
 
-										"ERROR" => error!("[{} Log] {}", sidecar_id, log_message),
+										// Warn
+										3 => warn!("[{} Log] {}", sidecar_id, log_message),
 
-										_ => info!("[{} Log] (Unknown Level '{}') {}", sidecar_id, level, log_message),
+										// Error, Critical
+										4 | 5 => error!("[{} Log] {}", sidecar_id, log_message),
+
+										_ => {
+											info!(
+												"[{} Log] (Unknown Level '{}') {}",
+												sidecar_id, level_num, log_message
+											)
+										},
 									}
 								} else {
-									debug!("[{} Log] (Malformed) {:?}", sidecar_id, params);
+									warn!(
+										"[Vine ProcessLine {}] Received malformed 'log' notification params (expected \
+										 array): {:?}",
+										sidecar_id, params
+									);
 								}
 							},
 
 							"error" | "extHostError" => {
+								// General error reporting from sidecar
 								error!("[{} Error Reported] {:?}", sidecar_id, params);
 
 								if let Err(e) = app_handle.emit_all(
@@ -772,20 +829,16 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 							},
 
 							"rpcData" => {
-								// VSCode RPCProtocol data for Mountain-as-client to Cocoon-as-server
-								if let Some(_buffer_val_str) = params.get("buffer").and_then(Value::as_str) {
+								// For VSCode RPCProtocol, if Mountain needs to act as client
+								if let Some(buffer_val_str) = params.get("buffer").and_then(Value::as_str) {
 									trace!(
 										"[Vine ProcessLine {}] Received rpcData notification (len: {})",
 										sidecar_id,
-										_buffer_val_str.len()
+										buffer_val_str.len()
 									);
 
-									// TODO: If Mountain acts as an RPC client
-									// to services in Cocoon, this data
-									// needs to be fed into Mountain's RPC
-									// client instance. This is not
-									// part of the primary Mountain-as-server
-									// flow.
+									// TODO: Feed this into Mountain's RPC
+									// client instance if implemented.
 								} else {
 									warn!(
 										"[Vine ProcessLine {}] Received rpcData without buffer string: {:?}",
@@ -795,6 +848,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 							},
 
 							_ => {
+								// Generic notification
 								let event_name = format!("vine://notification/{}/{}", sidecar_id, method);
 
 								debug!(
@@ -829,8 +883,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
 							sidecar_id, id
 						);
 
-						// TODO: Propagate cancellation to the task being
-						// handled by `track::dispatch_sidecar_request`.
+						// TODO: Propagate cancellation.
 					} else {
 						warn!(
 							"[Vine ProcessLine {}] Received Cancel message without an ID: {:?}",
@@ -866,6 +919,7 @@ async fn send_raw_message_to_sidecar_via_channel(
 
 async fn send_raw_message_to_sidecar(sidecar_id:&str, message:VineMessage) -> Result<(), VineError> {
 	let sender_opt = {
+		// Scope for lock
 		let writers_guard = SIDECAR_WRITERS.lock().map_err(VineError::from)?;
 
 		writers_guard.get(sidecar_id).cloned()
@@ -875,10 +929,16 @@ async fn send_raw_message_to_sidecar(sidecar_id:&str, message:VineMessage) -> Re
 		let send_result = send_raw_message_to_sidecar_via_channel(&tx, message).await;
 
 		if let Err(ref e @ VineError::Communication(_)) = send_result {
+			// Log this specific failure case. It often means the writer task has exited.
 			warn!(
-				"[Vine SendRaw] Send via channel failed for sidecar '{}', writer task likely exited: {}",
+				"[Vine SendRaw] Send via channel failed for sidecar '{}', writer task likely exited: {}. Sidecar \
+				 might be unresponsive or crashed.",
 				sidecar_id, e
 			);
+
+			// No need to proactively clean PENDING_RESPONSES here, as timeout
+			// or reader task exit will handle it. If we cleaned here, it
+			// might race with a legitimate response.
 		}
 
 		send_result
