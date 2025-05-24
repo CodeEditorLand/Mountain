@@ -3,448 +3,618 @@
 // --------------------------------------------------------------------------------------------
 // Implements the backend logic for the `vscode.workspace.fs` filesystem API
 // used by extensions. These handlers are invoked via RPC calls proxied from
-// Cocoon's `fs-api-shim.js` through Vine and Track.
+// Cocoon's `fs-api-shim.js` through Vine and then routed by `track.rs` or
+// `rpc.rs` to these specific functions.
 //
 // Responsibilities:
-// - Handling specific `workspacefs_*` methods (`stat`, `readFile`, `writeFile`,
+// - Handling specific `workspacefs_*` methods (e.g., `workspacefs_stat`,
 
-//   `readDirectory`, `createDirectory`, `delete`, `rename`, `copy`).
-// - Parsing URI components and options from the RPC request parameters (Value
-//   array).
-// - Performing security checks (scheme validation) to ensure requested paths
-//   are valid.
+//   `workspacefs_readFile`). These method names are conventions established by
+//   `track.rs` or `rpc.rs` when dispatching.
+// - Parsing URI components and operation-specific options from the RPC request
+//   parameters (which are typically a `serde_json::Value` array).
+// - Performing security checks, primarily URI scheme validation, to ensure that
+//   requested paths are for supported schemes (e.g., 'file') and rejecting
+//   unsupported ones (e.g., 'vscode-webview', 'http'). Path canonicalization
+//   and workspace boundary checks are delegated to the `FsReader`/`FsWriter`
+//   implementations in `environment.rs`.
 // - Executing the underlying filesystem operations by dispatching to the
-//   corresponding `FsReader`/`FsWriter` trait methods provided by the
-//   `Environment` obtained from the `AppRuntime`.
-// - Handling file types correctly (e.g., distinguishing files/directories for
-//   `delete`).
-// - Formatting results (e.g., base64 for `readFile`, stat structure, directory
-//   listing format) and errors (mapping CommonError to structured JSON errors
-//   with codes like `ENOENT`) as expected by the `fs-api-shim.js`.
-// - Rejecting requests for unsupported URI schemes (like `vscode-webview`,
+//   corresponding `FsReader` or `FsWriter` trait methods. These traits are
+//   provided by the `MountainEnvironment` instance, accessed via the
+//   `AppRuntime`.
+// - Handling file types correctly when necessary (e.g., distinguishing files
+//   from directories for operations like `delete`).
+// - Formatting results into the JSON structures expected by Cocoon's
+//   `fs-api-shim.js`. This includes:
+//   - Base64 encoding for `readFile` results.
+//   - `FileSystemStat` DTO structure for `stat` results.
+//   - Directory listing format `[name: string, type: FileType][]` for
+//     `readDirectory`.
+// - Mapping `CommonError` instances (returned by `FsReader`/`FsWriter`) to
+//   structured JSON-RPC error strings with appropriate error codes (e.g.,
 
-//   `vscode-remote`).
+//   "ENOENT", "EACCES") that the `fs-api-shim.js` can understand and convert
+//   into `vscode.FileSystemError`.
 //
 // Key Interactions:
-// - Called by `track::dispatch_sidecar_request` (mapped from `workspacefs_*`
+// - Called by `track.rs` (via direct function call after mapping the RPC method
+//   name) or `rpc.rs` (if using `MainThreadFileSystemApiHandler` struct
 //   methods).
-// - Parses `Value` array params containing URI components and options.
-// - Validates URI schemes.
-// - Interacts with `AppRuntime` to get the `Environment` and `require` the
-//   `FsReader`/`FsWriter`.
-// - Returns `Result<Value, String>` where the error string is structured JSON.
+// - Parses `Value` array parameters containing URI components and options.
+// - Validates URI schemes to ensure they are supported for filesystem
+//   operations.
+// - Interacts with `AppRuntime` to get the `MountainEnvironment` instance.
+// - Uses `env.require::<Arc<dyn FsReader/FsWriter>>()` to obtain the filesystem
+//   providers.
+// - Returns `Result<Value, String>` where the `Ok(Value)` is the JSON-formatted
+//   success response and `Err(String)` is a JSON-formatted error string.
 // --------------------------------------------------------------------------------------------
 
 use std::{path::PathBuf, sync::Arc};
 
 // Import necessary components from Land_Common
 use Land_Common::{
-	// Environment trait and Require helper
+	// Environment trait and Requires helper
 	environment::{Environment, Requires},
 
-	// Error enum for mapping
+	// CommonError enum for mapping
 	errors::CommonError,
 
-	// Filesystem traits
-	fs_effects::{FsReader, FsWriter},
+	// Filesystem traits and types
+	fs_effects::{FileSystemStat, FileType as CommonFileType, FsReader, FsWriter},
 };
-// Not needed if FsReader handles stream internally
-// use futures::stream::TryStreamExt;
-
-// Use log crate
-use log;
+// `futures::stream::TryStreamExt` is not needed if FsReader/FsWriter handles streams internally.
+// Logging
+use log::{debug, error, trace, warn};
+// For JSON manipulation
 use serde_json::{Value, json};
 // Tauri imports
 use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window};
 
-// Url crate not directly needed if only dealing with paths
-// use url::Url;
+// `url::Url` is not directly used here as path_from_uri_components_for_fs_api primarily extracts path string.
 use crate::{
-	// AppState might be needed for context/permissions later
-	app_state::AppState,
+	// `AppState` might be needed for advanced context/permissions checks in the future,
 
-	runtime::AppRuntime,
-	// Vine might be needed for future FS event notifications
-	// Runtime required to access Environment
-	// use crate::vine;
+	// but for now, path validation is delegated to environment.rs.
+	// app_state::AppState,
+
+	// For consistent error string creation
+	handlers::error_utils,
+
+	runtime::AppRuntime, /* AppRuntime required to access the Environment
+	                      * `vine` might be needed for future FS event notifications to sidecars. */
 };
 
 // --- Helper Functions ---
 
-/// Creates a structured error JSON string for RPC error responses.
-fn create_handler_error_string(message:String, code:Option<&str>) -> String {
-	json!({
+// `create_handler_error_string` and `map_common_error_to_handler_string` are
+// now centralized in `error_utils.rs`. This module will use
+// `error_utils::rpc_error_string` and
+// `error_utils::map_common_error_to_rpc_string`.
 
-
-		 "message": message,
-
-		  // Default error code
-		 "code": code.unwrap_or("EUNKNOWN")
-	})
-	.to_string()
-}
-
-/// Maps `CommonError` variants (typically returned by FsReader/FsWriter)
-/// to structured error JSON strings expected by the fs-api-shim.
-fn map_common_error_to_handler_string(e:CommonError) -> String {
-	let (message, code) = match e {
-		CommonError::FsNotFound(p) => (format!("File not found: {}", p.display()), Some("ENOENT")),
-
-		CommonError::FsPermissionDenied(p, m) => {
-			(format!("Permission denied for '{}': {}", p.display(), m), Some("EACCES"))
-		},
-
-		CommonError::FsFileExists(p) => (format!("File already exists: {}", p.display()), Some("EEXIST")),
-
-		CommonError::FsNotADirectory(p) => (format!("Path is not a directory: {}", p.display()), Some("ENOTDIR")),
-
-		CommonError::FsIsADirectory(p) => (format!("Path is a directory: {}", p.display()), Some("EISDIR")),
-
-		CommonError::FsNotEmpty(p) => (format!("Directory not empty: {}", p.display()), Some("ENOTEMPTY")),
-
-		// Map generic IO errors
-		CommonError::FsRead(p, m) => (format!("Read failed for '{}': {}", p.display(), m), Some("EIO")),
-
-		CommonError::FsWrite(p, m) => (format!("Write failed for '{}': {}", p.display(), m), Some("EIO")),
-
-		CommonError::FsStat(p, m) => (format!("Stat failed for '{}': {}", p.display(), m), Some("EIO")),
-
-		CommonError::FsReadDir(p, m) => (format!("ReadDir failed for '{}': {}", p.display(), m), Some("EIO")),
-
-		CommonError::FsMkdir(p, m) => (format!("Mkdir failed for '{}': {}", p.display(), m), Some("EIO")),
-
-		CommonError::FsDelete(p, m) => (format!("Delete failed for '{}': {}", p.display(), m), Some("EIO")),
-
-		CommonError::FsRename(p, m) => (format!("Rename failed for '{}': {}", p.display(), m), Some("EIO")),
-
-		CommonError::FsCopy(p, m) => (format!("Copy failed for '{}': {}", p.display(), m), Some("EIO")),
-
-		// Map argument/logic errors
-		CommonError::InvalidArg(a, m) => (format!("Invalid argument '{}': {}", a, m), Some("EINVAL")), /* Invalid Argument code */
-		CommonError::NotImplemented(f) => (format!("Operation not implemented: {}", f), Some("ENOSYS")), /* Not Implemented code */
-		// Default fallback
-		// Unknown error
-		_ => (e.to_string(), Some("EUNKNOWN")),
-	};
-
-	create_handler_error_string(message, code)
-}
-
-/// Helper to get a PathBuf from URI components JSON Value received via RPC.
-/// Enforces 'file' scheme and rejects unsupported schemes.
-fn path_from_uri_components(uri_val:&Value) -> Result<PathBuf, String> {
-	// Default to file scheme if missing
-	let scheme = uri_val.get("scheme").and_then(|v| v.as_str()).unwrap_or("file");
+/// Helper to extract a `PathBuf` from `UriComponents` JSON `Value` for FS API
+/// operations.
+///
+/// This function specifically validates that the URI scheme is 'file' (or
+/// empty, implying 'file' for local paths) and rejects schemes known to be
+/// unsupported by a typical local filesystem API (e.g., 'http',
+///
+///
+/// 'vscode-remote').
+///
+/// # Arguments
+/// * `uri_val` - A `&serde_json::Value` expected to be an object representing
+///   `UriComponents` (e.g., `{ "scheme": "file", "path": "/foo/bar.txt" }`).
+///
+/// # Returns
+/// * `Ok(PathBuf)` if the URI is valid and a path can be extracted.
+/// * `Err(String)` containing a JSON-RPC error string if the URI scheme is
+///   unsupported, or if the 'path' field is missing or invalid.
+fn path_from_uri_components_for_fs_api(uri_val:&Value) -> Result<PathBuf, String> {
+	// Default to "file" scheme if not explicitly provided in the DTO.
+	// Extensions using `vscode.workspace.fs` almost always operate on 'file' URIs
+	// or Uris that can be resolved to file paths by a provider.
+	// Assume "file" if scheme is missing
+	let scheme = uri_val.get("scheme").and_then(Value::as_str).unwrap_or("file");
 
 	match scheme {
-		// Allow 'file' scheme or empty scheme (could imply relative paths, but fs effects likely expect absolute)
 		"file" | "" => {
-			let path_str = uri_val.get("path").and_then(|v| v.as_str()).ok_or_else(|| {
-				create_handler_error_string("Missing or invalid 'path' in URI components".to_string(), Some("EBADARG"))
+			// "" scheme can occur if VS Code passes a string path that gets auto-converted
+			// to URI without scheme.
+			let path_str = uri_val.get("path").and_then(Value::as_str).ok_or_else(|| {
+				error_utils::rpc_error_string(
+					"Missing or invalid 'path' field in URI components for FS API operation.".to_string(),
+					// Error Bad Argument for Path
+					Some("EBADARG_PATH"),
+				)
 			})?;
 
-			// TODO: Security check - Ensure path is within allowed workspace boundaries?
-			// This might belong in the Environment impl.
+			// TODO: Security Check - Further validation of `path_str` (e.g., ensuring it's
+			//       not trying to escape a sandbox, if applicable) might be needed here or
+			//       more robustly within the `FsReader`/`FsWriter` implementations in
+			//       `environment.rs` which perform canonicalization and workspace boundary
+			// checks.
 			Ok(PathBuf::from(path_str))
 		},
 
-		// Explicitly reject schemes known to be unsupported by the standard FS API
+		// Explicitly reject schemes known to be unsupported by a standard local FS API.
 		"vscode-webview" | "vscode-remote" | "vscode-resource" | "untitled" | "git" | "http" | "https" => {
-			Err(create_handler_error_string(
-				format!("Unsupported URI scheme for workspace.fs: {}", scheme),
-				// Operation Not Supported code
-				Some("ENOTSUP"),
+			Err(error_utils::rpc_error_string(
+				format!(
+					"Unsupported URI scheme ('{}') for vscode.workspace.fs operations. Only 'file' scheme is \
+					 typically supported by local FS providers.",
+					scheme
+				),
+				// Error Not Supported for Scheme
+				Some("ENOTSUP_SCHEME"),
 			))
 		},
 
-		// Reject other non-file schemes
+		// Reject other unknown non-file schemes.
 		_ => {
-			Err(create_handler_error_string(
-				format!("WorkspaceFS API currently only supports 'file' scheme, got '{}'", scheme),
-				Some("ENOTSUP"),
+			Err(error_utils::rpc_error_string(
+				format!(
+					"WorkspaceFS API currently only supports 'file' scheme, but received '{}'.",
+					scheme
+				),
+				Some("ENOTSUP_SCHEME"),
 			))
 		},
 	}
 }
 
-// --- RPC Handlers (Called by Track dispatcher) ---
-// These handlers delegate the actual filesystem work to the appropriate trait
-// (`FsReader` or `FsWriter`) obtained from the `AppRuntime`'s `Environment`.
+// --- RPC Handlers (Called by Track dispatcher or rpc.rs) ---
+// These handlers implement the `vscode.workspace.fs` API methods.
+// They receive `Arc<AppRuntime>` directly from the dispatcher (`track.rs` or
+// `rpc.rs`) instead of `State<'_, Arc<AppRuntime>>` to simplify their
+// signatures, as they are not Tauri commands themselves but are called by them.
 
-/// Handles `$stat` RPC call.
-/// Args: `[uri: UriComponents]`
-pub async fn handle_stat(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
-	let uri_val = params
-		 // RPC calls use array params
-		.get(0)
-		.ok_or_else(|| create_handler_error_string("Missing 'uri' parameter".to_string(), Some("EBADARG")))?;
-
-	// Validates scheme
-	let path = path_from_uri_components(uri_val)?;
-
-	log::debug!("[WorkspaceFS Handler] handle_stat: {}", path.display());
-
-	// Get FsReader from runtime/environment and call its method
-	let env = runtime.get_environment();
-
-	let fs_reader:Arc<dyn FsReader + Send + Sync> = env.require();
-
-	fs_reader
-		 // FsReader::stat_file should return Result<Value, CommonError>
-		.stat_file(&path)
-		.await
-		 // Map CommonError to JSON error string
-		.map_err(map_common_error_to_handler_string)
-}
-
-/// Handles `$readDirectory` RPC call.
-/// Args: `[uri: UriComponents]`
-pub async fn handle_read_directory(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
-	let uri_val = params
-		.get(0)
-		.ok_or_else(|| create_handler_error_string("Missing 'uri' parameter".to_string(), Some("EBADARG")))?;
-
-	// Validates scheme
-	let path = path_from_uri_components(uri_val)?;
-
-	log::debug!("[WorkspaceFS Handler] handle_readDirectory: {}", path.display());
-
-	let env = runtime.get_environment();
-
-	let fs_reader:Arc<dyn FsReader + Send + Sync> = env.require();
-
-	fs_reader
-		 // FsReader::read_directory should return Result<Vec<(String, String)>, CommonError>
-		.read_directory(&path)
-		.await
-		 // Convert Vec<(name, type)> to JSON Value array
-		.map(|entries| json!(entries))
-		.map_err(map_common_error_to_handler_string)
-}
-
-/// Handles `$readFile` RPC call.
-/// Args: `[uri: UriComponents]`
-pub async fn handle_read_file(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
-	let uri_val = params
-		.get(0)
-		.ok_or_else(|| create_handler_error_string("Missing 'uri' parameter".to_string(), Some("EBADARG")))?;
-
-	// Validates scheme
-	let path = path_from_uri_components(uri_val)?;
-
-	log::debug!("[WorkspaceFS Handler] handle_readFile: {}", path.display());
-
-	let env = runtime.get_environment();
-
-	let fs_reader:Arc<dyn FsReader + Send + Sync> = env.require();
-
-	match fs_reader.read_file(&path).await {
-		// FsReader::read_file should return Result<Vec<u8>, CommonError>
-		Ok(bytes) => {
-			// Encode the byte vector as base64 for JSON transport
-			let base64_content = base64::encode(&bytes);
-
-			// Return JSON string (base64 encoded)
-			Ok(json!(base64_content))
-		},
-
-		Err(e) => Err(map_common_error_to_handler_string(e)),
-	}
-}
-
-/// Handles `$writeFile` RPC call.
-/// Args: `[uri: UriComponents, content_base64: string, options: { create: bool,
+/// Handles the `workspacefs_stat` RPC call.
 ///
-/// overwrite: bool }]`
-pub async fn handle_write_file(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
-	let uri_val = params
-		.get(0)
-		.ok_or_else(|| create_handler_error_string("Missing 'uri' parameter".to_string(), Some("EBADARG")))?;
+/// Corresponds to `vscode.workspace.fs.stat(uri)`.
+///
+/// # Arguments
+/// * `runtime` - The `AppRuntime` to access the `FsReader`.
+/// * `params` - A `serde_json::Value` array: `[uri: UriComponents]`
+///
+/// # Returns
+/// * `Ok(Value)`: JSON representation of `vscode.FileStat`.
+/// * `Err(String)`: JSON-RPC error string.
+pub async fn handle_workspace_fs_stat(
+	runtime:Arc<AppRuntime>,
 
-	let content_b64 = params.get(1).and_then(Value::as_str).ok_or_else(|| {
-		create_handler_error_string("Missing 'content' (base64 string) parameter".to_string(), Some("EBADARG"))
+	// Expects Value::Array([uri_components_dto])
+	params:Value,
+) -> Result<Value, String> {
+	let uri_components_dto = params.get(0).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_stat", "uriComponents DTO", "Value::Object", Some(0))
 	})?;
 
-	// TODO: Parse options from params[2] if the FsWriter::write_file method needs
-	// them (e.g., create, overwrite). let options_val =
-	// params.get(2).cloned().unwrap_or(Value::Null); let create =
-	// options_val.get("create").and_then(Value::as_bool).unwrap_or(true); //
-	// Default create=true? let overwrite =
-	// options_val.get("overwrite").and_then(Value::as_bool).unwrap_or(true); //
-	// Default overwrite=true?
+	let path = path_from_uri_components_for_fs_api(uri_components_dto)?;
 
-	// Validates scheme
-	let path = path_from_uri_components(uri_val)?;
+	debug!("[WorkspaceFS Handler] Stat request for path: {}", path.display());
 
-	log::debug!("[WorkspaceFS Handler] handle_writeFile: {}", path.display());
+	let environment = runtime.get_environment();
 
-	// Decode base64 content
-	let bytes = base64::decode(content_b64)
-		 // Bad Message code
-		.map_err(|e| create_handler_error_string(format!("Invalid base64 content provided: {}", e), Some("EBADMSG")))?;
+	let fs_reader:Arc<dyn FsReader + Send + Sync> = environment.require();
 
-	let env = runtime.get_environment();
-
-	let fs_writer:Arc<dyn FsWriter + Send + Sync> = env.require();
-
-	// Call FsWriter::write_file, potentially passing create/overwrite options if
-	// supported
-	fs_writer
-		.write_file(&path, bytes /*, create, overwrite */)
+	fs_reader
+		.stat_file(&path)
 		.await
-		 // Return JSON null on success
-		.map(|_| Value::Null)
-		.map_err(map_common_error_to_handler_string)
+		.map(|stat_obj:FileSystemStat| {
+			// Convert the FileSystemStat (from Common) to the JSON Value format
+			// expected by the vscode.workspace.fs API.
+			json!({
+
+				 // CommonFileType enum (u8)
+				"type": stat_obj.file_type,
+
+
+				 // Creation time in milliseconds since UNIX epoch
+				"ctime": stat_obj.ctime,
+
+
+				 // Modification time in milliseconds
+				"mtime": stat_obj.mtime,
+
+
+				 // Size in bytes
+				"size": stat_obj.size,
+
+
+				// `permissions` is optional in vscode.FileStat and CommonFileType.
+				// Only include if Some.
+				"permissions": stat_obj.permissions.map_or(Value::Null, |p| json!(p))
+			})
+		})
+		.map_err(|common_err| error_utils::map_common_error_to_rpc_string(common_err, "vscode.workspace.fs.stat"))
 }
 
-/// Handles `$createDirectory` RPC call.
-/// Args: `[uri: UriComponents]`
-pub async fn handle_create_directory(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
-	let uri_val = params
-		.get(0)
-		.ok_or_else(|| create_handler_error_string("Missing 'uri' parameter".to_string(), Some("EBADARG")))?;
+/// Handles the `workspacefs_readDirectory` RPC call.
+///
+/// Corresponds to `vscode.workspace.fs.readDirectory(uri)`.
+///
+/// # Arguments
+/// * `runtime` - The `AppRuntime`.
+/// * `params` - `[uri: UriComponents]`
+///
+/// # Returns
+/// * `Ok(Value)`: JSON array of `[name: string, type: FileType][]`.
+/// * `Err(String)`: JSON-RPC error string.
+pub async fn handle_workspace_fs_read_directory(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
+	let uri_components_dto = params.get(0).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_readDirectory", "uriComponents DTO", "Value::Object", Some(0))
+	})?;
 
-	// Validates scheme
-	let path = path_from_uri_components(uri_val)?;
+	let path = path_from_uri_components_for_fs_api(uri_components_dto)?;
 
-	log::debug!("[WorkspaceFS Handler] handle_createDirectory: {}", path.display());
+	debug!("[WorkspaceFS Handler] ReadDirectory request for path: {}", path.display());
 
-	let env = runtime.get_environment();
+	let environment = runtime.get_environment();
 
-	let fs_writer:Arc<dyn FsWriter + Send + Sync> = env.require();
+	let fs_reader:Arc<dyn FsReader + Send + Sync> = environment.require();
 
-	fs_writer
-		 // FsWriter::create_directory handles intermediate dirs
-		.create_directory(&path)
+	fs_reader
+		.read_directory(&path)
 		.await
-		.map(|_| Value::Null)
-		.map_err(map_common_error_to_handler_string)
+		.map(|entries_vec| {
+			// Convert Vec<(String, CommonFileType)> to JSON Value array
+			// CommonFileType (u8) directly matches vscode.FileType enum values.
+			json!(entries_vec)
+		})
+		.map_err(|common_err| {
+			error_utils::map_common_error_to_rpc_string(common_err, "vscode.workspace.fs.readDirectory")
+		})
 }
 
-/// Handles `$delete` RPC call.
-/// Args: `[uri: UriComponents, options: { recursive: bool, useTrash: bool }]`
-pub async fn handle_delete(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
-	let uri_val = params
-		.get(0)
-		.ok_or_else(|| create_handler_error_string("Missing 'uri' parameter".to_string(), Some("EBADARG")))?;
+/// Handles the `workspacefs_readFile` RPC call.
+///
+/// Corresponds to `vscode.workspace.fs.readFile(uri)`.
+///
+/// # Arguments
+/// * `runtime` - The `AppRuntime`.
+/// * `params` - `[uri: UriComponents]`
+///
+/// # Returns
+/// * `Ok(Value)`: Base64 encoded string of file content. (Note: VS Code API
+///   returns Uint8Array, shim expects base64 string from native for JSON)
+/// * `Err(String)`: JSON-RPC error string.
+pub async fn handle_workspace_fs_read_file(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
+	let uri_components_dto = params.get(0).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_readFile", "uriComponents DTO", "Value::Object", Some(0))
+	})?;
 
-	// Options object
-	let options_val = params.get(1).cloned().unwrap_or(Value::Null);
+	let path = path_from_uri_components_for_fs_api(uri_components_dto)?;
 
-	let recursive = options_val.get("recursive").and_then(|v| v.as_bool()).unwrap_or(false);
+	debug!("[WorkspaceFS Handler] ReadFile request for path: {}", path.display());
 
-	// TODO: Handle useTrash option if supported by FsWriter::delete
-	let use_trash = options_val.get("useTrash").and_then(|v| v.as_bool()).unwrap_or(false);
+	let environment = runtime.get_environment();
 
-	if use_trash {
-		log::warn!("[WorkspaceFS Handler] 'useTrash' option for delete is not implemented, using permanent delete.");
+	let fs_reader:Arc<dyn FsReader + Send + Sync> = environment.require();
+
+	match fs_reader.read_file(&path).await {
+		Ok(bytes_vec) => {
+			// Encode the byte vector as a base64 string for JSON transport.
+			// The fs-api-shim.js in Cocoon will decode this back to a Uint8Array.
+			let base64_content_str = base64::encode(&bytes_vec);
+
+			// Return as JSON string
+			Ok(json!(base64_content_str))
+		},
+
+		Err(common_err) => {
+			Err(error_utils::map_common_error_to_rpc_string(
+				common_err,
+				"vscode.workspace.fs.readFile",
+			))
+		},
+	}
+}
+
+/// Handles the `workspacefs_writeFile` RPC call.
+///
+/// Corresponds to `vscode.workspace.fs.writeFile(uri, content, options)`.
+///
+/// # Arguments
+/// * `runtime` - The `AppRuntime`.
+/// * `params` - `[uri: UriComponents, content_base64: string, options?: {
+///
+///   create: boolean, overwrite: boolean }]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)`: JSON-RPC error string.
+pub async fn handle_workspace_fs_write_file(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
+	let params_array = params
+		.as_array()
+		.ok_or_else(|| error_utils::rpc_param_error_string("workspacefs_writeFile", "params", "array", None))?;
+
+	let uri_components_dto = params_array.get(0).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_writeFile", "uriComponents DTO", "Value::Object", Some(0))
+	})?;
+
+	let content_base64_str = params_array.get(1).and_then(Value::as_str).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_writeFile", "content_base64", "string", Some(1))
+	})?;
+
+	// Optional options object
+	let options_val = params_array.get(2).cloned().unwrap_or(Value::Null);
+
+	// VS Code API defaults: create=true, overwrite=false for writeFile
+	let create_opt = options_val.get("create").and_then(Value::as_bool).unwrap_or(true);
+
+	let overwrite_opt = options_val.get("overwrite").and_then(Value::as_bool).unwrap_or(false);
+
+	let path = path_from_uri_components_for_fs_api(uri_components_dto)?;
+
+	debug!(
+		"[WorkspaceFS Handler] WriteFile request for path: {}, create={}, overwrite={}",
+		path.display(),
+		create_opt,
+		overwrite_opt
+	);
+
+	// Decode base64 content from string to Vec<u8>.
+	let bytes_to_write = base64::decode(content_base64_str).map_err(|e| {
+		error_utils::rpc_error_string(
+			format!("Invalid base64 content provided for writeFile: {}", e),
+			// Error Bad Message for Base64
+			Some("EBADMSG_BASE64"),
+		)
+	})?;
+
+	let environment = runtime.get_environment();
+
+	let fs_writer:Arc<dyn FsWriter + Send + Sync> = environment.require();
+
+	fs_writer
+		.write_file(&path, bytes_to_write, create_opt, overwrite_opt)
+		.await
+		 // writeFile is void on success
+		.map(|_| Value::Null)
+		.map_err(|common_err| {
+
+			error_utils::map_common_error_to_rpc_string(
+				common_err,
+
+
+				"vscode.workspace.fs.writeFile",
+
+
+			)
+		})
+}
+
+/// Handles the `workspacefs_createDirectory` RPC call.
+///
+/// Corresponds to `vscode.workspace.fs.createDirectory(uri)`. This operation is
+/// recursive by VS Code API definition (creates parent directories if needed).
+///
+/// # Arguments
+/// * `runtime` - The `AppRuntime`.
+/// * `params` - `[uri: UriComponents]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)`: JSON-RPC error string.
+pub async fn handle_workspace_fs_create_directory(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
+	let uri_components_dto = params.get(0).ok_or_else(|| {
+		error_utils::rpc_param_error_string(
+			"workspacefs_createDirectory",
+			"uriComponents DTO",
+			"Value::Object",
+			Some(0),
+		)
+	})?;
+
+	let path = path_from_uri_components_for_fs_api(uri_components_dto)?;
+
+	debug!("[WorkspaceFS Handler] CreateDirectory request for path: {}", path.display());
+
+	let environment = runtime.get_environment();
+
+	let fs_writer:Arc<dyn FsWriter + Send + Sync> = environment.require();
+
+	// `vscode.workspace.fs.createDirectory` is implicitly recursive.
+	fs_writer
+		 // `recursive` is true
+		.create_directory(&path, true)
+		.await
+		 // createDirectory is void on success
+		.map(|_| Value::Null)
+		.map_err(|common_err| {
+
+			error_utils::map_common_error_to_rpc_string(
+				common_err,
+
+
+				"vscode.workspace.fs.createDirectory",
+
+
+			)
+		})
+}
+
+/// Handles the `workspacefs_delete` RPC call.
+///
+/// Corresponds to `vscode.workspace.fs.delete(uri, options)`.
+///
+/// # Arguments
+/// * `runtime` - The `AppRuntime`.
+/// * `params` - `[uri: UriComponents, options?: { recursive: bool, useTrash:
+///   bool }]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)`: JSON-RPC error string.
+pub async fn handle_workspace_fs_delete(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
+	let params_array = params
+		.as_array()
+		.ok_or_else(|| error_utils::rpc_param_error_string("workspacefs_delete", "params", "array", None))?;
+
+	let uri_components_dto = params_array.get(0).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_delete", "uriComponents DTO", "Value::Object", Some(0))
+	})?;
+
+	let options_val = params_array.get(1).cloned().unwrap_or(Value::Null);
+
+	// VS Code API defaults: recursive=false, useTrash=false
+	let recursive_opt = options_val.get("recursive").and_then(Value::as_bool).unwrap_or(false);
+
+	let use_trash_opt = options_val.get("useTrash").and_then(Value::as_bool).unwrap_or(false);
+
+	let path = path_from_uri_components_for_fs_api(uri_components_dto)?;
+
+	debug!(
+		"[WorkspaceFS Handler] Delete request for path: {}, recursive={}, useTrash={}",
+		path.display(),
+		recursive_opt,
+		use_trash_opt
+	);
+
+	if use_trash_opt {
+		// Log if useTrash is requested but not implemented, then proceed with permanent
+		// delete.
+		warn!(
+			"[WorkspaceFS Handler] 'useTrash=true' option for delete is requested but not fully implemented in MVP. \
+			 Performing permanent delete."
+		);
+
+		// TODO: Implement `useTrash` functionality using a crate like `trash`
+		// if desired.       If `useTrash` is critical and not implemented,
+
+		// consider returning an error:       return
+		// Err(error_utils::rpc_error_string("useTrash option not
+		// implemented".to_string(), Some("ENOTSUP_TRASH")));
 	}
 
-	// Validates scheme
-	let path = path_from_uri_components(uri_val)?;
+	let environment = runtime.get_environment();
 
-	log::debug!(
-		"[WorkspaceFS Handler] handle_delete: {} (recursive={})",
-		path.display(),
-		recursive
-	);
-
-	let env = runtime.get_environment();
-
-	let fs_writer:Arc<dyn FsWriter + Send + Sync> = env.require();
+	let fs_writer:Arc<dyn FsWriter + Send + Sync> = environment.require();
 
 	fs_writer
-		 // Pass options if FsWriter supports them
-		.delete(&path, recursive /*, use_trash */)
+		 // Pass use_trash for future impl
+		.delete(&path, recursive_opt, use_trash_opt)
 		.await
+		 // delete is void on success
 		.map(|_| Value::Null)
-		.map_err(map_common_error_to_handler_string)
+		.map_err(|common_err| {
+
+			error_utils::map_common_error_to_rpc_string(common_err, "vscode.workspace.fs.delete")
+		})
 }
 
-/// Handles `$rename` RPC call (move).
-/// Args: `[sourceUri: UriComponents, targetUri: UriComponents, options: {
+/// Handles the `workspacefs_rename` RPC call (move operation).
 ///
+/// Corresponds to `vscode.workspace.fs.rename(sourceUri, targetUri, options)`.
 ///
-/// overwrite: bool }]`
-pub async fn handle_rename(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
-	let source_uri_val = params
-		.get(0)
-		.ok_or_else(|| create_handler_error_string("Missing 'source' uri parameter".to_string(), Some("EBADARG")))?;
+/// # Arguments
+/// * `runtime` - The `AppRuntime`.
+/// * `params` - `[sourceUri: UriComponents, targetUri: UriComponents, options?:
+///   { overwrite: bool }]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)`: JSON-RPC error string.
+pub async fn handle_workspace_fs_rename(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
+	let params_array = params
+		.as_array()
+		.ok_or_else(|| error_utils::rpc_param_error_string("workspacefs_rename", "params", "array", None))?;
 
-	let target_uri_val = params
-		.get(1)
-		.ok_or_else(|| create_handler_error_string("Missing 'target' uri parameter".to_string(), Some("EBADARG")))?;
+	let source_uri_dto = params_array.get(0).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_rename", "sourceUri DTO", "Value::Object", Some(0))
+	})?;
 
-	// Options object
-	let options_val = params.get(2).cloned().unwrap_or(Value::Null);
+	let target_uri_dto = params_array.get(1).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_rename", "targetUri DTO", "Value::Object", Some(1))
+	})?;
 
-	let overwrite = options_val.get("overwrite").and_then(|v| v.as_bool()).unwrap_or(false);
+	let options_val = params_array.get(2).cloned().unwrap_or(Value::Null);
 
-	// Validates scheme
-	let source_path = path_from_uri_components(source_uri_val)?;
+	// VS Code API default: overwrite=false
+	let overwrite_opt = options_val.get("overwrite").and_then(Value::as_bool).unwrap_or(false);
 
-	// Validates scheme
-	let target_path = path_from_uri_components(target_uri_val)?;
+	let source_path = path_from_uri_components_for_fs_api(source_uri_dto)?;
 
-	log::debug!(
-		"[WorkspaceFS Handler] handle_rename: {} -> {} (overwrite={})",
+	let target_path = path_from_uri_components_for_fs_api(target_uri_dto)?;
+
+	debug!(
+		"[WorkspaceFS Handler] Rename request: {} -> {} (overwrite={})",
 		source_path.display(),
 		target_path.display(),
-		overwrite
+		overwrite_opt
 	);
 
-	let env = runtime.get_environment();
+	let environment = runtime.get_environment();
 
-	let fs_writer:Arc<dyn FsWriter + Send + Sync> = env.require();
+	let fs_writer:Arc<dyn FsWriter + Send + Sync> = environment.require();
 
 	fs_writer
-		.rename(&source_path, &target_path, overwrite)
+		.rename(&source_path, &target_path, overwrite_opt)
 		.await
+		 // rename is void on success
 		.map(|_| Value::Null)
-		.map_err(map_common_error_to_handler_string)
+		.map_err(|common_err| {
+
+			error_utils::map_common_error_to_rpc_string(common_err, "vscode.workspace.fs.rename")
+		})
 }
 
-/// Handles `$copy` RPC call.
-/// Args: `[sourceUri: UriComponents, targetUri: UriComponents, options: {
+/// Handles the `workspacefs_copy` RPC call.
 ///
+/// Corresponds to `vscode.workspace.fs.copy(sourceUri, targetUri, options)`.
 ///
-/// overwrite: bool }]`
-pub async fn handle_copy(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
-	let source_uri_val = params
-		.get(0)
-		.ok_or_else(|| create_handler_error_string("Missing 'source' uri parameter".to_string(), Some("EBADARG")))?;
+/// # Arguments
+/// * `runtime` - The `AppRuntime`.
+/// * `params` - `[sourceUri: UriComponents, targetUri: UriComponents, options?:
+///   { overwrite: bool }]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)`: JSON-RPC error string.
+pub async fn handle_workspace_fs_copy(runtime:Arc<AppRuntime>, params:Value) -> Result<Value, String> {
+	let params_array = params
+		.as_array()
+		.ok_or_else(|| error_utils::rpc_param_error_string("workspacefs_copy", "params", "array", None))?;
 
-	let target_uri_val = params
-		.get(1)
-		.ok_or_else(|| create_handler_error_string("Missing 'target' uri parameter".to_string(), Some("EBADARG")))?;
+	let source_uri_dto = params_array.get(0).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_copy", "sourceUri DTO", "Value::Object", Some(0))
+	})?;
 
-	// Options object
-	let options_val = params.get(2).cloned().unwrap_or(Value::Null);
+	let target_uri_dto = params_array.get(1).ok_or_else(|| {
+		error_utils::rpc_param_error_string("workspacefs_copy", "targetUri DTO", "Value::Object", Some(1))
+	})?;
 
-	let overwrite = options_val.get("overwrite").and_then(|v| v.as_bool()).unwrap_or(false);
+	let options_val = params_array.get(2).cloned().unwrap_or(Value::Null);
 
-	// Validates scheme
-	let source_path = path_from_uri_components(source_uri_val)?;
+	// VS Code API default: overwrite=false
+	let overwrite_opt = options_val.get("overwrite").and_then(Value::as_bool).unwrap_or(false);
 
-	// Validates scheme
-	let target_path = path_from_uri_components(target_uri_val)?;
+	let source_path = path_from_uri_components_for_fs_api(source_uri_dto)?;
 
-	log::debug!(
-		"[WorkspaceFS Handler] handle_copy: {} -> {} (overwrite={})",
+	let target_path = path_from_uri_components_for_fs_api(target_uri_dto)?;
+
+	debug!(
+		"[WorkspaceFS Handler] Copy request: {} -> {} (overwrite={})",
 		source_path.display(),
 		target_path.display(),
-		overwrite
+		overwrite_opt
 	);
 
-	let env = runtime.get_environment();
+	let environment = runtime.get_environment();
 
-	// Copy requires both read and write capabilities potentially
-	let fs_writer:Arc<dyn FsWriter + Send + Sync> = env.require();
+	// Copy operation might require both read (from source) and write (to target)
+	// capabilities. The FsWriter trait is expected to handle this.
+	let fs_writer:Arc<dyn FsWriter + Send + Sync> = environment.require();
 
-	// FsWriter::copy should handle recursive copy if source is directory
+	// `FsWriter::copy` should handle recursive copy if the source is a directory.
 	fs_writer
-		.copy(&source_path, &target_path, overwrite)
+		.copy(&source_path, &target_path, overwrite_opt)
 		.await
+		 // copy is void on success
 		.map(|_| Value::Null)
-		.map_err(map_common_error_to_handler_string)
+		.map_err(|common_err| {
+
+			error_utils::map_common_error_to_rpc_string(common_err, "vscode.workspace.fs.copy")
+		})
 }
