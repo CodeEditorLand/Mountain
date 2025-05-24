@@ -28,4 +28,6 @@ pub mod handlers {
 	pub mod output;
 
 	pub mod process_mgmt;
+
+	pub mod protocol;
 }
