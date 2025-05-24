@@ -18,4 +18,6 @@ pub mod handlers {
 	pub mod config;
 
 	pub mod diagnostics;
+
+	pub mod documents;
 }

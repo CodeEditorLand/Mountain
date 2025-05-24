@@ -4,32 +4,25 @@
 // Handles RPC requests from Cocoon related to opening, creating, and saving
 // documents, primarily by delegating the core logic to the DocumentProvider
 // effect system. It also provides helper functions to notify Cocoon (via Vine)
-// about document state changes initiated within Mountain (e.g., by effects, UI
-// actions).
+// about document state changes initiated within Mountain.
 //
 // Responsibilities:
-// - Handling `$tryOpenDocument`, `$tryCreateDocument`, `$trySaveDocument`,
-//   `$trySaveDocumentAs`, `$saveAll` RPC calls by creating and dispatching
-//   corresponding `documents_effects` via the `AppRuntime`.
-// - Providing notification helper functions (`notify_model_added`,
-//   `notify_model_changed`, `notify_model_saved`, `notify_dirty_state_changed`,
-//   `notify_model_removed`, `notify_language_changed`,
-//   `notify_encoding_changed`) to be called by Mountain's internal logic
-//   (effects, UI handlers) to send `$accept...` notifications to Cocoon via
-//   Vine. These notifications carry DTOs compliant with extHost.protocol.ts.
+// - Handling document RPC calls by creating and dispatching
+//   `documents_effects`.
+// - Providing notification helpers to send `$accept...` notifications to
+//   Cocoon.
 //
 // Key Interactions:
-// - RPC handlers are called by `track::dispatch_sidecar_request`.
-// - RPC handlers use `documents_effects` and `AppRuntime` to perform document
-//   operations.
-// - Notification helpers use `vine::send_notification_to_sidecar` extensively
-//   to keep Cocoon's document shims synchronized.
+// - RPC handlers called by `track.rs` or `rpc.rs`.
+// - Uses `documents_effects` and `AppRuntime`.
+// - Notification helpers use `vine::send_notification_to_sidecar`.
 // --------------------------------------------------------------------------------------------
 
 use std::{path::PathBuf, sync::Arc};
 
-// Import effects
 use Land_Common::documents_effects;
+// For error mapping
+use Land_Common::errors::CommonError;
 use log::{debug, error, info, trace, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime, State};
@@ -37,58 +30,80 @@ use url::Url;
 
 use crate::{
 	app_state::{AppState, DocumentState},
+
+	// Use shared error utilities
+	handlers::error_utils,
+
 	runtime::AppRuntime,
+
 	vine,
 };
 
 // --- Helper: URI Parsing from Value ---
-fn parse_uri_from_components_param(param_val:&Value, method_name:&str) -> Result<Url, String> {
+fn parse_uri_from_components_param(
+	param_val:&Value,
+
+	method_name:&str,
+
+	arg_name:&str,
+
+	arg_idx:Option<usize>,
+) -> Result<Url, String> {
+	// Fallback to path if external is missing
 	let uri_str = param_val
 		.get("external")
 		.and_then(Value::as_str)
 		.or_else(|| {
 			param_val.get("path").and_then(Value::as_str).map(|p_str| {
+				// If path is absolute, try to form file URL
+
 				if PathBuf::from(p_str).is_absolute() {
 					Url::from_file_path(p_str)
 						.map(|u| u.to_string())
 						.unwrap_or_else(|_| p_str.to_string())
+				// Otherwise, assume it's a scheme or opaque URI string
 				} else {
 					p_str.to_string()
 				}
 			})
 		})
 		.ok_or_else(|| {
-			format!(
-				"Missing or invalid URI components in {}: 'external' or 'path' string expected.",
-				method_name
-			)
+			error_utils::rpc_param_error_string(method_name, arg_name, "UriComponents ({external} or {path})", arg_idx)
 		})?;
 
-	Url::parse(uri_str).map_err(|e| format!("Failed to parse URI '{}' in {}: {}", uri_str, method_name, e))
+	Url::parse(uri_str).map_err(|e| {
+		error_utils::rpc_error_string(
+			format!("Failed to parse URI '{}' in {}: {}", uri_str, method_name, e),
+			Some("EBADURI"),
+		)
+	})
 }
 
-// --- Helper: lines and EOL from text ---
+// --- Helper: lines and EOL from text (public for app_state if needed there
+// too) ---
 /// Utility to split text into lines and detect its EOL sequence.
-/// This was previously in `app_state.rs` but is a general text utility.
 pub fn lines_and_eol_from_text(text:&str) -> (Vec<String>, String) {
 	// Default to LF
 	let mut detected_eol = "\n";
 
 	if text.contains("\r\n") {
 		detected_eol = "\r\n";
+
+	// Check after \r\n
 	} else if text.contains('\n') {
 		detected_eol = "\n";
+
+	// Check for lone \r only if others are not present
 	} else if text.contains('\r') {
 		// For lone \r, standardizing to \n for internal consistency and splitting.
+
 		// VS Code model normalizes EOLs on load.
+
 		detected_eol = "\n";
 	}
 
-	// If text only contains \r, splitting by \n results in a single line.
-	// If the intent is to split by \r as well, then
-	// `text.lines().map(String::from).collect()` might be more robust, but then
-	// `detected_eol` logic needs refinement. Sticking with explicit EOL detection
-	// for now.
+	// Splitting by the detected EOL.
+
 	let lines = text.split(detected_eol).map(String::from).collect();
 
 	(lines, detected_eol.to_string())
@@ -99,10 +114,10 @@ pub fn lines_and_eol_from_text(text:&str) -> (Vec<String>, String) {
 pub async fn handle_try_open_document<R:Runtime>(app_handle:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let uri_components = args
 		.get(0)
-		.ok_or_else(|| "Missing URI components argument for $tryOpenDocument".to_string())?;
+		.ok_or_else(|| error_utils::rpc_param_error_string("$tryOpenDocument", "uriComponents", "Value", Some(0)))?;
 
 	info!(
-		"[DocHandler] RPC $tryOpenDocument: URI (external)='{:?}'",
+		"[DocHandler] RPC $tryOpenDocument: URI(external)='{:?}'",
 		uri_components.get("external")
 	);
 
@@ -113,18 +128,21 @@ pub async fn handle_try_open_document<R:Runtime>(app_handle:AppHandle<R>, args:V
 	// The effect expects UriComponents, optional languageId, optional content
 	let effect = documents_effects::try_open(uri_components.clone(), None, None);
 
-	runtime_state.run(effect).await
-		 // Ensure $mid for UriComponents
-		.map(|url| json!({ "scheme": url.scheme(), "path": url.path(), "external": url.to_string(), "$mid": 1 }))
+	runtime_state
+		.run(effect)
+		.await
+		.map(|url| json!({ "$mid": 1, "scheme": url.scheme(), "path": url.path(), "external": url.to_string() }))
 		.map_err(|e| {
+			let op_context = format!("try_open_document for {:?}", uri_components.get("external"));
 
-			error!("[DocHandler] Failed executing try_open effect for {:?}: {}", uri_components.get("external"), e);
+			error!("[DocHandler] Effect error for {}: {}", op_context, e);
 
-			e.to_string()
+			error_utils::map_common_error_to_rpc_string(e, &op_context)
 		})
 }
 
 pub async fn handle_try_create_document<R:Runtime>(app_handle:AppHandle<R>, args:Value) -> Result<Value, String> {
+	// Options are optional, clone if present
 	let options_val = args.get(0).cloned();
 
 	info!("[DocHandler] RPC $tryCreateDocument: Options='{:?}'", options_val);
@@ -150,55 +168,70 @@ pub async fn handle_try_create_document<R:Runtime>(app_handle:AppHandle<R>, args
 	runtime_state
 		.run(effect)
 		.await
-		.map(|url| json!({ "scheme": url.scheme(), "path": url.path(), "external": url.to_string(), "$mid": 1 }))
+		.map(|url| json!({ "$mid": 1, "scheme": url.scheme(), "path": url.path(), "external": url.to_string() }))
 		.map_err(|e| {
-			error!("[DocHandler] Failed executing try_create (via try_open untitled) effect: {}", e);
+			let op_context = "try_create_document";
 
-			e.to_string()
+			error!("[DocHandler] Effect error for {}: {}", op_context, e);
+
+			error_utils::map_common_error_to_rpc_string(e, op_context)
 		})
 }
 
 pub async fn handle_try_save_document<R:Runtime>(
 	app_handle:AppHandle<R>,
 
-	uri_components:Value,
+	uri_components_val:Value,
 ) -> Result<Value, String> {
 	info!(
-		"[DocHandler] RPC $trySaveDocument: URI (external)='{:?}'",
-		uri_components.get("external")
+		"[DocHandler] RPC $trySaveDocument: URI(external)='{:?}'",
+		uri_components_val.get("external")
 	);
 
-	trace!("[DocHandler] $trySaveDocument full URI components: {:?}", uri_components);
+	trace!(
+		"[DocHandler]
+$trySaveDocument full URI components: {:?}",
+		uri_components_val
+	);
 
-	let uri = parse_uri_from_components_param(&uri_components, "$trySaveDocument")?;
+	let uri = parse_uri_from_components_param(&uri_components_val, "$trySaveDocument", "uriComponents", Some(0))?;
 
 	let runtime_state = app_handle.state::<Arc<AppRuntime>>();
 
 	let effect = documents_effects::try_save(uri.clone());
 
-	runtime_state.run(effect).await.map(|success| json!(success)).map_err(|e| {
-		error!("[DocHandler] Failed executing try_save effect for {}: {}", uri, e);
+	// Converts bool to Value::Bool
+	// CORRECTED: Use closure to call json! macro
+	runtime_state.run(effect).await.map(|val| json!(val)).map_err(|e| {
+		let op_context = format!("try_save_document for {}", uri);
 
-		e.to_string()
+		error!("[DocHandler] Effect error for {}: {}", op_context, e);
+
+		error_utils::map_common_error_to_rpc_string(e, &op_context)
 	})
 }
 
 pub async fn handle_try_save_document_as<R:Runtime>(
 	app_handle:AppHandle<R>,
 
-	uri_components:Value,
+	uri_components_val:Value,
 ) -> Result<Value, String> {
 	info!(
-		"[DocHandler] RPC $trySaveDocumentAs: Original URI (external)='{:?}'",
-		uri_components.get("external")
+		"[DocHandler] RPC $trySaveDocumentAs: Original URI(external)='{:?}'",
+		uri_components_val.get("external")
 	);
 
 	trace!(
 		"[DocHandler] $trySaveDocumentAs full original URI components: {:?}",
-		uri_components
+		uri_components_val
 	);
 
-	let original_uri = parse_uri_from_components_param(&uri_components, "$trySaveDocumentAs (original URI)")?;
+	let original_uri = parse_uri_from_components_param(
+		&uri_components_val,
+		"$trySaveDocumentAs (original URI)",
+		"uriComponents",
+		Some(0),
+	)?;
 
 	let runtime_state = app_handle.state::<Arc<AppRuntime>>();
 
@@ -210,15 +243,18 @@ pub async fn handle_try_save_document_as<R:Runtime>(
 		.run(effect)
 		.await
 		.map(|new_uri_opt| {
-			new_uri_opt.map_or(Value::Null, |new_uri| {
-				// Return null if user cancelled save as dialog
-				json!({ "scheme": new_uri.scheme(), "path": new_uri.path(), "external": new_uri.to_string(), "$mid": 1 })
-			})
+			// Return null if user cancelled save as dialog
+			new_uri_opt.map_or(
+				Value::Null,
+				|new_uri| json!({ "$mid": 1, "scheme": new_uri.scheme(), "path": new_uri.path(), "external": new_uri.to_string() }),
+			)
 		})
 		.map_err(|e| {
-			error!("[DocHandler] Failed executing try_save_as effect for {}: {}", original_uri, e);
+			let op_context = format!("try_save_document_as for {}", original_uri);
 
-			e.to_string()
+			error!("[DocHandler] Effect error for {}: {}", op_context, e);
+
+			error_utils::map_common_error_to_rpc_string(e, &op_context)
 		})
 }
 
@@ -229,15 +265,16 @@ pub async fn handle_save_all<R:Runtime>(app_handle:AppHandle<R>, include_untitle
 
 	let effect = documents_effects::save_all(include_untitled);
 
-	runtime_state.run(effect).await
-		 // save_all effect returns Vec<bool>
-		.map(|success_bool_array| json!(success_bool_array))
-		.map_err(|e| {
+	// Converts Vec<bool> to Value::Array
+	// CORRECTED: Use closure to call json! macro
 
-			error!("[DocHandler] Failed executing save_all effect: {}", e);
+	runtime_state.run(effect).await.map(|val| json!(val)).map_err(|e| {
+		let op_context = "save_all";
 
-			e.to_string()
-		})
+		error!("[DocHandler] Effect error for {}: {}", op_context, e);
+
+		error_utils::map_common_error_to_rpc_string(e, op_context)
+	})
 }
 
 // --- Notification Helpers (Called by Mountain logic/effects) ---
@@ -247,22 +284,12 @@ pub async fn notify_model_added<R:Runtime>(app_handle:AppHandle<R>, doc_state:&D
 
 	trace!("[DocNotify] $acceptModelAdded state: {:?}", doc_state);
 
-	let uri_components = json!({
-
-		"scheme": doc_state.uri.scheme(),
-
-		"path": doc_state.uri.path(),
-
-		"external": doc_state.uri.to_string(),
-
-		 // Important for VS Code URI identification
-		"$mid": 1
-	});
+	let uri_components = json!({ "$mid": 1, "scheme": doc_state.uri.scheme(), "path": doc_state.uri.path(), "external": doc_state.uri.to_string() });
 
 	// Protocol: $acceptModelAdded(uri: UriComponents, eol: string, versionId:
 	// number, lines: string[], languageId: string, isDirty: boolean, encoding:
-	// string); (Based on Node `ExtHostDocumentsShape.$acceptModelAdded` which has
-	// 7 args)
+	// string);
+
 	let payload = json!([
 		uri_components,
 		doc_state.eol,
@@ -270,7 +297,6 @@ pub async fn notify_model_added<R:Runtime>(app_handle:AppHandle<R>, doc_state:&D
 		doc_state.lines,
 		doc_state.language_id,
 		doc_state.is_dirty,
-		// Add encoding as per common practice
 		doc_state.encoding,
 	]);
 
@@ -305,28 +331,21 @@ pub async fn notify_model_changed<R:Runtime>(
 		actual_changes_dto, doc_is_dirty, is_undoing, is_redoing
 	);
 
-	let uri_components = json!({
-
-		"scheme": doc_uri.scheme(),
-
-		"path": doc_uri.path(),
-
-		"external": doc_uri.to_string(),
-
-		"$mid": 1
-	});
+	let uri_components =
+		json!({ "$mid": 1, "scheme": doc_uri.scheme(), "path": doc_uri.path(), "external": doc_uri.to_string() });
 
 	let event_data_dto = json!({
 
-		"versionId": doc_version,
 
-		"changes": actual_changes_dto,
+	"versionId": doc_version,
 
-		"eol": doc_eol,
+	"changes": actual_changes_dto,
 
-		"isUndoing": is_undoing,
+	"eol": doc_eol,
 
-		"isRedoing": is_redoing,
+	"isUndoing": is_undoing,
+
+	"isRedoing": is_redoing,
 
 	});
 
@@ -338,19 +357,10 @@ pub async fn notify_model_changed<R:Runtime>(
 	}
 }
 
-pub async fn notify_model_saved<R:Runtime>(app_handle:AppHandle<R>, uri:&Url) {
+pub async fn notify_model_saved<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url) {
 	info!("[DocNotify] Sending $acceptModelSaved for: {}", uri);
 
-	let uri_components = json!({
-
-		"scheme": uri.scheme(),
-
-		"path": uri.path(),
-
-		"external": uri.to_string(),
-
-		"$mid": 1
-	});
+	let uri_components = json!({ "$mid": 1, "scheme": uri.scheme(), "path": uri.path(), "external": uri.to_string() });
 
 	let payload = json!(uri_components);
 
@@ -358,31 +368,20 @@ pub async fn notify_model_saved<R:Runtime>(app_handle:AppHandle<R>, uri:&Url) {
 		error!("[DocNotify] Failed to send $acceptModelSaved for {}: {}", uri, e);
 	}
 
-	// The save effect in environment.rs should handle AppState.is_dirty update.
-	// This notification only signals the save event to Cocoon.
-	// Cocoon's $acceptModelSaved might also imply isDirty=false on its side.
-	// If explicit dirty state sync is needed post-save (e.g. if save effect
-	// didn't make it clean due to concurrent changes), an additional
-	// notify_dirty_state_changed could be sent by the effect. Snippet 1 had:
-	// notify_dirty_state_changed(app_handle, uri.clone(), false).await;
+	// Note: The responsibility to also send `notify_dirty_state_changed(...,
 
-	// This is now managed by the save effect in environment.rs which has full
-	// context.
+	// false)`
+
+	// after a successful save is now handled by the
+	// `DocumentProvider::save_document`
+
+	// effect implementation in `environment.rs`, which has the full context.
 }
 
 pub async fn notify_dirty_state_changed<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url, is_dirty:bool) {
 	info!("[DocNotify] Sending $acceptDirtyStateChanged ({}) for: {}", is_dirty, uri);
 
-	let uri_components = json!({
-
-		"scheme": uri.scheme(),
-
-		"path": uri.path(),
-
-		"external": uri.to_string(),
-
-		"$mid": 1
-	});
+	let uri_components = json!({ "$mid": 1, "scheme": uri.scheme(), "path": uri.path(), "external": uri.to_string() });
 
 	let payload = json!([uri_components, is_dirty]);
 
@@ -396,16 +395,7 @@ pub async fn notify_dirty_state_changed<R:Runtime>(_app_handle:AppHandle<R>, uri
 pub async fn notify_model_removed<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url) {
 	info!("[DocNotify] Sending $acceptModelRemoved for: {}", uri);
 
-	let uri_components = json!({
-
-		"scheme": uri.scheme(),
-
-		"path": uri.path(),
-
-		"external": uri.to_string(),
-
-		"$mid": 1
-	});
+	let uri_components = json!({ "$mid": 1, "scheme": uri.scheme(), "path": uri.path(), "external": uri.to_string() });
 
 	let payload = json!(uri_components);
 
@@ -421,16 +411,7 @@ pub async fn notify_language_changed<R:Runtime>(_app_handle:AppHandle<R>, uri:&U
 		language_id, uri
 	);
 
-	let uri_components = json!({
-
-		"scheme": uri.scheme(),
-
-		"path": uri.path(),
-
-		"external": uri.to_string(),
-
-		"$mid": 1
-	});
+	let uri_components = json!({ "$mid": 1, "scheme": uri.scheme(), "path": uri.path(), "external": uri.to_string() });
 
 	let payload = json!([uri_components, language_id]);
 
@@ -444,16 +425,7 @@ pub async fn notify_language_changed<R:Runtime>(_app_handle:AppHandle<R>, uri:&U
 pub async fn notify_encoding_changed<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url, encoding:String) {
 	info!("[DocNotify] Sending $acceptEncodingChanged ('{}') for: {}", encoding, uri);
 
-	let uri_components = json!({
-
-		"scheme": uri.scheme(),
-
-		"path": uri.path(),
-
-		"external": uri.to_string(),
-
-		"$mid": 1
-	});
+	let uri_components = json!({ "$mid": 1, "scheme": uri.scheme(), "path": uri.path(), "external": uri.to_string() });
 
 	let payload = json!([uri_components, encoding]);
 
