@@ -14,5 +14,8 @@ pub mod environment;
 
 pub mod handlers {
 	pub mod commands;
+
 	pub mod config;
+
+	pub mod diagnostics;
 }
