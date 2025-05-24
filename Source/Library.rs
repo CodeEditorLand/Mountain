@@ -30,4 +30,6 @@ pub mod handlers {
 	pub mod process_mgmt;
 
 	pub mod protocol;
+
+	pub mod proxy;
 }
