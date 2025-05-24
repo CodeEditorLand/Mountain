@@ -34,7 +34,6 @@
 // --------------------------------------------------------------------------------------------
 
 use std::{
-	// For UiProvider QuickPick response
 	collections::HashMap,
 
 	ffi::OsStr,
@@ -325,7 +324,7 @@ fn map_io_error_to_common(e:std::io::Error, path:PathBuf, operation:&'static str
 
 				"stat" => CommonError::FsStat(path, e.to_string()),
 
-				"readdir" => CommonError::FsReadDir(path, e.to_string()),
+				"readdir" | "readdir_next" => CommonError::FsReadDir(path, e.to_string()),
 
 				"mkdir" | "mkdir_parent" | "mkdir_all" | "mkdir_parent_rename" | "mkdir_parent_copy" => {
 					CommonError::FsMkdir(path, e.to_string())
@@ -477,7 +476,7 @@ impl FsReader for MountainEnvironment {
 
 					size:metadata.len(),
 
-					// TODO: Populate permissions if needed
+					// TODO: Populate permissions if needed by VS Code extensions
 					permissions:None,
 				})
 			},
@@ -619,6 +618,8 @@ impl FsWriter for MountainEnvironment {
 
 		if use_trash {
 			warn!("[Env FsWriter] 'useTrash' option for delete is not yet implemented, using permanent delete.");
+
+			// TODO: Implement trash functionality using libraries like `trash`.
 		}
 
 		match fs::metadata(path).await {
@@ -770,7 +771,6 @@ impl StorageProvider for MountainEnvironment {
 
 		let app_state = self.get_app_state();
 
-		// Assuming handlers::storage::get_storage_map_and_path exists and is preferred
 		let (storage_mutex, _path_opt) =
 			handlers::storage::get_storage_map_and_path(&app_state, if scope_is_global { 1 } else { 0 })
 				.map_err(|e_str| CommonError::StateLock(e_str))?;
@@ -815,7 +815,6 @@ impl StorageProvider for MountainEnvironment {
 			let mut storage_guard = storage_mutex.lock().map_err(map_lock_error)?;
 
 			if let Some(val_to_set) = value {
-				// Clone key for insertion if needed later
 				storage_guard.insert(key.clone(), val_to_set);
 			} else {
 				storage_guard.remove(&key);
@@ -1014,7 +1013,9 @@ impl ConfigInspector for MountainEnvironment {
 
 		warn!("[Env ConfigInspector] inspect_configuration_value is STUBBED for MVP. Returning None.");
 
-		// TODO: Implement full inspection logic
+		// TODO: Implement full inspection logic by checking values in User, Workspace,
+
+		// Folder settings files.
 		Ok(None)
 	}
 }
@@ -1250,7 +1251,6 @@ impl DocumentProvider for MountainEnvironment {
 			None => {
 				let ui_provider:Arc<dyn UiProvider + Send + Sync> = self.require();
 
-				// Add $mid for UriComponents
 				let save_opts_val = json!({ "defaultUri": { "scheme": original_uri.scheme(), "path": original_uri.path(), "external": original_uri.to_string(), "$mid": 1 }});
 
 				let save_dialog_options:Option<SaveDialogOptions> = serde_json::from_value(save_opts_val)
@@ -1306,7 +1306,6 @@ impl DocumentProvider for MountainEnvironment {
 
 		fs_writer
 			.write_file(&new_path, original_doc_content.clone().into_bytes(), true, true)
-			 // Clone content for re-use
 			.await?;
 
 		let mut open_docs_guard = state.open_documents.lock().map_err(map_lock_error)?;
@@ -1374,12 +1373,9 @@ impl DocumentProvider for MountainEnvironment {
 		is_redoing:bool,
 	) -> Result<(), CommonError> {
 		info!(
-			"[Env DocumentProvider] Applying {} changes for {} (Server V{} -> Client V{}), dirty: {}, undo: {}, redo: \
-			 {}",
+			"[Env DocumentProvider] Applying {} changes for {} (Client V{}), dirty: {}, undo: {}, redo: {}",
 			changes_dto_val.as_array().map_or(0, |a| a.len()),
 			uri,
-			// old_version placeholder
-			"?",
 			version_id,
 			is_dirty,
 			is_undoing,
@@ -1795,6 +1791,8 @@ impl WorkspaceProvider for MountainEnvironment {
 
 		warn!("[Env WorkspaceProvider] requestWorkspaceTrust is STUBBED to return current trust state.");
 
+		// TODO: Implement actual trust request flow (e.g., show dialog, update
+		// AppState)
 		Ok(self.get_app_state().is_trusted.load(std::sync::atomic::Ordering::Relaxed))
 	}
 
@@ -1816,7 +1814,14 @@ impl WorkspaceProvider for MountainEnvironment {
 			include, exclude
 		);
 
-		let params = json!([include, exclude.unwrap_or(Value::Null), { "maxResults": max_results, "useIgnoreFiles": use_ignore_files, "followSymlinks": follow_symlinks }]);
+		let params = json!([
+			include,
+
+			exclude.unwrap_or(Value::Null),
+
+			{ "maxResults": max_results, "useIgnoreFiles": use_ignore_files, "followSymlinks": follow_symlinks }
+
+		]);
 
 		handlers::workspace::handle_find_files(self.app_handle.clone(), params)
 			.await
@@ -1847,17 +1852,14 @@ impl Requires<Arc<dyn WorkspaceProvider + Send + Sync>> for MountainEnvironment 
 	fn require(&self) -> Arc<dyn WorkspaceProvider + Send + Sync> { Arc::new(self.clone()) }
 }
 
-// Helper struct for UiProvider requests to Sky
-#[derive(Serialize)]
-struct UiRequest<T:Serialize> {
+// Helper struct for UiProvider requests to Sky (payload for Tauri event)
+#[derive(Serialize, Clone)]
+struct UiRequestToSky<T:Serialize + Clone> {
 	request_id:String,
 
+	// Payload specific to the UI request type, matching what Sky expects
 	payload:T,
 }
-
-// TODO: Define response DTOs for each UI interaction if Sky is to send
-// structured data back. E.g., #[derive(Deserialize)] struct OpenDialogResponse
-// { request_id: String, paths: Option<Vec<String>> }
 
 #[async_trait]
 impl UiProvider for MountainEnvironment {
@@ -1885,25 +1887,102 @@ impl UiProvider for MountainEnvironment {
 			options
 		);
 
-		let title = options
-			.as_ref()
-			.and_then(|o| o.title.as_ref())
-			.map_or_else(|| format!("Land Editor - {}", severity_str.to_uppercase()), |t| t.clone());
-
 		let window = self
 			.app_handle
 			.get_window("main")
 			.ok_or_else(|| CommonError::UiInteraction("Main window not found for show_message".to_string()))?;
 
-		let msg_clone = message.clone();
+		// If options contain items (buttons), it would need the sky:// event flow.
+		// For simple messages without buttons/return value, we can use Tauri's blocking
+		// dialog on a separate thread.
+		if options
+			.as_ref()
+			.map_or(true, |o| o.items.is_empty() && !o.modal.unwrap_or(false))
+		{
+			let title = options
+				.as_ref()
+				.and_then(|o| o.title.as_ref())
+				.map_or_else(|| format!("Land Editor - {}", severity_str.to_uppercase()), |t| t.clone());
 
-		tokio::task::spawn_blocking(move || {
-			tauri::api::dialog::message(Some(&window), title, msg_clone);
-		})
-		.await
-		.map_err(|e| CommonError::UiInteraction(format!("Failed to spawn blocking task for dialog: {}", e)))?;
+			let msg_clone = message.clone();
 
-		Ok(None)
+			tokio::task::spawn_blocking(move || {
+				tauri::api::dialog::message(Some(&window), title, msg_clone);
+			})
+			.await
+			.map_err(|e| CommonError::UiInteraction(format!("Failed to spawn blocking task for dialog: {}", e)))?;
+
+			Ok(None)
+		} else {
+			// Full flow for messages with buttons or modal messages that need a response
+			let request_id = Uuid::new_v4().to_string();
+
+			let (tx, rx) = oneshot::channel();
+
+			{
+				let app_state = self.get_app_state();
+
+				let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
+
+				pending_guard.insert(request_id.clone(), tx);
+			}
+
+			// Construct a payload Sky understands for showMessage
+			let payload_data = json!({
+
+				"severity": severity_str,
+
+				"message": message,
+
+				"options": options
+			});
+
+			let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:payload_data };
+
+			self.app_handle
+				.emit_all("sky://ui/show-message-request", event_payload)
+				.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_message request: {}", e)))?;
+
+			let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
+				// 5 min timeout
+				Ok(Ok(Ok(value_from_sky))) => {
+					// Assuming Sky sends back the selected item's string label or null if dismissed
+					if value_from_sky.is_null() {
+						Ok(None)
+					} else if let Some(selected_item_str) = value_from_sky.as_str() {
+						Ok(Some(selected_item_str.to_string()))
+					} else {
+						Err(CommonError::UiInteraction(
+							"show_message response was not a string or null".to_string(),
+						))
+					}
+				},
+
+				Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+
+				Ok(Err(_channel_closed_err)) => {
+					Err(CommonError::UiInteraction(format!(
+						"show_message (ReqID: {}) response channel closed prematurely.",
+						request_id
+					)))
+				},
+
+				Err(_timeout_err) => {
+					warn!("[Env UiProvider] show_message (ReqID: {}) timed out.", request_id);
+
+					// Timeout means no selection or dialog dismissed
+					Ok(None)
+				},
+			};
+
+			self.get_app_state()
+				.pending_ui_requests
+				.lock()
+				.map_err(map_lock_error)?
+				.remove(&request_id);
+
+			result_from_sky
+		}
 	}
 
 	async fn show_open_dialog(&self, options:Option<OpenDialogOptions>) -> Result<Option<Vec<PathBuf>>, CommonError> {
@@ -1914,73 +1993,63 @@ impl UiProvider for MountainEnvironment {
 			request_id, options
 		);
 
-		// Channel for Option<Value>
-		let (tx, rx) = oneshot::channel::<Option<Value>>();
+		let (tx, rx) = oneshot::channel();
 
-		// TODO: Store `tx` in a global AppState-managed map for pending UI responses,
+		{
+			let app_state = self.get_app_state();
 
-		// keyed by `request_id`. e.g., app_state.pending_ui_requests.lock().unwrap().
-		// insert(request_id.clone(), tx);
+			let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
+
+			pending_guard.insert(request_id.clone(), tx);
+		}
+
+		let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:options.clone() };
 
 		self.app_handle
-			.emit_all(
-				"sky://ui/show-open-dialog-request",
-				UiRequest { request_id:request_id.clone(), payload:options },
-			)
+			.emit_all("sky://ui/show-open-dialog-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_open_dialog request: {}", e)))?;
 
-		warn!(
-			"[Env UiProvider] show_open_dialog emitted request to Sky. Awaiting response (STUBBED - will timeout or \
-			 return None for now)."
-		);
+		let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
+			Ok(Ok(Ok(value_from_sky))) => {
+				if value_from_sky.is_null() {
+					Ok(None)
+				} else if let Some(paths_array) = value_from_sky.as_array() {
+					let paths:Result<Vec<PathBuf>, _> =
+						paths_array.iter().filter_map(|v| v.as_str().map(PathBuf::from)).collect();
 
-		// This is a placeholder. A real implementation needs a global map in AppState
-		// to store the `tx` part of the oneshot channel. A Tauri command handler,
-
-		// invoked by Sky, would then find the `tx` by `request_id` and send the
-		// result.
-
-		match timeout(TokioDuration::from_secs(120), rx).await {
-			Ok(Ok(paths_val_opt)) => {
-				paths_val_opt.map_or(Ok(None), |paths_val| {
-					paths_val.as_array().map_or_else(
-						|| {
-							Err(CommonError::UiInteraction(
-								"Open dialog response was not an array of paths".to_string(),
-							))
-						},
-						|arr| {
-							arr.iter()
-								.map(|v| {
-									v.as_str().map(PathBuf::from).ok_or_else(|| {
-										CommonError::UiInteraction("Open dialog path was not a string".to_string())
-									})
-								})
-								.collect()
-						},
-					)
-				})
+					paths.map(Some).map_err(|_| {
+						CommonError::UiInteraction("Invalid path string in open dialog response".to_string())
+					})
+				} else {
+					Err(CommonError::UiInteraction(
+						"Open dialog response was not an array of paths or null".to_string(),
+					))
+				}
 			},
 
+			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+
 			Ok(Err(_channel_closed_err)) => {
-				Err(CommonError::UiInteraction(
-					"Open dialog response channel closed prematurely.".to_string(),
-				))
+				Err(CommonError::UiInteraction(format!(
+					"Open dialog (ReqID: {}) response channel closed prematurely.",
+					request_id
+				)))
 			},
 
 			Err(_timeout_err) => {
-				warn!(
-					"[Env UiProvider] show_open_dialog (ReqID: {}) timed out waiting for response from Sky.",
-					request_id
-				);
+				warn!("[Env UiProvider] show_open_dialog (ReqID: {}) timed out.", request_id);
 
-				// Timeout is not necessarily an error if user simply didn't interact.
 				Ok(None)
 			},
-		}
+		};
 
-		// TODO: Remember to remove from PENDING_UI_RESPONSES map after
-		// completion or timeout.
+		self.get_app_state()
+			.pending_ui_requests
+			.lock()
+			.map_err(map_lock_error)?
+			.remove(&request_id);
+
+		result_from_sky
 	}
 
 	async fn show_save_dialog(&self, options:Option<SaveDialogOptions>) -> Result<Option<PathBuf>, CommonError> {
@@ -1991,10 +2060,58 @@ impl UiProvider for MountainEnvironment {
 			request_id, options
 		);
 
-		// Similar pattern to show_open_dialog: emit, store tx, await rx with timeout.
-		warn!("[Env UiProvider] show_save_dialog is STUBBED and needs full Sky interaction flow. Returning None.");
+		let (tx, rx) = oneshot::channel();
 
-		Ok(None)
+		{
+			let app_state = self.get_app_state();
+
+			let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
+
+			pending_guard.insert(request_id.clone(), tx);
+		}
+
+		let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:options.clone() };
+
+		self.app_handle
+			.emit_all("sky://ui/show-save-dialog-request", event_payload)
+			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_save_dialog request: {}", e)))?;
+
+		let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
+			Ok(Ok(Ok(value_from_sky))) => {
+				if value_from_sky.is_null() {
+					Ok(None)
+				} else if let Some(path_str) = value_from_sky.as_str() {
+					Ok(Some(PathBuf::from(path_str)))
+				} else {
+					Err(CommonError::UiInteraction(
+						"Save dialog response was not a path string or null".to_string(),
+					))
+				}
+			},
+
+			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+
+			Ok(Err(_channel_closed_err)) => {
+				Err(CommonError::UiInteraction(format!(
+					"Save dialog (ReqID: {}) response channel closed prematurely.",
+					request_id
+				)))
+			},
+
+			Err(_timeout_err) => {
+				warn!("[Env UiProvider] show_save_dialog (ReqID: {}) timed out.", request_id);
+
+				Ok(None)
+			},
+		};
+
+		self.get_app_state()
+			.pending_ui_requests
+			.lock()
+			.map_err(map_lock_error)?
+			.remove(&request_id);
+
+		result_from_sky
 	}
 
 	async fn show_quick_pick(
@@ -2013,9 +2130,98 @@ impl UiProvider for MountainEnvironment {
 			options
 		);
 
-		warn!("[Env UiProvider] show_quick_pick is STUBBED and needs full Sky interaction flow. Returning None.");
+		let (tx, rx) = oneshot::channel();
 
-		Ok(None)
+		{
+			let app_state = self.get_app_state();
+
+			let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
+
+			pending_guard.insert(request_id.clone(), tx);
+		}
+
+		// QuickPickItem might contain non-serializable parts like `buttons`.
+		// We need to serialize them carefully or define a DTO for Sky.
+		let serializable_items = items
+			.into_iter()
+			.map(|item| {
+				json!({
+
+					"label": item.label,
+
+					"description": item.description,
+
+					"detail": item.detail,
+
+					"picked": item.picked,
+
+					"alwaysShow": item.always_show,
+
+					// "buttons" field from QuickPickItem is not included here for simplicity.
+					// If needed, they would require custom serialization logic or a DTO.
+				})
+			})
+			.collect::<Vec<_>>();
+
+		let payload_data = json!({ "items": serializable_items, "options": options });
+
+		let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:payload_data };
+
+		self.app_handle
+			.emit_all("sky://ui/show-quick-pick-request", event_payload)
+			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_quick_pick request: {}", e)))?;
+
+		let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
+			Ok(Ok(Ok(value_from_sky))) => {
+				if value_from_sky.is_null() {
+					Ok(None)
+				} else if options.as_ref().map_or(false, |o| o.can_pick_many) {
+					if let Some(labels_array) = value_from_sky.as_array() {
+						let labels:Result<Vec<String>, _> =
+							labels_array.iter().filter_map(|v| v.as_str().map(String::from)).collect();
+
+						labels.map(Some).map_err(|_| {
+							CommonError::UiInteraction("Invalid string in quick pick multi-select response".to_string())
+						})
+					} else {
+						Err(CommonError::UiInteraction(
+							"Quick pick (multi) response was not an array of strings or null".to_string(),
+						))
+					}
+				} else {
+					if let Some(label_str) = value_from_sky.as_str() {
+						Ok(Some(vec![label_str.to_string()]))
+					} else {
+						Err(CommonError::UiInteraction(
+							"Quick pick (single) response was not a string or null".to_string(),
+						))
+					}
+				}
+			},
+
+			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+
+			Ok(Err(_channel_closed_err)) => {
+				Err(CommonError::UiInteraction(format!(
+					"Quick pick (ReqID: {}) response channel closed prematurely.",
+					request_id
+				)))
+			},
+
+			Err(_timeout_err) => {
+				warn!("[Env UiProvider] show_quick_pick (ReqID: {}) timed out.", request_id);
+
+				Ok(None)
+			},
+		};
+
+		self.get_app_state()
+			.pending_ui_requests
+			.lock()
+			.map_err(map_lock_error)?
+			.remove(&request_id);
+
+		result_from_sky
 	}
 
 	async fn show_input_box(&self, options:Option<InputBoxOptions>) -> Result<Option<String>, CommonError> {
@@ -2023,9 +2229,58 @@ impl UiProvider for MountainEnvironment {
 
 		info!("[Env UiProvider] show_input_box (ReqID: {}): options={:?}", request_id, options);
 
-		warn!("[Env UiProvider] show_input_box is STUBBED and needs full Sky interaction flow. Returning None.");
+		let (tx, rx) = oneshot::channel();
 
-		Ok(None)
+		{
+			let app_state = self.get_app_state();
+
+			let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
+
+			pending_guard.insert(request_id.clone(), tx);
+		}
+
+		let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:options.clone() };
+
+		self.app_handle
+			.emit_all("sky://ui/show-input-box-request", event_payload)
+			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_input_box request: {}", e)))?;
+
+		let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
+			Ok(Ok(Ok(value_from_sky))) => {
+				if value_from_sky.is_null() {
+					Ok(None)
+				} else if let Some(input_str) = value_from_sky.as_str() {
+					Ok(Some(input_str.to_string()))
+				} else {
+					Err(CommonError::UiInteraction(
+						"Input box response was not a string or null".to_string(),
+					))
+				}
+			},
+
+			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+
+			Ok(Err(_channel_closed_err)) => {
+				Err(CommonError::UiInteraction(format!(
+					"Input box (ReqID: {}) response channel closed prematurely.",
+					request_id
+				)))
+			},
+
+			Err(_timeout_err) => {
+				warn!("[Env UiProvider] show_input_box (ReqID: {}) timed out.", request_id);
+
+				Ok(None)
+			},
+		};
+
+		self.get_app_state()
+			.pending_ui_requests
+			.lock()
+			.map_err(map_lock_error)?
+			.remove(&request_id);
+
+		result_from_sky
 	}
 }
 
@@ -2108,67 +2363,65 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 		let handle = app_state.get_next_provider_handle();
 
-		let provider_type_appstate = match provider_type_common {
-			CommonProviderType::Hover => LanguageProviderType::Hover,
+		let provider_type_appstate:app_state::LanguageProviderType = match provider_type_common {
+			CommonProviderType::Hover => app_state::LanguageProviderType::Hover,
 
-			CommonProviderType::Completion => LanguageProviderType::Completion,
+			CommonProviderType::Completion => app_state::LanguageProviderType::Completion,
 
-			CommonProviderType::Definition => LanguageProviderType::Definition,
+			CommonProviderType::Definition => app_state::LanguageProviderType::Definition,
 
-			CommonProviderType::Declaration => LanguageProviderType::Declaration,
+			CommonProviderType::Declaration => app_state::LanguageProviderType::Declaration,
 
-			CommonProviderType::Implementation => LanguageProviderType::Implementation,
+			CommonProviderType::Implementation => app_state::LanguageProviderType::Implementation,
 
-			CommonProviderType::TypeDefinition => LanguageProviderType::TypeDefinition,
+			CommonProviderType::TypeDefinition => app_state::LanguageProviderType::TypeDefinition,
 
-			CommonProviderType::References => LanguageProviderType::References,
+			CommonProviderType::References => app_state::LanguageProviderType::References,
 
-			CommonProviderType::DocumentHighlight => LanguageProviderType::DocumentHighlight,
+			CommonProviderType::DocumentHighlight => app_state::LanguageProviderType::DocumentHighlight,
 
-			CommonProviderType::DocumentSymbol => LanguageProviderType::DocumentSymbol,
+			CommonProviderType::DocumentSymbol => app_state::LanguageProviderType::DocumentSymbol,
 
-			CommonProviderType::WorkspaceSymbol => LanguageProviderType::WorkspaceSymbol,
+			CommonProviderType::WorkspaceSymbol => app_state::LanguageProviderType::WorkspaceSymbol,
 
-			CommonProviderType::CodeAction => LanguageProviderType::CodeAction,
+			CommonProviderType::CodeAction => app_state::LanguageProviderType::CodeAction,
 
-			CommonProviderType::CodeLens => LanguageProviderType::CodeLens,
+			CommonProviderType::CodeLens => app_state::LanguageProviderType::CodeLens,
 
-			CommonProviderType::Formatting => LanguageProviderType::Formatting,
+			CommonProviderType::Formatting => app_state::LanguageProviderType::Formatting,
 
-			CommonProviderType::RangeFormatting => LanguageProviderType::RangeFormatting,
+			CommonProviderType::RangeFormatting => app_state::LanguageProviderType::RangeFormatting,
 
-			CommonProviderType::OnTypeFormatting => LanguageProviderType::OnTypeFormatting,
+			CommonProviderType::OnTypeFormatting => app_state::LanguageProviderType::OnTypeFormatting,
 
-			CommonProviderType::Rename => LanguageProviderType::Rename,
+			CommonProviderType::Rename => app_state::LanguageProviderType::Rename,
 
-			CommonProviderType::DocumentLink => LanguageProviderType::DocumentLink,
+			CommonProviderType::DocumentLink => app_state::LanguageProviderType::DocumentLink,
 
-			CommonProviderType::Color => LanguageProviderType::Color,
+			CommonProviderType::Color => app_state::LanguageProviderType::Color,
 
-			CommonProviderType::FoldingRange => LanguageProviderType::FoldingRange,
+			CommonProviderType::FoldingRange => app_state::LanguageProviderType::FoldingRange,
 
-			CommonProviderType::SelectionRange => LanguageProviderType::SelectionRange,
+			CommonProviderType::SelectionRange => app_state::LanguageProviderType::SelectionRange,
 
-			CommonProviderType::CallHierarchy => LanguageProviderType::CallHierarchy,
+			CommonProviderType::CallHierarchy => app_state::LanguageProviderType::CallHierarchy,
 
-			CommonProviderType::TypeHierarchy => LanguageProviderType::TypeHierarchy,
+			CommonProviderType::TypeHierarchy => app_state::LanguageProviderType::TypeHierarchy,
 
-			CommonProviderType::LinkedEditingRange => LanguageProviderType::LinkedEditingRange,
+			CommonProviderType::LinkedEditingRange => app_state::LanguageProviderType::LinkedEditingRange,
 
-			CommonProviderType::InlayHints => LanguageProviderType::InlayHints,
+			CommonProviderType::InlayHints => app_state::LanguageProviderType::InlayHints,
 		};
 
 		info!(
-			"[Env LangFeatRegistry] Registering {:?} provider from '{}', handle={}, selector_array_len={:?}, \
-			 options_present={}",
+			"[Env LangFeatRegistry] Registering {:?} (H:{}) from '{}'. Opts: {}",
 			provider_type_appstate,
-			sidecar_id,
 			handle,
-			selector.as_array().map(|a| a.len()),
+			sidecar_id,
 			options.is_some()
 		);
 
-		trace!("[Env LangFeatRegistry] Selector: {:?}, Options: {:?}", selector, options);
+		trace!("[Env LangFeatRegistry] Selector: {:?}, Options DTO: {:?}", selector, options);
 
 		let registration = ProviderRegistration {
 			handle,
@@ -2195,30 +2448,33 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 			signature_help_metadata:options.as_ref().and_then(|o| o.get("signatureHelpMetadata")).cloned(),
 		};
 
-		let mut providers_guard = app_state.language_providers.lock().map_err(map_lock_error)?;
-
-		providers_guard.insert(handle, registration);
+		app_state
+			.language_providers
+			.lock()
+			.map_err(map_lock_error)?
+			.insert(handle, registration);
 
 		Ok(handle)
 	}
 
 	async fn unregister_provider(&self, handle:u32) -> Result<(), CommonError> {
-		info!("[Env LangFeatRegistry] Unregistering provider with handle: {}", handle);
+		info!("[Env LangFeatRegistry] Unregistering provider handle: {}", handle);
 
-		let app_state = self.get_app_state();
-
-		let mut providers_guard = app_state.language_providers.lock().map_err(map_lock_error)?;
-
-		if providers_guard.remove(&handle).is_some() {
-			Ok(())
-		} else {
+		if self
+			.get_app_state()
+			.language_providers
+			.lock()
+			.map_err(map_lock_error)?
+			.remove(&handle)
+			.is_none()
+		{
 			warn!(
 				"[Env LangFeatRegistry] Attempted to unregister non-existent provider handle: {}",
 				handle
 			);
-
-			Ok(())
 		}
+
+		Ok(())
 	}
 
 	async fn get_providers_for_document(
@@ -2231,116 +2487,115 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 		provider_type_common:CommonProviderType,
 	) -> Result<Vec<ProviderDescription>, CommonError> {
 		debug!(
-			"[Env LangFeatRegistry] Getting providers for doc='{}', lang='{}', type='{:?}'",
+			"[Env LangFeatRegistry] Querying providers for doc='{}', lang='{}', type='{:?}'",
 			document_uri.as_str().split('/').last().unwrap_or_default(),
 			language_id,
 			provider_type_common
 		);
 
-		let app_state = self.get_app_state();
+		// Avoid using self.get_app_state() multiple times inside the lock
+		let app_state_val = self.get_app_state();
 
-		let providers_guard = app_state.language_providers.lock().map_err(map_lock_error)?;
+		let providers_guard = app_state_val.language_providers.lock().map_err(map_lock_error)?;
 
-		let target_provider_type_appstate = match provider_type_common {
-			CommonProviderType::Hover => LanguageProviderType::Hover,
+		let target_provider_type_appstate:app_state::LanguageProviderType = match provider_type_common {
+			CommonProviderType::Hover => app_state::LanguageProviderType::Hover,
 
-			CommonProviderType::Completion => LanguageProviderType::Completion,
+			CommonProviderType::Completion => app_state::LanguageProviderType::Completion,
 
-			CommonProviderType::Definition => LanguageProviderType::Definition,
+			CommonProviderType::Definition => app_state::LanguageProviderType::Definition,
 
-			CommonProviderType::Declaration => LanguageProviderType::Declaration,
+			CommonProviderType::Declaration => app_state::LanguageProviderType::Declaration,
 
-			CommonProviderType::Implementation => LanguageProviderType::Implementation,
+			CommonProviderType::Implementation => app_state::LanguageProviderType::Implementation,
 
-			CommonProviderType::TypeDefinition => LanguageProviderType::TypeDefinition,
+			CommonProviderType::TypeDefinition => app_state::LanguageProviderType::TypeDefinition,
 
-			CommonProviderType::References => LanguageProviderType::References,
+			CommonProviderType::References => app_state::LanguageProviderType::References,
 
-			CommonProviderType::DocumentHighlight => LanguageProviderType::DocumentHighlight,
+			CommonProviderType::DocumentHighlight => app_state::LanguageProviderType::DocumentHighlight,
 
-			CommonProviderType::DocumentSymbol => LanguageProviderType::DocumentSymbol,
+			CommonProviderType::DocumentSymbol => app_state::LanguageProviderType::DocumentSymbol,
 
-			CommonProviderType::WorkspaceSymbol => LanguageProviderType::WorkspaceSymbol,
+			CommonProviderType::WorkspaceSymbol => app_state::LanguageProviderType::WorkspaceSymbol,
 
-			CommonProviderType::CodeAction => LanguageProviderType::CodeAction,
+			CommonProviderType::CodeAction => app_state::LanguageProviderType::CodeAction,
 
-			CommonProviderType::CodeLens => LanguageProviderType::CodeLens,
+			CommonProviderType::CodeLens => app_state::LanguageProviderType::CodeLens,
 
-			CommonProviderType::Formatting => LanguageProviderType::Formatting,
+			CommonProviderType::Formatting => app_state::LanguageProviderType::Formatting,
 
-			CommonProviderType::RangeFormatting => LanguageProviderType::RangeFormatting,
+			CommonProviderType::RangeFormatting => app_state::LanguageProviderType::RangeFormatting,
 
-			CommonProviderType::OnTypeFormatting => LanguageProviderType::OnTypeFormatting,
+			CommonProviderType::OnTypeFormatting => app_state::LanguageProviderType::OnTypeFormatting,
 
-			CommonProviderType::Rename => LanguageProviderType::Rename,
+			CommonProviderType::Rename => app_state::LanguageProviderType::Rename,
 
-			CommonProviderType::DocumentLink => LanguageProviderType::DocumentLink,
+			CommonProviderType::DocumentLink => app_state::LanguageProviderType::DocumentLink,
 
-			CommonProviderType::Color => LanguageProviderType::Color,
+			CommonProviderType::Color => app_state::LanguageProviderType::Color,
 
-			CommonProviderType::FoldingRange => LanguageProviderType::FoldingRange,
+			CommonProviderType::FoldingRange => app_state::LanguageProviderType::FoldingRange,
 
-			CommonProviderType::SelectionRange => LanguageProviderType::SelectionRange,
+			CommonProviderType::SelectionRange => app_state::LanguageProviderType::SelectionRange,
 
-			CommonProviderType::CallHierarchy => LanguageProviderType::CallHierarchy,
+			CommonProviderType::CallHierarchy => app_state::LanguageProviderType::CallHierarchy,
 
-			CommonProviderType::TypeHierarchy => LanguageProviderType::TypeHierarchy,
+			CommonProviderType::TypeHierarchy => app_state::LanguageProviderType::TypeHierarchy,
 
-			CommonProviderType::LinkedEditingRange => LanguageProviderType::LinkedEditingRange,
+			CommonProviderType::LinkedEditingRange => app_state::LanguageProviderType::LinkedEditingRange,
 
-			CommonProviderType::InlayHints => LanguageProviderType::InlayHints,
+			CommonProviderType::InlayHints => app_state::LanguageProviderType::InlayHints,
 		};
 
 		let mut matching_providers = Vec::new();
 
-		for (_handle, registration) in providers_guard.iter() {
+		for registration in providers_guard.values() {
 			if registration.provider_type == target_provider_type_appstate {
-				// TODO CRITICAL: Implement robust DocumentSelector matching logic here.
-				// This version uses a placeholder `handlers::config::crude_selector_match`.
-				let matches = handlers::config::crude_selector_match(®istration.selector, &document_uri, &language_id);
-
-				if matches {
+				if handlers::config::match_document_selector(registration.selector, &document_uri, &language_id) {
 					trace!(
-						"[Env LangFeatRegistry] Provider handle {} (type {:?}) matches doc {}/{}",
-						registration.handle, registration.provider_type, document_uri, language_id
+						"[Env LangFeatRegistry] Match: Handle {}, Type {:?}, Doc {}, Lang {}",
+						registration.handle,
+						registration.provider_type,
+						document_uri.as_str(),
+						language_id
 					);
+
+					let mut options_map = serde_json::Map::new();
+
+					if let Some(tc) = registration.trigger_characters {
+						options_map.insert("triggerCharacters".to_string(), json!(tc));
+					}
+
+					if let Some(sr) = registration.supports_resolve_details {
+						options_map.insert("supportsResolveDetails".to_string(), json!(sr));
+					}
+
+					if let Some(cam) = registration.code_action_metadata {
+						options_map.insert("codeActionMetadata".to_string(), cam.clone());
+					}
+
+					if let Some(shm) = registration.signature_help_metadata {
+						options_map.insert("signatureHelpMetadata".to_string(), shm.clone());
+					}
 
 					matching_providers.push(ProviderDescription {
 						handle:registration.handle,
 
 						sidecar_id:registration.sidecar_id.clone(),
 
-						options:Some(json!({
-
-
-							"triggerCharacters": registration.trigger_characters,
-
-
-
-							"supportsResolveDetails": registration.supports_resolve_details,
-
-
-
-							"codeActionMetadata": registration.code_action_metadata,
-
-
-
-							"signatureHelpMetadata": registration.signature_help_metadata,
-
-
-
-						})),
+						options:if options_map.is_empty() { None } else { Some(Value::Object(options_map)) },
 					});
 				}
 			}
 		}
 
 		debug!(
-			"[Env LangFeatRegistry] Found {} matching providers for doc='{}', lang='{}', type='{:?}'",
+			"[Env LangFeatRegistry] Found {} matching {:?} providers for doc='{}', lang='{}'",
 			matching_providers.len(),
+			provider_type_common,
 			document_uri.as_str().split('/').last().unwrap_or_default(),
-			language_id,
-			provider_type_common
+			language_id
 		);
 
 		Ok(matching_providers)
