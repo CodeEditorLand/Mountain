@@ -2,23 +2,40 @@
 // Mountain Output Channel Handlers (handlers/output.rs)
 // --------------------------------------------------------------------------------------------
 // Manages state and handles RPC requests related to Output Channels created by
-// extensions running in sidecars (e.g., Cocoon).
+// extensions running in sidecars (e.g., Cocoon). This allows extensions to log
+// information to dedicated, named channels in the frontend (Sky).
 //
 // Responsibilities:
-// - Handling RPC calls: $register, $append, $clear, $replace, $reveal, $close,
-//   $dispose.
-// - Storing output channel state in `AppState`.
-// - Emitting Tauri events to notify Sky about channel changes.
+// - Handling RPC calls from Cocoon's output channel shim:
+//   - `$register`: Creates a new output channel.
+//   - `$append`: Appends text to an existing channel's buffer.
+//   - `$clear`: Clears the buffer of a channel.
+//   - `$replace`: Replaces the entire content of a channel's buffer.
+//   - `$reveal`: Requests the frontend to show/focus a channel.
+//   - `$close`: Informs the frontend that a channel view can be closed
+//     (hidden).
+//   - `$dispose`: Removes a channel and its state entirely.
+// - Storing output channel state (`OutputChannelState`) in
+//   `AppState.output_channels`.
+// - Emitting Tauri events (e.g., `output_channel_registered`,
+
+//   `output_channel_append`) to notify Sky about channel changes, enabling UI
+//   updates.
+//
 // Key Interactions:
-// - Called by `track::dispatch_sidecar_request`.
-// - Interacts with `AppState` to manage `output_channels` map.
-// - Emits Tauri events via `AppHandle::emit_all`.
+// - Called by `track::dispatch_sidecar_request` when an output channel related
+//   RPC is received.
+// - Interacts with `AppState.output_channels` (a `HashMap<String,
+
+//   OutputChannelState>`) for state management.
+// - Emits Tauri events via `AppHandle::emit_all` to Sky.
+// - Uses `handlers::error_utils` for consistent RPC error formatting.
 // --------------------------------------------------------------------------------------------
 
 use std::{
 	collections::HashMap,
 
-	// StdMutex used if AppState field is direct
+	// StdMutex is used for AppState.output_channels
 	sync::{Arc, Mutex as StdMutex, MutexGuard},
 };
 
@@ -29,13 +46,22 @@ use tauri::{AppHandle, Manager, Runtime};
 use crate::{
 	app_state::{AppState, OutputChannelState},
 
-	handlers::error_utils,
 	// Use shared error utilities
+	handlers::error_utils,
 };
 
-/// Helper to get a locked mutable reference to the output channels map in
-/// AppState.
-fn get_output_channels_lock<'a, R:Runtime>(
+/// Helper to acquire a lock on the `output_channels` map in `AppState`.
+///
+/// Handles potential `PoisonError` by converting it to a formatted RPC error
+/// string.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+///
+/// # Returns
+/// * `Ok(MutexGuard)` to the output channels map.
+/// * `Err(String)` containing a JSON-RPC error string if the lock is poisoned.
+fn get_output_channels_map_lock<'a, R:Runtime>(
 	app:&'a AppHandle<R>,
 ) -> Result<MutexGuard<'a, HashMap<String, OutputChannelState>>, String> {
 	let state = app.state::<AppState>();
@@ -43,103 +69,171 @@ fn get_output_channels_lock<'a, R:Runtime>(
 	state.output_channels.lock().map_err(|e| {
 		let msg = format!("Output channels lock is poisoned: {}", e);
 
-		// Keep specific error log
+		// Keep specific error log for internal diagnostics
 		error!("[Output Handler LockErr] {}", msg);
 
-		// Use a specific code if desired
+		// Use a specific error code for output channel lock issues
 		error_utils::rpc_error_string(msg, Some("ELOCKED_OUTPUT"))
 	})
 }
 
-/// Handles the `$register` RPC call.
-/// Creates a new output channel state entry.
-/// Args: `[name: string, file?: URI | null, languageId?: string | null]`
-pub async fn handle_register<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
+/// Handles the `$register` RPC call from Cocoon's output channel shim.
+///
+/// Creates a new output channel state entry in `AppState`. The channel ID is
+/// currently the same as its name.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[name: string, file?: URI | null,
+///
+///   languageId?: string | null]`
+///   - `name`: The human-readable name of the output channel.
+///   - `file` (optional): URI of a file to associate with the channel
+///     (currently unused in MVP).
+///   - `languageId` (optional): Language ID for syntax highlighting in the
+///     channel (e.g., "log").
+///
+/// # Returns
+/// * `Ok(Value::String)` containing the ID of the registered channel (which is
+///   its name).
+/// * `Err(String)` with a JSON-RPC error if parsing or registration fails.
+pub async fn handle_register_output_channel<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let name = args
 		.get(0)
 		.and_then(Value::as_str)
 		.ok_or_else(|| error_utils::rpc_param_error_string("output_register", "name", "string", Some(0)))?
 		.to_string();
 
+	// `file` (args[1]) is an optional URI for a file to associate with the channel.
+	// Not used in MVP's OutputChannelState, but could be in the future.
+	let _file_uri_val = args.get(1);
+
+	trace!("[Output Handler] Register: file_uri (args[1]) = {:?}", _file_uri_val);
+
 	let language_id = args.get(2).and_then(Value::as_str).map(String::from);
 
-	// args[1] is file_uri (Option<UriComponentsDTO>), currently unused by
-	// OutputChannelState::new for MVP.
+	// Keep: Registration is an important log event.
+	info!(
+		"[Output Handler] Registering output channel: name='{}', languageId={:?}",
+		name, language_id
+	);
 
-	// Keep: Registration is important log
-	info!("[Output Handler] Register channel: name='{}', langId={:?}", name, language_id);
-
-	// For MVP, channel ID is the name
+	// For MVP, the channel ID is the same as its display name.
+	// TODO: Consider generating unique IDs if names might collide or change.
 	let channel_id = name.clone();
 
 	{
-		// Scope for lock
-		let mut channels_state = get_output_channels_lock(&app)?;
+		// Scope for Mutex lock
+		let mut channels_state_map_guard = get_output_channels_map_lock(&app)?;
 
-		channels_state
+		// `or_insert_with` creates and inserts if not present, or returns a mutable
+		// ref if present. This ensures that registering an existing channel name is
+		// idempotent for state creation, though a new event will still be emitted.
+		channels_state_map_guard
 			.entry(channel_id.clone())
 			.or_insert_with(|| OutputChannelState::new(&name, language_id));
 
-		// Lock released
+		// Lock released here
 	}
 
+	// Notify Sky (frontend) that a new channel is available.
 	let event_payload = json!({"id": channel_id, "name": name});
 
-	// Keep: Log event emission
-	trace!("[Output Handler] Emitting output_channel_registered event: {:?}", event_payload);
+	// Keep: Log event emission for traceability.
+	trace!(
+		"[Output Handler] Emitting 'output_channel_registered' event: {:?}",
+		event_payload
+	);
 
 	app.emit_all("output_channel_registered", event_payload).map_err(|e| {
 		let msg = format!("Failed to emit output_channel_registered event: {}", e);
 
 		error!("[Output Handler] {}", msg);
 
-		error_utils::rpc_error_string(msg, Some("EEMIT"))
+		error_utils::rpc_error_string(msg, Some("EEMIT_OCHANNEL_REG"))
 	})?;
 
+	// Return the channel ID (name) to Cocoon.
 	Ok(json!(channel_id))
 }
 
 /// Handles the `$append` RPC call.
-/// Appends text to the specified channel's buffer.
-/// Args: `[channelId: string, value: string]`
-pub async fn handle_append<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
+///
+/// Appends the given `value` string to the buffer of the specified output
+/// channel.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[channelId: string, value: string]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)` if the channel ID is not found or parameters are invalid.
+pub async fn handle_append_to_output_channel<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let channel_id = args
 		.get(0)
 		.and_then(Value::as_str)
 		.ok_or_else(|| error_utils::rpc_param_error_string("output_append", "channelId", "string", Some(0)))?;
 
+	// Default to empty string if value is missing/not string
 	let value_to_append = args.get(1).and_then(Value::as_str).unwrap_or("");
 
-	// Reduce logging verbosity for append
-	trace!("[Output Handler] Append to '{}': len={}", channel_id, value_to_append.len());
+	// Reduce logging verbosity for frequent append operations, use trace.
+	trace!(
+		"[Output Handler] Appending to channel '{}': len={}",
+		channel_id,
+		value_to_append.len()
+	);
+
+	if value_to_append.is_empty() {
+		// No-op if appending empty string
+		return Ok(Value::Null);
+	}
 
 	let mut event_payload_opt:Option<Value> = None;
 
 	{
-		// Scope for lock
-		let mut channels_state = get_output_channels_lock(&app)?;
+		let mut channels_state_map_guard = get_output_channels_map_lock(&app)?;
 
-		if let Some(channel) = channels_state.get_mut(channel_id) {
-			channel.buffer.push_str(value_to_append);
+		if let Some(channel_state) = channels_state_map_guard.get_mut(channel_id) {
+			channel_state.buffer.push_str(value_to_append);
 
-			// TODO: Consider limiting total buffer size per channel
-			event_payload_opt = Some(json!({"id": channel_id.to_string(), "value": value_to_append.to_string()}));
+			// TODO: Consider limiting total buffer size per channel to prevent excessive
+			// memory usage. If limit is reached, could truncate from the beginning.
+			// e.g., if channel_state.buffer.len() > MAX_BUFFER_SIZE { channel_state.buffer
+			// = ... }
+
+			event_payload_opt =
+				Some(json!({"id": channel_id.to_string(), "appendedText": value_to_append.to_string()}));
 		} else {
-			warn!("[Output Handler] Output channel '{}' not found for append.", channel_id);
+			warn!(
+				"[Output Handler] Output channel '{}' not found for append operation.",
+				channel_id
+			);
+
+			// VS Code behavior: if channel doesn't exist, append is a no-op.
+			// Alternatively, could return an error:
+			// return Err(error_utils::rpc_error_string(format!("Channel '{}'
+			// not found", channel_id), Some("ENOCHANNEL")));
 		}
 
 		// Lock released
 	}
 
 	if let Some(payload) = event_payload_opt {
-		// trace!("[Output Handler] Emitting output_channel_append: {:?}", payload); //
-		// This can be very noisy
+		// This can be very noisy if logged at info/debug for every append. Use trace.
+		trace!(
+			"[Output Handler] Emitting 'output_channel_append': id={}, len={}",
+			channel_id,
+			value_to_append.len()
+		);
+
 		app.emit_all("output_channel_append", payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_append event: {}", e);
 
 			error!("[Output Handler] {}", msg);
 
-			error_utils::rpc_error_string(msg, Some("EEMIT"))
+			error_utils::rpc_error_string(msg, Some("EEMIT_OCHANNEL_APPEND"))
 		})?;
 	}
 
@@ -147,32 +241,44 @@ pub async fn handle_append<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Va
 }
 
 /// Handles the `$clear` RPC call.
-/// Clears the buffer of the specified channel.
-/// Args: `[channelId: string]`
-pub async fn handle_clear<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
+///
+/// Clears the entire buffer content of the specified output channel.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[channelId: string]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)` if the channel ID is not found or parameters are invalid.
+pub async fn handle_clear_output_channel<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let channel_id = args
 		.get(0)
 		.and_then(Value::as_str)
 		.ok_or_else(|| error_utils::rpc_param_error_string("output_clear", "channelId", "string", Some(0)))?;
 
-	// Keep: Clear is a distinct action
-	info!("[Output Handler] Clear channel: '{}'", channel_id);
+	// Keep: Clear is a distinct, less frequent user-visible action.
+	info!("[Output Handler] Clearing output channel: '{}'", channel_id);
 
 	let mut event_needed = false;
 
 	{
-		// Scope for lock
-		let mut channels_state = get_output_channels_lock(&app)?;
+		let mut channels_state_map_guard = get_output_channels_map_lock(&app)?;
 
-		if let Some(channel) = channels_state.get_mut(channel_id) {
-			if !channel.buffer.is_empty() {
-				// Only clear and emit if there's content
-				channel.buffer.clear();
+		if let Some(channel_state) = channels_state_map_guard.get_mut(channel_id) {
+			if !channel_state.buffer.is_empty() {
+				channel_state.buffer.clear();
 
+				// Only emit event if content was actually cleared.
 				event_needed = true;
 			}
 		} else {
-			warn!("[Output Handler] Output channel '{}' not found for clear.", channel_id);
+			warn!(
+				"[Output Handler] Output channel '{}' not found for clear operation.",
+				channel_id
+			);
+
+			// VS Code: no-op if channel doesn't exist.
 		}
 
 		// Lock released
@@ -181,15 +287,15 @@ pub async fn handle_clear<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Val
 	if event_needed {
 		let event_payload = json!({"id": channel_id.to_string()});
 
-		// Keep: Log event emission
-		trace!("[Output Handler] Emitting output_channel_clear event: {:?}", event_payload);
+		// Keep: Log event emission.
+		trace!("[Output Handler] Emitting 'output_channel_clear' event: {:?}", event_payload);
 
 		app.emit_all("output_channel_clear", event_payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_clear event: {}", e);
 
 			error!("[Output Handler] {}", msg);
 
-			error_utils::rpc_error_string(msg, Some("EEMIT"))
+			error_utils::rpc_error_string(msg, Some("EEMIT_OCHANNEL_CLEAR"))
 		})?;
 	}
 
@@ -197,48 +303,65 @@ pub async fn handle_clear<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Val
 }
 
 /// Handles the `$replace` RPC call.
-/// Replaces the entire buffer content of the specified channel.
-/// Args: `[channelId: string, value: string]`
-pub async fn handle_replace<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
+///
+/// Replaces the entire buffer content of the specified output channel with the
+/// new `value`.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[channelId: string, value: string]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)` if the channel ID is not found or parameters are invalid.
+pub async fn handle_replace_output_channel_content<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let channel_id = args
 		.get(0)
 		.and_then(Value::as_str)
 		.ok_or_else(|| error_utils::rpc_param_error_string("output_replace", "channelId", "string", Some(0)))?;
 
-	// Ensure it's owned
+	// Ensure new_value is an owned String.
 	let new_value = args.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 
-	// Keep: Replace is a distinct action
-	info!("[Output Handler] Replace channel: '{}'", channel_id);
+	// Keep: Replace is a distinct action.
+	info!(
+		"[Output Handler] Replacing content of output channel: '{}' (new length: {})",
+		channel_id,
+		new_value.len()
+	);
 
 	let mut event_payload_opt:Option<Value> = None;
 
 	{
-		// Scope for lock
-		let mut channels_state = get_output_channels_lock(&app)?;
+		let mut channels_state_map_guard = get_output_channels_map_lock(&app)?;
 
-		if let Some(channel) = channels_state.get_mut(channel_id) {
+		if let Some(channel_state) = channels_state_map_guard.get_mut(channel_id) {
 			// Use cloned new_value
-			channel.buffer = new_value.clone();
+			channel_state.buffer = new_value.clone();
 
-			event_payload_opt = Some(json!({"id": channel_id.to_string(), "value": new_value}));
+			event_payload_opt = Some(json!({"id": channel_id.to_string(), "fullContent": new_value}));
 		} else {
-			warn!("[Output Handler] Output channel '{}' not found for replace.", channel_id);
+			warn!(
+				"[Output Handler] Output channel '{}' not found for replace operation.",
+				channel_id
+			);
+
+			// VS Code: no-op if channel doesn't exist.
 		}
 
 		// Lock released
 	}
 
 	if let Some(payload) = event_payload_opt {
-		// Keep: Log event emission
-		trace!("[Output Handler] Emitting output_channel_replace event: {:?}", payload);
+		// Keep: Log event emission.
+		trace!("[Output Handler] Emitting 'output_channel_replace' event: id={}", channel_id);
 
 		app.emit_all("output_channel_replace", payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_replace event: {}", e);
 
 			error!("[Output Handler] {}", msg);
 
-			error_utils::rpc_error_string(msg, Some("EEMIT"))
+			error_utils::rpc_error_string(msg, Some("EEMIT_OCHANNEL_REPLACE"))
 		})?;
 	}
 
@@ -246,9 +369,20 @@ pub async fn handle_replace<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<V
 }
 
 /// Handles the `$reveal` RPC call.
-/// Requests the frontend to show the specified output channel.
-/// Args: `[channelId: string, preserveFocus: boolean]`
-pub async fn handle_reveal<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
+///
+/// Requests the frontend (Sky) to show and potentially focus the specified
+/// output channel. Mountain updates its internal state for the channel's
+/// visibility and emits an event.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[channelId: string, preserveFocus:
+///   boolean]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)` if the channel ID is not found or parameters are invalid.
+pub async fn handle_reveal_output_channel<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let channel_id = args
 		.get(0)
 		.and_then(Value::as_str)
@@ -256,25 +390,30 @@ pub async fn handle_reveal<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Va
 
 	let preserve_focus = args.get(1).and_then(Value::as_bool).unwrap_or(false);
 
-	// Keep: UI action log
+	// Keep: UI action log.
 	info!(
-		"[Output Handler] Reveal channel: '{}', preserveFocus={}",
+		"[Output Handler] Revealing output channel: '{}', preserveFocus={}",
 		channel_id, preserve_focus
 	);
 
 	let mut event_needed = false;
 
 	{
-		// Scope for lock
-		let mut channels_state = get_output_channels_lock(&app)?;
+		let mut channels_state_map_guard = get_output_channels_map_lock(&app)?;
 
-		if let Some(channel) = channels_state.get_mut(channel_id) {
-			// Update internal state
-			channel.visible = true;
+		if let Some(channel_state) = channels_state_map_guard.get_mut(channel_id) {
+			// Update internal visibility state.
+			// This helps if Mountain needs to know which channels are "active".
+			channel_state.visible = true;
 
 			event_needed = true;
 		} else {
-			warn!("[Output Handler] Output channel '{}' not found for reveal.", channel_id);
+			warn!(
+				"[Output Handler] Output channel '{}' not found for reveal operation.",
+				channel_id
+			);
+
+			// VS Code: no-op if channel doesn't exist.
 		}
 
 		// Lock released
@@ -283,15 +422,15 @@ pub async fn handle_reveal<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Va
 	if event_needed {
 		let event_payload = json!({"id": channel_id.to_string(), "preserveFocus": preserve_focus });
 
-		// Keep: Log event emission
-		trace!("[Output Handler] Emitting output_channel_reveal event: {:?}", event_payload);
+		// Keep: Log event emission.
+		trace!("[Output Handler] Emitting 'output_channel_reveal' event: {:?}", event_payload);
 
 		app.emit_all("output_channel_reveal", event_payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_reveal event: {}", e);
 
 			error!("[Output Handler] {}", msg);
 
-			error_utils::rpc_error_string(msg, Some("EEMIT"))
+			error_utils::rpc_error_string(msg, Some("EEMIT_OCHANNEL_REVEAL"))
 		})?;
 	}
 
@@ -299,36 +438,45 @@ pub async fn handle_reveal<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Va
 }
 
 /// Handles the `$close` RPC call.
-/// Informs the frontend that the channel view can be closed.
-/// Args: `[channelId: string]`
-pub async fn handle_close<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
+///
+/// Informs the frontend (Sky) that the view for the specified output channel
+/// can be closed (hidden). Mountain updates its internal visibility state.
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[channelId: string]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)` if the channel ID is not found or parameters are invalid.
+pub async fn handle_close_output_channel_view<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let channel_id = args
 		.get(0)
 		.and_then(Value::as_str)
 		.ok_or_else(|| error_utils::rpc_param_error_string("output_close", "channelId", "string", Some(0)))?;
 
-	// Keep: UI action log
-	info!("[Output Handler] Close channel requested: '{}'", channel_id);
+	// Keep: UI action log.
+	info!("[Output Handler] Closing output channel view requested for: '{}'", channel_id);
 
 	let mut event_needed = false;
 
 	{
-		// Scope for lock
-		let mut channels_state = get_output_channels_lock(&app)?;
+		let mut channels_state_map_guard = get_output_channels_map_lock(&app)?;
 
-		if let Some(channel) = channels_state.get_mut(channel_id) {
-			if channel.visible {
-				// Only update and emit if it was visible
-				// Update internal state
-				channel.visible = false;
+		if let Some(channel_state) = channels_state_map_guard.get_mut(channel_id) {
+			if channel_state.visible {
+				// Only update and emit if it was previously marked as visible.
+				channel_state.visible = false;
 
 				event_needed = true;
 			}
 		} else {
 			warn!(
-				"[Output Handler] Channel '{}' not found for close (maybe already disposed).",
+				"[Output Handler] Channel '{}' not found for close (view) operation (maybe already disposed).",
 				channel_id
 			);
+
+			// VS Code: no-op if channel doesn't exist.
 		}
 
 		// Lock released
@@ -337,15 +485,15 @@ pub async fn handle_close<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Val
 	if event_needed {
 		let event_payload = json!({"id": channel_id.to_string() });
 
-		// Keep: Log event emission
-		trace!("[Output Handler] Emitting output_channel_close event: {:?}", event_payload);
+		// Keep: Log event emission.
+		trace!("[Output Handler] Emitting 'output_channel_close' event: {:?}", event_payload);
 
 		app.emit_all("output_channel_close", event_payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_close event: {}", e);
 
 			error!("[Output Handler] {}", msg);
 
-			error_utils::rpc_error_string(msg, Some("EEMIT"))
+			error_utils::rpc_error_string(msg, Some("EEMIT_OCHANNEL_CLOSE"))
 		})?;
 	}
 
@@ -353,32 +501,42 @@ pub async fn handle_close<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Val
 }
 
 /// Handles the `$dispose` RPC call.
-/// Removes the channel state entirely from the backend.
-/// Args: `[channelId: string]`
-pub async fn handle_dispose<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
+///
+/// Removes the output channel and its associated state entirely from the
+/// backend (`AppState`).
+///
+/// # Arguments
+/// * `app` - The Tauri `AppHandle`.
+/// * `args` - A `serde_json::Value` array: `[channelId: string]`
+///
+/// # Returns
+/// * `Ok(Value::Null)` on success.
+/// * `Err(String)` if parameters are invalid or an internal error occurs.
+pub async fn handle_dispose_output_channel<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<Value, String> {
 	let channel_id = args
 		.get(0)
 		.and_then(Value::as_str)
 		.ok_or_else(|| error_utils::rpc_param_error_string("output_dispose", "channelId", "string", Some(0)))?;
 
-	// Keep: Lifecycle event log
-	info!("[Output Handler] Dispose channel: '{}'", channel_id);
+	// Keep: Lifecycle event log.
+	info!("[Output Handler] Disposing output channel: '{}'", channel_id);
 
 	let mut event_needed = false;
 
 	{
-		// Scope for lock
-		let mut channels_state = get_output_channels_lock(&app)?;
+		let mut channels_state_map_guard = get_output_channels_map_lock(&app)?;
 
-		if channels_state.remove(channel_id).is_some() {
-			info!("[Output Handler] Disposed channel '{}' state.", channel_id);
+		if channels_state_map_guard.remove(channel_id).is_some() {
+			info!("[Output Handler] Disposed channel '{}' state from AppState.", channel_id);
 
 			event_needed = true;
 		} else {
 			warn!(
-				"[Output Handler] Channel '{}' not found for dispose (maybe already disposed).",
+				"[Output Handler] Channel '{}' not found for dispose operation (maybe already disposed).",
 				channel_id
 			);
+
+			// VS Code: no-op if channel doesn't exist.
 		}
 
 		// Lock released
@@ -387,15 +545,15 @@ pub async fn handle_dispose<R:Runtime>(app:AppHandle<R>, args:Value) -> Result<V
 	if event_needed {
 		let event_payload = json!({"id": channel_id.to_string()});
 
-		// Keep: Log event emission
-		trace!("[Output Handler] Emitting output_channel_disposed event: {:?}", event_payload);
+		// Keep: Log event emission.
+		trace!("[Output Handler] Emitting 'output_channel_disposed' event: {:?}", event_payload);
 
 		app.emit_all("output_channel_disposed", event_payload).map_err(|e| {
 			let msg = format!("Failed to emit output_channel_disposed event: {}", e);
 
 			error!("[Output Handler] {}", msg);
 
-			error_utils::rpc_error_string(msg, Some("EEMIT"))
+			error_utils::rpc_error_string(msg, Some("EEMIT_OCHANNEL_DISPOSE"))
 		})?;
 	}
 
