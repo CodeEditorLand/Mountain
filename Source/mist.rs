@@ -33,8 +33,10 @@
 // - Uses `tokio` (TCP, MPSC channels, tasks) and `tokio-tungstenite`.
 // - Manages internal state (`CONNECTIONS`, `NEXT_CONN_ID`).
 // - Emits Tauri events (`mist_client_connected`, `mist_client_disconnected`,
+
 //   `mist://message`).
 // - `send_message_to_client` can be called by handlers (e.g.,
+
 //   `handlers::mist::handle_ws_send`) or effects to push data to the frontend.
 // --------------------------------------------------------------------------------------------
 
@@ -54,7 +56,9 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime};
 use tokio::{
 	net::{TcpListener, TcpStream},
-	sync::mpsc, // Use tokio's MPSC channels for inter-task communication
+
+	// Use tokio's MPSC channels for inter-task communication
+	sync::mpsc,
 };
 use tokio_tungstenite::{
 	WebSocketStream,
@@ -62,23 +66,30 @@ use tokio_tungstenite::{
 	tungstenite::{Error as WsError, Message as WsMessage},
 };
 
-use crate::{track, vine}; // Include track/vine if needed for error types or future interactions
+// Include track/vine if needed for error types or future interactions
+use crate::{track, vine};
 
 // --- Mist Error Type (Specific for this module) ---
 #[derive(Debug, thiserror::Error)]
 pub enum MistError {
 	#[error("WebSocket listener failed: {0}")]
 	ListenError(String),
+
 	#[error("Failed to accept TCP connection: {0}")]
 	AcceptError(std::io::Error),
+
 	#[error("WebSocket handshake error: {0}")]
 	HandshakeError(WsError),
+
 	#[error("Failed to send message to client {0}: {1}")]
 	SendError(u32, String),
+
 	#[error("Failed to receive message from client {0}: {1}")]
 	ReceiveError(u32, WsError),
+
 	#[error("Client connection {0} not found")]
 	ConnectionNotFound(u32),
+
 	#[error("Serialization failed: {0}")]
 	SerializationError(#[from] serde_json::Error),
 }
@@ -88,10 +99,12 @@ pub enum MistError {
 // Type alias for the map storing senders to client tasks.
 // Key: Connection ID (u32), Value: Sender channel to the connection's writer
 // task.
-type ConnectionMap = Arc<StdMutex<HashMap<u32, mpsc::Sender<WsMessage>>>>; // Send WsMessage directly
+// Send WsMessage directly
+type ConnectionMap = Arc<StdMutex<HashMap<u32, mpsc::Sender<WsMessage>>>>;
 
 // Global map holding communication channels to active WebSocket clients.
 static CONNECTIONS:Lazy<ConnectionMap> = Lazy::new(Default::default);
+
 // Atomic counter for assigning unique connection IDs.
 static NEXT_CONN_ID:Lazy<AtomicU32> = Lazy::new(|| AtomicU32::new(1));
 
@@ -102,12 +115,14 @@ static NEXT_CONN_ID:Lazy<AtomicU32> = Lazy::new(|| AtomicU32::new(1));
 pub async fn start_websocket_server<R:Runtime>(app_handle:AppHandle<R>) -> Result<(), MistError> {
 	// TODO: Make port configurable via environment or AppState
 	let port = 9001;
+
 	let addr = format!("127.0.0.1:{}", port);
 
 	// Bind the TCP listener.
 	let listener = TcpListener::bind(&addr)
 		.await
 		.map_err(|e| MistError::ListenError(format!("Failed to bind to {}: {}", addr, e)))?;
+
 	println!("[Mist] Native WebSocket server listening on {}", addr);
 
 	// Accept connections in a loop.
@@ -115,19 +130,24 @@ pub async fn start_websocket_server<R:Runtime>(app_handle:AppHandle<R>) -> Resul
 		match listener.accept().await {
 			Ok((stream, peer_addr)) => {
 				println!("[Mist] Accepted new TCP connection from: {}", peer_addr);
+
 				let app_handle_clone = app_handle.clone();
+
 				// Spawn a dedicated task to handle the WebSocket handshake and communication.
 				tokio::spawn(handle_connection(stream, peer_addr, app_handle_clone));
 			},
+
 			Err(e) => {
 				// Log error but continue accepting connections if possible.
 				eprintln!("[Mist] Failed to accept TCP connection: {}", e);
+
 				// Consider adding a small delay here if accept fails rapidly.
 				// If the listener error is fatal, this loop might need to break
 				// or return the error. For now, assume we can continue.
 			},
 		}
 	}
+
 	// Note: In this simple form, the server loop never exits unless the
 	// listener fails fatally. Ok(())
 }
@@ -142,6 +162,7 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 		Ok(ws_stream) => {
 			// Assign a unique ID to this connection.
 			let conn_id = NEXT_CONN_ID.fetch_add(1, Ordering::Relaxed);
+
 			println!("[Mist] WebSocket handshake successful for {} [ID={}]", peer_addr, conn_id);
 
 			// Split the WebSocket stream into a sender and receiver.
@@ -156,7 +177,9 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 			{
 				// Scope the lock guard.
 				let mut conns = CONNECTIONS.lock().unwrap();
+
 				conns.insert(conn_id, tx_to_client);
+
 				println!("[Mist] Registered sender for Conn ID {}", conn_id);
 			}
 
@@ -170,6 +193,7 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 
 			// --- Task: Reading messages FROM the client ---
 			let app_handle_reader = app_handle.clone();
+
 			let reader_task = tokio::spawn(async move {
 				loop {
 					match ws_receiver.next().await {
@@ -186,6 +210,7 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 											"[Mist Rx][Conn {}] Failed to parse text message as JSON: {}",
 											conn_id, e
 										);
+
 										json!({ "parseError": e.to_string(), "original": msg.to_text().unwrap_or_default() })
 									})
 								} else {
@@ -197,7 +222,8 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 								// This is generally safer than directly calling Track from the network task.
 								// Frontend or a dedicated Tauri-side listener can handle the event.
 								if let Err(e) = app_handle_reader.emit_all(
-									"mist://message", // Define a clear event name
+									// Define a clear event name
+									"mist://message",
 									json!({"connId": conn_id, "payload": payload_value}),
 								) {
 									eprintln!("[Mist Rx][Conn {}] Failed to emit Tauri event: {}", conn_id, e);
@@ -208,29 +234,42 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 								// here.
 							} else if msg.is_close() {
 								println!("[Mist Rx][Conn {}] Received WebSocket close frame.", conn_id);
-								break; // Exit loop on close frame
+
+								// Exit loop on close frame
+								break;
 							} else if msg.is_ping() {
 								println!("[Mist Rx][Conn {}] Received ping.", conn_id);
+
 								// tokio-tungstenite handles sending pongs
 								// automatically.
 							} else if msg.is_pong() {
 								println!("[Mist Rx][Conn {}] Received pong.", conn_id);
 							}
 						},
+
 						Some(Err(WsError::ConnectionClosed)) => {
 							println!("[Mist Rx][Conn {}] Connection closed normally by peer.", conn_id);
-							break; // Exit loop
+
+							// Exit loop
+							break;
 						},
+
 						Some(Err(e)) => {
 							eprintln!("[Mist Rx][Conn {}] Error receiving message: {}", conn_id, e);
-							break; // Exit loop on error
+
+							// Exit loop on error
+							break;
 						},
+
 						None => {
 							println!("[Mist Rx][Conn {}] WebSocket receiver stream ended.", conn_id);
-							break; // Exit loop if stream ends
+
+							// Exit loop if stream ends
+							break;
 						},
 					}
 				}
+
 				println!("[Mist Rx][Conn {}] Reader task finished.", conn_id);
 			});
 
@@ -255,14 +294,17 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 
 					if let Err(e) = ws_sender.send(message_to_send).await {
 						eprintln!("[Mist Tx][Conn {}] Error sending message: {}", conn_id, e);
+
 						// If sending fails, the connection is likely broken. Stop the task.
 						break;
 					}
 				}
+
 				println!(
 					"[Mist Tx][Conn {}] Writer task exiting (channel closed or send error).",
 					conn_id
 				);
+
 				// Attempt graceful close on exit?
 				// let _ = ws_sender.close().await;
 			});
@@ -270,27 +312,35 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 			// Wait for either the reader or writer task to finish.
 			// This indicates the connection is closing or has errored.
 			tokio::select! {
+
 				_ = reader_task => { println!("[Mist][Conn {}] Reader task completed.", conn_id); },
+
 				_ = writer_task => { println!("[Mist][Conn {}] Writer task completed.", conn_id); },
+
 			}
 
 			// --- Cleanup ---
 			println!("[Mist] Cleaning up connection state for Conn ID {}", conn_id);
+
 			{
 				// Remove the sender channel from the global map.
 				let mut conns = CONNECTIONS.lock().unwrap();
+
 				if conns.remove(&conn_id).is_some() {
 					println!("[Mist] Unregistered sender for Conn ID {}", conn_id);
 				}
 			}
+
 			// Emit event signalling client disconnection
 			app_handle
 				.emit_all("mist_client_disconnected", json!({ "connId": conn_id }))
 				.ok();
 
 			// WebSocket stream (`ws_sender`, `ws_receiver`) is dropped here,
+
 			// closing the connection.
 		},
+
 		Err(e) => {
 			// Handshake failed.
 			eprintln!("[Mist] WebSocket handshake error with {}: {}", peer_addr, e);
@@ -305,12 +355,15 @@ async fn handle_connection<R:Runtime>(stream:TcpStream, peer_addr:SocketAddr, ap
 pub async fn send_message_to_client(conn_id:u32, message:String) -> Result<(), MistError> {
 	let sender = {
 		let conns_guard = CONNECTIONS.lock().unwrap();
-		conns_guard.get(&conn_id).cloned() // Clone the mpsc::Sender
+
+		// Clone the mpsc::Sender
+		conns_guard.get(&conn_id).cloned()
 	};
 
 	if let Some(tx) = sender {
 		// Wrap the string message into a tungstenite Text message.
 		let ws_msg = WsMessage::Text(message);
+
 		// Send it via the channel to the client's writer task.
 		tx.send(ws_msg)
 			.await
@@ -324,12 +377,17 @@ pub async fn send_message_to_client(conn_id:u32, message:String) -> Result<(), M
 // This demonstrates how Track might use `send_message_to_client`.
 pub async fn handle_ws_send<R:Runtime>(
 	_app:AppHandle<R>,
+
 	_window:Window<R>,
-	args:Vec<Value>, // Assuming Track provides args as Vec<Value>
+
+	// Assuming Track provides args as Vec<Value>
+	args:Vec<Value>,
 ) -> Result<Value, String> {
 	println!("[Mist Handler] Handling ws_send request: {:?}", args);
+
 	// TODO: Robust arg parsing
 	let conn_id_val = args.get(0).ok_or("Missing connection ID argument".to_string())?;
+
 	let payload = args.get(1).cloned().ok_or("Missing payload argument".to_string())?;
 
 	let conn_id = conn_id_val.as_u64().ok_or("Connection ID must be a number".to_string())? as u32;
@@ -338,8 +396,11 @@ pub async fn handle_ws_send<R:Runtime>(
 	let message_string = serde_json::to_string(&payload).map_err(|e| e.to_string())?;
 
 	println!("[Mist Handler] Sending payload to Conn ID {}: {}", conn_id, message_string);
+
 	send_message_to_client(conn_id, message_string)
         .await
-        .map(|_| Value::Null) // Return null on success
-        .map_err(|e| e.to_string()) // Map MistError to String
+         // Return null on success
+		.map(|_| Value::Null)
+         // Map MistError to String
+		.map_err(|e| e.to_string())
 }
