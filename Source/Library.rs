@@ -32,4 +32,6 @@ pub mod handlers {
 	pub mod protocol;
 
 	pub mod proxy;
+
+	pub mod registry;
 }
