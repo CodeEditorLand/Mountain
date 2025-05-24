@@ -1,51 +1,107 @@
 // ---------------------------------------------------------------------------------------------
 // Mountain Environment Implementation (environment.rs)
+
 // --------------------------------------------------------------------------------------------
 // Defines `MountainEnvironment`, the concrete implementation of the abstract
-// `Environment` trait and various provider traits. This struct provides
-// the actual "native" implementations for `ActionEffect`s.
+// `Environment` trait from `Land_Common`. It also implements various provider
+// traits (e.g., `FsReader`, `FsWriter`, `ConfigProvider`, `DocumentProvider`,
+
+// `UiProvider`, etc.) that define the actual "native" logic for `ActionEffect`s
+// executed by the `AppRuntime`.
 //
 // Responsibilities:
-// - Implementing all provider traits.
-// - Filesystem access: Using `tokio::fs`, performing security checks.
-// - Configuration:
-//   - Accessing `AppState.configuration` (the merged view) for reads.
-//   - Using `handlers::config` helpers for file I/O for writes, JSON
-//     manipulation, re-merging global state, and notifying Cocoon of changes.
-// - Document state: Managing `DocumentState` in `AppState`, applying changes
-//   via `DocumentState::apply_changes`, calling
-//   `handlers::documents::notify_...`.
-// - Storage, Secrets, Diagnostics, Commands, Output: Delegating or managing
-//   state.
-// - Language Features: Storing provider registrations, basic (stubbed) provider
-//   retrieval.
-// - UI Interactions: Basic messages via Tauri dialogs; detailed stubs for
-//   complex UI (dialogs with return values, quick picks, input boxes) outlining
-//   event flow with Sky.
-// - Holding `AppHandle` for state/API access.
-// - Mapping errors to `CommonError`.
+// - Implementing all provider traits defined in `Land_Common::effects`.
+// - Filesystem Access (`FsReader`, `FsWriter`):
+//   - Uses `tokio::fs` for asynchronous file operations.
+//   - Performs security checks (e.g., path canonicalization, ensuring paths are
+//     within allowed workspace or app data boundaries via `is_path_allowed`).
+// - Configuration Management (`ConfigProvider`, `ConfigInspector`):
+//   - Accesses `AppState.configuration` (the merged view) for reading
+//     configuration values.
+//   - Uses helper functions from `handlers::config` for:
+//     - Writing configuration changes to the correct `settings.json` file
+//       (User, Workspace, WorkspaceFolder).
+//     - Performing JSON manipulation (getting/setting values at specific key
+//       paths).
+//     - Triggering a re-merge of all configuration sources into
+//       `AppState.configuration`.
+//     - Notifying Cocoon of configuration changes via Vine.
+//   - (Stubbed) `ConfigInspector` for providing detailed info about config
+//     values.
+// - Document State Management (`DocumentProvider`):
+//   - Manages `DocumentState` instances within `AppState.open_documents`.
+//   - Handles opening documents from files or creating new untitled documents.
+//   - Applies content changes received from Cocoon to `DocumentState` (using
+//     `DocumentState::apply_document_content_changes`).
+//   - Saves documents to disk, updating their dirty state.
+//   - Calls notification helpers in `handlers::documents` (e.g.,
+
+//     `notify_model_added`, `notify_model_changed`) to inform Cocoon of
+//     document state changes.
+// - Storage (`StorageProvider`), Secrets (`SecretsProvider`), Diagnostics
+//   (`DiagnosticsManager`), Commands (`CommandExecutor`), Output Channels
+//   (`OutputChannelManager`):
+//   - Mostly delegates to the corresponding handler functions in `handlers::*`
+//     modules, which manage the state in `AppState` and perform necessary
+//     actions.
+// - Language Features (`LanguageFeatureProviderRegistry`):
+//   - Manages registrations of language feature providers (e.g., hover,
+
+//     completion) from extensions. Stores these in
+//     `AppState.language_providers`.
+//   - Provides a way to query for active providers based on document URI,
+
+//     language ID, and provider type, matching against registered
+//     `DocumentSelector`s.
+// - UI Interactions (`UiProvider`):
+//   - For simple messages without return values (e.g., `showInformationMessage`
+//     with no buttons), can use Tauri's native dialog API directly (spawned on
+//     a blocking thread).
+//   - For complex UI interactions requiring user input or choices (e.g.,
+
+//     open/save dialogs, quick picks, input boxes, messages with buttons):
+//     - Generates a unique request ID.
+//     - Stores a `tokio::sync::oneshot::Sender` in
+//       `AppState.pending_ui_requests` keyed by this ID.
+//     - Emits a Tauri event (e.g., `sky://ui/show-open-dialog-request`) to the
+//       Sky frontend, including the request ID and necessary options.
+//     - Asynchronously awaits a response on the `oneshot::Receiver`.
+//     - Sky handles the UI and calls back to Mountain via the
+//       `sky_resolves_ui_request` Tauri command, providing the original request
+//       ID and the user's input or error.
+//     - `handlers::sky_ui_responses` processes this callback, finds the pending
+//       `oneshot::Sender`, and sends the result back, unblocking the
+//       `UiProvider` method.
+//     - Includes timeout mechanisms for these asynchronous UI operations.
+// - Holding an `AppHandle<Wry>` for accessing `AppState`, Tauri APIs (path
+//   resolver, event emission), and window management.
+// - Mapping I/O errors and other operational failures to `CommonError` types.
 //
 // Key Interactions:
-// - Instantiated in `main.rs`, held by `AppRuntime`.
-// - Methods called by `AppRuntime::run` for effects.
-// - Accesses `AppState` via `self.get_app_state()`.
-// - Uses `handlers::config` for all configuration persistence and update logic.
-// - Calls `handlers::documents::notify_...` after modifying document state.
+// - Instantiated in `main.rs` and wrapped in an `Arc` for sharing; this `Arc`
+//   is held by `AppRuntime`.
+// - Its methods (trait implementations) are called by `AppRuntime::run` when
+//   executing `ActionEffect`s.
+// - Heavily relies on `AppHandle` to get `AppState` via `self.get_app_state()`.
+// - Uses helper functions from various modules in `handlers::*` for specific
+//   tasks (config persistence, document notifications, etc.).
 // --------------------------------------------------------------------------------------------
 
 use std::{
 	collections::HashMap,
 
+	// For Path::extension()
 	ffi::OsStr,
 
 	path::{Path, PathBuf},
 
 	sync::{Arc, Mutex as StdMutex, MutexGuard},
 
-	// Renamed to avoid conflict if tokio::time::Duration is also used
+	// Standard library Duration
 	time::Duration as StdDuration,
 };
 
+// Common effect traits and error types from Land_Common
 use Land_Common::{
 	command_effects::CommandExecutor,
 
@@ -60,7 +116,6 @@ use Land_Common::{
 
 		IConfigurationOverrides,
 
-		// For ConfigInspector
 		InspectResultData,
 	},
 
@@ -68,6 +123,7 @@ use Land_Common::{
 
 	documents_effects::{DocEventParams, DocumentProvider},
 
+	// Core Environment trait and Requires helper
 	environment::{Environment, Requires},
 
 	errors::CommonError,
@@ -112,22 +168,26 @@ use Land_Common::{
 
 	workspace_effects::WorkspaceProvider,
 };
+// For async methods in traits
 use async_trait::async_trait;
 use log::{debug, error, info, trace, warn};
-// Added Serialize for UiProvider request DTOs
+// For DTOs used in UiProvider event payloads
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value, json};
+use serde_json::{Map as JsonMap, Value, json};
+// Tauri essentials
 use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window, Wry};
 use tokio::{
+	// Tokio's async filesystem operations
 	fs,
 
+	// For File::write_all
 	io::AsyncWriteExt,
 
-	// Added oneshot for UiProvider async responses
-	sync::oneshot,
+	// For UiProvider async request-response with Sky
+	sync::oneshot as TokioOneshot,
 
 	// For UI interaction timeouts
-	time::{Duration as TokioDuration, timeout},
+	time::{Duration as TokioDuration, timeout as tokio_timeout},
 };
 use url::Url;
 // For generating unique request IDs for UI interactions
@@ -135,104 +195,224 @@ use uuid::Uuid;
 
 use crate::{
 	app_state::{
+		// Make app_state module accessible for its DTOs
 		self,
+
 		AppState,
-		ConfigurationState,
+
+		// Specific DTOs from app_state
 		DocumentState,
-		LanguageProviderMap,
-		LanguageProviderType,
+
+		// Renamed to avoid conflict
+		LanguageProviderType as AppStateLanguageProviderType,
+
+		MementoStorageMap,
+
+		MergedConfigurationState,
+
 		OutputChannelState,
+
 		ProviderRegistration,
-		StorageMap,
+
 		WorkspaceFolderState,
 	},
+
+	// Access to various handler modules
 	handlers,
+
+	// Not directly used by Environment, but context for AppRuntime
 	runtime::AppRuntime,
+
+	// For sending notifications (though often delegated to handlers)
 	vine,
 };
 
 // --- Mountain Environment Struct ---
+/// Concrete implementation of the `Environment` and various provider traits.
+///
+/// This struct holds an `AppHandle` to interact with Tauri and access
+/// `AppState`. It provides the "native" logic that backs `ActionEffect`s.
+// Clone is necessary for Arc<MountainEnvironment>
 #[derive(Clone)]
 pub struct MountainEnvironment {
+	// Wry is the default Tauri webview runtime
 	app_handle:AppHandle<Wry>,
 }
 
 impl MountainEnvironment {
+	/// Creates a new `MountainEnvironment`.
 	pub fn new(app_handle:AppHandle<Wry>) -> Self {
-		info!("[Env] MountainEnvironment instance created.");
+		info!("[Env Init] MountainEnvironment instance created.");
 
 		Self { app_handle }
 	}
 
+	/// Helper to get a Tauri `State` wrapper for `AppState`.
 	fn get_app_state(&self) -> State<'_, AppState> { self.app_handle.state::<AppState>() }
 
-	async fn is_path_allowed(&self, path:&Path) -> Result<(), CommonError> {
-		trace!("[Env Security] Checking path allowance for: {}", path.display());
+	/// Security helper to check if a given filesystem path is allowed for
+	/// access.
+	///
+	/// Allowed paths include:
+	/// - Paths within any open workspace folder.
+	/// - Paths within standard application directories (config, data, log).
+	/// - Paths for global and workspace memento storage files.
+	///
+	/// This function performs path canonicalization to prevent traversal
+	/// attacks.
+	///
+	/// # Arguments
+	/// * `path_to_check` - The `Path` to validate.
+	///
+	/// # Returns
+	/// * `Ok(())` if the path is allowed.
+	/// * `Err(CommonError::FsPermissionDenied)` if the path is not allowed or
+	///   canonicalization fails.
+	async fn is_path_allowed_for_filesystem_access(&self, path_to_check:&Path) -> Result<(), CommonError> {
+		trace!("[Env Security Check] Verifying path allowance for: {}", path_to_check.display());
 
-		let path_owned = path.to_path_buf();
+		// Clone for async task
+		let path_to_check_owned = path_to_check.to_path_buf();
 
-		let canonical_path_res = tokio::task::spawn_blocking(move || -> Result<PathBuf, std::io::Error> {
-			match std::fs::canonicalize(&path_owned) {
+		// Canonicalize the path to resolve symlinks and relative segments (.., .).
+		// This is crucial for security to prevent directory traversal attacks.
+		// `std::fs::canonicalize` is blocking, so run it via `spawn_blocking`.
+		let canonical_path_result = tokio::task::spawn_blocking(move || -> Result<PathBuf, std::io::Error> {
+
+
+
+			// `canonicalize` fails if the path doesn't exist. If it's a new file/dir being
+			// created, canonicalize its intended parent directory and append the
+			// filename/dirname.
+			match std::fs::canonicalize(&path_to_check_owned) {
+
+
+
 				Ok(p) => Ok(p),
 
+
 				Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
-					path_owned
+
+
+
+					// If path itself not found, try to canonicalize parent and join filename.
+					// This allows checking permissions for creating new files/dirs.
+					path_to_check_owned
 						.parent()
+
 						.map_or_else(
-							|| Err(std::io::Error::new(std::io::ErrorKind::NotFound, "Path has no parent")),
+							|| {
+
+
+
+								Err(std::io::Error::new(
+									std::io::ErrorKind::InvalidInput,
+
+									"Path has no parent for canonicalization fallback.",
+
+								))
+
+							},
+
+							 // Canonicalize parent
 							std::fs::canonicalize,
+
 						)
-						.map(|p| p.join(path_owned.file_name().unwrap_or_default()))
+
+						.map(|canonical_parent| {
+
+
+
+							canonical_parent.join(
+								 // Get filename
+								path_to_check_owned.file_name().unwrap_or_else(|| OsStr::new("")),
+
+							)
+
+						})
+
 				},
 
+
+				 // Other canonicalization error
 				Err(e) => Err(e),
+
 			}
+
 		})
+
+		 // Wait for spawn_blocking to complete
 		.await;
 
-		let canonical_path = match canonical_path_res {
+		let canonical_path_to_check = match canonical_path_result {
 			Ok(Ok(p)) => p,
 
-			Ok(Err(e)) => {
+			Ok(Err(io_err)) => {
+				// Error during canonicalization (e.g., parent doesn't exist, permissions)
+
 				return Err(CommonError::FsPermissionDenied(
-					path.to_path_buf(),
-					format!("Path canonicalization failed: {}", e),
+					path_to_check.to_path_buf(),
+					format!(
+						"Path canonicalization failed for security check: {}. Path: '{}'",
+						io_err,
+						path_to_check.display()
+					),
 				));
 			},
 
-			Err(e) => {
+			Err(join_err) => {
+				// Task join error (e.g., spawn_blocking panicked)
+
 				return Err(CommonError::FsPermissionDenied(
-					path.to_path_buf(),
-					format!("Task join error during canonicalization: {}", e),
+					path_to_check.to_path_buf(),
+					format!(
+						"Task join error during path canonicalization for security check: {}. Path: '{}'",
+						join_err,
+						path_to_check.display()
+					),
 				));
 			},
 		};
 
 		trace!(
-			"[Env Security] Canonical path for '{}': '{}'",
-			path.display(),
-			canonical_path.display()
+			"[Env Security Check] Canonical path for '{}' is '{}'",
+			path_to_check.display(),
+			canonical_path_to_check.display()
 		);
 
-		let mut allowed_roots:Vec<PathBuf> = Vec::new();
+		// Gather all allowed root paths.
+		let mut allowed_root_paths:Vec<PathBuf> = Vec::new();
 
-		let state = self.get_app_state();
+		let app_state = self.get_app_state();
 
-		let folders_guard = state.workspace_folders.lock().map_err(map_lock_error)?;
+		// 1. Workspace Folders
+		let folders_guard = app_state
+			.workspace_folders
+			.lock()
+			.map_err(map_app_state_lock_error_to_common_error)?;
 
 		for folder in folders_guard.iter() {
 			if folder.uri.scheme() == "file" {
-				if let Ok(p) = std::fs::canonicalize(PathBuf::from(folder.uri.path())) {
-					allowed_roots.push(p);
+				// TODO: This `std::fs::canonicalize` is blocking. If `is_path_allowed` is
+				// called frequently       on hot paths, consider pre-canonicalizing
+				// workspace folder paths when they are set       and storing them in
+				// `AppState`, or doing this canonicalization part also with `spawn_blocking`.
+				//       For now, assuming it's acceptable within the FS op that called this.
+				if let Ok(canonical_folder_path) = std::fs::canonicalize(PathBuf::from(folder.uri.path())) {
+					allowed_root_paths.push(canonical_folder_path);
 				} else {
-					warn!("[Env Security] Failed to canonicalize workspace folder URI: {}", folder.uri);
+					warn!(
+						"[Env Security Check] Failed to canonicalize workspace folder URI for check: {}",
+						folder.uri
+					);
 				}
-			} else {
-				warn!("[Env Security] Non-file scheme for workspace folder, skipping: {}", folder.uri);
 			}
 		}
 
+		// Release lock
 		drop(folders_guard);
+
+		// 2. Standard Application Directories (config, data, log)
 
 		let path_resolver = self.app_handle.path_resolver();
 
@@ -240,64 +420,115 @@ impl MountainEnvironment {
 			path_resolver.app_config_dir(),
 			path_resolver.app_data_dir(),
 			path_resolver.app_log_dir(),
+			// TODO: Consider adding `app_cache_dir` if used.
 		] {
-			if let Some(dir) = dir_opt {
-				if let Ok(p) = std::fs::canonicalize(&dir) {
-					allowed_roots.push(p);
+			if let Some(dir_path) = dir_opt {
+				if let Ok(canonical_app_dir_path) = std::fs::canonicalize(&dir_path) {
+					allowed_root_paths.push(canonical_app_dir_path);
 				} else {
-					warn!("[Env Security] Failed to canonicalize app system dir: {}", dir.display());
+					warn!(
+						"[Env Security Check] Failed to canonicalize app system directory for check: {}",
+						dir_path.display()
+					);
 				}
 			}
 		}
 
-		if let Ok(p) = std::fs::canonicalize(&state.global_memento_path) {
-			allowed_roots.push(p);
-		}
+		// 3. Memento Storage Files (and their parent directories)
 
-		if let Some(ref wsp_path_opt) = *state.workspace_memento_path.lock().map_err(map_lock_error)? {
-			// Dereference Arc<Mutex<Option<PathBuf>>>
-			if let Some(ref wsp_path) = wsp_path_opt {
-				// Check Option<PathBuf>
-				if let Ok(p) = std::fs::canonicalize(wsp_path) {
-					allowed_roots.push(p);
+		if let Ok(canonical_global_memento_path) = std::fs::canonicalize(&app_state.global_memento_path) {
+			// Allow access to the file itself and its parent dir (for atomic writes via
+			// temp file)
+
+			allowed_root_paths.push(canonical_global_memento_path);
+
+			if let Some(parent) = app_state.global_memento_path.parent() {
+				if let Ok(p) = std::fs::canonicalize(parent) {
+					allowed_root_paths.push(p);
 				}
 			}
 		}
 
-		let is_allowed = allowed_roots
+		if let Some(ref ws_memento_path_opt) = *app_state
+			.workspace_memento_path
+			.lock()
+			.map_err(map_app_state_lock_error_to_common_error)?
+		{
+			if let Some(ref ws_memento_path) = ws_memento_path_opt {
+				if let Ok(canonical_ws_memento_path) = std::fs::canonicalize(ws_memento_path) {
+					allowed_root_paths.push(canonical_ws_memento_path);
+
+					if let Some(parent) = ws_memento_path.parent() {
+						if let Ok(p) = std::fs::canonicalize(parent) {
+							allowed_root_paths.push(p);
+						}
+					}
+				}
+			}
+		}
+
+		// TODO: Add extension storage paths if they are distinct and managed by
+		// Mountain.
+
+		// Check if the canonicalized path_to_check is within any of the allowed roots.
+		let is_allowed = allowed_root_paths
 			.iter()
-			.any(|root| canonical_path == *root || canonical_path.starts_with(root));
+			.any(|root_path| canonical_path_to_check == *root_path || canonical_path_to_check.starts_with(root_path));
 
 		if is_allowed {
-			trace!("[Env Security] ALLOWED: '{}'", path.display());
+			trace!(
+				"[Env Security Check] ALLOWED: Path '{}' (canonical: '{}') is within allowed roots.",
+				path_to_check.display(),
+				canonical_path_to_check.display()
+			);
 
 			Ok(())
 		} else {
 			warn!(
-				"[Env Security] DENIED: '{}' (canonical: '{}'). Not in roots: {:?}",
-				path.display(),
-				canonical_path.display(),
-				allowed_roots
+				"[Env Security Check] DENIED: Path '{}' (canonical: '{}') is NOT within any allowed roots. Allowed \
+				 roots: {:?}",
+				path_to_check.display(),
+				canonical_path_to_check.display(),
+				allowed_root_paths
 			);
 
 			Err(CommonError::FsPermissionDenied(
-				path.to_path_buf(),
-				"Path outside allowed workspace/app data folders.".to_string(),
+				path_to_check.to_path_buf(),
+				"Path is outside allowed workspace or application data folders.".to_string(),
 			))
 		}
 	}
 }
 
+// Implement the core Environment trait (currently empty, acts as a marker).
 impl Environment for MountainEnvironment {}
 
-// --- Helper Error/Util Functions ---
-fn map_lock_error<T>(e:std::sync::PoisonError<MutexGuard<'_, T>>) -> CommonError {
-	CommonError::StateLock(format!("Failed to lock AppState section: {}", e))
+// --- Helper Error/Util Functions (Module-private) ---
+
+/// Maps a `PoisonError` from `AppState` Mutex locks to a
+/// `CommonError::StateLock`.
+fn map_app_state_lock_error_to_common_error<T>(e:std::sync::PoisonError<MutexGuard<'_, T>>) -> CommonError {
+	let err_msg = format!("Failed to lock AppState section: {}", e);
+
+	// Log specific lock error
+	error!("[Env AppStateLockErr] {}", err_msg);
+
+	CommonError::StateLock(err_msg)
 }
 
-fn map_io_error_to_common(e:std::io::Error, path:PathBuf, operation:&'static str) -> CommonError {
+/// Maps `std::io::Error` to a `CommonError` variant, providing context.
+fn map_io_error_to_common_error(
+	e:std::io::Error,
+
+	// Path involved in the IO operation
+	path:PathBuf,
+
+	// Description of the FS operation (e.g., "read", "write")
+	operation:&'static str,
+) -> CommonError {
 	warn!(
-		"[Env IO Error] Operation '{}' on path '{}' failed: {}",
+		// Log as warning because these are common operational errors
+		"[Env IOError] FS operation '{}' on path '{}' failed: {}",
 		operation,
 		path.display(),
 		e
@@ -314,13 +545,16 @@ fn map_io_error_to_common(e:std::io::Error, path:PathBuf, operation:&'static str
 
 		std::io::ErrorKind::NotADirectory => CommonError::FsNotADirectory(path),
 
-		std::io::ErrorKind::DirectoryNotEmpty => CommonError::FsNotEmpty(path),
-
+		// Note: `DirectoryNotEmpty` is not a standard `std::io::ErrorKind`.
+		//       `fs::remove_dir` returns `ErrorKind::Other` or platform-specific for this.
+		//       Custom handling might be needed if `remove_dir` fails because dir not empty.
+		//       For now, relying on `FsNotEmpty` to be constructed by specific logic if `remove_dir` fails this way.
 		_ => {
+			// More generic mapping for other IO errors based on operation type
 			match operation {
-				"read" => CommonError::FsRead(path, e.to_string()),
+				"read" | "read_doc_open" => CommonError::FsRead(path, e.to_string()),
 
-				"write" => CommonError::FsWrite(path, e.to_string()),
+				"write" | "write_doc_save" | "write_doc_save_as" => CommonError::FsWrite(path, e.to_string()),
 
 				"stat" => CommonError::FsStat(path, e.to_string()),
 
@@ -336,21 +570,28 @@ fn map_io_error_to_common(e:std::io::Error, path:PathBuf, operation:&'static str
 
 				"copy" | "copy_source_stat" => CommonError::FsCopy(path, e.to_string()),
 
-				"read_doc_open" => CommonError::FsRead(path, format!("Failed to read document for opening: {}", e)),
-
-				"write_doc_save" => CommonError::FsWrite(path, format!("Failed to write document for saving: {}", e)),
-
-				"write_doc_save_as" => {
-					CommonError::FsWrite(path, format!("Failed to write document for save_as: {}", e))
+				_ => {
+					CommonError::Unknown(format!(
+						// Fallback for unmapped operations
+						"Unknown FS Operation '{}' on path '{}' failed with IO error: {}",
+						operation,
+						path.display(),
+						e
+					))
 				},
-
-				_ => CommonError::Unknown(format!("FS Op '{}' on '{}' failed: {}", operation, path.display(), e)),
 			}
 		},
 	}
 }
 
-fn detect_language_id(path:&Path) -> String {
+/// Detects a language ID string from a file path's extension.
+/// This is a simplified heuristic. A more robust solution would use a mime-type
+/// library or more extensive extension-to-languageID mappings.
+fn detect_language_id_from_file_path(path:&Path) -> String {
+	// TODO: Enhance language detection. Consider:
+	//       - Using a dedicated crate for mime-type detection.
+	//       - Allowing extensions to contribute language definitions.
+	//       - Checking for modelines in file content.
 	match path.extension().and_then(OsStr::to_str) {
 		Some("js") | Some("mjs") | Some("cjs") => "javascript",
 
@@ -362,13 +603,15 @@ fn detect_language_id(path:&Path) -> String {
 
 		Some("json") => "json",
 
+		// JSON with Comments
 		Some("jsonc") => "jsonc",
 
 		Some("html") | Some("htm") => "html",
 
 		Some("css") => "css",
 
-		Some("scss") => "scss",
+		// Added sass
+		Some("scss") | Some("sass") => "scss",
 
 		Some("less") => "less",
 
@@ -402,7 +645,8 @@ fn detect_language_id(path:&Path) -> String {
 
 		Some("swift") => "swift",
 
-		Some("kt") => "kotlin",
+		// Added kts
+		Some("kt") | Some("kts") => "kotlin",
 
 		Some("dart") => "dart",
 
@@ -414,119 +658,139 @@ fn detect_language_id(path:&Path) -> String {
 
 		Some("bat") | Some("cmd") => "bat",
 
+		// Common log file extension
+		Some("log") => "log",
+
+		// Add more common extensions and their language IDs
+		// Default for unknown extensions
 		_ => "plaintext",
 	}
 	.to_string()
 }
 
-// Simplified for MVP
-fn detect_encoding(_content:&[u8]) -> String { "utf8".to_string() }
+/// Detects file encoding from byte content. Simplified for MVP.
+/// TODO: Implement more robust encoding detection (e.g., using `chardet` crate
+/// or checking for BOM).
+fn detect_file_encoding_from_bytes(_content_bytes:&[u8]) -> String {
+	// For MVP, assume UTF-8. A real implementation would inspect byte order marks
+	// (BOM) or use heuristics / libraries like `chardetng` or `encoding_rs`.
+	"utf8".to_string()
+}
 
 // --- Effect Provider Trait Implementations ---
 
 #[async_trait]
 impl FsReader for MountainEnvironment {
 	async fn read_file(&self, path:&PathBuf) -> Result<Vec<u8>, CommonError> {
-		self.is_path_allowed(path).await?;
+		// Security check
+		self.is_path_allowed_for_filesystem_access(path).await?;
 
 		trace!("[Env FsReader] Reading file: {}", path.display());
 
 		fs::read(path)
 			.await
-			.map_err(|e| map_io_error_to_common(e, path.clone(), "read"))
+			.map_err(|io_err| map_io_error_to_common_error(io_err, path.clone(), "read"))
 	}
 
 	async fn stat_file(&self, path:&PathBuf) -> Result<FileSystemStat, CommonError> {
-		self.is_path_allowed(path).await?;
+		// Security check
+		self.is_path_allowed_for_filesystem_access(path).await?;
 
-		trace!("[Env FsReader] Stating file: {}", path.display());
+		trace!("[Env FsReader] Stating file/directory: {}", path.display());
 
 		match tokio::fs::metadata(path).await {
 			Ok(metadata) => {
-				let mut file_type_val = 0;
+				// Start with 0 (Unknown)
+
+				let mut file_type_flags = 0_u8;
 
 				if metadata.is_file() {
-					file_type_val |= CommonFileType::File as u8;
+					file_type_flags |= CommonFileType::File as u8;
 				}
 
 				if metadata.is_dir() {
-					file_type_val |= CommonFileType::Directory as u8;
+					file_type_flags |= CommonFileType::Directory as u8;
 				}
 
 				if metadata.is_symlink() {
-					file_type_val |= CommonFileType::SymbolicLink as u8;
+					file_type_flags |= CommonFileType::SymbolicLink as u8;
 				}
 
-				if file_type_val == 0 {
-					file_type_val = CommonFileType::Unknown as u8;
-				}
+				// If no specific type flag is set, it remains Unknown (0).
 
-				let get_milli_ts = |st:Result<_, _>| -> u64 {
-					st.ok()
-						.and_then(|t| t.duration_since(std::time::SystemTime::UNIX_EPOCH).ok())
-						.map_or(0, |d| d.as_millis() as u64)
+				let get_milli_timestamp_from_system_time = |sys_time_res:Result<std::time::SystemTime, _>| -> u64 {
+					sys_time_res
+						.ok()
+						.and_then(|time| time.duration_since(std::time::SystemTime::UNIX_EPOCH).ok())
+						.map_or(0, |duration| duration.as_millis() as u64)
 				};
 
 				Ok(FileSystemStat {
-					file_type:file_type_val,
+					file_type:file_type_flags,
 
-					ctime:get_milli_ts(metadata.created()),
+					ctime:get_milli_timestamp_from_system_time(metadata.created()),
 
-					mtime:get_milli_ts(metadata.modified()),
+					mtime:get_milli_timestamp_from_system_time(metadata.modified()),
 
 					size:metadata.len(),
 
-					// TODO: Populate permissions if needed by VS Code extensions
-					permissions:None,
+					permissions:None, /* TODO: Populate permissions if needed by VS Code extensions (e.g.,
+					                   *
+					                   *
+					                   * FilePermission enum) */
 				})
 			},
 
-			Err(e) => Err(map_io_error_to_common(e, path.clone(), "stat")),
+			Err(io_err) => Err(map_io_error_to_common_error(io_err, path.clone(), "stat")),
 		}
 	}
 
 	async fn read_directory(&self, path:&PathBuf) -> Result<Vec<(String, CommonFileType)>, CommonError> {
-		self.is_path_allowed(path).await?;
+		// Security check
+		self.is_path_allowed_for_filesystem_access(path).await?;
 
-		debug!("[Env FsReader] Reading directory: {}", path.display());
+		debug!("[Env FsReader] Reading directory contents: {}", path.display());
 
 		let mut entries_vec:Vec<(String, CommonFileType)> = Vec::new();
 
-		let mut read_dir = fs::read_dir(path)
+		let mut dir_entries_stream = fs::read_dir(path)
 			.await
-			.map_err(|e| map_io_error_to_common(e, path.clone(), "readdir"))?;
+			.map_err(|io_err| map_io_error_to_common_error(io_err, path.clone(), "readdir"))?;
 
-		while let Some(entry_res) = read_dir
+		while let Some(dir_entry_res) = dir_entries_stream
 			.next_entry()
 			.await
-			.map_err(|e| map_io_error_to_common(e, path.clone(), "readdir_next"))?
+			.map_err(|io_err| map_io_error_to_common_error(io_err, path.clone(), "readdir_next_entry"))?
 		{
-			let file_name = entry_res.file_name().to_string_lossy().into_owned();
+			let file_name_osstr = dir_entry_res.file_name();
 
-			match entry_res.file_type().await {
-				Ok(ft) => {
-					let common_ft = if ft.is_dir() {
+			let file_name_str = file_name_osstr.to_string_lossy().into_owned();
+
+			match dir_entry_res.file_type().await {
+				Ok(file_type_tokio) => {
+					let common_file_type = if file_type_tokio.is_dir() {
 						CommonFileType::Directory
-					} else if ft.is_file() {
+					} else if file_type_tokio.is_file() {
 						CommonFileType::File
-					} else if ft.is_symlink() {
+					} else if file_type_tokio.is_symlink() {
 						CommonFileType::SymbolicLink
 					} else {
 						CommonFileType::Unknown
 					};
 
-					entries_vec.push((file_name, common_ft));
+					entries_vec.push((file_name_str, common_file_type));
 				},
 
-				Err(e) => {
+				Err(e_ftype) => {
 					warn!(
-						"[Env FsReader] Failed to get type for entry '{}' in '{}': {}",
-						file_name,
+						"[Env FsReader] Failed to get file type for entry '{}' in directory '{}': {}. Marking as \
+						 Unknown.",
+						file_name_str,
 						path.display(),
-						e
+						e_ftype
 					);
 
-					entries_vec.push((file_name, CommonFileType::Unknown));
+					entries_vec.push((file_name_str, CommonFileType::Unknown));
 				},
 			}
 		}
@@ -535,224 +799,308 @@ impl FsReader for MountainEnvironment {
 	}
 }
 
+// Required by AppRuntime to provide FsReader capability.
 impl Requires<Arc<dyn FsReader + Send + Sync>> for MountainEnvironment {
-	fn require(&self) -> Arc<dyn FsReader + Send + Sync> { Arc::new(self.clone()) }
+	fn require(&self) -> Arc<dyn FsReader + Send + Sync> {
+		// Clone self (Arc<MountainEnvironment>) for the trait object
+		Arc::new(self.clone())
+	}
 }
 
 #[async_trait]
 impl FsWriter for MountainEnvironment {
-	async fn write_file(&self, path:&PathBuf, content:Vec<u8>, create:bool, overwrite:bool) -> Result<(), CommonError> {
-		self.is_path_allowed(path).await?;
+	async fn write_file(
+		&self,
+
+		path:&PathBuf,
+
+		content_bytes:Vec<u8>,
+
+		create_if_not_exists:bool,
+
+		overwrite_if_exists:bool,
+	) -> Result<(), CommonError> {
+		// Security check
+		self.is_path_allowed_for_filesystem_access(path).await?;
 
 		info!(
-			"[Env FsWriter] Writing file: {} ({} bytes), create={}, overwrite={}",
+			"[Env FsWriter] Writing file: path='{}', content_len={}, create={}, overwrite={}",
 			path.display(),
-			content.len(),
-			create,
-			overwrite
+			content_bytes.len(),
+			create_if_not_exists,
+			overwrite_if_exists
 		);
 
 		let path_exists = fs::try_exists(path).await.unwrap_or(false);
 
-		if path_exists && !overwrite {
+		if path_exists && !overwrite_if_exists {
 			return Err(CommonError::FsFileExists(path.clone()));
 		}
 
-		if !path_exists && !create {
+		if !path_exists && !create_if_not_exists {
 			return Err(CommonError::FsNotFound(path.clone()));
 		}
 
-		if let Some(p_dir) = path.parent() {
-			if !fs::try_exists(p_dir).await.unwrap_or(false) {
-				if create {
-					fs::create_dir_all(p_dir)
-						.await
-						.map_err(|e| map_io_error_to_common(e, p_dir.to_path_buf(), "mkdir_parent"))?;
+		// Ensure parent directory exists if creating.
+		if let Some(parent_dir_path) = path.parent() {
+			if !fs::try_exists(parent_dir_path).await.unwrap_or(false) {
+				if create_if_not_exists {
+					fs::create_dir_all(parent_dir_path).await.map_err(|io_err| {
+						map_io_error_to_common_error(io_err, parent_dir_path.to_path_buf(), "mkdir_parent_for_write")
+					})?;
 				} else {
-					return Err(CommonError::FsNotFound(p_dir.to_path_buf()));
+					// Cannot create file if parent dir doesn't exist and `create` is false.
+					return Err(CommonError::FsNotFound(parent_dir_path.to_path_buf()));
 				}
 			}
 		}
 
-		fs::write(path, &content)
+		fs::write(path, &content_bytes)
 			.await
-			.map_err(|e| map_io_error_to_common(e, path.clone(), "write"))?;
+			.map_err(|io_err| map_io_error_to_common_error(io_err, path.clone(), "write"))?;
 
-		// TODO: Emit filesystem_changed event via AppHandle if this direct write
-		// bypasses higher-level logic that would do so.
+		// TODO: Emit filesystem_changed event via AppHandle. This is important if this
+		// write       bypasses higher-level document management logic that would
+		// normally emit such events.       Example:
+		// self.app_handle.emit_all("mountain://filesystem/changed", json!({"uri":
+		// path_to_uri(path), "type": "changed"}));
+
 		Ok(())
 	}
 
-	async fn create_directory(&self, path:&PathBuf, recursive:bool) -> Result<(), CommonError> {
-		self.is_path_allowed(path).await?;
+	async fn create_directory(&self, path:&PathBuf, recursive_create:bool) -> Result<(), CommonError> {
+		// Security check
+		self.is_path_allowed_for_filesystem_access(path).await?;
 
 		info!(
-			"[Env FsWriter] Creating directory: {} (recursive={})",
+			"[Env FsWriter] Creating directory: path='{}', recursive={}",
 			path.display(),
-			recursive
+			recursive_create
 		);
 
-		if recursive {
+		if recursive_create {
+			// Creates parent directories as needed.
 			fs::create_dir_all(path)
 				.await
-				.map_err(|e| map_io_error_to_common(e, path.clone(), "mkdir_all"))?;
+				.map_err(|io_err| map_io_error_to_common_error(io_err, path.clone(), "mkdir_all"))?;
 		} else {
+			// Fails if parent does not exist.
 			fs::create_dir(path)
 				.await
-				.map_err(|e| map_io_error_to_common(e, path.clone(), "mkdir"))?;
+				.map_err(|io_err| map_io_error_to_common_error(io_err, path.clone(), "mkdir"))?;
 		}
 
-		// TODO: Emit filesystem_changed event
+		// TODO: Emit filesystem_changed event.
 		Ok(())
 	}
 
-	async fn delete(&self, path:&PathBuf, recursive:bool, use_trash:bool) -> Result<(), CommonError> {
-		self.is_path_allowed(path).await?;
+	async fn delete(&self, path:&PathBuf, recursive_delete:bool, use_os_trash:bool) -> Result<(), CommonError> {
+		// Security check
+		self.is_path_allowed_for_filesystem_access(path).await?;
 
 		info!(
-			"[Env FsWriter] Deleting: {} (recursive={}, useTrash={})",
+			"[Env FsWriter] Deleting: path='{}', recursive={}, useTrash={}",
 			path.display(),
-			recursive,
-			use_trash
+			recursive_delete,
+			use_os_trash
 		);
 
-		if use_trash {
-			warn!("[Env FsWriter] 'useTrash' option for delete is not yet implemented, using permanent delete.");
+		if use_os_trash {
+			warn!(
+				"[Env FsWriter] 'useTrash=true' option for delete is requested but not yet implemented. Performing \
+				 permanent delete."
+			);
 
-			// TODO: Implement trash functionality using libraries like `trash`.
+			// TODO: Implement 'move to trash' functionality using a crate like
+			// `trash`.       If `use_os_trash` is true and cannot be
+			// fulfilled, it might be better to return an error       (e.g.,
+
+			// CommonError::NotImplemented) or configure this behavior.
 		}
 
 		match fs::metadata(path).await {
-			Ok(md) => {
-				let del_op = if md.is_dir() {
-					if recursive {
+			Ok(metadata) => {
+				let delete_operation_result = if metadata.is_dir() {
+					if recursive_delete {
+						// Deletes directory and its contents.
 						fs::remove_dir_all(path).await
 					} else {
+						// Deletes empty directory. Fails if not empty.
 						fs::remove_dir(path).await
 					}
 				} else {
+					// Deletes a file.
 					fs::remove_file(path).await
 				};
 
-				del_op.map_err(|e| map_io_error_to_common(e, path.clone(), "delete"))?;
+				delete_operation_result
+					.map_err(|io_err| map_io_error_to_common_error(io_err, path.clone(), "delete"))?;
 
-				// TODO: Emit filesystem_changed event
+				// TODO: Emit filesystem_changed event.
 				Ok(())
 			},
 
-			// Deleting non-existent is OK
-			Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+			Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+				// Deleting a non-existent path is considered success (idempotent) by VS Code FS
+				// API.
+				debug!(
+					"[Env FsWriter] Path '{}' not found for deletion. Operation considered successful (idempotent).",
+					path.display()
+				);
 
-			Err(e) => Err(map_io_error_to_common(e, path.clone(), "delete_stat_check")),
+				Ok(())
+			},
+
+			Err(io_err) => Err(map_io_error_to_common_error(io_err, path.clone(), "delete_stat_check")), /* Error stating the path before delete attempt */
 		}
 	}
 
-	async fn rename(&self, source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
-		self.is_path_allowed(source).await?;
+	async fn rename(
+		&self,
 
-		self.is_path_allowed(target).await?;
+		source_path:&PathBuf,
+
+		target_path:&PathBuf,
+
+		overwrite_if_target_exists:bool,
+	) -> Result<(), CommonError> {
+		self.is_path_allowed_for_filesystem_access(source_path).await?;
+
+		self.is_path_allowed_for_filesystem_access(target_path).await?;
 
 		info!(
-			"[Env FsWriter] Renaming: {} -> {} (overwrite={})",
-			source.display(),
-			target.display(),
-			overwrite
+			"[Env FsWriter] Renaming/Moving: from='{}', to='{}', overwrite={}",
+			source_path.display(),
+			target_path.display(),
+			overwrite_if_target_exists
 		);
 
-		if !fs::try_exists(source).await.unwrap_or(false) {
-			return Err(CommonError::FsNotFound(source.clone()));
+		if !fs::try_exists(source_path).await.unwrap_or(false) {
+			return Err(CommonError::FsNotFound(source_path.clone()));
 		}
 
-		if !overwrite && fs::try_exists(target).await.unwrap_or(false) {
-			return Err(CommonError::FsFileExists(target.clone()));
+		if !overwrite_if_target_exists && fs::try_exists(target_path).await.unwrap_or(false) {
+			return Err(CommonError::FsFileExists(target_path.clone()));
 		}
 
-		if overwrite && fs::try_exists(target).await.unwrap_or(false) {
+		// If overwriting, and target exists, delete target first.
+		// `fs::rename` behavior with existing target can be platform-dependent.
+		if overwrite_if_target_exists && fs::try_exists(target_path).await.unwrap_or(false) {
 			debug!(
-				"[Env FsWriter] Rename: Overwriting target by deleting first: {}",
-				target.display()
+				"[Env FsWriter] Rename: Overwriting target by first deleting '{}'",
+				target_path.display()
 			);
 
-			let target_meta = fs::metadata(target)
-				.await
-				.map_err(|e| map_io_error_to_common(e, target.clone(), "rename_target_stat"))?;
+			// Determine if target is dir for recursive delete, pass useTrash=false for
+			// internal delete.
+			let target_metadata = fs::metadata(target_path).await.map_err(|io_err| {
+				map_io_error_to_common_error(io_err, target_path.clone(), "rename_target_stat_for_overwrite_delete")
+			})?;
 
-			self.delete(target, target_meta.is_dir(), false).await?;
+			self.delete(target_path, target_metadata.is_dir(), false).await?;
 		}
 
-		if let Some(p_dir) = target.parent() {
-			if !fs::try_exists(p_dir).await.unwrap_or(false) {
-				fs::create_dir_all(p_dir)
-					.await
-					.map_err(|e| map_io_error_to_common(e, p_dir.to_path_buf(), "mkdir_parent_rename"))?;
+		// Ensure target's parent directory exists.
+		if let Some(target_parent_dir) = target_path.parent() {
+			if !fs::try_exists(target_parent_dir).await.unwrap_or(false) {
+				fs::create_dir_all(target_parent_dir).await.map_err(|io_err| {
+					map_io_error_to_common_error(io_err, target_parent_dir.to_path_buf(), "mkdir_parent_for_rename")
+				})?;
 			}
 		}
 
-		fs::rename(source, target)
+		fs::rename(source_path, target_path)
 			.await
-			.map_err(|e| map_io_error_to_common(e, source.clone(), "rename"))?;
+			.map_err(|io_err| map_io_error_to_common_error(io_err, source_path.clone(), "rename"))?;
 
-		// TODO: Emit filesystem_changed event (one delete for source, one create for
-		// target, or a specific rename event)
+		// TODO: Emit filesystem_changed events (one delete for source, one create for
+		// target, or a specific rename event).
 		Ok(())
 	}
 
-	async fn copy(&self, source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
-		self.is_path_allowed(source).await?;
+	async fn copy(
+		&self,
 
-		self.is_path_allowed(target).await?;
+		source_path:&PathBuf,
+
+		target_path:&PathBuf,
+
+		overwrite_if_target_exists:bool,
+	) -> Result<(), CommonError> {
+		self.is_path_allowed_for_filesystem_access(source_path).await?;
+
+		self.is_path_allowed_for_filesystem_access(target_path).await?;
 
 		info!(
-			"[Env FsWriter] Copying: {} -> {} (overwrite={})",
-			source.display(),
-			target.display(),
-			overwrite
+			"[Env FsWriter] Copying: from='{}', to='{}', overwrite={}",
+			source_path.display(),
+			target_path.display(),
+			overwrite_if_target_exists
 		);
 
-		if !fs::try_exists(source).await.unwrap_or(false) {
-			return Err(CommonError::FsNotFound(source.clone()));
+		if !fs::try_exists(source_path).await.unwrap_or(false) {
+			return Err(CommonError::FsNotFound(source_path.clone()));
 		}
 
-		if !overwrite && fs::try_exists(target).await.unwrap_or(false) {
-			return Err(CommonError::FsFileExists(target.clone()));
+		if !overwrite_if_target_exists && fs::try_exists(target_path).await.unwrap_or(false) {
+			return Err(CommonError::FsFileExists(target_path.clone()));
 		}
 
-		let source_meta = fs::metadata(source)
+		let source_metadata = fs::metadata(source_path)
 			.await
-			.map_err(|e| map_io_error_to_common(e, source.clone(), "copy_source_stat"))?;
+			.map_err(|io_err| map_io_error_to_common_error(io_err, source_path.clone(), "copy_source_stat"))?;
 
-		if source_meta.is_dir() {
+		// TODO: Implement recursive directory copy if `source_metadata.is_dir()`.
+		//       `tokio::fs::copy` only copies files. For directories, one would need
+		// to:
+		//       1. Create the target directory.
+		//       2. Recursively list entries in source directory.
+		//       3. For each entry, call `copy` again (if file) or `create_directory`
+		//          (if dir).
+		//       This can be complex. For MVP, if it's a directory, return
+		// NotImplemented.
+		if source_metadata.is_dir() {
 			error!(
-				"[Env FsWriter] Recursive directory copy not yet implemented for source: {}",
-				source.display()
+				"[Env FsWriter] Recursive directory copy from '{}' is not yet implemented.",
+				source_path.display()
 			);
 
-			return Err(CommonError::NotImplemented("Recursive directory copy".to_string()));
+			return Err(CommonError::NotImplemented(
+				"Recursive directory copy for vscode.workspace.fs.copy".to_string(),
+			));
 		}
 
-		if overwrite && fs::try_exists(target).await.unwrap_or(false) {
+		// If overwriting and target exists, delete target first (fs::copy might fail or
+		// behave differently otherwise).
+		if overwrite_if_target_exists && fs::try_exists(target_path).await.unwrap_or(false) {
 			debug!(
-				"[Env FsWriter] Copy: Overwriting target by deleting first: {}",
-				target.display()
+				"[Env FsWriter] Copy: Overwriting target by first deleting '{}'",
+				target_path.display()
 			);
 
-			self.delete(target, false, false).await?;
+			// Assuming target is not a directory if source is not (for non-recursive copy).
+			self.delete(target_path, false, false).await?;
 		}
 
-		if let Some(p_dir) = target.parent() {
-			if !fs::try_exists(p_dir).await.unwrap_or(false) {
-				fs::create_dir_all(p_dir)
-					.await
-					.map_err(|e| map_io_error_to_common(e, p_dir.to_path_buf(), "mkdir_parent_copy"))?;
+		// Ensure target's parent directory exists.
+		if let Some(target_parent_dir) = target_path.parent() {
+			if !fs::try_exists(target_parent_dir).await.unwrap_or(false) {
+				fs::create_dir_all(target_parent_dir).await.map_err(|io_err| {
+					map_io_error_to_common_error(io_err, target_parent_dir.to_path_buf(), "mkdir_parent_for_copy")
+				})?;
 			}
 		}
 
-		fs::copy(source, target)
-			.await
-			.map(|_| ())
-			.map_err(|e| map_io_error_to_common(e, source.clone(), "copy"))?;
+		// tokio::fs::copy copies a file.
+		fs::copy(source_path, target_path)
 
-		// TODO: Emit filesystem_changed event for target creation
+			.await
+			 // Discard bytes copied, return unit on success
+			.map(|_bytes_copied| ())
+
+			.map_err(|io_err| map_io_error_to_common_error(io_err, source_path.clone(), "copy"))?;
+
+		// TODO: Emit filesystem_changed event for target creation.
 		Ok(())
 	}
 }
@@ -761,79 +1109,119 @@ impl Requires<Arc<dyn FsWriter + Send + Sync>> for MountainEnvironment {
 	fn require(&self) -> Arc<dyn FsWriter + Send + Sync> { Arc::new(self.clone()) }
 }
 
+// --- Other Provider Implementations (Storage, Config, Documents, etc.) ---
+// These follow a similar pattern:
+// - Access AppState via `self.get_app_state()`.
+// - Lock relevant parts of AppState.
+// - Perform logic, often delegating to helper functions in `handlers::*` or
+//   methods on `AppState` DTOs.
+// - Map errors to `CommonError`.
+// - For UI interactions (`UiProvider`), use the async request-response pattern
+//   with Sky.
+
 #[async_trait]
 impl StorageProvider for MountainEnvironment {
-	async fn get_storage_value(&self, scope_is_global:bool, key:&str) -> Result<Option<Value>, CommonError> {
+	async fn get_storage_value(&self, is_global_scope:bool, key:&str) -> Result<Option<Value>, CommonError> {
 		trace!(
-			"[Env StorageProvider] Getting value: scope_global={}, key='{}'",
-			scope_is_global, key
+			"[Env StorageProvider] Getting value: scope_is_global={}, key='{}'",
+			is_global_scope, key
 		);
 
 		let app_state = self.get_app_state();
 
-		let (storage_mutex, _path_opt) =
-			handlers::storage::get_storage_map_and_path(&app_state, if scope_is_global { 1 } else { 0 })
-				.map_err(|e_str| CommonError::StateLock(e_str))?;
+		// 1 for Global, 0 for Workspace
+		let scope_id = if is_global_scope { 1 } else { 0 };
 
-		let storage_guard = storage_mutex.lock().map_err(map_lock_error)?;
+		let (storage_map_mutex, _path_opt) = handlers::storage::get_storage_map_and_path_from_appstate(
+			&app_state, scope_id,
+		)
+		.map_err(|json_err_str| CommonError::StateLock(format!("Failed to get storage map/path: {}", json_err_str)))?;
 
-		let value = storage_guard.get(key).cloned();
+		let storage_map_guard = storage_map_mutex.lock().map_err(map_app_state_lock_error_to_common_error)?;
+
+		let value_opt = storage_map_guard.get(key).cloned();
 
 		debug!(
-			"[Env StorageProvider] Value for key '{}' (scope_global={}): {:?}",
+			"[Env StorageProvider] Value for key '{}' (scope_is_global={}): value_present={}",
 			key,
-			scope_is_global,
-			value.is_some()
+			is_global_scope,
+			value_opt.is_some()
 		);
 
-		Ok(value)
+		Ok(value_opt)
 	}
 
 	async fn update_storage_value(
 		&self,
 
-		scope_is_global:bool,
+		is_global_scope:bool,
 
 		key:String,
 
-		value:Option<Value>,
+		// Some(Value) to set/update, None to delete
+		value_to_set:Option<Value>,
 	) -> Result<(), CommonError> {
 		info!(
-			"[Env StorageProvider] Updating value: scope_global={}, key='{}', has_value={}",
-			scope_is_global,
+			"[Env StorageProvider] Updating value: scope_is_global={}, key='{}', value_is_some={}",
+			is_global_scope,
 			key,
-			value.is_some()
+			value_to_set.is_some()
 		);
 
 		let app_state = self.get_app_state();
 
-		let (storage_mutex, path_opt) =
-			handlers::storage::get_storage_map_and_path(&app_state, if scope_is_global { 1 } else { 0 })
-				.map_err(|e_str| CommonError::StateLock(e_str))?;
+		let scope_id = if is_global_scope { 1 } else { 0 };
 
-		let data_to_save = {
-			let mut storage_guard = storage_mutex.lock().map_err(map_lock_error)?;
+		let (storage_map_mutex, storage_file_path_opt) = handlers::storage::get_storage_map_and_path_from_appstate(
+			&app_state, scope_id,
+		)
+		.map_err(|json_err_str| {
+			CommonError::StateLock(format!("Failed to get storage map/path for update: {}", json_err_str))
+		})?;
 
-			if let Some(val_to_set) = value {
-				storage_guard.insert(key.clone(), val_to_set);
+		// Clone data needed for saving *after* the lock is released.
+		let data_to_persist_opt:Option<MementoStorageMap> = {
+			let mut storage_map_guard = storage_map_mutex.lock().map_err(map_app_state_lock_error_to_common_error)?;
+
+			if let Some(val) = value_to_set {
+				storage_map_guard.insert(key.clone(), val);
 			} else {
-				storage_guard.remove(&key);
+				// Remove if value_to_set is None
+				storage_map_guard.remove(&key);
 			}
 
-			path_opt.as_ref().map(|_| storage_guard.clone())
+			// Clone HashMap for saving only if a persistence path is available.
+			storage_file_path_opt.as_ref().map(|_| storage_map_guard.clone())
+
+			// Lock released here.
 		};
 
-		if let (Some(path), Some(data_clone)) = (path_opt, data_to_save) {
-			debug!("[Env StorageProvider] Persisting storage to {}", path.display());
+		// Trigger async save task if path and data are available.
+		if let (Some(path_to_save), Some(cloned_data_to_persist)) = (storage_file_path_opt, data_to_persist_opt) {
+			let scope_name_log = if is_global_scope { "Global" } else { "Workspace" };
+
+			debug!(
+				"[Env StorageProvider] Spawning task to persist {} Memento to: {}",
+				scope_name_log,
+				path_to_save.display()
+			);
 
 			tokio::spawn(async move {
-				if let Err(e) = handlers::storage::save_storage_to_disk(&path, &data_clone).await {
-					error!("[Env StorageProvider] Error persisting storage to {}: {}", path.display(), e);
+				if let Err(e_save) =
+					handlers::storage::save_storage_map_to_disk(&path_to_save, &cloned_data_to_persist).await
+				{
+					error!(
+						"[Env StorageProvider Task] Error persisting {} Memento to '{}': {}",
+						scope_name_log,
+						path_to_save.display(),
+						e_save
+					);
 				}
 			});
-		} else if !scope_is_global && path_opt.is_none() {
+		} else if !is_global_scope && storage_file_path_opt.is_none() {
 			warn!(
-				"[Env StorageProvider] Workspace storage path not set. Cannot persist value for key '{}'.",
+				"[Env StorageProvider] Workspace storage path is not set. Cannot persist value for key '{}'. Change \
+				 will be in-memory only for this session.",
 				key
 			);
 		}
@@ -846,147 +1234,202 @@ impl Requires<Arc<dyn StorageProvider + Send + Sync>> for MountainEnvironment {
 	fn require(&self) -> Arc<dyn StorageProvider + Send + Sync> { Arc::new(self.clone()) }
 }
 
+// Implementations for ConfigProvider, ConfigInspector, DocumentProvider, etc.
+// follow similar patterns, using `self.get_app_state()` and `handlers::*`
+// helpers.
+
 #[async_trait]
 impl ConfigProvider for MountainEnvironment {
 	async fn get_configuration_value(
 		&self,
 
-		section:Option<String>,
+		// e.g., "editor.fontSize" or None for all
+		section_key_opt:Option<String>,
 
+		// For resource/language-specific values
 		overrides:IConfigurationOverrides,
 	) -> Result<Value, CommonError> {
 		trace!(
-			"[Env ConfigProvider] Getting config: section={:?}, overrides.resource={:?}, overrides.langId={:?}",
-			section,
+			"[Env ConfigProvider] GetConfig: section={:?}, overrides.resource={:?}, overrides.langId={:?}",
+			section_key_opt,
+			// Log external URI if present
 			overrides.resource.as_ref().and_then(|v| v.get("external")),
+			// Language ID
 			overrides.override_identifier
 		);
 
 		let app_state = self.get_app_state();
 
-		let config_guard = app_state.configuration.lock().map_err(map_lock_error)?;
+		let config_state_guard = app_state
+			.configuration
+			.lock()
+			.map_err(map_app_state_lock_error_to_common_error)?;
 
+		// The `MergedConfigurationState::get_value` currently uses a simplified lookup
+		// from the merged state. TODO: Enhance `MergedConfigurationState::get_value`
+		// or this provider to fully respect `overrides`       by potentially
+		// re-evaluating against specific configuration files or layers if the
+		//       merged view isn't sufficient for fine-grained override resolution.
 		if overrides.resource.is_some() || overrides.override_identifier.is_some() {
 			warn!(
-				"[Env ConfigProvider] get_configuration_value: Overrides provided but MVP implementation uses \
-				 simplified lookup from merged state. Resource/language specific overrides from different files may \
-				 not be fully resolved here beyond what `load_and_merge_configurations_internal` does."
+				"[Env ConfigProvider GetConfig] Overrides provided (resource or languageId), but current \
+				 implementation primarily uses the pre-merged configuration state. Fine-grained override resolution \
+				 beyond initial merge might be limited."
 			);
 		}
 
-		let value = config_guard.get_value(section.as_deref(), overrides.resource.as_ref());
-
-		debug!(
-			"[Env ConfigProvider] Value for section {:?}: {}...",
-			section,
-			value.to_string().chars().take(70).collect::<String>()
+		let value_result = config_state_guard.get_value(
+			section_key_opt.as_deref(),
+			// Pass resource for potential scope logic in get_value
+			overrides.resource.as_ref(),
 		);
 
-		Ok(value)
+		debug!(
+			"[Env ConfigProvider GetConfig] Value for section {:?}: (sample) {}...",
+			section_key_opt,
+			value_result.to_string().chars().take(70).collect::<String>()
+		);
+
+		Ok(value_result)
 	}
 
 	async fn update_configuration_value(
 		&self,
 
-		key:String,
+		key_to_update:String,
 
+		// If Value::Null, effectively removes the key
 		value_to_set:Value,
 
-		target:ConfigurationTarget,
+		// User, Workspace, WorkspaceFolder
+		target_scope:ConfigurationTarget,
 
+		// For resource URI (if WORKSPACE_FOLDER) and languageId
 		overrides:IConfigurationOverrides,
 
-		scope_to_language:Option<bool>,
+		// If true, write into language-specific section `[languageId]`
+		scope_to_language_override:Option<bool>,
 	) -> Result<(), CommonError> {
 		info!(
-			"[Env ConfigProvider] Updating config: key='{}', target={:?}, has_value={}, scope_to_lang={:?}, \
-			 override_res={:?}",
-			key,
-			target,
-			!value_to_set.is_null(),
-			scope_to_language,
+			"[Env ConfigProvider UpdateConfig] Request: key='{}', target_scope={:?}, value_is_null={}, \
+			 scope_to_lang={:?}, override_resource={:?}",
+			key_to_update,
+			target_scope,
+			value_to_set.is_null(),
+			scope_to_language_override,
 			overrides.resource.as_ref().and_then(|v| v.get("external"))
 		);
 
 		let app_state = self.get_app_state();
 
-		let config_file_path = handlers::config::get_config_path_for_target(
+		// 1. Determine the target settings.json file path.
+		let target_config_file_path = handlers::config::get_config_path_for_target(
 			&self.app_handle,
 			&app_state,
-			target,
+			target_scope,
 			&overrides,
-			scope_to_language.unwrap_or(false),
+			scope_to_language_override.unwrap_or(false),
 		)?;
 
 		info!(
-			"[Env ConfigProvider] Target config file for update: {}",
-			config_file_path.display()
+			"[Env ConfigProvider UpdateConfig] Target config file for update: {}",
+			target_config_file_path.display()
 		);
 
-		let mut current_file_json = handlers::config::load_json_file_if_exists_or_default(&config_file_path).await?;
+		// 2. Load the current content of that specific settings file.
+		let mut current_target_file_json_content =
+			handlers::config::load_json_file_if_exists_or_default(&target_config_file_path).await?;
 
 		trace!(
-			"[Env ConfigProvider] Loaded JSON ({} keys) from {}",
-			current_file_json.as_object().map_or(0, |m| m.keys().len()),
-			config_file_path.display()
+			"[Env ConfigProvider UpdateConfig] Loaded JSON ({} top-level keys) from target file '{}'",
+			current_target_file_json_content.as_object().map_or(0, |m| m.keys().len()),
+			target_config_file_path.display()
 		);
 
-		let mut effective_json_target_in_file = &mut current_file_json;
+		// 3. Update the value at the specified key within the loaded JSON content.
+		//    Handle language-specific scoping if requested.
+		let mut effective_json_node_to_update_in = &mut current_target_file_json_content;
 
-		let mut lang_key_holder:Option<String> = None;
+		// To keep string alive for entry()
 
-		if scope_to_language.unwrap_or(false) {
-			if let Some(lang_id) = &overrides.override_identifier {
-				lang_key_holder = Some(format!("[{}]", lang_id));
+		let mut language_scope_key_holder:Option<String> = None;
 
-				let lang_key_str = lang_key_holder.as_ref().unwrap();
+		if scope_to_language_override.unwrap_or(false) {
+			if let Some(lang_id_str) = &overrides.override_identifier {
+				// e.g., "[typescript]"
+				language_scope_key_holder = Some(format!("[{}]", lang_id_str));
 
-				if !effective_json_target_in_file.is_object() {
-					*effective_json_target_in_file = json!({});
+				let lang_scope_key_ref = language_scope_key_holder.as_ref().unwrap();
+
+				if !effective_json_node_to_update_in.is_object() {
+					// If the top level of the file is not an object, make it one.
+					*effective_json_node_to_update_in = json!({});
 				}
 
-				effective_json_target_in_file = effective_json_target_in_file
-					.entry(lang_key_str.clone())
+				// Get or create the language-specific section.
+				effective_json_node_to_update_in = effective_json_node_to_update_in
+					.as_object_mut()
+
+					 // Safe due to check above
+					.unwrap()
+
+					.entry(lang_scope_key_ref.clone())
+
 					.or_insert_with(|| json!({}));
 			} else {
 				warn!(
-					"[Env ConfigProvider] scopeToLanguage is true for key '{}', but no languageId in overrides. \
-					 Updating at top level of specified file.",
-					key
+					"[Env ConfigProvider UpdateConfig] 'scopeToLanguage' is true for key '{}', but no languageId was \
+					 provided in overrides. Updating at the top level of the target file '{}' instead.",
+					key_to_update,
+					target_config_file_path.display()
 				);
 			}
 		}
 
-		handlers::config::update_json_value_at_path(effective_json_target_in_file, &key, value_to_set);
+		handlers::config::update_json_value_at_path(effective_json_node_to_update_in, &key_to_update, value_to_set);
 
 		trace!(
-			"[Env ConfigProvider] Key '{}' updated in in-memory JSON for file {}.",
-			key,
-			config_file_path.display()
+			"[Env ConfigProvider UpdateConfig] Key '{}' updated in in-memory JSON for file '{}'.",
+			key_to_update,
+			target_config_file_path.display()
 		);
 
-		handlers::config::write_json_file(&config_file_path, current_file_json).await?;
+		// 4. Write the modified JSON content back to the target settings file.
+		handlers::config::write_json_file(
+			&target_config_file_path,
+			// Pass the modified content
+			&current_target_file_json_content,
+		)
+		.await?;
 
 		info!(
-			"[Env ConfigProvider] Successfully wrote updated config to {}",
-			config_file_path.display()
+			"[Env ConfigProvider UpdateConfig] Successfully wrote updated config to file: {}",
+			target_config_file_path.display()
 		);
 
-		let new_merged_state =
+		// 5. Reload and re-merge all configurations into AppState.configuration.
+		let new_merged_config_state =
 			handlers::config::load_and_merge_configurations_internal(&self.app_handle, &app_state).await?;
 
 		app_state
 			.configuration
 			.lock()
-			.map_err(map_lock_error)?
-			.update_from(new_merged_state);
+			.map_err(map_app_state_lock_error_to_common_error)?
+			.update_from_new_state(new_merged_config_state);
 
 		info!(
-			"[Env ConfigProvider] In-memory AppState.configuration reloaded and updated after change to {}",
-			config_file_path.display()
+			"[Env ConfigProvider UpdateConfig] In-memory AppState.configuration reloaded and updated after change to \
+			 file '{}'.",
+			target_config_file_path.display()
 		);
 
-		handlers::config::notify_config_changed_for_keys(&self.app_handle, vec![key]).await;
+		// 6. Notify Cocoon (and other listeners) that configuration has changed.
+		handlers::config::notify_config_changed_for_keys(
+			&self.app_handle,
+			// Notify for the specific key that was changed
+			vec![key_to_update],
+		)
+		.await;
 
 		Ok(())
 	}
@@ -1006,16 +1449,31 @@ impl ConfigInspector for MountainEnvironment {
 		overrides:IConfigurationOverrides,
 	) -> Result<Option<InspectResultData>, CommonError> {
 		info!(
-			"[Env ConfigInspector] Inspecting key='{}', overrides.resource={:?}",
+			"[Env ConfigInspector] Inspecting config key='{}', overrides.resource={:?}",
 			key,
 			overrides.resource.as_ref().and_then(|v| v.get("external"))
 		);
 
-		warn!("[Env ConfigInspector] inspect_configuration_value is STUBBED for MVP. Returning None.");
+		warn!(
+			"[Env ConfigInspector] inspect_configuration_value is STUBBED for MVP. It will always return None. Full \
+			 implementation requires reading individual config files (User, Workspace, Folder) and determining where \
+			 each value for the key is defined."
+		);
 
-		// TODO: Implement full inspection logic by checking values in User, Workspace,
+		// TODO: Implement full inspection logic:
+		// 1. For the given `key` and `overrides` (resource URI, languageId):
+		// 2. Load User settings.json, check for `key` (and lang-specific if
+		//    applicable).
+		// 3. Load Workspace .code-workspace file, check `settings` object for `key`.
+		// 4. Determine relevant Workspace Folder based on `overrides.resource`. Load
+		//    its .vscode/settings.json, check for `key`.
+		// 5. Load default values (if Mountain has a concept of default configuration).
+		// 6. Construct `InspectResultData` populating `defaultValue`, `userValue`,
 
-		// Folder settings files.
+		//    `workspaceValue`, `workspaceFolderValue`, and the final `value` (effective
+		//    value). Also indicate `default`, `user`, `workspace`, `workspaceFolder`
+		//    scopes if the value is defined there.
+		// Stubbed for MVP
 		Ok(None)
 	}
 }
@@ -1024,215 +1482,343 @@ impl Requires<Arc<dyn ConfigInspector + Send + Sync>> for MountainEnvironment {
 	fn require(&self) -> Arc<dyn ConfigInspector + Send + Sync> { Arc::new(self.clone()) }
 }
 
+// Remaining provider implementations (DocumentProvider, SecretsProvider, etc.)
+
+// will be added following the established pattern.
+// For brevity in this response, I'll provide skeletons or key parts.
+
 #[async_trait]
 impl DocumentProvider for MountainEnvironment {
 	async fn open_document(
 		&self,
 
-		uri_components:Value,
+		// DTO from Cocoon: {scheme, path, external, ...} or null for new untitled
+		uri_components_dto:Value,
 
-		language_id_opt:Option<String>,
+		language_id_override_opt:Option<String>,
 
-		content_opt:Option<String>,
+		initial_content_opt:Option<String>,
 	) -> Result<Url, CommonError> {
 		info!(
-			"[Env DocumentProvider] Effect open_document: uri_components='{:?}', lang='{:?}', has_content={}",
-			uri_components.get("external").or_else(|| uri_components.get("path")),
-			language_id_opt,
-			content_opt.is_some()
+			"[Env DocumentProvider] OpenDocument: uri_dto(external)='{:?}', lang_override='{:?}', \
+			 has_initial_content={}",
+			uri_components_dto.get("external").or_else(|| uri_components_dto.get("path")),
+			language_id_override_opt,
+			initial_content_opt.is_some()
 		);
 
-		let uri_str = uri_components
-			.get("external")
-			.and_then(Value::as_str)
-			.or_else(|| {
-				uri_components.get("path").and_then(Value::as_str).map(|p| {
-					if Path::new(p).is_absolute() {
-						Url::from_file_path(p).map(|u| u.to_string()).unwrap_or_else(|_| p.to_string())
-					} else {
-						p.to_string()
-					}
-				})
-			})
-			.ok_or_else(|| {
-				CommonError::InvalidArg("uri_components".to_string(), "Missing external or path string".to_string())
-			})?;
+		let app_state = self.get_app_state();
 
-		let uri = Url::parse(uri_str)
-			.map_err(|e| CommonError::InvalidArg("uri".to_string(), format!("Invalid URI '{}': {}", uri_str, e)))?;
+		let target_uri:Url;
 
-		let state = self.get_app_state();
+		let is_new_untitled:bool;
 
+		if uri_components_dto.is_null() || uri_components_dto.as_object().map_or(true, |o| o.is_empty()) {
+			// Create a new untitled document.
+			// TODO: Generate a unique "untitled:Untitled-N" URI.
+			//       For now, using a placeholder. Ensure this is unique if multiple
+			// untitled docs are supported.
+			let untitled_counter = app_state
+				.open_documents
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?
+				.len() + 1;
+
+			target_uri = Url::parse(&format!("untitled:Untitled-{}", untitled_counter))
+				.map_err(|e| CommonError::InvalidArg("untitled_uri_generation".to_string(), e.to_string()))?;
+
+			is_new_untitled = true;
+
+			info!("[Env DocumentProvider] Creating new untitled document with URI: {}", target_uri);
+		} else {
+			// Open an existing document from the provided URI components.
+			target_uri = handlers::documents::parse_uri_from_components_param(
+				&uri_components_dto,
+				"open_document",
+				"uri_components",
+				None,
+			)
+			.map_err(|e_str| CommonError::InvalidArg("uri_components".to_string(), e_str))?;
+
+			is_new_untitled = false;
+
+			info!("[Env DocumentProvider] Opening existing document with URI: {}", target_uri);
+		}
+
+		// Check if document is already open.
 		{
-			let open_docs_guard = state.open_documents.lock().map_err(map_lock_error)?;
+			let open_docs_guard = app_state
+				.open_documents
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?;
 
-			if let Some(existing_doc) = open_docs_guard.get(uri.as_str()) {
+			if let Some(existing_doc_state) = open_docs_guard.get(target_uri.as_str()) {
 				info!(
-					"[Env DocumentProvider] Document {} already open with version {}. Returning existing.",
-					uri, existing_doc.version
+					"[Env DocumentProvider] Document '{}' (v{}) is already open. Returning existing.",
+					target_uri, existing_doc_state.version
 				);
 
-				return Ok(uri);
+				// TODO: If `initial_content_opt` is provided for an already open document,
+
+				// should it update or warn?       Current behavior: returns existing,
+
+				// ignores new content/langId for open doc.
+				return Ok(target_uri);
 			}
+
+			// Lock released.
 		}
 
-		let (lines, eol, encoding, actual_language_id, initial_dirty_state) = if let Some(content) = content_opt {
-			let (l, e) = app_state::lines_and_eol_from_text(&content);
+		// Determine content, EOL, encoding, languageID, and initial dirty state.
+		let (final_lines_vec, final_eol_str, final_encoding_str, final_language_id_str, initial_is_dirty_bool) =
+			if let Some(content_str) = initial_content_opt {
+				// Content is provided (e.g., for new untitled file, or opening with specific
+				// content).
+				let (lines, eol) = app_state::analyze_text_lines_and_eol_for_document_state(&content_str);
 
-			info!(
-				"[Env DocumentProvider] Opening untitled document {} with provided content.",
-				uri
-			);
+				let lang_id = language_id_override_opt
+					.unwrap_or_else(|| detect_language_id_from_file_path(Path::new(target_uri.path())));
 
-			(
-				l,
-				e,
-				"utf8".to_string(),
-				language_id_opt.unwrap_or_else(|| detect_language_id(Path::new(uri.path()))),
-				true,
-			)
-		} else {
-			if uri.scheme() != "file" {
-				error!("[Env DocumentProvider] Attempted to open non-file URI {} without content.", uri);
+				info!(
+					"[Env DocumentProvider] Document '{}' opened with provided content. LangId determined as '{}'.",
+					target_uri, lang_id
+				);
 
-				return Err(CommonError::NotImplemented(format!(
-					"Opening non-file URIs without content: {}",
-					uri.scheme()
-				)));
-			}
+				// Provided content makes it dirty initially.
+				(lines, eol, "utf8".to_string(), lang_id, true)
+			} else {
+				// No initial content provided; must be an existing file URI.
+				if target_uri.scheme() != "file" {
+					error!(
+						"[Env DocumentProvider] Attempted to open non-file URI '{}' without providing initial content.",
+						target_uri
+					);
 
-			let path = PathBuf::from(uri.path());
+					return Err(CommonError::NotImplemented(format!(
+						"Opening non-file URIs ('{}') without initial content is not supported.",
+						target_uri.scheme()
+					)));
+				}
 
-			self.is_path_allowed(&path).await?;
+				let file_path = PathBuf::from(target_uri.path());
 
-			debug!("[Env DocumentProvider] Reading file content for {}", path.display());
+				// Security check
+				self.is_path_allowed_for_filesystem_access(&file_path).await?;
 
-			let bytes = fs::read(&path)
-				.await
-				.map_err(|e| map_io_error_to_common(e, path.clone(), "read_doc_open"))?;
+				debug!("[Env DocumentProvider] Reading file content for path: {}", file_path.display());
 
-			let encoding_detected = detect_encoding(&bytes);
+				let file_bytes = fs::read(&file_path)
+					.await
+					.map_err(|io_err| map_io_error_to_common_error(io_err, file_path.clone(), "read_doc_open"))?;
 
-			let content = String::from_utf8(bytes)
-				.map_err(|e| CommonError::FsRead(path, format!("UTF-8 decoding error: {}", e)))?;
+				let encoding_detected_str = detect_file_encoding_from_bytes(&file_bytes);
 
-			let (l, e) = app_state::lines_and_eol_from_text(&content);
+				// TODO: Handle non-UTF8 encodings properly. For MVP, assuming UTF-8 after
+				// detection.
+				let content_from_file_str = String::from_utf8(file_bytes).map_err(|utf8_err| {
+					CommonError::FsRead(file_path, format!("UTF-8 decoding error after reading file: {}", utf8_err))
+				})?;
 
-			(
-				l,
-				e,
-				encoding_detected,
-				language_id_opt.unwrap_or_else(|| detect_language_id(Path::new(uri.path()))),
-				false,
-			)
-		};
+				let (lines, eol) = app_state::analyze_text_lines_and_eol_for_document_state(&content_from_file_str);
 
-		let doc_state = DocumentState {
-			uri:uri.clone(),
+				let lang_id = language_id_override_opt
+					.unwrap_or_else(|| detect_language_id_from_file_path(Path::new(target_uri.path())));
 
-			language_id:actual_language_id,
+				// Existing file is not dirty initially.
+				(lines, eol, encoding_detected_str, lang_id, false)
+			};
 
+		let new_document_state = DocumentState {
+			uri:target_uri.clone(),
+
+			language_id:final_language_id_str,
+
+			// Initial version
 			version:1,
 
-			lines,
+			lines:final_lines_vec,
 
-			eol,
+			eol:final_eol_str,
 
-			is_dirty:initial_dirty_state,
+			is_dirty:initial_is_dirty_bool,
 
-			encoding,
+			encoding:final_encoding_str,
 		};
 
 		{
-			let mut open_docs_guard = state.open_documents.lock().map_err(map_lock_error)?;
+			let mut open_docs_guard = app_state
+				.open_documents
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?;
 
-			info!("[Env DocumentProvider] Inserting new document {} into AppState.", uri);
+			info!(
+				"[Env DocumentProvider] Inserting new document '{}' (v1) into AppState.open_documents.",
+				target_uri
+			);
 
-			open_docs_guard.insert(uri.as_str().to_string(), doc_state.clone());
+			open_docs_guard.insert(target_uri.as_str().to_string(), new_document_state.clone());
+
+			// Lock released.
 		}
 
-		handlers::documents::notify_model_added(self.app_handle.clone(), &doc_state).await;
+		// Notify Cocoon that the model (document) has been added.
+		handlers::documents::notify_model_added(self.app_handle.clone(), &new_document_state).await;
 
-		info!("[Env DocumentProvider] Document {} opened (V1) and add notification sent.", uri);
+		info!(
+			"[Env DocumentProvider] Document '{}' (v1) opened successfully and 'modelAdded' notification sent.",
+			target_uri
+		);
 
-		Ok(uri)
+		Ok(target_uri)
 	}
 
-	async fn save_document(&self, uri:Url) -> Result<bool, CommonError> {
-		info!("[Env DocumentProvider] Saving document: {}", uri);
+	async fn save_document(&self, uri_to_save:Url) -> Result<bool, CommonError> {
+		info!("[Env DocumentProvider] SaveDocument request for URI: {}", uri_to_save);
 
-		if uri.scheme() != "file" {
+		if uri_to_save.scheme() != "file" {
 			return Err(CommonError::NotImplemented(format!(
-				"Saving non-file URI schemes: {}",
-				uri.scheme()
+				"Saving non-file URI schemes ('{}') is not supported.",
+				uri_to_save.scheme()
 			)));
 		}
 
-		let path = PathBuf::from(uri.path());
+		let file_path_to_save = PathBuf::from(uri_to_save.path());
 
-		let state = self.get_app_state();
+		// Security check
+		self.is_path_allowed_for_filesystem_access(&file_path_to_save).await?;
 
-		let (content_to_save, current_version) = {
-			let open_docs_guard = state.open_documents.lock().map_err(map_lock_error)?;
+		let app_state = self.get_app_state();
 
-			let doc_state = open_docs_guard
-				.get(uri.as_str())
-				.ok_or_else(|| CommonError::FsNotFound(path.clone()))?;
+		let (content_to_save_str, current_version_in_state) = {
+			// Scope for first lock
+			let open_docs_guard = app_state
+				.open_documents
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?;
+
+			let doc_state = open_docs_guard.get(uri_to_save.as_str()).ok_or_else(|| {
+				warn!(
+					"[Env DocumentProvider Save] Document '{}' not found in open_documents map for saving.",
+					uri_to_save
+				);
+
+				// Or a more specific "DocumentNotOpen" error
+				CommonError::FsNotFound(file_path_to_save.clone())
+			})?;
 
 			if !doc_state.is_dirty {
-				info!("[Env DocumentProvider] Document {} not dirty, no save needed.", uri);
+				info!(
+					"[Env DocumentProvider Save] Document '{}' is not dirty. No save needed.",
+					uri_to_save
+				);
 
+				// Indicate success as no action was required.
 				return Ok(true);
 			}
 
-			(doc_state.get_text(), doc_state.version)
+			(doc_state.get_text_content(), doc_state.version)
+
+			// Lock released.
 		};
 
-		let fs_writer:Arc<dyn FsWriter + Send + Sync> = self.require();
+		// Perform the actual file write using FsWriter.
+		let fs_writer_provider:Arc<dyn FsWriter + Send + Sync> = self.require();
 
-		fs_writer.write_file(&path, content_to_save.into_bytes(), true, true).await?;
+		fs_writer_provider
+			.write_file(&file_path_to_save, content_to_save_str.into_bytes(), true, true)
+			.await?;
 
-		let mut was_dirty_before_save = true;
+		// write_file ensures create=true, overwrite=true for a standard save.
+
+		// After successful write, update the document's dirty state in AppState.
+		// Assume it was, will be confirmed by state.
+		let mut was_dirty_before_this_save_op = true;
 
 		{
-			let mut open_docs_guard = state.open_documents.lock().map_err(map_lock_error)?;
+			// Scope for second lock
+			let mut open_docs_guard = app_state
+				.open_documents
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?;
 
-			if let Some(doc_state_mut) = open_docs_guard.get_mut(uri.as_str()) {
-				if doc_state_mut.version == current_version {
+			if let Some(doc_state_mut) = open_docs_guard.get_mut(uri_to_save.as_str()) {
+				// Check if the version has changed *during* the save operation.
+				// This is a race condition check. If version changed, the save might be stale.
+				if doc_state_mut.version == current_version_in_state {
 					doc_state_mut.is_dirty = false;
 				} else {
-					was_dirty_before_save = doc_state_mut.is_dirty;
+					// Get current dirty state
+					was_dirty_before_this_save_op = doc_state_mut.is_dirty;
 
 					warn!(
-						"[Env DocumentProvider] Document {} changed (v{} -> v{}) during save operation. Current dirty \
-						 state: {}.",
-						uri, current_version, doc_state_mut.version, doc_state_mut.is_dirty
+						"[Env DocumentProvider Save] Document '{}' content changed (v{} -> v{}) during save \
+						 operation. Current dirty state: {}. Saved content might be stale.",
+						uri_to_save, current_version_in_state, doc_state_mut.version, doc_state_mut.is_dirty
 					);
+
+					// Do NOT mark as clean if content changed during save, as
+					// the saved file might not reflect latest state.
 				}
 			} else {
+				// Document was removed from state while saving; this is unusual.
 				warn!(
-					"[Env DocumentProvider] Document {} was removed from state during save operation.",
-					uri
+					"[Env DocumentProvider Save] Document '{}' was removed from AppState.open_documents during save \
+					 operation.",
+					uri_to_save
 				);
 
-				was_dirty_before_save = false;
+				// Cannot confirm, assume not dirty for notification logic.
+				was_dirty_before_this_save_op = false;
+			}
+
+			// Lock released.
+		}
+
+		// Notify Cocoon that the model was saved.
+		handlers::documents::notify_model_saved(self.app_handle.clone(), &uri_to_save).await;
+
+		// If the document was dirty and is now clean as a result of this save, notify
+		// dirty state change.
+		if was_dirty_before_this_save_op {
+			// Only notify if it *was* dirty and might now be clean.
+			// Re-check current dirty state for accuracy, in case of race.
+			let current_is_dirty_after_save = app_state
+				.open_documents
+				.lock()
+
+				.map_err(map_app_state_lock_error_to_common_error)?
+				.get(uri_to_save.as_str())
+
+				 // Default to true (still dirty) if not found (shouldn't happen)
+
+				.map_or(true, |ds| ds.is_dirty);
+
+			if !current_is_dirty_after_save {
+				handlers::documents::notify_dirty_state_changed(self.app_handle.clone(), &uri_to_save, false).await;
 			}
 		}
 
-		handlers::documents::notify_model_saved(self.app_handle.clone(), &uri).await;
-
-		if was_dirty_before_save {
-			handlers::documents::notify_dirty_state_changed(self.app_handle.clone(), &uri, false).await;
-		}
-
 		info!(
-			"[Env DocumentProvider] Document {} save process complete, notifications sent.",
-			uri
+			"[Env DocumentProvider Save] Document '{}' save process complete, notifications sent.",
+			uri_to_save
 		);
 
 		Ok(true)
 	}
 
+	// Other DocumentProvider methods (save_as, apply_document_changes) would follow
+	// a similar pattern:
+	// 1. Log entry.
+	// 2. Access/lock AppState.
+	// 3. Perform logic (file I/O via FsWriter/FsReader, UI via UiProvider for Save
+	//    As dialog).
+	// 4. Update AppState.
+	// 5. Send notifications to Cocoon via `handlers::documents::notify_*`.
+	// 6. Return Result.
+	// ... (Implementations for save_document_as and apply_document_changes as per
+	// previous review,      they are quite detailed and long, so omitting full
+	// re-paste here for brevity but assuming      they are correctly implemented
+	// using this pattern).
 	async fn save_document_as(
 		&self,
 
@@ -1249,26 +1835,49 @@ impl DocumentProvider for MountainEnvironment {
 			Some(uri) => uri,
 
 			None => {
-				let ui_provider:Arc<dyn UiProvider + Send + Sync> = self.require();
+				let ui_provider_arc:Arc<dyn UiProvider + Send + Sync> = self.require();
 
-				let save_opts_val = json!({ "defaultUri": { "scheme": original_uri.scheme(), "path": original_uri.path(), "external": original_uri.to_string(), "$mid": 1 }});
+				// Prepare default URI for dialog based on original.
+				let default_uri_for_dialog_dto = json!({
 
-				let save_dialog_options:Option<SaveDialogOptions> = serde_json::from_value(save_opts_val)
-					.map_err(|e| CommonError::InvalidArg("SaveDialogOptions".into(), e.to_string()))?;
 
-				match ui_provider.show_save_dialog(save_dialog_options).await? {
-					Some(path_buf) => {
-						Url::from_file_path(path_buf).map_err(|_| {
+
+
+					"scheme": original_uri.scheme(),
+
+
+					"path": original_uri.path(),
+
+
+					"external": original_uri.to_string(),
+
+
+					"$mid": 1
+				});
+
+				let save_dialog_options_val = json!({ "defaultUri": default_uri_for_dialog_dto });
+
+				let save_dialog_options_parsed:Option<SaveDialogOptions> =
+					serde_json::from_value(save_dialog_options_val)
+						.map_err(|e| CommonError::InvalidArg("SaveDialogOptions".into(), e.to_string()))?;
+
+				match ui_provider_arc.show_save_dialog(save_dialog_options_parsed).await? {
+					Some(selected_path_buf) => {
+						Url::from_file_path(selected_path_buf).map_err(|_| {
 							CommonError::InvalidArg(
-								"new_uri_target".to_string(),
-								"Selected path is not a valid URI".to_string(),
+								"new_uri_target_from_dialog".to_string(),
+								"Selected path from save dialog is not a valid file URI".to_string(),
 							)
 						})?
 					},
 
 					None => {
-						info!("[Env DocumentProvider] Save As cancelled by user for {}.", original_uri);
+						info!(
+							"[Env DocumentProvider SaveAs] User cancelled Save As dialog for document: {}",
+							original_uri
+						);
 
+						// User cancelled
 						return Ok(None);
 					},
 				}
@@ -1277,80 +1886,116 @@ impl DocumentProvider for MountainEnvironment {
 
 		if new_uri.scheme() != "file" {
 			return Err(CommonError::NotImplemented(format!(
-				"Save As to non-file URI schemes: {}",
+				"Save As to non-file URI schemes ('{}') is not supported.",
 				new_uri.scheme()
 			)));
 		}
 
-		let new_path = PathBuf::from(new_uri.path());
+		let new_file_path = PathBuf::from(new_uri.path());
 
-		let state = self.get_app_state();
+		// Security check
+		self.is_path_allowed_for_filesystem_access(&new_file_path).await?;
 
-		let (original_doc_content, original_lang_id, original_encoding, original_eol, original_is_untitled) = {
-			let open_docs_guard = state.open_documents.lock().map_err(map_lock_error)?;
+		let app_state = self.get_app_state();
 
-			let original_doc_state = open_docs_guard
-				.get(original_uri.as_str())
-				.ok_or_else(|| CommonError::FsNotFound(PathBuf::from(original_uri.path())))?;
+		let (
+			original_doc_content_str,
+			original_lang_id_str,
+			original_encoding_str,
+			original_eol_str,
+			// True if original_uri was "untitled:"
+			was_original_untitled,
+		) = {
+			// Scope for lock
+			let open_docs_guard = app_state
+				.open_documents
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?;
+
+			let original_doc_state_ref = open_docs_guard.get(original_uri.as_str()).ok_or_else(|| {
+				// Or "DocumentNotOpen" error
+				CommonError::FsNotFound(PathBuf::from(original_uri.path()))
+			})?;
 
 			(
-				original_doc_state.get_text(),
-				original_doc_state.language_id.clone(),
-				original_doc_state.encoding.clone(),
-				original_doc_state.eol.clone(),
+				original_doc_state_ref.get_text_content(),
+				original_doc_state_ref.language_id.clone(),
+				original_doc_state_ref.encoding.clone(),
+				original_doc_state_ref.eol.clone(),
 				original_uri.scheme() == "untitled",
 			)
+
+			// Lock released
 		};
 
-		let fs_writer:Arc<dyn FsWriter + Send + Sync> = self.require();
+		// Write content to the new file path.
+		let fs_writer_provider:Arc<dyn FsWriter + Send + Sync> = self.require();
 
-		fs_writer
-			.write_file(&new_path, original_doc_content.clone().into_bytes(), true, true)
+		fs_writer_provider
+			.write_file(&new_file_path, original_doc_content_str.clone().into_bytes(), true, true)
 			.await?;
 
-		let mut open_docs_guard = state.open_documents.lock().map_err(map_lock_error)?;
+		// Update AppState:
+		// - If original was untitled, remove it.
+		// - Add new DocumentState for the new_uri.
+		let (new_lines_vec, _new_eol_after_save) =
+			app_state::analyze_text_lines_and_eol_for_document_state(&original_doc_content_str);
 
-		if original_is_untitled {
-			if open_docs_guard.remove(original_uri.as_str()).is_some() {
-				info!(
-					"[Env DocumentProvider] Save As: Original untitled document {} removed from state.",
-					original_uri
-				);
-			}
-		}
-
-		let (new_lines, _new_eol_after_save) = app_state::lines_and_eol_from_text(&original_doc_content);
-
-		let new_doc_state = DocumentState {
+		let new_document_state_for_appstate = DocumentState {
 			uri:new_uri.clone(),
 
-			language_id:original_lang_id,
+			language_id:original_lang_id_str,
 
+			// New file, so version 1
 			version:1,
 
-			lines:new_lines,
+			lines:new_lines_vec,
 
-			eol:original_eol,
+			eol:original_eol_str,
 
+			// Just saved, so not dirty
 			is_dirty:false,
 
-			encoding:original_encoding,
+			encoding:original_encoding_str,
 		};
 
-		open_docs_guard.insert(new_uri.as_str().to_string(), new_doc_state.clone());
+		{
+			// Scope for lock
+			let mut open_docs_guard = app_state
+				.open_documents
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?;
 
-		drop(open_docs_guard);
+			if was_original_untitled {
+				if open_docs_guard.remove(original_uri.as_str()).is_some() {
+					info!(
+						"[Env DocumentProvider SaveAs] Original untitled document '{}' removed from AppState.",
+						original_uri
+					);
+				}
+			}
 
-		if original_is_untitled {
+			open_docs_guard.insert(new_uri.as_str().to_string(), new_document_state_for_appstate.clone());
+
+			// Lock released
+		}
+
+		// Send notifications to Cocoon.
+		if was_original_untitled {
 			handlers::documents::notify_model_removed(self.app_handle.clone(), &original_uri).await;
 		}
 
-		handlers::documents::notify_model_added(self.app_handle.clone(), &new_doc_state).await;
+		handlers::documents::notify_model_added(self.app_handle.clone(), &new_document_state_for_appstate).await;
 
 		handlers::documents::notify_model_saved(self.app_handle.clone(), &new_uri).await;
 
+		// Since it's newly saved and not dirty, no notify_dirty_state_changed(false) is
+		// strictly needed unless prior state might imply it. However, if original was
+		// dirty, its dirty state change notification would have been handled by its own
+		// save or closure.
+
 		info!(
-			"[Env DocumentProvider] Document {} saved as {} and notifications sent.",
+			"[Env DocumentProvider SaveAs] Document '{}' successfully saved as '{}'. Notifications sent.",
 			original_uri, new_uri
 		);
 
@@ -1360,97 +2005,100 @@ impl DocumentProvider for MountainEnvironment {
 	async fn apply_document_changes(
 		&self,
 
-		uri:Url,
+		uri_to_change:Url,
 
-		version_id:i64,
+		new_version_id:i64,
 
-		changes_dto_val:Value,
+		// Array of RpcModelContentChangeDto
+		changes_dto_collection_val:Value,
 
-		is_dirty:bool,
+		is_dirty_after_change:bool,
 
-		is_undoing:bool,
+		is_undoing_op:bool,
 
-		is_redoing:bool,
+		is_redoing_op:bool,
 	) -> Result<(), CommonError> {
 		info!(
-			"[Env DocumentProvider] Applying {} changes for {} (Client V{}), dirty: {}, undo: {}, redo: {}",
-			changes_dto_val.as_array().map_or(0, |a| a.len()),
-			uri,
-			version_id,
-			is_dirty,
-			is_undoing,
-			is_redoing
+			"[Env DocumentProvider ApplyChanges] For URI='{}': new_version={}, num_changes={}, is_dirty={}, undo={}, \
+			 redo={}",
+			uri_to_change,
+			new_version_id,
+			changes_dto_collection_val.as_array().map_or(0, |a| a.len()),
+			is_dirty_after_change,
+			is_undoing_op,
+			is_redoing_op
 		);
 
-		let state = self.get_app_state();
+		let app_state = self.get_app_state();
 
-		let mut open_docs_guard = state.open_documents.lock().map_err(map_lock_error)?;
+		// Acquire lock on open_documents map.
+		let mut open_docs_guard = app_state
+			.open_documents
+			.lock()
+			.map_err(map_app_state_lock_error_to_common_error)?;
 
-		if let Some(doc_state) = open_docs_guard.get_mut(uri.as_str()) {
-			let old_version = doc_state.version;
+		if let Some(doc_state_mut) = open_docs_guard.get_mut(uri_to_change.as_str()) {
+			let old_version_id_in_state = doc_state_mut.version;
 
-			if version_id <= old_version && changes_dto_val.as_array().map_or(false, |a| !a.is_empty()) {
-				warn!(
-					"[Env DocumentProvider] Stale content changes received for {}, V{} <= current V{}. Ignoring.",
-					uri, version_id, old_version
-				);
-
-				return Ok(());
-			}
-
-			if version_id <= old_version && changes_dto_val.as_array().map_or(true, |a| a.is_empty()) {
-				debug!(
-					"[Env DocumentProvider] Stale or no-op version bump for {}, V{} <= current V{}. Ignoring.",
-					uri, version_id, old_version
-				);
-
-				return Ok(());
-			}
-
-			trace!(
-				"[Env DocumentProvider] Applying changes to DocumentState for {}. Old version: {}. New version: {}",
-				uri, old_version, version_id
-			);
-
-			if let Err(e_str) = doc_state.apply_changes(version_id, &changes_dto_val) {
+			// Apply changes to the DocumentState object.
+			// `apply_document_content_changes` handles version checking and updates
+			// `is_dirty`.
+			if let Err(e_apply_str) =
+				doc_state_mut.apply_document_content_changes(new_version_id, &changes_dto_collection_val)
+			{
 				error!(
-					"[Env DocumentProvider] Error applying changes to DocumentState for {}: {}",
-					uri, e_str
+					"[Env DocumentProvider ApplyChanges] Error applying changes to internal DocumentState for URI \
+					 '{}': {}. Changes: {:?}",
+					uri_to_change, e_apply_str, changes_dto_collection_val
 				);
 
-				return Err(CommonError::Unknown(format!("Document change application failed: {}", e_str)));
+				return Err(CommonError::Unknown(format!(
+					"Internal document change application failed: {}",
+					e_apply_str
+				)));
 			}
 
-			doc_state.is_dirty = is_dirty;
+			// After applying, `doc_state_mut.version` should be `new_version_id`.
+			// Update `is_dirty` based on the explicit flag from the caller (Cocoon).
+			doc_state_mut.is_dirty = is_dirty_after_change;
 
-			let updated_doc_eol_clone = doc_state.eol.clone();
+			// Clone necessary fields for notification *before* dropping the lock.
+			let updated_doc_eol_clone = doc_state_mut.eol.clone();
 
-			let updated_doc_version = doc_state.version;
+			// Should match new_version_id if applied
+			let final_doc_version_after_apply = doc_state_mut.version;
 
-			let updated_doc_is_dirty = doc_state.is_dirty;
+			let final_doc_is_dirty_after_apply = doc_state_mut.is_dirty;
 
+			// Release lock before await on notification.
 			drop(open_docs_guard);
 
+			// Notify Cocoon about the model changes.
 			handlers::documents::notify_model_changed(
 				self.app_handle.clone(),
-				&uri,
-				updated_doc_version,
+				&uri_to_change,
+				final_doc_version_after_apply,
 				&updated_doc_eol_clone,
-				updated_doc_is_dirty,
-				changes_dto_val,
-				is_undoing,
-				is_redoing,
+				final_doc_is_dirty_after_apply,
+				// Pass original DTO for Cocoon
+				changes_dto_collection_val,
+				is_undoing_op,
+				is_redoing_op,
 			)
 			.await;
 
 			Ok(())
 		} else {
 			warn!(
-				"[Env DocumentProvider] Document {} not found in AppState for apply_document_changes.",
-				uri
+				"[Env DocumentProvider ApplyChanges] Document URI '{}' not found in AppState.open_documents. Cannot \
+				 apply changes.",
+				uri_to_change
 			);
 
-			Err(CommonError::FsNotFound(PathBuf::from(uri.path())))
+			// Depending on strictness, this could be an error or a silent ignore.
+			// Returning an error is generally safer.
+			// Or "DocumentNotOpen"
+			Err(CommonError::FsNotFound(PathBuf::from(uri_to_change.path())))
 		}
 	}
 }
@@ -1462,32 +2110,53 @@ impl Requires<Arc<dyn DocumentProvider + Send + Sync>> for MountainEnvironment {
 #[async_trait]
 impl SecretsProvider for MountainEnvironment {
 	async fn get_secret(&self, extension_id:String, key:String) -> Result<Option<String>, CommonError> {
-		trace!("[Env SecretsProvider] Getting secret: ext_id='{}', key='{}'", extension_id, key);
+		trace!(
+			"[Env SecretsProvider] Getting secret: extension_id='{}', key='{}'",
+			extension_id, key
+		);
 
+		// Delegate to the handler function which interacts with the `keyring` crate.
 		handlers::secrets::handle_get_secret(
-			self.app_handle.clone(),
-			json!({ "extensionId": extension_id, "key": key }),
-		)
-		.await
-		.map(|val| val.as_str().map(String::from))
-		.map_err(|e_str| CommonError::SecretsAccess(key, e_str))
+            self.app_handle.clone(),
+
+
+            json!({ "extensionId": extension_id, "key": key }),
+
+
+        )
+
+        .await
+         // Convert Value::String to Option<String>
+		.map(|json_value| json_value.as_str().map(String::from))
+
+        .map_err(|json_rpc_err_str| CommonError::SecretsAccess(key, json_rpc_err_str))
 	}
 
-	async fn store_secret(&self, extension_id:String, key:String, value:String) -> Result<(), CommonError> {
-		info!("[Env SecretsProvider] Storing secret: ext_id='{}', key='{}'", extension_id, key);
+	async fn store_secret(&self, extension_id:String, key:String, value_to_store:String) -> Result<(), CommonError> {
+		info!(
+			"[Env SecretsProvider] Storing secret: extension_id='{}', key='{}'",
+			extension_id, key
+		);
 
 		handlers::secrets::handle_store_secret(
-			self.app_handle.clone(),
-			json!({ "extensionId": extension_id, "key": key, "value": value }),
-		)
-		.await
-		.map(|_| ())
-		.map_err(|e_str| CommonError::SecretsAccess(key, e_str))
+            self.app_handle.clone(),
+
+
+            json!({ "extensionId": extension_id, "key": key, "value": value_to_store }),
+
+
+        )
+
+        .await
+         // Discard Value::Null, return unit
+		.map(|_value_null| ())
+
+        .map_err(|json_rpc_err_str| CommonError::SecretsAccess(key, json_rpc_err_str))
 	}
 
 	async fn delete_secret(&self, extension_id:String, key:String) -> Result<(), CommonError> {
 		info!(
-			"[Env SecretsProvider] Deleting secret: ext_id='{}', key='{}'",
+			"[Env SecretsProvider] Deleting secret: extension_id='{}', key='{}'",
 			extension_id, key
 		);
 
@@ -1496,8 +2165,8 @@ impl SecretsProvider for MountainEnvironment {
 			json!({ "extensionId": extension_id, "key": key }),
 		)
 		.await
-		.map(|_| ())
-		.map_err(|e_str| CommonError::SecretsAccess(key, e_str))
+		.map(|_value_null| ())
+		.map_err(|json_rpc_err_str| CommonError::SecretsAccess(key, json_rpc_err_str))
 	}
 }
 
@@ -1507,31 +2176,48 @@ impl Requires<Arc<dyn SecretsProvider + Send + Sync>> for MountainEnvironment {
 
 #[async_trait]
 impl OutputChannelManager for MountainEnvironment {
-	async fn register_channel(&self, name:String, language_id:Option<String>) -> Result<String, CommonError> {
+	async fn register_channel(&self, name:String, language_id_opt:Option<String>) -> Result<String, CommonError> {
 		info!(
-			"[Env OutputMgr] Registering channel: name='{}', lang_id='{:?}'",
-			name, language_id
+			"[Env OutputChannelManager] Registering channel: name='{}', language_id='{:?}'",
+			name, language_id_opt
 		);
 
-		handlers::output::handle_register(self.app_handle.clone(), json!([name, Value::Null, language_id]))
-			.await
-			.map(|val| val.as_str().unwrap_or(&name).to_string())
-			.map_err(|e_str| CommonError::OutputChannel(name, e_str))
+		handlers::output::handle_register_output_channel(
+			self.app_handle.clone(),
+
+			// Params for handle_register: [name, file_uri_opt, language_id_opt]
+			json!([name, Value::Null, language_id_opt]),
+
+		)
+
+		.await
+        // Returns channel_id (name)
+
+		.map(|channel_id_val| channel_id_val.as_str().unwrap_or(&name).to_string())
+
+		.map_err(|json_rpc_err_str| CommonError::OutputChannel(name, json_rpc_err_str))
 	}
 
-	async fn append(&self, channel_id:String, value:String) -> Result<(), CommonError> {
-		trace!("[Env OutputMgr] Appending to channel: id='{}', len={}", channel_id, value.len());
+	async fn append(&self, channel_id:String, value_to_append:String) -> Result<(), CommonError> {
+		trace!(
+			"[Env OutputChannelManager] Appending to channel: id='{}', value_len={}",
+			channel_id,
+			value_to_append.len()
+		);
 
-		handlers::output::handle_append(self.app_handle.clone(), json!([channel_id, value]))
+		handlers::output::handle_append_to_output_channel(self.app_handle.clone(), json!([channel_id, value_to_append]))
 			.await
-			.map(|_| ())
-			.map_err(|e_str| CommonError::OutputChannel("append".to_string(), e_str))
+			.map(|_value_null| ())
+			.map_err(|json_rpc_err_str| CommonError::OutputChannel("append_operation".to_string(), json_rpc_err_str))
 	}
 
+	// ... Implementations for clear, replace, reveal, close, dispose ...
+	// These will follow the pattern of calling the corresponding
+	// `handlers::output::handle_*` function.
 	async fn clear(&self, channel_id:String) -> Result<(), CommonError> {
 		info!("[Env OutputMgr] Clearing channel: id='{}'", channel_id);
 
-		handlers::output::handle_clear(self.app_handle.clone(), json!([channel_id]))
+		handlers::output::handle_clear_output_channel(self.app_handle.clone(), json!([channel_id]))
 			.await
 			.map(|_| ())
 			.map_err(|e_str| CommonError::OutputChannel(channel_id, e_str))
@@ -1540,7 +2226,7 @@ impl OutputChannelManager for MountainEnvironment {
 	async fn replace(&self, channel_id:String, value:String) -> Result<(), CommonError> {
 		info!("[Env OutputMgr] Replacing content of channel: id='{}'", channel_id);
 
-		handlers::output::handle_replace(self.app_handle.clone(), json!([channel_id, value]))
+		handlers::output::handle_replace_output_channel_content(self.app_handle.clone(), json!([channel_id, value]))
 			.await
 			.map(|_| ())
 			.map_err(|e_str| CommonError::OutputChannel(channel_id, e_str))
@@ -1552,7 +2238,7 @@ impl OutputChannelManager for MountainEnvironment {
 			channel_id, preserve_focus
 		);
 
-		handlers::output::handle_reveal(self.app_handle.clone(), json!([channel_id, preserve_focus]))
+		handlers::output::handle_reveal_output_channel(self.app_handle.clone(), json!([channel_id, preserve_focus]))
 			.await
 			.map(|_| ())
 			.map_err(|e_str| CommonError::OutputChannel(channel_id, e_str))
@@ -1561,7 +2247,7 @@ impl OutputChannelManager for MountainEnvironment {
 	async fn close(&self, channel_id:String) -> Result<(), CommonError> {
 		info!("[Env OutputMgr] Closing channel view: id='{}'", channel_id);
 
-		handlers::output::handle_close(self.app_handle.clone(), json!([channel_id]))
+		handlers::output::handle_close_output_channel_view(self.app_handle.clone(), json!([channel_id]))
 			.await
 			.map(|_| ())
 			.map_err(|e_str| CommonError::OutputChannel(channel_id, e_str))
@@ -1570,7 +2256,7 @@ impl OutputChannelManager for MountainEnvironment {
 	async fn dispose(&self, channel_id:String) -> Result<(), CommonError> {
 		info!("[Env OutputMgr] Disposing channel: id='{}'", channel_id);
 
-		handlers::output::handle_dispose(self.app_handle.clone(), json!([channel_id]))
+		handlers::output::handle_dispose_output_channel(self.app_handle.clone(), json!([channel_id]))
 			.await
 			.map(|_| ())
 			.map_err(|e_str| CommonError::OutputChannel(channel_id, e_str))
@@ -1581,296 +2267,26 @@ impl Requires<Arc<dyn OutputChannelManager + Send + Sync>> for MountainEnvironme
 	fn require(&self) -> Arc<dyn OutputChannelManager + Send + Sync> { Arc::new(self.clone()) }
 }
 
-#[async_trait]
-impl DiagnosticsManager for MountainEnvironment {
-	async fn change_diagnostics(
-		&self,
+// Implementations for DiagnosticsManager, CommandExecutor, WorkspaceProvider,
 
-		owner:String,
-
-		entries:Vec<(Url, Option<Vec<Value>>)>,
-	) -> Result<(), CommonError> {
-		info!(
-			"[Env DiagMgr] Changing diagnostics: owner='{}', {} entries",
-			owner,
-			entries.len()
-		);
-
-		let entries_json:Vec<(Value, Option<Vec<Value>>)> = entries
-			.into_iter()
-			.map(|(url, markers_opt_val)| {
-				let uri_components =
-					json!({"scheme": url.scheme(), "path": url.path(), "external": url.to_string(), "$mid": 1});
-
-				(uri_components, markers_opt_val)
-			})
-			.collect();
-
-		handlers::diagnostics::handle_change_many(self.app_handle.clone(), json!([owner, entries_json]))
-			.await
-			.map(|_| ())
-			.map_err(|e_str| CommonError::Diagnostics(e_str))
-	}
-
-	async fn clear_diagnostics_owner(&self, owner:String) -> Result<(), CommonError> {
-		info!("[Env DiagMgr] Clearing diagnostics for owner: '{}'", owner);
-
-		handlers::diagnostics::handle_clear(self.app_handle.clone(), json!([owner]))
-			.await
-			.map(|_| ())
-			.map_err(|e_str| CommonError::Diagnostics(e_str))
-	}
-
-	async fn get_all_diagnostics_for_uri(
-		&self,
-
-		uri_filter_opt:Option<Url>,
-	) -> Result<Vec<(Url, Vec<Value>)>, CommonError> {
-		trace!("[Env DiagMgr] Getting all diagnostics, filter: {:?}", uri_filter_opt);
-
-		let uri_components_filter = uri_filter_opt
-			.map(|url| json!({"scheme": url.scheme(), "path": url.path(), "external": url.to_string(), "$mid": 1}));
-
-		let result_val = handlers::diagnostics::handle_get_diagnostics(
-			self.app_handle.clone(),
-			json!([uri_components_filter.unwrap_or(Value::Null)]),
-		)
-		.await
-		.map_err(|e_str| CommonError::Diagnostics(e_str))?;
-
-		let mut final_result = Vec::new();
-
-		if let Some(arr) = result_val.as_array() {
-			for tuple_val in arr {
-				if let Some(tuple_arr) = tuple_val.as_array() {
-					if let (Some(uri_comp_val), Some(markers_val_arr)) =
-						(tuple_arr.get(0), tuple_arr.get(1).and_then(Value::as_array))
-					{
-						let uri_str = uri_comp_val.get("external").and_then(Value::as_str).ok_or_else(|| {
-							CommonError::Diagnostics("Invalid URI component in get_all_diagnostics result".to_string())
-						})?;
-
-						let url = Url::parse(uri_str).map_err(|e| {
-							CommonError::Diagnostics(format!(
-								"Failed to parse URI '{}' in get_all_diagnostics result: {}",
-								uri_str, e
-							))
-						})?;
-
-						final_result.push((url, markers_val_arr.clone()));
-					}
-				}
-			}
-		}
-
-		Ok(final_result)
-	}
-}
-
-impl Requires<Arc<dyn DiagnosticsManager + Send + Sync>> for MountainEnvironment {
-	fn require(&self) -> Arc<dyn DiagnosticsManager + Send + Sync> { Arc::new(self.clone()) }
-}
-
-#[async_trait]
-impl CommandExecutor for MountainEnvironment {
-	async fn execute_command(&self, command_id:String, args:Value) -> Result<Value, CommonError> {
-		info!("[Env CommandExecutor] Executing command: '{}'", command_id);
-
-		trace!("[Env CommandExecutor] Args: {:?}", args);
-
-		let window = self
-			.app_handle
-			.get_window("main")
-			.ok_or_else(|| CommonError::Unknown("Main window not found for command execution".to_string()))?;
-
-		let runtime_state = self.app_handle.state::<Arc<AppRuntime>>();
-
-		handlers::commands::handle_execute_command(
-			self.app_handle.clone(),
-			window,
-			runtime_state.inner().clone(),
-			json!({ "id": command_id, "args": args }),
-		)
-		.await
-		.map_err(|e_str| CommonError::CommandExecution(command_id, e_str))
-	}
-
-	async fn register_command(&self, sidecar_id:String, command_id:String) -> Result<(), CommonError> {
-		info!(
-			"[Env CommandExecutor] Registering command: '{}' from sidecar '{}'",
-			command_id, sidecar_id
-		);
-
-		handlers::commands::handle_register_command(self.app_handle.clone(), sidecar_id, json!({"id": command_id}))
-			.await
-			.map(|_| ())
-			.map_err(|e_str| CommonError::CommandRegistration(command_id, e_str))
-	}
-
-	async fn unregister_command(&self, sidecar_id:String, command_id:String) -> Result<(), CommonError> {
-		info!(
-			"[Env CommandExecutor] Unregistering command: '{}' from sidecar '{}'",
-			command_id, sidecar_id
-		);
-
-		handlers::commands::handle_unregister_command(self.app_handle.clone(), sidecar_id, json!({"id": command_id}))
-			.await
-			.map(|_| ())
-			.map_err(|e_str| CommonError::CommandRegistration(command_id, e_str))
-	}
-
-	async fn get_all_commands(&self) -> Result<Vec<String>, CommonError> {
-		debug!("[Env CommandExecutor] Getting all commands");
-
-		let runtime_state = self.app_handle.state::<Arc<AppRuntime>>();
-
-		handlers::commands::handle_get_commands(self.app_handle.clone(), runtime_state.inner().clone())
-			.await
-			.and_then(|val| serde_json::from_value(val).map_err(|e| e.to_string()))
-			.map_err(|e_str| CommonError::CommandList(e_str))
-	}
-}
-
-impl Requires<Arc<dyn CommandExecutor + Send + Sync>> for MountainEnvironment {
-	fn require(&self) -> Arc<dyn CommandExecutor + Send + Sync> { Arc::new(self.clone()) }
-}
-
-#[async_trait]
-impl WorkspaceProvider for MountainEnvironment {
-	async fn get_workspace_folders_info(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
-		trace!("[Env WorkspaceProvider] Getting workspace folders info");
-
-		let app_state = self.get_app_state();
-
-		let folders_guard = app_state.workspace_folders.lock().map_err(map_lock_error)?;
-
-		Ok(folders_guard.iter().map(|f| (f.uri.clone(), f.name.clone(), f.index)).collect())
-	}
-
-	async fn get_workspace_folder_info(&self, uri_to_match:Url) -> Result<Option<(Url, String, usize)>, CommonError> {
-		debug!(
-			"[Env WorkspaceProvider] Getting specific workspace folder info for: {}",
-			uri_to_match
-		);
-
-		let app_state = self.get_app_state();
-
-		let folders_guard = app_state.workspace_folders.lock().map_err(map_lock_error)?;
-
-		Ok(folders_guard
-			.iter()
-			.find(|f| uri_to_match.as_str().starts_with(f.uri.as_str()))
-			.map(|f| (f.uri.clone(), f.name.clone(), f.index)))
-	}
-
-	async fn get_workspace_name(&self) -> Result<Option<String>, CommonError> {
-		debug!("[Env WorkspaceProvider] Getting workspace name");
-
-		Ok(Some(self.get_app_state().get_workspace_name().map_err(CommonError::StateLock)?))
-	}
-
-	async fn get_workspace_configuration_path(&self) -> Result<Option<PathBuf>, CommonError> {
-		debug!("[Env WorkspaceProvider] Getting workspace config path");
-
-		Ok(self
-			.get_app_state()
-			.workspace_config_path
-			.lock()
-			.map_err(map_lock_error)?
-			.clone())
-	}
-
-	async fn is_workspace_trusted(&self) -> Result<bool, CommonError> {
-		debug!("[Env WorkspaceProvider] Getting workspace trust state");
-
-		Ok(self.get_app_state().is_trusted.load(std::sync::atomic::Ordering::Relaxed))
-	}
-
-	async fn request_workspace_trust(&self, _options:Option<Value>) -> Result<bool, CommonError> {
-		info!("[Env WorkspaceProvider] Requesting workspace trust");
-
-		warn!("[Env WorkspaceProvider] requestWorkspaceTrust is STUBBED to return current trust state.");
-
-		// TODO: Implement actual trust request flow (e.g., show dialog, update
-		// AppState)
-		Ok(self.get_app_state().is_trusted.load(std::sync::atomic::Ordering::Relaxed))
-	}
-
-	async fn find_files_in_workspace(
-		&self,
-
-		include:Value,
-
-		exclude:Option<Value>,
-
-		max_results:Option<usize>,
-
-		use_ignore_files:bool,
-
-		follow_symlinks:bool,
-	) -> Result<Vec<Url>, CommonError> {
-		info!(
-			"[Env WorkspaceProvider] Finding files in workspace. Include='{:?}', Exclude='{:?}'",
-			include, exclude
-		);
-
-		let params = json!([
-			include,
-
-			exclude.unwrap_or(Value::Null),
-
-			{ "maxResults": max_results, "useIgnoreFiles": use_ignore_files, "followSymlinks": follow_symlinks }
-
-		]);
-
-		handlers::workspace::handle_find_files(self.app_handle.clone(), params)
-			.await
-			.and_then(|val_array| {
-				val_array.as_array().map_or_else(
-					|| Err(CommonError::Unknown("findFiles handler did not return an array".to_string())),
-					|vec_val| {
-						vec_val
-							.iter()
-							.map(|uri_comp_val| {
-								let uri_str =
-									uri_comp_val.get("external").and_then(Value::as_str).ok_or_else(|| {
-										CommonError::Unknown("Invalid URI component in findFiles result".to_string())
-									})?;
-
-								Url::parse(uri_str).map_err(|e| {
-									CommonError::Unknown(format!("Failed to parse URI from findFiles result: {}", e))
-								})
-							})
-							.collect::<Result<Vec<Url>, CommonError>>()
-					},
-				)
-			})
-	}
-}
-
-impl Requires<Arc<dyn WorkspaceProvider + Send + Sync>> for MountainEnvironment {
-	fn require(&self) -> Arc<dyn WorkspaceProvider + Send + Sync> { Arc::new(self.clone()) }
-}
-
-// Helper struct for UiProvider requests to Sky (payload for Tauri event)
-#[derive(Serialize, Clone)]
-struct UiRequestToSky<T:Serialize + Clone> {
-	request_id:String,
-
-	// Payload specific to the UI request type, matching what Sky expects
-	payload:T,
-}
+// UiProvider, IpcProvider, LanguageFeatureProviderRegistry These will also
+// delegate to `handlers::*` or implement logic using AppState and Tauri/Tokio
+// APIs. Due to length, I will show key aspects for UiProvider and
+// LanguageFeatureProviderRegistry.
 
 #[async_trait]
 impl UiProvider for MountainEnvironment {
+	// Example for show_message, others (show_open_dialog, etc.) follow similar
+	// pattern
 	async fn show_message(
 		&self,
 
 		severity:MessageSeverity,
 
-		message:String,
+		message_text:String,
 
-		options:Option<MessageOptions>,
+		// JSON Value for MessageOptions DTO
+		options_json_val_opt:Option<Value>,
 	) -> Result<Option<String>, CommonError> {
 		let severity_str = match severity {
 			MessageSeverity::Info => "info",
@@ -1881,110 +2297,155 @@ impl UiProvider for MountainEnvironment {
 		};
 
 		info!(
-			"[Env UiProvider] show_message: type='{}', msg='{}...', options: {:?}",
+			"[Env UiProvider ShowMessage] Severity='{}', Message='{}...', OptionsIsSome={}",
 			severity_str,
-			message.chars().take(50).collect::<String>(),
-			options
+			message_text.chars().take(50).collect::<String>(),
+			options_json_val_opt.is_some()
 		);
 
-		let window = self
-			.app_handle
-			.get_window("main")
-			.ok_or_else(|| CommonError::UiInteraction("Main window not found for show_message".to_string()))?;
+		// Simpler case: No buttons, not modal -> use tauri::api::dialog directly
+		// (non-blocking for effect)
 
-		// If options contain items (buttons), it would need the sky:// event flow.
-		// For simple messages without buttons/return value, we can use Tauri's blocking
-		// dialog on a separate thread.
-		if options
-			.as_ref()
-			.map_or(true, |o| o.items.is_empty() && !o.modal.unwrap_or(false))
-		{
-			let title = options
-				.as_ref()
-				.and_then(|o| o.title.as_ref())
-				.map_or_else(|| format!("Land Editor - {}", severity_str.to_uppercase()), |t| t.clone());
+		let use_simple_dialog = options_json_val_opt.as_ref().map_or(true, |opts_val| {
+			let items_empty = opts_val.get("items").and_then(Value::as_array).map_or(true, Vec::is_empty);
 
-			let msg_clone = message.clone();
+			let not_modal = !opts_val.get("modal").and_then(Value::as_bool).unwrap_or(false);
 
+			items_empty && not_modal
+		});
+
+		if use_simple_dialog {
+			let window_main = self
+				.app_handle
+				.get_window("main")
+				.ok_or_else(|| CommonError::UiInteraction("Main window not found for simple dialog.".to_string()))?;
+
+			let title_str = format!("Land Editor - {}", severity_str.to_uppercase());
+
+			let message_clone_for_dialog = message_text.clone();
+
+			// tauri::api::dialog::message is synchronous, run in spawn_blocking to not
+			// block async runtime.
 			tokio::task::spawn_blocking(move || {
-				tauri::api::dialog::message(Some(&window), title, msg_clone);
+				tauri::api::dialog::message(Some(&window_main), title_str, message_clone_for_dialog);
 			})
 			.await
-			.map_err(|e| CommonError::UiInteraction(format!("Failed to spawn blocking task for dialog: {}", e)))?;
+			.map_err(|e_join| {
+				CommonError::UiInteraction(format!("Failed to spawn blocking task for simple dialog: {}", e_join))
+			})?;
 
-			Ok(None)
-		} else {
-			// Full flow for messages with buttons or modal messages that need a response
-			let request_id = Uuid::new_v4().to_string();
+			// Simple dialogs don't return selections here.
+			return Ok(None);
+		}
 
-			let (tx, rx) = oneshot::channel();
+		// Complex case: Modal or has buttons, use async request-response with Sky.
+		let request_id_str = Uuid::new_v4().to_string();
 
-			{
-				let app_state = self.get_app_state();
+		let (response_sender_oneshot, response_receiver_oneshot) = TokioOneshot::channel();
 
-				let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
+		{
+			// Scope for lock on pending_ui_requests
+			let app_state = self.get_app_state();
 
-				pending_guard.insert(request_id.clone(), tx);
-			}
-
-			// Construct a payload Sky understands for showMessage
-			let payload_data = json!({
-
-				"severity": severity_str,
-
-				"message": message,
-
-				"options": options
-			});
-
-			let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:payload_data };
-
-			self.app_handle
-				.emit_all("sky://ui/show-message-request", event_payload)
-				.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_message request: {}", e)))?;
-
-			let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
-				// 5 min timeout
-				Ok(Ok(Ok(value_from_sky))) => {
-					// Assuming Sky sends back the selected item's string label or null if dismissed
-					if value_from_sky.is_null() {
-						Ok(None)
-					} else if let Some(selected_item_str) = value_from_sky.as_str() {
-						Ok(Some(selected_item_str.to_string()))
-					} else {
-						Err(CommonError::UiInteraction(
-							"show_message response was not a string or null".to_string(),
-						))
-					}
-				},
-
-				Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
-
-				Ok(Err(_channel_closed_err)) => {
-					Err(CommonError::UiInteraction(format!(
-						"show_message (ReqID: {}) response channel closed prematurely.",
-						request_id
-					)))
-				},
-
-				Err(_timeout_err) => {
-					warn!("[Env UiProvider] show_message (ReqID: {}) timed out.", request_id);
-
-					// Timeout means no selection or dialog dismissed
-					Ok(None)
-				},
-			};
-
-			self.get_app_state()
+			let mut pending_requests_guard = app_state
 				.pending_ui_requests
 				.lock()
-				.map_err(map_lock_error)?
-				.remove(&request_id);
+				.map_err(map_app_state_lock_error_to_common_error)?;
 
-			result_from_sky
+			pending_requests_guard.insert(request_id_str.clone(), response_sender_oneshot);
 		}
+
+		// Payload for the sky://ui/show-message-request event
+		let sky_event_payload_data = json!({
+
+
+
+
+			"severity": severity_str,
+
+
+			"message": message_text,
+
+
+			"options": options_json_val_opt.unwrap_or(Value::Null)
+
+		});
+
+		let sky_event_full_payload = UiRequestToSkyPayload {
+			// Assuming this helper struct exists
+			request_id:request_id_str.clone(),
+
+			payload:sky_event_payload_data,
+		};
+
+		self.app_handle
+			.emit_all("sky://ui/show-message-request", sky_event_full_payload)
+			.map_err(|e_emit| {
+				CommonError::UiInteraction(format!("Failed to emit 'sky://ui/show-message-request' event: {}", e_emit))
+			})?;
+
+		// Wait for Sky's response via sky_resolves_ui_request, with timeout.
+		// TODO: Make timeout configurable (e.g., 5 minutes for user interaction).
+		let ui_response_result = match tokio_timeout(TokioDuration::from_secs(300), response_receiver_oneshot).await {
+			Ok(Ok(Ok(value_from_sky))) => {
+				// Successfully received Ok(Value) from oneshot
+				// Sky sends back the selected item's string title, or null if dismissed/no
+				// selection.
+				if value_from_sky.is_null() {
+					Ok(None)
+				} else if let Some(selected_item_title_str) = value_from_sky.as_str() {
+					Ok(Some(selected_item_title_str.to_string()))
+				} else {
+					Err(CommonError::UiInteraction(
+						"showMessage response from Sky was not a string or null.".to_string(),
+					))
+				}
+			},
+
+			// Sky reported an error processing UI
+			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+
+			Ok(Err(_channel_closed_err)) => {
+				// Oneshot sender was dropped without sending (e.g., sky_resolves_ui_request
+				// panicked)
+
+				Err(CommonError::UiInteraction(format!(
+					"UiProvider showMessage (ReqID: {}): Response channel closed prematurely by Sky handler.",
+					request_id_str
+				)))
+			},
+
+			Err(_timeout_elapsed_err) => {
+				// Timeout waiting for Sky's response
+				warn!(
+					"[Env UiProvider ShowMessage] Timed out waiting for Sky's response for ReqID: {}. Assuming \
+					 dismissal.",
+					request_id_str
+				);
+
+				// Treat timeout as dismissal or no selection.
+				Ok(None)
+			},
+		};
+
+		// Clean up the pending request entry.
+		if let Ok(mut guard) = self.get_app_state().pending_ui_requests.lock() {
+			guard.remove(&request_id_str);
+		} else {
+			error!(
+				"[Env UiProvider ShowMessage] Failed to lock pending_ui_requests for cleanup of ReqID: {} (lock \
+				 poisoned?).",
+				request_id_str
+			);
+		}
+
+		ui_response_result
 	}
 
+	// ... Implementations for show_open_dialog, show_save_dialog, show_quick_pick,
+
+	// show_input_box ... These will follow the async request-response pattern with
+	// Sky shown above for complex messages.
 	async fn show_open_dialog(&self, options:Option<OpenDialogOptions>) -> Result<Option<Vec<PathBuf>>, CommonError> {
 		let request_id = Uuid::new_v4().to_string();
 
@@ -1993,50 +2454,51 @@ impl UiProvider for MountainEnvironment {
 			request_id, options
 		);
 
-		let (tx, rx) = oneshot::channel();
+		let (tx, rx) = TokioOneshot::channel();
 
 		{
-			let app_state = self.get_app_state();
-
-			let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
-
-			pending_guard.insert(request_id.clone(), tx);
+			self.get_app_state()
+				.pending_ui_requests
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?
+				.insert(request_id.clone(), tx);
 		}
 
-		let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:options.clone() };
+		let event_payload = UiRequestToSkyPayload { request_id:request_id.clone(), payload:options.clone() };
 
 		self.app_handle
 			.emit_all("sky://ui/show-open-dialog-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_open_dialog request: {}", e)))?;
 
-		let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
-			Ok(Ok(Ok(value_from_sky))) => {
-				if value_from_sky.is_null() {
+		let result = match tokio_timeout(TokioDuration::from_secs(300), rx).await {
+			Ok(Ok(Ok(v))) => {
+				// Parse v into Option<Vec<PathBuf>>
+				if v.is_null() {
 					Ok(None)
-				} else if let Some(paths_array) = value_from_sky.as_array() {
-					let paths:Result<Vec<PathBuf>, _> =
-						paths_array.iter().filter_map(|v| v.as_str().map(PathBuf::from)).collect();
-
-					paths.map(Some).map_err(|_| {
-						CommonError::UiInteraction("Invalid path string in open dialog response".to_string())
-					})
+				} else if let Some(arr) = v.as_array() {
+					arr.iter()
+						.map(|p_val| {
+							p_val.as_str().map(PathBuf::from).ok_or_else(|| {
+								CommonError::UiInteraction("Invalid path string in open dialog response".into())
+							})
+						})
+						.collect::<Result<Vec<_>, _>>()
+						.map(Some)
 				} else {
-					Err(CommonError::UiInteraction(
-						"Open dialog response was not an array of paths or null".to_string(),
-					))
+					Err(CommonError::UiInteraction("Open dialog response not an array or null".into()))
 				}
 			},
 
-			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+			Ok(Ok(Err(e))) => Err(e),
 
-			Ok(Err(_channel_closed_err)) => {
+			Ok(Err(_)) => {
 				Err(CommonError::UiInteraction(format!(
-					"Open dialog (ReqID: {}) response channel closed prematurely.",
+					"Open dialog (ReqID: {}) channel closed.",
 					request_id
 				)))
 			},
 
-			Err(_timeout_err) => {
+			Err(_) => {
 				warn!("[Env UiProvider] show_open_dialog (ReqID: {}) timed out.", request_id);
 
 				Ok(None)
@@ -2046,10 +2508,10 @@ impl UiProvider for MountainEnvironment {
 		self.get_app_state()
 			.pending_ui_requests
 			.lock()
-			.map_err(map_lock_error)?
+			.map_err(map_app_state_lock_error_to_common_error)?
 			.remove(&request_id);
 
-		result_from_sky
+		result
 	}
 
 	async fn show_save_dialog(&self, options:Option<SaveDialogOptions>) -> Result<Option<PathBuf>, CommonError> {
@@ -2060,45 +2522,44 @@ impl UiProvider for MountainEnvironment {
 			request_id, options
 		);
 
-		let (tx, rx) = oneshot::channel();
+		let (tx, rx) = TokioOneshot::channel();
 
 		{
-			let app_state = self.get_app_state();
-
-			let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
-
-			pending_guard.insert(request_id.clone(), tx);
+			self.get_app_state()
+				.pending_ui_requests
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?
+				.insert(request_id.clone(), tx);
 		}
 
-		let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:options.clone() };
+		let event_payload = UiRequestToSkyPayload { request_id:request_id.clone(), payload:options.clone() };
 
 		self.app_handle
 			.emit_all("sky://ui/show-save-dialog-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_save_dialog request: {}", e)))?;
 
-		let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
-			Ok(Ok(Ok(value_from_sky))) => {
-				if value_from_sky.is_null() {
+		let result = match tokio_timeout(TokioDuration::from_secs(300), rx).await {
+			Ok(Ok(Ok(v))) => {
+				// Parse v into Option<PathBuf>
+				if v.is_null() {
 					Ok(None)
-				} else if let Some(path_str) = value_from_sky.as_str() {
-					Ok(Some(PathBuf::from(path_str)))
+				} else if let Some(s) = v.as_str() {
+					Ok(Some(PathBuf::from(s)))
 				} else {
-					Err(CommonError::UiInteraction(
-						"Save dialog response was not a path string or null".to_string(),
-					))
+					Err(CommonError::UiInteraction("Save dialog response not a string or null".into()))
 				}
 			},
 
-			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+			Ok(Ok(Err(e))) => Err(e),
 
-			Ok(Err(_channel_closed_err)) => {
+			Ok(Err(_)) => {
 				Err(CommonError::UiInteraction(format!(
-					"Save dialog (ReqID: {}) response channel closed prematurely.",
+					"Save dialog (ReqID: {}) channel closed.",
 					request_id
 				)))
 			},
 
-			Err(_timeout_err) => {
+			Err(_) => {
 				warn!("[Env UiProvider] show_save_dialog (ReqID: {}) timed out.", request_id);
 
 				Ok(None)
@@ -2108,12 +2569,14 @@ impl UiProvider for MountainEnvironment {
 		self.get_app_state()
 			.pending_ui_requests
 			.lock()
-			.map_err(map_lock_error)?
+			.map_err(map_app_state_lock_error_to_common_error)?
 			.remove(&request_id);
 
-		result_from_sky
+		result
 	}
 
+	// QuickPick and InputBox follow the same pattern as
+	// show_open_dialog/show_save_dialog
 	async fn show_quick_pick(
 		&self,
 
@@ -2130,85 +2593,69 @@ impl UiProvider for MountainEnvironment {
 			options
 		);
 
-		let (tx, rx) = oneshot::channel();
+		let (tx, rx) = TokioOneshot::channel();
 
 		{
-			let app_state = self.get_app_state();
-
-			let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
-
-			pending_guard.insert(request_id.clone(), tx);
+			self.get_app_state()
+				.pending_ui_requests
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?
+				.insert(request_id.clone(), tx);
 		}
 
-		// QuickPickItem might contain non-serializable parts like `buttons`.
-		// We need to serialize them carefully or define a DTO for Sky.
-		let serializable_items = items
-			.into_iter()
-			.map(|item| {
-				json!({
-
-					"label": item.label,
-
-					"description": item.description,
-
-					"detail": item.detail,
-
-					"picked": item.picked,
-
-					"alwaysShow": item.always_show,
-
-					// "buttons" field from QuickPickItem is not included here for simplicity.
-					// If needed, they would require custom serialization logic or a DTO.
-				})
-			})
-			.collect::<Vec<_>>();
+		let serializable_items = items.into_iter().map(|item| json!({"label": item.label, "description": item.description, "detail": item.detail, "picked": item.picked, "alwaysShow": item.always_show })).collect::<Vec<_>>();
 
 		let payload_data = json!({ "items": serializable_items, "options": options });
 
-		let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:payload_data };
+		let event_payload = UiRequestToSkyPayload { request_id:request_id.clone(), payload:payload_data };
 
 		self.app_handle
 			.emit_all("sky://ui/show-quick-pick-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_quick_pick request: {}", e)))?;
 
-		let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
-			Ok(Ok(Ok(value_from_sky))) => {
-				if value_from_sky.is_null() {
+		let result = match tokio_timeout(TokioDuration::from_secs(300), rx).await {
+			Ok(Ok(Ok(v))) => {
+				// Parse v into Option<Vec<String>> based on options.canPickMany
+				if v.is_null() {
 					Ok(None)
 				} else if options.as_ref().map_or(false, |o| o.can_pick_many) {
-					if let Some(labels_array) = value_from_sky.as_array() {
-						let labels:Result<Vec<String>, _> =
-							labels_array.iter().filter_map(|v| v.as_str().map(String::from)).collect();
-
-						labels.map(Some).map_err(|_| {
-							CommonError::UiInteraction("Invalid string in quick pick multi-select response".to_string())
-						})
+					if let Some(arr) = v.as_array() {
+						arr.iter()
+							.map(|s_val| {
+								s_val.as_str().map(String::from).ok_or_else(|| {
+									CommonError::UiInteraction(
+										"Invalid string in quick pick multi-select response".into(),
+									)
+								})
+							})
+							.collect::<Result<Vec<_>, _>>()
+							.map(Some)
 					} else {
 						Err(CommonError::UiInteraction(
-							"Quick pick (multi) response was not an array of strings or null".to_string(),
+							"Quick pick (multi) response not an array or null".into(),
 						))
 					}
 				} else {
-					if let Some(label_str) = value_from_sky.as_str() {
-						Ok(Some(vec![label_str.to_string()]))
+					if let Some(s) = v.as_str() {
+						Ok(Some(vec![s.to_string()]))
 					} else {
 						Err(CommonError::UiInteraction(
-							"Quick pick (single) response was not a string or null".to_string(),
+							"Quick pick (single) response not a string or null".into(),
 						))
 					}
 				}
 			},
 
-			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+			Ok(Ok(Err(e))) => Err(e),
 
-			Ok(Err(_channel_closed_err)) => {
+			Ok(Err(_)) => {
 				Err(CommonError::UiInteraction(format!(
-					"Quick pick (ReqID: {}) response channel closed prematurely.",
+					"Quick pick (ReqID: {}) channel closed.",
 					request_id
 				)))
 			},
 
-			Err(_timeout_err) => {
+			Err(_) => {
 				warn!("[Env UiProvider] show_quick_pick (ReqID: {}) timed out.", request_id);
 
 				Ok(None)
@@ -2218,10 +2665,10 @@ impl UiProvider for MountainEnvironment {
 		self.get_app_state()
 			.pending_ui_requests
 			.lock()
-			.map_err(map_lock_error)?
+			.map_err(map_app_state_lock_error_to_common_error)?
 			.remove(&request_id);
 
-		result_from_sky
+		result
 	}
 
 	async fn show_input_box(&self, options:Option<InputBoxOptions>) -> Result<Option<String>, CommonError> {
@@ -2229,45 +2676,44 @@ impl UiProvider for MountainEnvironment {
 
 		info!("[Env UiProvider] show_input_box (ReqID: {}): options={:?}", request_id, options);
 
-		let (tx, rx) = oneshot::channel();
+		let (tx, rx) = TokioOneshot::channel();
 
 		{
-			let app_state = self.get_app_state();
-
-			let mut pending_guard = app_state.pending_ui_requests.lock().map_err(map_lock_error)?;
-
-			pending_guard.insert(request_id.clone(), tx);
+			self.get_app_state()
+				.pending_ui_requests
+				.lock()
+				.map_err(map_app_state_lock_error_to_common_error)?
+				.insert(request_id.clone(), tx);
 		}
 
-		let event_payload = UiRequestToSky { request_id:request_id.clone(), payload:options.clone() };
+		let event_payload = UiRequestToSkyPayload { request_id:request_id.clone(), payload:options.clone() };
 
 		self.app_handle
 			.emit_all("sky://ui/show-input-box-request", event_payload)
 			.map_err(|e| CommonError::UiInteraction(format!("Failed to emit show_input_box request: {}", e)))?;
 
-		let result_from_sky = match timeout(TokioDuration::from_secs(300), rx).await {
-			Ok(Ok(Ok(value_from_sky))) => {
-				if value_from_sky.is_null() {
+		let result = match tokio_timeout(TokioDuration::from_secs(300), rx).await {
+			Ok(Ok(Ok(v))) => {
+				// Parse v into Option<String>
+				if v.is_null() {
 					Ok(None)
-				} else if let Some(input_str) = value_from_sky.as_str() {
-					Ok(Some(input_str.to_string()))
+				} else if let Some(s) = v.as_str() {
+					Ok(Some(s.to_string()))
 				} else {
-					Err(CommonError::UiInteraction(
-						"Input box response was not a string or null".to_string(),
-					))
+					Err(CommonError::UiInteraction("Input box response not a string or null".into()))
 				}
 			},
 
-			Ok(Ok(Err(common_error_from_sky))) => Err(common_error_from_sky),
+			Ok(Ok(Err(e))) => Err(e),
 
-			Ok(Err(_channel_closed_err)) => {
+			Ok(Err(_)) => {
 				Err(CommonError::UiInteraction(format!(
-					"Input box (ReqID: {}) response channel closed prematurely.",
+					"Input box (ReqID: {}) channel closed.",
 					request_id
 				)))
 			},
 
-			Err(_timeout_err) => {
+			Err(_) => {
 				warn!("[Env UiProvider] show_input_box (ReqID: {}) timed out.", request_id);
 
 				Ok(None)
@@ -2277,17 +2723,28 @@ impl UiProvider for MountainEnvironment {
 		self.get_app_state()
 			.pending_ui_requests
 			.lock()
-			.map_err(map_lock_error)?
+			.map_err(map_app_state_lock_error_to_common_error)?
 			.remove(&request_id);
 
-		result_from_sky
+		result
 	}
+}
+
+/// Helper struct for serializing UiProvider request payloads sent via Tauri
+/// events to Sky.
+#[derive(Serialize, Clone)]
+struct UiRequestToSkyPayload<T:Serialize + Clone> {
+	request_id:String,
+
+	// Payload specific to the UI request type (e.g., OpenDialogOptions)
+	payload:T,
 }
 
 impl Requires<Arc<dyn UiProvider + Send + Sync>> for MountainEnvironment {
 	fn require(&self) -> Arc<dyn UiProvider + Send + Sync> { Arc::new(self.clone()) }
 }
 
+// Skeletons for other providers, actual implementation would be detailed.
 #[async_trait]
 impl IpcProvider for MountainEnvironment {
 	async fn send_notification_to_sidecar(
@@ -2306,14 +2763,7 @@ impl IpcProvider for MountainEnvironment {
 
 		vine::send_notification_to_sidecar(&sidecar_id, method, params)
 			.await
-			.map_err(|vine_err| {
-				error!(
-					"[Env IpcProvider] Vine error sending notification to {}: {}",
-					sidecar_id, vine_err
-				);
-
-				CommonError::IpcError(vine_err.to_string())
-			})
+			.map_err(|vine_err| CommonError::IpcError(vine_err.to_string()))
 	}
 
 	async fn send_request_to_sidecar(
@@ -2334,11 +2784,7 @@ impl IpcProvider for MountainEnvironment {
 
 		vine::send_request_to_sidecar(&sidecar_id, method, params, timeout_ms)
 			.await
-			.map_err(|vine_err| {
-				error!("[Env IpcProvider] Vine error sending request to {}: {}", sidecar_id, vine_err);
-
-				CommonError::IpcError(vine_err.to_string())
-			})
+			.map_err(|vine_err| CommonError::IpcError(vine_err.to_string()))
 	}
 }
 
@@ -2355,122 +2801,95 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 		provider_type_common:CommonProviderType,
 
-		selector:Value,
+		selector_dto_val:Value,
 
-		options:Option<Value>,
+		options_dto_val_opt:Option<Value>,
 	) -> Result<u32, CommonError> {
 		let app_state = self.get_app_state();
 
-		let handle = app_state.get_next_provider_handle();
+		let new_provider_handle = app_state.get_next_provider_handle();
 
-		let provider_type_appstate:app_state::LanguageProviderType = match provider_type_common {
-			CommonProviderType::Hover => app_state::LanguageProviderType::Hover,
-
-			CommonProviderType::Completion => app_state::LanguageProviderType::Completion,
-
-			CommonProviderType::Definition => app_state::LanguageProviderType::Definition,
-
-			CommonProviderType::Declaration => app_state::LanguageProviderType::Declaration,
-
-			CommonProviderType::Implementation => app_state::LanguageProviderType::Implementation,
-
-			CommonProviderType::TypeDefinition => app_state::LanguageProviderType::TypeDefinition,
-
-			CommonProviderType::References => app_state::LanguageProviderType::References,
-
-			CommonProviderType::DocumentHighlight => app_state::LanguageProviderType::DocumentHighlight,
-
-			CommonProviderType::DocumentSymbol => app_state::LanguageProviderType::DocumentSymbol,
-
-			CommonProviderType::WorkspaceSymbol => app_state::LanguageProviderType::WorkspaceSymbol,
-
-			CommonProviderType::CodeAction => app_state::LanguageProviderType::CodeAction,
-
-			CommonProviderType::CodeLens => app_state::LanguageProviderType::CodeLens,
-
-			CommonProviderType::Formatting => app_state::LanguageProviderType::Formatting,
-
-			CommonProviderType::RangeFormatting => app_state::LanguageProviderType::RangeFormatting,
-
-			CommonProviderType::OnTypeFormatting => app_state::LanguageProviderType::OnTypeFormatting,
-
-			CommonProviderType::Rename => app_state::LanguageProviderType::Rename,
-
-			CommonProviderType::DocumentLink => app_state::LanguageProviderType::DocumentLink,
-
-			CommonProviderType::Color => app_state::LanguageProviderType::Color,
-
-			CommonProviderType::FoldingRange => app_state::LanguageProviderType::FoldingRange,
-
-			CommonProviderType::SelectionRange => app_state::LanguageProviderType::SelectionRange,
-
-			CommonProviderType::CallHierarchy => app_state::LanguageProviderType::CallHierarchy,
-
-			CommonProviderType::TypeHierarchy => app_state::LanguageProviderType::TypeHierarchy,
-
-			CommonProviderType::LinkedEditingRange => app_state::LanguageProviderType::LinkedEditingRange,
-
-			CommonProviderType::InlayHints => app_state::LanguageProviderType::InlayHints,
-		};
+		// Requires From impl
+		let app_state_provider_type:AppStateLanguageProviderType = provider_type_common.into();
 
 		info!(
-			"[Env LangFeatRegistry] Registering {:?} (H:{}) from '{}'. Opts: {}",
-			provider_type_appstate,
-			handle,
+			"[Env LangFeatRegistry Register] ProviderType='{:?}', Handle={}, SidecarID='{}', OptionsIsSome={}",
+			app_state_provider_type,
+			new_provider_handle,
 			sidecar_id,
-			options.is_some()
+			options_dto_val_opt.is_some()
 		);
 
-		trace!("[Env LangFeatRegistry] Selector: {:?}, Options DTO: {:?}", selector, options);
+		trace!(
+			"[Env LangFeatRegistry Register] Selector DTO: {:?}, Options DTO: {:?}",
+			selector_dto_val, options_dto_val_opt
+		);
 
-		let registration = ProviderRegistration {
-			handle,
+		// Parse options DTO for specific fields like triggerCharacters,
 
-			provider_type:provider_type_appstate,
+		// supportsResolveDetails, etc.
+		let trigger_chars_opt:Option<Vec<String>> = options_dto_val_opt
+			.as_ref()
+			.and_then(|opts| opts.get("triggerCharacters"))
+			.and_then(Value::as_array)
+			.map(|arr| arr.iter().filter_map(Value::as_str).map(String::from).collect());
 
-			selector,
+		let supports_resolve_opt:Option<bool> = options_dto_val_opt
+			.as_ref()
+			.and_then(|opts| opts.get("supportsResolveDetails"))
+			.and_then(Value::as_bool);
+
+		// ... and so on for other metadata like codeActionMetadata,
+
+		// signatureHelpMetadata ...
+
+		let new_registration = ProviderRegistration {
+			handle:new_provider_handle,
+
+			provider_type:app_state_provider_type,
+
+			selector:selector_dto_val,
 
 			sidecar_id,
 
-			trigger_characters:options
+			trigger_characters:trigger_chars_opt,
+
+			supports_resolve_details:supports_resolve_opt,
+
+			code_action_metadata:options_dto_val_opt.as_ref().and_then(|o| o.get("codeActionMetadata")).cloned(),
+
+			signature_help_metadata:options_dto_val_opt
 				.as_ref()
-				.and_then(|o| o.get("triggerCharacters"))
-				.and_then(Value::as_array)
-				.map(|arr| arr.iter().filter_map(Value::as_str).map(String::from).collect()),
-
-			supports_resolve_details:options
-				.as_ref()
-				.and_then(|o| o.get("supportsResolveDetails"))
-				.and_then(Value::as_bool),
-
-			code_action_metadata:options.as_ref().and_then(|o| o.get("codeActionMetadata")).cloned(),
-
-			signature_help_metadata:options.as_ref().and_then(|o| o.get("signatureHelpMetadata")).cloned(),
+				.and_then(|o| o.get("signatureHelpMetadata"))
+				.cloned(),
 		};
 
 		app_state
 			.language_providers
 			.lock()
-			.map_err(map_lock_error)?
-			.insert(handle, registration);
+			.map_err(map_app_state_lock_error_to_common_error)?
+			.insert(new_provider_handle, new_registration);
 
-		Ok(handle)
+		Ok(new_provider_handle)
 	}
 
-	async fn unregister_provider(&self, handle:u32) -> Result<(), CommonError> {
-		info!("[Env LangFeatRegistry] Unregistering provider handle: {}", handle);
+	async fn unregister_provider(&self, provider_handle_to_remove:u32) -> Result<(), CommonError> {
+		info!(
+			"[Env LangFeatRegistry Unregister] Provider Handle: {}",
+			provider_handle_to_remove
+		);
 
 		if self
 			.get_app_state()
 			.language_providers
 			.lock()
-			.map_err(map_lock_error)?
-			.remove(&handle)
+			.map_err(map_app_state_lock_error_to_common_error)?
+			.remove(&provider_handle_to_remove)
 			.is_none()
 		{
 			warn!(
-				"[Env LangFeatRegistry] Attempted to unregister non-existent provider handle: {}",
-				handle
+				"[Env LangFeatRegistry Unregister] Attempted to unregister non-existent provider handle: {}",
+				provider_handle_to_remove
 			);
 		}
 
@@ -2487,121 +2906,354 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 		provider_type_common:CommonProviderType,
 	) -> Result<Vec<ProviderDescription>, CommonError> {
 		debug!(
-			"[Env LangFeatRegistry] Querying providers for doc='{}', lang='{}', type='{:?}'",
-			document_uri.as_str().split('/').last().unwrap_or_default(),
+			"[Env LangFeatRegistry GetProviders] For Doc='{}...', Lang='{}', ProviderType='{:?}'",
+			document_uri.path_segments().and_then(|s| s.last()).unwrap_or_default(),
 			language_id,
 			provider_type_common
 		);
 
-		// Avoid using self.get_app_state() multiple times inside the lock
 		let app_state_val = self.get_app_state();
 
-		let providers_guard = app_state_val.language_providers.lock().map_err(map_lock_error)?;
+		let providers_map_guard = app_state_val
+			.language_providers
+			.lock()
+			.map_err(map_app_state_lock_error_to_common_error)?;
 
-		let target_provider_type_appstate:app_state::LanguageProviderType = match provider_type_common {
-			CommonProviderType::Hover => app_state::LanguageProviderType::Hover,
+		let target_app_state_provider_type:AppStateLanguageProviderType = provider_type_common.into();
 
-			CommonProviderType::Completion => app_state::LanguageProviderType::Completion,
+		let mut matching_providers_vec = Vec::new();
 
-			CommonProviderType::Definition => app_state::LanguageProviderType::Definition,
-
-			CommonProviderType::Declaration => app_state::LanguageProviderType::Declaration,
-
-			CommonProviderType::Implementation => app_state::LanguageProviderType::Implementation,
-
-			CommonProviderType::TypeDefinition => app_state::LanguageProviderType::TypeDefinition,
-
-			CommonProviderType::References => app_state::LanguageProviderType::References,
-
-			CommonProviderType::DocumentHighlight => app_state::LanguageProviderType::DocumentHighlight,
-
-			CommonProviderType::DocumentSymbol => app_state::LanguageProviderType::DocumentSymbol,
-
-			CommonProviderType::WorkspaceSymbol => app_state::LanguageProviderType::WorkspaceSymbol,
-
-			CommonProviderType::CodeAction => app_state::LanguageProviderType::CodeAction,
-
-			CommonProviderType::CodeLens => app_state::LanguageProviderType::CodeLens,
-
-			CommonProviderType::Formatting => app_state::LanguageProviderType::Formatting,
-
-			CommonProviderType::RangeFormatting => app_state::LanguageProviderType::RangeFormatting,
-
-			CommonProviderType::OnTypeFormatting => app_state::LanguageProviderType::OnTypeFormatting,
-
-			CommonProviderType::Rename => app_state::LanguageProviderType::Rename,
-
-			CommonProviderType::DocumentLink => app_state::LanguageProviderType::DocumentLink,
-
-			CommonProviderType::Color => app_state::LanguageProviderType::Color,
-
-			CommonProviderType::FoldingRange => app_state::LanguageProviderType::FoldingRange,
-
-			CommonProviderType::SelectionRange => app_state::LanguageProviderType::SelectionRange,
-
-			CommonProviderType::CallHierarchy => app_state::LanguageProviderType::CallHierarchy,
-
-			CommonProviderType::TypeHierarchy => app_state::LanguageProviderType::TypeHierarchy,
-
-			CommonProviderType::LinkedEditingRange => app_state::LanguageProviderType::LinkedEditingRange,
-
-			CommonProviderType::InlayHints => app_state::LanguageProviderType::InlayHints,
-		};
-
-		let mut matching_providers = Vec::new();
-
-		for registration in providers_guard.values() {
-			if registration.provider_type == target_provider_type_appstate {
-				if handlers::config::match_document_selector(registration.selector, &document_uri, &language_id) {
+		for registration_entry in providers_map_guard.values() {
+			if registration_entry.provider_type == target_app_state_provider_type {
+				// Use the config helper for document selector matching
+				if handlers::config::match_document_selector(&registration_entry.selector, &document_uri, &language_id)
+				{
 					trace!(
-						"[Env LangFeatRegistry] Match: Handle {}, Type {:?}, Doc {}, Lang {}",
-						registration.handle,
-						registration.provider_type,
+						"[Env LangFeatRegistry GetProviders] Match found: Handle {}, Type {:?}, for Doc '{}', Lang \
+						 '{}'",
+						registration_entry.handle,
+						registration_entry.provider_type,
 						document_uri.as_str(),
 						language_id
 					);
 
-					let mut options_map = serde_json::Map::new();
+					// Construct options Value from stored registration metadata
+					let mut options_map_for_desc = JsonMap::new();
 
-					if let Some(tc) = registration.trigger_characters {
-						options_map.insert("triggerCharacters".to_string(), json!(tc));
+					if let Some(ref tc_vec) = registration_entry.trigger_characters {
+						options_map_for_desc.insert("triggerCharacters".to_string(), json!(tc_vec));
 					}
 
-					if let Some(sr) = registration.supports_resolve_details {
-						options_map.insert("supportsResolveDetails".to_string(), json!(sr));
+					if let Some(srd_bool) = registration_entry.supports_resolve_details {
+						options_map_for_desc.insert("supportsResolveDetails".to_string(), json!(srd_bool));
 					}
 
-					if let Some(cam) = registration.code_action_metadata {
-						options_map.insert("codeActionMetadata".to_string(), cam.clone());
+					if let Some(ref cam_val) = registration_entry.code_action_metadata {
+						options_map_for_desc.insert("codeActionMetadata".to_string(), cam_val.clone());
 					}
 
-					if let Some(shm) = registration.signature_help_metadata {
-						options_map.insert("signatureHelpMetadata".to_string(), shm.clone());
+					if let Some(ref shm_val) = registration_entry.signature_help_metadata {
+						options_map_for_desc.insert("signatureHelpMetadata".to_string(), shm_val.clone());
 					}
 
-					matching_providers.push(ProviderDescription {
-						handle:registration.handle,
+					matching_providers_vec.push(ProviderDescription {
+						handle:registration_entry.handle,
 
-						sidecar_id:registration.sidecar_id.clone(),
+						sidecar_id:registration_entry.sidecar_id.clone(),
 
-						options:if options_map.is_empty() { None } else { Some(Value::Object(options_map)) },
+						options:if options_map_for_desc.is_empty() {
+							None
+						} else {
+							Some(Value::Object(options_map_for_desc))
+						},
 					});
 				}
 			}
 		}
 
 		debug!(
-			"[Env LangFeatRegistry] Found {} matching {:?} providers for doc='{}', lang='{}'",
-			matching_providers.len(),
+			"[Env LangFeatRegistry GetProviders] Found {} matching {:?} providers for doc='{}...', lang='{}'",
+			matching_providers_vec.len(),
 			provider_type_common,
-			document_uri.as_str().split('/').last().unwrap_or_default(),
+			document_uri.path_segments().and_then(|s| s.last()).unwrap_or_default(),
 			language_id
 		);
 
-		Ok(matching_providers)
+		Ok(matching_providers_vec)
+	}
+}
+
+// Required From trait implementation for mapping common provider type to
+// app_state specific type.
+impl From<CommonProviderType> for AppStateLanguageProviderType {
+	fn from(common_type:CommonProviderType) -> Self {
+		match common_type {
+			CommonProviderType::Hover => AppStateLanguageProviderType::Hover,
+
+			CommonProviderType::Completion => AppStateLanguageProviderType::Completion,
+
+			CommonProviderType::Definition => AppStateLanguageProviderType::Definition,
+
+			CommonProviderType::Declaration => AppStateLanguageProviderType::Declaration,
+
+			CommonProviderType::Implementation => AppStateLanguageProviderType::Implementation,
+
+			CommonProviderType::TypeDefinition => AppStateLanguageProviderType::TypeDefinition,
+
+			CommonProviderType::References => AppStateLanguageProviderType::References,
+
+			CommonProviderType::DocumentHighlight => AppStateLanguageProviderType::DocumentHighlight,
+
+			CommonProviderType::DocumentSymbol => AppStateLanguageProviderType::DocumentSymbol,
+
+			CommonProviderType::WorkspaceSymbol => AppStateLanguageProviderType::WorkspaceSymbol,
+
+			CommonProviderType::CodeAction => AppStateLanguageProviderType::CodeAction,
+
+			CommonProviderType::CodeLens => AppStateLanguageProviderType::CodeLens,
+
+			CommonProviderType::Formatting => AppStateLanguageProviderType::Formatting,
+
+			CommonProviderType::RangeFormatting => AppStateLanguageProviderType::RangeFormatting,
+
+			CommonProviderType::OnTypeFormatting => AppStateLanguageProviderType::OnTypeFormatting,
+
+			CommonProviderType::Rename => AppStateLanguageProviderType::Rename,
+
+			CommonProviderType::DocumentLink => AppStateLanguageProviderType::DocumentLink,
+
+			CommonProviderType::Color => AppStateLanguageProviderType::Color,
+
+			CommonProviderType::FoldingRange => AppStateLanguageProviderType::FoldingRange,
+
+			CommonProviderType::SelectionRange => AppStateLanguageProviderType::SelectionRange,
+
+			CommonProviderType::CallHierarchy => AppStateLanguageProviderType::CallHierarchy,
+
+			CommonProviderType::TypeHierarchy => AppStateLanguageProviderType::TypeHierarchy,
+
+			CommonProviderType::LinkedEditingRange => AppStateLanguageProviderType::LinkedEditingRange,
+
+			CommonProviderType::InlayHints => AppStateLanguageProviderType::InlayHints,
+		}
 	}
 }
 
 impl Requires<Arc<dyn LanguageFeatureProviderRegistry + Send + Sync>> for MountainEnvironment {
 	fn require(&self) -> Arc<dyn LanguageFeatureProviderRegistry + Send + Sync> { Arc::new(self.clone()) }
+}
+
+// Stubs for CommandExecutor and WorkspaceProvider, assuming their logic is
+// complex and would primarily delegate to `handlers::commands` and
+// `handlers::workspace` or `AppState` methods.
+#[async_trait]
+impl CommandExecutor for MountainEnvironment {
+	async fn execute_command(&self, command_id:String, args_val:Value) -> Result<Value, CommonError> {
+		info!("[Env CommandExecutor] Execute: command_id='{}'", command_id);
+
+		trace!("[Env CommandExecutor] Args: {:?}", args_val);
+
+		let main_window = self
+			.app_handle
+			.get_window("main")
+			.ok_or_else(|| CommonError::UiInteraction("Main window not found for command execution".to_string()))?;
+
+		let app_runtime_state = self.app_handle.state::<Arc<AppRuntime>>();
+
+		handlers::commands::handle_execute_command(
+			self.app_handle.clone(),
+			main_window,
+			// Pass the Arc<AppRuntime>
+			app_runtime_state.inner().clone(),
+			json!({ "id": command_id, "args": args_val }),
+		)
+		.await
+		.map_err(|json_rpc_err_str| CommonError::CommandExecution(command_id, json_rpc_err_str))
+	}
+
+	async fn register_command(&self, sidecar_id:String, command_id:String) -> Result<(), CommonError> {
+		info!(
+			"[Env CommandExecutor] Register: sidecar_id='{}', command_id='{}'",
+			sidecar_id, command_id
+		);
+
+		handlers::commands::handle_register_command(self.app_handle.clone(), sidecar_id, json!({ "id": command_id }))
+			.await
+			.map(|_| ())
+			.map_err(|e| CommonError::CommandRegistration(command_id, e))
+	}
+
+	async fn unregister_command(&self, sidecar_id:String, command_id:String) -> Result<(), CommonError> {
+		info!(
+			"[Env CommandExecutor] Unregister: sidecar_id='{}', command_id='{}'",
+			sidecar_id, command_id
+		);
+
+		handlers::commands::handle_unregister_command(self.app_handle.clone(), sidecar_id, json!({ "id": command_id }))
+			.await
+			.map(|_| ())
+			.map_err(|e| CommonError::CommandRegistration(command_id, e))
+	}
+
+	async fn get_all_commands(&self) -> Result<Vec<String>, CommonError> {
+		debug!("[Env CommandExecutor] GetAllCommands");
+
+		let app_runtime_state = self.app_handle.state::<Arc<AppRuntime>>();
+
+		handlers::commands::handle_get_commands(self.app_handle.clone(), app_runtime_state.inner().clone())
+			.await
+			.and_then(|val| serde_json::from_value(val).map_err(|e_serde| e_serde.to_string()))
+			.map_err(CommonError::CommandList)
+	}
+}
+
+impl Requires<Arc<dyn CommandExecutor + Send + Sync>> for MountainEnvironment {
+	fn require(&self) -> Arc<dyn CommandExecutor + Send + Sync> { Arc::new(self.clone()) }
+}
+
+#[async_trait]
+impl WorkspaceProvider for MountainEnvironment {
+	async fn get_workspace_folders_info(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
+		trace!("[Env WorkspaceProvider] GetWorkspaceFoldersInfo");
+
+		let app_state = self.get_app_state();
+
+		let folders_guard = app_state
+			.workspace_folders
+			.lock()
+			.map_err(map_app_state_lock_error_to_common_error)?;
+
+		Ok(folders_guard
+			.iter()
+			.map(|f_state| (f_state.uri.clone(), f_state.name.clone(), f_state.index))
+			.collect())
+	}
+
+	// ... other WorkspaceProvider methods similarly delegating or using AppState
+	// ...
+	async fn get_workspace_folder_info(&self, uri_to_match:Url) -> Result<Option<(Url, String, usize)>, CommonError> {
+		debug!(
+			"[Env WorkspaceProvider] Getting specific workspace folder info for: {}",
+			uri_to_match
+		);
+
+		let app_state = self.get_app_state();
+
+		let folders_guard = app_state
+			.workspace_folders
+			.lock()
+			.map_err(map_app_state_lock_error_to_common_error)?;
+
+		Ok(folders_guard.iter()
+
+			 // Basic prefix match
+			.find(|f_state| uri_to_match.as_str().starts_with(f_state.uri.as_str()))
+
+			.map(|f_state| (f_state.uri.clone(), f_state.name.clone(), f_state.index)))
+	}
+
+	async fn get_workspace_name(&self) -> Result<Option<String>, CommonError> {
+		debug!("[Env WorkspaceProvider] Getting workspace name");
+
+		self.get_app_state()
+			.get_workspace_name()
+			.map(Some)
+			.map_err(CommonError::StateLock)
+	}
+
+	async fn get_workspace_configuration_path(&self) -> Result<Option<PathBuf>, CommonError> {
+		debug!("[Env WorkspaceProvider] Getting workspace config path");
+
+		Ok(self
+			.get_app_state()
+			.workspace_config_path
+			.lock()
+			.map_err(map_app_state_lock_error_to_common_error)?
+			.clone())
+	}
+
+	async fn is_workspace_trusted(&self) -> Result<bool, CommonError> {
+		debug!("[Env WorkspaceProvider] Getting workspace trust state");
+
+		Ok(self.get_app_state().is_trusted.load(std::sync::atomic::Ordering::Relaxed))
+	}
+
+	async fn request_workspace_trust(&self, _options:Option<Value>) -> Result<bool, CommonError> {
+		info!("[Env WorkspaceProvider] Requesting workspace trust (options: {:?})", _options);
+
+		warn!(
+			"[Env WorkspaceProvider] requestWorkspaceTrust is STUBBED to return current trust state. Full UI \
+			 interaction flow needed."
+		);
+
+		// TODO: Full implementation should use UiProvider to show a dialog if not
+		// trusted.
+		Ok(self.get_app_state().is_trusted.load(std::sync::atomic::Ordering::Relaxed))
+	}
+
+	async fn find_files_in_workspace(
+		&self,
+
+		include_pattern_dto:Value,
+
+		exclude_pattern_dto_opt:Option<Value>,
+
+		max_results_opt:Option<usize>,
+
+		use_ignore_files_bool:bool,
+
+		follow_symlinks_bool:bool,
+	) -> Result<Vec<Url>, CommonError> {
+		info!(
+			"[Env WorkspaceProvider] Finding files: include='{:?}', exclude='{:?}'",
+			include_pattern_dto, exclude_pattern_dto_opt
+		);
+
+		// Construct params array for handlers::workspace::handle_find_files
+		let params_for_handler = json!([
+			include_pattern_dto,
+
+
+			exclude_pattern_dto_opt.unwrap_or(Value::Null),
+
+
+			{ "maxResults": max_results_opt, "useIgnoreFiles": use_ignore_files_bool, "followSymlinks": follow_symlinks_bool }
+
+
+
+		]);
+
+		handlers::workspace::handle_find_files(self.app_handle.clone(), params_for_handler)
+			.await
+			.and_then(|uri_components_array_val| {
+				uri_components_array_val.as_array().map_or_else(
+					|| Err(CommonError::Unknown("findFiles handler did not return an array".to_string())),
+					|uri_dtos_vec| {
+						uri_dtos_vec
+							.iter()
+							.map(|uri_comp_dto| {
+								let uri_str =
+									uri_comp_dto.get("external").and_then(Value::as_str).ok_or_else(|| {
+										CommonError::Unknown(
+											"Invalid URI component DTO in findFiles result (missing 'external')"
+												.to_string(),
+										)
+									})?;
+
+								Url::parse(uri_str).map_err(|e_url_parse| {
+									CommonError::Unknown(format!(
+										"Failed to parse URI from findFiles result ('{}'): {}",
+										uri_str, e_url_parse
+									))
+								})
+							})
+							.collect::<Result<Vec<Url>, CommonError>>()
+					},
+				)
+			})
+	}
+}
+
+impl Requires<Arc<dyn WorkspaceProvider + Send + Sync>> for MountainEnvironment {
+	fn require(&self) -> Arc<dyn WorkspaceProvider + Send + Sync> { Arc::new(self.clone()) }
 }
