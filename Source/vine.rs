@@ -122,7 +122,7 @@ use tokio::{
 };
 
 // For dispatching incoming requests from sidecars
-use crate::{runtime::AppRuntime, track};
+use crate::runtime::AppRuntime;
 
 // --- Vine Error Type ---
 /// Defines errors specific to the Vine IPC layer.
@@ -883,7 +883,7 @@ async fn process_incoming_line_from_sidecar<R:Runtime>(
                             (Some(main_window), Some(app_runtime_state)) if app_runtime_state.inner().is_some() => {
 
 								// Dispatch the request to Track.
-                                match track::dispatch_sidecar_request(
+                                match crate::track::dispatch_sidecar_request(
                                     app_handle.clone(),
 
                                     main_window,

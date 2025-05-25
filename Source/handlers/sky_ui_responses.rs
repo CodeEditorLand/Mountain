@@ -302,9 +302,8 @@ pub async fn sky_resolves_ui_request(
 				Ok(successful_data)
 			},
 
-			// Case 3: Success with no specific data (e.g., user cancellation of a dialog,
-
-			//         simple ack for a message box), or data was explicitly `null`.
+			// Case 3: Success with no specific data (e.g., user cancellation of a dialog, simple ack for a message
+			// box), or data was explicitly `null`.
 			(None, None) => {
 				debug!(
 					"[Sky UI Resp Handler] ReqID '{}' resolved by Sky with no data and no error. Interpreting as user \

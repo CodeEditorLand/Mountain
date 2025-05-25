@@ -141,7 +141,6 @@ fn create_parameter_parse_error_string(
 }
 
 /// Maps a `CommonError` (from effect execution) to a JSON-RPC error string.
-///
 /// Delegates to `error_utils::map_common_error_to_rpc_string`.
 fn map_common_error_to_rpc_error_string(e:CommonError, operation_context:&str) -> String {
 	error_utils::map_common_error_to_rpc_string(e, operation_context)
@@ -161,14 +160,8 @@ fn map_common_error_to_rpc_error_string(e:CommonError, operation_context:&str) -
 /// * `window` - The Tauri `Window` context.
 /// * `runtime` - Managed `Arc<AppRuntime>` for executing effects.
 /// * `command` - The string identifier of the command to dispatch (e.g.,
-///
-///
-///
 ///   `Land_Echo::REQUEST_READ_FILE`).
 /// * `args` - A `serde_json::Value` containing the arguments for the command,
-///
-///
-///
 ///   typically an object.
 ///
 /// # Returns
@@ -230,9 +223,6 @@ pub async fn dispatch_command<R:TauriRuntime>(
 // --- Sidecar Request/Notification Dispatcher (Called by Vine) ---
 
 /// Dispatches requests and notifications received from a sidecar process (e.g.,
-///
-///
-///
 /// Cocoon) via the Vine IPC layer.
 ///
 /// This function tries to:
@@ -697,6 +687,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 /// Helper to check if a method name is a candidate for output channel fallback
 /// logic. This is used to disambiguate common method names like `$register`,
+///
 ///
 ///
 ///
