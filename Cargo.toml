@@ -21,7 +21,7 @@ tauri = { version = "2.5.1", features = [
 	"devtools",
 	"rustls-tls",
 	"compression",
-], default-features = false, git = "https://github.com/tauri-apps/tauri", branch = "feat/mobile-dev-cert" }
+], default-features = false }
 log = { workspace = true }
 env_logger = { workspace = true }
 colored = { workspace = true }
@@ -39,6 +39,8 @@ Echo = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
 toml = { workspace = true }
+
+tauri-plugin-dialog = { workspace = true }
 # regex = { workspace = true }
 # unbug = { workspace = true }
 

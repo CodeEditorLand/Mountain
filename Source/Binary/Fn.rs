@@ -225,6 +225,9 @@ pub fn Fn() {
 					// Indicate successful setup.
 					Ok(())
 				})
+
+				.plugin(tauri_plugin_dialog::init())
+
 				// Run the Tauri application. This starts the event loop.
 				// `tauri::generate_context!()` loads configuration from `tauri.conf.json` and embed assets.
 				.run(tauri::generate_context!())
