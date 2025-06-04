@@ -222,3 +222,23 @@ pub async fn handle_set_storage_value_effect_logic<R:Runtime>(
 	}
 	Ok(())
 }
+
+// // Example signature in handlers/storage.rs
+// pub async fn handle_get_storage_value_effect_logic<R: tauri::Runtime>(
+//     app_handle: tauri::AppHandle<R>,
+//     is_global_scope: bool,
+//     key: &str,
+// ) -> Result<Option<Value>, CommonError> {
+//     // ... implementation ...
+//     todo!()
+// }
+
+// pub async fn handle_set_storage_value_effect_logic<R: tauri::Runtime>(
+//     app_handle: tauri::AppHandle<R>,
+//     is_global_scope: bool,
+//     key: String,
+//     value_to_set: Option<Value>,
+// ) -> Result<(), CommonError> {
+//     // ... implementation ...
+//     todo!()
+// }
