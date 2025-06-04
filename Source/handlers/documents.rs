@@ -860,3 +860,23 @@ pub async fn notify_encoding_changed<R:Runtime>(_app_handle:AppHandle<R>, uri:&U
 		error!("[DocNotify] Failed to send $acceptEncodingChanged for {}: {}", uri, e);
 	}
 }
+
+// NEW:
+// // Example signature for a handler in handlers/documents.rs
+// pub async fn handle_open_document_effect_logic<R: tauri::Runtime>(
+//     app_handle: tauri::AppHandle<R>,
+//     // Pass MountainEnvironment directly so the handler can call
+// self.require::<FsReader>() etc.     // or if handlers are very thin, they
+// might take Arc<FsReader>, Arc<UiProvider> etc. directly.     // For now,
+// passing MountainEnvironment gives flexibility.
+//     env: crate::environment::MountainEnvironment,
+//     uri_components_dto: Value,
+//     language_id_override_opt: Option<String>,
+//     initial_content_opt: Option<String>,
+// ) -> Result<Url, CommonError> {
+//     // ... implementation using app_handle.state::<AppState>() ...
+//     // ... and env.require::<Arc<dyn FsReader>>().read_file(...) ...
+//     // ... or directly env.read_file(...) if FsReader is implemented on
+// MountainEnvironment ...     // ... and calls to other
+// handlers::documents::notify_* functions ...     todo!("Implement actual logic
+// in handlers/documents.rs") }
