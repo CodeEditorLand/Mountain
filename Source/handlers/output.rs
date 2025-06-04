@@ -559,3 +559,24 @@ pub async fn handle_dispose_output_channel<R:Runtime>(app:AppHandle<R>, args:Val
 
 	Ok(Value::Null)
 }
+
+// NEW:
+// // Example signature in handlers/output.rs
+// pub async fn handle_register_output_channel_effect_logic<R: tauri::Runtime>(
+//     app_handle: tauri::AppHandle<R>,
+//     name: String,
+//     language_id: Option<String>,
+// ) -> Result<String, CommonError> {
+//     // ... implementation using AppState and emitting Tauri events ...
+//     todo!()
+// }
+
+// pub async fn handle_append_to_output_channel_effect_logic<R: tauri::Runtime>(
+//     app_handle: tauri::AppHandle<R>,
+//     channel_id: String,
+//     value: String,
+// ) -> Result<(), CommonError> {
+//     // ... implementation ...
+//     todo!()
+// }
+// // ... and so on for replace, clear, reveal, close, dispose ...
