@@ -533,3 +533,42 @@ pub async fn handle_get_diagnostics<R:Runtime>(app:AppHandle<R>, args:Value) -> 
 		)
 	})
 }
+
+// NEW:
+// // Example signature in handlers/diagnostics.rs
+// use Land_Common::diagnostics_effects::MarkerDataDto as CommonMarkerDataDto;
+// use crate::app_state::MarkerData as AppStateMarkerData; // Assuming this
+// exists
+
+// pub async fn handle_set_diagnostics_effect_logic<R: tauri::Runtime>(
+//     app_handle: tauri::AppHandle<R>,
+//     owner: String,
+//     entries_dto_val: Value,
+// ) -> Result<(), CommonError> {
+//     // 1. Deserialize `entries_dto_val` into Vec<[UriComponentsValue,
+// Option<Vec<CommonMarkerDataDto>>]>.     // 2. For each entry:
+//     //    a. Get URI string key.
+//     //    b. Convert Vec<CommonMarkerDataDto> to Vec<AppStateMarkerData>.
+//     //    c. Update AppState.diagnostics_map.
+//     // 3. Emit "diagnostics_changed" Tauri event.
+//     todo!("Implement actual logic in handlers/diagnostics.rs")
+// }
+
+// pub async fn handle_clear_diagnostics_effect_logic<R: tauri::Runtime>(
+//     app_handle: tauri::AppHandle<R>,
+//     owner: String,
+// ) -> Result<(), CommonError> {
+//     // ... implementation ...
+//     todo!()
+// }
+
+// pub async fn handle_get_all_diagnostics_effect_logic<R: tauri::Runtime>(
+//     app_handle: tauri::AppHandle<R>,
+//     resource_uri_filter_opt: Option<Value>,
+// ) -> Result<Value, CommonError> {
+//     // 1. Read from AppState.diagnostics_map.
+//     // 2. Filter by `resource_uri_filter_opt` if provided.
+//     // 3. Convert Vec<AppStateMarkerData> to Vec<CommonMarkerDataDto>.
+//     // 4. Construct response Value: Vec<[UriComponentsValue,
+// Vec<CommonMarkerDataDtoAsValue>]>.     todo!()
+// }
