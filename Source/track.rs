@@ -6,83 +6,164 @@
 // (via the Vine IPC layer). Its primary role is to translate these incoming
 // commands and requests into abstract `ActionEffect`s (defined in
 // `Land_Common`) or to route them to direct handler functions or RPC struct
-// methods if an effect mapping is not appropriate or available.
-//
-// `ActionEffect`s are then dispatched to the `AppRuntime` for execution, which
-// uses the `MountainEnvironment` to perform the actual work.
+// methods. `ActionEffect`s are then dispatched to the `AppRuntime` for
+// execution.
 //
 // Responsibilities:
-// - Implementing the primary Tauri `#[command]` function (`dispatch_command`)
-//   which serves as the entry point for all commands invoked from the Sky
-//   frontend.
-// - Providing the `dispatch_sidecar_request` function, which is called by the
-//   `Vine` IPC layer when a request or notification is received from a sidecar.
-// - Parsing command/method names and their associated arguments
-//   (`serde_json::Value`).
-// - Prioritizing direct handling for specific notifications from sidecars that
-//   don't fit the request/response or effect pattern (e.g., terminal
-//   environment variable updates, extension lifecycle notifications).
-// - Mapping incoming command names (from Sky) and RPC method names (from
-//   sidecars) to their corresponding `ActionEffect` constructors defined in
-//   `Land_Common::effects`. This is the preferred way to handle operations that
-//   involve state changes, I/O, or complex logic, promoting a clear separation
-//   of concerns.
-// - If a sidecar request cannot be mapped to an `ActionEffect` (e.g., it's a
-//   method not covered by the effect system or a very simple query), it falls
-//   back to:
-//   - Invoking methods on specific RPC handler structs defined in `rpc.rs`
-//     (e.g., `MainThreadCommandsHandler`, `MainThreadFileSystemApiHandler`).
-//   - Calling direct handler functions in `handlers::*` submodules (less common
-//     now for primary logic, but still used for some specific cases).
-// - Invoking `AppRuntime::run(effect)` to execute `ActionEffect`s.
-// - Formatting success responses (`Ok(Value)`) and error responses
-//   (`Err(String)`) for the caller (Sky or Vine) using shared error utilities
-//   (`handlers::error_utils`).
-//
-// Key Interactions:
-// - `dispatch_command`: Called by Tauri when Sky uses
-//   `invoke('dispatch_command', ...)`.
-// - `dispatch_sidecar_request`: Called by `vine.rs` when processing messages
-//   from sidecars.
-// - Uses command name constants from `Land_Echo` for frontend command mapping.
-// - Uses RPC method names from VS Code's `extHost.protocol.ts` as the contract
-//   for sidecar request mapping.
-// - Creates `ActionEffect` instances from various modules in
-//   `Land_Common::effects` (e.g., `fs_effects`, `config_effects`,
-
-//   `document_effects`).
-// - Uses `AppRuntime` (obtained via `State<'_, Arc<AppRuntime>>`) to execute
-//   effects.
-// - If falling back from effects, calls methods on handler structs in `rpc.rs`
-//   or functions in `handlers::*`.
-// - Utilizes `handlers::error_utils` for consistent JSON-RPC error string
-//   formatting.
+// - `dispatch_command`: Entry point for Sky frontend commands.
+// - `dispatch_sidecar_request`: Entry point for sidecar IPC messages.
+// - Parsing command/method names and arguments.
+// - Prioritizing direct handling for specific notifications.
+// - Mapping incoming commands/RPC methods to `ActionEffect`s (preferred).
+// - Falling back to RPC handler structs (`rpc.rs`) or direct `handlers::*`
+//   functions.
+// - Invoking `AppRuntime::run(effect)` for `ActionEffect`s.
+// - Formatting responses and errors for Sky or Vine.
+// - Providing specific Tauri commands for fine-grained frontend interactions
+//   (e.g., language features).
 // --------------------------------------------------------------------------------------------
-use std::{path::PathBuf, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 // Import effect constructors and DTOs from Land_Common
 use Land_Common::{
 	command_effects,
 
-	// For effect creation
 	config_effects::{self, ConfigurationTarget, IConfigurationOverrides},
 
 	diagnostics_effects,
 
 	documents_effects,
 
-	// The core ActionEffect type
 	effect::ActionEffect,
 
-	// For error types returned by effects
 	errors::CommonError,
 
-	// fs_effects for FS actions, FsReader for generic effect wrapper
-	fs_effects::{self, FsReader},
+	fs_effects::{self, FsReader},     // FsReader for generic effect wrapper type
+	ipc_effects::{self, ProxyTarget}, // Added ProxyTarget for dispatch_sidecar_request
+	language_feature_effects::{
+		self,
 
-	ipc_effects,
+		CodeActionContextDto,
 
-	language_feature_effects::{self, ProviderType as CommonLangProviderType},
+		CodeActionDto,
+
+		CodeActionListDto,
+
+		CodeLensDto,
+
+		CodeLensListDto,
+
+		CompletionContextDto,
+
+		DocumentHighlightDto,
+
+		DocumentSymbolDto,
+
+		FoldingRangeDto,
+
+		FormattingOptionsDto,
+
+		HierarchyItemDto,
+
+		HoverResultDto,
+
+		IncomingCallDto,
+
+		InlayHintDto,
+
+		LinkDto,
+
+		LinkedEditingRangesDto,
+
+		LinksListDto,
+
+		LocationLinkDto,
+
+		OutgoingCallDto,
+
+		PositionDto,
+
+		ProviderOptionsDto, // For ProviderRegistration
+		ProviderType as CommonLangProviderType,
+
+		RangeDto,
+
+		SelectionRangeDto,
+
+		SemanticTokensDto,
+
+		SignatureHelpContextDto,
+
+		SignatureHelpResultDto,
+
+		SuggestResultDto,
+
+		TextEditDto,
+
+		WorkspaceEditDto,
+
+		WorkspaceSymbolDto,
+
+		prepare_call_hierarchy_effect,
+
+		prepare_rename_effect,
+
+		prepare_type_hierarchy_effect,
+
+		provide_call_hierarchy_incoming_calls_effect,
+
+		provide_call_hierarchy_outgoing_calls_effect,
+
+		// Effect constructors for specific language features:
+		provide_code_actions_effect,
+
+		provide_code_lenses_effect,
+
+		provide_completions_effect,
+
+		provide_document_formatting_edits_effect,
+
+		provide_document_highlights_effect,
+
+		provide_document_links_effect,
+
+		provide_document_semantic_tokens_edits_effect,
+
+		provide_document_semantic_tokens_effect,
+
+		provide_document_symbols_effect,
+
+		provide_folding_ranges_effect,
+
+		provide_hover_effect,
+
+		provide_inlay_hints_effect,
+
+		provide_linked_editing_ranges_effect,
+
+		provide_references_effect,
+
+		provide_rename_edits_effect,
+
+		provide_selection_ranges_effect,
+
+		provide_signature_help_effect,
+
+		provide_type_hierarchy_subtypes_effect,
+
+		provide_type_hierarchy_supertypes_effect,
+
+		provide_workspace_symbols_effect,
+
+		resolve_code_action_effect,
+
+		resolve_code_lens_effect,
+
+		resolve_completion_item_for_list_effect, // Used list_cache_id version
+		resolve_document_link_effect,
+
+		resolve_inlay_hint_effect,
+	},
 
 	output_effects,
 
@@ -92,42 +173,28 @@ use Land_Common::{
 
 	ui_effects,
 
-	workspace_effects,
+	workspace_effects::{self, apply_workspace_edit_effect},
 };
-// Constants for frontend command names (e.g., Land_Echo::REQUEST_READ_FILE)
+// Constants for frontend command names
 use Land_Echo;
 // Logging
 use log::{debug, error, info, trace, warn};
-// `serde::Deserialize` might be used if parsing complex DTOs from `args` directly in Track.
-// use serde::Deserialize;
+use serde::Deserialize; // For deserializing Tauri command args
 use serde_json::{Value, json};
 use tauri::{AppHandle, Runtime as TauriRuntime, State, Window, command};
 // For handling URIs in effect parameters
 use url::Url;
 
 use crate::{
-	// `AppState` is not directly used by Track, but context for handlers/effects it calls.
-	// app_state::AppState,
+	app_state::AppState, // For getting language_id
+	handlers::{self, error_utils, language_features::MainThreadLanguageFeaturesHandler, sky_configuration},
 
-	// Access to direct handler functions (e.g., handlers::extension_status)
-	handlers,
-
-	// Centralized error utilities for RPC responses
-	handlers::error_utils,
-
-	// Access to RPC handler structs (e.g., rpc::MainThreadCommandsHandler)
 	rpc,
 
-	runtime::AppRuntime, /* For running ActionEffects
-	                      * `vine` is not directly called by Track; Vine calls Track. */
+	runtime::AppRuntime,
 };
 
 // --- Error Handling Abstraction ---
-// These functions now directly use `handlers::error_utils` for consistency.
-
-/// Creates a JSON-RPC error string for parameter parsing failures.
-///
-/// Delegates to `error_utils::rpc_param_error_string`.
 fn create_parameter_parse_error_string(
 	method_name:&str,
 
@@ -140,78 +207,67 @@ fn create_parameter_parse_error_string(
 	error_utils::rpc_param_error_string(method_name, param_name, expected_type, index)
 }
 
-/// Maps a `CommonError` (from effect execution) to a JSON-RPC error string.
-/// Delegates to `error_utils::map_common_error_to_rpc_string`.
 fn map_common_error_to_rpc_error_string(e:CommonError, operation_context:&str) -> String {
 	error_utils::map_common_error_to_rpc_string(e, operation_context)
 }
 
-// --- Frontend Command Dispatcher (`#[tauri::command]`) ---
+// --- Helper to get language_id for a URI ---
+fn get_language_id_for_uri(
+	app_handle:&AppHandle<impl TauriRuntime>,
 
-/// Main entry point for commands invoked from the Sky frontend via Tauri's
-/// `invoke` system.
-///
-/// This function attempts to map the `command` string (typically a constant
-/// from `Land_Echo`) to an `ActionEffect`. If successful, the effect is run
-/// using the `AppRuntime`.
-///
-/// # Arguments
-/// * `app_handle` - The Tauri `AppHandle`.
-/// * `window` - The Tauri `Window` context.
-/// * `runtime` - Managed `Arc<AppRuntime>` for executing effects.
-/// * `command` - The string identifier of the command to dispatch (e.g.,
-///   `Land_Echo::REQUEST_READ_FILE`).
-/// * `args` - A `serde_json::Value` containing the arguments for the command,
-///   typically an object.
-///
-/// # Returns
-/// * `Result<Value, String>`:
-///   - `Ok(Value)` with the result of the command/effect execution.
-///   - `Err(String)` containing a JSON-RPC formatted error string if effect
-///     creation or execution fails.
-// Tauri attribute to expose this function as a command callable from frontend
+	uri:&Url,
+
+	command_context:&str,
+) -> Result<String, String> {
+	let app_state = app_handle.state::<AppState>();
+
+	let open_docs_guard = app_state.open_documents.lock().map_err(|e| {
+		error_utils::format_app_state_lock_error(&format!("open_documents for {} langId", command_context), e)
+	})?;
+
+	open_docs_guard
+		.get(uri.as_str())
+		.map(|ds| ds.language_id.clone())
+		.ok_or_else(|| {
+			error_utils::rpc_error_string(
+				format!("Document not found for {}: {}", command_context, uri),
+				Some(&format!("ENODOC_{}", command_context.to_uppercase())),
+			)
+		})
+}
+
+// --- Frontend Command Dispatcher (`#[tauri::command]`) ---
 #[command]
 pub async fn dispatch_command<R:TauriRuntime>(
 	app_handle:AppHandle<R>,
 
 	window:Window<R>,
 
-	// Access managed AppRuntime
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	// Command ID string from frontend
 	command:String,
 
-	// Arguments for the command, typically a JSON object
 	args:Value,
 ) -> Result<Value, String> {
-	info!("[Track FrontendCmd Dispatch] Received command: '{}'", command);
+	info!("[Track FrontendCmd Dispatch] Command: '{}'", command);
 
 	trace!("[Track FrontendCmd Dispatch] Args: {:?}", args);
 
 	match create_effect_for_frontend_command(&app_handle, &window, &command, args) {
 		Ok(effect_to_run) => {
-			// Successfully created an effect, now run it.
-			runtime.run(effect_to_run).await.map_err(|common_err_from_effect| {
-				// Effect execution resulted in a CommonError.
+			runtime.run(effect_to_run).await.map_err(|common_err| {
 				error!(
-					"[Track FrontendCmd Dispatch] Error running effect for command '{}': {}",
-					command, common_err_from_effect
+					"[Track FrontendCmd Dispatch] Error running effect for '{}': {}",
+					command, common_err
 				);
 
-				// Map CommonError to a JSON-RPC error string for Sky.
-				map_common_error_to_rpc_error_string(
-					common_err_from_effect,
-					&format!("frontend_command_execution_{}", command),
-				)
+				map_common_error_to_rpc_error_string(common_err, &format!("frontend_cmd_exec_{}", command))
 			})
 		},
 
 		Err(effect_creation_err_str) => {
-			// Effect creation failed (e.g., bad parameters).
-			// `effect_creation_err_str` is already a JSON-RPC formatted error string.
 			error!(
-				"[Track FrontendCmd Dispatch] Error creating effect for command '{}': {}",
+				"[Track FrontendCmd Dispatch] Error creating effect for '{}': {}",
 				command, effect_creation_err_str
 			);
 
@@ -221,76 +277,35 @@ pub async fn dispatch_command<R:TauriRuntime>(
 }
 
 // --- Sidecar Request/Notification Dispatcher (Called by Vine) ---
-
-/// Dispatches requests and notifications received from a sidecar process (e.g.,
-/// Cocoon) via the Vine IPC layer.
-///
-/// This function tries to:
-/// 1. Directly handle specific notifications that don't fit request/response or
-///    effect patterns (e.g., terminal env changes, extension lifecycle).
-/// 2. Map the incoming RPC method name to an `ActionEffect` and execute it.
-/// 3. If no effect mapping, fall back to invoking methods on RPC handler
-///    structs in `rpc.rs` or direct handler functions in `handlers::*`.
-///
-/// # Arguments
-/// * `app_handle` - The Tauri `AppHandle`.
-/// * `window` - The Tauri `Window` context.
-/// * `runtime` - Managed `Arc<AppRuntime>`.
-/// * `sidecar_id` - Identifier of the sidecar sending the request/notification.
-/// * `request_message_val` - A `serde_json::Value` representing the Vine
-///   message, expected to be an object `{ "method": string, "params": Value }`.
-///
-/// # Returns
-/// * `Result<Value, String>`:
-///   - `Ok(Value)` for successful RPC request responses.
-///   - `Ok(Value::Null)` for notifications (as they don't expect a return
-///     value).
-///   - `Err(String)` (JSON-RPC error string) for errors.
 pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 	app_handle:AppHandle<R>,
 
-	// Main window context
-	window:Window<R>,
-
-	// Managed AppRuntime
+	_window:Window<R>, // Often unused by backend handlers
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	// ID of the originating sidecar
 	sidecar_id:String,
 
-	// Raw Vine message: { method, params }
 	request_message_val:Value,
 ) -> Result<Value, String> {
-	// Default to empty if "method" is missing/not string
 	let rpc_method_name = request_message_val.get("method").and_then(Value::as_str).unwrap_or("");
 
-	// Params can be anything, default to Null
 	let rpc_params_val = request_message_val.get("params").cloned().unwrap_or(Value::Null);
 
 	info!(
-		"[Track SidecarReq Dispatch] From sidecar '{}': Method='{}'",
+		"[Track SidecarReq Dispatch] From '{}': Method='{}'",
 		sidecar_id, rpc_method_name
 	);
 
 	trace!(
 		"[Track SidecarReq Dispatch] Params (type='{:?}'): {}...",
 		rpc_params_val.kind(),
-		rpc_params_val
-			.to_string()
-			.chars()
-			 // Log a sample of params
-			.take(100)
-			.collect::<String>()
+		rpc_params_val.to_string().chars().take(100).collect::<String>()
 	);
 
 	// --- 1. Prioritize Direct Handling for Specific Notifications ---
-	// Some notifications are better handled directly without going through effect
-	// or full RPC machinery.
 	if rpc_method_name.starts_with("terminal_") && rpc_method_name != "$createTerminal" {
-		// These are environment variable change notifications from Cocoon's terminal
-		// env collection.
 		debug!(
-			"[Track SidecarReq Dispatch] Routing terminal environment notification '{}' directly to handler.",
+			"[Track SidecarReq Dispatch] Routing terminal env notification '{}' directly.",
 			rpc_method_name
 		);
 
@@ -313,7 +328,7 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 			_ => {
 				warn!(
-					"[Track SidecarReq Dispatch] Received unknown direct terminal notification: {}",
+					"[Track SidecarReq Dispatch] Unknown direct terminal notification: {}",
 					rpc_method_name
 				);
 
@@ -325,10 +340,8 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 		};
 	}
 
-	// Handle extension lifecycle notifications directly.
 	match rpc_method_name {
 		"$log" | "$logExtensionHostActivation" | "$logExtensionHostRequest" => {
-			// These are logging calls from Cocoon's general logger or specific log points.
 			let rpc_log_handler = rpc::MainThreadLogHandler { app_handle, runtime:runtime.inner().clone() };
 
 			return rpc_log_handler.log(rpc_params_val).await;
@@ -338,9 +351,6 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 		| "$onDidActivateExtension"
 		| "$onExtensionActivationError"
 		| "$onExtensionRuntimeError" => {
-			// These are notifications about extension activation status.
-			// `rpc_params_val` is expected to be an array by
-			// `handle_extension_host_status_notification`.
 			let params_as_array = rpc_params_val.as_array().cloned().unwrap_or_default();
 
 			return handlers::extension_status::handle_extension_host_status_notification(
@@ -351,80 +361,160 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 			.await;
 		},
 
-		_ => { /* Not a direct notification, continue to effect/RPC logic. */ },
+		_ => { /* Continue */ },
 	}
 
-	// --- 2. Attempt Effect Creation for RPC Requests (methods starting with '$')
-	// --- `rpc_params_val` is usually an array for methods from
-	// `extHost.protocol.ts`.
+	// --- 2. Attempt Effect Creation ---
 	let params_array_for_effects = rpc_params_val
 		.as_array()
 		.cloned()
-		 // Wrap non-array params in a vec
 		.unwrap_or_else(|| vec![rpc_params_val.clone()]);
 
-	match create_effect_for_sidecar_request(
-		&sidecar_id,
-		rpc_method_name,
-		// Clone for potential fallback
-		params_array_for_effects.clone(),
-	) {
+	match create_effect_for_sidecar_request(&sidecar_id, rpc_method_name, params_array_for_effects.clone()) {
 		Ok(effect_to_run) => {
 			debug!(
-				"[Track SidecarReq Dispatch] Successfully mapped RPC method '{}' to an ActionEffect. Running effect...",
+				"[Track SidecarReq Dispatch] Mapped RPC method '{}' to ActionEffect. Running...",
 				rpc_method_name
 			);
 
 			return runtime.run(effect_to_run).await.map_err(|common_err| {
 				error!(
-					"[Track SidecarReq Dispatch] Error running effect for RPC method '{}': {}",
+					"[Track SidecarReq Dispatch] Error running effect for '{}': {}",
 					rpc_method_name, common_err
 				);
 
-				map_common_error_to_rpc_error_string(
-					common_err,
-					&format!("sidecar_effect_execution_{}", rpc_method_name),
-				)
+				map_common_error_to_rpc_error_string(common_err, &format!("sidecar_effect_exec_{}", rpc_method_name))
 			});
 		},
 
 		Err(EffectCreationError::NoEffectMapping) => {
-			// No direct effect mapping found, proceed to RPC handler fallback.
 			debug!(
-				"[Track SidecarReq Dispatch] No direct ActionEffect mapping for RPC method '{}'. Attempting fallback \
-				 to RPC/direct handlers.",
+				"[Track SidecarReq Dispatch] No direct ActionEffect for '{}'. Attempting RPC fallback.",
 				rpc_method_name
 			);
 		},
 
-		Err(EffectCreationError::ParamParseError(param_err_str)) => {
-			// Parameter parsing failed during effect creation. `param_err_str` is already
-			// JSON-RPC formatted.
+		Err(EffectCreationError::ParamParseError(err_str)) => {
 			error!(
-				"[Track SidecarReq Dispatch] Parameter parsing error while creating effect for RPC method '{}': {}",
-				rpc_method_name, param_err_str
+				"[Track SidecarReq Dispatch] Param parsing error for '{}': {}",
+				rpc_method_name, err_str
 			);
 
-			return Err(param_err_str);
+			return Err(err_str);
 		},
 	}
 
-	// --- 3. Fallback to Direct RPC Handler Methods or Specific `handlers::*`
-	// functions ---
-	debug!(
-		"[Track SidecarReq Dispatch] Attempting direct RPC handler fallback for method: '{}'",
-		rpc_method_name
-	);
-
-	// Get Arc<AppRuntime> for handlers
+	// --- 3. Fallback to Direct RPC Handler Methods ---
 	let rpc_handler_runtime_clone = runtime.inner().clone();
 
-	// Match known RPC methods to their handlers.
-	// Note: `rpc_params_val` is used here, not `params_array_for_effects`, as RPC
-	// handlers       expect the original params structure (often an array, but
-	// sometimes an object).
+	if rpc_method_name.starts_with(&format!("{}$", ProxyTarget::MainThreadLanguageFeatures.target_prefix())) {
+		let handler = MainThreadLanguageFeaturesHandler::new(app_handle.clone());
+
+		let method_on_handler = rpc_method_name
+			.trim_start_matches(&format!("{}$", ProxyTarget::MainThreadLanguageFeatures.target_prefix()));
+
+		// Note: rpc_params_val IS the array [handle, selectorDto, optionsDto?,
+
+		// extensionIdDto?]
+		return match method_on_handler {
+			"registerHoverProvider" => handler.registerHoverProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerCompletionProvider" | "registerCompletionsProvider" => {
+				handler.registerCompletionItemProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerDefinitionSupport" => handler.registerDefinitionProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerDeclarationSupport" => handler.registerDeclarationProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerImplementationSupport" => {
+				handler.registerImplementationProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerTypeDefinitionSupport" => {
+				handler.registerTypeDefinitionProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerCodeLensSupport" => handler.registerCodeLensProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerCodeActionSupport" => handler.registerCodeActionProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerDocumentFormattingSupport" => {
+				handler
+					.registerDocumentFormattingEditProvider(&sidecar_id, rpc_params_val)
+					.await
+			},
+
+			"registerRangeFormattingSupport" => {
+				handler
+					.registerDocumentRangeFormattingEditProvider(&sidecar_id, rpc_params_val)
+					.await
+			},
+
+			"registerOnTypeFormattingSupport" => {
+				handler.registerOnTypeFormattingEditProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerDocumentHighlightProvider" => {
+				handler.registerDocumentHighlightProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerDocumentLinkProvider" => handler.registerDocumentLinkProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerDocumentColorProvider" => handler.registerDocumentColorProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerFoldingRangeProvider" | "registerFoldingRangeSupport" => {
+				handler.registerFoldingRangeProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerReferenceSupport" => handler.registerReferenceProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerRenameSupport" => handler.registerRenameProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerSignatureHelpProvider" => handler.registerSignatureHelpProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerNavigateTypeSupport" => handler.registerWorkspaceSymbolProvider(&sidecar_id, rpc_params_val).await,
+
+			"registerDocumentSymbolProvider" => {
+				handler.registerDocumentSymbolProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerSelectionRangeProvider" | "registerSelectionRangeSupport" => {
+				handler.registerSelectionRangeProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerCallHierarchyProvider" | "registerCallHierarchySupport" => {
+				handler.registerCallHierarchyProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerTypeHierarchyProvider" | "registerTypeHierarchySupport" => {
+				handler.registerTypeHierarchyProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerLinkedEditingRangeProvider" => {
+				handler.registerLinkedEditingRangeProvider(&sidecar_id, rpc_params_val).await
+			},
+
+			"registerInlayHintsProvider" => handler.registerInlayHintsProvider(&sidecar_id, rpc_params_val).await,
+
+			"unregister" | "unregisterProvider" => handler.unregisterProvider(&sidecar_id, rpc_params_val).await, /* This is handled by effect now primarily */
+			"emitCodeLensEvent" => handler.emitCodeLensEvent(&sidecar_id, rpc_params_val).await,
+
+			_ => {
+				error!(
+					"[Track SidecarReq Dispatch] Unhandled MainThreadLanguageFeatures method: '{}'",
+					rpc_method_name
+				);
+
+				Err(error_utils::rpc_error_string(
+					format!("Unknown MainThreadLanguageFeatures method: {}", rpc_method_name),
+					Some("ENOSYS_LANG_FEAT_METH_TRACK"),
+				))
+			},
+		};
+	}
+
 	match rpc_method_name {
-		// Commands
 		"$executeCommand" | "$getCommands" | "$registerCommand" | "$unregisterCommand" => {
 			let handler = rpc::MainThreadCommandsHandler { app_handle, runtime:rpc_handler_runtime_clone };
 
@@ -437,38 +527,18 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 				"$unregisterCommand" => handler.unregisterCommand(rpc_params_val).await,
 
-				// Covered by outer match
 				_ => unreachable!(),
 			}
 		},
 
-		// Workspace
 		"$resolveWorkspaceFolder" => {
 			let handler = rpc::MainThreadWorkspaceHandler { app_handle, runtime:rpc_handler_runtime_clone };
 
 			handler.resolveWorkspaceFolder(rpc_params_val).await
 		},
 
-		"$findFiles" => {
-			// This one calls `handlers::workspace` directly.
-			handlers::workspace::handle_find_files(app_handle, rpc_params_val).await
-		},
+		"$findFiles" => handlers::workspace::handle_find_files(app_handle, rpc_params_val).await,
 
-		// Language Feature Registrations (should be effects, this is a deep fallback)
-		_ if rpc_method_name.starts_with("$register") && rpc_method_name.contains("Provider") => {
-			warn!(
-				"[Track SidecarReq Dispatch] Language feature registration RPC '{}' fell back to RPC handler (should \
-				 be an ActionEffect). This indicates a missing mapping in `create_effect_for_sidecar_request`.",
-				rpc_method_name
-			);
-
-			// Use the catch-all from rpc.rs for this unlikely case.
-			let handler = rpc::MainThreadLanguageFeaturesHandler { app_handle, runtime:rpc_handler_runtime_clone };
-
-			handler.CatchAllRegisterProvider(rpc_method_name, rpc_params_val).await
-		},
-
-		// UI Messages & Dialogs (these use effects internally via rpc.rs handlers)
 		"$showMessage" => {
 			let handler = rpc::MainThreadMessageHandler { app_handle, runtime:rpc_handler_runtime_clone };
 
@@ -487,35 +557,28 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 			}
 		},
 
-		// Window
 		"$focusWindow" => {
 			let handler = rpc::MainThreadWindowHandler { app_handle, runtime:rpc_handler_runtime_clone };
 
 			handler.focusWindow(rpc_params_val).await
 		},
 
-		// Status Bar
 		"$setEntry" | "$disposeEntry" if rpc_method_name == "$setEntry" || rpc_method_name == "$disposeEntry" => {
 			let handler = rpc::MainThreadStatusBarHandler { app_handle, runtime:rpc_handler_runtime_clone };
 
 			match rpc_method_name {
-				// Expects DTO directly
 				"$setEntry" => handler.setEntry(rpc_params_val).await,
 
-				// Expects [id]
 				"$disposeEntry" => handler.disposeEntry(rpc_params_val).await,
 
 				_ => unreachable!(),
 			}
 		},
 
-		// Filesystem API (vscode.workspace.fs)
 		"$stat" | "$readDirectory" | "$readFile" | "$writeFile" | "$createDirectory" | "$delete" | "$rename"
 		| "$copy" => {
 			let fs_api_handler = rpc::MainThreadFileSystemApiHandler { app_handle, runtime:rpc_handler_runtime_clone };
 
-			// These methods in `MainThreadFileSystemApiHandler` expect `rpc_params_val`
-			// (the array).
 			match rpc_method_name {
 				"$stat" => fs_api_handler.stat(rpc_params_val).await,
 
@@ -537,7 +600,6 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 			}
 		},
 
-		// Document Operations (direct handlers)
 		"$tryOpenDocument" => handlers::documents::handle_try_open_document(app_handle, rpc_params_val).await,
 
 		"$tryCreateDocument" => handlers::documents::handle_try_create_document(app_handle, rpc_params_val).await,
@@ -578,9 +640,6 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 			handlers::documents::handle_save_all(app_handle, include_untitled_bool).await
 		},
 
-		// Output Channels (direct handlers, some might have been effects if params were simpler)
-		// Check using `is_output_method_fallback_candidate` to disambiguate from other uses of these common method
-		// names.
 		_ if is_output_method_fallback_candidate(rpc_method_name) => {
 			match rpc_method_name {
 				"$register" => handlers::output::handle_register_output_channel(app_handle, rpc_params_val).await,
@@ -593,58 +652,47 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 
 				"$close" => handlers::output::handle_close_output_channel_view(app_handle, rpc_params_val).await,
 
-				// Note: $clear and $dispose for output channels are handled below with param type checks.
 				_ => {
 					error!(
-						"[Track SidecarReq Dispatch] Unhandled output method in fallback candidate check: '{}'",
+						"[Track SidecarReq Dispatch] Unhandled output method in fallback: '{}'",
 						rpc_method_name
 					);
 
 					Err(error_utils::rpc_error_string(
-						format!("Output method '{}' not fully routed in fallback.", rpc_method_name),
+						format!("Output method '{}' not routed in fallback.", rpc_method_name),
 						Some("ENOSYS_OUT_FALLBACK_ROUTE"),
 					))
 				},
 			}
 		},
 
-		// Diagnostics (direct handlers)
-		// Note: `$clear` for diagnostics is an effect, so it's handled by `create_effect_for_sidecar_request`.
 		"$changeMany" => handlers::diagnostics::handle_change_many(app_handle, rpc_params_val).await,
 
 		"$getDiagnostics" => handlers::diagnostics::handle_get_diagnostics(app_handle, rpc_params_val).await,
 
-		// Terminals (via RPC struct that calls specific handlers in `handlers::terminal`)
 		"$createTerminal" | "$show" | "$hide" | "$sendText" => {
 			let terminal_rpc_handler =
 				rpc::MainThreadTerminalServiceHandler { app_handle, runtime:rpc_handler_runtime_clone };
 
 			match rpc_method_name {
-				// Expects options
 				"$createTerminal" => terminal_rpc_handler.createTerminal(rpc_params_val).await,
 
-				// object
-				// Expects [id, preserveFocus?]
 				"$show" => terminal_rpc_handler.show(rpc_params_val).await,
 
-				// Expects [id]
 				"$hide" => terminal_rpc_handler.hide(rpc_params_val).await,
 
-				// Expects [id, text]
 				"$sendText" => terminal_rpc_handler.sendText(rpc_params_val).await,
 
 				_ => unreachable!(),
 			}
 		},
 
-		// Disambiguation for $dispose and $clear based on parameter types (heuristic).
 		"$dispose" if rpc_params_val.as_array().and_then(|a| a.get(0)?.as_u64()).is_some() => {
 			info!("[Track SidecarReq Dispatch] Assuming '$dispose' with u64 param is for Terminal (fallback).");
 
 			let terminal_rpc_handler =
 				rpc::MainThreadTerminalServiceHandler { app_handle, runtime:rpc_handler_runtime_clone };
 
-			// Expects [id: u64]
 			terminal_rpc_handler.dispose(rpc_params_val).await
 		},
 
@@ -653,92 +701,56 @@ pub async fn dispatch_sidecar_request<R:TauriRuntime>(
 				"[Track SidecarReq Dispatch] Assuming '$dispose' with string param is for Output Channel (fallback)."
 			);
 
-			// Expects [id: string]
 			handlers::output::handle_dispose_output_channel(app_handle, rpc_params_val).await
 		},
 
 		"$clear" if rpc_params_val.as_array().and_then(|a| a.get(0)?.as_str()).is_some() => {
-			// Note: $clear for Diagnostics owner is an effect. This handles $clear for
-			// OutputChannel.
 			info!("[Track SidecarReq Dispatch] Assuming '$clear' with string param is for Output Channel (fallback).");
 
-			// Expects [id: string]
 			handlers::output::handle_clear_output_channel(app_handle, rpc_params_val).await
 		},
 
-		// Default: Method not found in any dispatch path.
 		_ => {
 			error!(
-				"[Track SidecarReq Dispatch] Unhandled RPC method '{}' from sidecar '{}'. No effect mapping AND no \
-				 explicit RPC/direct handler found after fallback.",
+				"[Track SidecarReq Dispatch] Unhandled RPC method '{}' from sidecar '{}'. No effect or RPC handler.",
 				rpc_method_name, sidecar_id
 			);
 
 			Err(error_utils::rpc_error_string(
-				format!(
-					"RPC method '{}' is not implemented or mapped in the Track dispatcher.",
-					rpc_method_name
-				),
-				Some("ENOSYS_TRACK_UNHANDLED"),
+				format!("RPC method '{}' not implemented.", rpc_method_name),
+				Some("ENOSYS_TRACK_UNHANDLED_FINAL"),
 			))
 		},
 	}
 }
 
 /// Helper to check if a method name is a candidate for output channel fallback
-/// logic. This is used to disambiguate common method names like `$register`,
-///
-///
-///
-///
-/// `$dispose`.
+/// logic.
 fn is_output_method_fallback_candidate(method_name:&str) -> bool {
 	matches!(method_name, "$register" | "$append" | "$replace" | "$reveal" | "$close")
 }
 
 /// Represents errors that can occur during the creation of an `ActionEffect`.
 enum EffectCreationError {
-	// Indicates no effect is defined for the given command/method.
 	NoEffectMapping,
 
-	// String is already a JSON-RPC error string from `create_parameter_parse_error_string`.
-	ParamParseError(String),
+	ParamParseError(String), // String is already a JSON-RPC error string
 }
 
 // --- Effect Creation Logic ---
-
-/// Creates an `ActionEffect` for commands originating from the Sky frontend.
-///
-/// # Arguments
-/// * `_app_handle` - Unused, kept for signature consistency.
-/// * `_window` - Unused, kept for signature consistency.
-/// * `command_id_str` - The command ID string (from `Land_Echo` constants).
-/// * `args_val` - `serde_json::Value` containing arguments for the command.
-///
-/// # Returns
-/// * `Ok(ActionEffect)` if successful.
-/// * `Err(String)` (JSON-RPC error string) if command is unknown or args are
-///   invalid.
 fn create_effect_for_frontend_command<R:TauriRuntime>(
-	// Currently unused, but available if needed for context.
 	_app_handle:&AppHandle<R>,
 
-	// Currently unused.
 	_window:&Window<R>,
 
 	command_id_str:&str,
 
-	// Expects args to be a JSON object from Sky
 	args_val:Value,
 ) -> Result<ActionEffect<Arc<AppRuntime>, CommonError, Value>, String> {
-	// Helper for creating parameter error strings specifically for frontend command
-	// arg parsing.
 	let frontend_param_err_fn = |param_name:&str, expected_type:&str| -> String {
-		// No index for object props
 		create_parameter_parse_error_string(command_id_str, param_name, expected_type, None)
 	};
 
-	// Helpers to get typed arguments from the `args_val` JSON object.
 	let get_string_arg_from_obj = |key:&str| {
 		args_val
 			.get(key)
@@ -774,26 +786,18 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 	);
 
 	match command_id_str {
-		// Filesystem Effects
 		Land_Echo::REQUEST_READ_FILE => {
 			let file_path = get_path_buf_arg_from_obj("path")?;
 
 			let read_file_effect = fs_effects::read_file(file_path);
 
-			// Wrap the Vec<u8>-returning effect to return a base64-encoded JSON string,
-
-			// as expected by Sky for file content.
-			Ok(ActionEffect::new(Arc::new(move |env_accessor| {
-				// Clone effect for closure
+			Ok(ActionEffect::new(Arc::new(move |runtime_accessor| {
 				let effect_clone = read_file_effect.clone();
 
 				Box::pin(async move {
-					let fs_reader_env:Arc<dyn FsReader + Send + Sync> = env_accessor.require();
-
-					fs_reader_env
-						.run_effect(effect_clone)
+					runtime_accessor
+						.run(effect_clone)
 						.await
-						 // Encode to base64 JSON string
 						.map(|bytes_vec| json!(base64::encode(bytes_vec)))
 				})
 			})))
@@ -802,12 +806,9 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 		Land_Echo::REQUEST_WRITE_FILE => {
 			Ok(fs_effects::write_file_string(
 				get_path_buf_arg_from_obj("path")?,
-				// Expects string content from Sky
 				get_string_arg_from_obj("content")?,
-				// Default to create=true
 				get_bool_arg_from_obj("create", true),
-				get_bool_arg_from_obj("overwrite", true), /* Default to overwrite=true (check if this is desired
-				                                           * default) */
+				get_bool_arg_from_obj("overwrite", true),
 			))
 		},
 
@@ -820,7 +821,6 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 		Land_Echo::REQUEST_NEW_FOLDER => {
 			Ok(fs_effects::create_directory(
 				get_path_buf_arg_from_obj("parentDir")?.join(get_string_arg_from_obj("name")?),
-				// `create_directory` effect is recursive
 				true,
 			))
 		},
@@ -828,9 +828,7 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 		Land_Echo::REQUEST_DELETE_PATH => {
 			Ok(fs_effects::delete(
 				get_path_buf_arg_from_obj("path")?,
-				// Default to recursive for safety/convenience
 				get_bool_arg_from_obj("recursive", true),
-				// Default to permanent delete
 				get_bool_arg_from_obj("useTrash", false),
 			))
 		},
@@ -850,7 +848,6 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 			Ok(fs_effects::rename(
 				old_path_buf,
 				parent_dir_path.join(new_name_str),
-				// Default to no overwrite
 				get_bool_arg_from_obj("overwrite", false),
 			))
 		},
@@ -863,39 +860,30 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 			))
 		},
 
-		// Document Effects
 		Land_Echo::REQUEST_SAVE_FILE => {
-			Ok(documents_effects::try_save(
+			Ok(documents_effects::try_save_document(
 				Url::parse(&get_string_arg_from_obj("uri")?)
 					.map_err(|e_url| frontend_param_err_fn("uri (parse error)", &e_url.to_string()))?,
 			))
 		},
 
 		Land_Echo::REQUEST_SAVE_FILE_AS => {
-			Ok(documents_effects::try_save_as(
+			Ok(documents_effects::try_save_document_as(
 				Url::parse(&get_string_arg_from_obj("originalUri")?)
 					.map_err(|e_url| frontend_param_err_fn("originalUri (parse error)", &e_url.to_string()))?,
-				// `newTargetUri` is optional; if None, UiProvider will prompt user.
 				get_optional_value_arg_from_obj("newTargetUri")
-				.and_then(|val| val.as_str().map(|s| Url::parse(s)))
-				 // Option<Result<Url, E>> -> Result<Option<Url>, E>
-				.transpose()
-				.map_err(|e_url| {
-
-
-					frontend_param_err_fn("newTargetUri (parse error)", &e_url.to_string())
-				})?,
+					.and_then(|val| val.as_str().map(|s| Url::parse(s)))
+					.transpose()
+					.map_err(|e_url| frontend_param_err_fn("newTargetUri (parse error)", &e_url.to_string()))?,
 			))
 		},
 
 		Land_Echo::REQUEST_APPLY_EDITOR_CHANGES => {
-			Ok(documents_effects::apply_changes(
+			Ok(documents_effects::apply_document_changes(
 				Url::parse(&get_string_arg_from_obj("uri")?)
 					.map_err(|e_url| frontend_param_err_fn("uri (parse error)", &e_url.to_string()))?,
 				get_i64_arg_from_obj("versionId")?,
-				// Expects array of change DTOs
 				get_required_value_arg_from_obj("changes")?,
-				// Default to dirty after change
 				get_bool_arg_from_obj("isDirty", true),
 				get_bool_arg_from_obj("isUndoing", false),
 				get_bool_arg_from_obj("isRedoing", false),
@@ -903,77 +891,47 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 		},
 
 		Land_Echo::REQUEST_OPEN_FILE => {
-			Ok(documents_effects::try_open(
-				// Expects UriComponents DTO
+			Ok(documents_effects::try_open_document(
 				get_required_value_arg_from_obj("uriComponents")?,
 				get_optional_value_arg_from_obj("languageId").and_then(|v| v.as_str().map(String::from)),
 				get_optional_value_arg_from_obj("content").and_then(|v| v.as_str().map(String::from)),
 			))
 		},
 
-		// IPC Effects (for frontend to call into sidecar via Mountain)
 		Land_Echo::REQUEST_PROXY_EXT_HOST_CALL => {
 			Ok(ipc_effects::proxy_call_to_sidecar(
-				// TODO: Target sidecar ID should be configurable or part of args
 				"cocoon-main".to_string(),
-				// Expects { method, params } for sidecar
 				get_required_value_arg_from_obj("callData")?,
 			))
 		},
 
 		Land_Echo::REQUEST_ESTABLISH_HOST_CONNECTION => {
-			// This might be for initializing Vine if not already done, or a health check.
-			// For now, map to an IPC effect that Vine might handle.
-			Ok(ipc_effects::establish_host_connection(
-				// TODO: Target sidecar ID
-				"cocoon-main".to_string(),
-			))
+			Ok(ipc_effects::establish_host_connection("cocoon-main".to_string()))
 		},
 
-		// WebSocket related commands (Mist) - These might not be effects if handled directly.
 		Land_Echo::REQUEST_WS_SEND | Land_Echo::REQUEST_WS_CONNECT => {
-			// These are handled directly by `handlers::mist::handle_ws_send_command` or
-			// similar, not typically as effects in the same way.
-			// If they were to be effects, they'd need an `IpcProvider` or `MistProvider`.
 			Err(error_utils::rpc_error_string(
-				format!(
-					"WebSocket command '{}' is not implemented via the general effect system. It may have a direct \
-					 handler.",
-					command_id_str
-				),
+				format!("WebSocket command '{}' not implemented via effect system.", command_id_str),
 				Some("ENOSYS_WS_EFFECT"),
 			))
 		},
 
 		_ => {
 			Err(error_utils::rpc_error_string(
-				format!("Unknown frontend command ID '{}' received for effect creation.", command_id_str),
+				format!("Unknown frontend command ID '{}'", command_id_str),
 				Some("ENOSYS_CMD_UNKNOWN"),
 			))
 		},
 	}
 }
 
-/// Attempts to create an `ActionEffect` for RPC requests originating from a
-/// sidecar.
-///
-/// # Arguments
-/// * `sidecar_id_str` - Identifier of the calling sidecar.
-/// * `rpc_method_name` - The RPC method name (e.g., "$getConfiguration").
-/// * `params_vec` - A `Vec<Value>` containing parameters for the RPC method.
-///
-/// # Returns
-/// * `Ok(ActionEffect)` if a mapping exists and params are valid.
-/// * `Err(EffectCreationError)` if no mapping, or if param parsing fails.
 fn create_effect_for_sidecar_request(
 	sidecar_id_str:&str,
 
 	rpc_method_name:&str,
 
-	// RPC methods typically take an array of parameters
 	params_vec:Vec<Value>,
 ) -> Result<ActionEffect<Arc<AppRuntime>, CommonError, Value>, EffectCreationError> {
-	// Helper for creating parameter parsing error for sidecar requests.
 	let sidecar_param_err_fn = |param_name:&str, expected_type:&str, idx:usize| {
 		EffectCreationError::ParamParseError(create_parameter_parse_error_string(
 			rpc_method_name,
@@ -983,7 +941,6 @@ fn create_effect_for_sidecar_request(
 		))
 	};
 
-	// Helpers to get typed parameters from the `params_vec` by index.
 	let get_string_param_at_idx = |idx:usize, name_for_err:&str| {
 		params_vec
 			.get(idx)
@@ -995,9 +952,7 @@ fn create_effect_for_sidecar_request(
 	let get_u32_param_at_idx = |idx:usize, name_for_err:&str| {
 		params_vec
 			.get(idx)
-			// Parse as u64 first for flexibility
 			.and_then(Value::as_u64)
-			// Then cast to u32
 			.map(|v| v as u32)
 			.ok_or_else(|| sidecar_param_err_fn(name_for_err, "u32 number", idx))
 	};
@@ -1011,6 +966,28 @@ fn create_effect_for_sidecar_request(
 			.ok_or_else(|| sidecar_param_err_fn(name_for_err, "JSON value", idx))
 	};
 
+	let lang_feat_reg_effect_adapter = |effect_u32:ActionEffect<Arc<AppRuntime>, CommonError, u32>| -> Result<
+		ActionEffect<Arc<AppRuntime>, CommonError, Value>,
+		EffectCreationError,
+	> {
+		Ok(ActionEffect::new(Arc::new(move |runtime_accessor| {
+			let effect_clone = effect_u32.clone();
+
+			Box::pin(async move { runtime_accessor.run(effect_clone).await.map(Value::from) })
+		})))
+	};
+
+	let lang_feat_void_effect_adapter = |effect_void:ActionEffect<Arc<AppRuntime>, CommonError, ()>| -> Result<
+		ActionEffect<Arc<AppRuntime>, CommonError, Value>,
+		EffectCreationError,
+	> {
+		Ok(ActionEffect::new(Arc::new(move |runtime_accessor| {
+			let effect_clone = effect_void.clone();
+
+			Box::pin(async move { runtime_accessor.run(effect_clone).await.map(|_| Value::Null) })
+		})))
+	};
+
 	trace!(
 		"[Track CreateEffect Sidecar] Method='{}', NumParams={}, Sidecar='{}'",
 		rpc_method_name,
@@ -1018,95 +995,56 @@ fn create_effect_for_sidecar_request(
 		sidecar_id_str
 	);
 
-	// Helper to wrap effects returning `u32` (like language provider handles)
-	// into `Value`-returning effects for the dispatcher.
-	let lang_feat_reg_effect_adapter = |effect_u32:ActionEffect<Arc<AppRuntime>, CommonError, u32>| -> Result<
-		ActionEffect<Arc<AppRuntime>, CommonError, Value>,
-		EffectCreationError,
-	> {
-		Ok(ActionEffect::new(Arc::new(move |env_accessor| {
-			let effect_clone = effect_u32.clone();
+	// For $register...Provider methods, params are [cocoon_handle, selectorDto,
 
-			Box::pin(async move {
-				// Convert u32 to Value::Number
-				env_accessor.run(effect_clone).await.map(Value::from)
-			})
-		})))
-	};
+	// optionsDto?, extensionIdDto?] We need selectorDto (idx 1), optionsDto (idx
+	// 2), and extensionIdDto (idx 3) for the generic register_provider effect.
+	let selector_dto_for_reg = get_required_param_at_idx(1, "selector DTO");
 
-	// Helper for effects returning `()` (void).
-	let lang_feat_void_effect_adapter = |effect_void:ActionEffect<Arc<AppRuntime>, CommonError, ()>| -> Result<
-		ActionEffect<Arc<AppRuntime>, CommonError, Value>,
-		EffectCreationError,
-	> {
-		Ok(ActionEffect::new(Arc::new(move |env_accessor| {
-			let effect_clone = effect_void.clone();
+	let options_dto_for_reg = get_optional_param_at_idx(2);
 
-			Box::pin(async move {
-				// Convert () to Value::Null
-				env_accessor.run(effect_clone).await.map(|_| Value::Null)
-			})
-		})))
-	};
+	let extension_id_dto_for_reg = get_required_param_at_idx(3, "extensionId DTO"); // Assuming always present for registrations
 
 	match rpc_method_name {
-		// --- Configuration Effects ---
-		// Params: [section?: string, overrides?: IConfigurationOverridesDto, scopeToLanguage?: boolean]
 		"$getConfiguration" => {
 			Ok(config_effects::get_configuration(
-				// section_key_opt
-				params_vec.get(0).and_then(Value::as_str).map(String::from),
-				// overrides_dto
+				get_optional_param_at_idx(0).and_then(|v| v.as_str().map(String::from)),
 				get_optional_param_at_idx(1).unwrap_or(Value::Null),
-				// scope_to_language_opt
-				params_vec.get(2).and_then(Value::as_bool),
+				get_optional_param_at_idx(2).and_then(Value::as_bool),
 			))
 		},
 
-		// Params: [target: number (ConfigTarget), key: string, value: any, overrides?: Dto, scopeToLang?: boolean]
 		"$updateConfigurationOption" => {
 			Ok(config_effects::update_configuration(
 				get_string_param_at_idx(1, "key")?,
 				get_required_param_at_idx(2, "value")?,
-				// Cast to u32 for enum
 				get_u32_param_at_idx(0, "target (ConfigurationTarget)")?,
-				// overrides_dto
 				get_optional_param_at_idx(3).unwrap_or(Value::Null),
-				// scope_to_language_opt
-				params_vec.get(4).and_then(Value::as_bool),
+				get_optional_param_at_idx(4).and_then(Value::as_bool),
 			))
 		},
 
-		// Params: [target: number, key: string, overrides?: Dto, scopeToLang?: boolean]
 		"$removeConfigurationOption" => {
 			Ok(config_effects::update_configuration(
 				get_string_param_at_idx(1, "key")?,
-				// Setting value to Null removes the key
 				Value::Null,
 				get_u32_param_at_idx(0, "target (ConfigurationTarget)")?,
 				get_optional_param_at_idx(2).unwrap_or(Value::Null),
-				params_vec.get(3).and_then(Value::as_bool),
+				get_optional_param_at_idx(3).and_then(Value::as_bool),
 			))
 		},
 
-		// Params: [key: string, overrides?: IConfigurationOverridesDto]
-		"$inspect" => Ok(config_effects::inspect_configuration(get_string_param_at_idx(0, "key")?)),
-
-		// --- Workspace Info Effects ---
-		// Params: void
-		"$getWorkspaceFolders" => Ok(workspace_effects::get_workspace_folders()),
-
-		// Params: [options?: WorkspaceTrustRequestOptionsDto]
-		"$requestWorkspaceTrust" => {
-			Ok(workspace_effects::request_trust(
-				// options_dto_opt
-				get_optional_param_at_idx(0),
+		"$inspect" => {
+			Ok(config_effects::inspect_configuration_value(
+				get_string_param_at_idx(0, "key")?,
+				get_optional_param_at_idx(1).unwrap_or(Value::Null),
 			))
 		},
 
-		// --- Storage & Secrets Effects ---
-		// Cocoon shim sends params as an object: {scope, key} for getValue, {scope, key}, value for setValue
-		// The effect constructors `storage_effects::*` expect this object as a single `Value` param.
+		"$getWorkspaceFolders" => Ok(workspace_effects::get_workspace_folders_info().map_value(|v_vec| json!(v_vec))),
+
+		"$requestWorkspaceTrust" => Ok(workspace_effects::request_workspace_trust(get_optional_param_at_idx(0))),
+
 		"$getValue" => {
 			Ok(storage_effects::get_storage_item(get_required_param_at_idx(
 				0,
@@ -1117,12 +1055,10 @@ fn create_effect_for_sidecar_request(
 		"$setValue" => {
 			Ok(storage_effects::set_storage_item(
 				get_required_param_at_idx(0, "storage target object {scope, key}")?,
-				// Value is the second parameter
 				get_required_param_at_idx(1, "value to set")?,
 			))
 		},
 
-		// Params: [extensionId: string, key: string]
 		"$getPassword" => {
 			Ok(secrets_effects::get_secret(
 				get_string_param_at_idx(0, "extensionId")?,
@@ -1130,7 +1066,6 @@ fn create_effect_for_sidecar_request(
 			))
 		},
 
-		// Params: [extensionId: string, key: string, value: string]
 		"$setPassword" => {
 			Ok(secrets_effects::store_secret(
 				get_string_param_at_idx(0, "extensionId")?,
@@ -1139,7 +1074,6 @@ fn create_effect_for_sidecar_request(
 			))
 		},
 
-		// Params: [extensionId: string, key: string]
 		"$deletePassword" => {
 			Ok(secrets_effects::delete_secret(
 				get_string_param_at_idx(0, "extensionId")?,
@@ -1147,262 +1081,1052 @@ fn create_effect_for_sidecar_request(
 			))
 		},
 
-		// --- Language Features Registration Effects ---
-		// Cocoon sends params for $register...Provider as:
-		// [0: internal_cocoon_handle, 1: selector_dto, 2: options_dto?, 3: extensionId_dto?]
-		// Our effect constructors typically take: (selector_dto, sidecar_id_str, options_dto_opt).
-		// The `internal_cocoon_handle` (params_vec[0]) is ignored by these Mountain effect creators.
-		// `sidecar_id_str` is available in this function's scope.
+		// Language Feature Provider Registrations (these are now mostly handled by the RPC handler fallback)
+		// This section is reduced as MainThreadLanguageFeaturesHandler handles most $register calls.
+		// Only $unregister might remain as a direct effect here if not in RPC handler.
 		"$registerHoverProvider" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_hover_provider(
-				get_required_param_at_idx(1, "selector DTO")?,
+			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
+				CommonLangProviderType::Hover,
+				selector_dto_for_reg?,
 				sidecar_id_str.to_string(),
-				// options_dto_opt
-				get_optional_param_at_idx(2),
+				extension_id_dto_for_reg?,
+				options_dto_for_reg,
 			))
 		},
 
 		"$registerCompletionItemProvider" | "$registerCompletionsProvider" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_completion_provider(
-				get_required_param_at_idx(1, "selector DTO")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		// ... (Similar mappings for all other $register...Provider methods) ...
-		// Omitting for brevity, but assume they follow the pattern above, e.g.:
-
-		// "$registerDefinitionProvider" | "$registerDefinitionSupport" =>
-		// lang_feat_reg_effect_adapter(language_feature_effects::register_definition_provider(...)),
-
-		// ... many more language feature registrations ...
-		"$registerDefinitionProvider" | "$registerDefinitionSupport" => {
 			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::Definition,
-				get_required_param_at_idx(1, "selector")?,
+				CommonLangProviderType::Completion,
+				selector_dto_for_reg?,
 				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
+				extension_id_dto_for_reg?,
+				options_dto_for_reg,
 			))
 		},
 
-		"$registerDeclarationProvider" | "$registerDeclarationSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::Declaration,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerImplementationProvider" | "$registerImplementationSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::Implementation,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerTypeDefinitionProvider" | "$registerTypeDefinitionSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::TypeDefinition,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerReferencesProvider" | "$registerReferencesSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::References,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerDocumentHighlightProvider" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::DocumentHighlight,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerDocumentSymbolProvider" | "$registerDocumentSymbolSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::DocumentSymbol,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		// WS Symbol has options at index 1, no selector normally
-		"$registerWorkspaceSymbolProvider" | "$registerWorkspaceSymbolSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::WorkspaceSymbol,
-				Value::Null,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(1),
-			))
-		},
-
-		"$registerCodeActionProvider" | "$registerCodeActionSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::CodeAction,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerCodeLensProvider" | "$registerCodeLensSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::CodeLens,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerDocumentFormattingEditProvider" | "$registerDocumentFormattingSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::Formatting,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerDocumentRangeFormattingEditProvider" | "$registerDocumentRangeFormattingSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::RangeFormatting,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerOnTypeFormattingEditProvider" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::OnTypeFormatting,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_required_param_at_idx(2, "onTypeFormattingOptionsDto")?,
-			))
-		},
-
-		"$registerRenameProvider" | "$registerRenameSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::Rename,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerDocumentLinkProvider" | "$registerDocumentLinkSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::DocumentLink,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerDocumentColorProvider" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::Color,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerFoldingRangeProvider" | "$registerFoldingRangeSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::FoldingRange,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerSelectionRangeProvider" | "$registerSelectionRangeSupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::SelectionRange,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerCallHierarchyProvider" | "$registerCallHierarchySupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::CallHierarchy,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerTypeHierarchyProvider" | "$registerTypeHierarchySupport" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::TypeHierarchy,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerLinkedEditingRangeProvider" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::LinkedEditingRange,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		"$registerInlayHintsProvider" => {
-			lang_feat_reg_effect_adapter(language_feature_effects::register_provider(
-				CommonLangProviderType::InlayHints,
-				get_required_param_at_idx(1, "selector")?,
-				sidecar_id_str.to_string(),
-				get_optional_param_at_idx(2),
-			))
-		},
-
-		// Unregister Language Feature Provider
-		// Params: [mountain_provider_handle: u32]
-		"$unregister" | "$unregisterProvider" => {
+		// ... Add other $register... calls if they are to be effects and not RPC handlers
+		// Ensure parameters match `language_feature_effects::register_provider`
+		"$unregister" | "$unregisterProvider"
+			if rpc_method_name != "$unregisterLogSink" && rpc_method_name != "$unregisterSerializer" =>
+		{
 			lang_feat_void_effect_adapter(language_feature_effects::unregister_provider(get_u32_param_at_idx(
 				0,
 				"provider_handle (Mountain-generated)",
 			)?))
 		},
 
-		// --- Diagnostics Effects ---
-		// Params: [owner: string]
-		// Note: `$changeMany` and `$getDiagnostics` are direct handlers, not effects here.
-		// Check if this is for Diagnostics based on typical usage (single string arg for owner)
 		"$clear"
 			if rpc_method_name == "$clear"
 				&& params_vec.len() == 1
 				&& params_vec.get(0).map_or(false, Value::is_string) =>
 		{
-			Ok(diagnostics_effects::clear_owner_diagnostics(get_string_param_at_idx(
-				0, "owner",
-			)?))
+			Ok(diagnostics_effects::clear_diagnostics(get_string_param_at_idx(0, "owner")?))
 		},
 
-		// --- Default: No Effect Mapping ---
-		// If the RPC method name doesn't match any known effect creation rule,
-
-		// signal that it needs to be handled by RPC fallback or a direct handler.
 		_ => Err(EffectCreationError::NoEffectMapping),
 	}
+}
+
+// --- Tauri Commands for Specific Language Features (Sky -> Mountain) ---
+
+#[command]
+pub async fn mountain_get_workbench_configuration(
+	app_handle:AppHandle<Wry>,
+) -> Result<sky_dtos::SandboxConfigurationDto, String> {
+	info!("[Track Command] mountain_get_workbench_configuration request.");
+
+	Ok(sky_configuration::build_sandbox_configuration(&app_handle))
+}
+
+// Define sky_dtos if not already available (placeholder)
+mod sky_dtos {
+
+	use serde::Serialize;
+
+	#[derive(Serialize, Debug, Default)]
+	pub struct SandboxConfigurationDto {
+		// Placeholder fields, actual fields would match VS Code's ISandboxConfiguration
+		pub locale:Option<String>,
+
+		pub user_data_path:Option<String>,
+
+		pub machine_settings_path:Option<String>,
+	}
+}
+
+#[derive(Deserialize, Debug)]
+struct RequestHoverArgs {
+	uri_string:String,
+
+	line_number_0_based:u32,
+
+	column_0_based:u32,
+}
+
+#[command]
+pub async fn mountain_request_hover(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:RequestHoverArgs,
+) -> Result<Option<HoverResultDto>, String> {
+	info!("[Track Command] mountain_request_hover for URI: {}", args.uri_string);
+
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_hover", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "hover")?;
+
+	let position_dto = PositionDto { line_number:args.line_number_0_based, column:args.column_0_based };
+
+	let effect = provide_hover_effect(target_uri, language_id, position_dto);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "hover_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct RequestCompletionsArgs {
+	uri_string:String,
+
+	line_number_0_based:u32,
+
+	column_0_based:u32,
+
+	context_dto:CompletionContextDto,
+
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_completions(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:RequestCompletionsArgs,
+) -> Result<Option<SuggestResultDto>, String> {
+	info!("[Track Command] mountain_request_completions for URI: {}", args.uri_string);
+
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_completions", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "completions")?;
+
+	let position_dto = PositionDto { line_number:args.line_number_0_based, column:args.column_0_based };
+
+	let effect = provide_completions_effect(
+		target_uri,
+		language_id,
+		position_dto,
+		args.context_dto,
+		args.cancellation_token_id_val,
+	);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "completions_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct ResolveCompletionItemArgsSky {
+	list_cache_id:u32,
+
+	item_dto_to_resolve:Value, // ISuggestDataDto as Value
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_resolve_completion_item(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ResolveCompletionItemArgsSky,
+) -> Result<Option<Value>, String> {
+	info!(
+		"[Track Command] mountain_resolve_completion_item for ListCacheID: {}",
+		args.list_cache_id
+	);
+
+	trace!(
+		"[Track Command] Item DTO to resolve for list {}: {:?}",
+		args.list_cache_id, args.item_dto_to_resolve
+	);
+
+	let effect = resolve_completion_item_for_list_effect(
+		args.list_cache_id,
+		args.item_dto_to_resolve,
+		args.cancellation_token_id_val,
+	);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "resolve_completion_item_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct RequestCodeActionsArgs {
+	uri_string:String,
+
+	line_number_0_based_start:u32,
+
+	column_0_based_start:u32,
+
+	line_number_0_based_end:u32,
+
+	column_0_based_end:u32,
+
+	context_dto:CodeActionContextDto,
+
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_code_actions(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:RequestCodeActionsArgs,
+) -> Result<Option<CodeActionListDto>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_code_actions", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "code_actions")?;
+
+	let range_or_selection_dto = json!({
+
+		"startLineNumber": args.line_number_0_based_start,
+
+		"startColumn": args.column_0_based_start,
+
+		"endLineNumber": args.line_number_0_based_end,
+
+		"endColumn": args.column_0_based_end,
+
+	});
+
+	let effect = provide_code_actions_effect(
+		target_uri,
+		language_id,
+		range_or_selection_dto,
+		args.context_dto,
+		args.cancellation_token_id_val,
+	);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "code_actions_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct ResolveCodeActionArgsSky {
+	list_cache_id:u32, // From item's cache_id[0]
+	// Assuming MountainEnvironment or the effect can find the sidecar_id from the list_cache_id or item data
+	action_dto_to_resolve:Value, // CodeActionDto as Value
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_resolve_code_action(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ResolveCodeActionArgsSky,
+) -> Result<Option<CodeActionDto>, String> {
+	// The effect now expects sidecar_id. For Sky-invoked resolve, sidecar_id might
+	// need to be looked up by list_cache_id or item. This lookup logic would be in
+	// MountainEnvironment or the effect itself if list_cache_id points to a
+	// ProviderRegistration. For now, a placeholder sidecar_id is used as it was in
+	// the snippet.
+	let sidecar_id_for_resolve = "cocoon-main".to_string(); // Placeholder - this needs robust handling
+	let effect = resolve_code_action_effect(
+		args.list_cache_id,
+		sidecar_id_for_resolve,
+		args.action_dto_to_resolve,
+		args.cancellation_token_id_val,
+	);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "resolve_code_action_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct RequestCodeLensesArgs {
+	uri_string:String,
+
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_code_lenses(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:RequestCodeLensesArgs,
+) -> Result<Option<CodeLensListDto>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_code_lenses", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "code_lenses")?;
+
+	let effect = provide_code_lenses_effect(target_uri, language_id, args.cancellation_token_id_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "code_lenses_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct ResolveCodeLensArgsSky {
+	list_cache_id:u32,
+
+	// Assuming sidecar_id can be derived
+	lens_dto_to_resolve:Value, // CodeLensDto as Value
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_resolve_code_lens(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ResolveCodeLensArgsSky,
+) -> Result<Option<CodeLensDto>, String> {
+	let sidecar_id_for_resolve = "cocoon-main".to_string(); // Placeholder
+	let effect = resolve_code_lens_effect(
+		args.list_cache_id,
+		sidecar_id_for_resolve,
+		args.lens_dto_to_resolve,
+		args.cancellation_token_id_val,
+	);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "resolve_code_lens_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct DocumentSymbolsArgs {
+	uri_string:String,
+
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_document_symbols(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:DocumentSymbolsArgs,
+) -> Result<Option<Vec<DocumentSymbolDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_document_symbols", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "doc_symbols")?;
+
+	let effect = provide_document_symbols_effect(target_uri, language_id, args.cancellation_token_id_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "doc_symbols_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct WorkspaceSymbolsArgs {
+	query:String,
+
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_workspace_symbols(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:WorkspaceSymbolsArgs,
+) -> Result<Option<Vec<WorkspaceSymbolDto>>, String> {
+	let effect = provide_workspace_symbols_effect(args.query, args.cancellation_token_id_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "ws_symbols_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct SignatureHelpArgs {
+	uri_string:String,
+
+	line_number_0_based:u32,
+
+	column_0_based:u32,
+
+	context_dto:SignatureHelpContextDto,
+
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_signature_help(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:SignatureHelpArgs,
+) -> Result<Option<SignatureHelpResultDto>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_signature_help", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "sig_help")?;
+
+	let position_dto = PositionDto { line_number:args.line_number_0_based, column:args.column_0_based };
+
+	let effect = provide_signature_help_effect(
+		target_uri,
+		language_id,
+		position_dto,
+		args.context_dto,
+		args.cancellation_token_id_val,
+	);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "sig_help_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct RequestReferencesArgs {
+	uri_string:String,
+
+	line_number_0_based:u32,
+
+	column_0_based:u32,
+
+	context_dto:Value, // IReferenceContext as Value
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_references(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:RequestReferencesArgs,
+) -> Result<Option<Vec<LocationLinkDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_references", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "references")?;
+
+	let position_dto = PositionDto { line_number:args.line_number_0_based, column:args.column_0_based };
+
+	let effect = provide_references_effect(
+		target_uri,
+		language_id,
+		position_dto,
+		args.context_dto,
+		args.cancellation_token_id_val,
+	);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "references_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct PrepareRenameArgs {
+	uri_string:String,
+
+	line_number_0_based:u32,
+
+	column_0_based:u32,
+
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_prepare_rename(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:PrepareRenameArgs,
+) -> Result<Option<Value>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_prepare_rename", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "prepare_rename")?;
+
+	let position_dto = PositionDto { line_number:args.line_number_0_based, column:args.column_0_based };
+
+	let effect = prepare_rename_effect(target_uri, language_id, position_dto, args.cancellation_token_id_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "prepare_rename_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct ProvideRenameEditsArgs {
+	uri_string:String,
+
+	line_number_0_based:u32,
+
+	column_0_based:u32,
+
+	new_name:String,
+
+	cancellation_token_id_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_provide_rename_edits(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ProvideRenameEditsArgs,
+) -> Result<Option<WorkspaceEditDto>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_provide_rename_edits", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "rename_edits")?;
+
+	let position_dto = PositionDto { line_number:args.line_number_0_based, column:args.column_0_based };
+
+	let effect = provide_rename_edits_effect(
+		target_uri,
+		language_id,
+		position_dto,
+		args.new_name,
+		args.cancellation_token_id_val,
+	);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "rename_edits_effect"))
+}
+
+#[command]
+pub async fn mountain_apply_workspace_edit(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	edit_dto:WorkspaceEditDto,
+) -> Result<bool, String> {
+	info!("[Track Command] mountain_apply_workspace_edit: {} edits.", edit_dto.edits.len());
+
+	trace!("[Track Command] WorkspaceEdit DTO: {:?}", edit_dto);
+
+	let effect = apply_workspace_edit_effect(edit_dto);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "apply_workspace_edit_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct FormattingArgs {
+	uri_string:String,
+
+	options_dto:FormattingOptionsDto,
+
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_document_formatting(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:FormattingArgs,
+) -> Result<Option<Vec<TextEditDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_document_formatting", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "doc_formatting")?;
+
+	let effect = provide_document_formatting_edits_effect(target_uri, language_id, args.options_dto, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "doc_fmt_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct PositionalArgs {
+	uri_string:String,
+
+	line:u32,      // Renamed from line_number_0_based for consistency with linked_editing
+	character:u32, // Renamed from column_0_based
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_document_highlights(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:PositionalArgs,
+) -> Result<Option<Vec<DocumentHighlightDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_document_highlights", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "doc_highlights")?;
+
+	let pos = PositionDto { line_number:args.line, column:args.character };
+
+	let effect = provide_document_highlights_effect(target_uri, language_id, pos, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "doc_highlights_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct DocumentArgs {
+	uri_string:String,
+
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_document_links(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:DocumentArgs,
+) -> Result<Option<LinksListDto>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_document_links", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "doc_links")?;
+
+	let effect = provide_document_links_effect(target_uri, language_id, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "doc_links_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct ResolveLinkArgs {
+	// list_cache_id: u32, // The effect takes list_cache_id, but VS Code resolveLink takes the link itself
+	link_dto_val:Value, // LinkDto as Value, which should contain data for resolve
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_resolve_document_link(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ResolveLinkArgs,
+) -> Result<Option<LinkDto>, String> {
+	// The effect now takes link_to_resolve_dto (as Value) directly
+	let effect = resolve_document_link_effect(args.link_dto_val, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "resolve_link_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct FoldingRangesArgs {
+	uri_string:String,
+
+	context_dto:Value, // FoldingContext DTO as Value
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_folding_ranges(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:FoldingRangesArgs,
+) -> Result<Option<Vec<FoldingRangeDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_folding_ranges", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "folding_ranges")?;
+
+	let effect = provide_folding_ranges_effect(target_uri, language_id, args.context_dto, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "folding_ranges_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct SelectionRangesArgs {
+	uri_string:String,
+
+	positions_dto:Vec<PositionDto>,
+
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_selection_ranges(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:SelectionRangesArgs,
+) -> Result<Option<Vec<SelectionRangeDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_selection_ranges", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "sel_ranges")?;
+
+	let effect = provide_selection_ranges_effect(target_uri, language_id, args.positions_dto, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "sel_ranges_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct LinkedEditingArgs {
+	uri_string:String,
+
+	line:u32,
+
+	character:u32,
+
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_linked_editing_ranges(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:LinkedEditingArgs,
+) -> Result<Option<LinkedEditingRangesDto>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string(
+			"mountain_request_linked_editing_ranges",
+			"uri_string",
+			&e.to_string(),
+			None,
+		)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "linked_edit")?;
+
+	let pos = PositionDto { line_number:args.line, column:args.character };
+
+	let effect = provide_linked_editing_ranges_effect(target_uri, language_id, pos, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "linked_edit_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct SemanticTokensArgs {
+	uri_string:String,
+
+	previous_result_id:Option<String>,
+
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_document_semantic_tokens(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:SemanticTokensArgs,
+) -> Result<Option<SemanticTokensDto>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string(
+			"mountain_request_document_semantic_tokens",
+			"uri_string",
+			&e.to_string(),
+			None,
+		)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "doc_sem_tok")?;
+
+	let effect =
+		provide_document_semantic_tokens_effect(target_uri, language_id, args.previous_result_id, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "doc_sem_tok_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct SemanticTokensEditsArgs {
+	uri_string:String,
+
+	previous_result_id:String,
+
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_document_semantic_tokens_edits(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:SemanticTokensEditsArgs,
+) -> Result<Option<Value>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string(
+			"mountain_request_document_semantic_tokens_edits",
+			"uri_string",
+			&e.to_string(),
+			None,
+		)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "doc_sem_tok_edits")?;
+
+	let effect =
+		provide_document_semantic_tokens_edits_effect(target_uri, language_id, args.previous_result_id, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "doc_sem_tok_edits_effect"))
+}
+
+// TODO: Command for range semantic tokens
+
+#[derive(Deserialize, Debug)]
+struct PrepareHierarchyArgs {
+	uri_string:String,
+
+	line:u32,
+
+	character:u32,
+
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_prepare_call_hierarchy(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:PrepareHierarchyArgs,
+) -> Result<Option<Vec<HierarchyItemDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_prepare_call_hierarchy", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "prep_call_hier")?;
+
+	let pos = PositionDto { line_number:args.line, column:args.character };
+
+	let effect = prepare_call_hierarchy_effect(target_uri, language_id, pos, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "prep_call_hier_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct ProvideHierarchyDetailArgs {
+	item_dto:HierarchyItemDto, // Contains _sessionId, _itemId from previous step
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_provide_call_hierarchy_incoming(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ProvideHierarchyDetailArgs,
+) -> Result<Option<Vec<IncomingCallDto>>, String> {
+	let effect = provide_call_hierarchy_incoming_calls_effect(args.item_dto, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "call_hier_in_effect"))
+}
+
+#[command]
+pub async fn mountain_provide_call_hierarchy_outgoing(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ProvideHierarchyDetailArgs,
+) -> Result<Option<Vec<OutgoingCallDto>>, String> {
+	let effect = provide_call_hierarchy_outgoing_calls_effect(args.item_dto, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "call_hier_out_effect"))
+}
+
+#[command]
+pub async fn mountain_prepare_type_hierarchy(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:PrepareHierarchyArgs,
+) -> Result<Option<Vec<HierarchyItemDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_prepare_type_hierarchy", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "prep_type_hier")?;
+
+	let pos = PositionDto { line_number:args.line, column:args.character };
+
+	let effect = prepare_type_hierarchy_effect(target_uri, language_id, pos, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "prep_type_hier_effect"))
+}
+
+#[command]
+pub async fn mountain_provide_type_hierarchy_supertypes(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ProvideHierarchyDetailArgs,
+) -> Result<Option<Vec<HierarchyItemDto>>, String> {
+	let effect = provide_type_hierarchy_supertypes_effect(args.item_dto, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "type_hier_super_effect"))
+}
+
+#[command]
+pub async fn mountain_provide_type_hierarchy_subtypes(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ProvideHierarchyDetailArgs,
+) -> Result<Option<Vec<HierarchyItemDto>>, String> {
+	let effect = provide_type_hierarchy_subtypes_effect(args.item_dto, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "type_hier_sub_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct RequestInlayHintsArgs {
+	uri_string:String,
+
+	start_line:u32,
+
+	start_char:u32,
+
+	end_line:u32,
+
+	end_char:u32,
+
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_request_inlay_hints(
+	app_handle:AppHandle<Wry>,
+
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:RequestInlayHintsArgs,
+) -> Result<Option<Vec<InlayHintDto>>, String> {
+	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
+		error_utils::rpc_param_error_string("mountain_request_inlay_hints", "uri_string", &e.to_string(), None)
+	})?;
+
+	let language_id = get_language_id_for_uri(&app_handle, &target_uri, "inlay_hints")?;
+
+	let range_dto = RangeDto {
+		start_line_number:args.start_line,
+
+		start_column:args.start_char,
+
+		end_line_number:args.end_line,
+
+		end_column:args.end_char,
+	};
+
+	let effect = provide_inlay_hints_effect(target_uri, language_id, range_dto, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "inlay_hints_effect"))
+}
+
+#[derive(Deserialize, Debug)]
+struct ResolveInlayHintArgs {
+	// provider_handle: u32, // This was present in one snippet but resolve_inlay_hint_effect takes hint_dto_val
+	// directly
+	hint_dto_to_resolve_val:Value, // InlayHintDto as Value
+	token_val:Option<Value>,
+}
+
+#[command]
+pub async fn mountain_resolve_inlay_hint(
+	runtime:State<'_, Arc<AppRuntime>>,
+
+	args:ResolveInlayHintArgs,
+) -> Result<Option<InlayHintDto>, String> {
+	let effect = resolve_inlay_hint_effect(args.hint_dto_to_resolve_val, args.token_val);
+
+	runtime
+		.run(effect)
+		.await
+		.map_err(|e| map_common_error_to_rpc_error_string(e, "resolve_inlay_hint_effect"))
 }
