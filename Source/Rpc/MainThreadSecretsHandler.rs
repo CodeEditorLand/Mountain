@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use Common::SecretsEffects; // Assuming this path
+use Common::SecretsEffect; // Assuming this path
 use Common::{Errors::CommonError, Runtime::AppRuntimeTrait};
 use log::{debug, info, trace};
 use serde_json::{Value, json};
@@ -34,7 +34,7 @@ impl MainThreadSecretsHandler {
 			Argument.ExtensionIdentifier, Argument.Key
 		);
 
-		let Effect = SecretsEffects::GetSecret(Argument.ExtensionIdentifier.clone(), Argument.Key.clone());
+		let Effect = SecretsEffect::GetSecret(Argument.ExtensionIdentifier.clone(), Argument.Key.clone());
 		self.Runtime.Run(Effect).await
             .map(|OptionalValue| OptionalValue.map_or(Value::Null, Value::String)) // Return string or null
             .map_err(|CommonErrorValue| ErrorUtils::MapCommonErrorToRpcString(CommonErrorValue, "GetPassword DTO (Secrets)"))
@@ -46,7 +46,7 @@ impl MainThreadSecretsHandler {
 			"[Rpc SecretsHandler] SetPassword (DTO): ExtensionIdentifier='{}', Key='{}'",
 			Argument.ExtensionIdentifier, Argument.Key
 		);
-		let Effect = SecretsEffects::StoreSecret(
+		let Effect = SecretsEffect::StoreSecret(
 			Argument.ExtensionIdentifier.clone(),
 			Argument.Key.clone(),
 			Argument.Value.clone(),
@@ -63,7 +63,7 @@ impl MainThreadSecretsHandler {
 			"[Rpc SecretsHandler] DeletePassword (DTO): ExtensionIdentifier='{}', Key='{}'",
 			Argument.ExtensionIdentifier, Argument.Key
 		);
-		let Effect = SecretsEffects::DeleteSecret(Argument.ExtensionIdentifier.clone(), Argument.Key.clone());
+		let Effect = SecretsEffect::DeleteSecret(Argument.ExtensionIdentifier.clone(), Argument.Key.clone());
 		self.Runtime.Run(Effect).await
             .map(|_| Value::Null) // Success is indicated by Value::Null
             .map_err(|CommonErrorValue| ErrorUtils::MapCommonErrorToRpcString(CommonErrorValue, "DeletePassword DTO (Secrets)"))

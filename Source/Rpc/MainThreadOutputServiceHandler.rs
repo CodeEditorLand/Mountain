@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use Common::{Errors::CommonError, OutputEffects, Runtime::AppRuntimeTrait};
+use Common::{Errors::CommonError, OutputEffect, Runtime::AppRuntimeTrait};
 use log::{debug, info, trace};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, State, Wry};
@@ -37,7 +37,7 @@ impl MainThreadOutputServiceHandler {
 			Argument.Name, Argument.LanguageIdentifier
 		);
 		// The effect expects direct parameters, not a DTO.
-		let Effect = OutputEffects::RegisterOutputChannel(Argument.Name, Argument.LanguageIdentifier);
+		let Effect = OutputEffect::RegisterOutputChannel(Argument.Name, Argument.LanguageIdentifier);
 		self.Runtime
 			.Run(Effect)
 			.await
@@ -52,7 +52,7 @@ impl MainThreadOutputServiceHandler {
 			Argument.ChannelIdentifier,
 			Argument.Content.len()
 		);
-		let Effect = OutputEffects::AppendToOutputChannel(Argument.ChannelIdentifier, Argument.Content);
+		let Effect = OutputEffect::AppendToOutputChannel(Argument.ChannelIdentifier, Argument.Content);
 		self.Runtime
 			.Run(Effect)
 			.await
@@ -66,7 +66,7 @@ impl MainThreadOutputServiceHandler {
 			"[Rpc OutputServiceHandler] Clear (DTO): ChannelIdentifier='{}'",
 			Argument.ChannelIdentifier
 		);
-		let Effect = OutputEffects::ClearOutputChannel(Argument.ChannelIdentifier);
+		let Effect = OutputEffect::ClearOutputChannel(Argument.ChannelIdentifier);
 		self.Runtime
 			.Run(Effect)
 			.await
@@ -81,7 +81,7 @@ impl MainThreadOutputServiceHandler {
 			Argument.ChannelIdentifier,
 			Argument.Content.len()
 		);
-		let Effect = OutputEffects::ReplaceOutputChannelContent(Argument.ChannelIdentifier, Argument.Content);
+		let Effect = OutputEffect::ReplaceOutputChannelContent(Argument.ChannelIdentifier, Argument.Content);
 		self.Runtime
 			.Run(Effect)
 			.await
@@ -99,7 +99,7 @@ impl MainThreadOutputServiceHandler {
 		// signature. If view column matters, the effect or its environment
 		// implementation would need to handle it.
 		let Effect =
-			OutputEffects::RevealOutputChannel(Argument.ChannelIdentifier, Argument.PreserveFocus.unwrap_or(false));
+			OutputEffect::RevealOutputChannel(Argument.ChannelIdentifier, Argument.PreserveFocus.unwrap_or(false));
 		self.Runtime
 			.Run(Effect)
 			.await
@@ -113,7 +113,7 @@ impl MainThreadOutputServiceHandler {
 			"[Rpc OutputServiceHandler] Close (DTO): ChannelIdentifier='{}'",
 			Argument.ChannelIdentifier
 		);
-		let Effect = OutputEffects::CloseOutputChannelView(Argument.ChannelIdentifier);
+		let Effect = OutputEffect::CloseOutputChannelView(Argument.ChannelIdentifier);
 		self.Runtime
 			.Run(Effect)
 			.await
@@ -127,7 +127,7 @@ impl MainThreadOutputServiceHandler {
 			"[Rpc OutputServiceHandler] Dispose (DTO): ChannelIdentifier='{}'",
 			Argument.ChannelIdentifier
 		);
-		let Effect = OutputEffects::DisposeOutputChannel(Argument.ChannelIdentifier);
+		let Effect = OutputEffect::DisposeOutputChannel(Argument.ChannelIdentifier);
 		self.Runtime
 			.Run(Effect)
 			.await

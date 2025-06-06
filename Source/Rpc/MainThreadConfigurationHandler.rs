@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use Common::Runtime::AppRuntimeTrait; // Assuming this path
 use Common::{
-	ConfigEffects::{
+	ConfigEffect::{
 		self,
 		ConfigurationTarget as CommonConfigurationTarget,
 		IConfigurationOverrides as CommonConfigurationOverrides,
@@ -48,7 +48,7 @@ impl MainThreadConfigurationHandler {
 				CommonConfigurationOverrides { Resource:Dto.Resource, OverrideIdentifier:Dto.OverrideIdentifier }
 			});
 
-		let Effect = ConfigEffects::GetConfiguration(
+		let Effect = ConfigEffect::GetConfiguration(
 			Argument.Section,
 			// The effect expects a Value for overrides, so we serialize our CommonConfigurationOverrides.
 			// It's a bit circular if the effect internally deserializes it back to IConfigurationOverrides,
@@ -87,7 +87,7 @@ impl MainThreadConfigurationHandler {
 				)
 			})?;
 
-		let Effect = ConfigEffects::UpdateConfiguration(
+		let Effect = ConfigEffect::UpdateConfiguration(
 			Argument.Key,
 			Argument.Value,
 			TargetScope,
@@ -124,7 +124,7 @@ impl MainThreadConfigurationHandler {
 				)
 			})?;
 
-		let Effect = ConfigEffects::UpdateConfiguration(
+		let Effect = ConfigEffect::UpdateConfiguration(
 			Argument.Key,
 			Value::Null, // Removing is achieved by setting to null
 			TargetScope,
@@ -150,7 +150,7 @@ impl MainThreadConfigurationHandler {
 				CommonConfigurationOverrides { Resource:Dto.Resource, OverrideIdentifier:Dto.OverrideIdentifier }
 			});
 
-		let Effect = ConfigEffects::InspectConfigurationValue(
+		let Effect = ConfigEffect::InspectConfigurationValue(
 			Argument.Key,
 			serde_json::to_value(CommonOverrides)
 				.map_err(|e| ErrorUtils::RpcInternalErrorString(format!("Failed to serialize overrides DTO: {}", e)))?,

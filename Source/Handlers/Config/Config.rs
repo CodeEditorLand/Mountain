@@ -7,9 +7,9 @@
 use std::path::{Path, PathBuf};
 
 use Common::{
-	ConfigEffects::{ConfigurationTarget, IConfigurationOverrides},
+	ConfigEffect::{ConfigurationTarget, IConfigurationOverrides},
 	Errors::CommonError,
-	IpcEffects::ProxyConfiguration as ProxyTarget,
+	IpcEffect::ProxyConfiguration as ProxyTarget,
 };
 use globset::GlobBuilder;
 use log::{debug, error, info, trace, warn};

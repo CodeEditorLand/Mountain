@@ -3,7 +3,7 @@
 // for a specific document URI. This is used when setting or retrieving
 // diagnostics.
 
-use Common::DiagnosticsEffects::MarkerDataDto as CommonMarkerDataDto;
+use Common::DiagnosticsEffect::MarkerDataDto as CommonMarkerDataDto;
 use serde::Deserialize;
 use serde_json::Value; // For UriComponentsValue // Standard DTO for a single marker
 

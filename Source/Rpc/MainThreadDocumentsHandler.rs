@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use Common::{DocumentsEffects, Errors::CommonError, Runtime::AppRuntimeTrait};
+use Common::{DocumentsEffect, Errors::CommonError, Runtime::AppRuntimeTrait};
 use log::{debug, info, trace};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, State, Wry};
@@ -49,7 +49,7 @@ impl MainThreadDocumentsHandler {
 		);
 
 		let Effect =
-			DocumentsEffects::OpenDocument(Argument.UriComponentsDto, Argument.LanguageIdentifier, Argument.Content);
+			DocumentsEffect::OpenDocument(Argument.UriComponentsDto, Argument.LanguageIdentifier, Argument.Content);
 
 		self.Runtime
 			.Run(Effect)
@@ -81,7 +81,7 @@ impl MainThreadDocumentsHandler {
 			Argument.LanguageIdentifier
 		);
 
-		let Effect = DocumentsEffects::OpenDocument(
+		let Effect = DocumentsEffect::OpenDocument(
 			Value::Null, // Indicates new document creation to the effect
 			Argument.LanguageIdentifier,
 			Argument.Content,
@@ -127,7 +127,7 @@ impl MainThreadDocumentsHandler {
 			None,
 		)?;
 
-		let Effect = DocumentsEffects::SaveDocument(UriToSave.clone());
+		let Effect = DocumentsEffect::SaveDocument(UriToSave.clone());
 
 		self.Runtime
 			.Run(Effect)
@@ -173,7 +173,7 @@ impl MainThreadDocumentsHandler {
 			})
 			.transpose()?; // Propagate parsing error if any
 
-		let Effect = DocumentsEffects::SaveDocumentAs(OriginalUrl.clone(), NewTargetUrlOption);
+		let Effect = DocumentsEffect::SaveDocumentAs(OriginalUrl.clone(), NewTargetUrlOption);
 
 		self.Runtime
 			.Run(Effect)
@@ -204,7 +204,7 @@ impl MainThreadDocumentsHandler {
 			"[Rpc DocumentsHandler] SaveAll (DTO): IncludeUntitled={}",
 			Argument.IncludeUntitled
 		);
-		let Effect = DocumentsEffects::SaveAllDocuments(Argument.IncludeUntitled);
+		let Effect = DocumentsEffect::SaveAllDocuments(Argument.IncludeUntitled);
 		self.Runtime
 			.Run(Effect)
 			.await

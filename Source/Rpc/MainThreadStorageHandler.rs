@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use Common::StorageEffects; // Assuming this path
+use Common::StorageEffect; // Assuming this path
 use Common::{Errors::CommonError, Runtime::AppRuntimeTrait};
 use log::{debug, info, trace};
 use serde_json::{Value, json};
@@ -34,7 +34,7 @@ impl MainThreadStorageHandler {
 			Argument.Target.Scope, Argument.Target.Key
 		);
 
-		// The StorageEffects::Get expects a single Value argument representing the
+		// The StorageEffect::Get expects a single Value argument representing the
 		// target. We need to serialize our TargetDto into such a Value.
 		let TargetObjectValue = serde_json::to_value(&Argument.Target).map_err(|SerializationError| {
 			ErrorUtils::RpcInternalErrorString(format!(
@@ -43,7 +43,7 @@ impl MainThreadStorageHandler {
 			))
 		})?;
 
-		let Effect = StorageEffects::GetStorageItem(TargetObjectValue);
+		let Effect = StorageEffect::GetStorageItem(TargetObjectValue);
 		self.Runtime.Run(Effect).await
             .map(|OptionalValue| OptionalValue.unwrap_or(Value::Null)) // Return Null if None
             .map_err(|CommonErrorValue| ErrorUtils::MapCommonErrorToRpcString(CommonErrorValue, "GetValue DTO (Storage)"))
@@ -66,7 +66,7 @@ impl MainThreadStorageHandler {
 		})?;
 
 		// The effect expects the value to set directly, not wrapped in the DTO.
-		let Effect = StorageEffects::SetStorageItem(TargetObjectValue, Argument.Value);
+		let Effect = StorageEffect::SetStorageItem(TargetObjectValue, Argument.Value);
 		self.Runtime.Run(Effect).await
             .map(|_| Value::Null) // Success is indicated by Value::Null
             .map_err(|CommonErrorValue| ErrorUtils::MapCommonErrorToRpcString(CommonErrorValue, "SetValue DTO (Storage)"))

@@ -13,9 +13,9 @@ use std::{
 };
 
 use Common::{
-	ConfigEffects::ConfigurationScope,
+	ConfigEffect::ConfigurationScope,
 	Errors::CommonError,
-	LanguageFeatureEffects::{ProviderOptionsDto as LanguageProviderOptionsDto, ProviderType as LanguageProviderType},
+	LanguageFeatureEffect::{ProviderOptionsDto as LanguageProviderOptionsDto, ProviderType as LanguageProviderType},
 };
 use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};

@@ -10,7 +10,7 @@ use std::{
 	sync::{Arc, MutexGuard as StdMutexGuard},
 };
 
-use Common::{Errors::CommonError, IpcEffects::ProxyConfiguration as ProxyTarget};
+use Common::{Errors::CommonError, IpcEffect::ProxyConfiguration as ProxyTarget};
 use log::{debug, error, info, trace, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime as TauriRuntime, State, Window};
@@ -249,7 +249,7 @@ pub fn HandleNativeSaveAll<R:TauriRuntime>(
 			"[NativeCommand] Executing 'workbench.action.files.saveAll' (IncludeUntitled: {})",
 			IncludeUntitled
 		);
-		let Effect = Common::WorkspaceEffects::SaveAllDocuments(IncludeUntitled);
+		let Effect = Common::WorkspaceEffect::SaveAllDocuments(IncludeUntitled);
 		Runtime
 			.Run(Effect)
 			.await
@@ -271,7 +271,7 @@ pub fn HandleNativeShowAbout<R:TauriRuntime>(
 		let AppName = &ApplicationHandle.package_info().name;
 		let Message = format!("{} (Mountain)\nVersion: {}\n\nMore info at our website.", AppName, Version);
 		let Effect =
-			Common::UiEffects::ShowMessage(Common::UiEffects::MessageSeverity::Info, Message, Value::Null);
+			Common::UiEffect::ShowMessage(Common::UiEffect::MessageSeverity::Info, Message, Value::Null);
 		Runtime
 			.Run(Effect)
 			.await

@@ -6,7 +6,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use Common::{DocumentEffects, Environment::Requires, Errors::CommonError, FsEffects::FsWriter};
+use Common::{DocumentEffect, Environment::Requires, Errors::CommonError, FsEffect::FsWriter};
 use log::{error, info, trace, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime};

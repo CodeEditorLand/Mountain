@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use Common::{DiagnosticsEffects, Errors::CommonError, Runtime::AppRuntimeTrait};
+use Common::{DiagnosticsEffect, Errors::CommonError, Runtime::AppRuntimeTrait};
 use log::{debug, info, trace};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, State, Wry};
@@ -38,7 +38,7 @@ impl MainThreadDiagnosticsHandler {
 			Argument.EntriesDtoValue
 		);
 
-		let Effect = DiagnosticsEffects::SetDiagnostics(Argument.Owner.clone(), Argument.EntriesDtoValue);
+		let Effect = DiagnosticsEffect::SetDiagnostics(Argument.Owner.clone(), Argument.EntriesDtoValue);
 		self.Runtime.Run(Effect).await.map(|_| Value::Null).map_err(|Error| {
 			ErrorUtils::MapCommonErrorToRpcString(Error, &format!("SetDiagnostics for Owner '{}'", Argument.Owner))
 		})
@@ -54,7 +54,7 @@ impl MainThreadDiagnosticsHandler {
 			"[Rpc DiagnosticsHandler] Clear (DTO flow, assuming DTO from direct call): Owner='{}'",
 			Owner
 		);
-		let Effect = DiagnosticsEffects::ClearDiagnostics(Owner.clone());
+		let Effect = DiagnosticsEffect::ClearDiagnostics(Owner.clone());
 		self.Runtime.Run(Effect).await.map(|_| Value::Null).map_err(|Error| {
 			ErrorUtils::MapCommonErrorToRpcString(Error, &format!("ClearDiagnostics for Owner '{}'", Owner))
 		})
@@ -67,7 +67,7 @@ impl MainThreadDiagnosticsHandler {
 			Argument.ResourceUriFilterOption
 		);
 
-		let Effect = DiagnosticsEffects::GetAllDiagnostics(Argument.ResourceUriFilterOption);
+		let Effect = DiagnosticsEffect::GetAllDiagnostics(Argument.ResourceUriFilterOption);
 		self.Runtime
 			.Run(Effect)
 			.await

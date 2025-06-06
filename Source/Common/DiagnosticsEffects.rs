@@ -1,4 +1,4 @@
-// File: Common/DiagnosticsEffects.rs
+// File: Common/DiagnosticsEffect.rs
 // Defines the DiagnosticsManager trait and associated effects for managing
 // diagnostic markers (errors, warnings, etc.) within the application.
 
@@ -10,8 +10,8 @@ use async_trait::async_trait;
 use serde_json::Value;
 
 // DTO for a diagnostic marker (re-exported for convenience if needed).
-// This assumes MarkerDataDto is defined elsewhere, like in LanguageFeatureEffects.
-pub use crate::LanguageFeatureEffects::MarkerDataDto;
+// This assumes MarkerDataDto is defined elsewhere, like in LanguageFeatureEffect.
+pub use crate::LanguageFeatureEffect::MarkerDataDto;
 use crate::{
 	Effect::ActionEffect,
 	Environment::{Environment, Requires},

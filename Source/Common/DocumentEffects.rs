@@ -1,4 +1,4 @@
-// File: Common/DocumentEffects.rs
+// File: Common/DocumentEffect.rs
 // Defines the DocumentProvider trait and associated effects for document
 // management. This provides a standardized way to open, save, and modify
 // documents within the application's environment.

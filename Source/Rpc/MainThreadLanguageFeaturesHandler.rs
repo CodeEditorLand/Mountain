@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use Common::LanguageFeatureEffects::ProviderType as CommonLanguageProviderType;
+use Common::LanguageFeatureEffect::ProviderType as CommonLanguageProviderType;
 use log::{debug, info, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, State, Wry};

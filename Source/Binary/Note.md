@@ -63,7 +63,7 @@ Builder
 		)
 
 		.visible_on_all_workspaces(true)
-		.effects(tauri::utils::config::WindowEffectsConfig {
+		.effects(tauri::utils::config::WindowEffectConfig {
 			..Default::default()
 		})
 

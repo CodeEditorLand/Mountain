@@ -25,7 +25,7 @@
 //    include `MainThreadCommandsHandler` (which calls `handlers::commands`),
 
 //    `MainThreadLogHandler`, and `MainThreadFileSystemApiHandler`.
-// 3. **Delegations to Effects:** Some RPC methods here might still create and
+// 3. **Delegations to Effect:** Some RPC methods here might still create and
 //    run effects using `self.runtime.run()` if they represent higher-level UI
 //    operations not directly covered by `track.rs`'s effect creation logic for
 //    sidecar requests (e.g., `MainThreadDialogsHandler`,

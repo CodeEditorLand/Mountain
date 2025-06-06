@@ -3,7 +3,7 @@
 
 #![allow(non_snake_case, non_camel_case_types)]
 
-use Common::IpcEffects::ProxyConfiguration as ProxyTarget;
+use Common::IpcEffect::ProxyConfiguration as ProxyTarget;
 use log::{debug, error, info, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime};

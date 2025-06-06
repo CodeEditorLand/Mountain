@@ -1,4 +1,4 @@
-// File: Common/CommandEffects.rs
+// File: Common/CommandEffect.rs
 // Defines the CommandExecutor trait and associated effects for command
 // management. This provides a standardized way to execute, register, and query
 // commands within the application's environment.

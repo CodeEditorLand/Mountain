@@ -7,7 +7,7 @@ use std::{path::PathBuf, sync::Arc};
 use Common::{
 	Errors::CommonError,
 	Runtime::AppRuntimeTrait,
-	UiEffects::{self, OpenDialogOptions as CommonOpenDialogOptions, SaveDialogOptions as CommonSaveDialogOptions},
+	UiEffect::{self, OpenDialogOptions as CommonOpenDialogOptions, SaveDialogOptions as CommonSaveDialogOptions},
 };
 use log::{debug, info, trace};
 use serde_json::{Value, json};
@@ -50,7 +50,7 @@ impl MainThreadDialogsHandler {
 				)
 			})?;
 
-		let ShowOpenDialogEffect = UiEffects::ShowOpenDialog(OpenDialogOptionsParsed);
+		let ShowOpenDialogEffect = UiEffect::ShowOpenDialog(OpenDialogOptionsParsed);
 
 		self.Runtime
 			.Run(ShowOpenDialogEffect)
@@ -90,7 +90,7 @@ impl MainThreadDialogsHandler {
 				)
 			})?;
 
-		let ShowSaveDialogEffect = UiEffects::ShowSaveDialog(SaveDialogOptionsParsed);
+		let ShowSaveDialogEffect = UiEffect::ShowSaveDialog(SaveDialogOptionsParsed);
 
 		self.Runtime
 			.Run(ShowSaveDialogEffect)

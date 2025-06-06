@@ -6,7 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::LanguageFeatureEffects::SemanticTokensLegendDto;
+use crate::LanguageFeatureEffect::SemanticTokensLegendDto;
 
 /// DTO for completion provider options.
 #[derive(Serialize, Deserialize, Debug, Clone)]

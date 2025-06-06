@@ -5,7 +5,7 @@
 
 use std::sync::Arc;
 
-use Common::UiEffects::{self, MessageSeverity as CommonMessageSeverity}; // Assuming this path and enum
+use Common::UiEffect::{self, MessageSeverity as CommonMessageSeverity}; // Assuming this path and enum
 use Common::{Errors::CommonError, Runtime::AppRuntimeTrait};
 use log::{debug, info, trace, warn};
 use serde_json::{Value, json};
@@ -70,7 +70,7 @@ impl MainThreadMessageHandler {
 			},
 		};
 
-		let ShowMessageEffect = UiEffects::ShowMessage(
+		let ShowMessageEffect = UiEffect::ShowMessage(
 			EffectSeverity,
 			MessageString,
 			OptionsValueOption.unwrap_or(Value::Null), // Pass options as Value to the effect

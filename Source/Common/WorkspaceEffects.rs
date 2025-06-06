@@ -1,4 +1,4 @@
-// File: Common/WorkspaceEffects.rs
+// File: Common/WorkspaceEffect.rs
 // Defines traits and effects for interacting with the workspace.
 // This includes managing folders, trust, files, and applying batch edits.
 
@@ -10,7 +10,7 @@ use async_trait::async_trait;
 use serde_json::Value;
 use url::Url;
 
-use crate::LanguageFeatureEffects::WorkspaceEditDto; // Assuming this is the correct path for the DTO
+use crate::LanguageFeatureEffect::WorkspaceEditDto; // Assuming this is the correct path for the DTO
 use crate::{
 	Effect::ActionEffect,
 	Environment::{Environment, Requires},

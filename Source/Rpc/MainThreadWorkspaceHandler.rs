@@ -6,7 +6,7 @@
 use std::path::PathBuf; // Added for file_path_to_uri_components_dto
 use std::sync::Arc;
 
-use Common::WorkspaceEffects; // Assuming this path
+use Common::WorkspaceEffect; // Assuming this path
 use Common::{Errors::CommonError, Runtime::AppRuntimeTrait};
 use log::{debug, info, trace};
 use serde_json::{Value, json};
@@ -58,7 +58,7 @@ impl MainThreadWorkspaceHandler {
 			)
 		})?;
 
-		let Effect = WorkspaceEffects::GetWorkspaceFolderInfo(UriToResolve);
+		let Effect = WorkspaceEffect::GetWorkspaceFolderInfo(UriToResolve);
 		self.Runtime
 			.Run(Effect)
 			.await
@@ -84,7 +84,7 @@ impl MainThreadWorkspaceHandler {
 			Argument.Include, Argument.Exclude, Argument.Options
 		);
 
-		// The WorkspaceEffects::FindFiles effect expects direct Value parameters, not
+		// The WorkspaceEffect::FindFiles effect expects direct Value parameters, not
 		// the DTO struct. We need to serialize the DTO parts back into the expected
 		// Value structure.
 		let IncludeValue = serde_json::to_value(&Argument.Include).map_err(|SerializationError| {
@@ -116,7 +116,7 @@ impl MainThreadWorkspaceHandler {
 				))
 			})?;
 
-		let Effect = WorkspaceEffects::FindFilesInWorkspace(
+		let Effect = WorkspaceEffect::FindFilesInWorkspace(
 			IncludeValue,
 			ExcludeValueOption,
 			OptionsValueOption
