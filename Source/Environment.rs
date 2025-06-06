@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Environment Implementation (environment.rs)
+// Mountain Environment Implementation 
 // --------------------------------------------------------------------------------------------
 // Defines `MountainEnvironment`, the concrete implementation of the abstract
 // `Environment` trait from `Land_Common`. It also implements various provider

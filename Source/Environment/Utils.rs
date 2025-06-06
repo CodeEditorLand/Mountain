@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Environment - Utility Functions (environment/utils.rs)
+// Mountain Environment - Utility Functions 
 // --------------------------------------------------------------------------------------------
 // This module contains shared helper functions used by various provider
 // implementations within the MountainEnvironment. These utilities handle tasks

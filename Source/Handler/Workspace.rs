@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Workspace Handlers (handlers/workspace.rs)
+// Mountain Workspace Handlers 
 // --------------------------------------------------------------------------------------------
 // Handles RPC requests from Cocoon's `workspace-shim.js` related to workspace
 // information, state (like trust), and file searching capabilities
@@ -208,7 +208,7 @@ fn file_path_to_uri_components_dto(p:&Path) -> Value {
 	})
 }
 
-// --- Request Handlers (Called by Track dispatcher or rpc.rs) ---
+// --- Request Handlers  ---
 
 /// Handles the `$getWorkspaceFolders` RPC request from Cocoon.
 ///

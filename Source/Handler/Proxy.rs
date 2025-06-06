@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Extension Host Proxy Handler (handlers/proxy.rs) - LIKELY
+// Mountain Extension Host Proxy Handler  - LIKELY
 // DEPRECATED/UNUSED
 // --------------------------------------------------------------------------------------------
 // This file appears to contain a generic proxy handler

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Sky-Specific Command Handlers (handlers/sky_commands.rs)
+// Mountain Sky-Specific Command Handlers 
 // --------------------------------------------------------------------------------------------
 // This module implements Tauri commands specifically invoked by the Sky
 // frontend for actions that are closely tied to the native application

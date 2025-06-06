@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Mist - Native WebSocket Server (mist.rs) [Feature Gated:
+// Mountain Mist - Native WebSocket Server  [Feature Gated:
 // mist_native]
 // --------------------------------------------------------------------------------------------
 // Implements an optional native WebSocket server within Mountain, allowing

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Sky IPC Bridge Handlers (handlers/sky_ipc_bridge.rs)
+// Mountain Sky IPC Bridge Handlers 
 // --------------------------------------------------------------------------------------------
 // Implements Tauri command handlers that bridge generic IPC messages (`send`
 // and `invoke`) from the Sky frontend to the appropriate sidecar process

@@ -10,7 +10,7 @@ use serde_json::Value;
 use url::Url;
 
 // This DTO seems to be for internal use or a very generic container.
-// Individual effects (in DocumentEffect.rs) use more specific parameters.
+// Individual effects  use more specific parameters.
 // This is kept for structural completeness based on the provided file list.
 #[derive(Clone, Debug)]
 #[allow(dead_code)]

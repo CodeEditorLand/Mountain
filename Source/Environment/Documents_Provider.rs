@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Environment - Document Provider (environment/documents_provider.rs)
+// Mountain Environment - Document Provider 
 // --------------------------------------------------------------------------------------------
 // This module implements the `DocumentProvider` trait for
 // `MountainEnvironment`. It manages the lifecycle of text documents, including

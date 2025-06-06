@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain UI Handlers (handlers/ui.rs) - BASIC IMPLEMENTATIONS / PLACEHOLDERS
+// Mountain UI Handlers  - BASIC IMPLEMENTATIONS / PLACEHOLDERS
 // --------------------------------------------------------------------------------------------
 // Contains basic handlers for UI-related actions proxied from sidecars (e.g.,
 

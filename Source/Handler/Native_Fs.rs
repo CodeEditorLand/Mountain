@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Native FS Handlers (handlers/native_fs.rs) - DEPRECATED
+// Mountain Native FS Handlers  - DEPRECATED
 // --------------------------------------------------------------------------------------------
 // This file previously handled low-level filesystem requests proxied directly
 // from Cocoon's Node 'fs' module shim (using `fs_*` method names like

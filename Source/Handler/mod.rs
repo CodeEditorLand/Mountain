@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Handlers Module (handlers/mod.rs)
+// Mountain Handlers Module 
 // --------------------------------------------------------------------------------------------
 // This file declares all public sub-modules within the `handlers` directory.
 // Each sub-module typically contains logic for a specific domain or type of

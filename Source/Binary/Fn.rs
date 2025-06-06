@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Application Main Entry Point (Fn.rs)
+// Mountain Application Main Entry Point 
 // --------------------------------------------------------------------------------------------
 // This file serves as the primary entry point for the Mountain Tauri
 // application.

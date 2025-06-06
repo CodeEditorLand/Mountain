@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------------
 // Mountain Environment - Diagnostics Provider
-// (environment/diagnostics_provider.rs)
+// 
 // --------------------------------------------------------------------------------------------
 // This module implements the `DiagnosticsManager` trait for
 // `MountainEnvironment`. It manages diagnostic collections (errors, warnings,

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------------
 // Mountain Environment - Output Channel Provider
-// (environment/output_provider.rs)
+// 
 // --------------------------------------------------------------------------------------------
 // This module implements the `OutputChannelManager` trait for
 // `MountainEnvironment`. It manages output channels used for displaying logs

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Language Features RPC Handlers (handlers/language_features.rs)
+// Mountain Language Features RPC Handlers 
 // --------------------------------------------------------------------------------------------
 // This module defines the `MainThreadLanguageFeaturesHandler` struct and its
 // methods, which correspond to the `MainThreadLanguageFeaturesShape` RPC

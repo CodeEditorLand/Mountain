@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Extension Enablement Handlers (handlers/enablement.rs)
+// Mountain Extension Enablement Handlers 
 // --------------------------------------------------------------------------------------------
 // Provides handlers for RPC requests from Cocoon related to querying and
 // potentially modifying the enablement state of extensions.

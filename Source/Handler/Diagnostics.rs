@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Diagnostics Handlers (handlers/diagnostics.rs)
+// Mountain Diagnostics Handlers 
 // --------------------------------------------------------------------------------------------
 // Manages diagnostic information (problems/markers).
 // - RPC handlers (`handle_change_many`, etc.) are called by Track, create

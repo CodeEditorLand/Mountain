@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Environment - IPC Provider (environment/ipc_provider.rs)
+// Mountain Environment - IPC Provider 
 // --------------------------------------------------------------------------------------------
 // This module implements the `IpcProvider` trait for `MountainEnvironment`.
 // It provides a standardized way for other parts of Mountain (primarily effects

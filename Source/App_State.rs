@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Application State (app_state.rs)
+// Mountain Application State 
 // --------------------------------------------------------------------------------------------
 // Defines the central `AppState` struct managed by Tauri via `app.manage()`.
 // This struct aggregates all shared, mutable application state required across

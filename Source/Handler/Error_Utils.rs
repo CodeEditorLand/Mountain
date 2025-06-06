@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Error Utilities (handlers/error_utils.rs)
+// Mountain Error Utilities 
 // --------------------------------------------------------------------------------------------
 // Provides shared utility functions for creating and formatting structured JSON
 // error strings, typically used for RPC responses or Tauri command error

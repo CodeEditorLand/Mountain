@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Configuration Handlers & Helpers (handlers/config.rs)
+// Mountain Configuration Handlers & Helpers 
 // --------------------------------------------------------------------------------------------
 // Provides helper functions for managing configuration settings, including path
 // resolution, file I/O for settings.json, JSON manipulation, merging, and

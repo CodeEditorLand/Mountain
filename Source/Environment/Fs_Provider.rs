@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Environment - Filesystem Provider (environment/fs_provider.rs)
+// Mountain Environment - Filesystem Provider 
 // --------------------------------------------------------------------------------------------
 // This module implements the `FsReader` and `FsWriter` traits for
 // `MountainEnvironment`, providing the core filesystem operations used by

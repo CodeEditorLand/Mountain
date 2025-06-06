@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Output Channel Handlers (handlers/output.rs)
+// Mountain Output Channel Handlers 
 // --------------------------------------------------------------------------------------------
 // Manages state and handles RPC requests related to Output Channels created by
 // extensions running in sidecars (e.g., Cocoon). This allows extensions to log

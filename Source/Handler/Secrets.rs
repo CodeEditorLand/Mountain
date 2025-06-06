@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Secrets Handlers (handlers/secrets.rs)
+// Mountain Secrets Handlers 
 // --------------------------------------------------------------------------------------------
 // Provides the backend implementation for the `vscode.SecretStorage` API,
 

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Storage Handlers (handlers/storage.rs)
+// Mountain Storage Handlers 
 // --------------------------------------------------------------------------------------------
 // Implements the backend logic for the Extension Storage API (Memento API).
 // These functions are called by the `StorageProvider` trait implementation in
@@ -128,7 +128,7 @@ pub fn get_storage_map_and_path_from_appstate(
 	Ok((memento_map_mutex, memento_file_path_opt))
 }
 
-// --- Handler Logic (Called by StorageProvider in environment.rs) ---
+// --- Handler Logic  ---
 
 /// Implements the logic for `StorageProvider::get_storage_value`.
 pub async fn handle_get_storage_value_effect_logic<R:Runtime>(

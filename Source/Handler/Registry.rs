@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Handler Registry (handlers/registry.rs) - POTENTIALLY
+// Mountain Handler Registry  - POTENTIALLY
 // DEPRECATED/UNUSED
 // --------------------------------------------------------------------------------------------
 // Defines a generic `HandlerRegistry` for mapping method names (strings) to

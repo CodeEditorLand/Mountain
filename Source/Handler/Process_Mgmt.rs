@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Process Management Handlers (handlers/process_mgmt.rs)
+// Mountain Process Management Handlers 
 // --------------------------------------------------------------------------------------------
 // Responsible for launching, managing the lifecycle of, and establishing
 // initial communication with sidecar processes, specifically the Cocoon Node.js

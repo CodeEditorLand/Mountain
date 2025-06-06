@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Document Handlers (handlers/documents.rs)
+// Mountain Document Handlers 
 // --------------------------------------------------------------------------------------------
 // Handles RPC requests from Cocoon related to opening, creating, and saving
 // documents, primarily by delegating the core logic to the DocumentProvider

@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Workspace FS API Handlers (handlers/workspace_fs_api.rs)
+// Mountain Workspace FS API Handlers 
 // --------------------------------------------------------------------------------------------
 // Implements the backend logic for the `vscode.workspace.fs` filesystem API
 // used by extensions. These handlers are invoked via RPC calls proxied from
@@ -161,7 +161,7 @@ fn path_from_uri_components_for_fs_api(uri_val:&Value) -> Result<PathBuf, String
 	}
 }
 
-// --- RPC Handlers (Called by Track dispatcher or rpc.rs) ---
+// --- RPC Handlers  ---
 // These handlers implement the `vscode.workspace.fs` API methods.
 // They receive `Arc<AppRuntime>` directly from the dispatcher (`track.rs` or
 // `rpc.rs`) instead of `State<'_, Arc<AppRuntime>>` to simplify their

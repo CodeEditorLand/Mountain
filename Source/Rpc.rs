@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain RPC Handlers (rpc.rs)
+// Mountain RPC Handlers 
 // --------------------------------------------------------------------------------------------
 // Defines the server-side RPC method implementations that Mountain exposes *to*
 // the Cocoon sidecar. These handlers mirror the `MainThread...Shape` interfaces

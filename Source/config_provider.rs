@@ -1,4 +1,4 @@
-// (Inside MountainEnvironment.rs)
+// 
 mod InternalUtils {
 	// ... other utils ...
 

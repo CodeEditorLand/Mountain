@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Sky Frontend Configuration Builder (handlers/sky_configuration.rs)
+// Mountain Sky Frontend Configuration Builder 
 // --------------------------------------------------------------------------------------------
 // This module is responsible for constructing the `SandboxConfigurationDto`,
 // which provides essential initialization data to the Sky frontend. This DTO

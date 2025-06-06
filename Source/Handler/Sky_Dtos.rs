@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain DTOs for Sky Frontend Initialization (handlers/sky_dtos.rs)
+// Mountain DTOs for Sky Frontend Initialization 
 // --------------------------------------------------------------------------------------------
 // This module defines Data Transfer Objects (DTOs) used to convey initial
 // configuration and environment information from the Mountain backend to the

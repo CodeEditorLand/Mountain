@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Command Handlers (handlers/commands.rs)
+// Mountain Command Handlers 
 // --------------------------------------------------------------------------------------------
 // Implements the core logic for managing and executing commands within
 // Mountain, handling interactions originating from both the frontend (via
@@ -49,7 +49,7 @@ fn format_app_state_lock_error_for_rpc<T>(e:std::sync::PoisonError<StdMutexGuard
 	error_utils::map_common_error_to_rpc_string(common_err, context)
 }
 
-// --- Request Handlers (Called by Track dispatcher or rpc.rs) ---
+// --- Request Handlers  ---
 
 pub async fn handle_register_command<R:TauriRuntime>(
 	app:AppHandle<R>,

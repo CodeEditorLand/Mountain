@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------------
 // Mountain Environment - Language Features Provider Registry
-// (environment/language_features_provider.rs)
+// 
 // --------------------------------------------------------------------------------------------
 // This module implements the `LanguageFeatureProviderRegistry` trait for
 // `MountainEnvironment`. It manages the registration of language feature

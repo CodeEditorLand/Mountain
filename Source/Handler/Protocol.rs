@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Protocol Handler (handlers/protocol.rs)
+// Mountain Protocol Handler 
 // --------------------------------------------------------------------------------------------
 // Implements the handler for custom URI protocols registered by the
 // application, primarily for schemes like `vscode://` or a custom equivalent

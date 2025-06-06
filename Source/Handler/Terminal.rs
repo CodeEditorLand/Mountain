@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Terminal Handlers (handlers/terminal.rs)
+// Mountain Terminal Handlers 
 // --------------------------------------------------------------------------------------------
 // Handles RPC requests and notifications related to integrated terminals,
 

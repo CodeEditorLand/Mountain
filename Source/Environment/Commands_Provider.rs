@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------------
 // Mountain Environment - Command Executor Provider
-// (environment/commands_provider.rs)
+// 
 // --------------------------------------------------------------------------------------------
 // This module implements the `CommandExecutor` trait for `MountainEnvironment`.
 // It handles the execution and management of commands within the application,

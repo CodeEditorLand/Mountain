@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Extension Host Status Handlers (handlers/extension_status.rs)
+// Mountain Extension Host Status Handlers 
 // --------------------------------------------------------------------------------------------
 // Handles notifications from Cocoon related to the extension host's lifecycle
 // and individual extension activation statuses. These are typically

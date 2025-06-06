@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Environment - UI Provider (environment/ui_provider.rs)
+// Mountain Environment - UI Provider 
 // --------------------------------------------------------------------------------------------
 // This module implements the `UiProvider` trait for `MountainEnvironment`.
 // It handles UI interactions initiated by backend effects, such as showing

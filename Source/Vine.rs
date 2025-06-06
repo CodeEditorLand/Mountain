@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Vine - Sidecar IPC Layer (vine.rs)
+// Mountain Vine - Sidecar IPC Layer 
 // --------------------------------------------------------------------------------------------
 // Implements the Mountain-side of the custom Inter-Process Communication (IPC)
 // protocol named "Vine". Vine is used for message-based communication between

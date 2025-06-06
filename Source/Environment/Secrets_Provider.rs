@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Environment - Secrets Provider (environment/secrets_provider.rs)
+// Mountain Environment - Secrets Provider 
 // --------------------------------------------------------------------------------------------
 // This module implements the `SecretsProvider` trait for `MountainEnvironment`.
 // It handles secure storage and retrieval of sensitive information (secrets),

@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------------
 // Mountain Environment - Workspace & Workspace Edit Provider
-// (environment/workspace_provider.rs)
+// 
 // --------------------------------------------------------------------------------------------
 // This module implements the `WorkspaceProvider` and `WorkspaceEditApplier`
 // traits for `MountainEnvironment`.

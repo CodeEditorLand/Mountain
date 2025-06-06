@@ -1,6 +1,6 @@
 // ---------------------------------------------------------------------------------------------
 // Mountain Environment - Configuration Provider
-// (environment/config_provider.rs)
+// 
 // --------------------------------------------------------------------------------------------
 // This module implements the `ConfigProvider` and `ConfigInspector` traits for
 // `MountainEnvironment`. It handles retrieving effective configuration values,

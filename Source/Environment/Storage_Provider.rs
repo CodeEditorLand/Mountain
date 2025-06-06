@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Environment - Storage Provider (environment/storage_provider.rs)
+// Mountain Environment - Storage Provider 
 // --------------------------------------------------------------------------------------------
 // This module implements the `StorageProvider` trait for `MountainEnvironment`.
 // It provides access to persistent key-value storage, similar to VS Code's

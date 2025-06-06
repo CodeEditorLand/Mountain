@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Sky UI Response Handlers (handlers/sky_ui_responses.rs)
+// Mountain Sky UI Response Handlers 
 // --------------------------------------------------------------------------------------------
 // Contains Tauri command handlers that the Sky frontend invokes to send back
 // results from UI interactions (dialogs, quick picks, input boxes) initiated by

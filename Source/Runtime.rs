@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Application Runtime (runtime.rs)
+// Mountain Application Runtime 
 // --------------------------------------------------------------------------------------------
 // Defines the `AppRuntime` which is responsible for executing `ActionEffect`s
 // within the Mountain application. It serves as a specialized wrapper around
