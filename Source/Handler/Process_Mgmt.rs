@@ -1,12 +1,12 @@
 // ---------------------------------------------------------------------------------------------
-// Mountain Process Management Handlers 
+// Mountain Process Management Handlers
 // --------------------------------------------------------------------------------------------
 // Responsible for launching, managing the lifecycle of, and establishing
 // initial communication with sidecar processes, specifically the Cocoon Node.js
 // extension host.
 //
 // Responsibilities:
-// - Locating executables/scripts (Node.js, Cocoon/index.js).
+// - Locating executables/scripts.
 // - Spawning the Cocoon sidecar process.
 // - Configuring stdio pipes for IPC.
 // - Initiating `Vine` IPC setup.
