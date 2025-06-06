@@ -638,7 +638,7 @@ pub async fn notify_model_changed<R:Runtime>(
 	});
 
 	// DTO structure based on VS Code's `IModelChangedEvent`
-	// (src/vs/editor/common/model/textModelEvents.ts)
+	// 
 	let event_data_dto = json!({
 
 		"versionId": doc_version,
