@@ -1,4 +1,4 @@
-// File: Handlers/Diagnostics/DiagnosticsEntry.rs
+// File: Handler/Diagnostics/DiagnosticsEntry.rs
 // Defines a Data Transfer Object (DTO) representing a collection of diagnostics
 // for a specific document URI. This is used when setting or retrieving
 // diagnostics.

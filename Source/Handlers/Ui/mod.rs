@@ -1,4 +1,4 @@
-// File: Handlers/Ui/mod.rs
+// File: Handler/Ui/mod.rs
 // This module defines and exports handlers for basic UI interactions,
 // specifically for showing simple native message dialogs.
 

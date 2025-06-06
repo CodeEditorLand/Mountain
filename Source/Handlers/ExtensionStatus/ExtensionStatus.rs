@@ -1,4 +1,4 @@
-// File: Handlers/ExtensionStatus/ExtensionStatus.rs
+// File: Handler/ExtensionStatus/ExtensionStatus.rs
 // Defines the handler for processing extension lifecycle status notifications
 // received from the Cocoon sidecar.
 

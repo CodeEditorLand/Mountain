@@ -1,4 +1,4 @@
-// File: Handlers/Secrets/Secrets.rs
+// File: Handler/Secrets/Secrets.rs
 // Contains the primary logic for handling secret storage operations,
 // using the system keyring for secure data persistence.
 

@@ -1,4 +1,4 @@
-// File: Handlers/SkyCommands/SkyCommands.rs
+// File: Handler/SkyCommands/SkyCommands.rs
 // Defines command handlers for requests originating from the Sky frontend that
 // are specific to the workbench or process, such as setting zoom or fetching
 // memory info.

@@ -1,4 +1,4 @@
-// File: Handlers/mod.rs
+// File: Handler/mod.rs
 // This file declares the modules within the Handlers directory.
 // Handlers are responsible for processing requests and events, often
 // interacting with the AppState and Environment to perform their tasks.

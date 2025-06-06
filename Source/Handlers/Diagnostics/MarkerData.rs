@@ -1,4 +1,4 @@
-// File: Handlers/Diagnostics/MarkerData.rs
+// File: Handler/Diagnostics/MarkerData.rs
 // Defines the data structure for a single diagnostic marker, representing an
 // issue found in a document, such as a linter error or warning.
 

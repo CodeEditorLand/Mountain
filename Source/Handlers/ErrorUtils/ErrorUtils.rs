@@ -1,4 +1,4 @@
-// File: Handlers/ErrorUtils/ErrorUtils.rs
+// File: Handler/ErrorUtils/ErrorUtils.rs
 // Defines utility functions for creating standardized RPC error strings.
 // This ensures consistent error formatting for responses sent back to the
 // sidecar.

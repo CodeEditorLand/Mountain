@@ -1,4 +1,4 @@
-// File: Handlers/Output/mod.rs
+// File: Handler/Output/mod.rs
 // This module defines and exports handlers for managing output channels.
 
 #![allow(non_snake_case, non_camel_case_types)]

@@ -1,4 +1,4 @@
-// File: Handlers/SkyIpcBridge/SkyIpcBridge.rs
+// File: Handler/SkyIpcBridge/SkyIpcBridge.rs
 // Defines command handlers that act as a bridge for IPC messages from the Sky
 // (frontend), forwarding them to the Cocoon sidecar via the Vine gRPC system.
 // This is likely a transitional or deprecated pattern.

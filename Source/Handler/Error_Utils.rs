@@ -15,7 +15,7 @@
 // - Centralizing error logging for these common error paths.
 //
 // Key Interactions:
-// - Used by various handler modules (`handlers/*`) and RPC method
+// - Used by various handler modules (`Handler/*`) and RPC method
 //   implementations (`rpc.rs`) to generate error responses for Track or Vine.
 // - Consumes `CommonError` from the effect system or other operations.
 // --------------------------------------------------------------------------------------------

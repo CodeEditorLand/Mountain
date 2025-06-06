@@ -1,4 +1,4 @@
-// File: Handlers/Proxy/Proxy.rs
+// File: Handler/Proxy/Proxy.rs
 // Defines a deprecated generic proxy handler for passthrough calls to the
 // sidecar. This approach is being replaced by specific, type-safe RPC methods
 // and effects.

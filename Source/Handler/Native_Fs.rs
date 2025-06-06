@@ -24,7 +24,7 @@
 // **not** be called and will return errors indicating they are deprecated.
 // --------------------------------------------------------------------------------------------
 
-// ----- START: DEPRECATED Element/Mountain/src/handlers/native_fs.rs -----
+// ----- START: DEPRECATED Element/Mountain/src/Handler/native_fs.rs -----
 // NOTE: This entire file is DEPRECATED.
 //       Extensions should use `vscode.workspace.fs` API, which is handled by
 //       `handlers::workspace_fs_api.rs` and `environment.rs`.
@@ -237,4 +237,4 @@ pub async fn handle_fs_unlink_proxy_deprecated(
 //     Err(create_deprecated_error_string(DEPRECATED_NATIVE_FS_ERROR_MSG.
 // to_string(), None)) }
 
-// ----- END: DEPRECATED Element/Mountain/src/handlers/native_fs.rs -----
+// ----- END: DEPRECATED Element/Mountain/src/Handler/native_fs.rs -----

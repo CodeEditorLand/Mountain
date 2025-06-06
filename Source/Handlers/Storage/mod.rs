@@ -1,4 +1,4 @@
-// File: Handlers/Storage/mod.rs
+// File: Handler/Storage/mod.rs
 // This module defines and exports handlers for managing Memento storage,
 // including both global and workspace-scoped data persistence.
 

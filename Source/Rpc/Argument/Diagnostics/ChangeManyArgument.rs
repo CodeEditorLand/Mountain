@@ -4,7 +4,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 // This DTO structure assumes `entriesDtoVal` is an array of tuples or objects
-// that the handler logic (e.g., in `handlers/diagnostics.rs`) will parse
+// that the handler logic (e.g., in `Handler/diagnostics.rs`) will parse
 // further into specific diagnostic entry structures. The original `track.rs`
 // used a generic Value for this.
 #[derive(Deserialize, Debug, Clone)]

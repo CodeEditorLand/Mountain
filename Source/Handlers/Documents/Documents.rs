@@ -1,4 +1,4 @@
-// File: Handlers/Documents/Documents.rs
+// File: Handler/Documents/Documents.rs
 // Contains the primary logic for handling document-related operations,
 // serving as the implementation details for the `DocumentProvider` trait.
 

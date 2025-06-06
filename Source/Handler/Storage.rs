@@ -224,7 +224,7 @@ pub async fn handle_set_storage_value_effect_logic<R:Runtime>(
 }
 
 // NEW:
-// // Example signature in handlers/storage.rs
+// // Example signature in Handler/storage.rs
 // pub async fn handle_get_storage_value_effect_logic<R: tauri::Runtime>(
 //     app_handle: tauri::AppHandle<R>,
 //     is_global_scope: bool,

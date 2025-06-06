@@ -1,4 +1,4 @@
-// File: Handlers/Secrets/mod.rs
+// File: Handler/Secrets/mod.rs
 // This module defines and exports handlers for secure secret storage,
 // interacting with the operating system's keyring or equivalent credential
 // manager.

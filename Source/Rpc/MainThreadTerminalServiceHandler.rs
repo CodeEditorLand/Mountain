@@ -38,7 +38,7 @@ impl MainThreadTerminalServiceHandler {
 	/// Creates a new terminal instance.
 	pub async fn CreateTerminal(&self, Argument:CreateTerminalArgument) -> Result<Value, String> {
 		info!("[Rpc TerminalServiceHandler] CreateTerminal (DTO): Name='{:?}'", Argument.Name);
-		// The original `handle_create_terminal` in `handlers/terminal.rs` expects a
+		// The original `handle_create_terminal` in `Handler/terminal.rs` expects a
 		// Value. We need to serialize our DTO back to Value for it.
 		let ParametersValueForHandler = serde_json::to_value(Argument).map_err(|SerializationError| {
 			ErrorUtils::RpcInternalErrorString(format!(

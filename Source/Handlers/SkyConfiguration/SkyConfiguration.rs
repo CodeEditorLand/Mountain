@@ -1,6 +1,6 @@
 
 
-// File: Handlers/SkyConfiguration/SkyConfiguration.rs
+// File: Handler/SkyConfiguration/SkyConfiguration.rs
 // Defines the logic for building the initial ISandboxConfiguration DTO,
 // which provides the Sky (frontend) with necessary environment and bootstrap data.
 

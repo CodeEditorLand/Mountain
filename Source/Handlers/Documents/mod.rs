@@ -1,4 +1,4 @@
-// File: Handlers/Documents/mod.rs
+// File: Handler/Documents/mod.rs
 // This module defines and exports handlers and logic for managing text
 // documents, including operations like opening, saving, and applying changes.
 

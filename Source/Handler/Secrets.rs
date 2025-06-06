@@ -402,14 +402,14 @@ pub async fn handle_delete_secret<R:Runtime>(app:AppHandle<R>, params:Value) -> 
 }
 
 // NEW:
-// Example signature in handlers/secrets.rs
+// Example signature in Handler/secrets.rs
 // pub async fn handle_get_secret_effect_logic<R: tauri::Runtime>(
 //     app_handle: tauri::AppHandle<R>, // May not be needed if keyring access
 // is direct     extension_id: String,
 //     key: String,
 // ) -> Result<Option<String>, CommonError> {
 //     // ... implementation using keyring crate ...
-//     todo!("Implement actual logic in handlers/secrets.rs")
+//     todo!("Implement actual logic in Handler/secrets.rs")
 // }
 
 // pub async fn handle_store_secret_effect_logic<R: tauri::Runtime>(

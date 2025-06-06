@@ -1,4 +1,4 @@
-// File: Handlers/SkyIpcBridge/mod.rs
+// File: Handler/SkyIpcBridge/mod.rs
 // This module defines and exports handlers that act as a bridge for IPC
 // messages from the Sky (frontend), forwarding them to the Cocoon sidecar.
 // This is likely to be deprecated in favor of more direct communication

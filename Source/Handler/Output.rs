@@ -561,7 +561,7 @@ pub async fn handle_dispose_output_channel<R:Runtime>(app:AppHandle<R>, args:Val
 }
 
 // NEW:
-// // Example signature in handlers/output.rs
+// // Example signature in Handler/output.rs
 // pub async fn handle_register_output_channel_effect_logic<R: tauri::Runtime>(
 //     app_handle: tauri::AppHandle<R>,
 //     name: String,

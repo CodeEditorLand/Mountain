@@ -1,4 +1,4 @@
-// File: Handlers/NativeFs/NativeFs.rs
+// File: Handler/NativeFs/NativeFs.rs
 // Defines deprecated native filesystem handlers. These functions are
 // placeholders and should not be used. All filesystem operations must go
 // through the `vscode.workspace.fs` API, which is implemented by the `FsReader`

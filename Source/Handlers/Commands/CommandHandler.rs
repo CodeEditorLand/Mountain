@@ -1,4 +1,4 @@
-// File: Handlers/Commands/CommandHandler.rs
+// File: Handler/Commands/CommandHandler.rs
 // Defines the CommandHandler enum, which categorizes different types of command
 // handlers used within the application, such as native Rust handlers or those
 // proxied to a sidecar.

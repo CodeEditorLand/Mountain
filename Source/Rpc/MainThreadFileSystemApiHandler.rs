@@ -15,7 +15,7 @@ use crate::{
 }; // Assuming WorkspaceFsApi contains the logic
 
 // Note: DTOs for these methods were not explicitly defined in the provided Argument
-// snippets. The logic will be adapted from `handlers/workspace_fs_api.rs`,
+// snippets. The logic will be adapted from `Handler/workspace_fs_api.rs`,
 // assuming it can handle raw `Value` parameters or can be refactored to use
 // specific DTOs if desired later.
 
