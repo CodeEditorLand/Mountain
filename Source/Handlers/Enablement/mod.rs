@@ -1,4 +1,4 @@
-// File: Handler/Enablement/mod.rs
+
 // This module defines and exports handlers for managing the enablement state of
 // extensions. It determines if an extension is enabled, disabled, or enabled
 // only for the current workspace.

@@ -1,4 +1,4 @@
-// File: Ipc/Rpc/ServiceIdentifierMap.rs
+
 // Defines a static map that translates string-based service identifiers from
 // RPC calls to the corresponding `ExtHostContext` enum variants used internally
 // by VS Code's RPCProtocol.

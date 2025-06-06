@@ -1,4 +1,4 @@
-// File: Common/UiEffect.rs
+
 // Defines the UiProvider trait and associated effects for interacting with the
 // user interface. This provides a standardized way to show dialogs,
 // notifications, quick picks, and input boxes.

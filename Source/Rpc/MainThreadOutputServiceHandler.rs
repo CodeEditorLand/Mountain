@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadOutputServiceHandler.rs
+
 // Defines the RPC handler for output channel operations requested by the
 // sidecar. This includes registering, appending to, clearing, revealing,
 // closing, and disposing of output channels.

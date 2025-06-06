@@ -1,4 +1,4 @@
-// File: Common/StorageEffect.rs
+
 // Defines the StorageProvider trait and associated effects for interacting with
 // Memento-style storage (both global and workspace-scoped).
 

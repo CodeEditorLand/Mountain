@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadExtensionServiceHandler.rs
+
 // Defines the RPC handler for notifications from the sidecar regarding
 // extension lifecycle events (activation, errors, etc.).
 

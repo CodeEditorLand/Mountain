@@ -1,4 +1,4 @@
-// File: Track/SkyCommandDto.rs
+
 // Defines the Data Transfer Object (DTO) structures for commands originating
 // from the Sky frontend. These structs are used to deserialize the `args`
 // `Value` from a Tauri command into a strongly-typed Rust struct.

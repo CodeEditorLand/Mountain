@@ -1,4 +1,4 @@
-// File: Ipc/GrpcServer/HandleRequest.ts
+
 // Defines the gRPC request handler for the CocoonService. It receives requests
 // from Mountain, dispatches them to the appropriate logic, and sends back a response.
 

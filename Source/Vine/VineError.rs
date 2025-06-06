@@ -1,4 +1,4 @@
-// File: Vine/VineError.rs
+
 // Defines the specific error types related to the Vine IPC system,
 // covering gRPC, process management, and communication protocol issues.
 

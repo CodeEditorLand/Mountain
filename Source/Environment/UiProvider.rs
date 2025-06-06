@@ -1,4 +1,4 @@
-// File: Environment/UiProvider.rs
+
 // Implements the `UiProvider` trait for the `MountainEnvironment`.
 // This file connects abstract UI effects to the concrete logic
 // in the application's UI handlers, which typically communicate with the

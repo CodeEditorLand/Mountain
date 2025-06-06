@@ -1,4 +1,4 @@
-// File: Common/DocumentDto.rs
+
 // Defines a general-purpose Data Transfer Object (DTO) for document-related
 // operations. This struct aggregates various optional fields to accommodate
 // different actions like opening, saving, and applying changes, reducing the

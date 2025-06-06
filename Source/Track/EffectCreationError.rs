@@ -1,4 +1,4 @@
-// File: Track/EffectCreationError.rs
+
 // Defines the error types that can occur during the creation of an ActionEffect
 // from an incoming RPC or command.
 

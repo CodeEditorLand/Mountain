@@ -1,4 +1,4 @@
-// File: AppState/HierarchySessionContext.rs
+
 // Defines the context for an ongoing call hierarchy or type hierarchy session,
 // linking subsequent requests (like getting incoming/outgoing calls) back to
 // the original provider that initiated the session.

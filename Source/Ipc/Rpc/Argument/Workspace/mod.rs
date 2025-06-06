@@ -1,4 +1,4 @@
-// File: Ipc/Rpc/Argument/Workspace/mod.rs
+
 // This module defines and exports the argument structures (DTOs) used for
 // RPC calls related to workspace management and operations.
 

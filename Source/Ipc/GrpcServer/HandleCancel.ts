@@ -1,4 +1,4 @@
-// File: Ipc/GrpcServer/HandleCancel.ts
+
 // Defines the gRPC handler for receiving cancellation requests from Mountain.
 
 import { type sendUnaryData, type ServerUnaryCall } from "@grpc/grpc-js";

@@ -1,4 +1,4 @@
-// File: AppState/UrlSerdeHelper.rs
+
 // Defines a helper module for serializing and deserializing `url::Url`
 // instances with Serde, allowing them to be easily stored in structs.
 

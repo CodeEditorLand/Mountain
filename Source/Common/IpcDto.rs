@@ -1,4 +1,4 @@
-// File: Common/IpcDto.rs
+
 // Defines Data Transfer Objects (DTOs) related to Inter-Process Communication,
 // specifically for identifying RPC targets.
 

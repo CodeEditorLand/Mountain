@@ -1,4 +1,4 @@
-// File: Handler/Commands/Commands.rs
+
 // Contains the primary logic for handling command execution, registration, and
 // unregistration.
 

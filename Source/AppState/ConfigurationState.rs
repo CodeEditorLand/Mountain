@@ -1,4 +1,4 @@
-// File: AppState/ConfigurationState.rs
+
 // Defines the data structure for the application's merged configuration state.
 
 #![allow(non_snake_case, non_camel_case_types)]

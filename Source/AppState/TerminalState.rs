@@ -1,4 +1,4 @@
-// File: AppState/TerminalState.rs
+
 // Defines the data structure for representing the state of a single active
 // terminal instance.
 

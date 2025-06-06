@@ -1,4 +1,4 @@
-// File: Ipc/RpcProtocolAdapter.ts
+
 // Defines an adapter that implements the `IMessagePassingProtocol` interface
 // required by VS Code's `RPCProtocol`. This adapter bridges the RPCProtocol's
 // send/receive mechanism with the project's gRPC transport layer.

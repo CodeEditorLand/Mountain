@@ -1,4 +1,4 @@
-// File: Common/DiagnosticsEffect.rs
+
 // Defines the DiagnosticsManager trait and associated effects for managing
 // diagnostic markers (errors, warnings, etc.) within the application.
 

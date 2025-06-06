@@ -1,4 +1,4 @@
-// File: Common/OutputEffect.rs
+
 // Defines the OutputChannelManager trait and associated effects for managing
 // output channels, which are used to display textual information to the user.
 

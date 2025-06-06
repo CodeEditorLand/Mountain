@@ -1,4 +1,4 @@
-// File: Environment/mod.rs
+
 // This file serves as the module declaration for the MountainEnvironment and
 // its providers.
 

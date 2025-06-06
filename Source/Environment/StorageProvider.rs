@@ -1,4 +1,4 @@
-// File: Environment/StorageProvider.rs
+
 // Implements the `StorageProvider` trait for the `MountainEnvironment`.
 // This file connects abstract storage effects to the concrete logic
 // in the application's storage handlers for Memento management.

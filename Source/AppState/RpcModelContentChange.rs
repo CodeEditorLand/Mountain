@@ -1,4 +1,4 @@
-// File: AppState/RpcModelContentChange.rs
+
 // Defines Data Transfer Objects (DTOs) used for representing document
 // content changes in a structured way, typically for RPC communication.
 

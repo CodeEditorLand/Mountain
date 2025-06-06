@@ -1,4 +1,4 @@
-// File: Handler/Workspace/mod.rs
+
 // This module defines and exports handlers for workspace-related operations,
 // such as managing workspace folders, trust, and file finding.
 

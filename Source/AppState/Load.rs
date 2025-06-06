@@ -1,4 +1,4 @@
-// File: AppState/Load.rs
+
 // Defines a helper function for loading Memento storage data from a file on
 // disk.
 

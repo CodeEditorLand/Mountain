@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadDiagnosticsHandler.rs
+
 // Defines the RPC handler for diagnostics-related requests from the sidecar.
 // This includes setting, clearing, and retrieving diagnostic markers.
 

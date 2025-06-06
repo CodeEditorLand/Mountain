@@ -1,4 +1,4 @@
-// File: Environment/SecretsProvider.rs
+
 // Implements the `SecretsProvider` trait for the `MountainEnvironment`.
 // This file connects abstract secrets effects to the concrete logic
 // in the application's secrets handlers, which use the system keyring.

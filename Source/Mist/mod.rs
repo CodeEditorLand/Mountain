@@ -1,4 +1,4 @@
-// File: Mist/mod.rs
+
 // This module is responsible for the "Mist" WebSocket server functionality,
 // if it's enabled. It handles WebSocket connections, message parsing,
 // and communication between the WebSocket clients and the Mountain backend.

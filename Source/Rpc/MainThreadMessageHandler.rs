@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadMessageHandler.rs
+
 // Defines the RPC handler for requests from the sidecar to show messages
 // (information, warnings, errors) to the user, typically via native dialogs or
 // UI notifications.

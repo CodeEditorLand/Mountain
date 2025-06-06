@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadStatusBarHandler.rs
+
 // Defines the RPC handler for managing status bar entries, allowing the sidecar
 // to display or update information in the application's status bar.
 

@@ -1,4 +1,4 @@
-// File: Ipc/GrpcServer/Initialize.ts
+
 // Defines the initialization and lifecycle management for the Cocoon gRPC server.
 
 import { CancellationTokenRegistry } from "../../../cancellation-token-registry";

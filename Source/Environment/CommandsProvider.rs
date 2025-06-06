@@ -1,4 +1,4 @@
-// File: Environment/CommandsProvider.rs
+
 // Implements the `CommandExecutor` trait for the `MountainEnvironment`.
 // This file connects the abstract command effects to the concrete logic
 // in the application's command handlers.

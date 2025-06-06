@@ -1,4 +1,4 @@
-// File: Entry.rs
+
 // Main application entry point and setup for the Mountain backend.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]

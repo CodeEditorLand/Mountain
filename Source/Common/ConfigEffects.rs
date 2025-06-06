@@ -1,4 +1,4 @@
-// File: Common/ConfigEffect.rs
+
 // Defines traits and effects for interacting with application configuration.
 // This includes getting, updating, and inspecting configuration values from
 // various sources.

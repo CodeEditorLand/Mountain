@@ -1,4 +1,4 @@
-// File: Environment/Ui/mod.rs
+
 // Declares and exports modules related to UI interaction within the
 // environment.
 

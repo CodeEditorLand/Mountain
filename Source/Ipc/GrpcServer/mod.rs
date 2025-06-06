@@ -1,4 +1,4 @@
-// File: Ipc/GrpcServer/mod.rs
+
 // Declares and exports modules related to the gRPC server,
 // which runs within Cocoon to receive requests from the Mountain backend.
 

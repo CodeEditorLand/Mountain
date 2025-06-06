@@ -1,4 +1,4 @@
-// File: Mist/MistServerError.rs
+
 // Defines the specific error types that can occur within the Mist WebSocket
 // server.
 

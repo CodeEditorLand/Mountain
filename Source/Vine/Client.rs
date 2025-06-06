@@ -1,4 +1,4 @@
-// File: Vine/Client.rs
+
 // Defines the gRPC client for Mountain to communicate with the Cocoon sidecar.
 // It handles connection management, request/notification sending, and
 // cancellation.

@@ -1,4 +1,4 @@
-// File: Ipc/Type/mod.rs
+
 // Declares and exports modules within the `Type` directory of the IPC system.
 // In the current structure, this is likely a placeholder.
 

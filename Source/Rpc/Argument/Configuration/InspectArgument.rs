@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Configuration/InspectArgument.rs
+
 
 use serde::Deserialize;
 

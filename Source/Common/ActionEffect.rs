@@ -1,4 +1,4 @@
-// File: Common/ActionEffect.rs
+
 // Defines the ActionEffect struct, a fundamental unit for representing
 // asynchronous operations that depend on an environment.
 

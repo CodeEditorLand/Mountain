@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadFileSystemApiHandler.rs
+
 // Defines the RPC handler for filesystem operations requested by the sidecar,
 // typically corresponding to the `vscode.workspace.fs` API.
 

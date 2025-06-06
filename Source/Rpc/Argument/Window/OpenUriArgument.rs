@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Window/OpenUriArgument.rs
+
 
 use serde::Deserialize;
 use serde_json::Value; // For UriComponentsDto and potentially complex options

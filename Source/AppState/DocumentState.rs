@@ -1,4 +1,4 @@
-// File: AppState/DocumentState.rs
+
 // Defines the data structure for representing a single open document in memory.
 
 #![allow(non_snake_case, non_camel_case_types)]

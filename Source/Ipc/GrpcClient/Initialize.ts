@@ -1,4 +1,4 @@
-// File: Ipc/GrpcClient/Initialize.ts
+
 // Defines the initialization and lifecycle management for the gRPC client
 // that connects from Cocoon to the Mountain backend.
 

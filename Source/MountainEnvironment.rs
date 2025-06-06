@@ -1,4 +1,4 @@
-// File: MountainEnvironment.rs
+
 // Primary Focus: Defines the Mountain application's specific environment,
 // implementing various provider traits to interact with the application's state
 // and services.

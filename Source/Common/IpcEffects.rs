@@ -1,4 +1,4 @@
-// File: Common/IpcEffect.rs
+
 // Defines the IpcProvider trait and associated effects for Inter-Process
 // Communication. This provides a standardized way to send requests and
 // notifications to sidecar processes.

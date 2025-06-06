@@ -1,4 +1,4 @@
-// File: Environment/ConfigProvider.rs
+
 // Implements the `ConfigProvider` and `ConfigInspector` traits for the
 // `MountainEnvironment`. This file connects abstract configuration effects to
 // the concrete logic in the handlers.

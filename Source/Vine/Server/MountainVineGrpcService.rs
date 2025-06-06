@@ -1,4 +1,4 @@
-// File: Vine/Server/MountainVineGrpcService.rs
+
 // Defines the gRPC service implementation for Mountain. This service listens
 // for incoming requests and notifications from the Cocoon sidecar and
 // dispatches them to the appropriate handlers within the Mountain application.

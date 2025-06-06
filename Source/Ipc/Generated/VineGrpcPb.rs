@@ -1,4 +1,4 @@
-// File: Ipc/Generated/VineGrpcPb.rs
+
 // Manually defines Rust structs that are compatible with Prost and Tonic for
 // gRPC. These structs correspond to the messages defined in `vine.proto`.
 // This file serves as a stand-in for auto-generated code from a tool like

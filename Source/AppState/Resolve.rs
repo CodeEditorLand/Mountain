@@ -1,4 +1,4 @@
-// File: AppState/Resolve.rs
+
 // Defines a helper function for resolving the filesystem path for Memento
 // storage.
 

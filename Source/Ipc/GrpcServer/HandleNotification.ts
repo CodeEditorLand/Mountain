@@ -1,4 +1,4 @@
-// File: Ipc/GrpcServer/HandleNotification.ts
+
 // Defines the gRPC notification handler for the CocoonService. It receives
 // fire-and-forget notifications from Mountain and dispatches them to the appropriate logic.
 

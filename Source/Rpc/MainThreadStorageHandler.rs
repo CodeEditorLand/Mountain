@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadStorageHandler.rs
+
 // Defines the RPC handler for Memento storage operations (global and workspace)
 // requested by the sidecar.
 

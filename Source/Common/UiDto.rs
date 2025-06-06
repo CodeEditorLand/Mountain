@@ -1,4 +1,4 @@
-// File: Common/UiDto.rs
+
 // Defines Data Transfer Objects (DTOs) for various UI elements like dialogs,
 // quick picks, and input boxes, used for communication between the backend and
 // frontend.

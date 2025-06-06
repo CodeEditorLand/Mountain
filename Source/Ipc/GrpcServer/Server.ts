@@ -1,4 +1,4 @@
-// File: Ipc/GrpcServer/Server.ts
+
 // Defines the Cocoon gRPC server implementation that receives calls from Mountain.
 // It loads the service definition from the .proto file and routes incoming calls
 // to the appropriate handlers.

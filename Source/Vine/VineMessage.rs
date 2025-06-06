@@ -1,4 +1,4 @@
-// File: Vine/VineMessage.rs
+
 // Defines the legacy Vine message structures for stdio-based IPC.
 // This is likely deprecated in favor of gRPC messages defined in .proto files.
 

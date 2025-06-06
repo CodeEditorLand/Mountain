@@ -1,4 +1,4 @@
-// File: Common/LanguageFeatureDto/OptionsDto.rs
+
 // Defines Data Transfer Objects (DTOs) for provider-specific options
 // that are sent during language feature provider registration.
 

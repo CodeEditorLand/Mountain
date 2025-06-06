@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Storage/GetValueArgument.rs
+
 
 use serde::Deserialize;
 

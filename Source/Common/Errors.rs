@@ -1,4 +1,4 @@
-// File: Common/Errors.rs
+
 // Defines the universal error enum for the project, used across Mountain and
 // potentially serialized for communication. This consolidates various error
 // kinds into a single, manageable type.

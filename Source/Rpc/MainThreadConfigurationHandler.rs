@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadConfigurationHandler.rs
+
 // Defines the RPC handler for configuration-related requests from the sidecar.
 // This includes getting, updating, and inspecting configuration values.
 

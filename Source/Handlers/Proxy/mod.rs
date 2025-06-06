@@ -1,4 +1,4 @@
-// File: Handler/Proxy/mod.rs
+
 // This module defines and exports handlers for proxying requests,
 // potentially acting as a passthrough to the Cocoon extension host.
 // This is likely deprecated in favor of specific gRPC service calls.

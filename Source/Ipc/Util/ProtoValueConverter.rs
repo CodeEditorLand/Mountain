@@ -1,4 +1,4 @@
-// File: Ipc/Util/ProtoValueConverter.rs
+
 // Defines utility functions for converting between `serde_json::Value`
 // and the `JsonValueWrapper` used in Prost-generated gRPC messages.
 

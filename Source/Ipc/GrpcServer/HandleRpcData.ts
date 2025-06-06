@@ -1,4 +1,4 @@
-// File: Ipc/GrpcServer/HandleRpcData.ts
+
 // Defines the gRPC handler for receiving raw binary RPC data from Mountain,
 // typically used for VS Code's `RPCProtocol`.
 

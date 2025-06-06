@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Documents/mod.rs
+
 // This module defines the argument structures (DTOs) used for
 // RPC calls related to document management (opening, saving, etc.).
 

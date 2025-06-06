@@ -1,4 +1,4 @@
-// File: Common/ConfigurationDto.rs
+
 // Defines Data Transfer Objects (DTOs) related to application configuration.
 // These structs are used for serialization and communication between different
 // parts of the system, such as between the backend and the sidecar.

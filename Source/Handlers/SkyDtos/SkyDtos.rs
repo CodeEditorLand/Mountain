@@ -1,4 +1,4 @@
-// File: Handler/SkyDtos/SkyDtos.rs
+
 // Defines the primary Data Transfer Objects (DTOs) used for initializing the
 // Sky (frontend) environment. These structures are serialized to JSON and sent
 // to the frontend to provide it with necessary bootstrap information.

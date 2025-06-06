@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadLogHandler.rs
+
 // Defines the RPC handler for log messages received from the sidecar.
 // These logs are typically from the extension host environment (e.g., Cocoon).
 

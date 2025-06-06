@@ -1,4 +1,4 @@
-// File: Common/FsEffect.rs
+
 // Defines traits and effects for interacting with the filesystem.
 // This provides a standardized, asynchronous way to read from and write to the
 // filesystem.

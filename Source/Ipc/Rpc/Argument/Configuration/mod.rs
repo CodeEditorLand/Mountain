@@ -1,4 +1,4 @@
-// File: Ipc/Rpc/Argument/Configuration/mod.rs
+
 // This module defines and exports the argument structures (DTOs) used for
 // RPC calls related to application configuration management.
 

@@ -1,4 +1,4 @@
-// File: Common/Environment.rs
+
 // Defines the core traits for the Dependency Injection (DI) system.
 // - `Environment`: A marker trait for any environment context.
 // - `Requires`: A trait that allows an environment to provide a specific

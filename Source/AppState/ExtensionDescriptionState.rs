@@ -1,4 +1,4 @@
-// File: AppState/ExtensionDescriptionState.rs
+
 // Defines the data structure for representing the metadata of a single scanned
 // extension, parsed from its `package.json` manifest.
 

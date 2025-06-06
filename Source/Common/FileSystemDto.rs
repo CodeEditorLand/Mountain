@@ -1,4 +1,4 @@
-// File: Common/FileSystemDto.rs
+
 // Defines Data Transfer Objects (DTOs) related to the filesystem,
 // used for representing file types and metadata in a serializable format.
 

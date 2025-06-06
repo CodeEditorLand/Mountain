@@ -1,4 +1,4 @@
-// File: Handler/Registry/Registry.rs
+
 // Defines a registry for mapping RPC method names to their corresponding
 // handler functions. This provides a structured way to manage and dispatch
 // incoming requests.

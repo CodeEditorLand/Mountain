@@ -1,4 +1,4 @@
-// File: Common/HasEnvironment.rs
+
 // Defines a generic trait for types that contain an environment.
 // This is a conceptual file based on the `Haslanguagefeatureenvironment` trait,
 // generalized to be applicable for any environment type.

@@ -1,4 +1,4 @@
-// File: Ipc/Type/Placeholder.ts
+
 // This file serves as a placeholder within the Type module.
 // In a more complex gRPC implementation, this module would contain
 // generated TypeScript interfaces or classes from the .proto definitions.

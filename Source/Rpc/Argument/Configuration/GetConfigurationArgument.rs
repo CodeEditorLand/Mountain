@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Configuration/GetConfigurationArgument.rs
+
 
 use serde::Deserialize;
 use serde_json::Value;

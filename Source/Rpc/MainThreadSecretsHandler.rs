@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadSecretsHandler.rs
+
 // Defines the RPC handler for secret storage operations (get, set, delete)
 // requested by the sidecar, using the system's keyring.
 

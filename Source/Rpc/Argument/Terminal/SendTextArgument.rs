@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Terminal/SendTextArgument.rs
+
 
 use serde::Deserialize;
 

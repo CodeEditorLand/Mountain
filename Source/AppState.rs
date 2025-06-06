@@ -1,4 +1,4 @@
-// File: AppState.rs
+
 // Primary Focus: Defines the application's shared state structure.
 
 use std::{

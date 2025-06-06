@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Workspace/ResolveFolderArgument.rs
+
 
 use serde::Deserialize;
 use serde_json::Value; // For UriComponentsDto which is a generic Value

@@ -1,4 +1,4 @@
-// File: AppState/Analyze.rs
+
 // Defines a helper function for analyzing text content.
 
 #![allow(non_snake_case, non_camel_case_types)]

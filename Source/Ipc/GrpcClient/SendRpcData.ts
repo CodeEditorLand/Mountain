@@ -1,4 +1,4 @@
-// File: Ipc/GrpcClient/SendRpcData.ts
+
 // Defines the function for sending raw binary RPC data via gRPC from Cocoon to Mountain.
 // This is typically used as the transport layer for VS Code's `RPCProtocol`.
 

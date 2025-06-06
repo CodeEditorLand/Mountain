@@ -1,4 +1,4 @@
-// File: Rpc/Argument/LanguageFeatures/mod.rs
+
 // This module defines the argument structures (DTOs) used for RPC calls
 // related to language-specific features like completion, hover, definition,
 // etc.

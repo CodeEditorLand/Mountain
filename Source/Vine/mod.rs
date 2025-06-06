@@ -1,4 +1,4 @@
-// File: Vine/mod.rs
+
 // This module handles Inter-Process Communication (IPC) between Mountain (Rust
 // backend) and Cocoon (Node.js sidecar), specifically using gRPC. It defines
 // error types, message structures, and client/server implementations for this

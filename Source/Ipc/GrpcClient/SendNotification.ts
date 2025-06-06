@@ -1,4 +1,4 @@
-// File: Ipc/GrpcClient/SendNotification.ts
+
 // Defines the function for sending a fire-and-forget gRPC notification from Cocoon to Mountain.
 
 import * as grpc from "@grpc/grpc-js";

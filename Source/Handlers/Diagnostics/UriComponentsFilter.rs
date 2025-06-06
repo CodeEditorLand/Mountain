@@ -1,4 +1,4 @@
-// File: Handler/Diagnostics/UriComponentsFilter.rs
+
 // Defines a Data Transfer Object (DTO) used for filtering diagnostics
 // based on components of a URI, such as its scheme or path.
 

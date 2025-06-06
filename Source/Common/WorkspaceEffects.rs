@@ -1,4 +1,4 @@
-// File: Common/WorkspaceEffect.rs
+
 // Defines traits and effects for interacting with the workspace.
 // This includes managing folders, trust, files, and applying batch edits.
 

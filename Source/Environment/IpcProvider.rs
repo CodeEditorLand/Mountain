@@ -1,4 +1,4 @@
-// File: Environment/IpcProvider.rs
+
 // Implements the `IpcProvider` trait for the `MountainEnvironment`.
 // This file connects abstract IPC effects to the concrete gRPC implementation
 // in the `Vine` module.

@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Diagnostics/GetDiagnosticsArgument.rs
+
 
 use serde::Deserialize;
 use serde_json::Value;

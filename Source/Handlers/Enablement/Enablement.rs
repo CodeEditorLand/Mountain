@@ -1,4 +1,4 @@
-// File: Handler/Enablement/Enablement.rs
+
 // Defines the logic handlers for managing extension enablement states.
 
 #![allow(non_snake_case, non_camel_case_types)]

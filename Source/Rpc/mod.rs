@@ -1,4 +1,4 @@
-// File: Rpc/mod.rs
+
 // This module defines the RPC (Remote Procedure Call) interface and handlers
 // for communication, likely between the Mountain backend and the Cocoon
 // sidecar. With the introduction of gRPC, this module will evolve to define

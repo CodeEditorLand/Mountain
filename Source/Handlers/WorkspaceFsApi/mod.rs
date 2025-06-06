@@ -1,4 +1,4 @@
-// File: Handler/WorkspaceFsApi/mod.rs
+
 // This module defines and exports handlers that implement the
 // `vscode.workspace.fs` API. These handlers receive requests from the sidecar
 // and use the application's runtime and environment to perform filesystem

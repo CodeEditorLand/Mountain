@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadTerminalServiceHandler.rs
+
 // Defines the RPC handler for terminal-related operations requested by the
 // sidecar. This includes creating, showing, hiding, sending text to, and
 // disposing of terminals.

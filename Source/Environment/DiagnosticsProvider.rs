@@ -1,4 +1,4 @@
-// File: Environment/DiagnosticsProvider.rs
+
 // Implements the `DiagnosticsManager` trait for the `MountainEnvironment`.
 // This file connects abstract diagnostic effects to the concrete logic
 // in the application's diagnostics handlers.

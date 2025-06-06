@@ -1,4 +1,4 @@
-// File: Ipc/Rpc/Argument/StatusBar/mod.rs
+
 // This module defines and exports the argument structures (DTOs) used for
 // RPC calls related to managing status bar entries.
 

@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadLanguageFeaturesHandler.rs
+
 // Defines the RPC handler for language feature provider registrations and
 // event emissions from the sidecar. This is the new, more specific name for
 // this handler.

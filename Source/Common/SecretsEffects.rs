@@ -1,4 +1,4 @@
-// File: Common/SecretsEffect.rs
+
 // Defines the SecretsProvider trait and associated effects for securely
 // storing and retrieving sensitive data like API keys or tokens.
 

@@ -1,4 +1,4 @@
-// File: Ipc/GrpcClient/SendRequest.ts
+
 // Defines the function for sending a request-response gRPC call from Cocoon to Mountain.
 
 import * as grpc from "@grpc/grpc-js";

@@ -1,4 +1,4 @@
-// File: Rpc/Argument/StatusBar/SetEntryArgument.rs
+
 
 use serde::Deserialize;
 use serde_json::Value; // Used because the status bar entry DTO is complex and passed as a generic Value

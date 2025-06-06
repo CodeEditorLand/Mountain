@@ -1,4 +1,4 @@
-// File: AppState/ProviderRegistration.rs
+
 // Defines the data structure for storing information about a single
 // registered language feature provider.
 

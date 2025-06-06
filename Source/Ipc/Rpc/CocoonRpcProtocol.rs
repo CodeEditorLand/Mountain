@@ -1,4 +1,4 @@
-// File: Ipc/Rpc/CocoonRpcProtocol.rs
+
 // Defines the Cocoon-specific implementation of the RPCProtocol, which is
 // responsible for dispatching incoming RPC calls from Mountain to the correct
 // local service shims.

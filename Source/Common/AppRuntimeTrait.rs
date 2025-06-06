@@ -1,4 +1,4 @@
-// File: Common/AppRuntimeTrait.rs
+
 // Defines the core trait for an application runtime, specifying the contract
 // for executing effects within a given environment.
 

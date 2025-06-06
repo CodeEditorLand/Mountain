@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadDialogsHandler.rs
+
 // Defines the RPC handler for requests from the sidecar to show native
 // file open or save dialogs.
 

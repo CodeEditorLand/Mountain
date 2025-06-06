@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadCommandsHandler.rs
+
 // Defines the RPC handler for commands originating from the sidecar (e.g.,
 // Cocoon) and to be executed within the Mountain environment or proxied
 // further.

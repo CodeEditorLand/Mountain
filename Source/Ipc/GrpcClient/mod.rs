@@ -1,4 +1,4 @@
-// File: Ipc/GrpcClient/mod.rs
+
 // Declares and exports modules related to the gRPC client,
 // which is used by Cocoon to communicate with the Mountain backend.
 

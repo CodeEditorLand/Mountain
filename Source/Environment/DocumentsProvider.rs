@@ -1,4 +1,4 @@
-// File: Environment/DocumentsProvider.rs
+
 // Implements the `DocumentProvider` trait for the `MountainEnvironment`.
 // This file connects abstract document effects to the concrete logic
 // in the application's document handlers.

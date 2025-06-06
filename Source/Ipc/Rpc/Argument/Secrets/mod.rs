@@ -1,4 +1,4 @@
-// File: Ipc/Rpc/Argument/Secrets/mod.rs
+
 // This module defines and exports the argument structures (DTOs) used for
 // RPC calls related to secret management (e.g., passwords, API keys).
 

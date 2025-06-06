@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadWorkspaceHandler.rs
+
 // Defines the RPC handler for workspace-related operations requested by the
 // sidecar. This includes resolving workspace folders and finding files within
 // the workspace.

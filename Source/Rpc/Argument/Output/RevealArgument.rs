@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Output/RevealArgument.rs
+
 
 use serde::Deserialize;
 use serde_json::Value; // Used for viewColumn which can be a number or an object

@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadWindowHandler.rs
+
 // Defines the RPC handler for window-related actions initiated by the sidecar,
 // such as focusing the main window or handling URI opening requests.
 

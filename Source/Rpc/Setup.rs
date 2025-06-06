@@ -1,4 +1,4 @@
-// File: Rpc/Setup.rs
+
 // Contains setup logic for the RPC server, specifically for the gRPC-based
 // communication with the Cocoon sidecar.
 

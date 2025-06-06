@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadDocumentsHandler.rs
+
 // Defines the RPC handler for document-related operations originating from the
 // sidecar. This includes opening, creating, and saving documents.
 

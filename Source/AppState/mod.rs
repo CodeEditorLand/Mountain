@@ -1,4 +1,4 @@
-// File: AppState/mod.rs
+
 // This module defines and exports the core application state structures.
 
 #![allow(non_snake_case, non_camel_case_types)]

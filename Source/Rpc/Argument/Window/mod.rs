@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Window/mod.rs
+
 // This module defines the argument structures (DTOs) used for
 // RPC calls related to window management and interactions.
 

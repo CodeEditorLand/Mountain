@@ -1,4 +1,4 @@
-// File: Shim/Mod.rs
+
 // Declares and exports all shim modules for the Cocoon extension host.
 // Shims provide implementations for VS Code's internal `ExtHost` services,
 // adapting them to the Mountain/Cocoon architecture.

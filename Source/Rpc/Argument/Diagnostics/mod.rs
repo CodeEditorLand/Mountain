@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Diagnostics/mod.rs
+
 // This module defines the argument structures (DTOs) used for
 // RPC calls related to diagnostics management (e.g., problems, errors,
 // warnings).

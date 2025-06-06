@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Storage/mod.rs
+
 // This module defines the argument structures (DTOs) used for
 // RPC calls related to Memento storage (global and workspace).
 

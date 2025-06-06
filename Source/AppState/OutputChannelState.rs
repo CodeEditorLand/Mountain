@@ -1,4 +1,4 @@
-// File: AppState/OutputChannelState.rs
+
 // Defines the data structure for representing the state of a single output
 // channel.
 

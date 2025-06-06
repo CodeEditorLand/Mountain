@@ -1,4 +1,4 @@
-// File: Handler/Diagnostics/mod.rs
+
 // This module defines and exports handlers and data structures related to
 // diagnostics management (e.g., problems, errors, warnings reported by linters
 // or extensions).

@@ -1,4 +1,4 @@
-// File: Common/Runtime.rs
+
 // Defines the core traits for an application runtime, specifying the contract
 // for executing effects and providing access to the environment.
 

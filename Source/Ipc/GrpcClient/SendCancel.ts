@@ -1,4 +1,4 @@
-// File: Ipc/GrpcClient/SendCancel.ts
+
 // Defines the function for sending a cancellation request via gRPC from Cocoon to Mountain.
 
 import * as grpc from "@grpc/grpc-js";

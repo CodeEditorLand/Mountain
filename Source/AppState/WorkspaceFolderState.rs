@@ -1,4 +1,4 @@
-// File: AppState/WorkspaceFolderState.rs
+
 // Defines the data structure for representing a single folder within a
 // workspace.
 

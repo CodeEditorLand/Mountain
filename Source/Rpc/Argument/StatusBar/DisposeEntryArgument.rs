@@ -1,4 +1,4 @@
-// File: Rpc/Argument/StatusBar/DisposeEntryArgument.rs
+
 
 use serde::Deserialize;
 

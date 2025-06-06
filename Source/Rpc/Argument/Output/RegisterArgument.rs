@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Output/RegisterArgument.rs
+
 
 use serde::Deserialize;
 use serde_json::Value; // Used for fileUriDto which can be a UriComponents DTO or null

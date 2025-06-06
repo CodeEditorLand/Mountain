@@ -1,4 +1,4 @@
-// File: Environment/WorkspaceProvider.rs
+
 // Implements the `WorkspaceProvider` and `WorkspaceEditApplier` traits for the
 // `MountainEnvironment`. This file connects abstract workspace effects to the
 // concrete logic in the application's handlers.

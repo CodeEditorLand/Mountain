@@ -1,4 +1,4 @@
-// File: Environment/OutputProvider.rs
+
 // Implements the `OutputChannelManager` trait for the `MountainEnvironment`.
 // This file connects abstract output channel effects to the concrete logic
 // in the application's output handlers.

@@ -1,4 +1,4 @@
-// File: Environment/Ui/Uirequestpayload.rs
+
 // Defines a generic payload structure for sending UI requests to the frontend.
 
 #![allow(non_snake_case, non_camel_case_types)]

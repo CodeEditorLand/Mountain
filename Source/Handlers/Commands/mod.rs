@@ -1,4 +1,4 @@
-// File: Handler/Commands/mod.rs
+
 // This module defines and exports handlers related to command execution and
 // registration.
 

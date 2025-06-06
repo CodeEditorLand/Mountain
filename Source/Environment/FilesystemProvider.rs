@@ -1,4 +1,4 @@
-// File: Environment/FilesystemProvider.rs
+
 // Implements the `FsReader` and `FsWriter` traits for the
 // `MountainEnvironment`. This file connects abstract filesystem effects to the
 // concrete logic using `tokio::fs`.

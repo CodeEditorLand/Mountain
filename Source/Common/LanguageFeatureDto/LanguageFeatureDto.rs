@@ -1,4 +1,4 @@
-// File: Common/LanguageFeatureDto/LanguageFeatureDto.rs
+
 // Defines all Data Transfer Objects (DTOs) related to language features.
 
 #![allow(non_snake_case, non_camel_case_types)]

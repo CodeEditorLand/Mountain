@@ -1,4 +1,4 @@
-// File: Handler/SkyCommands/mod.rs
+
 // This module defines and exports handlers for commands originating directly
 // from the Sky (frontend) layer that are specific to workbench or process
 // interactions, such as zoom level and memory info.

@@ -1,4 +1,4 @@
-// File: Rpc/Argument/Output/IdArgument.rs
+
 
 use serde::Deserialize;
 

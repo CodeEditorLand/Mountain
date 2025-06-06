@@ -1,4 +1,4 @@
-// File: Rpc/MainThreadExtensionEnablementHandler.rs
+
 // Defines the RPC handler for requests related to extension enablement states.
 
 use std::sync::Arc;
