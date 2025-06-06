@@ -1313,7 +1313,7 @@ impl CommandExecutor for MountainEnvironment {
 	async fn execute_command(&self, command_id:String, args_val:Value) -> Result<Value, CommonError> {
 		info!("[Env CmdExec] Execute: cmd_id='{}'", command_id);
 
-		trace!("[Env CmdExec] Args: {:?}", args_val);
+		trace!("[Env CmdExec] Argument: {:?}", args_val);
 
 		let main_window = self
 			.app_handle

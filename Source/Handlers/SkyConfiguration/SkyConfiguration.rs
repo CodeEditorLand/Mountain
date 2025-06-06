@@ -4,7 +4,7 @@
 // Defines the logic for building the initial ISandboxConfiguration DTO,
 // which provides the Sky (frontend) with necessary environment and bootstrap data.
 
-#![allow(non_snake_case, non_camel_case_types)]
+#![allow(non_snake_case, non_camel_case_types)] 
 
 use std::collections::HashMap;
 use std::env;

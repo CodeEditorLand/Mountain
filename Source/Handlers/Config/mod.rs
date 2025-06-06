@@ -1,4 +1,4 @@
-// File: Handlers/Config/Mod.rs
+// File: Handlers/Config/mod.rs
 // This module defines and exports handlers related to application configuration
 // management.
 

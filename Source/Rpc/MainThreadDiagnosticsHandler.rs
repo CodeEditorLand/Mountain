@@ -12,7 +12,7 @@ use tauri::{AppHandle, Manager, State, Wry};
 use crate::Runtime::AppRuntime; // Mountain's AppRuntime
 use crate::{
 	Handlers::ErrorUtils,
-	Rpc::Args::Diagnostics::{ChangeManyArgument as ChangeManyDiagnosticsArgument, GetDiagnosticsArgument},
+	Rpc::Argument::Diagnostics::{ChangeManyArgument as ChangeManyDiagnosticsArgument, GetDiagnosticsArgument},
 };
 
 #[derive(Clone)]

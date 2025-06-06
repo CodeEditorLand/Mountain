@@ -57,7 +57,7 @@ use crate::{
 
 /// Creates a `CommonError` specific to configuration operations.
 ///
-/// # Arguments
+/// # Argument
 /// * `operation` - A string slice describing the config operation (e.g.,
 ///
 ///
@@ -85,7 +85,7 @@ fn create_config_error(operation:&str, message:String) -> CommonError {
 
 /// Maps a `PoisonError` from `AppState` Mutex locks to a `CommonError`.
 ///
-/// # Arguments
+/// # Argument
 /// * `e` - The `PoisonError`.
 ///
 /// # Returns
@@ -107,7 +107,7 @@ fn map_app_state_lock_error_to_common_error<T>(e:std::sync::PoisonError<std::syn
 /// The `_scope_to_language` parameter is currently unused in this MVP
 /// implementation but is present for API consistency with VS Code's concepts.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - Tauri `AppHandle` for path resolution.
 /// * `app_state` - Reference to `AppState` for workspace-specific paths.
 /// * `target` - The `ConfigurationTarget` (User, Workspace, WorkspaceFolder).
@@ -291,7 +291,7 @@ pub fn get_config_path_for_target<R:TauriRuntime>(
 /// If the file does not exist or is empty, it returns a default empty JSON
 /// object (`{}`).
 ///
-/// # Arguments
+/// # Argument
 /// * `path` - The `Path` to the JSON file.
 ///
 /// # Returns
@@ -341,7 +341,7 @@ pub async fn load_json_file_if_exists_or_default(path:&Path) -> Result<Value, Co
 ///
 /// Creates parent directories if they don't exist.
 ///
-/// # Arguments
+/// # Argument
 /// * `path` - The `Path` to write the JSON file to.
 /// * `value` - The `serde_json::Value` to serialize and write.
 ///
@@ -398,7 +398,7 @@ pub async fn write_json_file(path:&Path, value:&Value) -> Result<(), CommonError
 /// removed. Intermediate objects along the path are created if they don't exist
 /// when setting a value.
 ///
-/// # Arguments
+/// # Argument
 /// * `target_value` - A mutable reference to the `serde_json::Value` to update.
 /// * `key_path` - A dot-separated string representing the path to the key
 ///   (e.g., "editor.fontSize").
@@ -509,7 +509,7 @@ pub fn update_json_value_at_path(target_value:&mut Value, key_path:&str, value_t
 /// Workspace Folder (`.vscode/settings.json`). Later sources override earlier
 /// ones.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - Tauri `AppHandle`.
 /// * `app_state` - Reference to `AppState`.
 ///
@@ -656,7 +656,7 @@ pub async fn load_and_merge_configurations_internal<R:TauriRuntime>(
 ///   key (arrays are not merged element-wise).
 /// - If `source` contains a null, it replaces the `target`'s value.
 ///
-/// # Arguments
+/// # Argument
 /// * `target` - A mutable reference to the `Value` to be merged into.
 /// * `source` - A reference to the `Value` whose contents will override
 ///   `target`.
@@ -692,7 +692,7 @@ fn merge_json_values(target:&mut Value, source:&Value) {
 /// list of affected keys, matching VS Code's `$acceptConfigurationChanged`
 /// protocol.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - Tauri `AppHandle`.
 /// * `affected_keys` - A `Vec<String>` of dot-separated configuration keys that
 ///   have changed.
@@ -828,7 +828,7 @@ pub struct DocumentFilterDto {
 ///
 /// Uses `globset` for pattern matching.
 ///
-/// # Arguments
+/// # Argument
 /// * `selector_val` - A `serde_json::Value` representing the
 ///   `DocumentSelector`.
 /// * `document_uri` - The `Url` of the document to match.

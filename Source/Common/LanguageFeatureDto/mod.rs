@@ -1,4 +1,4 @@
-// File: Common/LanguageFeatureDto/Mod.rs
+// File: Common/LanguageFeatureDto/mod.rs
 // This module defines and exports all Data Transfer Objects (DTOs) related to
 // language features, providing a structured way to communicate complex data
 // for operations like completion, hover, symbols, etc.

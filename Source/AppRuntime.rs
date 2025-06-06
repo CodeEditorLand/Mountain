@@ -4,8 +4,7 @@
 
 use std::sync::Arc;
 
-use Common::Runtime::AppRuntimeTrait; /* Assuming AppRuntimeTrait is the PascalCase version of
-                                             * CommonRuntimeTrait */
+use Common::Runtime::AppRuntimeTrait; // Assuming AppRuntimeTrait is the PascalCase version of CommonRuntimeTrait
 use Common::{
 	Effect::ActionEffect,
 	Environment::{Environment, Requires},

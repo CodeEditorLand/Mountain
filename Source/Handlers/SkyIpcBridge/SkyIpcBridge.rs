@@ -34,7 +34,7 @@ pub async fn MountainIpcBridgeSend(
 		Argument.Channel,
 		Argument.ArgumentList.len()
 	);
-	trace!("[SkyIpcBridge Send] FullArguments: {:?}", Argument.ArgumentList);
+	trace!("[SkyIpcBridge Send] FullArgument: {:?}", Argument.ArgumentList);
 
 	// Construct the method name expected by Cocoon's gRPC dispatcher.
 	let VineMethodName = format!("ipc:send:{}", Argument.Channel);
@@ -75,7 +75,7 @@ pub async fn MountainIpcBridgeInvoke(
 		Argument.Channel,
 		Argument.ArgumentList.len()
 	);
-	trace!("[SkyIpcBridge Invoke] FullArguments: {:?}", Argument.ArgumentList);
+	trace!("[SkyIpcBridge Invoke] FullArgument: {:?}", Argument.ArgumentList);
 
 	let VineMethodName = format!("ipc:invoke:{}", Argument.Channel);
 	let VineRequestParameters = Value::Array(Argument.ArgumentList);

@@ -13,12 +13,12 @@ pub struct DiagnosticsEntry {
 	// The URI of the document these diagnostics pertain to, represented as a generic JSON Value.
 	// This Value is expected to conform to a UriComponents DTO structure
 	// (e.g., { scheme: "file", path: "/foo/bar.ts", external: "file:///foo/bar.ts" }).
-	#[serde(alias = "uriComponentsVal", alias = "uri_components_dto")] 
+	#[serde(alias = "uriComponentsVal", alias = "uri_components_dto")] // Aliases from different versions
 	pub UriComponentsValue: Value,
 
 	// An optional list of diagnostic markers for the specified URI.
 	// If None or an empty Vec, it implies clearing diagnostics for this URI from the given owner.
 	// Uses the common MarkerDataDto.
-	#[serde(alias = "commonMarkerDataDtosOpt", alias = "markers_dto_values")] 
+	#[serde(alias = "commonMarkerDataDtosOpt", alias = "markers_dto_values")] // Aliases from different versions
 	pub CommonMarkerDataDtosOption: Option<Vec<CommonMarkerDataDto>>,
 }

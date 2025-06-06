@@ -1,4 +1,4 @@
-// File: Handlers/SkyDtos/Mod.rs
+// File: Handlers/SkyDtos/mod.rs
 // This module defines and exports Data Transfer Objects (DTOs) used for
 // communication with the Sky (frontend) layer, particularly for initial
 // configuration.

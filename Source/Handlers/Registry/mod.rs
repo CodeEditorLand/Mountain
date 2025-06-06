@@ -1,4 +1,4 @@
-// File: Handlers/Registry/Mod.rs
+// File: Handlers/Registry/mod.rs
 // This module defines and exports a registry for request handlers.
 // Its primary role is to map method names to their corresponding handler
 // functions, providing a structured way to manage and dispatch incoming RPC

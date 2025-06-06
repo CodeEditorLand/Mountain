@@ -1,4 +1,4 @@
-// File: Vine/Server/Mod.rs
+// File: Vine/Server/mod.rs
 // This module defines and exports the gRPC server implementation for Mountain.
 
 #![allow(non_snake_case, non_camel_case_types)]

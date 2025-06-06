@@ -122,7 +122,7 @@ enum GlobParam {
 /// Formats a `PoisonError` from a Mutex lock on workspace-related `AppState`
 /// sections into a standardized RPC error string.
 ///
-/// # Arguments
+/// # Argument
 /// * `e` - The `PoisonError`.
 /// * `context` - A string describing the context of the lock (e.g.,
 ///
@@ -154,7 +154,7 @@ fn format_workspace_app_state_lock_error_for_rpc<T>(
 ///
 /// Ensures consistent inclusion of `$mid: 1` for VS Code compatibility.
 ///
-/// # Arguments
+/// # Argument
 /// * `p` - The `Path` to convert.
 ///
 /// # Returns
@@ -215,7 +215,7 @@ fn file_path_to_uri_components_dto(p:&Path) -> Value {
 /// Retrieves information about all currently open workspace folders from
 /// `AppState` and returns them as an array of `WorkspaceFolder` DTOs.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 ///
 /// # Returns
@@ -283,7 +283,7 @@ pub async fn handle_get_workspace_folders<R:Runtime>(app:AppHandle<R>) -> Result
 /// **STUBBED:** This function is a placeholder. A full implementation would
 /// find the workspace folder that contains the given URI.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app` - The Tauri `AppHandle` (unused in stub).
 /// * `params_val` - A `serde_json::Value` which is expected to be either the
 ///   `UriComponents` DTO directly, or an array containing it as the first
@@ -338,7 +338,7 @@ pub async fn handle_get_workspace_folder_for_uri<R:Runtime>(
 /// dialog to the user to grant or deny trust if the state is currently
 /// untrusted, and then updating the state and notifying Cocoon.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `_params` - `serde_json::Value` (currently unused, might contain trust
 ///   request details in the future).
@@ -385,7 +385,7 @@ pub async fn handle_request_workspace_trust<R:Runtime>(
 /// Implements file searching within the workspace folders based on
 /// include/exclude glob patterns and options.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `params` - A `serde_json::Value` array: `[include: GlobParam, exclude?:
 ///   GlobParam | null, options?: FindFilesOptions | null]`
@@ -690,7 +690,7 @@ pub async fn handle_find_files<R:Runtime>(
 /// Cocoon, upon receiving this, will typically re-request the workspace folders
 /// via `$getWorkspaceFolders`.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 pub async fn notify_cocoon_of_workspace_folder_change<R:Runtime>(_:AppHandle<R>) {
 	info!("[Workspace Handler Notify] Notifying Cocoon of workspace folder change via $onDidChangeWorkspaceFolders");
@@ -723,7 +723,7 @@ pub async fn notify_cocoon_of_workspace_folder_change<R:Runtime>(_:AppHandle<R>)
 /// Cocoon, upon receiving `$onDidGrantWorkspaceTrust`, typically re-evaluates
 /// trust-dependent features.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `_is_trusted` - The new trust state (boolean, currently unused in this
 ///   simple notification).

@@ -13,7 +13,7 @@ use tauri::{AppHandle, Manager, State, Wry};
 use crate::Runtime::AppRuntime; // May not be strictly needed if logic is in Handlers
 use crate::{
 	Handlers::{self, ErrorUtils, LanguageFeatures as LanguageFeaturesHandlerLogic},
-	Rpc::Args::LanguageFeatures::{EmitProviderEventArgument, RegisterProviderArgument, UnregisterProviderArgument},
+	Rpc::Argument::LanguageFeatures::{EmitProviderEventArgument, RegisterProviderArgument, UnregisterProviderArgument},
 };
 
 #[derive(Clone)]
@@ -100,17 +100,17 @@ impl MainThreadLanguageFeaturesHandler {
 	) -> Result<Value, String> {
 		info!(
 			"[Rpc LanguageFeaturesHandler] EmitProviderEvent (DTO): Sidecar='{}', EventMethod='{}', Handle={}, \
-			 ArgsIsSome={}",
+			 ArgumentIsSome={}",
 			SidecarIdentifier,
 			EventMethodName,
 			Argument.EventHandle,
-			Argument.EventArguments.is_some()
+			Argument.EventArgument.is_some()
 		);
 		LanguageFeaturesHandlerLogic::HandleProviderEventEmission(
 			&self.ApplicationHandle,
 			EventMethodName,
 			Argument.EventHandle,
-			Argument.EventArguments,
+			Argument.EventArgument,
 		)
 		.await
 	}

@@ -12,7 +12,7 @@ use tauri::{AppHandle, Manager, State, Wry};
 
 use crate::Handlers::{self, ErrorUtils}; // Assuming Handlers::Secrets contains the logic
 use crate::{
-	Rpc::Args::Secrets::{GetSecretArgument, SetSecretArgument},
+	Rpc::Argument::Secrets::{GetSecretArgument, SetSecretArgument},
 	Runtime::AppRuntime,
 };
 

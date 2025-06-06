@@ -111,7 +111,7 @@ use crate::{
 /// This is used for formatting responses from dialog handlers that return file
 /// paths, ensuring consistency with VS Code's DTO expectations.
 ///
-/// # Arguments
+/// # Argument
 /// * `path` - The `PathBuf` to convert.
 ///
 /// # Returns
@@ -299,7 +299,7 @@ pub struct MainThreadTerminalServiceHandler {
 
 impl MainThreadCommandsHandler {
 	/// Handles `$executeCommand` RPC from Cocoon.
-	/// `args`: `[commandId: string, ...commandArgs: any[]]`
+	/// `args`: `[commandId: string, ...commandArgument: any[]]`
 	pub async fn executeCommand(&self, args:Value) -> Result<Value, String> {
 		debug!(
 			"[RPC MainThreadCommands] <= $executeCommand: (args sample) '{}...'",
@@ -460,7 +460,7 @@ impl MainThreadWorkspaceHandler {
 fn rpc_method_should_be_direct_effect(method_name:&str, args:Value) -> Result<Value, String> {
 	warn!(
 		"[RPC Handler STUB] Method '{}' was called via RPC fallback. This method should ideally be mapped directly to \
-		 an ActionEffect in 'track.rs'. Args: {:?}",
+		 an ActionEffect in 'track.rs'. Argument: {:?}",
 		method_name, args
 	);
 
@@ -601,7 +601,7 @@ impl MainThreadExtensionServiceHandler {
 	pub async fn onWillActivateExtension(&self, args:Value) -> Result<Value, String> {
 		warn!(
 			"[RPC MainThreadExtSvc] $onWillActivateExtension called via RPC fallback (should be a direct \
-			 notification). Args: {:?}",
+			 notification). Argument: {:?}",
 			args
 		);
 
@@ -619,7 +619,7 @@ impl MainThreadExtensionServiceHandler {
 	// $onExtensionRuntimeError
 	pub async fn onDidActivateExtension(&self, args:Value) -> Result<Value, String> {
 		warn!(
-			"[RPC MainThreadExtSvc] $onDidActivateExtension called via RPC fallback. Args: {:?}",
+			"[RPC MainThreadExtSvc] $onDidActivateExtension called via RPC fallback. Argument: {:?}",
 			args
 		);
 
@@ -633,7 +633,7 @@ impl MainThreadExtensionServiceHandler {
 
 	pub async fn onExtensionActivationError(&self, args:Value) -> Result<Value, String> {
 		warn!(
-			"[RPC MainThreadExtSvc] $onExtensionActivationError called via RPC fallback. Args: {:?}",
+			"[RPC MainThreadExtSvc] $onExtensionActivationError called via RPC fallback. Argument: {:?}",
 			args
 		);
 
@@ -647,7 +647,7 @@ impl MainThreadExtensionServiceHandler {
 
 	pub async fn onExtensionRuntimeError(&self, args:Value) -> Result<Value, String> {
 		warn!(
-			"[RPC MainThreadExtSvc] $onExtensionRuntimeError called via RPC fallback. Args: {:?}",
+			"[RPC MainThreadExtSvc] $onExtensionRuntimeError called via RPC fallback. Argument: {:?}",
 			args
 		);
 

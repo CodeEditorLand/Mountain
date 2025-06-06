@@ -93,7 +93,7 @@ use crate::{
 ///
 /// Prefixes the error code with "ETERM_" (e.g., "ETERM_PTYCREATE").
 ///
-/// # Arguments
+/// # Argument
 /// * `message` - The error message.
 /// * `code` - An optional short code (e.g., "PTYCREATE", "LOCK").
 ///
@@ -112,7 +112,7 @@ fn create_terminal_operation_rpc_error(message:String, code:Option<&str>) -> Str
 /// Formats a `PoisonError` from a Mutex lock on terminal-related `AppState`
 /// sections into a standardized RPC error string.
 ///
-/// # Arguments
+/// # Argument
 /// * `e` - The `PoisonError`.
 /// * `context` - A string describing the context of the lock (e.g.,
 ///
@@ -179,11 +179,11 @@ fn get_platform_default_shell_path() -> String {
 /// within it, and sets up asynchronous tasks for reading PTY output and writing
 /// PTY input. Stores the `TerminalState` in `AppState`.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `options_val` - A `serde_json::Value` representing
 ///   `vscode.TerminalOptions` (or `ICreateTerminalOptions` from Cocoon's shim).
-///   Expected fields include `name`, `shellPath`, `shellArgs`, `cwd`, `env`,
+///   Expected fields include `name`, `shellPath`, `shellArgument`, `cwd`, `env`,
 ///
 ///   `initialDimensions`, `isPty`.
 ///
@@ -725,7 +725,7 @@ pub async fn handle_create_terminal<R:Runtime>(
 /// Emits a Tauri event (`mountain://terminal/reveal`) to request the frontend
 /// (Sky) to make the specified terminal visible and optionally focus it.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[id: u64, preserveFocus?: boolean]`
 ///
@@ -770,7 +770,7 @@ pub async fn handle_show_terminal<R:Runtime>(app_handle:AppHandle<R>, args:Value
 /// This is often a no-op on the backend side, as terminal visibility is
 /// primarily managed by the UI. It logs the request.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app_handle` - The Tauri `AppHandle` (unused).
 /// * `args` - A `serde_json::Value` array: `[id: u64]`
 ///
@@ -807,7 +807,7 @@ pub async fn handle_hide_terminal<R:Runtime>(
 /// Sends the provided `text_to_send` to the PTY input of the specified
 /// terminal via its dedicated MPSC channel and PTY writer task.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[id: u64, text: string]`
 ///
@@ -895,7 +895,7 @@ pub async fn handle_send_text_to_terminal<R:Runtime>(app_handle:AppHandle<R>, ar
 /// Terminates the PTY process associated with the given terminal ID and cleans
 /// up its state and resources (tasks, channels).
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[id: u64]`
 ///

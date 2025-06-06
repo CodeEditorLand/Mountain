@@ -62,7 +62,7 @@ use crate::{app_state::AppState, handlers::error_utils};
 /// `sky_resolves_ui_request` Tauri command itself, not for the `Result` sent
 /// through the `oneshot::Sender` to the `UiProvider` effect.
 ///
-/// # Arguments
+/// # Argument
 /// * `e` - The `PoisonError` encountered.
 /// * `context` - A string describing the locked resource (e.g., "pending UI
 ///   requests map").
@@ -102,7 +102,7 @@ fn format_lock_error_for_tauri_command_failure<T>(
 ///
 /// This function also logs the outcome of attempting to send the result.
 ///
-/// # Arguments
+/// # Argument
 /// * `request_id` - The unique ID of the UI request being resolved.
 /// * `sender` - The `tokio::sync::oneshot::Sender` associated with the
 ///   `request_id`.
@@ -178,7 +178,7 @@ fn send_ui_operation_result_to_environment_task(
 ///   - If the UI interaction was successful or normally cancelled by the user
 ///     without any error on Sky's side, this should be `None`.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`, automatically injected.
 /// * `request_id` - The unique ID of the UI request being resolved.
 /// * `data_val` - Optional `serde_json::Value` containing successful data or

@@ -75,7 +75,7 @@ pub struct AppRuntime {
 impl AppRuntime {
 	/// Creates a new `AppRuntime`.
 	///
-	/// # Arguments
+	/// # Argument
 	/// * `environment` - An `Arc<MountainEnvironment>` that provides the
 	///   concrete implementations for all effects.
 	///
@@ -107,7 +107,7 @@ impl AppRuntime {
 	/// * `Out`: The output type that the `effect` produces on success. Must be
 	///   `Send + Sync + 'static`.
 	///
-	/// # Arguments
+	/// # Argument
 	/// * `effect` - The `ActionEffect` to execute.
 	///
 	/// # Returns

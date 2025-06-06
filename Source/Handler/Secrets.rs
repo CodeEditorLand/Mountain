@@ -48,7 +48,7 @@ use crate::handlers::error_utils;
 /// This function provides detailed error messages and specific error codes
 /// based on the `keyring::Error`.
 ///
-/// # Arguments
+/// # Argument
 /// * `e` - The `keyring::Error` to map.
 /// * `operation` - A string describing the keyring operation being attempted
 ///   (e.g., "get_password", "entry creation").
@@ -179,7 +179,7 @@ fn map_keyring_error_to_rpc_string(e:keyring::Error, operation:&str, key_context
 /// and the extension's ID to ensure uniqueness and prevent collisions between
 /// extensions or other applications.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle` to access `app.config()`.
 /// * `extension_id` - The identifier of the extension (e.g., "publisher.name").
 ///
@@ -203,7 +203,7 @@ fn get_keyring_service_name_for_extension<R:Runtime>(app:&AppHandle<R>, extensio
 ///
 /// Retrieves a secret for a given extension and key from the OS keychain.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `params` - A `serde_json::Value` object: `{ "extensionId": string, "key":
 ///   string }`
@@ -269,7 +269,7 @@ pub async fn handle_get_secret<R:Runtime>(app:AppHandle<R>, params:Value) -> Res
 ///
 /// Stores or updates a secret for a given extension and key in the OS keychain.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `params` - A `serde_json::Value` object: `{ "extensionId": string, "key":
 ///   string, "value": string }`
@@ -338,7 +338,7 @@ pub async fn handle_store_secret<R:Runtime>(app:AppHandle<R>, params:Value) -> R
 ///
 /// Deletes a secret for a given extension and key from the OS keychain.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `params` - A `serde_json::Value` object: `{ "extensionId": string, "key":
 ///   string }`

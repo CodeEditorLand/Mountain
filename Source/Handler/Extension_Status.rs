@@ -43,7 +43,7 @@ use crate::handlers::error_utils;
 /// deactivation, and errors. It logs these events and may emit Tauri events for
 /// other parts of Mountain or the Sky frontend to react to.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`, used for emitting events.
 /// * `method` - The specific notification method name (e.g.,
 ///

@@ -1,4 +1,4 @@
-// File: Handlers/Terminal/Mod.rs
+// File: Handlers/Terminal/mod.rs
 // This module defines and exports handlers for managing terminal instances,
 // including creation, interaction, and lifecycle events.
 

@@ -40,7 +40,7 @@ use crate::{
 // --- Constants ---
 /// Prefix for Cocoon's delegating command IDs (e.g., those returned with an
 /// `$ident`).
-const COCOON_DELEGATING_CMD_ID_PREFIX:&str = "_cocoon.executeContributedCommandWithCachedArgs";
+const COCOON_DELEGATING_CMD_ID_PREFIX:&str = "_cocoon.executeContributedCommandWithCachedArgument";
 
 // --- Helper Functions ---
 fn format_app_state_lock_error_for_rpc<T>(e:std::sync::PoisonError<StdMutexGuard<'_, T>>, context:&str) -> String {
@@ -156,7 +156,7 @@ pub async fn handle_execute_command<R:TauriRuntime>(
 	let original_args_val = params.get("args").cloned().unwrap_or(Value::Null);
 
 	info!(
-		"[Cmd Handler] Execute: ID='{}', ArgsType='{:?}'",
+		"[Cmd Handler] Execute: ID='{}', ArgumentType='{:?}'",
 		command_id_to_execute,
 		original_args_val.kind()
 	);

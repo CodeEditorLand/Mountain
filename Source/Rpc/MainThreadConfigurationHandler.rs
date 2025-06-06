@@ -18,10 +18,10 @@ use serde_json::Value;
 use tauri::{AppHandle, Manager, State, Wry};
 
 use crate::Handlers::ErrorUtils;
-use crate::Rpc::Args::Configuration::{
+use crate::Rpc::Argument::Configuration::{
 	GetConfigurationArgument,
-	InspectArgument as InspectConfigurationArgument, 
-	UpdateArgument as UpdateConfigurationArgument,   
+	InspectArgument as InspectConfigurationArgument, // Aliased
+	UpdateArgument as UpdateConfigurationArgument,   // Aliased to avoid conflict
 };
 use crate::Runtime::AppRuntime; // Mountain's AppRuntime
 

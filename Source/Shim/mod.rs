@@ -3,7 +3,7 @@
 // Shims provide implementations for VS Code's internal `ExtHost` services,
 // adapting them to the Mountain/Cocoon architecture.
 
-#![allow(non_snake_case, non_camel_case_types)] 
+#![allow(non_snake_case, non_camel_case_types)]
 
 // Sub-modules for each shimmed service and utility.
 mod ApiDeprecation;
@@ -56,7 +56,6 @@ mod Workspace;
 // Re-exporting primary shim classes for use in DI and other parts of the
 // application.
 // pub use self::Ui::ShimExtHostUiAndEnv; // Obsolete, not exported
-pub use self::UriTransformer::ShimUriTransformerService;
 pub use self::{
 	ApiDeprecation::ShimExtHostApiDeprecationService,
 	Authentication::ShimExtHostAuthentication,
@@ -98,6 +97,7 @@ pub use self::{
 	Task::ShimExtHostTaskService,
 	Telemetry::ShimExtHostTelemetry,
 	Terminal::ShimExtHostTerminalService,
+	UriTransformer::ShimUriTransformerService,
 	WindowPart::ShimExtHostWindowPartsService,
 	Workspace::ShimExtHostWorkspace,
 };

@@ -16,7 +16,7 @@ use url::Url; // Added for Url type
 use crate::{
 	Handlers::{self, ErrorUtils},
 	Rpc::{
-		Args::Workspace::{FindFilesArgument, ResolveFolderArgument as ResolveWorkspaceFolderArgument},
+		Argument::Workspace::{FindFilesArgument, ResolveFolderArgument as ResolveWorkspaceFolderArgument},
 		file_path_to_uri_components_dto,
 	},
 	Runtime::AppRuntime,

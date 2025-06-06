@@ -31,7 +31,7 @@ use crate::{
 impl CommandExecutor for MountainEnvironment {
 	async fn execute_command(&self, command_id:String, args_val:Value) -> Result<Value, CommonError> {
 		info!("[Env CmdExec] Execute: command_id='{}'", command_id);
-		trace!("[Env CmdExec] Args: {:?}", args_val);
+		trace!("[Env CmdExec] Argument: {:?}", args_val);
 
 		// `handle_execute_command` expects AppHandle, Window, Arc<AppRuntime>, and
 		// params. We have AppHandle from `self.app_handle`.

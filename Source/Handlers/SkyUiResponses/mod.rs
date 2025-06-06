@@ -1,4 +1,4 @@
-// File: Handlers/SkyUiResponses/Mod.rs
+// File: Handlers/SkyUiResponses/mod.rs
 // This module defines and exports handlers that process responses from the Sky
 // (frontend) for UI interactions that were initiated by the Mountain backend,
 // such as dialog or quick pick selections.

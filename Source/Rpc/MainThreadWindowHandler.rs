@@ -12,7 +12,7 @@ use url::Url;
 
 use crate::{
 	Handlers::ErrorUtils,
-	Rpc::Args::Window::{AsExternalUriArgument, OpenUriArgument},
+	Rpc::Argument::Window::{AsExternalUriArgument, OpenUriArgument},
 	Runtime::AppRuntime,
 };
 
@@ -28,9 +28,9 @@ impl MainThreadWindowHandler {
 	}
 
 	/// Sets focus to the main application window.
-	/// `_ArgumentsValue` is currently unused but kept for signature consistency
+	/// `_ArgumentValue` is currently unused but kept for signature consistency
 	/// if other window actions are added.
-	pub async fn FocusWindow(&self, _ArgumentsValue:Value) -> Result<Value, String> {
+	pub async fn FocusWindow(&self, _ArgumentValue:Value) -> Result<Value, String> {
 		info!("[Rpc MainThreadWindowHandler] FocusWindow (DTO flow)");
 
 		if let Some(MainWindow) = self.ApplicationHandle.get_webview_window("main") {

@@ -49,7 +49,7 @@ use tauri::{AppHandle, Runtime, Window};
 /// the proxied call itself beyond IPC errors. Its use is discouraged in favor
 /// of specific, well-defined RPC interfaces or effects.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app` - The Tauri `AppHandle` (currently unused).
 /// * `_window` - The Tauri `Window` (currently unused).
 /// * `args` - A `Vec<Value>` where the first element is expected to be the
@@ -68,7 +68,7 @@ pub async fn handle_ext_host_proxy_passthrough<R:Runtime>(
 	args:Vec<Value>,
 ) -> Result<Value, String> {
 	warn!(
-		"[Proxy Handler - DEPRECATED?] Received generic proxy call to Cocoon. Args: {:?}. This handler's usage should \
+		"[Proxy Handler - DEPRECATED?] Received generic proxy call to Cocoon. Argument: {:?}. This handler's usage should \
 		 be reviewed.",
 		args
 	);

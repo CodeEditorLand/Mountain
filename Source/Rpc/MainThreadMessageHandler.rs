@@ -25,15 +25,15 @@ impl MainThreadMessageHandler {
 	}
 
 	/// Shows a message to the user.
-	/// The `ArgumentsValue` is expected to be an array where:
+	/// The `ArgumentValue` is expected to be an array where:
 	/// - `args[0]` is the severity level (u64, mapped to MessageSeverity).
 	/// - `args[1]` is the message string.
 	/// - `args[2]` (optional) is a DTO for message options (e.g., buttons,
 	///   modality).
-	pub async fn ShowMessage(&self, ArgumentsValue:Value) -> Result<Value, String> {
-		let ParametersArray = ArgumentsValue
+	pub async fn ShowMessage(&self, ArgumentValue:Value) -> Result<Value, String> {
+		let ParametersArray = ArgumentValue
 			.as_array()
-			.ok_or_else(|| ErrorUtils::RpcParamErrorString("ShowMessage", "ArgumentsValue", "array", None))?;
+			.ok_or_else(|| ErrorUtils::RpcParamErrorString("ShowMessage", "ArgumentValue", "array", None))?;
 
 		let SeverityNumber = ParametersArray.get(0).and_then(Value::as_u64).ok_or_else(|| {
 			ErrorUtils::RpcParamErrorString("ShowMessage", "Severity (args[0])", "u64 number", Some(0))

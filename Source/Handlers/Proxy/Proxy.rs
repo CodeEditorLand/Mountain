@@ -16,16 +16,16 @@ use tauri::{AppHandle, Runtime, Window};
 pub async fn HandleExtensionHostProxyPassthrough<R:Runtime>(
 	_ApplicationHandle:AppHandle<R>,
 	_Window:Window<R>,
-	Arguments:Vec<Value>,
+	Argument:Vec<Value>,
 ) -> Result<Value, String> {
 	warn!(
-		"[ProxyHandler Deprecated] Generic proxy call intercepted. This handler should be replaced. Arguments: {:?}",
-		Arguments
+		"[ProxyHandler Deprecated] Generic proxy call intercepted. This handler should be replaced. Argument: {:?}",
+		Argument
 	);
 
 	let TargetProcessIdentifier = 1234; // Placeholder ID
 
-	let RequestPayload = Arguments.get(0).cloned().unwrap_or_else(|| {
+	let RequestPayload = Argument.get(0).cloned().unwrap_or_else(|| {
 		warn!("[ProxyHandler Deprecated] No payload provided for proxy call. Using null.");
 		json!(null)
 	});

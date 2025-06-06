@@ -41,7 +41,7 @@ const EXTENSION_ENABLEMENT_STATE_ENABLED_GLOBALLY:i32 = 1;
 /// This method is called by the extension enablement service shim in Cocoon to
 /// determine if an extension is enabled.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app` - The Tauri `AppHandle` (currently unused).
 /// * `params` - A `serde_json::Value` expected to be an object containing an
 ///   `extensionId` field (which itself is an object like `{value: "pub.name",

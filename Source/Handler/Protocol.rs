@@ -83,7 +83,7 @@ use crate::{handlers::error_utils, runtime::AppRuntime};
 /// appropriate `ActionEffect`, and spawns an async task to run the effect using
 /// the `AppRuntime`. It then returns an immediate HTTP response to the OS.
 ///
-/// # Arguments
+/// # Argument
 /// * `request` - A `&tauri::ipc::Request` containing the full URI string.
 /// * `app_handle` - The Tauri `AppHandle` for accessing `AppRuntime` and other
 ///   app resources.

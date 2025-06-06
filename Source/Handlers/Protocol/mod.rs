@@ -1,4 +1,4 @@
-// File: Handlers/Protocol/Mod.rs
+// File: Handlers/Protocol/mod.rs
 // This module defines and exports handlers for custom URI scheme requests,
 // such as `vscode://`, routing them to appropriate actions within the
 // application.

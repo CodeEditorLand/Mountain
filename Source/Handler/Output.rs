@@ -55,7 +55,7 @@ use crate::{
 /// Handles potential `PoisonError` by converting it to a formatted RPC error
 /// string.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 ///
 /// # Returns
@@ -82,7 +82,7 @@ fn get_output_channels_map_lock<'a, R:Runtime>(
 /// Creates a new output channel state entry in `AppState`. The channel ID is
 /// currently the same as its name.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[name: string, file?: URI | null,
 ///
@@ -162,7 +162,7 @@ pub async fn handle_register_output_channel<R:Runtime>(app:AppHandle<R>, args:Va
 /// Appends the given `value` string to the buffer of the specified output
 /// channel.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[channelId: string, value: string]`
 ///
@@ -244,7 +244,7 @@ pub async fn handle_append_to_output_channel<R:Runtime>(app:AppHandle<R>, args:V
 ///
 /// Clears the entire buffer content of the specified output channel.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[channelId: string]`
 ///
@@ -307,7 +307,7 @@ pub async fn handle_clear_output_channel<R:Runtime>(app:AppHandle<R>, args:Value
 /// Replaces the entire buffer content of the specified output channel with the
 /// new `value`.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[channelId: string, value: string]`
 ///
@@ -374,7 +374,7 @@ pub async fn handle_replace_output_channel_content<R:Runtime>(app:AppHandle<R>, 
 /// output channel. Mountain updates its internal state for the channel's
 /// visibility and emits an event.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[channelId: string, preserveFocus:
 ///   boolean]`
@@ -442,7 +442,7 @@ pub async fn handle_reveal_output_channel<R:Runtime>(app:AppHandle<R>, args:Valu
 /// Informs the frontend (Sky) that the view for the specified output channel
 /// can be closed (hidden). Mountain updates its internal visibility state.
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[channelId: string]`
 ///
@@ -505,7 +505,7 @@ pub async fn handle_close_output_channel_view<R:Runtime>(app:AppHandle<R>, args:
 /// Removes the output channel and its associated state entirely from the
 /// backend (`AppState`).
 ///
-/// # Arguments
+/// # Argument
 /// * `app` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array: `[channelId: string]`
 ///

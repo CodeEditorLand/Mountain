@@ -443,7 +443,7 @@ impl TerminalState {
 	pub fn new(id:u64, name:String, options_val:&Value, default_shell_path:String) -> Self {
 		let shell_path_opt_str = options_val.get("shellPath").and_then(Value::as_str);
 		let final_shell_path = shell_path_opt_str.map_or(default_shell_path, String::from);
-		let shell_args_val = options_val.get("shellArgs");
+		let shell_args_val = options_val.get("shellArgument");
 		let final_shell_args_vec = if let Some(s_arg_str) = shell_args_val.and_then(Value::as_str) {
 			s_arg_str.split_whitespace().map(String::from).collect()
 		} else if let Some(arr_val) = shell_args_val.and_then(Value::as_array) {

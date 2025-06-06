@@ -17,8 +17,11 @@ use Land_Common::{
 use async_trait::async_trait;
 use tokio::fs;
 
-use crate::environment::utils::{is_path_allowed_for_filesystem_access, map_io_error_to_common_error};
-use crate::environment::{MountainEnvironment, utils}; // Access to struct, helpers // Security check
+use crate::environment::{
+	MountainEnvironment,
+	utils,
+	utils::{is_path_allowed_for_filesystem_access, map_io_error_to_common_error},
+}; // Access to struct, helpers // Security check
 // use crate::app_state::AppState; // Not needed for this isolated
 // implementation
 

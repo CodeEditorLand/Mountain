@@ -1,11 +1,11 @@
-// File: Rpc/Mod.rs
+// File: Rpc/mod.rs
 // This module defines the RPC (Remote Procedure Call) interface and handlers
 // for communication, likely between the Mountain backend and the Cocoon
 // sidecar. With the introduction of gRPC, this module will evolve to define
 // gRPC service handlers and related DTOs (Data Transfer Objects).
 
 // Sub-module for argument DTOs used in RPC calls.
-pub mod Args;
+pub mod Argument;
 
 // Main RPC handler structs. These will likely become gRPC service
 // implementations.

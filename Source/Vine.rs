@@ -244,7 +244,7 @@ static NEXT_MOUNTAIN_REQUEST_ID:Lazy<AtomicU64> = Lazy::new(|| AtomicU64::new(1)
 /// at least its stdin/stdout handles), spawns dedicated reader and writer tasks
 /// for JSON line-based communication, and registers the sidecar for future use.
 ///
-/// # Arguments
+/// # Argument
 /// * `sidecar_id` - A unique string identifier for this sidecar instance.
 /// * `sidecar_child_process` - The `tokio::process::Child` representing the
 ///   spawned sidecar. Its stdin and stdout will be taken.
@@ -342,7 +342,7 @@ pub fn setup_sidecar_communication<R:Runtime>(
 /// This allows other parts of Mountain to find and use this sender to queue
 /// messages for that sidecar.
 ///
-/// # Arguments
+/// # Argument
 /// * `sidecar_id` - The unique ID of the sidecar.
 /// * `mpsc_sender_to_writer` - The `mpsc::Sender<String>` for the sidecar's
 ///   writer task.
@@ -366,7 +366,7 @@ fn register_sidecar_writer_channel_sender(sidecar_id:String, mpsc_sender_to_writ
 /// MPSC sender from the global map and attempts to cancel any pending requests
 /// that were targeting this sidecar.
 ///
-/// # Arguments
+/// # Argument
 /// * `sidecar_id_to_unregister` - The ID of the sidecar to unregister.
 pub fn unregister_sidecar_communication_channel(sidecar_id_to_unregister:&str) {
 	let mut writers_map_guard = ACTIVE_SIDECAR_WRITERS.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
@@ -439,7 +439,7 @@ pub fn unregister_sidecar_communication_channel(sidecar_id_to_unregister:&str) {
 /// Sends a request message to a specific sidecar and awaits its response or
 /// error.
 ///
-/// # Arguments
+/// # Argument
 /// * `target_sidecar_id` - The ID of the sidecar to send the request to.
 /// * `method_name` - The RPC method name for the request.
 /// * `params_val` - `serde_json::Value` containing parameters for the request.
@@ -558,7 +558,7 @@ pub async fn send_request_to_sidecar(
 
 /// Sends a fire-and-forget notification message to a specific sidecar.
 ///
-/// # Arguments
+/// # Argument
 /// * `target_sidecar_id` - The ID of the sidecar to send the notification to.
 /// * `method_name` - The RPC method name for the notification.
 /// * `params_val` - `serde_json::Value` containing parameters for the

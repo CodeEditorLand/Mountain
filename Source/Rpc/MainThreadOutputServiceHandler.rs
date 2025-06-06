@@ -10,7 +10,7 @@ use log::{debug, info, trace};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, State, Wry};
 
-use crate::Rpc::Args::Output::{
+use crate::Rpc::Argument::Output::{
 	AppendArgument as AppendToOutputChannelArgument,
 	OutputChannelIdentifierArgument, // For Clear, Close, Dispose
 	RegisterOutputChannelArgument,

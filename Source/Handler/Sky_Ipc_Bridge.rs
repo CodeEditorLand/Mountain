@@ -36,12 +36,12 @@ use tauri::{AppHandle, Runtime, Wry};
 
 use crate::{handlers::error_utils, vine}; // For sending messages and formatting errors // Wry is the default Tauri runtime
 
-/// Arguments for the IPC bridge commands from Sky.
+/// Argument for the IPC bridge commands from Sky.
 #[derive(Deserialize, Debug)]
-pub struct IpcBridgeArgs {
+pub struct IpcBridgeArgument {
 	channel:String, // The IPC channel name (e.g., "vscode:doSomething").
 	#[serde(default)] // args_list might be missing if no arguments are sent.
-	args_list: Vec<Value>, // Arguments for the IPC message.
+	args_list: Vec<Value>, // Argument for the IPC message.
 }
 
 /// Default sidecar ID for extension host operations.
@@ -55,14 +55,14 @@ const DEFAULT_INVOKE_TIMEOUT_MS:u64 = 30000; // 30 seconds
 #[tauri::command]
 pub async fn mountain_ipc_bridge_send(
 	_app_handle:AppHandle<Wry>, // Currently unused, but available for future routing logic
-	args:IpcBridgeArgs,
+	args:IpcBridgeArgument,
 ) -> Result<(), String> {
 	debug!(
-		"[SkyIpcBridge Send] Channel='{}', ArgsCount={}",
+		"[SkyIpcBridge Send] Channel='{}', ArgumentCount={}",
 		args.channel,
 		args.args_list.len()
 	);
-	trace!("[SkyIpcBridge Send] FullArgs: {:?}", args.args_list);
+	trace!("[SkyIpcBridge Send] FullArgument: {:?}", args.args_list);
 
 	if args.channel.starts_with("vscode:electron/") || args.channel.starts_with("vscode:native/") {
 		warn!(
@@ -111,15 +111,15 @@ pub async fn mountain_ipc_bridge_send(
 #[tauri::command]
 pub async fn mountain_ipc_bridge_invoke(
 	_app_handle:AppHandle<Wry>, // Currently unused, but available for future routing logic
-	args:IpcBridgeArgs,
+	args:IpcBridgeArgument,
 ) -> Result<Value, String> {
 	// Return type is `Value` because invoke can return anything JSON serializable.
 	debug!(
-		"[SkyIpcBridge Invoke] Channel='{}', ArgsCount={}",
+		"[SkyIpcBridge Invoke] Channel='{}', ArgumentCount={}",
 		args.channel,
 		args.args_list.len()
 	);
-	trace!("[SkyIpcBridge Invoke] FullArgs: {:?}", args.args_list);
+	trace!("[SkyIpcBridge Invoke] FullArgument: {:?}", args.args_list);
 
 	if args.channel.starts_with("vscode:electron/") || args.channel.starts_with("vscode:native/") {
 		warn!(

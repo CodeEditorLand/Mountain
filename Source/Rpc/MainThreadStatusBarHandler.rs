@@ -11,7 +11,7 @@ use tauri::{AppHandle, Manager, State, Wry};
 use crate::Runtime::AppRuntime; // May not be strictly needed if only emitting events
 use crate::{
 	Handlers::ErrorUtils,
-	Rpc::Args::StatusBar::{DisposeEntryArgument, SetEntryArgument},
+	Rpc::Argument::StatusBar::{DisposeEntryArgument, SetEntryArgument},
 };
 
 #[derive(Clone)]

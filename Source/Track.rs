@@ -251,7 +251,7 @@ pub async fn dispatch_command<R:TauriRuntime>(
 ) -> Result<Value, String> {
 	info!("[Track FrontendCmd Dispatch] Command: '{}'", command);
 
-	trace!("[Track FrontendCmd Dispatch] Args: {:?}", args);
+	trace!("[Track FrontendCmd Dispatch] Argument: {:?}", args);
 
 	match create_effect_for_frontend_command(&app_handle, &window, &command, args) {
 		Ok(effect_to_run) => {
@@ -781,7 +781,7 @@ fn create_effect_for_frontend_command<R:TauriRuntime>(
 	};
 
 	trace!(
-		"[Track CreateEffect Frontend] Command='{}', Args='{:?}'",
+		"[Track CreateEffect Frontend] Command='{}', Argument='{:?}'",
 		command_id_str, args_val
 	);
 
@@ -1155,7 +1155,7 @@ mod sky_dtos {
 }
 
 #[derive(Deserialize, Debug)]
-struct RequestHoverArgs {
+struct RequestHoverArgument {
 	uri_string:String,
 
 	line_number_0_based:u32,
@@ -1169,7 +1169,7 @@ pub async fn mountain_request_hover(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:RequestHoverArgs,
+	args:RequestHoverArgument,
 ) -> Result<Option<HoverResultDto>, String> {
 	info!("[Track Command] mountain_request_hover for URI: {}", args.uri_string);
 
@@ -1190,7 +1190,7 @@ pub async fn mountain_request_hover(
 }
 
 #[derive(Deserialize, Debug)]
-struct RequestCompletionsArgs {
+struct RequestCompletionsArgument {
 	uri_string:String,
 
 	line_number_0_based:u32,
@@ -1208,7 +1208,7 @@ pub async fn mountain_request_completions(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:RequestCompletionsArgs,
+	args:RequestCompletionsArgument,
 ) -> Result<Option<SuggestResultDto>, String> {
 	info!("[Track Command] mountain_request_completions for URI: {}", args.uri_string);
 
@@ -1235,7 +1235,7 @@ pub async fn mountain_request_completions(
 }
 
 #[derive(Deserialize, Debug)]
-struct ResolveCompletionItemArgsSky {
+struct ResolveCompletionItemArgumentSky {
 	list_cache_id:u32,
 
 	item_dto_to_resolve:Value, // ISuggestDataDto as Value
@@ -1246,7 +1246,7 @@ struct ResolveCompletionItemArgsSky {
 pub async fn mountain_resolve_completion_item(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ResolveCompletionItemArgsSky,
+	args:ResolveCompletionItemArgumentSky,
 ) -> Result<Option<Value>, String> {
 	info!(
 		"[Track Command] mountain_resolve_completion_item for ListCacheID: {}",
@@ -1271,7 +1271,7 @@ pub async fn mountain_resolve_completion_item(
 }
 
 #[derive(Deserialize, Debug)]
-struct RequestCodeActionsArgs {
+struct RequestCodeActionsArgument {
 	uri_string:String,
 
 	line_number_0_based_start:u32,
@@ -1293,7 +1293,7 @@ pub async fn mountain_request_code_actions(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:RequestCodeActionsArgs,
+	args:RequestCodeActionsArgument,
 ) -> Result<Option<CodeActionListDto>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_code_actions", "uri_string", &e.to_string(), None)
@@ -1328,7 +1328,7 @@ pub async fn mountain_request_code_actions(
 }
 
 #[derive(Deserialize, Debug)]
-struct ResolveCodeActionArgsSky {
+struct ResolveCodeActionArgumentSky {
 	list_cache_id:u32, // From item's cache_id[0]
 	// Assuming MountainEnvironment or the effect can find the sidecar_id from the list_cache_id or item data
 	action_dto_to_resolve:Value, // CodeActionDto as Value
@@ -1339,7 +1339,7 @@ struct ResolveCodeActionArgsSky {
 pub async fn mountain_resolve_code_action(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ResolveCodeActionArgsSky,
+	args:ResolveCodeActionArgumentSky,
 ) -> Result<Option<CodeActionDto>, String> {
 	// The effect now expects sidecar_id. For Sky-invoked resolve, sidecar_id might
 	// need to be looked up by list_cache_id or item. This lookup logic would be in
@@ -1361,7 +1361,7 @@ pub async fn mountain_resolve_code_action(
 }
 
 #[derive(Deserialize, Debug)]
-struct RequestCodeLensesArgs {
+struct RequestCodeLensesArgument {
 	uri_string:String,
 
 	cancellation_token_id_val:Option<Value>,
@@ -1373,7 +1373,7 @@ pub async fn mountain_request_code_lenses(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:RequestCodeLensesArgs,
+	args:RequestCodeLensesArgument,
 ) -> Result<Option<CodeLensListDto>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_code_lenses", "uri_string", &e.to_string(), None)
@@ -1390,7 +1390,7 @@ pub async fn mountain_request_code_lenses(
 }
 
 #[derive(Deserialize, Debug)]
-struct ResolveCodeLensArgsSky {
+struct ResolveCodeLensArgumentSky {
 	list_cache_id:u32,
 
 	// Assuming sidecar_id can be derived
@@ -1402,7 +1402,7 @@ struct ResolveCodeLensArgsSky {
 pub async fn mountain_resolve_code_lens(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ResolveCodeLensArgsSky,
+	args:ResolveCodeLensArgumentSky,
 ) -> Result<Option<CodeLensDto>, String> {
 	let sidecar_id_for_resolve = "cocoon-main".to_string(); // Placeholder
 	let effect = resolve_code_lens_effect(
@@ -1419,7 +1419,7 @@ pub async fn mountain_resolve_code_lens(
 }
 
 #[derive(Deserialize, Debug)]
-struct DocumentSymbolsArgs {
+struct DocumentSymbolsArgument {
 	uri_string:String,
 
 	cancellation_token_id_val:Option<Value>,
@@ -1431,7 +1431,7 @@ pub async fn mountain_request_document_symbols(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:DocumentSymbolsArgs,
+	args:DocumentSymbolsArgument,
 ) -> Result<Option<Vec<DocumentSymbolDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_document_symbols", "uri_string", &e.to_string(), None)
@@ -1448,7 +1448,7 @@ pub async fn mountain_request_document_symbols(
 }
 
 #[derive(Deserialize, Debug)]
-struct WorkspaceSymbolsArgs {
+struct WorkspaceSymbolsArgument {
 	query:String,
 
 	cancellation_token_id_val:Option<Value>,
@@ -1458,7 +1458,7 @@ struct WorkspaceSymbolsArgs {
 pub async fn mountain_request_workspace_symbols(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:WorkspaceSymbolsArgs,
+	args:WorkspaceSymbolsArgument,
 ) -> Result<Option<Vec<WorkspaceSymbolDto>>, String> {
 	let effect = provide_workspace_symbols_effect(args.query, args.cancellation_token_id_val);
 
@@ -1469,7 +1469,7 @@ pub async fn mountain_request_workspace_symbols(
 }
 
 #[derive(Deserialize, Debug)]
-struct SignatureHelpArgs {
+struct SignatureHelpArgument {
 	uri_string:String,
 
 	line_number_0_based:u32,
@@ -1487,7 +1487,7 @@ pub async fn mountain_request_signature_help(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:SignatureHelpArgs,
+	args:SignatureHelpArgument,
 ) -> Result<Option<SignatureHelpResultDto>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_signature_help", "uri_string", &e.to_string(), None)
@@ -1512,7 +1512,7 @@ pub async fn mountain_request_signature_help(
 }
 
 #[derive(Deserialize, Debug)]
-struct RequestReferencesArgs {
+struct RequestReferencesArgument {
 	uri_string:String,
 
 	line_number_0_based:u32,
@@ -1529,7 +1529,7 @@ pub async fn mountain_request_references(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:RequestReferencesArgs,
+	args:RequestReferencesArgument,
 ) -> Result<Option<Vec<LocationLinkDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_references", "uri_string", &e.to_string(), None)
@@ -1554,7 +1554,7 @@ pub async fn mountain_request_references(
 }
 
 #[derive(Deserialize, Debug)]
-struct PrepareRenameArgs {
+struct PrepareRenameArgument {
 	uri_string:String,
 
 	line_number_0_based:u32,
@@ -1570,7 +1570,7 @@ pub async fn mountain_prepare_rename(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:PrepareRenameArgs,
+	args:PrepareRenameArgument,
 ) -> Result<Option<Value>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_prepare_rename", "uri_string", &e.to_string(), None)
@@ -1589,7 +1589,7 @@ pub async fn mountain_prepare_rename(
 }
 
 #[derive(Deserialize, Debug)]
-struct ProvideRenameEditsArgs {
+struct ProvideRenameEditsArgument {
 	uri_string:String,
 
 	line_number_0_based:u32,
@@ -1607,7 +1607,7 @@ pub async fn mountain_provide_rename_edits(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ProvideRenameEditsArgs,
+	args:ProvideRenameEditsArgument,
 ) -> Result<Option<WorkspaceEditDto>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_provide_rename_edits", "uri_string", &e.to_string(), None)
@@ -1650,7 +1650,7 @@ pub async fn mountain_apply_workspace_edit(
 }
 
 #[derive(Deserialize, Debug)]
-struct FormattingArgs {
+struct FormattingArgument {
 	uri_string:String,
 
 	options_dto:FormattingOptionsDto,
@@ -1664,7 +1664,7 @@ pub async fn mountain_request_document_formatting(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:FormattingArgs,
+	args:FormattingArgument,
 ) -> Result<Option<Vec<TextEditDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_document_formatting", "uri_string", &e.to_string(), None)
@@ -1681,7 +1681,7 @@ pub async fn mountain_request_document_formatting(
 }
 
 #[derive(Deserialize, Debug)]
-struct PositionalArgs {
+struct PositionalArgument {
 	uri_string:String,
 
 	line:u32,      // Renamed from line_number_0_based for consistency with linked_editing
@@ -1695,7 +1695,7 @@ pub async fn mountain_request_document_highlights(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:PositionalArgs,
+	args:PositionalArgument,
 ) -> Result<Option<Vec<DocumentHighlightDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_document_highlights", "uri_string", &e.to_string(), None)
@@ -1714,7 +1714,7 @@ pub async fn mountain_request_document_highlights(
 }
 
 #[derive(Deserialize, Debug)]
-struct DocumentArgs {
+struct DocumentArgument {
 	uri_string:String,
 
 	token_val:Option<Value>,
@@ -1726,7 +1726,7 @@ pub async fn mountain_request_document_links(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:DocumentArgs,
+	args:DocumentArgument,
 ) -> Result<Option<LinksListDto>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_document_links", "uri_string", &e.to_string(), None)
@@ -1743,7 +1743,7 @@ pub async fn mountain_request_document_links(
 }
 
 #[derive(Deserialize, Debug)]
-struct ResolveLinkArgs {
+struct ResolveLinkArgument {
 	// list_cache_id: u32, // The effect takes list_cache_id, but VS Code resolveLink takes the link itself
 	link_dto_val:Value, // LinkDto as Value, which should contain data for resolve
 	token_val:Option<Value>,
@@ -1753,7 +1753,7 @@ struct ResolveLinkArgs {
 pub async fn mountain_resolve_document_link(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ResolveLinkArgs,
+	args:ResolveLinkArgument,
 ) -> Result<Option<LinkDto>, String> {
 	// The effect now takes link_to_resolve_dto (as Value) directly
 	let effect = resolve_document_link_effect(args.link_dto_val, args.token_val);
@@ -1765,7 +1765,7 @@ pub async fn mountain_resolve_document_link(
 }
 
 #[derive(Deserialize, Debug)]
-struct FoldingRangesArgs {
+struct FoldingRangesArgument {
 	uri_string:String,
 
 	context_dto:Value, // FoldingContext DTO as Value
@@ -1778,7 +1778,7 @@ pub async fn mountain_request_folding_ranges(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:FoldingRangesArgs,
+	args:FoldingRangesArgument,
 ) -> Result<Option<Vec<FoldingRangeDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_folding_ranges", "uri_string", &e.to_string(), None)
@@ -1795,7 +1795,7 @@ pub async fn mountain_request_folding_ranges(
 }
 
 #[derive(Deserialize, Debug)]
-struct SelectionRangesArgs {
+struct SelectionRangesArgument {
 	uri_string:String,
 
 	positions_dto:Vec<PositionDto>,
@@ -1809,7 +1809,7 @@ pub async fn mountain_request_selection_ranges(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:SelectionRangesArgs,
+	args:SelectionRangesArgument,
 ) -> Result<Option<Vec<SelectionRangeDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_selection_ranges", "uri_string", &e.to_string(), None)
@@ -1826,7 +1826,7 @@ pub async fn mountain_request_selection_ranges(
 }
 
 #[derive(Deserialize, Debug)]
-struct LinkedEditingArgs {
+struct LinkedEditingArgument {
 	uri_string:String,
 
 	line:u32,
@@ -1842,7 +1842,7 @@ pub async fn mountain_request_linked_editing_ranges(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:LinkedEditingArgs,
+	args:LinkedEditingArgument,
 ) -> Result<Option<LinkedEditingRangesDto>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string(
@@ -1866,7 +1866,7 @@ pub async fn mountain_request_linked_editing_ranges(
 }
 
 #[derive(Deserialize, Debug)]
-struct SemanticTokensArgs {
+struct SemanticTokensArgument {
 	uri_string:String,
 
 	previous_result_id:Option<String>,
@@ -1880,7 +1880,7 @@ pub async fn mountain_request_document_semantic_tokens(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:SemanticTokensArgs,
+	args:SemanticTokensArgument,
 ) -> Result<Option<SemanticTokensDto>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string(
@@ -1903,7 +1903,7 @@ pub async fn mountain_request_document_semantic_tokens(
 }
 
 #[derive(Deserialize, Debug)]
-struct SemanticTokensEditsArgs {
+struct SemanticTokensEditsArgument {
 	uri_string:String,
 
 	previous_result_id:String,
@@ -1917,7 +1917,7 @@ pub async fn mountain_request_document_semantic_tokens_edits(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:SemanticTokensEditsArgs,
+	args:SemanticTokensEditsArgument,
 ) -> Result<Option<Value>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string(
@@ -1942,7 +1942,7 @@ pub async fn mountain_request_document_semantic_tokens_edits(
 // TODO: Command for range semantic tokens
 
 #[derive(Deserialize, Debug)]
-struct PrepareHierarchyArgs {
+struct PrepareHierarchyArgument {
 	uri_string:String,
 
 	line:u32,
@@ -1958,7 +1958,7 @@ pub async fn mountain_prepare_call_hierarchy(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:PrepareHierarchyArgs,
+	args:PrepareHierarchyArgument,
 ) -> Result<Option<Vec<HierarchyItemDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_prepare_call_hierarchy", "uri_string", &e.to_string(), None)
@@ -1977,7 +1977,7 @@ pub async fn mountain_prepare_call_hierarchy(
 }
 
 #[derive(Deserialize, Debug)]
-struct ProvideHierarchyDetailArgs {
+struct ProvideHierarchyDetailArgument {
 	item_dto:HierarchyItemDto, // Contains _sessionId, _itemId from previous step
 	token_val:Option<Value>,
 }
@@ -1986,7 +1986,7 @@ struct ProvideHierarchyDetailArgs {
 pub async fn mountain_provide_call_hierarchy_incoming(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ProvideHierarchyDetailArgs,
+	args:ProvideHierarchyDetailArgument,
 ) -> Result<Option<Vec<IncomingCallDto>>, String> {
 	let effect = provide_call_hierarchy_incoming_calls_effect(args.item_dto, args.token_val);
 
@@ -2000,7 +2000,7 @@ pub async fn mountain_provide_call_hierarchy_incoming(
 pub async fn mountain_provide_call_hierarchy_outgoing(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ProvideHierarchyDetailArgs,
+	args:ProvideHierarchyDetailArgument,
 ) -> Result<Option<Vec<OutgoingCallDto>>, String> {
 	let effect = provide_call_hierarchy_outgoing_calls_effect(args.item_dto, args.token_val);
 
@@ -2016,7 +2016,7 @@ pub async fn mountain_prepare_type_hierarchy(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:PrepareHierarchyArgs,
+	args:PrepareHierarchyArgument,
 ) -> Result<Option<Vec<HierarchyItemDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_prepare_type_hierarchy", "uri_string", &e.to_string(), None)
@@ -2038,7 +2038,7 @@ pub async fn mountain_prepare_type_hierarchy(
 pub async fn mountain_provide_type_hierarchy_supertypes(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ProvideHierarchyDetailArgs,
+	args:ProvideHierarchyDetailArgument,
 ) -> Result<Option<Vec<HierarchyItemDto>>, String> {
 	let effect = provide_type_hierarchy_supertypes_effect(args.item_dto, args.token_val);
 
@@ -2052,7 +2052,7 @@ pub async fn mountain_provide_type_hierarchy_supertypes(
 pub async fn mountain_provide_type_hierarchy_subtypes(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ProvideHierarchyDetailArgs,
+	args:ProvideHierarchyDetailArgument,
 ) -> Result<Option<Vec<HierarchyItemDto>>, String> {
 	let effect = provide_type_hierarchy_subtypes_effect(args.item_dto, args.token_val);
 
@@ -2063,7 +2063,7 @@ pub async fn mountain_provide_type_hierarchy_subtypes(
 }
 
 #[derive(Deserialize, Debug)]
-struct RequestInlayHintsArgs {
+struct RequestInlayHintsArgument {
 	uri_string:String,
 
 	start_line:u32,
@@ -2083,7 +2083,7 @@ pub async fn mountain_request_inlay_hints(
 
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:RequestInlayHintsArgs,
+	args:RequestInlayHintsArgument,
 ) -> Result<Option<Vec<InlayHintDto>>, String> {
 	let target_uri = Url::parse(&args.uri_string).map_err(|e| {
 		error_utils::rpc_param_error_string("mountain_request_inlay_hints", "uri_string", &e.to_string(), None)
@@ -2110,7 +2110,7 @@ pub async fn mountain_request_inlay_hints(
 }
 
 #[derive(Deserialize, Debug)]
-struct ResolveInlayHintArgs {
+struct ResolveInlayHintArgument {
 	// provider_handle: u32, // This was present in one snippet but resolve_inlay_hint_effect takes hint_dto_val
 	// directly
 	hint_dto_to_resolve_val:Value, // InlayHintDto as Value
@@ -2121,7 +2121,7 @@ struct ResolveInlayHintArgs {
 pub async fn mountain_resolve_inlay_hint(
 	runtime:State<'_, Arc<AppRuntime>>,
 
-	args:ResolveInlayHintArgs,
+	args:ResolveInlayHintArgument,
 ) -> Result<Option<InlayHintDto>, String> {
 	let effect = resolve_inlay_hint_effect(args.hint_dto_to_resolve_val, args.token_val);
 

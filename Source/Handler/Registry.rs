@@ -101,7 +101,7 @@ impl<R:Runtime> HandlerRegistry<R> {
 	/// If a handler for the given method name already exists, it will be
 	/// overwritten.
 	///
-	/// # Arguments
+	/// # Argument
 	/// * `method`: The method name (string slice) to associate with the
 	///   handler.
 	/// * `handler`: The handler function conforming to
@@ -134,7 +134,7 @@ impl<R:Runtime> HandlerRegistry<R> {
 
 	/// Retrieves a handler function for a given method name.
 	///
-	/// # Arguments
+	/// # Argument
 	/// * `method`: The method name (string slice) whose handler is to be
 	///   retrieved.
 	///

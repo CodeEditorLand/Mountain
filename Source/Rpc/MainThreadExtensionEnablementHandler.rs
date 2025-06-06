@@ -14,7 +14,7 @@ use vs_platform_extensions_common_extensions::{
 
 use crate::Handlers::{self, ErrorUtils}; // Handlers::Enablement will contain the logic
 use crate::{
-	Rpc::Args::Enablement::{GetEnablementStateArgument, SetEnablementArgument},
+	Rpc::Argument::Enablement::{GetEnablementStateArgument, SetEnablementArgument},
 	Runtime::AppRuntime,
 };
 

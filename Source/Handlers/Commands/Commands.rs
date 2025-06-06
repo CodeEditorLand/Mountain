@@ -24,7 +24,7 @@ use crate::{
 
 // A prefix used to identify commands that are delegated to the Cocoon sidecar
 // for execution.
-const COCOON_DELEGATING_COMMAND_IDENTIFIER_PREFIX:&str = "_cocoon.executeContributedCommandWithCachedArgs";
+const COCOON_DELEGATING_COMMAND_IDENTIFIER_PREFIX:&str = "_cocoon.executeContributedCommandWithCachedArgument";
 
 /// Formats a Mutex lock error into a standardized RPC error string.
 fn FormatAppStateLockErrorForRpc<T>(PoisonError:std::sync::PoisonError<StdMutexGuard<'_, T>>, Context:&str) -> String {
@@ -139,20 +139,20 @@ pub async fn HandleExecuteCommand<R:TauriRuntime>(
 		.ok_or_else(|| ErrorUtils::RpcParamErrorString("HandleExecuteCommand", "params.id", "string", None))?
 		.to_string();
 
-	let OriginalArgumentsValue = Parameters.get("args").cloned().unwrap_or(Value::Null);
+	let OriginalArgumentValue = Parameters.get("args").cloned().unwrap_or(Value::Null);
 
 	info!(
-		"[CommandHandler] Execute: Identifier='{}', ArgumentsType='{:?}'",
+		"[CommandHandler] Execute: Identifier='{}', ArgumentType='{:?}'",
 		CommandIdentifierToExecute,
-		OriginalArgumentsValue.kind()
+		OriginalArgumentValue.kind()
 	);
 	trace!(
 		"[CommandHandler] Full arguments for {}: {:?}",
-		CommandIdentifierToExecute, OriginalArgumentsValue
+		CommandIdentifierToExecute, OriginalArgumentValue
 	);
 
 	if CommandIdentifierToExecute.starts_with(COCOON_DELEGATING_COMMAND_IDENTIFIER_PREFIX) {
-		let IdentifierArgumentArray = OriginalArgumentsValue.as_array().ok_or_else(|| {
+		let IdentifierArgumentArray = OriginalArgumentValue.as_array().ok_or_else(|| {
 			ErrorUtils::RpcErrorString(
 				format!(
 					"Delegating command '{}' expects arguments to be an array.",
@@ -200,14 +200,14 @@ pub async fn HandleExecuteCommand<R:TauriRuntime>(
 	match HandlerInformationOption {
 		Some(CommandHandler::Native(NativeHandlerFunction)) => {
 			debug!("[CommandHandler] Executing NATIVE command '{}'.", CommandIdentifierToExecute);
-			NativeHandlerFunction(ApplicationHandle, Window, Runtime.inner().clone(), OriginalArgumentsValue).await
+			NativeHandlerFunction(ApplicationHandle, Window, Runtime.inner().clone(), OriginalArgumentValue).await
 		},
 		Some(CommandHandler::Proxied { SidecarIdentifier, CommandIdentifier: ProxiedCommandIdentifier }) => {
 			debug!(
 				"[CommandHandler] Executing PROXIED command '{}' (as '{}') on sidecar '{}'.",
 				CommandIdentifierToExecute, ProxiedCommandIdentifier, SidecarIdentifier
 			);
-			let RpcParametersForCocoon = json!([ProxiedCommandIdentifier, OriginalArgumentsValue]);
+			let RpcParametersForCocoon = json!([ProxiedCommandIdentifier, OriginalArgumentValue]);
 			let RpcMethodOnCocoon =
 				format!("{}$executeContributedCommand", ProxyTarget::ExtHostCommands.GetTargetPrefix());
 
@@ -263,15 +263,14 @@ pub fn HandleNativeShowAbout<R:TauriRuntime>(
 	ApplicationHandle:AppHandle<R>,
 	_Window:Window<R>,
 	Runtime:Arc<AppRuntime>,
-	_Arguments:Value,
+	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
 		info!("[NativeCommand] Executing 'mountain.action.showAbout'");
 		let Version = ApplicationHandle.package_info().version.to_string();
 		let AppName = &ApplicationHandle.package_info().name;
 		let Message = format!("{} (Mountain)\nVersion: {}\n\nMore info at our website.", AppName, Version);
-		let Effect =
-			Common::UiEffect::ShowMessage(Common::UiEffect::MessageSeverity::Info, Message, Value::Null);
+		let Effect = Common::UiEffect::ShowMessage(Common::UiEffect::MessageSeverity::Info, Message, Value::Null);
 		Runtime
 			.Run(Effect)
 			.await

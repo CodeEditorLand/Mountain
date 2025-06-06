@@ -56,8 +56,8 @@
 //   `NEXT_CONN_ID` (atomic counter), using `once_cell::sync::Lazy` for lazy
 //   initialization and `Arc<StdMutex<_>>` for thread-safe access to
 //   `CONNECTIONS`.
-// - Emits Tauri events using `AppHandle::emit` to decouple message
-//   processing from direct calls into other Mountain systems.
+// - Emits Tauri events using `AppHandle::emit` to decouple message processing
+//   from direct calls into other Mountain systems.
 // - The `send_message_to_client_by_id` function provides an outbound API for
 //   other parts of Mountain.
 // - An example handler `handle_ws_send_command` demonstrates how a Tauri
@@ -162,7 +162,7 @@ static NEXT_CONNECTION_ID:Lazy<AtomicU32> = Lazy::new(|| AtomicU32::new(1));
 /// enters a loop to accept incoming TCP connections. Each accepted connection
 /// is handled in a new asynchronous task.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`, passed to connection handlers for
 ///   emitting events.
 ///
@@ -238,7 +238,7 @@ pub async fn start_websocket_server<R:Runtime>(app_handle:AppHandle<R>) -> Resul
 /// This function performs the WebSocket handshake, sets up reader and writer
 /// tasks for the connection, manages its lifecycle, and handles cleanup.
 ///
-/// # Arguments
+/// # Argument
 /// * `tcp_stream` - The `TcpStream` for the accepted connection.
 /// * `peer_addr` - The `SocketAddr` of the connected client.
 /// * `app_handle` - The Tauri `AppHandle` for emitting events.
@@ -579,7 +579,7 @@ async fn handle_websocket_connection<R:Runtime>(tcp_stream:TcpStream, peer_addr:
 /// Tauri command handlers, effects systems) that need to push data to a
 /// specific client connected via the native Mist WebSocket server.
 ///
-/// # Arguments
+/// # Argument
 /// * `connection_id` - The unique ID of the target WebSocket client connection.
 /// * `message_string` - The string message to send. This will be wrapped in a
 ///   `WsMessage::Text`.
@@ -630,7 +630,7 @@ pub async fn send_message_to_client_by_id(connection_id:u32, message_string:Stri
 /// This is an example of how other Mountain components might interact with
 /// Mist.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app_handle` - The Tauri `AppHandle` (unused in this direct example).
 /// * `_window` - The Tauri `Window` (unused).
 /// * `args` - Expected to be a `Vec<Value>`: `[connection_id: u32, payload:

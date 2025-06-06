@@ -12,7 +12,7 @@ use url::Url;
 
 use crate::{
 	Handlers::{self, Documents::ParseUriFromComponentsParameter, ErrorUtils},
-	Rpc::Args::Documents::{
+	Rpc::Argument::Documents::{
 		SaveAllArgument as SaveAllDocumentsArgument,
 		TryOpenArgument as TryOpenDocumentArgument,
 		TrySaveArgument as TrySaveDocumentArgument,

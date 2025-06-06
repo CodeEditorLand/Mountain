@@ -1,4 +1,4 @@
-// File: Handlers/ProcessManagement/Mod.rs
+// File: Handlers/ProcessManagement/mod.rs
 // This module defines and exports handlers for managing sidecar processes,
 // specifically the Cocoon extension host.
 

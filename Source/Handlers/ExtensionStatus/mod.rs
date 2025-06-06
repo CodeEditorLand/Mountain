@@ -1,4 +1,4 @@
-// File: Handlers/ExtensionStatus/Mod.rs
+// File: Handlers/ExtensionStatus/mod.rs
 // This module defines and exports handlers for processing extension lifecycle
 // status notifications from the sidecar, such as activation events and errors.
 

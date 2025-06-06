@@ -31,7 +31,7 @@ use serde_json::json;
 /// The resulting JSON string will have a "message" field and a "code" field.
 /// Errors created through this function are logged internally.
 ///
-/// # Arguments
+/// # Argument
 /// * `message` - The primary human-readable error message.
 /// * `code` - An optional error code string (e.g., "ENOENT", "EBADARG").
 ///   Defaults to "EUNKNOWN_RPC_ERROR" if `None`.
@@ -66,7 +66,7 @@ pub fn rpc_error_string(message:String, code:Option<&str>) -> String {
 /// the message format and uses the "EBADARG" error code. The error is also
 /// logged.
 ///
-/// # Arguments
+/// # Argument
 /// * `method_name` - The name of the method or command where the error
 ///   occurred.
 /// * `param_name` - The name of the problematic parameter.
@@ -103,7 +103,7 @@ pub fn rpc_param_error_string(method_name:&str, param_name:&str, expected_type:&
 /// user-facing format with appropriate error codes. The original `CommonError`
 /// is logged for detailed internal diagnostics.
 ///
-/// # Arguments
+/// # Argument
 /// * `e` - The `CommonError` instance to map.
 /// * `operation_context` - A string describing the operation during which the
 ///   error occurred (e.g., "native_save_all", "fs.readFile"). This is used for

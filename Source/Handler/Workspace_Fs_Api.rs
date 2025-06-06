@@ -100,7 +100,7 @@ use crate::{
 ///
 /// 'vscode-remote').
 ///
-/// # Arguments
+/// # Argument
 /// * `uri_val` - A `&serde_json::Value` expected to be an object representing
 ///   `UriComponents` (e.g., `{ "scheme": "file", "path": "/foo/bar.txt" }`).
 ///
@@ -171,7 +171,7 @@ fn path_from_uri_components_for_fs_api(uri_val:&Value) -> Result<PathBuf, String
 ///
 /// Corresponds to `vscode.workspace.fs.stat(uri)`.
 ///
-/// # Arguments
+/// # Argument
 /// * `runtime` - The `AppRuntime` to access the `FsReader`.
 /// * `params` - A `serde_json::Value` array: `[uri: UriComponents]`
 ///
@@ -232,7 +232,7 @@ pub async fn handle_workspace_fs_stat(
 ///
 /// Corresponds to `vscode.workspace.fs.readDirectory(uri)`.
 ///
-/// # Arguments
+/// # Argument
 /// * `runtime` - The `AppRuntime`.
 /// * `params` - `[uri: UriComponents]`
 ///
@@ -269,7 +269,7 @@ pub async fn handle_workspace_fs_read_directory(runtime:Arc<AppRuntime>, params:
 ///
 /// Corresponds to `vscode.workspace.fs.readFile(uri)`.
 ///
-/// # Arguments
+/// # Argument
 /// * `runtime` - The `AppRuntime`.
 /// * `params` - `[uri: UriComponents]`
 ///
@@ -313,7 +313,7 @@ pub async fn handle_workspace_fs_read_file(runtime:Arc<AppRuntime>, params:Value
 ///
 /// Corresponds to `vscode.workspace.fs.writeFile(uri, content, options)`.
 ///
-/// # Arguments
+/// # Argument
 /// * `runtime` - The `AppRuntime`.
 /// * `params` - `[uri: UriComponents, content_base64: string, options?: {
 ///
@@ -388,7 +388,7 @@ pub async fn handle_workspace_fs_write_file(runtime:Arc<AppRuntime>, params:Valu
 /// Corresponds to `vscode.workspace.fs.createDirectory(uri)`. This operation is
 /// recursive by VS Code API definition (creates parent directories if needed).
 ///
-/// # Arguments
+/// # Argument
 /// * `runtime` - The `AppRuntime`.
 /// * `params` - `[uri: UriComponents]`
 ///
@@ -437,7 +437,7 @@ pub async fn handle_workspace_fs_create_directory(runtime:Arc<AppRuntime>, param
 ///
 /// Corresponds to `vscode.workspace.fs.delete(uri, options)`.
 ///
-/// # Arguments
+/// # Argument
 /// * `runtime` - The `AppRuntime`.
 /// * `params` - `[uri: UriComponents, options?: { recursive: bool, useTrash:
 ///   bool }]`
@@ -506,7 +506,7 @@ pub async fn handle_workspace_fs_delete(runtime:Arc<AppRuntime>, params:Value) -
 ///
 /// Corresponds to `vscode.workspace.fs.rename(sourceUri, targetUri, options)`.
 ///
-/// # Arguments
+/// # Argument
 /// * `runtime` - The `AppRuntime`.
 /// * `params` - `[sourceUri: UriComponents, targetUri: UriComponents, options?:
 ///   { overwrite: bool }]`
@@ -562,7 +562,7 @@ pub async fn handle_workspace_fs_rename(runtime:Arc<AppRuntime>, params:Value) -
 ///
 /// Corresponds to `vscode.workspace.fs.copy(sourceUri, targetUri, options)`.
 ///
-/// # Arguments
+/// # Argument
 /// * `runtime` - The `AppRuntime`.
 /// * `params` - `[sourceUri: UriComponents, targetUri: UriComponents, options?:
 ///   { overwrite: bool }]`

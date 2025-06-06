@@ -1,4 +1,4 @@
-// File: Handlers/NativeFs/Mod.rs
+// File: Handlers/NativeFs/mod.rs
 // This module defines and exports handlers for native filesystem operations.
 // These are deprecated in favor of the `vscode.workspace.fs` API and its
 // corresponding environment provider implementation.

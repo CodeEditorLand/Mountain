@@ -12,7 +12,7 @@ use tauri::{AppHandle, Manager, State, Wry};
 
 use crate::{
 	Handlers::ErrorUtils,
-	Rpc::Args::Storage::{GetValueArgument, SetValueArgument},
+	Rpc::Argument::Storage::{GetValueArgument, SetValueArgument},
 	Runtime::AppRuntime,
 };
 

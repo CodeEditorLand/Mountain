@@ -40,11 +40,11 @@ where
 	RuntimeAccessType::EnvironmentType: Requires<Arc<dyn CommandExecutor>>, {
 	ActionEffect::New(Arc::new(move |Accessor:Arc<RuntimeAccessType>| {
 		let CommandIdentifierClone = CommandIdentifier.clone();
-		let ArgumentsClone = Argument.clone();
+		let ArgumentClone = Argument.clone();
 		Box::pin(async move {
 			let Environment = Accessor.GetEnvironment();
 			let Executor:Arc<dyn CommandExecutor> = Environment.require();
-			Executor.ExecuteCommand(CommandIdentifierClone, ArgumentsClone).await
+			Executor.ExecuteCommand(CommandIdentifierClone, ArgumentClone).await
 		})
 	}))
 }

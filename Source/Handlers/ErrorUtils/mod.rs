@@ -1,4 +1,4 @@
-// File: Handlers/ErrorUtils/Mod.rs
+// File: Handlers/ErrorUtils/mod.rs
 // This module provides utility functions for creating and formatting
 // standardized error responses, particularly for RPC communication.
 

@@ -11,7 +11,7 @@ use tauri::{AppHandle, Manager, State, Window, Wry};
 
 use crate::Handlers::{self, ErrorUtils}; // Assuming ErrorUtils will be PascalCased
 use crate::{
-	Rpc::Args::Commands::{ExecuteCommandArgument, RegisterArgument},
+	Rpc::Argument::Commands::{ExecuteCommandArgument, RegisterArgument},
 	Runtime::AppRuntime,
 };
 
@@ -31,12 +31,12 @@ impl MainThreadCommandsHandler {
 	/// proxied from a sidecar.
 	pub async fn ExecuteCommand(&self, Argument:ExecuteCommandArgument) -> Result<Value, String> {
 		let CommandIdentifier = Argument.CommandIdentifier;
-		let CommandArgumentsVec = Argument.CommandArguments;
+		let CommandArgumentVec = Argument.CommandArgument;
 
 		debug!(
 			"[Rpc MainThreadCommands] ExecuteCommand (DTO): CommandIdentifier='{}', ArgumentCount={}",
 			CommandIdentifier,
-			CommandArgumentsVec.len()
+			CommandArgumentVec.len()
 		);
 
 		let MainWindow = self.ApplicationHandle.get_webview_window("main").ok_or_else(|| {
@@ -50,7 +50,7 @@ impl MainThreadCommandsHandler {
 		// its `params` argument. We need to reconstruct this structure from our DTO.
 		let HandlerParams = json!({
 			"id": CommandIdentifier,
-			"args": CommandArgumentsVec
+			"args": CommandArgumentVec
 		});
 
 		// Assuming AppRuntime is managed correctly in Tauri's state
@@ -66,7 +66,7 @@ impl MainThreadCommandsHandler {
 	}
 
 	/// Retrieves a list of all available commands.
-	pub async fn GetCommands(&self, _Arguments:Value) -> Result<Value, String> {
+	pub async fn GetCommands(&self, _Argument:Value) -> Result<Value, String> {
 		debug!("[Rpc MainThreadCommands] GetCommands (DTO flow)");
 		// Assuming AppRuntime is managed correctly in Tauri's state
 		let RuntimeState:State<'_, Arc<AppRuntime>> = self.ApplicationHandle.state();

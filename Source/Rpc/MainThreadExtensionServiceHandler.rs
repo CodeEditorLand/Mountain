@@ -30,58 +30,58 @@ impl MainThreadExtensionServiceHandler {
 	// String> where Value is Null for success.
 
 	/// Handles the notification that an extension is about to be activated.
-	pub async fn OnWillActivateExtension(&self, ArgumentsArrayValue:Value) -> Result<Value, String> {
+	pub async fn OnWillActivateExtension(&self, ArgumentArrayValue:Value) -> Result<Value, String> {
 		warn!(
-			"[Rpc MainThreadExtensionService] OnWillActivateExtension (DTO via fallback). Args: {:?}",
-			ArgumentsArrayValue
+			"[Rpc MainThreadExtensionService] OnWillActivateExtension (DTO via fallback). Argument: {:?}",
+			ArgumentArrayValue
 		);
 		Handlers::ExtensionStatus::HandleExtensionHostStatusNotification(
 			self.ApplicationHandle.clone(),
 			"$onWillActivateExtension", // Method name used by the handler
-			ArgumentsArrayValue,
+			ArgumentArrayValue,
 		)
 		.await
 	}
 
 	/// Handles the notification that an extension has successfully activated.
-	pub async fn OnDidActivateExtension(&self, ArgumentsArrayValue:Value) -> Result<Value, String> {
+	pub async fn OnDidActivateExtension(&self, ArgumentArrayValue:Value) -> Result<Value, String> {
 		warn!(
-			"[Rpc MainThreadExtensionService] OnDidActivateExtension (DTO via fallback). Args: {:?}",
-			ArgumentsArrayValue
+			"[Rpc MainThreadExtensionService] OnDidActivateExtension (DTO via fallback). Argument: {:?}",
+			ArgumentArrayValue
 		);
 		Handlers::ExtensionStatus::HandleExtensionHostStatusNotification(
 			self.ApplicationHandle.clone(),
 			"$onDidActivateExtension", // Method name used by the handler
-			ArgumentsArrayValue,
+			ArgumentArrayValue,
 		)
 		.await
 	}
 
 	/// Handles the notification that an error occurred during extension
 	/// activation.
-	pub async fn OnExtensionActivationError(&self, ArgumentsArrayValue:Value) -> Result<Value, String> {
+	pub async fn OnExtensionActivationError(&self, ArgumentArrayValue:Value) -> Result<Value, String> {
 		warn!(
-			"[Rpc MainThreadExtensionService] OnExtensionActivationError (DTO via fallback). Args: {:?}",
-			ArgumentsArrayValue
+			"[Rpc MainThreadExtensionService] OnExtensionActivationError (DTO via fallback). Argument: {:?}",
+			ArgumentArrayValue
 		);
 		Handlers::ExtensionStatus::HandleExtensionHostStatusNotification(
 			self.ApplicationHandle.clone(),
 			"$onExtensionActivationError", // Method name used by the handler
-			ArgumentsArrayValue,
+			ArgumentArrayValue,
 		)
 		.await
 	}
 
 	/// Handles the notification of a runtime error within an extension.
-	pub async fn OnExtensionRuntimeError(&self, ArgumentsArrayValue:Value) -> Result<Value, String> {
+	pub async fn OnExtensionRuntimeError(&self, ArgumentArrayValue:Value) -> Result<Value, String> {
 		warn!(
-			"[Rpc MainThreadExtensionService] OnExtensionRuntimeError (DTO via fallback). Args: {:?}",
-			ArgumentsArrayValue
+			"[Rpc MainThreadExtensionService] OnExtensionRuntimeError (DTO via fallback). Argument: {:?}",
+			ArgumentArrayValue
 		);
 		Handlers::ExtensionStatus::HandleExtensionHostStatusNotification(
 			self.ApplicationHandle.clone(),
 			"$onExtensionRuntimeError", // Method name used by the handler
-			ArgumentsArrayValue,
+			ArgumentArrayValue,
 		)
 		.await
 	}

@@ -15,7 +15,7 @@ use tauri::{AppHandle, Manager, State, Wry};
 use crate::Runtime::AppRuntime; // Kept for consistency if other methods need it
 use crate::{
 	Handlers::{self, ErrorUtils, Terminal as TerminalHandlerLogic},
-	Rpc::Args::Terminal::{
+	Rpc::Argument::Terminal::{
 		CreateTerminalArgument,
 		IdArgument as TerminalIdentifierArgument,
 		SendTextArgument as SendTextToTerminalArgument,

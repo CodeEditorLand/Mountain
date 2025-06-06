@@ -24,18 +24,18 @@ impl MainThreadLogHandler {
 	}
 
 	/// Processes a log message from the sidecar.
-	/// The `ArgumentsValue` is expected to be an array where:
+	/// The `ArgumentValue` is expected to be an array where:
 	/// - `args[0]` is the log level (u64, mapped to LevelFilter).
 	/// - `args[1]` is an array of message parts to be joined, or a single
 	///   message string.
-	pub async fn Log(&self, ArgumentsValue:Value) -> Result<Value, String> {
-		let ArgumentsArray = ArgumentsValue
+	pub async fn Log(&self, ArgumentValue:Value) -> Result<Value, String> {
+		let ArgumentArray = ArgumentValue
 			.as_array()
-			.ok_or_else(|| ErrorUtils::RpcParamErrorString("Log", "ArgumentsValue", "array", None))?;
+			.ok_or_else(|| ErrorUtils::RpcParamErrorString("Log", "ArgumentValue", "array", None))?;
 
-		let LogLevelNumber = ArgumentsArray.get(0).and_then(Value::as_u64).unwrap_or(2); // Default to Info (VS Code level 2)
+		let LogLevelNumber = ArgumentArray.get(0).and_then(Value::as_u64).unwrap_or(2); // Default to Info (VS Code level 2)
 
-		let MessagePartsValue = ArgumentsArray.get(1).cloned().unwrap_or_else(|| json!([]));
+		let MessagePartsValue = ArgumentArray.get(1).cloned().unwrap_or_else(|| json!([]));
 
 		let MessageString = if let Some(PartsArray) = MessagePartsValue.as_array() {
 			PartsArray

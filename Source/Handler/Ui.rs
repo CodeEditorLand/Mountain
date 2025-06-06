@@ -64,7 +64,7 @@ use tauri::{Runtime, Window};
 /// from the dialog. For more complex dialogs, the `UiProvider` effect system
 /// should be used.
 ///
-/// # Arguments
+/// # Argument
 /// * `window` - The Tauri `Window` context in which to display the dialog.
 /// * `params` - A `serde_json::Value` object expected to contain:
 ///   - `severity`: Optional `u64` (0=Error, 1=Warning, 2=Info - VS Code like).

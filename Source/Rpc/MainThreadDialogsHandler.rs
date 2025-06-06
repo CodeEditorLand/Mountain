@@ -27,12 +27,12 @@ impl MainThreadDialogsHandler {
 	}
 
 	/// Shows a native file open dialog.
-	/// `ArgumentsValue` is expected to be an array where `args[0]` (optional)
+	/// `ArgumentValue` is expected to be an array where `args[0]` (optional)
 	/// is the OpenDialogOptions DTO.
-	pub async fn ShowOpenDialog(&self, ArgumentsValue:Value) -> Result<Value, String> {
-		let ParametersArray = ArgumentsValue
+	pub async fn ShowOpenDialog(&self, ArgumentValue:Value) -> Result<Value, String> {
+		let ParametersArray = ArgumentValue
 			.as_array()
-			.ok_or_else(|| ErrorUtils::RpcParamErrorString("ShowOpenDialog", "ArgumentsValue", "array", None))?;
+			.ok_or_else(|| ErrorUtils::RpcParamErrorString("ShowOpenDialog", "ArgumentValue", "array", None))?;
 
 		let OptionsDtoValueOption = ParametersArray.get(0).cloned();
 		info!(
@@ -67,12 +67,12 @@ impl MainThreadDialogsHandler {
 	}
 
 	/// Shows a native file save dialog.
-	/// `ArgumentsValue` is expected to be an array where `args[0]` (optional)
+	/// `ArgumentValue` is expected to be an array where `args[0]` (optional)
 	/// is the SaveDialogOptions DTO.
-	pub async fn ShowSaveDialog(&self, ArgumentsValue:Value) -> Result<Value, String> {
-		let ParametersArray = ArgumentsValue
+	pub async fn ShowSaveDialog(&self, ArgumentValue:Value) -> Result<Value, String> {
+		let ParametersArray = ArgumentValue
 			.as_array()
-			.ok_or_else(|| ErrorUtils::RpcParamErrorString("ShowSaveDialog", "ArgumentsValue", "array", None))?;
+			.ok_or_else(|| ErrorUtils::RpcParamErrorString("ShowSaveDialog", "ArgumentValue", "array", None))?;
 
 		let OptionsDtoValueOption = ParametersArray.get(0).cloned();
 		info!(

@@ -47,7 +47,7 @@ use crate::{
 /// `external` field with the full URI string, or fallback to a `path` field
 /// which might be an absolute file path or a generic URI string.
 ///
-/// # Arguments
+/// # Argument
 /// * `param_val` - The `serde_json::Value` containing URI components.
 /// * `method_name` - Name of the calling method, for error reporting.
 /// * `arg_name` - Name of the argument being parsed, for error reporting.
@@ -124,7 +124,7 @@ fn parse_uri_from_components_param(
 /// If only CR is found, it's normalized to LF for internal consistency, similar
 /// to how VS Code models often handle EOLs on load.
 ///
-/// # Arguments
+/// # Argument
 /// * `text` - The input string to process.
 ///
 /// # Returns
@@ -195,7 +195,7 @@ pub fn analyze_text_lines_and_eol(text:&str) -> (Vec<String>, String) {
 /// This function orchestrates opening a document by running the
 /// `documents_effects::try_open` effect.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array. The first element is expected to be
 ///   the `UriComponents` of the document to open.
@@ -272,7 +272,7 @@ pub async fn handle_try_open_document<R:Runtime>(app_handle:AppHandle<R>, args:V
 /// `documents_effects::try_open` effect with appropriate parameters (e.g., null
 /// URI, optional language and content).
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `args` - A `serde_json::Value` array. The first element (optional) is an
 ///   options object which may contain `language` and `content` fields.
@@ -281,7 +281,7 @@ pub async fn handle_try_open_document<R:Runtime>(app_handle:AppHandle<R>, args:V
 /// * `Ok(Value)` containing the `UriComponents` of the created document.
 /// * `Err(String)` with a JSON-RPC error if creation fails.
 pub async fn handle_try_create_document<R:Runtime>(app_handle:AppHandle<R>, args:Value) -> Result<Value, String> {
-	// Options are optional, clone if present. Args is an array: [options?]
+	// Options are optional, clone if present. Argument is an array: [options?]
 	let options_val = args.get(0).cloned();
 
 	info!("[DocHandler] RPC $tryCreateDocument: Options='{:?}'", options_val);
@@ -348,7 +348,7 @@ pub async fn handle_try_create_document<R:Runtime>(app_handle:AppHandle<R>, args
 /// Saves an existing document by running the `documents_effects::try_save`
 /// effect.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `uri_components_val` - A `serde_json::Value` representing the
 ///   `UriComponents` of the document to save. (Note: VS Code protocol usually
@@ -408,7 +408,7 @@ pub async fn handle_try_save_document<R:Runtime>(
 /// Saves a document to a new location (or prompts the user for one) by running
 /// the `documents_effects::try_save_as` effect.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `uri_components_val` - `UriComponents` of the original document. (Note: VS
 ///   Code protocol usually sends this as the first element of an array).
@@ -485,7 +485,7 @@ pub async fn handle_try_save_document_as<R:Runtime>(
 /// Saves all dirty documents by running the `documents_effects::save_all`
 /// effect.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `include_untitled` - Boolean indicating whether to attempt saving untitled
 ///   (in-memory) documents, which would typically prompt the user for a file
@@ -533,7 +533,7 @@ pub async fn handle_save_all<R:Runtime>(
 
 /// Notifies Cocoon that a new document model has been added/opened.
 ///
-/// # Arguments
+/// # Argument
 /// * `app_handle` - The Tauri `AppHandle`.
 /// * `doc_state` - The `DocumentState` of the newly added document.
 pub async fn notify_model_added<R:Runtime>(_:AppHandle<R>, doc_state:&DocumentState) {
@@ -583,7 +583,7 @@ pub async fn notify_model_added<R:Runtime>(_:AppHandle<R>, doc_state:&DocumentSt
 
 /// Notifies Cocoon that a document's content or state has changed.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app_handle` - The Tauri `AppHandle` (currently unused if vine is called
 ///   directly).
 /// * `doc_uri` - URI of the changed document.
@@ -671,7 +671,7 @@ pub async fn notify_model_changed<R:Runtime>(
 
 /// Notifies Cocoon that a document has been saved.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app_handle` - The Tauri `AppHandle` (unused).
 /// * `uri` - URI of the saved document.
 pub async fn notify_model_saved<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url) {
@@ -716,7 +716,7 @@ pub async fn notify_model_saved<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url) {
 
 /// Notifies Cocoon that a document's dirty state has changed.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app_handle` - The Tauri `AppHandle` (unused).
 /// * `uri` - URI of the document.
 /// * `is_dirty` - The new dirty state.
@@ -752,7 +752,7 @@ pub async fn notify_dirty_state_changed<R:Runtime>(_app_handle:AppHandle<R>, uri
 
 /// Notifies Cocoon that a document model has been removed/closed.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app_handle` - The Tauri `AppHandle` (unused).
 /// * `uri` - URI of the removed document.
 pub async fn notify_model_removed<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url) {
@@ -787,7 +787,7 @@ pub async fn notify_model_removed<R:Runtime>(_app_handle:AppHandle<R>, uri:&Url)
 
 /// Notifies Cocoon that a document's language ID has changed.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app_handle` - The Tauri `AppHandle` (unused).
 /// * `uri` - URI of the document.
 /// * `language_id` - The new language ID.
@@ -827,7 +827,7 @@ pub async fn notify_language_changed<R:Runtime>(_app_handle:AppHandle<R>, uri:&U
 
 /// Notifies Cocoon that a document's encoding has changed.
 ///
-/// # Arguments
+/// # Argument
 /// * `_app_handle` - The Tauri `AppHandle` (unused).
 /// * `uri` - URI of the document.
 /// * `encoding` - The new encoding string (e.g., "utf8", "utf16le").
