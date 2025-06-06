@@ -3,7 +3,7 @@
 // Shims provide implementations for VS Code's internal `ExtHost` services,
 // adapting them to the Mountain/Cocoon architecture.
 
-#![allow(non_snake_case, non_camel_case_types)] // STRATOS LINT SUPPRESSION
+#![allow(non_snake_case, non_camel_case_types)] 
 
 // Sub-modules for each shimmed service and utility.
 mod ApiDeprecation;
