@@ -7,6 +7,8 @@
 </h3> </td>
 </tr></table>
 
+---
+
 # **Mountain** ⛰️ The Bedrock of Land: Native Backend & Service Host
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](https://github.com/CodeEditorLand/Mountain/blob/Current/LICENSE)
@@ -32,6 +34,8 @@ frontend and the `Cocoon` extension host.
 4.  **Power the UI:** Serve as the backend for the `Wind` UI layer, responding
     to requests via Tauri commands and pushing state updates via Tauri events.
 
+---
+
 ## Key Features 🔐
 
 - **Declarative Effect System:** Built on a custom Rust `ActionEffect` system
@@ -51,6 +55,8 @@ frontend and the `Cocoon` extension host.
 - **Robust Command Dispatching:** A central `Track` dispatcher intelligently
   routes all incoming requests from the UI (`Wind`) and extensions (`Cocoon`) to
   the appropriate native handlers or effects.
+
+---
 
 ## Core Architecture Principles 🏗️
 
