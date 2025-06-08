@@ -148,7 +148,7 @@ Mountain/
 
 ---
 
-## Development Setup
+## Development Setup 🛠️
 
 `Mountain` is a Rust crate and a core component of the main `Land` repository.
 It is not intended to be built or run standalone. Please follow the instructions
@@ -184,7 +184,7 @@ of changes specific to **Mountain**.
 
 ---
 
-## Funding & Acknowledgements 🙏
+## Funding & Acknowledgements 🙏🏻
 
 **Mountain** is a core element of the **Land** ecosystem. This project is funded
 through [NGI0 Commons Fund](https://nlnet.nl/commonsfund), a fund established by

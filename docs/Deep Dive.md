@@ -7,12 +7,16 @@
 </h3> </td>
 </tr></table>
 
+---
+
 # **Mountain** ⛰️ Deep Dive & Architecture
 
 This document provides a detailed technical overview of the **Mountain** project
 for developers. It explores the internal architecture, the flow of control from
 request to execution, and the design patterns used to create a robust,
 effects-based native backend for the Land Code Editor.
+
+---
 
 ## Core Architecture Principles
 
