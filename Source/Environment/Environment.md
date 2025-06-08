@@ -1,5 +1,5 @@
 ```sh
-src/
+Source/
 ├── environment/
 │   ├── commands_provider.rs        // CommandExecutor impl
 │   ├── config_provider.rs          // ConfigProvider, ConfigInspector impls

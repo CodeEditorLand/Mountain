@@ -127,7 +127,7 @@ the architectural patterns defined in `Common`.
 
 ```
 Mountain/
-├── src/
+├── Source/
 │   ├── main.rs                      # Tauri application entry point and setup.
 │   ├── app_state/                   # The central, thread-safe state store for the application.
 │   ├── environment/                 # Concrete implementations of the `Common` provider traits.
