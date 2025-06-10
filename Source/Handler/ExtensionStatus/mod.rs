@@ -1,11 +1,8 @@
-
-
-/**
- * @module extension_status (Handlers)
- * @description This module contains the logic for handling extension lifecycle
- * status notifications sent from the Cocoon sidecar back to the Mountain host.
- * This includes events like activation success or failure.
- */
+// @module extension_status (Handlers)
+// @description This module contains the logic for handling extension lifecycle
+// status notifications sent from the Cocoon sidecar back to the Mountain host.
+// This includes events like activation success or failure.
+//
 
 #![allow(non_snake_case, non_camel_case_types)]
 

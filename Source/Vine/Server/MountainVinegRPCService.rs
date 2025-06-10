@@ -2,30 +2,30 @@ use std::sync::Arc;
 
 use log::{error, info, trace};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Wry};
+use tauri::{ApplicationHandle, Manager, Wry};
 use tonic::{Request, Response, Status};
 
-/// @module MountainVineGrpcService
-/// @description Defines the gRPC service implementation for Mountain. This
-/// struct handles incoming RPC calls from the Cocoon sidecar, dispatches them
-/// to the appropriate handlers via the `track` module, and returns the results.
-use crate::{handlers::extension_status, runtime::AppRuntime::AppRuntime, track, vine::generated::*};
+// @module MountainVinegRPCService
+// @description Defines the gRPC service implementation for Mountain. This
+// struct handles incoming RPC calls from the Cocoon sidecar, dispatches them
+// to the appropriate Handler via the `track` module, and returns the results.
+use crate::{Handler::extension_status, RunTime::ApplicationRunTime::ApplicationRunTime, track, vine::generated::*};
 
-pub struct MountainVineGrpcService {
-	ApplicationHandle:AppHandle<Wry>,
-	Runtime:Arc<AppRuntime>,
+pub struct MountainVinegRPCService {
+	ApplicationHandle:ApplicationHandle<Wry>,
+	RunTime:Arc<ApplicationRunTime>,
 }
 
-impl MountainVineGrpcService {
-	pub fn New(ApplicationHandle:AppHandle<Wry>, Runtime:Arc<AppRuntime>) -> Self {
-		info!("[MountainVineGrpcService] New instance created.");
-		Self { ApplicationHandle, Runtime }
+impl MountainVinegRPCService {
+	pub fn New(ApplicationHandle:ApplicationHandle<Wry>, RunTime:Arc<ApplicationRunTime>) -> Self {
+		info!("[MountainVinegRPCService] New instance created.");
+		Self { ApplicationHandle, RunTime }
 	}
 }
 
 #[tonic::async_trait]
-impl MountainService for MountainVineGrpcService {
-	/// Handles generic request-response RPCs from Cocoon.
+impl MountainService for MountainVinegRPCService {
+	// Handles generic request-response RPCs from Cocoon.
 	async fn ProcessCocoonRequest(&self, Request:Request<GenericRequest>) -> Result<Response<GenericResponse>, Status> {
 		let RequestData = Request.into_inner();
 		let MethodName = RequestData.method;
@@ -48,7 +48,7 @@ impl MountainService for MountainVineGrpcService {
 
 		let DispatchResult = track::DispatchSidecarRequest(
 			self.ApplicationHandle.clone(),
-			self.Runtime.clone(),
+			self.RunTime.clone(),
 			"cocoon-main".to_string(), // In the future, this could come from metadata.
 			MethodName.clone(),
 			ParametersValue,
@@ -69,7 +69,7 @@ impl MountainService for MountainVineGrpcService {
 		}
 	}
 
-	/// Handles generic fire-and-forget notifications from Cocoon.
+	// Handles generic fire-and-forget notifications from Cocoon.
 	async fn SendCocoonNotification(&self, Request:Request<GenericNotification>) -> Result<Response<Empty>, Status> {
 		let NotificationData = Request.into_inner();
 		let MethodName = NotificationData.method;

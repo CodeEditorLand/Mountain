@@ -8,12 +8,12 @@ use Common::{
 use async_trait::async_trait;
 use serde_json::Value;
 
-/// @module WebviewProvider (Environment)
-/// @description Implements the `WebviewProvider` trait for
-/// `MountainEnvironment` by delegating to the logic handlers in
-/// `handlers::webview`.
+// @module WebviewProvider (Environment)
+// @description Implements the `WebviewProvider` trait for
+// `MountainEnvironment` by delegating to the logic Handler in
+// `Handler::webview`.
 use super::MountainEnvironment;
-use crate::handlers::webview as WebviewHandler;
+use crate::Handler::webview as WebviewHandler;
 
 #[async_trait]
 impl WebviewProvider for MountainEnvironment {
@@ -28,7 +28,7 @@ impl WebviewProvider for MountainEnvironment {
 		SerializeBuffers:bool,
 	) -> Result<String, CommonError> {
 		WebviewHandler::CreateWebviewPanelLogic(
-			&self.AppHandle,
+			&self.ApplicationHandle,
 			ExtensionData,
 			ViewType,
 			Title,
@@ -41,11 +41,11 @@ impl WebviewProvider for MountainEnvironment {
 	}
 
 	async fn DisposeWebview(&self, Handle:String) -> Result<(), CommonError> {
-		WebviewHandler::DisposeWebviewLogic(&self.AppHandle, Handle).await
+		WebviewHandler::DisposeWebviewLogic(&self.ApplicationHandle, Handle).await
 	}
 
 	async fn RevealWebviewPanel(&self, Handle:String, ShowOptions:WebviewShowOptionsDto) -> Result<(), CommonError> {
-		WebviewHandler::RevealWebviewPanelLogic(&self.AppHandle, Handle, ShowOptions).await
+		WebviewHandler::RevealWebviewPanelLogic(&self.ApplicationHandle, Handle, ShowOptions).await
 	}
 
 	async fn SetWebviewTitle(&self, Handle:String, Title:String) -> Result<(), CommonError> {
@@ -60,11 +60,11 @@ impl WebviewProvider for MountainEnvironment {
 	}
 
 	async fn SetWebviewHtml(&self, Handle:String, Html:String) -> Result<(), CommonError> {
-		WebviewHandler::SetWebviewHtmlLogic(&self.AppHandle, Handle, Html).await
+		WebviewHandler::SetWebviewHtmlLogic(&self.ApplicationHandle, Handle, Html).await
 	}
 
 	async fn PostMessageToWebview(&self, Handle:String, Message:Value) -> Result<bool, CommonError> {
-		WebviewHandler::PostMessageToWebviewLogic(&self.AppHandle, Handle, Message).await
+		WebviewHandler::PostMessageToWebviewLogic(&self.ApplicationHandle, Handle, Message).await
 	}
 }
 

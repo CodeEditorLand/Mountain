@@ -1,5 +1,5 @@
-//! Defines the concrete `MountainEnvironment` struct, the central context and
-//! dependency injection container for the `Mountain` application.
+// Defines the concrete `MountainEnvironment` struct, the central context and
+// dependency injection container for the `Mountain` application.
 
 use std::sync::Arc;
 
@@ -10,7 +10,7 @@ use Common::{
 	diagnostic::DiagnosticsProvider,
 	document::DocumentsProvider,
 	environment::{Environment, Requires},
-	fs::{FsReader, FsWriter},
+	fs::{FileSystemReader, FileSystemWriter},
 	ipc::IpcProvider,
 	language_feature::LanguageFeatureProviderRegistry,
 	output::OutputProvider,
@@ -27,7 +27,7 @@ use Common::{
 	workspace::WorkspaceProvider,
 };
 use log::info;
-use tauri::{AppHandle, Wry};
+use tauri::{ApplicationHandle, Wry};
 
 use crate::environment::{
 	CommandProvider::CommandEnvironment,
@@ -35,7 +35,7 @@ use crate::environment::{
 	CustomEditorProvider::CustomEditorEnvironment,
 	DiagnosticProvider::DiagnosticEnvironment,
 	DocumentProvider::DocumentEnvironment,
-	FsProvider::FsEnvironment,
+	FileSystemProvider::FileSystemEnvironment,
 	IpcProvider::IpcEnvironment,
 	LanguageFeatureProvider::LanguageFeatureEnvironment,
 	OutputProvider::OutputEnvironment,
@@ -52,13 +52,13 @@ use crate::environment::{
 	WorkspaceProvider::WorkspaceEnvironment,
 };
 
-/// The concrete environment for the Mountain application.
-///
-/// This struct acts as a top-level container for all domain-specific
-/// sub-environments. It implements the `Requires<T>` trait for every service
-/// capability by delegating the request to the appropriate sub-environment.
-/// This pattern promotes separation of concerns, keeping the implementation
-/// details of each service domain isolated.
+// The concrete environment for the Mountain application.
+//
+// This struct acts as a top-level container for all domain-specific
+// sub-environments. It implements the `Requires<T>` trait for every service
+// capability by delegating the request to the appropriate sub-environment.
+// This pattern promotes separation of concerns, keeping the implementation
+// details of each service domain isolated.
 #[derive(Clone)]
 pub struct MountainEnvironment {
 	pub CommandEnvironment:Arc<CommandEnvironment>,
@@ -66,7 +66,7 @@ pub struct MountainEnvironment {
 	pub CustomEditorEnvironment:Arc<CustomEditorEnvironment>,
 	pub DiagnosticEnvironment:Arc<DiagnosticEnvironment>,
 	pub DocumentEnvironment:Arc<DocumentEnvironment>,
-	pub FsEnvironment:Arc<FsEnvironment>,
+	pub FileSystemEnvironment:Arc<FileSystemEnvironment>,
 	pub IpcEnvironment:Arc<IpcEnvironment>,
 	pub LanguageFeatureEnvironment:Arc<LanguageFeatureEnvironment>,
 	pub OutputEnvironment:Arc<OutputEnvironment>,
@@ -84,31 +84,31 @@ pub struct MountainEnvironment {
 }
 
 impl MountainEnvironment {
-	/// Creates a new `MountainEnvironment` by instantiating all of its
-	/// sub-environments.
-	pub fn New(AppHandle:AppHandle<Wry>) -> Self {
+	// Creates a new `MountainEnvironment` by instantiating all of its
+	// sub-environments.
+	pub fn New(ApplicationHandle:ApplicationHandle<Wry>) -> Self {
 		info!("[MountainEnvironment] New instance created.");
 		Self {
-			CommandEnvironment:Arc::new(CommandEnvironment::New(AppHandle.clone())),
-			ConfigurationEnvironment:Arc::new(ConfigurationEnvironment::New(AppHandle.clone())),
-			CustomEditorEnvironment:Arc::new(CustomEditorEnvironment::New(AppHandle.clone())),
-			DiagnosticEnvironment:Arc::new(DiagnosticEnvironment::New(AppHandle.clone())),
-			DocumentEnvironment:Arc::new(DocumentEnvironment::New(AppHandle.clone())),
-			FsEnvironment:Arc::new(FsEnvironment::New(AppHandle.clone())),
-			IpcEnvironment:Arc::new(IpcEnvironment::New(AppHandle.clone())),
-			LanguageFeatureEnvironment:Arc::new(LanguageFeatureEnvironment::New(AppHandle.clone())),
-			OutputEnvironment:Arc::new(OutputEnvironment::New(AppHandle.clone())),
-			ScmEnvironment:Arc::new(ScmEnvironment::New(AppHandle.clone())),
-			SecretEnvironment:Arc::new(SecretEnvironment::New(AppHandle.clone())),
-			StatusBarEnvironment:Arc::new(StatusBarEnvironment::New(AppHandle.clone())),
-			StorageEnvironment:Arc::new(StorageEnvironment::New(AppHandle.clone())),
-			SyncEnvironment:Arc::new(SyncEnvironment::New(AppHandle.clone())),
-			TerminalEnvironment:Arc::new(TerminalEnvironment::New(AppHandle.clone())),
-			TestEnvironment:Arc::new(TestEnvironment::New(AppHandle.clone())),
-			TreeViewEnvironment:Arc::new(TreeViewEnvironment::New(AppHandle.clone())),
-			UiEnvironment:Arc::new(UiEnvironment::New(AppHandle.clone())),
-			WebviewEnvironment:Arc::new(WebviewEnvironment::New(AppHandle.clone())),
-			WorkspaceEnvironment:Arc::new(WorkspaceEnvironment::New(AppHandle.clone())),
+			CommandEnvironment:Arc::new(CommandEnvironment::New(ApplicationHandle.clone())),
+			ConfigurationEnvironment:Arc::new(ConfigurationEnvironment::New(ApplicationHandle.clone())),
+			CustomEditorEnvironment:Arc::new(CustomEditorEnvironment::New(ApplicationHandle.clone())),
+			DiagnosticEnvironment:Arc::new(DiagnosticEnvironment::New(ApplicationHandle.clone())),
+			DocumentEnvironment:Arc::new(DocumentEnvironment::New(ApplicationHandle.clone())),
+			FileSystemEnvironment:Arc::new(FileSystemEnvironment::New(ApplicationHandle.clone())),
+			IpcEnvironment:Arc::new(IpcEnvironment::New(ApplicationHandle.clone())),
+			LanguageFeatureEnvironment:Arc::new(LanguageFeatureEnvironment::New(ApplicationHandle.clone())),
+			OutputEnvironment:Arc::new(OutputEnvironment::New(ApplicationHandle.clone())),
+			ScmEnvironment:Arc::new(ScmEnvironment::New(ApplicationHandle.clone())),
+			SecretEnvironment:Arc::new(SecretEnvironment::New(ApplicationHandle.clone())),
+			StatusBarEnvironment:Arc::new(StatusBarEnvironment::New(ApplicationHandle.clone())),
+			StorageEnvironment:Arc::new(StorageEnvironment::New(ApplicationHandle.clone())),
+			SyncEnvironment:Arc::new(SyncEnvironment::New(ApplicationHandle.clone())),
+			TerminalEnvironment:Arc::new(TerminalEnvironment::New(ApplicationHandle.clone())),
+			TestEnvironment:Arc::new(TestEnvironment::New(ApplicationHandle.clone())),
+			TreeViewEnvironment:Arc::new(TreeViewEnvironment::New(ApplicationHandle.clone())),
+			UiEnvironment:Arc::new(UiEnvironment::New(ApplicationHandle.clone())),
+			WebviewEnvironment:Arc::new(WebviewEnvironment::New(ApplicationHandle.clone())),
+			WorkspaceEnvironment:Arc::new(WorkspaceEnvironment::New(ApplicationHandle.clone())),
 		}
 	}
 }
@@ -132,11 +132,11 @@ impl Requires<Arc<dyn DiagnosticsProvider>> for MountainEnvironment {
 impl Requires<Arc<dyn DocumentsProvider>> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn DocumentsProvider> { self.DocumentEnvironment.clone() }
 }
-impl Requires<Arc<dyn FsReader>> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn FsReader> { self.FsEnvironment.clone() }
+impl Requires<Arc<dyn FileSystemReader>> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn FileSystemReader> { self.FileSystemEnvironment.clone() }
 }
-impl Requires<Arc<dyn FsWriter>> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn FsWriter> { self.FsEnvironment.clone() }
+impl Requires<Arc<dyn FileSystemWriter>> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn FileSystemWriter> { self.FileSystemEnvironment.clone() }
 }
 impl Requires<Arc<dyn IpcProvider>> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn IpcProvider> { self.IpcEnvironment.clone() }

@@ -3,17 +3,17 @@ use std::{collections::HashMap, path::PathBuf};
 use Common::error::CommonError;
 use log::{error, info, trace};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{ApplicationHandle, Manager, RunTime};
 use tokio::fs;
 
-/// @module StorageLogic
-/// @description Contains the core logic for Memento storage operations,
-/// including reading from and writing to the appropriate JSON storage files on
-/// disk.
-use crate::{AppState::AppState::AppState, environment::Utils};
+// @module StorageLogic
+// @description Contains the core logic for Memento storage operations,
+// including reading from and writing to the appropriate JSON storage files on
+// disk.
+use crate::{ApplicationState::ApplicationState::ApplicationState, environment::Utils};
 
-/// An internal helper function to asynchronously write the storage map to a
-/// file.
+// An internal helper function to asynchronously write the storage map to a
+// file.
 async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 	trace!("[StorageLogic] Persisting storage to disk: {}", Path.display());
 	match serde_json::to_string_pretty(&Data) {
@@ -42,15 +42,15 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 	}
 }
 
-/// Logic to retrieve a value from either global or workspace storage.
-pub async fn GetStorageValueLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to retrieve a value from either global or workspace storage.
+pub async fn GetStorageValueLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	IsGlobalScope:bool,
 	Key:&str,
 ) -> Result<Option<Value>, CommonError> {
 	let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 	trace!("[StorageLogic] Getting value from {} scope for key: {}", ScopeName, Key);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 
 	let StorageMapMutex = if IsGlobalScope {
 		&AppStateInstance.GlobalMemento
@@ -62,16 +62,16 @@ pub async fn GetStorageValueLogic<R:Runtime>(
 	Ok(StorageMapGuard.get(Key).cloned())
 }
 
-/// Logic to update or delete a value in either global or workspace storage.
-pub async fn UpdateStorageValueLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to update or delete a value in either global or workspace storage.
+pub async fn UpdateStorageValueLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	IsGlobalScope:bool,
 	Key:String,
 	ValueToSet:Option<Value>,
 ) -> Result<(), CommonError> {
 	let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 	info!("[StorageLogic] Updating value in {} scope for key: {}", ScopeName, Key);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 
 	let (StorageMapMutex, StoragePathOpt) = if IsGlobalScope {
 		(

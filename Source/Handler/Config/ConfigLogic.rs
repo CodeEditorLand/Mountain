@@ -3,23 +3,23 @@ use std::{path::PathBuf, sync::Arc};
 use Common::{
 	config::dto::{ConfigurationOverridesDto, ConfigurationTarget, InspectResultDataDto},
 	error::CommonError,
-	fs::{FsReader, FsWriter},
+	fs::{FileSystemReader, FileSystemWriter},
 };
 use log::{debug, error, info};
 use serde_json::{Map, Value, json};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{ApplicationHandle, Manager, RunTime};
 
-/// @module ConfigLogic
-/// @description Contains the core logic for configuration management, including
-/// reading, merging, updating, and inspecting settings from various sources.
+// @module ConfigLogic
+// @description Contains the core logic for configuration management, including
+// reading, merging, updating, and inspecting settings from various sources.
 use crate::{
-	AppState::{AppState::AppState, Dto::MergedConfigurationStateDto},
+	ApplicationState::{ApplicationState::ApplicationState, DTO::MergedConfigurationStateDto},
+	Handler::error_utils,
 	environment::Utils,
-	handlers::error_utils,
 	vine::{self, client},
 };
 
-async fn read_and_parse_config(fs_reader:&Arc<dyn FsReader>, path:&Option<PathBuf>) -> Value {
+async fn read_and_parse_config(fs_reader:&Arc<dyn FileSystemReader>, path:&Option<PathBuf>) -> Value {
 	if let Some(p) = path {
 		if let Ok(bytes) = fs_reader.ReadFile(p).await {
 			if let Ok(val) = serde_json::from_slice(&bytes) {
@@ -30,16 +30,16 @@ async fn read_and_parse_config(fs_reader:&Arc<dyn FsReader>, path:&Option<PathBu
 	Value::Object(Map::new())
 }
 
-/// Logic to load and merge all configuration files into the effective
-/// configuration stored in AppState. This is called at startup and after any
-/// settings file changes.
-pub async fn InitializeConfiguration<R:Runtime>(AppHandle:&AppHandle<R>, AppStateInstance:&AppState) {
+// Logic to load and merge all configuration files into the effective
+// configuration stored in ApplicationState. This is called at startup and after
+// any settings file changes.
+pub async fn InitializeConfiguration<R:RunTime>(ApplicationHandle:&ApplicationHandle<R>, AppStateInstance:&ApplicationState) {
 	info!("[ConfigLogic] Initializing and merging all configurations...");
 	let environment:tauri::State<'_, Arc<crate::environment::MountainEnvironment::MountainEnvironment>> =
-		AppHandle.state();
-	let fs_reader:Arc<dyn FsReader> = environment.Require();
+		ApplicationHandle.state();
+	let fs_reader:Arc<dyn FileSystemReader> = environment.Require();
 
-	let user_settings_path = AppHandle.path_resolver().app_config_dir().map(|p| p.join("settings.json"));
+	let user_settings_path = ApplicationHandle.path_resolver().app_config_dir().map(|p| p.join("settings.json"));
 	let workspace_settings_path = AppStateInstance.WorkspaceConfigurationPath.lock().unwrap().clone();
 
 	let user_config = read_and_parse_config(&fs_reader, &user_settings_path).await;
@@ -68,15 +68,15 @@ pub async fn InitializeConfiguration<R:Runtime>(AppHandle:&AppHandle<R>, AppStat
 	.ok();
 }
 
-/// Logic to retrieve a configuration value from the cached, merged
-/// configuration.
-pub async fn GetConfigurationValueLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to retrieve a configuration value from the cached, merged
+// configuration.
+pub async fn GetConfigurationValueLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	Section:Option<String>,
 	_Overrides:ConfigurationOverridesDto,
 ) -> Result<Value, CommonError> {
 	debug!("[ConfigLogic] Getting configuration for section: {:?}", Section);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let ConfigGuard = AppStateInstance
 		.Configuration
 		.lock()
@@ -84,9 +84,9 @@ pub async fn GetConfigurationValueLogic<R:Runtime>(
 	Ok(ConfigGuard.GetValue(Section.as_deref()))
 }
 
-/// Logic to update a configuration value in the appropriate settings.json file.
-pub async fn UpdateConfigurationValueLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to update a configuration value in the appropriate settings.json file.
+pub async fn UpdateConfigurationValueLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	Key:String,
 	ValueToSet:Value,
 	Target:ConfigurationTarget,
@@ -94,14 +94,14 @@ pub async fn UpdateConfigurationValueLogic<R:Runtime>(
 	_ScopeToLanguage:Option<bool>,
 ) -> Result<(), CommonError> {
 	info!("[ConfigLogic] Updating configuration key '{}' in target {:?}", Key, Target);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let environment:tauri::State<'_, Arc<crate::environment::MountainEnvironment::MountainEnvironment>> =
-		AppHandle.state();
-	let fs_reader:Arc<dyn FsReader> = environment.Require();
-	let fs_writer:Arc<dyn FsWriter> = environment.Require();
+		ApplicationHandle.state();
+	let fs_reader:Arc<dyn FileSystemReader> = environment.Require();
+	let fs_writer:Arc<dyn FileSystemWriter> = environment.Require();
 
 	let config_path = match Target {
-		ConfigurationTarget::User => AppHandle.path_resolver().app_config_dir().map(|p| p.join("settings.json")),
+		ConfigurationTarget::User => ApplicationHandle.path_resolver().app_config_dir().map(|p| p.join("settings.json")),
 		ConfigurationTarget::Workspace => AppStateInstance.WorkspaceConfigurationPath.lock().unwrap().clone(),
 		_ => return Err(CommonError::NotImplemented { FeatureName:"Configuration target not supported".into() }),
 	};
@@ -115,14 +115,14 @@ pub async fn UpdateConfigurationValueLogic<R:Runtime>(
 		let content_bytes = serde_json::to_vec_pretty(&current_config)?;
 		fs_writer.WriteFile(&path, content_bytes, true, true).await?;
 		// After writing, trigger a full reload to update the in-memory state.
-		InitializeConfiguration(AppHandle, &AppStateInstance).await;
+		InitializeConfiguration(ApplicationHandle, &AppStateInstance).await;
 	}
 	Ok(())
 }
 
-/// Logic to inspect a configuration value from all sources.
-pub async fn InspectConfigurationValueLogic<R:Runtime>(
-	_AppHandle:&AppHandle<R>,
+// Logic to inspect a configuration value from all sources.
+pub async fn InspectConfigurationValueLogic<R:RunTime>(
+	_ApplicationHandle:&ApplicationHandle<R>,
 	_Key:String,
 	_Overrides:ConfigurationOverridesDto,
 ) -> Result<Option<InspectResultDataDto>, CommonError> {

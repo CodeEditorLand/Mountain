@@ -1,15 +1,15 @@
-/// @module FsEnvironment
-/// @description The concrete environment for filesystem operations.
+// @module FileSystemEnvironment
+// @description The concrete environment for filesystem operations.
 use Common::environment::Environment;
-use tauri::{AppHandle, Wry};
+use tauri::{ApplicationHandle, Wry};
 
 #[derive(Clone)]
-pub struct FsEnvironment {
-	pub AppHandle:AppHandle<Wry>,
+pub struct FileSystemEnvironment {
+	pub ApplicationHandle:ApplicationHandle<Wry>,
 }
 
-impl FsEnvironment {
-	pub fn New(AppHandle:AppHandle<Wry>) -> Self { Self { AppHandle } }
+impl FileSystemEnvironment {
+	pub fn New(ApplicationHandle:ApplicationHandle<Wry>) -> Self { Self { ApplicationHandle } }
 }
 
-impl Environment for FsEnvironment {}
+impl Environment for FileSystemEnvironment {}

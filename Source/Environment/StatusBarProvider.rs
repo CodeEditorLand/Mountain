@@ -8,32 +8,32 @@ use Common::{
 use async_trait::async_trait;
 use serde_json::{Value, json};
 
-/// @module StatusBarProvider (Environment)
-/// @description Implements the `StatusBarProvider` trait for
-/// `MountainEnvironment` by delegating to logic handlers and making RPC calls
-/// for dynamic data.
+// @module StatusBarProvider (Environment)
+// @description Implements the `StatusBarProvider` trait for
+// `MountainEnvironment` by delegating to logic Handler and making RPC calls
+// for dynamic data.
 use super::MountainEnvironment;
-use crate::{handlers::status_bar as StatusBarHandler, vine::client as VineClient};
+use crate::{Handler::status_bar as StatusBarHandler, vine::client as VineClient};
 
 #[async_trait]
 impl StatusBarProvider for MountainEnvironment {
-	/// Handles a request to create or update a status bar entry by delegating
-	/// to the `StatusBarHandler`.
+	// Handles a request to create or update a status bar entry by delegating
+	// to the `StatusBarHandler`.
 	async fn SetEntry(&self, Entry:StatusBarEntryDto) -> Result<(), CommonError> {
-		StatusBarHandler::SetEntryLogic(&self.AppHandle, Entry).await
+		StatusBarHandler::SetEntryLogic(&self.ApplicationHandle, Entry).await
 	}
 
-	/// Handles a request to dispose of a status bar entry by delegating to the
-	/// `StatusBarHandler`.
+	// Handles a request to dispose of a status bar entry by delegating to the
+	// `StatusBarHandler`.
 	async fn DisposeEntry(&self, EntryId:String) -> Result<(), CommonError> {
-		StatusBarHandler::DisposeEntryLogic(&self.AppHandle, EntryId).await
+		StatusBarHandler::DisposeEntryLogic(&self.ApplicationHandle, EntryId).await
 	}
 
-	/// Handles a request to resolve a dynamic tooltip.
-	///
-	/// This is a "reverse" call, where the host (`Mountain`) needs to get data
-	/// from the extension host (`Cocoon`). It makes a gRPC call to the
-	/// sidecar and returns the result.
+	// Handles a request to resolve a dynamic tooltip.
+	//
+	// This is a "reverse" call, where the host (`Mountain`) needs to get data
+	// from the extension host (`Cocoon`). It makes a gRPC call to the
+	// sidecar and returns the result.
 	async fn ProvideTooltip(&self, EntryId:String) -> Result<Option<Value>, CommonError> {
 		let RpcResponse = VineClient::SendRequest(
 			"cocoon-main".to_string(),

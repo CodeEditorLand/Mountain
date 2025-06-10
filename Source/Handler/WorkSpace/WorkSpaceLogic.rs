@@ -5,21 +5,21 @@ use globset::{Glob, GlobMatcher};
 use ignore::WalkBuilder;
 use log::{error, info};
 use serde_json::Value;
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{ApplicationHandle, Emitter, Manager, RunTime};
 use url::Url;
 
-/// @module WorkspaceLogic
-/// @description Contains the core logic for workspace-related operations,
-/// including querying workspace folders and performing workspace-wide file
-/// searches.
-use crate::{AppState::AppState::AppState, environment::Utils as EnvUtils, vine};
+// @module WorkspaceLogic
+// @description Contains the core logic for workspace-related operations,
+// including querying workspace folders and performing workspace-wide file
+// searches.
+use crate::{ApplicationState::ApplicationState::ApplicationState, environment::Utils as EnvUtils, vine};
 
-/// Logic to get information about all currently open workspace folders.
-pub async fn GetWorkspaceFoldersInfoLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to get information about all currently open workspace folders.
+pub async fn GetWorkspaceFoldersInfoLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 ) -> Result<Vec<(Url, String, usize)>, CommonError> {
 	info!("[WorkspaceLogic] Getting workspace folders info.");
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let FoldersGuard = AppStateInstance
 		.WorkspaceFolders
 		.lock()
@@ -28,10 +28,10 @@ pub async fn GetWorkspaceFoldersInfoLogic<R:Runtime>(
 	Ok(ResultVec)
 }
 
-/// Logic to find files within the workspace using glob patterns, respecting
-/// ignore files.
-pub async fn FindFilesInWorkspaceLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to find files within the workspace using glob patterns, respecting
+// ignore files.
+pub async fn FindFilesInWorkspaceLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	IncludePattern:Value,
 	ExcludePattern:Option<Value>,
 	MaxResults:Option<usize>,
@@ -40,7 +40,7 @@ pub async fn FindFilesInWorkspaceLogic<R:Runtime>(
 ) -> Result<Vec<Url>, CommonError> {
 	info!("[WorkspaceLogic] Finding files with include pattern: {:?}", IncludePattern);
 
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let FoldersGuard = AppStateInstance
 		.WorkspaceFolders
 		.lock()
@@ -107,11 +107,11 @@ fn BuildMatcher(GlobValue:Value) -> Result<GlobMatcher, CommonError> {
 		.map_err(|e| CommonError::InvalidArg { ArgumentName:"GlobPattern".to_string(), Reason:e.to_string() })
 }
 
-/// Logic to get the path to the current `.code-workspace` file, if one is open.
-pub async fn GetWorkspaceConfigurationPathLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to get the path to the current `.code-workspace` file, if one is open.
+pub async fn GetWorkspaceConfigurationPathLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 ) -> Result<Option<PathBuf>, CommonError> {
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	Ok(AppStateInstance
 		.WorkspaceConfigurationPath
 		.lock()
@@ -119,8 +119,8 @@ pub async fn GetWorkspaceConfigurationPathLogic<R:Runtime>(
 		.clone())
 }
 
-/// Notifies Cocoon that the set of workspace folders has changed.
-pub async fn NotifyOfWorkspaceFolderChange<R:Runtime>(AppHandle:&AppHandle<R>) {
+// Notifies Cocoon that the set of workspace folders has changed.
+pub async fn NotifyOfWorkspaceFolderChange<R:RunTime>(ApplicationHandle:&ApplicationHandle<R>) {
 	info!("[WorkspaceLogic] Notifying Cocoon of workspace folder change.");
 	let Payload = serde_json::json!({ "added": [], "removed": [], "changed": [] }); // A real impl would have the diff
 	if let Err(e) =

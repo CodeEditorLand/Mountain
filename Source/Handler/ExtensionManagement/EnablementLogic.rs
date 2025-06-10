@@ -8,26 +8,26 @@ use Common::{
 };
 use log::{info, warn};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Runtime};
+use tauri::{ApplicationHandle, RunTime};
 use vs_platform_extensions_common_extensions::{EnablementState, ExtensionIdentifier};
 
-/// @module EnablementLogic
-/// @description Contains the core logic for managing the enablement state of
-/// extensions, including persisting the state and notifying the extension host
-/// of changes.
+// @module EnablementLogic
+// @description Contains the core logic for managing the enablement state of
+// extensions, including persisting the state and notifying the extension host
+// of changes.
 use crate::{
-	AppState,
+	ApplicationState,
+	Handler::error_utils,
 	environment::MountainEnvironment,
-	handlers::error_utils,
 	vine::{self, client},
 };
 
 const ENABLEMENT_STATE_STORAGE_KEY:&str = "extensions.enablement";
 
-/// Logic to retrieve the enablement state for a given extension from persistent
-/// storage.
-pub async fn GetEnablementStateLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to retrieve the enablement state for a given extension from persistent
+// storage.
+pub async fn GetEnablementStateLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	Environment:&MountainEnvironment,
 	ExtensionIdentifier:ExtensionIdentifier,
 ) -> Result<Value, CommonError> {
@@ -49,10 +49,10 @@ pub async fn GetEnablementStateLogic<R:Runtime>(
 	Ok(json!(CurrentState as u32))
 }
 
-/// Logic to set the enablement state for one or more extensions, persisting the
-/// change and notifying the extension host.
-pub async fn SetEnablementLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to set the enablement state for one or more extensions, persisting the
+// change and notifying the extension host.
+pub async fn SetEnablementLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	Environment:&MountainEnvironment,
 	ExtensionsToUpdate:Vec<ExtensionIdentifier>,
 	NewState:EnablementState,

@@ -2,15 +2,15 @@ use std::path::PathBuf;
 
 use log::{info, trace, warn};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{ApplicationHandle, Manager, RunTime};
 use tokio::fs;
 
-/// @module ScanLogic
-/// @description Contains the logic for scanning the filesystem for installed
-/// extensions and populating their metadata into the application's state.
-use crate::AppState::{AppState::AppState, Dto::ExtensionDescriptionStateDto};
+// @module ScanLogic
+// @description Contains the logic for scanning the filesystem for installed
+// extensions and populating their metadata into the application's state.
+use crate::ApplicationState::{ApplicationState::ApplicationState, DTO::ExtensionDescriptionStateDto};
 
-/// An internal helper to scan a single directory for extensions asynchronously.
+// An internal helper to scan a single directory for extensions asynchronously.
 async fn ScanSingleDirectory(ScanDir:PathBuf) -> Vec<(String, ExtensionDescriptionStateDto)> {
 	let mut FoundExtensions = Vec::new();
 	if !ScanDir.is_dir() {
@@ -49,9 +49,9 @@ async fn ScanSingleDirectory(ScanDir:PathBuf) -> Vec<(String, ExtensionDescripti
 	FoundExtensions
 }
 
-/// Scans all configured paths for extensions in parallel and populates
-/// `AppState`.
-pub async fn ScanExtensionsAndPopulateState<R:Runtime>(_AppHandle:&AppHandle<R>, AppStateInstance:&AppState) {
+// Scans all configured paths for extensions in parallel and populates
+// `ApplicationState`.
+pub async fn ScanExtensionsAndPopulateState<R:RunTime>(_ApplicationHandle:&ApplicationHandle<R>, AppStateInstance:&ApplicationState) {
 	let ScanPaths = AppStateInstance.ExtensionScanPaths.lock().unwrap().clone();
 	info!("[ExtensionScan] Starting parallel scan in paths: {:?}", ScanPaths);
 
@@ -78,16 +78,16 @@ pub async fn ScanExtensionsAndPopulateState<R:Runtime>(_AppHandle:&AppHandle<R>,
 	*AppStateInstance.ScannedExtensions.lock().unwrap() = FinalExtensionMap;
 }
 
-/// Initializes the list of paths to scan for extensions.
-/// In a real app, this would read from configuration.
-pub async fn InitializeScanPaths<R:Runtime>(AppHandle:&AppHandle<R>, AppStateInstance:&AppState) {
+// Initializes the list of paths to scan for extensions.
+// In a real app, this would read from configuration.
+pub async fn InitializeScanPaths<R:RunTime>(ApplicationHandle:&ApplicationHandle<R>, AppStateInstance:&ApplicationState) {
 	let mut PathsToScan = Vec::new();
 	// Example: Add a built-in extensions directory.
-	if let Some(ResourcePath) = AppHandle.path_resolver().resolve_resource("extensions") {
+	if let Some(ResourcePath) = ApplicationHandle.path_resolver().resolve_resource("extensions") {
 		PathsToScan.push(ResourcePath);
 	}
 	// Example: Add a user-specific extensions directory.
-	if let Some(DataDir) = AppHandle.path_resolver().app_data_dir() {
+	if let Some(DataDir) = ApplicationHandle.path_resolver().app_data_dir() {
 		let UserExtensionsPath = DataDir.join("extensions");
 		tokio::fs::create_dir_all(&UserExtensionsPath).await.ok();
 		PathsToScan.push(UserExtensionsPath);

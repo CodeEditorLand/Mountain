@@ -3,31 +3,31 @@ use std::{collections::HashMap, env, process::Stdio, sync::Arc};
 use Common::error::CommonError;
 use log::{error, info, trace, warn};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{ApplicationHandle, Manager, RunTime};
 use tokio::{
 	io::{AsyncBufReadExt, BufReader},
 	process::Command,
 	sync::oneshot,
 };
 
-/// @module CocoonManagement
-/// @description Contains the logic for launching, managing the lifecycle of,
-/// and performing the initial handshake with the Cocoon sidecar process.
+// @module CocoonManagement
+// @description Contains the logic for launching, managing the lifecycle of,
+// and performing the initial handshake with the Cocoon sidecar process.
 use crate::{
-	AppState::AppState::AppState,
-	handlers::process_management::InitData,
+	ApplicationState::ApplicationState::ApplicationState,
+	Handler::process_management::InitData,
 	vine::{self, client::GetSidecarClient},
 };
 
-/// The main entry point for starting the Cocoon process manager.
-/// It spawns a background task that handles the entire lifecycle.
-pub async fn InitializeCocoon<R:Runtime>(AppHandle:&AppHandle<R>) {
+// The main entry point for starting the Cocoon process manager.
+// It spawns a background task that handles the entire lifecycle.
+pub async fn InitializeCocoon<R:RunTime>(ApplicationHandle:&ApplicationHandle<R>) {
 	info!("[ProcessManagement] Initializing Cocoon sidecar manager...");
 	#[cfg(feature = "extension_host_cocoon")]
 	{
-		let AppHandleClone = AppHandle.clone();
+		let ApplicationHandleClone = ApplicationHandle.clone();
 		tokio::spawn(async move {
-			if let Err(e) = LaunchAndManageCocoonSidecar(AppHandleClone).await {
+			if let Err(e) = LaunchAndManageCocoonSidecar(ApplicationHandleClone).await {
 				error!("[ProcessManagement] Failed to launch and manage Cocoon: {}", e);
 			}
 		});
@@ -38,10 +38,10 @@ pub async fn InitializeCocoon<R:Runtime>(AppHandle:&AppHandle<R>) {
 	}
 }
 
-/// Spawns the Cocoon process and manages its communication and handshake.
-async fn LaunchAndManageCocoonSidecar<R:Runtime>(AppHandle:AppHandle<R>) -> Result<(), CommonError> {
+// Spawns the Cocoon process and manages its communication and handshake.
+async fn LaunchAndManageCocoonSidecar<R:RunTime>(ApplicationHandle:ApplicationHandle<R>) -> Result<(), CommonError> {
 	let SidecarId = "cocoon-main".to_string();
-	let PathResolver = AppHandle.path_resolver();
+	let PathResolver = ApplicationHandle.path_resolver();
 
 	let ScriptPath = match PathResolver.resolve_resource("scripts/cocoon/bootstrap-fork.js") {
 		Some(path) if path.exists() => path,
@@ -56,8 +56,8 @@ async fn LaunchAndManageCocoonSidecar<R:Runtime>(AppHandle:AppHandle<R>) -> Resu
 	EnvironmentVariables.insert("VSCODE_VERBOSE_LOGGING".to_string(), "true".to_string());
 	EnvironmentVariables.insert("VSCODE_PARENT_PID".to_string(), std::process::id().to_string());
 	EnvironmentVariables.insert("VSCODE_HANDLES_UNCAUGHT_ERRORS".to_string(), "true".to_string());
-	EnvironmentVariables.insert("MOUNTAIN_GRPC_PORT".to_string(), "50051".to_string()); // Configurable
-	EnvironmentVariables.insert("COCOON_GRPC_PORT".to_string(), "50052".to_string()); // Configurable
+	EnvironmentVariables.insert("MOUNTAIN_gRPC_PORT".to_string(), "50051".to_string()); // Configurable
+	EnvironmentVariables.insert("COCOON_gRPC_PORT".to_string(), "50052".to_string()); // Configurable
 
 	// --- Setup Command ---
 	NodeCommand
@@ -104,8 +104,8 @@ async fn LaunchAndManageCocoonSidecar<R:Runtime>(AppHandle:AppHandle<R>) -> Resu
 	})?;
 
 	info!("[ProcessManagement] Cocoon is ready. Sending initialization data...");
-	let AppStateInstance = AppHandle.state::<AppState>();
-	let MainInitData = InitData::ConstructExtensionHostInitData(&AppHandle, &AppStateInstance);
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
+	let MainInitData = InitData::ConstructExtensionHostInitData(&ApplicationHandle, &AppStateInstance);
 
 	let Response = vine::client::SendRequest(&SidecarId, "initExtensionHost".to_string(), MainInitData, 60000).await?;
 

@@ -1,9 +1,7 @@
-
-
-/**
- * @module Support (LanguageFeatures/Handlers)
- * @description Contains the invocation logic for each specific language feature.
- */
+// @module Support (LanguageFeatures/Handlers)
+// @description Contains the invocation logic for each specific language
+// feature.
+//
 
 #![allow(non_snake_case, non_camel_case_types)]
 

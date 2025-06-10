@@ -1,5 +1,5 @@
 #![allow(non_snake_case, non_camel_case_types)]
-mod FsEnvironment;
-mod FsProvider;
+mod FileSystemEnvironment;
+mod FileSystemProvider;
 
-pub use self::FsEnvironment::FsEnvironment;
+pub use self::FileSystemEnvironment::FileSystemEnvironment;

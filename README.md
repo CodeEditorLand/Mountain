@@ -40,13 +40,13 @@ frontend and the `Cocoon` extension host.
 
 - **Declarative Effect System:** Built on a custom Rust `ActionEffect` system
   defined in the `Common` crate. All business logic is described as declarative,
-  composable effects, which are executed by a central `AppRuntime`.
+  composable effects, which are executed by a central `ApplicationRunTime`.
 - **gRPC-Powered IPC:** Hosts a `tonic`-based gRPC server (`Vine`) to provide a
   strongly-typed, high-performance communication channel for the `Cocoon`
   extension host.
 - **Centralized State Management:** Utilizes a thread-safe, Tauri-managed
-  `AppState` to act as the single source of truth for the entire application's
-  state, from open documents to provider registrations.
+  `ApplicationState` to act as the single source of truth for the entire
+  application's state, from open documents to provider registrations.
 - **Native PTY Management:** Implements a full-featured integrated terminal
   service by spawning and managing native pseudo-terminals (`PTY`) using the
   `portable-pty` crate.
@@ -54,7 +54,7 @@ frontend and the `Cocoon` extension host.
   `keyring` crate to securely store sensitive data like authentication tokens.
 - **Robust Command Dispatching:** A central `Track` dispatcher intelligently
   routes all incoming requests from the UI (`Wind`) and extensions (`Cocoon`) to
-  the appropriate native handlers or effects.
+  the appropriate native Handler or effects.
 
 ---
 
@@ -63,11 +63,11 @@ frontend and the `Cocoon` extension host.
 | Principle                       | Description                                                                                                                                        | Key Components Involved                             |
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------- |
 | **Implementation of Contracts** | Faithfully implement the abstract service `trait`s defined in the `Common` crate, providing the concrete logic for the application's architecture. | `environment/*` providers                           |
-| **Separation of Concerns**      | Isolate business logic in `handlers` modules, keeping the `environment` provider implementations clean and focused on delegation.                  | `environment/*`, `handlers/*`                       |
-| **Declarative Logic**           | Express all operations as `ActionEffect`s, which are executed by the `AppRuntime`. This makes logic composable, testable, and robust.              | `runtime/*`, `track/*`, `Common::effect`            |
-| **Centralized State**           | Maintain a single, thread-safe `AppState` struct managed by Tauri to ensure data consistency across the entire application.                        | `app_state/*`                                       |
+| **Separation of Concerns**      | Isolate business logic in `Handler` modules, keeping the `environment` provider implementations clean and focused on delegation.                  | `environment/*`, `Handler/*`                       |
+| **Declarative Logic**           | Express all operations as `ActionEffect`s, which are executed by the `ApplicationRunTime`. This makes logic composable, testable, and robust.              | `RunTime/*`, `track/*`, `Common::effect`            |
+| **Centralized State**           | Maintain a single, thread-safe `ApplicationState` struct managed by Tauri to ensure data consistency across the entire application.                | `app_state/*`                                       |
 | **Secure & Performant IPC**     | Utilize gRPC for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                           | `vine/*`                                            |
-| **UI-Backend Decoupling**       | Interact with the `Wind` frontend exclusively through asynchronous Tauri commands and events, ensuring the backend is UI-agnostic.                 | `main.rs` (invoke handler), `handlers/*` (emitters) |
+| **UI-Backend Decoupling**       | Interact with the `Wind` frontend exclusively through asynchronous Tauri commands and events, ensuring the backend is UI-agnostic.                 | `main.rs` (invoke handler), `Handler/*` (emitters) |
 
 ---
 
@@ -76,8 +76,8 @@ frontend and the `Cocoon` extension host.
 To understand how `Mountain`'s internal components are structured and how they
 implement the application's core logic, please refer to the detailed technical
 breakdown in [`docs/Deep Dive.md`](docs/Deep%20Dive.md). This document explains
-the roles of the `AppRuntime`, `AppState`, `handlers`, `environment`, and the
-`Vine` gRPC layer.
+the roles of the `ApplicationRunTime`, `ApplicationState`, `Handler`, `environment`,
+and the `Vine` gRPC layer.
 
 ---
 
@@ -96,17 +96,17 @@ graph LR
 
     subgraph "Mountain (Native Rust/Tauri Backend)"
         TauriRuntime[Tauri App & Window]:::mountain
-        AppRuntime[AppRuntime Engine]:::mountain
-        AppState["AppState (Shared State)"]:::mountain
+        ApplicationRunTime[ApplicationRunTime Engine]:::mountain
+        ApplicationState["ApplicationState (Shared State)"]:::mountain
         TrackDispatcher[Track Dispatcher]:::mountain
-        VineGRPC[Vine gRPC Server]:::ipc
+        VinegRPC[Vine gRPC Server]:::ipc
         NativeHandlers[Native Logic Handlers]:::mountain
         CommonCrate["Common Crate (Traits & DTOs)"]:::common
 
-        TauriRuntime -- Manages --> AppState
-        TauriRuntime -- Manages --> AppRuntime
-        AppRuntime -- Executes effects via --> NativeHandlers
-        TrackDispatcher -- Routes requests to --> AppRuntime
+        TauriRuntime -- Manages --> ApplicationState
+        TauriRuntime -- Manages --> ApplicationRunTime
+        ApplicationRunTime -- Executes effects via --> NativeHandlers
+        TrackDispatcher -- Routes requests to --> ApplicationRunTime
     end
 
     subgraph "Clients"
@@ -118,8 +118,8 @@ graph LR
     WindUI -- Tauri Commands --> TrackDispatcher
     TrackDispatcher -- Tauri Events --> WindUI
 
-    VineGRPC -- gRPC Protocol <--> CocoonSidecar; class VineGRPC,CocoonSidecar ipc
-    VineGRPC -- Forwards requests to --> TrackDispatcher
+    VinegRPC -- gRPC Protocol <--> CocoonSidecar; class VinegRPC,CocoonSidecar ipc
+    VinegRPC -- Forwards requests to --> TrackDispatcher
 
     NativeHandlers -- Implements traits from --> CommonCrate
 ```
@@ -134,13 +134,13 @@ the architectural patterns defined in `Common`.
 ```
 Mountain/
 ├── Source/
-│   ├── main.rs                      # Tauri application entry point and setup.
-│   ├── app_state/                   # The central, thread-safe state store for the application.
-│   ├── environment/                 # Concrete implementations of the `Common` provider traits.
-│   ├── handlers/                    # The detailed business logic for each service domain.
-│   ├── runtime/                     # The `AppRuntime` engine that executes effects.
-│   ├── track/                       # The central request dispatcher.
-│   └── vine/                        # The gRPC server implementation (using `tonic`).
+│   ├── Binary.rs                    # Tauri application entry point and setup.
+│   ├── ApplicationState/            # The central, thread-safe state store for the application.
+│   ├── Environment/                 # Concrete implementations of the `Common` provider traits.
+│   ├── Handlers/                    # The detailed business logic for each service domain.
+│   ├── Runtime/                     # The `ApplicationRunTime` engine that executes effects.
+│   ├── Track/                       # The central request dispatcher.
+│   └── Vine/                        # The gRPC server implementation (using `tonic`).
 ├── proto/
 │   └── vine.proto                   # The gRPC contract definition file.
 └── build.rs                         # Build script to compile the .proto file into Rust code.
@@ -158,7 +158,7 @@ set up, build, and run the entire application.
 **Key Dependencies:**
 
 - `tauri`: `^2.x`
-- `tokio`: For the asynchronous runtime.
+- `tokio`: For the asynchronous RunTime.
 - `tonic`: For the gRPC server implementation.
 - `serde` & `serde_json`: For serialization.
 - `log` & `env_logger`: For logging.

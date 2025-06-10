@@ -3,25 +3,25 @@ use std::sync::Arc;
 use Common::{
 	environment::Requires,
 	error::CommonError,
-	fs::{FsReader, FsWriter},
+	fs::{FileSystemReader, FileSystemWriter},
 };
 use log::{info, trace, warn};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{ApplicationHandle, Manager, RunTime};
 use url::Url;
 
-/// @module DocumentsLogic
-/// @description Contains the core logic for all document lifecycle operations,
-/// such as opening, saving, and applying text changes.
+// @module DocumentsLogic
+// @description Contains the core logic for all document lifecycle operations,
+// such as opening, saving, and applying text changes.
 use crate::{
-	AppState::{AppState::AppState, Dto::DocumentStateDto},
+	ApplicationState::{ApplicationState::ApplicationState, DTO::DocumentStateDto},
+	Handler::{self, documents::NotificationLogic, error_utils},
 	environment::MountainEnvironment,
-	handlers::{self, documents::NotificationLogic, error_utils},
 };
 
-/// Logic for handling the `OpenDocument` effect.
-pub async fn OpenDocumentLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic for handling the `OpenDocument` effect.
+pub async fn OpenDocumentLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	Environment:&MountainEnvironment,
 	UriComponentsDto:Value,
 	LanguageIdentifier:Option<String>,
@@ -31,17 +31,17 @@ pub async fn OpenDocumentLogic<R:Runtime>(
 		.map_err(|_| CommonError::InvalidArg { ArgumentName:"Uri".into(), Reason:"Malformed URI DTO".into() })?;
 	info!("[DocumentsLogic] Opening document: {}", Uri);
 
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let mut OpenDocsGuard = AppStateInstance.OpenDocuments.lock().unwrap();
 
 	if let Some(ExistingDoc) = OpenDocsGuard.get(Uri.as_str()) {
 		return Ok(ExistingDoc.Uri.clone());
 	}
 
-	let FsReader:Arc<dyn FsReader> = Environment.Require();
+	let FileSystemReader:Arc<dyn FileSystemReader> = Environment.Require();
 	let FileContent = match Content {
 		Some(c) => c,
-		None => String::from_utf8(FsReader.ReadFile(&Uri.to_file_path().unwrap()).await?).unwrap_or_default(),
+		None => String::from_utf8(FileSystemReader.ReadFile(&Uri.to_file_path().unwrap()).await?).unwrap_or_default(),
 	};
 
 	let NewDoc = DocumentStateDto::New(Uri.clone(), LanguageIdentifier, FileContent);
@@ -50,39 +50,39 @@ pub async fn OpenDocumentLogic<R:Runtime>(
 	OpenDocsGuard.insert(Uri.to_string(), NewDoc);
 	drop(OpenDocsGuard);
 
-	NotificationLogic::NotifyModelAdded(AppHandle, &DtoForNotification).await;
+	NotificationLogic::NotifyModelAdded(ApplicationHandle, &DtoForNotification).await;
 	Ok(Uri)
 }
 
-/// Logic for handling the `SaveDocument` effect.
-pub async fn SaveDocumentLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic for handling the `SaveDocument` effect.
+pub async fn SaveDocumentLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	Environment:&MountainEnvironment,
 	Uri:Url,
 ) -> Result<bool, CommonError> {
 	info!("[DocumentsLogic] Saving document: {}", Uri);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let mut OpenDocsGuard = AppStateInstance.OpenDocuments.lock().unwrap();
 
 	if let Some(Doc) = OpenDocsGuard.get_mut(Uri.as_str()) {
-		let FsWriter:Arc<dyn FsWriter> = Environment.Require();
+		let FileSystemWriter:Arc<dyn FileSystemWriter> = Environment.Require();
 		let FilePath = Uri.to_file_path().unwrap();
 		let ContentBytes = Doc.GetText().into_bytes();
 
-		FsWriter.WriteFile(&FilePath, ContentBytes, true, true).await?;
+		FileSystemWriter.WriteFile(&FilePath, ContentBytes, true, true).await?;
 		Doc.IsDirty = false;
 		drop(OpenDocsGuard);
 
-		NotificationLogic::NotifyModelSaved(AppHandle, &Uri).await;
+		NotificationLogic::NotifyModelSaved(ApplicationHandle, &Uri).await;
 		Ok(true)
 	} else {
 		Err(CommonError::FsNotFound(Uri.to_file_path().unwrap()))
 	}
 }
 
-/// Logic for handling the `ApplyDocumentChanges` effect.
-pub async fn ApplyDocumentChangesLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic for handling the `ApplyDocumentChanges` effect.
+pub async fn ApplyDocumentChangesLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	Uri:Url,
 	NewVersionIdentifier:i64,
 	ChangesDtoCollection:Value,
@@ -91,7 +91,7 @@ pub async fn ApplyDocumentChangesLogic<R:Runtime>(
 	_IsRedoing:bool,
 ) -> Result<(), CommonError> {
 	trace!("[DocumentsLogic] Applying changes to document: {}", Uri);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let mut OpenDocumentsGuard = AppStateInstance.OpenDocuments.lock().unwrap();
 
 	if let Some(Document) = OpenDocumentsGuard.get_mut(Uri.as_str()) {
@@ -105,7 +105,7 @@ pub async fn ApplyDocumentChangesLogic<R:Runtime>(
 	}
 	drop(OpenDocumentsGuard);
 
-	NotificationLogic::NotifyModelChanged(AppHandle, &Uri, NewVersionIdentifier, ChangesDtoCollection).await;
+	NotificationLogic::NotifyModelChanged(ApplicationHandle, &Uri, NewVersionIdentifier, ChangesDtoCollection).await;
 	Ok(())
 }
 

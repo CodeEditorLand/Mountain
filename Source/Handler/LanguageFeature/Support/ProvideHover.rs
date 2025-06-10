@@ -1,21 +1,21 @@
 use Common::{error::CommonError, language_feature::dto::*};
 use log::debug;
 use serde_json::json;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{ApplicationHandle, Manager, RunTime};
 use url::Url;
 
-/// @module ProvideHover (LanguageFeatures/Support)
-/// @description Logic for invoking the hover provider.
-use crate::{AppState::AppState::AppState, vine};
+// @module ProvideHover (LanguageFeatures/Support)
+// @description Logic for invoking the hover provider.
+use crate::{ApplicationState::ApplicationState::ApplicationState, vine};
 
-pub async fn ProvideHoverLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+pub async fn ProvideHoverLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	DocumentUri:Url,
 	Position:PositionDto,
 ) -> Result<Option<HoverResultDto>, CommonError> {
 	debug!("[ProvideHoverLogic] Requesting hover for {}", DocumentUri);
 
-	// 1. Find the best provider for this document from AppState.
+	// 1. Find the best provider for this document from ApplicationState.
 	// This is complex logic involving matching the document selector.
 	// For now, we'll assume we found one.
 	let ProviderHandle = 1; // Placeholder

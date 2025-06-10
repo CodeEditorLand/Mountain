@@ -18,46 +18,46 @@ use Common::{
 use async_trait::async_trait;
 use serde_json::Value;
 
-/// @module UiProvider (Environment)
-/// @description Implements the `UiProvider` trait for `MountainEnvironment`
-/// by delegating to the logic handlers in `handlers::ui`.
+// @module UiProvider (Environment)
+// @description Implements the `UiProvider` trait for `MountainEnvironment`
+// by delegating to the logic Handler in `Handler::ui`.
 use super::MountainEnvironment;
-use crate::handlers::ui as UiHandler;
+use crate::Handler::ui as UiHandler;
 
 #[async_trait]
 impl UiProvider for MountainEnvironment {
-	/// Handles showing a message by delegating to the `UiHandler`.
+	// Handles showing a message by delegating to the `UiHandler`.
 	async fn ShowMessage(
 		&self,
 		Severity:MessageSeverity,
 		Message:String,
 		Options:Option<Value>,
 	) -> Result<Option<String>, CommonError> {
-		UiHandler::ShowMessageInteractiveLogic(&self.AppHandle, Severity, Message, Options).await
+		UiHandler::ShowMessageInteractiveLogic(&self.ApplicationHandle, Severity, Message, Options).await
 	}
 
-	/// Handles showing an open dialog by delegating to the `UiHandler`.
+	// Handles showing an open dialog by delegating to the `UiHandler`.
 	async fn ShowOpenDialog(&self, Options:Option<OpenDialogOptionsDto>) -> Result<Option<Vec<PathBuf>>, CommonError> {
-		UiHandler::ShowOpenDialogInteractiveLogic(&self.AppHandle, Options).await
+		UiHandler::ShowOpenDialogInteractiveLogic(&self.ApplicationHandle, Options).await
 	}
 
-	/// Handles showing a save dialog by delegating to the `UiHandler`.
+	// Handles showing a save dialog by delegating to the `UiHandler`.
 	async fn ShowSaveDialog(&self, Options:Option<SaveDialogOptionsDto>) -> Result<Option<PathBuf>, CommonError> {
-		UiHandler::ShowSaveDialogInteractiveLogic(&self.AppHandle, Options).await
+		UiHandler::ShowSaveDialogInteractiveLogic(&self.ApplicationHandle, Options).await
 	}
 
-	/// Handles showing a quick pick by delegating to the `UiHandler`.
+	// Handles showing a quick pick by delegating to the `UiHandler`.
 	async fn ShowQuickPick(
 		&self,
 		Items:Vec<QuickPickItemDto>,
 		Options:Option<QuickPickOptionsDto>,
 	) -> Result<Option<Vec<String>>, CommonError> {
-		UiHandler::ShowQuickPickInteractiveLogic(&self.AppHandle, Items, Options).await
+		UiHandler::ShowQuickPickInteractiveLogic(&self.ApplicationHandle, Items, Options).await
 	}
 
-	/// Handles showing an input box by delegating to the `UiHandler`.
+	// Handles showing an input box by delegating to the `UiHandler`.
 	async fn ShowInputBox(&self, Options:Option<InputBoxOptionsDto>) -> Result<Option<String>, CommonError> {
-		UiHandler::ShowInputBoxInteractiveLogic(&self.AppHandle, Options).await
+		UiHandler::ShowInputBoxInteractiveLogic(&self.ApplicationHandle, Options).await
 	}
 }
 

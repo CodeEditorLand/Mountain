@@ -1,21 +1,21 @@
 use log::{error, info};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Runtime};
+use tauri::{ApplicationHandle, RunTime};
 use url::Url;
 
-/// @module NotificationLogic (Documents/Handlers)
-/// @description Contains the logic for sending document lifecycle notifications
-/// from the Mountain host to the Cocoon sidecar, keeping the extension host's
-/// state in sync.
+// @module NotificationLogic (Documents/Handlers)
+// @description Contains the logic for sending document lifecycle notifications
+// from the Mountain host to the Cocoon sidecar, keeping the extension host's
+// state in sync.
 use crate::{
-	AppState::Dto::DocumentStateDto,
+	ApplicationState::DTO::DocumentStateDto,
 	vine::{self, client},
 };
 
-/// Notifies Cocoon that a new document model has been added (e.g., a file was
-/// opened). @param DocumentStateDto - The DTO representing the initial state of
-/// the new document.
-pub async fn NotifyModelAdded<R:Runtime>(_AppHandle:&AppHandle<R>, DocumentStateDto:&Value) {
+// Notifies Cocoon that a new document model has been added (e.g., a file was
+// opened). @param DocumentStateDto - The DTO representing the initial state of
+// the new document.
+pub async fn NotifyModelAdded<R:RunTime>(_ApplicationHandle:&ApplicationHandle<R>, DocumentStateDto:&Value) {
 	let uri_str = DocumentStateDto.get("Uri").and_then(Value::as_str).unwrap_or("unknown");
 	info!("[DocumentsNotify] Notifying ModelAdded for: {}", uri_str);
 
@@ -27,11 +27,11 @@ pub async fn NotifyModelAdded<R:Runtime>(_AppHandle:&AppHandle<R>, DocumentState
 	}
 }
 
-/// Notifies Cocoon that a document's content has changed.
-/// @param Uri - The URI of the document that changed.
-/// @param NewVersion - The new version identifier for the document.
-/// @param Changes - A DTO representing the text changes that occurred.
-pub async fn NotifyModelChanged<R:Runtime>(_AppHandle:&AppHandle<R>, Uri:&Url, NewVersion:i64, Changes:Value) {
+// Notifies Cocoon that a document's content has changed.
+// @param Uri - The URI of the document that changed.
+// @param NewVersion - The new version identifier for the document.
+// @param Changes - A DTO representing the text changes that occurred.
+pub async fn NotifyModelChanged<R:RunTime>(_ApplicationHandle:&ApplicationHandle<R>, Uri:&Url, NewVersion:i64, Changes:Value) {
 	info!("[DocumentsNotify] Notifying ModelChanged for: {}", Uri);
 
 	// Construct the payload to match the VS Code protocol format.
@@ -44,9 +44,9 @@ pub async fn NotifyModelChanged<R:Runtime>(_AppHandle:&AppHandle<R>, Uri:&Url, N
 	}
 }
 
-/// Notifies Cocoon that a document has been saved to disk.
-/// @param Uri - The URI of the saved document.
-pub async fn NotifyModelSaved<R:Runtime>(_AppHandle:&AppHandle<R>, Uri:&Url) {
+// Notifies Cocoon that a document has been saved to disk.
+// @param Uri - The URI of the saved document.
+pub async fn NotifyModelSaved<R:RunTime>(_ApplicationHandle:&ApplicationHandle<R>, Uri:&Url) {
 	info!("[DocumentsNotify] Notifying ModelSaved for: {}", Uri);
 
 	let UriComponents = json!({ "external": Uri.to_string(), "$mid": 1 });
@@ -57,9 +57,9 @@ pub async fn NotifyModelSaved<R:Runtime>(_AppHandle:&AppHandle<R>, Uri:&Url) {
 	}
 }
 
-/// Notifies Cocoon that a document has been closed.
-/// @param Uri - The URI of the closed document.
-pub async fn NotifyModelRemoved<R:Runtime>(_AppHandle:&AppHandle<R>, Uri:&Url) {
+// Notifies Cocoon that a document has been closed.
+// @param Uri - The URI of the closed document.
+pub async fn NotifyModelRemoved<R:RunTime>(_ApplicationHandle:&ApplicationHandle<R>, Uri:&Url) {
 	info!("[DocumentsNotify] Notifying ModelRemoved for: {}", Uri);
 
 	let UriComponents = json!({ "external": Uri.to_string(), "$mid": 1 });

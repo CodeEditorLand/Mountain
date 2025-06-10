@@ -1,12 +1,12 @@
-/// @module ErrorFormatting
-/// @description Defines utility functions for creating standardized,
-/// serializable error strings for use in RPC and Tauri command responses.
+// @module ErrorFormatting
+// @description Defines utility functions for creating standardized,
+// serializable error strings for use in RPC and Tauri command responses.
 use Common::error::CommonError;
 use log::error;
 use serde_json::json;
 
-/// Creates a JSON-formatted error string from a message and an optional code.
-/// This is the base error format returned to the frontend or sidecars.
+// Creates a JSON-formatted error string from a message and an optional code.
+// This is the base error format returned to the frontend or sidecars.
 pub fn RpcErrorString(Message:String, Code:Option<&str>) -> String {
 	let ErrorCode = Code.unwrap_or("EUNKNOWN");
 	error!("[RpcError] Code: '{}', Message: '{}'", ErrorCode, Message);
@@ -15,8 +15,8 @@ pub fn RpcErrorString(Message:String, Code:Option<&str>) -> String {
 	json!({ "Message": Message, "Code": ErrorCode }).to_string()
 }
 
-/// Creates a JSON-formatted error string specifically for parameter validation
-/// failures.
+// Creates a JSON-formatted error string specifically for parameter validation
+// failures.
 pub fn RpcParamErrorString(MethodName:&str, ParameterName:&str, ExpectedType:&str, Index:Option<usize>) -> String {
 	let BaseMessage = format!(
 		"Missing or invalid parameter '{}' (expected {}) for method '{}'",
@@ -30,9 +30,9 @@ pub fn RpcParamErrorString(MethodName:&str, ParameterName:&str, ExpectedType:&st
 	RpcErrorString(FullMessage, Some("EBADARG"))
 }
 
-/// Maps a structured `CommonError` enum variant to a standardized, serializable
-/// RPC error string. This provides consistent error reporting across the
-/// application.
+// Maps a structured `CommonError` enum variant to a standardized, serializable
+// RPC error string. This provides consistent error reporting across the
+// application.
 pub fn MapCommonErrorToRpcString(Error:CommonError, OperationContext:&str) -> String {
 	error!(
 		"[CommonError Mapping] Operation '{}' resulted in error: {:?}",

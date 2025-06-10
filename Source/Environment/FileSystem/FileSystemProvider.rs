@@ -3,31 +3,31 @@ use std::path::PathBuf;
 use Common::{
 	error::CommonError,
 	fs::{
-		FsReader,
-		FsWriter,
+		FileSystemReader,
+		FileSystemWriter,
 		dto::{FileSystemStatDto, FileTypeDto},
 	},
 };
 use async_trait::async_trait;
 
-/// @module FsProvider (Environment/fs)
-/// @description Implements the `FsReader` and `FsWriter` traits for
-/// `FsEnvironment`.
-use super::FsEnvironment;
-use crate::handlers::fs as FsHandler;
+// @module FileSystemProvider (Environment/fs)
+// @description Implements the `FileSystemReader` and `FileSystemWriter` traits for
+// `FileSystemEnvironment`.
+use super::FileSystemEnvironment;
+use crate::Handler::fs as FsHandler;
 
 #[async_trait]
-impl FsReader for FsEnvironment {
+impl FileSystemReader for FileSystemEnvironment {
 	async fn ReadFile(&self, Path:&PathBuf) -> Result<Vec<u8>, CommonError> {
-		FsHandler::ReadFileLogic(&self.AppHandle, Path).await
+		FsHandler::ReadFileLogic(&self.ApplicationHandle, Path).await
 	}
-	// ... other FsReader delegations
+	// ... other FileSystemReader delegations
 }
 
 #[async_trait]
-impl FsWriter for FsEnvironment {
+impl FileSystemWriter for FileSystemEnvironment {
 	async fn WriteFile(&self, Path:&PathBuf, Content:Vec<u8>, Create:bool, Overwrite:bool) -> Result<(), CommonError> {
-		FsHandler::WriteFileLogic(&self.AppHandle, Path, Content, Create, Overwrite).await
+		FsHandler::WriteFileLogic(&self.ApplicationHandle, Path, Content, Create, Overwrite).await
 	}
-	// ... other FsWriter delegations
+	// ... other FileSystemWriter delegations
 }

@@ -3,32 +3,32 @@ use std::sync::Arc;
 use Common::{effect::ActionEffect, error::CommonError};
 use log::{error, info, warn};
 use tauri::{
-	AppHandle,
-	Runtime,
+	ApplicationHandle,
+	RunTime,
 	http::{Request as TauriHttpRequest, Response as TauriHttpResponse},
 };
 use url::Url;
 
-/// @module ProtocolLogic
-/// @description Contains the handler logic for custom URI scheme requests,
-/// which are registered with Tauri's webview protocol system.
-use crate::runtime::AppRuntime::AppRuntime;
-use crate::{handlers::error_utils, track};
+// @module ProtocolLogic
+// @description Contains the handler logic for custom URI scheme requests,
+// which are registered with Tauri's webview protocol system.
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{Handler::error_utils, track};
 
-/// The main handler for custom URI scheme requests (e.g., `vscode://file/...`).
-///
-/// This function is registered with Tauri in `main.rs`. It parses the incoming
-/// URI, dispatches it to the `track` module to create an appropriate
-/// `ActionEffect`, and then executes that effect in the background. It
-/// immediately returns an HTTP response to Tauri to acknowledge the request.
-///
-/// @param Request - The raw HTTP request from Tauri's protocol handler.
-/// @param AppHandle - The Tauri application handle.
-/// @returns A `Result` containing the HTTP response to send back to the
-/// webview.
-pub fn HandleCustomUriSchemeRequest<R:Runtime>(
+// The main handler for custom URI scheme requests (e.g., `vscode://file/...`).
+//
+// This function is registered with Tauri in `main.rs`. It parses the incoming
+// URI, dispatches it to the `track` module to create an appropriate
+// `ActionEffect`, and then executes that effect in the background. It
+// immediately returns an HTTP response to Tauri to acknowledge the request.
+//
+// @param Request - The raw HTTP request from Tauri's protocol handler.
+// @param ApplicationHandle - The Tauri application handle.
+// @returns A `Result` containing the HTTP response to send back to the
+// webview.
+pub fn HandleCustomUriSchemeRequest<R:RunTime>(
 	Request:&TauriHttpRequest,
-	AppHandle:AppHandle<R>,
+	ApplicationHandle:ApplicationHandle<R>,
 ) -> Result<TauriHttpResponse, Box<dyn std::error::Error>> {
 	info!("[ProtocolLogic] Received custom URI request: {}", Request.uri());
 	let ParsedUrl = match Url::parse(Request.uri()) {
@@ -40,16 +40,16 @@ pub fn HandleCustomUriSchemeRequest<R:Runtime>(
 	};
 
 	// Delegate to the track module to map the URI to a specific ActionEffect.
-	let EffectResult:Result<ActionEffect<Arc<AppRuntime>, CommonError, serde_json::Value>, String> =
+	let EffectResult:Result<ActionEffect<Arc<ApplicationRunTime>, CommonError, serde_json::Value>, String> =
 		track::CreateEffectForUriProtocol(&ParsedUrl);
 
 	if let Ok(Effect) = EffectResult {
-		let AppHandleClone = AppHandle.clone();
+		let ApplicationHandleClone = ApplicationHandle.clone();
 		// Spawn the effect on a background task so we can return an immediate HTTP
 		// response.
-		tauri::async_runtime::spawn(async move {
-			let RuntimeState:tauri::State<'_, Arc<AppRuntime>> = AppHandleClone.state();
-			if let Err(e) = RuntimeState.Run(Effect).await {
+		tauri::async_RunTime::spawn(async move {
+			let RunTimeState:tauri::State<'_, Arc<ApplicationRunTime>> = ApplicationHandleClone.state();
+			if let Err(e) = RunTimeState.Run(Effect).await {
 				error!("[ProtocolLogic] Error running effect for URI {}: {:?}", Request.uri(), e);
 			}
 		});

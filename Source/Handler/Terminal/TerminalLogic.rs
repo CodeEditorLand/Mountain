@@ -7,25 +7,25 @@ use Common::error::CommonError;
 use log::{debug, error, info};
 use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{ApplicationHandle, Emitter, Manager, RunTime};
 use tokio::{
 	io::AsyncReadExt,
 	sync::{Mutex as TokioMutex, mpsc as TokioMpsc},
 };
 
-/// @module TerminalLogic
-/// @description Contains the core logic for managing integrated terminal
-/// instances, including creating native pseudo-terminals (PTYs) and handling
-/// their I/O.
+// @module TerminalLogic
+// @description Contains the core logic for managing integrated terminal
+// instances, including creating native pseudo-terminals (PTYs) and handling
+// their I/O.
 use crate::{
-	AppState::{AppState::AppState, Dto::TerminalStateDto},
+	ApplicationState::{ApplicationState::ApplicationState, DTO::TerminalStateDto},
 	vine::{self, client},
 };
 
-/// Logic to create a new terminal instance. This is called by the
-/// `TerminalProvider` in the environment.
-pub async fn CreateTerminalLogic<R:Runtime>(AppHandle:&AppHandle<R>, OptionsValue:Value) -> Result<Value, CommonError> {
-	let AppStateInstance = AppHandle.state::<AppState>();
+// Logic to create a new terminal instance. This is called by the
+// `TerminalProvider` in the environment.
+pub async fn CreateTerminalLogic<R:RunTime>(ApplicationHandle:&ApplicationHandle<R>, OptionsValue:Value) -> Result<Value, CommonError> {
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let TerminalId = AppStateInstance.GetNextTerminalIdentifier();
 	let DefaultShell = if cfg!(windows) { "cmd.exe".to_string() } else { env!("SHELL").to_string() };
 	let Name = OptionsValue
@@ -74,7 +74,7 @@ pub async fn CreateTerminalLogic<R:Runtime>(AppHandle:&AppHandle<R>, OptionsValu
 		.master
 		.try_clone_reader()
 		.map_err(|_| CommonError::IoError { Path:"pty master".into(), Description:"Failed to clone reader".into() })?;
-	let ReaderAppHandle = AppHandle.clone();
+	let ReaderApplicationHandle = ApplicationHandle.clone();
 	let ReaderTaskHandle = tokio::spawn(async move {
 		// Reader Task
 		let mut Buffer = [0u8; 8192];
@@ -92,7 +92,7 @@ pub async fn CreateTerminalLogic<R:Runtime>(AppHandle:&AppHandle<R>, OptionsValu
 		}
 	});
 
-	let WaiterAppHandle = AppHandle.clone();
+	let WaiterApplicationHandle = ApplicationHandle.clone();
 	let WaiterTaskHandle = tokio::spawn(async move {
 		// Process Waiter Task
 		let ExitStatus = ChildProcess.wait().unwrap_or_default();
@@ -107,8 +107,8 @@ pub async fn CreateTerminalLogic<R:Runtime>(AppHandle:&AppHandle<R>, OptionsValu
 		)
 		.await
 		.ok();
-		WaiterAppHandle
-			.state::<AppState>()
+		WaiterApplicationHandle
+			.state::<ApplicationState>()
 			.ActiveTerminals
 			.lock()
 			.unwrap()
@@ -137,14 +137,14 @@ pub async fn CreateTerminalLogic<R:Runtime>(AppHandle:&AppHandle<R>, OptionsValu
 	Ok(json!({ "Id": TerminalId, "Name": Name, "Pid": TerminalState.OsProcessIdentifier }))
 }
 
-/// Logic to send text input to a terminal process.
-pub async fn SendTextToTerminalLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to send text input to a terminal process.
+pub async fn SendTextToTerminalLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	TerminalId:u64,
 	Text:String,
 ) -> Result<(), CommonError> {
 	info!("[TerminalLogic] Sending text to terminal ID: {}", TerminalId);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let TerminalsGuard = AppStateInstance.ActiveTerminals.lock().unwrap();
 	if let Some(TerminalArc) = TerminalsGuard.get(&TerminalId) {
 		let TerminalStateGuard = TerminalArc.lock().unwrap();
@@ -160,10 +160,10 @@ pub async fn SendTextToTerminalLogic<R:Runtime>(
 	Ok(())
 }
 
-/// Logic to dispose of a terminal instance.
-pub async fn DisposeTerminalLogic<R:Runtime>(AppHandle:&AppHandle<R>, TerminalId:u64) -> Result<(), CommonError> {
+// Logic to dispose of a terminal instance.
+pub async fn DisposeTerminalLogic<R:RunTime>(ApplicationHandle:&ApplicationHandle<R>, TerminalId:u64) -> Result<(), CommonError> {
 	info!("[TerminalLogic] Disposing terminal ID: {}", TerminalId);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	if let Some(TerminalArc) = AppStateInstance.ActiveTerminals.lock().unwrap().remove(&TerminalId) {
 		let mut TerminalStateGuard = TerminalArc.lock().unwrap();
 		// Abort the background tasks associated with this terminal.

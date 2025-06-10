@@ -4,25 +4,25 @@ use Common::{
 	error::CommonError,
 	fs::dto::{FileSystemStatDto, FileTypeDto},
 };
-use tauri::{AppHandle, Wry};
+use tauri::{ApplicationHandle, Wry};
 use tokio::fs;
 
-/// @module FsLogic
-/// @description Contains the core, detailed logic for all native filesystem
-/// operations, using `tokio::fs` for asynchronous I/O.
+// @module FsLogic
+// @description Contains the core, detailed logic for all native filesystem
+// operations, using `tokio::fs` for asynchronous I/O.
 use crate::environment::Utils;
 
-/// Logic to read the entire contents of a file into a byte vector.
-pub async fn ReadFileLogic(AppHandle:&AppHandle<Wry>, Path:&PathBuf) -> Result<Vec<u8>, CommonError> {
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Path).await?;
+// Logic to read the entire contents of a file into a byte vector.
+pub async fn ReadFileLogic(ApplicationHandle:&ApplicationHandle<Wry>, Path:&PathBuf) -> Result<Vec<u8>, CommonError> {
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Path).await?;
 	fs::read(Path)
 		.await
 		.map_err(|e| Utils::MapIoErrorToCommonError(e, Path.clone(), "ReadFile"))
 }
 
-/// Logic to retrieve metadata for a file or directory.
-pub async fn StatFileLogic(AppHandle:&AppHandle<Wry>, Path:&PathBuf) -> Result<FileSystemStatDto, CommonError> {
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Path).await?;
+// Logic to retrieve metadata for a file or directory.
+pub async fn StatFileLogic(ApplicationHandle:&ApplicationHandle<Wry>, Path:&PathBuf) -> Result<FileSystemStatDto, CommonError> {
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Path).await?;
 	let Metadata = fs::metadata(Path)
 		.await
 		.map_err(|e| Utils::MapIoErrorToCommonError(e, Path.clone(), "StatFile"))?;
@@ -54,12 +54,12 @@ pub async fn StatFileLogic(AppHandle:&AppHandle<Wry>, Path:&PathBuf) -> Result<F
 	})
 }
 
-/// Logic to read the contents of a directory.
+// Logic to read the contents of a directory.
 pub async fn ReadDirectoryLogic(
-	AppHandle:&AppHandle<Wry>,
+	ApplicationHandle:&ApplicationHandle<Wry>,
 	Path:&PathBuf,
 ) -> Result<Vec<(String, FileTypeDto)>, CommonError> {
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Path).await?;
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Path).await?;
 	let mut Entries = Vec::new();
 	let mut ReadDir = fs::read_dir(Path)
 		.await
@@ -88,15 +88,15 @@ pub async fn ReadDirectoryLogic(
 	Ok(Entries)
 }
 
-/// Logic to write content to a file, with options for creation and overwriting.
+// Logic to write content to a file, with options for creation and overwriting.
 pub async fn WriteFileLogic(
-	AppHandle:&AppHandle<Wry>,
+	ApplicationHandle:&ApplicationHandle<Wry>,
 	Path:&PathBuf,
 	Content:Vec<u8>,
 	Create:bool,
 	Overwrite:bool,
 ) -> Result<(), CommonError> {
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Path).await?;
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Path).await?;
 	let PathExists = fs::try_exists(Path).await.unwrap_or(false);
 
 	if PathExists && !Overwrite {
@@ -119,9 +119,9 @@ pub async fn WriteFileLogic(
 		.map_err(|e| Utils::MapIoErrorToCommonError(e, Path.clone(), "WriteFile"))
 }
 
-/// Logic to create a directory, with an option for recursive creation.
-pub async fn CreateDirectoryLogic(AppHandle:&AppHandle<Wry>, Path:&PathBuf, Recursive:bool) -> Result<(), CommonError> {
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Path).await?;
+// Logic to create a directory, with an option for recursive creation.
+pub async fn CreateDirectoryLogic(ApplicationHandle:&ApplicationHandle<Wry>, Path:&PathBuf, Recursive:bool) -> Result<(), CommonError> {
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Path).await?;
 	let operation = if Recursive {
 		fs::create_dir_all(Path).await
 	} else {
@@ -130,14 +130,14 @@ pub async fn CreateDirectoryLogic(AppHandle:&AppHandle<Wry>, Path:&PathBuf, Recu
 	operation.map_err(|e| Utils::MapIoErrorToCommonError(e, Path.clone(), "CreateDirectory"))
 }
 
-/// Logic to delete a file or directory. The operation is idempotent.
+// Logic to delete a file or directory. The operation is idempotent.
 pub async fn DeleteLogic(
-	AppHandle:&AppHandle<Wry>,
+	ApplicationHandle:&ApplicationHandle<Wry>,
 	Path:&PathBuf,
 	Recursive:bool,
 	_UseTrash:bool,
 ) -> Result<(), CommonError> {
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Path).await?;
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Path).await?;
 	match fs::metadata(Path).await {
 		Ok(Metadata) => {
 			let operation = if Metadata.is_dir() {
@@ -156,15 +156,15 @@ pub async fn DeleteLogic(
 	}
 }
 
-/// Logic to rename (move) a file or directory.
+// Logic to rename (move) a file or directory.
 pub async fn RenameLogic(
-	AppHandle:&AppHandle<Wry>,
+	ApplicationHandle:&ApplicationHandle<Wry>,
 	Source:&PathBuf,
 	Target:&PathBuf,
 	Overwrite:bool,
 ) -> Result<(), CommonError> {
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Source).await?;
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Target).await?;
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Source).await?;
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Target).await?;
 	if !Overwrite && fs::try_exists(Target).await.unwrap_or(false) {
 		return Err(CommonError::FsFileExists(Target.clone()));
 	}
@@ -173,16 +173,16 @@ pub async fn RenameLogic(
 		.map_err(|e| Utils::MapIoErrorToCommonError(e, Source.clone(), "Rename"))
 }
 
-/// Logic to copy a file. Does not support recursive directory copy.
+// Logic to copy a file. Does not support recursive directory copy.
 pub async fn CopyLogic(
-	AppHandle:&AppHandle<Wry>,
+	ApplicationHandle:&ApplicationHandle<Wry>,
 	Source:&PathBuf,
 	Target:&PathBuf,
 	Overwrite:bool,
 ) -> Result<(), CommonError> {
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Source).await?;
-	Utils::IsPathAllowedForFilesystemAccess(AppHandle, Target).await?;
-	let SourceMetadata = StatFileLogic(AppHandle, Source).await?;
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Source).await?;
+	Utils::IsPathAllowedForFilesystemAccess(ApplicationHandle, Target).await?;
+	let SourceMetadata = StatFileLogic(ApplicationHandle, Source).await?;
 	if SourceMetadata.FileType == FileTypeDto::Directory as u8 {
 		return Err(CommonError::NotImplemented { FeatureName:"Recursive directory copy".to_string() });
 	}
@@ -195,7 +195,7 @@ pub async fn CopyLogic(
 		.map_err(|e| Utils::MapIoErrorToCommonError(e, Source.clone(), "Copy"))
 }
 
-/// Logic to create an empty file.
-pub async fn CreateFileLogic(AppHandle:&AppHandle<Wry>, Path:&PathBuf) -> Result<(), CommonError> {
-	WriteFileLogic(AppHandle, Path, vec![], true, false).await
+// Logic to create an empty file.
+pub async fn CreateFileLogic(ApplicationHandle:&ApplicationHandle<Wry>, Path:&PathBuf) -> Result<(), CommonError> {
+	WriteFileLogic(ApplicationHandle, Path, vec![], true, false).await
 }

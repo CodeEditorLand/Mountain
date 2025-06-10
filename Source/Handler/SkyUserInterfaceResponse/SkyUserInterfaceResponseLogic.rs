@@ -1,30 +1,30 @@
 use Common::error::CommonError;
 use log::{info, warn};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Runtime, command};
+use tauri::{ApplicationHandle, Manager, RunTime, command};
 
-/// @module SkyUiResponsesLogic
-/// @description Contains the handler logic for processing asynchronous
-/// responses sent from the Sky frontend back to the Mountain backend. This is
-/// the receiving end of the request-response pattern for UI interactions.
-use crate::{AppState::AppState::AppState, handlers::error_utils};
+// @module SkyUiResponsesLogic
+// @description Contains the handler logic for processing asynchronous
+// responses sent from the Sky frontend back to the Mountain backend. This is
+// the receiving end of the request-response pattern for UI interactions.
+use crate::{ApplicationState::ApplicationState::ApplicationState, Handler::error_utils};
 
-/// A Tauri command that resolves a pending UI request. The Sky frontend calls
-/// this command when a user has completed an action (e.g., selected a file in a
-/// dialog, clicked a button on a message).
-///
-/// @param RequestId - The unique ID of the request being resolved.
-/// @param DataValue - The success data from the UI (e.g., a file path).
-/// @param ErrorDetailsValue - Error information if the UI operation failed.
+// A Tauri command that resolves a pending UI request. The Sky frontend calls
+// this command when a user has completed an action (e.g., selected a file in a
+// dialog, clicked a button on a message).
+//
+// @param RequestId - The unique ID of the request being resolved.
+// @param DataValue - The success data from the UI (e.g., a file path).
+// @param ErrorDetailsValue - Error information if the UI operation failed.
 #[command(rename_all = "PascalCase")]
-pub async fn SkyResolvesUiRequest<R:Runtime>(
-	AppHandle:AppHandle<R>,
+pub async fn SkyResolvesUiRequest<R:RunTime>(
+	ApplicationHandle:ApplicationHandle<R>,
 	RequestId:String,
 	DataValue:Option<Value>,
 	ErrorDetailsValue:Option<Value>,
 ) -> Result<(), String> {
 	info!("[SkyUiResponses] Resolving UI request ID: {}", RequestId);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 
 	// Atomically find and remove the pending request's sender from the map.
 	let MaybeSender = AppStateInstance.PendingUiRequests.lock().unwrap().remove(&RequestId);

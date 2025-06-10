@@ -1,12 +1,13 @@
-//! Defines the concrete, Echo-based `AppRuntime` for the Mountain application.
-//!
-//! This is the core execution engine that bridges the declarative
-//! `ActionEffect` system with the high-performance `Echo` task scheduler.
+// Defines the concrete, Echo-based `ApplicationRunTime` for the Mountain
+// application.
+//
+// This is the core execution engine that bridges the declarative
+// `ActionEffect` system with the high-performance `Echo` task scheduler.
 
 use std::sync::Arc;
 
 use Common::{
-	effect::{ActionEffect, AppRuntime as AppRuntimeTrait},
+	effect::{ActionEffect, ApplicationRunTime as ApplicationRunTimeTrait},
 	environment::{Environment, Requires},
 	error::CommonError, // Assuming this will be used for error mapping.
 };
@@ -16,38 +17,38 @@ use tokio::sync::oneshot;
 
 use crate::{environment::MountainEnvironment, scheduler::Scheduler};
 
-/// A runtime that uses a high-performance, work-stealing scheduler (`Echo`)
-/// to execute all `ActionEffect`s.
-pub struct AppRuntime {
+// A RunTime that uses a high-performance, work-stealing scheduler (`Echo`)
+// to execute all `ActionEffect`s.
+pub struct ApplicationRunTime {
 	Scheduler:Arc<Scheduler>,
 	Environment:Arc<MountainEnvironment>,
 }
 
-impl AppRuntime {
-	/// Creates a new `AppRuntime` that is powered by an `Echo` scheduler.
-	///
-	/// # Arguments
-	/// * `Scheduler` - A shared pointer to the application's main scheduler.
-	/// * `Environment` - A shared pointer to the application's environment.
+impl ApplicationRunTime {
+	// Creates a new `ApplicationRunTime` that is powered by an `Echo` scheduler.
+	//
+	// # Arguments
+	// * `Scheduler` - A shared pointer to the application's main scheduler.
+	// * `Environment` - A shared pointer to the application's environment.
 	pub fn New(Scheduler:Arc<Scheduler>, Environment:Arc<MountainEnvironment>) -> Self {
-		info!("[AppRuntime] New Echo-based instance created.");
+		info!("[ApplicationRunTime] New Echo-based instance created.");
 		Self { Scheduler, Environment }
 	}
 }
 
 #[async_trait]
-impl AppRuntimeTrait for AppRuntime {
+impl ApplicationRunTimeTrait for ApplicationRunTime {
 	type EnvironmentType = MountainEnvironment;
 
-	/// Gets the environment associated with this runtime.
+	// Gets the environment associated with this RunTime.
 	fn GetEnvironment(&self) -> Arc<Self::EnvironmentType> { self.Environment.clone() }
 
-	/// The core integration logic.
-	///
-	/// This method takes an `ActionEffect`, wraps its execution in a new
-	/// future, submits that future to the scheduler, and then awaits the result
-	/// via a `oneshot` channel. This decouples the request of an effect from
-	/// its execution on a worker thread.
+	// The core integration logic.
+	//
+	// This method takes an `ActionEffect`, wraps its execution in a new
+	// future, submits that future to the scheduler, and then awaits the result
+	// via a `oneshot` channel. This decouples the request of an effect from
+	// its execution on a worker thread.
 	async fn Run<Capability, Error, Output>(
 		&self,
 		Effect:ActionEffect<Arc<Capability>, Error, Output>,
@@ -60,7 +61,8 @@ impl AppRuntimeTrait for AppRuntime {
 		// 1. Create the single-use channel to receive the result.
 		let (ResultSender, ResultReceiver) = oneshot::channel::<Result<Output, Error>>();
 
-		// 2. Get the specific capability (e.g., `Arc<dyn FsReader>`) the effect needs.
+		// 2. Get the specific capability (e.g., `Arc<dyn FileSystemReader>`) the effect
+		//    needs.
 		let CapabilityProvider:Arc<Capability> = self.Environment.Require();
 
 		// 3. Create the future that will be executed by a worker thread.
@@ -70,7 +72,7 @@ impl AppRuntimeTrait for AppRuntime {
 			if ResultSender.send(Result).is_err() {
 				// This occurs if the caller stops awaiting the receiver, e.g., due to a
 				// timeout.
-				error!("[AppRuntime] Failed to send effect result; receiver was dropped.");
+				error!("[ApplicationRunTime] Failed to send effect result; receiver was dropped.");
 			}
 		};
 
@@ -91,7 +93,7 @@ impl AppRuntimeTrait for AppRuntime {
 	}
 }
 
-impl Clone for AppRuntime {
-	/// Implements `Clone` to satisfy Tauri's `State` management requirements.
+impl Clone for ApplicationRunTime {
+	// Implements `Clone` to satisfy Tauri's `State` management requirements.
 	fn clone(&self) -> Self { Self { Scheduler:self.Scheduler.clone(), Environment:self.Environment.clone() } }
 }

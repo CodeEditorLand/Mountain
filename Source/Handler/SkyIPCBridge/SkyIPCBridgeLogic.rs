@@ -1,13 +1,13 @@
 use log::debug;
 use serde::Deserialize;
 use serde_json::Value;
-use tauri::{AppHandle, Wry, command};
+use tauri::{ApplicationHandle, Wry, command};
 
-/// @module SkyIpcBridgeLogic
-/// @description Contains the logic for bridging generic IPC messages from the
-/// Sky frontend to the Cocoon sidecar. This acts as a proxy for VS Code's
-/// legacy `ipcRenderer` communication pattern.
-use crate::{handlers::error_utils, vine};
+// @module SkyIpcBridgeLogic
+// @description Contains the logic for bridging generic IPC messages from the
+// Sky frontend to the Cocoon sidecar. This acts as a proxy for VS Code's
+// legacy `ipcRenderer` communication pattern.
+use crate::{Handler::error_utils, vine};
 
 const DEFAULT_SIDECAR_ID:&str = "cocoon-main";
 const DEFAULT_TIMEOUT_MS:u64 = 30000;
@@ -20,8 +20,8 @@ pub struct IpcBridgeArgument {
 	pub ArgumentList:Vec<Value>,
 }
 
-/// A Tauri command that forwards a "send" (fire-and-forget) message from Sky to
-/// Cocoon. This effectively shims `ipcRenderer.send`.
+// A Tauri command that forwards a "send" (fire-and-forget) message from Sky to
+// Cocoon. This effectively shims `ipcRenderer.send`.
 #[command(rename_all = "PascalCase")]
 pub async fn MountainIpcBridgeSend(Argument:IpcBridgeArgument) -> Result<(), String> {
 	debug!(
@@ -38,8 +38,8 @@ pub async fn MountainIpcBridgeSend(Argument:IpcBridgeArgument) -> Result<(), Str
 		.map_err(|e| error_utils::MapCommonErrorToRpcString(e, "IpcBridgeSend"))
 }
 
-/// A Tauri command that forwards an "invoke" (request-response) message from
-/// Sky to Cocoon. This effectively shims `ipcRenderer.invoke`.
+// A Tauri command that forwards an "invoke" (request-response) message from
+// Sky to Cocoon. This effectively shims `ipcRenderer.invoke`.
 #[command(rename_all = "PascalCase")]
 pub async fn MountainIpcBridgeInvoke(Argument:IpcBridgeArgument) -> Result<Value, String> {
 	debug!("[SkyIpcBridge] Forwarding 'invoke' request on channel '{}'", Argument.Channel);

@@ -4,23 +4,23 @@ use Common::{
 };
 use log::{debug, error, info};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Emitter, Manager, Runtime};
+use tauri::{ApplicationHandle, Emitter, Manager, RunTime};
 
-/// @module DiagnosticsLogic
-/// @description Contains the core logic for managing diagnostic collections.
-/// This includes storing diagnostics from various sources and notifying the UI
-/// of changes.
-use crate::{AppState::AppState::AppState, environment::Utils, handlers::error_utils};
+// @module DiagnosticsLogic
+// @description Contains the core logic for managing diagnostic collections.
+// This includes storing diagnostics from various sources and notifying the UI
+// of changes.
+use crate::{ApplicationState::ApplicationState::ApplicationState, Handler::error_utils, environment::Utils};
 
-/// Logic to set or update diagnostics for multiple resources from a specific
-/// owner.
-pub async fn SetDiagnosticsLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to set or update diagnostics for multiple resources from a specific
+// owner.
+pub async fn SetDiagnosticsLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	Owner:String,
 	EntriesDtoValue:Value,
 ) -> Result<(), CommonError> {
 	info!("[DiagnosticsLogic] Setting diagnostics for owner: {}", Owner);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let mut ChangedUriKeys = Vec::new();
 
 	// The payload is an array of [UriComponents, MarkerDataDto[] | null]
@@ -62,17 +62,17 @@ pub async fn SetDiagnosticsLogic<R:Runtime>(
 
 	// Notify the frontend that diagnostics have changed for specific URIs.
 	let EventPayload = json!({ "Owner": Owner, "Uris": ChangedUriKeys });
-	if let Err(e) = AppHandle.emit("sky://diagnostics/changed", EventPayload) {
+	if let Err(e) = ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
 		error!("[DiagnosticsLogic] Failed to emit 'diagnostics_changed': {}", e);
 	}
 
 	Ok(())
 }
 
-/// Logic to clear all diagnostics from a specific owner.
-pub async fn ClearDiagnosticsLogic<R:Runtime>(AppHandle:&AppHandle<R>, Owner:String) -> Result<(), CommonError> {
+// Logic to clear all diagnostics from a specific owner.
+pub async fn ClearDiagnosticsLogic<R:RunTime>(ApplicationHandle:&ApplicationHandle<R>, Owner:String) -> Result<(), CommonError> {
 	info!("[DiagnosticsLogic] Clearing all diagnostics for owner: {}", Owner);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let mut DiagMapGuard = AppStateInstance
 		.DiagnosticsMap
 		.lock()
@@ -83,23 +83,23 @@ pub async fn ClearDiagnosticsLogic<R:Runtime>(AppHandle:&AppHandle<R>, Owner:Str
 		drop(DiagMapGuard);
 
 		let EventPayload = json!({ "Owner": Owner, "Uris": ChangedUriKeys });
-		if let Err(e) = AppHandle.emit("sky://diagnostics/changed", EventPayload) {
+		if let Err(e) = ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
 			error!("[DiagnosticsLogic] Failed to emit 'diagnostics_changed' on clear: {}", e);
 		}
 	}
 	Ok(())
 }
 
-/// Logic to retrieve all diagnostics, optionally filtered by a resource URI.
-pub async fn GetAllDiagnosticsLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic to retrieve all diagnostics, optionally filtered by a resource URI.
+pub async fn GetAllDiagnosticsLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	ResourceUriFilterOption:Option<Value>,
 ) -> Result<Value, CommonError> {
 	debug!(
 		"[DiagnosticsLogic] Getting all diagnostics with filter: {:?}",
 		ResourceUriFilterOption
 	);
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let DiagMapGuard = AppStateInstance
 		.DiagnosticsMap
 		.lock()

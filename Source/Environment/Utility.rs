@@ -5,23 +5,23 @@ use std::{
 
 use Common::error::CommonError;
 use log::{error, trace, warn};
-use tauri::{AppHandle, Manager, Wry};
+use tauri::{ApplicationHandle, Manager, Wry};
 
-/// @module Utils (Environment)
-/// @description Contains shared helper functions used by the environment
-/// provider implementations and their corresponding handlers.
-use crate::AppState::AppState::AppState;
+// @module Utils (Environment)
+// @description Contains shared helper functions used by the environment
+// provider implementations and their corresponding Handler.
+use crate::ApplicationState::ApplicationState::ApplicationState;
 
-/// Maps a `PoisonError` from a failed `AppState` Mutex lock into a structured
-/// `CommonError::StateLock`.
+// Maps a `PoisonError` from a failed `ApplicationState` Mutex lock into a
+// structured `CommonError::StateLock`.
 pub fn MapAppStateLockErrorToCommonError<T>(Error:std::sync::PoisonError<std::sync::MutexGuard<'_, T>>) -> CommonError {
-	let ErrorMessage = format!("[EnvironmentUtils] Failed to lock AppState section: {}", Error);
+	let ErrorMessage = format!("[EnvironmentUtils] Failed to lock ApplicationState section: {}", Error);
 	error!("{}", ErrorMessage);
 	CommonError::StateLock { Context:ErrorMessage }
 }
 
-/// Maps a standard `std::io::Error` to a more specific `CommonError` variant,
-/// providing better context for filesystem failures.
+// Maps a standard `std::io::Error` to a more specific `CommonError` variant,
+// providing better context for filesystem failures.
 pub fn MapIoErrorToCommonError(Error:std::io::Error, Path:PathBuf, OperationContext:&'static str) -> CommonError {
 	warn!(
 		"[EnvironmentUtils] FS op '{}' on '{}' failed: {}",
@@ -42,8 +42,8 @@ pub fn MapIoErrorToCommonError(Error:std::io::Error, Path:PathBuf, OperationCont
 	}
 }
 
-/// A simple utility to detect a language identifier string from a file path's
-/// extension.
+// A simple utility to detect a language identifier string from a file path's
+// extension.
 pub fn DetectLanguageIdentifierFromFilePath(Path:&Path) -> String {
 	match Path.extension().and_then(OsStr::to_str) {
 		Some("js") | Some("mjs") | Some("cjs") => "javascript",
@@ -60,18 +60,18 @@ pub fn DetectLanguageIdentifierFromFilePath(Path:&Path) -> String {
 	.to_string()
 }
 
-/// A stub for a function that would detect file encoding from byte content.
-/// A real implementation would inspect for a Byte Order Mark (BOM) or use
-/// heuristics.
+// A stub for a function that would detect file encoding from byte content.
+// A real implementation would inspect for a Byte Order Mark (BOM) or use
+// heuristics.
 pub fn DetectFileEncodingFromBytes(_ContentBytes:&[u8]) -> String { "utf8".to_string() }
 
-/// A critical security helper that checks if a given filesystem path is allowed
-/// for access. In our architecture, this means the path must be within one of
-/// the currently open workspace folders.
-pub async fn IsPathAllowedForFilesystemAccess(AppHandle:&AppHandle<Wry>, PathToCheck:&Path) -> Result<(), CommonError> {
+// A critical security helper that checks if a given filesystem path is allowed
+// for access. In our architecture, this means the path must be within one of
+// the currently open workspace folders.
+pub async fn IsPathAllowedForFilesystemAccess(ApplicationHandle:&ApplicationHandle<Wry>, PathToCheck:&Path) -> Result<(), CommonError> {
 	trace!("[Environment SecCheck] Verifying path: {}", PathToCheck.display());
 
-	let AppStateInstance = AppHandle.state::<AppState>();
+	let AppStateInstance = ApplicationHandle.state::<ApplicationState>();
 	let FoldersGuard = AppStateInstance
 		.WorkspaceFolders
 		.lock()

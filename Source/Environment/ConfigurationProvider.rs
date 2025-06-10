@@ -12,7 +12,7 @@ use Common::{
 use async_trait::async_trait;
 use serde_json::Value;
 
-use crate::{environment::MountainEnvironment, handlers::config as ConfigHandler};
+use crate::{Handler::config as ConfigHandler, environment::MountainEnvironment};
 
 #[async_trait]
 impl ConfigProvider for MountainEnvironment {
@@ -21,7 +21,7 @@ impl ConfigProvider for MountainEnvironment {
 		Section:Option<String>,
 		Overrides:ConfigurationOverridesDto,
 	) -> Result<Value, CommonError> {
-		ConfigHandler::GetConfigurationValueLogic(&self.AppHandle, Section, Overrides).await
+		ConfigHandler::GetConfigurationValueLogic(&self.ApplicationHandle, Section, Overrides).await
 	}
 
 	async fn UpdateConfigurationValue(
@@ -33,7 +33,7 @@ impl ConfigProvider for MountainEnvironment {
 		ScopeToLanguage:Option<bool>,
 	) -> Result<(), CommonError> {
 		ConfigHandler::UpdateConfigurationValueLogic(
-			&self.AppHandle,
+			&self.ApplicationHandle,
 			Key,
 			ValueToSet,
 			Target,
@@ -51,7 +51,7 @@ impl ConfigInspector for MountainEnvironment {
 		Key:String,
 		Overrides:ConfigurationOverridesDto,
 	) -> Result<Option<InspectResultDataDto>, CommonError> {
-		ConfigHandler::InspectConfigurationValueLogic(&self.AppHandle, Key, Overrides).await
+		ConfigHandler::InspectConfigurationValueLogic(&self.ApplicationHandle, Key, Overrides).await
 	}
 }
 

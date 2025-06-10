@@ -9,18 +9,18 @@ use std::{
 };
 
 use log::{error, info, warn};
-use tauri::{AppHandle, Manager, Wry};
+use tauri::{ApplicationHandle, Manager, Wry};
 
-/// @module AppState
-/// @description Defines the main `AppState` struct, which is the central,
-/// shared, thread-safe state for the entire Mountain application. It is managed
-/// by Tauri and accessible to all commands and environment providers.
-use super::{Dto::*, Internal};
-use crate::handlers::commands::CommandHandler;
+// @module ApplicationState
+// @description Defines the main `ApplicationState` struct, which is the central,
+// shared, thread-safe state for the entire Mountain application. It is managed
+// by Tauri and accessible to all commands and environment providers.
+use super::{DTO::*, Internal};
+use crate::Handler::commands::CommandHandler;
 
-/// The central, shared, thread-safe state for the entire Mountain application.
+// The central, shared, thread-safe state for the entire Mountain application.
 #[derive(Clone)]
-pub struct AppState {
+pub struct ApplicationState {
 	// Workspace State
 	pub WorkspaceFolders:Arc<StdMutex<Vec<WorkspaceFolderStateDto>>>,
 	pub WorkspaceConfigurationPath:Arc<StdMutex<Option<PathBuf>>>,
@@ -59,21 +59,21 @@ pub struct AppState {
 	>,
 }
 
-impl Default for AppState {
+impl Default for ApplicationState {
 	fn default() -> Self {
-		info!("[AppState] Initializing default application state...");
+		info!("[ApplicationState] Initializing default application state...");
 		let AppNameForPaths = env!("CARGO_PKG_NAME");
 		let AppDataDirectoryPath = dirs::config_dir().map(|p| p.join(AppNameForPaths)).unwrap_or_else(|| {
-			warn!("[AppState] Could not get config dir. Using relative path.");
+			warn!("[ApplicationState] Could not get config dir. Using relative path.");
 			PathBuf::from(format!(".{}-appdata", AppNameForPaths))
 		});
 		Internal::EnsureDirectoryExists(&AppDataDirectoryPath);
 
 		let GlobalMementoFilePath = Internal::ResolveMementoStorageFilePath(&AppDataDirectoryPath, true, "");
 		let InitialGlobalMementoMap = Internal::LoadInitialMementoFromDisk(&GlobalMementoFilePath);
-		let InitialCommandRegistryMap = crate::handlers::commands::RegisterNativeCommands();
+		let InitialCommandRegistryMap = crate::Handler::commands::RegisterNativeCommands();
 
-		info!("[AppState] Default state initialization complete.");
+		info!("[ApplicationState] Default state initialization complete.");
 		Self {
 			WorkspaceFolders:Arc::new(StdMutex::new(Vec::new())),
 			WorkspaceConfigurationPath:Arc::new(StdMutex::new(None)),
@@ -104,7 +104,7 @@ impl Default for AppState {
 	}
 }
 
-impl AppState {
+impl ApplicationState {
 	// All helper methods from the provided source are preserved here...
 	pub fn GetWorkspaceIdentifier(&self) -> Result<String, String> {
 		// ...
@@ -120,7 +120,7 @@ impl AppState {
 
 	pub fn GetNextTerminalIdentifier(&self) -> u64 { self.NextTerminalIdentifier.fetch_add(1, AtomicOrdering::Relaxed) }
 
-	pub async fn ScanExtensions(&self, AppHandle:&AppHandle<Wry>) { /* ... */
+	pub async fn ScanExtensions(&self, ApplicationHandle:&ApplicationHandle<Wry>) { /* ...// 
 	}
 
 	pub fn UpdateWorkspaceMementoPathAndReload(&self, AppDataDirectory:&Path) -> Result<(), String> {

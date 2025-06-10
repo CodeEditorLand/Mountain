@@ -1,34 +1,37 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use serde_json::Value;
-use tauri::{AppHandle, Runtime, Window};
+use tauri::{ApplicationHandle, RunTime, Window};
 
-/// @module CommandHandler
-/// @description Defines the `CommandHandler` enum, which is used by the command
-/// registry to categorize and store the implementation details for each
-/// command.
-use crate::runtime::AppRuntime::AppRuntime;
+// @module CommandHandler
+// @description Defines the `CommandHandler` enum, which is used by the command
+// registry to categorize and store the implementation details for each
+// command.
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-/// An enum representing the different ways a command can be handled by the
-/// system. This allows the command dispatcher to decide whether to execute a
-/// local Rust function or to proxy the request to an external sidecar process.
-pub enum CommandHandler<R:Runtime + 'static> {
-	/// A command handled by a native, asynchronous Rust function. The function
-	/// pointer has a standardized signature to receive all necessary context.
+// An enum representing the different ways a command can be handled by the
+// system. This allows the command dispatcher to decide whether to execute a
+// local Rust function or to proxy the request to an external sidecar process.
+pub enum CommandHandler<R:RunTime + 'static> {
+	// A command handled by a native, asynchronous Rust function. The function
+	// pointer has a standardized signature to receive all necessary context.
 	Native(
 		fn(
-			AppHandle<R>,
+			ApplicationHandle<R>,
 			Window<R>,
-			Arc<AppRuntime>,
+			Arc<ApplicationRunTime>,
 			Value,
 		) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>>,
 	),
-	/// A command that is implemented in an extension and must be proxied to a
-	/// sidecar process (like Cocoon) for execution.
-	Proxied { SidecarIdentifier:String, CommandIdentifier:String },
+	// A command that is implemented in an extension and must be proxied to a
+	// sidecar process (like Cocoon) for execution.
+	Proxied {
+		SidecarIdentifier:String,
+		CommandIdentifier:String,
+	},
 }
 
-impl<R:Runtime + 'static> Clone for CommandHandler<R> {
+impl<R:RunTime + 'static> Clone for CommandHandler<R> {
 	fn clone(&self) -> Self {
 		match self {
 			CommandHandler::Native(FunctionPointer) => CommandHandler::Native(*FunctionPointer),

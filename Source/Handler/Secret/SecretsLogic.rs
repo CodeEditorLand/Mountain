@@ -1,27 +1,27 @@
 use Common::error::CommonError;
 use keyring::Entry;
 use log::{info, trace};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{ApplicationHandle, Manager, RunTime};
 
-/// @module SecretsLogic
-/// @description Contains the core logic for secure secret storage using the
-/// system keyring, powered by the `keyring` crate.
-use crate::handlers::error_utils;
+// @module SecretsLogic
+// @description Contains the core logic for secure secret storage using the
+// system keyring, powered by the `keyring` crate.
+use crate::Handler::error_utils;
 
-/// Constructs the service name for the keyring entry.
-///
-/// This is a crucial security feature that namespaces secrets on a
-/// per-extension basis, preventing one extension from reading another's
-/// secrets. It typically combines the application identifier (e.g.,
-/// `com.land.mountain`) with the extension's identifier (e.g.,
-/// `github.copilot`).
-fn GetKeyringServiceName<R:Runtime>(AppHandle:&AppHandle<R>, ExtensionIdentifier:&str) -> String {
-	format!("{}.{}", AppHandle.config().identifier, ExtensionIdentifier)
+// Constructs the service name for the keyring entry.
+//
+// This is a crucial security feature that namespaces secrets on a
+// per-extension basis, preventing one extension from reading another's
+// secrets. It typically combines the application identifier (e.g.,
+// `com.land.mountain`) with the extension's identifier (e.g.,
+// `github.copilot`).
+fn GetKeyringServiceName<R:RunTime>(ApplicationHandle:&ApplicationHandle<R>, ExtensionIdentifier:&str) -> String {
+	format!("{}.{}", ApplicationHandle.config().identifier, ExtensionIdentifier)
 }
 
-/// Logic for handling the `GetSecret` effect by reading from the OS keychain.
-pub async fn GetSecretLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic for handling the `GetSecret` effect by reading from the OS keychain.
+pub async fn GetSecretLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	ExtensionIdentifier:String,
 	Key:String,
 ) -> Result<Option<String>, CommonError> {
@@ -29,7 +29,7 @@ pub async fn GetSecretLogic<R:Runtime>(
 		"[SecretsLogic] Getting secret for ext: '{}', key: '{}'",
 		ExtensionIdentifier, Key
 	);
-	let ServiceName = GetKeyringServiceName(AppHandle, &ExtensionIdentifier);
+	let ServiceName = GetKeyringServiceName(ApplicationHandle, &ExtensionIdentifier);
 	let Entry = Entry::new(&ServiceName, &Key)
 		.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
 
@@ -40,9 +40,9 @@ pub async fn GetSecretLogic<R:Runtime>(
 	}
 }
 
-/// Logic for handling the `StoreSecret` effect by writing to the OS keychain.
-pub async fn StoreSecretLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic for handling the `StoreSecret` effect by writing to the OS keychain.
+pub async fn StoreSecretLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	ExtensionIdentifier:String,
 	Key:String,
 	Value:String,
@@ -51,7 +51,7 @@ pub async fn StoreSecretLogic<R:Runtime>(
 		"[SecretsLogic] Storing secret for ext: '{}', key: '{}'",
 		ExtensionIdentifier, Key
 	);
-	let ServiceName = GetKeyringServiceName(AppHandle, &ExtensionIdentifier);
+	let ServiceName = GetKeyringServiceName(ApplicationHandle, &ExtensionIdentifier);
 	let Entry = Entry::new(&ServiceName, &Key)
 		.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
 
@@ -60,10 +60,10 @@ pub async fn StoreSecretLogic<R:Runtime>(
 		.map_err(|e| CommonError::SecretsAccess { Key, Reason:e.to_string() })
 }
 
-/// Logic for handling the `DeleteSecret` effect by removing from the OS
-/// keychain.
-pub async fn DeleteSecretLogic<R:Runtime>(
-	AppHandle:&AppHandle<R>,
+// Logic for handling the `DeleteSecret` effect by removing from the OS
+// keychain.
+pub async fn DeleteSecretLogic<R:RunTime>(
+	ApplicationHandle:&ApplicationHandle<R>,
 	ExtensionIdentifier:String,
 	Key:String,
 ) -> Result<(), CommonError> {
@@ -71,7 +71,7 @@ pub async fn DeleteSecretLogic<R:Runtime>(
 		"[SecretsLogic] Deleting secret for ext: '{}', key: '{}'",
 		ExtensionIdentifier, Key
 	);
-	let ServiceName = GetKeyringServiceName(AppHandle, &ExtensionIdentifier);
+	let ServiceName = GetKeyringServiceName(ApplicationHandle, &ExtensionIdentifier);
 	let Entry = Entry::new(&ServiceName, &Key)
 		.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
 
