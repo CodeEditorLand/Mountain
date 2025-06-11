@@ -17,19 +17,19 @@ use crate::Handler::tree_view as TreeViewHandler;
 
 #[async_trait]
 impl TreeViewProvider for MountainEnvironment {
-	// Handles registering a new tree data provider by delegating to the
+	// Handle registering a new tree data provider by delegating to the
 	// `TreeViewHandler`.
 	async fn RegisterTreeDataProvider(&self, ViewId:String, Options:TreeViewOptionsDto) -> Result<(), CommonError> {
 		TreeViewHandler::RegisterTreeDataProviderLogic(&self.ApplicationHandle, ViewId, Options).await
 	}
 
-	// Handles unregistering a tree data provider by delegating to the
+	// Handle unregistering a tree data provider by delegating to the
 	// `TreeViewHandler`.
 	async fn UnregisterTreeDataProvider(&self, ViewId:String) -> Result<(), CommonError> {
 		TreeViewHandler::UnregisterTreeDataProviderLogic(&self.ApplicationHandle, ViewId).await
 	}
 
-	// Handles revealing a tree item by delegating to the `TreeViewHandler`.
+	// Handle revealing a tree item by delegating to the `TreeViewHandler`.
 	async fn RevealTreeItem(
 		&self,
 		ViewId:String,
@@ -40,12 +40,12 @@ impl TreeViewProvider for MountainEnvironment {
 		TreeViewHandler::RevealTreeItemLogic(&self.ApplicationHandle, ViewId, Item, ParentChain, Options).await
 	}
 
-	// Handles refreshing a tree view by delegating to the `TreeViewHandler`.
+	// Handle refreshing a tree view by delegating to the `TreeViewHandler`.
 	async fn RefreshTreeView(&self, ViewId:String, ItemsToRefresh:Option<Value>) -> Result<(), CommonError> {
 		TreeViewHandler::RefreshTreeViewLogic(&self.ApplicationHandle, ViewId, ItemsToRefresh).await
 	}
 
-	// Handles setting a tree view's message by delegating to the
+	// Handle setting a tree view's message by delegating to the
 	// `TreeViewHandler`.
 	async fn SetTreeViewMessage(&self, ViewId:String, Message:Value) -> Result<(), CommonError> {
 		// A real implementation would delegate to a handler.
@@ -53,7 +53,7 @@ impl TreeViewProvider for MountainEnvironment {
 		Ok(())
 	}
 
-	// Handles setting a tree view's title by delegating to the
+	// Handle setting a tree view's title by delegating to the
 	// `TreeViewHandler`.
 	async fn SetTreeViewTitle(
 		&self,
@@ -65,7 +65,7 @@ impl TreeViewProvider for MountainEnvironment {
 		Ok(())
 	}
 
-	// Handles setting a tree view's badge by delegating to the
+	// Handle setting a tree view's badge by delegating to the
 	// `TreeViewHandler`.
 	async fn SetTreeViewBadge(&self, ViewId:String, Badge:Option<TreeViewBadgeDto>) -> Result<(), CommonError> {
 		// A real implementation would delegate to a handler.

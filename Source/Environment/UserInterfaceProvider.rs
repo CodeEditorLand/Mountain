@@ -26,7 +26,7 @@ use crate::Handler::ui as UiHandler;
 
 #[async_trait]
 impl UiProvider for MountainEnvironment {
-	// Handles showing a message by delegating to the `UiHandler`.
+	// Handle showing a message by delegating to the `UiHandler`.
 	async fn ShowMessage(
 		&self,
 		Severity:MessageSeverity,
@@ -36,17 +36,17 @@ impl UiProvider for MountainEnvironment {
 		UiHandler::ShowMessageInteractiveLogic(&self.ApplicationHandle, Severity, Message, Options).await
 	}
 
-	// Handles showing an open dialog by delegating to the `UiHandler`.
+	// Handle showing an open dialog by delegating to the `UiHandler`.
 	async fn ShowOpenDialog(&self, Options:Option<OpenDialogOptionsDto>) -> Result<Option<Vec<PathBuf>>, CommonError> {
 		UiHandler::ShowOpenDialogInteractiveLogic(&self.ApplicationHandle, Options).await
 	}
 
-	// Handles showing a save dialog by delegating to the `UiHandler`.
+	// Handle showing a save dialog by delegating to the `UiHandler`.
 	async fn ShowSaveDialog(&self, Options:Option<SaveDialogOptionsDto>) -> Result<Option<PathBuf>, CommonError> {
 		UiHandler::ShowSaveDialogInteractiveLogic(&self.ApplicationHandle, Options).await
 	}
 
-	// Handles showing a quick pick by delegating to the `UiHandler`.
+	// Handle showing a quick pick by delegating to the `UiHandler`.
 	async fn ShowQuickPick(
 		&self,
 		Items:Vec<QuickPickItemDto>,
@@ -55,7 +55,7 @@ impl UiProvider for MountainEnvironment {
 		UiHandler::ShowQuickPickInteractiveLogic(&self.ApplicationHandle, Items, Options).await
 	}
 
-	// Handles showing an input box by delegating to the `UiHandler`.
+	// Handle showing an input box by delegating to the `UiHandler`.
 	async fn ShowInputBox(&self, Options:Option<InputBoxOptionsDto>) -> Result<Option<String>, CommonError> {
 		UiHandler::ShowInputBoxInteractiveLogic(&self.ApplicationHandle, Options).await
 	}

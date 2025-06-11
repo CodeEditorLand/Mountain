@@ -50,8 +50,8 @@ pub async fn Fn() {
 	let Scheduler = SchedulerBuilder::New().WithWorkerCount(NumberOfWorker).Build();
 
 	// We need an Arc<Mutex<>> to safely share the scheduler for shutdown handling.
-	let SchedulerForShutdown = Arc::new(tokio::sync::Mutex::new(Scheduler));
-	let SchedulerForRunTime = SchedulerForShutdown.clone();
+	let SchedulerForShutDown = Arc::new(tokio::sync::Mutex::new(Scheduler));
+	let SchedulerForRunTime = SchedulerForShutDown.clone();
 
 	let mut Builder = tauri::Builder::default();
 
@@ -117,7 +117,7 @@ pub async fn Fn() {
 			if let RunEvent::ExitRequested { api, .. } = Event {
 				info!("[RunEvent] Exit requested. Initiating graceful shutdown...");
 				api.prevent_exit();
-				let SchedulerHandle = SchedulerForShutdown.clone();
+				let SchedulerHandle = SchedulerForShutDown.clone();
 
 				// Spawn a new blocking thread to run the async shutdown logic.
 				// This avoids deadlocks when shutting down the tokio RunTime from within
@@ -126,7 +126,7 @@ pub async fn Fn() {
 					let RunTime = tokio::RunTime::Builder::new_current_thread().enable_all().build().unwrap();
 					RunTime.block_on(async move {
 						let mut Scheduler = SchedulerHandle.lock().await;
-						Scheduler.Shutdown().await;
+						Scheduler.ShutDown().await;
 					});
 				});
 

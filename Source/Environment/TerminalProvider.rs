@@ -13,7 +13,7 @@ use crate::Handler::terminal as TerminalHandler;
 
 #[async_trait]
 impl TerminalProvider for MountainEnvironment {
-	// Handles the creation of a new terminal by delegating to the
+	// Handle the creation of a new terminal by delegating to the
 	// `TerminalHandler`.
 	async fn CreateTerminal(&self, OptionsValue:Value) -> Result<Value, CommonError> {
 		// The handler logic returns a Result<Value, String>, so we map the error
@@ -23,7 +23,7 @@ impl TerminalProvider for MountainEnvironment {
 			.map_err(|e_str| CommonError::IpcError { Description:e_str })
 	}
 
-	// Handles sending text to a terminal by delegating to the
+	// Handle sending text to a terminal by delegating to the
 	// `TerminalHandler`.
 	async fn SendTextToTerminal(&self, TerminalId:u64, Text:String) -> Result<(), CommonError> {
 		TerminalHandler::SendTextToTerminalLogic(&self.ApplicationHandle, TerminalId, Text)
@@ -31,7 +31,7 @@ impl TerminalProvider for MountainEnvironment {
 			.map_err(|e_str| CommonError::IpcError { Description:e_str })
 	}
 
-	// Handles disposing of a terminal by delegating to the `TerminalHandler`.
+	// Handle disposing of a terminal by delegating to the `TerminalHandler`.
 	async fn DisposeTerminal(&self, TerminalId:u64) -> Result<(), CommonError> {
 		TerminalHandler::DisposeTerminalLogic(&self.ApplicationHandle, TerminalId)
 			.await

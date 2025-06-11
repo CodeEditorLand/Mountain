@@ -17,19 +17,19 @@ use crate::{Handler::status_bar as StatusBarHandler, vine::client as VineClient}
 
 #[async_trait]
 impl StatusBarProvider for MountainEnvironment {
-	// Handles a request to create or update a status bar entry by delegating
+	// Handle a request to create or update a status bar entry by delegating
 	// to the `StatusBarHandler`.
 	async fn SetEntry(&self, Entry:StatusBarEntryDto) -> Result<(), CommonError> {
 		StatusBarHandler::SetEntryLogic(&self.ApplicationHandle, Entry).await
 	}
 
-	// Handles a request to dispose of a status bar entry by delegating to the
+	// Handle a request to dispose of a status bar entry by delegating to the
 	// `StatusBarHandler`.
 	async fn DisposeEntry(&self, EntryId:String) -> Result<(), CommonError> {
 		StatusBarHandler::DisposeEntryLogic(&self.ApplicationHandle, EntryId).await
 	}
 
-	// Handles a request to resolve a dynamic tooltip.
+	// Handle a request to resolve a dynamic tooltip.
 	//
 	// This is a "reverse" call, where the host (`Mountain`) needs to get data
 	// from the extension host (`Cocoon`). It makes a gRPC call to the

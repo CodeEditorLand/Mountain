@@ -25,7 +25,7 @@ impl MountainVinegRPCService {
 
 #[tonic::async_trait]
 impl MountainService for MountainVinegRPCService {
-	// Handles generic request-response RPCs from Cocoon.
+	// Handle generic request-response RPCs from Cocoon.
 	async fn ProcessCocoonRequest(&self, Request:Request<GenericRequest>) -> Result<Response<GenericResponse>, Status> {
 		let RequestData = Request.into_inner();
 		let MethodName = RequestData.method;
@@ -69,7 +69,7 @@ impl MountainService for MountainVinegRPCService {
 		}
 	}
 
-	// Handles generic fire-and-forget notifications from Cocoon.
+	// Handle generic fire-and-forget notifications from Cocoon.
 	async fn SendCocoonNotification(&self, Request:Request<GenericNotification>) -> Result<Response<Empty>, Status> {
 		let NotificationData = Request.into_inner();
 		let MethodName = NotificationData.method;
