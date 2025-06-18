@@ -31,7 +31,7 @@ frontend and the `Cocoon` extension host.
     filesystem I/O, process management, secure storage, and more.
 3.  **Orchestrate Sidecars:** Reliably launch, manage, and communicate with the
     `Cocoon` (Node.js) extension host sidecar via a robust gRPC interface.
-4.  **Power the UI:** Serve as the backend for the `Wind` UI layer, responding
+4.  **Power the User Interface:** Serve as the backend for the `Wind` User Interface layer, responding
     to requests via Tauri commands and pushing state updates via Tauri events.
 
 ---
@@ -53,7 +53,7 @@ frontend and the `Cocoon` extension host.
 - **Secure Storage Integration:** Leverages the native OS keychain via the
   `keyring` crate to securely store sensitive data like authentication tokens.
 - **Robust Command Dispatching:** A central `Track` dispatcher intelligently
-  routes all incoming requests from the UI (`Wind`) and extensions (`Cocoon`) to
+  routes all incoming requests from the User Interface (`Wind`) and extensions (`Cocoon`) to
   the appropriate native Handler or effects.
 
 ---
@@ -62,12 +62,12 @@ frontend and the `Cocoon` extension host.
 
 | Principle                       | Description                                                                                                                                        | Key Components Involved                             |
 | :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------- |
-| **Implementation of Contracts** | Faithfully implement the abstract service `trait`s defined in the `Common` crate, providing the concrete logic for the application's architecture. | `environment/*` providers                           |
-| **Separation of Concerns**      | Isolate business logic in `Handler` modules, keeping the `environment` provider implementations clean and focused on delegation.                  | `environment/*`, `Handler/*`                       |
+| **Implementation of Contracts** | Faithfully implement the abstract service `trait`s defined in the `Common` crate, providing the concrete logic for the application's architecture. | `Environment/*` providers                           |
+| **Separation of Concerns**      | Isolate business logic in `Handler` modules, keeping the `Environment` provider implementations clean and focused on delegation.                  | `Environment/*`, `Handler/*`                       |
 | **Declarative Logic**           | Express all operations as `ActionEffect`s, which are executed by the `ApplicationRunTime`. This makes logic composable, testable, and robust.              | `RunTime/*`, `track/*`, `Common::effect`            |
 | **Centralized State**           | Maintain a single, thread-safe `ApplicationState` struct managed by Tauri to ensure data consistency across the entire application.                | `app_state/*`                                       |
-| **Secure & Performant IPC**     | Utilize gRPC for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                           | `vine/*`                                            |
-| **UI-Backend Decoupling**       | Interact with the `Wind` frontend exclusively through asynchronous Tauri commands and events, ensuring the backend is UI-agnostic.                 | `main.rs` (invoke handler), `Handler/*` (emitters) |
+| **Secure & Performant IPC**     | Utilize gRPC for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                           | `Vine/*`                                            |
+| **User Interface-Backend Decoupling**       | Interact with the `Wind` frontend exclusively through asynchronous Tauri commands and events, ensuring the backend is User Interface-agnostic.                 | `main.rs` (invoke handler), `Handler/*` (emitters) |
 
 ---
 
@@ -76,7 +76,7 @@ frontend and the `Cocoon` extension host.
 To understand how `Mountain`'s internal components are structured and how they
 implement the application's core logic, please refer to the detailed technical
 breakdown in [`docs/Deep Dive.md`](docs/Deep%20Dive.md). This document explains
-the roles of the `ApplicationRunTime`, `ApplicationState`, `Handler`, `environment`,
+the roles of the `ApplicationRunTime`, `ApplicationState`, `Handler`, `Environment`,
 and the `Vine` gRPC layer.
 
 ---
@@ -91,17 +91,17 @@ graph LR
     classDef mountain fill:#f9f,stroke:#333,stroke-width:2px;
     classDef cocoon fill:#ccf,stroke:#333,stroke-width:2px;
     classDef wind fill:#9cf,stroke:#333,stroke-width:2px;
-    classDef common fill:#cfc,stroke:#333,stroke-width:1px;
-    classDef ipc fill:#ff9,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5;
+    classDef Common fill:#cfc,stroke:#333,stroke-width:1px;
+    classDef IPC fill:#ff9,stroke:#333,stroke-width:1px,stroke-dasharray: 5 5;
 
     subgraph "Mountain (Native Rust/Tauri Backend)"
         TauriRuntime[Tauri App & Window]:::mountain
         ApplicationRunTime[ApplicationRunTime Engine]:::mountain
         ApplicationState["ApplicationState (Shared State)"]:::mountain
         TrackDispatcher[Track Dispatcher]:::mountain
-        VinegRPC[Vine gRPC Server]:::ipc
+        VinegRPC[Vine gRPC Server]:::IPC
         NativeHandlers[Native Logic Handlers]:::mountain
-        CommonCrate["Common Crate (Traits & DTOs)"]:::common
+        CommonCrate["Common Crate (Traits & DTOs)"]:::Common
 
         TauriRuntime -- Manages --> ApplicationState
         TauriRuntime -- Manages --> ApplicationRunTime
@@ -110,15 +110,15 @@ graph LR
     end
 
     subgraph "Clients"
-        WindUI["Wind/Sky UI (Webview)"]:::wind
+        WindUI["Wind/Sky User Interface (WebView)"]:::wind
         CocoonSidecar["Cocoon Extension Host (Node.js)"]:::cocoon
     end
 
     TauriRuntime -- Hosts --> WindUI
-    WindUI -- Tauri Commands --> TrackDispatcher
+    WindUI -- Tauri Command --> TrackDispatcher
     TrackDispatcher -- Tauri Events --> WindUI
 
-    VinegRPC -- gRPC Protocol <--> CocoonSidecar; class VinegRPC,CocoonSidecar ipc
+    VinegRPC -- gRPC Protocol <--> CocoonSidecar; class VinegRPC,CocoonSidecar IPC
     VinegRPC -- Forwards requests to --> TrackDispatcher
 
     NativeHandlers -- Implements traits from --> CommonCrate
@@ -142,7 +142,7 @@ Mountain/
 │   ├── Track/                       # The central request dispatcher.
 │   └── Vine/                        # The gRPC server implementation (using `tonic`).
 ├── proto/
-│   └── vine.proto                   # The gRPC contract definition file.
+│   └── Vine.proto                   # The gRPC contract definition file.
 └── build.rs                         # Build script to compile the .proto file into Rust code.
 ```
 
@@ -187,14 +187,14 @@ of changes specific to **Mountain**.
 ## Funding & Acknowledgements 🙏🏻
 
 **Mountain** is a core element of the **Land** ecosystem. This project is funded
-through [NGI0 Commons Fund](https://nlnet.nl/commonsfund), a fund established by
+through [NGI0 Commons Fund](https://nlnet.nl/Commonsfund), a fund established by
 [NLnet](https://nlnet.nl) with financial support from the European Commission's
 [Next Generation Internet](https://ngi.eu) program. Learn more at the
 [NLnet project page](https://nlnet.nl/project/Land).
 
 | **Land**                                                                                                                                            | PlayForm                                                                                                                                                 | NLnet                                                                                      | NGI0 Commons Fund                                                                                                                                 |
 | :-------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------ |
-| [<img src="https://raw.githubusercontent.com/CodeEditorLand/Asset/refs/heads/Current/Logo/Land.svg" height="80px" alt="Land">](https://editor.land) | [<img src="https://raw.githubusercontent.com/PlayForm/Asset/refs/heads/Current/Logo/PlayForm.svg" height="80px" alt="PlayForm">](https://playform.cloud) | [<img width="240px" src="https://nlnet.nl/logo/banner.svg" alt="NLnet">](https://nlnet.nl) | [<img width="240px" src="https://nlnet.nl/image/logos/NGI0CommonsFund_tag_black_mono.svg" alt="NGI0 Commons Fund">](https://nlnet.nl/commonsfund) |
+| [<img src="https://raw.githubusercontent.com/CodeEditorLand/Asset/refs/heads/Current/Logo/Land.svg" height="80px" alt="Land">](https://editor.land) | [<img src="https://raw.githubusercontent.com/PlayForm/Asset/refs/heads/Current/Logo/PlayForm.svg" height="80px" alt="PlayForm">](https://playform.cloud) | [<img width="240px" src="https://nlnet.nl/logo/banner.svg" alt="NLnet">](https://nlnet.nl) | [<img width="240px" src="https://nlnet.nl/image/logos/NGI0CommonsFund_tag_black_mono.svg" alt="NGI0 Commons Fund">](https://nlnet.nl/Commonsfund) |
 
 ---
 

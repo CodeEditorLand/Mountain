@@ -13,7 +13,7 @@ mod tests {
 		error::CommonError,
 		fs::{
 			FileSystemReader,
-			dto::{FileSystemStatDto, FileTypeDto},
+			DTO::{FileSystemStatDTO, FileTypeDTO},
 		},
 	};
 	use async_trait::async_trait;
@@ -68,11 +68,11 @@ mod tests {
 		let mut MockReader = MockMockTestFileSystemReader::new();
 
 		// 2. Arrange: Set up an expectation for failure.
-		// We tell the mock to return an FsNotFound error when called.
+		// We tell the mock to return an FileSystemNotFound error when called.
 		MockReader
 			.expect_ReadFile()
 			.times(1)
-			.returning(|path| Err(CommonError::FsNotFound(path.clone())));
+			.returning(|path| Err(CommonError::FileSystemNotFound(path.clone())));
 
 		// 3. Act: Call our handler function.
 		let path = PathBuf::from("/not/found.txt");
@@ -81,8 +81,8 @@ mod tests {
 		// 4. Assert: Check that the result is the correct error.
 		assert!(result.is_err());
 		match result.unwrap_err() {
-			CommonError::FsNotFound(p) => assert_eq!(p, path),
-			_ => panic!("Expected FsNotFound error"),
+			CommonError::FileSystemNotFound(p) => assert_eq!(p, path),
+			_ => panic!("Expected FileSystemNotFound error"),
 		}
 	}
 }
