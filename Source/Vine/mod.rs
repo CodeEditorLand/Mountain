@@ -29,8 +29,8 @@ pub mod generated;
 pub use self::error::VineError;
 // The auto-generated gRPC client for the `CocoonService`.
 // @see generated::CocoonServiceClient
-pub use self::generated::cocoon_service_client::CocoonServiceClient;
+pub use self::Generated::cocoon_service_client::CocoonServiceClient;
 // The auto-generated gRPC server trait for the `MountainService`.
 // Our `MountainVinegRPCService` will implement this trait.
 // @see generated::mountain_service_server::MountainServiceServer;
-pub use self::generated::mountain_service_server::MountainServiceServer;
+pub use self::Generated::mountain_service_server::MountainServiceServer;

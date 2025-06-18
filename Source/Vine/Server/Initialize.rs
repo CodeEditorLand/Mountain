@@ -11,7 +11,7 @@ use tonic::transport::Server;
 use super::MountainVinegRPCService::MountainVinegRPCService;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Vine::generated::mountain_service_server::MountainServiceServer,
+	Vine::Generated::mountain_service_server::MountainServiceServer,
 };
 
 /// Initializes and starts the gRPC server on a background task.

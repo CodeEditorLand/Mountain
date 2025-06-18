@@ -1,0 +1,66 @@
+// @file vine.proto
+// @brief Defines the gRPC services and messages for communication between Mountain (host) and Cocoon (sidecar).
+
+syntax = "proto3";
+
+package vine_ipc;
+
+// Service running on the Mountain host, listening for requests from Cocoon.
+service MountainService {
+  // A generic request-response method for Cocoon to call a function on Mountain.
+  rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
+  // A generic fire-and-forget method for Cocoon to send a notification to Mountain.
+  rpc SendCocoonNotification(GenericNotification) returns (Empty);
+  // A method for Cocoon to request that Mountain cancel a long-running operation.
+  rpc CancelOperation(CancelOperationRequest) returns (Empty);
+}
+
+// Service running on the Cocoon sidecar, listening for requests from Mountain.
+service CocoonService {
+  // A generic request-response method for Mountain to call a function on Cocoon.
+  rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+  // A generic fire-and-forget method for Mountain to send a notification to Cocoon.
+  rpc SendMountainNotification(GenericNotification) returns (Empty);
+  // A method for Mountain to request that Cocoon cancel a long-running operation.
+  rpc CancelOperation(CancelOperationRequest) returns (Empty);
+}
+
+// Represents an empty message, typically used for RPCs that don't need to return data.
+message Empty {}
+
+// A generic request message containing a method name and serialized parameters.
+message GenericRequest {
+  uint64 request_id = 1;
+  string method = 2;
+  bytes params = 3; // Parameters are expected to be a JSON-serialized byte array.
+}
+
+// A generic response message containing the result or an error.
+message GenericResponse {
+  uint64 request_id = 1;
+  bytes result = 2; // The successful result, JSON-serialized.
+  optional RpcError error = 3;
+}
+
+// A generic notification message, which is fire-and-forget and does not have an ID.
+message GenericNotification {
+  string method = 1;
+  bytes params = 2; // Parameters are expected to be a JSON-serialized byte array.
+}
+
+// A structured error payload, compliant with JSON-RPC error objects.
+message RpcError {
+  int32 code = 1;
+  string message = 2;
+  bytes data = 3; // Optional, additional error data, JSON-serialized.
+}
+
+// A message to cancel a specific, ongoing operation.
+message CancelOperationRequest {
+  uint64 request_id_to_cancel = 1;
+}
+
+// A generic data payload, currently unused but available for future extensions.
+message RpcDataPayload {
+  bytes data = 1;
+}

@@ -12,7 +12,7 @@ use tonic::{Request, Response, Status};
 
 use crate::{
 	track,
-	Vine::generated::{mountain_service_server::MountainService, *},
+	Vine::Generated::{mountain_service_server::MountainService, *},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
