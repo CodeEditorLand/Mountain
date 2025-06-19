@@ -1,7 +1,9 @@
-//! # WorkspaceFolderStateDTO
+//! # WorkSpaceFolderStateDTO
 //!
 //! Defines the Data Transfer Object for storing the state of a single
 //! workspace folder.
+
+#![allow(non_snake_case, non_camel_case_types)]
 
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -11,7 +13,7 @@ use crate::ApplicationState::Internal::URLSerializationHelper;
 /// Represents a single folder that is part of the current workspace.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "PascalCase")]
-pub struct WorkspaceFolderStateDTO {
+pub struct WorkSpaceFolderStateDTO {
 	/// The URI of the folder.
 	#[serde(with = "URLSerializationHelper")]
 	pub URI:Url,
