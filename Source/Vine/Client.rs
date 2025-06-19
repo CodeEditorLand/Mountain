@@ -6,7 +6,7 @@
 use std::{collections::HashMap, sync::Arc, time::Duration};
 
 use lazy_static::lazy_static;
-use log::{debug, error, info};
+use log::{debug, info};
 use parking_lot::Mutex;
 use serde_json::Value;
 use tokio::time::timeout;

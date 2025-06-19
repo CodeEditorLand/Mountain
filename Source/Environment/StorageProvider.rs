@@ -6,25 +6,25 @@
 
 use std::{collections::HashMap, path::PathBuf};
 
-use Common::{Error::CommonError, Storage::StorageProvider};
+use Common::{Error::CommonError::CommonError, Storage::StorageProvider};
 use async_trait::async_trait;
 use log::{error, info, trace};
 use serde_json::Value;
 use tokio::fs;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 
 #[async_trait]
 impl StorageProvider for MountainEnvironment {
 	/// Retrieves a value from either global or workspace storage.
 	async fn GetStorageValue(&self, IsGlobalScope:bool, Key:&str) -> Result<Option<Value>, CommonError> {
-		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
+		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
 		trace!("[StorageProvider] Getting value from {} scope for key: {}", ScopeName, Key);
 
 		let StorageMapMutex = if IsGlobalScope {
 			&self.ApplicationState.GlobalMemento
 		} else {
-			&self.ApplicationState.WorkspaceMemento
+			&self.ApplicationState.WorkSpaceMemento
 		};
 
 		let StorageMapGuard = StorageMapMutex
@@ -40,7 +40,7 @@ impl StorageProvider for MountainEnvironment {
 		Key:String,
 		ValueToSet:Option<Value>,
 	) -> Result<(), CommonError> {
-		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
+		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
 		info!("[StorageProvider] Updating value in {} scope for key: {}", ScopeName, Key);
 
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
@@ -50,9 +50,9 @@ impl StorageProvider for MountainEnvironment {
 			)
 		} else {
 			(
-				self.ApplicationState.WorkspaceMemento.clone(),
+				self.ApplicationState.WorkSpaceMemento.clone(),
 				self.ApplicationState
-					.WorkspaceMementoPath
+					.WorkSpaceMementoPath
 					.lock()
 					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 					.clone(),

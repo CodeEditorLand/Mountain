@@ -5,7 +5,7 @@
 
 #![allow(non_snake_case, non_camel_case_types)]
 
-use Common::LanguageFeature::DTO::ProviderType;
+use Common::LanguageFeature::DTO::ProviderType::ProviderType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 

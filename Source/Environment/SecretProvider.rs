@@ -4,13 +4,13 @@
 //! provider contains the core logic for secure secret storage using the system
 //! keyring, powered by the `keyring` crate.
 
-use Common::{Error::CommonError, Secret::SecretProvider};
+use Common::{Error::CommonError::CommonError, Secret::SecretProvider};
 use async_trait::async_trait;
 use keyring::Entry;
 use log::{info, trace};
 use tauri::Manager;
 
-use super::MountainEnvironment;
+use super::MountainEnvironment::MountainEnvironment;
 
 /// Constructs the service name for the keyring entry.
 ///

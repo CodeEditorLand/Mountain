@@ -12,7 +12,7 @@ use std::{
 	sync::{MutexGuard, PoisonError},
 };
 
-use Common::Error::CommonError;
+use Common::Error::CommonError::CommonError;
 use log::{error, trace};
 use url::Url;
 
@@ -56,7 +56,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 
 	// A full implementation would also check `ApplicationState.IsTrusted`.
 	let FoldersGuard = ApplicationState
-		.WorkspaceFolders
+		.WorkSpaceFolders
 		.lock()
 		.map_err(MapApplicationStateLockErrorToCommonError)?;
 

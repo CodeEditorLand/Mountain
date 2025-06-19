@@ -7,17 +7,17 @@
 use std::path::PathBuf;
 
 use Common::{
-	Error::CommonError,
+	Error::CommonError::CommonError,
 	UserInterface::{
 		DTO::{
-			InputBoxOptionsDTO,
-			MessageSeverity,
-			OpenDialogOptionsDTO,
-			QuickPickItemDTO,
-			QuickPickOptionsDTO,
-			SaveDialogOptionsDTO,
+			InputBoxOptionsDTO::InputBoxOptionsDTO,
+			MessageSeverity::MessageSeverity,
+			OpenDialogOptionsDTO::OpenDialogOptionsDTO,
+			QuickPickItemDTO::QuickPickItemDTO,
+			QuickPickOptionsDTO::QuickPickOptionsDTO,
+			SaveDialogOptionsDTO::SaveDialogOptionsDTO,
 		},
-		UserInterfaceProvider,
+		UserInterfaceProvider::UserInterfaceProvider,
 	},
 };
 use async_trait::async_trait;
@@ -28,7 +28,7 @@ use tauri::Emitter;
 use tokio::time::{Duration, timeout};
 use uuid::Uuid;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 
 #[derive(Serialize, Clone)]
 struct UserInterfaceRequest<TPayload:Serialize + Clone> {

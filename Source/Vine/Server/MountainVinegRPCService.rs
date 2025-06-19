@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use log::{error, info, trace, warn};
 use serde_json::Value;
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tonic::{Request, Response, Status};
 
 use crate::{
@@ -34,10 +34,7 @@ impl MountainVinegRPCService {
 #[tonic::async_trait]
 impl MountainService for MountainVinegRPCService {
 	/// Handles generic request-response RPCs from Cocoon.
-	async fn process_cocoon_request(
-		&self,
-		request:Request<GenericRequest>,
-	) -> Result<Response<GenericResponse>, Status> {
+	async fn ProcessCocoonRequest(&self, request:Request<GenericRequest>) -> Result<Response<GenericResponse>, Status> {
 		let RequestData = request.into_inner();
 		let MethodName = RequestData.method;
 		let RequestIdentifier = RequestData.request_id;
@@ -103,7 +100,7 @@ impl MountainService for MountainVinegRPCService {
 	}
 
 	/// Handles generic fire-and-forget notifications from Cocoon.
-	async fn send_cocoon_notification(&self, request:Request<GenericNotification>) -> Result<Response<Empty>, Status> {
+	async fn SendCocoonNotification(&self, request:Request<GenericNotification>) -> Result<Response<Empty>, Status> {
 		let NotificationData = request.into_inner();
 		let MethodName = NotificationData.method;
 		info!("[VineServer] Received gRPC Notification: Method='{}'", MethodName);
@@ -119,7 +116,7 @@ impl MountainService for MountainVinegRPCService {
 	}
 
 	/// Handles a request from Cocoon to cancel a long-running operation.
-	async fn cancel_operation(&self, _request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
+	async fn CancelOperation(&self, _request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		warn!("[VineServer] Received CancelOperation request, but cancellation is not yet implemented.");
 		// A full implementation would map the request_id_to_cancel to a
 		// CancellationToken and trigger it.

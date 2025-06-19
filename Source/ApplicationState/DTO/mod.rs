@@ -19,7 +19,7 @@ pub mod TerminalStateDTO;
 pub mod TreeViewStateDTO;
 pub mod WebViewStateDTO;
 pub mod WindowStateDTO;
-pub mod WorkspaceFolderStateDTO;
+pub mod WorkSpaceFolderStateDTO;
 
 // --- Public Re-exports (alphabetical) ---
 // pub use self::CustomDocumentStateDTO::CustomDocumentStateDTO;
@@ -34,4 +34,4 @@ pub mod WorkspaceFolderStateDTO;
 // pub use self::TreeViewStateDTO::TreeViewStateDTO;
 // pub use self::WebViewStateDTO::WebViewStateDTO;
 // pub use self::WindowStateDTO::WindowStateDTO;
-// pub use self::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;
+// pub use self::WorkSpaceFolderStateDTO::WorkSpaceFolderStateDTO;

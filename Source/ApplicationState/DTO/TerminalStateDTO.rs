@@ -5,11 +5,7 @@
 
 #![allow(non_snake_case, non_camel_case_types)]
 
-use std::{
-	collections::HashMap,
-	path::PathBuf,
-	sync::{Arc, Mutex as StandardMutex},
-};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use serde_json::Value;
 use tokio::{

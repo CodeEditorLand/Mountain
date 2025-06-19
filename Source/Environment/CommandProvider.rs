@@ -11,9 +11,9 @@ use Common::{Command::CommandExecutor, Error::CommonError, IPC::DTO::ProxyTarget
 use async_trait::async_trait;
 use log::{debug, error, info};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Runtime, Window};
+use tauri::{Manager, Runtime, Window};
 
-use super::MountainEnvironment;
+use super::MountainEnvironment::MountainEnvironment;
 use crate::{ApplicationState::ApplicationState::ApplicationState, RunTime::ApplicationRunTime, Vine::Client};
 
 /// An enum representing the different ways a command can be handled.

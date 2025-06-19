@@ -10,11 +10,11 @@ use std::sync::Arc;
 
 use Common::{
 	self,
-	Effect::{ActionEffect, ApplicationRunTime},
-	Error::CommonError,
+	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime},
+	Error::CommonError::CommonError,
 };
 use serde_json::{Value, from_value};
-use tauri::{AppHandle, Runtime};
+use tauri::Runtime;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 
@@ -52,26 +52,26 @@ pub fn CreateEffectForRequest<R:Runtime>(
 		"Command.Execute" => {
 			let ID = get_param!(ParametersArray, 0, String)?;
 			let Args = ParametersArray.get(1).cloned().unwrap_or(Value::Null);
-			Common::Command::ExecuteCommand(ID, Args).map(to_value)
+			Common::Command::ExecuteCommand::ExecuteCommand(ID, Args).map(to_value)
 		},
 		"Command.Register" => {
 			let SidecarID = get_param!(ParametersArray, 0, String)?;
 			let CommandID = get_param!(ParametersArray, 1, String)?;
-			Common::Command::RegisterCommand(SidecarID, CommandID).map(to_value)
+			Common::Command::RegisterCommand::RegisterCommand(SidecarID, CommandID).map(to_value)
 		},
 
 		// --- FileSystem Read Effects ---
 		"FileSystem.ReadFile" => {
 			let Path = get_param!(ParametersArray, 0, _)?;
-			Common::FileSystem::ReadFile(Path).map(to_value)
+			Common::FileSystem::ReadFile::ReadFile(Path).map(to_value)
 		},
 		"FileSystem.StatFile" => {
 			let Path = get_param!(ParametersArray, 0, _)?;
-			Common::FileSystem::StatFile(Path).map(to_value)
+			Common::FileSystem::StatFile::StatFile(Path).map(to_value)
 		},
 		"FileSystem.ReadDirectory" => {
 			let Path = get_param!(ParametersArray, 0, _)?;
-			Common::FileSystem::ReadDirectory(Path).map(to_value)
+			Common::FileSystem::ReadDirectory::ReadDirectory(Path).map(to_value)
 		},
 
 		// --- FileSystem Write Effects ---
@@ -80,13 +80,13 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let Content = get_param!(ParametersArray, 1, Vec<u8>)?;
 			let Create = get_param!(ParametersArray, 2, bool)?;
 			let Overwrite = get_param!(ParametersArray, 3, bool)?;
-			Common::FileSystem::WriteFileBytes(Path, Content, Create, Overwrite).map(to_value)
+			Common::FileSystem::WriteFileBytes::WriteFileBytes(Path, Content, Create, Overwrite).map(to_value)
 		},
 		"FileSystem.Delete" => {
 			let Path = get_param!(ParametersArray, 0, _)?;
 			let Recursive = get_param!(ParametersArray, 1, bool)?;
 			let UseTrash = get_param!(ParametersArray, 2, bool)?;
-			Common::FileSystem::Delete(Path, Recursive, UseTrash).map(to_value)
+			Common::FileSystem::Delete::Delete(Path, Recursive, UseTrash).map(to_value)
 		},
 
 		// --- UserInterface Effects ---
@@ -94,11 +94,11 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let Severity = get_param!(ParametersArray, 0, _)?;
 			let Message = get_param!(ParametersArray, 1, String)?;
 			let Options = ParametersArray.get(2).cloned().unwrap_or(Value::Null);
-			Common::UserInterface::ShowMessage(Severity, Message, Options).map(to_value)
+			Common::UserInterface::ShowMessage::ShowMessage(Severity, Message, Options).map(to_value)
 		},
 		"UserInterface.ShowOpenDialog" => {
 			let Options = get_param!(ParametersArray, 0, _)?;
-			Common::UserInterface::ShowOpenDialog(Options).map(to_value)
+			Common::UserInterface::ShowOpenDialog::ShowOpenDialog(Options).map(to_value)
 		},
 
 		// ... Add mappings for all other effects here ...
@@ -113,6 +113,9 @@ fn to_value<TOutput:serde::Serialize, TError, TRunTime>(
 	effect:ActionEffect<Arc<TRunTime>, TError, TOutput>,
 ) -> Result<MappedEffect, String>
 where
-	TRunTime: ApplicationRunTime<EnvironmentType = crate::Environment::MountainEnvironment> + Send + Sync + 'static, {
+	TRunTime: ApplicationRunTime<EnvironmentType = crate::Environment::MountainEnvironment::MountainEnvironment>
+		+ Send
+		+ Sync
+		+ 'static, {
 	Ok(effect.map(|output| serde_json::to_value(output).unwrap_or(Value::Null)))
 }

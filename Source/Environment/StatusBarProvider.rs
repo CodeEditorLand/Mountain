@@ -8,7 +8,7 @@
 use std::sync::Arc;
 
 use Common::{
-	Error::CommonError,
+	Error::CommonError::CommonError,
 	IPC::IPCProvider,
 	StatusBar::{DTO::StatusBarEntryDTO, StatusBarProvider},
 };
@@ -17,7 +17,7 @@ use log::info;
 use serde_json::{Value, json};
 use tauri::Emitter;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 
 #[async_trait]
 impl StatusBarProvider for MountainEnvironment {

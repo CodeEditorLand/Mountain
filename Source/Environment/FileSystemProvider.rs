@@ -7,7 +7,7 @@
 use std::path::{Path, PathBuf};
 
 use Common::{
-	Error::CommonError,
+	Error::CommonError::CommonError,
 	FileSystem::{
 		DTO::{FileSystemStatDTO, FileTypeDTO},
 		FileSystemReader,
@@ -17,7 +17,7 @@ use Common::{
 use async_trait::async_trait;
 use tokio::fs;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 
 #[async_trait]
 impl FileSystemReader for MountainEnvironment {

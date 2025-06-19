@@ -55,14 +55,14 @@ pub fn LoadInitialMementoFromDisk(StorageFilePath:&Path) -> HashMap<String, Valu
 pub fn ResolveMementoStorageFilePath(
 	ApplicationDataDirectory:&Path,
 	IsGlobalScope:bool,
-	WorkspaceIdentifier:&str,
+	WorkSpaceIdentifier:&str,
 ) -> std::path::PathBuf {
 	let UserStorageBasePath = ApplicationDataDirectory.join("User");
 	if IsGlobalScope {
 		UserStorageBasePath.join("globalStorage.json")
 	} else {
 		// Sanitize the workspace identifier to be a safe directory name.
-		let Segment = WorkspaceIdentifier.replace(|c:char| !c.is_alphanumeric() && c != '-' && c != '_', "_");
+		let Segment = WorkSpaceIdentifier.replace(|c:char| !c.is_alphanumeric() && c != '-' && c != '_', "_");
 		UserStorageBasePath.join("workspaceStorage").join(Segment).join("storage.json")
 	}
 }
@@ -70,7 +70,10 @@ pub fn ResolveMementoStorageFilePath(
 /// A helper module for serializing and deserializing `url::Url` with `serde`.
 /// This is used in DTOs where a `Url` field needs to be serialized to a string.
 pub mod URLSerializationHelper {
+	use serde::Deserialize;
+
 	use super::*;
+
 	pub fn serialize<S>(URLInstance:&Url, SerializerInstance:S) -> Result<S::Ok, S::Error>
 	where
 		S: Serializer, {

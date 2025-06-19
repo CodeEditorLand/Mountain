@@ -5,9 +5,9 @@
 
 use std::{collections::HashMap, process::Stdio, time::Duration};
 
-use Common::Error::CommonError;
+use Common::Error::CommonError::CommonError;
 use log::{error, info, trace, warn};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tokio::{
 	io::{AsyncBufReadExt, BufReader},
 	process::Command,

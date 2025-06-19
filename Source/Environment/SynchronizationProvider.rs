@@ -3,12 +3,12 @@
 //! Implements the `SynchronizationProvider` trait for the
 //! `MountainEnvironment`. This is currently a stub implementation.
 
-use Common::{Error::CommonError, Synchronization::SynchronizationProvider};
+use Common::{Error::CommonError::CommonError, Synchronization::SynchronizationProvider};
 use async_trait::async_trait;
 use log::warn;
 use serde_json::Value;
 
-use super::MountainEnvironment;
+use super::MountainEnvironment::MountainEnvironment;
 
 #[async_trait]
 impl SynchronizationProvider for MountainEnvironment {

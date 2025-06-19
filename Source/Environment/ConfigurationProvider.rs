@@ -13,14 +13,14 @@ use Common::{
 		ConfigurationProvider,
 		DTO::{ConfigurationOverridesDTO, ConfigurationTarget, InspectResultDataDTO},
 	},
-	Error::CommonError,
+	Error::CommonError::CommonError,
 	FileSystem::{FileSystemReader, FileSystemWriter},
 };
 use async_trait::async_trait;
 use log::{debug, error, info, warn};
 use serde_json::{Map, Value};
 
-use super::MountainEnvironment;
+use super::MountainEnvironment::MountainEnvironment;
 // TODO: Re-integrate IPC client for notifications
 // use crate::Vine::Client;
 
@@ -60,9 +60,9 @@ impl ConfigurationProvider for MountainEnvironment {
 					.app_config_dir()
 					.map(|p| p.join("settings.json"))
 			},
-			ConfigurationTarget::Workspace => {
+			ConfigurationTarget::WorkSpace => {
 				self.ApplicationState
-					.WorkspaceConfigurationPath
+					.WorkSpaceConfigurationPath
 					.lock()
 					.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
 					.clone()
@@ -150,16 +150,16 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		.app_config_dir()
 		.map(|p| p.join("settings.json"));
 
-	let WorkspaceSettingsPath = Environment.ApplicationState.WorkspaceConfigurationPath.lock().unwrap().clone();
+	let WorkSpaceSettingsPath = Environment.ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().clone();
 
 	let UserConfig = ReadAndParseConfigurationFile(Environment, &UserSettingsPath).await;
-	let WorkspaceConfig = ReadAndParseConfigurationFile(Environment, &WorkspaceSettingsPath).await;
+	let WorkSpaceConfig = ReadAndParseConfigurationFile(Environment, &WorkSpaceSettingsPath).await;
 
 	// A real implementation would also load default and folder-level settings.
 	// The merge order is critical: workspace settings override user settings.
 	let mut Merged = UserConfig.as_object().cloned().unwrap_or_default();
-	if let Some(WorkspaceMap) = WorkspaceConfig.as_object() {
-		for (k, v) in WorkspaceMap {
+	if let Some(WorkSpaceMap) = WorkSpaceConfig.as_object() {
+		for (k, v) in WorkSpaceMap {
 			Merged.insert(k.clone(), v.clone());
 		}
 	}

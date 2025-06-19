@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use log::{debug, error};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Runtime, State, command};
+use tauri::{AppHandle, State, command};
 
 use super::EffectCreation;
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;

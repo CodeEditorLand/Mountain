@@ -5,7 +5,7 @@
 
 #![allow(non_snake_case, non_camel_case_types)]
 
-use Common::WebView::DTO::WebViewContentOptionsDTO;
+use Common::WebView::DTO::WebViewContentOptionsDTO::WebViewContentOptionsDTO;
 use serde::{Deserialize, Serialize};
 use serde_json::Value; // For PanelOptions, etc.
 

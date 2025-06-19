@@ -9,16 +9,16 @@ use std::sync::Arc;
 
 use Common::{
 	Document::DocumentProvider,
-	Error::CommonError,
+	Error::CommonError::CommonError,
 	FileSystem::{FileSystemReader, FileSystemWriter},
 	IPC::IPCProvider,
 };
 use async_trait::async_trait;
-use log::{info, trace, warn};
+use log::{error, info, trace, warn};
 use serde_json::{Value, json};
 use url::Url;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::ApplicationState::DTO::DocumentStateDTO;
 
 #[async_trait]

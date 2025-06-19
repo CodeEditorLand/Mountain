@@ -4,11 +4,13 @@
 //! which is sent to the `Cocoon` sidecar during the initial handshake to
 //! bootstrap its state.
 
-use log::Level;
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 
-use crate::ApplicationState::{ApplicationState::ApplicationState, DTO::*};
+use crate::ApplicationState::{
+	ApplicationState::ApplicationState,
+	DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
+};
 
 /// Constructs the full `IExtensionHostInitData` DTO with high fidelity,
 /// mirroring the payload created by VS Code's `localProcessExtensionHost.ts`.
@@ -30,15 +32,15 @@ pub fn ConstructExtensionHostInitializationData(
 	let ExtensionsGuard = ApplicationState.ScannedExtensions.lock().unwrap();
 	let ExtensionsDTO:Vec<&ExtensionDescriptionStateDTO> = ExtensionsGuard.values().collect();
 
-	let WorkspaceFoldersGuard = ApplicationState.WorkspaceFolders.lock().unwrap();
-	let WorkspaceDTO = if WorkspaceFoldersGuard.is_empty() {
+	let WorkSpaceFoldersGuard = ApplicationState.WorkSpaceFolders.lock().unwrap();
+	let WorkSpaceDTO = if WorkSpaceFoldersGuard.is_empty() {
 		Value::Null
 	} else {
 		json!({
-			"id": ApplicationState.GetWorkspaceIdentifier().unwrap_or_default(),
-			"name": "TODO: GetWorkspaceName", // Placeholder
-			"configuration": ApplicationState.WorkspaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
-			"isUntitled": ApplicationState.WorkspaceConfigurationPath.lock().unwrap().is_none(),
+			"id": ApplicationState.GetWorkSpaceIdentifier().unwrap_or_default(),
+			"name": "TODO: GetWorkSpaceName", // Placeholder
+			"configuration": ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
+			"isUntitled": ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().is_none(),
 			"transient": false
 		})
 	};
@@ -53,7 +55,7 @@ pub fn ConstructExtensionHostInitializationData(
 		.app_log_dir()
 		.unwrap_or_else(|| AppData.join("logs"));
 	let GlobalStorage = AppData.join("User/globalStorage");
-	let WorkspaceStorage = AppData.join("User/workspaceStorage");
+	let WorkSpaceStorage = AppData.join("User/workspaceStorage");
 
 	json!({
 		// --- Application Info ---
@@ -72,14 +74,14 @@ pub fn ConstructExtensionHostInitializationData(
 			"isExtensionTelemetryLoggingOnly": true,
 			"appRoot": AppRoot,
 			"globalStorageHome": GlobalStorage,
-			"workspaceStorageHome": WorkspaceStorage,
+			"workspaceStorageHome": WorkSpaceStorage,
 			"extensionDevelopmentLocationURI": [],
 			"extensionTestsLocationURI": Value::Null,
 			"extensionLogLevel": [["info", "Default"]],
 		},
 
-		// --- Workspace & Remote ---
-		"workspace": WorkspaceDTO,
+		// --- WorkSpace & Remote ---
+		"workspace": WorkSpaceDTO,
 		"remote": {
 			"isRemote": false,
 			"authority": Value::Null,

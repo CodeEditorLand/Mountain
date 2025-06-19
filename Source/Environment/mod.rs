@@ -33,7 +33,7 @@ pub mod TestProvider;
 pub mod TreeViewProvider;
 pub mod UserInterfaceProvider;
 pub mod WebViewProvider;
-pub mod WorkspaceProvider;
+pub mod WorkSpaceProvider;
 
 // --- Internal Utilities ---
 // Shared helpers for provider implementations.

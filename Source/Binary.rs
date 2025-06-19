@@ -27,7 +27,7 @@ use crate::{
 fn InitializeLogging() {
 	let LogLevel = if cfg!(debug_assertions) { "debug" } else { "info" };
 	if std::env::var("RUST_LOG").is_err() {
-		std::env::set_var("RUST_LOG", LogLevel);
+		unsafe { std::env::set_var("RUST_LOG", LogLevel) };
 	}
 	env_logger::init();
 }

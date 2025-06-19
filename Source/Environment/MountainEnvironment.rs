@@ -7,30 +7,30 @@
 use std::sync::Arc;
 
 use Common::{
-	Command::CommandExecutor,
-	Configuration::{ConfigurationInspector, ConfigurationProvider},
-	CustomEditor::CustomEditorProvider,
-	Diagnostic::DiagnosticManager,
-	Document::DocumentProvider,
-	Environment::{Environment, Requires},
-	FileSystem::{FileSystemReader, FileSystemWriter},
-	IPC::IPCProvider,
-	LanguageFeature::LanguageFeatureProviderRegistry,
-	Output::OutputChannelManager,
-	Secret::SecretProvider,
-	SourceControlManagement::SourceControlManagementProvider,
-	StatusBar::StatusBarProvider,
-	Storage::StorageProvider,
-	Synchronization::SynchronizationProvider,
-	Terminal::TerminalProvider,
-	Testing::TestController,
-	TreeView::TreeViewProvider,
-	UserInterface::UserInterfaceProvider,
-	WebView::WebViewProvider,
-	Workspace::{WorkspaceEditApplier, WorkspaceProvider},
+	Command::CommandExecutor::CommandExecutor,
+	Configuration::{ConfigurationInspector::ConfigurationInspector, ConfigurationProvider::ConfigurationProvider},
+	CustomEditor::CustomEditorProvider::CustomEditorProvider,
+	Diagnostic::DiagnosticManager::DiagnosticManager,
+	Document::DocumentProvider::DocumentProvider,
+	Environment::{Environment::Environment, Requires::Requires},
+	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
+	IPC::IPCProvider::IPCProvider,
+	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
+	Output::OutputChannelManager::OutputChannelManager,
+	Secret::SecretProvider::SecretProvider,
+	SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
+	StatusBar::StatusBarProvider::StatusBarProvider,
+	Storage::StorageProvider::StorageProvider,
+	Synchronization::SynchronizationProvider::SynchronizationProvider,
+	Terminal::TerminalProvider::TerminalProvider,
+	Testing::TestController::TestController,
+	TreeView::TreeViewProvider::TreeViewProvider,
+	UserInterface::UserInterfaceProvider::UserInterfaceProvider,
+	WebView::WebViewProvider::WebViewProvider,
+	WorkSpace::{WorkSpaceEditApplier::WorkSpaceEditApplier, WorkSpaceProvider::WorkSpaceProvider},
 };
 use log::info;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{Manager, Runtime};
 
 use crate::ApplicationState::ApplicationState::ApplicationState;
 
@@ -125,9 +125,9 @@ impl Requires<Arc<dyn UserInterfaceProvider + Send + Sync>> for MountainEnvironm
 impl Requires<Arc<dyn WebViewProvider + Send + Sync>> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn WebViewProvider + Send + Sync> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn WorkspaceProvider + Send + Sync>> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn WorkspaceProvider + Send + Sync> { Arc::new(self.clone()) }
+impl Requires<Arc<dyn WorkSpaceProvider + Send + Sync>> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn WorkSpaceProvider + Send + Sync> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn WorkspaceEditApplier + Send + Sync>> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn WorkspaceEditApplier + Send + Sync> { Arc::new(self.clone()) }
+impl Requires<Arc<dyn WorkSpaceEditApplier + Send + Sync>> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn WorkSpaceEditApplier + Send + Sync> { Arc::new(self.clone()) }
 }

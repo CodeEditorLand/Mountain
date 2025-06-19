@@ -4,7 +4,7 @@
 //! `MountainEnvironment`. This is currently a stub implementation.
 
 use Common::{
-	Error::CommonError,
+	Error::CommonError::CommonError,
 	SourceControlManagement::{
 		DTO::{
 			SourceControlManagementGroupDTO,
@@ -17,7 +17,7 @@ use Common::{
 use async_trait::async_trait;
 use log::warn;
 
-use super::MountainEnvironment;
+use super::MountainEnvironment::MountainEnvironment;
 
 #[async_trait]
 impl SourceControlManagementProvider for MountainEnvironment {

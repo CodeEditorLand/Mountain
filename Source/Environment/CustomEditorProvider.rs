@@ -9,7 +9,7 @@ use log::warn;
 use serde_json::Value;
 use url::Url;
 
-use super::MountainEnvironment;
+use super::MountainEnvironment::MountainEnvironment;
 
 #[async_trait]
 impl CustomEditorProvider for MountainEnvironment {

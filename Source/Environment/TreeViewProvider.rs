@@ -4,22 +4,23 @@
 //! provider manages the lifecycle of custom tree views and orchestrates the
 //! data flow between the extension host (`Cocoon`) and the UI (`Sky`).
 
-use Common::{Error::CommonError, TreeView::TreeViewProvider};
+use Common::{Error::CommonError::CommonError, TreeView::TreeViewProvider};
 use async_trait::async_trait;
 use log::{info, warn};
 use serde_json::{Value, json};
 use tauri::Emitter;
 
-use super::{MountainEnvironment, Utility};
-use crate::ApplicationState::DTO::TreeViewStateDTO;
+use super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO;
 
 #[async_trait]
 impl TreeViewProvider for MountainEnvironment {
 	/// Registers a new tree data provider from Cocoon.
 	async fn RegisterTreeDataProvider(&self, ViewIdentifier:String, Options:Value) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Registering data provider for view: {}", ViewIdentifier);
-		let OptionsDTO:crate::Common::TreeView::DTO::TreeViewOptionsDTO = serde_json::from_value(Options)
-			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:e.to_string() })?;
+		let OptionsDTO:Common::TreeView::DTO::TreeViewOptionsDTO = serde_json::from_value(Options).map_err(|e| {
+			CommonError::CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:e.to_string() }
+		})?;
 
 		let NewState = TreeViewStateDTO {
 			ViewIdentifier:ViewIdentifier.clone(),

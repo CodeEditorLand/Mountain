@@ -11,7 +11,7 @@ use log::{debug, error, info};
 use serde_json::{Value, json};
 use tauri::Emitter;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 
 #[async_trait]
 impl DiagnosticManager for MountainEnvironment {

@@ -5,7 +5,7 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use log::{error, info};
-use tauri::{AppHandle, Manager};
+use tauri::AppHandle;
 use tonic::transport::Server;
 
 use super::MountainVinegRPCService::MountainVinegRPCService;

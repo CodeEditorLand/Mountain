@@ -4,12 +4,12 @@
 //! provider contains the core logic for creating and managing WebView
 //! instances.
 
-use Common::{Error::CommonError, WebView::WebViewProvider};
+use Common::{Error::CommonError::CommonError, WebView::WebViewProvider::WebViewProvider};
 use async_trait::async_trait;
 use log::warn;
 use serde_json::Value;
 
-use super::MountainEnvironment;
+use super::MountainEnvironment::MountainEnvironment;
 
 #[async_trait]
 impl WebViewProvider for MountainEnvironment {

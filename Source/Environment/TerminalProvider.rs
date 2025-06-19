@@ -6,15 +6,19 @@
 
 use std::{env, io::Write, sync::Arc};
 
-use Common::{Error::CommonError, IPC::IPCProvider, Terminal::TerminalProvider};
+use Common::{
+	Error::CommonError::CommonError,
+	IPC::IPCProvider::IPCProvider,
+	Terminal::TerminalProvider::TerminalProvider,
+};
 use async_trait::async_trait;
 use log::{error, info, trace, warn};
 use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
 use serde_json::{Value, json};
 use tokio::{io::AsyncReadExt, sync::mpsc as TokioMPSC};
 
-use super::{MountainEnvironment, Utility};
-use crate::ApplicationState::DTO::TerminalStateDTO;
+use super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO;
 
 #[async_trait]
 impl TerminalProvider for MountainEnvironment {

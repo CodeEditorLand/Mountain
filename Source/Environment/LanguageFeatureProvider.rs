@@ -8,7 +8,7 @@
 use std::sync::Arc;
 
 use Common::{
-	Error::CommonError,
+	Error::CommonError::CommonError,
 	IPC::IPCProvider,
 	LanguageFeature::{
 		DTO::*, // Import all DTOs from the feature
@@ -21,7 +21,7 @@ use serde::de::DeserializeOwned;
 use serde_json::{Value, json};
 use url::Url;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::ApplicationState::DTO::ProviderRegistrationDTO;
 
 #[async_trait]

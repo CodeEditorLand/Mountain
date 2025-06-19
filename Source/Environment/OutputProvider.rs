@@ -5,13 +5,13 @@
 //! including state management and emitting events to the `Sky` frontend for UI
 //! updates.
 
-use Common::{Error::CommonError, Output::OutputChannelManager};
+use Common::{Error::CommonError::CommonError, Output::OutputChannelManager};
 use async_trait::async_trait;
 use log::{info, trace, warn};
 use serde_json::json;
 use tauri::Emitter;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::ApplicationState::DTO::OutputChannelStateDTO;
 
 #[async_trait]

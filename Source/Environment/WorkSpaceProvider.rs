@@ -1,6 +1,6 @@
-//! # WorkspaceProvider Implementation
+//! # WorkSpaceProvider Implementation
 //!
-//! Implements the `WorkspaceProvider` and `WorkspaceEditApplier` traits for
+//! Implements the `WorkSpaceProvider` and `WorkSpaceEditApplier` traits for
 //! the `MountainEnvironment`. This provider contains the core logic for
 //! workspace-related operations, including querying workspace folders and
 //! performing workspace-wide file searches.
@@ -8,9 +8,9 @@
 use std::path::PathBuf;
 
 use Common::{
-	Error::CommonError,
-	LanguageFeature::DTO::WorkspaceEditDTO,
-	Workspace::{WorkspaceEditApplier, WorkspaceProvider},
+	Error::CommonError::CommonError,
+	LanguageFeature::DTO::WorkSpaceEditDTO,
+	WorkSpace::{WorkSpaceEditApplier, WorkSpaceProvider},
 };
 use async_trait::async_trait;
 use globset::{Glob, GlobMatcher};
@@ -20,16 +20,16 @@ use serde_json::Value;
 use tauri::Emitter;
 use url::Url;
 
-use super::{MountainEnvironment, Utility};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 
 #[async_trait]
-impl WorkspaceProvider for MountainEnvironment {
+impl WorkSpaceProvider for MountainEnvironment {
 	/// Retrieves information about all currently open workspace folders.
-	async fn GetWorkspaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
-		info!("[WorkspaceProvider] Getting workspace folders info.");
+	async fn GetWorkSpaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
+		info!("[WorkSpaceProvider] Getting workspace folders info.");
 		let FoldersGuard = self
 			.ApplicationState
-			.WorkspaceFolders
+			.WorkSpaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 		let ResultVector = FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect();
@@ -38,10 +38,10 @@ impl WorkspaceProvider for MountainEnvironment {
 
 	/// Retrieves information for the specific workspace folder that contains a
 	/// given URI.
-	async fn GetWorkspaceFolderInfo(&self, URIToMatch:Url) -> Result<Option<(Url, String, usize)>, CommonError> {
+	async fn GetWorkSpaceFolderInfo(&self, URIToMatch:Url) -> Result<Option<(Url, String, usize)>, CommonError> {
 		let FoldersGuard = self
 			.ApplicationState
-			.WorkspaceFolders
+			.WorkSpaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 		for Folder in FoldersGuard.iter() {
@@ -53,37 +53,37 @@ impl WorkspaceProvider for MountainEnvironment {
 	}
 
 	/// Gets the name of the current workspace.
-	async fn GetWorkspaceName(&self) -> Result<Option<String>, CommonError> {
+	async fn GetWorkSpaceName(&self) -> Result<Option<String>, CommonError> {
 		// This logic is complex and better suited inside ApplicationState.
 		// For now, it's a stub.
-		warn!("[WorkspaceProvider] GetWorkspaceName is a stub.");
-		Ok(Some("Untitled Workspace".to_string()))
+		warn!("[WorkSpaceProvider] GetWorkSpaceName is a stub.");
+		Ok(Some("Untitled WorkSpace".to_string()))
 	}
 
 	/// Gets the path to the workspace configuration file (`.code-workspace`).
-	async fn GetWorkspaceConfigurationPath(&self) -> Result<Option<PathBuf>, CommonError> {
+	async fn GetWorkSpaceConfigurationPath(&self) -> Result<Option<PathBuf>, CommonError> {
 		Ok(self
 			.ApplicationState
-			.WorkspaceConfigurationPath
+			.WorkSpaceConfigurationPath
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.clone())
 	}
 
 	/// Checks if the current workspace is trusted.
-	async fn IsWorkspaceTrusted(&self) -> Result<bool, CommonError> {
+	async fn IsWorkSpaceTrusted(&self) -> Result<bool, CommonError> {
 		Ok(self.ApplicationState.IsTrusted.load(std::sync::atomic::Ordering::Relaxed))
 	}
 
 	/// Requests workspace trust from the user.
-	async fn RequestWorkspaceTrust(&self, _Options:Option<Value>) -> Result<bool, CommonError> {
+	async fn RequestWorkSpaceTrust(&self, _Options:Option<Value>) -> Result<bool, CommonError> {
 		// A real implementation would use the UserInterfaceProvider.
-		warn!("[WorkspaceProvider] RequestWorkspaceTrust is not implemented; defaulting to trusted.");
+		warn!("[WorkSpaceProvider] RequestWorkSpaceTrust is not implemented; defaulting to trusted.");
 		Ok(true)
 	}
 
 	/// Finds files within the workspace using glob patterns.
-	async fn FindFilesInWorkspace(
+	async fn FindFilesInWorkSpace(
 		&self,
 		IncludePatternDTO:Value,
 		ExcludePatternDTO:Option<Value>,
@@ -92,12 +92,12 @@ impl WorkspaceProvider for MountainEnvironment {
 		FollowSymlinks:bool,
 	) -> Result<Vec<Url>, CommonError> {
 		info!(
-			"[WorkspaceProvider] Finding files with include pattern: {:?}",
+			"[WorkSpaceProvider] Finding files with include pattern: {:?}",
 			IncludePatternDTO
 		);
 		let FoldersGuard = self
 			.ApplicationState
-			.WorkspaceFolders
+			.WorkSpaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -171,11 +171,11 @@ fn BuildGlobMatcher(GlobValue:Value) -> Result<Option<GlobMatcher>, CommonError>
 }
 
 #[async_trait]
-impl WorkspaceEditApplier for MountainEnvironment {
-	async fn ApplyWorkspaceEdit(&self, _EditDTO:WorkspaceEditDTO) -> Result<bool, CommonError> {
-		warn!("[WorkspaceProvider] ApplyWorkspaceEdit is not implemented.");
+impl WorkSpaceEditApplier for MountainEnvironment {
+	async fn ApplyWorkSpaceEdit(&self, _EditDTO:WorkSpaceEditDTO) -> Result<bool, CommonError> {
+		warn!("[WorkSpaceProvider] ApplyWorkSpaceEdit is not implemented.");
 		// A full implementation would use DocumentProvider and FileSystemWriter
 		// effects.
-		Err(CommonError::NotImplemented { FeatureName:"ApplyWorkspaceEdit".into() })
+		Err(CommonError::NotImplemented { FeatureName:"ApplyWorkSpaceEdit".into() })
 	}
 }

@@ -16,9 +16,25 @@ use std::{
 };
 
 use log::{error, info, warn};
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{Manager, Runtime};
 
-use super::{DTO::*, Internal};
+use super::{
+	DTO::{
+		CustomDocumentStateDTO::CustomDocumentStateDTO,
+		DocumentStateDTO::DocumentStateDTO,
+		ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
+		MarkerDataDTO::MarkerDataDTO,
+		MergedConfigurationStateDTO::MergedConfigurationStateDTO,
+		OutputChannelStateDTO::OutputChannelStateDTO,
+		ProviderRegistrationDTO::ProviderRegistrationDTO,
+		TerminalStateDTO::TerminalStateDTO,
+		TreeViewStateDTO::TreeViewStateDTO,
+		WebViewStateDTO::WebViewStateDTO,
+		WindowStateDTO::WindowStateDTO,
+		WorkSpaceFolderStateDTO::WorkSpaceFolderStateDTO,
+	},
+	Internal,
+};
 use crate::Environment::CommandProvider::CommandHandler; // TODO: Fix this path after refactor
 
 /// The central, shared, thread-safe state for the entire Mountain application.
@@ -28,9 +44,9 @@ use crate::Environment::CommandProvider::CommandHandler; // TODO: Fix this path 
 /// like terminals and WebViews.
 #[derive(Clone)]
 pub struct ApplicationState {
-	// --- Workspace State ---
-	pub WorkspaceFolders:Arc<StandardMutex<Vec<WorkspaceFolderStateDTO>>>,
-	pub WorkspaceConfigurationPath:Arc<StandardMutex<Option<PathBuf>>>,
+	// --- WorkSpace State ---
+	pub WorkSpaceFolders:Arc<StandardMutex<Vec<WorkSpaceFolderStateDTO>>>,
+	pub WorkSpaceConfigurationPath:Arc<StandardMutex<Option<PathBuf>>>,
 	pub IsTrusted:Arc<AtomicBool>,
 	pub WindowState:Arc<StandardMutex<WindowStateDTO>>,
 
@@ -38,11 +54,11 @@ pub struct ApplicationState {
 	pub Configuration:Arc<StandardMutex<MergedConfigurationStateDTO>>,
 	pub GlobalMemento:Arc<StandardMutex<HashMap<String, serde_json::Value>>>,
 	pub GlobalMementoPath:PathBuf,
-	pub WorkspaceMemento:Arc<StandardMutex<HashMap<String, serde_json::Value>>>,
-	pub WorkspaceMementoPath:Arc<StandardMutex<Option<PathBuf>>>,
+	pub WorkSpaceMemento:Arc<StandardMutex<HashMap<String, serde_json::Value>>>,
+	pub WorkSpaceMementoPath:Arc<StandardMutex<Option<PathBuf>>>,
 
 	// --- Extension & Provider Management ---
-	pub CommandRegistry:Arc<StandardMutex<HashMap<String, CommandHandler<Runtime>>>>,
+	pub CommandRegistry:Arc<StandardMutex<HashMap<String, CommandHandler<dyn Runtime>>>>,
 	pub LanguageProviders:Arc<StandardMutex<HashMap<u32, ProviderRegistrationDTO>>>,
 	pub NextProviderHandle:Arc<AtomicU32>,
 	pub ScannedExtensions:Arc<StandardMutex<HashMap<String, ExtensionDescriptionStateDTO>>>,
@@ -57,13 +73,17 @@ pub struct ApplicationState {
 	pub NextTerminalIdentifier:Arc<AtomicU64>,
 	pub ActiveWebViews:Arc<StandardMutex<HashMap<String, WebViewStateDTO>>>,
 	pub ActiveCustomDocuments:Arc<StandardMutex<HashMap<String, CustomDocumentStateDTO>>>,
-	pub ActiveStatusBarItems:Arc<StandardMutex<HashMap<String, Common::StatusBar::DTO::StatusBarEntryDTO>>>,
+	pub ActiveStatusBarItems:
+		Arc<StandardMutex<HashMap<String, Common::StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO>>>,
 	pub ActiveTreeViews:Arc<StandardMutex<HashMap<String, TreeViewStateDTO>>>,
 
 	// --- IPC & User Interface State ---
 	pub PendingUserInterfaceRequests: Arc<
 		StandardMutex<
-			HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, Common::Error::CommonError>>>,
+			HashMap<
+				String,
+				tokio::sync::oneshot::Sender<Result<serde_json::Value, Common::Error::CommonError::CommonError>>,
+			>,
 		>,
 	>,
 }
@@ -99,15 +119,15 @@ impl Default for ApplicationState {
 
 		info!("[ApplicationState] Default state initialization complete.");
 		Self {
-			WorkspaceFolders:Arc::new(StandardMutex::new(Vec::new())),
-			WorkspaceConfigurationPath:Arc::new(StandardMutex::new(None)),
+			WorkSpaceFolders:Arc::new(StandardMutex::new(Vec::new())),
+			WorkSpaceConfigurationPath:Arc::new(StandardMutex::new(None)),
 			IsTrusted:Arc::new(AtomicBool::new(false)),
 			WindowState:Arc::new(StandardMutex::new(Default::default())),
 			Configuration:Arc::new(StandardMutex::new(MergedConfigurationStateDTO::default())),
 			GlobalMemento:Arc::new(StandardMutex::new(InitialGlobalMementoMap)),
 			GlobalMementoPath:GlobalMementoFilePath,
-			WorkspaceMemento:Arc::new(StandardMutex::new(HashMap::new())),
-			WorkspaceMementoPath:Arc::new(StandardMutex::new(None)),
+			WorkSpaceMemento:Arc::new(StandardMutex::new(HashMap::new())),
+			WorkSpaceMementoPath:Arc::new(StandardMutex::new(None)),
 			CommandRegistry:Arc::new(StandardMutex::new(HashMap::new())), // TODO: Use InitialCommandRegistryMap
 			DiagnosticsMap:Arc::new(StandardMutex::new(HashMap::new())),
 			OpenDocuments:Arc::new(StandardMutex::new(HashMap::new())),
@@ -131,15 +151,15 @@ impl Default for ApplicationState {
 impl ApplicationState {
 	/// Generates a unique, filesystem-safe identifier string for the current
 	/// workspace.
-	pub fn GetWorkspaceIdentifier(&self) -> Result<String, String> {
+	pub fn GetWorkSpaceIdentifier(&self) -> Result<String, String> {
 		let LockErrorMapper = |e| format!("[AppState] Lock error: {}", e);
-		let ConfigurationPathGuard = self.WorkspaceConfigurationPath.lock().map_err(LockErrorMapper)?;
+		let ConfigurationPathGuard = self.WorkSpaceConfigurationPath.lock().map_err(LockErrorMapper)?;
 		if let Some(ConfigurationPath) = ConfigurationPathGuard.as_ref() {
 			return Ok(ConfigurationPath.file_name().unwrap_or_default().to_string_lossy().into_owned());
 		}
 		drop(ConfigurationPathGuard);
 
-		let FoldersGuard = self.WorkspaceFolders.lock().map_err(LockErrorMapper)?;
+		let FoldersGuard = self.WorkSpaceFolders.lock().map_err(LockErrorMapper)?;
 		if let Some(FirstFolder) = FoldersGuard.first() {
 			let PathString = FirstFolder.URI.path();
 			// Create a more stable hash for the identifier.
@@ -163,21 +183,21 @@ impl ApplicationState {
 
 	/// Updates the path to the workspace memento file and reloads its content
 	/// from disk.
-	pub fn UpdateWorkspaceMementoPathAndReload(&self, ApplicationDataDirectory:&Path) -> Result<(), String> {
+	pub fn UpdateWorkSpaceMementoPathAndReload(&self, ApplicationDataDirectory:&Path) -> Result<(), String> {
 		let LockErrorMapper = |e| format!("[AppState] Lock error: {}", e);
-		let WorkspaceIdentifier = self.GetWorkspaceIdentifier()?;
-		let mut PathGuard = self.WorkspaceMementoPath.lock().map_err(LockErrorMapper)?;
+		let WorkSpaceIdentifier = self.GetWorkSpaceIdentifier()?;
+		let mut PathGuard = self.WorkSpaceMementoPath.lock().map_err(LockErrorMapper)?;
 
-		if WorkspaceIdentifier == "NO_WORKSPACE" {
+		if WorkSpaceIdentifier == "NO_WORKSPACE" {
 			if PathGuard.is_some() {
 				*PathGuard = None;
-				self.WorkspaceMemento.lock().map_err(LockErrorMapper)?.clear();
+				self.WorkSpaceMemento.lock().map_err(LockErrorMapper)?.clear();
 			}
 			return Ok(());
 		}
 
 		let NewMementoPath =
-			Internal::ResolveMementoStorageFilePath(ApplicationDataDirectory, false, &WorkspaceIdentifier);
+			Internal::ResolveMementoStorageFilePath(ApplicationDataDirectory, false, &WorkSpaceIdentifier);
 		if PathGuard.as_ref() != Some(&NewMementoPath) {
 			if let Some(Parent) = NewMementoPath.parent() {
 				if !Parent.exists() {
@@ -186,7 +206,7 @@ impl ApplicationState {
 			}
 			*PathGuard = Some(NewMementoPath.clone());
 			let NewMementoContent = Internal::LoadInitialMementoFromDisk(&NewMementoPath);
-			*self.WorkspaceMemento.lock().map_err(LockErrorMapper)? = NewMementoContent;
+			*self.WorkSpaceMemento.lock().map_err(LockErrorMapper)? = NewMementoContent;
 		}
 		Ok(())
 	}
