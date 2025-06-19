@@ -5,17 +5,14 @@
 //! including storing diagnostics from various sources and notifying the UI of
 //! changes.
 
-use Common::{
-	Diagnostic::DiagnosticManager::DiagnosticManager,
-	Error::CommonError::CommonError,
-	LanguageFeature::DTO::MarkerDataDTO,
-};
+use Common::{Diagnostic::DiagnosticManager::DiagnosticManager, Error::CommonError::CommonError};
 use async_trait::async_trait;
 use log::{debug, error, info};
 use serde_json::{Value, json};
 use tauri::Emitter;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO;
 
 #[async_trait]
 impl DiagnosticManager for MountainEnvironment {

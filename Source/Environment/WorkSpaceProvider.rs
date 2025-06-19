@@ -8,9 +8,9 @@
 use std::path::PathBuf;
 
 use Common::{
+	DTO::WorkSpaceEditDTO::WorkSpaceEditDTO,
 	Error::CommonError::CommonError,
-	LanguageFeature::DTO::WorkSpaceEditDTO,
-	WorkSpace::{WorkSpaceEditApplier, WorkSpaceProvider},
+	WorkSpace::{WorkSpaceEditApplier::WorkSpaceEditApplier, WorkSpaceProvider::WorkSpaceProvider},
 };
 use async_trait::async_trait;
 use globset::{Glob, GlobMatcher};
@@ -132,7 +132,7 @@ impl WorkSpaceProvider for MountainEnvironment {
 					if Path.is_dir() {
 						continue;
 					}
-					if IncludeMatcher.is_match(Path) {
+					if IncludeMatcher?.is_match(Path) {
 						if let Some(ref Exclude) = ExcludeMatcher {
 							if Exclude.is_match(Path) {
 								continue;

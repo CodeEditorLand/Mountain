@@ -16,7 +16,7 @@ use std::{
 };
 
 use log::{error, info, warn};
-use tauri::{Manager, Runtime};
+use tauri::{Manager, Wry};
 
 use super::{
 	DTO::{
@@ -35,7 +35,7 @@ use super::{
 	},
 	Internal,
 };
-use crate::Environment::CommandProvider::CommandHandler; // TODO: Fix this path after refactor
+use crate::Environment::CommandProvider::CommandHandler;
 
 /// The central, shared, thread-safe state for the entire Mountain application.
 ///
@@ -58,7 +58,7 @@ pub struct ApplicationState {
 	pub WorkSpaceMementoPath:Arc<StandardMutex<Option<PathBuf>>>,
 
 	// --- Extension & Provider Management ---
-	pub CommandRegistry:Arc<StandardMutex<HashMap<String, CommandHandler<dyn Runtime>>>>,
+	pub CommandRegistry:Arc<StandardMutex<HashMap<String, CommandHandler<Wry>>>>,
 	pub LanguageProviders:Arc<StandardMutex<HashMap<u32, ProviderRegistrationDTO>>>,
 	pub NextProviderHandle:Arc<AtomicU32>,
 	pub ScannedExtensions:Arc<StandardMutex<HashMap<String, ExtensionDescriptionStateDTO>>>,
