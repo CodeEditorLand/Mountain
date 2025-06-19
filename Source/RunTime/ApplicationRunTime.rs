@@ -8,7 +8,7 @@ use std::sync::Arc;
 
 use Common::{
 	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
-	Environment::Requires::Requires,
+	Environment::{HasEnvironment::HasEnvironment, Requires::Requires},
 	Error::CommonError::CommonError,
 };
 use Echo::Scheduler::Scheduler::Scheduler;
@@ -19,8 +19,8 @@ use tokio::sync::oneshot;
 use crate::Environment::MountainEnvironment::MountainEnvironment;
 
 /// A `RunTime` that uses a high-performance, work-stealing scheduler (`Echo`)
-/// to execute all `ActionEffect`s. This struct is managed by Tauri and is
-/// cloneable so it can be passed into different contexts.
+/// to execute all `ActionEffect`s.
+#[derive(Clone)]
 pub struct ApplicationRunTime {
 	/// A shared handle to the application's central scheduler.
 	pub Scheduler:Arc<Scheduler>,
@@ -42,13 +42,16 @@ impl ApplicationRunTime {
 	}
 }
 
-#[async_trait]
-impl ApplicationRunTimeTrait for ApplicationRunTime {
+// Implement the marker trait to satisfy the bounds on ApplicationRunTimeTrait
+impl HasEnvironment for ApplicationRunTime {
 	type EnvironmentType = MountainEnvironment;
 
 	/// Gets the `Environment` associated with this `RunTime`.
 	fn GetEnvironment(&self) -> Arc<Self::EnvironmentType> { self.Environment.clone() }
+}
 
+#[async_trait]
+impl ApplicationRunTimeTrait for ApplicationRunTime {
 	/// The core integration logic between `Common::ActionEffect` and
 	/// `Echo::Scheduler`.
 	///
@@ -96,9 +99,4 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 			},
 		}
 	}
-}
-
-impl Clone for ApplicationRunTime {
-	/// Implements `Clone` to satisfy Tauri's `State` management requirements.
-	fn clone(&self) -> Self { Self { Scheduler:self.Scheduler.clone(), Environment:self.Environment.clone() } }
 }
