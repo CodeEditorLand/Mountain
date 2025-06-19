@@ -3,7 +3,7 @@
 //! Implements the `TestController` trait for the `MountainEnvironment`. This is
 //! currently a stub implementation.
 
-use Common::{Error::CommonError::CommonError, Testing::TestController};
+use Common::{Error::CommonError::CommonError, Testing::TestController::TestController};
 use async_trait::async_trait;
 use log::warn;
 use serde_json::Value;

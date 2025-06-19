@@ -5,7 +5,11 @@
 //! including storing diagnostics from various sources and notifying the UI of
 //! changes.
 
-use Common::{Diagnostic::DiagnosticManager, Error::CommonError, LanguageFeature::DTO::MarkerDataDTO};
+use Common::{
+	Diagnostic::DiagnosticManager::DiagnosticManager,
+	Error::CommonError::CommonError,
+	LanguageFeature::DTO::MarkerDataDTO,
+};
 use async_trait::async_trait;
 use log::{debug, error, info};
 use serde_json::{Value, json};

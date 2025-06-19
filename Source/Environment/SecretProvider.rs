@@ -4,7 +4,7 @@
 //! provider contains the core logic for secure secret storage using the system
 //! keyring, powered by the `keyring` crate.
 
-use Common::{Error::CommonError::CommonError, Secret::SecretProvider};
+use Common::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProvider};
 use async_trait::async_trait;
 use keyring::Entry;
 use log::{info, trace};
@@ -68,7 +68,7 @@ impl SecretProvider for MountainEnvironment {
 
 		// This operation is idempotent; it is considered successful even if the
 		// entry doesn't exist.
-		match Entry.delete_password() {
+		match Entry.delete_credential() {
 			Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
 			Err(e) => Err(CommonError::SecretsAccess { Key, Reason:e.to_string() }),
 		}

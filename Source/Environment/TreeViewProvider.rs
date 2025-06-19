@@ -4,7 +4,7 @@
 //! provider manages the lifecycle of custom tree views and orchestrates the
 //! data flow between the extension host (`Cocoon`) and the UI (`Sky`).
 
-use Common::{Error::CommonError::CommonError, TreeView::TreeViewProvider};
+use Common::{Error::CommonError::CommonError, TreeView::TreeViewProvider::TreeViewProvider};
 use async_trait::async_trait;
 use log::{info, warn};
 use serde_json::{Value, json};

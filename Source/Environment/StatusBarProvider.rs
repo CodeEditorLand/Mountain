@@ -9,8 +9,8 @@ use std::sync::Arc;
 
 use Common::{
 	Error::CommonError::CommonError,
-	IPC::IPCProvider,
-	StatusBar::{DTO::StatusBarEntryDTO, StatusBarProvider},
+	IPC::IPCProvider::IPCProvider,
+	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
 };
 use async_trait::async_trait;
 use log::info;

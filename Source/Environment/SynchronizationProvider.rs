@@ -3,7 +3,7 @@
 //! Implements the `SynchronizationProvider` trait for the
 //! `MountainEnvironment`. This is currently a stub implementation.
 
-use Common::{Error::CommonError::CommonError, Synchronization::SynchronizationProvider};
+use Common::{Error::CommonError::CommonError, Synchronization::SynchronizationProvider::SynchronizationProvider};
 use async_trait::async_trait;
 use log::warn;
 use serde_json::Value;

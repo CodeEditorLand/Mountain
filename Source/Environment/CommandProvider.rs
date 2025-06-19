@@ -5,16 +5,20 @@
 //! dispatching command execution to either native Rust handlers or proxied
 //! sidecar handlers.
 
-use std::{collections::HashMap, future::Future, pin::Pin, sync::Arc};
+use std::{future::Future, pin::Pin, sync::Arc};
 
-use Common::{Command::CommandExecutor, Error::CommonError, IPC::DTO::ProxyTarget};
+use Common::{
+	Command::CommandExecutor::CommandExecutor,
+	Error::CommonError::CommonError,
+	IPC::DTO::ProxyTarget::ProxyTarget,
+};
 use async_trait::async_trait;
 use log::{debug, error, info};
 use serde_json::{Value, json};
-use tauri::{Manager, Runtime, Window};
+use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 
 use super::MountainEnvironment::MountainEnvironment;
-use crate::{ApplicationState::ApplicationState::ApplicationState, RunTime::ApplicationRunTime, Vine::Client};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Vine::Client};
 
 /// An enum representing the different ways a command can be handled.
 #[derive(Clone)]
@@ -23,7 +27,7 @@ pub enum CommandHandler<R:Runtime + 'static> {
 	Native(
 		fn(
 			AppHandle<R>,
-			Window<R>,
+			WebviewWindow<R>,
 			Arc<ApplicationRunTime>,
 			Value,
 		) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>>,
@@ -49,7 +53,7 @@ impl CommandExecutor for MountainEnvironment {
 			Some(CommandHandler::Native(Function)) => {
 				debug!("[CommandProvider] Executing NATIVE command '{}'.", CommandIdentifier);
 				let RunTime:Arc<ApplicationRunTime> = self.ApplicationHandle.state().inner().clone();
-				let MainWindow = self.ApplicationHandle.get_window("main").ok_or_else(|| {
+				let MainWindow = self.ApplicationHandle.get_webview_window("main").ok_or_else(|| {
 					CommonError::UserInterfaceInteraction {
 						Reason:"Main window not found for command execution".into(),
 					}
@@ -68,7 +72,7 @@ impl CommandExecutor for MountainEnvironment {
 				);
 				let RPCParameters = json!([ProxiedCommandIdentifier, Argument]);
 				let RPCMethod = format!("{}$ExecuteContributedCommand", ProxyTarget::ExtHostCommands.GetTargetPrefix());
-				Client::SendRequest(SidecarIdentifier, RPCMethod, RPCParameters, 30000).await
+				Client::SendRequest(&SidecarIdentifier, RPCMethod, RPCParameters, 30000).await
 			},
 			None => {
 				error!("[CommandProvider] Command '{}' not found in registry.", CommandIdentifier);

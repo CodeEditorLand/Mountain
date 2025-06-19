@@ -10,14 +10,14 @@
 
 use std::sync::Arc;
 
-use Echo::Scheduler::SchedulerBuilder;
+use Echo::Scheduler::SchedulerBuilder::SchedulerBuilder;
 use log::{error, info};
 use tauri::{Manager, RunEvent};
 
 use crate::{
 	ApplicationState::ApplicationState::ApplicationState,
-	Environment::MountainEnvironment,
-	ProcessManagement, // Placeholder for future logic
+	Environment::MountainEnvironment::MountainEnvironment,
+	ProcessManagement::CocoonManagement::InitializeCocoon, // Placeholder for future logic
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine,
 };
@@ -78,8 +78,8 @@ pub async fn main() {
 				// PostSetupApplicationHandle, &ApplicationState).await; ApplicationState.
 				// ScanExtensions(&PostSetupApplicationHandle).await;
 
-				Vine::Server::Initialize(PostSetupApplicationHandle.clone(), "[::1]:50051".to_string());
-				ProcessManagement::InitializeCocoon(&PostSetupApplicationHandle).await;
+				Vine::Server::Initialize::Initialize(PostSetupApplicationHandle.clone(), "[::1]:50051".to_string());
+				InitializeCocoon(&PostSetupApplicationHandle).await;
 
 				info!("[SetupTask] Post-setup initializations complete.");
 			});

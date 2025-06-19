@@ -7,11 +7,11 @@ use Common::{
 	Error::CommonError::CommonError,
 	SourceControlManagement::{
 		DTO::{
-			SourceControlManagementGroupDTO,
-			SourceControlManagementProviderDTO,
-			SourceControlManagementResourceDTO,
+			SourceControlManagementGroupDTO::SourceControlManagementGroupDTO,
+			SourceControlManagementProviderDTO::SourceControlManagementProviderDTO,
+			SourceControlManagementResourceDTO::SourceControlManagementResourceDTO,
 		},
-		SourceControlManagementProvider,
+		SourceControlManagementProvider::SourceControlManagementProvider,
 	},
 };
 use async_trait::async_trait;

@@ -3,7 +3,7 @@
 //! Implements the `CustomEditorProvider` trait for the `MountainEnvironment`.
 //! This is currently a stub implementation.
 
-use Common::{CustomEditor::CustomEditorProvider, Error::CommonError};
+use Common::{CustomEditor::CustomEditorProvider::CustomEditorProvider, Error::CommonError::CommonError};
 use async_trait::async_trait;
 use log::warn;
 use serde_json::Value;

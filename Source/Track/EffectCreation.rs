@@ -14,7 +14,7 @@ use Common::{
 	Error::CommonError::CommonError,
 };
 use serde_json::{Value, from_value};
-use tauri::Runtime;
+use tauri::{AppHandle, Runtime};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 

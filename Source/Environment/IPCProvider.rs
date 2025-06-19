@@ -4,7 +4,7 @@
 //! provider serves as a simple bridge, delegating all IPC operations directly
 //! to the `Vine` gRPC client.
 
-use Common::{Error::CommonError::CommonError, IPC::IPCProvider};
+use Common::{Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
 use async_trait::async_trait;
 use serde_json::Value;
 

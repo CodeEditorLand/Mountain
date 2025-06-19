@@ -9,10 +9,10 @@ use std::sync::Arc;
 
 use Common::{
 	Error::CommonError::CommonError,
-	IPC::IPCProvider,
+	IPC::IPCProvider::IPCProvider,
 	LanguageFeature::{
-		DTO::*, // Import all DTOs from the feature
-		LanguageFeatureProviderRegistry,
+		DTO::{HoverResultDTO::HoverResultDTO, PositionDTO::PositionDTO, ProviderType::ProviderType},
+		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 };
 use async_trait::async_trait;
@@ -22,7 +22,7 @@ use serde_json::{Value, json};
 use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::ApplicationState::DTO::ProviderRegistrationDTO;
+use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
 
 #[async_trait]
 impl LanguageFeatureProviderRegistry for MountainEnvironment {

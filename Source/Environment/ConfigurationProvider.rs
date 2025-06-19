@@ -5,19 +5,23 @@
 //! configuration management, including reading, merging, updating, and
 //! inspecting settings from various sources.
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use Common::{
 	Configuration::{
-		ConfigurationInspector,
-		ConfigurationProvider,
-		DTO::{ConfigurationOverridesDTO, ConfigurationTarget, InspectResultDataDTO},
+		ConfigurationInspector::ConfigurationInspector,
+		ConfigurationProvider::ConfigurationProvider,
+		DTO::{
+			ConfigurationOverridesDTO::ConfigurationOverridesDTO,
+			ConfigurationTarget::ConfigurationTarget,
+			InspectResultDataDTO::InspectResultDataDTO,
+		},
 	},
 	Error::CommonError::CommonError,
-	FileSystem::{FileSystemReader, FileSystemWriter},
+	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 };
 use async_trait::async_trait;
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use serde_json::{Map, Value};
 
 use super::MountainEnvironment::MountainEnvironment;
@@ -164,7 +168,9 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		}
 	}
 
-	let FinalConfig = crate::ApplicationState::DTO::MergedConfigurationStateDTO::Create(Value::Object(Merged));
+	let FinalConfig = crate::ApplicationState::DTO::MergedConfigurationStateDTO::MergedConfigurationStateDTO::Create(
+		Value::Object(Merged),
+	);
 
 	// Update the central application state.
 	*Environment.ApplicationState.Configuration.lock().unwrap() = FinalConfig.clone();

@@ -83,7 +83,7 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 		};
 
 		// 4. Submit the raw future to the scheduler with normal priority.
-		self.Scheduler.Submit(Task, Echo::Task::Priority::Normal);
+		self.Scheduler.Submit(Task, Echo::Task::Priority::Priority::Normal);
 
 		// 5. Await the result from the oneshot channel.
 		match ResultReceiver.await {

@@ -6,7 +6,7 @@
 
 use std::{collections::HashMap, path::PathBuf};
 
-use Common::{Error::CommonError::CommonError, Storage::StorageProvider};
+use Common::{Error::CommonError::CommonError, Storage::StorageProvider::StorageProvider};
 use async_trait::async_trait;
 use log::{error, info, trace};
 use serde_json::Value;

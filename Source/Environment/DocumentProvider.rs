@@ -8,10 +8,10 @@
 use std::sync::Arc;
 
 use Common::{
-	Document::DocumentProvider,
+	Document::DocumentProvider::DocumentProvider,
 	Error::CommonError::CommonError,
-	FileSystem::{FileSystemReader, FileSystemWriter},
-	IPC::IPCProvider,
+	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
+	IPC::IPCProvider::IPCProvider,
 };
 use async_trait::async_trait;
 use log::{error, info, trace, warn};
@@ -19,7 +19,7 @@ use serde_json::{Value, json};
 use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::ApplicationState::DTO::DocumentStateDTO;
+use crate::ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO;
 
 #[async_trait]
 impl DocumentProvider for MountainEnvironment {

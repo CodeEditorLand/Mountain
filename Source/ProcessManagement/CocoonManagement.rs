@@ -7,7 +7,7 @@ use std::{collections::HashMap, process::Stdio, time::Duration};
 
 use Common::Error::CommonError::CommonError;
 use log::{error, info, trace, warn};
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tokio::{
 	io::{AsyncBufReadExt, BufReader},
 	process::Command,
@@ -105,7 +105,7 @@ async fn LaunchAndManageCocoonSidecar(ApplicationHandle:AppHandle) -> Result<(),
 	Vine::Client::ConnectToSidecar(SidecarIdentifier.clone(), "127.0.0.1:50052".to_string()).await?;
 
 	info!("[CocoonManagement] Cocoon is ready. Sending initialization data...");
-	let AppState = ApplicationHandle.state::<ApplicationState>();
+	let AppState = ApplicationHandle.try_state::<ApplicationState>()?;
 	let MainInitializationData =
 		InitializationData::ConstructExtensionHostInitializationData(&ApplicationHandle, &AppState);
 
