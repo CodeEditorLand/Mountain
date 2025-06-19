@@ -36,11 +36,16 @@ uuid = { workspace = true, features = ["v4", "serde"] }
 chrono = { workspace = true, features = ["serde"] }
 thiserror = { workspace = true }
 Echo = { workspace = true }
+Common = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
 toml = { workspace = true }
+md5 = { workspace = true }
+num_cpus = { workspace = true }
+rand = { workspace = true }
 
 tauri-plugin-dialog = { workspace = true }
+
 # regex = { workspace = true }
 # unbug = { workspace = true }
 
