@@ -16,7 +16,7 @@ use async_trait::async_trait;
 use log::{error, info, trace, warn};
 use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
 use serde_json::{Value, json};
-use tokio::{io::AsyncReadExt, sync::mpsc as TokioMPSC};
+use tokio::sync::mpsc as TokioMPSC;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO;
@@ -47,7 +47,7 @@ impl TerminalProvider for MountainEnvironment {
 		let mut TerminalState = TerminalStateDTO::Create(TerminalIdentifier, Name.clone(), &OptionsValue, DefaultShell);
 
 		let PtySystem = NativePtySystem::default();
-		let PtyPair = PtySystem
+		let mut PtyPair = PtySystem
 			.openpty(PtySize::default())
 			.map_err(|e| CommonError::IPCError { Description:format!("Failed to open PTY: {}", e) })?;
 
@@ -63,7 +63,7 @@ impl TerminalProvider for MountainEnvironment {
 			.map_err(|e| CommonError::IPCError { Description:format!("Failed to spawn shell process: {}", e) })?;
 		TerminalState.OSProcessIdentifier = ChildProcess.process_id();
 
-		let mut PTYWriter = PtyPair.master.try_clone_writer().map_err(|e| {
+		let mut PTYWriter = PtyPair.master.take_writer().map_err(|e| {
 			CommonError::FileSystemIO {
 				Path:"pty master".into(),
 				Description:format!("Failed to clone PTY writer: {}", e),
@@ -93,8 +93,8 @@ impl TerminalProvider for MountainEnvironment {
 		tokio::spawn(async move {
 			let mut Buffer = [0u8; 8192];
 			loop {
-				match PTYReader.read(&mut Buffer).await {
-					Ok(Some(count)) if count > 0 => {
+				match PTYReader.read(&mut Buffer) {
+					Ok(count) if count > 0 => {
 						let DataString = String::from_utf8_lossy(&Buffer[..count]);
 						let Payload = json!([TermID, DataString]);
 						if let Err(e) = IPCProvider
@@ -108,8 +108,7 @@ impl TerminalProvider for MountainEnvironment {
 							warn!("[TerminalProvider] Failed to send process data for ID {}: {}", TermID, e);
 						}
 					},
-					Ok(_) => {}, // 0 bytes read or None, continue or break
-					Err(_) => break,
+					_ => break,
 				}
 			}
 		});
@@ -122,19 +121,26 @@ impl TerminalProvider for MountainEnvironment {
 	/// Sends text input to a running terminal process.
 	async fn SendTextToTerminal(&self, TerminalId:u64, Text:String) -> Result<(), CommonError> {
 		trace!("[TerminalProvider] Sending text to terminal ID: {}", TerminalId);
-		let TerminalsGuard = self
-			.ApplicationState
-			.ActiveTerminals
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-		if let Some(TerminalArc) = TerminalsGuard.get(&TerminalId) {
-			let TerminalStateGuard = TerminalArc.lock().unwrap();
-			if let Some(Sender) = &TerminalStateGuard.PTYInputTransmitter {
-				Sender
-					.send(Text)
-					.await
-					.map_err(|e| CommonError::IPCError { Description:e.to_string() })?;
+
+		let SenderOption = {
+			let TerminalsGuard = self
+				.ApplicationState
+				.ActiveTerminals
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			if let Some(TerminalArc) = TerminalsGuard.get(&TerminalId) {
+				let TerminalStateGuard = TerminalArc.lock().unwrap();
+				TerminalStateGuard.PTYInputTransmitter.clone()
+			} else {
+				None
 			}
+		}; // Lock is released here
+
+		if let Some(Sender) = SenderOption {
+			Sender
+				.send(Text)
+				.await
+				.map_err(|e| CommonError::IPCError { Description:e.to_string() })?;
 		}
 		Ok(())
 	}
@@ -142,12 +148,14 @@ impl TerminalProvider for MountainEnvironment {
 	/// Disposes of a terminal instance and terminates its underlying process.
 	async fn DisposeTerminal(&self, TerminalId:u64) -> Result<(), CommonError> {
 		info!("[TerminalProvider] Disposing terminal ID: {}", TerminalId);
-		let mut TerminalsGuard = self
+		let TerminalArc = self
 			.ApplicationState
 			.ActiveTerminals
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-		if let Some(TerminalArc) = TerminalsGuard.remove(&TerminalId) {
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.remove(&TerminalId);
+
+		if let Some(TerminalArc) = TerminalArc {
 			// Dropping the PTY master and associated tasks will cause the child
 			// process to terminate. A more robust implementation might send a
 			// SIGHUP or use a platform-specific kill command.

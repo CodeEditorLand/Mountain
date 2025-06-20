@@ -21,9 +21,4 @@ pub mod Binary;
 /// delegates to the primary binary logic.
 #[allow(dead_code)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-fn main() {
-	// We need to block on the main async function for the mobile entry point.
-	tokio::runtime::Runtime::new().unwrap().block_on(async {
-		Binary::main().await;
-	});
-}
+fn main() { Binary::Fn(); }

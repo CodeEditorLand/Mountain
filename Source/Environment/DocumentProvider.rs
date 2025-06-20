@@ -35,17 +35,20 @@ impl DocumentProvider for MountainEnvironment {
 		let URI = Utility::GetURLFromURIComponentsDTO(&URIComponentsDTO)?;
 		info!("[DocumentProvider] Opening document: {}", URI);
 
-		let mut OpenDocumentsGuard = self
-			.ApplicationState
-			.OpenDocuments
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+		// First, check if the document is already open.
+		{
+			let OpenDocumentsGuard = self
+				.ApplicationState
+				.OpenDocuments
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			if let Some(ExistingDocument) = OpenDocumentsGuard.get(URI.as_str()) {
+				info!("[DocumentProvider] Document {} is already open.", URI);
+				return Ok(ExistingDocument.URI.clone());
+			}
+		} // The lock is dropped here.
 
-		if let Some(ExistingDocument) = OpenDocumentsGuard.get(URI.as_str()) {
-			info!("[DocumentProvider] Document {} is already open.", URI);
-			return Ok(ExistingDocument.URI.clone());
-		}
-
+		// Read file content *before* acquiring the lock again for mutation.
 		let FileContent = if let Some(c) = Content {
 			c
 		} else if URI.scheme() == "file" {
@@ -59,15 +62,18 @@ impl DocumentProvider for MountainEnvironment {
 			String::from_utf8(FileSystemReader.ReadFile(&FilePath).await?)
 				.map_err(|e| CommonError::FileSystemIO { Path:FilePath, Description:e.to_string() })?
 		} else {
-			// For non-file schemes without initial content, start with an empty document.
 			String::new()
 		};
 
 		let NewDocument = DocumentStateDTO::Create(URI.clone(), LanguageIdentifier, FileContent);
 		let DTOForNotification = NewDocument.ToDTO();
 
-		OpenDocumentsGuard.insert(URI.to_string(), NewDocument);
-		drop(OpenDocumentsGuard);
+		// Now, acquire the lock just to insert the new document.
+		self.ApplicationState
+			.OpenDocuments
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.insert(URI.to_string(), NewDocument);
 
 		NotifyModelAdded(self, &DTOForNotification).await;
 		Ok(URI)
@@ -77,45 +83,44 @@ impl DocumentProvider for MountainEnvironment {
 	async fn SaveDocument(&self, URI:Url) -> Result<bool, CommonError> {
 		info!("[DocumentProvider] Saving document: {}", URI);
 
-		let mut OpenDocumentsGuard = self
-			.ApplicationState
-			.OpenDocuments
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+		let (ContentBytes, FilePath) = {
+			let mut OpenDocumentsGuard = self
+				.ApplicationState
+				.OpenDocuments
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
-			if URI.scheme() != "file" {
-				return Err(CommonError::NotImplemented {
-					FeatureName:format!("Saving for URI scheme '{}'", URI.scheme()),
-				});
+			if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
+				if URI.scheme() != "file" {
+					return Err(CommonError::NotImplemented {
+						FeatureName:format!("Saving for URI scheme '{}'", URI.scheme()),
+					});
+				}
+				Document.IsDirty = false;
+				(
+					Document.GetText().into_bytes(),
+					URI.to_file_path().unwrap(), // Safe due to scheme check
+				)
+			} else {
+				return Err(CommonError::FileSystemNotFound(URI.to_file_path().unwrap_or_default()));
 			}
+		}; // Lock is dropped here.
 
-			let FileSystemWriter:Arc<dyn FileSystemWriter> = self.Require();
-			let FilePath = URI.to_file_path().unwrap(); // Safe due to scheme check
-			let ContentBytes = Document.GetText().into_bytes();
+		let FileSystemWriter:Arc<dyn FileSystemWriter> = self.Require();
+		FileSystemWriter.WriteFile(&FilePath, ContentBytes, true, true).await?;
 
-			FileSystemWriter.WriteFile(&FilePath, ContentBytes, true, true).await?;
-			Document.IsDirty = false;
-			drop(OpenDocumentsGuard);
-
-			NotifyModelSaved(self, &URI).await;
-			Ok(true)
-		} else {
-			Err(CommonError::FileSystemNotFound(URI.to_file_path().unwrap_or_default()))
-		}
+		NotifyModelSaved(self, &URI).await;
+		Ok(true)
 	}
 
 	/// Saves a document to a new location.
 	async fn SaveDocumentAs(&self, _OriginalURI:Url, _NewTargetURI:Option<Url>) -> Result<Option<Url>, CommonError> {
-		// A full implementation would use the UserInterfaceProvider to prompt the user.
 		warn!("[DocumentProvider] SaveDocumentAs is not fully implemented.");
 		Err(CommonError::NotImplemented { FeatureName:"SaveDocumentAs".into() })
 	}
 
 	/// Saves all currently dirty documents.
 	async fn SaveAllDocuments(&self, _IncludeUntitled:bool) -> Result<Vec<bool>, CommonError> {
-		// A full implementation would iterate `ApplicationState.OpenDocuments` and
-		// save dirty ones.
 		warn!("[DocumentProvider] SaveAllDocuments is not fully implemented.");
 		Err(CommonError::NotImplemented { FeatureName:"SaveAllDocuments".into() })
 	}
@@ -131,22 +136,23 @@ impl DocumentProvider for MountainEnvironment {
 		_IsRedoing:bool,
 	) -> Result<(), CommonError> {
 		trace!("[DocumentProvider] Applying changes to document: {}", URI);
-		let mut OpenDocumentsGuard = self
-			.ApplicationState
-			.OpenDocuments
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+		{
+			let mut OpenDocumentsGuard = self
+				.ApplicationState
+				.OpenDocuments
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
-			if let Err(e) = Document.ApplyChanges(NewVersionIdentifier, &ChangesDTOCollection) {
-				return Err(CommonError::InvalidArgument { ArgumentName:"ChangesDTOCollection".into(), Reason:e });
+			if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
+				if let Err(e) = Document.ApplyChanges(NewVersionIdentifier, &ChangesDTOCollection) {
+					return Err(CommonError::InvalidArgument { ArgumentName:"ChangesDTOCollection".into(), Reason:e });
+				}
+				Document.IsDirty = true; // Assume any change makes it dirty
+			} else {
+				warn!("[DocumentProvider] Received changes for unknown document: {}", URI);
+				return Ok(());
 			}
-			Document.IsDirty = true; // Assume any change makes it dirty
-		} else {
-			warn!("[DocumentProvider] Received changes for unknown document: {}", URI);
-			return Ok(());
-		}
-		drop(OpenDocumentsGuard);
+		} // Lock is dropped here.
 
 		NotifyModelChanged(self, &URI, NewVersionIdentifier, ChangesDTOCollection).await;
 		Ok(())
