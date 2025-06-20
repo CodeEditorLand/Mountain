@@ -21,7 +21,6 @@ use super::MountainEnvironment::MountainEnvironment;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Vine::Client};
 
 /// An enum representing the different ways a command can be handled.
-#[derive(Clone)]
 pub enum CommandHandler<R:Runtime + 'static> {
 	/// A command handled by a native, asynchronous Rust function.
 	Native(
@@ -34,6 +33,21 @@ pub enum CommandHandler<R:Runtime + 'static> {
 	),
 	/// A command implemented in an extension and proxied to a sidecar.
 	Proxied { SidecarIdentifier:String, CommandIdentifier:String },
+}
+
+// Manually implement Clone because fn pointers are not automatically Clone
+impl<R:Runtime> Clone for CommandHandler<R> {
+	fn clone(&self) -> Self {
+		match self {
+			Self::Native(f) => Self::Native(*f),
+			Self::Proxied { SidecarIdentifier, CommandIdentifier } => {
+				Self::Proxied {
+					SidecarIdentifier:SidecarIdentifier.clone(),
+					CommandIdentifier:CommandIdentifier.clone(),
+				}
+			},
+		}
+	}
 }
 
 #[async_trait]
@@ -52,7 +66,8 @@ impl CommandExecutor for MountainEnvironment {
 		match HandlerInfoOption {
 			Some(CommandHandler::Native(Function)) => {
 				debug!("[CommandProvider] Executing NATIVE command '{}'.", CommandIdentifier);
-				let RunTime:Arc<ApplicationRunTime> = self.ApplicationHandle.state().inner().clone();
+				let RunTime:Arc<ApplicationRunTime> =
+					self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 				let MainWindow = self.ApplicationHandle.get_webview_window("main").ok_or_else(|| {
 					CommonError::UserInterfaceInteraction {
 						Reason:"Main window not found for command execution".into(),
@@ -72,7 +87,9 @@ impl CommandExecutor for MountainEnvironment {
 				);
 				let RPCParameters = json!([ProxiedCommandIdentifier, Argument]);
 				let RPCMethod = format!("{}$ExecuteContributedCommand", ProxyTarget::ExtHostCommands.GetTargetPrefix());
-				Client::SendRequest(&SidecarIdentifier, RPCMethod, RPCParameters, 30000).await
+				Client::SendRequest(&SidecarIdentifier, RPCMethod, RPCParameters, 30000)
+					.await
+					.map_err(|e| CommonError::IPCError { Description:e.to_string() })
 			},
 			None => {
 				error!("[CommandProvider] Command '{}' not found in registry.", CommandIdentifier);

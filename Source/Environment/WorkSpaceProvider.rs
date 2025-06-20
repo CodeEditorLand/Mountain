@@ -132,14 +132,16 @@ impl WorkSpaceProvider for MountainEnvironment {
 					if Path.is_dir() {
 						continue;
 					}
-					if IncludeMatcher?.is_match(Path) {
-						if let Some(ref Exclude) = ExcludeMatcher {
-							if Exclude.is_match(Path) {
-								continue;
+					if let Some(ref include) = IncludeMatcher {
+						if include.is_match(Path) {
+							if let Some(ref exclude) = ExcludeMatcher {
+								if exclude.is_match(Path) {
+									continue;
+								}
 							}
-						}
-						if let Ok(URL) = Url::from_file_path(Path) {
-							Results.push(URL);
+							if let Ok(URL) = Url::from_file_path(Path) {
+								Results.push(URL);
+							}
 						}
 					}
 				}

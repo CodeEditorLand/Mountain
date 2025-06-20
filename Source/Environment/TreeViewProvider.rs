@@ -4,7 +4,10 @@
 //! provider manages the lifecycle of custom tree views and orchestrates the
 //! data flow between the extension host (`Cocoon`) and the UI (`Sky`).
 
-use Common::{Error::CommonError::CommonError, TreeView::TreeViewProvider::TreeViewProvider};
+use Common::{
+	Error::CommonError::CommonError,
+	TreeView::{DTO::TreeViewOptionsDTO::TreeViewOptionsDTO, TreeViewProvider::TreeViewProvider},
+};
 use async_trait::async_trait;
 use log::{info, warn};
 use serde_json::{Value, json};
@@ -18,7 +21,7 @@ impl TreeViewProvider for MountainEnvironment {
 	/// Registers a new tree data provider from Cocoon.
 	async fn RegisterTreeDataProvider(&self, ViewIdentifier:String, Options:Value) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Registering data provider for view: {}", ViewIdentifier);
-		let OptionsDTO:Common::TreeView::DTO::TreeViewOptionsDTO::TreeViewOptionsDTO = serde_json::from_value(Options)
+		let OptionsDTO:TreeViewOptionsDTO = serde_json::from_value(Options)
 			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:e.to_string() })?;
 
 		let NewState = TreeViewStateDTO {
