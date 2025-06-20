@@ -3,7 +3,8 @@
 //! This file orchestrates the entire application lifecycle. It is responsible
 //! for setting up logging, initializing the `Echo` scheduler, the core
 //! `ApplicationState`, the `ApplicationRunTime`, the `Vine` gRPC server, the
-//! `Cocoon` sidecar process, and the Tauri application window and event loop.
+//! `Cocoon` sidecar process, and explicitly creating and customizing the main
+//! Tauri application window before starting the event loop.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(non_snake_case, non_camel_case_types)]
@@ -23,7 +24,8 @@ use crate::{
 };
 
 /// Initializes the application's logging infrastructure using `env_logger`.
-/// In debug builds, it defaults to a more verbose log level.
+/// In debug builds, it defaults to a more verbose log level with colored
+/// output.
 fn InitializeLogging() {
 	let LogLevel = if cfg!(debug_assertions) { "debug" } else { "info" };
 	if std::env::var("RUST_LOG").is_err() {
@@ -63,7 +65,7 @@ pub fn Fn() {
 	tokio::runtime::Builder::new_multi_thread()
 		.enable_all()
 		.build()
-		.expect("Cannot build.")
+		.expect("Cannot build Tokio runtime.")
 		.block_on(async {
 			InitializeLogging();
 			info!("[Main] Starting Mountain application...");
@@ -79,6 +81,8 @@ pub fn Fn() {
 			#[allow(unused_mut)]
 			let mut Builder = tauri::Builder::default();
 
+			// Conditionally enable `any_thread` for the Tauri builder on Windows and Linux.
+			// This allows Tauri event handlers and commands to run on any thread.
 			#[cfg(any(windows, target_os = "linux"))]
 			{
 				Builder = Builder.any_thread();
@@ -89,6 +93,55 @@ pub fn Fn() {
 				.setup(move |Application| {
 					info!("[Setup] Tauri setup hook initiated.");
 					let ApplicationHandle = Application.handle().clone();
+
+					// --- Main Window Creation ---
+					// Explicitly build and configure the main application window.
+					// This logic is integrated from the second example.
+					let mut WindowBuilder = tauri::WebviewWindowBuilder::new(
+						Application,
+						"Application", // Internal label for the window
+						// URL to load in the webview. `App` variant loads from bundled assets.
+						tauri::WebviewUrl::App(std::path::PathBuf::from("Application/index.html")),
+					)
+					// Use an internal HTTPS scheme (e.g., `https://tauri.localhost`).
+					// This can enable certain web APIs that require a secure context.
+					.use_https_scheme(true)
+					// Allow standard browser zoom hotkeys (Ctrl+Plus, Ctrl+Minus, Ctrl+0).
+					.zoom_hotkeys_enabled(true)
+					// Disable browser extension loading in the webview.
+					.browser_extensions_enabled(false);
+
+					// Platform-specific window styling (title, maximization, decorations).
+					#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
+					{
+						WindowBuilder = WindowBuilder
+							.title("FIDDEE") // Set the user-visible window title.
+							.maximized(true) // Start the window maximized.
+							// Remove default OS window decorations (title bar, buttons).
+							// This implies a custom title bar will be implemented in the frontend.
+							.decorations(false)
+							.shadow(true); // Enable window shadow.
+					}
+
+					// Build the main window and handle potential errors.
+					let MainWindow = match WindowBuilder.build() {
+						Ok(Instance) => Instance,
+						Err(Error) => {
+							error!("[Setup] Main application window build failed: {:?}", Error);
+							// Panic to halt execution as the main UI cannot be displayed.
+							panic!("Main application window build failed: {:?}", Error);
+						},
+					};
+
+					// --- Developer Tools (Debug Builds, Desktop Platforms Only) ---
+					#[cfg(all(debug_assertions, not(any(target_os = "android", target_os = "ios"))))]
+					{
+						// Open the webview's developer tools automatically in debug builds.
+						info!("[Setup] Opening webview developer tools.");
+						MainWindow.open_devtools();
+					}
+
+					// --- Backend Initialization (continues after window creation) ---
 
 					// 2. Create the application Environment and the Echo-powered
 					//    ApplicationRunTime.
@@ -135,7 +188,7 @@ pub fn Fn() {
 				.run(move |ApplicationHandle, Event| {
 					if let RunEvent::ExitRequested { api, .. } = Event {
 						info!("[RunEvent] Exit requested. Initiating graceful shutdown...");
-						api.prevent_exit();
+						api.prevent_exit(); // Prevent the app from closing immediately.
 						let SchedulerHandle = SchedulerForShutdown.clone();
 						let ApplicationHandleClone = ApplicationHandle.clone();
 
@@ -143,13 +196,14 @@ pub fn Fn() {
 						// Tauri event loop.
 						tokio::spawn(async move {
 							info!("[Shutdown] Shutting down Echo scheduler...");
+							// Attempt to get exclusive ownership of the Arc to shut down the scheduler.
 							if let Ok(mut Scheduler) = Arc::try_unwrap(SchedulerHandle) {
 								Scheduler.Stop().await;
 							} else {
 								error!("[Shutdown] Could not get exclusive access to scheduler for shutdown.");
 							}
 							info!("[Shutdown] Shutdown complete. Exiting application.");
-							ApplicationHandleClone.exit(0);
+							ApplicationHandleClone.exit(0); // Now, exit the application.
 						});
 					}
 				});
