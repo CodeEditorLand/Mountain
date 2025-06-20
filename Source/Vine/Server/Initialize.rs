@@ -5,11 +5,14 @@
 use std::{net::SocketAddr, sync::Arc};
 
 use log::{error, info};
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
 
 use super::MountainVinegRPCService::MountainVinegRPCService;
-use crate::{RunTime::ApplicationRunTime, Vine::Generated::mountain_service_server::MountainServiceServer};
+use crate::{
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Vine::Generated::mountain_service_server::MountainServiceServer,
+};
 
 /// Initializes and starts the gRPC server on a background task.
 ///

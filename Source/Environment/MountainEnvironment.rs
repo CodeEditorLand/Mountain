@@ -57,72 +57,72 @@ impl Environment for MountainEnvironment {}
 // implements every provider trait, so when an effect requires a capability, we
 // provide a clone of the environment, which satisfies the trait bound.
 
-impl Requires<Arc<dyn CommandExecutor>> for MountainEnvironment {
+impl Requires<dyn CommandExecutor> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn CommandExecutor> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn ConfigurationProvider>> for MountainEnvironment {
+impl Requires<dyn ConfigurationProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn ConfigurationProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn ConfigurationInspector>> for MountainEnvironment {
+impl Requires<dyn ConfigurationInspector> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn ConfigurationInspector> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn CustomEditorProvider>> for MountainEnvironment {
+impl Requires<dyn CustomEditorProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn CustomEditorProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn DiagnosticManager>> for MountainEnvironment {
+impl Requires<dyn DiagnosticManager> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn DiagnosticManager> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn DocumentProvider>> for MountainEnvironment {
+impl Requires<dyn DocumentProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn DocumentProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn FileSystemReader>> for MountainEnvironment {
+impl Requires<dyn FileSystemReader> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn FileSystemReader> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn FileSystemWriter>> for MountainEnvironment {
+impl Requires<dyn FileSystemWriter> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn FileSystemWriter> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn IPCProvider>> for MountainEnvironment {
+impl Requires<dyn IPCProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn IPCProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn LanguageFeatureProviderRegistry>> for MountainEnvironment {
+impl Requires<dyn LanguageFeatureProviderRegistry> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn LanguageFeatureProviderRegistry> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn OutputChannelManager>> for MountainEnvironment {
+impl Requires<dyn OutputChannelManager> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn OutputChannelManager> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn SourceControlManagementProvider>> for MountainEnvironment {
+impl Requires<dyn SourceControlManagementProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn SourceControlManagementProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn SecretProvider>> for MountainEnvironment {
+impl Requires<dyn SecretProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn SecretProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn StatusBarProvider>> for MountainEnvironment {
+impl Requires<dyn StatusBarProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn StatusBarProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn StorageProvider>> for MountainEnvironment {
+impl Requires<dyn StorageProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn StorageProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn SynchronizationProvider>> for MountainEnvironment {
+impl Requires<dyn SynchronizationProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn SynchronizationProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn TerminalProvider>> for MountainEnvironment {
+impl Requires<dyn TerminalProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn TerminalProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn TestController>> for MountainEnvironment {
+impl Requires<dyn TestController> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn TestController> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn TreeViewProvider>> for MountainEnvironment {
+impl Requires<dyn TreeViewProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn TreeViewProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn UserInterfaceProvider>> for MountainEnvironment {
+impl Requires<dyn UserInterfaceProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn UserInterfaceProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn WebViewProvider>> for MountainEnvironment {
+impl Requires<dyn WebViewProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn WebViewProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn WorkSpaceProvider>> for MountainEnvironment {
+impl Requires<dyn WorkSpaceProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn WorkSpaceProvider> { Arc::new(self.clone()) }
 }
-impl Requires<Arc<dyn WorkSpaceEditApplier>> for MountainEnvironment {
+impl Requires<dyn WorkSpaceEditApplier> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn WorkSpaceEditApplier> { Arc::new(self.clone()) }
 }

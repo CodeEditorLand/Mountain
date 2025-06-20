@@ -8,7 +8,7 @@
 
 use std::{collections::HashMap, fs, path::Path};
 
-use log::{error, warn};
+use log::error;
 use serde::{self, Deserializer, Serializer};
 use serde_json::Value;
 use url::Url;

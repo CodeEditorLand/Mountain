@@ -6,7 +6,7 @@
 
 use std::sync::Arc;
 
-use log::{error, info, trace, warn};
+use log::{error, info, trace};
 use serde_json::Value;
 use tauri::AppHandle;
 use tonic::{Request, Response, Status};
@@ -14,7 +14,15 @@ use tonic::{Request, Response, Status};
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track,
-	Vine::Generated::{mountain_service_server::MountainService, *},
+	Vine::Generated::{
+		CancelOperationRequest,
+		Empty,
+		GenericNotification,
+		GenericRequest,
+		GenericResponse,
+		RpcError,
+		mountain_service_server::MountainService,
+	},
 };
 
 /// The concrete implementation of the `MountainService` gRPC service.
@@ -52,19 +60,13 @@ impl MountainService for MountainVinegRPCService {
 				return Ok(Response::new(GenericResponse {
 					request_id:RequestIdentifier,
 					result:vec![],
-					error:Some(RpcError {
-						message:msg,
-						code:-32700, // JSON-RPC Parse Error
-						data:vec![],
-					}),
+					error:Some(RpcError { message:msg, code:-32700, data:vec![] }),
 				}));
 			},
 		};
 		trace!("[VineServer] Params for [ID: {}]: {:?}", RequestIdentifier, ParametersValue);
 
-		// Use the primary Track dispatcher to handle the request. This will create
-		// and run the corresponding ActionEffect.
-		let DispatchResult = Track::DispatchSidecarRequest(
+		let DispatchResult = Track::DispatchLogic::DispatchSidecarRequest(
 			self.ApplicationHandle.clone(),
 			self.RunTime.clone(),
 			"cocoon-main".to_string(), // In the future, this could come from connection metadata.
@@ -117,7 +119,7 @@ impl MountainService for MountainVinegRPCService {
 
 	/// Handles a request from Cocoon to cancel a long-running operation.
 	async fn CancelOperation(&self, _request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
-		warn!("[VineServer] Received CancelOperation request, but cancellation is not yet implemented.");
+		info!("[VineServer] Received CancelOperation request, but cancellation is not yet implemented.");
 		// A full implementation would map the request_id_to_cancel to a
 		// CancellationToken and trigger it.
 		Ok(Response::new(Empty {}))

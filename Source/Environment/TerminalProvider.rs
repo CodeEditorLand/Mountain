@@ -7,6 +7,7 @@
 use std::{env, io::Write, sync::Arc};
 
 use Common::{
+	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	IPC::IPCProvider::IPCProvider,
 	Terminal::TerminalProvider::TerminalProvider,

@@ -17,12 +17,14 @@ use Common::{
 			InspectResultDataDTO::InspectResultDataDTO,
 		},
 	},
+	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 };
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use serde_json::{Map, Value};
+use tauri::Manager;
 
 use super::MountainEnvironment::MountainEnvironment;
 // TODO: Re-integrate IPC client for notifications
@@ -59,10 +61,7 @@ impl ConfigurationProvider for MountainEnvironment {
 
 		let ConfigPath = match Target {
 			ConfigurationTarget::User => {
-				self.ApplicationHandle
-					.path_resolver()
-					.app_config_dir()
-					.map(|p| p.join("settings.json"))
+				self.ApplicationHandle.path().app_config_dir().map(|p| p.join("settings.json"))
 			},
 			ConfigurationTarget::WorkSpace => {
 				self.ApplicationState
@@ -150,7 +149,7 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 
 	let UserSettingsPath = Environment
 		.ApplicationHandle
-		.path_resolver()
+		.path()
 		.app_config_dir()
 		.map(|p| p.join("settings.json"));
 

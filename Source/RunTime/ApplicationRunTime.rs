@@ -59,20 +59,20 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 	/// future, submits that future to the scheduler, and then awaits the result
 	/// via a `oneshot` channel. This decouples the *request* of an effect from
 	/// its *execution* on a worker thread, enabling true concurrent processing.
-	async fn Run<TCapability, TError, TOutput>(
+	async fn Run<TCapabilityProvider, TError, TOutput>(
 		&self,
-		Effect:ActionEffect<Arc<TCapability>, TError, TOutput>,
+		Effect:ActionEffect<Arc<TCapabilityProvider>, TError, TOutput>,
 	) -> Result<TOutput, TError>
 	where
-		TCapability: ?Sized + Send + Sync,
-		Self::EnvironmentType: Requires<Arc<TCapability>>,
+		TCapabilityProvider: ?Sized + Send + Sync + 'static,
+		Self::EnvironmentType: Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static,
 		TOutput: Send + Sync + 'static, {
 		// 1. Create the single-use channel to receive the result from the worker.
 		let (ResultSender, ResultReceiver) = oneshot::channel::<Result<TOutput, TError>>();
 
 		// 2. Get the specific capability the effect needs from the Environment.
-		let CapabilityProvider:Arc<TCapability> = self.Environment.Require();
+		let CapabilityProvider:Arc<TCapabilityProvider> = self.Environment.Require();
 
 		// 3. Create the future that will be executed by a worker thread.
 		// This future captures the Effect, its Capability, and the Sender.

@@ -9,6 +9,7 @@ use std::sync::Arc;
 
 use Common::{
 	Document::DocumentProvider::DocumentProvider,
+	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 	IPC::IPCProvider::IPCProvider,

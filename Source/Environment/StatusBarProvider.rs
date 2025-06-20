@@ -8,6 +8,7 @@
 use std::sync::Arc;
 
 use Common::{
+	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	IPC::IPCProvider::IPCProvider,
 	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
