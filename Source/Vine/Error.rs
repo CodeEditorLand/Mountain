@@ -12,19 +12,12 @@ use thiserror::Error;
 pub enum VineError {
 	/// A gRPC client channel for the specified sidecar could not be found or
 	/// is not ready.
-	#[error("Sidecar '{SidecarIdentifier}' not found or its gRPC client channel is not ready: {Details}")]
-	ClientChannelError { SidecarIdentifier:String, Details:String },
+	#[error("Sidecar '{0}' not found or its gRPC client channel is not ready.")]
+	ClientNotConnected(String),
 
 	/// An RPC call to a sidecar failed with a specific gRPC status.
-	#[error(
-		"gRPC call to sidecar '{SidecarIdentifier}' (method: '{MethodName}') failed: {StatusCode} - {StatusMessage}"
-	)]
-	gRPCRequestFailed {
-		SidecarIdentifier:String,
-		MethodName:String,
-		StatusCode:String,
-		StatusMessage:String,
-	},
+	#[error("gRPC call failed: {0}")]
+	RpcError(String),
 
 	/// An error occurred while serializing or deserializing a JSON payload.
 	#[error("JSON serialization error for gRPC payload: {0}")]
@@ -43,10 +36,18 @@ pub enum VineError {
 	/// A shared state mutex was "poisoned," indicating a panic.
 	#[error("Internal state lock poisoned: {0}")]
 	InternalLockError(String),
+
+	/// An error occurred from an invalid URI.
+	#[error("Invalid URI: {0}")]
+	InvalidUri(#[from] tonic::transport::uri::InvalidUri),
 }
 
 impl<T> From<PoisonError<MutexGuard<'_, T>>> for VineError {
 	fn from(Error:PoisonError<MutexGuard<'_, T>>) -> Self {
 		VineError::InternalLockError(format!("Shared state lock poisoned: {}", Error))
 	}
+}
+
+impl From<tonic::Status> for VineError {
+	fn from(status:tonic::Status) -> Self { VineError::RpcError(status.to_string()) }
 }

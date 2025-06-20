@@ -71,12 +71,12 @@ pub async fn SendRequest(
 		match timeout(Duration::from_millis(TimeoutMilliseconds), Future).await {
 			Ok(Ok(Response)) => {
 				let ResponseData = Response.into_inner();
-				if let Some(RPCError) = ResponseData.error {
+				if let Some(RpcError) = ResponseData.error {
 					error!(
 						"[VineClient] Received RPC error from sidecar '{}': {}",
-						SidecarIdentifier, RPCError.message
+						SidecarIdentifier, RpcError.message
 					);
-					Err(VineError::RPCError(RPCError.message))
+					Err(VineError::RpcError(RpcError.message))
 				} else {
 					let DeserializedValue = from_slice(&ResponseData.result)?;
 					Ok(DeserializedValue)

@@ -9,10 +9,10 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 tauri-build = { workspace = true, features = [] }
 toml = { workspace = true }
-tonic-build = { workspace = true }
+tonic-build = { workspace = true, features = ["transport"] }
 
 [dependencies]
-tauri = { version = "*", features = [
+tauri = { workspace = true, features = [
 	"wry",
 	"tray-icon",
 	"devtools",

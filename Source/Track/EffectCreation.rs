@@ -9,8 +9,7 @@
 use std::sync::Arc;
 
 use Common::{
-	self,
-	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime},
+	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
 	Error::CommonError::CommonError,
 };
 use serde_json::{Value, from_value};
@@ -34,6 +33,22 @@ macro_rules! get_param {
 	};
 }
 
+/// A helper function to erase the specific capability type of an effect,
+/// mapping it to a generic effect that can be run by the dispatcher.
+fn erase_and_map_effect<C, O, E>(effect:ActionEffect<Arc<C>, E, O>) -> MappedEffect
+where
+	C: ?Sized + Send + Sync + 'static,
+	O: serde::Serialize + Send + 'static,
+	E: Into<CommonError> + Send + Sync + 'static,
+	MountainRunTime: Common::Environment::Requires::Requires<C>, {
+	let mapped_effect = effect.map(|output| serde_json::to_value(output).unwrap_or(Value::Null));
+
+	ActionEffect::New(Arc::new(move |runtime:Arc<MountainRunTime>| {
+		let effect_clone = mapped_effect.clone();
+		Box::pin(async move { runtime.Run(effect_clone).await.map_err(|e| e.into()) })
+	}))
+}
+
 /// Creates an `ActionEffect` for a request from any source (frontend or
 /// sidecar).
 pub fn CreateEffectForRequest<R:Runtime>(
@@ -47,31 +62,36 @@ pub fn CreateEffectForRequest<R:Runtime>(
 
 	// This is the main RPC-to-Effect mapping. It deserializes the `params`
 	// into the arguments required by the corresponding effect constructor.
-	let Effect:MappedEffect = match Method {
+	let effect:MappedEffect = match Method {
 		// --- Command Effects ---
 		"Command.Execute" => {
 			let ID = get_param!(ParametersArray, 0, String)?;
 			let Args = ParametersArray.get(1).cloned().unwrap_or(Value::Null);
-			Common::Command::ExecuteCommand::ExecuteCommand(ID, Args).map(to_value)
+			let specific_effect = Common::Command::ExecuteCommand::ExecuteCommand(ID, Args);
+			erase_and_map_effect(specific_effect)
 		},
 		"Command.Register" => {
 			let SidecarID = get_param!(ParametersArray, 0, String)?;
 			let CommandID = get_param!(ParametersArray, 1, String)?;
-			Common::Command::RegisterCommand::RegisterCommand(SidecarID, CommandID).map(to_value)
+			let specific_effect = Common::Command::RegisterCommand::RegisterCommand(SidecarID, CommandID);
+			erase_and_map_effect(specific_effect)
 		},
 
 		// --- FileSystem Read Effects ---
 		"FileSystem.ReadFile" => {
 			let Path = get_param!(ParametersArray, 0, _)?;
-			Common::FileSystem::ReadFile::ReadFile(Path).map(to_value)
+			let specific_effect = Common::FileSystem::ReadFile::ReadFile(Path);
+			erase_and_map_effect(specific_effect)
 		},
 		"FileSystem.StatFile" => {
 			let Path = get_param!(ParametersArray, 0, _)?;
-			Common::FileSystem::StatFile::StatFile(Path).map(to_value)
+			let specific_effect = Common::FileSystem::StatFile::StatFile(Path);
+			erase_and_map_effect(specific_effect)
 		},
 		"FileSystem.ReadDirectory" => {
 			let Path = get_param!(ParametersArray, 0, _)?;
-			Common::FileSystem::ReadDirectory::ReadDirectory(Path).map(to_value)
+			let specific_effect = Common::FileSystem::ReadDirectory::ReadDirectory(Path);
+			erase_and_map_effect(specific_effect)
 		},
 
 		// --- FileSystem Write Effects ---
@@ -80,13 +100,15 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let Content = get_param!(ParametersArray, 1, Vec<u8>)?;
 			let Create = get_param!(ParametersArray, 2, bool)?;
 			let Overwrite = get_param!(ParametersArray, 3, bool)?;
-			Common::FileSystem::WriteFileBytes::WriteFileBytes(Path, Content, Create, Overwrite).map(to_value)
+			let specific_effect = Common::FileSystem::WriteFileBytes::WriteFileBytes(Path, Content, Create, Overwrite);
+			erase_and_map_effect(specific_effect)
 		},
 		"FileSystem.Delete" => {
 			let Path = get_param!(ParametersArray, 0, _)?;
 			let Recursive = get_param!(ParametersArray, 1, bool)?;
 			let UseTrash = get_param!(ParametersArray, 2, bool)?;
-			Common::FileSystem::Delete::Delete(Path, Recursive, UseTrash).map(to_value)
+			let specific_effect = Common::FileSystem::Delete::Delete(Path, Recursive, UseTrash);
+			erase_and_map_effect(specific_effect)
 		},
 
 		// --- UserInterface Effects ---
@@ -94,28 +116,18 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let Severity = get_param!(ParametersArray, 0, _)?;
 			let Message = get_param!(ParametersArray, 1, String)?;
 			let Options = ParametersArray.get(2).cloned().unwrap_or(Value::Null);
-			Common::UserInterface::ShowMessage::ShowMessage(Severity, Message, Options).map(to_value)
+			let specific_effect = Common::UserInterface::ShowMessage::ShowMessage(Severity, Message, Options);
+			erase_and_map_effect(specific_effect)
 		},
 		"UserInterface.ShowOpenDialog" => {
 			let Options = get_param!(ParametersArray, 0, _)?;
-			Common::UserInterface::ShowOpenDialog::ShowOpenDialog(Options).map(to_value)
+			let specific_effect = Common::UserInterface::ShowOpenDialog::ShowOpenDialog(Options);
+			erase_and_map_effect(specific_effect)
 		},
 
 		// ... Add mappings for all other effects here ...
 		_ => return Err(format!("No ActionEffect mapping found for method: {}", Method)),
-	}?;
+	};
 
-	Ok(Effect)
-}
-
-/// A helper function to map the output of any effect to a `serde_json::Value`.
-fn to_value<TOutput:serde::Serialize, TError, TRunTime>(
-	effect:ActionEffect<Arc<TRunTime>, TError, TOutput>,
-) -> Result<MappedEffect, String>
-where
-	TRunTime: ApplicationRunTime<EnvironmentType = crate::Environment::MountainEnvironment::MountainEnvironment>
-		+ Send
-		+ Sync
-		+ 'static, {
-	Ok(effect.map(|output| serde_json::to_value(output).unwrap_or(Value::Null)))
+	Ok(effect)
 }

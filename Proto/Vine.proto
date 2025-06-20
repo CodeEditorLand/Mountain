@@ -36,7 +36,7 @@ message GenericRequest {
 message GenericResponse {
   uint64 request_id = 1;
   bytes result = 2; // The successful result, JSON-serialized.
-  optional RPCError error = 3;
+  optional RpcError error = 3;
 }
 
 // A generic notification message, which is fire-and-forget and does not have an ID.
@@ -46,7 +46,7 @@ message GenericNotification {
 }
 
 // A structured error payload, compliant with JSON-RPC error objects.
-message RPCError {
+message RpcError {
   int32 code = 1;
   string message = 2;
   bytes data = 3; // Optional, additional error data, JSON-serialized.

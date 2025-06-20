@@ -20,7 +20,7 @@ use crate::{
 		GenericNotification,
 		GenericRequest,
 		GenericResponse,
-		RPCError,
+		RpcError,
 		mountain_service_server::MountainService,
 	},
 };
@@ -42,7 +42,10 @@ impl MountainVinegRPCService {
 #[tonic::async_trait]
 impl MountainService for MountainVinegRPCService {
 	/// Handles generic request-response RPCs from Cocoon.
-	async fn ProcessCocoonRequest(&self, request:Request<GenericRequest>) -> Result<Response<GenericResponse>, Status> {
+	async fn process_cocoon_request(
+		&self,
+		request:Request<GenericRequest>,
+	) -> Result<Response<GenericResponse>, Status> {
 		let RequestData = request.into_inner();
 		let MethodName = RequestData.method;
 		let RequestIdentifier = RequestData.request_id;
@@ -60,7 +63,7 @@ impl MountainService for MountainVinegRPCService {
 				return Ok(Response::new(GenericResponse {
 					request_id:RequestIdentifier,
 					result:vec![],
-					error:Some(RPCError { message:msg, code:-32700, data:vec![] }),
+					error:Some(RpcError { message:msg, code:-32700, data:vec![] }),
 				}));
 			},
 		};
@@ -91,7 +94,7 @@ impl MountainService for MountainVinegRPCService {
 				Ok(Response::new(GenericResponse {
 					request_id:RequestIdentifier,
 					result:vec![],
-					error:Some(RPCError {
+					error:Some(RpcError {
 						message:ErrorString,
 						code:-32000, // JSON-RPC Generic Server Error
 						data:vec![],
@@ -102,7 +105,7 @@ impl MountainService for MountainVinegRPCService {
 	}
 
 	/// Handles generic fire-and-forget notifications from Cocoon.
-	async fn SendCocoonNotification(&self, request:Request<GenericNotification>) -> Result<Response<Empty>, Status> {
+	async fn send_cocoon_notification(&self, request:Request<GenericNotification>) -> Result<Response<Empty>, Status> {
 		let NotificationData = request.into_inner();
 		let MethodName = NotificationData.method;
 		info!("[VineServer] Received gRPC Notification: Method='{}'", MethodName);
@@ -118,7 +121,7 @@ impl MountainService for MountainVinegRPCService {
 	}
 
 	/// Handles a request from Cocoon to cancel a long-running operation.
-	async fn CancelOperation(&self, _request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
+	async fn cancel_operation(&self, _request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		info!("[VineServer] Received CancelOperation request, but cancellation is not yet implemented.");
 		// A full implementation would map the request_id_to_cancel to a
 		// CancellationToken and trigger it.

@@ -18,9 +18,8 @@ impl TreeViewProvider for MountainEnvironment {
 	/// Registers a new tree data provider from Cocoon.
 	async fn RegisterTreeDataProvider(&self, ViewIdentifier:String, Options:Value) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Registering data provider for view: {}", ViewIdentifier);
-		let OptionsDTO:Common::TreeView::DTO::TreeViewOptionsDTO = serde_json::from_value(Options).map_err(|e| {
-			CommonError::CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:e.to_string() }
-		})?;
+		let OptionsDTO:Common::TreeView::DTO::TreeViewOptionsDTO::TreeViewOptionsDTO = serde_json::from_value(Options)
+			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:e.to_string() })?;
 
 		let NewState = TreeViewStateDTO {
 			ViewIdentifier:ViewIdentifier.clone(),
