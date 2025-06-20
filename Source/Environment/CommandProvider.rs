@@ -35,7 +35,6 @@ pub enum CommandHandler<R:Runtime + 'static> {
 	Proxied { SidecarIdentifier:String, CommandIdentifier:String },
 }
 
-// Manually implement Clone because fn pointers are not automatically Clone
 impl<R:Runtime> Clone for CommandHandler<R> {
 	fn clone(&self) -> Self {
 		match self {

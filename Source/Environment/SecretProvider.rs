@@ -8,18 +8,12 @@ use Common::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProv
 use async_trait::async_trait;
 use keyring::Entry;
 use log::{info, trace};
-use tauri::Manager;
 
 use super::MountainEnvironment::MountainEnvironment;
 
 /// Constructs the service name for the keyring entry.
-///
-/// This is a crucial security feature that namespaces secrets on a
-/// per-extension basis, preventing one extension from reading another's
-/// secrets. It combines the application's unique identifier with the
-/// extension's identifier.
 fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&str) -> String {
-	format!("{}.{}", Environment.ApplicationHandle.config().identifier, ExtensionIdentifier)
+	format!("{}.{}", Environment.ApplicationHandle.package_info().name, ExtensionIdentifier)
 }
 
 #[async_trait]
@@ -36,7 +30,7 @@ impl SecretProvider for MountainEnvironment {
 
 		match Entry.get_password() {
 			Ok(Password) => Ok(Some(Password)),
-			Err(keyring::Error::NoEntry) => Ok(None), // Not finding a secret is not an error.
+			Err(keyring::Error::NoEntry) => Ok(None),
 			Err(e) => Err(CommonError::SecretsAccess { Key, Reason:e.to_string() }),
 		}
 	}
@@ -66,8 +60,6 @@ impl SecretProvider for MountainEnvironment {
 		let Entry = Entry::new(&ServiceName, &Key)
 			.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
 
-		// This operation is idempotent; it is considered successful even if the
-		// entry doesn't exist.
 		match Entry.delete_credential() {
 			Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
 			Err(e) => Err(CommonError::SecretsAccess { Key, Reason:e.to_string() }),

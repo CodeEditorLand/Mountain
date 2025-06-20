@@ -5,6 +5,7 @@
 
 use std::sync::{MutexGuard, PoisonError};
 
+use http::uri::InvalidUri;
 use thiserror::Error;
 
 /// A comprehensive error enum for the Vine IPC layer.
@@ -39,7 +40,7 @@ pub enum VineError {
 
 	/// An error occurred from an invalid URI.
 	#[error("Invalid URI: {0}")]
-	InvalidUri(#[from] tonic::transport::uri::InvalidUri),
+	InvalidUri(#[from] InvalidUri),
 }
 
 impl<T> From<PoisonError<MutexGuard<'_, T>>> for VineError {

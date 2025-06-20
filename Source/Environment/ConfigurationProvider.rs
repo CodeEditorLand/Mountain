@@ -27,8 +27,6 @@ use serde_json::{Map, Value};
 use tauri::Manager;
 
 use super::MountainEnvironment::MountainEnvironment;
-// TODO: Re-integrate IPC client for notifications
-// use crate::Vine::Client;
 
 #[async_trait]
 impl ConfigurationProvider for MountainEnvironment {
@@ -59,16 +57,21 @@ impl ConfigurationProvider for MountainEnvironment {
 	) -> Result<(), CommonError> {
 		info!("[ConfigurationProvider] Updating key '{}' in target {:?}", Key, Target);
 
-		let ConfigPath = match Target {
+		let config_path_result:Result<Option<PathBuf>, CommonError> = match Target {
 			ConfigurationTarget::User => {
-				self.ApplicationHandle.path().app_config_dir().map(|p| p.join("settings.json"))
+				self.ApplicationHandle
+					.path()
+					.app_config_dir()
+					.map(|p| Some(p.join("settings.json")))
+					.map_err(|e| CommonError::ConfigurationLoad { Description:e.to_string() })
 			},
 			ConfigurationTarget::WorkSpace => {
-				self.ApplicationState
+				Ok(self
+					.ApplicationState
 					.WorkSpaceConfigurationPath
 					.lock()
 					.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
-					.clone()
+					.clone())
 			},
 			_ => {
 				return Err(CommonError::NotImplemented {
@@ -77,11 +80,12 @@ impl ConfigurationProvider for MountainEnvironment {
 			},
 		};
 
+		let ConfigPath = config_path_result?;
+
 		if let Some(Path) = ConfigPath {
 			let mut CurrentConfig = ReadAndParseConfigurationFile(self, &Some(Path.clone())).await;
 
 			if let Value::Object(Map) = &mut CurrentConfig {
-				// A more robust implementation would handle nested keys like "a.b.c".
 				if ValueToSet.is_null() {
 					Map.remove(&Key);
 				} else {
@@ -95,8 +99,6 @@ impl ConfigurationProvider for MountainEnvironment {
 			let FileSystemWriter:Arc<dyn FileSystemWriter> = self.Require();
 			FileSystemWriter.WriteFile(&Path, ContentBytes, true, true).await?;
 
-			// After writing, trigger a full reload to update the in-memory state and notify
-			// sidecars.
 			InitializeAndMergeConfigurations(self).await;
 			Ok(())
 		} else {
@@ -116,14 +118,10 @@ impl ConfigurationInspector for MountainEnvironment {
 		_Key:String,
 		_Overrides:ConfigurationOverridesDTO,
 	) -> Result<Option<InspectResultDataDTO>, CommonError> {
-		// This is a complex operation requiring reading from all config files
-		// without merging them to build the final DTO. It is a stub for now.
 		warn!("[ConfigurationProvider] InspectConfigurationValue is not fully implemented.");
 		Ok(None)
 	}
 }
-
-// --- Internal Helper Functions ---
 
 /// An internal helper to read and parse a single JSON configuration file.
 async fn ReadAndParseConfigurationFile(Environment:&MountainEnvironment, Path:&Option<PathBuf>) -> Value {
@@ -142,8 +140,6 @@ async fn ReadAndParseConfigurationFile(Environment:&MountainEnvironment, Path:&O
 
 /// Logic to load and merge all configuration files into the effective
 /// configuration stored in `ApplicationState`.
-///
-/// This should be called at startup and after any settings file changes.
 pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) {
 	info!("[ConfigurationProvider] Initializing and merging all configurations...");
 
@@ -151,15 +147,14 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		.ApplicationHandle
 		.path()
 		.app_config_dir()
-		.map(|p| p.join("settings.json"));
+		.map(|p| p.join("settings.json"))
+		.ok();
 
 	let WorkSpaceSettingsPath = Environment.ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().clone();
 
 	let UserConfig = ReadAndParseConfigurationFile(Environment, &UserSettingsPath).await;
 	let WorkSpaceConfig = ReadAndParseConfigurationFile(Environment, &WorkSpaceSettingsPath).await;
 
-	// A real implementation would also load default and folder-level settings.
-	// The merge order is critical: workspace settings override user settings.
 	let mut Merged = UserConfig.as_object().cloned().unwrap_or_default();
 	if let Some(WorkSpaceMap) = WorkSpaceConfig.as_object() {
 		for (k, v) in WorkSpaceMap {
@@ -171,17 +166,7 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		Value::Object(Merged),
 	);
 
-	// Update the central application state.
 	*Environment.ApplicationState.Configuration.lock().unwrap() = FinalConfig.clone();
 
-	// TODO: Notify Cocoon of the change using the IPCProvider.
-	// let Payload = serde_json::json!({ "keys": [], "source": 0 }); // Simplified
-	// let IPCProvider: Arc<dyn IPCProvider> = Environment.Require();
-	// IPCProvider.SendNotificationToSidecar(
-	//     "cocoon-main".to_string(),
-	//     "$acceptConfigurationChanged".to_string(),
-	//     serde_json::json!([Payload, FinalConfig]),
-	// ).await.unwrap_or_else(|e| warn!("[ConfigurationProvider] Failed to notify
-	// Cocoon of config change: {}", e));
 	info!("[ConfigurationProvider] Configuration state updated and merged.");
 }

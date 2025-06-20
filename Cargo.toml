@@ -52,6 +52,7 @@ parking_lot = { workspace = true }
 lazy_static = { workspace = true }
 portable-pty = { workspace = true }
 prost = { workspace = true }
+http = { workspace = true }
 
 # regex = { workspace = true }
 # unbug = { workspace = true }

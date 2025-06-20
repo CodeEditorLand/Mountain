@@ -8,11 +8,7 @@ use serde_json::Value;
 use url::Url;
 
 use super::RPCModelContentChangeDTO::RPCModelContentChangeDTO;
-use crate::ApplicationState::Internal::{
-	AnalyzeTextLinesAndEOL,
-	URLSerializationHelper, /* DetectFileEncodingFromBytes,
-	                         * DetectLanguageIdentifierFromFilePath, */
-};
+use crate::ApplicationState::Internal::{AnalyzeTextLinesAndEOL, URLSerializationHelper};
 
 /// Represents the complete in-memory state of a single text document.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -39,9 +35,8 @@ impl DocumentStateDTO {
 	/// Creates a new `DocumentStateDTO` from its initial content.
 	pub fn Create(URI:Url, LanguageIdentifier:Option<String>, Content:String) -> Self {
 		let (Lines, EOL) = AnalyzeTextLinesAndEOL(&Content);
-		// A real implementation would have more robust language/encoding detection.
 		let LanguageID = LanguageIdentifier.unwrap_or_else(|| "plaintext".to_string());
-		let Encoding = "utf8".to_string(); // Stub for encoding detection
+		let Encoding = "utf8".to_string();
 
 		Self {
 			URI,
@@ -61,18 +56,14 @@ impl DocumentStateDTO {
 	pub fn ToDTO(&self) -> Value { serde_json::to_value(self).unwrap_or(Value::Null) }
 
 	/// Applies a set of changes to the document.
-	///
-	/// This is a complex operation that simulates how a text buffer would be
-	/// updated. For this implementation, it is simplified.
 	pub fn ApplyChanges(&mut self, NewVersion:i64, ChangesValue:&Value) -> Result<(), String> {
 		if NewVersion <= self.Version {
 			return Ok(()); // Ignore stale changes
 		}
 
-		let RPCChanges:Vec<RPCModelContentChangeDTO> = match serde_json::from_value(ChangesValue.clone()) {
+		let _RPCChanges:Vec<RPCModelContentChangeDTO> = match serde_json::from_value(ChangesValue.clone()) {
 			Ok(changes) => changes,
 			Err(_) => {
-				// Fallback for a full-content change, which is a common scenario.
 				if let Some(FullText) = ChangesValue.as_str() {
 					let (NewLines, NewEOL) = AnalyzeTextLinesAndEOL(FullText);
 					self.Lines = NewLines;
@@ -85,10 +76,6 @@ impl DocumentStateDTO {
 			},
 		};
 
-		// A full implementation would require a rope data structure or complex logic
-		// to apply deltas efficiently. We will log a warning and accept the new
-		// version number, but the content will be out of sync until the next full
-		// update.
 		log::warn!(
 			"Applying changes to {} by version bump only (delta application is a stub).",
 			self.URI

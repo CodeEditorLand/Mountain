@@ -11,12 +11,14 @@ use std::{
 	sync::{
 		Arc,
 		Mutex as StandardMutex,
+		PoisonError,
 		atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering as AtomicOrdering},
 	},
 };
 
+use Common::Error::CommonError::CommonError;
 use log::{error, info, warn};
-use tauri::{Manager, Wry};
+use tauri::Wry;
 
 use super::{
 	DTO::{
@@ -38,10 +40,6 @@ use super::{
 use crate::Environment::CommandProvider::CommandHandler;
 
 /// The central, shared, thread-safe state for the entire Mountain application.
-///
-/// This struct consolidates all dynamic state required by the backend, from
-/// workspace information and configuration to the state of active UI components
-/// like terminals and WebViews.
 #[derive(Clone)]
 pub struct ApplicationState {
 	// --- WorkSpace State ---
@@ -78,15 +76,11 @@ pub struct ApplicationState {
 	pub ActiveTreeViews:Arc<StandardMutex<HashMap<String, TreeViewStateDTO>>>,
 
 	// --- IPC & User Interface State ---
-	pub PendingUserInterfaceRequests: Arc<
-		StandardMutex<
-			HashMap<
-				String,
-				tokio::sync::oneshot::Sender<Result<serde_json::Value, Common::Error::CommonError::CommonError>>,
-			>,
-		>,
-	>,
+	pub PendingUserInterfaceRequests:
+		Arc<StandardMutex<HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>>>>,
 }
+
+fn map_lock_error<T>(e:PoisonError<T>) -> CommonError { CommonError::StateLockPoisoned { Context:e.to_string() } }
 
 impl Default for ApplicationState {
 	fn default() -> Self {
@@ -114,8 +108,6 @@ impl Default for ApplicationState {
 
 		let GlobalMementoFilePath = Internal::ResolveMementoStorageFilePath(&ApplicationDataDirectoryPath, true, "");
 		let InitialGlobalMementoMap = Internal::LoadInitialMementoFromDisk(&GlobalMementoFilePath);
-		// let InitialCommandRegistryMap =
-		// crate::Handler::Command::RegisterNativeCommands(); // TODO: Re-integrate
 
 		info!("[ApplicationState] Default state initialization complete.");
 		Self {
@@ -128,7 +120,7 @@ impl Default for ApplicationState {
 			GlobalMementoPath:GlobalMementoFilePath,
 			WorkSpaceMemento:Arc::new(StandardMutex::new(HashMap::new())),
 			WorkSpaceMementoPath:Arc::new(StandardMutex::new(None)),
-			CommandRegistry:Arc::new(StandardMutex::new(HashMap::new())), // TODO: Use InitialCommandRegistryMap
+			CommandRegistry:Arc::new(StandardMutex::new(HashMap::new())),
 			DiagnosticsMap:Arc::new(StandardMutex::new(HashMap::new())),
 			OpenDocuments:Arc::new(StandardMutex::new(HashMap::new())),
 			OutputChannels:Arc::new(StandardMutex::new(HashMap::new())),
@@ -149,17 +141,16 @@ impl Default for ApplicationState {
 }
 
 impl ApplicationState {
-	/// Generates a unique, filesystem-safe identifier string for the current
+	/// Generates a unique, filesystem-safe identifier for the current
 	/// workspace.
-	pub fn GetWorkSpaceIdentifier(&self) -> Result<String, String> {
-		let LockErrorMapper = |e| format!("[AppState] Lock error: {}", e);
-		let ConfigurationPathGuard = self.WorkSpaceConfigurationPath.lock().map_err(LockErrorMapper)?;
+	pub fn GetWorkSpaceIdentifier(&self) -> Result<String, CommonError> {
+		let ConfigurationPathGuard = self.WorkSpaceConfigurationPath.lock().map_err(map_lock_error)?;
 		if let Some(ConfigurationPath) = ConfigurationPathGuard.as_ref() {
 			return Ok(ConfigurationPath.file_name().unwrap_or_default().to_string_lossy().into_owned());
 		}
 		drop(ConfigurationPathGuard);
 
-		let FoldersGuard = self.WorkSpaceFolders.lock().map_err(LockErrorMapper)?;
+		let FoldersGuard = self.WorkSpaceFolders.lock().map_err(map_lock_error)?;
 		if let Some(FirstFolder) = FoldersGuard.first() {
 			let PathString = FirstFolder.URI.path();
 			// Create a more stable hash for the identifier.
@@ -184,14 +175,13 @@ impl ApplicationState {
 	/// Updates the path to the workspace memento file and reloads its content
 	/// from disk.
 	pub fn UpdateWorkSpaceMementoPathAndReload(&self, ApplicationDataDirectory:&Path) -> Result<(), String> {
-		let LockErrorMapper = |e| format!("[AppState] Lock error: {}", e);
-		let WorkSpaceIdentifier = self.GetWorkSpaceIdentifier()?;
-		let mut PathGuard = self.WorkSpaceMementoPath.lock().map_err(LockErrorMapper)?;
+		let WorkSpaceIdentifier = self.GetWorkSpaceIdentifier().map_err(|e| e.to_string())?;
+		let mut PathGuard = self.WorkSpaceMementoPath.lock().map_err(|e| e.to_string())?;
 
 		if WorkSpaceIdentifier == "NO_WORKSPACE" {
 			if PathGuard.is_some() {
 				*PathGuard = None;
-				self.WorkSpaceMemento.lock().map_err(LockErrorMapper)?.clear();
+				self.WorkSpaceMemento.lock().map_err(|e| e.to_string())?.clear();
 			}
 			return Ok(());
 		}
@@ -206,7 +196,7 @@ impl ApplicationState {
 			}
 			*PathGuard = Some(NewMementoPath.clone());
 			let NewMementoContent = Internal::LoadInitialMementoFromDisk(&NewMementoPath);
-			*self.WorkSpaceMemento.lock().map_err(LockErrorMapper)? = NewMementoContent;
+			*self.WorkSpaceMemento.lock().map_err(|e| e.to_string())? = NewMementoContent;
 		}
 		Ok(())
 	}

@@ -3,7 +3,12 @@
 //! Provides a simplified, thread-safe client for communicating with a `Cocoon`
 //! sidecar process via gRPC. It manages a shared pool of connections.
 
-use std::{collections::HashMap, sync::Arc, time::Duration};
+use std::{
+	collections::{HashMap, hash_map::DefaultHasher},
+	hash::{Hash, Hasher},
+	sync::Arc,
+	time::Duration,
+};
 
 use lazy_static::lazy_static;
 use log::{debug, error, info};
@@ -26,19 +31,24 @@ lazy_static! {
 /// Establishes a gRPC connection to a sidecar process.
 pub async fn ConnectToSidecar(SidecarIdentifier:String, Address:String) -> Result<(), VineError> {
 	info!("[VineClient] Connecting to sidecar '{}' at '{}'...", SidecarIdentifier, Address);
-	let Channel = Channel::from_shared(format!("http://{}", Address))?.connect().await?;
-	let Client = CocoonServiceClient::new(Channel);
-	SIDECAR_CLIENTS.lock().insert(SidecarIdentifier.clone(), Client);
+	let endpoint = format!("http://{}", Address);
+	let channel = Channel::from_shared(endpoint)?.connect().await?;
+	let client = CocoonServiceClient::new(channel);
+	SIDECAR_CLIENTS.lock().insert(SidecarIdentifier.clone(), client);
 	info!("[VineClient] Successfully connected to sidecar '{}'.", SidecarIdentifier);
 	Ok(())
 }
 
 /// Sends a fire-and-forget notification to a sidecar.
 pub async fn SendNotification(SidecarIdentifier:String, Method:String, Parameters:Value) -> Result<(), VineError> {
-	let mut Guard = SIDECAR_CLIENTS.lock();
-	if let Some(Client) = Guard.get_mut(&SidecarIdentifier) {
-		let Request = GenericNotification { method:Method, params:to_vec(&Parameters)? };
-		Client.send_cocoon_notification(Request).await?;
+	let mut client = {
+		let guard = SIDECAR_CLIENTS.lock();
+		guard.get(&SidecarIdentifier).cloned()
+	};
+
+	if let Some(ref mut client) = client {
+		let request = GenericNotification { method:Method, params:to_vec(&Parameters)? };
+		client.send_mountain_notification(request).await?;
 		Ok(())
 	} else {
 		Err(VineError::ClientNotConnected(SidecarIdentifier))
@@ -56,38 +66,40 @@ pub async fn SendRequest(
 		"[VineClient] Sending request '{}' to sidecar '{}'...",
 		Method, SidecarIdentifier
 	);
-	let mut Guard = SIDECAR_CLIENTS.lock();
-	if let Some(Client) = Guard.get_mut(SidecarIdentifier) {
-		// Use a unique request ID for tracking.
-		let RequestIdentifier = uuid::Uuid::new_v4().to_string();
-		let Request = GenericRequest {
-			request_id:RequestIdentifier.clone(),
-			method:Method.clone(),
-			params:to_vec(&Parameters)?,
-		};
+	let mut client = {
+		let guard = SIDECAR_CLIENTS.lock();
+		guard.get(SidecarIdentifier).cloned()
+	};
 
-		let Future = Client.process_mountain_request(Request);
+	if let Some(ref mut client) = client {
+		let mut hasher = DefaultHasher::new();
+		uuid::Uuid::new_v4().hash(&mut hasher);
+		let request_id = hasher.finish();
 
-		match timeout(Duration::from_millis(TimeoutMilliseconds), Future).await {
-			Ok(Ok(Response)) => {
-				let ResponseData = Response.into_inner();
-				if let Some(RpcError) = ResponseData.error {
+		let request = GenericRequest { request_id, method:Method.clone(), params:to_vec(&Parameters)? };
+
+		let future = client.process_mountain_request(request);
+
+		match timeout(Duration::from_millis(TimeoutMilliseconds), future).await {
+			Ok(Ok(response)) => {
+				let response_data = response.into_inner();
+				if let Some(rpc_error) = response_data.error {
 					error!(
 						"[VineClient] Received RPC error from sidecar '{}': {}",
-						SidecarIdentifier, RpcError.message
+						SidecarIdentifier, rpc_error.message
 					);
-					Err(VineError::RpcError(RpcError.message))
+					Err(VineError::RpcError(rpc_error.message))
 				} else {
-					let DeserializedValue = from_slice(&ResponseData.result)?;
-					Ok(DeserializedValue)
+					let deserialized_value = from_slice(&response_data.result)?;
+					Ok(deserialized_value)
 				}
 			},
-			Ok(Err(Status)) => {
+			Ok(Err(status)) => {
 				error!(
 					"[VineClient] gRPC status error from sidecar '{}': {}",
-					SidecarIdentifier, Status
+					SidecarIdentifier, status
 				);
-				Err(VineError::from(Status))
+				Err(VineError::from(status))
 			},
 			Err(_) => {
 				error!("[VineClient] Request to sidecar '{}' timed out.", SidecarIdentifier);

@@ -26,7 +26,6 @@ impl OutputChannelManager for MountainEnvironment {
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		// Create the channel if it doesn't exist.
 		ChannelsGuard
 			.entry(ChannelIdentifier.clone())
 			.or_insert_with(|| OutputChannelStateDTO::Create(&Name, LanguageIdentifier.clone()));
@@ -123,9 +122,7 @@ impl OutputChannelManager for MountainEnvironment {
 	}
 
 	/// Closes the view of an output channel in the UI.
-	async fn Close(&self, ChannelIdentifier:String) -> Result<(), CommonError> {
-		// This would typically just update the IsVisible flag and emit an event.
-		// For simplicity, this is a stub.
+	async fn Close(&self, _ChannelIdentifier:String) -> Result<(), CommonError> {
 		warn!("[OutputProvider] Close is not fully implemented.");
 		Ok(())
 	}
