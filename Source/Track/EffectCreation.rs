@@ -11,12 +11,16 @@ use std::{future::Future, pin::Pin, sync::Arc};
 use Common::{
 	self,
 	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
+	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 };
 use serde_json::{Value, from_value};
 use tauri::{AppHandle, Runtime};
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
+use crate::{
+	Environment::MountainEnvironment::MountainEnvironment,
+	RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime,
+};
 
 /// A type alias for a boxed, runnable effect. This is the "type-erased" unit of
 /// work.
@@ -43,8 +47,8 @@ fn box_effect<C, O, E>(effect:ActionEffect<Arc<C>, E, O>) -> MappedEffect
 where
 	C: ?Sized + Send + Sync + 'static,
 	O: serde::Serialize + Send + Sync + 'static,
-	E: Into<CommonError> + Send + Sync + 'static,
-	MountainRunTime: Common::Environment::Requires::Requires<C>, {
+	E: Into<CommonError> + From<CommonError> + Send + Sync + 'static,
+	MountainEnvironment: Requires<C>, {
 	Box::new(move |runtime:Arc<MountainRunTime>| {
 		Box::pin(async move {
 			let result = runtime.Run(effect).await;
@@ -126,7 +130,6 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			box_effect(Common::UserInterface::ShowOpenDialog::ShowOpenDialog(Options))
 		},
 
-		// ... Add mappings for all other effects here ...
 		_ => return Err(format!("No ActionEffect mapping found for method: {}", Method)),
 	};
 

@@ -47,7 +47,7 @@ impl TerminalProvider for MountainEnvironment {
 		let mut TerminalState = TerminalStateDTO::Create(TerminalIdentifier, Name.clone(), &OptionsValue, DefaultShell);
 
 		let PtySystem = NativePtySystem::default();
-		let mut PtyPair = PtySystem
+		let PtyPair = PtySystem
 			.openpty(PtySize::default())
 			.map_err(|e| CommonError::IPCError { Description:format!("Failed to open PTY: {}", e) })?;
 
@@ -57,7 +57,7 @@ impl TerminalProvider for MountainEnvironment {
 			Command.cwd(CWD);
 		}
 
-		let mut ChildProcess = PtyPair
+		let ChildProcess = PtyPair
 			.slave
 			.spawn_command(Command)
 			.map_err(|e| CommonError::IPCError { Description:format!("Failed to spawn shell process: {}", e) })?;

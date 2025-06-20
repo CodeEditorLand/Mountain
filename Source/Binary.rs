@@ -30,7 +30,32 @@ fn InitializeLogging() {
 		// This is unsafe but only runs once at startup.
 		unsafe { std::env::set_var("RUST_LOG", LogLevel) };
 	}
-	env_logger::init();
+
+	#[cfg(debug_assertions)]
+	{
+		env_logger::Builder::new()
+			.filter_level(log::LevelFilter::Trace)
+			.format(|Buffer, Record| {
+				use std::io::Write;
+
+				use colored::Colorize;
+				writeln!(
+					Buffer,
+					"[{}] [{}]: {}",
+					"Mountain".red(),
+					match Record.level() {
+						log::Level::Error => "ERROR".red().bold(),
+						log::Level::Warn => "WARN".yellow().bold(),
+						log::Level::Info => "INFO".green(),
+						log::Level::Debug => "DEBUG".blue(),
+						log::Level::Trace => "TRACE".magenta(),
+					},
+					Record.args()
+				)
+			})
+			.try_init()
+			.expect("Failed to initialize env_logger. Another logger might be active.");
+	}
 }
 
 /// The main asynchronous function that sets up and runs the application.
@@ -51,7 +76,13 @@ pub fn Fn() {
 			let SchedulerForShutdown = Arc::new(Scheduler);
 			let SchedulerForRunTime = SchedulerForShutdown.clone();
 
+			#[allow(unused_mut)]
 			let mut Builder = tauri::Builder::default();
+
+			#[cfg(any(windows, target_os = "linux"))]
+			{
+				Builder = Builder.any_thread();
+			}
 
 			Builder
 				.manage(ApplicationState::default())
