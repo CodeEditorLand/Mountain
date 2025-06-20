@@ -1,6 +1,3 @@
-// @file vine.proto
-// @brief Defines the gRPC services and messages for communication between Mountain (host) and Cocoon (sidecar).
-
 syntax = "proto3";
 
 package vine_ipc;
