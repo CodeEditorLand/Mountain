@@ -20,7 +20,7 @@ use crate::{
 		GenericNotification,
 		GenericRequest,
 		GenericResponse,
-		RpcError,
+		RPCError,
 		mountain_service_server::MountainService,
 	},
 };
@@ -60,7 +60,7 @@ impl MountainService for MountainVinegRPCService {
 				return Ok(Response::new(GenericResponse {
 					request_id:RequestIdentifier,
 					result:vec![],
-					error:Some(RpcError { message:msg, code:-32700, data:vec![] }),
+					error:Some(RPCError { message:msg, code:-32700, data:vec![] }),
 				}));
 			},
 		};
@@ -91,7 +91,7 @@ impl MountainService for MountainVinegRPCService {
 				Ok(Response::new(GenericResponse {
 					request_id:RequestIdentifier,
 					result:vec![],
-					error:Some(RpcError {
+					error:Some(RPCError {
 						message:ErrorString,
 						code:-32000, // JSON-RPC Generic Server Error
 						data:vec![],

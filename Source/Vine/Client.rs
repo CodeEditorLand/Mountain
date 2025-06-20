@@ -14,7 +14,7 @@ use tonic::transport::Channel;
 
 use super::{
 	Error::VineError,
-	Generated::{Empty, GenericNotification, GenericRequest, cocoon_service_client::CocoonServiceClient},
+	Generated::{GenericNotification, GenericRequest, cocoon_service_client::CocoonServiceClient},
 };
 
 type CocoonClient = CocoonServiceClient<Channel>;
