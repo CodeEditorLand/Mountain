@@ -19,7 +19,7 @@ pub struct DocumentStateDTO {
 	pub URI:Url,
 	/// The VS Code language identifier (e.g., "rust", "typescript").
 	pub LanguageIdentifier:String,
-	/// The version number, incremented on each change.
+	/// The version number, incremented on each change from the client.
 	pub Version:i64,
 	/// The content of the document, split into lines.
 	pub Lines:Vec<String>,
@@ -29,6 +29,8 @@ pub struct DocumentStateDTO {
 	pub IsDirty:bool,
 	/// The detected file encoding (e.g., "utf8").
 	pub Encoding:String,
+	/// An internal version number, used for tracking changes within the host.
+	pub VersionIdentifier:i64,
 }
 
 impl DocumentStateDTO {
@@ -46,6 +48,7 @@ impl DocumentStateDTO {
 			EOL,
 			IsDirty:false,
 			Encoding,
+			VersionIdentifier:1,
 		}
 	}
 
@@ -69,6 +72,7 @@ impl DocumentStateDTO {
 					self.Lines = NewLines;
 					self.EOL = NewEOL;
 					self.Version = NewVersion;
+					self.VersionIdentifier += 1; // Increment internal version
 					self.IsDirty = true;
 					return Ok(());
 				}
@@ -82,6 +86,7 @@ impl DocumentStateDTO {
 		);
 
 		self.Version = NewVersion;
+		self.VersionIdentifier += 1; // Increment internal version
 		self.IsDirty = true;
 		Ok(())
 	}
