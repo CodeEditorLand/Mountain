@@ -1,3 +1,10 @@
+// File: Mountain/Source/Environment/CommandProvider.rs
+// Role: Implements the `CommandExecutor` trait for the `MountainEnvironment`.
+// Responsibilities:
+//   - Contains the core logic for managing the command registry.
+//   - Dispatches command execution to either native Rust handlers or proxied
+//     sidecar handlers.
+
 //! # CommandProvider Implementation
 //!
 //! Implements the `CommandExecutor` trait for the `MountainEnvironment`. This
@@ -67,7 +74,7 @@ impl CommandExecutor for MountainEnvironment {
 				debug!("[CommandProvider] Executing NATIVE command '{}'.", CommandIdentifier);
 				let RunTime:Arc<ApplicationRunTime> =
 					self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
-				let MainWindow = self.ApplicationHandle.get_webview_window("main").ok_or_else(|| {
+				let MainWindow = self.ApplicationHandle.get_webview_window("Application").ok_or_else(|| {
 					CommonError::UserInterfaceInteraction {
 						Reason:"Main window not found for command execution".into(),
 					}
