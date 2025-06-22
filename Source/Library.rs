@@ -9,11 +9,16 @@
 #![feature(trivial_bounds)]
 
 pub mod ApplicationState;
+pub mod Command;
 pub mod Environment;
+pub mod ExtensionManagement;
+pub mod FileSystem;
 pub mod ProcessManagement;
 pub mod RunTime;
 pub mod Track;
+pub mod Update;
 pub mod Vine;
+pub mod WorkSpace;
 
 // The main binary entry point is defined in its own module.
 pub mod Binary;
