@@ -21,6 +21,7 @@ pub mod DiagnosticProvider;
 pub mod DocumentProvider;
 pub mod FileSystemProvider;
 pub mod IPCProvider;
+pub mod KeybindingProvider;
 pub mod LanguageFeatureProvider;
 pub mod OutputProvider;
 pub mod SecretProvider;
