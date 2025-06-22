@@ -1,31 +1,46 @@
+// File: Mountain/Source/Environment/DocumentProvider.rs
+// Role: Implements the `DocumentProvider` trait for the `MountainEnvironment`.
+// Responsibilities:
+//   - Core logic for all document lifecycle operations (open, save, change).
+//   - Notifies `Cocoon` (extension host) and `Sky` (frontend) of these events.
+//   - Handles content resolution for both native (`file`) and custom URI
+//     schemes.
+
 //! # DocumentProvider Implementation
 //!
 //! Implements the `DocumentProvider` trait for the `MountainEnvironment`. This
 //! provider contains the core logic for all document lifecycle operations, such
 //! as opening, saving, and applying text changes, and notifying the `Cocoon`
-//! sidecar of these events.
+//! sidecar and `Sky` frontend of these events.
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use Common::{
 	Document::DocumentProvider::DocumentProvider,
+	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
+	FileSystem::{ReadFile::ReadFile, WriteFileBytes::WriteFileBytes},
 	IPC::IPCProvider::IPCProvider,
+	UserInterface::{DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO, ShowSaveDialog::ShowSaveDialog},
 };
 use async_trait::async_trait;
 use log::{error, info, trace, warn};
 use serde_json::{Value, json};
+use tauri::{Emitter, Manager};
 use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO;
+use crate::{
+	ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
 #[async_trait]
 impl DocumentProvider for MountainEnvironment {
-	/// Opens an existing document from a URI or creates a new untitled
-	/// document.
+	/// Opens a document. If the URI scheme is not native (`file`), it attempts
+	/// to resolve the content from a registered sidecar provider
+	/// (`TextDocumentContentProvider`).
 	async fn OpenDocument(
 		&self,
 		URIComponentsDTO:Value,
@@ -36,46 +51,65 @@ impl DocumentProvider for MountainEnvironment {
 		info!("[DocumentProvider] Opening document: {}", URI);
 
 		// First, check if the document is already open.
-		{
-			let OpenDocumentsGuard = self
-				.ApplicationState
-				.OpenDocuments
-				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-			if let Some(ExistingDocument) = OpenDocumentsGuard.get(URI.as_str()) {
-				info!("[DocumentProvider] Document {} is already open.", URI);
-				return Ok(ExistingDocument.URI.clone());
-			}
-		} // The lock is dropped here.
+		if let Some(ExistingDocument) = self.ApplicationState.OpenDocuments.lock().unwrap().get(URI.as_str()) {
+			info!("[DocumentProvider] Document {} is already open.", URI);
+			self.ApplicationHandle
+				.emit("sky://documents/open", ExistingDocument.ToDTO())
+				.expect("");
+			return Ok(ExistingDocument.URI.clone());
+		}
 
-		// Read file content *before* acquiring the lock again for mutation.
+		// Resolve the content based on the URI scheme.
 		let FileContent = if let Some(c) = Content {
-			c
+			c // Content was provided directly (e.g., new untitled file)
 		} else if URI.scheme() == "file" {
-			let FileSystemReader:Arc<dyn FileSystemReader> = self.Require();
 			let FilePath = URI.to_file_path().map_err(|_| {
 				CommonError::InvalidArgument {
 					ArgumentName:"URI".into(),
 					Reason:"Cannot convert non-file URI to path".into(),
 				}
 			})?;
-			String::from_utf8(FileSystemReader.ReadFile(&FilePath).await?)
+			let RunTime = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+			let FileContentBytes = RunTime.Run(ReadFile(FilePath.clone())).await?;
+			String::from_utf8(FileContentBytes)
 				.map_err(|e| CommonError::FileSystemIO { Path:FilePath, Description:e.to_string() })?
 		} else {
-			String::new()
+			// Custom scheme: attempt to resolve from a sidecar provider.
+			info!(
+				"[DocumentProvider] Non-native scheme '{}'. Attempting to resolve from sidecar.",
+				URI.scheme()
+			);
+			let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+			let RpcResult = IPCProvider
+				.SendRequestToSidecar(
+					"cocoon-main".to_string(), // In a multi-host world, we'd look this up
+					"$provideTextDocumentContent".to_string(),
+					json!([URIComponentsDTO]),
+					10000,
+				)
+				.await?;
+
+			RpcResult.as_str().map(String::from).ok_or_else(|| {
+				CommonError::IPCError {
+					Description:format!("Failed to get valid string content for custom URI scheme '{}'", URI.scheme()),
+				}
+			})?
 		};
 
+		// The rest of the flow is the same for all schemes.
 		let NewDocument = DocumentStateDTO::Create(URI.clone(), LanguageIdentifier, FileContent);
 		let DTOForNotification = NewDocument.ToDTO();
 
-		// Now, acquire the lock just to insert the new document.
 		self.ApplicationState
 			.OpenDocuments
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.unwrap()
 			.insert(URI.to_string(), NewDocument);
-
+		self.ApplicationHandle
+			.emit("sky://documents/open", DTOForNotification.clone())
+			.expect("");
 		NotifyModelAdded(self, &DTOForNotification).await;
+
 		Ok(URI)
 	}
 
@@ -97,26 +131,81 @@ impl DocumentProvider for MountainEnvironment {
 					});
 				}
 				Document.IsDirty = false;
-				(
-					Document.GetText().into_bytes(),
-					URI.to_file_path().unwrap(), // Safe due to scheme check
-				)
+				(Document.GetText().into_bytes(), URI.to_file_path().unwrap())
 			} else {
 				return Err(CommonError::FileSystemNotFound(URI.to_file_path().unwrap_or_default()));
 			}
-		}; // Lock is dropped here.
+		};
 
-		let FileSystemWriter:Arc<dyn FileSystemWriter> = self.Require();
-		FileSystemWriter.WriteFile(&FilePath, ContentBytes, true, true).await?;
+		let RunTime = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+		RunTime.Run(WriteFileBytes(FilePath, ContentBytes, true, true)).await?;
+
+		self.ApplicationHandle
+			.emit("sky://documents/saved", json!({ "uri": URI.to_string() }))
+			.expect("");
 
 		NotifyModelSaved(self, &URI).await;
 		Ok(true)
 	}
 
 	/// Saves a document to a new location.
-	async fn SaveDocumentAs(&self, _OriginalURI:Url, _NewTargetURI:Option<Url>) -> Result<Option<Url>, CommonError> {
-		warn!("[DocumentProvider] SaveDocumentAs is not fully implemented.");
-		Err(CommonError::NotImplemented { FeatureName:"SaveDocumentAs".into() })
+	async fn SaveDocumentAs(&self, OriginalURI:Url, NewTargetURI:Option<Url>) -> Result<Option<Url>, CommonError> {
+		info!("[DocumentProvider] Saving document as: {}", OriginalURI);
+		let RunTime = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+
+		let NewFilePath = match NewTargetURI {
+			Some(uri) => uri.to_file_path().ok(),
+			None => RunTime.Run(ShowSaveDialog(Some(SaveDialogOptionsDTO::default()))).await?,
+		};
+
+		let Some(NewPath) = NewFilePath else { return Ok(None) };
+		let NewURI = Url::from_file_path(&NewPath).map_err(|_| {
+			CommonError::InvalidArgument {
+				ArgumentName:"NewPath".into(),
+				Reason:"Could not convert new path to URI".into(),
+			}
+		})?;
+
+		let OriginalContent = {
+			let Guard = self
+				.ApplicationState
+				.OpenDocuments
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			Guard
+				.get(OriginalURI.as_str())
+				.map(|doc| doc.GetText())
+				.ok_or_else(|| CommonError::FileSystemNotFound(PathBuf::from(OriginalURI.path())))?
+		};
+
+		RunTime
+			.Run(WriteFileBytes(NewPath, OriginalContent.clone().into_bytes(), true, true))
+			.await?;
+
+		let NewDocumentState = {
+			let mut Guard = self
+				.ApplicationState
+				.OpenDocuments
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			let OldDocument = Guard.remove(OriginalURI.as_str());
+			let NewDocument =
+				DocumentStateDTO::Create(NewURI.clone(), OldDocument.map(|d| d.LanguageIdentifier), OriginalContent);
+			let DTO = NewDocument.ToDTO();
+			Guard.insert(NewURI.to_string(), NewDocument);
+			DTO
+		};
+
+		NotifyModelRemoved(self, &OriginalURI).await;
+		NotifyModelAdded(self, &NewDocumentState).await;
+		self.ApplicationHandle
+			.emit(
+				"sky://documents/renamed",
+				json!({ "oldUri": OriginalURI.to_string(), "newUri": NewURI.to_string() }),
+			)
+			.expect("");
+
+		Ok(Some(NewURI))
 	}
 
 	/// Saves all currently dirty documents.
@@ -147,12 +236,12 @@ impl DocumentProvider for MountainEnvironment {
 				if let Err(e) = Document.ApplyChanges(NewVersionIdentifier, &ChangesDTOCollection) {
 					return Err(CommonError::InvalidArgument { ArgumentName:"ChangesDTOCollection".into(), Reason:e });
 				}
-				Document.IsDirty = true; // Assume any change makes it dirty
+				Document.IsDirty = true;
 			} else {
 				warn!("[DocumentProvider] Received changes for unknown document: {}", URI);
 				return Ok(());
 			}
-		} // Lock is dropped here.
+		}
 
 		NotifyModelChanged(self, &URI, NewVersionIdentifier, ChangesDTOCollection).await;
 		Ok(())
@@ -163,12 +252,10 @@ impl DocumentProvider for MountainEnvironment {
 
 /// Notifies Cocoon that a new document model has been added.
 async fn NotifyModelAdded(Environment:&MountainEnvironment, DocumentStateDTO:&Value) {
-	let URIString = DocumentStateDTO.get("URI").and_then(Value::as_str).unwrap_or("unknown");
+	let URIString = DocumentStateDTO.get("uri").and_then(Value::as_str).unwrap_or("unknown");
 	info!("[DocumentProvider] Notifying ModelAdded for: {}", URIString);
-
 	let Payload = json!([DocumentStateDTO]);
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
-
 	if let Err(e) = IPCProvider
 		.SendNotificationToSidecar("cocoon-main".to_string(), "$acceptModelAdded".to_string(), Payload)
 		.await
@@ -180,12 +267,10 @@ async fn NotifyModelAdded(Environment:&MountainEnvironment, DocumentStateDTO:&Va
 /// Notifies Cocoon that a document's content has changed.
 async fn NotifyModelChanged(Environment:&MountainEnvironment, URI:&Url, NewVersion:i64, Changes:Value) {
 	info!("[DocumentProvider] Notifying ModelChanged for: {}", URI);
-
 	let URIComponents = json!({ "external": URI.to_string(), "$mid": 1 });
-	let EventData = json!({ "versionId": NewVersion, "changes": Changes });
-	let Payload = json!([URIComponents, EventData, true]); // The final `true` is for `isDirty`.
+	let EventData = json!({ "versionId": NewVersion, "changes": Changes, "isDirty": true });
+	let Payload = json!([URIComponents, EventData]);
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
-
 	if let Err(e) = IPCProvider
 		.SendNotificationToSidecar("cocoon-main".to_string(), "$acceptModelChanged".to_string(), Payload)
 		.await
@@ -200,7 +285,6 @@ async fn NotifyModelSaved(Environment:&MountainEnvironment, URI:&Url) {
 	let URIComponents = json!({ "external": URI.to_string(), "$mid": 1 });
 	let Payload = json!([URIComponents]);
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
-
 	if let Err(e) = IPCProvider
 		.SendNotificationToSidecar("cocoon-main".to_string(), "$acceptModelSaved".to_string(), Payload)
 		.await
@@ -215,7 +299,6 @@ pub async fn NotifyModelRemoved(Environment:&MountainEnvironment, URI:&Url) {
 	let URIComponents = json!({ "external": URI.to_string(), "$mid": 1 });
 	let Payload = json!([URIComponents]);
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
-
 	if let Err(e) = IPCProvider
 		.SendNotificationToSidecar("cocoon-main".to_string(), "$acceptModelRemoved".to_string(), Payload)
 		.await

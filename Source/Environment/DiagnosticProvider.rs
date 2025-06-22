@@ -1,3 +1,11 @@
+// File: Mountain/Source/Environment/DiagnosticProvider.rs
+// Role: Implements the `DiagnosticManager` trait for the `MountainEnvironment`.
+// Responsibilities:
+//   - Manage diagnostic collections in the central `ApplicationState`.
+//   - Store diagnostics from various sources (owners).
+//   - Notify the UI (`Sky`) of changes to diagnostics.
+//   - Provide an aggregated view of all diagnostics.
+
 //! # DiagnosticProvider Implementation
 //!
 //! Implements the `DiagnosticManager` trait for the `MountainEnvironment`. This
@@ -39,12 +47,17 @@ impl DiagnosticManager for MountainEnvironment {
 
 		for (URIComponentsValue, MarkersOption) in DeserializedEntries {
 			let URIKey = Utility::GetURLFromURIComponentsDTO(&URIComponentsValue)?.to_string();
+			ChangedURIKeys.push(URIKey.clone());
+
 			if let Some(Markers) = MarkersOption {
-				OwnerMap.insert(URIKey.clone(), Markers);
+				if Markers.is_empty() {
+					OwnerMap.remove(&URIKey);
+				} else {
+					OwnerMap.insert(URIKey.clone(), Markers);
+				}
 			} else {
 				OwnerMap.remove(&URIKey);
 			}
-			ChangedURIKeys.push(URIKey);
 		}
 		drop(DiagnosticsMapGuard);
 
@@ -70,9 +83,11 @@ impl DiagnosticManager for MountainEnvironment {
 			let ChangedURIKeys:Vec<String> = OwnerMap.keys().cloned().collect();
 			drop(DiagnosticsMapGuard);
 
-			let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
-			if let Err(e) = self.ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
-				error!("[DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}", e);
+			if !ChangedURIKeys.is_empty() {
+				let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
+				if let Err(e) = self.ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
+					error!("[DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}", e);
+				}
 			}
 		}
 		Ok(())
@@ -89,28 +104,25 @@ impl DiagnosticManager for MountainEnvironment {
 			.DiagnosticsMap
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		let mut ResultList:Vec<(String, Vec<MarkerDataDTO>)> = Vec::new();
+		let mut ResultMap:std::collections::HashMap<String, Vec<MarkerDataDTO>> = std::collections::HashMap::new();
 
 		if let Some(FilterURIValue) = ResourceURIFilterOption {
 			let FilterURIKey = Utility::GetURLFromURIComponentsDTO(&FilterURIValue)?.to_string();
 			for OwnerMap in DiagnosticsMapGuard.values() {
 				if let Some(Markers) = OwnerMap.get(&FilterURIKey) {
-					ResultList.push((FilterURIKey.clone(), Markers.clone()));
+					ResultMap.entry(FilterURIKey.clone()).or_default().extend(Markers.clone());
 				}
 			}
 		} else {
-			// Aggregate all diagnostics from all owners.
-			let mut AggregatedByURI:std::collections::HashMap<String, Vec<MarkerDataDTO>> =
-				std::collections::HashMap::new();
+			// Aggregate all diagnostics from all owners for all files.
 			for OwnerMap in DiagnosticsMapGuard.values() {
 				for (URIKey, Markers) in OwnerMap.iter() {
-					AggregatedByURI.entry(URIKey.clone()).or_default().extend(Markers.clone());
+					ResultMap.entry(URIKey.clone()).or_default().extend(Markers.clone());
 				}
 			}
-			ResultList = AggregatedByURI.into_iter().collect();
 		}
 
+		let ResultList:Vec<(String, Vec<MarkerDataDTO>)> = ResultMap.into_iter().collect();
 		serde_json::to_value(ResultList).map_err(|e| CommonError::SerializationError { Description:e.to_string() })
 	}
 }
