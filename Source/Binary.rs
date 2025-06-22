@@ -1,35 +1,51 @@
+// File: Mountain/Source/Binary.rs
+// Role: Main entry point for the Mountain native host application.
+// Responsibilities:
+//   - Orchestrate the entire application lifecycle.
+//   - Initialize logging, the Echo scheduler, ApplicationState, and
+//     ApplicationRunTime.
+//   - Parse command-line arguments to open a workspace.
+//   - Bootstrap native command registration.
+//   - Set up the Vine gRPC server and spawn the Cocoon sidecar process.
+//   - Create and customize the main Tauri application window.
+//   - Manage the main application event loop and graceful shutdown.
+
 //! # Mountain Binary Entry Point
 //!
 //! This file orchestrates the entire application lifecycle. It is responsible
 //! for setting up logging, initializing the `Echo` scheduler, the core
 //! `ApplicationState`, the `ApplicationRunTime`, the `Vine` gRPC server, the
-//! `Cocoon` sidecar process, and explicitly creating and customizing the main
-//! Tauri application window before starting the event loop.
+//! `Cocoon` sidecar process, and the Tauri application window and event loop.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(non_snake_case, non_camel_case_types)]
 
-use std::sync::Arc;
+use std::{
+	path::PathBuf,
+	sync::{Arc, Mutex},
+};
 
 use Echo::Scheduler::SchedulerBuilder::SchedulerBuilder;
 use log::{error, info};
-use tauri::{Manager, RunEvent};
+use tauri::{AppHandle, Manager, RunEvent, Wry};
 
 use crate::{
-	ApplicationState::ApplicationState::ApplicationState,
-	Environment::MountainEnvironment::MountainEnvironment,
-	ProcessManagement::CocoonManagement::InitializeCocoon, // Placeholder for future logic
+	ApplicationState::{
+		ApplicationState::ApplicationState,
+		DTO::WorkSpaceFolderStateDTO::WorkSpaceFolderStateDTO,
+		Internal::ScanAndPopulateExtensions,
+	},
+	Command,
+	Environment::{ConfigurationProvider::InitializeAndMergeConfigurations, MountainEnvironment::MountainEnvironment},
+	ProcessManagement::{CocoonManagement::InitializeCocoon, InitializationData},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine,
 };
 
 /// Initializes the application's logging infrastructure using `env_logger`.
-/// In debug builds, it defaults to a more verbose log level with colored
-/// output.
 fn InitializeLogging() {
 	let LogLevel = if cfg!(debug_assertions) { "debug" } else { "info" };
 	if std::env::var("RUST_LOG").is_err() {
-		// This is unsafe but only runs once at startup.
 		unsafe { std::env::set_var("RUST_LOG", LogLevel) };
 	}
 
@@ -60,6 +76,19 @@ fn InitializeLogging() {
 	}
 }
 
+/// A Tauri command to provide the initial workbench configuration to the Sky
+/// frontend.
+#[tauri::command]
+async fn MountainGetWorkbenchConfiguration(
+	ApplicationHandle:AppHandle<Wry>,
+	State:tauri::State<'_, Arc<ApplicationState>>,
+) -> Result<serde_json::Value, String> {
+	log::info!("[IPC Bridge] Received MountainGetWorkbenchConfiguration request from Sky.");
+	InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, &State)
+		.await
+		.map_err(|Error| Error.to_string())
+}
+
 /// The main asynchronous function that sets up and runs the application.
 pub fn Fn() {
 	tokio::runtime::Builder::new_multi_thread()
@@ -70,140 +99,180 @@ pub fn Fn() {
 			InitializeLogging();
 			info!("[Main] Starting Mountain application...");
 
-			// 1. Create the high-performance scheduler from the `Echo` crate.
+			// --- Pre-flight WorkSpace Loading from Args ---
+			let CliArgs:Vec<String> = std::env::args().collect();
+			let WorkSpacePathArgument = CliArgs.iter().find(|Arg| Arg.ends_with(".code-workspace"));
+
+			let (InitialFolders, WorkSpaceConfigurationPath) = if let Some(PathString) = WorkSpacePathArgument {
+				let Path = PathBuf::from(PathString);
+				info!("[Main] Found workspace argument: {}", Path.display());
+				match std::fs::read_to_string(&Path) {
+					Ok(Content) => {
+						crate::WorkSpace::WorkSpaceFileService::ParseWorkSpaceFile(&Path, &Content)
+							.map(|Folders| (Folders, Some(Path)))
+							.unwrap_or_else(|Error| {
+								error!(
+									"[Main] Failed to parse workspace file: {}. Continuing without workspace.",
+									Error
+								);
+								(Vec::<WorkSpaceFolderStateDTO>::new(), None)
+							})
+					},
+					Err(Error) => {
+						error!("[Main] Failed to read workspace file: {}. Continuing without workspace.", Error);
+						(Vec::new(), None)
+					},
+				}
+			} else {
+				(Vec::new(), None)
+			};
+
+			// --- State Initialization ---
+			let AppState = Arc::new(ApplicationState {
+				WorkSpaceFolders:Arc::new(Mutex::new(InitialFolders)),
+				WorkSpaceConfigurationPath:Arc::new(Mutex::new(WorkSpaceConfigurationPath)),
+				..ApplicationState::default()
+			});
+
+			// --- Scheduler Initialization ---
 			let NumberOfWorkers = num_cpus::get().max(2);
 			let Scheduler = SchedulerBuilder::Create().WithWorkerCount(NumberOfWorkers).Build();
-
-			// We need an Arc<> to safely share the scheduler for shutdown handling.
 			let SchedulerForShutdown = Arc::new(Scheduler);
 			let SchedulerForRunTime = SchedulerForShutdown.clone();
 
+			// --- Tauri Application Builder ---
 			#[allow(unused_mut)]
 			let mut Builder = tauri::Builder::default();
 
-			// Conditionally enable `any_thread` for the Tauri builder on Windows and Linux.
-			// This allows Tauri event handlers and commands to run on any thread.
 			#[cfg(any(windows, target_os = "linux"))]
 			{
 				Builder = Builder.any_thread();
 			}
 
 			Builder
-				.manage(ApplicationState::default())
+				.manage(AppState.clone())
 				.setup(move |Application| {
 					info!("[Setup] Tauri setup hook initiated.");
 					let ApplicationHandle = Application.handle().clone();
 
-					// --- Main Window Creation ---
-					// Explicitly build and configure the main application window.
-					// This logic is integrated from the second example.
+					Command::Bootstrap::RegisterNativeCommands(&ApplicationHandle, &AppState);
+
+					// --- Window Creation ---
 					let mut WindowBuilder = tauri::WebviewWindowBuilder::new(
 						Application,
-						"Application", // Internal label for the window
-						// URL to load in the webview. `App` variant loads from bundled assets.
+						"main", // Use "main" as the label for consistency
 						tauri::WebviewUrl::App(std::path::PathBuf::from("Application/index.html")),
 					)
-					// Use an internal HTTPS scheme (e.g., `https://tauri.localhost`).
-					// This can enable certain web APIs that require a secure context.
 					.use_https_scheme(true)
-					// Allow standard browser zoom hotkeys (Ctrl+Plus, Ctrl+Minus, Ctrl+0).
 					.zoom_hotkeys_enabled(true)
-					// Disable browser extension loading in the webview.
 					.browser_extensions_enabled(false);
 
-					// Platform-specific window styling (title, maximization, decorations).
 					#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 					{
-						WindowBuilder = WindowBuilder
-							.title("FIDDEE") // Set the user-visible window title.
-							.maximized(true) // Start the window maximized.
-							// Remove default OS window decorations (title bar, buttons).
-							// This implies a custom title bar will be implemented in the frontend.
-							.decorations(false)
-							.shadow(true); // Enable window shadow.
+						WindowBuilder = WindowBuilder.title("Mountain").maximized(true).decorations(false).shadow(true);
 					}
 
-					// Build the main window and handle potential errors.
 					let MainWindow = match WindowBuilder.build() {
 						Ok(Instance) => Instance,
-						Err(Error) => {
-							error!("[Setup] Main application window build failed: {:?}", Error);
-							// Panic to halt execution as the main UI cannot be displayed.
-							panic!("Main application window build failed: {:?}", Error);
-						},
+						Err(Error) => panic!("Main application window build failed: {:?}", Error),
 					};
 
-					// --- Developer Tools (Debug Builds, Desktop Platforms Only) ---
 					#[cfg(all(debug_assertions, not(any(target_os = "android", target_os = "ios"))))]
 					{
-						// Open the webview's developer tools automatically in debug builds.
-						info!("[Setup] Opening webview developer tools.");
 						MainWindow.open_devtools();
 					}
 
-					// --- Backend Initialization (continues after window creation) ---
-
-					// 2. Create the application Environment and the Echo-powered
-					//    ApplicationRunTime.
+					// --- Backend Initialization ---
 					let Environment = Arc::new(MountainEnvironment::Create(ApplicationHandle.clone()));
-					let RunTime = Arc::new(ApplicationRunTime::Create(SchedulerForRunTime, Environment));
-
-					// 3. Manage the ApplicationRunTime in Tauri's state so it's accessible to all
-					//    command handlers.
+					let RunTime = Arc::new(ApplicationRunTime::Create(SchedulerForRunTime, Environment.clone()));
 					ApplicationHandle.manage(RunTime);
 					info!("[Setup] Echo scheduler and ApplicationRunTime created and managed.");
 
-					// 4. Spawn a detached task for all post-setup initializations.
-					// This allows the UI to load faster while the backend finishes starting up.
+					// Clone handles for the post-setup async task.
 					let PostSetupApplicationHandle = ApplicationHandle.clone();
+					let PostSetupEnvironment = Environment.clone();
+
+					// --- Post-Setup Initialization Task ---
 					tauri::async_runtime::spawn(async move {
 						info!("[SetupTask] Starting post-setup initializations...");
-						let _ApplicationState = PostSetupApplicationHandle.state::<ApplicationState>();
+						let AppStateForSetup = PostSetupEnvironment.ApplicationState.clone();
 
-						// TODO: Re-integrate handler logic for these initializations.
-						// Handler::Configuration::InitializeConfiguration(&PostSetupApplicationHandle,
-						// &ApplicationState).await;
-						// Handler::ExtensionManagement::InitializeScanPaths(&
-						// PostSetupApplicationHandle, &ApplicationState).await; ApplicationState.
-						// ScanExtensions(&PostSetupApplicationHandle).await;
+						if let Err(Error) = InitializeAndMergeConfigurations(&PostSetupEnvironment).await {
+							error!("[SetupTask] Failed to initialize configuration: {}", Error);
+						}
+
+						{
+							let mut ScanPathsGuard = AppStateForSetup.ExtensionScanPaths.lock().unwrap();
+							if let Ok(ExecutableDir) = std::env::current_exe() {
+								if let Some(Parent) = ExecutableDir.parent() {
+									ScanPathsGuard.push(Parent.join("../Resources/extensions"));
+									ScanPathsGuard.push(Parent.join("extensions"));
+								}
+							}
+							info!("[SetupTask] Extension scan paths initialized: {:?}", *ScanPathsGuard);
+						} // ScanPathsGuard is dropped here, before any .await
+
+						if let Err(Error) =
+							ScanAndPopulateExtensions(PostSetupApplicationHandle.clone(), &AppStateForSetup).await
+						{
+							error!("[SetupTask] Failed to scan for extensions: {}", Error);
+						}
 
 						Vine::Server::Initialize::Initialize(
 							PostSetupApplicationHandle.clone(),
 							"[::1]:50051".to_string(),
 						);
-						InitializeCocoon(&PostSetupApplicationHandle).await;
+
+						InitializeCocoon(&PostSetupApplicationHandle, &PostSetupEnvironment).await;
 
 						info!("[SetupTask] Post-setup initializations complete.");
 					});
 
+					#[cfg(desktop)]
+					{
+						ApplicationHandle.plugin(tauri_plugin_updater::Builder::new().build()).expect("");
+					}
+
 					Ok(())
 				})
 				.plugin(tauri_plugin_dialog::init())
+				.plugin(tauri_plugin_fs::init())
 				.invoke_handler(tauri::generate_handler![
-					// TODO: Re-integrate all Tauri command handlers here.
+					MountainGetWorkbenchConfiguration,
+					Command::TreeView::GetTreeViewChildren,
+					Command::LanguageFeature::MountainProvideHover,
+					Command::LanguageFeature::MountainProvideCompletions,
+					Command::LanguageFeature::MountainProvideDefinition,
+					Command::LanguageFeature::MountainProvideReferences,
+					Command::Scm::GetAllScmState,
+					Command::Keybinding::GetResolvedKeybinding,
 					crate::Track::DispatchLogic::DispatchFrontendCommand,
+					crate::Track::DispatchLogic::ResolveUIRequest,
 				])
 				.build(tauri::generate_context!())
 				.expect("FATAL: Error while building Mountain Tauri application")
 				.run(move |ApplicationHandle, Event| {
 					if let RunEvent::ExitRequested { api, .. } = Event {
 						info!("[RunEvent] Exit requested. Initiating graceful shutdown...");
-						api.prevent_exit(); // Prevent the app from closing immediately.
+						api.prevent_exit();
 						let SchedulerHandle = SchedulerForShutdown.clone();
 						let ApplicationHandleClone = ApplicationHandle.clone();
 
-						// Spawn a new async task to handle the shutdown to avoid blocking the
-						// Tauri event loop.
 						tokio::spawn(async move {
+							if let Some(RunTime) = ApplicationHandleClone.try_state::<Arc<ApplicationRunTime>>() {
+								RunTime.inner().clone().Shutdown().await;
+							} else {
+								error!("[Shutdown] Could not retrieve ApplicationRunTime to shut down services.");
+							}
+
 							info!("[Shutdown] Shutting down Echo scheduler...");
-							// Attempt to get exclusive ownership of the Arc to shut down the scheduler.
 							if let Ok(mut Scheduler) = Arc::try_unwrap(SchedulerHandle) {
 								Scheduler.Stop().await;
 							} else {
-								error!("[Shutdown] Could not get exclusive access to scheduler for shutdown.");
+								error!("[Shutdown] Could not get exclusive ownership of scheduler for shutdown.");
 							}
 							info!("[Shutdown] Shutdown complete. Exiting application.");
-							ApplicationHandleClone.exit(0); // Now, exit the application.
+							ApplicationHandleClone.exit(0);
 						});
 					}
 				});
