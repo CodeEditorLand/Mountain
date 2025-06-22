@@ -1,3 +1,10 @@
+// File: Mountain/Source/ApplicationState/Internal.rs
+// Role: Contains internal helper functions for the `ApplicationState` module.
+// Responsibilities:
+//   - Handle tasks like file I/O, path resolution, and serialization.
+//   - Provide helper logic for populating state, like scanning for extensions.
+//   - These are not part of the public API of the state struct itself.
+
 //! # Internal (ApplicationState)
 //!
 //! Contains internal helper functions for the `ApplicationState` module,
@@ -8,10 +15,13 @@
 
 use std::{collections::HashMap, fs, path::Path};
 
-use log::error;
+use Common::Error::CommonError::CommonError;
+use log::{error, info};
 use serde::{self, Deserializer, Serializer};
 use serde_json::Value;
 use url::Url;
+
+use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, ExtensionManagement};
 
 /// Analyzes text content to determine its line endings and splits it into a
 /// vector of lines.
@@ -65,6 +75,41 @@ pub fn ResolveMementoStorageFilePath(
 		let Segment = WorkSpaceIdentifier.replace(|c:char| !c.is_alphanumeric() && c != '-' && c != '_', "_");
 		UserStorageBasePath.join("workspaceStorage").join(Segment).join("storage.json")
 	}
+}
+
+/// Scans all registered extension paths for valid extensions and populates the
+/// state.
+pub async fn ScanAndPopulateExtensions(
+	ApplicationHandle:tauri::AppHandle,
+	State:&crate::ApplicationState::ApplicationState::ApplicationState,
+) -> Result<(), CommonError> {
+	info!("[AppStateInternal] Starting extension scan...");
+	let mut AllFoundExtensions:HashMap<String, ExtensionDescriptionStateDTO> = HashMap::new();
+	let ScanPaths = State.ExtensionScanPaths.lock().unwrap().clone();
+
+	for Path in ScanPaths {
+		let FoundInPath =
+			ExtensionManagement::Scanner::ScanDirectoryForExtensions(ApplicationHandle.clone(), Path).await?;
+		for Extension in FoundInPath {
+			let Identifier = Extension
+				.Identifier
+				.get("value")
+				.and_then(Value::as_str)
+				.unwrap_or_default()
+				.to_string();
+			AllFoundExtensions.insert(Identifier, Extension);
+		}
+	}
+
+	let mut ScannedExtensionsGuard = State.ScannedExtensions.lock().unwrap();
+	*ScannedExtensionsGuard = AllFoundExtensions;
+
+	info!(
+		"[AppStateInternal] Extension scan complete. Found {} extensions.",
+		ScannedExtensionsGuard.len()
+	);
+
+	Ok(())
 }
 
 /// A helper module for serializing and deserializing `url::Url` with `serde`.
