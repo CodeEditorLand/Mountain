@@ -1,3 +1,10 @@
+// File: Mountain/Source/Environment/WorkSpaceProvider.rs
+// Role: Implements `WorkSpaceProvider` and `WorkSpaceEditApplier` traits.
+// Responsibilities:
+//   - Core logic for workspace-related operations.
+//   - Querying workspace folders, finding files, and applying workspace edits.
+//   - Orchestrating the opening of files, including routing to custom editors.
+
 //! # WorkSpaceProvider Implementation
 //!
 //! Implements the `WorkSpaceProvider` and `WorkSpaceEditApplier` traits for
@@ -5,19 +12,22 @@
 //! workspace-related operations, including querying workspace folders and
 //! performing workspace-wide file searches.
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::Arc};
 
 use Common::{
+	CustomEditor::CustomEditorProvider::CustomEditorProvider,
 	DTO::WorkSpaceEditDTO::WorkSpaceEditDTO,
+	Document::DocumentProvider::DocumentProvider,
+	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
+	WebView::WebViewProvider::WebViewProvider,
 	WorkSpace::{WorkSpaceEditApplier::WorkSpaceEditApplier, WorkSpaceProvider::WorkSpaceProvider},
 };
 use async_trait::async_trait;
 use globset::{Glob, GlobMatcher};
 use ignore::WalkBuilder;
 use log::{info, warn};
-use serde_json::Value;
-use tauri::Emitter;
+use serde_json::{Value, json};
 use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
@@ -54,10 +64,7 @@ impl WorkSpaceProvider for MountainEnvironment {
 
 	/// Gets the name of the current workspace.
 	async fn GetWorkSpaceName(&self) -> Result<Option<String>, CommonError> {
-		// This logic is complex and better suited inside ApplicationState.
-		// For now, it's a stub.
-		warn!("[WorkSpaceProvider] GetWorkSpaceName is a stub.");
-		Ok(Some("Untitled WorkSpace".to_string()))
+		Ok(self.ApplicationState.GetWorkSpaceIdentifier().ok())
 	}
 
 	/// Gets the path to the workspace configuration file (`.code-workspace`).
@@ -77,7 +84,6 @@ impl WorkSpaceProvider for MountainEnvironment {
 
 	/// Requests workspace trust from the user.
 	async fn RequestWorkSpaceTrust(&self, _Options:Option<Value>) -> Result<bool, CommonError> {
-		// A real implementation would use the UserInterfaceProvider.
 		warn!("[WorkSpaceProvider] RequestWorkSpaceTrust is not implemented; defaulting to trusted.");
 		Ok(true)
 	}
@@ -117,7 +123,7 @@ impl WorkSpaceProvider for MountainEnvironment {
 			}
 			let FolderPath = match Folder.URI.to_file_path() {
 				Ok(path) => path,
-				Err(_) => continue, // Skip non-file URIs
+				Err(_) => continue,
 			};
 
 			let mut WalkerBuilder = WalkBuilder::new(&FolderPath);
@@ -132,17 +138,19 @@ impl WorkSpaceProvider for MountainEnvironment {
 					if Path.is_dir() {
 						continue;
 					}
-					if let Some(ref include) = IncludeMatcher {
-						if include.is_match(Path) {
-							if let Some(ref exclude) = ExcludeMatcher {
-								if exclude.is_match(Path) {
-									continue;
-								}
-							}
-							if let Ok(URL) = Url::from_file_path(Path) {
-								Results.push(URL);
-							}
+
+					let is_match = IncludeMatcher.as_ref().map_or(true, |g| g.is_match(Path));
+					if !is_match {
+						continue;
+					}
+					if let Some(ref exclude) = ExcludeMatcher {
+						if exclude.is_match(Path) {
+							continue;
 						}
+					}
+
+					if let Ok(URL) = Url::from_file_path(Path) {
+						Results.push(URL);
 					}
 				}
 			}
@@ -150,14 +158,49 @@ impl WorkSpaceProvider for MountainEnvironment {
 		Ok(Results)
 	}
 
-	/// Requests that the host application open a file in an editor.
+	/// Requests that the host application open the specified file path in an
+	/// editor.
 	async fn OpenFile(&self, Path:PathBuf) -> Result<(), CommonError> {
-		let URI = Url::from_file_path(Path).map_err(|_| {
+		let URI = Url::from_file_path(Path.clone()).map_err(|_| {
 			CommonError::InvalidArgument { ArgumentName:"Path".into(), Reason:"Could not convert path to URI.".into() }
 		})?;
-		self.ApplicationHandle
-			.emit("sky://window/open-uri", serde_json::json!({ "uri": URI.to_string() }))
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+
+		// TODO: A full implementation would check a registry of custom editor providers
+		// based on the file's glob pattern.
+		let custom_editor_view_type:Option<String> = None;
+
+		if let Some(view_type) = custom_editor_view_type {
+			info!(
+				"[WorkSpaceProvider] Found custom editor '{}' for file '{}'",
+				view_type,
+				Path.display()
+			);
+			let webview_provider:Arc<dyn WebViewProvider> = self.Require();
+			let handle = webview_provider
+				.CreateWebViewPanel(
+					json!({ "id": "placeholder.extension" }),
+					view_type.clone(),
+					Path.file_name().unwrap().to_string_lossy().to_string(),
+					json!({ "viewColumn": -1 }),
+					json!({}),
+					json!({ "enableScripts": true }),
+				)
+				.await?;
+
+			let custom_editor_provider:Arc<dyn CustomEditorProvider> = self.Require();
+			custom_editor_provider.ResolveCustomEditor(view_type, URI, handle).await?;
+			return Ok(());
+		}
+
+		info!(
+			"[WorkSpaceProvider] No custom editor found. Opening '{}' as text.",
+			Path.display()
+		);
+		let uri_components = json!({ "external": URI.to_string(), "$mid": 1 });
+		let doc_provider:Arc<dyn DocumentProvider> = self.Require();
+		doc_provider.OpenDocument(uri_components, None, None).await?;
+
+		Ok(())
 	}
 }
 
@@ -174,10 +217,26 @@ fn BuildGlobMatcher(GlobValue:Value) -> Result<Option<GlobMatcher>, CommonError>
 
 #[async_trait]
 impl WorkSpaceEditApplier for MountainEnvironment {
-	async fn ApplyWorkSpaceEdit(&self, _EditDTO:WorkSpaceEditDTO) -> Result<bool, CommonError> {
-		warn!("[WorkSpaceProvider] ApplyWorkSpaceEdit is not implemented.");
-		// A full implementation would use DocumentProvider and FileSystemWriter
-		// effects.
-		Err(CommonError::NotImplemented { FeatureName:"ApplyWorkSpaceEdit".into() })
+	async fn ApplyWorkSpaceEdit(&self, EditDTO:WorkSpaceEditDTO) -> Result<bool, CommonError> {
+		let DocProvider:Arc<dyn DocumentProvider> = self.Require();
+
+		for (URIValue, Edits) in EditDTO.Edits {
+			let URI = serde_json::from_value::<Url>(URIValue)?;
+			let Document = {
+				let Guard = self.ApplicationState.OpenDocuments.lock().unwrap();
+				Guard.get(URI.as_str()).cloned()
+			};
+
+			if let Some(Doc) = Document {
+				let NewVersionID = Doc.Version + 1;
+
+				DocProvider
+					.ApplyDocumentChanges(URI.clone(), NewVersionID.into(), json!(Edits), true, false, false)
+					.await?;
+			} else {
+				warn!("[WorkSpaceProvider] Attempted to apply edit to non-open document: {}", URI);
+			}
+		}
+		Ok(true)
 	}
 }
