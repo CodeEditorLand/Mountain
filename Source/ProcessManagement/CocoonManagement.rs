@@ -1,3 +1,7 @@
+// File: Mountain/Source/ProcessManagement/CocoonManagement.rs
+// Role: Contains the logic for launching, managing the lifecycle of, and
+// performing the initial handshake with the Cocoon sidecar process.
+
 //! # CocoonManagement
 //!
 //! Contains the logic for launching, managing the lifecycle of, and performing
@@ -7,7 +11,12 @@ use std::{collections::HashMap, process::Stdio, sync::Arc, time::Duration};
 
 use Common::Error::CommonError::CommonError;
 use log::{error, info, trace, warn};
-use tauri::{AppHandle, Manager, path::BaseDirectory};
+use tauri::{
+	AppHandle,
+	Manager,
+	Wry,
+	path::{BaseDirectory, PathResolver},
+};
 use tokio::{
 	io::{AsyncBufReadExt, BufReader},
 	process::Command,
@@ -15,32 +24,37 @@ use tokio::{
 };
 
 use super::InitializationData;
-use crate::{ApplicationState::ApplicationState::ApplicationState, Vine};
+use crate::{Environment::MountainEnvironment::MountainEnvironment, Vine};
 
 /// The main entry point for starting the Cocoon process manager.
-pub async fn InitializeCocoon(ApplicationHandle:&AppHandle) {
+pub async fn InitializeCocoon(ApplicationHandle:&AppHandle, Environment:&Arc<MountainEnvironment>) {
 	info!("[CocoonManagement] Initializing Cocoon sidecar manager...");
-	#[cfg(feature = "extension_host_cocoon")]
+	#[cfg(feature = "ExtensionHostCocoon")]
 	{
+		// Clone the handles for the spawned task.
 		let ApplicationHandleClone = ApplicationHandle.clone();
+		let EnvironmentClone = Environment.clone();
 		tokio::spawn(async move {
-			if let Err(e) = LaunchAndManageCocoonSidecar(ApplicationHandleClone).await {
+			if let Err(e) = LaunchAndManageCocoonSidecar(ApplicationHandleClone, EnvironmentClone).await {
 				error!("[CocoonManagement] CRITICAL: Failed to launch and manage Cocoon: {}", e);
 			}
 		});
 	}
-	#[cfg(not(feature = "extension_host_cocoon"))]
+	#[cfg(not(feature = "ExtensionHostCocoon"))]
 	{
-		info!("[CocoonManagement] 'extension_host_cocoon' feature is disabled. Cocoon will not be launched.");
+		info!("[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched.");
 	}
 }
 
 /// Spawns the Cocoon process and manages its communication and handshake.
-async fn LaunchAndManageCocoonSidecar(ApplicationHandle:AppHandle) -> Result<(), CommonError> {
+async fn LaunchAndManageCocoonSidecar(
+	ApplicationHandle:AppHandle,
+	Environment:Arc<MountainEnvironment>,
+) -> Result<(), CommonError> {
 	let SidecarIdentifier = "cocoon-main".to_string();
 
-	let ScriptPath = ApplicationHandle
-		.path()
+	let path_resolver:PathResolver<Wry> = ApplicationHandle.path().clone();
+	let ScriptPath = path_resolver
 		.resolve("scripts/cocoon/bootstrap-fork.js", BaseDirectory::Resource)
 		.map_err(|e| CommonError::FileSystemNotFound(e.to_string().into()))?;
 
@@ -93,23 +107,14 @@ async fn LaunchAndManageCocoonSidecar(ApplicationHandle:AppHandle) -> Result<(),
 
 	info!("[CocoonManagement] Waiting for Cocoon gRPC server to start...");
 	sleep(Duration::from_millis(2000)).await;
+	// Assuming the sidecar listens on a standard gRPC port.
 	Vine::Client::ConnectToSidecar(SidecarIdentifier.clone(), "127.0.0.1:50052".to_string())
 		.await
 		.map_err(|e| CommonError::IPCError { Description:e.to_string() })?;
 
 	info!("[CocoonManagement] Cocoon is ready. Sending initialization data...");
-	let AppState = ApplicationHandle
-		.try_state::<Arc<ApplicationState>>()
-		.ok_or_else(|| {
-			CommonError::StateLockPoisoned {
-				Context:"Could not get Arc<ApplicationState> from Tauri state".to_string(),
-			}
-		})?
-		.inner()
-		.clone();
 
-	let MainInitializationData =
-		InitializationData::ConstructExtensionHostInitializationData(&ApplicationHandle, &AppState);
+	let MainInitializationData = InitializationData::ConstructExtensionHostInitializationData(&Environment).await?;
 
 	let Response = Vine::Client::SendRequest(
 		&SidecarIdentifier,
