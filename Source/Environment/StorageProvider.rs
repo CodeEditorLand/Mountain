@@ -1,3 +1,10 @@
+// File: Mountain/Source/Environment/StorageProvider.rs
+// Role: Implements the `StorageProvider` trait for the `MountainEnvironment`.
+// Responsibilities:
+//   - Core logic for Memento storage operations.
+//   - Reading from and writing to global and workspace JSON storage files.
+//   - Provides both per-key and high-performance batch operations.
+
 //! # StorageProvider Implementation
 //!
 //! Implements the `StorageProvider` trait for the `MountainEnvironment`. This
@@ -72,12 +79,63 @@ impl StorageProvider for MountainEnvironment {
 			StorageMapGuard.clone()
 		};
 
-		// If a path is configured, spawn a background task to persist the changes.
-		// NOTE: This writes the entire file on every change. A more advanced
-		// implementation would use a debounced writer to batch multiple changes.
 		if let Some(StoragePath) = StoragePathOption {
 			tokio::spawn(async move {
 				SaveStorageToDisk(StoragePath, DataToSave).await;
+			});
+		}
+
+		Ok(())
+	}
+
+	/// Retrieves the entire storage map for a given scope.
+	async fn GetAllStorage(&self, IsGlobalScope:bool) -> Result<Value, CommonError> {
+		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+		trace!("[StorageProvider] Getting all values from {} scope.", ScopeName);
+
+		let StorageMapMutex = if IsGlobalScope {
+			&self.ApplicationState.GlobalMemento
+		} else {
+			&self.ApplicationState.WorkSpaceMemento
+		};
+
+		let StorageMapGuard = StorageMapMutex
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+		Ok(serde_json::to_value(&*StorageMapGuard)?)
+	}
+
+	/// Overwrites the entire storage map for a given scope and persists it.
+	async fn SetAllStorage(&self, IsGlobalScope:bool, FullState:Value) -> Result<(), CommonError> {
+		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+		info!("[StorageProvider] Setting all values for {} scope.", ScopeName);
+
+		let DeserializedState:HashMap<String, Value> = serde_json::from_value(FullState)?;
+
+		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
+			(
+				self.ApplicationState.GlobalMemento.clone(),
+				Some(self.ApplicationState.GlobalMementoPath.clone()),
+			)
+		} else {
+			(
+				self.ApplicationState.WorkSpaceMemento.clone(),
+				self.ApplicationState.WorkSpaceMementoPath.lock().unwrap().clone(),
+			)
+		};
+
+		// Update in-memory state
+		{
+			let mut StorageMapGuard = StorageMapMutex
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			*StorageMapGuard = DeserializedState.clone();
+		}
+
+		// Persist to disk asynchronously
+		if let Some(StoragePath) = StoragePathOption {
+			tokio::spawn(async move {
+				SaveStorageToDisk(StoragePath, DeserializedState).await;
 			});
 		}
 
