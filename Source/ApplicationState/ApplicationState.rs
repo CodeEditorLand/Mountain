@@ -1,3 +1,13 @@
+// File: Mountain/Source/ApplicationState/ApplicationState.rs
+// Role: Defines the main `ApplicationState` struct, which is the central,
+// shared,       thread-safe state container for the entire Mountain
+// application. Responsibilities:
+//   - Hold all runtime state for services like configuration, extensions,
+//     documents, and UI.
+//   - Provide thread-safe access to this state via `Arc<Mutex<...>>`.
+//   - Be managed by Tauri and accessible to all command handlers and
+//     Environment providers.
+
 //! # ApplicationState Struct
 //!
 //! Defines the main `ApplicationState` struct, which is the central, shared,
@@ -16,7 +26,15 @@ use std::{
 	},
 };
 
-use Common::Error::CommonError::CommonError;
+use Common::{
+	Error::CommonError::CommonError,
+	SourceControlManagement::DTO::{
+		SourceControlManagementGroupDTO::SourceControlManagementGroupDTO,
+		SourceControlManagementProviderDTO::SourceControlManagementProviderDTO,
+		SourceControlManagementResourceDTO::SourceControlManagementResourceDTO,
+	},
+	StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO,
+};
 use log::{error, info, warn};
 use tauri::Wry;
 
@@ -47,6 +65,7 @@ pub struct ApplicationState {
 	pub WorkSpaceConfigurationPath:Arc<StandardMutex<Option<PathBuf>>>,
 	pub IsTrusted:Arc<AtomicBool>,
 	pub WindowState:Arc<StandardMutex<WindowStateDTO>>,
+	pub ActiveDocumentURI:Arc<StandardMutex<Option<String>>>,
 
 	// --- Configuration & Storage ---
 	pub Configuration:Arc<StandardMutex<MergedConfigurationStateDTO>>,
@@ -71,9 +90,12 @@ pub struct ApplicationState {
 	pub NextTerminalIdentifier:Arc<AtomicU64>,
 	pub ActiveWebViews:Arc<StandardMutex<HashMap<String, WebViewStateDTO>>>,
 	pub ActiveCustomDocuments:Arc<StandardMutex<HashMap<String, CustomDocumentStateDTO>>>,
-	pub ActiveStatusBarItems:
-		Arc<StandardMutex<HashMap<String, Common::StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO>>>,
+	pub ActiveStatusBarItems:Arc<StandardMutex<HashMap<String, StatusBarEntryDTO>>>,
 	pub ActiveTreeViews:Arc<StandardMutex<HashMap<String, TreeViewStateDTO>>>,
+	pub ScmProviders:Arc<StandardMutex<HashMap<u32, SourceControlManagementProviderDTO>>>,
+	pub ScmGroups:Arc<StandardMutex<HashMap<u32, HashMap<String, SourceControlManagementGroupDTO>>>>,
+	pub ScmResources:Arc<StandardMutex<HashMap<u32, HashMap<String, Vec<SourceControlManagementResourceDTO>>>>>,
+	pub NextScmProviderHandle:Arc<AtomicU32>,
 
 	// --- IPC & User Interface State ---
 	pub PendingUserInterfaceRequests:
@@ -115,27 +137,32 @@ impl Default for ApplicationState {
 			WorkSpaceConfigurationPath:Arc::new(StandardMutex::new(None)),
 			IsTrusted:Arc::new(AtomicBool::new(false)),
 			WindowState:Arc::new(StandardMutex::new(Default::default())),
+			ActiveDocumentURI:Arc::new(StandardMutex::new(None)),
 			Configuration:Arc::new(StandardMutex::new(MergedConfigurationStateDTO::default())),
 			GlobalMemento:Arc::new(StandardMutex::new(InitialGlobalMementoMap)),
 			GlobalMementoPath:GlobalMementoFilePath,
 			WorkSpaceMemento:Arc::new(StandardMutex::new(HashMap::new())),
 			WorkSpaceMementoPath:Arc::new(StandardMutex::new(None)),
 			CommandRegistry:Arc::new(StandardMutex::new(HashMap::new())),
-			DiagnosticsMap:Arc::new(StandardMutex::new(HashMap::new())),
-			OpenDocuments:Arc::new(StandardMutex::new(HashMap::new())),
-			OutputChannels:Arc::new(StandardMutex::new(HashMap::new())),
 			LanguageProviders:Arc::new(StandardMutex::new(HashMap::new())),
 			NextProviderHandle:Arc::new(AtomicU32::new(1)),
 			ScannedExtensions:Arc::new(StandardMutex::new(HashMap::new())),
 			EnabledProposedAPIs:Arc::new(StandardMutex::new(HashMap::new())),
 			ExtensionScanPaths:Arc::new(StandardMutex::new(Vec::new())),
+			DiagnosticsMap:Arc::new(StandardMutex::new(HashMap::new())),
+			OpenDocuments:Arc::new(StandardMutex::new(HashMap::new())),
+			OutputChannels:Arc::new(StandardMutex::new(HashMap::new())),
 			ActiveTerminals:Arc::new(StandardMutex::new(HashMap::new())),
 			NextTerminalIdentifier:Arc::new(AtomicU64::new(1)),
-			PendingUserInterfaceRequests:Arc::new(StandardMutex::new(HashMap::new())),
 			ActiveWebViews:Arc::new(StandardMutex::new(HashMap::new())),
 			ActiveCustomDocuments:Arc::new(StandardMutex::new(HashMap::new())),
 			ActiveStatusBarItems:Arc::new(StandardMutex::new(HashMap::new())),
 			ActiveTreeViews:Arc::new(StandardMutex::new(HashMap::new())),
+			ScmProviders:Arc::new(StandardMutex::new(HashMap::new())),
+			ScmGroups:Arc::new(StandardMutex::new(HashMap::new())),
+			ScmResources:Arc::new(StandardMutex::new(HashMap::new())),
+			NextScmProviderHandle:Arc::new(AtomicU32::new(1)),
+			PendingUserInterfaceRequests:Arc::new(StandardMutex::new(HashMap::new())),
 		}
 	}
 }
@@ -171,6 +198,10 @@ impl ApplicationState {
 
 	/// Returns the next available unique identifier for a terminal instance.
 	pub fn GetNextTerminalIdentifier(&self) -> u64 { self.NextTerminalIdentifier.fetch_add(1, AtomicOrdering::Relaxed) }
+
+	/// Returns the next available unique identifier for an SCM provider
+	/// instance.
+	pub fn GetNextScmProviderHandle(&self) -> u32 { self.NextScmProviderHandle.fetch_add(1, AtomicOrdering::Relaxed) }
 
 	/// Updates the path to the workspace memento file and reloads its content
 	/// from disk.
