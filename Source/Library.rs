@@ -19,9 +19,6 @@ pub mod Track;
 pub mod Vine;
 pub mod WorkSpace;
 
-// TEMPORARY DISABLE
-// pub mod Update;
-
 // The main binary entry point is defined in its own module.
 pub mod Binary;
 

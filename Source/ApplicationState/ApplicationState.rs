@@ -92,10 +92,10 @@ pub struct ApplicationState {
 	pub ActiveCustomDocuments:Arc<StandardMutex<HashMap<String, CustomDocumentStateDTO>>>,
 	pub ActiveStatusBarItems:Arc<StandardMutex<HashMap<String, StatusBarEntryDTO>>>,
 	pub ActiveTreeViews:Arc<StandardMutex<HashMap<String, TreeViewStateDTO>>>,
-	pub ScmProviders:Arc<StandardMutex<HashMap<u32, SourceControlManagementProviderDTO>>>,
-	pub ScmGroups:Arc<StandardMutex<HashMap<u32, HashMap<String, SourceControlManagementGroupDTO>>>>,
-	pub ScmResources:Arc<StandardMutex<HashMap<u32, HashMap<String, Vec<SourceControlManagementResourceDTO>>>>>,
-	pub NextScmProviderHandle:Arc<AtomicU32>,
+	pub SourceControlManagementProviders:Arc<StandardMutex<HashMap<u32, SourceControlManagementProviderDTO>>>,
+	pub SourceControlManagementGroups:Arc<StandardMutex<HashMap<u32, HashMap<String, SourceControlManagementGroupDTO>>>>,
+	pub SourceControlManagementResources:Arc<StandardMutex<HashMap<u32, HashMap<String, Vec<SourceControlManagementResourceDTO>>>>>,
+	pub NextSourceControlManagementProviderHandle:Arc<AtomicU32>,
 
 	// --- IPC & User Interface State ---
 	pub PendingUserInterfaceRequests:
@@ -158,10 +158,10 @@ impl Default for ApplicationState {
 			ActiveCustomDocuments:Arc::new(StandardMutex::new(HashMap::new())),
 			ActiveStatusBarItems:Arc::new(StandardMutex::new(HashMap::new())),
 			ActiveTreeViews:Arc::new(StandardMutex::new(HashMap::new())),
-			ScmProviders:Arc::new(StandardMutex::new(HashMap::new())),
-			ScmGroups:Arc::new(StandardMutex::new(HashMap::new())),
-			ScmResources:Arc::new(StandardMutex::new(HashMap::new())),
-			NextScmProviderHandle:Arc::new(AtomicU32::new(1)),
+			SourceControlManagementProviders:Arc::new(StandardMutex::new(HashMap::new())),
+			SourceControlManagementGroups:Arc::new(StandardMutex::new(HashMap::new())),
+			SourceControlManagementResources:Arc::new(StandardMutex::new(HashMap::new())),
+			NextSourceControlManagementProviderHandle:Arc::new(AtomicU32::new(1)),
 			PendingUserInterfaceRequests:Arc::new(StandardMutex::new(HashMap::new())),
 		}
 	}
@@ -199,9 +199,9 @@ impl ApplicationState {
 	/// Returns the next available unique identifier for a terminal instance.
 	pub fn GetNextTerminalIdentifier(&self) -> u64 { self.NextTerminalIdentifier.fetch_add(1, AtomicOrdering::Relaxed) }
 
-	/// Returns the next available unique identifier for an SCM provider
+	/// Returns the next available unique identifier for an SourceControlManagement provider
 	/// instance.
-	pub fn GetNextScmProviderHandle(&self) -> u32 { self.NextScmProviderHandle.fetch_add(1, AtomicOrdering::Relaxed) }
+	pub fn GetNextSourceControlManagementProviderHandle(&self) -> u32 { self.NextSourceControlManagementProviderHandle.fetch_add(1, AtomicOrdering::Relaxed) }
 
 	/// Updates the path to the workspace memento file and reloads its content
 	/// from disk.

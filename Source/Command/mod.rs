@@ -14,5 +14,5 @@
 pub mod Bootstrap;
 pub mod Keybinding;
 pub mod LanguageFeature;
-pub mod Scm;
+pub mod SourceControlManagement;
 pub mod TreeView;

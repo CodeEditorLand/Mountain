@@ -275,7 +275,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				})
 			}));
 		},
-		// SCM
+		// SourceControlManagement
 		"$scm:createSourceControl" => {
 			let DTO = ParametersArray.get(0).cloned().unwrap_or(Value::Null);
 			return Ok(Box::new(move |runtime:Arc<MountainRunTime>| {

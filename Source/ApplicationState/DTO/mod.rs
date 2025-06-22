@@ -20,18 +20,3 @@ pub mod TreeViewStateDTO;
 pub mod WebViewStateDTO;
 pub mod WindowStateDTO;
 pub mod WorkSpaceFolderStateDTO;
-
-// --- Public Re-exports (alphabetical) ---
-// pub use self::CustomDocumentStateDTO::CustomDocumentStateDTO;
-// pub use self::DocumentStateDTO::DocumentStateDTO;
-// pub use self::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO;
-// pub use self::MarkerDataDTO::MarkerDataDTO;
-// pub use self::MergedConfigurationStateDTO::MergedConfigurationStateDTO;
-// pub use self::OutputChannelStateDTO::OutputChannelStateDTO;
-// pub use self::ProviderRegistrationDTO::ProviderRegistrationDTO;
-// pub use self::RPCModelContentChangeDTO::{RPCModelContentChangeDTO,
-// RPCRangeDTO}; pub use self::TerminalStateDTO::TerminalStateDTO;
-// pub use self::TreeViewStateDTO::TreeViewStateDTO;
-// pub use self::WebViewStateDTO::WebViewStateDTO;
-// pub use self::WindowStateDTO::WindowStateDTO;
-// pub use self::WorkSpaceFolderStateDTO::WorkSpaceFolderStateDTO;

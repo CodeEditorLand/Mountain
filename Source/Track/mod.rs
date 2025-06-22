@@ -17,10 +17,3 @@
 pub mod DispatchLogic;
 /// Contains the logic for creating `ActionEffect`s from request payloads.
 pub mod EffectCreation;
-
-// --- Public Re-exports ---
-
-// /// The main dispatch functions for handling requests from both the frontend
-// /// and sidecar processes.
-// pub use self::DispatchLogic::{DispatchFrontendCommand,
-// DispatchSidecarRequest};

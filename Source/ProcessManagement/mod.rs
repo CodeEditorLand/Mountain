@@ -9,5 +9,3 @@
 
 pub mod CocoonManagement;
 pub mod InitializationData;
-
-// pub use self::CocoonManagement::*;

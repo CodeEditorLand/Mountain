@@ -9,7 +9,3 @@
 
 pub mod Initialize;
 pub mod MountainVinegRPCService;
-
-// /// The primary public function for this module, responsible for creating and
-// /// starting the gRPC server on a background task.
-// pub use self::Initialize::Initialize;

@@ -245,7 +245,7 @@ pub fn Fn() {
 					Command::LanguageFeature::MountainProvideCompletions,
 					Command::LanguageFeature::MountainProvideDefinition,
 					Command::LanguageFeature::MountainProvideReferences,
-					Command::Scm::GetAllScmState,
+					Command::SourceControlManagement::GetAllSourceControlManagementState,
 					Command::Keybinding::GetResolvedKeybinding,
 					crate::Track::DispatchLogic::DispatchFrontendCommand,
 					crate::Track::DispatchLogic::ResolveUIRequest,
