@@ -45,13 +45,19 @@ use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationD
 impl LanguageFeatureProviderRegistry for MountainEnvironment {
 	async fn RegisterProvider(
 		&self,
+
 		SidecarIdentifier:String,
+
 		ProviderType:ProviderType,
+
 		SelectorDTO:Value,
+
 		ExtensionIdentifierDTO:Value,
+
 		OptionsDTO:Option<Value>,
 	) -> Result<u32, CommonError> {
 		let Handle = self.ApplicationState.GetNextProviderHandle();
+
 		info!(
 			"[LangFeatureProvider] Registering {:?} provider from '{}' with new handle {}",
 			ProviderType, SidecarIdentifier, Handle
@@ -59,10 +65,15 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 		let NewRegistration = ProviderRegistrationDTO {
 			Handle,
+
 			ProviderType,
+
 			Selector:SelectorDTO,
+
 			SidecarIdentifier,
+
 			Options:OptionsDTO,
+
 			ExtensionIdentifier:ExtensionIdentifierDTO,
 		};
 
@@ -77,6 +88,7 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn UnregisterProvider(&self, Handle:u32) -> Result<(), CommonError> {
 		info!("[LangFeatureProvider] Unregistering provider with handle {}", Handle);
+
 		if self
 			.ApplicationState
 			.LanguageProviders
@@ -90,6 +102,7 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 				Handle
 			);
 		}
+
 		Ok(())
 	}
 
@@ -97,7 +110,9 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn ProvideHover(
 		&self,
+
 		DocumentURI:Url,
+
 		PositionDTO:PositionDTO,
 	) -> Result<Option<HoverResultDTO>, CommonError> {
 		InvokeProvider(self, ProviderType::Hover, &DocumentURI, json!([PositionDTO])).await
@@ -105,9 +120,13 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn ProvideCompletions(
 		&self,
+
 		DocumentURI:Url,
+
 		PositionDTO:PositionDTO,
+
 		ContextDTO:CompletionContextDTO,
+
 		CancellationTokenValue:Option<Value>,
 	) -> Result<Option<CompletionListDTO>, CommonError> {
 		InvokeProvider(
@@ -121,7 +140,9 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn ProvideDefinition(
 		&self,
+
 		DocumentURI:Url,
+
 		PositionDTO:PositionDTO,
 	) -> Result<Option<Vec<LocationDTO>>, CommonError> {
 		InvokeProvider(self, ProviderType::Definition, &DocumentURI, json!([PositionDTO])).await
@@ -129,8 +150,11 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn ProvideReferences(
 		&self,
+
 		DocumentURI:Url,
+
 		PositionDTO:PositionDTO,
+
 		ContextDTO:Value,
 	) -> Result<Option<Vec<LocationDTO>>, CommonError> {
 		InvokeProvider(self, ProviderType::References, &DocumentURI, json!([PositionDTO, ContextDTO])).await
@@ -138,7 +162,9 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn ProvideDocumentFormattingEdits(
 		&self,
+
 		DocumentURI:Url,
+
 		OptionsDTO:Value,
 	) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
 		InvokeProvider(self, ProviderType::DocumentFormatting, &DocumentURI, json!([OptionsDTO])).await
@@ -146,8 +172,11 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 	async fn ProvideDocumentRangeFormattingEdits(
 		&self,
+
 		DocumentURI:Url,
+
 		RangeDTO:Value,
+
 		OptionsDTO:Value,
 	) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
 		InvokeProvider(
@@ -162,35 +191,45 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 	// --- STUBS FOR OTHER PROVIDER METHODS ---
 	async fn ProvideCodeActions(
 		&self,
+
 		_DocumentURI:Url,
+
 		_RangeOrSelectionDTO:Value,
+
 		_ContextDTO:Value,
 	) -> Result<Option<Value>, CommonError> {
 		warn!("[LangFeatureProvider] ProvideCodeActions is not implemented.");
+
 		Ok(None)
 	}
 
 	async fn ProvideCodeLenses(&self, _DocumentURI:Url) -> Result<Option<Value>, CommonError> {
 		warn!("[LangFeatureProvider] ProvideCodeLenses is not implemented.");
+
 		Ok(None)
 	}
 
 	async fn ProvideDocumentHighlights(
 		&self,
+
 		_DocumentURI:Url,
+
 		_PositionDTO:PositionDTO,
 	) -> Result<Option<Value>, CommonError> {
 		warn!("[LangFeatureProvider] ProvideDocumentHighlights is not implemented.");
+
 		Ok(None)
 	}
 
 	async fn ProvideDocumentLinks(&self, _DocumentURI:Url) -> Result<Option<Value>, CommonError> {
 		warn!("[LangFeatureProvider] ProvideDocumentLinks is not implemented.");
+
 		Ok(None)
 	}
 
 	async fn PrepareRename(&self, _DocumentURI:Url, _PositionDTO:PositionDTO) -> Result<Option<Value>, CommonError> {
 		warn!("[LangFeatureProvider] PrepareRename is not implemented.");
+
 		Ok(None)
 	}
 }
@@ -200,10 +239,13 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 /// Finds the best provider for a given feature and document.
 fn FindBestProvider(
 	Environment:&MountainEnvironment,
+
 	ProviderType:ProviderType,
+
 	DocumentURI:&Url,
 ) -> Option<ProviderRegistrationDTO> {
 	let Providers = Environment.ApplicationState.LanguageProviders.lock().unwrap();
+
 	let Document = Environment
 		.ApplicationState
 		.OpenDocuments
@@ -223,9 +265,11 @@ fn FindBestProvider(
 						if let Some(lang) = selector.get("language").and_then(Value::as_str) {
 							if lang == doc.LanguageIdentifier {
 								debug!("Found provider with handle {} for document {}", Provider.Handle, DocumentURI);
+
 								return Some(Provider.clone());
 							}
 						}
+
 						// TODO: Add scheme and pattern matching logic here.
 					}
 				}
@@ -234,6 +278,7 @@ fn FindBestProvider(
 	}
 
 	warn!("No provider found for {:?} on document {}", ProviderType, DocumentURI);
+
 	None
 }
 
@@ -241,26 +286,34 @@ fn FindBestProvider(
 /// deserialize the result.
 async fn InvokeProvider<TResponse:DeserializeOwned>(
 	Environment:&MountainEnvironment,
+
 	ProviderType:ProviderType,
+
 	DocumentURI:&Url,
+
 	mut ProviderArguments:Value,
 ) -> Result<Option<TResponse>, CommonError> {
 	if let Some(Provider) = FindBestProvider(Environment, ProviderType, DocumentURI) {
 		let RPCMethod = format!("$provide{}", Provider.ProviderType.to_string());
+
 		let URIComponents = json!({ "external": DocumentURI.to_string(), "$mid": 1 });
 
 		let ArgumentsVector = ProviderArguments.as_array_mut().ok_or_else(|| {
 			CommonError::InvalidArgument {
 				ArgumentName:"ProviderArguments".into(),
+
 				Reason:"Expected provider arguments to be a JSON array.".into(),
 			}
 		})?;
+
 		let mut FinalArgumentsVector = vec![json!(Provider.Handle), URIComponents];
+
 		FinalArgumentsVector.append(ArgumentsVector);
 
 		let FinalArguments = json!(FinalArgumentsVector);
 
 		let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
+
 		let Response = IPCProvider
 			.SendRequestToSidecar(Provider.SidecarIdentifier, RPCMethod, FinalArguments, 5000)
 			.await?;

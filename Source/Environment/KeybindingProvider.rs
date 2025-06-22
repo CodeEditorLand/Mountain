@@ -30,8 +30,11 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 #[serde(rename_all = "camelCase")]
 struct KeybindingRule {
 	key:String,
+
 	command:String,
+
 	when:Option<String>,
+
 	args:Option<Value>,
 }
 
@@ -39,11 +42,13 @@ struct KeybindingRule {
 impl KeybindingProvider for MountainEnvironment {
 	async fn GetResolvedKeybinding(&self) -> Result<Value, CommonError> {
 		info!("[KeybindingProvider] Resolving all keybindings...");
+
 		let mut resolved_keybindings:HashMap<String, KeybindingRule> = HashMap::new();
 
 		// 1. Collect default keybindings from extensions
 		{
 			let extensions = self.ApplicationState.ScannedExtensions.lock().unwrap();
+
 			for ext in extensions.values() {
 				if let Some(contributes) = ext.Contributes.as_ref().and_then(|c| c.get("keybindings")) {
 					if let Some(keybindings_array) = contributes.as_array() {
@@ -51,13 +56,16 @@ impl KeybindingProvider for MountainEnvironment {
 							if let Ok(kb_rule) = serde_json::from_value::<KeybindingRule>(kb_val.clone()) {
 								// Use key+when as a unique identifier for the rule
 								let unique_key = format!("{}{}", kb_rule.key, kb_rule.when.as_deref().unwrap_or(""));
+
 								resolved_keybindings.insert(unique_key, kb_rule);
 							}
 						}
 					}
 				}
 			}
-		} // extensions lock is dropped here
+
+			// extensions lock is dropped here
+		}
 
 		// 2. Load and apply user-defined keybindings from keybindings.json
 		let user_keybindings_path = self
@@ -68,10 +76,12 @@ impl KeybindingProvider for MountainEnvironment {
 			.join("keybindings.json");
 
 		let runtime = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+
 		if let Ok(content) = runtime.Run(ReadFile(user_keybindings_path)).await {
 			if let Ok(user_keybindings) = serde_json::from_slice::<Vec<KeybindingRule>>(&content) {
 				for user_kb in user_keybindings {
 					let unique_key = format!("{}{}", user_kb.key, user_kb.when.as_deref().unwrap_or(""));
+
 					if user_kb.command.starts_with('-') {
 						// This is an "unbind" rule
 						resolved_keybindings.remove(&unique_key);
@@ -84,6 +94,7 @@ impl KeybindingProvider for MountainEnvironment {
 		}
 
 		let final_rules:Vec<KeybindingRule> = resolved_keybindings.into_values().collect();
+
 		Ok(json!(final_rules))
 	}
 }

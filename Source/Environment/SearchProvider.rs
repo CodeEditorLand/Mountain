@@ -32,7 +32,9 @@ use super::MountainEnvironment::MountainEnvironment;
 #[serde(rename_all = "camelCase")]
 struct TextSearchQuery {
 	pattern:String,
+
 	is_case_sensitive:Option<bool>,
+
 	is_word_match:Option<bool>,
 }
 
@@ -40,13 +42,16 @@ struct TextSearchQuery {
 #[serde(rename_all = "camelCase")]
 struct TextMatch {
 	preview:String,
+
 	line_number:u64,
 }
 
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct FileMatch {
-	resource:String, // URI
+	// URI
+	resource:String,
+
 	matches:Vec<TextMatch>,
 }
 
@@ -55,6 +60,7 @@ struct FileMatch {
 // it's searching.
 struct PerFileSink {
 	path:PathBuf,
+
 	results:Arc<Mutex<Vec<FileMatch>>>,
 }
 
@@ -63,7 +69,9 @@ impl Sink for PerFileSink {
 
 	fn matched(&mut self, _searcher:&Searcher, mat:&SinkMatch<'_>) -> Result<bool, Self::Error> {
 		let mut results_guard = self.results.lock().unwrap();
+
 		let preview = String::from_utf8_lossy(mat.bytes()).to_string();
+
 		let line_number = mat.line_number().unwrap_or(0);
 
 		// Since this sink is per-file, we know `self.path` is correct.
@@ -76,7 +84,8 @@ impl Sink for PerFileSink {
 			results_guard.push(FileMatch { resource:file_uri, matches:vec![TextMatch { preview, line_number }] });
 		}
 
-		Ok(true) // Continue searching
+		// Continue searching
+		Ok(true)
 	}
 }
 
@@ -84,9 +93,11 @@ impl Sink for PerFileSink {
 impl SearchProvider for MountainEnvironment {
 	async fn TextSearch(&self, QueryValue:Value, _OptionsValue:Value) -> Result<Value, CommonError> {
 		let Query:TextSearchQuery = serde_json::from_value(QueryValue)?;
+
 		info!("[SearchProvider] Performing text search for: {:?}", Query);
 
 		let mut builder = RegexMatcherBuilder::new();
+
 		builder
 			.case_insensitive(!Query.is_case_sensitive.unwrap_or(false))
 			.word(Query.is_word_match.unwrap_or(false));
@@ -98,11 +109,14 @@ impl SearchProvider for MountainEnvironment {
 		let all_matches = Arc::new(Mutex::new(Vec::<FileMatch>::new()));
 
 		let folders_guard = self.ApplicationState.WorkSpaceFolders.lock().unwrap();
+
 		let folders = folders_guard.clone();
+
 		drop(folders_guard);
 
 		if folders.is_empty() {
 			warn!("[SearchProvider] No workspace folders to search in.");
+
 			return Ok(json!([]));
 		}
 
@@ -115,7 +129,9 @@ impl SearchProvider for MountainEnvironment {
 				// We must process entries from the walker and call `search_path` individually.
 				walker.run(|| {
 					let mut searcher = Searcher::new();
+
 					let matcher = matcher.clone();
+
 					let all_matches = all_matches.clone();
 
 					Box::new(move |entry_result| {
@@ -129,6 +145,7 @@ impl SearchProvider for MountainEnvironment {
 								}
 							}
 						}
+
 						ignore::WalkState::Continue
 					})
 				});
@@ -136,6 +153,7 @@ impl SearchProvider for MountainEnvironment {
 		}
 
 		let final_matches = all_matches.lock().unwrap().clone();
+
 		Ok(json!(final_matches))
 	}
 }

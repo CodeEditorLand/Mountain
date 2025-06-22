@@ -13,8 +13,11 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "PascalCase")]
 pub struct OutputChannelStateDTO {
 	pub Name:String,
+
 	pub LanguageIdentifier:Option<String>,
+
 	pub Buffer:String,
+
 	pub IsVisible:bool,
 }
 

@@ -9,6 +9,7 @@
 //!
 //! Implements the `TerminalProvider` trait for the `MountainEnvironment`. This
 //! provider contains the core logic for managing integrated terminal instances,
+
 //! including creating native pseudo-terminals (PTYs) and handling their I/O.
 
 use std::{env, io::Write, sync::Arc};
@@ -55,12 +56,15 @@ impl TerminalProvider for MountainEnvironment {
 		let mut TerminalState = TerminalStateDTO::Create(TerminalIdentifier, Name.clone(), &OptionsValue, DefaultShell);
 
 		let PtySystem = NativePtySystem::default();
+
 		let PtyPair = PtySystem
 			.openpty(PtySize::default())
 			.map_err(|e| CommonError::IPCError { Description:format!("Failed to open PTY: {}", e) })?;
 
 		let mut Command = CommandBuilder::new(&TerminalState.ShellPath);
+
 		Command.args(&TerminalState.ShellArguments);
+
 		if let Some(CWD) = &TerminalState.CurrentWorkingDirectory {
 			Command.cwd(CWD);
 		}
@@ -69,22 +73,28 @@ impl TerminalProvider for MountainEnvironment {
 			.slave
 			.spawn_command(Command)
 			.map_err(|e| CommonError::IPCError { Description:format!("Failed to spawn shell process: {}", e) })?;
+
 		TerminalState.OSProcessIdentifier = ChildProcess.process_id();
 
 		let mut PTYWriter = PtyPair.master.take_writer().map_err(|e| {
 			CommonError::FileSystemIO {
 				Path:"pty master".into(),
+
 				Description:format!("Failed to clone PTY writer: {}", e),
 			}
 		})?;
+
 		let (InputTransmitter, mut InputReceiver) = TokioMPSC::channel::<String>(32);
+
 		TerminalState.PTYInputTransmitter = Some(InputTransmitter);
 
 		let TermIDForInput = TerminalIdentifier;
+
 		tokio::spawn(async move {
 			while let Some(Data) = InputReceiver.recv().await {
 				if let Err(e) = PTYWriter.write_all(Data.as_bytes()) {
 					error!("[TerminalProvider] PTY write failed for ID {}: {}", TermIDForInput, e);
+
 					break;
 				}
 			}
@@ -93,18 +103,25 @@ impl TerminalProvider for MountainEnvironment {
 		let mut PTYReader = PtyPair.master.try_clone_reader().map_err(|e| {
 			CommonError::FileSystemIO {
 				Path:"pty master".into(),
+
 				Description:format!("Failed to clone PTY reader: {}", e),
 			}
 		})?;
+
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+
 		let TermIDForOutput = TerminalIdentifier;
+
 		tokio::spawn(async move {
 			let mut Buffer = [0u8; 8192];
+
 			loop {
 				match PTYReader.read(&mut Buffer) {
 					Ok(count) if count > 0 => {
 						let DataString = String::from_utf8_lossy(&Buffer[..count]);
+
 						let Payload = json!([TermIDForOutput, DataString]);
+
 						if let Err(e) = IPCProvider
 							.SendNotificationToSidecar(
 								"cocoon-main".into(),
@@ -119,17 +136,24 @@ impl TerminalProvider for MountainEnvironment {
 							);
 						}
 					},
+
 					_ => break,
 				}
 			}
 		});
 
 		let TermIDForExit = TerminalIdentifier;
-		let EnvironmentClone = self.clone(); // Clone environment for the exit task
+
+		// Clone environment for the exit task
+		let EnvironmentClone = self.clone();
+
 		tokio::spawn(async move {
 			let _exit_status = ChildProcess.wait();
+
 			info!("[TerminalProvider] Process for terminal ID {} has exited.", TermIDForExit);
+
 			let IPCProvider:Arc<dyn IPCProvider> = EnvironmentClone.Require();
+
 			if let Err(e) = IPCProvider
 				.SendNotificationToSidecar(
 					"cocoon-main".into(),
@@ -143,6 +167,7 @@ impl TerminalProvider for MountainEnvironment {
 					TermIDForExit, e
 				);
 			}
+
 			// Clean up the terminal from the state
 			EnvironmentClone
 				.ApplicationState
@@ -163,14 +188,17 @@ impl TerminalProvider for MountainEnvironment {
 
 	async fn SendTextToTerminal(&self, TerminalId:u64, Text:String) -> Result<(), CommonError> {
 		trace!("[TerminalProvider] Sending text to terminal ID: {}", TerminalId);
+
 		let SenderOption = {
 			let TerminalsGuard = self
 				.ApplicationState
 				.ActiveTerminals
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 			if let Some(TerminalArc) = TerminalsGuard.get(&TerminalId) {
 				let TerminalStateGuard = TerminalArc.lock().unwrap();
+
 				TerminalStateGuard.PTYInputTransmitter.clone()
 			} else {
 				None
@@ -185,11 +213,13 @@ impl TerminalProvider for MountainEnvironment {
 		} else {
 			return Err(CommonError::IPCError { Description:format!("Terminal with ID {} not found.", TerminalId) });
 		}
+
 		Ok(())
 	}
 
 	async fn DisposeTerminal(&self, TerminalId:u64) -> Result<(), CommonError> {
 		info!("[TerminalProvider] Disposing terminal ID: {}", TerminalId);
+
 		let TerminalArc = self
 			.ApplicationState
 			.ActiveTerminals
@@ -198,13 +228,16 @@ impl TerminalProvider for MountainEnvironment {
 			.remove(&TerminalId);
 
 		if let Some(TerminalArc) = TerminalArc {
-			drop(TerminalArc); // This will drop the PTY master, killing the process.
+			// This will drop the PTY master, killing the process.
+			drop(TerminalArc);
 		}
+
 		Ok(())
 	}
 
 	async fn ShowTerminal(&self, TerminalId:u64, PreserveFocus:bool) -> Result<(), CommonError> {
 		info!("[TerminalProvider] Showing terminal ID: {}", TerminalId);
+
 		self.ApplicationHandle
 			.emit(
 				"sky://terminal/show",
@@ -215,6 +248,7 @@ impl TerminalProvider for MountainEnvironment {
 
 	async fn HideTerminal(&self, TerminalId:u64) -> Result<(), CommonError> {
 		info!("[TerminalProvider] Hiding terminal ID: {}", TerminalId);
+
 		self.ApplicationHandle
 			.emit("sky://terminal/hide", json!({ "id": TerminalId }))
 			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
@@ -226,6 +260,7 @@ impl TerminalProvider for MountainEnvironment {
 			.ActiveTerminals
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		Ok(TerminalsGuard
 			.get(&TerminalId)
 			.and_then(|t| t.lock().unwrap().OSProcessIdentifier))

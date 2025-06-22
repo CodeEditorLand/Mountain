@@ -9,6 +9,9 @@
 
 // --- Sub-modules ---
 pub mod Client;
+
 pub mod Error;
+
 pub mod Generated;
+
 pub mod Server;

@@ -15,10 +15,15 @@ use serde_json::Value;
 #[serde(rename_all = "PascalCase")]
 pub struct MarkerDataDTO {
 	pub Severity:u32,
+
 	pub Message:String,
+
 	pub StartLineNumber:u32,
+
 	pub StartColumn:u32,
+
 	pub EndLineNumber:u32,
+
 	pub EndColumn:u32,
 
 	#[serde(skip_serializing_if = "Option::is_none")]

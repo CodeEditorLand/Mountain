@@ -37,12 +37,15 @@ impl WorkSpaceProvider for MountainEnvironment {
 	/// Retrieves information about all currently open workspace folders.
 	async fn GetWorkSpaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
 		info!("[WorkSpaceProvider] Getting workspace folders info.");
+
 		let FoldersGuard = self
 			.ApplicationState
 			.WorkSpaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		let ResultVector = FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect();
+
 		Ok(ResultVector)
 	}
 
@@ -54,11 +57,13 @@ impl WorkSpaceProvider for MountainEnvironment {
 			.WorkSpaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		for Folder in FoldersGuard.iter() {
 			if URIToMatch.as_str().starts_with(Folder.URI.as_str()) {
 				return Ok(Some((Folder.URI.clone(), Folder.Name.clone(), Folder.Index)));
 			}
 		}
+
 		Ok(None)
 	}
 
@@ -85,22 +90,29 @@ impl WorkSpaceProvider for MountainEnvironment {
 	/// Requests workspace trust from the user.
 	async fn RequestWorkSpaceTrust(&self, _Options:Option<Value>) -> Result<bool, CommonError> {
 		warn!("[WorkSpaceProvider] RequestWorkSpaceTrust is not implemented; defaulting to trusted.");
+
 		Ok(true)
 	}
 
 	/// Finds files within the workspace using glob patterns.
 	async fn FindFilesInWorkSpace(
 		&self,
+
 		IncludePatternDTO:Value,
+
 		ExcludePatternDTO:Option<Value>,
+
 		MaxResults:Option<usize>,
+
 		UseIgnoreFiles:bool,
+
 		FollowSymlinks:bool,
 	) -> Result<Vec<Url>, CommonError> {
 		info!(
 			"[WorkSpaceProvider] Finding files with include pattern: {:?}",
 			IncludePatternDTO
 		);
+
 		let FoldersGuard = self
 			.ApplicationState
 			.WorkSpaceFolders
@@ -112,37 +124,46 @@ impl WorkSpaceProvider for MountainEnvironment {
 		}
 
 		let IncludeMatcher = BuildGlobMatcher(IncludePatternDTO)?;
+
 		let ExcludeMatcher = ExcludePatternDTO.map(BuildGlobMatcher).transpose()?.flatten();
 
 		let mut Results:Vec<Url> = Vec::new();
+
 		let MaxResultsCap = MaxResults.unwrap_or(usize::MAX);
 
 		for Folder in FoldersGuard.iter() {
 			if Results.len() >= MaxResultsCap {
 				break;
 			}
+
 			let FolderPath = match Folder.URI.to_file_path() {
 				Ok(path) => path,
+
 				Err(_) => continue,
 			};
 
 			let mut WalkerBuilder = WalkBuilder::new(&FolderPath);
+
 			WalkerBuilder.standard_filters(UseIgnoreFiles).follow_links(FollowSymlinks);
 
 			for EntryResult in WalkerBuilder.build() {
 				if Results.len() >= MaxResultsCap {
 					break;
 				}
+
 				if let Ok(Entry) = EntryResult {
 					let Path = Entry.path();
+
 					if Path.is_dir() {
 						continue;
 					}
 
 					let is_match = IncludeMatcher.as_ref().map_or(true, |g| g.is_match(Path));
+
 					if !is_match {
 						continue;
 					}
+
 					if let Some(ref exclude) = ExcludeMatcher {
 						if exclude.is_match(Path) {
 							continue;
@@ -155,6 +176,7 @@ impl WorkSpaceProvider for MountainEnvironment {
 				}
 			}
 		}
+
 		Ok(Results)
 	}
 
@@ -175,7 +197,9 @@ impl WorkSpaceProvider for MountainEnvironment {
 				view_type,
 				Path.display()
 			);
+
 			let webview_provider:Arc<dyn WebViewProvider> = self.Require();
+
 			let handle = webview_provider
 				.CreateWebViewPanel(
 					json!({ "id": "placeholder.extension" }),
@@ -188,7 +212,9 @@ impl WorkSpaceProvider for MountainEnvironment {
 				.await?;
 
 			let custom_editor_provider:Arc<dyn CustomEditorProvider> = self.Require();
+
 			custom_editor_provider.ResolveCustomEditor(view_type, URI, handle).await?;
+
 			return Ok(());
 		}
 
@@ -196,8 +222,11 @@ impl WorkSpaceProvider for MountainEnvironment {
 			"[WorkSpaceProvider] No custom editor found. Opening '{}' as text.",
 			Path.display()
 		);
+
 		let uri_components = json!({ "external": URI.to_string(), "$mid": 1 });
+
 		let doc_provider:Arc<dyn DocumentProvider> = self.Require();
+
 		doc_provider.OpenDocument(uri_components, None, None).await?;
 
 		Ok(())
@@ -222,8 +251,10 @@ impl WorkSpaceEditApplier for MountainEnvironment {
 
 		for (URIValue, Edits) in EditDTO.Edits {
 			let URI = serde_json::from_value::<Url>(URIValue)?;
+
 			let Document = {
 				let Guard = self.ApplicationState.OpenDocuments.lock().unwrap();
+
 				Guard.get(URI.as_str()).cloned()
 			};
 
@@ -237,6 +268,7 @@ impl WorkSpaceEditApplier for MountainEnvironment {
 				warn!("[WorkSpaceProvider] Attempted to apply edit to non-open document: {}", URI);
 			}
 		}
+
 		Ok(true)
 	}
 }

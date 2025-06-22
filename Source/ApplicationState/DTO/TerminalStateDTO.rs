@@ -20,19 +20,27 @@ use tokio::{
 pub struct TerminalStateDTO {
 	// --- Identifiers ---
 	pub Identifier:u64,
+
 	pub Name:String,
+
 	pub OSProcessIdentifier:Option<u32>,
 
 	// --- Configuration ---
 	pub ShellPath:String,
+
 	pub ShellArguments:Vec<String>,
+
 	pub CurrentWorkingDirectory:Option<PathBuf>,
+
 	pub EnvironmentVariables:Option<HashMap<String, Option<String>>>,
+
 	pub IsPTY:bool,
 
 	// --- Runtime Handles ---
 	pub PTYInputTransmitter:Option<TokioMPSC::Sender<String>>,
+
 	pub ReaderTaskHandle:Option<Arc<TokioMutex<Option<JoinHandle<()>>>>>,
+
 	pub ProcessWaitHandle:Option<Arc<TokioMutex<Option<JoinHandle<()>>>>>,
 }
 
@@ -48,6 +56,7 @@ impl TerminalStateDTO {
 
 		let ShellArguments = match OptionsValue.get("shellArgs") {
 			Some(Value::Array(array)) => array.iter().filter_map(Value::as_str).map(String::from).collect(),
+
 			_ => Vec::new(),
 		};
 
@@ -58,16 +67,26 @@ impl TerminalStateDTO {
 
 		Self {
 			Identifier,
+
 			Name,
+
 			ShellPath,
+
 			ShellArguments,
+
 			CurrentWorkingDirectory:CWD,
+
 			EnvironmentVariables:EnvVars,
+
 			OSProcessIdentifier:None,
+
 			// Assume all terminals are PTYs for now
 			IsPTY:true,
+
 			PTYInputTransmitter:None,
+
 			ReaderTaskHandle:None,
+
 			ProcessWaitHandle:None,
 		}
 	}

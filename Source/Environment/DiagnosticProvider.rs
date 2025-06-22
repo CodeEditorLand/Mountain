@@ -10,6 +10,7 @@
 //!
 //! Implements the `DiagnosticManager` trait for the `MountainEnvironment`. This
 //! provider contains the core logic for managing diagnostic collections,
+
 //! including storing diagnostics from various sources and notifying the UI of
 //! changes.
 
@@ -28,12 +29,14 @@ impl DiagnosticManager for MountainEnvironment {
 	/// owner.
 	async fn SetDiagnostics(&self, Owner:String, EntriesDTOValue:Value) -> Result<(), CommonError> {
 		info!("[DiagnosticProvider] Setting diagnostics for owner: {}", Owner);
+
 		let mut ChangedURIKeys = Vec::new();
 
 		let DeserializedEntries:Vec<(Value, Option<Vec<MarkerDataDTO>>)> = serde_json::from_value(EntriesDTOValue)
 			.map_err(|e| {
 				CommonError::InvalidArgument {
 					ArgumentName:"EntriesDTOValue".to_string(),
+
 					Reason:format!("Failed to deserialize diagnostic entries: {}", e),
 				}
 			})?;
@@ -43,10 +46,12 @@ impl DiagnosticManager for MountainEnvironment {
 			.DiagnosticsMap
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		let OwnerMap = DiagnosticsMapGuard.entry(Owner.clone()).or_default();
 
 		for (URIComponentsValue, MarkersOption) in DeserializedEntries {
 			let URIKey = Utility::GetURLFromURIComponentsDTO(&URIComponentsValue)?.to_string();
+
 			ChangedURIKeys.push(URIKey.clone());
 
 			if let Some(Markers) = MarkersOption {
@@ -59,10 +64,12 @@ impl DiagnosticManager for MountainEnvironment {
 				OwnerMap.remove(&URIKey);
 			}
 		}
+
 		drop(DiagnosticsMapGuard);
 
 		// Notify the frontend that diagnostics have changed for specific URIs.
 		let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
+
 		if let Err(e) = self.ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
 			error!("[DiagnosticProvider] Failed to emit 'diagnostics_changed': {}", e);
 		}
@@ -73,6 +80,7 @@ impl DiagnosticManager for MountainEnvironment {
 	/// Clears all diagnostics from a specific owner.
 	async fn ClearDiagnostics(&self, Owner:String) -> Result<(), CommonError> {
 		info!("[DiagnosticProvider] Clearing all diagnostics for owner: {}", Owner);
+
 		let mut DiagnosticsMapGuard = self
 			.ApplicationState
 			.DiagnosticsMap
@@ -81,15 +89,18 @@ impl DiagnosticManager for MountainEnvironment {
 
 		if let Some(OwnerMap) = DiagnosticsMapGuard.remove(&Owner) {
 			let ChangedURIKeys:Vec<String> = OwnerMap.keys().cloned().collect();
+
 			drop(DiagnosticsMapGuard);
 
 			if !ChangedURIKeys.is_empty() {
 				let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
+
 				if let Err(e) = self.ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
 					error!("[DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}", e);
 				}
 			}
 		}
+
 		Ok(())
 	}
 
@@ -99,15 +110,18 @@ impl DiagnosticManager for MountainEnvironment {
 			"[DiagnosticProvider] Getting all diagnostics with filter: {:?}",
 			ResourceURIFilterOption
 		);
+
 		let DiagnosticsMapGuard = self
 			.ApplicationState
 			.DiagnosticsMap
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		let mut ResultMap:std::collections::HashMap<String, Vec<MarkerDataDTO>> = std::collections::HashMap::new();
 
 		if let Some(FilterURIValue) = ResourceURIFilterOption {
 			let FilterURIKey = Utility::GetURLFromURIComponentsDTO(&FilterURIValue)?.to_string();
+
 			for OwnerMap in DiagnosticsMapGuard.values() {
 				if let Some(Markers) = OwnerMap.get(&FilterURIKey) {
 					ResultMap.entry(FilterURIKey.clone()).or_default().extend(Markers.clone());
@@ -123,6 +137,7 @@ impl DiagnosticManager for MountainEnvironment {
 		}
 
 		let ResultList:Vec<(String, Vec<MarkerDataDTO>)> = ResultMap.into_iter().collect();
+
 		serde_json::to_value(ResultList).map_err(|e| CommonError::SerializationError { Description:e.to_string() })
 	}
 }

@@ -24,13 +24,17 @@ impl SecretProvider for MountainEnvironment {
 			"[SecretProvider] Getting secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier, Key
 		);
+
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
+
 		let Entry = Entry::new(&ServiceName, &Key)
 			.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
 
 		match Entry.get_password() {
 			Ok(Password) => Ok(Some(Password)),
+
 			Err(keyring::Error::NoEntry) => Ok(None),
+
 			Err(e) => Err(CommonError::SecretsAccess { Key, Reason:e.to_string() }),
 		}
 	}
@@ -41,7 +45,9 @@ impl SecretProvider for MountainEnvironment {
 			"[SecretProvider] Storing secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier, Key
 		);
+
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
+
 		let Entry = Entry::new(&ServiceName, &Key)
 			.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
 
@@ -56,12 +62,15 @@ impl SecretProvider for MountainEnvironment {
 			"[SecretProvider] Deleting secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier, Key
 		);
+
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
+
 		let Entry = Entry::new(&ServiceName, &Key)
 			.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
 
 		match Entry.delete_credential() {
 			Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
+
 			Err(e) => Err(CommonError::SecretsAccess { Key, Reason:e.to_string() }),
 		}
 	}

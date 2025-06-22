@@ -28,6 +28,7 @@ use crate::{
 /// The concrete implementation of the `MountainService` gRPC service.
 pub struct MountainVinegRPCService {
 	ApplicationHandle:AppHandle,
+
 	RunTime:Arc<ApplicationRunTime>,
 }
 
@@ -35,6 +36,7 @@ impl MountainVinegRPCService {
 	/// Creates a new instance of the Mountain gRPC service.
 	pub fn Create(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Self {
 		info!("[MountainVinegRPCService] New instance created.");
+
 		Self { ApplicationHandle, RunTime }
 	}
 }
@@ -44,10 +46,13 @@ impl MountainService for MountainVinegRPCService {
 	/// Handles generic request-response RPCs from Cocoon.
 	async fn process_cocoon_request(
 		&self,
+
 		request:Request<GenericRequest>,
 	) -> Result<Response<GenericResponse>, Status> {
 		let RequestData = request.into_inner();
+
 		let MethodName = RequestData.method;
+
 		let RequestIdentifier = RequestData.request_identifier;
 
 		info!(
@@ -57,22 +62,29 @@ impl MountainService for MountainVinegRPCService {
 
 		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
 			Ok(v) => v,
+
 			Err(e) => {
 				let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
+
 				error!("{}", msg);
+
 				return Ok(Response::new(GenericResponse {
 					request_identifier:RequestIdentifier,
+
 					result:vec![],
+
 					error:Some(RPCError { message:msg, code:-32700, data:vec![] }),
 				}));
 			},
 		};
+
 		trace!("[VineServer] Params for [ID: {}]: {:?}", RequestIdentifier, ParametersValue);
 
 		let DispatchResult = Track::DispatchLogic::DispatchSidecarRequest(
 			self.ApplicationHandle.clone(),
 			self.RunTime.clone(),
-			"cocoon-main".to_string(), // In the future, this could come from connection metadata.
+			// In the future, this could come from connection metadata.
+			"cocoon-main".to_string(),
 			MethodName.clone(),
 			ParametersValue,
 		)
@@ -82,21 +94,31 @@ impl MountainService for MountainVinegRPCService {
 			Ok(SuccessfulResult) => {
 				let ResultBytes = serde_json::to_vec(&SuccessfulResult).unwrap_or_else(|e| {
 					error!("Failed to serialize successful result for '{}': {}", MethodName, e);
+
 					b"null".to_vec()
 				});
+
 				Ok(Response::new(GenericResponse {
 					request_identifier:RequestIdentifier,
+
 					result:ResultBytes,
+
 					error:None,
 				}))
 			},
+
 			Err(ErrorString) => {
 				Ok(Response::new(GenericResponse {
 					request_identifier:RequestIdentifier,
+
 					result:vec![],
+
 					error:Some(RPCError {
 						message:ErrorString,
-						code:-32000, // JSON-RPC Generic Server Error
+
+						// JSON-RPC Generic Server Error
+						code:-32000,
+
 						data:vec![],
 					}),
 				}))
@@ -107,7 +129,9 @@ impl MountainService for MountainVinegRPCService {
 	/// Handles generic fire-and-forget notifications from Cocoon.
 	async fn send_cocoon_notification(&self, request:Request<GenericNotification>) -> Result<Response<Empty>, Status> {
 		let NotificationData = request.into_inner();
+
 		let MethodName = NotificationData.method;
+
 		info!("[VineServer] Received gRPC Notification: Method='{}'", MethodName);
 
 		// TODO: A full implementation would route these notifications to a
@@ -115,6 +139,7 @@ impl MountainService for MountainVinegRPCService {
 		// just log and acknowledge.
 		// For example:
 		// let Parameter: Value = serde_json::from_slice(...)?;
+
 		// NotificationHandler::Handle(MethodName, Parameter).await;
 
 		Ok(Response::new(Empty {}))
@@ -123,6 +148,7 @@ impl MountainService for MountainVinegRPCService {
 	/// Handles a request from Cocoon to cancel a long-running operation.
 	async fn cancel_operation(&self, _request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		info!("[VineServer] Received CancelOperation request, but cancellation is not yet implemented.");
+
 		// A full implementation would map the RequestIdentifier_to_cancel to a
 		// CancellationToken and trigger it.
 		Ok(Response::new(Empty {}))

@@ -17,18 +17,25 @@ pub struct DocumentStateDTO {
 	/// The unique resource identifier for this document.
 	#[serde(with = "URLSerializationHelper")]
 	pub URI:Url,
+
 	/// The VS Code language identifier (e.g., "rust", "typescript").
 	pub LanguageIdentifier:String,
+
 	/// The version number, incremented on each change from the client.
 	pub Version:i64,
+
 	/// The content of the document, split into lines.
 	pub Lines:Vec<String>,
+
 	/// The detected end-of-line sequence (e.g., `\n` or `\r\n`).
 	pub EOL:String,
+
 	/// A flag indicating if the in-memory version has unsaved changes.
 	pub IsDirty:bool,
+
 	/// The detected file encoding (e.g., "utf8").
 	pub Encoding:String,
+
 	/// An internal version number, used for tracking changes within the host.
 	pub VersionIdentifier:i64,
 }
@@ -37,17 +44,26 @@ impl DocumentStateDTO {
 	/// Creates a new `DocumentStateDTO` from its initial content.
 	pub fn Create(URI:Url, LanguageIdentifier:Option<String>, Content:String) -> Self {
 		let (Lines, EOL) = AnalyzeTextLinesAndEOL(&Content);
+
 		let LanguageID = LanguageIdentifier.unwrap_or_else(|| "plaintext".to_string());
+
 		let Encoding = "utf8".to_string();
 
 		Self {
 			URI,
+
 			LanguageIdentifier:LanguageID,
+
 			Version:1,
+
 			Lines,
+
 			EOL,
+
 			IsDirty:false,
+
 			Encoding,
+
 			VersionIdentifier:1,
 		}
 	}
@@ -67,17 +83,25 @@ impl DocumentStateDTO {
 
 		let _RPCChanges:Vec<RPCModelContentChangeDTO> = match serde_json::from_value(ChangesValue.clone()) {
 			Ok(changes) => changes,
+
 			Err(_) => {
 				if let Some(FullText) = ChangesValue.as_str() {
 					let (NewLines, NewEOL) = AnalyzeTextLinesAndEOL(FullText);
+
 					self.Lines = NewLines;
+
 					self.EOL = NewEOL;
+
 					self.Version = NewVersion;
+
 					// Increment internal version
 					self.VersionIdentifier += 1;
+
 					self.IsDirty = true;
+
 					return Ok(());
 				}
+
 				return Err(format!("Invalid RPCModelContentChangeDTO for {}", self.URI));
 			},
 		};
@@ -88,9 +112,12 @@ impl DocumentStateDTO {
 		);
 
 		self.Version = NewVersion;
+
 		// Increment internal version
 		self.VersionIdentifier += 1;
+
 		self.IsDirty = true;
+
 		Ok(())
 	}
 }

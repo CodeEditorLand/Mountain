@@ -12,8 +12,11 @@ use serde::Deserialize;
 #[serde(rename_all = "PascalCase")]
 pub struct RPCRangeDTO {
 	pub StartLineNumber:usize,
+
 	pub StartColumn:usize,
+
 	pub EndLineNumber:usize,
+
 	pub EndColumn:usize,
 }
 
@@ -24,5 +27,6 @@ pub struct RPCRangeDTO {
 #[serde(rename_all = "PascalCase")]
 pub struct RPCModelContentChangeDTO {
 	pub Range:RPCRangeDTO,
+
 	pub Text:String,
 }

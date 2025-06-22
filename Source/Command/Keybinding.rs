@@ -16,7 +16,9 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 #[command]
 pub async fn GetResolvedKeybinding(app_handle:AppHandle) -> Result<Value, String> {
 	log::debug!("[Keybinding Command] Getting resolved keybindings for UI.");
+
 	let runtime = app_handle.state::<Arc<MountainRunTime>>().inner().clone();
+
 	let provider:Arc<dyn KeybindingProvider> = runtime.Environment.Require();
 
 	provider.GetResolvedKeybinding().await.map_err(|e| e.to_string())

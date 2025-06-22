@@ -17,8 +17,11 @@ use crate::ApplicationState::ApplicationState::ApplicationState;
 #[command]
 pub async fn GetTreeViewChildren(
 	_AppicationHandle:AppHandle,
+
 	state:State<'_, Arc<ApplicationState>>,
+
 	view_id:String,
+
 	element_handle:Option<String>,
 ) -> Result<Value, String> {
 	log::debug!(
@@ -29,6 +32,7 @@ pub async fn GetTreeViewChildren(
 
 	let provider = {
 		let tree_views = state.ActiveTreeViews.lock().map_err(|e| e.to_string())?;
+
 		// Note: This logic for getting a provider needs to be more robust.
 		// Assuming a single native provider for now.
 		tree_views.get(&view_id).and_then(|v| v.Provider.clone())
@@ -37,15 +41,20 @@ pub async fn GetTreeViewChildren(
 	if let Some(provider) = provider {
 		match provider.GetChildren(view_id, element_handle).await {
 			Ok(children) => Ok(json!(children)),
+
 			Err(e) => {
 				let err_msg = format!("Failed to get children for tree view: {}", e);
+
 				log::error!("{}", err_msg);
+
 				Err(err_msg)
 			},
 		}
 	} else {
 		let err_msg = format!("No provider found for tree view '{}'", view_id);
+
 		log::error!("{}", err_msg);
+
 		Err(err_msg)
 	}
 }

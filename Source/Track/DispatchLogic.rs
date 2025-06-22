@@ -30,18 +30,25 @@ use crate::{
 #[command]
 pub async fn DispatchFrontendCommand<R:Runtime>(
 	ApplicationHandle:AppHandle<R>,
+
 	RunTime:State<'_, Arc<ApplicationRunTime>>,
+
 	Command:String,
+
 	Argument:Value,
 ) -> Result<Value, String> {
 	debug!("[DispatchLogic] Dispatching frontend command: {}", Command);
+
 	match EffectCreation::CreateEffectForRequest(&ApplicationHandle, &Command, Argument) {
 		Ok(EffectFn) => {
 			let runtime_clone = RunTime.inner().clone();
+
 			EffectFn(runtime_clone).await
 		},
+
 		Err(e) => {
 			error!("[DispatchLogic] Failed to create effect for command '{}': {}", Command, e);
+
 			Err(e)
 		},
 	}
@@ -51,9 +58,13 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 /// gRPC. This routes RPC calls to the correct effect-based implementation.
 pub async fn DispatchSidecarRequest<R:Runtime>(
 	ApplicationHandle:AppHandle<R>,
+
 	RunTime:Arc<ApplicationRunTime>,
+
 	SidecarIdentifier:String,
+
 	MethodName:String,
+
 	Parameters:Value,
 ) -> Result<Value, String> {
 	debug!(
@@ -63,11 +74,13 @@ pub async fn DispatchSidecarRequest<R:Runtime>(
 
 	match EffectCreation::CreateEffectForRequest(&ApplicationHandle, &MethodName, Parameters) {
 		Ok(EffectFn) => EffectFn(RunTime).await,
+
 		Err(e) => {
 			error!(
 				"[DispatchLogic] Failed to create effect for sidecar method '{}': {}",
 				MethodName, e
 			);
+
 			Err(e)
 		},
 	}
@@ -78,20 +91,25 @@ pub async fn DispatchSidecarRequest<R:Runtime>(
 #[command]
 pub async fn ResolveUIRequest(
 	State:State<'_, Arc<ApplicationState>>,
+
 	RequestID:String,
+
 	Result:Value,
 ) -> Result<(), String> {
 	debug!("[DispatchLogic] Resolving UI request ID: {}", RequestID);
 
 	let Sender = {
 		let mut PendingRequests = State.PendingUserInterfaceRequests.lock().map_err(|e| e.to_string())?;
+
 		PendingRequests.remove(&RequestID)
 	};
 
 	if let Some(Sender) = Sender {
 		if Sender.send(Ok(Result)).is_err() {
 			let ErrorMessage = format!("Failed to send result for UI request '{}': receiver was dropped.", RequestID);
+
 			error!("{}", ErrorMessage);
+
 			return Err(ErrorMessage);
 		}
 	} else {
@@ -109,11 +127,14 @@ pub async fn ResolveUIRequest(
 #[command]
 pub async fn MountainWebviewPostMessageFromGuest(
 	ApplicationHandle:AppHandle,
+
 	Handle:String,
+
 	Message:Value,
 ) -> Result<(), String> {
 	let IPC:Arc<dyn IPCProvider> = {
 		let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+
 		RunTime.Environment.Require()
 	};
 
@@ -123,6 +144,7 @@ pub async fn MountainWebviewPostMessageFromGuest(
 
 	if let Err(e) = RPCResult {
 		error!("[DispatchLogic] Failed to forward webview message to Cocoon: {}", e);
+
 		return Err(e.to_string());
 	}
 

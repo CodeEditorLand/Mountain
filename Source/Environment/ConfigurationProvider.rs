@@ -45,10 +45,13 @@ impl ConfigurationProvider for MountainEnvironment {
 	/// Retrieves a configuration value from the cached, merged configuration.
 	async fn GetConfigurationValue(
 		&self,
+
 		Section:Option<String>,
+
 		_Overrides:ConfigurationOverridesDTO,
 	) -> Result<Value, CommonError> {
 		debug!("[ConfigurationProvider] Getting configuration for section: {:?}", Section);
+
 		let ConfigurationGuard = self
 			.ApplicationState
 			.Configuration
@@ -61,10 +64,15 @@ impl ConfigurationProvider for MountainEnvironment {
 	/// Updates a configuration value in the appropriate `settings.json` file.
 	async fn UpdateConfigurationValue(
 		&self,
+
 		Key:String,
+
 		ValueToSet:Value,
+
 		Target:ConfigurationTarget,
+
 		_Overrides:ConfigurationOverridesDTO,
+
 		_ScopeToLanguage:Option<bool>,
 	) -> Result<(), CommonError> {
 		info!("[ConfigurationProvider] Updating key '{}' in target {:?}", Key, Target);
@@ -83,6 +91,7 @@ impl ConfigurationProvider for MountainEnvironment {
 						}
 					})?
 			},
+
 			ConfigurationTarget::WorkSpace => {
 				self.ApplicationState
 					.WorkSpaceConfigurationPath
@@ -93,6 +102,7 @@ impl ConfigurationProvider for MountainEnvironment {
 						CommonError::ConfigurationLoad { Description:"No workspace configuration path set".into() }
 					})?
 			},
+
 			_ => {
 				return Err(CommonError::NotImplemented {
 					FeatureName:"This configuration target is not supported".into(),
@@ -102,6 +112,7 @@ impl ConfigurationProvider for MountainEnvironment {
 
 		// Read the file, modify it, and write it back.
 		let Bytes = RunTime.Run(ReadFile(ConfigPath.clone())).await.unwrap_or_default();
+
 		let mut CurrentConfig:Value = serde_json::from_slice(&Bytes).unwrap_or_else(|_| Value::Object(Map::new()));
 
 		if let Value::Object(Map) = &mut CurrentConfig {
@@ -121,6 +132,7 @@ impl ConfigurationProvider for MountainEnvironment {
 
 		// Re-merge all configurations to update the live state.
 		InitializeAndMergeConfigurations(self).await?;
+
 		Ok(())
 	}
 }
@@ -130,7 +142,9 @@ impl ConfigurationInspector for MountainEnvironment {
 	/// Inspects a configuration key to get its value from all relevant scopes.
 	async fn InspectConfigurationValue(
 		&self,
+
 		Key:String,
+
 		_Overrides:ConfigurationOverridesDTO,
 	) -> Result<Option<InspectResultDataDTO>, CommonError> {
 		info!("[ConfigurationProvider] Inspecting key: {}", Key);
@@ -141,19 +155,25 @@ impl ConfigurationInspector for MountainEnvironment {
 			.app_config_dir()
 			.map(|p| p.join("settings.json"))
 			.ok();
+
 		let WorkSpaceSettingsPath = self.ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().clone();
 
 		// Read each configuration layer individually.
 		let DefaultConfig = CollectDefaultConfigurations(&self.ApplicationState)?;
+
 		let UserConfig = ReadAndParseConfigurationFile(self, &UserSettingsPath).await?;
+
 		let WorkSpaceConfig = ReadAndParseConfigurationFile(self, &WorkSpaceSettingsPath).await?;
 
 		let GetValueFromDotPath =
 			|Node:&Value, Path:&str| -> Option<Value> { Path.split('.').try_fold(Node, |n, key| n.get(key)).cloned() };
 
 		let mut ResultDTO:InspectResultDataDTO = InspectResultDataDTO::default();
+
 		ResultDTO.DefaultValue = GetValueFromDotPath(&DefaultConfig, &Key);
+
 		ResultDTO.UserValue = GetValueFromDotPath(&UserConfig, &Key);
+
 		ResultDTO.WorkSpaceValue = GetValueFromDotPath(&WorkSpaceConfig, &Key);
 
 		// Determine the final effective value based on the correct cascade order.
@@ -170,14 +190,17 @@ impl ConfigurationInspector for MountainEnvironment {
 /// An internal helper to read and parse a single JSON configuration file.
 async fn ReadAndParseConfigurationFile(
 	Environment:&MountainEnvironment,
+
 	Path:&Option<PathBuf>,
 ) -> Result<Value, CommonError> {
 	if let Some(p) = Path {
 		let RunTime = Environment.ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+
 		if let Ok(Bytes) = RunTime.Run(ReadFile(p.clone())).await {
 			return Ok(serde_json::from_slice(&Bytes).unwrap_or(Value::Object(Map::new())));
 		}
 	}
+
 	Ok(Value::Object(Map::new()))
 }
 
@@ -187,24 +210,29 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 	info!("[ConfigurationProvider] Re-initializing and merging all configurations...");
 
 	let DefaultConfig = CollectDefaultConfigurations(&Environment.ApplicationState)?;
+
 	let UserSettingsPath = Environment
 		.ApplicationHandle
 		.path()
 		.app_config_dir()
 		.map(|p| p.join("settings.json"))
 		.ok();
+
 	let WorkSpaceSettingsPath = Environment.ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().clone();
 
 	let UserConfig = ReadAndParseConfigurationFile(Environment, &UserSettingsPath).await?;
+
 	let WorkSpaceConfig = ReadAndParseConfigurationFile(Environment, &WorkSpaceSettingsPath).await?;
 
 	// A true deep merge is required here.
 	let mut Merged = DefaultConfig.as_object().cloned().unwrap_or_default();
+
 	if let Some(UserMap) = UserConfig.as_object() {
 		for (k, v) in UserMap {
 			Merged.insert(k.clone(), v.clone());
 		}
 	}
+
 	if let Some(WorkSpaceMap) = WorkSpaceConfig.as_object() {
 		for (k, v) in WorkSpaceMap {
 			Merged.insert(k.clone(), v.clone());
@@ -212,8 +240,10 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 	}
 
 	let FinalConfig = MergedConfigurationStateDTO::Create(Value::Object(Merged));
+
 	*Environment.ApplicationState.Configuration.lock().unwrap() = FinalConfig;
 
 	info!("[ConfigurationProvider] Configuration state updated and merged.");
+
 	Ok(())
 }

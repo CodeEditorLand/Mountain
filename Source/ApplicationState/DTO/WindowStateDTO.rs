@@ -12,8 +12,10 @@ use serde::{Deserialize, Serialize};
 pub struct WindowStateDTO {
 	#[serde(default)]
 	pub IsFocused:bool,
+
 	#[serde(default)]
 	pub IsFullScreen:bool,
+
 	#[serde(default = "DefaultZoomLevel")]
 	pub ZoomLevel:f64,
 }

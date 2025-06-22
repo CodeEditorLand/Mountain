@@ -23,17 +23,25 @@ impl TreeViewProvider for MountainEnvironment {
 	/// Registers a new tree data provider from Cocoon (an extension).
 	async fn RegisterTreeDataProvider(&self, ViewIdentifier:String, Options:Value) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Registering data provider for view: {}", ViewIdentifier);
+
 		let OptionsDTO:TreeViewOptionsDTO = serde_json::from_value(Options)
 			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:e.to_string() })?;
 
 		let NewState = TreeViewStateDTO {
 			ViewIdentifier:ViewIdentifier.clone(),
+
 			Provider:None,
+
 			CanSelectMany:OptionsDTO.CanSelectMany,
+
 			HasHandleDrag:OptionsDTO.HasHandleDrag,
+
 			HasHandleDrop:OptionsDTO.HasHandleDrop,
+
 			Message:None,
+
 			Title:None,
+
 			Description:None,
 		};
 
@@ -56,7 +64,9 @@ impl TreeViewProvider for MountainEnvironment {
 	/// Unregisters a tree data provider from Cocoon.
 	async fn UnregisterTreeDataProvider(&self, ViewIdentifier:String) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Unregistering data provider for view: {}", ViewIdentifier);
+
 		self.ApplicationState.ActiveTreeViews.lock().unwrap().remove(&ViewIdentifier);
+
 		self.ApplicationHandle
 			.emit("sky://tree-view/dispose", json!({ "ViewIdentifier": ViewIdentifier }))
 			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
@@ -65,11 +75,15 @@ impl TreeViewProvider for MountainEnvironment {
 	/// Reveals a specific item in the tree view.
 	async fn RevealTreeItem(
 		&self,
+
 		_ViewIdentifier:String,
+
 		_ItemHandle:String,
+
 		_Options:Value,
 	) -> Result<(), CommonError> {
 		warn!("[TreeViewProvider] RevealTreeItem is not implemented.");
+
 		Ok(())
 	}
 
@@ -77,36 +91,45 @@ impl TreeViewProvider for MountainEnvironment {
 	/// items.
 	async fn RefreshTreeView(&self, _ViewIdentifier:String, _ItemsToRefresh:Option<Value>) -> Result<(), CommonError> {
 		warn!("[TreeViewProvider] RefreshTreeView is not implemented.");
+
 		Ok(())
 	}
 
 	/// Sets a message to be displayed in the tree view UI.
 	async fn SetTreeViewMessage(&self, _ViewIdentifier:String, _Message:Option<String>) -> Result<(), CommonError> {
 		warn!("[TreeViewProvider] SetTreeViewMessage is not implemented.");
+
 		Ok(())
 	}
 
 	/// Sets the title and description for the tree view.
 	async fn SetTreeViewTitle(
 		&self,
+
 		_ViewIdentifier:String,
+
 		_Title:Option<String>,
+
 		_Description:Option<String>,
 	) -> Result<(), CommonError> {
 		warn!("[TreeViewProvider] SetTreeViewTitle is not implemented.");
+
 		Ok(())
 	}
 
 	/// Sets a badge to be displayed on the tree view's container.
 	async fn SetTreeViewBadge(&self, _ViewIdentifier:String, _Badge:Option<Value>) -> Result<(), CommonError> {
 		warn!("[TreeViewProvider] SetTreeViewBadge is not implemented.");
+
 		Ok(())
 	}
 
 	/// Gets the children for a given element. This method acts as a dispatcher.
 	async fn GetChildren(
 		&self,
+
 		ViewIdentifier:String,
+
 		ElementHandle:Option<String>,
 	) -> Result<Vec<Value>, CommonError> {
 		let provider = self

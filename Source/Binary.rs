@@ -45,6 +45,7 @@ use crate::{
 /// Initializes the application's logging infrastructure using `env_logger`.
 fn InitializeLogging() {
 	let LogLevel = if cfg!(debug_assertions) { "debug" } else { "info" };
+
 	if std::env::var("RUST_LOG").is_err() {
 		unsafe { std::env::set_var("RUST_LOG", LogLevel) };
 	}
@@ -57,15 +58,20 @@ fn InitializeLogging() {
 				use std::io::Write;
 
 				use colored::Colorize;
+
 				writeln!(
 					Buffer,
 					"[{}] [{}]: {}",
 					"Mountain".red(),
 					match Record.level() {
 						log::Level::Error => "ERROR".red().bold(),
+
 						log::Level::Warn => "WARN".yellow().bold(),
+
 						log::Level::Info => "INFO".green(),
+
 						log::Level::Debug => "DEBUG".blue(),
+
 						log::Level::Trace => "TRACE".magenta(),
 					},
 					Record.args()
@@ -81,9 +87,11 @@ fn InitializeLogging() {
 #[tauri::command]
 async fn MountainGetWorkbenchConfiguration(
 	ApplicationHandle:AppHandle<Wry>,
+
 	State:tauri::State<'_, Arc<ApplicationState>>,
 ) -> Result<serde_json::Value, String> {
 	log::info!("[IPC Bridge] Received MountainGetWorkbenchConfiguration request from Sky.");
+
 	InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, &State)
 		.await
 		.map_err(|Error| Error.to_string())
@@ -97,15 +105,19 @@ pub fn Fn() {
 		.expect("Cannot build Tokio runtime.")
 		.block_on(async {
 			InitializeLogging();
+
 			info!("[Main] Starting Mountain application...");
 
 			// --- Pre-flight WorkSpace Loading from Args ---
 			let CliArgs:Vec<String> = std::env::args().collect();
+
 			let WorkSpacePathArgument = CliArgs.iter().find(|Arg| Arg.ends_with(".code-workspace"));
 
 			let (InitialFolders, WorkSpaceConfigurationPath) = if let Some(PathString) = WorkSpacePathArgument {
 				let Path = PathBuf::from(PathString);
+
 				info!("[Main] Found workspace argument: {}", Path.display());
+
 				match std::fs::read_to_string(&Path) {
 					Ok(Content) => {
 						crate::WorkSpace::WorkSpaceFileService::ParseWorkSpaceFile(&Path, &Content)
@@ -115,11 +127,14 @@ pub fn Fn() {
 									"[Main] Failed to parse workspace file: {}. Continuing without workspace.",
 									Error
 								);
+
 								(Vec::<WorkSpaceFolderStateDTO>::new(), None)
 							})
 					},
+
 					Err(Error) => {
 						error!("[Main] Failed to read workspace file: {}. Continuing without workspace.", Error);
+
 						(Vec::new(), None)
 					},
 				}
@@ -130,14 +145,19 @@ pub fn Fn() {
 			// --- State Initialization ---
 			let AppState = Arc::new(ApplicationState {
 				WorkSpaceFolders:Arc::new(Mutex::new(InitialFolders)),
+
 				WorkSpaceConfigurationPath:Arc::new(Mutex::new(WorkSpaceConfigurationPath)),
+
 				..ApplicationState::default()
 			});
 
 			// --- Scheduler Initialization ---
 			let NumberOfWorkers = num_cpus::get().max(2);
+
 			let Scheduler = SchedulerBuilder::Create().WithWorkerCount(NumberOfWorkers).Build();
+
 			let SchedulerForShutdown = Arc::new(Scheduler);
+
 			let SchedulerForRunTime = SchedulerForShutdown.clone();
 
 			// --- Tauri Application Builder ---
@@ -153,6 +173,7 @@ pub fn Fn() {
 				.manage(AppState.clone())
 				.setup(move |Application| {
 					info!("[Setup] Tauri setup hook initiated.");
+
 					let ApplicationHandle = Application.handle().clone();
 
 					Command::Bootstrap::RegisterNativeCommands(&ApplicationHandle, &AppState);
@@ -160,7 +181,8 @@ pub fn Fn() {
 					// --- Window Creation ---
 					let mut WindowBuilder = tauri::WebviewWindowBuilder::new(
 						Application,
-						"main", // Use "main" as the label for consistency
+						// Use "main" as the label for consistency
+						"main",
 						tauri::WebviewUrl::App(std::path::PathBuf::from("Application/index.html")),
 					)
 					.use_https_scheme(true)
@@ -174,6 +196,7 @@ pub fn Fn() {
 
 					let MainWindow = match WindowBuilder.build() {
 						Ok(Instance) => Instance,
+
 						Err(Error) => panic!("Main application window build failed: {:?}", Error),
 					};
 
@@ -184,17 +207,22 @@ pub fn Fn() {
 
 					// --- Backend Initialization ---
 					let Environment = Arc::new(MountainEnvironment::Create(ApplicationHandle.clone()));
+
 					let RunTime = Arc::new(ApplicationRunTime::Create(SchedulerForRunTime, Environment.clone()));
+
 					ApplicationHandle.manage(RunTime);
+
 					info!("[Setup] Echo scheduler and ApplicationRunTime created and managed.");
 
 					// Clone handles for the post-setup async task.
 					let PostSetupApplicationHandle = ApplicationHandle.clone();
+
 					let PostSetupEnvironment = Environment.clone();
 
 					// --- Post-Setup Initialization Task ---
 					tauri::async_runtime::spawn(async move {
 						info!("[SetupTask] Starting post-setup initializations...");
+
 						let AppStateForSetup = PostSetupEnvironment.ApplicationState.clone();
 
 						if let Err(Error) = InitializeAndMergeConfigurations(&PostSetupEnvironment).await {
@@ -203,14 +231,19 @@ pub fn Fn() {
 
 						{
 							let mut ScanPathsGuard = AppStateForSetup.ExtensionScanPaths.lock().unwrap();
+
 							if let Ok(ExecutableDir) = std::env::current_exe() {
 								if let Some(Parent) = ExecutableDir.parent() {
 									ScanPathsGuard.push(Parent.join("../Resources/extensions"));
+
 									ScanPathsGuard.push(Parent.join("extensions"));
 								}
 							}
+
 							info!("[SetupTask] Extension scan paths initialized: {:?}", *ScanPathsGuard);
-						} // ScanPathsGuard is dropped here, before any .await
+
+							// ScanPathsGuard is dropped here, before any .await
+						}
 
 						if let Err(Error) =
 							ScanAndPopulateExtensions(PostSetupApplicationHandle.clone(), &AppStateForSetup).await
@@ -231,7 +264,10 @@ pub fn Fn() {
 					// TEMPORARY DISABLE
 					// #[cfg(desktop)]
 					// {
-					// 	ApplicationHandle.plugin(tauri_plugin_updater::Builder::new().build()).expect("");
+
+					// 	ApplicationHandle.plugin(tauri_plugin_updater::Builder::new().build()).
+					// expect("");
+
 					// }
 
 					Ok(())
@@ -255,8 +291,11 @@ pub fn Fn() {
 				.run(move |ApplicationHandle, Event| {
 					if let RunEvent::ExitRequested { api, .. } = Event {
 						info!("[RunEvent] Exit requested. Initiating graceful shutdown...");
+
 						api.prevent_exit();
+
 						let SchedulerHandle = SchedulerForShutdown.clone();
+
 						let ApplicationHandleClone = ApplicationHandle.clone();
 
 						tokio::spawn(async move {
@@ -267,12 +306,15 @@ pub fn Fn() {
 							}
 
 							info!("[Shutdown] Shutting down Echo scheduler...");
+
 							if let Ok(mut Scheduler) = Arc::try_unwrap(SchedulerHandle) {
 								Scheduler.Stop().await;
 							} else {
 								error!("[Shutdown] Could not get exclusive ownership of scheduler for shutdown.");
 							}
+
 							info!("[Shutdown] Shutdown complete. Exiting application.");
+
 							ApplicationHandleClone.exit(0);
 						});
 					}

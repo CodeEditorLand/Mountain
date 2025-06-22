@@ -17,8 +17,10 @@ pub struct WorkSpaceFolderStateDTO {
 	/// The URI of the folder.
 	#[serde(with = "URLSerializationHelper")]
 	pub URI:Url,
+
 	/// The display name of the folder.
 	pub Name:String,
+
 	/// The zero-based index of the folder in the workspace.
 	pub Index:usize,
 }

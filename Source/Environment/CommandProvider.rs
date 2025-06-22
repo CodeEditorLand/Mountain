@@ -33,11 +33,15 @@ pub enum CommandHandler<R:Runtime + 'static> {
 	Native(
 		fn(
 			AppHandle<R>,
+
 			WebviewWindow<R>,
+
 			Arc<ApplicationRunTime>,
+
 			Value,
 		) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>>,
 	),
+
 	/// A command implemented in an extension and proxied to a sidecar.
 	Proxied { SidecarIdentifier:String, CommandIdentifier:String },
 }
@@ -46,9 +50,11 @@ impl<R:Runtime> Clone for CommandHandler<R> {
 	fn clone(&self) -> Self {
 		match self {
 			Self::Native(f) => Self::Native(*f),
+
 			Self::Proxied { SidecarIdentifier, CommandIdentifier } => {
 				Self::Proxied {
 					SidecarIdentifier:SidecarIdentifier.clone(),
+
 					CommandIdentifier:CommandIdentifier.clone(),
 				}
 			},
@@ -72,8 +78,10 @@ impl CommandExecutor for MountainEnvironment {
 		match HandlerInfoOption {
 			Some(CommandHandler::Native(Function)) => {
 				debug!("[CommandProvider] Executing NATIVE command '{}'.", CommandIdentifier);
+
 				let RunTime:Arc<ApplicationRunTime> =
 					self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+
 				let MainWindow = self.ApplicationHandle.get_webview_window("Application").ok_or_else(|| {
 					CommonError::UserInterfaceInteraction {
 						Reason:"Main window not found for command execution".into(),
@@ -86,19 +94,25 @@ impl CommandExecutor for MountainEnvironment {
 						CommonError::CommandExecution { CommandIdentifier:CommandIdentifier.clone(), Reason:e }
 					})
 			},
+
 			Some(CommandHandler::Proxied { SidecarIdentifier, CommandIdentifier: ProxiedCommandIdentifier }) => {
 				debug!(
 					"[CommandProvider] Executing PROXIED command '{}' on sidecar '{}'.",
 					CommandIdentifier, SidecarIdentifier
 				);
+
 				let RPCParameters = json!([ProxiedCommandIdentifier, Argument]);
+
 				let RPCMethod = format!("{}$ExecuteContributedCommand", ProxyTarget::ExtHostCommands.GetTargetPrefix());
+
 				Client::SendRequest(&SidecarIdentifier, RPCMethod, RPCParameters, 30000)
 					.await
 					.map_err(|e| CommonError::IPCError { Description:e.to_string() })
 			},
+
 			None => {
 				error!("[CommandProvider] Command '{}' not found in registry.", CommandIdentifier);
+
 				Err(CommonError::CommandNotFound { Identifier:CommandIdentifier })
 			},
 		}
@@ -110,37 +124,44 @@ impl CommandExecutor for MountainEnvironment {
 			"[CommandProvider] Registering PROXY command '{}' from sidecar '{}'",
 			CommandIdentifier, SidecarIdentifier
 		);
+
 		let mut Registry = self
 			.ApplicationState
 			.CommandRegistry
 			.lock()
 			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		Registry.insert(
 			CommandIdentifier.clone(),
 			CommandHandler::Proxied { SidecarIdentifier, CommandIdentifier },
 		);
+
 		Ok(())
 	}
 
 	/// Unregisters a previously registered command.
 	async fn UnregisterCommand(&self, _SidecarIdentifier:String, CommandIdentifier:String) -> Result<(), CommonError> {
 		info!("[CommandProvider] Unregistering command '{}'", CommandIdentifier);
+
 		self.ApplicationState
 			.CommandRegistry
 			.lock()
 			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&CommandIdentifier);
+
 		Ok(())
 	}
 
 	/// Gets a list of all currently registered command IDs.
 	async fn GetAllCommands(&self) -> Result<Vec<String>, CommonError> {
 		debug!("[CommandProvider] Getting all command identifiers.");
+
 		let Registry = self
 			.ApplicationState
 			.CommandRegistry
 			.lock()
 			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		Ok(Registry.keys().cloned().collect())
 	}
 }

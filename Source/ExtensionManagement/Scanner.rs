@@ -39,19 +39,23 @@ use crate::{
 /// into an `ExtensionDescriptionStateDTO`.
 pub async fn ScanDirectoryForExtensions(
 	ApplicationHandle:tauri::AppHandle,
+
 	DirectoryPath:PathBuf,
 ) -> Result<Vec<ExtensionDescriptionStateDTO>, CommonError> {
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+
 	let mut FoundExtensions = Vec::new();
 
 	let TopLevelEntries = match RunTime.Run(ReadDirectory(DirectoryPath.clone())).await {
 		Ok(entries) => entries,
+
 		Err(error) => {
 			warn!(
 				"[ExtensionScanner] Could not read extension directory '{}': {}. Skipping.",
 				DirectoryPath.display(),
 				error
 			);
+
 			return Ok(Vec::new());
 		},
 	};
@@ -59,6 +63,7 @@ pub async fn ScanDirectoryForExtensions(
 	for (EntryName, FileType) in TopLevelEntries {
 		if FileType == FileTypeDTO::Directory {
 			let PotentialExtensionPath = DirectoryPath.join(EntryName);
+
 			let PackageJsonPath = PotentialExtensionPath.join("package.json");
 
 			trace!(
@@ -76,6 +81,7 @@ pub async fn ScanDirectoryForExtensions(
 
 						FoundExtensions.push(Description);
 					},
+
 					Err(error) => {
 						warn!(
 							"[ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
@@ -95,6 +101,7 @@ pub async fn ScanDirectoryForExtensions(
 /// scanned extensions.
 pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, CommonError> {
 	let mut MergedDefaults = Map::new();
+
 	let Extensions = State
 		.ScannedExtensions
 		.lock()

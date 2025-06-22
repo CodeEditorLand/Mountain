@@ -24,16 +24,19 @@ use crate::{
 /// # Parameters
 /// * `ApplicationHandle`: The Tauri application handle.
 /// * `AddressString`: The address and port to bind the server to (e.g.,
+
 ///   "[::1]:50051").
 pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) {
 	tokio::spawn(async move {
 		let Address:SocketAddr = match AddressString.parse() {
 			Ok(addr) => addr,
+
 			Err(e) => {
 				error!(
 					"[VineServer] Invalid gRPC server address '{}': {}. Server will not start.",
 					AddressString, e
 				);
+
 				return;
 			},
 		};
@@ -42,8 +45,10 @@ pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) {
 
 		let RunTime = match ApplicationHandle.try_state::<Arc<ApplicationRunTime>>() {
 			Some(rt) => rt.inner().clone(),
+
 			None => {
 				error!("[VineServer] CRITICAL: ApplicationRunTime not found in Tauri state. Server cannot start.");
+
 				return;
 			},
 		};

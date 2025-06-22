@@ -37,8 +37,11 @@ use super::MountainEnvironment::MountainEnvironment;
 impl DebugService for MountainEnvironment {
 	async fn RegisterDebugConfigurationProvider(
 		&self,
+
 		DebugType:String,
+
 		_ProviderHandle:u32,
+
 		_SidecarIdentifier:String,
 	) -> Result<(), CommonError> {
 		// TODO: Store this registration in ApplicationState
@@ -46,13 +49,17 @@ impl DebugService for MountainEnvironment {
 			"[DebugProvider] Registering DebugConfigurationProvider for type '{}'",
 			DebugType
 		);
+
 		Ok(())
 	}
 
 	async fn RegisterDebugAdapterDescriptorFactory(
 		&self,
+
 		DebugType:String,
+
 		_FactoryHandle:u32,
+
 		_SidecarIdentifier:String,
 	) -> Result<(), CommonError> {
 		// TODO: Store this registration in ApplicationState
@@ -60,21 +67,25 @@ impl DebugService for MountainEnvironment {
 			"[DebugProvider] Registering DebugAdapterDescriptorFactory for type '{}'",
 			DebugType
 		);
+
 		Ok(())
 	}
 
 	async fn StartDebugging(&self, _FolderURI:Option<Url>, Configuration:Value) -> Result<String, CommonError> {
 		let SessionID = uuid::Uuid::new_v4().to_string();
+
 		info!(
 			"[DebugProvider] Starting debug session '{}' with config: {:?}",
 			SessionID, Configuration
 		);
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+
 		let DebugType = Configuration.get("type").and_then(Value::as_str).unwrap_or_default();
 
 		// 1. Resolve configuration (Reverse-RPC to Cocoon)
 		info!("[DebugProvider] Resolving debug configuration...");
+
 		let ResolvedConfig = IPCProvider
 			.SendRequestToSidecar(
 				"cocoon-main".into(),
@@ -86,6 +97,7 @@ impl DebugService for MountainEnvironment {
 
 		// 2. Get the Debug Adapter Descriptor (Reverse-RPC to Cocoon)
 		info!("[DebugProvider] Creating debug adapter descriptor...");
+
 		let Descriptor = IPCProvider
 			.SendRequestToSidecar(
 				"cocoon-main".into(),
@@ -98,7 +110,9 @@ impl DebugService for MountainEnvironment {
 		// 3. Spawn the Debug Adapter process based on the descriptor
 		// This is a complex step involving process management. For now, we log it.
 		info!("[DebugProvider] Spawning Debug Adapter based on descriptor: {:?}", Descriptor);
-		// let da_process = spawn_process(descriptor); // Placeholder
+
+		// Placeholder
+		// let da_process = spawn_process(descriptor);
 
 		// 4. Create a DebugSession object to manage communication with the DA and the
 		//    UI

@@ -29,7 +29,8 @@ use Common::{
 use async_trait::async_trait;
 use log::info;
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager}; // Import AppHandle and Manager trait
+// Import AppHandle and Manager trait
+use tauri::{AppHandle, Manager};
 use url::Url;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
@@ -47,20 +48,32 @@ impl FileExplorerViewProvider {
 	// Helper function to create the DTO, merged with V2's format
 	fn CreateTreeItemDTO(&self, Name:&str, Uri:&Url, FileType:FileTypeDTO) -> Value {
 		json!({
-			"handle": Uri.to_string(),
-			"label": { "label": Name },
-			"collapsibleState": if FileType == FileTypeDTO::Directory { 1 } else { 0 }, // 1: Collapsed, 0: None
-			"resourceUri": json!({ "external": Uri.to_string() }),
-			"command": if FileType == FileTypeDTO::File {
-				Some(json!({
-					"id": "vscode.open",
-					"title": "Open File",
-					"arguments": [json!({ "external": Uri.to_string() })]
-				}))
-			} else {
-				None
-			}
-		})
+
+					"handle": Uri.to_string(),
+
+					"label": { "label": Name },
+
+		// 1: Collapsed, 0: None
+					"collapsibleState": if FileType == FileTypeDTO::Directory { 1 } else { 0 },
+
+					"resourceUri": json!({ "external": Uri.to_string() }),
+
+					"command": if FileType == FileTypeDTO::File {
+
+						Some(json!({
+
+							"id": "vscode.open",
+
+							"title": "Open File",
+
+							"arguments": [json!({ "external": Uri.to_string() })]
+						}))
+					} else {
+
+						None
+					}
+
+				})
 	}
 }
 
@@ -75,8 +88,11 @@ impl TreeViewProvider for FileExplorerViewProvider {
 
 	async fn RevealTreeItem(
 		&self,
+
 		_ViewIdentifier:String,
+
 		_ItemHandle:String,
+
 		_Options:Value,
 	) -> Result<(), CommonError> {
 		Ok(())
@@ -92,8 +108,11 @@ impl TreeViewProvider for FileExplorerViewProvider {
 
 	async fn SetTreeViewTitle(
 		&self,
+
 		_ViewIdentifier:String,
+
 		_Title:Option<String>,
+
 		_Description:Option<String>,
 	) -> Result<(), CommonError> {
 		Ok(())
@@ -108,10 +127,14 @@ impl TreeViewProvider for FileExplorerViewProvider {
 	/// Retrieves the children for a given directory URI.
 	async fn GetChildren(
 		&self,
-		_ViewIdentifier:String, // Kept for trait signature compatibility, but unused.
+
+		// Kept for trait signature compatibility, but unused.
+		_ViewIdentifier:String,
+
 		ElementHandle:Option<String>,
 	) -> Result<Vec<Value>, CommonError> {
 		let RunTime = self.AppicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+
 		let AppState = RunTime.Environment.ApplicationState.clone();
 
 		let PathToRead = if let Some(Handle) = ElementHandle {
@@ -120,6 +143,7 @@ impl TreeViewProvider for FileExplorerViewProvider {
 				.map_err(|_| {
 					CommonError::InvalidArgument {
 						ArgumentName:"ElementHandle".into(),
+
 						Reason:"Handle is not a valid URI".into(),
 					}
 				})?
@@ -127,16 +151,19 @@ impl TreeViewProvider for FileExplorerViewProvider {
 				.map_err(|_| {
 					CommonError::InvalidArgument {
 						ArgumentName:"ElementHandle".into(),
+
 						Reason:"Handle URI is not a file path".into(),
 					}
 				})?
 		} else {
 			// If no element, we are at the root. We should return the workspace folders.
 			let Folders = AppState.WorkSpaceFolders.lock().unwrap();
+
 			let RootItems:Vec<Value> = Folders
 				.iter()
 				.map(|folder| self.CreateTreeItemDTO(&folder.Name, &folder.URI, FileTypeDTO::Directory))
 				.collect();
+
 			return Ok(RootItems);
 		};
 
@@ -145,11 +172,14 @@ impl TreeViewProvider for FileExplorerViewProvider {
 		// This now works because `RunTime` has the correct type and implements the
 		// `ApplicationRunTime` trait.
 		let Entries = RunTime.Run(ReadDirectory(PathToRead.clone())).await?;
+
 		let Items = Entries
 			.into_iter()
 			.map(|(Name, FileType)| {
 				let FullPath = PathToRead.join(&Name);
+
 				let Uri = Url::from_file_path(FullPath).unwrap();
+
 				self.CreateTreeItemDTO(&Name, &Uri, FileType)
 			})
 			.collect();
@@ -161,10 +191,12 @@ impl TreeViewProvider for FileExplorerViewProvider {
 	async fn GetTreeItem(&self, _ViewIdentifier:String, ElementHandle:String) -> Result<Value, CommonError> {
 		let URI = Url::parse(&ElementHandle)
 			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"ElementHandle".into(), Reason:e.to_string() })?;
+
 		let Name = URI.path_segments().and_then(|s| s.last()).unwrap_or("").to_string();
 
 		// Use robust check from V1
 		let IsDirectory = URI.as_str().ends_with('/') || URI.to_file_path().map_or(false, |p| p.is_dir());
+
 		let FileType = if IsDirectory { FileTypeDTO::Directory } else { FileTypeDTO::File };
 
 		Ok(self.CreateTreeItemDTO(&Name, &URI, FileType))

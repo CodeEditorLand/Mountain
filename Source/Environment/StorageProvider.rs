@@ -26,6 +26,7 @@ impl StorageProvider for MountainEnvironment {
 	/// Retrieves a value from either global or workspace storage.
 	async fn GetStorageValue(&self, IsGlobalScope:bool, Key:&str) -> Result<Option<Value>, CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+
 		trace!("[StorageProvider] Getting value from {} scope for key: {}", ScopeName, Key);
 
 		let StorageMapMutex = if IsGlobalScope {
@@ -37,17 +38,22 @@ impl StorageProvider for MountainEnvironment {
 		let StorageMapGuard = StorageMapMutex
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		Ok(StorageMapGuard.get(Key).cloned())
 	}
 
 	/// Updates or deletes a value in either global or workspace storage.
 	async fn UpdateStorageValue(
 		&self,
+
 		IsGlobalScope:bool,
+
 		Key:String,
+
 		ValueToSet:Option<Value>,
 	) -> Result<(), CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+
 		info!("[StorageProvider] Updating value in {} scope for key: {}", ScopeName, Key);
 
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
@@ -71,11 +77,13 @@ impl StorageProvider for MountainEnvironment {
 			let mut StorageMapGuard = StorageMapMutex
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 			if let Some(Value) = ValueToSet {
 				StorageMapGuard.insert(Key, Value);
 			} else {
 				StorageMapGuard.remove(&Key);
 			}
+
 			StorageMapGuard.clone()
 		};
 
@@ -91,6 +99,7 @@ impl StorageProvider for MountainEnvironment {
 	/// Retrieves the entire storage map for a given scope.
 	async fn GetAllStorage(&self, IsGlobalScope:bool) -> Result<Value, CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+
 		trace!("[StorageProvider] Getting all values from {} scope.", ScopeName);
 
 		let StorageMapMutex = if IsGlobalScope {
@@ -102,12 +111,14 @@ impl StorageProvider for MountainEnvironment {
 		let StorageMapGuard = StorageMapMutex
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 		Ok(serde_json::to_value(&*StorageMapGuard)?)
 	}
 
 	/// Overwrites the entire storage map for a given scope and persists it.
 	async fn SetAllStorage(&self, IsGlobalScope:bool, FullState:Value) -> Result<(), CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+
 		info!("[StorageProvider] Setting all values for {} scope.", ScopeName);
 
 		let DeserializedState:HashMap<String, Value> = serde_json::from_value(FullState)?;
@@ -129,6 +140,7 @@ impl StorageProvider for MountainEnvironment {
 			let mut StorageMapGuard = StorageMapMutex
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
 			*StorageMapGuard = DeserializedState.clone();
 		}
 
@@ -149,6 +161,7 @@ impl StorageProvider for MountainEnvironment {
 /// file.
 async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 	trace!("[StorageProvider] Persisting storage to disk: {}", Path.display());
+
 	match serde_json::to_string_pretty(&Data) {
 		Ok(JSONString) => {
 			if let Some(ParentDirectory) = Path.parent() {
@@ -158,13 +171,16 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 						Path.display(),
 						e
 					);
+
 					return;
 				}
 			}
+
 			if let Err(e) = fs::write(&Path, JSONString).await {
 				error!("[StorageProvider] Failed to write storage file to '{}': {}", Path.display(), e);
 			}
 		},
+
 		Err(e) => {
 			error!(
 				"[StorageProvider] Failed to serialize storage data for '{}': {}",

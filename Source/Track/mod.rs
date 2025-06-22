@@ -15,5 +15,6 @@
 
 /// Contains the main dispatch functions.
 pub mod DispatchLogic;
+
 /// Contains the logic for creating `ActionEffect`s from request payloads.
 pub mod EffectCreation;

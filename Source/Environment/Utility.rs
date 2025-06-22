@@ -22,7 +22,9 @@ use crate::ApplicationState::ApplicationState::ApplicationState;
 /// structured `CommonError::StateLockPoisoned`.
 pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>) -> CommonError {
 	let ErrorMessage = format!("[EnvironmentUtility] Failed to lock ApplicationState section: {}", Error);
+
 	error!("{}", ErrorMessage);
+
 	CommonError::StateLockPoisoned { Context:ErrorMessage }
 }
 
@@ -31,14 +33,23 @@ pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard
 pub fn DetectLanguageIdentifierFromFilePath(Path:&Path) -> String {
 	match Path.extension().and_then(OsStr::to_str) {
 		Some("js") | Some("mjs") | Some("cjs") => "javascript",
+
 		Some("ts") | Some("mts") | Some("cts") => "typescript",
+
 		Some("jsx") => "javascriptreact",
+
 		Some("tsx") => "typescriptreact",
+
 		Some("rs") => "rust",
+
 		Some("md") => "markdown",
+
 		Some("json") => "json",
+
 		Some("html") => "html",
+
 		Some("css") => "css",
+
 		_ => "plaintext",
 	}
 	.to_string()
@@ -63,6 +74,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 	if FoldersGuard.is_empty() {
 		return Err(CommonError::FileSystemPermissionDenied {
 			Path:PathToCheck.to_path_buf(),
+
 			Reason:"No workspace folder is open. All file access is denied.".to_string(),
 		});
 	}
@@ -80,6 +92,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 	} else {
 		Err(CommonError::FileSystemPermissionDenied {
 			Path:PathToCheck.to_path_buf(),
+
 			Reason:"Path is outside of the registered workspace folders.".to_string(),
 		})
 	}
@@ -89,16 +102,20 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 /// `UriComponents` DTO from VS Code.
 pub fn GetURLFromURIComponentsDTO(URIDTO:&serde_json::Value) -> Result<Url, CommonError> {
 	// VS Code's UriComponents DTO often serializes to an object with a path,
+
 	// scheme, etc., but also includes a pre-formatted 'external' string version.
 	let URIString = URIDTO.get("external").and_then(serde_json::Value::as_str).ok_or_else(|| {
 		CommonError::InvalidArgument {
 			ArgumentName:"URIDTO".to_string(),
+
 			Reason:"Missing 'external' string field in UriComponents DTO".to_string(),
 		}
 	})?;
+
 	Url::parse(URIString).map_err(|e| {
 		CommonError::InvalidArgument {
 			ArgumentName:"URIDTO.external".to_string(),
+
 			Reason:format!("Failed to parse URI string '{}': {}", URIString, e),
 		}
 	})

@@ -28,10 +28,13 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 /// the user consents.
 pub async fn CheckForUpdates(
 	ApplicationHandle:AppHandle,
+
 	RunTime:Arc<MountainRunTime>,
+
 	NotifyNoUpdate:bool,
 ) -> Result<(), CommonError> {
 	info!("[UpdateService] Checking for updates...");
+
 	let updater = ApplicationHandle
 		.updater_builder()
 		.build()
@@ -40,7 +43,9 @@ pub async fn CheckForUpdates(
 	match updater.check().await {
 		Ok(Some(update)) => {
 			info!("Update available: v{} ({:?})", update.version, update.date);
+
 			let update_notes = update.body.clone().unwrap_or_else(|| "No release notes provided.".to_string());
+
 			let message = format!(
 				"A new version of Mountain is available: v{}.\n\n{}",
 				update.version, update_notes
@@ -52,7 +57,9 @@ pub async fn CheckForUpdates(
 					MessageSeverity::Info,
 					message,
 					json!({
+
 						"modal": true,
+
 						"actions": ["Install", "Later"]
 					}),
 				))
@@ -64,6 +71,7 @@ pub async fn CheckForUpdates(
 				let on_chunk = |chunk_size, total_size| {
 					info!("[Update] Download progress: {} / {:?}", chunk_size, total_size);
 				};
+
 				let on_download_finish = || {
 					info!("[Update] Download complete, starting installation.");
 				};
@@ -83,9 +91,11 @@ pub async fn CheckForUpdates(
 				info!("[UpdateService] User chose not to install.");
 			}
 		},
+
 		Ok(None) => {
 			if NotifyNoUpdate {
 				info!("[UpdateService] No updates available.");
+
 				RunTime
 					.Run(ShowMessage(
 						MessageSeverity::Info,
@@ -97,8 +107,10 @@ pub async fn CheckForUpdates(
 				info!("[UpdateService] No updates available (silent check).");
 			}
 		},
+
 		Err(e) => {
 			error!("[UpdateService] Failed to check for updates: {}", e);
+
 			if NotifyNoUpdate {
 				RunTime
 					.Run(ShowMessage(
@@ -110,5 +122,6 @@ pub async fn CheckForUpdates(
 			}
 		},
 	}
+
 	Ok(())
 }

@@ -24,18 +24,21 @@ use super::MountainEnvironment::MountainEnvironment;
 impl CustomEditorProvider for MountainEnvironment {
 	async fn RegisterCustomEditorProvider(&self, _ViewType:String, _OptionsValue:Value) -> Result<(), CommonError> {
 		warn!("[CustomEditorProvider] RegisterCustomEditorProvider is not implemented.");
+
 		// TODO: Store provider info in ApplicationState.
 		Ok(())
 	}
 
 	async fn UnregisterCustomEditorProvider(&self, _ViewType:String) -> Result<(), CommonError> {
 		warn!("[CustomEditorProvider] UnregisterCustomEditorProvider is not implemented.");
+
 		// TODO: Remove provider info from ApplicationState.
 		Ok(())
 	}
 
 	async fn OnSaveCustomDocument(&self, _ViewType:String, _ResourceURI:Url) -> Result<(), CommonError> {
 		warn!("[CustomEditorProvider] OnSaveCustomDocument is not implemented.");
+
 		// This would typically trigger a call to the extension host to perform the
 		// save.
 		Ok(())
@@ -43,16 +46,21 @@ impl CustomEditorProvider for MountainEnvironment {
 
 	async fn ResolveCustomEditor(
 		&self,
+
 		_ViewType:String,
+
 		_ResourceURI:Url,
+
 		_WebViewPanelHandle:String,
 	) -> Result<(), CommonError> {
 		warn!("[CustomEditorProvider] ResolveCustomEditor is not implemented.");
+
 		// This is the core logic:
 		// 1. Find the sidecar that registered this ViewType.
 		// 2. Make an RPC call to that sidecar's implementation of
 		//    `$resolveCustomEditor`.
 		// 3. The sidecar will then call back to the host with `setHtml`, `postMessage`,
+
 		//    etc.
 		Err(CommonError::NotImplemented { FeatureName:"ResolveCustomEditor".into() })
 	}
