@@ -1,3 +1,11 @@
+// File: Mountain/Source/Environment/StatusBarProvider.rs
+// Role: Implements the `StatusBarProvider` trait for the `MountainEnvironment`.
+// Responsibilities:
+//   - Handle creating, updating, and removing status bar items and messages.
+//   - Orchestrate communication between the `Cocoon` sidecar and the `Sky`
+//     frontend.
+//   - Store status bar state in `ApplicationState` and push updates to the UI.
+
 //! # StatusBarProvider Implementation
 //!
 //! Implements the `StatusBarProvider` trait for the `MountainEnvironment`. This
@@ -23,7 +31,7 @@ use super::{MountainEnvironment::MountainEnvironment, Utility};
 #[async_trait]
 impl StatusBarProvider for MountainEnvironment {
 	/// Creates a new status bar entry or updates an existing one.
-	async fn SetEntry(&self, Entry:StatusBarEntryDTO) -> Result<(), CommonError> {
+	async fn SetStatusBarEntry(&self, Entry:StatusBarEntryDTO) -> Result<(), CommonError> {
 		info!("[StatusBarProvider] Setting entry: {}", Entry.EntryIdentifier);
 		let mut ItemsGuard = self
 			.ApplicationState
@@ -42,7 +50,7 @@ impl StatusBarProvider for MountainEnvironment {
 	}
 
 	/// Removes a status bar item from the UI.
-	async fn DisposeEntry(&self, EntryIdentifier:String) -> Result<(), CommonError> {
+	async fn DisposeStatusBarEntry(&self, EntryIdentifier:String) -> Result<(), CommonError> {
 		info!("[StatusBarProvider] Disposing entry: {}", EntryIdentifier);
 		let mut ItemsGuard = self
 			.ApplicationState
@@ -56,6 +64,22 @@ impl StatusBarProvider for MountainEnvironment {
 		// Notify the Sky frontend to remove the item from the UI.
 		self.ApplicationHandle
 			.emit("sky://statusbar/dispose-entry", json!({ "EntryIdentifier": EntryIdentifier }))
+			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+	}
+
+	/// Shows a temporary message in the status bar.
+	async fn SetStatusBarMessage(&self, MessageIdentifier:String, Text:String) -> Result<(), CommonError> {
+		info!("[StatusBarProvider] Setting status message '{}': {}", MessageIdentifier, Text);
+		self.ApplicationHandle
+			.emit("sky://statusbar/set-message", json!({ "id": MessageIdentifier, "text": Text }))
+			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+	}
+
+	/// Disposes of a temporary status bar message.
+	async fn DisposeStatusBarMessage(&self, MessageIdentifier:String) -> Result<(), CommonError> {
+		info!("[StatusBarProvider] Disposing status message '{}'", MessageIdentifier);
+		self.ApplicationHandle
+			.emit("sky://statusbar/dispose-message", json!({ "id": MessageIdentifier }))
 			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
 	}
 
