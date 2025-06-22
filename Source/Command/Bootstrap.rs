@@ -94,7 +94,8 @@ fn CommandCheckForUpdates(
 /// A native command that orchestrates the "Format Document" action.
 fn CommandFormatDocument(
 	_ApplicationHandle:AppHandle,
-	_Window:WebviewWindow, // Window is unused now
+	// Window is unused now
+	_Window:WebviewWindow,
 	RunTime:Arc<ApplicationRunTime>,
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
@@ -111,7 +112,8 @@ fn CommandFormatDocument(
 
 		let Uri = Url::parse(&UriString).map_err(|_| "Invalid URI in window state".to_string())?;
 
-		let Options = json!({ "tabSize": 4, "insertSpaces": true }); // Example formatting options
+		// Example formatting options
+		let Options = json!({ "tabSize": 4, "insertSpaces": true });
 
 		// 1. Get the formatting edits from the language feature provider.
 		let LanguageProvider:Arc<dyn LanguageFeatureProviderRegistry> = RunTime.Environment.Require();

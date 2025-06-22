@@ -12,13 +12,14 @@
 //! is a library for the `ripgrep` search tool.
 
 use std::{
-	path::{Path, PathBuf},
+	io,
+	path::PathBuf,
 	sync::{Arc, Mutex},
 };
 
-use Common::{Error::CommonError, Search::SearchProvider::SearchProvider};
+use Common::{Error::CommonError::CommonError, Search::SearchProvider::SearchProvider};
 use async_trait::async_trait;
-use grep_regex::RegexMatcher;
+use grep_regex::RegexMatcherBuilder;
 use grep_searcher::{Searcher, Sink, SinkMatch};
 use ignore::WalkBuilder;
 use log::{info, warn};
@@ -33,7 +34,6 @@ struct TextSearchQuery {
 	pattern:String,
 	is_case_sensitive:Option<bool>,
 	is_word_match:Option<bool>,
-	is_regex:Option<bool>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -41,7 +41,6 @@ struct TextSearchQuery {
 struct TextMatch {
 	preview:String,
 	line_number:u64,
-	// TODO: Add ranges: Vec<(u64, u64)> for highlighting matches
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -51,41 +50,33 @@ struct FileMatch {
 	matches:Vec<TextMatch>,
 }
 
-#[derive(Clone)]
-struct MatchSink {
-	matches:Arc<Mutex<Vec<FileMatch>>>,
-	current_file_path:Arc<Mutex<Option<PathBuf>>>,
+// This Sink is designed to be created for each file.
+// It holds a reference to the central results vector and the path of the file
+// it's searching.
+struct PerFileSink {
+	path:PathBuf,
+	results:Arc<Mutex<Vec<FileMatch>>>,
 }
 
-impl Sink for MatchSink {
-	type Error = std::io::Error;
+impl Sink for PerFileSink {
+	type Error = io::Error;
 
 	fn matched(&mut self, _searcher:&Searcher, mat:&SinkMatch<'_>) -> Result<bool, Self::Error> {
-		let path_guard = self.current_file_path.lock().unwrap();
-		let path = path_guard.as_ref().unwrap(); // Should be set by `begin`
-		let mut matches_guard = self.matches.lock().unwrap();
+		let mut results_guard = self.results.lock().unwrap();
+		let preview = String::from_utf8_lossy(mat.bytes()).to_string();
+		let line_number = mat.line_number().unwrap_or(0);
 
-		let preview = String::from_utf8_lossy(mat.lines().next().unwrap_or_default()).to_string();
+		// Since this sink is per-file, we know `self.path` is correct.
+		let file_uri = url::Url::from_file_path(&self.path).unwrap().to_string();
 
-		let file_uri = url::Url::from_file_path(&path).unwrap().to_string();
-
-		if let Some(file_match) = matches_guard.iter_mut().find(|fm| fm.resource == file_uri) {
-			file_match
-				.matches
-				.push(TextMatch { preview, line_number:mat.line_number().unwrap_or(0) });
+		// Find the entry for our file, or create it if it's the first match.
+		if let Some(file_match) = results_guard.iter_mut().find(|fm| fm.resource == file_uri) {
+			file_match.matches.push(TextMatch { preview, line_number });
 		} else {
-			matches_guard.push(FileMatch {
-				resource:file_uri,
-				matches:vec![TextMatch { preview, line_number:mat.line_number().unwrap_or(0) }],
-			});
+			results_guard.push(FileMatch { resource:file_uri, matches:vec![TextMatch { preview, line_number }] });
 		}
 
-		Ok(true)
-	}
-
-	fn begin(&mut self, _searcher:&Searcher, path:&Path) -> Result<bool, Self::Error> {
-		*self.current_file_path.lock().unwrap() = Some(path.to_path_buf());
-		Ok(true)
+		Ok(true) // Continue searching
 	}
 }
 
@@ -95,19 +86,21 @@ impl SearchProvider for MountainEnvironment {
 		let Query:TextSearchQuery = serde_json::from_value(QueryValue)?;
 		info!("[SearchProvider] Performing text search for: {:?}", Query);
 
-		let matcher = RegexMatcher::new_builder()
+		let mut builder = RegexMatcherBuilder::new();
+		builder
 			.case_insensitive(!Query.is_case_sensitive.unwrap_or(false))
-			.word(Query.is_word_match.unwrap_or(false))
+			.word(Query.is_word_match.unwrap_or(false));
+
+		let matcher = builder
 			.build(&Query.pattern)
 			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"pattern".into(), Reason:e.to_string() })?;
 
-		let searcher = Searcher::new();
-		let sink = MatchSink {
-			matches:Arc::new(Mutex::new(Vec::new())),
-			current_file_path:Arc::new(Mutex::new(None)),
-		};
+		let all_matches = Arc::new(Mutex::new(Vec::<FileMatch>::new()));
 
-		let folders = self.ApplicationState.WorkSpaceFolders.lock().unwrap().clone();
+		let folders_guard = self.ApplicationState.WorkSpaceFolders.lock().unwrap();
+		let folders = folders_guard.clone();
+		drop(folders_guard);
+
 		if folders.is_empty() {
 			warn!("[SearchProvider] No workspace folders to search in.");
 			return Ok(json!([]));
@@ -115,19 +108,34 @@ impl SearchProvider for MountainEnvironment {
 
 		for folder in folders {
 			if let Ok(folder_path) = folder.URI.to_file_path() {
-				let walker = WalkBuilder::new(folder_path).build();
-				for result in walker {
-					let Ok(entry) = result else { continue };
-					if entry.file_type().map_or(false, |ft| ft.is_file()) {
-						if let Err(e) = searcher.search_path(&matcher, entry.path(), sink.clone()) {
-							warn!("[SearchProvider] Error searching path {}: {}", entry.path().display(), e);
+				// Use a parallel walker for better performance.
+				let walker = WalkBuilder::new(folder_path).build_parallel();
+
+				// The `search_parallel` method is not available on `Searcher`.
+				// We must process entries from the walker and call `search_path` individually.
+				walker.run(|| {
+					let mut searcher = Searcher::new();
+					let matcher = matcher.clone();
+					let all_matches = all_matches.clone();
+
+					Box::new(move |entry_result| {
+						if let Ok(entry) = entry_result {
+							if entry.file_type().map_or(false, |ft| ft.is_file()) {
+								// For each file, create a new sink that knows its path.
+								let sink = PerFileSink { path:entry.path().to_path_buf(), results:all_matches.clone() };
+
+								if let Err(e) = searcher.search_path(&matcher, entry.path(), sink) {
+									warn!("[SearchProvider] Error searching path {}: {}", entry.path().display(), e);
+								}
+							}
 						}
-					}
-				}
+						ignore::WalkState::Continue
+					})
+				});
 			}
 		}
 
-		let final_matches = sink.matches.lock().unwrap().clone();
+		let final_matches = all_matches.lock().unwrap().clone();
 		Ok(json!(final_matches))
 	}
 }

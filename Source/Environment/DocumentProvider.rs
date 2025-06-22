@@ -61,7 +61,8 @@ impl DocumentProvider for MountainEnvironment {
 
 		// Resolve the content based on the URI scheme.
 		let FileContent = if let Some(c) = Content {
-			c // Content was provided directly (e.g., new untitled file)
+			// Content was provided directly (e.g., new untitled file)
+			c
 		} else if URI.scheme() == "file" {
 			let FilePath = URI.to_file_path().map_err(|_| {
 				CommonError::InvalidArgument {
@@ -82,7 +83,8 @@ impl DocumentProvider for MountainEnvironment {
 			let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 			let RpcResult = IPCProvider
 				.SendRequestToSidecar(
-					"cocoon-main".to_string(), // In a multi-host world, we'd look this up
+					// In a multi-host world, we'd look this up
+					"cocoon-main".to_string(),
 					"$provideTextDocumentContent".to_string(),
 					json!([URIComponentsDTO]),
 					10000,

@@ -57,6 +57,8 @@ lazy_static = { workspace = true }
 portable-pty = { workspace = true }
 prost = { workspace = true }
 http = { workspace = true }
+grep-regex = { workspace = true }
+grep-searcher = { workspace = true }
 
 [features]
 default = ["ExtensionHostCocoon", "MistNative"]

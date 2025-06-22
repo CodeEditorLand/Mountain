@@ -27,7 +27,7 @@ use Common::{
 	IPC::IPCProvider::IPCProvider,
 };
 use async_trait::async_trait;
-use log::{error, info};
+use log::info;
 use serde_json::{Value, json};
 use url::Url;
 

@@ -25,14 +25,17 @@ pub struct MarkerDataDTO {
 	pub Source:Option<String>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub Code:Option<Value>, // Can be string or { value: string, target: URI }
+	// Can be string or { value: string, target: URI }
+	pub Code: Option<Value>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub ModelVersionIdentifier:Option<u64>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub RelatedInformation:Option<Value>, // Vec<RelatedInformationDTO>
+	// Vec<RelatedInformationDTO>
+	pub RelatedInformation: Option<Value>,
 
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub Tags:Option<Vec<u32>>, // Corresponds to MarkerTag enum
+	// Corresponds to MarkerTag enum
+	pub Tags: Option<Vec<u32>>,
 }

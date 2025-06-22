@@ -64,7 +64,8 @@ impl TerminalStateDTO {
 			CurrentWorkingDirectory:CWD,
 			EnvironmentVariables:EnvVars,
 			OSProcessIdentifier:None,
-			IsPTY:true, // Assume all terminals are PTYs for now
+			// Assume all terminals are PTYs for now
+			IsPTY:true,
 			PTYInputTransmitter:None,
 			ReaderTaskHandle:None,
 			ProcessWaitHandle:None,

@@ -17,11 +17,13 @@ use serde_json::Value;
 #[serde(rename_all = "PascalCase")]
 pub struct ExtensionDescriptionStateDTO {
 	// --- Core Metadata ---
-	pub Identifier:Value, // DTO: { value: string, uuid?: string }
+	// DTO: { value: string, uuid?: string }
+	pub Identifier:Value,
 	pub Name:String,
 	pub Version:String,
 	pub Publisher:String,
-	pub Engines:Value, // DTO: { vscode: string }
+	// DTO: { vscode: string }
+	pub Engines:Value,
 
 	// --- Entry Points ---
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -38,7 +40,8 @@ pub struct ExtensionDescriptionStateDTO {
 	pub IsUnderDevelopment:bool,
 
 	// --- Location & Activation ---
-	pub ExtensionLocation:Value, // Serialized UriComponents DTO
+	// Serialized UriComponents DTO
+	pub ExtensionLocation:Value,
 	#[serde(skip_serializing_if = "Option::is_none")]
 	pub ActivationEvents:Option<Vec<String>>,
 

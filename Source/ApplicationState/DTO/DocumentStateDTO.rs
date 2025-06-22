@@ -61,7 +61,8 @@ impl DocumentStateDTO {
 	/// Applies a set of changes to the document.
 	pub fn ApplyChanges(&mut self, NewVersion:i64, ChangesValue:&Value) -> Result<(), String> {
 		if NewVersion <= self.Version {
-			return Ok(()); // Ignore stale changes
+			// Ignore stale changes
+			return Ok(());
 		}
 
 		let _RPCChanges:Vec<RPCModelContentChangeDTO> = match serde_json::from_value(ChangesValue.clone()) {
@@ -72,7 +73,8 @@ impl DocumentStateDTO {
 					self.Lines = NewLines;
 					self.EOL = NewEOL;
 					self.Version = NewVersion;
-					self.VersionIdentifier += 1; // Increment internal version
+					// Increment internal version
+					self.VersionIdentifier += 1;
 					self.IsDirty = true;
 					return Ok(());
 				}
@@ -86,7 +88,8 @@ impl DocumentStateDTO {
 		);
 
 		self.Version = NewVersion;
-		self.VersionIdentifier += 1; // Increment internal version
+		// Increment internal version
+		self.VersionIdentifier += 1;
 		self.IsDirty = true;
 		Ok(())
 	}

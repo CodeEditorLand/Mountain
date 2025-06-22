@@ -7,7 +7,8 @@
 
 use Common::WebView::DTO::WebViewContentOptionsDTO::WebViewContentOptionsDTO;
 use serde::{Deserialize, Serialize};
-use serde_json::Value; // For PanelOptions, etc.
+// For PanelOptions, etc.
+use serde_json::Value;
 
 /// A struct that holds the complete state for a single WebView panel instance.
 /// This is stored in `ApplicationState` to track all active WebViews managed by
@@ -28,7 +29,8 @@ pub struct WebViewStateDTO {
 	pub ContentOptions:WebViewContentOptionsDTO,
 
 	/// The options controlling the behavior of the WebView panel itself.
-	pub PanelOptions:Value, // DTO: WebViewPanelOptionsDTO
+	// DTO: WebViewPanelOptionsDTO
+	pub PanelOptions: Value,
 
 	/// The identifier of the sidecar process that owns this WebView.
 	pub SidecarIdentifier:String,
