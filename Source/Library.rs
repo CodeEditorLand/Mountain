@@ -16,9 +16,11 @@ pub mod FileSystem;
 pub mod ProcessManagement;
 pub mod RunTime;
 pub mod Track;
-pub mod Update;
 pub mod Vine;
 pub mod WorkSpace;
+
+// TEMPORARY DISABLE
+// pub mod Update;
 
 // The main binary entry point is defined in its own module.
 pub mod Binary;

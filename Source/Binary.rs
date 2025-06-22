@@ -228,10 +228,11 @@ pub fn Fn() {
 						info!("[SetupTask] Post-setup initializations complete.");
 					});
 
-					#[cfg(desktop)]
-					{
-						ApplicationHandle.plugin(tauri_plugin_updater::Builder::new().build()).expect("");
-					}
+					// TEMPORARY DISABLE
+					// #[cfg(desktop)]
+					// {
+					// 	ApplicationHandle.plugin(tauri_plugin_updater::Builder::new().build()).expect("");
+					// }
 
 					Ok(())
 				})
