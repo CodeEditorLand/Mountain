@@ -18,7 +18,7 @@ pub enum VineError {
 
 	/// An RPC call to a sidecar failed with a specific gRPC status.
 	#[error("gRPC call failed: {0}")]
-	RpcError(String),
+	RPCError(String),
 
 	/// An error occurred while serializing or deserializing a JSON payload.
 	#[error("JSON serialization error for gRPC payload: {0}")]
@@ -50,5 +50,5 @@ impl<T> From<PoisonError<MutexGuard<'_, T>>> for VineError {
 }
 
 impl From<tonic::Status> for VineError {
-	fn from(status:tonic::Status) -> Self { VineError::RpcError(status.to_string()) }
+	fn from(status:tonic::Status) -> Self { VineError::RPCError(status.to_string()) }
 }

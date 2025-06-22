@@ -47,7 +47,7 @@ pub async fn SendNotification(SidecarIdentifier:String, Method:String, Parameter
 	};
 
 	if let Some(ref mut client) = client {
-		let request = GenericNotification { method:Method, params:to_vec(&Parameters)? };
+		let request = GenericNotification { method:Method, parameter:to_vec(&Parameters)? };
 		client.send_mountain_notification(request).await?;
 		Ok(())
 	} else {
@@ -74,9 +74,13 @@ pub async fn SendRequest(
 	if let Some(ref mut client) = client {
 		let mut hasher = DefaultHasher::new();
 		uuid::Uuid::new_v4().hash(&mut hasher);
-		let request_id = hasher.finish();
+		let RequestIdentifier = hasher.finish();
 
-		let request = GenericRequest { request_id, method:Method.clone(), params:to_vec(&Parameters)? };
+		let request = GenericRequest {
+			request_identifier:RequestIdentifier,
+			method:Method.clone(),
+			parameter:to_vec(&Parameters)?,
+		};
 
 		let future = client.process_mountain_request(request);
 
@@ -88,7 +92,7 @@ pub async fn SendRequest(
 						"[VineClient] Received RPC error from sidecar '{}': {}",
 						SidecarIdentifier, rpc_error.message
 					);
-					Err(VineError::RpcError(rpc_error.message))
+					Err(VineError::RPCError(rpc_error.message))
 				} else {
 					let deserialized_value = from_slice(&response_data.result)?;
 					Ok(deserialized_value)

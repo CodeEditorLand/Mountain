@@ -20,7 +20,7 @@ use crate::{
 		GenericNotification,
 		GenericRequest,
 		GenericResponse,
-		RpcError,
+		RpcError as RPCError,
 		mountain_service_server::MountainService,
 	},
 };
@@ -48,22 +48,22 @@ impl MountainService for MountainVinegRPCService {
 	) -> Result<Response<GenericResponse>, Status> {
 		let RequestData = request.into_inner();
 		let MethodName = RequestData.method;
-		let RequestIdentifier = RequestData.request_id;
+		let RequestIdentifier = RequestData.request_identifier;
 
 		info!(
 			"[VineServer] Received gRPC Request [ID: {}]: Method='{}'",
 			RequestIdentifier, MethodName
 		);
 
-		let ParametersValue:Value = match serde_json::from_slice(&RequestData.params) {
+		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
 			Ok(v) => v,
 			Err(e) => {
 				let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
 				error!("{}", msg);
 				return Ok(Response::new(GenericResponse {
-					request_id:RequestIdentifier,
+					request_identifier:RequestIdentifier,
 					result:vec![],
-					error:Some(RpcError { message:msg, code:-32700, data:vec![] }),
+					error:Some(RPCError { message:msg, code:-32700, data:vec![] }),
 				}));
 			},
 		};
@@ -85,16 +85,16 @@ impl MountainService for MountainVinegRPCService {
 					b"null".to_vec()
 				});
 				Ok(Response::new(GenericResponse {
-					request_id:RequestIdentifier,
+					request_identifier:RequestIdentifier,
 					result:ResultBytes,
 					error:None,
 				}))
 			},
 			Err(ErrorString) => {
 				Ok(Response::new(GenericResponse {
-					request_id:RequestIdentifier,
+					request_identifier:RequestIdentifier,
 					result:vec![],
-					error:Some(RpcError {
+					error:Some(RPCError {
 						message:ErrorString,
 						code:-32000, // JSON-RPC Generic Server Error
 						data:vec![],
@@ -114,8 +114,8 @@ impl MountainService for MountainVinegRPCService {
 		// dedicated handler for processing status updates, etc. For now, we
 		// just log and acknowledge.
 		// For example:
-		// let params: Value = serde_json::from_slice(...)?;
-		// NotificationHandler::Handle(MethodName, params).await;
+		// let Parameter: Value = serde_json::from_slice(...)?;
+		// NotificationHandler::Handle(MethodName, Parameter).await;
 
 		Ok(Response::new(Empty {}))
 	}
@@ -123,7 +123,7 @@ impl MountainService for MountainVinegRPCService {
 	/// Handles a request from Cocoon to cancel a long-running operation.
 	async fn cancel_operation(&self, _request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		info!("[VineServer] Received CancelOperation request, but cancellation is not yet implemented.");
-		// A full implementation would map the request_id_to_cancel to a
+		// A full implementation would map the RequestIdentifier_to_cancel to a
 		// CancellationToken and trigger it.
 		Ok(Response::new(Empty {}))
 	}

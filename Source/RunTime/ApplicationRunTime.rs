@@ -53,8 +53,8 @@ impl ApplicationRunTime {
 		info!("[ApplicationRunTime] Initiating graceful shutdown of services...");
 
 		// 1. Shutdown Cocoon
-		let IpcProvider:Arc<dyn IPCProvider> = self.Environment.Require();
-		if let Err(e) = IpcProvider
+		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
+		if let Err(e) = IPCProvider
 			.SendNotificationToSidecar("cocoon-main".to_string(), "$shutdown".to_string(), serde_json::Value::Null)
 			.await
 		{

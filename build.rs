@@ -55,6 +55,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.build_server(true)
 		.build_client(true)
 		.out_dir("Source/Vine/Generated")
+		.compile_well_known_types(true)
 		.compile_protos(&["Proto/Vine.proto"], &["Proto"])?;
 
 	tauri_build::build();

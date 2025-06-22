@@ -6,18 +6,18 @@ pub struct Empty {}
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenericRequest {
     #[prost(uint64, tag = "1")]
-    pub request_id: u64,
+    pub request_identifier: u64,
     #[prost(string, tag = "2")]
     pub method: ::prost::alloc::string::String,
     /// Parameters are expected to be a JSON-serialized byte array.
     #[prost(bytes = "vec", tag = "3")]
-    pub params: ::prost::alloc::vec::Vec<u8>,
+    pub parameter: ::prost::alloc::vec::Vec<u8>,
 }
 /// A generic response message containing the result or an error.
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct GenericResponse {
     #[prost(uint64, tag = "1")]
-    pub request_id: u64,
+    pub request_identifier: u64,
     /// The successful result, JSON-serialized.
     #[prost(bytes = "vec", tag = "2")]
     pub result: ::prost::alloc::vec::Vec<u8>,
@@ -31,7 +31,7 @@ pub struct GenericNotification {
     pub method: ::prost::alloc::string::String,
     /// Parameters are expected to be a JSON-serialized byte array.
     #[prost(bytes = "vec", tag = "2")]
-    pub params: ::prost::alloc::vec::Vec<u8>,
+    pub parameter: ::prost::alloc::vec::Vec<u8>,
 }
 /// A structured error payload, compliant with JSON-RPC error objects.
 #[derive(Clone, PartialEq, ::prost::Message)]
@@ -48,7 +48,7 @@ pub struct RpcError {
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct CancelOperationRequest {
     #[prost(uint64, tag = "1")]
-    pub request_id_to_cancel: u64,
+    pub request_identifier_to_cancel: u64,
 }
 /// A generic data payload, currently unused but available for future extensions.
 #[derive(Clone, PartialEq, ::prost::Message)]
