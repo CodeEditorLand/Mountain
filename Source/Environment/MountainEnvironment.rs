@@ -1,3 +1,5 @@
+// File: Mountain/Source/Environment/MountainEnvironment.rs
+
 //! # MountainEnvironment
 //!
 //! Defines the concrete `MountainEnvironment` struct, which serves as the
@@ -10,13 +12,18 @@ use Common::{
 	Command::CommandExecutor::CommandExecutor,
 	Configuration::{ConfigurationInspector::ConfigurationInspector, ConfigurationProvider::ConfigurationProvider},
 	CustomEditor::CustomEditorProvider::CustomEditorProvider,
+	Debug::DebugService::DebugService,
 	Diagnostic::DiagnosticManager::DiagnosticManager,
 	Document::DocumentProvider::DocumentProvider,
 	Environment::{Environment::Environment, Requires::Requires},
+	Error::CommonError::CommonError,
+	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 	IPC::IPCProvider::IPCProvider,
+	Keybinding::KeybindingProvider::KeybindingProvider,
 	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	Output::OutputChannelManager::OutputChannelManager,
+	Search::SearchProvider::SearchProvider,
 	Secret::SecretProvider::SecretProvider,
 	SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
 	StatusBar::StatusBarProvider::StatusBarProvider,
@@ -29,8 +36,11 @@ use Common::{
 	WebView::WebViewProvider::WebViewProvider,
 	WorkSpace::{WorkSpaceEditApplier::WorkSpaceEditApplier, WorkSpaceProvider::WorkSpaceProvider},
 };
+use async_trait::async_trait;
 use log::info;
+use serde_json::Value;
 use tauri::{AppHandle, Manager, Wry};
+use url::Url;
 
 use crate::ApplicationState::ApplicationState::ApplicationState;
 
@@ -45,17 +55,54 @@ impl MountainEnvironment {
 	/// Creates a new `MountainEnvironment` instance.
 	pub fn Create(ApplicationHandle:AppHandle<Wry>) -> Self {
 		info!("[MountainEnvironment] New instance created.");
-		let ApplicationState = Arc::new(ApplicationHandle.state::<ApplicationState>().inner().clone());
+		let ApplicationState = ApplicationHandle.state::<Arc<ApplicationState>>().inner().clone();
 		Self { ApplicationHandle, ApplicationState }
 	}
 }
 
 impl Environment for MountainEnvironment {}
 
+#[async_trait]
+impl ExtensionManagementService for MountainEnvironment {
+	async fn ScanForExtensions(&self) -> Result<(), CommonError> { todo!() }
+
+	async fn GetExtensions(&self) -> Result<Vec<Value>, CommonError> { todo!() }
+
+	async fn GetExtension(&self, _id:String) -> Result<Option<Value>, CommonError> { todo!() }
+}
+#[async_trait]
+impl DebugService for MountainEnvironment {
+	async fn RegisterDebugConfigurationProvider(
+		&self,
+		_debug_type:String,
+		_provider_handle:u32,
+		_extension_id:String,
+	) -> Result<(), CommonError> {
+		todo!()
+	}
+
+	async fn RegisterDebugAdapterDescriptorFactory(
+		&self,
+		_debug_type:String,
+		_factory_handle:u32,
+		_extension_id:String,
+	) -> Result<(), CommonError> {
+		todo!()
+	}
+
+	async fn StartDebugging(&self, _folder:Option<Url>, _configuration:Value) -> Result<String, CommonError> { todo!() }
+
+	async fn SendCommand(&self, _session_id:String, _command:String, _args:Value) -> Result<Value, CommonError> {
+		todo!()
+	}
+}
+#[async_trait]
+impl SearchProvider for MountainEnvironment {
+	async fn TextSearch(&self, _query:Value, _options:Value) -> Result<Value, CommonError> { todo!() }
+}
+
 // --- Capability Requirement Implementations (DI) ---
-// This is the core of the DI system. The `MountainEnvironment` itself
-// implements every provider trait, so when an effect requires a capability, we
-// provide a clone of the environment, which satisfies the trait bound.
+// ... (The rest of the file remains the same)
 
 impl Requires<dyn CommandExecutor> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn CommandExecutor> { Arc::new(self.clone()) }
@@ -125,4 +172,16 @@ impl Requires<dyn WorkSpaceProvider> for MountainEnvironment {
 }
 impl Requires<dyn WorkSpaceEditApplier> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn WorkSpaceEditApplier> { Arc::new(self.clone()) }
+}
+impl Requires<dyn ExtensionManagementService> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn ExtensionManagementService> { Arc::new(self.clone()) }
+}
+impl Requires<dyn DebugService> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn DebugService> { Arc::new(self.clone()) }
+}
+impl Requires<dyn KeybindingProvider> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn KeybindingProvider> { Arc::new(self.clone()) }
+}
+impl Requires<dyn SearchProvider> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn SearchProvider> { Arc::new(self.clone()) }
 }
