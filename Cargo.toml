@@ -21,6 +21,10 @@ tauri = { workspace = true, features = [
 ], default-features = false }
 
 tauri-plugin-dialog = { workspace = true }
+tauri-plugin-fs = { workspace = true }
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = { workspace = true }
 
 async-trait = { workspace = true }
 base64 = { workspace = true }
@@ -54,15 +58,12 @@ portable-pty = { workspace = true }
 prost = { workspace = true }
 http = { workspace = true }
 
-# regex = { workspace = true }
-# unbug = { workspace = true }
-
 [features]
-default = ["extension_host_cocoon", "mist_native"]
+default = ["ExtensionHostCocoon", "MistNative"]
 
-extension_host_cocoon = []
+ExtensionHostCocoon = []
 
-mist_native = []
+MistNative = []
 
 Debug = []
 
