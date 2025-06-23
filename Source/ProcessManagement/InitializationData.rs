@@ -79,76 +79,73 @@ pub async fn ConstructSandboxConfiguration(
 	};
 
 	let Versions = json!({
+		"mountain": ApplicationHandle.package_info().version.to_string(),
 
-			"mountain": ApplicationHandle.package_info().version.to_string(),
+		// Explicitly signal we are not in Electron
+		"electron": "0.0.0-tauri",
 
-	// Explicitly signal we are not in Electron
-			"electron": "0.0.0-tauri",
+		// Representative version
+		"chrome": "120.0.0.0",
 
-	// Representative version
-			"chrome": "120.0.0.0",
-
-	// Representative version
-			"node": "18.18.2"
-		});
+		// Representative version
+		"node": "18.18.2"
+	});
 
 	Ok(json!({
+		"windowId": ApplicationHandle.get_webview_window("main").unwrap().label(),
 
-			"windowId": ApplicationHandle.get_webview_window("main").unwrap().label(),
+		// TODO: Persist and read from storage
+		"machineId": Uuid::new_v4().to_string(),
 
-	// TODO: Persist and read from storage
-			"machineId": Uuid::new_v4().to_string(),
+		"sessionId": Uuid::new_v4().to_string(),
 
-			"sessionId": Uuid::new_v4().to_string(),
+		"logLevel": log::max_level() as i32,
 
-			"logLevel": log::max_level() as i32,
+		"userEnv": env::vars().collect::<HashMap<_,_>>(),
 
-			"userEnv": env::vars().collect::<HashMap<_,_>>(),
+		"appRoot": url::Url::from_directory_path(AppRootUri).unwrap().to_string(),
 
-			"appRoot": url::Url::from_directory_path(AppRootUri).unwrap().to_string(),
+		"appName": ApplicationHandle.package_info().name.clone(),
 
-			"appName": ApplicationHandle.package_info().name.clone(),
+		"appUriScheme": "mountain",
 
-			"appUriScheme": "mountain",
+		"appLanguage": "en",
 
-			"appLanguage": "en",
+		"appHost": "desktop",
 
-			"appHost": "desktop",
+		"platform": Platform,
 
-			"platform": Platform,
+		"arch": Arch,
 
-			"arch": Arch,
+		"versions": Versions,
 
-			"versions": Versions,
+		"execPath": env::current_exe().unwrap_or_default().to_string_lossy(),
 
-			"execPath": env::current_exe().unwrap_or_default().to_string_lossy(),
+		"homeDir": url::Url::from_directory_path(HomeDir).unwrap().to_string(),
 
-			"homeDir": url::Url::from_directory_path(HomeDir).unwrap().to_string(),
+		"tmpDir": url::Url::from_directory_path(TmpDir).unwrap().to_string(),
 
-			"tmpDir": url::Url::from_directory_path(TmpDir).unwrap().to_string(),
+		"userDataDir": url::Url::from_directory_path(AppDataDir).unwrap().to_string(),
 
-			"userDataDir": url::Url::from_directory_path(AppDataDir).unwrap().to_string(),
+		"backupPath": url::Url::from_directory_path(BackupPath).unwrap().to_string(),
 
-			"backupPath": url::Url::from_directory_path(BackupPath).unwrap().to_string(),
+		"nls": { "messages": {}, "language": "en", "availableLanguages": { "en": "English" } },
 
-			"nls": { "messages": {}, "language": "en", "availableLanguages": { "en": "English" } },
+		"productConfiguration": {
 
-			"productConfiguration": {
+			"nameShort": "Mountain",
 
-				"nameShort": "Mountain",
+			"nameLong": "Mountain Editor",
 
-				"nameLong": "Mountain Editor",
+			"applicationName": "mountain",
 
-				"applicationName": "mountain",
+			"embedderIdentifier": "mountain-desktop"
+		},
 
-				"embedderIdentifier": "mountain-desktop"
-			},
+		"resourcesPath": PathResolver.resource_dir().unwrap_or_default().to_string_lossy(),
 
-			"resourcesPath": PathResolver.resource_dir().unwrap_or_default().to_string_lossy(),
-
-			"VSCODE_CWD": env::current_dir().unwrap_or_default().to_string_lossy(),
-
-		}))
+		"VSCODE_CWD": env::current_dir().unwrap_or_default().to_string_lossy(),
+	}))
 }
 
 /// Constructs the `IExtensionHostInitData` payload sent to `Cocoon`.
@@ -209,77 +206,76 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	Ok(json!({
 
-			"commit": "dev-commit-hash",
+		"commit": "dev-commit-hash",
 
-			"version": ApplicationHandle.package_info().version.to_string(),
+		"version": ApplicationHandle.package_info().version.to_string(),
 
-			"quality": "development",
+		"quality": "development",
 
-			"parentPid": std::process::id(),
+		"parentPid": std::process::id(),
 
-			"environment": {
+		"environment": {
 
-				"isExtensionDevelopmentDebug": false,
+			"isExtensionDevelopmentDebug": false,
 
-				"appName": "Mountain",
+			"appName": "Mountain",
 
-				"appHost": "desktop",
+			"appHost": "desktop",
 
-				"appUriScheme": "mountain",
+			"appUriScheme": "mountain",
 
-				"appLanguage": "en",
+			"appLanguage": "en",
 
-				"isExtensionTelemetryLoggingOnly": true,
+			"isExtensionTelemetryLoggingOnly": true,
 
-				"appRoot": url::Url::from_directory_path(AppRoot.clone()).unwrap(),
+			"appRoot": url::Url::from_directory_path(AppRoot.clone()).unwrap(),
 
-				"globalStorageHome": url::Url::from_directory_path(GlobalStorage).unwrap(),
+			"globalStorageHome": url::Url::from_directory_path(GlobalStorage).unwrap(),
 
-				"workspaceStorageHome": url::Url::from_directory_path(WorkSpaceStorage).unwrap(),
+			"workspaceStorageHome": url::Url::from_directory_path(WorkSpaceStorage).unwrap(),
 
-				"extensionDevelopmentLocationURI": [],
+			"extensionDevelopmentLocationURI": [],
 
-				"extensionTestsLocationURI": Value::Null,
+			"extensionTestsLocationURI": Value::Null,
 
-				"extensionLogLevel": [["info", "Default"]],
+			"extensionLogLevel": [["info", "Default"]],
 
-			},
+		},
 
-			"workspace": WorkSpaceDTO,
+		"workspace": WorkSpaceDTO,
 
-			"remote": {
+		"remote": {
 
-				"isRemote": false,
+			"isRemote": false,
 
-				"authority": Value::Null,
+			"authority": Value::Null,
 
-				"connectionData": Value::Null,
+			"connectionData": Value::Null,
 
-			},
+		},
 
-			"consoleForward": { "includeStack": true, "logNative": true },
+		"consoleForward": { "includeStack": true, "logNative": true },
 
-			"logLevel": log::max_level() as i32,
+		"logLevel": log::max_level() as i32,
 
-			"logsLocation": url::Url::from_directory_path(LogsLocation).unwrap(),
+		"logsLocation": url::Url::from_directory_path(LogsLocation).unwrap(),
 
-			"telemetryInfo": {
+		"telemetryInfo": {
 
-				"sessionId": Uuid::new_v4().to_string(),
+			"sessionId": Uuid::new_v4().to_string(),
 
-				"machineId": Uuid::new_v4().to_string(),
+			"machineId": Uuid::new_v4().to_string(),
 
-				"firstSessionDate": "2024-01-01T00:00:00.000Z",
+			"firstSessionDate": "2024-01-01T00:00:00.000Z",
 
-				"msftInternal": false
-			},
+			"msftInternal": false
+		},
 
-			"extensions": ExtensionsDTO,
+		"extensions": ExtensionsDTO,
 
-			"autoStart": true,
+		"autoStart": true,
 
-	// UIKind.Desktop
-			"uiKind": 1,
-
-		}))
+		// UIKind.Desktop
+		"uiKind": 1,
+	}))
 }

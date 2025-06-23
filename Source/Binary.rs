@@ -17,7 +17,6 @@
 //! `ApplicationState`, the `ApplicationRunTime`, the `Vine` gRPC server, the
 //! `Cocoon` sidecar process, and the Tauri application window and event loop.
 
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(non_snake_case, non_camel_case_types)]
 
 use std::{
@@ -90,7 +89,7 @@ async fn MountainGetWorkbenchConfiguration(
 
 	State:tauri::State<'_, Arc<ApplicationState>>,
 ) -> Result<serde_json::Value, String> {
-	log::info!("[IPC Bridge] Received MountainGetWorkbenchConfiguration request from Sky.");
+	info!("[IPC Bridge] Received MountainGetWorkbenchConfiguration request from Sky.");
 
 	InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, &State)
 		.await
@@ -194,6 +193,7 @@ pub fn Fn() {
 						WindowBuilder = WindowBuilder.title("Mountain").maximized(true).decorations(false).shadow(true);
 					}
 
+					#[allow(unused_variables)]
 					let MainWindow = match WindowBuilder.build() {
 						Ok(Instance) => Instance,
 
@@ -232,8 +232,8 @@ pub fn Fn() {
 						{
 							let mut ScanPathsGuard = AppStateForSetup.ExtensionScanPaths.lock().unwrap();
 
-							if let Ok(ExecutableDir) = std::env::current_exe() {
-								if let Some(Parent) = ExecutableDir.parent() {
+							if let Ok(ExecutableDirectory) = std::env::current_exe() {
+								if let Some(Parent) = ExecutableDirectory.parent() {
 									ScanPathsGuard.push(Parent.join("../Resources/extensions"));
 
 									ScanPathsGuard.push(Parent.join("extensions"));
@@ -260,15 +260,6 @@ pub fn Fn() {
 
 						info!("[SetupTask] Post-setup initializations complete.");
 					});
-
-					// TEMPORARY DISABLE
-					// #[cfg(desktop)]
-					// {
-
-					// 	ApplicationHandle.plugin(tauri_plugin_updater::Builder::new().build()).
-					// expect("");
-
-					// }
 
 					Ok(())
 				})

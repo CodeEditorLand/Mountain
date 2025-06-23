@@ -5,6 +5,7 @@
 //! the `Binary.rs` file to have a clean entry point that orchestrates these
 //! components.
 
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(non_snake_case, non_camel_case_types)]
 #![feature(trivial_bounds)]
 

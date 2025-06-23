@@ -23,10 +23,6 @@ tauri = { workspace = true, features = [
 tauri-plugin-dialog = { workspace = true }
 tauri-plugin-fs = { workspace = true }
 
-# TEMPORARY DISABLE
-# [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
-# tauri-plugin-updater = { workspace = true }
-
 async-trait = { workspace = true }
 base64 = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
@@ -92,6 +88,7 @@ include = [
 	"capabilities/**/*",
 	"Cargo.toml",
 	"CHANGELOG.md",
+	"gen/**/*",
 	"icons/**/*",
 	"LICENSE",
 	"Mountain.key.pub",
@@ -99,5 +96,6 @@ include = [
 	"README.md",
 	"Source/**/*",
 	"tauri.conf.json",
+	"Test/**/*",
 ]
 version = "0.0.1"

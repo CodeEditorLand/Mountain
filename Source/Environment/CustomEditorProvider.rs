@@ -60,7 +60,6 @@ impl CustomEditorProvider for MountainEnvironment {
 		// 2. Make an RPC call to that sidecar's implementation of
 		//    `$resolveCustomEditor`.
 		// 3. The sidecar will then call back to the host with `setHtml`, `postMessage`,
-
 		//    etc.
 		Err(CommonError::NotImplemented { FeatureName:"ResolveCustomEditor".into() })
 	}

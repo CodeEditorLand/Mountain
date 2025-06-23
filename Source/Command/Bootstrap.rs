@@ -30,14 +30,9 @@ use url::Url;
 
 use crate::{
 	ApplicationState::{ApplicationState::ApplicationState, DTO::TreeViewStateDTO::TreeViewStateDTO},
-
 	Environment::CommandProvider::CommandHandler,
-
 	FileSystem::FileExplorerViewProvider::FileExplorerViewProvider,
-
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	// TEMPORARY DISABLE
-	// Update::UpdateService,
 };
 
 // --- Command Implementations ---
@@ -88,30 +83,6 @@ fn CommandOpenFile(
 		Ok(Value::Null)
 	})
 }
-
-// TEMPORARY DISABLE
-// /// A native command that triggers the application update check.
-// fn CommandCheckForUpdates(
-// 	ApplicationHandle:AppHandle,
-
-// 	_Window:WebviewWindow,
-
-// 	RunTime:Arc<ApplicationRunTime>,
-
-// 	_Argument:Value,
-
-// ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
-// 	Box::pin(async move {
-
-// 		// The `true` here means we will notify the user even if there's no update.
-// 		UpdateService::CheckForUpdates(ApplicationHandle, RunTime, true)
-// 			.await
-// 			.map_err(|e| e.to_string())?;
-
-// 		Ok(Value::Null)
-// 	})
-// }
 
 /// A native command that orchestrates the "Format Document" action.
 fn CommandFormatDocument(
@@ -196,14 +167,6 @@ pub fn RegisterNativeCommands(AppHandle:&AppHandle, ApplicationState:&Arc<Applic
 		"workbench.action.files.openFile".to_string(),
 		CommandHandler::Native(CommandOpenFile),
 	);
-
-	// TEMPORARY DISABLE
-	// CommandRegistry.insert(
-	// 	"mountain.checkForUpdates".to_string(),
-
-	// 	CommandHandler::Native(CommandCheckForUpdates),
-
-	// );
 
 	CommandRegistry.insert(
 		"editor.action.formatDocument".to_string(),
