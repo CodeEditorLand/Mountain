@@ -29,8 +29,8 @@ lazy_static! {
 }
 
 /// Establishes a gRPC connection to a sidecar process.
-pub async fn ConnectToSidecar(SidecarIdentifier:String, Address:String) -> Result<(), VineError> {
-	info!("[VineClient] Connecting to sidecar '{}' at '{}'...", SidecarIdentifier, Address);
+pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Result<(), VineError> {
+	info!("[VineClient] Connecting to sidecar '{}' at '{}'...", SideCarIdentifier, Address);
 
 	let endpoint = format!("http://{}", Address);
 
@@ -38,19 +38,19 @@ pub async fn ConnectToSidecar(SidecarIdentifier:String, Address:String) -> Resul
 
 	let client = CocoonServiceClient::new(channel);
 
-	SIDECAR_CLIENTS.lock().insert(SidecarIdentifier.clone(), client);
+	SIDECAR_CLIENTS.lock().insert(SideCarIdentifier.clone(), client);
 
-	info!("[VineClient] Successfully connected to sidecar '{}'.", SidecarIdentifier);
+	info!("[VineClient] Successfully connected to sidecar '{}'.", SideCarIdentifier);
 
 	Ok(())
 }
 
 /// Sends a fire-and-forget notification to a sidecar.
-pub async fn SendNotification(SidecarIdentifier:String, Method:String, Parameters:Value) -> Result<(), VineError> {
+pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameters:Value) -> Result<(), VineError> {
 	let mut client = {
 		let guard = SIDECAR_CLIENTS.lock();
 
-		guard.get(&SidecarIdentifier).cloned()
+		guard.get(&SideCarIdentifier).cloned()
 	};
 
 	if let Some(ref mut client) = client {
@@ -60,13 +60,13 @@ pub async fn SendNotification(SidecarIdentifier:String, Method:String, Parameter
 
 		Ok(())
 	} else {
-		Err(VineError::ClientNotConnected(SidecarIdentifier))
+		Err(VineError::ClientNotConnected(SideCarIdentifier))
 	}
 }
 
 /// Sends a request to a sidecar and awaits a response.
 pub async fn SendRequest(
-	SidecarIdentifier:&str,
+	SideCarIdentifier:&str,
 
 	Method:String,
 
@@ -76,13 +76,13 @@ pub async fn SendRequest(
 ) -> Result<Value, VineError> {
 	debug!(
 		"[VineClient] Sending request '{}' to sidecar '{}'...",
-		Method, SidecarIdentifier
+		Method, SideCarIdentifier
 	);
 
 	let mut client = {
 		let guard = SIDECAR_CLIENTS.lock();
 
-		guard.get(SidecarIdentifier).cloned()
+		guard.get(SideCarIdentifier).cloned()
 	};
 
 	if let Some(ref mut client) = client {
@@ -109,7 +109,7 @@ pub async fn SendRequest(
 				if let Some(rpc_error) = response_data.error {
 					error!(
 						"[VineClient] Received RPC error from sidecar '{}': {}",
-						SidecarIdentifier, rpc_error.message
+						SideCarIdentifier, rpc_error.message
 					);
 
 					Err(VineError::RPCError(rpc_error.message))
@@ -123,17 +123,17 @@ pub async fn SendRequest(
 			Ok(Err(status)) => {
 				error!(
 					"[VineClient] gRPC status error from sidecar '{}': {}",
-					SidecarIdentifier, status
+					SideCarIdentifier, status
 				);
 
 				Err(VineError::from(status))
 			},
 
 			Err(_) => {
-				error!("[VineClient] Request to sidecar '{}' timed out.", SidecarIdentifier);
+				error!("[VineClient] Request to sidecar '{}' timed out.", SideCarIdentifier);
 
 				Err(VineError::RequestTimeout {
-					SidecarIdentifier:SidecarIdentifier.to_string(),
+					SideCarIdentifier:SideCarIdentifier.to_string(),
 
 					MethodName:Method,
 
@@ -142,6 +142,6 @@ pub async fn SendRequest(
 			},
 		}
 	} else {
-		Err(VineError::ClientNotConnected(SidecarIdentifier.to_string()))
+		Err(VineError::ClientNotConnected(SideCarIdentifier.to_string()))
 	}
 }

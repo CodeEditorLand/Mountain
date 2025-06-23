@@ -14,25 +14,25 @@ use crate::Vine::Client;
 #[async_trait]
 impl IPCProvider for MountainEnvironment {
 	/// Sends a fire-and-forget notification to a specified sidecar.
-	async fn SendNotificationToSidecar(
+	async fn SendNotificationToSideCar(
 		&self,
 
-		SidecarIdentifier:String,
+		SideCarIdentifier:String,
 
 		Method:String,
 
 		Parameters:Value,
 	) -> Result<(), CommonError> {
-		Client::SendNotification(SidecarIdentifier, Method, Parameters)
+		Client::SendNotification(SideCarIdentifier, Method, Parameters)
 			.await
 			.map_err(|e| CommonError::IPCError { Description:e.to_string() })
 	}
 
 	/// Sends a request to a specified sidecar and awaits a response.
-	async fn SendRequestToSidecar(
+	async fn SendRequestToSideCar(
 		&self,
 
-		SidecarIdentifier:String,
+		SideCarIdentifier:String,
 
 		Method:String,
 
@@ -40,7 +40,7 @@ impl IPCProvider for MountainEnvironment {
 
 		TimeoutMilliseconds:u64,
 	) -> Result<Value, CommonError> {
-		Client::SendRequest(&SidecarIdentifier, Method, Parameters, TimeoutMilliseconds)
+		Client::SendRequest(&SideCarIdentifier, Method, Parameters, TimeoutMilliseconds)
 			.await
 			.map_err(|e| CommonError::IPCError { Description:e.to_string() })
 	}

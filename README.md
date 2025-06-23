@@ -111,14 +111,14 @@ graph LR
 
     subgraph "Clients"
         WindUI["Wind/Sky User Interface (WebView)"]:::wind
-        CocoonSidecar["Cocoon Extension Host (Node.js)"]:::cocoon
+        CocoonSideCar["Cocoon Extension Host (Node.js)"]:::cocoon
     end
 
     TauriRuntime -- Hosts --> WindUI
     WindUI -- Tauri Command --> TrackDispatcher
     TrackDispatcher -- Tauri Events --> WindUI
 
-    VinegRPC -- gRPC Protocol <--> CocoonSidecar; class VinegRPC,CocoonSidecar IPC
+    VinegRPC -- gRPC Protocol <--> CocoonSideCar; class VinegRPC,CocoonSideCar IPC
     VinegRPC -- Forwards requests to --> TrackDispatcher
 
     NativeHandlers -- Implements traits from --> CommonCrate

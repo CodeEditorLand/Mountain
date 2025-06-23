@@ -43,7 +43,7 @@ pub enum CommandHandler<R:Runtime + 'static> {
 	),
 
 	/// A command implemented in an extension and proxied to a sidecar.
-	Proxied { SidecarIdentifier:String, CommandIdentifier:String },
+	Proxied { SideCarIdentifier:String, CommandIdentifier:String },
 }
 
 impl<R:Runtime> Clone for CommandHandler<R> {
@@ -51,9 +51,9 @@ impl<R:Runtime> Clone for CommandHandler<R> {
 		match self {
 			Self::Native(f) => Self::Native(*f),
 
-			Self::Proxied { SidecarIdentifier, CommandIdentifier } => {
+			Self::Proxied { SideCarIdentifier, CommandIdentifier } => {
 				Self::Proxied {
-					SidecarIdentifier:SidecarIdentifier.clone(),
+					SideCarIdentifier:SideCarIdentifier.clone(),
 
 					CommandIdentifier:CommandIdentifier.clone(),
 				}
@@ -95,17 +95,17 @@ impl CommandExecutor for MountainEnvironment {
 					})
 			},
 
-			Some(CommandHandler::Proxied { SidecarIdentifier, CommandIdentifier: ProxiedCommandIdentifier }) => {
+			Some(CommandHandler::Proxied { SideCarIdentifier, CommandIdentifier: ProxiedCommandIdentifier }) => {
 				debug!(
 					"[CommandProvider] Executing PROXIED command '{}' on sidecar '{}'.",
-					CommandIdentifier, SidecarIdentifier
+					CommandIdentifier, SideCarIdentifier
 				);
 
 				let RPCParameters = json!([ProxiedCommandIdentifier, Argument]);
 
 				let RPCMethod = format!("{}$ExecuteContributedCommand", ProxyTarget::ExtHostCommands.GetTargetPrefix());
 
-				Client::SendRequest(&SidecarIdentifier, RPCMethod, RPCParameters, 30000)
+				Client::SendRequest(&SideCarIdentifier, RPCMethod, RPCParameters, 30000)
 					.await
 					.map_err(|e| CommonError::IPCError { Description:e.to_string() })
 			},
@@ -119,10 +119,10 @@ impl CommandExecutor for MountainEnvironment {
 	}
 
 	/// Registers a command contributed by a sidecar process.
-	async fn RegisterCommand(&self, SidecarIdentifier:String, CommandIdentifier:String) -> Result<(), CommonError> {
+	async fn RegisterCommand(&self, SideCarIdentifier:String, CommandIdentifier:String) -> Result<(), CommonError> {
 		info!(
 			"[CommandProvider] Registering PROXY command '{}' from sidecar '{}'",
-			CommandIdentifier, SidecarIdentifier
+			CommandIdentifier, SideCarIdentifier
 		);
 
 		let mut Registry = self
@@ -133,14 +133,14 @@ impl CommandExecutor for MountainEnvironment {
 
 		Registry.insert(
 			CommandIdentifier.clone(),
-			CommandHandler::Proxied { SidecarIdentifier, CommandIdentifier },
+			CommandHandler::Proxied { SideCarIdentifier, CommandIdentifier },
 		);
 
 		Ok(())
 	}
 
 	/// Unregisters a previously registered command.
-	async fn UnregisterCommand(&self, _SidecarIdentifier:String, CommandIdentifier:String) -> Result<(), CommonError> {
+	async fn UnregisterCommand(&self, _SideCarIdentifier:String, CommandIdentifier:String) -> Result<(), CommonError> {
 		info!("[CommandProvider] Unregistering command '{}'", CommandIdentifier);
 
 		self.ApplicationState

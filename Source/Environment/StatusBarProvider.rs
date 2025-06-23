@@ -98,7 +98,7 @@ impl StatusBarProvider for MountainEnvironment {
 
 		// This is a "reverse" call, where the host needs data from the sidecar.
 		let RPCResponse = IPCProvider
-			.SendRequestToSidecar(
+			.SendRequestToSideCar(
 				"cocoon-main".to_string(),
 				"$ProvideStatusbarTooltip".to_string(),
 				json!([EntryIdentifier]),

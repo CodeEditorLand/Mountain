@@ -58,7 +58,7 @@ impl ApplicationRunTime {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
 
 		if let Err(e) = IPCProvider
-			.SendNotificationToSidecar("cocoon-main".to_string(), "$shutdown".to_string(), serde_json::Value::Null)
+			.SendNotificationToSideCar("cocoon-main".to_string(), "$shutdown".to_string(), serde_json::Value::Null)
 			.await
 		{
 			error!("[ApplicationRunTime] Failed to send shutdown signal to Cocoon: {}", e);

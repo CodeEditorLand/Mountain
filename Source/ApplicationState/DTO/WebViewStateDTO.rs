@@ -33,7 +33,7 @@ pub struct WebViewStateDTO {
 	pub PanelOptions: Value,
 
 	/// The identifier of the sidecar process that owns this WebView.
-	pub SidecarIdentifier:String,
+	pub SideCarIdentifier:String,
 
 	/// The identifier of the extension that owns this WebView.
 	pub ExtensionIdentifier:String,

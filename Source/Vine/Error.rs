@@ -13,7 +13,7 @@ use thiserror::Error;
 pub enum VineError {
 	/// A gRPC client channel for the specified sidecar could not be found or
 	/// is not ready.
-	#[error("Sidecar '{0}' not found or its gRPC client channel is not ready.")]
+	#[error("SideCar '{0}' not found or its gRPC client channel is not ready.")]
 	ClientNotConnected(String),
 
 	/// An RPC call to a sidecar failed with a specific gRPC status.
@@ -30,9 +30,9 @@ pub enum VineError {
 
 	/// A request did not receive a response within the specified timeout.
 	#[error(
-		"Request to sidecar '{SidecarIdentifier}' (method: '{MethodName}') timed out after {TimeoutMilliseconds}ms"
+		"Request to sidecar '{SideCarIdentifier}' (method: '{MethodName}') timed out after {TimeoutMilliseconds}ms"
 	)]
-	RequestTimeout { SidecarIdentifier:String, MethodName:String, TimeoutMilliseconds:u64 },
+	RequestTimeout { SideCarIdentifier:String, MethodName:String, TimeoutMilliseconds:u64 },
 
 	/// A shared state mutex was "poisoned," indicating a panic.
 	#[error("Internal state lock poisoned: {0}")]

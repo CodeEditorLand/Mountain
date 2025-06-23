@@ -42,7 +42,7 @@ impl DebugService for MountainEnvironment {
 
 		_ProviderHandle:u32,
 
-		_SidecarIdentifier:String,
+		_SideCarIdentifier:String,
 	) -> Result<(), CommonError> {
 		// TODO: Store this registration in ApplicationState
 		info!(
@@ -60,7 +60,7 @@ impl DebugService for MountainEnvironment {
 
 		_FactoryHandle:u32,
 
-		_SidecarIdentifier:String,
+		_SideCarIdentifier:String,
 	) -> Result<(), CommonError> {
 		// TODO: Store this registration in ApplicationState
 		info!(
@@ -87,7 +87,7 @@ impl DebugService for MountainEnvironment {
 		info!("[DebugProvider] Resolving debug configuration...");
 
 		let ResolvedConfig = IPCProvider
-			.SendRequestToSidecar(
+			.SendRequestToSideCar(
 				"cocoon-main".into(),
 				"$resolveDebugConfiguration".into(),
 				json!([DebugType, Configuration]),
@@ -99,7 +99,7 @@ impl DebugService for MountainEnvironment {
 		info!("[DebugProvider] Creating debug adapter descriptor...");
 
 		let Descriptor = IPCProvider
-			.SendRequestToSidecar(
+			.SendRequestToSideCar(
 				"cocoon-main".into(),
 				"$createDebugAdapterDescriptor".into(),
 				json!([DebugType, &ResolvedConfig]),

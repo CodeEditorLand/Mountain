@@ -123,7 +123,7 @@ impl TerminalProvider for MountainEnvironment {
 						let Payload = json!([TermIDForOutput, DataString]);
 
 						if let Err(e) = IPCProvider
-							.SendNotificationToSidecar(
+							.SendNotificationToSideCar(
 								"cocoon-main".into(),
 								"$acceptTerminalProcessData".into(),
 								Payload,
@@ -155,7 +155,7 @@ impl TerminalProvider for MountainEnvironment {
 			let IPCProvider:Arc<dyn IPCProvider> = EnvironmentClone.Require();
 
 			if let Err(e) = IPCProvider
-				.SendNotificationToSidecar(
+				.SendNotificationToSideCar(
 					"cocoon-main".into(),
 					"$acceptTerminalProcessExit".into(),
 					json!([TermIDForExit]),

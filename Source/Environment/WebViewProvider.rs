@@ -54,7 +54,7 @@ impl WebViewProvider for MountainEnvironment {
 			PanelOptions:PanelOptionsValue,
 
 			// TODO: This should come from request context
-			SidecarIdentifier:"cocoon-main".to_string(),
+			SideCarIdentifier:"cocoon-main".to_string(),
 
 			ExtensionIdentifier:ExtensionDataValue
 				.get("id")

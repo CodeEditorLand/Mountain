@@ -26,7 +26,7 @@ pub struct ProviderRegistrationDTO {
 	pub Selector:Value,
 
 	/// The identifier of the sidecar process that hosts this provider's logic.
-	pub SidecarIdentifier:String,
+	pub SideCarIdentifier:String,
 
 	/// The identifier of the extension that contributed this provider.
 	pub ExtensionIdentifier:Value,

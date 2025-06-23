@@ -27,7 +27,7 @@ pub struct CustomDocumentStateDTO {
 
 	/// The identifier of the sidecar process where the custom editor provider
 	/// lives.
-	pub SidecarIdentifier:String,
+	pub SideCarIdentifier:String,
 
 	/// A flag indicating if the document is currently editable by the user.
 	pub IsEditable:bool,

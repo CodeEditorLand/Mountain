@@ -46,7 +46,7 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 	async fn RegisterProvider(
 		&self,
 
-		SidecarIdentifier:String,
+		SideCarIdentifier:String,
 
 		ProviderType:ProviderType,
 
@@ -60,7 +60,7 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 		info!(
 			"[LangFeatureProvider] Registering {:?} provider from '{}' with new handle {}",
-			ProviderType, SidecarIdentifier, Handle
+			ProviderType, SideCarIdentifier, Handle
 		);
 
 		let NewRegistration = ProviderRegistrationDTO {
@@ -70,7 +70,7 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 
 			Selector:SelectorDTO,
 
-			SidecarIdentifier,
+			SideCarIdentifier,
 
 			Options:OptionsDTO,
 
@@ -315,7 +315,7 @@ async fn InvokeProvider<TResponse:DeserializeOwned>(
 		let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
 		let Response = IPCProvider
-			.SendRequestToSidecar(Provider.SidecarIdentifier, RPCMethod, FinalArguments, 5000)
+			.SendRequestToSideCar(Provider.SideCarIdentifier, RPCMethod, FinalArguments, 5000)
 			.await?;
 
 		if Response.is_null() {

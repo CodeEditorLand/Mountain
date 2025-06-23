@@ -80,7 +80,7 @@ impl MountainService for MountainVinegRPCService {
 
 		trace!("[VineServer] Params for [ID: {}]: {:?}", RequestIdentifier, ParametersValue);
 
-		let DispatchResult = Track::DispatchLogic::DispatchSidecarRequest(
+		let DispatchResult = Track::DispatchLogic::DispatchSideCarRequest(
 			self.ApplicationHandle.clone(),
 			self.RunTime.clone(),
 			// In the future, this could come from connection metadata.

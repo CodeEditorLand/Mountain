@@ -284,7 +284,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 
 		// Language Features
 		"$languageFeatures:registerProvider" => {
-			let SidecarID = Parameter!(ParametersArray, 0, String)?;
+			let SideCarID = Parameter!(ParametersArray, 0, String)?;
 
 			let ProviderType = Parameter!(ParametersArray, 1, ProviderType)?;
 
@@ -299,7 +299,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					let provider:Arc<dyn LanguageFeatureProviderRegistry> = runtime.Environment.Require();
 
 					let handle = provider
-						.RegisterProvider(SidecarID, ProviderType, Selector, ExtensionID, Options)
+						.RegisterProvider(SideCarID, ProviderType, Selector, ExtensionID, Options)
 						.await
 						.map_err(|e| e.to_string())?;
 
@@ -604,11 +604,11 @@ pub fn CreateEffectForRequest<R:Runtime>(
 		"Command.GetAll" => Map(GetAllCommands()),
 
 		"Command.Register" => {
-			let SidecarID = Parameter!(ParametersArray, 0, String)?;
+			let SideCarID = Parameter!(ParametersArray, 0, String)?;
 
 			let CommandID = Parameter!(ParametersArray, 1, String)?;
 
-			Map(RegisterCommand(SidecarID, CommandID))
+			Map(RegisterCommand(SideCarID, CommandID))
 		},
 
 		// Configuration

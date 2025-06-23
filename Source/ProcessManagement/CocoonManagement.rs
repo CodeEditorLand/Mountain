@@ -38,7 +38,7 @@ pub async fn InitializeCocoon(ApplicationHandle:&AppHandle, Environment:&Arc<Mou
 		let EnvironmentClone = Environment.clone();
 
 		tokio::spawn(async move {
-			if let Err(e) = LaunchAndManageCocoonSidecar(ApplicationHandleClone, EnvironmentClone).await {
+			if let Err(e) = LaunchAndManageCocoonSideCar(ApplicationHandleClone, EnvironmentClone).await {
 				error!("[CocoonManagement] CRITICAL: Failed to launch and manage Cocoon: {}", e);
 			}
 		});
@@ -51,12 +51,12 @@ pub async fn InitializeCocoon(ApplicationHandle:&AppHandle, Environment:&Arc<Mou
 }
 
 /// Spawns the Cocoon process and manages its communication and handshake.
-async fn LaunchAndManageCocoonSidecar(
+async fn LaunchAndManageCocoonSideCar(
 	ApplicationHandle:AppHandle,
 
 	Environment:Arc<MountainEnvironment>,
 ) -> Result<(), CommonError> {
-	let SidecarIdentifier = "cocoon-main".to_string();
+	let SideCarIdentifier = "cocoon-main".to_string();
 
 	let path_resolver:PathResolver<Wry> = ApplicationHandle.path().clone();
 
@@ -127,7 +127,7 @@ async fn LaunchAndManageCocoonSidecar(
 	sleep(Duration::from_millis(2000)).await;
 
 	// Assuming the sidecar listens on a standard gRPC port.
-	Vine::Client::ConnectToSidecar(SidecarIdentifier.clone(), "127.0.0.1:50052".to_string())
+	Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), "127.0.0.1:50052".to_string())
 		.await
 		.map_err(|e| CommonError::IPCError { Description:e.to_string() })?;
 
@@ -136,7 +136,7 @@ async fn LaunchAndManageCocoonSidecar(
 	let MainInitializationData = InitializationData::ConstructExtensionHostInitializationData(&Environment).await?;
 
 	let Response = Vine::Client::SendRequest(
-		&SidecarIdentifier,
+		&SideCarIdentifier,
 		"InitializeExtensionHost".to_string(),
 		MainInitializationData,
 		60000,

@@ -56,12 +56,12 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 
 /// The primary dispatcher for requests originating from a `Cocoon` sidecar via
 /// gRPC. This routes RPC calls to the correct effect-based implementation.
-pub async fn DispatchSidecarRequest<R:Runtime>(
+pub async fn DispatchSideCarRequest<R:Runtime>(
 	ApplicationHandle:AppHandle<R>,
 
 	RunTime:Arc<ApplicationRunTime>,
 
-	SidecarIdentifier:String,
+	SideCarIdentifier:String,
 
 	MethodName:String,
 
@@ -69,7 +69,7 @@ pub async fn DispatchSidecarRequest<R:Runtime>(
 ) -> Result<Value, String> {
 	debug!(
 		"[DispatchLogic] Dispatching sidecar request from '{}': {}",
-		SidecarIdentifier, MethodName
+		SideCarIdentifier, MethodName
 	);
 
 	match EffectCreation::CreateEffectForRequest(&ApplicationHandle, &MethodName, Parameters) {
@@ -139,7 +139,7 @@ pub async fn MountainWebviewPostMessageFromGuest(
 	};
 
 	let RPCResult = IPC
-		.SendNotificationToSidecar("cocoon-main".into(), "$onDidReceiveMessage".into(), json!([Handle, Message]))
+		.SendNotificationToSideCar("cocoon-main".into(), "$onDidReceiveMessage".into(), json!([Handle, Message]))
 		.await;
 
 	if let Err(e) = RPCResult {

@@ -94,7 +94,7 @@ impl DocumentProvider for MountainEnvironment {
 			let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 
 			let RpcResult = IPCProvider
-				.SendRequestToSidecar(
+				.SendRequestToSideCar(
 					// In a multi-host world, we'd look this up
 					"cocoon-main".to_string(),
 					"$provideTextDocumentContent".to_string(),
@@ -305,7 +305,7 @@ async fn NotifyModelAdded(Environment:&MountainEnvironment, DocumentStateDTO:&Va
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
 	if let Err(e) = IPCProvider
-		.SendNotificationToSidecar("cocoon-main".to_string(), "$acceptModelAdded".to_string(), Payload)
+		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelAdded".to_string(), Payload)
 		.await
 	{
 		error!("[DocumentProvider] Failed to send $acceptModelAdded for {}: {}", URIString, e);
@@ -325,7 +325,7 @@ async fn NotifyModelChanged(Environment:&MountainEnvironment, URI:&Url, NewVersi
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
 	if let Err(e) = IPCProvider
-		.SendNotificationToSidecar("cocoon-main".to_string(), "$acceptModelChanged".to_string(), Payload)
+		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelChanged".to_string(), Payload)
 		.await
 	{
 		error!("[DocumentProvider] Failed to send $acceptModelChanged for {}: {}", URI, e);
@@ -343,7 +343,7 @@ async fn NotifyModelSaved(Environment:&MountainEnvironment, URI:&Url) {
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
 	if let Err(e) = IPCProvider
-		.SendNotificationToSidecar("cocoon-main".to_string(), "$acceptModelSaved".to_string(), Payload)
+		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelSaved".to_string(), Payload)
 		.await
 	{
 		error!("[DocumentProvider] Failed to send $acceptModelSaved for {}: {}", URI, e);
@@ -361,7 +361,7 @@ pub async fn NotifyModelRemoved(Environment:&MountainEnvironment, URI:&Url) {
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
 	if let Err(e) = IPCProvider
-		.SendNotificationToSidecar("cocoon-main".to_string(), "$acceptModelRemoved".to_string(), Payload)
+		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelRemoved".to_string(), Payload)
 		.await
 	{
 		error!("[DocumentProvider] Failed to send $acceptModelRemoved for {}: {}", URI, e);
