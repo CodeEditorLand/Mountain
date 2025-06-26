@@ -31,8 +31,9 @@ frontend and the `Cocoon` extension host.
     filesystem I/O, process management, secure storage, and more.
 3.  **Orchestrate Sidecars:** Reliably launch, manage, and communicate with the
     `Cocoon` (Node.js) extension host sidecar via a robust gRPC interface.
-4.  **Power the User Interface:** Serve as the backend for the `Wind` User Interface layer, responding
-    to requests via Tauri commands and pushing state updates via Tauri events.
+4.  **Power the User Interface:** Serve as the backend for the `Wind` User
+    Interface layer, responding to requests via Tauri commands and pushing state
+    updates via Tauri events.
 
 ---
 
@@ -53,21 +54,21 @@ frontend and the `Cocoon` extension host.
 - **Secure Storage Integration:** Leverages the native OS keychain via the
   `keyring` crate to securely store sensitive data like authentication tokens.
 - **Robust Command Dispatching:** A central `Track` dispatcher intelligently
-  routes all incoming requests from the User Interface (`Wind`) and extensions (`Cocoon`) to
-  the appropriate native Handler or effects.
+  routes all incoming requests from the User Interface (`Wind`) and extensions
+  (`Cocoon`) to the appropriate native Handler or effects.
 
 ---
 
 ## Core Architecture Principles 🏗️
 
-| Principle                       | Description                                                                                                                                        | Key Components Involved                             |
-| :------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------- |
-| **Implementation of Contracts** | Faithfully implement the abstract service `trait`s defined in the `Common` crate, providing the concrete logic for the application's architecture. | `Environment/*` providers                           |
-| **Separation of Concerns**      | Isolate business logic in `Handler` modules, keeping the `Environment` provider implementations clean and focused on delegation.                  | `Environment/*`, `Handler/*`                       |
-| **Declarative Logic**           | Express all operations as `ActionEffect`s, which are executed by the `ApplicationRunTime`. This makes logic composable, testable, and robust.              | `RunTime/*`, `track/*`, `Common::effect`            |
-| **Centralized State**           | Maintain a single, thread-safe `ApplicationState` struct managed by Tauri to ensure data consistency across the entire application.                | `app_state/*`                                       |
-| **Secure & Performant IPC**     | Utilize gRPC for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                           | `Vine/*`                                            |
-| **User Interface-Backend Decoupling**       | Interact with the `Wind` frontend exclusively through asynchronous Tauri commands and events, ensuring the backend is User Interface-agnostic.                 | `main.rs` (invoke handler), `Handler/*` (emitters) |
+| Principle                             | Description                                                                                                                                        | Key Components Involved                            |
+| :------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------- |
+| **Implementation of Contracts**       | Faithfully implement the abstract service `trait`s defined in the `Common` crate, providing the concrete logic for the application's architecture. | `Environment/*` providers                          |
+| **Separation of Concerns**            | Isolate business logic in `Handler` modules, keeping the `Environment` provider implementations clean and focused on delegation.                   | `Environment/*`, `Handler/*`                       |
+| **Declarative Logic**                 | Express all operations as `ActionEffect`s, which are executed by the `ApplicationRunTime`. This makes logic composable, testable, and robust.      | `RunTime/*`, `track/*`, `Common::effect`           |
+| **Centralized State**                 | Maintain a single, thread-safe `ApplicationState` struct managed by Tauri to ensure data consistency across the entire application.                | `app_state/*`                                      |
+| **Secure & Performant IPC**           | Utilize gRPC for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                           | `Vine/*`                                           |
+| **User Interface-Backend Decoupling** | Interact with the `Wind` frontend exclusively through asynchronous Tauri commands and events, ensuring the backend is User Interface-agnostic.     | `main.rs` (invoke handler), `Handler/*` (emitters) |
 
 ---
 
@@ -76,8 +77,8 @@ frontend and the `Cocoon` extension host.
 To understand how `Mountain`'s internal components are structured and how they
 implement the application's core logic, please refer to the detailed technical
 breakdown in [`docs/Deep Dive.md`](docs/Deep%20Dive.md). This document explains
-the roles of the `ApplicationRunTime`, `ApplicationState`, `Handler`, `Environment`,
-and the `Vine` gRPC layer.
+the roles of the `ApplicationRunTime`, `ApplicationState`, `Handler`,
+`Environment`, and the `Vine` gRPC layer.
 
 ---
 

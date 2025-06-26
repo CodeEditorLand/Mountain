@@ -50,5 +50,7 @@ need to be polluted with temporary files.
 
 ---
 
-**Parent Project**: [`Mountain`](https://github.com/CodeEditorLand/Mountain/tree/Current/README.md) | **Related Directory**:
+**Parent Project**:
+[`Mountain`](https://github.com/CodeEditorLand/Mountain/tree/Current/README.md)
+| **Related Directory**:
 [`SideCar`](https://github.com/CodeEditorLand/SideCar/tree/Current/README.md)

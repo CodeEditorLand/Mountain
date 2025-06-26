@@ -2,8 +2,8 @@
 // @description This file demonstrates how to write unit tests for Mountain's
 // handler logic using the `mockall` crate for dependency mocking.
 
-// This code would live in a file under the `tests/` directory in the Mountain crate.
-// It requires `mockall` to be added as a `[dev-dependency]`.
+// This code would live in a file under the `tests/` directory in the Mountain
+// crate. It requires `mockall` to be added as a `[dev-dependency]`.
 
 #[cfg(test)]
 mod tests {
@@ -12,8 +12,8 @@ mod tests {
 	use Common::{
 		error::CommonError,
 		fs::{
-			FileSystemReader,
 			DTO::{FileSystemStatDTO, FileTypeDTO},
+			FileSystemReader,
 		},
 	};
 	use async_trait::async_trait;
@@ -30,8 +30,8 @@ mod tests {
 
 	// --- The Function/Handler Under Test ---
 	// This is a simplified handler that depends on any type that implements
-	// `FileSystemReader`. Thanks to generics, we can pass in a real FileSystemReader or our mock
-	// one.
+	// `FileSystemReader`. Thanks to generics, we can pass in a real
+	// FileSystemReader or our mock one.
 	async fn LogicThatReadsAFile(
 		Reader:Arc<dyn TestFileSystemReader + Send + Sync>,
 		Path:PathBuf,
