@@ -4,6 +4,8 @@
 //! `MountainEnvironment`, providing the concrete logic for all filesystem
 //! operations.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::path::PathBuf;
 
 use Common::{
@@ -176,7 +178,7 @@ impl FileSystemWriter for MountainEnvironment {
 			},
 
 			// Idempotent success
-			Err(Error) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+			Err(Error) if Error.kind() == std::io::ErrorKind::NotFound => Ok(()),
 
 			Err(Error) => Err(CommonError::FromStandardIOError(Error, Path.clone(), "Delete.Stat")),
 		}

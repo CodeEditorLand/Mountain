@@ -7,54 +7,50 @@
 
 use std::sync::Arc;
 
+use Common::{Environment::Requires::Requires, TreeView::TreeViewProvider::TreeViewProvider as CommonTreeViewProvider};
 use serde_json::{Value, json};
-use tauri::{AppHandle, State, command};
+use tauri::{AppHandle, Manager, State, Wry, command};
 
-use crate::ApplicationState::ApplicationState::ApplicationState;
+use crate::{
+	ApplicationState::ApplicationState::ApplicationState,
+	Environment::MountainEnvironment::MountainEnvironment,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
-/// A specific Tauri command handler for the UI to fetch the children of a
-/// tree view node.
+/// A specific Tauri command handler for the UI to fetch the children of a tree
+/// view node. This handler dispatches to the correct provider (native or
+/// proxied).
 #[command]
 pub async fn GetTreeViewChildren(
-	_AppicationHandle:AppHandle,
+	ApplicationHandle:AppHandle<Wry>,
 
-	state:State<'_, Arc<ApplicationState>>,
+	_State:State<'_, Arc<ApplicationState>>,
 
-	view_id:String,
+	ViewId:String,
 
-	element_handle:Option<String>,
+	ElementHandle:Option<String>,
 ) -> Result<Value, String> {
 	log::debug!(
 		"[DispatchLogic] Getting TreeView children for '{}', element: {:?}",
-		view_id,
-		element_handle
+		ViewId,
+		ElementHandle
 	);
 
-	let provider = {
-		let tree_views = state.ActiveTreeViews.lock().map_err(|Error| Error.to_string())?;
+	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-		// Note: This logic for getting a provider needs to be more robust.
-		// Assuming a single native provider for now.
-		tree_views.get(&view_id).and_then(|v| v.Provider.clone())
-	};
+	let Environment:Arc<MountainEnvironment> = RunTime.Environment.clone();
 
-	if let Some(provider) = provider {
-		match provider.GetChildren(view_id, element_handle).await {
-			Ok(children) => Ok(json!(children)),
+	let TreeProvider:Arc<dyn CommonTreeViewProvider> = Environment.Require();
 
-			Err(Error) => {
-				let err_msg = format!("Failed to get children for tree view: {}", Error);
+	match TreeProvider.GetChildren(ViewId, ElementHandle).await {
+		Ok(Children) => Ok(json!(Children)),
 
-				log::error!("{}", err_msg);
+		Err(Error) => {
+			let ErrorMessage = format!("Failed to get children for tree view: {}", Error);
 
-				Err(err_msg)
-			},
-		}
-	} else {
-		let err_msg = format!("No provider found for tree view '{}'", view_id);
+			log::error!("{}", ErrorMessage);
 
-		log::error!("{}", err_msg);
-
-		Err(err_msg)
+			Err(ErrorMessage)
+		},
 	}
 }

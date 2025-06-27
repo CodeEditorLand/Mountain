@@ -4,10 +4,8 @@
 //!
 //! This module contains the `MountainEnvironment` struct and all of its
 //! implementations of the provider traits defined in the `Common` crate. Each
-//! provider implementation is organized into its own file (e.g.,
-
-//! `CommandProvider.rs`, `FileSystemProvider.rs`) for clarity and separation
-//! of concerns.
+//! provider implementation is organized into its own file for clarity and
+//! separation of concerns.
 
 #![allow(non_snake_case, non_camel_case_types)]
 

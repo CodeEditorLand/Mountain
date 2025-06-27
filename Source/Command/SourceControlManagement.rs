@@ -10,24 +10,21 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use tauri::{State, command};
 
-use crate::ApplicationState::ApplicationState::ApplicationState;
+use crate::ApplicationState::ApplicationState::{ApplicationState, MapLockError};
 
 #[command]
-pub async fn GetAllSourceControlManagementState(state:State<'_, Arc<ApplicationState>>) -> Result<Value, String> {
-	log::debug!("[SourceControlManagement Command] Getting all SourceControlManagement state for UI.");
+pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationState>>) -> Result<Value, String> {
+	log::debug!("[SourceControlManagement Command] Getting all SCM state for UI.");
 
-	let providers = state.SourceControlManagementProviders.lock().unwrap().clone();
+	let Providers = State.SourceControlManagementProviders.lock().map_err(MapLockError)?.clone();
 
-	let groups = state.SourceControlManagementGroups.lock().unwrap().clone();
+	let Groups = State.SourceControlManagementGroups.lock().map_err(MapLockError)?.clone();
 
-	let resources = state.SourceControlManagementResources.lock().unwrap().clone();
+	let Resources = State.SourceControlManagementResources.lock().map_err(MapLockError)?.clone();
 
 	Ok(json!({
-
-		"providers": providers,
-
-		"groups": groups,
-
-		"resources": resources
+		"providers": Providers,
+		"groups": Groups,
+		"resources": Resources,
 	}))
 }

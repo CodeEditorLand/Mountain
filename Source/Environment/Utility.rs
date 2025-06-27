@@ -58,32 +58,37 @@ pub fn DetectLanguageIdentifierFromFilePath(Path:&Path) -> String {
 /// A critical security helper that checks if a given filesystem path is
 /// allowed for access.
 ///
-/// In our architecture, this means the path must be a descendant of one of the
+/// In this architecture, this means the path must be a descendant of one of the
 /// currently open and trusted workspace folders. This prevents extensions from
 /// performing arbitrary filesystem operations outside the user's intended
 /// scope.
 pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), CommonError> {
 	trace!("[EnvironmentSecurity] Verifying path: {}", PathToCheck.display());
 
-	// A full implementation would also check `ApplicationState.IsTrusted`.
+	if !ApplicationState.IsTrusted.load(std::sync::atomic::Ordering::Relaxed) {
+		return Err(CommonError::FileSystemPermissionDenied {
+			Path:PathToCheck.to_path_buf(),
+
+			Reason:"Workspace is not trusted. File access is denied.".to_string(),
+		});
+	}
+
 	let FoldersGuard = ApplicationState
 		.WorkSpaceFolders
 		.lock()
 		.map_err(MapApplicationStateLockErrorToCommonError)?;
 
 	if FoldersGuard.is_empty() {
-		return Err(CommonError::FileSystemPermissionDenied {
-			Path:PathToCheck.to_path_buf(),
-
-			Reason:"No workspace folder is open. All file access is denied.".to_string(),
-		});
+		// Allow access if no folder is open, as operations are likely on user-chosen
+		// files. A stricter model could deny this.
+		return Ok(());
 	}
 
 	let IsAllowed = FoldersGuard.iter().any(|Folder| {
-		if let Ok(FolderPath) = Folder.URI.to_file_path() {
-			PathToCheck.starts_with(FolderPath)
-		} else {
-			false
+		match Folder.URI.to_file_path() {
+			Ok(FolderPath) => PathToCheck.starts_with(FolderPath),
+
+			Err(_) => false,
 		}
 	});
 

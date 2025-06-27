@@ -13,6 +13,9 @@ use Common::TreeView::TreeViewProvider::TreeViewProvider;
 /// registered by an extension or natively. This is stored in `ApplicationState`
 /// to track active tree views.
 ///
+/// This struct holds references to either a native (Rust) provider or metadata
+/// for a proxied (extension) provider.
+///
 /// NOTE: This struct does not derive Serialize/Deserialize because `Arc<dyn
 /// ...>` is not serializable. It is intended for in-memory state management
 /// only.
@@ -24,6 +27,10 @@ pub struct TreeViewStateDTO {
 	/// A reference to the native provider, if one exists for this view.
 	/// This will be `None` for extension-provided (proxied) tree views.
 	pub Provider:Option<Arc<dyn TreeViewProvider + Send + Sync>>,
+
+	/// The identifier of the sidecar process that hosts the provider logic.
+	/// This will be `Some` for extension-provided (proxied) tree views.
+	pub SideCarIdentifier:Option<String>,
 
 	/// Whether the tree view supports selecting multiple items.
 	pub CanSelectMany:bool,
@@ -42,7 +49,4 @@ pub struct TreeViewStateDTO {
 
 	/// An optional description that appears with the title.
 	pub Description:Option<String>,
-
-	/// SideCar Identifier.
-	pub SideCarIdentifier:Option<String>,
 }

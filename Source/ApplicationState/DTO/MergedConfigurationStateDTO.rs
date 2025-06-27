@@ -1,5 +1,6 @@
 //! # MergedConfigurationStateDTO
-// Defines the Data Transfer Object for the application's final, merged
+//!
+//! Defines the Data Transfer Object for the application's final, merged
 //! configuration state.
 
 #![allow(non_snake_case, non_camel_case_types)]

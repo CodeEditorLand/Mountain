@@ -3,6 +3,9 @@
 //! Defines the Data Transfer Object for storing the state of a single open
 //! text document in memory.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
+use Common::Error::CommonError::CommonError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
@@ -72,48 +75,51 @@ impl DocumentStateDTO {
 	pub fn GetText(&self) -> String { self.Lines.join(&self.EOL) }
 
 	/// Converts the struct to a `serde_json::Value`, useful for notifications.
-	pub fn ToDTO(&self) -> Value { serde_json::to_value(self).unwrap_or(Value::Null) }
+	pub fn ToDTO(&self) -> Result<Value, CommonError> {
+		serde_json::to_value(self).map_err(|Error| CommonError::SerializationError { Description:Error.to_string() })
+	}
 
-	/// Applies a set of changes to the document.
-	pub fn ApplyChanges(&mut self, NewVersion:i64, ChangesValue:&Value) -> Result<(), String> {
+	/// Applies a set of changes to the document. This can be a full text
+	/// replacement or a collection of delta changes.
+	pub fn ApplyChanges(&mut self, NewVersion:i64, ChangesValue:&Value) -> Result<(), CommonError> {
+		// Ignore stale changes.
 		if NewVersion <= self.Version {
-			// Ignore stale changes
 			return Ok(());
 		}
 
-		let _RPCChanges:Vec<RPCModelContentChangeDTO> = match serde_json::from_value(ChangesValue.clone()) {
-			Ok(changes) => changes,
+		// Attempt to deserialize as an array of delta changes first.
+		if let Ok(RPCChange) = serde_json::from_value::<Vec<RPCModelContentChangeDTO>>(ChangesValue.clone()) {
+			// A full implementation would apply each delta change to the `Lines` vector.
+			// This is a complex operation involving coordinate transformations.
+			// For now, we will log that this is a stub and only update the version.
+			log::warn!(
+				"Applying changes to {} by version bump only (delta application is a stub).",
+				self.URI
+			);
 
-			Err(_) => {
-				if let Some(FullText) = ChangesValue.as_str() {
-					let (NewLines, NewEOL) = AnalyzeTextLinesAndEOL(FullText);
+			// In a real implementation:
+			self.Lines = ApplyDeltaChanges(&self.Lines, &self.EOL, &RPCChange);
+		} else if let Some(FullText) = ChangesValue.as_str() {
+			// If it's not deltas, check if it's a full text replacement.
+			let (NewLines, NewEOL) = AnalyzeTextLinesAndEOL(FullText);
 
-					self.Lines = NewLines;
+			self.Lines = NewLines;
 
-					self.EOL = NewEOL;
+			self.EOL = NewEOL;
+		} else {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"ChangesValue".into(),
 
-					self.Version = NewVersion;
+				Reason:format!(
+					"Invalid change format for {}: expected string or RPCModelContentChangeDTO array.",
+					self.URI
+				),
+			});
+		}
 
-					// Increment internal version
-					self.VersionIdentifier += 1;
-
-					self.IsDirty = true;
-
-					return Ok(());
-				}
-
-				return Err(format!("Invalid RPCModelContentChangeDTO for {}", self.URI));
-			},
-		};
-
-		log::warn!(
-			"Applying changes to {} by version bump only (delta application is a stub).",
-			self.URI
-		);
-
+		// Update metadata after changes have been applied.
 		self.Version = NewVersion;
 
-		// Increment internal version
 		self.VersionIdentifier += 1;
 
 		self.IsDirty = true;
@@ -121,3 +127,5 @@ impl DocumentStateDTO {
 		Ok(())
 	}
 }
+
+fn ApplyDeltaChanges(_Line:&[String], _EOL:&str, _RPCChange:&[RPCModelContentChangeDTO]) -> Vec<String> { todo!() }

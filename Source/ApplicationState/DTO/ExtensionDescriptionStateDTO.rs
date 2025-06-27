@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// Represents the deserialized content of an extension's `package.json` file,
-
 /// augmented with location information and other metadata.
 ///
 /// This is stored in `ApplicationState` to provide the extension host with the

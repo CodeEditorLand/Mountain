@@ -55,7 +55,7 @@ impl TerminalStateDTO {
 			.to_string();
 
 		let ShellArguments = match OptionsValue.get("shellArgs") {
-			Some(Value::Array(array)) => array.iter().filter_map(Value::as_str).map(String::from).collect(),
+			Some(Value::Array(Array)) => Array.iter().filter_map(Value::as_str).map(String::from).collect(),
 
 			_ => Vec::new(),
 		};

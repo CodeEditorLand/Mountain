@@ -2,9 +2,10 @@
 //!
 //! Implements the `OutputChannelManager` trait for the `MountainEnvironment`.
 //! This provider contains the core logic for managing output channels,
-
 //! including state management and emitting events to the `Sky` frontend for UI
 //! updates.
+
+#![allow(non_snake_case, non_camel_case_types)]
 
 use Common::{Error::CommonError::CommonError, Output::OutputChannelManager::OutputChannelManager};
 use async_trait::async_trait;

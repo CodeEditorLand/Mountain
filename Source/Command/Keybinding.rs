@@ -9,17 +9,17 @@ use std::sync::Arc;
 
 use Common::{Environment::Requires::Requires, Keybinding::KeybindingProvider::KeybindingProvider};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, command};
+use tauri::{AppHandle, Manager, Wry, command};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 
 #[command]
-pub async fn GetResolvedKeybinding(app_handle:AppHandle) -> Result<Value, String> {
+pub async fn GetResolvedKeybinding(ApplicationHandle:AppHandle<Wry>) -> Result<Value, String> {
 	log::debug!("[Keybinding Command] Getting resolved keybindings for UI.");
 
-	let runtime = app_handle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
 
-	let provider:Arc<dyn KeybindingProvider> = runtime.Environment.Require();
+	let Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
-	provider.GetResolvedKeybinding().await.map_err(|Error| Error.to_string())
+	Provider.GetResolvedKeybinding().await.map_err(|Error| Error.to_string())
 }

@@ -8,15 +8,13 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
 // --- Public Modules ---
-
 /// Defines the main `ApplicationState` struct and its core implementation.
 pub mod ApplicationState;
 
-/// Defines all DTOs used to represent the various components of the
-/// application state.
+/// Defines all DTOs used to represent the various components of the application
+/// state.
 pub mod DTO;
 
 // --- Internal Implementation ---
-
 /// Contains internal helper functions for the `ApplicationState` module.
 pub mod Internal;

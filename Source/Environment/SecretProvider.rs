@@ -4,6 +4,8 @@
 //! provider contains the core logic for secure secret storage using the system
 //! keyring, powered by the `keyring` crate.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use Common::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProvider};
 use async_trait::async_trait;
 use keyring::Entry;
