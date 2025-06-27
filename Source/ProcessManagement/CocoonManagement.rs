@@ -7,10 +7,12 @@
 //! Contains the logic for launching, managing the lifecycle of, and performing
 //! the initial handshake with the Cocoon sidecar process.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{collections::HashMap, process::Stdio, sync::Arc, time::Duration};
 
 use Common::Error::CommonError::CommonError;
-use log::{error, info, trace, warn};
+use log::{info, trace, warn};
 use tauri::{
 	AppHandle,
 	Manager,
@@ -26,27 +28,26 @@ use tokio::{
 use super::InitializationData;
 use crate::{Environment::MountainEnvironment::MountainEnvironment, Vine};
 
-/// The main entry point for starting the Cocoon process manager.
-pub async fn InitializeCocoon(ApplicationHandle:&AppHandle, Environment:&Arc<MountainEnvironment>) {
+/// The main entry point for starting the Cocoon process manager. This function
+/// now returns a Result to indicate if initialization was successful.
+pub async fn InitializeCocoon(
+	ApplicationHandle:&AppHandle,
+
+	Environment:&Arc<MountainEnvironment>,
+) -> Result<(), CommonError> {
 	info!("[CocoonManagement] Initializing Cocoon sidecar manager...");
 
 	#[cfg(feature = "ExtensionHostCocoon")]
 	{
-		// Clone the handles for the spawned task.
-		let ApplicationHandleClone = ApplicationHandle.clone();
-
-		let EnvironmentClone = Environment.clone();
-
-		tokio::spawn(async move {
-			if let Err(Error) = LaunchAndManageCocoonSideCar(ApplicationHandleClone, EnvironmentClone).await {
-				error!("[CocoonManagement] CRITICAL: Failed to launch and manage Cocoon: {}", Error);
-			}
-		});
+		// Awaiting this directly now, so the caller knows if it failed.
+		LaunchAndManageCocoonSideCar(ApplicationHandle.clone(), Environment.clone()).await
 	}
 
 	#[cfg(not(feature = "ExtensionHostCocoon"))]
 	{
 		info!("[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched.");
+
+		Ok(())
 	}
 }
 
@@ -104,19 +105,18 @@ async fn LaunchAndManageCocoonSideCar(
 
 			let mut Lines = Reader.lines();
 
-			while let Some(Line) = Lines.next_line().await.unwrap_or(None) {
+			while let Ok(Some(Line)) = Lines.next_line().await {
 				trace!("[Cocoon stdout] {}", Line);
 			}
 		});
 	}
-
 	if let Some(stderr) = ChildProcess.stderr.take() {
 		tokio::spawn(async move {
 			let Reader = BufReader::new(stderr);
 
 			let mut Lines = Reader.lines();
 
-			while let Some(Line) = Lines.next_line().await.unwrap_or(None) {
+			while let Ok(Some(Line)) = Lines.next_line().await {
 				warn!("[Cocoon stderr] {}", Line);
 			}
 		});
@@ -126,7 +126,6 @@ async fn LaunchAndManageCocoonSideCar(
 
 	sleep(Duration::from_millis(2000)).await;
 
-	// Assuming the sidecar listens on a standard gRPC port.
 	Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), "127.0.0.1:50052".to_string())
 		.await
 		.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })?;
@@ -144,13 +143,11 @@ async fn LaunchAndManageCocoonSideCar(
 	.await
 	.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })?;
 
-	let ResponseString = Response.as_str().unwrap_or("");
-
-	if ResponseString == "initialized" {
+	if Response.as_str() == Some("initialized") {
 		info!("[CocoonManagement] Cocoon handshake complete.");
 	} else {
 		return Err(CommonError::IPCError {
-			Description:format!("Cocoon initialization failed with response: {}", ResponseString),
+			Description:format!("Cocoon initialization failed with response: {}", Response),
 		});
 	}
 

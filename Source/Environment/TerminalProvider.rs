@@ -186,29 +186,28 @@ impl TerminalProvider for MountainEnvironment {
 	async fn SendTextToTerminal(&self, TerminalId:u64, Text:String) -> Result<(), CommonError> {
 		trace!("[TerminalProvider] Sending text to terminal ID: {}", TerminalId);
 
-		let TerminalsGuard = self
-			.ApplicationState
-			.ActiveTerminals
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		if let Some(TerminalArc) = TerminalsGuard.get(&TerminalId) {
-			let TerminalStateGuard = TerminalArc
+		let SenderOption = {
+			let TerminalsGuard = self
+				.ApplicationState
+				.ActiveTerminals
 				.lock()
-				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-			if let Some(Sender) = &TerminalStateGuard.PTYInputTransmitter {
-				Sender
-					.send(Text)
-					.await
-					.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
-			} else {
-				Err(CommonError::IPCError {
-					Description:format!("Terminal with ID {} has no input channel.", TerminalId),
-				})
-			}
+			TerminalsGuard
+				.get(&TerminalId)
+				.and_then(|TerminalArc| TerminalArc.lock().ok())
+				.and_then(|TerminalStateGuard| TerminalStateGuard.PTYInputTransmitter.clone())
+		};
+
+		if let Some(Sender) = SenderOption {
+			Sender
+				.send(Text)
+				.await
+				.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
 		} else {
-			Err(CommonError::IPCError { Description:format!("Terminal with ID {} not found.", TerminalId) })
+			Err(CommonError::IPCError {
+				Description:format!("Terminal with ID {} not found or has no input channel.", TerminalId),
+			})
 		}
 	}
 
@@ -227,6 +226,7 @@ impl TerminalProvider for MountainEnvironment {
 			// underlying process to terminate.
 			drop(TerminalArc);
 		}
+
 		Ok(())
 	}
 

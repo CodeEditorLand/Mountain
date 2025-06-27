@@ -66,10 +66,16 @@ impl DocumentProvider for MountainEnvironment {
 		{
 			info!("[DocumentProvider] Document {} is already open.", URI);
 
-			let DTO = ExistingDocument.ToDTO();
+			match ExistingDocument.ToDTO() {
+				Ok(DTO) => {
+					if let Err(Error) = self.ApplicationHandle.emit("sky://documents/open", DTO) {
+						error!("[DocumentProvider] Failed to emit document open event: {}", Error);
+					}
+				},
 
-			if let Err(Error) = self.ApplicationHandle.emit("sky://documents/open", DTO) {
-				error!("[DocumentProvider] Failed to emit document open event: {}", Error);
+				Err(Error) => {
+					error!("[DocumentProvider] Failed to serialize existing document DTO: {}", Error);
+				},
 			}
 
 			return Ok(ExistingDocument.URI.clone());
@@ -92,7 +98,7 @@ impl DocumentProvider for MountainEnvironment {
 			let FileContentBytes = RunTime.Run(ReadFile(FilePath.clone())).await?;
 
 			String::from_utf8(FileContentBytes)
-				.map_err(|Error| CommonError::FileSystemIO { Path:FilePath, Description:Error.to_string() })?
+				.map_err(|e| CommonError::FileSystemIO { Path:FilePath, Description:e.to_string() })?
 		} else {
 			// Custom scheme: attempt to resolve from a sidecar provider.
 			info!(
@@ -122,7 +128,7 @@ impl DocumentProvider for MountainEnvironment {
 		// The rest of the flow is the same for all schemes.
 		let NewDocument = DocumentStateDTO::Create(URI.clone(), LanguageIdentifier, FileContent);
 
-		let DTOForNotification = NewDocument.ToDTO();
+		let DTOForNotification = NewDocument.ToDTO()?;
 
 		self.ApplicationState
 			.OpenDocuments
@@ -244,7 +250,7 @@ impl DocumentProvider for MountainEnvironment {
 			let NewDocument =
 				DocumentStateDTO::Create(NewURI.clone(), OldDocument.map(|d| d.LanguageIdentifier), OriginalContent);
 
-			let DTO = NewDocument.ToDTO();
+			let DTO = NewDocument.ToDTO()?;
 
 			Guard.insert(NewURI.to_string(), NewDocument);
 
@@ -298,7 +304,7 @@ impl DocumentProvider for MountainEnvironment {
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 			if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
-				Document.ApplyChanges(NewVersionIdentifier, &ChangesDTOCollection);
+				Document.ApplyChanges(NewVersionIdentifier, &ChangesDTOCollection)?;
 			} else {
 				warn!("[DocumentProvider] Received changes for unknown document: {}", URI);
 

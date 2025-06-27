@@ -3,7 +3,12 @@
 //! Defines the specific, structured error types for all operations within the
 //! Vine gRPC Inter-Process Communication (IPC) system.
 
-use std::sync::{MutexGuard, PoisonError};
+#![allow(non_snake_case, non_camel_case_types)]
+
+use std::{
+	net::AddrParseError,
+	sync::{MutexGuard, PoisonError},
+};
 
 use http::uri::InvalidUri;
 use thiserror::Error;
@@ -41,6 +46,10 @@ pub enum VineError {
 	/// An error occurred from an invalid URI.
 	#[error("Invalid URI: {0}")]
 	InvalidUri(#[from] InvalidUri),
+
+	/// An error occurred while parsing a socket address.
+	#[error("Invalid Socket Address: {0}")]
+	AddressParseError(#[from] AddrParseError),
 }
 
 impl<T> From<PoisonError<MutexGuard<'_, T>>> for VineError {

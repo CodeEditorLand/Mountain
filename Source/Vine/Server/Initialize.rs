@@ -2,6 +2,8 @@
 //!
 //! Contains the logic to initialize and start the Mountain gRPC server.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{net::SocketAddr, sync::Arc};
 
 use log::{error, info};
@@ -11,7 +13,7 @@ use tonic::transport::Server;
 use super::MountainVinegRPCService::MountainVinegRPCService;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Vine::Generated::mountain_service_server::MountainServiceServer,
+	Vine::{Error::VineError, Generated::mountain_service_server::MountainServiceServer},
 };
 
 /// Initializes and starts the gRPC server on a background task.
@@ -24,43 +26,40 @@ use crate::{
 /// # Parameters
 /// * `ApplicationHandle`: The Tauri application handle.
 /// * `AddressString`: The address and port to bind the server to (e.g.,
-
 ///   "[::1]:50051").
-pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) {
+///
+/// # Returns
+/// A `Result` indicating if the server setup was successful. The server itself
+/// runs on a separate spawned task.
+pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) -> Result<(), VineError> {
+	let Address:SocketAddr = AddressString.parse()?;
+
+	let RunTime = ApplicationHandle
+		.try_state::<Arc<ApplicationRunTime>>()
+		.ok_or_else(|| {
+			let msg = "[VineServer] CRITICAL: ApplicationRunTime not found in Tauri state. Server cannot start.";
+
+			error!("{}", msg);
+
+			VineError::ClientNotConnected(msg.to_string())
+		})?
+		.inner()
+		.clone();
+
+	let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime);
+
+	// Spawn the server to run in the background.
 	tokio::spawn(async move {
-		let Address:SocketAddr = match AddressString.parse() {
-			Ok(Address) => Address,
-
-			Err(Error) => {
-				error!(
-					"[VineServer] Invalid gRPC server address '{}': {}. Server will not start.",
-					AddressString, Error
-				);
-
-				return;
-			},
-		};
-
 		info!("[VineServer] Starting gRPC server on {}", Address);
 
-		let RunTime = match ApplicationHandle.try_state::<Arc<ApplicationRunTime>>() {
-			Some(RunTime) => RunTime.inner().clone(),
-
-			None => {
-				error!("[VineServer] CRITICAL: ApplicationRunTime not found in Tauri state. Server cannot start.");
-
-				return;
-			},
-		};
-
-		let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime);
-
-		if let Err(Error) = Server::builder()
+		if let Err(e) = Server::builder()
 			.add_service(MountainServiceServer::new(MountainService))
 			.serve(Address)
 			.await
 		{
-			error!("[VineServer] gRPC server failed to run: {}", Error);
+			error!("[VineServer] gRPC server failed to run: {}", e);
 		}
 	});
+
+	Ok(())
 }

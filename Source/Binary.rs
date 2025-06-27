@@ -31,7 +31,6 @@ use tauri::{AppHandle, Manager, RunEvent, Wry};
 use crate::{
 	ApplicationState::{
 		ApplicationState::{ApplicationState, MapLockError},
-		DTO::WorkSpaceFolderStateDTO::WorkSpaceFolderStateDTO,
 		Internal::ScanAndPopulateExtensions,
 	},
 	Command,
@@ -69,9 +68,13 @@ fn InitializeLogging() {
 				"Mountain".red(),
 				match Record.level() {
 					log::Level::Error => "ERROR".red().bold(),
+
 					log::Level::Warn => "WARN".yellow().bold(),
+
 					log::Level::Info => "INFO".green(),
+
 					log::Level::Debug => "DEBUG".blue(),
+
 					log::Level::Trace => "TRACE".magenta(),
 				},
 				Record.args()
@@ -89,6 +92,7 @@ fn InitializeLogging() {
 #[tauri::command]
 async fn MountainGetWorkbenchConfiguration(
 	ApplicationHandle:AppHandle<Wry>,
+
 	State:tauri::State<'_, Arc<ApplicationState>>,
 ) -> Result<serde_json::Value, String> {
 	info!("[IPC Bridge] Received MountainGetWorkbenchConfiguration request from Sky.");
@@ -134,6 +138,7 @@ pub fn Fn() {
 							(Vec::new(), None)
 						})
 				},
+
 				Err(Error) => {
 					error!("[Main] Failed to read workspace file: {}. Continuing without workspace.", Error);
 
@@ -147,7 +152,9 @@ pub fn Fn() {
 		// --- State Initialization ---
 		let AppState = Arc::new(ApplicationState {
 			WorkSpaceFolders:Arc::new(Mutex::new(InitialFolders)),
+
 			WorkSpaceConfigurationPath:Arc::new(Mutex::new(WorkSpaceConfigurationPath)),
+
 			..ApplicationState::default()
 		});
 
@@ -237,6 +244,7 @@ pub fn Fn() {
 								ScanPathsGuard.push(Parent.join("extensions"));
 							}
 						}
+
 						info!("[SetupTask] Extension scan paths initialized: {:?}", *ScanPathsGuard);
 					}
 
