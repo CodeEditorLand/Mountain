@@ -11,6 +11,8 @@
 //! Implements the `SearchProvider` trait using the `grep-searcher` crate, which
 //! is a library for the `ripgrep` search tool.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{
 	io,
 	path::PathBuf,
@@ -26,7 +28,7 @@ use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -55,9 +57,8 @@ struct FileMatch {
 	matches:Vec<TextMatch>,
 }
 
-// This Sink is designed to be created for each file.
-// It holds a reference to the central results vector and the path of the file
-// it's searching.
+// This Sink is designed to be created for each file. It holds a reference to
+// the central results vector and the path of the file it's searching.
 struct PerFileSink {
 	path:PathBuf,
 
@@ -67,21 +68,30 @@ struct PerFileSink {
 impl Sink for PerFileSink {
 	type Error = io::Error;
 
-	fn matched(&mut self, _searcher:&Searcher, mat:&SinkMatch<'_>) -> Result<bool, Self::Error> {
-		let mut results_guard = self.results.lock().unwrap();
+	fn matched(&mut self, _Searcher:&Searcher, Mat:&SinkMatch<'_>) -> Result<bool, Self::Error> {
+		let mut ResultsGuard = self
+			.results
+			.lock()
+			.map_err(|Error| io::Error::new(io::ErrorKind::Other, Error.to_string()))?;
 
-		let preview = String::from_utf8_lossy(mat.bytes()).to_string();
+		let Preview = String::from_utf8_lossy(Mat.bytes()).to_string();
 
-		let line_number = mat.line_number().unwrap_or(0);
+		let LineNumber = Mat.line_number().unwrap_or(0);
 
 		// Since this sink is per-file, we know `self.path` is correct.
-		let file_uri = url::Url::from_file_path(&self.path).unwrap().to_string();
+		let FileURI = url::Url::from_file_path(&self.path)
+			.map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "Could not convert path to URL"))?
+			.to_string();
 
 		// Find the entry for our file, or create it if it's the first match.
-		if let Some(file_match) = results_guard.iter_mut().find(|fm| fm.resource == file_uri) {
-			file_match.matches.push(TextMatch { preview, line_number });
+		if let Some(FileMatch) = ResultsGuard.iter_mut().find(|fm| fm.resource == FileURI) {
+			FileMatch.matches.push(TextMatch { preview:Preview, line_number:LineNumber });
 		} else {
-			results_guard.push(FileMatch { resource:file_uri, matches:vec![TextMatch { preview, line_number }] });
+			ResultsGuard.push(FileMatch {
+				resource:FileURI,
+
+				matches:vec![TextMatch { preview:Preview, line_number:LineNumber }],
+			});
 		}
 
 		// Continue searching
@@ -96,52 +106,53 @@ impl SearchProvider for MountainEnvironment {
 
 		info!("[SearchProvider] Performing text search for: {:?}", Query);
 
-		let mut builder = RegexMatcherBuilder::new();
+		let mut Builder = RegexMatcherBuilder::new();
 
-		builder
+		Builder
 			.case_insensitive(!Query.is_case_sensitive.unwrap_or(false))
 			.word(Query.is_word_match.unwrap_or(false));
 
-		let matcher = builder
+		let Matcher = Builder
 			.build(&Query.pattern)
-			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"pattern".into(), Reason:e.to_string() })?;
+			.map_err(|Error| CommonError::InvalidArgument { ArgumentName:"pattern".into(), Reason:Error.to_string() })?;
 
-		let all_matches = Arc::new(Mutex::new(Vec::<FileMatch>::new()));
+		let AllMatches = Arc::new(Mutex::new(Vec::<FileMatch>::new()));
 
-		let folders_guard = self.ApplicationState.WorkSpaceFolders.lock().unwrap();
+		let Folders = self
+			.ApplicationState
+			.WorkSpaceFolders
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.clone();
 
-		let folders = folders_guard.clone();
-
-		drop(folders_guard);
-
-		if folders.is_empty() {
+		if Folders.is_empty() {
 			warn!("[SearchProvider] No workspace folders to search in.");
 
 			return Ok(json!([]));
 		}
 
-		for folder in folders {
-			if let Ok(folder_path) = folder.URI.to_file_path() {
+		for Folder in Folders {
+			if let Ok(FolderPath) = Folder.URI.to_file_path() {
 				// Use a parallel walker for better performance.
-				let walker = WalkBuilder::new(folder_path).build_parallel();
+				let Walker = WalkBuilder::new(FolderPath).build_parallel();
 
-				// The `search_parallel` method is not available on `Searcher`.
-				// We must process entries from the walker and call `search_path` individually.
-				walker.run(|| {
-					let mut searcher = Searcher::new();
+				// The `search_parallel` method is not available on `Searcher`. We must process
+				// entries from the walker and call `search_path` individually.
+				Walker.run(|| {
+					let mut Searcher = Searcher::new();
 
-					let matcher = matcher.clone();
+					let Matcher = Matcher.clone();
 
-					let all_matches = all_matches.clone();
+					let AllMatches = AllMatches.clone();
 
-					Box::new(move |entry_result| {
-						if let Ok(entry) = entry_result {
-							if entry.file_type().map_or(false, |ft| ft.is_file()) {
+					Box::new(move |EntryResult| {
+						if let Ok(Entry) = EntryResult {
+							if Entry.file_type().map_or(false, |ft| ft.is_file()) {
 								// For each file, create a new sink that knows its path.
-								let sink = PerFileSink { path:entry.path().to_path_buf(), results:all_matches.clone() };
+								let Sink = PerFileSink { path:Entry.path().to_path_buf(), results:AllMatches.clone() };
 
-								if let Err(e) = searcher.search_path(&matcher, entry.path(), sink) {
-									warn!("[SearchProvider] Error searching path {}: {}", entry.path().display(), e);
+								if let Err(Error) = Searcher.search_path(&Matcher, Entry.path(), Sink) {
+									warn!("[SearchProvider] Error searching path {}: {}", Entry.path().display(), Error);
 								}
 							}
 						}
@@ -152,8 +163,11 @@ impl SearchProvider for MountainEnvironment {
 			}
 		}
 
-		let final_matches = all_matches.lock().unwrap().clone();
+		let FinalMatches = AllMatches
+			.lock()
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?
+			.clone();
 
-		Ok(json!(final_matches))
+		Ok(json!(FinalMatches))
 	}
 }

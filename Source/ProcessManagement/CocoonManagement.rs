@@ -38,8 +38,8 @@ pub async fn InitializeCocoon(ApplicationHandle:&AppHandle, Environment:&Arc<Mou
 		let EnvironmentClone = Environment.clone();
 
 		tokio::spawn(async move {
-			if let Err(e) = LaunchAndManageCocoonSideCar(ApplicationHandleClone, EnvironmentClone).await {
-				error!("[CocoonManagement] CRITICAL: Failed to launch and manage Cocoon: {}", e);
+			if let Err(Error) = LaunchAndManageCocoonSideCar(ApplicationHandleClone, EnvironmentClone).await {
+				error!("[CocoonManagement] CRITICAL: Failed to launch and manage Cocoon: {}", Error);
 			}
 		});
 	}
@@ -62,7 +62,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 	let ScriptPath = path_resolver
 		.resolve("scripts/cocoon/bootstrap-fork.js", BaseDirectory::Resource)
-		.map_err(|e| CommonError::FileSystemNotFound(e.to_string().into()))?;
+		.map_err(|Error| CommonError::FileSystemNotFound(Error.to_string().into()))?;
 
 	if !ScriptPath.exists() {
 		return Err(CommonError::FileSystemNotFound(
@@ -94,7 +94,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 	let mut ChildProcess = NodeCommand
 		.spawn()
-		.map_err(|e| CommonError::IPCError { Description:format!("Failed to spawn Cocoon: {}", e) })?;
+		.map_err(|Error| CommonError::IPCError { Description:format!("Failed to spawn Cocoon: {}", Error) })?;
 
 	info!("[CocoonManagement] Cocoon process spawned [PID: {:?}]", ChildProcess.id());
 
@@ -129,7 +129,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// Assuming the sidecar listens on a standard gRPC port.
 	Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), "127.0.0.1:50052".to_string())
 		.await
-		.map_err(|e| CommonError::IPCError { Description:e.to_string() })?;
+		.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })?;
 
 	info!("[CocoonManagement] Cocoon is ready. Sending initialization data...");
 
@@ -142,7 +142,7 @@ async fn LaunchAndManageCocoonSideCar(
 		60000,
 	)
 	.await
-	.map_err(|e| CommonError::IPCError { Description:e.to_string() })?;
+	.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })?;
 
 	let ResponseString = Response.as_str().unwrap_or("");
 

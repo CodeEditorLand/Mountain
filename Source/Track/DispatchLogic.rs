@@ -46,10 +46,10 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 			EffectFn(runtime_clone).await
 		},
 
-		Err(e) => {
-			error!("[DispatchLogic] Failed to create effect for command '{}': {}", Command, e);
+		Err(Error) => {
+			error!("[DispatchLogic] Failed to create effect for command '{}': {}", Command, Error);
 
-			Err(e)
+			Err(Error)
 		},
 	}
 }
@@ -75,13 +75,13 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 	match EffectCreation::CreateEffectForRequest(&ApplicationHandle, &MethodName, Parameters) {
 		Ok(EffectFn) => EffectFn(RunTime).await,
 
-		Err(e) => {
+		Err(Error) => {
 			error!(
 				"[DispatchLogic] Failed to create effect for sidecar method '{}': {}",
-				MethodName, e
+				MethodName, Error
 			);
 
-			Err(e)
+			Err(Error)
 		},
 	}
 }
@@ -99,7 +99,7 @@ pub async fn ResolveUIRequest(
 	debug!("[DispatchLogic] Resolving UI request ID: {}", RequestID);
 
 	let Sender = {
-		let mut PendingRequests = State.PendingUserInterfaceRequests.lock().map_err(|e| e.to_string())?;
+		let mut PendingRequests = State.PendingUserInterfaceRequests.lock().map_err(|Error| Error.to_string())?;
 
 		PendingRequests.remove(&RequestID)
 	};
@@ -142,10 +142,10 @@ pub async fn MountainWebviewPostMessageFromGuest(
 		.SendNotificationToSideCar("cocoon-main".into(), "$onDidReceiveMessage".into(), json!([Handle, Message]))
 		.await;
 
-	if let Err(e) = RPCResult {
-		error!("[DispatchLogic] Failed to forward webview message to Cocoon: {}", e);
+	if let Err(Error) = RPCResult {
+		error!("[DispatchLogic] Failed to forward webview message to Cocoon: {}", Error);
 
-		return Err(e.to_string());
+		return Err(Error.to_string());
 	}
 
 	Ok(())

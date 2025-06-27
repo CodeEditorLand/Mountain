@@ -38,7 +38,7 @@ pub async fn CheckForUpdates(
 	let updater = ApplicationHandle
 		.updater_builder()
 		.build()
-		.map_err(|e| CommonError::ExternalServiceError { ServiceName:"Updater".into(), Description:e.to_string() })?;
+		.map_err(|Error| CommonError::ExternalServiceError { ServiceName:"Updater".into(), Description:Error.to_string() })?;
 
 	match updater.check().await {
 		Ok(Some(update)) => {
@@ -76,13 +76,13 @@ pub async fn CheckForUpdates(
 					info!("[Update] Download complete, starting installation.");
 				};
 
-				if let Err(e) = update.download_and_install(on_chunk, on_download_finish).await {
-					error!("[UpdateService] Update failed: {}", e);
+				if let Err(Error) = update.download_and_install(on_chunk, on_download_finish).await {
+					error!("[UpdateService] Update failed: {}", Error);
 
 					RunTime
 						.Run(ShowMessage(
 							MessageSeverity::Error,
-							format!("Failed to install update: {}", e),
+							format!("Failed to install update: {}", Error),
 							json!(null),
 						))
 						.await?;
@@ -108,14 +108,14 @@ pub async fn CheckForUpdates(
 			}
 		},
 
-		Err(e) => {
-			error!("[UpdateService] Failed to check for updates: {}", e);
+		Err(Error) => {
+			error!("[UpdateService] Failed to check for updates: {}", Error);
 
 			if NotifyNoUpdate {
 				RunTime
 					.Run(ShowMessage(
 						MessageSeverity::Error,
-						format!("Failed to check for updates: {}", e),
+						format!("Failed to check for updates: {}", Error),
 						json!(null),
 					))
 					.await?;

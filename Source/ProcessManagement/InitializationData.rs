@@ -42,16 +42,16 @@ pub async fn ConstructSandboxConfiguration(
 
 	let PathResolver = ApplicationHandle.path();
 
-	let AppRootUri = PathResolver.resource_dir().map_err(|e| {
-		CommonError::ConfigurationLoad { Description:format!("Failed to resolve resource directory (app root): {}", e) }
+	let AppRootUri = PathResolver.resource_dir().map_err(|Error| {
+		CommonError::ConfigurationLoad { Description:format!("Failed to resolve resource directory (app root): {}", Error) }
 	})?;
 
-	let AppDataDir = PathResolver.app_data_dir().map_err(|e| {
-		CommonError::ConfigurationLoad { Description:format!("Failed to resolve app data directory: {}", e) }
+	let AppDataDir = PathResolver.app_data_dir().map_err(|Error| {
+		CommonError::ConfigurationLoad { Description:format!("Failed to resolve app data directory: {}", Error) }
 	})?;
 
-	let HomeDir = PathResolver.home_dir().map_err(|e| {
-		CommonError::ConfigurationLoad { Description:format!("Failed to resolve home directory: {}", e) }
+	let HomeDir = PathResolver.home_dir().map_err(|Error| {
+		CommonError::ConfigurationLoad { Description:format!("Failed to resolve home directory: {}", Error) }
 	})?;
 
 	let TmpDir = env::temp_dir();
@@ -190,15 +190,15 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	let AppRoot = PathResolver
 		.resource_dir()
-		.map_err(|e| CommonError::ConfigurationLoad { Description:e.to_string() })?;
+		.map_err(|Error| CommonError::ConfigurationLoad { Description:Error.to_string() })?;
 
 	let AppData = PathResolver
 		.app_data_dir()
-		.map_err(|e| CommonError::ConfigurationLoad { Description:e.to_string() })?;
+		.map_err(|Error| CommonError::ConfigurationLoad { Description:Error.to_string() })?;
 
 	let LogsLocation = PathResolver
 		.app_log_dir()
-		.map_err(|e| CommonError::ConfigurationLoad { Description:e.to_string() })?;
+		.map_err(|Error| CommonError::ConfigurationLoad { Description:Error.to_string() })?;
 
 	let GlobalStorage = AppData.join("User/globalStorage");
 

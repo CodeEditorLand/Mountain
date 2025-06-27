@@ -39,7 +39,7 @@ impl OutputChannelManager for MountainEnvironment {
 
 		self.ApplicationHandle
 			.emit("sky://output/create", EventPayload)
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
 		Ok(ChannelIdentifier)
 	}
@@ -61,7 +61,7 @@ impl OutputChannelManager for MountainEnvironment {
 
 			self.ApplicationHandle
 				.emit("sky://output/append", EventPayload)
-				.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		} else {
 			warn!("[OutputProvider] Channel '{}' not found for append.", ChannelIdentifier);
 		}
@@ -86,7 +86,7 @@ impl OutputChannelManager for MountainEnvironment {
 
 			self.ApplicationHandle
 				.emit("sky://output/replace", EventPayload)
-				.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		} else {
 			warn!("[OutputProvider] Channel '{}' not found for replace.", ChannelIdentifier);
 		}
@@ -109,7 +109,7 @@ impl OutputChannelManager for MountainEnvironment {
 
 			self.ApplicationHandle
 				.emit("sky://output/clear", json!({ "Id": ChannelIdentifier }))
-				.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		} else {
 			warn!("[OutputProvider] Channel '{}' not found for clear.", ChannelIdentifier);
 		}
@@ -134,7 +134,7 @@ impl OutputChannelManager for MountainEnvironment {
 
 			self.ApplicationHandle
 				.emit("sky://output/reveal", EventPayload)
-				.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		} else {
 			warn!("[OutputProvider] Channel '{}' not found for reveal.", ChannelIdentifier);
 		}
@@ -161,6 +161,6 @@ impl OutputChannelManager for MountainEnvironment {
 
 		self.ApplicationHandle
 			.emit("sky://output/dispose", json!({ "Id": ChannelIdentifier }))
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 }

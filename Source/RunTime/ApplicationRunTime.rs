@@ -57,11 +57,11 @@ impl ApplicationRunTime {
 		// 1. Shutdown Cocoon
 		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
 
-		if let Err(e) = IPCProvider
+		if let Err(Error) = IPCProvider
 			.SendNotificationToSideCar("cocoon-main".to_string(), "$shutdown".to_string(), serde_json::Value::Null)
 			.await
 		{
-			error!("[ApplicationRunTime] Failed to send shutdown signal to Cocoon: {}", e);
+			error!("[ApplicationRunTime] Failed to send shutdown signal to Cocoon: {}", Error);
 		}
 
 		// Give Cocoon a moment to process the shutdown before we proceed.
@@ -77,8 +77,8 @@ impl ApplicationRunTime {
 		};
 
 		for id in TerminalIds {
-			if let Err(e) = TerminalProvider.DisposeTerminal(id).await {
-				error!("[ApplicationRunTime] Failed to dispose terminal {}: {}", id, e);
+			if let Err(Error) = TerminalProvider.DisposeTerminal(id).await {
+				error!("[ApplicationRunTime] Failed to dispose terminal {}: {}", id, Error);
 			}
 		}
 

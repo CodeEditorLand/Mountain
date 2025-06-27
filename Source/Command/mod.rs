@@ -1,10 +1,10 @@
-// File: Mountain/Source/Commands/mod.rs
+// File: Mountain/Source/Command/mod.rs
 // Role: Public module interface for all command-related logic.
 // Responsibilities:
 //   - Expose the bootstrap functionality for registering native commands.
 //   - Expose specific command handler modules for organization.
 
-//! # Commands Module
+//! # Command Module
 //!
 //! This module is responsible for defining and registering all native
 //! (Rust-implemented) commands for the Mountain application.

@@ -63,8 +63,8 @@ impl MountainService for MountainVinegRPCService {
 		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
 			Ok(v) => v,
 
-			Err(e) => {
-				let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
+			Err(Error) => {
+				let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, Error);
 
 				error!("{}", msg);
 
@@ -92,8 +92,8 @@ impl MountainService for MountainVinegRPCService {
 
 		match DispatchResult {
 			Ok(SuccessfulResult) => {
-				let ResultBytes = serde_json::to_vec(&SuccessfulResult).unwrap_or_else(|e| {
-					error!("Failed to serialize successful result for '{}': {}", MethodName, e);
+				let ResultBytes = serde_json::to_vec(&SuccessfulResult).unwrap_or_else(|Error| {
+					error!("Failed to serialize successful result for '{}': {}", MethodName, Error);
 
 					b"null".to_vec()
 				});

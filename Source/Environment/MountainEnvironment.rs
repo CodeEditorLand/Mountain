@@ -6,6 +6,8 @@
 //! central context and dependency injection container for the `Mountain`
 //! application.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::sync::Arc;
 
 use Common::{
@@ -37,7 +39,7 @@ use Common::{
 	WorkSpace::{WorkSpaceEditApplier::WorkSpaceEditApplier, WorkSpaceProvider::WorkSpaceProvider},
 };
 use async_trait::async_trait;
-use log::info;
+use log::{info, warn};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Wry};
 
@@ -66,11 +68,32 @@ impl Environment for MountainEnvironment {}
 
 #[async_trait]
 impl ExtensionManagementService for MountainEnvironment {
-	async fn ScanForExtensions(&self) -> Result<(), CommonError> { todo!() }
+	async fn ScanForExtensions(&self) -> Result<(), CommonError> {
+		warn!("[ExtensionManagementService] ScanForExtensions is a stub.");
 
-	async fn GetExtensions(&self) -> Result<Vec<Value>, CommonError> { todo!() }
+		Err(CommonError::NotImplemented { FeatureName:"ScanForExtensions".into() })
+	}
 
-	async fn GetExtension(&self, _id:String) -> Result<Option<Value>, CommonError> { todo!() }
+	async fn GetExtensions(&self) -> Result<Vec<Value>, CommonError> {
+		let ScannedExtensionsGuard = self
+			.ApplicationState
+			.ScannedExtensions
+			.lock()
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+
+		let Extensions:Vec<Value> = ScannedExtensionsGuard
+			.values()
+			.map(|ext| serde_json::to_value(ext).unwrap_or(Value::Null))
+			.collect();
+
+		Ok(Extensions)
+	}
+
+	async fn GetExtension(&self, _id:String) -> Result<Option<Value>, CommonError> {
+		warn!("[ExtensionManagementService] GetExtension is a stub.");
+
+		Err(CommonError::NotImplemented { FeatureName:"GetExtension".into() })
+	}
 }
 
 // --- Capability Requirement Implementations (DI) ---

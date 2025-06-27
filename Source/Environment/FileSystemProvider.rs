@@ -28,7 +28,7 @@ impl FileSystemReader for MountainEnvironment {
 
 		fs::read(Path)
 			.await
-			.map_err(|e| CommonError::FromStandardIOError(e, Path.clone(), "ReadFile"))
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadFile"))
 	}
 
 	/// Retrieves metadata for a file or directory after verifying access
@@ -38,7 +38,7 @@ impl FileSystemReader for MountainEnvironment {
 
 		let Metadata = fs::metadata(Path)
 			.await
-			.map_err(|e| CommonError::FromStandardIOError(e, Path.clone(), "StatFile"))?;
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "StatFile"))?;
 
 		let mut FileType = 0_u8;
 
@@ -83,12 +83,12 @@ impl FileSystemReader for MountainEnvironment {
 
 		let mut ReadDirectory = fs::read_dir(Path)
 			.await
-			.map_err(|e| CommonError::FromStandardIOError(e, Path.clone(), "ReadDirectory"))?;
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadDirectory"))?;
 
 		while let Some(EntryResult) = ReadDirectory
 			.next_entry()
 			.await
-			.map_err(|e| CommonError::FromStandardIOError(e, Path.clone(), "ReadDirectory.NextEntry"))?
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadDirectory.NextEntry"))?
 		{
 			let FileName = EntryResult.file_name().to_string_lossy().into_owned();
 
@@ -131,15 +131,15 @@ impl FileSystemWriter for MountainEnvironment {
 
 		if let Some(ParentDirectory) = Path.parent() {
 			if !fs::try_exists(ParentDirectory).await.unwrap_or(false) {
-				fs::create_dir_all(ParentDirectory).await.map_err(|e| {
-					CommonError::FromStandardIOError(e, ParentDirectory.to_path_buf(), "WriteFile.CreateParent")
+				fs::create_dir_all(ParentDirectory).await.map_err(|Error| {
+					CommonError::FromStandardIOError(Error, ParentDirectory.to_path_buf(), "WriteFile.CreateParent")
 				})?;
 			}
 		}
 
 		fs::write(Path, &Content)
 			.await
-			.map_err(|e| CommonError::FromStandardIOError(e, Path.clone(), "WriteFile"))
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "WriteFile"))
 	}
 
 	/// Creates a directory after verifying access rights.
@@ -152,7 +152,7 @@ impl FileSystemWriter for MountainEnvironment {
 			fs::create_dir(Path).await
 		};
 
-		Operation.map_err(|e| CommonError::FromStandardIOError(e, Path.clone(), "CreateDirectory"))
+		Operation.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "CreateDirectory"))
 	}
 
 	/// Deletes a file or directory after verifying access rights.
@@ -172,13 +172,13 @@ impl FileSystemWriter for MountainEnvironment {
 					fs::remove_file(Path).await
 				};
 
-				Operation.map_err(|e| CommonError::FromStandardIOError(e, Path.clone(), "Delete"))
+				Operation.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "Delete"))
 			},
 
 			// Idempotent success
-			Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+			Err(Error) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
 
-			Err(e) => Err(CommonError::FromStandardIOError(e, Path.clone(), "Delete.Stat")),
+			Err(Error) => Err(CommonError::FromStandardIOError(Error, Path.clone(), "Delete.Stat")),
 		}
 	}
 
@@ -194,7 +194,7 @@ impl FileSystemWriter for MountainEnvironment {
 
 		fs::rename(Source, Target)
 			.await
-			.map_err(|e| CommonError::FromStandardIOError(e, Source.clone(), "Rename"))
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Source.clone(), "Rename"))
 	}
 
 	/// Copies a file after verifying access rights.
@@ -216,7 +216,7 @@ impl FileSystemWriter for MountainEnvironment {
 		fs::copy(Source, Target)
 			.await
 			.map(|_| ())
-			.map_err(|e| CommonError::FromStandardIOError(e, Source.clone(), "Copy"))
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Source.clone(), "Copy"))
 	}
 
 	/// Creates a new, empty file after verifying access rights.

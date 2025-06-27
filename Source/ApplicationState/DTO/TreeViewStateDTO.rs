@@ -42,4 +42,7 @@ pub struct TreeViewStateDTO {
 
 	/// An optional description that appears with the title.
 	pub Description:Option<String>,
+
+	/// SideCar Identifier.
+	pub SideCarIdentifier:Option<String>,
 }

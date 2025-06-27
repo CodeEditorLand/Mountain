@@ -1,4 +1,4 @@
-// File: Mountain/Source/Commands/Bootstrap.rs
+// File: Mountain/Source/Command/Bootstrap.rs
 // Role: Registers all native, Rust-implemented commands and providers at
 // startup. Responsibilities:
 //   - Centralize the registration of all built-in functionality.
@@ -19,17 +19,21 @@ use Common::{
 	Document::OpenDocument::OpenDocument,
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Environment::Requires::Requires,
+	Error::CommonError::CommonError,
 	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	UserInterface::ShowOpenDialog::ShowOpenDialog,
 	WorkSpace::ApplyWorkSpaceEdit::ApplyWorkSpaceEdit,
 };
 use log::info;
 use serde_json::{Value, json};
-use tauri::{AppHandle, WebviewWindow};
+use tauri::{AppHandle, WebviewWindow, Wry};
 use url::Url;
 
 use crate::{
-	ApplicationState::{ApplicationState::ApplicationState, DTO::TreeViewStateDTO::TreeViewStateDTO},
+	ApplicationState::{
+		ApplicationState::{ApplicationState, MapLockError},
+		DTO::TreeViewStateDTO::TreeViewStateDTO,
+	},
 	Environment::CommandProvider::CommandHandler,
 	FileSystem::FileExplorerViewProvider::FileExplorerViewProvider,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
@@ -39,9 +43,9 @@ use crate::{
 
 /// A simple native command that logs a message.
 fn CommandHelloWorld(
-	_ApplicationHandle:AppHandle,
+	_ApplicationHandle:AppHandle<Wry>,
 
-	_Window:WebviewWindow,
+	_Window:WebviewWindow<Wry>,
 
 	_RunTime:Arc<ApplicationRunTime>,
 
@@ -56,9 +60,9 @@ fn CommandHelloWorld(
 
 /// A native command that orchestrates the "Open File" dialog flow.
 fn CommandOpenFile(
-	_ApplicationHandle:AppHandle,
+	_ApplicationHandle:AppHandle<Wry>,
 
-	_Window:WebviewWindow,
+	_Window:WebviewWindow<Wry>,
 
 	RunTime:Arc<ApplicationRunTime>,
 
@@ -67,16 +71,16 @@ fn CommandOpenFile(
 	Box::pin(async move {
 		info!("[Native Command] Executing Open File...");
 
-		let DialogResult = RunTime.Run(ShowOpenDialog(None)).await.map_err(|e| e.to_string())?;
+		let DialogResult = RunTime.Run(ShowOpenDialog(None)).await.map_err(|Error| Error.to_string())?;
 
 		if let Some(Paths) = DialogResult {
 			if let Some(Path) = Paths.first() {
 				// We have a path, now open the document.
-				let Uri = Url::from_file_path(Path).map_err(|_| "Invalid file path".to_string())?;
+				let URI = Url::from_file_path(Path).map_err(|_| "Invalid file path".to_string())?;
 
-				let OpenDocumentEffect = OpenDocument(json!({ "external": Uri.to_string() }), None, None);
+				let OpenDocumentEffect = OpenDocument(json!({ "external": URI.to_string() }), None, None);
 
-				RunTime.Run(OpenDocumentEffect).await.map_err(|e| e.to_string())?;
+				RunTime.Run(OpenDocumentEffect).await.map_err(|Error| Error.to_string())?;
 			}
 		}
 
@@ -86,10 +90,9 @@ fn CommandOpenFile(
 
 /// A native command that orchestrates the "Format Document" action.
 fn CommandFormatDocument(
-	_ApplicationHandle:AppHandle,
+	_ApplicationHandle:AppHandle<Wry>,
 
-	// Window is unused now
-	_Window:WebviewWindow,
+	_Window:WebviewWindow<Wry>,
 
 	RunTime:Arc<ApplicationRunTime>,
 
@@ -100,14 +103,15 @@ fn CommandFormatDocument(
 
 		let AppState = &RunTime.Environment.ApplicationState;
 
-		let UriString = AppState
+		let URIString = AppState
 			.ActiveDocumentURI
 			.lock()
-			.unwrap()
+			.map_err(MapLockError)
+			.map_err(|Error| Error.to_string())?
 			.clone()
 			.ok_or("No active document URI found in state".to_string())?;
 
-		let Uri = Url::parse(&UriString).map_err(|_| "Invalid URI in window state".to_string())?;
+		let URI = Url::parse(&URIString).map_err(|_| "Invalid URI in window state".to_string())?;
 
 		// Example formatting options
 		let Options = json!({ "tabSize": 4, "insertSpaces": true });
@@ -116,9 +120,9 @@ fn CommandFormatDocument(
 		let LanguageProvider:Arc<dyn LanguageFeatureProviderRegistry> = RunTime.Environment.Require();
 
 		let EditsOption = LanguageProvider
-			.ProvideDocumentFormattingEdits(Uri.clone(), Options)
+			.ProvideDocumentFormattingEdits(URI.clone(), Options)
 			.await
-			.map_err(|e| e.to_string())?;
+			.map_err(|Error| Error.to_string())?;
 
 		if let Some(Edits) = EditsOption {
 			if Edits.is_empty() {
@@ -130,8 +134,12 @@ fn CommandFormatDocument(
 			// 2. Convert the text edits into a WorkSpaceEdit.
 			let WorkSpaceEdit = WorkSpaceEditDTO {
 				Edits:vec![(
-					serde_json::to_value(&Uri).unwrap(),
-					Edits.into_iter().map(|e| serde_json::to_value(e).unwrap()).collect(),
+					serde_json::to_value(&URI).map_err(|Error| Error.to_string())?,
+					Edits
+						.into_iter()
+						.map(serde_json::to_value)
+						.collect::<Result<Vec<_>, _>>()
+						.map_err(|Error| Error.to_string())?,
 				)],
 			};
 
@@ -141,7 +149,7 @@ fn CommandFormatDocument(
 			RunTime
 				.Run(ApplyWorkSpaceEdit(WorkSpaceEdit))
 				.await
-				.map_err(|e| e.to_string())?;
+				.map_err(|Error| Error.to_string())?;
 		} else {
 			info!("[Native Command] No formatting provider found for this document.");
 		}
@@ -153,9 +161,13 @@ fn CommandFormatDocument(
 // --- Registration Function ---
 
 /// Registers all native commands and providers with the application state.
-pub fn RegisterNativeCommands(AppHandle:&AppHandle, ApplicationState:&Arc<ApplicationState>) {
+pub fn RegisterNativeCommands(
+	AppHandle:&AppHandle<Wry>,
+
+	ApplicationState:&Arc<ApplicationState>,
+) -> Result<(), CommonError> {
 	// --- Command Registration ---
-	let mut CommandRegistry = ApplicationState.CommandRegistry.lock().unwrap();
+	let mut CommandRegistry = ApplicationState.CommandRegistry.lock().map_err(MapLockError)?;
 
 	info!("[Bootstrap] Registering native commands...");
 
@@ -178,13 +190,13 @@ pub fn RegisterNativeCommands(AppHandle:&AppHandle, ApplicationState:&Arc<Applic
 	drop(CommandRegistry);
 
 	// --- Tree View Provider Registration ---
-	let mut TreeViewRegistry = ApplicationState.ActiveTreeViews.lock().unwrap();
+	let mut TreeViewRegistry = ApplicationState.ActiveTreeViews.lock().map_err(MapLockError)?;
 
 	info!("[Bootstrap] Registering native tree view providers...");
 
 	let ExplorerViewID = "workbench.view.explorer".to_string();
 
-	let ExplorerProvider = Arc::new(FileExplorerViewProvider::new(AppHandle.clone()));
+	let ExplorerProvider = Arc::new(FileExplorerViewProvider::New(AppHandle.clone()));
 
 	TreeViewRegistry.insert(
 		ExplorerViewID.clone(),
@@ -192,6 +204,9 @@ pub fn RegisterNativeCommands(AppHandle:&AppHandle, ApplicationState:&Arc<Applic
 			ViewIdentifier:ExplorerViewID,
 
 			Provider:Some(ExplorerProvider),
+
+			// This is a native provider
+			SideCarIdentifier:None,
 
 			CanSelectMany:true,
 
@@ -208,4 +223,6 @@ pub fn RegisterNativeCommands(AppHandle:&AppHandle, ApplicationState:&Arc<Applic
 	);
 
 	info!("[Bootstrap] {} native tree view providers registered.", TreeViewRegistry.len());
+
+	Ok(())
 }

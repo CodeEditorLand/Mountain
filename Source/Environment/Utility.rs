@@ -112,11 +112,11 @@ pub fn GetURLFromURIComponentsDTO(URIDTO:&serde_json::Value) -> Result<Url, Comm
 		}
 	})?;
 
-	Url::parse(URIString).map_err(|e| {
+	Url::parse(URIString).map_err(|Error| {
 		CommonError::InvalidArgument {
 			ArgumentName:"URIDTO.external".to_string(),
 
-			Reason:format!("Failed to parse URI string '{}': {}", URIString, e),
+			Reason:format!("Failed to parse URI string '{}': {}", URIString, Error),
 		}
 	})
 }

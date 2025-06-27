@@ -29,12 +29,12 @@ use crate::{
 pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) {
 	tokio::spawn(async move {
 		let Address:SocketAddr = match AddressString.parse() {
-			Ok(addr) => addr,
+			Ok(Address) => Address,
 
-			Err(e) => {
+			Err(Error) => {
 				error!(
 					"[VineServer] Invalid gRPC server address '{}': {}. Server will not start.",
-					AddressString, e
+					AddressString, Error
 				);
 
 				return;
@@ -44,7 +44,7 @@ pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) {
 		info!("[VineServer] Starting gRPC server on {}", Address);
 
 		let RunTime = match ApplicationHandle.try_state::<Arc<ApplicationRunTime>>() {
-			Some(rt) => rt.inner().clone(),
+			Some(RunTime) => RunTime.inner().clone(),
 
 			None => {
 				error!("[VineServer] CRITICAL: ApplicationRunTime not found in Tauri state. Server cannot start.");
@@ -55,12 +55,12 @@ pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) {
 
 		let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime);
 
-		if let Err(e) = Server::builder()
+		if let Err(Error) = Server::builder()
 			.add_service(MountainServiceServer::new(MountainService))
 			.serve(Address)
 			.await
 		{
-			error!("[VineServer] gRPC server failed to run: {}", e);
+			error!("[VineServer] gRPC server failed to run: {}", Error);
 		}
 	});
 }

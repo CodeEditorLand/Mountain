@@ -31,7 +31,7 @@ pub async fn GetTreeViewChildren(
 	);
 
 	let provider = {
-		let tree_views = state.ActiveTreeViews.lock().map_err(|e| e.to_string())?;
+		let tree_views = state.ActiveTreeViews.lock().map_err(|Error| Error.to_string())?;
 
 		// Note: This logic for getting a provider needs to be more robust.
 		// Assuming a single native provider for now.
@@ -42,8 +42,8 @@ pub async fn GetTreeViewChildren(
 		match provider.GetChildren(view_id, element_handle).await {
 			Ok(children) => Ok(json!(children)),
 
-			Err(e) => {
-				let err_msg = format!("Failed to get children for tree view: {}", e);
+			Err(Error) => {
+				let err_msg = format!("Failed to get children for tree view: {}", Error);
 
 				log::error!("{}", err_msg);
 

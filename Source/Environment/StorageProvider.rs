@@ -11,6 +11,8 @@
 //! provider contains the core logic for Memento storage operations, including
 //! reading from and writing to the appropriate JSON storage files on disk.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{collections::HashMap, path::PathBuf};
 
 use Common::{Error::CommonError::CommonError, Storage::StorageProvider::StorageProvider};
@@ -131,18 +133,18 @@ impl StorageProvider for MountainEnvironment {
 		} else {
 			(
 				self.ApplicationState.WorkSpaceMemento.clone(),
-				self.ApplicationState.WorkSpaceMementoPath.lock().unwrap().clone(),
+				self.ApplicationState
+					.WorkSpaceMementoPath
+					.lock()
+					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+					.clone(),
 			)
 		};
 
 		// Update in-memory state
-		{
-			let mut StorageMapGuard = StorageMapMutex
-				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-			*StorageMapGuard = DeserializedState.clone();
-		}
+		*StorageMapMutex
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = DeserializedState.clone();
 
 		// Persist to disk asynchronously
 		if let Some(StoragePath) = StoragePathOption {
@@ -165,27 +167,31 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 	match serde_json::to_string_pretty(&Data) {
 		Ok(JSONString) => {
 			if let Some(ParentDirectory) = Path.parent() {
-				if let Err(e) = fs::create_dir_all(ParentDirectory).await {
+				if let Err(Error) = fs::create_dir_all(ParentDirectory).await {
 					error!(
 						"[StorageProvider] Failed to create parent directory for '{}': {}",
 						Path.display(),
-						e
+						Error
 					);
 
 					return;
 				}
 			}
 
-			if let Err(e) = fs::write(&Path, JSONString).await {
-				error!("[StorageProvider] Failed to write storage file to '{}': {}", Path.display(), e);
+			if let Err(Error) = fs::write(&Path, JSONString).await {
+				error!(
+					"[StorageProvider] Failed to write storage file to '{}': {}",
+					Path.display(),
+					Error
+				);
 			}
 		},
 
-		Err(e) => {
+		Err(Error) => {
 			error!(
 				"[StorageProvider] Failed to serialize storage data for '{}': {}",
 				Path.display(),
-				e
+				Error
 			);
 		},
 	}

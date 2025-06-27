@@ -94,7 +94,7 @@ where
 			let Result = RunTime.Run(Effect).await;
 
 			match Result {
-				Ok(Output) => serde_json::to_value(Output).map_err(|e| format!("Serialization failed: {}", e)),
+				Ok(Output) => serde_json::to_value(Output).map_err(|Error| format!("Serialization failed: {}", Error)),
 
 				Err(Error) => {
 					let CommonError:CommonError = Error.into();
@@ -136,7 +136,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					let result = provider
 						.InspectConfigurationValue(Key, from_value(Overrides).unwrap_or_default())
 						.await
-						.map_err(|e| e.to_string())?;
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(serde_json::to_value(result).unwrap_or(Value::Null))
 				})
@@ -167,7 +167,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							ScopeToLang,
 						)
 						.await
-						.map_err(|e| e.to_string())?;
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -189,7 +189,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					provider
 						.ResolveCustomEditor(ViewType, ResourceURI, WebViewPanelHandle)
 						.await
-						.map_err(|e| e.to_string())?;
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -205,14 +205,14 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let folder_uri = if folder_uri_val.is_null() {
 				None
 			} else {
-				Some(from_value(folder_uri_val).map_err(|e| e.to_string())?)
+				Some(from_value(folder_uri_val).map_err(|Error| Error.to_string())?)
 			};
 
 			return Ok(Box::new(move |runtime:Arc<MountainRunTime>| {
 				Box::pin(async move {
 					let provider:Arc<dyn DebugService> = runtime.Environment.Require();
 
-					let session_id = provider.StartDebugging(folder_uri, config).await.map_err(|e| e.to_string())?;
+					let session_id = provider.StartDebugging(folder_uri, config).await.map_err(|Error| Error.to_string())?;
 
 					Ok(json!(session_id))
 				})
@@ -233,7 +233,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					provider
 						.RegisterDebugConfigurationProvider(dbg_type, handle, sidecar_id)
 						.await
-						.map_err(|e| e.to_string())?;
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -250,7 +250,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn DiagnosticManager> = runtime.Environment.Require();
 
-					provider.SetDiagnostics(Owner, Entries).await.map_err(|e| e.to_string())?;
+					provider.SetDiagnostics(Owner, Entries).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -264,7 +264,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn DiagnosticManager> = runtime.Environment.Require();
 
-					provider.ClearDiagnostics(Owner).await.map_err(|e| e.to_string())?;
+					provider.ClearDiagnostics(Owner).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -277,7 +277,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn KeybindingProvider> = runtime.Environment.Require();
 
-					provider.GetResolvedKeybinding().await.map_err(|e| e.to_string())
+					provider.GetResolvedKeybinding().await.map_err(|Error| Error.to_string())
 				})
 			}));
 		},
@@ -301,7 +301,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					let handle = provider
 						.RegisterProvider(SideCarID, ProviderType, Selector, ExtensionID, Options)
 						.await
-						.map_err(|e| e.to_string())?;
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(json!(handle))
 				})
@@ -315,7 +315,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn LanguageFeatureProviderRegistry> = runtime.Environment.Require();
 
-					provider.UnregisterProvider(Handle).await.map_err(|e| e.to_string())?;
+					provider.UnregisterProvider(Handle).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -332,7 +332,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn SearchProvider> = runtime.Environment.Require();
 
-					let result = provider.TextSearch(Query, Options).await.map_err(|e| e.to_string())?;
+					let result = provider.TextSearch(Query, Options).await.map_err(|Error| Error.to_string())?;
 
 					Ok(result)
 				})
@@ -347,7 +347,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn SourceControlManagementProvider> = runtime.Environment.Require();
 
-					let handle = provider.CreateSourceControl(DTO).await.map_err(|e| e.to_string())?;
+					let handle = provider.CreateSourceControl(DTO).await.map_err(|Error| Error.to_string())?;
 
 					Ok(json!(handle))
 				})
@@ -363,7 +363,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn SourceControlManagementProvider> = runtime.Environment.Require();
 
-					provider.UpdateSourceControl(handle, dto).await.map_err(|e| e.to_string())?;
+					provider.UpdateSourceControl(handle, dto).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -382,7 +382,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					provider
 						.UpdateSourceControlGroup(handle, dto)
 						.await
-						.map_err(|e| e.to_string())?;
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -398,7 +398,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn SourceControlManagementProvider> = runtime.Environment.Require();
 
-					provider.RegisterInputBox(handle, dto).await.map_err(|e| e.to_string())?;
+					provider.RegisterInputBox(handle, dto).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -413,7 +413,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StatusBarProvider> = runtime.Environment.Require();
 
-					provider.SetStatusBarEntry(EntryDTO).await.map_err(|e| e.to_string())?;
+					provider.SetStatusBarEntry(EntryDTO).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -427,7 +427,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StatusBarProvider> = runtime.Environment.Require();
 
-					provider.DisposeStatusBarEntry(EntryID).await.map_err(|e| e.to_string())?;
+					provider.DisposeStatusBarEntry(EntryID).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -443,7 +443,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StatusBarProvider> = runtime.Environment.Require();
 
-					provider.SetStatusBarMessage(ID, Text).await.map_err(|e| e.to_string())?;
+					provider.SetStatusBarMessage(ID, Text).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -457,7 +457,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StatusBarProvider> = runtime.Environment.Require();
 
-					provider.DisposeStatusBarMessage(ID).await.map_err(|e| e.to_string())?;
+					provider.DisposeStatusBarMessage(ID).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -472,7 +472,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
 
-					provider.GetAllStorage(IsGlobal).await.map_err(|e| e.to_string())
+					provider.GetAllStorage(IsGlobal).await.map_err(|Error| Error.to_string())
 				})
 			}));
 		},
@@ -486,7 +486,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
 
-					provider.SetAllStorage(IsGlobal, State).await.map_err(|e| e.to_string())?;
+					provider.SetAllStorage(IsGlobal, State).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -501,7 +501,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn TerminalProvider> = runtime.Environment.Require();
 
-					let result = provider.CreateTerminal(OptionsValue).await.map_err(|e| e.to_string())?;
+					let result = provider.CreateTerminal(OptionsValue).await.map_err(|Error| Error.to_string())?;
 
 					Ok(result)
 				})
@@ -517,7 +517,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn TerminalProvider> = runtime.Environment.Require();
 
-					provider.SendTextToTerminal(TerminalId, Text).await.map_err(|e| e.to_string())?;
+					provider.SendTextToTerminal(TerminalId, Text).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -531,7 +531,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn TerminalProvider> = runtime.Environment.Require();
 
-					provider.DisposeTerminal(TerminalId).await.map_err(|e| e.to_string())?;
+					provider.DisposeTerminal(TerminalId).await.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -551,7 +551,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					provider
 						.RegisterTreeDataProvider(ID, Options)
 						.await
-						.map_err(|e| e.to_string())?;
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -579,7 +579,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					let handle = provider
 						.CreateWebViewPanel(ExtData, ViewType, Title, ShowOpts, PanelOpts, ContentOpts)
 						.await
-						.map_err(|e| e.to_string())?;
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(json!(handle))
 				})
@@ -624,7 +624,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 		"Document.Save" => {
 			let uri_str = Parameter!(ParametersArray, 0, String)?;
 
-			let uri = Url::parse(&uri_str).map_err(|e| format!("Invalid URI parameter: {}", e))?;
+			let uri = Url::parse(&uri_str).map_err(|Error| format!("Invalid URI parameter: {}", Error))?;
 
 			Map(SaveDocument(uri))
 		},
@@ -632,7 +632,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 		"Document.SaveAs" => {
 			let original_uri_str = Parameter!(ParametersArray, 0, String)?;
 
-			let original_uri = Url::parse(&original_uri_str).map_err(|e| format!("Invalid URI parameter: {}", e))?;
+			let original_uri = Url::parse(&original_uri_str).map_err(|Error| format!("Invalid URI parameter: {}", Error))?;
 
 			Map(SaveDocumentAs(original_uri, None))
 		},

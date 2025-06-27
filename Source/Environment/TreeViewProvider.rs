@@ -6,8 +6,14 @@
 //! provider manages the lifecycle of custom tree views and orchestrates the
 //! data flow between the extension host (`Cocoon`) and the UI (`Sky`).
 
+#![allow(non_snake_case, non_camel_case_types)]
+
+use std::sync::Arc;
+
 use Common::{
+	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
+	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 	TreeView::{DTO::TreeViewOptionsDTO::TreeViewOptionsDTO, TreeViewProvider::TreeViewProvider},
 };
 use async_trait::async_trait;
@@ -20,17 +26,24 @@ use crate::ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO;
 
 #[async_trait]
 impl TreeViewProvider for MountainEnvironment {
-	/// Registers a new tree data provider from Cocoon (an extension).
+	/// Registers a new tree data provider from an extension (e.g., Cocoon).
 	async fn RegisterTreeDataProvider(&self, ViewIdentifier:String, Options:Value) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Registering data provider for view: {}", ViewIdentifier);
 
-		let OptionsDTO:TreeViewOptionsDTO = serde_json::from_value(Options)
-			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:e.to_string() })?;
+		let OptionsDTO:TreeViewOptionsDTO = serde_json::from_value(Options.clone()).map_err(|Error| {
+			CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:Error.to_string() }
+		})?;
+
+		// For now, assume all extension providers come from the main sidecar.
+		let SideCarIdentifier = "cocoon-main".to_string();
 
 		let NewState = TreeViewStateDTO {
 			ViewIdentifier:ViewIdentifier.clone(),
 
+			// This is a proxied provider, not native.
 			Provider:None,
+
+			SideCarIdentifier:Some(SideCarIdentifier),
 
 			CanSelectMany:OptionsDTO.CanSelectMany,
 
@@ -54,55 +67,124 @@ impl TreeViewProvider for MountainEnvironment {
 		self.ApplicationHandle
 			.emit(
 				"sky://tree-view/create",
-				json!({ "ViewIdentifier": ViewIdentifier, "Options": OptionsDTO }),
+				json!({ "ViewIdentifier": ViewIdentifier, "Options": Options }),
 			)
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
 		Ok(())
 	}
 
-	/// Unregisters a tree data provider from Cocoon.
+	/// Unregisters a tree data provider.
 	async fn UnregisterTreeDataProvider(&self, ViewIdentifier:String) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Unregistering data provider for view: {}", ViewIdentifier);
 
-		self.ApplicationState.ActiveTreeViews.lock().unwrap().remove(&ViewIdentifier);
+		self.ApplicationState
+			.ActiveTreeViews
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.remove(&ViewIdentifier);
 
 		self.ApplicationHandle
 			.emit("sky://tree-view/dispose", json!({ "ViewIdentifier": ViewIdentifier }))
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
-	/// Reveals a specific item in the tree view.
-	async fn RevealTreeItem(
+	/// Reveals a specific item in the tree view by notifying the UI.
+	async fn RevealTreeItem(&self, ViewIdentifier:String, ItemHandle:String, Options:Value) -> Result<(), CommonError> {
+		info!(
+			"[TreeViewProvider] Revealing item '{}' in view '{}'",
+			ItemHandle, ViewIdentifier
+		);
+
+		self.ApplicationHandle
+			.emit(
+				"sky://tree-view/reveal",
+				json!({ "viewId": ViewIdentifier, "itemHandle": ItemHandle, "options": Options }),
+			)
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
+	}
+
+	/// Refreshes the tree view by notifying the UI.
+	async fn RefreshTreeView(&self, ViewIdentifier:String, ItemsToRefresh:Option<Value>) -> Result<(), CommonError> {
+		info!("[TreeViewProvider] Refreshing view '{}'", ViewIdentifier);
+
+		self.ApplicationHandle
+			.emit(
+				"sky://tree-view/refresh",
+				json!({ "viewId": ViewIdentifier, "itemsToRefresh": ItemsToRefresh }),
+			)
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
+	}
+
+	/// Gets the children for a given element. This method acts as a dispatcher.
+	async fn GetChildren(
 		&self,
 
-		_ViewIdentifier:String,
+		ViewIdentifier:String,
 
-		_ItemHandle:String,
+		ElementHandle:Option<String>,
+	) -> Result<Vec<Value>, CommonError> {
+		let ProviderInfo = self
+			.ApplicationState
+			.ActiveTreeViews
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.get(&ViewIdentifier)
+			.cloned();
 
-		_Options:Value,
-	) -> Result<(), CommonError> {
-		warn!("[TreeViewProvider] RevealTreeItem is not implemented.");
+		if let Some(Info) = ProviderInfo {
+			if let Some(NativeProvider) = Info.Provider {
+				// Case 1: Native Rust provider (e.g., File Explorer)
+				return NativeProvider.GetChildren(ViewIdentifier, ElementHandle).await;
+			} else if let Some(SideCarId) = Info.SideCarIdentifier {
+				// Case 2: Proxied extension provider
+				let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 
-		Ok(())
+				let RPCMethod = format!("{}$getChildren", ProxyTarget::ExtHostTreeView.GetTargetPrefix());
+
+				let RPCParams = json!([ViewIdentifier, ElementHandle]);
+
+				let Response = IPCProvider.SendRequestToSideCar(SideCarId, RPCMethod, RPCParams, 10000).await?;
+
+				return serde_json::from_value(Response)?;
+			}
+		}
+		Err(CommonError::TreeViewProviderNotFound { ViewIdentifier })
 	}
 
-	/// Refreshes the tree view, optionally starting from a specific set of
-	/// items.
-	async fn RefreshTreeView(&self, _ViewIdentifier:String, _ItemsToRefresh:Option<Value>) -> Result<(), CommonError> {
-		warn!("[TreeViewProvider] RefreshTreeView is not implemented.");
+	/// Gets the TreeItem for a given element. This method acts as a dispatcher.
+	async fn GetTreeItem(&self, ViewIdentifier:String, ElementHandle:String) -> Result<Value, CommonError> {
+		let ProviderInfo = self
+			.ApplicationState
+			.ActiveTreeViews
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.get(&ViewIdentifier)
+			.cloned();
 
-		Ok(())
+		if let Some(Info) = ProviderInfo {
+			if let Some(NativeProvider) = Info.Provider {
+				return NativeProvider.GetTreeItem(ViewIdentifier, ElementHandle).await;
+			} else if let Some(SideCarId) = Info.SideCarIdentifier {
+				let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+
+				let RPCMethod = format!("{}$getTreeItem", ProxyTarget::ExtHostTreeView.GetTargetPrefix());
+
+				let RPCParams = json!([ViewIdentifier, ElementHandle]);
+
+				return IPCProvider.SendRequestToSideCar(SideCarId, RPCMethod, RPCParams, 5000).await;
+			}
+		}
+		Err(CommonError::TreeViewProviderNotFound { ViewIdentifier })
 	}
 
-	/// Sets a message to be displayed in the tree view UI.
+	// --- Other stubbed methods ---
 	async fn SetTreeViewMessage(&self, _ViewIdentifier:String, _Message:Option<String>) -> Result<(), CommonError> {
 		warn!("[TreeViewProvider] SetTreeViewMessage is not implemented.");
 
 		Ok(())
 	}
 
-	/// Sets the title and description for the tree view.
 	async fn SetTreeViewTitle(
 		&self,
 
@@ -117,50 +199,9 @@ impl TreeViewProvider for MountainEnvironment {
 		Ok(())
 	}
 
-	/// Sets a badge to be displayed on the tree view's container.
 	async fn SetTreeViewBadge(&self, _ViewIdentifier:String, _Badge:Option<Value>) -> Result<(), CommonError> {
 		warn!("[TreeViewProvider] SetTreeViewBadge is not implemented.");
 
 		Ok(())
-	}
-
-	/// Gets the children for a given element. This method acts as a dispatcher.
-	async fn GetChildren(
-		&self,
-
-		ViewIdentifier:String,
-
-		ElementHandle:Option<String>,
-	) -> Result<Vec<Value>, CommonError> {
-		let provider = self
-			.ApplicationState
-			.ActiveTreeViews
-			.lock()
-			.unwrap()
-			.get(&ViewIdentifier)
-			.and_then(|v| v.Provider.clone());
-
-		if let Some(p) = provider {
-			p.GetChildren(ViewIdentifier, ElementHandle).await
-		} else {
-			Err(CommonError::NotImplemented { FeatureName:"GetChildren for proxied TreeView".into() })
-		}
-	}
-
-	/// Gets the TreeItem for a given element. This method acts as a dispatcher.
-	async fn GetTreeItem(&self, ViewIdentifier:String, ElementHandle:String) -> Result<Value, CommonError> {
-		let provider = self
-			.ApplicationState
-			.ActiveTreeViews
-			.lock()
-			.unwrap()
-			.get(&ViewIdentifier)
-			.and_then(|v| v.Provider.clone());
-
-		if let Some(p) = provider {
-			p.GetTreeItem(ViewIdentifier, ElementHandle).await
-		} else {
-			Err(CommonError::NotImplemented { FeatureName:"GetTreeItem for proxied TreeView".into() })
-		}
 	}
 }

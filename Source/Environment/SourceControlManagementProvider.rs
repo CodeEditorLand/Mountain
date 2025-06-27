@@ -5,6 +5,8 @@
 //! Implements the `SourceControlManagementProvider` trait for the
 //! `MountainEnvironment`.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use Common::{
 	Error::CommonError::CommonError,
 	SourceControlManagement::{
@@ -24,7 +26,7 @@ use log::{info, warn};
 use serde_json::{Value, json};
 use tauri::Emitter;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 
 #[async_trait]
 impl SourceControlManagementProvider for MountainEnvironment {
@@ -34,64 +36,59 @@ impl SourceControlManagementProvider for MountainEnvironment {
 		let Handle = self.ApplicationState.GetNextSourceControlManagementProviderHandle();
 
 		info!(
-			"[SourceControlManagementProvider] Creating new SourceControlManagement provider with handle {}",
+			"[SourceControlManagementProvider] Creating new SCM provider with handle {}",
 			Handle
 		);
 
 		let ProviderState = SourceControlManagementProviderDTO {
 			Handle,
-
 			Label:ProviderData.Label,
-
 			RootURI:Some(json!({ "external": ProviderData.RootUri.to_string() })),
-
 			CommitTemplate:None,
-
 			Count:None,
-
 			InputBox:None,
 		};
 
 		self.ApplicationState
 			.SourceControlManagementProviders
 			.lock()
-			.unwrap()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(Handle, ProviderState.clone());
 
 		self.ApplicationState
 			.SourceControlManagementGroups
 			.lock()
-			.unwrap()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(Handle, Default::default());
 
 		self.ApplicationHandle
 			.emit("sky://scm/provider/added", ProviderState)
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit scm event: {}", e) })?;
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit scm event: {}", Error) })?;
 
 		Ok(Handle)
 	}
 
 	async fn DisposeSourceControl(&self, ProviderHandle:u32) -> Result<(), CommonError> {
 		info!(
-			"[SourceControlManagementProvider] Disposing SourceControlManagement provider with handle {}",
+			"[SourceControlManagementProvider] Disposing SCM provider with handle {}",
 			ProviderHandle
 		);
 
 		self.ApplicationState
 			.SourceControlManagementProviders
 			.lock()
-			.unwrap()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&ProviderHandle);
 
 		self.ApplicationState
 			.SourceControlManagementGroups
 			.lock()
-			.unwrap()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&ProviderHandle);
 
 		self.ApplicationHandle
 			.emit("sky://scm/provider/removed", ProviderHandle)
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
 		Ok(())
 	}
@@ -101,13 +98,13 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		info!("[SourceControlManagementProvider] Updating provider {}", ProviderHandle);
 
-		if let Some(Provider) = self
+		let mut ProvidersGuard = self
 			.ApplicationState
 			.SourceControlManagementProviders
 			.lock()
-			.unwrap()
-			.get_mut(&ProviderHandle)
-		{
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+		if let Some(Provider) = ProvidersGuard.get_mut(&ProviderHandle) {
 			if let Some(count) = UpdateData.Count {
 				Provider.Count = Some(count);
 			}
@@ -118,12 +115,17 @@ impl SourceControlManagementProvider for MountainEnvironment {
 				}
 			}
 
+			let ProviderClone = Provider.clone();
+
+			// Release lock before emitting
+			drop(ProvidersGuard);
+
 			self.ApplicationHandle
 				.emit(
 					"sky://scm/provider/changed",
-					json!({ "handle": ProviderHandle, "provider": Provider }),
+					json!({ "handle": ProviderHandle, "provider": ProviderClone }),
 				)
-				.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		}
 
 		Ok(())
@@ -137,31 +139,34 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			GroupData.GroupID, ProviderHandle
 		);
 
-		if let Some(ProviderGroups) = self
+		let mut GroupsGuard = self
 			.ApplicationState
 			.SourceControlManagementGroups
 			.lock()
-			.unwrap()
-			.get_mut(&ProviderHandle)
-		{
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+		if let Some(ProviderGroups) = GroupsGuard.get_mut(&ProviderHandle) {
 			let Group = ProviderGroups.entry(GroupData.GroupID.clone()).or_insert_with(|| {
 				SourceControlManagementGroupDTO {
 					ProviderHandle,
-
 					Identifier:GroupData.GroupID.clone(),
-
 					Label:GroupData.Label.clone(),
 				}
 			});
 
 			Group.Label = GroupData.Label;
 
+			let GroupClone = Group.clone();
+
+			// Release lock before emitting
+			drop(GroupsGuard);
+
 			self.ApplicationHandle
 				.emit(
 					"sky://scm/group/changed",
-					json!({ "providerHandle": ProviderHandle, "group": Group }),
+					json!({ "providerHandle": ProviderHandle, "group": GroupClone }),
 				)
-				.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		} else {
 			warn!(
 				"[SourceControlManagementProvider] Received group update for unknown provider handle: {}",
@@ -180,21 +185,26 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			ProviderHandle
 		);
 
-		if let Some(Provider) = self
+		let mut ProvidersGuard = self
 			.ApplicationState
 			.SourceControlManagementProviders
 			.lock()
-			.unwrap()
-			.get_mut(&ProviderHandle)
-		{
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+		if let Some(Provider) = ProvidersGuard.get_mut(&ProviderHandle) {
 			Provider.InputBox = Some(InputBoxData);
+
+			let ProviderClone = Provider.clone();
+
+			// Release lock before emitting
+			drop(ProvidersGuard);
 
 			self.ApplicationHandle
 				.emit(
 					"sky://scm/provider/changed",
-					json!({ "handle": ProviderHandle, "provider": Provider }),
+					json!({ "handle": ProviderHandle, "provider": ProviderClone }),
 				)
-				.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		}
 
 		Ok(())

@@ -13,6 +13,8 @@
 //! as opening, saving, and applying text changes, and notifying the `Cocoon`
 //! sidecar and `Sky` frontend of these events.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{path::PathBuf, sync::Arc};
 
 use Common::{
@@ -55,19 +57,26 @@ impl DocumentProvider for MountainEnvironment {
 		info!("[DocumentProvider] Opening document: {}", URI);
 
 		// First, check if the document is already open.
-		if let Some(ExistingDocument) = self.ApplicationState.OpenDocuments.lock().unwrap().get(URI.as_str()) {
+		if let Some(ExistingDocument) = self
+			.ApplicationState
+			.OpenDocuments
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.get(URI.as_str())
+		{
 			info!("[DocumentProvider] Document {} is already open.", URI);
 
-			self.ApplicationHandle
-				.emit("sky://documents/open", ExistingDocument.ToDTO())
-				.expect("");
+			let DTO = ExistingDocument.ToDTO();
+
+			if let Err(Error) = self.ApplicationHandle.emit("sky://documents/open", DTO) {
+				error!("[DocumentProvider] Failed to emit document open event: {}", Error);
+			}
 
 			return Ok(ExistingDocument.URI.clone());
 		}
 
 		// Resolve the content based on the URI scheme.
 		let FileContent = if let Some(c) = Content {
-			// Content was provided directly (e.g., new untitled file)
 			c
 		} else if URI.scheme() == "file" {
 			let FilePath = URI.to_file_path().map_err(|_| {
@@ -83,7 +92,7 @@ impl DocumentProvider for MountainEnvironment {
 			let FileContentBytes = RunTime.Run(ReadFile(FilePath.clone())).await?;
 
 			String::from_utf8(FileContentBytes)
-				.map_err(|e| CommonError::FileSystemIO { Path:FilePath, Description:e.to_string() })?
+				.map_err(|Error| CommonError::FileSystemIO { Path:FilePath, Description:Error.to_string() })?
 		} else {
 			// Custom scheme: attempt to resolve from a sidecar provider.
 			info!(
@@ -118,12 +127,12 @@ impl DocumentProvider for MountainEnvironment {
 		self.ApplicationState
 			.OpenDocuments
 			.lock()
-			.unwrap()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(URI.to_string(), NewDocument);
 
-		self.ApplicationHandle
-			.emit("sky://documents/open", DTOForNotification.clone())
-			.expect("");
+		if let Err(Error) = self.ApplicationHandle.emit("sky://documents/open", DTOForNotification.clone()) {
+			error!("[DocumentProvider] Failed to emit document open event: {}", Error);
+		}
 
 		NotifyModelAdded(self, &DTOForNotification).await;
 
@@ -144,13 +153,25 @@ impl DocumentProvider for MountainEnvironment {
 			if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
 				if URI.scheme() != "file" {
 					return Err(CommonError::NotImplemented {
-						FeatureName:format!("Saving for URI scheme '{}'", URI.scheme()),
+						FeatureName:format!(
+							"Saving for URI scheme '{}' is not supported via this method.",
+							URI.scheme()
+						),
 					});
 				}
 
 				Document.IsDirty = false;
 
-				(Document.GetText().into_bytes(), URI.to_file_path().unwrap())
+				(
+					Document.GetText().into_bytes(),
+					URI.to_file_path().map_err(|_| {
+						CommonError::InvalidArgument {
+							ArgumentName:"URI".into(),
+
+							Reason:"Cannot convert file URI to path".into(),
+						}
+					})?,
+				)
 			} else {
 				return Err(CommonError::FileSystemNotFound(URI.to_file_path().unwrap_or_default()));
 			}
@@ -160,9 +181,12 @@ impl DocumentProvider for MountainEnvironment {
 
 		RunTime.Run(WriteFileBytes(FilePath, ContentBytes, true, true)).await?;
 
-		self.ApplicationHandle
+		if let Err(Error) = self
+			.ApplicationHandle
 			.emit("sky://documents/saved", json!({ "uri": URI.to_string() }))
-			.expect("");
+		{
+			error!("[DocumentProvider] Failed to emit document saved event: {}", Error);
+		}
 
 		NotifyModelSaved(self, &URI).await;
 
@@ -231,19 +255,19 @@ impl DocumentProvider for MountainEnvironment {
 
 		NotifyModelAdded(self, &NewDocumentState).await;
 
-		self.ApplicationHandle
-			.emit(
-				"sky://documents/renamed",
-				json!({ "oldUri": OriginalURI.to_string(), "newUri": NewURI.to_string() }),
-			)
-			.expect("");
+		if let Err(Error) = self.ApplicationHandle.emit(
+			"sky://documents/renamed",
+			json!({ "oldUri": OriginalURI.to_string(), "newUri": NewURI.to_string() }),
+		) {
+			error!("[DocumentProvider] Failed to emit document renamed event: {}", Error);
+		}
 
 		Ok(Some(NewURI))
 	}
 
 	/// Saves all currently dirty documents.
 	async fn SaveAllDocuments(&self, _IncludeUntitled:bool) -> Result<Vec<bool>, CommonError> {
-		warn!("[DocumentProvider] SaveAllDocuments is not fully implemented.");
+		warn!("[DocumentProvider] SaveAllDocuments is not implemented.");
 
 		Err(CommonError::NotImplemented { FeatureName:"SaveAllDocuments".into() })
 	}
@@ -274,11 +298,7 @@ impl DocumentProvider for MountainEnvironment {
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 			if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
-				if let Err(e) = Document.ApplyChanges(NewVersionIdentifier, &ChangesDTOCollection) {
-					return Err(CommonError::InvalidArgument { ArgumentName:"ChangesDTOCollection".into(), Reason:e });
-				}
-
-				Document.IsDirty = true;
+				Document.ApplyChanges(NewVersionIdentifier, &ChangesDTOCollection);
 			} else {
 				warn!("[DocumentProvider] Received changes for unknown document: {}", URI);
 
@@ -296,7 +316,7 @@ impl DocumentProvider for MountainEnvironment {
 
 /// Notifies Cocoon that a new document model has been added.
 async fn NotifyModelAdded(Environment:&MountainEnvironment, DocumentStateDTO:&Value) {
-	let URIString = DocumentStateDTO.get("uri").and_then(Value::as_str).unwrap_or("unknown");
+	let URIString = DocumentStateDTO.get("URI").and_then(Value::as_str).unwrap_or("unknown");
 
 	info!("[DocumentProvider] Notifying ModelAdded for: {}", URIString);
 
@@ -304,11 +324,14 @@ async fn NotifyModelAdded(Environment:&MountainEnvironment, DocumentStateDTO:&Va
 
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
-	if let Err(e) = IPCProvider
+	if let Err(Error) = IPCProvider
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelAdded".to_string(), Payload)
 		.await
 	{
-		error!("[DocumentProvider] Failed to send $acceptModelAdded for {}: {}", URIString, e);
+		error!(
+			"[DocumentProvider] Failed to send $acceptModelAdded for {}: {}",
+			URIString, Error
+		);
 	}
 }
 
@@ -324,11 +347,11 @@ async fn NotifyModelChanged(Environment:&MountainEnvironment, URI:&Url, NewVersi
 
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
-	if let Err(e) = IPCProvider
+	if let Err(Error) = IPCProvider
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelChanged".to_string(), Payload)
 		.await
 	{
-		error!("[DocumentProvider] Failed to send $acceptModelChanged for {}: {}", URI, e);
+		error!("[DocumentProvider] Failed to send $acceptModelChanged for {}: {}", URI, Error);
 	}
 }
 
@@ -342,15 +365,15 @@ async fn NotifyModelSaved(Environment:&MountainEnvironment, URI:&Url) {
 
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
-	if let Err(e) = IPCProvider
+	if let Err(Error) = IPCProvider
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelSaved".to_string(), Payload)
 		.await
 	{
-		error!("[DocumentProvider] Failed to send $acceptModelSaved for {}: {}", URI, e);
+		error!("[DocumentProvider] Failed to send $acceptModelSaved for {}: {}", URI, Error);
 	}
 }
 
-/// Notifies Cocoon that a document has been closed.
+/// Notifies Cocoon that a document has been closed or renamed.
 pub async fn NotifyModelRemoved(Environment:&MountainEnvironment, URI:&Url) {
 	info!("[DocumentProvider] Notifying ModelRemoved for: {}", URI);
 
@@ -360,10 +383,10 @@ pub async fn NotifyModelRemoved(Environment:&MountainEnvironment, URI:&Url) {
 
 	let IPCProvider:Arc<dyn IPCProvider> = Environment.Require();
 
-	if let Err(e) = IPCProvider
+	if let Err(Error) = IPCProvider
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelRemoved".to_string(), Payload)
 		.await
 	{
-		error!("[DocumentProvider] Failed to send $acceptModelRemoved for {}: {}", URI, e);
+		error!("[DocumentProvider] Failed to send $acceptModelRemoved for {}: {}", URI, Error);
 	}
 }

@@ -13,6 +13,8 @@
 //! intelligence features, routing requests from the application to the
 //! appropriate extension provider hosted in the `Cocoon` sidecar.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::sync::Arc;
 
 use Common::{
@@ -102,12 +104,10 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 				Handle
 			);
 		}
-
 		Ok(())
 	}
 
 	// --- Invocation Methods ---
-
 	async fn ProvideHover(
 		&self,
 
@@ -188,7 +188,7 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 		.await
 	}
 
-	// --- STUBS FOR OTHER PROVIDER METHODS ---
+	// --- Stubs for other provider methods ---
 	async fn ProvideCodeActions(
 		&self,
 
@@ -243,43 +243,45 @@ fn FindBestProvider(
 	ProviderType:ProviderType,
 
 	DocumentURI:&Url,
-) -> Option<ProviderRegistrationDTO> {
-	let Providers = Environment.ApplicationState.LanguageProviders.lock().unwrap();
+) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
+	let Providers = Environment
+		.ApplicationState
+		.LanguageProviders
+		.lock()
+		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 	let Document = Environment
 		.ApplicationState
 		.OpenDocuments
 		.lock()
-		.unwrap()
+		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.get(DocumentURI.as_str())
 		.cloned();
 
 	if let Some(doc) = Document {
 		// This is a simplified selector matching logic. A real implementation would
 		// score providers based on how well their DocumentSelector matches the
-		// document (scheme, pattern, language).
+		// document.
 		for Provider in Providers.values() {
 			if Provider.ProviderType == ProviderType {
-				if let Some(selector_array) = Provider.Selector.as_array() {
-					for selector in selector_array {
-						if let Some(lang) = selector.get("language").and_then(Value::as_str) {
-							if lang == doc.LanguageIdentifier {
+				if let Some(SelectorArray) = Provider.Selector.as_array() {
+					for Selector in SelectorArray {
+						if let Some(Lang) = Selector.get("language").and_then(Value::as_str) {
+							if Lang == doc.LanguageIdentifier {
 								debug!("Found provider with handle {} for document {}", Provider.Handle, DocumentURI);
 
-								return Some(Provider.clone());
+								return Ok(Some(Provider.clone()));
 							}
 						}
-
 						// TODO: Add scheme and pattern matching logic here.
 					}
 				}
 			}
 		}
 	}
-
 	warn!("No provider found for {:?} on document {}", ProviderType, DocumentURI);
 
-	None
+	Ok(None)
 }
 
 /// A generic helper to find the best provider, invoke it via RPC, and
@@ -293,7 +295,7 @@ async fn InvokeProvider<TResponse:DeserializeOwned>(
 
 	mut ProviderArguments:Value,
 ) -> Result<Option<TResponse>, CommonError> {
-	if let Some(Provider) = FindBestProvider(Environment, ProviderType, DocumentURI) {
+	if let Some(Provider) = FindBestProvider(Environment, ProviderType, DocumentURI)? {
 		let RPCMethod = format!("$provide{}", Provider.ProviderType.to_string());
 
 		let URIComponents = json!({ "external": DocumentURI.to_string(), "$mid": 1 });
@@ -321,10 +323,9 @@ async fn InvokeProvider<TResponse:DeserializeOwned>(
 		if Response.is_null() {
 			return Ok(None);
 		}
-
-		serde_json::from_value(Response).map_err(|e| {
+		serde_json::from_value(Response).map_err(|Error| {
 			CommonError::SerializationError {
-				Description:format!("Failed to deserialize response for {:?}: {}", ProviderType, e),
+				Description:format!("Failed to deserialize response for {:?}: {}", ProviderType, Error),
 			}
 		})
 	} else {

@@ -12,6 +12,8 @@
 //! configuration management, including reading, merging, updating, and
 //! inspecting settings from various sources.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{path::PathBuf, sync::Arc};
 
 use Common::{
@@ -29,7 +31,7 @@ use Common::{
 	FileSystem::{ReadFile::ReadFile, WriteFileBytes::WriteFileBytes},
 };
 use async_trait::async_trait;
-use log::{debug, info};
+use log::{debug, info, warn};
 use serde_json::{Map, Value};
 use tauri::Manager;
 
@@ -85,9 +87,9 @@ impl ConfigurationProvider for MountainEnvironment {
 					.path()
 					.app_config_dir()
 					.map(|p| p.join("settings.json"))
-					.map_err(|e| {
+					.map_err(|Error| {
 						CommonError::ConfigurationLoad {
-							Description:format!("Could not resolve user config path: {}", e),
+							Description:format!("Could not resolve user config path: {}", Error),
 						}
 					})?
 			},
@@ -104,6 +106,8 @@ impl ConfigurationProvider for MountainEnvironment {
 			},
 
 			_ => {
+				warn!("[ConfigurationProvider] Unsupported configuration target: {:?}", Target);
+
 				return Err(CommonError::NotImplemented {
 					FeatureName:"This configuration target is not supported".into(),
 				});
@@ -123,8 +127,7 @@ impl ConfigurationProvider for MountainEnvironment {
 			}
 		}
 
-		let ContentBytes = serde_json::to_vec_pretty(&CurrentConfig)
-			.map_err(|e| CommonError::SerializationError { Description:e.to_string() })?;
+		let ContentBytes = serde_json::to_vec_pretty(&CurrentConfig)?;
 
 		RunTime
 			.Run(WriteFileBytes(ConfigPath.clone(), ContentBytes, true, true))
@@ -156,7 +159,12 @@ impl ConfigurationInspector for MountainEnvironment {
 			.map(|p| p.join("settings.json"))
 			.ok();
 
-		let WorkSpaceSettingsPath = self.ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().clone();
+		let WorkSpaceSettingsPath = self
+			.ApplicationState
+			.WorkSpaceConfigurationPath
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.clone();
 
 		// Read each configuration layer individually.
 		let DefaultConfig = CollectDefaultConfigurations(&self.ApplicationState)?;
@@ -166,9 +174,9 @@ impl ConfigurationInspector for MountainEnvironment {
 		let WorkSpaceConfig = ReadAndParseConfigurationFile(self, &WorkSpaceSettingsPath).await?;
 
 		let GetValueFromDotPath =
-			|Node:&Value, Path:&str| -> Option<Value> { Path.split('.').try_fold(Node, |n, key| n.get(key)).cloned() };
+			|Node:&Value, Path:&str| -> Option<Value> { Path.split('.').try_fold(Node, |n, k| n.get(k)).cloned() };
 
-		let mut ResultDTO:InspectResultDataDTO = InspectResultDataDTO::default();
+		let mut ResultDTO = InspectResultDataDTO::default();
 
 		ResultDTO.DefaultValue = GetValueFromDotPath(&DefaultConfig, &Key);
 
@@ -218,7 +226,12 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		.map(|p| p.join("settings.json"))
 		.ok();
 
-	let WorkSpaceSettingsPath = Environment.ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().clone();
+	let WorkSpaceSettingsPath = Environment
+		.ApplicationState
+		.WorkSpaceConfigurationPath
+		.lock()
+		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.clone();
 
 	let UserConfig = ReadAndParseConfigurationFile(Environment, &UserSettingsPath).await?;
 
@@ -241,7 +254,11 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 
 	let FinalConfig = MergedConfigurationStateDTO::Create(Value::Object(Merged));
 
-	*Environment.ApplicationState.Configuration.lock().unwrap() = FinalConfig;
+	*Environment
+		.ApplicationState
+		.Configuration
+		.lock()
+		.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = FinalConfig;
 
 	info!("[ConfigurationProvider] Configuration state updated and merged.");
 

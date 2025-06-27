@@ -8,7 +8,6 @@
 //! # Internal (ApplicationState)
 //!
 //! Contains internal helper functions for the `ApplicationState` module,
-
 //! handling tasks like file I/O, path resolution, and serialization that are
 //! not part of the public API of the state itself.
 
@@ -17,12 +16,18 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use Common::Error::CommonError::CommonError;
-use log::{error, info};
+use log::{error, info, trace};
 use serde::{self, Deserializer, Serializer};
 use serde_json::Value;
 use url::Url;
 
-use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, ExtensionManagement};
+use crate::{
+	ApplicationState::{
+		ApplicationState::MapLockError,
+		DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
+	},
+	ExtensionManagement,
+};
 
 /// Analyzes text content to determine its line endings and splits it into a
 /// vector of lines.
@@ -44,22 +49,22 @@ pub fn LoadInitialMementoFromDisk(StorageFilePath:&Path) -> HashMap<String, Valu
 
 	match fs::read_to_string(StorageFilePath) {
 		Ok(Content) => {
-			serde_json::from_str(&Content).unwrap_or_else(|e| {
+			serde_json::from_str(&Content).unwrap_or_else(|Error| {
 				error!(
 					"[AppStateInternal] Failed to parse JSON from '{}': {}. Returning empty map.",
 					StorageFilePath.display(),
-					e
+					Error
 				);
 
 				HashMap::new()
 			})
 		},
 
-		Err(e) => {
+		Err(Error) => {
 			error!(
 				"[AppStateInternal] Failed to read '{}': {}. Returning empty map.",
 				StorageFilePath.display(),
-				e
+				Error
 			);
 
 			HashMap::new()
@@ -98,7 +103,9 @@ pub async fn ScanAndPopulateExtensions(
 
 	let mut AllFoundExtensions:HashMap<String, ExtensionDescriptionStateDTO> = HashMap::new();
 
-	let ScanPaths = State.ExtensionScanPaths.lock().unwrap().clone();
+	let ScanPaths = State.ExtensionScanPaths.lock().map_err(MapLockError)?.clone();
+
+	trace!("[AppStateInternal] Scanning paths: {:?}", ScanPaths);
 
 	for Path in ScanPaths {
 		let FoundInPath =
@@ -112,11 +119,13 @@ pub async fn ScanAndPopulateExtensions(
 				.unwrap_or_default()
 				.to_string();
 
-			AllFoundExtensions.insert(Identifier, Extension);
+			if !Identifier.is_empty() {
+				AllFoundExtensions.insert(Identifier, Extension);
+			}
 		}
 	}
 
-	let mut ScannedExtensionsGuard = State.ScannedExtensions.lock().unwrap();
+	let mut ScannedExtensionsGuard = State.ScannedExtensions.lock().map_err(MapLockError)?;
 
 	*ScannedExtensionsGuard = AllFoundExtensions;
 

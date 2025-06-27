@@ -25,7 +25,7 @@ impl IPCProvider for MountainEnvironment {
 	) -> Result<(), CommonError> {
 		Client::SendNotification(SideCarIdentifier, Method, Parameters)
 			.await
-			.map_err(|e| CommonError::IPCError { Description:e.to_string() })
+			.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
 	}
 
 	/// Sends a request to a specified sidecar and awaits a response.
@@ -42,6 +42,6 @@ impl IPCProvider for MountainEnvironment {
 	) -> Result<Value, CommonError> {
 		Client::SendRequest(&SideCarIdentifier, Method, Parameters, TimeoutMilliseconds)
 			.await
-			.map_err(|e| CommonError::IPCError { Description:e.to_string() })
+			.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
 	}
 }

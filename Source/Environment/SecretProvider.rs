@@ -28,14 +28,14 @@ impl SecretProvider for MountainEnvironment {
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
 		let Entry = Entry::new(&ServiceName, &Key)
-			.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
+			.map_err(|Error| CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() })?;
 
 		match Entry.get_password() {
 			Ok(Password) => Ok(Some(Password)),
 
 			Err(keyring::Error::NoEntry) => Ok(None),
 
-			Err(e) => Err(CommonError::SecretsAccess { Key, Reason:e.to_string() }),
+			Err(Error) => Err(CommonError::SecretsAccess { Key, Reason:Error.to_string() }),
 		}
 	}
 
@@ -49,11 +49,11 @@ impl SecretProvider for MountainEnvironment {
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
 		let Entry = Entry::new(&ServiceName, &Key)
-			.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
+			.map_err(|Error| CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() })?;
 
 		Entry
 			.set_password(&Value)
-			.map_err(|e| CommonError::SecretsAccess { Key, Reason:e.to_string() })
+			.map_err(|Error| CommonError::SecretsAccess { Key, Reason:Error.to_string() })
 	}
 
 	/// Deletes a secret by removing it from the OS keychain.
@@ -66,12 +66,12 @@ impl SecretProvider for MountainEnvironment {
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
 		let Entry = Entry::new(&ServiceName, &Key)
-			.map_err(|e| CommonError::SecretsAccess { Key:Key.clone(), Reason:e.to_string() })?;
+			.map_err(|Error| CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() })?;
 
 		match Entry.delete_credential() {
 			Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
 
-			Err(e) => Err(CommonError::SecretsAccess { Key, Reason:e.to_string() }),
+			Err(Error) => Err(CommonError::SecretsAccess { Key, Reason:Error.to_string() }),
 		}
 	}
 }

@@ -21,5 +21,5 @@ pub async fn GetResolvedKeybinding(app_handle:AppHandle) -> Result<Value, String
 
 	let provider:Arc<dyn KeybindingProvider> = runtime.Environment.Require();
 
-	provider.GetResolvedKeybinding().await.map_err(|e| e.to_string())
+	provider.GetResolvedKeybinding().await.map_err(|Error| Error.to_string())
 }

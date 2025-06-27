@@ -10,6 +10,8 @@
 //!
 //! Implements the `KeybindingProvider` trait for the `MountainEnvironment`.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{collections::HashMap, sync::Arc};
 
 use Common::{
@@ -19,11 +21,11 @@ use Common::{
 	Keybinding::KeybindingProvider::KeybindingProvider,
 };
 use async_trait::async_trait;
-use log::info;
+use log::{info, warn};
 use serde_json::{Value, json};
 use tauri::Manager;
 
-use super::MountainEnvironment::MountainEnvironment;
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
@@ -43,58 +45,61 @@ impl KeybindingProvider for MountainEnvironment {
 	async fn GetResolvedKeybinding(&self) -> Result<Value, CommonError> {
 		info!("[KeybindingProvider] Resolving all keybindings...");
 
-		let mut resolved_keybindings:HashMap<String, KeybindingRule> = HashMap::new();
+		let mut ResolvedKeybindings:HashMap<String, KeybindingRule> = HashMap::new();
 
 		// 1. Collect default keybindings from extensions
-		{
-			let extensions = self.ApplicationState.ScannedExtensions.lock().unwrap();
+		let Extensions = self
+			.ApplicationState
+			.ScannedExtensions
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.clone();
 
-			for ext in extensions.values() {
-				if let Some(contributes) = ext.Contributes.as_ref().and_then(|c| c.get("keybindings")) {
-					if let Some(keybindings_array) = contributes.as_array() {
-						for kb_val in keybindings_array {
-							if let Ok(kb_rule) = serde_json::from_value::<KeybindingRule>(kb_val.clone()) {
-								// Use key+when as a unique identifier for the rule
-								let unique_key = format!("{}{}", kb_rule.key, kb_rule.when.as_deref().unwrap_or(""));
+		for Extension in Extensions.values() {
+			if let Some(Contributes) = Extension.Contributes.as_ref().and_then(|c| c.get("keybindings")) {
+				if let Some(KeybindingsArray) = Contributes.as_array() {
+					for KeybindingValue in KeybindingsArray {
+						if let Ok(KeybindingRule) = serde_json::from_value::<KeybindingRule>(KeybindingValue.clone()) {
+							let UniqueKey =
+								format!("{}{}", KeybindingRule.key, KeybindingRule.when.as_deref().unwrap_or(""));
 
-								resolved_keybindings.insert(unique_key, kb_rule);
-							}
+							ResolvedKeybindings.insert(UniqueKey, KeybindingRule);
 						}
 					}
 				}
 			}
-
-			// extensions lock is dropped here
 		}
 
 		// 2. Load and apply user-defined keybindings from keybindings.json
-		let user_keybindings_path = self
+		let UserKeybindingsPath = self
 			.ApplicationHandle
 			.path()
 			.app_config_dir()
-			.map_err(|e| CommonError::ConfigurationLoad { Description:format!("Cannot find app config dir: {}", e) })?
+			.map_err(|Error| CommonError::ConfigurationLoad { Description:format!("Cannot find app config dir: {}", Error) })?
 			.join("keybindings.json");
 
-		let runtime = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+		let RunTime = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-		if let Ok(content) = runtime.Run(ReadFile(user_keybindings_path)).await {
-			if let Ok(user_keybindings) = serde_json::from_slice::<Vec<KeybindingRule>>(&content) {
-				for user_kb in user_keybindings {
-					let unique_key = format!("{}{}", user_kb.key, user_kb.when.as_deref().unwrap_or(""));
+		if let Ok(Content) = RunTime.Run(ReadFile(UserKeybindingsPath)).await {
+			if let Ok(UserKeybindings) = serde_json::from_slice::<Vec<KeybindingRule>>(&Content) {
+				for UserKeybinding in UserKeybindings {
+					let UniqueKey = format!("{}{}", UserKeybinding.key, UserKeybinding.when.as_deref().unwrap_or(""));
 
-					if user_kb.command.starts_with('-') {
-						// This is an "unbind" rule
-						resolved_keybindings.remove(&unique_key);
+					if UserKeybinding.command.starts_with('-') {
+						// Unbind rule
+						ResolvedKeybindings.remove(&UniqueKey);
 					} else {
-						// This rule overrides any existing default
-						resolved_keybindings.insert(unique_key, user_kb);
+						// Override rule
+						ResolvedKeybindings.insert(UniqueKey, UserKeybinding);
 					}
 				}
+			} else {
+				warn!("[KeybindingProvider] Failed to parse user keybindings.json. It may be malformed.");
 			}
 		}
 
-		let final_rules:Vec<KeybindingRule> = resolved_keybindings.into_values().collect();
+		let FinalRules:Vec<KeybindingRule> = ResolvedKeybindings.into_values().collect();
 
-		Ok(json!(final_rules))
+		Ok(json!(FinalRules))
 	}
 }

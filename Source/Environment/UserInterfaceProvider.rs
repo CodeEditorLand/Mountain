@@ -9,8 +9,9 @@
 //!
 //! Implements the `UserInterfaceProvider` trait for the `MountainEnvironment`.
 //! This provider orchestrates all modal UI interactions like dialogs, messages,
-
 //! and quick picks by communicating with the `Sky` frontend.
+
+#![allow(non_snake_case, non_camel_case_types)]
 
 use std::path::PathBuf;
 
@@ -73,85 +74,77 @@ impl UserInterfaceProvider for MountainEnvironment {
 	async fn ShowOpenDialog(&self, Options:Option<OpenDialogOptionsDTO>) -> Result<Option<Vec<PathBuf>>, CommonError> {
 		info!("[UserInterfaceProvider] Showing open dialog.");
 
-		let mut builder = self.ApplicationHandle.dialog().file();
+		let mut Builder = self.ApplicationHandle.dialog().file();
 
-		let (can_select_many, can_select_folders, can_select_files) = if let Some(ref opts) = Options {
-			// Set common options
+		let (CanSelectMany, CanSelectFolders, CanSelectFiles) = if let Some(ref opts) = Options {
 			if let Some(title) = &opts.Base.Title {
-				builder = builder.set_title(title);
+				Builder = Builder.set_title(title);
 			}
 
 			if let Some(path_string) = &opts.Base.DefaultPath {
-				builder = builder.set_directory(PathBuf::from(path_string));
+				Builder = Builder.set_directory(PathBuf::from(path_string));
 			}
 
 			if let Some(filters) = &opts.Base.FilterList {
 				for filter in filters {
 					let extensions:Vec<&str> = filter.ExtensionList.iter().map(AsRef::as_ref).collect();
 
-					builder = builder.add_filter(&filter.Name, &extensions);
+					Builder = Builder.add_filter(&filter.Name, &extensions);
 				}
 			}
 
 			(
 				opts.CanSelectMany.unwrap_or(false),
 				opts.CanSelectFolders.unwrap_or(false),
-				// Default to true if not specified
 				opts.CanSelectFiles.unwrap_or(true),
 			)
 		} else {
 			(false, false, true)
 		};
 
-		// Spawn blocking task to avoid blocking async runtime
-		let picked_paths:Option<Vec<FilePath>> = tokio::task::spawn_blocking(move || {
-			if can_select_folders {
-				if can_select_many {
-					builder.blocking_pick_folders()
+		let PickedPaths:Option<Vec<FilePath>> = tokio::task::spawn_blocking(move || {
+			if CanSelectFolders {
+				if CanSelectMany {
+					Builder.blocking_pick_folders()
 				} else {
-					builder.blocking_pick_folder().map(|p| vec![p])
+					Builder.blocking_pick_folder().map(|p| vec![p])
 				}
-			} else if can_select_files {
-				if can_select_many {
-					builder.blocking_pick_files()
+			} else if CanSelectFiles {
+				if CanSelectMany {
+					Builder.blocking_pick_files()
 				} else {
-					builder.blocking_pick_file().map(|p| vec![p])
+					Builder.blocking_pick_file().map(|p| vec![p])
 				}
 			} else {
 				None
 			}
 		})
 		.await
-		.map_err(|e| CommonError::UserInterfaceInteraction { Reason:format!("Dialog task failed: {}", e) })?;
+		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:format!("Dialog task failed: {}", Error) })?;
 
-		// Convert the result from the dialog's FilePath type to standard PathBuf
-		let result = picked_paths.map(|file_paths| file_paths.into_iter().filter_map(|p| p.into_path().ok()).collect());
-
-		Ok(result)
+		Ok(PickedPaths.map(|paths| paths.into_iter().filter_map(|p| p.into_path().ok()).collect()))
 	}
 
 	/// Shows a dialog for saving a file using the tauri-plugin-dialog.
 	async fn ShowSaveDialog(&self, Options:Option<SaveDialogOptionsDTO>) -> Result<Option<PathBuf>, CommonError> {
 		info!("[UserInterfaceProvider] Showing save dialog.");
 
-		let mut builder = self.ApplicationHandle.dialog().file();
+		let mut Builder = self.ApplicationHandle.dialog().file();
 
 		if let Some(options) = Options {
 			if let Some(title) = options.Base.Title {
-				builder = builder.set_title(title);
+				Builder = Builder.set_title(title);
 			}
 
 			if let Some(path_string) = options.Base.DefaultPath {
 				let path = PathBuf::from(path_string);
 
-				// If a parent directory exists, set it.
 				if let Some(parent) = path.parent() {
-					builder = builder.set_directory(parent);
+					Builder = Builder.set_directory(parent);
 				}
 
-				// If a file name exists, set it as the default name.
 				if let Some(file_name) = path.file_name().and_then(|n| n.to_str()) {
-					builder = builder.set_file_name(file_name);
+					Builder = Builder.set_file_name(file_name);
 				}
 			}
 
@@ -159,19 +152,18 @@ impl UserInterfaceProvider for MountainEnvironment {
 				for filter in filters {
 					let extensions:Vec<&str> = filter.ExtensionList.iter().map(AsRef::as_ref).collect();
 
-					builder = builder.add_filter(filter.Name, &extensions);
+					Builder = Builder.add_filter(filter.Name, &extensions);
 				}
 			}
 		}
 
-		let picked_file = tokio::task::spawn_blocking(move || builder.blocking_save_file())
+		let PickedFile = tokio::task::spawn_blocking(move || Builder.blocking_save_file())
 			.await
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:format!("Dialog task failed: {}", e) })?;
+			.map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Dialog task failed: {}", Error) }
+			})?;
 
-		// Convert the result to a standard PathBuf
-		let result = picked_file.and_then(|p| p.into_path().ok());
-
-		Ok(result)
+		Ok(PickedFile.and_then(|p| p.into_path().ok()))
 	}
 
 	/// Shows a quick pick list to the user.
@@ -188,8 +180,10 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 		let ResponseValue = SendUserInterfaceRequest(self, "sky://ui/show-quick-pick-request", Payload).await?;
 
-		serde_json::from_value(ResponseValue).map_err(|e| {
-			CommonError::SerializationError { Description:format!("Failed to deserialize quick pick response: {}", e) }
+		serde_json::from_value(ResponseValue).map_err(|Error| {
+			CommonError::SerializationError {
+				Description:format!("Failed to deserialize quick pick response: {}", Error),
+			}
 		})
 	}
 
@@ -199,8 +193,10 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 		let ResponseValue = SendUserInterfaceRequest(self, "sky://ui/show-input-box-request", Options).await?;
 
-		serde_json::from_value(ResponseValue).map_err(|e| {
-			CommonError::SerializationError { Description:format!("Failed to deserialize input box response: {}", e) }
+		serde_json::from_value(ResponseValue).map_err(|Error| {
+			CommonError::SerializationError {
+				Description:format!("Failed to deserialize input box response: {}", Error),
+			}
 		})
 	}
 }
@@ -232,9 +228,9 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 
 	let EventPayload = UserInterfaceRequest { RequestIdentifier:RequestIdentifier.clone(), Payload };
 
-	Environment.ApplicationHandle.emit(EventName, EventPayload).map_err(|e| {
+	Environment.ApplicationHandle.emit(EventName, EventPayload).map_err(|Error| {
 		CommonError::UserInterfaceInteraction {
-			Reason:format!("Failed to emit UI request '{}': {}", EventName, e.to_string()),
+			Reason:format!("Failed to emit UI request '{}': {}", EventName, Error.to_string()),
 		}
 	})?;
 
@@ -255,12 +251,13 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 				EventName, RequestIdentifier
 			);
 
-			Environment
+			let mut Guard = Environment
 				.ApplicationState
 				.PendingUserInterfaceRequests
 				.lock()
-				.unwrap()
-				.remove(&RequestIdentifier);
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+			Guard.remove(&RequestIdentifier);
 
 			Err(CommonError::UserInterfaceInteraction {
 				Reason:format!("UI request timed out for request ID: {}", RequestIdentifier),

@@ -12,6 +12,8 @@
 //! dispatching command execution to either native Rust handlers or proxied
 //! sidecar handlers.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use Common::{
@@ -49,7 +51,7 @@ pub enum CommandHandler<R:Runtime + 'static> {
 impl<R:Runtime> Clone for CommandHandler<R> {
 	fn clone(&self) -> Self {
 		match self {
-			Self::Native(f) => Self::Native(*f),
+			Self::Native(Function) => Self::Native(*Function),
 
 			Self::Proxied { SideCarIdentifier, CommandIdentifier } => {
 				Self::Proxied {
@@ -82,7 +84,7 @@ impl CommandExecutor for MountainEnvironment {
 				let RunTime:Arc<ApplicationRunTime> =
 					self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-				let MainWindow = self.ApplicationHandle.get_webview_window("Application").ok_or_else(|| {
+				let MainWindow = self.ApplicationHandle.get_webview_window("main").ok_or_else(|| {
 					CommonError::UserInterfaceInteraction {
 						Reason:"Main window not found for command execution".into(),
 					}
@@ -90,9 +92,7 @@ impl CommandExecutor for MountainEnvironment {
 
 				Function(self.ApplicationHandle.clone(), MainWindow, RunTime, Argument)
 					.await
-					.map_err(|e| {
-						CommonError::CommandExecution { CommandIdentifier:CommandIdentifier.clone(), Reason:e }
-					})
+					.map_err(|Error| CommonError::CommandExecution { CommandIdentifier, Reason:Error })
 			},
 
 			Some(CommandHandler::Proxied { SideCarIdentifier, CommandIdentifier: ProxiedCommandIdentifier }) => {
@@ -107,7 +107,7 @@ impl CommandExecutor for MountainEnvironment {
 
 				Client::SendRequest(&SideCarIdentifier, RPCMethod, RPCParameters, 30000)
 					.await
-					.map_err(|e| CommonError::IPCError { Description:e.to_string() })
+					.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
 			},
 
 			None => {

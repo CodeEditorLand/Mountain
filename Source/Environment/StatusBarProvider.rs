@@ -13,12 +13,14 @@
 //! orchestrates communication between the `Cocoon` sidecar and the `Sky`
 //! frontend.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::sync::Arc;
 
 use Common::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	IPC::IPCProvider::IPCProvider,
+	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
 };
 use async_trait::async_trait;
@@ -40,35 +42,28 @@ impl StatusBarProvider for MountainEnvironment {
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		// Store the latest state of the item.
 		ItemsGuard.insert(Entry.EntryIdentifier.clone(), Entry.clone());
 
 		drop(ItemsGuard);
 
-		// Notify the Sky frontend to render or update the item.
 		self.ApplicationHandle
 			.emit("sky://statusbar/set-entry", Entry)
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
 	/// Removes a status bar item from the UI.
 	async fn DisposeStatusBarEntry(&self, EntryIdentifier:String) -> Result<(), CommonError> {
 		info!("[StatusBarProvider] Disposing entry: {}", EntryIdentifier);
 
-		let mut ItemsGuard = self
-			.ApplicationState
+		self.ApplicationState
 			.ActiveStatusBarItems
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.remove(&EntryIdentifier);
 
-		ItemsGuard.remove(&EntryIdentifier);
-
-		drop(ItemsGuard);
-
-		// Notify the Sky frontend to remove the item from the UI.
 		self.ApplicationHandle
 			.emit("sky://statusbar/dispose-entry", json!({ "EntryIdentifier": EntryIdentifier }))
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
 	/// Shows a temporary message in the status bar.
@@ -77,7 +72,7 @@ impl StatusBarProvider for MountainEnvironment {
 
 		self.ApplicationHandle
 			.emit("sky://statusbar/set-message", json!({ "id": MessageIdentifier, "text": Text }))
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
 	/// Disposes of a temporary status bar message.
@@ -86,7 +81,7 @@ impl StatusBarProvider for MountainEnvironment {
 
 		self.ApplicationHandle
 			.emit("sky://statusbar/dispose-message", json!({ "id": MessageIdentifier }))
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
 	/// Resolves a dynamic tooltip by making a reverse call to the extension
@@ -97,14 +92,10 @@ impl StatusBarProvider for MountainEnvironment {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 
 		// This is a "reverse" call, where the host needs data from the sidecar.
+		let RPCMethod = format!("{}$ProvideStatusbarTooltip", ProxyTarget::ExtHostStatusBar.GetTargetPrefix());
+
 		let RPCResponse = IPCProvider
-			.SendRequestToSideCar(
-				"cocoon-main".to_string(),
-				"$ProvideStatusbarTooltip".to_string(),
-				json!([EntryIdentifier]),
-				// 5-second timeout
-				5000,
-			)
+			.SendRequestToSideCar("cocoon-main".to_string(), RPCMethod, json!([EntryIdentifier]), 5000)
 			.await?;
 
 		// If the response is null or fails to parse, we gracefully return None.

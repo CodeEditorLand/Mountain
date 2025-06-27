@@ -12,6 +12,8 @@
 //! workspace-related operations, including querying workspace folders and
 //! performing workspace-wide file searches.
 
+#![allow(non_snake_case, non_camel_case_types)]
+
 use std::{path::PathBuf, sync::Arc};
 
 use Common::{
@@ -37,16 +39,12 @@ impl WorkSpaceProvider for MountainEnvironment {
 	/// Retrieves information about all currently open workspace folders.
 	async fn GetWorkSpaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
 		info!("[WorkSpaceProvider] Getting workspace folders info.");
-
 		let FoldersGuard = self
 			.ApplicationState
 			.WorkSpaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		let ResultVector = FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect();
-
-		Ok(ResultVector)
+		Ok(FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect())
 	}
 
 	/// Retrieves information for the specific workspace folder that contains a
@@ -57,7 +55,6 @@ impl WorkSpaceProvider for MountainEnvironment {
 			.WorkSpaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
 		for Folder in FoldersGuard.iter() {
 			if URIToMatch.as_str().starts_with(Folder.URI.as_str()) {
 				return Ok(Some((Folder.URI.clone(), Folder.Name.clone(), Folder.Index)));
@@ -69,7 +66,7 @@ impl WorkSpaceProvider for MountainEnvironment {
 
 	/// Gets the name of the current workspace.
 	async fn GetWorkSpaceName(&self) -> Result<Option<String>, CommonError> {
-		Ok(self.ApplicationState.GetWorkSpaceIdentifier().ok())
+		self.ApplicationState.GetWorkSpaceIdentifier().map(Some)
 	}
 
 	/// Gets the path to the workspace configuration file (`.code-workspace`).
@@ -90,7 +87,11 @@ impl WorkSpaceProvider for MountainEnvironment {
 	/// Requests workspace trust from the user.
 	async fn RequestWorkSpaceTrust(&self, _Options:Option<Value>) -> Result<bool, CommonError> {
 		warn!("[WorkSpaceProvider] RequestWorkSpaceTrust is not implemented; defaulting to trusted.");
-
+		// A full implementation would show a modal dialog to the user and wait for
+		// their response.
+		self.ApplicationState
+			.IsTrusted
+			.store(true, std::sync::atomic::Ordering::Relaxed);
 		Ok(true)
 	}
 
@@ -112,23 +113,18 @@ impl WorkSpaceProvider for MountainEnvironment {
 			"[WorkSpaceProvider] Finding files with include pattern: {:?}",
 			IncludePatternDTO
 		);
-
 		let FoldersGuard = self
 			.ApplicationState
 			.WorkSpaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
 		if FoldersGuard.is_empty() {
 			return Ok(vec![]);
 		}
 
 		let IncludeMatcher = BuildGlobMatcher(IncludePatternDTO)?;
-
 		let ExcludeMatcher = ExcludePatternDTO.map(BuildGlobMatcher).transpose()?.flatten();
-
 		let mut Results:Vec<Url> = Vec::new();
-
 		let MaxResultsCap = MaxResults.unwrap_or(usize::MAX);
 
 		for Folder in FoldersGuard.iter() {
@@ -141,9 +137,7 @@ impl WorkSpaceProvider for MountainEnvironment {
 
 				Err(_) => continue,
 			};
-
 			let mut WalkerBuilder = WalkBuilder::new(&FolderPath);
-
 			WalkerBuilder.standard_filters(UseIgnoreFiles).follow_links(FollowSymlinks);
 
 			for EntryResult in WalkerBuilder.build() {
@@ -153,14 +147,11 @@ impl WorkSpaceProvider for MountainEnvironment {
 
 				if let Ok(Entry) = EntryResult {
 					let Path = Entry.path();
-
 					if Path.is_dir() {
 						continue;
 					}
 
-					let is_match = IncludeMatcher.as_ref().map_or(true, |g| g.is_match(Path));
-
-					if !is_match {
+					if !IncludeMatcher.as_ref().map_or(true, |g| g.is_match(Path)) {
 						continue;
 					}
 
@@ -187,34 +178,29 @@ impl WorkSpaceProvider for MountainEnvironment {
 			CommonError::InvalidArgument { ArgumentName:"Path".into(), Reason:"Could not convert path to URI.".into() }
 		})?;
 
-		// TODO: A full implementation would check a registry of custom editor providers
-		// based on the file's glob pattern.
-		let custom_editor_view_type:Option<String> = None;
+		// A full implementation would check a registry of custom editor providers based
+		// on the file's glob pattern.
+		let CustomEditorViewType:Option<String> = None;
 
-		if let Some(view_type) = custom_editor_view_type {
+		if let Some(ViewType) = CustomEditorViewType {
 			info!(
 				"[WorkSpaceProvider] Found custom editor '{}' for file '{}'",
-				view_type,
+				ViewType,
 				Path.display()
 			);
-
-			let webview_provider:Arc<dyn WebViewProvider> = self.Require();
-
-			let handle = webview_provider
+			let WebViewProvider:Arc<dyn WebViewProvider> = self.Require();
+			let Handle = WebViewProvider
 				.CreateWebViewPanel(
 					json!({ "id": "placeholder.extension" }),
-					view_type.clone(),
-					Path.file_name().unwrap().to_string_lossy().to_string(),
+					ViewType.clone(),
+					Path.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default(),
 					json!({ "viewColumn": -1 }),
 					json!({}),
 					json!({ "enableScripts": true }),
 				)
 				.await?;
-
-			let custom_editor_provider:Arc<dyn CustomEditorProvider> = self.Require();
-
-			custom_editor_provider.ResolveCustomEditor(view_type, URI, handle).await?;
-
+			let CustomEditorProvider:Arc<dyn CustomEditorProvider> = self.Require();
+			CustomEditorProvider.ResolveCustomEditor(ViewType, URI, Handle).await?;
 			return Ok(());
 		}
 
@@ -222,13 +208,9 @@ impl WorkSpaceProvider for MountainEnvironment {
 			"[WorkSpaceProvider] No custom editor found. Opening '{}' as text.",
 			Path.display()
 		);
-
-		let uri_components = json!({ "external": URI.to_string(), "$mid": 1 });
-
-		let doc_provider:Arc<dyn DocumentProvider> = self.Require();
-
-		doc_provider.OpenDocument(uri_components, None, None).await?;
-
+		let URIComponents = json!({ "external": URI.to_string(), "$mid": 1 });
+		let DocProvider:Arc<dyn DocumentProvider> = self.Require();
+		DocProvider.OpenDocument(URIComponents, None, None).await?;
 		Ok(())
 	}
 }
@@ -237,8 +219,8 @@ fn BuildGlobMatcher(GlobValue:Value) -> Result<Option<GlobMatcher>, CommonError>
 	GlobValue
 		.as_str()
 		.map(|Pattern| {
-			Glob::new(Pattern).map(|g| g.compile_matcher()).map_err(|e| {
-				CommonError::InvalidArgument { ArgumentName:"GlobPattern".to_string(), Reason:e.to_string() }
+			Glob::new(Pattern).map(|g| g.compile_matcher()).map_err(|Error| {
+				CommonError::InvalidArgument { ArgumentName:"GlobPattern".to_string(), Reason:Error.to_string() }
 			})
 		})
 		.transpose()
@@ -248,21 +230,21 @@ fn BuildGlobMatcher(GlobValue:Value) -> Result<Option<GlobMatcher>, CommonError>
 impl WorkSpaceEditApplier for MountainEnvironment {
 	async fn ApplyWorkSpaceEdit(&self, EditDTO:WorkSpaceEditDTO) -> Result<bool, CommonError> {
 		let DocProvider:Arc<dyn DocumentProvider> = self.Require();
-
 		for (URIValue, Edits) in EditDTO.Edits {
 			let URI = serde_json::from_value::<Url>(URIValue)?;
-
 			let Document = {
-				let Guard = self.ApplicationState.OpenDocuments.lock().unwrap();
-
-				Guard.get(URI.as_str()).cloned()
+				self.ApplicationState
+					.OpenDocuments
+					.lock()
+					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+					.get(URI.as_str())
+					.cloned()
 			};
 
 			if let Some(Doc) = Document {
 				let NewVersionID = Doc.Version + 1;
-
 				DocProvider
-					.ApplyDocumentChanges(URI.clone(), NewVersionID.into(), json!(Edits), true, false, false)
+					.ApplyDocumentChanges(URI.clone(), NewVersionID, json!(Edits), true, false, false)
 					.await?;
 			} else {
 				warn!("[WorkSpaceProvider] Attempted to apply edit to non-open document: {}", URI);

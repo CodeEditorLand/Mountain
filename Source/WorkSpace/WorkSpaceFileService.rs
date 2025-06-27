@@ -46,7 +46,7 @@ pub fn ParseWorkSpaceFile(
 	FileContent:&str,
 ) -> Result<Vec<WorkSpaceFolderStateDTO>, CommonError> {
 	let Parsed:WorkSpaceFile =
-		serde_json::from_str(FileContent).map_err(|e| CommonError::SerializationError { Description:e.to_string() })?;
+		serde_json::from_str(FileContent).map_err(|Error| CommonError::SerializationError { Description:Error.to_string() })?;
 
 	let WorkSpaceFileDirectory = WorkSpaceFilePath.parent().ok_or_else(|| {
 		CommonError::FileSystemIO {
