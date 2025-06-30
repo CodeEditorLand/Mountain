@@ -25,21 +25,21 @@ pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationS
 		.SourceControlManagementProviders
 		.lock()
 		.map_err(MapLockError)
-		.map_err(|e| e.to_string())?
+		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let Groups = State
 		.SourceControlManagementGroups
 		.lock()
 		.map_err(MapLockError)
-		.map_err(|e| e.to_string())?
+		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let Resources = State
 		.SourceControlManagementResources
 		.lock()
 		.map_err(MapLockError)
-		.map_err(|e| e.to_string())?
+		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	Ok(json!({

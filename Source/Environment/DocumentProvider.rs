@@ -98,7 +98,7 @@ impl DocumentProvider for MountainEnvironment {
 			let FileContentBytes = RunTime.Run(ReadFile(FilePath.clone())).await?;
 
 			String::from_utf8(FileContentBytes)
-				.map_err(|e| CommonError::FileSystemIO { Path:FilePath, Description:e.to_string() })?
+				.map_err(|Error| CommonError::FileSystemIO { Path:FilePath, Description:Error.to_string() })?
 		} else {
 			// Custom scheme: attempt to resolve from a sidecar provider.
 			info!(

@@ -35,10 +35,9 @@ pub async fn CheckForUpdates(
 ) -> Result<(), CommonError> {
 	info!("[UpdateService] Checking for updates...");
 
-	let updater = ApplicationHandle
-		.updater_builder()
-		.build()
-		.map_err(|Error| CommonError::ExternalServiceError { ServiceName:"Updater".into(), Description:Error.to_string() })?;
+	let updater = ApplicationHandle.updater_builder().build().map_err(|Error| {
+		CommonError::ExternalServiceError { ServiceName:"Updater".into(), Description:Error.to_string() }
+	})?;
 
 	match updater.check().await {
 		Ok(Some(update)) => {

@@ -189,8 +189,9 @@ impl TreeViewProvider for FileExplorerViewProvider {
 
 	/// Retrieves the `TreeItem` for a given handle (which is its URI).
 	async fn GetTreeItem(&self, _ViewIdentifier:String, ElementHandle:String) -> Result<Value, CommonError> {
-		let URI = Url::parse(&ElementHandle)
-			.map_err(|Error| CommonError::InvalidArgument { ArgumentName:"ElementHandle".into(), Reason:Error.to_string() })?;
+		let URI = Url::parse(&ElementHandle).map_err(|Error| {
+			CommonError::InvalidArgument { ArgumentName:"ElementHandle".into(), Reason:Error.to_string() }
+		})?;
 
 		let Name = URI.path_segments().and_then(|s| s.last()).unwrap_or("").to_string();
 

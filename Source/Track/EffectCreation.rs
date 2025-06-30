@@ -212,7 +212,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn DebugService> = runtime.Environment.Require();
 
-					let session_id = provider.StartDebugging(folder_uri, config).await.map_err(|Error| Error.to_string())?;
+					let session_id = provider
+						.StartDebugging(folder_uri, config)
+						.await
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(json!(session_id))
 				})
@@ -250,7 +253,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn DiagnosticManager> = runtime.Environment.Require();
 
-					provider.SetDiagnostics(Owner, Entries).await.map_err(|Error| Error.to_string())?;
+					provider
+						.SetDiagnostics(Owner, Entries)
+						.await
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -363,7 +369,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn SourceControlManagementProvider> = runtime.Environment.Require();
 
-					provider.UpdateSourceControl(handle, dto).await.map_err(|Error| Error.to_string())?;
+					provider
+						.UpdateSourceControl(handle, dto)
+						.await
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -398,7 +407,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn SourceControlManagementProvider> = runtime.Environment.Require();
 
-					provider.RegisterInputBox(handle, dto).await.map_err(|Error| Error.to_string())?;
+					provider
+						.RegisterInputBox(handle, dto)
+						.await
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -427,7 +439,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StatusBarProvider> = runtime.Environment.Require();
 
-					provider.DisposeStatusBarEntry(EntryID).await.map_err(|Error| Error.to_string())?;
+					provider
+						.DisposeStatusBarEntry(EntryID)
+						.await
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -443,7 +458,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StatusBarProvider> = runtime.Environment.Require();
 
-					provider.SetStatusBarMessage(ID, Text).await.map_err(|Error| Error.to_string())?;
+					provider
+						.SetStatusBarMessage(ID, Text)
+						.await
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -486,7 +504,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
 
-					provider.SetAllStorage(IsGlobal, State).await.map_err(|Error| Error.to_string())?;
+					provider
+						.SetAllStorage(IsGlobal, State)
+						.await
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -517,7 +538,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				Box::pin(async move {
 					let provider:Arc<dyn TerminalProvider> = runtime.Environment.Require();
 
-					provider.SendTextToTerminal(TerminalId, Text).await.map_err(|Error| Error.to_string())?;
+					provider
+						.SendTextToTerminal(TerminalId, Text)
+						.await
+						.map_err(|Error| Error.to_string())?;
 
 					Ok(Value::Null)
 				})
@@ -632,7 +656,8 @@ pub fn CreateEffectForRequest<R:Runtime>(
 		"Document.SaveAs" => {
 			let original_uri_str = Parameter!(ParametersArray, 0, String)?;
 
-			let original_uri = Url::parse(&original_uri_str).map_err(|Error| format!("Invalid URI parameter: {}", Error))?;
+			let original_uri =
+				Url::parse(&original_uri_str).map_err(|Error| format!("Invalid URI parameter: {}", Error))?;
 
 			Map(SaveDocumentAs(original_uri, None))
 		},

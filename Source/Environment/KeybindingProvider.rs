@@ -75,7 +75,9 @@ impl KeybindingProvider for MountainEnvironment {
 			.ApplicationHandle
 			.path()
 			.app_config_dir()
-			.map_err(|Error| CommonError::ConfigurationLoad { Description:format!("Cannot find app config dir: {}", Error) })?
+			.map_err(|Error| {
+				CommonError::ConfigurationLoad { Description:format!("Cannot find app config dir: {}", Error) }
+			})?
 			.join("keybindings.json");
 
 		let RunTime = self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();

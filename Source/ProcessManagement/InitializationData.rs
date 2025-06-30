@@ -43,7 +43,9 @@ pub async fn ConstructSandboxConfiguration(
 	let PathResolver = ApplicationHandle.path();
 
 	let AppRootUri = PathResolver.resource_dir().map_err(|Error| {
-		CommonError::ConfigurationLoad { Description:format!("Failed to resolve resource directory (app root): {}", Error) }
+		CommonError::ConfigurationLoad {
+			Description:format!("Failed to resolve resource directory (app root): {}", Error),
+		}
 	})?;
 
 	let AppDataDir = PathResolver.app_data_dir().map_err(|Error| {

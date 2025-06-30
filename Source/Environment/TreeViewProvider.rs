@@ -30,8 +30,9 @@ impl TreeViewProvider for MountainEnvironment {
 	async fn RegisterTreeDataProvider(&self, ViewIdentifier:String, Options:Value) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Registering data provider for view: {}", ViewIdentifier);
 
-		let OptionsDTO:TreeViewOptionsDTO = serde_json::from_value(Options.clone())
-			.map_err(|e| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:e.to_string() })?;
+		let OptionsDTO:TreeViewOptionsDTO = serde_json::from_value(Options.clone()).map_err(|Error| {
+			CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:Error.to_string() }
+		})?;
 
 		// For now, assume all extension providers come from the main sidecar.
 		let SideCarIdentifier = "cocoon-main".to_string();
@@ -68,7 +69,7 @@ impl TreeViewProvider for MountainEnvironment {
 				"sky://tree-view/create",
 				json!({ "ViewIdentifier": ViewIdentifier, "Options": Options }),
 			)
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })?;
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
 		Ok(())
 	}
@@ -85,7 +86,7 @@ impl TreeViewProvider for MountainEnvironment {
 
 		self.ApplicationHandle
 			.emit("sky://tree-view/dispose", json!({ "ViewIdentifier": ViewIdentifier }))
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
 	/// Reveals a specific item in the tree view by notifying the UI.
@@ -100,7 +101,7 @@ impl TreeViewProvider for MountainEnvironment {
 				"sky://tree-view/reveal",
 				json!({ "viewId": ViewIdentifier, "itemHandle": ItemHandle, "options": Options }),
 			)
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
 	/// Refreshes the tree view by notifying the UI.
@@ -112,7 +113,7 @@ impl TreeViewProvider for MountainEnvironment {
 				"sky://tree-view/refresh",
 				json!({ "viewId": ViewIdentifier, "itemsToRefresh": ItemsToRefresh }),
 			)
-			.map_err(|e| CommonError::UserInterfaceInteraction { Reason:e.to_string() })
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
 	/// Gets the children for a given element. This method acts as a dispatcher.

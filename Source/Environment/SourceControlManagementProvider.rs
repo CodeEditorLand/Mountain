@@ -63,7 +63,9 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		self.ApplicationHandle
 			.emit("sky://scm/provider/added", ProviderState)
-			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit scm event: {}", Error) })?;
+			.map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit scm event: {}", Error) }
+			})?;
 
 		Ok(Handle)
 	}

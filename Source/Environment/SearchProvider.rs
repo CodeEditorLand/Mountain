@@ -112,9 +112,9 @@ impl SearchProvider for MountainEnvironment {
 			.case_insensitive(!Query.is_case_sensitive.unwrap_or(false))
 			.word(Query.is_word_match.unwrap_or(false));
 
-		let Matcher = Builder
-			.build(&Query.pattern)
-			.map_err(|Error| CommonError::InvalidArgument { ArgumentName:"pattern".into(), Reason:Error.to_string() })?;
+		let Matcher = Builder.build(&Query.pattern).map_err(|Error| {
+			CommonError::InvalidArgument { ArgumentName:"pattern".into(), Reason:Error.to_string() }
+		})?;
 
 		let AllMatches = Arc::new(Mutex::new(Vec::<FileMatch>::new()));
 
@@ -152,7 +152,11 @@ impl SearchProvider for MountainEnvironment {
 								let Sink = PerFileSink { path:Entry.path().to_path_buf(), results:AllMatches.clone() };
 
 								if let Err(Error) = Searcher.search_path(&Matcher, Entry.path(), Sink) {
-									warn!("[SearchProvider] Error searching path {}: {}", Entry.path().display(), Error);
+									warn!(
+										"[SearchProvider] Error searching path {}: {}",
+										Entry.path().display(),
+										Error
+									);
 								}
 							}
 						}
