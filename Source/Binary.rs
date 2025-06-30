@@ -202,6 +202,7 @@ pub fn Fn() {
 					WindowBuilder = WindowBuilder.title("Mountain").maximized(true).decorations(false).shadow(true);
 				}
 
+				#[allow(unused_variables)]
 				let MainWindow = WindowBuilder.build().expect("Main application window build failed");
 
 				#[cfg(debug_assertions)]
