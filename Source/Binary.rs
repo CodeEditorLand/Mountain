@@ -168,6 +168,7 @@ pub fn Fn() {
 		let SchedulerForRunTime = SchedulerForShutdown.clone();
 
 		// --- Tauri Application Builder ---
+		#[allow(unused_mut)]
 		let mut Builder = tauri::Builder::default();
 
 		#[cfg(any(windows, target_os = "linux"))]
