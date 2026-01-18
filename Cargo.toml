@@ -10,6 +10,7 @@ serde_json = { workspace = true }
 tauri-build = { workspace = true, features = [] }
 toml = { workspace = true }
 tonic-build = { workspace = true, features = ["transport"] }
+tonic-prost-build = { workspace = true }
 
 [dependencies]
 tauri = { workspace = true, features = [
@@ -56,6 +57,7 @@ prost = { workspace = true }
 http = { workspace = true }
 grep-regex = { workspace = true }
 grep-searcher = { workspace = true }
+tonic-prost = { workspace = true }
 
 [features]
 default = ["ExtensionHostCocoon", "MistNative"]
