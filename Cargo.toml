@@ -34,12 +34,20 @@ Echo = { workspace = true }
 env_logger = { workspace = true }
 futures-util = { workspace = true, features = ["sink", "std"] }
 globset = { workspace = true }
+grep-regex = { workspace = true }
+grep-searcher = { workspace = true }
+http = { workspace = true }
 ignore = { workspace = true }
 keyring = { workspace = true }
+lazy_static = { workspace = true }
 log = { workspace = true }
 md5 = { workspace = true }
 num_cpus = { workspace = true }
 once_cell = { workspace = true }
+parking_lot = { workspace = true }
+portable-pty = { workspace = true }
+portpicker = { workspace = true }
+prost = { workspace = true }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -48,16 +56,9 @@ tokio = { workspace = true, features = ["full"] }
 tokio-tungstenite = { workspace = true, features = ["rustls-tls-native-roots"] }
 toml = { workspace = true }
 tonic = { workspace = true }
+tonic-prost = { workspace = true }
 url = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4", "serde"] }
-parking_lot = { workspace = true }
-lazy_static = { workspace = true }
-portable-pty = { workspace = true }
-prost = { workspace = true }
-http = { workspace = true }
-grep-regex = { workspace = true }
-grep-searcher = { workspace = true }
-tonic-prost = { workspace = true }
 
 [features]
 default = ["ExtensionHostCocoon", "MistNative"]
