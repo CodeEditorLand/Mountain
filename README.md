@@ -120,7 +120,7 @@ frontend and the `Cocoon` extension host.
 
 To understand how `Mountain`'s internal components are structured and how they
 implement the application's core logic, please refer to the detailed technical
-breakdown in [`docs/Deep Dive.md`](docs/Deep%20Dive.md). This document explains
+breakdown in [`Documentation/GitHub/Deep Dive.md`](Documentation/GitHub/Deep%20Dive.md). This document explains
 the roles of the `ApplicationRunTime`, `ApplicationState`, `Handler`,
 `Environment`, and the `Vine` gRPC layer.
 

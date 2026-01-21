@@ -26,7 +26,7 @@ use crate::{
 /// # Parameters
 /// * `ApplicationHandle`: The Tauri application handle.
 /// * `AddressString`: The address and port to bind the server to (e.g.,
-///   "[::1]:50051").
+///   `"[::1]:50051"`).
 ///
 /// # Returns
 /// A `Result` indicating if the server setup was successful. The server itself
