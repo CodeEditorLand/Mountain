@@ -3,14 +3,15 @@
 // Responsibilities:
 //   - Orchestrate the entire application lifecycle.
 //   - Initialize logging (via Tauri plugin), the Echo scheduler,
-// 	 ApplicationState, and ApplicationRunTime.
+//   ApplicationState, and ApplicationRunTime.
 //   - Serve assets via http://localhost (determined by portpicker) to support
-// 	 Service Workers.
+//   Service Workers.
 //   - Parse command-line arguments to open a workspace.
 //   - Bootstrap native command registration.
 //   - Set up the Vine gRPC server and spawn the Cocoon sidecar process.
 //   - Create and customize the main Tauri application window.
 //   - Manage the main application event loop and graceful shutdown.
+//   - [NEW] Manage System Tray and native OS integration events.
 //
 // Logging strategy:
 //   - Release default: Info (low noise) unless RUST_LOG overrides.
@@ -20,7 +21,7 @@
 //
 // NOTE (Webview logs):
 //   - To see Rust logs in the Webview console, enable TargetKind::Webview and
-// 	 call attachConsole() in the frontend.
+//   call attachConsole() in the frontend.
 
 //! # Mountain Binary Entry Point
 //!
@@ -38,7 +39,15 @@ use std::{
 
 use Echo::Scheduler::SchedulerBuilder::SchedulerBuilder;
 use log::{LevelFilter, debug, error, info, trace, warn};
-use tauri::{AppHandle, Manager, RunEvent, Wry};
+use tauri::{
+	AppHandle,
+	Manager,
+	RunEvent,
+	Wry,
+	image::Image,
+	menu::{MenuBuilder, MenuItem},
+	tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
+};
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 
 use crate::{
@@ -90,6 +99,109 @@ async fn MountainGetWorkbenchConfiguration(
 	debug!("[IPC] [WorkbenchConfig] Success. Returning payload.");
 
 	Ok(Config)
+}
+
+/// Dynamically switches the tray icon based on the theme (Light/Dark).
+/// Can be invoked from the frontend when the theme changes.
+#[tauri::command]
+fn SwitchTrayIcon(App:AppHandle, IsDarkMode:bool) {
+	debug!("[UI] [Tray] Switching icon. IsDarkMode: {}", IsDarkMode);
+
+	const DARK_ICON_BYTES:&[u8] = include_bytes!("../icons/32x32.png");
+
+	const LIGHT_ICON_BYTES:&[u8] = include_bytes!("../icons/32x32.png");
+
+	let IconBytes = if IsDarkMode { DARK_ICON_BYTES } else { LIGHT_ICON_BYTES };
+
+	if let Some(Tray) = App.tray_by_id("tray") {
+		match Image::from_bytes(IconBytes) {
+			Ok(IconImage) => {
+				if let Err(e) = Tray.set_icon(Some(IconImage)) {
+					error!("[UI] [Tray] Failed to set icon: {}", e);
+				}
+			},
+			Err(e) => error!("[UI] [Tray] Failed to load icon bytes: {}", e),
+		}
+	} else {
+		warn!("[UI] [Tray] Tray with ID 'tray' not found.");
+	}
+}
+
+// =============================================================================
+// Tray Initialization Logic
+// =============================================================================
+
+/// Configures and builds the system tray with menu and event handling.
+fn EnableTray(Application:&mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+	let Handle = Application.handle();
+
+	// Create menu items
+	let OpenItem = MenuItem::with_id(Handle, "open", "Open Mountain", true, None::<&str>)?;
+
+	let HideItem = MenuItem::with_id(Handle, "hide", "Hide Mountain", true, None::<&str>)?;
+
+	let Separator = tauri::menu::PredefinedMenuItem::separator(Handle)?;
+
+	let QuitItem = MenuItem::with_id(Handle, "quit", "Quit", true, None::<&str>)?;
+
+	// Build menu structure
+	let TrayMenu = MenuBuilder::new(Handle)
+		.item(&OpenItem)
+		.item(&HideItem)
+		.item(&Separator)
+		.item(&QuitItem)
+		.build()?;
+
+	// Load initial icon (Defaulting to 32x32 from your icons folder)
+	let IconBytes = include_bytes!("../icons/32x32.png");
+
+	let TrayIconImage = Image::from_bytes(IconBytes)?;
+
+	// Build the Tray
+	TrayIconBuilder::with_id("tray")
+		.icon(TrayIconImage)
+		.menu(&TrayMenu)
+		.tooltip("Mountain")
+		// Handle Menu Item Clicks
+		.on_menu_event(|AppHandle, Event| match Event.id.as_ref() {
+			"open" => {
+				if let Some(Window) = AppHandle.get_webview_window("main") {
+					let _ = Window.show();
+
+					let _ = Window.set_focus();
+
+				}
+			},
+			"hide" => {
+				if let Some(Window) = AppHandle.get_webview_window("main") {
+					let _ = Window.hide();
+
+				}
+			},
+			"quit" => AppHandle.exit(0),
+			_ => warn!("[UI] [Tray] Unhandled menu item: {:?}", Event.id),
+		})
+		// Handle Native Tray Events (Left Click to Toggle)
+		.on_tray_icon_event(|Tray, Event| {
+			if let TrayIconEvent::Click { button: MouseButton::Left, .. } = Event {
+				let App = Tray.app_handle();
+
+				if let Some(Window) = App.get_webview_window("main") {
+					if Window.is_visible().unwrap_or(false) {
+						let _ = Window.hide();
+					} else {
+						let _ = Window.show();
+
+						let _ = Window.set_focus();
+					}
+				}
+			}
+		})
+		.build(Application)?;
+
+	info!("[UI] [Tray] System tray enabled successfully.");
+
+	Ok(())
 }
 
 // =============================================================================
@@ -281,7 +393,9 @@ pub fn Fn() {
 			.plugin(tauri_plugin_localhost::Builder::new(ServerPort)
 			.on_request(|_, Response| {
 				Response.add_header("Access-Control-Allow-Origin", "*");
+
 				Response.add_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD");
+
 				Response.add_header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin, Accept");
 			})
 			.build())
@@ -303,6 +417,17 @@ pub fn Fn() {
 					let ApplicationHandle = Application.handle().clone();
 
 					TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
+
+					// ---------------------------------------------------------
+					// [UI] [Tray] Initialize System Tray
+					// ---------------------------------------------------------
+					debug!("[UI] [Tray] Initializing system tray...");
+
+					if let Err(Error) = EnableTray(Application) {
+						error!("[UI] [Tray] Failed to enable tray: {}", Error);
+
+						// We do not crash the app if tray fails, but we log it.
+					}
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [Commands] Bootstrap native commands
@@ -437,6 +562,7 @@ pub fn Fn() {
 									);
 
 									ScanPathsGuard.push(LocalPath);
+
 								}
 							}
 
@@ -493,6 +619,7 @@ pub fn Fn() {
 			// [IPC] Command routing
 			// ---------------------------------------------------------------------
 			.invoke_handler(tauri::generate_handler![
+				SwitchTrayIcon,
 				MountainGetWorkbenchConfiguration,
 				Command::TreeView::GetTreeViewChildren,
 				Command::LanguageFeature::MountainProvideHover,
@@ -535,10 +662,8 @@ pub fn Fn() {
 							RunTime.inner().clone().Shutdown().await;
 
 							info!("[Lifecycle] [Shutdown] ApplicationRunTime stopped.");
-
 						} else {
 							error!("[Lifecycle] [Shutdown] ApplicationRunTime not found.");
-
 						}
 
 						debug!("[Lifecycle] [Shutdown] Stopping Echo scheduler...");
@@ -555,6 +680,7 @@ pub fn Fn() {
 
 						ApplicationHandleClone.exit(0);
 					});
+
 				}
 			});
 

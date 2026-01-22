@@ -14,11 +14,12 @@ tonic-prost-build = { workspace = true }
 
 [dependencies]
 tauri = { workspace = true, features = [
-	"wry",
-	"tray-icon",
-	"devtools",
-	"rustls-tls",
 	"compression",
+	"devtools",
+	"image-png",
+	"rustls-tls",
+	"tray-icon",
+	"wry",
 ], default-features = false }
 
 tauri-plugin-dialog = { workspace = true }
