@@ -44,9 +44,11 @@ This ensures that the final application installer is lean and contains only the
 one required sidecar runtime, while the source code remains clean and doesn't
 need to be polluted with temporary files.
 
-> [!IMPORTANT] This directory is managed automatically by the build system. Its
-> contents are transient and **should not be committed to version control**. It
-> should be included in your project's `.gitignore` file.
+> [!IMPORTANT]
+>
+> This directory is managed automatically by the build system. Its contents are
+> transient and **should not be committed to version control**. It should be
+> included in your project's `.gitignore` file.
 
 ---
 
