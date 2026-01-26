@@ -41,11 +41,10 @@
 
 # **Mountain** ⛰️ Deep Dive & Architecture
 
-This document provides a detailed technical overview of the **Mountain** project
-for developers. It explores the native backend architecture, Tauri integration,
-gRPC communication systems, and the high-performance service implementations
-that form the bedrock of the Land Code Editor ecosystem while lifting VSCode
-services into the Tauri framework.
+This document provides the technical foundation for implementing VSCode services
+as native Rust services within the Land ecosystem. **Mountain** serves as the
+concrete implementation layer that brings VSCode service compatibility through
+native Rust implementations, Tauri integration, and gRPC communication.
 
 ---
 
@@ -62,7 +61,7 @@ services into the Tauri framework.
 
 ---
 
-## Deep Dive into `Mountain`'s Practical Components
+## Deep Dive into `Mountain`'s Concrete Components
 
 ### 1. The `ApplicationRunTime` Engine: Concrete Effect Execution
 
@@ -70,7 +69,7 @@ The `ApplicationRunTime` serves as the bridge between the declarative effect
 system defined in `Common` and the concrete native implementations provided by
 Mountain.
 
-#### **Practical Effect Execution Flow**
+#### **Concrete Effect Execution Flow**
 
 ```mermaid
 sequenceDiagram
@@ -118,7 +117,7 @@ impl ApplicationRunTime for MountainRunTime {
 }
 ```
 
-### 2. Practical State Management Architecture
+### 2. Concrete State Management Architecture
 
 The `ApplicationState` system provides concrete state management with advanced
 concurrency guarantees:
@@ -178,7 +177,7 @@ impl ApplicationState {
 
 ### 3. Concrete gRPC Communication System
 
-The `Vine` gRPC layer provides practical communication with the `Cocoon`
+The `Vine` gRPC layer provides concrete communication with the `Cocoon`
 extension host:
 
 ```mermaid
@@ -229,7 +228,7 @@ impl VineService for MountainVineService {
 }
 ```
 
-### 4. Practical Process Management System
+### 4. Concrete Process Management System
 
 The process management system provides concrete sidecar orchestration:
 
@@ -725,7 +724,78 @@ mod performance_tests {
 }
 ```
 
-Mountain represents the concrete implementation layer that brings VSCode service
-compatibility to the Land ecosystem through native Rust implementations, Tauri
-integration, and practical performance optimizations while maintaining type
-safety and architectural integrity.
+### Concrete VSCode Service Lifting Architecture
+
+```mermaid
+graph TD
+    subgraph "Mountain Service Implementation"
+        CommonTraits["Common Traits"]
+        MountainImpl["Mountain Implementation"]
+        Tauri["Tauri Integration"]
+        gRPC["gRPC Server"]
+
+        CommonTraits --> MountainImpl
+        MountainImpl --> Tauri
+        MountainImpl --> gRPC
+    end
+
+    subgraph "Service Communication"
+        Wind["Wind UI Services"]
+        Cocoon["Cocoon Extension Host"]
+
+        Tauri --> Wind
+        gRPC --> Cocoon
+    end
+
+    subgraph "Native Integration"
+        FileSystem["Native File System"]
+        ProcessMgmt["Process Management"]
+        WindowMgmt["Window Management"]
+
+        MountainImpl --> FileSystem
+        MountainImpl --> ProcessMgmt
+        MountainImpl --> WindowMgmt
+    end
+```
+
+#### Service Implementation Table
+
+| VSCode Service          | Common Trait           | Mountain Implementation | Communication Protocol |
+| :---------------------- | :--------------------- | :---------------------- | :--------------------- |
+| `IFileService`          | `FileSystemService`    | `MountainFileSystem`    | gRPC + Tauri           |
+| `IWorkspaceService`     | `WorkspaceService`     | `MountainWorkspace`     | gRPC + Tauri           |
+| `IConfigurationService` | `ConfigurationService` | `MountainConfiguration` | gRPC + Tauri           |
+| `ICommandService`       | `CommandService`       | `MountainCommand`       | gRPC + Tauri           |
+| `IDocumentService`      | `DocumentProvider`     | `MountainDocument`      | gRPC + Tauri           |
+
+### Component Block Map
+
+```mermaid
+graph TB
+    subgraph "Mountain Architecture Blocks"
+        ApplicationState["ApplicationState<br/>Central State"]
+        ApplicationRunTime["ApplicationRunTime<br/>Effect Execution"]
+        Environment["Environment<br/>Service Implementations"]
+        ProcessManager["ProcessManager<br/>Sidecar Orchestration"]
+        VineServer["Vine Server<br/>gRPC Communication"]
+    end
+
+    subgraph "External Dependencies"
+        Common["Common Traits"]
+        Tauri["Tauri Framework"]
+        Tokio["Tokio Runtime"]
+        Echo["Echo Scheduler"]
+    end
+
+    Common --> Environment
+    Common --> ApplicationRunTime
+    Tauri --> ApplicationState
+    Tauri --> ProcessManager
+    Tokio --> VineServer
+    Echo --> ApplicationRunTime
+
+    ApplicationState --> Environment
+    ApplicationRunTime --> Environment
+    Environment --> VineServer
+    ProcessManager --> VineServer
+```
