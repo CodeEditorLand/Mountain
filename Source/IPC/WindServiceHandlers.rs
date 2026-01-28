@@ -201,7 +201,7 @@ async fn handle_storage_get(
     // Use Mountain's storage provider
     let provider: Arc<dyn Common::Storage::StorageProvider::StorageProvider> = runtime.Environment.Require();
     
-    let value = provider.GetStorageItem(key.to_string())
+    let value = provider.GetStorageValue(false, key)
         .await
         .map_err(|e| format!("Failed to get storage item: {}", e))?;
     
