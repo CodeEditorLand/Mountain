@@ -20,6 +20,8 @@ use Common::Environment::Requires::Requires;
 use Common::FileSystem::FileSystemReader::FileSystemReader;
 use Common::FileSystem::FileSystemWriter::FileSystemWriter;
 use Common::Configuration::ConfigurationProvider::ConfigurationProvider;
+use Common::Configuration::DTO::{ConfigurationOverridesDTO, ConfigurationTarget};
+use Common::Storage::StorageProvider::StorageProvider;
 
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system
@@ -109,8 +111,8 @@ async fn handle_configuration_update(
     provider.UpdateConfigurationValue(
         key.to_string(),
         value,
-        Common::Configuration::DTO::ConfigurationTarget::ConfigurationTarget::User,
-        Value::Null,
+        ConfigurationTarget::User,
+        ConfigurationOverridesDTO::default(),
         None,
     )
     .await
@@ -199,7 +201,7 @@ async fn handle_storage_get(
         .ok_or("Storage key must be a string".to_string())?;
     
     // Use Mountain's storage provider
-    let provider: Arc<dyn Common::Storage::StorageProvider::StorageProvider> = runtime.Environment.Require();
+    let provider: Arc<dyn StorageProvider> = runtime.Environment.Require();
     
     let value = provider.GetStorageValue(false, key)
         .await
@@ -224,9 +226,9 @@ async fn handle_storage_set(
         .clone();
     
     // Use Mountain's storage provider
-    let provider: Arc<dyn Common::Storage::StorageProvider::StorageProvider> = runtime.Environment.Require();
+    let provider: Arc<dyn StorageProvider> = runtime.Environment.Require();
     
-    provider.SetStorageItem(key.to_string(), value)
+    provider.UpdateStorageValue(false, key.to_string(), Some(value))
         .await
         .map_err(|e| format!("Failed to set storage item: {}", e))?;
     
@@ -432,7 +434,7 @@ async fn handle_workbench_configuration(
     // Get the complete workbench configuration
     let provider: Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
     
-    let config = provider.GetConfiguration(None, Value::Null)
+    let config = provider.GetConfigurationValue(None, ConfigurationOverridesDTO::default())
         .await
         .map_err(|e| format!("Failed to get workbench configuration: {}", e))?;
     
