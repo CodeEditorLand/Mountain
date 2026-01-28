@@ -160,7 +160,7 @@ fn process_configuration_properties(
 				)?;
 			} else if let Some(default_value) = prop_details.get("default") {
 				// Handle regular property with default value
-				merged_defaults.insert(full_path, default_value.clone());
+					merged_defaults.insert(full_path.clone(), default_value.clone());
 			}
 		}
 		

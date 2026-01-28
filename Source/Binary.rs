@@ -556,7 +556,7 @@ pub fn Fn() {
 			.setup({
 				let LocalhostUrl = LocalhostUrl.clone();
 
-				move |Application| {
+				move |Application| async move {
 					info!("[Lifecycle] [Setup] Setup hook started.");
 
 					debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
@@ -601,7 +601,7 @@ pub fn Fn() {
 				// ---------------------------------------------------------
 				debug!("[Lifecycle] [IPC] Initializing Status Reporter...");
 
-				let status_reporter = initialize_status_reporter(&ApplicationHandle, RunTime.clone())?;
+				let status_reporter = initialize_status_reporter(&ApplicationHandle, Runtime.clone())?;
 				status_reporter.set_ipc_server(ipc_server);
 
 				// Start periodic status reporting
@@ -616,7 +616,7 @@ pub fn Fn() {
 				// ---------------------------------------------------------
 				debug!("[Lifecycle] [IPC] Initializing Advanced Features...");
 
-				if let Err(e) = initialize_advanced_features(&ApplicationHandle, RunTime.clone()) {
+				if let Err(e) = initialize_advanced_features(&ApplicationHandle, Runtime.clone()) {
 					error!("[Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
 				}
 
@@ -627,12 +627,12 @@ pub fn Fn() {
 				// ---------------------------------------------------------
 				debug!("[Lifecycle] [IPC] Initializing Wind Advanced Sync...");
 
-				if let Err(e) = initialize_wind_advanced_sync(&ApplicationHandle, RunTime.clone()) {
+				if let Err(e) = initialize_wind_advanced_sync(&ApplicationHandle, Runtime.clone()) {
 					error!("[Lifecycle] [IPC] Failed to initialize Wind advanced sync: {}", e);
 				}
 
 				debug!("[Lifecycle] [IPC] Wind Advanced Sync initialized.");
-					TraceStep!("[UI] [Window] InitScript bytes={}", InitScript.len());
+					TraceStep!("[UI] [Window] InitScript bytes=0");
 
 					debug!("[UI] [Window] Creating window builder...");
 
@@ -644,7 +644,7 @@ pub fn Fn() {
 						),
 					)
 					.use_https_scheme(false)
-					.initialization_script(&InitScript)
+					.initialization_script("")
 					.zoom_hotkeys_enabled(true)
 					.browser_extensions_enabled(false);
 
