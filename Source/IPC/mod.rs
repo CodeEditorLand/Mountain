@@ -10,6 +10,8 @@ pub mod WindServiceHandlers;
 pub mod WindServiceAdapters;
 pub mod ConfigurationBridge;
 pub mod StatusReporter;
+pub mod AdvancedFeatures;
+pub mod WindAdvancedSync;
 
 pub use TauriIPCServer::{
     TauriIPCServer,
@@ -49,4 +51,39 @@ pub use StatusReporter::{
     mountain_get_ipc_status_history,
     mountain_start_ipc_status_reporting,
     initialize_status_reporter,
+};
+
+pub use AdvancedFeatures::{
+    AdvancedFeatures,
+    PerformanceStats,
+    CollaborationSession,
+    CollaborationPermissions,
+    MessageCache,
+    mountain_get_performance_stats,
+    mountain_get_cache_stats,
+    mountain_create_collaboration_session,
+    mountain_get_collaboration_sessions,
+    initialize_advanced_features,
+};
+
+pub use WindAdvancedSync::{
+    WindAdvancedSync,
+    DocumentSynchronization,
+    SynchronizedDocument,
+    DocumentChange,
+    ChangeType,
+    SyncState,
+    SyncStatus,
+    UIStateSynchronization,
+    CursorPosition,
+    SelectionRange,
+    ViewState,
+    LayoutState,
+    RealTimeUpdates,
+    RealTimeUpdate,
+    UpdateType,
+    mountain_add_document_for_sync,
+    mountain_get_sync_status,
+    mountain_subscribe_to_updates,
+    initialize_wind_advanced_sync,
 };

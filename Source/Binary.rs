@@ -57,7 +57,7 @@ use crate::{
 	},
 	Command,
 	Environment::{ConfigurationProvider::InitializeAndMergeConfigurations, MountainEnvironment::MountainEnvironment},
-	IPC::{TauriIPCServer, register_wind_ipc_handlers, initialize_status_reporter},
+	IPC::{TauriIPCServer, register_wind_ipc_handlers, initialize_status_reporter, initialize_advanced_features, initialize_wind_advanced_sync},
 	ProcessManagement::{CocoonManagement::InitializeCocoon, InitializationData},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine,
@@ -464,6 +464,28 @@ pub fn Fn() {
 				}
 
 				debug!("[Lifecycle] [IPC] Status Reporter initialized.");
+
+				// ---------------------------------------------------------
+				// [Lifecycle] [IPC] Initialize Advanced Features
+				// ---------------------------------------------------------
+				debug!("[Lifecycle] [IPC] Initializing Advanced Features...");
+
+				if let Err(e) = initialize_advanced_features(&ApplicationHandle, RunTime.clone()) {
+					error!("[Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
+				}
+
+				debug!("[Lifecycle] [IPC] Advanced Features initialized.");
+
+				// ---------------------------------------------------------
+				// [Lifecycle] [IPC] Initialize Wind Advanced Sync
+				// ---------------------------------------------------------
+				debug!("[Lifecycle] [IPC] Initializing Wind Advanced Sync...");
+
+				if let Err(e) = initialize_wind_advanced_sync(&ApplicationHandle, RunTime.clone()) {
+					error!("[Lifecycle] [IPC] Failed to initialize Wind advanced sync: {}", e);
+				}
+
+				debug!("[Lifecycle] [IPC] Wind Advanced Sync initialized.");
 					TraceStep!("[UI] [Window] InitScript bytes={}", InitScript.len());
 
 					debug!("[UI] [Window] Creating window builder...");
