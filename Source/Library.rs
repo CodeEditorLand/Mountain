@@ -19,6 +19,8 @@ pub mod ExtensionManagement;
 
 pub mod FileSystem;
 
+pub mod IPC;
+
 pub mod ProcessManagement;
 
 pub mod RunTime;

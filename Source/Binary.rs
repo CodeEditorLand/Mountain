@@ -57,6 +57,7 @@ use crate::{
 	},
 	Command,
 	Environment::{ConfigurationProvider::InitializeAndMergeConfigurations, MountainEnvironment::MountainEnvironment},
+	IPC::{TauriIPCServer, register_wind_ipc_handlers, initialize_status_reporter, initialize_advanced_features, initialize_wind_advanced_sync},
 	ProcessManagement::{CocoonManagement::InitializeCocoon, InitializationData},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine,
@@ -125,6 +126,168 @@ fn SwitchTrayIcon(App:AppHandle, IsDarkMode:bool) {
 	} else {
 		warn!("[UI] [Tray] Tray with ID 'tray' not found.");
 	}
+}
+
+// =============================================================================
+// IPC Command Wrappers
+// =============================================================================
+
+/// Receive messages from Wind through IPC
+#[tauri::command]
+async fn mountain_ipc_receive_message(
+	app_handle: AppHandle,
+	message: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::TauriIPCServer::mountain_ipc_receive_message(app_handle, serde_json::from_value(message).map_err(|e| e.to_string())?).await
+}
+
+/// Get Mountain IPC status
+#[tauri::command]
+async fn mountain_ipc_get_status(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle).await
+}
+
+/// Invoke IPC methods
+#[tauri::command]
+async fn mountain_ipc_invoke(
+	app_handle: AppHandle,
+	method: String,
+	params: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, params).await
+}
+
+/// Get Wind desktop configuration
+#[tauri::command]
+async fn mountain_get_wind_desktop_configuration(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await
+}
+
+/// Update configuration from Wind
+#[tauri::command]
+async fn mountain_update_configuration_from_wind(
+	app_handle: AppHandle,
+	config: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::mountain_update_configuration_from_wind(app_handle, config).await
+}
+
+/// Synchronize configuration
+#[tauri::command]
+async fn mountain_synchronize_configuration(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::mountain_synchronize_configuration(app_handle).await
+}
+
+/// Get configuration status
+#[tauri::command]
+async fn mountain_get_configuration_status(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle).await
+}
+
+/// Get IPC status
+#[tauri::command]
+async fn mountain_get_ipc_status(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::StatusReporter::mountain_get_ipc_status(app_handle).await
+}
+
+/// Get IPC status history
+#[tauri::command]
+async fn mountain_get_ipc_status_history(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::StatusReporter::mountain_get_ipc_status_history(app_handle).await
+}
+
+/// Start IPC status reporting
+#[tauri::command]
+async fn mountain_start_ipc_status_reporting(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::StatusReporter::mountain_start_ipc_status_reporting(app_handle).await
+}
+
+/// Get performance stats
+#[tauri::command]
+async fn mountain_get_performance_stats(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::AdvancedFeatures::mountain_get_performance_stats(app_handle).await
+}
+
+/// Get cache stats
+#[tauri::command]
+async fn mountain_get_cache_stats(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::AdvancedFeatures::mountain_get_cache_stats(app_handle).await
+}
+
+/// Create collaboration session
+#[tauri::command]
+async fn mountain_create_collaboration_session(
+	app_handle: AppHandle,
+	session_data: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_data).await
+}
+
+/// Get collaboration sessions
+#[tauri::command]
+async fn mountain_get_collaboration_sessions(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions(app_handle).await
+}
+
+/// Add document for sync
+#[tauri::command]
+async fn mountain_add_document_for_sync(
+	app_handle: AppHandle,
+	document_data: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	// Extract document_id and file_path from JSON data
+	let document_id = document_data["document_id"].as_str()
+		.ok_or("Missing document_id")?.to_string();
+	let file_path = document_data["file_path"].as_str()
+		.ok_or("Missing file_path")?.to_string();
+	
+	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, document_id, file_path).await
+		.map(|_| serde_json::Value::Null)
+}
+
+/// Get sync status
+#[tauri::command]
+async fn mountain_get_sync_status(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle).await
+		.map(|status| serde_json::to_value(status).unwrap_or(serde_json::Value::Null))
+}
+
+/// Subscribe to updates
+#[tauri::command]
+async fn mountain_subscribe_to_updates(
+	app_handle: AppHandle,
+	subscription_data: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	// Extract target and subscriber from JSON data
+	let target = subscription_data["target"].as_str()
+		.ok_or("Missing target")?.to_string();
+	let subscriber = subscription_data["subscriber"].as_str()
+		.ok_or("Missing subscriber")?.to_string();
+	
+	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle, target, subscriber).await
+		.map(|_| serde_json::Value::Null)
 }
 
 // =============================================================================
@@ -409,7 +572,7 @@ pub fn Fn() {
 			.setup({
 				let LocalhostUrl = LocalhostUrl.clone();
 
-				move |Application| {
+				move |Application| async move {
 					info!("[Lifecycle] [Setup] Setup hook started.");
 
 					debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
@@ -439,14 +602,53 @@ pub fn Fn() {
 
 					debug!("[Lifecycle] [Commands] Native commands registered.");
 
-					// ---------------------------------------------------------
-					// [UI] [Window] Main window creation
-					// ---------------------------------------------------------
-					debug!("[UI] [Window] Building init script...");
+				// ---------------------------------------------------------
+				// [Lifecycle] [IPC] Initialize Mountain IPC Server
+				// ---------------------------------------------------------
+				debug!("[Lifecycle] [IPC] Initializing Mountain IPC Server...");
 
-					let InitScript = format!("window.__MOUNTAIN_BASE_URL__ = '{}';", LocalhostUrl);
+				let ipc_server = crate::IPC::TauriIPCServer::new(ApplicationHandle.clone());
+				ApplicationHandle.manage(ipc_server.clone());
 
-					TraceStep!("[UI] [Window] InitScript bytes={}", InitScript.len());
+				debug!("[Lifecycle] [IPC] Mountain IPC Server initialized.");
+
+				// ---------------------------------------------------------
+				// [Lifecycle] [IPC] Initialize Status Reporter
+				// ---------------------------------------------------------
+				debug!("[Lifecycle] [IPC] Initializing Status Reporter...");
+
+				let status_reporter = initialize_status_reporter(&ApplicationHandle, Runtime.clone())?;
+				status_reporter.set_ipc_server(ipc_server);
+
+				// Start periodic status reporting
+				if let Err(e) = status_reporter.start_periodic_reporting(30).await {
+					error!("[Lifecycle] [IPC] Failed to start status reporting: {}", e);
+				}
+
+				debug!("[Lifecycle] [IPC] Status Reporter initialized.");
+
+				// ---------------------------------------------------------
+				// [Lifecycle] [IPC] Initialize Advanced Features
+				// ---------------------------------------------------------
+				debug!("[Lifecycle] [IPC] Initializing Advanced Features...");
+
+				if let Err(e) = initialize_advanced_features(&ApplicationHandle, Runtime.clone()) {
+					error!("[Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
+				}
+
+				debug!("[Lifecycle] [IPC] Advanced Features initialized.");
+
+				// ---------------------------------------------------------
+				// [Lifecycle] [IPC] Initialize Wind Advanced Sync
+				// ---------------------------------------------------------
+				debug!("[Lifecycle] [IPC] Initializing Wind Advanced Sync...");
+
+				if let Err(e) = initialize_wind_advanced_sync(&ApplicationHandle, Runtime.clone()) {
+					error!("[Lifecycle] [IPC] Failed to initialize Wind advanced sync: {}", e);
+				}
+
+				debug!("[Lifecycle] [IPC] Wind Advanced Sync initialized.");
+					TraceStep!("[UI] [Window] InitScript bytes=0");
 
 					debug!("[UI] [Window] Creating window builder...");
 
@@ -458,7 +660,7 @@ pub fn Fn() {
 						),
 					)
 					.use_https_scheme(false)
-					.initialization_script(&InitScript)
+					.initialization_script("")
 					.zoom_hotkeys_enabled(true)
 					.browser_extensions_enabled(false);
 
@@ -630,6 +832,23 @@ pub fn Fn() {
 				Command::Keybinding::GetResolvedKeybinding,
 				crate::Track::DispatchLogic::DispatchFrontendCommand,
 				crate::Track::DispatchLogic::ResolveUIRequest,
+				mountain_ipc_receive_message,
+				mountain_ipc_get_status,
+				mountain_ipc_invoke,
+				mountain_get_wind_desktop_configuration,
+				mountain_update_configuration_from_wind,
+				mountain_synchronize_configuration,
+				mountain_get_configuration_status,
+				mountain_get_ipc_status,
+				mountain_get_ipc_status_history,
+				mountain_start_ipc_status_reporting,
+				mountain_get_performance_stats,
+				mountain_get_cache_stats,
+				mountain_create_collaboration_session,
+				mountain_get_collaboration_sessions,
+				mountain_add_document_for_sync,
+				mountain_get_sync_status,
+				mountain_subscribe_to_updates,
 			])
 			// ---------------------------------------------------------------------
 			// [Tauri] Build & run loop
