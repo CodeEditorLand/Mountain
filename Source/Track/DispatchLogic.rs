@@ -6,10 +6,15 @@
 //   - Provide specific, high-performance Tauri command handlers for frequent UI
 //     interactions.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # DispatchLogic
 //!
 //! Contains the main dispatch functions for routing all incoming commands and
 //! RPC requests to the appropriate execution logic via the effect system.
+
+#![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
 

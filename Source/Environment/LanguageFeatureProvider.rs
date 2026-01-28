@@ -6,12 +6,19 @@
 //     provider hosted in the `Cocoon` sidecar.
 //   - Manages the registration and lifecycle of language providers.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # LanguageFeatureProvider Implementation
 //!
 //! Implements the `LanguageFeatureProviderRegistry` trait for the
 //! `MountainEnvironment`. This provider is the central hub for all language
 //! intelligence features, routing requests from the application to the
 //! appropriate extension provider hosted in the `Cocoon` sidecar.
+//!
+//! TODO (Mountain→Air Split): If Air provides advanced completion or indexing
+//! services, consider adding a fallback provider chain: Air (cached/indexed)
+//! → Cocoon (LSP) → Local (basic). Current implementation uses Cocoon only.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -188,49 +195,46 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 		.await
 	}
 
-	// --- Stubs for other provider methods ---
+	// --- Language Feature Provider Methods ---
+
 	async fn ProvideCodeActions(
 		&self,
 
-		_DocumentURI:Url,
+		DocumentURI:Url,
 
-		_RangeOrSelectionDTO:Value,
+		RangeOrSelectionDTO:Value,
 
-		_ContextDTO:Value,
+		ContextDTO:Value,
 	) -> Result<Option<Value>, CommonError> {
-		warn!("[LangFeatureProvider] ProvideCodeActions is not implemented.");
-
-		Ok(None)
+		InvokeProvider(
+			self,
+			ProviderType::CodeAction,
+			&DocumentURI,
+			json!([RangeOrSelectionDTO, ContextDTO]),
+		)
+		.await
 	}
 
-	async fn ProvideCodeLenses(&self, _DocumentURI:Url) -> Result<Option<Value>, CommonError> {
-		warn!("[LangFeatureProvider] ProvideCodeLenses is not implemented.");
-
-		Ok(None)
+	async fn ProvideCodeLenses(&self, DocumentURI:Url) -> Result<Option<Value>, CommonError> {
+		InvokeProvider(self, ProviderType::CodeLens, &DocumentURI, json!([Value::Null])).await
 	}
 
 	async fn ProvideDocumentHighlights(
 		&self,
 
-		_DocumentURI:Url,
+		DocumentURI:Url,
 
-		_PositionDTO:PositionDTO,
+		PositionDTO:PositionDTO,
 	) -> Result<Option<Value>, CommonError> {
-		warn!("[LangFeatureProvider] ProvideDocumentHighlights is not implemented.");
-
-		Ok(None)
+		InvokeProvider(self, ProviderType::DocumentHighlight, &DocumentURI, json!([PositionDTO])).await
 	}
 
-	async fn ProvideDocumentLinks(&self, _DocumentURI:Url) -> Result<Option<Value>, CommonError> {
-		warn!("[LangFeatureProvider] ProvideDocumentLinks is not implemented.");
-
-		Ok(None)
+	async fn ProvideDocumentLinks(&self, DocumentURI:Url) -> Result<Option<Value>, CommonError> {
+		InvokeProvider(self, ProviderType::DocumentLink, &DocumentURI, json!([Value::Null])).await
 	}
 
-	async fn PrepareRename(&self, _DocumentURI:Url, _PositionDTO:PositionDTO) -> Result<Option<Value>, CommonError> {
-		warn!("[LangFeatureProvider] PrepareRename is not implemented.");
-
-		Ok(None)
+	async fn PrepareRename(&self, DocumentURI:Url, PositionDTO:PositionDTO) -> Result<Option<Value>, CommonError> {
+		InvokeProvider(self, ProviderType::Rename, &DocumentURI, json!([PositionDTO])).await
 	}
 }
 
@@ -274,6 +278,12 @@ fn FindBestProvider(
 							}
 						}
 						// TODO: Add scheme and pattern matching logic here.
+						// Current implementation only matches language identifier.
+						// Should also check:
+						// - Selector["scheme"] (e.g., "file", "untitled", "custom")
+						// - Selector["pattern"] (e.g., "**/*.ts", "src/**/*.rs")
+						// - Selector["exclude"] (e.g., "node_modules/**")
+						// Provider scoring should rank by specificity (pattern > language > all)
 					}
 				}
 			}

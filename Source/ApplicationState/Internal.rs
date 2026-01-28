@@ -5,6 +5,9 @@
 //   - Provide helper logic for populating state, like scanning for extensions.
 //   - These are not part of the public API of the state struct itself.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # Internal (ApplicationState)
 //!
 //! Contains internal helper functions for the `ApplicationState` module,

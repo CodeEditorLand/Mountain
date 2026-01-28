@@ -7,6 +7,9 @@
 //     and construct a list of `WorkSpaceFolderStateDTO`s representing the
 //     workspace.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # WorkSpace File Service
 //!
 //! Contains logic for parsing and handling `.code-workspace` files.

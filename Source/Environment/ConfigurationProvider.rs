@@ -5,6 +5,9 @@
 //   - Handles the configuration cascade (Default -> User -> WorkSpace).
 //   - Interacts with the file system via effects for persistence.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # ConfigurationProvider Implementation
 //!
 //! Implements the `ConfigurationProvider` and `ConfigurationInspector` traits

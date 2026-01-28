@@ -1,3 +1,6 @@
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # RunTime Module
 //!
 //! This module defines the concrete `ApplicationRunTime` for the Mountain

@@ -12,6 +12,13 @@
 //! provider contains the core logic for all document lifecycle operations, such
 //! as opening, saving, and applying text changes, and notifying the `Cocoon`
 //! sidecar and `Sky` frontend of these events.
+//!
+//! TODO (Mountain→Air Split): Consider delegating bulk save operations to Air
+//! for improved performance with large workspaces. Air could handle save
+//! batches in the background and report progress via gRPC status events.
+//!
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -272,10 +279,61 @@ impl DocumentProvider for MountainEnvironment {
 	}
 
 	/// Saves all currently dirty documents.
-	async fn SaveAllDocuments(&self, _IncludeUntitled:bool) -> Result<Vec<bool>, CommonError> {
-		warn!("[DocumentProvider] SaveAllDocuments is not implemented.");
+	async fn SaveAllDocuments(&self, IncludeUntitled:bool) -> Result<Vec<bool>, CommonError> {
+		info!(
+			"[DocumentProvider] SaveAllDocuments called (IncludeUntitled: {})",
+			IncludeUntitled
+		);
 
-		Err(CommonError::NotImplemented { FeatureName:"SaveAllDocuments".into() })
+		let URIsToSave:Vec<Url> = {
+			let OpenDocumentsGuard = self
+				.ApplicationState
+				.OpenDocuments
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+			OpenDocumentsGuard
+				.values()
+				.filter(|Document| {
+					// Include documents that are dirty
+					if !Document.IsDirty {
+						return false;
+					}
+
+					// Include only file-scheme documents unless IncludeUntitled is true
+					if !IncludeUntitled && Document.URI.scheme() != "file" {
+						return false;
+					}
+
+					true
+				})
+				.map(|Document| Document.URI.clone())
+				.collect()
+		};
+
+		let mut Results = Vec::with_capacity(URIsToSave.len());
+
+		info!(
+			"[DocumentProvider] Saving {} dirty document(s)",
+			URIsToSave.len()
+		);
+
+		for URI in URIsToSave {
+			let Result = self.SaveDocument(URI.clone()).await;
+
+			match &Result {
+				Ok(_) => {
+					info!("[DocumentProvider] Successfully saved {}", URI);
+				},
+				Err(Error) => {
+					error!("[DocumentProvider] Failed to save {}: {}", URI, Error);
+				},
+			}
+
+			Results.push(Result.is_ok());
+		}
+
+		Ok(Results)
 	}
 
 	/// Applies a collection of content changes to a document.

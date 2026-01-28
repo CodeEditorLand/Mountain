@@ -6,6 +6,9 @@
 //   - Manages WebView state in `ApplicationState` and pushes updates to the
 //     frontend.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # WebViewProvider Implementation
 //!
 //! Implements the `WebViewProvider` trait for the `MountainEnvironment`. This

@@ -124,6 +124,11 @@ breakdown in [`Documentation/GitHub/Deep Dive.md`](Documentation/GitHub/Deep%20D
 the roles of the `ApplicationRunTime`, `ApplicationState`, `Handler`,
 `Environment`, and the `Vine` gRPC layer.
 
+> **📝 Naming Conventions:** Mountain follows a deliberate **PascalCase** naming convention
+> throughout the codebase for ecosystem consistency and cross-language interoperability.
+> See [`Documentation/GitHub/Naming Conventions.md`](Documentation/GitHub/Naming%20Conventions.md)
+> for the comprehensive guide covering rationale, patterns, exceptions, and migration guidelines.
+
 ---
 
 ## `Mountain` in the Land Ecosystem ⛰️ + 🏞️

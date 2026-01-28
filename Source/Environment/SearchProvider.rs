@@ -6,6 +6,9 @@
 //   - Respect workspace folders and standard ignore files (`.gitignore`).
 //   - Collect and format search results into a DTO suitable for the frontend.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # SearchProvider Implementation
 //!
 //! Implements the `SearchProvider` trait using the `grep-searcher` crate, which

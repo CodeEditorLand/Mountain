@@ -1,5 +1,8 @@
 // File: Mountain/Source/Environment/MountainEnvironment.rs
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # MountainEnvironment
 //!
 //! Defines the concrete `MountainEnvironment` struct, which serves as the
@@ -9,6 +12,10 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
+
+// Import Air service client when Air integration is enabled
+#[cfg(feature = "AirIntegration")]
+use Air::Vine::Generated::air_service_client::AirServiceClient;
 
 use Common::{
 	Command::CommandExecutor::CommandExecutor,
@@ -51,16 +58,93 @@ pub struct MountainEnvironment {
 	pub ApplicationHandle:AppHandle<Wry>,
 
 	pub ApplicationState:Arc<ApplicationState>,
+
+	/// Optional Air client for cloud-based services.
+	/// When provided, providers like SecretProvider and UpdateService can delegate to Air.
+	#[cfg(feature = "AirIntegration")]
+	pub AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 }
 
 impl MountainEnvironment {
 	/// Creates a new `MountainEnvironment` instance.
-	pub fn Create(ApplicationHandle:AppHandle<Wry>) -> Self {
+	#[allow(unused_mut)]
+	pub fn Create(ApplicationHandle: AppHandle<Wry>) -> Self {
 		info!("[MountainEnvironment] New instance created.");
 
 		let ApplicationState = ApplicationHandle.state::<Arc<ApplicationState>>().inner().clone();
 
-		Self { ApplicationHandle, ApplicationState }
+		#[cfg(feature = "AirIntegration")]
+		{
+			Self { ApplicationHandle, ApplicationState, AirClient: None }
+		}
+
+		#[cfg(not(feature = "AirIntegration"))]
+		{
+			Self { ApplicationHandle, ApplicationState }
+		}
+	}
+
+	/// Creates a new `MountainEnvironment` instance with an optional Air client.
+	/// When AirClient is provided, providers can delegate to Air for cloud-based services.
+	#[cfg(feature = "AirIntegration")]
+	pub fn CreateWithAir(
+		ApplicationHandle: AppHandle<Wry>,
+		AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+	) -> Self {
+		info!(
+			"[MountainEnvironment] New instance created with Air client: {}",
+			AirClient.is_some()
+		);
+
+		let ApplicationState = ApplicationHandle.state::<Arc<ApplicationState>>().inner().clone();
+
+		Self { ApplicationHandle, ApplicationState, AirClient }
+	}
+
+	/// Updates the Air client for this environment.
+	/// This allows dynamically switching between Air and local services.
+	#[cfg(feature = "AirIntegration")]
+	pub fn SetAirClient(&mut self, AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>) {
+		info!("[MountainEnvironment] Air client updated: {}", AirClient.is_some());
+
+		self.AirClient = AirClient;
+	}
+
+	/// Returns whether Air is available and ready.
+	#[cfg(feature = "AirIntegration")]
+	pub async fn IsAirAvailable(&self) -> bool {
+		if let Some(AirClient) = &self.AirClient {
+			use tonic::Request;
+			use Air::Vine::Generated::air_service_client::air_service_server;
+
+			match AirClient
+				.health_check(Request::new(air_service_server::HealthCheckRequest {}))
+				.await
+			{
+				Ok(response) => {
+					let is_healthy = response.into_inner().healthy;
+
+					if !is_healthy {
+						warn!("[MountainEnvironment] Air health check returned unhealthy");
+					}
+
+					is_healthy
+				},
+				Err(error) => {
+					warn!("[MountainEnvironment] Air health check failed: {}", error);
+					false
+				},
+			}
+		} else {
+			info!("[MountainEnvironment] No Air client configured");
+			false
+		}
+	}
+
+	/// Returns whether Air is available and ready.
+	#[cfg(not(feature = "AirIntegration"))]
+	pub async fn IsAirAvailable(&self) -> bool {
+		false
 	}
 }
 

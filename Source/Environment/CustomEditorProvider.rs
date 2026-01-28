@@ -5,6 +5,9 @@
 //   - Mediate the "resolve" process, calling back to the extension host to get
 //     the content for a custom editor instance.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # CustomEditorProvider Implementation
 //!
 //! Implements the `CustomEditorProvider` trait for the `MountainEnvironment`.

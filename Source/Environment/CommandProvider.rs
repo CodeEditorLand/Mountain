@@ -5,6 +5,9 @@
 //   - Dispatches command execution to either native Rust handlers or proxied
 //     sidecar handlers.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # CommandProvider Implementation
 //!
 //! Implements the `CommandExecutor` trait for the `MountainEnvironment`. This

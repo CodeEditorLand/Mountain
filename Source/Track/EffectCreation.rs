@@ -5,6 +5,9 @@
 //     effect constructors from the `Common` crate.
 //   - Create a runnable, type-erased `MappedEffect` for each request.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # EffectCreation
 //!
 //! Contains the logic for creating `ActionEffect`s by mapping string-based

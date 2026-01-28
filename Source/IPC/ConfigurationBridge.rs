@@ -1,3 +1,6 @@
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # Configuration Bridge
 //! 
 //! Bridges Mountain's configuration system to Wind's desktop configuration requirements.

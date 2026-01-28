@@ -1,5 +1,8 @@
 // File: Mountain/Source/Environment/TreeViewProvider.rs
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # TreeViewProvider Implementation
 //!
 //! Implements the `TreeViewProvider` trait for the `MountainEnvironment`. This

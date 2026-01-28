@@ -5,6 +5,9 @@
 //   - Querying workspace folders, finding files, and applying workspace edits.
 //   - Orchestrating the opening of files, including routing to custom editors.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # WorkSpaceProvider Implementation
 //!
 //! Implements the `WorkSpaceProvider` and `WorkSpaceEditApplier` traits for

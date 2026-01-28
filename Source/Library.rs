@@ -9,6 +9,8 @@
 #![allow(non_snake_case, non_camel_case_types)]
 #![feature(trivial_bounds)]
 
+pub mod Air;
+
 pub mod ApplicationState;
 
 pub mod Command;

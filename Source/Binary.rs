@@ -51,6 +51,7 @@ use tauri::{
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 
 use crate::{
+	Air,
 	ApplicationState::{
 		ApplicationState::{ApplicationState, MapLockError},
 		Internal::ScanAndPopulateExtensions,
@@ -709,6 +710,44 @@ pub fn Fn() {
 					ApplicationHandle.manage(RunTime);
 
 					info!("[Backend] [Runtime] ApplicationRunTime managed.");
+
+					// ---------------------------------------------------------
+					// [Air] [gRPC] Initialize Air client
+					// ---------------------------------------------------------
+					debug!("[Air] [Init] Initializing Air client...");
+
+					let AirAddress = "http://[::1]:50053";
+
+					// Attempt to connect to Air, but continue gracefully if unavailable
+					let AirProvider = match tokio::time::timeout(
+						tokio::time::Duration::from_secs(3),
+						Air::CreateAirServiceProvider(AirAddress)
+					).await {
+						Ok(Ok(provider)) => {
+							info!("[Air] [Init] Successfully connected to Air at {}", AirAddress);
+							provider
+						},
+						Ok(Err(e)) => {
+							warn!("[Air] [Init] Failed to connect to Air: {}. Continuing without Air client.", e);
+							Air::CreateAirServiceProviderOrUnavailable(AirAddress)
+						},
+						Err(_) => {
+							warn!("[Air] [Init] Connection to Air timed out. Continuing without Air client.");
+							Air::CreateAirServiceProviderOrUnavailable(AirAddress)
+						},
+					};
+
+					// Store AirServiceProvider in Tauri state for global access
+					ApplicationHandle.manage(AirProvider);
+
+					// Log Air availability status
+					if let Some(air_provider) = ApplicationHandle.try_state::<Air::AirServiceProvider>() {
+						if air_provider.is_available() {
+							info!("[Air] [Init] Air is available and connected.");
+						} else {
+							warn!("[Air] [Init] Air is not connected. Some features may be unavailable.");
+						}
+					}
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [PostSetup] Async initialization work

@@ -5,6 +5,9 @@
 //   - Creating native pseudo-terminals (PTYs) and handling their I/O.
 //   - Spawning and managing the lifecycle of the underlying shell processes.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # TerminalProvider Implementation
 //!
 //! Implements the `TerminalProvider` trait for the `MountainEnvironment`. This

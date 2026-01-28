@@ -8,6 +8,9 @@
 //   - Be managed by Tauri and accessible to all command handlers and
 //     Environment providers.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # ApplicationState Struct
 //!
 //! Defines the main `ApplicationState` struct, which is the central, shared,

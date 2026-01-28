@@ -6,6 +6,9 @@
 //   - Notify the UI (`Sky`) of changes to diagnostics.
 //   - Provide an aggregated view of all diagnostics.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # DiagnosticProvider Implementation
 //!
 //! Implements the `DiagnosticManager` trait for the `MountainEnvironment`. This

@@ -5,6 +5,9 @@
 //   - Use the `tauri-plugin-dialog` for native file dialogs.
 //   - Use a custom request-response event pattern for web-based UI elements.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # UserInterfaceProvider Implementation
 //!
 //! Implements the `UserInterfaceProvider` trait for the `MountainEnvironment`.

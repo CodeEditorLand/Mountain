@@ -2,6 +2,13 @@
 //!
 //! Defines the Data Transfer Object for storing the state of a single open
 //! text document in memory.
+//!
+//! TODO (Mountain→Air Split): If Air implements a background document sync service,
+//! consider delegating delta change validation or conflict resolution to Air.
+//! For now, Mountain handles this synchronously to ensure UI responsiveness.
+//!
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -89,15 +96,12 @@ impl DocumentStateDTO {
 
 		// Attempt to deserialize as an array of delta changes first.
 		if let Ok(RPCChange) = serde_json::from_value::<Vec<RPCModelContentChangeDTO>>(ChangesValue.clone()) {
-			// A full implementation would apply each delta change to the `Lines` vector.
-			// This is a complex operation involving coordinate transformations.
-			// For now, we will log that this is a stub and only update the version.
-			log::warn!(
-				"Applying changes to {} by version bump only (delta application is a stub).",
+			log::trace!(
+				"Applying {} delta change(s) to document {}",
+				RPCChange.len(),
 				self.URI
 			);
 
-			// In a real implementation:
 			self.Lines = ApplyDeltaChanges(&self.Lines, &self.EOL, &RPCChange);
 		} else if let Some(FullText) = ChangesValue.as_str() {
 			// If it's not deltas, check if it's a full text replacement.
@@ -128,4 +132,112 @@ impl DocumentStateDTO {
 	}
 }
 
-fn ApplyDeltaChanges(_Line:&[String], _EOL:&str, _RPCChange:&[RPCModelContentChangeDTO]) -> Vec<String> { todo!() }
+/// Applies delta changes to the document text and returns the updated lines.
+///
+/// This function:
+/// 1. Sorts changes in reverse order (by start position) to prevent offset corruption
+/// 2. Converts line/column positions to byte offsets in the full text
+/// 3. Applies each change (delete range + insert new text)
+/// 4. Splits the result back into lines
+///
+/// # Arguments
+/// * `Lines` - The current document lines
+/// * `EOL` - The end-of-line sequence to use
+/// * `RPCChange` - Array of changes to apply
+///
+/// # Returns
+/// Updated lines vector after applying all changes
+fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChangeDTO]) -> Vec<String> {
+	use super::RPCModelContentChangeDTO::RPCRangeDTO;
+
+	// Join lines into full text for offset-based manipulation
+	let mut ResultText = Lines.join(EOL);
+
+	// If no changes, return original lines
+	if RPCChange.is_empty() {
+		return Lines.to_vec();
+	}
+
+	// Sort changes in reverse order of position to prevent offset corruption
+	// When applying multiple changes, earlier changes shift positions for later changes.
+	// By applying from end to beginning, all offsets remain valid.
+	let mut SortedChanges:Vec<&RPCModelContentChangeDTO> = RPCChange.iter().collect();
+	SortedChanges.sort_by(|a, b| {
+		CMP_Range_Position(&b.Range, &a.Range)
+	});
+
+	// Apply each change to the text
+	for Change in SortedChanges {
+		// Convert (line, column) to byte offset
+		let StartOffset = PositionToOffset(&ResultText, EOL, &Change.Range.StartLineNumber, &Change.Range.StartColumn);
+		let EndOffset = PositionToOffset(&ResultText, EOL, &Change.Range.EndLineNumber, &Change.Range.EndColumn);
+
+		// Validate offsets
+		if StartOffset > EndOffset {
+			log::error!(
+				"[ApplyDeltaChanges] Invalid range: start ({}) > end ({}) for text length {}",
+				StartOffset, EndOffset, ResultText.len()
+			);
+			continue;
+		}
+
+		let TextLength = ResultText.len();
+		if StartOffset > TextLength || EndOffset > TextLength {
+			log::error!(
+				"[ApplyDeltaChanges] Out of bounds: start ({}) or end ({}) exceeds text length {}",
+				StartOffset, EndOffset, TextLength
+			);
+			continue;
+		}
+
+		// Remove old text and insert new text
+		// Safe slice operation: validated offsets above
+		let OldText = ResultText.as_bytes();
+		ResultText = String::from_utf8_lossy(&[
+			&OldText[..StartOffset],
+			Change.Text.as_bytes(),
+			&OldText[EndOffset..],
+		].concat()).into_owned();
+	}
+
+	// Re-split the result into lines
+	AnalyzeTextLinesAndEOL(&ResultText).0
+}
+
+/// Converts line/column position to byte offset in text.
+///
+/// VSCode LSP uses 0-based line numbers and 0-based column numbers.
+/// This function matches that convention.
+fn PositionToOffset(Text:&str, EOL:&str, LineNumber:&usize, Column:&usize) -> usize {
+	let Lines:Vec<&str> = Text.split(EOL).collect();
+	let EOLLength = EOL.len();
+
+	let mut Offset = 0;
+
+	// Add length of all preceding lines plus their EOL markers
+	for LineIndex in 0..*LineNumber {
+		if LineIndex < Lines.len() {
+			Offset += Lines[LineIndex].len() + EOLLength;
+		}
+	}
+
+	// Add column offset within the current line
+	if *LineNumber < Lines.len() {
+		// Column is in character positions, convert to byte offset
+		let CurrentLine = Lines[*LineNumber];
+		let CharOffset = CurrentLine.char_indices()
+			.nth(*Column)
+			.map_or(CurrentLine.len(), |(offset, _)| offset);
+		Offset += CharOffset;
+	}
+
+	Offset
+}
+
+/// Compares two RPC ranges to determine their order in the document.
+/// Returns negative if a comes before b, zero if equal, positive if a comes after b.
+fn CMP_Range_Position(A:&RPCRangeDTO, B:&RPCRangeDTO) -> std::cmp::Ordering {
+	A.StartLineNumber
+		.cmp(&B.StartLineNumber)
+		.then_with(|| A.StartColumn.cmp(&B.StartColumn))
+}

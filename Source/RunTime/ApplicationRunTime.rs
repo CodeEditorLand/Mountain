@@ -7,11 +7,16 @@
 //     capability.
 //   - Orchestrates the graceful shutdown of application services.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # ApplicationRunTime
 //!
 //! Defines the concrete, `Echo`-based `ApplicationRunTime` for the Mountain
 //! application. This is the core execution engine that bridges the declarative
 //! `ActionEffect` system with the high-performance `Echo` task scheduler.
+
+#![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
 

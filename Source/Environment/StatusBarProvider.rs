@@ -6,6 +6,9 @@
 //     frontend.
 //   - Store status bar state in `ApplicationState` and push updates to the UI.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # StatusBarProvider Implementation
 //!
 //! Implements the `StatusBarProvider` trait for the `MountainEnvironment`. This

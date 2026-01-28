@@ -1,7 +1,12 @@
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # Vine Client
 //!
 //! Provides a simplified, thread-safe client for communicating with a `Cocoon`
 //! sidecar process via gRPC. It manages a shared pool of connections.
+
+#![allow(non_snake_case, non_camel_case_types)]
 
 use std::{
 	collections::{HashMap, hash_map::DefaultHasher},

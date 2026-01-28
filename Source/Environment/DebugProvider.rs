@@ -12,6 +12,9 @@
 //     4. Mediating communication between the UI, the extension host, and the
 //        debug adapter.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # DebugProvider Implementation
 //!
 //! Implements the `DebugService` trait for the `MountainEnvironment`. This

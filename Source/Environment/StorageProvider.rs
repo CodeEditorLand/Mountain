@@ -5,6 +5,9 @@
 //   - Reading from and writing to global and workspace JSON storage files.
 //   - Provides both per-key and high-performance batch operations.
 
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//!
 //! # StorageProvider Implementation
 //!
 //! Implements the `StorageProvider` trait for the `MountainEnvironment`. This
