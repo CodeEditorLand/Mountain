@@ -106,7 +106,7 @@ async fn handle_configuration_update(
         .clone();
     
     // Use Mountain's configuration system
-    let provider: Arc<dyn Common::Configuration::ConfigurationProvider::ConfigurationProvider> = runtime.Environment.Require();
+    let provider: Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
     
     provider.UpdateConfigurationValue(
         key.to_string(),
