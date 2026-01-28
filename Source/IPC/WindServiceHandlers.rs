@@ -16,6 +16,7 @@ use crate::{
     RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
+use Common::Environment::Requires::Requires;
 use Common::FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter};
 
 /// Handler for Wind's MainProcessService.invoke() calls

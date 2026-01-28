@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use Common::Environment::Requires::Requires;
 use Common::FileSystem::FileSystemReader::FileSystemReader;
 
 /// Wind desktop configuration structure

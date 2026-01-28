@@ -18,6 +18,7 @@ use tokio::time::interval;
 use tauri::{AppHandle, Emitter, command, State, Manager};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use Common::Environment::Requires::Requires;
 
 /// Advanced Wind synchronization features
 pub struct WindAdvancedSync {
