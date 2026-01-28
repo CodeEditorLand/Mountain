@@ -13,7 +13,6 @@ pub mod StatusReporter;
 pub mod AdvancedFeatures;
 pub mod WindAdvancedSync;
 
-pub use TauriIPCServer::TauriIPCServer;
 pub use WindServiceHandlers::register_wind_ipc_handlers;
 pub use StatusReporter::initialize_status_reporter;
 pub use AdvancedFeatures::initialize_advanced_features;
