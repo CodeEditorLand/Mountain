@@ -239,11 +239,8 @@ async fn handle_environment_get(
         .as_str()
         .ok_or("Environment key must be a string".to_string())?;
     
-    // Use Mountain's environment service
-    let provider: Arc<dyn Common::Environment::EnvironmentProvider::EnvironmentProvider> = runtime.Environment.Require();
-    
-    let value = provider.GetEnvironmentVariable(key.to_string())
-        .await
+    // Use std::env for environment variables
+    let value = std::env::var(key)
         .map_err(|e| format!("Failed to get environment variable: {}", e))?;
     
     debug!("[WindServiceHandlers] Environment get: {}", key);

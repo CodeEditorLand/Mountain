@@ -141,10 +141,7 @@ impl WindServiceAdapter {
     pub async fn get_environment_service(&self) -> Result<WindEnvironmentService, String> {
         debug!("[WindServiceAdapters] Getting Wind environment service");
         
-        let environment: Arc<dyn Common::Environment::EnvironmentProvider::EnvironmentProvider> = 
-            self.runtime.Environment.Require();
-        
-        Ok(WindEnvironmentService::new(environment))
+        Ok(WindEnvironmentService::new())
     }
 
     /// Get Wind-compatible file service
@@ -180,23 +177,21 @@ impl WindServiceAdapter {
 
 /// Wind environment service adapter
 pub struct WindEnvironmentService {
-    provider: Arc<dyn Common::Environment::EnvironmentProvider::EnvironmentProvider>,
+    // Environment variables are accessed via std::env
 }
 
 impl WindEnvironmentService {
-    pub fn new(provider: Arc<dyn Common::Environment::EnvironmentProvider::EnvironmentProvider>) -> Self {
-        Self { provider }
+    pub fn new() -> Self {
+        Self {}
     }
 
     pub async fn get_app_root(&self) -> Result<String, String> {
-        self.provider.GetEnvironmentVariable("APP_ROOT".to_string())
-            .await
+        std::env::var("APP_ROOT")
             .map_err(|e| e.to_string())
     }
 
     pub async fn get_user_data_path(&self) -> Result<String, String> {
-        self.provider.GetEnvironmentVariable("USER_DATA_PATH".to_string())
-            .await
+        std::env::var("USER_DATA_PATH")
             .map_err(|e| e.to_string())
     }
 }
