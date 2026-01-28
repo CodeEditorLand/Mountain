@@ -129,6 +129,152 @@ fn SwitchTrayIcon(App:AppHandle, IsDarkMode:bool) {
 }
 
 // =============================================================================
+// IPC Command Wrappers
+// =============================================================================
+
+/// Receive messages from Wind through IPC
+#[tauri::command]
+async fn mountain_ipc_receive_message(
+	app_handle: AppHandle,
+	message: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::TauriIPCServer::mountain_ipc_receive_message(app_handle, message).await
+}
+
+/// Get IPC connection status
+#[tauri::command]
+async fn mountain_ipc_get_status(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle).await
+}
+
+/// Invoke IPC methods
+#[tauri::command]
+async fn mountain_ipc_invoke(
+	app_handle: AppHandle,
+	method: String,
+	params: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, params).await
+}
+
+/// Get Wind desktop configuration
+#[tauri::command]
+async fn mountain_get_wind_desktop_configuration(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await
+}
+
+/// Update configuration from Wind
+#[tauri::command]
+async fn mountain_update_configuration_from_wind(
+	app_handle: AppHandle,
+	config: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::mountain_update_configuration_from_wind(app_handle, config).await
+}
+
+/// Synchronize configuration
+#[tauri::command]
+async fn mountain_synchronize_configuration(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::mountain_synchronize_configuration(app_handle).await
+}
+
+/// Get configuration status
+#[tauri::command]
+async fn mountain_get_configuration_status(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle).await
+}
+
+/// Get IPC status
+#[tauri::command]
+async fn mountain_get_ipc_status(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::StatusReporter::mountain_get_ipc_status(app_handle).await
+}
+
+/// Get IPC status history
+#[tauri::command]
+async fn mountain_get_ipc_status_history(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::StatusReporter::mountain_get_ipc_status_history(app_handle).await
+}
+
+/// Start IPC status reporting
+#[tauri::command]
+async fn mountain_start_ipc_status_reporting(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::StatusReporter::mountain_start_ipc_status_reporting(app_handle).await
+}
+
+/// Get performance stats
+#[tauri::command]
+async fn mountain_get_performance_stats(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::AdvancedFeatures::mountain_get_performance_stats(app_handle).await
+}
+
+/// Get cache stats
+#[tauri::command]
+async fn mountain_get_cache_stats(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::AdvancedFeatures::mountain_get_cache_stats(app_handle).await
+}
+
+/// Create collaboration session
+#[tauri::command]
+async fn mountain_create_collaboration_session(
+	app_handle: AppHandle,
+	session_data: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_data).await
+}
+
+/// Get collaboration sessions
+#[tauri::command]
+async fn mountain_get_collaboration_sessions(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions(app_handle).await
+}
+
+/// Add document for sync
+#[tauri::command]
+async fn mountain_add_document_for_sync(
+	app_handle: AppHandle,
+	document_data: serde_json::Value
+) -> Result<serde_json::Value, String> {
+	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, document_data).await
+}
+
+/// Get sync status
+#[tauri::command]
+async fn mountain_get_sync_status(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle).await
+}
+
+/// Subscribe to updates
+#[tauri::command]
+async fn mountain_subscribe_to_updates(
+	app_handle: AppHandle
+) -> Result<serde_json::Value, String> {
+	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle).await
+}
+
+// =============================================================================
 // Tray Initialization Logic
 // =============================================================================
 
@@ -670,23 +816,23 @@ pub fn Fn() {
 				Command::Keybinding::GetResolvedKeybinding,
 				crate::Track::DispatchLogic::DispatchFrontendCommand,
 				crate::Track::DispatchLogic::ResolveUIRequest,
-				crate::IPC::mountain_ipc_receive_message,
-				crate::IPC::mountain_ipc_get_status,
-				crate::IPC::mountain_ipc_invoke,
-				crate::IPC::mountain_get_wind_desktop_configuration,
-				crate::IPC::mountain_update_configuration_from_wind,
-				crate::IPC::mountain_synchronize_configuration,
-				crate::IPC::mountain_get_configuration_status,
-				crate::IPC::mountain_get_ipc_status,
-				crate::IPC::mountain_get_ipc_status_history,
-				crate::IPC::mountain_start_ipc_status_reporting,
-				crate::IPC::mountain_get_performance_stats,
-				crate::IPC::mountain_get_cache_stats,
-				crate::IPC::mountain_create_collaboration_session,
-				crate::IPC::mountain_get_collaboration_sessions,
-				crate::IPC::mountain_add_document_for_sync,
-				crate::IPC::mountain_get_sync_status,
-				crate::IPC::mountain_subscribe_to_updates,
+				mountain_ipc_receive_message,
+				mountain_ipc_get_status,
+				mountain_ipc_invoke,
+				mountain_get_wind_desktop_configuration,
+				mountain_update_configuration_from_wind,
+				mountain_synchronize_configuration,
+				mountain_get_configuration_status,
+				mountain_get_ipc_status,
+				mountain_get_ipc_status_history,
+				mountain_start_ipc_status_reporting,
+				mountain_get_performance_stats,
+				mountain_get_cache_stats,
+				mountain_create_collaboration_session,
+				mountain_get_collaboration_sessions,
+				mountain_add_document_for_sync,
+				mountain_get_sync_status,
+				mountain_subscribe_to_updates,
 			])
 			// ---------------------------------------------------------------------
 			// [Tauri] Build & run loop

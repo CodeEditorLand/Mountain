@@ -62,10 +62,7 @@
 			"transparent": false,
 			"center": true,
 			"minWidth": 800,
-			"minHeight": 600,
-			"webview": {
-				"preload": "../Wind/Configuration/Preload.js"
-			}
+			"minHeight": 600
 		}],
 		"withGlobalTauri": false
 	},

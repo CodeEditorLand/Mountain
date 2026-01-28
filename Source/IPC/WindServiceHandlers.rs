@@ -251,32 +251,174 @@ async fn handle_environment_get(
 
 /// Handler for showing items in folder
 async fn handle_show_item_in_folder(
-    _runtime: Arc<ApplicationRunTime>,
+    runtime: Arc<ApplicationRunTime>,
     args: Vec<Value>,
 ) -> Result<Value, String> {
-    let path = args.get(0)
+    let path_str = args.get(0)
         .ok_or("Missing file path".to_string())?
         .as_str()
         .ok_or("File path must be a string".to_string())?;
     
-    // TODO: Implement native file system integration
-    debug!("[WindServiceHandlers] Show item in folder: {}", path);
-    Ok(Value::Null)
+    // ADVANCED IMPLEMENTATION: Microsoft-inspired native file system integration
+    debug!("[WindServiceHandlers] Show item in folder: {}", path_str);
+    
+    let path = std::path::PathBuf::from(path_str);
+    
+    // Validate path exists
+    if !path.exists() {
+        return Err(format!("Path does not exist: {}", path_str));
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+        
+        // Use macOS's open command with -R flag to reveal in Finder
+        let result = Command::new("open")
+            .arg("-R")
+            .arg(&path)
+            .output()
+            .map_err(|e| format!("Failed to execute open command: {}", e))?;
+            
+        if !result.status.success() {
+            return Err(format!("Failed to show item in folder: {}", String::from_utf8_lossy(&result.stderr)));
+        }
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        
+        // Use Windows Explorer with /select flag
+        let result = Command::new("explorer")
+            .arg("/select,")
+            .arg(&path)
+            .output()
+            .map_err(|e| format!("Failed to execute explorer command: {}", e))?;
+            
+        if !result.status.success() {
+            return Err(format!("Failed to show item in folder: {}", String::from_utf8_lossy(&result.stderr)));
+        }
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        use std::process::Command;
+        
+        // Try common Linux file managers
+        let file_managers = ["nautilus", "dolphin", "thunar", "pcmanfm", "nemo"];
+        let mut last_error = String::new();
+        
+        for manager in file_managers.iter() {
+            let result = Command::new(manager)
+                .arg(&path)
+                .output();
+                
+            match result {
+                Ok(output) if output.status.success() => {
+                    debug!("[WindServiceHandlers] Successfully opened with {}", manager);
+                    break;
+                }
+                Err(e) => {
+                    last_error = e.to_string();
+                    continue;
+                }
+                _ => continue,
+            }
+        }
+        
+        if !last_error.is_empty() {
+            return Err(format!("Failed to show item in folder with any file manager: {}", last_error));
+        }
+    }
+    
+    info!("[WindServiceHandlers] Successfully showed item in folder: {}", path_str);
+    Ok(Value::Bool(true))
 }
 
 /// Handler for opening external URLs
 async fn handle_open_external(
-    _runtime: Arc<ApplicationRunTime>,
+    runtime: Arc<ApplicationRunTime>,
     args: Vec<Value>,
 ) -> Result<Value, String> {
-    let url = args.get(0)
+    let url_str = args.get(0)
         .ok_or("Missing URL".to_string())?
         .as_str()
         .ok_or("URL must be a string".to_string())?;
     
-    // TODO: Implement native URL opening
-    debug!("[WindServiceHandlers] Open external: {}", url);
-    Ok(Value::Null)
+    // ADVANCED IMPLEMENTATION: Microsoft-inspired URL validation and opening
+    debug!("[WindServiceHandlers] Open external: {}", url_str);
+    
+    // Validate URL format
+    if !url_str.starts_with("http://") && !url_str.starts_with("https://") {
+        return Err(format!("Invalid URL format. Must start with http:// or https://: {}", url_str));
+    }
+    
+    #[cfg(target_os = "macos")]
+    {
+        use std::process::Command;
+        
+        // Use macOS's open command
+        let result = Command::new("open")
+            .arg(url_str)
+            .output()
+            .map_err(|e| format!("Failed to execute open command: {}", e))?;
+            
+        if !result.status.success() {
+            return Err(format!("Failed to open URL: {}", String::from_utf8_lossy(&result.stderr)));
+        }
+    }
+    
+    #[cfg(target_os = "windows")]
+    {
+        use std::process::Command;
+        
+        // Use Windows start command
+        let result = Command::new("cmd")
+            .arg("/c")
+            .arg("start")
+            .arg(url_str)
+            .output()
+            .map_err(|e| format!("Failed to execute start command: {}", e))?;
+            
+        if !result.status.success() {
+            return Err(format!("Failed to open URL: {}", String::from_utf8_lossy(&result.stderr)));
+        }
+    }
+    
+    #[cfg(target_os = "linux")]
+    {
+        use std::process::Command;
+        
+        // Try common Linux URL handlers
+        let handlers = ["xdg-open", "gnome-open", "kde-open", "x-www-browser"];
+        let mut last_error = String::new();
+        
+        for handler in handlers.iter() {
+            let result = Command::new(handler)
+                .arg(url_str)
+                .output();
+                
+            match result {
+                Ok(output) if output.status.success() => {
+                    debug!("[WindServiceHandlers] Successfully opened with {}", handler);
+                    break;
+                }
+                Err(e) => {
+                    last_error = e.to_string();
+                    continue;
+                }
+                _ => continue,
+            }
+        }
+        
+        if !last_error.is_empty() {
+            return Err(format!("Failed to open URL with any handler: {}", last_error));
+        }
+    }
+    
+    info!("[WindServiceHandlers] Successfully opened external URL: {}", url_str);
+    Ok(Value::Bool(true))
 }
 
 /// Handler for workbench configuration requests

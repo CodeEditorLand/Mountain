@@ -231,11 +231,51 @@ impl WindAdvancedSync {
                     },
                 },
             })),
-        }
+        };
         
         // ADVANCED PERFORMANCE TRACKING: Microsoft-inspired initialization metrics
         let sync_duration = sync_start.elapsed();
         info!("[WindAdvancedSync] Initialization completed in {:.2}ms", sync_duration.as_millis());
+        
+        Self {
+            runtime,
+            document_sync: Arc::new(Mutex::new(DocumentSynchronization {
+                synchronized_documents: HashMap::new(),
+                pending_changes: HashMap::new(),
+                last_sync_time: SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs(),
+                sync_status: SyncStatus {
+                    total_documents: 0,
+                    synced_documents: 0,
+                    conflicted_documents: 0,
+                    offline_documents: 0,
+                    last_sync_duration_ms: 0,
+                },
+            })),
+            ui_state_sync: Arc::new(Mutex::new(UIStateSynchronization {
+                active_editor: None,
+                cursor_positions: HashMap::new(),
+                selection_ranges: HashMap::new(),
+                view_state: ViewState {
+                    zoom_level: 1.0,
+                    sidebar_visible: true,
+                    panel_visible: false,
+                    status_bar_visible: true,
+                },
+                theme: "dark".to_string(),
+                layout: LayoutState {
+                    editor_groups: Vec::new(),
+                    active_group: 0,
+                    grid_layout: GridLayout {
+                        rows: 1,
+                        columns: 1,
+                        cell_width: 100,
+                        cell_height: 100,
+                    },
+                },
+            })),
             real_time_updates: Arc::new(Mutex::new(RealTimeUpdates {
                 subscribers: HashMap::new(),
                 last_broadcast: 0,
