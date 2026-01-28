@@ -12,3 +12,8 @@ pub mod ConfigurationBridge;
 pub mod StatusReporter;
 pub mod AdvancedFeatures;
 pub mod WindAdvancedSync;
+
+pub use TauriIPCServer::register_wind_ipc_handlers;
+pub use StatusReporter::initialize_status_reporter;
+pub use AdvancedFeatures::initialize_advanced_features;
+pub use WindAdvancedSync::initialize_wind_advanced_sync;

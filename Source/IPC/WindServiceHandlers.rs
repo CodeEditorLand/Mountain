@@ -173,9 +173,9 @@ async fn handle_file_stat(
         .ok_or("File path must be a string".to_string())?;
     
     // Use Mountain's file system provider
-    let provider: Arc<dyn Common::FileSystem::FileSystemProvider::FileSystemProvider> = runtime.Environment.Require();
+    let provider: Arc<dyn Common::FileSystem::FileSystemReader> = runtime.Environment.Require();
     
-    let stats = provider.StatFile(path.to_string())
+    let stats = provider.StatFile(&PathBuf::from(path))
         .await
         .map_err(|e| format!("Failed to stat file: {}", e))?;
     
