@@ -8,6 +8,7 @@
 use std::sync::Arc;
 use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
+use tauri::{AppHandle, command, Manager};
 
 use crate::{
     IPC::WindServiceAdapters::{WindDesktopConfiguration, WindServiceAdapter},

@@ -16,6 +16,8 @@ use crate::{
     RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
+use Common::FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter};
+
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system
 #[tauri::command]
@@ -152,7 +154,7 @@ async fn handle_file_write(
         .ok_or("File content must be a string".to_string())?;
     
     // Use Mountain's file system provider
-    let provider: Arc<dyn Common::FileSystem::FileSystemWriter> = runtime.Environment.Require();
+    let provider: Arc<dyn FileSystemWriter> = runtime.Environment.Require();
     
     provider.WriteFile(&PathBuf::from(path), content.as_bytes().to_vec(), true, true)
         .await

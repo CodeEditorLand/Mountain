@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use Common::FileSystem::FileSystemReader::FileSystemReader;
 
 /// Wind desktop configuration structure
 /// Mirrors Wind's IDesktopConfiguration interface
@@ -148,7 +149,7 @@ impl WindServiceAdapter {
     pub async fn get_file_service(&self) -> Result<WindFileService, String> {
         debug!("[WindServiceAdapters] Getting Wind file service");
         
-        let file_system: Arc<dyn Common::FileSystem::FileSystemReader> = 
+        let file_system: Arc<dyn FileSystemReader> = 
             self.runtime.Environment.Require();
         
         Ok(WindFileService::new(file_system))
@@ -198,11 +199,11 @@ impl WindEnvironmentService {
 
 /// Wind file service adapter
 pub struct WindFileService {
-    provider: Arc<dyn Common::FileSystem::FileSystemReader>,
+    provider: Arc<dyn FileSystemReader>,
 }
 
 impl WindFileService {
-    pub fn new(provider: Arc<dyn Common::FileSystem::FileSystemReader>) -> Self {
+    pub fn new(provider: Arc<dyn FileSystemReader>) -> Self {
         Self { provider }
     }
 

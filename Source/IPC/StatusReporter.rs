@@ -8,7 +8,7 @@
 use std::{sync::{Arc, Mutex}, time::{Duration, SystemTime}};
 use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 

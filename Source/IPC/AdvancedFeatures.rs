@@ -9,7 +9,7 @@ use std::{sync::{Arc, Mutex}, time::{Duration, SystemTime}, collections::HashMap
 use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
-use tauri::{AppHandle, Emitter};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 

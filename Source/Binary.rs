@@ -138,10 +138,10 @@ async fn mountain_ipc_receive_message(
 	app_handle: AppHandle,
 	message: serde_json::Value
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::TauriIPCServer::mountain_ipc_receive_message(app_handle, message).await
+	crate::IPC::TauriIPCServer::mountain_ipc_receive_message(app_handle, serde_json::from_value(message).map_err(|e| e.to_string())?).await
 }
 
-/// Get IPC connection status
+/// Get Mountain IPC status
 #[tauri::command]
 async fn mountain_ipc_get_status(
 	app_handle: AppHandle
