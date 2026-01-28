@@ -680,6 +680,13 @@ pub fn Fn() {
 				crate::IPC::mountain_get_ipc_status,
 				crate::IPC::mountain_get_ipc_status_history,
 				crate::IPC::mountain_start_ipc_status_reporting,
+				crate::IPC::mountain_get_performance_stats,
+				crate::IPC::mountain_get_cache_stats,
+				crate::IPC::mountain_create_collaboration_session,
+				crate::IPC::mountain_get_collaboration_sessions,
+				crate::IPC::mountain_add_document_for_sync,
+				crate::IPC::mountain_get_sync_status,
+				crate::IPC::mountain_subscribe_to_updates,
 			])
 			// ---------------------------------------------------------------------
 			// [Tauri] Build & run loop
