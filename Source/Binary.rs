@@ -57,6 +57,7 @@ use crate::{
 	},
 	Command,
 	Environment::{ConfigurationProvider::InitializeAndMergeConfigurations, MountainEnvironment::MountainEnvironment},
+	IPC::{TauriIPCServer, register_wind_ipc_handlers, initialize_status_reporter},
 	ProcessManagement::{CocoonManagement::InitializeCocoon, InitializationData},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine,
@@ -439,13 +440,30 @@ pub fn Fn() {
 
 					debug!("[Lifecycle] [Commands] Native commands registered.");
 
-					// ---------------------------------------------------------
-					// [UI] [Window] Main window creation
-					// ---------------------------------------------------------
-					debug!("[UI] [Window] Building init script...");
+				// ---------------------------------------------------------
+				// [Lifecycle] [IPC] Initialize Mountain IPC Server
+				// ---------------------------------------------------------
+				debug!("[Lifecycle] [IPC] Initializing Mountain IPC Server...");
 
-					let InitScript = format!("window.__MOUNTAIN_BASE_URL__ = '{}';", LocalhostUrl);
+				let ipc_server = TauriIPCServer::new(ApplicationHandle.clone());
+				ApplicationHandle.manage(ipc_server.clone());
 
+				debug!("[Lifecycle] [IPC] Mountain IPC Server initialized.");
+
+				// ---------------------------------------------------------
+				// [Lifecycle] [IPC] Initialize Status Reporter
+				// ---------------------------------------------------------
+				debug!("[Lifecycle] [IPC] Initializing Status Reporter...");
+
+				let status_reporter = initialize_status_reporter(&ApplicationHandle, RunTime.clone())?;
+				status_reporter.set_ipc_server(ipc_server);
+
+				// Start periodic status reporting
+				if let Err(e) = status_reporter.start_periodic_reporting(30).await {
+					error!("[Lifecycle] [IPC] Failed to start status reporting: {}", e);
+				}
+
+				debug!("[Lifecycle] [IPC] Status Reporter initialized.");
 					TraceStep!("[UI] [Window] InitScript bytes={}", InitScript.len());
 
 					debug!("[UI] [Window] Creating window builder...");
@@ -630,6 +648,16 @@ pub fn Fn() {
 				Command::Keybinding::GetResolvedKeybinding,
 				crate::Track::DispatchLogic::DispatchFrontendCommand,
 				crate::Track::DispatchLogic::ResolveUIRequest,
+				crate::IPC::mountain_ipc_receive_message,
+				crate::IPC::mountain_ipc_get_status,
+				crate::IPC::mountain_ipc_invoke,
+				crate::IPC::mountain_get_wind_desktop_configuration,
+				crate::IPC::mountain_update_configuration_from_wind,
+				crate::IPC::mountain_synchronize_configuration,
+				crate::IPC::mountain_get_configuration_status,
+				crate::IPC::mountain_get_ipc_status,
+				crate::IPC::mountain_get_ipc_status_history,
+				crate::IPC::mountain_start_ipc_status_reporting,
 			])
 			// ---------------------------------------------------------------------
 			// [Tauri] Build & run loop
