@@ -151,7 +151,7 @@ impl WindServiceAdapter {
     pub async fn get_file_service(&self) -> Result<WindFileService, String> {
         debug!("[WindServiceAdapters] Getting Wind file service");
         
-        let file_system: Arc<dyn Common::FileSystem::FileSystemProvider::FileSystemProvider> = 
+        let file_system: Arc<dyn Common::FileSystem::FileSystemReader> = 
             self.runtime.Environment.Require();
         
         Ok(WindFileService::new(file_system))
@@ -203,11 +203,11 @@ impl WindEnvironmentService {
 
 /// Wind file service adapter
 pub struct WindFileService {
-    provider: Arc<dyn Common::FileSystem::FileSystemProvider::FileSystemProvider>,
+    provider: Arc<dyn Common::FileSystem::FileSystemReader>,
 }
 
 impl WindFileService {
-    pub fn new(provider: Arc<dyn Common::FileSystem::FileSystemProvider::FileSystemProvider>) -> Self {
+    pub fn new(provider: Arc<dyn Common::FileSystem::FileSystemReader>) -> Self {
         Self { provider }
     }
 

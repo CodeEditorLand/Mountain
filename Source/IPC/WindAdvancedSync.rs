@@ -420,7 +420,7 @@ impl WindAdvancedSync {
         }
         
         // Apply change to Mountain's document system
-        let file_system: Arc<dyn Common::FileSystem::FileSystemProvider::FileSystemProvider> = 
+        let file_system: Arc<dyn Common::FileSystem::FileSystemReader> = 
             self.runtime.Environment.Require();
         
         match change.change_type {

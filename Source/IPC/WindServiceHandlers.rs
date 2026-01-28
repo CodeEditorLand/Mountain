@@ -6,6 +6,7 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
+use std::path::PathBuf;
 use log::{debug, error, info};
 use serde_json::{Value, json};
 use tauri::{AppHandle, command};
@@ -125,9 +126,9 @@ async fn handle_file_read(
         .ok_or("File path must be a string".to_string())?;
     
     // Use Mountain's file system provider
-    let provider: Arc<dyn Common::FileSystem::FileSystemProvider::FileSystemProvider> = runtime.Environment.Require();
+    let provider: Arc<dyn Common::FileSystem::FileSystemReader> = runtime.Environment.Require();
     
-    let content = provider.ReadFile(path.to_string())
+    let content = provider.ReadFile(&PathBuf::from(path))
         .await
         .map_err(|e| format!("Failed to read file: {}", e))?;
     
@@ -151,9 +152,9 @@ async fn handle_file_write(
         .ok_or("File content must be a string".to_string())?;
     
     // Use Mountain's file system provider
-    let provider: Arc<dyn Common::FileSystem::FileSystemProvider::FileSystemProvider> = runtime.Environment.Require();
+    let provider: Arc<dyn Common::FileSystem::FileSystemWriter> = runtime.Environment.Require();
     
-    provider.WriteFile(path.to_string(), content.as_bytes().to_vec(), true, true)
+    provider.WriteFile(&PathBuf::from(path), content.as_bytes().to_vec(), true, true)
         .await
         .map_err(|e| format!("Failed to write file: {}", e))?;
     
