@@ -17,7 +17,9 @@ use crate::{
 };
 
 use Common::Environment::Requires::Requires;
-use Common::FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter};
+use Common::FileSystem::FileSystemReader::FileSystemReader;
+use Common::FileSystem::FileSystemWriter::FileSystemWriter;
+use Common::Configuration::ConfigurationProvider::ConfigurationProvider;
 
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system
@@ -129,7 +131,7 @@ async fn handle_file_read(
         .ok_or("File path must be a string".to_string())?;
     
     // Use Mountain's file system provider
-    let provider: Arc<dyn Common::FileSystem::FileSystemReader> = runtime.Environment.Require();
+    let provider: Arc<dyn FileSystemReader> = runtime.Environment.Require();
     
     let content = provider.ReadFile(&PathBuf::from(path))
         .await
@@ -176,7 +178,7 @@ async fn handle_file_stat(
         .ok_or("File path must be a string".to_string())?;
     
     // Use Mountain's file system provider
-    let provider: Arc<dyn Common::FileSystem::FileSystemReader> = runtime.Environment.Require();
+    let provider: Arc<dyn FileSystemReader> = runtime.Environment.Require();
     
     let stats = provider.StatFile(&PathBuf::from(path))
         .await
@@ -428,7 +430,7 @@ async fn handle_workbench_configuration(
     _args: Vec<Value>,
 ) -> Result<Value, String> {
     // Get the complete workbench configuration
-    let provider: Arc<dyn Common::Configuration::ConfigurationProvider::ConfigurationProvider> = runtime.Environment.Require();
+    let provider: Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
     
     let config = provider.GetConfiguration(None, Value::Null)
         .await
