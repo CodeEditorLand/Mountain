@@ -255,7 +255,14 @@ async fn mountain_add_document_for_sync(
 	app_handle: AppHandle,
 	document_data: serde_json::Value
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, document_data).await
+	// Extract document_id and file_path from JSON data
+	let document_id = document_data["document_id"].as_str()
+		.ok_or("Missing document_id")?.to_string();
+	let file_path = document_data["file_path"].as_str()
+		.ok_or("Missing file_path")?.to_string();
+	
+	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, document_id, file_path).await
+		.map(|_| serde_json::Value::Null)
 }
 
 /// Get sync status
@@ -264,14 +271,23 @@ async fn mountain_get_sync_status(
 	app_handle: AppHandle
 ) -> Result<serde_json::Value, String> {
 	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle).await
+		.map(|status| serde_json::to_value(status).unwrap_or(serde_json::Value::Null))
 }
 
 /// Subscribe to updates
 #[tauri::command]
 async fn mountain_subscribe_to_updates(
-	app_handle: AppHandle
+	app_handle: AppHandle,
+	subscription_data: serde_json::Value
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle).await
+	// Extract target and subscriber from JSON data
+	let target = subscription_data["target"].as_str()
+		.ok_or("Missing target")?.to_string();
+	let subscriber = subscription_data["subscriber"].as_str()
+		.ok_or("Missing subscriber")?.to_string();
+	
+	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle, target, subscriber).await
+		.map(|_| serde_json::Value::Null)
 }
 
 // =============================================================================
@@ -591,7 +607,7 @@ pub fn Fn() {
 				// ---------------------------------------------------------
 				debug!("[Lifecycle] [IPC] Initializing Mountain IPC Server...");
 
-				let ipc_server = TauriIPCServer::new(ApplicationHandle.clone());
+				let ipc_server = crate::IPC::TauriIPCServer::new(ApplicationHandle.clone());
 				ApplicationHandle.manage(ipc_server.clone());
 
 				debug!("[Lifecycle] [IPC] Mountain IPC Server initialized.");

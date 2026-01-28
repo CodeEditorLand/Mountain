@@ -9,7 +9,7 @@ use std::sync::Arc;
 use std::path::PathBuf;
 use log::{debug, error, info};
 use serde_json::{Value, json};
-use tauri::{AppHandle, command};
+use tauri::{AppHandle, command, Manager};
 
 use crate::{
     ApplicationState::ApplicationState::ApplicationState,
@@ -34,33 +34,32 @@ pub async fn mountain_ipc_invoke(
     debug!("[WindServiceHandlers] IPC Invoke command: {}, args: {:?}", command, args);
     
     // Get the application runtime
-    let runtime = app_handle.try_state::<Arc<ApplicationRunTime>>()
-        .ok_or("ApplicationRunTime not found in state".to_string())?;
+    let runtime = app_handle.state::<Arc<ApplicationRunTime>>();
     
     // Route the command based on the command name
     match command.as_str() {
         // Configuration commands
-        "configuration:get" => handle_configuration_get(runtime, args).await,
-        "configuration:update" => handle_configuration_update(runtime, args).await,
+        "configuration:get" => handle_configuration_get(runtime.inner().clone(), args).await,
+        "configuration:update" => handle_configuration_update(runtime.inner().clone(), args).await,
         
         // File system commands
-        "file:read" => handle_file_read(runtime, args).await,
-        "file:write" => handle_file_write(runtime, args).await,
-        "file:stat" => handle_file_stat(runtime, args).await,
+        "file:read" => handle_file_read(runtime.inner().clone(), args).await,
+        "file:write" => handle_file_write(runtime.inner().clone(), args).await,
+        "file:stat" => handle_file_stat(runtime.inner().clone(), args).await,
         
         // Storage commands
-        "storage:get" => handle_storage_get(runtime, args).await,
-        "storage:set" => handle_storage_set(runtime, args).await,
+        "storage:get" => handle_storage_get(runtime.inner().clone(), args).await,
+        "storage:set" => handle_storage_set(runtime.inner().clone(), args).await,
         
         // Environment commands
-        "environment:get" => handle_environment_get(runtime, args).await,
+        "environment:get" => handle_environment_get(runtime.inner().clone(), args).await,
         
         // Native host commands
-        "native:showItemInFolder" => handle_show_item_in_folder(runtime, args).await,
-        "native:openExternal" => handle_open_external(runtime, args).await,
+        "native:showItemInFolder" => handle_show_item_in_folder(runtime.inner().clone(), args).await,
+        "native:openExternal" => handle_open_external(runtime.inner().clone(), args).await,
         
         // Workbench commands
-        "workbench:getConfiguration" => handle_workbench_configuration(runtime, args).await,
+        "workbench:getConfiguration" => handle_workbench_configuration(runtime.inner().clone(), args).await,
         
         // Default handler for unknown commands
         _ => {
@@ -81,9 +80,9 @@ async fn handle_configuration_get(
         .ok_or("Configuration key must be a string".to_string())?;
     
     // Use Mountain's configuration system
-    let provider: Arc<dyn Common::Configuration::ConfigurationProvider::ConfigurationProvider> = runtime.Environment.Require();
+    let provider: Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
     
-    let value = provider.GetConfigurationValue(key.to_string(), Value::Null)
+    let value = provider.GetConfigurationValue(Some(key.to_string()), ConfigurationOverridesDTO::default())
         .await
         .map_err(|e| format!("Failed to get configuration: {}", e))?;
     
@@ -208,7 +207,7 @@ async fn handle_storage_get(
         .map_err(|e| format!("Failed to get storage item: {}", e))?;
     
     debug!("[WindServiceHandlers] Storage get: {}", key);
-    Ok(value)
+    Ok(value.unwrap_or(Value::Null))
 }
 
 /// Handler for storage set requests

@@ -6,6 +6,7 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
+use std::path::PathBuf;
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use url::Url;
@@ -13,6 +14,7 @@ use url::Url;
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 use Common::Environment::Requires::Requires;
 use Common::FileSystem::FileSystemReader::FileSystemReader;
+use Common::FileSystem::FileSystemWriter::FileSystemWriter;
 
 /// Wind desktop configuration structure
 /// Mirrors Wind's IDesktopConfiguration interface
@@ -150,10 +152,13 @@ impl WindServiceAdapter {
     pub async fn get_file_service(&self) -> Result<WindFileService, String> {
         debug!("[WindServiceAdapters] Getting Wind file service");
         
-        let file_system: Arc<dyn FileSystemReader> = 
+        let file_system_reader: Arc<dyn FileSystemReader> = 
             self.runtime.Environment.Require();
         
-        Ok(WindFileService::new(file_system))
+        let file_system_writer: Arc<dyn FileSystemWriter> = 
+            self.runtime.Environment.Require();
+        
+        Ok(WindFileService::new(file_system_reader, file_system_writer))
     }
 
     /// Get Wind-compatible storage service
@@ -200,30 +205,31 @@ impl WindEnvironmentService {
 
 /// Wind file service adapter
 pub struct WindFileService {
-    provider: Arc<dyn FileSystemReader>,
+    reader: Arc<dyn FileSystemReader>,
+    writer: Arc<dyn FileSystemWriter>,
 }
 
 impl WindFileService {
-    pub fn new(provider: Arc<dyn FileSystemReader>) -> Self {
-        Self { provider }
+    pub fn new(reader: Arc<dyn FileSystemReader>, writer: Arc<dyn FileSystemWriter>) -> Self {
+        Self { reader, writer }
     }
 
     pub async fn read_file(&self, path: String) -> Result<Vec<u8>, String> {
-        self.provider.ReadFile(path)
+        self.reader.ReadFile(&PathBuf::from(path))
             .await
             .map_err(|e| e.to_string())
     }
 
     pub async fn write_file(&self, path: String, content: Vec<u8>) -> Result<(), String> {
-        self.provider.WriteFile(path, content, true, true)
+        self.writer.WriteFile(&PathBuf::from(path), content, true, true)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e: Common::Error::CommonError::CommonError| e.to_string())
     }
 
     pub async fn stat_file(&self, path: String) -> Result<serde_json::Value, String> {
-        self.provider.StatFile(path)
+        self.reader.StatFile(&PathBuf::from(path))
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e: Common::Error::CommonError::CommonError| e.to_string())
     }
 }
 
@@ -238,15 +244,15 @@ impl WindStorageService {
     }
 
     pub async fn get(&self, key: String) -> Result<serde_json::Value, String> {
-        self.provider.GetStorageItem(key)
+        self.provider.GetStorageValue(false, &key)
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e: Common::Error::CommonError::CommonError| e.to_string())
     }
 
     pub async fn set(&self, key: String, value: serde_json::Value) -> Result<(), String> {
-        self.provider.SetStorageItem(key, value)
+        self.provider.UpdateStorageValue(false, key.to_string(), Some(value))
             .await
-            .map_err(|e| e.to_string())
+            .map_err(|e: Common::Error::CommonError::CommonError| e.to_string())
     }
 }
 
@@ -261,7 +267,7 @@ impl WindConfigurationService {
     }
 
     pub async fn get_value(&self, key: String) -> Result<serde_json::Value, String> {
-        self.provider.GetConfigurationValue(key, serde_json::Value::Null)
+        self.provider.GetConfigurationValue(Some(key.to_string()), ConfigurationOverridesDTO::default())
             .await
             .map_err(|e| e.to_string())
     }
@@ -271,7 +277,7 @@ impl WindConfigurationService {
             key,
             value,
             Common::Configuration::DTO::ConfigurationTarget::ConfigurationTarget::User,
-            serde_json::Value::Null,
+            ConfigurationOverridesDTO::default(),
             None,
         )
         .await

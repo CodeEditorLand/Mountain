@@ -9,6 +9,10 @@ use std::sync::Arc;
 use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, command, Manager};
+use Common::Environment::Requires::Requires;
+use Common::Configuration::ConfigurationProvider::ConfigurationProvider;
+use Common::Configuration::DTO::{ConfigurationTarget, ConfigurationOverridesDTO};
+use sha2::Digest;
 
 use crate::{
     IPC::WindServiceAdapters::{WindDesktopConfiguration, WindServiceAdapter},
@@ -66,7 +70,7 @@ impl ConfigurationBridge {
         let config_provider: Arc<dyn Common::Configuration::ConfigurationProvider::ConfigurationProvider> = 
             self.runtime.Environment.Require();
         
-        let config = config_provider.GetConfiguration(None, serde_json::Value::Null)
+        let config = config_provider.GetConfigurationValue(None, ConfigurationOverridesDTO::default())
             .await
             .map_err(|e| format!("Failed to get Mountain configuration: {}", e))?;
         
@@ -77,7 +81,7 @@ impl ConfigurationBridge {
     async fn update_mountain_configuration(&self, config: serde_json::Value) -> Result<(), String> {
         debug!("[ConfigurationBridge] Updating Mountain configuration");
         
-        let config_provider: Arc<dyn Common::Configuration::ConfigurationProvider::ConfigurationProvider> = 
+        let config_provider: Arc<dyn ConfigurationProvider> = 
             self.runtime.Environment.Require();
         
         // Update configuration values
@@ -86,8 +90,8 @@ impl ConfigurationBridge {
                 config_provider.UpdateConfigurationValue(
                     key.clone(),
                     value.clone(),
-                    Common::Configuration::DTO::ConfigurationTarget::ConfigurationTarget::User,
-                    serde_json::Value::Null,
+                    ConfigurationTarget::User,
+                    ConfigurationOverridesDTO::default(),
                     None,
                 )
                 .await
@@ -304,7 +308,7 @@ impl ConfigurationBridge {
         
         // ADVANCED IMPLEMENTATION: Secure session ID generation
         let mut rng = rng();
-        let random_part: u64 = rng.gen_range(0..=u64::MAX);
+        let random_part: u64 = rng.random_range(0..=u64::MAX);
         
         let timestamp = SystemTime::now()
             .duration_since(UNIX_EPOCH)

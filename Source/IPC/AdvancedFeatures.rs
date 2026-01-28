@@ -102,21 +102,23 @@ impl AdvancedFeatures {
     pub async fn start_monitoring(&self) -> Result<(), String> {
         info!("[AdvancedFeatures] Starting advanced monitoring");
         
-        let features = self.clone_features();
+        let features1 = self.clone_features();
+        let features2 = self.clone_features();
+        let features3 = self.clone_features();
         
         // Start performance monitoring
         tokio::spawn(async move {
-            features.monitor_performance().await;
+            features1.monitor_performance().await;
         });
         
         // Start cache cleanup
         tokio::spawn(async move {
-            features.cleanup_cache().await;
+            features2.cleanup_cache().await;
         });
         
         // Start collaboration session monitoring
         tokio::spawn(async move {
-            features.monitor_collaboration_sessions().await;
+            features3.monitor_collaboration_sessions().await;
         });
         
         Ok(())
@@ -226,7 +228,7 @@ impl AdvancedFeatures {
             ttl,
         };
         
-        cache.cached_messages.insert(message_id, cached_message);
+        cache.cached_messages.insert(message_id.clone(), cached_message);
         cache.cache_size = cache.cached_messages.len();
         
         debug!("[AdvancedFeatures] Message cached: {}, TTL: {}s", message_id, ttl);
