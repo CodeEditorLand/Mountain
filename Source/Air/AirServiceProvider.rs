@@ -395,7 +395,7 @@ impl AirServiceProvider {
 /// Uses UUID v4 to generate a cryptographically random unique identifier.
 /// This is used to correlate requests with responses and for tracing.
 fn generate_request_id() -> String {
-	Uuid::new_v4().to_simple().to_string()
+	Uuid::new_v4().simple().to_string()
 }
 
 /// Creates a new AirServiceProvider by attempting to connect to Air.

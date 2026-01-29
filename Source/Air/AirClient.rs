@@ -21,7 +21,7 @@ use tonic::transport::{Channel, Endpoint};
 // Placeholder authentication types
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticationRequest {
-	pub request_id: u64,
+	pub request_id: String,
 	pub username: String,
 	pub password: String,
 	pub provider: String,
@@ -29,7 +29,7 @@ pub struct AuthenticationRequest {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct AuthenticationResponse {
-	pub request_id: u64,
+	pub request_id: String,
 	pub success: bool,
 	pub token: String,
 	pub error: String,
@@ -38,14 +38,14 @@ pub struct AuthenticationResponse {
 // Placeholder update types
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct UpdateCheckRequest {
-	pub request_id: u64,
+	pub request_id: String,
 	pub current_version: String,
 	pub channel: String,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct UpdateCheckResponse {
-	pub request_id: u64,
+	pub request_id: String,
 	pub update_available: bool,
 	pub version: String,
 	pub download_url: String,
@@ -55,14 +55,14 @@ pub struct UpdateCheckResponse {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct ApplyUpdateRequest {
-	pub request_id: u64,
+	pub request_id: String,
 	pub version: String,
 	pub update_path: String,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct ApplyUpdateResponse {
-	pub request_id: u64,
+	pub request_id: String,
 	pub success: bool,
 	pub error: String,
 }
@@ -70,7 +70,7 @@ pub struct ApplyUpdateResponse {
 // Placeholder download types
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct DownloadRequest {
-	pub request_id: u64,
+	pub request_id: String,
 	pub url: String,
 	pub destination_path: String,
 	pub checksum: String,
@@ -79,7 +79,7 @@ pub struct DownloadRequest {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct DownloadResponse {
-	pub request_id: u64,
+	pub request_id: String,
 	pub success: bool,
 	pub file_path: String,
 	pub file_size: u64,
@@ -90,7 +90,7 @@ pub struct DownloadResponse {
 // Placeholder indexing types
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct IndexRequest {
-	pub request_id: u64,
+	pub request_id: String,
 	pub path: String,
 	pub patterns: Vec<String>,
 	pub exclude_patterns: Vec<String>,
@@ -99,7 +99,7 @@ pub struct IndexRequest {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct IndexResponse {
-	pub request_id: u64,
+	pub request_id: String,
 	pub success: bool,
 	pub files_indexed: u32,
 	pub total_size: u64,
@@ -108,7 +108,7 @@ pub struct IndexResponse {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SearchRequest {
-	pub request_id: u64,
+	pub request_id: String,
 	pub query: String,
 	pub path: String,
 	pub max_results: u32,
@@ -124,7 +124,7 @@ pub struct FileResult {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct SearchResponse {
-	pub request_id: u64,
+	pub request_id: String,
 	pub results: Vec<FileResult>,
 	pub total_results: u32,
 	pub error: String,
@@ -133,7 +133,7 @@ pub struct SearchResponse {
 // Placeholder status types
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct StatusRequest {
-	pub request_id: u64,
+	pub request_id: String,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -151,13 +151,13 @@ pub struct StatusResponse {
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct MetricsRequest {
-	pub request_id: u64,
+	pub request_id: String,
 	pub metric_type: String,
 }
 
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct MetricsResponse {
-	pub request_id: u64,
+	pub request_id: String,
 	pub metrics: HashMap<String, String>,
 	pub error: String,
 }

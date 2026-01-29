@@ -100,7 +100,7 @@ impl AirClient {
     pub async fn new(address: String) -> Result<Self, String> {
         debug!("[WindAirCommands] Connecting to Air daemon at: {}", address);
         
-        let client = AirServiceClient::connect(address)
+        let client = AirClient::new(&address)
             .await
             .map_err(|e| format!("Failed to connect to Air daemon: {}", e))?;
         
@@ -112,7 +112,7 @@ impl AirClient {
     pub async fn reconnect(&mut self, address: String) -> Result<(), String> {
         debug!("[WindAirCommands] Reconnecting to Air daemon at: {}", address);
         
-        self.client = AirServiceClient::connect(address)
+        self.client = AirClient::new(&address)
             .await
             .map_err(|e| format!("Failed to reconnect to Air daemon: {}", e))?;
         
@@ -158,11 +158,10 @@ pub async fn CheckForUpdates(
     };
     
     // Delegate to Air via gRPC
-    let response = client.client
-        .check_for_updates(tonic::Request::new(request))
+    let response = client
+        .CheckForUpdates(request)
         .await
-        .map_err(|e| format!("Update check failed: {}", e))?
-        .into_inner();
+        .map_err(|e| format!("Update check failed: {}", e))?;
     
     // Check for errors in the response
     if !response.error.is_empty() {
@@ -213,11 +212,10 @@ pub async fn DownloadUpdate(
         headers: Default::default(),
     };
     
-    let response = client.client
-        .download_file(tonic::Request::new(request))
+    let response = client
+        .DownloadFile(request)
         .await
-        .map_err(|e| format!("Update download failed: {}", e))?
-        .into_inner();
+        .map_err(|e| format!("Update download failed: {}", e))?;
     
     if !response.error.is_empty() {
         return Err(response.error);
@@ -264,17 +262,20 @@ pub async fn ApplyUpdate(
         update_path,
     };
     
-    let response = client.client
-        .apply_update(tonic::Request::new(request))
-        .await
-        .map_err(|e| format!("Update application failed: {}", e))?
-        .into_inner();
+    // TODO: Implement ApplyUpdate method in AirClient
+    // let response = client
+    //     .ApplyUpdate(request)
+    //     .await
+    //     .map_err(|e| format!("Update application failed: {}", e))?;
+    // 
+    // if !response.error.is_empty() {
+    //     return Err(response.error);
+    // }
+    // 
+    // info!("[WindAirCommands] Update applied successfully");
     
-    if !response.error.is_empty() {
-        return Err(response.error);
-    }
-    
-    info!("[WindAirCommands] Update applied successfully");
+    // Placeholder response for now
+    return Err("ApplyUpdate not yet implemented".to_string());
     Ok(response.success)
 }
 

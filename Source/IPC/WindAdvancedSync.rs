@@ -19,6 +19,8 @@ use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tauri::{AppHandle, Emitter, command, State, Manager};
+use crate::IPC::AdvancedFeatures::PerformanceStats;
+use Common::FileSystem::FileSystemReader::FileSystemReader;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 use Common::Environment::Requires::Requires;
@@ -33,49 +35,6 @@ pub struct WindAdvancedSync {
 }
 
 impl WindAdvancedSync {
-    /// Create a new WindAdvancedSync instance
-    pub fn new(runtime: Arc<ApplicationRunTime>) -> Self {
-        Self {
-            runtime,
-            document_sync: Arc::new(Mutex::new(DocumentSynchronization {
-                synchronized_documents: HashMap::new(),
-                pending_changes: HashMap::new(),
-                last_sync_time: 0,
-                sync_status: SyncStatus {
-                    total_documents: 0,
-                    synced_documents: 0,
-                    conflicted_documents: 0,
-                    offline_documents: 0,
-                    last_sync_duration_ms: 0,
-                },
-            })),
-            ui_state_sync: Arc::new(Mutex::new(UIStateSynchronization {
-                active_editor: None,
-                cursor_positions: HashMap::new(),
-                selection_ranges: HashMap::new(),
-                view_state: ViewState {
-                    zoom_level: 1.0,
-                    sidebar_visible: true,
-                    panel_visible: true,
-                    status_bar_visible: true,
-                },
-                theme: "default".to_string(),
-                layout: LayoutState {
-                    editor_groups: Vec::new(),
-                    active_group: 0,
-                    grid_layout: GridLayout {
-                        rows: 1,
-                        columns: 1,
-                        cell_width: 100,
-                        cell_height: 100,
-                    },
-                },
-            })),
-            real_time_updates: Arc::new(Mutex::new(RealTimeUpdates {
-                updates: Vec::new(),
-                subscribers: HashMap::new(),
-            })),
-            performance_stats: Arc::new(Mutex::new(PerformanceStats {
                 total_messages_sent: 0,
                 total_messages_received: 0,
                 average_processing_time_ms: 0.0,
@@ -107,7 +66,7 @@ impl WindAdvancedSync {
         let runtime = self.runtime.clone();
         
         tokio::spawn(async move {
-            let mut interval = interval(Duration::from_secs(5));
+            let mut interval = tokio::time::interval(Duration::from_secs(5));
             
             loop {
                 interval.tick().await;
@@ -128,7 +87,7 @@ impl WindAdvancedSync {
                             sync.sync_status = Self::calculate_sync_status(&sync.synchronized_documents);
                             
                             // Emit sync event
-                            let _ = runtime.emit(
+                            let _ = runtime.Environment.ApplicationHandle.emit(
                                 "mountain_sync_status_update",
                                 sync.sync_status.clone()
                             );
@@ -145,7 +104,7 @@ impl WindAdvancedSync {
         let runtime = self.runtime.clone();
         
         tokio::spawn(async move {
-            let mut interval = interval(Duration::from_secs(10));
+            let mut interval = tokio::time::interval(Duration::from_secs(10));
             
             loop {
                 interval.tick().await;
@@ -158,7 +117,7 @@ impl WindAdvancedSync {
                     stats.connection_uptime += 10;
                     
                     // Emit performance update
-                    let _ = runtime.emit(
+                    let _ = runtime.Environment.ApplicationHandle.emit(
                         "mountain_performance_update",
                         stats.clone()
                     );
@@ -234,7 +193,7 @@ pub enum ChangeType {
 }
 
 /// Sync state
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum SyncState {
     Synced,
     Modified,
@@ -407,50 +366,21 @@ impl WindAdvancedSync {
         // ADVANCED PERFORMANCE TRACKING: Microsoft-inspired initialization metrics
         let sync_duration = sync_start.elapsed();
         info!("[WindAdvancedSync] Initialization completed in {:.2}ms", sync_duration.as_millis());
-        
-        Self {
-            runtime,
-            document_sync: Arc::new(Mutex::new(DocumentSynchronization {
-                synchronized_documents: HashMap::new(),
-                pending_changes: HashMap::new(),
-                last_sync_time: SystemTime::now()
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs(),
-                sync_status: SyncStatus {
-                    total_documents: 0,
-                    synced_documents: 0,
-                    conflicted_documents: 0,
-                    offline_documents: 0,
-                    last_sync_duration_ms: 0,
-                },
-            })),
-            ui_state_sync: Arc::new(Mutex::new(UIStateSynchronization {
-                active_editor: None,
-                cursor_positions: HashMap::new(),
-                selection_ranges: HashMap::new(),
-                view_state: ViewState {
-                    zoom_level: 1.0,
-                    sidebar_visible: true,
-                    panel_visible: false,
-                    status_bar_visible: true,
-                },
-                theme: "dark".to_string(),
-                layout: LayoutState {
-                    editor_groups: Vec::new(),
-                    active_group: 0,
-                    grid_layout: GridLayout {
-                        rows: 1,
-                        columns: 1,
-                        cell_width: 100,
-                        cell_height: 100,
-                    },
-                },
-            })),
-            real_time_updates: Arc::new(Mutex::new(RealTimeUpdates {
-                subscribers: HashMap::new(),
                 last_broadcast: 0,
                 update_queue: Vec::new(),
+            })),
+            performance_stats: Arc::new(Mutex::new(PerformanceStats {
+                total_memory_bytes: 0,
+                used_memory_bytes: 0,
+                cpu_usage_percent: 0.0,
+                network_bytes_sent: 0,
+                network_bytes_received: 0,
+                disk_read_bytes: 0,
+                disk_write_bytes: 0,
+                process_count: 0,
+                thread_count: 0,
+                uptime_seconds: 0,
+                last_update_timestamp: 0,
             })),
         }
     }
@@ -481,7 +411,7 @@ impl WindAdvancedSync {
 
     /// Synchronize documents between Wind and Mountain
     async fn synchronize_documents(&self) {
-        let mut interval = interval(Duration::from_secs(5));
+        let mut interval = tokio::time::interval(Duration::from_secs(5));
         let mut consecutive_failures = 0;
         let max_consecutive_failures = 3;
         
@@ -510,7 +440,7 @@ impl WindAdvancedSync {
                         consecutive_failures += 1;
                         if consecutive_failures >= max_consecutive_failures {
                             warn!("[WindAdvancedSync] Too many consecutive failures, slowing sync interval");
-                            interval = interval(Duration::from_secs(30)); // Slow down
+                            interval = tokio::time::interval(Duration::from_secs(30)); // Slow down
                         }
                     }
                 }
@@ -519,7 +449,7 @@ impl WindAdvancedSync {
             // Reset failure counter on successful operations
             if success_count > 0 {
                 consecutive_failures = 0;
-                interval = interval(Duration::from_secs(5)); // Reset to normal interval
+                interval = tokio::time::interval(Duration::from_secs(5)); // Reset to normal interval
             }
             
             // Update sync status
@@ -536,7 +466,7 @@ impl WindAdvancedSync {
 
     /// Synchronize UI state
     async fn synchronize_ui_state(&self) {
-        let mut interval = interval(Duration::from_secs(1));
+        let mut interval = tokio::time::interval(Duration::from_secs(1));
         
         loop {
             interval.tick().await;
@@ -555,7 +485,7 @@ impl WindAdvancedSync {
 
     /// Broadcast real-time updates
     async fn broadcast_real_time_updates(&self) {
-        let mut interval = interval(Duration::from_millis(100));
+        let mut interval = tokio::time::interval(Duration::from_millis(100));
         
         loop {
             interval.tick().await;
@@ -712,7 +642,7 @@ impl WindAdvancedSync {
         *sync = ui_state;
         
         // Emit UI state update to Sky
-        if let Err(e) = self.runtime.Environment.ApplicationHandle.emit("ui-state-update", &sync) {
+        if let Err(e) = self.runtime.Environment.ApplicationHandle.emit("ui-state-update", *sync) {
             error!("[WindAdvancedSync] Failed to emit UI state update: {}", e);
         }
         

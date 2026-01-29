@@ -1,6 +1,6 @@
 [[bin]]
 name = "Mountain"
-path = "Source/Library.rs"
+path = "Source/Binary.rs"
 
 [build-dependencies]
 json5 = { workspace = true }
@@ -68,13 +68,15 @@ flate2 = { workspace = true }
 ring = { workspace = true }
 
 [features]
-default = ["ExtensionHostCocoon", "MistNative"]
+default = ["ExtensionHostCocoon", "MistNative", "AirIntegration"]
 
 ExtensionHostCocoon = []
 
 MistNative = []
 
 Debug = []
+
+AirIntegration = []
 
 [lib]
 name = "Mountain"
