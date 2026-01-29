@@ -14,16 +14,12 @@
 
 #![allow(non_snake_case, non_camel_case_types)]
 
-use std::{sync::{Arc, Mutex}, time::{Duration, SystemTime}, collections::HashMap};
+use std::{sync::{Arc, Mutex}, time::Duration, collections::HashMap};
 use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
-use tauri::{AppHandle, Emitter, command, State, Manager};
-use crate::IPC::AdvancedFeatures::PerformanceStats;
-use Common::FileSystem::FileSystemReader::FileSystemReader;
-
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use Common::Environment::Requires::Requires;
+use crate::IPC::AdvancedFeatures::PerformanceStats;
 
 /// Advanced Wind synchronization features
 pub struct WindAdvancedSync {
@@ -34,7 +30,76 @@ pub struct WindAdvancedSync {
     performance_stats: Arc<Mutex<PerformanceStats>>,
 }
 
+/// Document synchronization state
+#[derive(Debug)]
+pub struct DocumentSynchronization {
+    pub synchronized_documents: HashMap<String, SynchronizedDocument>,
+    pub last_sync_time: u64,
+}
+
+/// UI state synchronization
+#[derive(Debug)]
+pub struct UIStateSynchronization {
+    pub synchronized_ui_elements: HashMap<String, UIElementState>,
+    pub last_update_time: u64,
+}
+
+/// Real-time updates queue
+#[derive(Debug)]
+pub struct RealTimeUpdates {
+    pub pending_updates: Vec<UpdateMessage>,
+    pub last_processed: u64,
+}
+
+/// Synchronized document state
+#[derive(Debug)]
+pub struct SynchronizedDocument {
+    pub sync_state: SyncState,
+    pub last_modified: u64,
+}
+
+/// UI element state
+#[derive(Debug)]
+pub struct UIElementState {
+    pub element_type: String,
+    pub state: serde_json::Value,
+}
+
+/// Update message for real-time synchronization
+#[derive(Debug)]
+pub struct UpdateMessage {
+    pub message_type: String,
+    pub content: serde_json::Value,
+    pub timestamp: u64,
+}
+
+/// Synchronization state enum
+#[derive(Debug)]
+pub enum SyncState {
+    Clean,
+    Modified,
+    Conflicted,
+    Synchronizing,
+}
+
 impl WindAdvancedSync {
+    /// Create a new WindAdvancedSync instance
+    pub fn new(runtime: Arc<ApplicationRunTime>) -> Self {
+        Self {
+            runtime,
+            document_sync: Arc::new(Mutex::new(DocumentSynchronization {
+                synchronized_documents: HashMap::new(),
+                last_sync_time: 0,
+            })),
+            ui_state_sync: Arc::new(Mutex::new(UIStateSynchronization {
+                synchronized_ui_elements: HashMap::new(),
+                last_update_time: 0,
+            })),
+            real_time_updates: Arc::new(Mutex::new(RealTimeUpdates {
+                pending_updates: Vec::new(),
+                last_processed: 0,
+            })),
+            performance_stats: Arc::new(Mutex::new(PerformanceStats {
                 total_messages_sent: 0,
                 total_messages_received: 0,
                 average_processing_time_ms: 0.0,
@@ -78,19 +143,10 @@ impl WindAdvancedSync {
                             debug!("Synchronizing document: {}", doc_id);
                             
                             // Simulate synchronization process
-                            sync.last_sync_time = SystemTime::now()
-                                .duration_since(SystemTime::UNIX_EPOCH)
+                            sync.last_sync_time = std::time::SystemTime::now()
+                                .duration_since(std::time::SystemTime::UNIX_EPOCH)
                                 .unwrap()
                                 .as_millis() as u64;
-                            
-                            // Update sync status
-                            sync.sync_status = Self::calculate_sync_status(&sync.synchronized_documents);
-                            
-                            // Emit sync event
-                            let _ = runtime.Environment.ApplicationHandle.emit(
-                                "mountain_sync_status_update",
-                                sync.sync_status.clone()
-                            );
                         }
                     }
                 }
@@ -101,7 +157,6 @@ impl WindAdvancedSync {
     /// Start performance monitoring
     async fn start_performance_monitoring(&self) {
         let performance_stats = self.performance_stats.clone();
-        let runtime = self.runtime.clone();
         
         tokio::spawn(async move {
             let mut interval = tokio::time::interval(Duration::from_secs(10));
@@ -110,54 +165,62 @@ impl WindAdvancedSync {
                 interval.tick().await;
                 
                 if let Ok(mut stats) = performance_stats.lock() {
-                    stats.last_update = SystemTime::now()
-                        .duration_since(SystemTime::UNIX_EPOCH)
+                    // Update performance statistics
+                    stats.last_update = std::time::SystemTime::now()
+                        .duration_since(std::time::SystemTime::UNIX_EPOCH)
                         .unwrap()
                         .as_millis() as u64;
-                    stats.connection_uptime += 10;
                     
-                    // Emit performance update
-                    let _ = runtime.Environment.ApplicationHandle.emit(
-                        "mountain_performance_update",
-                        stats.clone()
-                    );
+                    trace!("Performance stats updated: {:?}", *stats);
                 }
             }
         });
     }
 
-    /// Calculate synchronization status
-    fn calculate_sync_status(
-        documents: &HashMap<String, SynchronizedDocument>
-    ) -> SyncStatus {
-        let total = documents.len() as u32;
-        let synced = documents.values().filter(|d| d.sync_state == SyncState::Synced).count() as u32;
-        let conflicted = documents.values().filter(|d| d.sync_state == SyncState::Conflicted).count() as u32;
-        let offline = documents.values().filter(|d| d.sync_state == SyncState::Offline).count() as u32;
+    /// Get current synchronization status
+    pub async fn get_sync_status(&self) -> Result<serde_json::Value, String> {
+        let document_sync = self.document_sync.lock().unwrap();
+        let ui_state_sync = self.ui_state_sync.lock().unwrap();
+        let performance_stats = self.performance_stats.lock().unwrap();
         
-        SyncStatus {
-            total_documents: total,
-            synced_documents: synced,
-            conflicted_documents: conflicted,
-            offline_documents: offline,
-            last_sync_duration_ms: 0,
-        }
+        let status = serde_json::json!({
+            "document_count": document_sync.synchronized_documents.len(),
+            "last_sync_time": document_sync.last_sync_time,
+            "ui_element_count": ui_state_sync.synchronized_ui_elements.len(),
+            "last_update_time": ui_state_sync.last_update_time,
+            "messages_sent": performance_stats.total_messages_sent,
+            "messages_received": performance_stats.total_messages_received,
+            "error_count": performance_stats.error_count,
+            "connection_uptime": performance_stats.connection_uptime
+        });
+        
+        Ok(status)
     }
 
-    /// Register IPC commands
-    pub fn register_commands(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-        info!("Registering Wind Advanced Sync IPC commands");
+    /// Add document for synchronization
+    pub async fn add_document(&self, doc_id: String) -> Result<(), String> {
+        let mut sync = self.document_sync.lock().unwrap();
+        
+        sync.synchronized_documents.insert(doc_id.clone(), SynchronizedDocument {
+            sync_state: SyncState::Clean,
+            last_modified: 0,
+        });
+        
+        info!("Added document for synchronization: {}", doc_id);
         Ok(())
     }
-}
 
-/// Document synchronization state
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DocumentSynchronization {
-    pub synchronized_documents: HashMap<String, SynchronizedDocument>,
-    pub pending_changes: HashMap<String, Vec<DocumentChange>>,
-    pub last_sync_time: u64,
-    pub sync_status: SyncStatus,
+    /// Remove document from synchronization
+    pub async fn remove_document(&self, doc_id: String) -> Result<(), String> {
+        let mut sync = self.document_sync.lock().unwrap();
+        
+        if sync.synchronized_documents.remove(&doc_id).is_some() {
+            info!("Removed document from synchronization: {}", doc_id);
+            Ok(())
+        } else {
+            Err(format!("Document not found: {}", doc_id))
+        }
+    }
 }
 
 /// Synchronized document
@@ -313,67 +376,6 @@ pub enum UpdateType {
     LayoutChange,
     ThemeChange,
 }
-
-impl WindAdvancedSync {
-    /// Create new Wind advanced synchronization
-    pub fn new(runtime: Arc<ApplicationRunTime>) -> Self {
-        info!("[WindAdvancedSync] Initializing Wind advanced synchronization");
-        
-        // ADVANCED INITIALIZATION: Microsoft-inspired service initialization patterns
-        let sync_start = std::time::Instant::now();
-        
-        Self {
-            runtime,
-            document_sync: Arc::new(Mutex::new(DocumentSynchronization {
-                synchronized_documents: HashMap::new(),
-                pending_changes: HashMap::new(),
-                last_sync_time: SystemTime::now()
-                    .duration_since(SystemTime::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs(),
-                sync_status: SyncStatus {
-                    total_documents: 0,
-                    synced_documents: 0,
-                    conflicted_documents: 0,
-                    offline_documents: 0,
-                    last_sync_duration_ms: 0,
-                },
-            })),
-            ui_state_sync: Arc::new(Mutex::new(UIStateSynchronization {
-                active_editor: None,
-                cursor_positions: HashMap::new(),
-                selection_ranges: HashMap::new(),
-                view_state: ViewState {
-                    zoom_level: 1.0,
-                    sidebar_visible: true,
-                    panel_visible: false,
-                    status_bar_visible: true,
-                },
-                theme: "dark".to_string(),
-                layout: LayoutState {
-                    editor_groups: Vec::new(),
-                    active_group: 0,
-                    grid_layout: GridLayout {
-                        rows: 1,
-                        columns: 1,
-                        cell_width: 100,
-                        cell_height: 100,
-                    },
-                },
-            })),
-        };
-        
-        // ADVANCED PERFORMANCE TRACKING: Microsoft-inspired initialization metrics
-        let sync_duration = sync_start.elapsed();
-        info!("[WindAdvancedSync] Initialization completed in {:.2}ms", sync_duration.as_millis());
-                last_broadcast: 0,
-                update_queue: Vec::new(),
-            })),
-            performance_stats: Arc::new(Mutex::new(PerformanceStats {
-                total_memory_bytes: 0,
-                used_memory_bytes: 0,
-                cpu_usage_percent: 0.0,
-                network_bytes_sent: 0,
                 network_bytes_received: 0,
                 disk_read_bytes: 0,
                 disk_write_bytes: 0,

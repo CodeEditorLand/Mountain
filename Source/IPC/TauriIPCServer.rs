@@ -991,4 +991,3 @@ impl PermissionManager {
         }
     }
 }
-    permissions: Arc<RwLock<HashMap<String, Permission>>>,

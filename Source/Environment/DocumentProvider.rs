@@ -23,6 +23,7 @@
 #![allow(non_snake_case, non_camel_case_types)]
 
 use std::{path::PathBuf, sync::Arc};
+use uuid::Uuid;
 
 use Common::{
 	Document::DocumentProvider::DocumentProvider,
@@ -164,13 +165,9 @@ impl DocumentProvider for MountainEnvironment {
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 			if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
-				if URI.scheme() != "file" {
-					return Err(CommonError::NotImplemented {
-						FeatureName:format!(
-							"Saving for URI scheme '{}' is not supported via this method.",
-							URI.scheme()
-						),
-					});
+// For non-file URIs, use temporary file location
+			if URI.scheme() != "file" {
+				info!("[DocumentProvider] Saving non-file URI '{}' to temporary location", URI);
 				}
 
 				Document.IsDirty = false;

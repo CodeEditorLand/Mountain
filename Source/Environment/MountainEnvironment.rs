@@ -50,7 +50,10 @@ use log::{info, warn};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Wry};
 
-use crate::ApplicationState::ApplicationState::ApplicationState;
+use crate::{
+	ApplicationState::ApplicationState::ApplicationState,
+	ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
+};
 
 /// The concrete `Environment` for the Mountain application.
 #[derive(Clone)]
@@ -146,6 +149,61 @@ impl MountainEnvironment {
 	pub async fn IsAirAvailable(&self) -> bool {
 		false
 	}
+
+	/// Scans a directory for extensions and returns their package.json data
+	async fn ScanExtensionDirectory(&self, path: &std::path::PathBuf) -> Result<Vec<serde_json::Value>, CommonError> {
+		use std::fs;
+		use serde_json::Value;
+
+		let mut extensions = Vec::new();
+
+		// Check if directory exists
+		if !path.exists() || !path.is_dir() {
+			warn!("[ExtensionManagementService] Extension directory does not exist: {:?}", path);
+			return Ok(extensions);
+		}
+
+		// Read directory contents
+		let entries = fs::read_dir(path).map_err(|error| CommonError::FileSystemError {
+			Description: format!("Failed to read extension directory: {}", error),
+		})?;
+
+		for entry in entries {
+			let entry = entry.map_err(|error| CommonError::FileSystemError {
+				Description: format!("Failed to read directory entry: {}", error),
+			})?;
+
+			let entry_path = entry.path();
+			if entry_path.is_dir() {
+				// Look for package.json in the extension directory
+				let package_json_path = entry_path.join("package.json");
+				if package_json_path.exists() {
+					match fs::read_to_string(&package_json_path) {
+						Ok(content) => {
+							match serde_json::from_str::<Value>(&content) {
+								Ok(mut package_json) => {
+									// Add extension location information
+									if let Some(obj) = package_json.as_object_mut() {
+										obj.insert("ExtensionLocation".to_string(), Value::String(entry_path.to_string_lossy().to_string()));
+									}
+									extensions.push(package_json);
+									info!("[ExtensionManagementService] Found extension at: {:?}", entry_path);
+								}
+								Err(error) => {
+									warn!("[ExtensionManagementService] Failed to parse package.json at {:?}: {}", package_json_path, error);
+								}
+							}
+						}
+						Err(error) => {
+							warn!("[ExtensionManagementService] Failed to read package.json at {:?}: {}", package_json_path, error);
+						}
+					}
+				}
+			}
+		}
+
+		Ok(extensions)
+	}
 }
 
 impl Environment for MountainEnvironment {}
@@ -153,9 +211,61 @@ impl Environment for MountainEnvironment {}
 #[async_trait]
 impl ExtensionManagementService for MountainEnvironment {
 	async fn ScanForExtensions(&self) -> Result<(), CommonError> {
-		warn!("[ExtensionManagementService] ScanForExtensions is a stub.");
+		info!("[ExtensionManagementService] Scanning for extensions...");
 
-		Err(CommonError::NotImplemented { FeatureName:"ScanForExtensions".into() })
+		// Get the extension scan paths from ApplicationState
+		let ScanPaths: Vec<std::path::PathBuf> = {
+			let ScanPathsGuard = self
+				.ApplicationState
+				.ExtensionScanPaths
+				.lock()
+				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			ScanPathsGuard.clone()
+		};
+
+		let mut extensions = Vec::new();
+
+		// Scan each extension directory
+		for path in ScanPaths {
+			if let Ok(mut scan_result) = self.ScanExtensionDirectory(&path).await {
+				extensions.append(&mut scan_result);
+			}
+		}
+
+		// Update ApplicationState with scanned extensions
+		let mut ScannedExtensionsGuard = self
+			.ApplicationState
+			.ScannedExtensions
+			.lock()
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+
+		ScannedExtensionsGuard.clear();
+
+		for extension in extensions {
+			if let Some(identifier) = extension.get("Identifier").and_then(|v| v.as_str()) {
+				// Convert the extension DTO to ExtensionDescriptionStateDTO
+				let extension_dto = ExtensionDescriptionStateDTO {
+					Identifier: serde_json::Value::String(identifier.to_string()),
+					Name: extension.get("Name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
+					Version: extension.get("Version").and_then(|v| v.as_str()).unwrap_or("0.0.0").to_string(),
+					Publisher: extension.get("Publisher").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
+					Engines: extension.get("Engines").cloned().unwrap_or(serde_json::Value::Null),
+					Main: extension.get("Main").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					Browser: extension.get("Browser").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					ModuleType: extension.get("ModuleType").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					IsBuiltin: extension.get("IsBuiltin").and_then(|v| v.as_bool()).unwrap_or(false),
+					IsUnderDevelopment: extension.get("IsUnderDevelopment").and_then(|v| v.as_bool()).unwrap_or(false),
+					ExtensionLocation: extension.get("ExtensionLocation").cloned().unwrap_or(serde_json::Value::Null),
+					ActivationEvents: extension.get("ActivationEvents").and_then(|v| v.as_array()).map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()),
+					Contributes: extension.get("Contributes").cloned(),
+				};
+
+				ScannedExtensionsGuard.insert(identifier.to_string(), extension_dto);
+			}
+		}
+
+		info!("[ExtensionManagementService] Found {} extensions", ScannedExtensionsGuard.len());
+		Ok(())
 	}
 
 	async fn GetExtensions(&self) -> Result<Vec<Value>, CommonError> {
@@ -173,10 +283,51 @@ impl ExtensionManagementService for MountainEnvironment {
 		Ok(Extensions)
 	}
 
-	async fn GetExtension(&self, _id:String) -> Result<Option<Value>, CommonError> {
-		warn!("[ExtensionManagementService] GetExtension is a stub.");
+	async fn GetExtension(&self, id:String) -> Result<Option<Value>, CommonError> {
+		let ScannedExtensionsGuard = self
+			.ApplicationState
+			.ScannedExtensions
+			.lock()
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 
-		Err(CommonError::NotImplemented { FeatureName:"GetExtension".into() })
+		if let Some(extension_dto) = ScannedExtensionsGuard.get(&id) {
+			// Convert ExtensionDescriptionStateDTO back to JSON Value
+			let mut extension_value = serde_json::Map::new();
+			extension_value.insert("Identifier".to_string(), extension_dto.Identifier.clone());
+			extension_value.insert("Name".to_string(), Value::String(extension_dto.Name.clone()));
+			extension_value.insert("Version".to_string(), Value::String(extension_dto.Version.clone()));
+			extension_value.insert("Publisher".to_string(), Value::String(extension_dto.Publisher.clone()));
+			extension_value.insert("Engines".to_string(), extension_dto.Engines.clone());
+
+			if let Some(main) = &extension_dto.Main {
+				extension_value.insert("Main".to_string(), Value::String(main.clone()));
+			}
+
+			if let Some(browser) = &extension_dto.Browser {
+				extension_value.insert("Browser".to_string(), Value::String(browser.clone()));
+			}
+
+			if let Some(module_type) = &extension_dto.ModuleType {
+				extension_value.insert("ModuleType".to_string(), Value::String(module_type.clone()));
+			}
+
+			extension_value.insert("IsBuiltin".to_string(), Value::Bool(extension_dto.IsBuiltin));
+			extension_value.insert("IsUnderDevelopment".to_string(), Value::Bool(extension_dto.IsUnderDevelopment));
+			extension_value.insert("ExtensionLocation".to_string(), extension_dto.ExtensionLocation.clone());
+
+			if let Some(activation_events) = &extension_dto.ActivationEvents {
+				let events: Vec<Value> = activation_events.iter().map(|e| Value::String(e.clone())).collect();
+				extension_value.insert("ActivationEvents".to_string(), Value::Array(events));
+			}
+
+			if let Some(contributes) = &extension_dto.Contributes {
+				extension_value.insert("Contributes".to_string(), contributes.clone());
+			}
+
+			Ok(Some(Value::Object(extension_value)))
+		} else {
+			Ok(None)
+		}
 	}
 }
 
