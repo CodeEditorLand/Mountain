@@ -310,11 +310,10 @@ pub async fn DownloadFile(
         headers: Default::default(),
     };
     
-    let response = client.client
-        .download_file(tonic::Request::new(request))
+    let response = client
+        .DownloadFile(request)
         .await
-        .map_err(|e| format!("File download failed: {}", e))?
-        .into_inner();
+        .map_err(|e| format!("File download failed: {}", e))?;
     
     if !response.error.is_empty() {
         return Err(response.error);
