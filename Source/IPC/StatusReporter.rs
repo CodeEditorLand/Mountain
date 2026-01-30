@@ -837,11 +837,12 @@ impl StatusReporter {
 #[tauri::command]
 pub async fn mountain_get_ipc_status(
     app_handle: tauri::AppHandle,
-) -> Result<IPCStatusReport, String> {
+) -> Result<serde_json::Value, String> {
     debug!("[StatusReporter] Tauri command: get_ipc_status");
     
     if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
         reporter.generate_status_report().await
+            .map(|report| serde_json::to_value(report).unwrap_or(serde_json::Value::Null))
     } else {
         Err("StatusReporter not found in application state".to_string())
     }
@@ -851,11 +852,12 @@ pub async fn mountain_get_ipc_status(
 #[tauri::command]
 pub async fn mountain_get_ipc_status_history(
     app_handle: tauri::AppHandle,
-) -> Result<Vec<IPCStatusReport>, String> {
+) -> Result<serde_json::Value, String> {
     debug!("[StatusReporter] Tauri command: get_ipc_status_history");
     
     if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
         reporter.get_status_history()
+            .map(|history| serde_json::to_value(history).unwrap_or(serde_json::Value::Null))
     } else {
         Err("StatusReporter not found in application state".to_string())
     }
@@ -866,11 +868,12 @@ pub async fn mountain_get_ipc_status_history(
 pub async fn mountain_start_ipc_status_reporting(
     app_handle: tauri::AppHandle,
     interval_seconds: u64,
-) -> Result<(), String> {
+) -> Result<serde_json::Value, String> {
     debug!("[StatusReporter] Tauri command: start_ipc_status_reporting");
     
     if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
         reporter.start_periodic_reporting(interval_seconds).await
+            .map(|_| serde_json::json!({ "status": "started", "interval_seconds": interval_seconds }))
     } else {
         Err("StatusReporter not found in application state".to_string())
     }

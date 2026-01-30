@@ -214,7 +214,7 @@ async fn mountain_get_ipc_status_history(
 async fn mountain_start_ipc_status_reporting(
 	app_handle: AppHandle
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::StatusReporter::mountain_start_ipc_status_reporting(app_handle).await
+	crate::IPC::StatusReporter::mountain_start_ipc_status_reporting(app_handle, 60).await
 }
 
 /// Get performance stats

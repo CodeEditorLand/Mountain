@@ -25,6 +25,7 @@ use Common::FileSystem::FileSystemWriter::FileSystemWriter;
 use Common::Configuration::ConfigurationProvider::ConfigurationProvider;
 use Common::Configuration::DTO::{ConfigurationOverridesDTO, ConfigurationTarget};
 use Common::Storage::StorageProvider::StorageProvider;
+use Common::Error::CommonError::CommonError;
 
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system
@@ -204,7 +205,7 @@ async fn handle_file_write(
     
     provider.WriteFile(&PathBuf::from(path), content.as_bytes().to_vec(), true, true)
         .await
-        .map_err(|e| format!("Failed to write file: {}", e))?;
+        .map_err(|e: CommonError| format!("Failed to write file: {}", e))?;
     
     debug!("[WindServiceHandlers] File written: {} ({} bytes)", path, content.len());
     Ok(Value::Null)
@@ -267,7 +268,7 @@ async fn handle_file_delete(
     
     provider.Delete(&PathBuf::from(path))
         .await
-        .map_err(|e| format!("Failed to delete file: {}", e))?;
+        .map_err(|e: CommonError| format!("Failed to delete file: {}", e))?;
     
     debug!("[WindServiceHandlers] File deleted: {}", path);
     Ok(Value::Null)
@@ -293,7 +294,7 @@ async fn handle_file_copy(
     
     provider.Copy(&PathBuf::from(source), &PathBuf::from(destination))
         .await
-        .map_err(|e| format!("Failed to copy file: {} -> {}", source, destination))?;
+        .map_err(|e: CommonError| format!("Failed to copy file: {} -> {}", source, destination))?;
     
     debug!("[WindServiceHandlers] File copied: {} -> {}", source, destination);
     Ok(Value::Null)
@@ -319,7 +320,7 @@ async fn handle_file_move(
     
     provider.Rename(&PathBuf::from(source), &PathBuf::from(destination))
         .await
-        .map_err(|e| format!("Failed to move file: {} -> {}", source, destination))?;
+        .map_err(|e: CommonError| format!("Failed to move file: {} -> {}", source, destination))?;
     
     debug!("[WindServiceHandlers] File moved: {} -> {}", source, destination);
     Ok(Value::Null)
@@ -344,7 +345,7 @@ async fn handle_file_mkdir(
     
     provider.CreateDirectory(&PathBuf::from(path), recursive)
         .await
-        .map_err(|e| format!("Failed to create directory: {}", e))?;
+        .map_err(|e: CommonError| format!("Failed to create directory: {}", e))?;
     
     debug!("[WindServiceHandlers] Directory created: {} (recursive: {})", path, recursive);
     Ok(Value::Null)
@@ -415,7 +416,7 @@ async fn handle_file_write_binary(
     
     provider.WriteFile(&PathBuf::from(path), content_bytes, true, true)
         .await
-        .map_err(|e| format!("Failed to write binary file: {}", e))?;
+        .map_err(|e: CommonError| format!("Failed to write binary file: {}", e))?;
     
     debug!("[WindServiceHandlers] Binary file written: {} ({} bytes)", path, content_bytes.len());
     Ok(Value::Null)

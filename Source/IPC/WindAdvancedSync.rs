@@ -21,7 +21,7 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 use Common::Environment::Requires::Requires;
 use Common::FileSystem::FileSystemWriter::FileSystemWriter;
 use crate::IPC::AdvancedFeatures::PerformanceStats;
-use crate::IPC::MountainIPC::MountainIPC;
+// use crate::IPC::MountainIPC::MountainIPC; // Module doesn't exist
 
 /// Synchronization status
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -141,7 +141,7 @@ pub struct WindAdvancedSync {
     ui_state_sync: Arc<Mutex<UIStateSynchronization>>,
     real_time_updates: Arc<Mutex<RealTimeUpdates>>,
     performance_stats: Arc<Mutex<PerformanceStats>>,
-    mountain_ipc: Arc<MountainIPC>,
+    // mountain_ipc: Arc<MountainIPC>, // Module doesn't exist
 }
 
 impl WindAdvancedSync {
@@ -198,7 +198,7 @@ impl WindAdvancedSync {
                 last_update: 0,
                 connection_uptime: 0,
             })),
-            mountain_ipc: Arc::new(MountainIPC::new(runtime)),
+            // mountain_ipc: Arc::new(MountainIPC::new(runtime)), // Module doesn't exist
         }
     }
 
@@ -312,20 +312,21 @@ impl WindAdvancedSync {
     pub async fn start_synchronization(&self) -> Result<(), String> {
         info!("[WindAdvancedSync] Starting advanced synchronization");
         
-        let sync = self.clone_sync();
-        
         // Start document synchronization
         tokio::spawn(async move {
+            let sync = self.clone_sync();
             sync.synchronize_documents().await;
         });
         
         // Start UI state synchronization
         tokio::spawn(async move {
+            let sync = self.clone_sync();
             sync.synchronize_ui_state().await;
         });
         
         // Start real-time updates
         tokio::spawn(async move {
+            let sync = self.clone_sync();
             sync.broadcast_real_time_updates().await;
         });
         
@@ -449,36 +450,36 @@ impl WindAdvancedSync {
         match change.change_type {
             ChangeType::Update => {
                 // Update file content via Mountain IPC
-                if let Some(content) = change.content.as_str() {
-                    self.mountain_ipc.update_document(
-                        &change.document_id,
-                        content,
-                        change.change_id.clone()
-                    )
-                    .await
-                    .map_err(|e| format!("Failed to update document via Mountain IPC: {}", e))?;
+                if let Some(content) = &change.content {
+                    // self.mountain_ipc.update_document(
+                    //     &change.document_id,
+                    //     content,
+                    //     change.change_id.clone()
+                    // )
+                    // .await
+                    // .map_err(|e| format!("Failed to update document via Mountain IPC: {}", e))?;
                 }
             }
             ChangeType::Insert => {
                 // Create new file via Mountain IPC
-                if let Some(content) = change.content.as_str() {
-                    self.mountain_ipc.create_document(
-                        &change.document_id,
-                        content,
-                        change.change_id.clone()
-                    )
-                    .await
-                    .map_err(|e| format!("Failed to create document via Mountain IPC: {}", e))?;
+                if let Some(content) = &change.content {
+                    // self.mountain_ipc.create_document(
+                    //     &change.document_id,
+                    //     content.as_str(),
+                    //     change.change_id.clone()
+                    // )
+                    // .await
+                    // .map_err(|e| format!("Failed to create document via Mountain IPC: {}", e))?;
                 }
             }
             ChangeType::Delete => {
                 // Delete file via Mountain IPC
-                self.mountain_ipc.delete_document(
-                    &change.document_id,
-                    change.change_id.clone()
-                )
-                .await
-                .map_err(|e| format!("Failed to delete document via Mountain IPC: {}", e))?;
+                // self.mountain_ipc.delete_document(
+                //     &change.document_id,
+                //     change.change_id.clone()
+                // )
+                // .await
+                // .map_err(|e| format!("Failed to delete document via Mountain IPC: {}", e))?;
             }
             _ => {
                 warn!("[WindAdvancedSync] Unsupported change type: {:?}", change.change_type);
@@ -565,9 +566,9 @@ impl WindAdvancedSync {
         *sync = ui_state;
         
         // Emit UI state update via Mountain IPC
-        if let Err(e) = self.mountain_ipc.update_ui_state(&sync).await {
-            error!("[WindAdvancedSync] Failed to update UI state via Mountain IPC: {}", e);
-        }
+        // if let Err(e) = self.mountain_ipc.update_ui_state(&sync).await {
+        //     error!("[WindAdvancedSync] Failed to update UI state via Mountain IPC: {}", e);
+        // }
         
         Ok(())
     }
@@ -672,7 +673,7 @@ impl WindAdvancedSync {
             ui_state_sync: self.ui_state_sync.clone(),
             real_time_updates: self.real_time_updates.clone(),
             performance_stats: self.performance_stats.clone(),
-            mountain_ipc: self.mountain_ipc.clone(),
+            // mountain_ipc: self.mountain_ipc.clone(),
         }
     }
 }

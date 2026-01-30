@@ -16,17 +16,6 @@ use tonic::transport::{Channel, Endpoint};
 
 // Import generated Air types from Air element
 use Air::Vine::Generated::air::air_service_client;
-use Air::Vine::Generated::air::{
-    AuthenticationRequest, AuthenticationResponse,
-    UpdateCheckRequest, UpdateCheckResponse,
-    ApplyUpdateRequest, ApplyUpdateResponse,
-    DownloadRequest, DownloadResponse,
-    IndexRequest, IndexResponse,
-    SearchRequest, SearchResponse,
-    FileResult,
-    StatusRequest, StatusResponse,
-    MetricsRequest, MetricsResponse,
-};
 
 // Re-export Air types for external use
 pub use Air::Vine::Generated::air::{

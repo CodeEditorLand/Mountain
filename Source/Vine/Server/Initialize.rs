@@ -13,26 +13,33 @@ use tonic::transport::Server;
 use super::MountainVinegRPCService::MountainVinegRPCService;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Vine::{Error::VineError, Generated::mountain_service_server::MountainServiceServer},
+	Vine::{Error::VineError, Generated::{mountain_service_server::MountainServiceServer, cocoon_service_server::CocoonServiceServer}},
 };
 
-/// Initializes and starts the gRPC server on a background task.
+/// Initializes and starts the gRPC servers on background tasks.
 ///
 /// This function retrieves the core `ApplicationRunTime` from Tauri's managed
-/// state, instantiates the gRPC service implementation
-/// (`MountainVinegRPCService`), and uses `tonic` to serve it at the specified
-/// address.
+/// state, instantiates the gRPC service implementations
+/// (`MountainVinegRPCService` and `CocoonServiceServer`), and uses `tonic` to 
+/// serve them at the specified addresses.
 ///
 /// # Parameters
 /// * `ApplicationHandle`: The Tauri application handle.
-/// * `AddressString`: The address and port to bind the server to (e.g.,
+/// * `MountainAddressString`: The address and port to bind the Mountain server to (e.g.,
 ///   `"[::1]:50051"`).
+/// * `CocoonAddressString`: The address and port to bind the Cocoon server to (e.g.,
+///   `"[::1]:50052"`).
 ///
 /// # Returns
-/// A `Result` indicating if the server setup was successful. The server itself
-/// runs on a separate spawned task.
-pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) -> Result<(), VineError> {
-	let Address:SocketAddr = AddressString.parse()?;
+/// A `Result` indicating if the server setup was successful. The servers themselves
+/// run on separate spawned tasks.
+pub fn Initialize(
+	ApplicationHandle:AppHandle, 
+	MountainAddressString:String,
+	CocoonAddressString:String
+) -> Result<(), VineError> {
+	let MountainAddress:SocketAddr = MountainAddressString.parse()?;
+	let CocoonAddress:SocketAddr = CocoonAddressString.parse()?;
 
 	let RunTime = ApplicationHandle
 		.try_state::<Arc<ApplicationRunTime>>()
@@ -46,18 +53,38 @@ pub fn Initialize(ApplicationHandle:AppHandle, AddressString:String) -> Result<(
 		.inner()
 		.clone();
 
-	let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime);
+	let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime.clone());
+	
+	// Create CocoonService server
+	let CocoonService = CocoonServiceServer::new(
+		RunTime.ApplicationState.clone(),
+		RunTime.Environment.clone(),
+		RunTime.Require(),
+	);
 
-	// Spawn the server to run in the background.
+	// Spawn Mountain server to run in the background.
 	tokio::spawn(async move {
-		info!("[VineServer] Starting gRPC server on {}", Address);
+		info!("[VineServer] Starting Mountain gRPC server on {}", MountainAddress);
 
 		if let Err(e) = Server::builder()
 			.add_service(MountainServiceServer::new(MountainService))
-			.serve(Address)
+			.serve(MountainAddress)
 			.await
 		{
-			error!("[VineServer] gRPC server failed to run: {}", e);
+			error!("[VineServer] Mountain gRPC server failed to run: {}", e);
+		}
+	});
+	
+	// Spawn Cocoon server to run in the background.
+	tokio::spawn(async move {
+		info!("[VineServer] Starting Cocoon gRPC server on {}", CocoonAddress);
+
+		if let Err(e) = Server::builder()
+			.add_service(CocoonServiceServer::new(CocoonService))
+			.serve(CocoonAddress)
+			.await
+		{
+			error!("[VineServer] Cocoon gRPC server failed to run: {}", e);
 		}
 	});
 
