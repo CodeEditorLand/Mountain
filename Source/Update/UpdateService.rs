@@ -13,7 +13,6 @@
 //! - When ForceAir is true, uses Air exclusively (panics if unavailable)
 //! - When AirClient is provided and available, delegates to Air for updates
 //! - Falls back to Tauri updater when Air is unavailable
-//! - Auto-detect模式 (默认) 会在Air可用时使用Air，否则使用Tauri更新器
 //!
 //! TODO: Full Air Migration Plan
 //! ============================
