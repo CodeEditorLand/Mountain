@@ -229,25 +229,29 @@ impl WindAdvancedSync {
                 
                 // Synchronize documents
                 if let Ok(mut sync) = document_sync.lock() {
-                    for (doc_id, document) in &sync.synchronized_documents {
-                        if document.sync_state == SyncState::Modified {
-                            debug!("Synchronizing document: {}", doc_id);
-                            
-                            // Simulate synchronization process
-                            sync.last_sync_time = SystemTime::now()
-                                .duration_since(SystemTime::UNIX_EPOCH)
-                                .unwrap()
-                                .as_millis() as u64;
-                            
-                            // Update sync status
-                            sync.sync_status = Self::calculate_sync_status(&sync.synchronized_documents);
-                            
-                            // Emit sync event
-                            let _ = runtime.Environment.ApplicationHandle.emit(
-                                "mountain_sync_status_update",
-                                sync.sync_status.clone()
-                            );
-                        }
+                    let modified_docs: Vec<String> = sync.synchronized_documents
+                        .iter()
+                        .filter(|(_, document)| document.sync_state == SyncState::Modified)
+                        .map(|(doc_id, _)| doc_id.clone())
+                        .collect();
+                    
+                    if !modified_docs.is_empty() {
+                        debug!("Synchronizing {} documents", modified_docs.len());
+                        
+                        // Simulate synchronization process
+                        sync.last_sync_time = SystemTime::now()
+                            .duration_since(SystemTime::UNIX_EPOCH)
+                            .unwrap()
+                            .as_millis() as u64;
+                        
+                        // Update sync status
+                        sync.sync_status = Self::calculate_sync_status(&sync.synchronized_documents);
+                        
+                        // Emit sync event
+                        let _ = runtime.Environment.ApplicationHandle.emit(
+                            "mountain_sync_status_update",
+                            sync.sync_status.clone()
+                        );
                     }
                 }
             }
@@ -309,25 +313,25 @@ impl WindAdvancedSync {
 
 impl WindAdvancedSync {
     /// Start advanced synchronization
-    pub async fn start_synchronization(&self) -> Result<(), String> {
+    pub async fn start_synchronization(self: Arc<Self>) -> Result<(), String> {
         info!("[WindAdvancedSync] Starting advanced synchronization");
         
         // Start document synchronization
+        let sync1 = self.clone();
         tokio::spawn(async move {
-            let sync = self.clone_sync();
-            sync.synchronize_documents().await;
+            sync1.synchronize_documents().await;
         });
         
         // Start UI state synchronization
+        let sync2 = self.clone();
         tokio::spawn(async move {
-            let sync = self.clone_sync();
-            sync.synchronize_ui_state().await;
+            sync2.synchronize_ui_state().await;
         });
         
         // Start real-time updates
+        let sync3 = self.clone();
         tokio::spawn(async move {
-            let sync = self.clone_sync();
-            sync.broadcast_real_time_updates().await;
+            sync3.broadcast_real_time_updates().await;
         });
         
         Ok(())
@@ -632,11 +636,12 @@ impl WindAdvancedSync {
     pub async fn subscribe_to_updates(&self, target: String, subscriber: String) -> Result<(), String> {
         let mut updates = self.real_time_updates.lock().unwrap();
         
-        updates.subscribers.entry(target)
+        let target_clone = target.clone();
+        updates.subscribers.entry(target_clone.clone())
             .or_insert_with(Vec::new)
             .push(subscriber);
         
-        debug!("[WindAdvancedSync] Subscriber added for target: {}", target);
+        debug!("[WindAdvancedSync] Subscriber added for target: {}", target_clone);
         Ok(())
     }
 
@@ -728,17 +733,18 @@ pub async fn mountain_subscribe_to_updates(
 pub fn initialize_wind_advanced_sync(
     app_handle: &tauri::AppHandle,
     runtime: Arc<ApplicationRunTime>,
-) -> Result<WindAdvancedSync, String> {
+) -> Result<Arc<WindAdvancedSync>, String> {
     info!("[WindAdvancedSync] Initializing Wind advanced synchronization");
     
-    let sync = WindAdvancedSync::new(runtime);
+    let sync = Arc::new(WindAdvancedSync::new(runtime));
     
     // Store in application state
-    app_handle.manage(sync.clone_sync());
+    app_handle.manage(sync.clone());
     
     // Start synchronization
+    let sync_clone = sync.clone();
     tokio::spawn(async move {
-        if let Err(e) = sync.start_synchronization().await {
+        if let Err(e) = sync_clone.start_synchronization().await {
             error!("[WindAdvancedSync] Failed to start synchronization: {}", e);
         }
     });

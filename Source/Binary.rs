@@ -147,7 +147,8 @@ async fn mountain_ipc_receive_message(
 async fn mountain_ipc_get_status(
 	app_handle: AppHandle
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle).await
+	let status = crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle).await?;
+	Ok(serde_json::to_value(status).map_err(|e| e.to_string())?)
 }
 
 /// Invoke IPC methods
@@ -819,8 +820,7 @@ pub fn Fn() {
 
 						if let Err(Error) = Vine::Server::Initialize::Initialize(
 							PostSetupApplicationHandle.clone(),
-							"[::1]:50051".to_string(),
-						) {
+							"[::1]:50051".to_string(),						"[::1]:50052".to_string(),						) {
 							error!("[Vine] [Init] Failed: {}", Error);
 						} else {
 							info!("[Vine] [Init] Ready.");

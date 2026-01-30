@@ -242,13 +242,16 @@ impl AdvancedFeatures {
     pub async fn get_cached_message(&self, message_id: &str) -> Option<serde_json::Value> {
         let mut cache = self.message_cache.lock().unwrap();
         
-        if let Some(cached_message) = cache.cached_messages.get(message_id) {
+        let result = cache.cached_messages.get(message_id).map(|cached_message| cached_message.data.clone());
+        
+        // Update cache statistics
+        if result.is_some() {
             cache.cache_hits += 1;
-            Some(cached_message.data.clone())
         } else {
             cache.cache_misses += 1;
-            None
         }
+        
+        result
     }
 
     /// Create collaboration session
@@ -326,14 +329,14 @@ impl AdvancedFeatures {
     }
 
     /// Get performance statistics
-    pub async fn get_performance_stats(&self) -> PerformanceStats {
-        self.calculate_performance_stats().await
+    pub async fn get_performance_stats(&self) -> Result<PerformanceStats, String> {
+        Ok(self.calculate_performance_stats().await)
     }
 
     /// Get cache statistics
-    pub async fn get_cache_stats(&self) -> MessageCache {
+    pub async fn get_cache_stats(&self) -> Result<MessageCache, String> {
         let cache = self.message_cache.lock().unwrap();
-        cache.clone()
+        Ok(cache.clone())
     }
 
     /// Get active collaboration sessions

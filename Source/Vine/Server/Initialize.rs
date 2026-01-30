@@ -56,11 +56,7 @@ pub fn Initialize(
 	let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime.clone());
 	
 	// Create CocoonService server
-	let CocoonService = CocoonServiceServer::new(
-		RunTime.ApplicationState.clone(),
-		RunTime.Environment.clone(),
-		RunTime.Require(),
-	);
+	let CocoonService = CocoonServiceServer::new(RunTime.Environment.clone());
 
 	// Spawn Mountain server to run in the background.
 	tokio::spawn(async move {
