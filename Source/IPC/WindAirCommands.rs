@@ -139,7 +139,7 @@ impl AirClientWrapper {
 /// `UpdateInfoDTO` with update information or error message
 #[tauri::command]
 pub async fn CheckForUpdates(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
     current_version: Option<String>,
     channel: Option<String>,
 ) -> Result<UpdateInfoDTO, String> {
@@ -194,15 +194,15 @@ pub async fn CheckForUpdates(
 /// `DownloadResultDTO` with download status
 #[tauri::command]
 pub async fn DownloadUpdate(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
     url: String,
     destination: String,
     checksum: Option<String>,
 ) -> Result<DownloadResultDTO, String> {
     debug!("[WindAirCommands] DownloadUpdate called: {} -> {}", url, destination);
     
-    let air_address = get_air_address(&app_handle)?;
-    let client = get_or_create_air_client(&app_handle, air_address).await?;
+    let air_address = get_air_address(app_handle.inner())?;
+    let client = get_or_create_air_client(app_handle.inner(), air_address).await?;
     
     let request = DownloadRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -246,14 +246,14 @@ pub async fn DownloadUpdate(
 /// Success status or error message
 #[tauri::command]
 pub async fn ApplyUpdate(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
     update_id: String,
     update_path: String,
 ) -> Result<bool, String> {
     debug!("[WindAirCommands] ApplyUpdate called: id={}, path={}", update_id, update_path);
     
-    let air_address = get_air_address(&app_handle)?;
-    let client = get_or_create_air_client(&app_handle, air_address).await?;
+    let air_address = get_air_address(app_handle.inner())?;
+    let client = get_or_create_air_client(app_handle.inner(), air_address).await?;
     
     // Use ApplyUpdateRequest from Air module
     let request = ApplyUpdateRequest {
@@ -292,7 +292,7 @@ pub async fn ApplyUpdate(
 /// `DownloadResultDTO` with download status
 #[tauri::command]
 pub async fn DownloadFile(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
     url: String,
     destination: String,
 ) -> Result<DownloadResultDTO, String> {
@@ -344,15 +344,15 @@ pub async fn DownloadFile(
 /// `AuthResponseDTO` with authentication token
 #[tauri::command]
 pub async fn AuthenticateUser(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
     username: String,
     password: String,
     provider: String,
 ) -> Result<AuthResponseDTO, String> {
     debug!("[WindAirCommands] AuthenticateUser called: {} via {}", username, provider);
     
-    let air_address = get_air_address(&app_handle)?;
-    let client = get_or_create_air_client(&app_handle, air_address).await?;
+    let air_address = get_air_address(app_handle.inner())?;
+    let client = get_or_create_air_client(app_handle.inner(), air_address).await?;
     
     let request = AuthenticationRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -396,7 +396,7 @@ pub async fn AuthenticateUser(
 /// `IndexResultDTO` with indexing results
 #[tauri::command]
 pub async fn IndexFiles(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
     path: String,
     patterns: Vec<String>,
     exclude_patterns: Option<Vec<String>>,
@@ -404,8 +404,8 @@ pub async fn IndexFiles(
 ) -> Result<IndexResultDTO, String> {
     debug!("[WindAirCommands] IndexFiles called: {} with patterns: {:?}", path, patterns);
     
-    let air_address = get_air_address(&app_handle)?;
-    let client = get_or_create_air_client(&app_handle, air_address).await?;
+    let air_address = get_air_address(app_handle.inner())?;
+    let client = get_or_create_air_client(app_handle.inner(), air_address).await?;
     
     let request = IndexRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -449,15 +449,15 @@ pub async fn IndexFiles(
 /// `SearchResultsDTO` with matching files
 #[tauri::command]
 pub async fn SearchFiles(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
     query: String,
     index_id: Option<String>,
     max_results: Option<u32>,
 ) -> Result<SearchResultsDTO, String> {
     debug!("[WindAirCommands] SearchFiles called: query={}, index={:?}", query, index_id);
     
-    let air_address = get_air_address(&app_handle)?;
-    let client = get_or_create_air_client(&app_handle, air_address).await?;
+    let air_address = get_air_address(app_handle.inner())?;
+    let client = get_or_create_air_client(app_handle.inner(), air_address).await?;
     
     let request = SearchRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -506,12 +506,12 @@ pub async fn SearchFiles(
 /// `AirServiceStatusDTO` with service status information
 #[tauri::command]
 pub async fn GetAirStatus(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
 ) -> Result<AirServiceStatusDTO, String> {
     debug!("[WindAirCommands] GetAirStatus called");
     
-    let air_address = get_air_address(&app_handle)?;
-    let client = get_or_create_air_client(&app_handle, air_address).await?;
+    let air_address = get_air_address(app_handle.inner())?;
+    let client = get_or_create_air_client(app_handle.inner(), air_address).await?;
     
     let request = StatusRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -553,13 +553,13 @@ pub async fn GetAirStatus(
 /// `AirMetricsDTO` with metrics data
 #[tauri::command]
 pub async fn GetAirMetrics(
-    app_handle: tauri::AppHandle,
+    app_handle: tauri::State<'_, tauri::AppHandle>,
     metric_type: Option<String>,
 ) -> Result<AirMetricsDTO, String> {
     debug!("[WindAirCommands] GetAirMetrics called with type: {:?}", metric_type);
     
-    let air_address = get_air_address(&app_handle)?;
-    let client = get_or_create_air_client(&app_handle, air_address).await?;
+    let air_address = get_air_address(app_handle.inner())?;
+    let client = get_or_create_air_client(app_handle.inner(), air_address).await?;
     
     let request = MetricsRequest {
         request_id: uuid::Uuid::new_v4().to_string(),

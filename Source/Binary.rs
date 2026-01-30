@@ -64,6 +64,19 @@ use crate::{
 	Vine,
 };
 
+// Import Wind-Air commands
+use crate::IPC::WindAirCommands::{
+	CheckForUpdates,
+	DownloadUpdate,
+	ApplyUpdate,
+	DownloadFile,
+	AuthenticateUser,
+	IndexFiles,
+	SearchFiles,
+	GetAirStatus,
+	GetAirMetrics,
+};
+
 // =============================================================================
 // Debug Helpers (Highly Verbose, Low Intrusion)
 // =============================================================================
@@ -568,6 +581,20 @@ pub fn Fn() {
 			// [Boot] [DI] Global state
 			// -----------------------------------------------------------------
 			.manage(AppState.clone())
+			// -----------------------------------------------------------------
+			// [Boot] [Tauri] [Commands] Wind-Air commands
+			// -----------------------------------------------------------------
+			.invoke_handler(tauri::generate_handler![
+				CheckForUpdates,
+				DownloadUpdate,
+				ApplyUpdate,
+				DownloadFile,
+				AuthenticateUser,
+				IndexFiles,
+				SearchFiles,
+				GetAirStatus,
+				GetAirMetrics,
+			])
 			// -----------------------------------------------------------------
 			// [Lifecycle] Setup hook
 			// -----------------------------------------------------------------
