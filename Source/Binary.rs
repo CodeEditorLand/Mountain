@@ -717,7 +717,7 @@ pub fn Fn() {
 					let AirAddress = "http://[::1]:50053";
 
 					// Attempt to connect to Air, but continue gracefully if unavailable
-					let AirProvider = match Air::CreateAirServiceProvider(AirAddress) {
+					let AirProvider = match Air::CreateAirServiceProvider(AirAddress).await {
 						Ok(provider) => {
 							info!("[Air] [Init] Successfully connected to Air at {}", AirAddress);
 							provider

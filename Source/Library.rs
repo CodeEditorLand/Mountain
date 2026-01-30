@@ -4,6 +4,25 @@
 //! application, declaring all of its major internal components. This allows
 //! the `Binary.rs` file to have a clean entry point that orchestrates these
 //! components.
+//!
+//! ## File Responsibilities
+//! - Main library entry point for Mountain application
+//! - Module declarations for all Mountain components
+//! - Mobile entry point configuration for Tauri
+//! - Feature flag management and conditional compilation
+//! - Cross-platform compatibility definitions
+//!
+//! ## TODO
+//! - [ ] Add comprehensive integration tests for all modules
+//! - [ ] Implement proper error handling and recovery patterns
+//! - [ ] Add performance monitoring and optimization
+//! - [ ] Implement proper logging and diagnostics
+//! - [ ] Add security audit and vulnerability assessment
+//! - [ ] Implement proper memory management and resource cleanup
+//! - [ ] Add comprehensive documentation for all APIs
+//! - [ ] Implement proper testing infrastructure
+//! - [ ] Add performance benchmarking and profiling
+//! - [ ] Implement proper error boundary handling
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(non_snake_case, non_camel_case_types)]

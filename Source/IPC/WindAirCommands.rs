@@ -194,7 +194,7 @@ pub async fn CheckForUpdates(
 /// `DownloadResultDTO` with download status
 #[tauri::command]
 pub async fn DownloadUpdate(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
     url: String,
     destination: String,
     checksum: Option<String>,
@@ -246,7 +246,7 @@ pub async fn DownloadUpdate(
 /// Success status or error message
 #[tauri::command]
 pub async fn ApplyUpdate(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
     update_id: String,
     update_path: String,
 ) -> Result<bool, String> {
@@ -292,7 +292,7 @@ pub async fn ApplyUpdate(
 /// `DownloadResultDTO` with download status
 #[tauri::command]
 pub async fn DownloadFile(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
     url: String,
     destination: String,
 ) -> Result<DownloadResultDTO, String> {
@@ -344,7 +344,7 @@ pub async fn DownloadFile(
 /// `AuthResponseDTO` with authentication token
 #[tauri::command]
 pub async fn AuthenticateUser(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
     username: String,
     password: String,
     provider: String,
@@ -396,7 +396,7 @@ pub async fn AuthenticateUser(
 /// `IndexResultDTO` with indexing results
 #[tauri::command]
 pub async fn IndexFiles(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
     path: String,
     patterns: Vec<String>,
     exclude_patterns: Option<Vec<String>>,
@@ -449,7 +449,7 @@ pub async fn IndexFiles(
 /// `SearchResultsDTO` with matching files
 #[tauri::command]
 pub async fn SearchFiles(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
     query: String,
     index_id: Option<String>,
     max_results: Option<u32>,
@@ -506,7 +506,7 @@ pub async fn SearchFiles(
 /// `AirServiceStatusDTO` with service status information
 #[tauri::command]
 pub async fn GetAirStatus(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
 ) -> Result<AirServiceStatusDTO, String> {
     debug!("[WindAirCommands] GetAirStatus called");
     
@@ -553,7 +553,7 @@ pub async fn GetAirStatus(
 /// `AirMetricsDTO` with metrics data
 #[tauri::command]
 pub async fn GetAirMetrics(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
     metric_type: Option<String>,
 ) -> Result<AirMetricsDTO, String> {
     debug!("[WindAirCommands] GetAirMetrics called with type: {:?}", metric_type);

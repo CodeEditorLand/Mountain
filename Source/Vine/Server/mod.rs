@@ -5,7 +5,7 @@
 //! `Cocoon`, handling RPC requests, and dispatching them into the Mountain
 //! application logic.
 
-#![allow(non_snakeCase)]
+#![allow(non_snake_case)]
 
 pub mod Initialize;
 

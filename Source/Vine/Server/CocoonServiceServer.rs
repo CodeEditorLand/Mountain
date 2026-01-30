@@ -15,9 +15,9 @@ use super::super::Generated::{
 };
 use crate::{
     ApplicationState::ApplicationState,
-    Environment::MountainEnvironment,
-    ExtensionManagement::ExtensionManagementService,
+    Environment::MountainEnvironment::MountainEnvironment,
 };
+use Common::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 
 /// Implementation of the CocoonService gRPC server
 pub struct CocoonServiceServer {
@@ -62,7 +62,7 @@ impl CocoonServiceServer {
             "GetExtensions" => {
                 debug!("[CocoonServiceServer] Getting extensions");
                 
-                let extension_service: Arc<dyn ExtensionManagementService> = self.environment.Require();
+                let extension_service: Arc<dyn ExtensionManagementService> = (*self.environment).Require();
                 let extensions = extension_service.get_extensions().await.map_err(|e| {
                     Status::internal(format!("Failed to get extensions: {}", e))
                 })?;
@@ -86,7 +86,7 @@ impl CocoonServiceServer {
                     .as_str()
                     .ok_or_else(|| Status::invalid_argument("Missing extensionId parameter"))?;
                 
-                let extension_service: Arc<dyn ExtensionManagementService> = self.environment.Require();
+                let extension_service: Arc<dyn ExtensionManagementService> = (*self.environment).Require();
                 extension_service.activate_extension(extension_id).await
                     .map_err(|e| Status::internal(format!("Failed to activate extension: {}", e)))?;
                 
