@@ -22,7 +22,118 @@ use Common::Environment::Requires::Requires;
 use Common::FileSystem::FileSystemWriter::FileSystemWriter;
 use crate::IPC::AdvancedFeatures::PerformanceStats;
 
+/// Synchronization status
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct SyncStatus {
+    pub total_documents: u32,
+    pub synced_documents: u32,
+    pub conflicted_documents: u32,
+    pub offline_documents: u32,
+    pub last_sync_duration_ms: u64,
+}
+
+/// Document synchronization state
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum SyncState {
+    Modified,
+    Synced,
+    Conflicted,
+    Offline,
+}
+
+/// Change type for document modifications
+#[derive(Clone, Copy, Debug)]
+pub enum ChangeType {
+    Update,
+    Insert,
+    Delete,
+    Move,
+    Other,
+}
+
+/// Single synchronized document
+#[derive(Clone, Debug)]
+pub struct SynchronizedDocument {
+    pub document_id: String,
+    pub file_path: String,
+    pub last_modified: u64,
+    pub content_hash: String,
+    pub sync_state: SyncState,
+    pub version: u32,
+}
+
+/// Document change
+#[derive(Clone, Debug)]
+pub struct DocumentChange {
+    pub change_id: String,
+    pub document_id: String,
+    pub change_type: ChangeType,
+    pub content: Option<String>,
+    pub applied: bool,
+}
+
+/// Document synchronization state
+pub struct DocumentSynchronization {
+    pub synchronized_documents: HashMap<String, SynchronizedDocument>,
+    pub pending_changes: HashMap<String, Vec<DocumentChange>>,
+    pub last_sync_time: u64,
+    pub sync_status: SyncStatus,
+}
+
+/// Real-time update
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct RealTimeUpdate {
+    pub target: String,
+    pub data: String,
+}
+
+/// Real-time updates manager
+pub struct RealTimeUpdates {
+    pub updates: Vec<RealTimeUpdate>,
+    pub subscribers: HashMap<String, Vec<String>>,
+    pub update_queue: Vec<RealTimeUpdate>,
+    pub last_broadcast: u64,
+}
+
+/// View state
+#[derive(Clone, Debug)]
+pub struct ViewState {
+    pub zoom_level: f32,
+    pub sidebar_visible: bool,
+    pub panel_visible: bool,
+    pub status_bar_visible: bool,
+}
+
+/// Grid layout
+#[derive(Clone, Debug)]
+pub struct GridLayout {
+    pub rows: u32,
+    pub columns: u32,
+    pub cell_width: u32,
+    pub cell_height: u32,
+}
+
+/// Editor layout state
+#[derive(Clone, Debug)]
+pub struct LayoutState {
+    pub editor_groups: Vec<String>,
+    pub active_group: u32,
+    pub grid_layout: GridLayout,
+}
+
+/// UI state synchronization
+#[derive(Clone, Debug)]
+pub struct UIStateSynchronization {
+    pub active_editor: Option<String>,
+    pub cursor_positions: HashMap<String, (u32, u32)>,
+    pub selection_ranges: HashMap<String, (u32, u32)>,
+    pub view_state: ViewState,
+    pub theme: String,
+    pub layout: LayoutState,
+}
+
 /// Advanced Wind synchronization features
+#[derive(Clone)]
 pub struct WindAdvancedSync {
     runtime: Arc<ApplicationRunTime>,
     document_sync: Arc<Mutex<DocumentSynchronization>>,
@@ -73,6 +184,8 @@ impl WindAdvancedSync {
             real_time_updates: Arc::new(Mutex::new(RealTimeUpdates {
                 updates: Vec::new(),
                 subscribers: HashMap::new(),
+                update_queue: Vec::new(),
+                last_broadcast: 0,
             })),
             performance_stats: Arc::new(Mutex::new(PerformanceStats {
                 total_messages_sent: 0,
@@ -191,171 +304,7 @@ impl WindAdvancedSync {
     }
 }
 
-/// Document synchronization state
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DocumentSynchronization {
-    pub synchronized_documents: HashMap<String, SynchronizedDocument>,
-    pub pending_changes: HashMap<String, Vec<DocumentChange>>,
-    pub last_sync_time: u64,
-    pub sync_status: SyncStatus,
-}
-
-/// Synchronized document
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SynchronizedDocument {
-    pub document_id: String,
-    pub file_path: String,
-    pub last_modified: u64,
-    pub content_hash: String,
-    pub sync_state: SyncState,
-    pub version: u32,
-}
-
-/// Document change
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DocumentChange {
-    pub change_id: String,
-    pub document_id: String,
-    pub change_type: ChangeType,
-    pub content: serde_json::Value,
-    pub timestamp: u64,
-    pub applied: bool,
-}
-
-/// Change type
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum ChangeType {
-    Insert,
-    Delete,
-    Update,
-    Format,
-    Rename,
-}
-
-/// Sync state
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub enum SyncState {
-    Synced,
-    Modified,
-    Conflicted,
-    Offline,
-    Syncing,
-}
-
-/// Sync status
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SyncStatus {
-    pub total_documents: u32,
-    pub synced_documents: u32,
-    pub conflicted_documents: u32,
-    pub offline_documents: u32,
-    pub last_sync_duration_ms: u64,
-}
-
-/// UI state synchronization
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UIStateSynchronization {
-    pub active_editor: Option<String>,
-    pub cursor_positions: HashMap<String, CursorPosition>,
-    pub selection_ranges: HashMap<String, SelectionRange>,
-    pub view_state: ViewState,
-    pub theme: String,
-    pub layout: LayoutState,
-}
-
-/// Cursor position
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CursorPosition {
-    pub line: u32,
-    pub column: u32,
-    pub document_id: String,
-}
-
-/// Selection range
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SelectionRange {
-    pub start_line: u32,
-    pub start_column: u32,
-    pub end_line: u32,
-    pub end_column: u32,
-    pub document_id: String,
-}
-
-/// View state
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ViewState {
-    pub zoom_level: f64,
-    pub sidebar_visible: bool,
-    pub panel_visible: bool,
-    pub status_bar_visible: bool,
-}
-
-/// Layout state
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct LayoutState {
-    pub editor_groups: Vec<EditorGroup>,
-    pub active_group: u32,
-    pub grid_layout: GridLayout,
-}
-
-/// Editor group
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EditorGroup {
-    pub group_id: u32,
-    pub active_editor: Option<String>,
-    pub editors: Vec<String>,
-    pub dimensions: Dimensions,
-}
-
-/// Dimensions
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Dimensions {
-    pub x: u32,
-    pub y: u32,
-    pub width: u32,
-    pub height: u32,
-}
-
-/// Grid layout
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct GridLayout {
-    pub rows: u32,
-    pub columns: u32,
-    pub cell_width: u32,
-    pub cell_height: u32,
-}
-
-/// Real-time updates
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RealTimeUpdates {
-    pub subscribers: HashMap<String, Vec<String>>,
-    pub last_broadcast: u64,
-    pub update_queue: Vec<RealTimeUpdate>,
-}
-
-/// Real-time update
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RealTimeUpdate {
-    pub update_id: String,
-    pub update_type: UpdateType,
-    pub target: String,
-    pub data: serde_json::Value,
-    pub timestamp: u64,
-}
-
-/// Update type
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub enum UpdateType {
-    DocumentChange,
-    CursorMove,
-    SelectionChange,
-    ViewChange,
-    LayoutChange,
-    ThemeChange,
-}
-
-
-
+impl WindAdvancedSync {
     /// Start advanced synchronization
     pub async fn start_synchronization(&self) -> Result<(), String> {
         info!("[WindAdvancedSync] Starting advanced synchronization");
@@ -633,9 +582,15 @@ pub enum UpdateType {
     /// Broadcast updates to subscribers
     async fn broadcast_updates(&self, updates: Vec<RealTimeUpdate>) -> Result<(), String> {
         for update in updates {
+            // Get subscribers for this target
+            let subscribers = {
+                let rt = self.real_time_updates.lock().unwrap();
+                rt.subscribers.get(&update.target).cloned()
+            };
+            
             // Broadcast to all subscribers for this target
-            if let Some(subscribers) = self.real_time_updates.lock().unwrap().subscribers.get(&update.target) {
-                for subscriber in subscribers {
+            if let Some(subscriber_list) = subscribers {
+                for subscriber in subscriber_list {
                     if let Err(e) = self.runtime.Environment.ApplicationHandle.emit(
                         &format!("real-time-update-{}", subscriber),
                         &update
@@ -718,6 +673,7 @@ pub enum UpdateType {
             performance_stats: self.performance_stats.clone(),
         }
     }
+}
 
 /// Tauri command to add document for synchronization
 #[tauri::command]

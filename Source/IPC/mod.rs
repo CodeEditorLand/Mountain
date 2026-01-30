@@ -14,7 +14,7 @@ pub mod AdvancedFeatures;
 pub mod WindAdvancedSync;
 pub mod WindAirCommands;
 
-pub use TauriIPCServer::TauriIPCServer;
+// Re-export commonly used items for convenience
 pub use WindServiceHandlers::register_wind_ipc_handlers;
 pub use StatusReporter::initialize_status_reporter;
 pub use AdvancedFeatures::initialize_advanced_features;

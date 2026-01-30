@@ -42,7 +42,7 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 
 // Import Air client types when Air is available in the workspace
 #[cfg(feature = "AirIntegration")]
-use Air::Vine::Generated::air_service_client::AirServiceClient;
+use Air::Vine::Generated::air::AirServiceClient;
 
 /// Update delegation mode for controlling which update mechanism to use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

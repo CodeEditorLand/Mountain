@@ -83,8 +83,8 @@ macro_rules! TraceStep {
 /// frontend.
 #[tauri::command]
 async fn MountainGetWorkbenchConfiguration(
-	ApplicationHandle:AppHandle<Wry>,
-	State:tauri::State<'_, Arc<ApplicationState>>,
+	ApplicationHandle: AppHandle,
+	State: tauri::State<'_, Arc<ApplicationState>>,
 ) -> Result<serde_json::Value, String> {
 	info!("[IPC] [WorkbenchConfig] Request received.");
 
@@ -573,7 +573,7 @@ pub fn Fn() {
 			.setup({
 				let LocalhostUrl = LocalhostUrl.clone();
 
-				move |Application| async move {
+				move |Application| {
 					info!("[Lifecycle] [Setup] Setup hook started.");
 
 					debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
@@ -613,42 +613,6 @@ pub fn Fn() {
 
 				debug!("[Lifecycle] [IPC] Mountain IPC Server initialized.");
 
-				// ---------------------------------------------------------
-				// [Lifecycle] [IPC] Initialize Status Reporter
-				// ---------------------------------------------------------
-				debug!("[Lifecycle] [IPC] Initializing Status Reporter...");
-
-				let status_reporter = initialize_status_reporter(&ApplicationHandle, Runtime.clone())?;
-				status_reporter.set_ipc_server(ipc_server);
-
-				// Start periodic status reporting
-				if let Err(e) = status_reporter.start_periodic_reporting(30).await {
-					error!("[Lifecycle] [IPC] Failed to start status reporting: {}", e);
-				}
-
-				debug!("[Lifecycle] [IPC] Status Reporter initialized.");
-
-				// ---------------------------------------------------------
-				// [Lifecycle] [IPC] Initialize Advanced Features
-				// ---------------------------------------------------------
-				debug!("[Lifecycle] [IPC] Initializing Advanced Features...");
-
-				if let Err(e) = initialize_advanced_features(&ApplicationHandle, Runtime.clone()) {
-					error!("[Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
-				}
-
-				debug!("[Lifecycle] [IPC] Advanced Features initialized.");
-
-				// ---------------------------------------------------------
-				// [Lifecycle] [IPC] Initialize Wind Advanced Sync
-				// ---------------------------------------------------------
-				debug!("[Lifecycle] [IPC] Initializing Wind Advanced Sync...");
-
-				if let Err(e) = initialize_wind_advanced_sync(&ApplicationHandle, Runtime.clone()) {
-					error!("[Lifecycle] [IPC] Failed to initialize Wind advanced sync: {}", e);
-				}
-
-				debug!("[Lifecycle] [IPC] Wind Advanced Sync initialized.");
 					TraceStep!("[UI] [Window] InitScript bytes=0");
 
 					debug!("[UI] [Window] Creating window builder...");
@@ -707,9 +671,42 @@ pub fn Fn() {
 						Environment.clone(),
 					));
 
-					ApplicationHandle.manage(RunTime);
+					ApplicationHandle.manage(RunTime.clone());
 
 					info!("[Backend] [Runtime] ApplicationRunTime managed.");
+
+					// ---------------------------------------------------------
+					// [Lifecycle] [IPC] Initialize Status Reporter
+					// ---------------------------------------------------------
+					debug!("[Lifecycle] [IPC] Initializing Status Reporter...");
+
+					if let Err(e) = initialize_status_reporter(&ApplicationHandle, RunTime.clone()) {
+						error!("[Lifecycle] [IPC] Failed to initialize status reporter: {}", e);
+					}
+
+					debug!("[Lifecycle] [IPC] Status Reporter initialized.");
+
+					// ---------------------------------------------------------
+					// [Lifecycle] [IPC] Initialize Advanced Features
+					// ---------------------------------------------------------
+					debug!("[Lifecycle] [IPC] Initializing Advanced Features...");
+
+					if let Err(e) = initialize_advanced_features(&ApplicationHandle, RunTime.clone()) {
+						error!("[Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
+					}
+
+					debug!("[Lifecycle] [IPC] Advanced Features initialized.");
+
+					// ---------------------------------------------------------
+					// [Lifecycle] [IPC] Initialize Wind Advanced Sync
+					// ---------------------------------------------------------
+					debug!("[Lifecycle] [IPC] Initializing Wind Advanced Sync...");
+
+					if let Err(e) = initialize_wind_advanced_sync(&ApplicationHandle, RunTime.clone()) {
+						error!("[Lifecycle] [IPC] Failed to initialize Wind advanced sync: {}", e);
+					}
+
+					debug!("[Lifecycle] [IPC] Wind Advanced Sync initialized.");
 
 					// ---------------------------------------------------------
 					// [Air] [gRPC] Initialize Air client
@@ -719,20 +716,13 @@ pub fn Fn() {
 					let AirAddress = "http://[::1]:50053";
 
 					// Attempt to connect to Air, but continue gracefully if unavailable
-					let AirProvider = match tokio::time::timeout(
-						tokio::time::Duration::from_secs(3),
-						Air::CreateAirServiceProvider(AirAddress)
-					).await {
-						Ok(Ok(provider)) => {
+					let AirProvider = match Air::CreateAirServiceProvider(AirAddress) {
+						Ok(provider) => {
 							info!("[Air] [Init] Successfully connected to Air at {}", AirAddress);
 							provider
 						},
-						Ok(Err(e)) => {
+						Err(e) => {
 							warn!("[Air] [Init] Failed to connect to Air: {}. Continuing without Air client.", e);
-							Air::CreateAirServiceProviderOrUnavailable(AirAddress)
-						},
-						Err(_) => {
-							warn!("[Air] [Init] Connection to Air timed out. Continuing without Air client.");
 							Air::CreateAirServiceProviderOrUnavailable(AirAddress)
 						},
 					};

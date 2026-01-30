@@ -12,9 +12,8 @@
 pub mod AirClient;
 pub mod AirServiceProvider;
 
-// Re-export the main types for convenience
+// Re-export convenience types from submodules
 pub use AirClient::{
-	AirClient,
 	AuthenticationRequest,
 	AuthenticationResponse,
 	UpdateCheckRequest,
@@ -33,4 +32,4 @@ pub use AirClient::{
 	MetricsResponse,
 	DEFAULT_AIR_SERVER_ADDRESS,
 };
-pub use AirServiceProvider::{AirServiceProvider, CreateAirServiceProvider, CreateAirServiceProviderOrUnavailable};
+pub use AirServiceProvider::{CreateAirServiceProvider, CreateAirServiceProviderOrUnavailable};

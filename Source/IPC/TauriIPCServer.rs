@@ -9,7 +9,8 @@
 
 #![allow(non_snake_case, non_camel_case_types)]
 
-use std::{collections::HashMap, io::{self, Read, Write}, sync::{Arc, Mutex}};
+use std::{collections::HashMap, io::{Read, Write}, sync::{Arc, Mutex}};
+use base64::{engine::general_purpose, Engine};
 use flate2::{write::GzEncoder, Compression, read::GzDecoder};
 use log::{debug, error, info, trace};
 use ring::{aead::{self, LessSafeKey, UnboundKey, AES_256_GCM}, hmac, rand::SystemRandom};
@@ -340,7 +341,7 @@ impl TauriIPCServer {
         
         let batch_message = TauriIPCMessage {
             channel: "compressed_batch".to_string(),
-            data: serde_json::Value::String(base64::encode(&compressed_data)),
+            data: serde_json::Value::String(general_purpose::STANDARD.encode(&compressed_data)),
             sender: Some("mountain".to_string()),
             timestamp: std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -356,7 +357,7 @@ impl TauriIPCServer {
         let compressed_data_base64 = message.data.as_str()
             .ok_or("Compressed batch data must be a string")?;
         
-        let compressed_data = base64::decode(compressed_data_base64)
+        let compressed_data = general_purpose::STANDARD.decode(compressed_data_base64)
             .map_err(|e| format!("Failed to decode base64: {}", e))?;
         
         let compressor = MessageCompressor::new(6, 10);
@@ -429,17 +430,6 @@ impl TauriIPCServer {
         self.handle_incoming_message(message).await
     }
 
-    /// Create security context from incoming message
-    fn create_security_context(&self, message: &TauriIPCMessage) -> SecurityContext {
-        SecurityContext {
-            user_id: message.sender.clone().unwrap_or("unknown".to_string()),
-            roles: vec!["user".to_string()], // Default role
-            permissions: vec![],
-            ip_address: "127.0.0.1".to_string(), // Default IP for IPC
-            timestamp: std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_millis(message.timestamp),
-        }
-    }
-
     /// Handle message with permission validation
     pub async fn handle_message_with_permissions(&self, message: TauriIPCMessage) -> Result<(), String> {
         let permission_manager = PermissionManager::new();
@@ -454,12 +444,6 @@ impl TauriIPCServer {
         // Process the message
         self.handle_incoming_message(message).await
     }
-
-    /// Get security audit log
-    pub async fn get_security_audit_log(&self, limit: usize) -> Result<Vec<SecurityEvent>, String> {
-        let permission_manager = PermissionManager::new();
-        Ok(permission_manager.get_audit_log(limit).await)
-    }
 }
 
 /// Connection pool for IPC operations
@@ -472,6 +456,7 @@ pub struct ConnectionPool {
 }
 
 /// Handle representing an active connection
+#[derive(Clone)]
 pub struct ConnectionHandle {
     pub id: String,
     pub created_at: std::time::Instant,
@@ -645,9 +630,10 @@ impl ConnectionHealthChecker {
 }
 
 /// Connection statistics
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct ConnectionStats {
     pub total_connections: usize,
+    pub healthy_connections: usize,
     pub max_connections: usize,
     pub available_permits: usize,
     pub connection_timeout: Duration,
@@ -810,11 +796,6 @@ pub async fn mountain_ipc_get_status(
         Err("IPC Server not found in application state".to_string())
     }
 }
-
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use serde::{Deserialize, Serialize};
 
 /// Security context for permission validation
 #[derive(Debug, Clone, Serialize, Deserialize)]

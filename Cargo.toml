@@ -34,6 +34,7 @@ colored = { workspace = true }
 Common = { workspace = true }
 dirs = { workspace = true }
 Echo = { workspace = true }
+Air = { workspace = true }
 env_logger = { workspace = true }
 futures-util = { workspace = true, features = ["sink", "std"] }
 globset = { workspace = true }
@@ -91,7 +92,7 @@ autoexamples = false
 autotests = false
 default-run = "Mountain"
 description = "Mountain ⛰️"
-edition = "2024"
+edition = "2021"
 license-file = "LICENSE"
 name = "Mountain"
 publish = false

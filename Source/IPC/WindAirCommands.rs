@@ -10,18 +10,17 @@
 
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, command, Manager};
-use tonic::transport::Channel;
-use log::{debug, error, info};
+use tauri::AppHandle;
+use log::{debug, info};
 
-use crate::Configuration::MountainConfiguration::MountainConfiguration;
-
-// Re-import Air's generated gRPC client
-// Note: In actual implementation, this would be imported from Air's crate or a shared dependency
-// For now, we'll define the client interface inline or use a wrapper
-use air_proto::air_client::AirClient as AirServiceClient;
-use air_proto::{AuthenticationRequest, UpdateCheckRequest, DownloadRequest, 
-                IndexRequest, SearchRequest, StatusRequest, MetricsRequest};
+// Import Air types using fully qualified paths to avoid name collisions
+use crate::Air::AirClient::{
+	AirClient as AirClientType,
+	AuthenticationRequest, UpdateCheckRequest, DownloadRequest, 
+	IndexRequest, SearchRequest, StatusRequest, MetricsRequest,
+	ApplyUpdateRequest,
+};
+use crate::Air::DEFAULT_AIR_SERVER_ADDRESS;
 
 /// Data Transfer Objects for Wind-Air communication
 
@@ -91,34 +90,35 @@ pub struct AirMetricsDTO {
 
 /// Air Client - Wrapper for the gRPC client connection to Air daemon
 #[derive(Debug, Clone)]
-pub struct AirClient {
-    client: AirServiceClient<Channel>,
+pub struct AirClientWrapper {
+	client: AirClientType,
 }
 
-impl AirClient {
-    /// Create a new AirClient connected to the Air daemon
-    pub async fn new(address: String) -> Result<Self, String> {
-        debug!("[WindAirCommands] Connecting to Air daemon at: {}", address);
-        
-        let client = AirClient::new(&address)
-            .await
-            .map_err(|e| format!("Failed to connect to Air daemon: {}", e))?;
-        
-        info!("[WindAirCommands] Successfully connected to Air daemon");
-        Ok(Self { client })
-    }
-    
-    /// Reconnect to Air daemon
-    pub async fn reconnect(&mut self, address: String) -> Result<(), String> {
-        debug!("[WindAirCommands] Reconnecting to Air daemon at: {}", address);
-        
-        self.client = AirClient::new(&address)
-            .await
-            .map_err(|e| format!("Failed to reconnect to Air daemon: {}", e))?;
-        
-        info!("[WindAirCommands] Successfully reconnected to Air daemon");
-        Ok(())
-    }
+impl AirClientWrapper {
+	/// Create a new AirClient connected to the Air daemon
+	pub async fn new(address: String) -> Result<Self, String> {
+		debug!("[WindAirCommands] Connecting to Air daemon at: {}", address);
+		
+		let client = AirClientType::new(&address)
+			.await
+			.map_err(|e| format!("Failed to connect to Air daemon: {}", e))?;
+		
+		info!("[WindAirCommands] Successfully connected to Air daemon");
+		Ok(Self { client })
+	}
+	
+	/// Reconnect to Air daemon
+	pub async fn reconnect(&mut self, address: String) -> Result<(), String> {
+		debug!("[WindAirCommands] Reconnecting to Air daemon at: {}", address);
+		
+		let client = AirClientType::new(&address)
+			.await
+			.map_err(|e| format!("Failed to reconnect to Air daemon: {}", e))?;
+		
+		self.client = client;
+		info!("[WindAirCommands] Successfully reconnected to Air daemon");
+		Ok(())
+	}
 }
 
 // ============================================================================
@@ -148,7 +148,7 @@ pub async fn CheckForUpdates(
     
     // Get the Air client from app state or configuration
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
     // Build the request
     let request = UpdateCheckRequest {
@@ -202,7 +202,7 @@ pub async fn DownloadUpdate(
     debug!("[WindAirCommands] DownloadUpdate called: {} -> {}", url, destination);
     
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
     let request = DownloadRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -253,10 +253,10 @@ pub async fn ApplyUpdate(
     debug!("[WindAirCommands] ApplyUpdate called: id={}, path={}", update_id, update_path);
     
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
-    // Use ApplyUpdateRequest from Air's proto
-    let request = air_proto::ApplyUpdateRequest {
+    // Use ApplyUpdateRequest from Air module
+    let request = ApplyUpdateRequest {
         request_id: update_id.clone(),
         version: update_id,
         update_path,
@@ -273,10 +273,9 @@ pub async fn ApplyUpdate(
     // }
     // 
     // info!("[WindAirCommands] Update applied successfully");
-    
+
     // Placeholder response for now
-    return Err("ApplyUpdate not yet implemented".to_string());
-    Ok(response.success)
+    Err("ApplyUpdate not yet implemented".to_string())
 }
 
 /// Command: Download File
@@ -300,7 +299,7 @@ pub async fn DownloadFile(
     debug!("[WindAirCommands] DownloadFile called: {} -> {}", url, destination);
     
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
     let request = DownloadRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -353,7 +352,7 @@ pub async fn AuthenticateUser(
     debug!("[WindAirCommands] AuthenticateUser called: {} via {}", username, provider);
     
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
     let request = AuthenticationRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -406,7 +405,7 @@ pub async fn IndexFiles(
     debug!("[WindAirCommands] IndexFiles called: {} with patterns: {:?}", path, patterns);
     
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
     let request = IndexRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -458,7 +457,7 @@ pub async fn SearchFiles(
     debug!("[WindAirCommands] SearchFiles called: query={}, index={:?}", query, index_id);
     
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
     let request = SearchRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -481,8 +480,8 @@ pub async fn SearchFiles(
         .map(|r| FileResultDTO {
             path: r.path,
             size: r.size,
-            line: if r.line > 0 { Some(r.line) } else { None },
-            content: if !r.content.is_empty() { Some(r.content) } else { None },
+            line: if r.line_number > 0 { Some(r.line_number) } else { None },
+            content: if !r.match_preview.is_empty() { Some(r.match_preview) } else { None },
         })
         .collect();
     
@@ -512,7 +511,7 @@ pub async fn GetAirStatus(
     debug!("[WindAirCommands] GetAirStatus called");
     
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
     let request = StatusRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -523,16 +522,8 @@ pub async fn GetAirStatus(
         .await
         .map_err(|e| format!("Failed to get Air status: {}", e))?;
     
-    // Also perform health check
     // TODO: Implement HealthCheck method in AirClient
-    // let health_response = client
-    //     .HealthCheck(air_proto::HealthCheckRequest {})
-    //     .await
-    //     .map_err(|e| format!("Health check failed: {}", e))?;
-    let health_response = air_proto::HealthCheckResponse {
-        healthy: true,
-        message: "Health check not yet implemented".to_string(),
-    };
+    let healthy = response.uptime_seconds > 0;
     
     let result = AirServiceStatusDTO {
         version: response.version,
@@ -541,7 +532,7 @@ pub async fn GetAirStatus(
         successful_requests: response.successful_requests,
         failed_requests: response.failed_requests,
         active_requests: response.active_requests,
-        healthy: health_response.healthy,
+        healthy,
     };
     
     debug!("[WindAirCommands] Air status retrieved: version={}, healthy={}", 
@@ -568,7 +559,7 @@ pub async fn GetAirMetrics(
     debug!("[WindAirCommands] GetAirMetrics called with type: {:?}", metric_type);
     
     let air_address = get_air_address(&app_handle)?;
-    let mut client = get_or_create_air_client(&app_handle, air_address).await?;
+    let client = get_or_create_air_client(&app_handle, air_address).await?;
     
     let request = MetricsRequest {
         request_id: uuid::Uuid::new_v4().to_string(),
@@ -581,11 +572,21 @@ pub async fn GetAirMetrics(
         .map_err(|e| format!("Failed to get Air metrics: {}", e))?;
     
     let result = AirMetricsDTO {
-        memory_usage_mb: response.memory_usage_mb,
-        cpu_usage_percent: response.cpu_usage_percent,
-        average_response_time: response.average_response_time,
-        disk_usage_mb: response.disk_usage_mb,
-        network_usage_mbps: response.network_usage_mbps,
+        memory_usage_mb: response.metrics.get("memory_usage_mb")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0.0),
+        cpu_usage_percent: response.metrics.get("cpu_usage_percent")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0.0),
+        average_response_time: response.metrics.get("average_response_time")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0.0),
+        disk_usage_mb: response.metrics.get("disk_usage_mb")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0.0),
+        network_usage_mbps: response.metrics.get("network_usage_mbps")
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(0.0),
     };
     
     debug!("[WindAirCommands] Air metrics retrieved");
@@ -597,31 +598,21 @@ pub async fn GetAirMetrics(
 // ============================================================================
 
 /// Get the Air daemon address from configuration
-fn get_air_address(app_handle: &AppHandle) -> Result<String, String> {
-    // Try to get from Mountain configuration
-    if let Some(config) = app_handle.try_state::<Arc<MountainConfiguration>>() {
-        let config = config.read().map_err(|e| format!("Failed to read config: {}", e))?;
-        // Assume there's an air_connection field or similar
-        // For now, return default
-        return Ok("[::1]:50053".to_string());
-    }
-    
-    Default configuration
-    Ok("[::1]:50053".to_string())
+fn get_air_address(_app_handle: &AppHandle) -> Result<String, String> {
+    // Return default Air address
+    Ok(DEFAULT_AIR_SERVER_ADDRESS.to_string())
 }
 
 /// Get or create the Air client instance
 async fn get_or_create_air_client(
-    app_handle: &AppHandle,
+    _app_handle: &AppHandle,
     address: String,
-) -> Result<Arc<tokio::sync::Mutex<AirClient>>, String> {
-    // Try to get existing client from app state
-    // If not exists, create new one and store it
-    
-    // For simplicity, create a new client each time
+) -> Result<AirClientType, String> {
+    // Create a new client each time
     // In production, you'd use a state management pattern
-    let client = AirClient::new(address).await?;
-    Ok(Arc::new(tokio::sync::Mutex::new(client)))
+    AirClientType::new(&address)
+        .await
+        .map_err(|e| format!("Failed to create Air client: {}", e))
 }
 
 /// Register all Wind-Air commands with Tauri
@@ -638,181 +629,4 @@ pub fn register_wind_air_commands<R: tauri::Runtime>(builder: tauri::Builder<R>)
             GetAirStatus,
             GetAirMetrics,
         ])
-}
-
-// ============================================================================
-// Placeholder Module for Air Proto (Would be imported from Air crate)
-// ============================================================================
-
-// This is a placeholder - in the actual implementation, these would be imported
-// from the Air crate's generated protobuf code
-pub mod air_proto {
-    use tonic::transport::Channel;
-    
-    pub mod air_client {
-        use super::*;
-        
-        #[derive(Debug, Clone)]
-        pub struct AirClient<T> {
-            pub client: super::AirServiceClient<T>,
-        }
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct AirServiceClient<T> {
-        _phantom: std::marker::PhantomData<T>,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct AuthenticationRequest {
-        pub request_id: String,
-        pub username: String,
-        pub password: String,
-        pub provider: String,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct UpdateCheckRequest {
-        pub request_id: String,
-        pub current_version: String,
-        pub channel: String,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct DownloadRequest {
-        pub request_id: String,
-        pub url: String,
-        pub destination_path: String,
-        pub checksum: String,
-        pub headers: std::collections::HashMap<String, String>,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct ApplyUpdateRequest {
-        pub request_id: String,
-        pub version: String,
-        pub update_path: String,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct IndexRequest {
-        pub request_id: String,
-        pub path: String,
-        pub patterns: Vec<String>,
-        pub exclude_patterns: Vec<String>,
-        pub max_depth: u32,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct SearchRequest {
-        pub request_id: String,
-        pub query: String,
-        pub path: String,
-        pub max_results: u32,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct StatusRequest {
-        pub request_id: String,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct MetricsRequest {
-        pub request_id: String,
-        pub metric_type: String,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct HealthCheckRequest {
-        _private: (),
-    }
-    
-    // Response types
-    #[derive(Debug, Clone)]
-    pub struct UpdateCheckResponse {
-        pub request_id: String,
-        pub update_available: bool,
-        pub version: String,
-        pub download_url: String,
-        pub release_notes: String,
-        pub error: String,
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct ApplyUpdateResponse {
-        pub request_id: String,
-        pub success: bool,
-        pub error: String,
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct DownloadResponse {
-        pub request_id: String,
-        pub success: bool,
-        pub file_path: String,
-        pub file_size: u64,
-        pub checksum: String,
-        pub error: String,
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct AuthenticationResponse {
-        pub request_id: String,
-        pub success: bool,
-        pub token: String,
-        pub error: String,
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct IndexResponse {
-        pub request_id: String,
-        pub success: bool,
-        pub files_indexed: u32,
-        pub total_size: u64,
-        pub error: String,
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct SearchResponse {
-        pub request_id: String,
-        pub results: Vec<FileResult>,
-        pub total_results: u32,
-        pub error: String,
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct StatusResponse {
-        pub version: String,
-        pub uptime_seconds: u64,
-        pub total_requests: u64,
-        pub successful_requests: u64,
-        pub failed_requests: u64,
-        pub average_response_time: f64,
-        pub memory_usage_mb: f64,
-        pub cpu_usage_percent: f64,
-        pub active_requests: u32,
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct MetricsResponse {
-        pub memory_usage_mb: f64,
-        pub cpu_usage_percent: f64,
-        pub average_response_time: f64,
-        pub disk_usage_mb: f64,
-        pub network_usage_mbps: f64,
-    }
-    
-    #[derive(Debug, Clone)]
-    pub struct HealthCheckResponse {
-        pub healthy: bool,
-        pub timestamp: u64,
-    }
-    
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct FileResult {
-        pub path: String,
-        pub size: u64,
-        pub line: u32,
-        pub content: String,
-    }
 }
