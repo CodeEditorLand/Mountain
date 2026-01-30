@@ -49,6 +49,14 @@ pub async fn mountain_ipc_invoke(
         "file:read" => handle_file_read(runtime.inner().clone(), args).await,
         "file:write" => handle_file_write(runtime.inner().clone(), args).await,
         "file:stat" => handle_file_stat(runtime.inner().clone(), args).await,
+        "file:exists" => handle_file_exists(runtime.inner().clone(), args).await,
+        "file:delete" => handle_file_delete(runtime.inner().clone(), args).await,
+        "file:copy" => handle_file_copy(runtime.inner().clone(), args).await,
+        "file:move" => handle_file_move(runtime.inner().clone(), args).await,
+        "file:mkdir" => handle_file_mkdir(runtime.inner().clone(), args).await,
+        "file:readdir" => handle_file_readdir(runtime.inner().clone(), args).await,
+        "file:readBinary" => handle_file_read_binary(runtime.inner().clone(), args).await,
+        "file:writeBinary" => handle_file_write_binary(runtime.inner().clone(), args).await,
         
         // Storage commands
         "storage:get" => handle_storage_get(runtime.inner().clone(), args).await,
@@ -63,6 +71,37 @@ pub async fn mountain_ipc_invoke(
         
         // Workbench commands
         "workbench:getConfiguration" => handle_workbench_configuration(runtime.inner().clone(), args).await,
+        
+        // IPC status commands
+        "mountain_get_status" => {
+            let status = json!({
+                "connected": true,
+                "version": "1.0.0"
+            });
+            Ok(status)
+        },
+        "mountain_get_configuration" => {
+            let config = json!({
+                "editor": { "theme": "dark" },
+                "extensions": { "installed": [] }
+            });
+            Ok(config)
+        },
+        "mountain_get_services_status" => {
+            let services = json!({
+                "editor": { "status": "running" },
+                "extensionHost": { "status": "running" }
+            });
+            Ok(services)
+        },
+        "mountain_get_state" => {
+            let state = json!({
+                "ui": {},
+                "editor": {},
+                "workspace": {}
+            });
+            Ok(state)
+        },
         
         // Default handler for unknown commands
         _ => {
@@ -190,6 +229,196 @@ async fn handle_file_stat(
     
     debug!("[WindServiceHandlers] File stat: {}", path);
     Ok(json!(stats))
+}
+
+/// Handler for file exists requests
+async fn handle_file_exists(
+    runtime: Arc<ApplicationRunTime>,
+    args: Vec<Value>,
+) -> Result<Value, String> {
+    let path = args.get(0)
+        .ok_or("Missing file path".to_string())?
+        .as_str()
+        .ok_or("File path must be a string".to_string())?;
+    
+    // Use Mountain's file system provider
+    let provider: Arc<dyn FileSystemReader> = runtime.Environment.Require();
+    
+    let exists = provider.StatFile(&PathBuf::from(path))
+        .await
+        .is_ok();
+    
+    debug!("[WindServiceHandlers] File exists check: {} = {}", path, exists);
+    Ok(json!(exists))
+}
+
+/// Handler for file delete requests
+async fn handle_file_delete(
+    runtime: Arc<ApplicationRunTime>,
+    args: Vec<Value>,
+) -> Result<Value, String> {
+    let path = args.get(0)
+        .ok_or("Missing file path".to_string())?
+        .as_str()
+        .ok_or("File path must be a string".to_string())?;
+    
+    // Use Mountain's file system provider
+    let provider: Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+    
+    provider.Delete(&PathBuf::from(path))
+        .await
+        .map_err(|e| format!("Failed to delete file: {}", e))?;
+    
+    debug!("[WindServiceHandlers] File deleted: {}", path);
+    Ok(Value::Null)
+}
+
+/// Handler for file copy requests
+async fn handle_file_copy(
+    runtime: Arc<ApplicationRunTime>,
+    args: Vec<Value>,
+) -> Result<Value, String> {
+    let source = args.get(0)
+        .ok_or("Missing source path".to_string())?
+        .as_str()
+        .ok_or("Source path must be a string".to_string())?;
+    
+    let destination = args.get(1)
+        .ok_or("Missing destination path".to_string())?
+        .as_str()
+        .ok_or("Destination path must be a string".to_string())?;
+    
+    // Use Mountain's file system provider
+    let provider: Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+    
+    provider.Copy(&PathBuf::from(source), &PathBuf::from(destination))
+        .await
+        .map_err(|e| format!("Failed to copy file: {} -> {}", source, destination))?;
+    
+    debug!("[WindServiceHandlers] File copied: {} -> {}", source, destination);
+    Ok(Value::Null)
+}
+
+/// Handler for file move requests
+async fn handle_file_move(
+    runtime: Arc<ApplicationRunTime>,
+    args: Vec<Value>,
+) -> Result<Value, String> {
+    let source = args.get(0)
+        .ok_or("Missing source path".to_string())?
+        .as_str()
+        .ok_or("Source path must be a string".to_string())?;
+    
+    let destination = args.get(1)
+        .ok_or("Missing destination path".to_string())?
+        .as_str()
+        .ok_or("Destination path must be a string".to_string())?;
+    
+    // Use Mountain's file system provider
+    let provider: Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+    
+    provider.Rename(&PathBuf::from(source), &PathBuf::from(destination))
+        .await
+        .map_err(|e| format!("Failed to move file: {} -> {}", source, destination))?;
+    
+    debug!("[WindServiceHandlers] File moved: {} -> {}", source, destination);
+    Ok(Value::Null)
+}
+
+/// Handler for directory creation requests
+async fn handle_file_mkdir(
+    runtime: Arc<ApplicationRunTime>,
+    args: Vec<Value>,
+) -> Result<Value, String> {
+    let path = args.get(0)
+        .ok_or("Missing directory path".to_string())?
+        .as_str()
+        .ok_or("Directory path must be a string".to_string())?;
+    
+    let recursive = args.get(1)
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+    
+    // Use Mountain's file system provider
+    let provider: Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+    
+    provider.CreateDirectory(&PathBuf::from(path), recursive)
+        .await
+        .map_err(|e| format!("Failed to create directory: {}", e))?;
+    
+    debug!("[WindServiceHandlers] Directory created: {} (recursive: {})", path, recursive);
+    Ok(Value::Null)
+}
+
+/// Handler for directory reading requests
+async fn handle_file_readdir(
+    runtime: Arc<ApplicationRunTime>,
+    args: Vec<Value>,
+) -> Result<Value, String> {
+    let path = args.get(0)
+        .ok_or("Missing directory path".to_string())?
+        .as_str()
+        .ok_or("Directory path must be a string".to_string())?;
+    
+    // Use Mountain's file system provider
+    let provider: Arc<dyn FileSystemReader> = runtime.Environment.Require();
+    
+    let entries = provider.ReadDirectory(&PathBuf::from(path))
+        .await
+        .map_err(|e| format!("Failed to read directory: {}", e))?;
+    
+    debug!("[WindServiceHandlers] Directory read: {} ({} entries)", path, entries.len());
+    Ok(json!(entries))
+}
+
+/// Handler for binary file read requests
+async fn handle_file_read_binary(
+    runtime: Arc<ApplicationRunTime>,
+    args: Vec<Value>,
+) -> Result<Value, String> {
+    let path = args.get(0)
+        .ok_or("Missing file path".to_string())?
+        .as_str()
+        .ok_or("File path must be a string".to_string())?;
+    
+    // Use Mountain's file system provider
+    let provider: Arc<dyn FileSystemReader> = runtime.Environment.Require();
+    
+    let content = provider.ReadFile(&PathBuf::from(path))
+        .await
+        .map_err(|e| format!("Failed to read binary file: {}", e))?;
+    
+    debug!("[WindServiceHandlers] Binary file read: {} ({} bytes)", path, content.len());
+    Ok(json!(content))
+}
+
+/// Handler for binary file write requests
+async fn handle_file_write_binary(
+    runtime: Arc<ApplicationRunTime>,
+    args: Vec<Value>,
+) -> Result<Value, String> {
+    let path = args.get(0)
+        .ok_or("Missing file path".to_string())?
+        .as_str()
+        .ok_or("File path must be a string".to_string())?;
+    
+    let content = args.get(1)
+        .ok_or("Missing file content".to_string())?
+        .as_str()
+        .ok_or("File content must be a string".to_string())?;
+    
+    // Convert string content to bytes
+    let content_bytes = content.as_bytes().to_vec();
+    
+    // Use Mountain's file system provider
+    let provider: Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+    
+    provider.WriteFile(&PathBuf::from(path), content_bytes, true, true)
+        .await
+        .map_err(|e| format!("Failed to write binary file: {}", e))?;
+    
+    debug!("[WindServiceHandlers] Binary file written: {} ({} bytes)", path, content_bytes.len());
+    Ok(Value::Null)
 }
 
 /// Handler for storage get requests

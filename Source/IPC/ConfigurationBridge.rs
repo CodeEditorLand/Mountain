@@ -359,6 +359,54 @@ pub async fn mountain_get_wind_desktop_configuration(
     }
 }
 
+/// Tauri command to get configuration data for Wind frontend
+#[tauri::command]
+pub async fn get_configuration_data(
+    app_handle: tauri::AppHandle,
+) -> Result<serde_json::Value, String> {
+    debug!("[ConfigurationBridge] Tauri command: get_configuration_data");
+    
+    if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
+        let bridge = ConfigurationBridge::new(runtime.inner().clone());
+        
+        // Get Mountain's current configuration
+        let mountain_config = bridge.get_mountain_configuration().await?;
+        
+        // Convert to Wind format
+        let config_data = serde_json::json!({
+            "application": mountain_config.clone(),
+            "workspace": mountain_config.clone(),
+            "profile": mountain_config.clone()
+        });
+        
+        debug!("[ConfigurationBridge] Configuration data retrieved successfully");
+        Ok(config_data)
+    } else {
+        Err("ApplicationRunTime not found".to_string())
+    }
+}
+
+/// Tauri command to save configuration data from Wind frontend
+#[tauri::command]
+pub async fn save_configuration_data(
+    app_handle: tauri::AppHandle,
+    config_data: serde_json::Value,
+) -> Result<(), String> {
+    debug!("[ConfigurationBridge] Tauri command: save_configuration_data");
+    
+    if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
+        let bridge = ConfigurationBridge::new(runtime.inner().clone());
+        
+        // Update Mountain configuration with the new data
+        bridge.update_mountain_configuration(config_data).await?;
+        
+        debug!("[ConfigurationBridge] Configuration data saved successfully");
+        Ok(())
+    } else {
+        Err("ApplicationRunTime not found".to_string())
+    }
+}
+
 /// Tauri command to update configuration from Wind
 #[tauri::command]
 pub async fn mountain_update_configuration_from_wind(

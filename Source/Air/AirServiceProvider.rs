@@ -15,6 +15,15 @@ use log::debug;
 use uuid::Uuid;
 
 use super::AirClient::*;
+use super::AirClient::{
+    AuthenticationRequest, AuthenticationResponse,
+    UpdateCheckRequest, UpdateCheckResponse,
+    DownloadRequest, DownloadResponse,
+    IndexRequest, IndexResponse,
+    SearchRequest, SearchResponse,
+    StatusRequest, StatusResponse,
+    MetricsRequest, MetricsResponse,
+};
 
 /// AirServiceProvider provides a high-level, convenient interface to the Air daemon service.
 /// This struct wraps the lower-level AirClient and adds convenience methods,

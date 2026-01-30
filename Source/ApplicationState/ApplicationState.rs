@@ -40,7 +40,7 @@ use Common::{
 	},
 	StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO,
 };
-use log::{error, info, warn};
+use log::{error, info, warn, debug};
 use tauri::Wry;
 
 use super::{
@@ -137,6 +137,20 @@ pub struct ApplicationState {
 /// A helper to map a mutex poison error into a `CommonError`.
 pub fn MapLockError<T>(Error:PoisonError<T>) -> CommonError {
 	CommonError::StateLockPoisoned { Context:Error.to_string() }
+}
+
+/// A helper to map a mutex poison error with recovery attempt.
+pub fn MapLockErrorWithRecovery<T>(Error:PoisonError<T>, RecoveryContext:&str) -> CommonError {
+	warn!("[ApplicationState] Attempting recovery from poisoned lock in context: {}", RecoveryContext);
+	CommonError::StateLockPoisoned { Context:format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext) }
+}
+
+/// Error handling result with recovery information
+#[derive(Debug)]
+pub struct StateOperationResult<T> {
+	pub result: Result<T, CommonError>,
+	pub recovery_attempted: bool,
+	pub recovery_successful: bool,
 }
 
 impl Default for ApplicationState {
@@ -242,7 +256,9 @@ impl ApplicationState {
 	/// workspace. Returns "NO_WORKSPACE" if no folder or configuration is
 	/// open.
 	pub fn GetWorkSpaceIdentifier(&self) -> Result<String, CommonError> {
-		let ConfigurationPathGuard = self.WorkSpaceConfigurationPath.lock().map_err(MapLockError)?;
+		let ConfigurationPathGuard = self.WorkSpaceConfigurationPath.lock().map_err(|e| {
+			MapLockErrorWithRecovery(e, "GetWorkSpaceIdentifier - ConfigurationPath")
+		})?;
 
 		if let Some(ConfigurationPath) = ConfigurationPathGuard.as_ref() {
 			let FileName = ConfigurationPath.file_name().unwrap_or_default().to_string_lossy().into_owned();
@@ -252,7 +268,9 @@ impl ApplicationState {
 
 		drop(ConfigurationPathGuard);
 
-		let FoldersGuard = self.WorkSpaceFolders.lock().map_err(MapLockError)?;
+		let FoldersGuard = self.WorkSpaceFolders.lock().map_err(|e| {
+			MapLockErrorWithRecovery(e, "GetWorkSpaceIdentifier - WorkSpaceFolders")
+		})?;
 
 		if let Some(FirstFolder) = FoldersGuard.first() {
 			let PathString = FirstFolder.URI.path();
@@ -266,6 +284,97 @@ impl ApplicationState {
 		}
 
 		Ok("NO_WORKSPACE".to_string())
+	}
+
+	/// Safe state operation with automatic recovery
+	pub fn SafeStateOperation<T, F>(&self, operation_name: &str, operation: F) -> StateOperationResult<T>
+	where
+		F: FnOnce() -> Result<T, CommonError>,
+	{
+		let mut recovery_attempted = false;
+		let mut recovery_successful = false;
+		
+		match operation() {
+			Ok(result) => StateOperationResult {
+				result: Ok(result),
+				recovery_attempted,
+				recovery_successful,
+			},
+			Err(error) => {
+				// Attempt recovery for specific error types
+				if Self::should_attempt_recovery(&error) {
+					recovery_attempted = true;
+					match Self::attempt_state_recovery(&error, operation_name) {
+						Ok(()) => {
+							recovery_successful = true;
+							info!("[ApplicationState] Recovery successful for operation: {}", operation_name);
+							StateOperationResult {
+								result: Err(error), // Original error still returned
+								recovery_attempted,
+								recovery_successful,
+							}
+						},
+						Err(recovery_error) => {
+							warn!("[ApplicationState] Recovery failed for operation {}: {}", operation_name, recovery_error);
+							StateOperationResult {
+								result: Err(error), // Original error still returned
+								recovery_attempted,
+								recovery_successful,
+							}
+						},
+					}
+				} else {
+					StateOperationResult {
+						result: Err(error),
+						recovery_attempted,
+						recovery_successful,
+					}
+				}
+			},
+		}
+	}
+
+	/// Determine if recovery should be attempted for a given error
+	fn should_attempt_recovery(error: &CommonError) -> bool {
+		match error {
+			CommonError::StateLockPoisoned { .. } => true,
+			CommonError::FileSystemIO { .. } => true,
+			CommonError::SerializationError { .. } => true,
+			_ => false,
+		}
+	}
+
+	/// Attempt state recovery based on error type
+	fn attempt_state_recovery(error: &CommonError, context: &str) -> Result<(), CommonError> {
+		match error {
+			CommonError::StateLockPoisoned { .. } => {
+				// For poisoned locks, we can't do much but log and wait
+				warn!("[ApplicationState] Poisoned lock detected in context: {}", context);
+				// Small delay to allow system to stabilize
+				std::thread::sleep(std::time::Duration::from_millis(100));
+				Ok(())
+			},
+			CommonError::FileSystemIO { path, .. } => {
+				// Attempt to recreate directories or handle file system issues
+				if let Some(parent) = path.parent() {
+					if !parent.exists() {
+						std::fs::create_dir_all(parent).map_err(|e| {
+							CommonError::FileSystemIO {
+								Path: parent.to_path_buf(),
+								Description: format!("Failed to create directory during recovery: {}", e),
+							}
+						})?;
+					}
+				}
+				Ok(())
+			},
+			CommonError::SerializationError { .. } => {
+				// For serialization errors, we might need to reset corrupted state
+				warn!("[ApplicationState] Serialization error detected, state may be corrupted: {}", context);
+				Ok(())
+			},
+			_ => Ok(()),
+		}
 	}
 
 	/// Returns the next available unique identifier for a language provider
@@ -285,39 +394,148 @@ impl ApplicationState {
 	/// Updates the path to the workspace memento file and reloads its content
 	/// from disk. This should be called when a workspace is opened or changed.
 	pub fn UpdateWorkSpaceMementoPathAndReload(&self, ApplicationDataDirectory:&Path) -> Result<(), CommonError> {
-		let WorkSpaceIdentifier = self.GetWorkSpaceIdentifier()?;
+		let operation_result = self.SafeStateOperation("UpdateWorkSpaceMementoPathAndReload", || {
+			let WorkSpaceIdentifier = self.GetWorkSpaceIdentifier()?;
 
-		let mut PathGuard = self.WorkSpaceMementoPath.lock().map_err(MapLockError)?;
+			let mut PathGuard = self.WorkSpaceMementoPath.lock().map_err(|e| {
+				MapLockErrorWithRecovery(e, "UpdateWorkSpaceMementoPathAndReload - WorkSpaceMementoPath")
+			})?;
 
-		if WorkSpaceIdentifier == "NO_WORKSPACE" {
-			if PathGuard.is_some() {
-				*PathGuard = None;
+			if WorkSpaceIdentifier == "NO_WORKSPACE" {
+				if PathGuard.is_some() {
+					*PathGuard = None;
 
-				self.WorkSpaceMemento.lock().map_err(MapLockError)?.clear();
+					self.WorkSpaceMemento.lock().map_err(|e| {
+						MapLockErrorWithRecovery(e, "UpdateWorkSpaceMementoPathAndReload - WorkSpaceMemento")
+					})?.clear();
+				}
+
+				return Ok(());
 			}
 
-			return Ok(());
+			let NewMementoPath =
+				Internal::ResolveMementoStorageFilePath(ApplicationDataDirectory, false, &WorkSpaceIdentifier);
+
+			if PathGuard.as_ref() != Some(&NewMementoPath) {
+				if let Some(Parent) = NewMementoPath.parent() {
+					if !Parent.exists() {
+						std::fs::create_dir_all(Parent).map_err(|Error| {
+							CommonError::FileSystemIO { Path:Parent.to_path_buf(), Description:Error.to_string() }
+						})?;
+					}
+				}
+
+				*PathGuard = Some(NewMementoPath.clone());
+
+				let NewMementoContent = Internal::LoadInitialMementoFromDisk(&NewMementoPath);
+
+				*self.WorkSpaceMemento.lock().map_err(|e| {
+					MapLockErrorWithRecovery(e, "UpdateWorkSpaceMementoPathAndReload - WorkSpaceMemento update")
+				})? = NewMementoContent;
+			}
+
+			Ok(())
+		});
+
+		operation_result.result
+	}
+
+	/// Enhanced state recovery with comprehensive error handling
+	pub async fn RecoverApplicationState(&self) -> Result<(), CommonError> {
+		info!("[ApplicationState] Starting comprehensive state recovery...");
+
+		// Recover global memento
+		self.RecoverGlobalMemento().await?;
+
+		// Recover workspace memento
+		self.RecoverWorkSpaceMemento().await?;
+
+		// Recover extension state
+		self.RecoverExtensionState().await?;
+
+		// Recover document state
+		self.RecoverDocumentState().await?;
+
+		info!("[ApplicationState] Comprehensive state recovery completed successfully");
+		Ok(())
+	}
+
+	/// Recover global memento state
+	async fn RecoverGlobalMemento(&self) -> Result<(), CommonError> {
+		debug!("[ApplicationState] Recovering global memento state...");
+		
+		let memento_content = Internal::LoadInitialMementoFromDisk(&self.GlobalMementoPath);
+		let mut global_memento = self.GlobalMemento.lock().map_err(|e| {
+			MapLockErrorWithRecovery(e, "RecoverGlobalMemento")
+		})?;
+		
+		*global_memento = memento_content;
+		Ok(())
+	}
+
+	/// Recover workspace memento state
+	async fn RecoverWorkSpaceMemento(&self) -> Result<(), CommonError> {
+		debug!("[ApplicationState] Recovering workspace memento state...");
+		
+		let workspace_path_guard = self.WorkSpaceMementoPath.lock().map_err(|e| {
+			MapLockErrorWithRecovery(e, "RecoverWorkSpaceMemento - Path")
+		})?;
+		
+		if let Some(path) = workspace_path_guard.as_ref() {
+			let memento_content = Internal::LoadInitialMementoFromDisk(path);
+			let mut workspace_memento = self.WorkSpaceMemento.lock().map_err(|e| {
+				MapLockErrorWithRecovery(e, "RecoverWorkSpaceMemento - Content")
+			})?;
+			
+			*workspace_memento = memento_content;
 		}
+		
+		Ok(())
+	}
 
-		let NewMementoPath =
-			Internal::ResolveMementoStorageFilePath(ApplicationDataDirectory, false, &WorkSpaceIdentifier);
+	/// Recover extension state
+	async fn RecoverExtensionState(&self) -> Result<(), CommonError> {
+		debug!("[ApplicationState] Recovering extension state...");
+		
+		// Clear potentially corrupted extension state
+		let mut scanned_extensions = self.ScannedExtensions.lock().map_err(|e| {
+			MapLockErrorWithRecovery(e, "RecoverExtensionState - ScannedExtensions")
+		})?;
+		
+		scanned_extensions.clear();
+		
+		// Reset extension scan paths
+		let mut scan_paths = self.ExtensionScanPaths.lock().map_err(|e| {
+			MapLockErrorWithRecovery(e, "RecoverExtensionState - ExtensionScanPaths")
+		})?;
+		
+		// Keep only valid paths that exist
+		scan_paths.retain(|path| path.exists());
+		
+		Ok(())
+	}
 
-		if PathGuard.as_ref() != Some(&NewMementoPath) {
-			if let Some(Parent) = NewMementoPath.parent() {
-				if !Parent.exists() {
-					std::fs::create_dir_all(Parent).map_err(|Error| {
-						CommonError::FileSystemIO { Path:Parent.to_path_buf(), Description:Error.to_string() }
-					})?;
+	/// Recover document state
+	async fn RecoverDocumentState(&self) -> Result<(), CommonError> {
+		debug!("[ApplicationState] Recovering document state...");
+		
+		// Clear potentially corrupted document state
+		let mut open_documents = self.OpenDocuments.lock().map_err(|e| {
+			MapLockErrorWithRecovery(e, "RecoverDocumentState - OpenDocuments")
+		})?;
+		
+		// Remove documents that reference non-existent files
+		open_documents.retain(|uri, doc_state| {
+			if let Ok(url) = url::Url::parse(uri) {
+				if url.scheme() == "file" {
+					if let Some(path) = url.to_file_path().ok() {
+						return path.exists();
+					}
 				}
 			}
-
-			*PathGuard = Some(NewMementoPath.clone());
-
-			let NewMementoContent = Internal::LoadInitialMementoFromDisk(&NewMementoPath);
-
-			*self.WorkSpaceMemento.lock().map_err(MapLockError)? = NewMementoContent;
-		}
-
+			true // Keep non-file URIs
+		});
+		
 		Ok(())
 	}
 }

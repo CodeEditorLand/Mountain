@@ -15,152 +15,31 @@ use log::{debug, error, info, warn};
 use tonic::transport::{Channel, Endpoint};
 
 // Import generated Air types from Air element
-// Note: In a real build, you would depend on the Air crate for these types
-// For now, we define placeholder types that match the proto structure
+use Air::Vine::Generated::air::air_service_client;
+use Air::Vine::Generated::air::{
+    AuthenticationRequest, AuthenticationResponse,
+    UpdateCheckRequest, UpdateCheckResponse,
+    ApplyUpdateRequest, ApplyUpdateResponse,
+    DownloadRequest, DownloadResponse,
+    IndexRequest, IndexResponse,
+    SearchRequest, SearchResponse,
+    FileResult,
+    StatusRequest, StatusResponse,
+    MetricsRequest, MetricsResponse,
+};
 
-// Placeholder authentication types
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct AuthenticationRequest {
-	pub request_id: String,
-	pub username: String,
-	pub password: String,
-	pub provider: String,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct AuthenticationResponse {
-	pub request_id: String,
-	pub success: bool,
-	pub token: String,
-	pub error: String,
-}
-
-// Placeholder update types
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct UpdateCheckRequest {
-	pub request_id: String,
-	pub current_version: String,
-	pub channel: String,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct UpdateCheckResponse {
-	pub request_id: String,
-	pub update_available: bool,
-	pub version: String,
-	pub download_url: String,
-	pub release_notes: String,
-	pub error: String,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct ApplyUpdateRequest {
-	pub request_id: String,
-	pub version: String,
-	pub update_path: String,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct ApplyUpdateResponse {
-	pub request_id: String,
-	pub success: bool,
-	pub error: String,
-}
-
-// Placeholder download types
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct DownloadRequest {
-	pub request_id: String,
-	pub url: String,
-	pub destination_path: String,
-	pub checksum: String,
-	pub headers: HashMap<String, String>,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct DownloadResponse {
-	pub request_id: String,
-	pub success: bool,
-	pub file_path: String,
-	pub file_size: u64,
-	pub checksum: String,
-	pub error: String,
-}
-
-// Placeholder indexing types
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct IndexRequest {
-	pub request_id: String,
-	pub path: String,
-	pub patterns: Vec<String>,
-	pub exclude_patterns: Vec<String>,
-	pub max_depth: u32,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct IndexResponse {
-	pub request_id: String,
-	pub success: bool,
-	pub files_indexed: u32,
-	pub total_size: u64,
-	pub error: String,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct SearchRequest {
-	pub request_id: String,
-	pub query: String,
-	pub path: String,
-	pub max_results: u32,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct FileResult {
-	pub path: String,
-	pub size: u64,
-	pub match_preview: String,
-	pub line_number: u32,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct SearchResponse {
-	pub request_id: String,
-	pub results: Vec<FileResult>,
-	pub total_results: u32,
-	pub error: String,
-}
-
-// Placeholder status types
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct StatusRequest {
-	pub request_id: String,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct StatusResponse {
-	pub version: String,
-	pub uptime_seconds: u64,
-	pub total_requests: u64,
-	pub successful_requests: u64,
-	pub failed_requests: u64,
-	pub average_response_time: f64,
-	pub memory_usage_mb: f64,
-	pub cpu_usage_percent: f64,
-	pub active_requests: u32,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct MetricsRequest {
-	pub request_id: String,
-	pub metric_type: String,
-}
-
-#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
-pub struct MetricsResponse {
-	pub request_id: String,
-	pub metrics: HashMap<String, String>,
-	pub error: String,
-}
+// Re-export Air types for external use
+pub use Air::Vine::Generated::air::{
+    AuthenticationRequest, AuthenticationResponse,
+    UpdateCheckRequest, UpdateCheckResponse,
+    ApplyUpdateRequest, ApplyUpdateResponse,
+    DownloadRequest, DownloadResponse,
+    IndexRequest, IndexResponse,
+    SearchRequest, SearchResponse,
+    FileResult,
+    StatusRequest, StatusResponse,
+    MetricsRequest, MetricsResponse,
+};
 
 /// Default gRPC server address for the Air daemon.
 ///
@@ -177,9 +56,7 @@ pub const DEFAULT_AIR_SERVER_ADDRESS: &str = "[::1]:50053";
 #[derive(Clone)]
 pub struct AirClient {
 	// The underlying tonic gRPC client
-	// Using raw Channel since we don't have direct access to Air's generated client
-	// In production, this would be: inner: air_service_client::AirServiceClient<Channel>,
-	inner: Option<Channel>,
+	inner: Option<air_service_client::AirServiceClient<Channel>>,
 	address: String,
 }
 
@@ -205,8 +82,9 @@ impl AirClient {
 		match tokio::time::timeout(Duration::from_secs(5), endpoint.connect()).await {
 			Ok(Ok(channel)) => {
 				info!("[AirClient] Successfully connected to Air at: {}", address);
+				let client = air_service_client::AirServiceClient::new(channel);
 				Ok(Self {
-					inner: Some(channel),
+					inner: Some(client),
 					address: address.to_string(),
 				})
 			},
@@ -267,22 +145,13 @@ impl AirClient {
 
 		self.ensure_connected()?;
 
-		// In production, this would call:
-		// let response = self.inner.as_ref().unwrap()
-		//     .check_for_updates(request)
-		//     .await
-		//     .map_err(|e| self.translate_tonic_error(e))?
-		//     .into_inner();
+		let response = self.inner.as_ref().unwrap()
+			.check_for_updates(request)
+			.await
+			.map_err(|e| Self::from_tonic_status(e))?
+			.into_inner();
 
-		// Placeholder response for now
-		Ok(UpdateCheckResponse {
-			request_id: request.request_id,
-			update_available: false,
-			version: "".to_string(),
-			download_url: "".to_string(),
-			release_notes: "".to_string(),
-			error: "".to_string(),
-		})
+		Ok(response)
 	}
 
 	/// Downloads a file from a specified URL.
@@ -297,15 +166,13 @@ impl AirClient {
 
 		self.ensure_connected()?;
 
-		// In production, this would call Air's download endpoint
-		Ok(DownloadResponse {
-			request_id: request.request_id,
-			success: false,
-			file_path: request.destination_path.clone(),
-			file_size: 0,
-			checksum: "".to_string(),
-			error: "Not yet implemented".to_string(),
-		})
+		let response = self.inner.as_ref().unwrap()
+			.download_file(request)
+			.await
+			.map_err(|e| Self::from_tonic_status(e))?
+			.into_inner();
+
+		Ok(response)
 	}
 
 	// =========================================================================
@@ -324,13 +191,13 @@ impl AirClient {
 
 		self.ensure_connected()?;
 
-		// In production, this would call Air's authentication endpoint
-		Ok(AuthenticationResponse {
-			request_id: request.request_id,
-			success: false,
-			token: "".to_string(),
-			error: "Not yet implemented".to_string(),
-		})
+		let response = self.inner.as_ref().unwrap()
+			.authenticate(request)
+			.await
+			.map_err(|e| Self::from_tonic_status(e))?
+			.into_inner();
+
+		Ok(response)
 	}
 
 	// =========================================================================
@@ -352,14 +219,13 @@ impl AirClient {
 
 		self.ensure_connected()?;
 
-		// In production, this would call Air's indexing endpoint
-		Ok(IndexResponse {
-			request_id: request.request_id,
-			success: false,
-			files_indexed: 0,
-			total_size: 0,
-			error: "Not yet implemented".to_string(),
-		})
+		let response = self.inner.as_ref().unwrap()
+			.index_files(request)
+			.await
+			.map_err(|e| Self::from_tonic_status(e))?
+			.into_inner();
+
+		Ok(response)
 	}
 
 	/// Searches indexed files for the specified query.
@@ -377,13 +243,13 @@ impl AirClient {
 
 		self.ensure_connected()?;
 
-		// In production, this would call Air's search endpoint
-		Ok(SearchResponse {
-			request_id: request.request_id,
-			results: Vec::new(),
-			total_results: 0,
-			error: "Not yet implemented".to_string(),
-		})
+		let response = self.inner.as_ref().unwrap()
+			.search_files(request)
+			.await
+			.map_err(|e| Self::from_tonic_status(e))?
+			.into_inner();
+
+		Ok(response)
 	}
 
 	// =========================================================================
@@ -402,18 +268,13 @@ impl AirClient {
 
 		self.ensure_connected()?;
 
-		// In production, this would call Air's status endpoint
-		Ok(StatusResponse {
-			version: "0.0.1".to_string(),
-			uptime_seconds: 0,
-			total_requests: 0,
-			successful_requests: 0,
-			failed_requests: 0,
-			average_response_time: 0.0,
-			memory_usage_mb: 0.0,
-			cpu_usage_percent: 0.0,
-			active_requests: 0,
-		})
+		let response = self.inner.as_ref().unwrap()
+			.get_status(request)
+			.await
+			.map_err(|e| Self::from_tonic_status(e))?
+			.into_inner();
+
+		Ok(response)
 	}
 
 	/// Gets detailed metrics from the Air daemon.
@@ -428,12 +289,13 @@ impl AirClient {
 
 		self.ensure_connected()?;
 
-		// In production, this would call Air's metrics endpoint
-		Ok(MetricsResponse {
-			request_id: request.request_id,
-			metrics: HashMap::new(),
-			error: "Not yet implemented".to_string(),
-		})
+		let response = self.inner.as_ref().unwrap()
+			.get_metrics(request)
+			.await
+			.map_err(|e| Self::from_tonic_status(e))?
+			.into_inner();
+
+		Ok(response)
 	}
 
 	// =========================================================================
@@ -455,7 +317,8 @@ impl AirClient {
 
 		match tokio::time::timeout(Duration::from_secs(5), endpoint.connect()).await {
 			Ok(Ok(channel)) => {
-				self.inner = Some(channel);
+				let client = air_service_client::AirServiceClient::new(channel);
+				self.inner = Some(client);
 				info!("[AirClient] Successfully reconnected to Air");
 				Ok(())
 			},
