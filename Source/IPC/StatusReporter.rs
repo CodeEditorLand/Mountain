@@ -12,7 +12,8 @@ use std::{sync::{Arc, Mutex}, time::{Duration, SystemTime}};
 use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
+use tokio::sync::RwLock;
 
 /// Comprehensive status report combining all monitoring data
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -103,6 +104,48 @@ pub struct MessageStats {
     pub average_processing_time_ms: f64,
 }
 
+/// Service discovery information
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceInfo {
+    pub name: String,
+    pub version: String,
+    pub status: ServiceStatus,
+    pub last_heartbeat: u64,
+    pub uptime: u64,
+    pub dependencies: Vec<String>,
+    pub metrics: ServiceMetrics,
+    pub endpoint: Option<String>,
+    pub port: Option<u16>,
+}
+
+/// Service status
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum ServiceStatus {
+    Running,
+    Degraded,
+    Stopped,
+    Error,
+}
+
+/// Service metrics
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceMetrics {
+    pub response_time: f64,
+    pub error_rate: f64,
+    pub throughput: f64,
+    pub memory_usage: f64,
+    pub cpu_usage: f64,
+    pub last_updated: u64,
+}
+
+/// Service discovery registry
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServiceRegistry {
+    pub services: HashMap<String, ServiceInfo>,
+    pub last_discovery: u64,
+    pub discovery_interval: u64,
+}
+
 /// Status reporter for IPC communication
 pub struct StatusReporter {
     runtime: Arc<ApplicationRunTime>,
@@ -112,6 +155,8 @@ pub struct StatusReporter {
     error_count: Arc<Mutex<u32>>,
     performance_metrics: Arc<Mutex<PerformanceMetrics>>,
     health_monitor: Arc<Mutex<HealthMonitor>>,
+    service_registry: Arc<RwLock<ServiceRegistry>>,
+    discovered_services: Arc<RwLock<HashSet<String>>>,
 }
 
 impl StatusReporter {
@@ -147,6 +192,15 @@ impl StatusReporter {
                 issues_detected: Vec::new(),
                 recovery_attempts: 0,
             })),
+            service_registry: Arc::new(RwLock::new(ServiceRegistry {
+                services: HashMap::new(),
+                last_discovery: SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis() as u64,
+                discovery_interval: 30000, // 30 seconds
+            })),
+            discovered_services: Arc::new(RwLock::new(HashSet::new())),
         }
     }
 
@@ -538,6 +592,188 @@ impl StatusReporter {
         15.0 // Example CPU percentage
     }
 
+    /// SERVICE DISCOVERY: Discover available Mountain services
+    pub async fn discover_services(&self) -> Result<Vec<ServiceInfo>, String> {
+        info!("[StatusReporter] Starting service discovery");
+        
+        let mut registry = self.service_registry.write().await;
+        let mut discovered = self.discovered_services.write().await;
+        
+        let mut services = Vec::new();
+        
+        // Discover core Mountain services
+        let core_services = vec![
+            ("EditorService", "1.0.0", ServiceStatus::Running),
+            ("ExtensionHostService", "1.0.0", ServiceStatus::Running),
+            ("ConfigurationService", "1.0.0", ServiceStatus::Running),
+            ("FileService", "1.0.0", ServiceStatus::Running),
+            ("StorageService", "1.0.0", ServiceStatus::Running),
+        ];
+        
+        for (name, version, status) in core_services {
+            let service_info = ServiceInfo {
+                name: name.to_string(),
+                version: version.to_string(),
+                status: status.clone(),
+                last_heartbeat: SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_millis() as u64,
+                uptime: SystemTime::now()
+                    .duration_since(self.start_time)
+                    .unwrap_or_default()
+                    .as_secs(),
+                dependencies: self.get_service_dependencies(name),
+                metrics: ServiceMetrics {
+                    response_time: self.calculate_service_response_time(name).await,
+                    error_rate: self.calculate_service_error_rate(name).await,
+                    throughput: self.calculate_service_throughput(name).await,
+                    memory_usage: self.get_service_memory_usage(name).await,
+                    cpu_usage: self.get_service_cpu_usage(name).await,
+                    last_updated: SystemTime::now()
+                        .duration_since(SystemTime::UNIX_EPOCH)
+                        .unwrap_or_default()
+                        .as_millis() as u64,
+                },
+                endpoint: Some(format!("localhost:{}", 50050 + services.len() as u16)),
+                port: Some(50050 + services.len() as u16),
+            };
+            
+            registry.services.insert(name.to_string(), service_info.clone());
+            discovered.insert(name.to_string());
+            services.push(service_info);
+        }
+        
+        registry.last_discovery = SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_millis() as u64;
+        
+        info!("[StatusReporter] Service discovery completed: {} services found", services.len());
+        
+        // Emit service discovery event
+        if let Err(e) = self.runtime.Environment.ApplicationHandle.emit(
+            "mountain_service_discovery", 
+            &services
+        ) {
+            error!("[StatusReporter] Failed to emit service discovery event: {}", e);
+        }
+        
+        Ok(services)
+    }
+    
+    /// Get service dependencies
+    fn get_service_dependencies(&self, service_name: &str) -> Vec<String> {
+        match service_name {
+            "ExtensionHostService" => vec!["ConfigurationService".to_string()],
+            "FileService" => vec!["StorageService".to_string()],
+            "StorageService" => vec!["ConfigurationService".to_string()],
+            _ => Vec::new(),
+        }
+    }
+    
+    /// Calculate service response time
+    async fn calculate_service_response_time(&self, service_name: &str) -> f64 {
+        // Mock implementation - would use real metrics in production
+        match service_name {
+            "EditorService" => 5.0,
+            "ExtensionHostService" => 15.0,
+            "ConfigurationService" => 2.0,
+            "FileService" => 8.0,
+            "StorageService" => 3.0,
+            _ => 10.0,
+        }
+    }
+    
+    /// Calculate service error rate
+    async fn calculate_service_error_rate(&self, service_name: &str) -> f64 {
+        // Mock implementation - would use real metrics in production
+        match service_name {
+            "EditorService" => 0.1,
+            "ExtensionHostService" => 2.5,
+            "ConfigurationService" => 0.5,
+            "FileService" => 1.2,
+            "StorageService" => 0.8,
+            _ => 5.0,
+        }
+    }
+    
+    /// Calculate service throughput
+    async fn calculate_service_throughput(&self, service_name: &str) -> f64 {
+        // Mock implementation - would use real metrics in production
+        match service_name {
+            "EditorService" => 1000.0,
+            "ExtensionHostService" => 500.0,
+            "ConfigurationService" => 2000.0,
+            "FileService" => 800.0,
+            "StorageService" => 1500.0,
+            _ => 100.0,
+        }
+    }
+    
+    /// Get service memory usage
+    async fn get_service_memory_usage(&self, service_name: &str) -> f64 {
+        // Mock implementation - would use real metrics in production
+        match service_name {
+            "EditorService" => 256.0,
+            "ExtensionHostService" => 512.0,
+            "ConfigurationService" => 128.0,
+            "FileService" => 192.0,
+            "StorageService" => 64.0,
+            _ => 100.0,
+        }
+    }
+    
+    /// Get service CPU usage
+    async fn get_service_cpu_usage(&self, service_name: &str) -> f64 {
+        // Mock implementation - would use real metrics in production
+        match service_name {
+            "EditorService" => 15.0,
+            "ExtensionHostService" => 25.0,
+            "ConfigurationService" => 5.0,
+            "FileService" => 10.0,
+            "StorageService" => 8.0,
+            _ => 20.0,
+        }
+    }
+    
+    /// Start periodic service discovery
+    pub async fn start_periodic_discovery(&self) -> Result<(), String> {
+        info!("[StatusReporter] Starting periodic service discovery");
+        
+        let registry = self.service_registry.read().await;
+        let interval = registry.discovery_interval;
+        drop(registry);
+        
+        let reporter = self.clone_reporter();
+        
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_millis(interval));
+            
+            loop {
+                interval.tick().await;
+                
+                if let Err(e) = reporter.discover_services().await {
+                    error!("[StatusReporter] Periodic service discovery failed: {}", e);
+                }
+            }
+        });
+        
+        Ok(())
+    }
+    
+    /// Get service registry
+    pub async fn get_service_registry(&self) -> Result<ServiceRegistry, String> {
+        let registry = self.service_registry.read().await;
+        Ok(registry.clone())
+    }
+    
+    /// Get service information
+    pub async fn get_service_info(&self, service_name: &str) -> Result<Option<ServiceInfo>, String> {
+        let registry = self.service_registry.read().await;
+        Ok(registry.services.get(service_name).cloned())
+    }
+    
     /// ADVANCED RECOVERY: Microsoft-inspired automatic recovery
     pub async fn attempt_recovery(&self) -> Result<(), String> {
         let mut health_monitor = self.health_monitor.lock()
@@ -591,6 +827,8 @@ impl StatusReporter {
             error_count: self.error_count.clone(),
             performance_metrics: self.performance_metrics.clone(),
             health_monitor: self.health_monitor.clone(),
+            service_registry: self.service_registry.clone(),
+            discovered_services: self.discovered_services.clone(),
         }
     }
 }
@@ -692,6 +930,63 @@ pub async fn mountain_attempt_recovery(
     
     if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
         reporter.attempt_recovery().await
+    } else {
+        Err("StatusReporter not found in application state".to_string())
+    }
+}
+
+/// Tauri command to get service registry
+#[tauri::command]
+pub async fn mountain_get_service_registry(
+    app_handle: tauri::AppHandle,
+) -> Result<ServiceRegistry, String> {
+    debug!("[StatusReporter] Tauri command: get_service_registry");
+    
+    if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
+        reporter.get_service_registry().await
+    } else {
+        Err("StatusReporter not found in application state".to_string())
+    }
+}
+
+/// Tauri command to get service information
+#[tauri::command]
+pub async fn mountain_get_service_info(
+    app_handle: tauri::AppHandle,
+    service_name: String,
+) -> Result<Option<ServiceInfo>, String> {
+    debug!("[StatusReporter] Tauri command: get_service_info");
+    
+    if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
+        reporter.get_service_info(&service_name).await
+    } else {
+        Err("StatusReporter not found in application state".to_string())
+    }
+}
+
+/// Tauri command to discover services
+#[tauri::command]
+pub async fn mountain_discover_services(
+    app_handle: tauri::AppHandle,
+) -> Result<Vec<ServiceInfo>, String> {
+    debug!("[StatusReporter] Tauri command: discover_services");
+    
+    if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
+        reporter.discover_services().await
+    } else {
+        Err("StatusReporter not found in application state".to_string())
+    }
+}
+
+/// Tauri command to start periodic service discovery
+#[tauri::command]
+pub async fn mountain_start_service_discovery(
+    app_handle: tauri::AppHandle,
+) -> Result<(), String> {
+    debug!("[StatusReporter] Tauri command: start_service_discovery");
+    
+    if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
+        reporter.start_periodic_discovery().await
     } else {
         Err("StatusReporter not found in application state".to_string())
     }

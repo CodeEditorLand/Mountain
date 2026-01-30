@@ -29,7 +29,7 @@ use Common::{
 };
 use Echo::Scheduler::Scheduler::Scheduler;
 use async_trait::async_trait;
-use log::{error, info};
+use log::{error, info, warn, debug};
 use tokio::sync::oneshot;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
@@ -59,37 +59,179 @@ impl ApplicationRunTime {
 	pub async fn Shutdown(&self) {
 		info!("[ApplicationRunTime] Initiating graceful shutdown of services...");
 
-		// 1. Shutdown Cocoon
-		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
+		let shutdown_result = self.ShutdownWithRecovery().await;
 
-		if let Err(Error) = IPCProvider
-			.SendNotificationToSideCar("cocoon-main".to_string(), "$shutdown".to_string(), serde_json::Value::Null)
-			.await
-		{
-			error!("[ApplicationRunTime] Failed to send shutdown signal to Cocoon: {}", Error);
+		match shutdown_result {
+			Ok(()) => info!("[ApplicationRunTime] Service shutdown tasks completed successfully."),
+			Err(error) => error!("[ApplicationRunTime] Service shutdown completed with errors: {}", error),
+		}
+	}
+
+	/// Enhanced shutdown with comprehensive error handling and recovery
+	pub async fn ShutdownWithRecovery(&self) -> Result<(), CommonError> {
+		info!("[ApplicationRunTime] Initiating robust shutdown with recovery...");
+
+		let mut shutdown_errors: Vec<String> = Vec::new();
+
+		// 1. Shutdown Cocoon with retry mechanism
+		match self.ShutdownCocoonWithRetry().await {
+			Ok(()) => debug!("[ApplicationRunTime] Cocoon shutdown successful"),
+			Err(error) => {
+				shutdown_errors.push(format!("Cocoon shutdown failed: {}", error));
+				warn!("[ApplicationRunTime] Cocoon shutdown failed, continuing with other services...");
+			},
 		}
 
-		// Give Cocoon a moment to process the shutdown before we proceed.
-		tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+		// 2. Dispose of all active terminals with error handling
+		match self.DisposeTerminalsSafely().await {
+			Ok(()) => debug!("[ApplicationRunTime] Terminal disposal successful"),
+			Err(error) => {
+				shutdown_errors.push(format!("Terminal disposal failed: {}", error));
+				warn!("[ApplicationRunTime] Terminal disposal failed, continuing...");
+			},
+		}
 
-		// 2. Dispose of all active terminals
+		// 3. Save application state
+		match self.SaveApplicationState().await {
+			Ok(()) => debug!("[ApplicationRunTime] Application state saved"),
+			Err(error) => {
+				shutdown_errors.push(format!("State save failed: {}", error));
+				warn!("[ApplicationRunTime] Failed to save application state, continuing...");
+			},
+		}
+
+		// 4. Flush any pending operations
+		self.FlushPendingOperations().await;
+
+		if !shutdown_errors.is_empty() {
+			Err(CommonError::Unknown {
+				Description: format!("Shutdown completed with {} errors: {:?}", shutdown_errors.len(), shutdown_errors),
+			})
+		} else {
+			Ok(())
+		}
+	}
+
+	/// Shutdown Cocoon with retry mechanism
+	async fn ShutdownCocoonWithRetry(&self) -> Result<(), CommonError> {
+		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
+
+		let mut attempts = 0;
+		let max_attempts = 3;
+
+		while attempts < max_attempts {
+			match IPCProvider
+				.SendNotificationToSideCar("cocoon-main".to_string(), "$shutdown".to_string(), serde_json::Value::Null)
+				.await
+			{
+				Ok(()) => {
+					// Give Cocoon a moment to process the shutdown
+					tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+					return Ok(());
+				},
+				Err(error) => {
+					attempts += 1;
+					if attempts == max_attempts {
+						return Err(error);
+					}
+
+					warn!(
+						"[ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
+						attempts,
+						error
+					);
+
+					tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+				},
+			}
+		}
+
+		Err(CommonError::Unknown {
+			Description: "Failed to shutdown Cocoon after maximum retries".to_string(),
+		})
+	}
+
+	/// Safely dispose of all active terminals
+	async fn DisposeTerminalsSafely(&self) -> Result<(), CommonError> {
 		let TerminalProvider:Arc<dyn TerminalProviderTrait> = self.Environment.Require();
 
 		let TerminalIds:Vec<u64> = {
-			let TerminalsGuard = self.Environment.ApplicationState.ActiveTerminals.lock().unwrap();
+			let TerminalsGuard = self.Environment.ApplicationState.ActiveTerminals.lock()
+				.map_err(|e| CommonError::StateLockPoisoned { Context: e.to_string() })?;
 
 			TerminalsGuard.keys().cloned().collect()
 		};
 
+		let mut disposal_errors: Vec<String> = Vec::new();
+
 		for id in TerminalIds {
-			if let Err(Error) = TerminalProvider.DisposeTerminal(id).await {
-				error!("[ApplicationRunTime] Failed to dispose terminal {}: {}", id, Error);
+			match TerminalProvider.DisposeTerminal(id).await {
+				Ok(()) => debug!("[ApplicationRunTime] Terminal {} disposed successfully", id),
+				Err(error) => {
+					disposal_errors.push(format!("Terminal {}: {}", id, error));
+					warn!("[ApplicationRunTime] Failed to dispose terminal {}: {}", id, error);
+				},
 			}
 		}
 
-		// TODO: Add final flush for storage services if they become debounced.
+		if !disposal_errors.is_empty() {
+			Err(CommonError::Unknown {
+				Description: format!("Terminal disposal completed with {} errors: {:?}", disposal_errors.len(), disposal_errors),
+			})
+		} else {
+			Ok(())
+		}
+	}
 
-		info!("[ApplicationRunTime] Service shutdown tasks complete.");
+	/// Save application state before shutdown
+	async fn SaveApplicationState(&self) -> Result<(), CommonError> {
+		debug!("[ApplicationRunTime] Saving application state...");
+
+		// Save global memento
+		let global_memento_guard = self.Environment.ApplicationState.GlobalMemento.lock()
+			.map_err(|e| CommonError::StateLockPoisoned { Context: e.to_string() })?;
+
+		let global_memento_path = &self.Environment.ApplicationState.GlobalMementoPath;
+
+		if let Some(parent) = global_memento_path.parent() {
+			if !parent.exists() {
+				std::fs::create_dir_all(parent).map_err(|e| {
+					CommonError::FileSystemIO {
+						Path: parent.to_path_buf(),
+						Description: e.to_string(),
+					}
+				})?;
+			}
+		}
+
+		let memento_json = serde_json::to_string_pretty(&*global_memento_guard)
+			.map_err(|e| CommonError::SerializationError { Description: e.to_string() })?;
+
+		std::fs::write(global_memento_path, memento_json)
+			.map_err(|e| CommonError::FileSystemIO {
+				Path: global_memento_path.clone(),
+				Description: e.to_string(),
+			})
+	}
+
+	/// Flush any pending operations
+	async fn FlushPendingOperations(&self) {
+		debug!("[ApplicationRunTime] Flushing pending operations...");
+
+		// Flush pending UI requests
+		let mut pending_requests_guard = self.Environment.ApplicationState.PendingUserInterfaceRequests.lock()
+			.unwrap_or_else(|e| {
+				error!("[ApplicationRunTime] Failed to lock pending UI requests: {}", e);
+				e.into_inner()
+			});
+
+for (_request_id, sender) in pending_requests_guard.drain() {
+			let _ = sender.send(Err(CommonError::Unknown {
+				Description: "Application shutting down".to_string(),
+			}));
+		}
+
+		debug!("[ApplicationRunTime] Pending operations flushed");
 	}
 }
 
@@ -143,5 +285,71 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 				Err(CommonError::IPCError { Description:Message }.into())
 			},
 		}
+	}
+}
+
+impl ApplicationRunTime {
+	/// Enhanced effect execution with timeout and recovery
+	pub async fn RunWithTimeout<TCapabilityProvider, TError, TOutput>(
+		&self,
+		Effect:ActionEffect<Arc<TCapabilityProvider>, TError, TOutput>,
+		timeout: std::time::Duration,
+	) -> Result<TOutput, TError>
+	where
+		TCapabilityProvider: ?Sized + Send + Sync + 'static,
+		Self::EnvironmentType: Requires<TCapabilityProvider>,
+		TError: From<CommonError> + Send + Sync + 'static,
+		TOutput: Send + Sync + 'static,
+	{
+		tokio::time::timeout(timeout, self.Run(Effect))
+			.await
+			.map_err(|_| {
+				CommonError::Unknown {
+					Description: format!("Effect execution timed out after {:?}", timeout),
+				}.into()
+			})?
+	}
+
+	/// Execute effect with retry mechanism
+	pub async fn RunWithRetry<TCapabilityProvider, TError, TOutput>(
+		&self,
+		Effect:ActionEffect<Arc<TCapabilityProvider>, TError, TOutput>,
+		max_retries: u32,
+		initial_delay: std::time::Duration,
+	) -> Result<TOutput, TError>
+	where
+		TCapabilityProvider: ?Sized + Send + Sync + 'static,
+		Self::EnvironmentType: Requires<TCapabilityProvider>,
+		TError: From<CommonError> + Send + Sync + 'static,
+		TOutput: Send + Sync + 'static,
+	{
+		let mut retry_count = 0;
+		let mut current_delay = initial_delay;
+
+		while retry_count <= max_retries {
+			match self.Run(Effect.clone()).await {
+				Ok(result) => return Ok(result),
+				Err(error) => {
+					if retry_count == max_retries {
+						return Err(error);
+					}
+
+					retry_count += 1;
+					warn!(
+						"[ApplicationRunTime] Effect execution failed (attempt {}): {}. Retrying in {:?}...",
+						retry_count,
+						error,
+						current_delay
+					);
+
+					tokio::time::sleep(current_delay).await;
+					current_delay *= 2; // Exponential backoff
+				},
+			}
+		}
+
+		Err(CommonError::Unknown {
+			Description: format!("Effect execution failed after {} retries", max_retries),
+		}.into())
 	}
 }

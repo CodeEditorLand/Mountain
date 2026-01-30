@@ -878,6 +878,8 @@ pub fn Fn() {
 				mountain_add_document_for_sync,
 				mountain_get_sync_status,
 				mountain_subscribe_to_updates,
+				get_configuration_data,
+				save_configuration_data,
 			])
 			// ---------------------------------------------------------------------
 			// [Tauri] Build & run loop

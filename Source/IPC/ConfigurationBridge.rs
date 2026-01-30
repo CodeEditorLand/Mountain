@@ -84,6 +84,11 @@ impl ConfigurationBridge {
     async fn update_mountain_configuration(&self, config: serde_json::Value) -> Result<(), String> {
         debug!("[ConfigurationBridge] Updating Mountain configuration");
         
+        // Validate configuration before updating
+        if !self.validate_configuration(&config) {
+            return Err("Invalid configuration data".to_string());
+        }
+        
         let config_provider: Arc<dyn ConfigurationProvider> = 
             self.runtime.Environment.Require();
         
@@ -103,6 +108,58 @@ impl ConfigurationBridge {
         }
         
         Ok(())
+    }
+
+    /// Validate configuration data
+    fn validate_configuration(&self, config: &serde_json::Value) -> bool {
+        // Basic validation: config must be an object
+        if !config.is_object() {
+            return false;
+        }
+
+        // Validate individual configuration values
+        if let Some(obj) = config.as_object() {
+            for (key, value) in obj {
+                // Key validation
+                if key.trim().is_empty() {
+                    return false;
+                }
+
+                // Value type validation
+                match key.as_str() {
+                    "zoom_level" | "font_size" => {
+                        if let Some(num) = value.as_f64() {
+                            if key == "zoom_level" && (num < -8.0 || num > 9.0) {
+                                return false;
+                            }
+                            if key == "font_size" && (num < 6.0 || num > 100.0) {
+                                return false;
+                            }
+                        } else {
+                            return false;
+                        }
+                    }
+                    "is_packaged" | "enable_feature" => {
+                        if !value.is_boolean() {
+                            return false;
+                        }
+                    }
+                    "theme" | "platform" | "arch" => {
+                        if !value.is_string() || value.as_str().unwrap().trim().is_empty() {
+                            return false;
+                        }
+                    }
+                    _ => {
+                        // Default validation: value must not be null
+                        if value.is_null() {
+                            return false;
+                        }
+                    }
+                }
+            }
+        }
+
+        true
     }
 
     /// Convert Wind configuration to Mountain format
@@ -427,12 +484,13 @@ pub async fn mountain_update_configuration_from_wind(
 #[tauri::command]
 pub async fn mountain_synchronize_configuration(
     app_handle: tauri::AppHandle,
-) -> Result<(), String> {
+) -> Result<serde_json::Value, String> {
     debug!("[ConfigurationBridge] Tauri command: synchronize_configuration");
     
     if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
         let bridge = ConfigurationBridge::new(runtime.inner().clone());
         bridge.synchronize_configuration().await
+            .map(|_| serde_json::json!({ "status": "success" }))
     } else {
         Err("ApplicationRunTime not found".to_string())
     }
@@ -442,12 +500,13 @@ pub async fn mountain_synchronize_configuration(
 #[tauri::command]
 pub async fn mountain_get_configuration_status(
     app_handle: tauri::AppHandle,
-) -> Result<ConfigurationStatus, String> {
+) -> Result<serde_json::Value, String> {
     debug!("[ConfigurationBridge] Tauri command: get_configuration_status");
     
     if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
         let bridge = ConfigurationBridge::new(runtime.inner().clone());
         bridge.get_configuration_status().await
+            .map(|status| serde_json::to_value(status).unwrap_or(serde_json::Value::Null))
     } else {
         Err("ApplicationRunTime not found".to_string())
     }

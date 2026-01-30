@@ -21,6 +21,7 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 use Common::Environment::Requires::Requires;
 use Common::FileSystem::FileSystemWriter::FileSystemWriter;
 use crate::IPC::AdvancedFeatures::PerformanceStats;
+use crate::IPC::MountainIPC::MountainIPC;
 
 /// Synchronization status
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -140,13 +141,14 @@ pub struct WindAdvancedSync {
     ui_state_sync: Arc<Mutex<UIStateSynchronization>>,
     real_time_updates: Arc<Mutex<RealTimeUpdates>>,
     performance_stats: Arc<Mutex<PerformanceStats>>,
+    mountain_ipc: Arc<MountainIPC>,
 }
 
 impl WindAdvancedSync {
     /// Create a new WindAdvancedSync instance
     pub fn new(runtime: Arc<ApplicationRunTime>) -> Self {
         Self {
-            runtime,
+            runtime: runtime.clone(),
             document_sync: Arc::new(Mutex::new(DocumentSynchronization {
                 synchronized_documents: HashMap::new(),
                 pending_changes: HashMap::new(),
@@ -196,6 +198,7 @@ impl WindAdvancedSync {
                 last_update: 0,
                 connection_uptime: 0,
             })),
+            mountain_ipc: Arc::new(MountainIPC::new(runtime)),
         }
     }
 
@@ -442,42 +445,40 @@ impl WindAdvancedSync {
             return Err(format!("Conflict detected: {}", conflict));
         }
         
-        // Apply change to Mountain's document system
-        let file_system: Arc<dyn FileSystemWriter> = 
-            self.runtime.Environment.Require();
-        
+        // Apply change via Mountain IPC instead of mock file system
         match change.change_type {
             ChangeType::Update => {
-                // Update file content
+                // Update file content via Mountain IPC
                 if let Some(content) = change.content.as_str() {
-                    file_system.WriteFile(
-                        &std::path::PathBuf::from(&change.document_id),
-                        content.as_bytes().to_vec(),
-                        true,
-                        true,
+                    self.mountain_ipc.update_document(
+                        &change.document_id,
+                        content,
+                        change.change_id.clone()
                     )
                     .await
-                    .map_err(|e| format!("Failed to write file: {}", e))?;
+                    .map_err(|e| format!("Failed to update document via Mountain IPC: {}", e))?;
                 }
             }
             ChangeType::Insert => {
-                // Create new file
+                // Create new file via Mountain IPC
                 if let Some(content) = change.content.as_str() {
-                    file_system.WriteFile(
-                        &std::path::PathBuf::from(&change.document_id),
-                        content.as_bytes().to_vec(),
-                        true,
-                        false,
+                    self.mountain_ipc.create_document(
+                        &change.document_id,
+                        content,
+                        change.change_id.clone()
                     )
                     .await
-                    .map_err(|e| format!("Failed to create file: {}", e))?;
+                    .map_err(|e| format!("Failed to create document via Mountain IPC: {}", e))?;
                 }
             }
             ChangeType::Delete => {
-                // Delete file
-                file_system.Delete(&std::path::PathBuf::from(&change.document_id), false, false)
-                    .await
-                    .map_err(|e| format!("Failed to delete file: {}", e))?;
+                // Delete file via Mountain IPC
+                self.mountain_ipc.delete_document(
+                    &change.document_id,
+                    change.change_id.clone()
+                )
+                .await
+                .map_err(|e| format!("Failed to delete document via Mountain IPC: {}", e))?;
             }
             _ => {
                 warn!("[WindAdvancedSync] Unsupported change type: {:?}", change.change_type);
@@ -563,9 +564,9 @@ impl WindAdvancedSync {
         let mut sync = self.ui_state_sync.lock().unwrap();
         *sync = ui_state;
         
-        // Emit UI state update to Sky
-        if let Err(e) = self.runtime.Environment.ApplicationHandle.emit("ui-state-update", &sync) {
-            error!("[WindAdvancedSync] Failed to emit UI state update: {}", e);
+        // Emit UI state update via Mountain IPC
+        if let Err(e) = self.mountain_ipc.update_ui_state(&sync).await {
+            error!("[WindAdvancedSync] Failed to update UI state via Mountain IPC: {}", e);
         }
         
         Ok(())
@@ -671,6 +672,7 @@ impl WindAdvancedSync {
             ui_state_sync: self.ui_state_sync.clone(),
             real_time_updates: self.real_time_updates.clone(),
             performance_stats: self.performance_stats.clone(),
+            mountain_ipc: self.mountain_ipc.clone(),
         }
     }
 }

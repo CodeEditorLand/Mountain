@@ -319,7 +319,8 @@ pub mod RecoveryUtilities {
 		operation_name: &str,
 	) -> Result<T, CommonError>
 	where
-		F: FnOnce() -> Result<T, CommonError>,
+		F: FnOnce() -> Result<T, CommonError> + Send + 'static,
+		T: Send + 'static,
 	{
 		let (sender, receiver) = std::sync::mpsc::channel();
 		

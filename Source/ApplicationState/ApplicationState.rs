@@ -354,9 +354,9 @@ impl ApplicationState {
 				std::thread::sleep(std::time::Duration::from_millis(100));
 				Ok(())
 			},
-			CommonError::FileSystemIO { path, .. } => {
+			CommonError::FileSystemIO { Path, .. } => {
 				// Attempt to recreate directories or handle file system issues
-				if let Some(parent) = path.parent() {
+				if let Some(parent) = Path.parent() {
 					if !parent.exists() {
 						std::fs::create_dir_all(parent).map_err(|e| {
 							CommonError::FileSystemIO {
@@ -525,8 +525,7 @@ impl ApplicationState {
 		})?;
 		
 		// Remove documents that reference non-existent files
-		open_documents.retain(|uri, doc_state| {
-			if let Ok(url) = url::Url::parse(uri) {
+				open_documents.retain(|uri, _doc_state| {
 				if url.scheme() == "file" {
 					if let Some(path) = url.to_file_path().ok() {
 						return path.exists();
