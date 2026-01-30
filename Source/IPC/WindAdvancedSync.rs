@@ -718,7 +718,6 @@ pub enum UpdateType {
             performance_stats: self.performance_stats.clone(),
         }
     }
-}
 
 /// Tauri command to add document for synchronization
 #[tauri::command]
