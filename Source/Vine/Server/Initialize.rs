@@ -10,10 +10,7 @@ use log::{error, info};
 use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
 
-use super::{
-	MountainVinegRPCService::MountainVinegRPCService,
-	CocoonServiceServer::CocoonServiceImpl,
-};
+use super::MountainVinegRPCService::MountainVinegRPCService;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine::{Error::VineError, Generated::{mountain_service_server::MountainServiceServer, cocoon_service_server::CocoonServiceServer}},
@@ -59,7 +56,7 @@ pub fn Initialize(
 	let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime.clone());
 	
 	// Create CocoonService server implementation
-	let cocoon_service_impl = CocoonServiceImpl::new(RunTime.Environment.clone());
+	let cocoon_service_impl = CocoonServiceServer::new(RunTime.Environment.clone());
 
 	// Spawn Mountain server to run in the background.
 	tokio::spawn(async move {

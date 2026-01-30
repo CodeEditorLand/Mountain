@@ -11,4 +11,4 @@ pub mod Initialize;
 
 pub mod MountainVinegRPCService;
 
-pub mod CocoonServiceImpl;
+pub mod CocoonServiceServer;

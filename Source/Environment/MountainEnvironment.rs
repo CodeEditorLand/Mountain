@@ -26,7 +26,7 @@ use Common::{
 	Document::DocumentProvider::DocumentProvider,
 	Environment::{Environment::Environment, Requires::Requires},
 	Error::CommonError::CommonError,
-	ExtensionManagement::ExtensionManagementService,
+	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 	IPC::IPCProvider::IPCProvider,
 	Keybinding::KeybindingProvider::KeybindingProvider,

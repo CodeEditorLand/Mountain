@@ -17,18 +17,18 @@ use crate::{
     ApplicationState::ApplicationState,
     Environment::MountainEnvironment::MountainEnvironment,
 };
-use Common::ExtensionManagement::ExtensionManagementService;
+use Common::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 
 /// Implementation of the CocoonService gRPC server
-pub struct CocoonServiceImpl {
+pub struct CocoonServiceServer {
     /// Mountain environment
     environment: Arc<MountainEnvironment>,
 }
 
-impl CocoonServiceImpl {
+impl CocoonServiceServer {
     /// Creates a new instance of the CocoonService server
     pub fn new(environment: Arc<MountainEnvironment>) -> Self {
-info!("[CocoonServiceImpl] New instance created");
+        info!("[CocoonServiceServer] New instance created");
         
         Self {
             environment,
@@ -41,13 +41,13 @@ info!("[CocoonServiceImpl] New instance created");
         request: GenericRequest,
     ) -> Result<GenericResponse, Status> {
         debug!(
-            "[CocoonServiceImpl] Handling Mountain request '{}' with ID {}",
+            "[CocoonServiceServer] Handling Mountain request '{}' with ID {}",
             request.method, request.request_identifier
         );
         
         match request.method.as_str() {
             "InitializeExtensionHost" => {
-                info!("[CocoonServiceImpl] Initializing extension host");
+                info!("[CocoonServiceServer] Initializing extension host");
                 
                 // Return success response
                 Ok(GenericResponse {
@@ -115,7 +115,7 @@ info!("[CocoonServiceImpl] New instance created");
 }
 
 #[async_trait]
-impl CocoonService for CocoonServiceImpl {
+impl CocoonService for CocoonServiceServer {
     /// Process Mountain requests from Cocoon
     async fn process_mountain_request(
         &self,
@@ -126,7 +126,7 @@ impl CocoonService for CocoonServiceImpl {
         match self.handle_mountain_request(request_data).await {
             Ok(response) => Ok(Response::new(response)),
             Err(status) => {
-                error!("[CocoonServiceImpl] Error processing Mountain request: {}", status);
+                error!("[CocoonServiceServer] Error processing Mountain request: {}", status);
                 Err(status)
             }
         }

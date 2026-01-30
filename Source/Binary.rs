@@ -64,19 +64,6 @@ use crate::{
 	Vine,
 };
 
-// Import Wind-Air commands
-use crate::IPC::WindAirCommands::{
-	CheckForUpdates,
-	DownloadUpdate,
-	ApplyUpdate,
-	DownloadFile,
-	AuthenticateUser,
-	IndexFiles,
-	SearchFiles,
-	GetAirStatus,
-	GetAirMetrics,
-};
-
 // =============================================================================
 // Debug Helpers (Highly Verbose, Low Intrusion)
 // =============================================================================
@@ -582,20 +569,6 @@ pub fn Fn() {
 			// -----------------------------------------------------------------
 			.manage(AppState.clone())
 			// -----------------------------------------------------------------
-			// [Boot] [Tauri] [Commands] Wind-Air commands
-			// -----------------------------------------------------------------
-			.invoke_handler(tauri::generate_handler![
-				CheckForUpdates,
-				DownloadUpdate,
-				ApplyUpdate,
-				DownloadFile,
-				AuthenticateUser,
-				IndexFiles,
-				SearchFiles,
-				GetAirStatus,
-				GetAirMetrics,
-			])
-			// -----------------------------------------------------------------
 			// [Lifecycle] Setup hook
 			// -----------------------------------------------------------------
 			.setup({
@@ -744,7 +717,7 @@ pub fn Fn() {
 					let AirAddress = "http://[::1]:50053";
 
 					// Attempt to connect to Air, but continue gracefully if unavailable
-					let AirProvider = match Air::CreateAirServiceProvider(AirAddress).await {
+					let AirProvider = match Air::CreateAirServiceProvider(AirAddress) {
 						Ok(provider) => {
 							info!("[Air] [Init] Successfully connected to Air at {}", AirAddress);
 							provider

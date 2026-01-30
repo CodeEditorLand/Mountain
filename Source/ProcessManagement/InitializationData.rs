@@ -19,7 +19,7 @@ use std::{collections::HashMap, env, sync::Arc};
 use Common::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	ExtensionManagement::ExtensionManagementService,
+	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
 	WorkSpace::WorkSpaceProvider::WorkSpaceProvider,
 };
 use log::info;
