@@ -10,7 +10,7 @@
 
 use std::sync::Arc;
 use serde::{Deserialize, Serialize};
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use log::{debug, info};
 
 // Import Air types using fully qualified paths to avoid name collisions
@@ -139,7 +139,7 @@ impl AirClientWrapper {
 /// `UpdateInfoDTO` with update information or error message
 #[tauri::command]
 pub async fn CheckForUpdates(
-    app_handle: AppHandle,
+    app_handle: tauri::AppHandle,
     current_version: Option<String>,
     channel: Option<String>,
 ) -> Result<UpdateInfoDTO, String> {

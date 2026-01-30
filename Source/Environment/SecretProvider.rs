@@ -46,7 +46,7 @@ fn GetKeyringServiceName(Environment: &MountainEnvironment, ExtensionIdentifier:
 
 /// Helper to check if Air client is available and healthy.
 #[cfg(feature = "AirIntegration")]
-async fn IsAirAvailable(AirClient: &AirServiceClient<tonic::transport::Channel>) -> bool {
+async fn IsAirAvailable(AirClient: &mut AirServiceClient<tonic::transport::Channel>) -> bool {
 	use tonic::Request;
 	use Air::Vine::Generated::air::HealthCheckRequest;
 

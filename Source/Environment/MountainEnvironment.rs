@@ -169,7 +169,7 @@ impl MountainEnvironment {
 		})?;
 
 		for entry in entries {
-			let entry = entry.map_err(|error| CommonError::FileSystemError {
+let entry = entry.map_err(|error| CommonError::FileSystemIO {
 				Description: format!("Failed to read directory entry: {}", error),
 			})?;
 

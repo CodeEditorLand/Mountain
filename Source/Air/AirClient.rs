@@ -42,7 +42,7 @@ pub const DEFAULT_AIR_SERVER_ADDRESS: &str = "[::1]:50053";
 /// This provides a clean interface for Mountain to interact with Air's
 /// capabilities including update management, authentication, file indexing,
 /// and system monitoring.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct AirClient {
 	// The underlying tonic gRPC client
 	inner: Option<air_service_client::AirServiceClient<Channel>>,

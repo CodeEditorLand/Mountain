@@ -1,4 +1,4 @@
-//! # Vine Server
+//! # CocoonServiceServer
 //!
 //! Implements the gRPC server for Mountain-Cocoon communication.
 
@@ -9,7 +9,7 @@ use log::{debug, error, info};
 use tonic::{Request, Response, Status};
 use async_trait::async_trait;
 
-use super::Generated::{
+use super::super::Generated::{
     cocoon_service_server::CocoonService,
     GenericRequest, GenericResponse, GenericNotification, CancelOperationRequest, Empty, RpcError
 };

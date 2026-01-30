@@ -421,7 +421,7 @@ impl StatusReporter {
         let mut health_monitor = self.health_monitor.lock()
             .map_err(|e| format!("Failed to access health monitor: {}", e))?;
 
-        let mut health_score = 100.0;
+        let mut health_score: f32 = 100.0;
         let mut issues = Vec::new();
 
         // Check connection health

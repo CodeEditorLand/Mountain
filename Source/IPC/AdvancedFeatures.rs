@@ -364,7 +364,7 @@ pub async fn mountain_get_performance_stats(
     debug!("[AdvancedFeatures] Tauri command: get_performance_stats");
     
     if let Some(features) = app_handle.try_state::<AdvancedFeatures>() {
-        Ok(features.get_performance_stats().await)
+        Ok(features.get_performance_stats().await?)
     } else {
         Err("AdvancedFeatures not found in application state".to_string())
     }
@@ -378,7 +378,7 @@ pub async fn mountain_get_cache_stats(
     debug!("[AdvancedFeatures] Tauri command: get_cache_stats");
     
     if let Some(features) = app_handle.try_state::<AdvancedFeatures>() {
-        Ok(features.get_cache_stats().await)
+        Ok(features.get_cache_stats().await?)
     } else {
         Err("AdvancedFeatures not found in application state".to_string())
     }

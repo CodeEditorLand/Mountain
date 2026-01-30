@@ -5,8 +5,10 @@
 //! `Cocoon`, handling RPC requests, and dispatching them into the Mountain
 //! application logic.
 
-#![allow(non_snake_case)]
+#![allow(non_snakeCase)]
 
 pub mod Initialize;
 
 pub mod MountainVinegRPCService;
+
+pub mod CocoonServiceServer;
