@@ -1,11 +1,38 @@
+// File: Mountain/Source/Environment/Utility.rs
+//
+// # Architectural Role: Shared Utility Functions for Environment Providers
+//
+// This module provides common helper functions used across all provider implementations
+// in the MountainEnvironment module. These utilities handle cross-cutting concerns like
+// error mapping, path manipulation, security validation, and type conversions.
+//
+// # Responsibilities
+//
+// 1. **Error Mapping**: Converts Mutex lock poisoning errors to CommonError variants
+// 2. **Language Detection**: Infers language identifiers from file extensions
+// 3. **Security Validation**: Enforces workspace trust and path access rules
+// 4. **URI Conversion**: Converts VSCode UriComponents DTOs to Rust Url types
+//
+// # Security Model
+//
+// The IsPathAllowedForAccess function enforces a security boundary where:
+// - All file operations require a trusted workspace
+// - Only paths within registered workspace folders are accessible
+// - This prevents extensions from accessing arbitrary system files
+// - The trust status is atomic and threadsafe
+//
+// # TODOs
+//
+// - [ ] Add more comprehensive language detection (e.g., from .editorconfig)
+// - [ ] Implement path normalization to prevent directory traversal attacks
+// - [ ] Add caching for language detection results
+// - [ ] Consider adding symbolic link resolution with security checks
+// - [ ] Add support for custom language mappings from user settings
+// - [ ] Implement path-based permission levels (read-only, read/write)
+// - [ ] Add audit logging for path access attempts
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # Environment Utility
-//!
-//! Contains shared helper functions used by the `MountainEnvironment` provider
-//! implementations for tasks like error mapping, path manipulation, and
-//! security checks.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
