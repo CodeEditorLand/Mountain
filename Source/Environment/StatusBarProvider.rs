@@ -5,6 +5,49 @@
 //   - Orchestrate communication between the `Cocoon` sidecar and the `Sky`
 //     frontend.
 //   - Store status bar state in `ApplicationState` and push updates to the UI.
+//   - Manage status bar item ordering and priority system.
+//   - Handle dynamic tooltip resolution via sidecar callbacks.
+//   - Support status bar item visibility management.
+//   - Handle left/right alignment of status bar items.
+//
+// TODOs:
+//   - Implement status bar priority ordering system
+//   - Add status bar alignment (left/right) support
+//   - Implement status bar item visibility toggle
+//   - Support status bar item compact mode
+//   - Add status bar item background color support
+//   - Implement status bar item grouping
+//   - Support status bar item command registration
+//   - Add status bar item accessibility (ARIA labels)
+//   - Implement status bar item hover actions
+//   - Support status bar widget contribution points
+//   - Add status bar item animation support
+//   - Implement status bar item context menu
+//   - Add status bar configuration persistence
+//
+// Inspired by VSCode's status bar service which:
+// - Uses IStatusbarEntryPriority for item ordering
+// - Supports StatusbarAlignment (Left/Right)
+// - Provides dynamic tooltip resolution
+// - Manages entry visibility overrides
+// - Supports status bar item compact mode
+// - Handles status bar item grouping
+//
+// ## Status Bar Priority System
+//
+// The priority determines the order of items within their alignment group:
+// - Higher priority values appear before lower priority values
+// - Left alignment: Items arranged from left to right by descending priority
+// - Right alignment: Items arranged from right to left by descending priority
+// - Default priority is 0 for items without explicit priority
+// - Primary items typically use priority 100-1000
+// - Secondary items typically use priority 10-99
+//
+// ## Status Bar Item Types
+//
+// 1. **Persistent Items**: Long-lived items (e.g., branch indicator, language indicator)
+// 2. **Transient Messages**: Temporary notifications that auto-dismiss
+// 3. **Dynamic Items**: Items with computed values (e.g., error count, position)
 
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
