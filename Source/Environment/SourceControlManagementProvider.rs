@@ -1,5 +1,51 @@
 // File: Mountain/Source/Environment/SourceControlManagementProvider.rs
-
+// Role: Implements the `SourceControlManagementProvider` trait for the
+// `MountainEnvironment`. Responsibilities:
+//   - Manage source control providers (e.g., Git, Mercurial, SVN).
+//   - Handle SCM provider registration and disposal.
+//   - Manage resource groups (e.g., changes, untracked, merge conflicts).
+//   - Handle input boxes for user input (e.g., commit messages).
+//   - Emit events to the Sky frontend for UI updates.
+//   - Provide Git integration patterns for common operations.
+//   - Handle conflict detection and resolution.
+//   - Support multiple SCM providers simultaneously.
+//
+// TODOs:
+//   - Implement complete Git integration (status, commit, push, pull, branch)
+//   - Add Git diff display with visual comparison
+//   - Implement merge conflict resolution UI
+//   - Support Git staging/unstaging of resources
+//   - Add Git stash operations
+//   - Implement Git branch management (create, delete, checkout)
+//   - Support Git remote operations
+//   - Add Git history/log viewing
+//   - Implement Git blame annotations
+//   - Support Git submodules
+//   - Implement Git LFS (Large File Storage) support
+//   - Add Git tag management
+//   - Custom implementation for Mercurial, SVN, and other VCS
+//   - Implement SCM provider command registration
+//   - Support SCM provider decoration (badges, colors)
+//   - Add input box validation and validation messaging
+//   - Implement resource state caching for performance
+//   - Support SCM provider quick picks and menus
+//   - Add keyboard shortcuts for common SCM operations
+//   - Implement SCM provider extension points
+//   - Support Git rebase and cherry-pick operations
+//   - Add Git bisect support
+//   - Implement Git commit graph visualization
+//   - Support Git hooks integration
+//   - Add Git signature verification
+//   - Implement Git ignore management
+//
+// Inspired by VSCode's SCM service which:
+// - Provides a flexible abstraction over multiple source control systems
+// - Manages resource state changes through groups
+// - Supports provider-specific operations through commands
+// - Handles UI updates through event emission
+// - Manages input boxes for user interaction
+// - Git integration is the primary implementation with patterns for others
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 //!
@@ -7,6 +53,43 @@
 //!
 //! Implements the `SourceControlManagementProvider` trait for the
 //! `MountainEnvironment`.
+//!
+//! ## SCM Provider Architecture
+//!
+//! Each SCM provider maintains:
+//! - **Handle**: Unique identifier for the provider
+//! - **Label**: User-friendly name (e.g., "Git")
+//! - **Root URI**: URI of the repository root
+//! - **Groups**: Resource groups organizing changed resources
+//! - **Input Box**: User input widget for operations (e.g., commit messages)
+//! - **Count**: Badge count for changed items
+//!
+//! ## Resource Groups
+//!
+//! Groups organize resources by their state:
+//! - **Changes**: Modified files ready to commit
+//! - **Untracked**: New files not yet tracked
+//! - **Staged**: Files staged for commit
+//! - **Merge Changes**: Files with merge conflicts
+//! - **Conflict Unresolved**: Unresolved conflict markers
+//
+//! ## SCM Lifecycle
+//!
+//! 1. **Create Provider**: Register a new SCM provider with handle and metadata
+//! 2. **Update Provider**: Update provider state (badge count, input box)
+//! 3. **Update Group**: Add or remove resources from groups
+//! 4. **Register Input Box**: Create input widget for user interaction
+//! 5. **Dispose Provider**: Remove provider and all associated state
+//
+//! ## Git Integration Patterns
+//!
+//! Typical Git provider workflow:
+//! - Detect Git repository via `.git` directory
+//! - Run `git status` to populate resource groups
+//! - Run `git diff` to provide file diffs
+//! - Use input box for commit messages
+//! - Show badge count for changed files
+//! - Provide commands: Stage, Unstage, Commit, Push, Pull, Discard
 
 #![allow(non_snake_case, non_camel_case_types)]
 
