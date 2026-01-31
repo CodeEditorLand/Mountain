@@ -5,6 +5,29 @@
 //   - Collect default keybindings contributed by all scanned extensions.
 //   - Read and apply user-defined keybindings from `keybindings.json`, handling
 //     overrides and unbindings.
+//   - Parse and resolve keybinding combinations (modifiers + keys).
+//   - Evaluate "when" clauses to determine keybinding activation context.
+//   - Handle keybinding conflicts with priority-based resolution.
+//   - Support platform-specific keybindings.
+//
+// TODOs:
+//   - Implement complete when clause evaluation (context key expressions)
+//   - Add keybinding scoring for conflict resolution
+//   - Support keybinding localization
+//   - Implement platform-specific modifier key conversion (Cmd/Ctrl)
+//   - Add keybinding conflict detection and warnings
+//   - Implement keybinding chords (multi-key sequences)
+//   - Support custom keybinding schemes
+//   - Add keybinding validation and syntax error reporting
+//   - Implement keybinding telemetry for usage tracking
+//   - Support keybinding migration across versions
+//
+// Inspired by VSCode's keybinding service which:
+// - Evaluates complex when clause expressions
+// - Resolves conflicts with scoring (default > extension > user overrides)
+// - Supports platform-specific transformations
+// - Handles keybinding chords
+// - Provides keybinding resolution diagnostics
 
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
@@ -12,6 +35,26 @@
 //! # KeybindingProvider Implementation
 //!
 //! Implements the `KeybindingProvider` trait for the `MountainEnvironment`.
+//!
+//! ## Keybinding Resolution Strategy
+//!
+//! 1. Collect default keybindings from all enabled extensions
+//! 2. Apply user-defined keybindings from `keybindings.json`
+//! 3. Resolve conflicts using priority rules:
+//!    - User keybindings override system defaults
+//!    - Negative commands (starting with `-`) unbind keys
+//!    - Higher priority values win in cases of ambiguity
+//! 4. Evaluate when clauses at runtime to filter active keybindings
+//!
+//! ## When Clause Evaluation
+//!
+//! When clauses are boolean expressions controlling when a keybinding
+//! is active. Examples:
+//! - `"editorTextFocus && !inQuickOpen"` - Only when editor has focus
+//! - `"debugState != 'inactive'"` - Only when debugging
+//!
+//! Current implementation stores when clauses but only partially
+//! evaluates them. Full expression evaluation is pending.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
