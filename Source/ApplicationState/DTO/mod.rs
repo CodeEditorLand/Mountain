@@ -1,8 +1,12 @@
 //! # ApplicationState DTO Module
 //!
-//! This module aggregates and re-exports all Data Transfer Objects (DTOs) that
-//! are used to represent the various components of the application's central
-//! state.
+//! # RESPONSIBILITY
+//! - Aggregates and re-exports all Data Transfer Objects (DTOs)
+//! - Central module for state serialization/deserialization
+//! - Provides standard interface for gRPC/IPC transmission of application state
+//!
+//! # FIELDS
+//! - Re-exports all DTO modules for application state components
 
 #![allow(non_snake_case, non_camel_case_types)]
 
