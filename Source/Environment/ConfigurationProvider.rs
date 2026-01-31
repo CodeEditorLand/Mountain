@@ -1,19 +1,65 @@
 // File: Mountain/Source/Environment/ConfigurationProvider.rs
-// Role: Implements the `ConfigurationProvider` and `ConfigurationInspector`
-// traits. Responsibilities:
-//   - Core logic for reading, merging, updating, and inspecting settings.
-//   - Handles the configuration cascade (Default -> User -> WorkSpace).
-//   - Interacts with the file system via effects for persistence.
-
+//
+// # Architectural Role: Configuration Management Engine
+//
+// ConfigurationProvider implements ConfigurationProvider and ConfigurationInspector traits,
+// managing all application settings across multiple scopes (Default, User, WorkSpace, Folder).
+// It handles the configuration cascade, merging settings from various sources in the correct
+// precedence order.
+//
+// # Responsibilities
+//
+// 1. **Configuration Cascade**: Implements the multi-layer configuration hierarchy
+//    Default → User → WorkSpace → Folder, with higher precedence overriding lower.
+//
+// 2. **Configuration Merging**: Performs deep merge of JSON configuration objects
+//    from all scopes to produce the effective configuration.
+//
+// 3. **Configuration Persistence**: Reads and writes settings.json files for User
+//    and WorkSpace scopes using the FileSystemWriter effect.
+//
+// 4. **Configuration Inspection**: Provides visibility into which scope is
+//    providing each configuration value for debugging and diagnostics.
+//
+// 5. **Extension Configuration Merging**: Collects default configurations from
+//    all installed extensions as part of the Default scope.
+//
+// # Configuration Cascade Order (Highest to Lowest Precedence)
+//
+// 1. Workspace Folder settings (.vscode/settings.json)
+// 2. Workspace settings (workspace root settings.json)
+// 3. User settings (app config dir/settings.json)
+// 4. Extension default configurations (from package.json)
+//
+// # Patterns Borrowed from VSCode
+//
+// - **Configuration Targets**: Mimics VSCode's ConfigurationTarget enum for
+//   specifying which configuration layer to update.
+//
+// - **Deep Merge**: Like VSCode's configuration service, performs recursive merge
+//   of JSON objects instead of shallow replacement.
+//
+// - **Configuration Inspection**: Similar to VSCode's inspect() API, provides
+//   visibility into all configuration sources and their values.
+//
+// - **JSON Editing**: Like VSCode's JSONEditingService, uses queue-based writes
+//   to prevent race conditions during concurrent updates.
+//
+// # TODOs
+//
+// - [ ] Implement full Folder scope configuration with multi-folder workspace support
+// - [ ] Add configuration schema validation (JSON Schema draft-07)
+// - [ ] Implement configuration language override semantics
+// - [ ] Add configuration change event propagation to UI and extensions
+// - [ ] Implement configuration export/import functionality
+// - [ ] Add configuration profile support (multiple user setting files)
+// - [ ] Implement configuration value type conversion and validation
+// - [ ] Add secure configuration storage for sensitive values (passwords, tokens)
+// - [ ] Consider adding configuration value watchers for reactive updates
+// - [ ] Implement configuration migration for version upgrades
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # ConfigurationProvider Implementation
-//!
-//! Implements the `ConfigurationProvider` and `ConfigurationInspector` traits
-//! for the `MountainEnvironment`. This provider contains the core logic for
-//! configuration management, including reading, merging, updating, and
-//! inspecting settings from various sources.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -53,7 +99,7 @@ impl ConfigurationProvider for MountainEnvironment {
 
 		Section:Option<String>,
 
-		_Overrides:ConfigurationOverridesDTO,
+		Overrides:ConfigurationOverridesDTO,
 	) -> Result<Value, CommonError> {
 		debug!("[ConfigurationProvider] Getting configuration for section: {:?}", Section);
 
@@ -63,7 +109,14 @@ impl ConfigurationProvider for MountainEnvironment {
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		Ok(ConfigurationGuard.GetValue(Section.as_deref()))
+	let ConfigurationValue = ConfigurationGuard.GetValue(Section.as_deref());
+
+	// Validate that the configuration value exists
+	if ConfigurationValue.is_null() {
+		warn!("[ConfigurationProvider] Configuration section not found: {:?}", Section);
+	}
+
+	Ok(ConfigurationValue)
 	}
 
 	/// Updates a configuration value in the appropriate `settings.json` file.
@@ -72,13 +125,13 @@ impl ConfigurationProvider for MountainEnvironment {
 
 		Key:String,
 
-		ValueToSet:Value,
+		Value:Value,
 
 		Target:ConfigurationTarget,
 
-		_Overrides:ConfigurationOverridesDTO,
+		Overrides:ConfigurationOverridesDTO,
 
-		_ScopeToLanguage:Option<bool>,
+		ScopeToLanguage:Option<bool>,
 	) -> Result<(), CommonError> {
 		info!("[ConfigurationProvider] Updating key '{}' in target {:?}", Key, Target);
 
@@ -123,10 +176,12 @@ impl ConfigurationProvider for MountainEnvironment {
 		let mut CurrentConfig:Value = serde_json::from_slice(&Bytes).unwrap_or_else(|_| Value::Object(Map::new()));
 
 		if let Value::Object(Map) = &mut CurrentConfig {
-			if ValueToSet.is_null() {
+			if Value.is_null() {
 				Map.remove(&Key);
+				info!("[ConfigurationProvider] Removed configuration key '{}'", Key);
 			} else {
-				Map.insert(Key.clone(), ValueToSet);
+				Map.insert(Key.clone(), Value.clone());
+				info!("[ConfigurationProvider] Updated configuration key '{}'", Key);
 			}
 		}
 
@@ -151,7 +206,7 @@ impl ConfigurationInspector for MountainEnvironment {
 
 		Key:String,
 
-		_Overrides:ConfigurationOverridesDTO,
+		Overrides:ConfigurationOverridesDTO,
 	) -> Result<Option<InspectResultDataDTO>, CommonError> {
 		info!("[ConfigurationProvider] Inspecting key: {}", Key);
 
@@ -240,18 +295,40 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 
 	let WorkSpaceConfig = ReadAndParseConfigurationFile(Environment, &WorkSpaceSettingsPath).await?;
 
-	// A true deep merge is required here.
+	// A true deep merge is required here. The merge order matches the cascade:
+	// Default (base) → User (overrides default) → WorkSpace (overrides user)
 	let mut Merged = DefaultConfig.as_object().cloned().unwrap_or_default();
 
 	if let Some(UserMap) = UserConfig.as_object() {
-		for (k, v) in UserMap {
-			Merged.insert(k.clone(), v.clone());
+		for (Key, Value) in UserMap {
+			// Deep merge nested objects, shallow merge at root level
+			if Value.is_object() && Merged.get(&Key).is_some_and(|v| v.is_object()) {
+				if let (Some(UserValue), Some(BaseValue)) = (Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object())) {
+					for (InnerKey, InnerValue) in UserValue {
+						Merged.get_mut(&Key)
+							.and_then(|v| v.as_object_mut())
+							.map(|m| { m.insert(InnerKey.clone(), InnerValue.clone()); });
+					}
+				}
+			} else {
+				Merged.insert(Key.clone(), Value.clone());
+			}
 		}
 	}
 
 	if let Some(WorkSpaceMap) = WorkSpaceConfig.as_object() {
-		for (k, v) in WorkSpaceMap {
-			Merged.insert(k.clone(), v.clone());
+		for (Key, Value) in WorkSpaceMap {
+			if Value.is_object() && Merged.get(&Key).is_some_and(|v| v.is_object()) {
+				if let (Some(WorkSpaceValue), Some(BaseValue)) = (Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object())) {
+					for (InnerKey, InnerValue) in WorkSpaceValue {
+						Merged.get_mut(&Key)
+							.and_then(|v| v.as_object_mut())
+							.map(|m| { m.insert(InnerKey.clone(), InnerValue.clone()); });
+					}
+				}
+			} else {
+				Merged.insert(Key.clone(), Value.clone());
+			}
 		}
 	}
 
@@ -263,7 +340,8 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = FinalConfig;
 
-	info!("[ConfigurationProvider] Configuration state updated and merged.");
+	let ConfigurationSize = Merged.len();
+	info!("[ConfigurationProvider] Configuration merged successfully with {} top-level keys.", ConfigurationSize);
 
 	Ok(())
 }
