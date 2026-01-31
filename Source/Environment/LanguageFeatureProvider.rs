@@ -5,6 +5,23 @@
 //   - Routes requests from the application to the appropriate extension
 //     provider hosted in the `Cocoon` sidecar.
 //   - Manages the registration and lifecycle of language providers.
+//   - Handles JSON-RPC to Effect conversions for LSP features.
+//   - Provides provider scoring and selection based on document selectors.
+//   - Manages language server lifecycle (initialization, shutdown).
+//
+// TODOs:
+//   - Implement language server lifecycle management (start/stop/restart)
+//   - Add provider fallback chain: Air (cached) → Cocoon (LSP) → Local (basic)
+//   - Implement provider priority scoring based on selector specificity
+//   - Add scheme and pattern matching in document selectors
+//   - Add exclude pattern support
+//   - Handle LSP capability negotiation
+//   - Implement request cancellation through CancellationToken
+//   - Add performance metrics and logging for feature invocation
+//   - Support incremental synchronization for large files
+//   - Add semantic tokens support
+//   - Implement call hierarchy provider
+//   - Add inlay hints support
 
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
@@ -15,6 +32,31 @@
 //! `MountainEnvironment`. This provider is the central hub for all language
 //! intelligence features, routing requests from the application to the
 //! appropriate extension provider hosted in the `Cocoon` sidecar.
+//!
+//! Inspired by VSCode's language feature registry which:
+//! - Scores providers based on selector specificity
+//! - Supports multiple providers per feature with resolution
+//! - Handles capability negotiation with language servers
+//! - Manages provider lifecycle and state
+//!
+//! LSP Feature Support:
+//! - Hover: Provide rich information at cursor position
+//! - Completion: Intelligent code completion with context
+//! - Definition: Jump to symbol definitions
+//! - References: Find all symbol usages
+//! - Document Formatting: Format entire documents
+//! - Range Formatting: Format document ranges
+//! - Code Actions: Quick fixes and refactorings
+//! - Code Lenses: Decorations with inline actions
+//! - Document Highlights: Highlight symbol occurrences
+//! - Document Links: Navigation for embedded resources
+//! - Signature Help: Parameter information during function calls
+//! - Type Definition: Jump to type definitions
+//! - Implementation: Find interface implementations
+//! - Rename: Symbol renaming with workspace update
+//! - Semantic Tokens: Syntax highlighting with semantic info
+//! - Inlay Hints: Parameter and type hints inline
+//! - Folding Ranges: Code folding regions
 //!
 //! TODO (Mountain→Air Split): If Air provides advanced completion or indexing
 //! services, consider adding a fallback provider chain: Air (cached/indexed)
