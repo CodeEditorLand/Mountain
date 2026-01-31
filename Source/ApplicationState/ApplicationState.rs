@@ -1,12 +1,272 @@
 // File: Mountain/Source/ApplicationState/ApplicationState.rs
-// Role: Defines the main `ApplicationState` struct, which is the central,
-// shared, thread-safe state container for the entire Mountain application.
-// Responsibilities:
-//   - Hold all runtime state for services like configuration, extensions,
-//     documents, and UI.
-//   - Provide thread-safe access to this state via `Arc<Mutex<...>>`.
-//   - Be managed by Tauri and accessible to all command handlers and
-//     Environment providers.
+//
+// # ApplicationState - Central State Container
+//
+// ## Role
+//
+// Defines the main `ApplicationState` struct, which is the central, shared,
+// thread-safe state container for the entire Mountain application.
+//
+// ## Architectural Position
+//
+// ApplicationState is the **state center of the application**. It serves as:
+// - **Single Source of Truth**: All application state lives here
+// - **Thread-Safe Hub**: Safe access from all threads via Arc<Mutex<...>>
+// - **Persistence Manager**: Handles state persistence to disk
+// - **Recovery System**: Provides recovery from corrupted state
+// - **Identity Source**: Supplies unique IDs for providers and resources
+//
+// ## Responsibilities
+//
+// ### 1. State Container
+// Hold all runtime state for services like:
+// - WorkSpace and window state
+// - Configuration and storage
+// - Extensions and command registry
+// - Documents and diagnostic errors
+// - Terminals, webviews, and tree views
+// - Source control management state
+// - Pending UI requests
+//
+// ### 2. Thread-Safe Access
+// - Provide thread-safe access to state via `Arc<Mutex<...>>`
+// - Ensure proper synchronization for concurrent access
+// - Handle mutex poisoning gracefully
+// - Support async operations with proper locking
+//
+// ### 3. State Persistence
+// - Manage memento (state serialization) for crash recovery
+// - Handle global and workspace-scoped storage
+// - Provide disk I/O for state loading/saving
+// - Recover from corrupted state files
+//
+// ### 4. Identity Management
+// - Generate unique provider handles
+// - Generate unique terminal identifiers
+// - Generate unique SCM provider handles
+// - Ensure monotonically increasing IDs
+//
+// ### 5. State Recovery
+// - Detect corrupted state
+// - Attempt recovery from poisoned locks
+// - Restore state from disk
+// - Clear invalid state entries
+//
+// ## VS Code Reference
+//
+// This module borrows from VS Code's state management patterns in:
+//
+// - `vs/platform/storage/common/storageService.ts` - Memento storage
+//   - Global vs workspace-scoped storage separation
+//   - Crash recovery and state persistence
+//   - Key-value storage API
+//
+// - `vs/workbench/services/environment/common/environmentService.ts` - Environment state
+//   - Workspace configuration management
+//   - Window state persistence
+//   - Trust management
+//
+// - `vs/workbench/services/extensions/common/extensions` - Extension state
+//   - Extension registry and metadata
+//   - Language provider management
+//   - Command registration
+//
+// Key patterns adopted:
+// 1. **Memento Pattern**: State is serialized for crash recovery
+// 2. **Repository Pattern**: State access goes through this container
+// 3. **Identity Map**: Track all instances with unique IDs
+// 4. **Observer Pattern**: State changes trigger events
+//
+// ## Data Layout
+//
+// The ApplicationState struct is organized into logical groups:
+//
+// ### Workspace State
+// - `WorkSpaceFolders` - Open workspace folders
+// - `WorkSpaceConfigurationPath` - Active workspace config file
+// - `IsTrusted` - Workspace security trust status
+// - `WindowState` - Window geometry and state
+// - `ActiveDocumentURI` - Currently active document
+//
+// ### Configuration & Storage
+// - `Configuration` - Merged configuration from all sources
+// - `GlobalMemento` - Global key-value storage
+// - `WorkSpaceMemento` - Workspace-scoped storage
+// - Memento paths for persistence
+//
+// ### Extension & Provider Management
+// - `CommandRegistry` - Registered CLI commands
+// - `LanguageProviders` - LSP and other language features
+// - `NextProviderHandle` - Counter for provider IDs
+// - `ScannedExtensions` - Discovered extensions
+// - `EnabledProposedAPIs` - API feature flags
+// - `ExtensionScanPaths` - Where to look for extensions
+//
+// ### Feature-specific State
+// - `DiagnosticsMap` - Compiler/diagnostic errors by owner and resource
+// - `OpenDocuments` - Currently open documents by URI
+// - `OutputChannels` - Output panel channels
+// - `ActiveTerminals` - Terminal instances by ID (nested mutex)
+// - `NextTerminalIdentifier` - Counter for terminal IDs
+// - `ActiveWebViews` - Webview panels by ID
+// - `ActiveCustomDocuments` - Custom editor state
+// - `ActiveStatusBarItems` - Status bar entries
+// - `ActiveTreeViews` - Tree data providers
+// - `SourceControlManagementProviders` - SCM registries
+// - `SourceControlManagementGroups` - SCM resource groups
+// - `SourceControlManagementResources` - SCM resource state
+// - `NextSourceControlManagementProviderHandle` - Counter for SCM IDs
+//
+// ### IPC & UI State
+// - `PendingUserInterfaceRequests` - Ongoing UI interactions (dialogs, etc.)
+//
+// ## Thread Safety
+//
+// All state is protected by `Arc<Mutex<...>>`:
+//
+//```rust
+// pub struct ApplicationState {
+//     pub WorkSpaceFolders: Arc<Mutex<Vec<WorkSpaceFolderStateDTO>>>,
+//     pub Configuration: Arc<Mutex<MergedConfigurationStateDTO>>,
+//     // ... all fields protected by Arc<Mutex<...>>
+// }
+//```
+//
+// **Access Patterns:**
+// - Lock briefly, copy data needed, release immediately
+// - Use `map_err(MapLockError)` for lock error handling
+// - Avoid nested locks to prevent deadlocks
+// - Prefer read-only copies when possible
+//
+// **Terminal State Note:**
+// Terminals use `Arc<Mutex<...>>>` (double mutex) because:
+// - Outer mutex protects the HashMap of terminals
+// - Inner mutex protects each individual terminal state
+// - Allows concurrent access to different terminals
+//
+// ## State Initialization
+//
+// The `Default` implementation creates a fully initialized state:
+//
+// 1. **Resolve Application Data Directory**:
+//    - Use `dirs::config_dir()` on supported platforms
+//    - Fall back to relative path if unavailable
+//
+// 2. **Ensure Directory Exists**:
+//    - Create if missing
+//    - Log error if creation fails
+//
+// 3. **Load Global Memento**:
+//    - Read from disk if exists
+//    - Default to empty map if not
+//    - Handle corruption gracefully
+//
+// 4. **Initialize All Fields**:
+//    - Empty collections for maps and vectors
+//    - At starting value of 1 for counters
+//    - Default structs for complex state
+//
+// ## Workspace Identification
+//
+// The workspace identifier is generated by `GetWorkSpaceIdentifier`:
+//
+// **Priority**:
+// 1. Configuration file name (if workspace open from file)
+// 2. First workspace folder hashed and sanitized
+// 3. "NO_WORKSPACE" if no workspace loaded
+//
+// **Format**: `{folder-name}-{hash[:8]}` or `{config-file-name}`
+//
+// Example: `MyProject-a1b2c3d4` or `settings.json`
+//
+// This identifier is used for:
+// - Workspace memento file naming
+// - Workspace-specific storage
+// - Workspace identification in logs
+//
+// ## Memento Persistence
+//
+// Memento files store state for crash recovery:
+//
+// **Global Memento** (`globalStorage.json`):
+// - Application-wide settings
+// - User preferences
+// - Cross-workspace data
+//
+// **Workspace Memento** (`workspaceStorage/{id}/storage.json`):
+// - Workspace-specific settings
+// - Document state
+// - Per-workspace preferences
+//
+// **Update Flow**:
+// - When workspace opens/changes → `UpdateWorkSpaceMementoPathAndReload`
+// - This updates path and reloads from disk
+// - Old workspace state is forgotten
+// - New workspace state is loaded
+//
+// ## Error Handling
+//
+// All functions return `Result<T, CommonError>`:
+//
+// **Error Types**:
+// - `CommonError::StateLockPoisoned` - Mutex poisoned (panic in another thread)
+// - `CommonError::FileSystemIO` - File/directory operations failed
+// - `CommonError::SerializationError` - JSON parsing failed
+// - `CommonError::Unknown` - Uncategorized errors
+//
+// **Recovery Functions**:
+// - `MapLockError` - Convert lock error to CommonError
+// - `MapLockErrorWithRecovery` - Convert with recovery attempt
+// - `SafeStateOperation` - Wrap operation with recovery
+// - `RecoverApplicationState` - Comprehensive recovery
+//
+// **StateOperationResult**:
+// Provides recovery metadata:
+// - `result` - Operation result
+// - `recovery_attempted` - Was recovery tried
+// - `recovery_successful` - Did recovery work
+//
+// ## Recovery Mechanisms
+//
+// ### State Recovery Functions:
+//
+// **`RecoverApplicationState()`**:
+// - Recovers all state components
+// - Calls all sub-recovery functions
+// - Logs comprehensive status
+//
+// **`RecoverGlobalMemento()`**:
+// - Reloads global memento from disk
+// - Resets to empty if corrupted
+//
+// **`RecoverWorkSpaceMemento()`**:
+// - Reloads workspace memento from disk
+// - Clears if path is None
+//
+// **`RecoverExtensionState()`**:
+// - Clears potentially corrupted extensions
+// - Removes invalid scan paths
+//
+// **`RecoverDocumentState()`**:
+// - Removes documents that don't exist on disk
+// - Keeps non-file URIs (untitled, virtual)
+//
+// ## TODOs
+//
+// High Priority:
+// - [ ] Add state validation invariants
+// - [ ] Implement state diffing for debugging
+// - [ ] Add state metrics collection
+//
+// Medium Priority:
+// - [ ] Add state compaction for large maps
+// - [ ] Implement state snapshots
+// - [ ] Add state export functionality
+//
+// Low Priority:
+// - [ ] Add state visualization tools
+// - [ ] Implement state cloning for testing
+// - [ ] Add state migration for version upgrades
 
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
