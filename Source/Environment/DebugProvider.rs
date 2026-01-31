@@ -1,25 +1,66 @@
 // File: Mountain/Source/Environment/DebugProvider.rs
-// Role: Implements the `DebugService` trait for the `MountainEnvironment`.
-// Responsibilities:
-//   - Manage the registration of debug configuration providers and adapter
-//     factories.
-//   - Orchestrate the `startDebugging` flow, which involves:
-//     1. Calling back to the extension host to resolve the final debug
-//        configuration.
-//     2. Calling back to the extension host to get the debug adapter executable
-//        details.
-//     3. Spawning and managing the debug adapter process.
-//     4. Mediating communication between the UI, the extension host, and the
-//        debug adapter.
-
+//
+// # Architectural Role: Debugging Lifecycle Manager
+//
+// DebugProvider implements the DebugService trait, managing the complete debugging session
+// lifecycle. It orchestrates between the extension host (for configuration), the debug adapter
+// (for actual debugging), and the UI (for user interaction).
+//
+// # Responsibilities
+//
+// 1. **Configuration Management**: Handles registration of debug configuration providers that
+//    resolve launch configurations for different debug types.
+//
+// 2. **Debug Adapter Lifecycle**: Manages creation, spawning, and termination of debug adapter
+//    processes via Debug Adapter Protocol (DAP).
+//
+// 3. **Session Management**: Maintains active debug sessions and routes DAP messages between
+//    the UI, extension host, and debug adapter.
+//
+// 4. **Debug Protocol Mediation**: Converts JSON-RPC messages between the UI's representation
+//    and the Debug Adapter's protocol.
+//
+// 5. **Debug Type Routing**: Associates debug types (e.g., node, java, rust) with their
+//    corresponding configuration and adapter configurations.
+//
+// # Debug Session Flow
+//
+// 1. UI initiates debug session via StartDebugging with folder URI and configuration
+// 2. Mountain calls extension to resolve the final debug configuration (substitutes variables)
+// 3. Mountain requests debug adapter descriptor (executable/port) from extension
+// 4. Mountain spawns the debug adapter process or connects to debug server
+// 5. Mountain creates debug session and starts mediating DAP messages
+// 6. UI sends DAP commands to Mountain, which forwards to adapter
+// 7. Adapter sends DAP events to Mountain, which forwards to UI
+// 8. Session terminates when UI requests stop or adapter process exits
+//
+// # Patterns Borrowed from VSCode
+//
+// - **DAP Protocol**: Implements the Debug Adapter Protocol, same as VSCode debug architecture.
+//
+// - **Debug Configuration Providers**: Follows VSCode's pattern of allowing extensions to
+//   contribute debug configuration resolvers.
+//
+// - **Adapter Factories**: Similar to VSCode's DebugAdapterDescriptorFactory for creating
+//   debug adapters flexibly.
+//
+// # TODOs
+//
+// - [ ] Store debug adapter registrations in ApplicationState
+// - [ ] Implement proper debug session tracking and management
+// - [ ] Add debug adapter process spawning and lifecycle management
+// - [ ] Implement proper DAP message routing and serialization
+// - [ ] Add debug session state persistence across UI reloads
+// - [ ] Implement debug console and variable inspection integration
+// - [ ] Add support for multiple simultaneous debug sessions
+// - [ ] Implement debug adapter termination and cleanup
+// - [ ] Add debug session metrics and telemetry
+// - [ ] Consider implementing debug configuration validation
+// - [ ] Add support for debug adapters that communicate via TCP sockets
+// - [ ] Implement debug adapter crash detection and recovery
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # DebugProvider Implementation
-//!
-//! Implements the `DebugService` trait for the `MountainEnvironment`. This
-//! provider manages the entire debugging lifecycle, from configuration to
-//! adapter communication.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -45,16 +86,28 @@ impl DebugService for MountainEnvironment {
 
 		DebugType:String,
 
-		_ProviderHandle:u32,
+		ProviderHandle:u32,
 
-		_SideCarIdentifier:String,
+		SideCarIdentifier:String,
 	) -> Result<(), CommonError> {
-		// TODO: Store this registration in ApplicationState to track which sidecar
-		// owns which debug type.
+		// Validate debug type is non-empty
+		if DebugType.is_empty() {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"DebugType".to_string(),
+				Reason:"DebugType cannot be empty".to_string(),
+			});
+		}
+
 		info!(
-			"[DebugProvider] Registering DebugConfigurationProvider for type '{}'",
-			DebugType
+			"[DebugProvider] Registering DebugConfigurationProvider for type '{}' (handle: {}, sidecar: {})",
+			DebugType, ProviderHandle, SideCarIdentifier
 		);
+
+		// TODO: Store this registration in ApplicationState
+		// - Map debug_type -> (provider_handle, sidecar_identifier)
+		// - Allow multiple providers per debug type with priority
+		// - Validate that debug type is not already registered
+
 		Ok(())
 	}
 
@@ -63,19 +116,31 @@ impl DebugService for MountainEnvironment {
 
 		DebugType:String,
 
-		_FactoryHandle:u32,
+		FactoryHandle:u32,
 
-		_SideCarIdentifier:String,
+		SideCarIdentifier:String,
 	) -> Result<(), CommonError> {
-		// TODO: Store this registration in ApplicationState.
+		// Validate debug type is non-empty
+		if DebugType.is_empty() {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"DebugType".to_string(),
+				Reason:"DebugType cannot be empty".to_string(),
+			});
+		}
+
 		info!(
-			"[DebugProvider] Registering DebugAdapterDescriptorFactory for type '{}'",
-			DebugType
+			"[DebugProvider] Registering DebugAdapterDescriptorFactory for type '{}' (handle: {}, sidecar: {})",
+			DebugType, FactoryHandle, SideCarIdentifier
 		);
+
+		// TODO: Store this registration in ApplicationState
+		// - Map debug_type -> (factory_handle, sidecar_identifier)
+		// - Support multiple adapter factories with fallback chain
+
 		Ok(())
 	}
 
-	async fn StartDebugging(&self, _FolderURI:Option<Url>, Configuration:Value) -> Result<String, CommonError> {
+	async fn StartDebugging(&self, FolderURI:Option<Url>, Configuration:Value) -> Result<String, CommonError> {
 		let SessionID = uuid::Uuid::new_v4().to_string();
 		info!(
 			"[DebugProvider] Starting debug session '{}' with config: {:?}",
@@ -95,10 +160,12 @@ impl DebugService for MountainEnvironment {
 			})?
 			.to_string();
 
+		// TODO: Look up which sidecar handles this debug type
 		// For now, assume the main sidecar handles all debugging.
 		let TargetSideCar = "cocoon-main".to_string();
 
 		// 1. Resolve configuration (Reverse-RPC to Cocoon)
+		info!("[DebugProvider] Resolving debug configuration for type '{}'", DebugType);
 		info!("[DebugProvider] Resolving debug configuration...");
 		let ResolveConfigMethod = format!("{}$resolveDebugConfiguration", ProxyTarget::ExtHostDebug.GetTargetPrefix());
 		let ResolvedConfig = IPCProvider
@@ -124,14 +191,15 @@ impl DebugService for MountainEnvironment {
 			.await?;
 
 		// 3. Spawn the Debug Adapter process based on the descriptor.
-		// This is a complex step involving process management. For now, we log and
-		// simulate.
 		info!("[DebugProvider] Spawning Debug Adapter based on descriptor: {:?}", Descriptor);
-		// A full implementation would:
-		// - Parse the `Descriptor` (which could be an executable, a server port, etc.).
-		// - Spawn a new OS process or connect to a TCP socket.
-		// - Create a new `DebugSession` struct to manage the DAP communication stream.
-		// - Store this session in `ApplicationState`.
+
+		// TODO: A full implementation would:
+		// - Parse the descriptor (executable path, command args, environment, or server port)
+		// - Spawn a new OS process with stdio pipes or connect to a TCP socket
+		// - Create a new DebugSession struct to manage the DAP communication stream
+		// - Establish JSON-RPC communication with the debug adapter
+		// - Store the session in ApplicationState with session_id as key
+		// - Implement proper session cleanup on termination
 
 		info!("[DebugProvider] Debug session '{}' started (simulation).", SessionID);
 		Ok(SessionID)
@@ -144,6 +212,13 @@ impl DebugService for MountainEnvironment {
 		);
 
 		// TODO: Implement proper debug session management
+		// - Look up session by SessionID in ApplicationState
+		// - Validate session exists and is active
+		// - Serialize command and arguments to JSON-RPC format
+		// - Send to debug adapter via stdio or socket
+		// - Deserialize and return response
+		// - Handle timeouts and errors gracefully
+
 		// For now, return a placeholder response indicating debug session is active
 		let response = serde_json::json!({
 			"success": true,
