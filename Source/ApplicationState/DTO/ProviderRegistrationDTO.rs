@@ -1,13 +1,26 @@
 //! # ProviderRegistrationDTO
 //!
-//! Defines the Data Transfer Object for storing the state of a registered
-//! language feature provider.
+//! # RESPONSIBILITY
+//! - Data transfer object for language feature provider registration
+//! - Serializable format for gRPC/IPC transmission
+//! - Used by Mountain to track active language feature providers
+//!
+//! # FIELDS
+//! - Handle: Unique registration handle
+/// - ProviderType: Type of feature provider
+/// - Selector: Document selector value
+/// - SideCarIdentifier: Host sidecar process ID
+/// - ExtensionIdentifier: Contributor extension ID
+/// - Options: Provider-specific options
 
 #![allow(non_snake_case, non_camel_case_types)]
 
 use Common::LanguageFeature::DTO::ProviderType::ProviderType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+/// Maximum sidecar identifier length
+const MAX_SIDECAR_IDENTIFIER_LENGTH: usize = 128;
 
 /// Stores the registration details for a single language feature provider
 /// contributed by an extension. This is stored in `ApplicationState` to track
@@ -26,6 +39,7 @@ pub struct ProviderRegistrationDTO {
 	pub Selector:Value,
 
 	/// The identifier of the sidecar process that hosts this provider's logic.
+	#[serde(skip_serializing_if = "String::is_empty")]
 	pub SideCarIdentifier:String,
 
 	/// The identifier of the extension that contributed this provider.
@@ -33,5 +47,63 @@ pub struct ProviderRegistrationDTO {
 
 	/// Optional, feature-specific options for this provider.
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub Options:Option<Value /* ProviderOptionsDTO */>,
+	pub Options:Option<Value>,
+}
+
+impl ProviderRegistrationDTO {
+	/// Creates a new ProviderRegistrationDTO with validation.
+	///
+	/// # Arguments
+	/// * `Handle` - Unique registration handle
+	/// * `ProviderType` - Type of feature provider
+	/// * `Selector` - Document selector value
+	/// * `SideCarIdentifier` - Sidecar process identifier
+	/// * `ExtensionIdentifier` - Extension identifier value
+	///
+	/// # Returns
+	/// Result containing the DTO or validation error
+	pub fn New(Handle:u32, ProviderType:ProviderType, Selector:Value,
+		SideCarIdentifier:String, ExtensionIdentifier:Value) -> Result<Self, String> {
+		// Validate sidecar identifier length
+		if SideCarIdentifier.len() > MAX_SIDECAR_IDENTIFIER_LENGTH {
+			return Err(format!("SideCarIdentifier exceeds maximum length of {} bytes", MAX_SIDECAR_IDENTIFIER_LENGTH));
+		}
+
+		Ok(Self {
+			Handle,
+			ProviderType,
+			Selector,
+			SideCarIdentifier,
+			ExtensionIdentifier,
+			Options: None,
+		})
+	}
+
+	/// Updates the provider options.
+	///
+	/// # Arguments
+	/// * `Options` - New options value
+	pub fn UpdateOptions(&mut self, Options:Value) {
+		self.Options = Some(Options);
+	}
+
+	/// Checks if this provider matches a given document selector.
+	///
+	/// # Arguments
+	/// * `DocumentURI` - Document URI to check
+	/// * `LanguageIdentifier` - Document language identifier
+	///
+	/// # Returns
+	/// True if provider selector matches the document
+	pub fn MatchesSelector(&self, DocumentURI:&str, LanguageIdentifier:&str) -> bool {
+		// This is a simplified matching logic
+		// A full implementation would traverse the selector value
+		if let Some(SelectorObj) = self.Selector.as_object() {
+			if let Some(Languages) = SelectorObj.get("language").and_then(Value::as_array) {
+				return Languages.iter()
+					.any(|Lang| Lang.as_str().map_or(false, |L| L == LanguageIdentifier));
+			}
+		}
+		false
+	}
 }
