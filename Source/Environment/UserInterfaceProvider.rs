@@ -1,18 +1,29 @@
+// ============================================================================
 // File: Mountain/Source/Environment/UserInterfaceProvider.rs
-// Role: Implements the `UserInterfaceProvider` trait for the
-// `MountainEnvironment`. Responsibilities:
-//   - Orchestrate all modal UI interactions (dialogs, messages, quick picks).
-//   - Use the `tauri-plugin-dialog` for native file dialogs.
-//   - Use a custom request-response event pattern for web-based UI elements.
-
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # UserInterfaceProvider Implementation
-//!
-//! Implements the `UserInterfaceProvider` trait for the `MountainEnvironment`.
-//! This provider orchestrates all modal UI interactions like dialogs, messages,
-//! and quick picks by communicating with the `Sky` frontend.
+// ============================================================================
+// This module follows the Land ecosystem's PascalCase naming convention.
+// See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//
+// # UserInterfaceProvider Implementation
+//
+// Implements the `UserInterfaceProvider` trait for the `MountainEnvironment`.
+// This provider orchestrates all modal UI interactions like dialogs, messages,
+// and quick picks by communicating with the `Sky` frontend.
+//
+// ## Key Features:
+// - Thread-safe modal dialogs (file dialogs, message boxes)
+// - Quick pick selection interface
+// - Input box for string input
+// - Event-driven UI updates
+// - Request-response pattern with timeout handling
+// - Thread-safe pending request tracking
+//
+// ## VSCode Reference:
+// - vs/base/browser/ui/dialog/dialog.ts
+// - vs/platform/dialogs/common/dialogs.ts
+// - vs/base/common/message.ts
+//
+// ============================================================================
 
 #![allow(non_snake_case, non_camel_case_types)]
 
