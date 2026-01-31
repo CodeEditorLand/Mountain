@@ -5,7 +5,48 @@
 //     library).
 //   - Respect workspace folders and standard ignore files (`.gitignore`).
 //   - Collect and format search results into a DTO suitable for the frontend.
-
+//   - Support regex patterns and case-sensitive/insensitive searches.
+//   - Implement word-boundary matching.
+//   - Optimize for performance with parallel file walking.
+//   - Handle large files efficiently with memory-efficient streaming.
+//   - Support incremental search with result pagination.
+//   - Provide search statistics (matches count, files searched).
+//   - Handle search cancellation gracefully.
+//
+// TODOs:
+//   - Implement result pagination for large result sets
+//   - Add search cancellation via CancellationToken
+//   - Support include/exclude file patterns
+//   - Implement context lines for matches (before/after)
+//   - Add file type filtering (e.g., search only in certain extensions)
+//   - Implement replacement/match highlighting in results
+//   - Add search progress reporting
+//   - Support search across multiple workspace folders independently
+//   - Implement search caching for repeated searches
+//   - Add regex capture groups support
+//   - Implement search history and recent searches
+//   - Support search result export
+//   - Add search performance metrics and optimization
+//   - Implement search result deduplication
+//   - Support glob patterns for file matching
+//   - Add search result ranking and sorting
+//   - Implement binary file handling (skip or search)
+//   - Support symbolic link following
+//   - Add max file size limit to avoid memory issues
+//   - Implement search timeout
+//   - Support search in hidden files
+//   - Add line and column number precision
+//   - Implement multi-line regex search
+//
+// Inspired by VSCode's search service which:
+// - Uses ripgrep for high-performance text search
+// - Supports complex regex patterns and modifiers
+// - Provides context lines for matches
+// - Handles large directories efficiently
+// - Supports file and directory exclusions
+// - Provides incremental search results
+// - Handles search cancellation gracefully
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 //!
@@ -13,6 +54,34 @@
 //!
 //! Implements the `SearchProvider` trait using the `grep-searcher` crate, which
 //! is a library for the `ripgrep` search tool.
+//!
+//! ## Search Architecture
+//!
+//! The search implementation uses a multi-threaded approach:
+//!
+//! 1. **Pattern Compilation**: Regex pattern is compiled with modifiers
+//! 2. **Parallel Walking**: Files in workspace are walked in parallel
+//! 3. **Per-File Search**: Each file is searched individually using a sink pattern
+//! 4. **Result Aggregation**: Matches are collected in a shared thread-safe vector
+//!
+//! ## Search Features
+//!
+//! - **Case Sensitivity**: Controlled by `is_case_sensitive` option
+//! - **Word Matching**: Controlled by `is_word_match` option
+//! - **Regex Support**: Full regex pattern matching via `grep-regex`
+//! - **Ignore Files**: Respects `.gitignore`, `.ignore`, and other ignore files
+//! - **Parallel Search**: Uses `WalkBuilder::build_parallel()` for performance
+//! - **Memory Efficient**: Streams results to avoid loading entire files
+//!
+//! ## Search Result Format
+//!
+//! Each match includes:
+//! - **File URI**: Valid URL pointing to the file
+//! - **Line Number**: Zero-indexed line number of the match
+//! - **Preview**: The matched text line
+//!
+//! Results are grouped by file, with each file containing multiple matches.
+//
 
 #![allow(non_snake_case, non_camel_case_types)]
 
