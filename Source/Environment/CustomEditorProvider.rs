@@ -1,18 +1,59 @@
 // File: Mountain/Source/Environment/CustomEditorProvider.rs
-// Role: Implements the `CustomEditorProvider` trait for the
-// `MountainEnvironment`. Responsibilities:
-//   - Manage the registration and state of custom editor providers.
-//   - Mediate the "resolve" process, calling back to the extension host to get
-//     the content for a custom editor instance.
-
+//
+// # Architectural Role: Custom Editor Lifecycle Management
+//
+// CustomEditorProvider implements the CustomEditorProvider trait, managing the lifecycle
+// of custom non-text editors contributed by extensions. These editors use WebView panels
+// to provide specialized editing experiences (e.g., SVG editors, diff viewers, image editors).
+//
+// # Responsibilities
+//
+// 1. **Provider Registration**: Manages registration of custom editor providers, each
+//    identified by a unique viewType.
+//
+// 2. **Editor Orchestration**: Coordinates between the UI (WebView), the extension host
+//    (Cocoon), and the filesystem to provide a seamless editing experience.
+//
+// 3. **Content Resolution**: Mediates the "resolve" process where the extension provides
+//    initial content and HTML for the custom editor.
+//
+// 4. **Lifecycle Events**: Handles registration, unregistration, save operations, and
+//    editor lifecycle events.
+//
+// # Custom Editor Flow
+//
+// 1. Extension registers a custom editor provider via RegisterCustomEditorProvider
+// 2. UI requests to open a resource with a custom viewType
+// 3. Mountain calls ResolveCustomEditor with viewType, resource URI, and WebView handle
+// 4. Extension receives RPC call and provides HTML/content for the WebView
+// 5. Extension can send messages back and forth via WebView communication
+// 6. On save, Mountain calls OnSaveCustomDocument to persist changes
+//
+// # Patterns Borrowed from VSCode
+//
+// - **Webview API**: Inspired by VSCode's WebviewPanel API for custom editors.
+//
+// - **Content Providers**: Similar to VSCode's TextDocumentContentProvider pattern
+//   for providing content with custom URI schemes.
+//
+// - **Extension Contribution**: Follows VSCode's contribution pattern where extensions
+//   declare custom editors in package.json.
+//
+// # TODOs
+//
+// - [ ] Store provider registrations in ApplicationState with capability metadata
+// - [ ] Implement custom editor backup/restore mechanism
+// - [ ] Add support for multiple active instances of the same viewType
+// - [ ] Implement custom editor move and rename handling
+// - [ ] Add proper validation of viewType and resource URI
+// - [ ] Implement editor-specific command registration
+// - [ ] Add support for custom editor dispose/cleanup
+// - [ ] Consider adding editor state persistence across reloads
+// - [ ] Implement proper error recovery for WebView crashes
+// - [ ] Add telemetry for custom editor usage metrics
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # CustomEditorProvider Implementation
-//!
-//! Implements the `CustomEditorProvider` trait for the `MountainEnvironment`.
-//! This provider orchestrates the lifecycle of custom, non-text editors that
-//! are contributed by extensions.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -33,24 +74,47 @@ use super::MountainEnvironment::MountainEnvironment;
 
 #[async_trait]
 impl CustomEditorProvider for MountainEnvironment {
-	async fn RegisterCustomEditorProvider(&self, _ViewType:String, _OptionsValue:Value) -> Result<(), CommonError> {
-		info!("[CustomEditorProvider] Registering provider for view type: {}", _ViewType);
-		// In a full implementation, this would store provider details, such as
-		// its capabilities and the sidecar it belongs to, in ApplicationState.
-		// For now, we assume all providers are in the main sidecar.
+	async fn RegisterCustomEditorProvider(&self, ViewType:String, Options:Value) -> Result<(), CommonError> {
+		info!("[CustomEditorProvider] Registering provider for view type: {}", ViewType);
+
+		// Validate ViewType is non-empty
+		if ViewType.is_empty() {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"ViewType".to_string(),
+				Reason:"ViewType cannot be empty".to_string(),
+			});
+		}
+
+		// TODO: Store provider registration in ApplicationState
+		// - Associate ViewType with sidecar identifier
+		// - Store provider capabilities (supportsMultipleEditors, etc.)
+		// - Store custom options for the provider
+		// - Validate that viewType is not already registered
+
 		Ok(())
 	}
 
-	async fn UnregisterCustomEditorProvider(&self, _ViewType:String) -> Result<(), CommonError> {
-		info!("[CustomEditorProvider] Unregistering provider for view type: {}", _ViewType);
-		// This would remove the provider's registration from ApplicationState.
+	async fn UnregisterCustomEditorProvider(&self, ViewType:String) -> Result<(), CommonError> {
+		info!("[CustomEditorProvider] Unregistering provider for view type: {}", ViewType);
+
+		// TODO: Remove provider registration from ApplicationState
+		// - Check if any active editors are using this viewType
+		// - Optionally close active editors or show warning
+
 		Ok(())
 	}
 
-	async fn OnSaveCustomDocument(&self, _ViewType:String, _ResourceURI:Url) -> Result<(), CommonError> {
+	async fn OnSaveCustomDocument(&self, ViewType:String, ResourceURI:Url) -> Result<(), CommonError> {
+		info!("[CustomEditorProvider] OnSaveCustomDocument called for '{}' at '{}'", ViewType, ResourceURI);
+
+		// TODO: Implement full save flow:
+		// 1. Send RPC request to extension sidecar requesting content from WebView
+		// 2. Extension retrieves content from WebView via webview.postMessage
+		// 3. Extension writes content back to Mountain
+		// 4. Mountain persists content to file system via FileSystemWriter
+		// 5. Emit save notification to UI
+
 		warn!("[CustomEditorProvider] OnSaveCustomDocument is not fully implemented.");
-		// This would typically trigger a call to the extension host to perform the
-		// save, which would then read data from the webview and write it to the file.
 		Ok(())
 	}
 
