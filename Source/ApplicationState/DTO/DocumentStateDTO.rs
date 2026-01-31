@@ -1,7 +1,19 @@
 //! # DocumentStateDTO
 //!
-//! Defines the Data Transfer Object for storing the state of a single open
-//! text document in memory.
+//! # RESPONSIBILITY
+//! - Data transfer object for text document state
+//! - Serializable format for gRPC/IPC transmission
+//! - Used by Mountain to track document lifecycle and sync with Air
+//!
+//! # FIELDS
+//! - URI: Unique document resource identifier
+//! - LanguageIdentifier: Language ID for syntax highlighting
+//! - Version: Client-side version for change tracking
+//! - Lines: Document content split into lines
+//! - EOL: End-of-line sequence (\n or \r\n)
+//! - IsDirty: Indicates unsaved changes
+//! - Encoding: File encoding (e.g., utf8)
+//! - VersionIdentifier: Internal version for host tracking
 //!
 //! TODO (Mountain→Air Split): If Air implements a background document sync service,
 //! consider delegating delta change validation or conflict resolution to Air.
@@ -20,6 +32,15 @@ use url::Url;
 use super::RPCModelContentChangeDTO::RPCModelContentChangeDTO;
 use crate::ApplicationState::Internal::{AnalyzeTextLinesAndEOL, URLSerializationHelper};
 
+/// Maximum line count for a document to prevent memory exhaustion
+const MAX_DOCUMENT_LINES: usize = 1_000_000;
+
+/// Maximum line length to prevent line-based denial of service
+const MAX_LINE_LENGTH: usize = 100_000;
+
+/// Maximum language identifier string length
+const MAX_LANGUAGE_ID_LENGTH: usize = 128;
+
 /// Represents the complete in-memory state of a single text document.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "PascalCase")]
@@ -29,6 +50,7 @@ pub struct DocumentStateDTO {
 	pub URI:Url,
 
 	/// The VS Code language identifier (e.g., "rust", "typescript").
+	#[serde(skip_serializing_if = "String::is_empty")]
 	pub LanguageIdentifier:String,
 
 	/// The version number, incremented on each change from the client.
@@ -51,15 +73,64 @@ pub struct DocumentStateDTO {
 }
 
 impl DocumentStateDTO {
-	/// Creates a new `DocumentStateDTO` from its initial content.
-	pub fn Create(URI:Url, LanguageIdentifier:Option<String>, Content:String) -> Self {
-		let (Lines, EOL) = AnalyzeTextLinesAndEOL(&Content);
+	/// Creates a new `DocumentStateDTO` from its initial content with validation.
+	///
+	/// # Arguments
+	/// * `URI` - The document resource URI
+	/// * `LanguageIdentifier` - Optional language ID for syntax highlighting
+	/// * `Content` - The initial document content
+	///
+	/// # Returns
+	/// Result containing the DTO or an error if validation fails
+	///
+	/// # Errors
+	/// Returns `CommonError` if:
+	/// - Language identifier exceeds maximum length
+	/// - Document exceeds maximum line count
+	/// - Any line exceeds maximum length
+	/// - URI is empty
+	pub fn Create(URI:Url, LanguageIdentifier:Option<String>, Content:String) -> Result<Self, CommonError> {
+		// Validate URI is not empty
+		if URI.as_str().is_empty() {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName: "URI".into(),
+				Reason: "URI cannot be empty".into(),
+			});
+		}
 
 		let LanguageID = LanguageIdentifier.unwrap_or_else(|| "plaintext".to_string());
 
+		// Validate language identifier length
+		if LanguageID.len() > MAX_LANGUAGE_ID_LENGTH {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName: "LanguageIdentifier".into(),
+				Reason: format!("Language identifier exceeds maximum length of {} bytes", MAX_LANGUAGE_ID_LENGTH),
+			});
+		}
+
+		let (Lines, EOL) = AnalyzeTextLinesAndEOL(&Content);
+
+		// Validate document line count
+		if Lines.len() > MAX_DOCUMENT_LINES {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName: "Content".into(),
+				Reason: format!("Document exceeds maximum line count of {}", MAX_DOCUMENT_LINES),
+			});
+		}
+
+		// Validate individual line lengths
+		for (Index, Line) in Lines.iter().enumerate() {
+			if Line.len() > MAX_LINE_LENGTH {
+				return Err(CommonError::InvalidArgument {
+					ArgumentName: "Content".into(),
+					Reason: format!("Line {} exceeds maximum length of {} bytes", Index + 1, MAX_LINE_LENGTH),
+				});
+			}
+		}
+
 		let Encoding = "utf8".to_string();
 
-		Self {
+		Ok(Self {
 			URI,
 
 			LanguageIdentifier:LanguageID,
@@ -75,6 +146,22 @@ impl DocumentStateDTO {
 			Encoding,
 
 			VersionIdentifier:1,
+		})
+	}
+
+	/// Creates a new `DocumentStateDTO` without validation for internal use.
+	/// This should only be called with trusted data sources.
+	pub fn CreateUnsafe(URI:Url, LanguageIdentifier:String, Lines:Vec<String>, EOL:String,
+		IsDirty:bool, Encoding:String, Version:i64, VersionIdentifier:i64) -> Self {
+		Self {
+			URI,
+			LanguageIdentifier,
+			Version,
+			Lines,
+			EOL,
+			IsDirty,
+			Encoding,
+			VersionIdentifier,
 		}
 	}
 
