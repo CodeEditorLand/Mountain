@@ -1,34 +1,105 @@
-// File: Mountain/Source/Binary.rs
-// Role: Main entry point for the Mountain native host application.
-// Responsibilities:
-//   - Orchestrate the entire application lifecycle.
-//   - Initialize logging (via Tauri plugin), the Echo scheduler,
-//   ApplicationState, and ApplicationRunTime.
-//   - Serve assets via http://localhost (determined by portpicker) to support
-//   Service Workers.
-//   - Parse command-line arguments to open a workspace.
-//   - Bootstrap native command registration.
-//   - Set up the Vine gRPC server and spawn the Cocoon sidecar process.
-//   - Create and customize the main Tauri application window.
-//   - Manage the main application event loop and graceful shutdown.
-//   - [NEW] Manage System Tray and native OS integration events.
-//
-// Logging strategy:
-//   - Release default: Info (low noise) unless RUST_LOG overrides.
-//   - Debug default: Debug (high fidelity) unless RUST_LOG overrides.
-//   - Very noisy deps are capped using level_for(...) and filter(...).
-//
-//
-// NOTE (Webview logs):
-//   - To see Rust logs in the Webview console, enable TargetKind::Webview and
-//   call attachConsole() in the frontend.
-
-//! # Mountain Binary Entry Point
+//! # Binary
 //!
-//! This file orchestrates the entire application lifecycle. It is responsible
-//! for setting up logging, initializing the `Echo` scheduler, the core
-//! `ApplicationState`, the `ApplicationRunTime`, the `Vine` gRPC server, the
-//! `Cocoon` sidecar process, and the Tauri application window and event loop.
+//! Main entry point for the Mountain native host application.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### Application Lifecycle Management
+//! - Orchestrate the complete application lifecycle from startup to shutdown
+//! - Initialize all core services in the correct dependency order
+//! - Manage graceful shutdown with proper cleanup of all resources
+//! - Handle system tray events and native OS integration
+//! - Coordinate service dependencies and health checks
+//!
+//! ### Service Initialization
+//! - Configure and initialize Tauri application framework
+//! - Set up structured logging with appropriate level filtering
+//! - Initialize Echo task scheduler with optimal worker configuration
+//! - Create ApplicationState with workspace management
+//! - Start ApplicationRunTime effect execution engine
+//! - Launch Vine gRPC server for inter-service communication
+//! - Spawn Cocoon sidecar process for build tool support
+//! - Connect to Air provider for AI/integration features
+//! - Initialize IPC server and status reporting services
+//!
+//! ### Resource Management
+//! - Select and bind localhost port for Service Worker support
+//! - Parse command-line arguments for workspace opening
+//! - Register native commands for frontend communication
+//! - Create and configure main application window
+//! - Manage system tray icon and menu interactions
+//! - Handle configuration merging and extension discovery
+//!
+//! ### Error Handling & Recovery
+//! - Implement graceful degradation when services are unavailable
+//! - Provide comprehensive error logging for diagnostics
+//! - Retry operations with exponential backoff where appropriate
+//! - Ensure no resource leaks during startup failures
+//! - Maintain application stability under error conditions
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! ### Position in Mountain
+//! - Entry point (binary) of the Mountain application
+//! - Orchestrator for all Mountain subsystems
+//! - Bridge between Tauri framework and custom Mountain services
+//!
+//! ### Dependencies
+//! - Tauri: Desktop application framework
+//! - Echo: Task scheduling and execution
+//! - Common: Shared infrastructure (ApplicationRunTime trait, Environment)
+//! - ApplicationRunTime: Effect execution engine
+//! - MountainEnvironment: Capability provider
+//! - Vine: gRPC inter-service communication
+//! - Cocoon: Build tool sidecar
+//! - Air: AI/integration services
+//!
+//! ### Dependents
+//! - Frontend (Sky): Receives commands and configuration
+//! - All Mountain services: Initialized and managed by this binary
+//!
+//! ### VSCode Patterns Borrowed
+//! - Multi-phase initialization sequence (Electron main process)
+//! - Service health checks with graceful degradation
+//! - Configuration merging from multiple sources
+//! - Extension scanning and discovery
+//! - Lifecycle event handling (setup, ready, exit)
+//!
+//! ## TODO
+//!
+//! ### Immediate Improvements
+//! - Add telemetry/analytics for startup performance
+//! - Implement service dependency graph with automatic ordering
+//! - Add startup timeout with diagnostic report
+//! - Implement hot-reload for development builds
+//!
+//! ### Future Work
+//! - Add crash reporter integration
+//! - Implement service auto-restart on failure
+//! - Add performance profiling and metrics collection
+//! - Implement distributed logging for multi-instance scenarios
+//! - Add plugin system for third-party services
+//! - Implement secure IPC channel validation
+//! - Add watchdog timer for stalled services
+//!
+//! ### Missing Functionality to Probe
+//! - Service health check intervals and thresholds
+//! - Optimal worker count calculation for Echo scheduler
+//! - Port conflict resolution strategy
+//! - Extension version compatibility checking
+//! - Cocoon communication protocol details
+//! - Air provider fallback strategy
+//!
+//! ## Logging Strategy
+//!
+//! - Release default: Info (low noise) unless RUST_LOG overrides
+//! - Debug default: Debug (high fidelity) unless RUST_LOG overrides
+//! - Very noisy deps are capped using level_for(...) and filter(...)
+//!
+//! ## Webview Logs
+//!
+//! To see Rust logs in the Webview console, enable TargetKind::Webview and
+//! call attachConsole() in the frontend.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -58,7 +129,13 @@ use crate::{
 	},
 	Command,
 	Environment::{ConfigurationProvider::InitializeAndMergeConfigurations, MountainEnvironment::MountainEnvironment},
-	IPC::{TauriIPCServer, register_wind_ipc_handlers, initialize_status_reporter, initialize_advanced_features, initialize_wind_advanced_sync},
+	IPC::{
+		TauriIPCServer,
+		initialize_advanced_features,
+		initialize_status_reporter,
+		initialize_wind_advanced_sync,
+		register_wind_ipc_handlers,
+	},
 	ProcessManagement::{CocoonManagement::InitializeCocoon, InitializationData},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine,
@@ -83,8 +160,8 @@ macro_rules! TraceStep {
 /// frontend.
 #[tauri::command]
 async fn MountainGetWorkbenchConfiguration(
-	ApplicationHandle: AppHandle,
-	State: tauri::State<'_, Arc<ApplicationState>>,
+	ApplicationHandle:AppHandle,
+	State:tauri::State<'_, Arc<ApplicationState>>,
 ) -> Result<serde_json::Value, String> {
 	info!("[IPC] [WorkbenchConfig] Request received.");
 
@@ -135,160 +212,180 @@ fn SwitchTrayIcon(App:AppHandle, IsDarkMode:bool) {
 
 /// Receive messages from Wind through IPC
 #[tauri::command]
-async fn mountain_ipc_receive_message(
-	app_handle: AppHandle,
-	message: serde_json::Value
+async fn MountainIPCReceiveMessage(
+	app_handle:AppHandle,
+	message:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::TauriIPCServer::mountain_ipc_receive_message(app_handle, serde_json::from_value(message).map_err(|e| e.to_string())?).await
+	crate::IPC::TauriIPCServer::mountain_ipc_receive_message(
+		app_handle,
+		serde_json::from_value(message).map_err(|e| e.to_string())?,
+	)
+	.await
 }
 
 /// Get Mountain IPC status
 #[tauri::command]
-async fn mountain_ipc_get_status(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
-	let status = crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle).await?;
+async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
+	let status = crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle)
+		.await
+		.map_err(|e| {
+			error!("[IPC] [Command] Failed to get IPC status: {}", e);
+			e.to_string()
+		})?;
 	Ok(serde_json::to_value(status).map_err(|e| e.to_string())?)
 }
 
 /// Invoke IPC methods
 #[tauri::command]
-async fn mountain_ipc_invoke(
-	app_handle: AppHandle,
-	method: String,
-	params: serde_json::Value
+async fn MountainIPCInvoke(
+	app_handle:AppHandle,
+	method:String,
+	params:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
 	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, params).await
 }
 
 /// Get Wind desktop configuration
 #[tauri::command]
-async fn mountain_get_wind_desktop_configuration(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainGetWindDesktopConfiguration(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await
 }
 
 /// Update configuration from Wind
 #[tauri::command]
-async fn mountain_update_configuration_from_wind(
-	app_handle: AppHandle,
-	config: serde_json::Value
+async fn MountainUpdateConfigurationFromWind(
+	app_handle:AppHandle,
+	config:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_update_configuration_from_wind(app_handle, config).await
 }
 
 /// Synchronize configuration
 #[tauri::command]
-async fn mountain_synchronize_configuration(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainSynchronizeConfiguration(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_synchronize_configuration(app_handle).await
 }
 
 /// Get configuration status
 #[tauri::command]
-async fn mountain_get_configuration_status(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainGetConfigurationStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle).await
 }
 
 /// Get IPC status
 #[tauri::command]
-async fn mountain_get_ipc_status(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainGetIPCStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::StatusReporter::mountain_get_ipc_status(app_handle).await
 }
 
 /// Get IPC status history
 #[tauri::command]
-async fn mountain_get_ipc_status_history(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainGetIPCStatusHistory(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::StatusReporter::mountain_get_ipc_status_history(app_handle).await
 }
 
 /// Start IPC status reporting
 #[tauri::command]
-async fn mountain_start_ipc_status_reporting(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainStartIPCStatusReporting(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::StatusReporter::mountain_start_ipc_status_reporting(app_handle, 60).await
 }
 
 /// Get performance stats
 #[tauri::command]
-async fn mountain_get_performance_stats(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainGetPerformanceStats(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_get_performance_stats(app_handle).await
 }
 
 /// Get cache stats
 #[tauri::command]
-async fn mountain_get_cache_stats(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainGetCacheStats(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_get_cache_stats(app_handle).await
 }
 
 /// Create collaboration session
 #[tauri::command]
-async fn mountain_create_collaboration_session(
-	app_handle: AppHandle,
-	session_data: serde_json::Value
+async fn MountainCreateCollaborationSession(
+	app_handle:AppHandle,
+	session_data:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_data).await
 }
 
 /// Get collaboration sessions
 #[tauri::command]
-async fn mountain_get_collaboration_sessions(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
+async fn MountainGetCollaborationSessions(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions(app_handle).await
 }
 
 /// Add document for sync
 #[tauri::command]
-async fn mountain_add_document_for_sync(
-	app_handle: AppHandle,
-	document_data: serde_json::Value
+async fn MountainAddDocumentForSync(
+	app_handle:AppHandle,
+	document_data:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-	// Extract document_id and file_path from JSON data
-	let document_id = document_data["document_id"].as_str()
-		.ok_or("Missing document_id")?.to_string();
-	let file_path = document_data["file_path"].as_str()
-		.ok_or("Missing file_path")?.to_string();
-	
-	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, document_id, file_path).await
+	let document_id = document_data["document_id"]
+		.as_str()
+		.ok_or_else(|| {
+			error!("[IPC] [Sync] Missing document_id in document_data");
+			"Missing document_id"
+		})?
+		.to_string();
+	let file_path = document_data["file_path"]
+		.as_str()
+		.ok_or_else(|| {
+			error!("[IPC] [Sync] Missing file_path in document_data");
+			"Missing file_path"
+		})?
+		.to_string();
+
+	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, document_id, file_path)
+		.await
+		.map_err(|e| {
+			error!("[IPC] [Sync] Failed to add document for sync: {}", e);
+			e.to_string()
+		})
 		.map(|_| serde_json::Value::Null)
 }
 
 /// Get sync status
 #[tauri::command]
-async fn mountain_get_sync_status(
-	app_handle: AppHandle
-) -> Result<serde_json::Value, String> {
-	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle).await
+async fn MountainGetSyncStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
+	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle)
+		.await
+		.map_err(|e| {
+			error!("[IPC] [Sync] Failed to get sync status: {}", e);
+			e.to_string()
+		})
 		.map(|status| serde_json::to_value(status).unwrap_or(serde_json::Value::Null))
 }
 
 /// Subscribe to updates
 #[tauri::command]
-async fn mountain_subscribe_to_updates(
-	app_handle: AppHandle,
-	subscription_data: serde_json::Value
+async fn MountainSubscribeToUpdates(
+	app_handle:AppHandle,
+	subscription_data:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-	// Extract target and subscriber from JSON data
-	let target = subscription_data["target"].as_str()
-		.ok_or("Missing target")?.to_string();
-	let subscriber = subscription_data["subscriber"].as_str()
-		.ok_or("Missing subscriber")?.to_string();
-	
-	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle, target, subscriber).await
+	let target = subscription_data["target"]
+		.as_str()
+		.ok_or_else(|| {
+			error!("[IPC] [Sync] Missing target in subscription_data");
+			"Missing target"
+		})?
+		.to_string();
+	let subscriber = subscription_data["subscriber"]
+		.as_str()
+		.ok_or_else(|| {
+			error!("[IPC] [Sync] Missing subscriber in subscription_data");
+			"Missing subscriber"
+		})?
+		.to_string();
+
+	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle, target, subscriber)
+		.await
+		.map_err(|e| {
+			error!("[IPC] [Sync] Failed to subscribe to updates: {}", e);
+			e.to_string()
+		})
 		.map(|_| serde_json::Value::Null)
 }
 
@@ -447,18 +544,10 @@ pub fn Fn() {
 			..ApplicationState::default()
 		});
 
-		debug!("[Boot] [State] ApplicationState created and managed.");
-
-		// ---------------------------------------------------------------------
-		// [Boot] [Echo] Scheduler
-		// ---------------------------------------------------------------------
-		let NumberOfWorkers = num_cpus::get().max(2);
-
-		debug!("[Boot] [Echo] Creating scheduler. workers={}", NumberOfWorkers);
-
-		let Scheduler = SchedulerBuilder::Create().WithWorkerCount(NumberOfWorkers).Build();
-
-		debug!("[Boot] [Echo] Scheduler built.");
+		debug!(
+			"[Boot] [State] ApplicationState created with {} workspace folders.",
+			AppState.WorkSpaceFolders.lock().map(|f| f.len()).unwrap_or(0)
+		);
 
 		let SchedulerForShutdown = Arc::new(Scheduler);
 
@@ -861,23 +950,23 @@ pub fn Fn() {
 				Command::Keybinding::GetResolvedKeybinding,
 				crate::Track::DispatchLogic::DispatchFrontendCommand,
 				crate::Track::DispatchLogic::ResolveUIRequest,
-				mountain_ipc_receive_message,
-				mountain_ipc_get_status,
-				mountain_ipc_invoke,
-				mountain_get_wind_desktop_configuration,
-				mountain_update_configuration_from_wind,
-				mountain_synchronize_configuration,
-				mountain_get_configuration_status,
-				mountain_get_ipc_status,
-				mountain_get_ipc_status_history,
-				mountain_start_ipc_status_reporting,
-				mountain_get_performance_stats,
-				mountain_get_cache_stats,
-				mountain_create_collaboration_session,
-				mountain_get_collaboration_sessions,
-				mountain_add_document_for_sync,
-				mountain_get_sync_status,
-				mountain_subscribe_to_updates,
+				MountainIPCReceiveMessage,
+				MountainIPCGetStatus,
+				MountainIPCInvoke,
+				MountainGetWindDesktopConfiguration,
+				MountainUpdateConfigurationFromWind,
+				MountainSynchronizeConfiguration,
+				MountainGetConfigurationStatus,
+				MountainGetIPCStatus,
+				MountainGetIPCStatusHistory,
+				MountainStartIPCStatusReporting,
+				MountainGetPerformanceStats,
+				MountainGetCacheStats,
+				MountainCreateCollaborationSession,
+				MountainGetCollaborationSessions,
+				MountainAddDocumentForSync,
+				MountainGetSyncStatus,
+				MountainSubscribeToUpdates,
 				get_configuration_data,
 				save_configuration_data,
 			])
