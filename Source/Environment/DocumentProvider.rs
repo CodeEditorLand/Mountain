@@ -1,22 +1,100 @@
 // File: Mountain/Source/Environment/DocumentProvider.rs
-// Role: Implements the `DocumentProvider` trait for the `MountainEnvironment`.
-// Responsibilities:
-//   - Core logic for all document lifecycle operations (open, save, change).
-//   - Notifies `Cocoon` (extension host) and `Sky` (frontend) of these events.
-//   - Handles content resolution for both native (`file`) and custom URI
-//     schemes.
-
-//! # DocumentProvider Implementation
-//!
-//! Implements the `DocumentProvider` trait for the `MountainEnvironment`. This
-//! provider contains the core logic for all document lifecycle operations, such
-//! as opening, saving, and applying text changes, and notifying the `Cocoon`
-//! sidecar and `Sky` frontend of these events.
-//!
-//! TODO (Mountain→Air Split): Consider delegating bulk save operations to Air
-//! for improved performance with large workspaces. Air could handle save
-//! batches in the background and report progress via gRPC status events.
-//!
+//
+// # Architectural Role: Document Lifecycle and State Management
+//
+// DocumentProvider implements the DocumentProvider trait, managing the complete lifecycle
+// of document operations including opening, saving, editing, and closing. It maintains
+// document state, coordinates between the frontend (Sky), extension host (Cocoon), and
+// filesystem, and handles both native file URIs and custom scheme URIs.
+//
+// # Responsibilities
+//
+// 1. **Document State Management**: Maintains all open documents in ApplicationState,
+//    tracking content, version, dirty status, and metadata.
+//
+// 2. **Document Persistence**: Handles saving documents to the filesystem, including
+//    Save and Save As operations.
+//
+// 3. **Change Tracking**: Applies incremental text edits to documents, tracking
+//    version identifiers for collaboration and undo/redo.
+//
+// 4. **URI Scheme Support**: Supports both native file:// URIs and custom scheme URIs
+//    (e.g., untitled:, git:, vscode-vfs:) via TextDocumentContentProvider.
+//
+// 5. **Event Orchestration**: Emits events to Sky and Cocoon for document lifecycle
+//    changes (Opened, Saved, Changed, Closed, Renamed).
+//
+// 6. **Bulk Operations**: Supports Save All to handle multiple dirty documents efficiently.
+//
+// # Document State Model
+//
+// Each open document is represented in ApplicationState.OpenDocuments with:
+// - URI: Uniform Resource Identifier (file:// or custom scheme)
+// - LanguageIdentifier: Language ID (e.g., rust, typescript, markdown)
+// - TextContent: Full document text
+// - Version: Monotonically increasing version number (for LSP synchronization)
+// - LineCount: Cached line count for performance
+// - ChangeCount: Number of incremental changes applied
+// - IsDirty: Whether document has unsaved changes
+//
+// # Document Open Flow
+//
+// 1. Frontend requests to open a URI with optional content
+// 2. Mountain checks if document is already open - if yes, refocus existing model
+// 3. If file:// URI: read content from filesystem via FileSystemReader
+// 4. If custom URI: request content from extension's TextDocumentContentProvider via IPC
+// 5. Create DocumentStateDTO and store in ApplicationState.OpenDocuments
+// 6. Detect language from file extension or explicit parameter
+// 7. Emit "sky://documents/open" event to frontend
+// 8. Send $acceptModelAdded notification to Cocoon
+//
+// # Document Edit Flow
+//
+// 1. Frontend applies text edits with new version number
+// 2. Mountain applies changes to DocumentStateDTO text content
+// 3. Update version, line count, change count, and dirty status
+// 4. Send $acceptModelChanged notification to Cocoon
+// 5. Cocoon forwards to language servers for analysis
+//
+// # Document Save Flow
+//
+// 1. Frontend requests to save a URI
+// 2. Mountain retrieves document text content
+// 3. Write to filesystem via FileSystemWriter
+// 4. Clear dirty flag
+// 5. Emit "sky://documents/saved" event to frontend
+// 6. Send $acceptModelSaved notification to Cocoon
+// 7. Cocoon notifies language servers to update diagnostics
+//
+// # Patterns Borrowed from VSCode
+//
+// - **Text Model Service**: Inspired by VSCode's ITextModelService for managing
+//   text document instances with lifecycle and change events.
+//
+// - **TextDocumentContentProvider**: Like VSCode's pattern for custom URI schemes,
+//   allows extensions to provide document content dynamically.
+//
+// - **Synchronized Versions**: Mimics VSCode's versioning for seamless LSP
+//   synchronization with Language Servers.
+//
+// - **Change Events**: Emits granular change notifications like VSCode's
+//   onDidChangeTextDocument event.
+//
+// # TODOs
+//
+// - [ ] Implement document revert to last saved
+// - [ ] Add document backup before save for crash recovery
+// - [ ] Implement proper encoding detection and conversion (UTF-8, UTF-16, etc.)
+// - [ ] Add document state persistence across application restarts
+// - [ ] Implement document close cleanup and resource releasing
+// - [ ] Add document line ending normalization (LF, CRLF)
+// - [ ] Implement document diff and merge support
+// - [ ] Add support for large file handling (streaming, memory limits)
+// - [ ] Implement document auto-save with user-configurable delay
+// - [ ] TODO (Mountain→Air Split): Consider delegating bulk save operations to Air
+//   for improved performance with large workspaces. Air could handle save
+//   batches in the background and report progress via gRPC status events.
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
