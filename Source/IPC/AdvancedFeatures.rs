@@ -1,10 +1,209 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # Advanced IPC Features
+//! # Advanced IPC Features - Enhanced Synchronization & Collaboration
 //! 
-//! Advanced Mountain-Wind IPC features for enhanced synchronization and performance.
-//! Includes real-time collaboration, performance optimization, and advanced monitoring.
+//! **File Responsibilities:**
+//! This module provides advanced features for the IPC layer that go beyond basic
+//! communication. It implements real-time collaboration support, performance
+//! optimization through caching, and enhanced monitoring capabilities.
+//! 
+//! **Architectural Role in Wind-Mountain Connection:**
+//! 
+//! The AdvancedFeatures module extends the IPC layer with:
+//! 
+//! 1. **Real-time Collaboration:** Support for multi-user collaborative editing
+//!    - Session management for collaborative workspaces
+//!    - Participant tracking and permission management
+//!    - Real-time document change broadcasting
+//! 
+//! 2. **Performance Optimization:** Intelligent caching to reduce redundant operations
+//!    - Message caching with TTL (Time-To-Live)
+//!    - Cache hit/miss tracking and analytics
+//!    - Automatic cleanup of expired cache entries
+//! 
+//! 3. **Advanced Monitoring:** Detailed performance tracking and metrics
+//!    - Message rate calculations (MPS - Messages Per Second)
+//!    - Latency tracking (average, peak)
+//!    - Error rate monitoring
+//!    - Connection uptime tracking
+//! 
+//! 4. **Background Services:** Continuous monitoring and cleanup tasks
+//!    - Periodic performance metrics calculation
+//!    - Cache cleanup at regular intervals
+//!    - Session monitoring for inactivity
+//! 
+//! **Key Features:**
+//! 
+//! **1. Collaboration Support:**
+//! 
+//! **CollaborationSessions:**
+//! ```rust
+//! CollaborationSession {
+//!     session_id: String,
+//!     participants: Vec<String>,
+//!     active_documents: Vec<String>,
+//!     last_activity: u64,
+//!     permissions: CollaborationPermissions,
+//! }
+//! ```
+//! 
+//! **Permissions:**
+//! - `can_edit`: Allow editing
+//! - `can_view`: Read-only access
+//! - `can_comment`: Allow comments
+//! - `can_share`: Allow inviting others
+//! 
+//! **Session Management:**
+//! - `create_collaboration_session()` - Create new session
+//! - `add_participant()` - Add user to session
+//! - `monitor_collaboration_sessions()` - Track active sessions
+//! - Automatic session cleanup on inactivity (5 minutes)
+//! 
+//! **2. Message Caching:**
+//! 
+//! **Cache Structure:**
+//! ```rust
+//! MessageCache {
+//!     cached_messages: HashMap<String, CachedMessage>,
+//!     cache_hits: u64,
+//!     cache_misses: u64,
+//!     cache_size: usize,
+//! }
+//! ```
+//! 
+//! **CachedMessage:**
+//! ```rust
+//! CachedMessage {
+//!     data: serde_json::Value,
+//!     timestamp: u64,
+//!     ttl: u64, // Time to live in seconds
+//! }
+//! ```
+//! 
+//! **Cache Operations:**
+//! - `cache_message(id, data, ttl)` - Store message
+//! - `get_cached_message(id)` - Retrieve message
+//! - Automatic TTL-based expiration
+//! - Periodic cleanup every 60 seconds
+//! 
+//! **Cache Effectiveness:**
+//! ```rust
+//! cache_hit_rate = cache_hits / (cache_hits + cache_misses)
+//! ```
+//! 
+//! **3. Performance Monitoring:**
+//! 
+//! **Metrics Tracked:**
+//! - `total_messages_sent` - Outgoing message count
+//! - `total_messages_received` - Incoming message count
+//! - `average_processing_time_ms` - Mean latency
+//! - `peak_message_rate` - Maximum observed rate
+//! - `error_count` - Total errors
+//! - `connection_uptime` - Time connected
+//! 
+//! **Calculations:**
+//! 
+//! **Average Processing Time:**
+//! ```rust
+//! new_avg = old_avg * (n-1)/n + current_time / n
+//! ```
+//! 
+//! **Message Rate:**
+//! ```rosu//! messages_per_second = total_messages / time_window_seconds
+//! ```
+//! 
+//! **4. Background Services:**
+//! 
+//! **Performance Monitoring (Every 10 seconds):**
+//! - Calculate current performance metrics
+//! - Emit metrics to Sky via IPC events
+//! - Update connection uptime
+//! 
+//! **Cache Cleanup (Every 60 seconds):**
+//! - Remove expired cache entries
+//! - Update cache size count
+//! - Log cleanup statistics
+//! 
+//! **Session Monitoring (Every 30 seconds):**
+//! - Remove inactive sessions (5+ minutes idle)
+//! - Emit session updates to subscribers
+//! - Track session count
+//! 
+//! **Tauri Commands:**
+//! 
+//! - `mountain_get_performance_stats` - Get performance metrics
+//! - `mountain_get_cache_stats` - Get cache statistics
+//! - `mountain_create_collaboration_session` - Create collaboration session
+//! - `mountain_get_collaboration_sessions` - Get all active sessions
+//! 
+//! **Events Emitted:**
+//! 
+//! - `ipc-performance-stats` - Performance metrics update
+//! - `collaboration-sessions-update` - Active sessions list
+//! 
+//! **Initialization:**
+//! 
+//! ```rust
+//! // In Mountain setup
+//! let features = AdvancedFeatures::new(runtime);
+//! app_handle.manage(features.clone_features());
+//! features.start_monitoring().await;
+//! ```
+//! 
+//! **Usage Examples:**
+//! 
+//! **Caching a Message:**
+//! ```rust
+//! features.cache_message(
+//!     "config:editor".to_string(),
+//!     serde_json::json!({ "theme": "dark" }),
+//!     300 // 5 minutes TTL
+//! ).await?;
+//! 
+//! // Retrieve later
+//! let cached = features.get_cached_message("config:editor").await;
+//! ```
+//! 
+//! **Creating a Collaboration Session:**
+//! ```rust
+//! let permissions = CollaborationPermissions {
+//!     can_edit: true,
+//!     can_view: true,
+//!     can_comment: true,
+//!     can_share: false,
+//! };
+//! 
+//! features.create_collaboration_session(
+//!     "project-alpha".to_string(),
+//!     permissions
+//! ).await?;
+//! 
+//! features.add_participant("project-alpha", "user123").await?;
+//! ```
+//! 
+//! **Monitoring Performance:**
+//! ```rust
+//! features.record_message_statistics(true, 15).await; // Sent, 15ms
+//! let stats = features.get_performance_stats().await?;
+//! println!("Average latency: {}ms", stats.average_processing_time_ms);
+//! ```
+//! 
+//! **Integration with StatusReporter:**
+//! 
+//! The AdvancedFeatures module works with StatusReporter:
+//! - StatusReporter can call this module for detailed metrics
+//! - Both modules emit events to Sky for monitoring
+//! - Complementary monitoring at different levels
+//! 
+//! **Advanced Features Future Enhancements:**
+//! 
+//! - **Intelligent Caching:** LRU cache eviction, predictive caching
+//! - **Collaboration Cursors:** Real-time cursor position sharing
+//! - **Conflict Resolution:** Automatic conflict detection and resolution
+//! - **Presence Indicators:** Show who is viewing/editing documents
+//! - **Change History:** Track all collaborative changes with authors
+//! 
+//! **Naming Convention:**
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 

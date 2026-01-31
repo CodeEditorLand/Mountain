@@ -1,10 +1,186 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # Status Reporter
+//! # Status Reporter - IPC Monitoring & Health Checking
 //! 
-//! Reports Mountain's IPC status to Sky for monitoring and debugging.
-//! Provides real-time status information about IPC communication between Mountain and Wind.
+//! **File Responsibilities:**
+//! This module provides comprehensive monitoring and health checking for the IPC layer.
+//! It reports Mountain's IPC status to Sky (the monitoring system) and enables real-time
+//! observability of the Wind-Mountain communication bridge.
+//! 
+//! **Architectural Role in Wind-Mountain Connection:**
+//! 
+//! The StatusReporter is the observability layer that provides:
+//! 
+//! 1. **Real-time Monitoring:** Continuous tracking of IPC health and performance
+//! 2. **Performance Metrics:** Collection of latency, throughput, and resource usage data
+//! 3. **Health Scoring:** Automated health assessments with alerting
+//! 4. **Service Discovery:** Automatic detection and monitoring of Mountain services
+//! 5. **Incident Response:** Automatic recovery attempts for degraded states
+//! 
+//! **Monitoring Architecture (Microsoft-Inspired):**
+//! 
+//! This module follows Microsoft's monitoring and observability patterns:
+//! 
+//! **1. Three-Pillar Monitoring:**
+//!    - **Telemetry:** Collect and send metrics to Sky
+//!    - **Health Checks:** Periodic health assessments
+//!    - **Logging:** Detailed operation and error logging
+//! 
+//! **2. Metric Categories:**
+//!    - **Availability:** Connection uptime, service status
+//!    - **Performance:** Latency, throughput, response times
+//!    - **Reliability:** Error rates, success rates, retry counts
+//!    - **Capacity:** Resource usage, connection pool utilization
+//! 
+//! **3. Health Scoring Algorithm:**
+//!    - Start with perfect health (100%)
+//!    - Deduct points for detected issues:
+//!      - Connection loss: -25%
+//!      - Queue overflow: -15%
+//!      - High latency (>100ms): -20%
+//!      - Security violations: -30%
+//!    - Alert when score < 70%
+//!    - Critical when score < 50%
+//! 
+//! **Key Structures:**
+//! 
+//! **ComprehensiveStatusReport:**
+//! Combines all monitoring data into a single report:
+//! - Basic status (connection, queue, errors)
+//! - Performance metrics (latency, throughput, compression)
+//! - Health status (score, issues, recovery attempts)
+//! - Timestamp for correlation
+//! 
+//! **PerformanceMetrics:**
+//! Real-time performance data:
+//! - Messages per second (throughput)
+//! - Average and peak latency (performance)
+//! - Compression ratio (efficiency)
+//! - Connection pool utilization (capacity)
+//! - Memory and CPU usage (resources)
+//! 
+//! **HealthMonitor:**
+//! Health state tracking:
+//! - Overall health score (0-100)
+//! - Detected issues with severity levels
+//! - Recovery attempt counter
+//! - Last health check timestamp
+//! 
+//! **ServiceInfo:**
+//! Individual service status:
+//! - Service name and version
+//! - Current status (Running/Degraded/Stopped/Error)
+//! - Uptime and last heartbeat
+//! - Dependencies for impact analysis
+//! - Performance metrics per service
+//! - Network endpoint information
+//! 
+//! **ServiceRegistry:**
+//! Service discovery registry:
+//! - All discovered services
+//! - Last discovery timestamp
+//! - Configurable discovery interval
+//! 
+//! **Health Issue Types:**
+//! - `HighLatency`: Response time exceeds threshold
+//! - `MemoryPressure`: High memory usage
+//! - `ConnectionLoss`: IPC connection failure
+//! - `QueueOverflow`: Message queue capacity exceeded
+//! - `SecurityViolation`: Unauthorized access or suspicious activity
+//! - `PerformanceDegradation`: General performance decline
+//! 
+//! **Severity Levels:**
+//! - `Low`: Informational, no action needed
+//! - `Medium`: Monitor closely, may need attention
+//! - `High`: Requires investigation and action
+//! - `Critical`: Immediate attention required
+//! 
+//! **Reporting to Sky:**
+//! 
+//! StatusReporter emits events that Sky listens to:
+//! 
+//! ```
+//! StatusReporter
+//!   |
+//!   | emit("ipc-status-report")
+//!   v
+//! Sky (Monitoring System)
+//!   |
+//!   | Collects metrics
+//!   | Runs analytics
+//!   | Triggers alerts
+//!   | Displays dashboards
+//! ```
+//! 
+//! **Tauri Commands:**
+//! 
+//! The module provides Tauri commands for external monitoring:
+//! 
+//! - `mountain_get_ipc_status` - Get current status
+//! - `mountain_get_ipc_status_history` - Get historical status
+//! - `mountain_start_ipc_status_reporting` - Enable periodic reporting
+//! - `mountain_get_performance_metrics` - Get performance data
+//! - `mountain_get_health_status` - Get health status
+//! - `mountain_perform_health_check` - Trigger health check
+//! - `mountain_attempt_recovery` - Attempt automatic recovery
+//! - `mountain_get_service_registry` - Get all services
+//! - `mountain_get_service_info` - Get specific service info
+//! - `mountain_discover_services` - Trigger service discovery
+//! - `mountain_get_comprehensive_status` - Get complete report
+//! 
+//! **Service Discovery:**
+//! 
+//! Automatically discovers Mountain services:
+//! 
+//! ```rust
+//! // Core services always discovered
+//! let core_services = vec![
+//!     ("EditorService", "1.0.0", Running),
+//!     ("ExtensionHostService", "1.0.0", Running),
+//!     ("ConfigurationService", "1.0.0", Running),
+//!     ("FileService", "1.0.0", Running),
+//!     ("StorageService", "1.0.0", Running),
+//! ];
+//! ```
+//! 
+//! **Automatic Recovery:**
+//! 
+//! When health score drops below threshold:
+//! 1. Dispose current IPC server
+//! 2. Reinitialize IPC server
+//! 3. Clear error counters
+//! 4. Log recovery attempt
+//! 5. Return to normal operation
+//! 
+//! **Performance Calculations:**
+//! 
+//! **Message Rate:**
+//! ```
+//! messages_per_second = total_messages / time_span_seconds
+//! ```
+//! 
+//! **Average Latency:**
+//! ```
+//! average_latency_ms = sum(latencies) / message_count
+//! ```
+//! **Metric Collection Strategy:**
+//! 
+//! 1. **Continuous Collection:** Background tasks collect metrics constantly
+//! 2. **Sliding Window:** Calculate metrics over recent time window (5-10 samples)
+//! 3. **Periodic Reporting:** Emit to Sky at configured interval (default: 30s)
+//! 4. **Event-Driven:** Emit immediately for critical events
+//! 
+//! **Health Check Process:**
+//! 
+//! Every 30 seconds:
+//! 1. Check IPC connection status
+//! 2. Check message queue size
+//! 3. Check performance metrics
+//! 4. Update health score
+//! 5. Emit health status event
+//! 6. Trigger alerts if needed
+//! 
+//! **Naming Convention:**
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 

@@ -1,10 +1,223 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # Configuration Bridge
+//! # Configuration Bridge - Bidirectional Configuration Synchronization
 //! 
-//! Bridges Mountain's configuration system to Wind's desktop configuration requirements.
-//! Ensures seamless configuration sharing between Mountain backend and Wind frontend.
+//! **File Responsibilities:**
+//! This module manages bidirectional synchronization of configuration between Mountain's
+//! Rust backend and Wind's TypeScript frontend. It ensures configuration consistency across
+//! the entire CodeEditorLand ecosystem while handling conflicts and updates gracefully.
+//! 
+//! **Architectural Role in Wind-Mountain Connection:**
+//! 
+//! The ConfigurationBridge is the synchronization layer that:
+//! 
+//! 1. **Translates Configuration Formats:** Converts between Mountain's internal config
+//!    structure and Wind's desktop configuration interface
+//! 2. **Bidirectional Sync:** Maintains consistency in both directions (Wind→Mountain
+//!    and Mountain→Wind)
+//! 3. **Conflict Resolution:** Handles merge conflicts when multiple sources update
+//!    configuration simultaneously
+//! 4. **Validation:** Ensures all configuration changes are valid before applying
+//! 5. **Identity Management:** Generates unique machine and session IDs for multi-
+//!    instance scenarios
+//! 
+//! **Bidirectional Synchronization Flow:**
+//! 
+//! **Mountain → Wind Sync:**
+//! ```
+//! Mountain Services (Internal Config)
+//!       |
+//!       | get_mountain_configuration()
+//!       v
+//! ConfigurationBridge
+//!       |
+//!       | WindServiceAdapter.convert_to_wind_configuration()
+//!       v
+//! Wind Desktop Configuration Format
+//!       |
+//!       | send_configuration_to_wind()
+//!       v
+//! Wind Frontend (via IPC)
+//! ```
+//! 
+//! **Wind → Mountain Sync:**
+//! ```
+//! Wind Frontend (User Changes)
+//!       |
+//!       | handle_wind_configuration_change()
+//!       v
+//! ConfigurationBridge
+//!       |
+//!       | convert_to_mountain_configuration()
+//!       v
+//! Mountain Configuration Format
+//!       |
+//!       | update_mountain_configuration()
+//!       v
+//! Mountain Services (Internal Config)
+//! ```
+//! 
+//! **Configuration Bridge Features:**
+//! 
+//! **1. Format Translation:**
+//! - Mountain's internal JSON structure → Wind's desktop configuration interface
+//! - Handles nested configuration objects
+//! - Type conversion between TypeScript and Rust types
+//! 
+//! **2. Conflict Resolution Strategy:**
+//! 
+//! **Current Implementation (Basic):**
+//! - Last-write-wins (most recent update takes precedence)
+//! - Configuration is validated before applying
+//! - Invalid changes are rejected entirely
+//! 
+//! **Advanced Conflict Resolution (Future Enhancement):**
+//! - Detect conflicts based on modification timestamps
+//! - Provide conflict metadata (source, timestamp, value)
+//! - Support three-way merge strategies:
+//!   - **Ours:** Keep Mountain's version
+//!   - **Theirs:** Use Wind's version
+//!   - **Merge:** Attempt intelligent merge
+//! - Conflict UI prompts in Wind for user resolution
+//! 
+//! **3. Validation Rules:**
+//! 
+//! **Type Validation:**
+//! - `zoom_level`: Number, range -8.0 to 9.0
+//! - `font_size`: Number, range 6.0 to 100.0
+//! - `is_packaged`: Boolean
+//! - `theme`, `platform`, `arch`: String, non-empty
+//! - All other values: Not null
+//! 
+//! **Key Validation:**
+//! - Configuration keys must not be empty or whitespace
+//! - Reserved keys cannot be modified
+//! - Nested paths use dot notation (e.g., "editor.theme")
+//! 
+//! **Value Validation:**
+//! - Ranges checked for numeric values
+//! - Enum validation for predefined options
+//! - Pattern validation for string values (URLs, paths)
+//! 
+//! **4. Identity Management:**
+//! 
+//! **Machine ID Generation (Microsoft-Inspired):**
+//! - **macOS:** Get system serial number via `system_profiler`
+//! - **Windows:** Get machine UUID via `wmic csproduct get UUID`
+//! - **Linux:** Read from `/etc/machine-id` or `/var/lib/dbus/machine-id`
+//! - **Fallback:** Hash hostname + timestamp
+//! 
+//! **Session ID Generation (Secure):**
+//! - Combine timestamp, random number, and process ID
+//! - Hash with SHA-256
+//! - Use first 16 characters of hex digest
+//! - Format: `session-{16-char-hash}`
+//! 
+//! **5. Bidirectional Sync Triggers:**
+//! 
+//! **Triggers for Mountain → Wind:**
+//! - Configuration changes from Mountain services
+//! - Periodic sync interval (configurable)
+//! - Manual sync request from Mountain
+//! 
+//! **Triggers for Wind → Mountain:**
+//! - User changes configuration in Wind UI
+//! - Settings panel updates
+//! - Extension configuration changes
+//! - Command palette configuration commands
+//! 
+//! **Key Structures:**
+//! 
+//! **ConfigurationBridge:**
+//! Main synchronization orchestrator
+//! - `get_wind_desktop_configuration()` - Get config in Wind format
+//! - `update_configuration_from_wind()` - Apply Wind's config changes
+//! - `synchronize_configuration()` - Force bidirectional sync
+//! - `get_configuration_status()` - Get sync status info
+//! 
+//! **ConfigurationStatus:**
+//! Current synchronization state
+//! - `is_valid` - Whether configuration is valid
+//! - `last_sync` - Timestamp of last successful sync
+//! - `configuration_keys` - List of all configuration keys
+//! 
+//! **Tauri Commands:**
+//! 
+//! The module provides Tauri commands for Wind to invoke:
+//! 
+//! - `mountain_get_wind_desktop_configuration` - Get config for Wind UI
+//! - `get_configuration_data` - Get all configuration data
+//! - `save_configuration_data` - Save configuration from Wind
+//! - `mountain_update_configuration_from_wind` - Update config from Wind
+//! - `mountain_synchronize_configuration` - Force sync
+//! - `mountain_get_configuration_status` - Get sync status
+//! 
+//! **Configuration Flow Examples:**
+//! 
+//! **Example 1: Wind Initializing**
+//! ```typescript
+//! // Wind startup
+//! const config = await invoke('mountain_get_wind_desktop_configuration');
+//! applyConfiguration(config);
+//! ```
+//! 
+//! **Example 2: User Changes Theme**
+//! ```typescript
+//! // User changes theme in Wind UI
+//! const newConfig = { theme: 'dark', 'editor.fontSize': 14 };
+//! await invoke('save_configuration_data', newConfig);
+//! ```
+//! 
+//! **Example 3: Mountain Updates Setting**
+//! ```rust
+//! // Mountain service updates configuration
+//! let bridge = ConfigurationBridge::new(runtime);
+//! bridge.synchronize_configuration().await?;
+//! 
+//! // Result: Wind UI automatically updates via IPC event
+//! ```
+//! 
+//! **Error Handling Strategy:**
+//! 
+//! **Configuration Validation Errors:**
+//! - Reject entire invalid configuration
+//! - Return detailed validation error messages
+//! - List which keys/values failed validation
+//! 
+//! **Format Conversion Errors:**
+//! - Log conversion errors with field names
+//! - Attempt graceful fallback for missing fields
+//! - Use defaults for conversion failures
+//! 
+//! **Sync Errors:**
+//! - Log sync failures with timestamps
+//! - Queue sync for retry on transient errors
+//! - Alert monitoring system on persistent failures
+//! 
+//! **Integration with Other Modules:**
+//! 
+//! **WindServiceAdapters:**
+//! - Uses `WindServiceAdapter.convert_to_wind_configuration()`
+//! - Depends on `WindDesktopConfiguration` structure
+//! 
+//! **TauriIPCServer:**
+//! - Sends configuration updates via IPC events
+//! - Receives configuration changes from Wind
+//! 
+//! **Mountain Configuration Service:**
+//! - Delegates to `ConfigurationProvider` trait
+//! - Uses `ConfigurationTarget` for scoping
+//! 
+//! **Best Practices:**
+//! 
+//! 1. **Always Validate:** Never apply configuration without validation
+//! 2. **Atomic Updates:** Apply entire configuration atomically
+//! 3. **Versioning:** Consider adding configuration versioning
+//! 4. **Change Logging:** Log all configuration changes for audit
+//! 5. **Fallback Support:** Provide sensible defaults for all settings
+//! 6. **Conflict Detection:** Implement proper conflict detection before merges
+//! 
+//! **Naming Convention:**
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 
