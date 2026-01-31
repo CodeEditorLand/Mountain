@@ -1,20 +1,86 @@
-// File: Mountain/Source/RunTime/ApplicationRunTime.rs
-// Role: Defines the concrete, `Echo`-based `ApplicationRunTime`.
-// Responsibilities:
-//   - The core execution engine bridging `ActionEffect`s with the `Echo`
-//     scheduler.
-//   - Provides the `Run` method to execute any effect, supplying the required
-//     capability.
-//   - Orchestrates the graceful shutdown of application services.
-
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # ApplicationRunTime
 //!
-//! Defines the concrete, `Echo`-based `ApplicationRunTime` for the Mountain
-//! application. This is the core execution engine that bridges the declarative
-//! `ActionEffect` system with the high-performance `Echo` task scheduler.
+//! Core execution engine powered by Echo scheduler, bridging the declarative
+//! ActionEffect system with high-performance task execution.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### Effect Execution
+//! - Execute ActionEffect via Echo scheduler with proper capability injection
+//! - Provide main Run() method for synchronous effect execution
+//! - Support timeout-based effect execution with cancellation
+//! - Implement retry mechanisms with exponential backoff
+//! - Handle effect result channels and error propagation
+//! - Ensure thread-safe execution environment
+//!
+//! ### Service Shutdown & Recovery
+//! - Coordinate graceful shutdown of all application services
+//! - Implement shutdown with timeout and recovery mechanisms
+//! - Shutdown Cocoon sidecar with retry attempts
+//! - Safely dispose of all active terminal instances
+//! - Persist application state (GlobalMemento) before exit
+//! - Flush pending operations and UI requests
+//! - Collect and report shutdown errors without crashing
+//!
+//! ### Error Recovery
+//! - Implement fallback strategies for service unavailability
+//! - Provide detailed error context for diagnostics
+//! - Log all failures with appropriate severity levels
+//! - Continue shutdown even when some services fail
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! ### Position in Mountain
+//! - Implementation of ApplicationRunTime trait from Common
+//! - Core execution engine for entire application
+//! - Bridges declarative effect system with Echo scheduler
+//!
+//! ### Dependencies
+//! - Echo::Scheduler: High-performance work-stealing scheduler
+//! - Common::Effect::ApplicationRunTime: Trait implementation
+//! - Common::Environment: Environment integration
+//! - MountainEnvironment: Capability provider for all services
+//! - IPCProvider: Sidecar communication
+//! - TerminalProvider: Terminal lifecycle management
+//!
+//! ### Dependents
+//! - Binary: Initializes and manages lifecycle
+//! - Command handlers: Execute effects via Run()
+//! - IPC services: Submit effects from frontend
+//! - Shutdown controller: Calls ShutdownWithRecovery()
+//!
+//! ### VSCode Patterns Borrowed
+//! - Workbench service instantiation sequence
+//! - Service lifecycle management (dispose pattern)
+//! - Graceful degradation when services unavailable
+//! - Comprehensive error handling during shutdown
+//! - State persistence before exit (memento system)
+//!
+//! ## TODO
+//!
+//! ### Immediate Improvements
+//! - Add effect execution metrics (count, duration, success rate)
+//! - Implement effect execution tracing and profiling
+//! - Add effect prioritization levels beyond Normal
+//! - Implement effect cancellation token propagation
+//! - Add circuit breaker pattern for failing effects
+//!
+//! ### Future Work
+//! - Implement distributed effect execution across instances
+//! - Add effect result caching for idempotent operations
+//! - Implement effect pipeline with chaining and composition
+//! - Add real-time effect monitoring dashboard
+//! - Implement adaptive timeout based on historical performance
+//! - Add effect execution limits (rate limiting)
+//!
+//! ### Missing Functionality to Probe
+//! - Optimal timeout values for different effect categories
+//! - Retry strategy customization per effect type
+//! - Backoff policy tuning for different error conditions
+//! - Effect execution throttling under high load
+//! - Service health check intervals for shutdown
+//! - State persistence durability guarantees
+//! - Pending operation flush timeout
 
 #![allow(non_snake_case, non_camel_case_types)]
 

@@ -1,9 +1,176 @@
 // File: Mountain/Source/Track/EffectCreation.rs
-// Role: Central routing table for the application.
-// Responsibilities:
-//   - Map string-based command and RPC method names to their strongly-typed
-//     effect constructors from the `Common` crate.
-//   - Create a runnable, type-erased `MappedEffect` for each request.
+//
+// # Central Routing Table for Mountain Application
+//
+// ## Responsibilities
+//
+// This module serves as the **central routing table** for the entire Mountain
+// backend. Its primary responsibilities are:
+//
+// ### 1. Command-to-Effect Mapping
+// - Map string-based command and RPC method names to their strongly-typed
+//   effect constructors from the `Common` crate
+// - Ensure all commands from Wind (frontend) and Cocoon (sidecar) have corresponding effects
+// - Provide default/error handling for unknown commands
+// - Create a runnable, type-erased `MappedEffect` for each request
+//
+// ### 2. Effect System Integration
+// - Transform declarative ActionEffects into executable closures
+// - Ensure proper parameter deserialization and validation
+// - Handle type-safe effect creation with comprehensive error context
+// - Support both direct provider calls and effect-based execution
+//
+// ### 3. Error Handling and Validation
+// - Validate all input parameters before effect creation
+// - Provide detailed error messages for failed mappings
+// - Handle serialization/deserialization errors gracefully
+// - Support parameter defaults and optionals
+//
+// ## Architectural Role
+//
+// EffectCreation is the **routing layer** that sits between:
+//
+// DispatchLogic (Router) ──► EffectCreation (Mapper) ──► ApplicationRunTime (Executor)
+//
+// ### Design Patterns:
+// 1. **Command Pattern**: Each command is mapped to a specific effect
+// 2. **Factory Pattern**: The CreateEffectForRequest function creates effects
+// 3. **Strategy Pattern**: Direct provider calls vs effect-based execution
+//
+// ### VS Code Reference:
+// This module borrows from VS Code's command registration and dispatch
+// system in `vs/workbench/services/extensions/common/extensions.ts`
+// and `vs/platform/commands/common/commands.ts`. Key concepts:
+// - Command ID → Handler mapping
+// - Type-safe parameter passing
+// - Async execution with proper error propagation
+//
+// ## Key Components
+//
+// ### CreateEffectForRequest
+// The primary entry point that maps method names to effects. Returns a
+// `MappedEffect` which is a boxed, async closure that can be executed by
+// the ApplicationRunTime.
+//
+// ### Direct Provider Calls
+// For performance-critical operations, we bypass the effect system and call
+// providers directly. This is done for:
+// - Configuration inspection/updates (high frequency)
+// - Diagnostics (real-time updates)
+// - Language features (interactive editing)
+// - Terminal operations (direct user input)
+//
+// ### Effect-Based Handlers
+// Most operations go through the effect system for:
+// - Consistency and maintainability
+// - Declarative semantics
+// - Easier testing and mocking
+// - Better error handling
+//
+// ## Supported Command Categories
+//
+// ### Commands
+// - `Command.Execute` - Execute a registered command
+// - `Command.GetAll` - Get all available commands
+// - `Command.Register` - Register a new command
+//
+// ### Configuration
+// - `Configuration.Inspect` - Inspect a configuration value
+// - `Configuration.Update` - Update a configuration value
+// - `Configuration.Get` - Get configuration sections
+//
+// ### Documents
+// - `Document.Save` - Save a document
+// - `Document.SaveAs` - Save a document to a new location
+//
+// ### FileSystem
+// - `FileSystem.ReadFile` - Read file contents
+// - `FileSystem.WriteFile` - Write file contents
+// - `FileSystem.ReadDirectory` - List directory contents
+// - `FileSystem.StatFile` - Get file metadata
+// - `FileSystem.Delete` - Delete files/directories
+//
+// ### Debug
+// - `Debug.Start` - Start a debugging session
+// - `Debug.RegisterConfigurationProvider` - Register debug config provider
+//
+// ### Diagnostics
+// - `Diagnostic.Set` - Set diagnostics for a resource
+// - `Diagnostic.Clear` - Clear diagnostics
+//
+// ### Keybinding
+// - `Keybinding.GetResolved` - Get resolved keybindings
+//
+// ### Language Features
+// - `$languageFeatures:registerProvider` - Register a language feature provider
+// - `$languageFeatures:unregisterProvider` - Unregister a provider
+//
+// ### Search
+// - `Search.TextSearch` - Perform text search
+//
+// ### Source Control Management
+// - `$scm:createSourceControl` - Create SCM provider
+// - `$scm:updateSourceControl` - Update SCM state
+// - `$scm:updateGroup` - Update SCM resource groups
+// - `$scm:registerInputBox` - Register SCM input box
+//
+// ### Status Bar
+// - `$statusBar:set` - Set status bar entry
+// - `$statusBar:dispose` - Dispose status bar entry
+// - `$setStatusBarMessage` - Set status bar message
+// - `$disposeStatusBarMessage` - Dispose status bar message
+//
+// ### Storage
+// - `Storage.Get` - Get a storage item
+// - `Storage.Set` - Set a storage item
+// - `$storage:getAll` - Get all storage items
+// - `$storage:setAll` - Set all storage items
+//
+// ### Terminal
+// - `$terminal:create` - Create a terminal instance
+// - `$terminal:sendText` - Send text to terminal
+// - `$terminal:dispose` - Dispose a terminal
+//
+// ### Tree View
+// - `$tree:register` - Register a tree data provider
+//
+// ### User Interface
+// - `UserInterface.ShowMessage` - Show a message dialog
+// - `UserInterface.ShowOpenDialog` - Show open file dialog
+// - `UserInterface.ShowSaveDialog` - Show save file dialog
+//
+// ### WebView
+// - `$webview:create` - Create a webview panel
+// - `$resolveCustomEditor` - Resolve a custom editor
+//
+// ## Error Handling
+//
+// All effects return `Result<Value, String>` where:
+// - `Ok(Value)` - Successful execution with JSON-serializable result
+// - `Err(String)` - Error with descriptive message
+//
+// Error recovery mechanisms:
+// - Invalid parameters return descriptive errors
+// - Unknown commands are caught and reported
+// - Serialization errors are caught and reported
+// - Provider call errors are propagated with context
+//
+// ## TODOs
+//
+// High Priority:
+// - [ ] Add command parameter schema validation
+// - [ ] Implement command permission checking
+// - [ ] Add command deprecation warnings
+//
+// Medium Priority:
+// - [ ] Cache frequently created effects
+// - [ ] Add command timeout configuration
+// - [ ] Implement command rate limiting
+//
+// Low Priority:
+// - [ ] Add command metrics collection
+// - [ ] Implement command aliasing
+// - [ ] Add command migration support
 
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md

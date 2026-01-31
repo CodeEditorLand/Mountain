@@ -1,10 +1,143 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # Wind Service Adapters
+//! # Wind Service Adapters - Type Conversion & Service Bridging
 //! 
-//! Mountain adapters that bridge Wind's TypeScript service interfaces to Mountain's Rust services.
-//! Provides seamless integration between Wind's desktop services and Mountain's backend services.
+//! **File Responsibilities:**
+//! This module provides the adapter layer that handles type conversion and service abstraction
+//! between Wind's TypeScript interfaces and Mountain's Rust implementations. It allows Mountain
+//! services to present Wind-compatible APIs while using Mountain's internal architecture.
+//! 
+//! **Architectural Role in Wind-Mountain Connection:**
+//! 
+//! The WindServiceAdapters module serves as the translation layer that:
+//! 
+//! 1. **Converts Data Types:** Transforms TypeScript types to Rust types and vice versa
+//! 2. **Abstracts Services:** Provides Wind-compatible service interfaces over Mountain services
+//! 3. **Handles Configuration:** Converts between different configuration formats
+//! 4. **Maintains Compatibility:** Ensures Wind contracts are satisfied
+//! 
+//! **Adapter Pattern:**
+//! 
+//! This module implements the Adapter design pattern to bridge the interface gap:
+//! 
+//! ```
+//! Wind's IFileService (TypeScript interface)
+//!        |
+//!        |  Expected interface
+//!        v
+//! WindFileService (Rust adapter)
+//!        |
+//!        |  Delegates to
+//!        v
+//! Mountain's FileSystemReader (Rust trait)
+//! ```
+//! 
+//! **Key Structures:**
+//! 
+//! **1. WindDesktopConfiguration:**
+//! - Represents Wind's complete desktop configuration structure
+//! - Mirrors Wind's TypeScript interface
+//! - Includes window settings, paths, platform info, profile data
+//! 
+//! **2. WindServiceAdapter:**
+//! Main adapter that converts between Mountain and Wind formats
+//! - `convert_to_wind_configuration()` - Mountain config to Wind config
+//! - `get_environment_service()` - Wind-compatible environment service
+//! - `get_file_service()` - Wind-compatible file service
+//! - `get_storage_service()` - Wind-compatible storage service
+//! - `get_configuration_service()` - Wind-compatible configuration service
+//! 
+//! **3. Individual Service Adapters:**
+//! 
+//! **WindEnvironmentService:**
+//! Provides Wind-compatible environment variable access
+//! - `get_app_root()` - Get application root path
+//! - `get_user_data_path()` - Get user data directory
+//! 
+//! **WindFileService:**
+//! Adapts Mountain's file system to Wind's interface
+//! - `read_file()` - Read file as bytes
+//! - `write_file()` - Write file from bytes
+//! - `stat_file()` - Get file metadata as JSON
+//! 
+//! **WindStorageService:**
+//! Adapts Mountain's storage to Wind's interface
+//! - `get()` - Get storage value as JSON
+//! - `set()` - Set storage value from JSON
+//! 
+//! **WindConfigurationService:**
+//! Adapts Mountain's configuration to Wind's interface
+//! - `get_value()` - Get configuration value
+//! - `update_value()` - Update configuration value
+//! 
+//! **Type Conversion Examples:**
+//! 
+//! **Configuration Conversion:**
+//! ```typescript
+//! // Wind TypeScript Configuration
+//! interface IDesktopConfiguration {
+//!   windowId: number;
+//!   appRoot: string;
+//!   userDataPath: string;
+//!   // ... more fields
+//! }
+//! ```
+//! 
+//! ```rust
+//! // Mountain Rust Configuration (after conversion)
+//! struct WindDesktopConfiguration {
+//!     pub window_id: u32,
+//!     pub app_root: String,
+//!     pub user_data_path: String,
+//!     // ... more fields
+//! }
+//! ```
+//! 
+//! **File Service Integration:**
+//! 
+//! Mountain's file system uses traits for abstraction:
+//! 
+//! ```rust
+//! let reader: Arc<dyn FileSystemReader> = runtime.Environment.Require();
+//! let writer: Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+//! 
+//! // Adapt to Wind's interface
+//! let wind_file_service = WindFileService::new(reader, writer);
+//! let bytes = wind_file_service.read_file(path).await?;
+//! ```
+//! 
+//! **Configuration Bridge Integration:**
+//! 
+//! The WindServiceAdapter works closely with ConfigurationBridge:
+//! - ConfigurationBridge uses WindServiceAdapter to convert formats
+//! - WindServiceAdapter maintains type compatibility
+//! - Both work together to ensure seamless Wind-Mountain integration
+//! 
+//! **Error Handling:**
+//! 
+//! All adapter methods return `Result<T, String>` with descriptive errors:
+//! - Type conversion errors include the field and reason
+//! - Service delegation errors propagate with context
+//! - All errors are in a format Wind can understand
+//! 
+//! **Usage Pattern:**
+//! 
+//! ```rust
+//! // Create adapter
+//! let adapter = WindServiceAdapter::new(runtime);
+//! 
+//! // Get Mountain config
+//! let mountain_config = get_mountain_config().await?;
+//! 
+//! // Convert to Wind format
+//! let wind_config = adapter.convert_to_wind_configuration(mountain_config).await?;
+//! 
+//! // Get Wind-compatible services
+//! let file_service = adapter.get_file_service().await?;
+//! let config_service = adapter.get_configuration_service().await?;
+//! ```
+//! 
+//! **Naming Convention:**
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 

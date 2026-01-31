@@ -1,10 +1,298 @@
+//! # Wind-Air Commands - Air Daemon Delegation Layer
+//! 
+//! **File Responsibilities:**
+//! This module provides the Tauri IPC commands that enable Wind (the TypeScript frontend)
+//! to delegate background operations to Air (the Rust daemon). All commands use the
+//! gRPC-based AirClient for communication and return structured DTOs or detailed error messages.
+//! 
+//! **Architectural Role in Wind-Mountain-Air Connection:**
+//! 
+//! The WindAirCommands module forms the delegation layer that:
+//! 
+//! 1. **Bridge to Air Daemon:** Provides a Tauri IPC interface to Air's gRPC services
+//! 2. **Background Operations:** Offloads long-running tasks from Wind to Air
+//! 3. **Type Translation:** Converts between Tauri JSON and gRPC protobuf messages
+//! 4. **Error Handling:** Translates gRPC errors to user-friendly error messages
+//! 5. **Connection Management:** Manages Air client lifecycle and reconnections
+//! 
+//! **Three-Tier Architecture:**
+//! ```
+//! Wind (Frontend - TypeScript)
+//!   |
+//!   | Tauri IPC Commands
+//!   v
+//! WindAirCommands (Mountain - Rust)
+//!   |
+//!   | gRPC Calls
+//!   v
+//! AirClient (gRPC Client)
+//!   |
+//!   | Network Communication
+//!   v
+//! Air Daemon (gRPC Server)
+//! ```
+//! 
+//! **Available Commands (Tauri IPC):**
+//! 
+//! **1. Update Management:**
+//! - `CheckForUpdates` - Check for application updates
+//! - `DownloadUpdate` - Download update package
+//! - `ApplyUpdate` - Apply downloaded update
+//! 
+//! **2. File Operations:**
+//! - `DownloadFile` - Download any file from URL
+//! 
+//! **3. Authentication:**
+//! - `AuthenticateUser` - Authenticate with various providers
+//! 
+//! **4. Indexing & Search:**
+//! - `IndexFiles` - Index directory contents
+//! - `SearchFiles` - Search indexed files
+//! 
+//! **5. Monitoring:**
+//! - `GetAirStatus` - Get Air daemon status
+//! - `GetAirMetrics` - Get performance & resource metrics
+//! 
+//! **Data Transfer Objects (DTOs):**
+//! 
+//! **UpdateInfoDTO:**
+//! ```rust
+//! struct UpdateInfoDTO {
+//!     update_available: bool,
+//!     version: String,
+//!     download_url: String,
+//!     release_notes: String,
+//! }
+//! ```
+//! 
+//! **DownloadResultDTO:**
+//! ```rust
+//! struct DownloadResultDTO {
+//!     success: bool,
+//!     file_path: String,
+//!     file_size: u64,
+//!     checksum: String,
+//! }
+//! ```
+//! 
+//! **AuthResponseDTO:**
+//! ```rust
+//! struct AuthResponseDTO {
+//!     success: bool,
+//!     token: String,
+//!     error: Option<String>,
+//! }
+//! ```
+//! 
+//! **IndexResultDTO:**
+//! ```rust
+//! struct IndexResultDTO {
+//!     success: bool,
+//!     files_indexed: u32,
+//!     total_size: u64,
+//! }
+//! ```
+//! 
+//! **SearchResultsDTO:**
+//! ```rust
+//! struct SearchResultsDTO {
+//!     results: Vec<FileResultDTO>,
+//!     total_results: u32,
+//! }
+//! ```
+//! 
+//! **FileResultDTO:**
+//! ```rust
+//! struct FileResultDTO {
+//!     path: String,
+//!     size: u64,
+//!     line: Option<u32>,
+//!     content: Option<String>,
+//! }
+//! ```
+//! 
+//! **AirServiceStatusDTO:**
+//! ```rust
+//! struct AirServiceStatusDTO {
+//!     version: String,
+//!     uptime_seconds: u64,
+//!     total_requests: u64,
+//!     successful_requests: u64,
+//!     failed_requests: u64,
+//!     active_requests: u32,
+//!     healthy: bool,
+//! }
+//! ```
+//! 
+//! **AirMetricsDTO:**
+//! ```rust
+//! struct AirMetricsDTO {
+//!     memory_usage_mb: f64,
+//!     cpu_usage_percent: f64,
+//!     average_response_time: f64,
+//!     disk_usage_mb: f64,
+//!     network_usage_mbps: f64,
+//! }
+//! ```
+//! 
+//! **Command Registration:**
+//! 
+//! All commands are registered with Tauri's invoke_handler:
+//! 
+//! ```rust
+//! builder.invoke_handler(tauri::generate_handler![
+//!     CheckForUpdates,
+//!     DownloadUpdate,
+//!     ApplyUpdate,
+//!     DownloadFile,
+//!     AuthenticateUser,
+//!     IndexFiles,
+//!     SearchFiles,
+//!     GetAirStatus,
+//!     GetAirMetrics,
+//! ])
+//! ```
+//! 
+//! **Client Connection Management:**
+//! 
+//! **AirClientWrapper:**
+//! - Wraps the gRPC AirClient
+//! - Manages reconnections
+//! - Default address: `DEFAULT_AIR_SERVER_ADDRESS`
+//! 
+//! **Connection Flow:**
+//! ```rust
+//! // 1. Get Air address from config
+//! let air_address = get_air_address(&app_handle)?;
+//! 
+//! // 2. Create or reuse client
+//! let client = get_or_create_air_client(&app_handle, air_address).await?;
+//! 
+//! // 3. Call Air's gRPC method
+//! let response = client.CheckForUpdates(request).await?;
+//! 
+//! // 4. Check for errors
+//! if !response.error.is_empty() {
+//!     return Err(response.error);
+//! }
+//! 
+//! // 5. Convert to DTO
+//! let result = UpdateInfoDTO { ... };
+//! ```
+//! 
+//! **Error Handling Strategy:**
+//! 
+//! **gRPC Errors:**
+//! - Catch all gRPC errors
+//! - Translate to user-friendly messages
+//! - Include context about what operation failed
+//! 
+//! **Response Errors:**
+//! - Check `response.error` field
+//! - Return error instead of DTO if present
+//! - Preserve original error message
+//! 
+//! **Client Errors:**
+//! - Connection failures -> "Failed to connect to Air daemon"
+//! - Timeout errors -> "Operation timed out"
+//! - Parse errors -> "Failed to parse response"
+//! 
+//! **Usage Examples from Wind:**
+//! 
+//! **Check for Updates:**
+//! ```typescript
+//! const updates = await invoke('CheckForUpdates', {
+//!     currentVersion: '1.0.0',
+//!     channel: 'stable'
+//! });
+//! 
+//! if (updates.updateAvailable) {
+//!     console.log(`New version: ${updates.version}`);
+//! }
+//! ```
+//! 
+//! **Download Update:**
+//! ```typescript
+//! const result = await invoke('DownloadUpdate', {
+//!     url: 'https://example.com/update.zip',
+//!     destination: '/tmp/update.zip',
+//!     checksum: 'abc123...'
+//! });
+//! 
+//! if (result.success) {
+//!     console.log(`Downloaded: ${result.filePath}`);
+//! }
+//! ```
+//! 
+//! **Authenticate:**
+//! ```typescript
+//! const auth = await invoke('AuthenticateUser', {
+//!     username: 'user@example.com',
+//!     password: 'secret',
+//!     provider: 'github'
+//! });
+//! 
+//! if (auth.success) {
+//!     localStorage.setItem('token', auth.token);
+//! }
+//! ```
+//! 
+//! **Index Files:**
+//! ```typescript
+//! const indexResult = await invoke('IndexFiles', {
+//!     path: '/project',
+//!     patterns: ['*.ts', '*.rs'],
+//!     excludePatterns: ['node_modules', 'target'],
+//!     maxDepth: 10
+//! });
+//! 
+//! console.log(`Indexed ${indexResult.filesIndexed} files`);
+//! ```
+//! 
+//! **Search Files:**
+//! ```typescript
+//! const searchResults = await invoke('SearchFiles', {
+//!     query: 'TODO:',
+//!     indexId: '/project',
+//!     maxResults: 100
+//! });
+//! 
+//! for (const file of searchResults.results) {
+//!     console.log(`${file.path}:${file.line} - ${file.content}`);
+//! }
+//! ```
+//! 
+//! **Integration with Other Modules:**
+//! 
+//! **TauriIPCServer:**
+//! - Commands registered in same invoke handler
+//! - Both provide Tauri IPC interfaces
+//! 
+//! **Configuration:**
+//! - Air address configurable via Mountain settings
+//! - Uses default if not specified
+//! 
+//! **StatusReporter:**
+//! - Air status can be reported to Sky
+//! - Metrics collected for monitoring
+//! 
+//! **Security Considerations:**
+//! 
+//! - Passwords never logged
+//! - Checksums verified for downloads
+//! - File paths validated
+//! - Provider authentication handled securely by Air
+//! 
+//! **Performance Considerations:**
+//! 
+//! - Client connections are created fresh each call (current implementation)
+//! - Could cache clients for better performance in production
+//! - Large file downloads streamed via Air
+//! - Indexing operations run asynchronously in Air
+//! 
+//! **Naming Convention:**
 //! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # Wind-Air Commands
-//!
-//! Tauri IPC commands that allow Wind (frontend) to delegate background operations to Air (daemon).
-//! All commands delegate to AirClient via gRPC and return appropriate DTOs or friendly error messages.
+//! See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 

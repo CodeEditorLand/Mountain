@@ -1,10 +1,169 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # Wind Service Handlers
+//! # Wind Service Handlers - Cross-Language Service Bridge
 //! 
-//! Mountain counterpart to Wind's desktop services.
-//! Provides Rust implementations that mirror Wind's TypeScript service interfaces.
+//! **File Responsibilities:**
+//! This module provides the direct mapping layer between Wind's TypeScript service invocations
+//! and Mountain's Rust service implementations. It acts as the critical translation layer that
+//! enables Wind to request operations from Mountain through Tauri's IPC mechanism.
+//! 
+//! **Architectural Role in Wind-Mountain Connection:**
+//! 
+//! The WindServiceHandlers module implements the concrete command handlers that process
+//! IPC invocations from Wind. It serves as the single entry point for all Wind->Mountain
+//! service requests:
+//! 
+//! 1. **Command Mapping:** Maps Wind's TypeScript service methods to Rust implementations
+//! 2. **Type Conversion:** Converts between JSON/TypeScript types and Rust types
+//! 3. **Validation:** Validates all inputs before forwarding to Mountain services
+//! 4. **Error Handling:** Provides comprehensive error messages back to Wind
+//! 5. **Service Integration:** Connects to Mountain's internal service architecture
+//! 
+//! **Handled Command Categories:**
+//! 
+//! **1. Configuration Commands:**
+//! - `configuration:get` - Retrieve configuration values
+//! - `configuration:update` - Update configuration values
+//! 
+//! **2. File System Commands:**
+//! - `file:read` - Read file contents
+//! - `file:write` - Write to files
+//! - `file:stat` - Get file metadata
+//! - `file:exists` - Check file existence
+//! - `file:delete` - Delete files or directories
+//! - `file:copy` - Copy files
+//! - `file:move` - Move/rename files
+//! - `file:mkdir` - Create directories
+//! - `file:readdir` - Read directory contents
+//! - `file:readBinary` - Read binary files
+//! - `file:writeBinary` - Write binary files
+//! 
+//! **3. Storage Commands:**
+//! - `storage:get` - Retrieve persistent storage values
+//! - `storage:set` - Store persistent values
+//! 
+//! **4. Environment Commands:**
+//! - `environment:get` - Get environment variables
+//! 
+//! **5. Native Host Commands:**
+//! - `native:showItemInFolder` - Reveal file in system file manager
+//! - `native:openExternal` - Open URLs in external browser
+//! 
+//! **6. Workbench Commands:**
+//! - `workbench:getConfiguration` - Get complete workbench configuration
+//! 
+//! **7. IPC Status Commands:**
+//! - `mountain_get_status` - Get overall IPC system status
+//! - `mountain_get_configuration` - Get Mountain configuration snapshot
+//! - `mountain_get_services_status` - Get status of all Mountain services
+//! - `mountain_get_state` - Get current application state
+//! 
+//! **Communication Pattern:**
+//! 
+//! ```
+//! Wind (TypeScript)
+//!   |
+//!   | app.handle.invoke('command', args)
+//!   v
+//! Tauri Bridge (IPC)
+//!   |
+//!   | mountain_ipc_invoke(command, args)
+//!   v
+//! WindServiceHandlers
+//!   |
+//!   | Type conversion + validation
+//!   v
+//! Mountain Services (Rust)
+//!   |
+//!   | Execute operation
+//!   v
+//! Return Result<serde_json::Value>
+//! ```
+//! 
+//! **Type Conversion Strategy (TypeScript <-> Rust):**
+//! 
+//! **Primitive Types:**
+//! - TypeScript `string` ↔ Rust `String` / `&str`
+//! - TypeScript `number` ↔ Rust `f64` / `i32` / `u32`
+//! - TypeScript `boolean` ↔ Rust `bool`
+//! - TypeScript `null` ↔ Rust `Option::<T>::None`
+//! 
+//! **Complex Types:**
+//! - TypeScript `object` ↔ Rust `serde_json::Value` / `HashMap`
+//! - TypeScript `Array<T>` ↔ Rust `Vec<T>`
+//! - TypeScript custom interfaces ↔ Rust structs with Serialize/Deserialize
+//! 
+//! **Example Type Conversion:**
+//! ```typescript
+//! // Wind (TypeScript)
+//! interface FileReadOptions {
+//!   encoding: 'utf8' | 'binary';
+//!   withBOM: boolean;
+//! }
+//! const result = await invoke('file:read', {
+//!   path: '/path/to/file.txt',
+//!   options: { encoding: 'utf8', withBOM: false }
+//! });
+//! ```
+//! 
+//! ```rust
+//! // Mountain (Rust)
+//! args.get(0).and_then(|v| v.as_str()) // Extract path
+//! args.get(1).and_then(|v| v.as_object()) // Extract options
+//! // ... validation, processing, return Result
+//! ```
+//! 
+//! **Defensive Error Handling:**
+//! 
+//! Each handler implements comprehensive error handling:
+//! 
+//! 1. **Input Validation:**
+//!    - Check parameter presence
+//!    - Validate parameter types
+//!    - Validate value ranges and formats
+//! 
+//! 2. **Service Error Handling:**
+//!    - Catch and translate service errors
+//!    - Provide detailed error messages
+//!    - Include context for debugging
+//! 
+//! 3. **Error Response Format:**
+//! ```rust
+//! Error("Failed to read file: Permission denied (path: /etc/passwd)")
+//! ```
+//! 
+//! **Comprehensive Error Messages:**
+//! - Include operation that failed
+//! - Include relevant parameters (paths, keys, etc.)
+//! - Include the underlying cause
+//! - Format: `"Failed to <operation>: <cause> (context: <value>)"`
+//! 
+//! **Service Integration Pattern:**
+//! 
+//! Handlers use Mountain's dependency injection system via `Requires` trait:
+//! 
+//! ```rust
+//! let provider: Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
+//! provider.GetConfigurationValue(...).await?;
+//! ```
+//! 
+//! This provides:
+//! - Loose coupling between handlers and services
+//! - Testable architecture (can mock services)
+//! - Centralized service lifecycle management
+//! 
+//! **Command Registration:**
+//! 
+//! All handlers are automatically registered when included in Tauri's invoke_handler:
+//! 
+//! ```rust
+//! .invoke_handler(tauri::generate_handler![
+//!     mountain_ipc_invoke,
+//!     // ... other commands
+//! ])
+//! ```
+//! 
+//! **Naming Convention:**
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 

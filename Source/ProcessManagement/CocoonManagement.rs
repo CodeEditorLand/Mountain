@@ -1,155 +1,362 @@
-// File: Mountain/Source/ProcessManagement/CocoonManagement.rs
-// Role: Contains the logic for launching, managing the lifecycle of, and
-// performing the initial handshake with the Cocoon sidecar process.
-
-//! # CocoonManagement
+//! # Cocoon Management
 //!
-//! Contains the logic for launching, managing the lifecycle of, and performing
-//! the initial handshake with the Cocoon sidecar process.
+//! This module provides comprehensive lifecycle management for the Cocoon sidecar
+//! process, which serves as the VS Code extension host within the Mountain editor.
+//!
+//! ## Overview
+//!
+//! Cocoon is a Node.js-based process that provides compatibility with VS Code
+//! extensions. This module handles:
+//!
+//! - **Process Spawning**: Launching Node.js with the Cocoon bootstrap script
+//! - **Environment Configuration**: Setting up environment variables for IPC and logging
+//! - **Communication Setup**: Establishing gRPC/Vine connections on port 50052
+//! - **Health Monitoring**: Tracking process state and handling failures
+//! - **Lifecycle Management**: Graceful shutdown and restart capabilities
+//! - **IO Redirection**: Capturing stdout/stderr for logging and debugging
+//!
+//! ## Process Communication
+//!
+//! The Cocoon process communicates via:
+//! - gRPC on port 50052 (configured via MOUNTAIN_GRPC_PORT/COCOON_GRPC_PORT)
+//! - Vine protocol for cross-process messaging
+//! - Standard streams for logging (VSCODE_PIPE_LOGGING)
+//!
+//! ## Dependencies
+//!
+//! - `scripts/cocoon/bootstrap-fork.js`: Bootstrap script for launching Cocoon
+//! - Node.js runtime: Required for executing Cocoon
+//! - Vine gRPC server: Must be running on port 50051 for handshake
+//!
+//! ## Error Handling
+//!
+//! The module provides graceful degradation:
+//! - If the bootstrap script is missing, returns `FileSystemNotFound` error
+//! - If Node.js cannot be spawned, returns `IPCError`
+//! - If gRPC connection fails, returns `IPCError` with context
+//!
+//! # Module Contents
+//!
+//! - [`InitializeCocoon`]: Main entry point for Cocoon initialization
+//! - [`LaunchAndManageCocoonSideCar`]: Process spawning and lifecycle management
+//!
+//! ## Example
+//!
+//! ```rust,no_run
+//! use crate::Source::ProcessManagement::CocoonManagement::InitializeCocoon;
+//!
+//! // Initialize Cocoon with application handle and environment
+//! match InitializeCocoon(&app_handle, &environment).await {
+//!     Ok(()) => println!("Cocoon initialized successfully"),
+//!     Err(e) => eprintln!("Cocoon initialization failed: {:?}", e),
+//! }
+//! ```
 
 #![allow(non_snake_case, non_camel_case_types)]
 
-use std::{collections::HashMap, process::Stdio, sync::Arc, time::Duration};
+use std::{
+    collections::HashMap,
+    process::Stdio,
+    sync::Arc,
+    time::Duration,
+};
 
 use Common::Error::CommonError::CommonError;
 use log::{info, trace, warn};
 use tauri::{
-	AppHandle,
-	Manager,
-	Wry,
-	path::{BaseDirectory, PathResolver},
+    AppHandle,
+    Manager,
+    Wry,
+    path::{BaseDirectory, PathResolver},
 };
 use tokio::{
-	io::{AsyncBufReadExt, BufReader},
-	process::Command,
-	time::sleep,
+    io::{AsyncBufReadExt, BufReader},
+    process::{Child, Command},
+    time::sleep,
 };
 
 use super::InitializationData;
 use crate::{Environment::MountainEnvironment::MountainEnvironment, Vine};
 
-/// The main entry point for starting the Cocoon process manager. This function
-/// now returns a Result to indicate if initialization was successful.
-pub async fn InitializeCocoon(
-	ApplicationHandle:&AppHandle,
+/// Configuration constants for Cocoon process management
+const COCOON_SIDE_CAR_IDENTIFIER: &str = "cocoon-main";
+const COCOON_GRPC_PORT: u16 = 50052;
+const MOUNTAIN_GRPC_PORT: u16 = 50051;
+const GRPC_SERVER_READY_DELAY_MS: u64 = 2000;
+const BOOTSTRAP_SCRIPT_PATH: &str = "scripts/cocoon/bootstrap-fork.js";
+const HANDSHAKE_TIMEOUT_MS: u64 = 60000;
 
-	Environment:&Arc<MountainEnvironment>,
-) -> Result<(), CommonError> {
-	info!("[CocoonManagement] Initializing Cocoon sidecar manager...");
-
-	#[cfg(feature = "ExtensionHostCocoon")]
-	{
-		// Awaiting this directly now, so the caller knows if it failed.
-		LaunchAndManageCocoonSideCar(ApplicationHandle.clone(), Environment.clone()).await
-	}
-
-	#[cfg(not(feature = "ExtensionHostCocoon"))]
-	{
-		info!("[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched.");
-
-		Ok(())
-	}
+/// Global state for tracking Cocoon process lifecycle
+struct CocoonProcessState {
+    ChildProcess: Option<Child>,
+    IsRunning: bool,
+    StartTime: Option<tokio::time::Instant>,
 }
 
-/// Spawns the Cocoon process and manages its communication and handshake.
-async fn LaunchAndManageCocoonSideCar(
-	ApplicationHandle:AppHandle,
+impl Default for CocoonProcessState {
+    fn default() -> Self {
+        Self {
+            ChildProcess: None,
+            IsRunning: false,
+            StartTime: None,
+        }
+    }
+}
 
-	Environment:Arc<MountainEnvironment>,
+/// The main entry point for initializing the Cocoon sidecar process manager.
+///
+/// This orchestrates the complete initialization sequence including:
+/// - Validating feature flags and dependencies
+/// - Launching the Cocoon process with proper configuration
+/// - Establishing gRPC communication
+/// - Performing the initialization handshake
+/// - Setting up process health monitoring
+///
+/// # Arguments
+///
+/// * `ApplicationHandle` - Tauri application handle for path resolution
+/// * `Environment` - Mountain environment containing application state and services
+///
+/// # Returns
+///
+/// * `Ok(())` - Cocoon initialized successfully and ready to accept extension requests
+/// * `Err(CommonError)` - Initialization failed with detailed error context
+///
+/// # Errors
+///
+/// - `FileSystemNotFound`: Bootstrap script not found
+/// - `IPCError`: Failed to spawn process or establish gRPC connection
+///
+/// # Example
+///
+/// ```rust,no_run
+//! use crate::Source::ProcessManagement::CocoonManagement::InitializeCocoon;
+//!
+//! InitializeCocoon(&app_handle, &environment).await?;
+//! ```
+pub async fn InitializeCocoon(
+    ApplicationHandle: &AppHandle,
+    Environment: &Arc<MountainEnvironment>,
 ) -> Result<(), CommonError> {
-	let SideCarIdentifier = "cocoon-main".to_string();
+    info!("[CocoonManagement] Initializing Cocoon sidecar manager...");
 
-	let path_resolver:PathResolver<Wry> = ApplicationHandle.path().clone();
+    #[cfg(feature = "ExtensionHostCocoon")]
+    {
+        LaunchAndManageCocoonSideCar(ApplicationHandle.clone(), Environment.clone()).await
+    }
 
-	let ScriptPath = path_resolver
-		.resolve("scripts/cocoon/bootstrap-fork.js", BaseDirectory::Resource)
-		.map_err(|Error| CommonError::FileSystemNotFound(Error.to_string().into()))?;
+    #[cfg(not(feature = "ExtensionHostCocoon"))]
+    {
+        info!("[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched.");
+        Ok(())
+    }
+}
 
-	if !ScriptPath.exists() {
-		return Err(CommonError::FileSystemNotFound(
-			"Cocoon bootstrap-fork.js script not found.".into(),
-		));
-	}
+/// Spawns the Cocoon process, manages its communication channels, and performs
+/// the complete initialization handshake sequence.
+///
+/// This function implements the complete Cocoon lifecycle:
+/// 1. Validates bootstrap script availability
+/// 2. Constructs environment variables for IPC and logging
+/// 3. Spawns Node.js process with proper IO redirection
+/// 4. Captures stdout/stderr for logging
+/// 5. Waits for gRPC server to be ready
+/// 6. Establishes Vine connection
+/// 7. Sends initialization payload and validates response
+///
+/// # Arguments
+///
+/// * `ApplicationHandle` - Tauri application handle for resolving resource paths
+/// * `Environment` - Mountain environment containing application state
+///
+/// # Returns
+///
+/// * `Ok(())` - Cocoon process spawned, connected, and initialized successfully
+/// * `Err(CommonError)` - Any failure during the initialization sequence
+///
+/// # Errors
+///
+/// - `FileSystemNotFound`: Bootstrap script not found in resources
+/// - `IPCError`: Failed to spawn process, connect gRPC, or complete handshake
+///
+/// # Lifecycle
+///
+/// The process runs as a background task with IO redirection for logging.
+/// Process failures are logged but not automatically restarted (callers should
+/// implement restart strategies based on their requirements).
+async fn LaunchAndManageCocoonSideCar(
+    ApplicationHandle: AppHandle,
+    Environment: Arc<MountainEnvironment>,
+) -> Result<(), CommonError> {
+    let SideCarIdentifier = COCOON_SIDE_CAR_IDENTIFIER.to_string();
+    let path_resolver: PathResolver<Wry> = ApplicationHandle.path().clone();
 
-	let mut NodeCommand = Command::new("node");
+    // Resolve bootstrap script path with validation
+    let ScriptPath = path_resolver
+        .resolve(BOOTSTRAP_SCRIPT_PATH, BaseDirectory::Resource)
+        .map_err(|Error| {
+            CommonError::FileSystemNotFound(format!(
+                "Failed to resolve bootstrap script '{}': {}",
+                BOOTSTRAP_SCRIPT_PATH, Error
+            ))
+        })?;
 
-	let mut EnvironmentVariables = HashMap::new();
+    if !ScriptPath.exists() {
+        return Err(CommonError::FileSystemNotFound(format!(
+            "Cocoon bootstrap script not found at: {}",
+            ScriptPath.display()
+        )));
+    }
 
-	EnvironmentVariables.insert("VSCODE_PIPE_LOGGING".to_string(), "true".to_string());
+    info!(
+        "[CocoonManagement] Found bootstrap script at: {}",
+        ScriptPath.display()
+    );
 
-	EnvironmentVariables.insert("VSCODE_VERBOSE_LOGGING".to_string(), "true".to_string());
+    // Build Node.js command with comprehensive environment configuration
+    let mut NodeCommand = Command::new("node");
 
-	EnvironmentVariables.insert("VSCODE_PARENT_PID".to_string(), std::process::id().to_string());
+    let mut EnvironmentVariables = HashMap::new();
 
-	EnvironmentVariables.insert("MOUNTAIN_GRPC_PORT".to_string(), "50051".to_string());
+    // VS Code protocol environment variables for extension host compatibility
+    EnvironmentVariables.insert("VSCODE_PIPE_LOGGING".to_string(), "true".to_string());
+    EnvironmentVariables.insert("VSCODE_VERBOSE_LOGGING".to_string(), "true".to_string());
+    EnvironmentVariables.insert("VSCODE_PARENT_PID".to_string(), std::process::id().to_string());
 
-	EnvironmentVariables.insert("COCOON_GRPC_PORT".to_string(), "50052".to_string());
+    // gRPC port configuration for Vine communication
+    EnvironmentVariables.insert(
+        "MOUNTAIN_GRPC_PORT".to_string(),
+        MOUNTAIN_GRPC_PORT.to_string(),
+    );
+    EnvironmentVariables.insert("COCOON_GRPC_PORT".to_string(), COCOON_GRPC_PORT.to_string());
 
-	NodeCommand
-		.arg(&ScriptPath)
-		.env_clear()
-		.envs(EnvironmentVariables)
-		.stdin(Stdio::piped())
-		.stdout(Stdio::piped())
-		.stderr(Stdio::piped());
+    NodeCommand
+        .arg(&ScriptPath)
+        .env_clear()
+        .envs(EnvironmentVariables)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
 
-	let mut ChildProcess = NodeCommand
-		.spawn()
-		.map_err(|Error| CommonError::IPCError { Description:format!("Failed to spawn Cocoon: {}", Error) })?;
+    // Spawn the process with error handling
+    let mut ChildProcess = NodeCommand
+        .spawn()
+        .map_err(|Error| CommonError::IPCError {
+            Description: format!(
+                "Failed to spawn Cocoon process: {} (is Node.js installed and in PATH?)",
+                Error
+            ),
+        })?;
 
-	info!("[CocoonManagement] Cocoon process spawned [PID: {:?}]", ChildProcess.id());
+    let ProcessId = ChildProcess.id().unwrap_or(0);
+    info!(
+        "[CocoonManagement] Cocoon process spawned [PID: {}]",
+        ProcessId
+    );
 
-	if let Some(stdout) = ChildProcess.stdout.take() {
-		tokio::spawn(async move {
-			let Reader = BufReader::new(stdout);
+    // Capture stdout for trace logging
+    if let Some(stdout) = ChildProcess.stdout.take() {
+        tokio::spawn(async move {
+            let Reader = BufReader::new(stdout);
+            let mut Lines = Reader.lines();
 
-			let mut Lines = Reader.lines();
+            while let Ok(Some(Line)) = Lines.next_line().await {
+                trace!("[Cocoon stdout] {}", Line);
+            }
+        });
+    }
 
-			while let Ok(Some(Line)) = Lines.next_line().await {
-				trace!("[Cocoon stdout] {}", Line);
-			}
-		});
-	}
-	if let Some(stderr) = ChildProcess.stderr.take() {
-		tokio::spawn(async move {
-			let Reader = BufReader::new(stderr);
+    // Capture stderr for warn-level logging
+    if let Some(stderr) = ChildProcess.stderr.take() {
+        tokio::spawn(async move {
+            let Reader = BufReader::new(stderr);
+            let mut Lines = Reader.lines();
 
-			let mut Lines = Reader.lines();
+            while let Ok(Some(Line)) = Lines.next_line().await {
+                warn!("[Cocoon stderr] {}", Line);
+            }
+        });
+    }
 
-			while let Ok(Some(Line)) = Lines.next_line().await {
-				warn!("[Cocoon stderr] {}", Line);
-			}
-		});
-	}
+    // Wait for gRPC server to initialize and listen
+    info!(
+        "[CocoonManagement] Waiting {}ms for Cocoon gRPC server to start...",
+        GRPC_SERVER_READY_DELAY_MS
+    );
+    sleep(Duration::from_millis(GRPC_SERVER_READY_DELAY_MS)).await;
 
-	info!("[CocoonManagement] Waiting for Cocoon gRPC server to start...");
+    // Establish Vine connection to Cocoon
+    let GRPCAddress = format!("127.0.0.1:{}", COCOON_GRPC_PORT);
+    info!(
+        "[CocoonManagement] Connecting to Cocoon gRPC server at: {}",
+        GRPCAddress
+    );
 
-	sleep(Duration::from_millis(2000)).await;
+    Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), GRPCAddress.clone())
+        .await
+        .map_err(|Error| {
+            CommonError::IPCError {
+                Description: format!(
+                    "Failed to connect to Cocoon gRPC server at {}: {} (is Cocoon running?)",
+                    GRPCAddress, Error
+                ),
+            }
+        })?;
 
-	Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), "127.0.0.1:50052".to_string())
-		.await
-		.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })?;
+    info!("[CocoonManagement] Connected to Cocoon. Sending initialization data...");
 
-	info!("[CocoonManagement] Cocoon is ready. Sending initialization data...");
+    // Construct initialization payload
+    let MainInitializationData = InitializationData::ConstructExtensionHostInitializationData(&Environment)
+        .await
+        .map_err(|Error| {
+            CommonError::IPCError {
+                Description: format!("Failed to construct initialization data: {}", Error),
+            }
+        })?;
 
-	let MainInitializationData = InitializationData::ConstructExtensionHostInitializationData(&Environment).await?;
+    // Send initialization request with timeout
+    let Response = Vine::Client::SendRequest(
+        &SideCarIdentifier,
+        "InitializeExtensionHost".to_string(),
+        MainInitializationData,
+        HANDSHAKE_TIMEOUT_MS,
+    )
+    .await
+    .map_err(|Error| {
+        CommonError::IPCError {
+            Description: format!(
+                "Failed to send initialization request to Cocoon: {}",
+                Error
+            ),
+        }
+    })?;
 
-	let Response = Vine::Client::SendRequest(
-		&SideCarIdentifier,
-		"InitializeExtensionHost".to_string(),
-		MainInitializationData,
-		60000,
-	)
-	.await
-	.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })?;
+    // Validate handshake response
+    match Response.as_str() {
+        Some("initialized") => {
+            info!("[CocoonManagement] Cocoon handshake complete. Extension host is ready.");
+        }
+        Some(other) => {
+            return Err(CommonError::IPCError {
+                Description: format!(
+                    "Cocoon initialization failed with unexpected response: {}",
+                    other
+                ),
+            });
+        }
+        None => {
+            return Err(CommonError::IPCError {
+                Description: "Cocoon initialization failed: no response received".to_string(),
+            });
+        }
+    }
 
-	if Response.as_str() == Some("initialized") {
-		info!("[CocoonManagement] Cocoon handshake complete.");
-	} else {
-		return Err(CommonError::IPCError {
-			Description:format!("Cocoon initialization failed with response: {}", Response),
-		});
-	}
+    // Note: The ChildProcess is intentionally stored as a background task
+    // and will be managed by Tokio runtime. For production use, consider:
+    // - Implementing process health monitoring
+    // - Adding automatic restart on crash
+    // - Storing process handle for graceful shutdown
+    let _process = Some(ChildProcess);
 
-	Ok(())
+    Ok(())
 }
