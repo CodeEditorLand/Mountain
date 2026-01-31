@@ -1,9 +1,240 @@
 // File: Mountain/Source/ApplicationState/Internal.rs
-// Role: Contains internal helper functions for the `ApplicationState` module.
-// Responsibilities:
-//   - Handle tasks like file I/O, path resolution, and serialization.
-//   - Provide helper logic for populating state, like scanning for extensions.
-//   - These are not part of the public API of the state struct itself.
+//
+// # Internal Helper Functions for ApplicationState
+//
+// ## Role
+//
+// Contains internal helper functions for the `ApplicationState` module.
+// These are not part of the public API but provide essential support
+// functionality for state management.
+//
+// ## Responsibilities
+//
+// ### 1. File I/O and Persistence
+// - Handle all file system operations for state persistence
+// - Load memento state from disk on startup
+// - Write state to disk for crash recovery
+// - Handle corrupted state files gracefully
+//
+// ### 2. Path Resolution
+// - Resolve paths to memento storage files
+// - Generate filesystem-safe identifiers
+// - Handle workspace-specific path resolution
+// - Create directory structures as needed
+//
+// ### 3. Seriallization and Deserialization
+// - Handle JSON serialization/deserialization
+// - Provide URL serialization helpers
+// - Convert between Rust types and JSON
+// - Handle errors gracefully
+//
+// ### 4. State Population
+// - Scan for extensions in registered paths
+// - Populate extension metadata
+// - Validate and filter extensions
+// - Handle scan failures gracefully
+//
+// ### 5. Text Processing
+// - Analyze text content (line endings, lines)
+// - Support document state management
+// - Handle various line ending formats
+//
+// ### 6. Recovery and Validation
+// - Recover from corrupted state files
+// - Validate state before loading
+// - Create backups of corrupted data
+// - Provide safe state operations
+//
+// ## Architectural Role
+//
+// This module provides **internal utilities** for ApplicationState:
+//
+//```text
+// ApplicationState (Public API) ──► Internal (Private Utilities)
+//                                       │
+//                                       ├── File I/O
+//                                       ├── Path Resolution
+//                                       ├── Serialization
+//                                       ├── Extension Scanning
+//                                       ├── Text Processing
+//                                       └── Recovery
+//```
+//
+// ## VS Code Reference
+//
+// This module borrows from VS Code's internal utilities in:
+//
+// - `vs/base/node/pfs.ts` - Platform file system utilities
+//   - File I/O with error handling
+//   - Directory management
+//   - Path resolution
+//
+// - `vs/platform/storage/common/storageService.ts` - Memento handling
+//   - State serialization/deserialization
+//   - Crash recovery
+//   - Invalid state handling
+//
+// - `vs/platform/path/common/path.ts` - Path utilities
+//   - Sanitization
+//   - Normalization
+//   - Platform-specific handling
+//
+// Key patterns adopted:
+// 1. **Guard Clauses**: Fail fast with descriptive errors
+// 2. **Recovery-Oriented**: Don't crash on corrupted data
+// 3. **Idempotent Operations**: Safe to call multiple times
+// 4. **Comprehensive Logging**: All operations logged
+//
+// ## Key Functions by Category
+//
+// ### File I/O and Persistence
+//
+// **`LoadInitialMementoFromDisk(StorageFilePath)`**:
+// - Synchronously loads memento from JSON file
+// - Returns empty HashMap if file doesn't exist
+// - Creates backup and returns empty on parse error
+// - Creates directory on read error
+//
+// **`LoadMementoWithRecovery(StorageFilePath)`**:
+// - Robust memento loading with comprehensive error handling
+// - Returns Result for explicit error handling
+// - Creates timestamped backup of corrupted files
+// - Uses CommonError for consistency
+//
+// **`attempt_memento_recovery(file_path, corrupted_content)`**:
+// - Creates backup of corrupted memento file
+// - Named with .backup extension
+// - Logs warning on success, error on failure
+//
+// **`create_corrupted_backup(file_path, content)`**:
+// - Creates timestamped backup of corrupted file
+// - Extension format: `.json.corrupted.YYYYMMDD_HHMMSS`
+// - Logs success/failure
+//
+// ### Path Resolution
+//
+// **`ResolveMementoStorageFilePath(ApplicationDataDirectory, IsGlobalScope, WorkSpaceIdentifier)`**:
+// - Resolves absolute path for memento file
+// - Creates `{AppData}/User/globalStorage.json` for global
+// - Creates `{AppData}/User/workspaceStorage/{id}/storage.json` for workspace
+// - Sanitizes workspace identifier (alphanumeric, hyphens, underscores only)
+//
+//### Extension Management
+//
+// **`ScanAndPopulateExtensions(ApplicationHandle, State)`**:
+// - Scans all registered extension paths
+// - Populates state with discovered extensions
+// - Returns comprehensive scan statistics
+// - Handles partial failures gracefully
+//
+// **`ScanExtensionsWithRecovery(ApplicationHandle, State)`**:
+// - Robust extension scanning with recovery
+// - Clears potentially corrupted state first
+// - Retries once on failure
+// - Comprehensive error logging
+//
+//### Text Processing
+//
+// **`AnalyzeTextLinesAndEOL(TextContent)`**:
+// - Detects line ending type (CRLF or LF)
+// - Splits text into lines vector
+// - Returns (lines, detected_eol) tuple
+//
+//### Serialization Helpers
+//
+// **`URLSerializationHelper`** module:
+// - Provides `serialize` function for Url → String
+// - Provides `deserialize` function for String → Url
+// - Handles parse errors gracefully
+//
+//### Recovery Utilities
+//
+// **`RecoveryUtilities`** module:
+// - `validate_and_clean_state` - Filter state by validator function
+// - `safe_state_operation_with_timeout` - Execute with timeout
+// - `recover_state_with_backoff` - Retry with exponential backoff
+//
+// ## Error Handling
+//
+// All functions follow these error handling patterns:
+//
+// **Silent Failures** (Internal utilities):
+// - Return default values (empty HashMap, empty Vec)
+// - Log warnings/errors
+// - Don't propagate errors to caller
+//
+// **Explicit Errors** (Public utilities):
+// - Return Result<T, CommonError>
+// - Provide detailed error context
+// - Include recovery information
+//
+// **Recovery Patterns**:
+// 1. Create backup of corrupted data
+// 2. Return safe default
+// 3. Log for troubleshooting
+// 4. Attempt recovery when appropriate
+//
+// ## Extension Scanning Flow
+//
+//```text
+// ScanExtensionsWithRecovery()
+//     ↓
+// Clear potentially corrupted state
+//     ↓
+// ScanAndPopulateExtensions()
+//     ↓
+//   For each scan path:
+//       ↓
+//   ScanDirectoryForExtensions()
+//       ↓
+//   On success: Add extensions to map
+//   On error: Log and continue
+//     ↓
+//   Update state with all found extensions
+//     ↓
+//   Log scan statistics
+//     ↓
+//   If any failed:
+//       ↓
+//   Attempt retry with fresh state
+//```
+//
+//## Memento File Structure
+//
+//```
+//{AppData}/
+//├── User/
+//│   ├── globalStorage.json          (Global memento)
+//│   └── workspaceStorage/
+//│       ├── {workspace-id-1}/
+//│       │   └── storage.json         (Workspace 1 memento)
+//│       ├── {workspace-id-2}/
+//│       │   ├── storage.json
+//│       │   └── storage.json.backup  (Backup if corrupted)
+//│       └── {workspace-id-3}/
+//│           └── storage.json
+//```
+//
+//**Backup Naming**:
+// - `.backup` on initial corruption
+// - `.corrupted.YYYYMMDD_HHMMSS` for timestamped backups
+//
+//## TODOs
+//
+// High Priority:
+// - [ ] Add checksum validation for memento files
+// - [ ] Implement incremental memento updates
+// - [ ] Add memento version migration support
+//
+// Medium Priority:
+// - [ ] Add concurrent extension scanning
+// - [ ] Implement extension caching
+// - [ ] Add extension validation rules
+//
+// Low Priority:
+// - [ ] Add memento compression
+// - [ ] Implement text encoding detection
+// - [ ] Add file system watcher integration
 
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
