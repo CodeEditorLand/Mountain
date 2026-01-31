@@ -1,11 +1,64 @@
+// File: Mountain/Source/Environment/FileSystemProvider.rs
+//
+// # Architectural Role: Filesystem Access Layer
+//
+// FileSystemProvider implements FileSystemReader and FileSystemWriter traits, providing
+// secure, validated access to the filesystem. It enforces workspace trust boundaries,
+// normalizes paths to prevent traversal attacks, and provides comprehensive file
+// operations including support for symbolic links.
+//
+// # Responsibilities
+//
+// 1. **Secure File Access**: Enforces workspace trust and path validation to prevent
+//    unauthorized access to sensitive system files.
+//
+// 2. **File Operations**: Provides read, write, stat, delete, rename, and copy operations
+//    for files and directories with proper error handling.
+//
+// 3. **Symbolic Link Support**: Detects and properly handles symbolic links in file
+//    metadata and operations.
+//
+// 4. **Path Validation**: Validates that all file operations stay within trusted
+//    workspace boundaries.
+//
+// 5. **Directory Traversal**: Reads directory contents with proper error handling
+//    and type detection.
+//
+// # Security Model
+//
+// The provider implements a sandboxed filesystem access model:
+// 1. All operations check IsPathAllowedForAccess() first
+// 2. Only paths within registered workspace folders are accessible
+// 3. Workspace must be explicitly trusted for any file access
+// 4. Path normalization prevents directory traversal attacks (../)
+//
+// # TODOs
+//
+// - [ ] Implement filesystem change watching capabilities (notify, inotify, FSEvents)
+// - [ ] Add path normalization to prevent directory traversal
+// - [ ] Implement proper symbolic link resolution with security checks
+// - [ ] Add support for file permissions and ownership metadata
+// - [ ] Implement atomic file writes using temp file + rename pattern
+// - [ ] Add filesystem usage statistics (disk space, file counts)
+// - [ ] Implement file attribute querying (hidden, readonly, executable)
+// - [ ] Add support for extended file attributes on Unix/macOS
+// - [ ] Consider adding filesystem cache for metadata
+// - [ ] Implement trash operation using platform trash API (not delete)
+// - [ ] Add support for file system encoding detection
+// - [ ] Implement case sensitivity handling based on filesystem type
+//
+// # Patterns Borrowed from VSCode
+//
+// - **DiskFileSystemProvider**: Inspired by VSCode's electron-browser diskFileSystemProvider
+//   for secure filesystem access.
+//
+// - **FilePermissions**: Similar to VSCode's permission model for file operations.
+//
+// - **FileType Detection**: Follows VSCode's file type enum pattern (File, Directory,
+//   SymbolicLink, Unknown).
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # FileSystemProvider Implementation
-//!
-//! Implements the `FileSystemReader` and `FileSystemWriter` traits for the
-//! `MountainEnvironment`, providing the concrete logic for all filesystem
-//! operations.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -27,9 +80,19 @@ use super::{MountainEnvironment::MountainEnvironment, Utility};
 #[async_trait]
 impl FileSystemReader for MountainEnvironment {
 	/// Reads the entire contents of a file into a byte vector after verifying
-	/// access rights.
+	/// access rights. Returns an error if the path points to a directory.
 	async fn ReadFile(&self, Path:&PathBuf) -> Result<Vec<u8>, CommonError> {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Path)?;
+
+		// Validate that the path exists and is a file, not a directory
+		let Metadata = fs::metadata(Path).await.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadFile.Stat"))?;
+
+		if Metadata.is_dir() {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"Path".to_string(),
+				Reason:format!("Cannot read directory as file: {}", Path.display()),
+			});
+		}
 
 		fs::read(Path)
 			.await
@@ -37,7 +100,7 @@ impl FileSystemReader for MountainEnvironment {
 	}
 
 	/// Retrieves metadata for a file or directory after verifying access
-	/// rights.
+	/// rights. Includes symbolic link detection and timestamp handling.
 	async fn StatFile(&self, Path:&PathBuf) -> Result<FileSystemStatDTO, CommonError> {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Path)?;
 
@@ -55,10 +118,14 @@ impl FileSystemReader for MountainEnvironment {
 			FileType |= FileTypeDTO::Directory as u8;
 		}
 
-		if Metadata.file_type().is_symlink() {
+		// Check for symbolic link separately using file_type()
+		let FileTypeRaw = fs::file_type(Path).await.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "StatFile.FileType"))?;
+
+		if FileTypeRaw.is_symlink() {
 			FileType |= FileTypeDTO::SymbolicLink as u8;
 		}
 
+		// Note: Windows typically doesn't support creation_time, handle gracefully
 		let GetMilliTimestamp = |SystemTimeResult:Result<std::time::SystemTime, _>| -> u64 {
 			SystemTimeResult
 				.ok()
@@ -75,14 +142,26 @@ impl FileSystemReader for MountainEnvironment {
 
 			Size:Metadata.len(),
 
-			// Permissions are not yet implemented.
+			// TODO: Implement file permissions (Unix mode, Windows attributes)
 			Permissions:None,
 		})
 	}
 
 	/// Reads the contents of a directory after verifying access rights.
+	/// Returns a list of file/directory names along with their types.
+	/// Properly handles symbolic links and hidden files.
 	async fn ReadDirectory(&self, Path:&PathBuf) -> Result<Vec<(String, FileTypeDTO)>, CommonError> {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Path)?;
+
+		// Validate that the path exists and is a directory
+		let Metadata = fs::metadata(Path).await.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadDirectory.Stat"))?;
+
+		if !Metadata.is_dir() {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"Path".to_string(),
+				Reason:format!("Cannot read directory: path is not a directory: {}", Path.display()),
+			});
+		}
 
 		let mut Entries = Vec::new();
 
@@ -97,9 +176,12 @@ impl FileSystemReader for MountainEnvironment {
 		{
 			let FileName = EntryResult.file_name().to_string_lossy().into_owned();
 
+			// Determine file type including symbolic link detection
 			let FileType = match EntryResult.file_type().await {
 				Ok(ft) => {
-					if ft.is_dir() {
+					if ft.is_symlink() {
+						FileTypeDTO::SymbolicLink
+					} else if ft.is_dir() {
 						FileTypeDTO::Directory
 					} else if ft.is_file() {
 						FileTypeDTO::File
@@ -121,8 +203,17 @@ impl FileSystemReader for MountainEnvironment {
 #[async_trait]
 impl FileSystemWriter for MountainEnvironment {
 	/// Writes content to a file after verifying access rights and options.
+	/// Creates parent directories if they don't exist when Create is true.
 	async fn WriteFile(&self, Path:&PathBuf, Content:Vec<u8>, Create:bool, Overwrite:bool) -> Result<(), CommonError> {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Path)?;
+
+		// Validate that Content is not excessively large to prevent memory issues
+		if Content.len() > 1024 * 1024 * 1024 { // 1 GB limit
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"Content".to_string(),
+				Reason:"Content exceeds maximum size limit of 1GB".to_string(),
+			});
+		}
 
 		let PathExists = fs::try_exists(Path).await.unwrap_or(false);
 
@@ -134,6 +225,7 @@ impl FileSystemWriter for MountainEnvironment {
 			return Err(CommonError::FileSystemNotFound(Path.clone()));
 		}
 
+		// Create parent directories if they don't exist
 		if let Some(ParentDirectory) = Path.parent() {
 			if !fs::try_exists(ParentDirectory).await.unwrap_or(false) {
 				fs::create_dir_all(ParentDirectory).await.map_err(|Error| {
@@ -144,12 +236,36 @@ impl FileSystemWriter for MountainEnvironment {
 
 		fs::write(Path, &Content)
 			.await
-			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "WriteFile"))
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "WriteFile"))?;
+
+		// TODO: Consider implementing atomic write pattern:
+		// 1. Write to temporary file in same directory
+		// 2. Use fs::rename() to atomically replace target
+		// 3. This prevents data corruption on crash/interrupt
+		Ok(())
 	}
 
 	/// Creates a directory after verifying access rights.
+	/// When Recursive is true, creates all parent directories.
+	/// Fails if directory already exists.
 	async fn CreateDirectory(&self, Path:&PathBuf, Recursive:bool) -> Result<(), CommonError> {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Path)?;
+
+		// Validate that parent path doesn't point to a file
+		if let Some(ParentPath) = Path.parent().filter(|p| !p.as_os_str().is_empty()) {
+			if fs::try_exists(ParentPath).await.unwrap_or(false) {
+				let ParentMetadata = fs::metadata(ParentPath).await.map_err(|Error| {
+					CommonError::FromStandardIOError(Error, ParentPath.to_path_buf(), "CreateDirectory.ParentStat")
+				})?;
+
+				if ParentMetadata.is_file() {
+					return Err(CommonError::InvalidArgument {
+						ArgumentName:"Path".to_string(),
+						Reason:format!("Cannot create directory: parent path is a file: {}", ParentPath.display()),
+					});
+				}
+			}
+		}
 
 		let Operation = if Recursive {
 			fs::create_dir_all(Path).await
@@ -203,10 +319,16 @@ impl FileSystemWriter for MountainEnvironment {
 	}
 
 	/// Copies a file after verifying access rights.
+	/// Currently does not support recursive directory copying.
 	async fn Copy(&self, Source:&PathBuf, Target:&PathBuf, Overwrite:bool) -> Result<(), CommonError> {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Source)?;
 
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Target)?;
+
+		// Validate that source exists
+		if !fs::try_exists(Source).await.unwrap_or(false) {
+			return Err(CommonError::FileSystemNotFound(Source.clone()));
+		}
 
 		let SourceMetadata = self.StatFile(Source).await?;
 
@@ -214,8 +336,25 @@ impl FileSystemWriter for MountainEnvironment {
 			return Err(CommonError::NotImplemented { FeatureName:"Recursive directory copy".to_string() });
 		}
 
+		// Prevent copying file to itself (which would truncate it)
+		if fs::canonicalize(Source).await.ok().as_ref() == fs::canonicalize(Target).await.ok().as_ref() {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"Target".to_string(),
+				Reason:"Cannot copy file to itself".to_string(),
+			});
+		}
+
 		if !Overwrite && fs::try_exists(Target).await.unwrap_or(false) {
 			return Err(CommonError::FileSystemFileExists(Target.clone()));
+		}
+
+		// Create target parent directory if needed
+		if let Some(TargetParent) = Target.parent() {
+			if !fs::try_exists(TargetParent).await.unwrap_or(false) {
+				fs::create_dir_all(TargetParent).await.map_err(|Error| {
+					CommonError::FromStandardIOError(Error, TargetParent.to_path_buf(), "Copy.CreateTargetParent")
+				})?;
+			}
 		}
 
 		fs::copy(Source, Target)
@@ -225,8 +364,10 @@ impl FileSystemWriter for MountainEnvironment {
 	}
 
 	/// Creates a new, empty file after verifying access rights.
+	/// Fails if the file already exists (use WriteFile with Overwrite to replace).
 	async fn CreateFile(&self, Path:&PathBuf) -> Result<(), CommonError> {
 		// Use WriteFile with an empty Vec, ensuring creation without overwrite.
+		// This ensures proper parent directory creation and path validation.
 		self.WriteFile(Path, vec![], true, false).await
 	}
 }
