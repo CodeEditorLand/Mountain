@@ -37,7 +37,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 			Err(_) => serde_json::from_str(&Content)?,
 		};
 
-		Tauri.get_mut("version").map(|Entry| *Entry = Value::String(Version.clone()));
+		if let Some(Entry) = Tauri.get_mut("version") {
+			*Entry = Value::String(Version.clone());
+		}
 
 		let mut Serializer =
 			serde_json::Serializer::with_formatter(Vec::new(), serde_json::ser::PrettyFormatter::with_indent(b"\t"));
