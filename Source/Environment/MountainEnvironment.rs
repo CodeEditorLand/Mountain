@@ -1,13 +1,65 @@
 // File: Mountain/Source/Environment/MountainEnvironment.rs
-
+//
+// # Architectural Role: Central DI Container and Application Context
+//
+// MountainEnvironment is the primary dependency injection (DI) container for the Mountain application.
+// It implements all provider traits defined in the Common crate, acting as the central orchestrator
+// that provides access to all platform services.
+//
+// # Responsibilities
+//
+// 1. **Dependency Injection Container**: Implements Requires<T> for all 19+ provider traits,
+//    enabling other components to request dependencies through the Require() method.
+//
+// 2. **Application Lifecycle Management**: Holds references to Tauri AppHandle and ApplicationState,
+//    managing the core application context and state.
+//
+// 3. **Air Integration**: Optionally manages the Air gRPC client for cloud-based services when
+//    the AirIntegration feature is enabled. Enables dynamic switching between local and cloud services.
+//
+// 4. **Extension Management**: Implements ExtensionManagementService for discovering, scanning,
+//    and managing extensions in the system.
+//
+// 5. **Service Orchestration**: Acts as the central coordinator between all providers (FileSystem,
+//    Document, Command, Configuration, IPC, etc.), ensuring proper initialization and interaction.
+//
+// # Initialization Sequence
+//
+// 1. Create MountainEnvironment instance via Create() or CreateWithAir()
+// 2. Provider instances are created lazily through Requires<T> traits
+// 3. Each provider can access ApplicationState and AppHandle through self
+// 4. Inter-provider communication is handled via IPCProvider or direct Rust calls
+//
+// # Dependency Wiring
+//
+// All providers implement their respective traits from the Common crate. MountainEnvironment
+// implements Requires<T> for each trait, returning an Arc-wrapped clone of itself. This enables
+// circular dependencies and lazy initialization while maintaining type safety.
+//
+// # Patterns Borrowed from VSCode
+//
+// - **ServiceCollection Pattern**: Like VSCode's ServiceCollection, MountainEnvironment
+//   registers and provides all services in a centralized location.
+//
+// - **Lifecycle Management**: Similar to VSCode's IDisposable pattern, resources are
+//   automatically managed through Arc reference counting.
+//
+// - **Extension Points**: Extension management follows VSCode's activation event pattern,
+//   enabling lazy loading of extension services.
+//
+// # TODOs
+//
+// - [ ] Add telemetry integration for performance monitoring
+// - [ ] Implement proper provider health checking
+// - [ ] Add provider dependency validation on initialization
+// - [ ] Consider async initialization for providers
+// - [ ] Add circuit breaker pattern for external service calls (Air)
+// - [ ] Implement graceful degradation when providers fail
+// - [ ] Add metrics collection for provider usage
+// - [ ] Consider provider initialization order dependencies
+//
 //! This module follows the Land ecosystem's PascalCase naming convention.
 //! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # MountainEnvironment
-//!
-//! Defines the concrete `MountainEnvironment` struct, which serves as the
-//! central context and dependency injection container for the `Mountain`
-//! application.
 
 #![allow(non_snake_case, non_camel_case_types)]
 
