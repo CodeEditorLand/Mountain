@@ -1,11 +1,152 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
-//! # TauriIPCServer
+//! # TauriIPCServer - Mountain-Wind IPC Bridge
 //! 
-//! Mountain counterpart to Wind's TauriIPCServer.ts
-//! Provides bidirectional IPC communication between Mountain (Rust backend) and Wind (TypeScript frontend)
-//! Uses Tauri's event system for seamless integration
+//! **File Responsibilities:**
+//! This module serves as the core IPC (Inter-Process Communication) server for Mountain,
+//! establishing and managing the bidirectional communication bridge between Mountain's
+//! Rust backend and Wind's TypeScript frontend. It implements the Mountain counterpart
+//! to Wind's TauriIPCServer.ts, ensuring seamless integration across the language boundary.
+//! 
+//! **Architectural Role in Wind-Mountain Connection:**
+//! The TauriIPCServer acts as the central message router and communication orchestrator:
+//! 
+//! 1. **Connection Management:**
+//!    - Establishes secure connections between Wind and Mountain
+//!    - Maintains connection health and auto-reconnects on failure
+//!    - Manages connection pooling for optimal resource usage
+//!    - Tracks connection state for monitoring and debugging
+//! 
+//! 2. **Message Routing:**
+//!    - Routes incoming messages from Wind to appropriate handlers
+//!    - Broadcasts messages from Mountain to Wind subscribers
+//!    - Implements message filtering and prioritization
+//!    - Supports point-to-point and publish-subscribe patterns
+//! 
+//! 3. **Security Layer:**
+//!    - Validates all incoming messages for security
+//!    - Implements permission-based access control (RBAC)
+//!    - Provides AES-256-GCM encryption for sensitive data
+//!    - Logs all security events for audit trails
+//! 
+//! 4. **Reliability Features:**
+//!    - Message queuing for offline scenarios
+//!    - Automatic retry with exponential backoff
+//!    - Graceful degradation when services unavailable
+//!    - Circuit breaker pattern for cascading failure prevention
+//! 
+//! **Communication Patterns:**
+//! 
+//! **1. Request-Response Pattern:**
+//! ```rust
+//! // Wind sends request
+//! let result = app_handle.invoke_handler("command", args).await?;
+//! 
+//! // Mountain processes and responds
+//! let response = handle_request().await;
+//! ipc.emit(response_channel, response).await;
+//! ```
+//! 
+//! **2. Event Emission Pattern:**
+//! ```rust
+//! // Mountain emits events to Wind subscribers
+//! app.emit("configuration-updated", new_config).await;
+//! app.emit("file-changed", file_event).await;
+//! ```
+//! 
+//! **3. Broadcast Pattern:**
+//! ```rust
+//! // Broadcast to all subscribers on a channel
+//! for listener in listeners.get(channel) {
+//!     listener(message.clone()).await;
+//! }
+//! ```
+//! 
+//! **Message Flow:**
+//! ```
+//! Wind Frontend
+//!     |
+//!     | 4. Response
+//!     v
+//! Tauri Bridge (JS Bridge)
+//!     |
+//!     | 1. IPC Invoke
+//!     v
+//! TauriIPCServer (Rust)
+//!     |
+//!     | 2. Route & Validate
+//!     v
+//! WindServiceHandlers
+//!     |
+//!     | 3. Execute
+//!     v
+//! Mountain Services
+//! ```
+//! 
+//! **Key Structures:**
+//! 
+//! - **TauriIPCMessage:** Standard message format for all IPC communication
+//! - **ConnectionStatus:** Tracks connection health and uptime
+//! - **ConnectionPool:** Manages concurrent IPC connections efficiently
+//! - **PermissionManager:** Implements role-based access control
+//! - **SecureMessageChannel:** Provides encryption for sensitive data
+//! - **MessageCompressor:** Gzip compression for large payloads
+//! 
+//! **Defensive Coding Practices:**
+//! 
+//! 1. **Input Validation:**
+//!    - All messages validated before processing
+//!    - Type checking for all serialized data
+//!    - Schema validation for complex payloads
+//! 
+//! 2. **Error Handling:**
+//!    - Comprehensive error messages with context
+//!    - Error logging at appropriate levels
+//!    - Graceful handling of transient failures
+//!    - Automatic retry with backoff
+//! 
+//! 3. **Timeout Management:**
+//!    - Configurable timeouts for all operations
+//!    - Timeout-based circuit breaking
+//!    - Graceful degradation on timeout
+//! 
+//! 4. **Resource Management:**
+//!    - Connection pooling to prevent exhaustion
+//!    - Automatic cleanup of stale resources
+//!    - Memory-efficient message queuing
+//! 
+//! **Security Architecture:**
+//! 
+//! - **Authentication:** User identity verification
+//! - **Authorization:** Permission-based access control (RBAC)
+//! - **Encryption:** AES-256-GCM for sensitive data
+//! - **Auditing:** Complete security event logging
+//! - **Threat Detection:** Anomaly monitoring and alerts
+//! 
+//! **Performance Optimizations:**
+//! 
+//! - **Message Compression:** Gzip for large payloads
+//! - **Connection Pooling:** Reuse connections efficiently
+//! - **Caching:** Cache frequently used data
+//! - **Batching:** Batch multiple messages for efficiency
+//! - **Async/Await:** Non-blocking I/O operations
+//! 
+//! **Monitoring & Observability:**
+//! 
+//! - **Connection Status:** Real-time health monitoring
+//! - **Performance Metrics:** Latency, throughput, error rates
+//! - **Audit Logs:** Complete message and security event logging
+//! - **Health Checks:** Periodic health assessments
+//! 
+//! **VSCode RPC Patterns (Study Reference):**
+//! This implementation draws inspiration from VSCode's RPC/IPC architecture:
+//! - Channel-based message routing
+//! - Request-response correlation
+//! - Cancellation token support
+//! - Binary protocol message serialization
+//! - Protocol versioning for compatibility
+//! 
+//! **Naming Convention:**
+//! This module follows the Land ecosystem's PascalCase naming convention.
+//! See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
 #![allow(non_snake_case, non_camel_case_types)]
 
@@ -48,48 +189,48 @@ pub struct TauriIPCServer {
 
 
 
-/// Message compression utility
+/// Message compression utility for optimizing IPC message transfer
 pub struct MessageCompressor {
-    compression_level: u32,
-    batch_size: usize,
+    CompressionLevel: u32,
+    BatchSize: usize,
 }
 
 impl MessageCompressor {
-    /// Create a new message compressor
-    pub fn new(compression_level: u32, batch_size: usize) -> Self {
+    /// Create a new message compressor with specified parameters
+    pub fn new(CompressionLevel: u32, BatchSize: usize) -> Self {
         Self {
-            compression_level,
-            batch_size,
+            CompressionLevel,
+            BatchSize,
         }
     }
 
-    /// Compress messages using Gzip
-    pub fn compress_messages(&self, messages: Vec<TauriIPCMessage>) -> Result<Vec<u8>, String> {
-        let serialized_messages = serde_json::to_vec(&messages)
+    /// Compress messages using Gzip for efficient transfer
+    pub fn compress_messages(&self, Messages: Vec<TauriIPCMessage>) -> Result<Vec<u8>, String> {
+        let SerializedMessages = serde_json::to_vec(&Messages)
             .map_err(|e| format!("Failed to serialize messages: {}", e))?;
         
-        let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.compression_level));
-        encoder.write_all(&serialized_messages)
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.CompressionLevel));
+        encoder.write_all(&SerializedMessages)
             .map_err(|e| format!("Failed to compress messages: {}", e))?;
         
         encoder.finish()
             .map_err(|e| format!("Failed to finish compression: {}", e))
     }
 
-    /// Decompress messages
-    pub fn decompress_messages(&self, compressed_data: &[u8]) -> Result<Vec<TauriIPCMessage>, String> {
-        let mut decoder = GzDecoder::new(compressed_data);
-        let mut decompressed_data = Vec::new();
-        decoder.read_to_end(&mut decompressed_data)
+    /// Decompress messages from compressed data
+    pub fn decompress_messages(&self, CompressedData: &[u8]) -> Result<Vec<TauriIPCMessage>, String> {
+        let mut decoder = GzDecoder::new(CompressedData);
+        let mut DecompressedData = Vec::new();
+        decoder.read_to_end(&mut DecompressedData)
             .map_err(|e| format!("Failed to decompress data: {}", e))?;
         
-        serde_json::from_slice(&decompressed_data)
+        serde_json::from_slice(&DecompressedData)
             .map_err(|e| format!("Failed to deserialize messages: {}", e))
     }
 
-    /// Check if messages should be batched
-    pub fn should_batch(&self, messages_count: usize) -> bool {
-        messages_count >= self.batch_size
+    /// Check if messages should be batched for compression
+    pub fn should_batch(&self, MessagesCount: usize) -> bool {
+        MessagesCount >= self.BatchSize
     }
 }
 
@@ -448,13 +589,16 @@ impl TauriIPCServer {
     }
 }
 
-/// Connection pool for IPC operations
+/// Connection pool for IPC operations - manages concurrent connections efficiently
+/// 
+/// **Purpose:** Prevents connection exhaustion by pooling connections and reusing them
+/// **Features:** Health monitoring, automatic cleanup, configurable timeouts
 pub struct ConnectionPool {
-    max_connections: usize,
-    connection_timeout: Duration,
-    semaphore: Arc<Semaphore>,
-    active_connections: Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
-    health_checker: Arc<AsyncMutex<ConnectionHealthChecker>>,
+    MaxConnections: usize,
+    ConnectionTimeout: Duration,
+    Semaphore: Arc<Semaphore>,
+    ActiveConnections: Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
+    HealthChecker: Arc<AsyncMutex<ConnectionHealthChecker>>,
 }
 
 /// Handle representing an active connection
@@ -495,23 +639,20 @@ impl ConnectionHandle {
     pub fn is_healthy(&self) -> bool {
         self.health_score > 50.0 && self.error_count < 5
     }
-}
-
-impl ConnectionPool {
-    /// Create a new connection pool
-    pub fn new(max_connections: usize, connection_timeout: Duration) -> Self {
+} with specified parameters
+    pub fn new(MaxConnections: usize, ConnectionTimeout: Duration) -> Self {
         Self {
-            max_connections,
-            connection_timeout,
-            semaphore: Arc::new(Semaphore::new(max_connections)),
-            active_connections: Arc::new(AsyncMutex::new(HashMap::new())),
-            health_checker: Arc::new(AsyncMutex::new(ConnectionHealthChecker::new())),
+            MaxConnections,
+            ConnectionTimeout,
+            Semaphore: Arc::new(Semaphore::new(MaxConnections)),
+            ActiveConnections: Arc::new(AsyncMutex::new(HashMap::new())),
+            HealthChecker: Arc::new(AsyncMutex::new(ConnectionHealthChecker::new())),
         }
     }
 
-    /// Get a connection handle
+    /// Get a connection handle from the pool with timeout
     pub async fn get_connection(&self) -> Result<ConnectionHandle, String> {
-        let permit = timeout(self.connection_timeout, self.semaphore.acquire())
+        let permit = timeout(self.ConnectionTimeout, self.Semaphore.acquire())
             .await
             .map_err(|_| "Connection timeout")?
             .map_err(|e| format!("Failed to acquire connection: {}", e))?;
@@ -519,7 +660,7 @@ impl ConnectionPool {
         let handle = ConnectionHandle::new();
 
         {
-            let mut connections = self.active_connections.lock().await;
+            let mut connections = self.ActiveConnections.lock().await;
             connections.insert(handle.id.clone(), handle.clone());
         }
 
@@ -529,24 +670,27 @@ impl ConnectionPool {
         Ok(handle)
     }
 
-    /// Release a connection handle
+    /// Release a connection handle back to the pool
     pub async fn release_connection(&self, handle: ConnectionHandle) {
         {
-            let mut connections = self.active_connections.lock().await;
+            let mut connections = self.ActiveConnections.lock().await;
             connections.remove(&handle.id);
         }
         
         // The permit is released when dropped
     }
 
-    /// Get connection statistics
+    /// Get connection statistics for monitoring
     pub async fn get_stats(&self) -> ConnectionStats {
-        let connections = self.active_connections.lock().await;
+        let connections = self.ActiveConnections.lock().await;
         let healthy_connections = connections.values().filter(|h| h.is_healthy()).count();
         
         ConnectionStats {
             total_connections: connections.len(),
             healthy_connections,
+            max_connections: self.MaxConnections,
+            available_permits: self.Semaphore.available_permits(),
+            connection_timeout: self.ConnectionT
             max_connections: self.max_connections,
             available_permits: self.semaphore.available_permits(),
             connection_timeout: self.connection_timeout,
@@ -786,6 +930,16 @@ pub async fn mountain_ipc_receive_message(
 }
 
 /// Tauri command handler for Wind to check connection status
+/// 
+/// **Command Registration:** Registered in Tauri's invoke_handler
+/// Called by Wind using: `app.handle.invoke('mountain_ipc_get_status')`
+/// 
+/// **Response Format:**
+/// ```json
+/// {
+///   "connected": true
+/// }
+/// ```
 #[tauri::command]
 pub async fn mountain_ipc_get_status(
     app_handle: tauri::AppHandle,
