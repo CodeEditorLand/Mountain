@@ -143,12 +143,7 @@
 //! - Cancellation token support
 //! - Binary protocol message serialization
 //! - Protocol versioning for compatibility
-//! 
-//! **Naming Convention:**
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::{collections::HashMap, io::{Read, Write}, sync::{Arc, Mutex}};
 use base64::{engine::general_purpose, Engine};
@@ -186,7 +181,6 @@ pub struct TauriIPCServer {
     is_connected: Arc<Mutex<bool>>,
     message_queue: Arc<Mutex<Vec<TauriIPCMessage>>>,
 }
-
 
 
 /// Message compression utility for optimizing IPC message transfer
@@ -639,7 +633,10 @@ impl ConnectionHandle {
     pub fn is_healthy(&self) -> bool {
         self.health_score > 50.0 && self.error_count < 5
     }
-} with specified parameters
+}
+
+impl ConnectionPool {
+    /// Create a new connection pool with specified parameters
     pub fn new(MaxConnections: usize, ConnectionTimeout: Duration) -> Self {
         Self {
             MaxConnections,
@@ -651,7 +648,7 @@ impl ConnectionHandle {
     }
 
     /// Get a connection handle from the pool with timeout
-    pub async fn get_connection(&self) -> Result<ConnectionHandle, String> {
+    pub async fn GetConnection(&self) -> Result<ConnectionHandle, String> {
         let permit = timeout(self.ConnectionTimeout, self.Semaphore.acquire())
             .await
             .map_err(|_| "Connection timeout")?
@@ -665,13 +662,13 @@ impl ConnectionHandle {
         }
 
         // Start health monitoring for this connection
-        self.start_health_monitoring(&handle.id).await;
+        self.StartHealthMonitoring(&handle.id).await;
 
         Ok(handle)
     }
 
     /// Release a connection handle back to the pool
-    pub async fn release_connection(&self, handle: ConnectionHandle) {
+    pub async fn ReleaseConnection(&self, handle: ConnectionHandle) {
         {
             let mut connections = self.ActiveConnections.lock().await;
             connections.remove(&handle.id);
@@ -681,7 +678,7 @@ impl ConnectionHandle {
     }
 
     /// Get connection statistics for monitoring
-    pub async fn get_stats(&self) -> ConnectionStats {
+    pub async fn GetStats(&self) -> ConnectionStats {
         let connections = self.ActiveConnections.lock().await;
         let healthy_connections = connections.values().filter(|h| h.is_healthy()).count();
         
@@ -690,16 +687,13 @@ impl ConnectionHandle {
             healthy_connections,
             max_connections: self.MaxConnections,
             available_permits: self.Semaphore.available_permits(),
-            connection_timeout: self.ConnectionT
-            max_connections: self.max_connections,
-            available_permits: self.semaphore.available_permits(),
-            connection_timeout: self.connection_timeout,
+            connection_timeout: self.ConnectionTimeout,
         }
     }
 
     /// Clean up stale connections
-    pub async fn cleanup_stale_connections(&self) -> usize {
-        let mut connections = self.active_connections.lock().await;
+    pub async fn CleanUpStaleConnections(&self) -> usize {
+        let mut connections = self.ActiveConnections.lock().await;
         let now = std::time::Instant::now();
         let stale_threshold = Duration::from_secs(300); // 5 minutes
         
@@ -717,7 +711,7 @@ impl ConnectionHandle {
     }
 
     /// Start health monitoring for a connection
-    async fn start_health_monitoring(&self, connection_id: &str) {
+    async fn StartHealthMonitoring(&self, connection_id: &str) {
         let health_checker = self.health_checker.clone();
         let connection_id = connection_id.to_string();
         
@@ -728,7 +722,7 @@ impl ConnectionHandle {
                 interval.tick().await;
                 
                 let mut checker = health_checker.lock().await;
-                let mut connections = match self.active_connections.try_lock() {
+                let mut connections = match self.ActiveConnections.try_lock() {
                     Ok(conns) => conns,
                     Err(_) => continue,
                 };
@@ -1025,10 +1019,11 @@ impl PermissionManager {
         }
 
         // Check if user has required permissions
-        let user_permissions: Vec<String> = context.roles.iter()
-            .flat_map(|role| self.get_role_permissions(role).await)
-            .chain(context.permissions.iter().cloned())
-            .collect();
+        let mut user_permissions: Vec<String> = context.permissions.iter().cloned().collect();
+        for role in context.roles.iter() {
+            let role_perms = self.get_role_permissions(role).await;
+            user_permissions.extend(role_perms);
+        }
 
         for required in required_permissions {
             if !user_permissions.contains(&required) {
