@@ -2,8 +2,8 @@
 // Role: Air gRPC client module for Mountain
 // Responsibilities:
 //   - Provide gRPC client connectivity to the Air daemon service
-//   - Implement Air service methods for update management, authentication,
-//     file indexing, and system monitoring
+//   - Implement Air service methods for update management, authentication, file
+//     indexing, and system monitoring
 //   - Handle connection management and error translation to CommonError
 //   - Wrap client in Arc for shared access across the application
 
@@ -40,29 +40,56 @@
 //! - Add request timeout configuration
 //! - Implement request/response logging
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 pub mod AirClient;
 pub mod AirServiceProvider;
 
+// Stub types for Air integration when AirLibrary is not available
+pub mod AirServiceTypesStub;
+
 // Re-export convenience types from submodules
-pub use AirClient::{
-	AuthenticationRequest,
-	AuthenticationResponse,
+// TODO: Air library is not available - commented out until AirIntegration feature is implemented
+// pub use AirLibraryClient::{
+// 	ApplyUpdateRequest,
+// 	ApplyUpdateResponse,
+// 	AuthenticationRequest,
+// 	AuthenticationResponse,
+// 	DEFAULT_AIR_SERVER_ADDRESS,
+// 	DownloadRequest,
+// 	DownloadResponse,
+// 	IndexRequest,
+// 	IndexResponse,
+// 	MetricsRequest,
+// 	MetricsResponse,
+// 	SearchRequest,
+// 	SearchResponse,
+// 	StatusRequest,
+// 	StatusResponse,
+// 	UpdateCheckRequest,
+// 	UpdateCheckResponse,
+// };
+
+// Re-export stub types for compatibility
+pub use AirServiceTypesStub::{
+	AirClientType,
 	UpdateCheckRequest,
-	UpdateCheckResponse,
-	ApplyUpdateRequest,
-	ApplyUpdateResponse,
 	DownloadRequest,
-	DownloadResponse,
+	ApplyUpdateRequest,
+	AuthenticationRequest,
 	IndexRequest,
-	IndexResponse,
 	SearchRequest,
-	SearchResponse,
 	StatusRequest,
-	StatusResponse,
 	MetricsRequest,
+	UpdateCheckResponse,
+	DownloadFileResponse,
+	ApplyUpdateResponse,
+	AuthenticationResponse,
+	IndexFilesResponse,
+	SearchFilesResponse,
+	StatusResponse,
 	MetricsResponse,
+	FileResultProtoDTO,
+	AirMetricsProtoDTO,
 	DEFAULT_AIR_SERVER_ADDRESS,
 };
-pub use AirServiceProvider::{CreateAirServiceProvider, CreateAirServiceProviderOrUnavailable};
+
+// pub use AirLibraryServiceProvider::{CreateAirServiceProvider, CreateAirServiceProviderOrUnavailable};
