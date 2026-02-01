@@ -59,7 +59,6 @@
 //                                       ├── Text Processing
 //                                       └── Recovery
 //```
-//
 // ## VS Code Reference
 //
 // This module borrows from VS Code's internal utilities in:
@@ -113,14 +112,14 @@
 //
 // ### Path Resolution
 //
-// **`ResolveMementoStorageFilePath(ApplicationDataDirectory, IsGlobalScope, WorkSpaceIdentifier)`**:
+// **`ResolveMementoStorageFilePath(ApplicationDataDirectory, IsGlobalScope,
+// WorkSpaceIdentifier)`**:
 // - Resolves absolute path for memento file
 // - Creates `{AppData}/User/globalStorage.json` for global
 // - Creates `{AppData}/User/workspaceStorage/{id}/storage.json` for workspace
 // - Sanitizes workspace identifier (alphanumeric, hyphens, underscores only)
 //
 //### Extension Management
-//
 // **`ScanAndPopulateExtensions(ApplicationHandle, State)`**:
 // - Scans all registered extension paths
 // - Populates state with discovered extensions
@@ -134,21 +133,18 @@
 // - Comprehensive error logging
 //
 //### Text Processing
-//
 // **`AnalyzeTextLinesAndEOL(TextContent)`**:
 // - Detects line ending type (CRLF or LF)
 // - Splits text into lines vector
 // - Returns (lines, detected_eol) tuple
 //
 //### Serialization Helpers
-//
 // **`URLSerializationHelper`** module:
 // - Provides `serialize` function for Url → String
 // - Provides `deserialize` function for String → Url
 // - Handles parse errors gracefully
 //
 //### Recovery Utilities
-//
 // **`RecoveryUtilities`** module:
 // - `validate_and_clean_state` - Filter state by validator function
 // - `safe_state_operation_with_timeout` - Execute with timeout
@@ -220,7 +216,6 @@
 // - `.corrupted.YYYYMMDD_HHMMSS` for timestamped backups
 //
 //## TODOs
-//
 // High Priority:
 // - [ ] Add checksum validation for memento files
 // - [ ] Implement incremental memento updates
@@ -236,21 +231,16 @@
 // - [ ] Implement text encoding detection
 // - [ ] Add file system watcher integration
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # Internal (ApplicationState)
 //!
 //! Contains internal helper functions for the `ApplicationState` module,
 //! handling tasks like file I/O, path resolution, and serialization that are
 //! not part of the public API of the state itself.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{collections::HashMap, fs, path::Path};
 
-use Common::Error::CommonError::CommonError;
-use log::{error, info, trace, warn, debug};
+use CommonLibrary::Error::CommonError::CommonError;
+use log::{debug, error, info, trace, warn};
 use serde::{self, Deserializer, Serializer};
 use serde_json::Value;
 use url::Url;
@@ -331,8 +321,8 @@ pub fn LoadMementoWithRecovery(StorageFilePath:&Path) -> Result<HashMap<String, 
 
 	let content = fs::read_to_string(StorageFilePath).map_err(|e| {
 		CommonError::FileSystemIO {
-			Path: StorageFilePath.to_path_buf(),
-			Description: format!("Failed to read memento file: {}", e),
+			Path:StorageFilePath.to_path_buf(),
+			Description:format!("Failed to read memento file: {}", e),
 		}
 	})?;
 
@@ -340,15 +330,15 @@ pub fn LoadMementoWithRecovery(StorageFilePath:&Path) -> Result<HashMap<String, 
 		// Create backup of corrupted file
 		create_corrupted_backup(StorageFilePath, &content);
 		CommonError::SerializationError {
-			Description: format!("Failed to parse memento JSON from '{}': {}", StorageFilePath.display(), e),
+			Description:format!("Failed to parse memento JSON from '{}': {}", StorageFilePath.display(), e),
 		}
 	})
 }
 
 /// Attempt recovery for corrupted memento files
-fn attempt_memento_recovery(file_path: &Path, corrupted_content: &str) {
+fn attempt_memento_recovery(file_path:&Path, corrupted_content:&str) {
 	let backup_path = file_path.with_extension("json.backup");
-	
+
 	match fs::write(&backup_path, corrupted_content) {
 		Ok(()) => {
 			warn!(
@@ -367,10 +357,10 @@ fn attempt_memento_recovery(file_path: &Path, corrupted_content: &str) {
 }
 
 /// Create backup of corrupted file
-fn create_corrupted_backup(file_path: &Path, content: &str) {
+fn create_corrupted_backup(file_path:&Path, content:&str) {
 	let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
 	let backup_path = file_path.with_extension(format!("json.corrupted.{}", timestamp));
-	
+
 	if let Err(e) = fs::write(&backup_path, content) {
 		error!(
 			"[AppStateInternal] Failed to create corrupted backup at '{}': {}",
@@ -378,10 +368,7 @@ fn create_corrupted_backup(file_path: &Path, content: &str) {
 			e
 		);
 	} else {
-		debug!(
-			"[AppStateInternal] Created corrupted backup at: {}",
-			backup_path.display()
-		);
+		debug!("[AppStateInternal] Created corrupted backup at: {}", backup_path.display());
 	}
 }
 
@@ -416,9 +403,16 @@ pub async fn ScanAndPopulateExtensions(
 
 	let mut AllFoundExtensions:HashMap<String, ExtensionDescriptionStateDTO> = HashMap::new();
 
-	let ScanPaths = State.ExtensionScanPaths.lock().map_err(|e| {
-		crate::ApplicationState::ApplicationState::MapLockErrorWithRecovery(e, "ScanAndPopulateExtensions - ExtensionScanPaths")
-	})?.clone();
+	let ScanPaths = State
+		.ExtensionScanPaths
+		.lock()
+		.map_err(|e| {
+			crate::ApplicationState::ApplicationState::MapLockErrorWithRecovery(
+				e,
+				"ScanAndPopulateExtensions - ExtensionScanPaths",
+			)
+		})?
+		.clone();
 
 	trace!("[AppStateInternal] Scanning paths: {:?}", ScanPaths);
 
@@ -454,7 +448,10 @@ pub async fn ScanAndPopulateExtensions(
 	}
 
 	let mut ScannedExtensionsGuard = State.ScannedExtensions.lock().map_err(|e| {
-		crate::ApplicationState::ApplicationState::MapLockErrorWithRecovery(e, "ScanAndPopulateExtensions - ScannedExtensions")
+		crate::ApplicationState::ApplicationState::MapLockErrorWithRecovery(
+			e,
+			"ScanAndPopulateExtensions - ScannedExtensions",
+		)
 	})?;
 
 	*ScannedExtensionsGuard = AllFoundExtensions;
@@ -497,10 +494,13 @@ pub async fn ScanExtensionsWithRecovery(
 			error!("[AppStateInternal] Robust extension scan failed: {}", error);
 			// Attempt recovery by clearing state and retrying once
 			warn!("[AppStateInternal] Attempting recovery from extension scan failure...");
-			
+
 			// Clear state again
 			let mut scanned_extensions = State.ScannedExtensions.lock().map_err(|e| {
-				crate::ApplicationState::ApplicationState::MapLockErrorWithRecovery(e, "ScanExtensionsWithRecovery - Recovery Clear")
+				crate::ApplicationState::ApplicationState::MapLockErrorWithRecovery(
+					e,
+					"ScanExtensionsWithRecovery - Recovery Clear",
+				)
 			})?;
 			scanned_extensions.clear();
 			drop(scanned_extensions);
@@ -539,22 +539,21 @@ pub mod RecoveryUtilities {
 	use super::*;
 
 	/// Validate and clean up state data
-	pub fn validate_and_clean_state<T>(state_data: &mut HashMap<String, T>, validator: impl Fn(&T) -> bool) {
+	pub fn validate_and_clean_state<T>(state_data:&mut HashMap<String, T>, validator:impl Fn(&T) -> bool) {
 		state_data.retain(|_, value| validator(value));
 	}
 
 	/// Safe state operation with timeout
 	pub fn safe_state_operation_with_timeout<T, F>(
-		operation: F,
-		timeout_ms: u64,
-		operation_name: &str,
+		operation:F,
+		timeout_ms:u64,
+		operation_name:&str,
 	) -> Result<T, CommonError>
 	where
 		F: FnOnce() -> Result<T, CommonError> + Send + 'static,
-		T: Send + 'static,
-	{
+		T: Send + 'static, {
 		let (sender, receiver) = std::sync::mpsc::channel();
-		
+
 		std::thread::spawn(move || {
 			let result = operation();
 			let _ = sender.send(result);
@@ -563,23 +562,23 @@ pub mod RecoveryUtilities {
 		match receiver.recv_timeout(std::time::Duration::from_millis(timeout_ms)) {
 			Ok(result) => result,
 			Err(_) => {
-				error!("[RecoveryUtilities] Operation '{}' timed out after {}ms", operation_name, timeout_ms);
-				Err(CommonError::Unknown {
-					Description: format!("Operation '{}' timed out", operation_name),
-				})
+				error!(
+					"[RecoveryUtilities] Operation '{}' timed out after {}ms",
+					operation_name, timeout_ms
+				);
+				Err(CommonError::Unknown { Description:format!("Operation '{}' timed out", operation_name) })
 			},
 		}
 	}
 
 	/// Attempt state recovery with exponential backoff
 	pub async fn recover_state_with_backoff<F, T>(
-		operation: F,
-		max_attempts: u32,
-		operation_name: &str,
+		operation:F,
+		max_attempts:u32,
+		operation_name:&str,
 	) -> Result<T, CommonError>
 	where
-		F: Fn() -> Result<T, CommonError> + Send,
-	{
+		F: Fn() -> Result<T, CommonError> + Send, {
 		let mut attempt = 0;
 		let mut delay_ms = 100;
 
@@ -594,10 +593,7 @@ pub mod RecoveryUtilities {
 
 					warn!(
 						"[RecoveryUtilities] Attempt {} failed for '{}': {}. Retrying in {}ms...",
-						attempt,
-						operation_name,
-						error,
-						delay_ms
+						attempt, operation_name, error, delay_ms
 					);
 
 					tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms)).await;
@@ -607,7 +603,10 @@ pub mod RecoveryUtilities {
 		}
 
 		Err(CommonError::Unknown {
-			Description: format!("Failed to recover state for '{}' after {} attempts", operation_name, max_attempts),
+			Description:format!(
+				"Failed to recover state for '{}' after {} attempts",
+				operation_name, max_attempts
+			),
 		})
 	}
 }

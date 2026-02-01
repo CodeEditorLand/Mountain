@@ -61,7 +61,8 @@
 //   - Crash recovery and state persistence
 //   - Key-value storage API
 //
-// - `vs/workbench/services/environment/common/environmentService.ts` - Environment state
+// - `vs/workbench/services/environment/common/environmentService.ts` -
+//   Environment state
 //   - Workspace configuration management
 //   - Window state persistence
 //   - Trust management
@@ -131,7 +132,6 @@
 //     // ... all fields protected by Arc<Mutex<...>>
 // }
 //```
-//
 // **Access Patterns:**
 // - Lock briefly, copy data needed, release immediately
 // - Use `map_err(MapLockError)` for lock error handling
@@ -268,17 +268,12 @@
 // - [ ] Implement state cloning for testing
 // - [ ] Add state migration for version upgrades
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # ApplicationState Struct
 //!
 //! Defines the main `ApplicationState` struct, which is the central, shared,
 //! thread-safe state container for the entire Mountain application. It is
 //! managed by Tauri and is accessible to all command handlers and Environment
 //! providers.
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::{
 	collections::HashMap,
@@ -291,7 +286,7 @@ use std::{
 	},
 };
 
-use Common::{
+use CommonLibrary::{
 	Error::CommonError::CommonError,
 	SourceControlManagement::DTO::{
 		SourceControlManagementGroupDTO::SourceControlManagementGroupDTO,
@@ -300,7 +295,7 @@ use Common::{
 	},
 	StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO,
 };
-use log::{error, info, warn, debug};
+use log::{debug, error, info, warn};
 use tauri::Wry;
 
 use super::{
@@ -401,16 +396,21 @@ pub fn MapLockError<T>(Error:PoisonError<T>) -> CommonError {
 
 /// A helper to map a mutex poison error with recovery attempt.
 pub fn MapLockErrorWithRecovery<T>(Error:PoisonError<T>, RecoveryContext:&str) -> CommonError {
-	warn!("[ApplicationState] Attempting recovery from poisoned lock in context: {}", RecoveryContext);
-	CommonError::StateLockPoisoned { Context:format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext) }
+	warn!(
+		"[ApplicationState] Attempting recovery from poisoned lock in context: {}",
+		RecoveryContext
+	);
+	CommonError::StateLockPoisoned {
+		Context:format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext),
+	}
 }
 
 /// Error handling result with recovery information
 #[derive(Debug)]
 pub struct StateOperationResult<T> {
-	pub result: Result<T, CommonError>,
-	pub recovery_attempted: bool,
-	pub recovery_successful: bool,
+	pub result:Result<T, CommonError>,
+	pub recovery_attempted:bool,
+	pub recovery_successful:bool,
 }
 
 impl Default for ApplicationState {
@@ -516,9 +516,10 @@ impl ApplicationState {
 	/// workspace. Returns "NO_WORKSPACE" if no folder or configuration is
 	/// open.
 	pub fn GetWorkSpaceIdentifier(&self) -> Result<String, CommonError> {
-		let ConfigurationPathGuard = self.WorkSpaceConfigurationPath.lock().map_err(|e| {
-			MapLockErrorWithRecovery(e, "GetWorkSpaceIdentifier - ConfigurationPath")
-		})?;
+		let ConfigurationPathGuard = self
+			.WorkSpaceConfigurationPath
+			.lock()
+			.map_err(|e| MapLockErrorWithRecovery(e, "GetWorkSpaceIdentifier - ConfigurationPath"))?;
 
 		if let Some(ConfigurationPath) = ConfigurationPathGuard.as_ref() {
 			let FileName = ConfigurationPath.file_name().unwrap_or_default().to_string_lossy().into_owned();
@@ -528,9 +529,10 @@ impl ApplicationState {
 
 		drop(ConfigurationPathGuard);
 
-		let FoldersGuard = self.WorkSpaceFolders.lock().map_err(|e| {
-			MapLockErrorWithRecovery(e, "GetWorkSpaceIdentifier - WorkSpaceFolders")
-		})?;
+		let FoldersGuard = self
+			.WorkSpaceFolders
+			.lock()
+			.map_err(|e| MapLockErrorWithRecovery(e, "GetWorkSpaceIdentifier - WorkSpaceFolders"))?;
 
 		if let Some(FirstFolder) = FoldersGuard.first() {
 			let PathString = FirstFolder.URI.path();
@@ -547,19 +549,14 @@ impl ApplicationState {
 	}
 
 	/// Safe state operation with automatic recovery
-	pub fn SafeStateOperation<T, F>(&self, operation_name: &str, operation: F) -> StateOperationResult<T>
+	pub fn SafeStateOperation<T, F>(&self, operation_name:&str, operation:F) -> StateOperationResult<T>
 	where
-		F: FnOnce() -> Result<T, CommonError>,
-	{
+		F: FnOnce() -> Result<T, CommonError>, {
 		let mut recovery_attempted = false;
 		let mut recovery_successful = false;
-		
+
 		match operation() {
-			Ok(result) => StateOperationResult {
-				result: Ok(result),
-				recovery_attempted,
-				recovery_successful,
-			},
+			Ok(result) => StateOperationResult { result:Ok(result), recovery_attempted, recovery_successful },
 			Err(error) => {
 				// Attempt recovery for specific error types
 				if Self::should_attempt_recovery(&error) {
@@ -569,33 +566,32 @@ impl ApplicationState {
 							recovery_successful = true;
 							info!("[ApplicationState] Recovery successful for operation: {}", operation_name);
 							StateOperationResult {
-								result: Err(error), // Original error still returned
+								result:Err(error), // Original error still returned
 								recovery_attempted,
 								recovery_successful,
 							}
 						},
 						Err(recovery_error) => {
-							warn!("[ApplicationState] Recovery failed for operation {}: {}", operation_name, recovery_error);
+							warn!(
+								"[ApplicationState] Recovery failed for operation {}: {}",
+								operation_name, recovery_error
+							);
 							StateOperationResult {
-								result: Err(error), // Original error still returned
+								result:Err(error), // Original error still returned
 								recovery_attempted,
 								recovery_successful,
 							}
 						},
 					}
 				} else {
-					StateOperationResult {
-						result: Err(error),
-						recovery_attempted,
-						recovery_successful,
-					}
+					StateOperationResult { result:Err(error), recovery_attempted, recovery_successful }
 				}
 			},
 		}
 	}
 
 	/// Determine if recovery should be attempted for a given error
-	fn should_attempt_recovery(error: &CommonError) -> bool {
+	fn should_attempt_recovery(error:&CommonError) -> bool {
 		match error {
 			CommonError::StateLockPoisoned { .. } => true,
 			CommonError::FileSystemIO { .. } => true,
@@ -605,7 +601,7 @@ impl ApplicationState {
 	}
 
 	/// Attempt state recovery based on error type
-	fn attempt_state_recovery(error: &CommonError, context: &str) -> Result<(), CommonError> {
+	fn attempt_state_recovery(error:&CommonError, context:&str) -> Result<(), CommonError> {
 		match error {
 			CommonError::StateLockPoisoned { .. } => {
 				// For poisoned locks, we can't do much but log and wait
@@ -620,8 +616,8 @@ impl ApplicationState {
 					if !parent.exists() {
 						std::fs::create_dir_all(parent).map_err(|e| {
 							CommonError::FileSystemIO {
-								Path: parent.to_path_buf(),
-								Description: format!("Failed to create directory during recovery: {}", e),
+								Path:parent.to_path_buf(),
+								Description:format!("Failed to create directory during recovery: {}", e),
 							}
 						})?;
 					}
@@ -630,7 +626,10 @@ impl ApplicationState {
 			},
 			CommonError::SerializationError { .. } => {
 				// For serialization errors, we might need to reset corrupted state
-				warn!("[ApplicationState] Serialization error detected, state may be corrupted: {}", context);
+				warn!(
+					"[ApplicationState] Serialization error detected, state may be corrupted: {}",
+					context
+				);
 				Ok(())
 			},
 			_ => Ok(()),
@@ -665,9 +664,12 @@ impl ApplicationState {
 				if PathGuard.is_some() {
 					*PathGuard = None;
 
-					self.WorkSpaceMemento.lock().map_err(|e| {
-						MapLockErrorWithRecovery(e, "UpdateWorkSpaceMementoPathAndReload - WorkSpaceMemento")
-					})?.clear();
+					self.WorkSpaceMemento
+						.lock()
+						.map_err(|e| {
+							MapLockErrorWithRecovery(e, "UpdateWorkSpaceMementoPathAndReload - WorkSpaceMemento")
+						})?
+						.clear();
 				}
 
 				return Ok(());
@@ -723,12 +725,13 @@ impl ApplicationState {
 	/// Recover global memento state
 	async fn RecoverGlobalMemento(&self) -> Result<(), CommonError> {
 		debug!("[ApplicationState] Recovering global memento state...");
-		
+
 		let memento_content = Internal::LoadInitialMementoFromDisk(&self.GlobalMementoPath);
-		let mut global_memento = self.GlobalMemento.lock().map_err(|e| {
-			MapLockErrorWithRecovery(e, "RecoverGlobalMemento")
-		})?;
-		
+		let mut global_memento = self
+			.GlobalMemento
+			.lock()
+			.map_err(|e| MapLockErrorWithRecovery(e, "RecoverGlobalMemento"))?;
+
 		*global_memento = memento_content;
 		Ok(())
 	}
@@ -736,62 +739,67 @@ impl ApplicationState {
 	/// Recover workspace memento state
 	async fn RecoverWorkSpaceMemento(&self) -> Result<(), CommonError> {
 		debug!("[ApplicationState] Recovering workspace memento state...");
-		
-		let workspace_path_guard = self.WorkSpaceMementoPath.lock().map_err(|e| {
-			MapLockErrorWithRecovery(e, "RecoverWorkSpaceMemento - Path")
-		})?;
-		
+
+		let workspace_path_guard = self
+			.WorkSpaceMementoPath
+			.lock()
+			.map_err(|e| MapLockErrorWithRecovery(e, "RecoverWorkSpaceMemento - Path"))?;
+
 		if let Some(path) = workspace_path_guard.as_ref() {
 			let memento_content = Internal::LoadInitialMementoFromDisk(path);
-			let mut workspace_memento = self.WorkSpaceMemento.lock().map_err(|e| {
-				MapLockErrorWithRecovery(e, "RecoverWorkSpaceMemento - Content")
-			})?;
-			
+			let mut workspace_memento = self
+				.WorkSpaceMemento
+				.lock()
+				.map_err(|e| MapLockErrorWithRecovery(e, "RecoverWorkSpaceMemento - Content"))?;
+
 			*workspace_memento = memento_content;
 		}
-		
+
 		Ok(())
 	}
 
 	/// Recover extension state
 	async fn RecoverExtensionState(&self) -> Result<(), CommonError> {
 		debug!("[ApplicationState] Recovering extension state...");
-		
+
 		// Clear potentially corrupted extension state
-		let mut scanned_extensions = self.ScannedExtensions.lock().map_err(|e| {
-			MapLockErrorWithRecovery(e, "RecoverExtensionState - ScannedExtensions")
-		})?;
-		
+		let mut scanned_extensions = self
+			.ScannedExtensions
+			.lock()
+			.map_err(|e| MapLockErrorWithRecovery(e, "RecoverExtensionState - ScannedExtensions"))?;
+
 		scanned_extensions.clear();
-		
+
 		// Reset extension scan paths
-		let mut scan_paths = self.ExtensionScanPaths.lock().map_err(|e| {
-			MapLockErrorWithRecovery(e, "RecoverExtensionState - ExtensionScanPaths")
-		})?;
-		
+		let mut scan_paths = self
+			.ExtensionScanPaths
+			.lock()
+			.map_err(|e| MapLockErrorWithRecovery(e, "RecoverExtensionState - ExtensionScanPaths"))?;
+
 		// Keep only valid paths that exist
 		scan_paths.retain(|path| path.exists());
-		
+
 		Ok(())
 	}
 
 	/// Recover document state
 	async fn RecoverDocumentState(&self) -> Result<(), CommonError> {
 		debug!("[ApplicationState] Recovering document state...");
-		
+
 		// Clear potentially corrupted document state
-		let mut open_documents = self.OpenDocuments.lock().map_err(|e| {
-			MapLockErrorWithRecovery(e, "RecoverDocumentState - OpenDocuments")
-		})?;
-		
+		let mut open_documents = self
+			.OpenDocuments
+			.lock()
+			.map_err(|e| MapLockErrorWithRecovery(e, "RecoverDocumentState - OpenDocuments"))?;
+
 		// Remove documents that reference non-existent files
 		open_documents.retain(|uri, _doc_state| {
-		if uri.scheme() == "file" {
-			if let Some(path) = uri.to_file_path().ok() {
-				return path.exists();
+			if uri.scheme() == "file" {
+				if let Some(path) = uri.to_file_path().ok() {
+					return path.exists();
+				}
 			}
-		}
-		true // Keep non-file URIs
+			true // Keep non-file URIs
 		});
 		Ok(())
 	}

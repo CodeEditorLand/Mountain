@@ -30,12 +30,12 @@
 //!
 //! The ApplicationState module is the **state management layer** of Mountain:
 //!
-//!```text
+//! ```text
 //! UI ──► Commands ──► ApplicationState (State) ──► Providers/Services
 //!                      │
 //!                      ↓
 //!                   Disk (Persistence)
-//!```
+//! ```
 //!
 //! ### Design Principles:
 //! 1. **Single Source of Truth**: All state lives in one place
@@ -47,7 +47,8 @@
 //! ### VS Code Reference:
 //! This module borrows from VS Code's state management patterns in:
 //! - `vs/base/parts/storage/common/storageService.ts` - Storage management
-//! - `vs/workbench/services/environment/common/environmentService.ts` - Environment state
+//! - `vs/workbench/services/environment/common/environmentService.ts` -
+//!   Environment state
 //! - `vs/platform/workspace/common/workspace.ts` - Workspace state
 //! - `vs/workbench/services/extensions/common/extensions.ts` - Extension state
 //!
@@ -117,13 +118,13 @@
 //!
 //! All state is protected by `Arc<Mutex<...>>` for thread-safe access:
 //!
-//!```rust
+//! ```rust
 //! pub struct ApplicationState {
-//!     pub WorkSpaceFolders: Arc<Mutex<Vec<WorkSpaceFolderStateDTO>>>,
-//!     pub Configuration: Arc<Mutex<MergedConfigurationStateDTO>>,
-//!     // ... all fields follow this pattern
+//! 	pub WorkSpaceFolders:Arc<Mutex<Vec<WorkSpaceFolderStateDTO>>>,
+//! 	pub Configuration:Arc<Mutex<MergedConfigurationStateDTO>>,
+//! 	// ... all fields follow this pattern
 //! }
-//!```
+//! ```
 //!
 //! **Best Practices:**
 //! - Always lock mutexes before accessing state
@@ -172,11 +173,11 @@
 //!
 //! Valid state transitions:
 //!
-//!```text
+//! ```text
 //! Uninitialized → Default State → Workspace Loaded → Workspace Unloaded
 //!      ↓                ↓                 ↓                  ↓
 //!    Load           Recover          Update Memento      Clean Up
-//!```
+//! ```
 //!
 //! **Invariants:**
 //! - Workspace identifier is computed from folder or config
@@ -185,23 +186,21 @@
 //! - Unique IDs are never reused
 //!
 //! ## TODOs
- //!
- // High Priority:
- // - [ ] Add state migration support for version changes
- // - [ ] Implement state diffing for better debugging
- // - [ ] Add state snapshots for rollback support
- //!
- // Medium Priority:
- // - [ ] Add state compression for large workspaces
- // - [ ] Implement incremental memento updates
- // - [ ] Add state validation on load
- //!
- // Low Priority:
- // - [ ] Add state analytics and metrics
- // - [ ] Implement state cloning for testing
- // - [ ] Add state export/import functionality
-
-#![allow(non_snake_case, non_camel_case_types)]
+//!
+//! High Priority:
+//! - [ ] Add state migration support for version changes
+//! - [ ] Implement state diffing for better debugging
+//! - [ ] Add state snapshots for rollback support
+//!
+//! Medium Priority:
+//! - [ ] Add state compression for large workspaces
+//! - [ ] Implement incremental memento updates
+//! - [ ] Add state validation on load
+//!
+//! Low Priority:
+//! - [ ] Add state analytics and metrics
+//! - [ ] Implement state cloning for testing
+//! - [ ] Add state export/import functionality
 
 // --- Public Modules ---
 /// Defines the main `ApplicationState` struct and its core implementation.
