@@ -288,4 +288,121 @@ impl TreeViewProvider for MountainEnvironment {
 				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view badge: {}", Error) }
 			})
 	}
+
+	// --- State Management Methods ---
+
+	/// Handles tree node expansion/collapse events.
+	/// Called when a user expands or collapses a node in the tree view.
+	/// Updates internal state and propagates the event to the frontend.
+	async fn OnTreeNodeExpanded(&self, ViewIdentifier:String, ElementHandle:String, IsExpanded:bool) -> Result<(), CommonError> {
+		info!(
+			"[TreeViewProvider] Node '{}' in view '{}' expanded: {}",
+			ElementHandle, ViewIdentifier, IsExpanded
+		);
+
+		// TODO: Store expansion state in TreeViewStateDTO when available
+
+		// Propagate to frontend
+		self.ApplicationHandle
+			.emit(
+				"sky://tree-view/node-expanded",
+				json!({
+					"ViewIdentifier": ViewIdentifier,
+					"ElementHandle": ElementHandle,
+					"IsExpanded": IsExpanded
+				}),
+			)
+			.map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit node expanded event: {}", Error) }
+			})
+	}
+
+	/// Handles tree selection changes.
+	/// Called when the user selects or deselects items in the tree view.
+	/// Updates internal state and propagates the event to the frontend.
+	async fn OnTreeSelectionChanged(&self, ViewIdentifier:String, SelectedHandles:Vec<String>) -> Result<(), CommonError> {
+		info!(
+			"[TreeViewProvider] Selection changed in view '{}': {} items selected",
+			ViewIdentifier, SelectedHandles.len()
+		);
+
+		// TODO: Store selection state in TreeViewStateDTO when available
+
+		// Propagate to frontend
+		self.ApplicationHandle
+			.emit(
+				"sky://tree-view/selection-changed",
+				json!({
+					"ViewIdentifier": ViewIdentifier,
+					"SelectedHandles": SelectedHandles
+				}),
+			)
+			.map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit selection changed event: {}", Error) }
+			})
+	}
+
+	/// Persists the current state of a tree view.
+	/// Saves the expansion, selection, and other state for later restoration.
+	/// Returns JSON representation of the persisted state.
+	async fn PersistTreeViewState(&self, ViewIdentifier:String) -> Result<Value, CommonError> {
+		info!("[TreeViewProvider] Persisting state for view '{}'", ViewIdentifier);
+
+		let TreeViews = self
+			.ApplicationState
+			.ActiveTreeViews
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+		let State = TreeViews.get(&ViewIdentifier).map(|View| json!({
+			"ViewIdentifier": ViewIdentifier,
+			"Title": View.Title,
+			"Description": View.Description,
+			"CanSelectMany": View.CanSelectMany,
+			"Message": View.Message,
+			"HasHandleDrag": View.HasHandleDrag,
+			"HasHandleDrop": View.HasHandleDrop,
+		}));
+
+		State.ok_or(CommonError::TreeViewProviderNotFound { ViewIdentifier })
+	}
+
+	/// Restores a previously persisted tree view state.
+	/// Restores expansion, selection, and other state from a JSON representation.
+	async fn RestoreTreeViewState(&self, ViewIdentifier:String, StateValue:Value) -> Result<(), CommonError> {
+		info!("[TreeViewProvider] Restoring state for view '{}'", ViewIdentifier);
+
+		let mut TreeViews = self
+			.ApplicationState
+			.ActiveTreeViews
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+		if let Some(ViewState) = TreeViews.get_mut(&ViewIdentifier) {
+			if let Some(Title) = StateValue.get("Title").and_then(|v| v.as_str()) {
+				ViewState.Title = Some(Title.to_string());
+			}
+			if let Some(Description) = StateValue.get("Description").and_then(|v| v.as_str()) {
+				ViewState.Description = Some(Description.to_string());
+			}
+			// TODO: Restore other state properties as needed
+
+			// Emit to frontend
+			self.ApplicationHandle
+				.emit(
+					"sky://tree-view/restore-state",
+					json!({
+						"ViewIdentifier": ViewIdentifier,
+						"State": StateValue
+					}),
+				)
+				.map_err(|Error| {
+					CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit restore state event: {}", Error) }
+				})?;
+
+			Ok(())
+		} else {
+			Err(CommonError::TreeViewProviderNotFound { ViewIdentifier })
+		}
+	}
 }
