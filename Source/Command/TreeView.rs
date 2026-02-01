@@ -202,53 +202,33 @@ pub async fn RevealTreeViewItem(
 }
 
 /// Persists tree view state.
+/// TODO: PersistTreeViewState is not defined in TreeViewProvider trait - needs implementation
 #[command]
 pub async fn PersistTreeView(
 	ApplicationHandle:AppHandle<Wry>,
 
 	_State:State<'_, Arc<ApplicationState>>,
 
-	ViewId:String,
+	_ViewId:String,
 ) -> Result<Value, String> {
-	log::debug!("[TreeView Command] Persisting state for view '{}'", ViewId);
+	log::warn!("[TreeView Command] PersistTreeView not implemented");
 
-	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
-
-	let Environment:Arc<MountainEnvironment> = RunTime.Environment.clone();
-
-	match Environment.PersistTreeViewState(ViewId.clone()).await {
-		Ok(State) => Ok(json!({ "success": true, "state": State })),
-		Err(Error) => {
-			let ErrorMessage = format!("Failed to persist tree view state: {}", Error);
-			log::error!("{}", ErrorMessage);
-			Err(ErrorMessage)
-		},
-	}
+	Ok(json!({ "success": false, "error": "PersistTreeViewState method not implemented" }))
 }
 
 /// Restores tree view state.
+/// TODO: RestoreTreeViewState is not defined in TreeViewProvider trait - needs implementation
 #[command]
 pub async fn RestoreTreeView(
 	ApplicationHandle:AppHandle<Wry>,
 
 	_State:State<'_, Arc<ApplicationState>>,
 
-	ViewId:String,
+	_ViewId:String,
 
-	State:Value,
+	_StateValue:Value,
 ) -> Result<Value, String> {
-	log::debug!("[TreeView Command] Restoring state for view '{}'", ViewId);
+	log::warn!("[TreeView Command] RestoreTreeView not implemented");
 
-	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
-
-	let Environment:Arc<MountainEnvironment> = RunTime.Environment.clone();
-
-	match Environment.RestoreTreeViewState(ViewId, State).await {
-		Ok(_) => Ok(json!({ "success": true })),
-		Err(Error) => {
-			let ErrorMessage = format!("Failed to restore tree view: {}", Error);
-			log::error!("{}", ErrorMessage);
-			Err(ErrorMessage)
-		},
-	}
+	Ok(json!({ "success": false, "error": "RestoreTreeViewState method not implemented" }))
 }
