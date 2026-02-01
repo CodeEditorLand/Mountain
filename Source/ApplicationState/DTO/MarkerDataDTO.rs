@@ -16,16 +16,14 @@
 //! - RelatedInformation: Related diagnostic information
 //! - Tags: Additional marker tags (deprecated, unnecessary)
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// Maximum message length for a marker
-const MAX_MARKER_MESSAGE_LENGTH: usize = 10_000;
+const MAX_MARKER_MESSAGE_LENGTH:usize = 10_000;
 
 /// Maximum source string length
-const MAX_SOURCE_LENGTH: usize = 256;
+const MAX_SOURCE_LENGTH:usize = 256;
 
 /// Marker severity levels (aligned with VS Code)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,7 +70,7 @@ pub struct MarkerDataDTO {
 
 	/// Diagnostic code for quick fix lookup (string or object)
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub Code: Option<Value>,
+	pub Code:Option<Value>,
 
 	/// Document version marker is associated with
 	#[serde(skip_serializing_if = "Option::is_none")]
@@ -80,11 +78,11 @@ pub struct MarkerDataDTO {
 
 	/// Related diagnostic information
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub RelatedInformation: Option<Value>,
+	pub RelatedInformation:Option<Value>,
 
 	/// Additional marker tags (deprecated, unnecessary)
 	#[serde(skip_serializing_if = "Option::is_none")]
-	pub Tags: Option<Vec<u32>>,
+	pub Tags:Option<Vec<u32>>,
 }
 
 impl MarkerDataDTO {
@@ -100,8 +98,14 @@ impl MarkerDataDTO {
 	///
 	/// # Returns
 	/// Result containing the DTO or validation error
-	pub fn New(Severity:u32, Message:String, StartLineNumber:u32, StartColumn:u32,
-		EndLineNumber:u32, EndColumn:u32) -> Result<Self, String> {
+	pub fn New(
+		Severity:u32,
+		Message:String,
+		StartLineNumber:u32,
+		StartColumn:u32,
+		EndLineNumber:u32,
+		EndColumn:u32,
+	) -> Result<Self, String> {
 		// Validate severity range
 		if Severity > 8 || Severity == 0 {
 			return Err("Invalid severity value: must be 1, 2, 4, or 8".to_string());
@@ -129,11 +133,11 @@ impl MarkerDataDTO {
 			StartColumn,
 			EndLineNumber,
 			EndColumn,
-			Source: None,
-			Code: None,
-			ModelVersionIdentifier: None,
-			RelatedInformation: None,
-			Tags: None,
+			Source:None,
+			Code:None,
+			ModelVersionIdentifier:None,
+			RelatedInformation:None,
+			Tags:None,
 		})
 	}
 
@@ -194,12 +198,12 @@ impl MarkerDataDTO {
 	/// New MarkerDataDTO configured as an error
 	pub fn Error(Message:String, LineNumber:u32, Column:u32) -> Self {
 		Self {
-			Severity: MarkerSeverity::Error as u32,
+			Severity:MarkerSeverity::Error as u32,
 			Message,
-			StartLineNumber: LineNumber,
-			StartColumn: Column,
-			EndLineNumber: LineNumber,
-			EndColumn: Column,
+			StartLineNumber:LineNumber,
+			StartColumn:Column,
+			EndLineNumber:LineNumber,
+			EndColumn:Column,
 			..Default::default()
 		}
 	}
@@ -215,12 +219,12 @@ impl MarkerDataDTO {
 	/// New MarkerDataDTO configured as a warning
 	pub fn Warning(Message:String, LineNumber:u32, Column:u32) -> Self {
 		Self {
-			Severity: MarkerSeverity::Warning as u32,
+			Severity:MarkerSeverity::Warning as u32,
 			Message,
-			StartLineNumber: LineNumber,
-			StartColumn: Column,
-			EndLineNumber: LineNumber,
-			EndColumn: Column,
+			StartLineNumber:LineNumber,
+			StartColumn:Column,
+			EndLineNumber:LineNumber,
+			EndColumn:Column,
 			..Default::default()
 		}
 	}

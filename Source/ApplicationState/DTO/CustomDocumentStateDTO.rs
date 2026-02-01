@@ -13,8 +13,6 @@
 //! - BackupIdentifier: Optional backup file reference
 //! - Edits: Version tracking and edit history map
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
@@ -23,13 +21,13 @@ use url::Url;
 use crate::ApplicationState::Internal::URLSerializationHelper;
 
 /// Maximum length for ViewType string to prevent allocation attacks
-const MAX_VIEW_TYPE_LENGTH: usize = 256;
+const MAX_VIEW_TYPE_LENGTH:usize = 256;
 
 /// Maximum length for SideCarIdentifier string
-const MAX_SIDECAR_IDENTIFIER_LENGTH: usize = 128;
+const MAX_SIDECAR_IDENTIFIER_LENGTH:usize = 128;
 
 /// Maximum number of edits to track per document
-const MAX_EDITS_PER_DOCUMENT: usize = 1000;
+const MAX_EDITS_PER_DOCUMENT:usize = 1000;
 
 /// A struct that holds the state for a document being handled by a custom
 /// editor. This is stored in `ApplicationState` to track the lifecycle of
@@ -82,7 +80,10 @@ impl CustomDocumentStateDTO {
 
 		// Validate SideCarIdentifier length
 		if SideCarIdentifier.len() > MAX_SIDECAR_IDENTIFIER_LENGTH {
-			return Err(format!("SideCarIdentifier exceeds maximum length of {} bytes", MAX_SIDECAR_IDENTIFIER_LENGTH));
+			return Err(format!(
+				"SideCarIdentifier exceeds maximum length of {} bytes",
+				MAX_SIDECAR_IDENTIFIER_LENGTH
+			));
 		}
 
 		// Ensure URI is not empty
@@ -95,8 +96,8 @@ impl CustomDocumentStateDTO {
 			ViewType,
 			SideCarIdentifier,
 			IsEditable,
-			BackupIdentifier: None,
-			Edits: HashMap::new(),
+			BackupIdentifier:None,
+			Edits:HashMap::new(),
 		})
 	}
 
@@ -118,14 +119,10 @@ impl CustomDocumentStateDTO {
 	}
 
 	/// Clears all edit history for this document.
-	pub fn ClearEdits(&mut self) {
-		self.Edits.clear();
-	}
+	pub fn ClearEdits(&mut self) { self.Edits.clear(); }
 
 	/// Returns the count of edits tracked for this document.
-	pub fn GetEditCount(&self) -> usize {
-		self.Edits.len()
-	}
+	pub fn GetEditCount(&self) -> usize { self.Edits.len() }
 }
 
 #[cfg(test)]
@@ -135,12 +132,8 @@ mod tests {
 	#[test]
 	fn test_creation_success() {
 		let URI = Url::parse("file:///test/document.md").unwrap();
-		let dto = CustomDocumentStateDTO::New(
-			URI.clone(),
-			"markdown.editor".to_string(),
-			"sidecar-123".to_string(),
-			true
-		);
+		let dto =
+			CustomDocumentStateDTO::New(URI.clone(), "markdown.editor".to_string(), "sidecar-123".to_string(), true);
 		assert!(dto.is_ok());
 		assert_eq!(dto.unwrap().ViewType, "markdown.editor");
 	}
@@ -149,12 +142,7 @@ mod tests {
 	fn test_invalid_view_type_length() {
 		let URI = Url::parse("file:///test/document.md").unwrap();
 		let LongViewType = "a".repeat(257);
-		let dto = CustomDocumentStateDTO::New(
-			URI,
-			LongViewType,
-			"sidecar-123".to_string(),
-			true
-		);
+		let dto = CustomDocumentStateDTO::New(URI, LongViewType, "sidecar-123".to_string(), true);
 		assert!(dto.is_err());
 	}
 }

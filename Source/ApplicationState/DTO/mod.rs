@@ -8,8 +8,6 @@
 //! # FIELDS
 //! - Re-exports all DTO modules for application state components
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 // --- Module Declarations (alphabetical) ---
 pub mod CustomDocumentStateDTO;
 

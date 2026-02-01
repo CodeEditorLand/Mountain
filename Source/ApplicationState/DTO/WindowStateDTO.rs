@@ -9,19 +9,16 @@
 /// - IsFocused: Window focus state
 /// - IsFullScreen: Fullscreen mode state
 /// - ZoomLevel: Window zoom level
-
-#![allow(non_snake_case, non_camel_case_types)]
-
 use serde::{Deserialize, Serialize};
 
 /// Minimum allowed zoom level
-const MIN_ZOOM_LEVEL: f64 = -20.0;
+const MIN_ZOOM_LEVEL:f64 = -20.0;
 
 /// Maximum allowed zoom level
-const MAX_ZOOM_LEVEL: f64 = 20.0;
+const MAX_ZOOM_LEVEL:f64 = 20.0;
 
 /// Default zoom level
-const DEFAULT_ZOOM_LEVEL: f64 = 0.0;
+const DEFAULT_ZOOM_LEVEL:f64 = 0.0;
 
 /// Holds information about the state of the main application window, such as
 /// whether it is focused or fullscreen, and its current zoom level.
@@ -54,15 +51,13 @@ impl WindowStateDTO {
 	pub fn New(IsFocused:bool, IsFullScreen:bool, ZoomLevel:f64) -> Result<Self, String> {
 		// Validate zoom level range
 		if ZoomLevel < MIN_ZOOM_LEVEL || ZoomLevel > MAX_ZOOM_LEVEL {
-			return Err(format!("Zoom level must be between {} and {}, got {}", MIN_ZOOM_LEVEL,
-				MAX_ZOOM_LEVEL, ZoomLevel));
+			return Err(format!(
+				"Zoom level must be between {} and {}, got {}",
+				MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL, ZoomLevel
+			));
 		}
 
-		Ok(Self {
-			IsFocused,
-			IsFullScreen,
-			ZoomLevel,
-		})
+		Ok(Self { IsFocused, IsFullScreen, ZoomLevel })
 	}
 
 	/// Sets the zoom level with validation.
@@ -74,8 +69,10 @@ impl WindowStateDTO {
 	/// Result indicating success or error if out of range
 	pub fn SetZoomLevel(&mut self, ZoomLevel:f64) -> Result<(), String> {
 		if ZoomLevel < MIN_ZOOM_LEVEL || ZoomLevel > MAX_ZOOM_LEVEL {
-			return Err(format!("Zoom level must be between {} and {}, got {}", MIN_ZOOM_LEVEL,
-				MAX_ZOOM_LEVEL, ZoomLevel));
+			return Err(format!(
+				"Zoom level must be between {} and {}, got {}",
+				MIN_ZOOM_LEVEL, MAX_ZOOM_LEVEL, ZoomLevel
+			));
 		}
 
 		self.ZoomLevel = ZoomLevel;
@@ -107,15 +104,11 @@ impl WindowStateDTO {
 	}
 
 	/// Resets the zoom level to default.
-	pub fn ResetZoom(&mut self) {
-		self.ZoomLevel = DEFAULT_ZOOM_LEVEL;
-	}
+	pub fn ResetZoom(&mut self) { self.ZoomLevel = DEFAULT_ZOOM_LEVEL; }
 
 	/// Gets the current zoom level as a percentage.
 	/// A zoom level of 0 corresponds to 100%.
-	pub fn GetZoomPercent(&self) -> f64 {
-		100.0 + (self.ZoomLevel * 10.0)
-	}
+	pub fn GetZoomPercent(&self) -> f64 { 100.0 + (self.ZoomLevel * 10.0) }
 }
 
 fn DefaultZoomLevel() -> f64 { DEFAULT_ZOOM_LEVEL }

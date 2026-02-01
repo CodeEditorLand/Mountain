@@ -20,22 +20,20 @@
 //! - ActivationEvents: Activation event triggers
 //! - Contributes: Extension contributions configuration
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// Maximum length for extension name
-const MAX_EXTENSION_NAME_LENGTH: usize = 128;
+const MAX_EXTENSION_NAME_LENGTH:usize = 128;
 
 /// Maximum length for version string
-const MAX_VERSION_LENGTH: usize = 64;
+const MAX_VERSION_LENGTH:usize = 64;
 
 /// Maximum length for publisher name
-const MAX_PUBLISHER_LENGTH: usize = 64;
+const MAX_PUBLISHER_LENGTH:usize = 64;
 
 /// Maximum number of activation events
-const MAX_ACTIVATION_EVENTS: usize = 100;
+const MAX_ACTIVATION_EVENTS:usize = 100;
 
 /// Represents the deserialized content of an extension's `package.json` file,
 /// augmented with location information and other metadata.
@@ -110,7 +108,10 @@ impl ExtensionDescriptionStateDTO {
 	pub fn Validate(&self) -> Result<(), String> {
 		// Validate Name length
 		if self.Name.len() > MAX_EXTENSION_NAME_LENGTH {
-			return Err(format!("Extension name exceeds maximum length of {} bytes", MAX_EXTENSION_NAME_LENGTH));
+			return Err(format!(
+				"Extension name exceeds maximum length of {} bytes",
+				MAX_EXTENSION_NAME_LENGTH
+			));
 		}
 
 		// Validate Version length
@@ -146,18 +147,18 @@ impl ExtensionDescriptionStateDTO {
 	pub fn CreateMinimal(Identifier:Value, Name:String, Version:String, Publisher:String) -> Result<Self, String> {
 		let Description = Self {
 			Identifier,
-			Name: Name.clone(),
-			Version: Version.clone(),
-			Publisher: Publisher.clone(),
-			Engines: serde_json::json!({ "vscode": "*" }),
-			Main: None,
-			Browser: None,
-			ModuleType: None,
-			IsBuiltin: false,
-			IsUnderDevelopment: false,
-			ExtensionLocation: serde_json::json!(null),
-			ActivationEvents: None,
-			Contributes: None,
+			Name:Name.clone(),
+			Version:Version.clone(),
+			Publisher:Publisher.clone(),
+			Engines:serde_json::json!({ "vscode": "*" }),
+			Main:None,
+			Browser:None,
+			ModuleType:None,
+			IsBuiltin:false,
+			IsUnderDevelopment:false,
+			ExtensionLocation:serde_json::json!(null),
+			ActivationEvents:None,
+			Contributes:None,
 		};
 
 		Description.Validate()?;

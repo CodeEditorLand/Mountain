@@ -15,28 +15,25 @@
 /// - ExtensionIdentifier: Owner extension ID
 /// - IsActive: Focus state flag
 /// - IsVisible: Visibility state flag
-
-#![allow(non_snake_case, non_camel_case_types)]
-
-use Common::WebView::DTO::WebViewContentOptionsDTO::WebViewContentOptionsDTO;
+use CommonLibrary::WebView::DTO::WebViewContentOptionsDTO::WebViewContentOptionsDTO;
 use serde::{Deserialize, Serialize};
 // For PanelOptions, etc.
 use serde_json::Value;
 
 /// Maximum handle length (UUID string)
-const MAX_HANDLE_LENGTH: usize = 128;
+const MAX_HANDLE_LENGTH:usize = 128;
 
 /// Maximum view type length
-const MAX_VIEW_TYPE_LENGTH: usize = 128;
+const MAX_VIEW_TYPE_LENGTH:usize = 128;
 
 /// Maximum sidecar identifier length
-const MAX_SIDECAR_IDENTIFIER_LENGTH: usize = 128;
+const MAX_SIDECAR_IDENTIFIER_LENGTH:usize = 128;
 
 /// Maximum extension identifier length
-const MAX_EXTENSION_IDENTIFIER_LENGTH: usize = 128;
+const MAX_EXTENSION_IDENTIFIER_LENGTH:usize = 128;
 
 /// Maximum title length
-const MAX_TITLE_LENGTH: usize = 256;
+const MAX_TITLE_LENGTH:usize = 256;
 
 /// A struct that holds the complete state for a single WebView panel instance.
 /// This is stored in `ApplicationState` to track all active WebViews managed by
@@ -91,8 +88,15 @@ impl WebViewStateDTO {
 	///
 	/// # Returns
 	/// Result containing the DTO or validation error
-	pub fn New(Handle:String, ViewType:String, Title:String, ContentOptions:WebViewContentOptionsDTO,
-		PanelOptions:Value, SideCarIdentifier:String, ExtensionIdentifier:String) -> Result<Self, String> {
+	pub fn New(
+		Handle:String,
+		ViewType:String,
+		Title:String,
+		ContentOptions:WebViewContentOptionsDTO,
+		PanelOptions:Value,
+		SideCarIdentifier:String,
+		ExtensionIdentifier:String,
+	) -> Result<Self, String> {
 		// Validate handle length
 		if Handle.len() > MAX_HANDLE_LENGTH {
 			return Err(format!("Handle exceeds maximum length of {} bytes", MAX_HANDLE_LENGTH));
@@ -110,14 +114,18 @@ impl WebViewStateDTO {
 
 		// Validate sidecar identifier length
 		if SideCarIdentifier.len() > MAX_SIDECAR_IDENTIFIER_LENGTH {
-			return Err(format!("SideCar identifier exceeds maximum length of {} bytes",
-				MAX_SIDECAR_IDENTIFIER_LENGTH));
+			return Err(format!(
+				"SideCar identifier exceeds maximum length of {} bytes",
+				MAX_SIDECAR_IDENTIFIER_LENGTH
+			));
 		}
 
 		// Validate extension identifier length
 		if ExtensionIdentifier.len() > MAX_EXTENSION_IDENTIFIER_LENGTH {
-			return Err(format!("Extension identifier exceeds maximum length of {} bytes",
-				MAX_EXTENSION_IDENTIFIER_LENGTH));
+			return Err(format!(
+				"Extension identifier exceeds maximum length of {} bytes",
+				MAX_EXTENSION_IDENTIFIER_LENGTH
+			));
 		}
 
 		Ok(Self {
@@ -128,8 +136,8 @@ impl WebViewStateDTO {
 			PanelOptions,
 			SideCarIdentifier,
 			ExtensionIdentifier,
-			IsActive: false,
-			IsVisible: false,
+			IsActive:false,
+			IsVisible:false,
 		})
 	}
 
@@ -137,17 +145,13 @@ impl WebViewStateDTO {
 	///
 	/// # Arguments
 	/// * `IsActive` - New focus state
-	pub fn SetFocus(&mut self, IsActive:bool) {
-		self.IsActive = IsActive;
-	}
+	pub fn SetFocus(&mut self, IsActive:bool) { self.IsActive = IsActive; }
 
 	/// Updates the visibility state of the WebView.
 	///
 	/// # Arguments
 	/// * `IsVisible` - New visibility state
-	pub fn SetVisibility(&mut self, IsVisible:bool) {
-		self.IsVisible = IsVisible;
-	}
+	pub fn SetVisibility(&mut self, IsVisible:bool) { self.IsVisible = IsVisible; }
 
 	/// Updates the WebView title with validation.
 	///
@@ -166,7 +170,5 @@ impl WebViewStateDTO {
 	}
 
 	/// Checks if the WebView is currently displayed (visible and focused).
-	pub fn IsDisplayed(&self) -> bool {
-		self.IsVisible || self.IsActive
-	}
+	pub fn IsDisplayed(&self) -> bool { self.IsVisible || self.IsActive }
 }

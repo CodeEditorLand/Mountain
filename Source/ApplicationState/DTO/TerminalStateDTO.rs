@@ -18,11 +18,9 @@
 /// - PTYInputTransmitter: PTY input channel sender
 /// - ReaderTaskHandle: Output reader task handle
 /// - ProcessWaitHandle: Process wait task handle
-
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
+use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::{
 	sync::{Mutex as TokioMutex, mpsc as TokioMPSC},
@@ -30,24 +28,24 @@ use tokio::{
 };
 
 /// Maximum terminal name length
-const MAX_TERMINAL_NAME_LENGTH: usize = 128;
+const MAX_TERMINAL_NAME_LENGTH:usize = 128;
 
 /// Maximum shell path length
-const MAX_SHELL_PATH_LENGTH: usize = 1024;
+const MAX_SHELL_PATH_LENGTH:usize = 1024;
 
 /// Maximum number of shell arguments
-const MAX_SHELL_ARGUMENTS: usize = 100;
+const MAX_SHELL_ARGUMENTS:usize = 100;
 
 /// Maximum argument string length
-const MAX_ARGUMENT_LENGTH: usize = 4096;
+const MAX_ARGUMENT_LENGTH:usize = 4096;
 
 /// Maximum number of environment variables
-const MAX_ENV_VARS: usize = 1000;
+const MAX_ENV_VARS:usize = 1000;
 
 /// Holds the complete state and runtime resources for a single pseudo-terminal
 /// (PTY) instance. This includes configuration, process identifiers, and
 /// handles for I/O tasks.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TerminalStateDTO {
 	// --- Identifiers ---
 	/// Unique terminal identifier
@@ -102,11 +100,13 @@ impl TerminalStateDTO {
 	///
 	/// # Returns
 	/// Result containing the DTO or validation error
-	pub fn Create(Identifier:u64, Name:String, OptionsValue:&Value, DefaultShellPath:String)
-		-> Result<Self, String> {
+	pub fn Create(Identifier:u64, Name:String, OptionsValue:&Value, DefaultShellPath:String) -> Result<Self, String> {
 		// Validate name length
 		if Name.len() > MAX_TERMINAL_NAME_LENGTH {
-			return Err(format!("Terminal name exceeds maximum length of {} bytes", MAX_TERMINAL_NAME_LENGTH));
+			return Err(format!(
+				"Terminal name exceeds maximum length of {} bytes",
+				MAX_TERMINAL_NAME_LENGTH
+			));
 		}
 
 		let ShellPath = OptionsValue
@@ -122,10 +122,7 @@ impl TerminalStateDTO {
 
 		let ShellArguments = match OptionsValue.get("shellArgs") {
 			Some(Value::Array(Array)) => {
-				let Args:Vec<String> = Array.iter()
-					.filter_map(Value::as_str)
-					.map(String::from)
-					.collect();
+				let Args:Vec<String> = Array.iter().filter_map(Value::as_str).map(String::from).collect();
 
 				// Validate argument count
 				if Args.len() > MAX_SHELL_ARGUMENTS {
@@ -135,12 +132,15 @@ impl TerminalStateDTO {
 				// Validate individual argument lengths
 				for Arg in &Args {
 					if Arg.len() > MAX_ARGUMENT_LENGTH {
-						return Err(format!("Shell argument exceeds maximum length of {} bytes", MAX_ARGUMENT_LENGTH));
+						return Err(format!(
+							"Shell argument exceeds maximum length of {} bytes",
+							MAX_ARGUMENT_LENGTH
+						));
 					}
 				}
 
 				Args
-			}
+			},
 
 			_ => Vec::new(),
 		};
@@ -166,14 +166,10 @@ impl TerminalStateDTO {
 	}
 
 	/// Checks if the terminal process is currently running.
-	pub fn IsRunning(&self) -> bool {
-		self.OSProcessIdentifier.is_some()
-	}
+	pub fn IsRunning(&self) -> bool { self.OSProcessIdentifier.is_some() }
 
 	/// Checks if the terminal has an active PTY input channel.
-	pub fn HasInputChannel(&self) -> bool {
-		self.PTYInputTransmitter.is_some()
-	}
+	pub fn HasInputChannel(&self) -> bool { self.PTYInputTransmitter.is_some() }
 
 	/// Returns the working directory as a string, or default if not set.
 	pub fn GetWorkingDirectory(&self) -> String {

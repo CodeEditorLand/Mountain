@@ -12,15 +12,12 @@
 /// - SideCarIdentifier: Host sidecar process ID
 /// - ExtensionIdentifier: Contributor extension ID
 /// - Options: Provider-specific options
-
-#![allow(non_snake_case, non_camel_case_types)]
-
-use Common::LanguageFeature::DTO::ProviderType::ProviderType;
+use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// Maximum sidecar identifier length
-const MAX_SIDECAR_IDENTIFIER_LENGTH: usize = 128;
+const MAX_SIDECAR_IDENTIFIER_LENGTH:usize = 128;
 
 /// Stores the registration details for a single language feature provider
 /// contributed by an extension. This is stored in `ApplicationState` to track
@@ -62,11 +59,19 @@ impl ProviderRegistrationDTO {
 	///
 	/// # Returns
 	/// Result containing the DTO or validation error
-	pub fn New(Handle:u32, ProviderType:ProviderType, Selector:Value,
-		SideCarIdentifier:String, ExtensionIdentifier:Value) -> Result<Self, String> {
+	pub fn New(
+		Handle:u32,
+		ProviderType:ProviderType,
+		Selector:Value,
+		SideCarIdentifier:String,
+		ExtensionIdentifier:Value,
+	) -> Result<Self, String> {
 		// Validate sidecar identifier length
 		if SideCarIdentifier.len() > MAX_SIDECAR_IDENTIFIER_LENGTH {
-			return Err(format!("SideCarIdentifier exceeds maximum length of {} bytes", MAX_SIDECAR_IDENTIFIER_LENGTH));
+			return Err(format!(
+				"SideCarIdentifier exceeds maximum length of {} bytes",
+				MAX_SIDECAR_IDENTIFIER_LENGTH
+			));
 		}
 
 		Ok(Self {
@@ -75,7 +80,7 @@ impl ProviderRegistrationDTO {
 			Selector,
 			SideCarIdentifier,
 			ExtensionIdentifier,
-			Options: None,
+			Options:None,
 		})
 	}
 
@@ -83,9 +88,7 @@ impl ProviderRegistrationDTO {
 	///
 	/// # Arguments
 	/// * `Options` - New options value
-	pub fn UpdateOptions(&mut self, Options:Value) {
-		self.Options = Some(Options);
-	}
+	pub fn UpdateOptions(&mut self, Options:Value) { self.Options = Some(Options); }
 
 	/// Checks if this provider matches a given document selector.
 	///
@@ -100,7 +103,8 @@ impl ProviderRegistrationDTO {
 		// A full implementation would traverse the selector value
 		if let Some(SelectorObj) = self.Selector.as_object() {
 			if let Some(Languages) = SelectorObj.get("language").and_then(Value::as_array) {
-				return Languages.iter()
+				return Languages
+					.iter()
 					.any(|Lang| Lang.as_str().map_or(false, |L| L == LanguageIdentifier));
 			}
 		}

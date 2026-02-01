@@ -9,19 +9,16 @@
 /// - URI: Folder resource URI
 /// - Name: Display name
 /// - Index: Zero-based position in workspace
-
-#![allow(non_snake_case, non_camel_case_types)]
-
 use serde::{Deserialize, Serialize};
 use url::Url;
 
 use crate::ApplicationState::Internal::URLSerializationHelper;
 
 /// Maximum folder name length
-const MAX_FOLDER_NAME_LENGTH: usize = 256;
+const MAX_FOLDER_NAME_LENGTH:usize = 256;
 
 /// Maximum number of folders in a workspace
-const MAX_WORKSPACE_FOLDERS: usize = 100;
+const MAX_WORKSPACE_FOLDERS:usize = 100;
 
 /// Represents a single folder that is part of the current workspace.
 /// Compatible with VS Code's WorkspaceFolder interface.
@@ -58,13 +55,18 @@ impl WorkSpaceFolderStateDTO {
 
 		// Validate name length
 		if Name.len() > MAX_FOLDER_NAME_LENGTH {
-			return Err(format!("Folder name exceeds maximum length of {} bytes", MAX_FOLDER_NAME_LENGTH));
+			return Err(format!(
+				"Folder name exceeds maximum length of {} bytes",
+				MAX_FOLDER_NAME_LENGTH
+			));
 		}
 
 		// Validate index range
 		if Index >= MAX_WORKSPACE_FOLDERS {
-			return Err(format!("Folder index {} exceeds maximum workspace folders count of {}", Index,
-				MAX_WORKSPACE_FOLDERS));
+			return Err(format!(
+				"Folder index {} exceeds maximum workspace folders count of {}",
+				Index, MAX_WORKSPACE_FOLDERS
+			));
 		}
 
 		Ok(Self { URI, Name, Index })
@@ -79,7 +81,10 @@ impl WorkSpaceFolderStateDTO {
 	/// Result indicating success or error if name too long
 	pub fn UpdateName(&mut self, Name:String) -> Result<(), String> {
 		if Name.len() > MAX_FOLDER_NAME_LENGTH {
-			return Err(format!("Folder name exceeds maximum length of {} bytes", MAX_FOLDER_NAME_LENGTH));
+			return Err(format!(
+				"Folder name exceeds maximum length of {} bytes",
+				MAX_FOLDER_NAME_LENGTH
+			));
 		}
 
 		self.Name = Name;
@@ -102,9 +107,7 @@ impl WorkSpaceFolderStateDTO {
 	}
 
 	/// Checks if this is the root folder (index 0).
-	pub fn IsRoot(&self) -> bool {
-		self.Index == 0
-	}
+	pub fn IsRoot(&self) -> bool { self.Index == 0 }
 
 	/// Creates a new instance from a file path URI.
 	///
@@ -115,8 +118,7 @@ impl WorkSpaceFolderStateDTO {
 	/// # Returns
 	/// Result containing the DTO or validation error
 	pub fn FromPath(FolderPath:&str, Index:usize) -> Result<Self, String> {
-		let URI = Url::parse(FolderPath)
-			.map_err(|Error| format!("Invalid folder path: {}", Error))?;
+		let URI = Url::parse(FolderPath).map_err(|Error| format!("Invalid folder path: {}", Error))?;
 
 		if !URI.is_dir() && !FolderPath.ends_with('/') {
 			return Err("URI does not represent a directory".to_string());

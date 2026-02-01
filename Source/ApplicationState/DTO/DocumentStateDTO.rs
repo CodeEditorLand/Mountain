@@ -15,31 +15,27 @@
 //! - Encoding: File encoding (e.g., utf8)
 //! - VersionIdentifier: Internal version for host tracking
 //!
-//! TODO (Mountain→Air Split): If Air implements a background document sync service,
-//! consider delegating delta change validation or conflict resolution to Air.
-//! For now, Mountain handles this synchronously to ensure UI responsiveness.
-//!
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//! TODO (Mountain→Air Split): If Air implements a background document sync
+//! service, consider delegating delta change validation or conflict resolution
+//! to Air. For now, Mountain handles this synchronously to ensure UI
+//! responsiveness.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
-use Common::Error::CommonError::CommonError;
+use CommonLibrary::Error::CommonError::CommonError;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use super::RPCModelContentChangeDTO::RPCModelContentChangeDTO;
+use super::RPCModelContentChangeDTO::{RPCModelContentChangeDTO, RPCRangeDTO};
 use crate::ApplicationState::Internal::{AnalyzeTextLinesAndEOL, URLSerializationHelper};
 
 /// Maximum line count for a document to prevent memory exhaustion
-const MAX_DOCUMENT_LINES: usize = 1_000_000;
+const MAX_DOCUMENT_LINES:usize = 1_000_000;
 
 /// Maximum line length to prevent line-based denial of service
-const MAX_LINE_LENGTH: usize = 100_000;
+const MAX_LINE_LENGTH:usize = 100_000;
 
 /// Maximum language identifier string length
-const MAX_LANGUAGE_ID_LENGTH: usize = 128;
+const MAX_LANGUAGE_ID_LENGTH:usize = 128;
 
 /// Represents the complete in-memory state of a single text document.
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -73,7 +69,8 @@ pub struct DocumentStateDTO {
 }
 
 impl DocumentStateDTO {
-	/// Creates a new `DocumentStateDTO` from its initial content with validation.
+	/// Creates a new `DocumentStateDTO` from its initial content with
+	/// validation.
 	///
 	/// # Arguments
 	/// * `URI` - The document resource URI
@@ -93,8 +90,8 @@ impl DocumentStateDTO {
 		// Validate URI is not empty
 		if URI.as_str().is_empty() {
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "URI".into(),
-				Reason: "URI cannot be empty".into(),
+				ArgumentName:"URI".into(),
+				Reason:"URI cannot be empty".into(),
 			});
 		}
 
@@ -103,8 +100,8 @@ impl DocumentStateDTO {
 		// Validate language identifier length
 		if LanguageID.len() > MAX_LANGUAGE_ID_LENGTH {
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "LanguageIdentifier".into(),
-				Reason: format!("Language identifier exceeds maximum length of {} bytes", MAX_LANGUAGE_ID_LENGTH),
+				ArgumentName:"LanguageIdentifier".into(),
+				Reason:format!("Language identifier exceeds maximum length of {} bytes", MAX_LANGUAGE_ID_LENGTH),
 			});
 		}
 
@@ -113,8 +110,8 @@ impl DocumentStateDTO {
 		// Validate document line count
 		if Lines.len() > MAX_DOCUMENT_LINES {
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "Content".into(),
-				Reason: format!("Document exceeds maximum line count of {}", MAX_DOCUMENT_LINES),
+				ArgumentName:"Content".into(),
+				Reason:format!("Document exceeds maximum line count of {}", MAX_DOCUMENT_LINES),
 			});
 		}
 
@@ -122,8 +119,8 @@ impl DocumentStateDTO {
 		for (Index, Line) in Lines.iter().enumerate() {
 			if Line.len() > MAX_LINE_LENGTH {
 				return Err(CommonError::InvalidArgument {
-					ArgumentName: "Content".into(),
-					Reason: format!("Line {} exceeds maximum length of {} bytes", Index + 1, MAX_LINE_LENGTH),
+					ArgumentName:"Content".into(),
+					Reason:format!("Line {} exceeds maximum length of {} bytes", Index + 1, MAX_LINE_LENGTH),
 				});
 			}
 		}
@@ -151,8 +148,16 @@ impl DocumentStateDTO {
 
 	/// Creates a new `DocumentStateDTO` without validation for internal use.
 	/// This should only be called with trusted data sources.
-	pub fn CreateUnsafe(URI:Url, LanguageIdentifier:String, Lines:Vec<String>, EOL:String,
-		IsDirty:bool, Encoding:String, Version:i64, VersionIdentifier:i64) -> Self {
+	pub fn CreateUnsafe(
+		URI:Url,
+		LanguageIdentifier:String,
+		Lines:Vec<String>,
+		EOL:String,
+		IsDirty:bool,
+		Encoding:String,
+		Version:i64,
+		VersionIdentifier:i64,
+	) -> Self {
 		Self {
 			URI,
 			LanguageIdentifier,
@@ -183,11 +188,7 @@ impl DocumentStateDTO {
 
 		// Attempt to deserialize as an array of delta changes first.
 		if let Ok(RPCChange) = serde_json::from_value::<Vec<RPCModelContentChangeDTO>>(ChangesValue.clone()) {
-			log::trace!(
-				"Applying {} delta change(s) to document {}",
-				RPCChange.len(),
-				self.URI
-			);
+			log::trace!("Applying {} delta change(s) to document {}", RPCChange.len(), self.URI);
 
 			self.Lines = ApplyDeltaChanges(&self.Lines, &self.EOL, &RPCChange);
 		} else if let Some(FullText) = ChangesValue.as_str() {
@@ -222,7 +223,8 @@ impl DocumentStateDTO {
 /// Applies delta changes to the document text and returns the updated lines.
 ///
 /// This function:
-/// 1. Sorts changes in reverse order (by start position) to prevent offset corruption
+/// 1. Sorts changes in reverse order (by start position) to prevent offset
+///    corruption
 /// 2. Converts line/column positions to byte offsets in the full text
 /// 3. Applies each change (delete range + insert new text)
 /// 4. Splits the result back into lines
@@ -246,12 +248,10 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 	}
 
 	// Sort changes in reverse order of position to prevent offset corruption
-	// When applying multiple changes, earlier changes shift positions for later changes.
-	// By applying from end to beginning, all offsets remain valid.
+	// When applying multiple changes, earlier changes shift positions for later
+	// changes. By applying from end to beginning, all offsets remain valid.
 	let mut SortedChanges:Vec<&RPCModelContentChangeDTO> = RPCChange.iter().collect();
-	SortedChanges.sort_by(|a, b| {
-		CMP_Range_Position(&b.Range, &a.Range)
-	});
+	SortedChanges.sort_by(|a, b| CMP_Range_Position(&b.Range, &a.Range));
 
 	// Apply each change to the text
 	for Change in SortedChanges {
@@ -263,7 +263,9 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 		if StartOffset > EndOffset {
 			log::error!(
 				"[ApplyDeltaChanges] Invalid range: start ({}) > end ({}) for text length {}",
-				StartOffset, EndOffset, ResultText.len()
+				StartOffset,
+				EndOffset,
+				ResultText.len()
 			);
 			continue;
 		}
@@ -272,7 +274,9 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 		if StartOffset > TextLength || EndOffset > TextLength {
 			log::error!(
 				"[ApplyDeltaChanges] Out of bounds: start ({}) or end ({}) exceeds text length {}",
-				StartOffset, EndOffset, TextLength
+				StartOffset,
+				EndOffset,
+				TextLength
 			);
 			continue;
 		}
@@ -280,11 +284,9 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 		// Remove old text and insert new text
 		// Safe slice operation: validated offsets above
 		let OldText = ResultText.as_bytes();
-		ResultText = String::from_utf8_lossy(&[
-			&OldText[..StartOffset],
-			Change.Text.as_bytes(),
-			&OldText[EndOffset..],
-		].concat()).into_owned();
+		ResultText =
+			String::from_utf8_lossy(&[&OldText[..StartOffset], Change.Text.as_bytes(), &OldText[EndOffset..]].concat())
+				.into_owned();
 	}
 
 	// Re-split the result into lines
@@ -312,7 +314,8 @@ fn PositionToOffset(Text:&str, EOL:&str, LineNumber:&usize, Column:&usize) -> us
 	if *LineNumber < Lines.len() {
 		// Column is in character positions, convert to byte offset
 		let CurrentLine = Lines[*LineNumber];
-		let CharOffset = CurrentLine.char_indices()
+		let CharOffset = CurrentLine
+			.char_indices()
 			.nth(*Column)
 			.map_or(CurrentLine.len(), |(offset, _)| offset);
 		Offset += CharOffset;
@@ -322,7 +325,8 @@ fn PositionToOffset(Text:&str, EOL:&str, LineNumber:&usize, Column:&usize) -> us
 }
 
 /// Compares two RPC ranges to determine their order in the document.
-/// Returns negative if a comes before b, zero if equal, positive if a comes after b.
+/// Returns negative if a comes before b, zero if equal, positive if a comes
+/// after b.
 fn CMP_Range_Position(A:&RPCRangeDTO, B:&RPCRangeDTO) -> std::cmp::Ordering {
 	A.StartLineNumber
 		.cmp(&B.StartLineNumber)

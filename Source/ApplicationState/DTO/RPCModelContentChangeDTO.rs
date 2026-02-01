@@ -13,16 +13,13 @@
 /// - EndLineNumber: End line (0-based)
 /// - EndColumn: End column (0-based)
 /// - Text: Text to insert in change
-
-#![allow(non_snake_case, non_camel_case_types)]
-
 use serde::Deserialize;
 
 /// Maximum line number to prevent invalid ranges
-const MAX_LINE_NUMBER: usize = 1_000_000;
+const MAX_LINE_NUMBER:usize = 1_000_000;
 
 /// Maximum column number to prevent invalid ranges
-const MAX_COLUMN_NUMBER: usize = 1_000_000;
+const MAX_COLUMN_NUMBER:usize = 1_000_000;
 
 /// Represents a line and column-based range in a text document.
 /// Compatible with VS Code LSP position/range definitions.
@@ -53,8 +50,7 @@ impl RPCRangeDTO {
 	///
 	/// # Returns
 	/// Result containing the DTO or validation error
-	pub fn New(StartLineNumber:usize, StartColumn:usize, EndLineNumber:usize, EndColumn:usize)
-		-> Result<Self, String> {
+	pub fn New(StartLineNumber:usize, StartColumn:usize, EndLineNumber:usize, EndColumn:usize) -> Result<Self, String> {
 		// Validate line numbers
 		if StartLineNumber > MAX_LINE_NUMBER || EndLineNumber > MAX_LINE_NUMBER {
 			return Err(format!("Line numbers exceed maximum of {}", MAX_LINE_NUMBER));
@@ -75,18 +71,11 @@ impl RPCRangeDTO {
 			return Err("Start column cannot be greater than end column on the same line".to_string());
 		}
 
-		Ok(Self {
-			StartLineNumber,
-			StartColumn,
-			EndLineNumber,
-			EndColumn,
-		})
+		Ok(Self { StartLineNumber, StartColumn, EndLineNumber, EndColumn })
 	}
 
 	/// Checks if this is an empty range (start equals end).
-	pub fn IsEmpty(&self) -> bool {
-		self.StartLineNumber == self.EndLineNumber && self.StartColumn == self.EndColumn
-	}
+	pub fn IsEmpty(&self) -> bool { self.StartLineNumber == self.EndLineNumber && self.StartColumn == self.EndColumn }
 
 	/// Creates a range for inserting/replacing text at a specific position.
 	///
@@ -142,17 +131,11 @@ impl RPCModelContentChangeDTO {
 	}
 
 	/// Checks if this is a deletion operation (empty text).
-	pub fn IsDeletion(&self) -> bool {
-		self.Text.is_empty()
-	}
+	pub fn IsDeletion(&self) -> bool { self.Text.is_empty() }
 
 	/// Checks if this is an insertion operation (empty range).
-	pub fn IsInsertion(&self) -> bool {
-		self.Range.IsEmpty() && !self.Text.is_empty()
-	}
+	pub fn IsInsertion(&self) -> bool { self.Range.IsEmpty() && !self.Text.is_empty() }
 
 	/// Checks if this is a replacement operation (non-empty range and text).
-	pub fn IsReplacement(&self) -> bool {
-		!self.Range.IsEmpty() && !self.Text.is_empty()
-	}
+	pub fn IsReplacement(&self) -> bool { !self.Range.IsEmpty() && !self.Text.is_empty() }
 }

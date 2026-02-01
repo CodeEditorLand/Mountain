@@ -3,24 +3,22 @@
 //! # RESPONSIBILITY
 //! - Data transfer object for tree view state
 //! - In-memory state tracking (not serializable due to trait object)
-/// - Used by Mountain to track tree view provider instances
+//! - Used by Mountain to track tree view provider instances
 //!
 //! # FIELDS
-/// - ViewIdentifier: Unique tree view identifier
-/// - Provider: Native Rust provider reference
-/// - SideCarIdentifier: Extension sidecar host ID
-/// - CanSelectMany: Multi-selection support flag
-/// - HasHandleDrag: Drag-and-drop source support
-/// - HasHandleDrop: Drop target support
-/// - Message: Optional UI message
-/// - Title: Tree view title
-/// - Description: Optional description text
-
-#![allow(non_snake_case, non_camel_case_types)]
+//! - ViewIdentifier: Unique tree view identifier
+//! - Provider: Native Rust provider reference
+//! - SideCarIdentifier: Extension sidecar host ID
+//! - CanSelectMany: Multi-selection support flag
+//! - HasHandleDrag: Drag-and-drop source support
+//! - HasHandleDrop: Drop target support
+//! - Message: Optional UI message
+//! - Title: Tree view title
+//! - Description: Optional description text
 
 use std::sync::Arc;
 
-use Common::TreeView::TreeViewProvider::TreeViewProvider;
+use CommonLibrary::TreeView::TreeViewProvider::TreeViewProvider;
 
 /// Maximum view identifier length
 const MAX_VIEW_IDENTIFIER_LENGTH: usize = 128;
@@ -50,7 +48,6 @@ const MAX_DESCRIPTION_LENGTH: usize = 512;
 #[derive(Clone)]
 pub struct TreeViewStateDTO {
 	/// The unique identifier for this tree view.
-	#[serde(skip_serializing_if = "String::is_empty")]
 	pub ViewIdentifier:String,
 
 	/// A reference to the native provider, if one exists for this view.
@@ -59,7 +56,6 @@ pub struct TreeViewStateDTO {
 
 	/// The identifier of the sidecar process that hosts the provider logic.
 	/// This will be `Some` for extension-provided (proxied) tree views.
-	#[serde(skip_serializing_if = "Option::is_none")]
 	pub SideCarIdentifier:Option<String>,
 
 	/// Whether the tree view supports selecting multiple items.
@@ -72,15 +68,12 @@ pub struct TreeViewStateDTO {
 	pub HasHandleDrop:bool,
 
 	/// An optional message to display in the tree view's UI.
-	#[serde(skip_serializing_if = "Option::is_none")]
 	pub Message:Option<String>,
 
 	/// The title of the tree view.
-	#[serde(skip_serializing_if = "Option::is_none")]
 	pub Title:Option<String>,
 
 	/// An optional description that appears with the title.
-	#[serde(skip_serializing_if = "Option::is_none")]
 	pub Description:Option<String>,
 }
 

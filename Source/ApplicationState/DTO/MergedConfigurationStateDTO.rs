@@ -8,13 +8,12 @@
 //! # FIELDS
 //! - Data: Merged configuration JSON object from all sources
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-/// Maximum configuration depth to prevent stack overflow from deeply nested paths
-const MAX_CONFIGURATION_DEPTH: usize = 50;
+/// Maximum configuration depth to prevent stack overflow from deeply nested
+/// paths
+const MAX_CONFIGURATION_DEPTH:usize = 50;
 
 /// Represents the final, effective configuration after merging settings from
 /// all sources (default, user, workspace, folder). This merged view is what
@@ -48,7 +47,11 @@ impl MergedConfigurationStateDTO {
 		if let Some(Path) = Section {
 			let Depth = Path.matches('.').count();
 			if Depth > MAX_CONFIGURATION_DEPTH {
-				log::warn!("Configuration path depth {} exceeds maximum of {}", Depth, MAX_CONFIGURATION_DEPTH);
+				log::warn!(
+					"Configuration path depth {} exceeds maximum of {}",
+					Depth,
+					MAX_CONFIGURATION_DEPTH
+				);
 				return Value::Null;
 			}
 
@@ -73,7 +76,10 @@ impl MergedConfigurationStateDTO {
 	pub fn SetValue(&mut self, Section:&str, Value:Value) -> Result<(), String> {
 		let Depth = Section.matches('.').count();
 		if Depth > MAX_CONFIGURATION_DEPTH {
-			return Err(format!("Configuration path depth {} exceeds maximum of {}", Depth, MAX_CONFIGURATION_DEPTH));
+			return Err(format!(
+				"Configuration path depth {} exceeds maximum of {}",
+				Depth, MAX_CONFIGURATION_DEPTH
+			));
 		}
 
 		let Keys:Vec<&str> = Section.split('.').collect();
@@ -92,11 +98,10 @@ impl MergedConfigurationStateDTO {
 	fn SetValueRecursive(Data:&mut Value, Keys:&[&str], Index:usize, Value:Value) {
 		if Index == Keys.len() - 1 {
 			// At final key, set the value
-			 *Data = Value;
+			*Data = Value;
 		} else if let Some(Map) = Data.as_object_mut() {
 			// Get or create nested object
-			Map.entry(Keys[Index])
-				.or_insert_with(|| Value::Object(serde_json::Map::new()));
+			Map.entry(Keys[Index]).or_insert_with(|| Value::Object(serde_json::Map::new()));
 			if let Some(Nested) = Map.get_mut(Keys[Index]) {
 				Self::SetValueRecursive(Nested, Keys, Index + 1, Value);
 			}
@@ -112,9 +117,7 @@ impl MergedConfigurationStateDTO {
 	/// # Returns
 	/// Boolean value or default
 	pub fn GetBool(&self, Section:&str, Default:bool) -> bool {
-		self.GetValue(Some(Section))
-			.as_bool()
-			.unwrap_or(Default)
+		self.GetValue(Some(Section)).as_bool().unwrap_or(Default)
 	}
 
 	/// Gets a numeric value from configuration with default fallback.
@@ -126,9 +129,7 @@ impl MergedConfigurationStateDTO {
 	/// # Returns
 	/// f64 value or default
 	pub fn GetNumber(&self, Section:&str, Default:f64) -> f64 {
-		self.GetValue(Some(Section))
-			.as_f64()
-			.unwrap_or(Default)
+		self.GetValue(Some(Section)).as_f64().unwrap_or(Default)
 	}
 
 	/// Gets a string value from configuration with default fallback.
@@ -140,9 +141,6 @@ impl MergedConfigurationStateDTO {
 	/// # Returns
 	/// String value or default
 	pub fn GetString(&self, Section:&str, Default:&str) -> String {
-		self.GetValue(Some(Section))
-			.as_str()
-			.unwrap_or(Default)
-			.to_string()
+		self.GetValue(Some(Section)).as_str().unwrap_or(Default).to_string()
 	}
 }
