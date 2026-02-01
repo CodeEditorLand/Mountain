@@ -82,11 +82,9 @@
 //! - State persistence durability guarantees
 //! - Pending operation flush timeout
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::sync::Arc;
 
-use Common::{
+use CommonLibrary::{
 	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
 	Environment::{Environment::Environment, HasEnvironment::HasEnvironment, Requires::Requires},
 	Error::CommonError::CommonError,
@@ -95,7 +93,7 @@ use Common::{
 };
 use Echo::Scheduler::Scheduler::Scheduler;
 use async_trait::async_trait;
-use log::{error, info, warn, debug};
+use log::{debug, error, info, warn};
 use tokio::sync::oneshot;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
@@ -137,7 +135,7 @@ impl ApplicationRunTime {
 	pub async fn ShutdownWithRecovery(&self) -> Result<(), CommonError> {
 		info!("[ApplicationRunTime] Initiating robust shutdown with recovery...");
 
-		let mut shutdown_errors: Vec<String> = Vec::new();
+		let mut shutdown_errors:Vec<String> = Vec::new();
 
 		// 1. Shutdown Cocoon with retry mechanism
 		match self.ShutdownCocoonWithRetry().await {
@@ -171,7 +169,11 @@ impl ApplicationRunTime {
 
 		if !shutdown_errors.is_empty() {
 			Err(CommonError::Unknown {
-				Description: format!("Shutdown completed with {} errors: {:?}", shutdown_errors.len(), shutdown_errors),
+				Description:format!(
+					"Shutdown completed with {} errors: {:?}",
+					shutdown_errors.len(),
+					shutdown_errors
+				),
 			})
 		} else {
 			Ok(())
@@ -203,8 +205,7 @@ impl ApplicationRunTime {
 
 					warn!(
 						"[ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
-						attempts,
-						error
+						attempts, error
 					);
 
 					tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
@@ -212,9 +213,7 @@ impl ApplicationRunTime {
 			}
 		}
 
-		Err(CommonError::Unknown {
-			Description: "Failed to shutdown Cocoon after maximum retries".to_string(),
-		})
+		Err(CommonError::Unknown { Description:"Failed to shutdown Cocoon after maximum retries".to_string() })
 	}
 
 	/// Safely dispose of all active terminals
@@ -222,13 +221,17 @@ impl ApplicationRunTime {
 		let TerminalProvider:Arc<dyn TerminalProviderTrait> = self.Environment.Require();
 
 		let TerminalIds:Vec<u64> = {
-			let TerminalsGuard = self.Environment.ApplicationState.ActiveTerminals.lock()
-				.map_err(|e| CommonError::StateLockPoisoned { Context: e.to_string() })?;
+			let TerminalsGuard = self
+				.Environment
+				.ApplicationState
+				.ActiveTerminals
+				.lock()
+				.map_err(|e| CommonError::StateLockPoisoned { Context:e.to_string() })?;
 
 			TerminalsGuard.keys().cloned().collect()
 		};
 
-		let mut disposal_errors: Vec<String> = Vec::new();
+		let mut disposal_errors:Vec<String> = Vec::new();
 
 		for id in TerminalIds {
 			match TerminalProvider.DisposeTerminal(id).await {
@@ -242,7 +245,11 @@ impl ApplicationRunTime {
 
 		if !disposal_errors.is_empty() {
 			Err(CommonError::Unknown {
-				Description: format!("Terminal disposal completed with {} errors: {:?}", disposal_errors.len(), disposal_errors),
+				Description:format!(
+					"Terminal disposal completed with {} errors: {:?}",
+					disposal_errors.len(),
+					disposal_errors
+				),
 			})
 		} else {
 			Ok(())
@@ -254,30 +261,27 @@ impl ApplicationRunTime {
 		debug!("[ApplicationRunTime] Saving application state...");
 
 		// Save global memento
-		let global_memento_guard = self.Environment.ApplicationState.GlobalMemento.lock()
-			.map_err(|e| CommonError::StateLockPoisoned { Context: e.to_string() })?;
+		let global_memento_guard = self
+			.Environment
+			.ApplicationState
+			.GlobalMemento
+			.lock()
+			.map_err(|e| CommonError::StateLockPoisoned { Context:e.to_string() })?;
 
 		let global_memento_path = &self.Environment.ApplicationState.GlobalMementoPath;
 
 		if let Some(parent) = global_memento_path.parent() {
 			if !parent.exists() {
-				std::fs::create_dir_all(parent).map_err(|e| {
-					CommonError::FileSystemIO {
-						Path: parent.to_path_buf(),
-						Description: e.to_string(),
-					}
-				})?;
+				std::fs::create_dir_all(parent)
+					.map_err(|e| CommonError::FileSystemIO { Path:parent.to_path_buf(), Description:e.to_string() })?;
 			}
 		}
 
 		let memento_json = serde_json::to_string_pretty(&*global_memento_guard)
-			.map_err(|e| CommonError::SerializationError { Description: e.to_string() })?;
+			.map_err(|e| CommonError::SerializationError { Description:e.to_string() })?;
 
 		std::fs::write(global_memento_path, memento_json)
-			.map_err(|e| CommonError::FileSystemIO {
-				Path: global_memento_path.clone(),
-				Description: e.to_string(),
-			})
+			.map_err(|e| CommonError::FileSystemIO { Path:global_memento_path.clone(), Description:e.to_string() })
 	}
 
 	/// Flush any pending operations
@@ -285,15 +289,19 @@ impl ApplicationRunTime {
 		debug!("[ApplicationRunTime] Flushing pending operations...");
 
 		// Flush pending UI requests
-		let mut pending_requests_guard = self.Environment.ApplicationState.PendingUserInterfaceRequests.lock()
+		let mut pending_requests_guard = self
+			.Environment
+			.ApplicationState
+			.PendingUserInterfaceRequests
+			.lock()
 			.unwrap_or_else(|e| {
 				error!("[ApplicationRunTime] Failed to lock pending UI requests: {}", e);
 				e.into_inner()
 			});
 
-for (_request_id, sender) in pending_requests_guard.drain() {
+		for (_request_id, sender) in pending_requests_guard.drain() {
 			let _ = sender.send(Err(CommonError::Unknown {
-				Description: "Application shutting down".to_string(),
+				Description:"Application shutting down".to_string(),
 			}));
 		}
 
@@ -359,36 +367,30 @@ impl ApplicationRunTime {
 	pub async fn RunWithTimeout<TCapabilityProvider, TError, TOutput>(
 		&self,
 		Effect:ActionEffect<Arc<TCapabilityProvider>, TError, TOutput>,
-		timeout: std::time::Duration,
+		timeout:std::time::Duration,
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
 		Self::EnvironmentType: Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static,
-		TOutput: Send + Sync + 'static,
-	{
-		tokio::time::timeout(timeout, self.Run(Effect))
-			.await
-			.map_err(|_| {
-				CommonError::Unknown {
-					Description: format!("Effect execution timed out after {:?}", timeout),
-				}.into()
-			})?
+		TOutput: Send + Sync + 'static, {
+		tokio::time::timeout(timeout, self.Run(Effect)).await.map_err(|_| {
+			CommonError::Unknown { Description:format!("Effect execution timed out after {:?}", timeout) }.into()
+		})?
 	}
 
 	/// Execute effect with retry mechanism
 	pub async fn RunWithRetry<TCapabilityProvider, TError, TOutput>(
 		&self,
 		Effect:ActionEffect<Arc<TCapabilityProvider>, TError, TOutput>,
-		max_retries: u32,
-		initial_delay: std::time::Duration,
+		max_retries:u32,
+		initial_delay:std::time::Duration,
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
 		Self::EnvironmentType: Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static,
-		TOutput: Send + Sync + 'static,
-	{
+		TOutput: Send + Sync + 'static, {
 		let mut retry_count = 0;
 		let mut current_delay = initial_delay;
 
@@ -403,9 +405,7 @@ impl ApplicationRunTime {
 					retry_count += 1;
 					warn!(
 						"[ApplicationRunTime] Effect execution failed (attempt {}): {}. Retrying in {:?}...",
-						retry_count,
-						error,
-						current_delay
+						retry_count, error, current_delay
 					);
 
 					tokio::time::sleep(current_delay).await;
@@ -414,8 +414,9 @@ impl ApplicationRunTime {
 			}
 		}
 
-		Err(CommonError::Unknown {
-			Description: format!("Effect execution failed after {} retries", max_retries),
-		}.into())
+		Err(
+			CommonError::Unknown { Description:format!("Effect execution failed after {} retries", max_retries) }
+				.into(),
+		)
 	}
 }

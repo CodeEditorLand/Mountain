@@ -24,11 +24,9 @@
 //! - [ ] Add metrics for Air vs Local update usage tracking
 //! - [ ] Phase out Tauri updater after successful Air deployment
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::sync::Arc;
 
-use Common::{
+use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Error::CommonError::CommonError,
 	UserInterface::{DTO::MessageSeverity::MessageSeverity, ShowMessage::ShowMessage},
@@ -37,12 +35,11 @@ use log::{error, info, warn};
 use serde_json::json;
 use tauri::AppHandle;
 use tauri_plugin_updater::UpdaterExt;
-
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
-
 // Import Air client types when Air is available in the workspace
 #[cfg(feature = "AirIntegration")]
-use Air::Vine::Generated::air::AirServiceClient;
+use AirLibrary::Vine::Generated::Air::AirServiceClient;
+
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 
 /// Update delegation mode for controlling which update mechanism to use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -166,17 +163,21 @@ pub async fn CheckForUpdates(
 /// Checks for application updates with Air delegation support.
 ///
 /// This function supports multiple update strategies via the `Mode` parameter:
-/// - `UpdateMode::AutoDetect` (default): Use Air if available, otherwise use Tauri updater
-/// - `UpdateMode::ForceAir`: Use Air exclusively (returns error if Air unavailable)
+/// - `UpdateMode::AutoDetect` (default): Use Air if available, otherwise use
+///   Tauri updater
+/// - `UpdateMode::ForceAir`: Use Air exclusively (returns error if Air
+///   unavailable)
 /// - `UpdateMode::ForceTauri`: Use Tauri updater exclusively
 ///
-/// When Air is selected and available, delegates update checking to the Air service.
-/// This enables centralized update management across all Land applications.
+/// When Air is selected and available, delegates update checking to the Air
+/// service. This enables centralized update management across all Land
+/// applications.
 ///
 /// # Arguments
 /// * `ApplicationHandle` - The Tauri application handle
 /// * `RunTime` - The Mountain runtime for UI interactions
-/// * `NotifyNoUpdate` - Whether to notify the user when no updates are available
+/// * `NotifyNoUpdate` - Whether to notify the user when no updates are
+///   available
 /// * `AirClient` - Optional Air client for cloud-based update checking
 /// * `Mode` - Update mode controlling delegation behavior
 ///
@@ -185,47 +186,30 @@ pub async fn CheckForUpdates(
 /// use crate::Source::Update::UpdateService::{CheckForUpdatesWithAir, UpdateMode};
 ///
 /// // Auto-detect: Use Air if available
-/// CheckForUpdatesWithAir(
-///     app_handle,
-///     runtime,
-///     true,
-///     Some(air_client),
-///     UpdateMode::AutoDetect,
-/// ).await?;
+/// CheckForUpdatesWithAir(app_handle, runtime, true, Some(air_client), UpdateMode::AutoDetect)
+/// 	.await?;
 ///
 /// // Force Air usage
-/// CheckForUpdatesWithAir(
-///     app_handle,
-///     runtime,
-///     true,
-///     Some(air_client),
-///     UpdateMode::ForceAir,
-/// ).await?;
+/// CheckForUpdatesWithAir(app_handle, runtime, true, Some(air_client), UpdateMode::ForceAir)
+/// 	.await?;
 ///
 /// // Force local Tauri updater
-/// CheckForUpdatesWithAir(
-///     app_handle,
-///     runtime,
-///     true,
-///     None,
-///     UpdateMode::ForceTauri,
-/// ).await?;
+/// CheckForUpdatesWithAir(app_handle, runtime, true, None, UpdateMode::ForceTauri).await?;
 /// ```
 #[cfg(not(feature = "AirIntegration"))]
 pub async fn CheckForUpdatesWithAir(
-	ApplicationHandle: AppHandle,
-	RunTime: Arc<MountainRunTime>,
-	NotifyNoUpdate: bool,
-	_AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
-	Mode: UpdateMode,
+	ApplicationHandle:AppHandle,
+	RunTime:Arc<MountainRunTime>,
+	NotifyNoUpdate:bool,
+	_AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+	Mode:UpdateMode,
 ) -> Result<(), CommonError> {
 	match Mode {
 		UpdateMode::ForceAir => {
-			error!(
-				"[UpdateService] ForceAir mode specified but Air integration is disabled"
-			);
+			error!("[UpdateService] ForceAir mode specified but Air integration is disabled");
 			return Err(CommonError::Configuration {
-				Message: "Air integration is not enabled. Build with `--features AirIntegration` to use ForceAir mode.".to_string(),
+				Message:"Air integration is not enabled. Build with `--features AirIntegration` to use ForceAir mode."
+					.to_string(),
 			});
 		},
 		UpdateMode::AutoDetect | UpdateMode::ForceTauri => {
@@ -240,17 +224,21 @@ pub async fn CheckForUpdatesWithAir(
 /// Checks for application updates with Air delegation support.
 ///
 /// This function supports multiple update strategies via the `Mode` parameter:
-/// - `UpdateMode::AutoDetect` (default): Use Air if available, otherwise use Tauri updater
-/// - `UpdateMode::ForceAir`: Use Air exclusively (returns error if Air unavailable)
+/// - `UpdateMode::AutoDetect` (default): Use Air if available, otherwise use
+///   Tauri updater
+/// - `UpdateMode::ForceAir`: Use Air exclusively (returns error if Air
+///   unavailable)
 /// - `UpdateMode::ForceTauri`: Use Tauri updater exclusively
 ///
-/// When Air is selected and available, delegates update checking to the Air service.
-/// This enables centralized update management across all Land applications.
+/// When Air is selected and available, delegates update checking to the Air
+/// service. This enables centralized update management across all Land
+/// applications.
 ///
 /// # Arguments
 /// * `ApplicationHandle` - The Tauri application handle
 /// * `RunTime` - The Mountain runtime for UI interactions
-/// * `NotifyNoUpdate` - Whether to notify the user when no updates are available
+/// * `NotifyNoUpdate` - Whether to notify the user when no updates are
+///   available
 /// * `AirClient` - Optional Air client for cloud-based update checking
 /// * `Mode` - Update mode controlling delegation behavior
 ///
@@ -259,57 +247,33 @@ pub async fn CheckForUpdatesWithAir(
 /// use crate::Source::Update::UpdateService::{CheckForUpdatesWithAir, UpdateMode};
 ///
 /// // Auto-detect: Use Air if available
-/// CheckForUpdatesWithAir(
-///     app_handle,
-///     runtime,
-///     true,
-///     Some(air_client),
-///     UpdateMode::AutoDetect,
-/// ).await?;
+/// CheckForUpdatesWithAir(app_handle, runtime, true, Some(air_client), UpdateMode::AutoDetect)
+/// 	.await?;
 ///
 /// // Force Air usage
-/// CheckForUpdatesWithAir(
-///     app_handle,
-///     runtime,
-///     true,
-///     Some(air_client),
-///     UpdateMode::ForceAir,
-/// ).await?;
+/// CheckForUpdatesWithAir(app_handle, runtime, true, Some(air_client), UpdateMode::ForceAir)
+/// 	.await?;
 ///
 /// // Force local Tauri updater
-/// CheckForUpdatesWithAir(
-///     app_handle,
-///     runtime,
-///     true,
-///     None,
-///     UpdateMode::ForceTauri,
-/// ).await?;
+/// CheckForUpdatesWithAir(app_handle, runtime, true, None, UpdateMode::ForceTauri).await?;
 /// ```
 #[cfg(feature = "AirIntegration")]
 pub async fn CheckForUpdatesWithAir(
-	ApplicationHandle: AppHandle,
-	RunTime: Arc<MountainRunTime>,
-	NotifyNoUpdate: bool,
-	AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
-	Mode: UpdateMode,
+	ApplicationHandle:AppHandle,
+	RunTime:Arc<MountainRunTime>,
+	NotifyNoUpdate:bool,
+	AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+	Mode:UpdateMode,
 ) -> Result<(), CommonError> {
 	match Mode {
 		UpdateMode::ForceAir => {
 			info!("[UpdateService] ForceAir mode specified - requiring Air service");
 
-			let AirClientRef = AirClient
-				.as_ref()
-				.ok_or_else(|| CommonError::Configuration {
-					Message: "ForceAir mode requires a valid AirClient".to_string(),
-				})?;
+			let AirClientRef = AirClient.as_ref().ok_or_else(|| {
+				CommonError::Configuration { Message:"ForceAir mode requires a valid AirClient".to_string() }
+			})?;
 
-			return CheckForUpdatesViaAir(
-				ApplicationHandle,
-				RunTime,
-				NotifyNoUpdate,
-				AirClientRef,
-			)
-			.await;
+			return CheckForUpdatesViaAir(ApplicationHandle, RunTime, NotifyNoUpdate, AirClientRef).await;
 		},
 
 		UpdateMode::ForceTauri => {
@@ -321,13 +285,7 @@ pub async fn CheckForUpdatesWithAir(
 			if let Some(AirClientRef) = &AirClient {
 				if IsAirAvailable(AirClientRef).await {
 					info!("[UpdateService] Air service available - delegating update check to Air");
-					return CheckForUpdatesViaAir(
-						ApplicationHandle,
-						RunTime,
-						NotifyNoUpdate,
-						AirClientRef,
-					)
-					.await;
+					return CheckForUpdatesViaAir(ApplicationHandle, RunTime, NotifyNoUpdate, AirClientRef).await;
 				} else {
 					warn!("[UpdateService] Air client provided but unhealthy - falling back to Tauri updater");
 				}
@@ -346,10 +304,10 @@ pub async fn CheckForUpdatesWithAir(
 /// centralized update management across the Land ecosystem.
 #[cfg(feature = "AirIntegration")]
 async fn CheckForUpdatesViaAir(
-	ApplicationHandle: AppHandle,
-	RunTime: Arc<MountainRunTime>,
-	NotifyNoUpdate: bool,
-	AirClient: &Arc<AirServiceClient<tonic::transport::Channel>>,
+	ApplicationHandle:AppHandle,
+	RunTime:Arc<MountainRunTime>,
+	NotifyNoUpdate:bool,
+	AirClient:&Arc<AirServiceClient<tonic::transport::Channel>>,
 ) -> Result<(), CommonError> {
 	info!("[UpdateService] Checking for updates via Air service...");
 
@@ -359,9 +317,9 @@ async fn CheckForUpdatesViaAir(
 	let RequestID = uuid::Uuid::new_v4().to_string();
 
 	let Request = tonic::Request::new(air_service_server::UpdateCheckRequest {
-		request_id: RequestID,
-		current_version: CurrentVersion,
-		channel: "stable".to_string(),
+		request_id:RequestID,
+		current_version:CurrentVersion,
+		channel:"stable".to_string(),
 	});
 
 	match AirClient.check_for_updates(Request).await {
@@ -429,8 +387,8 @@ async fn CheckForUpdatesViaAir(
 			} else {
 				// Silent error - just log it
 				return Err(CommonError::ExternalServiceError {
-					ServiceName: "Air Update Service".to_string(),
-					Description: Status.to_string(),
+					ServiceName:"Air Update Service".to_string(),
+					Description:Status.to_string(),
 				});
 			};
 
@@ -439,8 +397,8 @@ async fn CheckForUpdatesViaAir(
 				.await?;
 
 			Err(CommonError::ExternalServiceError {
-				ServiceName: "Air Update Service".to_string(),
-				Description: Status.to_string(),
+				ServiceName:"Air Update Service".to_string(),
+				Description:Status.to_string(),
 			})
 		},
 	}
@@ -448,7 +406,7 @@ async fn CheckForUpdatesViaAir(
 
 /// Helper to check if Air service is available and healthy.
 #[cfg(feature = "AirIntegration")]
-async fn IsAirAvailable(AirClient: &AirServiceClient<tonic::transport::Channel>) -> bool {
+async fn IsAirAvailable(AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool {
 	use tonic::Request;
 
 	match AirClient

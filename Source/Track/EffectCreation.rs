@@ -10,7 +10,8 @@
 // ### 1. Command-to-Effect Mapping
 // - Map string-based command and RPC method names to their strongly-typed
 //   effect constructors from the `Common` crate
-// - Ensure all commands from Wind (frontend) and Cocoon (sidecar) have corresponding effects
+// - Ensure all commands from Wind (frontend) and Cocoon (sidecar) have
+//   corresponding effects
 // - Provide default/error handling for unknown commands
 // - Create a runnable, type-erased `MappedEffect` for each request
 //
@@ -30,7 +31,8 @@
 //
 // EffectCreation is the **routing layer** that sits between:
 //
-// DispatchLogic (Router) ──► EffectCreation (Mapper) ──► ApplicationRunTime (Executor)
+// DispatchLogic (Router) ──► EffectCreation (Mapper) ──► ApplicationRunTime
+// (Executor)
 //
 // ### Design Patterns:
 // 1. **Command Pattern**: Each command is mapped to a specific effect
@@ -172,20 +174,15 @@
 // - [ ] Implement command aliasing
 // - [ ] Add command migration support
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # EffectCreation
 //!
 //! Contains the logic for creating `ActionEffect`s by mapping string-based
 //! command and RPC method names to their strongly-typed effect constructors in
 //! the `Common` crate. This is the central routing table of the application.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{future::Future, pin::Pin, sync::Arc};
 
-use Common::{
+use CommonLibrary::{
 	self,
 	Command::{ExecuteCommand::ExecuteCommand, GetAllCommands::GetAllCommands, RegisterCommand::RegisterCommand},
 	Configuration::{

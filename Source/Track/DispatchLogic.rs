@@ -11,7 +11,8 @@
 // ### 1. Request Routing
 // - Route all incoming requests from the Sky frontend to appropriate effects
 // - Route all incoming requests from Cocoon sidecars to appropriate effects
-// - Provide specific, high-performance Tauri command handlers for frequent UI interactions
+// - Provide specific, high-performance Tauri command handlers for frequent UI
+//   interactions
 // - Handle both synchronous (UI) and asynchronous (backend) dispatch paths
 //
 // ### 2. Error Handling and Recovery
@@ -30,12 +31,14 @@
 //
 // DispatchLogic is the **dispatcher layer** that sits between:
 //
-//Sky (Frontend) ──► DispatchLogic (Dispatcher) ──► EffectCreation (Mapper) ──► ApplicationRunTime (Executor)
-//Cocoon (Sidecar) ──► DispatchLogic (Dispatcher) ──► EffectCreation (Mapper) ──► ApplicationRunTime (Executor)
+// Sky (Frontend) ──► DispatchLogic (Dispatcher) ──► EffectCreation (Mapper) ──►
+// ApplicationRunTime (Executor) Cocoon (Sidecar) ──► DispatchLogic (Dispatcher)
+// ──► EffectCreation (Mapper) ──► ApplicationRunTime (Executor)
 //
 // ### Design Patterns:
 // 1. **Command Pattern**: Execute commands by name
-// 2. **Strategy Pattern**: Different dispatch strategies for frontend vs sidecar
+// 2. **Strategy Pattern**: Different dispatch strategies for frontend vs
+//    sidecar
 // 3. **Observer Pattern**: Handle UI request-response interactions
 //
 // ### VS Code Reference:
@@ -143,19 +146,14 @@
 // - [ ] Implement request tracing across the entire pipeline
 // - [ ] Add request priority queuing
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # DispatchLogic
 //!
 //! Contains the main dispatch functions for routing all incoming commands and
 //! RPC requests to the appropriate execution logic via the effect system.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::sync::Arc;
 
-use Common::{Environment::Requires::Requires, IPC::IPCProvider::IPCProvider};
+use CommonLibrary::{Environment::Requires::Requires, IPC::IPCProvider::IPCProvider};
 use log::{debug, error, warn};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime, State, command};
