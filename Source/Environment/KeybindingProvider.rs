@@ -29,9 +29,6 @@
 // - Handles keybinding chords
 // - Provides keybinding resolution diagnostics
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # KeybindingProvider Implementation
 //!
 //! Implements the `KeybindingProvider` trait for the `MountainEnvironment`.
@@ -56,11 +53,9 @@
 //! Current implementation stores when clauses but only partially
 //! evaluates them. Full expression evaluation is pending.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{collections::HashMap, sync::Arc};
 
-use Common::{
+use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Error::CommonError::CommonError,
 	FileSystem::ReadFile::ReadFile,

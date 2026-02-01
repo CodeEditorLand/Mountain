@@ -1,6 +1,3 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # Environment Module
 //!
 //! Provides the concrete implementation of the application's Environment.
@@ -9,8 +6,6 @@
 //! implementations of the provider traits defined in the `Common` crate. Each
 //! provider implementation is organized into its own file for clarity and
 //! separation of concerns.
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 // --- Main Environment Struct ---
 pub mod MountainEnvironment;

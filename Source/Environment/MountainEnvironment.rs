@@ -2,50 +2,57 @@
 //
 // # Architectural Role: Central DI Container and Application Context
 //
-// MountainEnvironment is the primary dependency injection (DI) container for the Mountain application.
-// It implements all provider traits defined in the Common crate, acting as the central orchestrator
-// that provides access to all platform services.
+// MountainEnvironment is the primary dependency injection (DI) container for
+// the Mountain application. It implements all provider traits defined in the
+// Common crate, acting as the central orchestrator that provides access to all
+// platform services.
 //
 // # Responsibilities
 //
-// 1. **Dependency Injection Container**: Implements Requires<T> for all 19+ provider traits,
-//    enabling other components to request dependencies through the Require() method.
+// 1. **Dependency Injection Container**: Implements Requires<T> for all 19+
+//    provider traits, enabling other components to request dependencies through
+//    the Require() method.
 //
-// 2. **Application Lifecycle Management**: Holds references to Tauri AppHandle and ApplicationState,
-//    managing the core application context and state.
+// 2. **Application Lifecycle Management**: Holds references to Tauri AppHandle
+//    and ApplicationState, managing the core application context and state.
 //
-// 3. **Air Integration**: Optionally manages the Air gRPC client for cloud-based services when
-//    the AirIntegration feature is enabled. Enables dynamic switching between local and cloud services.
+// 3. **Air Integration**: Optionally manages the Air gRPC client for
+//    cloud-based services when the AirIntegration feature is enabled. Enables
+//    dynamic switching between local and cloud services.
 //
-// 4. **Extension Management**: Implements ExtensionManagementService for discovering, scanning,
-//    and managing extensions in the system.
+// 4. **Extension Management**: Implements ExtensionManagementService for
+//    discovering, scanning, and managing extensions in the system.
 //
-// 5. **Service Orchestration**: Acts as the central coordinator between all providers (FileSystem,
-//    Document, Command, Configuration, IPC, etc.), ensuring proper initialization and interaction.
+// 5. **Service Orchestration**: Acts as the central coordinator between all
+//    providers (FileSystem, Document, Command, Configuration, IPC, etc.),
+//    ensuring proper initialization and interaction.
 //
 // # Initialization Sequence
 //
 // 1. Create MountainEnvironment instance via Create() or CreateWithAir()
 // 2. Provider instances are created lazily through Requires<T> traits
 // 3. Each provider can access ApplicationState and AppHandle through self
-// 4. Inter-provider communication is handled via IPCProvider or direct Rust calls
+// 4. Inter-provider communication is handled via IPCProvider or direct Rust
+//    calls
 //
 // # Dependency Wiring
 //
-// All providers implement their respective traits from the Common crate. MountainEnvironment
-// implements Requires<T> for each trait, returning an Arc-wrapped clone of itself. This enables
-// circular dependencies and lazy initialization while maintaining type safety.
+// All providers implement their respective traits from the Common crate.
+// MountainEnvironment implements Requires<T> for each trait, returning an
+// Arc-wrapped clone of itself. This enables circular dependencies and lazy
+// initialization while maintaining type safety.
 //
 // # Patterns Borrowed from VSCode
 //
-// - **ServiceCollection Pattern**: Like VSCode's ServiceCollection, MountainEnvironment
-//   registers and provides all services in a centralized location.
+// - **ServiceCollection Pattern**: Like VSCode's ServiceCollection,
+//   MountainEnvironment registers and provides all services in a centralized
+//   location.
 //
-// - **Lifecycle Management**: Similar to VSCode's IDisposable pattern, resources are
-//   automatically managed through Arc reference counting.
+// - **Lifecycle Management**: Similar to VSCode's IDisposable pattern,
+//   resources are automatically managed through Arc reference counting.
 //
-// - **Extension Points**: Extension management follows VSCode's activation event pattern,
-//   enabling lazy loading of extension services.
+// - **Extension Points**: Extension management follows VSCode's activation
+//   event pattern, enabling lazy loading of extension services.
 //
 // # TODOs
 //
@@ -57,19 +64,13 @@
 // - [ ] Implement graceful degradation when providers fail
 // - [ ] Add metrics collection for provider usage
 // - [ ] Consider provider initialization order dependencies
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
 
 // Import Air service client when Air integration is enabled
 #[cfg(feature = "AirIntegration")]
-use Air::Vine::Generated::air::air_service_client::AirServiceClient;
-
-use Common::{
+use AirLibrary::Vine::Generated::Air::air_service_client::AirServiceClient;
+use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
 	Configuration::{ConfigurationInspector::ConfigurationInspector, ConfigurationProvider::ConfigurationProvider},
 	CustomEditor::CustomEditorProvider::CustomEditorProvider,
@@ -102,9 +103,9 @@ use log::{info, warn};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Wry};
 
-use crate::{
-	ApplicationState::ApplicationState::ApplicationState,
-	ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
+use crate::ApplicationState::{
+	ApplicationState::ApplicationState,
+	DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
 };
 
 /// The concrete `Environment` for the Mountain application.
@@ -115,7 +116,8 @@ pub struct MountainEnvironment {
 	pub ApplicationState:Arc<ApplicationState>,
 
 	/// Optional Air client for cloud-based services.
-	/// When provided, providers like SecretProvider and UpdateService can delegate to Air.
+	/// When provided, providers like SecretProvider and UpdateService can
+	/// delegate to Air.
 	#[cfg(feature = "AirIntegration")]
 	pub AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 }
@@ -123,14 +125,14 @@ pub struct MountainEnvironment {
 impl MountainEnvironment {
 	/// Creates a new `MountainEnvironment` instance.
 	#[allow(unused_mut)]
-	pub fn Create(ApplicationHandle: AppHandle<Wry>) -> Self {
+	pub fn Create(ApplicationHandle:AppHandle<Wry>) -> Self {
 		info!("[MountainEnvironment] New instance created.");
 
 		let ApplicationState = ApplicationHandle.state::<Arc<ApplicationState>>().inner().clone();
 
 		#[cfg(feature = "AirIntegration")]
 		{
-			Self { ApplicationHandle, ApplicationState, AirClient: None }
+			Self { ApplicationHandle, ApplicationState, AirClient:None }
 		}
 
 		#[cfg(not(feature = "AirIntegration"))]
@@ -139,12 +141,13 @@ impl MountainEnvironment {
 		}
 	}
 
-	/// Creates a new `MountainEnvironment` instance with an optional Air client.
-	/// When AirClient is provided, providers can delegate to Air for cloud-based services.
+	/// Creates a new `MountainEnvironment` instance with an optional Air
+	/// client. When AirClient is provided, providers can delegate to Air for
+	/// cloud-based services.
 	#[cfg(feature = "AirIntegration")]
 	pub fn CreateWithAir(
-		ApplicationHandle: AppHandle<Wry>,
-		AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+		ApplicationHandle:AppHandle<Wry>,
+		AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 	) -> Self {
 		info!(
 			"[MountainEnvironment] New instance created with Air client: {}",
@@ -159,7 +162,7 @@ impl MountainEnvironment {
 	/// Updates the Air client for this environment.
 	/// This allows dynamically switching between Air and local services.
 	#[cfg(feature = "AirIntegration")]
-	pub fn SetAirClient(&mut self, AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>) {
+	pub fn SetAirClient(&mut self, AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>) {
 		info!("[MountainEnvironment] Air client updated: {}", AirClient.is_some());
 
 		self.AirClient = AirClient;
@@ -170,12 +173,9 @@ impl MountainEnvironment {
 	pub async fn IsAirAvailable(&self) -> bool {
 		if let Some(AirClient) = &self.AirClient {
 			use tonic::Request;
-			use Air::Vine::Generated::air::HealthCheckRequest;
+			use AirLibrary::Vine::Generated::Air::HealthCheckRequest;
 
-			match AirClient
-				.health_check(Request::new(HealthCheckRequest {}))
-				.await
-			{
+			match AirClient.health_check(Request::new(HealthCheckRequest {})).await {
 				Ok(response) => {
 					let is_healthy = response.into_inner().healthy;
 
@@ -198,13 +198,12 @@ impl MountainEnvironment {
 
 	/// Returns whether Air is available and ready.
 	#[cfg(not(feature = "AirIntegration"))]
-	pub async fn IsAirAvailable(&self) -> bool {
-		false
-	}
+	pub async fn IsAirAvailable(&self) -> bool { false }
 
 	/// Scans a directory for extensions and returns their package.json data
-	async fn ScanExtensionDirectory(&self, path: &std::path::PathBuf) -> Result<Vec<serde_json::Value>, CommonError> {
+	async fn ScanExtensionDirectory(&self, path:&std::path::PathBuf) -> Result<Vec<serde_json::Value>, CommonError> {
 		use std::fs;
+
 		use serde_json::Value;
 
 		let mut extensions = Vec::new();
@@ -216,13 +215,13 @@ impl MountainEnvironment {
 		}
 
 		// Read directory contents
-		let entries = fs::read_dir(path).map_err(|error| CommonError::FileSystemError {
-			Description: format!("Failed to read extension directory: {}", error),
+		let entries = fs::read_dir(path).map_err(|error| {
+			CommonError::FileSystemError { Description:format!("Failed to read extension directory: {}", error) }
 		})?;
 
 		for entry in entries {
-let entry = entry.map_err(|error| CommonError::FileSystemIO {
-				Description: format!("Failed to read directory entry: {}", error),
+			let entry = entry.map_err(|error| {
+				CommonError::FileSystemIO { Description:format!("Failed to read directory entry: {}", error) }
 			})?;
 
 			let entry_path = entry.path();
@@ -236,19 +235,28 @@ let entry = entry.map_err(|error| CommonError::FileSystemIO {
 								Ok(mut package_json) => {
 									// Add extension location information
 									if let Some(obj) = package_json.as_object_mut() {
-										obj.insert("ExtensionLocation".to_string(), Value::String(entry_path.to_string_lossy().to_string()));
+										obj.insert(
+											"ExtensionLocation".to_string(),
+											Value::String(entry_path.to_string_lossy().to_string()),
+										);
 									}
 									extensions.push(package_json);
 									info!("[ExtensionManagementService] Found extension at: {:?}", entry_path);
-								}
+								},
 								Err(error) => {
-									warn!("[ExtensionManagementService] Failed to parse package.json at {:?}: {}", package_json_path, error);
-								}
+									warn!(
+										"[ExtensionManagementService] Failed to parse package.json at {:?}: {}",
+										package_json_path, error
+									);
+								},
 							}
-						}
+						},
 						Err(error) => {
-							warn!("[ExtensionManagementService] Failed to read package.json at {:?}: {}", package_json_path, error);
-						}
+							warn!(
+								"[ExtensionManagementService] Failed to read package.json at {:?}: {}",
+								package_json_path, error
+							);
+						},
 					}
 				}
 			}
@@ -266,7 +274,7 @@ impl ExtensionManagementService for MountainEnvironment {
 		info!("[ExtensionManagementService] Scanning for extensions...");
 
 		// Get the extension scan paths from ApplicationState
-		let ScanPaths: Vec<std::path::PathBuf> = {
+		let ScanPaths:Vec<std::path::PathBuf> = {
 			let ScanPathsGuard = self
 				.ApplicationState
 				.ExtensionScanPaths
@@ -297,19 +305,26 @@ impl ExtensionManagementService for MountainEnvironment {
 			if let Some(identifier) = extension.get("Identifier").and_then(|v| v.as_str()) {
 				// Convert the extension DTO to ExtensionDescriptionStateDTO
 				let extension_dto = ExtensionDescriptionStateDTO {
-					Identifier: serde_json::Value::String(identifier.to_string()),
-					Name: extension.get("Name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
-					Version: extension.get("Version").and_then(|v| v.as_str()).unwrap_or("0.0.0").to_string(),
-					Publisher: extension.get("Publisher").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
-					Engines: extension.get("Engines").cloned().unwrap_or(serde_json::Value::Null),
-					Main: extension.get("Main").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					Browser: extension.get("Browser").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					ModuleType: extension.get("ModuleType").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					IsBuiltin: extension.get("IsBuiltin").and_then(|v| v.as_bool()).unwrap_or(false),
-					IsUnderDevelopment: extension.get("IsUnderDevelopment").and_then(|v| v.as_bool()).unwrap_or(false),
-					ExtensionLocation: extension.get("ExtensionLocation").cloned().unwrap_or(serde_json::Value::Null),
-					ActivationEvents: extension.get("ActivationEvents").and_then(|v| v.as_array()).map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()),
-					Contributes: extension.get("Contributes").cloned(),
+					Identifier:serde_json::Value::String(identifier.to_string()),
+					Name:extension.get("Name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
+					Version:extension.get("Version").and_then(|v| v.as_str()).unwrap_or("0.0.0").to_string(),
+					Publisher:extension
+						.get("Publisher")
+						.and_then(|v| v.as_str())
+						.unwrap_or("Unknown")
+						.to_string(),
+					Engines:extension.get("Engines").cloned().unwrap_or(serde_json::Value::Null),
+					Main:extension.get("Main").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					Browser:extension.get("Browser").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					ModuleType:extension.get("ModuleType").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					IsBuiltin:extension.get("IsBuiltin").and_then(|v| v.as_bool()).unwrap_or(false),
+					IsUnderDevelopment:extension.get("IsUnderDevelopment").and_then(|v| v.as_bool()).unwrap_or(false),
+					ExtensionLocation:extension.get("ExtensionLocation").cloned().unwrap_or(serde_json::Value::Null),
+					ActivationEvents:extension
+						.get("ActivationEvents")
+						.and_then(|v| v.as_array())
+						.map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()),
+					Contributes:extension.get("Contributes").cloned(),
 				};
 
 				ScannedExtensionsGuard.insert(identifier.to_string(), extension_dto);
@@ -368,7 +383,7 @@ impl ExtensionManagementService for MountainEnvironment {
 			extension_value.insert("ExtensionLocation".to_string(), extension_dto.ExtensionLocation.clone());
 
 			if let Some(activation_events) = &extension_dto.ActivationEvents {
-				let events: Vec<Value> = activation_events.iter().map(|e| Value::String(e.clone())).collect();
+				let events:Vec<Value> = activation_events.iter().map(|e| Value::String(e.clone())).collect();
 				extension_value.insert("ActivationEvents".to_string(), Value::Array(events));
 			}
 

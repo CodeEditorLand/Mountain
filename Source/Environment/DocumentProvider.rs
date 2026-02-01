@@ -2,29 +2,32 @@
 //
 // # Architectural Role: Document Lifecycle and State Management
 //
-// DocumentProvider implements the DocumentProvider trait, managing the complete lifecycle
-// of document operations including opening, saving, editing, and closing. It maintains
-// document state, coordinates between the frontend (Sky), extension host (Cocoon), and
-// filesystem, and handles both native file URIs and custom scheme URIs.
+// DocumentProvider implements the DocumentProvider trait, managing the complete
+// lifecycle of document operations including opening, saving, editing, and
+// closing. It maintains document state, coordinates between the frontend (Sky),
+// extension host (Cocoon), and filesystem, and handles both native file URIs
+// and custom scheme URIs.
 //
 // # Responsibilities
 //
-// 1. **Document State Management**: Maintains all open documents in ApplicationState,
-//    tracking content, version, dirty status, and metadata.
+// 1. **Document State Management**: Maintains all open documents in
+//    ApplicationState, tracking content, version, dirty status, and metadata.
 //
-// 2. **Document Persistence**: Handles saving documents to the filesystem, including
-//    Save and Save As operations.
+// 2. **Document Persistence**: Handles saving documents to the filesystem,
+//    including Save and Save As operations.
 //
 // 3. **Change Tracking**: Applies incremental text edits to documents, tracking
 //    version identifiers for collaboration and undo/redo.
 //
-// 4. **URI Scheme Support**: Supports both native file:// URIs and custom scheme URIs
-//    (e.g., untitled:, git:, vscode-vfs:) via TextDocumentContentProvider.
+// 4. **URI Scheme Support**: Supports both native file:// URIs and custom
+//    scheme URIs (e.g., untitled:, git:, vscode-vfs:) via
+//    TextDocumentContentProvider.
 //
-// 5. **Event Orchestration**: Emits events to Sky and Cocoon for document lifecycle
-//    changes (Opened, Saved, Changed, Closed, Renamed).
+// 5. **Event Orchestration**: Emits events to Sky and Cocoon for document
+//    lifecycle changes (Opened, Saved, Changed, Closed, Renamed).
 //
-// 6. **Bulk Operations**: Supports Save All to handle multiple dirty documents efficiently.
+// 6. **Bulk Operations**: Supports Save All to handle multiple dirty documents
+//    efficiently.
 //
 // # Document State Model
 //
@@ -40,9 +43,11 @@
 // # Document Open Flow
 //
 // 1. Frontend requests to open a URI with optional content
-// 2. Mountain checks if document is already open - if yes, refocus existing model
+// 2. Mountain checks if document is already open - if yes, refocus existing
+//    model
 // 3. If file:// URI: read content from filesystem via FileSystemReader
-// 4. If custom URI: request content from extension's TextDocumentContentProvider via IPC
+// 4. If custom URI: request content from extension's
+//    TextDocumentContentProvider via IPC
 // 5. Create DocumentStateDTO and store in ApplicationState.OpenDocuments
 // 6. Detect language from file extension or explicit parameter
 // 7. Emit "sky://documents/open" event to frontend
@@ -71,8 +76,8 @@
 // - **Text Model Service**: Inspired by VSCode's ITextModelService for managing
 //   text document instances with lifecycle and change events.
 //
-// - **TextDocumentContentProvider**: Like VSCode's pattern for custom URI schemes,
-//   allows extensions to provide document content dynamically.
+// - **TextDocumentContentProvider**: Like VSCode's pattern for custom URI
+//   schemes, allows extensions to provide document content dynamically.
 //
 // - **Synchronized Versions**: Mimics VSCode's versioning for seamless LSP
 //   synchronization with Language Servers.
@@ -84,26 +89,22 @@
 //
 // - [ ] Implement document revert to last saved
 // - [ ] Add document backup before save for crash recovery
-// - [ ] Implement proper encoding detection and conversion (UTF-8, UTF-16, etc.)
+// - [ ] Implement proper encoding detection and conversion (UTF-8, UTF-16,
+//   etc.)
 // - [ ] Add document state persistence across application restarts
 // - [ ] Implement document close cleanup and resource releasing
 // - [ ] Add document line ending normalization (LF, CRLF)
 // - [ ] Implement document diff and merge support
 // - [ ] Add support for large file handling (streaming, memory limits)
 // - [ ] Implement document auto-save with user-configurable delay
-// - [ ] TODO (Mountain→Air Split): Consider delegating bulk save operations to Air
-//   for improved performance with large workspaces. Air could handle save
+// - [ ] TODO (Mountain→Air Split): Consider delegating bulk save operations to
+//   Air for improved performance with large workspaces. Air could handle save
 //   batches in the background and report progress via gRPC status events.
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::{path::PathBuf, sync::Arc};
-use uuid::Uuid;
 
-use Common::{
+use uuid::Uuid;
+use CommonLibrary::{
 	Document::DocumentProvider::DocumentProvider,
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Environment::Requires::Requires,
@@ -243,9 +244,9 @@ impl DocumentProvider for MountainEnvironment {
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 			if let Some(Document) = OpenDocumentsGuard.get_mut(URI.as_str()) {
-// For non-file URIs, use temporary file location
-			if URI.scheme() != "file" {
-				info!("[DocumentProvider] Saving non-file URI '{}' to temporary location", URI);
+				// For non-file URIs, use temporary file location
+				if URI.scheme() != "file" {
+					info!("[DocumentProvider] Saving non-file URI '{}' to temporary location", URI);
 				}
 
 				Document.IsDirty = false;
@@ -388,10 +389,7 @@ impl DocumentProvider for MountainEnvironment {
 
 		let mut Results = Vec::with_capacity(URIsToSave.len());
 
-		info!(
-			"[DocumentProvider] Saving {} dirty document(s)",
-			URIsToSave.len()
-		);
+		info!("[DocumentProvider] Saving {} dirty document(s)", URIsToSave.len());
 
 		for URI in URIsToSave {
 			let Result = self.SaveDocument(URI.clone()).await;

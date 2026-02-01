@@ -46,10 +46,6 @@
 // - Implements automatic sync with manual override
 // - Provides sync status and error reporting
 // - Uses encryption for sensitive data
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # SynchronizationProvider Implementation
 //!
 //! Implements the `SynchronizationProvider` trait for the
@@ -103,9 +99,10 @@
 //! - Code snippets
 //! - UI layout and theme preferences
 
-#![allow(non_snake_case, non_camel_case_types)]
-
-use Common::{Error::CommonError::CommonError, Synchronization::SynchronizationProvider::SynchronizationProvider};
+use CommonLibrary::{
+	Error::CommonError::CommonError,
+	Synchronization::SynchronizationProvider::SynchronizationProvider,
+};
 use async_trait::async_trait;
 use log::warn;
 use serde_json::Value;

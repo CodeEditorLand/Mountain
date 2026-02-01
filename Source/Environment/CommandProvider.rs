@@ -2,42 +2,45 @@
 //
 // # Architectural Role: Command Registration and Execution
 //
-// CommandProvider implements the CommandExecutor trait, serving as the central registry
-// and dispatcher for all commands in the Mountain application. Commands can be handled
-// either by native Rust handlers or proxied to extension sidecar processes.
+// CommandProvider implements the CommandExecutor trait, serving as the central
+// registry and dispatcher for all commands in the Mountain application.
+// Commands can be handled either by native Rust handlers or proxied to
+// extension sidecar processes.
 //
 // # Responsibilities
 //
-// 1. **Command Registry**: Maintains a centralized registry of all registered commands
-//    and their corresponding handlers (native or proxied).
+// 1. **Command Registry**: Maintains a centralized registry of all registered
+//    commands and their corresponding handlers (native or proxied).
 //
-// 2. **Command Dispatching**: Routes command execution requests to the appropriate
-//    handler based on the command identifier.
+// 2. **Command Dispatching**: Routes command execution requests to the
+//    appropriate handler based on the command identifier.
 //
-// 3. **Extension Command Proxying**: Enables extensions to contribute commands that
-//    are executed in their sidecar processes via IPC.
+// 3. **Extension Command Proxying**: Enables extensions to contribute commands
+//    that are executed in their sidecar processes via IPC.
 //
-// 4. **Command Lifecycle Management**: Handles registration, unregistration, and
-//    querying of available commands.
+// 4. **Command Lifecycle Management**: Handles registration, unregistration,
+//    and querying of available commands.
 //
 // # Command Execution Flow
 //
 // 1. Extension or system calls ExecuteCommand(identifier, args)
 // 2. CommandProvider looks up the command in ApplicationState.CommandRegistry
-// 3. If native handler: executes Rust function directly with AppHandle and arguments
-// 4. If proxied handler: sends IPC request to the owning sidecar via Vine client
+// 3. If native handler: executes Rust function directly with AppHandle and
+//    arguments
+// 4. If proxied handler: sends IPC request to the owning sidecar via Vine
+//    client
 // 5. Returns result or error to caller
 //
 // # Patterns Borrowed from VSCode
 //
-// - **Command Registry**: Follows VSCode's command registry pattern where commands
-//   are identified by strings and can be contributed by extensions.
+// - **Command Registry**: Follows VSCode's command registry pattern where
+//   commands are identified by strings and can be contributed by extensions.
 //
 // - **Context Passing**: Like VSCode's execution context, Mountain passes the
 //   AppHandle and Runtime to native handlers for context awareness.
 //
-// - **Conflict Resolution**: VSCode allows command overrides; Mountain currently
-//   does not implement conflict resolution (TODO).
+// - **Conflict Resolution**: VSCode allows command overrides; Mountain
+//   currently does not implement conflict resolution (TODO).
 //
 // # TODOs
 //
@@ -51,15 +54,10 @@
 // - [ ] Add validation of command arguments
 // - [ ] Consider adding command preconditions
 // - [ ] Implement command history for undo/redo scenarios
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::{future::Future, pin::Pin, sync::Arc};
 
-use Common::{
+use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
 	Error::CommonError::CommonError,
 	IPC::DTO::ProxyTarget::ProxyTarget,

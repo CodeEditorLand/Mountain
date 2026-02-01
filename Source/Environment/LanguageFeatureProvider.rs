@@ -23,9 +23,6 @@
 //   - Implement call hierarchy provider
 //   - Add inlay hints support
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # LanguageFeatureProvider Implementation
 //!
 //! Implements the `LanguageFeatureProviderRegistry` trait for the
@@ -62,11 +59,9 @@
 //! services, consider adding a fallback provider chain: Air (cached/indexed)
 //! → Cocoon (LSP) → Local (basic). Current implementation uses Cocoon only.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::sync::Arc;
 
-use Common::{
+use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	IPC::IPCProvider::IPCProvider,
@@ -320,12 +315,15 @@ fn FindBestProvider(
 							}
 						}
 						// TODO: Add scheme and pattern matching logic here.
-						// Current implementation only matches language identifier.
-						// Should also check:
-						// - Selector["scheme"] (e.g., "file", "untitled", "custom")
-						// - Selector["pattern"] (e.g., "**/*.ts", "src/**/*.rs")
+						// Current implementation only matches language
+						// identifier. Should also check:
+						// - Selector["scheme"] (e.g., "file", "untitled",
+						//   "custom")
+						// - Selector["pattern"] (e.g., "**/*.ts",
+						//   "src/**/*.rs")
 						// - Selector["exclude"] (e.g., "node_modules/**")
-						// Provider scoring should rank by specificity (pattern > language > all)
+						// Provider scoring should rank by specificity (pattern
+						// > language > all)
 					}
 				}
 			}

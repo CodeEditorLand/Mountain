@@ -2,18 +2,18 @@
 //
 // # Architectural Role: Inter-Process Communication Bridge
 //
-// IPCProvider implements the IPCProvider trait, serving as the communication bridge
-// between Mountain (main process) and extension sidecar processes (Cocoon). It
-// delegates all IPC operations to the Vine gRPC client, which manages the actual
-// transport layer and connection handling.
+// IPCProvider implements the IPCProvider trait, serving as the communication
+// bridge between Mountain (main process) and extension sidecar processes
+// (Cocoon). It delegates all IPC operations to the Vine gRPC client, which
+// manages the actual transport layer and connection handling.
 //
 // # Responsibilities
 //
 // 1. **Request/Response Communication**: Handles synchronous RPC requests where
 //    Mountain sends a request and awaits a response from a sidecar.
 //
-// 2. **Notification Communication**: Handles fire-and-forget notifications where
-//    Mountain sends messages to sidecars without waiting for responses.
+// 2. **Notification Communication**: Handles fire-and-forget notifications
+//    where Mountain sends messages to sidecars without waiting for responses.
 //
 // 3. **Sidecar Routing**: Routes all IPC messages to the appropriate sidecar
 //    process via the Vine client.
@@ -49,7 +49,8 @@
 //
 // # TODOs
 //
-// - [ ] Add message queuing for offline scenarios (caching messages when sidecar is down)
+// - [ ] Add message queuing for offline scenarios (caching messages when
+//   sidecar is down)
 // - [ ] Implement bidirectional request handling (sidecar → main process)
 // - [ ] Add request/response streaming support for large data transfers
 // - [ ] Implement request cancellation with token support
@@ -62,20 +63,15 @@
 //
 // # Patterns Borrowed from VSCode
 //
-// - **RPC Bridge**: Similar to VSCode's RPC protocol between main process
-//   and extension host.
+// - **RPC Bridge**: Similar to VSCode's RPC protocol between main process and
+//   extension host.
 //
 // - **JSON-RPC**: Uses JSON-RPC 2.0 protocol for message format, like VSCode.
 //
-// - **Message Targeting**: Employs ProxyTarget pattern for routing messages
-//   to specific extension hosts, similar to VSCode's architecture.
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+// - **Message Targeting**: Employs ProxyTarget pattern for routing messages to
+//   specific extension hosts, similar to VSCode's architecture.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
-use Common::{Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
+use CommonLibrary::{Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
 use async_trait::async_trait;
 use serde_json::Value;
 

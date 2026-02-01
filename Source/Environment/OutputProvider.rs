@@ -1,7 +1,8 @@
 // File: Mountain/Source/Environment/OutputProvider.rs
 // Role: Implements the `OutputChannelManager` trait for the
 // `MountainEnvironment`. Responsibilities:
-//   - Manage multiple output channels (e.g., 'Extension Host', 'JavaScript', 'Git')
+//   - Manage multiple output channels (e.g., 'Extension Host', 'JavaScript',
+//     'Git')
 //   - Handle channel creation, modification, and disposal.
 //   - Emit events to the Sky frontend for UI updates.
 //   - Manage output formatting and encoding.
@@ -31,9 +32,6 @@
 // - Provides output channel language-specific formatting
 // - Manages output channel lifecycle and disposal
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # OutputProvider Implementation
 //!
 //! Implements the `OutputChannelManager` trait for the `MountainEnvironment`.
@@ -67,9 +65,7 @@
 //! - Extension channels: Created by extensions with their own naming scheme
 //! - Channels can be shown/hide individually or batch managed
 
-#![allow(non_snake_case, non_camel_case_types)]
-
-use Common::{Error::CommonError::CommonError, Output::OutputChannelManager::OutputChannelManager};
+use CommonLibrary::{Error::CommonError::CommonError, Output::OutputChannelManager::OutputChannelManager};
 use async_trait::async_trait;
 use log::{info, trace, warn};
 use serde_json::json;
@@ -88,15 +84,15 @@ impl OutputChannelManager for MountainEnvironment {
 		// Validate channel name
 		if Name.is_empty() {
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "Name".into(),
-				Reason: "Channel name cannot be empty".into(),
+				ArgumentName:"Name".into(),
+				Reason:"Channel name cannot be empty".into(),
 			});
 		}
 
 		if Name.len() > 256 {
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "Name".into(),
-				Reason: "Channel name exceeds maximum length of 256 characters".into(),
+				ArgumentName:"Name".into(),
+				Reason:"Channel name exceeds maximum length of 256 characters".into(),
 			});
 		}
 
@@ -104,8 +100,8 @@ impl OutputChannelManager for MountainEnvironment {
 		if let Some(ref lang_id) = LanguageIdentifier {
 			if lang_id.len() > 64 {
 				return Err(CommonError::InvalidArgument {
-					ArgumentName: "LanguageIdentifier".into(),
-					Reason: "Language identifier exceeds maximum length of 64 characters".into(),
+					ArgumentName:"LanguageIdentifier".into(),
+					Reason:"Language identifier exceeds maximum length of 64 characters".into(),
 				});
 			}
 		}
@@ -139,10 +135,11 @@ impl OutputChannelManager for MountainEnvironment {
 		trace!("[OutputProvider] Appending to channel: '{}'", ChannelIdentifier);
 
 		// Validate input size to prevent memory exhaustion
-		if Value.len() > 1_048_576 { // 1MB limit per append
+		if Value.len() > 1_048_576 {
+			// 1MB limit per append
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "Value".into(),
-				Reason: "Append value exceeds maximum size of 1MB".into(),
+				ArgumentName:"Value".into(),
+				Reason:"Append value exceeds maximum size of 1MB".into(),
 			});
 		}
 
@@ -154,10 +151,10 @@ impl OutputChannelManager for MountainEnvironment {
 
 		if let Some(ChannelState) = ChannelsGuard.get_mut(&ChannelIdentifier) {
 			// Check buffer size before appending
-			const MAX_BUFFER_SIZE: usize = 10 * 1_048_576; // 10MB total buffer limit
+			const MAX_BUFFER_SIZE:usize = 10 * 1_048_576; // 10MB total buffer limit
 			if ChannelState.Buffer.len() + Value.len() > MAX_BUFFER_SIZE {
 				// Trim from beginning to make room
-				const TRIM_SIZE: usize = Value.len() + 1_048_576; // Keep 1MB headroom
+				let TRIM_SIZE:usize = Value.len() + 1_048_576; // Keep 1MB headroom
 				if ChannelState.Buffer.len() > TRIM_SIZE {
 					let _ = ChannelState.Buffer.drain(..TRIM_SIZE);
 				}

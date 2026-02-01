@@ -46,10 +46,6 @@
 // - Supports file and directory exclusions
 // - Provides incremental search results
 // - Handles search cancellation gracefully
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # SearchProvider Implementation
 //!
 //! Implements the `SearchProvider` trait using the `grep-searcher` crate, which
@@ -61,8 +57,10 @@
 //!
 //! 1. **Pattern Compilation**: Regex pattern is compiled with modifiers
 //! 2. **Parallel Walking**: Files in workspace are walked in parallel
-//! 3. **Per-File Search**: Each file is searched individually using a sink pattern
-//! 4. **Result Aggregation**: Matches are collected in a shared thread-safe vector
+//! 3. **Per-File Search**: Each file is searched individually using a sink
+//!    pattern
+//! 4. **Result Aggregation**: Matches are collected in a shared thread-safe
+//!    vector
 //!
 //! ## Search Features
 //!
@@ -83,15 +81,13 @@
 //! Results are grouped by file, with each file containing multiple matches.
 //
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{
 	io,
 	path::PathBuf,
 	sync::{Arc, Mutex},
 };
 
-use Common::{Error::CommonError::CommonError, Search::SearchProvider::SearchProvider};
+use CommonLibrary::{Error::CommonError::CommonError, Search::SearchProvider::SearchProvider};
 use async_trait::async_trait;
 use grep_regex::RegexMatcherBuilder;
 use grep_searcher::{Searcher, Sink, SinkMatch};

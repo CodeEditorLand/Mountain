@@ -1,9 +1,6 @@
 // ============================================================================
 // File: Mountain/Source/Environment/WebViewProvider.rs
 // ============================================================================
-// This module follows the Land ecosystem's PascalCase naming convention.
-// See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//
 // # WebViewProvider Implementation
 //
 // Implements the `WebViewProvider` trait for the `MountainEnvironment`.
@@ -25,35 +22,30 @@
 //
 // ============================================================================
 
-#![allow(non_snake_case, non_camel_case_types)]
+use std::{collections::HashMap, sync::Arc};
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
-
-use Common::{
+use CommonLibrary::{
 	Error::CommonError::CommonError,
-	IPC::{IPCProvider::IPCProvider, DTO::ProxyTarget::ProxyTarget},
+	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 	WebView::WebViewProvider::WebViewProvider,
 };
 use async_trait::async_trait;
-use log::{info, warn, error, debug};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tauri::{Emitter, Manager, WebviewWindowBuilder};
 use uuid::Uuid;
 
-use super::{MountainEnvironment::MountainEnvironment, Utility, Requires};
+use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::ApplicationState::DTO::WebViewStateDTO::WebViewStateDTO;
 
 /// Represents a WebView message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebViewMessage {
-	pub MessageIdentifier: String,
-	pub MessageType: String,
-	pub Payload: Value,
-	pub Source: Option<String>,
+	pub MessageIdentifier:String,
+	pub MessageType:String,
+	pub Payload:Value,
+	pub Source:Option<String>,
 }
 
 /// WebView lifecycle state
@@ -69,9 +61,9 @@ pub enum WebViewLifecycleState {
 
 /// WebView message handler context
 struct WebViewMessageContext {
-	Handle: String,
-	SideCarIdentifier: Option<String>,
-	PendingResponses: HashMap<String, tokio::sync::oneshot::Sender<Value>>,
+	Handle:String,
+	SideCarIdentifier:Option<String>,
+	PendingResponses:HashMap<String, tokio::sync::oneshot::Sender<Value>>,
 }
 
 #[async_trait]
@@ -94,31 +86,31 @@ impl WebViewProvider for MountainEnvironment {
 		);
 
 		// Parse content options to ensure security settings
-		let ContentOptions = serde_json::from_value(ContentOptionsValue.clone())
-			.map_err(|Error| CommonError::InvalidArgument {
-				ArgumentName: "ContentOptions".into(),
-				Reason: Error.to_string(),
-			})?;
+		let ContentOptions = serde_json::from_value(ContentOptionsValue.clone()).map_err(|Error| {
+			CommonError::InvalidArgument { ArgumentName:"ContentOptions".into(), Reason:Error.to_string() }
+		})?;
 
 		let State = WebViewStateDTO {
 			Handle:Handle.clone(),
-			ViewType: ViewType.clone(),
+			ViewType:ViewType.clone(),
 			Title:Title.clone(),
 			ContentOptions,
-			PanelOptions: PanelOptionsValue,
-			SideCarIdentifier: "cocoon-main".to_string(),
-			ExtensionIdentifier: ExtensionDataValue
+			PanelOptions:PanelOptionsValue,
+			SideCarIdentifier:"cocoon-main".to_string(),
+			ExtensionIdentifier:ExtensionDataValue
 				.get("id")
 				.and_then(|v| v.as_str())
 				.unwrap_or_default()
 				.to_string(),
-			IsActive: true,
-			IsVisible: true,
+			IsActive:true,
+			IsVisible:true,
 		};
 
 		// Store the initial state with lifecycle state
 		{
-			let mut WebViewGuard = self.ApplicationState.ActiveWebViews
+			let mut WebViewGuard = self
+				.ApplicationState
+				.ActiveWebViews
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -126,7 +118,7 @@ impl WebViewProvider for MountainEnvironment {
 		}
 
 		// Create a new Tauri window for this webview with security settings
-		WebViewWindowBuilder::new(
+		WebviewWindowBuilder::new(
 			&self.ApplicationHandle,
 			&Handle,
 			tauri::WebviewUrl::App("WebviewHost.html".into()),
@@ -143,7 +135,7 @@ impl WebViewProvider for MountainEnvironment {
 		.build()
 		.map_err(|Error| {
 			error!("[WebViewProvider] Failed to create WebView window: {}", Error);
-			CommonError::UserInterfaceInteraction { Reason: Error.to_string() }
+			CommonError::UserInterfaceInteraction { Reason:Error.to_string() }
 		})?;
 
 		// Setup message listener for this WebView
@@ -155,8 +147,8 @@ impl WebViewProvider for MountainEnvironment {
 				"sky://webview/created",
 				json!({ "Handle": Handle, "ViewType": ViewType, "Title": Title }),
 			)
-			.map_err(|Error| CommonError::IPCError {
-				Description: format!("Failed to emit WebView creation event: {}", Error),
+			.map_err(|Error| {
+				CommonError::IPCError { Description:format!("Failed to emit WebView creation event: {}", Error) }
 			})?;
 
 		Ok(Handle)
@@ -185,12 +177,9 @@ impl WebViewProvider for MountainEnvironment {
 
 		// Notify frontend about WebView disposal
 		self.ApplicationHandle
-			.emit(
-				"sky://webview/disposed",
-				json!({ "Handle": Handle }),
-			)
-			.map_err(|Error| CommonError::IPCError {
-				Description: format!("Failed to emit WebView disposal event: {}", Error),
+			.emit("sky://webview/disposed", json!({ "Handle": Handle }))
+			.map_err(|Error| {
+				CommonError::IPCError { Description:format!("Failed to emit WebView disposal event: {}", Error) }
 			})?;
 
 		Ok(())
@@ -201,21 +190,19 @@ impl WebViewProvider for MountainEnvironment {
 		info!("[WebViewProvider] Revealing WebViewPanel: {}", Handle);
 
 		if let Some(WebviewWindow) = self.ApplicationHandle.get_webview_window(&Handle) {
-			WebviewWindow
-				.show()
-				.map_err(|Error| CommonError::UserInterfaceInteraction {
-					Reason: format!("Failed to show WebView window: {}", Error),
-				})?;
+			WebviewWindow.show().map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to show WebView window: {}", Error) }
+			})?;
 
-			WebviewWindow
-				.set_focus()
-				.map_err(|Error| CommonError::UserInterfaceInteraction {
-					Reason: format!("Failed to focus WebView window: {}", Error),
-				})?;
+			WebviewWindow.set_focus().map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to focus WebView window: {}", Error) }
+			})?;
 
 			// Update visibility state
 			{
-				let mut WebViewGuard = self.ApplicationState.ActiveWebViews
+				let mut WebViewGuard = self
+					.ApplicationState
+					.ActiveWebViews
 					.lock()
 					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -226,12 +213,9 @@ impl WebViewProvider for MountainEnvironment {
 
 			// Emit visibility event
 			self.ApplicationHandle
-				.emit(
-					"sky://webview/revealed",
-					json!({ "Handle": Handle }),
-				)
-				.map_err(|Error| CommonError::IPCError {
-					Description: format!("Failed to emit WebView revealed event: {}", Error),
+				.emit("sky://webview/revealed", json!({ "Handle": Handle }))
+				.map_err(|Error| {
+					CommonError::IPCError { Description:format!("Failed to emit WebView revealed event: {}", Error) }
 				})?;
 		}
 
@@ -243,22 +227,21 @@ impl WebViewProvider for MountainEnvironment {
 		info!("[WebViewProvider] Setting options for WebView: {}", Handle);
 
 		if let Some(WebviewWindow) = self.ApplicationHandle.get_webview_window(&Handle) {
-			let OptionsMap:HashMap<String, Value> = serde_json::from_value(OptionsValue.clone())
-				.map_err(|Error| CommonError::SerializationError {
-					Description: format!("Failed to parse WebView options: {}", Error),
-				})?;
+			let OptionsMap:HashMap<String, Value> = serde_json::from_value(OptionsValue.clone()).map_err(|Error| {
+				CommonError::SerializationError { Description:format!("Failed to parse WebView options: {}", Error) }
+			})?;
 
 			// Update title
 			if let Some(Title) = OptionsMap.get("title").and_then(|v| v.as_str()) {
-				WebviewWindow
-					.set_title(Title)
-					.map_err(|Error| CommonError::UserInterfaceInteraction {
-						Reason: format!("Failed to set WebView title: {}", Error),
-					})?;
+				WebviewWindow.set_title(Title).map_err(|Error| {
+					CommonError::UserInterfaceInteraction { Reason:format!("Failed to set WebView title: {}", Error) }
+				})?;
 
 				// Update state
 				{
-					let mut WebViewGuard = self.ApplicationState.ActiveWebViews
+					let mut WebViewGuard = self
+						.ApplicationState
+						.ActiveWebViews
 						.lock()
 						.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -277,8 +260,8 @@ impl WebViewProvider for MountainEnvironment {
 				"sky://webview/options-changed",
 				json!({ "Handle": Handle, "Options": OptionsValue }),
 			)
-			.map_err(|Error| CommonError::IPCError {
-				Description: format!("Failed to emit WebView options changed event: {}", Error),
+			.map_err(|Error| {
+				CommonError::IPCError { Description:format!("Failed to emit WebView options changed event: {}", Error) }
 			})?;
 
 		Ok(())
@@ -289,11 +272,9 @@ impl WebViewProvider for MountainEnvironment {
 		debug!("[WebViewProvider] Setting HTML for WebView: {} ({} bytes)", Handle, HTML.len());
 
 		if let Some(WebviewWindow) = self.ApplicationHandle.get_webview_window(&Handle) {
-			WebviewWindow
-				.emit("sky://webview/set-html", HTML)
-				.map_err(|Error| CommonError::IPCError {
-					Description: format!("Failed to set WebView HTML: {}", Error),
-				})?;
+			WebviewWindow.emit("sky://webview/set-html", HTML).map_err(|Error| {
+				CommonError::IPCError { Description:format!("Failed to set WebView HTML: {}", Error) }
+			})?;
 
 			Ok(())
 		} else {
@@ -307,16 +288,16 @@ impl WebViewProvider for MountainEnvironment {
 
 		if let Some(WebviewWindow) = self.ApplicationHandle.get_webview_window(&Handle) {
 			let WebViewMessage = WebViewMessage {
-				MessageIdentifier: Uuid::new_v4().to_string(),
-				MessageType: "request".to_string(),
-				Payload: Message,
-				Source: Some("host".to_string()),
+				MessageIdentifier:Uuid::new_v4().to_string(),
+				MessageType:"request".to_string(),
+				Payload:Message,
+				Source:Some("host".to_string()),
 			};
 
 			WebviewWindow
 				.emit("sky://webview/post-message", WebViewMessage)
-				.map_err(|Error| CommonError::IPCError {
-					Description: format!("Failed to post message to WebView: {}", Error),
+				.map_err(|Error| {
+					CommonError::IPCError { Description:format!("Failed to post message to WebView: {}", Error) }
 				})?;
 
 			debug!("[WebViewProvider] Message sent successfully to WebView: {}", Handle);
@@ -327,19 +308,27 @@ impl WebViewProvider for MountainEnvironment {
 		}
 	}
 
+	/* ========================================================================
+	 * EXTRA METHODS - Not part of the WebViewProvider trait in CommonLibrary
+	 * These methods are commented out because the trait definition doesn't
+	 * include them. They may be added to the trait in the future or implemented
+	 * through a different mechanism.
+	 * ======================================================================== */
+
+	/*
 	/// Receives a message from a WebView and routes it appropriately.
 	async fn ReceiveMessageFromWebView(&self, Handle:String, Message:Value) -> Result<Value, CommonError> {
 		debug!("[WebViewProvider] Received message from WebView: {}", Handle);
 
 		// Get WebView state
 		let SideCarIdentifier = {
-			let WebViewGuard = self.ApplicationState.ActiveWebViews
+			let WebViewGuard = self
+				.ApplicationState
+				.ActiveWebViews
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-			WebViewGuard
-				.get(&Handle)
-				.map(|State| State.SideCarIdentifier.clone())
+			WebViewGuard.get(&Handle).map(|State| State.SideCarIdentifier.clone())
 		};
 
 		// Route message to appropriate handler
@@ -352,9 +341,7 @@ impl WebViewProvider for MountainEnvironment {
 				"Message": Message,
 			});
 
-			return IPCProvider
-				.SendRequestToSideCar(&SideCarId, RPCMethod, RPCParams, 5000)
-				.await;
+			return IPCProvider.SendRequestToSideCar(&SideCarId, RPCMethod, RPCParams, 5000).await;
 		}
 
 		// Handle locally if no sidecar
@@ -364,12 +351,15 @@ impl WebViewProvider for MountainEnvironment {
 
 	/// Gets the current state of a WebView.
 	async fn GetWebViewState(&self, Handle:String) -> Result<Value, CommonError> {
-		let WebViewGuard = self.ApplicationState.ActiveWebViews
+		let WebViewGuard = self
+			.ApplicationState
+			.ActiveWebViews
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		let State = WebViewGuard.get(&Handle)
-			.ok_or_else(|| CommonError::WebViewNotFound { Handle: Handle.clone() })?;
+		let State = WebViewGuard
+			.get(&Handle)
+			.ok_or_else(|| CommonError::WebViewNotFound { Handle:Handle.clone() })?;
 
 		Ok(json!({
 			"Handle": State.Handle,
@@ -377,9 +367,10 @@ impl WebViewProvider for MountainEnvironment {
 			"Title": State.Title,
 			"IsActive": State.IsActive,
 			"IsVisible": State.IsVisible,
-	    "ExtensionIdentifier": State.ExtensionIdentifier,
+			"ExtensionIdentifier": State.ExtensionIdentifier,
 		}))
 	}
+	*/
 }
 
 // ============================================================================
@@ -400,7 +391,7 @@ impl MountainEnvironment {
 
 	/// Removes a message listener for a specific WebView.
 	async fn RemoveWebViewMessageListener(&self, _Handle:&str) {
-		// Remove the event listener
-		debug!("[WebViewProvider] Removing message listener");
+		// In a full implementation, this would remove the event listener
+		// that forwards WebView messages.
 	}
 }

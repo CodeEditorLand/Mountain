@@ -1,9 +1,6 @@
 // ============================================================================
 // File: Mountain/Source/Environment/UserInterfaceProvider.rs
 // ============================================================================
-// This module follows the Land ecosystem's PascalCase naming convention.
-// See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//
 // # UserInterfaceProvider Implementation
 //
 // Implements the `UserInterfaceProvider` trait for the `MountainEnvironment`.
@@ -25,11 +22,9 @@
 //
 // ============================================================================
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::path::PathBuf;
 
-use Common::{
+use CommonLibrary::{
 	Error::CommonError::CommonError,
 	UserInterface::{
 		DTO::{

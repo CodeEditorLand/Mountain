@@ -4,7 +4,8 @@
 //   - Core logic for Memento storage operations.
 //   - Reading from and writing to global and workspace JSON storage files.
 //   - Provides both per-key and high-performance batch operations.
-//   - Enhances keychain integration with the `keyring` crate for secure storage.
+//   - Enhances keychain integration with the `keyring` crate for secure
+//     storage.
 //   - Adds secure storage with encryption for sensitive data.
 //   - Handles storage errors gracefully with proper error handling.
 //   - Manages storage file location and directory creation.
@@ -35,7 +36,8 @@
 //
 // ## Storage Scopes
 //
-// 1. **Global Storage**: Application-level settings that persist across all workspaces
+// 1. **Global Storage**: Application-level settings that persist across all
+//    workspaces
 //    - Location: App config directory (platform-specific)
 //    - File: `global.json` or similar
 //    - Scope: `IsGlobalScope = true`
@@ -66,20 +68,15 @@
 // - Lock poisoning from concurrent access
 // - Missing permissions for storage paths
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # StorageProvider Implementation
 //!
 //! Implements the `StorageProvider` trait for the `MountainEnvironment`. This
 //! provider contains the core logic for Memento storage operations, including
 //! reading from and writing to the appropriate JSON storage files on disk.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{collections::HashMap, path::PathBuf};
 
-use Common::{Error::CommonError::CommonError, Storage::StorageProvider::StorageProvider};
+use CommonLibrary::{Error::CommonError::CommonError, Storage::StorageProvider::StorageProvider};
 use async_trait::async_trait;
 use log::{error, info, trace};
 use serde_json::Value;
@@ -103,8 +100,8 @@ impl StorageProvider for MountainEnvironment {
 
 		if Key.len() > 1024 {
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "Key".into(),
-				Reason: "Key length exceeds maximum allowed length of 1024 characters".into(),
+				ArgumentName:"Key".into(),
+				Reason:"Key length exceeds maximum allowed length of 1024 characters".into(),
 			});
 		}
 
@@ -122,7 +119,8 @@ impl StorageProvider for MountainEnvironment {
 	}
 
 	/// Updates or deletes a value in either global or workspace storage.
-	/// Includes comprehensive validation for key length, value size, and JSON validity.
+	/// Includes comprehensive validation for key length, value size, and JSON
+	/// validity.
 	async fn UpdateStorageValue(
 		&self,
 
@@ -139,15 +137,15 @@ impl StorageProvider for MountainEnvironment {
 		// Validate key to prevent injection or invalid storage paths
 		if Key.is_empty() {
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "Key".into(),
-				Reason: "Key cannot be empty".into(),
+				ArgumentName:"Key".into(),
+				Reason:"Key cannot be empty".into(),
 			});
 		}
 
 		if Key.len() > 1024 {
 			return Err(CommonError::InvalidArgument {
-				ArgumentName: "Key".into(),
-				Reason: "Key length exceeds maximum allowed length of 1024 characters".into(),
+				ArgumentName:"Key".into(),
+				Reason:"Key length exceeds maximum allowed length of 1024 characters".into(),
 			});
 		}
 
@@ -157,8 +155,8 @@ impl StorageProvider for MountainEnvironment {
 				if json_string.len() > 10 * 1024 * 1024 {
 					// 10MB limit per value
 					return Err(CommonError::InvalidArgument {
-						ArgumentName: "ValueToSet".into(),
-						Reason: "Value size exceeds maximum allowed size of 10MB".into(),
+						ArgumentName:"ValueToSet".into(),
+						Reason:"Value size exceeds maximum allowed size of 10MB".into(),
 					});
 				}
 			}

@@ -2,13 +2,15 @@
 //
 // # Architectural Role: Shared Utility Functions for Environment Providers
 //
-// This module provides common helper functions used across all provider implementations
-// in the MountainEnvironment module. These utilities handle cross-cutting concerns like
-// error mapping, path manipulation, security validation, and type conversions.
+// This module provides common helper functions used across all provider
+// implementations in the MountainEnvironment module. These utilities handle
+// cross-cutting concerns like error mapping, path manipulation, security
+// validation, and type conversions.
 //
 // # Responsibilities
 //
-// 1. **Error Mapping**: Converts Mutex lock poisoning errors to CommonError variants
+// 1. **Error Mapping**: Converts Mutex lock poisoning errors to CommonError
+//    variants
 // 2. **Language Detection**: Infers language identifiers from file extensions
 // 3. **Security Validation**: Enforces workspace trust and path access rules
 // 4. **URI Conversion**: Converts VSCode UriComponents DTOs to Rust Url types
@@ -30,11 +32,6 @@
 // - [ ] Add support for custom language mappings from user settings
 // - [ ] Implement path-based permission levels (read-only, read/write)
 // - [ ] Add audit logging for path access attempts
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::{
 	ffi::OsStr,
@@ -42,7 +39,7 @@ use std::{
 	sync::{MutexGuard, PoisonError},
 };
 
-use Common::Error::CommonError::CommonError;
+use CommonLibrary::Error::CommonError::CommonError;
 use log::{error, trace};
 use url::Url;
 
@@ -57,6 +54,9 @@ pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard
 
 	CommonError::StateLockPoisoned { Context:ErrorMessage }
 }
+
+/// Alias for MapApplicationStateLockErrorToCommonError for shorter names
+pub use MapApplicationStateLockErrorToCommonError as MapLockErrorToCommonError;
 
 /// A simple utility to detect a language identifier string from a file path's
 /// extension.

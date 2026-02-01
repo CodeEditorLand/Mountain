@@ -1,9 +1,6 @@
 // ============================================================================
 // File: Mountain/Source/Environment/TreeViewProvider.rs
 // ============================================================================
-// This module follows the Land ecosystem's PascalCase naming convention.
-// See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//
 // # TreeViewProvider Implementation
 //
 // Implements the `TreeViewProvider` trait for the `MountainEnvironment`.
@@ -24,11 +21,10 @@
 //
 // ============================================================================
 
-#![allow(non_snake_case, non_camel_case_types)]
-
+use log::debug;
 use std::sync::Arc;
 
-use Common::{
+use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
@@ -196,30 +192,12 @@ impl TreeViewProvider for MountainEnvironment {
 		Err(CommonError::TreeViewProviderNotFound { ViewIdentifier })
 	}
 
-	// --- Other stubbed methods ---
-	async fn SetTreeViewMessage(&self, _ViewIdentifier:String, _Message:Option<String>) -> Result<(), CommonError> {
-		warn!("[TreeViewProvider] SetTreeViewMessage is not implemented.");
-
-		Ok(())
-	}
-
-	async fn SetTreeViewTitle(
-		&self,
-
-		_ViewIdentifier:String,
-
-		_Title:Option<String>,
-
-		_Description:Option<String>,
-	) -> Result<(), CommonError> {
-		warn!("[TreeViewProvider] SetTreeViewTitle is not implemented.");
-
-		Ok(())
-	}
-
 	/// Updates the tree view message displayed in the UI.
 	async fn SetTreeViewMessage(&self, ViewIdentifier:String, Message:Option<String>) -> Result<(), CommonError> {
-		info!("[TreeViewProvider] Setting message for view '{}': {:?}", ViewIdentifier, Message);
+		info!(
+			"[TreeViewProvider] Setting message for view '{}': {:?}",
+			ViewIdentifier, Message
+		);
 
 		{
 			let mut TreeViewGuard = self
@@ -238,8 +216,8 @@ impl TreeViewProvider for MountainEnvironment {
 				"sky://tree-view/set-message",
 				json!({ "ViewIdentifier": ViewIdentifier, "Message": Message }),
 			)
-			.map_err(|Error| CommonError::UserInterfaceInteraction {
-				Reason: format!("Failed to emit tree view message: {}", Error),
+			.map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view message: {}", Error) }
 			})
 	}
 
@@ -277,8 +255,8 @@ impl TreeViewProvider for MountainEnvironment {
 					"Description": Description,
 				}),
 			)
-			.map_err(|Error| CommonError::UserInterfaceInteraction {
-				Reason: format!("Failed to emit tree view title: {}", Error),
+			.map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view title: {}", Error) }
 			})
 	}
 
@@ -295,8 +273,8 @@ impl TreeViewProvider for MountainEnvironment {
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 			if let Some(ViewState) = TreeViewGuard.get_mut(&ViewIdentifier) {
-				// Store badge in ViewState (you may need to add this field to TreeViewStateDTO)
-				// For now, just emit the event
+				// Store badge in ViewState (you may need to add this field to
+				// TreeViewStateDTO) For now, just emit the event
 			}
 		}
 
@@ -306,151 +284,8 @@ impl TreeViewProvider for MountainEnvironment {
 				"sky://tree-view/set-badge",
 				json!({ "ViewIdentifier": ViewIdentifier, "Badge": Badge }),
 			)
-			.map_err(|Error| CommonError::UserInterfaceInteraction {
-				Reason: format!("Failed to emit tree view badge: {}", Error),
+			.map_err(|Error| {
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view badge: {}", Error) }
 			})
-	}
-
-	/// Handles tree node expansion/collapse events.
-	async fn OnTreeNodeExpanded(&self, ViewIdentifier:String, ElementHandle:String, IsExpanded:bool) -> Result<(), CommonError> {
-		debug!(
-			"[TreeViewProvider] Tree node '{}' in view '{}' is now {}",
-			ElementHandle, ViewIdentifier, if IsExpanded { "expanded" } else { "collapsed" }
-		);
-
-		// Save expansion state for persistence
-		{
-			let mut TreeViewGuard = self
-				.ApplicationState
-				.ActiveTreeViews
-				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-			if let Some(ViewState) = TreeViewGuard.get_mut(&ViewIdentifier) {
-				// Store expansion state in ViewState
-				// You may need to add an ExpansionState field to TreeViewStateDTO
-				_ = (IsExpanded, ElementHandle); // Suppress unused warning
-			}
-		}
-
-		Ok(())
-	}
-
-	/// Handles tree selection changes.
-	async fn OnTreeSelectionChanged(&self, ViewIdentifier:String, SelectedHandles:Vec<String>) -> Result<(), CommonError> {
-		debug!(
-			"[TreeViewProvider] Selection changed in view '{}': {} items selected",
-			ViewIdentifier,
-			SelectedHandles.len()
-		);
-
-		// Save selection state
-		{
-			let mut TreeViewGuard = self
-				.ApplicationState
-				.ActiveTreeViews
-				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-			if let Some(ViewState) = TreeViewGuard.get_mut(&ViewIdentifier) {
-				// Store selected handles in ViewState
-				// You may need to add a SelectedHandles field to TreeViewStateDTO
-				_ = SelectedHandles; // Suppress unused warning
-			}
-		}
-
-		Ok(())
-	}
-
-	/// Persists tree view state (for restoration after restart).
-	async fn PersistTreeViewState(&self, ViewIdentifier:String) -> Result<Value, CommonError> {
-		info!("[TreeViewProvider] Persisting state for view '{}'", ViewIdentifier);
-
-		let TreeViewGuard = self
-			.ApplicationState
-			.ActiveTreeViews
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		let State = TreeViewGuard.get(&ViewIdentifier).map(|ViewState| {
-			json!({
-				"ViewIdentifier": ViewState.ViewIdentifier,
-				"Title": ViewState.Title,
-				"Description": ViewState.Description,
-				"CanSelectMany": ViewState.CanSelectMany,
-				"HasHandleDrag": ViewState.HasHandleDrag,
-				"HasHandleDrop": ViewState.HasHandleDrop,
-			})
-		});
-
-		Ok(State.unwrap_or(json!(null)))
-	}
-
-	/// Restores previously persisted tree view state.
-	async fn RestoreTreeViewState(&self, ViewIdentifier:String, State:Value) -> Result<(), CommonError> {
-		info!(
-			"[TreeViewProvider] Restoring state for view '{}' from persisted data",
-			ViewIdentifier
-		);
-
-		// Parse and apply the persisted state
-		if let Some(ViewDescription) = State.get("ViewDescription").and_then(|v| v.as_str()) {
-			self.SetTreeViewTitle(ViewIdentifier.clone(), Some(ViewDescription.to_string()), None).await?;
-		}
-
-		if let Some(ViewMessage) = State.get("ViewMessage") {
-			let Message:Option<String> = serde_json::from_value(ViewMessage.clone()).ok();
-			self.SetTreeViewMessage(ViewIdentifier.clone(), Message).await?;
-		}
-
-		Ok(())
-	}
-
-	/// Handles tree node drag and drop start.
-	async fn OnTreeViewDragStart(&self, ViewIdentifier:String, DraggedHandles:Vec<String>) -> Result<Vec<String>, CommonError> {
-		debug!(
-			"[TreeViewProvider] Drag started in view '{}': {} items being dragged",
-			ViewIdentifier,
-			DraggedHandles.len()
-		);
-
-		// For now, just return the handles.
-		// In a full implementation, this would:
-		// 1. Prepare data transfer objects for the dragged items
-		// 2. Register the drag operation with the DnD service
-		Ok(DraggedHandles)
-	}
-
-	/// Handles tree node drop.
-	async fn OnTreeViewDrop(&self, ViewIdentifier:String, TargetHandle:Option<String>, TransferData:Value) -> Result<(), CommonError> {
-		info!(
-			"[TreeViewProvider] Drop in view '{}' on target {:?}",
-			ViewIdentifier, TargetHandle
-		);
-
-		let ProviderInfo = self
-			.ApplicationState
-			.ActiveTreeViews
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
-			.get(&ViewIdentifier)
-			.cloned();
-
-		if let Some(Info) = ProviderInfo {
-			if let Some(SideCarId) = Info.SideCarIdentifier {
-				let IPCProvider:Arc<dyn IPCProvider> = self.Require();
-
-				let RPCMethod = format!("{}$handleDrop", ProxyTarget::ExtHostTreeView.GetTargetPrefix());
-				let RPCParams = json!({
-					"ViewIdentifier": ViewIdentifier,
-					"TargetHandle": TargetHandle,
-					"TransferData": TransferData,
-				});
-
-				IPCProvider.SendRequestToSideCar(SideCarId, RPCMethod, RPCParams, 10000).await?
-			}
-		}
-
-		Ok(())
 	}
 }

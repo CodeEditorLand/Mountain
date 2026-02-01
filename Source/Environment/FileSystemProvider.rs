@@ -2,27 +2,27 @@
 //
 // # Architectural Role: Filesystem Access Layer
 //
-// FileSystemProvider implements FileSystemReader and FileSystemWriter traits, providing
-// secure, validated access to the filesystem. It enforces workspace trust boundaries,
-// normalizes paths to prevent traversal attacks, and provides comprehensive file
-// operations including support for symbolic links.
+// FileSystemProvider implements FileSystemReader and FileSystemWriter traits,
+// providing secure, validated access to the filesystem. It enforces workspace
+// trust boundaries, normalizes paths to prevent traversal attacks, and provides
+// comprehensive file operations including support for symbolic links.
 //
 // # Responsibilities
 //
-// 1. **Secure File Access**: Enforces workspace trust and path validation to prevent
-//    unauthorized access to sensitive system files.
+// 1. **Secure File Access**: Enforces workspace trust and path validation to
+//    prevent unauthorized access to sensitive system files.
 //
-// 2. **File Operations**: Provides read, write, stat, delete, rename, and copy operations
-//    for files and directories with proper error handling.
+// 2. **File Operations**: Provides read, write, stat, delete, rename, and copy
+//    operations for files and directories with proper error handling.
 //
-// 3. **Symbolic Link Support**: Detects and properly handles symbolic links in file
-//    metadata and operations.
+// 3. **Symbolic Link Support**: Detects and properly handles symbolic links in
+//    file metadata and operations.
 //
-// 4. **Path Validation**: Validates that all file operations stay within trusted
-//    workspace boundaries.
+// 4. **Path Validation**: Validates that all file operations stay within
+//    trusted workspace boundaries.
 //
-// 5. **Directory Traversal**: Reads directory contents with proper error handling
-//    and type detection.
+// 5. **Directory Traversal**: Reads directory contents with proper error
+//    handling and type detection.
 //
 // # Security Model
 //
@@ -34,7 +34,8 @@
 //
 // # TODOs
 //
-// - [ ] Implement filesystem change watching capabilities (notify, inotify, FSEvents)
+// - [ ] Implement filesystem change watching capabilities (notify, inotify,
+//   FSEvents)
 // - [ ] Add path normalization to prevent directory traversal
 // - [ ] Implement proper symbolic link resolution with security checks
 // - [ ] Add support for file permissions and ownership metadata
@@ -49,22 +50,18 @@
 //
 // # Patterns Borrowed from VSCode
 //
-// - **DiskFileSystemProvider**: Inspired by VSCode's electron-browser diskFileSystemProvider
-//   for secure filesystem access.
+// - **DiskFileSystemProvider**: Inspired by VSCode's electron-browser
+//   diskFileSystemProvider for secure filesystem access.
 //
-// - **FilePermissions**: Similar to VSCode's permission model for file operations.
+// - **FilePermissions**: Similar to VSCode's permission model for file
+//   operations.
 //
-// - **FileType Detection**: Follows VSCode's file type enum pattern (File, Directory,
-//   SymbolicLink, Unknown).
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-
-#![allow(non_snake_case, non_camel_case_types)]
+// - **FileType Detection**: Follows VSCode's file type enum pattern (File,
+//   Directory, SymbolicLink, Unknown).
 
 use std::path::PathBuf;
 
-use Common::{
+use CommonLibrary::{
 	Error::CommonError::CommonError,
 	FileSystem::{
 		DTO::{FileSystemStatDTO::FileSystemStatDTO, FileTypeDTO::FileTypeDTO},
@@ -85,7 +82,9 @@ impl FileSystemReader for MountainEnvironment {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Path)?;
 
 		// Validate that the path exists and is a file, not a directory
-		let Metadata = fs::metadata(Path).await.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadFile.Stat"))?;
+		let Metadata = fs::metadata(Path)
+			.await
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadFile.Stat"))?;
 
 		if Metadata.is_dir() {
 			return Err(CommonError::InvalidArgument {
@@ -118,8 +117,10 @@ impl FileSystemReader for MountainEnvironment {
 			FileType |= FileTypeDTO::Directory as u8;
 		}
 
-		// Check for symbolic link separately using file_type()
-		let FileTypeRaw = fs::file_type(Path).await.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "StatFile.FileType"))?;
+		// Check for symbolic link separately using symlink_metadata()
+		let FileTypeRaw = fs::symlink_metadata(Path)
+			.await
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "StatFile.FileType"))?;
 
 		if FileTypeRaw.is_symlink() {
 			FileType |= FileTypeDTO::SymbolicLink as u8;
@@ -154,7 +155,9 @@ impl FileSystemReader for MountainEnvironment {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Path)?;
 
 		// Validate that the path exists and is a directory
-		let Metadata = fs::metadata(Path).await.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadDirectory.Stat"))?;
+		let Metadata = fs::metadata(Path)
+			.await
+			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "ReadDirectory.Stat"))?;
 
 		if !Metadata.is_dir() {
 			return Err(CommonError::InvalidArgument {
@@ -208,7 +211,8 @@ impl FileSystemWriter for MountainEnvironment {
 		Utility::IsPathAllowedForAccess(&self.ApplicationState, Path)?;
 
 		// Validate that Content is not excessively large to prevent memory issues
-		if Content.len() > 1024 * 1024 * 1024 { // 1 GB limit
+		if Content.len() > 1024 * 1024 * 1024 {
+			// 1 GB limit
 			return Err(CommonError::InvalidArgument {
 				ArgumentName:"Content".to_string(),
 				Reason:"Content exceeds maximum size limit of 1GB".to_string(),
@@ -364,7 +368,8 @@ impl FileSystemWriter for MountainEnvironment {
 	}
 
 	/// Creates a new, empty file after verifying access rights.
-	/// Fails if the file already exists (use WriteFile with Overwrite to replace).
+	/// Fails if the file already exists (use WriteFile with Overwrite to
+	/// replace).
 	async fn CreateFile(&self, Path:&PathBuf) -> Result<(), CommonError> {
 		// Use WriteFile with an empty Vec, ensuring creation without overwrite.
 		// This ensures proper parent directory creation and path validation.

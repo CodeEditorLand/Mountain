@@ -55,10 +55,6 @@
 // - Manages terminal process lifecycle
 // - Supports terminal profiles and custom shells
 // - Provides shell integration features
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # TerminalProvider Implementation
 //!
 //! Implements the `TerminalProvider` trait for the `MountainEnvironment`. This
@@ -102,11 +98,9 @@
 //
 //! Each terminal gets its own I/O tasks to prevent blocking each other.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{env, io::Write, sync::Arc};
 
-use Common::{
+use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	IPC::IPCProvider::IPCProvider,

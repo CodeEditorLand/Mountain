@@ -61,13 +61,8 @@
 // - [ ] Add diagnostic statistics and metrics
 // - [ ] Consider implementing diagnostic versioning for change detection
 // - [ ] Add support for diagnostic workspace-wide filtering (exclude files)
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
 
-#![allow(non_snake_case, non_camel_case_types)]
-
-use Common::{Diagnostic::DiagnosticManager::DiagnosticManager, Error::CommonError::CommonError};
+use CommonLibrary::{Diagnostic::DiagnosticManager::DiagnosticManager, Error::CommonError::CommonError};
 use async_trait::async_trait;
 use log::{debug, error, info};
 use serde_json::{Value, json};
@@ -150,6 +145,7 @@ impl DiagnosticManager for MountainEnvironment {
 				(keys.len(), keys)
 			})
 			.unwrap_or((0, vec![]))
+		};
 
 		if !ChangedURIKeys.is_empty() {
 			info!("[DiagnosticProvider] Cleared {} diagnostics across {} URI(s)", ClearedCount, ChangedURIKeys.len());

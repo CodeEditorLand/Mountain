@@ -45,10 +45,6 @@
 // - Handles UI updates through event emission
 // - Manages input boxes for user interaction
 // - Git integration is the primary implementation with patterns for others
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # SourceControlManagementProvider Implementation
 //!
 //! Implements the `SourceControlManagementProvider` trait for the
@@ -91,9 +87,7 @@
 //! - Show badge count for changed files
 //! - Provide commands: Stage, Unstage, Commit, Push, Pull, Discard
 
-#![allow(non_snake_case, non_camel_case_types)]
-
-use Common::{
+use CommonLibrary::{
 	Error::CommonError::CommonError,
 	SourceControlManagement::{
 		DTO::{

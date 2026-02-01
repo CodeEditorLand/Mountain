@@ -2,21 +2,23 @@
 //
 // # Architectural Role: Configuration Management Engine
 //
-// ConfigurationProvider implements ConfigurationProvider and ConfigurationInspector traits,
-// managing all application settings across multiple scopes (Default, User, WorkSpace, Folder).
-// It handles the configuration cascade, merging settings from various sources in the correct
+// ConfigurationProvider implements ConfigurationProvider and
+// ConfigurationInspector traits, managing all application settings across
+// multiple scopes (Default, User, WorkSpace, Folder). It handles the
+// configuration cascade, merging settings from various sources in the correct
 // precedence order.
 //
 // # Responsibilities
 //
-// 1. **Configuration Cascade**: Implements the multi-layer configuration hierarchy
-//    Default → User → WorkSpace → Folder, with higher precedence overriding lower.
+// 1. **Configuration Cascade**: Implements the multi-layer configuration
+//    hierarchy Default → User → WorkSpace → Folder, with higher precedence
+//    overriding lower.
 //
-// 2. **Configuration Merging**: Performs deep merge of JSON configuration objects
-//    from all scopes to produce the effective configuration.
+// 2. **Configuration Merging**: Performs deep merge of JSON configuration
+//    objects from all scopes to produce the effective configuration.
 //
-// 3. **Configuration Persistence**: Reads and writes settings.json files for User
-//    and WorkSpace scopes using the FileSystemWriter effect.
+// 3. **Configuration Persistence**: Reads and writes settings.json files for
+//    User and WorkSpace scopes using the FileSystemWriter effect.
 //
 // 4. **Configuration Inspection**: Provides visibility into which scope is
 //    providing each configuration value for debugging and diagnostics.
@@ -36,8 +38,8 @@
 // - **Configuration Targets**: Mimics VSCode's ConfigurationTarget enum for
 //   specifying which configuration layer to update.
 //
-// - **Deep Merge**: Like VSCode's configuration service, performs recursive merge
-//   of JSON objects instead of shallow replacement.
+// - **Deep Merge**: Like VSCode's configuration service, performs recursive
+//   merge of JSON objects instead of shallow replacement.
 //
 // - **Configuration Inspection**: Similar to VSCode's inspect() API, provides
 //   visibility into all configuration sources and their values.
@@ -47,25 +49,22 @@
 //
 // # TODOs
 //
-// - [ ] Implement full Folder scope configuration with multi-folder workspace support
+// - [ ] Implement full Folder scope configuration with multi-folder workspace
+//   support
 // - [ ] Add configuration schema validation (JSON Schema draft-07)
 // - [ ] Implement configuration language override semantics
 // - [ ] Add configuration change event propagation to UI and extensions
 // - [ ] Implement configuration export/import functionality
 // - [ ] Add configuration profile support (multiple user setting files)
 // - [ ] Implement configuration value type conversion and validation
-// - [ ] Add secure configuration storage for sensitive values (passwords, tokens)
+// - [ ] Add secure configuration storage for sensitive values (passwords,
+//   tokens)
 // - [ ] Consider adding configuration value watchers for reactive updates
 // - [ ] Implement configuration migration for version upgrades
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::{path::PathBuf, sync::Arc};
 
-use Common::{
+use CommonLibrary::{
 	Configuration::{
 		ConfigurationInspector::ConfigurationInspector,
 		ConfigurationProvider::ConfigurationProvider,
@@ -109,14 +108,14 @@ impl ConfigurationProvider for MountainEnvironment {
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-	let ConfigurationValue = ConfigurationGuard.GetValue(Section.as_deref());
+		let ConfigurationValue = ConfigurationGuard.GetValue(Section.as_deref());
 
-	// Validate that the configuration value exists
-	if ConfigurationValue.is_null() {
-		warn!("[ConfigurationProvider] Configuration section not found: {:?}", Section);
-	}
+		// Validate that the configuration value exists
+		if ConfigurationValue.is_null() {
+			warn!("[ConfigurationProvider] Configuration section not found: {:?}", Section);
+		}
 
-	Ok(ConfigurationValue)
+		Ok(ConfigurationValue)
 	}
 
 	/// Updates a configuration value in the appropriate `settings.json` file.
@@ -303,11 +302,13 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		for (Key, Value) in UserMap {
 			// Deep merge nested objects, shallow merge at root level
 			if Value.is_object() && Merged.get(&Key).is_some_and(|v| v.is_object()) {
-				if let (Some(UserValue), Some(BaseValue)) = (Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object())) {
+				if let (Some(UserValue), Some(BaseValue)) =
+					(Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object()))
+				{
 					for (InnerKey, InnerValue) in UserValue {
-						Merged.get_mut(&Key)
-							.and_then(|v| v.as_object_mut())
-							.map(|m| { m.insert(InnerKey.clone(), InnerValue.clone()); });
+						Merged.get_mut(&Key).and_then(|v| v.as_object_mut()).map(|m| {
+							m.insert(InnerKey.clone(), InnerValue.clone());
+						});
 					}
 				}
 			} else {
@@ -319,11 +320,13 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 	if let Some(WorkSpaceMap) = WorkSpaceConfig.as_object() {
 		for (Key, Value) in WorkSpaceMap {
 			if Value.is_object() && Merged.get(&Key).is_some_and(|v| v.is_object()) {
-				if let (Some(WorkSpaceValue), Some(BaseValue)) = (Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object())) {
+				if let (Some(WorkSpaceValue), Some(BaseValue)) =
+					(Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object()))
+				{
 					for (InnerKey, InnerValue) in WorkSpaceValue {
-						Merged.get_mut(&Key)
-							.and_then(|v| v.as_object_mut())
-							.map(|m| { m.insert(InnerKey.clone(), InnerValue.clone()); });
+						Merged.get_mut(&Key).and_then(|v| v.as_object_mut()).map(|m| {
+							m.insert(InnerKey.clone(), InnerValue.clone());
+						});
 					}
 				}
 			} else {
@@ -341,7 +344,10 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = FinalConfig;
 
 	let ConfigurationSize = Merged.len();
-	info!("[ConfigurationProvider] Configuration merged successfully with {} top-level keys.", ConfigurationSize);
+	info!(
+		"[ConfigurationProvider] Configuration merged successfully with {} top-level keys.",
+		ConfigurationSize
+	);
 
 	Ok(())
 }

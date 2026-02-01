@@ -45,13 +45,12 @@
 //
 // ## Status Bar Item Types
 //
-// 1. **Persistent Items**: Long-lived items (e.g., branch indicator, language indicator)
+// 1. **Persistent Items**: Long-lived items (e.g., branch indicator, language
+//    indicator)
 // 2. **Transient Messages**: Temporary notifications that auto-dismiss
-// 3. **Dynamic Items**: Items with computed values (e.g., error count, position)
+// 3. **Dynamic Items**: Items with computed values (e.g., error count,
+//    position)
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # StatusBarProvider Implementation
 //!
 //! Implements the `StatusBarProvider` trait for the `MountainEnvironment`. This
@@ -59,11 +58,9 @@
 //! orchestrates communication between the `Cocoon` sidecar and the `Sky`
 //! frontend.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::sync::Arc;
 
-use Common::{
+use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},

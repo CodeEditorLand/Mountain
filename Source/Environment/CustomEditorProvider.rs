@@ -2,29 +2,33 @@
 //
 // # Architectural Role: Custom Editor Lifecycle Management
 //
-// CustomEditorProvider implements the CustomEditorProvider trait, managing the lifecycle
-// of custom non-text editors contributed by extensions. These editors use WebView panels
-// to provide specialized editing experiences (e.g., SVG editors, diff viewers, image editors).
+// CustomEditorProvider implements the CustomEditorProvider trait, managing the
+// lifecycle of custom non-text editors contributed by extensions. These editors
+// use WebView panels to provide specialized editing experiences (e.g., SVG
+// editors, diff viewers, image editors).
 //
 // # Responsibilities
 //
-// 1. **Provider Registration**: Manages registration of custom editor providers, each
-//    identified by a unique viewType.
+// 1. **Provider Registration**: Manages registration of custom editor
+//    providers, each identified by a unique viewType.
 //
-// 2. **Editor Orchestration**: Coordinates between the UI (WebView), the extension host
-//    (Cocoon), and the filesystem to provide a seamless editing experience.
+// 2. **Editor Orchestration**: Coordinates between the UI (WebView), the
+//    extension host (Cocoon), and the filesystem to provide a seamless editing
+//    experience.
 //
-// 3. **Content Resolution**: Mediates the "resolve" process where the extension provides
-//    initial content and HTML for the custom editor.
+// 3. **Content Resolution**: Mediates the "resolve" process where the extension
+//    provides initial content and HTML for the custom editor.
 //
-// 4. **Lifecycle Events**: Handles registration, unregistration, save operations, and
-//    editor lifecycle events.
+// 4. **Lifecycle Events**: Handles registration, unregistration, save
+//    operations, and editor lifecycle events.
 //
 // # Custom Editor Flow
 //
-// 1. Extension registers a custom editor provider via RegisterCustomEditorProvider
+// 1. Extension registers a custom editor provider via
+//    RegisterCustomEditorProvider
 // 2. UI requests to open a resource with a custom viewType
-// 3. Mountain calls ResolveCustomEditor with viewType, resource URI, and WebView handle
+// 3. Mountain calls ResolveCustomEditor with viewType, resource URI, and
+//    WebView handle
 // 4. Extension receives RPC call and provides HTML/content for the WebView
 // 5. Extension can send messages back and forth via WebView communication
 // 6. On save, Mountain calls OnSaveCustomDocument to persist changes
@@ -33,15 +37,16 @@
 //
 // - **Webview API**: Inspired by VSCode's WebviewPanel API for custom editors.
 //
-// - **Content Providers**: Similar to VSCode's TextDocumentContentProvider pattern
-//   for providing content with custom URI schemes.
+// - **Content Providers**: Similar to VSCode's TextDocumentContentProvider
+//   pattern for providing content with custom URI schemes.
 //
-// - **Extension Contribution**: Follows VSCode's contribution pattern where extensions
-//   declare custom editors in package.json.
+// - **Extension Contribution**: Follows VSCode's contribution pattern where
+//   extensions declare custom editors in package.json.
 //
 // # TODOs
 //
-// - [ ] Store provider registrations in ApplicationState with capability metadata
+// - [ ] Store provider registrations in ApplicationState with capability
+//   metadata
 // - [ ] Implement custom editor backup/restore mechanism
 // - [ ] Add support for multiple active instances of the same viewType
 // - [ ] Implement custom editor move and rename handling
@@ -51,15 +56,10 @@
 // - [ ] Consider adding editor state persistence across reloads
 // - [ ] Implement proper error recovery for WebView crashes
 // - [ ] Add telemetry for custom editor usage metrics
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
 
-use Common::{
+use CommonLibrary::{
 	CustomEditor::CustomEditorProvider::CustomEditorProvider,
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
@@ -105,7 +105,10 @@ impl CustomEditorProvider for MountainEnvironment {
 	}
 
 	async fn OnSaveCustomDocument(&self, ViewType:String, ResourceURI:Url) -> Result<(), CommonError> {
-		info!("[CustomEditorProvider] OnSaveCustomDocument called for '{}' at '{}'", ViewType, ResourceURI);
+		info!(
+			"[CustomEditorProvider] OnSaveCustomDocument called for '{}' at '{}'",
+			ViewType, ResourceURI
+		);
 
 		// TODO: Implement full save flow:
 		// 1. Send RPC request to extension sidecar requesting content from WebView

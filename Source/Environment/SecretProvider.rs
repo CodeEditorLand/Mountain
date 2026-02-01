@@ -30,14 +30,11 @@
 //
 // Inspired by VSCode's secrets service which:
 // - Uses operating system keychain for secure storage
-// - Provides consistent API across platforms (macOS Keychain, Windows Credential Manager, Linux Secret Service)
+// - Provides consistent API across platforms (macOS Keychain, Windows
+//   Credential Manager, Linux Secret Service)
 // - Handles keychain access failures gracefully
 // - Supports secret encryption
 // - Provides secure secret sharing between processes
-//
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # SecretProvider Implementation
 //!
 //! Implements the `SecretProvider` trait for the `MountainEnvironment`. This
@@ -58,7 +55,8 @@
 //!
 //! ## Security Considerations
 //!
-//! 1. **No Secret Logging**: Secrets are never logged or included in error messages
+//! 1. **No Secret Logging**: Secrets are never logged or included in error
+//!    messages
 //! 2. **Secure Storage**: Keyring handles encryption at the OS level
 //! 3. **Access Control**: OS keychain manages access permissions and unlocking
 //! 4. **Error Handling**: Failed operations don't expose secret values
@@ -89,7 +87,6 @@
 //!   - Succeeds even if secret doesn't exist
 //!   - Delegates to Air if available and healthy
 //!   - Falls back to local keyring otherwise
-//
 // TODO: Full Air Migration Plan
 // ============================
 // - [ ] Implement complete Air-based secret storage
@@ -100,38 +97,35 @@
 // - [ ] Add metrics for Air vs Local usage tracking
 // - [ ] Phase out local keyring after successful Air deployment
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::sync::Arc;
 
-use Common::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProvider};
+use CommonLibrary::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProvider};
 use async_trait::async_trait;
 use keyring::Entry;
 use log::{info, trace, warn};
+// Import Air client types when Air is available in the workspace
+#[cfg(feature = "AirIntegration")]
+use AirLibrary::Vine::Generated::Air::air_service_client::AirServiceClient;
 
 use super::MountainEnvironment::MountainEnvironment;
 
-// Import Air client types when Air is available in the workspace
-#[cfg(feature = "AirIntegration")]
-use Air::Vine::Generated::air::air_service_client::AirServiceClient;
-
 /// Constructs the service name for the keyring entry.
-fn GetKeyringServiceName(Environment: &MountainEnvironment, ExtensionIdentifier: &str) -> String {
+fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&str) -> String {
 	format!("{}.{}", Environment.ApplicationHandle.package_info().name, ExtensionIdentifier)
 }
 
 /// Helper to check if Air client is available and healthy.
 #[cfg(feature = "AirIntegration")]
-async fn IsAirAvailable(AirClient: &mut AirServiceClient<tonic::transport::Channel>) -> bool {
+async fn IsAirAvailable(AirClient:&mut AirServiceClient<tonic::transport::Channel>) -> bool {
 	use tonic::Request;
-	use Air::Vine::Generated::air::HealthCheckRequest;
+	use AirLibrary::Vine::Generated::Air::HealthCheckRequest;
 
 	match AirClient.health_check(Request::new(HealthCheckRequest {})).await {
 		Ok(response) => response.into_inner().healthy,
 		Err(error) => {
 			warn!("[SecretProvider] Air health check failed: {}", error);
 			false
-		}
+		},
 	}
 }
 
@@ -141,12 +135,11 @@ impl SecretProvider for MountainEnvironment {
 	/// If Air is available and healthy, delegates to Air service.
 	/// Falls back to local keyring if Air is unavailable.
 	#[allow(unused_mut, unused_variables)]
-	async fn GetSecret(
-		&self,
-		ExtensionIdentifier: String,
-		Key: String,
-	) -> Result<Option<String>, CommonError> {
-		trace!("[SecretProvider] Getting secret for ext: '{}', key: '{}'", ExtensionIdentifier, Key);
+	async fn GetSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<Option<String>, CommonError> {
+		trace!(
+			"[SecretProvider] Getting secret for ext: '{}', key: '{}'",
+			ExtensionIdentifier, Key
+		);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -156,7 +149,10 @@ impl SecretProvider for MountainEnvironment {
 
 					return GetSecretFromAir(AirClient, ExtensionIdentifier.clone(), Key).await;
 				} else {
-					warn!("[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'", Key);
+					warn!(
+						"[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+						Key
+					);
 				}
 			}
 		}
@@ -181,13 +177,11 @@ impl SecretProvider for MountainEnvironment {
 	/// If Air is available and healthy, delegates to Air service.
 	/// Falls back to local keyring if Air is unavailable.
 	#[allow(unused_mut, unused_variables)]
-	async fn StoreSecret(
-		&self,
-		ExtensionIdentifier: String,
-		Key: String,
-		Value: String,
-	) -> Result<(), CommonError> {
-		info!("[SecretProvider] Storing secret for ext: '{}', key: '{}'", ExtensionIdentifier, Key);
+	async fn StoreSecret(&self, ExtensionIdentifier:String, Key:String, Value:String) -> Result<(), CommonError> {
+		info!(
+			"[SecretProvider] Storing secret for ext: '{}', key: '{}'",
+			ExtensionIdentifier, Key
+		);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -197,7 +191,10 @@ impl SecretProvider for MountainEnvironment {
 
 					return StoreSecretToAir(AirClient, ExtensionIdentifier.clone(), Key, Value).await;
 				} else {
-					warn!("[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'", Key);
+					warn!(
+						"[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+						Key
+					);
 				}
 			}
 		}
@@ -218,12 +215,11 @@ impl SecretProvider for MountainEnvironment {
 	/// If Air is available and healthy, delegates to Air service.
 	/// Falls back to local keyring if Air is unavailable.
 	#[allow(unused_mut, unused_variables)]
-	async fn DeleteSecret(
-		&self,
-		ExtensionIdentifier: String,
-		Key: String,
-	) -> Result<(), CommonError> {
-		info!("[SecretProvider] Deleting secret for ext: '{}', key: '{}'", ExtensionIdentifier, Key);
+	async fn DeleteSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<(), CommonError> {
+		info!(
+			"[SecretProvider] Deleting secret for ext: '{}', key: '{}'",
+			ExtensionIdentifier, Key
+		);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -233,7 +229,10 @@ impl SecretProvider for MountainEnvironment {
 
 					return DeleteSecretFromAir(AirClient, ExtensionIdentifier.clone(), Key).await;
 				} else {
-					warn!("[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'", Key);
+					warn!(
+						"[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+						Key
+					);
 				}
 			}
 		}
@@ -263,53 +262,56 @@ use tonic::Request;
 /// Retrieves a secret from the Air service.
 #[cfg(feature = "AirIntegration")]
 async fn GetSecretFromAir(
-	AirClient: &AirServiceClient<tonic::transport::Channel>,
-	ExtensionIdentifier: String,
-	Key: String,
+	AirClient:&AirServiceClient<tonic::transport::Channel>,
+	ExtensionIdentifier:String,
+	Key:String,
 ) -> Result<Option<String>, CommonError> {
-	use Air::Vine::Generated::air::air_service_server;
+	use AirLibrary::Vine::Generated::Air::air_service_server;
 
-	info!("[SecretProvider] Fetching secret from Air: ext='{}', key='{}'", ExtensionIdentifier, Key);
+	info!(
+		"[SecretProvider] Fetching secret from Air: ext='{}', key='{}'",
+		ExtensionIdentifier, Key
+	);
 
 	// TODO: Implement Air secret retrieval
 	// This would call Air's secret management API
 	// For now, return NotImplemented to indicate this needs to be implemented
-	Err(CommonError::NotImplemented {
-		FeatureName: "GetSecretFromAir".to_string(),
-	})
+	Err(CommonError::NotImplemented { FeatureName:"GetSecretFromAir".to_string() })
 }
 
 /// Stores a secret in the Air service.
 #[cfg(feature = "AirIntegration")]
 async fn StoreSecretToAir(
-	AirClient: &AirServiceClient<tonic::transport::Channel>,
-	ExtensionIdentifier: String,
-	Key: String,
-	Value: String,
+	AirClient:&AirServiceClient<tonic::transport::Channel>,
+	ExtensionIdentifier:String,
+	Key:String,
+	Value:String,
 ) -> Result<(), CommonError> {
-	info!("[SecretProvider] Storing secret in Air: ext='{}', key='{}'", ExtensionIdentifier, Key);
+	info!(
+		"[SecretProvider] Storing secret in Air: ext='{}', key='{}'",
+		ExtensionIdentifier, Key
+	);
 
 	// TODO: Implement Air secret storage
 	// This would call Air's secret management API
 	// For now, return NotImplemented to indicate this needs to be implemented
-	Err(CommonError::NotImplemented {
-		FeatureName: "StoreSecretToAir".to_string(),
-	})
+	Err(CommonError::NotImplemented { FeatureName:"StoreSecretToAir".to_string() })
 }
 
 /// Deletes a secret from the Air service.
 #[cfg(feature = "AirIntegration")]
 async fn DeleteSecretFromAir(
-	AirClient: &AirServiceClient<tonic::transport::Channel>,
-	ExtensionIdentifier: String,
-	Key: String,
+	AirClient:&AirServiceClient<tonic::transport::Channel>,
+	ExtensionIdentifier:String,
+	Key:String,
 ) -> Result<(), CommonError> {
-	info!("[SecretProvider] Deleting secret from Air: ext='{}', key='{}'", ExtensionIdentifier, Key);
+	info!(
+		"[SecretProvider] Deleting secret from Air: ext='{}', key='{}'",
+		ExtensionIdentifier, Key
+	);
 
 	// TODO: Implement Air secret deletion
 	// This would call Air's secret management API
 	// For now, return NotImplemented to indicate this needs to be implemented
-	Err(CommonError::NotImplemented {
-		FeatureName: "DeleteSecretFromAir".to_string(),
-	})
+	Err(CommonError::NotImplemented { FeatureName:"DeleteSecretFromAir".to_string() })
 }
