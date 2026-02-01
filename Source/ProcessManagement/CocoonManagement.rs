@@ -52,8 +52,6 @@
 //! }
 //! ```
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{
     collections::HashMap,
     process::Stdio,
@@ -61,7 +59,7 @@ use std::{
     time::Duration,
 };
 
-use Common::Error::CommonError::CommonError;
+use CommonLibrary::Error::CommonError::CommonError;
 use log::{info, trace, warn};
 use tauri::{
     AppHandle,
@@ -130,10 +128,10 @@ impl Default for CocoonProcessState {
 /// # Example
 ///
 /// ```rust,no_run
-//! use crate::Source::ProcessManagement::CocoonManagement::InitializeCocoon;
-//!
-//! InitializeCocoon(&app_handle, &environment).await?;
-//! ```
+/// use crate::Source::ProcessManagement::CocoonManagement::InitializeCocoon;
+///
+/// InitializeCocoon(&app_handle, &environment).await?;
+/// ```
 pub async fn InitializeCocoon(
     ApplicationHandle: &AppHandle,
     Environment: &Arc<MountainEnvironment>,

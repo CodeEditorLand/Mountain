@@ -15,11 +15,9 @@
 //! A native (Rust-implemented) TreeViewProvider that provides the data for
 //! the file explorer view.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::sync::Arc;
 
-use Common::{
+use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime,
 	Environment::Environment::Environment,
 	Error::CommonError::CommonError,

@@ -12,11 +12,9 @@
 //! Contains the logic for constructing the initial data payloads that are sent
 //! to the `Sky` frontend and the `Cocoon` sidecar to bootstrap their states.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{collections::HashMap, env, sync::Arc};
 
-use Common::{
+use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,

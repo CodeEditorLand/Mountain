@@ -9,13 +9,14 @@
 //!    proper environment variables, IPC channels, and communication endpoints
 //!
 //! 2. **Lifecycle Management**: Monitoring process health, handling automatic
-//!    restarts on failure, managing graceful shutdowns, and tracking process state
+//!    restarts on failure, managing graceful shutdowns, and tracking process
+//!    state
 //!
 //! 3. **Communication Setup**: Establishing IPC connections via gRPC/Vine,
 //!    performing initial handshakes, and ensuring bidirectional communication
 //!
-//! 4. **Initialization Data**: Constructing comprehensive initialization payloads
-//!    for both the Sky frontend and Cocoon extension host
+//! 4. **Initialization Data**: Constructing comprehensive initialization
+//!    payloads for both the Sky frontend and Cocoon extension host
 //!
 //! ## Architecture
 //!
@@ -25,7 +26,8 @@
 //!   which provides compatibility with VS Code extensions
 //!
 //! - **InitializationData**: Constructs and validates initialization payloads
-//!   containing workspace information, extension manifests, and system configuration
+//!   containing workspace information, extension manifests, and system
+//!   configuration
 //!
 //! ## Port Allocation
 //!

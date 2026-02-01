@@ -175,6 +175,7 @@ pub struct ConnectionStatus {
 type ListenerCallback = Box<dyn Fn(serde_json::Value) -> Result<(), String> + Send + Sync>;
 
 /// Mountain's IPC Server counterpart to Wind's TauriIPCServer
+#[derive(Clone)]
 pub struct TauriIPCServer {
     app_handle: AppHandle,
     listeners: Arc<Mutex<HashMap<String, Vec<ListenerCallback>>>>,

@@ -10,11 +10,9 @@
 //! Contains the logic for scanning directories on the filesystem to discover
 //! installed extensions by reading their `package.json` manifests.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{path::PathBuf, sync::Arc};
 
-use Common::{
+use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Error::CommonError::CommonError,
 	FileSystem::{DTO::FileTypeDTO::FileTypeDTO, ReadDirectory::ReadDirectory, ReadFile::ReadFile},
@@ -112,12 +110,7 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 			if let Some(configuration) = contributes.get("configuration").and_then(|v| v.as_object()) {
 				if let Some(properties) = configuration.get("properties").and_then(|v| v.as_object()) {
 					// ADVANCED NESTED OBJECT HANDLING: Recursively process configuration properties
-					self::process_configuration_properties(
-						&mut MergedDefaults,
-						"",
-						properties,
-						&mut Vec::new()
-					)?;
+					self::process_configuration_properties(&mut MergedDefaults, "", properties, &mut Vec::new())?;
 				}
 			}
 		}
@@ -128,10 +121,10 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 
 /// ADVANCED RECURSIVE CONFIGURATION PROCESSING: Handle nested object structures
 fn process_configuration_properties(
-	merged_defaults: &mut serde_json::Map<String, Value>,
-	current_path: &str,
-	properties: &serde_json::Map<String, Value>,
-	visited_keys: &mut Vec<String>
+	merged_defaults:&mut serde_json::Map<String, Value>,
+	current_path:&str,
+	properties:&serde_json::Map<String, Value>,
+	visited_keys:&mut Vec<String>,
 ) -> Result<(), String> {
 	for (key, value) in properties {
 		// Build the full path for this property
@@ -140,33 +133,31 @@ fn process_configuration_properties(
 		} else {
 			format!("{}.{}", current_path, key)
 		};
-		
+
 		// Check for circular references
 		if visited_keys.contains(&full_path) {
-			return Err(format!("Circular reference detected in configuration properties: {}", full_path));
+			return Err(format!(
+				"Circular reference detected in configuration properties: {}",
+				full_path
+			));
 		}
-		
+
 		visited_keys.push(full_path.clone());
-		
+
 		if let Some(prop_details) = value.as_object() {
 			// Check if this is a nested object structure
 			if let Some(nested_properties) = prop_details.get("properties").and_then(|v| v.as_object()) {
 				// Recursively process nested properties
-				self::process_configuration_properties(
-					merged_defaults,
-					&full_path,
-					nested_properties,
-					visited_keys
-				)?;
+				self::process_configuration_properties(merged_defaults, &full_path, nested_properties, visited_keys)?;
 			} else if let Some(default_value) = prop_details.get("default") {
 				// Handle regular property with default value
-					merged_defaults.insert(full_path.clone(), default_value.clone());
+				merged_defaults.insert(full_path.clone(), default_value.clone());
 			}
 		}
-		
+
 		// Remove current key from visited keys
 		visited_keys.retain(|k| k != &full_path);
 	}
-	
+
 	Ok(())
 }
