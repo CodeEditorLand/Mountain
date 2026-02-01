@@ -1,9 +1,6 @@
 // ============================================================================
 // File: Mountain/Source/Command/LanguageFeature.rs
 // ============================================================================
-// This module follows the Land ecosystem's PascalCase naming convention.
-// See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//
 // # Language Feature Commands
 //
 //! Defines the specific Tauri command handlers for language feature requests
@@ -20,14 +17,11 @@
 //! ## VSCode Reference:
 //! - vs/workbench/api/common/extHostLanguageFeatures.ts
 //! - vs/workbench/services/languageFeatures/common/languageFeaturesService.ts
-//!
 // ============================================================================
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
 
-use Common::{
+use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	LanguageFeature::{
@@ -45,7 +39,7 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 async fn InvokeProvider<F, T>(ApplicationHandle:AppHandle<Wry>, Handler:F) -> Result<Value, String>
 where
 	F: FnOnce(Arc<dyn LanguageFeatureProviderRegistry>) -> T,
-	T: std::future::Future<Output = Result<Value, CommonError>> {
+	T: std::future::Future<Output = Result<Value, CommonError>>, {
 	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
 
 	let Provider:Arc<dyn LanguageFeatureProviderRegistry> = RunTime.Environment.Require();
@@ -95,8 +89,8 @@ pub async fn MountainProvideHover(
 
 	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
 
-	let PositionDTO:PositionDTO = serde_json::from_value(Position.clone())
-		.map_err(|Error| format!("Failed to parse position: {}", Error))?;
+	let PositionDTO:PositionDTO =
+		serde_json::from_value(Position.clone()).map_err(|Error| format!("Failed to parse position: {}", Error))?;
 
 	InvokeProvider(ApplicationHandle, |Provider| {
 		async move {
@@ -109,11 +103,7 @@ pub async fn MountainProvideHover(
 }
 
 #[command]
-pub async fn MountainProvideDocumentSymbols(
-	ApplicationHandle:AppHandle<Wry>,
-
-	URI:String,
-) -> Result<Value, String> {
+pub async fn MountainProvideDocumentSymbols(ApplicationHandle:AppHandle<Wry>, URI:String) -> Result<Value, String> {
 	log::debug!("[Language Feature] Providing document symbols for: {}", URI);
 
 	if URI.is_empty() {
@@ -174,8 +164,8 @@ pub async fn MountainProvideDocumentHighlights(
 
 	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
 
-	let PositionDTO:PositionDTO = serde_json::from_value(Position.clone())
-		.map_err(|Error| format!("Failed to parse position: {}", Error))?;
+	let PositionDTO:PositionDTO =
+		serde_json::from_value(Position.clone()).map_err(|Error| format!("Failed to parse position: {}", Error))?;
 
 	InvokeProvider(ApplicationHandle, |Provider| {
 		async move {

@@ -1,11 +1,7 @@
 // ============================================================================
 // File: Mountain/Source/Command/SourceControlManagement.rs
 // ============================================================================
-// This module follows the Land ecosystem's PascalCase naming convention.
-// See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//
 // # SourceControlManagement Commands
-//!
 //! Defines the specific Tauri command handlers for SourceControlManagement data
 //! requests that originate from the `Sky` frontend UI.
 //!
@@ -20,10 +16,7 @@
 //! - vs/workbench/contrib/scm/common/scm.ts
 //! - vs/workbench/contrib/scm/browser/scmView.ts
 //! - vs/workbench/services/scm/common/scmService.ts
-//!
 // ============================================================================
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
 
@@ -141,11 +134,7 @@ pub async fn GetSCMBranches(
 }
 
 #[command]
-pub async fn CheckoutSCMBranch(
-	State:State<'_, Arc<ApplicationState>>,
-
-	BranchName:String,
-) -> Result<Value, String> {
+pub async fn CheckoutSCMBranch(State:State<'_, Arc<ApplicationState>>, BranchName:String) -> Result<Value, String> {
 	log::debug!("[SCM Command] Checking out branch: {}", BranchName);
 
 	// TODO: Implement branch checkout

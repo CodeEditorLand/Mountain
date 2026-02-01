@@ -1,11 +1,7 @@
 // ============================================================================
 // File: Mountain/Source/Command/Keybinding.rs
 // ============================================================================
-// This module follows the Land ecosystem's PascalCase naming convention.
-// See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//
 // # Keybinding Commands
-//!
 //! Defines the specific Tauri command handlers for Keybinding data requests
 //! that originate from the `Sky` frontend UI.
 //!
@@ -18,15 +14,12 @@
 //! ## VSCode Reference:
 //! - vs/workbench/services/keybinding/browser/keybindingService.ts
 //! - vs/platform/keybinding/common/keybindingResolver.ts
-//!
 // ============================================================================
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::sync::Arc;
 
-use Common::{Environment::Requires::Requires, Keybinding::KeybindingProvider::KeybindingProvider};
-use serde_json::Value;
+use CommonLibrary::{Environment::Requires::Requires, Keybinding::KeybindingProvider::KeybindingProvider};
+use serde_json::{json, Value};
 use tauri::{AppHandle, Manager, Wry, command};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
@@ -95,11 +88,7 @@ pub async fn UnregisterExtensionKeybindings(
 }
 
 #[command]
-pub async fn CheckKeybindingConflicts(
-	ApplicationHandle:AppHandle<Wry>,
-
-	Keybinding:String,
-) -> Result<Value, String> {
+pub async fn CheckKeybindingConflicts(ApplicationHandle:AppHandle<Wry>, Keybinding:String) -> Result<Value, String> {
 	log::debug!("[Keybinding Command] Checking conflicts for keybinding: {}", Keybinding);
 
 	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();

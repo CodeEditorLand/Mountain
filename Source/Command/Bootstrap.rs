@@ -1,9 +1,6 @@
 // ============================================================================
 // File: Mountain/Source/Command/Bootstrap.rs
 // ============================================================================
-// This module follows the Land ecosystem's PascalCase naming convention.
-// See: https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//
 // # Bootstrap Commands & Providers
 //
 // Registers all native, Rust-implemented commands and providers into the
@@ -24,11 +21,9 @@
 //
 // ============================================================================
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{future::Future, pin::Pin, sync::Arc};
 
-use Common::{
+use CommonLibrary::{
 	DTO::WorkSpaceEditDTO::WorkSpaceEditDTO,
 	Document::OpenDocument::OpenDocument,
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
