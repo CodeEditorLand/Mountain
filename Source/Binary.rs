@@ -101,8 +101,6 @@
 //! To see Rust logs in the Webview console, enable TargetKind::Webview and
 //! call attachConsole() in the frontend.
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{
 	path::PathBuf,
 	sync::{Arc, Mutex},
@@ -130,7 +128,7 @@ use crate::{
 	Command,
 	Environment::{ConfigurationProvider::InitializeAndMergeConfigurations, MountainEnvironment::MountainEnvironment},
 	IPC::{
-		TauriIPCServer,
+		TauriIPCServer::TauriIPCServer,
 		initialize_advanced_features,
 		initialize_status_reporter,
 		initialize_wind_advanced_sync,
@@ -270,6 +268,18 @@ async fn MountainSynchronizeConfiguration(app_handle:AppHandle) -> Result<serde_
 #[tauri::command]
 async fn MountainGetConfigurationStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle).await
+}
+
+/// Get configuration data for Wind frontend
+#[tauri::command]
+async fn get_configuration_data(app_handle:AppHandle) -> Result<serde_json::Value, String> {
+	crate::IPC::ConfigurationBridge::get_configuration_data(app_handle).await
+}
+
+/// Save configuration data from Wind frontend
+#[tauri::command]
+async fn save_configuration_data(app_handle:AppHandle, config_data:serde_json::Value) -> Result<(), String> {
+	crate::IPC::ConfigurationBridge::save_configuration_data(app_handle, config_data).await
 }
 
 /// Get IPC status
@@ -549,7 +559,9 @@ pub fn Fn() {
 			AppState.WorkSpaceFolders.lock().map(|f| f.len()).unwrap_or(0)
 		);
 
-		let SchedulerForShutdown = Arc::new(Scheduler);
+		// TODO: EchoScheduler::new() needed here when Echo crate is available
+		// let SchedulerForShutdown = Arc::new(Echo::Scheduler::SchedulerBuilder::new().build());
+		let SchedulerForShutdown = Arc::new(()); // Placeholder for now
 
 		let SchedulerForRunTime = SchedulerForShutdown.clone();
 
@@ -697,10 +709,10 @@ pub fn Fn() {
 				// [Lifecycle] [IPC] Initialize Mountain IPC Server
 				// ---------------------------------------------------------
 				debug!("[Lifecycle] [IPC] Initializing Mountain IPC Server...");
-
-				let ipc_server = crate::IPC::TauriIPCServer::new(ApplicationHandle.clone());
+	
+				let ipc_server = TauriIPCServer::new(ApplicationHandle.clone());
 				ApplicationHandle.manage(ipc_server.clone());
-
+	
 				debug!("[Lifecycle] [IPC] Mountain IPC Server initialized.");
 
 					TraceStep!("[UI] [Window] InitScript bytes=0");
@@ -801,19 +813,22 @@ pub fn Fn() {
 					// ---------------------------------------------------------
 					// [Air] [gRPC] Initialize Air client
 					// ---------------------------------------------------------
+					// TODO: Air integration not fully implemented - commenting out Air client initialization
+					/*
 					debug!("[Air] [Init] Initializing Air client...");
 
 					let AirAddress = "http://[::1]:50053";
 
 					// Attempt to connect to Air, but continue gracefully if unavailable
-					let AirProvider = match Air::CreateAirServiceProvider(AirAddress) {
+					let AirProvider = match Air::AirServiceProvider::new(&AirAddress) {
 						Ok(provider) => {
 							info!("[Air] [Init] Successfully connected to Air at {}", AirAddress);
 							provider
 						},
 						Err(e) => {
 							warn!("[Air] [Init] Failed to connect to Air: {}. Continuing without Air client.", e);
-							Air::CreateAirServiceProviderOrUnavailable(AirAddress)
+							// Create unavailable provider
+							Air::AirServiceProvider::new_unavailable()
 						},
 					};
 
@@ -828,6 +843,8 @@ pub fn Fn() {
 							warn!("[Air] [Init] Air is not connected. Some features may be unavailable.");
 						}
 					}
+					*/
+					debug!("[Air] [Init] Air integration skipped (not fully implemented).");
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [PostSetup] Async initialization work

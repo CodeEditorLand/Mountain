@@ -34,7 +34,7 @@ colored = { workspace = true }
 Common = { workspace = true }
 dirs = { workspace = true }
 Echo = { workspace = true }
-Air = { workspace = true }
+Air = { workspace = true, optional = true }
 env_logger = { workspace = true }
 futures-util = { workspace = true, features = ["sink", "std"] }
 globset = { workspace = true }
@@ -69,7 +69,7 @@ flate2 = { workspace = true }
 ring = { workspace = true }
 
 [features]
-default = ["ExtensionHostCocoon", "MistNative", "AirIntegration"]
+default = ["ExtensionHostCocoon", "MistNative"]
 
 ExtensionHostCocoon = []
 

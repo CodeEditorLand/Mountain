@@ -1,3 +1,6 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+#![allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
+
 //! # Library
 //!
 //! Root library module for the Mountain application, declaring all major
@@ -70,8 +73,6 @@
 //! - Module re-export strategy for external consumers
 //! - Cross-compilation considerations for mobile targets
 
-#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-#![allow(non_snake_case, non_camel_case_types)]
 #![feature(trivial_bounds)]
 
 pub mod Air;

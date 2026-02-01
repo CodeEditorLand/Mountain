@@ -4,9 +4,6 @@
 //   - Expose services related to managing workspaces, such as parsing
 //     `.code-workspace` files.
 
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # WorkSpace Module
 //!
 //! ## RESPONSIBILITY
@@ -38,7 +35,5 @@
 //! - Support workspace snapshots and restore
 //! - Implement workspace local history
 //! - Add workspace migration and upgrade paths
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 pub mod WorkSpaceFileService;
