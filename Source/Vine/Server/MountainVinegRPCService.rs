@@ -7,7 +7,8 @@
 //! ## Service Methods
 //!
 //! - **process_cocoon_request**: Handles request-response calls from Cocoon
-//! - **send_cocoon_notification**: Handles fire-and-forget notifications from Cocoon
+//! - **send_cocoon_notification**: Handles fire-and-forget notifications from
+//!   Cocoon
 //! - **cancel_operation**: Cancels long-running operations requested by Cocoon
 //!
 //! ## Request Processing
@@ -57,13 +58,13 @@ use crate::{
 /// Configuration for MountainService
 mod ServiceConfig {
 	/// Maximum number of concurrent operations
-	pub const MAX_CONCURRENT_OPERATIONS: usize = 50;
+	pub const MAX_CONCURRENT_OPERATIONS:usize = 50;
 
 	/// Default timeout for operation cancellation
-	pub const CANCELLATION_TIMEOUT_MS: u64 = 5000;
+	pub const CANCELLATION_TIMEOUT_MS:u64 = 5000;
 
 	/// Maximum method name length
-	pub const MAX_METHOD_NAME_LENGTH: usize = 128;
+	pub const MAX_METHOD_NAME_LENGTH:usize = 128;
 }
 
 /// The concrete implementation of the `MountainService` gRPC service.
@@ -138,20 +139,11 @@ impl MountainVinegRPCService {
 	///
 	/// # Returns
 	/// GenericResponse with error populated
-	fn CreateErrorResponse(
-		RequestIdentifier:u64,
-		code:i32,
-		message:String,
-		data:Option<Vec<u8>>,
-	) -> GenericResponse {
+	fn CreateErrorResponse(RequestIdentifier:u64, code:i32, message:String, data:Option<Vec<u8>>) -> GenericResponse {
 		GenericResponse {
 			request_identifier:RequestIdentifier,
 			result:vec![],
-			error:Some(RPCError {
-				code,
-				message,
-				data:data.unwrap_or_default(),
-			}),
+			error:Some(RPCError { code, message, data:data.unwrap_or_default() }),
 		}
 	}
 
@@ -176,14 +168,10 @@ impl MountainVinegRPCService {
 					"Failed to serialize response".to_string(),
 					None,
 				);
-			}
+			},
 		};
 
-		GenericResponse {
-			request_identifier:RequestIdentifier,
-			result:result_bytes,
-			error:None,
-		}
+		GenericResponse { request_identifier:RequestIdentifier, result:result_bytes, error:None }
 	}
 }
 
@@ -191,12 +179,14 @@ impl MountainVinegRPCService {
 impl MountainService for MountainVinegRPCService {
 	/// Handles generic request-response RPCs from Cocoon.
 	///
-	/// This is the main entry point for Cocoon to request operations from Mountain.
-	/// It validates the request, deserializes parameters, dispatches to the Track module,
-	/// and returns the result or error in JSON-RPC format.
+	/// This is the main entry point for Cocoon to request operations from
+	/// Mountain. It validates the request, deserializes parameters, dispatches
+	/// to the Track module, and returns the result or error in JSON-RPC
+	/// format.
 	///
 	/// # Parameters
-	/// - `request`: GenericRequest containing method name and serialized parameters
+	/// - `request`: GenericRequest containing method name and serialized
+	///   parameters
 	///
 	/// # Returns
 	/// - `Ok(Response<GenericResponse>)`: Response with result or error
@@ -235,10 +225,7 @@ impl MountainService for MountainVinegRPCService {
 				v
 			},
 			Err(e) => {
-				let msg = format!(
-					"Failed to deserialize parameters for method '{}': {}",
-					MethodName, e
-				);
+				let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
 
 				error!("{}", msg);
 
@@ -274,10 +261,7 @@ impl MountainService for MountainVinegRPCService {
 					RequestIdentifier
 				);
 
-				Ok(Response::new(Self::CreateSuccessResponse(
-					RequestIdentifier,
-					&SuccessfulResult,
-				)))
+				Ok(Response::new(Self::CreateSuccessResponse(RequestIdentifier, &SuccessfulResult)))
 			},
 
 			Err(ErrorString) => {
@@ -299,7 +283,8 @@ impl MountainService for MountainVinegRPCService {
 	/// Handles generic fire-and-forget notifications from Cocoon.
 	///
 	/// Notifications do not expect a response beyond acknowledgment.
-	/// They are used for status updates, events, and other asynchronous notifications.
+	/// They are used for status updates, events, and other asynchronous
+	/// notifications.
 	///
 	/// # Parameters
 	/// - `request`: GenericNotification with method name and parameters
@@ -319,10 +304,7 @@ impl MountainService for MountainVinegRPCService {
 
 		let MethodName = NotificationData.method;
 
-		info!(
-			"[MountainVinegRPCService] Received gRPC Notification: Method='{}'",
-			MethodName
-		);
+		info!("[MountainVinegRPCService] Received gRPC Notification: Method='{}'", MethodName);
 
 		// Validate notification method name
 		if MethodName.is_empty() {
@@ -345,11 +327,8 @@ impl MountainService for MountainVinegRPCService {
 				debug!("[MountainVinegRPCService] WebView ready notification received");
 			},
 			_ => {
-				debug!(
-					"[MountainVinegRPCService] Unknown notification method: {}",
-					MethodName
-				);
-			}
+				debug!("[MountainVinegRPCService] Unknown notification method: {}", MethodName);
+			},
 		}
 
 		Ok(Response::new(Empty {}))

@@ -1,6 +1,3 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # Vine Client
 //!
 //! Provides a simplified, thread-safe client for communicating with a `Cocoon`
@@ -24,14 +21,14 @@
 //! use Vine::Client::ConnectToSideCar;
 //! use Vine::Client::SendRequest;
 //! use serde_json::json;
-//!
+//! 
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! // Connect to Cocoon
 //! ConnectToSideCar(
 //!     "cocoon-main".to_string(),
 //!     "127.0.0.1:50052".to_string()
 //! ).await?;
-//!
+//! 
 //! // Send request
 //! let result = SendRequest(
 //!     "cocoon-main",
@@ -51,11 +48,8 @@
 //! - RPCError: gRPC transport or status error
 //! - SerializationError: JSON parsing/serialization failure
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 use std::{
 	collections::{HashMap, hash_map::DefaultHasher},
-	hash::{Hash, Hasher},
 	sync::Arc,
 	time::{Duration, Instant},
 };
@@ -63,9 +57,8 @@ use std::{
 use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
 use parking_lot::Mutex;
-use serde_json::{Value, from_slice, to_vec};
+use serde_json::{from_slice, to_vec, Value};
 use tokio::time::timeout;
-use tonic::transport::Channel;
 
 use super::{
 	Error::VineError,
@@ -73,7 +66,7 @@ use super::{
 };
 
 /// Type alias for the Cocoon gRPC client with Channel transport
-type CocoonClient = CocoonServiceClient<Channel>;
+type CocoonClient = CocoonServiceClient<tonic::transport::Channel>;
 
 /// Configuration constants for Vine client behavior
 mod Config {
@@ -154,151 +147,166 @@ pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Resul
 	// Attempt connection with retry logic
 	let mut last_error = None;
 
-	for Attempt in 1..=Config::MAX_RETRY_ATTEMPTS {
-		match Channel::from_shared(endpoint.clone())?.connect().await {
-			Ok(channel) => {
-				let client = CocoonServiceClient::new(channel);
+	for attempt in 1..=Config::MAX_RETRY_ATTEMPTS {
+		let result = try_connect_single(&SideCarIdentifier, &endpoint).await;
 
-				SIDECAR_CLIENTS.lock().insert(SideCarIdentifier.clone(), client);
+		if result.is_ok() {
+			// Initialize connection metadata
+			CONNECTION_METADATA.lock().insert(
+				SideCarIdentifier.clone(),
+				ConnectionMetadata {
+					LastActivity:Instant::now(),
+					FailureCount:0,
+					IsHealthy:true,
+				},
+			);
 
-				// Initialize connection metadata
-				CONNECTION_METADATA.lock().insert(
-					SideCarIdentifier.clone(),
-					ConnectionMetadata {
-						LastActivity: Instant::now(),
-						FailureCount: 0,
-						IsHealthy: true,
-					}
-				);
+			info!("[VineClient] Successfully connected to sidecar '{}'",
+				SideCarIdentifier
+			);
 
-				info!("[VineClient] Successfully connected to sidecar '{}'.", SideCarIdentifier);
-				return Ok(());
-			},
+			return Ok(result?);
+		}
 
-			Err(e) => {
-				warn!(
-					"[VineClient] Connection attempt {}/{} failed: {}",
-					Attempt, Config::MAX_RETRY_ATTEMPTS, e
-				);
+		// Capture last error
+		last_error = Some(result.unwrap_err());
 
-				last_error = Some(VineError::from(e));
-
-				// Exponential backoff before retry
-				if Attempt < Config::MAX_RETRY_ATTEMPTS {
-					let delay_ms = Config::RETRY_BASE_DELAY_MS * 2u64.pow((Attempt - 1) as u32);
-					tokio::time::sleep(Duration::from_millis(delay_ms)).await;
-				}
-			}
+		// Wait before retry (exponential backoff)
+		if attempt < Config::MAX_RETRY_ATTEMPTS {
+			let delay_ms = Config::RETRY_BASE_DELAY_MS * 2_u64.pow(attempt as u32);
+			tokio::time::sleep(Duration::from_millis(delay_ms)).await;
 		}
 	}
 
-	error!(
-		"[VineClient] Failed to connect to sidecar '{}' after {} attempts",
-		SideCarIdentifier, Config::MAX_RETRY_ATTEMPTS
-	);
-
-	Err(last_error.unwrap_or_else(|| {
-		VineError::RPCError("Connection failed: unknown error".to_string())
-	}))
+	Err(last_error.unwrap_or_else(|| VineError::RPCError("Connection failed".to_string())))
 }
 
-/// Disconnects from a sidecar and removes it from the connection pool.
+/// Single connection attempt without retry logic
+async fn try_connect_single(_SideCarIdentifier:&str, endpoint:&str) -> Result<(), VineError> {
+	let channel = tonic::transport::Channel::from_shared(endpoint.parse()?);
+	let client = CocoonClient::new(channel);
+
+	let mut clients = SIDECAR_CLIENTS.lock();
+	clients.insert(_SideCarIdentifier.to_string(), client);
+
+	Ok(())
+}
+
+/// Disconnects from a sidecar process and removes it from the connection pool.
 ///
-/// This function gracefully disconnects from a sidecar and cleans up
-/// connection metadata. Any pending RPC calls will fail.
+/// This function removes the sidecar from both the connection pool and
+/// connection metadata tracking.
 ///
 /// # Parameters
 /// - `SideCarIdentifier`: Unique identifier of the sidecar to disconnect
 ///
 /// # Returns
-/// - `Ok(())`: Successfully disconnected or sidecar was not connected
-/// - `Err(VineError)`: Failed during disconnection (rare)
+/// - `Ok(())`: Disconnection successful
+/// - `Err(VineError)`: Sidecar was not connected
+///
+/// # Example
+/// ```rust,no_run
+/// # use Vine::Client::DisconnectFromSideCar;
+/// # fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// DisconnectFromSideCar("cocoon-main".to_string())?;
+/// # Ok(())
+/// # }
+/// ```
 pub fn DisconnectFromSideCar(SideCarIdentifier:String) -> Result<(), VineError> {
-	info!("[VineClient] Disconnecting from sidecar '{}'...", SideCarIdentifier);
+	let mut clients = SIDECAR_CLIENTS.lock();
 
-	SIDECAR_CLIENTS.lock().remove(&SideCarIdentifier);
-	CONNECTION_METADATA.lock().remove(&SideCarIdentifier);
+	if clients.remove(&SideCarIdentifier).is_some() {
+		CONNECTION_METADATA.lock().remove(&SideCarIdentifier);
 
-	info!("[VineClient] Disconnected from sidecar '{}'.", SideCarIdentifier);
+		info!("[VineClient] Disconnected from sidecar '{}'", SideCarIdentifier);
 
-	Ok(())
+		Ok(())
+	} else {
+		Err(VineError::ClientNotConnected(SideCarIdentifier))
+	}
 }
 
-/// Checks health status of a connected sidecar.
+/// Checks the health status of a connected sidecar.
 ///
-/// This function validates that a sidecar connection is healthy by checking
-/// last activity and failure count. An unhealthy connection may need reconnection.
+/// Health is determined by:
+/// - Connection exists in the pool
+/// - Last activity within health check interval
+/// - Failure count below threshold
 ///
 /// # Parameters
 /// - `SideCarIdentifier`: Unique identifier of the sidecar to check
 ///
 /// # Returns
-/// - `Ok(true)`: Connection is healthy
-/// - `Ok(false)`: Connection exists but is unhealthy
+/// - `Ok(true)`: Sidecar is healthy and responsive
+/// - `Ok(false)`: Sidecar exists but may have issues
 /// - `Err(VineError)`: Sidecar not connected
+///
+/// # Example
+/// ```rust,no_run
+/// # use Vine::Client::CheckSideCarHealth;
+/// # fn example() -> Result<bool, Box<dyn std::error::Error>> {
+/// let healthy = CheckSideCarHealth("cocoon-main")?;
+/// # Ok(healthy)
+/// # }
+/// ```
 pub fn CheckSideCarHealth(SideCarIdentifier:&str) -> Result<bool, VineError> {
 	let metadata = CONNECTION_METADATA.lock();
-	let metadata = metadata.get(SideCarIdentifier)
-		.ok_or_else(|| VineError::ClientNotConnected(SideCarIdentifier.to_string()))?;
 
-	let time_since_activity = metadata.LastActivity.elapsed();
-	let is_stale = time_since_activity > Duration::from_millis(Config::HEALTH_CHECK_INTERVAL_MS);
-	let is_healthy = metadata.IsHealthy && !is_stale && metadata.FailureCount == 0;
+	if let Some(conn) = metadata.get(SideCarIdentifier) {
+		let is_stale = conn.LastActivity.elapsed() > Duration::from_millis(Config::HEALTH_CHECK_INTERVAL_MS);
+		let has_many_failures = conn.FailureCount > Config::MAX_RETRY_ATTEMPTS;
 
-	if !is_healthy {
-		warn!(
-			"[VineClient] Sidecar '{}' health check: stale={}, failures={}, healthy={}",
-			SideCarIdentifier, is_stale, metadata.FailureCount, metadata.IsHealthy
-		);
+		Ok(conn.IsHealthy && !is_stale && !has_many_failures)
+	} else {
+		Err(VineError::ClientNotConnected(SideCarIdentifier.to_string()))
 	}
-
-	Ok(is_healthy)
 }
 
-/// Marks a sidecar connection as failed for health tracking.
+/// Records a failure for a sidecar connection.
+///
+/// Increments the failure count and marks the connection as unhealthy.
 ///
 /// # Parameters
-/// - `SideCarIdentifier`: Unique identifier of the sidecar
+/// - `SideCarIdentifier`: Unique identifier of the sidecar that failed
 fn RecordSideCarFailure(SideCarIdentifier:&str) {
 	let mut metadata = CONNECTION_METADATA.lock();
-	if let Some(meta) = metadata.get_mut(SideCarIdentifier) {
-		meta.FailureCount += 1;
-		meta.IsHealthy = meta.FailureCount < 3;
 
-		if !meta.IsHealthy {
-			warn!(
-				"[VineClient] Sidecar '{}' marked as unhealthy after {} failures",
-				SideCarIdentifier, meta.FailureCount
-			);
-		}
+	if let Some(conn) = metadata.get_mut(SideCarIdentifier) {
+		conn.FailureCount += 1;
+		conn.IsHealthy = false;
 	}
 }
 
-/// Updates last activity timestamp for a sidecar.
+/// Updates the last activity timestamp for a sidecar.
+///
+/// Called after successful operations to track liveness.
 ///
 /// # Parameters
 /// - `SideCarIdentifier`: Unique identifier of the sidecar
 fn UpdateSideCarActivity(SideCarIdentifier:&str) {
 	let mut metadata = CONNECTION_METADATA.lock();
-	if let Some(meta) = metadata.get_mut(SideCarIdentifier) {
-		meta.LastActivity = Instant::now();
-		meta.FailureCount = meta.FailureCount.saturating_sub(1);
-		meta.IsHealthy = true;
+
+	if let Some(conn) = metadata.get_mut(SideCarIdentifier) {
+		conn.LastActivity = Instant::now();
+		conn.FailureCount = 0;
+		conn.IsHealthy = true;
 	}
 }
 
-/// Validates message size before sending.
+/// Validates message size against maximum allowed.
+///
+/// Helps prevent denial-of-service attacks via overly large messages.
 ///
 /// # Parameters
-/// - `data`: Byte array to validate
+/// - `data`: Raw byte slice to validate
 ///
 /// # Returns
 /// - `Ok(())`: Message size is within limits
-/// - `Err(VineError)`: Message exceeds maximum size
+/// - `Err(VineError::SerializationError)`: Message exceeds maximum size
 fn ValidateMessageSize(data:&[u8]) -> Result<(), VineError> {
 	if data.len() > Config::MAX_MESSAGE_SIZE_BYTES {
-		Err(VineError::RPCError(format!(
-			"Message size {} bytes exceeds maximum of {} bytes",
+		Err(VineError::SerializationError(format!(
+			"Message size {} exceeds maximum {} bytes",
 			data.len(),
 			Config::MAX_MESSAGE_SIZE_BYTES
 		)))
@@ -307,50 +315,164 @@ fn ValidateMessageSize(data:&[u8]) -> Result<(), VineError> {
 	}
 }
 
-/// Sends a fire-and-forget notification to a sidecar.
+/// Sends a request to a sidecar and waits for a response.
 ///
-/// This function sends a notification that does not expect a response.
-/// It validates the message, checks connection health, and handles errors gracefully.
-///
-/// # Parameters
-/// - `SideCarIdentifier`: Unique identifier of the target sidecar
-/// - `Method`: RPC method name to invoke
-/// - `Parameters`: JSON-serializable parameters for the method
-///
-/// # Returns
-/// - `Ok(())`: Notification sent successfully
-/// - `Err(VineError)`: Notification failed (sidecar not connected, serialization, or RPC error)
-///
-/// # Example
-/// ```rust,no_run
-/// # use Vine::Client::SendNotification;
-/// # use serde_json::json;
-/// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// SendNotification(
-///     \"cocoon-main\".to_string(),
-///     \"UpdateTheme\".to_string(),
-///     json!({\"theme\": \"dark\"})\n/// ).await?;\n/// # Ok(())\n/// # }\n/// ```\npub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameters:Value) -> Result<(), VineError> {\n\t// Validate method name format\n\tif Method.is_empty() || Method.len() > 128 {\n\t\treturn Err(VineError::RPCError(\n\t\t\t\"Method name must be between 1 and 128 characters\".to_string()\n\t\t));\n\t}\n\n\tlet parameter_bytes = to_vec(&Parameters)?;\n\tValidateMessageSize(&parameter_bytes)?;\n\n\tlet mut client = {\n\t\tlet guard = SIDECAR_CLIENTS.lock();\n\t\tguard.get(&SideCarIdentifier).cloned()\n\t};\n\n\tif let Some(ref mut client) = client {\n\t\tlet request = GenericNotification { method:Method, parameter:parameter_bytes };\n\n\t\tmatch client.send_mountain_notification(request).await {\n\t\t\tOk(_) => {\n\t\t\t\tUpdateSideCarActivity(&SideCarIdentifier);\n\t\t\t\tdebug!(\n\t\t\t\t\t\"[VineClient] Notification sent successfully to sidecar '{}'\",\n\t\t\t\t\tSideCarIdentifier\n\t\t\t\t);\n\t\t\t\tOk(())\n\t\t\t},\n\t\t\tErr(status) => {\n\t\t\t\tRecordSideCarFailure(&SideCarIdentifier);\n\t\t\t\tError!(\n\t\t\t\t\t\"[VineClient] Failed to send notification to sidecar '{}': {}\",\n\t\t\t\t\tSideCarIdentifier, status\n\t\t\t\t);\n\t\t\t\tErr(VineError::from(status))\n\t\t\t}\n\t\t}\n\t} else {\n\t\tErr(VineError::ClientNotConnected(SideCarIdentifier))\n\t}\n}"
-
-/// Sends a request to a sidecar and awaits a response with timeout handling.
-///
-/// This function sends a request-response RPC call to a sidecar with configurable
-/// timeout. It generates a unique request ID, handles serialization, tracks
-/// connection health, and provides detailed error reporting.
+/// This is the primary method for request-response communication with sidecars.
+/// It implements timeout handling and automatic connection validation.
 ///
 /// # Parameters
 /// - `SideCarIdentifier`: Unique identifier of the target sidecar
-/// - `Method`: RPC method name to invoke
-/// - `Parameters`: JSON-serializable parameters for the method
-/// - `TimeoutMilliseconds`: Maximum time to wait for response (0 = use default)
+/// - `Method`: RPC method name to call
+/// - `Parameters`: JSON parameters for the RPC call
+/// - `TimeoutMilliseconds`: Maximum time to wait for response (default: 5000ms)
 ///
 /// # Returns
-/// - `Ok(Value)`: Deserialized JSON response from the sidecar
-/// - `Err(VineError)`: Request failed (timeout, not connected, serialization, or RPC error)
+/// - `Ok(Value)`: JSON response from the sidecar
+/// - `Err(VineError)`: Request failed or timed out
 ///
 /// # Example
 /// ```rust,no_run
 /// # use Vine::Client::SendRequest;
-/// # use serde_json::json;
+/// use serde_json::json;
+/// # async fn example() -> Result<serde_json::Value, Box<dyn std::error::Error>> {
+/// let result = SendRequest(
+///     "cocoon-main".to_string(),
+///     "GetExtensions".to_string(),
+///     json!({}),
+///     5000
+/// ).await?;
+/// # Ok(result)
+/// # }
+/// ```
+pub async fn SendRequest(
+	SideCarIdentifier:&str,
+	Method:String,
+	Parameters:Value,
+	TimeoutMilliseconds:u64,
+) -> Result<Value, VineError> {
+	// Validate method name format
+	if Method.is_empty() || Method.len() > 128 {
+		return Err(VineError::RPCError(
+			"Method name must be between 1 and 128 characters".to_string()
+		));
+	}
+
+	let timeout = Duration::from_millis(if TimeoutMilliseconds > 0 {
+		TimeoutMilliseconds
+	} else {
+		Config::DEFAULT_TIMEOUT_MS
+	});
+
+	// Validate message size
+	let parameter_bytes = to_vec(&Parameters).map_err(|e| VineError::SerializationError(format!("Failed to serialize parameters: {}", e)))?;
+	ValidateMessageSize(&parameter_bytes)?;
+
+	let mut client = {
+		let guard = SIDECAR_CLIENTS.lock();
+		guard.get(SideCarIdentifier).cloned()
+	};
+
+	if client.is_none() {
+		return Err(VineError::ClientNotConnected(SideCarIdentifier.to_string()));
+	}
+
+	let client = client.unwrap();
+
+	let request = GenericRequest { method:Method, parameter:parameter_bytes };
+
+	let result = timeout(
+		timeout,
+		client.process_mountain_request(request)
+	).await;
+
+	match result {
+		Ok(response) => {
+			UpdateSideCarActivity(SideCarIdentifier);
+			debug!(
+				"[VineClient] Request sent successfully to sidecar '{}': method='{}'",
+				SideCarIdentifier, Method
+			);
+
+			// Parse response JSON
+			let result_bytes = response.result;
+			let result_value:Value = from_slice(&result_bytes)
+				.map_err(|e| VineError::SerializationError(format!("Failed to deserialize response: {}", e)))?;
+
+			// Check for RPC errors in response
+			if let Some(error_data) = response.error {
+				return Err(VineError::RPCError(format!(
+					"RPC error from sidecar: code={}, message={}",
+					error_data.code, error_data.message
+				)));
+			}
+
+			Ok(result_value)
+		},
+		Err(_) => {
+			RecordSideCarFailure(SideCarIdentifier);
+			Err(VineError::RequestTimeout(format!(
+				"Request to sidecar '{}' timed out after {}ms",
+				SideCarIdentifier, timeout.as_millis()
+			)))
+		}
+	}
+}
+
+/// Sends a notification to a sidecar without waiting for a response.
+///
+/// Note: This does not include a timeout parameter (unlike `SendRequest`).
+/// Notifications are sent as fire-and-forget messages.
+///
+/// ```rust,no_run
+/// # use Vine::Client::SendNotification;
+/// use serde_json::json;
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// let extensions = SendRequest(
-///     \"cocoon-main\",\n///     \"GetExtensions\".to_string(),\n///     json!({}),\n///     5000\n/// ).await?;\n/// # Ok(())\n/// # }\n/// ```\npub async fn SendRequest(\n\tSideCarIdentifier:&str,\n\n\tMethod:String,\n\n\tParameters:Value,\n\n\tTimeoutMilliseconds:u64,\n) -> Result<Value, VineError> {\n\t// Validate inputs\n\tif Method.is_empty() || Method.len() > 128 {\n\t\treturn Err(VineError::RPCError(\n\t\t\t\"Method name must be between 1 and 128 characters\".to_string()\n\t\t));\n\t}\n\n\tlet timeout_ms = if TimeoutMilliseconds == 0 {\n\t\tConfig::DEFAULT_TIMEOUT_MS\n\t} else {\n\t\tTimeoutMilliseconds\n\t};\n\n\tdebug!(\n\t\t\"[VineClient] Sending request '{}' to sidecar '{}' (timeout: {}ms)...\",\n\t\tMethod, SideCarIdentifier, timeout_ms\n\t);\n\n\t// Check connection health before proceeding\n\tif let Ok(is_healthy) = CheckSideCarHealth(SideCarIdentifier) {\n\t\tif !is_healthy {\n\t\t\twarn!(\n\t\t\t\t\"[VineClient] Sidecar '{}' connection is unhealthy, proceeding anyway\",\n\t\t\t\tSideCarIdentifier\n\t\t\t);\n\t\t}\n\t}\n\n\tlet mut client = {\n\t\tlet guard = SIDECAR_CLIENTS.lock();\n\t\tguard.get(SideCarIdentifier).cloned()\n\t};\n\n\tif let Some(ref mut client) = client {\n\t\t// Generate unique request identifier using UUID hashing\n\t\tlet mut hasher = DefaultHasher::new();\n\t\tuuid::Uuid::new_v4().hash(&mut hasher);\n\t\tlet RequestIdentifier = hasher.finish();\n\n\t\t// Serialize parameters with validation\n\t\tlet parameter_bytes = to_vec(&Parameters)?;\n\t\tValidateMessageSize(&parameter_bytes)?;\n\n\t\tlet request = GenericRequest {\n\t\t\trequest_identifier:RequestIdentifier,\n\t\t\tmethod:Method.clone(),\n\t\t\tparameter:parameter_bytes,\n\t\t};\n\n\t\tlet future = client.process_mountain_request(request);\n\n\t\t// Execute with timeout\n\t\tmatch timeout(Duration::from_millis(timeout_ms), future).await {\n\t\t\tOk(Ok(response)) => {\n\t\t\t\tlet response_data = response.into_inner();\n\t\t\t\tUpdateSideCarActivity(SideCarIdentifier);\n\n\t\t\t\t// Check for RPC error in response\n\t\t\t\tif let Some(rpc_error) = response_data.error {\n\t\t\t\t\tRecordSideCarFailure(SideCarIdentifier);\n\t\t\t\t\terror!(\n\t\t\t\t\t\t\"[VineClient] Received RPC error from sidecar '{}': code={}, message={}\",\n\t\t\t\t\t\tSideCarIdentifier, rpc_error.code, rpc_error.message\n\t\t\t\t\t);\n\t\t\t\t\treturn Err(VineError::RPCError(rpc_error.message));\n\t\t\t\t}\n\n\t\t\t\t// Deserialize result\n\t\t\t\tmatch from_slice(&response_data.result) {\n\t\t\t\t\tOk(deserialized_value) => {\n\t\t\t\t\t\tdebug!(\n\t\t\t\t\t\t\t\"[VineClient] Request '{}' to sidecar '{}' completed successfully\",\n\t\t\t\t\t\t\tMethod, SideCarIdentifier\n\t\t\t\t\t\t);\n\t\t\t\t\t\tOk(deserialized_value)\n\t\t\t\t\t},\n\t\t\t\t\tErr(e) => {\n\t\t\t\t\t\tRecordSideCarFailure(SideCarIdentifier);\n\t\t\t\t\t\terror!(\n\t\t\t\t\t\t\t\"[VineClient] Failed to deserialize response from sidecar '{}': {}\",\n\t\t\t\t\t\t\tSideCarIdentifier, e\n\t\t\t\t\t\t);\n\t\t\t\t\t\tErr(VineError::SerializationError(e))\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t},\n\n\t\t\tOk(Err(status)) => {\n\t\t\t\tRecordSideCarFailure(SideCarIdentifier);\n\t\t\t\terror!(\n\t\t\t\t\t\"[VineClient] gRPC status error from sidecar '{}': code={}, message={}\",\n\t\t\t\t\tSideCarIdentifier, status.code(), status.message()\n\t\t\t\t);\n\t\t\t\tErr(VineError::from(status))\n\t\t\t},\n\n\t\t\tErr(_) => {\n\t\t\t\tRecordSideCarFailure(SideCarIdentifier);\n\t\t\t\terror!(\n\t\t\t\t\t\"[VineClient] Request to sidecar '{}' (method: '{}') timed out after {}ms\",\n\t\t\t\t\tSideCarIdentifier, Method, timeout_ms\n\t\t\t\t);\n\t\t\t\tErr(VineError::RequestTimeout {\n\t\t\t\t\tSideCarIdentifier:SideCarIdentifier.to_string(),\n\t\t\t\t\tMethodName:Method,\n\t\t\t\t\tTimeoutMilliseconds:timeout_ms,\n\t\t\t\t})\n\t\t\t},\n\t\t}\n\t} else {\n\t\tErr(VineError::ClientNotConnected(SideCarIdentifier.to_string()))\n\t}\n}"
+/// SendNotification(
+///     "cocoon-main".to_string(),
+///     "UpdateTheme".to_string(),
+///     json!({"theme": "dark"}),
+/// ).await?;
+/// # Ok(())
+/// # }
+/// ```
+pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameters:Value) -> Result<(), VineError> {
+	// Validate method name format
+	if Method.is_empty() || Method.len() > 128 {
+		return Err(VineError::RPCError(
+			"Method name must be between 1 and 128 characters".to_string()
+		));
+	}
+
+	let parameter_bytes = to_vec(&Parameters)?;
+	ValidateMessageSize(&parameter_bytes)?;
+
+	let mut client = {
+		let guard = SIDECAR_CLIENTS.lock();
+		guard.get(&SideCarIdentifier).cloned()
+	};
+
+	if let Some(ref mut client) = client {
+		let request = GenericNotification { method:Method, parameter:parameter_bytes };
+
+		match client.send_mountain_notification(request).await {
+			Ok(_) => {
+				UpdateSideCarActivity(&SideCarIdentifier);
+				debug!(
+					"[VineClient] Notification sent successfully to sidecar '{}'",
+					SideCarIdentifier
+				);
+				Ok(())
+			},
+			Err(status) => {
+				RecordSideCarFailure(&SideCarIdentifier);
+				error!(
+					"[VineClient] Failed to send notification to sidecar '{}': {}",
+					SideCarIdentifier, status
+				);
+				Err(VineError::from(status))
+			}
+		}
+	} else {
+		Err(VineError::ClientNotConnected(SideCarIdentifier))
+	}
+}

@@ -11,18 +11,23 @@
 //!
 //! ### MountainService (Listens on one port)
 //! - **ProcessCocoonRequest**: Handles request-response calls from Cocoon
-//! - **SendCocoonNotification**: Processes fire-and-forget notifications from Cocoon
+//! - **SendCocoonNotification**: Processes fire-and-forget notifications from
+//!   Cocoon
 //! - **CancelOperation**: Cancels long-running operations requested by Cocoon
 //!
 //! ### CocoonService (Listens on separate port)
-//! - **ProcessMountainRequest**: Handles request-response calls from Mountain to Cocoon
-//! - **SendMountainNotification**: Processes notifications from Mountain to Cocoon
+//! - **ProcessMountainRequest**: Handles request-response calls from Mountain
+//!   to Cocoon
+//! - **SendMountainNotification**: Processes notifications from Mountain to
+//!   Cocoon
 //! - **CancelOperation**: Cancels operations in Cocoon
 //!
 //! ## Lifecycle Management
 //!
-//! 1. **Initialization**: Servers are spawned as background tasks via `Initialize::Initialize`
-//! 2. **Service Registration**: gRPC services are registered with tonic's Server builder
+//! 1. **Initialization**: Servers are spawned as background tasks via
+//!    `Initialize::Initialize`
+//! 2. **Service Registration**: gRPC services are registered with tonic's
+//!    Server builder
 //! 3. **Request Handling**: Each RPC call is dispatched to appropriate handlers
 //! 4. **Graceful Shutdown**: Servers terminate when tokio runtime is shut down
 //!
@@ -70,7 +75,8 @@
 //! ## Modules
 //!
 //! - [`Initialize`]: Server initialization and startup logic
-//! - [`MountainVinegRPCService`]: Implementation of MountainService (Cocoon → Mountain)
+//! - [`MountainVinegRPCService`]: Implementation of MountainService (Cocoon →
+//!   Mountain)
 //! - [`CocoonServiceImpl`]: Implementation of CocoonService (Mountain → Cocoon)
 
 #![allow(non_snake_case)]

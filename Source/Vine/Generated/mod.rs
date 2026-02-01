@@ -18,13 +18,17 @@
 //!
 //! ### Service Clients
 //! - [`cocoon_service_client::CocoonServiceClient`] Client for calling Cocoon
-//! - [`mountain_service_client::MountainServiceClient`] Client for calling Mountain
+//! - [`mountain_service_client::MountainServiceClient`] Client for calling
+//!   Mountain
 //!
 //! ### Service Servers
-//! - [`cocoon_service_server::CocoonService`] Trait for Cocoon service implementation
+//! - [`cocoon_service_server::CocoonService`] Trait for Cocoon service
+//!   implementation
 //! - [`cocoon_service_server::CocoonServiceServer`] Server wrapper for Cocoon
-//! - [`mountain_service_server::MountainService`] Trait for Mountain service implementation
-//! - [`mountain_service_server::MountainServiceServer`] Server wrapper for Mountain
+//! - [`mountain_service_server::MountainService`] Trait for Mountain service
+//!   implementation
+//! - [`mountain_service_server::MountainServiceServer`] Server wrapper for
+//!   Mountain
 //!
 //! ## Usage Notes
 //!
@@ -41,7 +45,6 @@
 	unknown_lints,
 	non_shorthand_field_patterns
 )]
-
 #![allow(
 	non_snake_case,
 	non_camel_case_types,

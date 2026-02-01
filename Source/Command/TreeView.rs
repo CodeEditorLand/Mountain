@@ -102,69 +102,39 @@ pub async fn GetTreeViewItem(
 }
 
 /// Handles tree node expansion/collapse events.
+/// TODO: OnTreeNodeExpanded is not defined in TreeViewProvider trait - needs implementation
 #[command]
 pub async fn OnTreeViewExpansionChanged(
 	ApplicationHandle:AppHandle<Wry>,
 
 	_State:State<'_, Arc<ApplicationState>>,
 
-	ViewId:String,
+	_ViewId:String,
 
-	ElementHandle:String,
+	_ElementHandle:String,
 
-	IsExpanded:bool,
+	_IsExpanded:bool,
 ) -> Result<Value, String> {
-	log::debug!(
-		"[TreeView Command] Tree node '{}' in view '{}' expanded: {}",
-		ElementHandle,
-		ViewId,
-		IsExpanded
-	);
+	log::warn!("[TreeView Command] OnTreeViewExpansionChanged not implemented");
 
-	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
-
-	let Environment:Arc<MountainEnvironment> = RunTime.Environment.clone();
-
-	// Update expansion state
-	match Environment.OnTreeNodeExpanded(ViewId, ElementHandle, IsExpanded).await {
-		Ok(_) => Ok(json!({ "success": true })),
-		Err(Error) => {
-			let ErrorMessage = format!("Failed to update tree expansion: {}", Error);
-			log::error!("{}", ErrorMessage);
-			Err(ErrorMessage)
-		},
-	}
+	Ok(json!({ "success": false, "error": "OnTreeNodeExpanded method not implemented" }))
 }
 
 /// Handles tree selection changes.
+/// TODO: OnTreeSelectionChanged is not defined in TreeViewProvider trait - needs implementation
 #[command]
 pub async fn OnTreeViewSelectionChanged(
 	ApplicationHandle:AppHandle<Wry>,
 
 	_State:State<'_, Arc<ApplicationState>>,
 
-	ViewId:String,
+	_ViewId:String,
 
-	SelectedHandles:Vec<String>,
+	_SelectedHandles:Vec<String>,
 ) -> Result<Value, String> {
-	log::debug!(
-		"[TreeView Command] Selection changed in view '{}': {} items selected",
-		ViewId,
-		SelectedHandles.len()
-	);
+	log::warn!("[TreeView Command] OnTreeViewSelectionChanged not implemented");
 
-	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
-
-	let Environment:Arc<MountainEnvironment> = RunTime.Environment.clone();
-
-	match Environment.OnTreeSelectionChanged(ViewId, SelectedHandles.clone()).await {
-		Ok(_) => Ok(json!({ "success": true, "selectedCount": SelectedHandles.len() })),
-		Err(Error) => {
-			let ErrorMessage = format!("Failed to update tree selection: {}", Error);
-			log::error!("{}", ErrorMessage);
-			Err(ErrorMessage)
-		},
-	}
+	Ok(json!({ "success": false, "error": "OnTreeSelectionChanged method not implemented" }))
 }
 
 /// Refreshes a tree view.

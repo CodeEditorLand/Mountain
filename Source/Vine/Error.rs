@@ -1,6 +1,3 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # VineError
 //!
 //! Defines the specific, structured error types for all operations within the
@@ -46,23 +43,23 @@
 //!
 //! ```rust,no_run
 //! # use Vine::Error::VineError;
-//! fn handle_error(error: VineError) {
-//!     match error {
-//!         VineError::RequestTimeout { SideCarIdentifier, MethodName, TimeoutMilliseconds } => {
-//!             eprintln!("Request to {} method '{}' timed out after {}ms",
-//!                       SideCarIdentifier, MethodName, TimeoutMilliseconds);
-//!             // Implement retry logic or fallback behavior
-//!         }
-//!         VineError::ClientNotConnected(id) => {
-//!             eprintln!("Sidecar '{}' not connected, attempting reconnection...", id);
-//!             // Attempt to reconnect
-//!         }
-//!         _ => eprintln!("Vine error: {}", error),
-//!     }
+//! fn handle_error(error:VineError) {
+//! 	match error {
+//! 		VineError::RequestTimeout { SideCarIdentifier, MethodName, TimeoutMilliseconds } => {
+//! 			eprintln!(
+//! 				"Request to {} method '{}' timed out after {}ms",
+//! 				SideCarIdentifier, MethodName, TimeoutMilliseconds
+//! 			);
+//! 			// Implement retry logic or fallback behavior
+//! 		},
+//! 		VineError::ClientNotConnected(id) => {
+//! 			eprintln!("Sidecar '{}' not connected, attempting reconnection...", id);
+//! 			// Attempt to reconnect
+//! 		},
+//! 		_ => eprintln!("Vine error: {}", error),
+//! 	}
 //! }
 //! ```
-
-#![allow(non_snake_case, non_camel_case_types)]
 
 use std::{
 	net::AddrParseError,
@@ -91,7 +88,7 @@ pub enum VineError {
 	/// This indicates that connection attempts failed, possibly due to
 	/// network issues, incorrect address, or the sidecar being unavailable.
 	#[error("Failed to connect to sidecar '{SideCarIdentifier}' at '{Address}': {Reason}")]
-	ConnectionFailed  { SideCarIdentifier:String, Address:String, Reason:String },
+	ConnectionFailed { SideCarIdentifier:String, Address:String, Reason:String },
 
 	/// An established connection to the sidecar was lost.
 	///
@@ -177,11 +174,12 @@ impl VineError {
 	/// failures. Non-recoverable errors include serialization errors and
 	/// invalid state.
 	pub fn IsRecoverable(&self) -> bool {
-		matches!(self,
-			Self::RequestTimeout { .. } |
-			Self::ConnectionFailed { .. } |
-			Self::ConnectionLost(_) |
-			Self::TonicTransportError(_)
+		matches!(
+			self,
+			Self::RequestTimeout { .. }
+				| Self::ConnectionFailed { .. }
+				| Self::ConnectionLost(_)
+				| Self::TonicTransportError(_)
 		)
 	}
 
@@ -194,30 +192,18 @@ impl VineError {
 	/// - etc.
 	pub fn ToTonicStatus(&self) -> tonic::Status {
 		match self {
-			Self::RequestTimeout { .. } => {
-				tonic::Status::deadline_exceeded(self.to_string())
-			},
-			Self::ClientNotConnected(_) | Self::ConnectionFailed { .. } => {
-				tonic::Status::unavailable(self.to_string())
-			},
+			Self::RequestTimeout { .. } => tonic::Status::deadline_exceeded(self.to_string()),
+			Self::ClientNotConnected(_) | Self::ConnectionFailed { .. } => tonic::Status::unavailable(self.to_string()),
 			Self::SerializationError(_) | Self::InternalLockError(_) | Self::InvalidState(_) => {
 				tonic::Status::internal(self.to_string())
 			},
-			Self::MessageTooLarge { .. } => {
-				tonic::Status::resource_exhausted(self.to_string())
-			},
+			Self::MessageTooLarge { .. } => tonic::Status::resource_exhausted(self.to_string()),
 			Self::InvalidMessageFormat(_) | Self::InvalidUri(_) | Self::AddressParseError(_) => {
 				tonic::Status::invalid_argument(self.to_string())
 			},
-			Self::RequestCanceled { .. } => {
-				tonic::Status::cancelled(self.to_string())
-			},
-			Self::RPCError(msg) => {
-				tonic::Status::unknown(msg.clone())
-			},
-			Self::ConnectionLost(_) => {
-				tonic::Status::aborted(self.to_string())
-			},
+			Self::RequestCanceled { .. } => tonic::Status::cancelled(self.to_string()),
+			Self::RPCError(msg) => tonic::Status::unknown(msg.clone()),
+			Self::ConnectionLost(_) => tonic::Status::aborted(self.to_string()),
 		}
 	}
 }
@@ -232,33 +218,24 @@ impl From<tonic::Status> for VineError {
 	fn from(status:tonic::Status) -> Self {
 		// Map gRPC status codes to appropriate VineError variants
 		match status.code() {
-			tonic::Code::DeadlineExceeded => VineError::RPCError(
-				format!("Timeout: {}", status.message())
-			),
-			tonic::Code::NotFound => VineError::ClientNotConnected(
-				status.message().to_string()
-			),
-			tonic::Code::AlreadyExists |
-			tonic::Code::InvalidArgument |
-			tonic::Code::OutOfRange => VineError::InvalidMessageFormat(
-				status.message().to_string()
-			),
-			tonic::Code::FailedPrecondition |
-			tonic::Code::Aborted => VineError::ConnectionLost(
-				status.message().to_string()
-			),
-			tonic::Code::ResourceExhausted => VineError::MessageTooLarge {
-				ActualSize: 0,
-				MaxSize: 4 * 1024 * 1024,
+			tonic::Code::DeadlineExceeded => VineError::RPCError(format!("Timeout: {}", status.message())),
+			tonic::Code::NotFound => VineError::ClientNotConnected(status.message().to_string()),
+			tonic::Code::AlreadyExists | tonic::Code::InvalidArgument | tonic::Code::OutOfRange => {
+				VineError::InvalidMessageFormat(status.message().to_string())
 			},
-			tonic::Code::Cancelled => VineError::RequestCanceled {
-				SideCarIdentifier: "unknown".to_string(),
-				MethodName: "unknown".to_string(),
+			tonic::Code::FailedPrecondition | tonic::Code::Aborted => {
+				VineError::ConnectionLost(status.message().to_string())
 			},
-			tonic::Code::Unavailable => VineError::ConnectionFailed {
-				SideCarIdentifier: "unknown".to_string(),
-				Address: "unknown".to_string(),
-				Reason: status.message().to_string(),
+			tonic::Code::ResourceExhausted => VineError::MessageTooLarge { ActualSize:0, MaxSize:4 * 1024 * 1024 },
+			tonic::Code::Cancelled => {
+				VineError::RequestCanceled { SideCarIdentifier:"unknown".to_string(), MethodName:"unknown".to_string() }
+			},
+			tonic::Code::Unavailable => {
+				VineError::ConnectionFailed {
+					SideCarIdentifier:"unknown".to_string(),
+					Address:"unknown".to_string(),
+					Reason:status.message().to_string(),
+				}
 			},
 			_ => VineError::RPCError(status.to_string()),
 		}

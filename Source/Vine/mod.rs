@@ -1,6 +1,3 @@
-//! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
-//!
 //! # Vine gRPC Module
 //!
 //! This module encapsulates all logic related to the gRPC-based
@@ -15,13 +12,17 @@
 //! The system uses two complementary gRPC services:
 //!
 //! ### MountainService (Cocoon → Mountain)
-//! - **ProcessCocoonRequest**: Request-response pattern for Cocoon to query Mountain
-//! - **SendCocoonNotification**: Fire-and-forget notifications from Cocoon to Mountain
+//! - **ProcessCocoonRequest**: Request-response pattern for Cocoon to query
+//!   Mountain
+//! - **SendCocoonNotification**: Fire-and-forget notifications from Cocoon to
+//!   Mountain
 //! - **CancelOperation**: Request cancellation of long-running operations
 //!
 //! ### CocoonService (Mountain → Cocoon)
-//! - **ProcessMountainRequest**: Request-response pattern for Mountain to query Cocoon
-//! - **SendMountainNotification**: Fire-and-forget notifications from Mountain to Cocoon
+//! - **ProcessMountainRequest**: Request-response pattern for Mountain to query
+//!   Cocoon
+//! - **SendMountainNotification**: Fire-and-forget notifications from Mountain
+//!   to Cocoon
 //! - **CancelOperation**: Request cancellation of long-running operations
 //!
 //! ## Communication Protocol
@@ -29,8 +30,10 @@
 //! All RPC messages use Protocol Buffers for serialization:
 //! - **GenericRequest**: Contains request ID, method name, and JSON parameters
 //! - **GenericResponse**: Contains request ID, JSON result, or optional error
-//! - **GenericNotification**: Fire-and-forget message with method name and JSON parameters
-//! - **RpcError**: JSON-RPC compliant error structure with code, message, and optional data
+//! - **GenericNotification**: Fire-and-forget message with method name and JSON
+//!   parameters
+//! - **RpcError**: JSON-RPC compliant error structure with code, message, and
+//!   optional data
 //!
 //! ## Data Flow
 //!
@@ -55,7 +58,8 @@
 //!
 //! ## Key Features
 //!
-//! - **Thread-Safe Client**: Connection pool with Arc<Mutex<>> for concurrent access
+//! - **Thread-Safe Client**: Connection pool with Arc<Mutex<>> for concurrent
+//!   access
 //! - **Request Timeout**: Configurable timeout per RPC call
 //! - **Error Handling**: Comprehensive error types with gRPC status conversion
 //! - **Graceful Degradation**: System continues when Cocoon is unavailable
@@ -76,8 +80,6 @@
 //! - [`Generated`]: Auto-generated protobuf code from Vine.proto
 //! - [`Server`]: gRPC server implementations for Mountain services
 
-#![allow(non_snake_case, non_camel_case_types)]
-
 // --- Sub-modules ---
 pub mod Client;
 
@@ -88,4 +90,4 @@ pub mod Generated;
 pub mod Server;
 
 // Re-export commonly used types
-pub use Server::CocoonServiceServer;
+pub use Generated::cocoon_service_server::CocoonServiceServer;

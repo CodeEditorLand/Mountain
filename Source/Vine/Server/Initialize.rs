@@ -4,7 +4,8 @@
 //!
 //! This module provides the entry point for starting Vine's gRPC servers:
 //! - **MountainServiceServer**: Listens for connections from Cocoon sidecar
-//! - **CocoonServiceServer**: Listens for connections from Mountain (bidirectional)
+//! - **CocoonServiceServer**: Listens for connections from Mountain
+//!   (bidirectional)
 //!
 //! ## Initialization Process
 //!
@@ -31,9 +32,8 @@
 //! - Start immediately when spawned
 //! - Continue until process termination or tokio runtime shutdown
 //! - Log errors to the logging system
-//! - Not automatically restart on failure (caller should implement retry logic if needed)
-
-#![allow(non_snake_case, non_camel_case_types)]
+//! - Not automatically restart on failure (caller should implement retry logic
+//!   if needed)
 
 use std::{net::SocketAddr, sync::Arc, time::Duration};
 
@@ -44,25 +44,30 @@ use tonic::transport::Server;
 use super::MountainVinegRPCService::MountainVinegRPCService;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Vine::{Error::VineError, Generated::{mountain_service_server::MountainServiceServer, cocoon_service_server::CocoonServiceServer}},
+	Vine::{
+		Error::VineError,
+		Generated::{cocoon_service_server::CocoonServiceServer, mountain_service_server::MountainServiceServer},
+	},
 };
 
 /// Server configuration constants
 mod ServerConfig {
+	use std::time::Duration;
+
 	/// Default port for MountainService server
-	pub const DEFAULT_MOUNTAIN_PORT: u16 = 50051;
+	pub const DEFAULT_MOUNTAIN_PORT:u16 = 50051;
 
 	/// Default port for CocoonService server
-	pub const DEFAULT_COCOON_PORT: u16 = 50052;
+	pub const DEFAULT_COCOON_PORT:u16 = 50052;
 
 	/// Maximum concurrent connections per server
-	pub const MAX_CONNECTIONS: usize = 100;
+	pub const MAX_CONNECTIONS:usize = 100;
 
 	/// Connection timeout duration
-	pub const CONNECTION_TIMEOUT: Duration = Duration::from_secs(30);
+	pub const CONNECTION_TIMEOUT:Duration = Duration::from_secs(30);
 
 	/// Default message size limit (4MB)
-	pub const MAX_MESSAGE_SIZE: usize = 4 * 1024 * 1024;
+	pub const MAX_MESSAGE_SIZE:usize = 4 * 1024 * 1024;
 }
 
 /// Validates a socket address string before parsing.
@@ -77,13 +82,15 @@ mod ServerConfig {
 fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAddr, VineError> {
 	if AddressString.is_empty() {
 		return Err(VineError::InvalidMessageFormat(format!(
-			"{} address cannot be empty", ServerName
+			"{} address cannot be empty",
+			ServerName
 		)));
 	}
 
 	if AddressString.len() > 256 {
 		return Err(VineError::InvalidMessageFormat(format!(
-			"{} address exceeds maximum length (256 characters)", ServerName
+			"{} address exceeds maximum length (256 characters)",
+			ServerName
 		)));
 	}
 
@@ -93,13 +100,14 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 			if addr.port() < 1024 {
 				warn!(
 					"[VineServer] {} using privileged port {}, this may require elevated privileges",
-					ServerName, addr.port()
+					ServerName,
+					addr.port()
 				);
 			}
 
 			Ok(addr)
 		},
-		Err(e) => Err(VineError::AddressParseError(e))
+		Err(e) => Err(VineError::AddressParseError(e)),
 	}
 }
 
@@ -112,12 +120,15 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 ///
 /// # Parameters
 /// - `ApplicationHandle`: The Tauri application handle
-/// - `MountainAddressString`: The address and port to bind the Mountain server to (e.g., `"[::1]:50051"`)
-/// - `CocoonAddressString`: The address and port to bind the Cocoon server to (e.g., `"[::1]:50052"`)
+/// - `MountainAddressString`: The address and port to bind the Mountain server
+///   to (e.g., `"[::1]:50051"`)
+/// - `CocoonAddressString`: The address and port to bind the Cocoon server to
+///   (e.g., `"[::1]:50052"`)
 ///
 /// # Returns
 /// - `Ok(())`: Successfully initialized and started both servers
-/// - `Err(VineError)`: Initialization failed (invalid address, missing runtime, etc.)
+/// - `Err(VineError)`: Initialization failed (invalid address, missing runtime,
+///   etc.)
 ///
 /// # Errors
 ///
@@ -132,11 +143,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 /// # use Vine::Server::Initialize::Initialize;
 /// # use tauri::AppHandle;
 /// # async fn example(handle: AppHandle) -> Result<(), Box<dyn std::error::Error>> {
-/// Initialize(
-///     handle,
-///     "[::1]:50051".to_string(),
-///     "[::1]:50052".to_string()
-/// )?;
+/// Initialize(handle, "[::1]:50051".to_string(), "[::1]:50052".to_string())?;
 /// # Ok(())
 /// # }
 /// ```
@@ -150,7 +157,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 pub fn Initialize(
 	ApplicationHandle:AppHandle,
 	MountainAddressString:String,
-	CocoonAddressString:String
+	CocoonAddressString:String,
 ) -> Result<(), VineError> {
 	info!("[VineServer] Initializing Vine gRPC servers...");
 
@@ -158,14 +165,8 @@ pub fn Initialize(
 	let MountainAddress = ValidateSocketAddress(&MountainAddressString, "MountainService")?;
 	let CocoonAddress = ValidateSocketAddress(&CocoonAddressString, "CocoonService")?;
 
-	info!(
-		"[VineServer] MountainService will bind to: {}",
-		MountainAddress
-	);
-	info!(
-		"[VineServer] CocoonService will bind to: {}",
-		CocoonAddress
-	);
+	info!("[VineServer] MountainService will bind to: {}", MountainAddress);
+	info!("[VineServer] CocoonService will bind to: {}", CocoonAddress);
 
 	// Retrieve ApplicationRunTime from Tauri managed state
 	let RunTime = ApplicationHandle
@@ -193,16 +194,13 @@ pub fn Initialize(
 	// Spawn Mountain server to run in the background
 	let MountainServerName = MountainAddress.to_string();
 	tokio::spawn(async move {
-		info!(
-			"[VineServer] Starting MountainService gRPC server on {}",
-			MountainServerName
-		);
+		info!("[VineServer] Starting MountainService gRPC server on {}", MountainServerName);
 
 		let server_result = Server::builder()
 			.add_service(
 				MountainServiceServer::new(MountainService)
 					.max_decoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
-					.max_encoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
+					.max_encoding_message_size(ServerConfig::MAX_MESSAGE_SIZE),
 			)
 			.serve(MountainAddress)
 			.await;
@@ -212,27 +210,21 @@ pub fn Initialize(
 				info!("[VineServer] MountainService server shut down gracefully");
 			},
 			Err(e) => {
-				error!(
-					"[VineServer] MountainService gRPC server error: {}",
-					e
-				);
-			}
+				error!("[VineServer] MountainService gRPC server error: {}", e);
+			},
 		}
 	});
 
 	// Spawn Cocoon server to run in the background
 	let CocoonServerName = CocoonAddress.to_string();
 	tokio::spawn(async move {
-		info!(
-			"[VineServer] Starting CocoonService gRPC server on {}",
-			CocoonServerName
-		);
+		info!("[VineServer] Starting CocoonService gRPC server on {}", CocoonServerName);
 
 		let server_result = Server::builder()
 			.add_service(
 				CocoonServiceServer::new(cocoon_service_impl)
 					.max_decoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
-					.max_encoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
+					.max_encoding_message_size(ServerConfig::MAX_MESSAGE_SIZE),
 			)
 			.serve(CocoonAddress)
 			.await;
@@ -242,17 +234,12 @@ pub fn Initialize(
 				info!("[VineServer] CocoonService server shut down gracefully");
 			},
 			Err(e) => {
-				error!(
-					"[VineServer] CocoonService gRPC server error: {}",
-					e
-				);
-			}
+				error!("[VineServer] CocoonService gRPC server error: {}", e);
+			},
 		}
 	});
 
-	info!(
-		"[VineServer] Both gRPC servers initialized successfully and running in background"
-	);
+	info!("[VineServer] Both gRPC servers initialized successfully and running in background");
 
 	Ok(())
 }
