@@ -33,7 +33,6 @@
 //! - Async commands don't block main thread
 
 pub mod WorkbenchConfigurationCommand;
-pub mod TrayIconSwitchCommand;
 pub mod MessageReceiveCommand;
 pub mod StatusGetCommand;
 pub mod InvokeCommand;

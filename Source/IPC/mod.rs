@@ -25,10 +25,16 @@
 //! - [`ipc_server`]: Core IPC server implementation
 //! - [`commands`]: Tauri command handlers for IPC operations
 
-// pub mod Command;
-// pub mod compression;
-// pub mod connection_pool;
-// pub mod encryption;
-// pub mod ipc_server;
-// pub mod permissions;
-// pub mod types;
+pub mod AdvancedFeatures;
+pub mod ConfigurationBridge;
+pub mod StatusReporter;
+pub mod TauriIPCServer;
+pub mod WindAdvancedSync;
+pub mod WindAirCommands;
+pub mod WindServiceAdapters;
+pub mod WindServiceHandlers;
+
+pub mod Connection;
+pub mod Enhanced;
+pub mod Message;
+pub mod Permission;

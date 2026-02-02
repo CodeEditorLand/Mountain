@@ -78,8 +78,8 @@ async fn MountainGetWorkbenchConfiguration(
 fn SwitchTrayIcon(App:AppHandle, IsDarkMode:bool) {
 	debug!("[UI] [Tray] Switching icon. IsDarkMode: {}", IsDarkMode);
 
-	const DARK_ICON_BYTES:&[u8] = include_bytes!("../icons/32x32.png");
-	const LIGHT_ICON_BYTES:&[u8] = include_bytes!("../icons/32x32.png");
+	const DARK_ICON_BYTES:&[u8] = include_bytes!("../../icons/32x32.png");
+	const LIGHT_ICON_BYTES:&[u8] = include_bytes!("../../icons/32x32.png");
 
 	let IconBytes = if IsDarkMode { DARK_ICON_BYTES } else { LIGHT_ICON_BYTES };
 

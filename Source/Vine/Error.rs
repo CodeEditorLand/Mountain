@@ -204,6 +204,7 @@ impl VineError {
 			Self::RequestCanceled { .. } => tonic::Status::cancelled(self.to_string()),
 			Self::RPCError(msg) => tonic::Status::unknown(msg.clone()),
 			Self::ConnectionLost(_) => tonic::Status::aborted(self.to_string()),
+			Self::TonicTransportError(_) => tonic::Status::unavailable(self.to_string()),
 		}
 	}
 }
