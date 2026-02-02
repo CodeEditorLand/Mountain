@@ -33,4 +33,4 @@ pub mod WebViewStateDTO;
 
 pub mod WindowStateDTO;
 
-pub mod WorkSpaceFolderStateDTO;
+pub mod WorkspaceFolderStateDTO;

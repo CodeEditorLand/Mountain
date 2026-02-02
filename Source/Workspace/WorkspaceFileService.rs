@@ -1,13 +1,13 @@
-// File: Mountain/Source/WorkSpace/WorkSpaceFileService.rs
+// File: Mountain/Source/Workspace/WorkspaceFileService.rs
 // Role: Contains logic for parsing and handling `.code-workspace` files.
 // Responsibilities:
 //   - Define the structure for deserializing `.code-workspace` JSON.
 //   - Parse the file content, resolve relative folder paths to absolute URIs,
 
-//     and construct a list of `WorkSpaceFolderStateDTO`s representing the
+//     and construct a list of `WorkspaceFolderStateDTO`s representing the
 //     workspace.
 
-//! # WorkSpace File Service
+//! # Workspace File Service
 //!
 //! Contains logic for parsing and handling `.code-workspace` files.
 
@@ -17,49 +17,49 @@ use CommonLibrary::Error::CommonError::CommonError;
 use serde::Deserialize;
 use url::Url;
 
-use crate::ApplicationState::DTO::WorkSpaceFolderStateDTO::WorkSpaceFolderStateDTO;
+use crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;
 
 #[derive(Deserialize, Debug)]
-struct WorkSpaceFile {
-	folders:Vec<WorkSpaceFolderEntry>,
+struct WorkspaceFile {
+	folders:Vec<WorkspaceFolderEntry>,
 	// Can also contain 'settings', 'extensions', etc.
 }
 
 #[derive(Deserialize, Debug)]
-struct WorkSpaceFolderEntry {
+struct WorkspaceFolderEntry {
 	path:String,
 }
 
 /// Parses a `.code-workspace` file content and resolves the folder paths.
 ///
 /// # Parameters
-/// * `WorkSpaceFilePath`: The absolute path to the `.code-workspace` file.
+/// * `WorkspaceFilePath`: The absolute path to the `.code-workspace` file.
 /// * `FileContent`: The raw string content of the file.
 ///
 /// # Returns
-/// A `Result` containing a vector of `WorkSpaceFolderStateDTO`s.
-pub fn ParseWorkSpaceFile(
-	WorkSpaceFilePath:&Path,
+/// A `Result` containing a vector of `WorkspaceFolderStateDTO`s.
+pub fn ParseWorkspaceFile(
+	WorkspaceFilePath:&Path,
 
 	FileContent:&str,
-) -> Result<Vec<WorkSpaceFolderStateDTO>, CommonError> {
-	let Parsed:WorkSpaceFile = serde_json::from_str(FileContent)
+) -> Result<Vec<WorkspaceFolderStateDTO>, CommonError> {
+	let Parsed:WorkspaceFile = serde_json::from_str(FileContent)
 		.map_err(|Error| CommonError::SerializationError { Description:Error.to_string() })?;
 
-	let WorkSpaceFileDirectory = WorkSpaceFilePath.parent().ok_or_else(|| {
+	let WorkspaceFileDirectory = WorkspaceFilePath.parent().ok_or_else(|| {
 		CommonError::FileSystemIO {
-			Path:WorkSpaceFilePath.to_path_buf(),
+			Path:WorkspaceFilePath.to_path_buf(),
 
 			Description:"Cannot get parent directory of workspace file".to_string(),
 		}
 	})?;
 
-	let Folders:Result<Vec<WorkSpaceFolderStateDTO>, CommonError> = Parsed
+	let Folders:Result<Vec<WorkspaceFolderStateDTO>, CommonError> = Parsed
 		.folders
 		.into_iter()
 		.enumerate()
 		.map(|(Index, Entry)| {
-			let FolderPath = WorkSpaceFileDirectory.join(Entry.path);
+			let FolderPath = WorkspaceFileDirectory.join(Entry.path);
 
 			let CanonicalPath = FolderPath
 				.canonicalize()
@@ -79,7 +79,7 @@ pub fn ParseWorkSpaceFile(
 				.unwrap_or("untitled-folder")
 				.to_string();
 
-			Ok(WorkSpaceFolderStateDTO { URI:FolderURI, Name, Index })
+			Ok(WorkspaceFolderStateDTO { URI:FolderURI, Name, Index })
 		})
 		.collect();
 

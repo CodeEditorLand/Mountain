@@ -67,7 +67,7 @@
 
 use CommonLibrary::{Error::CommonError::CommonError, Output::OutputChannelManager::OutputChannelManager};
 use async_trait::async_trait;
-use log::{info, trace, warn};
+use log::{error, info, trace, warn};
 use serde_json::json;
 use tauri::Emitter;
 

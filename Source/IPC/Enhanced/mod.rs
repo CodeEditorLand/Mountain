@@ -11,6 +11,15 @@ pub mod ConnectionPool;
 pub mod SecureMessageChannel;
 pub mod PerformanceDashboard;
 
+use std::collections::HashMap;
+
+use log::{info, debug};
+
+use MessageCompressor::{BatchConfig, CompressionLevel, CompressionAlgorithm, MessageCompressor};
+use ConnectionPool::{PoolConfig, PoolStats, ConnectionPool};
+use SecureMessageChannel::{SecurityConfig, SecurityStats, EncryptedMessage, SecureMessageChannel};
+use PerformanceDashboard::{DashboardConfig, DashboardStatistics, MetricType, PerformanceDashboard};
+
 /// Enhanced IPC manager that combines all advanced features
 pub struct EnhancedIPCManager {
 	pub compressor:MessageCompressor::MessageCompressor,
@@ -28,10 +37,10 @@ impl EnhancedIPCManager {
 		let dashboard_config = DashboardConfig::default();
 
 		Ok(Self {
-			compressor:MessageCompressor::new(compressor_config),
-			connection_pool:ConnectionPool::new(pool_config),
-			secure_channel:SecureMessageChannel::new(security_config)?,
-			performance_dashboard:PerformanceDashboard::new(dashboard_config),
+			compressor:MessageCompressor::MessageCompressor::new(compressor_config),
+			connection_pool:ConnectionPool::ConnectionPool::new(pool_config),
+			secure_channel:SecureMessageChannel::SecureMessageChannel::new(security_config)?,
+			performance_dashboard:PerformanceDashboard::PerformanceDashboard::new(dashboard_config),
 		})
 	}
 
@@ -190,10 +199,10 @@ impl EnhancedIPCManager {
 		};
 
 		Self {
-			compressor:MessageCompressor::new(compressor_config),
-			connection_pool:ConnectionPool::new(pool_config),
-			secure_channel:SecureMessageChannel::new(security_config).unwrap(),
-			performance_dashboard:PerformanceDashboard::new(dashboard_config),
+			compressor:MessageCompressor::MessageCompressor::new(compressor_config),
+			connection_pool:ConnectionPool::ConnectionPool::new(pool_config),
+			secure_channel:SecureMessageChannel::SecureMessageChannel::new(security_config).unwrap(),
+			performance_dashboard:PerformanceDashboard::PerformanceDashboard::new(dashboard_config),
 		}
 	}
 
@@ -231,10 +240,10 @@ impl EnhancedIPCManager {
 		};
 
 		Self {
-			compressor:MessageCompressor::new(compressor_config),
-			connection_pool:ConnectionPool::new(pool_config),
-			secure_channel:SecureMessageChannel::new(security_config).unwrap(),
-			performance_dashboard:PerformanceDashboard::new(dashboard_config),
+			compressor:MessageCompressor::MessageCompressor::new(compressor_config),
+			connection_pool:ConnectionPool::ConnectionPool::new(pool_config),
+			secure_channel:SecureMessageChannel::SecureMessageChannel::new(security_config).unwrap(),
+			performance_dashboard:PerformanceDashboard::PerformanceDashboard::new(dashboard_config),
 		}
 	}
 }

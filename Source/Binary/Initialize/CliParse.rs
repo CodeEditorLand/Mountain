@@ -45,9 +45,9 @@ use std::path::PathBuf;
 pub fn Parse() -> Option<PathBuf> {
 	let CliArgs:Vec<String> = std::env::args().collect();
 
-	let WorkSpacePathArgument = CliArgs.iter().find(|Arg| Arg.ends_with(".code-workspace"));
+	let WorkspacePathArgument = CliArgs.iter().find(|Arg| Arg.ends_with(".code-workspace"));
 
-	WorkSpacePathArgument.map(|PathString| PathBuf::from(PathString))
+	WorkspacePathArgument.map(|PathString| PathBuf::from(PathString))
 }
 
 /// Check if a workspace argument was provided.

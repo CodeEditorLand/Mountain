@@ -62,7 +62,7 @@ async fn MountainGetWorkbenchConfiguration(
 
 	debug!("[IPC] [WorkbenchConfig] Constructing sandbox configuration...");
 
-	let Config = InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, &State)
+	let Configuration = InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, &State)
 		.await
 		.map_err(|Error| {
 			error!("[IPC] [WorkbenchConfig] Failed: {}", Error);
@@ -291,24 +291,24 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [Args] CLI parsing (using CliParse module)
 		// ---------------------------------------------------------------------
-		let (InitialFolders, WorkSpaceConfigurationPath) = CliParse::CliParse();
+		let (InitialFolders, WorkspaceConfigurationPath) = CliParse::CliParse();
 
 		// ---------------------------------------------------------------------
 		// [Boot] [State] ApplicationState (using StateBuild module)
 		// ---------------------------------------------------------------------
 		debug!("[Boot] [State] Building ApplicationState...");
 
-		let AppState = StateBuild::StateBuild(InitialFolders, WorkSpaceConfigurationPath);
+		let AppState = StateBuild::StateBuild(InitialFolders, WorkspaceConfigurationPath);
 
 		debug!(
 			"[Boot] [State] ApplicationState created with {} workspace folders.",
-			AppState.WorkSpaceFolders.lock().map(|f| f.len()).unwrap_or(0)
+			AppState.WorkspaceFolders.lock().map(|f| f.len()).unwrap_or(0)
 		);
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Runtime] Scheduler handles (using RuntimeBuild module)
 		// ---------------------------------------------------------------------
-		let (SchedulerForShutdown, SchedulerForRunTime) = RuntimeBuild::RuntimeBuild();
+		let (SchedulerForShutdown, SchedulerForRuntime) = RuntimeBuild::RuntimeBuild();
 		TraceStep!("[Boot] [Echo] Scheduler handles prepared.");
 
 		// ---------------------------------------------------------------------
@@ -319,7 +319,7 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [Logging] Log level resolution (using LogLevel module)
 		// ---------------------------------------------------------------------
-		let LogLevel = LogLevel::LogLevel();
+		let LogLevel = LogLevel::Resolve();
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Tauri] Builder setup (using TauriBuild module)
@@ -332,18 +332,18 @@ pub fn Fn() {
 			.manage(AppState.clone())
 			.setup({
 				let LocalhostUrl = LocalhostUrl.clone();
-				move |Application| {
+				move |App| {
 					info!("[Lifecycle] [Setup] Setup hook started.");
 					debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
 
-					let ApplicationHandle = Application.handle().clone();
+					let AppHandle = App.handle().clone();
 					TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
 
 					// ---------------------------------------------------------
 					// [UI] [Tray] Initialize System Tray
 					// ---------------------------------------------------------
 					debug!("[UI] [Tray] Initializing system tray...");
-					if let Err(Error) = EnableTray(Application) {
+					if let Err(Error) = EnableTray(App) {
 						error!("[UI] [Tray] Failed to enable tray: {}", Error);
 					}
 
@@ -351,20 +351,20 @@ pub fn Fn() {
 					// [Lifecycle] [Commands] Register native commands
 					// ---------------------------------------------------------
 					debug!("[Lifecycle] [Commands] Registering native commands...");
-					CommandRegister(&ApplicationHandle, &AppState)?;
+					CommandRegister(&AppHandle, &AppState)?;
 					debug!("[Lifecycle] [Commands] Native commands registered.");
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize IPC Server
 					// ---------------------------------------------------------
 					debug!("[Lifecycle] [IPC] Initializing Mountain IPC Server...");
-					IPCServerRegister(&ApplicationHandle)?;
+					IPCServerRegister(&AppHandle)?;
 
 					// ---------------------------------------------------------
 					// [UI] [Window] Build main window
 					// ---------------------------------------------------------
 					debug!("[UI] [Window] Building main window...");
-					let MainWindow = WindowBuild(Application, LocalhostUrl.clone());
+					let MainWindow = WindowBuild(App, LocalhostUrl.clone());
 					info!("[UI] [Window] Main window ready.");
 
 					#[cfg(debug_assertions)]
@@ -377,37 +377,37 @@ pub fn Fn() {
 					// [Backend] [Env] Mountain environment
 					// ---------------------------------------------------------
 					debug!("[Backend] [Env] Creating MountainEnvironment...");
-					let Environment = Arc::new(MountainEnvironment::Create(ApplicationHandle.clone()));
+					let Environment = Arc::new(MountainEnvironment::Create(AppHandle.clone()));
 					info!("[Backend] [Env] MountainEnvironment ready.");
 
 					// ---------------------------------------------------------
 					// [Backend] [Runtime] ApplicationRunTime
 					// ---------------------------------------------------------
 					debug!("[Backend] [Runtime] Creating ApplicationRunTime...");
-					let RunTime =
-						Arc::new(ApplicationRunTime::Create(SchedulerForRunTime.clone(), Environment.clone()));
-					ApplicationHandle.manage(RunTime.clone());
+					let Runtime =
+						Arc::new(ApplicationRunTime::Create(SchedulerForRuntime.clone(), Environment.clone()));
+					AppHandle.manage(Runtime.clone());
 					info!("[Backend] [Runtime] ApplicationRunTime managed.");
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Status Reporter
 					// ---------------------------------------------------------
-					StatusReporterRegister(&ApplicationHandle, RunTime.clone())?;
+					StatusReporterRegister(&AppHandle, Runtime.clone())?;
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Advanced Features
 					// ---------------------------------------------------------
-					AdvancedFeaturesRegister(&ApplicationHandle, RunTime.clone())?;
+					AdvancedFeaturesRegister(&AppHandle, Runtime.clone())?;
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Wind Advanced Sync
 					// ---------------------------------------------------------
-					WindSyncRegister(&ApplicationHandle, RunTime.clone())?;
+					WindSyncRegister(&AppHandle, Runtime.clone())?;
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [PostSetup] Async initialization work
 					// ---------------------------------------------------------
-					let PostSetupApplicationHandle = ApplicationHandle.clone();
+					let PostSetupAppHandle = AppHandle.clone();
 					let PostSetupEnvironment = Environment.clone();
 
 					tauri::async_runtime::spawn(async move {
@@ -422,18 +422,18 @@ pub fn Fn() {
 						ScanPathConfigure(&AppStateForSetup);
 
 						// [Extensions] [Scan]
-						ExtensionPopulate(PostSetupApplicationHandle.clone(), &AppStateForSetup).await;
+						ExtensionPopulate(PostSetupAppHandle.clone(), &AppStateForSetup).await;
 
 						// [Vine] [gRPC]
 						VineStart(
-							PostSetupApplicationHandle.clone(),
+							PostSetupAppHandle.clone(),
 							"[::1]:50051".to_string(),
 							"[::1]:50052".to_string(),
 						)
 						.await;
 
 						// [Cocoon] [Sidecar]
-						CocoonStart(&PostSetupApplicationHandle, &PostSetupEnvironment).await;
+						CocoonStart(&PostSetupAppHandle, &PostSetupEnvironment).await;
 
 						info!("[Lifecycle] [PostSetup] Complete. System ready.");
 					});
@@ -477,7 +477,7 @@ pub fn Fn() {
 			])
 			.build(tauri::generate_context!())
 			.expect("FATAL: Error while building Mountain Tauri application")
-			.run(move |ApplicationHandle, Event| {
+			.run(move |AppHandle, Event| {
 				// Debug-only: log selected lifecycle events
 				if cfg!(debug_assertions) {
 					match &Event {
@@ -492,17 +492,17 @@ pub fn Fn() {
 					api.prevent_exit();
 
 					let SchedulerHandle = SchedulerForShutdown.clone();
-					let ApplicationHandleClone = ApplicationHandle.clone();
+					let AppHandleClone = AppHandle.clone();
 
 					tokio::spawn(async move {
 						debug!("[Lifecycle] [Shutdown] Shutting down ApplicationRunTime...");
-						let _ = RuntimeShutdown(&ApplicationHandleClone).await;
+						let _ = RuntimeShutdown(&AppHandleClone).await;
 
 						debug!("[Lifecycle] [Shutdown] Stopping Echo scheduler...");
 						let _ = SchedulerShutdown(SchedulerHandle).await;
 
 						info!("[Lifecycle] [Shutdown] Done. Exiting process.");
-						ApplicationHandleClone.exit(0);
+						AppHandleClone.exit(0);
 					});
 				}
 			});

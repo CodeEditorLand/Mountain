@@ -20,7 +20,7 @@
 /// - Access-Control-Allow-Origin: * (allows all origins)
 /// - Access-Control-Allow-Methods: GET, POST, OPTIONS, HEAD
 /// - Access-Control-Allow-Headers: Content-Type, Authorization, Origin, Accept
-pub fn LocalhostPlugin(ServerPort:u16) -> tauri_plugin_localhost::TauriPlugin {
+pub fn LocalhostPlugin(ServerPort:u16) -> tauri_plugin_localhost::TauriPlugin<tauri::Wry> {
 	tauri_plugin_localhost::Builder::new(ServerPort)
 		.on_request(|_, Response| {
 			// Set CORS headers to allow cross-origin requests from Service Workers

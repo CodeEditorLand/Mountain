@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use log::debug;
+use log::{debug, info};
 
 use crate::ApplicationState::{
 	ApplicationState::{ApplicationState, MapLockError},

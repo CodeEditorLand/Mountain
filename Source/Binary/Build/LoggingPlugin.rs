@@ -42,7 +42,7 @@ use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 /// - polling: File watcher events (very noisy)
 /// - tokio_reactor: Async reactor events
 /// - want: Connection readiness logs
-pub fn LoggingPlugin(LogLevel:LevelFilter) -> tauri_plugin_log::TauriPlugin {
+pub fn LoggingPlugin(LogLevel:LevelFilter) -> tauri_plugin_log::TauriPlugin<tauri::Wry> {
 	tauri_plugin_log::Builder::new()
 		// Configure output targets
 		.targets([

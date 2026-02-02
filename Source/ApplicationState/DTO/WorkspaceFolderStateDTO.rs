@@ -1,4 +1,4 @@
-//! # WorkSpaceFolderStateDTO
+//! # WorkspaceFolderStateDTO
 //!
 //! # RESPONSIBILITY
 //! - Data transfer object for workspace folder state
@@ -24,7 +24,7 @@ const MAX_WORKSPACE_FOLDERS:usize = 100;
 /// Compatible with VS Code's WorkspaceFolder interface.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 #[serde(rename_all = "PascalCase")]
-pub struct WorkSpaceFolderStateDTO {
+pub struct WorkspaceFolderStateDTO {
 	/// The URI of the folder.
 	#[serde(with = "URLSerializationHelper")]
 	pub URI:Url,
@@ -37,8 +37,8 @@ pub struct WorkSpaceFolderStateDTO {
 	pub Index:usize,
 }
 
-impl WorkSpaceFolderStateDTO {
-	/// Creates a new WorkSpaceFolderStateDTO with validation.
+impl WorkspaceFolderStateDTO {
+	/// Creates a new WorkspaceFolderStateDTO with validation.
 	///
 	/// # Arguments
 	/// * `URI` - Folder URI
@@ -150,7 +150,7 @@ mod tests {
 	#[test]
 	fn test_creation_success() {
 		let URI = Url::parse("file:///workspace/project").unwrap();
-		let dto = WorkSpaceFolderStateDTO::New(URI.clone(), "project".to_string(), 0);
+		let dto = WorkspaceFolderStateDTO::New(URI.clone(), "project".to_string(), 0);
 		assert!(dto.is_ok());
 		assert_eq!(dto.unwrap().Name, "project");
 	}
@@ -159,14 +159,14 @@ mod tests {
 	fn test_invalid_name_length() {
 		let URI = Url::parse("file:///workspace/project").unwrap();
 		let LongName = "a".repeat(257);
-		let dto = WorkSpaceFolderStateDTO::New(URI, LongName, 0);
+		let dto = WorkspaceFolderStateDTO::New(URI, LongName, 0);
 		assert!(dto.is_err());
 	}
 
 	#[test]
 	fn test_invalid_index() {
 		let URI = Url::parse("file:///workspace/project").unwrap();
-		let dto = WorkSpaceFolderStateDTO::New(URI, "project".to_string(), 100);
+		let dto = WorkspaceFolderStateDTO::New(URI, "project".to_string(), 100);
 		assert!(dto.is_err());
 	}
 }

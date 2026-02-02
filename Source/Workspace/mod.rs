@@ -1,10 +1,10 @@
-// File: Mountain/Source/WorkSpace/mod.rs
+// File: Mountain/Source/Workspace/mod.rs
 // Role: Public module interface for workspace-related logic.
 // Responsibilities:
 //   - Expose services related to managing workspaces, such as parsing
 //     `.code-workspace` files.
 
-//! # WorkSpace Module
+//! # Workspace Module
 //!
 //! ## RESPONSIBILITY
 //! - Workspace folder management and state tracking
@@ -36,4 +36,4 @@
 //! - Implement workspace local history
 //! - Add workspace migration and upgrade paths
 
-pub mod WorkSpaceFileService;
+pub mod WorkspaceFileService;

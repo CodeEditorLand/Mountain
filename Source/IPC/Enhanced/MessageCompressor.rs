@@ -4,16 +4,17 @@
 //! Supports Brotli compression for large payloads and intelligent message
 //! batching.
 
-use std::{collections::VecDeque, time::Duration};
+use std::{collections::VecDeque, io::Write, io::Read, time::Duration};
 
-use brotli::{BrotliEncoderParams, CompressorReader, CompressorWriter};
+use brotli::{enc::BrotliEncoderParams, CompressorReader, CompressorWriter};
 use flate2::{
 	Compression,
 	write::{GzEncoder, ZlibEncoder},
 };
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::time::Instant;
+use bincode::{config::Configuration, decode::decode_from_slice, encode::encode_to_vec};
 
 /// Message compression levels
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -34,56 +35,56 @@ pub enum CompressionAlgorithm {
 /// Message batch configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BatchConfig {
-	pub max_batch_size:usize,
-	pub max_batch_delay_ms:u64,
-	pub compression_threshold_bytes:usize,
-	pub compression_level:CompressionLevel,
-	pub algorithm:CompressionAlgorithm,
+	pub MaxBatchSize:usize,
+	pub MaxBatchDelayMs:u64,
+	pub CompressionThresholdBytes:usize,
+	pub CompressionLevel:CompressionLevel,
+	pub Algorithm:CompressionAlgorithm,
 }
 
 impl Default for BatchConfig {
 	fn default() -> Self {
 		Self {
-			max_batch_size:100,
-			max_batch_delay_ms:100,
-			compression_threshold_bytes:1024, // 1KB
-			compression_level:CompressionLevel::Balanced,
-			algorithm:CompressionAlgorithm::Brotli,
+			MaxBatchSize:100,
+			MaxBatchDelayMs:100,
+			CompressionThresholdBytes:1024, // 1KB
+			CompressionLevel:CompressionLevel::Balanced,
+			Algorithm:CompressionAlgorithm::Brotli,
 		}
 	}
 }
 
 /// Message compressor with batching capabilities
 pub struct MessageCompressor {
-	config:BatchConfig,
-	current_batch:VecDeque<Vec<u8>>,
-	batch_start_time:Option<Instant>,
-	batch_size_bytes:usize,
+	Config:BatchConfig,
+	CurrentBatch:VecDeque<Vec<u8>>,
+	BatchStartTime:Option<Instant>,
+	BatchSizeBytes:usize,
 }
 
 impl MessageCompressor {
 	/// Create a new message compressor with configuration
 	pub fn new(config:BatchConfig) -> Self {
-		Self { config, current_batch:VecDeque::new(), batch_start_time:None, batch_size_bytes:0 }
+		Self { Config: config, CurrentBatch:VecDeque::new(), BatchStartTime:None, BatchSizeBytes:0 }
 	}
 
 	/// Add a message to the current batch
-	pub fn add_message(&mut self, message_data:&[u8]) -> bool {
-		let message_size = message_data.len();
-		let should_compress = message_size >= self.config.compression_threshold_bytes;
+	pub fn add_message(&mut self, MessageData:&[u8]) -> bool {
+		let MessageSize = MessageData.len();
+		let _should_compress = MessageSize >= self.Config.CompressionThresholdBytes;
 
 		// Check if we should flush based on size
-		if self.batch_size_bytes + message_size > self.config.max_batch_size * 1024 {
+		if self.BatchSizeBytes + MessageSize > self.Config.MaxBatchSize * 1024 {
 			return false; // Batch is full
 		}
 
 		// Add message to batch
-		self.current_batch.push_back(message_data.to_vec());
-		self.batch_size_bytes += message_size;
+		self.CurrentBatch.push_back(MessageData.to_vec());
+		self.BatchSizeBytes += MessageSize;
 
 		// Initialize batch timer if this is the first message
-		if self.batch_start_time.is_none() {
-			self.batch_start_time = Some(Instant::now());
+		if self.BatchStartTime.is_none() {
+			self.BatchStartTime = Some(Instant::now());
 		}
 
 		true
@@ -91,19 +92,19 @@ impl MessageCompressor {
 
 	/// Check if batch should be flushed
 	pub fn should_flush(&self) -> bool {
-		if self.current_batch.is_empty() {
+		if self.CurrentBatch.is_empty() {
 			return false;
 		}
 
 		// Check batch size limit
-		if self.current_batch.len() >= self.config.max_batch_size {
+		if self.CurrentBatch.len() >= self.Config.MaxBatchSize {
 			return true;
 		}
 
 		// Check time limit
-		if let Some(start_time) = self.batch_start_time {
+		if let Some(start_time) = self.BatchStartTime {
 			let elapsed = start_time.elapsed();
-			if elapsed.as_millis() >= self.config.max_batch_delay_ms as u128 {
+			if elapsed.as_millis() >= self.Config.MaxBatchDelayMs as u128 {
 				return true;
 			}
 		}
@@ -113,33 +114,33 @@ impl MessageCompressor {
 
 	/// Compress and flush the current batch
 	pub fn flush_batch(&mut self) -> Result<CompressedBatch, String> {
-		if self.current_batch.is_empty() {
+		if self.CurrentBatch.is_empty() {
 			return Err("No messages in batch to flush".to_string());
 		}
 
-		let batch_messages:Vec<Vec<u8>> = self.current_batch.drain(..).collect();
-		let total_size = self.batch_size_bytes;
+		let BatchMessages:Vec<Vec<u8>> = self.CurrentBatch.drain(..).collect();
+		let total_size = self.BatchSizeBytes;
 
 		// Reset batch state
-		self.batch_start_time = None;
-		self.batch_size_bytes = 0;
+		self.BatchStartTime = None;
+		self.BatchSizeBytes = 0;
 
-		// Serialize batch
-		let serialized_batch =
-			bincode::serialize(&batch_messages).map_err(|e| format!("Failed to serialize batch: {}", e))?;
+		// Serialize batch using bincode 2.0 API
+		let serialized_batch = encode_to_vec(&BatchMessages, Configuration::standard())
+			.map_err(|e| format!("Failed to serialize batch: {}", e))?;
 
 		// Compress if needed
-		let (compressed_data, compression_info) = if total_size >= self.config.compression_threshold_bytes {
+		let (CompressedData, compression_info) = if total_size >= self.Config.CompressionThresholdBytes {
 			self.compress_data(&serialized_batch).map(|(data, info)| (Some(data), info))
 		} else {
 			(None, CompressionInfo::none())
 		}?;
 
 		Ok(CompressedBatch {
-			messages_count:batch_messages.len(),
+			messages_count:BatchMessages.len(),
 			original_size:total_size,
-			compressed_size:compressed_data.as_ref().map(|d| d.len()).unwrap_or(total_size),
-			compressed_data,
+			compressed_size:CompressedData.as_ref().map(|d| d.len()).unwrap_or(total_size),
+			compressed_data: CompressedData,
 			compression_info,
 			timestamp:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
@@ -150,7 +151,7 @@ impl MessageCompressor {
 
 	/// Compress data using configured algorithm
 	fn compress_data(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
-		match self.config.algorithm {
+		match self.Config.Algorithm {
 			CompressionAlgorithm::Brotli => self.compress_brotli(data),
 			CompressionAlgorithm::Gzip => self.compress_gzip(data),
 			CompressionAlgorithm::Zlib => self.compress_zlib(data),
@@ -160,7 +161,7 @@ impl MessageCompressor {
 	/// Compress using Brotli algorithm
 	fn compress_brotli(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
 		let mut params = BrotliEncoderParams::default();
-		params.quality = self.config.compression_level as i32;
+		params.quality = self.Config.CompressionLevel as i32;
 
 		let mut compressed = Vec::new();
 		let mut writer = CompressorWriter::with_params(&mut compressed, data.len(), &params);
@@ -175,7 +176,7 @@ impl MessageCompressor {
 			compressed,
 			CompressionInfo {
 				algorithm:"brotli".to_string(),
-				level:self.config.compression_level as u32,
+				level:self.Config.CompressionLevel as u32,
 				ratio,
 			},
 		))
@@ -183,7 +184,7 @@ impl MessageCompressor {
 
 	/// Compress using Gzip algorithm
 	fn compress_gzip(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
-		let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.config.compression_level as u32));
+		let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.Config.CompressionLevel as u32));
 		encoder.write_all(data).map_err(|e| format!("Gzip compression failed: {}", e))?;
 
 		let compressed = encoder.finish().map_err(|e| format!("Gzip finish failed: {}", e))?;
@@ -192,13 +193,13 @@ impl MessageCompressor {
 
 		Ok((
 			compressed,
-			CompressionInfo { algorithm:"gzip".to_string(), level:self.config.compression_level as u32, ratio },
+			CompressionInfo { algorithm:"gzip".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}
 
 	/// Compress using Zlib algorithm
 	fn compress_zlib(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
-		let mut encoder = ZlibEncoder::new(Vec::new(), Compression::new(self.config.compression_level as u32));
+		let mut encoder = ZlibEncoder::new(Vec::new(), Compression::new(self.Config.CompressionLevel as u32));
 		encoder.write_all(data).map_err(|e| format!("Zlib compression failed: {}", e))?;
 
 		let compressed = encoder.finish().map_err(|e| format!("Zlib finish failed: {}", e))?;
@@ -207,7 +208,7 @@ impl MessageCompressor {
 
 		Ok((
 			compressed,
-			CompressionInfo { algorithm:"zlib".to_string(), level:self.config.compression_level as u32, ratio },
+			CompressionInfo { algorithm:"zlib".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}
 
@@ -216,10 +217,13 @@ impl MessageCompressor {
 		let data = if let Some(ref compressed_data) = batch.compressed_data {
 			self.decompress_data(compressed_data, &batch.compression_info.algorithm)
 		} else {
-			Ok(bincode::serialize(&batch).map_err(|e| format!("Serialization failed: {}", e))?)
+			encode_to_vec(&batch, Configuration::standard())
+				.map_err(|e| format!("Serialization failed: {}", e))?
 		}?;
 
-		bincode::deserialize(&data).map_err(|e| format!("Failed to deserialize batch: {}", e))
+		let (decoded, _) = decode_from_slice::<Vec<Vec<u8>>, _>(&data, Configuration::standard())
+			.map_err(|e| format!("Failed to deserialize batch: {}", e))?;
+		Ok(decoded)
 	}
 
 	/// Decompress data using specified algorithm
@@ -235,7 +239,7 @@ impl MessageCompressor {
 	/// Decompress Brotli data
 	fn decompress_brotli(&self, data:&[u8]) -> Result<Vec<u8>, String> {
 		let mut decompressed = Vec::new();
-		let mut reader = CompressorReader::new(data, data.len());
+		let mut reader = CompressorReader::new(data, 0, data.len(), data.len());
 
 		std::io::Read::read_to_end(&mut reader, &mut decompressed)
 			.map_err(|e| format!("Brotli decompression failed: {}", e))?;
@@ -272,17 +276,17 @@ impl MessageCompressor {
 	/// Get current batch statistics
 	pub fn get_batch_stats(&self) -> BatchStats {
 		BatchStats {
-			messages_count:self.current_batch.len(),
-			total_size_bytes:self.batch_size_bytes,
-			batch_age_ms:self.batch_start_time.map(|t| t.elapsed().as_millis() as u64).unwrap_or(0),
+			messages_count:self.CurrentBatch.len(),
+			total_size_bytes:self.BatchSizeBytes,
+			batch_age_ms:self.BatchStartTime.map(|t| t.elapsed().as_millis() as u64).unwrap_or(0),
 		}
 	}
 
 	/// Clear current batch without flushing
 	pub fn clear_batch(&mut self) {
-		self.current_batch.clear();
-		self.batch_start_time = None;
-		self.batch_size_bytes = 0;
+		self.CurrentBatch.clear();
+		self.BatchStartTime = None;
+		self.BatchSizeBytes = 0;
 	}
 }
 
@@ -325,7 +329,7 @@ impl MessageCompressor {
 		algorithm:CompressionAlgorithm,
 		level:CompressionLevel,
 	) -> Result<(Vec<u8>, CompressionInfo), String> {
-		let config = BatchConfig { algorithm, compression_level:level, ..Default::default() };
+		let config = BatchConfig { Algorithm: algorithm, CompressionLevel:level, ..Default::default() };
 
 		let compressor = MessageCompressor::new(config);
 		compressor.compress_data(message_data)

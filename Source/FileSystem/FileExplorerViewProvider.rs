@@ -194,7 +194,7 @@ impl TreeViewProvider for FileExplorerViewProvider {
 				})?
 		} else {
 			// If no element, we are at the root. We should return the workspace folders.
-			let Folders = AppState.WorkSpaceFolders.lock().unwrap();
+			let Folders = AppState.WorkspaceFolders.lock().unwrap();
 
 			let RootItems:Vec<Value> = Folders
 				.iter()

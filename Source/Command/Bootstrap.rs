@@ -24,14 +24,14 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{
-	DTO::WorkSpaceEditDTO::WorkSpaceEditDTO,
+	DTO::WorkspaceEditDTO::WorkspaceEditDTO,
 	Document::OpenDocument::OpenDocument,
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	UserInterface::ShowOpenDialog::ShowOpenDialog,
-	WorkSpace::ApplyWorkSpaceEdit::ApplyWorkSpaceEdit,
+	Workspace::ApplyWorkspaceEdit::ApplyWorkspaceEdit,
 };
 use log::info;
 use serde_json::{Value, json};
@@ -140,8 +140,8 @@ fn CommandFormatDocument(
 				return Ok(Value::Null);
 			}
 
-			// 2. Convert the text edits into a WorkSpaceEdit.
-			let WorkSpaceEdit = WorkSpaceEditDTO {
+			// 2. Convert the text edits into a WorkspaceEdit.
+			let WorkspaceEdit = WorkspaceEditDTO {
 				Edits:vec![(
 					serde_json::to_value(&URI).map_err(|Error| Error.to_string())?,
 					Edits
@@ -156,7 +156,7 @@ fn CommandFormatDocument(
 			info!("[Native Command] Applying formatting edits...");
 
 			RunTime
-				.Run(ApplyWorkSpaceEdit(WorkSpaceEdit))
+				.Run(ApplyWorkspaceEdit(WorkspaceEdit))
 				.await
 				.map_err(|Error| Error.to_string())?;
 		} else {

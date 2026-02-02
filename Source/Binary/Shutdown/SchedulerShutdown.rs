@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use log::{error, info};
+use log::{debug, error, info};
 
 /// Stops the Echo task scheduler and cleans up its resources.
 ///

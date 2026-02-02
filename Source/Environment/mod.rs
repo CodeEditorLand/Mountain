@@ -55,7 +55,7 @@ pub mod UserInterfaceProvider;
 
 pub mod WebViewProvider;
 
-pub mod WorkSpaceProvider;
+pub mod WorkspaceProvider;
 
 // --- Internal Utilities ---
 // Shared helpers for provider implementations.

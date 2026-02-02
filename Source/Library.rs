@@ -51,7 +51,7 @@
 //! ### Commands & Features
 //! - Command: Native command implementations
 //! - Track: Command tracking and dispatch
-//! - WorkSpace: Workspace file parsing
+//! - Workspace: Workspace file parsing
 //!
 //! ### Entry Point
 //! - Binary: Main application entry point
@@ -96,7 +96,7 @@ pub mod Command;
 
 pub mod Track;
 
-pub mod WorkSpace;
+pub mod Workspace;
 
 // ============================================================================
 // Entry Point Module

@@ -18,7 +18,7 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
-	WorkSpace::WorkSpaceProvider::WorkSpaceProvider,
+	Workspace::WorkspaceProvider::WorkspaceProvider,
 };
 use log::info;
 use serde_json::{Value, json};
@@ -56,7 +56,7 @@ pub async fn ConstructSandboxConfiguration(
 
 	let TmpDir = env::temp_dir();
 
-	let BackupPath = AppDataDir.join("Backups").join(ApplicationState.GetWorkSpaceIdentifier()?);
+	let BackupPath = AppDataDir.join("Backups").join(ApplicationState.GetWorkspaceIdentifier()?);
 
 	let Platform = match env::consts::OS {
 		"windows" => "win32",
@@ -160,27 +160,27 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	let ExtensionsDTO = ExtensionManagementProvider.GetExtensions().await?;
 
-	let WorkspaceProvider:Arc<dyn WorkSpaceProvider> = Environment.Require();
+	let WorkspaceProvider:Arc<dyn WorkspaceProvider> = Environment.Require();
 
 	let WorkspaceName = WorkspaceProvider
-		.GetWorkSpaceName()
+		.GetWorkspaceName()
 		.await?
-		.unwrap_or_else(|| "Mountain WorkSpace".to_string());
+		.unwrap_or_else(|| "Mountain Workspace".to_string());
 
-	let WorkSpaceFoldersGuard = ApplicationState.WorkSpaceFolders.lock().unwrap();
+	let WorkspaceFoldersGuard = ApplicationState.WorkspaceFolders.lock().unwrap();
 
-	let WorkSpaceDTO = if WorkSpaceFoldersGuard.is_empty() {
+	let WorkspaceDTO = if WorkspaceFoldersGuard.is_empty() {
 		Value::Null
 	} else {
 		json!({
 
-			"id": ApplicationState.GetWorkSpaceIdentifier()?,
+			"id": ApplicationState.GetWorkspaceIdentifier()?,
 
 			"name": WorkspaceName,
 
-			"configuration": ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
+			"configuration": ApplicationState.WorkspaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
 
-			"isUntitled": ApplicationState.WorkSpaceConfigurationPath.lock().unwrap().is_none(),
+			"isUntitled": ApplicationState.WorkspaceConfigurationPath.lock().unwrap().is_none(),
 
 			"transient": false
 		})
@@ -202,7 +202,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	let GlobalStorage = AppData.join("User/globalStorage");
 
-	let WorkSpaceStorage = AppData.join("User/workspaceStorage");
+	let WorkspaceStorage = AppData.join("User/workspaceStorage");
 
 	Ok(json!({
 
@@ -232,7 +232,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 			"globalStorageHome": url::Url::from_directory_path(GlobalStorage).unwrap(),
 
-			"workspaceStorageHome": url::Url::from_directory_path(WorkSpaceStorage).unwrap(),
+			"workspaceStorageHome": url::Url::from_directory_path(WorkspaceStorage).unwrap(),
 
 			"extensionDevelopmentLocationURI": [],
 
@@ -242,7 +242,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 		},
 
-		"workspace": WorkSpaceDTO,
+		"workspace": WorkspaceDTO,
 
 		"remote": {
 

@@ -96,7 +96,7 @@ use CommonLibrary::{
 	TreeView::TreeViewProvider::TreeViewProvider,
 	UserInterface::UserInterfaceProvider::UserInterfaceProvider,
 	WebView::WebViewProvider::WebViewProvider,
-	WorkSpace::{WorkSpaceEditApplier::WorkSpaceEditApplier, WorkSpaceProvider::WorkSpaceProvider},
+	Workspace::{WorkspaceEditApplier::WorkspaceEditApplier, WorkspaceProvider::WorkspaceProvider},
 };
 use async_trait::async_trait;
 use log::{info, warn};
@@ -490,12 +490,12 @@ impl Requires<dyn WebViewProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn WebViewProvider> { Arc::new(self.clone()) }
 }
 
-impl Requires<dyn WorkSpaceProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn WorkSpaceProvider> { Arc::new(self.clone()) }
+impl Requires<dyn WorkspaceProvider> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn WorkspaceProvider> { Arc::new(self.clone()) }
 }
 
-impl Requires<dyn WorkSpaceEditApplier> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn WorkSpaceEditApplier> { Arc::new(self.clone()) }
+impl Requires<dyn WorkspaceEditApplier> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn WorkspaceEditApplier> { Arc::new(self.clone()) }
 }
 
 impl Requires<dyn ExtensionManagementService> for MountainEnvironment {

@@ -111,7 +111,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 	}
 
 	let FoldersGuard = ApplicationState
-		.WorkSpaceFolders
+		.WorkspaceFolders
 		.lock()
 		.map_err(MapApplicationStateLockErrorToCommonError)?;
 

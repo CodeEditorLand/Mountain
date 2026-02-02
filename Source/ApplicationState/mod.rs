@@ -64,8 +64,8 @@
 //! The central state struct containing all runtime state:
 //!
 //! **Workspace State:**
-//! - `WorkSpaceFolders` - Currently open workspace folders
-//! - `WorkSpaceConfigurationPath` - Path to workspace config
+//! - `WorkspaceFolders` - Currently open workspace folders
+//! - `WorkspaceConfigurationPath` - Path to workspace config
 //! - `IsTrusted` - Workspace trust status
 //! - `WindowState` - Window size, position, etc.
 //! - `ActiveDocumentURI` - Currently active document
@@ -73,7 +73,7 @@
 //! **Configuration & Storage:**
 //! - `Configuration` - Merged configuration state
 //! - `GlobalMemento` - Global storage (keys → values)
-//! - `WorkSpaceMemento` - Workspace-scoped storage
+//! - `WorkspaceMemento` - Workspace-scoped storage
 //! - Memento paths for persistence
 //!
 //! **Extension & Provider Management:**
@@ -99,7 +99,7 @@
 //!
 //! ### DTOs
 //! Type-safe representations of state components:
-//! - `WorkSpaceFolderStateDTO` - Workspace folder representation
+//! - `WorkspaceFolderStateDTO` - Workspace folder representation
 //! - `DocumentStateDTO` - Document metadata and content
 //! - `ExtensionDescriptionStateDTO` - Extension metadata
 //! - `TreeViewStateDTO` - Tree view state
@@ -120,7 +120,7 @@
 //!
 //! ```rust
 //! pub struct ApplicationState {
-//! 	pub WorkSpaceFolders:Arc<Mutex<Vec<WorkSpaceFolderStateDTO>>>,
+//! 	pub WorkspaceFolders:Arc<Mutex<Vec<WorkspaceFolderStateDTO>>>,
 //! 	pub Configuration:Arc<Mutex<MergedConfigurationStateDTO>>,
 //! 	// ... all fields follow this pattern
 //! }

@@ -50,8 +50,8 @@ use crate::ApplicationState::ApplicationState;
 /// Returns an Arc wrapping the constructed ApplicationState.
 pub fn Build(Folders:Vec<String>, ConfigPath:Option<std::path::PathBuf>) -> Arc<ApplicationState> {
 	Arc::new(ApplicationState {
-		WorkSpaceFoldersValue:Arc::new(std::sync::Mutex::new(Folders)),
-		WorkSpaceConfigurationPathValue:Arc::new(std::sync::Mutex::new(ConfigPath)),
+		WorkspaceFoldersValue:Arc::new(std::sync::Mutex::new(Folders)),
+		WorkspaceConfigurationPathValue:Arc::new(std::sync::Mutex::new(ConfigPath)),
 		..ApplicationState::default()
 	})
 }

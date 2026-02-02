@@ -4,21 +4,21 @@
 //
 // ConfigurationProvider implements ConfigurationProvider and
 // ConfigurationInspector traits, managing all application settings across
-// multiple scopes (Default, User, WorkSpace, Folder). It handles the
+// multiple scopes (Default, User, Workspace, Folder). It handles the
 // configuration cascade, merging settings from various sources in the correct
 // precedence order.
 //
 // # Responsibilities
 //
 // 1. **Configuration Cascade**: Implements the multi-layer configuration
-//    hierarchy Default → User → WorkSpace → Folder, with higher precedence
+//    hierarchy Default → User → Workspace → Folder, with higher precedence
 //    overriding lower.
 //
 // 2. **Configuration Merging**: Performs deep merge of JSON configuration
 //    objects from all scopes to produce the effective configuration.
 //
 // 3. **Configuration Persistence**: Reads and writes settings.json files for
-//    User and WorkSpace scopes using the FileSystemWriter effect.
+//    User and Workspace scopes using the FileSystemWriter effect.
 //
 // 4. **Configuration Inspection**: Provides visibility into which scope is
 //    providing each configuration value for debugging and diagnostics.
@@ -149,9 +149,9 @@ impl ConfigurationProvider for MountainEnvironment {
 					})?
 			},
 
-			ConfigurationTarget::WorkSpace => {
+			ConfigurationTarget::Workspace => {
 				self.ApplicationState
-					.WorkSpaceConfigurationPath
+					.WorkspaceConfigurationPath
 					.lock()
 					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 					.clone()
@@ -216,9 +216,9 @@ impl ConfigurationInspector for MountainEnvironment {
 			.map(|p| p.join("settings.json"))
 			.ok();
 
-		let WorkSpaceSettingsPath = self
+		let WorkspaceSettingsPath = self
 			.ApplicationState
-			.WorkSpaceConfigurationPath
+			.WorkspaceConfigurationPath
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.clone();
@@ -228,7 +228,7 @@ impl ConfigurationInspector for MountainEnvironment {
 
 		let UserConfig = ReadAndParseConfigurationFile(self, &UserSettingsPath).await?;
 
-		let WorkSpaceConfig = ReadAndParseConfigurationFile(self, &WorkSpaceSettingsPath).await?;
+		let WorkspaceConfig = ReadAndParseConfigurationFile(self, &WorkspaceSettingsPath).await?;
 
 		let GetValueFromDotPath =
 			|Node:&Value, Path:&str| -> Option<Value> { Path.split('.').try_fold(Node, |n, k| n.get(k)).cloned() };
@@ -239,11 +239,11 @@ impl ConfigurationInspector for MountainEnvironment {
 
 		ResultDTO.UserValue = GetValueFromDotPath(&UserConfig, &Key);
 
-		ResultDTO.WorkSpaceValue = GetValueFromDotPath(&WorkSpaceConfig, &Key);
+		ResultDTO.WorkspaceValue = GetValueFromDotPath(&WorkspaceConfig, &Key);
 
 		// Determine the final effective value based on the correct cascade order.
 		ResultDTO.EffectiveValue = ResultDTO
-			.WorkSpaceValue
+			.WorkspaceValue
 			.clone()
 			.or_else(|| ResultDTO.UserValue.clone())
 			.or_else(|| ResultDTO.DefaultValue.clone());
@@ -283,19 +283,19 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		.map(|p| p.join("settings.json"))
 		.ok();
 
-	let WorkSpaceSettingsPath = Environment
+	let WorkspaceSettingsPath = Environment
 		.ApplicationState
-		.WorkSpaceConfigurationPath
+		.WorkspaceConfigurationPath
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.clone();
 
 	let UserConfig = ReadAndParseConfigurationFile(Environment, &UserSettingsPath).await?;
 
-	let WorkSpaceConfig = ReadAndParseConfigurationFile(Environment, &WorkSpaceSettingsPath).await?;
+	let WorkspaceConfig = ReadAndParseConfigurationFile(Environment, &WorkspaceSettingsPath).await?;
 
 	// A true deep merge is required here. The merge order matches the cascade:
-	// Default (base) → User (overrides default) → WorkSpace (overrides user)
+	// Default (base) → User (overrides default) → Workspace (overrides user)
 	let mut Merged = DefaultConfig.as_object().cloned().unwrap_or_default();
 
 	if let Some(UserMap) = UserConfig.as_object() {
@@ -317,13 +317,13 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		}
 	}
 
-	if let Some(WorkSpaceMap) = WorkSpaceConfig.as_object() {
-		for (Key, Value) in WorkSpaceMap {
+	if let Some(WorkspaceMap) = WorkspaceConfig.as_object() {
+		for (Key, Value) in WorkspaceMap {
 			if Value.is_object() && Merged.get(&Key).is_some_and(|v| v.is_object()) {
-				if let (Some(WorkSpaceValue), Some(BaseValue)) =
+				if let (Some(WorkspaceValue), Some(BaseValue)) =
 					(Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object()))
 				{
-					for (InnerKey, InnerValue) in WorkSpaceValue {
+					for (InnerKey, InnerValue) in WorkspaceValue {
 						Merged.get_mut(&Key).and_then(|v| v.as_object_mut()).map(|m| {
 							m.insert(InnerKey.clone(), InnerValue.clone());
 						});

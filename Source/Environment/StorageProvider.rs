@@ -89,7 +89,7 @@ impl StorageProvider for MountainEnvironment {
 	/// Retrieves a value from either global or workspace storage.
 	/// Includes defensive validation to prevent invalid keys and invalid JSON.
 	async fn GetStorageValue(&self, IsGlobalScope:bool, Key:&str) -> Result<Option<Value>, CommonError> {
-		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
 		trace!("[StorageProvider] Getting value from {} scope for key: {}", ScopeName, Key);
 
@@ -108,7 +108,7 @@ impl StorageProvider for MountainEnvironment {
 		let StorageMapMutex = if IsGlobalScope {
 			&self.ApplicationState.GlobalMemento
 		} else {
-			&self.ApplicationState.WorkSpaceMemento
+			&self.ApplicationState.WorkspaceMemento
 		};
 
 		let StorageMapGuard = StorageMapMutex
@@ -130,7 +130,7 @@ impl StorageProvider for MountainEnvironment {
 
 		ValueToSet:Option<Value>,
 	) -> Result<(), CommonError> {
-		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
 		info!("[StorageProvider] Updating value in {} scope for key: {}", ScopeName, Key);
 
@@ -169,9 +169,9 @@ impl StorageProvider for MountainEnvironment {
 			)
 		} else {
 			(
-				self.ApplicationState.WorkSpaceMemento.clone(),
+				self.ApplicationState.WorkspaceMemento.clone(),
 				self.ApplicationState
-					.WorkSpaceMementoPath
+					.WorkspaceMementoPath
 					.lock()
 					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 					.clone(),
@@ -204,14 +204,14 @@ impl StorageProvider for MountainEnvironment {
 
 	/// Retrieves the entire storage map for a given scope.
 	async fn GetAllStorage(&self, IsGlobalScope:bool) -> Result<Value, CommonError> {
-		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
 		trace!("[StorageProvider] Getting all values from {} scope.", ScopeName);
 
 		let StorageMapMutex = if IsGlobalScope {
 			&self.ApplicationState.GlobalMemento
 		} else {
-			&self.ApplicationState.WorkSpaceMemento
+			&self.ApplicationState.WorkspaceMemento
 		};
 
 		let StorageMapGuard = StorageMapMutex
@@ -223,7 +223,7 @@ impl StorageProvider for MountainEnvironment {
 
 	/// Overwrites the entire storage map for a given scope and persists it.
 	async fn SetAllStorage(&self, IsGlobalScope:bool, FullState:Value) -> Result<(), CommonError> {
-		let ScopeName = if IsGlobalScope { "Global" } else { "WorkSpace" };
+		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
 		info!("[StorageProvider] Setting all values for {} scope.", ScopeName);
 
@@ -236,9 +236,9 @@ impl StorageProvider for MountainEnvironment {
 			)
 		} else {
 			(
-				self.ApplicationState.WorkSpaceMemento.clone(),
+				self.ApplicationState.WorkspaceMemento.clone(),
 				self.ApplicationState
-					.WorkSpaceMementoPath
+					.WorkspaceMementoPath
 					.lock()
 					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 					.clone(),
