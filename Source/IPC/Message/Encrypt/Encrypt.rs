@@ -388,7 +388,3 @@ mod tests {
         assert_eq!(decrypted.channel, "test");
     }
 }
-
-pub mod mod {
-    pub use super::{SecureMessageChannel, EncryptedMessage};
-}

@@ -29,15 +29,3 @@ pub mod encryption;
 pub mod ipc_server;
 pub mod permissions;
 pub mod types;
-
-// Re-export commonly used types
-pub use types::{
-    ConnectionStatus, SecurityContext, SecurityEvent, SecurityEventType,
-    TauriIPCMessage, EncryptedMessage, Role, Permission,
-};
-
-// Re-export the main IPC server
-pub use ipc_server::TauriIPCServer;
-
-// Re-export command handlers
-pub use commands::{mountain_ipc_get_status, mountain_ipc_receive_message};

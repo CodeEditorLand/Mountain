@@ -50,23 +50,3 @@ pub mod CollaborationSessionCommand;
 pub mod DocumentSyncCommand;
 pub mod UpdateSubscriptionCommand;
 pub mod CacheStatsCommand;
-
-// Re-export all commands for convenient registration
-pub use WorkbenchConfigurationCommand::MountainGetWorkbenchConfiguration;
-pub use TrayIconSwitchCommand::SwitchTrayIcon;
-pub use MessageReceiveCommand::MountainIPCReceiveMessage;
-pub use StatusGetCommand::MountainIPCGetStatus;
-pub use InvokeCommand::MountainIPCInvoke;
-pub use WindConfigurationCommand::MountainGetWindDesktopConfiguration;
-pub use ConfigurationUpdateCommand::MountainUpdateConfigurationFromWind;
-pub use ConfigurationSyncCommand::MountainSynchronizeConfiguration;
-pub use ConfigurationStatusCommand::MountainGetConfigurationStatus;
-pub use ConfigurationDataCommand::{GetConfigurationData, SaveConfigurationData};
-pub use IPCStatusCommand::MountainGetIPCStatus;
-pub use IPCStatusHistoryCommand::MountainGetIPCStatusHistory;
-pub use IPCStatusReportingStartCommand::MountainStartIPCStatusReporting;
-pub use PerformanceStatsCommand::MountainGetPerformanceStats;
-pub use CacheStatsCommand::MountainGetCacheStats;
-pub use CollaborationSessionCommand::{MountainCreateCollaborationSession, MountainGetCollaborationSessions};
-pub use DocumentSyncCommand::{MountainAddDocumentForSync, MountainGetSyncStatus};
-pub use UpdateSubscriptionCommand::MountainSubscribeToUpdates;

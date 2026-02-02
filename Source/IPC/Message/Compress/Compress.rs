@@ -353,7 +353,3 @@ mod tests {
         assert_eq!(decompressed[2].channel, "channel3");
     }
 }
-
-pub mod mod {
-    pub use super::Compressor;
-}

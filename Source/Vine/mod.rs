@@ -88,6 +88,3 @@ pub mod Error;
 pub mod Generated;
 
 pub mod Server;
-
-// Re-export commonly used types
-pub use Generated::cocoon_service_server::CocoonServiceServer;

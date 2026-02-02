@@ -55,9 +55,6 @@ pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard
 	CommonError::StateLockPoisoned { Context:ErrorMessage }
 }
 
-/// Alias for MapApplicationStateLockErrorToCommonError for shorter names
-pub use MapApplicationStateLockErrorToCommonError as MapLockErrorToCommonError;
-
 /// A simple utility to detect a language identifier string from a file path's
 /// extension.
 pub fn DetectLanguageIdentifierFromFilePath(Path:&Path) -> String {

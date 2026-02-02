@@ -4,6 +4,3 @@
 
 pub mod ScanPathConfigure;
 pub mod ExtensionPopulate;
-
-pub use ScanPathConfigure::ScanPathConfigure;
-pub use ExtensionPopulate::ExtensionPopulate;

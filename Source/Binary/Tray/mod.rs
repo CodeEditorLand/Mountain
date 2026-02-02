@@ -65,8 +65,3 @@
 pub mod SwitchTrayIcon;
 
 pub mod EnableTray;
-
-// Re-export for convenience
-pub use SwitchTrayIcon::*;
-
-pub use EnableTray::*;

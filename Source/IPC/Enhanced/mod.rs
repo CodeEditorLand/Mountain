@@ -11,30 +11,6 @@ pub mod ConnectionPool;
 pub mod SecureMessageChannel;
 pub mod PerformanceDashboard;
 
-pub use MessageCompressor::{
-	BatchConfig,
-	BatchStats,
-	CompressedBatch,
-	CompressionAlgorithm,
-	CompressionInfo,
-	CompressionLevel,
-	MessageCompressor,
-};
-pub use ConnectionPool::{ConnectionHandle, ConnectionPool, PoolConfig, PoolStats};
-pub use SecureMessageChannel::{EncryptedMessage, SecureMessageChannel, SecurityConfig, SecurityStats};
-pub use PerformanceDashboard::{
-	AlertSeverity,
-	DashboardConfig,
-	DashboardStatistics,
-	LogLevel,
-	MetricType,
-	PerformanceAlert,
-	PerformanceDashboard,
-	PerformanceMetric,
-	TraceLog,
-	TraceSpan,
-};
-
 /// Enhanced IPC manager that combines all advanced features
 pub struct EnhancedIPCManager {
 	pub compressor:MessageCompressor,

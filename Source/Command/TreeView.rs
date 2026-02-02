@@ -205,7 +205,7 @@ pub async fn RevealTreeViewItem(
 /// TODO: PersistTreeViewState is not defined in TreeViewProvider trait - needs implementation
 #[command]
 pub async fn PersistTreeView(
-	ApplicationHandle:AppHandle<Wry>,
+	_ApplicationHandle:AppHandle<Wry>,
 
 	_State:State<'_, Arc<ApplicationState>>,
 
@@ -220,7 +220,7 @@ pub async fn PersistTreeView(
 /// TODO: RestoreTreeViewState is not defined in TreeViewProvider trait - needs implementation
 #[command]
 pub async fn RestoreTreeView(
-	ApplicationHandle:AppHandle<Wry>,
+	_ApplicationHandle:AppHandle<Wry>,
 
 	_State:State<'_, Arc<ApplicationState>>,
 

@@ -12,29 +12,6 @@ use CommonLibrary::Error::CommonError::CommonError;
 use log::{debug, error, info, warn};
 use tonic::transport::{Channel, Endpoint};
 
-// TODO: Air library is not available - commented out until AirIntegration feature is implemented
-// use AirLibrary::Vine::Generated::Air::air_service_client;
-// Re-export Air types for external use
-// pub use AirLibrary::Vine::Generated::Air::{
-// 	ApplyUpdateRequest,
-// 	ApplyUpdateResponse,
-// 	AuthenticationRequest,
-//	AuthenticationResponse,
-//	DownloadRequest,
-//	DownloadResponse,
-//	FileResult,
-//	IndexRequest,
-//	IndexResponse,
-//	MetricsRequest,
-//	MetricsResponse,
-//	SearchRequest,
-//	SearchResponse,
-//	StatusRequest,
-//	StatusResponse,
-//	UpdateCheckRequest,
-//		UpdateCheckResponse,
-// };
-
 /// Default gRPC server address for the Air daemon.
 ///
 /// Port Allocation:

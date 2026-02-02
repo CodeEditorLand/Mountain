@@ -1,4 +1,3 @@
-//!
 //! # Route
 //!
 //! ## File: IPC/Message/Route/RouteMessage.rs
@@ -390,8 +389,4 @@ mod tests {
         router.ClearChannel("test").unwrap();
         assert_eq!(router.GetListenerCount("test").unwrap(), 0);
     }
-}
-
-pub mod mod {
-    pub use super::Router;
 }
