@@ -1,11 +1,13 @@
 //! # Logging Plugin Module
 //!
-//! Configures and creates the Tauri logging plugin with appropriate targets and filters.
+//! Configures and creates the Tauri logging plugin with appropriate targets and
+//! filters.
 
 use log::LevelFilter;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 
-/// Creates and configures the logging plugin with multi-target output and level filtering.
+/// Creates and configures the logging plugin with multi-target output and level
+/// filtering.
 ///
 /// # Arguments
 ///
@@ -29,7 +31,8 @@ use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 ///
 /// # Noise Filtering
 ///
-/// The following noisy dependencies are capped at Info level regardless of RUST_LOG:
+/// The following noisy dependencies are capped at Info level regardless of
+/// RUST_LOG:
 /// - hyper: HTTP library verbose logs
 /// - mio: Async I/O polling logs
 /// - tao: Windowing system logs
@@ -39,7 +42,7 @@ use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 /// - polling: File watcher events (very noisy)
 /// - tokio_reactor: Async reactor events
 /// - want: Connection readiness logs
-pub fn LoggingPlugin(LogLevel: LevelFilter) -> tauri_plugin_log::TauriPlugin {
+pub fn LoggingPlugin(LogLevel:LevelFilter) -> tauri_plugin_log::TauriPlugin {
 	tauri_plugin_log::Builder::new()
 		// Configure output targets
 		.targets([

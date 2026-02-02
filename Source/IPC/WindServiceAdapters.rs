@@ -155,8 +155,8 @@ use CommonLibrary::{
 	},
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	Storage::StorageProvider::StorageProvider,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
+	Storage::StorageProvider::StorageProvider,
 };
 
 // Type aliases for Configuration DTOs to simplify usage
@@ -393,9 +393,7 @@ pub struct WindConfigurationService {
 }
 
 impl WindConfigurationService {
-	pub fn new(provider:Arc<dyn ConfigurationProvider>) -> Self {
-		Self { provider }
-	}
+	pub fn new(provider:Arc<dyn ConfigurationProvider>) -> Self { Self { provider } }
 
 	pub async fn get_value(&self, key:String) -> Result<serde_json::Value, String> {
 		self.provider

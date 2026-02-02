@@ -45,10 +45,7 @@ use log::debug;
 use tauri::{AppHandle, State};
 use serde_json::Value;
 
-use crate::{
-	ApplicationState::ApplicationState,
-	ProcessManagement::InitializationData,
-};
+use crate::{ApplicationState::ApplicationState, ProcessManagement::InitializationData};
 
 /// Provides the initial workbench configuration to the Sky frontend.
 ///
@@ -58,7 +55,8 @@ use crate::{
 ///
 /// # Arguments
 ///
-/// * `ApplicationHandle` - Tauri application handle for accessing system resources
+/// * `ApplicationHandle` - Tauri application handle for accessing system
+///   resources
 /// * `State` - Global application state containing workspace information
 ///
 /// # Returns
@@ -73,8 +71,8 @@ use crate::{
 /// - State locking fails (concurrent access issues)
 #[tauri::command]
 pub async fn MountainGetWorkbenchConfiguration(
-	ApplicationHandle: AppHandle,
-	State: State<'_, ApplicationState>,
+	ApplicationHandle:AppHandle,
+	State:State<'_, ApplicationState>,
 ) -> Result<Value, String> {
 	debug!("[IPC] [WorkbenchConfig] Request received.");
 

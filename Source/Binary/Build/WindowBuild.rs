@@ -17,9 +17,10 @@ use tauri::{App, WebviewUrl, WebviewWindowBuilder, Wry};
 ///
 /// # Platform-Specific Behavior
 ///
-/// - Windows/macOS/Linux: Sets title, maximized state, no decorations, and shadow effect
+/// - Windows/macOS/Linux: Sets title, maximized state, no decorations, and
+///   shadow effect
 /// - Debug builds: Automatically opens DevTools
-pub fn WindowBuild(Application: &mut App, LocalhostUrl: String) -> tauri::WebviewWindow<Wry> {
+pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewWindow<Wry> {
 	// Create the window URL pointing to the application
 	let WindowUrl = WebviewUrl::External(
 		format!("{}/Application/index.html", LocalhostUrl)
@@ -37,17 +38,11 @@ pub fn WindowBuild(Application: &mut App, LocalhostUrl: String) -> tauri::Webvie
 	// Apply platform-specific window configurations
 	#[cfg(any(target_os = "windows", target_os = "macos", target_os = "linux"))]
 	{
-		WindowBuilder = WindowBuilder
-			.title("Mountain")
-			.maximized(true)
-			.decorations(false)
-			.shadow(true);
+		WindowBuilder = WindowBuilder.title("Mountain").maximized(true).decorations(false).shadow(true);
 	}
 
 	// Build the main window
-	let MainWindow = WindowBuilder
-		.build()
-		.expect("FATAL: Main window build failed");
+	let MainWindow = WindowBuilder.build().expect("FATAL: Main window build failed");
 
 	// Open DevTools in debug builds
 	#[cfg(debug_assertions)]

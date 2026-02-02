@@ -43,7 +43,7 @@ use std::path::PathBuf;
 ///
 /// Returns the workspace file path if found, or None.
 pub fn Parse() -> Option<PathBuf> {
-	let CliArgs: Vec<String> = std::env::args().collect();
+	let CliArgs:Vec<String> = std::env::args().collect();
 
 	let WorkSpacePathArgument = CliArgs.iter().find(|Arg| Arg.ends_with(".code-workspace"));
 
@@ -53,6 +53,4 @@ pub fn Parse() -> Option<PathBuf> {
 /// Check if a workspace argument was provided.
 ///
 /// Returns true if a workspace file path was found in CLI arguments.
-pub fn HasWorkspaceArgument() -> bool {
-	Parse().is_some()
-}
+pub fn HasWorkspaceArgument() -> bool { Parse().is_some() }

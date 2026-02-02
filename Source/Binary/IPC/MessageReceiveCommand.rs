@@ -63,10 +63,7 @@ use tauri::AppHandle;
 /// - JSON message cannot be parsed into the expected structure
 /// - TauriIPCServer processing fails
 #[tauri::command]
-pub async fn MountainIPCReceiveMessage(
-	app_handle: AppHandle,
-	message: Value,
-) -> Result<Value, String> {
+pub async fn MountainIPCReceiveMessage(app_handle:AppHandle, message:Value) -> Result<Value, String> {
 	crate::IPC::TauriIPCServer::mountain_ipc_receive_message(
 		app_handle,
 		serde_json::from_value(message).map_err(|e| e.to_string())?,

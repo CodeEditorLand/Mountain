@@ -60,7 +60,7 @@ use tauri::AppHandle;
 /// Returns an error if:
 /// - Status cannot be retrieved from IPC server
 #[tauri::command]
-pub async fn MountainIPCGetStatus(app_handle: AppHandle) -> Result<Value, String> {
+pub async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<Value, String> {
 	let Status = crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle)
 		.await
 		.map_err(|Error| {

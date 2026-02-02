@@ -1,36 +1,45 @@
 //! # Binary
 //!
 //! Main entry point for the Mountain native host application.
-//! 
+//!
 //! Orchestration-focused file that coordinates application lifecycle from
 //! startup to shutdown using extracted modules.
 
-use std::sync::Arc;
-use std::path::PathBuf;
-use log::{debug, error, info, trace, warn};
-use tauri::{AppHandle, Manager, RunEvent, Wry, image::Image, menu::{MenuBuilder, MenuItem}};
-use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
-use log::LevelFilter;
+use std::{path::PathBuf, sync::Arc};
+
+use log::{LevelFilter, debug, error, info, trace, warn};
+use tauri::{
+	AppHandle,
+	Manager,
+	RunEvent,
+	Wry,
+	image::Image,
+	menu::{MenuBuilder, MenuItem},
+	tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
+};
 
 use crate::{
-	ApplicationState::ApplicationState::{ApplicationState, MapLockError, Internal::ScanAndPopulateExtensions},
+	ApplicationState::ApplicationState::{ApplicationState, Internal::ScanAndPopulateExtensions, MapLockError},
+	// Refactored modules
+	Binary::Build::{LocalhostPlugin, LoggingPlugin, TauriBuild, WindowBuild},
+	Binary::Extension::{ExtensionPopulate, ScanPathConfigure},
+	Binary::Initialize::{CliParse, LogLevel, PortSelector, RuntimeBuild, StateBuild},
+	Binary::Register::{
+		AdvancedFeaturesRegister,
+		CommandRegister,
+		IPCServerRegister,
+		StatusReporterRegister,
+		WindSyncRegister,
+	},
+	Binary::Service::{CocoonStart, ConfigurationInitialize, VineStart},
+	Binary::Shutdown::{RuntimeShutdown, SchedulerShutdown},
+	Binary::Tray::EnableTray,
 	Command,
 	Environment::MountainEnvironment::MountainEnvironment,
-	IPC::{
-		TauriIPCServer::TauriIPCServer,
-		initialize_wind_advanced_sync,
-	},
+	IPC::{TauriIPCServer::TauriIPCServer, initialize_wind_advanced_sync},
 	ProcessManagement::InitializationData,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::DispatchLogic,
-	// Refactored modules
-	Binary::Build::{TauriBuild, WindowBuild, LoggingPlugin, LocalhostPlugin},
-	Binary::Register::{CommandRegister, IPCServerRegister, StatusReporterRegister, AdvancedFeaturesRegister, WindSyncRegister},
-	Binary::Service::{VineStart, CocoonStart, ConfigurationInitialize},
-	Binary::Extension::{ScanPathConfigure, ExtensionPopulate},
-	Binary::Shutdown::{RuntimeShutdown, SchedulerShutdown},
-	Binary::Tray::EnableTray,
-	Binary::Initialize::{CliParse, StateBuild, PortSelector, RuntimeBuild, LogLevel},
 };
 
 /// Logs a checkpoint message at TRACE level.
@@ -375,10 +384,8 @@ pub fn Fn() {
 					// [Backend] [Runtime] ApplicationRunTime
 					// ---------------------------------------------------------
 					debug!("[Backend] [Runtime] Creating ApplicationRunTime...");
-					let RunTime = Arc::new(ApplicationRunTime::Create(
-						SchedulerForRunTime.clone(),
-						Environment.clone(),
-					));
+					let RunTime =
+						Arc::new(ApplicationRunTime::Create(SchedulerForRunTime.clone(), Environment.clone()));
 					ApplicationHandle.manage(RunTime.clone());
 					info!("[Backend] [Runtime] ApplicationRunTime managed.");
 
@@ -418,7 +425,12 @@ pub fn Fn() {
 						ExtensionPopulate(PostSetupApplicationHandle.clone(), &AppStateForSetup).await;
 
 						// [Vine] [gRPC]
-						VineStart(PostSetupApplicationHandle.clone(), "[::1]:50051".to_string(), "[::1]:50052".to_string()).await;
+						VineStart(
+							PostSetupApplicationHandle.clone(),
+							"[::1]:50051".to_string(),
+							"[::1]:50052".to_string(),
+						)
+						.await;
 
 						// [Cocoon] [Sidecar]
 						CocoonStart(&PostSetupApplicationHandle, &PostSetupEnvironment).await;

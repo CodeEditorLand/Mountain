@@ -2,9 +2,9 @@
 //!
 //! Scans and populates extensions from configured scan paths.
 
-use crate::ApplicationState::ApplicationState::ApplicationState;
-use crate::ApplicationState::Internal::ScanAndPopulateExtensions;
 use log::{error, info};
+
+use crate::ApplicationState::{ApplicationState::ApplicationState, Internal::ScanAndPopulateExtensions};
 
 /// Scans and populates extensions from the configured scan paths.
 ///
@@ -29,10 +29,10 @@ use log::{error, info};
 ///
 /// Returns an error if extension scanning or population fails.
 pub async fn ExtensionPopulate(
-	ApplicationHandle: tauri::AppHandle,
-	AppState: &std::sync::Arc<ApplicationState>,
+	ApplicationHandle:tauri::AppHandle,
+	AppState:&std::sync::Arc<ApplicationState>,
 ) -> Result<(), String> {
- match ScanAndPopulateExtensions(ApplicationHandle.clone(), AppState).await {
+	match ScanAndPopulateExtensions(ApplicationHandle.clone(), AppState).await {
 		Ok(()) => {
 			info!("[Extensions] [Populate] Extensions scanned and populated successfully.");
 			Ok(())

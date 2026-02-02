@@ -122,8 +122,8 @@ impl WorkSpaceFolderStateDTO {
 
 		// Check if the URI represents a directory by checking if it ends with a slash
 		// or if the file path exists and is a directory
-		let IsDirectory = URI.path().ends_with('/') ||
-			(URI.scheme() == "file" && URI.to_file_path().map_or(false, |p| p.is_dir()));
+		let IsDirectory =
+			URI.path().ends_with('/') || (URI.scheme() == "file" && URI.to_file_path().map_or(false, |p| p.is_dir()));
 
 		if !IsDirectory {
 			return Err("URI does not represent a directory".to_string());

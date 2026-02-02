@@ -55,6 +55,6 @@ use tauri::AppHandle;
 ///
 /// Returns an error if stats cannot be collected.
 #[tauri::command]
-pub async fn MountainGetPerformanceStats(app_handle: AppHandle) -> Result<Value, String> {
+pub async fn MountainGetPerformanceStats(app_handle:AppHandle) -> Result<Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_get_performance_stats(app_handle).await
 }

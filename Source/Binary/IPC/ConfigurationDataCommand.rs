@@ -60,7 +60,7 @@ use tauri::AppHandle;
 /// - Configuration cannot be loaded
 /// - File system errors occur
 #[tauri::command]
-pub async fn GetConfigurationData(app: AppHandle) -> Result<Value, String> {
+pub async fn GetConfigurationData(app:AppHandle) -> Result<Value, String> {
 	crate::IPC::ConfigurationBridge::get_configuration_data(app).await
 }
 
@@ -83,6 +83,6 @@ pub async fn GetConfigurationData(app: AppHandle) -> Result<Value, String> {
 /// - Configuration validation fails
 /// - File system errors occur when persisting
 #[tauri::command]
-pub async fn SaveConfigurationData(app: AppHandle, config_data: Value) -> Result<(), String> {
+pub async fn SaveConfigurationData(app:AppHandle, config_data:Value) -> Result<(), String> {
 	crate::IPC::ConfigurationBridge::save_configuration_data(app, config_data).await
 }

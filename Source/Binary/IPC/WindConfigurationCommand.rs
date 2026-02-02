@@ -59,6 +59,6 @@ use tauri::AppHandle;
 /// - Configuration cannot be retrieved
 /// - Configuration is malformed
 #[tauri::command]
-pub async fn MountainGetWindDesktopConfiguration(app_handle: AppHandle) -> Result<Value, String> {
+pub async fn MountainGetWindDesktopConfiguration(app_handle:AppHandle) -> Result<Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await
 }

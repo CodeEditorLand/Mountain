@@ -32,15 +32,11 @@ use log::{error, info};
 ///
 /// Returns an error if Vine server initialization fails.
 pub async fn VineStart(
-	ApplicationHandle: tauri::AppHandle,
-	PrimaryAddress: String,
-	SecondaryAddress: String,
+	ApplicationHandle:tauri::AppHandle,
+	PrimaryAddress:String,
+	SecondaryAddress:String,
 ) -> Result<(), String> {
-	match crate::Vine::Server::Initialize::Initialize(
-		ApplicationHandle,
-		PrimaryAddress,
-		SecondaryAddress,
-	) {
+	match crate::Vine::Server::Initialize::Initialize(ApplicationHandle, PrimaryAddress, SecondaryAddress) {
 		Ok(()) => {
 			info!("[Vine] [Start] Vine gRPC server started successfully.");
 			Ok(())

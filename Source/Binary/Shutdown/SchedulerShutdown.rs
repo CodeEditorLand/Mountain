@@ -2,8 +2,9 @@
 //!
 //! Handles graceful shutdown of the Echo task scheduler.
 
-use log::{error, info};
 use std::sync::Arc;
+
+use log::{error, info};
 
 /// Stops the Echo task scheduler and cleans up its resources.
 ///
@@ -28,8 +29,9 @@ use std::sync::Arc;
 ///
 /// # Note
 ///
-/// This is a placeholder implementation until Echo scheduler integration is complete.
-pub async fn SchedulerShutdown(SchedulerForShutdown: Arc<()>) -> Result<(), String> {
+/// This is a placeholder implementation until Echo scheduler integration is
+/// complete.
+pub async fn SchedulerShutdown(SchedulerForShutdown:Arc<()>) -> Result<(), String> {
 	debug!("[Shutdown] [Scheduler] Stopping Echo scheduler...");
 
 	// TODO: Replace with actual Echo::Scheduler when available

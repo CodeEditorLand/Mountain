@@ -2,10 +2,11 @@
 //!
 //! Initializes the IPC status reporting functionality.
 
-use crate::IPC::initialize_status_reporter;
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use log::{error, info};
 use std::sync::Arc;
+
+use log::{error, info};
+
+use crate::{IPC::initialize_status_reporter, RunTime::ApplicationRunTime::ApplicationRunTime};
 
 /// Initializes the IPC status reporting with the ApplicationRunTime.
 ///
@@ -30,8 +31,8 @@ use std::sync::Arc;
 ///
 /// Returns an error if status reporter initialization fails.
 pub fn StatusReporterRegister(
-	ApplicationHandle: &tauri::AppHandle,
-	RunTime: Arc<ApplicationRunTime>,
+	ApplicationHandle:&tauri::AppHandle,
+	RunTime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
 	match initialize_status_reporter(ApplicationHandle, RunTime) {
 		Ok(()) => {

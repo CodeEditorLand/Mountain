@@ -64,10 +64,6 @@ use tauri::AppHandle;
 /// - Method execution fails
 /// - Parameters are invalid
 #[tauri::command]
-pub async fn MountainIPCInvoke(
-	app_handle: AppHandle,
-	method: String,
-	params: Value,
-) -> Result<Value, String> {
+pub async fn MountainIPCInvoke(app_handle:AppHandle, method:String, params:Value) -> Result<Value, String> {
 	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, params).await
 }

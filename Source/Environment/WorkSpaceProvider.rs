@@ -114,143 +114,143 @@ impl WorkSpaceProvider for MountainEnvironment {
 		Ok(true)
 	}
 
-	/* ========================================================================
-	 * EXTRA METHODS - Not part of the WorkSpaceProvider trait in CommonLibrary
-	 * These methods are commented out because the trait definition doesn't
-	 * include them. They may be added to the trait in the future or implemented
-	 * through a different mechanism.
-	 * ======================================================================== */
+	// ========================================================================
+	// EXTRA METHODS - Not part of the WorkSpaceProvider trait in CommonLibrary
+	// These methods are commented out because the trait definition doesn't
+	// include them. They may be added to the trait in the future or implemented
+	// through a different mechanism.
+	// ========================================================================
 
-	/*
-	/// Adds a workspace folder.
-	async fn AddWorkSpaceFolder(&self, URI:Url, Name:Option<String>) -> Result<String, CommonError> {
-		info!("[WorkSpaceProvider] Adding workspace folder: {} ({:?})", URI, Name);
-
-		let FolderName = Name.unwrap_or_else(|| {
-			URI.path()
-				.split('/')
-				.filter(|s| !s.is_empty())
-				.last()
-				.unwrap_or("Workspace")
-				.to_string()
-		});
-
-		let mut FoldersGuard = self
-			.ApplicationState
-			.WorkSpaceFolders
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		let NewIndex = FoldersGuard.len();
-
-		// Check for duplicate URI
-		if FoldersGuard.iter().any(|f| f.URI == URI) {
-			return Err(CommonError::InvalidArgument {
-				ArgumentName:"URI".into(),
-				Reason:format!("Workspace folder already exists: {}", URI),
-			});
-		}
-
-		FoldersGuard.push(crate::ApplicationState::DTO::WorkSpaceFolderDTO {
-			URI:URI.clone(),
-			Name:FolderName.clone(),
-			Index:NewIndex,
-		});
-
-		drop(FoldersGuard);
-
-		// Emit folder added event
-		self.ApplicationHandle
-			.emit(
-				"sky://workspace/folder-added",
-				json!({ "URI": URI, "Name": FolderName, "Index": NewIndex }),
-			)
-			.map_err(|Error| {
-				CommonError::IPCError { Description:format!("Failed to emit workspace folder added event: {}", Error) }
-			})?;
-
-		info!("[WorkSpaceProvider] Workspace folder added: {}", FolderName);
-
-		Ok(FolderName)
-	}
-
-	/// Removes a workspace folder.
-	async fn RemoveWorkSpaceFolder(&self, URI:Url) -> Result<(), CommonError> {
-		info!("[WorkSpaceProvider] Removing workspace folder: {}", URI);
-
-		let mut FoldersGuard = self
-			.ApplicationState
-			.WorkSpaceFolders
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		let OriginalLen = FoldersGuard.len();
-		FoldersGuard.retain(|f| f.URI != URI);
-		let WasRemoved = FoldersGuard.len() < OriginalLen;
-
-		drop(FoldersGuard);
-
-		if WasRemoved {
-			// Emit folder removed event
-			self.ApplicationHandle
-				.emit("sky://workspace/folder-removed", json!({ "URI": URI }))
-				.map_err(|Error| {
-					CommonError::IPCError {
-						Description:format!("Failed to emit workspace folder removed event: {}", Error),
-					}
-				})?;
-
-			info!("[WorkSpaceProvider] Workspace folder removed: {}", URI);
-		} else {
-			warn!("[WorkSpaceProvider] Workspace folder not found for removal: {}", URI);
-		}
-
-		Ok(())
-	}
-
-	/// Updates workspace folder (renames or moves).
-	async fn UpdateWorkSpaceFolder(
-		&self,
-		OldURI:Url,
-		NewURI:Option<Url>,
-		NewName:Option<String>,
-	) -> Result<(), CommonError> {
-		info!("[WorkSpaceProvider] Updating workspace folder: {} -> {:?}", OldURI, NewURI);
-
-		let mut FoldersGuard = self
-			.ApplicationState
-			.WorkSpaceFolders
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		if let Some(Folder) = FoldersGuard.iter_mut().find(|f| f.URI == OldURI) {
-			if let Some(NewURI) = NewURI {
-				Folder.URI = NewURI;
-			}
-			if let Some(Name) = NewName {
-				Folder.Name = Name;
-			}
-
-			drop(FoldersGuard);
-
-			// Emit folder updated event
-			self.ApplicationHandle
-				.emit("sky://workspace/folder-updated", json!({ "OldURI": OldURI, "Folder": Folder }))
-				.map_err(|Error| {
-					CommonError::IPCError {
-						Description:format!("Failed to emit workspace folder updated event: {}", Error),
-					}
-				})?;
-
-			Ok(())
-		} else {
-			Err(CommonError::InvalidArgument {
-				ArgumentName:"URI".into(),
-				Reason:format!("Workspace folder not found: {}", OldURI),
-			})
-		}
-	}
-	*/
+	// Adds a workspace folder.
+	// async fn AddWorkSpaceFolder(&self, URI:Url, Name:Option<String>) ->
+	// Result<String, CommonError> { info!("[WorkSpaceProvider] Adding workspace
+	// folder: {} ({:?})", URI, Name);
+	//
+	// let FolderName = Name.unwrap_or_else(|| {
+	// URI.path()
+	// .split('/')
+	// .filter(|s| !s.is_empty())
+	// .last()
+	// .unwrap_or("Workspace")
+	// .to_string()
+	// });
+	//
+	// let mut FoldersGuard = self
+	// .ApplicationState
+	// .WorkSpaceFolders
+	// .lock()
+	// .map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+	//
+	// let NewIndex = FoldersGuard.len();
+	//
+	// Check for duplicate URI
+	// if FoldersGuard.iter().any(|f| f.URI == URI) {
+	// return Err(CommonError::InvalidArgument {
+	// ArgumentName:"URI".into(),
+	// Reason:format!("Workspace folder already exists: {}", URI),
+	// });
+	// }
+	//
+	// FoldersGuard.push(crate::ApplicationState::DTO::WorkSpaceFolderDTO {
+	// URI:URI.clone(),
+	// Name:FolderName.clone(),
+	// Index:NewIndex,
+	// });
+	//
+	// drop(FoldersGuard);
+	//
+	// Emit folder added event
+	// self.ApplicationHandle
+	// .emit(
+	// "sky://workspace/folder-added",
+	// json!({ "URI": URI, "Name": FolderName, "Index": NewIndex }),
+	// )
+	// .map_err(|Error| {
+	// CommonError::IPCError { Description:format!("Failed to emit workspace folder
+	// added event: {}", Error) } })?;
+	//
+	// info!("[WorkSpaceProvider] Workspace folder added: {}", FolderName);
+	//
+	// Ok(FolderName)
+	// }
+	//
+	// Removes a workspace folder.
+	// async fn RemoveWorkSpaceFolder(&self, URI:Url) -> Result<(), CommonError> {
+	// info!("[WorkSpaceProvider] Removing workspace folder: {}", URI);
+	//
+	// let mut FoldersGuard = self
+	// .ApplicationState
+	// .WorkSpaceFolders
+	// .lock()
+	// .map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+	//
+	// let OriginalLen = FoldersGuard.len();
+	// FoldersGuard.retain(|f| f.URI != URI);
+	// let WasRemoved = FoldersGuard.len() < OriginalLen;
+	//
+	// drop(FoldersGuard);
+	//
+	// if WasRemoved {
+	// Emit folder removed event
+	// self.ApplicationHandle
+	// .emit("sky://workspace/folder-removed", json!({ "URI": URI }))
+	// .map_err(|Error| {
+	// CommonError::IPCError {
+	// Description:format!("Failed to emit workspace folder removed event: {}",
+	// Error), }
+	// })?;
+	//
+	// info!("[WorkSpaceProvider] Workspace folder removed: {}", URI);
+	// } else {
+	// warn!("[WorkSpaceProvider] Workspace folder not found for removal: {}", URI);
+	// }
+	//
+	// Ok(())
+	// }
+	//
+	// Updates workspace folder (renames or moves).
+	// async fn UpdateWorkSpaceFolder(
+	// &self,
+	// OldURI:Url,
+	// NewURI:Option<Url>,
+	// NewName:Option<String>,
+	// ) -> Result<(), CommonError> {
+	// info!("[WorkSpaceProvider] Updating workspace folder: {} -> {:?}", OldURI,
+	// NewURI);
+	//
+	// let mut FoldersGuard = self
+	// .ApplicationState
+	// .WorkSpaceFolders
+	// .lock()
+	// .map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+	//
+	// if let Some(Folder) = FoldersGuard.iter_mut().find(|f| f.URI == OldURI) {
+	// if let Some(NewURI) = NewURI {
+	// Folder.URI = NewURI;
+	// }
+	// if let Some(Name) = NewName {
+	// Folder.Name = Name;
+	// }
+	//
+	// drop(FoldersGuard);
+	//
+	// Emit folder updated event
+	// self.ApplicationHandle
+	// .emit("sky://workspace/folder-updated", json!({ "OldURI": OldURI, "Folder":
+	// Folder })) .map_err(|Error| {
+	// CommonError::IPCError {
+	// Description:format!("Failed to emit workspace folder updated event: {}",
+	// Error), }
+	// })?;
+	//
+	// Ok(())
+	// } else {
+	// Err(CommonError::InvalidArgument {
+	// ArgumentName:"URI".into(),
+	// Reason:format!("Workspace folder not found: {}", OldURI),
+	// })
+	// }
+	// }
 
 	/// Finds files within the workspace using glob patterns.
 	async fn FindFilesInWorkSpace(
@@ -372,81 +372,79 @@ impl WorkSpaceProvider for MountainEnvironment {
 		Ok(())
 	}
 
-	/* ========================================================================
-	 * EXTRA METHODS - Not part of the WorkSpaceProvider trait in CommonLibrary
-	 * These methods are commented out because the trait definition doesn't
-	 * include them. They may be added to the trait in the future or implemented
-	 * through a different mechanism.
-	 * ======================================================================== */
+	// ========================================================================
+	// EXTRA METHODS - Not part of the WorkSpaceProvider trait in CommonLibrary
+	// These methods are commented out because the trait definition doesn't
+	// include them. They may be added to the trait in the future or implemented
+	// through a different mechanism.
+	// ========================================================================
 
-	/*
-	/// Gets workspace configuration for the given workspace folder.
-	async fn GetWorkSpaceConfiguration(
-		&self,
-		ScopeURI:Option<Url>,
-		Section:Option<String>,
-	) -> Result<Value, CommonError> {
-		info!(
-			"[WorkSpaceProvider] Getting workspace configuration for scope: {:?}, section: {:?}",
-			ScopeURI, Section
-		);
-
-		// For now, return an empty configuration.
-		// A full implementation would:
-		// 1. Read workspace settings files
-		// 2. Merge with user settings
-		// 3. Apply defaults
-		// 4. Return the merged configuration
-
-		Ok(json!({}))
-	}
-
-	/// Updates workspace configuration.
-	async fn UpdateWorkSpaceConfiguration(
-		&self,
-		ScopeURI:Option<Url>,
-		Key:String,
-		Value:Value,
-	) -> Result<(), CommonError> {
-		info!(
-			"[WorkSpaceProvider] Updating workspace configuration for scope: {:?}, key: {}",
-			ScopeURI, Key
-		);
-
-		// For now, just emit an event that the configuration was updated.
-		// A full implementation would:
-		// 1. Update the settings file
-		// 2. Apply the change
-		// 3. Notify listeners
-
-		self.ApplicationHandle
-			.emit("sky://workspace/configuration-changed", json!({ "Key": Key, "Value": Value }))
-			.map_err(|Error| {
-				CommonError::IPCError { Description:format!("Failed to emit configuration changed event: {}", Error) }
-			})?;
-
-		Ok(())
-	}
-
-	/// Gets active workspace folder by URI.
-	async fn GetActiveWorkSpaceFolder(&self) -> Result<Option<(Url, String, usize)>, CommonError> {
-		let FoldersGuard = self
-			.ApplicationState
-			.WorkSpaceFolders
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		if FoldersGuard.is_empty() {
-			Ok(None)
-		} else {
-			// For now, return the first folder.
-			// A full implementation would check the active document and return its
-			// containing folder.
-			let First = FoldersGuard.first().unwrap();
-			Ok(Some((First.URI.clone(), First.Name.clone(), First.Index)))
-		}
-	}
-	*/
+	// Gets workspace configuration for the given workspace folder.
+	// async fn GetWorkSpaceConfiguration(
+	// &self,
+	// ScopeURI:Option<Url>,
+	// Section:Option<String>,
+	// ) -> Result<Value, CommonError> {
+	// info!(
+	// "[WorkSpaceProvider] Getting workspace configuration for scope: {:?},
+	// section: {:?}", ScopeURI, Section
+	// );
+	//
+	// For now, return an empty configuration.
+	// A full implementation would:
+	// 1. Read workspace settings files
+	// 2. Merge with user settings
+	// 3. Apply defaults
+	// 4. Return the merged configuration
+	//
+	// Ok(json!({}))
+	// }
+	//
+	// Updates workspace configuration.
+	// async fn UpdateWorkSpaceConfiguration(
+	// &self,
+	// ScopeURI:Option<Url>,
+	// Key:String,
+	// Value:Value,
+	// ) -> Result<(), CommonError> {
+	// info!(
+	// "[WorkSpaceProvider] Updating workspace configuration for scope: {:?}, key:
+	// {}", ScopeURI, Key
+	// );
+	//
+	// For now, just emit an event that the configuration was updated.
+	// A full implementation would:
+	// 1. Update the settings file
+	// 2. Apply the change
+	// 3. Notify listeners
+	//
+	// self.ApplicationHandle
+	// .emit("sky://workspace/configuration-changed", json!({ "Key": Key, "Value":
+	// Value })) .map_err(|Error| {
+	// CommonError::IPCError { Description:format!("Failed to emit configuration
+	// changed event: {}", Error) } })?;
+	//
+	// Ok(())
+	// }
+	//
+	// Gets active workspace folder by URI.
+	// async fn GetActiveWorkSpaceFolder(&self) -> Result<Option<(Url, String,
+	// usize)>, CommonError> { let FoldersGuard = self
+	// .ApplicationState
+	// .WorkSpaceFolders
+	// .lock()
+	// .map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+	//
+	// if FoldersGuard.is_empty() {
+	// Ok(None)
+	// } else {
+	// For now, return the first folder.
+	// A full implementation would check the active document and return its
+	// containing folder.
+	// let First = FoldersGuard.first().unwrap();
+	// Ok(Some((First.URI.clone(), First.Name.clone(), First.Index)))
+	// }
+	// }
 }
 
 impl MountainEnvironment {

@@ -218,7 +218,7 @@ impl MountainEnvironment {
 		let entries = fs::read_dir(path).map_err(|error| {
 			CommonError::FileSystemIO {
 				Path:path.clone(),
-				Description:format!("Failed to read extension directory: {}", error)
+				Description:format!("Failed to read extension directory: {}", error),
 			}
 		})?;
 
@@ -226,7 +226,7 @@ impl MountainEnvironment {
 			let entry = entry.map_err(|error| {
 				CommonError::FileSystemIO {
 					Path:path.clone(),
-					Description:format!("Failed to read directory entry: {}", error)
+					Description:format!("Failed to read directory entry: {}", error),
 				}
 			})?;
 

@@ -58,6 +58,4 @@ pub fn Select() -> u16 {
 /// # Returns
 ///
 /// Returns the localhost URL string.
-pub fn BuildUrl(Port: u16) -> String {
-	format!("http://localhost:{}", Port)
-}
+pub fn BuildUrl(Port:u16) -> String { format!("http://localhost:{}", Port) }

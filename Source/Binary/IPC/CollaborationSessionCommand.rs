@@ -60,10 +60,7 @@ use tauri::AppHandle;
 /// - Session data is invalid
 /// - Session creation fails
 #[tauri::command]
-pub async fn MountainCreateCollaborationSession(
-	app_handle: AppHandle,
-	session_data: Value,
-) -> Result<Value, String> {
+pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_data:Value) -> Result<Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_data).await
 }
 
@@ -83,6 +80,6 @@ pub async fn MountainCreateCollaborationSession(
 ///
 /// Returns an error if sessions cannot be retrieved.
 #[tauri::command]
-pub async fn MountainGetCollaborationSessions(app_handle: AppHandle) -> Result<Value, String> {
+pub async fn MountainGetCollaborationSessions(app_handle:AppHandle) -> Result<Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions(app_handle).await
 }

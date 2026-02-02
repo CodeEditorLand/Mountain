@@ -510,7 +510,7 @@ impl Default for ApplicationState {
 			NextSourceControlManagementProviderHandle:Arc::new(AtomicU32::new(1)),
 
 			TestProviderState:Arc::new(tokio::sync::RwLock::new(
-				crate::Environment::TestProvider::TestProviderState::new()
+				crate::Environment::TestProvider::TestProviderState::new(),
 			)),
 
 			PendingUserInterfaceRequests:Arc::new(StandardMutex::new(HashMap::new())),

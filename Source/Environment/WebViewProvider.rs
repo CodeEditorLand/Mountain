@@ -308,69 +308,68 @@ impl WebViewProvider for MountainEnvironment {
 		}
 	}
 
-	/* ========================================================================
-	 * EXTRA METHODS - Not part of the WebViewProvider trait in CommonLibrary
-	 * These methods are commented out because the trait definition doesn't
-	 * include them. They may be added to the trait in the future or implemented
-	 * through a different mechanism.
-	 * ======================================================================== */
+	// ========================================================================
+	// EXTRA METHODS - Not part of the WebViewProvider trait in CommonLibrary
+	// These methods are commented out because the trait definition doesn't
+	// include them. They may be added to the trait in the future or implemented
+	// through a different mechanism.
+	// ========================================================================
 
-	/*
-	/// Receives a message from a WebView and routes it appropriately.
-	async fn ReceiveMessageFromWebView(&self, Handle:String, Message:Value) -> Result<Value, CommonError> {
-		debug!("[WebViewProvider] Received message from WebView: {}", Handle);
-
-		// Get WebView state
-		let SideCarIdentifier = {
-			let WebViewGuard = self
-				.ApplicationState
-				.ActiveWebViews
-				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-			WebViewGuard.get(&Handle).map(|State| State.SideCarIdentifier.clone())
-		};
-
-		// Route message to appropriate handler
-		if let Some(SideCarId) = SideCarIdentifier {
-			let IPCProvider:Arc<dyn IPCProvider> = self.Require();
-
-			let RPCMethod = format!("{}$handleWebViewMessage", ProxyTarget::ExtHostWebView.GetTargetPrefix());
-			let RPCParams = json!({
-				"Handle": Handle,
-				"Message": Message,
-			});
-
-			return IPCProvider.SendRequestToSideCar(&SideCarId, RPCMethod, RPCParams, 5000).await;
-		}
-
-		// Handle locally if no sidecar
-		warn!("[WebViewProvider] No sidecar for WebView message: {}", Handle);
-		Ok(json!({ "status": "no_handler" }))
-	}
-
-	/// Gets the current state of a WebView.
-	async fn GetWebViewState(&self, Handle:String) -> Result<Value, CommonError> {
-		let WebViewGuard = self
-			.ApplicationState
-			.ActiveWebViews
-			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
-
-		let State = WebViewGuard
-			.get(&Handle)
-			.ok_or_else(|| CommonError::WebViewNotFound { Handle:Handle.clone() })?;
-
-		Ok(json!({
-			"Handle": State.Handle,
-			"ViewType": State.ViewType,
-			"Title": State.Title,
-			"IsActive": State.IsActive,
-			"IsVisible": State.IsVisible,
-			"ExtensionIdentifier": State.ExtensionIdentifier,
-		}))
-	}
-	*/
+	// Receives a message from a WebView and routes it appropriately.
+	// async fn ReceiveMessageFromWebView(&self, Handle:String, Message:Value) ->
+	// Result<Value, CommonError> { debug!("[WebViewProvider] Received message from
+	// WebView: {}", Handle);
+	//
+	// Get WebView state
+	// let SideCarIdentifier = {
+	// let WebViewGuard = self
+	// .ApplicationState
+	// .ActiveWebViews
+	// .lock()
+	// .map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+	//
+	// WebViewGuard.get(&Handle).map(|State| State.SideCarIdentifier.clone())
+	// };
+	//
+	// Route message to appropriate handler
+	// if let Some(SideCarId) = SideCarIdentifier {
+	// let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+	//
+	// let RPCMethod = format!("{}$handleWebViewMessage",
+	// ProxyTarget::ExtHostWebView.GetTargetPrefix()); let RPCParams = json!({
+	// "Handle": Handle,
+	// "Message": Message,
+	// });
+	//
+	// return IPCProvider.SendRequestToSideCar(&SideCarId, RPCMethod, RPCParams,
+	// 5000).await; }
+	//
+	// Handle locally if no sidecar
+	// warn!("[WebViewProvider] No sidecar for WebView message: {}", Handle);
+	// Ok(json!({ "status": "no_handler" }))
+	// }
+	//
+	// Gets the current state of a WebView.
+	// async fn GetWebViewState(&self, Handle:String) -> Result<Value, CommonError>
+	// { let WebViewGuard = self
+	// .ApplicationState
+	// .ActiveWebViews
+	// .lock()
+	// .map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+	//
+	// let State = WebViewGuard
+	// .get(&Handle)
+	// .ok_or_else(|| CommonError::WebViewNotFound { Handle:Handle.clone() })?;
+	//
+	// Ok(json!({
+	// "Handle": State.Handle,
+	// "ViewType": State.ViewType,
+	// "Title": State.Title,
+	// "IsActive": State.IsActive,
+	// "IsVisible": State.IsVisible,
+	// "ExtensionIdentifier": State.ExtensionIdentifier,
+	// }))
+	// }
 }
 
 // ============================================================================

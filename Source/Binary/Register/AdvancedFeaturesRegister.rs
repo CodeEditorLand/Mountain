@@ -2,10 +2,11 @@
 //!
 //! Initializes the IPC advanced features functionality.
 
-use crate::IPC::initialize_advanced_features;
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use log::{error, info};
 use std::sync::Arc;
+
+use log::{error, info};
+
+use crate::{IPC::initialize_advanced_features, RunTime::ApplicationRunTime::ApplicationRunTime};
 
 /// Initializes the IPC advanced features with the ApplicationRunTime.
 ///
@@ -30,8 +31,8 @@ use std::sync::Arc;
 ///
 /// Returns an error if advanced features initialization fails.
 pub fn AdvancedFeaturesRegister(
-	ApplicationHandle: &tauri::AppHandle,
-	RunTime: Arc<ApplicationRunTime>,
+	ApplicationHandle:&tauri::AppHandle,
+	RunTime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
 	match initialize_advanced_features(ApplicationHandle, RunTime) {
 		Ok(()) => {

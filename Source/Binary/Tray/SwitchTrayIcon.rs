@@ -48,7 +48,6 @@
 //! - Icon loading performance characteristics
 
 use log::{debug, error, warn};
-
 use tauri::{AppHandle, image::Image};
 
 /// Dynamically switches the tray icon based on the theme (Light/Dark).

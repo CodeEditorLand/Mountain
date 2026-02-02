@@ -2,10 +2,11 @@
 //!
 //! Initializes the Wind advanced sync functionality.
 
-use crate::IPC::initialize_wind_advanced_sync;
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use log::{error, info};
 use std::sync::Arc;
+
+use log::{error, info};
+
+use crate::{IPC::initialize_wind_advanced_sync, RunTime::ApplicationRunTime::ApplicationRunTime};
 
 /// Initializes the Wind advanced sync with the ApplicationRunTime.
 ///
@@ -29,10 +30,7 @@ use std::sync::Arc;
 /// # Errors
 ///
 /// Returns an error if Wind advanced sync initialization fails.
-pub fn WindSyncRegister(
-	ApplicationHandle: &tauri::AppHandle,
-	RunTime: Arc<ApplicationRunTime>,
-) -> Result<(), String> {
+pub fn WindSyncRegister(ApplicationHandle:&tauri::AppHandle, RunTime:Arc<ApplicationRunTime>) -> Result<(), String> {
 	match initialize_wind_advanced_sync(ApplicationHandle, RunTime) {
 		Ok(()) => {
 			info!("[IPC] [WindSync] Wind advanced sync initialized successfully.");

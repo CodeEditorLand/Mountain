@@ -2,9 +2,11 @@
 //!
 //! Handles graceful shutdown of the ApplicationRunTime.
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use log::{error, info};
 use std::sync::Arc;
+
+use log::{error, info};
+
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 /// Shuts down the ApplicationRunTime and its effect execution engine.
 ///
@@ -26,9 +28,7 @@ use std::sync::Arc;
 /// # Errors
 ///
 /// Returns an error if ApplicationRunTime is not found or shutdown fails.
-pub async fn RuntimeShutdown(
-	ApplicationHandle: &tauri::AppHandle,
-) -> Result<(), String> {
+pub async fn RuntimeShutdown(ApplicationHandle:&tauri::AppHandle) -> Result<(), String> {
 	debug!("[Shutdown] [Runtime] Shutting down ApplicationRunTime...");
 
 	let RunTime = ApplicationHandle

@@ -231,10 +231,7 @@ use CommonLibrary::Configuration::DTO::{
 type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationOverridesDTO;
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
-use CommonLibrary::{
-	Configuration::ConfigurationProvider::ConfigurationProvider,
-	Environment::Requires::Requires,
-};
+use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider, Environment::Requires::Requires};
 use sha2::Digest;
 
 use crate::{

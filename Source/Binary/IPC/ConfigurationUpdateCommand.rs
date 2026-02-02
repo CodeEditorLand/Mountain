@@ -34,7 +34,7 @@
 //!
 //! ## PERFORMANCE
 //!
-//!### Considerations
+//! ### Considerations
 //! - Configuration updates trigger I/O operations
 //! - Consider debouncing rapid updates
 
@@ -61,9 +61,6 @@ use tauri::AppHandle;
 /// - Configuration structure is invalid
 /// - Update cannot be persisted
 #[tauri::command]
-pub async fn MountainUpdateConfigurationFromWind(
-	app_handle: AppHandle,
-	config: Value,
-) -> Result<Value, String> {
+pub async fn MountainUpdateConfigurationFromWind(app_handle:AppHandle, config:Value) -> Result<Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_update_configuration_from_wind(app_handle, config).await
 }

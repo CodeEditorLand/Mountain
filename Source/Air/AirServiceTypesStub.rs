@@ -4,7 +4,8 @@
 //! AirLibrary is not available. These types allow the code to compile
 //! while the AirIntegration feature is being implemented.
 //!
-//! TODO: Replace with actual Air types when AirIntegration feature is implemented
+//! TODO: Replace with actual Air types when AirIntegration feature is
+//! implemented
 
 /// Stub for AirClient since AirIntegration is not yet available
 #[derive(Debug)]

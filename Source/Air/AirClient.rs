@@ -27,7 +27,8 @@ pub const DEFAULT_AIR_SERVER_ADDRESS:&str = "[::1]:50053";
 /// and system monitoring.
 #[derive(Debug, Clone)]
 pub struct AirClient {
-	/// The underlying tonic gRPC client (commented out until AirIntegration feature)
+	/// The underlying tonic gRPC client (commented out until AirIntegration
+	/// feature)
 	inner:Option<()>,
 	/// Address of the Air daemon
 	address:String,
@@ -48,10 +49,7 @@ impl AirClient {
 	pub async fn new(address:&str) -> Result<Self, CommonError> {
 		info!("[AirClient] Creating Air client (connection deferred until AirIntegration feature)");
 
-		Ok(Self {
-			inner:None,
-			address:address.to_string(),
-		})
+		Ok(Self { inner:None, address:address.to_string() })
 	}
 
 	/// Checks if the client is connected to the Air daemon.
@@ -59,15 +57,11 @@ impl AirClient {
 	/// # Returns
 	/// * `true` - Client is connected
 	/// * `false` - Client is not connected
-	pub fn is_connected(&self) -> bool {
-		self.inner.is_some()
-	}
+	pub fn is_connected(&self) -> bool { self.inner.is_some() }
 
 	/// Gets the address of the Air daemon.
 	///
 	/// # Returns
 	/// The address string
-	pub fn address(&self) -> &str {
-		&self.address
-	}
+	pub fn address(&self) -> &str { &self.address }
 }

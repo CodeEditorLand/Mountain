@@ -2,8 +2,9 @@
 //!
 //! Initializes and manages the IPC server in Tauri state.
 
-use crate::IPC::TauriIPCServer::TauriIPCServer;
 use log::info;
+
+use crate::IPC::TauriIPCServer::TauriIPCServer;
 
 /// Creates and initializes the Tauri IPC server, storing it in Tauri state.
 ///
@@ -26,9 +27,7 @@ use log::info;
 /// # Errors
 ///
 /// Returns an error if IPC server initialization or state management fails.
-pub fn IPCServerRegister(
-	ApplicationHandle: &tauri::AppHandle,
-) -> Result<TauriIPCServer, String> {
+pub fn IPCServerRegister(ApplicationHandle:&tauri::AppHandle) -> Result<TauriIPCServer, String> {
 	let ipc_server = TauriIPCServer::new(ApplicationHandle.clone());
 
 	ApplicationHandle.manage(ipc_server.clone());

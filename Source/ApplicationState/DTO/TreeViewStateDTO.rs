@@ -21,19 +21,19 @@ use std::sync::Arc;
 use CommonLibrary::TreeView::TreeViewProvider::TreeViewProvider;
 
 /// Maximum view identifier length
-const MAX_VIEW_IDENTIFIER_LENGTH: usize = 128;
+const MAX_VIEW_IDENTIFIER_LENGTH:usize = 128;
 
 /// Maximum sidecar identifier length
-const MAX_SIDECAR_IDENTIFIER_LENGTH: usize = 128;
+const MAX_SIDECAR_IDENTIFIER_LENGTH:usize = 128;
 
 /// Maximum message length
-const MAX_MESSAGE_LENGTH: usize = 1024;
+const MAX_MESSAGE_LENGTH:usize = 1024;
 
 /// Maximum title length
-const MAX_TITLE_LENGTH: usize = 256;
+const MAX_TITLE_LENGTH:usize = 256;
 
 /// Maximum description length
-const MAX_DESCRIPTION_LENGTH: usize = 512;
+const MAX_DESCRIPTION_LENGTH:usize = 512;
 
 /// Holds the static options and provider for a tree view instance that has been
 /// registered by an extension or natively. This is stored in `ApplicationState`
@@ -90,18 +90,29 @@ impl TreeViewStateDTO {
 	///
 	/// # Returns
 	/// Result containing the DTO or validation error
-	pub fn New(ViewIdentifier:String, Provider:Option<Arc<dyn TreeViewProvider + Send + Sync>>,
-		SideCarIdentifier:Option<String>, CanSelectMany:bool, HasHandleDrag:bool, HasHandleDrop:bool)
-		-> Result<Self, String> {
+	pub fn New(
+		ViewIdentifier:String,
+		Provider:Option<Arc<dyn TreeViewProvider + Send + Sync>>,
+		SideCarIdentifier:Option<String>,
+		CanSelectMany:bool,
+		HasHandleDrag:bool,
+		HasHandleDrop:bool,
+	) -> Result<Self, String> {
 		// Validate view identifier length
 		if ViewIdentifier.len() > MAX_VIEW_IDENTIFIER_LENGTH {
-			return Err(format!("View identifier exceeds maximum length of {} bytes", MAX_VIEW_IDENTIFIER_LENGTH));
+			return Err(format!(
+				"View identifier exceeds maximum length of {} bytes",
+				MAX_VIEW_IDENTIFIER_LENGTH
+			));
 		}
 
 		// Validate sidecar identifier length
 		if let Some(SideCarID) = &SideCarIdentifier {
 			if SideCarID.len() > MAX_SIDECAR_IDENTIFIER_LENGTH {
-				return Err(format!("SideCar identifier exceeds maximum length of {} bytes", MAX_SIDECAR_IDENTIFIER_LENGTH));
+				return Err(format!(
+					"SideCar identifier exceeds maximum length of {} bytes",
+					MAX_SIDECAR_IDENTIFIER_LENGTH
+				));
 			}
 		}
 
@@ -112,9 +123,9 @@ impl TreeViewStateDTO {
 			CanSelectMany,
 			HasHandleDrag,
 			HasHandleDrop,
-			Message: None,
-			Title: None,
-			Description: None,
+			Message:None,
+			Title:None,
+			Description:None,
 		})
 	}
 
@@ -159,7 +170,10 @@ impl TreeViewStateDTO {
 	/// Result indicating success or error if description too long
 	pub fn SetDescription(&mut self, Description:String) -> Result<(), String> {
 		if Description.len() > MAX_DESCRIPTION_LENGTH {
-			return Err(format!("Description exceeds maximum length of {} bytes", MAX_DESCRIPTION_LENGTH));
+			return Err(format!(
+				"Description exceeds maximum length of {} bytes",
+				MAX_DESCRIPTION_LENGTH
+			));
 		}
 
 		self.Description = Some(Description);
@@ -167,12 +181,8 @@ impl TreeViewStateDTO {
 	}
 
 	/// Checks if this is a native (Rust) tree view.
-	pub fn IsNative(&self) -> bool {
-		self.Provider.is_some()
-	}
+	pub fn IsNative(&self) -> bool { self.Provider.is_some() }
 
 	/// Checks if this is a proxy (extension) tree view.
-	pub fn IsProxy(&self) -> bool {
-		self.SideCarIdentifier.is_some()
-	}
+	pub fn IsProxy(&self) -> bool { self.SideCarIdentifier.is_some() }
 }

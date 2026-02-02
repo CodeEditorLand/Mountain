@@ -57,6 +57,6 @@ use tauri::AppHandle;
 /// Returns an error if:
 /// - Status cannot be retrieved
 #[tauri::command]
-pub async fn MountainGetConfigurationStatus(app_handle: AppHandle) -> Result<Value, String> {
+pub async fn MountainGetConfigurationStatus(app_handle:AppHandle) -> Result<Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle).await
 }

@@ -61,6 +61,6 @@ use tauri::AppHandle;
 /// - Network connectivity issues
 /// - Configuration conflicts cannot be resolved
 #[tauri::command]
-pub async fn MountainSynchronizeConfiguration(app_handle: AppHandle) -> Result<Value, String> {
+pub async fn MountainSynchronizeConfiguration(app_handle:AppHandle) -> Result<Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_synchronize_configuration(app_handle).await
 }

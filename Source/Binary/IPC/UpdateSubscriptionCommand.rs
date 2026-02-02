@@ -61,10 +61,7 @@ use tauri::AppHandle;
 /// - Required fields missing
 /// - Subscription fails
 #[tauri::command]
-pub async fn MountainSubscribeToUpdates(
-	app_handle: AppHandle,
-	subscription_data: Value,
-) -> Result<Value, String> {
+pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:Value) -> Result<Value, String> {
 	let Target = subscription_data["target"]
 		.as_str()
 		.ok_or_else(|| {

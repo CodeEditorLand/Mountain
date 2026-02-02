@@ -2,14 +2,17 @@
 //!
 //! Configures extension scan paths from the executable directory.
 
+use std::path::PathBuf;
+
+use log::debug;
+
 use crate::ApplicationState::{
 	ApplicationState::{ApplicationState, MapLockError},
 	Internal::ExtensionScanPath,
 };
-use log::debug;
-use std::path::PathBuf;
 
-/// Configures extension scan paths by resolving paths from the executable directory.
+/// Configures extension scan paths by resolving paths from the executable
+/// directory.
 ///
 /// # Arguments
 ///
@@ -28,7 +31,7 @@ use std::path::PathBuf;
 /// # Errors
 ///
 /// Returns an error if ExtensionScanPaths mutex lock fails.
-pub fn ScanPathConfigure(AppState: &std::sync::Arc<ApplicationState>) -> Result<Vec<PathBuf>, String> {
+pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<Vec<PathBuf>, String> {
 	debug!("[Extensions] [ScanPaths] Locking ExtensionScanPaths...");
 
 	let mut ScanPathsGuard = AppState

@@ -103,8 +103,9 @@ pub async fn MountainProvideHover(
 }
 
 // #[command]
-// pub async fn MountainProvideDocumentSymbols(ApplicationHandle:AppHandle<Wry>, URI:String) -> Result<Value, String> {
-// 	log::debug!("[Language Feature] Providing document symbols for: {}", URI);
+// pub async fn MountainProvideDocumentSymbols(ApplicationHandle:AppHandle<Wry>,
+// URI:String) -> Result<Value, String> { 	log::debug!("[Language Feature]
+// Providing document symbols for: {}", URI);
 
 // 	if URI.is_empty() {
 // 		return Err("Empty URI for document symbols request".to_string());

@@ -4,11 +4,13 @@
 
 use tauri::Wry;
 
-/// Creates and configures the Tauri Builder with platform-specific configurations.
+/// Creates and configures the Tauri Builder with platform-specific
+/// configurations.
 ///
 /// # Returns
 ///
-/// A configured `tauri::Builder<Wry>` ready for plugin and window configuration.
+/// A configured `tauri::Builder<Wry>` ready for plugin and window
+/// configuration.
 ///
 /// # Platform-Specific Behavior
 ///

@@ -120,19 +120,27 @@ impl TreeViewProvider for FileExplorerViewProvider {
 		Ok(())
 	}
 
-
 	// --- State Management Methods (not used by native file explorer providers) ---
 
 	/// Handles tree node expansion/collapse events.
 	/// These events are not relevant for the native file explorer provider.
-	async fn OnTreeNodeExpanded(&self, _ViewIdentifier:String, _ElementHandle:String, _IsExpanded:bool) -> Result<(), CommonError> {
+	async fn OnTreeNodeExpanded(
+		&self,
+		_ViewIdentifier:String,
+		_ElementHandle:String,
+		_IsExpanded:bool,
+	) -> Result<(), CommonError> {
 		info!("[FileExplorer] OnTreeNodeExpanded called - not implemented for native providers");
 		Ok(())
 	}
 
 	/// Handles tree selection changes.
 	/// These events are not relevant for the native file explorer provider.
-	async fn OnTreeSelectionChanged(&self, _ViewIdentifier:String, _SelectedHandles:Vec<String>) -> Result<(), CommonError> {
+	async fn OnTreeSelectionChanged(
+		&self,
+		_ViewIdentifier:String,
+		_SelectedHandles:Vec<String>,
+	) -> Result<(), CommonError> {
 		info!("[FileExplorer] OnTreeSelectionChanged called - not implemented for native providers");
 		Ok(())
 	}

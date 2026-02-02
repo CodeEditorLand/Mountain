@@ -2,52 +2,55 @@
 //
 // # Architectural Role: Diagnostic Collection and Aggregation
 //
-// DiagnosticProvider implements the DiagnosticManager trait, managing diagnostic information
-// from multiple sources (language servers, extensions, built-in providers). It aggregates
-// diagnostics by owner, file URI, and severity, notifying the UI when changes occur.
+// DiagnosticProvider implements the DiagnosticManager trait, managing
+// diagnostic information from multiple sources (language servers, extensions,
+// built-in providers). It aggregates diagnostics by owner, file URI, and
+// severity, notifying the UI when changes occur.
 //
 // # Responsibilities
 //
-// 1. **Diagnostic Collection**: Maintains collections of diagnostics organized by owner
-//    (e.g., TypeScript, Rust, ESLint) and resource URI.
+// 1. **Diagnostic Collection**: Maintains collections of diagnostics organized
+//    by owner (e.g., TypeScript, Rust, ESLint) and resource URI.
 //
-// 2. **Diagnostic Aggregation**: Combines diagnostics from multiple sources into a unified
-//    view for the user interface.
+// 2. **Diagnostic Aggregation**: Combines diagnostics from multiple sources
+//    into a unified view for the user interface.
 //
-// 3. **Change Notification**: Emits events to the UI (Sky) when diagnostics change,
-//    enabling real-time feedback.
+// 3. **Change Notification**: Emits events to the UI (Sky) when diagnostics
+//    change, enabling real-time feedback.
 //
-// 4. **Owner Management**: Allows independent language servers and tools to manage
-//    their own diagnostic collections without interference.
+// 4. **Owner Management**: Allows independent language servers and tools to
+//    manage their own diagnostic collections without interference.
 //
-// 5. **Diagnostic Lifecycle**: Handles setting, updating, and clearing diagnostics
-//    for specific resources or entire owner collections.
+// 5. **Diagnostic Lifecycle**: Handles setting, updating, and clearing
+//    diagnostics for specific resources or entire owner collections.
 //
 // # Diagnostic Data Model
 //
 // Diagnostics are stored in ApplicationState.DiagnosticsMap as:
 // - Outer map: Owner (String) -> Inner map
 // - Inner map: URI String -> Vector of MarkerDataDTO
-// - Each MarkerDataDTO represents a single diagnostic with severity, message, range, etc.
+// - Each MarkerDataDTO represents a single diagnostic with severity, message,
+//   range, etc.
 //
 // # Notification Flow
 //
 // 1. Language server or extension calls SetDiagnostics(owner, entries)
 // 2. Mountain validates and stores diagnostics in ApplicationState
 // 3. Mountain identifies changed URIs in this update
-// 4. Mountain emits "sky://diagnostics/changed" event with owner and changed URIs
+// 4. Mountain emits "sky://diagnostics/changed" event with owner and changed
+//    URIs
 // 5. UI (Sky) receives event and updates diagnostic display
 //
 // # Patterns Borrowed from VSCode
 //
-// - **Diagnostic Collections**: Inspired by VSCode's DiagnosticCollection pattern
-//   where each language service manages its own collection.
+// - **Diagnostic Collections**: Inspired by VSCode's DiagnosticCollection
+//   pattern where each language service manages its own collection.
 //
-// - **Owner Model**: Similar to VSCode's owner concept for distinguishing diagnostic
-//   sources (e.g., cs, tslint, eslint).
+// - **Owner Model**: Similar to VSCode's owner concept for distinguishing
+//   diagnostic sources (e.g., cs, tslint, eslint).
 //
-// - **Batch Updates**: Like VSCode, supports setting multiple diagnostics at once
-//   for efficiency.
+// - **Batch Updates**: Like VSCode, supports setting multiple diagnostics at
+//   once for efficiency.
 //
 // # TODOs
 //
@@ -74,7 +77,8 @@ use crate::ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO;
 #[async_trait]
 impl DiagnosticManager for MountainEnvironment {
 	/// Sets or updates diagnostics for multiple resources from a specific
-	/// owner. Empty marker arrays are treated as clearing diagnostics for that URI.
+	/// owner. Empty marker arrays are treated as clearing diagnostics for that
+	/// URI.
 	async fn SetDiagnostics(&self, Owner:String, EntriesDTOValue:Value) -> Result<(), CommonError> {
 		info!("[DiagnosticProvider] Setting diagnostics for owner: {}", Owner);
 
@@ -122,7 +126,10 @@ impl DiagnosticManager for MountainEnvironment {
 			error!("[DiagnosticProvider] Failed to emit 'diagnostics_changed': {}", Error);
 		}
 
-		info!("[DiagnosticProvider] Emitted diagnostics changed for {} URI(s)", ChangedURIKeys.len());
+		info!(
+			"[DiagnosticProvider] Emitted diagnostics changed for {} URI(s)",
+			ChangedURIKeys.len()
+		);
 
 		Ok(())
 	}
@@ -131,7 +138,7 @@ impl DiagnosticManager for MountainEnvironment {
 	async fn ClearDiagnostics(&self, Owner:String) -> Result<(), CommonError> {
 		info!("[DiagnosticProvider] Clearing all diagnostics for owner: {}", Owner);
 
-		let (ClearedCount, ChangedURIKeys): (usize, Vec<String>) = {
+		let (ClearedCount, ChangedURIKeys):(usize, Vec<String>) = {
 			let mut DiagnosticsMapGuard = self
 				.ApplicationState
 				.DiagnosticsMap
@@ -140,15 +147,19 @@ impl DiagnosticManager for MountainEnvironment {
 
 			DiagnosticsMapGuard
 				.remove(&Owner)
-			.map(|OwnerMap| {
-				let keys: Vec<String> = OwnerMap.keys().cloned().collect();
-				(keys.len(), keys)
-			})
-			.unwrap_or((0, vec![]))
+				.map(|OwnerMap| {
+					let keys:Vec<String> = OwnerMap.keys().cloned().collect();
+					(keys.len(), keys)
+				})
+				.unwrap_or((0, vec![]))
 		};
 
 		if !ChangedURIKeys.is_empty() {
-			info!("[DiagnosticProvider] Cleared {} diagnostics across {} URI(s)", ClearedCount, ChangedURIKeys.len());
+			info!(
+				"[DiagnosticProvider] Cleared {} diagnostics across {} URI(s)",
+				ClearedCount,
+				ChangedURIKeys.len()
+			);
 
 			let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
 
@@ -161,7 +172,8 @@ impl DiagnosticManager for MountainEnvironment {
 	}
 
 	/// Retrieves all diagnostics, optionally filtered by a resource URI.
-	/// Returns diagnostics aggregated from all owners for the specified resource(s).
+	/// Returns diagnostics aggregated from all owners for the specified
+	/// resource(s).
 	async fn GetAllDiagnostics(&self, ResourceURIFilterOption:Option<Value>) -> Result<Value, CommonError> {
 		debug!(
 			"[DiagnosticProvider] Getting all diagnostics with filter: {:?}",

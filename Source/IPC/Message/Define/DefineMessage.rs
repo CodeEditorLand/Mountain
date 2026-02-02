@@ -1,4 +1,3 @@
-//!
 //! # Define
 //!
 //! ## File: IPC/Message/Define/DefineMessage.rs
@@ -6,7 +5,8 @@
 //! ## Role in Mountain Architecture
 //!
 //! Defines core message types and structures used throughout the IPC layer
-//! for communication between Mountain's Rust backend and Wind's TypeScript frontend.
+//! for communication between Mountain's Rust backend and Wind's TypeScript
+//! frontend.
 //!
 //! ## Primary Responsibility
 //!
@@ -54,7 +54,8 @@
 //! ## Performance Considerations
 //!
 //! - Use serde_json for efficient JSON parsing
-//! - Clone-based message routing (zero-copy not possible across serialization boundary)
+//! - Clone-based message routing (zero-copy not possible across serialization
+//!   boundary)
 //! - Compact structure minimizes serialization overhead
 //!
 //! ## Error Handling Strategy
@@ -73,17 +74,18 @@
 //! - [ ] Add message versioning for schema evolution
 //! - [ ] Add message validation schema
 //! - [ ] Consider binary protocol option for performance
-//!
 
 use serde::{Deserialize, Serialize};
 
 /// IPC message structure matching Wind's ITauriIPCMessage interface
 ///
-/// This structure represents the standard message format for all IPC communication
-/// between Mountain's Rust backend and Wind's TypeScript frontend.
+/// This structure represents the standard message format for all IPC
+/// communication between Mountain's Rust backend and Wind's TypeScript
+/// frontend.
 ///
 /// # Security
-/// - Timestamp used to prevent replay attacks when combined with nonce in encrypted messages
+/// - Timestamp used to prevent replay attacks when combined with nonce in
+///   encrypted messages
 /// - Sender field verified for source authentication
 /// - Size limits enforced to prevent DoS
 ///
@@ -92,72 +94,76 @@ use serde::{Deserialize, Serialize};
 /// - Compact structure minimizes serialization overhead
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TauriIPCMessage {
-    /// Channel name for message routing (e.g., "configuration", "file-system")
-    pub channel: String,
-    /// Message payload in JSON format
-    pub data: serde_json::Value,
-    /// Optional sender identifier for source tracking
-    pub sender: Option<String>,
-    /// Unix timestamp in milliseconds for ordering and replay prevention
-    pub timestamp: u64,
+	/// Channel name for message routing (e.g., "configuration", "file-system")
+	pub channel:String,
+	/// Message payload in JSON format
+	pub data:serde_json::Value,
+	/// Optional sender identifier for source tracking
+	pub sender:Option<String>,
+	/// Unix timestamp in milliseconds for ordering and replay prevention
+	pub timestamp:u64,
 }
 
 impl TauriIPCMessage {
-    /// Create a new TauriIPCMessage with current timestamp
-    ///
-    /// # Arguments
-    /// * `channel` - Channel name for routing
-    /// * `data` - Message payload
-    /// * `sender` - Optional sender identifier
-    ///
-    /// # Returns
-    /// A new TauriIPCMessage instance with timestamp set to current time
-    pub fn new(channel: impl Into<String>, data: serde_json::Value, sender: Option<String>) -> Self {
-        Self {
-            channel: channel.into(),
-            data,
-            sender,
-            timestamp: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_millis() as u64,
-        }
-    }
+	/// Create a new TauriIPCMessage with current timestamp
+	///
+	/// # Arguments
+	/// * `channel` - Channel name for routing
+	/// * `data` - Message payload
+	/// * `sender` - Optional sender identifier
+	///
+	/// # Returns
+	/// A new TauriIPCMessage instance with timestamp set to current time
+	pub fn new(channel:impl Into<String>, data:serde_json::Value, sender:Option<String>) -> Self {
+		Self {
+			channel:channel.into(),
+			data,
+			sender,
+			timestamp:std::time::SystemTime::now()
+				.duration_since(std::time::UNIX_EPOCH)
+				.unwrap_or_default()
+				.as_millis() as u64,
+		}
+	}
 
-    /// Validate message integrity
-    ///
-    /// # Returns
-    /// Ok(()) if message passes validation, Err with reason otherwise
-    pub fn validate(&self) -> Result<(), String> {
-        // Ensure channel is not empty
-        if self.channel.is_empty() {
-            return Err("Channel cannot be empty".to_string());
-        }
+	/// Validate message integrity
+	///
+	/// # Returns
+	/// Ok(()) if message passes validation, Err with reason otherwise
+	pub fn validate(&self) -> Result<(), String> {
+		// Ensure channel is not empty
+		if self.channel.is_empty() {
+			return Err("Channel cannot be empty".to_string());
+		}
 
-        // Ensure channel name contains only valid characters
-        if !self.channel.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == ':') {
-            return Err("Channel contains invalid characters".to_string());
-        }
+		// Ensure channel name contains only valid characters
+		if !self
+			.channel
+			.chars()
+			.all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == ':')
+		{
+			return Err("Channel contains invalid characters".to_string());
+		}
 
-        // Ensure timestamp is reasonable (not in future, not too old)
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_millis() as u64;
+		// Ensure timestamp is reasonable (not in future, not too old)
+		let now = std::time::SystemTime::now()
+			.duration_since(std::time::UNIX_EPOCH)
+			.unwrap_or_default()
+			.as_millis() as u64;
 
-        const MAX_FUTURE_MS: u64 = 5_000; // 5 seconds future tolerance
-        const MAX_AGE_MS: u64 = 3600_000; // 1 hour max age
+		const MAX_FUTURE_MS:u64 = 5_000; // 5 seconds future tolerance
+		const MAX_AGE_MS:u64 = 3600_000; // 1 hour max age
 
-        if self.timestamp > now + MAX_FUTURE_MS {
-            return Err("Timestamp is too far in the future".to_string());
-        }
+		if self.timestamp > now + MAX_FUTURE_MS {
+			return Err("Timestamp is too far in the future".to_string());
+		}
 
-        if self.timestamp < now.saturating_sub(MAX_AGE_MS) {
-            return Err("Timestamp is too old".to_string());
-        }
+		if self.timestamp < now.saturating_sub(MAX_AGE_MS) {
+			return Err("Timestamp is too old".to_string());
+		}
 
-        Ok(())
-    }
+		Ok(())
+	}
 }
 
 /// Connection status message
@@ -165,18 +171,16 @@ impl TauriIPCMessage {
 /// Simple boolean indicator of IPC connection health between Mountain and Wind.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionStatus {
-    /// True if IPC connection is active, false otherwise
-    pub connected: bool,
+	/// True if IPC connection is active, false otherwise
+	pub connected:bool,
 }
 
 impl ConnectionStatus {
-    /// Create a new connection status
-    ///
-    /// # Arguments
-    /// * `connected` - Connection state
-    pub fn new(connected: bool) -> Self {
-        Self { connected }
-    }
+	/// Create a new connection status
+	///
+	/// # Arguments
+	/// * `connected` - Connection state
+	pub fn new(connected:bool) -> Self { Self { connected } }
 }
 
 /// Listener callback type for message subscription

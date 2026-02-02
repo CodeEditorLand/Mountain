@@ -102,7 +102,8 @@ pub async fn GetTreeViewItem(
 }
 
 /// Handles tree node expansion/collapse events.
-/// TODO: OnTreeNodeExpanded is not defined in TreeViewProvider trait - needs implementation
+/// TODO: OnTreeNodeExpanded is not defined in TreeViewProvider trait - needs
+/// implementation
 #[command]
 pub async fn OnTreeViewExpansionChanged(
 	_ApplicationHandle:AppHandle<Wry>,
@@ -121,14 +122,13 @@ pub async fn OnTreeViewExpansionChanged(
 }
 
 /// Handles tree selection changes.
-/// TODO: OnTreeSelectionChanged is not defined in TreeViewProvider trait - needs implementation
+/// TODO: OnTreeSelectionChanged is not defined in TreeViewProvider trait -
+/// needs implementation
 #[command]
 pub async fn OnTreeViewSelectionChanged(
 	_ApplicationHandle:AppHandle<Wry>,
 
-
 	_State:State<'_, Arc<ApplicationState>>,
-
 
 	_ViewId:String,
 
@@ -204,7 +204,8 @@ pub async fn RevealTreeViewItem(
 }
 
 /// Persists tree view state.
-/// TODO: PersistTreeViewState is not defined in TreeViewProvider trait - needs implementation
+/// TODO: PersistTreeViewState is not defined in TreeViewProvider trait - needs
+/// implementation
 #[command]
 pub async fn PersistTreeView(
 	_ApplicationHandle:AppHandle<Wry>,
@@ -219,7 +220,8 @@ pub async fn PersistTreeView(
 }
 
 /// Restores tree view state.
-/// TODO: RestoreTreeViewState is not defined in TreeViewProvider trait - needs implementation
+/// TODO: RestoreTreeViewState is not defined in TreeViewProvider trait - needs
+/// implementation
 #[command]
 pub async fn RestoreTreeView(
 	_ApplicationHandle:AppHandle<Wry>,

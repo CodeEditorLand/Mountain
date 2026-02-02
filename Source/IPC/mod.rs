@@ -7,8 +7,10 @@
 //! ## RESPONSIBILITIES
 //!
 //! ### Core Responsibilities
-//! - **Message Routing**: Routes incoming messages from Wind to appropriate handlers
-//! - **Connection Management**: Maintains connection health and manages connection pooling
+//! - **Message Routing**: Routes incoming messages from Wind to appropriate
+//!   handlers
+//! - **Connection Management**: Maintains connection health and manages
+//!   connection pooling
 //! - **Security Layer**: Implements permissions, encryption, and audit logging
 //! - **Performance Optimization**: Provides message compression and batching
 //!
@@ -18,7 +20,8 @@
 //! - [`compression`]: Message compression utilities for efficient transfer
 //! - [`connection_pool`]: Connection pooling and health monitoring
 //! - [`encryption`]: Secure message channel with AES-256-GCM encryption
-//! - [`permissions`]: Role-based access control (RBAC) and permission management
+//! - [`permissions`]: Role-based access control (RBAC) and permission
+//!   management
 //! - [`ipc_server`]: Core IPC server implementation
 //! - [`commands`]: Tauri command handlers for IPC operations
 
@@ -29,4 +32,3 @@
 // pub mod ipc_server;
 // pub mod permissions;
 // pub mod types;
-

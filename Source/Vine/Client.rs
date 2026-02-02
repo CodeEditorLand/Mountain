@@ -7,9 +7,11 @@
 //!
 //! ## Features
 //!
-//! - **Connection Pool**: Thread-safe HashMap of client connections by identifier
+//! - **Connection Pool**: Thread-safe HashMap of client connections by
+//!   identifier
 //! - **Health Checks**: Validates connection status before RPC calls
-//! - **Automatic Reconnection**: Retries failed connections with exponential backoff
+//! - **Automatic Reconnection**: Retries failed connections with exponential
+//!   backoff
 //! - **Request Timeout**: Configurable timeout per RPC call
 //! - **Retry Logic**: Configurable retry attempts for transient failures
 //! - **Message Validation**: Size limits and format checking for all messages
@@ -18,24 +20,21 @@
 //! ## Usage Example
 //!
 //! ```rust,no_run
-//! use Vine::Client::ConnectToSideCar;
-//! use Vine::Client::SendRequest;
+//! use Vine::Client::{ConnectToSideCar, SendRequest};
 //! use serde_json::json;
-//! 
+//!
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! // Connect to Cocoon
-//! ConnectToSideCar(
-//!     "cocoon-main".to_string(),
-//!     "127.0.0.1:50052".to_string()
-//! ).await?;
-//! 
+//! ConnectToSideCar("cocoon-main".to_string(), "127.0.0.1:50052".to_string()).await?;
+//!
 //! // Send request
 //! let result = SendRequest(
-//!     "cocoon-main",
-//!     "GetExtensions".to_string(),
-//!     json!({}),
-//!     5000 // 5 second timeout
-//! ).await?;
+//! 	"cocoon-main",
+//! 	"GetExtensions".to_string(),
+//! 	json!({}),
+//! 	5000, // 5 second timeout
+//! )
+//! .await?;
 //! # Ok(())
 //! # }
 //! ```
@@ -57,7 +56,7 @@ use std::{
 use lazy_static::lazy_static;
 use log::{debug, error, info, warn};
 use parking_lot::Mutex;
-use serde_json::{from_slice, to_vec, Value};
+use serde_json::{Value, from_slice, to_vec};
 use tokio::time::timeout;
 
 use super::{
@@ -71,32 +70,32 @@ type CocoonClient = CocoonServiceClient<tonic::transport::Channel>;
 /// Configuration constants for Vine client behavior
 mod Config {
 	/// Default timeout for RPC calls (5 seconds)
-	pub const DEFAULT_TIMEOUT_MS: u64 = 5000;
+	pub const DEFAULT_TIMEOUT_MS:u64 = 5000;
 
 	/// Maximum number of retry attempts for failed connections
-	pub const MAX_RETRY_ATTEMPTS: usize = 3;
+	pub const MAX_RETRY_ATTEMPTS:usize = 3;
 
 	/// Base delay between retry attempts (100ms)
-	pub const RETRY_BASE_DELAY_MS: u64 = 100;
+	pub const RETRY_BASE_DELAY_MS:u64 = 100;
 
 	/// Maximum message size for validation (4MB to match tonic default)
-	pub const MAX_MESSAGE_SIZE_BYTES: usize = 4 * 1024 * 1024;
+	pub const MAX_MESSAGE_SIZE_BYTES:usize = 4 * 1024 * 1024;
 
 	/// Health check interval (30 seconds)
-	pub const HEALTH_CHECK_INTERVAL_MS: u64 = 30000;
+	pub const HEALTH_CHECK_INTERVAL_MS:u64 = 30000;
 
 	/// Connection timeout (10 seconds)
-	pub const CONNECTION_TIMEOUT_MS: u64 = 10000;
+	pub const CONNECTION_TIMEOUT_MS:u64 = 10000;
 }
 
 /// Connection metadata tracking health and last activity
 struct ConnectionMetadata {
 	/// Timestamp of last successful communication
-	LastActivity: Instant,
+	LastActivity:Instant,
 	/// Number of consecutive failures since last success
-	FailureCount: usize,
+	FailureCount:usize,
 	/// Whether the connection is currently marked healthy
-	IsHealthy: bool,
+	IsHealthy:bool,
 }
 
 lazy_static! {
@@ -109,9 +108,9 @@ lazy_static! {
 
 /// Establishes a gRPC connection to a sidecar process with retry logic.
 ///
-/// This function attempts to connect to a Cocoon sidecar at the specified address.
-/// It implements exponential backoff retry logic for transient failures and
-/// initializes connection metadata for health tracking.
+/// This function attempts to connect to a Cocoon sidecar at the specified
+/// address. It implements exponential backoff retry logic for transient
+/// failures and initializes connection metadata for health tracking.
 ///
 /// # Parameters
 /// - `SideCarIdentifier`: Unique identifier for this sidecar connection
@@ -125,10 +124,7 @@ lazy_static! {
 /// ```rust,no_run
 /// # use Vine::Client::ConnectToSideCar;
 /// # async fn example() -> Result<(), Box<dyn std::error::Error>> {
-/// ConnectToSideCar(
-///     "cocoon-main".to_string(),
-///     "127.0.0.1:50052".to_string()
-/// ).await?;
+/// ConnectToSideCar("cocoon-main".to_string(), "127.0.0.1:50052".to_string()).await?;
 /// # Ok(())
 /// # }
 /// ```
@@ -139,9 +135,7 @@ pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Resul
 
 	// Validate endpoint format
 	if endpoint.len() > 256 {
-		return Err(VineError::RPCError(format!(
-			"Invalid endpoint address: exceeds maximum length"
-		)));
+		return Err(VineError::RPCError(format!("Invalid endpoint address: exceeds maximum length")));
 	}
 
 	// Attempt connection with retry logic
@@ -154,16 +148,10 @@ pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Resul
 			// Initialize connection metadata
 			CONNECTION_METADATA.lock().insert(
 				SideCarIdentifier.clone(),
-				ConnectionMetadata {
-					LastActivity:Instant::now(),
-					FailureCount:0,
-					IsHealthy:true,
-				},
+				ConnectionMetadata { LastActivity:Instant::now(), FailureCount:0, IsHealthy:true },
 			);
 
-			info!("[VineClient] Successfully connected to sidecar '{}'",
-				SideCarIdentifier
-			);
+			info!("[VineClient] Successfully connected to sidecar '{}'", SideCarIdentifier);
 
 			return Ok(result?);
 		}
@@ -183,7 +171,9 @@ pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Resul
 
 /// Single connection attempt without retry logic
 async fn try_connect_single(_SideCarIdentifier:&str, endpoint:&str) -> Result<(), VineError> {
-	let parsed_endpoint = endpoint.parse().map_err(|e| VineError::RPCError(format!("Invalid endpoint: {}", e)))?;
+	let parsed_endpoint = endpoint
+		.parse()
+		.map_err(|e| VineError::RPCError(format!("Invalid endpoint: {}", e)))?;
 	let channel = tonic::transport::Channel::from_shared(parsed_endpoint)
 		.map_err(|e| VineError::RPCError(format!("Failed to create channel: {}", e)))?;
 	let client = CocoonClient::new(channel);
@@ -337,12 +327,9 @@ fn ValidateMessageSize(data:&[u8]) -> Result<(), VineError> {
 /// # use Vine::Client::SendRequest;
 /// use serde_json::json;
 /// # async fn example() -> Result<serde_json::Value, Box<dyn std::error::Error>> {
-/// let result = SendRequest(
-///     "cocoon-main".to_string(),
-///     "GetExtensions".to_string(),
-///     json!({}),
-///     5000
-/// ).await?;
+/// let result =
+/// 	SendRequest("cocoon-main".to_string(), "GetExtensions".to_string(), json!({}), 5000)
+/// 		.await?;
 /// # Ok(result)
 /// # }
 /// ```
@@ -355,7 +342,7 @@ pub async fn SendRequest(
 	// Validate method name format
 	if Method.is_empty() || Method.len() > 128 {
 		return Err(VineError::RPCError(
-			"Method name must be between 1 and 128 characters".to_string()
+			"Method name must be between 1 and 128 characters".to_string(),
 		));
 	}
 
@@ -366,7 +353,8 @@ pub async fn SendRequest(
 	});
 
 	// Validate message size
-	let parameter_bytes = to_vec(&Parameters).map_err(|e| VineError::SerializationError(format!("Failed to serialize parameters: {}", e)))?;
+	let parameter_bytes = to_vec(&Parameters)
+		.map_err(|e| VineError::SerializationError(format!("Failed to serialize parameters: {}", e)))?;
 	ValidateMessageSize(&parameter_bytes)?;
 
 	let mut client = {
@@ -384,16 +372,9 @@ pub async fn SendRequest(
 		.duration_since(std::time::UNIX_EPOCH)
 		.unwrap()
 		.as_nanos() as u64;
-	let request = GenericRequest {
-		request_identifier,
-		method:Method,
-		parameter:parameter_bytes
-	};
+	let request = GenericRequest { request_identifier, method:Method, parameter:parameter_bytes };
 
-	let result = timeout(
-		timeout,
-		client.process_mountain_request(request)
-	).await;
+	let result = timeout(timeout, client.process_mountain_request(request)).await;
 
 	match result {
 		Ok(response) => {
@@ -421,11 +402,11 @@ pub async fn SendRequest(
 		Err(_) => {
 			RecordSideCarFailure(SideCarIdentifier);
 			Err(VineError::RequestTimeout {
-				SideCarIdentifier: SideCarIdentifier.to_string(),
-				MethodName: Method.clone(),
-				TimeoutMilliseconds: timeout.as_millis() as u64
+				SideCarIdentifier:SideCarIdentifier.to_string(),
+				MethodName:Method.clone(),
+				TimeoutMilliseconds:timeout.as_millis() as u64,
 			})
-		}
+		},
 	}
 }
 
@@ -450,7 +431,7 @@ pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameter
 	// Validate method name format
 	if Method.is_empty() || Method.len() > 128 {
 		return Err(VineError::RPCError(
-			"Method name must be between 1 and 128 characters".to_string()
+			"Method name must be between 1 and 128 characters".to_string(),
 		));
 	}
 
@@ -468,10 +449,7 @@ pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameter
 		match client.send_mountain_notification(request).await {
 			Ok(_) => {
 				UpdateSideCarActivity(&SideCarIdentifier);
-				debug!(
-					"[VineClient] Notification sent successfully to sidecar '{}'",
-					SideCarIdentifier
-				);
+				debug!("[VineClient] Notification sent successfully to sidecar '{}'", SideCarIdentifier);
 				Ok(())
 			},
 			Err(status) => {
@@ -481,7 +459,7 @@ pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameter
 					SideCarIdentifier, status
 				);
 				Err(VineError::from(status))
-			}
+			},
 		}
 	} else {
 		Err(VineError::ClientNotConnected(SideCarIdentifier))

@@ -2,9 +2,12 @@
 //!
 //! Initializes and starts the Cocoon sidecar process.
 
-use crate::Environment::MountainEnvironment::MountainEnvironment;
-use crate::ProcessManagement::CocoonManagement::InitializeCocoon;
 use log::{error, info};
+
+use crate::{
+	Environment::MountainEnvironment::MountainEnvironment,
+	ProcessManagement::CocoonManagement::InitializeCocoon,
+};
 
 /// Starts the Cocoon sidecar process for build tool support.
 ///
@@ -28,8 +31,8 @@ use log::{error, info};
 ///
 /// Returns an error if Cocoon initialization fails.
 pub async fn CocoonStart(
-	ApplicationHandle: &tauri::AppHandle,
-	Environment: &std::sync::Arc<MountainEnvironment>,
+	ApplicationHandle:&tauri::AppHandle,
+	Environment:&std::sync::Arc<MountainEnvironment>,
 ) -> Result<(), String> {
 	match InitializeCocoon(ApplicationHandle, Environment).await {
 		Ok(()) => {

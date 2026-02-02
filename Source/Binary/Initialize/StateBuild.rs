@@ -32,6 +32,7 @@
 //! - State construction is fast, in-memory only
 
 use std::sync::Arc;
+
 use crate::ApplicationState::ApplicationState;
 
 /// Build ApplicationState with initial workspace folders.
@@ -47,10 +48,10 @@ use crate::ApplicationState::ApplicationState;
 /// # Returns
 ///
 /// Returns an Arc wrapping the constructed ApplicationState.
-pub fn Build(Folders: Vec<String>, ConfigPath: Option<std::path::PathBuf>) -> Arc<ApplicationState> {
+pub fn Build(Folders:Vec<String>, ConfigPath:Option<std::path::PathBuf>) -> Arc<ApplicationState> {
 	Arc::new(ApplicationState {
-		WorkSpaceFoldersValue: Arc::new(std::sync::Mutex::new(Folders)),
-		WorkSpaceConfigurationPathValue: Arc::new(std::sync::Mutex::new(ConfigPath)),
+		WorkSpaceFoldersValue:Arc::new(std::sync::Mutex::new(Folders)),
+		WorkSpaceConfigurationPathValue:Arc::new(std::sync::Mutex::new(ConfigPath)),
 		..ApplicationState::default()
 	})
 }

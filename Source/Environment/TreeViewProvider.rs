@@ -21,9 +21,9 @@
 //
 // ============================================================================
 
-use log::debug;
 use std::sync::Arc;
 
+use log::{debug, info, warn};
 use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
@@ -31,7 +31,6 @@ use CommonLibrary::{
 	TreeView::{DTO::TreeViewOptionsDTO::TreeViewOptionsDTO, TreeViewProvider::TreeViewProvider},
 };
 use async_trait::async_trait;
-use log::{info, warn};
 use serde_json::{Value, json};
 use tauri::Emitter;
 
@@ -294,7 +293,12 @@ impl TreeViewProvider for MountainEnvironment {
 	/// Handles tree node expansion/collapse events.
 	/// Called when a user expands or collapses a node in the tree view.
 	/// Updates internal state and propagates the event to the frontend.
-	async fn OnTreeNodeExpanded(&self, ViewIdentifier:String, ElementHandle:String, IsExpanded:bool) -> Result<(), CommonError> {
+	async fn OnTreeNodeExpanded(
+		&self,
+		ViewIdentifier:String,
+		ElementHandle:String,
+		IsExpanded:bool,
+	) -> Result<(), CommonError> {
 		info!(
 			"[TreeViewProvider] Node '{}' in view '{}' expanded: {}",
 			ElementHandle, ViewIdentifier, IsExpanded
@@ -313,17 +317,24 @@ impl TreeViewProvider for MountainEnvironment {
 				}),
 			)
 			.map_err(|Error| {
-				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit node expanded event: {}", Error) }
+				CommonError::UserInterfaceInteraction {
+					Reason:format!("Failed to emit node expanded event: {}", Error),
+				}
 			})
 	}
 
 	/// Handles tree selection changes.
 	/// Called when the user selects or deselects items in the tree view.
 	/// Updates internal state and propagates the event to the frontend.
-	async fn OnTreeSelectionChanged(&self, ViewIdentifier:String, SelectedHandles:Vec<String>) -> Result<(), CommonError> {
+	async fn OnTreeSelectionChanged(
+		&self,
+		ViewIdentifier:String,
+		SelectedHandles:Vec<String>,
+	) -> Result<(), CommonError> {
 		info!(
 			"[TreeViewProvider] Selection changed in view '{}': {} items selected",
-			ViewIdentifier, SelectedHandles.len()
+			ViewIdentifier,
+			SelectedHandles.len()
 		);
 
 		// TODO: Store selection state in TreeViewStateDTO when available
@@ -338,7 +349,9 @@ impl TreeViewProvider for MountainEnvironment {
 				}),
 			)
 			.map_err(|Error| {
-				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit selection changed event: {}", Error) }
+				CommonError::UserInterfaceInteraction {
+					Reason:format!("Failed to emit selection changed event: {}", Error),
+				}
 			})
 	}
 
@@ -354,21 +367,24 @@ impl TreeViewProvider for MountainEnvironment {
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		let State = TreeViews.get(&ViewIdentifier).map(|View| json!({
-			"ViewIdentifier": ViewIdentifier,
-			"Title": View.Title,
-			"Description": View.Description,
-			"CanSelectMany": View.CanSelectMany,
-			"Message": View.Message,
-			"HasHandleDrag": View.HasHandleDrag,
-			"HasHandleDrop": View.HasHandleDrop,
-		}));
+		let State = TreeViews.get(&ViewIdentifier).map(|View| {
+			json!({
+				"ViewIdentifier": ViewIdentifier,
+				"Title": View.Title,
+				"Description": View.Description,
+				"CanSelectMany": View.CanSelectMany,
+				"Message": View.Message,
+				"HasHandleDrag": View.HasHandleDrag,
+				"HasHandleDrop": View.HasHandleDrop,
+			})
+		});
 
 		State.ok_or(CommonError::TreeViewProviderNotFound { ViewIdentifier })
 	}
 
 	/// Restores a previously persisted tree view state.
-	/// Restores expansion, selection, and other state from a JSON representation.
+	/// Restores expansion, selection, and other state from a JSON
+	/// representation.
 	async fn RestoreTreeViewState(&self, ViewIdentifier:String, StateValue:Value) -> Result<(), CommonError> {
 		info!("[TreeViewProvider] Restoring state for view '{}'", ViewIdentifier);
 
@@ -397,7 +413,9 @@ impl TreeViewProvider for MountainEnvironment {
 					}),
 				)
 				.map_err(|Error| {
-					CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit restore state event: {}", Error) }
+					CommonError::UserInterfaceInteraction {
+						Reason:format!("Failed to emit restore state event: {}", Error),
+					}
 				})?;
 
 			Ok(())

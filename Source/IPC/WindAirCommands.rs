@@ -304,15 +304,15 @@ use log::{debug, info};
 // TODO: Replace with actual Air types when AirIntegration feature is implemented
 use crate::Air::{
 	AirClientType,
-	DEFAULT_AIR_SERVER_ADDRESS,
-	UpdateCheckRequest,
-	DownloadRequest,
 	ApplyUpdateRequest,
 	AuthenticationRequest,
+	DEFAULT_AIR_SERVER_ADDRESS,
+	DownloadRequest,
 	IndexRequest,
+	MetricsRequest,
 	SearchRequest,
 	StatusRequest,
-	MetricsRequest,
+	UpdateCheckRequest,
 };
 
 /// Data Transfer Objects for Wind-Air communication
