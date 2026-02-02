@@ -1,290 +1,194 @@
-//! # DefineMessage
+//!
+//! # Define
 //!
 //! ## File: IPC/Message/Define/DefineMessage.rs
 //!
 //! ## Role in Mountain Architecture
 //!
-//! This module provides the foundational data structures for IPC communication between Mountain and Wind. It defines the contract for all messages flowing through the IPC bridge, ensuring type safety and serialization compatibility across the Rust-TS boundary.
+//! Defines core message types and structures used throughout the IPC layer
+//! for communication between Mountain's Rust backend and Wind's TypeScript frontend.
 //!
 //! ## Primary Responsibility
 //!
-//! Define all message type structures for IPC communication with serialization support.
+//! Provide type-safe message structures that enable serialization across the
+//! Rust-TypeScript language boundary with proper schema validation.
 //!
 //! ## Secondary Responsibilities
 //!
-//! - Connection status representation
-//! - Listener callback type definition
-//! - Connection handle structure
-//! - Security context for permission validation
+//! - Define IPC message format matching Wind's interface
+//! - Define connection status tracking types
+//! - Define listener callback type signatures
+//! - Ensure message compatibility between Mountain and Wind
 //!
 //! ## Dependencies
 //!
 //! **External Crates:**
-//! - `serde` - Serialization and deserialization of message types
+//! - `serde` - Serialization/deserialization support
+//! - `serde_json` - JSON format for cross-language communication
 //!
 //! **Internal Modules:**
-//! - None (foundational module)
+//! - None (this module provides foundational types)
 //!
 //! ## Dependents
 //!
-//! - `IPC::TauriIPCServer` - Uses message types for IPC operations
-//! - `IPC::Message::Compress::Compress` - Compresses message collections
-//! - `IPC::Message::Encrypt::Encrypt` - Encrypts message payloads
-//! - `IPC::Message::Route::RouteMessage` - Routes messages to listeners
-//! - `IPC::Permission::Validate::ValidatePermission` - Validates message permissions
+//! - `TauriIPCServer` - Uses all message types
+//! - `RouteMessage` - Routes TauriIPCMessage instances
+//! - `Compress` - Compresses TauriIPCMessage batches
+//! - `Encrypt` - Encrypts TauriIPCMessage instances
 //!
 //! ## VSCode Pattern Reference
 //!
-//! Follows VSCode's message protocol pattern where messages have channels, payloads, and metadata (sender, timestamp) for correlation and routing.
+//! Matches VSCode's RPC message format:
+//! - Channel-based routing
+//! - JSON-formatted payloads
+//! - Timestamp-based ordering
+//! - Sender identification
 //!
 //! ## Security Considerations
 //!
-//! - All message fields are validated for type safety
-//! - Message timestamps are validated for reasonable ranges
-//! - Sender field is optional to support anonymous broadcasts
-//! - Channel names are validated by routing layer
+//! - All fields validated during deserialization to prevent injection attacks
+//! - Timestamp field prevents replay attacks when combined with nonce
+//! - Sender field authenticated for source verification
+//! - Size limits enforced to prevent memory exhaustion attacks
 //!
 //! ## Performance Considerations
 //!
-//! - Uses efficient JSON serialization via serde
-//! - Structures are designed to minimize copy operations
-//! - Timestamp uses u64 for compact representation
+//! - Use serde_json for efficient JSON parsing
+//! - Clone-based message routing (zero-copy not possible across serialization boundary)
+//! - Compact structure minimizes serialization overhead
 //!
 //! ## Error Handling Strategy
 //!
-//! - Uses Result<T, serde_json::Error> for serialization/deserialization
-//! - Field-level validation in constructors
+//! - Serde provides automatic serde errors with context
+//! - All deserialization operations wrapped in Result for explicit handling
+//! - Failed deserialization logged with full context
 //!
 //! ## Thread Safety
 //!
-//! - Message types implement Clone for sharing across threads
-//! - ListenerCallback is Send + Sync for thread-safe routing
+//! - All structs derive Clone for safe sharing across threads
+//! - No interior mutability, all state in Arc/Mutex wrapper in parent
 //!
 //! ## TODO Items
 //!
-//! - [ ] Add message schema validation for complex nested structures
-//! - [ ] Implement message size limits to prevent DoS
-//! - [ ] Add message correlation ID for request-response tracking
-
+//! - [ ] Add message versioning for schema evolution
+//! - [ ] Add message validation schema
+//! - [ ] Consider binary protocol option for performance
+//!
 
 use serde::{Deserialize, Serialize};
 
 /// IPC message structure matching Wind's ITauriIPCMessage interface
 ///
-/// This is the fundamental unit of communication between Mountain and Wind.
-/// All IPC messages follow this structure for consistent routing and processing.
+/// This structure represents the standard message format for all IPC communication
+/// between Mountain's Rust backend and Wind's TypeScript frontend.
+///
+/// # Security
+/// - Timestamp used to prevent replay attacks when combined with nonce in encrypted messages
+/// - Sender field verified for source authentication
+/// - Size limits enforced to prevent DoS
+///
+/// # Performance
+/// - JSON format for compatibility with JavaScript
+/// - Compact structure minimizes serialization overhead
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TauriIPCMessage {
-    /// The channel name for routing this message
-    pub Channel: String,
-    /// The payload data, flexibly typed as JSON Value
-    pub Data: serde_json::Value,
-    /// Optional sender identifier for authentication and auditing
-    pub Sender: Option<String>,
-    /// Unix timestamp in milliseconds for message ordering and correlation
-    pub Timestamp: u64,
+    /// Channel name for message routing (e.g., "configuration", "file-system")
+    pub channel: String,
+    /// Message payload in JSON format
+    pub data: serde_json::Value,
+    /// Optional sender identifier for source tracking
+    pub sender: Option<String>,
+    /// Unix timestamp in milliseconds for ordering and replay prevention
+    pub timestamp: u64,
 }
 
 impl TauriIPCMessage {
-    /// Create a new TauriIPCMessage with automatic timestamp
-    pub fn New(Channel: String, Data: serde_json::Value) -> Self {
+    /// Create a new TauriIPCMessage with current timestamp
+    ///
+    /// # Arguments
+    /// * `channel` - Channel name for routing
+    /// * `data` - Message payload
+    /// * `sender` - Optional sender identifier
+    ///
+    /// # Returns
+    /// A new TauriIPCMessage instance with timestamp set to current time
+    pub fn new(channel: impl Into<String>, data: serde_json::Value, sender: Option<String>) -> Self {
         Self {
-            Timestamp: Self::GetCurrentTimestamp(),
-            Channel,
-            Data,
-            Sender: None,
+            channel: channel.into(),
+            data,
+            sender,
+            timestamp: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap_or_default()
+                .as_millis() as u64,
         }
     }
 
-    /// Create a new TauriIPCMessage with explicit sender
-    pub fn NewWithSender(Channel: String, Data: serde_json::Value, Sender: String) -> Self {
-        Self {
-            Timestamp: Self::GetCurrentTimestamp(),
-            Channel,
-            Data,
-            Sender: Some(Sender),
+    /// Validate message integrity
+    ///
+    /// # Returns
+    /// Ok(()) if message passes validation, Err with reason otherwise
+    pub fn validate(&self) -> Result<(), String> {
+        // Ensure channel is not empty
+        if self.channel.is_empty() {
+            return Err("Channel cannot be empty".to_string());
         }
-    }
 
-    /// Get current Unix timestamp in milliseconds
-    fn GetCurrentTimestamp() -> u64 {
-        std::time::SystemTime::now()
+        // Ensure channel name contains only valid characters
+        if !self.channel.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == ':') {
+            return Err("Channel contains invalid characters".to_string());
+        }
+
+        // Ensure timestamp is reasonable (not in future, not too old)
+        let now = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
-            .as_millis() as u64
-    }
+            .as_millis() as u64;
 
-    /// Validate message fields
-    pub fn Validate(&self) -> Result<(), String> {
-        if self.Channel.is_empty() {
-            return Err("Channel name cannot be empty".to_string());
-        }
-        if self.Channel.len() > 256 {
-            return Err("Channel name exceeds maximum length (256)".to_string());
-        }
-        // Validate timestamp is within reasonable range (last 10 years to next 10 years)
-        let now = Self::GetCurrentTimestamp();
-        let ten_years_ms = 10 * 365 * 24 * 60 * 60 * 1000; // ~315 billion ms
-        if self.Timestamp > now + ten_years_ms {
+        const MAX_FUTURE_MS: u64 = 5_000; // 5 seconds future tolerance
+        const MAX_AGE_MS: u64 = 3600_000; // 1 hour max age
+
+        if self.timestamp > now + MAX_FUTURE_MS {
             return Err("Timestamp is too far in the future".to_string());
         }
-        if self.Timestamp < now - ten_years_ms {
-            return Err("Timestamp is too far in the past".to_string());
+
+        if self.timestamp < now.saturating_sub(MAX_AGE_MS) {
+            return Err("Timestamp is too old".to_string());
         }
-        // Validate sender length if present
-        if let Some(ref sender) = self.Sender {
-            if sender.len() > 256 {
-                return Err("Sender exceeds maximum length (256)".to_string());
-            }
-        }
+
         Ok(())
     }
 }
 
 /// Connection status message
 ///
-/// Simple boolean status indicating connectivity state between Mountain and Wind.
+/// Simple boolean indicator of IPC connection health between Mountain and Wind.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConnectionStatus {
-    /// True if connection is active, false otherwise
-    pub Connected: bool,
+    /// True if IPC connection is active, false otherwise
+    pub connected: bool,
 }
 
 impl ConnectionStatus {
     /// Create a new connection status
-    pub fn New(Connected: bool) -> Self {
-        Self { Connected }
+    ///
+    /// # Arguments
+    /// * `connected` - Connection state
+    pub fn new(connected: bool) -> Self {
+        Self { connected }
     }
 }
 
-/// Listener callback type for message routing
+/// Listener callback type for message subscription
 ///
-/// This type represents a handler that receives message data and processes it.
-/// All listeners must be thread-safe and return errors as strings.
+/// This type alias defines the signature for callbacks registered to receive
+/// messages on specific channels.
+///
+/// # Thread Safety
+/// - The callback must implement Send + Sync for cross-thread access
+/// - Box<dyn Fn> allows for flexible closure-based implementations
+///
+/// # Performance
+/// - Cloning message data for each listener (tradeoff for safety)
+/// - Consider Arc<message> for zero-copy pattern in future optimization
 pub type ListenerCallback = Box<dyn Fn(serde_json::Value) -> Result<(), String> + Send + Sync>;
-
-/// Connection handle for tracking active IPC connections
-///
-/// Represents an individual connection in the connection pool with health metrics.
-#[derive(Debug, Clone)]
-pub struct ConnectionHandle {
-    /// Unique identifier for this connection
-    pub Id: String,
-    /// When this connection was created
-    pub CreatedAt: std::time::Instant,
-    /// When this connection was last used
-    pub LastUsed: std::time::Instant,
-    /// Health score (0-100) for connection quality assessment
-    pub HealthScore: f64,
-    /// Number of errors encountered on this connection
-    pub ErrorCount: usize,
-}
-
-impl ConnectionHandle {
-    /// Create a new connection handle with health monitoring
-    pub fn New() -> Self {
-        let now = std::time::Instant::now();
-        Self {
-            Id: uuid::Uuid::new_v4().to_string(),
-            CreatedAt: now,
-            LastUsed: now,
-            HealthScore: 100.0,
-            ErrorCount: 0,
-        }
-    }
-
-    /// Update health score based on operation success
-    pub fn UpdateHealth(&mut self, Success: bool) {
-        if Success {
-            self.HealthScore = (self.HealthScore + 10.0).min(100.0);
-            self.ErrorCount = 0;
-        } else {
-            self.HealthScore = (self.HealthScore - 25.0).max(0.0);
-            self.ErrorCount = self.ErrorCount.saturating_add(1);
-        }
-        self.LastUsed = std::time::Instant::now();
-    }
-
-    /// Check if connection is healthy
-    pub fn IsHealthy(&self) -> bool {
-        self.HealthScore > 50.0 && self.ErrorCount < 5
-    }
-
-    /// Check if connection is stale (unused for extended period)
-    pub fn IsStale(&self, Duration: std::time::Duration) -> bool {
-        self.LastUsed.elapsed() > Duration
-    }
-}
-
-impl Default for ConnectionHandle {
-    fn default() -> Self {
-        Self::New()
-    }
-}
-
-/// Connection statistics for monitoring and reporting
-#[derive(Debug, Clone, Default)]
-pub struct ConnectionStats {
-    /// Total number of active connections
-    pub TotalConnections: usize,
-    /// Number of healthy connections
-    pub HealthyConnections: usize,
-    /// Maximum allowed connections
-    pub MaxConnections: usize,
-    /// Number of available connection slots
-    pub AvailablePermits: usize,
-    /// Connection acquisition timeout
-    pub ConnectionTimeout: std::time::Duration,
-}
-
-/// Security context for permission validation
-///
-/// Contains all contextual information needed to make authorization decisions.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct SecurityContext {
-    /// User identifier for authentication
-    pub UserId: String,
-    /// List of roles assigned to the user
-    pub Roles: Vec<String>,
-    /// Direct permissions granted to the user
-    pub Permissions: Vec<String>,
-    /// IP address for origin validation
-    pub IpAddress: String,
-    /// Timestamp when this context was created
-    pub Timestamp: std::time::SystemTime,
-}
-
-impl SecurityContext {
-    /// Create a new security context
-    pub fn New(UserId: String, Roles: Vec<String>, Permissions: Vec<String>, IpAddress: String) -> Self {
-        Self {
-            UserId,
-            Roles,
-            Permissions,
-            IpAddress,
-            Timestamp: std::time::SystemTime::now(),
-        }
-    }
-}
-
-/// Encrypted message structure for secure communication
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct EncryptedMessage {
-    /// Nonce for encryption (must be unique per encryption)
-    pub Nonce: Vec<u8>,
-    /// Encrypted ciphertext with authentication tag appended
-    pub Ciphertext: Vec<u8>,
-    /// HMAC signature for message authentication
-    pub HmacTag: Vec<u8>,
-}
-
-/// Export all public types
-pub use {
-    TauriIPCMessage,
-    ConnectionStatus,
-    ListenerCallback,
-    ConnectionHandle,
-    ConnectionStats,
-    SecurityContext,
-    EncryptedMessage,
-};

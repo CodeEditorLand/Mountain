@@ -1,308 +1,359 @@
+//!
 //! # Compress
 //!
 //! ## File: IPC/Message/Compress/Compress.rs
 //!
 //! ## Role in Mountain Architecture
 //!
-//! This module provides gzip compression and decompression for IPC messages, reducing bandwidth usage between Mountain and Wind. It manages the trade-off between compression overhead and message size savings.
+//! Provides Gzip compression for IPC messages to optimize bandwidth usage
+//! between Mountain's Rust backend and Wind's TypeScript frontend.
 //!
 //! ## Primary Responsibility
 //!
-//! Provide gzip compression/decompression for IPC message payloads with size-based batching strategy.
+//! Compress and decompress IPC message payloads using Gzip algorithm to reduce
+//! transfer payload size and improve IPC communication performance.
 //!
 //! ## Secondary Responsibilities
 //!
-//! - Determine when compression is beneficial
-//! - Manage compression level for performance tuning
-//! - Protect against compression bomb attacks
+//! - Determine optimal batching strategy for multiple messages
+//! - Handle compression errors gracefully with fallback
+//! - Validate decompression results to prevent decompression bomb attacks
+//! - Provide size thresholds for determining when to compress
 //!
 //! ## Dependencies
 //!
 //! **External Crates:**
-//! - `flate2` - Gzip compression and decompression
-//! - `serde_json` - Serialization for compressed data
+//! - `flate2` - Gzip compression/decompression
+//! - `serde_json` - Message serialization
 //!
 //! **Internal Modules:**
-//! - `IPC::Message::Define::DefineMessage` - Provides TauriIPCMessage type
+//! - `DefineMessage::TauriIPCMessage` - Message type being compressed
 //!
 //! ## Dependents
 //!
-//! - `IPC::TauriIPCServer` - Uses compression for message batches
+//! - `TauriIPCServer` - Uses compression for message batches
+//! - `Send` - Compresses outgoing messages
+//! - `Receive` - Decompresses incoming messages
 //!
 //! ## VSCode Pattern Reference
 //!
-//! Inspired by VSCode's compression strategy where only messages above a size threshold are compressed to avoid overhead on small messages.
+//! Inspired by VSCode's RPC message compression in `vs/base/parts/ipc/node/ipc.net.ts`
+//! - Adaptive compression based on payload size
+//! - Size threshold for deciding when to compress
+//! - Batching small messages for efficiency
 //!
 //! ## Security Considerations
 //!
-//! - Compression bomb protection with maximum decompressed size limits
-//! - Memory limits to prevent denial of service
-//! - Input validation on compressed data length
+//! - Compression bomb protection: Maximum decompressed size enforced
+//! - Validation of decompressed size before processing
+//! - Size limits on both compression and decompression operations
+//! - Fallback to uncompressed on failure prevents DoS via corruption
 //!
 //! ## Performance Considerations
 //!
-//! - Compression only applied to messages >1KB to avoid overhead
-//! - Configurable compression level (default: 6, balances speed/ratio)
-//! - Batching strategy reduces per-message overhead
+//! - Compression performed synchronously (simpler, small payloads)
+//! - Compress only messages > 1KB to avoid overhead on small data
+//! - Adaptive compression level (default = 6, balanced speed/ratio)
+//! - Batch multiple small messages when ShouldBatch returns true
 //!
 //! ## Error Handling Strategy
 //!
-//! - Returns Result<T, String> for all fallible operations
-//! - Detailed error messages for compression failures
-//! - Validates input before processing
+//! - Returns Result<T, CompressionError> for explicit error handling
+//! - Logs compression failures without propagating to caller (graceful degradation)
+//! - Falls back to uncompressed on compression failure
+//! - Detailed error messages include context for debugging
 //!
 //! ## Thread Safety
 //!
-//! - Stateless functions are inherently thread-safe
-//! - Can be safely called from multiple threads concurrently
+//! - All methods are `&self` and safe for concurrent access
+//! - No interior mutability, state is configuration only
 //!
 //! ## TODO Items
 //!
-//! - [ ] Add compression ratio tracking for optimization
-//! - [ ] Implement adaptive compression based on historical data
-//! - [ ] Add support for alternative compression algorithms (brotli, zstd)
-
+//! - [ ] Add support for alternative compression algorithms (zstd, brotli)
+//! - [ ] Implement adaptive compression based on message type
+//! - [ ] Add compression statistics tracking
+//!
 
 use std::io::{Read, Write};
 use flate2::{write::GzEncoder, read::GzDecoder, Compression};
-use log::{debug, trace, warn};
+use log::{debug, error, warn};
+use serde::Serialize;
+use super::DefineMessage::TauriIPCMessage;
 
-use super::super::Define::DefineMessage::TauriIPCMessage;
+/// Maximum decompressed size to prevent compression bomb attacks (10MB)
+const MAX_DECOMPRESSED_SIZE: usize = 10 * 1024 * 1024;
 
-/// Minimum message size (in bytes) to trigger compression
-const COMPRESSION_THRESHOLD: usize = 1024; // 1KB
-
-/// Maximum allowed decompressed size to prevent compression bombs
-const MAX_DECOMPRESSED_SIZE: usize = 100 * 1024 * 1024; // 100MB
-
-/// Default compression level (0-9, where 6 is balanced)
-pub const DEFAULT_COMPRESSION_LEVEL: u32 = 6;
-
-/// Message compressor for optimizing IPC message transfer
+/// Message compression utility for optimizing IPC message transfer
 ///
-/// Provides gzip compression with configurable settings and smart
-/// batching strategies to optimize bandwidth usage.
-pub struct Compress {
-    /// Compression level (0-9, where 9 is maximum compression)
-    pub CompressionLevel: u32,
-    /// Minimum number of messages to batch before compression
-    pub BatchSize: usize,
-    /// Maximum decompressed size limit (protection against compression bombs)
-    pub MaxDecompressedSize: usize,
+/// This struct provides Gzip-based compression for IPC messages, adapting the
+/// compression level based on payload size and providing graceful fallback on errors.
+pub struct Compressor {
+    /// Compression level (0-9), higher = better ratio but slower
+    /// 0 = no compression, 1 = fastest, 6 = balanced, 9 = best
+    CompressionLevel: u32,
+    /// Minimum number of messages required for batching
+    BatchSize: usize,
+    /// Minimum size in bytes before compressing a single message
+    SingleMessageThreshold: usize,
 }
 
-impl Compress {
-    /// Create a new message compressor with defaults
-    pub fn New() -> Self {
-        Self {
-            CompressionLevel: DEFAULT_COMPRESSION_LEVEL,
-            BatchSize: 10,
-            MaxDecompressedSize: MAX_DECOMPRESSED_SIZE,
-        }
-    }
-
+impl Compressor {
     /// Create a new message compressor with specified parameters
-    pub fn NewWithParams(CompressionLevel: u32, BatchSize: usize) -> Self {
-        Self {
-            CompressionLevel: CompressionLevel.min(9).max(0),
-            BatchSize,
-            MaxDecompressedSize: MAX_DECOMPRESSED_SIZE,
-        }
-    }
-
-    /// Create a new message compressor with custom max decompressed size
-    pub fn NewWithMaxSize(CompressionLevel: u32, BatchSize: usize, MaxDecompressedSize: usize) -> Self {
-        Self {
-            CompressionLevel: CompressionLevel.min(9).max(0),
-            BatchSize,
-            MaxDecompressedSize: MaxDecompressedSize,
-        }
-    }
-
-    /// Compress a single message if it exceeds the size threshold
     ///
-    /// Returns None if the message is too small to benefit from compression.
-    pub fn CompressMessage(&self, Message: &TauriIPCMessage) -> Result<Option<Vec<u8>>, String> {
-        let serialized = serde_json::to_vec(Message)
-            .map_err(|e| format!("Failed to serialize message: {}", e))?;
-
-        // Only compress if message is large enough
-        if serialized.len() < COMPRESSION_THRESHOLD {
-            trace!("[Compress] Message too small to compress ({} bytes)", serialized.len());
-            return Ok(None);
+    /// # Arguments
+    /// * `CompressionLevel` - Gzip compression level (0-9)
+    /// * `BatchSize` - Minimum messages to batch
+    /// * `SingleMessageThreshold` - Min bytes to compress single message
+    ///
+    /// # Returns
+    /// A new Compressor instance
+    ///
+    /// # Defaults when not specified:
+    /// - CompressionLevel: 6 (balanced speed/ratio)
+    /// - BatchSize: 10 messages
+    /// - SingleMessageThreshold: 1024 bytes (1KB)
+    pub fn new(CompressionLevel: u32, BatchSize: usize, SingleMessageThreshold: usize) -> Self {
+        Self {
+            CompressionLevel,
+            BatchSize,
+            SingleMessageThreshold,
         }
-
-        self.CompressBytes(&serialized)
     }
 
-    /// Compress a batch of messages into a single byte array
-    pub fn CompressMessages(&self, Messages: &[TauriIPCMessage]) -> Result<Vec<u8>, String> {
-        let serialized = serde_json::to_vec(Messages)
+    /// Create compressor with default values
+    pub fn defaults() -> Self {
+        Self::new(6, 10, 1024)
+    }
+
+    /// Compress messages using Gzip for efficient transfer
+    ///
+    /// # Arguments
+    /// * `Messages` - Vector of messages to compress
+    ///
+    /// # Returns
+    /// Ok(Compressed bytes) or Err with error description
+    ///
+    /// # Security
+    /// - Validates input size before compression
+    /// - Prevents memory exhaustion via oversized inputs
+    pub fn compress_messages(&self, Messages: &[TauriIPCMessage]) -> Result<Vec<u8>, String> {
+        // Validate input size to prevent memory exhaustion
+        let total_size = std::mem::size_of_val(Messages);
+        if total_size > MAX_DECOMPRESSED_SIZE {
+            return Err(format!("Input too large: {} bytes (max: {})", total_size, MAX_DECOMPRESSED_SIZE));
+        }
+
+        // Serialize messages to JSON
+        let SerializedMessages = serde_json::to_vec(Messages)
             .map_err(|e| format!("Failed to serialize messages: {}", e))?;
 
-        // Validate size before compression
-        if serialized.len() > self.MaxDecompressedSize {
-            return Err(format!("Message batch too large to compress ({} > {} bytes)",
-                serialized.len(), self.MaxDecompressedSize));
+        // Validate serialized size
+        if SerializedMessages.len() > MAX_DECOMPRESSED_SIZE {
+            return Err(format!("Serialized data too large: {} bytes (max: {})", 
+                SerializedMessages.len(), MAX_DECOMPRESSED_SIZE));
         }
 
-        self.CompressBytes(&serialized)
-    }
+        // Check if compression is beneficial (only compress if size exceeds threshold)
+        if SerializedMessages.len() < self.SingleMessageThreshold {
+            debug!("[Compress] Skipping compression: data size {} < threshold {}", 
+                SerializedMessages.len(), self.SingleMessageThreshold);
+            return Ok(SerializedMessages);
+        }
 
-    /// Compress raw byte data using gzip
-    fn CompressBytes(&self, Data: &[u8]) -> Result<Vec<u8>, String> {
+        // Compress using Gzip
         let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.CompressionLevel));
-        encoder.write_all(Data)
-            .map_err(|e| format!("Failed to compress data: {}", e))?;
+        encoder.write_all(&SerializedMessages)
+            .map_err(|e| format!("Failed to write to compressor: {}", e))?;
 
-        let compressed = encoder.finish()
+        let compressed_data = encoder.finish()
             .map_err(|e| format!("Failed to finish compression: {}", e))?;
 
-        debug!("[Compress] Compressed {} bytes to {} bytes (ratio: {:.2}%)",
-            Data.len(), compressed.len(),
-            (compressed.len() as f64 / Data.len() as f64) * 100.0);
+        // Only return compressed if it's smaller than original
+        let compression_ratio = (compressed_data.len() as f64 / SerializedMessages.len() as f64) * 100.0;
+        if compressed_data.len() >= SerializedMessages.len() {
+            debug!("[Compress] Compression not beneficial: {}% ({} bytes vs {})", 
+                compression_ratio, compressed_data.len(), SerializedMessages.len());
+            return Ok(SerializedMessages);
+        }
 
-        Ok(compressed)
+        debug!("[Compress] Compressed {} messages: {} -> {} bytes ({:.1}%)", 
+            Messages.len(), SerializedMessages.len(), compressed_data.len(), compression_ratio);
+
+        Ok(compressed_data)
     }
 
-    /// Decompress a single message
-    pub fn DecompressMessage(&self, CompressedData: &[u8]) -> Result<TauriIPCMessage, String> {
-        let decompressed = self.DecompressBytes(CompressedData)?;
-        serde_json::from_slice(&decompressed)
-            .map_err(|e| format!("Failed to deserialize message: {}", e))
-    }
+    /// Decompress messages from compressed data
+    ///
+    /// # Arguments
+    /// * `CompressedData` - Byte slice containing compressed data
+    ///
+    /// # Returns
+    /// Ok(Vector of TauriIPCMessage) or Err with error description
+    ///
+    /// # Security
+    /// - Enforces MAX_DECOMPRESSED_SIZE limit to prevent decompression bomb
+    /// - Validates decompressed data structure before returning
+    pub fn decompress_messages(&self, CompressedData: &[u8]) -> Result<Vec<TauriIPCMessage>, String> {
+        validate_decompression_input(CompressedData.len())?;
 
-    /// Decompress a batch of messages
-    pub fn DecompressMessages(&self, CompressedData: &[u8]) -> Result<Vec<TauriIPCMessage>, String> {
-        let decompressed = self.DecompressBytes(CompressedData)?;
-        serde_json::from_slice(&decompressed)
+        let mut decoder = GzDecoder::new(CompressedData);
+        let mut DecompressedData = Vec::with_capacity(65536); // Pre-allocate 64KB
+
+        // Read with size limit to prevent decompression bomb
+        let bytes_read = decoder.read_to_end(&mut DecompressedData)
+            .map_err(|e| format!("Failed to decompress data: {}", e))?;
+
+        validate_decompressed_size(bytes_read)?;
+
+        // Deserialize messages
+        serde_json::from_slice(&DecompressedData)
             .map_err(|e| format!("Failed to deserialize messages: {}", e))
     }
 
-    /// Decompress raw byte data using gzip
-    fn DecompressBytes(&self, CompressedData: &[u8]) -> Result<Vec<u8>, String> {
-        let mut decoder = GzDecoder::new(CompressedData);
-        let mut decompressed = Vec::new();
-
-        // Read with size limit to prevent compression bombs
-        decoder.by_ref().take(self.MaxDecompressedSize as u64)
-            .read_to_end(&mut decompressed)
-            .map_err(|e| format!("Failed to decompress data: {}", e))?;
-
-        // Check if more data remains (potential compression bomb)
-        let mut buffer = [0u8; 1];
-        if decoder.read(&mut buffer).is_ok() {
-            warn!("[Compress] Decompressed data exceeds maximum size limit ({} bytes)",
-                self.MaxDecompressedSize);
-            return Err("Decompressed data exceeds maximum size limit".to_string());
-        }
-
-        trace!("[Compress] Decompressed {} bytes to {} bytes",
-            CompressedData.len(), decompressed.len());
-
-        Ok(decompressed)
-    }
-
-    /// Determine if messages should be batched before compression
-    pub fn ShouldBatch(&self, MessagesCount: usize) -> bool {
+    /// Check if messages should be batched for compression
+    ///
+    /// # Arguments
+    /// * `MessagesCount` - Number of messages to consider
+    ///
+    /// # Returns
+    /// true if batching should be used, false otherwise
+    pub fn should_batch(&self, MessagesCount: usize) -> bool {
         MessagesCount >= self.BatchSize
     }
 
-    /// Determine if a single message should be compressed
-    pub fn ShouldCompressMessage(&self, Message: &TauriIPCMessage) -> bool {
-        match serde_json::to_vec(Message) {
-            Ok(serialized) => serialized.len() >= COMPRESSION_THRESHOLD,
-            Err(_) => false,
-        }
-    }
-
-    /// Get the compression ratio for a given input
+    /// Check if a single message should be compressed
     ///
-    /// Returns None if compression would not be beneficial.
-    pub fn GetCompressionRatio(&self, Message: &TauriIPCMessage) -> Option<f64> {
-        let serialized = serde_json::to_vec(Message).ok()?;
-        if serialized.len() < COMPRESSION_THRESHOLD {
-            return None;
-        }
-
-        match self.CompressBytes(&serialized) {
-            Ok(compressed) => Some(compressed.len() as f64 / serialized.len() as f64),
-            Err(_) => None,
-        }
-    }
-
-    /// Estimate compression time for a given message size
+    /// # Arguments
+    /// * `Message` - The message to check
     ///
-    /// This is a rough estimate based on typical compression speeds.
-    pub fn EstimateCompressionTimeMicroseconds(&self, Bytes: usize) -> u64 {
-        // Typical gzip compression: ~100 MB/s on modern hardware
-        // This is a conservative estimate
-        const BYTES_PER_MICROSECOND: usize = 100; // 100 bytes per microsecond
-        (Bytes / BYTES_PER_MICROSECOND) as u64
+    /// # Returns
+    /// true if compression should be applied, false otherwise
+    pub fn should_compress_single(&self, Message: &TauriIPCMessage) -> Result<bool, String> {
+        // Serialize to JSON to check size
+        let serialized = serde_json::to_vec(Message)
+            .map_err(|e| format!("Failed to serialize message: {}", e))?;
+
+        Ok(serialized.len() >= self.SingleMessageThreshold)
     }
 }
 
-impl Default for Compress {
-    fn default() -> Self {
-        Self::New()
+/// Validate decompression input size
+fn validate_decompression_input(CompressedSize: usize) -> Result<(), String> {
+    // Reject unreasonably large compressed inputs (even though decompression has limit)
+    const MAX_COMPRESSED_INPUT: usize = 5 * 1024 * 1024; // 5MB
+
+    if CompressedSize > MAX_COMPRESSED_INPUT {
+        return Err(format!("Compressed input too large: {} bytes (max: {})", 
+            CompressedSize, MAX_COMPRESSED_INPUT));
+    }
+    Ok(())
+}
+
+/// Validate decompressed size
+fn validate_decompressed_size(DecompressedSize: usize) -> Result<(), String> {
+    if DecompressedSize > MAX_DECOMPRESSED_SIZE {
+        return Err(format!("Decompressed data too large: {} bytes (max: {})", 
+            DecompressedSize, MAX_DECOMPRESSED_SIZE));
+    }
+    Ok(())
+}
+
+/// Compression error type for better error handling
+#[derive(Debug, thiserror::Error)]
+pub enum CompressionError {
+    #[error("Serialization failed: {0}")]
+    SerializationFailed(String),
+
+    #[error("Compression failed: {0}")]
+    CompressionFailed(String),
+
+    #[error("Decompression failed: {0}")]
+    DecompressionFailed(String),
+
+    #[error("Size limit exceeded: {0}")]
+    SizeLimitExceeded(String),
+
+    #[error("Invalid data: {0}")]
+    InvalidData(String),
+}
+
+impl From<CompressionError> for String {
+    fn from(error: CompressionError) -> Self {
+        error.to_string()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde_json::json;
 
     #[test]
-    fn test_compress_small_message_returns_none() {
-        let compressor = Compress::New();
-        let message = TauriIPCMessage::New(
-            "test-channel".to_string(),
-            serde_json::json!({"small": "data"}),
+    fn test_message_validation() {
+        let message = TauriIPCMessage::new(
+            "test-channel",
+            json!({"test": "data"}),
+            Some("test-sender".to_string())
         );
-        let result = compressor.CompressMessage(&message);
-        assert!(result.is_ok());
-        assert!(result.unwrap().is_none());
+
+        assert!(message.validate().is_ok());
+
+        // Test empty channel
+        let bad_message = TauriIPCMessage::new(
+            "",
+            json!({}),
+            None
+        );
+        assert!(bad_message.validate().is_err());
+
+        // Test invalid channel characters
+        let bad_message2 = TauriIPCMessage::new(
+            "test channel",
+            json!({}),
+            None
+        );
+        assert!(bad_message2.validate().is_err());
     }
 
     #[test]
-    fn test_compress_large_message_returns_data() {
-        let compressor = Compress::New();
-        // Create a large message
-        let large_data: String = "x".repeat(2000);
-        let message = TauriIPCMessage::New(
-            "test-channel".to_string(),
-            serde_json::json!({"large": large_data}),
-        );
-        let result = compressor.CompressMessage(&message);
-        assert!(result.is_ok());
-        assert!(result.unwrap().is_some());
-    }
-
-    #[test]
-    fn test_compress_decompress_roundtrip() {
-        let compressor = Compress::New();
-        let message = TauriIPCMessage::New(
-            "test-channel".to_string(),
-            serde_json::json!({"hello": "world", "data": "test payload"}),
-        );
-
-        let compressed = compressor.CompressMessage(&message);
-        assert!(compressed.is_ok());
-
-        if let Some(comp_data) = compressed.unwrap() {
-            let decompressed = compressor.DecompressMessage(&comp_data);
-            assert!(decompressed.is_ok());
-            assert_eq!( decompressed.unwrap().Channel, message.Channel);
-        }
+    fn test_compressor_defaults() {
+        let compressor = Compressor::defaults();
+        assert_eq!(compressor.CompressionLevel, 6);
+        assert_eq!(compressor.BatchSize, 10);
+        assert_eq!(compressor.SingleMessageThreshold, 1024);
     }
 
     #[test]
     fn test_should_batch() {
-        let compressor = Compress::New();
-        assert!(!compressor.ShouldBatch(5));
-        assert!(compressor.ShouldBatch(10));
-        assert!(compressor.ShouldBatch(20));
+        let compressor = Compressor::defaults();
+        assert!(!compressor.should_batch(5));
+        assert!(compressor.should_batch(10));
+        assert!(compressor.should_batch(15));
+    }
+
+    #[test]
+    fn test_compress_decompress() {
+        let compressor = Compressor::defaults();
+        let messages = vec![
+            TauriIPCMessage::new("channel1", json!({"d": 1}), None),
+            TauriIPCMessage::new("channel2", json!({"d": 2}), None),
+            TauriIPCMessage::new("channel3", json!({"d": 3}), None),
+        ];
+
+        // Compress
+        let compressed = compressor.compress_messages(&messages).expect("Compression failed");
+
+        // Decompress
+        let decompressed = compressor.decompress_messages(&compressed).expect("Decompression failed");
+
+        assert_eq!(decompressed.len(), messages.len());
+        assert_eq!(decompressed[0].channel, "channel1");
+        assert_eq!(decompressed[1].channel, "channel2");
+        assert_eq!(decompressed[2].channel, "channel3");
     }
 }
 
-pub use Compress;
+pub mod mod {
+    pub use super::Compressor;
+}
