@@ -118,7 +118,7 @@ pub async fn ExecuteSCMCommand(
 
 #[command]
 pub async fn GetSCMBranches(
-	State:State<'_, Arc<ApplicationState>>,
+	_State:State<'_, Arc<ApplicationState>>,
 
 	ProviderIdentifier:String,
 ) -> Result<Value, String> {
@@ -134,7 +134,7 @@ pub async fn GetSCMBranches(
 }
 
 #[command]
-pub async fn CheckoutSCMBranch(State:State<'_, Arc<ApplicationState>>, BranchName:String) -> Result<Value, String> {
+pub async fn CheckoutSCMBranch(_State:State<'_, Arc<ApplicationState>>, BranchName:String) -> Result<Value, String> {
 	log::debug!("[SCM Command] Checking out branch: {}", BranchName);
 
 	// TODO: Implement branch checkout
@@ -143,7 +143,7 @@ pub async fn CheckoutSCMBranch(State:State<'_, Arc<ApplicationState>>, BranchNam
 
 #[command]
 pub async fn GetSCMCommitHistory(
-	State:State<'_, Arc<ApplicationState>>,
+	_State:State<'_, Arc<ApplicationState>>,
 
 	MaxCount:Option<usize>,
 ) -> Result<Value, String> {
@@ -159,7 +159,7 @@ pub async fn GetSCMCommitHistory(
 
 #[command]
 pub async fn StageSCMResource(
-	State:State<'_, Arc<ApplicationState>>,
+	_State:State<'_, Arc<ApplicationState>>,
 
 	ResourceURI:String,
 

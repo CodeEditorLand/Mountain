@@ -22,10 +22,11 @@
 //! - [`ipc_server`]: Core IPC server implementation
 //! - [`commands`]: Tauri command handlers for IPC operations
 
-pub mod commands;
-pub mod compression;
-pub mod connection_pool;
-pub mod encryption;
-pub mod ipc_server;
-pub mod permissions;
-pub mod types;
+// pub mod Command;
+// pub mod compression;
+// pub mod connection_pool;
+// pub mod encryption;
+// pub mod ipc_server;
+// pub mod permissions;
+// pub mod types;
+

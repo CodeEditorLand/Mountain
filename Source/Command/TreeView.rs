@@ -105,7 +105,7 @@ pub async fn GetTreeViewItem(
 /// TODO: OnTreeNodeExpanded is not defined in TreeViewProvider trait - needs implementation
 #[command]
 pub async fn OnTreeViewExpansionChanged(
-	ApplicationHandle:AppHandle<Wry>,
+	_ApplicationHandle:AppHandle<Wry>,
 
 	_State:State<'_, Arc<ApplicationState>>,
 
@@ -124,9 +124,11 @@ pub async fn OnTreeViewExpansionChanged(
 /// TODO: OnTreeSelectionChanged is not defined in TreeViewProvider trait - needs implementation
 #[command]
 pub async fn OnTreeViewSelectionChanged(
-	ApplicationHandle:AppHandle<Wry>,
+	_ApplicationHandle:AppHandle<Wry>,
+
 
 	_State:State<'_, Arc<ApplicationState>>,
+
 
 	_ViewId:String,
 
