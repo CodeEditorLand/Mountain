@@ -55,6 +55,16 @@ pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard
 	CommonError::StateLockPoisoned { Context:ErrorMessage }
 }
 
+/// Maps a generic `PoisonError` from a failed Mutex lock into a
+/// structured `CommonError::StateLockPoisoned`.
+pub fn MapLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>) -> CommonError {
+	let ErrorMessage = format!("[EnvironmentUtility] Failed to lock Mutex: {}", Error);
+
+	error!("{}", ErrorMessage);
+
+	CommonError::StateLockPoisoned { Context:ErrorMessage }
+}
+
 /// A simple utility to detect a language identifier string from a file path's
 /// extension.
 pub fn DetectLanguageIdentifierFromFilePath(Path:&Path) -> String {

@@ -331,7 +331,7 @@ impl DocumentProvider for MountainEnvironment {
 			let OldDocument = Guard.remove(OriginalURI.as_str());
 
 			let NewDocument =
-				DocumentStateDTO::Create(NewURI.clone(), OldDocument.map(|d| d.LanguageIdentifier), OriginalContent);
+				DocumentStateDTO::Create(NewURI.clone(), OldDocument.map(|d| d.LanguageIdentifier), OriginalContent)?;
 
 			let DTO = NewDocument.ToDTO()?;
 

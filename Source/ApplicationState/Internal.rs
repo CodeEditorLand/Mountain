@@ -420,7 +420,8 @@ pub async fn ScanAndPopulateExtensions(
 	let mut failed_scans = 0;
 
 	for Path in ScanPaths {
-		match ExtensionManagement::Scanner::ScanDirectoryForExtensions(ApplicationHandle.clone(), Path).await {
+		let PathClone = Path.clone();
+		match ExtensionManagement::Scanner::ScanDirectoryForExtensions(ApplicationHandle.clone(), PathClone).await {
 			Ok(FoundInPath) => {
 				successful_scans += 1;
 				for Extension in FoundInPath {
@@ -505,8 +506,8 @@ pub async fn ScanExtensionsWithRecovery(
 			scanned_extensions.clear();
 			drop(scanned_extensions);
 
-			// Retry the scan
-			ScanAndPopulateExtensions(ApplicationHandle, State).await
+			// Retry the scan with a cloned handle
+			ScanAndPopulateExtensions(ApplicationHandle.clone(), State).await
 		},
 	}
 }

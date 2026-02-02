@@ -79,12 +79,15 @@ pub struct TerminalStateDTO {
 
 	// --- Runtime Handles ---
 	/// Channel for sending input to PTY
+	#[serde(skip)]
 	pub PTYInputTransmitter:Option<TokioMPSC::Sender<String>>,
 
 	/// Handle for output reader task
+	#[serde(skip)]
 	pub ReaderTaskHandle:Option<Arc<TokioMutex<Option<JoinHandle<()>>>>>,
 
 	/// Handle for process wait task
+	#[serde(skip)]
 	pub ProcessWaitHandle:Option<Arc<TokioMutex<Option<JoinHandle<()>>>>>,
 }
 

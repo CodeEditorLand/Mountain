@@ -183,7 +183,9 @@ pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Resul
 
 /// Single connection attempt without retry logic
 async fn try_connect_single(_SideCarIdentifier:&str, endpoint:&str) -> Result<(), VineError> {
-	let channel = tonic::transport::Channel::from_shared(endpoint.parse()?);
+	let parsed_endpoint = endpoint.parse().map_err(|e| VineError::RPCError(format!("Invalid endpoint: {}", e)))?;
+	let channel = tonic::transport::Channel::from_shared(parsed_endpoint)
+		.map_err(|e| VineError::RPCError(format!("Failed to create channel: {}", e)))?;
 	let client = CocoonClient::new(channel);
 
 	let mut clients = SIDECAR_CLIENTS.lock();
@@ -378,7 +380,15 @@ pub async fn SendRequest(
 
 	let client = client.unwrap();
 
-	let request = GenericRequest { method:Method, parameter:parameter_bytes };
+	let request_identifier = std::time::SystemTime::now()
+		.duration_since(std::time::UNIX_EPOCH)
+		.unwrap()
+		.as_nanos() as u64;
+	let request = GenericRequest {
+		request_identifier,
+		method:Method,
+		parameter:parameter_bytes
+	};
 
 	let result = timeout(
 		timeout,

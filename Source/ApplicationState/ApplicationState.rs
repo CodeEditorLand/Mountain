@@ -794,12 +794,14 @@ impl ApplicationState {
 
 		// Remove documents that reference non-existent files
 		open_documents.retain(|uri, _doc_state| {
-			if uri.scheme() == "file" {
-				if let Some(path) = uri.to_file_path().ok() {
-					return path.exists();
+			if let Ok(parsed_url) = url::Url::parse(uri) {
+				if parsed_url.scheme() == "file" {
+					if let Ok(path) = parsed_url.to_file_path() {
+						return path.exists();
+					}
 				}
 			}
-			true // Keep non-file URIs
+			true // Keep non-file URIs or invalid URIs
 		});
 		Ok(())
 	}

@@ -24,15 +24,13 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::DispatchLogic,
 	// Refactored modules
-	Binary::{
-		Build::{TauriBuild, WindowBuild, LoggingPlugin, LocalhostPlugin},
-		Register::{CommandRegister, IPCServerRegister, StatusReporterRegister, AdvancedFeaturesRegister, WindSyncRegister},
-		Service::{VineStart, CocoonStart, ConfigurationInitialize},
-		Extension::{ScanPathConfigure, ExtensionPopulate},
-		Shutdown::{RuntimeShutdown, SchedulerShutdown},
-		Tray::EnableTray,
-		Initialize::{CliParse, StateBuild, PortSelector, RuntimeBuild, LogLevel},
-	},
+	Binary::Build::{TauriBuild, WindowBuild, LoggingPlugin, LocalhostPlugin},
+	Binary::Register::{CommandRegister, IPCServerRegister, StatusReporterRegister, AdvancedFeaturesRegister, WindSyncRegister},
+	Binary::Service::{VineStart, CocoonStart, ConfigurationInitialize},
+	Binary::Extension::{ScanPathConfigure, ExtensionPopulate},
+	Binary::Shutdown::{RuntimeShutdown, SchedulerShutdown},
+	Binary::Tray::EnableTray,
+	Binary::Initialize::{CliParse, StateBuild, PortSelector, RuntimeBuild, LogLevel},
 };
 
 /// Logs a checkpoint message at TRACE level.

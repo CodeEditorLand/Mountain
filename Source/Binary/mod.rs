@@ -12,6 +12,7 @@
 //! - Initialize: Application initialization
 //! - IPC: IPC command modules
 //! - Tray: System tray functionality
+//! - Main: Main entry point for the application
 
 // Build modules
 pub mod Build;
@@ -39,3 +40,6 @@ pub mod IPC;
 
 // Tray modules
 pub mod Tray;
+
+// Main entry point
+pub mod Main;

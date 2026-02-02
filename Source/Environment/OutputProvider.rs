@@ -116,7 +116,10 @@ impl OutputChannelManager for MountainEnvironment {
 
 		ChannelsGuard
 			.entry(ChannelIdentifier.clone())
-			.or_insert_with(|| OutputChannelStateDTO::Create(&Name, LanguageIdentifier.clone()));
+			.or_insert_with(|| OutputChannelStateDTO::Create(&Name, LanguageIdentifier.clone()).unwrap_or_else(|e| {
+				error!("[OutputProvider] Failed to create output channel: {}", e);
+				OutputChannelStateDTO::default()
+			}));
 
 		drop(ChannelsGuard);
 
