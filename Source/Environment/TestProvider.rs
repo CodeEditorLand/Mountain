@@ -88,7 +88,7 @@ pub struct TestProviderState {
 }
 
 impl TestProviderState {
-	fn new() -> Self { Self { Controllers:HashMap::new(), ActiveRuns:HashMap::new() } }
+	pub fn new() -> Self { Self { Controllers:HashMap::new(), ActiveRuns:HashMap::new() } }
 }
 
 #[async_trait]
@@ -275,8 +275,7 @@ impl MountainEnvironment {
 			.ApplicationState
 			.TestProviderState
 			.write()
-			.await
-			.map_err(Utility::MapLockErrorToCommonError)?;
+			.await;
 
 		if let Some(TestRun) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			TestRun.Status = Status;
@@ -308,8 +307,7 @@ impl MountainEnvironment {
 			.ApplicationState
 			.TestProviderState
 			.write()
-			.await
-			.map_err(Utility::MapLockErrorToCommonError)?;
+			.await;
 
 		if let Some(TestRun) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			for Result in Results {
@@ -323,10 +321,7 @@ impl MountainEnvironment {
 
 	/// Calculates the final status of a test run based on its results.
 	async fn CalculateRunStatus(&self, RunIdentifier:&str) -> TestRunStatus {
-		let StateGuard = match self.ApplicationState.TestProviderState.read().await {
-			Ok(Guard) => Guard,
-			Err(_) => return TestRunStatus::Errored,
-		};
+		let StateGuard = self.ApplicationState.TestProviderState.read().await;
 
 		if let Some(TestRun) = StateGuard.ActiveRuns.get(RunIdentifier) {
 			if TestRun.Results.is_empty() {
