@@ -384,6 +384,9 @@ pub struct ApplicationState {
 
 	pub NextSourceControlManagementProviderHandle:Arc<AtomicU32>,
 
+	// --- Test Provider State ---
+	pub TestProviderState:Arc<tokio::sync::RwLock<crate::Environment::TestProvider::TestProviderState>>,
+
 	// --- IPC & User Interface State ---
 	pub PendingUserInterfaceRequests:
 		Arc<StandardMutex<HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>>>>,
@@ -505,6 +508,10 @@ impl Default for ApplicationState {
 			SourceControlManagementResources:Arc::new(StandardMutex::new(HashMap::new())),
 
 			NextSourceControlManagementProviderHandle:Arc::new(AtomicU32::new(1)),
+
+			TestProviderState:Arc::new(tokio::sync::RwLock::new(
+				crate::Environment::TestProvider::TestProviderState::new()
+			)),
 
 			PendingUserInterfaceRequests:Arc::new(StandardMutex::new(HashMap::new())),
 		}

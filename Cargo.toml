@@ -1,6 +1,6 @@
 [[bin]]
 name = "Mountain"
-path = "Source/Binary.rs"
+path = "Source/Binary/Main.rs"
 
 [build-dependencies]
 json5 = { workspace = true }

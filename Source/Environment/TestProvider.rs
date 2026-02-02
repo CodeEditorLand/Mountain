@@ -81,9 +81,10 @@ struct TestRun {
 }
 
 /// Stores test provider state
-struct TestProviderState {
-	Controllers:HashMap<String, TestControllerState>,
-	ActiveRuns:HashMap<String, TestRun>,
+#[derive(Debug)]
+pub struct TestProviderState {
+	pub Controllers:HashMap<String, TestControllerState>,
+	pub ActiveRuns:HashMap<String, TestRun>,
 }
 
 impl TestProviderState {

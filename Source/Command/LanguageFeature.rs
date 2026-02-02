@@ -102,25 +102,25 @@ pub async fn MountainProvideHover(
 	.await
 }
 
-#[command]
-pub async fn MountainProvideDocumentSymbols(ApplicationHandle:AppHandle<Wry>, URI:String) -> Result<Value, String> {
-	log::debug!("[Language Feature] Providing document symbols for: {}", URI);
+// #[command]
+// pub async fn MountainProvideDocumentSymbols(ApplicationHandle:AppHandle<Wry>, URI:String) -> Result<Value, String> {
+// 	log::debug!("[Language Feature] Providing document symbols for: {}", URI);
 
-	if URI.is_empty() {
-		return Err("Empty URI for document symbols request".to_string());
-	}
+// 	if URI.is_empty() {
+// 		return Err("Empty URI for document symbols request".to_string());
+// 	}
 
-	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
+// 	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
 
-	InvokeProvider(ApplicationHandle, |Provider| {
-		async move {
-			let Result = Provider.ProvideDocumentSymbols(DocumentURI).await?;
+// 	InvokeProvider(ApplicationHandle, |Provider| {
+// 		async move {
+// 			let Result = Provider.ProvideDocumentSymbols(DocumentURI).await?;
 
-			Ok(serde_json::to_value(Result)?)
-		}
-	})
-	.await
-}
+// 			Ok(serde_json::to_value(Result)?)
+// 		}
+// 	})
+// 	.await
+// }
 
 #[command]
 pub async fn MountainProvideCodeActions(

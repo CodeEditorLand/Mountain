@@ -420,10 +420,11 @@ pub async fn SendRequest(
 		},
 		Err(_) => {
 			RecordSideCarFailure(SideCarIdentifier);
-			Err(VineError::RequestTimeout(format!(
-				"Request to sidecar '{}' timed out after {}ms",
-				SideCarIdentifier, timeout.as_millis()
-			)))
+			Err(VineError::RequestTimeout {
+				SideCarIdentifier: SideCarIdentifier.to_string(),
+				MethodName: Method.clone(),
+				TimeoutMilliseconds: timeout.as_millis() as u64
+			})
 		}
 	}
 }

@@ -196,7 +196,7 @@ pub fn Initialize(
 	tokio::spawn(async move {
 		info!("[VineServer] Starting MountainService gRPC server on {}", MountainServerName);
 
-		let server_result = Server::builder()
+		let ServerResult = Server::builder()
 			.add_service(
 				MountainServiceServer::new(MountainService)
 					.max_decoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
@@ -205,7 +205,7 @@ pub fn Initialize(
 			.serve(MountainAddress)
 			.await;
 
-		match server_result {
+		match ServerResult {
 			Ok(_) => {
 				info!("[VineServer] MountainService server shut down gracefully");
 			},
@@ -220,7 +220,7 @@ pub fn Initialize(
 	tokio::spawn(async move {
 		info!("[VineServer] Starting CocoonService gRPC server on {}", CocoonServerName);
 
-		let server_result = Server::builder()
+		let ServerResult = Server::builder()
 			.add_service(
 				CocoonServiceServer::new(cocoon_service_impl)
 					.max_decoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
@@ -229,7 +229,7 @@ pub fn Initialize(
 			.serve(CocoonAddress)
 			.await;
 
-		match server_result {
+		match ServerResult {
 			Ok(_) => {
 				info!("[VineServer] CocoonService server shut down gracefully");
 			},

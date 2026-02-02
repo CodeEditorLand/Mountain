@@ -1,4 +1,5 @@
-//!
+#![allow(non_snake_case, non_camel_case_types, non_upper_case_globals)]
+
 //! # Library
 //!
 //! Library root module for the Mountain application, declaring all subsystem
@@ -54,7 +55,6 @@
 //!
 //! ### Entry Point
 //! - Binary: Main application entry point
-//!
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
