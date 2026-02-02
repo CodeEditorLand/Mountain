@@ -135,13 +135,13 @@ pub struct PoolStats {
 
 /// Connection pool with advanced management
 pub struct ConnectionPool {
-	config:PoolConfig,
-	connections:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
-	semaphore:Arc<Semaphore>,
-	wait_queue:Arc<AsyncMutex<Vec<Arc<Notify>>>>,
-	stats:Arc<RwLock<PoolStats>>,
-	health_checker:Arc<AsyncMutex<ConnectionHealthChecker>>,
-	is_running:Arc<AsyncMutex<bool>>,
+	pub config:PoolConfig,
+	pub connections:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
+	pub semaphore:Arc<Semaphore>,
+	pub wait_queue:Arc<AsyncMutex<Vec<Arc<Notify>>>>,
+	pub stats:Arc<RwLock<PoolStats>>,
+	pub health_checker:Arc<AsyncMutex<ConnectionHealthChecker>>,
+	pub is_running:Arc<AsyncMutex<bool>>,
 }
 
 impl ConnectionPool {

@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package vine_ipc;
+package Vine;
 
 // Service running on the Mountain host, listening for requests from Cocoon.
 service MountainService {

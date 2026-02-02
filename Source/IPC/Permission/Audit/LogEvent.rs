@@ -1,17 +1,17 @@
-//!
 //! # Audit
 //!
 //! ## File: IPC/Permission/Audit/LogEvent.rs
 //!
 //! ## Role in Mountain Architecture
 //!
-//! Provides comprehensive security event logging and audit trail functionality for IPC operations,
-//! enabling security compliance monitoring, forensic analysis, and performance tracking.
+//! Provides comprehensive security event logging and audit trail functionality
+//! for IPC operations, enabling security compliance monitoring, forensic
+//! analysis, and performance tracking.
 //!
 //! ## Primary Responsibility
 //!
-//! Log security events for audit trails including permission checks, access attempts,
-//! security violations, and configuration changes.
+//! Log security events for audit trails including permission checks, access
+//! attempts, security violations, and configuration changes.
 //!
 //! ## Secondary Responsibilities
 //!
@@ -34,7 +34,8 @@
 //! - `chrono` - Timestamp management (optional, falls back to std::time)
 //!
 //! **Internal Modules:**
-//! - `Validate::ValidatePermission::{Permission, SecurityContext}` - Permission context
+//! - `Validate::ValidatePermission::{Permission, SecurityContext}` - Permission
+//!   context
 //! - `Role::ManageRole::Role` - Role change events
 //!
 //! ## Dependents
@@ -47,7 +48,8 @@
 //!
 //! ## VSCode Pattern Reference
 //!
-//! Inspired by VSCode's audit logging in `vs/platform/telemetry/common/telemetryService.ts`
+//! Inspired by VSCode's audit logging in
+//! `vs/platform/telemetry/common/telemetryService.ts`
 //! - Structured event logging with contextual metadata
 //! - Severity classification for event filtering
 //! - Bounded buffer for log rotation
@@ -99,49 +101,61 @@
 //! - [ ] Support structured queries (SQL-like syntax)
 //! - [ ] Add real-time alerting for critical events
 //! - [ ] Implement log aggregation across multiple instances
-//!
 
-use std::collections::VecDeque;
-use std::sync::Arc;
+use std::{
+	collections::VecDeque,
+	net::IpAddr,
+	sync::Arc,
+	time::{Duration, SystemTime, UNIX_EPOCH},
+};
+
 use tokio::sync::RwLock;
-use log::{debug, info, warn, error};
-use serde::{Serialize, Deserialize};
-use std::time::{SystemTime, UNIX_EPOCH, Duration};
-use std::net::IpAddr;
+use log::{debug, error, info, warn};
+use serde::{Deserialize, Serialize};
 
 /// Maximum number of events to store in the audit log
 /// bounded to prevent memory exhaustion
-const MAX_LOG_SIZE: usize = 1000;
+const MAX_LOG_SIZE:usize = 1000;
 
 /// Default timeout for log operations in milliseconds
-const LOG_TIMEOUT_MS: u64 = 5000;
+const LOG_TIMEOUT_MS:u64 = 5000;
 
 /// Security event type categorization for audit trail classification
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum SecurityEventType {
-    /// Access was granted to a resource or operation
-    AccessGranted,
-    /// Access was denied due to insufficient permissions
-    PermissionDenied,
-    /// Authentication attempt failed
-    AuthenticationFailed,
-    /// Application configuration was modified
-    ConfigurationChange,
-    /// Security policy was violated
-    SecurityViolation,
-    /// Performance anomaly detected
-    PerformanceAnomaly,
-    /// User role was changed
-    RoleChange,
-    /// Permission was added, removed, or modified
-    PermissionChange,
-    /// Security policy was updated
-    PolicyChange,
+	/// Access was granted to a resource or operation
+	AccessGranted,
+	/// Access was denied due to insufficient permissions
+	PermissionDenied,
+	/// Authentication attempt failed
+	AuthenticationFailed,
+	/// Application configuration was modified
+	ConfigurationChange,
+	/// Security policy was violated
+	SecurityViolation,
+	/// Performance anomaly detected
+	PerformanceAnomaly,
+	/// User role was changed
+	RoleChange,
+	/// Permission was added, removed, or modified
+	PermissionChange,
+	/// Security policy was updated
+	PolicyChange,
 }
 
 impl SecurityEventType {
-    /// Get display name for event type
-    pub fn DisplayName(&self) -> String {
-        match self {
-            SecurityEventType::AccessGranted => String::from("AccessGranted"),
-            SecurityEventType::PermissionDenied => String::from("Permission{
+	/// Get display name for event type
+	pub fn DisplayName(&self) -> String {
+		match self {
+			SecurityEventType::AccessGranted => String::from("AccessGranted"),
+			SecurityEventType::PermissionDenied => String::from("PermissionDenied"),
+			SecurityEventType::AuthenticationFailed => todo!(),
+			SecurityEventType::ConfigurationChange => todo!(),
+			SecurityEventType::SecurityViolation => todo!(),
+			SecurityEventType::PerformanceAnomaly => todo!(),
+			SecurityEventType::RoleChange => todo!(),
+			SecurityEventType::PermissionChange => todo!(),
+			SecurityEventType::PolicyChange => todo!(),
+		}
+	}
+}

@@ -67,6 +67,8 @@ url = { workspace = true, features = ["serde"] }
 uuid = { workspace = true, features = ["v4", "serde"] }
 flate2 = { workspace = true }
 ring = { workspace = true }
+bincode = { workspace = true }
+brotli = { workspace = true }
 
 [features]
 default = ["ExtensionHostCocoon", "MistNative"]

@@ -13,10 +13,10 @@ pub mod PerformanceDashboard;
 
 /// Enhanced IPC manager that combines all advanced features
 pub struct EnhancedIPCManager {
-	pub compressor:MessageCompressor,
-	pub connection_pool:ConnectionPool,
-	pub secure_channel:SecureMessageChannel,
-	pub performance_dashboard:PerformanceDashboard,
+	pub compressor:MessageCompressor::MessageCompressor,
+	pub connection_pool:ConnectionPool::ConnectionPool,
+	pub secure_channel:SecureMessageChannel::SecureMessageChannel,
+	pub performance_dashboard:PerformanceDashboard::PerformanceDashboard,
 }
 
 impl EnhancedIPCManager {
@@ -85,7 +85,7 @@ impl EnhancedIPCManager {
 
 		// Record performance metrics
 		let duration = start_time.elapsed().as_millis() as f64;
-		let metric = PerformanceDashboard::create_metric(
+		let metric = PerformanceDashboard::PerformanceDashboard::create_metric(
 			MetricType::MessageProcessingTime,
 			duration,
 			Some(channel.to_string()),

@@ -302,11 +302,10 @@ use log::{debug, info};
 
 // Import Air types using stub types from Air module
 // TODO: Replace with actual Air types when AirIntegration feature is implemented
-use crate::Air::{
+use crate::Air::AirServiceTypesStub::{
 	AirClientType,
 	ApplyUpdateRequest,
 	AuthenticationRequest,
-	DEFAULT_AIR_SERVER_ADDRESS,
 	DownloadRequest,
 	IndexRequest,
 	MetricsRequest,

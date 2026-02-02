@@ -80,12 +80,12 @@ impl EncryptionKey {
 
 /// Secure message channel with encryption and authentication
 pub struct SecureMessageChannel {
-	config:SecurityConfig,
-	current_key:Arc<RwLock<EncryptionKey>>,
-	previous_keys:Arc<RwLock<HashMap<String, EncryptionKey>>>,
-	hmac_key:Arc<RwLock<Vec<u8>>>,
-	rng:SystemRandom,
-	key_rotation_task:Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
+	pub config:SecurityConfig,
+	pub current_key:Arc<RwLock<EncryptionKey>>,
+	pub previous_keys:Arc<RwLock<HashMap<String, EncryptionKey>>>,
+	pub hmac_key:Arc<RwLock<Vec<u8>>>,
+	pub rng:SystemRandom,
+	pub key_rotation_task:Arc<RwLock<Option<tokio::task::JoinHandle<()>>>>,
 }
 
 impl SecureMessageChannel {
