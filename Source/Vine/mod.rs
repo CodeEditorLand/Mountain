@@ -47,7 +47,7 @@
 //!       │  Status Updates            │ (returns Empty)
 //!       │                            │
 //!       │◄───────────────────────────┤ ProcessMountainRequest
-//!       │  WebView Operations         │ (returns GenericResponse)
+//!       │  Webview Operations         │ (returns GenericResponse)
 //!       │                            │
 //!       │◄───────────────────────────┤ SendMountainNotification
 //!       │  Configuration Changes      │ (returns Empty)

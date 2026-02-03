@@ -95,7 +95,7 @@ use CommonLibrary::{
 	Testing::TestController::TestController,
 	TreeView::TreeViewProvider::TreeViewProvider,
 	UserInterface::UserInterfaceProvider::UserInterfaceProvider,
-	WebView::WebViewProvider::WebViewProvider,
+	Webview::WebviewProvider::WebviewProvider,
 	Workspace::{WorkspaceEditApplier::WorkspaceEditApplier, WorkspaceProvider::WorkspaceProvider},
 };
 use async_trait::async_trait;
@@ -486,8 +486,8 @@ impl Requires<dyn UserInterfaceProvider> for MountainEnvironment {
 	fn Require(&self) -> Arc<dyn UserInterfaceProvider> { Arc::new(self.clone()) }
 }
 
-impl Requires<dyn WebViewProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn WebViewProvider> { Arc::new(self.clone()) }
+impl Requires<dyn WebviewProvider> for MountainEnvironment {
+	fn Require(&self) -> Arc<dyn WebviewProvider> { Arc::new(self.clone()) }
 }
 
 impl Requires<dyn WorkspaceProvider> for MountainEnvironment {

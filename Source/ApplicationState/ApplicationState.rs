@@ -109,7 +109,7 @@
 // - `OutputChannels` - Output panel channels
 // - `ActiveTerminals` - Terminal instances by ID (nested mutex)
 // - `NextTerminalIdentifier` - Counter for terminal IDs
-// - `ActiveWebViews` - Webview panels by ID
+// - `ActiveWebviews` - Webview panels by ID
 // - `ActiveCustomDocuments` - Custom editor state
 // - `ActiveStatusBarItems` - Status bar entries
 // - `ActiveTreeViews` - Tree data providers
@@ -309,7 +309,7 @@ use super::{
 		ProviderRegistrationDTO::ProviderRegistrationDTO,
 		TerminalStateDTO::TerminalStateDTO,
 		TreeViewStateDTO::TreeViewStateDTO,
-		WebViewStateDTO::WebViewStateDTO,
+		WebviewStateDTO::WebviewStateDTO,
 		WindowStateDTO::WindowStateDTO,
 		WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
 	},
@@ -366,7 +366,7 @@ pub struct ApplicationState {
 
 	pub NextTerminalIdentifier:Arc<AtomicU64>,
 
-	pub ActiveWebViews:Arc<StandardMutex<HashMap<String, WebViewStateDTO>>>,
+	pub ActiveWebviews:Arc<StandardMutex<HashMap<String, WebviewStateDTO>>>,
 
 	pub ActiveCustomDocuments:Arc<StandardMutex<HashMap<String, CustomDocumentStateDTO>>>,
 
@@ -493,7 +493,7 @@ impl Default for ApplicationState {
 
 			NextTerminalIdentifier:Arc::new(AtomicU64::new(1)),
 
-			ActiveWebViews:Arc::new(StandardMutex::new(HashMap::new())),
+			ActiveWebviews:Arc::new(StandardMutex::new(HashMap::new())),
 
 			ActiveCustomDocuments:Arc::new(StandardMutex::new(HashMap::new())),
 

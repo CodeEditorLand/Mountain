@@ -155,7 +155,7 @@ graph LR
     end
 
     subgraph "Clients"
-        WindUI["Wind/Sky User Interface (WebView)"]:::Wind
+        WindUI["Wind/Sky User Interface (Webview)"]:::Wind
         CocoonSideCar["Cocoon Extension Host (Node.js)"]:::Cocoon
     end
 
@@ -190,7 +190,7 @@ Mountain/
 │   ├── Track/                       # The central request dispatcher (`EffectCreation`).
 │   ├── Update/                      # Application self-updating logic.
 │   ├── Vine/                        # The gRPC server and client implementation (`tonic`).
-│   └── WorkSpace/                   # Logic for handling `.code-workspace` files.
+│   └── Workspace/                   # Logic for handling `.code-workspace` files.
 ├── Proto/
 │   └── Vine.proto                   # The gRPC contract definition file.
 └── build.rs                         # Build script to compile the .proto file into Rust code.

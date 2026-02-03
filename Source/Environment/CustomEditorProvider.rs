@@ -4,7 +4,7 @@
 //
 // CustomEditorProvider implements the CustomEditorProvider trait, managing the
 // lifecycle of custom non-text editors contributed by extensions. These editors
-// use WebView panels to provide specialized editing experiences (e.g., SVG
+// use Webview panels to provide specialized editing experiences (e.g., SVG
 // editors, diff viewers, image editors).
 //
 // # Responsibilities
@@ -12,7 +12,7 @@
 // 1. **Provider Registration**: Manages registration of custom editor
 //    providers, each identified by a unique viewType.
 //
-// 2. **Editor Orchestration**: Coordinates between the UI (WebView), the
+// 2. **Editor Orchestration**: Coordinates between the UI (Webview), the
 //    extension host (Cocoon), and the filesystem to provide a seamless editing
 //    experience.
 //
@@ -28,9 +28,9 @@
 //    RegisterCustomEditorProvider
 // 2. UI requests to open a resource with a custom viewType
 // 3. Mountain calls ResolveCustomEditor with viewType, resource URI, and
-//    WebView handle
-// 4. Extension receives RPC call and provides HTML/content for the WebView
-// 5. Extension can send messages back and forth via WebView communication
+//    Webview handle
+// 4. Extension receives RPC call and provides HTML/content for the Webview
+// 5. Extension can send messages back and forth via Webview communication
 // 6. On save, Mountain calls OnSaveCustomDocument to persist changes
 //
 // # Patterns Borrowed from VSCode
@@ -54,7 +54,7 @@
 // - [ ] Implement editor-specific command registration
 // - [ ] Add support for custom editor dispose/cleanup
 // - [ ] Consider adding editor state persistence across reloads
-// - [ ] Implement proper error recovery for WebView crashes
+// - [ ] Implement proper error recovery for Webview crashes
 // - [ ] Add telemetry for custom editor usage metrics
 
 use std::sync::Arc;
@@ -111,8 +111,8 @@ impl CustomEditorProvider for MountainEnvironment {
 		);
 
 		// TODO: Implement full save flow:
-		// 1. Send RPC request to extension sidecar requesting content from WebView
-		// 2. Extension retrieves content from WebView via webview.postMessage
+		// 1. Send RPC request to extension sidecar requesting content from Webview
+		// 2. Extension retrieves content from Webview via webview.postMessage
 		// 3. Extension writes content back to Mountain
 		// 4. Mountain persists content to file system via FileSystemWriter
 		// 5. Emit save notification to UI
@@ -125,7 +125,7 @@ impl CustomEditorProvider for MountainEnvironment {
 		&self,
 		ViewType:String,
 		ResourceURI:Url,
-		WebViewPanelHandle:String,
+		WebviewPanelHandle:String,
 	) -> Result<(), CommonError> {
 		info!(
 			"[CustomEditorProvider] Resolving custom editor for '{}' on resource '{}'",
@@ -138,12 +138,12 @@ impl CustomEditorProvider for MountainEnvironment {
 		// 2. Make an RPC call to that sidecar's implementation of
 		//    `$resolveCustomEditor`.
 		// 3. The sidecar will then call back to the host with `setHtml`, `postMessage`,
-		//    etc. to populate the webview associated with the `WebViewPanelHandle`.
+		//    etc. to populate the webview associated with the `WebviewPanelHandle`.
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 		let ResourceURIComponents = json!({ "external": ResourceURI.to_string() });
 		let RPCMethod = format!("{}$resolveCustomEditor", ProxyTarget::ExtHostCustomEditors.GetTargetPrefix());
-		let RPCParameters = json!([ResourceURIComponents, ViewType, WebViewPanelHandle]);
+		let RPCParameters = json!([ResourceURIComponents, ViewType, WebviewPanelHandle]);
 
 		// This is a fire-and-forget notification. The sidecar is expected to
 		// call back to the host to populate the webview.

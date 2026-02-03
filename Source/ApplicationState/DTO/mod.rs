@@ -29,7 +29,7 @@ pub mod TerminalStateDTO;
 
 pub mod TreeViewStateDTO;
 
-pub mod WebViewStateDTO;
+pub mod WebviewStateDTO;
 
 pub mod WindowStateDTO;
 

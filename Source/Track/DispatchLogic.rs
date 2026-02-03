@@ -87,7 +87,7 @@
 // 4. Handle dropped receiver errors gracefully
 //
 // ### MountainWebviewPostMessageFromGuest
-// A specific Tauri command handler for a WebView guest to post a message back
+// A specific Tauri command handler for a Webview guest to post a message back
 // to the extension host.
 //
 // **Flow:**
@@ -113,7 +113,7 @@
 // - All incoming commands and RPC requests
 // - Effect creation failures
 // - UI request resolution
-// - WebView message forwarding
+// - Webview message forwarding
 // - All errors with context
 //
 // Log levels:
@@ -262,7 +262,7 @@ pub async fn ResolveUIRequest(
 	Ok(())
 }
 
-/// A specific Tauri command handler for a WebView guest to post a message back
+/// A specific Tauri command handler for a Webview guest to post a message back
 /// to the extension host.
 #[command]
 pub async fn MountainWebviewPostMessageFromGuest(

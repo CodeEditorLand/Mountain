@@ -1,12 +1,12 @@
-//! # WebViewStateDTO
+//! # WebviewStateDTO
 //!
 //! # RESPONSIBILITY
-//! - Data transfer object for WebView panel state
+//! - Data transfer object for Webview panel state
 //! - Serializable format for gRPC/IPC transmission
-//! - Used by Mountain to track WebView lifecycle
+//! - Used by Mountain to track Webview lifecycle
 //!
 //! # FIELDS
-/// - Handle: Unique WebView UUID
+/// - Handle: Unique Webview UUID
 /// - ViewType: Extension-defined view type
 /// - Title: Current panel title
 /// - ContentOptions: Web content and security settings
@@ -15,7 +15,7 @@
 /// - ExtensionIdentifier: Owner extension ID
 /// - IsActive: Focus state flag
 /// - IsVisible: Visibility state flag
-use CommonLibrary::WebView::DTO::WebViewContentOptionsDTO::WebViewContentOptionsDTO;
+use CommonLibrary::Webview::DTO::WebviewContentOptionsDTO::WebviewContentOptionsDTO;
 use serde::{Deserialize, Serialize};
 // For PanelOptions, etc.
 use serde_json::Value;
@@ -35,50 +35,50 @@ const MAX_EXTENSION_IDENTIFIER_LENGTH:usize = 128;
 /// Maximum title length
 const MAX_TITLE_LENGTH:usize = 256;
 
-/// A struct that holds the complete state for a single WebView panel instance.
-/// This is stored in `ApplicationState` to track all active WebViews managed by
+/// A struct that holds the complete state for a single Webview panel instance.
+/// This is stored in `ApplicationState` to track all active Webviews managed by
 /// the host.
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "PascalCase")]
-pub struct WebViewStateDTO {
-	/// A unique UUID handle for this WebView instance.
+pub struct WebviewStateDTO {
+	/// A unique UUID handle for this Webview instance.
 	pub Handle:String,
 
-	/// The view type of this WebView panel, as defined by the extension.
+	/// The view type of this Webview panel, as defined by the extension.
 	#[serde(skip_serializing_if = "String::is_empty")]
 	pub ViewType:String,
 
-	/// The current title of the WebView panel.
+	/// The current title of the Webview panel.
 	#[serde(skip_serializing_if = "String::is_empty")]
 	pub Title:String,
 
-	/// The content and security options for the WebView's content.
-	pub ContentOptions:WebViewContentOptionsDTO,
+	/// The content and security options for the Webview's content.
+	pub ContentOptions:WebviewContentOptionsDTO,
 
-	/// The options controlling the behavior of the WebView panel itself.
-	// DTO: WebViewPanelOptionsDTO
+	/// The options controlling the behavior of the Webview panel itself.
+	// DTO: WebviewPanelOptionsDTO
 	pub PanelOptions: Value,
 
-	/// The identifier of the sidecar process that owns this WebView.
+	/// The identifier of the sidecar process that owns this Webview.
 	#[serde(skip_serializing_if = "String::is_empty")]
 	pub SideCarIdentifier:String,
 
-	/// The identifier of the extension that owns this WebView.
+	/// The identifier of the extension that owns this Webview.
 	#[serde(skip_serializing_if = "String::is_empty")]
 	pub ExtensionIdentifier:String,
 
-	/// A flag indicating if the WebView panel currently has focus.
+	/// A flag indicating if the Webview panel currently has focus.
 	pub IsActive:bool,
 
-	/// A flag indicating if the WebView panel is currently visible in the UI.
+	/// A flag indicating if the Webview panel is currently visible in the UI.
 	pub IsVisible:bool,
 }
 
-impl WebViewStateDTO {
-	/// Creates a new WebViewStateDTO with validation.
+impl WebviewStateDTO {
+	/// Creates a new WebviewStateDTO with validation.
 	///
 	/// # Arguments
-	/// * `Handle` - Unique WebView handle
+	/// * `Handle` - Unique Webview handle
 	/// * `ViewType` - Extension-defined view type
 	/// * `Title` - Panel title
 	/// * `ContentOptions` - Web content options
@@ -92,7 +92,7 @@ impl WebViewStateDTO {
 		Handle:String,
 		ViewType:String,
 		Title:String,
-		ContentOptions:WebViewContentOptionsDTO,
+		ContentOptions:WebviewContentOptionsDTO,
 		PanelOptions:Value,
 		SideCarIdentifier:String,
 		ExtensionIdentifier:String,
@@ -141,19 +141,19 @@ impl WebViewStateDTO {
 		})
 	}
 
-	/// Updates the focus state of the WebView.
+	/// Updates the focus state of the Webview.
 	///
 	/// # Arguments
 	/// * `IsActive` - New focus state
 	pub fn SetFocus(&mut self, IsActive:bool) { self.IsActive = IsActive; }
 
-	/// Updates the visibility state of the WebView.
+	/// Updates the visibility state of the Webview.
 	///
 	/// # Arguments
 	/// * `IsVisible` - New visibility state
 	pub fn SetVisibility(&mut self, IsVisible:bool) { self.IsVisible = IsVisible; }
 
-	/// Updates the WebView title with validation.
+	/// Updates the Webview title with validation.
 	///
 	/// # Arguments
 	/// * `Title` - New title
@@ -169,6 +169,6 @@ impl WebViewStateDTO {
 		Ok(())
 	}
 
-	/// Checks if the WebView is currently displayed (visible and focused).
+	/// Checks if the Webview is currently displayed (visible and focused).
 	pub fn IsDisplayed(&self) -> bool { self.IsVisible || self.IsActive }
 }

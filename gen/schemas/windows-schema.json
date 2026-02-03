@@ -1346,10 +1346,10 @@
                         "markdownDescription": "This denies read access to the\n`$APPLOCALDATA` folder on linux as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered."
                       },
                       {
-                        "description": "This denies read access to the\n`$APPLOCALDATA/EBWebView` folder on windows as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered.",
+                        "description": "This denies read access to the\n`$APPLOCALDATA/EBWebview` folder on windows as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered.",
                         "type": "string",
                         "const": "fs:deny-webview-data-windows",
-                        "markdownDescription": "This denies read access to the\n`$APPLOCALDATA/EBWebView` folder on windows as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered."
+                        "markdownDescription": "This denies read access to the\n`$APPLOCALDATA/EBWebview` folder on windows as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered."
                       },
                       {
                         "description": "Denies the write command without any pre-configured scope.",
@@ -5217,10 +5217,10 @@
           "markdownDescription": "This denies read access to the\n`$APPLOCALDATA` folder on linux as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered."
         },
         {
-          "description": "This denies read access to the\n`$APPLOCALDATA/EBWebView` folder on windows as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered.",
+          "description": "This denies read access to the\n`$APPLOCALDATA/EBWebview` folder on windows as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered.",
           "type": "string",
           "const": "fs:deny-webview-data-windows",
-          "markdownDescription": "This denies read access to the\n`$APPLOCALDATA/EBWebView` folder on windows as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered."
+          "markdownDescription": "This denies read access to the\n`$APPLOCALDATA/EBWebview` folder on windows as the webview data and configuration values are stored here.\nAllowing access can lead to sensitive information disclosure and should be well considered."
         },
         {
           "description": "Denies the write command without any pre-configured scope.",

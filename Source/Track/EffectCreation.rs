@@ -141,7 +141,7 @@
 // - `UserInterface.ShowOpenDialog` - Show open file dialog
 // - `UserInterface.ShowSaveDialog` - Show save file dialog
 //
-// ### WebView
+// ### Webview
 // - `$webview:create` - Create a webview panel
 // - `$resolveCustomEditor` - Resolve a custom editor
 //
@@ -217,7 +217,7 @@ use CommonLibrary::{
 	Terminal::TerminalProvider::TerminalProvider,
 	TreeView::TreeViewProvider::TreeViewProvider,
 	UserInterface::{ShowMessage::ShowMessage, ShowOpenDialog::ShowOpenDialog, ShowSaveDialog::ShowSaveDialog},
-	WebView::WebViewProvider::WebViewProvider,
+	Webview::WebviewProvider::WebviewProvider,
 };
 use serde_json::{Value, from_value, json};
 use tauri::{AppHandle, Runtime};
@@ -347,14 +347,14 @@ pub fn CreateEffectForRequest<R:Runtime>(
 
 			let ResourceURI = Parameter!(ParametersArray, 1, Url)?;
 
-			let WebViewPanelHandle = Parameter!(ParametersArray, 2, String)?;
+			let WebviewPanelHandle = Parameter!(ParametersArray, 2, String)?;
 
 			return Ok(Box::new(move |runtime:Arc<MountainRunTime>| {
 				Box::pin(async move {
 					let provider:Arc<dyn CustomEditorProvider> = runtime.Environment.Require();
 
 					provider
-						.ResolveCustomEditor(ViewType, ResourceURI, WebViewPanelHandle)
+						.ResolveCustomEditor(ViewType, ResourceURI, WebviewPanelHandle)
 						.await
 						.map_err(|Error| Error.to_string())?;
 
@@ -749,7 +749,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			}));
 		},
 
-		// WebView
+		// Webview
 		"$webview:create" => {
 			let ExtData = Parameter!(ParametersArray, 0, Value)?;
 
@@ -765,10 +765,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 
 			return Ok(Box::new(move |runtime:Arc<MountainRunTime>| {
 				Box::pin(async move {
-					let provider:Arc<dyn WebViewProvider> = runtime.Environment.Require();
+					let provider:Arc<dyn WebviewProvider> = runtime.Environment.Require();
 
 					let handle = provider
-						.CreateWebViewPanel(ExtData, ViewType, Title, ShowOpts, PanelOpts, ContentOpts)
+						.CreateWebviewPanel(ExtData, ViewType, Title, ShowOpts, PanelOpts, ContentOpts)
 						.await
 						.map_err(|Error| Error.to_string())?;
 

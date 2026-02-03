@@ -323,8 +323,8 @@ impl MountainService for MountainVinegRPCService {
 			"ExtensionDeactivated" => {
 				debug!("[MountainVinegRPCService] Extension deactivated notification received");
 			},
-			"WebViewReady" => {
-				debug!("[MountainVinegRPCService] WebView ready notification received");
+			"WebviewReady" => {
+				debug!("[MountainVinegRPCService] Webview ready notification received");
 			},
 			_ => {
 				debug!("[MountainVinegRPCService] Unknown notification method: {}", MethodName);

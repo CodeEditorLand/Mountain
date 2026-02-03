@@ -32,7 +32,7 @@ use CommonLibrary::{
 	Document::DocumentProvider::DocumentProvider,
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	WebView::WebViewProvider::WebViewProvider,
+	Webview::WebviewProvider::WebviewProvider,
 	Workspace::{WorkspaceEditApplier::WorkspaceEditApplier, WorkspaceProvider::WorkspaceProvider},
 };
 use async_trait::async_trait;

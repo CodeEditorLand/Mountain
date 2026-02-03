@@ -53,7 +53,7 @@ pub mod TreeViewProvider;
 
 pub mod UserInterfaceProvider;
 
-pub mod WebViewProvider;
+pub mod WebviewProvider;
 
 pub mod WorkspaceProvider;
 

@@ -88,7 +88,7 @@
 //! - `OpenDocuments` - Currently open documents
 //! - `OutputChannels` - Output channel state
 //! - `ActiveTerminals` - Active terminal instances
-//! - `ActiveWebViews` - Active webview panels
+//! - `ActiveWebviews` - Active webview panels
 //! - `ActiveCustomDocuments` - Custom editor state
 //! - `ActiveStatusBarItems` - Status bar entries
 //! - `ActiveTreeViews` - Tree view providers
@@ -103,7 +103,7 @@
 //! - `DocumentStateDTO` - Document metadata and content
 //! - `ExtensionDescriptionStateDTO` - Extension metadata
 //! - `TreeViewStateDTO` - Tree view state
-//! - `WebViewStateDTO` - Webview panel state
+//! - `WebviewStateDTO` - Webview panel state
 //! - etc.
 //!
 //! ### Internal
