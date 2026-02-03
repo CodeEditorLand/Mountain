@@ -139,7 +139,10 @@ impl TerminalProvider for MountainEnvironment {
 			TerminalIdentifier, Name
 		);
 
-		let mut TerminalState = TerminalStateDTO::Create(TerminalIdentifier, Name.clone(), &OptionsValue, DefaultShell);
+		let mut TerminalState = TerminalStateDTO::Create(TerminalIdentifier, Name.clone(), &OptionsValue, DefaultShell)
+			.map_err(|e| {
+				CommonError::ConfigurationError { Description:format!("Failed to create terminal state: {}", e) }
+			})?;
 
 		let PtySystem = NativePtySystem::default();
 

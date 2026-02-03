@@ -81,7 +81,7 @@ use std::{
 
 use log::{debug, error, warn};
 
-use super::DefineMessage::{ListenerCallback, TauriIPCMessage};
+use super::super::Define::DefineMessage::{ListenerCallback, TauriIPCMessage};
 
 /// Maximum listeners per channel to prevent resource exhaustion
 const MAX_LISTENERS_PER_CHANNEL:usize = 100;

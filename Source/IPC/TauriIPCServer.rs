@@ -550,13 +550,13 @@ impl TauriIPCServer {
 		let pool = Arc::new(ConnectionPool::new(10, Duration::from_secs(30)));
 
 		let handle = pool
-			.get_connection()
+			.GetConnection()
 			.await
 			.map_err(|e| format!("Failed to get connection: {}", e))?;
 
 		let result = self.send(channel, data).await;
 
-		pool.release_connection(handle).await;
+		pool.ReleaseConnection(handle).await;
 
 		result
 	}
@@ -564,7 +564,7 @@ impl TauriIPCServer {
 	/// Get connection pool statistics
 	pub async fn get_connection_stats(&self) -> Result<ConnectionStats, String> {
 		let pool = Arc::new(ConnectionPool::new(10, Duration::from_secs(30)));
-		Ok(pool.get_stats().await)
+		Ok(pool.GetStats().await)
 	}
 
 	/// Send encrypted message
@@ -753,7 +753,7 @@ impl ConnectionPool {
 
 	/// Start health monitoring for a connection
 	async fn StartHealthMonitoring(&self, connection_id:&str) {
-		let health_checker = self.health_checker.clone();
+		let health_checker = self.HealthChecker.clone();
 		let connection_id = connection_id.to_string();
 
 		tokio::spawn(async move {
@@ -947,7 +947,7 @@ pub async fn mountain_ipc_receive_message(app_handle:tauri::AppHandle, message:T
 
 		// Advanced monitoring: Track message processing time
 		let start_time = std::time::Instant::now();
-		let result = ipc_server.handle_incoming_message(message).await;
+		let result = ipc_server.handle_incoming_message(message.clone()).await;
 		let duration = start_time.elapsed();
 
 		// Record performance metrics

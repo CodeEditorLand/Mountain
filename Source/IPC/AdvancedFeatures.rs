@@ -216,6 +216,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 /// Advanced IPC features for enhanced Mountain-Wind synchronization
+#[derive(Clone)]
 pub struct AdvancedFeatures {
 	runtime:Arc<ApplicationRunTime>,
 	performance_stats:Arc<Mutex<PerformanceStats>>,
@@ -633,9 +634,10 @@ pub fn initialize_advanced_features(
 	// Store in application state
 	app_handle.manage(features.clone_features());
 
-	// Start monitoring
+	// Start monitoring - clone features before moving into async block
+	let features_clone = features.clone();
 	tokio::spawn(async move {
-		if let Err(e) = features.start_monitoring().await {
+		if let Err(e) = features_clone.start_monitoring().await {
 			error!("[AdvancedFeatures] Failed to start monitoring: {}", e);
 		}
 	});

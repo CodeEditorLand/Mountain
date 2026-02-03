@@ -13,12 +13,16 @@ pub mod PerformanceDashboard;
 
 use std::collections::HashMap;
 
-use log::{info, debug};
+use log::{debug, info};
+use bincode::serde::encode_to_vec;
 
-use MessageCompressor::{BatchConfig, CompressionLevel, CompressionAlgorithm, MessageCompressor};
-use ConnectionPool::{PoolConfig, PoolStats, ConnectionPool};
-use SecureMessageChannel::{SecurityConfig, SecurityStats, EncryptedMessage, SecureMessageChannel};
-use PerformanceDashboard::{DashboardConfig, DashboardStatistics, MetricType, PerformanceDashboard};
+// Import only the types, not the modules themselves (modules are already in scope via `pub mod`)
+use crate::IPC::Enhanced::MessageCompressor::{BatchConfig, CompressionAlgorithm, CompressionLevel};
+use crate::IPC::Enhanced::{
+	ConnectionPool::{PoolConfig, PoolStats},
+	PerformanceDashboard::{DashboardConfig, DashboardStatistics, MetricType},
+	SecureMessageChannel::{EncryptedMessage, SecurityConfig, SecurityStats},
+};
 
 /// Enhanced IPC manager that combines all advanced features
 pub struct EnhancedIPCManager {
@@ -78,7 +82,8 @@ impl EnhancedIPCManager {
 		let connection = self.connection_pool.get_connection().await?;
 
 		// Serialize message
-		let serialized = bincode::serialize(message).map_err(|e| format!("Failed to serialize message: {}", e))?;
+		let serialized = encode_to_vec(message, bincode::config::standard())
+			.map_err(|e| format!("Failed to serialize message: {}", e))?;
 
 		let result = if use_encryption {
 			// Use secure channel
@@ -110,21 +115,21 @@ impl EnhancedIPCManager {
 	}
 
 	/// Send encrypted message
-	async fn send_encrypted_message(&self, channel:&str, encrypted:&EncryptedMessage) -> Result<(), String> {
+	async fn send_encrypted_message(&self, channel:&str, _encrypted:&EncryptedMessage) -> Result<(), String> {
 		// Implementation would integrate with existing IPC infrastructure
 		log::debug!("[EnhancedIPCManager] Sending encrypted message on channel: {}", channel);
 		Ok(())
 	}
 
 	/// Send compressed message
-	async fn send_compressed_message(&self, channel:&str, data:&[u8]) -> Result<(), String> {
+	async fn send_compressed_message(&self, channel:&str, _data:&[u8]) -> Result<(), String> {
 		// Implementation would integrate with existing IPC infrastructure
 		log::debug!("[EnhancedIPCManager] Sending compressed message on channel: {}", channel);
 		Ok(())
 	}
 
 	/// Send raw message
-	async fn send_raw_message(&self, channel:&str, data:&[u8]) -> Result<(), String> {
+	async fn send_raw_message(&self, channel:&str, _data:&[u8]) -> Result<(), String> {
 		// Implementation would integrate with existing IPC infrastructure
 		log::debug!("[EnhancedIPCManager] Sending raw message on channel: {}", channel);
 		Ok(())
@@ -168,11 +173,11 @@ impl EnhancedIPCManager {
 	/// Create a high-performance configuration
 	pub fn high_performance_config() -> Self {
 		let compressor_config = BatchConfig {
-			max_batch_size:200,
-			max_batch_delay_ms:50,
-			compression_threshold_bytes:512,
-			compression_level:CompressionLevel::High,
-			algorithm:CompressionAlgorithm::Brotli,
+			MaxBatchSize:200,
+			MaxBatchDelayMs:50,
+			CompressionThresholdBytes:512,
+			CompressionLevel:CompressionLevel::High,
+			Algorithm:CompressionAlgorithm::Brotli,
 		};
 
 		let pool_config = PoolConfig {
@@ -209,11 +214,11 @@ impl EnhancedIPCManager {
 	/// Create a security-focused configuration
 	pub fn high_security_config() -> Self {
 		let compressor_config = BatchConfig {
-			max_batch_size:50,
-			max_batch_delay_ms:200,
-			compression_threshold_bytes:2048,
-			compression_level:CompressionLevel::Balanced,
-			algorithm:CompressionAlgorithm::Gzip,
+			MaxBatchSize:50,
+			MaxBatchDelayMs:200,
+			CompressionThresholdBytes:2048,
+			CompressionLevel:CompressionLevel::Balanced,
+			Algorithm:CompressionAlgorithm::Gzip,
 		};
 
 		let pool_config = PoolConfig {
@@ -253,7 +258,7 @@ impl EnhancedIPCManager {
 	/// Integrate with Tauri IPCServer
 	pub async fn integrate_with_tauri_ipc(
 		&self,
-		ipc_server:&crate::IPC::TauriIPCServer::TauriIPCServer,
+		_ipc_server:&crate::IPC::TauriIPCServer::TauriIPCServer,
 	) -> Result<(), String> {
 		log::info!("[EnhancedIPCManager] Integrating with Tauri IPC server");
 

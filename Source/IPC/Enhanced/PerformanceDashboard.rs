@@ -141,6 +141,7 @@ pub struct DashboardStatistics {
 impl PerformanceDashboard {
 	/// Create a new performance dashboard
 	pub fn new(config:DashboardConfig) -> Self {
+		let config_clone = config.clone();
 		let dashboard = Self {
 			config,
 			metrics:Arc::new(RwLock::new(VecDeque::new())),
@@ -165,7 +166,7 @@ impl PerformanceDashboard {
 
 		info!(
 			"[PerformanceDashboard] Created dashboard with {}ms update interval",
-			config.update_interval_ms
+			config_clone.update_interval_ms
 		);
 
 		dashboard

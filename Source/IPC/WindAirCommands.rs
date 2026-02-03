@@ -313,6 +313,7 @@ use crate::Air::AirServiceTypesStub::{
 	StatusRequest,
 	UpdateCheckRequest,
 };
+use crate::Air::AirClient::DEFAULT_AIR_SERVER_ADDRESS;
 
 /// Data Transfer Objects for Wind-Air communication
 
@@ -430,19 +431,15 @@ impl AirClientWrapper {
 /// # Returns
 /// `UpdateInfoDTO` with update information or error message
 #[tauri::command]
-pub async fn CheckForUpdates(
-	app_handle:tauri::AppHandle,
-	current_version:Option<String>,
-	channel:Option<String>,
-) -> Result<UpdateInfoDTO, String> {
+pub async fn CheckForUpdates(current_version:Option<String>, channel:Option<String>) -> Result<UpdateInfoDTO, String> {
 	debug!(
 		"[WindAirCommands] CheckForUpdates called with version: {:?}, channel: {:?}",
 		current_version, channel
 	);
 
 	// Get the Air client from app state or configuration
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
 	// Build the request
 	let request = UpdateCheckRequest {
@@ -491,15 +488,14 @@ pub async fn CheckForUpdates(
 /// `DownloadResultDTO` with download status
 #[tauri::command]
 pub async fn DownloadUpdate(
-	app_handle:tauri::AppHandle,
 	url:String,
 	destination:String,
 	checksum:Option<String>,
 ) -> Result<DownloadResultDTO, String> {
 	debug!("[WindAirCommands] DownloadUpdate called: {} -> {}", url, destination);
 
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
 	let request = DownloadRequest {
 		request_id:uuid::Uuid::new_v4().to_string(),
@@ -542,14 +538,14 @@ pub async fn DownloadUpdate(
 /// # Returns
 /// Success status or error message
 #[tauri::command]
-pub async fn ApplyUpdate(app_handle:tauri::AppHandle, update_id:String, update_path:String) -> Result<bool, String> {
+pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, String> {
 	debug!("[WindAirCommands] ApplyUpdate called: id={}, path={}", update_id, update_path);
 
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
 	// Use ApplyUpdateRequest from Air module
-	let request = ApplyUpdateRequest { request_id:update_id.clone(), version:update_id, update_path };
+	let request = ApplyUpdateRequest { request_id:update_id.clone(), update_id, update_path };
 
 	// TODO: Implement ApplyUpdate method in AirClient
 	// let response = client
@@ -580,15 +576,11 @@ pub async fn ApplyUpdate(app_handle:tauri::AppHandle, update_id:String, update_p
 /// # Returns
 /// `DownloadResultDTO` with download status
 #[tauri::command]
-pub async fn DownloadFile(
-	app_handle:tauri::AppHandle,
-	url:String,
-	destination:String,
-) -> Result<DownloadResultDTO, String> {
+pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResultDTO, String> {
 	debug!("[WindAirCommands] DownloadFile called: {} -> {}", url, destination);
 
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
 	let request = DownloadRequest {
 		request_id:uuid::Uuid::new_v4().to_string(),
@@ -632,21 +624,20 @@ pub async fn DownloadFile(
 /// # Returns
 /// `AuthResponseDTO` with authentication token
 #[tauri::command]
-pub async fn AuthenticateUser(
-	app_handle:tauri::AppHandle,
-	username:String,
-	password:String,
-	provider:String,
-) -> Result<AuthResponseDTO, String> {
+pub async fn AuthenticateUser(username:String, password:String, provider:String) -> Result<AuthResponseDTO, String> {
 	debug!("[WindAirCommands] AuthenticateUser called: {} via {}", username, provider);
 
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
-	let request = AuthenticationRequest { request_id:uuid::Uuid::new_v4().to_string(), username, password, provider };
+	let request = AuthenticationRequest {
+		request_id:uuid::Uuid::new_v4().to_string(),
+		provider,
+		credentials:serde_json::json!({"username": username, "password": password}),
+	};
 
 	let response = client
-		.Authenticate(request)
+		.AuthenticateUser(request)
 		.await
 		.map_err(|e| format!("Authentication failed: {}", e))?;
 
@@ -680,7 +671,6 @@ pub async fn AuthenticateUser(
 /// `IndexResultDTO` with indexing results
 #[tauri::command]
 pub async fn IndexFiles(
-	app_handle:tauri::AppHandle,
 	path:String,
 	patterns:Vec<String>,
 	exclude_patterns:Option<Vec<String>>,
@@ -688,15 +678,13 @@ pub async fn IndexFiles(
 ) -> Result<IndexResultDTO, String> {
 	debug!("[WindAirCommands] IndexFiles called: {} with patterns: {:?}", path, patterns);
 
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
 	let request = IndexRequest {
 		request_id:uuid::Uuid::new_v4().to_string(),
-		path,
-		patterns,
-		exclude_patterns:exclude_patterns.unwrap_or_default(),
-		max_depth:max_depth.unwrap_or(100),
+		paths:vec![path],
+		recursive:max_depth.unwrap_or(100) > 0,
 	};
 
 	let response = client
@@ -733,20 +721,22 @@ pub async fn IndexFiles(
 /// `SearchResultsDTO` with matching files
 #[tauri::command]
 pub async fn SearchFiles(
-	app_handle:tauri::AppHandle,
 	query:String,
-	index_id:Option<String>,
+	file_patterns:Vec<String>,
 	max_results:Option<u32>,
 ) -> Result<SearchResultsDTO, String> {
-	debug!("[WindAirCommands] SearchFiles called: query={}, index={:?}", query, index_id);
+	debug!(
+		"[WindAirCommands] SearchFiles called: query={}, patterns={:?}",
+		query, file_patterns
+	);
 
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
 	let request = SearchRequest {
 		request_id:uuid::Uuid::new_v4().to_string(),
 		query,
-		path:index_id.unwrap_or_else(|| String::from(".")),
+		file_patterns,
 		max_results:max_results.unwrap_or(100),
 	};
 
@@ -762,14 +752,7 @@ pub async fn SearchFiles(
 	let results:Vec<FileResultDTO> = response
 		.results
 		.into_iter()
-		.map(|r| {
-			FileResultDTO {
-				path:r.path,
-				size:r.size,
-				line:if r.line_number > 0 { Some(r.line_number) } else { None },
-				content:if !r.match_preview.is_empty() { Some(r.match_preview) } else { None },
-			}
-		})
+		.map(|r| FileResultDTO { path:r.path, size:r.size, line:r.line, content:r.content })
 		.collect();
 
 	let result = SearchResultsDTO { results, total_results:response.total_results };
@@ -789,11 +772,11 @@ pub async fn SearchFiles(
 /// # Returns
 /// `AirServiceStatusDTO` with service status information
 #[tauri::command]
-pub async fn GetAirStatus(app_handle:tauri::AppHandle) -> Result<AirServiceStatusDTO, String> {
+pub async fn GetAirStatus() -> Result<AirServiceStatusDTO, String> {
 	debug!("[WindAirCommands] GetAirStatus called");
 
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
 	let request = StatusRequest { request_id:uuid::Uuid::new_v4().to_string() };
 
@@ -835,16 +818,13 @@ pub async fn GetAirStatus(app_handle:tauri::AppHandle) -> Result<AirServiceStatu
 /// # Returns
 /// `AirMetricsDTO` with metrics data
 #[tauri::command]
-pub async fn GetAirMetrics(app_handle:tauri::AppHandle, metric_type:Option<String>) -> Result<AirMetricsDTO, String> {
+pub async fn GetAirMetrics(metric_type:Option<String>) -> Result<AirMetricsDTO, String> {
 	debug!("[WindAirCommands] GetAirMetrics called with type: {:?}", metric_type);
 
-	let air_address = get_air_address(&app_handle)?;
-	let client = get_or_create_air_client(&app_handle, air_address).await?;
+	let air_address = get_air_address()?;
+	let client = get_or_create_air_client(air_address).await?;
 
-	let request = MetricsRequest {
-		request_id:uuid::Uuid::new_v4().to_string(),
-		metric_type:metric_type.unwrap_or_else(|| "all".to_string()),
-	};
+	let request = MetricsRequest { request_id:uuid::Uuid::new_v4().to_string(), metric_type };
 
 	let response = client
 		.GetMetrics(request)
@@ -852,31 +832,11 @@ pub async fn GetAirMetrics(app_handle:tauri::AppHandle, metric_type:Option<Strin
 		.map_err(|e| format!("Failed to get Air metrics: {}", e))?;
 
 	let result = AirMetricsDTO {
-		memory_usage_mb:response
-			.metrics
-			.get("memory_usage_mb")
-			.and_then(|v| v.parse().ok())
-			.unwrap_or(0.0),
-		cpu_usage_percent:response
-			.metrics
-			.get("cpu_usage_percent")
-			.and_then(|v| v.parse().ok())
-			.unwrap_or(0.0),
-		average_response_time:response
-			.metrics
-			.get("average_response_time")
-			.and_then(|v| v.parse().ok())
-			.unwrap_or(0.0),
-		disk_usage_mb:response
-			.metrics
-			.get("disk_usage_mb")
-			.and_then(|v| v.parse().ok())
-			.unwrap_or(0.0),
-		network_usage_mbps:response
-			.metrics
-			.get("network_usage_mbps")
-			.and_then(|v| v.parse().ok())
-			.unwrap_or(0.0),
+		memory_usage_mb:response.metrics.memory_usage_mb,
+		cpu_usage_percent:response.metrics.cpu_usage_percent,
+		average_response_time:response.metrics.average_response_time,
+		disk_usage_mb:response.metrics.disk_usage_mb,
+		network_usage_mbps:response.metrics.network_usage_mbps,
 	};
 
 	debug!("[WindAirCommands] Air metrics retrieved");
@@ -888,13 +848,13 @@ pub async fn GetAirMetrics(app_handle:tauri::AppHandle, metric_type:Option<Strin
 // ============================================================================
 
 /// Get the Air daemon address from configuration
-fn get_air_address(_app_handle:&AppHandle) -> Result<String, String> {
+fn get_air_address() -> Result<String, String> {
 	// Return default Air address
 	Ok(DEFAULT_AIR_SERVER_ADDRESS.to_string())
 }
 
 /// Get or create the Air client instance
-async fn get_or_create_air_client(_app_handle:&AppHandle, address:String) -> Result<AirClientType, String> {
+async fn get_or_create_air_client(address:String) -> Result<AirClientType, String> {
 	// Create a new client each time
 	// In production, you'd use a state management pattern
 	AirClientType::new(&address)

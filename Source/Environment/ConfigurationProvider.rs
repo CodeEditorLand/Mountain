@@ -301,12 +301,12 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 	if let Some(UserMap) = UserConfig.as_object() {
 		for (Key, Value) in UserMap {
 			// Deep merge nested objects, shallow merge at root level
-			if Value.is_object() && Merged.get(&Key).is_some_and(|v| v.is_object()) {
+			if Value.is_object() && Merged.get(Key.as_str()).is_some_and(|v| v.is_object()) {
 				if let (Some(UserValue), Some(BaseValue)) =
-					(Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object()))
+					(Value.as_object(), Merged.get(Key.as_str()).and_then(|v| v.as_object()))
 				{
 					for (InnerKey, InnerValue) in UserValue {
-						Merged.get_mut(&Key).and_then(|v| v.as_object_mut()).map(|m| {
+						Merged.get_mut(Key.as_str()).and_then(|v| v.as_object_mut()).map(|m| {
 							m.insert(InnerKey.clone(), InnerValue.clone());
 						});
 					}
@@ -319,12 +319,12 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 
 	if let Some(WorkspaceMap) = WorkspaceConfig.as_object() {
 		for (Key, Value) in WorkspaceMap {
-			if Value.is_object() && Merged.get(&Key).is_some_and(|v| v.is_object()) {
+			if Value.is_object() && Merged.get(Key.as_str()).is_some_and(|v| v.is_object()) {
 				if let (Some(WorkspaceValue), Some(BaseValue)) =
-					(Value.as_object(), Merged.get(&Key).and_then(|v| v.as_object()))
+					(Value.as_object(), Merged.get(Key.as_str()).and_then(|v| v.as_object()))
 				{
 					for (InnerKey, InnerValue) in WorkspaceValue {
-						Merged.get_mut(&Key).and_then(|v| v.as_object_mut()).map(|m| {
+						Merged.get_mut(Key.as_str()).and_then(|v| v.as_object_mut()).map(|m| {
 							m.insert(InnerKey.clone(), InnerValue.clone());
 						});
 					}
@@ -335,6 +335,7 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		}
 	}
 
+	let ConfigurationSize = Merged.len();
 	let FinalConfig = MergedConfigurationStateDTO::Create(Value::Object(Merged));
 
 	*Environment
@@ -343,7 +344,6 @@ pub async fn InitializeAndMergeConfigurations(Environment:&MountainEnvironment) 
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = FinalConfig;
 
-	let ConfigurationSize = Merged.len();
 	info!(
 		"[ConfigurationProvider] Configuration merged successfully with {} top-level keys.",
 		ConfigurationSize

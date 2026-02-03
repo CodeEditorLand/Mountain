@@ -41,6 +41,14 @@ impl Default for PoolConfig {
 	}
 }
 
+/// Connection health status
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ConnectionHealth {
+	Healthy,
+	Unhealthy,
+	Degraded,
+}
+
 /// Connection handle with health monitoring
 #[derive(Debug, Clone)]
 pub struct ConnectionHandle {
@@ -52,6 +60,8 @@ pub struct ConnectionHandle {
 	pub successful_operations:usize,
 	pub total_operations:usize,
 	pub is_active:bool,
+	pub reuse_count:u32,
+	pub health:ConnectionHealth,
 }
 
 impl ConnectionHandle {
@@ -66,6 +76,8 @@ impl ConnectionHandle {
 			successful_operations:0,
 			total_operations:0,
 			is_active:true,
+			reuse_count:0,
+			health:ConnectionHealth::Healthy,
 		}
 	}
 
@@ -147,18 +159,21 @@ pub struct ConnectionPool {
 impl ConnectionPool {
 	/// Create a new connection pool
 	pub fn new(config:PoolConfig) -> Self {
+		let max_connections = config.max_connections;
+		let min_connections = config.min_connections;
+
 		let pool = Self {
-			config,
+			config:config.clone(),
 			connections:Arc::new(AsyncMutex::new(HashMap::new())),
-			semaphore:Arc::new(Semaphore::new(config.max_connections)),
+			semaphore:Arc::new(Semaphore::new(max_connections)),
 			wait_queue:Arc::new(AsyncMutex::new(Vec::new())),
 			stats:Arc::new(RwLock::new(PoolStats {
 				total_connections:0,
 				active_connections:0,
 				idle_connections:0,
 				healthy_connections:0,
-				max_connections:config.max_connections,
-				min_connections:config.min_connections,
+				max_connections,
+				min_connections,
 				wait_queue_size:0,
 				average_wait_time_ms:0.0,
 				total_operations:0,
@@ -169,7 +184,7 @@ impl ConnectionPool {
 			is_running:Arc::new(AsyncMutex::new(false)),
 		};
 
-		info!("[ConnectionPool] Created pool with max {} connections", config.max_connections);
+		info!("[ConnectionPool] Created pool with max {} connections", max_connections);
 		pool
 	}
 
@@ -229,7 +244,7 @@ impl ConnectionPool {
 		let start_time = Instant::now();
 
 		// Try to acquire permit with timeout
-		let permit = timeout(
+		let _permit = timeout(
 			Duration::from_millis(self.config.connection_timeout_ms),
 			self.semaphore.acquire(),
 		)
@@ -262,6 +277,8 @@ impl ConnectionPool {
 
 	/// Release a connection back to the pool
 	pub async fn release_connection(&self, mut handle:ConnectionHandle) {
+		let connection_id = handle.id.clone();
+
 		handle.last_used = Instant::now();
 
 		// Update connection in pool
@@ -280,7 +297,7 @@ impl ConnectionPool {
 		// Release permit
 		drop(handle); // The permit is released when the handle is dropped
 
-		trace!("[ConnectionPool] Connection released: {}", handle.id);
+		trace!("[ConnectionPool] Connection released: {}", connection_id);
 	}
 
 	/// Find or create a healthy connection
@@ -288,7 +305,7 @@ impl ConnectionPool {
 		let mut connections = self.connections.lock().await;
 
 		// Try to find a healthy connection
-		for (id, handle) in connections.iter_mut() {
+		for (_id, handle) in connections.iter_mut() {
 			if handle.is_healthy() && handle.idle_time().as_millis() < self.config.idle_timeout_ms as u128 {
 				handle.last_used = Instant::now();
 				return Ok(handle.clone());
@@ -364,12 +381,12 @@ impl ConnectionPool {
 	/// Check connection health
 	async fn check_connection_health(&self) -> Result<(), String> {
 		let mut connections = self.connections.lock().await;
-		let mut health_checker = self.health_checker.lock().await;
+		let mut _health_checker = self.health_checker.lock().await;
 
 		let mut healthy_count = 0;
 
-		for (id, handle) in connections.iter_mut() {
-			let is_healthy = health_checker.check_connection_health(handle).await;
+		for (_id, handle) in connections.iter_mut() {
+			let is_healthy = _health_checker.check_connection_health(handle).await;
 			handle.update_health(is_healthy);
 
 			if handle.is_healthy() {
@@ -394,7 +411,7 @@ impl ConnectionPool {
 	/// Cleanup stale connections
 	async fn cleanup_stale_connections(&self) -> usize {
 		let mut connections = self.connections.lock().await;
-		let now = Instant::now();
+		let _now = Instant::now();
 
 		let stale_ids:Vec<String> = connections
 			.iter()

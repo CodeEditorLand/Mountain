@@ -5,6 +5,7 @@
 use std::sync::Arc;
 
 use log::{debug, error, info};
+use tauri::Manager;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
@@ -31,11 +32,9 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 pub async fn RuntimeShutdown(ApplicationHandle:&tauri::AppHandle) -> Result<(), String> {
 	debug!("[Shutdown] [Runtime] Shutting down ApplicationRunTime...");
 
-	let RunTime = ApplicationHandle
-		.try_state::<Arc<ApplicationRunTime>>()
-		.ok_or("ApplicationRunTime not found in state")?;
+	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-	RunTime.inner().clone().Shutdown().await;
+	RunTime.Shutdown().await;
 
 	info!("[Shutdown] [Runtime] ApplicationRunTime stopped.");
 

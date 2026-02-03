@@ -4,9 +4,13 @@
 //! Supports Brotli compression for large payloads and intelligent message
 //! batching.
 
-use std::{collections::VecDeque, io::Write, io::Read, time::Duration};
+use std::{
+	collections::VecDeque,
+	io::{Read, Write},
+	time::Duration,
+};
 
-use brotli::{enc::BrotliEncoderParams, CompressorReader, CompressorWriter};
+use brotli::{CompressorReader, CompressorWriter, enc::BrotliEncoderParams};
 use flate2::{
 	Compression,
 	write::{GzEncoder, ZlibEncoder},
@@ -14,7 +18,7 @@ use flate2::{
 use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::time::Instant;
-use bincode::{config::Configuration, decode::decode_from_slice, encode::encode_to_vec};
+use bincode::serde::{decode_from_slice, encode_to_vec};
 
 /// Message compression levels
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -65,7 +69,12 @@ pub struct MessageCompressor {
 impl MessageCompressor {
 	/// Create a new message compressor with configuration
 	pub fn new(config:BatchConfig) -> Self {
-		Self { Config: config, CurrentBatch:VecDeque::new(), BatchStartTime:None, BatchSizeBytes:0 }
+		Self {
+			Config:config,
+			CurrentBatch:VecDeque::new(),
+			BatchStartTime:None,
+			BatchSizeBytes:0,
+		}
 	}
 
 	/// Add a message to the current batch
@@ -126,21 +135,22 @@ impl MessageCompressor {
 		self.BatchSizeBytes = 0;
 
 		// Serialize batch using bincode 2.0 API
-		let serialized_batch = encode_to_vec(&BatchMessages, Configuration::standard())
-			.map_err(|e| format!("Failed to serialize batch: {}", e))?;
+		let config = bincode::config::standard();
+		let serialized_batch =
+			encode_to_vec(&BatchMessages, config).map_err(|e| format!("Failed to serialize batch: {}", e))?;
 
 		// Compress if needed
 		let (CompressedData, compression_info) = if total_size >= self.Config.CompressionThresholdBytes {
 			self.compress_data(&serialized_batch).map(|(data, info)| (Some(data), info))
 		} else {
-			(None, CompressionInfo::none())
+			Ok((None, CompressionInfo::none()))
 		}?;
 
 		Ok(CompressedBatch {
 			messages_count:BatchMessages.len(),
 			original_size:total_size,
-			compressed_size:CompressedData.as_ref().map(|d| d.len()).unwrap_or(total_size),
-			compressed_data: CompressedData,
+			compressed_size:CompressedData.as_ref().map(|d| d.len()).unwrap_or(total_size) as usize,
+			compressed_data:CompressedData,
 			compression_info,
 			timestamp:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
@@ -164,21 +174,17 @@ impl MessageCompressor {
 		params.quality = self.Config.CompressionLevel as i32;
 
 		let mut compressed = Vec::new();
-		let mut writer = CompressorWriter::with_params(&mut compressed, data.len(), &params);
-
-		std::io::Write::write_all(&mut writer, data).map_err(|e| format!("Brotli compression failed: {}", e))?;
-
-		writer.flush().map_err(|e| format!("Brotli flush failed: {}", e))?;
+		{
+			let mut writer = CompressorWriter::with_params(&mut compressed, data.len().try_into().unwrap(), &params);
+			std::io::Write::write_all(&mut writer, data).map_err(|e| format!("Brotli compression failed: {}", e))?;
+			writer.flush().map_err(|e| format!("Brotli flush failed: {}", e))?;
+		} // writer dropped here, release borrow on compressed
 
 		let ratio = data.len() as f64 / compressed.len() as f64;
 
 		Ok((
 			compressed,
-			CompressionInfo {
-				algorithm:"brotli".to_string(),
-				level:self.Config.CompressionLevel as u32,
-				ratio,
-			},
+			CompressionInfo { algorithm:"brotli".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}
 
@@ -215,13 +221,12 @@ impl MessageCompressor {
 	/// Decompress a batch
 	pub fn decompress_batch(&self, batch:&CompressedBatch) -> Result<Vec<Vec<u8>>, String> {
 		let data = if let Some(ref compressed_data) = batch.compressed_data {
-			self.decompress_data(compressed_data, &batch.compression_info.algorithm)
+			self.decompress_data(compressed_data, &batch.compression_info.algorithm)?
 		} else {
-			encode_to_vec(&batch, Configuration::standard())
-				.map_err(|e| format!("Serialization failed: {}", e))?
-		}?;
+			encode_to_vec(&batch, bincode::config::standard()).map_err(|e| format!("Serialization failed: {}", e))?
+		};
 
-		let (decoded, _) = decode_from_slice::<Vec<Vec<u8>>, _>(&data, Configuration::standard())
+		let (decoded, _) = decode_from_slice::<Vec<Vec<u8>>, _>(&data, bincode::config::standard())
 			.map_err(|e| format!("Failed to deserialize batch: {}", e))?;
 		Ok(decoded)
 	}
@@ -239,7 +244,7 @@ impl MessageCompressor {
 	/// Decompress Brotli data
 	fn decompress_brotli(&self, data:&[u8]) -> Result<Vec<u8>, String> {
 		let mut decompressed = Vec::new();
-		let mut reader = CompressorReader::new(data, 0, data.len(), data.len());
+		let mut reader = CompressorReader::new(data, 0, data.len().try_into().unwrap(), data.len().try_into().unwrap());
 
 		std::io::Read::read_to_end(&mut reader, &mut decompressed)
 			.map_err(|e| format!("Brotli decompression failed: {}", e))?;
@@ -329,7 +334,7 @@ impl MessageCompressor {
 		algorithm:CompressionAlgorithm,
 		level:CompressionLevel,
 	) -> Result<(Vec<u8>, CompressionInfo), String> {
-		let config = BatchConfig { Algorithm: algorithm, CompressionLevel:level, ..Default::default() };
+		let config = BatchConfig { Algorithm:algorithm, CompressionLevel:level, ..Default::default() };
 
 		let compressor = MessageCompressor::new(config);
 		compressor.compress_data(message_data)

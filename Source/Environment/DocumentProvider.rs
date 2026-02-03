@@ -213,7 +213,7 @@ impl DocumentProvider for MountainEnvironment {
 		};
 
 		// The rest of the flow is the same for all schemes.
-		let NewDocument = DocumentStateDTO::Create(URI.clone(), LanguageIdentifier, FileContent);
+		let NewDocument = DocumentStateDTO::Create(URI.clone(), LanguageIdentifier, FileContent)?;
 
 		let DTOForNotification = NewDocument.ToDTO()?;
 

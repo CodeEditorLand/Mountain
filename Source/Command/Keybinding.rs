@@ -39,7 +39,7 @@ pub async fn GetResolvedKeybinding(ApplicationHandle:AppHandle<Wry>) -> Result<V
 pub async fn GetUserKeybindings(ApplicationHandle:AppHandle<Wry>) -> Result<Value, String> {
 	log::debug!("[Keybinding Command] Getting user keybindings for UI.");
 
-	let _RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
 
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
@@ -53,14 +53,14 @@ pub async fn RegisterExtensionKeybindings(
 
 	ExtensionIdentifier:String,
 
-	Keybindings:Value,
+	_Keybindings:Value,
 ) -> Result<Value, String> {
 	log::debug!(
 		"[Keybinding Command] Registering keybindings for extension: {}",
 		ExtensionIdentifier
 	);
 
-	let _RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
 
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
@@ -79,7 +79,7 @@ pub async fn UnregisterExtensionKeybindings(
 		ExtensionIdentifier
 	);
 
-	let _RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
 
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
@@ -91,7 +91,7 @@ pub async fn UnregisterExtensionKeybindings(
 pub async fn CheckKeybindingConflicts(ApplicationHandle:AppHandle<Wry>, Keybinding:String) -> Result<Value, String> {
 	log::debug!("[Keybinding Command] Checking conflicts for keybinding: {}", Keybinding);
 
-	let _RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
 
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 

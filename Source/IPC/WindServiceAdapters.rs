@@ -144,6 +144,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use log::{debug, info};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use url::Url;
 use CommonLibrary::{
 	Configuration::{
@@ -357,10 +358,12 @@ impl WindFileService {
 	}
 
 	pub async fn stat_file(&self, path:String) -> Result<serde_json::Value, String> {
-		self.reader
+		let stat_dto = self
+			.reader
 			.StatFile(&PathBuf::from(path))
 			.await
-			.map_err(|e:CommonError| e.to_string())
+			.map_err(|e:CommonError| e.to_string())?;
+		Ok(json!(stat_dto))
 	}
 }
 
@@ -373,10 +376,13 @@ impl WindStorageService {
 	pub fn new(provider:Arc<dyn StorageProvider>) -> Self { Self { provider } }
 
 	pub async fn get(&self, key:String) -> Result<serde_json::Value, String> {
-		self.provider
+		let value = self
+			.provider
 			.GetStorageValue(false, &key)
 			.await
-			.map_err(|e:CommonError| e.to_string())
+			.map_err(|e:CommonError| e.to_string())?
+			.ok_or_else(|| "Storage key not found".to_string())?;
+		Ok(value)
 	}
 
 	pub async fn set(&self, key:String, value:serde_json::Value) -> Result<(), String> {

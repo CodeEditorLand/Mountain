@@ -5,6 +5,7 @@
 
 use std::{
 	collections::HashMap,
+	marker::PhantomData,
 	sync::Arc,
 	time::{Duration, SystemTime},
 };
@@ -17,6 +18,7 @@ use ring::{
 };
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
+use bincode::serde::{decode_from_slice, encode_to_vec};
 
 /// Security configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -164,7 +166,8 @@ impl SecureMessageChannel {
 	/// Encrypt and authenticate a message
 	pub async fn encrypt_message<T:Serialize>(&self, message:&T) -> Result<EncryptedMessage, String> {
 		// Serialize message
-		let serialized_data = bincode::serialize(message).map_err(|e| format!("Failed to serialize message: {}", e))?;
+		let serialized_data = encode_to_vec(message, bincode::config::standard())
+			.map_err(|e| format!("Failed to serialize message: {}", e))?;
 
 		// Check message size
 		if serialized_data.len() > self.config.max_message_size_bytes {
@@ -246,7 +249,8 @@ impl SecureMessageChannel {
 		in_out.truncate(plaintext_len);
 
 		// Deserialize message
-		let message:T = bincode::deserialize(&in_out).map_err(|e| format!("Failed to deserialize message: {}", e))?;
+		let (message, _) = decode_from_slice(&in_out, bincode::config::standard())
+			.map_err(|e| format!("Failed to deserialize message: {}", e))?;
 
 		trace!("[SecureMessageChannel] Message decrypted successfully");
 
@@ -447,7 +451,12 @@ impl SecureMessageChannel {
 	) -> Result<SecureMessage<T>, String> {
 		let encrypted = self.encrypt_message(message).await?;
 
-		Ok(SecureMessage { encrypted, headers:additional_headers, version:"1.0".to_string() })
+		Ok(SecureMessage::<T> {
+			encrypted,
+			headers:additional_headers,
+			version:"1.0".to_string(),
+			_marker:PhantomData,
+		})
 	}
 }
 
@@ -457,6 +466,8 @@ pub struct SecureMessage<T> {
 	pub encrypted:EncryptedMessage,
 	pub headers:HashMap<String, String>,
 	pub version:String,
+	#[serde(skip)]
+	_marker:PhantomData<T>,
 }
 
 #[cfg(test)]

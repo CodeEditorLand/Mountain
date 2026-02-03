@@ -97,26 +97,51 @@ impl WorkspaceProvider for MountainEnvironment {
 		warn!("[WorkspaceProvider] RequestWorkspaceTrust is not implemented; defaulting to trusted.");
 		Ok(true)
 	}
+
+	/// Finds files in the workspace matching the specified query.
+	async fn FindFilesInWorkspace(
+		&self,
+		query:Value,
+		_:Option<Value>,
+		_:Option<usize>,
+		_:bool,
+		_:bool,
+	) -> Result<Vec<Url>, CommonError> {
+		info!("[WorkspaceProvider] FindFilesInWorkspace called");
+		// TODO: Implement file search
+		Ok(Vec::new())
+	}
+
+	/// Opens a file in the workspace.
+	async fn OpenFile(&self, path:PathBuf) -> Result<(), CommonError> {
+		info!("[WorkspaceProvider] OpenFile called for: {:?}", path);
+		// TODO: Implement file opening
+		Ok(())
+	}
 }
 
 #[async_trait]
 impl WorkspaceEditApplier for MountainEnvironment {
 	/// Applies a workspace edit to the workspace.
-	async fn ApplyWorkspaceEdit(&self, Edit:WorkspaceEditDTO) -> Result<(), CommonError> {
+	async fn ApplyWorkspaceEdit(&self, Edit:WorkspaceEditDTO) -> Result<bool, CommonError> {
 		info!("[WorkspaceEditApplier] Applying workspace edit");
 
 		// For now, just log the edit details
 		match Edit {
 			WorkspaceEditDTO { Edits } => {
 				for (DocumentURI, TextEdits) in Edits {
-					info!("[WorkspaceEditApplier] Would apply {} edits to document: {}", TextEdits.len(), DocumentURI);
+					info!(
+						"[WorkspaceEditApplier] Would apply {} edits to document: {}",
+						TextEdits.len(),
+						DocumentURI
+					);
 				}
-			}
+			},
 		}
 
 		// TODO: Actually implement workspace edit application
 		warn!("[WorkspaceEditApplier] ApplyWorkspaceEdit is not fully implemented");
 
-		Ok(())
+		Ok(true)
 	}
 }

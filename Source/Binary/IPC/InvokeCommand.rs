@@ -65,5 +65,13 @@ use tauri::AppHandle;
 /// - Parameters are invalid
 #[tauri::command]
 pub async fn MountainIPCInvoke(app_handle:AppHandle, method:String, params:Value) -> Result<Value, String> {
-	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, params).await
+	// Convert params to Vec<Value> - if params is an array use it, otherwise wrap
+	// in array
+	let args = if params.is_array() {
+		serde_json::from_value(params).map_err(|e| format!("Invalid params array: {}", e))?
+	} else {
+		vec![params]
+	};
+
+	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, args).await
 }

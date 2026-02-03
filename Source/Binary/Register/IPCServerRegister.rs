@@ -3,6 +3,7 @@
 //! Initializes and manages the IPC server in Tauri state.
 
 use log::info;
+use tauri::Manager;
 
 use crate::IPC::TauriIPCServer::TauriIPCServer;
 

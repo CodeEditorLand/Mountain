@@ -175,7 +175,7 @@ impl Role {
 	/// Self for method chaining
 	pub fn AddPermission(mut self, Permission:String) -> Self {
 		if !self.Permissions.contains(&Permission) {
-			self.Permissions.push(Permission);
+			self.Permissions.push(Permission.clone());
 			debug!("[Role] Added permission '{}' to role '{}'", Permission, self.Name);
 		} else {
 			debug!(
@@ -196,7 +196,7 @@ impl Role {
 	pub fn AddPermissions(mut self, Permissions:impl IntoIterator<Item = String>) -> Self {
 		for Permission in Permissions {
 			if !self.Permissions.contains(&Permission) {
-				self.Permissions.push(Permission);
+				self.Permissions.push(Permission.clone());
 				debug!("[Role] Added permission '{}' to role '{}'", Permission, self.Name);
 			}
 		}

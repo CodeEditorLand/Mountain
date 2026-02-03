@@ -414,7 +414,7 @@ async fn handle_file_delete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) ->
 	let provider:Arc<dyn FileSystemWriter> = runtime.Environment.Require();
 
 	provider
-		.Delete(&PathBuf::from(path))
+		.Delete(&PathBuf::from(path), false, false)
 		.await
 		.map_err(|e:CommonError| format!("Failed to delete file: {}", e))?;
 
@@ -440,7 +440,7 @@ async fn handle_file_copy(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 	let provider:Arc<dyn FileSystemWriter> = runtime.Environment.Require();
 
 	provider
-		.Copy(&PathBuf::from(source), &PathBuf::from(destination))
+		.Copy(&PathBuf::from(source), &PathBuf::from(destination), false)
 		.await
 		.map_err(|e:CommonError| format!("Failed to copy file: {} -> {}", source, destination))?;
 
@@ -466,7 +466,7 @@ async fn handle_file_move(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 	let provider:Arc<dyn FileSystemWriter> = runtime.Environment.Require();
 
 	provider
-		.Rename(&PathBuf::from(source), &PathBuf::from(destination))
+		.Rename(&PathBuf::from(source), &PathBuf::from(destination), false)
 		.await
 		.map_err(|e:CommonError| format!("Failed to move file: {} -> {}", source, destination))?;
 
@@ -552,20 +552,17 @@ async fn handle_file_write_binary(runtime:Arc<ApplicationRunTime>, args:Vec<Valu
 
 	// Convert string content to bytes
 	let content_bytes = content.as_bytes().to_vec();
+	let content_len = content_bytes.len();
 
 	// Use Mountain's file system provider
 	let provider:Arc<dyn FileSystemWriter> = runtime.Environment.Require();
 
 	provider
-		.WriteFile(&PathBuf::from(path), content_bytes, true, true)
+		.WriteFile(&PathBuf::from(path), content_bytes.clone(), true, true)
 		.await
 		.map_err(|e:CommonError| format!("Failed to write binary file: {}", e))?;
 
-	debug!(
-		"[WindServiceHandlers] Binary file written: {} ({} bytes)",
-		path,
-		content_bytes.len()
-	);
+	debug!("[WindServiceHandlers] Binary file written: {} ({} bytes)", path, content_len);
 	Ok(Value::Null)
 }
 

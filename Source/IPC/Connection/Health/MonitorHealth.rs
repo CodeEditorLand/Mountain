@@ -18,7 +18,6 @@
 //! - Non-blocking health checks with configurable timeouts
 //! - Metrics collection without impacting connection performance
 //! - Background monitoring without disrupting active operations
-//!
 
 use std::{
 	sync::Arc,
@@ -27,7 +26,7 @@ use std::{
 
 use tokio::{sync::RwLock, time::timeout};
 
-use super::super::Pool::PoolConnection::{ConnectionHandle, ConnectionHealth};
+use super::super::super::Enhanced::ConnectionPool::{ConnectionHandle, ConnectionHealth};
 
 /// Health check timeout duration
 const HEALTH_CHECK_TIMEOUT:Duration = Duration::from_secs(2);
@@ -61,7 +60,7 @@ pub struct ConnectionHealthChecker {
 	pub HealthCheckTimeout:Duration,
 
 	/// Historical health metrics
-	pub Metrics:Arc<RwLock<ConnectionHealthMetrics>>,
+	pub metrics:Arc<RwLock<ConnectionHealthMetrics>>,
 }
 
 impl ConnectionHealthChecker {
@@ -81,7 +80,7 @@ impl ConnectionHealthChecker {
 			MaxConsecutiveFailures,
 			MinHealthyPings,
 			HealthCheckTimeout,
-			Metrics:Arc::new(RwLock::new(ConnectionHealthMetrics {
+			metrics:Arc::new(RwLock::new(ConnectionHealthMetrics {
 				connection_id:String::new(),
 				ping_success_rate:1.0,
 				average_latency_ms:0,
@@ -100,14 +99,14 @@ impl ConnectionHealthChecker {
 	/// ## Returns
 	/// True if healthy, false otherwise
 	pub async fn CheckConnectionHealth(&self, Handle:&mut ConnectionHandle) -> bool {
-		let ConnectionId = Handle.ConnectionId.clone();
-		let StartTime = Instant::now();
+		let connection_id = Handle.id.clone();
+		let start_time = Instant::now();
 
 		// Perform health check with timeout
-		let HealthCheckResult = timeout(self.HealthCheckTimeout, self.PerformHealthCheck(Handle)).await;
+		let health_check_result = timeout(self.HealthCheckTimeout, self.PerformHealthCheck(Handle)).await;
 
-		let IsHealthy = match HealthCheckResult {
-			Ok(Result) => Result,
+		let is_healthy = match health_check_result {
+			Ok(result) => result,
 			Err(_) => {
 				// Timeout occurred - mark as failed
 				self.RecordFailure().await;
@@ -115,22 +114,27 @@ impl ConnectionHealthChecker {
 			},
 		};
 
-		let Latency = StartTime.elapsed();
+		let latency = start_time.elapsed();
 
 		// Update metrics
 		{
-			let mut Metrics = self.Metrics.write().await;
-			Metrics.connection_id = ConnectionId.clone();
-			Metrics.consecutive_failures = Handle.ReuseCount as u32;
-			Metrics.last_health_check = Instant::now();
-			Metrics.average_latency_ms = Latency.as_millis() as u64;
-			Metrics.health_status = if IsHealthy { ConnectionHealth::Healthy } else { ConnectionHealth::Unhealthy };
+			let mut metrics = self.metrics.write().await;
+			metrics.connection_id = connection_id.clone();
+			metrics.consecutive_failures = Handle.error_count as u32;
+			metrics.last_health_check = Instant::now();
+			metrics.average_latency_ms = latency.as_millis() as u64;
+			metrics.health_status = if is_healthy { ConnectionHealth::Healthy } else { ConnectionHealth::Unhealthy };
 		}
 
 		// Update handle health based on result
-		Handle.Health = if IsHealthy { ConnectionHealth::Healthy } else { ConnectionHealth::Unhealthy };
+		Handle.health = if is_healthy { ConnectionHealth::Healthy } else { ConnectionHealth::Unhealthy };
 
-		IsHealthy
+		// Increment reuse count on successful health check
+		if is_healthy {
+			Handle.reuse_count += 1;
+		}
+
+		is_healthy
 	}
 
 	/// Internal health check implementation
@@ -142,38 +146,39 @@ impl ConnectionHealthChecker {
 	/// True if healthy, false otherwise
 	async fn PerformHealthCheck(&self, Handle:&ConnectionHandle) -> bool {
 		// Check if connection has been idle too long
-		let IdleTime = Instant::now().duration_since(Handle.LastActivity);
+		let idle_time = Instant::now().duration_since(Handle.last_used);
 
 		// If idle for more than 5 minutes, consider it potentially degraded
-		if IdleTime > Duration::from_secs(300) {
+		if idle_time > Duration::from_secs(300) {
 			return false;
 		}
 
 		// Check reuse count - highly reused connections are likely stable
-		if Handle.ReuseCount < self.MinHealthyPings {
+		if Handle.reuse_count < self.MinHealthyPings as u32 {
 			// New connections need more pings to establish trust
+			return false;
 		}
 
 		// Verify connection is healthy
-		Handle.Health == ConnectionHealth::Healthy
+		Handle.health == ConnectionHealth::Healthy
 	}
 
 	/// Record a failure for the connection
 	pub async fn RecordFailure(&self) {
-		let mut Metrics = self.Metrics.write().await;
-		Metrics.consecutive_failures += 1;
+		let mut metrics = self.metrics.write().await;
+		metrics.consecutive_failures += 1;
 
-		if Metrics.consecutive_failures >= self.MaxConsecutiveFailures {
-			Metrics.health_status = ConnectionHealth::Unhealthy;
+		if metrics.consecutive_failures >= self.MaxConsecutiveFailures {
+			metrics.health_status = ConnectionHealth::Unhealthy;
 		}
 	}
 
 	/// Reset the health metrics
 	pub async fn ResetMetrics(&self) {
-		let mut Metrics = self.Metrics.write().await;
-		Metrics.consecutive_failures = 0;
-		Metrics.ping_success_rate = 1.0;
-		Metrics.health_status = ConnectionHealth::Healthy;
+		let mut metrics = self.metrics.write().await;
+		metrics.consecutive_failures = 0;
+		metrics.ping_success_rate = 1.0;
+		metrics.health_status = ConnectionHealth::Healthy;
 	}
 
 	/// Get the current health metrics
@@ -181,8 +186,8 @@ impl ConnectionHealthChecker {
 	/// ## Returns
 	/// Clone of current health metrics
 	pub async fn GetMetrics(&self) -> ConnectionHealthMetrics {
-		let Metrics = self.Metrics.read().await;
-		Metrics.clone()
+		let metrics = self.metrics.read().await;
+		metrics.clone()
 	}
 
 	/// Determine if connection should be recycled based on health
@@ -193,11 +198,11 @@ impl ConnectionHealthChecker {
 	/// ## Returns
 	/// True if connection should be recycled, false otherwise
 	pub async fn ShouldRecycle(&self, Handle:&ConnectionHandle) -> bool {
-		match Handle.Health {
+		match Handle.health {
 			ConnectionHealth::Unhealthy => true,
 			ConnectionHealth::Degraded => {
 				// Recycle degraded connections after certain reuse threshold
-				Handle.ReuseCount > 10
+				Handle.reuse_count > 10
 			},
 			ConnectionHealth::Healthy => false,
 		}
@@ -205,7 +210,7 @@ impl ConnectionHealthChecker {
 }
 
 impl Default for ConnectionHealthChecker {
-	fn default() -> Self { Self::New() }
+	fn default() -> Self { Self::NewWithSettings(MAX_CONSECUTIVE_FAILURES, MIN_HEALTHY_PINGS, HEALTH_CHECK_TIMEOUT) }
 }
 
 #[cfg(test)]
@@ -231,17 +236,21 @@ mod tests {
 	async fn test_check_connection_health() {
 		let Checker = ConnectionHealthChecker::New();
 		let mut Handle = ConnectionHandle {
-			ConnectionId:"test-conn-1".to_string(),
-			Channel:"test-channel".to_string(),
-			CreatedAt:Instant::now(),
-			LastActivity:Instant::now(),
-			ReuseCount:5,
-			Health:ConnectionHealth::Healthy,
+			id:"test-conn-1".to_string(),
+			created_at:Instant::now(),
+			last_used:Instant::now(),
+			health_score:100.0,
+			error_count:0,
+			successful_operations:10,
+			total_operations:10,
+			is_active:true,
+			reuse_count:5,
+			health:ConnectionHealth::Healthy,
 		};
 
 		let Result = Checker.CheckConnectionHealth(&mut Handle).await;
 		assert!(Result);
-		assert_eq!(Handle.Health, ConnectionHealth::Healthy);
+		assert_eq!(Handle.health, ConnectionHealth::Healthy);
 	}
 
 	#[tokio::test]

@@ -6,10 +6,7 @@ use std::path::PathBuf;
 
 use log::{debug, info};
 
-use crate::ApplicationState::{
-	ApplicationState::{ApplicationState, MapLockError},
-	Internal::ExtensionScanPath,
-};
+use crate::ApplicationState::ApplicationState::{ApplicationState, MapLockError};
 
 /// Configures extension scan paths by resolving paths from the executable
 /// directory.

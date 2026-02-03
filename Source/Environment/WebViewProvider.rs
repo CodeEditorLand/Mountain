@@ -25,6 +25,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use CommonLibrary::{
+	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 	WebView::WebViewProvider::WebViewProvider,
@@ -95,7 +96,7 @@ impl WebViewProvider for MountainEnvironment {
 			ViewType:ViewType.clone(),
 			Title:Title.clone(),
 			ContentOptions,
-			PanelOptions:PanelOptionsValue,
+			PanelOptions:PanelOptionsValue.clone(),
 			SideCarIdentifier:"cocoon-main".to_string(),
 			ExtensionIdentifier:ExtensionDataValue
 				.get("id")
@@ -118,6 +119,7 @@ impl WebViewProvider for MountainEnvironment {
 		}
 
 		// Create a new Tauri window for this webview with security settings
+		let TitleClone = Title.clone();
 		WebviewWindowBuilder::new(
 			&self.ApplicationHandle,
 			&Handle,
@@ -129,7 +131,7 @@ impl WebViewProvider for MountainEnvironment {
 			json!({
 				"Handle": Handle,
 				"ViewType": ViewType,
-				"Title": Title
+				"Title": TitleClone
 			})
 		))
 		.build()
@@ -145,7 +147,7 @@ impl WebViewProvider for MountainEnvironment {
 		self.ApplicationHandle
 			.emit(
 				"sky://webview/created",
-				json!({ "Handle": Handle, "ViewType": ViewType, "Title": Title }),
+				json!({ "Handle": Handle.clone(), "ViewType": ViewType.clone(), "Title": Title.clone() }),
 			)
 			.map_err(|Error| {
 				CommonError::IPCError { Description:format!("Failed to emit WebView creation event: {}", Error) }

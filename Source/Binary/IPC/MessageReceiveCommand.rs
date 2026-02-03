@@ -68,5 +68,6 @@ pub async fn MountainIPCReceiveMessage(app_handle:AppHandle, message:Value) -> R
 		app_handle,
 		serde_json::from_value(message).map_err(|e| e.to_string())?,
 	)
-	.await
+	.await?;
+	Ok(Value::Null)
 }

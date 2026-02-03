@@ -19,7 +19,6 @@
 //! - Connection reuse reduces allocation overhead
 //! - Background cleanup runs without blocking operations
 //! - Adaptive scaling based on usage patterns
-//!
 
 use std::{collections::HashMap, sync::Arc, time::Duration};
 

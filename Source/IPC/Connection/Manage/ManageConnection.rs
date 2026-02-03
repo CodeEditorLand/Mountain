@@ -18,7 +18,6 @@
 //! - Arc<Mutex<>> for thread-safe shared state without excessive locks
 //! - Non-blocking status checks for high-frequency polling
 //! - Atomic operations for status changes avoid lock contention
-//!
 
 use std::{
 	sync::{
@@ -29,7 +28,7 @@ use std::{
 	time::{SystemTime, UNIX_EPOCH},
 };
 
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 use serde::Serialize;
 
 /// Connection state tracker for IPC server
@@ -159,7 +158,7 @@ impl ConnectionState {
 		};
 
 		handle
-			.emit_all("ipc:connection_status", event)
+			.emit("ipc:connection_status", event)
 			.map_err(|e| format!("Failed to emit connection status event: {}", e))?;
 
 		Ok(())

@@ -7,7 +7,10 @@ use std::sync::Arc;
 use log::{debug, error, info};
 use tonic::{Request, Response, Status};
 use async_trait::async_trait;
-use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
+use CommonLibrary::{
+	Environment::Requires::Requires,
+	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
+};
 
 use super::super::Generated::{
 	CancelOperationRequest,

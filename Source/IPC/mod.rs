@@ -38,3 +38,7 @@ pub mod Connection;
 pub mod Enhanced;
 pub mod Message;
 pub mod Permission;
+
+pub use AdvancedFeatures::initialize_advanced_features;
+pub use StatusReporter::initialize_status_reporter;
+pub use WindAdvancedSync::initialize_wind_advanced_sync;

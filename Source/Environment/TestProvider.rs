@@ -115,12 +115,7 @@ impl TestController for MountainEnvironment {
 		};
 
 		// Store the controller state
-		let StateGuard = self
-			.ApplicationState
-			.TestProviderState
-			.write()
-			.await
-			.map_err(Utility::MapLockErrorToCommonError)?;
+		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
 
 		StateGuard.Controllers.insert(ControllerId.clone(), ControllerState);
 		drop(StateGuard);
@@ -150,12 +145,7 @@ impl TestController for MountainEnvironment {
 
 		// Get controller state
 		let ControllerState = {
-			let StateGuard = self
-				.ApplicationState
-				.TestProviderState
-				.read()
-				.await
-				.map_err(Utility::MapLockErrorToCommonError)?;
+			let StateGuard = self.ApplicationState.TestProviderState.read().await;
 
 			StateGuard.Controllers.get(&ControllerIdentifier).cloned().ok_or_else(|| {
 				CommonError::TestControllerNotFound { ControllerIdentifier:ControllerIdentifier.clone() }
@@ -173,12 +163,7 @@ impl TestController for MountainEnvironment {
 		};
 
 		{
-			let mut StateGuard = self
-				.ApplicationState
-				.TestProviderState
-				.write()
-				.await
-				.map_err(Utility::MapLockErrorToCommonError)?;
+			let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
 
 			StateGuard.ActiveRuns.insert(RunIdentifier.clone(), TestRun);
 		}
@@ -239,7 +224,7 @@ impl MountainEnvironment {
 		});
 
 		match IPCProvider
-			.SendRequestToSideCar(SideCarIdentifier, RPCMethod, RPCParams, 300000)
+			.SendRequestToSideCar(SideCarIdentifier.to_string(), RPCMethod, RPCParams, 300000)
 			.await
 		{
 			Ok(Response) => {
@@ -271,11 +256,7 @@ impl MountainEnvironment {
 
 	/// Updates the status of a test run and notifies the frontend.
 	async fn UpdateRunStatus(&self, RunIdentifier:&str, Status:TestRunStatus) -> Result<(), CommonError> {
-		let mut StateGuard = self
-			.ApplicationState
-			.TestProviderState
-			.write()
-			.await;
+		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
 
 		if let Some(TestRun) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			TestRun.Status = Status;
@@ -303,11 +284,7 @@ impl MountainEnvironment {
 
 	/// Stores test results for a test run.
 	async fn StoreTestResults(&self, RunIdentifier:&str, Results:Vec<TestResult>) -> Result<(), CommonError> {
-		let mut StateGuard = self
-			.ApplicationState
-			.TestProviderState
-			.write()
-			.await;
+		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
 
 		if let Some(TestRun) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			for Result in Results {

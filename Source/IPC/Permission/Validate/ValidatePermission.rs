@@ -94,7 +94,7 @@ use log::{debug, error, warn};
 use serde::{Deserialize, Serialize};
 
 use super::super::{
-	Audit::LogEvent::{SecurityEvent, SecurityEventType},
+	Audit::LogEvent::SecurityEventType,
 	Role::ManageRole::{Permission, Role},
 };
 
@@ -362,8 +362,9 @@ impl PermissionValidator {
 		}
 		drop(permissions_read);
 
-		roles.insert(Role.Name.clone(), Role);
-		debug!("[PermissionValidator] Role registered: {}", roles.get(&Role.Name).unwrap().Name);
+		let RoleName = Role.Name.clone();
+		roles.insert(RoleName.clone(), Role);
+		debug!("[PermissionValidator] Role registered: {}", RoleName);
 		Ok(())
 	}
 
@@ -385,11 +386,9 @@ impl PermissionValidator {
 		}
 
 		let mut permissions = self.Permissions.write().await;
-		permissions.insert(Permission.Name.clone(), Permission);
-		debug!(
-			"[PermissionValidator] Permission registered: {}",
-			permissions.get(&Permission.Name).unwrap().Name
-		);
+		let PermissionName = Permission.Name.clone();
+		permissions.insert(PermissionName.clone(), Permission);
+		debug!("[PermissionValidator] Permission registered: {}", PermissionName);
 		Ok(())
 	}
 
@@ -450,46 +449,55 @@ impl PermissionValidator {
 				Name:"file.read".to_string(),
 				Description:"Read file operations".to_string(),
 				Category:"file".to_string(),
+				IsSensitive:false,
 			},
 			Permission {
 				Name:"file.write".to_string(),
 				Description:"Write file operations".to_string(),
 				Category:"file".to_string(),
+				IsSensitive:false,
 			},
 			Permission {
 				Name:"config.read".to_string(),
 				Description:"Read configuration".to_string(),
 				Category:"config".to_string(),
+				IsSensitive:false,
 			},
 			Permission {
 				Name:"config.update".to_string(),
 				Description:"Update configuration".to_string(),
 				Category:"config".to_string(),
+				IsSensitive:false,
 			},
 			Permission {
 				Name:"storage.read".to_string(),
 				Description:"Read storage".to_string(),
 				Category:"storage".to_string(),
+				IsSensitive:false,
 			},
 			Permission {
 				Name:"storage.write".to_string(),
 				Description:"Write storage".to_string(),
 				Category:"storage".to_string(),
+				IsSensitive:false,
 			},
 			Permission {
 				Name:"system.external".to_string(),
 				Description:"Access external system resources".to_string(),
 				Category:"system".to_string(),
+				IsSensitive:true,
 			},
 			Permission {
 				Name:"system.execute".to_string(),
 				Description:"Execute system commands".to_string(),
 				Category:"system".to_string(),
+				IsSensitive:true,
 			},
 			Permission {
 				Name:"admin.manage".to_string(),
 				Description:"Administrative management operations".to_string(),
 				Category:"admin".to_string(),
+				IsSensitive:true,
 			},
 		];
 
@@ -504,6 +512,8 @@ impl PermissionValidator {
 				Name:"user".to_string(),
 				Permissions:vec!["file.read".to_string(), "config.read".to_string(), "storage.read".to_string()],
 				Description:"Standard user with read access".to_string(),
+				ParentRole:None,
+				Priority:0,
 			},
 			Role {
 				Name:"developer".to_string(),
@@ -515,6 +525,8 @@ impl PermissionValidator {
 					"storage.write".to_string(),
 				],
 				Description:"Developer with read/write access".to_string(),
+				ParentRole:None,
+				Priority:1,
 			},
 			Role {
 				Name:"admin".to_string(),
@@ -530,6 +542,8 @@ impl PermissionValidator {
 					"admin.manage".to_string(),
 				],
 				Description:"Administrator with full access".to_string(),
+				ParentRole:None,
+				Priority:2,
 			},
 		];
 

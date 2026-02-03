@@ -8,7 +8,7 @@
 //! implemented
 
 /// Stub for AirClient since AirIntegration is not yet available
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct AirClientType;
 
 /// Stub request structures for Air integration

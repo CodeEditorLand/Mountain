@@ -36,13 +36,12 @@
 //! - Configuration is typically cached, fast retrieval
 //! - Consider caching in memory for frequently accessed config
 
-use serde_json::Value;
+use serde_json::{Value, to_value};
 use tauri::AppHandle;
 
 /// Get Wind desktop configuration.
 ///
-/// This command retrieves the desktop configuration for Wind from the
-/// ConfigurationBridge module.
+/// Retrieves the Wind desktop configuration for frontend initialization.
 ///
 /// # Arguments
 ///
@@ -50,15 +49,15 @@ use tauri::AppHandle;
 ///
 /// # Returns
 ///
-/// Returns a JSON object containing the Wind desktop configuration,
-/// or an error string on failure.
+/// Returns Wind configuration JSON, or an error string.
 ///
 /// # Errors
 ///
 /// Returns an error if:
-/// - Configuration cannot be retrieved
-/// - Configuration is malformed
+/// - Configuration cannot be loaded
+/// - Serialization fails
 #[tauri::command]
 pub async fn MountainGetWindDesktopConfiguration(app_handle:AppHandle) -> Result<Value, String> {
-	crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await
+	let config = crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await?;
+	to_value(&config).map_err(|e| format!("Failed to serialize configuration: {}", e))
 }

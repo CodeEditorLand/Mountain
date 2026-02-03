@@ -81,7 +81,7 @@ use flate2::{Compression, read::GzDecoder, write::GzEncoder};
 use log::{debug, error, warn};
 use serde::Serialize;
 
-use super::DefineMessage::TauriIPCMessage;
+use super::super::Define::DefineMessage::TauriIPCMessage;
 
 /// Maximum decompressed size to prevent compression bomb attacks (10MB)
 const MAX_DECOMPRESSED_SIZE:usize = 10 * 1024 * 1024;

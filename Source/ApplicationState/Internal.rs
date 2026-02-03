@@ -486,7 +486,7 @@ pub async fn ScanExtensionsWithRecovery(
 	drop(scanned_extensions);
 
 	// Perform the scan
-	match ScanAndPopulateExtensions(ApplicationHandle, State).await {
+	match ScanAndPopulateExtensions(ApplicationHandle.clone(), State).await {
 		Ok(()) => {
 			info!("[AppStateInternal] Robust extension scan completed successfully");
 			Ok(())

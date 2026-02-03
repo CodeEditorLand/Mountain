@@ -304,7 +304,7 @@ impl SecureMessageChannel {
 }
 
 /// Re-export TauriIPCMessage from parent for convenience
-use super::super::Define::TauriIPCMessage;
+use super::super::Define::DefineMessage::TauriIPCMessage;
 
 #[cfg(test)]
 mod tests {

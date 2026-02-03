@@ -5,9 +5,9 @@
 //! Orchestration-focused file that coordinates application lifecycle from
 //! startup to shutdown using extracted modules.
 
-use std::{path::PathBuf, sync::Arc};
+use std::{path::PathBuf, sync::Arc, time::Duration};
 
-use log::{LevelFilter, debug, error, info, trace, warn};
+use log::{debug, error, info, trace, warn};
 use tauri::{
 	AppHandle,
 	Manager,
@@ -17,24 +17,42 @@ use tauri::{
 	menu::{MenuBuilder, MenuItem},
 	tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
 };
+use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 
 use crate::{
-	ApplicationState::ApplicationState::{ApplicationState, Internal::ScanAndPopulateExtensions, MapLockError},
-	// Refactored modules
-	Binary::Build::{LocalhostPlugin, LoggingPlugin, TauriBuild, WindowBuild},
-	Binary::Extension::{ExtensionPopulate, ScanPathConfigure},
-	Binary::Initialize::{CliParse, LogLevel, PortSelector, RuntimeBuild, StateBuild},
-	Binary::Register::{
-		AdvancedFeaturesRegister,
-		CommandRegister,
-		IPCServerRegister,
-		StatusReporterRegister,
-		WindSyncRegister,
-	},
-	Binary::Service::{CocoonStart, ConfigurationInitialize, VineStart},
-	Binary::Shutdown::{RuntimeShutdown, SchedulerShutdown},
-	Binary::Tray::EnableTray,
+	ApplicationState::ApplicationState::{ApplicationState, MapLockError},
+	Binary::Build::LocalhostPlugin::LocalhostPlugin as LocalhostPluginFn,
+	Binary::Build::LoggingPlugin::LoggingPlugin as LoggingPluginFn,
+	// Build functions
+	Binary::Build::TauriBuild::TauriBuild as TauriBuildFn,
+	Binary::Build::WindowBuild::WindowBuild as WindowBuildFn,
+	// Extension functions
+	Binary::Extension::ExtensionPopulate::ExtensionPopulate as ExtensionPopulateFn,
+	Binary::Extension::ScanPathConfigure::ScanPathConfigure as ScanPathConfigureFn,
+	// Initialize functions
+	Binary::Initialize::CliParse::Parse as CliParseFn,
+	Binary::Initialize::LogLevel::Resolve as ResolveLogLevel,
+	Binary::Initialize::PortSelector::BuildUrl as BuildPortUrl,
+	Binary::Initialize::PortSelector::Select as SelectPort,
+	Binary::Initialize::StateBuild::Build as BuildStateFn,
+	// Register functions
+	Binary::Register::AdvancedFeaturesRegister::AdvancedFeaturesRegister as AdvancedFeaturesRegisterFn,
+	Binary::Register::CommandRegister::CommandRegister as CommandRegisterFn,
+	Binary::Register::IPCServerRegister::IPCServerRegister as IPCServerRegisterFn,
+	Binary::Register::StatusReporterRegister::StatusReporterRegister as StatusReporterRegisterFn,
+	Binary::Register::WindSyncRegister::WindSyncRegister as WindSyncRegisterFn,
+	// Service functions
+	Binary::Service::CocoonStart::CocoonStart as CocoonStartFn,
+	Binary::Service::ConfigurationInitialize::ConfigurationInitialize as ConfigurationInitializeFn,
+	Binary::Service::VineStart::VineStart as VineStartFn,
+	// Shutdown functions
+	Binary::Shutdown::RuntimeShutdown::RuntimeShutdown as RuntimeShutdownFn,
+	Binary::Shutdown::SchedulerShutdown::SchedulerShutdown as SchedulerShutdownFn,
+	// Tray
+	Binary::Tray::EnableTray as EnableTrayFn,
+	// Commands
 	Command,
+	// Environment and IPC
 	Environment::MountainEnvironment::MountainEnvironment,
 	IPC::{TauriIPCServer::TauriIPCServer, initialize_wind_advanced_sync},
 	ProcessManagement::InitializationData,
@@ -71,7 +89,7 @@ async fn MountainGetWorkbenchConfiguration(
 
 	debug!("[IPC] [WorkbenchConfig] Success. Returning payload.");
 
-	Ok(Config)
+	Ok(Configuration)
 }
 
 #[tauri::command]
@@ -291,14 +309,14 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [Args] CLI parsing (using CliParse module)
 		// ---------------------------------------------------------------------
-		let (InitialFolders, WorkspaceConfigurationPath) = CliParse::CliParse();
+		let (InitialFolders, WorkspaceConfigurationPath) = CliParseFn();
 
 		// ---------------------------------------------------------------------
 		// [Boot] [State] ApplicationState (using StateBuild module)
 		// ---------------------------------------------------------------------
 		debug!("[Boot] [State] Building ApplicationState...");
 
-		let AppState = StateBuild::StateBuild(InitialFolders, WorkspaceConfigurationPath);
+		let AppState = BuildStateFn(InitialFolders, WorkspaceConfigurationPath);
 
 		debug!(
 			"[Boot] [State] ApplicationState created with {} workspace folders.",
@@ -308,27 +326,28 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [Runtime] Scheduler handles (using RuntimeBuild module)
 		// ---------------------------------------------------------------------
-		let (SchedulerForShutdown, SchedulerForRuntime) = RuntimeBuild::RuntimeBuild();
+		let Scheduler = SchedulerBuilder::Create().Build();
 		TraceStep!("[Boot] [Echo] Scheduler handles prepared.");
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Localhost] Port selection (using PortSelector module)
 		// ---------------------------------------------------------------------
-		let (ServerPort, LocalhostUrl) = PortSelector::PortSelector();
+		let ServerPort = SelectPort();
+		let LocalhostUrl = BuildPortUrl(ServerPort);
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Logging] Log level resolution (using LogLevel module)
 		// ---------------------------------------------------------------------
-		let LogLevel = LogLevel::Resolve();
+		let log_level = ResolveLogLevel();
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Tauri] Builder setup (using TauriBuild module)
 		// ---------------------------------------------------------------------
-		let mut Builder = TauriBuild();
+		let mut Builder = TauriBuildFn();
 
 		Builder
-			.plugin(LoggingPlugin(LogLevel))
-			.plugin(LocalhostPlugin(ServerPort))
+			.plugin(LoggingPluginFn(log_level))
+			.plugin(LocalhostPluginFn(ServerPort))
 			.manage(AppState.clone())
 			.setup({
 				let LocalhostUrl = LocalhostUrl.clone();
@@ -343,7 +362,7 @@ pub fn Fn() {
 					// [UI] [Tray] Initialize System Tray
 					// ---------------------------------------------------------
 					debug!("[UI] [Tray] Initializing system tray...");
-					if let Err(Error) = EnableTray(App) {
+					if let Err(Error) = EnableTrayFn(App) {
 						error!("[UI] [Tray] Failed to enable tray: {}", Error);
 					}
 
@@ -351,20 +370,20 @@ pub fn Fn() {
 					// [Lifecycle] [Commands] Register native commands
 					// ---------------------------------------------------------
 					debug!("[Lifecycle] [Commands] Registering native commands...");
-					CommandRegister(&AppHandle, &AppState)?;
+					CommandRegisterFn(&AppHandle, &AppState)?;
 					debug!("[Lifecycle] [Commands] Native commands registered.");
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize IPC Server
 					// ---------------------------------------------------------
 					debug!("[Lifecycle] [IPC] Initializing Mountain IPC Server...");
-					IPCServerRegister(&AppHandle)?;
+					IPCServerRegisterFn(&AppHandle)?;
 
 					// ---------------------------------------------------------
 					// [UI] [Window] Build main window
 					// ---------------------------------------------------------
 					debug!("[UI] [Window] Building main window...");
-					let MainWindow = WindowBuild(App, LocalhostUrl.clone());
+					let MainWindow = WindowBuildFn(App, LocalhostUrl.clone());
 					info!("[UI] [Window] Main window ready.");
 
 					#[cfg(debug_assertions)]
@@ -384,25 +403,24 @@ pub fn Fn() {
 					// [Backend] [Runtime] ApplicationRunTime
 					// ---------------------------------------------------------
 					debug!("[Backend] [Runtime] Creating ApplicationRunTime...");
-					let Runtime =
-						Arc::new(ApplicationRunTime::Create(SchedulerForRuntime.clone(), Environment.clone()));
+					let Runtime = Arc::new(ApplicationRunTime::Create(Scheduler.clone(), Environment.clone()));
 					AppHandle.manage(Runtime.clone());
 					info!("[Backend] [Runtime] ApplicationRunTime managed.");
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Status Reporter
 					// ---------------------------------------------------------
-					StatusReporterRegister(&AppHandle, Runtime.clone())?;
+					StatusReporterRegisterFn(&AppHandle, Runtime.clone())?;
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Advanced Features
 					// ---------------------------------------------------------
-					AdvancedFeaturesRegister(&AppHandle, Runtime.clone())?;
+					AdvancedFeaturesRegisterFn(&AppHandle, Runtime.clone())?;
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Wind Advanced Sync
 					// ---------------------------------------------------------
-					WindSyncRegister(&AppHandle, Runtime.clone())?;
+					WindSyncRegisterFn(&AppHandle, Runtime.clone())?;
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [PostSetup] Async initialization work
@@ -416,24 +434,20 @@ pub fn Fn() {
 						TraceStep!("[Lifecycle] [PostSetup] AppState cloned.");
 
 						// [Config]
-						ConfigurationInitialize(&PostSetupEnvironment).await;
+						ConfigurationInitializeFn(&PostSetupEnvironment).await;
 
 						// [Extensions] [ScanPaths]
-						ScanPathConfigure(&AppStateForSetup);
+						ScanPathConfigureFn(&AppStateForSetup);
 
 						// [Extensions] [Scan]
-						ExtensionPopulate(PostSetupAppHandle.clone(), &AppStateForSetup).await;
+						ExtensionPopulateFn(PostSetupAppHandle.clone(), &AppStateForSetup).await;
 
 						// [Vine] [gRPC]
-						VineStart(
-							PostSetupAppHandle.clone(),
-							"[::1]:50051".to_string(),
-							"[::1]:50052".to_string(),
-						)
-						.await;
+						VineStartFn(PostSetupAppHandle.clone(), "[::1]:50051".to_string(), "[::1]:50052".to_string())
+							.await;
 
 						// [Cocoon] [Sidecar]
-						CocoonStart(&PostSetupAppHandle, &PostSetupEnvironment).await;
+						CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
 
 						info!("[Lifecycle] [PostSetup] Complete. System ready.");
 					});
@@ -491,15 +505,15 @@ pub fn Fn() {
 					warn!("[Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown...");
 					api.prevent_exit();
 
-					let SchedulerHandle = SchedulerForShutdown.clone();
+					let SchedulerHandle = Scheduler.clone();
 					let AppHandleClone = AppHandle.clone();
 
 					tokio::spawn(async move {
 						debug!("[Lifecycle] [Shutdown] Shutting down ApplicationRunTime...");
-						let _ = RuntimeShutdown(&AppHandleClone).await;
+						let _ = RuntimeShutdownFn(&AppHandleClone).await;
 
 						debug!("[Lifecycle] [Shutdown] Stopping Echo scheduler...");
-						let _ = SchedulerShutdown(SchedulerHandle).await;
+						let _ = SchedulerShutdownFn(SchedulerHandle).await;
 
 						info!("[Lifecycle] [Shutdown] Done. Exiting process.");
 						AppHandleClone.exit(0);

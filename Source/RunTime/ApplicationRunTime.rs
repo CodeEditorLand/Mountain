@@ -371,7 +371,7 @@ impl ApplicationRunTime {
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
-		Self::EnvironmentType: Requires<TCapabilityProvider>,
+		MountainEnvironment: Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static,
 		TOutput: Send + Sync + 'static, {
 		tokio::time::timeout(timeout, self.Run(Effect)).await.map_err(|_| {
@@ -388,7 +388,7 @@ impl ApplicationRunTime {
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
-		Self::EnvironmentType: Requires<TCapabilityProvider>,
+		MountainEnvironment: Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static,
 		TOutput: Send + Sync + 'static, {
 		let mut retry_count = 0;

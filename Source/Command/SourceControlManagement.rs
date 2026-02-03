@@ -70,17 +70,23 @@ pub async fn GetSCMResourceChanges(
 ) -> Result<Value, String> {
 	log::debug!("[SCM Command] Getting resource changes for provider: {}", ProviderIdentifier);
 
-	let Resources = State
+	let resources_map = State
 		.SourceControlManagementResources
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?
 		.clone();
 
-	// Filter resources by provider
-	let ProviderResources:Vec<_> = Resources
-		.into_iter()
-		.filter(|r| r.ProviderIdentifier == ProviderIdentifier)
+	// Filter resources by provider - Resources is HashMap<u32, HashMap<String,
+	// Vec<SourceControlManagementResourceDTO>>> We need to flatten and filter by
+	// ProviderHandle (u32) matching ProviderIdentifier (String)
+	let provider_handle_u32 = ProviderIdentifier.parse::<u32>().unwrap_or(0);
+	let ProviderResources:Vec<_> = resources_map
+		.iter()
+		.flat_map(|(_group_id, group_resources)| group_resources.values())
+		.flat_map(|vec_resources| vec_resources.iter())
+		.filter(|r| r.ProviderHandle == provider_handle_u32)
+		.cloned()
 		.collect();
 
 	Ok(json!({

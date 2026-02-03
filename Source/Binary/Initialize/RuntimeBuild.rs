@@ -1,54 +1,51 @@
 //! # RuntimeBuild
 //!
-//! Builds the Tokio runtime for async execution.
+//! Builds the Echo scheduler for async task execution.
 //!
 //! ## RESPONSIBILITIES
 //!
 //! ### Runtime Construction
-//! - Create multi-threaded Tokio runtime
-//! - Enable all runtime features (IO, time, etc.)
-//! - Validate runtime construction
+//! - Create Echo scheduler with work-stealing threads
+//! - Configure worker count based on CPU cores
+//! - Initialize task queue system
 //!
 //! ## ARCHITECTURAL ROLE
 //!
 //! ### Position in Mountain
 //! - Early initialization component in Binary subsystem
-//! - Provides async execution environment
+//! - Provides high-performance task scheduling
 //!
 //! ### Dependencies
-//! - tokio: Async runtime
+//! - Echo: scheduler library
 //!
 //! ### Dependents
-//! - Fn() main entry point: Uses runtime for async execution
+//! - Fn() main entry point: Uses scheduler for async execution
 //!
 //! ## SECURITY
 //!
 //! ### Considerations
-//! - No security impact (runtime construction only)
+//! - No security impact (scheduler construction only)
 //!
 //! ## PERFORMANCE
 //!
 //! ### Considerations
-//! - Runtime construction is one-time cost at startup
-//! - Multi-threaded config maximizes CPU utilization
+//! - Scheduler construction is one-time cost at startup
+//! - Work-stealing maximizes CPU utilization
 
-use tokio::runtime::Builder;
+use std::sync::Arc;
 
-/// Build the Tokio runtime for async execution.
+use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
+
+/// Build the Echo scheduler for async task execution.
 ///
-/// Creates a multi-threaded Tokio runtime with all features enabled.
+/// Creates a multi-threaded work-stealing scheduler with optimal worker count.
 /// This is required for all async operations in the application.
 ///
 /// # Returns
 ///
-/// Returns a configured Tokio runtime.
+/// Returns an Arc-wrapped Echo scheduler.
 ///
 /// # Panics
 ///
-/// Panics if runtime construction fails.
-pub fn Build() -> tokio::runtime::Runtime {
-	Builder::new_multi_thread()
-		.enable_all()
-		.build()
-		.expect("FATAL: Cannot build Tokio runtime.")
-}
+/// Panics if scheduler construction fails.
+pub fn Build() -> Arc<Scheduler> { Arc::new(SchedulerBuilder::Create().Build()) }

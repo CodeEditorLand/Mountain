@@ -493,8 +493,8 @@ impl StatusReporter {
 		// Emit comprehensive status report
 		let comprehensive_report = ComprehensiveStatusReport {
 			basic_status:report.clone(),
-			performance_metrics,
-			health_status,
+			performance_metrics:performance_metrics.clone(),
+			health_status:health_status.clone(),
 			timestamp:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -619,7 +619,7 @@ impl StatusReporter {
 			.lock()
 			.map_err(|e| format!("Failed to access health monitor: {}", e))?;
 
-		let mut health_score:f32 = 100.0;
+		let mut health_score:f64 = 100.0;
 		let mut issues = Vec::new();
 
 		// Check connection health

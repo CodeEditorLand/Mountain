@@ -4,6 +4,7 @@
 //! filters.
 
 use log::LevelFilter;
+use tauri::plugin::TauriPlugin;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 
 /// Creates and configures the logging plugin with multi-target output and level
@@ -42,7 +43,7 @@ use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 /// - polling: File watcher events (very noisy)
 /// - tokio_reactor: Async reactor events
 /// - want: Connection readiness logs
-pub fn LoggingPlugin(LogLevel:LevelFilter) -> tauri_plugin_log::TauriPlugin<tauri::Wry> {
+pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 	tauri_plugin_log::Builder::new()
 		// Configure output targets
 		.targets([
