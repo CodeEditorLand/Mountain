@@ -171,11 +171,18 @@ pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Resul
 
 /// Single connection attempt without retry logic
 async fn try_connect_single(_SideCarIdentifier:&str, endpoint:&str) -> Result<(), VineError> {
-	let parsed_endpoint = endpoint
-		.parse()
-		.map_err(|e| VineError::RPCError(format!("Invalid endpoint: {}", e)))?;
-	let channel = tonic::transport::Channel::from_shared(parsed_endpoint)
-		.map_err(|e| VineError::RPCError(format!("Failed to create channel: {}", e)))?;
+	let endpoint_url = if endpoint.starts_with("http://") || endpoint.starts_with("https://") {
+		endpoint.to_string()
+	} else {
+		format!("http://{}", endpoint)
+	};
+	
+	let channel = tonic::transport::Channel::from_shared(endpoint_url)
+		.map_err(|e| VineError::RPCError(format!("Failed to create channel: {}", e)))?
+		.connect()
+		.await
+		.map_err(|e| VineError::RPCError(format!("Failed to connect: {}", e)))?;
+	
 	let client = CocoonClient::new(channel);
 
 	let mut clients = SIDECAR_CLIENTS.lock();
@@ -297,11 +304,10 @@ fn UpdateSideCarActivity(SideCarIdentifier:&str) {
 /// - `Err(VineError::SerializationError)`: Message exceeds maximum size
 fn ValidateMessageSize(data:&[u8]) -> Result<(), VineError> {
 	if data.len() > Config::MAX_MESSAGE_SIZE_BYTES {
-		Err(VineError::SerializationError(format!(
-			"Message size {} exceeds maximum {} bytes",
-			data.len(),
-			Config::MAX_MESSAGE_SIZE_BYTES
-		)))
+		Err(VineError::MessageTooLarge {
+			ActualSize: data.len(),
+			MaxSize: Config::MAX_MESSAGE_SIZE_BYTES,
+		})
 	} else {
 		Ok(())
 	}
@@ -346,7 +352,7 @@ pub async fn SendRequest(
 		));
 	}
 
-	let timeout = Duration::from_millis(if TimeoutMilliseconds > 0 {
+	let timeout_duration = Duration::from_millis(if TimeoutMilliseconds > 0 {
 		TimeoutMilliseconds
 	} else {
 		Config::DEFAULT_TIMEOUT_MS
@@ -354,7 +360,7 @@ pub async fn SendRequest(
 
 	// Validate message size
 	let parameter_bytes = to_vec(&Parameters)
-		.map_err(|e| VineError::SerializationError(format!("Failed to serialize parameters: {}", e)))?;
+		.map_err(|e| VineError::RPCError(format!("Failed to serialize parameters: {}", e)))?;
 	ValidateMessageSize(&parameter_bytes)?;
 
 	let mut client = {
@@ -366,31 +372,35 @@ pub async fn SendRequest(
 		return Err(VineError::ClientNotConnected(SideCarIdentifier.to_string()));
 	}
 
-	let client = client.unwrap();
+	let mut client = client.unwrap();
 
 	let request_identifier = std::time::SystemTime::now()
 		.duration_since(std::time::UNIX_EPOCH)
 		.unwrap()
 		.as_nanos() as u64;
+	let method_clone = Method.clone();
 	let request = GenericRequest { request_identifier, method:Method, parameter:parameter_bytes };
 
-	let result = timeout(timeout, client.process_mountain_request(request)).await;
+	let result = timeout(timeout_duration, client.process_mountain_request(request)).await;
 
 	match result {
-		Ok(response) => {
+		Ok(Ok(response)) => {
 			UpdateSideCarActivity(SideCarIdentifier);
 			debug!(
 				"[VineClient] Request sent successfully to sidecar '{}': method='{}'",
-				SideCarIdentifier, Method
+				SideCarIdentifier, method_clone
 			);
 
+			// Get the inner response message
+			let inner_response = response.into_inner();
+			
 			// Parse response JSON
-			let result_bytes = response.result;
+			let result_bytes = inner_response.result;
 			let result_value:Value = from_slice(&result_bytes)
-				.map_err(|e| VineError::SerializationError(format!("Failed to deserialize response: {}", e)))?;
-
+				.map_err(|e| VineError::RPCError(format!("Failed to deserialize response: {}", e)))?;
+	
 			// Check for RPC errors in response
-			if let Some(error_data) = response.error {
+			if let Some(error_data) = inner_response.error {
 				return Err(VineError::RPCError(format!(
 					"RPC error from sidecar: code={}, message={}",
 					error_data.code, error_data.message
@@ -399,12 +409,16 @@ pub async fn SendRequest(
 
 			Ok(result_value)
 		},
+		Ok(Err(status)) => {
+			RecordSideCarFailure(SideCarIdentifier);
+			return Err(VineError::RPCError(format!("gRPC error: {}", status)));
+		},
 		Err(_) => {
 			RecordSideCarFailure(SideCarIdentifier);
 			Err(VineError::RequestTimeout {
 				SideCarIdentifier:SideCarIdentifier.to_string(),
-				MethodName:Method.clone(),
-				TimeoutMilliseconds:timeout.as_millis() as u64,
+				MethodName:method_clone,
+				TimeoutMilliseconds:timeout_duration.as_millis() as u64,
 			})
 		},
 	}

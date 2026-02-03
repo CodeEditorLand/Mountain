@@ -8,7 +8,9 @@
 use std::{path::PathBuf, sync::Arc, time::Duration};
 
 use log::{debug, error, info, trace, warn};
+use serde_json::Value;
 use tauri::{
+	App,
 	AppHandle,
 	Manager,
 	RunEvent,
@@ -18,43 +20,42 @@ use tauri::{
 	tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
 };
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
+use CommonLibrary::Error::CommonError::CommonError;
+use crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;
 
 use crate::{
-	ApplicationState::ApplicationState::{ApplicationState, MapLockError},
+	// Binary submodule imports
 	Binary::Build::LocalhostPlugin::LocalhostPlugin as LocalhostPluginFn,
 	Binary::Build::LoggingPlugin::LoggingPlugin as LoggingPluginFn,
-	// Build functions
 	Binary::Build::TauriBuild::TauriBuild as TauriBuildFn,
 	Binary::Build::WindowBuild::WindowBuild as WindowBuildFn,
-	// Extension functions
 	Binary::Extension::ExtensionPopulate::ExtensionPopulate as ExtensionPopulateFn,
 	Binary::Extension::ScanPathConfigure::ScanPathConfigure as ScanPathConfigureFn,
-	// Initialize functions
 	Binary::Initialize::CliParse::Parse as CliParseFn,
 	Binary::Initialize::LogLevel::Resolve as ResolveLogLevel,
 	Binary::Initialize::PortSelector::BuildUrl as BuildPortUrl,
 	Binary::Initialize::PortSelector::Select as SelectPort,
 	Binary::Initialize::StateBuild::Build as BuildStateFn,
-	// Register functions
 	Binary::Register::AdvancedFeaturesRegister::AdvancedFeaturesRegister as AdvancedFeaturesRegisterFn,
 	Binary::Register::CommandRegister::CommandRegister as CommandRegisterFn,
 	Binary::Register::IPCServerRegister::IPCServerRegister as IPCServerRegisterFn,
 	Binary::Register::StatusReporterRegister::StatusReporterRegister as StatusReporterRegisterFn,
 	Binary::Register::WindSyncRegister::WindSyncRegister as WindSyncRegisterFn,
-	// Service functions
 	Binary::Service::CocoonStart::CocoonStart as CocoonStartFn,
 	Binary::Service::ConfigurationInitialize::ConfigurationInitialize as ConfigurationInitializeFn,
 	Binary::Service::VineStart::VineStart as VineStartFn,
-	// Shutdown functions
 	Binary::Shutdown::RuntimeShutdown::RuntimeShutdown as RuntimeShutdownFn,
 	Binary::Shutdown::SchedulerShutdown::SchedulerShutdown as SchedulerShutdownFn,
-	// Tray
 	Binary::Tray::EnableTray as EnableTrayFn,
-	// Commands
+	// Crate root imports
+	ApplicationState::ApplicationState::ApplicationState,
 	Command,
-	// Environment and IPC
 	Environment::MountainEnvironment::MountainEnvironment,
-	IPC::{TauriIPCServer::TauriIPCServer, initialize_wind_advanced_sync},
+	IPC::{
+		AdvancedFeatures::CollaborationPermissions,
+		TauriIPCServer::TauriIPCServer,
+		initialize_wind_advanced_sync,
+	},
 	ProcessManagement::InitializationData,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::DispatchLogic,
@@ -82,7 +83,7 @@ async fn MountainGetWorkbenchConfiguration(
 
 	let Configuration = InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, &State)
 		.await
-		.map_err(|Error| {
+		.map_err(|Error: CommonError| {
 			error!("[IPC] [WorkbenchConfig] Failed: {}", Error);
 			Error.to_string()
 		})?;
@@ -125,13 +126,14 @@ async fn MountainIPCReceiveMessage(
 		serde_json::from_value(message).map_err(|e| e.to_string())?,
 	)
 	.await
+	.map(|()| serde_json::Value::Object(serde_json::Map::new()))
 }
 
 #[tauri::command]
 async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	let status = crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle)
 		.await
-		.map_err(|e| {
+		.map_err(|e: String| {
 			error!("[IPC] [Command] Failed to get IPC status: {}", e);
 			e.to_string()
 		})?;
@@ -144,12 +146,20 @@ async fn MountainIPCInvoke(
 	method:String,
 	params:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, params).await
+	let args: Vec<Value> = params.as_array()
+		.ok_or_else(|| "params must be an array".to_string())?
+		.clone()
+		.into_iter()
+		.collect();
+	
+	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, args).await
 }
 
 #[tauri::command]
 async fn MountainGetWindDesktopConfiguration(app_handle:AppHandle) -> Result<serde_json::Value, String> {
-	crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle).await
+	crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle)
+		.await
+		.and_then(|config| serde_json::to_value(config).map_err(|e: serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
@@ -157,22 +167,30 @@ async fn MountainUpdateConfigurationFromWind(
 	app_handle:AppHandle,
 	config:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::ConfigurationBridge::mountain_update_configuration_from_wind(app_handle, config).await
+	crate::IPC::ConfigurationBridge::mountain_update_configuration_from_wind(app_handle, config)
+		.await
+		.map(|()| serde_json::json!({"success": true}))
 }
 
 #[tauri::command]
 async fn MountainSynchronizeConfiguration(app_handle:AppHandle) -> Result<serde_json::Value, String> {
-	crate::IPC::ConfigurationBridge::mountain_synchronize_configuration(app_handle).await
+	crate::IPC::ConfigurationBridge::mountain_synchronize_configuration(app_handle)
+		.await
+		.map(|_| serde_json::json!({"synchronized": true}))
 }
 
 #[tauri::command]
 async fn MountainGetConfigurationStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
-	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle).await
+	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle)
+		.await
+		.and_then(|status| serde_json::to_value(status).map_err(|e: serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
 async fn get_configuration_data(app_handle:AppHandle) -> Result<serde_json::Value, String> {
-	crate::IPC::ConfigurationBridge::get_configuration_data(app_handle).await
+	crate::IPC::ConfigurationBridge::get_configuration_data(app_handle)
+		.await
+		.and_then(|data| serde_json::to_value(data).map_err(|e: serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
@@ -197,12 +215,16 @@ async fn MountainStartIPCStatusReporting(app_handle:AppHandle) -> Result<serde_j
 
 #[tauri::command]
 async fn MountainGetPerformanceStats(app_handle:AppHandle) -> Result<serde_json::Value, String> {
-	crate::IPC::AdvancedFeatures::mountain_get_performance_stats(app_handle).await
+	crate::IPC::AdvancedFeatures::mountain_get_performance_stats(app_handle)
+		.await
+		.and_then(|stats| serde_json::to_value(stats).map_err(|e: serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
 async fn MountainGetCacheStats(app_handle:AppHandle) -> Result<serde_json::Value, String> {
-	crate::IPC::AdvancedFeatures::mountain_get_cache_stats(app_handle).await
+	crate::IPC::AdvancedFeatures::mountain_get_cache_stats(app_handle)
+		.await
+		.and_then(|cache| serde_json::to_value(cache).map_err(|e: serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
@@ -210,12 +232,33 @@ async fn MountainCreateCollaborationSession(
 	app_handle:AppHandle,
 	session_data:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_data).await
+	let session_id = session_data["session_id"]
+		.as_str()
+		.ok_or_else(|| "Missing or invalid session_id in session_data".to_string())?
+		.to_string();
+	
+	let permissions_list: Vec<String> = serde_json::from_value(session_data["permissions"].clone())
+		.map_err(|e| format!("Invalid permissions: {}", e))?;
+	
+	// Convert Vec<String> to CollaborationPermissions
+	let permissions = CollaborationPermissions {
+		can_edit: permissions_list.iter().any(|p| p == "can_edit" || p == "edit"),
+		can_view: permissions_list.iter().any(|p| p == "can_view" || p == "view"),
+		can_comment: permissions_list.iter().any(|p| p == "can_comment" || p == "comment"),
+		can_share: permissions_list.iter().any(|p| p == "can_share" || p == "share"),
+	};
+	
+	let session_id_for_response = session_id.clone();
+	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_id, permissions)
+		.await
+		.map(|()| serde_json::json!({"session_id": session_id_for_response, "permissions": session_data["permissions"]}))
 }
 
 #[tauri::command]
 async fn MountainGetCollaborationSessions(app_handle:AppHandle) -> Result<serde_json::Value, String> {
-	crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions(app_handle).await
+	crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions(app_handle)
+		.await
+		.and_then(|sessions| serde_json::to_value(sessions).map_err(|e: serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
@@ -240,7 +283,7 @@ async fn MountainAddDocumentForSync(
 
 	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, document_id, file_path)
 		.await
-		.map_err(|e| {
+		.map_err(|e: String| {
 			error!("[IPC] [Sync] Failed to add document for sync: {}", e);
 			e.to_string()
 		})
@@ -251,7 +294,7 @@ async fn MountainAddDocumentForSync(
 async fn MountainGetSyncStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle)
 		.await
-		.map_err(|e| {
+		.map_err(|e: String| {
 			error!("[IPC] [Sync] Failed to get sync status: {}", e);
 			e.to_string()
 		})
@@ -280,7 +323,7 @@ async fn MountainSubscribeToUpdates(
 
 	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle, target, subscriber)
 		.await
-		.map_err(|e| {
+		.map_err(|e: String| {
 			error!("[IPC] [Sync] Failed to subscribe to updates: {}", e);
 			e.to_string()
 		})
@@ -309,7 +352,8 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [Args] CLI parsing (using CliParse module)
 		// ---------------------------------------------------------------------
-		let (InitialFolders, WorkspaceConfigurationPath) = CliParseFn();
+		let WorkspaceConfigurationPath = CliParseFn();
+		let InitialFolders = vec![];
 
 		// ---------------------------------------------------------------------
 		// [Boot] [State] ApplicationState (using StateBuild module)
@@ -326,7 +370,8 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [Runtime] Scheduler handles (using RuntimeBuild module)
 		// ---------------------------------------------------------------------
-		let Scheduler = SchedulerBuilder::Create().Build();
+		let Scheduler = Arc::new(SchedulerBuilder::Create().Build());
+		let SchedulerForClosure = Scheduler.clone();
 		TraceStep!("[Boot] [Echo] Scheduler handles prepared.");
 
 		// ---------------------------------------------------------------------
@@ -349,20 +394,20 @@ pub fn Fn() {
 			.plugin(LoggingPluginFn(log_level))
 			.plugin(LocalhostPluginFn(ServerPort))
 			.manage(AppState.clone())
-			.setup({
-				let LocalhostUrl = LocalhostUrl.clone();
-				move |App| {
-					info!("[Lifecycle] [Setup] Setup hook started.");
-					debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
-
-					let AppHandle = App.handle().clone();
-					TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
+		.setup({
+			let LocalhostUrl = LocalhostUrl.clone();
+			move |app: &mut App| {
+				info!("[Lifecycle] [Setup] Setup hook started.");
+				debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
+	
+				let AppHandle = app.handle().clone();
+				TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
 
 					// ---------------------------------------------------------
 					// [UI] [Tray] Initialize System Tray
 					// ---------------------------------------------------------
 					debug!("[UI] [Tray] Initializing system tray...");
-					if let Err(Error) = EnableTrayFn(App) {
+					if let Err(Error) = EnableTrayFn::enable_tray(app) {
 						error!("[UI] [Tray] Failed to enable tray: {}", Error);
 					}
 
@@ -370,20 +415,24 @@ pub fn Fn() {
 					// [Lifecycle] [Commands] Register native commands
 					// ---------------------------------------------------------
 					debug!("[Lifecycle] [Commands] Registering native commands...");
-					CommandRegisterFn(&AppHandle, &AppState)?;
+					if let Err(e) = CommandRegisterFn(&AppHandle, &AppState) {
+						error!("[Lifecycle] [Commands] Failed to register commands: {}", e);
+					}
 					debug!("[Lifecycle] [Commands] Native commands registered.");
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize IPC Server
 					// ---------------------------------------------------------
 					debug!("[Lifecycle] [IPC] Initializing Mountain IPC Server...");
-					IPCServerRegisterFn(&AppHandle)?;
+					if let Err(e) = IPCServerRegisterFn(&AppHandle) {
+						error!("[Lifecycle] [IPC] Failed to register IPC server: {}", e);
+					}
 
 					// ---------------------------------------------------------
 					// [UI] [Window] Build main window
 					// ---------------------------------------------------------
 					debug!("[UI] [Window] Building main window...");
-					let MainWindow = WindowBuildFn(App, LocalhostUrl.clone());
+					let MainWindow = WindowBuildFn(app, LocalhostUrl.clone());
 					info!("[UI] [Window] Main window ready.");
 
 					#[cfg(debug_assertions)]
@@ -403,24 +452,30 @@ pub fn Fn() {
 					// [Backend] [Runtime] ApplicationRunTime
 					// ---------------------------------------------------------
 					debug!("[Backend] [Runtime] Creating ApplicationRunTime...");
-					let Runtime = Arc::new(ApplicationRunTime::Create(Scheduler.clone(), Environment.clone()));
+					let Runtime = Arc::new(ApplicationRunTime::Create(SchedulerForClosure.clone(), Environment.clone()));
 					AppHandle.manage(Runtime.clone());
 					info!("[Backend] [Runtime] ApplicationRunTime managed.");
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Status Reporter
 					// ---------------------------------------------------------
-					StatusReporterRegisterFn(&AppHandle, Runtime.clone())?;
+					if let Err(e) = StatusReporterRegisterFn(&AppHandle, Runtime.clone()) {
+						error!("[Lifecycle] [IPC] Failed to initialize status reporter: {}", e);
+					}
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Advanced Features
 					// ---------------------------------------------------------
-					AdvancedFeaturesRegisterFn(&AppHandle, Runtime.clone())?;
+					if let Err(e) = AdvancedFeaturesRegisterFn(&AppHandle, Runtime.clone()) {
+						error!("[Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
+					}
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [IPC] Initialize Wind Advanced Sync
 					// ---------------------------------------------------------
-					WindSyncRegisterFn(&AppHandle, Runtime.clone())?;
+					if let Err(e) = WindSyncRegisterFn(&AppHandle, Runtime.clone()) {
+						error!("[Lifecycle] [IPC] Failed to initialize wind advanced sync: {}", e);
+					}
 
 					// ---------------------------------------------------------
 					// [Lifecycle] [PostSetup] Async initialization work
@@ -491,32 +546,32 @@ pub fn Fn() {
 			])
 			.build(tauri::generate_context!())
 			.expect("FATAL: Error while building Mountain Tauri application")
-			.run(move |AppHandle, Event| {
+			.run(move |app_handle: &tauri::AppHandle, event: tauri::RunEvent| {
 				// Debug-only: log selected lifecycle events
 				if cfg!(debug_assertions) {
-					match &Event {
+					match &event {
 						RunEvent::MainEventsCleared => {},
 						RunEvent::WindowEvent { .. } => {},
-						_ => debug!("[Lifecycle] [RunEvent] {:?}", Event),
+						_ => debug!("[Lifecycle] [RunEvent] {:?}", event),
 					}
 				}
-
-				if let RunEvent::ExitRequested { api, .. } = Event {
+	
+				if let RunEvent::ExitRequested { api, .. } = event {
 					warn!("[Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown...");
 					api.prevent_exit();
-
+	
 					let SchedulerHandle = Scheduler.clone();
-					let AppHandleClone = AppHandle.clone();
-
+					let app_handle_clone = app_handle.clone();
+	
 					tokio::spawn(async move {
 						debug!("[Lifecycle] [Shutdown] Shutting down ApplicationRunTime...");
-						let _ = RuntimeShutdownFn(&AppHandleClone).await;
-
+						let _ = RuntimeShutdownFn(&app_handle_clone).await;
+	
 						debug!("[Lifecycle] [Shutdown] Stopping Echo scheduler...");
 						let _ = SchedulerShutdownFn(SchedulerHandle).await;
-
+	
 						info!("[Lifecycle] [Shutdown] Done. Exiting process.");
-						AppHandleClone.exit(0);
+						app_handle_clone.exit(0);
 					});
 				}
 			});

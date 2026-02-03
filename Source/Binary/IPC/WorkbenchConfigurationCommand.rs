@@ -42,6 +42,7 @@
 //! - Async execution won't block main thread
 
 use log::debug;
+use std::sync::Arc;
 use tauri::{AppHandle, State};
 use serde_json::Value;
 
@@ -72,13 +73,13 @@ use crate::{ApplicationState::ApplicationState::ApplicationState, ProcessManagem
 #[tauri::command]
 pub async fn MountainGetWorkbenchConfiguration(
 	ApplicationHandle:AppHandle,
-	State:State<'_, ApplicationState>,
+	State:State<'_, Arc<ApplicationState>>,
 ) -> Result<Value, String> {
 	debug!("[IPC] [WorkbenchConfig] Request received.");
 
 	debug!("[IPC] [WorkbenchConfig] Constructing sandbox configuration...");
 
-	let Config = InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, &State)
+	let Config = InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, State.inner())
 		.await
 		.map_err(|Error| {
 			debug!("[IPC] [WorkbenchConfig] Failed: {}", Error);

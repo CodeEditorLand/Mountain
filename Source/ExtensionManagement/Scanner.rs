@@ -125,7 +125,7 @@ fn process_configuration_properties(
 	current_path:&str,
 	properties:&serde_json::Map<String, Value>,
 	visited_keys:&mut Vec<String>,
-) -> Result<(), String> {
+) -> Result<(), CommonError> {
 	for (key, value) in properties {
 		// Build the full path for this property
 		let full_path = if current_path.is_empty() {
@@ -136,10 +136,9 @@ fn process_configuration_properties(
 
 		// Check for circular references
 		if visited_keys.contains(&full_path) {
-			return Err(format!(
-				"Circular reference detected in configuration properties: {}",
-				full_path
-			));
+			return Err(CommonError::Unknown {
+				Description: format!("Circular reference detected in configuration properties: {}", full_path)
+			});
 		}
 
 		visited_keys.push(full_path.clone());

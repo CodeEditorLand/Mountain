@@ -585,24 +585,34 @@ impl StatusReporter {
 		// Get connection statistics
 		let connection_stats = ipc_server.get_connection_stats().await.unwrap_or_default();
 
-		// Calculate performance metrics
+		// Calculate all performance metrics first (without holding the lock)
+		let messages_per_second = self.calculate_message_rate().await;
+		let average_latency_ms = self.calculate_average_latency().await;
+		let peak_latency_ms = self.calculate_peak_latency().await;
+		let compression_ratio = self.calculate_compression_ratio().await;
+		let connection_pool_utilization = self.calculate_pool_utilization(&connection_stats).await;
+		let memory_usage_mb = self.get_memory_usage().await;
+		let cpu_usage_percent = self.get_cpu_usage().await;
+		let last_update = SystemTime::now()
+			.duration_since(SystemTime::UNIX_EPOCH)
+			.unwrap_or_default()
+			.as_millis() as u64;
+
+		// Now acquire the lock and update metrics
 		let mut metrics = self
 			.performance_metrics
 			.lock()
 			.map_err(|e| format!("Failed to access performance metrics: {}", e))?;
 
 		// Update metrics with real-time data
-		metrics.messages_per_second = self.calculate_message_rate().await;
-		metrics.average_latency_ms = self.calculate_average_latency().await;
-		metrics.peak_latency_ms = self.calculate_peak_latency().await;
-		metrics.compression_ratio = self.calculate_compression_ratio().await;
-		metrics.connection_pool_utilization = self.calculate_pool_utilization(&connection_stats).await;
-		metrics.memory_usage_mb = self.get_memory_usage().await;
-		metrics.cpu_usage_percent = self.get_cpu_usage().await;
-		metrics.last_update = SystemTime::now()
-			.duration_since(SystemTime::UNIX_EPOCH)
-			.unwrap_or_default()
-			.as_millis() as u64;
+		metrics.messages_per_second = messages_per_second;
+		metrics.average_latency_ms = average_latency_ms;
+		metrics.peak_latency_ms = peak_latency_ms;
+		metrics.compression_ratio = compression_ratio;
+		metrics.connection_pool_utilization = connection_pool_utilization;
+		metrics.memory_usage_mb = memory_usage_mb;
+		metrics.cpu_usage_percent = cpu_usage_percent;
+		metrics.last_update = last_update;
 
 		debug!(
 			"[StatusReporter] Performance metrics updated: {:.2} msg/s, {:.2}ms latency",
@@ -1220,7 +1230,7 @@ pub async fn mountain_get_comprehensive_status(
 pub fn initialize_status_reporter(
 	app_handle:&tauri::AppHandle,
 	runtime:Arc<ApplicationRunTime>,
-) -> Result<StatusReporter, String> {
+) -> Result<(), String> {
 	info!("[StatusReporter] Initializing status reporter");
 
 	let reporter = StatusReporter::new(runtime);
@@ -1228,5 +1238,5 @@ pub fn initialize_status_reporter(
 	// Store in application state
 	app_handle.manage(reporter.clone_reporter());
 
-	Ok(reporter)
+	Ok(())
 }

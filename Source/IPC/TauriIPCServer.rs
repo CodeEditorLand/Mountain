@@ -754,6 +754,7 @@ impl ConnectionPool {
 	/// Start health monitoring for a connection
 	async fn StartHealthMonitoring(&self, connection_id:&str) {
 		let health_checker = self.HealthChecker.clone();
+		let active_connections = self.ActiveConnections.clone();
 		let connection_id = connection_id.to_string();
 
 		tokio::spawn(async move {
@@ -763,7 +764,7 @@ impl ConnectionPool {
 				interval.tick().await;
 
 				let mut checker = health_checker.lock().await;
-				let mut connections = match self.ActiveConnections.try_lock() {
+				let mut connections = match active_connections.try_lock() {
 					Ok(conns) => conns,
 					Err(_) => continue,
 				};

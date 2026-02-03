@@ -626,7 +626,7 @@ pub async fn mountain_get_collaboration_sessions(
 pub fn initialize_advanced_features(
 	app_handle:&tauri::AppHandle,
 	runtime:Arc<ApplicationRunTime>,
-) -> Result<AdvancedFeatures, String> {
+) -> Result<(), String> {
 	info!("[AdvancedFeatures] Initializing advanced IPC features");
 
 	let features = AdvancedFeatures::new(runtime);
@@ -642,5 +642,5 @@ pub fn initialize_advanced_features(
 		}
 	});
 
-	Ok(features)
+	Ok(())
 }

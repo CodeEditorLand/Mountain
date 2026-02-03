@@ -62,7 +62,7 @@ impl CocoonServiceImpl {
 
 				let extension_service:Arc<dyn ExtensionManagementService> = (*self.environment).Require();
 				let extensions = extension_service
-					.get_extensions()
+					.GetExtensions()
 					.await
 					.map_err(|e| Status::internal(format!("Failed to get extensions: {}", e)))?;
 
@@ -75,27 +75,8 @@ impl CocoonServiceImpl {
 			},
 
 			"ActivateExtension" => {
-				debug!("[CocoonServiceServer] Activating extension");
-
-				let params:serde_json::Value = serde_json::from_slice(&request.parameter)
-					.map_err(|e| Status::invalid_argument(format!("Invalid parameters: {}", e)))?;
-
-				let extension_id = params["extensionId"]
-					.as_str()
-					.ok_or_else(|| Status::invalid_argument("Missing extensionId parameter"))?;
-
-				let extension_service:Arc<dyn ExtensionManagementService> = (*self.environment).Require();
-				extension_service
-					.activate_extension(extension_id)
-					.await
-					.map_err(|e| Status::internal(format!("Failed to activate extension: {}", e)))?;
-
-				Ok(GenericResponse {
-					request_identifier:request.request_identifier,
-					result:serde_json::to_vec(&"activated")
-						.map_err(|e| Status::internal(format!("Failed to serialize response: {}", e)))?,
-					error:None,
-				})
+				debug!("[CocoonServiceServer] ActivateExtension not implemented");
+				Err(Status::unimplemented("ActivateExtension method not available"))
 			},
 
 			_ => {

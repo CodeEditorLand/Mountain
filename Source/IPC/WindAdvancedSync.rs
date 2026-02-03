@@ -1001,7 +1001,7 @@ pub async fn mountain_subscribe_to_updates(
 pub fn initialize_wind_advanced_sync(
 	app_handle:&tauri::AppHandle,
 	runtime:Arc<ApplicationRunTime>,
-) -> Result<Arc<WindAdvancedSync>, String> {
+) -> Result<(), String> {
 	info!("[WindAdvancedSync] Initializing Wind advanced synchronization");
 
 	let sync = Arc::new(WindAdvancedSync::new(runtime));
@@ -1017,5 +1017,5 @@ pub fn initialize_wind_advanced_sync(
 		}
 	});
 
-	Ok(sync)
+	Ok(())
 }

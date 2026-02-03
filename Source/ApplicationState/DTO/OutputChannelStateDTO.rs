@@ -116,7 +116,7 @@ fn FormatBytes(Bytes:usize) -> String {
 	}
 
 	let mut Size = Bytes as f64;
-	let MutIndex = 0usize;
+	let mut MutIndex = 0usize;
 
 	while Size >= 1024.0 && MutIndex < UNITS.len() - 1 {
 		Size /= 1024.0;

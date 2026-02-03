@@ -389,7 +389,7 @@ impl ApplicationRunTime {
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
 		MountainEnvironment: Requires<TCapabilityProvider>,
-		TError: From<CommonError> + Send + Sync + 'static,
+		TError: From<CommonError> + Send + Sync + 'static + std::fmt::Display,
 		TOutput: Send + Sync + 'static, {
 		let mut retry_count = 0;
 		let mut current_delay = initial_delay;

@@ -147,7 +147,7 @@ impl WebViewProvider for MountainEnvironment {
 		self.ApplicationHandle
 			.emit(
 				"sky://webview/created",
-				json!({ "Handle": Handle.clone(), "ViewType": ViewType.clone(), "Title": Title.clone() }),
+				json!({ "Handle": Handle.clone(), "ViewType": ViewType.clone(), "Title": TitleClone }),
 			)
 			.map_err(|Error| {
 				CommonError::IPCError { Description:format!("Failed to emit WebView creation event: {}", Error) }

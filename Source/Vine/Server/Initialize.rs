@@ -41,7 +41,7 @@ use log::{debug, error, info, warn};
 use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
 
-use super::MountainVinegRPCService::MountainVinegRPCService;
+use super::{MountainVinegRPCService::MountainVinegRPCService, CocoonServiceImpl::CocoonServiceImpl};
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine::{
@@ -187,7 +187,7 @@ pub fn Initialize(
 	let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime.clone());
 
 	// Create CocoonService implementation (handles calls from Mountain to Cocoon)
-	let cocoon_service_impl = CocoonServiceServer::new(RunTime.Environment.clone());
+	let cocoon_service_impl = CocoonServiceImpl::new(RunTime.Environment.clone());
 
 	debug!("[VineServer] Service implementations created");
 
