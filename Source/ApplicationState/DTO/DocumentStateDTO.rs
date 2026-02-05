@@ -25,7 +25,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use super::RPCModelContentChangeDTO::{RPCModelContentChangeDTO, RPCRangeDTO};
+use super::{RPCRangeDTO::RPCRangeDTO, RPCModelContentChangeDTO::RPCModelContentChangeDTO};
 use crate::ApplicationState::Internal::{AnalyzeTextLinesAndEOL, URLSerializationHelper};
 
 /// Maximum line count for a document to prevent memory exhaustion
@@ -237,7 +237,6 @@ impl DocumentStateDTO {
 /// # Returns
 /// Updated lines vector after applying all changes
 fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChangeDTO]) -> Vec<String> {
-	use super::RPCModelContentChangeDTO::RPCRangeDTO;
 
 	// Join lines into full text for offset-based manipulation
 	let mut ResultText = Lines.join(EOL);

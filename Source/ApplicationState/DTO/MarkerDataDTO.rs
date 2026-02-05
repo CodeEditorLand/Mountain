@@ -16,6 +16,7 @@
 //! - RelatedInformation: Related diagnostic information
 //! - Tags: Additional marker tags (deprecated, unnecessary)
 
+use super::MarkerSeverity::MarkerSeverity;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -24,20 +25,6 @@ const MAX_MARKER_MESSAGE_LENGTH:usize = 10_000;
 
 /// Maximum source string length
 const MAX_SOURCE_LENGTH:usize = 256;
-
-/// Marker severity levels (aligned with VS Code)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-#[repr(u32)]
-pub enum MarkerSeverity {
-	/// Something not allowed by the rules of a language
-	Error = 8,
-	/// Something suspicious but allowed
-	Warning = 4,
-	/// Something to inform about but not a problem
-	Information = 2,
-	/// Something to help improvement
-	Hint = 1,
-}
 
 /// Represents a single diagnostic marker, such as a compiler error or a linter
 /// warning. This structure is compatible with VS Code's `IMarkerData`
