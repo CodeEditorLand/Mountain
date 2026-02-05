@@ -5,7 +5,7 @@
 use log::{error, info};
 
 use crate::Environment::{
-	ConfigurationProvider::InitializeAndMergeConfigurations,
+	ConfigurationProvider::Loading::initialize_and_merge_configurations,
 	MountainEnvironment::MountainEnvironment,
 };
 
@@ -31,15 +31,15 @@ use crate::Environment::{
 /// # Errors
 ///
 /// Returns an error if configuration initialization or merging fails.
-pub async fn ConfigurationInitialize(Environment:&std::sync::Arc<MountainEnvironment>) -> Result<(), String> {
-	match InitializeAndMergeConfigurations(Environment).await {
+pub async fn ConfigurationInitialize(Environment: &std::sync::Arc<MountainEnvironment>) -> Result<(), String> {
+	match initialize_and_merge_configurations(Environment).await {
 		Ok(()) => {
 			info!("[Config] [Initialize] Configuration initialized and merged successfully.");
 			Ok(())
-		},
+		}
 		Err(e) => {
 			error!("[Config] [Initialize] Failed: {}", e);
 			Err(format!("Failed to initialize and merge configurations: {}", e))
-		},
+		}
 	}
 }

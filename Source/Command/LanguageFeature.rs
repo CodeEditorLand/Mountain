@@ -71,245 +71,107 @@
 //! - Add folding range provider
 //! - Support selection range provider
 //!
-//! MODULE CONTENTS:
-//! - Helper function: `InvokeProvider<F, T>` - generic provider invoker
-//! - Validation function: `ValidateLanguageFeatureRequest`
-//! - Tauri command functions (all `#[command] pub async fn`):
-//!   - Hover: `MountainProvideHover`
-//!   - Code Actions: `MountainProvideCodeActions`
-//!   - Highlights: `MountainProvideDocumentHighlights`
-//!   - Completions: `MountainProvideCompletions`
-//!   - Definition: `MountainProvideDefinition`
-//!   - References: `MountainProvideReferences`
-//! - (Commented out: `MountainProvideDocumentSymbols`)
+//! MODULE STRUCTURE:
+//! - [`validation.rs`](validation.rs) - request validation helper
+//! - [`invoke_provider.rs`](invoke_provider.rs) - generic provider invoker
+//! - Individual command modules for each language feature (containing impls only)
 
 use std::sync::Arc;
 
 use CommonLibrary::{
-	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	LanguageFeature::{
-		DTO::{CompletionContextDTO::CompletionContextDTO, PositionDTO::PositionDTO},
-		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
-	},
+	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
-use serde_json::Value;
+use log::debug;
+use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry, command};
 use url::Url;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-/// A generic helper to reduce boilerplate in language feature command handlers.
-async fn InvokeProvider<F, T>(ApplicationHandle:AppHandle<Wry>, Handler:F) -> Result<Value, String>
-where
-	F: FnOnce(Arc<dyn LanguageFeatureProviderRegistry>) -> T,
-	T: std::future::Future<Output = Result<Value, CommonError>>, {
-	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+// Private submodules containing implementation (without #[command] attributes)
+#[path = "LanguageFeature/validation.rs"]
+mod validation;
+#[path = "LanguageFeature/invoke_provider.rs"]
+mod invoke_provider;
+#[path = "LanguageFeature/hover.rs"]
+mod hover;
+#[path = "LanguageFeature/code_actions.rs"]
+mod code_actions;
+#[path = "LanguageFeature/highlights.rs"]
+mod highlights;
+#[path = "LanguageFeature/completions.rs"]
+mod completions;
+#[path = "LanguageFeature/definition.rs"]
+mod definition;
+#[path = "LanguageFeature/references.rs"]
+mod references;
 
-	let Provider:Arc<dyn LanguageFeatureProviderRegistry> = RunTime.Environment.Require();
-
-	let Result = Handler(Provider).await.map_err(|Error| Error.to_string())?;
-
-	serde_json::to_value(Result).map_err(|Error| Error.to_string())
-}
-
-/// Validates language feature request parameters.
-fn ValidateLanguageFeatureRequest(RequestType:&str, URI:&str, Position:&Value) -> Result<(), String> {
-	if URI.is_empty() {
-		return Err(format!("Empty URI for {} request", RequestType));
-	}
-
-	// Validate position format
-	if let Some(Line) = Position.get("line") {
-		if !Line.is_u64() {
-			return Err(format!("Invalid line position for {} request", RequestType));
-		}
-	} else {
-		return Err(format!("Missing line position for {} request", RequestType));
-	}
-
-	if let Some(Character) = Position.get("character") {
-		if !Character.is_u64() {
-			return Err(format!("Invalid character position for {} request", RequestType));
-		}
-	} else {
-		return Err(format!("Missing character position for {} request", RequestType));
-	}
-
-	Ok(())
-}
-
+/// Provides hover information at cursor position
 #[command]
 pub async fn MountainProvideHover(
-	ApplicationHandle:AppHandle<Wry>,
-
-	URI:String,
-
-	Position:Value,
+	application_handle: AppHandle<Wry>,
+	uri: String,
+	position: Value,
 ) -> Result<Value, String> {
-	log::debug!("[Language Feature] Providing hover for: {} at {:?}", URI, Position);
-
-	ValidateLanguageFeatureRequest("hover", &URI, &Position)?;
-
-	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
-
-	let PositionDTO:PositionDTO =
-		serde_json::from_value(Position.clone()).map_err(|Error| format!("Failed to parse position: {}", Error))?;
-
-	InvokeProvider(ApplicationHandle, |Provider| {
-		async move {
-			let Result = Provider.ProvideHover(DocumentURI, PositionDTO).await?;
-
-			Ok(serde_json::to_value(Result)?)
-		}
-	})
-	.await
+	debug!("[Language Feature] Providing hover for: {} at {:?}", uri, position);
+	hover::provide_hover_impl(application_handle, uri, position).await
 }
 
-// #[command]
-// pub async fn MountainProvideDocumentSymbols(ApplicationHandle:AppHandle<Wry>,
-// URI:String) -> Result<Value, String> { 	log::debug!("[Language Feature]
-// Providing document symbols for: {}", URI);
-
-// 	if URI.is_empty() {
-// 		return Err("Empty URI for document symbols request".to_string());
-// 	}
-
-// 	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
-
-// 	InvokeProvider(ApplicationHandle, |Provider| {
-// 		async move {
-// 			let Result = Provider.ProvideDocumentSymbols(DocumentURI).await?;
-
-// 			Ok(serde_json::to_value(Result)?)
-// 		}
-// 	})
-// 	.await
-// }
-
+/// Provides code actions (quick fixes and refactorings) for a code range
 #[command]
 pub async fn MountainProvideCodeActions(
-	ApplicationHandle:AppHandle<Wry>,
-
-	URI:String,
-
-	Range:Value,
-
-	Context:Value,
+	application_handle: AppHandle<Wry>,
+	uri: String,
+	position: Value,
+	context: Value,
 ) -> Result<Value, String> {
-	log::debug!("[Language Feature] Providing code actions for: {}", URI);
-
-	if URI.is_empty() {
-		return Err("Empty URI for code actions request".to_string());
-	}
-
-	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
-
-	InvokeProvider(ApplicationHandle, |Provider| {
-		async move {
-			let Result = Provider.ProvideCodeActions(DocumentURI, Range, Context).await?;
-
-			Ok(serde_json::to_value(Result)?)
-		}
-	})
-	.await
+	debug!("[Language Feature] Providing code actions for: {} at {:?}", uri, position);
+	code_actions::provide_code_actions_impl(application_handle, uri, position, context).await
 }
 
+/// Finds symbol occurrences (document highlights) in a document
 #[command]
 pub async fn MountainProvideDocumentHighlights(
-	ApplicationHandle:AppHandle<Wry>,
-
-	URI:String,
-
-	Position:Value,
+	application_handle: AppHandle<Wry>,
+	uri: String,
+	position: Value,
 ) -> Result<Value, String> {
-	log::debug!("[Language Feature] Providing document highlights for: {}", URI);
-
-	ValidateLanguageFeatureRequest("highlights", &URI, &Position)?;
-
-	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
-
-	let PositionDTO:PositionDTO =
-		serde_json::from_value(Position.clone()).map_err(|Error| format!("Failed to parse position: {}", Error))?;
-
-	InvokeProvider(ApplicationHandle, |Provider| {
-		async move {
-			let Result = Provider.ProvideDocumentHighlights(DocumentURI, PositionDTO).await?;
-
-			Ok(serde_json::to_value(Result)?)
-		}
-	})
-	.await
+	debug!("[Language Feature] Providing document highlights for: {} at {:?}", uri, position);
+	highlights::provide_document_highlights_impl(application_handle, uri, position).await
 }
 
+/// Provides code completion suggestions
 #[command]
 pub async fn MountainProvideCompletions(
-	ApplicationHandle:AppHandle<Wry>,
-
-	URI:String,
-
-	Position:Value,
-
-	Context:Value,
+	application_handle: AppHandle<Wry>,
+	uri: String,
+	position: Value,
+	context: Value,
 ) -> Result<Value, String> {
-	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
-
-	let PositionDTO:PositionDTO = serde_json::from_value(Position).map_err(|Error| Error.to_string())?;
-
-	let ContextDTO:CompletionContextDTO = serde_json::from_value(Context).map_err(|Error| Error.to_string())?;
-
-	InvokeProvider(ApplicationHandle, |Provider| {
-		async move {
-			let Result = Provider.ProvideCompletions(DocumentURI, PositionDTO, ContextDTO, None).await?;
-
-			Ok(serde_json::to_value(Result)?)
-		}
-	})
-	.await
+	debug!("[Language Feature] Providing completions for: {} at {:?}", uri, position);
+	completions::provide_completions_impl(application_handle, uri, position, context).await
 }
 
+/// Provides go-to-definition functionality
 #[command]
 pub async fn MountainProvideDefinition(
-	ApplicationHandle:AppHandle<Wry>,
-
-	URI:String,
-
-	Position:Value,
+	application_handle: AppHandle<Wry>,
+	uri: String,
+	position: Value,
 ) -> Result<Value, String> {
-	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
-
-	let PositionDTO:PositionDTO = serde_json::from_value(Position).map_err(|Error| Error.to_string())?;
-
-	InvokeProvider(ApplicationHandle, |Provider| {
-		async move {
-			let Result = Provider.ProvideDefinition(DocumentURI, PositionDTO).await?;
-
-			Ok(serde_json::to_value(Result)?)
-		}
-	})
-	.await
+	debug!("[Language Feature] Providing definition for: {} at {:?}", uri, position);
+	definition::provide_definition_impl(application_handle, uri, position).await
 }
 
+/// Finds all references to a symbol
 #[command]
 pub async fn MountainProvideReferences(
-	ApplicationHandle:AppHandle<Wry>,
-
-	URI:String,
-
-	Position:Value,
-
-	Context:Value,
+	application_handle: AppHandle<Wry>,
+	uri: String,
+	position: Value,
+	context: Value,
 ) -> Result<Value, String> {
-	let DocumentURI = Url::parse(&URI).map_err(|Error| Error.to_string())?;
-
-	let PositionDTO:PositionDTO = serde_json::from_value(Position).map_err(|Error| Error.to_string())?;
-
-	InvokeProvider(ApplicationHandle, |Provider| {
-		async move {
-			let Result = Provider.ProvideReferences(DocumentURI, PositionDTO, Context).await?;
-
-			Ok(serde_json::to_value(Result)?)
-		}
-	})
-	.await
+	debug!("[Language Feature] Providing references for: {} at {:?}", uri, position);
+	references::provide_references_impl(application_handle, uri, position, context).await
 }
