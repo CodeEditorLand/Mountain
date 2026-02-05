@@ -282,7 +282,12 @@ fn CommandSaveDocument(
 
 		let URI = Url::parse(&URIString).map_err(|_| "Invalid URI in window state".to_string())?;
 
-		// TODO: Trigger document save
+		// Persist the active document by invoking DocumentProvider::SaveDocument or the
+		// Document::Save effect. This reads the document URI from ApplicationState,
+		// serializes the current editor content, and writes to disk with proper error
+		// handling, atomic writes, and backup creation. Current implementation only
+		// logs the action; full implementation requires integration with the document
+		// lifecycle and file system provider.
 		info!("[Native Command] Saving document: {}", URI);
 
 		Ok(Value::Null)
@@ -314,7 +319,12 @@ fn CommandCloseDocument(
 
 		let URI = Url::parse(&URIString).map_err(|_| "Invalid URI in window state".to_string())?;
 
-		// TODO: Trigger document close
+		// Close the active document in the editor by triggering the workspace edit
+		// to remove the document from open editors. Checks for unsaved changes and
+		// prompts the user to save, discard, or cancel. Integrates with the document
+		// lifecycle manager to release resources and update the UI. May invoke
+		// Workbench::closeEditor or equivalent command. Current implementation only
+		// logs the action.
 		info!("[Native Command] Closing document: {}", URI);
 
 		Ok(Value::Null)
@@ -334,7 +344,11 @@ fn CommandReloadWindow(
 	Box::pin(async move {
 		info!("[Native Command] Executing Reload Window...");
 
-		// TODO: Reload the window
+		// Refresh the entire application UI by calling WebviewWindow::reload. This
+		// reinitializes the frontend, reapplies window state, and restarts extension
+		// host processes if configuration changes require it. Used after settings
+		// updates, extension installations, or development hot-reload. Current
+		// implementation returns success without performing the actual reload.
 		Ok(json!({ "success": true }))
 	})
 }
@@ -403,7 +417,12 @@ pub fn RegisterNativeCommands(
 
 	// --- Command Validation ---
 	info!("[Bootstrap] Validating registered commands...");
-	// TODO: Implement comprehensive command validation
+	// Validate all registered commands at startup to catch configuration errors early.
+	// Verification includes command signature correctness, parameter type matching,
+	// required permissions and capabilities, and extension metadata validity. This
+	// prevents runtime errors from malformed registrations and provides immediate
+	// feedback to extension developers during development. Current implementation
+	// logs without performing actual validation checks.
 
 	// --- Tree View Provider Registration ---
 	let mut TreeViewRegistry = ApplicationState.ActiveTreeViews.lock().map_err(MapLockError)?;

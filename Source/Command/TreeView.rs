@@ -152,8 +152,11 @@ pub async fn GetTreeViewItem(
 }
 
 /// Handles tree node expansion/collapse events.
-/// TODO: OnTreeNodeExpanded is not defined in TreeViewProvider trait - needs
-/// implementation
+///
+/// TODO: Implement OnTreeNodeExpanded method in the TreeViewProvider trait.
+/// This method notifies the provider when a node is expanded or collapsed,
+/// allowing it to lazily load child items or preserve expansion state.
+/// Currently returns an error indicating the method is not implemented.
 #[command]
 pub async fn OnTreeViewExpansionChanged(
 	_ApplicationHandle:AppHandle<Wry>,
@@ -172,8 +175,11 @@ pub async fn OnTreeViewExpansionChanged(
 }
 
 /// Handles tree selection changes.
-/// TODO: OnTreeSelectionChanged is not defined in TreeViewProvider trait -
-/// needs implementation
+///
+/// TODO: Implement OnTreeSelectionChanged method in the TreeViewProvider trait.
+/// This notifies the provider when the user selects or deselects tree items,
+/// enabling context-specific actions or detail view updates. The provider should
+/// respond to selection changes to update UI state or perform operations.
 #[command]
 pub async fn OnTreeViewSelectionChanged(
 	_ApplicationHandle:AppHandle<Wry>,
@@ -254,8 +260,11 @@ pub async fn RevealTreeViewItem(
 }
 
 /// Persists tree view state.
-/// TODO: PersistTreeViewState is not defined in TreeViewProvider trait - needs
-/// implementation
+///
+/// TODO: Implement PersistTreeViewState method in the TreeViewProvider trait.
+/// This method should serialize and store the current tree state (expansion,
+/// selection, scroll position) to allow restoration across sessions. Typically
+/// saved to workspace storage or ApplicationState for persistence.
 #[command]
 pub async fn PersistTreeView(
 	_ApplicationHandle:AppHandle<Wry>,
@@ -270,8 +279,11 @@ pub async fn PersistTreeView(
 }
 
 /// Restores tree view state.
-/// TODO: RestoreTreeViewState is not defined in TreeViewProvider trait - needs
-/// implementation
+///
+/// TODO: Implement RestoreTreeViewState method in the TreeViewProvider trait.
+/// This method should deserialize previously saved tree state and apply it
+/// to the tree view (expanded nodes, selected items, scroll position). Called
+/// when a tree view is recreated or the workspace is reloaded.
 #[command]
 pub async fn RestoreTreeView(
 	_ApplicationHandle:AppHandle<Wry>,

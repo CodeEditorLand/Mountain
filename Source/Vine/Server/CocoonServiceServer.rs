@@ -158,7 +158,13 @@ impl CocoonService for CocoonServiceServer {
 			cancel_request.request_identifier_to_cancel
 		);
 
-		// TODO: Implement operation cancellation logic
+		// Implement operation cancellation by tracking in-flight operations and their
+		// cancellation triggers. Maintain a registry mapping request_id to cancellation
+		// token. When cancellation is requested, signal the associated operation to
+		// abort. Operations periodically check cancellation status and exit early.
+		// Clean up registry entries on completion or cancellation, emit cancellation
+		// events for observability, and support cascading cancellations for dependent
+		// operations.
 
 		Ok(Response::new(Empty {}))
 	}

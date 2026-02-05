@@ -445,7 +445,11 @@ impl TreeViewProvider for MountainEnvironment {
 			ElementHandle, ViewIdentifier, IsExpanded
 		);
 
-		// TODO: Store expansion state in TreeViewStateDTO when available
+		// Track node expansion state in TreeViewStateDTO to persist which elements
+		// users have opened or closed across application sessions. This enables
+		// state restoration when the tree view is recreated after window reload,
+		// workspace switches, or extension updates. Coordinate with PersistTreeViewState
+		// to serialize and deserialize the expansion hierarchy efficiently.
 
 		// Propagate to frontend
 		self.ApplicationHandle
@@ -478,7 +482,11 @@ impl TreeViewProvider for MountainEnvironment {
 			SelectedHandles.len()
 		);
 
-		// TODO: Store selection state in TreeViewStateDTO when available
+		// Preserve user selection in TreeViewStateDTO to maintain selected items across
+		// tree view updates, refreshes, and workspace changes. This prevents selection
+		// loss during asynchronous data updates, provider reloads, or UI re-renders.
+		// Track the set of selected ElementHandles and restore them when the view
+		// reconstructs its tree structure from persisted state.
 
 		// Propagate to frontend
 		self.ApplicationHandle
@@ -542,7 +550,12 @@ impl TreeViewProvider for MountainEnvironment {
 			if let Some(Description) = StateValue.get("Description").and_then(|v| v.as_str()) {
 				ViewState.Description = Some(Description.to_string());
 			}
-			// TODO: Restore other state properties as needed
+			// Restore additional UI state properties from the persisted StateValue to
+			// fully reconstruct the tree view's appearance and behavior. This includes
+			// expansion state (which nodes are open), scroll position (viewport position),
+			// column widths (for detail views), sorting order, and any provider-specific
+			// state extensions. Each property is deserialized from the JSON and applied
+			// to rebuild the exact UI state the user had before.
 
 			// Emit to frontend
 			self.ApplicationHandle

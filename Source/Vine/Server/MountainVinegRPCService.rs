@@ -312,9 +312,14 @@ impl MountainService for MountainVinegRPCService {
 			return Err(Status::invalid_argument("Method name cannot be empty"));
 		}
 
-		// TODO: A full implementation would route these notifications to a
-		// dedicated handler for processing status updates, etc. For now, we
-		// just log and acknowledge.
+		// Route notifications to appropriate handlers based on MethodName. Currently
+		// only logs known notification types and acknowledges all others. A complete
+		// implementation would maintain a registry of notification handlers per method,
+		// route notifications to registered handlers asynchronously, allow handlers
+		// to perform side effects (state updates, UI updates), support cancellation
+		// and timeouts for long-running handlers, and log unhandled notifications
+		// at debug level for diagnostics. Known notifications include: ExtensionActivated,
+		// ExtensionDeactivated, WebviewReady.
 
 		match MethodName.as_str() {
 			"ExtensionActivated" => {
@@ -348,10 +353,13 @@ impl MountainService for MountainVinegRPCService {
 	///
 	/// # TODO
 	/// Full implementation requires:
-	/// 1. Map RequestIdentifier to active operation
-	/// 2. Trigger cancellation token
-	/// 3. Verify operation was actually canceled
-	/// 4. Return appropriate status
+	/// 1. Map RequestIdentifier to active operation in the gRPC request registry
+	/// 2. Trigger cancellation token associated with that operation to signal
+	///    abort to the running task
+	/// 3. Verify operation was actually canceled (timeout or forced termination)
+	/// 4. Return appropriate gRPC status (Ok if cancellation initiated, error
+	///    if operation not found or already completed)
+	/// 5. Clean up request registry entry and emit cancellation event for observability
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		let cancel_request = request.into_inner();
 

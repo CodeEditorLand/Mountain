@@ -188,13 +188,22 @@
 //!   - Falls back to local keyring otherwise
 // TODO: Full Air Migration Plan
 // ============================
-// - [ ] Implement complete Air-based secret storage
-// - [ ] Add secret sync between Air and local keyring
-// - [ ] Implement conflict resolution strategies
-// - [ ] Add caching layer for frequently accessed secrets
-// - [ ] Implement retry logic for transient Air failures
-// - [ ] Add metrics for Air vs Local usage tracking
-// - [ ] Phase out local keyring after successful Air deployment
+// - [ ] Implement complete Air-based secret storage and retrieval, replacing
+//   local keyring calls with Air service RPCs for all operations
+// - [ ] Add secret synchronization between Air and local keyring for offline mode
+//   and gradual migration support. Use version vectors or timestamps for conflict
+//   detection and implement last-write-wins or manual merge strategies
+// - [ ] Implement conflict resolution strategies for concurrent secret updates
+//   from multiple sources (Air vs local, different extensions). Provide UI for
+//   user to resolve conflicts when automatic resolution is not possible
+// - [ ] Add caching layer (in-memory LRU or ttl cache) for frequently accessed
+//   secrets to reduce latency and Air service load. Invalidate on secret updates.
+// - [ ] Implement retry logic with exponential backoff for transient Air service
+//   failures. Circuit breaker pattern to prevent cascading failures during outages
+// - [ ] Add metrics collection for Air vs Local usage tracking, latency percentiles,
+//   error rates, and cache hit rates to inform deployment decisions
+// - [ ] Phase out local keyring after successful Air deployment and validation
+//   period (e.g., 2 weeks of stable operation). Keep fallback for Air unavailability
 
 use std::sync::Arc;
 
@@ -372,9 +381,14 @@ async fn GetSecretFromAir(
 		ExtensionIdentifier, Key
 	);
 
-	// TODO: Implement Air secret retrieval
-	// This would call Air's secret management API
-	// For now, return NotImplemented to indicate this needs to be implemented
+	// TODO: Implement Air secret retrieval by calling the Air service's GetSecret
+	// RPC method. This should:
+	// - Construct a GetSecretRequest with ExtensionIdentifier and Key
+	// - Call AirClient.get_secret (or similar) with appropriate timeout
+	// - Map Air service errors to CommonError (NotFound, AccessDenied, etc.)
+	// - Return Ok(Some(secret)) if found, Ok(None) if not found
+	// The Air service provides centralized secret storage with audit logging,
+	// access control, and cross-device sync capabilities.
 	Err(CommonError::NotImplemented { FeatureName:"GetSecretFromAir".to_string() })
 }
 
@@ -391,9 +405,14 @@ async fn StoreSecretToAir(
 		ExtensionIdentifier, Key
 	);
 
-	// TODO: Implement Air secret storage
-	// This would call Air's secret management API
-	// For now, return NotImplemented to indicate this needs to be implemented
+	// TODO: Implement Air secret storage by calling the Air service's StoreSecret
+	// RPC method. This should:
+	// - Construct a StoreSecretRequest with ExtensionIdentifier, Key, and Value
+	// - Call AirClient.store_secret (or similar) with the secret payload
+	// - Handle encryption and secure transmission to the Air service
+	// - Return Ok(()) on success, map errors to CommonError appropriately
+	// The Air service handles secret encryption at rest and provides fine-grained
+	// access control and versioning for secret updates.
 	Err(CommonError::NotImplemented { FeatureName:"StoreSecretToAir".to_string() })
 }
 
@@ -409,8 +428,13 @@ async fn DeleteSecretFromAir(
 		ExtensionIdentifier, Key
 	);
 
-	// TODO: Implement Air secret deletion
-	// This would call Air's secret management API
-	// For now, return NotImplemented to indicate this needs to be implemented
+	// TODO: Implement Air secret deletion by calling the Air service's DeleteSecret
+	// RPC method. This should:
+	// - Construct a DeleteSecretRequest with ExtensionIdentifier and Key
+	// - Call AirClient.delete_secret (or similar) to remove the secret
+	// - Handle idempotency: deleting a non-existent secret should succeed
+	// - Return Ok(()) on success, map errors to CommonError as needed
+	// The Air service ensures secure deletion and propagates changes to other
+	// devices via sync, maintaining consistency across the user's ecosystem.
 	Err(CommonError::NotImplemented { FeatureName:"DeleteSecretFromAir".to_string() })
 }

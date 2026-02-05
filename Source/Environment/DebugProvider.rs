@@ -98,10 +98,12 @@ impl DebugService for MountainEnvironment {
 			DebugType, ProviderHandle, SideCarIdentifier
 		);
 
-		// TODO: Store this registration in ApplicationState
-		// - Map debug_type -> (provider_handle, sidecar_identifier)
-		// - Allow multiple providers per debug type with priority
-		// - Validate that debug type is not already registered
+		// TODO: Store debug configuration provider registration in ApplicationState
+		// to enable debug adapter resolution and lifecycle management. Should:
+		// - Map debug_type to (provider_handle, sidecar_identifier) tuple
+		// - Support multiple providers per debug type with priority ordering
+		// - Validate that debug type is not already registered to prevent conflicts
+		// - Track registration source (extension ID) for debugging and cleanup
 
 		Ok(())
 	}
@@ -128,9 +130,12 @@ impl DebugService for MountainEnvironment {
 			DebugType, FactoryHandle, SideCarIdentifier
 		);
 
-		// TODO: Store this registration in ApplicationState
-		// - Map debug_type -> (factory_handle, sidecar_identifier)
-		// - Support multiple adapter factories with fallback chain
+		// TODO: Store debug adapter descriptor factory registration in ApplicationState
+		// for use during debug session creation. Should:
+		// - Map debug_type to (factory_handle, sidecar_identifier)
+		// - Support multiple adapter factories with fallback chain for resilience
+		// - Allow factory override based on debug configuration version
+		// - Enable runtime lookup of appropriate factory for requested debug type
 
 		Ok(())
 	}
@@ -155,8 +160,10 @@ impl DebugService for MountainEnvironment {
 			})?
 			.to_string();
 
-		// TODO: Look up which sidecar handles this debug type
-		// For now, assume the main sidecar handles all debugging.
+		// TODO: Look up which sidecar (extension) handles this debug type using
+		// the registration stored in ApplicationState. The mapping should be based
+		// on previous RegisterDebugConfigurationProvider calls. Initial stub uses
+		// hardcoded "cocoon-main" until proper registration tracking is implemented.
 		let TargetSideCar = "cocoon-main".to_string();
 
 		// 1. Resolve configuration (Reverse-RPC to Cocoon)
@@ -188,14 +195,21 @@ impl DebugService for MountainEnvironment {
 		// 3. Spawn the Debug Adapter process based on the descriptor.
 		info!("[DebugProvider] Spawning Debug Adapter based on descriptor: {:?}", Descriptor);
 
-		// TODO: A full implementation would:
-		// - Parse the descriptor (executable path, command args, environment, or server
-		//   port)
-		// - Spawn a new OS process with stdio pipes or connect to a TCP socket
-		// - Create a new DebugSession struct to manage the DAP communication stream
-		// - Establish JSON-RPC communication with the debug adapter
-		// - Store the session in ApplicationState with session_id as key
-		// - Implement proper session cleanup on termination
+		// TODO: Implement full debug adapter spawning based on the descriptor.
+		// A complete implementation would:
+		// - Parse the DebugAdapterDescriptor (executable path, command args, environment
+		//   variables, or server port for TCP connection)
+		// - Spawn a new OS process with stdio pipes using Command or connect to a
+		//   TCP socket if using debug adapter server mode
+		// - Create a new DebugSession struct to manage the DAP (Debug Adapter Protocol)
+		//   communication stream, handling JSON-RPC message framing
+		// - Establish bidirectional JSON-RPC communication with the debug adapter
+		// - Store the active session in ApplicationState keyed by session_id for
+		//   later command routing and session management
+		// - Implement proper session cleanup on termination (kill process, close
+		//   sockets, remove from ApplicationState, emit exit events)
+		// - Handle adapter launch failures with descriptive error messages and
+		//   proper session state cleanup
 
 		info!("[DebugProvider] Debug session '{}' started (simulation).", SessionID);
 		Ok(SessionID)
@@ -207,13 +221,17 @@ impl DebugService for MountainEnvironment {
 			SessionID, Command, Arguments
 		);
 
-		// TODO: Implement proper debug session management
-		// - Look up session by SessionID in ApplicationState
-		// - Validate session exists and is active
-		// - Serialize command and arguments to JSON-RPC format
-		// - Send to debug adapter via stdio or socket
-		// - Deserialize and return response
-		// - Handle timeouts and errors gracefully
+		// TODO: Implement proper debug session management to route commands to
+		// active debug adapters. Should:
+		// - Look up session by SessionID in ApplicationState's debug session registry
+		// - Validate session exists and is in active state (not terminated or crashed)
+		// - Serialize command and arguments to JSON-RPC 2.0 format with proper
+		//   request sequencing (seq number)
+		// - Send the request to debug adapter via stdio pipes or TCP socket
+		// - Wait for response with appropriate timeout, handle cancellation requests
+		// - Deserialize JSON-RPC response and return the result body to the caller
+		// - Handle timeouts, adapter crashes, and protocol errors gracefully with
+		//   informative error messages and session cleanup as needed
 
 		// For now, return a placeholder response indicating debug session is active
 		let response = serde_json::json!({

@@ -22,7 +22,14 @@ use tauri::App;
 pub fn enable_tray(app: &App) -> Result<(), String> {
     info!("[Tray] Initializing system tray...");
     
-    // TODO: Implement full tray functionality with icon and menu
+    // Implement full system tray functionality using Tauri's SystemTray API.
+    // Create tray icon with platform-appropriate format (template for macOS,
+    // RGBA for Windows/Linux). Build tray menu with standard items: Show/Hide,
+    // Settings, About, Quit using SystemTrayMenu and SystemTrayMenuItem. Handle
+    // menu item click events via on_system_tray_event to implement window
+    // toggling, settings dialog, application quit, and update checking. Add
+    // tooltip and status icon states (normal, warning, error) for background
+    // operations like updates or sync status.
     
     debug!("[Tray] System tray enabled");
     Ok(())

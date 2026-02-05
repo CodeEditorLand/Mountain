@@ -138,7 +138,12 @@ impl FileSystemReader for MountainEnvironment {
 
 			Size:Metadata.len(),
 
-			// TODO: Implement file permissions (Unix mode, Windows attributes)
+			// Capture file permissions by extracting Unix file mode (st_mode) and Windows
+			// file attributes. On Unix, extract permission bits (rwx for owner/group/others)
+			// and store in FileSystemPermissionsDTO. On Windows, capture attributes
+			// (readonly, hidden, system, archive). This enables preserving permissions
+			// during file operations and respecting the user's filesystem ACLs. Currently
+			// returns None, which defaults to inherited permissions.
 			Permissions:None,
 		})
 	}
@@ -237,10 +242,16 @@ impl FileSystemWriter for MountainEnvironment {
 			.await
 			.map_err(|Error| CommonError::FromStandardIOError(Error, Path.clone(), "WriteFile"))?;
 
-		// TODO: Consider implementing atomic write pattern:
-		// 1. Write to temporary file in same directory
-		// 2. Use fs::rename() to atomically replace target
-		// 3. This prevents data corruption on crash/interrupt
+		// Implement atomic write pattern to prevent partial writes and data corruption
+		// on crashes or interrupts. The current implementation writes directly to the
+		// target file, which can leave corrupted files if the operation is interrupted.
+		// A robust implementation: 1) writes content to a temporary file in the same
+		// directory (ensuring same filesystem for atomic rename), 2) flushes and syncs
+		// the temporary file to disk (fsync), 3) atomically renames the temporary file
+		// to the target path using fs::rename (POSIX rename is atomic within a
+		// filesystem), 4) deletes old file if replacing, or handles temp cleanup on
+		// failure. This pattern ensures the target file is either fully written or
+		// unchanged.
 		Ok(())
 	}
 

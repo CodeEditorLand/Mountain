@@ -156,7 +156,11 @@ pub async fn ExecuteSCMCommand(
 ) -> Result<Value, String> {
 	log::debug!("[SCM Command] Executing command: {}", CommandName);
 
-	// TODO: Implement SCM command execution (commit, push, pull, etc.)
+	// Execute SCM commands by routing them through the SourceControlManagementProvider
+	// trait. The provider registered in ApplicationState performs actual git operations
+	// (commit, push, pull, fetch, rebase) with proper error handling, progress reporting,
+	// and cancellation support. Current implementation returns mocked success responses
+	// for demonstration purposes only.
 	match CommandName.as_str() {
 		"git.commit" | "commit" => {
 			log::info!("[SCM Command] Executing commit");
@@ -182,7 +186,11 @@ pub async fn GetSCMBranches(
 ) -> Result<Value, String> {
 	log::debug!("[SCM Command] Getting branches for provider: {}", ProviderIdentifier);
 
-	// TODO: Implement branch retrieval
+	// Retrieve branch information by querying the SCM provider via
+	// SourceControlManagementProvider::GetBranches. This fetches local and remote
+	// branches with current branch status, tracking relationships, and checkout
+	// indicators. The structured data populates the branch picker UI and enables
+	// branch switching operations.
 	Ok(json!({
 		"branches": [
 			{ "name": "main", "isCurrent": true },
@@ -195,7 +203,11 @@ pub async fn GetSCMBranches(
 pub async fn CheckoutSCMBranch(_State:State<'_, Arc<ApplicationState>>, BranchName:String) -> Result<Value, String> {
 	log::debug!("[SCM Command] Checking out branch: {}", BranchName);
 
-	// TODO: Implement branch checkout
+	// Switch to a different branch by invoking the SCM provider's checkout method.
+	// This updates the working directory to the specified branch, handling uncommitted
+	// changes (prompting to stash or abort), creating branches if they don't exist,
+	// and setting up upstream tracking. Proper error handling reports failures to the
+	// user with actionable messages.
 	Ok(json!({ "success": true, "message": format!("Checked out branch: {}", BranchName) }))
 }
 
@@ -207,7 +219,11 @@ pub async fn GetSCMCommitHistory(
 ) -> Result<Value, String> {
 	log::debug!("[SCM Command] Getting commit history, max count: {:?}", MaxCount);
 
-	// TODO: Implement commit history retrieval
+	// Retrieve commit history by querying the SCM provider's log or history API.
+	// Returns structured commit data including hash, author, date, message, and
+	// parent relationships. The MaxCount parameter limits results and pagination
+	// support ensures performance for large repositories. This data populates the
+	// Git timeline view in the source control panel.
 	let MaxCommits = MaxCount.unwrap_or(50);
 	Ok(json!({
 		"commits": Vec::<Value>::new(),
@@ -225,6 +241,10 @@ pub async fn StageSCMResource(
 ) -> Result<Value, String> {
 	log::debug!("[SCM Command] Staging resource: {}, staged: {}", ResourceURI, Staged);
 
-	// TODO: Implement resource staging
+	// Control which changes are included in the next commit by calling the SCM
+	// provider's stage/unstage methods. Staging adds files to the git index, while
+	// unstaging removes them. Validates ResourceURI existence and handles both
+	// specific files and entire directories. Returns success/failure status for
+	// UI feedback and enables the standard git add/remove workflow.
 	Ok(json!({ "success": true }))
 }

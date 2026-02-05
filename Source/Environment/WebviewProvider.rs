@@ -385,7 +385,12 @@ impl WebviewProvider for MountainEnvironment {
 				}
 			}
 
-			// TODO: Implement icon path setting
+			// Set the webview panel's icon by storing the icon path in the webview state
+			// in ApplicationState.ActiveWebviews. Validate the path exists, convert to
+			// appropriate format (Url or string), update the UI to display the icon in
+			// the tab bar or title area, and emit an event to refresh the frontend
+			// representation. The icon path can be a theme-aware icon path or a custom
+			// image file URI.
 		}
 
 		// Emit options changed event

@@ -73,11 +73,12 @@ impl CustomEditorProvider for MountainEnvironment {
 			});
 		}
 
-		// TODO: Store provider registration in ApplicationState
-		// - Associate ViewType with sidecar identifier
-		// - Store provider capabilities (supportsMultipleEditors, etc.)
-		// - Store custom options for the provider
-		// - Validate that viewType is not already registered
+		// Register custom editor provider in ApplicationState for lifecycle management
+		// and resolution. Should associate ViewType with the sidecar identifier for
+		// RPC routing, store provider capabilities (supportsMultipleEditors, serialization
+		// support), store custom options (mime types, file extensions), validate that
+		// the ViewType is not already registered to prevent conflicts, and track
+		// registration timestamp and extension origin for debugging.
 
 		Ok(())
 	}
@@ -85,9 +86,12 @@ impl CustomEditorProvider for MountainEnvironment {
 	async fn UnregisterCustomEditorProvider(&self, ViewType:String) -> Result<(), CommonError> {
 		info!("[CustomEditorProvider] Unregistering provider for view type: {}", ViewType);
 
-		// TODO: Remove provider registration from ApplicationState
-		// - Check if any active editors are using this viewType
-		// - Optionally close active editors or show warning
+		// Remove custom editor provider registration from ApplicationState. Should
+		// check if any active editors are currently using this ViewType and either
+		// force close with unsaved changes warning or prevent unregistration, remove
+		// all stored configuration, capabilities, and sidecar association, notify the
+		// sidecar extension to clean up its internal state, and remove any cached
+		// resolution entries for this ViewType.
 
 		Ok(())
 	}
@@ -98,12 +102,15 @@ impl CustomEditorProvider for MountainEnvironment {
 			ViewType, ResourceURI
 		);
 
-		// TODO: Implement full save flow:
-		// 1. Send RPC request to extension sidecar requesting content from Webview
-		// 2. Extension retrieves content from Webview via webview.postMessage
-		// 3. Extension writes content back to Mountain
-		// 4. Mountain persists content to file system via FileSystemWriter
-		// 5. Emit save notification to UI
+		// Implement the complete custom document save workflow. Send RPC request
+		// ($customDocument/save) to the extension sidecar responsible for this
+		// ViewType, including the ResourceURI. The extension retrieves edited content
+		// from its Webview via postMessage and returns the updated data (string or
+		// bytes). Mountain receives the content and writes it to the file system using
+		// FileSystemWriter with appropriate encoding and atomic write pattern. Emit
+		// a document saved notification to refresh UI and trigger post-save hooks
+		// (formatters, linters, extension notifications). This enables custom editors
+		// to participate in the standard save lifecycle.
 
 		warn!("[CustomEditorProvider] OnSaveCustomDocument is not fully implemented.");
 		Ok(())

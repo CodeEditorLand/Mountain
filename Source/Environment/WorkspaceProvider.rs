@@ -135,14 +135,24 @@ impl WorkspaceProvider for MountainEnvironment {
 		_:bool,
 	) -> Result<Vec<Url>, CommonError> {
 		info!("[WorkspaceProvider] FindFilesInWorkspace called");
-		// TODO: Implement file search
+		// Scan all workspace folders to find files matching the query pattern. This
+		// integrates with FileSystemReader to traverse directories, apply glob and
+		// exclude patterns, and return matching file URIs. Respect query parameters
+		// including maxResults, excludePatterns, and .gitignore rules. The result
+		// set supports fuzzy search, symbol search, and quick file open features.
+		// Currently returns an empty result set.
 		Ok(Vec::new())
 	}
 
 	/// Opens a file in the workspace.
 	async fn OpenFile(&self, path:PathBuf) -> Result<(), CommonError> {
 		info!("[WorkspaceProvider] OpenFile called for: {:?}", path);
-		// TODO: Implement file opening
+		// Open a file in the editor by delegating to the Workbench or command system.
+		// Resolves the path relative to workspace roots, handles URI schemes (file://,
+		// untitled:), and triggers the 'workbench.action.files.open' command or
+		// equivalent. Creates a new document tab with the file contents, activating
+		// the editor and adding the file to the recently opened list. Currently a
+		// no-op.
 		Ok(())
 	}
 }
@@ -166,7 +176,14 @@ impl WorkspaceEditApplier for MountainEnvironment {
 			},
 		}
 
-		// TODO: Actually implement workspace edit application
+		// Apply a collection of document edits and file operations to the workspace.
+		// Parses the WorkspaceEditDTO and performs text edits on documents, creates
+		// and deletes files, and handles renames with proper validation. Key aspects:
+		// validate document URIs and workspace trust, apply text edits with coordinate
+		// conversion (line/column), handle all operations atomically with rollback on
+		// failure, emit before/after events for extension observability, and return
+		// false if any edit fails with detailed error information. This enables
+		// multi-file refactorings, code actions, and automated fixes.
 		warn!("[WorkspaceEditApplier] ApplyWorkspaceEdit is not fully implemented");
 
 		Ok(true)

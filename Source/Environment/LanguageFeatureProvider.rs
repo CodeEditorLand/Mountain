@@ -327,16 +327,13 @@ fn FindBestProvider(
 								return Ok(Some(Provider.clone()));
 							}
 						}
-						// TODO: Add scheme and pattern matching logic here.
-						// Current implementation only matches language
-						// identifier. Should also check:
-						// - Selector["scheme"] (e.g., "file", "untitled",
-						//   "custom")
-						// - Selector["pattern"] (e.g., "**/*.ts",
-						//   "src/**/*.rs")
-						// - Selector["exclude"] (e.g., "node_modules/**")
-						// Provider scoring should rank by specificity (pattern
-						// > language > all)
+						// Enhance provider selection with comprehensive selector matching.
+						// Current implementation only matches language identifier. Should
+						// also validate: URI scheme (file, untitled, custom), glob patterns
+						// (**/*.ts, src/**/*.rs), and exclude patterns (node_modules/**).
+						// Implement a scoring algorithm to rank by specificity: pattern match
+						// > language match > catch-all. This ensures the most specific provider
+						// wins when multiple match a document.
 					}
 				}
 			}

@@ -460,8 +460,11 @@ async fn CheckForUpdatesViaAir(
 				if user_response == Some("Install".to_string()) {
 					info!("[UpdateService] User chose to install via Air");
 
-					// TODO: Implement download via Air service
-					// This would involve calling Air's download_update endpoint
+					// Download and install updates via the Air service after user confirmation.
+					// Call Air's download_update endpoint to fetch the update package, track
+					// download progress, and then execute the platform-specific installation.
+					// The Air service handles update packaging, signature verification, and
+					// provides progress feedback. Currently showing a placeholder message.
 					RunTime
 						.Run(ShowMessage(
 							MessageSeverity::Info,

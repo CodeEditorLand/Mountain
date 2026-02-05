@@ -211,7 +211,12 @@ pub async fn ConstructSandboxConfiguration(
 	Ok(json!({
 		"windowId": ApplicationHandle.get_webview_window("main").unwrap().label(),
 
-		// TODO: Persist and read from storage
+		// Persist the machineId to ApplicationState or persistent storage and load
+		// it on subsequent runs. A stable machine identifier is crucial for licensing
+		// validation, telemetry deduplication, and cross-session state consistency.
+		// Current implementation generates a new UUID each startup, which breaks
+		// these use cases. The persisted value should be stored in the app data
+		// directory and migrated across installations when possible.
 		"machineId": Uuid::new_v4().to_string(),
 
 		"sessionId": Uuid::new_v4().to_string(),
