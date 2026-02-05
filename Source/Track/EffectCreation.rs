@@ -96,33 +96,24 @@
 //!
 //! ---
 //! *This module is the heart of Mountain's command dispatch system, providing
-//! the glue between UI commands and backend provider implementations.*
+//! the glue between UI commands and backend provider implementations.*/
 
 use std::{future::Future, pin::Pin, sync::Arc};
 
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use CommonLibrary::{
-	self,
-	Command::{ExecuteCommand::ExecuteCommand, GetAllCommands::GetAllCommands, RegisterCommand::RegisterCommand},
+	Command::CommandExecutor::CommandExecutor,
 	Configuration::{
 		ConfigurationInspector::ConfigurationInspector,
 		ConfigurationProvider::ConfigurationProvider,
 		DTO::ConfigurationTarget::ConfigurationTarget,
-		GetConfiguration::GetConfiguration,
 	},
 	CustomEditor::CustomEditorProvider::CustomEditorProvider,
 	Debug::DebugService::DebugService,
 	Diagnostic::DiagnosticManager::DiagnosticManager,
-	Document::{SaveDocument::SaveDocument, SaveDocumentAs::SaveDocumentAs},
-	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
+	Document::DocumentProvider::DocumentProvider,
 	Environment::Requires::Requires,
-	Error::CommonError::CommonError,
-	FileSystem::{
-		Delete::Delete,
-		ReadDirectory::ReadDirectory,
-		ReadFile::ReadFile,
-		StatFile::StatFile,
-		WriteFileBytes::WriteFileBytes,
-	},
+	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 	Keybinding::KeybindingProvider::KeybindingProvider,
 	LanguageFeature::{
 		DTO::ProviderType::ProviderType,
@@ -131,40 +122,23 @@ use CommonLibrary::{
 	Search::SearchProvider::SearchProvider,
 	SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
 	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
-	Storage::{GetStorageItem::GetStorageItem, SetStorageItem::SetStorageItem, StorageProvider::StorageProvider},
+	Storage::StorageProvider::StorageProvider,
 	Terminal::TerminalProvider::TerminalProvider,
 	TreeView::TreeViewProvider::TreeViewProvider,
-	UserInterface::{ShowMessage::ShowMessage, ShowOpenDialog::ShowOpenDialog, ShowSaveDialog::ShowSaveDialog},
-	Webview::WebviewProvider::WebviewProvider,
+	UserInterface::{DTO::MessageSeverity::MessageSeverity, UserInterfaceProvider::UserInterfaceProvider},
+	Webview::WebviewProvider,
 };
-use serde_json::{Value, from_value, json};
+use serde_json::{Value, json};
 use tauri::{AppHandle, Runtime};
 use url::Url;
 use log::warn;
 
-use crate::{
-	Environment::MountainEnvironment::MountainEnvironment,
-	RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime,
-};
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
 
 /// A type alias for a boxed, runnable effect. This is the "type-erased" unit of
 /// work that the dispatch logic can execute.
 pub type MappedEffect =
 	Box<dyn FnOnce(Arc<MountainRunTime>) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> + Send>;
-
-/// A helper macro to reduce boilerplate when getting and deserializing
-/// parameters from a JSON array.
-macro_rules! Parameter {
-	($Parameter:expr, $Current:expr, $Type:ty) => {
-		from_value::<$Type>(
-			$Parameter
-				.get($Current)
-				.cloned()
-				.ok_or_else(|| format!("Missing parameter at index {}", $Current))?,
-		)
-		.map_err(|Error| format!("Invalid parameter at index {}: {}", $Current, Error))
-	};
-}
 
 /// Maps a string-based method name (command or RPC) to its corresponding effect
 /// constructor, returning a boxed closure (`MappedEffect`) that can be executed
@@ -172,536 +146,655 @@ macro_rules! Parameter {
 ///
 /// # Arguments
 /// - `ApplicationHandle`: Tauri app handle for accessing state
-/// - `_State`: unused State parameter (for DI compatibility)
 /// - `MethodName`: The command/RPC method name to map
-/// - `_Parameters`: JSON array of parameters for the effect (currently unused)
+/// - `Parameters`: JSON value containing parameters for the effect
 ///
 /// # Returns
-/// `MappedEffect` - a boxed async closure that takes Arc<ApplicationRunTime>
-/// and returns Result<Value, String>
+/// `Result<MappedEffect, String>` - either a boxed async closure or an error
+/// if the command is unknown
 pub fn CreateEffectForRequest<R:Runtime>(
-	_ApplicationHandle:AppHandle<R>,
-	_State:&Arc<MountainEnvironment>,
+	_ApplicationHandle:&AppHandle<R>,
 	MethodName:&str,
-	_Parameters:&Value,
-) -> MappedEffect {
-	// Simplified: direct provider calls for hot paths
+	Parameters:Value,
+) -> Result<MappedEffect, String> {
 	match MethodName {
 		// Configuration
 		"Configuration.Inspect" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
-					// Parse the section parameter from request arguments to support dynamic
-					// configuration queries. Currently hardcoded to empty string, which only
-					// retrieves global section configuration values. The section should be
-					// deserialized from _Parameters[0] as a String.
-					let section = String::new();
-					provider.InspectConfigurationValue(target, &section).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
+						let section = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let result = provider.InspectConfigurationValue(section, Default::default()).await;
+						result.map(|_opt_dto| json!(null)).map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"Configuration.Update" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
-					// Parse configuration target, section, and value from request parameters.
-					// Deserialize from _Parameters JSON array using the Parameter! macro.
-					// Expected indices: 0=target (ConfigurationTarget), 1=section (String),
-					// 2=value (Value). Integration with ConfigurationProvider requires proper
-					// parameter extraction to update configuration correctly.
-					provider
-						.UpdateConfigurationValue(ConfigurationTarget::Global, "section".to_string(), json!({}))
-						.await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
+						let key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let value = Parameters.get(1).cloned().unwrap_or_default();
+						let target = match Parameters.get(2).and_then(Value::as_u64) {
+							Some(0) => ConfigurationTarget::User,
+							Some(1) => ConfigurationTarget::Workspace,
+							_ => ConfigurationTarget::User,
+						};
+						let result = provider
+							.UpdateConfigurationValue(key, value, target, Default::default(), None)
+							.await;
+						result.map(|_| json!(null)).map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Diagnostics
 		"Diagnostic.Set" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
-					// Parse owner identifier and diagnostic entries from request parameters.
-					// Expected indices: 0=owner (String, identifies the extension/source),
-					// 1=entries (Vec<DiagnosticEntry> or array of diagnostic DTOs). This
-					// enables proper diagnostic management per extension.
-					provider.SetDiagnostics("owner".to_string(), json!([])).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
+						let owner = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let entries = Parameters.get(1).cloned().unwrap_or_default();
+						provider
+							.SetDiagnostics(owner, entries)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"Diagnostic.Clear" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
-					provider.ClearDiagnostics("owner".to_string()).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
+						let owner = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						provider
+							.ClearDiagnostics(owner)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Language Features
 		"$languageFeatures:registerProvider" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
-					// Parse ProviderType, SelectorDTO, ExtensionIdentifierDTO, and OptionsDTO
-					// from request parameters. These define the language feature provider
-					// registration details and must be deserialized correctly to register the
-					// provider with the LanguageFeatureProviderRegistry.
-					provider
-						.RegisterProvider("cocoon".to_string(), ProviderType::Hover, json!({}), json!({}), None)
-						.await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
+						let id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let selector = Parameters.get(1).cloned().unwrap_or_default();
+						let extension_id = Parameters.get(2).cloned().unwrap_or_default();
+						let options = Parameters.get(3).cloned();
+						provider
+							.RegisterProvider(id, ProviderType::Hover, selector, extension_id, options)
+							.await
+							.map(|handle| json!(handle))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Documents
 		"Document.Save" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
-					// Parse document URI from request parameters. The URI identifies the
-					// document to save and must be deserialized from _Parameters[0]. Expected
-					// format: VS Code URI scheme (e.g., file://, untitled:). Currently using
-					// hardcoded test path for placeholder implementation.
-					let uri = Url::parse("file:///tmp/test.txt").unwrap();
-					document_provider.SaveDocument(uri).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
+						let uri_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///tmp/test.txt").unwrap());
+						document_provider
+							.SaveDocument(uri)
+							.await
+							.map(|success| json!(success))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"Document.SaveAs" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
-					// Parse original document URI and target URI from request parameters.
-					// Expected indices: 0=original URI (Url), 1=target URI (Url). This
-					// implements "Save As" functionality, requiring both source and
-					// destination URIs. Current placeholder uses hardcoded path.
-					let original_uri = Url::parse("file:///tmp/test.txt").unwrap();
-					document_provider.SaveDocumentAs(original_uri, None).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
+						let original_uri_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let original_uri = Url::parse(original_uri_str)
+							.unwrap_or_else(|_| Url::parse("file:///tmp/test.txt").unwrap());
+						let target_uri = Parameters
+							.get(1)
+							.and_then(Value::as_str)
+							.map(Url::parse)
+							.transpose()
+							.unwrap_or(None);
+						document_provider
+							.SaveDocumentAs(original_uri, target_uri)
+							.await
+							.map(|uri_option| json!(uri_option))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// FileSystem
 		"FileSystem.ReadFile" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
-					// Parse filesystem path from request parameters. The path specifies which
-					// file to read and should be deserialized from _Parameters[0] as a string,
-					// then converted to PathBuf. Current implementation uses hardcoded test path.
-					let path = std::path::PathBuf::from("/tmp/test.txt");
-					fs_reader.ReadFile(&path).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
+						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let path = std::path::PathBuf::from(path_str);
+						fs_reader
+							.ReadFile(&path)
+							.await
+							.map(|bytes| json!(bytes))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"FileSystem.WriteFile" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
-					// Parse filesystem path, content bytes, and write options from request
-					// parameters. Expected indices: 0=path (String → PathBuf), 1=content
-					// (Bytes or base64 string), 2=options (WriteOptions DTO). Proper
-					// implementation requires deserializing all three parameters.
-					let path = std::path::PathBuf::from("/tmp/test.txt");
-					fs_writer.WriteFile(&path, &[]).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let path = std::path::PathBuf::from(path_str);
+						let content = Parameters.get(1).cloned();
+						let content_bytes = match content {
+							Some(Value::Array(arr)) => {
+								arr.into_iter().filter_map(|v| v.as_u64().map(|n| n as u8)).collect()
+							},
+							Some(Value::String(s)) => STANDARD.decode(&s).unwrap_or_default(),
+							_ => vec![],
+						};
+						fs_writer
+							.WriteFile(&path, content_bytes, true, true)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"FileSystem.ReadDirectory" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
-					// Parse directory path from request parameters to list directory contents.
-					// Should be deserialized from _Parameters[0] as a string. Current
-					// placeholder uses hardcoded "/tmp" directory.
-					let path = std::path::PathBuf::from("/tmp");
-					fs_reader.ReadDirectory(&path).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
+						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let path = std::path::PathBuf::from(path_str);
+						fs_reader
+							.ReadDirectory(&path)
+							.await
+							.map(|entries| json!(entries))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Keybinding
 		"Keybinding.GetResolved" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn KeybindingProvider> = run_time.Environment.Require();
-					provider.GetResolvedKeybinding().await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn KeybindingProvider> = run_time.Environment.Require();
+						provider.GetResolvedKeybinding().await.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Search
 		"Search.TextSearch" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
-					// Parse search query string and search options from request parameters.
-					// Expected indices: 0=query (String), 1=options (SearchOptions DTO). These
-					// control the text search behavior across workspace files.
-					provider.TextSearch(json!({}), None, None, false, false).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
+						let query = Parameters.get(0).cloned().unwrap_or_default();
+						let options = Parameters.get(1).cloned().unwrap_or_default();
+						provider.TextSearch(query, options).await.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Storage
 		"Storage.Get" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
-					// Parse storage key from request parameters. The key identifies which
-					// storage item to retrieve and should be deserialized from _Parameters[0]
-					// as a String. Current implementation uses hardcoded "key" placeholder.
-					provider.GetStorageItem("key".to_string()).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
+						let key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						provider
+							.GetStorageValue(false, &key)
+							.await
+							.map(|opt_val| json!(opt_val))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"Storage.Set" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
-					// Parse storage key and value from request parameters for persisting data.
-					// Expected indices: 0=key (String), 1=value (serde_json::Value). The value
-					// can be any JSON-serializable type.
-					provider.SetStorageItem("key".to_string(), json!("value")).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
+						let key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let value = Parameters.get(1).cloned();
+						provider
+							.UpdateStorageValue(false, key, value)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Commands
 		"Command.Execute" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
-					// Parse command identifier and optional arguments from request parameters.
-					// Expected indices: 0=command ID (String), 1=args (Value/JSON object). This
-					// executes arbitrary commands registered by extensions or the host.
-					command_executor.ExecuteCommand("command".to_string(), json!({})).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
+						let command_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let args = Parameters.get(1).cloned().unwrap_or_default();
+						command_executor
+							.ExecuteCommand(command_id, args)
+							.await
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"Command.GetAll" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
-					command_executor.GetAllCommands().await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn CommandExecutor> = run_time.Environment.Require();
+						provider
+							.GetAllCommands()
+							.await
+							.map(|cmds| json!(cmds))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Status Bar
 		"$statusBar:set" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
-					// Parse StatusBarEntryDTO from request parameters to create a new status bar
-					// entry. The DTO contains text, identifier, alignment, priority, and other
-					// UI properties. Should be deserialized from _Parameters[0].
-					let entry = StatusBarEntryDTO {
-						text:"status".to_string(),
-						identifier:Some("id".to_string()),
-						// other fields...
-						..Default::default()
-					};
-					provider.SetStatusBarEntry(entry).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+						// Construct a minimal StatusBarEntryDTO from parameters
+						let text = Parameters.get(0).and_then(Value::as_str).unwrap_or("status").to_string();
+						let entry = StatusBarEntryDTO {
+							EntryIdentifier:"id".to_string(),
+							ItemIdentifier:"item".to_string(),
+							ExtensionIdentifier:"ext".to_string(),
+							Name:None,
+							Text:text,
+							Tooltip:None,
+							HasTooltipProvider:false,
+							Command:None,
+							Color:None,
+							BackgroundColor:None,
+							IsAlignedLeft:false,
+							Priority:None,
+							AccessibilityInformation:None,
+						};
+						provider
+							.SetStatusBarEntry(entry)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$statusBar:dispose" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
-					// Parse status bar entry identifier from request parameters to dispose of
-					// the entry. Expected from _Parameters[0] as a String. Disposal removes the
-					// entry from the status bar UI.
-					provider.DisposeStatusBarEntry("id".to_string()).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+						let id = Parameters.get(0).and_then(Value::as_str).unwrap_or("id").to_string();
+						provider
+							.DisposeStatusBarEntry(id)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$setStatusBarMessage" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
-					// Parse message identifier and message text from request parameters.
-					// Expected indices: 0=message_id (String, for later disposal), 1=text
-					// (String). Sets a temporary or persistent status bar message.
-					provider.SetStatusBarMessage("msg_id".to_string(), "message".to_string()).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+						let message_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("msg_id").to_string();
+						let text = Parameters.get(1).and_then(Value::as_str).unwrap_or("message").to_string();
+						provider
+							.SetStatusBarMessage(message_id, text)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$disposeStatusBarMessage" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
-					// Parse message identifier from request parameters to hide and dispose of
-					// a previously shown status bar message. Expected from _Parameters[0] as a
-					// String. This cleans up status bar resources.
-					provider.DisposeStatusBarMessage("msg_id".to_string()).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+						let message_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("msg_id").to_string();
+						provider
+							.DisposeStatusBarMessage(message_id)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// User Interface
 		"UserInterface.ShowMessage" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-					// Parse message type (info/warning/error), title, and message content from
-					// request parameters. Expected indices: 0=type (String), 1=title (String),
-					// 2=message (String), 3=options (Value, optional). This triggers
-					// user-facing notifications.
-					provider.ShowMessage("info".to_string(), "Title", "Message", json!({})).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+						let severity_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("info");
+						let message = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+						let options = Parameters.get(2).cloned();
+						let severity = match severity_str {
+							"warning" => MessageSeverity::Warning,
+							"error" => MessageSeverity::Error,
+							_ => MessageSeverity::Info,
+						};
+						provider
+							.ShowMessage(severity, message, options)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"UserInterface.ShowOpenDialog" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-					// Parse file open dialog options from request parameters to customize the
-					// dialog behavior. Expected from _Parameters[0] as OpenDialogOptions DTO
-					// (filters, default path, multi-select, etc.).
-					provider.ShowOpenDialog(None).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+						let options = if let Some(Value::Object(_obj)) = Parameters.get(0) {
+							// TODO: Properly deserialize to OpenDialogOptionsDTO
+							Some(Default::default())
+						} else {
+							None
+						};
+						provider
+							.ShowOpenDialog(options)
+							.await
+							.map(|path_buf_opt| json!(path_buf_opt))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"UserInterface.ShowSaveDialog" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-					// Parse file save dialog options from request parameters to customize the
-					// dialog behavior. Expected from _Parameters[0] as SaveDialogOptions DTO
-					// (filters, default path, default name, etc.).
-					provider.ShowSaveDialog(None).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+						let options = if let Some(Value::Object(_obj)) = Parameters.get(0) {
+							// TODO: Properly deserialize to SaveDialogOptionsDTO
+							Some(Default::default())
+						} else {
+							None
+						};
+						provider
+							.ShowSaveDialog(options)
+							.await
+							.map(|path_buf_opt| json!(path_buf_opt))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Terminal
 		"$terminal:create" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-					// Parse terminal name and creation options from request parameters.
-					// Expected indices: 0=name (String), 1=options (TerminalOptions DTO with
-					// cwd, env, shell path, etc.). The shell path should also come from
-					// options, not hardcoded.
-					let options = json!({});
-					let shell_path = "/bin/bash".to_string();
-					provider.CreateTerminal("Terminal".to_string(), &options, &shell_path).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+						let options = Parameters.get(0).cloned().unwrap_or_default();
+						provider.CreateTerminal(options).await.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$terminal:sendText" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-					// Parse terminal session identifier and text to send from request
-					// parameters. Expected indices: 0=identifier (u32 or String), 1=text
-					// (String). The identifier targets a specific terminal instance.
-					provider.SendTextToTerminal(0, "echo hello\n".to_string()).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+						let terminal_id = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u64).unwrap_or(0);
+						let text = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+						provider
+							.SendTextToTerminal(terminal_id, text)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$terminal:dispose" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-					// Parse terminal session identifier from request parameters to dispose of
-					// a created terminal. Expected from _Parameters[0] as u32 or String
-					// depending on terminal identifier scheme. Current hardcoded 0 is a
-					// placeholder.
-					provider.DisposeTerminal(0).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+						let terminal_id = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u64).unwrap_or(0);
+						provider
+							.DisposeTerminal(terminal_id)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Webview
 		"$webview:create" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn WebviewProvider> = run_time.Environment.Require();
-					// Parse webview view type, title, and options from request parameters to
-					// create a new webview panel. Expected indices: 0=viewType (String),
-					// 1=title (String), 2=options (WebviewOptions DTO). This would eventually
-					// call WebviewProvider::CreateWebview with properly deserialized
-					// parameters. For now, just log that this would be called.
-					warn!("$webview:create not fully implemented");
-					Ok(json!({"handle": "webview-123"}))
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |_run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						warn!("$webview:create not fully implemented");
+						Ok(json!({"handle": "webview-123"}))
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$resolveCustomEditor" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
-					// Parse view type, resource URI, and webview handle from request
-					// parameters for resolving custom editor associations. Expected indices:
-					// 0=viewType (String), 1=resource URI (Url), 2=webview handle (String).
-					// This links a file URI to a specific webview editor.
-					provider
-						.ResolveCustomEditor(
-							"viewType".to_string(),
-							Url::parse("file:///tmp/test.txt").unwrap(),
-							"webview-123".to_string(),
-						)
-						.await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
+						let view_type = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let resource_uri_str = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
+						let resource_uri = Url::parse(resource_uri_str)
+							.unwrap_or_else(|_| Url::parse("file:///tmp/test.txt").unwrap());
+						let webview_handle =
+							Parameters.get(2).and_then(Value::as_str).unwrap_or("webview-123").to_string();
+						provider
+							.ResolveCustomEditor(view_type, resource_uri, webview_handle)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Debug
 		"Debug.Start" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn DebugService> = run_time.Environment.Require();
-					// Parse debug session folder URI and debug configuration from request
-					// parameters. Expected indices: 0=folder URI (Url, optional), 1=configuration
-					// (DebugConfiguration DTO). This initiates a debugging session for the
-					// specified workspace folder.
-					provider.StartDebugging(None, json!({ "type": "node" })).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
+						let folder_uri_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let folder_uri = if folder_uri_str.is_empty() { None } else { Url::parse(folder_uri_str).ok() };
+						let configuration = Parameters.get(1).cloned().unwrap_or_else(|| json!({ "type": "node" }));
+						provider
+							.StartDebugging(folder_uri, configuration)
+							.await
+							.map(|session_id| json!(session_id))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"Debug.RegisterConfigurationProvider" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn DebugService> = run_time.Environment.Require();
-					// Parse debug type, provider factory handle, and sidecar identifier from
-					// request parameters. Expected indices: 0=debug_type (String),
-					// 1=provider_handle (u32 or String), 2=sidecar_id (String). This registers
-					// a debug configuration provider for a specific debugging type.
-					provider
-						.RegisterDebugConfigurationProvider("node".to_string(), 1, "cocoon-main".to_string())
-						.await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
+						let debug_type = Parameters.get(0).and_then(Value::as_str).unwrap_or("node").to_string();
+						let provider_handle = Parameters.get(1).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(1);
+						let sidecar_id = Parameters.get(2).and_then(Value::as_str).unwrap_or("cocoon-main").to_string();
+						provider
+							.RegisterDebugConfigurationProvider(debug_type, provider_handle, sidecar_id)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Tree View
 		"$tree:register" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
-					// Parse tree view identifier and tree data provider DTO from request
-					// parameters. Expected indices: 0=viewId (String), 1=data provider
-					// (TreeDataProvider DTO). This registers a custom tree view for the
-					// extension's UI.
-					provider.RegisterTreeDataProvider("viewId".to_string(), json!({})).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
+						let view_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("viewId").to_string();
+						let options = Parameters.get(1).cloned().unwrap_or_default();
+						provider
+							.RegisterTreeDataProvider(view_id, options)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Source Control Management
 		"$scm:createSourceControl" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-					// Parse source control management resource URI and associated metadata from
-					// request parameters. Expected indices: 0=resource (SourceControlResource
-					// DTO), 1=metadata (Value). This creates a new SCM source control widget
-					// for a repository.
-					provider.CreateSourceControl(json!({}), json!({})).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+						let resource = Parameters.get(0).cloned().unwrap_or_default();
+						provider
+							.CreateSourceControl(resource)
+							.await
+							.map(|handle| json!(handle))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$scm:updateSourceControl" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-					// Parse source control resource changes and update data from request
-					// parameters. Expected from _Parameters[0] as SourceControl update DTO.
-					// This updates the UI to reflect repository changes (commits, branches,
-					// diffs, etc.).
-					provider.UpdateSourceControl(json!({})).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+						let update = Parameters.get(1).cloned().unwrap_or_default();
+						provider
+							.UpdateSourceControl(handle, update)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$scm:updateGroup" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-					// Parse source control group identifier and associated resources from
-					// request parameters. Expected indices: 0=group_id (String), 1=resources
-					// (Vec<SourceControlResource>). Groups organize multiple SCM repositories
-					// together in the UI.
-					provider.UpdateGroup("group1".to_string(), json!([])).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+						let group_data = Parameters.get(1).cloned().unwrap_or_default();
+						provider
+							.UpdateSourceControlGroup(handle, group_data)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		"$scm:registerInputBox" => {
-			let effect = |run_time:Arc<MountainRunTime>| {
-				async move {
-					let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
-					// Parse input box options from request parameters to configure an SCM input
-					// box. Expected from _Parameters[0] as InputBoxOptions DTO (placeholder,
-					// prompt, validation, etc.). Registers input control for user interaction
-					// within source control view.
-					provider.RegisterInputBox(json!({})).await
-				}
-			};
-			Box::new(effect)
+			let effect =
+				move |run_time:Arc<MountainRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
+						let options = Parameters.get(1).cloned().unwrap_or_default();
+						provider
+							.RegisterInputBox(handle, options)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
 		},
 
 		// Unknown command
 		_ => {
 			warn!("[EffectCreation] Unknown method: {}", MethodName);
-			let effect = |run_time:Arc<MountainRunTime>| async move { Err(format!("Unknown method: {}", MethodName)) };
-			Box::new(effect)
+			Err(format!("Unknown method: {}", MethodName))
 		},
 	}
 }
@@ -713,26 +806,14 @@ mod tests {
 	#[test]
 	fn test_effect_creation_for_known_commands() {
 		// Test that known commands return a valid MappedEffect
-		let effect = CreateEffectForRequest(
-			tauri::test::mock_app(),
-			&Arc::new(MountainEnvironment::default()),
-			"Keybinding.GetResolved",
-			&json!([]),
-		);
-		assert!(effect.is_some());
+		let result = CreateEffectForRequest(&tauri::test::mock_app(), "Keybinding.GetResolved", Value::Array(vec![]));
+		assert!(result.is_ok());
 	}
 
 	#[test]
 	fn test_unknown_command_returns_error() {
-		// Test that unknown commands return an error effect
-		let effect = CreateEffectForRequest(
-			tauri::test::mock_app(),
-			&Arc::new(MountainEnvironment::default()),
-			"Unknown.Command",
-			&json!([]),
-		);
-		// Should return an effect that when executed returns error
-		let result = (effect)(Arc::new(MountainRunTime::default()));
-		// Since we can't easily test async, just verify it's a boxed closure
+		// Test that unknown commands return an error
+		let result = CreateEffectForRequest(&tauri::test::mock_app(), "Unknown.Command", Value::Array(vec![]));
+		assert!(result.is_err());
 	}
 }
