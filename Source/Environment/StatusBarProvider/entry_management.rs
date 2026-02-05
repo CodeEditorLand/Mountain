@@ -1,0 +1,57 @@
+//! # StatusBarProvider - Entry Management
+//!
+//! Implementation of status bar entry creation and disposal for [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+
+use CommonLibrary::{
+	Error::CommonError::CommonError,
+	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
+};
+use async_trait::async_trait;
+use log::info;
+use serde_json::{json, Value};
+use tauri::{Emitter, Manager};
+
+use super::super::{MountainEnvironment::MountainEnvironment, Utility};
+
+/// Entry management operations implementation for MountainEnvironment
+pub(super) async fn set_status_bar_entry_impl(
+	env: &MountainEnvironment,
+	entry: StatusBarEntryDTO,
+) -> Result<(), CommonError> {
+	info!("[StatusBarProvider] Setting entry: {}", entry.EntryIdentifier);
+
+	let mut items_guard = env
+		.ApplicationState
+		.ActiveStatusBarItems
+		.lock()
+		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+	items_guard.insert(entry.EntryIdentifier.clone(), entry.clone());
+
+	drop(items_guard);
+
+	env.ApplicationHandle
+		.emit("sky://statusbar/set-entry", entry)
+		.map_err(|error| CommonError::UserInterfaceInteraction { Reason: error.to_string() })
+}
+
+/// Removes a status bar item from the UI.
+pub(super) async fn dispose_status_bar_entry_impl(
+	env: &MountainEnvironment,
+	entry_identifier: String,
+) -> Result<(), CommonError> {
+	info!("[StatusBarProvider] Disposing entry: {}", entry_identifier);
+
+	env.ApplicationState
+		.ActiveStatusBarItems
+		.lock()
+		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.remove(&entry_identifier);
+
+	env.ApplicationHandle
+		.emit(
+			"sky://statusbar/dispose-entry",
+			json!({ "EntryIdentifier": entry_identifier }),
+		)
+		.map_err(|error| CommonError::UserInterfaceInteraction { Reason: error.to_string() })
+}
