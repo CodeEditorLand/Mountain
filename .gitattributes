@@ -12,9 +12,7 @@ Target/debug/Mountain filter=lfs diff=lfs merge=lfs -text
 Target/release/Mountain filter=lfs diff=lfs merge=lfs -text
 
 Target/debug/bundle/dmg/*.dmg filter=lfs diff=lfs merge=lfs -text
-
 Target/release/bundle/dmg/*.dmg filter=lfs diff=lfs merge=lfs -text
 
 Target/debug/bundle/macos/*.app/Contents/MacOS/* filter=lfs diff=lfs merge=lfs -text
-
 Target/release/bundle/macos/*.app/Contents/MacOS/* filter=lfs diff=lfs merge=lfs -text
