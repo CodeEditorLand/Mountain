@@ -29,11 +29,16 @@ pub struct DashboardConfig {
 impl Default for DashboardConfig {
 	fn default() -> Self {
 		Self {
-			update_interval_ms:5000,    // Update every 5 seconds
-			metrics_retention_hours:24, // Keep metrics for 24 hours
-			alert_threshold_ms:1000,    // Alert if processing takes >1s
-			trace_sampling_rate:0.1,    // Sample 10% of traces
-			max_traces_stored:1000,     // Keep up to 1000 traces
+			// Configuration for metrics update frequency in milliseconds.
+			update_interval_ms:5000,
+			// Retention period for stored metrics in hours.
+			metrics_retention_hours:24,
+			// Threshold in milliseconds for triggering performance alerts.
+			alert_threshold_ms:1000,
+			// Fraction of traces to sample (0.1 = 10%).
+			trace_sampling_rate:0.1,
+			// Maximum number of trace spans to retain.
+			max_traces_stored:1000,
 		}
 	}
 }
@@ -177,7 +182,8 @@ impl PerformanceDashboard {
 		{
 			let mut running = self.is_running.lock().await;
 			if *running {
-				return Ok(()); // Already running
+				// If already running, exit early to prevent duplicate startup.
+				return Ok(());
 			}
 			*running = true;
 		}
@@ -200,7 +206,8 @@ impl PerformanceDashboard {
 		{
 			let mut running = self.is_running.lock().await;
 			if !*running {
-				return Ok(()); // Already stopped
+				// If already stopped, exit early to prevent redundant operations.
+				return Ok(());
 			}
 			*running = false;
 		}
@@ -351,7 +358,8 @@ impl PerformanceDashboard {
 		let dashboard = Arc::new(self.clone());
 
 		tokio::spawn(async move {
-			let mut interval = interval(Duration::from_secs(3600)); // Cleanup every hour
+			// Perform cleanup operations every hour.
+			let mut interval = interval(Duration::from_secs(3600));
 
 			while *dashboard.is_running.lock().await {
 				interval.tick().await;
@@ -458,10 +466,14 @@ impl PerformanceDashboard {
 	async fn check_alerts(&self, metric:&PerformanceMetric) {
 		let threshold = match metric.metric_type {
 			MetricType::MessageProcessingTime => self.config.alert_threshold_ms as f64,
-			MetricType::ErrorRate => 5.0,      // 5% error rate threshold
-			MetricType::MemoryUsage => 1024.0, // 1GB memory threshold
-			MetricType::CpuUsage => 90.0,      // 90% CPU threshold
-			_ => return,                       // No alert for other metric types
+			// Error rate threshold: 5% of total operations.
+			MetricType::ErrorRate => 5.0,
+			// Memory threshold: 1GB (1024 MB).
+			MetricType::MemoryUsage => 1024.0,
+			// CPU threshold: 90% utilization.
+			MetricType::CpuUsage => 90.0,
+			// No alert for other metric types (e.g., ConnectionLatency, QueueSize).
+			_ => return,
 		};
 
 		if metric.value > threshold {
@@ -552,14 +564,18 @@ impl PerformanceDashboard {
 	fn get_memory_usage() -> Result<f64, String> {
 		// This is a simplified implementation
 		// In a real application, you would use system-specific APIs
-		Ok(100.0) // Simulated memory usage in MB
+		// to query actual system memory consumption. This simulated value
+		// provides predictable behavior for testing and demonstration.
+		Ok(100.0)
 	}
 
 	/// Get CPU usage (simplified implementation)
 	fn get_cpu_usage() -> Result<f64, String> {
 		// This is a simplified implementation
 		// In a real application, you would use system-specific APIs
-		Ok(25.0) // Simulated CPU usage percentage
+		// to measure actual CPU utilization. This simulated value provides
+		// consistent test data for the performance dashboard.
+		Ok(25.0)
 	}
 
 	/// Generate trace ID
@@ -611,11 +627,16 @@ impl PerformanceDashboard {
 	/// Create a high-frequency dashboard
 	pub fn high_frequency_dashboard() -> Self {
 		Self::new(DashboardConfig {
-			update_interval_ms:1000,   // Update every second
-			metrics_retention_hours:1, // Keep metrics for 1 hour
-			alert_threshold_ms:500,    // Alert if processing takes >500ms
-			trace_sampling_rate:1.0,   // Sample 100% of traces
-			max_traces_stored:5000,    // Keep up to 5000 traces
+			// High-frequency updates every second for detailed monitoring.
+			update_interval_ms:1000,
+			// Short retention period for real-time dashboards.
+			metrics_retention_hours:1,
+			// Lower threshold for aggressive alerting in high-frequency mode.
+			alert_threshold_ms:500,
+			// Sample all traces for maximum visibility.
+			trace_sampling_rate:1.0,
+			// Larger trace buffer for high-frequency systems.
+			max_traces_stored:5000,
 		})
 	}
 }
@@ -672,7 +693,9 @@ impl PerformanceDashboard {
 		// Simple scoring algorithm
 		let time_score = 100.0 / (1.0 + average_processing_time / 100.0);
 		let error_score = 100.0 * (1.0 - error_rate / 100.0);
-		let throughput_score = throughput / 1000.0; // Normalize throughput
+		// Normalize throughput to thousands of messages per second for balanced
+		// scoring.
+		let throughput_score = throughput / 1000.0;
 
 		(time_score * 0.4 + error_score * 0.4 + throughput_score * 0.2)
 			.max(0.0)
@@ -747,7 +770,8 @@ mod tests {
 		// Create metric that exceeds threshold
 		let metric = PerformanceDashboard::create_metric(
 			MetricType::MessageProcessingTime,
-			2000.0, // Exceeds 1000ms threshold
+			// Value exceeds the default 1000ms threshold to trigger an alert.
+			2000.0,
 			None,
 			HashMap::new(),
 		);

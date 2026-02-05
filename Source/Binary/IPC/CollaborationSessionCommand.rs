@@ -62,17 +62,18 @@ use tauri::AppHandle;
 #[tauri::command]
 pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_data:Value) -> Result<Value, String> {
 	// Extract session_id and permissions from the JSON object
-	let session_id = session_data.get("session_id")
+	let session_id = session_data
+		.get("session_id")
 		.and_then(|v| v.as_str())
 		.ok_or("Missing or invalid session_id in session_data")?
 		.to_string();
-	
+
 	// For now, use default permissions
 	let permissions = crate::IPC::AdvancedFeatures::CollaborationPermissions {
-		can_edit: true,
-		can_view: true,
-		can_comment: true,
-		can_share: true,
+		can_edit:true,
+		can_view:true,
+		can_comment:true,
+		can_share:true,
 	};
 
 	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_id, permissions).await?;

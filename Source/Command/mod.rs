@@ -8,8 +8,10 @@
 //!
 //! - **Command Registration**: Register all Tauri command handlers with the
 //!   invoke_handler
-//! - **Module Organization**: Group commands by domain (LanguageFeature, SCM, etc.)
-//! - **Handler Coordination**: Delegate command execution to appropriate providers
+//! - **Module Organization**: Group commands by domain (LanguageFeature, SCM,
+//!   etc.)
+//! - **Handler Coordination**: Delegate command execution to appropriate
+//!   providers
 //! - **Error Propagation**: Convert provider errors to Tauri-compatible strings
 //!
 //! ## MODULE STRUCTURE
@@ -33,7 +35,8 @@
 //! 3. **Error Translation**: Convert CommonError → String for Tauri
 //!
 //! ### VS Code Reference:
-//! - `vs/workbench/services/commands/common/commandService.ts` - Command registry
+//! - `vs/workbench/services/commands/common/commandService.ts` - Command
+//!   registry
 //! - `vs/platform/commands/common/commands.ts` - Command definitions
 //! - `vs/base/parts/ipc/common/ipc.ts` - IPC-based command execution
 //!
@@ -43,7 +46,8 @@
 //!    `tauri::generate_handler![]`
 //! 2. **Invocation**: Frontend calls `app.invoke("command_name", args)`
 //! 3. **Dispatch**: `DispatchLogic::DispatchFrontendCommand` routes to effect
-//! 4. **Execution**: Effect runs via `ApplicationRunTime` with proper capabilities
+//! 4. **Execution**: Effect runs via `ApplicationRunTime` with proper
+//!    capabilities
 //! 5. **Response**: Result serialized and returned to frontend
 //!
 //! ## ERROR HANDLING
@@ -72,7 +76,6 @@
 //! - [`TreeView`]: Tree view manipulation commands
 //! - [`Keybinding`]: Keybinding resolution commands
 //! - [`SourceControlManagement`]: Git/SCM commands
-
 
 pub mod Bootstrap;
 pub mod Keybinding;

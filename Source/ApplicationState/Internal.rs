@@ -226,7 +226,6 @@
 //! - [ ] Implement text encoding detection
 //! - [ ] Add file system watcher integration
 
-//
 // ### 1. File I/O and Persistence
 // - Handle all file system operations for state persistence
 // - Load memento state from disk on startup
@@ -815,7 +814,10 @@ pub mod RecoveryUtilities {
 					);
 
 					tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms)).await;
-					delay_ms *= 2; // Exponential backoff
+
+					// Apply exponential backoff by doubling the delay after each failure
+					// to prevent overwhelming the system during recovery attempts.
+					delay_ms *= 2;
 				},
 			}
 		}

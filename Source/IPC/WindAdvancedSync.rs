@@ -286,7 +286,11 @@ use tauri::{AppHandle, Emitter, Manager, State, command};
 use CommonLibrary::{Environment::Requires::Requires, FileSystem::FileSystemWriter::FileSystemWriter};
 
 use crate::{IPC::AdvancedFeatures::PerformanceStats, RunTime::ApplicationRunTime::ApplicationRunTime};
-// use crate::IPC::MountainIPC::MountainIPC; // Module doesn't exist
+
+// TEMPORARY: MountainIPC module not yet implemented
+// This import is needed for full document synchronization with Mountain
+// backend. TODO: Create MountainIPC module and implement document operations.
+// // use crate::IPC::MountainIPC::MountainIPC;
 
 /// Synchronization status
 #[derive(Clone, Serialize, Deserialize, Debug)]
@@ -623,8 +627,9 @@ impl WindAdvancedSync {
 						consecutive_failures += 1;
 						if consecutive_failures >= max_consecutive_failures {
 							warn!("[WindAdvancedSync] Too many consecutive failures, slowing sync interval");
-							// Slow down by creating a new interval
-							interval = tokio::time::interval(Duration::from_secs(30)); // Slow down
+							// Reduce sync frequency to 30-second interval to prevent system overload
+							// during persistent error conditions (circuit breaker pattern).
+							interval = tokio::time::interval(Duration::from_secs(30));
 						}
 					},
 				}
@@ -633,8 +638,8 @@ impl WindAdvancedSync {
 			// Reset failure counter on successful operations
 			if success_count > 0 {
 				consecutive_failures = 0;
-				// Reset to normal interval
-				interval = tokio::time::interval(Duration::from_secs(5)); // Reset to normal interval
+				// Restore normal sync frequency to 5-second interval after successful recovery.
+				interval = tokio::time::interval(Duration::from_secs(5));
 			}
 
 			// Update sync status

@@ -1,20 +1,27 @@
 //! # DebugProvider (Environment)
 //!
 //! RESPONSIBILITIES:
-//! - Implements [`DebugService`](CommonLibrary::Debug::DebugService) for [`MountainEnvironment`]
-//! - Manages complete debugging session lifecycle from configuration to termination
+//! - Implements [`DebugService`](CommonLibrary::Debug::DebugService) for
+//!   [`MountainEnvironment`]
+//! - Manages complete debugging session lifecycle from configuration to
+//!   termination
 //! - Orchestrates between extension host (Cocoon), debug adapter, and UI
 //! - Handles DAP (Debug Adapter Protocol) message mediation
 //!
 //! ARCHITECTURAL ROLE:
-//! - Core provider for debugging functionality, analogous to VSCode's debug service
-//! - Uses two-stage registration: configuration providers and adapter descriptor factories
-//! - Each debug type (node, java, rust) can have its own configuration and adapter
-//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC to Cocoon
+//! - Core provider for debugging functionality, analogous to VSCode's debug
+//!   service
+//! - Uses two-stage registration: configuration providers and adapter
+//!   descriptor factories
+//! - Each debug type (node, java, rust) can have its own configuration and
+//!   adapter
+//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
+//!   to Cocoon
 //!
 //! DEBUG SESSION FLOW:
 //! 1. UI calls `StartDebugging` with folder URI and configuration
-//! 2. Mountain RPCs to Cocoon to resolve debug configuration (variable substitution)
+//! 2. Mountain RPCs to Cocoon to resolve debug configuration (variable
+//!    substitution)
 //! 3. Mountain RPCs to Cocoon to create debug adapter descriptor
 //! 4. Mountain spawns debug adapter process or connects to TCP server
 //! 5. Mountain mediates DAP messages between UI and debug adapter
@@ -25,17 +32,21 @@
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
 //! - Validates debug type is non-empty (InvalidArgument error)
-//! - TODO: Implement proper session lookup, timeout handling, and error recovery
+//! - TODO: Implement proper session lookup, timeout handling, and error
+//!   recovery
 //!
 //! PERFORMANCE:
-//! - Debug adapter spawning should be async with timeout protection (5000ms in current RPC)
+//! - Debug adapter spawning should be async with timeout protection (5000ms in
+//!   current RPC)
 //! - DAP message routing needs efficient session lookup (TODO: O(1) hash map)
 //! - Multiple simultaneous debug sessions require careful resource management
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/contrib/debug/browser/debugService.ts` - debug service main logic
+//! - `vs/workbench/contrib/debug/browser/debugService.ts` - debug service main
+//!   logic
 //! - `vs/workbench/contrib/debug/common/debug.ts` - debug interfaces and models
-//! - `vs/workbench/contrib/debug/browser/adapter/descriptorFactory.ts` - adapter descriptor factories
+//! - `vs/workbench/contrib/debug/browser/adapter/descriptorFactory.ts` -
+//!   adapter descriptor factories
 //! - `vs/debugAdapter/common/debugProtocol.ts` - DAP protocol specification
 //!
 //! TODO:
@@ -197,19 +208,19 @@ impl DebugService for MountainEnvironment {
 
 		// TODO: Implement full debug adapter spawning based on the descriptor.
 		// A complete implementation would:
-		// - Parse the DebugAdapterDescriptor (executable path, command args, environment
-		//   variables, or server port for TCP connection)
-		// - Spawn a new OS process with stdio pipes using Command or connect to a
-		//   TCP socket if using debug adapter server mode
+		// - Parse the DebugAdapterDescriptor (executable path, command args,
+		//   environment variables, or server port for TCP connection)
+		// - Spawn a new OS process with stdio pipes using Command or connect to a TCP
+		//   socket if using debug adapter server mode
 		// - Create a new DebugSession struct to manage the DAP (Debug Adapter Protocol)
 		//   communication stream, handling JSON-RPC message framing
 		// - Establish bidirectional JSON-RPC communication with the debug adapter
-		// - Store the active session in ApplicationState keyed by session_id for
-		//   later command routing and session management
+		// - Store the active session in ApplicationState keyed by session_id for later
+		//   command routing and session management
 		// - Implement proper session cleanup on termination (kill process, close
 		//   sockets, remove from ApplicationState, emit exit events)
-		// - Handle adapter launch failures with descriptive error messages and
-		//   proper session state cleanup
+		// - Handle adapter launch failures with descriptive error messages and proper
+		//   session state cleanup
 
 		info!("[DebugProvider] Debug session '{}' started (simulation).", SessionID);
 		Ok(SessionID)
@@ -225,8 +236,8 @@ impl DebugService for MountainEnvironment {
 		// active debug adapters. Should:
 		// - Look up session by SessionID in ApplicationState's debug session registry
 		// - Validate session exists and is in active state (not terminated or crashed)
-		// - Serialize command and arguments to JSON-RPC 2.0 format with proper
-		//   request sequencing (seq number)
+		// - Serialize command and arguments to JSON-RPC 2.0 format with proper request
+		//   sequencing (seq number)
 		// - Send the request to debug adapter via stdio pipes or TCP socket
 		// - Wait for response with appropriate timeout, handle cancellation requests
 		// - Deserialize JSON-RPC response and return the result body to the caller

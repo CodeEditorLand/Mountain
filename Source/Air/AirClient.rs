@@ -50,7 +50,8 @@
 //!
 //! ## THREAD SAFETY
 //!
-//! - `AirClient` is `Clone`able and can be shared across threads via `Arc<AirClient>`
+//! - `AirClient` is `Clone`able and can be shared across threads via
+//!   `Arc<AirClient>`
 //! - Internal connection state is protected by mutexes (to be implemented)
 //! - All public methods are safe to call from multiple threads
 //!
@@ -65,7 +66,8 @@
 //!
 //! This implementation borrows patterns from VS Code's extension host and
 //! remote communication:
-//! - `vs/platform/remote/common/remoteAgentConnection.ts` - Connection management
+//! - `vs/platform/remote/common/remoteAgentConnection.ts` - Connection
+//!   management
 //! - `vs/platform/remote/common/remoteAgentService.ts` - Service proxy pattern
 //!
 //! ## TODO

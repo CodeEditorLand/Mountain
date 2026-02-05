@@ -151,8 +151,12 @@ impl TauriIPCMessage {
 			.unwrap_or_default()
 			.as_millis() as u64;
 
-		const MAX_FUTURE_MS:u64 = 5_000; // 5 seconds future tolerance
-		const MAX_AGE_MS:u64 = 3600_000; // 1 hour max age
+		// Maximum allowed clock skew: messages may be at most 5 seconds in the future
+		// to account for minor clock desynchronization between Wind and Mountain.
+		const MAX_FUTURE_MS:u64 = 5_000;
+		// Maximum message age: reject messages older than 1 hour to prevent
+		// replay attacks using captured old messages.
+		const MAX_AGE_MS:u64 = 3600_000;
 
 		if self.timestamp > now + MAX_FUTURE_MS {
 			return Err("Timestamp is too far in the future".to_string());

@@ -1,19 +1,25 @@
 //! # FileSystemProvider (Environment)
 //!
 //! RESPONSIBILITIES:
-//! - Implements [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) and
-//!   [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for [`MountainEnvironment`]
-//! - Provides secure, validated filesystem access with workspace trust enforcement
-//! - Handles file operations: read, write, stat, delete, rename, copy, directory traversal
+//! - Implements
+//!   [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) and
+//!   [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for
+//!   [`MountainEnvironment`]
+//! - Provides secure, validated filesystem access with workspace trust
+//!   enforcement
+//! - Handles file operations: read, write, stat, delete, rename, copy,
+//!   directory traversal
 //! - Detects and handles symbolic links properly
 //! - Enforces path validation to prevent directory traversal attacks
 //!
 //! SECURITY MODEL:
 //! - Sandboxed filesystem access limited to registered workspace folders
-//! - All operations call [`Utility::IsPathAllowedForAccess`](crate::Utility) first
+//! - All operations call [`Utility::IsPathAllowedForAccess`](crate::Utility)
+//!   first
 //! - Requires workspace trust to be enabled for any file access
 //! - Path normalization prevents `../` attacks
-//! - Symbolic link detection avoids following untrusted links outside workspaces
+//! - Symbolic link detection avoids following untrusted links outside
+//!   workspaces
 //!
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
@@ -27,7 +33,8 @@
 //! - TODO: Consider caching file metadata for frequently accessed files
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/services/files/electron-browser/diskFileSystemProvider.ts` - secure FS access
+//! - `vs/workbench/services/files/electron-browser/diskFileSystemProvider.ts` -
+//!   secure FS access
 //! - `vs/platform/files/common/files.ts` - file system interfaces
 //! - `vs/base/common/network.ts` - URI and path handling
 //!
@@ -46,12 +53,17 @@
 //! - Implement case sensitivity handling based on filesystem type
 //!
 //! MODULE CONTENTS:
-//! - [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) implementation:
+//! - [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader)
+//!   implementation:
 //!   - [`ReadFile`](Self::ReadFile) - read file bytes with access validation
-//!   - [`StatFile`](Self::StatFile) - file/directory metadata with symlink detection
-//! - [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) implementation:
-//!   - (methods to be implemented: WriteFile, DeleteFile, CreateDirectory, etc.)
-//! - Data types: [`FileSystemStatDTO`](CommonLibrary::FileSystem::DTO::FileSystemStatDTO),
+//!   - [`StatFile`](Self::StatFile) - file/directory metadata with symlink
+//!     detection
+//! - [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter)
+//!   implementation:
+//!   - (methods to be implemented: WriteFile, DeleteFile, CreateDirectory,
+//!     etc.)
+//! - Data types:
+//!   [`FileSystemStatDTO`](CommonLibrary::FileSystem::DTO::FileSystemStatDTO),
 //!   [`FileTypeDTO`](CommonLibrary::FileSystem::DTO::FileTypeDTO)
 
 use std::path::PathBuf;

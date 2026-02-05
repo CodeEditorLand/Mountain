@@ -108,7 +108,6 @@
 //! - Selection methods: `QuickPick`, `InputBox`
 //! - Request-response coordination logic
 
-
 use std::path::PathBuf;
 
 use CommonLibrary::{

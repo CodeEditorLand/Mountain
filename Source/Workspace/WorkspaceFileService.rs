@@ -1,31 +1,27 @@
 //! # WorkspaceFileService (Workspace)
 //!
 //! RESPONSIBILITIES:
-//! - Parses `.code-workspace` configuration files (VSCode multi-root workspace format)
+//! - Parses `.code-workspace` configuration files (VSCode multi-root workspace
+//!   format)
 //! - Resolves relative folder paths to absolute filesystem paths
 //! - Converts parsed workspace folders into `WorkspaceFolderStateDTO` instances
 //! - Handles path canonicalization and URI conversion
 //!
 //! ARCHITECTURAL ROLE:
 //! - Utility module for workspace configuration management
-//! - Used by [`MountainEnvironment`](crate::Environment::MountainEnvironment) during
-//!   workspace initialization and configuration loading
-//! - Integrates with [`ApplicationState`](crate::ApplicationState::ApplicationState)
-//!   for workspace folder state management
+//! - Used by [`MountainEnvironment`](crate::Environment::MountainEnvironment)
+//!   during workspace initialization and configuration loading
+//! - Integrates with
+//!   [`ApplicationState`](crate::ApplicationState::ApplicationState) for
+//!   workspace folder state management
 //!
 //! FILE FORMAT:
 //! - Expects JSON format conforming to VSCode `.code-workspace` schema
-//! - Top-level object contains `folders` array (can also have `settings`, `extensions`)
+//! - Top-level object contains `folders` array (can also have `settings`,
+//!   `extensions`)
 //! - Each folder entry has at least a `path` field (relative to workspace file)
-//! - Example:
-//!   ```json
-//!   {
-//!     "folders": [
-//!       { "path": "." },
-//!       { "path": "../other-project" }
-//!     ]
-//!   }
-//!   ```
+//! - Example: ```json { "folders": [ { "path": "." }, { "path":
+//!   "../other-project" } ] } ```
 //!
 //! PARSING FLOW:
 //! 1. Read `.code-workspace` file content as string
@@ -48,12 +44,14 @@
 //!
 //! PERFORMANCE:
 //! - Synchronous function but should be called from async context
-//! - Each folder path undergoes I/O: join + canonicalize (can be slow on network drives)
+//! - Each folder path undergoes I/O: join + canonicalize (can be slow on
+//!   network drives)
 //! - Consider caching parsed workspace files if frequently accessed
 //!
 //! VS CODE REFERENCE:
 //! - `vs/workbench/workspaces/common/workspace.ts` - workspace file format
-//! - `vs/workbench/services/workspace/browser/workspaceService.ts` - workspace service
+//! - `vs/workbench/services/workspace/browser/workspaceService.ts` - workspace
+//!   service
 //! - `vs/platform/workspace/common/workspace.ts` - workspace interfaces
 //!
 //! TODO:
@@ -72,7 +70,8 @@
 //! MODULE CONTENTS:
 //! - Structs: `WorkspaceFile`, `WorkspaceFolderEntry` (serde deserialization)
 //! - Function: `ParseWorkspaceFile` - main entry point
-//! - Data type: [`WorkspaceFolderStateDTO`](crate::ApplicationState::DTO::WorkspaceFolderStateDTO)
+//! - Data type:
+//!   [`WorkspaceFolderStateDTO`](crate::ApplicationState::DTO::WorkspaceFolderStateDTO)
 
 use std::path::Path;
 

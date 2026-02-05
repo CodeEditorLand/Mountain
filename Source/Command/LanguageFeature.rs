@@ -1,15 +1,19 @@
 //! # LanguageFeature (Command)
 //!
 //! RESPONSIBILITIES:
-//! - Defines Tauri command handlers for language feature requests from Sky frontend
-//! - Bridges Monaco Editor language requests to [`LanguageFeatureProviderRegistry`]
+//! - Defines Tauri command handlers for language feature requests from Sky
+//!   frontend
+//! - Bridges Monaco Editor language requests to
+//!   [`LanguageFeatureProviderRegistry`]
 //! - Provides type-safe parameter handling and validation for LSP features
-//! - Implements hover, code actions, document highlights, completions, definition, references
+//! - Implements hover, code actions, document highlights, completions,
+//!   definition, references
 //! - Uses generic `InvokeProvider` helper to reduce boilerplate
 //!
 //! ARCHITECTURAL ROLE:
 //! - Command layer that exposes language features via Tauri IPC (`#[command]`)
-//! - Delegates to Environment's [`LanguageFeatureProvider`](crate::Environment::LanguageFeatureProvider)
+//! - Delegates to Environment's
+//!   [`LanguageFeatureProvider`](crate::Environment::LanguageFeatureProvider)
 //!   via DI with `Require()` trait
 //! - Translates between frontend JSON parameters and Rust DTO types
 //! - Error strings returned directly to frontend for display
@@ -32,7 +36,8 @@
 //! - Returns `Result<Value, String>` where errors sent directly to frontend
 //! - Validates URI non-empty and position format (line/character numbers)
 //! - JSON serialization errors converted to strings
-//! - Provider errors (CommonError) converted to strings via `map_err(|Error| Error.to_string())`
+//! - Provider errors (CommonError) converted to strings via `map_err(|Error|
+//!   Error.to_string())`
 //!
 //! PERFORMANCE:
 //! - Each command is async and non-blocking
@@ -40,15 +45,19 @@
 //! - URI parsing and DTO deserialization adds minimal overhead
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/api/common/extHostLanguageFeatures.ts` - ext host language features API
-//! - `vs/workbench/services/languageFeatures/common/languageFeaturesService.ts` - service layer
+//! - `vs/workbench/api/common/extHostLanguageFeatures.ts` - ext host language
+//!   features API
+//! - `vs/workbench/services/languageFeatures/common/languageFeaturesService.ts`
+//!   - service layer
 //! - `vs/workbench/contrib/hover/browser/hover.ts` - hover implementation
-//! - `vs/workbench/contrib/completion/browser/completion.ts` - completion widget
+//! - `vs/workbench/contrib/completion/browser/completion.ts` - completion
+//!   widget
 //! - `vs/workbench/contrib/definition/browser/definition.ts` - go to definition
 //! - `vs/workbench/contrib/references/browser/references.ts` - find references
 //!
 //! TODO:
-//! - Implement more language features: document symbols, formatting, rename, signature help
+//! - Implement more language features: document symbols, formatting, rename,
+//!   signature help
 //! - Add cancellation token support for long-running operations
 //! - Implement request deduplication for identical concurrent requests
 //! - Add request caching for repeated symbol lookups

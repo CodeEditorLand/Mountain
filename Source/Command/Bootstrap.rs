@@ -49,7 +49,8 @@
 //! 1. **Commands**: All command functions are added to Tauri's `invoke_handler`
 //!    via `tauri::generate_handler![]` macro
 //! 2. **Tree Views**: Native providers are instantiated and stored in state
-//! 3. **Error Handling**: Registration failures are logged but don't stop startup
+//! 3. **Error Handling**: Registration failures are logged but don't stop
+//!    startup
 //!
 //! ## COMMAND REGISTRATION
 //!
@@ -101,9 +102,9 @@
 //!
 //! - [`RegisterAll`]: Main registration function called from Binary::Main
 //! - [`RegisterCommands`]: Internal function to register all command handlers
-//! - [`RegisterTreeViewProviders`]: Internal function to register tree view providers
+//! - [`RegisterTreeViewProviders`]: Internal function to register tree view
+//!   providers
 
-//
 // ## VSCode Reference:
 // - vs/workbench/services/actions/common/menuService.ts
 // - vs/workbench/browser/actions.ts
@@ -417,12 +418,12 @@ pub fn RegisterNativeCommands(
 
 	// --- Command Validation ---
 	info!("[Bootstrap] Validating registered commands...");
-	// Validate all registered commands at startup to catch configuration errors early.
-	// Verification includes command signature correctness, parameter type matching,
-	// required permissions and capabilities, and extension metadata validity. This
-	// prevents runtime errors from malformed registrations and provides immediate
-	// feedback to extension developers during development. Current implementation
-	// logs without performing actual validation checks.
+	// Validate all registered commands at startup to catch configuration errors
+	// early. Verification includes command signature correctness, parameter type
+	// matching, required permissions and capabilities, and extension metadata
+	// validity. This prevents runtime errors from malformed registrations and
+	// provides immediate feedback to extension developers during development.
+	// Current implementation logs without performing actual validation checks.
 
 	// --- Tree View Provider Registration ---
 	let mut TreeViewRegistry = ApplicationState.ActiveTreeViews.lock().map_err(MapLockError)?;

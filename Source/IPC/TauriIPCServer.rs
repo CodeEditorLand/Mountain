@@ -475,9 +475,11 @@ impl TauriIPCServer {
 	fn create_security_context(&self, message:&TauriIPCMessage) -> SecurityContext {
 		SecurityContext {
 			user_id:message.sender.clone().unwrap_or("unknown".to_string()),
-			roles:vec!["user".to_string()], // Default role
+			// Default role assigned to authenticated IPC connections
+			roles:vec!["user".to_string()],
 			permissions:vec![],
-			ip_address:"127.0.0.1".to_string(), // Default IP for IPC
+			// IPC connections use loopback address for security (localhost only)
+			ip_address:"127.0.0.1".to_string(),
 			timestamp:std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_millis(message.timestamp),
 		}
 	}
@@ -505,7 +507,9 @@ impl TauriIPCServer {
 
 	/// Send compressed message batch
 	pub async fn send_compressed_batch(&self, channel:&str, messages:Vec<TauriIPCMessage>) -> Result<(), String> {
-		let compressor = MessageCompressor::new(6, 10); // Default compression level 6, batch size 10
+		// Configure compressor with balanced settings: level 6 (good compression/speed
+		// tradeoff) and batch size 10 (aggregate small messages for efficiency)
+		let compressor = MessageCompressor::new(6, 10);
 
 		let compressed_data = compressor
 			.compress_messages(messages)
@@ -735,7 +739,8 @@ impl ConnectionPool {
 	pub async fn CleanUpStaleConnections(&self) -> usize {
 		let mut connections = self.ActiveConnections.lock().await;
 		let now = std::time::Instant::now();
-		let stale_threshold = Duration::from_secs(300); // 5 minutes
+		// Stale connections are those unused for 5 minutes (300 seconds)
+		let stale_threshold = Duration::from_secs(300);
 
 		let stale_ids:Vec<String> = connections
 			.iter()
@@ -780,7 +785,8 @@ impl ConnectionPool {
 						);
 					}
 				} else {
-					break; // Connection no longer exists
+					// The connection has been removed from the pool, stop monitoring
+					break;
 				}
 			}
 		});
@@ -1090,7 +1096,8 @@ impl PermissionManager {
 			"configuration:update" => vec!["config.update".to_string()],
 			"storage:set" => vec!["storage.write".to_string()],
 			"native:openExternal" => vec!["system.external".to_string()],
-			_ => Vec::new(), // Default: no special permissions required
+			// Operations not in the mapping require no special permissions by default
+			_ => Vec::new(),
 		}
 	}
 

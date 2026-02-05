@@ -46,7 +46,8 @@
 //! - Accessible via `Environment.Require<dyn StatusBarProvider>()`
 //!
 //! ### Status Bar State
-//! - `ApplicationState.ActiveStatusBarItems`: HashMap<String, StatusBarEntryDTO>
+//! - `ApplicationState.ActiveStatusBarItems`: HashMap<String,
+//!   StatusBarEntryDTO>
 //!   - Key: Status bar item ID (unique)
 //!   - Value: StatusBarEntryDTO with text, tooltip, alignment, priority, etc.
 //!
@@ -186,11 +187,9 @@
 //
 // ## Status Bar Item Types
 //
-// 1. **Persistent Items**: Long-lived items (e.g., branch indicator, language
-//    indicator)
+// 1. **Persistent Items**: Long-lived items (e.g., branch indicator, language indicator)
 // 2. **Transient Messages**: Temporary notifications that auto-dismiss
-// 3. **Dynamic Items**: Items with computed values (e.g., error count,
-//    position)
+// 3. **Dynamic Items**: Items with computed values (e.g., error count, position)
 
 //! # StatusBarProvider Implementation
 //!

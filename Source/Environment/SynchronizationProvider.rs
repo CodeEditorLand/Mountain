@@ -1,7 +1,8 @@
 //! # SynchronizationProvider (Environment)
 //!
 //! RESPONSIBILITIES:
-//! - Implements [`SynchronizationProvider`](CommonLibrary::Synchronization::SynchronizationProvider)
+//! - Implements
+//!   [`SynchronizationProvider`](CommonLibrary::Synchronization::SynchronizationProvider)
 //!   for [`MountainEnvironment`]
 //! - Provides two-way synchronization of user data across devices
 //! - Handles push (local → remote) and pull (remote → local) operations
@@ -10,10 +11,13 @@
 //!
 //! ARCHITECTURAL ROLE:
 //! - Optional provider for cloud sync functionality (currently stub)
-//! - Would integrate with external sync service (Firebase, Supabase, custom backend)
+//! - Would integrate with external sync service (Firebase, Supabase, custom
+//!   backend)
 //! - Uses authentication from [`AuthenticationProvider`] (to be implemented)
-//! - Syncs multiple data types: settings, keybindings, workspaces, extensions, snippets
-//! - Store sync metadata in [`ApplicationState`](crate::ApplicationState::ApplicationState)
+//! - Syncs multiple data types: settings, keybindings, workspaces, extensions,
+//!   snippets
+//! - Store sync metadata in
+//!   [`ApplicationState`](crate::ApplicationState::ApplicationState)
 //!
 //! SYNC ARCHITECTURE:
 //! **PushUserData**:
@@ -54,9 +58,11 @@
 //! - TODO: Implement end-to-end encryption for maximum security
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/services/settings/common/settingsSync.ts` - settings sync service
+//! - `vs/workbench/services/settings/common/settingsSync.ts` - settings sync
+//!   service
 //! - `vs/workbench/common/sync/syncService.ts` - sync service abstraction
-//! - `vs/workbench/services/settings/common/settingsTarget.ts` - multi-device sync
+//! - `vs/workbench/services/settings/common/settingsTarget.ts` - multi-device
+//!   sync
 //! - `vs/platform/update/common/update.ts` - update pattern for comparison
 //!
 //! TODO:
@@ -84,13 +90,16 @@
 //!
 //! MODULE CONTENTS:
 //! - [`SynchronizationProvider`](CommonLibrary::Synchronization::SynchronizationProvider) implementation:
-//!   - [`PushUserData`](Self::PushUserData) - upload local data to remote (stub)
-//!   - [`PullUserData`](Self::PullUserData) - download remote data to local (stub)
+//!   - [`PushUserData`](Self::PushUserData) - upload local data to remote
+//!     (stub)
+//!   - [`PullUserData`](Self::PullUserData) - download remote data to local
+//!     (stub)
 //! - Current state: Stub with logging only; production implementation pending
 //!
 //! ---
-//! *Implementation notes: This provider is currently a stub with no actual sync functionality.
-//! Future work will integrate with a cloud sync service provider.*
+//! *Implementation notes: This provider is currently a stub with no actual sync
+//! functionality. Future work will integrate with a cloud sync service
+//! provider.*
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,

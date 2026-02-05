@@ -1,14 +1,15 @@
 //! # DiagnosticProvider (Environment)
 //!
-//! Implements the `DiagnosticManager` trait, managing diagnostic information from
-//! multiple sources (language servers, extensions, built-in providers). It
+//! Implements the `DiagnosticManager` trait, managing diagnostic information
+//! from multiple sources (language servers, extensions, built-in providers). It
 //! aggregates diagnostics by owner, file URI, and severity, notifying the UI
 //! when changes occur.
 //!
 //! ## RESPONSIBILITIES
 //!
 //! ### 1. Diagnostic Collection
-//! - Maintain collections of diagnostics organized by owner (TypeScript, Rust, ESLint)
+//! - Maintain collections of diagnostics organized by owner (TypeScript, Rust,
+//!   ESLint)
 //! - Store diagnostics per resource URI for efficient lookup
 //! - Support multiple severity levels (Error, Warning, Info, Hint)
 //! - Track diagnostic source and code for quick fixes
@@ -52,7 +53,8 @@
 //! - Accessible via `Environment.Require<dyn DiagnosticManager>()`
 //!
 //! ### Data Storage
-//! - `ApplicationState.DiagnosticsMap`: HashMap<String, HashMap<String, Vec<MarkerDataDTO>>>
+//! - `ApplicationState.DiagnosticsMap`: HashMap<String, HashMap<String,
+//!   Vec<MarkerDataDTO>>>
 //!   - Outer key: Owner (e.g., "typescript", "rust-analyzer")
 //!   - Inner key: URI string
 //!   - Value: Vector of diagnostic markers
@@ -106,9 +108,11 @@
 //! ## VS CODE REFERENCE
 //!
 //! Patterns from VS Code:
-//! - `vs/workbench/services/diagnostic/common/diagnosticCollection.ts` - Collection management
+//! - `vs/workbench/services/diagnostic/common/diagnosticCollection.ts` -
+//!   Collection management
 //! - `vs/platform/diagnostics/common/diagnostics.ts` - Diagnostic data model
-//! - `vs/workbench/services/diagnostic/common/diagnosticService.ts` - Aggregation and events
+//! - `vs/workbench/services/diagnostic/common/diagnosticService.ts` -
+//!   Aggregation and events
 //!
 //! ## TODO
 //!
@@ -131,7 +135,6 @@
 //! - Owner management functions
 //! - Diagnostic validation helpers
 
-//
 // 1. **Diagnostic Collection**: Maintains collections of diagnostics organized
 //    by owner (e.g., TypeScript, Rust, ESLint) and resource URI.
 //

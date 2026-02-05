@@ -28,7 +28,8 @@
 //!
 //! ### 4. URI Scheme Support
 //! - Native `file://` URIs: Read/write from filesystem
-//! - Custom schemes (untitled:, git:, vscode-vfs:): Via `TextDocumentContentProvider`
+//! - Custom schemes (untitled:, git:, vscode-vfs:): Via
+//!   `TextDocumentContentProvider`
 //! - Extension-hosted documents: Request content from Cocoon
 //!
 //! ### 5. Event Orchestration
@@ -61,7 +62,8 @@
 //!
 //! ### Document State Model
 //!
-//! Stored in `ApplicationState.OpenDocuments` as `HashMap<String, DocumentStateDTO>`:
+//! Stored in `ApplicationState.OpenDocuments` as `HashMap<String,
+//! DocumentStateDTO>`:
 //! - `URI`: Document identifier
 //! - `LanguageIdentifier`: Syntax highlighting language
 //! - `Lines`: Vector of document lines (for efficient editing)
@@ -79,7 +81,8 @@
 //! ### Dependents
 //! - Text editors: Load and modify document content
 //! - Language servers: Receive document change notifications
-//! - `Binary::Main`::`MountainGetWorkbenchConfiguration`: Initial document setup
+//! - `Binary::Main`::`MountainGetWorkbenchConfiguration`: Initial document
+//!   setup
 //! - Extension providers: Custom document handling
 //!
 //! ## DOCUMENT OPEN FLOW
@@ -131,9 +134,11 @@
 //! ## VS CODE REFERENCE
 //!
 //! Patterns from VS Code:
-//! - `vs/workbench/api/common/extHostDocumentProvider.ts` - Document provider interface
+//! - `vs/workbench/api/common/extHostDocumentProvider.ts` - Document provider
+//!   interface
 //! - `vs/workbench/services/files/common/files.ts` - File document provider
-//! - `vs/workbench/services/textService/common/textService.ts` - Text document management
+//! - `vs/workbench/services/textService/common/textService.ts` - Text document
+//!   management
 //!
 //! ## TODO
 //!
@@ -156,7 +161,6 @@
 //! - Event emission and notification
 //! - URI scheme handling
 
-//
 // 1. **Document State Management**: Maintains all open documents in
 //    ApplicationState, tracking content, version, dirty status, and metadata.
 //

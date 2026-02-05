@@ -176,13 +176,13 @@ async fn try_connect_single(_SideCarIdentifier:&str, endpoint:&str) -> Result<()
 	} else {
 		format!("http://{}", endpoint)
 	};
-	
+
 	let channel = tonic::transport::Channel::from_shared(endpoint_url)
 		.map_err(|e| VineError::RPCError(format!("Failed to create channel: {}", e)))?
 		.connect()
 		.await
 		.map_err(|e| VineError::RPCError(format!("Failed to connect: {}", e)))?;
-	
+
 	let client = CocoonClient::new(channel);
 
 	let mut clients = SIDECAR_CLIENTS.lock();
@@ -304,10 +304,7 @@ fn UpdateSideCarActivity(SideCarIdentifier:&str) {
 /// - `Err(VineError::SerializationError)`: Message exceeds maximum size
 fn ValidateMessageSize(data:&[u8]) -> Result<(), VineError> {
 	if data.len() > Config::MAX_MESSAGE_SIZE_BYTES {
-		Err(VineError::MessageTooLarge {
-			ActualSize: data.len(),
-			MaxSize: Config::MAX_MESSAGE_SIZE_BYTES,
-		})
+		Err(VineError::MessageTooLarge { ActualSize:data.len(), MaxSize:Config::MAX_MESSAGE_SIZE_BYTES })
 	} else {
 		Ok(())
 	}
@@ -359,8 +356,8 @@ pub async fn SendRequest(
 	});
 
 	// Validate message size
-	let parameter_bytes = to_vec(&Parameters)
-		.map_err(|e| VineError::RPCError(format!("Failed to serialize parameters: {}", e)))?;
+	let parameter_bytes =
+		to_vec(&Parameters).map_err(|e| VineError::RPCError(format!("Failed to serialize parameters: {}", e)))?;
 	ValidateMessageSize(&parameter_bytes)?;
 
 	let mut client = {
@@ -393,12 +390,12 @@ pub async fn SendRequest(
 
 			// Get the inner response message
 			let inner_response = response.into_inner();
-			
+
 			// Parse response JSON
 			let result_bytes = inner_response.result;
 			let result_value:Value = from_slice(&result_bytes)
 				.map_err(|e| VineError::RPCError(format!("Failed to deserialize response: {}", e)))?;
-	
+
 			// Check for RPC errors in response
 			if let Some(error_data) = inner_response.error {
 				return Err(VineError::RPCError(format!(

@@ -16,7 +16,8 @@
 //!   - [`UpdateService`](crate::Update::UpdateService) for self-updates
 //!   - [`SearchProvider`](crate::Environment::SearchProvider) for file search
 //!   - [`AuthenticationProvider`] (if implemented) for user credentials
-//! - Connection is optional; Mountain can function without Air (graceful degradation)
+//! - Connection is optional; Mountain can function without Air (graceful
+//!   degradation)
 //! - Service discovery and health checking via gRPC
 //!
 //! MODULE STRUCTURE:
@@ -31,25 +32,31 @@
 //! - TODO: Implement connection pooling, retry with exponential backoff
 //!
 //! ERROR HANDLING:
-//! - All gRPC errors translated to [`CommonError::IPCError`](CommonLibrary::Error::CommonError)
+//! - All gRPC errors translated to
+//!   [`CommonError::IPCError`](CommonLibrary::Error::CommonError)
 //! - Connection failures logged and return error
-//! - Service unavailability handled gracefully (return error, caller decides fallback)
+//! - Service unavailability handled gracefully (return error, caller decides
+//!   fallback)
 //!
 //! PERFORMANCE:
 //! - gRPC channels are expensive; reuse via Arc<AirServiceClient>
 //! - TODO: Add request caching for frequently accessed data (auth tokens, etc.)
-//! - TODO: Implement metrics collection for Air service calls (latency, success rate)
+//! - TODO: Implement metrics collection for Air service calls (latency, success
+//!   rate)
 //!
 //! VS CODE REFERENCE:
-//! - `vs/platform/telemetry/common/telemetry.ts` - telemetry/analytics service pattern
+//! - `vs/platform/telemetry/common/telemetry.ts` - telemetry/analytics service
+//!   pattern
 //! - `vs/platform/update/common/update.ts` - update service integration
-//! - `vs/workbench/services/search/common/search.ts` - search service architecture
+//! - `vs/workbench/services/search/common/search.ts` - search service
+//!   architecture
 //!
 //! TODO:
 //! - Implement connection retry with exponential backoff
 //! - Add connection pooling for multiple concurrent requests
 //! - Implement request caching for frequently accessed data (auth tokens, etc.)
-//! - Add metrics collection for Air service calls (latency, success rate, errors)
+//! - Add metrics collection for Air service calls (latency, success rate,
+//!   errors)
 //! - Implement fallback strategies when Air unavailable (local search, etc.)
 //! - Support for multiple Air daemons (load balancing/failover)
 //! - Add request timeout configuration (configurable per operation type)

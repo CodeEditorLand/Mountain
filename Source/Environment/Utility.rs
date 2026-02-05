@@ -1,25 +1,32 @@
 //! # Utility (Environment)
 //!
-//! Shared utility functions used across all Environment provider implementations
+//! Shared utility functions used across all Environment provider
+//! implementations
 //! in [`MountainEnvironment`](crate::Environment::MountainEnvironment::MountainEnvironment).
 //! These handle cross-cutting concerns: error mapping, security validation,
 //! language detection, and URI conversions.
 //!
 //! RESPONSIBILITIES:
-//! - **Error Mapping**: Convert `PoisonError` from Mutex locks to [`CommonError::StateLockPoisoned`]
-//! - **Security Validation**: Enforce workspace trust and path access boundaries via [`IsPathAllowedForAccess`]
-//! - **Language Detection**: Infer language identifiers from file extensions (basic mapping)
-//! - **URI Conversion**: Parse VS Code `UriComponents` DTOs into Rust [`Url`] types
+//! - **Error Mapping**: Convert `PoisonError` from Mutex locks to
+//!   [`CommonError::StateLockPoisoned`]
+//! - **Security Validation**: Enforce workspace trust and path access
+//!   boundaries via [`IsPathAllowedForAccess`]
+//! - **Language Detection**: Infer language identifiers from file extensions
+//!   (basic mapping)
+//! - **URI Conversion**: Parse VS Code `UriComponents` DTOs into Rust [`Url`]
+//!   types
 //!
 //! SECURITY MODEL:
-//! - [`IsPathAllowedForAccess`] is the primary security gate for all filesystem operations:
+//! - [`IsPathAllowedForAccess`] is the primary security gate for all filesystem
+//!   operations:
 //!   - Requires workspace trust (`ApplicationState.IsTrusted`)
 //!   - Path must be within one of the registered workspace folders
 //!   - Prevents extensions from accessing arbitrary system files
 //!   - Trust status is atomic and thread-safe via `AtomicBool`
 //!
 //! ERROR HANDLING:
-//! - All functions return [`CommonError`](CommonLibrary::Error::CommonError) on failure
+//! - All functions return [`CommonError`](CommonLibrary::Error::CommonError) on
+//!   failure
 //! - Mutex lock poisoning is mapped to `StateLockPoisoned` with context
 //! - Path access violations return `FileSystemPermissionDenied`
 //! - URI parsing failures return `InvalidArgument` with descriptive reason
@@ -31,11 +38,13 @@
 //!
 //! VS CODE REFERENCE:
 //! - `vs/base/common/network.ts` - URI handling and conversion
-//! - `vs/workbench/services/files/common/fileService.ts` - path validation patterns
+//! - `vs/workbench/services/files/common/fileService.ts` - path validation
+//!   patterns
 //! - `vs/workbench/common/resources.ts` - workspace trust model
 //!
 //! TODO:
-//! - Add more comprehensive language detection (from .editorconfig, shebang, etc.)
+//! - Add more comprehensive language detection (from .editorconfig, shebang,
+//!   etc.)
 //! - Implement path normalization to prevent directory traversal attacks
 //! - Add caching for language detection results (LRU cache)
 //! - Consider adding symbolic link resolution with security checks

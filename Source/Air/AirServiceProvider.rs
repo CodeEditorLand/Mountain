@@ -3,8 +3,8 @@
 //! High-level API surface for Air service methods.
 //!
 //! **Note**: This module currently contains a stub implementation because the
-//! `AirIntegration` feature is not enabled. When Air integration is implemented,
-//! this file will provide the full production implementation.
+//! `AirIntegration` feature is not enabled. When Air integration is
+//! implemented, this file will provide the full production implementation.
 //!
 //! ## RESPONSIBILITIES
 //!
@@ -65,7 +65,8 @@
 //!
 //! Patterns borrowed from VS Code:
 //! - `vs/platform/update/common/updateService.ts` - Update management
-//! - `vs/platform/authentication/common/authenticationService.ts` - Auth handling
+//! - `vs/platform/authentication/common/authenticationService.ts` - Auth
+//!   handling
 //! - `vs/platform/filesystem/common/filesystem.ts` - File indexing
 //!
 //! ## TODO

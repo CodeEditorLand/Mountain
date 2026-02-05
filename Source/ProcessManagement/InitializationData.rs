@@ -50,7 +50,8 @@
 //!
 //! ### Dependents
 //! - `Binary::Main::Fn`: Calls `ConstructSandboxConfiguration` for UI
-//! - `CocoonManagement::InitializeCocoon`: Calls `ConstructExtensionHostInitializationData`
+//! - `CocoonManagement::InitializeCocoon`: Calls
+//!   `ConstructExtensionHostInitializationData`
 //!
 //! ## PAYLOAD FORMATS
 //!
@@ -100,7 +101,8 @@
 //! ## ERROR HANDLING
 //!
 //! - Path resolution failures return `CommonError::ConfigurationLoad`
-//! - Workspace identifier errors propagate from `ApplicationState::GetWorkspaceIdentifier`
+//! - Workspace identifier errors propagate from
+//!   `ApplicationState::GetWorkspaceIdentifier`
 //! - JSON serialization errors should not occur (using `json!` macro)
 //!
 //! ## PLATFORM DETECTION
@@ -117,7 +119,8 @@
 //!
 //! ## TODO
 //!
-//! - [ ] Persist machineId across sessions (currently generated new each launch)
+//! - [ ] Persist machineId across sessions (currently generated new each
+//!   launch)
 //! - [ ] Add environment variable overrides for development
 //! - [ ] Implement workspace cache for faster startup
 //! - [ ] Add telemetry for initialization performance
@@ -126,8 +129,8 @@
 //! ## MODULE CONTENTS
 //!
 //! - [`ConstructSandboxConfiguration`]: Build ISandboxConfiguration for Sky
-//! - [`ConstructExtensionHostInitializationData`]: Build IExtensionHostInitData for Cocoon
-
+//! - [`ConstructExtensionHostInitializationData`]: Build IExtensionHostInitData
+//!   for Cocoon
 
 use std::{collections::HashMap, env, sync::Arc};
 

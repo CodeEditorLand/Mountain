@@ -21,9 +21,11 @@ use tauri::{
 };
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 use CommonLibrary::Error::CommonError::CommonError;
-use crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;
 
+use crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;
 use crate::{
+	// Crate root imports
+	ApplicationState::ApplicationState::ApplicationState,
 	// Binary submodule imports
 	Binary::Build::LocalhostPlugin::LocalhostPlugin as LocalhostPluginFn,
 	Binary::Build::LoggingPlugin::LoggingPlugin as LoggingPluginFn,
@@ -47,15 +49,9 @@ use crate::{
 	Binary::Shutdown::RuntimeShutdown::RuntimeShutdown as RuntimeShutdownFn,
 	Binary::Shutdown::SchedulerShutdown::SchedulerShutdown as SchedulerShutdownFn,
 	Binary::Tray::EnableTray as EnableTrayFn,
-	// Crate root imports
-	ApplicationState::ApplicationState::ApplicationState,
 	Command,
 	Environment::MountainEnvironment::MountainEnvironment,
-	IPC::{
-		AdvancedFeatures::CollaborationPermissions,
-		TauriIPCServer::TauriIPCServer,
-		initialize_wind_advanced_sync,
-	},
+	IPC::{AdvancedFeatures::CollaborationPermissions, TauriIPCServer::TauriIPCServer, initialize_wind_advanced_sync},
 	ProcessManagement::InitializationData,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track::DispatchLogic,
@@ -83,7 +79,7 @@ async fn MountainGetWorkbenchConfiguration(
 
 	let Configuration = InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, &State)
 		.await
-		.map_err(|Error: CommonError| {
+		.map_err(|Error:CommonError| {
 			error!("[IPC] [WorkbenchConfig] Failed: {}", Error);
 			Error.to_string()
 		})?;
@@ -133,7 +129,7 @@ async fn MountainIPCReceiveMessage(
 async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	let status = crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle)
 		.await
-		.map_err(|e: String| {
+		.map_err(|e:String| {
 			error!("[IPC] [Command] Failed to get IPC status: {}", e);
 			e.to_string()
 		})?;
@@ -146,12 +142,13 @@ async fn MountainIPCInvoke(
 	method:String,
 	params:serde_json::Value,
 ) -> Result<serde_json::Value, String> {
-	let args: Vec<Value> = params.as_array()
+	let args:Vec<Value> = params
+		.as_array()
 		.ok_or_else(|| "params must be an array".to_string())?
 		.clone()
 		.into_iter()
 		.collect();
-	
+
 	crate::IPC::WindServiceHandlers::mountain_ipc_invoke(app_handle, method, args).await
 }
 
@@ -159,7 +156,7 @@ async fn MountainIPCInvoke(
 async fn MountainGetWindDesktopConfiguration(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_get_wind_desktop_configuration(app_handle)
 		.await
-		.and_then(|config| serde_json::to_value(config).map_err(|e: serde_json::Error| e.to_string()))
+		.and_then(|config| serde_json::to_value(config).map_err(|e:serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
@@ -183,14 +180,14 @@ async fn MountainSynchronizeConfiguration(app_handle:AppHandle) -> Result<serde_
 async fn MountainGetConfigurationStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::ConfigurationBridge::mountain_get_configuration_status(app_handle)
 		.await
-		.and_then(|status| serde_json::to_value(status).map_err(|e: serde_json::Error| e.to_string()))
+		.and_then(|status| serde_json::to_value(status).map_err(|e:serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
 async fn get_configuration_data(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::ConfigurationBridge::get_configuration_data(app_handle)
 		.await
-		.and_then(|data| serde_json::to_value(data).map_err(|e: serde_json::Error| e.to_string()))
+		.and_then(|data| serde_json::to_value(data).map_err(|e:serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
@@ -217,14 +214,14 @@ async fn MountainStartIPCStatusReporting(app_handle:AppHandle) -> Result<serde_j
 async fn MountainGetPerformanceStats(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_get_performance_stats(app_handle)
 		.await
-		.and_then(|stats| serde_json::to_value(stats).map_err(|e: serde_json::Error| e.to_string()))
+		.and_then(|stats| serde_json::to_value(stats).map_err(|e:serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
 async fn MountainGetCacheStats(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_get_cache_stats(app_handle)
 		.await
-		.and_then(|cache| serde_json::to_value(cache).map_err(|e: serde_json::Error| e.to_string()))
+		.and_then(|cache| serde_json::to_value(cache).map_err(|e:serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
@@ -236,29 +233,31 @@ async fn MountainCreateCollaborationSession(
 		.as_str()
 		.ok_or_else(|| "Missing or invalid session_id in session_data".to_string())?
 		.to_string();
-	
-	let permissions_list: Vec<String> = serde_json::from_value(session_data["permissions"].clone())
+
+	let permissions_list:Vec<String> = serde_json::from_value(session_data["permissions"].clone())
 		.map_err(|e| format!("Invalid permissions: {}", e))?;
-	
+
 	// Convert Vec<String> to CollaborationPermissions
 	let permissions = CollaborationPermissions {
-		can_edit: permissions_list.iter().any(|p| p == "can_edit" || p == "edit"),
-		can_view: permissions_list.iter().any(|p| p == "can_view" || p == "view"),
-		can_comment: permissions_list.iter().any(|p| p == "can_comment" || p == "comment"),
-		can_share: permissions_list.iter().any(|p| p == "can_share" || p == "share"),
+		can_edit:permissions_list.iter().any(|p| p == "can_edit" || p == "edit"),
+		can_view:permissions_list.iter().any(|p| p == "can_view" || p == "view"),
+		can_comment:permissions_list.iter().any(|p| p == "can_comment" || p == "comment"),
+		can_share:permissions_list.iter().any(|p| p == "can_share" || p == "share"),
 	};
-	
+
 	let session_id_for_response = session_id.clone();
 	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_id, permissions)
 		.await
-		.map(|()| serde_json::json!({"session_id": session_id_for_response, "permissions": session_data["permissions"]}))
+		.map(
+			|()| serde_json::json!({"session_id": session_id_for_response, "permissions": session_data["permissions"]}),
+		)
 }
 
 #[tauri::command]
 async fn MountainGetCollaborationSessions(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions(app_handle)
 		.await
-		.and_then(|sessions| serde_json::to_value(sessions).map_err(|e: serde_json::Error| e.to_string()))
+		.and_then(|sessions| serde_json::to_value(sessions).map_err(|e:serde_json::Error| e.to_string()))
 }
 
 #[tauri::command]
@@ -283,7 +282,7 @@ async fn MountainAddDocumentForSync(
 
 	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, document_id, file_path)
 		.await
-		.map_err(|e: String| {
+		.map_err(|e:String| {
 			error!("[IPC] [Sync] Failed to add document for sync: {}", e);
 			e.to_string()
 		})
@@ -294,7 +293,7 @@ async fn MountainAddDocumentForSync(
 async fn MountainGetSyncStatus(app_handle:AppHandle) -> Result<serde_json::Value, String> {
 	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle)
 		.await
-		.map_err(|e: String| {
+		.map_err(|e:String| {
 			error!("[IPC] [Sync] Failed to get sync status: {}", e);
 			e.to_string()
 		})
@@ -323,7 +322,7 @@ async fn MountainSubscribeToUpdates(
 
 	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle, target, subscriber)
 		.await
-		.map_err(|e: String| {
+		.map_err(|e:String| {
 			error!("[IPC] [Sync] Failed to subscribe to updates: {}", e);
 			e.to_string()
 		})
@@ -394,14 +393,14 @@ pub fn Fn() {
 			.plugin(LoggingPluginFn(log_level))
 			.plugin(LocalhostPluginFn(ServerPort))
 			.manage(AppState.clone())
-		.setup({
-			let LocalhostUrl = LocalhostUrl.clone();
-			move |app: &mut App| {
-				info!("[Lifecycle] [Setup] Setup hook started.");
-				debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
-	
-				let AppHandle = app.handle().clone();
-				TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
+			.setup({
+				let LocalhostUrl = LocalhostUrl.clone();
+				move |app:&mut App| {
+					info!("[Lifecycle] [Setup] Setup hook started.");
+					debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
+
+					let AppHandle = app.handle().clone();
+					TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
 
 					// ---------------------------------------------------------
 					// [UI] [Tray] Initialize System Tray
@@ -452,7 +451,8 @@ pub fn Fn() {
 					// [Backend] [Runtime] ApplicationRunTime
 					// ---------------------------------------------------------
 					debug!("[Backend] [Runtime] Creating ApplicationRunTime...");
-					let Runtime = Arc::new(ApplicationRunTime::Create(SchedulerForClosure.clone(), Environment.clone()));
+					let Runtime =
+						Arc::new(ApplicationRunTime::Create(SchedulerForClosure.clone(), Environment.clone()));
 					AppHandle.manage(Runtime.clone());
 					info!("[Backend] [Runtime] ApplicationRunTime managed.");
 
@@ -546,7 +546,7 @@ pub fn Fn() {
 			])
 			.build(tauri::generate_context!())
 			.expect("FATAL: Error while building Mountain Tauri application")
-			.run(move |app_handle: &tauri::AppHandle, event: tauri::RunEvent| {
+			.run(move |app_handle:&tauri::AppHandle, event:tauri::RunEvent| {
 				// Debug-only: log selected lifecycle events
 				if cfg!(debug_assertions) {
 					match &event {
@@ -555,21 +555,21 @@ pub fn Fn() {
 						_ => debug!("[Lifecycle] [RunEvent] {:?}", event),
 					}
 				}
-	
+
 				if let RunEvent::ExitRequested { api, .. } = event {
 					warn!("[Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown...");
 					api.prevent_exit();
-	
+
 					let SchedulerHandle = Scheduler.clone();
 					let app_handle_clone = app_handle.clone();
-	
+
 					tokio::spawn(async move {
 						debug!("[Lifecycle] [Shutdown] Shutting down ApplicationRunTime...");
 						let _ = RuntimeShutdownFn(&app_handle_clone).await;
-	
+
 						debug!("[Lifecycle] [Shutdown] Stopping Echo scheduler...");
 						let _ = SchedulerShutdownFn(SchedulerHandle).await;
-	
+
 						info!("[Lifecycle] [Shutdown] Done. Exiting process.");
 						app_handle_clone.exit(0);
 					});

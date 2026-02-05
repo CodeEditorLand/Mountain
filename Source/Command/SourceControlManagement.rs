@@ -1,19 +1,23 @@
 //! # SourceControlManagement (Command)
 //!
 //! RESPONSIBILITIES:
-//! - Defines Tauri command handlers for Source Control Management (SCM) operations
+//! - Defines Tauri command handlers for Source Control Management (SCM)
+//!   operations
 //! - Exposes SCM functionality to the Sky frontend via IPC
 //! - Aggregates SCM provider state, resources, and groups for UI rendering
-//! - Routes SCM commands to appropriate providers (commit, push, pull, branch ops)
+//! - Routes SCM commands to appropriate providers (commit, push, pull, branch
+//!   ops)
 //! - Manages branch listing, checkout, and commit history retrieval
 //! - Handles resource staging (git add equivalent)
 //!
 //! ARCHITECTURAL ROLE:
-//! - Command module that bridges Sky UI requests to [`SourceControlManagementProvider`]
-//!   implementations in the Environment layer
+//! - Command module that bridges Sky UI requests to
+//!   [`SourceControlManagementProvider`] implementations in the Environment
+//!   layer
 //! - Uses Tauri's `#[command]` attribute for IPC exposure
-//! - Reads from [`ApplicationState.SourceControlManagement*`](crate::ApplicationState::ApplicationState)
-//!   fields to gather state
+//! - Reads from
+//!   [`ApplicationState.SourceControlManagement*
+//!   `](crate::ApplicationState::ApplicationState) fields to gather state
 //! - TODO: Should forward commands to provider methods via DI (Require trait)
 //!
 //! COMMAND REFERENCE (Tauri IPC):
@@ -64,7 +68,8 @@
 //!
 //! MODULE CONTENTS:
 //! - Tauri command functions (all `#[command]` async):
-//!   - State retrieval: `GetAllSourceControlManagementState`, `GetSCMResourceChanges`
+//!   - State retrieval: `GetAllSourceControlManagementState`,
+//!     `GetSCMResourceChanges`
 //!   - Operations: `ExecuteSCMCommand`, `StageSCMResource`
 //!   - Branch management: `GetSCMBranches`, `CheckoutSCMBranch`
 //!   - History: `GetSCMCommitHistory`
@@ -156,10 +161,11 @@ pub async fn ExecuteSCMCommand(
 ) -> Result<Value, String> {
 	log::debug!("[SCM Command] Executing command: {}", CommandName);
 
-	// Execute SCM commands by routing them through the SourceControlManagementProvider
-	// trait. The provider registered in ApplicationState performs actual git operations
-	// (commit, push, pull, fetch, rebase) with proper error handling, progress reporting,
-	// and cancellation support. Current implementation returns mocked success responses
+	// Execute SCM commands by routing them through the
+	// SourceControlManagementProvider trait. The provider registered in
+	// ApplicationState performs actual git operations (commit, push, pull, fetch,
+	// rebase) with proper error handling, progress reporting, and cancellation
+	// support. Current implementation returns mocked success responses
 	// for demonstration purposes only.
 	match CommandName.as_str() {
 		"git.commit" | "commit" => {
@@ -204,10 +210,10 @@ pub async fn CheckoutSCMBranch(_State:State<'_, Arc<ApplicationState>>, BranchNa
 	log::debug!("[SCM Command] Checking out branch: {}", BranchName);
 
 	// Switch to a different branch by invoking the SCM provider's checkout method.
-	// This updates the working directory to the specified branch, handling uncommitted
-	// changes (prompting to stash or abort), creating branches if they don't exist,
-	// and setting up upstream tracking. Proper error handling reports failures to the
-	// user with actionable messages.
+	// This updates the working directory to the specified branch, handling
+	// uncommitted changes (prompting to stash or abort), creating branches if they
+	// don't exist, and setting up upstream tracking. Proper error handling reports
+	// failures to the user with actionable messages.
 	Ok(json!({ "success": true, "message": format!("Checked out branch: {}", BranchName) }))
 }
 

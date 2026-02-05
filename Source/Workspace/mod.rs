@@ -88,8 +88,10 @@
 //!
 //! Patterns from VS Code:
 //! - `vs/platform/workspace/common/workspace.ts` - Workspace service
-//! - `vs/platform/workspace/common/workspaceFolders.ts` - Workspace folder operations
-//! - `vs/platform/configuration/common/configuration.ts` - Configuration merging
+//! - `vs/platform/workspace/common/workspaceFolders.ts` - Workspace folder
+//!   operations
+//! - `vs/platform/configuration/common/configuration.ts` - Configuration
+//!   merging
 //!
 //! ## ERROR HANDLING
 //!
@@ -113,7 +115,7 @@
 //!
 //! ## MODULE CONTENTS
 //!
-//! - [`WorkspaceFileService`]: Parsing and serialization of `.code-workspace` files
-
+//! - [`WorkspaceFileService`]: Parsing and serialization of `.code-workspace`
+//!   files
 
 pub mod WorkspaceFileService;

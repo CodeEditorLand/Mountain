@@ -268,8 +268,10 @@ pub struct MessageCache {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedMessage {
 	pub data:serde_json::Value,
+	/// Unix timestamp in seconds when this message was cached
 	pub timestamp:u64,
-	pub ttl:u64, // Time to live in seconds
+	/// Time-to-live in seconds for cache entry expiration
+	pub ttl:u64,
 }
 
 impl AdvancedFeatures {

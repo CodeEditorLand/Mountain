@@ -33,10 +33,14 @@ impl Default for PoolConfig {
 		Self {
 			max_connections:10,
 			min_connections:2,
-			connection_timeout_ms:30000,    // 30 seconds
-			max_lifetime_ms:300000,         // 5 minutes
-			idle_timeout_ms:60000,          // 1 minute
-			health_check_interval_ms:30000, // 30 seconds
+			// Connection timeout: 30 seconds to acquire a connection from the pool.
+			connection_timeout_ms:30000,
+			// Maximum lifetime: 5 minutes before a connection is retired.
+			max_lifetime_ms:300000,
+			// Idle timeout: 1 minute before an unused connection is closed.
+			idle_timeout_ms:60000,
+			// Health check interval: 30 seconds between connection health probes.
+			health_check_interval_ms:30000,
 		}
 	}
 }
@@ -110,7 +114,10 @@ impl ConnectionHandle {
 
 	/// Check if connection is healthy
 	pub fn is_healthy(&self) -> bool {
-		self.health_score > 50.0 && self.error_count < 5 && self.is_active && self.age().as_secs() < 300 // Less than 5 minutes old
+		// Connection is considered healthy if: health score > 50%, fewer than 5 errors,
+		// actively flagged as healthy, and less than 5 minutes old (prevents stale
+		// connections).
+		self.health_score > 50.0 && self.error_count < 5 && self.is_active && self.age().as_secs() < 300
 	}
 
 	/// Get connection age
@@ -193,7 +200,8 @@ impl ConnectionPool {
 		{
 			let mut running = self.is_running.lock().await;
 			if *running {
-				return Ok(()); // Already running
+				// If the pool is already running, exit early to avoid duplicate startup.
+				return Ok(());
 			}
 			*running = true;
 		}
@@ -216,7 +224,8 @@ impl ConnectionPool {
 		{
 			let mut running = self.is_running.lock().await;
 			if !*running {
-				return Ok(()); // Already stopped
+				// If the pool is already stopped, exit early to avoid redundant operations.
+				return Ok(());
 			}
 			*running = false;
 		}
@@ -294,8 +303,8 @@ impl ConnectionPool {
 			stats.idle_connections += 1;
 		}
 
-		// Release permit
-		drop(handle); // The permit is released when the handle is dropped
+		// Release the semaphore permit when the handle is dropped.
+		drop(handle);
 
 		trace!("[ConnectionPool] Connection released: {}", connection_id);
 	}
@@ -348,7 +357,8 @@ impl ConnectionPool {
 		let pool = Arc::new(self.clone());
 
 		tokio::spawn(async move {
-			let mut interval = interval(Duration::from_secs(60)); // Check every minute
+			// Check for stale connections every minute.
+			let mut interval = interval(Duration::from_secs(60));
 
 			while *pool.is_running.lock().await {
 				interval.tick().await;
@@ -499,9 +509,11 @@ impl ConnectionPool {
 			max_connections:50,
 			min_connections:10,
 			connection_timeout_ms:10000,
-			max_lifetime_ms:180000,         // 3 minutes
-			idle_timeout_ms:30000,          // 30 seconds
-			health_check_interval_ms:15000, // 15 seconds
+			// Shorter lifetimes for high-performance mode: 3 minutes max, 30 seconds idle.
+			max_lifetime_ms:180000,
+			idle_timeout_ms:30000,
+			// More frequent health checks: every 15 seconds.
+			health_check_interval_ms:15000,
 		})
 	}
 
@@ -511,16 +523,19 @@ impl ConnectionPool {
 			max_connections:5,
 			min_connections:1,
 			connection_timeout_ms:60000,
-			max_lifetime_ms:600000,         // 10 minutes
-			idle_timeout_ms:120000,         // 2 minutes
-			health_check_interval_ms:60000, // 60 seconds
+			// Longer lifetimes for conservative mode: 10 minutes max, 2 minutes idle.
+			max_lifetime_ms:600000,
+			idle_timeout_ms:120000,
+			// Less frequent health checks: every 60 seconds.
+			health_check_interval_ms:60000,
 		})
 	}
 
 	/// Calculate optimal pool size based on system resources
 	pub fn calculate_optimal_pool_size() -> usize {
 		let num_cpus = num_cpus::get();
-		// Use 2x CPU count as optimal pool size
+		// Calculate optimal pool size using 2x CPU count as a starting point,
+		// with minimum of 4 and maximum of 50 connections.
 		(num_cpus * 2).max(4).min(50)
 	}
 }
@@ -549,7 +564,9 @@ mod tests {
 
 		// Test failed operation
 		handle.update_health(false);
-		assert!(handle.is_healthy()); // Should still be healthy after one failure
+		// The connection should still be healthy after one failure (health score drops
+		// but stays above 50).
+		assert!(handle.is_healthy());
 		assert_eq!(handle.success_rate(), 0.5);
 	}
 
@@ -599,7 +616,9 @@ mod tests {
 	#[tokio::test]
 	async fn test_connection_cleanup() {
 		let pool = ConnectionPool::new(PoolConfig {
-			max_lifetime_ms:100, // Very short lifetime for testing
+			// Very short lifetime (100ms) for testing cleanup behavior.
+			max_lifetime_ms:100,
+			// Very short idle timeout (50ms) for testing.
 			idle_timeout_ms:50,
 			..Default::default()
 		});

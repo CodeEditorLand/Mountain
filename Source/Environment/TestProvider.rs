@@ -1,7 +1,8 @@
 //! # TestProvider (Environment)
 //!
 //! RESPONSIBILITIES:
-//! - Implements [`TestController`](CommonLibrary::Testing::TestController) for [`MountainEnvironment`]
+//! - Implements [`TestController`](CommonLibrary::Testing::TestController) for
+//!   [`MountainEnvironment`]
 //! - Manages test discovery, execution, and result reporting
 //! - Handles test controller registration and lifecycle
 //! - Tracks test run progress and aggregates results
@@ -9,19 +10,26 @@
 //!
 //! ARCHITECTURAL ROLE:
 //! - Environment provider for testing functionality
-//! - Uses controller pattern: each extension can register its own test controller
-//! - Controllers identified by unique `ControllerIdentifier` and scoped to extensions
-//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC to test runners
-//! - Stores controller state in [`ApplicationState`](crate::ApplicationState::ApplicationState)
+//! - Uses controller pattern: each extension can register its own test
+//!   controller
+//! - Controllers identified by unique `ControllerIdentifier` and scoped to
+//!   extensions
+//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
+//!   to test runners
+//! - Stores controller state in
+//!   [`ApplicationState`](crate::ApplicationState::ApplicationState)
 //!
 //! TEST EXECUTION FLOW:
 //! 1. Extension registers test controller via `RegisterTestController`
-//! 2. Mountain calls `ResolveTests` to discover tests (async, emits `TestItemAdded`)
+//! 2. Mountain calls `ResolveTests` to discover tests (async, emits
+//!    `TestItemAdded`)
 //! 3. Extension returns test tree structure with IDs, labels, children
-//! 4. UI requests to run tests via `RunTest` or `RunTests` with optional `RunProfile`
+//! 4. UI requests to run tests via `RunTest` or `RunTests` with optional
+//!    `RunProfile`
 //! 5. Mountain forwards to extension's controller via RPC
-//! 6. Extension executes tests and reports progress via `TestRunStarted`, `TestItemStarted`,
-//!    `TestItemPassed`, `TestItemFailed`, `TestRunEnded` events
+//! 6. Extension executes tests and reports progress via `TestRunStarted`,
+//!    `TestItemStarted`, `TestItemPassed`, `TestItemFailed`, `TestRunEnded`
+//!    events
 //! 7. Mountain aggregates results and emits to UI
 //!
 //! ERROR HANDLING:
@@ -38,8 +46,10 @@
 //! - TODO: Consider test result caching for quick re-runs
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/contrib/testing/common/testService.ts` - test service architecture
-//! - `vs/workbench/contrib/testing/common/testController.ts` - test controller interface
+//! - `vs/workbench/contrib/testing/common/testService.ts` - test service
+//!   architecture
+//! - `vs/workbench/contrib/testing/common/testController.ts` - test controller
+//!   interface
 //! - `vs/workbench/contrib/testing/common/testTypes.ts` - test data models
 //! - `vs/workbench/contrib/testing/browser/testingView.ts` - testing UI panel
 //!
@@ -58,15 +68,22 @@
 //!
 //! MODULE CONTENTS:
 //! - [`TestController`](CommonLibrary::Testing::TestController) implementation:
-//!   - [`RegisterTestController`](Self::RegisterTestController) - register extension's controller
-//!   - [`UnregisterTestController`](Self::UnregisterTestController) - remove controller
-//!   - [`ResolveTests`](Self::ResolveTests) - discover tests (async with cancellation)
+//!   - [`RegisterTestController`](Self::RegisterTestController) - register
+//!     extension's controller
+//!   - [`UnregisterTestController`](Self::UnregisterTestController) - remove
+//!     controller
+//!   - [`ResolveTests`](Self::ResolveTests) - discover tests (async with
+//!     cancellation)
 //!   - [`RunTest`](Self::RunTest) - run single test by ID
-//!   - [`RunTests`](Self::RunTests) - run multiple tests (by ID or all in parent)
+//!   - [`RunTests`](Self::RunTests) - run multiple tests (by ID or all in
+//!     parent)
 //!   - [`StopTestRun`](Self::StopTestRun) - cancel ongoing test run
-//!   - [`DidTestItemDiscoveryStart`](Self::DidTestItemDiscoveryStart) - discovery progress event
-//!   - `TestRunStarted`/`TestItemStarted`/`TestItemPassed`/`TestItemFailed`/`TestRunEnded` - events
-//! - Data types: `TestControllerState`, `TestItemState`, `TestRunProfile`, `TestResultState`
+//!   - [`DidTestItemDiscoveryStart`](Self::DidTestItemDiscoveryStart) -
+//!     discovery progress event
+//!   - `TestRunStarted`/`TestItemStarted`/`TestItemPassed`/`TestItemFailed`/
+//!     `TestRunEnded` - events
+//! - Data types: `TestControllerState`, `TestItemState`, `TestRunProfile`,
+//!   `TestResultState`
 
 use std::{collections::HashMap, sync::Arc};
 

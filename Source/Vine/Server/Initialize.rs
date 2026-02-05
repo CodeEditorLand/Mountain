@@ -41,7 +41,7 @@ use log::{debug, error, info, warn};
 use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
 
-use super::{MountainVinegRPCService::MountainVinegRPCService, CocoonServiceImpl::CocoonServiceImpl};
+use super::{CocoonServiceImpl::CocoonServiceImpl, MountainVinegRPCService::MountainVinegRPCService};
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine::{

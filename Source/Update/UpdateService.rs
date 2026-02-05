@@ -82,8 +82,10 @@
 //!
 //! Patterns from VS Code:
 //! - `vs/platform/update/common/updateService.ts` - Update orchestration
-//! - `vs/platform/update/electronbrowser/electronUpdater.ts` - Platform-specific updates
-//! - `vs/workbench/services/extensions/common/extensionManagementService.ts` - Update notification
+//! - `vs/platform/update/electronbrowser/electronUpdater.ts` -
+//!   Platform-specific updates
+//! - `vs/workbench/services/extensions/common/extensionManagementService.ts` -
+//!   Update notification
 //!
 //! ## TODO
 //!
@@ -109,16 +111,20 @@
 //! ## EXAMPLE
 //!
 //! ```rust,no_run
-//! use crate::Source::Update::UpdateService::{CheckForUpdates, CheckForUpdatesWithAir, UpdateMode};
+//! use crate::Source::Update::UpdateService::{
+//! 	CheckForUpdates,
+//! 	CheckForUpdatesWithAir,
+//! 	UpdateMode,
+//! };
 //!
 //! // Simple check using Tauri updater
 //! CheckForUpdates(app_handle, runtime, true).await?;
 //!
 //! // Check with Air delegation (AutoDetect mode)
-//! CheckForUpdatesWithAir(app_handle, runtime, true, Some(air_client), UpdateMode::AutoDetect).await?;
+//! CheckForUpdatesWithAir(app_handle, runtime, true, Some(air_client), UpdateMode::AutoDetect)
+//! 	.await?;
 //! ```
 
-//!
 //! ## Air Integration Strategy
 //!
 //! This service supports delegation to the Air service for update management:

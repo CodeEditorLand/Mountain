@@ -20,7 +20,9 @@ const MAX_CHANNEL_NAME_LENGTH:usize = 128;
 const MAX_LANGUAGE_ID_LENGTH:usize = 128;
 
 /// Maximum buffer size per channel (prevents memory exhaustion)
-const MAX_BUFFER_SIZE:usize = 10_000_000; // 10MB
+/// Set to 10MB to prevent unbounded memory growth from excessive output
+/// accumulation.
+const MAX_BUFFER_SIZE:usize = 10_000_000;
 
 /// Represents the complete state of a single output channel, including its
 /// buffered content and visibility status.

@@ -41,8 +41,9 @@
 //! - Consider caching if configuration becomes expensive to compute
 //! - Async execution won't block main thread
 
-use log::debug;
 use std::sync::Arc;
+
+use log::debug;
 use tauri::{AppHandle, State};
 use serde_json::Value;
 

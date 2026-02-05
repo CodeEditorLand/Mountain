@@ -318,8 +318,8 @@ impl MountainService for MountainVinegRPCService {
 		// route notifications to registered handlers asynchronously, allow handlers
 		// to perform side effects (state updates, UI updates), support cancellation
 		// and timeouts for long-running handlers, and log unhandled notifications
-		// at debug level for diagnostics. Known notifications include: ExtensionActivated,
-		// ExtensionDeactivated, WebviewReady.
+		// at debug level for diagnostics. Known notifications include:
+		// ExtensionActivated, ExtensionDeactivated, WebviewReady.
 
 		match MethodName.as_str() {
 			"ExtensionActivated" => {
@@ -353,13 +353,16 @@ impl MountainService for MountainVinegRPCService {
 	///
 	/// # TODO
 	/// Full implementation requires:
-	/// 1. Map RequestIdentifier to active operation in the gRPC request registry
+	/// 1. Map RequestIdentifier to active operation in the gRPC request
+	///    registry
 	/// 2. Trigger cancellation token associated with that operation to signal
 	///    abort to the running task
-	/// 3. Verify operation was actually canceled (timeout or forced termination)
+	/// 3. Verify operation was actually canceled (timeout or forced
+	///    termination)
 	/// 4. Return appropriate gRPC status (Ok if cancellation initiated, error
 	///    if operation not found or already completed)
-	/// 5. Clean up request registry entry and emit cancellation event for observability
+	/// 5. Clean up request registry entry and emit cancellation event for
+	///    observability
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		let cancel_request = request.into_inner();
 

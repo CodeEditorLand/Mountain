@@ -1,16 +1,21 @@
 //! # CustomEditorProvider (Environment)
 //!
 //! RESPONSIBILITIES:
-//! - Implements [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider) for [`MountainEnvironment`]
+//! - Implements
+//!   [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider)
+//!   for [`MountainEnvironment`]
 //! - Manages registration and lifecycle of custom non-text editors
-//! - Coordinates Webview-based editing experiences (SVG editors, diff viewers, etc.)
+//! - Coordinates Webview-based editing experiences (SVG editors, diff viewers,
+//!   etc.)
 //! - Handles editor resolution, save operations, and provider unregistration
 //!
 //! ARCHITECTURAL ROLE:
 //! - Environment provider that enables extension-contributed custom editors
-//! - Uses [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC communication with Cocoon
-//! - Integrates with [`ApplicationState`](crate::ApplicationState::ApplicationState)
-//!   for provider registration persistence
+//! - Uses [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
+//!   communication with Cocoon
+//! - Integrates with
+//!   [`ApplicationState`](crate::ApplicationState::ApplicationState) for
+//!   provider registration persistence
 //!
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
@@ -18,12 +23,15 @@
 //! - Some operations are stubbed with logging/warning (OnSaveCustomDocument)
 //!
 //! PERFORMANCE:
-//! - Provider registration lookup should be O(1) via hash map in ApplicationState (TODO)
+//! - Provider registration lookup should be O(1) via hash map in
+//!   ApplicationState (TODO)
 //! - ResolveCustomEditor uses fire-and-forget RPC pattern to avoid waiting
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/contrib/customEditor/browser/customEditorService.ts` - custom editor service
-//! - `vs/workbench/contrib/customEditor/common/customEditor.ts` - custom editor interfaces
+//! - `vs/workbench/contrib/customEditor/browser/customEditorService.ts` -
+//!   custom editor service
+//! - `vs/workbench/contrib/customEditor/common/customEditor.ts` - custom editor
+//!   interfaces
 //! - `vs/platform/workspace/common/workspace.ts` - resource URI handling
 //!
 //! TODO:
@@ -40,10 +48,14 @@
 //!
 //! MODULE CONTENTS:
 //! - [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider) implementation:
-//!   - [`RegisterCustomEditorProvider`](Self::RegisterCustomEditorProvider) - register extension provider
-//!   - [`UnregisterCustomEditorProvider`](Self::UnregisterCustomEditorProvider) - unregister provider
-//!   - [`OnSaveCustomDocument`](Self::OnSaveCustomDocument) - save handler (stub)
-//!   - [`ResolveCustomEditor`](Self::ResolveCustomEditor) - resolve editor content via RPC
+//!   - [`RegisterCustomEditorProvider`](Self::RegisterCustomEditorProvider) -
+//!     register extension provider
+//!   - [`UnregisterCustomEditorProvider`](Self::UnregisterCustomEditorProvider)
+//!     - unregister provider
+//!   - [`OnSaveCustomDocument`](Self::OnSaveCustomDocument) - save handler
+//!     (stub)
+//!   - [`ResolveCustomEditor`](Self::ResolveCustomEditor) - resolve editor
+//!     content via RPC
 
 use std::sync::Arc;
 
@@ -75,10 +87,10 @@ impl CustomEditorProvider for MountainEnvironment {
 
 		// Register custom editor provider in ApplicationState for lifecycle management
 		// and resolution. Should associate ViewType with the sidecar identifier for
-		// RPC routing, store provider capabilities (supportsMultipleEditors, serialization
-		// support), store custom options (mime types, file extensions), validate that
-		// the ViewType is not already registered to prevent conflicts, and track
-		// registration timestamp and extension origin for debugging.
+		// RPC routing, store provider capabilities (supportsMultipleEditors,
+		// serialization support), store custom options (mime types, file extensions),
+		// validate that the ViewType is not already registered to prevent conflicts,
+		// and track registration timestamp and extension origin for debugging.
 
 		Ok(())
 	}

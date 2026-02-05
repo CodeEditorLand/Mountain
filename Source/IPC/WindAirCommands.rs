@@ -792,12 +792,12 @@ pub async fn GetAirStatus() -> Result<AirServiceStatusDTO, String> {
 		.await
 		.map_err(|e| format!("Failed to get Air status: {}", e))?;
 
-	// Implement a dedicated HealthCheck method in AirClient to assess service health
-	// beyond simple uptime. The current heuristic (uptime_seconds > 0) is simplistic.
-	// A proper health check RPC verifies the Air service is responsive and ready to
-	// accept requests, checking dependencies, resource availability, and system load.
-	// Replace the uptime heuristic with the health check response to determine
-	// service availability.
+	// Implement a dedicated HealthCheck method in AirClient to assess service
+	// health beyond simple uptime. The current heuristic (uptime_seconds > 0) is
+	// simplistic. A proper health check RPC verifies the Air service is responsive
+	// and ready to accept requests, checking dependencies, resource availability,
+	// and system load. Replace the uptime heuristic with the health check response
+	// to determine service availability.
 	let healthy = response.uptime_seconds > 0;
 
 	let result = AirServiceStatusDTO {

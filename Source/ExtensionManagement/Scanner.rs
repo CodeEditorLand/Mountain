@@ -13,7 +13,8 @@
 //! - Build `ExtensionDescriptionStateDTO` for each discovered extension
 //!
 //! ### 2. Configuration Collection
-//! - Extract default configuration values from extension `contributes.configuration`
+//! - Extract default configuration values from extension
+//!   `contributes.configuration`
 //! - Merge configuration properties from all extensions
 //! - Handle nested configuration objects recursively
 //! - Detect and prevent circular references
@@ -44,23 +45,29 @@
 //! - `ApplicationState`: Extension storage
 //!
 //! ### Dependents
-//! - `InitializationData::ConstructExtensionHostInitializationData`: Sends extensions to Cocoon
-//! - `MountainEnvironment::ScanForExtensions`: Public API for extension scanning
-//! - `ApplicationState::Internal::ScanExtensionsWithRecovery`: Robust scanning wrapper
+//! - `InitializationData::ConstructExtensionHostInitializationData`: Sends
+//!   extensions to Cocoon
+//! - `MountainEnvironment::ScanForExtensions`: Public API for extension
+//!   scanning
+//! - `ApplicationState::Internal::ScanExtensionsWithRecovery`: Robust scanning
+//!   wrapper
 //!
 //! ## SCANNING PROCESS
 //!
-//! 1. **Path Resolution**: Get scan paths from `ApplicationState.ExtensionScanPaths`
+//! 1. **Path Resolution**: Get scan paths from
+//!    `ApplicationState.ExtensionScanPaths`
 //! 2. **Directory Enumeration**: For each path, read directory entries
 //! 3. **Manifest Detection**: Look for `package.json` in each subdirectory
-//! 4. **Parsing**: Deserialize `package.json` into `ExtensionDescriptionStateDTO`
+//! 4. **Parsing**: Deserialize `package.json` into
+//!    `ExtensionDescriptionStateDTO`
 //! 5. **Augmentation**: Add `ExtensionLocation` (disk path) to metadata
 //! 6. **Storage**: Insert into `ApplicationState.ScannedExtensions` map
 //!
 //! ## CONFIGURATION MERGING
 //!
-//! `CollectDefaultConfigurations()` extracts default values from all extensions'
-//! `contributes.configuration.properties` and merges them into a single JSON object:
+//! `CollectDefaultConfigurations()` extracts default values from all
+//! extensions' `contributes.configuration.properties` and merges them into a
+//! single JSON object:
 //!
 //! - Handles nested `.` notation (e.g., `editor.fontSize`)
 //! - Recursively processes nested `properties` objects
@@ -83,8 +90,10 @@
 //! ## VS CODE REFERENCE
 //!
 //! Borrowed from VS Code's extension management:
-//! - `vs/workbench/services/extensions/common/extensionPoints.ts` - Configuration contribution
-//! - `vs/platform/extensionManagement/common/extensionManagementService.ts` - Extension scanning
+//! - `vs/workbench/services/extensions/common/extensionPoints.ts` -
+//!   Configuration contribution
+//! - `vs/platform/extensionManagement/common/extensionManagementService.ts` -
+//!   Extension scanning
 //!
 //! ## TODO
 //!
@@ -97,9 +106,10 @@
 //! ## MODULE CONTENTS
 //!
 //! - [`ScanDirectoryForExtensions`]: Scan a single directory for extensions
-//! - [`CollectDefaultConfigurations`]: Merge configuration defaults from all extensions
-//! - [`process_configuration_properties`]: Recursive configuration property processor
-
+//! - [`CollectDefaultConfigurations`]: Merge configuration defaults from all
+//!   extensions
+//! - [`process_configuration_properties`]: Recursive configuration property
+//!   processor
 
 use std::{path::PathBuf, sync::Arc};
 
@@ -228,7 +238,7 @@ fn process_configuration_properties(
 		// Check for circular references
 		if visited_keys.contains(&full_path) {
 			return Err(CommonError::Unknown {
-				Description: format!("Circular reference detected in configuration properties: {}", full_path)
+				Description:format!("Circular reference detected in configuration properties: {}", full_path),
 			});
 		}
 

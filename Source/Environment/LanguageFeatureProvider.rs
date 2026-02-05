@@ -1,25 +1,33 @@
 //! # LanguageFeatureProvider (Environment)
 //!
 //! RESPONSIBILITIES:
-//! - Implements [`LanguageFeatureProviderRegistry`](CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry)
+//! - Implements
+//!   [`LanguageFeatureProviderRegistry`](CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry)
 //!   for [`MountainEnvironment`]
-//! - Central hub for all language intelligence features (completion, hover, definition, etc.)
-//! - Routes language feature requests to appropriate extension providers in Cocoon
-//! - Manages provider registration, scoring, and selection based on document selectors
+//! - Central hub for all language intelligence features (completion, hover,
+//!   definition, etc.)
+//! - Routes language feature requests to appropriate extension providers in
+//!   Cocoon
+//! - Manages provider registration, scoring, and selection based on document
+//!   selectors
 //! - Handles JSON-RPC to LSP (Language Server Protocol) conversions
-//! - Supports all major LSP features: hover, completion, definition, references,
-//!   formatting, code actions, rename, semantic tokens, inlay hints, folding ranges
+//! - Supports all major LSP features: hover, completion, definition,
+//!   references, formatting, code actions, rename, semantic tokens, inlay
+//!   hints, folding ranges
 //!
 //! ARCHITECTURAL ROLE:
 //! - Core provider enabling language intelligence across the editor
 //! - Uses provider registry pattern with numeric handles for efficient lookup
 //! - Each extension can register multiple providers for different file types
-//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC to Cocoon
-//! - Provider metadata stored in [`ApplicationState`](crate::ApplicationState::ApplicationState)
+//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
+//!   to Cocoon
+//! - Provider metadata stored in
+//!   [`ApplicationState`](crate::ApplicationState::ApplicationState)
 //! - TODO: Consider fallback chain: Air (cached) → Cocoon (LSP) → Local (basic)
 //!
 //! PROVIDER SCORING:
-//! - Providers are scored based on selector specificity (language, scheme, pattern)
+//! - Providers are scored based on selector specificity (language, scheme,
+//!   pattern)
 //! - Higher scores win; ties broken by registration order
 //! - Selector matching uses language identifier, URI scheme, and glob patterns
 //! - TODO: Implement proper scoring algorithm with specificity weights
@@ -27,21 +35,26 @@
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
 //! - Validates provider type and selector presence during registration
-//! - Unknown provider handle errors return `TestControllerNotFound` (should be specialized)
+//! - Unknown provider handle errors return `TestControllerNotFound` (should be
+//!   specialized)
 //! - Feature requests failing to find provider return `ProviderNotFound` errors
 //!
 //! PERFORMANCE:
 //! - Provider lookup should be O(1) via handle hash map in ApplicationState
 //! - Feature requests are async and non-blocking
 //! - TODO: Add provider caching for frequently used features
-//! - TODO: Implement request cancellation via CancellationToken for long-running operations
+//! - TODO: Implement request cancellation via CancellationToken for
+//!   long-running operations
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/contrib/editor/browser/editor.contribution.ts` - language feature registration
-//! - `vs/workbench/services/languageserver/common/languageServer.ts` - LSP lifecycle
+//! - `vs/workbench/contrib/editor/browser/editor.contribution.ts` - language
+//!   feature registration
+//! - `vs/workbench/services/languageserver/common/languageServer.ts` - LSP
+//!   lifecycle
 //! - `vs/workbench/contrib/quickfix/browser/quickfix.ts` - code actions
 //! - `vs/workbench/contrib/hover/browser/hover.ts` - hover provider
-//! - `vs/workbench/contrib/completion/browser/completion.ts` - completion provider
+//! - `vs/workbench/contrib/completion/browser/completion.ts` - completion
+//!   provider
 //!
 //! TODO:
 //! - Implement language server lifecycle management (start/stop/restart)
@@ -62,13 +75,17 @@
 //!
 //! MODULE CONTENTS:
 //! - [`LanguageFeatureProviderRegistry`](CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry) implementation:
-//!   - [`RegisterProvider`](Self::RegisterProvider) - register extension provider with selector
-//!   - [`UnregisterProvider`](Self::UnregisterProvider) - remove provider by handle
-//!   - [`GetMatchingProvider`](Self::GetMatchingProvider) - score and select provider for document
-//!   - LSP feature methods: [`Hover`](Self::Hover), [`Completion`](Self::Completion),
-//!     [`Definition`](Self::Definition), [`References`](Self::References),
-//!     [`Formatting`](Self::Formatting), [`CodeActions`](Self::CodeActions),
-//!     [`Rename`](Self::Rename), [`SemanticTokens`](Self::SemanticTokens), etc.
+//!   - [`RegisterProvider`](Self::RegisterProvider) - register extension
+//!     provider with selector
+//!   - [`UnregisterProvider`](Self::UnregisterProvider) - remove provider by
+//!     handle
+//!   - [`GetMatchingProvider`](Self::GetMatchingProvider) - score and select
+//!     provider for document
+//!   - LSP feature methods: [`Hover`](Self::Hover),
+//!     [`Completion`](Self::Completion), [`Definition`](Self::Definition),
+//!     [`References`](Self::References), [`Formatting`](Self::Formatting),
+//!     [`CodeActions`](Self::CodeActions), [`Rename`](Self::Rename),
+//!     [`SemanticTokens`](Self::SemanticTokens), etc.
 //! - Data types: `ProviderRegistrationDTO`, `ProviderType`, `HoverResultDTO`,
 //!   `CompletionListDTO`, `CompletionContextDTO`, `LocationDTO`, `PositionDTO`
 

@@ -4,26 +4,26 @@ package Vine;
 
 // Service running on the Mountain host, listening for requests from Cocoon.
 service MountainService {
-	// A generic request-response method for Cocoon to call a function on Mountain.
-	rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
+  // A generic request-response method for Cocoon to call a function on Mountain.
+  rpc ProcessCocoonRequest(GenericRequest) returns (GenericResponse);
 
-	// A generic fire-and-forget method for Cocoon to send a notification to Mountain.
-	rpc SendCocoonNotification(GenericNotification) returns (Empty);
+  // A generic fire-and-forget method for Cocoon to send a notification to Mountain.
+  rpc SendCocoonNotification(GenericNotification) returns (Empty);
 
-	// A method for Cocoon to request that Mountain cancel a long-running operation.
-	rpc CancelOperation(CancelOperationRequest) returns (Empty);	
+  // A method for Cocoon to request that Mountain cancel a long-running operation.
+  rpc CancelOperation(CancelOperationRequest) returns (Empty);
 }
 
 // Service running on the Cocoon sidecar, listening for requests from Mountain.
 service CocoonService {
-	// A generic request-response method for Mountain to call a function on Cocoon.
-	rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
+  // A generic request-response method for Mountain to call a function on Cocoon.
+  rpc ProcessMountainRequest(GenericRequest) returns (GenericResponse);
 
-	// A generic fire-and-forget method for Mountain to send a notification to Cocoon.
-	rpc SendMountainNotification(GenericNotification) returns (Empty);
+  // A generic fire-and-forget method for Mountain to send a notification to Cocoon.
+  rpc SendMountainNotification(GenericNotification) returns (Empty);
 
-	// A method for Mountain to request that Cocoon cancel a long-running operation.
-	rpc CancelOperation(CancelOperationRequest) returns (Empty);	
+  // A method for Mountain to request that Cocoon cancel a long-running operation.
+  rpc CancelOperation(CancelOperationRequest) returns (Empty);
 }
 
 // Represents an empty message, typically used for RPCs that don't need to return data.
@@ -31,48 +31,48 @@ message Empty {}
 
 // A generic request message containing a method name and serialized parameters.
 message GenericRequest {
-	uint64 RequestIdentifier = 1;
+  uint64 RequestIdentifier = 1;
 
-	string Method = 2;
+  string Method = 2;
 
-	// Parameters are expected to be a JSON-serialized byte array.
-	bytes Parameter = 3;	
+  // Parameters are expected to be a JSON-serialized byte array.
+  bytes Parameter = 3;
 }
 
 // A generic response message containing the result or an error.
 message GenericResponse {
-	uint64 RequestIdentifier = 1;
+  uint64 RequestIdentifier = 1;
 
-	// The successful result, JSON-serialized.
-	bytes Result = 2;
+  // The successful result, JSON-serialized.
+  bytes Result = 2;
 
-	optional RPCError error = 3;	
+  optional RPCError error = 3;
 }
 
 // A generic notification message, which is fire-and-forget and does not have an ID.
 message GenericNotification {
-	string Method = 1;
+  string Method = 1;
 
-	// Parameters are expected to be a JSON-serialized byte array.
-	bytes Parameter = 2;	
+  // Parameters are expected to be a JSON-serialized byte array.
+  bytes Parameter = 2;
 }
 
 // A structured error payload, compliant with JSON-RPC error objects.
 message RPCError {
-	int32 Code = 1;
+  int32 Code = 1;
 
-	string Message = 2;
+  string Message = 2;
 
-	// Optional, additional error data, JSON-serialized.
-	bytes Data = 3;	
+  // Optional, additional error data, JSON-serialized.
+  bytes Data = 3;
 }
 
 // A message to cancel a specific, ongoing operation.
 message CancelOperationRequest {
-	uint64 RequestIdentifierToCancel = 1;	
+  uint64 RequestIdentifierToCancel = 1;
 }
 
 // A generic data payload, currently unused but available for future extensions.
 message RPCDataPayload {
-	bytes Data = 1;
+  bytes Data = 1;
 }

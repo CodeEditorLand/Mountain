@@ -2,33 +2,37 @@
 //!
 //! RESPONSIBILITIES:
 //! - Defines Tauri command handlers for TreeView operations from Sky frontend
-//! - Bridges TreeView UI requests to [`TreeViewProvider`](CommonLibrary::TreeView::TreeViewProvider)
+//! - Bridges TreeView UI requests to
+//!   [`TreeViewProvider`](CommonLibrary::TreeView::TreeViewProvider)
 //! - Handles tree data fetching, expansion, selection, and refresh operations
 //! - Manages tree view state persistence and restoration (stubs)
 //!
 //! ARCHITECTURAL ROLE:
-//! - Command module exposing TreeView functionality via Tauri IPC (`#[command]`)
-//! - Delegates to Environment's [`TreeViewProvider`](crate::Environment::TreeViewProvider)
-//!   via DI with `Require()` trait from `MountainEnvironment`
-//! - Translates frontend requests to provider method calls with proper error mapping
+//! - Command module exposing TreeView functionality via Tauri IPC
+//!   (`#[command]`)
+//! - Delegates to Environment's
+//!   [`TreeViewProvider`](crate::Environment::TreeViewProvider) via DI with
+//!   `Require()` trait from `MountainEnvironment`
+//! - Translates frontend requests to provider method calls with proper error
+//!   mapping
 //!
 //! COMMAND REFERENCE (Tauri IPC):
 //! - [`GetTreeViewChildren`](crate::Command::TreeView::GetTreeViewChildren):
 //!   Fetch child items for a tree node (by `ElementHandle`, null for root)
-//! - [`GetTreeViewItem`](crate::Command::TreeView::GetTreeViewItem):
-//!   Get tree item metadata (label, icon, description) by handle
+//! - [`GetTreeViewItem`](crate::Command::TreeView::GetTreeViewItem): Get tree
+//!   item metadata (label, icon, description) by handle
 //! - [`OnTreeViewExpansionChanged`](crate::Command::TreeView::OnTreeViewExpansionChanged):
 //!   Notify when user expands/collapses a node (stub - trait method missing)
 //! - [`OnTreeViewSelectionChanged`](crate::Command::TreeView::OnTreeViewSelectionChanged):
 //!   Notify when user selects/deselects tree items (stub - trait method missing)
-//! - [`RefreshTreeView`](crate::Command::TreeView::RefreshTreeView):
-//!   Request tree view to refresh its data, optionally specific items
+//! - [`RefreshTreeView`](crate::Command::TreeView::RefreshTreeView): Request
+//!   tree view to refresh its data, optionally specific items
 //! - [`RevealTreeViewItem`](crate::Command::TreeView::RevealTreeViewItem):
 //!   Request to reveal/focus a specific tree item in the UI
-//! - [`PersistTreeView`](crate::Command::TreeView::PersistTreeView):
-//!   Save tree view state (scroll position, expansion) (stub)
-//! - [`RestoreTreeView`](crate::Command::TreeView::RestoreTreeView):
-//!   Restore previously saved tree view state (stub)
+//! - [`PersistTreeView`](crate::Command::TreeView::PersistTreeView): Save tree
+//!   view state (scroll position, expansion) (stub)
+//! - [`RestoreTreeView`](crate::Command::TreeView::RestoreTreeView): Restore
+//!   previously saved tree view state (stub)
 //!
 //! ERROR HANDLING:
 //! - Returns `Result<Value, String>` with error strings sent to frontend
@@ -41,13 +45,18 @@
 //! - Refresh can target specific items to avoid full tree rebuild
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/api/browser/mainThreadTreeViews.ts` - main thread tree view API
-//! - `vs/workbench/api/common/extHostTreeViews.ts` - extension host tree view API
-//! - `vs/workbench/contrib/files/browser/explorerView.ts` - file explorer tree view
-//! - `vs/workbench/contrib/tree/browser/treeView.ts` - generic tree view component
+//! - `vs/workbench/api/browser/mainThreadTreeViews.ts` - main thread tree view
+//!   API
+//! - `vs/workbench/api/common/extHostTreeViews.ts` - extension host tree view
+//!   API
+//! - `vs/workbench/contrib/files/browser/explorerView.ts` - file explorer tree
+//!   view
+//! - `vs/workbench/contrib/tree/browser/treeView.ts` - generic tree view
+//!   component
 //!
 //! TODO:
-//! - Implement `OnTreeNodeExpanded` and `OnTreeSelectionChanged` in TreeViewProvider trait
+//! - Implement `OnTreeNodeExpanded` and `OnTreeSelectionChanged` in
+//!   TreeViewProvider trait
 //! - Add tree view state persistence to ApplicationState
 //! - Implement drag and drop support for tree items
 //! - Add tree item validation and disabled states
@@ -178,8 +187,9 @@ pub async fn OnTreeViewExpansionChanged(
 ///
 /// TODO: Implement OnTreeSelectionChanged method in the TreeViewProvider trait.
 /// This notifies the provider when the user selects or deselects tree items,
-/// enabling context-specific actions or detail view updates. The provider should
-/// respond to selection changes to update UI state or perform operations.
+/// enabling context-specific actions or detail view updates. The provider
+/// should respond to selection changes to update UI state or perform
+/// operations.
 #[command]
 pub async fn OnTreeViewSelectionChanged(
 	_ApplicationHandle:AppHandle<Wry>,

@@ -1,8 +1,10 @@
 //! # IPCProvider (Environment)
 //!
 //! RESPONSIBILITIES:
-//! - Implements [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for [`MountainEnvironment`]
-//! - Serves as the IPC bridge between Mountain and extension sidecar processes (Cocoon)
+//! - Implements [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for
+//!   [`MountainEnvironment`]
+//! - Serves as the IPC bridge between Mountain and extension sidecar processes
+//!   (Cocoon)
 //! - Delegates all communications to the Vine gRPC client for transport
 //! - Provides both request/response and notification patterns
 //!
@@ -10,14 +12,16 @@
 //! - Thin wrapper layer over [`Vine::Client`](crate::Vine::Client)
 //! - All IPC operations are async and use JSON-RPC 2.0 protocol
 //! - Sidecar routing via `SideCarIdentifier` to target specific extension hosts
-//! - Error translation from Vine errors to [`CommonError::IPCError`](CommonLibrary::Error::CommonError)
+//! - Error translation from Vine errors to
+//!   [`CommonError::IPCError`](CommonLibrary::Error::CommonError)
 //!
 //! COMMUNICATION PATTERNS:
 //! - **Request/Response** [`SendRequestToSideCar`](Self::SendRequestToSideCar):
 //!   - Synchronous RPC with timeout protection
 //!   - Returns `Result<Value, CommonError>`
 //!   - Used for config resolution, URI lookup, content retrieval
-//! - **Notification** [`SendNotificationToSideCar`](Self::SendNotificationToSideCar):
+//! - **Notification**
+//!   [`SendNotificationToSideCar`](Self::SendNotificationToSideCar):
 //!   - Fire-and-forget pattern
 //!   - Returns `Result<(), CommonError>` (indicating send success only)
 //!   - Used for document changes, diagnostics, UI events
@@ -28,9 +32,11 @@
 //! - TODO: Add request queuing, batching, and priority handling
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/services/extensions/common/extensionHostProtocol.ts` - main-ext host IPC
+//! - `vs/workbench/services/extensions/common/extensionHostProtocol.ts` -
+//!   main-ext host IPC
 //! - `vs/base/parts/ipc/common/ipc.net.ts` - IPC transport layer
-//! - `vs/workbench/services/extensions/common/rpcProtocol.ts` - JSON-RPC protocol
+//! - `vs/workbench/services/extensions/common/rpcProtocol.ts` - JSON-RPC
+//!   protocol
 //!
 //! TODO:
 //! - Add message queuing for offline scenarios (caching when sidecar is down)
@@ -46,9 +52,11 @@
 //!
 //! MODULE CONTENTS:
 //! - [`IPCProvider`](CommonLibrary::IPC::IPCProvider) implementation:
-//!   - [`SendNotificationToSideCar`](Self::SendNotificationToSideCar) - fire-and-forget
+//!   - [`SendNotificationToSideCar`](Self::SendNotificationToSideCar) -
+//!     fire-and-forget
 //!   - [`SendRequestToSideCar`](Self::SendRequestToSideCar) - synchronous RPC
-//! - Delegate: [`Vine::Client`](crate::Vine::Client) handles all transport concerns
+//! - Delegate: [`Vine::Client`](crate::Vine::Client) handles all transport
+//!   concerns
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
 use async_trait::async_trait;

@@ -213,7 +213,9 @@ impl Compressor {
 		validate_decompression_input(CompressedData.len())?;
 
 		let mut decoder = GzDecoder::new(CompressedData);
-		let mut DecompressedData = Vec::with_capacity(65536); // Pre-allocate 64KB
+		// Pre-allocate 64KB buffer for decompressed data as an optimization
+		// (actual size will grow as needed, this is just an initial estimate)
+		let mut DecompressedData = Vec::with_capacity(65536);
 
 		// Read with size limit to prevent decompression bomb
 		let bytes_read = decoder
@@ -254,7 +256,8 @@ impl Compressor {
 fn validate_decompression_input(CompressedSize:usize) -> Result<(), String> {
 	// Reject unreasonably large compressed inputs (even though decompression has
 	// limit)
-	const MAX_COMPRESSED_INPUT:usize = 5 * 1024 * 1024; // 5MB
+	// Maximum compressed input size: 5MB to prevent decompression bomb attacks
+	const MAX_COMPRESSED_INPUT:usize = 5 * 1024 * 1024;
 
 	if CompressedSize > MAX_COMPRESSED_INPUT {
 		return Err(format!(

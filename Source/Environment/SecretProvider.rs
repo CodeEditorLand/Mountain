@@ -20,7 +20,8 @@
 //!
 //! ### 3. Security
 //! - Encrypt secrets at rest using strong cryptography
-//! - Optional integration with system keychain (macOS Keychain, Windows DPAPI, etc.)
+//! - Optional integration with system keychain (macOS Keychain, Windows DPAPI,
+//!   etc.)
 //! - Secure memory handling for secret values
 //! - Audit logging for secret access (optional)
 //!
@@ -76,11 +77,13 @@
 //!
 //! Patterns from VS Code:
 //! - `vs/platform/secrets/common/secrets.ts` - Secret storage API
-//! - `vs/platform/secrets/electron-simulator/electronSecretStorage.ts` - Keychain integration
+//! - `vs/platform/secrets/electron-simulator/electronSecretStorage.ts` -
+//!   Keychain integration
 //!
 //! ## TODO
 //!
-//! - [ ] Implement system keychain integration (macOS Keychain, Windows DPAPI, libsecret)
+//! - [ ] Implement system keychain integration (macOS Keychain, Windows DPAPI,
+//!   libsecret)
 //! - [ ] Add secret encryption with hardware-backed keys (TPM, Secure Enclave)
 //! - [ ] Implement secret versioning and history
 //! - [ ] Add secret access control lists (ACL) per provider
@@ -129,8 +132,7 @@
 //
 // Inspired by VSCode's secrets service which:
 // - Uses operating system keychain for secure storage
-// - Provides consistent API across platforms (macOS Keychain, Windows
-//   Credential Manager, Linux Secret Service)
+// - Provides consistent API across platforms (macOS Keychain, Windows Credential Manager, Linux Secret Service)
 // - Handles keychain access failures gracefully
 // - Supports secret encryption
 // - Provides secure secret sharing between processes
@@ -190,20 +192,24 @@
 // ============================
 // - [ ] Implement complete Air-based secret storage and retrieval, replacing
 //   local keyring calls with Air service RPCs for all operations
-// - [ ] Add secret synchronization between Air and local keyring for offline mode
-//   and gradual migration support. Use version vectors or timestamps for conflict
-//   detection and implement last-write-wins or manual merge strategies
+// - [ ] Add secret synchronization between Air and local keyring for offline
+//   mode and gradual migration support. Use version vectors or timestamps for
+//   conflict detection and implement last-write-wins or manual merge strategies
 // - [ ] Implement conflict resolution strategies for concurrent secret updates
 //   from multiple sources (Air vs local, different extensions). Provide UI for
 //   user to resolve conflicts when automatic resolution is not possible
 // - [ ] Add caching layer (in-memory LRU or ttl cache) for frequently accessed
-//   secrets to reduce latency and Air service load. Invalidate on secret updates.
-// - [ ] Implement retry logic with exponential backoff for transient Air service
-//   failures. Circuit breaker pattern to prevent cascading failures during outages
-// - [ ] Add metrics collection for Air vs Local usage tracking, latency percentiles,
-//   error rates, and cache hit rates to inform deployment decisions
+//   secrets to reduce latency and Air service load. Invalidate on secret
+//   updates.
+// - [ ] Implement retry logic with exponential backoff for transient Air
+//   service failures. Circuit breaker pattern to prevent cascading failures
+//   during outages
+// - [ ] Add metrics collection for Air vs Local usage tracking, latency
+//   percentiles, error rates, and cache hit rates to inform deployment
+//   decisions
 // - [ ] Phase out local keyring after successful Air deployment and validation
-//   period (e.g., 2 weeks of stable operation). Keep fallback for Air unavailability
+//   period (e.g., 2 weeks of stable operation). Keep fallback for Air
+//   unavailability
 
 use std::sync::Arc;
 

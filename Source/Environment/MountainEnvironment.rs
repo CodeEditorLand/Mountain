@@ -1,8 +1,9 @@
 //! # MountainEnvironment (Environment)
 //!
-//! The primary dependency injection (DI) container for the Mountain application.
-//! It implements all provider traits defined in the Common crate, acting as the
-//! central orchestrator that provides access to all platform services.
+//! The primary dependency injection (DI) container for the Mountain
+//! application. It implements all provider traits defined in the Common crate,
+//! acting as the central orchestrator that provides access to all platform
+//! services.
 //!
 //! ## RESPONSIBILITIES
 //!
@@ -19,7 +20,8 @@
 //! - Support graceful shutdown and cleanup
 //!
 //! ### 3. Air Integration (Optional)
-//! - Manage the Air gRPC client for cloud-based services when `AirIntegration` feature enabled
+//! - Manage the Air gRPC client for cloud-based services when `AirIntegration`
+//!   feature enabled
 //! - Enable dynamic switching between local and cloud services
 //! - Provide health checking for Air daemon availability
 //! - Support fallback to local services when Air unavailable
@@ -31,7 +33,8 @@
 //! - Provide extension list to extension host (Cocoon)
 //!
 //! ### 5. Service Orchestration
-//! - Act as central coordinator between all providers (FileSystem, Document, Command, etc.)
+//! - Act as central coordinator between all providers (FileSystem, Document,
+//!   Command, etc.)
 //! - Ensure proper initialization order and dependency resolution
 //! - Facilitate inter-provider communication via IPC or direct calls
 //! - Provide capability resolution through `Requires<T>` trait
@@ -49,7 +52,7 @@
 //! - `Environment` module: Root of the dependency injection system
 //! - Implements Common crate's `Environment` and `Requires` traits
 //! - All providers accessed through capability-based lookups
-//!! - Created early in startup and shared via `Arc<MountainEnvironment>`
+//! ! - Created early in startup and shared via `Arc<MountainEnvironment>`
 //!
 //! ### Dependencies (Incoming)
 //! - `CommonLibrary::*` provider traits (19+ interfaces)
@@ -61,7 +64,8 @@
 //! - All command handlers: Require capabilities from environment
 //! - `ApplicationRunTime`: Uses environment for effect execution
 //! - Provider implementations: self-referencing via `Arc<dyn Trait>`
-//! - `InitializationData`: Uses environment to gather extensions and workspace data
+//! - `InitializationData`: Uses environment to gather extensions and workspace
+//!   data
 //!
 //! ## DEPENDENCY INJECTION PATTERN
 //!
@@ -77,7 +81,8 @@
 //!
 //! This enables:
 //! - **Loose coupling**: Components depend on traits, not concrete types
-//! - **Circular dependencies**: All providers can require each other through Environment
+//! - **Circular dependencies**: All providers can require each other through
+//!   Environment
 //! - **Testability**: Environment can be mocked or stubbed for tests
 //! - **Flexibility**: New providers added without changing dependents
 //!
@@ -85,16 +90,20 @@
 //!
 //! 1. **Create Environment**: `MountainEnvironment::Create(app_handle)`
 //! 2. **Provider Instantiation**: Lazy through `Requires<T>` trait calls
-//! 3. **State Access**: Each provider can access `ApplicationState` and `AppHandle` via self
-//! 4. **Inter-Provider Communication**: Via trait methods (direct Rust calls) or IPC
+//! 3. **State Access**: Each provider can access `ApplicationState` and
+//!    `AppHandle` via self
+//! 4. **Inter-Provider Communication**: Via trait methods (direct Rust calls)
+//!    or IPC
 //!
-//! Note: Provider implementations are separate modules in `Environment/` directory.
-//! Each module implements a specific trait and can be included/excluded via feature flags.
+//! Note: Provider implementations are separate modules in `Environment/`
+//! directory. Each module implements a specific trait and can be
+//! included/excluded via feature flags.
 //!
 //! ## AIR INTEGRATION
 //!
 //! When `AirIntegration` feature is enabled:
-//! - `AirClient` field is `Option<Arc<AirServiceClient<tonic::transport::Channel>>>`
+//! - `AirClient` field is
+//!   `Option<Arc<AirServiceClient<tonic::transport::Channel>>>`
 //! - `CreateWithAir()` allows passing pre-configured Air client
 //! - `SetAirClient()` allows dynamic switching at runtime
 //! - `IsAirAvailable()` performs health check on Air daemon
@@ -108,9 +117,11 @@
 //! ## VS CODE REFERENCE
 //!
 //! Patterns borrowed from VS Code's service architecture:
-//! - `vs/platform/instantiation/common/instantiation.ts` - Service collection and instantiation
+//! - `vs/platform/instantiation/common/instantiation.ts` - Service collection
+//!   and instantiation
 //! - `vs/platform/workspace/common/workspace.ts` - Service locator pattern
-//! - `vs/workbench/services/extensions/common/extensions.ts` - Extension point management
+//! - `vs/workbench/services/extensions/common/extensions.ts` - Extension point
+//!   management
 //!
 //! Key concepts:
 //! - Service lifetime management through `Arc` reference counting
@@ -120,7 +131,8 @@
 //!
 //! ## PROVIDER TRAITS IMPLEMENTED
 //!
-//! The following 19+ provider traits are implemented (full list in module body):
+//! The following 19+ provider traits are implemented (full list in module
+//! body):
 //! - `CommandExecutor` - Execute commands and actions
 //! - `ConfigurationProvider` - Access application configuration
 //! - `CustomEditorProvider` - Custom document editor support
@@ -161,7 +173,6 @@
 //! - [ ] Add metrics collection for provider usage
 //! - [ ] Consider provider initialization order dependencies
 
-//
 // 1. **Dependency Injection Container**: Implements Requires<T> for all 19+
 //    provider traits, enabling other components to request dependencies through
 //    the Require() method.

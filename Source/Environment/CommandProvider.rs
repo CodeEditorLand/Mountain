@@ -66,8 +66,10 @@
 //! ## COMMAND EXECUTION FLOW
 //!
 //! 1. **Request**: Caller invokes `ExecuteCommand(command_id, args)`
-//! 2. **Lookup**: Provider looks up command in `ApplicationState::CommandRegistry`
-//! 3. **Handler**: Retrieves the associated handler (native function or extension RPC)
+//! 2. **Lookup**: Provider looks up command in
+//!    `ApplicationState::CommandRegistry`
+//! 3. **Handler**: Retrieves the associated handler (native function or
+//!    extension RPC)
 //! 4. **Execute**: Calls handler with arguments
 //! 5. **Result**: Returns serialized JSON result or error
 //!
@@ -103,7 +105,8 @@
 //!
 //! Borrowed from VS Code's command system:
 //! - `vs/platform/commands/common/commands.ts` - Command definitions
-//! - `vs/workbench/services/commands/common/commandService.ts` - Command registry
+//! - `vs/workbench/services/commands/common/commandService.ts` - Command
+//!   registry
 //! - `vs/platform/commands/common/commandExecutor.ts` - Command execution
 //!
 //! ## TODO
@@ -124,7 +127,6 @@
 //! - Command registration functions (to be added)
 //! - Extension command proxy logic
 
-//
 // 1. **Command Registry**: Maintains a centralized registry of all registered
 //    commands and their corresponding handlers (native or proxied).
 //

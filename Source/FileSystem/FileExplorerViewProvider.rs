@@ -43,12 +43,15 @@
 //!
 //! ### Differences from Extension Providers
 //! - **Native Provider**: Direct Rust implementation, no extension hosting
-//! - **Read-Only**: Only implements "pull" methods (`GetChildren`, `GetTreeItem`)
-//! - **No Push Methods**: Does not use `RegisterTreeDataProvider`, `RefreshTreeView`, etc.
+//! - **Read-Only**: Only implements "pull" methods (`GetChildren`,
+//!   `GetTreeItem`)
+//! - **No Push Methods**: Does not use `RegisterTreeDataProvider`,
+//!   `RefreshTreeView`, etc.
 //! - **No Sidecar**: No extension host communication overhead
 //!
 //! ### Dependencies
-//! - `CommonLibrary::FileSystem::ReadDirectory` and `ReadFile`: Filesystem access
+//! - `CommonLibrary::FileSystem::ReadDirectory` and `ReadFile`: Filesystem
+//!   access
 //! - `CommonLibrary::TreeView::TreeViewProvider`: Provider trait
 //! - `ApplicationRunTime`: Effect execution
 //! - `ApplicationState`: Workspace folder access
@@ -80,7 +83,8 @@
 //!
 //! - `GetChildren`: Returns child items for a given parent directory
 //! - `GetTreeItem`: Returns a single tree item for a given handle (URI)
-//! - Other `TreeViewProvider` methods (push-based) are no-ops for native providers
+//! - Other `TreeViewProvider` methods (push-based) are no-ops for native
+//!   providers
 //!
 //! ## ERROR HANDLING
 //!
@@ -98,7 +102,8 @@
 //! ## VS CODE REFERENCE
 //!
 //! Patterns from VS Code:
-//! - `vs/workbench/contrib/files/browser/filesViewProvider.ts`: File tree provider
+//! - `vs/workbench/contrib/files/browser/filesViewProvider.ts`: File tree
+//!   provider
 //! - `vs/platform/workspace/common/workspace.ts`: Tree item DTO structure
 //!
 //! ## TODO
@@ -115,7 +120,6 @@
 //!
 //! - [`FileExplorerViewProvider`]: Main provider struct
 //! - [`CreateTreeItemDTO`]: Helper to build tree item JSON
-
 
 use std::sync::Arc;
 

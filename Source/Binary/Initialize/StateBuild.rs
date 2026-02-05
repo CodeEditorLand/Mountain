@@ -55,9 +55,7 @@ pub fn Build(Folders:Vec<String>, ConfigPath:Option<std::path::PathBuf>) -> Arc<
 	// Convert folder paths to WorkspaceFolderStateDTOs
 	let WorkspaceFolders = Folders
 		.into_iter()
-		.filter_map(|folder| {
-			WorkspaceFolderStateDTO::FromPath(&folder, 0).ok()
-		})
+		.filter_map(|folder| WorkspaceFolderStateDTO::FromPath(&folder, 0).ok())
 		.collect::<Vec<WorkspaceFolderStateDTO>>();
 
 	Arc::new(ApplicationState {

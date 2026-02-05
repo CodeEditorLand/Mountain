@@ -72,7 +72,6 @@
 //! - Memento (state serialization) for crash recovery
 //! - Thread-safe state access with proper locking
 //! - State validation and invariants
-//
 // ### 1. State Container
 // Hold all runtime state for services like:
 // - Workspace and window state
@@ -116,8 +115,7 @@
 //   - Crash recovery and state persistence
 //   - Key-value storage API
 //
-// - `vs/workbench/services/environment/common/environmentService.ts` -
-//   Environment state
+// - `vs/workbench/services/environment/common/environmentService.ts` - Environment state
 //   - Workspace configuration management
 //   - Window state persistence
 //   - Trust management

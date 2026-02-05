@@ -48,7 +48,8 @@
 //! - **Global**: `{AppData}/User/globalStorage.json`
 //!   - Shared across all workspaces
 //!   - Used for user preferences, extension state
-//! - **Workspace**: `{AppData}/User/workspaceStorage/{workspace-id}/storage.json`
+//! - **Workspace**:
+//!   `{AppData}/User/workspaceStorage/{workspace-id}/storage.json`
 //!   - Specific to current workspace
 //!   - Used for workspace-specific settings and state
 //!
@@ -70,11 +71,16 @@
 //!
 //! ## STORAGE LIFECYCLE
 //!
-//! 1. **App Start**: `ApplicationState::default()` loads global and workspace memento
-//! 2. **Workspace Change**: `UpdateWorkspaceMementoPathAndReload()` loads new workspace storage
-//! 3. **Runtime**: Providers read/write to in-memory maps (`GlobalMemento`, `WorkspaceMemento`)
-//! 4. **Shutdown**: `ApplicationRunTime::SaveApplicationState()` writes memento to disk
-//! 5. **Crash Recovery**: `Internal::LoadInitialMementoFromDisk()` with backup/restore
+//! 1. **App Start**: `ApplicationState::default()` loads global and workspace
+//!    memento
+//! 2. **Workspace Change**: `UpdateWorkspaceMementoPathAndReload()` loads new
+//!    workspace storage
+//! 3. **Runtime**: Providers read/write to in-memory maps (`GlobalMemento`,
+//!    `WorkspaceMemento`)
+//! 4. **Shutdown**: `ApplicationRunTime::SaveApplicationState()` writes memento
+//!    to disk
+//! 5. **Crash Recovery**: `Internal::LoadInitialMementoFromDisk()` with
+//!    backup/restore
 //!
 //! ## ERROR HANDLING
 //!
@@ -127,8 +133,7 @@
 //   - Core logic for Memento storage operations.
 //   - Reading from and writing to global and workspace JSON storage files.
 //   - Provides both per-key and high-performance batch operations.
-//   - Enhances keychain integration with the `keyring` crate for secure
-//     storage.
+//   - Enhances keychain integration with the `keyring` crate for secure storage.
 //   - Adds secure storage with encryption for sensitive data.
 //   - Handles storage errors gracefully with proper error handling.
 //   - Manages storage file location and directory creation.
@@ -159,8 +164,7 @@
 //
 // ## Storage Scopes
 //
-// 1. **Global Storage**: Application-level settings that persist across all
-//    workspaces
+// 1. **Global Storage**: Application-level settings that persist across all workspaces
 //    - Location: App config directory (platform-specific)
 //    - File: `global.json` or similar
 //    - Scope: `IsGlobalScope = true`

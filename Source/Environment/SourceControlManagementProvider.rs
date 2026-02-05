@@ -48,8 +48,11 @@
 //!
 //! ### Position in Mountain
 //! - `Environment` module: SCM capability provider
-//! - Implements `CommonLibrary::SourceControlManagement::SourceControlManagementProvider` trait
-//! - Accessible via `Environment.Require<dyn SourceControlManagementProvider>()`
+//! - Implements
+//!   `CommonLibrary::SourceControlManagement::SourceControlManagementProvider`
+//!   trait
+//! - Accessible via `Environment.Require<dyn
+//!   SourceControlManagementProvider>()`
 //!
 //! ### SCM Provider Hierarchy
 //! - **Built-in Git Provider**: Native Git implementation (preferred)

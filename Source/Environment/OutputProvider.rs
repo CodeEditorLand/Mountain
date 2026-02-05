@@ -1,37 +1,48 @@
 //! # OutputProvider (Environment)
 //!
 //! RESPONSIBILITIES:
-//! - Implements [`OutputChannelManager`](CommonLibrary::Output::OutputChannelManager) for [`MountainEnvironment`]
-//! - Manages multiple output channels (e.g., 'Extension Host', 'JavaScript', 'Git')
-//! - Handles channel lifecycle: creation, appending, replacement, clearing, disposal
+//! - Implements
+//!   [`OutputChannelManager`](CommonLibrary::Output::OutputChannelManager) for
+//!   [`MountainEnvironment`]
+//! - Manages multiple output channels (e.g., 'Extension Host', 'JavaScript',
+//!   'Git')
+//! - Handles channel lifecycle: creation, appending, replacement, clearing,
+//!   disposal
 //! - Maintains in-memory buffers with size limits and automatic trimming
 //! - Emits Tauri events to Sky frontend for UI updates
 //! - Controls channel visibility and reveal behavior
 //!
 //! ARCHITECTURAL ROLE:
 //! - Environment provider for output channel management
-//! - Channels stored in [`ApplicationState.OutputChannels`](crate::ApplicationState::ApplicationState)
+//! - Channels stored in
+//!   [`ApplicationState.
+//!   OutputChannels`](crate::ApplicationState::ApplicationState)
 //! - Uses Tauri event system (`tauri::Emitter`) for UI communication
 //! - Integrates with [`Utility`](crate::Utility) for state lock error handling
 //! - Buffer management with 10MB limit per channel and 1MB trim threshold
 //!
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
-//! - Validates channel name length (1-256 chars) and language identifier (max 64 chars)
+//! - Validates channel name length (1-256 chars) and language identifier (max
+//!   64 chars)
 //! - Rejects append values exceeding 1MB per operation
-//! - State lock errors mapped via [`Utility::MapApplicationStateLockErrorToCommonError`](crate::Utility)
-//! - Warns on operations for non-existent channels (Append, Replace, Clear, Reveal)
+//! - State lock errors mapped via
+//!   [`Utility::MapApplicationStateLockErrorToCommonError`](crate::Utility)
+//! - Warns on operations for non-existent channels (Append, Replace, Clear,
+//!   Reveal)
 //! - Close operation is stubbed with warning
 //!
 //! PERFORMANCE:
 //! - In-memory buffer with O(1) append and O(n) replace operations
 //! - Automatic buffer trimming when approaching 10MB limit (drains from front)
-//! - Lock on shared state should be minimized; drops guard promptly after mutation
+//! - Lock on shared state should be minimized; drops guard promptly after
+//!   mutation
 //! - TODO: Consider streaming large outputs directly to UI without buffering
 //!
 //! VS CODE REFERENCE:
 //! - `vs/workbench/contrib/output/common/output.ts` - output channel service
-//! - `vs/workbench/services/output/common/outputService.ts` - output service main logic
+//! - `vs/workbench/services/output/common/outputService.ts` - output service
+//!   main logic
 //! - `vs/workbench/contrib/output/browser/outputPanel.ts` - output view UI
 //!
 //! TODO:
@@ -52,15 +63,19 @@
 //! - Implement Close operation fully (hide channel and cleanup)
 //!
 //! MODULE CONTENTS:
-//! - [`OutputChannelManager`](CommonLibrary::Output::OutputChannelManager) implementation:
-//!   - [`RegisterChannel`](Self::RegisterChannel) - create new channel with validation
-//!   - [`Append`](Self::Append) - add text with buffer size enforcement (1MB per call)
+//! - [`OutputChannelManager`](CommonLibrary::Output::OutputChannelManager)
+//!   implementation:
+//!   - [`RegisterChannel`](Self::RegisterChannel) - create new channel with
+//!     validation
+//!   - [`Append`](Self::Append) - add text with buffer size enforcement (1MB
+//!     per call)
 //!   - [`Replace`](Self::Replace) - replace entire channel buffer
 //!   - [`Clear`](Self::Clear) - empty channel buffer
 //!   - [`Reveal`](Self::Reveal) - show channel in UI with focus option
 //!   - [`Close`](Self::Close) - hide channel (stub)
 //!   - [`Dispose`](Self::Dispose) - permanently remove channel from state
-//! - Data type: [`OutputChannelStateDTO`](crate::ApplicationState::DTO::OutputChannelStateDTO)
+//! - Data type:
+//!   [`OutputChannelStateDTO`](crate::ApplicationState::DTO::OutputChannelStateDTO)
 
 use CommonLibrary::{Error::CommonError::CommonError, Output::OutputChannelManager::OutputChannelManager};
 use async_trait::async_trait;
@@ -150,11 +165,13 @@ impl OutputChannelManager for MountainEnvironment {
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 		if let Some(ChannelState) = ChannelsGuard.get_mut(&ChannelIdentifier) {
-			// Check buffer size before appending
-			const MAX_BUFFER_SIZE:usize = 10 * 1_048_576; // 10MB total buffer limit
+			// Enforce total buffer size limit of 10MB per channel to prevent
+			// unbounded memory growth from excessive output accumulation.
+			const MAX_BUFFER_SIZE:usize = 10 * 1_048_576;
 			if ChannelState.Buffer.len() + Value.len() > MAX_BUFFER_SIZE {
-				// Trim from beginning to make room
-				let TRIM_SIZE:usize = Value.len() + 1_048_576; // Keep 1MB headroom
+				// Trim from beginning to make room for new content.
+				// Keep 1MB headroom to avoid frequent reallocation.
+				let TRIM_SIZE:usize = Value.len() + 1_048_576;
 				if ChannelState.Buffer.len() > TRIM_SIZE {
 					let _ = ChannelState.Buffer.drain(..TRIM_SIZE);
 				}

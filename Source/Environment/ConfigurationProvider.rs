@@ -23,7 +23,8 @@
 //!
 //! ### 3. Configuration Access
 //! - Provide `GetConfiguration` for retrieving merged settings
-//! - Support nested property access via dot notation (e.g., `"editor.fontSize"`)
+//! - Support nested property access via dot notation (e.g.,
+//!   `"editor.fontSize"`)
 //! - Implement `ConfigurationInspector` for introspection
 //! - Cache configuration for performance
 //!
@@ -84,7 +85,8 @@
 //!
 //! - `GetConfiguration(Section)` returns the entire configuration or a
 //!   subsection
-//! - Section uses dot notation: `"editor.fontSize"` or `"typescript.format.enable"`
+//! - Section uses dot notation: `"editor.fontSize"` or
+//!   `"typescript.format.enable"`
 //! - Returns `serde_json::Value` which can be queried further
 //! - Missing properties return `Value::Null`
 //!
@@ -105,7 +107,8 @@
 //! ## VS CODE REFERENCE
 //!
 //! Patterns from VS Code's configuration system:
-//! - `vs/platform/configuration/common/configuration.ts` - Configuration service
+//! - `vs/platform/configuration/common/configuration.ts` - Configuration
+//!   service
 //! - `vs/platform/configuration/common/configurationCache.ts` - Caching
 //! - `vs/platform/configuration/common/configurationLayer.ts` - Layer merging
 //!
@@ -124,11 +127,11 @@
 //!
 //! ## MODULE CONTENTS
 //!
-//! - [`ConfigurationProvider`]: Main struct implementing configuration management
+//! - [`ConfigurationProvider`]: Main struct implementing configuration
+//!   management
 //! - Configuration loading and merging functions
 //! - Storage layer abstractions
 
-//
 // 1. **Configuration Cascade**: Implements the multi-layer configuration
 //    hierarchy Default → User → Workspace → Folder, with higher precedence
 //    overriding lower.

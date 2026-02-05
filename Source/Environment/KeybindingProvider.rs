@@ -27,7 +27,8 @@
 //! - Support keybinding cancellation (Esc, etc.)
 //!
 //! ### 4. Platform Adaptation
-//! - Convert between platform-specific modifiers (Cmd on macOS, Ctrl on Windows/Linux)
+//! - Convert between platform-specific modifiers (Cmd on macOS, Ctrl on
+//!   Windows/Linux)
 //! - Support international keyboard layouts
 //! - Handle platform-exclusive keybindings
 //!
@@ -92,7 +93,8 @@
 //! Borrowed from VS Code's keybinding system:
 //! - `vs/platform/keybinding/common/keybinding.ts` - Keybinding data model
 //! - `vs/platform/keybinding/common/keybindingResolver.ts` - Resolution logic
-//! - `vs/platform/keybinding/common/keybindingsRegistry.ts` - Registry management
+//! - `vs/platform/keybinding/common/keybindingsRegistry.ts` - Registry
+//!   management
 //! - `vs/platform/contextkey/common/contextkey.ts` - "When" clause evaluation
 //!
 //! ## TODO

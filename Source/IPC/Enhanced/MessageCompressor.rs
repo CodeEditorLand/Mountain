@@ -51,7 +51,8 @@ impl Default for BatchConfig {
 		Self {
 			MaxBatchSize:100,
 			MaxBatchDelayMs:100,
-			CompressionThresholdBytes:1024, // 1KB
+			// Compression threshold: 1KB (messages smaller than this won't be compressed)
+			CompressionThresholdBytes:1024,
 			CompressionLevel:CompressionLevel::Balanced,
 			Algorithm:CompressionAlgorithm::Brotli,
 		}
@@ -84,7 +85,9 @@ impl MessageCompressor {
 
 		// Check if we should flush based on size
 		if self.BatchSizeBytes + MessageSize > self.Config.MaxBatchSize * 1024 {
-			return false; // Batch is full
+			// The batch has reached its configured size limit and cannot accept more
+			// messages. Caller should flush the batch before adding additional messages.
+			return false;
 		}
 
 		// Add message to batch

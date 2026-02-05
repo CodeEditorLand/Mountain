@@ -8,7 +8,8 @@
 //! ### 1. Request Routing
 //! - Route all incoming requests from the Sky frontend to appropriate effects
 //! - Route all incoming requests from Cocoon sidecars to appropriate effects
-//! - Provide specific, high-performance Tauri command handlers for frequent UI interactions
+//! - Provide specific, high-performance Tauri command handlers for frequent UI
+//!   interactions
 //! - Handle both synchronous (UI) and asynchronous (backend) dispatch paths
 //!
 //! ### 2. Error Handling and Recovery
@@ -35,7 +36,8 @@
 //!
 //! ### Design Patterns:
 //! 1. **Command Pattern**: Execute commands by name
-//! 2. **Strategy Pattern**: Different dispatch strategies for frontend vs sidecar
+//! 2. **Strategy Pattern**: Different dispatch strategies for frontend vs
+//!    sidecar
 //! 3. **Observer Pattern**: Handle UI request-response interactions
 //!
 //! ### VS Code Reference:
@@ -83,7 +85,8 @@
 //! 4. Handle dropped receiver errors gracefully
 //!
 //! ### MountainWebviewPostMessageFromGuest
-//! Tauri command handler for Webview guest to post message back to extension host.
+//! Tauri command handler for Webview guest to post message back to extension
+//! host.
 //!
 //! **Flow**:
 //! 1. Get IPC provider from runtime
@@ -162,9 +165,9 @@
 //! - [`DispatchFrontendCommand`]: Main frontend command handler (Tauri command)
 //! - [`DispatchSideCarRequest`]: Sidecar RPC request dispatcher
 //! - [`ResolveUIRequest`]: UI request-response result handler (Tauri command)
-//! - [`MountainWebviewPostMessageFromGuest`]: Webview message forwarder (Tauri command)
+//! - [`MountainWebviewPostMessageFromGuest`]: Webview message forwarder (Tauri
+//!   command)
 
-//
 // This module provides the main dispatch functions for routing all incoming
 // commands and RPC requests to the appropriate execution logic via the effect
 // system. Its primary responsibilities are:
@@ -172,8 +175,7 @@
 // ### 1. Request Routing
 // - Route all incoming requests from the Sky frontend to appropriate effects
 // - Route all incoming requests from Cocoon sidecars to appropriate effects
-// - Provide specific, high-performance Tauri command handlers for frequent UI
-//   interactions
+// - Provide specific, high-performance Tauri command handlers for frequent UI interactions
 // - Handle both synchronous (UI) and asynchronous (backend) dispatch paths
 //
 // ### 2. Error Handling and Recovery
@@ -198,8 +200,7 @@
 //
 // ### Design Patterns:
 // 1. **Command Pattern**: Execute commands by name
-// 2. **Strategy Pattern**: Different dispatch strategies for frontend vs
-//    sidecar
+// 2. **Strategy Pattern**: Different dispatch strategies for frontend vs sidecar
 // 3. **Observer Pattern**: Handle UI request-response interactions
 //
 // ### VS Code Reference:

@@ -43,8 +43,8 @@
 //! - Direct provider calls avoid allocation (for hot paths)
 //! - TODO: Consider implementing an effect pool to cache frequently created
 //!   effects, reducing allocation overhead for high-frequency commands.
-//! - TODO: Add configurable command timeouts per command type and rate
-//!   limiting to prevent abuse and ensure system stability.
+//! - TODO: Add configurable command timeouts per command type and rate limiting
+//!   to prevent abuse and ensure system stability.
 //!
 //! VS CODE REFERENCE:
 //! - `vs/workbench/services/extensions/common/extensions.ts` - command
@@ -614,9 +614,9 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				async move {
 					let provider:Arc<dyn DebugService> = run_time.Environment.Require();
 					// Parse debug type, provider factory handle, and sidecar identifier from
-					// request parameters. Expected indices: 0=debug_type (String), 1=provider_handle
-					// (u32 or String), 2=sidecar_id (String). This registers a debug
-					// configuration provider for a specific debugging type.
+					// request parameters. Expected indices: 0=debug_type (String),
+					// 1=provider_handle (u32 or String), 2=sidecar_id (String). This registers
+					// a debug configuration provider for a specific debugging type.
 					provider
 						.RegisterDebugConfigurationProvider("node".to_string(), 1, "cocoon-main".to_string())
 						.await

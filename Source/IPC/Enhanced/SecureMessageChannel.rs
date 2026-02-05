@@ -35,11 +35,13 @@ impl Default for SecurityConfig {
 	fn default() -> Self {
 		Self {
 			encryption_algorithm:"AES-256-GCM".to_string(),
-			key_rotation_interval_hours:24, // Rotate keys daily
+			// Rotate encryption keys every 24 hours for forward secrecy.
+			key_rotation_interval_hours:24,
 			hmac_algorithm:"HMAC-SHA256".to_string(),
 			nonce_size_bytes:NONCE_LEN,
 			auth_tag_size_bytes:AES_256_GCM.tag_len(),
-			max_message_size_bytes:10 * 1024 * 1024, // 10MB
+			// Maximum message size: 10MB to prevent memory exhaustion attacks.
+			max_message_size_bytes:10 * 1024 * 1024,
 		}
 	}
 }
@@ -143,10 +145,11 @@ impl SecureMessageChannel {
 			}
 		}
 
-		// Clear keys
+		// Clear all cryptographic keys from memory.
 		{
 			let mut current_key = self.current_key.write().await;
-			*current_key = EncryptionKey::new(&[0u8; 32]).unwrap(); // Zero key
+			// Replace with a zeroized key to overwrite sensitive material.
+			*current_key = EncryptionKey::new(&[0u8; 32]).unwrap();
 		}
 
 		{
@@ -156,7 +159,8 @@ impl SecureMessageChannel {
 
 		{
 			let mut hmac_key = self.hmac_key.write().await;
-			hmac_key.fill(0); // Zero out HMAC key
+			// Zero out the HMAC key material to prevent leakage.
+			hmac_key.fill(0);
 		}
 
 		info!("[SecureMessageChannel] Secure channel stopped");
@@ -329,7 +333,8 @@ impl SecureMessageChannel {
 	/// Cleanup old keys
 	async fn cleanup_old_keys(&self) {
 		let rotation_interval = Duration::from_secs(self.config.key_rotation_interval_hours * 3600);
-		let max_age = rotation_interval * 2; // Keep keys for 2 rotation cycles
+		// Keep previous keys for 2 rotation cycles to support key rollover.
+		let max_age = rotation_interval * 2;
 
 		let mut previous_keys = self.previous_keys.write().await;
 
@@ -379,8 +384,10 @@ impl SecureMessageChannel {
 	/// Create a high-security channel
 	pub fn high_security_channel() -> Result<Self, String> {
 		Self::new(SecurityConfig {
-			key_rotation_interval_hours:1,          // Rotate keys hourly
-			max_message_size_bytes:1 * 1024 * 1024, // 1MB
+			// Rotate keys hourly for maximum security.
+			key_rotation_interval_hours:1,
+			// Smaller message size limit: 1MB for stricter controls.
+			max_message_size_bytes:1 * 1024 * 1024,
 			..Default::default()
 		})
 	}
@@ -434,8 +441,8 @@ impl SecureMessageChannel {
 
 	/// Calculate message overhead for encryption
 	pub fn calculate_encryption_overhead(message_size:usize) -> usize {
-		// Nonce + HMAC tag + encryption overhead
-		NONCE_LEN + AES_256_GCM.tag_len() + 16 // Additional padding
+		// Nonce + HMAC tag + encryption overhead + additional padding.
+		NONCE_LEN + AES_256_GCM.tag_len() + 16
 	}
 
 	/// Estimate encrypted message size

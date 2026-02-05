@@ -113,8 +113,7 @@
 //! - Search cancellation support
 
 // Responsibilities:
-//   - Perform workspace-wide text searches using `grep-searcher` (the `ripgrep`
-//     library).
+//   - Perform workspace-wide text searches using `grep-searcher` (the `ripgrep` library).
 //   - Respect workspace folders and standard ignore files (`.gitignore`).
 //   - Collect and format search results into a DTO suitable for the frontend.
 //   - Support regex patterns and case-sensitive/insensitive searches.

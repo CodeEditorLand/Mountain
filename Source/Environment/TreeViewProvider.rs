@@ -7,7 +7,8 @@
 //! ## RESPONSIBILITIES
 //!
 //! ### 1. Tree View Registration
-//! - Register tree view providers from extensions via `RegisterTreeDataProvider`
+//! - Register tree view providers from extensions via
+//!   `RegisterTreeDataProvider`
 //! - Create and store tree view state in `ApplicationState.ActiveTreeViews`
 //! - Manage tree view identifiers and view types
 //! - Handle tree view unregistration and cleanup
@@ -68,13 +69,16 @@
 //!
 //! ### Data Flow
 //!
-//! 1. **Registration**: Extension calls `RegisterTreeDataProvider(viewId, options)`
-//! 2. **Initial Request**: Sky calls `GetChildren(viewId, parentHandle)` for root
+//! 1. **Registration**: Extension calls `RegisterTreeDataProvider(viewId,
+//!    options)`
+//! 2. **Initial Request**: Sky calls `GetChildren(viewId, parentHandle)` for
+//!    root
 //! 3. **Provider Call**: TreeViewProvider routes to provider's `GetChildren`
 //! 4. **Result**: Provider returns `TreeItemDTO` JSON objects
 //! 5. **Display**: Sky renders tree items in UI
 //! 6. **User Action**: User expands/clicks/selects items
-//! 7. **Events**: Sky calls `OnTreeNodeExpanded`, `OnTreeSelectionChanged`, etc.
+//! 7. **Events**: Sky calls `OnTreeNodeExpanded`, `OnTreeSelectionChanged`,
+//!    etc.
 //!
 //! ### Dependencies
 //! - `ApplicationState`: Tree view state storage (`ActiveTreeViews`)
@@ -132,7 +136,8 @@
 //!
 //! Patterns from VS Code:
 //! - `vs/workbench/api/common/extHostTreeViews.ts` - Extension API
-//! - `vs/workbench/services/views/common/treeViewService.ts` - Tree view service
+//! - `vs/workbench/services/views/common/treeViewService.ts` - Tree view
+//!   service
 //! - `vs/platform/views/common/views.ts` - Tree view data model
 //!
 //! ## TODO
@@ -160,7 +165,6 @@
 //! - Event handling (selection, expansion, etc.)
 //! - State persistence and restoration
 //! - Drag-and-drop coordination
-
 
 use std::sync::Arc;
 
@@ -448,8 +452,9 @@ impl TreeViewProvider for MountainEnvironment {
 		// Track node expansion state in TreeViewStateDTO to persist which elements
 		// users have opened or closed across application sessions. This enables
 		// state restoration when the tree view is recreated after window reload,
-		// workspace switches, or extension updates. Coordinate with PersistTreeViewState
-		// to serialize and deserialize the expansion hierarchy efficiently.
+		// workspace switches, or extension updates. Coordinate with
+		// PersistTreeViewState to serialize and deserialize the expansion hierarchy
+		// efficiently.
 
 		// Propagate to frontend
 		self.ApplicationHandle

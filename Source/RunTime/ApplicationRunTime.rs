@@ -409,7 +409,10 @@ impl ApplicationRunTime {
 					);
 
 					tokio::time::sleep(current_delay).await;
-					current_delay *= 2; // Exponential backoff
+
+					// Apply exponential backoff by doubling the delay after each failure
+					// to prevent overwhelming the system during recovery attempts.
+					current_delay *= 2;
 				},
 			}
 		}

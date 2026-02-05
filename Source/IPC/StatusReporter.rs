@@ -377,7 +377,9 @@ impl StatusReporter {
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
 					.as_millis() as u64,
-				discovery_interval:30000, // 30 seconds
+				// Service discovery interval in milliseconds: 30 seconds between scans.
+				// Balances timely service detection with CPU overhead from frequent polling.
+				discovery_interval:30000,
 			})),
 			discovered_services:Arc::new(RwLock::new(HashSet::new())),
 		}
@@ -1227,10 +1229,7 @@ pub async fn mountain_get_comprehensive_status(
 }
 
 /// Initialize status reporter in Mountain's setup
-pub fn initialize_status_reporter(
-	app_handle:&tauri::AppHandle,
-	runtime:Arc<ApplicationRunTime>,
-) -> Result<(), String> {
+pub fn initialize_status_reporter(app_handle:&tauri::AppHandle, runtime:Arc<ApplicationRunTime>) -> Result<(), String> {
 	info!("[StatusReporter] Initializing status reporter");
 
 	let reporter = StatusReporter::new(runtime);
