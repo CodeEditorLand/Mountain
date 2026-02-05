@@ -1,7 +1,8 @@
 //! # EffectCreation (Track)
 //!
 //! RESPONSIBILITIES:
-//! - Central routing table that maps string-based commands/RPC methods to typed effects
+//! - Central routing table that maps string-based commands/RPC methods to typed
+//!   effects
 //! - Creates `MappedEffect` (type-erased async closures) for dispatch execution
 //! - Integrates with the effect system (`ActionEffect`) and provider traits
 //! - Provides direct provider calls for performance-critical operations
@@ -17,7 +18,8 @@
 //! 2. Calls `EffectCreation::CreateEffectForRequest` with method name + params
 //! 3. EffectCreation matches method to effect constructor (match statement)
 //! 4. Constructs typed effect with deserialized parameters
-//! 5. Returns `MappedEffect` (boxed future) to be executed by `ApplicationRunTime`
+//! 5. Returns `MappedEffect` (boxed future) to be executed by
+//!    `ApplicationRunTime`
 //! 6. Runtime executes effect via provider trait (DI via `Require`)
 //! 7. Result propagates back through the call chain
 //!
@@ -43,8 +45,10 @@
 //! - TODO: Add command timeout and rate limiting
 //!
 //! VS CODE REFERENCE:
-//! - `vs/workbench/services/extensions/common/extensions.ts` - command registration
-//! - `vs/platform/commands/common/commands.ts` - command service and dispatching
+//! - `vs/workbench/services/extensions/common/extensions.ts` - command
+//!   registration
+//! - `vs/platform/commands/common/commands.ts` - command service and
+//!   dispatching
 //! - `vs/workbench/common/effect/effect.ts` - effect system pattern
 //!
 //! SUPPORTED COMMAND CATEGORIES:
@@ -57,11 +61,11 @@
 //! **Keybinding**: GetResolved
 //! **LanguageFeatures**: $languageFeatures:registerProvider, unregisterProvider
 //! **Search**: TextSearch
-//! **SourceControlManagement**: $scm:createSourceControl, updateSourceControl, updateGroup, registerInputBox
-//! **StatusBar**: $statusBar:set, dispose, $setStatusBarMessage, $disposeStatusBarMessage
-//! **Storage**: Get, Set, $storage:getAll, $storage:setAll
-//! **Terminal**: $terminal:create, sendText, dispose
-//! **TreeView**: $tree:register
+//! **SourceControlManagement**: $scm:createSourceControl, updateSourceControl,
+//! updateGroup, registerInputBox **StatusBar**: $statusBar:set, dispose,
+//! $setStatusBarMessage, $disposeStatusBarMessage **Storage**: Get, Set,
+//! $storage:getAll, $storage:setAll **Terminal**: $terminal:create, sendText,
+//! dispose **TreeView**: $tree:register
 //! **UserInterface**: ShowMessage, ShowOpenDialog, ShowSaveDialog
 //! **Webview**: $webview:create, $resolveCustomEditor
 //!
@@ -82,8 +86,10 @@
 //! MODULE CONTENTS:
 //! - Type alias: `MappedEffect` - boxed async closure signature
 //! - Macro: `Parameter!` - deserialize parameters from JSON array
-//! - Main function: `CreateEffectForRequest` - map method name to effect (in DispatchLogic)
-//! - Direct provider calls: Various `Provider::*` methods called without effect wrapper
+//! - Main function: `CreateEffectForRequest` - map method name to effect (in
+//!   DispatchLogic)
+//! - Direct provider calls: Various `Provider::*` methods called without effect
+//!   wrapper
 //! - Effect constructors: All `*` effects from `CommonLibrary::Effect`
 //!
 //! ---
@@ -132,6 +138,7 @@ use CommonLibrary::{
 use serde_json::{Value, from_value, json};
 use tauri::{AppHandle, Runtime};
 use url::Url;
+use log::warn;
 
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
@@ -168,21 +175,21 @@ macro_rules! Parameter {
 /// - `_Parameters`: JSON array of parameters for the effect (currently unused)
 ///
 /// # Returns
-/// `MappedEffect` - a boxed async closure that takes Arc<ApplicationRunTime> and
-/// returns Result<Value, String>
-pub fn CreateEffectForRequest<R: Runtime>(
-	_ApplicationHandle: AppHandle<R>,
-	_State: &Arc<MountainEnvironment>,
-	MethodName: &str,
-	_Parameters: &Value,
+/// `MappedEffect` - a boxed async closure that takes Arc<ApplicationRunTime>
+/// and returns Result<Value, String>
+pub fn CreateEffectForRequest<R:Runtime>(
+	_ApplicationHandle:AppHandle<R>,
+	_State:&Arc<MountainEnvironment>,
+	MethodName:&str,
+	_Parameters:&Value,
 ) -> MappedEffect {
 	// Simplified: direct provider calls for hot paths
 	match MethodName {
 		// Configuration
 		"Configuration.Inspect" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
+					let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
 					let target = ConfigurationTarget::Global;
 					let section = String::new(); // TODO: parse from parameters
 					provider.InspectConfigurationValue(target, &section).await
@@ -192,11 +199,13 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"Configuration.Update" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
 					// TODO: parse target, section, value from parameters
-					provider.UpdateConfigurationValue(ConfigurationTarget::Global, "section".to_string(), json!({})).await
+					provider
+						.UpdateConfigurationValue(ConfigurationTarget::Global, "section".to_string(), json!({}))
+						.await
 				}
 			};
 			Box::new(effect)
@@ -204,9 +213,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Diagnostics
 		"Diagnostic.Set" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn DiagnosticManager> = run_time.Environment.Require();
+					let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
 					// TODO: parse owner, entries from parameters
 					provider.SetDiagnostics("owner".to_string(), json!([])).await
 				}
@@ -215,9 +224,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"Diagnostic.Clear" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn DiagnosticManager> = run_time.Environment.Require();
+					let provider:Arc<dyn DiagnosticManager> = run_time.Environment.Require();
 					provider.ClearDiagnostics("owner".to_string()).await
 				}
 			};
@@ -226,17 +235,13 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Language Features
 		"$languageFeatures:registerProvider" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
+					let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
 					// TODO: parse ProviderType, SelectorDTO, ExtensionIdentifierDTO, OptionsDTO
-					provider.RegisterProvider(
-						"cocoon".to_string(),
-						ProviderType::Hover,
-						json!({}),
-						json!({}),
-						None,
-					).await
+					provider
+						.RegisterProvider("cocoon".to_string(), ProviderType::Hover, json!({}), json!({}), None)
+						.await
 				}
 			};
 			Box::new(effect)
@@ -244,9 +249,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Documents
 		"Document.Save" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let document_provider: Arc<dyn DocumentProvider> = run_time.Environment.Require();
+					let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
 					// TODO: parse URI from parameters
 					let uri = Url::parse("file:///tmp/test.txt").unwrap();
 					document_provider.SaveDocument(uri).await
@@ -256,9 +261,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"Document.SaveAs" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let document_provider: Arc<dyn DocumentProvider> = run_time.Environment.Require();
+					let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
 					// TODO: parse original URI and new target URI from parameters
 					let original_uri = Url::parse("file:///tmp/test.txt").unwrap();
 					document_provider.SaveDocumentAs(original_uri, None).await
@@ -269,9 +274,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// FileSystem
 		"FileSystem.ReadFile" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let fs_reader: Arc<dyn FileSystemReader> = run_time.Environment.Require();
+					let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 					// TODO: parse path from parameters
 					let path = std::path::PathBuf::from("/tmp/test.txt");
 					fs_reader.ReadFile(&path).await
@@ -281,9 +286,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"FileSystem.WriteFile" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let fs_writer: Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+					let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 					// TODO: parse path, content, options from parameters
 					let path = std::path::PathBuf::from("/tmp/test.txt");
 					fs_writer.WriteFile(&path, &[]).await
@@ -293,9 +298,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"FileSystem.ReadDirectory" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let fs_reader: Arc<dyn FileSystemReader> = run_time.Environment.Require();
+					let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 					// TODO: parse path from parameters
 					let path = std::path::PathBuf::from("/tmp");
 					fs_reader.ReadDirectory(&path).await
@@ -306,9 +311,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Keybinding
 		"Keybinding.GetResolved" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn KeybindingProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn KeybindingProvider> = run_time.Environment.Require();
 					provider.GetResolvedKeybinding().await
 				}
 			};
@@ -317,9 +322,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Search
 		"Search.TextSearch" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn SearchProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
 					// TODO: parse query, options from parameters
 					provider.TextSearch(json!({}), None, None, false, false).await
 				}
@@ -329,9 +334,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Storage
 		"Storage.Get" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn StorageProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
 					// TODO: parse key from parameters
 					provider.GetStorageItem("key".to_string()).await
 				}
@@ -340,9 +345,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"Storage.Set" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn StorageProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn StorageProvider> = run_time.Environment.Require();
 					// TODO: parse key, value from parameters
 					provider.SetStorageItem("key".to_string(), json!("value")).await
 				}
@@ -352,9 +357,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Commands
 		"Command.Execute" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let command_executor: Arc<dyn CommandExecutor> = run_time.Environment.Require();
+					let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
 					// TODO: parse command identifier and argument from parameters
 					command_executor.ExecuteCommand("command".to_string(), json!({})).await
 				}
@@ -363,9 +368,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"Command.GetAll" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let command_executor: Arc<dyn CommandExecutor> = run_time.Environment.Require();
+					let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
 					command_executor.GetAllCommands().await
 				}
 			};
@@ -374,13 +379,13 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Status Bar
 		"$statusBar:set" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
 					// TODO: parse entry from parameters
 					let entry = StatusBarEntryDTO {
-						text: "status".to_string(),
-						identifier: Some("id".to_string()),
+						text:"status".to_string(),
+						identifier:Some("id".to_string()),
 						// other fields...
 						..Default::default()
 					};
@@ -391,9 +396,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$statusBar:dispose" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
 					// TODO: parse identifier from parameters
 					provider.DisposeStatusBarEntry("id".to_string()).await
 				}
@@ -402,9 +407,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$setStatusBarMessage" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
 					// TODO: parse message identifier and text from parameters
 					provider.SetStatusBarMessage("msg_id".to_string(), "message".to_string()).await
 				}
@@ -413,9 +418,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$disposeStatusBarMessage" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn StatusBarProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
 					// TODO: parse message identifier from parameters
 					provider.DisposeStatusBarMessage("msg_id".to_string()).await
 				}
@@ -425,9 +430,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// User Interface
 		"UserInterface.ShowMessage" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 					// TODO: parse message type, title, message from parameters
 					provider.ShowMessage("info".to_string(), "Title", "Message", json!({})).await
 				}
@@ -436,9 +441,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"UserInterface.ShowOpenDialog" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 					// TODO: parse options from parameters
 					provider.ShowOpenDialog(None).await
 				}
@@ -447,9 +452,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"UserInterface.ShowSaveDialog" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 					// TODO: parse options from parameters
 					provider.ShowSaveDialog(None).await
 				}
@@ -459,9 +464,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Terminal
 		"$terminal:create" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn TerminalProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
 					// TODO: parse name, options from parameters
 					let options = json!({});
 					let shell_path = "/bin/bash".to_string();
@@ -472,9 +477,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$terminal:sendText" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn TerminalProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
 					// TODO: parse identifier and text from parameters
 					provider.SendTextToTerminal(0, "echo hello\n".to_string()).await
 				}
@@ -483,9 +488,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$terminal:dispose" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn TerminalProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
 					// TODO: parse identifier from parameters
 					provider.DisposeTerminal(0).await
 				}
@@ -495,9 +500,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Webview
 		"$webview:create" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn WebviewProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn WebviewProvider> = run_time.Environment.Require();
 					// TODO: parse view type, title, options from parameters
 					// For now, just log that this would be called
 					warn!("$webview:create not fully implemented");
@@ -508,15 +513,17 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$resolveCustomEditor" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
 					// TODO: parse view type, resource URI, webview handle from parameters
-					provider.ResolveCustomEditor(
-						"viewType".to_string(),
-						Url::parse("file:///tmp/test.txt").unwrap(),
-						"webview-123".to_string(),
-					).await
+					provider
+						.ResolveCustomEditor(
+							"viewType".to_string(),
+							Url::parse("file:///tmp/test.txt").unwrap(),
+							"webview-123".to_string(),
+						)
+						.await
 				}
 			};
 			Box::new(effect)
@@ -524,9 +531,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Debug
 		"Debug.Start" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn DebugService> = run_time.Environment.Require();
+					let provider:Arc<dyn DebugService> = run_time.Environment.Require();
 					// TODO: parse folder URI and configuration from parameters
 					provider.StartDebugging(None, json!({ "type": "node" })).await
 				}
@@ -535,15 +542,13 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"Debug.RegisterConfigurationProvider" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn DebugService> = run_time.Environment.Require();
+					let provider:Arc<dyn DebugService> = run_time.Environment.Require();
 					// TODO: parse debug type, provider handle, sidecar identifier from parameters
-					provider.RegisterDebugConfigurationProvider(
-						"node".to_string(),
-						1,
-						"cocoon-main".to_string(),
-					).await
+					provider
+						.RegisterDebugConfigurationProvider("node".to_string(), 1, "cocoon-main".to_string())
+						.await
 				}
 			};
 			Box::new(effect)
@@ -551,9 +556,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Tree View
 		"$tree:register" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn TreeViewProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
 					// TODO: parse view identifier, tree data provider from parameters
 					provider.RegisterTreeDataProvider("viewId".to_string(), json!({})).await
 				}
@@ -563,9 +568,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 
 		// Source Control Management
 		"$scm:createSourceControl" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
 					// TODO: parse source control management resource and metadata from parameters
 					provider.CreateSourceControl(json!({}), json!({})).await
 				}
@@ -574,9 +579,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$scm:updateSourceControl" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
 					// TODO: parse source control management resource changes from parameters
 					provider.UpdateSourceControl(json!({})).await
 				}
@@ -585,9 +590,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$scm:updateGroup" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
 					// TODO: parse group identifier and resources from parameters
 					provider.UpdateGroup("group1".to_string(), json!([])).await
 				}
@@ -596,9 +601,9 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		},
 
 		"$scm:registerInputBox" => {
-			let effect = |run_time: Arc<MountainRunTime>| {
+			let effect = |run_time:Arc<MountainRunTime>| {
 				async move {
-					let provider: Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
+					let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
 					// TODO: parse input box options from parameters
 					provider.RegisterInputBox(json!({})).await
 				}
@@ -609,11 +614,7 @@ pub fn CreateEffectForRequest<R: Runtime>(
 		// Unknown command
 		_ => {
 			warn!("[EffectCreation] Unknown method: {}", MethodName);
-			let effect = |run_time: Arc<MountainRunTime>| {
-				async move {
-					Err(format!("Unknown method: {}", MethodName))
-				}
-			};
+			let effect = |run_time:Arc<MountainRunTime>| async move { Err(format!("Unknown method: {}", MethodName)) };
 			Box::new(effect)
 		},
 	}
