@@ -1,28 +1,55 @@
-// ============================================================================
-// File: Mountain/Source/Environment/WorkspaceProvider.rs
-// ============================================================================
-// # WorkspaceProvider Implementation
-//
-// Implements the `WorkspaceProvider` and `WorkspaceEditApplier` traits for
-// the `MountainEnvironment`. This provider contains the core logic for
-// workspace-related operations, including multi-root workspace support,
-// folder management, and workspace-wide file operations.
-//
-// ## Key Features:
-// - Multi-root workspace folder management
-// - Folder addition, removal, and reordering
-// - Workspace trust management
-// - File discovery with glob patterns
-// - Workspace edit application
-// - Custom editor routing
-// - Workspace event propagation
-//
-// ## VSCode Reference:
-// - vs/workbench/services/workspace/browser/workspaceService.ts
-// - vs/workbench/contrib/files/common/editors/textFileEditor.ts
-// - vs/platform/workspace/common/workspace.ts
-//
-// ============================================================================
+//! # WorkspaceProvider (Environment)
+//!
+//! RESPONSIBILITIES:
+//! - Implements [`WorkspaceProvider`](CommonLibrary::Workspace::WorkspaceProvider) and
+//!   [`WorkspaceEditApplier`](CommonLibrary::Workspace::WorkspaceEditApplier) traits for [`MountainEnvironment`]
+//! - Manages multi-root workspace folder operations and configuration
+//! - Provides workspace trust management and file discovery capabilities
+//! - Handles workspace edit application and custom editor routing
+//!
+//! ARCHITECTURAL ROLE:
+//! - Core provider in the Environment system, exposing workspace-level functionality
+//!   to frontend via gRPC through the [`AirService`](crate::Air::AirServiceProvider)
+//! - Workspace provider is one of the foundational services alongside Document,
+//!   Configuration, and Diagnostic providers
+//! - Integrates with [`ApplicationState`](crate::ApplicationState::ApplicationState)
+//!   for persistent workspace folder storage
+//!
+//! ERROR HANDLING:
+//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
+//! - Application state lock errors are mapped using [`Utility::MapApplicationStateLockErrorToCommonError`]
+//! - Some operations are stubbed with logging (FindFilesInWorkspace, OpenFile, ApplyWorkspaceEdit)
+//!
+//! PERFORMANCE:
+//! - Workspace folder lookup uses O(n) linear search through folder list
+//! - Lock contention on `ApplicationState.WorkspaceFolders` should be minimized
+//! - File discovery and workspace edit application are not yet optimized
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/services/workspace/browser/workspaceService.ts` - workspace service implementation
+//! - `vs/workbench/contrib/files/common/editors/textFileEditor.ts` - file editor integration
+//! - `vs/platform/workspace/common/workspace.ts` - workspace types and interfaces
+//!
+//! TODO:
+//! - Implement actual file search with glob pattern matching
+//! - Implement file opening with workspace-relative paths
+//! - Complete workspace edit application logic
+//! - Add workspace event propagation to subscribers
+//! - Implement custom editor routing by view type
+//!
+//! MODULE CONTENTS:
+//! - [`WorkspaceProvider`](CommonLibrary::Workspace::WorkspaceProvider) implementation:
+//!   - [`GetWorkspaceFoldersInfo`](Self::GetWorkspaceFoldersInfo) - enumerate all workspace folders
+//!   - [`GetWorkspaceFolderInfo`](Self::GetWorkspaceFolderInfo) - find folder containing a URI
+//!   - [`GetWorkspaceName`](Self::GetWorkspaceName) - workspace identifier from state
+//!   - [`GetWorkspaceConfigurationPath`](Self::GetWorkspaceConfigurationPath) - .code-workspace path
+//!   - [`IsWorkspaceTrusted`](Self::IsWorkspaceTrusted) - trust status check
+//!   - [`RequestWorkspaceTrust`](Self::RequestWorkspaceTrust) - trust acquisition (stub)
+//!   - [`FindFilesInWorkspace`](Self::FindFilesInWorkspace) - file discovery (stub)
+//!   - [`OpenFile`](Self::OpenFile) - file opening (stub)
+//! - [`WorkspaceEditApplier`](CommonLibrary::Workspace::WorkspaceEditApplier) implementation:
+//!   - [`ApplyWorkspaceEdit`](Self::ApplyWorkspaceEdit) - edit application (stub)
+//! - Data types: [`(Url, String, usize)`] tuple for folder info (URI, name, index)
 
 use std::{path::PathBuf, sync::Arc};
 

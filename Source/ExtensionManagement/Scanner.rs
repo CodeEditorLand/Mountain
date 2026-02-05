@@ -1,14 +1,105 @@
-// File: Mountain/Source/ExtensionManagement/Scanner.rs
-// Role: Contains logic for discovering and parsing installed extensions.
-// Responsibilities:
-//   - Scan directories on the filesystem for extensions by reading
-//     `package.json`.
-//   - Collect and merge default configurations from all discovered extensions.
-
-//! # Extension Scanner
+//! # Extension Scanner (ExtensionManagement)
 //!
 //! Contains the logic for scanning directories on the filesystem to discover
-//! installed extensions by reading their `package.json` manifests.
+//! installed extensions by reading their `package.json` manifests, and for
+//! collecting default configuration values from all discovered extensions.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Extension Discovery
+//! - Scan registered extension paths for valid extensions
+//! - Read and parse `package.json` manifest files
+//! - Validate extension metadata and structure
+//! - Build `ExtensionDescriptionStateDTO` for each discovered extension
+//!
+//! ### 2. Configuration Collection
+//! - Extract default configuration values from extension `contributes.configuration`
+//! - Merge configuration properties from all extensions
+//! - Handle nested configuration objects recursively
+//! - Detect and prevent circular references
+//!
+//! ### 3. Error Handling
+//! - Gracefully handle unreadable directories
+//! - Skip extensions with invalid package.json
+//! - Log warnings for partial scan failures
+//! - Continue scanning even when some paths fail
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! The Extension Scanner is part of the **Extension Management** subsystem:
+//!
+//! ```
+//! Startup ──► ScanPaths ──► Scanner ──► Extensions Map ──► ApplicationState
+//! ```
+//!
+//! ### Position in Mountain
+//! - `ExtensionManagement` module: Extension discovery and metadata
+//! - Used during application startup to populate extension registry
+//! - Provides data to `Cocoon` for extension host initialization
+//!
+//! ### Dependencies
+//! - `CommonLibrary::FileSystem`: ReadDirectory and ReadFile effects
+//! - `CommonLibrary::Error::CommonError`: Error handling
+//! - `ApplicationRunTime`: Effect execution
+//! - `ApplicationState`: Extension storage
+//!
+//! ### Dependents
+//! - `InitializationData::ConstructExtensionHostInitializationData`: Sends extensions to Cocoon
+//! - `MountainEnvironment::ScanForExtensions`: Public API for extension scanning
+//! - `ApplicationState::Internal::ScanExtensionsWithRecovery`: Robust scanning wrapper
+//!
+//! ## SCANNING PROCESS
+//!
+//! 1. **Path Resolution**: Get scan paths from `ApplicationState.ExtensionScanPaths`
+//! 2. **Directory Enumeration**: For each path, read directory entries
+//! 3. **Manifest Detection**: Look for `package.json` in each subdirectory
+//! 4. **Parsing**: Deserialize `package.json` into `ExtensionDescriptionStateDTO`
+//! 5. **Augmentation**: Add `ExtensionLocation` (disk path) to metadata
+//! 6. **Storage**: Insert into `ApplicationState.ScannedExtensions` map
+//!
+//! ## CONFIGURATION MERGING
+//!
+//! `CollectDefaultConfigurations()` extracts default values from all extensions'
+//! `contributes.configuration.properties` and merges them into a single JSON object:
+//!
+//! - Handles nested `.` notation (e.g., `editor.fontSize`)
+//! - Recursively processes nested `properties` objects
+//! - Detects circular references to prevent infinite loops
+//! - Returns a flat map of configuration keys to default values
+//!
+//! ## ERROR HANDLING
+//!
+//! - **Directory Read Failures**: Logged as warnings, scanning continues
+//! - **Invalid package.json**: Skipped with warning, scanning continues
+//! - **IO Errors**: Logged, operation continues or fails gracefully
+//!
+//! ## PERFORMANCE
+//!
+//! - Scans are performed asynchronously via `ApplicationRunTime`
+//! - Each directory read is a separate filesystem operation
+//! - Large extension directories may impact startup time
+//! - Consider caching scan results for development workflows
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Borrowed from VS Code's extension management:
+//! - `vs/workbench/services/extensions/common/extensionPoints.ts` - Configuration contribution
+//! - `vs/platform/extensionManagement/common/extensionManagementService.ts` - Extension scanning
+//!
+//! ## TODO
+//!
+//! - [ ] Implement concurrent scanning for multiple paths
+//! - [ ] Add extension scan caching with invalidation
+//! - [ ] Implement extension validation rules (required fields, etc.)
+//! - [ ] Add scan progress reporting for UI feedback
+//! - [ ] Support extension scanning in subdirectories (recursive)
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`ScanDirectoryForExtensions`]: Scan a single directory for extensions
+//! - [`CollectDefaultConfigurations`]: Merge configuration defaults from all extensions
+//! - [`process_configuration_properties`]: Recursive configuration property processor
+
 
 use std::{path::PathBuf, sync::Arc};
 

@@ -1,43 +1,127 @@
-// File: Mountain/Source/Environment/KeybindingProvider.rs
-// Role: Implements the `KeybindingProvider` trait for the
-// `MountainEnvironment`. Responsibilities:
-//   - Resolve the final, effective keymap for the application.
-//   - Collect default keybindings contributed by all scanned extensions.
-//   - Read and apply user-defined keybindings from `keybindings.json`, handling
-//     overrides and unbindings.
-//   - Parse and resolve keybinding combinations (modifiers + keys).
-//   - Evaluate "when" clauses to determine keybinding activation context.
-//   - Handle keybinding conflicts with priority-based resolution.
-//   - Support platform-specific keybindings.
-//
-// TODOs:
-//   - Implement complete when clause evaluation (context key expressions)
-//   - Add keybinding scoring for conflict resolution
-//   - Support keybinding localization
-//   - Implement platform-specific modifier key conversion (Cmd/Ctrl)
-//   - Add keybinding conflict detection and warnings
-//   - Implement keybinding chords (multi-key sequences)
-//   - Support custom keybinding schemes
-//   - Add keybinding validation and syntax error reporting
-//   - Implement keybinding telemetry for usage tracking
-//   - Support keybinding migration across versions
-//
-// Inspired by VSCode's keybinding service which:
-// - Evaluates complex when clause expressions
-// - Resolves conflicts with scoring (default > extension > user overrides)
-// - Supports platform-specific transformations
-// - Handles keybinding chords
-// - Provides keybinding resolution diagnostics
+//! # KeybindingProvider (Environment)
+//!
+//! Implements the `KeybindingProvider` trait for `MountainEnvironment`,
+//! providing keybinding resolution, conflict detection, and command activation
+//! based on keyboard input.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Keybinding Collection
+//! - Gather default keybindings from all extensions (`contributes.keybindings`)
+//! - Load user-defined keybindings from `keybindings.json`
+//! - Include built-in Mountain keybindings
+//! - Support platform-specific keybinding variants
+//!
+//! ### 2. Keybinding Resolution
+//! - Parse keybinding combinations (modifiers + keys)
+//! - Evaluate "when" clauses for context activation
+//! - Resolve conflicts using priority rules:
+//!   - User keybindings override extension keybindings
+//!   - Extension keybindings override defaults
+//!   - Within same priority, use specificity scoring
+//!
+//! ### 3. Command Activation
+//! - Match incoming keyboard events to keybindings
+//! - Execute bound commands with proper arguments
+//! - Handle keybinding chords (multi-key sequences)
+//! - Support keybinding cancellation (Esc, etc.)
+//!
+//! ### 4. Platform Adaptation
+//! - Convert between platform-specific modifiers (Cmd on macOS, Ctrl on Windows/Linux)
+//! - Support international keyboard layouts
+//! - Handle platform-exclusive keybindings
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! KeybindingProvider is the **keyboard input mapper**:
+//!
+//! ```text
+//! Keyboard Event ──► KeybindingProvider ──► Resolved Keybinding ──► CommandExecutor
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: Input handling capability
+//! - Implements `CommonLibrary::Keybinding::KeybindingProvider` trait
+//! - Accessible via `Environment.Require<dyn KeybindingProvider>()`
+//!
+//! ### Keybinding Source Precedence (highest to lowest)
+//! 1. **User keybindings**: `keybindings.json` with overrides and unbindings
+//! 2. **Extension keybindings**: From `contributes.keybindings` in package.json
+//! 3. **Built-in keybindings**: Mountain default shortcuts
+//!
+//! ### Conflict Resolution
+//!
+//! When multiple keybindings match an input:
+//! 1. **Priority**: User > Extension > Built-in
+//! 2. **Specificity**: More specific "when" clause wins
+//! 3. **Scoring**: (TODO) Calculate score based on:
+//!    - Number of modifiers (more is more specific)
+//!    - Presence of "when" clause conditions
+//!    - Platform specificity
+//!
+//! ## DATA MODEL
+//!
+//! A `Keybinding` consists of:
+//! - `Command`: Command ID to execute
+//! - `Keybinding`: Keyboard shortcut string (e.g., "Ctrl+Shift+P")
+//! - `When`: Context expression (e.g., "editorTextFocus")
+//! - `Source`: Where it came from (user, extension, built-in)
+//! - `Weight`: Priority weight for conflict resolution
+//!
+//! ## WHEN CLAUSE EVALUATION
+//!
+//! "When" clauses are boolean expressions over context keys:
+//! - `editorTextFocus`: Editor has focus
+//! - `editorHasSelection`: Text is selected
+//! - `resourceLangId == python`: File is Python
+//! - `!editorHasSelection`: Negation
+//! - `editorTextFocus && !editorHasSelection`: AND combination
+//!
+//! Context keys are set by providers based on UI state:
+//! - Focus state, language, file type, editor mode, etc.
+//!
+//! ## PERFORMANCE
+//!
+//! - Keybinding lookup should be fast (HashMap or trie-based)
+//! - "When" clause evaluation should be efficient (pre-parsed expressions)
+//! - Consider caching resolved keybindings per context
+//! - Platform-specific lookup avoids runtime conversion overhead
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Borrowed from VS Code's keybinding system:
+//! - `vs/platform/keybinding/common/keybinding.ts` - Keybinding data model
+//! - `vs/platform/keybinding/common/keybindingResolver.ts` - Resolution logic
+//! - `vs/platform/keybinding/common/keybindingsRegistry.ts` - Registry management
+//! - `vs/platform/contextkey/common/contextkey.ts` - "When" clause evaluation
+//!
+//! ## TODO
+//!
+//! - [ ] Implement complete "when" clause expression parser and evaluator
+//! - [ ] Add keybinding precedence scoring algorithm
+//! - [ ] Support keybinding localization (different key labels per locale)
+//! - [ ] Implement platform-specific modifier conversion (Cmd/Ctrl/Alt)
+//! - [ ] Add conflict detection and warnings during registration
+//! - [ ] Implement keybinding chords (e.g., "Ctrl+K Ctrl+C")
+//! - [ ] Support custom keybinding schemes (vim, emacs, sublime)
+//! - [ ] Add keybinding validation and syntax error reporting
+//! - [ ] Implement keybinding telemetry for usage tracking
+//! - [ ] Support keybinding migration across versions
+//! - [ ] Add keybinding export/import functionality
+//! - [ ] Implement keybinding search and discovery UI
+//! - [ ] Support keybinding recording from actual key presses
+//! - [ ] Add keybinding conflict resolution UI
+//! - [ ] Implement keybinding per-profile (development, debugging, etc.)
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`KeybindingProvider`]: Main struct implementing the trait
+//! - Keybinding collection and registration
+//! - "When" clause parsing and evaluation
+//! - Conflict resolution logic
+//! - Platform-specific key mapping
+//! - Command activation from keyboard events
 
-//! # KeybindingProvider Implementation
-//!
-//! Implements the `KeybindingProvider` trait for the `MountainEnvironment`.
-//!
-//! ## Keybinding Resolution Strategy
-//!
-//! 1. Collect default keybindings from all enabled extensions
-//! 2. Apply user-defined keybindings from `keybindings.json`
-//! 3. Resolve conflicts using priority rules:
 //!    - User keybindings override system defaults
 //!    - Negative commands (starting with `-`) unbind keys
 //!    - Higher priority values win in cases of ambiguity

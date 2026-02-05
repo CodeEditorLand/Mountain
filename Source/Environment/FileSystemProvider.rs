@@ -1,63 +1,58 @@
-// File: Mountain/Source/Environment/FileSystemProvider.rs
-//
-// # Architectural Role: Filesystem Access Layer
-//
-// FileSystemProvider implements FileSystemReader and FileSystemWriter traits,
-// providing secure, validated access to the filesystem. It enforces workspace
-// trust boundaries, normalizes paths to prevent traversal attacks, and provides
-// comprehensive file operations including support for symbolic links.
-//
-// # Responsibilities
-//
-// 1. **Secure File Access**: Enforces workspace trust and path validation to
-//    prevent unauthorized access to sensitive system files.
-//
-// 2. **File Operations**: Provides read, write, stat, delete, rename, and copy
-//    operations for files and directories with proper error handling.
-//
-// 3. **Symbolic Link Support**: Detects and properly handles symbolic links in
-//    file metadata and operations.
-//
-// 4. **Path Validation**: Validates that all file operations stay within
-//    trusted workspace boundaries.
-//
-// 5. **Directory Traversal**: Reads directory contents with proper error
-//    handling and type detection.
-//
-// # Security Model
-//
-// The provider implements a sandboxed filesystem access model:
-// 1. All operations check IsPathAllowedForAccess() first
-// 2. Only paths within registered workspace folders are accessible
-// 3. Workspace must be explicitly trusted for any file access
-// 4. Path normalization prevents directory traversal attacks (../)
-//
-// # TODOs
-//
-// - [ ] Implement filesystem change watching capabilities (notify, inotify,
-//   FSEvents)
-// - [ ] Add path normalization to prevent directory traversal
-// - [ ] Implement proper symbolic link resolution with security checks
-// - [ ] Add support for file permissions and ownership metadata
-// - [ ] Implement atomic file writes using temp file + rename pattern
-// - [ ] Add filesystem usage statistics (disk space, file counts)
-// - [ ] Implement file attribute querying (hidden, readonly, executable)
-// - [ ] Add support for extended file attributes on Unix/macOS
-// - [ ] Consider adding filesystem cache for metadata
-// - [ ] Implement trash operation using platform trash API (not delete)
-// - [ ] Add support for file system encoding detection
-// - [ ] Implement case sensitivity handling based on filesystem type
-//
-// # Patterns Borrowed from VSCode
-//
-// - **DiskFileSystemProvider**: Inspired by VSCode's electron-browser
-//   diskFileSystemProvider for secure filesystem access.
-//
-// - **FilePermissions**: Similar to VSCode's permission model for file
-//   operations.
-//
-// - **FileType Detection**: Follows VSCode's file type enum pattern (File,
-//   Directory, SymbolicLink, Unknown).
+//! # FileSystemProvider (Environment)
+//!
+//! RESPONSIBILITIES:
+//! - Implements [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) and
+//!   [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for [`MountainEnvironment`]
+//! - Provides secure, validated filesystem access with workspace trust enforcement
+//! - Handles file operations: read, write, stat, delete, rename, copy, directory traversal
+//! - Detects and handles symbolic links properly
+//! - Enforces path validation to prevent directory traversal attacks
+//!
+//! SECURITY MODEL:
+//! - Sandboxed filesystem access limited to registered workspace folders
+//! - All operations call [`Utility::IsPathAllowedForAccess`](crate::Utility) first
+//! - Requires workspace trust to be enabled for any file access
+//! - Path normalization prevents `../` attacks
+//! - Symbolic link detection avoids following untrusted links outside workspaces
+//!
+//! ERROR HANDLING:
+//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
+//! - File operation errors are mapped via `CommonError::FromStandardIOError`
+//! - Validates paths are within workspace boundaries (IsPathAllowedForAccess)
+//! - Rejects directory reads when file expected (ReadFile)
+//!
+//! PERFORMANCE:
+//! - Uses async tokio::fs for non-blocking I/O operations
+//! - Symbolic link detection uses `symlink_metadata` in addition to `metadata`
+//! - TODO: Consider caching file metadata for frequently accessed files
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/services/files/electron-browser/diskFileSystemProvider.ts` - secure FS access
+//! - `vs/platform/files/common/files.ts` - file system interfaces
+//! - `vs/base/common/network.ts` - URI and path handling
+//!
+//! TODO:
+//! - Implement filesystem change watching (notify, inotify, FSEvents)
+//! - Add path normalization to prevent directory traversal
+//! - Implement proper symbolic link resolution with security checks
+//! - Add support for file permissions and ownership metadata
+//! - Implement atomic file writes using temp file + rename pattern
+//! - Add filesystem usage statistics (disk space, file counts)
+//! - Implement file attribute querying (hidden, readonly, executable)
+//! - Add support for extended file attributes on Unix/macOS
+//! - Consider adding filesystem cache for metadata
+//! - Implement trash operation using platform trash API (not delete)
+//! - Add support for file system encoding detection
+//! - Implement case sensitivity handling based on filesystem type
+//!
+//! MODULE CONTENTS:
+//! - [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) implementation:
+//!   - [`ReadFile`](Self::ReadFile) - read file bytes with access validation
+//!   - [`StatFile`](Self::StatFile) - file/directory metadata with symlink detection
+//! - [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) implementation:
+//!   - (methods to be implemented: WriteFile, DeleteFile, CreateDirectory, etc.)
+//! - Data types: [`FileSystemStatDTO`](CommonLibrary::FileSystem::DTO::FileSystemStatDTO),
+//!   [`FileTypeDTO`](CommonLibrary::FileSystem::DTO::FileTypeDTO)
 
 use std::path::PathBuf;
 

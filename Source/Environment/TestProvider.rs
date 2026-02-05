@@ -1,24 +1,72 @@
-// ============================================================================
-// File: Mountain/Source/Environment/TestProvider.rs
-// ============================================================================
-// # TestProvider Implementation
-//
-// Implements the `TestController` trait for the `MountainEnvironment`.
-// This provider manages test discovery, execution, and result reporting,
-// borrowing patterns from VSCode's Testing Service.
-//
-// ## Key Features:
-// - Test controller registration and lifecycle management
-// - Test discovery and enumeration
-// - Test execution with progress tracking
-// - Test result aggregation and reporting
-// - Sidecar proxy support for extension-provided test frameworks
-//
-// ## VSCode Reference:
-// - vs/workbench/contrib/testing/common/testTypes.ts
-// - vs/workbench/contrib/testing/common/testService.ts
-//
-// ============================================================================
+//! # TestProvider (Environment)
+//!
+//! RESPONSIBILITIES:
+//! - Implements [`TestController`](CommonLibrary::Testing::TestController) for [`MountainEnvironment`]
+//! - Manages test discovery, execution, and result reporting
+//! - Handles test controller registration and lifecycle
+//! - Tracks test run progress and aggregates results
+//! - Provides sidecar proxy for extension-provided test frameworks
+//!
+//! ARCHITECTURAL ROLE:
+//! - Environment provider for testing functionality
+//! - Uses controller pattern: each extension can register its own test controller
+//! - Controllers identified by unique `ControllerIdentifier` and scoped to extensions
+//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC to test runners
+//! - Stores controller state in [`ApplicationState`](crate::ApplicationState::ApplicationState)
+//!
+//! TEST EXECUTION FLOW:
+//! 1. Extension registers test controller via `RegisterTestController`
+//! 2. Mountain calls `ResolveTests` to discover tests (async, emits `TestItemAdded`)
+//! 3. Extension returns test tree structure with IDs, labels, children
+//! 4. UI requests to run tests via `RunTest` or `RunTests` with optional `RunProfile`
+//! 5. Mountain forwards to extension's controller via RPC
+//! 6. Extension executes tests and reports progress via `TestRunStarted`, `TestItemStarted`,
+//!    `TestItemPassed`, `TestItemFailed`, `TestRunEnded` events
+//! 7. Mountain aggregates results and emits to UI
+//!
+//! ERROR HANDLING:
+//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
+//! - Validates controller identifiers and run profile names (non-empty)
+//! - Controller state tracked in RwLock for thread-safe mutation
+//! - Unknown controller ID errors return `TestControllerNotFound`
+//! - Duplicate registration returns `InvalidArgument` error
+//!
+//! PERFORMANCE:
+//! - Test discovery is async and can be cancelled (drop sender)
+//! - Test run progress is streamed via events, avoiding blocking
+//! - Controller state uses RwLock for concurrent read access during test runs
+//! - TODO: Consider test result caching for quick re-runs
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/contrib/testing/common/testService.ts` - test service architecture
+//! - `vs/workbench/contrib/testing/common/testController.ts` - test controller interface
+//! - `vs/workbench/contrib/testing/common/testTypes.ts` - test data models
+//! - `vs/workbench/contrib/testing/browser/testingView.ts` - testing UI panel
+//!
+//! TODO:
+//! - Implement test run cancellation and timeout handling
+//! - Add test result caching and quick re-run support
+//! - Implement test tree filtering and search
+//! - Add test run configuration persistence
+//! - Support test run peeking (inline results in editor)
+//! - Implement test coverage integration
+//! - Add test run duration metrics and profiling
+//! - Support parallel test execution (multiple workers)
+//! - Implement test run retry logic for flaky tests
+//! - Add test run export (JUnit, TAP, custom formats)
+//! - Integrate with CodeLens for in-source test run buttons
+//!
+//! MODULE CONTENTS:
+//! - [`TestController`](CommonLibrary::Testing::TestController) implementation:
+//!   - [`RegisterTestController`](Self::RegisterTestController) - register extension's controller
+//!   - [`UnregisterTestController`](Self::UnregisterTestController) - remove controller
+//!   - [`ResolveTests`](Self::ResolveTests) - discover tests (async with cancellation)
+//!   - [`RunTest`](Self::RunTest) - run single test by ID
+//!   - [`RunTests`](Self::RunTests) - run multiple tests (by ID or all in parent)
+//!   - [`StopTestRun`](Self::StopTestRun) - cancel ongoing test run
+//!   - [`DidTestItemDiscoveryStart`](Self::DidTestItemDiscoveryStart) - discovery progress event
+//!   - `TestRunStarted`/`TestItemStarted`/`TestItemPassed`/`TestItemFailed`/`TestRunEnded` - events
+//! - Data types: `TestControllerState`, `TestItemState`, `TestRunProfile`, `TestResultState`
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -42,9 +90,13 @@ use super::{MountainEnvironment::MountainEnvironment, Utility};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TestControllerState {
 	pub ControllerIdentifier:String,
+
 	pub Label:String,
+
 	pub SideCarIdentifier:Option<String>,
+
 	pub IsActive:bool,
+
 	pub SupportedTestTypes:Vec<String>,
 }
 
@@ -52,10 +104,15 @@ struct TestControllerState {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 enum TestRunStatus {
 	Queued,
+
 	Running,
+
 	Passed,
+
 	Failed,
+
 	Skipped,
+
 	Errored,
 }
 
@@ -63,10 +120,15 @@ enum TestRunStatus {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct TestResult {
 	pub TestIdentifier:String,
+
 	pub FullName:String,
+
 	pub Status:TestRunStatus,
+
 	pub DurationMs:Option<u64>,
+
 	pub ErrorMessage:Option<String>,
+
 	pub StackTrace:Option<String>,
 }
 
@@ -74,9 +136,13 @@ struct TestResult {
 #[derive(Debug, Clone)]
 struct TestRun {
 	pub RunIdentifier:String,
+
 	pub ControllerIdentifier:String,
+
 	pub Status:TestRunStatus,
+
 	pub StartedAt:std::time::Instant,
+
 	pub Results:HashMap<String, TestResult>,
 }
 
@@ -84,6 +150,7 @@ struct TestRun {
 #[derive(Debug)]
 pub struct TestProviderState {
 	pub Controllers:HashMap<String, TestControllerState>,
+
 	pub ActiveRuns:HashMap<String, TestRun>,
 }
 
@@ -108,9 +175,13 @@ impl TestController for MountainEnvironment {
 
 		let ControllerState = TestControllerState {
 			ControllerIdentifier:ControllerId.clone(),
+
 			Label,
+
 			SideCarIdentifier,
+
 			IsActive:true,
+
 			SupportedTestTypes:vec!["unit".to_string(), "integration".to_string()],
 		};
 
@@ -118,6 +189,7 @@ impl TestController for MountainEnvironment {
 		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
 
 		StateGuard.Controllers.insert(ControllerId.clone(), ControllerState);
+
 		drop(StateGuard);
 
 		// Notify the frontend about the new test controller
@@ -154,11 +226,16 @@ impl TestController for MountainEnvironment {
 
 		// Create a new test run
 		let RunIdentifier = Uuid::new_v4().to_string();
+
 		let TestRun = TestRun {
 			RunIdentifier:RunIdentifier.clone(),
+
 			ControllerIdentifier:ControllerIdentifier.clone(),
+
 			Status:TestRunStatus::Queued,
+
 			StartedAt:std::time::Instant::now(),
+
 			Results:HashMap::new(),
 		};
 
@@ -188,6 +265,7 @@ impl TestController for MountainEnvironment {
 				"[TestProvider] Native test controllers not yet implemented for '{}'",
 				ControllerIdentifier
 			);
+
 			Self::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Skipped).await;
 		}
 
@@ -203,8 +281,11 @@ impl MountainEnvironment {
 	/// Runs tests via a proxied sidecar test controller.
 	async fn RunProxiedTests(
 		&self,
+
 		SideCarIdentifier:&str,
+
 		RunIdentifier:&str,
+
 		TestRunRequest:Value,
 	) -> Result<(), CommonError> {
 		info!(
@@ -218,9 +299,12 @@ impl MountainEnvironment {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 
 		let RPCMethod = format!("{}$runTests", ProxyTarget::ExtHostTesting.GetTargetPrefix());
+
 		let RPCParams = json!({
 			"RunIdentifier": RunIdentifier,
+
 			"TestRunRequest": TestRunRequest,
+
 		});
 
 		match IPCProvider
@@ -234,6 +318,7 @@ impl MountainEnvironment {
 
 					// Determine final status based on results
 					let FinalStatus = Self::CalculateRunStatus(self, RunIdentifier).await;
+
 					Self::UpdateRunStatus(self, RunIdentifier, FinalStatus).await;
 
 					info!(
@@ -242,13 +327,17 @@ impl MountainEnvironment {
 					);
 				} else {
 					error!("[TestProvider] Failed to parse test results for run '{}'", RunIdentifier);
+
 					Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
 				}
 				Ok(())
 			},
+
 			Err(Error) => {
 				error!("[TestProvider] Failed to run tests: {}", Error);
+
 				Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
+
 				Err(Error)
 			},
 		}
@@ -269,7 +358,9 @@ impl MountainEnvironment {
 					"sky://test/run-status-changed",
 					json!({
 						"RunIdentifier": RunIdentifier,
+
 						"Status": Status,
+
 					}),
 				)
 				.map_err(|Error| {
@@ -305,6 +396,7 @@ impl MountainEnvironment {
 				TestRunStatus::Passed // No tests considered passed
 			} else {
 				let HasFailed = TestRun.Results.values().any(|r| r.Status == TestRunStatus::Failed);
+
 				let HasErrored = TestRun.Results.values().any(|r| r.Status == TestRunStatus::Errored);
 
 				if HasErrored {

@@ -1,5 +1,104 @@
-// File: Mountain/Source/Environment/SecretProvider.rs
-// Role: Implements the `SecretProvider` trait for the `MountainEnvironment`.
+//! # SecretProvider (Environment)
+//!
+//! Implements the `SecretProvider` trait for `MountainEnvironment`, providing
+//! secure storage and retrieval of secrets (passwords, tokens, keys) with
+//! optional integration with system keychains and the Air service.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Secret Storage
+//! - Store secrets securely in encrypted format
+//! - Support multiple secret types (passwords, API keys, tokens)
+//! - Provide per-secret access control and metadata
+//! - Handle secret creation, update, and deletion
+//!
+//! ### 2. Secret Retrieval
+//! - Retrieve stored secrets by key
+//! - Cache frequently accessed secrets for performance
+//! - Support secret resolution with fallbacks
+//! - Handle missing or expired secrets gracefully
+//!
+//! ### 3. Security
+//! - Encrypt secrets at rest using strong cryptography
+//! - Optional integration with system keychain (macOS Keychain, Windows DPAPI, etc.)
+//! - Secure memory handling for secret values
+//! - Audit logging for secret access (optional)
+//!
+//! ### 4. Air Integration (Optional)
+//! - Delegate secret storage to Air service when available
+//! - Support cloud-synced secrets across devices
+//! - Handle Air service availability failures with fallback
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! SecretProvider is the **secure credential manager** for Mountain:
+//!
+//! ```text
+//! Provider ──► Store/Retrieve ──► Secret Storage (Local or Air)
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: Security capability provider
+//! - Implements `CommonLibrary::Secret::SecretProvider` trait
+//! - Accessible via `Environment.Require<dyn SecretProvider>()`
+//!
+//! ### Secret Storage Backends
+//! - **Local Storage**: Encrypted file in app data directory (default)
+//! - **System Keychain**: Platform-native secure storage (optional)
+//! - **Air Service**: Cloud-based secret management (optional, feature-gated)
+//!
+//! ### Dependencies
+//! - `ApplicationState`: For storage paths and state
+//! - `ConfigurationProvider`: To read security settings
+//! - `Log`: Secret access auditing (if enabled)
+//!
+//! ### Dependents
+//! - Authentication flows: Store and retrieve OAuth tokens
+//! - Git credentials: Store SCM passwords and tokens
+//! - Extension secrets: Extension-specific API keys
+//! - System secrets: Mountain service account credentials
+//!
+//! ## SECURITY CONSIDERATIONS
+//!
+//! - Secrets are never logged or exposed in error messages
+//! - Secret values are zeroed from memory after use
+//! - Access to secret storage should be audited
+//! - Consider rate limiting secret retrieval attempts
+//! - Implement secret expiration and rotation policies
+//!
+//! ## PERFORMANCE
+//!
+//! - Secret lookups are cached to avoid repeated decryption
+//! - Async operations to avoid blocking the UI
+//! - Consider lazy loading for rarely used secrets
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/platform/secrets/common/secrets.ts` - Secret storage API
+//! - `vs/platform/secrets/electron-simulator/electronSecretStorage.ts` - Keychain integration
+//!
+//! ## TODO
+//!
+//! - [ ] Implement system keychain integration (macOS Keychain, Windows DPAPI, libsecret)
+//! - [ ] Add secret encryption with hardware-backed keys (TPM, Secure Enclave)
+//! - [ ] Implement secret versioning and history
+//! - [ ] Add secret access control lists (ACL) per provider
+//! - [ ] Support secret sharing between extensions
+//! - [ ] Implement secret backup and restore
+//! - [ ] Add secret expiration and automatic rotation
+//! - [ ] Support secret references (pointer to external secret)
+//! - [ ] Implement secret audit trail and compliance reporting
+//! - [ ] Add secret strength validation and generation
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`SecretProvider`]: Main struct implementing the trait
+//! - Secret storage and retrieval methods
+//! - Encryption/decryption helpers
+//! - System keychain abstraction
+//! - Air service delegation logic
+
 // Responsibilities:
 //   - Securely store and retrieve secrets using the OS keychain.
 //   - Provide a consistent API across platforms (Windows, macOS, Linux).

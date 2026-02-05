@@ -1,37 +1,55 @@
-// File: Mountain/Source/Environment/Utility.rs
-//
-// # Architectural Role: Shared Utility Functions for Environment Providers
-//
-// This module provides common helper functions used across all provider
-// implementations in the MountainEnvironment module. These utilities handle
-// cross-cutting concerns like error mapping, path manipulation, security
-// validation, and type conversions.
-//
-// # Responsibilities
-//
-// 1. **Error Mapping**: Converts Mutex lock poisoning errors to CommonError
-//    variants
-// 2. **Language Detection**: Infers language identifiers from file extensions
-// 3. **Security Validation**: Enforces workspace trust and path access rules
-// 4. **URI Conversion**: Converts VSCode UriComponents DTOs to Rust Url types
-//
-// # Security Model
-//
-// The IsPathAllowedForAccess function enforces a security boundary where:
-// - All file operations require a trusted workspace
-// - Only paths within registered workspace folders are accessible
-// - This prevents extensions from accessing arbitrary system files
-// - The trust status is atomic and threadsafe
-//
-// # TODOs
-//
-// - [ ] Add more comprehensive language detection (e.g., from .editorconfig)
-// - [ ] Implement path normalization to prevent directory traversal attacks
-// - [ ] Add caching for language detection results
-// - [ ] Consider adding symbolic link resolution with security checks
-// - [ ] Add support for custom language mappings from user settings
-// - [ ] Implement path-based permission levels (read-only, read/write)
-// - [ ] Add audit logging for path access attempts
+//! # Utility (Environment)
+//!
+//! Shared utility functions used across all Environment provider implementations
+//! in [`MountainEnvironment`](crate::Environment::MountainEnvironment::MountainEnvironment).
+//! These handle cross-cutting concerns: error mapping, security validation,
+//! language detection, and URI conversions.
+//!
+//! RESPONSIBILITIES:
+//! - **Error Mapping**: Convert `PoisonError` from Mutex locks to [`CommonError::StateLockPoisoned`]
+//! - **Security Validation**: Enforce workspace trust and path access boundaries via [`IsPathAllowedForAccess`]
+//! - **Language Detection**: Infer language identifiers from file extensions (basic mapping)
+//! - **URI Conversion**: Parse VS Code `UriComponents` DTOs into Rust [`Url`] types
+//!
+//! SECURITY MODEL:
+//! - [`IsPathAllowedForAccess`] is the primary security gate for all filesystem operations:
+//!   - Requires workspace trust (`ApplicationState.IsTrusted`)
+//!   - Path must be within one of the registered workspace folders
+//!   - Prevents extensions from accessing arbitrary system files
+//!   - Trust status is atomic and thread-safe via `AtomicBool`
+//!
+//! ERROR HANDLING:
+//! - All functions return [`CommonError`](CommonLibrary::Error::CommonError) on failure
+//! - Mutex lock poisoning is mapped to `StateLockPoisoned` with context
+//! - Path access violations return `FileSystemPermissionDenied`
+//! - URI parsing failures return `InvalidArgument` with descriptive reason
+//!
+//! PERFORMANCE:
+//! - Language detection is O(1) match on file extension
+//! - Path validation iterates workspace folders (O(n), but typically small n)
+//! - TODO: Add caching for language detection results
+//!
+//! VS CODE REFERENCE:
+//! - `vs/base/common/network.ts` - URI handling and conversion
+//! - `vs/workbench/services/files/common/fileService.ts` - path validation patterns
+//! - `vs/workbench/common/resources.ts` - workspace trust model
+//!
+//! TODO:
+//! - Add more comprehensive language detection (from .editorconfig, shebang, etc.)
+//! - Implement path normalization to prevent directory traversal attacks
+//! - Add caching for language detection results (LRU cache)
+//! - Consider adding symbolic link resolution with security checks
+//! - Add support for custom language mappings from user settings
+//! - Implement path-based permission levels (read-only, read/write per folder)
+//! - Add audit logging for path access attempts (security monitoring)
+//! - Consider using `path_slash` crate for cross-platform path normalization
+//!
+//! MODULE CONTENTS:
+//! - [`MapApplicationStateLockErrorToCommonError`](Self::MapApplicationStateLockErrorToCommonError)
+//! - [`MapLockErrorToCommonError`](Self::MapLockErrorToCommonError)
+//! - [`DetectLanguageIdentifierFromFilePath`](Self::DetectLanguageIdentifierFromFilePath)
+//! - [`IsPathAllowedForAccess`](Self::IsPathAllowedForAccess)
+//! - [`GetURLFromURIComponentsDTO`](Self::GetURLFromURIComponentsDTO)
 
 use std::{
 	ffi::OsStr,

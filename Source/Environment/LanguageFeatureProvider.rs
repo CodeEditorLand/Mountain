@@ -1,63 +1,76 @@
-// File: Mountain/Source/Environment/LanguageFeatureProvider.rs
-// Role: Implements the `LanguageFeatureProviderRegistry` trait for the
-// `MountainEnvironment`. Responsibilities:
-//   - The central hub for all language intelligence features.
-//   - Routes requests from the application to the appropriate extension
-//     provider hosted in the `Cocoon` sidecar.
-//   - Manages the registration and lifecycle of language providers.
-//   - Handles JSON-RPC to Effect conversions for LSP features.
-//   - Provides provider scoring and selection based on document selectors.
-//   - Manages language server lifecycle (initialization, shutdown).
-//
-// TODOs:
-//   - Implement language server lifecycle management (start/stop/restart)
-//   - Add provider fallback chain: Air (cached) → Cocoon (LSP) → Local (basic)
-//   - Implement provider priority scoring based on selector specificity
-//   - Add scheme and pattern matching in document selectors
-//   - Add exclude pattern support
-//   - Handle LSP capability negotiation
-//   - Implement request cancellation through CancellationToken
-//   - Add performance metrics and logging for feature invocation
-//   - Support incremental synchronization for large files
-//   - Add semantic tokens support
-//   - Implement call hierarchy provider
-//   - Add inlay hints support
-
-//! # LanguageFeatureProvider Implementation
+//! # LanguageFeatureProvider (Environment)
 //!
-//! Implements the `LanguageFeatureProviderRegistry` trait for the
-//! `MountainEnvironment`. This provider is the central hub for all language
-//! intelligence features, routing requests from the application to the
-//! appropriate extension provider hosted in the `Cocoon` sidecar.
+//! RESPONSIBILITIES:
+//! - Implements [`LanguageFeatureProviderRegistry`](CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry)
+//!   for [`MountainEnvironment`]
+//! - Central hub for all language intelligence features (completion, hover, definition, etc.)
+//! - Routes language feature requests to appropriate extension providers in Cocoon
+//! - Manages provider registration, scoring, and selection based on document selectors
+//! - Handles JSON-RPC to LSP (Language Server Protocol) conversions
+//! - Supports all major LSP features: hover, completion, definition, references,
+//!   formatting, code actions, rename, semantic tokens, inlay hints, folding ranges
 //!
-//! Inspired by VSCode's language feature registry which:
-//! - Scores providers based on selector specificity
-//! - Supports multiple providers per feature with resolution
-//! - Handles capability negotiation with language servers
-//! - Manages provider lifecycle and state
+//! ARCHITECTURAL ROLE:
+//! - Core provider enabling language intelligence across the editor
+//! - Uses provider registry pattern with numeric handles for efficient lookup
+//! - Each extension can register multiple providers for different file types
+//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC to Cocoon
+//! - Provider metadata stored in [`ApplicationState`](crate::ApplicationState::ApplicationState)
+//! - TODO: Consider fallback chain: Air (cached) → Cocoon (LSP) → Local (basic)
 //!
-//! LSP Feature Support:
-//! - Hover: Provide rich information at cursor position
-//! - Completion: Intelligent code completion with context
-//! - Definition: Jump to symbol definitions
-//! - References: Find all symbol usages
-//! - Document Formatting: Format entire documents
-//! - Range Formatting: Format document ranges
-//! - Code Actions: Quick fixes and refactorings
-//! - Code Lenses: Decorations with inline actions
-//! - Document Highlights: Highlight symbol occurrences
-//! - Document Links: Navigation for embedded resources
-//! - Signature Help: Parameter information during function calls
-//! - Type Definition: Jump to type definitions
-//! - Implementation: Find interface implementations
-//! - Rename: Symbol renaming with workspace update
-//! - Semantic Tokens: Syntax highlighting with semantic info
-//! - Inlay Hints: Parameter and type hints inline
-//! - Folding Ranges: Code folding regions
+//! PROVIDER SCORING:
+//! - Providers are scored based on selector specificity (language, scheme, pattern)
+//! - Higher scores win; ties broken by registration order
+//! - Selector matching uses language identifier, URI scheme, and glob patterns
+//! - TODO: Implement proper scoring algorithm with specificity weights
 //!
-//! TODO (Mountain→Air Split): If Air provides advanced completion or indexing
-//! services, consider adding a fallback provider chain: Air (cached/indexed)
-//! → Cocoon (LSP) → Local (basic). Current implementation uses Cocoon only.
+//! ERROR HANDLING:
+//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
+//! - Validates provider type and selector presence during registration
+//! - Unknown provider handle errors return `TestControllerNotFound` (should be specialized)
+//! - Feature requests failing to find provider return `ProviderNotFound` errors
+//!
+//! PERFORMANCE:
+//! - Provider lookup should be O(1) via handle hash map in ApplicationState
+//! - Feature requests are async and non-blocking
+//! - TODO: Add provider caching for frequently used features
+//! - TODO: Implement request cancellation via CancellationToken for long-running operations
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/contrib/editor/browser/editor.contribution.ts` - language feature registration
+//! - `vs/workbench/services/languageserver/common/languageServer.ts` - LSP lifecycle
+//! - `vs/workbench/contrib/quickfix/browser/quickfix.ts` - code actions
+//! - `vs/workbench/contrib/hover/browser/hover.ts` - hover provider
+//! - `vs/workbench/contrib/completion/browser/completion.ts` - completion provider
+//!
+//! TODO:
+//! - Implement language server lifecycle management (start/stop/restart)
+//! - Add provider fallback chain: Air (cached) → Cocoon (LSP) → Local (basic)
+//! - Implement provider priority scoring based on selector specificity
+//! - Add scheme and pattern matching in document selectors
+//! - Add exclude pattern support
+//! - Handle LSP capability negotiation
+//! - Implement request cancellation through CancellationToken
+//! - Add performance metrics and logging for feature invocation
+//! - Support incremental synchronization for large files
+//! - Add semantic tokens support with proper token modifiers
+//! - Implement call hierarchy provider (calls to and from)
+//! - Add inlay hints support (parameter, type, inline variable hints)
+//! - Implement type hierarchy provider
+//! - Add workspace symbol support
+//! - Support linked editing range (rename multiple occurrences)
+//!
+//! MODULE CONTENTS:
+//! - [`LanguageFeatureProviderRegistry`](CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry) implementation:
+//!   - [`RegisterProvider`](Self::RegisterProvider) - register extension provider with selector
+//!   - [`UnregisterProvider`](Self::UnregisterProvider) - remove provider by handle
+//!   - [`GetMatchingProvider`](Self::GetMatchingProvider) - score and select provider for document
+//!   - LSP feature methods: [`Hover`](Self::Hover), [`Completion`](Self::Completion),
+//!     [`Definition`](Self::Definition), [`References`](Self::References),
+//!     [`Formatting`](Self::Formatting), [`CodeActions`](Self::CodeActions),
+//!     [`Rename`](Self::Rename), [`SemanticTokens`](Self::SemanticTokens), etc.
+//! - Data types: `ProviderRegistrationDTO`, `ProviderType`, `HoverResultDTO`,
+//!   `CompletionListDTO`, `CompletionContextDTO`, `LocationDTO`, `PositionDTO`
 
 use std::sync::Arc;
 

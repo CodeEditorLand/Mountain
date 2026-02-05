@@ -1,19 +1,121 @@
-// File: Mountain/Source/FileSystem/FileExplorerViewProvider.rs
-// Role: A native (Rust-implemented) TreeViewProvider for the file explorer
-// view. Responsibilities:
-//   - Provide the root-level items (workspace folders).
-//   - Provide the children for a given directory URI by reading the file
-//     system.
-//   - Construct `TreeItemDTO` JSON values for each file and directory.
-//
-// NOTE: This is a native provider, so it doesn't need to implement methods
-// called *by* extensions (like `RegisterTreeDataProvider`). It only implements
-// the "pull" methods called *by the host* (`GetChildren`, `GetTreeItem`).
-
-//! # File Explorer View Provider
+//! # FileExplorerViewProvider (FileSystem)
 //!
-//! A native (Rust-implemented) TreeViewProvider that provides the data for
-//! the file explorer view.
+//! A native (Rust-implemented) `TreeViewProvider` that provides the data for
+//! the file explorer (tree) view in Mountain. This is a **native provider**,
+//! meaning it is implemented directly in Rust rather than being provided by an
+//! extension.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Root-Level Items (Workspace Folders)
+//! - Return the list of workspace folders as root tree nodes
+//! - Each folder appears as a collapsible node at the top level
+//! - Folder names are displayed as labels
+//!
+//! ### 2. Directory Listing
+//! - Provide children for a given directory URI (via `GetChildren`)
+//! - Read filesystem to enumerate files and subdirectories
+//! - Return appropriate `TreeItemDTO` for each entry
+//! - Handle permissions errors gracefully
+//!
+//! ### 3. Tree Item Construction
+//! - Build `TreeItemDTO` JSON objects with proper structure:
+//!   - `handle`: Unique identifier (file URI)
+//!   - `label`: Display name
+//!   - `collapsibleState`: 1 for directories, 0 for files
+//!   - `resourceUri`: File URI with `external` property
+//!   - `command`: Open file command for leaf nodes
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! The FileExplorerViewProvider is a **native TreeViewProvider**:
+//!
+//! ```text
+//! TreeView API ──► FileExplorerViewProvider ──► FileSystem ReadDirectory/ReadFile
+//!                          │
+//!                          └─► Returns TreeItemDTO JSON
+//! ```
+//!
+//! ### Position in Mountain
+//! - `FileSystem` module: File system operations
+//! - Implements `CommonLibrary::TreeView::TreeViewProvider` trait
+//! - Registered as provider in `ApplicationState::ActiveTreeViews`
+//!
+//! ### Differences from Extension Providers
+//! - **Native Provider**: Direct Rust implementation, no extension hosting
+//! - **Read-Only**: Only implements "pull" methods (`GetChildren`, `GetTreeItem`)
+//! - **No Push Methods**: Does not use `RegisterTreeDataProvider`, `RefreshTreeView`, etc.
+//! - **No Sidecar**: No extension host communication overhead
+//!
+//! ### Dependencies
+//! - `CommonLibrary::FileSystem::ReadDirectory` and `ReadFile`: Filesystem access
+//! - `CommonLibrary::TreeView::TreeViewProvider`: Provider trait
+//! - `ApplicationRunTime`: Effect execution
+//! - `ApplicationState`: Workspace folder access
+//!
+//! ### Dependents
+//! - `Binary::Main::Fn`: Creates and registers provider instance
+//! - TreeView UI component: Requests data via provider methods
+//! - Command handlers: Trigger tree view operations
+//!
+//! ## TREE ITEM DTO STRUCTURE
+//!
+//! Each tree item is a JSON object compatible with VS Code's `TreeItem`:
+//!
+//! ```json
+//! {
+//!   "handle": "file:///path/to/item",
+//!   "label": { "label": "itemName" },
+//!   "collapsibleState": 1,
+//!   "resourceUri": { "external": "file:///path/to/item" },
+//!   "command": {
+//!     "id": "vscode.open",
+//!     "title": "Open File",
+//!     "arguments": [{ "external": "file:///path/to/item" }]
+//!   }
+//! }
+//! ```
+//!
+//! ## METHODS OVERVIEW
+//!
+//! - `GetChildren`: Returns child items for a given parent directory
+//! - `GetTreeItem`: Returns a single tree item for a given handle (URI)
+//! - Other `TreeViewProvider` methods (push-based) are no-ops for native providers
+//!
+//! ## ERROR HANDLING
+//!
+//! - Filesystem errors are converted to `CommonError::FileSystemIO`
+//! - Invalid URIs return `CommonError::InvalidArgument`
+//! - Permission errors are logged and empty results returned
+//!
+//! ## PERFORMANCE
+//!
+//! - Directory reads are async via `ApplicationRunTime`
+//! - Each `GetChildren` call reads the directory from disk
+//! - Consider caching for large directories (TODO)
+//! - Stat calls are minimized by using directory entry metadata
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/workbench/contrib/files/browser/filesViewProvider.ts`: File tree provider
+//! - `vs/platform/workspace/common/workspace.ts`: Tree item DTO structure
+//!
+//! ## TODO
+//!
+//! - [ ] Implement tree item caching for better performance
+//! - [ ] Add file icon decoration based on file type
+//! - [ ] Support drag-and-drop operations
+//! - [ ] Add file/folder filtering (gitignore, exclude patterns)
+//! - [ ] Implement tree state persistence (expanded/collapsed)
+//! - [ ] Add file change notifications (watch for file system events)
+//! - [ ] Support virtual workspace folders (non-file URIs)
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`FileExplorerViewProvider`]: Main provider struct
+//! - [`CreateTreeItemDTO`]: Helper to build tree item JSON
+
 
 use std::sync::Arc;
 

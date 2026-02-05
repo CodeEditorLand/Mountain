@@ -1,13 +1,129 @@
-// File: Mountain/Source/Environment/CommandProvider.rs
-//
-// # Architectural Role: Command Registration and Execution
-//
-// CommandProvider implements the CommandExecutor trait, serving as the central
-// registry and dispatcher for all commands in the Mountain application.
-// Commands can be handled either by native Rust handlers or proxied to
-// extension sidecar processes.
-//
-// # Responsibilities
+//! # CommandProvider (Environment)
+//!
+//! Implements the `CommandExecutor` trait, serving as the central registry and
+//! dispatcher for all commands in the Mountain application. Commands can be
+//! handled either by native Rust handlers or proxied to extension sidecar
+//! processes.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Command Registry
+//! - Maintain centralized registry of all registered commands
+//! - Store command metadata (id, title, category, flags)
+//! - Track command source (native vs extension)
+//! - Support command enablement/disable state
+//!
+//! ### 2. Command Dispatching
+//! - Route command execution requests to appropriate handlers
+//! - Execute native commands directly via function calls
+//! - Proxy extension commands via IPC to sidecar processes
+//! - Handle command result propagation and error translation
+//!
+//! ### 3. Command Execution Context
+//! - Provide `CommandExecutor` capability to command handlers
+//! - Manage command scope (text editor, file system, etc.)
+//! - Track command invocation source and user context
+//! - Support command cancellation for long-running operations
+//!
+//! ### 4. Command Discovery
+//! - Enumerate all registered commands for UI display
+//! - Support command palette and quick open
+//! - Provide command categories and visibility rules
+//! - Handle command contribution points from extensions
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! CommandProvider is the **command execution hub** for Mountain:
+//!
+//! ```text
+//! Command Caller ──► CommandProvider ──► Handler (Native or Extension)
+//!       │                            │
+//!       └─► ExecuteCommand() ───────► Execute
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: Core capability provider
+//! - Implements `CommonLibrary::Command::CommandExecutor` trait
+//! - Accessible via `Environment.Require<dyn CommandExecutor>()`
+//!
+//! ### Command Sources
+//! - **Native Commands**: Defined in Rust, registered at startup
+//! - **Extension Commands**: Defined in package.json, contributed by extensions
+//! - **Built-in Commands**: Core Mountain functionality
+//! - **User-defined Commands**: Custom macros and keybindings (future)
+//!
+//! ### Dependencies
+//! - `ApplicationState`: Command registry storage
+//! - `IPCProvider`: For proxying to extension sidecars
+//! - `Log`: For command execution tracing
+//!
+//! ### Dependents
+//! - All command handlers: Use `CommandExecutor` to execute other commands
+//! - `DispatchLogic`::`DispatchFrontendCommand`: Main entry point
+//! - Tauri command handlers: Many invoke `ExecuteCommand`
+//! - Keybinding system: Trigger commands via keyboard shortcuts
+//!
+//! ## COMMAND EXECUTION FLOW
+//!
+//! 1. **Request**: Caller invokes `ExecuteCommand(command_id, args)`
+//! 2. **Lookup**: Provider looks up command in `ApplicationState::CommandRegistry`
+//! 3. **Handler**: Retrieves the associated handler (native function or extension RPC)
+//! 4. **Execute**: Calls handler with arguments
+//! 5. **Result**: Returns serialized JSON result or error
+//!
+//! ## NATIVE vs EXTENSION COMMANDS
+//!
+//! ### Native Commands
+//! - Implemented directly in Rust
+//! - Registered via `RegisterCommand` function
+//! - Handler is a function pointer or Arc<Fn>
+//! - Zero IPC overhead, direct call
+//!
+//! ### Extension Commands
+//! - Defined in extension's `package.json` `contributes.commands`
+//! - Registered when extension is activated
+//! - Handler is RPC method to extension sidecar
+//! - Goes through IPC layer with serialization
+//!
+//! ## ERROR HANDLING
+//!
+//! - Command not found: Returns `CommonError::InvalidArgument`
+//! - Handler errors: Propagated as `CommonError`
+//! - IPC failures: Converted to `CommonError::IPCError`
+//! - Serialization failures: `CommonError::SerializationError`
+//!
+//! ## PERFORMANCE
+//!
+//! - Native commands: Near-zero overhead (direct function call)
+//! - Extension commands: IPC serialization + network latency
+//! - Command lookup: HashMap lookup by string ID (fast)
+//! - Consider caching frequently used command results
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Borrowed from VS Code's command system:
+//! - `vs/platform/commands/common/commands.ts` - Command definitions
+//! - `vs/workbench/services/commands/common/commandService.ts` - Command registry
+//! - `vs/platform/commands/common/commandExecutor.ts` - Command execution
+//!
+//! ## TODO
+//!
+//! - [ ] Implement command contribution points from extensions
+//! - [ ] Add command enablement/disable state management
+//! - [ ] Support command categories and grouping
+//! - [ ] Add command history and undo/redo stack
+//! - [ ] Implement command keyboard shortcut resolution
+//! - [ ] Add command telemetry (usage metrics)
+//! - [ ] Support command aliases and deprecation
+//! - [ ] Add command permission validation
+//! - [ ] Implement command batching for related operations
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`CommandProvider`]: Main struct implementing `CommandExecutor`
+//! - Command registration functions (to be added)
+//! - Extension command proxy logic
+
 //
 // 1. **Command Registry**: Maintains a centralized registry of all registered
 //    commands and their corresponding handlers (native or proxied).

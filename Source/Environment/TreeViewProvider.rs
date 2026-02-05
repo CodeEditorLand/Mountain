@@ -1,25 +1,166 @@
-// ============================================================================
-// File: Mountain/Source/Environment/TreeViewProvider.rs
-// ============================================================================
-// # TreeViewProvider Implementation
-//
-// Implements the `TreeViewProvider` trait for the `MountainEnvironment`.
-// This provider manages the lifecycle of custom tree views and orchestrates the
-// data flow between the extension host (`Cocoon`) and the UI (`Sky`).
-//
-// ## Key Features:
-// - Tree view registration and lifecycle management
-// - Tree data provider dispatching (native/proxied)
-// - Tree state persistence and restoration
-// - Lazy loading and selection handling
-// - Drag and drop support
-// - Badge and message management
-//
-// ## VSCode Reference:
-// - vs/workbench/api/browser/mainThreadTreeViews.ts
-// - vs/workbench/api/common/extHostTreeViews.ts
-//
-// ============================================================================
+//! # TreeViewProvider (Environment)
+//!
+//! Implements the `TreeViewProvider` trait for `MountainEnvironment`, managing
+//! the lifecycle of custom tree views and orchestrating data flow between the
+//! extension host (Cocoon) and the UI (Sky).
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Tree View Registration
+//! - Register tree view providers from extensions via `RegisterTreeDataProvider`
+//! - Create and store tree view state in `ApplicationState.ActiveTreeViews`
+//! - Manage tree view identifiers and view types
+//! - Handle tree view unregistration and cleanup
+//!
+//! ### 2. Data Provider Dispatching
+//! - Route tree data requests to appropriate provider (native or extension)
+//! - Support both native Rust providers and extension-sidecar providers
+//! - Handle `GetChildren`, `GetTreeItem`, `OnTreeSelectionChanged`, etc.
+//! - Ensure thread-safe access to provider state
+//!
+//! ### 3. Tree State Management
+//! - Track tree view options (title, description, message, badge)
+//! - Manage tree item visibility and selection state
+//! - Persist tree state across sessions (expanded/collapsed nodes)
+//! - Support tree view state restoration
+//!
+//! ### 4. UI Events & Notifications
+//! - Handle tree node expansion/collapse events
+//! - Process tree item selection changes
+//! - Emit events to Sky for UI updates
+//! - Support `RefreshTreeView` for manual updates
+//!
+//! ### 5. Advanced Features
+//! - Drag-and-drop support (`HasHandleDrag`, `HasHandleDrop`)
+//! - Multi-selection support (`CanSelectMany`)
+//! - Badge display on tree items
+//! - Message display above tree view
+//! - Title and description updates
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! TreeViewProvider is the **tree view orchestration layer**:
+//!
+//! ```text
+//! Extension ──► RegisterTreeDataProvider ──► TreeViewProvider ──► Sky TreeView
+//!                     │                              │
+//!                     └─► IPC Calls ──► Cocoon ◄────┘
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: UI tree capability provider
+//! - Implements `CommonLibrary::TreeView::TreeViewProvider` trait
+//! - Accessible via `Environment.Require<dyn TreeViewProvider>()`
+//!
+//! ### Tree View Provider Types
+//!
+//! **Native Provider**:
+//! - Implemented directly in Rust
+//! - Example: `FileExplorerViewProvider`
+//! - Direct function calls (no IPC)
+//! - High performance, full control
+//!
+//! **Extension Provider**:
+//! - Implemented in extension (TypeScript/JavaScript)
+//! - Runs in Cocoon sidecar process
+//! - Accessed via IPC (`SendNotificationToSideCar`)
+//! - Isolated, sandboxed, extensible
+//!
+//! ### Data Flow
+//!
+//! 1. **Registration**: Extension calls `RegisterTreeDataProvider(viewId, options)`
+//! 2. **Initial Request**: Sky calls `GetChildren(viewId, parentHandle)` for root
+//! 3. **Provider Call**: TreeViewProvider routes to provider's `GetChildren`
+//! 4. **Result**: Provider returns `TreeItemDTO` JSON objects
+//! 5. **Display**: Sky renders tree items in UI
+//! 6. **User Action**: User expands/clicks/selects items
+//! 7. **Events**: Sky calls `OnTreeNodeExpanded`, `OnTreeSelectionChanged`, etc.
+//!
+//! ### Dependencies
+//! - `ApplicationState`: Tree view state storage (`ActiveTreeViews`)
+//! - `IPCProvider`: For extension provider communication
+//! - `Log`: Tree view operation logging
+//!
+//! ### Dependents
+//! - Extensions: Register tree views for Explorer, Outline, etc.
+//! - Native providers: FileExplorer, SymbolTree, etc.
+//! - `Binary::Bootstrap::RegisterTreeViewProviders`: Initial registration
+//! - Sky UI: Tree view component requests data
+//!
+//! ## TREE ITEM DTO
+//!
+//! `TreeItemDTO` structure (JSON):
+//! - `handle`: Unique identifier for the item
+//! - `label`: Display label (with `label` property)
+//! - `collapsibleState`: 0=none, 1=collapsed, 2=expanded
+//! - `resourceUri`: URI for the item (file, folder, symbol)
+//! - `command`: Command to execute on activation (click/double-click)
+//! - `description`: Secondary text (right-aligned)
+//! - `iconPath`: Icon for the item (theme aware)
+//! - `contextValue`: Context for theming and keybindings
+//!
+//! ## TREE VIEW OPTIONS
+//!
+//! `TreeViewOptionsDTO` during registration:
+//! - `canSelectMany`: Allow multi-selection (Ctrl+Click)
+//! - `canHide`: Allow user to hide tree view
+//! - `hasFileIcon`: Show file icons next to items
+//! - `hasDecoration`: Show tooltips and badges
+//! - `dragAndDrop`: Enable drag-and-drop
+//! - `canRename`: Allow renaming tree items
+//! - `canDelete`: Allow deleting tree items
+//! - `menu`: Context menu contributions
+//! - `selectOnFocus`: Select item when tree gains focus
+//!
+//! ## ERROR HANDLING
+//!
+//! - Provider not found: `CommonError::InvalidArgument`
+//! - Provider error: Propagate as `CommonError`
+//! - IPC failure: `CommonError::IPCError`
+//! - Invalid tree item: `CommonError::InvalidArgument`
+//! - State lock errors: `CommonError::StateLockPoisoned`
+//!
+//! ## PERFORMANCE
+//!
+//! - Tree data providers should be lazy (load children on demand)
+//! - Cache tree item results to avoid redundant computation
+//! - Use `RefreshTreeView` sparingly (expensive operation)
+//! - Consider background loading for large trees
+//! - Limit child count per node (paging for very large directories)
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/workbench/api/common/extHostTreeViews.ts` - Extension API
+//! - `vs/workbench/services/views/common/treeViewService.ts` - Tree view service
+//! - `vs/platform/views/common/views.ts` - Tree view data model
+//!
+//! ## TODO
+//!
+//! - [ ] Implement tree view state persistence (expanded nodes, selection)
+//! - [ ] Add tree view theming support (custom CSS)
+//! - [ ] Support tree view filtering and search
+//! - [ ] Implement tree view sorting and ordering
+//! - [ ] Add tree view virtualization for large trees
+//! - [ ] Support tree view column rendering (like file explorer details)
+//! - [ ] Implement tree view keyboard navigation enhancements
+//! - [ ] Add tree view context menu customization
+//! - [ ] Support tree view drag-and-drop reordering
+//! - [ ] Implement tree view accessibility (screen reader, keyboard-only)
+//! - [ ] Add tree view animations (expand/collapse)
+//! - [ ] Support tree view grouping and categorization
+//! - [ ] Implement tree view configuration UI
+//! - [ ] Add tree view performance monitoring
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`TreeViewProvider`]: Main struct implementing the trait
+//! - Tree view registration and lifecycle
+//! - Provider dispatch logic (native vs extension)
+//! - Event handling (selection, expansion, etc.)
+//! - State persistence and restoration
+//! - Drag-and-drop coordination
+
 
 use std::sync::Arc;
 

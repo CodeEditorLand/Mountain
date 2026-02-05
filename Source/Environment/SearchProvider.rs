@@ -1,5 +1,117 @@
-// File: Mountain/Source/Environment/SearchProvider.rs
-// Role: Implements the `SearchProvider` trait for `MountainEnvironment`.
+//! # SearchProvider (Environment)
+//!
+//! Implements the `SearchProvider` trait for `MountainEnvironment`, providing
+//! text search capabilities across files and content within the workspace.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Search Execution
+//! - Search for text patterns in files using glob patterns
+//! - Support regular expression search
+//! - Search file contents and/or file names
+//! - Handle large result sets efficiently
+//!
+//! ### 2. Search Results
+//! - Return structured search results with matches
+//! - Include file URI, line number, column, and matching text
+//! - Support paging and result limiting
+//! - Sort results by relevance or file order
+//!
+//! ### 3. Search Configuration
+//! - Respect workspace file exclusion patterns (.gitignore)
+//! - Honor file size limits for search
+//! - Support case-sensitive and whole-word matching
+//! - Handle symbolic links appropriately
+//!
+//! ### 4. Search Cancellation
+//! - Support cancellation of long-running searches
+//! - Clean up resources on cancellation
+//! - Provide progress feedback (optional)
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! SearchProvider is the **workspace search engine**:
+//!
+//! ```text
+//! Search Request ──► SearchProvider ──► FileSystem Scan ──► Results
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: Search capability provider
+//! - Implements `CommonLibrary::Search::SearchProvider` trait
+//! - Accessible via `Environment.Require<dyn SearchProvider>()`
+//!
+//! ### Search Types Supported
+//! - **Text search**: Find files containing text pattern
+//! - **File search**: Find files by name/glob pattern
+//! - **Replace**: (Future) Search and replace operations
+//! - **Context search**: (Future) Search with surrounding context
+//!
+//! ### Dependencies
+//! - `FileSystemReader`: Read file contents for searching
+//! - `WorkspaceProvider`: Get workspace folders to search
+//! - `Log`: Search progress and errors
+//!
+//! ### Dependents
+//! - Search UI panel: User-initiated searches
+//! - Find/Replace dialogs: In-editor search
+//! - Grep-like command-line operations
+//! - Code navigation (symbol search)
+//!
+//! ## SEARCH PROCESS
+//!
+//! 1. **File Discovery**: Walk workspace directories, respecting exclusions
+//! 2. **File Filtering**: Match filenames against include/exclude patterns
+//! 3. **Content Search**: For each file, search for pattern in content
+//! 4. **Match Collection**: Record matches with position information
+//! 5. **Result Formatting**: Return structured search results
+//!
+//! ## PERFORMANCE CONSIDERATIONS
+//!
+//! - Search is I/O bound; consider async and parallel processing
+//! - Large workspaces may have thousands of files
+//! - Use file size limits to prevent memory exhaustion
+//! - Implement result paging for UI responsiveness
+//! - Consider background search indexing for faster repeated searches
+//!
+//! ## ERROR HANDLING
+//!
+//! - Permission denied: Skip file, log warning
+//! - File not found: Skip file (may have been deleted)
+//! - Encoding errors: Try default encoding, skip on failure
+//! - Search cancelled: Stop immediately, return partial results
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/workbench/contrib/search/browser/searchWidget.ts` - Search UI
+//! - `vs/platform/search/common/search.ts` - Search service API
+//! - `vs/platform/search/common/fileSearch.ts` - File system search
+//!
+//! ## TODO
+//!
+//! - [ ] Implement file content indexing for faster searches
+//! - [ ] Add regular expression support with PCRE or regex engine
+//! - [ ] Support search result paging and streaming
+//! - [ ] Add search cancellation with proper cleanup
+//! - [ ] Implement search result highlighting in UI
+//! - [ ] Support search in compressed/archive files
+//! - [ ] Add search across multiple workspaces
+//! - [ ] Implement search history and persistence
+//! - [ ] Add search filters (by language, by file size, etc.)
+//! - [ ] Support search templates and saved searches
+//! - [ ] Implement search result grouping (by folder, by file)
+//! - [ ] Add search performance metrics and logging
+//! - [ ] Support search result export (to file, clipboard)
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`SearchProvider`]: Main struct implementing the trait
+//! - Search execution methods
+//! - File walking and filtering logic
+//! - Match extraction and formatting
+//! - Search cancellation support
+
 // Responsibilities:
 //   - Perform workspace-wide text searches using `grep-searcher` (the `ripgrep`
 //     library).

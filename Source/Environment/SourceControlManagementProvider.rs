@@ -1,5 +1,142 @@
-// File: Mountain/Source/Environment/SourceControlManagementProvider.rs
-// Role: Implements the `SourceControlManagementProvider` trait for the
+//! # SourceControlManagementProvider (Environment)
+//!
+//! Implements the `SourceControlManagementProvider` trait for
+//! `MountainEnvironment`, providing Git and other source control management
+//! (SCM) capabilities to the application.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Repository Detection
+//! - Scan workspace folders for Git repositories
+//! - Detect repository root directories
+//! - Track repository state (clean, dirty, branching)
+//! - Monitor repository changes (commit, checkout, merge)
+//!
+//! ### 2. SCM Providers
+//! - Create and manage `SourceControlManagementProvider` instances
+//! - Support multiple SCM systems (Git, Mercurial, etc.)
+//! - Load extension-provided SCM providers
+//! - Route SCM operations to appropriate provider
+//!
+//! ### 3. Change Management
+//! - Track file changes (modified, added, deleted, renamed)
+//! - Provide diff information for changed files
+//! - Support staging and unstaging changes
+//! - Handle merge conflicts
+//!
+//! ### 4. Authentication
+//! - Manage SCM credentials and authentication
+//! - Support SSH keys and HTTPS tokens
+//! - Store credentials securely via `SecretProvider`
+//! - Handle authentication failures and prompts
+//!
+//! ### 5. Operations
+//! - Commit, push, pull, fetch operations
+//! - Branch management (create, delete, rename, checkout)
+//! - Merge and rebase operations
+//! - Remote management (add, remove, rename)
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! SourceControlManagementProvider is the **SCM integration layer**:
+//!
+//! ```text
+//! UI (SCM View) ──► SourceControlManagementProvider ──► Git CLI / Libgit2
+//!                              │
+//!                              └─► Extension SCM Providers
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: SCM capability provider
+//! - Implements `CommonLibrary::SourceControlManagement::SourceControlManagementProvider` trait
+//! - Accessible via `Environment.Require<dyn SourceControlManagementProvider>()`
+//!
+//! ### SCM Provider Hierarchy
+//! - **Built-in Git Provider**: Native Git implementation (preferred)
+//! - **Extension Providers**: Custom SCM support (Mercurial, SVN, etc.)
+//! - **Fallback Providers**: Basic functionality for unknown SCM types
+//!
+//! ### Dependencies
+//! - `SecretProvider`: For storing SCM credentials
+//! - `FileSystemReader` / `FileSystemWriter`: For .git operations
+//! - `Log`: SCM operation logging
+//! - External Git binary or libgit2 library
+//!
+//! ### Dependents
+//! - SCM UI view: Display repository state and changes
+//! - Source control commands: Commit, push, pull, etc.
+//! - `Binary::Main`::`MountainGetWorkbenchConfiguration`: SCM state
+//! - Extension SCM providers: Custom SCM implementations
+//!
+//! ## DATA MODEL
+//!
+//! Stored in `ApplicationState`:
+//! - `SourceControlManagementProviders`: Registered providers by ID
+//! - `SourceControlManagementGroups`: Repository groups (by workspace)
+//! - `SourceControlManagementResources`: Resource state (changed files)
+//!
+//! Key structures:
+//! - `SourceControlManagementProviderDTO`: Provider metadata
+//! - `SourceControlManagementGroupDTO`: Repository group state
+//! - `SourceControlManagementResourceDTO`: Changed file information
+//!
+//! ## REPOSITORY STATES
+//!
+//! - **Clean**: No uncommitted changes
+//! - **Dirty**: Unstaged changes present
+//! - **Staged**: Changes staged for commit
+//! - **Merging**: Merge in progress
+//! - **Rebasing**: Rebase in progress
+//! - **Cherry-picking**: Cherry-pick in progress
+//!
+//! ## ERROR HANDLING
+//!
+//! - Repository not found: `CommonError::SCMNotFound`
+//! - Authentication failure: `CommonError::SCMAuthenticationFailed`
+//! - Operation failure: `CommonError::SCMOperationFailed`
+//! - Merge conflict: `CommonError::SCMConflict`
+//! - Uncommitted changes: `CommonError::SCMUncommittedChanges`
+//!
+//! ## PERFORMANCE
+//!
+//! - Repository scanning should be async and cached
+//! - Use file system watchers to detect changes
+//! - Batch operations when possible (e.g., status of multiple files)
+//! - Consider background indexing for large repositories
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/workbench/services/scm/common/scmService.ts` - SCM service
+//! - `vs/platform/scm/common/scm.ts` - SCM provider interface
+//! - `vs/sourcecontrol/git/common/git.ts` - Git provider implementation
+//!
+//! ## TODO
+//!
+//! - [ ] Implement built-in Git provider using libgit2 or Git CLI
+//! - [ ] Add repository discovery and change detection
+//! - [ ] Support staging, unstaging, and committing changes
+//! - [ ] Implement branch management UI and operations
+//! - [ ] Add remote operations (push, pull, fetch)
+//! - [ ] Handle merge conflicts with UI resolution
+//! - [ ] Support Git LFS and submodules
+//! - [ ] Add SCM authentication and credential management
+//! - [ ] Implement SCM extensions API for custom providers
+//! - [ ] Add SCM history and blame views
+//! - [ ] Support stash and pop operations
+//! - [ ] Implement tag management
+//! - [ ] Add SCM configuration and settings
+//! - [ ] Support detached HEAD and bisect operations
+//! - [ ] Implement SCM telemetry and diagnostics
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`SourceControlManagementProvider`]: Main struct implementing the trait
+//! - Repository detection and tracking
+//! - Provider registration and routing
+//! - SCM operation implementations
+//! - Authentication and credential management
+
 // `MountainEnvironment`. Responsibilities:
 //   - Manage source control providers (e.g., Git, Mercurial, SVN).
 //   - Handle SCM provider registration and disposal.

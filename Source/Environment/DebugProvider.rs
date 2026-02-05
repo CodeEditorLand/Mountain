@@ -1,68 +1,63 @@
-// File: Mountain/Source/Environment/DebugProvider.rs
-//
-// # Architectural Role: Debugging Lifecycle Manager
-//
-// DebugProvider implements the DebugService trait, managing the complete
-// debugging session lifecycle. It orchestrates between the extension host (for
-// configuration), the debug adapter (for actual debugging), and the UI (for
-// user interaction).
-//
-// # Responsibilities
-//
-// 1. **Configuration Management**: Handles registration of debug configuration
-//    providers that resolve launch configurations for different debug types.
-//
-// 2. **Debug Adapter Lifecycle**: Manages creation, spawning, and termination
-//    of debug adapter processes via Debug Adapter Protocol (DAP).
-//
-// 3. **Session Management**: Maintains active debug sessions and routes DAP
-//    messages between the UI, extension host, and debug adapter.
-//
-// 4. **Debug Protocol Mediation**: Converts JSON-RPC messages between the UI's
-//    representation and the Debug Adapter's protocol.
-//
-// 5. **Debug Type Routing**: Associates debug types (e.g., node, java, rust)
-//    with their corresponding configuration and adapter configurations.
-//
-// # Debug Session Flow
-//
-// 1. UI initiates debug session via StartDebugging with folder URI and
-//    configuration
-// 2. Mountain calls extension to resolve the final debug configuration
-//    (substitutes variables)
-// 3. Mountain requests debug adapter descriptor (executable/port) from
-//    extension
-// 4. Mountain spawns the debug adapter process or connects to debug server
-// 5. Mountain creates debug session and starts mediating DAP messages
-// 6. UI sends DAP commands to Mountain, which forwards to adapter
-// 7. Adapter sends DAP events to Mountain, which forwards to UI
-// 8. Session terminates when UI requests stop or adapter process exits
-//
-// # Patterns Borrowed from VSCode
-//
-// - **DAP Protocol**: Implements the Debug Adapter Protocol, same as VSCode
-//   debug architecture.
-//
-// - **Debug Configuration Providers**: Follows VSCode's pattern of allowing
-//   extensions to contribute debug configuration resolvers.
-//
-// - **Adapter Factories**: Similar to VSCode's DebugAdapterDescriptorFactory
-//   for creating debug adapters flexibly.
-//
-// # TODOs
-//
-// - [ ] Store debug adapter registrations in ApplicationState
-// - [ ] Implement proper debug session tracking and management
-// - [ ] Add debug adapter process spawning and lifecycle management
-// - [ ] Implement proper DAP message routing and serialization
-// - [ ] Add debug session state persistence across UI reloads
-// - [ ] Implement debug console and variable inspection integration
-// - [ ] Add support for multiple simultaneous debug sessions
-// - [ ] Implement debug adapter termination and cleanup
-// - [ ] Add debug session metrics and telemetry
-// - [ ] Consider implementing debug configuration validation
-// - [ ] Add support for debug adapters that communicate via TCP sockets
-// - [ ] Implement debug adapter crash detection and recovery
+//! # DebugProvider (Environment)
+//!
+//! RESPONSIBILITIES:
+//! - Implements [`DebugService`](CommonLibrary::Debug::DebugService) for [`MountainEnvironment`]
+//! - Manages complete debugging session lifecycle from configuration to termination
+//! - Orchestrates between extension host (Cocoon), debug adapter, and UI
+//! - Handles DAP (Debug Adapter Protocol) message mediation
+//!
+//! ARCHITECTURAL ROLE:
+//! - Core provider for debugging functionality, analogous to VSCode's debug service
+//! - Uses two-stage registration: configuration providers and adapter descriptor factories
+//! - Each debug type (node, java, rust) can have its own configuration and adapter
+//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC to Cocoon
+//!
+//! DEBUG SESSION FLOW:
+//! 1. UI calls `StartDebugging` with folder URI and configuration
+//! 2. Mountain RPCs to Cocoon to resolve debug configuration (variable substitution)
+//! 3. Mountain RPCs to Cocoon to create debug adapter descriptor
+//! 4. Mountain spawns debug adapter process or connects to TCP server
+//! 5. Mountain mediates DAP messages between UI and debug adapter
+//! 6. UI sends DAP commands via `SendCommand` which forwards to adapter
+//! 7. Debug adapter sends DAP events/notifications back through Mountain to UI
+//! 8. Session ends on stop request or adapter process exit
+//!
+//! ERROR HANDLING:
+//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
+//! - Validates debug type is non-empty (InvalidArgument error)
+//! - TODO: Implement proper session lookup, timeout handling, and error recovery
+//!
+//! PERFORMANCE:
+//! - Debug adapter spawning should be async with timeout protection (5000ms in current RPC)
+//! - DAP message routing needs efficient session lookup (TODO: O(1) hash map)
+//! - Multiple simultaneous debug sessions require careful resource management
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/contrib/debug/browser/debugService.ts` - debug service main logic
+//! - `vs/workbench/contrib/debug/common/debug.ts` - debug interfaces and models
+//! - `vs/workbench/contrib/debug/browser/adapter/descriptorFactory.ts` - adapter descriptor factories
+//! - `vs/debugAdapter/common/debugProtocol.ts` - DAP protocol specification
+//!
+//! TODO:
+//! - Store debug adapter registrations in ApplicationState
+//! - Implement proper debug session tracking and management
+//! - Add debug adapter process spawning and lifecycle management
+//! - Implement proper DAP message routing and serialization
+//! - Add debug session state persistence across UI reloads
+//! - Implement debug console and variable inspection integration
+//! - Add support for multiple simultaneous debug sessions
+//! - Implement debug adapter termination and cleanup
+//! - Add debug session metrics and telemetry
+//! - Consider implementing debug configuration validation
+//! - Add support for debug adapters that communicate via TCP sockets
+//! - Implement debug adapter crash detection and recovery
+//!
+//! MODULE CONTENTS:
+//! - [`DebugService`](CommonLibrary::Debug::DebugService) implementation:
+//!   - [`RegisterDebugConfigurationProvider`](Self::RegisterDebugConfigurationProvider) - register config resolver
+//!   - [`RegisterDebugAdapterDescriptorFactory`](Self::RegisterDebugAdapterDescriptorFactory) - register adapter factory
+//!   - [`StartDebugging`](Self::StartDebugging) - start debug session (partial)
+//!   - [`SendCommand`](Self::SendCommand) - send DAP command to adapter (stub)
 
 use std::sync::Arc;
 

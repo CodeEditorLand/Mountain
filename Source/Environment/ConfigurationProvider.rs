@@ -1,14 +1,133 @@
-// File: Mountain/Source/Environment/ConfigurationProvider.rs
-//
-// # Architectural Role: Configuration Management Engine
-//
-// ConfigurationProvider implements ConfigurationProvider and
-// ConfigurationInspector traits, managing all application settings across
-// multiple scopes (Default, User, Workspace, Folder). It handles the
-// configuration cascade, merging settings from various sources in the correct
-// precedence order.
-//
-// # Responsibilities
+//! # ConfigurationProvider (Environment)
+//!
+//! Implements `ConfigurationProvider` and `ConfigurationInspector` traits,
+//! managing all application settings across multiple scopes (Default, User,
+//! Workspace, Folder). It handles the configuration cascade, merging settings
+//! from various sources in the correct precedence order.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Configuration Cascade
+//! - Implement multi-layer configuration hierarchy: Default → User → Workspace
+//!   → Folder
+//! - Apply precedence rules: higher layers override lower layers
+//! - Merge configuration objects from different sources
+//! - Handle configuration inheritance and overrides
+//!
+//! ### 2. Configuration Storage
+//! - Read default settings from resource files
+//! - Load user settings from global storage (`globalStorage.json`)
+//! - Load workspace settings from `.code-workspace` files
+//! - Load folder settings from `.vscode/settings.json`
+//! - Persist configuration changes to disk
+//!
+//! ### 3. Configuration Access
+//! - Provide `GetConfiguration` for retrieving merged settings
+//! - Support nested property access via dot notation (e.g., `"editor.fontSize"`)
+//! - Implement `ConfigurationInspector` for introspection
+//! - Cache configuration for performance
+//!
+//! ### 4. Configuration Updates
+//! - Handle runtime configuration changes
+//! - Notify listeners when configuration updates occur
+//! - Persist changes to appropriate storage layer
+//! - Re-merge configuration after changes
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! ConfigurationProvider is the **configuration management core**:
+//!
+//! ```text
+//! Providers ──► ConfigurationProvider ──► MergedConfigurationStateDTO ──► Disk
+//!               │
+//!               └─► Multiple Storage Layers
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: Core capability provider
+//! - Implements `CommonLibrary::Configuration::ConfigurationProvider` and
+//!   `ConfigurationInspector`
+//! - Accessible via `Environment.Require<dyn ConfigurationProvider>()`
+//!
+//! ### Configuration Scope Precedence (lowest to highest)
+//! 1. **Default**: Built-in Mountain defaults
+//! 2. **User**: Global user settings (`User/settings.json`)
+//! 3. **Workspace**: Workspace file (`.code-workspace`)
+//! 4. **Folder**: Per-folder settings (`.vscode/settings.json`)
+//! 5. **Workspace-Folder**: Workspace settings for specific folder
+//!
+//! ### Dependencies
+//! - `ApplicationState`: Access to `Configuration` state and storage paths
+//! - `FileSystemReader`: Read configuration files from disk
+//! - `Log`: Configuration change logging
+//!
+//! ### Dependents
+//! - All providers that need configuration values
+//! - `Binary::Main`: Initial configuration setup
+//! - `InitializationData`: Includes configuration in frontend payload
+//! - Command handlers: Read settings to customize behavior
+//!
+//! ## CONFIGURATION MERGE STRATEGY
+//!
+//! Configuration is merged using a **depth-first cascade**:
+//!
+//! 1. Start with default values
+//! 2. Overlay user settings (if exist)
+//! 3. Overlay workspace settings (if exists)
+//! 4. For each folder, overlay folder settings
+//! 5. For workspace-folders, apply folder-specific overrides
+//!
+//! The final result is a single JSON object representing the effective
+//! configuration for the current context.
+//!
+//! ## PROPERTY ACCESS
+//!
+//! - `GetConfiguration(Section)` returns the entire configuration or a
+//!   subsection
+//! - Section uses dot notation: `"editor.fontSize"` or `"typescript.format.enable"`
+//! - Returns `serde_json::Value` which can be queried further
+//! - Missing properties return `Value::Null`
+//!
+//! ## ERROR HANDLING
+//!
+//! - File read errors: `CommonError::FileSystemIO`
+//! - JSON parse errors: `CommonError::SerializationError`
+//! - Invalid section paths: `Value::Null` (no error)
+//! - Write permission errors: `CommonError::FileSystemIO`
+//!
+//! ## PERFORMANCE
+//!
+//! - Configuration is cached in `ApplicationState::Configuration`
+//! - Merging happens on change (not on every read)
+//! - File reads are async via `ApplicationRunTime`
+//! - Consider incremental merging for large configurations (TODO)
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code's configuration system:
+//! - `vs/platform/configuration/common/configuration.ts` - Configuration service
+//! - `vs/platform/configuration/common/configurationCache.ts` - Caching
+//! - `vs/platform/configuration/common/configurationLayer.ts` - Layer merging
+//!
+//! ## TODO
+//!
+//! - [ ] Implement configuration change observers/eventing
+//! - [ ] Add configuration schema validation
+//! - [ ] Support configuration profiles (dev, prod, test)
+//! - [ ] Implement configuration export/import
+//! - [ ] Add configuration search and query API
+//! - [ ] Support remote configuration sources
+//! - [ ] Add configuration diffing for debugging
+//! - [ ] Implement configuration hot-reload without restart
+//! - [ ] Add configuration permissions and security
+//! - [ ] Support configuration templates and presets
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`ConfigurationProvider`]: Main struct implementing configuration management
+//! - Configuration loading and merging functions
+//! - Storage layer abstractions
+
 //
 // 1. **Configuration Cascade**: Implements the multi-layer configuration
 //    hierarchy Default → User → Workspace → Folder, with higher precedence

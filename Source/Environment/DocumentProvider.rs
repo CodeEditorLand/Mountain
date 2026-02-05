@@ -1,14 +1,161 @@
-// File: Mountain/Source/Environment/DocumentProvider.rs
-//
-// # Architectural Role: Document Lifecycle and State Management
-//
-// DocumentProvider implements the DocumentProvider trait, managing the complete
-// lifecycle of document operations including opening, saving, editing, and
-// closing. It maintains document state, coordinates between the frontend (Sky),
-// extension host (Cocoon), and filesystem, and handles both native file URIs
-// and custom scheme URIs.
-//
-// # Responsibilities
+//! # DocumentProvider (Environment)
+//!
+//! Implements the `DocumentProvider` trait, managing the complete lifecycle of
+//! document operations including opening, saving, editing, and closing. It
+//! maintains document state, coordinates between the frontend (Sky), extension
+//! host (Cocoon), and filesystem, and handles both native file URIs and custom
+//! scheme URIs.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Document State Management
+//! - Maintain all open documents in `ApplicationState.OpenDocuments`
+//! - Track document content, version, dirty status, and metadata
+//! - Support multiple documents open simultaneously
+//! - Handle document focus and activation
+//!
+//! ### 2. Document Persistence
+//! - Save documents to the filesystem (`Save`, `SaveAs`)
+//! - Handle file I/O errors gracefully
+//! - Support dirty state tracking and prompt on close
+//! - Implement atomic saves to prevent data loss
+//!
+//! ### 3. Change Tracking
+//! - Apply incremental text edits via LSP `DidChangeTextDocument`
+//! - Track version identifiers for synchronization
+//! - Maintain line count cache for performance
+//! - Support undo/redo integration (via version history)
+//!
+//! ### 4. URI Scheme Support
+//! - Native `file://` URIs: Read/write from filesystem
+//! - Custom schemes (untitled:, git:, vscode-vfs:): Via `TextDocumentContentProvider`
+//! - Extension-hosted documents: Request content from Cocoon
+//!
+//! ### 5. Event Orchestration
+//! - Emit events to Sky and Cocoon for document lifecycle:
+//!   - `onDidOpenDocument`: Document opened
+//!   - `onDidChangeDocument`: Content modified
+//!   - `onDidSaveDocument`: Document saved
+//!   - `onDidCloseDocument`: Document closed
+//!   - `onDidRenameDocument`: Document moved/renamed
+//!
+//! ### 6. Bulk Operations
+//! - `Save All`: Save all dirty documents efficiently
+//! - Batch close operations
+//! - Concurrent document operations with proper locking
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! DocumentProvider is the **document lifecycle manager**:
+//!
+//! ```text
+//! Frontend ──► Open/Edit/Save ──► DocumentProvider ──► FileSystem / Cocoon
+//!               │                                   │
+//!               └─► Event Emit ──► Sky/Cocoon ◄─────┘
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: Document management capability
+//! - Implements `CommonLibrary::Document::DocumentProvider` trait
+//! - Accessible via `Environment.Require<dyn DocumentProvider>()`
+//!
+//! ### Document State Model
+//!
+//! Stored in `ApplicationState.OpenDocuments` as `HashMap<String, DocumentStateDTO>`:
+//! - `URI`: Document identifier
+//! - `LanguageIdentifier`: Syntax highlighting language
+//! - `Lines`: Vector of document lines (for efficient editing)
+//! - `Version`: Monotonic version for LSP sync
+//! - `IsDirty`: Unsaved changes flag
+//! - `Encoding`: Text encoding (usually UTF-8)
+//! - `EOL`: End-of-line sequence (LF or CRLF)
+//!
+//! ### Dependencies
+//! - `ApplicationState`: Document state storage
+//! - `FileSystemReader` / `FileSystemWriter`: File I/O
+//! - `IPCProvider`: For extension document providers
+//! - `Log`: Document change logging
+//!
+//! ### Dependents
+//! - Text editors: Load and modify document content
+//! - Language servers: Receive document change notifications
+//! - `Binary::Main`::`MountainGetWorkbenchConfiguration`: Initial document setup
+//! - Extension providers: Custom document handling
+//!
+//! ## DOCUMENT OPEN FLOW
+//!
+//! 1. Frontend calls `OpenDocument(uri, options)`
+//! 2. Provider checks if already open → return existing
+//! 3. If `file://` URI: `FileSystemReader::ReadFile` → content
+//! 4. If custom URI: `IPCProvider::SendRequest` to extension
+//! 5. Create `DocumentStateDTO` with content
+//! 6. Store in `ApplicationState.OpenDocuments`
+//! 7. Emit `onDidOpenDocument` event to Sky/Cocoon
+//! 8. Return document state to frontend
+//!
+//! ## DOCUMENT CHANGE FLOW (LSP-style)
+//!
+//! 1. Frontend sends `ApplyChanges(uri, version, changes)`
+//! 2. Provider looks up document in `OpenDocuments`
+//! 3. Apply delta changes or full text replacement
+//! 4. Increment `Version` and `VersionIdentifier`
+//! 5. Set `IsDirty = true`
+//! 6. Emit `onDidChangeDocument` event
+//! 7. Return updated document state
+//!
+//! ## DOCUMENT SAVE FLOW
+//!
+//! 1. Frontend calls `SaveDocument(uri)` or `SaveAll`
+//! 2. For each dirty document:
+//!    - Serialize document content from `Lines`
+//!    - Write to filesystem via `FileSystemWriter::WriteFile`
+//!    - Clear `IsDirty` flag
+//!    - Emit `onDidSaveDocument` event
+//! 3. Return save results (success/failure per document)
+//!
+//! ## ERROR HANDLING
+//!
+//! - Document not found: `CommonError::FileSystemNotFound`
+//! - Permission denied: `CommonError::FileSystemIO`
+//! - Already open: Return existing (not an error)
+//! - Unsaved changes: Prompt user or force close (configurable)
+//! - Extension provider failure: `CommonError::IPCError`
+//!
+//! ## PERFORMANCE
+//!
+//! - Document state stored in memory (fast access)
+//! - Large files may impact memory (consider streaming for >10MB)
+//! - Line-based storage enables efficient edits
+//! - Version numbers prevent race conditions in collaborative editing
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/workbench/api/common/extHostDocumentProvider.ts` - Document provider interface
+//! - `vs/workbench/services/files/common/files.ts` - File document provider
+//! - `vs/workbench/services/textService/common/textService.ts` - Text document management
+//!
+//! ## TODO
+//!
+//! - [ ] Implement document encoding detection (BOM, charset heuristics)
+//! - [ ] Add document change history for undo/redo across sessions
+//! - [ ] Support document snapshots for diff/merge operations
+//! - [ ] Implement document locking for collaborative editing
+//! - [ ] Add document analytics (edit time, change frequency)
+//! - [ ] Support virtual documents (generated content, no file on disk)
+//! - [ ] Implement document templates and snippets
+//! - [ ] Add document validation and format on save
+//! - [ ] Support document encryption for sensitive files
+//! - [ ] Implement document migration across versions
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`DocumentProvider`]: Main struct implementing the trait
+//! - Document open/close/edit methods
+//! - Save and Save All implementations
+//! - Event emission and notification
+//! - URI scheme handling
+
 //
 // 1. **Document State Management**: Maintains all open documents in
 //    ApplicationState, tracking content, version, dirty status, and metadata.

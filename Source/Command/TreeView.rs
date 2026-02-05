@@ -1,22 +1,72 @@
-// ============================================================================
-// File: Mountain/Source/Command/TreeView.rs
-// ============================================================================
-// # TreeView Commands
-//! Defines the specific Tauri command handlers for TreeView data requests
-//! that originate from the `Sky` frontend UI.
+//! # TreeView (Command)
 //!
-//! ## Key Features:
-//! - Tree data retrieval (children, tree items)
-//! - Tree expansion state management
-//! - Tree selection handling
-//! - Drag and drop support
-//! - Tree view UI interaction
+//! RESPONSIBILITIES:
+//! - Defines Tauri command handlers for TreeView operations from Sky frontend
+//! - Bridges TreeView UI requests to [`TreeViewProvider`](CommonLibrary::TreeView::TreeViewProvider)
+//! - Handles tree data fetching, expansion, selection, and refresh operations
+//! - Manages tree view state persistence and restoration (stubs)
 //!
-//! ## VSCode Reference:
-//! - vs/workbench/api/browser/mainThreadTreeViews.ts
-//! - vs/workbench/api/common/extHostTreeViews.ts
-//! - vs/workbench/contrib/files/browser/explorerView.ts
-// ============================================================================
+//! ARCHITECTURAL ROLE:
+//! - Command module exposing TreeView functionality via Tauri IPC (`#[command]`)
+//! - Delegates to Environment's [`TreeViewProvider`](crate::Environment::TreeViewProvider)
+//!   via DI with `Require()` trait from `MountainEnvironment`
+//! - Translates frontend requests to provider method calls with proper error mapping
+//!
+//! COMMAND REFERENCE (Tauri IPC):
+//! - [`GetTreeViewChildren`](crate::Command::TreeView::GetTreeViewChildren):
+//!   Fetch child items for a tree node (by `ElementHandle`, null for root)
+//! - [`GetTreeViewItem`](crate::Command::TreeView::GetTreeViewItem):
+//!   Get tree item metadata (label, icon, description) by handle
+//! - [`OnTreeViewExpansionChanged`](crate::Command::TreeView::OnTreeViewExpansionChanged):
+//!   Notify when user expands/collapses a node (stub - trait method missing)
+//! - [`OnTreeViewSelectionChanged`](crate::Command::TreeView::OnTreeViewSelectionChanged):
+//!   Notify when user selects/deselects tree items (stub - trait method missing)
+//! - [`RefreshTreeView`](crate::Command::TreeView::RefreshTreeView):
+//!   Request tree view to refresh its data, optionally specific items
+//! - [`RevealTreeViewItem`](crate::Command::TreeView::RevealTreeViewItem):
+//!   Request to reveal/focus a specific tree item in the UI
+//! - [`PersistTreeView`](crate::Command::TreeView::PersistTreeView):
+//!   Save tree view state (scroll position, expansion) (stub)
+//! - [`RestoreTreeView`](crate::Command::TreeView::RestoreTreeView):
+//!   Restore previously saved tree view state (stub)
+//!
+//! ERROR HANDLING:
+//! - Returns `Result<Value, String>` with error strings sent to frontend
+//! - Provider errors are logged with context and converted to error strings
+//! - Missing trait methods return structured error indicating not implemented
+//!
+//! PERFORMANCE:
+//! - All commands are async and non-blocking
+//! - Tree data fetching should be efficient; provider may cache results
+//! - Refresh can target specific items to avoid full tree rebuild
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/api/browser/mainThreadTreeViews.ts` - main thread tree view API
+//! - `vs/workbench/api/common/extHostTreeViews.ts` - extension host tree view API
+//! - `vs/workbench/contrib/files/browser/explorerView.ts` - file explorer tree view
+//! - `vs/workbench/contrib/tree/browser/treeView.ts` - generic tree view component
+//!
+//! TODO:
+//! - Implement `OnTreeNodeExpanded` and `OnTreeSelectionChanged` in TreeViewProvider trait
+//! - Add tree view state persistence to ApplicationState
+//! - Implement drag and drop support for tree items
+//! - Add tree item validation and disabled states
+//! - Support tree item tooltips and description rendering
+//! - Implement tree item icon theming (light/dark)
+//! - Add tree view column support (multi-column tree views)
+//! - Support tree view title and description updates
+//! - Implement tree view badge (count overlay) functionality
+//! - Add tree view message handling for dynamic updates
+//! - Support tree item context menu contributions
+//! - Implement tree item editing (inline rename)
+//! - Add tree view accessibility (ARIA labels, keyboard navigation)
+//!
+//! MODULE CONTENTS:
+//! - Tauri command functions (all `#[command] pub async fn`):
+//!   - Data retrieval: `GetTreeViewChildren`, `GetTreeViewItem`
+//!   - UI events: `OnTreeViewExpansionChanged`, `OnTreeViewSelectionChanged`
+//!   - Management: `RefreshTreeView`, `RevealTreeViewItem`
+//!   - State: `PersistTreeView`, `RestoreTreeView`
 
 use std::sync::Arc;
 

@@ -1,22 +1,77 @@
-// File: Mountain/Source/ApplicationState/ApplicationState.rs
-//
-// # ApplicationState - Central State Container
-//
-// ## Role
-//
-// Defines the main `ApplicationState` struct, which is the central, shared,
-// thread-safe state container for the entire Mountain application.
-//
-// ## Architectural Position
-//
-// ApplicationState is the **state center of the application**. It serves as:
-// - **Single Source of Truth**: All application state lives here
-// - **Thread-Safe Hub**: Safe access from all threads via Arc<Mutex<...>>
-// - **Persistence Manager**: Handles state persistence to disk
-// - **Recovery System**: Provides recovery from corrupted state
-// - **Identity Source**: Supplies unique IDs for providers and resources
-//
-// ## Responsibilities
+//! # ApplicationState
+//!
+//! Defines the main `ApplicationState` struct, which is the central, shared,
+//! thread-safe state container for the entire Mountain application. It is
+//! managed by Tauri and is accessible to all command handlers and Environment
+//! providers.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. State Container
+//! Hold all runtime state for services like:
+//! - Workspace and window state
+//! - Configuration and storage
+//! - Extensions and command registry
+//! - Documents and diagnostic errors
+//! - Terminals, webviews, and tree views
+//! - Source control management state
+//! - Pending UI requests
+//!
+//! ### 2. Thread-Safe Access
+//! - Provide thread-safe access to state via `Arc<Mutex<...>>`
+//! - Ensure proper synchronization for concurrent access
+//! - Handle mutex poisoning gracefully
+//! - Support async operations with proper locking
+//!
+//! ### 3. State Persistence
+//! - Manage memento (state serialization) for crash recovery
+//! - Handle global and workspace-scoped storage
+//! - Provide disk I/O for state loading/saving
+//! - Recover from corrupted state files
+//!
+//! ### 4. Identity Management
+//! - Generate unique provider handles
+//! - Generate unique terminal identifiers
+//! - Generate unique SCM provider handles
+//! - Ensure monotonically increasing IDs
+//!
+//! ### 5. State Recovery
+//! - Detect corrupted state
+//! - Attempt recovery from poisoned locks
+//! - Restore state from disk
+//! - Clear invalid state entries
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! The ApplicationState module is the **state management layer** of Mountain:
+//!
+//! ```text
+//! UI ──► Commands ──► ApplicationState (State) ──► Providers/Services
+//!                      │
+//!                      ↓
+//!                   Disk (Persistence)
+//! ```
+//!
+//! ### Design Principles:
+//! 1. **Single Source of Truth**: All state lives in one place
+//! 2. **Thread Safety**: All state is protected by Arc<Mutex<...>>
+//! 3. **Recovery-Oriented**: Comprehensive error handling and recovery
+//! 4. **Type Safety**: Strong typing at all levels
+//! 5. **Observability**: Comprehensive logging for state changes
+//!
+//! ### VS Code Reference:
+//! This module borrows from VS Code's state management patterns in:
+//! - `vs/base/parts/storage/common/storageService.ts` - Storage management
+//! - `vs/workbench/services/environment/common/environmentService.ts` -
+//!   Environment state
+//! - `vs/platform/workspace/common/workspace.ts` - Workspace state
+//! - `vs/workbench/services/extensions/common/extensions.ts` - Extension state
+//!
+//! Key concepts:
+//! - Global vs workspace-scoped storage
+//! - Memento (state serialization) for crash recovery
+//! - Thread-safe state access with proper locking
+//! - State validation and invariants
 //
 // ### 1. State Container
 // Hold all runtime state for services like:

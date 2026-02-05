@@ -1,10 +1,94 @@
-// File: Mountain/Source/Air/AirClient.rs
-// Role: gRPC client wrapper for Air daemon service
-// Responsibilities:
-//   - Manage gRPC connection to Air service
-//   - Implement all Air service methods
-//   - Translate tonic errors to CommonError
-//   - Provide connection retry capabilities (optional)
+//! # AirClient
+//!
+//! gRPC client wrapper for the Air daemon service, providing Mountain with
+//! access to cloud-based backend services including updates, authentication,
+//! file indexing, and system monitoring.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! - **Connection Management**: Manage gRPC connection lifecycle to Air service
+//! - **Service Methods**: Implement all Air service RPC methods
+//! - **Error Translation**: Convert tonic/transport errors to CommonError
+//! - **Connection Retry**: (Optional) Provide automatic retry with backoff
+//! - **Health Checking**: Monitor Air service availability
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! AirClient serves as the primary interface between Mountain and the Air
+//! backend service:
+//!
+//! ```
+//! Mountain (Frontend) ──► AirClient ──► gRPC ──► Air Daemon (Backend)
+//! ```
+//!
+//! ### Position in Mountain
+//! - Communication module for Air integration
+//! - Part of the service management layer
+//! - Features-gated behind `AirIntegration` feature flag
+//!
+//! ### Dependencies
+//! - `tonic`: gRPC client framework
+//! - `CommonLibrary::Error::CommonError`: Error handling
+//! - `log`: Structured logging
+//!
+//! ### Dependents
+//! - `AirServiceProvider`: High-level API that wraps AirClient
+//! - `Binary::Service::VineStart`: Initializes Air connection
+//!
+//! ## CONFIGURATION
+//!
+//! - **Default Address**: `[::1]:50053` (configurable via constructor)
+//! - **Transport**: gRPC over TCP/IP with optional TLS
+//! - **Connection Pooling**: (TODO) Implement for multiple concurrent requests
+//!
+//! ## ERROR HANDLING
+//!
+//! All methods return `Result<T, CommonError>` with appropriate error types:
+//! - `IPCError`: gRPC communication failures
+//! - `SerializationError`: Message encoding/decoding failures
+//! - `Unknown`: Uncategorized errors
+//!
+//! ## THREAD SAFETY
+//!
+//! - `AirClient` is `Clone`able and can be shared across threads via `Arc<AirClient>`
+//! - Internal connection state is protected by mutexes (to be implemented)
+//! - All public methods are safe to call from multiple threads
+//!
+//! ## PERFORMANCE CONSIDERATIONS
+//!
+//! - Connection establishment is lazy (deferred until first use)
+//! - (TODO) Implement connection pooling for high-throughput scenarios
+//! - (TODO) Add request caching for frequently accessed data
+//! - (TODO) Implement request timeout configuration
+//!
+//! ## VSCODE REFERENCE
+//!
+//! This implementation borrows patterns from VS Code's extension host and
+//! remote communication:
+//! - `vs/platform/remote/common/remoteAgentConnection.ts` - Connection management
+//! - `vs/platform/remote/common/remoteAgentService.ts` - Service proxy pattern
+//!
+//! ## TODO
+//!
+//! High Priority:
+//! - [ ] Implement actual gRPC client with generated tonic code
+//! - [ ] Add connection retry with exponential backoff
+//! - [ ] Implement proper connection pooling
+//!
+//! Medium Priority:
+//! - [ ] Add request/response logging for debugging
+//! - [ ] Implement connection health monitoring
+//! - [ ] Add metrics collection for RPC calls
+//!
+//! Low Priority:
+//! - [ ] Support multiple Air daemons (load balancing)
+//! - [ ] Add request priority queuing
+//! - [ ] Implement circuit breaker pattern
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`AirClient`]: Main client struct
+//! - [`DEFAULT_AIR_SERVER_ADDRESS`]: Default gRPC server address constant
 
 use std::{collections::HashMap, time::Duration};
 

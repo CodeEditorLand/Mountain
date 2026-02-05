@@ -1,103 +1,96 @@
-// File: Mountain/Source/Environment/SynchronizationProvider.rs
-// Role: Implements the `SynchronizationProvider` trait for the
-// `MountainEnvironment`. Responsibilities:
-//   - Synchronize user settings and data across devices.
-//   - Handle push operations from the local device to the remote server.
-//   - Handle pull operations from the remote server to the local device.
-//   - Manage sync state and conflict resolution.
-//   - Provide offline support with queueing and retry logic.
-//   - Handle authentication for sync services.
-//   - Implement conflict resolution strategies for concurrent edits.
-//   - Support sync for multiple data types (settings, keybindings, extensions).
-//   - Provide sync status and progress notifications.
-//   - Handle sync failures and retry with exponential backoff.
-//   - Support sync schedule configuration (manual, immediate, interval).
-//   - Implement versioning for synced data.
-//   - Support selective sync (exclude certain data types).
-//
-// TODOs:
-//   - Implement complete sync service integration (e.g., Firebase, Supabase)
-//   - Add authentication flow for sync service
-//   - Implement conflict detection and resolution strategies
-//   - Add offline queue for pending operations
-//   - Implement retry logic with exponential backoff
-//   - Support sync schedule configuration
-//   - Add sync progress tracking
-//   - Implement selective sync based on user preferences
-//   - Support data versioning for rollback
-//   - Add sync conflict UI for user resolution
-//   - Implement sync encryption for sensitive data
-//   - Support sync across multiple devices (device IDs)
-//   - Add sync history and audit log
-//   - Implement sync migration and upgrade support
-//   - Support sync for workspaces and configurations
-//   - Add sync for extensions and their data
-//   - Implement sync throttling to avoid rate limits
-//   - Support sync for large files with chunking
-//   - Add sync statistics and analytics
-//   - Implement sync health checks and monitoring
-//   - Support sync service fallback and failover
-//
-// Inspired by VSCode's settings sync feature which:
-// - Syncs settings, keybindings, snippets, extensions, etc.
-// - Provides conflict resolution UI
-// - Supports offline mode with queueing
-// - Handles authentication and account management
-// - Implements automatic sync with manual override
-// - Provides sync status and error reporting
-// - Uses encryption for sensitive data
-//! # SynchronizationProvider Implementation
+//! # SynchronizationProvider (Environment)
 //!
-//! Implements the `SynchronizationProvider` trait for the
-//! `MountainEnvironment`. This is currently a stub implementation.
-//
-//! ## Sync Architecture
+//! RESPONSIBILITIES:
+//! - Implements [`SynchronizationProvider`](CommonLibrary::Synchronization::SynchronizationProvider)
+//!   for [`MountainEnvironment`]
+//! - Provides two-way synchronization of user data across devices
+//! - Handles push (local → remote) and pull (remote → local) operations
+//! - Manages sync state, conflict resolution, and offline queuing
+//! - Provides sync status notifications and progress tracking
 //!
-//! The synchronization provider follows a two-way sync pattern:
+//! ARCHITECTURAL ROLE:
+//! - Optional provider for cloud sync functionality (currently stub)
+//! - Would integrate with external sync service (Firebase, Supabase, custom backend)
+//! - Uses authentication from [`AuthenticationProvider`] (to be implemented)
+//! - Syncs multiple data types: settings, keybindings, workspaces, extensions, snippets
+//! - Store sync metadata in [`ApplicationState`](crate::ApplicationState::ApplicationState)
 //!
-//! 1. **PushUserData**: Upload local data to remote
-//!    - Upload settings, keybindings, snippets, extensions
-//!    - Handle conflicts by comparing versions
-//!    - Update local state after successful push
-//!    - Queue push operations when offline
-//
-//! 2. **PullUserData**: Download remote data to local
-//!    - Download latest data from remote server
-//!    - Apply changes to local configuration
-//!    - Handle conflicts by comparing timestamps/versions
-//!    - Notify UI of sync completion
+//! SYNC ARCHITECTURE:
+//! **PushUserData**:
+//! - Upload local data snapshot to remote server
+//! - Compare versions to detect conflicts
+//! - Handle conflicts via configured strategy (latest wins, manual, merge)
+//! - Queue operations when offline for later retry
+//! - Update local state after successful push
 //!
-//! ## Conflict Resolution
+//! **PullUserData**:
+//! - Download latest remote data snapshot
+//! - Compare with local version to detect conflicts
+//! - Apply changes or prompt for conflict resolution
+//! - Notify UI of sync completion via events
 //!
-//! Strategies for sync conflicts:
-//! - **Latest Wins**: Use the most recently modified version
-//! - **Local Wins**: Give preference to local changes
-//! - **Remote Wins**: Give preference to remote changes
-//! - **Manual Resolution**: Prompt user to choose
-//! - **Merge**: Attempt to merge conflicting changes
-//
-//! ## TODO: Implementation Status
+//! CONFLICT RESOLUTION:
+//! - Strategies: Latest Wins, Local Wins, Remote Wins, Manual Resolution, Merge
+//! - Version tracking using timestamps or incremental version numbers
+//! - Conflict UI would be handled by frontend (Sky) via notifications
+//! - TODO: Implement proper three-way merge for settings files
 //!
-//! Current state: Stub implementation
+//! ERROR HANDLING:
+//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
+//! - Network failures should be queued for retry with exponential backoff
+//! - Authentication errors should trigger re-authentication flow
+//! - TODO: Implement proper error categorization and user messaging
 //!
-//! Required features:
-//! - [ ] Sync service client (e.g., Firebase, Supabase)
-//! - [ ] Authentication provider integration
-//! - [ ] Data serialization/deserialization
-//! - [ ] Conflict detection and resolution
-//! - [ ] Offline queue management
-//! - [ ] Retry logic with exponential backoff
-//! - [ ] Progress tracking and notifications
-//! - [ ] Versioning support
-//! - [ ] Encryption for sensitive data
-//
-//! Data types to sync:
-//! - User settings (global storage)
-//! - Keybindings configuration
-//! - Workspaces configuration
-//! - Extensions list and settings
-//! - Code snippets
-//! - UI layout and theme preferences
+//! PERFORMANCE:
+//! - Sync operations should be non-blocking and cancellable
+//! - Large data payloads should be compressed and chunked
+//! - Incremental sync to minimize data transfer (sync only deltas)
+//! - Throttling to respect rate limits and avoid network saturation
+//!
+//! SECURITY:
+//! - All sync traffic must be encrypted (HTTPS/TLS)
+//! - Sensitive data (credentials, tokens) must be encrypted at rest on server
+//! - Device identification and authentication required
+//! - TODO: Implement end-to-end encryption for maximum security
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/services/settings/common/settingsSync.ts` - settings sync service
+//! - `vs/workbench/common/sync/syncService.ts` - sync service abstraction
+//! - `vs/workbench/services/settings/common/settingsTarget.ts` - multi-device sync
+//! - `vs/platform/update/common/update.ts` - update pattern for comparison
+//!
+//! TODO:
+//! - Implement complete sync service integration (Firebase, Supabase, custom)
+//! - Add authentication flow for sync service (OAuth, API keys)
+//! - Implement conflict detection and resolution strategies (version vectors)
+//! - Add offline queue with persistent storage for pending operations
+//! - Implement retry logic with exponential backoff and jitter
+//! - Support sync schedule configuration (manual, immediate, interval, on-wifi)
+//! - Add sync progress tracking and cancellation support
+//! - Implement selective sync based on user preferences (data type filters)
+//! - Support data versioning for rollback and audit trail
+//! - Add sync conflict UI for user resolution (frontend component)
+//! - Implement sync encryption for sensitive data (client-side encryption)
+//! - Support sync across multiple devices (device IDs, device management)
+//! - Add sync history and audit log (for compliance and debugging)
+//! - Implement sync migration and upgrade support (schema changes)
+//! - Support sync for workspaces and configurations (full workspace state)
+//! - Add sync for extensions and their data (extension state, settings)
+//! - Implement sync throttling to avoid rate limits (adaptive throttling)
+//! - Support sync for large files with chunking and resumable uploads
+//! - Add sync statistics and analytics (sync frequency, data volume, errors)
+//! - Implement sync health checks and monitoring (service status, connectivity)
+//! - Support sync service fallback and failover (multiple backend endpoints)
+//!
+//! MODULE CONTENTS:
+//! - [`SynchronizationProvider`](CommonLibrary::Synchronization::SynchronizationProvider) implementation:
+//!   - [`PushUserData`](Self::PushUserData) - upload local data to remote (stub)
+//!   - [`PullUserData`](Self::PullUserData) - download remote data to local (stub)
+//! - Current state: Stub with logging only; production implementation pending
+//!
+//! ---
+//! *Implementation notes: This provider is currently a stub with no actual sync functionality.
+//! Future work will integrate with a cloud sync service provider.*
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,

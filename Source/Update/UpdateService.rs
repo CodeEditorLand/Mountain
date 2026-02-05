@@ -1,11 +1,123 @@
-// File: Mountain/Source/Update/UpdateService.rs
-// Role: Handles application update checking, user notification, and
-// installation using the `tauri-plugin-updater`.
-
-//! # Update Service
+//! # UpdateService (Update)
 //!
-//! Handles the application update checking and installation process using
-//! `tauri-plugin-updater`.
+//! Handles the application update checking, user notification, and installation
+//! process using `tauri-plugin-updater`, with optional delegation to the Air
+//! service for centralized update management.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Update Checking
+//! - Check for available updates using Tauri's updater system
+//! - Support Air service delegation for centralized updates (when enabled)
+//! - Compare versions and determine if update is available
+//! - Handle network errors and service unavailability gracefully
+//!
+//! ### 2. User Interaction
+//! - Notify user when updates are found (if `NotifyNoUpdate` is true)
+//! - Prompt user for install confirmation with release notes
+//! - Display error messages when update operations fail
+//! - Support silent update checks (no UI when no update available)
+//!
+//! ### 3. Update Installation
+//! - Download and install updates using Tauri's updater
+//! - Show download progress during update acquisition
+//! - Handle installation success and failure scenarios
+//! - Support automatic restart after installation (via Tauri)
+//!
+//! ### 4. Air Integration (Optional)
+//! - Delegate update checking to Air service when available
+//! - Support `UpdateMode` configuration (AutoDetect, ForceAir, ForceTauri)
+//! - Handle Air service unavailability with fallbacks
+//! - Provide health checking for Air daemon connectivity
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! UpdateService is the **update management layer** for Mountain:
+//!
+//! ```text
+//! Binary (Startup) ──► UpdateService ──► Tauri Updater / Air Service ──► Install
+//!                          │
+//!                          └─► UI (ShowMessage) ──► User Consent
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Update` module: Application update lifecycle
+//! - Called from `Binary::Main` or manually by users (Help menu)
+//! - Provides update capability via `Environment::UpdateProvider` trait
+//!
+//! ### Dependencies
+//! - `tauri_plugin_updater`: Tauri's update mechanism
+//! - `AirLibrary::Vine::Generated::Air` (optional): Air service client
+//! - `CommonLibrary::UserInterface::ShowMessage`: User notifications
+//! - `ApplicationRunTime`: Effect execution for UI operations
+//!
+//! ### Dependents
+//! - `Binary::Main::Fn`: May trigger update check at startup
+//! - Command handlers: Manual update check commands
+//! - UI menu items: Help → Check for Updates
+//!
+//! ## UPDATE MODES
+//!
+//! The `UpdateMode` enum controls which update mechanism is used:
+//!
+//! - **AutoDetect** (default): Use Air if available, otherwise Tauri updater
+//! - **ForceAir**: Use Air exclusively (errors if Air unavailable)
+//! - **ForceTauri**: Use Tauri updater exclusively (ignore Air)
+//!
+//! ## ERROR HANDLING
+//!
+//! - Network errors: Logged and user notified (if `NotifyNoUpdate`)
+//! - Update download failures: Error shown to user, retry possible
+//! - Air service errors: Fallback to Tauri or fail based on mode
+//! - Installation errors: Reported to user with diagnostic info
+//!
+//! ## PERFORMANCE
+//!
+//! - Update checks are async and non-blocking
+//! - Download progress is reported in real-time via callbacks
+//! - Air delegation adds network hop but enables centralized caching
+//! - Tauri updater uses native platform APIs (NSIS, MSI, etc.)
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/platform/update/common/updateService.ts` - Update orchestration
+//! - `vs/platform/update/electronbrowser/electronUpdater.ts` - Platform-specific updates
+//! - `vs/workbench/services/extensions/common/extensionManagementService.ts` - Update notification
+//!
+//! ## TODO
+//!
+//! - [ ] Implement complete Air-based update download and installation
+//! - [ ] Add digital signature verification for downloaded updates
+//! - [ ] Implement delta updates to reduce download size
+//! - [ ] Add update rollback capability
+//! - [ ] Support custom update channels (stable, beta, nightly)
+//! - [ ] Add update download resumption for interrupted downloads
+//! - [ ] Implement staged rollout with percentage-based deployment
+//! - [ ] Add telemetry for update success/failure rates
+//! - [ ] Support background silent updates with user opt-out
+//! - [ ] Add update scheduling (e.g., install at next restart)
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`CheckForUpdates`]: Primary update check using Tauri updater
+//! - [`CheckForUpdatesWithAir`]: Update check with Air delegation support
+//! - [`CheckForUpdatesViaAir`]: Air-based update implementation (feature-gated)
+//! - `IsAirAvailable`: Helper to check Air service health
+//! - [`UpdateMode`]: Update delegation mode enum
+//!
+//! ## EXAMPLE
+//!
+//! ```rust,no_run
+//! use crate::Source::Update::UpdateService::{CheckForUpdates, CheckForUpdatesWithAir, UpdateMode};
+//!
+//! // Simple check using Tauri updater
+//! CheckForUpdates(app_handle, runtime, true).await?;
+//!
+//! // Check with Air delegation (AutoDetect mode)
+//! CheckForUpdatesWithAir(app_handle, runtime, true, Some(air_client), UpdateMode::AutoDetect).await?;
+//! ```
+
 //!
 //! ## Air Integration Strategy
 //!

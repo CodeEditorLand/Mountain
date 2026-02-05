@@ -1,18 +1,108 @@
-// ============================================================================
-// File: Mountain/Source/Command/Bootstrap.rs
-// ============================================================================
-// # Bootstrap Commands & Providers
-//
-// Registers all native, Rust-implemented commands and providers into the
-// application's state at startup. This module ensures all core functionality
-// is available as soon as the application initializes.
-//
-// ## Key Features:
-// - Comprehensive native command registration
-// - Tree view provider registration
-// - Command validation and error handling
-// - Command execution context management
-// - Integration with Tauri command system
+//! # Bootstrap (Command)
+//!
+//! Registers all native, Rust-implemented commands and providers into the
+//! application's state at startup. This module ensures all core functionality
+//! is available as soon as the application initializes.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Command Registration
+//! - Register all Tauri command handlers from `Command::` module
+//! - Register core IPC command handlers from `Track::` module
+//! - Build the complete `invoke_handler` vector for Tauri builder
+//! - Ensure all commands are available before UI starts
+//!
+//! ### 2. Tree View Provider Registration
+//! - Register native tree view providers (FileExplorer, etc.)
+//! - Create provider instances and store in `ApplicationState::ActiveTreeViews`
+//! - Associate view identifiers with provider implementations
+//!
+//! ### 3. Provider Registration
+//! - Initialize Environment providers that need early setup
+//! - Register command executors and configuration providers
+//! - Set up document and workspace providers
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! Bootstrap is the **registration orchestrator** for Mountain's startup:
+//!
+//! ```text
+//! Binary::Main ──► Bootstrap::RegisterAll ──► Tauri Builder ──► App Ready
+//!                      │
+//!                      ├─► Command Handlers Registered
+//!                      ├─► Tree View Providers Registered
+//!                      └─► ApplicationState Populated
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Command` module: Command system initialization
+//! - Called from `Binary::Main::Fn` during Tauri builder setup
+//! - Must complete before `.run()` is called on Tauri app
+//!
+//! ### Key Functions
+//! - `RegisterAll`: Main entry point that registers everything
+//! - `RegisterCommands`: Adds all Tauri command handlers
+//! - `RegisterTreeViewProviders`: Registers native tree view providers
+//!
+//! ## REGISTRATION PROCESS
+//!
+//! 1. **Commands**: All command functions are added to Tauri's `invoke_handler`
+//!    via `tauri::generate_handler![]` macro
+//! 2. **Tree Views**: Native providers are instantiated and stored in state
+//! 3. **Error Handling**: Registration failures are logged but don't stop startup
+//!
+//! ## COMMAND REGISTRATION
+//!
+//! The following command modules are registered:
+//! - `Command::TreeView::GetTreeViewChildren`
+//! - `Command::LanguageFeature::MountainProvideHover`
+//! - `Command::LanguageFeature::MountainProvideCompletions`
+//! - `Command::LanguageFeature::MountainProvideDefinition`
+//! - `Command::LanguageFeature::MountainProvideReferences`
+//! - `Command::SourceControlManagement::GetAllSourceControlManagementState`
+//! - `Command::Keybinding::GetResolvedKeybinding`
+//! - `Track::DispatchLogic::DispatchFrontendCommand`
+//! - `Track::DispatchLogic::ResolveUIRequest`
+//! - `IPC::TauriIPCServer::mountain_ipc_receive_message`
+//! - `IPC::TauriIPCServer::mountain_ipc_get_status`
+//! - `Binary::Main::SwitchTrayIcon`
+//! - `Binary::Main::MountainGetWorkbenchConfiguration`
+//! - (and more...)
+//!
+//! ## TREE VIEW PROVIDERS
+//!
+//! Currently registered native providers:
+//! - `FileExplorerViewProvider`: File system tree view
+//!   - View ID: `"fileExplorer"`
+//!   - Provides workspace folders and file listings
+//!
+//! ## PERFORMANCE
+//!
+//! - Registration is synchronous and fast (no async allowed in registration)
+//! - All commands are registered up-front; no lazy loading
+//! - Tree view providers are created once at startup
+//!
+//! ## ERROR HANDLING
+//!
+//! - Command registration errors are logged as errors
+//! - Tree view provider errors are logged as warnings
+//! - Registration continues even if some components fail
+//!
+//! ## TODO
+//!
+//! - [ ] Add command registration metrics (count, duplicates detection)
+//! - [ ] Implement command dependency ordering
+//! - [ ] Add command validation (duplicate names, signature checking)
+//! - [ ] Support dynamic command registration after startup
+//! - [ ] Add command unregistration for hot-reload scenarios
+//! - [ ] Implement command permission system
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`RegisterAll`]: Main registration function called from Binary::Main
+//! - [`RegisterCommands`]: Internal function to register all command handlers
+//! - [`RegisterTreeViewProviders`]: Internal function to register tree view providers
+
 //
 // ## VSCode Reference:
 // - vs/workbench/services/actions/common/menuService.ts

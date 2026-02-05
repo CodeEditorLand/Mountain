@@ -1,23 +1,78 @@
-// ============================================================================
-// File: Mountain/Source/Command/LanguageFeature.rs
-// ============================================================================
-// # Language Feature Commands
-//
-//! Defines the specific Tauri command handlers for language feature requests
-//! that originate from the `Sky` frontend UI (e.g., Monaco Editor).
+//! # LanguageFeature (Command)
 //!
-//! ## Key Features:
-//! - LSP protocol wrapping and delegation
-//! - Type-safe command parameter handling
-//! - Hover information display
-//! - Code completion suggestions
-//! - Go-to-definition navigation
-//! - References search
+//! RESPONSIBILITIES:
+//! - Defines Tauri command handlers for language feature requests from Sky frontend
+//! - Bridges Monaco Editor language requests to [`LanguageFeatureProviderRegistry`]
+//! - Provides type-safe parameter handling and validation for LSP features
+//! - Implements hover, code actions, document highlights, completions, definition, references
+//! - Uses generic `InvokeProvider` helper to reduce boilerplate
 //!
-//! ## VSCode Reference:
-//! - vs/workbench/api/common/extHostLanguageFeatures.ts
-//! - vs/workbench/services/languageFeatures/common/languageFeaturesService.ts
-// ============================================================================
+//! ARCHITECTURAL ROLE:
+//! - Command layer that exposes language features via Tauri IPC (`#[command]`)
+//! - Delegates to Environment's [`LanguageFeatureProvider`](crate::Environment::LanguageFeatureProvider)
+//!   via DI with `Require()` trait
+//! - Translates between frontend JSON parameters and Rust DTO types
+//! - Error strings returned directly to frontend for display
+//!
+//! COMMAND REFERENCE (Tauri IPC):
+//! - [`MountainProvideHover`](crate::Command::LanguageFeature::MountainProvideHover):
+//!   Show hover information at cursor position
+//! - [`MountainProvideCodeActions`](crate::Command::LanguageFeature::MountainProvideCodeActions):
+//!   Get quick fixes and refactorings for a code range
+//! - [`MountainProvideDocumentHighlights`](crate::Command::LanguageFeature::MountainProvideDocumentHighlights):
+//!   Find symbol occurrences in document
+//! - [`MountainProvideCompletions`](crate::Command::LanguageFeature::MountainProvideCompletions):
+//!   Get code completion suggestions with context
+//! - [`MountainProvideDefinition`](crate::Command::LanguageFeature::MountainProvideDefinition):
+//!   Jump to symbol definition location
+//! - [`MountainProvideReferences`](crate::Command::LanguageFeature::MountainProvideReferences):
+//!   Find all references to a symbol
+//!
+//! ERROR HANDLING:
+//! - Returns `Result<Value, String>` where errors sent directly to frontend
+//! - Validates URI non-empty and position format (line/character numbers)
+//! - JSON serialization errors converted to strings
+//! - Provider errors (CommonError) converted to strings via `map_err(|Error| Error.to_string())`
+//!
+//! PERFORMANCE:
+//! - Each command is async and non-blocking
+//! - Provider lookup is O(1) via `Require()` from DI container
+//! - URI parsing and DTO deserialization adds minimal overhead
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/api/common/extHostLanguageFeatures.ts` - ext host language features API
+//! - `vs/workbench/services/languageFeatures/common/languageFeaturesService.ts` - service layer
+//! - `vs/workbench/contrib/hover/browser/hover.ts` - hover implementation
+//! - `vs/workbench/contrib/completion/browser/completion.ts` - completion widget
+//! - `vs/workbench/contrib/definition/browser/definition.ts` - go to definition
+//! - `vs/workbench/contrib/references/browser/references.ts` - find references
+//!
+//! TODO:
+//! - Implement more language features: document symbols, formatting, rename, signature help
+//! - Add cancellation token support for long-running operations
+//! - Implement request deduplication for identical concurrent requests
+//! - Add request caching for repeated symbol lookups
+//! - Support workspace symbol search
+//! - Add semantic tokens for syntax highlighting
+//! - Implement code lens provider
+//! - Add inlay hints support
+//! - Support linked editing range
+//! - Add call hierarchy and type hierarchy
+//! - Implement document color and color presentation
+//! - Add folding range provider
+//! - Support selection range provider
+//!
+//! MODULE CONTENTS:
+//! - Helper function: `InvokeProvider<F, T>` - generic provider invoker
+//! - Validation function: `ValidateLanguageFeatureRequest`
+//! - Tauri command functions (all `#[command] pub async fn`):
+//!   - Hover: `MountainProvideHover`
+//!   - Code Actions: `MountainProvideCodeActions`
+//!   - Highlights: `MountainProvideDocumentHighlights`
+//!   - Completions: `MountainProvideCompletions`
+//!   - Definition: `MountainProvideDefinition`
+//!   - References: `MountainProvideReferences`
+//! - (Commented out: `MountainProvideDocumentSymbols`)
 
 use std::sync::Arc;
 

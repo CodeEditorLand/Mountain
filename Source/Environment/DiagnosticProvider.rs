@@ -1,13 +1,136 @@
-// File: Mountain/Source/Environment/DiagnosticProvider.rs
-//
-// # Architectural Role: Diagnostic Collection and Aggregation
-//
-// DiagnosticProvider implements the DiagnosticManager trait, managing
-// diagnostic information from multiple sources (language servers, extensions,
-// built-in providers). It aggregates diagnostics by owner, file URI, and
-// severity, notifying the UI when changes occur.
-//
-// # Responsibilities
+//! # DiagnosticProvider (Environment)
+//!
+//! Implements the `DiagnosticManager` trait, managing diagnostic information from
+//! multiple sources (language servers, extensions, built-in providers). It
+//! aggregates diagnostics by owner, file URI, and severity, notifying the UI
+//! when changes occur.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Diagnostic Collection
+//! - Maintain collections of diagnostics organized by owner (TypeScript, Rust, ESLint)
+//! - Store diagnostics per resource URI for efficient lookup
+//! - Support multiple severity levels (Error, Warning, Info, Hint)
+//! - Track diagnostic source and code for quick fixes
+//!
+//! ### 2. Diagnostic Aggregation
+//! - Combine diagnostics from multiple sources into unified view
+//! - Merge diagnostics for same location from different owners
+//! - Sort diagnostics by severity and position
+//! - De-duplicate identical diagnostics
+//!
+//! ### 3. Change Notification
+//! - Emit events to UI (Sky) when diagnostics change
+//! - Identify changed URIs efficiently for incremental updates
+//! - Format diagnostic collections for IPC transmission
+//! - Support diagnostic refresh requests
+//!
+//! ### 4. Owner Management
+//! - Allow independent language servers to manage their diagnostics
+//! - Support adding/removing diagnostic owners
+//! - Prevent interference between different diagnostic sources
+//! - Track owner metadata (name, version, etc.)
+//!
+//! ### 5. Diagnostic Lifecycle
+//! - `SetDiagnostics(owner, uri, entries)`: Set diagnostics for owner+URI
+//! - `ClearDiagnostics(owner, uri)`: Remove diagnostics
+//! - `RemoveOwner(owner)`: Remove all diagnostics from an owner
+//! - `GetDiagnostics(uri)`: Retrieve all diagnostics for a URI
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! DiagnosticProvider is the **diagnostic aggregation hub**:
+//!
+//! ```text
+//! Language Server ──► SetDiagnostics ──► DiagnosticProvider ──► UI Event ──► Sky
+//! Extension ──► SetDiagnostics ──► DiagnosticProvider ──► UI Event ──► Sky
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: Error and diagnostic management
+//! - Implements `CommonLibrary::Diagnostic::DiagnosticManager` trait
+//! - Accessible via `Environment.Require<dyn DiagnosticManager>()`
+//!
+//! ### Data Storage
+//! - `ApplicationState.DiagnosticsMap`: HashMap<String, HashMap<String, Vec<MarkerDataDTO>>>
+//!   - Outer key: Owner (e.g., "typescript", "rust-analyzer")
+//!   - Inner key: URI string
+//!   - Value: Vector of diagnostic markers
+//!
+//! ### Dependencies
+//! - `ApplicationState`: Diagnostic storage
+//! - `Log`: Diagnostic change logging
+//! - `IPCProvider`: To emit diagnostic change events
+//!
+//! ### Dependents
+//! - Language servers: Report diagnostics via provider
+//! - `DispatchLogic`: Route diagnostic-related commands
+//! - UI components: Display diagnostics in editor
+//!
+//! ## DIAGNOSTIC DATA MODEL
+//!
+//! Each diagnostic is a `MarkerDataDTO`:
+//! - `Severity`: Error(8), Warning(4), Information(2), Hint(1)
+//! - `Message`: Human-readable description
+//! - `StartLineNumber`/`StartColumn`: Start position (0-based)
+//! - `EndLineNumber`/`EndColumn`: End position
+//! - `Source`: Diagnostic source string (e.g., "tslint")
+//! - `Code`: Diagnostic code for quick fix lookup
+//! - `ModelVersionIdentifier`: Document version for tracking
+//!
+//! ## NOTIFICATION FLOW
+//!
+//! 1. Language server calls `SetDiagnostics(owner, uri, entries)`
+//! 2. Provider validates and stores in `ApplicationState.DiagnosticsMap`
+//! 3. Provider identifies which URIs changed in this update
+//! 4. Provider emits `sky://diagnostics/changed` event with:
+//!    - `owner`: Diagnostic source
+//!    - `uris`: List of changed file URIs
+//! 5. Sky receives event and requests updated diagnostics for those URIs
+//! 6. Sky updates UI (squiggles, Problems panel, etc.)
+//!
+//! ## ERROR HANDLING
+//!
+//! - Invalid owner/uri: Logged but operation continues
+//! - Empty diagnostic list: Treated as "clear" operation
+//! - Serialization errors: Logged and skipped
+//! - State lock errors: `CommonError::StateLockPoisoned`
+//!
+//! ## PERFORMANCE
+//!
+//! - Diagnostic storage uses nested HashMaps for O(1) lookup
+//! - Change detection compares old vs new URI sets
+//! - Events are debounced to prevent spam (configurable)
+//! - Large diagnostic sets may impact UI responsiveness (consider paging)
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/workbench/services/diagnostic/common/diagnosticCollection.ts` - Collection management
+//! - `vs/platform/diagnostics/common/diagnostics.ts` - Diagnostic data model
+//! - `vs/workbench/services/diagnostic/common/diagnosticService.ts` - Aggregation and events
+//!
+//! ## TODO
+//!
+//! - [ ] Implement diagnostic severity filtering (hide certain levels)
+//! - [ ] Add diagnostic code actions/quick fixes integration
+//! - [ ] Support diagnostic inline messages and hover
+//! - [ ] Implement diagnostic history and undo/redo
+//! - [ ] Add diagnostic export (to file, clipboard)
+//! - [ ] Support diagnostic linting and rule configuration
+//! - [ ] Implement diagnostic suppression comments
+//! - [ ] Add diagnostic telemetry (frequency, severity distribution)
+//! - [ ] Support remote diagnostics (from cloud services)
+//! - [ ] Implement diagnostic caching for offline scenarios
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`DiagnosticProvider`]: Main struct implementing `DiagnosticManager`
+//! - Diagnostic storage and retrieval methods
+//! - Change notification and event emission
+//! - Owner management functions
+//! - Diagnostic validation helpers
+
 //
 // 1. **Diagnostic Collection**: Maintains collections of diagnostics organized
 //    by owner (e.g., TypeScript, Rust, ESLint) and resource URI.

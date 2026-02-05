@@ -1,16 +1,133 @@
-// File: Mountain/Source/ProcessManagement/InitializationData.rs
-// Role: Constructs initial data payloads for the `Sky` frontend and `Cocoon`
-// sidecar. Responsibilities:
-//   - `ConstructSandboxConfiguration`: Gathers host environment data for the
-//     frontend.
-//   - `ConstructExtensionHostInitializationData`: Assembles all necessary data
-//     for the extension host to initialize, including extensions, workspace
-//     info, and paths.
-
-//! # InitializationData
+//! # InitializationData (ProcessManagement)
 //!
-//! Contains the logic for constructing the initial data payloads that are sent
-//! to the `Sky` frontend and the `Cocoon` sidecar to bootstrap their states.
+//! Constructs the initial data payloads that are sent to the `Sky` frontend
+//! and the `Cocoon` sidecar to bootstrap their states during application
+//! startup.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Frontend Sandbox Configuration
+//! - Gather host environment data (paths, platform, versions)
+//! - Construct `ISandboxConfiguration` payload for Sky
+//! - Include machine ID, session ID, and user environment
+//! - Provide appRoot, homeDir, tmpDir, and userDataDir URIs
+//!
+//! ### 2. Extension Host Initialization
+//! - Assemble data for extension host (Cocoon) startup
+//! - Include discovered extensions list
+//! - Provide workspace information (folders, configuration)
+//! - Set up storage paths (globalStorage, workspaceStorage)
+//! - Configure logging and telemetry settings
+//!
+//! ### 3. Path Resolution
+//! - Resolve application root from Tauri resources
+//! - Resolve app data directory for persistence
+//! - Resolve home directory and temp directory
+//! - Handle path errors with descriptive `CommonError` types
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! InitializationData is the **bootstrap orchestrator** for Mountain's
+//! startup sequence:
+//!
+//! ```
+//! Binary::Main ──► InitializationData ──► Sky (Frontend)
+//!                        │
+//!                        └─► Cocoon (Extension Host)
+//! ```
+//!
+//! ### Position in Mountain
+//! - `ProcessManagement` module: Process lifecycle and initialization
+//! - Called during `Binary::Main` startup and `CocoonManagement` initialization
+//! - Provides complete environment snapshot for all processes
+//!
+//! ### Dependencies
+//! - `tauri::AppHandle`: Path resolution and package info
+//! - `CommonLibrary::Environment::Requires`: DI for services
+//! - `CommonLibrary::Error::CommonError`: Error handling
+//! - `uuid::Uuid`: Generate machine/session IDs
+//! - `serde_json::json`: Payload construction
+//!
+//! ### Dependents
+//! - `Binary::Main::Fn`: Calls `ConstructSandboxConfiguration` for UI
+//! - `CocoonManagement::InitializeCocoon`: Calls `ConstructExtensionHostInitializationData`
+//!
+//! ## PAYLOAD FORMATS
+//!
+//! ### ISandboxConfiguration (for Sky)
+//! ```json
+//! {
+//!   "windowId": "main",
+//!   "machineId": "uuid",
+//!   "sessionId": "uuid",
+//!   "logLevel": 2,
+//!   "userEnv": { ... },
+//!   "appRoot": "file:///...",
+//!   "appName": "Mountain",
+//!   "platform": "darwin|win32|linux",
+//!   "arch": "x64|arm64",
+//!   "versions": { "mountain": "x.y.z", "electron": "0.0.0-tauri", ... },
+//!   "homeDir": "file:///...",
+//!   "tmpDir": "file:///...",
+//!   "userDataDir": "file:///...",
+//!   "backupPath": "file:///...",
+//!   "productConfiguration": { ... }
+//! }
+//! ```
+//!
+//! ### IExtensionHostInitData (for Cocoon)
+//! ```json
+//! {
+//!   "commit": "dev-commit-hash",
+//!   "version": "x.y.z",
+//!   "parentPid": 12345,
+//!   "environment": {
+//!     "appName": "Mountain",
+//!     "appRoot": "file:///...",
+//!     "globalStorageHome": "file:///...",
+//!     "workspaceStorageHome": "file:///...",
+//!     "extensionLogLevel": [["info", "Default"]]
+//!   },
+//!   "workspace": { "id": "...", "name": "...", ... },
+//!   "logsLocation": "file:///...",
+//!   "telemetryInfo": { ... },
+//!   "extensions": [ ... ],
+//!   "autoStart": true,
+//!   "uiKind": 1
+//! }
+//! ```
+//!
+//! ## ERROR HANDLING
+//!
+//! - Path resolution failures return `CommonError::ConfigurationLoad`
+//! - Workspace identifier errors propagate from `ApplicationState::GetWorkspaceIdentifier`
+//! - JSON serialization errors should not occur (using `json!` macro)
+//!
+//! ## PLATFORM DETECTION
+//!
+//! Platform strings match VS Code conventions:
+//! - `"win32"` for Windows
+//! - `"darwin"` for macOS
+//! - `"linux"` for Linux
+//!
+//! Architecture mapping:
+//! - `"x64"` for x86_64
+//! - `"arm64"` for aarch64
+//! - `"ia32"` for x86
+//!
+//! ## TODO
+//!
+//! - [ ] Persist machineId across sessions (currently generated new each launch)
+//! - [ ] Add environment variable overrides for development
+//! - [ ] Implement workspace cache for faster startup
+//! - [ ] Add telemetry for initialization performance
+//! - [ ] Support remote workspace URIs
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`ConstructSandboxConfiguration`]: Build ISandboxConfiguration for Sky
+//! - [`ConstructExtensionHostInitializationData`]: Build IExtensionHostInitData for Cocoon
+
 
 use std::{collections::HashMap, env, sync::Arc};
 

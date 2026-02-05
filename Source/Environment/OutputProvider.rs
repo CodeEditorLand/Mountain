@@ -1,69 +1,66 @@
-// File: Mountain/Source/Environment/OutputProvider.rs
-// Role: Implements the `OutputChannelManager` trait for the
-// `MountainEnvironment`. Responsibilities:
-//   - Manage multiple output channels (e.g., 'Extension Host', 'JavaScript',
-//     'Git')
-//   - Handle channel creation, modification, and disposal.
-//   - Emit events to the Sky frontend for UI updates.
-//   - Manage output formatting and encoding.
-//   - Handle channel scoping and visibility state.
-//   - Maintain output buffer in memory for persistence.
-//
-// TODOs:
-//   - Implement output formatting (syntax highlighting, line numbers)
-//   - Add output encoding support (UTF-8, UTF-16, ASCII)
-//   - Implement output buffering with size limits
-//   - Add output channel persistence to disk
-//   - Implement output channel export functionality
-//   - Add output search and filtering
-//   - Support output channel grouping
-//   - Implement output timestamping
-//   - Add output channel priority (relevance ordering)
-//   - Support output channel logging levels
-//   - Implement output deduplication
-//   - Add output channel statistics (line count, char count)
-//   - Implement output scroll-to-bottom behavior
-//   - Support output word wrap configuration
-//
-// Inspired by VSCode's output service which:
-// - Separates output channels by identifier
-// - Supports output visibility management
-// - Handles large output buffers efficiently
-// - Provides output channel language-specific formatting
-// - Manages output channel lifecycle and disposal
-
-//! # OutputProvider Implementation
+//! # OutputProvider (Environment)
 //!
-//! Implements the `OutputChannelManager` trait for the `MountainEnvironment`.
-//! This provider contains the core logic for managing output channels,
-//! including state management and emitting events to the `Sky` frontend for UI
-//! updates.
+//! RESPONSIBILITIES:
+//! - Implements [`OutputChannelManager`](CommonLibrary::Output::OutputChannelManager) for [`MountainEnvironment`]
+//! - Manages multiple output channels (e.g., 'Extension Host', 'JavaScript', 'Git')
+//! - Handles channel lifecycle: creation, appending, replacement, clearing, disposal
+//! - Maintains in-memory buffers with size limits and automatic trimming
+//! - Emits Tauri events to Sky frontend for UI updates
+//! - Controls channel visibility and reveal behavior
 //!
-//! ## Channel Management
+//! ARCHITECTURAL ROLE:
+//! - Environment provider for output channel management
+//! - Channels stored in [`ApplicationState.OutputChannels`](crate::ApplicationState::ApplicationState)
+//! - Uses Tauri event system (`tauri::Emitter`) for UI communication
+//! - Integrates with [`Utility`](crate::Utility) for state lock error handling
+//! - Buffer management with 10MB limit per channel and 1MB trim threshold
 //!
-//! Each output channel maintains:
-//! - A unique identifier (channel name)
-//! - A display name (shown in the UI)
-//! - An optional language identifier for syntax highlighting
-//! - An in-memory buffer of output content
-//! - A visibility state flag
+//! ERROR HANDLING:
+//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
+//! - Validates channel name length (1-256 chars) and language identifier (max 64 chars)
+//! - Rejects append values exceeding 1MB per operation
+//! - State lock errors mapped via [`Utility::MapApplicationStateLockErrorToCommonError`](crate::Utility)
+//! - Warns on operations for non-existent channels (Append, Replace, Clear, Reveal)
+//! - Close operation is stubbed with warning
 //!
-//! ## Channel Lifecycle
+//! PERFORMANCE:
+//! - In-memory buffer with O(1) append and O(n) replace operations
+//! - Automatic buffer trimming when approaching 10MB limit (drains from front)
+//! - Lock on shared state should be minimized; drops guard promptly after mutation
+//! - TODO: Consider streaming large outputs directly to UI without buffering
 //!
-//! 1. **Register**: Create a new channel with the specified name and language
-//! 2. **Append**: Add text to the channel's buffer (emit append event)
-//! 3. **Replace**: Replace the entire channel content (emit replace event)
-//! 4. **Clear**: Empty the channel buffer (emit clear event)
-//! 5. **Reveal**: Show the channel in the UI with optional focus preservation
-//! 6. **Close**: Hide the channel view (channel remains registered)
-//! 7. **Dispose**: Permanently remove the channel from memory and UI
+//! VS CODE REFERENCE:
+//! - `vs/workbench/contrib/output/common/output.ts` - output channel service
+//! - `vs/workbench/services/output/common/outputService.ts` - output service main logic
+//! - `vs/workbench/contrib/output/browser/outputPanel.ts` - output view UI
 //!
-//! ## Output Scoping
+//! TODO:
+//! - Implement output formatting (syntax highlighting, line numbers)
+//! - Add output encoding support (UTF-8, UTF-16, ASCII)
+//! - Implement output buffering with configurable size limits
+//! - Add output channel persistence to disk for recovery
+//! - Implement output channel export functionality (save to file)
+//! - Add output search and filtering capabilities
+//! - Support output channel grouping and categorization
+//! - Implement output timestamping for each line
+//! - Add output channel priority (relevance ordering)
+//! - Support output channel logging levels (debug, info, warn, error)
+//! - Implement output deduplication to reduce noise
+//! - Add output channel statistics (line count, char count, age)
+//! - Implement output scroll-to-bottom behavior configuration
+//! - Support output word wrap configuration
+//! - Implement Close operation fully (hide channel and cleanup)
 //!
-//! Output channels are scoped by extension or feature:
-//! - Built-in channels: 'Extension Host', 'Tasks', 'Debug'
-//! - Extension channels: Created by extensions with their own naming scheme
-//! - Channels can be shown/hide individually or batch managed
+//! MODULE CONTENTS:
+//! - [`OutputChannelManager`](CommonLibrary::Output::OutputChannelManager) implementation:
+//!   - [`RegisterChannel`](Self::RegisterChannel) - create new channel with validation
+//!   - [`Append`](Self::Append) - add text with buffer size enforcement (1MB per call)
+//!   - [`Replace`](Self::Replace) - replace entire channel buffer
+//!   - [`Clear`](Self::Clear) - empty channel buffer
+//!   - [`Reveal`](Self::Reveal) - show channel in UI with focus option
+//!   - [`Close`](Self::Close) - hide channel (stub)
+//!   - [`Dispose`](Self::Dispose) - permanently remove channel from state
+//! - Data type: [`OutputChannelStateDTO`](crate::ApplicationState::DTO::OutputChannelStateDTO)
 
 use CommonLibrary::{Error::CommonError::CommonError, Output::OutputChannelManager::OutputChannelManager};
 use async_trait::async_trait;

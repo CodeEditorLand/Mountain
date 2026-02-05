@@ -1,22 +1,74 @@
-// ============================================================================
-// File: Mountain/Source/Command/SourceControlManagement.rs
-// ============================================================================
-// # SourceControlManagement Commands
-//! Defines the specific Tauri command handlers for SourceControlManagement data
-//! requests that originate from the `Sky` frontend UI.
+//! # SourceControlManagement (Command)
 //!
-//! ## Key Features:
-//! - Git integration and status tracking
-//! - SCM provider state management
-//! - File change tracking
-//! - Branch management
-//! - Commit and diff operations
+//! RESPONSIBILITIES:
+//! - Defines Tauri command handlers for Source Control Management (SCM) operations
+//! - Exposes SCM functionality to the Sky frontend via IPC
+//! - Aggregates SCM provider state, resources, and groups for UI rendering
+//! - Routes SCM commands to appropriate providers (commit, push, pull, branch ops)
+//! - Manages branch listing, checkout, and commit history retrieval
+//! - Handles resource staging (git add equivalent)
 //!
-//! ## VSCode Reference:
-//! - vs/workbench/contrib/scm/common/scm.ts
-//! - vs/workbench/contrib/scm/browser/scmView.ts
-//! - vs/workbench/services/scm/common/scmService.ts
-// ============================================================================
+//! ARCHITECTURAL ROLE:
+//! - Command module that bridges Sky UI requests to [`SourceControlManagementProvider`]
+//!   implementations in the Environment layer
+//! - Uses Tauri's `#[command]` attribute for IPC exposure
+//! - Reads from [`ApplicationState.SourceControlManagement*`](crate::ApplicationState::ApplicationState)
+//!   fields to gather state
+//! - TODO: Should forward commands to provider methods via DI (Require trait)
+//!
+//! COMMAND REFERENCE (Tauri IPC):
+//! - [`GetAllSourceControlManagementState`](crate::Command::SourceControlManagement::GetAllSourceControlManagementState):
+//!   Returns complete snapshot of providers, groups, and resources for SCM view
+//! - [`GetSCMResourceChanges`](crate::Command::SourceControlManagement::GetSCMResourceChanges):
+//!   Get file changes for a specific provider
+//! - [`ExecuteSCMCommand`](crate::Command::SourceControlManagement::ExecuteSCMCommand):
+//!   Execute SCM operation (commit, push, pull, etc.)
+//! - [`GetSCMBranches`](crate::Command::SourceControlManagement::GetSCMBranches):
+//!   List branches for provider
+//! - [`CheckoutSCMBranch`](crate::Command::SourceControlManagement::CheckoutSCMBranch):
+//!   Switch to a different branch
+//! - [`GetSCMCommitHistory`](crate::Command::SourceControlManagement::GetSCMCommitHistory):
+//!   Retrieve commit log with optional limit
+//! - [`StageSCMResource`](crate::Command::SourceControlManagement::StageSCMResource):
+//!   Stage or unstage a file resource
+//!
+//! ERROR HANDLING:
+//! - Returns `Result<Value, String>` where error string is sent to frontend
+//! - Uses `MapLockError` to convert Mutex poisoning to error strings
+//! - Provider identifier parsing may fail (unwrap_or(0) fallback)
+//! - Unknown commands return error string
+//!
+//! PERFORMANCE:
+//! - State access uses RwLock reads; cloning entire state maps (may be heavy)
+//! - TODO: Consider pagination for large commit histories and resource lists
+//!
+//! VS CODE REFERENCE:
+//! - `vs/workbench/contrib/scm/common/scm.ts` - SCM model and state aggregation
+//! - `vs/workbench/contrib/scm/browser/scmView.ts` - SCM UI panel
+//! - `vs/workbench/services/scm/common/scmService.ts` - SCM service façade
+//!
+//! TODO:
+//! - Integrate with `SourceControlManagementProvider` trait methods
+//! - Implement actual SCM command execution (currently stubs with mock success)
+//! - Add proper error handling for failed git operations
+//! - Implement branch retrieval with remote tracking branches
+//! - Add commit history with proper commit objects (author, message, hash)
+//! - Implement resource staging with correct file paths and states
+//! - Add support for stash operations, merging, rebasing
+//! - Handle multiple SCM providers simultaneously (git, svn, etc.)
+//! - Add cancellation tokens for long-running operations
+//! - Implement diff viewing with proper unified diff format
+//! - Add SCM resource decoration (git status icons, gutter marks)
+//! - Support SCM workspace edit (apply changes from commit/rebase)
+//! - Add SCM input box interactions (commit message, branch name)
+//!
+//! MODULE CONTENTS:
+//! - Tauri command functions (all `#[command]` async):
+//!   - State retrieval: `GetAllSourceControlManagementState`, `GetSCMResourceChanges`
+//!   - Operations: `ExecuteSCMCommand`, `StageSCMResource`
+//!   - Branch management: `GetSCMBranches`, `CheckoutSCMBranch`
+//!   - History: `GetSCMCommitHistory`
+//! - No data structures (uses DTOs from CommonLibrary)
 
 use std::sync::Arc;
 

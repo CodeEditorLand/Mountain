@@ -1,5 +1,128 @@
-// File: Mountain/Source/Environment/StorageProvider.rs
-// Role: Implements the `StorageProvider` trait for the `MountainEnvironment`.
+//! # StorageProvider (Environment)
+//!
+//! Implements the `StorageProvider` trait for `MountainEnvironment`, providing
+//! persistent key-value storage for extensions and application components.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Storage Management
+//! - Provide global storage (shared across all workspaces)
+//! - Provide workspace-scoped storage (per workspace)
+//! - Support namespaced keys to avoid collisions
+//! - Handle storage quota limits
+//!
+//! ### 2. CRUD Operations
+//! - `Get(scope, key)`: Retrieve value by key
+//! - `Set(scope, key, value)`: Store value (create or update)
+//! - `Remove(scope, key)`: Delete key-value pair
+//! - `Clear(scope)`: Remove all keys in a scope
+//! - `Keys(scope)`: List all keys in a scope
+//!
+//! ### 3. Data Persistence
+//! - Write storage changes to disk immediately
+//! - Load storage from disk on startup
+//! - Handle corrupted storage files with recovery
+//! - Backup storage before writes (optional)
+//!
+//! ### 4. Type Safety
+//! - Store and retrieve arbitrary JSON-serializable values
+//! - Handle serialization/deserialization errors
+//! - Support primitive types and complex objects
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! StorageProvider is the **persistent key-value store** for Mountain:
+//!
+//! ```text
+//! Extension ──► StorageProvider ──► Disk (JSON files)
+//!                      │
+//!                      └─► ApplicationState (Cache)
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: Persistence capability provider
+//! - Implements `CommonLibrary::Storage::StorageProvider` trait
+//! - Accessible via `Environment.Require<dyn StorageProvider>()`
+//!
+//! ### Storage Scopes
+//! - **Global**: `{AppData}/User/globalStorage.json`
+//!   - Shared across all workspaces
+//!   - Used for user preferences, extension state
+//! - **Workspace**: `{AppData}/User/workspaceStorage/{workspace-id}/storage.json`
+//!   - Specific to current workspace
+//!   - Used for workspace-specific settings and state
+//!
+//! ### Storage Format
+//! - JSON file with simple key-value pairs
+//! - Values are `serde_json::Value` (any JSON type)
+//! - Keys are strings with namespace prefix (e.g., "extensionId.setting")
+//!
+//! ### Dependencies
+//! - `ApplicationState`: Access to global/workspace memento maps
+//! - `FileSystemWriter`: To persist storage to disk
+//! - `Log`: Storage change logging
+//!
+//! ### Dependents
+//! - Extensions: Store extension-specific state
+//! - `ConfigurationProvider`: Uses global storage for user settings
+//! - `ExtensionManagement`: Store extension metadata
+//! - Any component needing persistent settings
+//!
+//! ## STORAGE LIFECYCLE
+//!
+//! 1. **App Start**: `ApplicationState::default()` loads global and workspace memento
+//! 2. **Workspace Change**: `UpdateWorkspaceMementoPathAndReload()` loads new workspace storage
+//! 3. **Runtime**: Providers read/write to in-memory maps (`GlobalMemento`, `WorkspaceMemento`)
+//! 4. **Shutdown**: `ApplicationRunTime::SaveApplicationState()` writes memento to disk
+//! 5. **Crash Recovery**: `Internal::LoadInitialMementoFromDisk()` with backup/restore
+//!
+//! ## ERROR HANDLING
+//!
+//! - Disk full: `CommonError::FileSystemIO`
+//! - Permission denied: `CommonError::FileSystemIO`
+//! - JSON parse error: `CommonError::SerializationError` (with recovery)
+//! - Quota exceeded: `CommonError::StorageFull` (TODO)
+//!
+//! ## PERFORMANCE
+//!
+//! - All storage operations are in-memory (fast)
+//! - Disk writes are async and batched
+//! - Consider size limits (configurable max per storage file)
+//! - Large values (>1MB) should be stored in files, not storage
+//!
+//! ## RECOVERY MECHANISMS
+//!
+//! - Corrupted JSON files are backed up with timestamps
+//! - On parse error, storage is reset to empty and continues
+//! - Directories are created automatically
+//! - Writes are atomic (write to temp, then rename)
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Patterns from VS Code:
+//! - `vs/platform/storage/common/storageService.ts` - Storage service
+//! - `vs/platform/storage/common/memento.ts` - Memento pattern for state
+//!
+//! ## TODO
+//!
+//! - [ ] Implement storage quotas (per-extension limits)
+//! - [ ] Add storage encryption for sensitive data
+//! - [ ] Support storage compression for large datasets
+//! - [ ] Implement storage migration/versioning
+//! - [ ] Add storage inspection and debugging tools
+//! - [ ] Support storage syncing across devices (via Air)
+//! - [ ] Implement storage TTL (time-to-live) for auto-expiring keys
+//! - [ ] Add storage subscriptions/notifications on change
+//! - [ ] Support binary data storage (not just JSON)
+//! - [ ] Implement storage transactions (batch operations with rollback)
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`StorageProvider`]: Main struct implementing the trait
+//! - Storage access methods (Get, Set, Remove, Clear, Keys)
+//! - Memento loading and saving
+//! - Recovery and backup logic
+
 // Responsibilities:
 //   - Core logic for Memento storage operations.
 //   - Reading from and writing to global and workspace JSON storage files.

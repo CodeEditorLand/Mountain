@@ -1,26 +1,113 @@
-// ============================================================================
-// File: Mountain/Source/Environment/UserInterfaceProvider.rs
-// ============================================================================
-// # UserInterfaceProvider Implementation
-//
-// Implements the `UserInterfaceProvider` trait for the `MountainEnvironment`.
-// This provider orchestrates all modal UI interactions like dialogs, messages,
-// and quick picks by communicating with the `Sky` frontend.
-//
-// ## Key Features:
-// - Thread-safe modal dialogs (file dialogs, message boxes)
-// - Quick pick selection interface
-// - Input box for string input
-// - Event-driven UI updates
-// - Request-response pattern with timeout handling
-// - Thread-safe pending request tracking
-//
-// ## VSCode Reference:
-// - vs/base/browser/ui/dialog/dialog.ts
-// - vs/platform/dialogs/common/dialogs.ts
-// - vs/base/common/message.ts
-//
-// ============================================================================
+//! # UserInterfaceProvider (Environment)
+//!
+//! Implements the `UserInterfaceProvider` trait for `MountainEnvironment`,
+//! orchestrating all modal UI interactions like dialogs, messages, and quick
+//! picks by communicating with the `Sky` frontend.
+//!
+//! ## RESPONSIBILITIES
+//!
+//! ### 1. Modal Dialogs
+//! - Open file/folder selection dialogs (`OpenDialog`)
+//! - Save file dialogs (`SaveDialog`)
+//! - Message boxes (`ShowMessage`, `ShowErrorMessage`)
+//! - Input boxes for text entry (`InputBox`)
+//! - Quick pick lists for selection (`QuickPick`)
+//!
+//! ### 2. Request-Response Pattern
+//! - Send UI requests to Sky frontend via IPC
+//! - Track pending requests with unique IDs
+//! - Wait for responses with timeout handling
+//! - Resolve results via `ResolveUIRequest` callback
+//!
+//! ### 3. Thread Safety
+//! - All methods are async and safe for concurrent access
+//! - Pending requests stored in `ApplicationState.PendingUserInterfaceRequests`
+//! - Uses `tokio::sync::oneshot` for request-response coordination
+//!
+//! ## ARCHITECTURAL ROLE
+//!
+//! UserInterfaceProvider is the **UI bridge** for Mountain:
+//!
+//! ```text
+//! Provider ──► UI Request ──► Sky Frontend ──► User Interaction ──► ResolveUIRequest
+//! ```
+//!
+//! ### Position in Mountain
+//! - `Environment` module: UI capability provider
+//! - Implements `CommonLibrary::UserInterface::UserInterfaceProvider` trait
+//! - Accessible via `Environment.Require<dyn UserInterfaceProvider>()`
+//!
+//! ### Dependencies
+//! - `ApplicationState`: Pending request tracking
+//! - `IPCProvider`: For sending messages to Sky
+//! - `tauri::AppHandle`: For window/parent references
+//!
+//! ### Dependents
+//! - Any command that needs to show UI dialogs
+//! - `DispatchLogic::ResolveUIRequest`: Completes the request-response cycle
+//! - Error handlers: Show error messages to users
+//!
+//! ## DTO STRUCTURES
+//!
+//! All UI operations use DTOs for type-safe options:
+//! - `OpenDialogOptionsDTO`: File/folder selection options
+//! - `SaveDialogOptionsDTO`: Save file dialog options
+//! - `QuickPickOptionsDTO`: Quick pick list configuration
+//! - `InputBoxOptionsDTO`: Input box configuration
+//! - `MessageSeverity`: Info, Warning, Error levels
+//!
+//! ## REQUEST FLOW
+//!
+//! 1. Provider method called (e.g., `ShowMessage`)
+//! 2. Generate unique request ID
+//! 3. Store `oneshot::Sender` in `PendingUserInterfaceRequests` map
+//! 4. Send IPC message to Sky with request ID and options
+//! 5. Sky shows UI and waits for user action
+//! 6. User responds → Sky calls `ResolveUIRequest` Tauri command
+//! 7. `ResolveUIRequest` looks up sender by ID and sends result
+//! 8. Provider method returns result to caller
+//!
+//! ## ERROR HANDLING
+//!
+//! - IPC failures: `CommonError::IPCError`
+//! - Timeout: `CommonError::RequestTimeout`
+//! - User cancellation: `None` result (not error)
+//! - Invalid arguments: `CommonError::InvalidArgument`
+//!
+//! ## PERFORMANCE
+//!
+//! - Requests are async and non-blocking
+//! - Timeouts prevent indefinite waiting (default ~30s)
+//! - Request IDs are time-based for uniqueness
+//! - Pending request map uses `Arc<Mutex<>>` for thread safety
+//!
+//! ## VS CODE REFERENCE
+//!
+//! Borrowed from VS Code's UI system:
+//! - `vs/platform/dialogs/common/dialogs.ts` - Dialog service API
+//! - `vs/platform/prompt/common/prompt.ts` - Input and quick pick
+//! - `vs/workbench/services/decorator/common/decorator.ts` - Message service
+//!
+//! ## TODO
+//!
+//! - [ ] Add support for custom dialog buttons and layouts
+//! - [ ] Implement file/folder filters with glob patterns
+//! - [ ] Add dialog position and sizing controls
+//! - [ ] Support modal vs non-modal dialogs
+//! - [ ] Add accessibility features (screen reader support)
+//! - [ ] Implement dialog theming (dark/light mode)
+//! - [ ] Add file type/extension selection in save dialog
+//! - [ ] Support multi-select in quick pick and file dialogs
+//! - [ ] Add async progress reporting during long operations
+//! - [ ] Implement custom input validation (regex, etc.)
+//!
+//! ## MODULE CONTENTS
+//!
+//! - [`UserInterfaceProvider`]: Main struct implementing the trait
+//! - Dialog-specific methods: `ShowMessage`, `OpenDialog`, `SaveDialog`
+//! - Selection methods: `QuickPick`, `InputBox`
+//! - Request-response coordination logic
+
 
 use std::path::PathBuf;
 
