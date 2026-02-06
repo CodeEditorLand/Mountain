@@ -383,7 +383,6 @@ impl ConfigurationBridge {
 	) -> Result<serde_json::Value, String> {
 		debug!("[ConfigurationBridge] Converting Wind config to Mountain format");
 
-		// ADVANCED IMPLEMENTATION: Microsoft-inspired machine and session ID generation
 		let machine_id = self.generate_machine_id().await.unwrap_or_else(|e| {
 			warn!("[ConfigurationBridge] Failed to generate machine ID: {}", e);
 			"wind-machine-fallback".to_string()
@@ -496,7 +495,7 @@ impl ConfigurationBridge {
 
 	/// Generate unique machine ID using advanced Microsoft-inspired patterns
 	async fn generate_machine_id(&self) -> Result<String, String> {
-		// ADVANCED IMPLEMENTATION: Multi-platform machine ID generation
+		// IMPLEMENTATION: Multi-platform machine ID generation
 		#[cfg(target_os = "macos")]
 		{
 			use std::process::Command;
@@ -583,7 +582,7 @@ impl ConfigurationBridge {
 
 		use rand::{Rng, rng};
 
-		// ADVANCED IMPLEMENTATION: Secure session ID generation
+		// IMPLEMENTATION: Secure session ID generation
 		let mut rng = rng();
 		let random_part:u64 = rng.random_range(0..=u64::MAX);
 

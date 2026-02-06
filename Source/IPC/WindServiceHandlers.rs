@@ -631,7 +631,7 @@ async fn handle_show_item_in_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Va
 		.as_str()
 		.ok_or("File path must be a string".to_string())?;
 
-	// ADVANCED IMPLEMENTATION: Microsoft-inspired native file system integration
+	// IMPLEMENTATION: Microsoft-inspired native file system integration
 	debug!("[WindServiceHandlers] Show item in folder: {}", path_str);
 
 	let path = std::path::PathBuf::from(path_str);
@@ -720,7 +720,7 @@ async fn handle_open_external(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 		.as_str()
 		.ok_or("URL must be a string".to_string())?;
 
-	// ADVANCED IMPLEMENTATION: Microsoft-inspired URL validation and opening
+	// IMPLEMENTATION: Microsoft-inspired URL validation and opening
 	debug!("[WindServiceHandlers] Open external: {}", url_str);
 
 	// Validate URL format

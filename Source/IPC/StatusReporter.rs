@@ -476,7 +476,7 @@ impl StatusReporter {
 		Ok(report)
 	}
 
-	/// ADVANCED STATUS REPORTING: Microsoft-inspired comprehensive reporting
+	/// STATUS REPORTING: Microsoft-inspired comprehensive reporting
 	pub async fn report_to_sky(&self) -> Result<(), String> {
 		debug!("[StatusReporter] Reporting IPC status to Sky");
 
@@ -580,7 +580,7 @@ impl StatusReporter {
 	/// Get the start time
 	pub fn get_start_time(&self) -> SystemTime { self.start_time }
 
-	/// ADVANCED PERFORMANCE MONITORING: Microsoft-inspired performance tracking
+	/// PERFORMANCE MONITORING: Microsoft-inspired performance tracking
 	pub async fn update_performance_metrics(&self) -> Result<(), String> {
 		let ipc_server = self.ipc_server.as_ref().ok_or("IPC Server not set".to_string())?;
 
@@ -624,7 +624,7 @@ impl StatusReporter {
 		Ok(())
 	}
 
-	/// ADVANCED HEALTH MONITORING: Microsoft-inspired health checks
+	/// HEALTH MONITORING: Microsoft-inspired health checks
 	pub async fn perform_health_check(&self) -> Result<(), String> {
 		let mut health_monitor = self
 			.health_monitor
@@ -718,7 +718,7 @@ impl StatusReporter {
 		Ok(())
 	}
 
-	/// ADVANCED METRICS CALCULATION: Microsoft-inspired performance algorithms
+	/// METRICS CALCULATION: Microsoft-inspired performance algorithms
 	async fn calculate_message_rate(&self) -> f64 {
 		// Calculate messages per second based on recent activity
 		let history = self.get_status_history().unwrap_or_default();
@@ -985,7 +985,7 @@ impl StatusReporter {
 		Ok(registry.services.get(service_name).cloned())
 	}
 
-	/// ADVANCED RECOVERY: Microsoft-inspired automatic recovery
+	/// RECOVERY: Microsoft-inspired automatic recovery
 	pub async fn attempt_recovery(&self) -> Result<(), String> {
 		let mut health_monitor = self
 			.health_monitor
@@ -1100,7 +1100,7 @@ pub async fn mountain_start_ipc_status_reporting(
 	}
 }
 
-/// ADVANCED TAURI COMMANDS: Microsoft-inspired comprehensive monitoring
+/// TAURI COMMANDS: Microsoft-inspired comprehensive monitoring
 
 /// Tauri command to get performance metrics
 #[tauri::command]

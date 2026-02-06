@@ -210,7 +210,7 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 		if let Some(contributes) = Extension.Contributes.as_ref().and_then(|v| v.as_object()) {
 			if let Some(configuration) = contributes.get("configuration").and_then(|v| v.as_object()) {
 				if let Some(properties) = configuration.get("properties").and_then(|v| v.as_object()) {
-					// ADVANCED NESTED OBJECT HANDLING: Recursively process configuration properties
+					// NESTED OBJECT HANDLING: Recursively process configuration properties
 					self::process_configuration_properties(&mut MergedDefaults, "", properties, &mut Vec::new())?;
 				}
 			}
@@ -220,7 +220,7 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 	Ok(Value::Object(MergedDefaults))
 }
 
-/// ADVANCED RECURSIVE CONFIGURATION PROCESSING: Handle nested object structures
+/// RECURSIVE CONFIGURATION PROCESSING: Handle nested object structures
 fn process_configuration_properties(
 	merged_defaults:&mut serde_json::Map<String, Value>,
 	current_path:&str,

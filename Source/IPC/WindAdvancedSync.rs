@@ -607,7 +607,7 @@ impl WindAdvancedSync {
 
 			debug!("[WindAdvancedSync] Synchronizing documents");
 
-			// ADVANCED ERROR RECOVERY: Microsoft-inspired circuit breaker pattern
+			// ERROR RECOVERY: Microsoft-inspired circuit breaker pattern
 			let sync_start = std::time::Instant::now();
 			let mut success_count = 0;
 			let mut error_count = 0;
@@ -623,7 +623,7 @@ impl WindAdvancedSync {
 						error_count += 1;
 						error!("[WindAdvancedSync] Failed to apply document change: {}", e);
 
-						// ADVANCED ERROR HANDLING: Exponential backoff on consecutive failures
+						// ERROR HANDLING: Exponential backoff on consecutive failures
 						consecutive_failures += 1;
 						if consecutive_failures >= max_consecutive_failures {
 							warn!("[WindAdvancedSync] Too many consecutive failures, slowing sync interval");
@@ -645,7 +645,7 @@ impl WindAdvancedSync {
 			// Update sync status
 			self.update_sync_status().await;
 
-			// ADVANCED PERFORMANCE MONITORING: Microsoft-inspired metrics collection
+			// PERFORMANCE MONITORING: Microsoft-inspired metrics collection
 			let sync_duration = sync_start.elapsed();
 			trace!(
 				"[WindAdvancedSync] Document sync completed: {} success, {} errors, {:.2}ms",
@@ -703,7 +703,7 @@ impl WindAdvancedSync {
 	async fn apply_document_change(&self, change:DocumentChange) -> Result<(), String> {
 		debug!("[WindAdvancedSync] Applying document change: {}", change.change_id);
 
-		// ADVANCED CONFLICT RESOLUTION: Microsoft-inspired conflict handling
+		// CONFLICT RESOLUTION: Microsoft-inspired conflict handling
 		let change_start = std::time::Instant::now();
 
 		// Check for conflicts before applying changes
@@ -763,7 +763,7 @@ impl WindAdvancedSync {
 			}
 		}
 
-		// ADVANCED PERFORMANCE TRACKING: Microsoft-inspired operation metrics
+		// PERFORMANCE TRACKING: Microsoft-inspired operation metrics
 		let change_duration = change_start.elapsed();
 		trace!(
 			"[WindAdvancedSync] Change applied successfully in {:.2}ms: {}",
@@ -774,7 +774,7 @@ impl WindAdvancedSync {
 		Ok(())
 	}
 
-	/// ADVANCED CONFLICT DETECTION: Microsoft-inspired conflict resolution
+	/// CONFLICT DETECTION: Microsoft-inspired conflict resolution
 	async fn check_for_conflicts(&self, change:&DocumentChange) -> Result<(), String> {
 		let sync = self.document_sync.lock().unwrap();
 
