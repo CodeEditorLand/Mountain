@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use log::{debug, info};
 
-use crate::ApplicationState::ApplicationState::{ApplicationState, MapLockError};
+use crate::ApplicationState::{ApplicationState, MapLockError};
 
 /// Configures extension scan paths by resolving paths from the executable
 /// directory.
@@ -32,7 +32,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	debug!("[Extensions] [ScanPaths] Locking ExtensionScanPaths...");
 
 	let mut ScanPathsGuard = AppState
-		.ExtensionScanPaths
+		.Extension.Registry.ExtensionScanPaths
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|e| format!("Failed to lock ExtensionScanPaths: {}", e))?;

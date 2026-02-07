@@ -4,7 +4,7 @@
 
 use log::{error, info};
 
-use crate::ApplicationState::{ApplicationState::ApplicationState, Internal::ScanAndPopulateExtensions};
+use crate::ApplicationState::{ApplicationState, Internal::ScanAndPopulateExtensions};
 
 /// Scans and populates extensions from the configured scan paths.
 ///
@@ -32,7 +32,7 @@ pub async fn ExtensionPopulate(
 	ApplicationHandle:tauri::AppHandle,
 	AppState:&std::sync::Arc<ApplicationState>,
 ) -> Result<(), String> {
-	match ScanAndPopulateExtensions(ApplicationHandle.clone(), AppState).await {
+	match ScanAndPopulateExtensions(ApplicationHandle.clone(), &AppState.Extension).await {
 		Ok(()) => {
 			info!("[Extensions] [Populate] Extensions scanned and populated successfully.");
 			Ok(())
