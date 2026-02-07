@@ -18,13 +18,14 @@ use crate::Vine::Generated::Vine::{
     GenericRequest, GenericResponse, GenericNotification
 };
 
-use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ClientInfo};
+use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine, ClientInfo, ConfigScope};
 
 pub struct CocoonServiceImpl {
     // Injected dependencies (The Spine)
     pub fs_spine: Arc<dyn FileSystemSpine>,
     pub window_spine: Arc<dyn WindowManagerSpine>,
     pub lifecycle_spine: Arc<dyn LifecycleSpine>,
+    pub config_spine: Arc<dyn ConfigSpine>,
 }
 
 impl CocoonServiceImpl {
@@ -32,11 +33,13 @@ impl CocoonServiceImpl {
         fs_spine: Arc<dyn FileSystemSpine>,
         window_spine: Arc<dyn WindowManagerSpine>,
         lifecycle_spine: Arc<dyn LifecycleSpine>,
+        config_spine: Arc<dyn ConfigSpine>,
     ) -> Self {
         Self {
             fs_spine,
             window_spine,
             lifecycle_spine,
+            config_spine,
         }
     }
 }
@@ -121,6 +124,74 @@ impl MountainService for CocoonServiceImpl {
                     error: "".to_string(),
                     success: true,
                 }))
+            },
+
+            // --- Config Spine (v0.4) ---
+            "config.get" => {
+                #[derive(serde::Deserialize)]
+                struct GetConfigArgs {
+                    section: String,
+                }
+
+                let args: GetConfigArgs = serde_json::from_slice(&inner_req.parameter)
+                    .map_err(|e| Status::invalid_argument(format!("Invalid args: {}", e)))?;
+
+                match self.config_spine.get(args.section).await {
+                     Ok(value) => {
+                         Ok(Response::new(GenericResponse {
+                            request_id: inner_req.request_id,
+                            payload: serde_json::to_vec(&value).unwrap(),
+                            error: "".to_string(),
+                            success: true,
+                         }))
+                     },
+                     Err(e) => {
+                         Ok(Response::new(GenericResponse {
+                            request_id: inner_req.request_id,
+                            payload: vec![],
+                            error: e,
+                            success: false,
+                        }))
+                     }
+                }
+            },
+             "config.update" => {
+                #[derive(serde::Deserialize)]
+                struct SetConfigArgs {
+                    key: String,
+                    value: serde_json::Value,
+                    scope: i32,
+                }
+
+                let args: SetConfigArgs = serde_json::from_slice(&inner_req.parameter)
+                    .map_err(|e| Status::invalid_argument(format!("Invalid args: {}", e)))?;
+                
+                // Map integer to enum
+                let scope = match args.scope {
+                    0 => ConfigScope::Application,
+                    1 => ConfigScope::Workspace,
+                    2 => ConfigScope::Profile,
+                    _ => ConfigScope::Application,
+                };
+
+                match self.config_spine.set(args.key, args.value, scope).await {
+                     Ok(_) => {
+                         Ok(Response::new(GenericResponse {
+                            request_id: inner_req.request_id,
+                            payload: vec![],
+                            error: "".to_string(),
+                            success: true,
+                         }))
+                     },
+                     Err(e) => {
+                         Ok(Response::new(GenericResponse {
+                            request_id: inner_req.request_id,
+                            payload: vec![],
+                            error: e,
+                            success: false,
+                        }))
+                     }
+                }
             },
 
             // --- Unimplemented ---
