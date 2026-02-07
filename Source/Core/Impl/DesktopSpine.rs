@@ -45,6 +45,29 @@ impl FileSystemSpine for DesktopFileSystem {
         .await.map_err(|e| e.to_string())?
     }
     async fn exists(&self, path: PathBuf) -> bool { path.exists() }
+
+    async fn create_dir(&self, path: PathBuf) -> Result<(), String> {
+         tokio::task::spawn_blocking(move || {
+            fs::create_dir_all(&path).map_err(|e| format!("Failed to create dir {}: {}", path.display(), e))
+        })
+        .await.map_err(|e| e.to_string())?
+    }
+    async fn delete(&self, path: PathBuf) -> Result<(), String> {
+         tokio::task::spawn_blocking(move || {
+            if path.is_dir() {
+                fs::remove_dir_all(&path).map_err(|e| format!("Failed to delete dir {}: {}", path.display(), e))
+            } else {
+                fs::remove_file(&path).map_err(|e| format!("Failed to delete file {}: {}", path.display(), e))
+            }
+        })
+        .await.map_err(|e| e.to_string())?
+    }
+    async fn rename(&self, from: PathBuf, to: PathBuf) -> Result<(), String> {
+         tokio::task::spawn_blocking(move || {
+            fs::rename(&from, &to).map_err(|e| format!("Failed to rename {} to {}: {}", from.display(), to.display(), e))
+        })
+        .await.map_err(|e| e.to_string())?
+    }
 }
 
 // --- Window Manager Implementation ---
