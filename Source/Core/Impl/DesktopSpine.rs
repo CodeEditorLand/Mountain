@@ -7,7 +7,10 @@ use async_trait::async_trait;
 use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
-use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, DialogOptions, ClientInfo, ServerInfo};
+use serde_json::Value;
+use std::sync::Arc;
+use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine, DialogOptions, ClientInfo, ServerInfo, ConfigScope};
+use crate::ApplicationState::ApplicationState::ApplicationState;
 
 // --- Filesystem Implementation ---
 
@@ -104,6 +107,7 @@ impl LifecycleSpine for DesktopLifecycle {
                 "fs.write".to_string(),
                 "window.dialog".to_string(),
                 "system.lifecycle".to_string(),
+                "config.read".to_string(),
             ],
         })
     }
@@ -111,5 +115,33 @@ impl LifecycleSpine for DesktopLifecycle {
     async fn shutdown(&self) {
         println!("[DesktopLifecycle] Shutdown requested");
         std::process::exit(0);
+    }
+}
+
+// --- Configuration Implementation ---
+
+#[derive(Clone)]
+pub struct DesktopConfig {
+    // We hold a reference to the global ApplicationState
+    pub state: Arc<ApplicationState>,
+}
+
+#[async_trait]
+impl ConfigSpine for DesktopConfig {
+    async fn get(&self, section: String) -> Result<Value, String> {
+        // In a real implementation, we'd query the internal ConfigurationService
+        // For now, return a basic default structure or look it up in a map
+        println!("[DesktopConfig] Get config: {}", section);
+        Ok(Value::Null) 
+    }
+
+    async fn set(&self, key: String, value: Value, scope: ConfigScope) -> Result<(), String> {
+        println!("[DesktopConfig] Set config: {} = {} (scope: {:?})", key, value, scope);
+        Ok(())
+    }
+
+    async fn reload(&self) -> Result<Value, String> {
+        println!("[DesktopConfig] Reload requested");
+        Ok(Value::Object(serde_json::Map::new()))
     }
 }
