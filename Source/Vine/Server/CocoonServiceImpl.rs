@@ -18,22 +18,25 @@ use crate::Vine::Generated::Vine::{
     GenericRequest, GenericResponse, GenericNotification
 };
 
-use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine};
+use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ClientInfo};
 
 pub struct CocoonServiceImpl {
     // Injected dependencies (The Spine)
     pub fs_spine: Arc<dyn FileSystemSpine>,
     pub window_spine: Arc<dyn WindowManagerSpine>,
+    pub lifecycle_spine: Arc<dyn LifecycleSpine>,
 }
 
 impl CocoonServiceImpl {
     pub fn new(
         fs_spine: Arc<dyn FileSystemSpine>,
         window_spine: Arc<dyn WindowManagerSpine>,
+        lifecycle_spine: Arc<dyn LifecycleSpine>,
     ) -> Self {
         Self {
             fs_spine,
             window_spine,
+            lifecycle_spine,
         }
     }
 }
@@ -51,6 +54,22 @@ impl MountainService for CocoonServiceImpl {
         println!("[CocoonService] Received Request: {}", method);
 
         match method {
+             // --- Lifecycle Spine (v0.3) ---
+            "system.handshake" => {
+                let info: ClientInfo = serde_json::from_slice(&inner_req.parameter)
+                    .map_err(|e| Status::invalid_argument(format!("Invalid client info: {}", e)))?;
+                
+                let server_info = self.lifecycle_spine.handshake(info).await
+                    .map_err(|e| Status::internal(e))?;
+                    
+                Ok(Response::new(GenericResponse {
+                    request_id: inner_req.request_id,
+                    payload: serde_json::to_vec(&server_info).unwrap(),
+                    error: "".to_string(),
+                    success: true,
+                }))
+            },
+
             // --- Filesystem Spine (v0.1) ---
             "fs.readFile" => {
                 // Decode arguments: PathBuf
