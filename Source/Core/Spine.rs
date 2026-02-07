@@ -11,6 +11,7 @@
 use async_trait::async_trait;
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 /// v0.1: The Filesystem Spine
 /// Abstracting disk I/O so it can be swapped (e.g., In-Memory for Web)
@@ -53,4 +54,19 @@ pub struct ClientInfo {
 pub struct ServerInfo {
     pub version: String,
     pub capabilities: Vec<String>,
+}
+
+/// v0.4: Configuration Spine
+#[async_trait]
+pub trait ConfigSpine: Send + Sync {
+    async fn get(&self, section: String) -> Result<Value, String>;
+    async fn set(&self, key: String, value: Value, scope: ConfigScope) -> Result<(), String>;
+    async fn reload(&self) -> Result<Value, String>;
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum ConfigScope {
+    Application = 0,
+    Workspace = 1,
+    Profile = 2,
 }
