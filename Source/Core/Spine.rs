@@ -10,7 +10,6 @@
 
 use async_trait::async_trait;
 use std::path::PathBuf;
-use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 
 /// v0.1: The Filesystem Spine
@@ -40,13 +39,18 @@ pub struct DialogOptions {
 /// v0.3: Lifecycle Spine
 #[async_trait]
 pub trait LifecycleSpine: Send + Sync {
-    async fn initialize(&self) -> Result<InitData, String>;
+    async fn handshake(&self, client_info: ClientInfo) -> Result<ServerInfo, String>;
     async fn shutdown(&self);
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct InitData {
+pub struct ClientInfo {
+    pub pid: u32,
+    pub role: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ServerInfo {
     pub version: String,
     pub capabilities: Vec<String>,
-    pub env: std::collections::HashMap<String, String>,
 }
