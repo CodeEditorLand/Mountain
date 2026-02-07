@@ -203,13 +203,19 @@
 //! - [ ] Add state export/import functionality
 
 // --- Public Modules ---
-/// Defines the main `ApplicationState` struct and its core implementation.
-pub mod ApplicationState;
 
-/// Defines all DTOs used to represent the various components of the application
-/// state.
+/// State management sub-modules.
+pub mod State;
+
+/// Internal utility sub-modules for persistence, scanning, etc.
+pub mod Internal;
+
+/// Data Transfer Objects for serialization.
 pub mod DTO;
 
-// --- Internal Implementation ---
-/// Contains internal helper functions for the `ApplicationState` module.
-pub mod Internal;
+// --- Re-exports for backward compatibility ---
+
+/// Re-export the main ApplicationState struct and helpers for backward compatibility
+pub use State::ApplicationState::{ApplicationState, MapLockError, MapLockErrorWithRecovery, StateOperationResult};
+pub use State::{WorkspaceState, ConfigurationState, ExtensionState, FeatureState, UIState};
+pub use Internal::{Persistence, PathResolution, Serialization, ExtensionScanner, TextProcessing, Recovery};
