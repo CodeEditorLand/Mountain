@@ -111,4 +111,4 @@ pub mod Binary;
 /// delegates to the primary binary logic in the Binary module.
 #[allow(dead_code)]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-fn main() { Binary::Main::Fn(); }
+fn main() { Binary::Main::Main(); }
