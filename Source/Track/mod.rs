@@ -37,29 +37,52 @@
 //!
 //! ## Key Components
 //!
-//! - **EffectCreation**: Creates ActionEffects from request payloads
-//! - **DispatchLogic**: Main dispatch functions for routing requests
+//! - **FrontendCommand**: Frontend command dispatch via Tauri
+//! - **SideCarRequest**: Sidecar RPC request dispatch via gRPC
+//! - **UIRequest**: UI request-response result handler
+//! - **Webview**: Webview message forwarder
+//! - **Effect**: Effect creation and routing
 //!
 //! ## TODOs
-// High Priority:
-// - [ ] Add metrics/telemetry for dispatch latency
-// - [ ] Implement command caching for frequently used effects
-// - [ ] Add circuit breaker pattern for failing provider calls
+//! High Priority:
+//! - [x] Atomize DispatchLogic into submodules
+//! - [ ] Add metrics/telemetry for dispatch latency
+//! - [ ] Implement command caching for frequently used effects
+//! - [ ] Add circuit breaker pattern for failing provider calls
 //!
-// Medium Priority:
-// - [ ] Add request rate limiting per client
-// - [ ] Implement command batching for related operations
-// - [ ] Add warm-up phase for critical paths
+//! Medium Priority:
+//! - [ ] Split CreateEffectForRequest into individual effect modules
+//! - [ ] Add request rate limiting per client
+//! - [ ] Implement command batching for related operations
+//! - [ ] Add warm-up phase for critical paths
 //!
-// Low Priority:
-// - [ ] Add request tracing across the entire pipeline
-// - [ ] Implement request replay for debugging
-// - [ ] Add command versioning for backwards compatibility
+//! Low Priority:
+//! - [ ] Add request tracing across the entire pipeline
+//! - [ ] Implement request replay for debugging
+//! - [ ] Add command versioning for backwards compatibility
 
 // --- Sub-modules ---
 
-/// Contains the main dispatch functions.
-pub mod DispatchLogic;
+/// Frontend command dispatch handling.
+pub mod FrontendCommand;
 
-/// Contains the logic for creating `ActionEffect`s from request payloads.
-pub mod EffectCreation;
+/// Sidecar RPC request dispatch handling.
+pub mod SideCarRequest;
+
+/// UI request-response result handling.
+pub mod UIRequest;
+
+/// Webview message forwarding.
+pub mod Webview;
+
+/// Effect creation and routing.
+pub mod Effect;
+
+// --- Re-exports for backward compatibility ---
+
+pub use FrontendCommand::DispatchFrontendCommand as DispatchFrontendCommand;
+pub use SideCarRequest::DispatchSideCarRequest as DispatchSideCarRequest;
+pub use UIRequest::ResolveUIRequest as ResolveUIRequest;
+pub use Webview::MountainWebviewPostMessageFromGuest as MountainWebviewPostMessageFromGuest;
+pub use Effect::CreateEffectForRequest as CreateEffectForRequest;
+pub use Effect::MappedEffect;
