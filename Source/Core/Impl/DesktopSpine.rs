@@ -1,7 +1,6 @@
 //! # DesktopSpine.rs
 //! 
 //! Concrete implementation of the Universal Spine traits for the Desktop target.
-//! Uses `std::fs` for file I/O and `tauri` for window management.
 
 use async_trait::async_trait;
 use std::fs;
@@ -9,139 +8,113 @@ use std::path::PathBuf;
 use tauri::Manager;
 use serde_json::Value;
 use std::sync::Arc;
-use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine, DialogOptions, ClientInfo, ServerInfo, ConfigScope};
+use crate::Core::Spine::{
+    FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine, TerminalSpine,
+    DialogOptions, ClientInfo, ServerInfo, ConfigScope, TerminalOptions
+};
 use crate::ApplicationState::ApplicationState::ApplicationState;
 
 // --- Filesystem Implementation ---
-
 #[derive(Clone)]
 pub struct DesktopFileSystem;
-
 #[async_trait]
 impl FileSystemSpine for DesktopFileSystem {
     async fn read_file(&self, path: PathBuf) -> Result<Vec<u8>, String> {
-        // Run blocking I/O on a thread pool to avoid blocking async runtime
         tokio::task::spawn_blocking(move || {
             fs::read(&path).map_err(|e| format!("Failed to read {}: {}", path.display(), e))
         })
-        .await
-        .map_err(|e| e.to_string())?
+        .await.map_err(|e| e.to_string())?
     }
-
     async fn write_file(&self, path: PathBuf, content: Vec<u8>) -> Result<(), String> {
         tokio::task::spawn_blocking(move || {
             fs::write(&path, content).map_err(|e| format!("Failed to write {}: {}", path.display(), e))
         })
-        .await
-        .map_err(|e| e.to_string())?
+        .await.map_err(|e| e.to_string())?
     }
-
     async fn list_dir(&self, path: PathBuf) -> Result<Vec<String>, String> {
         tokio::task::spawn_blocking(move || {
             let mut entries = Vec::new();
             if path.is_dir() {
                 for entry in fs::read_dir(&path).map_err(|e| e.to_string())? {
                     let entry = entry.map_err(|e| e.to_string())?;
-                    if let Ok(name) = entry.file_name().into_string() {
-                        entries.push(name);
-                    }
+                    if let Ok(name) = entry.file_name().into_string() { entries.push(name); }
                 }
             }
             Ok(entries)
         })
-        .await
-        .map_err(|e| e.to_string())?
+        .await.map_err(|e| e.to_string())?
     }
-
-    async fn exists(&self, path: PathBuf) -> bool {
-        path.exists()
-    }
+    async fn exists(&self, path: PathBuf) -> bool { path.exists() }
 }
 
 // --- Window Manager Implementation ---
-
 #[derive(Clone)]
-pub struct TauriWindowManager {
-    pub app_handle: tauri::AppHandle,
-}
-
+pub struct TauriWindowManager { pub app_handle: tauri::AppHandle }
 #[async_trait]
 impl WindowManagerSpine for TauriWindowManager {
-    async fn show_message(&self, title: &str, message: &str, level: &str) {
+    async fn show_message(&self, title: &str, message: &str, _level: &str) {
         let app = self.app_handle.clone();
         let title = title.to_string();
         let msg = message.to_string();
-        let _level = level.to_string(); // Logic to map 'info'/'error' to icon can go here
-
-        // Dispatch to main thread
         tauri::async_runtime::spawn(async move {
             if let Some(window) = app.get_window("main") {
                 tauri::api::dialog::message(Some(&window), &title, &msg);
-            } else {
-                eprintln!("[Headless] Message: {} - {}", title, msg);
             }
         });
     }
-
-    async fn open_dialog(&self, _options: DialogOptions) -> Option<PathBuf> {
-        // Implement native file picker
-        // For now, return None as placeholder
-        None
-    }
+    async fn open_dialog(&self, _options: DialogOptions) -> Option<PathBuf> { None }
 }
 
 // --- Lifecycle Implementation ---
-
 #[derive(Clone)]
 pub struct DesktopLifecycle;
-
 #[async_trait]
 impl LifecycleSpine for DesktopLifecycle {
     async fn handshake(&self, client_info: ClientInfo) -> Result<ServerInfo, String> {
-        println!("[DesktopLifecycle] Handshake received from role: {}, pid: {}", client_info.role, client_info.pid);
-        
+        println!("[DesktopLifecycle] Handshake received from role: {}", client_info.role);
         Ok(ServerInfo {
             version: "0.1.0".to_string(),
-            capabilities: vec![
-                "fs.read".to_string(),
-                "fs.write".to_string(),
-                "window.dialog".to_string(),
-                "system.lifecycle".to_string(),
-                "config.read".to_string(),
-            ],
+            capabilities: vec!["fs".to_string(), "window".to_string(), "config".to_string(), "terminal".to_string()],
         })
     }
-
-    async fn shutdown(&self) {
-        println!("[DesktopLifecycle] Shutdown requested");
-        std::process::exit(0);
-    }
+    async fn shutdown(&self) { std::process::exit(0); }
 }
 
 // --- Configuration Implementation ---
-
 #[derive(Clone)]
-pub struct DesktopConfig {
-    // We hold a reference to the global ApplicationState
-    pub state: Arc<ApplicationState>,
-}
-
+pub struct DesktopConfig { pub state: Arc<ApplicationState> }
 #[async_trait]
 impl ConfigSpine for DesktopConfig {
     async fn get(&self, section: String) -> Result<Value, String> {
-        // In a real implementation, we'd query the internal ConfigurationService
-        // For now, return a basic default structure or look it up in a map
         println!("[DesktopConfig] Get config: {}", section);
         Ok(Value::Null) 
     }
-
     async fn set(&self, key: String, value: Value, scope: ConfigScope) -> Result<(), String> {
-        println!("[DesktopConfig] Set config: {} = {} (scope: {:?})", key, value, scope);
+        println!("[DesktopConfig] Set config: {} = {:?} (scope: {:?})", key, value, scope);
         Ok(())
     }
+    async fn reload(&self) -> Result<Value, String> { Ok(Value::Object(serde_json::Map::new())) }
+}
 
-    async fn reload(&self) -> Result<Value, String> {
-        println!("[DesktopConfig] Reload requested");
-        Ok(Value::Object(serde_json::Map::new()))
+// --- Terminal Implementation ---
+#[derive(Clone)]
+pub struct DesktopTerminal;
+#[async_trait]
+impl TerminalSpine for DesktopTerminal {
+    async fn create(&self, options: TerminalOptions) -> Result<u32, String> {
+        println!("[DesktopTerminal] Creating terminal: {}", options.name);
+        Ok(1) // Mock ID
+    }
+    async fn write(&self, id: u32, data: String) -> Result<(), String> {
+        println!("[DesktopTerminal] Write to {}: {}", id, data.trim());
+        Ok(())
+    }
+    async fn resize(&self, id: u32, cols: u16, rows: u16) -> Result<(), String> {
+        println!("[DesktopTerminal] Resize {}: {}x{}", id, cols, rows);
+        Ok(())
+    }
+    async fn kill(&self, id: u32) -> Result<(), String> {
+        println!("[DesktopTerminal] Kill {}", id);
+        Ok(())
     }
 }
