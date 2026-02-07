@@ -1,14 +1,6 @@
 //! # CocoonServiceImpl
 //! 
 //! The gRPC implementation for the Cocoon Extension Host.
-//! This service acts as the "Limb" that connects the Cocoon process (Node.js)
-//! to the Mountain Spine (Core traits) via the Vine Protocol.
-//!
-//! RESPONSIBILITIES:
-//! 1. Receive `GenericRequest` from Cocoon (via gRPC).
-//! 2. Decode the request parameters (JSON).
-//! 3. Dispatch to the appropriate `Spine` implementation (Filesystem, Window, etc.).
-//! 4. Encode the result back to `GenericResponse`.
 
 use std::sync::Arc;
 use tonic::{Request, Response, Status};
@@ -21,7 +13,6 @@ use crate::Vine::Generated::Vine::{
 use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine, TerminalSpine, ClientInfo, ConfigScope, TerminalOptions};
 
 pub struct CocoonServiceImpl {
-    // Injected dependencies (The Spine)
     pub fs_spine: Arc<dyn FileSystemSpine>,
     pub window_spine: Arc<dyn WindowManagerSpine>,
     pub lifecycle_spine: Arc<dyn LifecycleSpine>,
@@ -37,57 +28,64 @@ impl CocoonServiceImpl {
         config_spine: Arc<dyn ConfigSpine>,
         terminal_spine: Arc<dyn TerminalSpine>,
     ) -> Self {
-        Self {
-            fs_spine,
-            window_spine,
-            lifecycle_spine,
-            config_spine,
-            terminal_spine,
-        }
+        Self { fs_spine, window_spine, lifecycle_spine, config_spine, terminal_spine }
     }
 }
 
 #[tonic::async_trait]
 impl MountainService for CocoonServiceImpl {
-    /// Process a Request/Response call from Cocoon
-    async fn process_request(
-        &self,
-        request: Request<GenericRequest>,
-    ) -> Result<Response<GenericResponse>, Status> {
+    async fn process_request(&self, request: Request<GenericRequest>) -> Result<Response<GenericResponse>, Status> {
         let inner_req = request.into_inner();
         let method = inner_req.method.as_str();
 
         println!("[CocoonService] Received Request: {}", method);
 
         match method {
-             // --- Lifecycle Spine (v0.3) ---
             "system.handshake" => {
-                let info: ClientInfo = serde_json::from_slice(&inner_req.parameter)
-                    .map_err(|e| Status::invalid_argument(format!("Invalid client info: {}", e)))?;
-                
-                let server_info = self.lifecycle_spine.handshake(info).await
-                    .map_err(|e| Status::internal(e))?;
-                    
-                Ok(Response::new(GenericResponse {
-                    request_id: inner_req.request_id,
-                    payload: serde_json::to_vec(&server_info).unwrap(),
-                    error: "".to_string(),
-                    success: true,
-                }))
+                let info: ClientInfo = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(format!("Invalid client info: {}", e)))?;
+                let server_info = self.lifecycle_spine.handshake(info).await.map_err(|e| Status::internal(e))?;
+                Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: serde_json::to_vec(&server_info).unwrap(), error: "".to_string(), success: true }))
             },
-
-            // --- Filesystem Spine (v0.1) ---
+            // --- Filesystem Spine (v0.1.1) ---
             "fs.readFile" => {
-                let path: std::path::PathBuf = serde_json::from_slice(&inner_req.parameter)
-                    .map_err(|e| Status::invalid_argument(format!("Invalid path: {}", e)))?;
+                let path: std::path::PathBuf = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(format!("Invalid path: {}", e)))?;
                 let result = self.fs_spine.read_file(path).await;
                 match result {
                     Ok(content) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: content, error: "".to_string(), success: true })),
                     Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
                 }
             },
+             "fs.listDir" => {
+                let path: std::path::PathBuf = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(format!("Invalid path: {}", e)))?;
+                match self.fs_spine.list_dir(path).await {
+                    Ok(entries) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: serde_json::to_vec(&entries).unwrap(), error: "".to_string(), success: true })),
+                    Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
+                }
+            },
+             "fs.writeFile" => {
+                #[derive(serde::Deserialize)] struct WriteFileArgs { path: std::path::PathBuf, content: Vec<u8> }
+                let args: WriteFileArgs = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(format!("Invalid args: {}", e)))?;
+                match self.fs_spine.write_file(args.path, args.content).await {
+                    Ok(_) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: "".to_string(), success: true })),
+                    Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
+                }
+            },
+            "fs.createDir" => {
+                 let path: std::path::PathBuf = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(format!("Invalid path: {}", e)))?;
+                 match self.fs_spine.create_dir(path).await {
+                    Ok(_) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: "".to_string(), success: true })),
+                    Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
+                 }
+            },
+            "fs.delete" => {
+                 let path: std::path::PathBuf = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(format!("Invalid path: {}", e)))?;
+                 match self.fs_spine.delete(path).await {
+                    Ok(_) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: "".to_string(), success: true })),
+                    Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
+                 }
+            },
 
-            // --- Window Manager Spine (v0.2) ---
+            // --- Window Manager Spine ---
             "window.showMessage" => {
                 #[derive(serde::Deserialize)] struct ShowMessageArgs { title: String, message: String, level: String }
                 let args: ShowMessageArgs = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(e.to_string()))?;
@@ -95,7 +93,7 @@ impl MountainService for CocoonServiceImpl {
                 Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: "".to_string(), success: true }))
             },
 
-            // --- Config Spine (v0.4) ---
+            // --- Config Spine ---
             "config.get" => {
                 #[derive(serde::Deserialize)] struct GetConfigArgs { section: String }
                 let args: GetConfigArgs = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(e.to_string()))?;
@@ -113,8 +111,14 @@ impl MountainService for CocoonServiceImpl {
                      Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
                 }
             },
+             "config.reload" => {
+                match self.config_spine.reload().await {
+                     Ok(value) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: serde_json::to_vec(&value).unwrap(), error: "".to_string(), success: true })),
+                     Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
+                }
+            },
 
-            // --- Terminal Spine (v0.5) ---
+            // --- Terminal Spine ---
             "terminal.create" => {
                 let options: TerminalOptions = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(e.to_string()))?;
                 match self.terminal_spine.create(options).await {
@@ -130,8 +134,6 @@ impl MountainService for CocoonServiceImpl {
                     Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
                 }
             },
-
-            // --- Unimplemented ---
             _ => {
                 eprintln!("[CocoonService] Unknown method: {}", method);
                 Err(Status::not_found(format!("Method {} not found in Spine", method)))
@@ -139,13 +141,7 @@ impl MountainService for CocoonServiceImpl {
         }
     }
 
-    /// Process a one-way Notification from Cocoon
-    async fn process_notification(
-        &self,
-        request: Request<GenericNotification>,
-    ) -> Result<Response<()>, Status> {
-        let inner_notif = request.into_inner();
-        println!("[CocoonService] Received Notification: {}", inner_notif.event);
+    async fn process_notification(&self, request: Request<GenericNotification>) -> Result<Response<()>, Status> {
         Ok(Response::new(()))
     }
 }
