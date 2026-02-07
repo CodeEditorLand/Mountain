@@ -12,9 +12,9 @@ use std::sync::Arc;
 use tauri::Manager;
 
 use crate::{
-	ApplicationState::DTO::{ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, MergedConfigurationStateDTO::MergedConfigurationStateDTO},
+	ApplicationState::DTO::MergedConfigurationStateDTO::MergedConfigurationStateDTO,
 	Environment::Utility,
-	RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime,
+	RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime,
 };
 
 /// An internal helper to read and parse a single JSON configuration file.
@@ -25,7 +25,7 @@ pub(super) async fn read_and_parse_configuration_file(
 	if let Some(p) = path {
 		let runtime = environment
 			.ApplicationHandle
-			.state::<Arc<MountainRunTime>>()
+			.state::<Arc<ApplicationRunTime>>()
 			.inner()
 			.clone();
 
@@ -55,7 +55,7 @@ pub async fn initialize_and_merge_configurations(
 
 	let workspace_settings_path = environment
 		.ApplicationState
-		.WorkspaceConfigurationPath
+		.Workspace.WorkspaceConfigurationPath
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.clone();
@@ -117,8 +117,9 @@ pub async fn initialize_and_merge_configurations(
 	*environment
 		.ApplicationState
 		.Configuration
+		.GlobalConfiguration
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = final_config;
+		.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = final_config.Data;
 
 	info!(
 		"[ConfigurationProvider] Configuration merged successfully with {} top-level keys.",
@@ -130,13 +131,13 @@ pub async fn initialize_and_merge_configurations(
 
 /// Collects default configurations from all installed extensions.
 pub(super) fn collect_default_configurations(
-	application_state: &crate::ApplicationState::ApplicationState::ApplicationState,
+	application_state: &crate::ApplicationState::ApplicationState,
 ) -> Result<Value, CommonError> {
 	let mut default_config = Map::new();
 
 	// Collect configurations from all extensions' contributes.configuration
 	for extension in application_state
-		.ScannedExtensions
+		.Extension.ScannedExtensions.ScannedExtensions
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.values()

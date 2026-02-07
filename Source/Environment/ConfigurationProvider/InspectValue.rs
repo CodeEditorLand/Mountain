@@ -8,7 +8,7 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 };
 use log::info;
-use serde_json::{Map, Value};
+use serde_json::Value;
 use tauri::Manager;
 
 use crate::Environment::Utility;
@@ -30,7 +30,7 @@ pub(super) async fn inspect_configuration_value(
 
 	let workspace_settings_path = environment
 		.ApplicationState
-		.WorkspaceConfigurationPath
+		.Workspace.WorkspaceConfigurationPath
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.clone();

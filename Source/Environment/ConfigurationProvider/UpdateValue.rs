@@ -6,20 +6,18 @@ use CommonLibrary::{
 		ConfigurationTarget::ConfigurationTarget,
 	},
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
-	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	FileSystem::{ReadFile::ReadFile, WriteFileBytes::WriteFileBytes},
 };
-use log::{error, info, warn};
+use log::{info, warn};
 use serde_json::{Map, Value};
 use std::path::PathBuf;
 use std::sync::Arc;
-use tauri::{Emitter, Manager};
+use tauri::Manager;
 
 use crate::{
-	ApplicationState::DTO::MergedConfigurationStateDTO::MergedConfigurationStateDTO,
 	Environment::Utility,
-	RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime,
+	RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime,
 };
 
 /// Updates a configuration value in the appropriate `settings.json` file.
@@ -29,13 +27,13 @@ pub(super) async fn update_configuration_value(
 	value: Value,
 	target: ConfigurationTarget,
 	_overrides: ConfigurationOverridesDTO,
-	scope_to_language: Option<bool>,
+	_scope_to_language: Option<bool>,
 ) -> Result<(), CommonError> {
 	info!("[ConfigurationProvider] Updating key '{}' in target {:?}", key, target);
 
 	let runtime = environment
 		.ApplicationHandle
-		.state::<Arc<MountainRunTime>>()
+		.state::<Arc<ApplicationRunTime>>()
 		.inner()
 		.clone();
 
@@ -56,7 +54,7 @@ pub(super) async fn update_configuration_value(
 		ConfigurationTarget::Workspace => {
 			environment
 				.ApplicationState
-				.WorkspaceConfigurationPath
+				.Workspace.WorkspaceConfigurationPath
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 				.clone()
