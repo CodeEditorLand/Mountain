@@ -20,6 +20,7 @@ pub(super) async fn reveal_channel(
 
 	let mut channels_guard = env
 		.ApplicationState
+		.Feature.OutputChannels
 		.OutputChannels
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -41,7 +42,7 @@ pub(super) async fn reveal_channel(
 
 /// Closes the view of an output channel in the UI.
 pub(super) async fn close_channel(
-	env: &crate::Environment::MountainEnvironment::MountainEnvironment,
+	_env: &crate::Environment::MountainEnvironment::MountainEnvironment,
 	_channel_identifier: String,
 ) -> Result<(), CommonError> {
 	warn!("[OutputProvider] Close is not fully implemented.");

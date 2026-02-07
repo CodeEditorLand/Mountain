@@ -30,6 +30,7 @@ pub(super) async fn append_to_channel(
 
 	let mut channels_guard = env
 		.ApplicationState
+		.Feature.OutputChannels
 		.OutputChannels
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -71,6 +72,7 @@ pub(super) async fn replace_channel_content(
 
 	let mut channels_guard = env
 		.ApplicationState
+		.Feature.OutputChannels
 		.OutputChannels
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -99,6 +101,7 @@ pub(super) async fn clear_channel(
 
 	let mut channels_guard = env
 		.ApplicationState
+		.Feature.OutputChannels
 		.OutputChannels
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;

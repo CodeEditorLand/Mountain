@@ -48,6 +48,7 @@ pub(super) async fn register_channel(
 
 	let mut channels_guard = env
 		.ApplicationState
+		.Feature.OutputChannels
 		.OutputChannels
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -78,6 +79,7 @@ pub(super) async fn dispose_channel(
 	info!("[OutputProvider] Disposing channel: '{}'", channel_identifier);
 
 	env.ApplicationState
+		.Feature.OutputChannels
 		.OutputChannels
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
