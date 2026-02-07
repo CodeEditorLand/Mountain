@@ -146,7 +146,7 @@ use tauri::{AppHandle, Manager, Wry};
 use uuid::Uuid;
 
 use crate::{
-	ApplicationState::ApplicationState::ApplicationState,
+	ApplicationState::ApplicationState,
 	Environment::MountainEnvironment::MountainEnvironment,
 };
 
@@ -292,7 +292,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 		.await?
 		.unwrap_or_else(|| "Mountain Workspace".to_string());
 
-	let WorkspaceFoldersGuard = ApplicationState.WorkspaceFolders.lock().unwrap();
+	let WorkspaceFoldersGuard = ApplicationState.Workspace.WorkspaceFolders.lock().unwrap();
 
 	let WorkspaceDTO = if WorkspaceFoldersGuard.is_empty() {
 		Value::Null
@@ -303,9 +303,9 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 			"name": WorkspaceName,
 
-			"configuration": ApplicationState.WorkspaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
+			"configuration": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
 
-			"isUntitled": ApplicationState.WorkspaceConfigurationPath.lock().unwrap().is_none(),
+			"isUntitled": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().is_none(),
 
 			"transient": false
 		})
