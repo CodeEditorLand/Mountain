@@ -8,7 +8,6 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	Webview::DTO::WebviewContentOptionsDTO::WebviewContentOptionsDTO,
 };
-use async_trait::async_trait;
 use log::{error, info, warn};
 use serde_json::{json, Value};
 use tauri::{Emitter, Manager, WebviewWindow, WebviewWindowBuilder};
@@ -59,7 +58,7 @@ pub(super) async fn create_webview_panel_impl(
 	{
 		let mut webview_guard = env
 			.ApplicationState
-			.ActiveWebviews
+			.Feature.Webviews.ActiveWebviews
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -120,7 +119,7 @@ pub(super) async fn dispose_webview_panel_impl(env: &MountainEnvironment, handle
 
 	// Remove state
 	env.ApplicationState
-		.ActiveWebviews
+		.Feature.Webviews.ActiveWebviews
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.remove(&handle);
@@ -156,7 +155,7 @@ pub(super) async fn reveal_webview_panel_impl(
 		{
 			let mut webview_guard = env
 				.ApplicationState
-				.ActiveWebviews
+				.Feature.Webviews.ActiveWebviews
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

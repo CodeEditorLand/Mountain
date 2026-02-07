@@ -38,7 +38,7 @@ pub(super) async fn set_webview_options_impl(
 			{
 				let mut webview_guard = env
 					.ApplicationState
-					.ActiveWebviews
+					.Feature.Webviews.ActiveWebviews
 					.lock()
 					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -49,7 +49,7 @@ pub(super) async fn set_webview_options_impl(
 		}
 
 		// Set the webview panel's icon by storing the icon path in the
-		// webview state in ApplicationState.ActiveWebviews. Validate the
+		// webview state in ApplicationState.Feature.Webviews. Validate the
 		// path exists, convert to appropriate format (Url or string),
 		// update the UI to display the icon in the tab bar or title
 		// area, and emit an event to refresh the frontend

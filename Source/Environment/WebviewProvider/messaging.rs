@@ -6,17 +6,14 @@
 
 use std::collections::HashMap;
 
-use CommonLibrary::{
-	Error::CommonError::CommonError,
-};
-use async_trait::async_trait;
+use CommonLibrary::Error::CommonError::CommonError;
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::Value;
 use tauri::{Emitter, Manager};
 use uuid::Uuid;
 
-use super::super::{MountainEnvironment::MountainEnvironment, Utility};
+use super::super::MountainEnvironment::MountainEnvironment;
 
 /// Represents a Webview message
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,11 +77,9 @@ pub(super) async fn setup_webview_message_listener_impl(
 
 /// Removes a message listener for a specific Webview.
 pub(super) async fn remove_webview_message_listener_impl(
-	env: &MountainEnvironment,
-	handle: &str,
+	_env: &MountainEnvironment,
+	_handle: &str,
 ) {
 	// In a full implementation, this would remove the event listener
 	// that forwards Webview messages.
-	let _ = env; // Use env to avoid unused variable warning
-	let _ = handle;
 }
