@@ -25,6 +25,7 @@ pub(super) async fn apply_document_changes(
 	{
 		let mut open_documents_guard = environment
 			.ApplicationState
+			.Feature.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;

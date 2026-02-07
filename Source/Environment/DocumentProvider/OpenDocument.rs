@@ -38,6 +38,7 @@ pub(super) async fn open_document(
 	// First, check if the document is already open.
 	if let Some(existing_document) = environment
 		.ApplicationState
+		.Feature.Documents
 		.OpenDocuments
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
@@ -120,6 +121,7 @@ pub(super) async fn open_document(
 
 	environment
 		.ApplicationState
+		.Feature.Documents
 		.OpenDocuments
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?

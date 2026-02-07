@@ -34,6 +34,7 @@ pub(super) async fn save_document(
 	let (content_bytes, file_path) = {
 		let mut open_documents_guard = environment
 			.ApplicationState
+			.Feature.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -115,6 +116,7 @@ pub(super) async fn save_document_as(
 	let original_content = {
 		let guard = environment
 			.ApplicationState
+			.Feature.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -132,6 +134,7 @@ pub(super) async fn save_document_as(
 	let new_document_state = {
 		let mut guard = environment
 			.ApplicationState
+			.Feature.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -175,6 +178,7 @@ pub(super) async fn save_all_documents(
 	let uris_to_save: Vec<Url> = {
 		let open_documents_guard = environment
 			.ApplicationState
+			.Feature.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
