@@ -1,12 +1,6 @@
 //! # Spine.rs
 //! 
 //! The Universal Spine defines the abstract traits that drive the Mountain editor.
-//! These traits decouple the "what" (Business Logic) from the "how" (Implementation/Transport).
-//! 
-//! By coding against these traits, Mountain can support multiple targets:
-//! - Desktop (Tauri + Local FS)
-//! - Web (DOM + OPFS/Memory FS)
-//! - CLI (Terminal + Stdio)
 
 use async_trait::async_trait;
 use std::path::PathBuf;
@@ -20,6 +14,10 @@ pub trait FileSystemSpine: Send + Sync {
     async fn write_file(&self, path: PathBuf, content: Vec<u8>) -> Result<(), String>;
     async fn list_dir(&self, path: PathBuf) -> Result<Vec<String>, String>;
     async fn exists(&self, path: PathBuf) -> bool;
+    // Add new methods for full FS support
+    async fn create_dir(&self, path: PathBuf) -> Result<(), String>;
+    async fn delete(&self, path: PathBuf) -> Result<(), String>;
+    async fn rename(&self, from: PathBuf, to: PathBuf) -> Result<(), String>;
 }
 
 /// v0.2: The Window Manager Spine
