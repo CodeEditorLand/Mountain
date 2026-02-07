@@ -7,7 +7,7 @@ use std::path::Path;
 use CommonLibrary::Error::CommonError::CommonError;
 use log::trace;
 
-use crate::ApplicationState::ApplicationState::ApplicationState;
+use crate::ApplicationState::ApplicationState;
 
 /// A critical security helper that checks if a given filesystem path is
 /// allowed for access.
@@ -19,7 +19,7 @@ use crate::ApplicationState::ApplicationState::ApplicationState;
 pub fn IsPathAllowedForAccess(ApplicationState: &ApplicationState, PathToCheck: &Path) -> Result<(), CommonError> {
 	trace!("[EnvironmentSecurity] Verifying path: {}", PathToCheck.display());
 
-	if !ApplicationState.IsTrusted.load(std::sync::atomic::Ordering::Relaxed) {
+	if !ApplicationState.Workspace.IsTrusted.load(std::sync::atomic::Ordering::Relaxed) {
 		return Err(CommonError::FileSystemPermissionDenied {
 			Path: PathToCheck.to_path_buf(),
 			Reason: "Workspace is not trusted. File access is denied.".to_string(),
@@ -27,7 +27,7 @@ pub fn IsPathAllowedForAccess(ApplicationState: &ApplicationState, PathToCheck: 
 	}
 
 	let FoldersGuard = ApplicationState
-		.WorkspaceFolders
+		.Workspace.WorkspaceFolders
 		.lock()
 		.map_err(super::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
