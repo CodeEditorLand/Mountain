@@ -4,11 +4,10 @@
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,
-	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
+	StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO,
 };
-use async_trait::async_trait;
 use log::info;
-use serde_json::{json, Value};
+use serde_json::json;
 use tauri::{Emitter, Manager};
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
@@ -22,7 +21,7 @@ pub(super) async fn set_status_bar_entry_impl(
 
 	let mut items_guard = env
 		.ApplicationState
-		.ActiveStatusBarItems
+		.Feature.Markers.ActiveStatusBarItems
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -43,7 +42,7 @@ pub(super) async fn dispose_status_bar_entry_impl(
 	info!("[StatusBarProvider] Disposing entry: {}", entry_identifier);
 
 	env.ApplicationState
-		.ActiveStatusBarItems
+		.Feature.Markers.ActiveStatusBarItems
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.remove(&entry_identifier);

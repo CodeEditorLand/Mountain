@@ -6,14 +6,12 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
-	StatusBar::StatusBarProvider::StatusBarProvider,
 };
-use async_trait::async_trait;
 use log::info;
 use serde_json::{json, Value};
 use std::sync::Arc;
 
-use super::super::{MountainEnvironment::MountainEnvironment, Utility};
+use super::super::MountainEnvironment::MountainEnvironment;
 
 /// Tooltip resolution operations implementation for MountainEnvironment
 pub(super) async fn provide_tooltip_impl(

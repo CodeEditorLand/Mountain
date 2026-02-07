@@ -2,13 +2,10 @@
 //!
 //! Implementation of status bar temporary message handling for [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
 
-use CommonLibrary::{
-	Error::CommonError::CommonError,
-};
-use async_trait::async_trait;
+use CommonLibrary::Error::CommonError::CommonError;
 use log::info;
 use serde_json::{json, Value};
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 
