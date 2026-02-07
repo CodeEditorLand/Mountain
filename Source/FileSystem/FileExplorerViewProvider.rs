@@ -124,7 +124,8 @@
 use std::sync::Arc;
 
 use CommonLibrary::{
-	Effect::ApplicationRunTime::ApplicationRunTime,
+	Effect::ApplicationRunTime,
+	Effect::ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait,
 	Environment::Environment::Environment,
 	Error::CommonError::CommonError,
 	FileSystem::{DTO::FileTypeDTO::FileTypeDTO, ReadDirectory::ReadDirectory},
@@ -137,7 +138,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
 use url::Url;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime as Runtime;
 
 #[derive(Clone)]
 pub struct FileExplorerViewProvider {
@@ -276,7 +277,7 @@ impl TreeViewProvider for FileExplorerViewProvider {
 
 		ElementHandle:Option<String>,
 	) -> Result<Vec<Value>, CommonError> {
-		let RunTime = self.AppicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+		let RunTime = self.AppicationHandle.state::<Arc<Runtime>>().inner().clone();
 
 		let AppState = RunTime.Environment.ApplicationState.clone();
 
@@ -300,7 +301,7 @@ impl TreeViewProvider for FileExplorerViewProvider {
 				})?
 		} else {
 			// If no element, we are at the root. We should return the workspace folders.
-			let Folders = AppState.WorkspaceFolders.lock().unwrap();
+			let Folders = AppState.Workspace.WorkspaceFolders.lock().unwrap();
 
 			let RootItems:Vec<Value> = Folders
 				.iter()
@@ -314,7 +315,8 @@ impl TreeViewProvider for FileExplorerViewProvider {
 
 		// This now works because `RunTime` has the correct type and implements the
 		// `ApplicationRunTime` trait.
-		let Entries = RunTime.Run(ReadDirectory(PathToRead.clone())).await?;
+		let Entries: Vec<(String, CommonLibrary::FileSystem::DTO::FileTypeDTO::FileTypeDTO)> =
+			RunTime.Run(ReadDirectory(PathToRead.clone())).await?;
 
 		let Items = Entries
 			.into_iter()
