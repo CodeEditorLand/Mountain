@@ -1,155 +1,124 @@
-//! # CocoonServiceServer
+//! # CocoonServiceImpl
+//! 
+//! The gRPC implementation for the Cocoon Extension Host.
+//! This service acts as the "Limb" that connects the Cocoon process (Node.js)
+//! to the Mountain Spine (Core traits) via the Vine Protocol.
 //!
-//! Implements the gRPC server for Mountain-Cocoon communication.
+//! RESPONSIBILITIES:
+//! 1. Receive `GenericRequest` from Cocoon (via gRPC).
+//! 2. Decode the request parameters (JSON).
+//! 3. Dispatch to the appropriate `Spine` implementation (Filesystem, Window, etc.).
+//! 4. Encode the result back to `GenericResponse`.
 
 use std::sync::Arc;
-
-use log::{debug, error, info};
 use tonic::{Request, Response, Status};
-use async_trait::async_trait;
-use CommonLibrary::{
-	Environment::Requires::Requires,
-	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
+
+use crate::Vine::Generated::Vine::{
+    mountain_service_server::MountainService, 
+    GenericRequest, GenericResponse, GenericNotification
 };
 
-use super::super::Generated::{
-	CancelOperationRequest,
-	Empty,
-	GenericNotification,
-	GenericRequest,
-	GenericResponse,
-	RpcError,
-	cocoon_service_server::CocoonService,
-};
-use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
+use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine};
 
-/// Implementation of the CocoonService gRPC server
 pub struct CocoonServiceImpl {
-	/// Mountain environment
-	environment:Arc<MountainEnvironment>,
+    // Injected dependencies (The Spine)
+    pub fs_spine: Arc<dyn FileSystemSpine>,
+    pub window_spine: Arc<dyn WindowManagerSpine>,
 }
 
 impl CocoonServiceImpl {
-	/// Creates a new instance of the CocoonService server
-	pub fn new(environment:Arc<MountainEnvironment>) -> Self {
-		info!("[CocoonServiceImpl] New instance created");
-
-		Self { environment }
-	}
-
-	/// Handle generic Mountain requests from Cocoon
-	async fn handle_mountain_request(&self, request:GenericRequest) -> Result<GenericResponse, Status> {
-		debug!(
-			"[CocoonServiceImpl] Handling Mountain request '{}' with ID {}",
-			request.method, request.request_identifier
-		);
-
-		match request.method.as_str() {
-			"InitializeExtensionHost" => {
-				info!("[CocoonServiceImpl] Initializing extension host");
-
-				// Return success response
-				Ok(GenericResponse {
-					request_identifier:request.request_identifier,
-					result:serde_json::to_vec(&"initialized")
-						.map_err(|e| Status::internal(format!("Failed to serialize response: {}", e)))?,
-					error:None,
-				})
-			},
-
-			"GetExtensions" => {
-				debug!("[CocoonServiceServer] Getting extensions");
-
-				let extension_service:Arc<dyn ExtensionManagementService> = (*self.environment).Require();
-				let extensions = extension_service
-					.GetExtensions()
-					.await
-					.map_err(|e| Status::internal(format!("Failed to get extensions: {}", e)))?;
-
-				Ok(GenericResponse {
-					request_identifier:request.request_identifier,
-					result:serde_json::to_vec(&extensions)
-						.map_err(|e| Status::internal(format!("Failed to serialize extensions: {}", e)))?,
-					error:None,
-				})
-			},
-
-			"ActivateExtension" => {
-				debug!("[CocoonServiceServer] ActivateExtension not implemented");
-				Err(Status::unimplemented("ActivateExtension method not available"))
-			},
-
-			_ => {
-				error!("[CocoonServiceServer] Unknown Mountain request method '{}'", request.method);
-
-				Err(Status::unimplemented(format!("Unknown method: {}", request.method)))
-			},
-		}
-	}
+    pub fn new(
+        fs_spine: Arc<dyn FileSystemSpine>,
+        window_spine: Arc<dyn WindowManagerSpine>,
+    ) -> Self {
+        Self {
+            fs_spine,
+            window_spine,
+        }
+    }
 }
 
-#[async_trait]
-impl CocoonService for CocoonServiceImpl {
-	/// Process Mountain requests from Cocoon
-	async fn process_mountain_request(
-		&self,
-		request:Request<GenericRequest>,
-	) -> Result<Response<GenericResponse>, Status> {
-		let request_data = request.into_inner();
+#[tonic::async_trait]
+impl MountainService for CocoonServiceImpl {
+    /// Process a Request/Response call from Cocoon
+    async fn process_request(
+        &self,
+        request: Request<GenericRequest>,
+    ) -> Result<Response<GenericResponse>, Status> {
+        let inner_req = request.into_inner();
+        let method = inner_req.method.as_str();
 
-		match self.handle_mountain_request(request_data).await {
-			Ok(response) => Ok(Response::new(response)),
-			Err(status) => {
-				error!("[CocoonServiceImpl] Error processing Mountain request: {}", status);
-				Err(status)
-			},
-		}
-	}
+        println!("[CocoonService] Received Request: {}", method);
 
-	/// Send Mountain notifications to Cocoon
-	async fn send_mountain_notification(
-		&self,
-		request:Request<GenericNotification>,
-	) -> Result<Response<Empty>, Status> {
-		let notification = request.into_inner();
+        match method {
+            // --- Filesystem Spine (v0.1) ---
+            "fs.readFile" => {
+                // Decode arguments: PathBuf
+                let path: std::path::PathBuf = serde_json::from_slice(&inner_req.parameter)
+                    .map_err(|e| Status::invalid_argument(format!("Invalid path: {}", e)))?;
 
-		debug!("[CocoonServiceServer] Received Mountain notification '{}'", notification.method);
+                // Call Spine
+                let result = self.fs_spine.read_file(path).await;
 
-		// Handle notifications (fire-and-forget)
-		match notification.method.as_str() {
-			"ExtensionActivated" => {
-				info!("[CocoonServiceServer] Extension activated notification");
-			},
+                match result {
+                    Ok(content) => {
+                        Ok(Response::new(GenericResponse {
+                            request_id: inner_req.request_id,
+                            payload: content, // Binary content
+                            error: "".to_string(),
+                            success: true,
+                        }))
+                    },
+                    Err(e) => {
+                         Ok(Response::new(GenericResponse {
+                            request_id: inner_req.request_id,
+                            payload: vec![],
+                            error: e,
+                            success: false,
+                        }))
+                    }
+                }
+            },
 
-			"ExtensionDeactivated" => {
-				info!("[CocoonServiceServer] Extension deactivated notification");
-			},
+            // --- Window Manager Spine (v0.2) ---
+            "window.showMessage" => {
+                // Decode arguments: { title, message, level }
+                #[derive(serde::Deserialize)]
+                struct ShowMessageArgs {
+                    title: String,
+                    message: String,
+                    level: String,
+                }
 
-			_ => {
-				debug!("[CocoonServiceServer] Unknown Mountain notification '{}'", notification.method);
-			},
-		}
+                let args: ShowMessageArgs = serde_json::from_slice(&inner_req.parameter)
+                    .map_err(|e| Status::invalid_argument(format!("Invalid args: {}", e)))?;
 
-		Ok(Response::new(Empty {}))
-	}
+                // Call Spine (Fire and forget UI update)
+                self.window_spine.show_message(&args.title, &args.message, &args.level).await;
 
-	/// Cancel operations requested by Mountain
-	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
-		let cancel_request = request.into_inner();
+                Ok(Response::new(GenericResponse {
+                    request_id: inner_req.request_id,
+                    payload: vec![],
+                    error: "".to_string(),
+                    success: true,
+                }))
+            },
 
-		info!(
-			"[CocoonServiceServer] Cancelling operation with ID {}",
-			cancel_request.request_identifier_to_cancel
-		);
+            // --- Unimplemented ---
+            _ => {
+                eprintln!("[CocoonService] Unknown method: {}", method);
+                Err(Status::not_found(format!("Method {} not found in Spine", method)))
+            }
+        }
+    }
 
-		// Implement operation cancellation by tracking in-flight operations and their
-		// cancellation triggers. Maintain a registry mapping request_id to cancellation
-		// token. When cancellation is requested, signal the associated operation to
-		// abort. Operations periodically check cancellation status and exit early.
-		// Clean up registry entries on completion or cancellation, emit cancellation
-		// events for observability, and support cascading cancellations for dependent
-		// operations.
-
-		Ok(Response::new(Empty {}))
-	}
+    /// Process a one-way Notification from Cocoon
+    async fn process_notification(
+        &self,
+        request: Request<GenericNotification>,
+    ) -> Result<Response<()>, Status> {
+        let inner_notif = request.into_inner();
+        println!("[CocoonService] Received Notification: {}", inner_notif.event);
+        Ok(Response::new(()))
+    }
 }
