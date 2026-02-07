@@ -1,53 +1,63 @@
-//! # RunTime
-//!
-//! Runtime subsystem for effect execution and lifecycle management.
+//! # RunTime Module
 //!
 //! ## RESPONSIBILITIES
 //!
-//! ### Effect Execution
-//! - Provide ApplicationRunTime for executing ActionEffect
-//! - Bridge Echo scheduler with declarative effect system
-//! - Support timeout and retry mechanisms for effect execution
-//! - Handle effect cancellation and error recovery
+//! Effect execution engine for the Mountain application. This module provides
+//! the runtime environment for executing effects through the Echo scheduler.
 //!
-//! ### Lifecycle Management
-//! - Orchestrate graceful shutdown of all services
-//! - Coordinate service cleanup order (Cocoon, Terminals, State)
-//! - Implement retry mechanisms for shutdown failures
+//! ### Core Functions:
+//! - **Effect Execution**: Execute effects through the Echo scheduler
+//! - **Task Management**: Submit tasks to the async runtime
+//! - **Environment Integration**: Provide access to MountainEnvironment
+//! - **Result Handling**: Collect and return effect results
+//! - **Lifecycle Management**: Orchestrate graceful shutdown of all services
+//! - **Error Recovery**: Comprehensive error handling and recovery mechanisms
 //!
-//! ## ARCHITECTURAL ROLE
+//! ## Architectural Role
 //!
-//! ### Position in Mountain
-//! - Component of Core Infrastructure
-//! - Implements ApplicationRunTime trait from Common
-//! - Powered by Echo task scheduler
+//! The RunTime module is the **execution engine** in Mountain's architecture:
 //!
-//! ### Dependencies
-//! - Echo::Scheduler: Task scheduling and execution
-//! - Common::Effect::ApplicationRunTime: Trait implementation
-//! - Common::Environment: Environment integration
-//! - MountainEnvironment: Capability provider
+//! ```text
+//! Track (Router) ──► RunTime (Executor) ──► Eco:Scheduler ──► Providers
+//! Command ─────────────────────────────────────────────────────────┘
+//! ```
 //!
-//! ### Dependents
-//! - Binary: Initializes and manages ApplicationRunTime
-//! - Command handlers: Submit effects for execution
-//! - IPC services: Execute effects on behalf of frontend
+//! ### Design Principles:
+//! 1. **Async-First**: All execution happens in an async context
+//! 2. **Effect-Based**: Effects describe "what" to do, runtime determines "how"
+//! 3. **Non-Blocking**: Uses Echo's work-stealing scheduler
+//! 4. **Type-Safe**: Effect execution is type-safe through generics
+//! 5. **Error Recovery**: Continues shutdown even when services fail
+//! 6. **Graceful Degradation**: Provides fallback strategies for service unavailability
 //!
-//! ## TODO
+//! ## Key Components
 //!
-//! ### Immediate Improvements
-//! - Add effect execution metrics collection
-//! - Implement effect prioritization system
-//! - Add effect dependency tracking
+//! - **ApplicationRunTime**: Main runtime struct and orchestration
+//! - **Execute**: Effect execution logic (Run, RunWithTimeout, RunWithRetry)
+//! - **Shutdown**: Service shutdown and lifecycle management
 //!
-//! ### Future Work
-//! - Implement effect result caching
-//! - Add distributed effect execution
-//! - Implement effect pipeline with chaining
+//! ## TODOs
+//! Medium Priority:
+//! - [ ] Add effect timeout handling
+//! - [ ] Implement effect execution metrics
+//! - [ ] Add effect cancellation support
+//! - [ ] Add effect tracing
+//! - [ ] Implement effect prioritization
 //!
-//! ### Missing Functionality to Probe
-//! - Optimal timeout values for different effect types
-//! - Retry strategy customization per effect
-//! - Effect execution throttling under load
+//! Low Priority:
+//! - [ ] Add effect execution limits (rate limiting)
+//! - [ ] Implement distributed effect execution across instances
+//! - [ ] Add effect result caching for idempotent operations
+//! - [ ] Implement effect pipeline with chaining and composition
 
+// --- Sub-modules ---
+
+/// Application runtime module containing the struct definition.
+/// The struct is accessible as `RunTime::ApplicationRunTime::ApplicationRunTime`.
 pub mod ApplicationRunTime;
+
+/// Effect execution logic.
+pub mod Execute;
+
+/// Service shutdown and lifecycle management.
+pub mod Shutdown;
