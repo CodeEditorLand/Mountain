@@ -6,8 +6,8 @@ use std::sync::Arc;
 use tonic::transport::Server;
 use crate::Vine::Generated::Vine::mountain_service_server::MountainServiceServer;
 use crate::Vine::Server::CocoonServiceImpl::CocoonServiceImpl;
-use crate::Core::Impl::DesktopSpine::{DesktopFileSystem, TauriWindowManager, DesktopLifecycle, DesktopConfig};
-use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine};
+use crate::Core::Impl::DesktopSpine::{DesktopFileSystem, TauriWindowManager, DesktopLifecycle, DesktopConfig, DesktopTerminal};
+use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine, TerminalSpine};
 use crate::ApplicationState::ApplicationState::ApplicationState;
 
 pub async fn StartCocoonServiceServer(app_handle: tauri::AppHandle, state: Arc<ApplicationState>) -> Result<(), Box<dyn std::error::Error>> {
@@ -18,13 +18,15 @@ pub async fn StartCocoonServiceServer(app_handle: tauri::AppHandle, state: Arc<A
     let window_spine = Arc::new(TauriWindowManager { app_handle });
     let lifecycle_spine = Arc::new(DesktopLifecycle);
     let config_spine = Arc::new(DesktopConfig { state });
+    let terminal_spine = Arc::new(DesktopTerminal);
 
     // 2. Inject into Service
     let cocoon_service = CocoonServiceImpl::new(
         fs_spine, 
         window_spine, 
         lifecycle_spine,
-        config_spine
+        config_spine,
+        terminal_spine
     );
 
     println!("[CocoonServiceServer] Listening on {}", addr);
