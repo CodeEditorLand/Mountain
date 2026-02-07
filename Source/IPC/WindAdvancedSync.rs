@@ -564,7 +564,7 @@ impl WindAdvancedSync {
 	}
 
 	/// Register IPC commands
-	pub fn register_commands(app:&mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+	pub fn register_commands(_app:&mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 		info!("Registering Wind Advanced Sync IPC commands");
 		Ok(())
 	}
@@ -716,7 +716,7 @@ impl WindAdvancedSync {
 		match change.change_type {
 			ChangeType::Update => {
 				// Update file content via Mountain IPC
-				if let Some(content) = &change.content {
+				if let Some(_content) = &change.content {
 					// self.mountain_ipc.update_document(
 					//     &change.document_id,
 					//     content,
@@ -729,7 +729,7 @@ impl WindAdvancedSync {
 			},
 			ChangeType::Insert => {
 				// Create new file via Mountain IPC
-				if let Some(content) = &change.content {
+				if let Some(_content) = &change.content {
 					// self.mountain_ipc.create_document(
 					//     &change.document_id,
 					//     content.as_str(),

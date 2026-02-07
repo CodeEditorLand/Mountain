@@ -693,7 +693,7 @@ impl ConnectionPool {
 
 	/// Get a connection handle from the pool with timeout
 	pub async fn GetConnection(&self) -> Result<ConnectionHandle, String> {
-		let permit = timeout(self.ConnectionTimeout, self.Semaphore.acquire())
+		let _permit = timeout(self.ConnectionTimeout, self.Semaphore.acquire())
 			.await
 			.map_err(|_| "Connection timeout")?
 			.map_err(|e| format!("Failed to acquire connection: {}", e))?;
@@ -802,7 +802,7 @@ impl ConnectionHealthChecker {
 	fn new() -> Self { Self { ping_timeout:Duration::from_secs(5) } }
 
 	/// Check connection health by sending a ping
-	async fn check_connection_health(&self, handle:&mut ConnectionHandle) -> bool {
+	async fn check_connection_health(&self, _handle:&mut ConnectionHandle) -> bool {
 		// Simulate health check by ensuring connection can handle basic operations
 		// In a real implementation, this would send an actual ping message
 		let start_time = std::time::Instant::now();

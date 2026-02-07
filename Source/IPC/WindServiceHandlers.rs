@@ -188,7 +188,7 @@ use CommonLibrary::{
 	Storage::StorageProvider::StorageProvider,
 };
 
-use crate::{ApplicationState::ApplicationState::ApplicationState, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{ApplicationState::ApplicationState, RunTime::ApplicationRunTime::ApplicationRunTime};
 
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system
