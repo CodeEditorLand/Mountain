@@ -21,7 +21,7 @@ pub(super) async fn set_tree_view_message(
 	{
 		let mut tree_view_guard = env
 			.ApplicationState
-			.ActiveTreeViews
+			.Feature.TreeViews.ActiveTreeViews
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -57,7 +57,7 @@ pub(super) async fn set_tree_view_title(
 	{
 		let mut tree_view_guard = env
 			.ApplicationState
-			.ActiveTreeViews
+			.Feature.TreeViews.ActiveTreeViews
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -95,11 +95,11 @@ pub(super) async fn set_tree_view_badge(
 	{
 		let mut tree_view_guard = env
 			.ApplicationState
-			.ActiveTreeViews
+			.Feature.TreeViews.ActiveTreeViews
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
+		if let Some(_view_state) = tree_view_guard.get_mut(&view_identifier) {
 			// TODO: Store badge in ViewState when field is added to TreeViewStateDTO
 		}
 	}

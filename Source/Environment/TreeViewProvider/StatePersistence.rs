@@ -19,7 +19,7 @@ pub(super) async fn persist_tree_view_state(
 
 	let tree_views = env
 		.ApplicationState
-		.ActiveTreeViews
+		.Feature.TreeViews.ActiveTreeViews
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -49,7 +49,7 @@ pub(super) async fn restore_tree_view_state(
 
 	let mut tree_views = env
 		.ApplicationState
-		.ActiveTreeViews
+		.Feature.TreeViews.ActiveTreeViews
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

@@ -24,7 +24,7 @@ pub(super) async fn get_children(
 
     let provider_info = env
         .ApplicationState
-        .ActiveTreeViews
+        .Feature.TreeViews.ActiveTreeViews
         .lock()
         .map_err(Utility::MapApplicationStateLockErrorToCommonError)?
         .get(&view_identifier)
@@ -63,7 +63,7 @@ pub(super) async fn get_tree_item(
 
     let provider_info = env
         .ApplicationState
-        .ActiveTreeViews
+        .Feature.TreeViews.ActiveTreeViews
         .lock()
         .map_err(Utility::MapApplicationStateLockErrorToCommonError)?
         .get(&view_identifier)

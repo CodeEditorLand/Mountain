@@ -45,7 +45,7 @@ pub(super) async fn register_tree_data_provider(
 	};
 
 	env.ApplicationState
-		.ActiveTreeViews
+		.Feature.TreeViews.ActiveTreeViews
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.insert(view_identifier.clone(), new_state);
@@ -68,7 +68,7 @@ pub(super) async fn unregister_tree_data_provider(
 	info!("[TreeViewProvider] Unregistering data provider for view: {}", view_identifier);
 
 	env.ApplicationState
-		.ActiveTreeViews
+		.Feature.TreeViews.ActiveTreeViews
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.remove(&view_identifier);
