@@ -55,13 +55,13 @@
 //! ## SCANNING PROCESS
 //!
 //! 1. **Path Resolution**: Get scan paths from
-//!    `ApplicationState.ExtensionScanPaths`
+//!    `ApplicationState.Extension.Registry.ExtensionScanPaths`
 //! 2. **Directory Enumeration**: For each path, read directory entries
 //! 3. **Manifest Detection**: Look for `package.json` in each subdirectory
 //! 4. **Parsing**: Deserialize `package.json` into
 //!    `ExtensionDescriptionStateDTO`
 //! 5. **Augmentation**: Add `ExtensionLocation` (disk path) to metadata
-//! 6. **Storage**: Insert into `ApplicationState.ScannedExtensions` map
+//! 6. **Storage**: Insert into `ApplicationState.Extension.ScannedExtensions` map
 //!
 //! ## CONFIGURATION MERGING
 //!
@@ -124,7 +124,7 @@ use tauri::Manager;
 
 use crate::{
 	ApplicationState::{
-		ApplicationState::ApplicationState,
+		ApplicationState,
 		DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
 	},
 	Environment::Utility,
@@ -202,7 +202,7 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 	let mut MergedDefaults = Map::new();
 
 	let Extensions = State
-		.ScannedExtensions
+		.Extension.ScannedExtensions.ScannedExtensions
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
