@@ -110,7 +110,7 @@ pub(super) async fn delete_impl(
 	env: &MountainEnvironment,
 	path: &PathBuf,
 	recursive: bool,
-	use_trash: bool,
+	_use_trash: bool,
 ) -> Result<(), CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, path)?;
 
