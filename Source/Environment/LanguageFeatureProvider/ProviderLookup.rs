@@ -14,8 +14,8 @@ pub(super) async fn get_matching_provider(
 	document_uri: &Url,
 	feature_type: ProviderType,
 ) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
-	let providers = environment.ApplicationState.LanguageProviders.lock().map_err(MapApplicationStateLockErrorToCommonError)?;
-	let open_documents = environment.ApplicationState.OpenDocuments.lock().map_err(MapApplicationStateLockErrorToCommonError)?;
+	let providers = environment.ApplicationState.Extension.ProviderRegistration.LanguageProviders.lock().map_err(MapApplicationStateLockErrorToCommonError)?;
+	let open_documents = environment.ApplicationState.Feature.Documents.OpenDocuments.lock().map_err(MapApplicationStateLockErrorToCommonError)?;
 
 	if let Some(document) = open_documents.get(document_uri.as_str()) {
 		for provider in providers.values() {

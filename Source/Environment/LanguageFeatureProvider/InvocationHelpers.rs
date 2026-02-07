@@ -28,13 +28,13 @@ pub(super) async fn get_matching_provider(
 ) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
 	let providers = environment
 		.ApplicationState
-		.LanguageProviders
+		.Extension.ProviderRegistration.LanguageProviders
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 	let document = environment
 		.ApplicationState
-		.OpenDocuments
+		.Feature.Documents
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.get(document_uri.as_str())

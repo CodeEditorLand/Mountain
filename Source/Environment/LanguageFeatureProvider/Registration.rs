@@ -26,7 +26,7 @@ pub(super) async fn register_provider(
 		ExtensionIdentifier: extension_identifier_dto,
 		Options: options_dto,
 	};
-	environment.ApplicationState.LanguageProviders.lock().map_err(MapApplicationStateLockErrorToCommonError)?.insert(handle, new_registration);
+	environment.ApplicationState.Extension.ProviderRegistration.LanguageProviders.lock().map_err(MapApplicationStateLockErrorToCommonError)?.insert(handle, new_registration);
 	Ok(handle)
 }
 
@@ -34,7 +34,7 @@ pub(super) async fn unregister_provider(
 	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
 	handle: u32,
 ) -> Result<(), CommonError> {
-	let mut providers = environment.ApplicationState.LanguageProviders.lock().map_err(MapApplicationStateLockErrorToCommonError)?;
+	let mut providers = environment.ApplicationState.Extension.ProviderRegistration.LanguageProviders.lock().map_err(MapApplicationStateLockErrorToCommonError)?;
 	if providers.remove(&handle).is_none() {
 		warn!("Attempted to unregister non-existent provider handle: {}", handle);
 	}
