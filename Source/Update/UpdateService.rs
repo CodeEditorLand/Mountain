@@ -157,7 +157,7 @@ use tauri_plugin_updater::UpdaterExt;
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::Air::AirServiceClient;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime as Runtime;
 
 /// Update delegation mode for controlling which update mechanism to use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -182,7 +182,7 @@ impl Default for UpdateMode {
 pub async fn CheckForUpdates(
 	ApplicationHandle:AppHandle,
 
-	RunTime:Arc<MountainRunTime>,
+	RunTime:Arc<ApplicationRunTime>,
 
 	NotifyNoUpdate:bool,
 ) -> Result<(), CommonError> {
@@ -317,7 +317,7 @@ pub async fn CheckForUpdates(
 #[cfg(not(feature = "AirIntegration"))]
 pub async fn CheckForUpdatesWithAir(
 	ApplicationHandle:AppHandle,
-	RunTime:Arc<MountainRunTime>,
+	RunTime:Arc<ApplicationRunTime>,
 	NotifyNoUpdate:bool,
 	_AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 	Mode:UpdateMode,
@@ -378,7 +378,7 @@ pub async fn CheckForUpdatesWithAir(
 #[cfg(feature = "AirIntegration")]
 pub async fn CheckForUpdatesWithAir(
 	ApplicationHandle:AppHandle,
-	RunTime:Arc<MountainRunTime>,
+	RunTime:Arc<ApplicationRunTime>,
 	NotifyNoUpdate:bool,
 	AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 	Mode:UpdateMode,
@@ -423,7 +423,7 @@ pub async fn CheckForUpdatesWithAir(
 #[cfg(feature = "AirIntegration")]
 async fn CheckForUpdatesViaAir(
 	ApplicationHandle:AppHandle,
-	RunTime:Arc<MountainRunTime>,
+	RunTime:Arc<ApplicationRunTime>,
 	NotifyNoUpdate:bool,
 	AirClient:&Arc<AirServiceClient<tonic::transport::Channel>>,
 ) -> Result<(), CommonError> {
