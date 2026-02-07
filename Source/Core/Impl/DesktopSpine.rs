@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use std::fs;
 use std::path::PathBuf;
 use tauri::Manager;
-use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, DialogOptions};
+use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, DialogOptions, ClientInfo, ServerInfo};
 
 // --- Filesystem Implementation ---
 
@@ -84,5 +84,32 @@ impl WindowManagerSpine for TauriWindowManager {
         // Implement native file picker
         // For now, return None as placeholder
         None
+    }
+}
+
+// --- Lifecycle Implementation ---
+
+#[derive(Clone)]
+pub struct DesktopLifecycle;
+
+#[async_trait]
+impl LifecycleSpine for DesktopLifecycle {
+    async fn handshake(&self, client_info: ClientInfo) -> Result<ServerInfo, String> {
+        println!("[DesktopLifecycle] Handshake received from role: {}, pid: {}", client_info.role, client_info.pid);
+        
+        Ok(ServerInfo {
+            version: "0.1.0".to_string(),
+            capabilities: vec![
+                "fs.read".to_string(),
+                "fs.write".to_string(),
+                "window.dialog".to_string(),
+                "system.lifecycle".to_string(),
+            ],
+        })
+    }
+
+    async fn shutdown(&self) {
+        println!("[DesktopLifecycle] Shutdown requested");
+        std::process::exit(0);
     }
 }
