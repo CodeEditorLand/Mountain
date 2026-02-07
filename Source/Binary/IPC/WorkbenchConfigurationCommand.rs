@@ -47,7 +47,7 @@ use log::debug;
 use tauri::{AppHandle, State};
 use serde_json::Value;
 
-use crate::{ApplicationState::ApplicationState::ApplicationState, ProcessManagement::InitializationData};
+use crate::{ApplicationState::ApplicationState, ProcessManagement::InitializationData};
 
 /// Provides the initial workbench configuration to the Sky frontend.
 ///
