@@ -14,7 +14,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 /// v0.1: The Filesystem Spine
-/// Abstracting disk I/O so it can be swapped (e.g., In-Memory for Web)
 #[async_trait]
 pub trait FileSystemSpine: Send + Sync {
     async fn read_file(&self, path: PathBuf) -> Result<Vec<u8>, String>;
@@ -24,7 +23,6 @@ pub trait FileSystemSpine: Send + Sync {
 }
 
 /// v0.2: The Window Manager Spine
-/// Abstracting UI so we can swap Tauri for DOM (Web) or Terminal (CLI)
 #[async_trait]
 pub trait WindowManagerSpine: Send + Sync {
     async fn show_message(&self, title: &str, message: &str, level: &str);
@@ -69,4 +67,20 @@ pub enum ConfigScope {
     Application = 0,
     Workspace = 1,
     Profile = 2,
+}
+
+/// v0.5: Terminal Spine
+#[async_trait]
+pub trait TerminalSpine: Send + Sync {
+    async fn create(&self, options: TerminalOptions) -> Result<u32, String>;
+    async fn write(&self, id: u32, data: String) -> Result<(), String>;
+    async fn resize(&self, id: u32, cols: u16, rows: u16) -> Result<(), String>;
+    async fn kill(&self, id: u32) -> Result<(), String>;
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TerminalOptions {
+    pub name: String,
+    pub shell_path: Option<String>,
+    pub cwd: Option<String>,
 }
