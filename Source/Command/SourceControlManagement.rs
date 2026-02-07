@@ -80,7 +80,7 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use tauri::{State, command};
 
-use crate::ApplicationState::ApplicationState::{ApplicationState, MapLockError};
+use crate::ApplicationState::{ApplicationState, MapLockError};
 
 /// Retrieves the complete state of all Source Control Management providers,
 /// groups, and resources for rendering in the UI.
@@ -92,21 +92,21 @@ pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationS
 	log::debug!("[SourceControlManagement Command] Getting all SCM state for UI.");
 
 	let Providers = State
-		.SourceControlManagementProviders
+		.Feature.Markers.SourceControlManagementProviders
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let Groups = State
-		.SourceControlManagementGroups
+		.Feature.Markers.SourceControlManagementGroups
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let Resources = State
-		.SourceControlManagementResources
+		.Feature.Markers.SourceControlManagementResources
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?
@@ -128,7 +128,7 @@ pub async fn GetSCMResourceChanges(
 	log::debug!("[SCM Command] Getting resource changes for provider: {}", ProviderIdentifier);
 
 	let resources_map = State
-		.SourceControlManagementResources
+		.Feature.Markers.SourceControlManagementResources
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?

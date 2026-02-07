@@ -130,10 +130,8 @@ use tauri::{AppHandle, WebviewWindow, Wry};
 use url::Url;
 
 use crate::{
-	ApplicationState::{
-		ApplicationState::{ApplicationState, MapLockError},
-		DTO::TreeViewStateDTO::TreeViewStateDTO,
-	},
+	ApplicationState::{ApplicationState, MapLockError},
+	ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO,
 	Environment::CommandProvider::CommandHandler,
 	FileSystem::FileExplorerViewProvider::FileExplorerViewProvider,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
@@ -204,7 +202,7 @@ fn CommandFormatDocument(
 		let AppState = &RunTime.Environment.ApplicationState;
 
 		let URIString = AppState
-			.ActiveDocumentURI
+			.Workspace.ActiveDocumentURI
 			.lock()
 			.map_err(MapLockError)
 			.map_err(|Error| Error.to_string())?
@@ -274,7 +272,7 @@ fn CommandSaveDocument(
 		let AppState = &RunTime.Environment.ApplicationState;
 
 		let URIString = AppState
-			.ActiveDocumentURI
+			.Workspace.ActiveDocumentURI
 			.lock()
 			.map_err(MapLockError)
 			.map_err(|Error| Error.to_string())?
@@ -311,7 +309,7 @@ fn CommandCloseDocument(
 		let AppState = &RunTime.Environment.ApplicationState;
 
 		let URIString = AppState
-			.ActiveDocumentURI
+			.Workspace.ActiveDocumentURI
 			.lock()
 			.map_err(MapLockError)
 			.map_err(|Error| Error.to_string())?
@@ -378,7 +376,7 @@ pub fn RegisterNativeCommands(
 	ApplicationState:&Arc<ApplicationState>,
 ) -> Result<(), CommonError> {
 	// --- Command Registration ---
-	let mut CommandRegistry = ApplicationState.CommandRegistry.lock().map_err(MapLockError)?;
+	let mut CommandRegistry = ApplicationState.Extension.Registry.CommandRegistry.lock().map_err(MapLockError)?;
 
 	info!("[Bootstrap] Registering native commands...");
 
@@ -426,7 +424,7 @@ pub fn RegisterNativeCommands(
 	// Current implementation logs without performing actual validation checks.
 
 	// --- Tree View Provider Registration ---
-	let mut TreeViewRegistry = ApplicationState.ActiveTreeViews.lock().map_err(MapLockError)?;
+	let mut TreeViewRegistry = ApplicationState.Feature.TreeViews.ActiveTreeViews.lock().map_err(MapLockError)?;
 
 	info!("[Bootstrap] Registering native tree view providers...");
 

@@ -87,7 +87,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, State, Wry, command};
 
 use crate::{
-	ApplicationState::ApplicationState::ApplicationState,
+	ApplicationState::ApplicationState,
 	Environment::MountainEnvironment::MountainEnvironment,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };

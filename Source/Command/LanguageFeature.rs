@@ -76,15 +76,9 @@
 //! - [`invoke_provider.rs`](invoke_provider.rs) - generic provider invoker
 //! - Individual command modules for each language feature (containing impls only)
 
-use std::sync::Arc;
-
-use CommonLibrary::{
-	Error::CommonError::CommonError,
-	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
-};
 use log::debug;
-use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, Wry, command};
+use serde_json::Value;
+use tauri::{AppHandle, Wry, command};
 use url::Url;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;

@@ -77,13 +77,13 @@ use CommonLibrary::{Environment::Requires::Requires, Keybinding::KeybindingProvi
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry, command};
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime as MountainRunTime;
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime as Runtime;
 
 #[command]
 pub async fn GetResolvedKeybinding(ApplicationHandle:AppHandle<Wry>) -> Result<Value, String> {
 	log::debug!("[Keybinding Command] Getting resolved keybindings for UI.");
 
-	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
 
 	let Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
@@ -94,7 +94,7 @@ pub async fn GetResolvedKeybinding(ApplicationHandle:AppHandle<Wry>) -> Result<V
 pub async fn GetUserKeybindings(ApplicationHandle:AppHandle<Wry>) -> Result<Value, String> {
 	log::debug!("[Keybinding Command] Getting user keybindings for UI.");
 
-	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
 
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
@@ -119,7 +119,7 @@ pub async fn RegisterExtensionKeybindings(
 		ExtensionIdentifier
 	);
 
-	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
 
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
@@ -142,7 +142,7 @@ pub async fn UnregisterExtensionKeybindings(
 		ExtensionIdentifier
 	);
 
-	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
 
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
@@ -158,7 +158,7 @@ pub async fn UnregisterExtensionKeybindings(
 pub async fn CheckKeybindingConflicts(ApplicationHandle:AppHandle<Wry>, Keybinding:String) -> Result<Value, String> {
 	log::debug!("[Keybinding Command] Checking conflicts for keybinding: {}", Keybinding);
 
-	let RunTime = ApplicationHandle.state::<Arc<MountainRunTime>>().inner().clone();
+	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
 
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
