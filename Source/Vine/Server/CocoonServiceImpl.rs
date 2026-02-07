@@ -18,7 +18,7 @@ use crate::Vine::Generated::Vine::{
     GenericRequest, GenericResponse, GenericNotification
 };
 
-use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine, ClientInfo, ConfigScope};
+use crate::Core::Spine::{FileSystemSpine, WindowManagerSpine, LifecycleSpine, ConfigSpine, TerminalSpine, ClientInfo, ConfigScope, TerminalOptions};
 
 pub struct CocoonServiceImpl {
     // Injected dependencies (The Spine)
@@ -26,6 +26,7 @@ pub struct CocoonServiceImpl {
     pub window_spine: Arc<dyn WindowManagerSpine>,
     pub lifecycle_spine: Arc<dyn LifecycleSpine>,
     pub config_spine: Arc<dyn ConfigSpine>,
+    pub terminal_spine: Arc<dyn TerminalSpine>,
 }
 
 impl CocoonServiceImpl {
@@ -34,12 +35,14 @@ impl CocoonServiceImpl {
         window_spine: Arc<dyn WindowManagerSpine>,
         lifecycle_spine: Arc<dyn LifecycleSpine>,
         config_spine: Arc<dyn ConfigSpine>,
+        terminal_spine: Arc<dyn TerminalSpine>,
     ) -> Self {
         Self {
             fs_spine,
             window_spine,
             lifecycle_spine,
             config_spine,
+            terminal_spine,
         }
     }
 }
@@ -75,122 +78,56 @@ impl MountainService for CocoonServiceImpl {
 
             // --- Filesystem Spine (v0.1) ---
             "fs.readFile" => {
-                // Decode arguments: PathBuf
                 let path: std::path::PathBuf = serde_json::from_slice(&inner_req.parameter)
                     .map_err(|e| Status::invalid_argument(format!("Invalid path: {}", e)))?;
-
-                // Call Spine
                 let result = self.fs_spine.read_file(path).await;
-
                 match result {
-                    Ok(content) => {
-                        Ok(Response::new(GenericResponse {
-                            request_id: inner_req.request_id,
-                            payload: content, // Binary content
-                            error: "".to_string(),
-                            success: true,
-                        }))
-                    },
-                    Err(e) => {
-                         Ok(Response::new(GenericResponse {
-                            request_id: inner_req.request_id,
-                            payload: vec![],
-                            error: e,
-                            success: false,
-                        }))
-                    }
+                    Ok(content) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: content, error: "".to_string(), success: true })),
+                    Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
                 }
             },
 
             // --- Window Manager Spine (v0.2) ---
             "window.showMessage" => {
-                // Decode arguments: { title, message, level }
-                #[derive(serde::Deserialize)]
-                struct ShowMessageArgs {
-                    title: String,
-                    message: String,
-                    level: String,
-                }
-
-                let args: ShowMessageArgs = serde_json::from_slice(&inner_req.parameter)
-                    .map_err(|e| Status::invalid_argument(format!("Invalid args: {}", e)))?;
-
-                // Call Spine (Fire and forget UI update)
+                #[derive(serde::Deserialize)] struct ShowMessageArgs { title: String, message: String, level: String }
+                let args: ShowMessageArgs = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(e.to_string()))?;
                 self.window_spine.show_message(&args.title, &args.message, &args.level).await;
-
-                Ok(Response::new(GenericResponse {
-                    request_id: inner_req.request_id,
-                    payload: vec![],
-                    error: "".to_string(),
-                    success: true,
-                }))
+                Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: "".to_string(), success: true }))
             },
 
             // --- Config Spine (v0.4) ---
             "config.get" => {
-                #[derive(serde::Deserialize)]
-                struct GetConfigArgs {
-                    section: String,
-                }
-
-                let args: GetConfigArgs = serde_json::from_slice(&inner_req.parameter)
-                    .map_err(|e| Status::invalid_argument(format!("Invalid args: {}", e)))?;
-
+                #[derive(serde::Deserialize)] struct GetConfigArgs { section: String }
+                let args: GetConfigArgs = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(e.to_string()))?;
                 match self.config_spine.get(args.section).await {
-                     Ok(value) => {
-                         Ok(Response::new(GenericResponse {
-                            request_id: inner_req.request_id,
-                            payload: serde_json::to_vec(&value).unwrap(),
-                            error: "".to_string(),
-                            success: true,
-                         }))
-                     },
-                     Err(e) => {
-                         Ok(Response::new(GenericResponse {
-                            request_id: inner_req.request_id,
-                            payload: vec![],
-                            error: e,
-                            success: false,
-                        }))
-                     }
+                     Ok(value) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: serde_json::to_vec(&value).unwrap(), error: "".to_string(), success: true })),
+                     Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
                 }
             },
              "config.update" => {
-                #[derive(serde::Deserialize)]
-                struct SetConfigArgs {
-                    key: String,
-                    value: serde_json::Value,
-                    scope: i32,
-                }
-
-                let args: SetConfigArgs = serde_json::from_slice(&inner_req.parameter)
-                    .map_err(|e| Status::invalid_argument(format!("Invalid args: {}", e)))?;
-                
-                // Map integer to enum
-                let scope = match args.scope {
-                    0 => ConfigScope::Application,
-                    1 => ConfigScope::Workspace,
-                    2 => ConfigScope::Profile,
-                    _ => ConfigScope::Application,
-                };
-
+                #[derive(serde::Deserialize)] struct SetConfigArgs { key: String, value: serde_json::Value, scope: i32 }
+                let args: SetConfigArgs = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(e.to_string()))?;
+                let scope = match args.scope { 0 => ConfigScope::Application, 1 => ConfigScope::Workspace, 2 => ConfigScope::Profile, _ => ConfigScope::Application };
                 match self.config_spine.set(args.key, args.value, scope).await {
-                     Ok(_) => {
-                         Ok(Response::new(GenericResponse {
-                            request_id: inner_req.request_id,
-                            payload: vec![],
-                            error: "".to_string(),
-                            success: true,
-                         }))
-                     },
-                     Err(e) => {
-                         Ok(Response::new(GenericResponse {
-                            request_id: inner_req.request_id,
-                            payload: vec![],
-                            error: e,
-                            success: false,
-                        }))
-                     }
+                     Ok(_) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: "".to_string(), success: true })),
+                     Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
+                }
+            },
+
+            // --- Terminal Spine (v0.5) ---
+            "terminal.create" => {
+                let options: TerminalOptions = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(e.to_string()))?;
+                match self.terminal_spine.create(options).await {
+                    Ok(id) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: serde_json::to_vec(&id).unwrap(), error: "".to_string(), success: true })),
+                    Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
+                }
+            },
+            "terminal.write" => {
+                #[derive(serde::Deserialize)] struct WriteArgs { id: u32, data: String }
+                let args: WriteArgs = serde_json::from_slice(&inner_req.parameter).map_err(|e| Status::invalid_argument(e.to_string()))?;
+                match self.terminal_spine.write(args.id, args.data).await {
+                    Ok(_) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: "".to_string(), success: true })),
+                    Err(e) => Ok(Response::new(GenericResponse { request_id: inner_req.request_id, payload: vec![], error: e, success: false }))
                 }
             },
 
