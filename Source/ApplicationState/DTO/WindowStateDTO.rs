@@ -6,9 +6,9 @@
 //! - Used by Mountain to track window presentation state
 //!
 //! # FIELDS
-/// - IsFocused: Window focus state
-/// - IsFullScreen: Fullscreen mode state
-/// - ZoomLevel: Window zoom level
+//! - IsFocused: Window focus state
+//! - IsFullScreen: Fullscreen mode state
+//! - ZoomLevel: Window zoom level
 use serde::{Deserialize, Serialize};
 
 /// Minimum allowed zoom level

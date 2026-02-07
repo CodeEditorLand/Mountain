@@ -10,7 +10,7 @@
 //! - Information: 2
 //! - Hint: 1
 
-/// Marker severity levels (aligned with VS Code)
+//! Marker severity levels (aligned with VS Code)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u32)]
 pub enum MarkerSeverity {

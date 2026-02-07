@@ -26,7 +26,8 @@ use serde_json::Value;
 use url::Url;
 
 use super::{RPCRangeDTO::RPCRangeDTO, RPCModelContentChangeDTO::RPCModelContentChangeDTO};
-use crate::ApplicationState::Internal::{AnalyzeTextLinesAndEOL, URLSerializationHelper};
+use crate::ApplicationState::Internal::AnalyzeTextLinesAndEOL;
+use CommonLibrary::Utility::Serialization::URLSerializationHelper;
 
 /// Maximum line count for a document to prevent memory exhaustion
 const MAX_DOCUMENT_LINES:usize = 1_000_000;

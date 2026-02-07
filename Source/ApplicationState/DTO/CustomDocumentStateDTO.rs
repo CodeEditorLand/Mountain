@@ -18,7 +18,7 @@ use std::collections::HashMap;
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::ApplicationState::Internal::URLSerializationHelper;
+use CommonLibrary::Utility::Serialization::URLSerializationHelper;
 
 /// Maximum length for ViewType string to prevent allocation attacks
 const MAX_VIEW_TYPE_LENGTH:usize = 256;

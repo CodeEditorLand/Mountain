@@ -9,15 +9,15 @@
 //! # FIELDS
 //! - Identifier: Unique terminal identifier
 //! - Name: Terminal display name
-/// - OSProcessIdentifier: OS process ID
-/// - ShellPath: Shell executable path
-/// - ShellArguments: Shell launch arguments
-/// - CurrentWorkingDirectory: Working directory path
-/// - EnvironmentVariables: Environment variable map
-/// - IsPTY: PTY mode flag
-/// - PTYInputTransmitter: PTY input channel sender
-/// - ReaderTaskHandle: Output reader task handle
-/// - ProcessWaitHandle: Process wait task handle
+//! - OSProcessIdentifier: OS process ID
+//! - ShellPath: Shell executable path
+//! - ShellArguments: Shell launch arguments
+//! - CurrentWorkingDirectory: Working directory path
+//! - EnvironmentVariables: Environment variable map
+//! - IsPTY: PTY mode flag
+//! - PTYInputTransmitter: PTY input channel sender
+//! - ReaderTaskHandle: Output reader task handle
+//! - ProcessWaitHandle: Process wait task handle
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use serde::{Deserialize, Serialize};

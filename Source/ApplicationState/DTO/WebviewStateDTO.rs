@@ -6,15 +6,15 @@
 //! - Used by Mountain to track Webview lifecycle
 //!
 //! # FIELDS
-/// - Handle: Unique Webview UUID
-/// - ViewType: Extension-defined view type
-/// - Title: Current panel title
-/// - ContentOptions: Web content and security settings
-/// - PanelOptions: Panel behavior options
-/// - SideCarIdentifier: Host sidecar process ID
-/// - ExtensionIdentifier: Owner extension ID
-/// - IsActive: Focus state flag
-/// - IsVisible: Visibility state flag
+//! - Handle: Unique Webview UUID
+//! - ViewType: Extension-defined view type
+//! - Title: Current panel title
+//! - ContentOptions: Web content and security settings
+//! - PanelOptions: Panel behavior options
+//! - SideCarIdentifier: Host sidecar process ID
+//! - ExtensionIdentifier: Owner extension ID
+//! - IsActive: Focus state flag
+//! - IsVisible: Visibility state flag
 use CommonLibrary::Webview::DTO::WebviewContentOptionsDTO::WebviewContentOptionsDTO;
 use serde::{Deserialize, Serialize};
 // For PanelOptions, etc.

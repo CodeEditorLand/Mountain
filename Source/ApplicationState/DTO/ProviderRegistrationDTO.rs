@@ -7,11 +7,11 @@
 //!
 //! # FIELDS
 //! - Handle: Unique registration handle
-/// - ProviderType: Type of feature provider
-/// - Selector: Document selector value
-/// - SideCarIdentifier: Host sidecar process ID
-/// - ExtensionIdentifier: Contributor extension ID
-/// - Options: Provider-specific options
+//! - ProviderType: Type of feature provider
+//! - Selector: Document selector value
+//! - SideCarIdentifier: Host sidecar process ID
+//! - ExtensionIdentifier: Contributor extension ID
+//! - Options: Provider-specific options
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -98,7 +98,7 @@ impl ProviderRegistrationDTO {
 	///
 	/// # Returns
 	/// True if provider selector matches the document
-	pub fn MatchesSelector(&self, DocumentURI:&str, LanguageIdentifier:&str) -> bool {
+	pub fn MatchesSelector(&self, _DocumentURI:&str, LanguageIdentifier:&str) -> bool {
 		// This is a simplified matching logic
 		// A full implementation would traverse the selector value
 		if let Some(SelectorObj) = self.Selector.as_object() {

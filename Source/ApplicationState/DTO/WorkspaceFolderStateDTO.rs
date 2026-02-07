@@ -6,13 +6,13 @@
 //! - Used by Mountain to track workspace folder configuration
 //!
 //! # FIELDS
-/// - URI: Folder resource URI
-/// - Name: Display name
-/// - Index: Zero-based position in workspace
+//! - URI: Folder resource URI
+//! - Name: Display name
+//! - Index: Zero-based position in workspace
 use serde::{Deserialize, Serialize};
 use url::Url;
 
-use crate::ApplicationState::Internal::URLSerializationHelper;
+use CommonLibrary::Utility::Serialization::URLSerializationHelper;
 
 /// Maximum folder name length
 const MAX_FOLDER_NAME_LENGTH:usize = 256;
