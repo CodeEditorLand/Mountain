@@ -8,7 +8,7 @@
 //! ## RESPONSIBILITIES
 //!
 //! ### 1. Dependency Injection Container
-//! - Implements `Requires<T>` for all 19+ provider traits
+//! - Implements `Requires<T>` for all 25+ provider traits via macro
 //! - Enable other components to request dependencies through `Require()` method
 //! - Provide lazy initialization with proper lifetime management
 //! - Support circular dependencies via `Arc`-wrapped self-references
@@ -52,10 +52,10 @@
 //! - `Environment` module: Root of the dependency injection system
 //! - Implements Common crate's `Environment` and `Requires` traits
 //! - All providers accessed through capability-based lookups
-//! ! - Created early in startup and shared via `Arc<MountainEnvironment>`
+//! - Created early in startup and shared via `Arc<MountainEnvironment>`
 //!
 //! ### Dependencies (Incoming)
-//! - `CommonLibrary::*` provider traits (19+ interfaces)
+//! - `CommonLibrary::*` provider traits (25+ interfaces)
 //! - `tauri::AppHandle`: UI and platform integration
 //! - `ApplicationState`: Shared application state
 //! - `AirServiceClient` (optional): Cloud service integration
@@ -131,10 +131,11 @@
 //!
 //! ## PROVIDER TRAITS IMPLEMENTED
 //!
-//! The following 19+ provider traits are implemented (full list in module
-//! body):
+//! The following 25+ provider traits are implemented using the
+//! `impl_provider!` macro:
 //! - `CommandExecutor` - Execute commands and actions
 //! - `ConfigurationProvider` - Access application configuration
+//! - `ConfigurationInspector` - Inspect configuration values
 //! - `CustomEditorProvider` - Custom document editor support
 //! - `DebugService` - Debug adapter protocol integration
 //! - `DiagnosticManager` - Diagnostic/lint/error management
@@ -157,11 +158,7 @@
 //! - `WorkspaceProvider` - Workspace and folder management
 //! - `WorkspaceEditApplier` - Workspace edit application (text changes)
 //! - `ExtensionManagementService` - Extension scanning and metadata
-//! - `DebugService` - Debug adapter protocol
-//! - `KeybindingProvider` - Keybinding resolution
 //! - `SearchProvider` - Search and replace functionality
-//! - `SearchProvider` - Search functionality (duplicate, will keep one)
-//! - (Plus more as the system evolves)
 //!
 //! ## TODO
 //! - [ ] Add telemetry integration for performance monitoring
@@ -172,62 +169,6 @@
 //! - [ ] Implement graceful degradation when providers fail
 //! - [ ] Add metrics collection for provider usage
 //! - [ ] Consider provider initialization order dependencies
-
-// 1. **Dependency Injection Container**: Implements Requires<T> for all 19+
-//    provider traits, enabling other components to request dependencies through
-//    the Require() method.
-//
-// 2. **Application Lifecycle Management**: Holds references to Tauri AppHandle
-//    and ApplicationState, managing the core application context and state.
-//
-// 3. **Air Integration**: Optionally manages the Air gRPC client for
-//    cloud-based services when the AirIntegration feature is enabled. Enables
-//    dynamic switching between local and cloud services.
-//
-// 4. **Extension Management**: Implements ExtensionManagementService for
-//    discovering, scanning, and managing extensions in the system.
-//
-// 5. **Service Orchestration**: Acts as the central coordinator between all
-//    providers (FileSystem, Document, Command, Configuration, IPC, etc.),
-//    ensuring proper initialization and interaction.
-//
-// # Initialization Sequence
-//
-// 1. Create MountainEnvironment instance via Create() or CreateWithAir()
-// 2. Provider instances are created lazily through Requires<T> traits
-// 3. Each provider can access ApplicationState and AppHandle through self
-// 4. Inter-provider communication is handled via IPCProvider or direct Rust
-//    calls
-//
-// # Dependency Wiring
-//
-// All providers implement their respective traits from the Common crate.
-// MountainEnvironment implements Requires<T> for each trait, returning an
-// Arc-wrapped clone of itself. This enables circular dependencies and lazy
-// initialization while maintaining type safety.
-//
-// # Patterns Borrowed from VSCode
-//
-// - **ServiceCollection Pattern**: Like VSCode's ServiceCollection,
-//   MountainEnvironment registers and provides all services in a centralized
-//   location.
-//
-// - **Lifecycle Management**: Similar to VSCode's IDisposable pattern,
-//   resources are automatically managed through Arc reference counting.
-//
-// - **Extension Points**: Extension management follows VSCode's activation
-//   event pattern, enabling lazy loading of extension services.
-//
-// # TODOs
-//
-// - [ ] Add telemetry integration for performance monitoring
-// - [ ] Implement proper provider health checking
-// - [ ] Add provider dependency validation on initialization
-// - [ ] Consider async initialization for providers
-// - [ ] Add circuit breaker pattern for external service calls (Air)
-// - [ ] Implement graceful degradation when providers fail
-// - [ ] Add metrics collection for provider usage
-// - [ ] Consider provider initialization order dependencies
 
 use std::sync::Arc;
 
@@ -268,35 +209,39 @@ use serde_json::Value;
 use tauri::{AppHandle, Manager, Wry};
 
 use crate::ApplicationState::{
-	ApplicationState::ApplicationState,
+	ApplicationState,
 	DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
 };
+
+// Import the macro for generating trait implementations
+// Note: Macros annotated with #[macro_export] are available at crate root
+use crate::impl_provider;
 
 /// The concrete `Environment` for the Mountain application.
 #[derive(Clone)]
 pub struct MountainEnvironment {
-	pub ApplicationHandle:AppHandle<Wry>,
+	pub ApplicationHandle: AppHandle<Wry>,
 
-	pub ApplicationState:Arc<ApplicationState>,
+	pub ApplicationState: Arc<ApplicationState>,
 
 	/// Optional Air client for cloud-based services.
 	/// When provided, providers like SecretProvider and UpdateService can
 	/// delegate to Air.
 	#[cfg(feature = "AirIntegration")]
-	pub AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+	pub AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 }
 
 impl MountainEnvironment {
 	/// Creates a new `MountainEnvironment` instance.
 	#[allow(unused_mut)]
-	pub fn Create(ApplicationHandle:AppHandle<Wry>) -> Self {
+	pub fn Create(ApplicationHandle: AppHandle<Wry>) -> Self {
 		info!("[MountainEnvironment] New instance created.");
 
 		let ApplicationState = ApplicationHandle.state::<Arc<ApplicationState>>().inner().clone();
 
 		#[cfg(feature = "AirIntegration")]
 		{
-			Self { ApplicationHandle, ApplicationState, AirClient:None }
+			Self { ApplicationHandle, ApplicationState, AirClient: None }
 		}
 
 		#[cfg(not(feature = "AirIntegration"))]
@@ -310,8 +255,8 @@ impl MountainEnvironment {
 	/// cloud-based services.
 	#[cfg(feature = "AirIntegration")]
 	pub fn CreateWithAir(
-		ApplicationHandle:AppHandle<Wry>,
-		AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+		ApplicationHandle: AppHandle<Wry>,
+		AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 	) -> Self {
 		info!(
 			"[MountainEnvironment] New instance created with Air client: {}",
@@ -326,7 +271,7 @@ impl MountainEnvironment {
 	/// Updates the Air client for this environment.
 	/// This allows dynamically switching between Air and local services.
 	#[cfg(feature = "AirIntegration")]
-	pub fn SetAirClient(&mut self, AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>) {
+	pub fn SetAirClient(&mut self, AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>) {
 		info!("[MountainEnvironment] Air client updated: {}", AirClient.is_some());
 
 		self.AirClient = AirClient;
@@ -365,10 +310,8 @@ impl MountainEnvironment {
 	pub async fn IsAirAvailable(&self) -> bool { false }
 
 	/// Scans a directory for extensions and returns their package.json data
-	async fn ScanExtensionDirectory(&self, path:&std::path::PathBuf) -> Result<Vec<serde_json::Value>, CommonError> {
+	async fn ScanExtensionDirectory(&self, path: &std::path::PathBuf) -> Result<Vec<serde_json::Value>, CommonError> {
 		use std::fs;
-
-		use serde_json::Value;
 
 		let mut extensions = Vec::new();
 
@@ -381,16 +324,16 @@ impl MountainEnvironment {
 		// Read directory contents
 		let entries = fs::read_dir(path).map_err(|error| {
 			CommonError::FileSystemIO {
-				Path:path.clone(),
-				Description:format!("Failed to read extension directory: {}", error),
+				Path: path.clone(),
+				Description: format!("Failed to read extension directory: {}", error),
 			}
 		})?;
 
 		for entry in entries {
 			let entry = entry.map_err(|error| {
 				CommonError::FileSystemIO {
-					Path:path.clone(),
-					Description:format!("Failed to read directory entry: {}", error),
+					Path: path.clone(),
+					Description: format!("Failed to read directory entry: {}", error),
 				}
 			})?;
 
@@ -444,12 +387,14 @@ impl ExtensionManagementService for MountainEnvironment {
 		info!("[ExtensionManagementService] Scanning for extensions...");
 
 		// Get the extension scan paths from ApplicationState
-		let ScanPaths:Vec<std::path::PathBuf> = {
+		let ScanPaths: Vec<std::path::PathBuf> = {
 			let ScanPathsGuard = self
 				.ApplicationState
+				.Extension
+				.Registry
 				.ExtensionScanPaths
 				.lock()
-				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+				.map_err(|Error| CommonError::StateLockPoisoned { Context: Error.to_string() })?;
 			ScanPathsGuard.clone()
 		};
 
@@ -465,9 +410,11 @@ impl ExtensionManagementService for MountainEnvironment {
 		// Update ApplicationState with scanned extensions
 		let mut ScannedExtensionsGuard = self
 			.ApplicationState
+			.Extension
+			.ScannedExtensions
 			.ScannedExtensions
 			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			.map_err(|Error| CommonError::StateLockPoisoned { Context: Error.to_string() })?;
 
 		ScannedExtensionsGuard.clear();
 
@@ -475,26 +422,29 @@ impl ExtensionManagementService for MountainEnvironment {
 			if let Some(identifier) = extension.get("Identifier").and_then(|v| v.as_str()) {
 				// Convert the extension DTO to ExtensionDescriptionStateDTO
 				let extension_dto = ExtensionDescriptionStateDTO {
-					Identifier:serde_json::Value::String(identifier.to_string()),
-					Name:extension.get("Name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
-					Version:extension.get("Version").and_then(|v| v.as_str()).unwrap_or("0.0.0").to_string(),
-					Publisher:extension
+					Identifier: serde_json::Value::String(identifier.to_string()),
+					Name: extension.get("Name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
+					Version: extension.get("Version").and_then(|v| v.as_str()).unwrap_or("0.0.0").to_string(),
+					Publisher: extension
 						.get("Publisher")
 						.and_then(|v| v.as_str())
 						.unwrap_or("Unknown")
 						.to_string(),
-					Engines:extension.get("Engines").cloned().unwrap_or(serde_json::Value::Null),
-					Main:extension.get("Main").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					Browser:extension.get("Browser").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					ModuleType:extension.get("ModuleType").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					IsBuiltin:extension.get("IsBuiltin").and_then(|v| v.as_bool()).unwrap_or(false),
-					IsUnderDevelopment:extension.get("IsUnderDevelopment").and_then(|v| v.as_bool()).unwrap_or(false),
-					ExtensionLocation:extension.get("ExtensionLocation").cloned().unwrap_or(serde_json::Value::Null),
-					ActivationEvents:extension
+					Engines: extension.get("Engines").cloned().unwrap_or(serde_json::Value::Null),
+					Main: extension.get("Main").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					Browser: extension.get("Browser").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					ModuleType: extension.get("ModuleType").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					IsBuiltin: extension.get("IsBuiltin").and_then(|v| v.as_bool()).unwrap_or(false),
+					IsUnderDevelopment: extension
+						.get("IsUnderDevelopment")
+						.and_then(|v| v.as_bool())
+						.unwrap_or(false),
+					ExtensionLocation: extension.get("ExtensionLocation").cloned().unwrap_or(serde_json::Value::Null),
+					ActivationEvents: extension
 						.get("ActivationEvents")
 						.and_then(|v| v.as_array())
 						.map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()),
-					Contributes:extension.get("Contributes").cloned(),
+					Contributes: extension.get("Contributes").cloned(),
 				};
 
 				ScannedExtensionsGuard.insert(identifier.to_string(), extension_dto);
@@ -508,11 +458,13 @@ impl ExtensionManagementService for MountainEnvironment {
 	async fn GetExtensions(&self) -> Result<Vec<Value>, CommonError> {
 		let ScannedExtensionsGuard = self
 			.ApplicationState
+			.Extension
+			.ScannedExtensions
 			.ScannedExtensions
 			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			.map_err(|Error| CommonError::StateLockPoisoned { Context: Error.to_string() })?;
 
-		let Extensions:Vec<Value> = ScannedExtensionsGuard
+		let Extensions: Vec<Value> = ScannedExtensionsGuard
 			.values()
 			.map(|ext| serde_json::to_value(ext).unwrap_or(Value::Null))
 			.collect();
@@ -520,12 +472,14 @@ impl ExtensionManagementService for MountainEnvironment {
 		Ok(Extensions)
 	}
 
-	async fn GetExtension(&self, id:String) -> Result<Option<Value>, CommonError> {
+	async fn GetExtension(&self, id: String) -> Result<Option<Value>, CommonError> {
 		let ScannedExtensionsGuard = self
 			.ApplicationState
+			.Extension
+			.ScannedExtensions
 			.ScannedExtensions
 			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			.map_err(|Error| CommonError::StateLockPoisoned { Context: Error.to_string() })?;
 
 		if let Some(extension_dto) = ScannedExtensionsGuard.get(&id) {
 			// Convert ExtensionDescriptionStateDTO back to JSON Value
@@ -549,11 +503,17 @@ impl ExtensionManagementService for MountainEnvironment {
 			}
 
 			extension_value.insert("IsBuiltin".to_string(), Value::Bool(extension_dto.IsBuiltin));
-			extension_value.insert("IsUnderDevelopment".to_string(), Value::Bool(extension_dto.IsUnderDevelopment));
-			extension_value.insert("ExtensionLocation".to_string(), extension_dto.ExtensionLocation.clone());
+			extension_value.insert(
+				"IsUnderDevelopment".to_string(),
+				Value::Bool(extension_dto.IsUnderDevelopment),
+			);
+			extension_value.insert(
+				"ExtensionLocation".to_string(),
+				extension_dto.ExtensionLocation.clone(),
+			);
 
 			if let Some(activation_events) = &extension_dto.ActivationEvents {
-				let events:Vec<Value> = activation_events.iter().map(|e| Value::String(e.clone())).collect();
+				let events: Vec<Value> = activation_events.iter().map(|e| Value::String(e.clone())).collect();
 				extension_value.insert("ActivationEvents".to_string(), Value::Array(events));
 			}
 
@@ -569,111 +529,57 @@ impl ExtensionManagementService for MountainEnvironment {
 }
 
 // --- Capability Requirement Implementations (DI) ---
+// All trait implementations are generated using the impl_provider! macro
 
-impl Requires<dyn CommandExecutor> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn CommandExecutor> { Arc::new(self.clone()) }
-}
+// Command and Configuration
+impl_provider!(CommandExecutor);
+impl_provider!(ConfigurationProvider);
+impl_provider!(ConfigurationInspector);
 
-impl Requires<dyn ConfigurationProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn ConfigurationProvider> { Arc::new(self.clone()) }
-}
+// Custom Editor and Debug
+impl_provider!(CustomEditorProvider);
+impl_provider!(DebugService);
 
-impl Requires<dyn ConfigurationInspector> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn ConfigurationInspector> { Arc::new(self.clone()) }
-}
+// Document and Diagnostic
+impl_provider!(DocumentProvider);
+impl_provider!(DiagnosticManager);
 
-impl Requires<dyn CustomEditorProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn CustomEditorProvider> { Arc::new(self.clone()) }
-}
+// File System
+impl_provider!(FileSystemReader);
+impl_provider!(FileSystemWriter);
 
-impl Requires<dyn DiagnosticManager> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn DiagnosticManager> { Arc::new(self.clone()) }
-}
+// IPC and Keybinding
+impl_provider!(IPCProvider);
+impl_provider!(KeybindingProvider);
 
-impl Requires<dyn DocumentProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn DocumentProvider> { Arc::new(self.clone()) }
-}
+// Language Features and Output
+impl_provider!(LanguageFeatureProviderRegistry);
+impl_provider!(OutputChannelManager);
 
-impl Requires<dyn FileSystemReader> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn FileSystemReader> { Arc::new(self.clone()) }
-}
+// Secret and SCM
+impl_provider!(SecretProvider);
+impl_provider!(SourceControlManagementProvider);
 
-impl Requires<dyn FileSystemWriter> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn FileSystemWriter> { Arc::new(self.clone()) }
-}
+// Status Bar and Storage
+impl_provider!(StatusBarProvider);
+impl_provider!(StorageProvider);
 
-impl Requires<dyn IPCProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn IPCProvider> { Arc::new(self.clone()) }
-}
+// Synchronization and Terminal
+impl_provider!(SynchronizationProvider);
+impl_provider!(TerminalProvider);
 
-impl Requires<dyn LanguageFeatureProviderRegistry> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn LanguageFeatureProviderRegistry> { Arc::new(self.clone()) }
-}
+// Test and Tree View
+impl_provider!(TestController);
+impl_provider!(TreeViewProvider);
 
-impl Requires<dyn OutputChannelManager> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn OutputChannelManager> { Arc::new(self.clone()) }
-}
+// UI and Webview
+impl_provider!(UserInterfaceProvider);
+impl_provider!(WebviewProvider);
 
-impl Requires<dyn SourceControlManagementProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn SourceControlManagementProvider> { Arc::new(self.clone()) }
-}
+// Workspace
+impl_provider!(WorkspaceProvider);
+impl_provider!(WorkspaceEditApplier);
 
-impl Requires<dyn SecretProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn SecretProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn StatusBarProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn StatusBarProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn StorageProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn StorageProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn SynchronizationProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn SynchronizationProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn TerminalProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn TerminalProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn TestController> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn TestController> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn TreeViewProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn TreeViewProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn UserInterfaceProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn UserInterfaceProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn WebviewProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn WebviewProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn WorkspaceProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn WorkspaceProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn WorkspaceEditApplier> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn WorkspaceEditApplier> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn ExtensionManagementService> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn ExtensionManagementService> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn DebugService> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn DebugService> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn KeybindingProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn KeybindingProvider> { Arc::new(self.clone()) }
-}
-
-impl Requires<dyn SearchProvider> for MountainEnvironment {
-	fn Require(&self) -> Arc<dyn SearchProvider> { Arc::new(self.clone()) }
-}
+// Extension Management and Search
+impl_provider!(ExtensionManagementService);
+impl_provider!(SearchProvider);

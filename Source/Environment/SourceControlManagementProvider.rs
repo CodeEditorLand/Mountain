@@ -270,13 +270,13 @@ impl SourceControlManagementProvider for MountainEnvironment {
 		};
 
 		self.ApplicationState
-			.SourceControlManagementProviders
+			.Feature.Markers.SourceControlManagementProviders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(Handle, ProviderState.clone());
 
 		self.ApplicationState
-			.SourceControlManagementGroups
+			.Feature.Markers.SourceControlManagementGroups
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(Handle, Default::default());
@@ -297,13 +297,13 @@ impl SourceControlManagementProvider for MountainEnvironment {
 		);
 
 		self.ApplicationState
-			.SourceControlManagementProviders
+			.Feature.Markers.SourceControlManagementProviders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&ProviderHandle);
 
 		self.ApplicationState
-			.SourceControlManagementGroups
+			.Feature.Markers.SourceControlManagementGroups
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&ProviderHandle);
@@ -322,7 +322,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		let mut ProvidersGuard = self
 			.ApplicationState
-			.SourceControlManagementProviders
+			.Feature.Markers.SourceControlManagementProviders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -363,7 +363,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		let mut GroupsGuard = self
 			.ApplicationState
-			.SourceControlManagementGroups
+			.Feature.Markers.SourceControlManagementGroups
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -409,7 +409,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		let mut ProvidersGuard = self
 			.ApplicationState
-			.SourceControlManagementProviders
+			.Feature.Markers.SourceControlManagementProviders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

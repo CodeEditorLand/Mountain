@@ -299,7 +299,7 @@ impl SearchProvider for MountainEnvironment {
 
 		let Folders = self
 			.ApplicationState
-			.WorkspaceFolders
+			.Workspace.WorkspaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.clone();

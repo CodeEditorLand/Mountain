@@ -1,14 +1,60 @@
 //! # Environment Module
 //!
-//! Provides the concrete implementation of the application's Environment.
+//! ## RESPONSIBILITIES
+//! Dependency Injection (DI) container that provides thread-safe access to
+//! all Mountain providers through trait-based lookups using the Requires trait.
 //!
-//! This module contains the `MountainEnvironment` struct and all of its
-//! implementations of the provider traits defined in the `Common` crate. Each
-//! provider implementation is organized into its own file for clarity and
-//! separation of concerns.
+//! ## ARCHITECTURAL ROLE
+//!
+//! The Environment module is the central dependency injection system for Mountain:
+//!
+//! ```text
+//! Component ──► Requires<T> ──► MountainEnvironment ──► Arc<dyn T>
+//! ```
+//!
+//! ### Position in Mountain
+//! - Implements Common crate's `Environment` and `Requires` traits
+//! - All providers accessed through capability-based lookups
+//! - Created early in startup and shared via `Arc<MountainEnvironment>`
+//!
+//! ### Key Components
+//! - `MountainEnvironment`: Main DI container struct
+//! - `ProviderTraitImplMacro`: Macro for generating trait implementations
+//! - Provider modules: Individual implementations for each provider trait
+//!
+//! ### Provider Traits Implemented (25+)
+//! - CommandExecutor, ConfigurationProvider, CustomEditorProvider
+//! - DebugService, DiagnosticManager, DocumentProvider
+//! - FileSystemReader/Writer, IPCProvider, KeybindingProvider
+//! - LanguageFeatureProviderRegistry, OutputChannelManager
+//! - SecretProvider, SourceControlManagementProvider
+//! - StatusBarProvider, StorageProvider, SynchronizationProvider
+//! - TerminalProvider, TestController, TreeViewProvider
+//! - UserInterfaceProvider, WebviewProvider
+//! - WorkspaceProvider, WorkspaceEditApplier
+//! - ExtensionManagementService, SearchProvider
+//!
+//! ## ERROR HANDLING
+//! Providers use CommonError for error reporting. The DI container handles
+//! trait resolution at compile time, ensuring type safety.
+//!
+//! ## PERFORMANCE CONSIDERATIONS
+//! - Thread-safe access via Arc<T>
+//! - Lazy initialization through trait-based lookups
+//! - Zero-cost abstractions - macro-generated code is identical to hand-written
+//!
+//! ## TODO
+//! - [ ] Consider async initialization for providers
+//! - [ ] Add provider health checking
+//! - [ ] Implement provider dependency validation on initialization
 
-// --- Main Environment Struct ---
+// --- Main Environment Modules ---
+
+/// Main DI container struct.
 pub mod MountainEnvironment;
+
+/// Macro for generating trait implementations.
+pub mod ProviderTraitImplMacro;
 
 // --- Provider Trait Implementations (organized by domain) ---
 pub mod CommandProvider;

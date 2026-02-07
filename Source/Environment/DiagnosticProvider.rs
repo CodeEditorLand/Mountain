@@ -53,7 +53,7 @@
 //! - Accessible via `Environment.Require<dyn DiagnosticManager>()`
 //!
 //! ### Data Storage
-//! - `ApplicationState.DiagnosticsMap`: HashMap<String, HashMap<String,
+//! - `ApplicationState.Feature.Diagnostics`: HashMap<String, HashMap<String,
 //!   Vec<MarkerDataDTO>>>
 //!   - Outer key: Owner (e.g., "typescript", "rust-analyzer")
 //!   - Inner key: URI string
@@ -83,7 +83,7 @@
 //! ## NOTIFICATION FLOW
 //!
 //! 1. Language server calls `SetDiagnostics(owner, uri, entries)`
-//! 2. Provider validates and stores in `ApplicationState.DiagnosticsMap`
+//! 2. Provider validates and stores in `ApplicationState.Feature.Diagnostics`
 //! 3. Provider identifies which URIs changed in this update
 //! 4. Provider emits `sky://diagnostics/changed` event with:
 //!    - `owner`: Diagnostic source
@@ -152,7 +152,7 @@
 //
 // # Diagnostic Data Model
 //
-// Diagnostics are stored in ApplicationState.DiagnosticsMap as:
+// Diagnostics are stored in ApplicationState.Feature.Diagnostics as:
 // - Outer map: Owner (String) -> Inner map
 // - Inner map: URI String -> Vector of MarkerDataDTO
 // - Each MarkerDataDTO represents a single diagnostic with severity, message,
@@ -218,7 +218,7 @@ impl DiagnosticManager for MountainEnvironment {
 
 		let mut DiagnosticsMapGuard = self
 			.ApplicationState
-			.DiagnosticsMap
+			.Feature.Diagnostics.DiagnosticsMap
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -267,7 +267,7 @@ impl DiagnosticManager for MountainEnvironment {
 		let (ClearedCount, ChangedURIKeys):(usize, Vec<String>) = {
 			let mut DiagnosticsMapGuard = self
 				.ApplicationState
-				.DiagnosticsMap
+				.Feature.Diagnostics.DiagnosticsMap
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -308,7 +308,7 @@ impl DiagnosticManager for MountainEnvironment {
 
 		let DiagnosticsMapGuard = self
 			.ApplicationState
-			.DiagnosticsMap
+			.Feature.Diagnostics.DiagnosticsMap
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

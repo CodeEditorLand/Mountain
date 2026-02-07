@@ -257,13 +257,13 @@ impl TerminalProvider for MountainEnvironment {
 			}
 
 			// Clean up the terminal from the state
-			if let Ok(mut Guard) = EnvironmentClone.ApplicationState.ActiveTerminals.lock() {
+			if let Ok(mut Guard) = EnvironmentClone.ApplicationState.Feature.Terminals.ActiveTerminals.lock() {
 				Guard.remove(&TermIDForExit);
 			}
 		});
 
 		self.ApplicationState
-			.ActiveTerminals
+			.Feature.Terminals.ActiveTerminals
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(TerminalIdentifier, Arc::new(std::sync::Mutex::new(TerminalState.clone())));
@@ -277,7 +277,7 @@ impl TerminalProvider for MountainEnvironment {
 		let SenderOption = {
 			let TerminalsGuard = self
 				.ApplicationState
-				.ActiveTerminals
+				.Feature.Terminals.ActiveTerminals
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -304,7 +304,7 @@ impl TerminalProvider for MountainEnvironment {
 
 		let TerminalArc = self
 			.ApplicationState
-			.ActiveTerminals
+			.Feature.Terminals.ActiveTerminals
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&TerminalId);
@@ -340,7 +340,7 @@ impl TerminalProvider for MountainEnvironment {
 	async fn GetTerminalProcessId(&self, TerminalId:u64) -> Result<Option<u32>, CommonError> {
 		let TerminalsGuard = self
 			.ApplicationState
-			.ActiveTerminals
+			.Feature.Terminals.ActiveTerminals
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

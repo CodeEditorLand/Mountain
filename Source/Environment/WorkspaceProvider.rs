@@ -28,7 +28,7 @@
 //!
 //! PERFORMANCE:
 //! - Workspace folder lookup uses O(n) linear search through folder list
-//! - Lock contention on `ApplicationState.WorkspaceFolders` should be minimized
+//! - Lock contention on `ApplicationState.Workspace.WorkspaceFolders` should be minimized
 //! - File discovery and workspace edit application are not yet optimized
 //!
 //! VS CODE REFERENCE:
@@ -73,17 +73,13 @@
 use std::{path::PathBuf, sync::Arc};
 
 use CommonLibrary::{
-	CustomEditor::CustomEditorProvider::CustomEditorProvider,
 	DTO::WorkspaceEditDTO::WorkspaceEditDTO,
-	Document::DocumentProvider::DocumentProvider,
-	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	Webview::WebviewProvider::WebviewProvider,
 	Workspace::{WorkspaceEditApplier::WorkspaceEditApplier, WorkspaceProvider::WorkspaceProvider},
 };
 use async_trait::async_trait;
 use log::{info, warn};
-use serde_json::{Value, json};
+use serde_json::Value;
 use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
@@ -95,7 +91,7 @@ impl WorkspaceProvider for MountainEnvironment {
 		info!("[WorkspaceProvider] Getting workspace folders info.");
 		let FoldersGuard = self
 			.ApplicationState
-			.WorkspaceFolders
+			.Workspace.WorkspaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 		Ok(FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect())
@@ -106,7 +102,7 @@ impl WorkspaceProvider for MountainEnvironment {
 	async fn GetWorkspaceFolderInfo(&self, URIToMatch:Url) -> Result<Option<(Url, String, usize)>, CommonError> {
 		let FoldersGuard = self
 			.ApplicationState
-			.WorkspaceFolders
+			.Workspace.WorkspaceFolders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 		for Folder in FoldersGuard.iter() {
@@ -127,7 +123,7 @@ impl WorkspaceProvider for MountainEnvironment {
 	async fn GetWorkspaceConfigurationPath(&self) -> Result<Option<PathBuf>, CommonError> {
 		Ok(self
 			.ApplicationState
-			.WorkspaceConfigurationPath
+			.Workspace.WorkspaceConfigurationPath
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.clone())
@@ -135,7 +131,7 @@ impl WorkspaceProvider for MountainEnvironment {
 
 	/// Checks if the current workspace is trusted.
 	async fn IsWorkspaceTrusted(&self) -> Result<bool, CommonError> {
-		Ok(self.ApplicationState.IsTrusted.load(std::sync::atomic::Ordering::Relaxed))
+		Ok(self.ApplicationState.Workspace.IsTrusted.load(std::sync::atomic::Ordering::Relaxed))
 	}
 
 	/// Requests workspace trust from the user.
@@ -147,7 +143,7 @@ impl WorkspaceProvider for MountainEnvironment {
 	/// Finds files in the workspace matching the specified query.
 	async fn FindFilesInWorkspace(
 		&self,
-		query:Value,
+		_query:Value,
 		_:Option<Value>,
 		_:Option<usize>,
 		_:bool,

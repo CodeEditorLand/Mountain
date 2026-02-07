@@ -74,7 +74,7 @@ use super::MountainEnvironment::MountainEnvironment;
 
 #[async_trait]
 impl CustomEditorProvider for MountainEnvironment {
-	async fn RegisterCustomEditorProvider(&self, ViewType:String, Options:Value) -> Result<(), CommonError> {
+	async fn RegisterCustomEditorProvider(&self, ViewType:String, _Options:Value) -> Result<(), CommonError> {
 		info!("[CustomEditorProvider] Registering provider for view type: {}", ViewType);
 
 		// Validate ViewType is non-empty

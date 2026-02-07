@@ -13,7 +13,7 @@
 //! - Initialize webview lifecycle and event handlers
 //!
 //! ### 2. Webview Management
-//! - Track active webview instances in `ApplicationState.ActiveWebviews`
+//! - Track active webview instances in `ApplicationState.Feature.Webviews`
 //! - Handle webview focus and visibility changes
 //! - Support webview window positioning and sizing
 //! - Manage webview disposal and cleanup

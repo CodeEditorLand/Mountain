@@ -233,9 +233,9 @@ impl StorageProvider for MountainEnvironment {
 		}
 
 		let StorageMapMutex = if IsGlobalScope {
-			&self.ApplicationState.GlobalMemento
+			&self.ApplicationState.Configuration.MementoGlobalStorage
 		} else {
-			&self.ApplicationState.WorkspaceMemento
+			&self.ApplicationState.Configuration.MementoWorkspaceStorage
 		};
 
 		let StorageMapGuard = StorageMapMutex
@@ -291,12 +291,12 @@ impl StorageProvider for MountainEnvironment {
 
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
-				self.ApplicationState.GlobalMemento.clone(),
+				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
 				Some(self.ApplicationState.GlobalMementoPath.clone()),
 			)
 		} else {
 			(
-				self.ApplicationState.WorkspaceMemento.clone(),
+				self.ApplicationState.Configuration.MementoWorkspaceStorage.clone(),
 				self.ApplicationState
 					.WorkspaceMementoPath
 					.lock()
@@ -336,9 +336,9 @@ impl StorageProvider for MountainEnvironment {
 		trace!("[StorageProvider] Getting all values from {} scope.", ScopeName);
 
 		let StorageMapMutex = if IsGlobalScope {
-			&self.ApplicationState.GlobalMemento
+			&self.ApplicationState.Configuration.MementoGlobalStorage
 		} else {
-			&self.ApplicationState.WorkspaceMemento
+			&self.ApplicationState.Configuration.MementoWorkspaceStorage
 		};
 
 		let StorageMapGuard = StorageMapMutex
@@ -358,12 +358,12 @@ impl StorageProvider for MountainEnvironment {
 
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
-				self.ApplicationState.GlobalMemento.clone(),
+				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
 				Some(self.ApplicationState.GlobalMementoPath.clone()),
 			)
 		} else {
 			(
-				self.ApplicationState.WorkspaceMemento.clone(),
+				self.ApplicationState.Configuration.MementoWorkspaceStorage.clone(),
 				self.ApplicationState
 					.WorkspaceMementoPath
 					.lock()

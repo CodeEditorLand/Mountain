@@ -151,7 +151,7 @@ impl DebugService for MountainEnvironment {
 		Ok(())
 	}
 
-	async fn StartDebugging(&self, FolderURI:Option<Url>, Configuration:Value) -> Result<String, CommonError> {
+	async fn StartDebugging(&self, _FolderURI:Option<Url>, Configuration:Value) -> Result<String, CommonError> {
 		let SessionID = uuid::Uuid::new_v4().to_string();
 		info!(
 			"[DebugProvider] Starting debug session '{}' with config: {:?}",
