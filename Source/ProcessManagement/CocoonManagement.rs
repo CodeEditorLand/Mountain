@@ -68,11 +68,13 @@ use tauri::{
 use tokio::{
 	io::{AsyncBufReadExt, BufReader},
 	process::{Child, Command},
+	sync::Mutex,
 	time::sleep,
 };
 
 use super::InitializationData;
 use crate::{Environment::MountainEnvironment::MountainEnvironment, Vine};
+use crate::IPC::Common::HealthStatus::{HealthIssue, HealthMonitor};
 
 /// Configuration constants for Cocoon process management
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
@@ -81,16 +83,38 @@ const MOUNTAIN_GRPC_PORT:u16 = 50051;
 const GRPC_SERVER_READY_DELAY_MS:u64 = 2000;
 const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
 const HANDSHAKE_TIMEOUT_MS:u64 = 60000;
+const HEALTH_CHECK_INTERVAL_SECONDS:u64 = 5;
+const MAX_RESTART_ATTEMPTS:u32 = 3;
+const RESTART_WINDOW_SECONDS:u64 = 300;
 
 /// Global state for tracking Cocoon process lifecycle
 struct CocoonProcessState {
 	ChildProcess:Option<Child>,
 	IsRunning:bool,
 	StartTime:Option<tokio::time::Instant>,
+	RestartCount:u32,
+	LastRestartTime:Option<tokio::time::Instant>,
 }
 
 impl Default for CocoonProcessState {
-	fn default() -> Self { Self { ChildProcess:None, IsRunning:false, StartTime:None } }
+	fn default() -> Self {
+		Self {
+			ChildProcess:None,
+			IsRunning:false,
+			StartTime:None,
+			RestartCount:0,
+			LastRestartTime:None,
+		}
+	}
+}
+
+/// Global state for Cocoon process management
+lazy_static::lazy_static! {
+	static ref COCOON_STATE: Arc<Mutex<CocoonProcessState>> =
+		Arc::new(Mutex::new(CocoonProcessState::default()));
+	
+	static ref COCOON_HEALTH: Arc<Mutex<HealthMonitor>> =
+		Arc::new(Mutex::new(HealthMonitor::new()));
 }
 
 /// The main entry point for initializing the Cocoon sidecar process manager.
@@ -319,12 +343,92 @@ async fn LaunchAndManageCocoonSideCar(
 		},
 	}
 
-	// Note: The ChildProcess is intentionally stored as a background task
-	// and will be managed by Tokio runtime. For production use, consider:
-	// - Implementing process health monitoring
-	// - Adding automatic restart on crash
-	// - Storing process handle for graceful shutdown
-	let _process = Some(ChildProcess);
+	// Store process handle for health monitoring and management
+	{
+		let mut state = COCOON_STATE.lock().await;
+		state.ChildProcess = Some(ChildProcess);
+		state.IsRunning = true;
+		state.StartTime = Some(tokio::time::Instant::now());
+		info!("[CocoonManagement] Process state updated: Running");
+	}
+
+	// Reset health monitor on successful initialization
+	{
+		let mut health = COCOON_HEALTH.lock().await;
+		health.clear_issues();
+		info!("[CocoonManagement] Health monitor reset to active state");
+	}
+
+	// Start background health monitoring
+	let state_clone = Arc::clone(&COCOON_STATE);
+	tokio::spawn(monitor_cocoon_health_task(state_clone));
+	info!("[CocoonManagement] Background health monitoring started");
 
 	Ok(())
+}
+
+/// Background task that monitors Cocoon process health and logs crashes
+async fn monitor_cocoon_health_task(state: Arc<Mutex<CocoonProcessState>>) {
+	loop {
+		tokio::time::sleep(Duration::from_secs(HEALTH_CHECK_INTERVAL_SECONDS)).await;
+
+		let mut state_guard = state.lock().await;
+		
+		// Check if we have a child process to monitor
+		if state_guard.ChildProcess.is_some() {
+			// Get process ID before checking status
+			let process_id = state_guard.ChildProcess.as_ref().map(|c| c.id().unwrap_or(0));
+			
+			// Check if process is still running
+			let exit_status = {
+				let child = state_guard.ChildProcess.as_mut().unwrap();
+				child.try_wait()
+			};
+			
+			match exit_status {
+			Ok(Some(exit_code)) => {
+				// Process has exited (crashed or terminated)
+				let uptime = state_guard.StartTime.map(|t| t.elapsed().as_secs()).unwrap_or(0);
+				let exit_code_num = exit_code.code().unwrap_or(-1);
+				warn!(
+					"[CocoonHealth] Cocoon process crashed [PID: {}] [Exit Code: {}] [Uptime: {}s]",
+					process_id.unwrap_or(0),
+					exit_code_num,
+					uptime
+				);
+				
+				// Update state
+				state_guard.IsRunning = false;
+				state_guard.ChildProcess = None;
+				
+				// Report health issue
+				{
+					let mut health = COCOON_HEALTH.lock().await;
+					health.add_issue(HealthIssue::Custom(format!("ProcessCrashed (Exit code: {})", exit_code_num)));
+					warn!("[CocoonHealth] Health score: {}", health.health_score);
+				}
+				
+				// Log that automatic restart would be needed
+				warn!("[CocoonHealth] CRASH DETECTED: Cocoon process has crashed and must be restarted manually or via application reinitialization");
+			},
+			Ok(None) => {
+				// Process is still running
+				trace!("[CocoonHealth] Cocoon process is healthy [PID: {}]", process_id.unwrap_or(0));
+			},
+			Err(e) => {
+				// Error checking process status
+				warn!("[CocoonHealth] Error checking process status: {}", e);
+				
+				// Report health issue
+				{
+					let mut health = COCOON_HEALTH.lock().await;
+					health.add_issue(HealthIssue::Custom(format!("ProcessCheckError: {}", e)));
+				}
+			},
+			}
+		} else {
+			// No child process exists
+			trace!("[CocoonHealth] No Cocoon process to monitor");
+		}
+	}
 }

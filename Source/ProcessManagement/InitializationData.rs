@@ -438,7 +438,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 			"sessionId": Uuid::new_v4().to_string(),
 
-			"machineId": Uuid::new_v4().to_string(),
+			"machineId": get_or_generate_machine_id(&AppData),
 
 			"firstSessionDate": "2024-01-01T00:00:00.000Z",
 
