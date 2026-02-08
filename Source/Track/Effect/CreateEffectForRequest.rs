@@ -543,6 +543,57 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			Ok(Box::new(effect))
 		},
 
+		"UserInterface.ShowQuickPick" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+						let (items, options) = match Parameters.as_slice() {
+							[Value::Array(items_arr), opts] => {
+								// Deserialize items from array
+								let items_vec: Vec<crate::Environment::UserInterface::DTO::QuickPickItemDTO> = items_arr.iter()
+									.filter_map(|v| serde_json::from_value(v.clone()).ok())
+									.collect();
+								let options_dto = match opts {
+									Value::Object(_) => Some(crate::Environment::UserInterface::DTO::QuickPickOptionsDTO::default()),
+									Value::Null => None,
+									_ => None,
+								};
+								(items_vec, options_dto)
+							},
+							_ => (vec![], None),
+						};
+						provider
+							.ShowQuickPick(items, options)
+							.await
+							.map(|selected_items| json!(selected_items))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"UserInterface.ShowInputBox" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
+						let options = if let Some(Value::Object(_obj)) = Parameters.get(0) {
+							// TODO: Properly deserialize to InputBoxOptionsDTO
+							Some(crate::Environment::UserInterface::DTO::InputBoxOptionsDTO::default())
+						} else {
+							None
+						};
+						provider
+							.ShowInputBox(options)
+							.await
+							.map(|input_opt| json!(input_opt))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
 		"UserInterface.ShowOpenDialog" => {
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
