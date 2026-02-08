@@ -132,7 +132,13 @@
 //! - [`ConstructExtensionHostInitializationData`]: Build IExtensionHostInitData
 //!   for Cocoon
 
-use std::{collections::HashMap, env, sync::Arc};
+use std::{
+	collections::HashMap,
+	env,
+	fs,
+	path::PathBuf,
+	sync::Arc,
+};
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -149,6 +155,48 @@ use crate::{
 	ApplicationState::ApplicationState,
 	Environment::MountainEnvironment::MountainEnvironment,
 };
+
+/// Loads or generates a persistent machine ID.
+///
+/// The machine ID is stored in the app data directory as a simple text file.
+/// If the file doesn't exist, a new UUID is generated and saved.
+///
+/// # Arguments
+/// * `app_data_dir` - The application data directory path
+///
+/// # Returns
+/// The machine ID as a String
+fn get_or_generate_machine_id(app_data_dir: &PathBuf) -> String {
+	let machine_id_path = app_data_dir.join("machine-id.txt");
+
+	// Try to load existing machine ID
+	if let Ok(content) = fs::read_to_string(&machine_id_path) {
+		let trimmed = content.trim();
+		if !trimmed.is_empty() {
+			log::info!("[InitializationData] Loaded existing machine ID from disk");
+			return trimmed.to_string();
+		}
+	}
+
+	// Generate and save new machine ID
+	let new_machine_id = Uuid::new_v4().to_string();
+	
+	// Ensure directory exists
+	if let Some(parent) = machine_id_path.parent() {
+		if let Err(e) = fs::create_dir_all(parent) {
+			log::warn!("[InitializationData] Failed to create machine ID directory: {}", e);
+		}
+	}
+
+	// Save to disk
+	if let Err(e) = fs::write(&machine_id_path, &new_machine_id) {
+		log::warn!("[InitializationData] Failed to persist machine ID to disk: {}", e);
+	} else {
+		log::info!("[InitializationData] Generated and persisted new machine ID");
+	}
+
+	new_machine_id
+}
 
 /// Constructs the `ISandboxConfiguration` payload needed by the `Sky` frontend.
 pub async fn ConstructSandboxConfiguration(
@@ -211,16 +259,17 @@ pub async fn ConstructSandboxConfiguration(
 		"node": "18.18.2"
 	});
 
+	// Load or generate persistent machine ID
+	let machine_id = get_or_generate_machine_id(&AppDataDir);
+
 	Ok(json!({
 		"windowId": ApplicationHandle.get_webview_window("main").unwrap().label(),
 
 		// Persist the machineId to ApplicationState or persistent storage and load
 		// it on subsequent runs. A stable machine identifier is crucial for licensing
 		// validation, telemetry deduplication, and cross-session state consistency.
-		// Current implementation generates a new UUID each startup, which breaks
-		// these use cases. The persisted value should be stored in the app data
-		// directory and migrated across installations when possible.
-		"machineId": Uuid::new_v4().to_string(),
+		// Now implemented with persistent storage in app data directory.
+		"machineId": machine_id,
 
 		"sessionId": Uuid::new_v4().to_string(),
 

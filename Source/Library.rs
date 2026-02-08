@@ -61,6 +61,9 @@
 // Core Infrastructure Modules
 // ============================================================================
 
+/// Centralized error handling system
+pub mod Error;
+
 pub mod ApplicationState;
 
 pub mod Environment;

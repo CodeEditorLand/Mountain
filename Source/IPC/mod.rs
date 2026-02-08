@@ -62,6 +62,9 @@
 
 // --- Main Sub-modules ---
 
+/// Common shared types and abstractions for IPC layer.
+pub mod Common;
+
 /// Main Tauri IPC server orchestrator.
 // Note: Legacy TauriIPCServer.rs is used for backward compatibility
 // TODO: Migrate to TauriIPCServer/mod.rs in future phase
@@ -127,6 +130,7 @@ pub mod Permission;
 
 // --- Re-exports for backward compatibility ---
 
+pub use Common::{ConnectionStatus, HealthStatus, MessageType, PerformanceMetrics, ServiceInfo};
 pub use TauriIPCServer_Old as TauriIPCServer;
 pub use Message::{TauriIPCMessage, ConnectionStatus, ListenerCallback};
 pub use Connection::{ConnectionHandle, ConnectionManager, ConnectionStats, HealthChecker};
