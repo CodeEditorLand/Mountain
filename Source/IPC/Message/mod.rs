@@ -36,4 +36,4 @@
 
 pub mod Types;
 
-pub use Types::{TauriIPCMessage, ConnectionStatus, ListenerCallback};
+pub use Types::{TauriIPCMessage, SimpleConnectionStatus, ListenerCallback};

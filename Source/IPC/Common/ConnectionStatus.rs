@@ -28,13 +28,16 @@ pub enum ConnectionState {
 pub struct ConnectionStatus {
     /// Current connection state
     pub state: ConnectionState,
-    /// When the connection entered its current state
+    /// When the connection entered its current state (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub state_since: Instant,
     /// Count of connection attempts
     pub connection_attempts: u32,
-    /// Timestamp of last successful connection
+    /// Timestamp of last successful connection (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub last_connected: Option<Instant>,
-    /// Timestamp of last disconnection
+    /// Timestamp of last disconnection (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub last_disconnected: Option<Instant>,
     /// Total uptime duration
     pub total_uptime: Duration,

@@ -40,11 +40,13 @@ pub struct ServiceInfo {
     pub version: String,
     /// Current state
     pub state: ServiceState,
-    /// When the service entered its current state
+    /// When the service entered its current state (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub state_since: Instant,
     /// Service uptime
     pub uptime: Duration,
-    /// Last heartbeat timestamp
+    /// Last heartbeat timestamp (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub last_heartbeat: Option<Instant>,
     /// Services this service depends on
     pub dependencies: Vec<String>,
@@ -63,7 +65,8 @@ pub struct ServicePerformance {
     pub error_count: u64,
     /// Average response time in milliseconds
     pub average_response_time_ms: f64,
-    /// Last updated timestamp
+    /// Last updated timestamp (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub last_updated: Instant,
 }
 
@@ -213,7 +216,8 @@ impl ServiceInfo {
 pub struct ServiceRegistry {
     /// Map of service name to service info
     pub services: HashMap<String, ServiceInfo>,
-    /// Last discovery timestamp
+    /// Last discovery timestamp (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub last_discovery: Instant,
     /// Configurable discovery interval
     pub discovery_interval: Duration,

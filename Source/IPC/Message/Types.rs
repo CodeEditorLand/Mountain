@@ -145,13 +145,17 @@ impl TauriIPCMessage {
 ///     v
 /// User (see connection status)
 /// ```
+/// Simple connection status message for health monitoring
+///
+/// This structure is used to report the IPC connection status between Wind
+/// and Mountain, enabling the frontend to display connection state to users.
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConnectionStatus {
+pub struct SimpleConnectionStatus {
 	/// Whether the IPC connection is currently active
 	pub connected: bool,
 }
 
-impl ConnectionStatus {
+impl SimpleConnectionStatus {
 	/// Create a new connection status
 	pub fn new(connected: bool) -> Self {
 		Self { connected }

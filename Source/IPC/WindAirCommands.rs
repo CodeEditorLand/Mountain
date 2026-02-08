@@ -300,23 +300,11 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 use log::{debug, info};
 
-// Import Air types using stub types from Air module.
-// Replace these stub types with actual Air service types when the AirIntegration
-// feature is fully implemented. The stubs provide type safety during development
-// while the Air service is not yet available. Transition requires updating imports
-// and ensuring gRPC client codegen is generated from the Air service proto files.
-use crate::Air::AirServiceTypesStub::{
-	AirClientType,
-	ApplyUpdateRequest,
-	AuthenticationRequest,
-	DownloadRequest,
-	IndexRequest,
-	MetricsRequest,
-	SearchRequest,
-	StatusRequest,
-	UpdateCheckRequest,
-};
-use crate::Air::AirClient::DEFAULT_AIR_SERVER_ADDRESS;
+// Import Air types from the new AirClient implementation.
+// These provide actual gRPC connectivity to the Air daemon service.
+use crate::Air::AirClient as AirClientModule;
+use crate::Air::DEFAULT_AIR_SERVER_ADDRESS;
+use CommonLibrary::Error::CommonError::CommonError;
 
 /// Data Transfer Objects for Wind-Air communication
 
@@ -387,7 +375,7 @@ pub struct AirMetricsDTO {
 /// Air Client - Wrapper for the gRPC client connection to Air daemon
 #[derive(Debug, Clone)]
 pub struct AirClientWrapper {
-	client:AirClientType,
+	client:AirClientModule::AirClient,
 }
 
 impl AirClientWrapper {
@@ -395,9 +383,9 @@ impl AirClientWrapper {
 	pub async fn new(address:String) -> Result<Self, String> {
 		debug!("[WindAirCommands] Connecting to Air daemon at: {}", address);
 
-		let client = AirClientType::new(&address)
+		let client = AirClientModule::AirClient::new(&address)
 			.await
-			.map_err(|e| format!("Failed to connect to Air daemon: {}", e))?;
+			.map_err(|e| format!("Failed to connect to Air daemon: {:?}", e))?;
 
 		info!("[WindAirCommands] Successfully connected to Air daemon");
 		Ok(Self { client })
@@ -407,9 +395,9 @@ impl AirClientWrapper {
 	pub async fn reconnect(&mut self, address:String) -> Result<(), String> {
 		debug!("[WindAirCommands] Reconnecting to Air daemon at: {}", address);
 
-		let client = AirClientType::new(&address)
+		let client = AirClientModule::AirClient::new(&address)
 			.await
-			.map_err(|e| format!("Failed to reconnect to Air daemon: {}", e))?;
+			.map_err(|e| format!("Failed to reconnect to Air daemon: {:?}", e))?;
 
 		self.client = client;
 		info!("[WindAirCommands] Successfully reconnected to Air daemon");
@@ -444,29 +432,22 @@ pub async fn CheckForUpdates(current_version:Option<String>, channel:Option<Stri
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	// Build the request
-	let request = UpdateCheckRequest {
-		request_id:uuid::Uuid::new_v4().to_string(),
-		current_version:current_version.unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string()),
-		channel:channel.unwrap_or_else(|| "stable".to_string()),
-	};
+	// Use the new AirClient API
+	let request_id = uuid::Uuid::new_v4().to_string();
+	let current_version = current_version.unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
+	let channel = channel.unwrap_or_else(|| "stable".to_string());
 
 	// Delegate to Air via gRPC
-	let response = client
-		.CheckForUpdates(request)
+	let update_info = client
+		.check_for_updates(request_id, current_version, channel)
 		.await
-		.map_err(|e| format!("Update check failed: {}", e))?;
-
-	// Check for errors in the response
-	if !response.error.is_empty() {
-		return Err(response.error);
-	}
+		.map_err(|e| format!("Update check failed: {:?}", e))?;
 
 	let result = UpdateInfoDTO {
-		update_available:response.update_available,
-		version:response.version,
-		download_url:response.download_url,
-		release_notes:response.release_notes,
+		update_available:update_info.update_available,
+		version:update_info.version,
+		download_url:update_info.download_url,
+		release_notes:update_info.release_notes,
 	};
 
 	info!(
@@ -500,28 +481,19 @@ pub async fn DownloadUpdate(
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	let request = DownloadRequest {
-		request_id:uuid::Uuid::new_v4().to_string(),
-		url,
-		destination_path:destination,
-		checksum:checksum.unwrap_or_default(),
-		headers:Default::default(),
-	};
+	let request_id = uuid::Uuid::new_v4().to_string();
 
-	let response = client
-		.DownloadFile(request)
+	// Delegate to Air via gRPC
+	let file_info = client
+		.download_update(request_id, url, destination, checksum.unwrap_or_default(), std::collections::HashMap::new())
 		.await
-		.map_err(|e| format!("Update download failed: {}", e))?;
-
-	if !response.error.is_empty() {
-		return Err(response.error);
-	}
+		.map_err(|e| format!("Update download failed: {:?}", e))?;
 
 	let result = DownloadResultDTO {
-		success:response.success,
-		file_path:response.file_path,
-		file_size:response.file_size,
-		checksum:response.checksum,
+		success:true,
+		file_path:file_info.file_path,
+		file_size:file_info.file_size,
+		checksum:file_info.checksum,
 	};
 
 	info!("[WindAirCommands] Update download completed: success={}", result.success);
@@ -547,27 +519,18 @@ pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, S
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	// Use ApplyUpdateRequest from Air module
-	let request = ApplyUpdateRequest { request_id:update_id.clone(), update_id, update_path };
+	let request_id = uuid::Uuid::new_v4().to_string();
 
 	// Apply downloaded updates by sending ApplyUpdateRequest to the Air service.
 	// The Air service handles platform-specific installation (replacing binaries,
-	// restarting the application, cleaning up old versions). The response indicates
-	// success or provides error details. Currently returning an error placeholder
-	// until the AirClient ApplyUpdate method is implemented.
-	// let response = client
-	//     .ApplyUpdate(request)
-	//     .await
-	//     .map_err(|e| format!("Update application failed: {}", e))?;
-	//
-	// if !response.error.is_empty() {
-	//     return Err(response.error);
-	// }
-	//
-	// info!("[WindAirCommands] Update applied successfully");
+	// restarting the application, cleaning up old versions).
+	client
+		.apply_update(request_id, update_id, update_path)
+		.await
+		.map_err(|e| format!("Update application failed: {:?}", e))?;
 
-	// Placeholder response for now
-	Err("ApplyUpdate not yet implemented".to_string())
+	info!("[WindAirCommands] Update applied successfully");
+	Ok(true)
 }
 
 /// Command: Download File
@@ -589,28 +552,18 @@ pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResu
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	let request = DownloadRequest {
-		request_id:uuid::Uuid::new_v4().to_string(),
-		url,
-		destination_path:destination,
-		checksum:String::new(),
-		headers:Default::default(),
-	};
+	let request_id = uuid::Uuid::new_v4().to_string();
 
-	let response = client
-		.DownloadFile(request)
+	let file_info = client
+		.download_file(request_id, url, destination, String::new(), std::collections::HashMap::new())
 		.await
-		.map_err(|e| format!("File download failed: {}", e))?;
-
-	if !response.error.is_empty() {
-		return Err(response.error);
-	}
+		.map_err(|e| format!("File download failed: {:?}", e))?;
 
 	let result = DownloadResultDTO {
-		success:response.success,
-		file_path:response.file_path,
-		file_size:response.file_size,
-		checksum:response.checksum,
+		success:true,
+		file_path:file_info.file_path,
+		file_size:file_info.file_size,
+		checksum:file_info.checksum,
 	};
 
 	info!("[WindAirCommands] File download completed");
@@ -637,25 +590,17 @@ pub async fn AuthenticateUser(username:String, password:String, provider:String)
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	let request = AuthenticationRequest {
-		request_id:uuid::Uuid::new_v4().to_string(),
-		provider,
-		credentials:serde_json::json!({"username": username, "password": password}),
-	};
+	let request_id = uuid::Uuid::new_v4().to_string();
 
-	let response = client
-		.AuthenticateUser(request)
+	let token = client
+		.authenticate(request_id, username, password, provider)
 		.await
-		.map_err(|e| format!("Authentication failed: {}", e))?;
-
-	if !response.success && !response.error.is_empty() {
-		return Err(response.error);
-	}
+		.map_err(|e| format!("Authentication failed: {:?}", e))?;
 
 	let result = AuthResponseDTO {
-		success:response.success,
-		token:response.token,
-		error:if response.error.is_empty() { None } else { Some(response.error) },
+		success:true,
+		token,
+		error:None,
 	};
 
 	info!("[WindAirCommands] Authentication completed: success={}", result.success);
@@ -688,25 +633,23 @@ pub async fn IndexFiles(
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	let request = IndexRequest {
-		request_id:uuid::Uuid::new_v4().to_string(),
-		paths:vec![path],
-		recursive:max_depth.unwrap_or(100) > 0,
-	};
+	let request_id = uuid::Uuid::new_v4().to_string();
 
-	let response = client
-		.IndexFiles(request)
+	let index_info = client
+		.index_files(
+			request_id,
+			path,
+			patterns,
+			exclude_patterns.unwrap_or_default(),
+			max_depth.unwrap_or(100),
+		)
 		.await
-		.map_err(|e| format!("File indexing failed: {}", e))?;
-
-	if !response.error.is_empty() {
-		return Err(response.error);
-	}
+		.map_err(|e| format!("File indexing failed: {:?}", e))?;
 
 	let result = IndexResultDTO {
-		success:response.success,
-		files_indexed:response.files_indexed,
-		total_size:response.total_size,
+		success:true,
+		files_indexed:index_info.files_indexed,
+		total_size:index_info.total_size,
 	};
 
 	info!("[WindAirCommands] File indexing completed: {} files", result.files_indexed);
@@ -740,29 +683,26 @@ pub async fn SearchFiles(
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	let request = SearchRequest {
-		request_id:uuid::Uuid::new_v4().to_string(),
-		query,
-		file_patterns,
-		max_results:max_results.unwrap_or(100),
-	};
+	let request_id = uuid::Uuid::new_v4().to_string();
+	let max_results_count = max_results.unwrap_or(100);
 
-	let response = client
-		.SearchFiles(request)
+	let search_results = client
+		.search_files(request_id, query, file_patterns.first().map(|s| s.as_str()).unwrap_or("").to_string(), max_results_count)
 		.await
-		.map_err(|e| format!("File search failed: {}", e))?;
+		.map_err(|e| format!("File search failed: {:?}", e))?;
 
-	if !response.error.is_empty() {
-		return Err(response.error);
-	}
-
-	let results:Vec<FileResultDTO> = response
-		.results
+	let results:Vec<FileResultDTO> = search_results
 		.into_iter()
-		.map(|r| FileResultDTO { path:r.path, size:r.size, line:r.line, content:r.content })
+		.map(|r| FileResultDTO {
+			path:r.path,
+			size:r.size,
+			line:Some(r.line_number),
+			content:Some(r.match_preview)
+		})
 		.collect();
 
-	let result = SearchResultsDTO { results, total_results:response.total_results };
+	let total_results = results.len() as u32;
+	let result = SearchResultsDTO { results, total_results };
 
 	info!("[WindAirCommands] File search completed: {} results", result.total_results);
 	Ok(result)
@@ -785,35 +725,27 @@ pub async fn GetAirStatus() -> Result<AirServiceStatusDTO, String> {
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	let request = StatusRequest { request_id:uuid::Uuid::new_v4().to_string() };
+	let request_id = uuid::Uuid::new_v4().to_string();
 
-	let response = client
-		.GetStatus(request)
+	let status = client
+		.get_status(request_id)
 		.await
-		.map_err(|e| format!("Failed to get Air status: {}", e))?;
+		.map_err(|e| format!("Failed to get Air status: {:?}", e))?;
 
-	// Implement a dedicated HealthCheck method in AirClient to assess service
-	// health beyond simple uptime. The current heuristic (uptime_seconds > 0) is
-	// simplistic. A proper health check RPC verifies the Air service is responsive
-	// and ready to accept requests, checking dependencies, resource availability,
-	// and system load. Replace the uptime heuristic with the health check response
-	// to determine service availability.
-	let healthy = response.uptime_seconds > 0;
+	// Use the health check RPC to determine service availability
+	let healthy = client.health_check().await.unwrap_or(false);
 
 	let result = AirServiceStatusDTO {
-		version:response.version,
-		uptime_seconds:response.uptime_seconds,
-		total_requests:response.total_requests,
-		successful_requests:response.successful_requests,
-		failed_requests:response.failed_requests,
-		active_requests:response.active_requests,
+		version:status.version,
+		uptime_seconds:status.uptime_seconds,
+		total_requests:status.total_requests,
+		successful_requests:status.successful_requests,
+		failed_requests:status.failed_requests,
+		active_requests:status.active_requests,
 		healthy,
 	};
 
-	debug!(
-		"[WindAirCommands] Air status retrieved: version={}, healthy={}",
-		result.version, result.healthy
-	);
+	info!("[WindAirCommands] Air status retrieved: healthy={}", result.healthy);
 	Ok(result)
 }
 
@@ -836,19 +768,19 @@ pub async fn GetAirMetrics(metric_type:Option<String>) -> Result<AirMetricsDTO, 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
 
-	let request = MetricsRequest { request_id:uuid::Uuid::new_v4().to_string(), metric_type };
+	let request_id = uuid::Uuid::new_v4().to_string();
 
-	let response = client
-		.GetMetrics(request)
+	let metrics = client
+		.get_metrics(request_id, metric_type)
 		.await
-		.map_err(|e| format!("Failed to get Air metrics: {}", e))?;
+		.map_err(|e| format!("Failed to get Air metrics: {:?}", e))?;
 
 	let result = AirMetricsDTO {
-		memory_usage_mb:response.metrics.memory_usage_mb,
-		cpu_usage_percent:response.metrics.cpu_usage_percent,
-		average_response_time:response.metrics.average_response_time,
-		disk_usage_mb:response.metrics.disk_usage_mb,
-		network_usage_mbps:response.metrics.network_usage_mbps,
+		memory_usage_mb:metrics.memory_usage_mb,
+		cpu_usage_percent:metrics.cpu_usage_percent,
+		average_response_time:metrics.average_response_time,
+		disk_usage_mb:metrics.disk_usage_mb,
+		network_usage_mbps:metrics.network_usage_mbps,
 	};
 
 	debug!("[WindAirCommands] Air metrics retrieved");
@@ -866,12 +798,12 @@ fn get_air_address() -> Result<String, String> {
 }
 
 /// Get or create the Air client instance
-async fn get_or_create_air_client(address:String) -> Result<AirClientType, String> {
+async fn get_or_create_air_client(address:String) -> Result<AirClientModule::AirClient, String> {
 	// Create a new client each time
 	// In production, you'd use a state management pattern
-	AirClientType::new(&address)
+	AirClientModule::AirClient::new(&address)
 		.await
-		.map_err(|e| format!("Failed to create Air client: {}", e))
+		.map_err(|e| format!("Failed to create Air client: {:?}", e))
 }
 
 /// Register all Wind-Air commands with Tauri

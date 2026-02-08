@@ -27,7 +27,8 @@ pub struct PerformanceMetrics {
     pub total_messages: u64,
     /// Failed messages
     pub failed_messages: u64,
-    /// Last update timestamp
+    /// Last update timestamp (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub last_updated: Instant,
 }
 
@@ -111,7 +112,8 @@ pub struct ThroughputMetrics {
     pub bytes_received: u64,
     /// Bytes sent
     pub bytes_sent: u64,
-    /// Start time of measurement period
+    /// Start time of measurement period (skipped for serialization as Instant is not serializable)
+    #[serde(skip)]
     pub start_time: Instant,
 }
 
