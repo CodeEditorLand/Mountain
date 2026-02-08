@@ -24,6 +24,192 @@ service CocoonService {
 
   // A method for Mountain to request that Cocoon cancel a long-running operation.
   rpc CancelOperation(CancelOperationRequest) returns (Empty);
+
+  // ==================== Initialization ====================
+
+  // Handshake - Called by Cocoon to signal readiness
+  rpc initial_handshake(Empty) returns (Empty);
+
+  // Initialize Extension Host - Mountain sends initialization data to Cocoon
+  rpc init_extension_host(InitExtensionHostRequest) returns (Empty);
+
+  // ==================== Commands ====================
+
+  // Register Command - Cocoon registers an extension command
+  rpc register_command(RegisterCommandRequest) returns (Empty);
+
+  // Execute Contributed Command - Mountain executes an extension command
+  rpc execute_contributed_command(ExecuteCommandRequest) returns (ExecuteCommandResponse);
+
+  // Unregister Command - Unregister a previously registered command
+  rpc unregister_command(UnregisterCommandRequest) returns (Empty);
+
+  // ==================== Language Features ====================
+
+  // Register Hover Provider - Register a hover provider
+  rpc register_hover_provider(RegisterProviderRequest) returns (Empty);
+
+  // Provide Hover - Request hover information
+  rpc provide_hover(ProvideHoverRequest) returns (ProvideHoverResponse);
+
+  // Register Completion Item Provider - Register a completion provider
+  rpc register_completion_item_provider(RegisterProviderRequest) returns (Empty);
+
+  // Provide Completion Items - Request completion items
+  rpc provide_completion_items(ProvideCompletionItemsRequest) returns (ProvideCompletionItemsResponse);
+
+  // Register Definition Provider - Register a definition provider
+  rpc register_definition_provider(RegisterProviderRequest) returns (Empty);
+
+  // Provide Definition - Request definition location
+  rpc provide_definition(ProvideDefinitionRequest) returns (ProvideDefinitionResponse);
+
+  // Register Reference Provider - Register a reference provider
+  rpc register_reference_provider(RegisterProviderRequest) returns (Empty);
+
+  // Provide References - Request references
+  rpc provide_references(ProvideReferencesRequest) returns (ProvideReferencesResponse);
+
+  // Register Code Actions Provider - Register code actions provider
+  rpc register_code_actions_provider(RegisterProviderRequest) returns (Empty);
+
+  // Provide Code Actions - Request code actions
+  rpc provide_code_actions(ProvideCodeActionsRequest) returns (ProvideCodeActionsResponse);
+
+  // ==================== Window Operations ====================
+
+  // Show Text Document - Open a text document
+  rpc show_text_document(ShowTextDocumentRequest) returns (ShowTextDocumentResponse);
+
+  // Show Information Message - Display an info message
+  rpc show_information_message(ShowMessageRequest) returns (ShowMessageResponse);
+
+  // Show Warning Message - Display a warning message
+  rpc show_warning_message(ShowMessageRequest) returns (ShowMessageResponse);
+
+  // Show Error Message - Display an error message
+  rpc show_error_message(ShowMessageRequest) returns (ShowMessageResponse);
+
+  // Create Status Bar Item - Create a status bar item
+  rpc create_status_bar_item(CreateStatusBarItemRequest) returns (CreateStatusBarItemResponse);
+
+  // Set Status Bar Text - Set status bar text
+  rpc set_status_bar_text(SetStatusBarTextRequest) returns (Empty);
+
+  // Create Webview Panel - Create a new webview panel
+  rpc create_webview_panel(CreateWebviewPanelRequest) returns (CreateWebviewPanelResponse);
+
+  // Set Webview HTML - Update webview HTML content
+  rpc set_webview_html(SetWebviewHtmlRequest) returns (Empty);
+
+  // On Did Receive Message - Receive message from webview
+  rpc on_did_receive_message(OnDidReceiveMessageRequest) returns (Empty);
+
+  // ==================== File System ====================
+
+  // Read File - Read file contents
+  rpc read_file(ReadFileRequest) returns (ReadFileResponse);
+
+  // Write File - Write file contents
+  rpc write_file(WriteFileRequest) returns (Empty);
+
+  // Stat - Get file metadata
+  rpc stat(StatRequest) returns (StatResponse);
+
+  // Read Directory - List directory contents
+  rpc readdir(ReaddirRequest) returns (ReaddirResponse);
+
+  // Watch File - Watch file for changes
+  rpc watch_file(WatchFileRequest) returns (Empty);
+
+  // ==================== Workspace Operations ====================
+
+  // Find Files - Search for files
+  rpc find_files(FindFilesRequest) returns (FindFilesResponse);
+
+  // Find Text in Files - Search for text across files
+  rpc find_text_in_files(FindTextInFilesRequest) returns (FindTextInFilesResponse);
+
+  // Open Document - Open a document
+  rpc open_document(OpenDocumentRequest) returns (OpenDocumentResponse);
+
+  // Save All - Save all open documents
+  rpc save_all(SaveAllRequest) returns (SaveAllResponse);
+
+  // Apply Edit - Apply a text edit to a document
+  rpc apply_edit(ApplyEditRequest) returns (ApplyEditResponse);
+
+  // Update Configuration - Notify of configuration changes
+  rpc update_configuration(UpdateConfigurationRequest) returns (Empty);
+
+  // Update Workspace Folders - Update workspace folders
+  rpc update_workspace_folders(UpdateWorkspaceFoldersRequest) returns (Empty);
+
+  // ==================== Terminal ====================
+
+  // Open Terminal - Open a new terminal
+  rpc open_terminal(OpenTerminalRequest) returns (Empty);
+
+  // Terminal Input - Send input to terminal
+  rpc terminal_input(TerminalInputRequest) returns (Empty);
+
+  // Close Terminal - Close a terminal
+  rpc close_terminal(CloseTerminalRequest) returns (Empty);
+
+  // Accept Terminal Opened - Notification: Terminal opened
+  rpc accept_terminal_opened(TerminalOpenedNotification) returns (Empty);
+
+  // Accept Terminal Closed - Notification: Terminal closed
+  rpc accept_terminal_closed(TerminalClosedNotification) returns (Empty);
+
+  // Accept Terminal Process ID - Notification: Terminal process ID
+  rpc accept_terminal_process_id(TerminalProcessIdNotification) returns (Empty);
+
+  // Accept Terminal Process Data - Notification: Terminal output
+  rpc accept_terminal_process_data(TerminalDataNotification) returns (Empty);
+
+  // ==================== Tree View ====================
+
+  // Register Tree View Provider - Register a tree view provider
+  rpc register_tree_view_provider(RegisterTreeViewProviderRequest) returns (Empty);
+
+  // Get Tree Children - Request tree view children
+  rpc get_tree_children(GetTreeChildrenRequest) returns (GetTreeChildrenResponse);
+
+  // ==================== SCM ====================
+
+  // Register SCM Provider - Register source control provider
+  rpc register_scm_provider(RegisterScmProviderRequest) returns (Empty);
+
+  // Update SCM Group - Update SCM group
+  rpc update_scm_group(UpdateScmGroupRequest) returns (Empty);
+
+  // Execute Git - Execute git command
+  rpc git_exec(GitExecRequest) returns (GitExecResponse);
+
+  // ==================== Debug ====================
+
+  // Register Debug Adapter - Register debug adapter
+  rpc register_debug_adapter(RegisterDebugAdapterRequest) returns (Empty);
+
+  // Start Debugging - Start debug session
+  rpc start_debugging(StartDebuggingRequest) returns (StartDebuggingResponse);
+
+  // ==================== Save Participants ====================
+
+  // Participate in Save - Extension participates in save
+  rpc participate_in_save(ParticipateInSaveRequest) returns (ParticipateInSaveResponse);
+
+  // ==================== Secret Storage ====================
+
+  // Get Secret - Retrieve a secret from storage
+  rpc get_secret(GetSecretRequest) returns (GetSecretResponse);
+
+  // Store Secret - Store a secret in storage
+  rpc store_secret(StoreSecretRequest) returns (Empty);
+
+  // Delete Secret - Delete a secret from storage
+  rpc delete_secret(DeleteSecretRequest) returns (Empty);
 }
 
 // Represents an empty message, typically used for RPCs that don't need to return data.
@@ -75,4 +261,559 @@ message CancelOperationRequest {
 // A generic data payload, currently unused but available for future extensions.
 message RPCDataPayload {
   bytes Data = 1;
+}
+
+// ==================== Common Types ====================
+
+// A position in a text document, expressed as zero-based line and character offset.
+message Position {
+  uint32 line = 1;
+  uint32 character = 2;
+}
+
+// A range in a text document, expressed as start and end positions.
+message Range {
+  Position start = 1;
+  Position end = 2;
+}
+
+// A Uniform Resource Identifier (URI).
+message Uri {
+  string value = 1;
+}
+
+// A command argument, which can be one of several types.
+message Argument {
+  oneof value {
+    string string_value = 1;
+    int32 int_value = 2;
+    bool bool_value = 3;
+    bytes bytes_value = 4;
+  }
+}
+
+// A workspace folder.
+message WorkspaceFolder {
+  Uri uri = 1;
+  string name = 2;
+}
+
+// A view column (editor location).
+enum ViewColumn {
+  VIEW_COLUMN_UNDEFINED = 0;
+  VIEW_COLUMN_ACTIVE = 1;
+  VIEW_COLUMN_ONE = 2;
+  VIEW_COLUMN_TWO = 3;
+  VIEW_COLUMN_THREE = 4;
+  VIEW_COLUMN_FOUR = 5;
+  VIEW_COLUMN_FIVE = 6;
+  VIEW_COLUMN_SIX = 7;
+  VIEW_COLUMN_SEVEN = 8;
+  VIEW_COLUMN_EIGHT = 9;
+  VIEW_COLUMN_NINE = 10;
+}
+
+// Text document save reason.
+enum TextDocumentSaveReason {
+  SAVE_REASON_MANUAL = 0;
+  SAVE_REASON_AFTER_DELAY = 1;
+  SAVE_REASON_FOCUS_OUT = 2;
+}
+
+// ==================== Initialization ====================
+
+// Request to initialize the extension host.
+message InitExtensionHostRequest {
+  repeated WorkspaceFolder workspace_folders = 1;
+  map<string, string> configuration = 2;
+  string workspace_id = 3;
+}
+
+// ==================== Commands ====================
+
+// Request to register a command.
+message RegisterCommandRequest {
+  string command_id = 1;
+  string extension_id = 2;
+  string title = 3;
+}
+
+// Request to execute a command.
+message ExecuteCommandRequest {
+  string command_id = 1;
+  repeated Argument arguments = 2;
+}
+
+// Response from command execution.
+message ExecuteCommandResponse {
+  oneof result {
+    bytes value = 1;
+    RPCError error = 2;
+  }
+}
+
+// Request to unregister a command.
+message UnregisterCommandRequest {
+  string command_id = 1;
+}
+
+// ==================== Language Features ====================
+
+// Request to register a provider.
+message RegisterProviderRequest {
+  string language_selector = 1;
+  uint32 handle = 2;
+  string extension_id = 3;
+}
+
+// Request for hover information.
+message ProvideHoverRequest {
+  Uri uri = 1;
+  Position position = 2;
+  uint32 provider_handle = 3;
+}
+
+// Response with hover information.
+message ProvideHoverResponse {
+  string markdown = 1;
+  Range range = 2;
+}
+
+// Request for completion items.
+message ProvideCompletionItemsRequest {
+  Uri uri = 1;
+  Position position = 2;
+  uint32 provider_handle = 3;
+  string trigger_character = 4;
+}
+
+// Response with completion items.
+message ProvideCompletionItemsResponse {
+  repeated CompletionItem items = 1;
+}
+
+message CompletionItem {
+  string label = 1;
+  string kind = 2;
+  string detail = 3;
+  bytes documentation = 4;
+  string insert_text = 5;
+}
+
+// Request for definition location.
+message ProvideDefinitionRequest {
+  Uri uri = 1;
+  Position position = 2;
+  uint32 provider_handle = 3;
+}
+
+// Response with definition location.
+message ProvideDefinitionResponse {
+  repeated Location locations = 1;
+}
+
+message Location {
+  Uri uri = 1;
+  Range range = 2;
+}
+
+// Request for references.
+message ProvideReferencesRequest {
+  Uri uri = 1;
+  Position position = 2;
+  uint32 provider_handle = 3;
+}
+
+// Response with references.
+message ProvideReferencesResponse {
+  repeated Location locations = 1;
+}
+
+// Request for code actions.
+message ProvideCodeActionsRequest {
+  Uri uri = 1;
+  Range range = 2;
+  uint32 provider_handle = 3;
+}
+
+// Response with code actions.
+message ProvideCodeActionsResponse {
+  repeated CodeAction actions = 1;
+}
+
+message CodeAction {
+  string title = 1;
+  string kind = 2;
+  bool is_preferred = 3;
+}
+
+// ==================== Window Operations ====================
+
+// Request to show a text document.
+message ShowTextDocumentRequest {
+  Uri uri = 1;
+  ViewColumn view_column = 2;
+  bool preserve_focus = 3;
+}
+
+// Response for showing a text document.
+message ShowTextDocumentResponse {
+  bool success = 1;
+}
+
+// Request to show a message.
+message ShowMessageRequest {
+  string message = 1;
+}
+
+// Response for showing a message.
+message ShowMessageResponse {
+  bool success = 1;
+}
+
+// Request to create a status bar item.
+message CreateStatusBarItemRequest {
+  string id = 1;
+  string text = 2;
+  string tooltip = 3;
+}
+
+// Response for creating a status bar item.
+message CreateStatusBarItemResponse {
+  string item_id = 1;
+}
+
+// Request to set status bar text.
+message SetStatusBarTextRequest {
+  string item_id = 1;
+  string text = 2;
+}
+
+// Request to create a webview panel.
+message CreateWebviewPanelRequest {
+  string view_type = 1;
+  string title = 2;
+  string icon_path = 3;
+  ViewColumn view_column = 4;
+  bool preserve_focus = 5;
+  bool enable_find_widget = 6;
+  bool retain_context_when_hidden = 7;
+  repeated string local_resource_roots = 8;
+}
+
+// Response for creating a webview panel.
+message CreateWebviewPanelResponse {
+  uint32 handle = 1;
+}
+
+// Request to set webview HTML.
+message SetWebviewHtmlRequest {
+  uint32 handle = 1;
+  string html = 2;
+}
+
+// Request for webview message.
+message OnDidReceiveMessageRequest {
+  uint32 handle = 1;
+  oneof message {
+    string string_message = 2;
+    bytes bytes_message = 3;
+  }
+}
+
+// ==================== File System ====================
+
+// Request to read a file.
+message ReadFileRequest {
+  Uri uri = 1;
+}
+
+// Response with file contents.
+message ReadFileResponse {
+  bytes content = 1;
+  string encoding = 2;
+}
+
+// Request to write a file.
+message WriteFileRequest {
+  Uri uri = 1;
+  bytes content = 2;
+  string encoding = 3;
+}
+
+// Request for file metadata.
+message StatRequest {
+  Uri uri = 1;
+}
+
+// Response with file metadata.
+message StatResponse {
+  bool is_file = 1;
+  bool is_directory = 2;
+  uint64 size = 3;
+  uint64 mtime = 4;
+}
+
+// Request to read directory contents.
+message ReaddirRequest {
+  Uri uri = 1;
+}
+
+// Response with directory contents.
+message ReaddirResponse {
+  repeated string entries = 1;
+}
+
+// Request to watch a file.
+message WatchFileRequest {
+  Uri uri = 1;
+}
+
+// ==================== Workspace Operations ====================
+
+// Request to find files.
+message FindFilesRequest {
+  string pattern = 1;
+  bool include = 2;
+}
+
+// Response with found files.
+message FindFilesResponse {
+  repeated string uris = 1;
+}
+
+// Request to find text in files.
+message FindTextInFilesRequest {
+  string pattern = 1;
+  repeated string include = 2;
+  repeated string exclude = 3;
+}
+
+// Response with text matches.
+message FindTextInFilesResponse {
+  repeated TextMatch matches = 1;
+}
+
+message TextMatch {
+  Uri uri = 1;
+  Range range = 2;
+  string preview = 3;
+}
+
+// Request to open a document.
+message OpenDocumentRequest {
+  Uri uri = 1;
+  ViewColumn view_column = 2;
+}
+
+// Response for opening a document.
+message OpenDocumentResponse {
+  bool success = 1;
+}
+
+// Request to save all documents.
+message SaveAllRequest {
+  bool includeUntitled = 1;
+}
+
+// Response for saving all documents.
+message SaveAllResponse {
+  bool success = 1;
+}
+
+// Request to apply an edit.
+message ApplyEditRequest {
+  Uri uri = 1;
+  repeated TextEdit edits = 2;
+}
+
+message TextEdit {
+  Range range = 1;
+  string new_text = 2;
+}
+
+// Response for applying an edit.
+message ApplyEditResponse {
+  bool success = 1;
+}
+
+// Request to update configuration.
+message UpdateConfigurationRequest {
+  repeated string changed_keys = 1;
+}
+
+// Request to update workspace folders.
+message UpdateWorkspaceFoldersRequest {
+  repeated WorkspaceFolder additions = 1;
+  repeated WorkspaceFolder removals = 2;
+}
+
+// ==================== Terminal ====================
+
+// Request to open a terminal.
+message OpenTerminalRequest {
+  string name = 1;
+  string shell_path = 2;
+  repeated string shell_args = 3;
+  string cwd = 4;
+}
+
+// Request for terminal input.
+message TerminalInputRequest {
+  uint32 terminal_id = 1;
+  bytes data = 2;
+}
+
+// Request to close a terminal.
+message CloseTerminalRequest {
+  uint32 terminal_id = 1;
+}
+
+// Notification that a terminal was opened.
+message TerminalOpenedNotification {
+  uint32 terminal_id = 1;
+  string name = 2;
+}
+
+// Notification that a terminal was closed.
+message TerminalClosedNotification {
+  uint32 terminal_id = 1;
+}
+
+// Notification of terminal process ID.
+message TerminalProcessIdNotification {
+  uint32 terminal_id = 1;
+  uint32 process_id = 2;
+}
+
+// Notification of terminal output.
+message TerminalDataNotification {
+  uint32 terminal_id = 1;
+  bytes data = 2;
+}
+
+// ==================== Tree View ====================
+
+// Request to register a tree view provider.
+message RegisterTreeViewProviderRequest {
+  string view_id = 1;
+  string extension_id = 2;
+}
+
+// Request for tree children.
+message GetTreeChildrenRequest {
+  string view_id = 1;
+  string tree_item_handle = 2;
+}
+
+// Response with tree children.
+message GetTreeChildrenResponse {
+  repeated TreeItem items = 1;
+}
+
+message TreeItem {
+  string handle = 1;
+  string label = 2;
+  bool is_collapsed = 3;
+  string icon = 4;
+}
+
+// ==================== SCM ====================
+
+// Request to register an SCM provider.
+message RegisterScmProviderRequest {
+  string scm_id = 1;
+  string extension_id = 2;
+}
+
+// Request to update SCM group.
+message UpdateScmGroupRequest {
+  string provider_id = 1;
+  string group_id = 2;
+  repeated SourceControlResourceState resource_states = 3;
+}
+
+message SourceControlResourceState {
+  Uri uri = 1;
+  string state = 2;
+  string decorations = 3;
+}
+
+// Request to execute a git command.
+message GitExecRequest {
+  string repository_path = 1;
+  repeated string args = 2;
+}
+
+// Response from git execution.
+message GitExecResponse {
+  repeated string output = 1;
+  int32 exit_code = 2;
+}
+
+// ==================== Debug ====================
+
+// Request to register a debug adapter.
+message RegisterDebugAdapterRequest {
+  string debug_type = 1;
+  string extension_id = 2;
+}
+
+message DebugConfiguration {
+  string type = 1;
+  string name = 2;
+  string request = 3;
+  map<string, string> options = 4;
+}
+
+// Request to start debugging.
+message StartDebuggingRequest {
+  string debug_type = 1;
+  DebugConfiguration configuration = 2;
+}
+
+// Response for starting debugging.
+message StartDebuggingResponse {
+  bool success = 1;
+}
+
+// ==================== Save Participants ====================
+
+// Request to participate in save.
+message ParticipateInSaveRequest {
+  Uri uri = 1;
+  TextDocumentSaveReason reason = 2;
+}
+
+message TextEditForSave {
+  Uri uri = 1;
+  repeated TextEdit edits = 2;
+}
+
+// Response for participating in save.
+message ParticipateInSaveResponse {
+  repeated TextEditForSave edits = 1;
+}
+
+// ==================== Secret Storage ====================
+
+// Request to get a secret.
+message GetSecretRequest {
+  string key = 1;
+}
+
+// Response with secret value.
+message GetSecretResponse {
+  string value = 1;
+}
+
+// Request to store a secret.
+message StoreSecretRequest {
+  string key = 1;
+  string value = 2;
+}
+
+// Request to delete a secret.
+message DeleteSecretRequest {
+  string key = 1;
 }
