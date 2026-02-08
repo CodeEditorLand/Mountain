@@ -155,7 +155,7 @@ use tauri::AppHandle;
 use tauri_plugin_updater::UpdaterExt;
 // Import Air client types when Air is available in the workspace
 #[cfg(feature = "AirIntegration")]
-use AirLibrary::Vine::Generated::Air::AirServiceClient;
+use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime as Runtime;
 
