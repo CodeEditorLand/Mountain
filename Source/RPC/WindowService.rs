@@ -1,421 +1,256 @@
-//! # WindowService Implementation
+//! # WindowService - Advanced Window and UI Management
 //!
-//! This module implements window-related gRPC service methods for the
-//! Mountain backend. These methods handle UI operations that need to be
-//! delegated to the Wind frontend via IPC.
-//!
-//! ## Service Responsibilities
-//!
-//! - **Documents**: Opening and managing text documents
-//! - **Messages**: Displaying information, warning, and error messages
-//! - **Status Bar**: Creating and updating status bar items
-//! - **Webview Panels**: Creating and managing webview panels
-//!
-//! ## Architecture
-//!
-//! The WindowService maintains references to:
-//! - `MountainEnvironment`: Access to all Mountain services
-//! - IPC transport for communicating with Wind
-//!
-//! ## Implementation Notes
-//!
-//! This service is a subset of the main CocoonService, focusing specifically
-//! on window and UI operations. Most of these operations will be delegated to
-//! Wind via the IPC layer, as Wind controls the actual UI/window state.
+//! This module provides a high-performance gRPC service for managing
+//! window operations, document display, messages, and status bars.
 
-use std::sync::Arc;
+use std::{
+    collections::HashMap,
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use async_trait::async_trait;
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use tonic::{Request, Response, Status};
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
+use crate::RPC::WindowState::WindowState;
 use CommonLibrary::Environment::Requires::Requires;
 
-// Import generated protobuf types
 use crate::Vine::Generated::{
-	// Common types
-	Empty,
-	Uri,
-	ViewColumn,
-
-	// Window Operations
-	ShowTextDocumentRequest,
-	ShowTextDocumentResponse,
-	ShowMessageRequest,
-	ShowMessageResponse,
-	CreateStatusBarItemRequest,
-	CreateStatusBarItemResponse,
-	SetStatusBarTextRequest,
-	CreateWebviewPanelRequest,
-	CreateWebviewPanelResponse,
-	SetWebviewHtmlRequest,
-	OnDidReceiveMessageRequest,
+    Empty, ShowInformationRequest, ShowWarningRequest, ShowErrorRequest,
+    ShowDocumentRequest, ShowDocumentResponse, CreateWindowRequest, CreateWindowResponse,
+    ShowInputRequest, ShowInputResponse, SetStatusBarTextRequest,
+    CreateWebviewPanelRequest, CreateWebviewPanelResponse, SetWebviewHtmlRequest,
 };
 
-// Import state management
-use super::WindowState::{StatusBarItem, WindowStateManager, WebviewPanel};
+// ============ Feature Flags & Telemetry ============
 
-/// WindowService handles window and UI-related operations
-///
-/// This service manages interactions with the Wind frontend for:
-/// - Opening text documents
-/// - Displaying messages to the user
-/// - Managing status bar items
-/// - Creating and managing webview panels
-#[derive(Clone)]
+#[cfg(feature = "Telemetry")]
+use opentelemetry::{global, Key, KeyValue, metrics::{Counter, Histogram}};
+
+#[cfg(feature = "Telemetry")]
+pub struct WindowMetrics {
+    window_create_counter: Counter<u64>,
+    document_open_counter: Counter<u64>,
+    message_show_counter: Counter<u64>,
+    interaction_latency_histogram: Histogram<u64>,
+}
+
+#[cfg(feature = "Telemetry")]
+impl WindowMetrics {
+    pub fn new() -> Self {
+        let meter = global::meter("WindowService");
+        Self {
+            window_create_counter: meter.u64_counter("windows_created").build(),
+            document_open_counter: meter.u64_counter("documents_opened").build(),
+            message_show_counter: meter.u64_counter("messages_shown").build(),
+            interaction_latency_histogram: meter.u64_histogram("ui_interaction_latency_us").build(),
+        }
+    }
+
+    pub fn record_window_created(&self, window_type: &str) {
+        self.window_create_counter.add(1, &[KeyValue::new("type", window_type)]);
+    }
+
+    pub fn record_document_open(&self, language: Option<&str>) {
+        self.document_open_counter.add(1, &[KeyValue::new("language", language.unwrap_or("unknown"))]);
+    }
+
+    pub fn record_message_shown(&self, severity: &str) {
+        self.message_show_counter.add(1, &[KeyValue::new("severity", severity)]);
+    }
+
+    pub fn record_interaction(&self, operation: &str, latency_us: u64) {
+        self.interaction_latency_histogram.record(latency_us, &[KeyValue::new("operation", operation)]);
+    }
+}
+
+#[cfg(not(feature = "Telemetry"))]
+pub struct WindowMetrics;
+
+#[cfg(not(feature = "Telemetry"))]
+impl WindowMetrics {
+    pub fn new() -> Self { Self }
+}
+
+// ============ Window Service Implementation ============
+
 pub struct WindowService {
-	/// Mountain environment providing access to all services
-	environment: Arc<MountainEnvironment>,
-
-	/// Window state manager for status bars and webviews
-	state_manager: Arc<WindowStateManager>,
+    environment: MountainEnvironment,
+    state_manager: Arc<WindowState>,
+    metrics: WindowMetrics,
 }
 
 impl WindowService {
-	/// Creates a new instance of the WindowService
-	///
-	/// # Parameters
-	/// - `environment`: Mountain environment with access to all services
-	///
-	/// # Returns
-	/// A new WindowService instance
-	pub fn new(environment: Arc<MountainEnvironment>) -> Self {
-		info!("[WindowService] New instance created");
+    pub fn Create(environment: MountainEnvironment, state_manager: Arc<WindowState>) -> Self {
+        let metrics = WindowMetrics::new();
+        info!("[WindowService] Initializing window service");
+        Self { environment, state_manager, metrics }
+    }
 
-		Self {
-			environment,
-			state_manager: Arc::new(WindowStateManager::new()),
-		}
-	}
-}
+    pub async fn ShowInformation(&self, request: Request<ShowInformationRequest>) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        #[cfg(feature = "Telemetry")]
+        let _span = global::tracer("WindowService").start("ShowInformation");
+        info!("[WindowService] Showing information message: {}", req.message);
+        
+        let window_provider = self.environment.Require();
+        match window_provider.ShowInformation(req.message).await {
+            Ok(_) => {
+                #[cfg(feature = "Telemetry")]
+                self.metrics.record_message_shown("info");
+                Ok(Response::new(Empty {}))
+            }
+            Err(err) => {
+                error!("[WindowService] Failed: {}", err);
+                Err(Status::internal(format!("Failed: {}", err)))
+            }
+        }
+    }
 
-impl WindowService {
-	// ==================== Document Operations ====================
+    pub async fn ShowWarning(&self, request: Request<ShowWarningRequest>) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        warn!("[WindowService] Showing warning: {}", req.message);
+        let window_provider = self.environment.Require();
+        match window_provider.ShowWarning(req.message).await {
+            Ok(_) => {
+                #[cfg(feature = "Telemetry")]
+                self.metrics.record_message_shown("warning");
+                Ok(Response::new(Empty {}))
+            }
+            Err(err) => Err(Status::internal(format!("Failed: {}", err)))
+        }
+    }
 
-	/// Show a text document in the editor
-	///
-	/// This method instructs Wind to open a text document at the specified URI.
-	///
-	/// # Parameters
-	/// - `uri`: The URI of the document to open
-	/// - `view_column`: The view column to use (optional)
-	/// - `preserve_focus`: Whether to preserve the current focus (optional)
-	///
-	/// # Returns
-	/// Success status indicating whether the document was opened
-	pub async fn show_text_document_impl(
-	&self,
-	uri: &Uri,
-	view_column: Option<ViewColumn>,
-	preserve_focus: Option<bool>,
-) -> Result<bool, Status> {
-	let uri_value = &uri.value;
-	info!(
-		"[WindowService] Showing text document: {} (column: {:?}, preserve_focus: {:?})",
-		uri_value, view_column, preserve_focus
-	);
+    pub async fn ShowError(&self, request: Request<ShowErrorRequest>) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        error!("[WindowService] Showing error: {}", req.message);
+        let window_provider = self.environment.Require();
+        match window_provider.ShowError(req.message).await {
+            Ok(_) => {
+                #[cfg(feature = "Telemetry")]
+                self.metrics.record_message_shown("error");
+                Ok(Response::new(Empty {}))
+            }
+            Err(err) => Err(Status::internal(format!("Failed: {}", err)))
+        }
+    }
 
-	// Use DocumentProvider from MountainEnvironment to open document
-	let document_provider = self.environment.Require();
-	match document_provider.OpenDocument(uri_value.to_string()).await {
-		Ok(_) => {
-			info!("[WindowService] Document opened successfully: {}", uri_value);
-			Ok(true)
-		},
-		Err(error) => {
-			error!(
-				"[WindowService] Failed to open document {}: {}",
-				uri_value, error
-			);
-			Err(Status::internal(format!("Failed to open document: {}", error)))
-		},
-	}
-}
+    pub async fn ShowDocument(&self, request: Request<ShowDocumentRequest>) -> Result<Response<ShowDocumentResponse>, Status> {
+        let req = request.into_inner();
+        #[cfg(feature = "Telemetry")]
+        let span = global::tracer("WindowService").start("ShowDocument");
+        info!("[WindowService] Opening document: {}", req.path);
+        let start = Instant::now();
+        let document_provider = self.environment.Require();
+        match document_provider.ShowDocument(req.path, req.view_column, req.preserve_focus.unwrap_or(false)).await {
+            Ok(handle) => {
+                let elapsed = start.elapsed();
+                #[cfg(feature = "Telemetry")]
+                {
+                    span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
+                    span.end();
+                    self.metrics.record_document_open(req.language.as_deref());
+                    self.metrics.record_interaction("open_document", elapsed.as_micros() as u64);
+                }
+                Ok(Response::new(ShowDocumentResponse { handle }))
+            }
+            Err(err) => {
+                #[cfg(feature = "Telemetry")] { span.end(); }
+                Err(Status::internal(format!("Failed: {}", err)))
+            }
+        }
+    }
 
-	// ==================== Message Operations ====================
+    pub async fn CreateWindow(&self, request: Request<CreateWindowRequest>) -> Result<Response<CreateWindowResponse>, Status> {
+        let req = request.into_inner();
+        #[cfg(feature = "Telemetry")]
+        let span = global::tracer("WindowService").start("CreateWindow");
+        info!("[WindowService] Creating window: {:?}", req.window_type);
+        let window_provider = self.environment.Require();
+        match window_provider.CreateWindow(req.window_type, req.title).await {
+            Ok(handle) => {
+                #[cfg(feature = "Telemetry")] { span.end(); self.metrics.record_window_created("new_window"); }
+                Ok(Response::new(CreateWindowResponse { handle }))
+            }
+            Err(err) => {
+                #[cfg(feature = "Telemetry")] { span.end(); }
+                Err(Status::internal(format!("Failed: {}", err)))
+            }
+        }
+    }
 
-	/// Show an information message to the user
-	///
-	/// # Parameters
-	/// - `message`: The message text to display
-	///
-	/// # Returns
-	/// Success status
-	pub async fn show_information_message_impl(
-	&self,
-	message: &str,
-) -> Result<bool, Status> {
-	debug!("[WindowService] Showing information message: {}", message);
+    pub async fn ShowInput(&self, request: Request<ShowInputRequest>) -> Result<Response<ShowInputResponse>, Status> {
+        let req = request.into_inner();
+        #[cfg(feature = "Telemetry")]
+        let span = global::tracer("WindowService").start("ShowInput");
+        info!("[WindowService] Showing input dialog: {}", req.prompt);
+        let start = Instant::now();
+        let window_provider = self.environment.Require();
+        match window_provider.ShowInput(req.prompt, req.placeholder, req.default_value, req.password.unwrap_or(false)).await {
+            Ok(result) => {
+                let elapsed = start.elapsed();
+                #[cfg(feature = "Telemetry")]
+                {
+                    span.set_attribute(KeyValue::new("cancelled", result.value.is_none()));
+                    span.end();
+                    self.metrics.record_interaction("show_input", elapsed.as_micros() as u64);
+                }
+                Ok(Response::new(ShowInputResponse {
+                    value: result.value.unwrap_or_default(),
+                    cancelled: result.cancelled,
+                }))
+            }
+            Err(err) => {
+                #[cfg(feature = "Telemetry")] { span.end(); }
+                Err(Status::internal(format!("Failed: {}", err)))
+            }
+        }
+    }
 
-	// Use UserInterfaceProvider from MountainEnvironment
-	let ui_provider = self.environment.Require();
-	match ui_provider.ShowInformationMessage(message.to_string()).await {
-		Ok(_) => {
-			info!("[WindowService] Information message shown");
-			Ok(true)
-		},
-		Err(error) => {
-			error!("[WindowService] Failed to show information message: {}", error);
-			warn!("{}", message); // Fallback to logging
-			Ok(true) // Consider non-blocking errors as success
-		},
-	}
-}
+    pub async fn SetStatusBarText(&self, request: Request<SetStatusBarTextRequest>) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        let window_provider = self.environment.Require();
+        match window_provider.SetStatusBarText(req.text, req.position, req.priority.unwrap_or(0)).await {
+            Ok(_) => Ok(Response::new(Empty {})),
+            Err(err) => Err(Status::internal(format!("Failed: {}", err)))
+        }
+    }
 
-	/// Show a warning message to the user
-	///
-	/// # Parameters
-	/// - `message`: The message text to display
-	///
-	/// # Returns
-	/// Success status
-	pub async fn show_warning_message_impl(&self, message: &str) -> Result<bool, Status> {
-		debug!("[WindowService] Showing warning message: {}", message);
+    pub async fn CreateWebviewPanel(&self, request: Request<CreateWebviewPanelRequest>) -> Result<Response<CreateWebviewPanelResponse>, Status> {
+        let req = request.into_inner();
+        let webview_provider = self.environment.Require();
+        let handle = self.state_manager.next_webview_handle();
+        let view_column = req.view_column.unwrap_or(1) as i32;
+        match webview_provider.CreateWebviewPanel(
+            handle, req.view_type, req.title,
+            if req.icon_path.is_empty() { None } else { Some(req.icon_path) },
+            view_column, req.preserve_focus.unwrap_or(false),
+            req.enable_find_widget.unwrap_or(false),
+            req.retain_context_when_hidden.unwrap_or(true),
+            req.local_resource_roots,
+        ).await {
+            Ok(_) => Ok(Response::new(CreateWebviewPanelResponse { handle })),
+            Err(err) => Err(Status::internal(format!("Failed: {}", err)))
+        }
+    }
 
-		// Use UserInterfaceProvider from MountainEnvironment
-		let ui_provider = self.environment.Require();
-		match ui_provider.ShowWarningMessage(message.to_string()).await {
-			Ok(_) => {
-				info!("[WindowService] Warning message shown");
-				Ok(true)
-			},
-			Err(error) => {
-				error!("[WindowService] Failed to show warning message: {}", error);
-				warn!("{}", message); // Fallback to logging
-				Ok(true) // Consider non-blocking errors as success
-			},
-		}
-	}
+    pub async fn SetWebviewHtml(&self, request: Request<SetWebviewHtmlRequest>) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        let webview_provider = self.environment.Require();
+        match webview_provider.SetWebviewHtml(req.handle, req.html).await {
+            Ok(_) => Ok(Response::new(Empty {})),
+            Err(err) => Err(Status::internal(format!("Failed: {}", err)))
+        }
+    }
 
-	/// Show an error message to the user
-	///
-	/// # Parameters
-	/// - `message`: The message text to display
-	///
-	/// # Returns
-	/// Success status
-	pub async fn show_error_message_impl(&self, message: &str) -> Result<bool, Status> {
-		debug!("[WindowService] Showing error message: {}", message);
-
-		// Use UserInterfaceProvider from MountainEnvironment
-		let ui_provider = self.environment.Require();
-		match ui_provider.ShowErrorMessage(message.to_string()).await {
-			Ok(_) => {
-				info!("[WindowService] Error message shown");
-				Ok(true)
-			},
-			Err(error) => {
-				error!("[WindowService] Failed to show error message: {}", error);
-				error!("{}", message); // Fallback to logging
-				Ok(true) // Consider non-blocking errors as success
-			},
-		}
-	}
-
-	// ==================== Status Bar Operations ====================
-
-	/// Create a status bar item
-	///
-	/// # Parameters
-	/// - `id`: Unique identifier for the status bar item
-	/// - `text`: The text to display
-	/// - `tooltip`: Optional tooltip text
-	///
-	/// # Returns
-	/// The ID of the created status bar item (same as input ID)
-	pub async fn create_status_bar_item_impl(
-		&self,
-		id: &str,
-		text: &str,
-		tooltip: &str,
-	) -> Result<String, Status> {
-		info!(
-			"[WindowService] Creating status bar item: {} (text: {}, tooltip: {})",
-			id, text, tooltip
-		);
-
-		// Use StatusBarProvider from MountainEnvironment
-		let status_bar_provider = self.environment.Require();
-
-		// Register with StatusBarProvider
-		match status_bar_provider.CreateStatusBarItem(id.to_string(), text.to_string(), tooltip.to_string()).await {
-			Ok(_) => {
-				info!("[WindowService] Status bar item created: {}", id);
-				Ok(id.to_string())
-			},
-			Err(error) => {
-				error!("[WindowService] Failed to create status bar item: {}", error);
-				Err(Status::internal(format!("Failed to create status bar item: {}", error)))
-			},
-		}
-	}
-
-	/// Set the text of a status bar item
-	///
-	/// # Parameters
-	/// - `item_id`: The ID of the status bar item
-	/// - `text`: The new text to display
-	///
-	/// # Returns
-	/// Success status
-	pub async fn set_status_bar_text_impl(
-		&self,
-		item_id: &str,
-		text: &str,
-	) -> Result<(), Status> {
-		debug!(
-			"[WindowService] Setting status bar text for item {}: {}",
-			item_id, text
-		);
-
-		// Use StatusBarProvider from MountainEnvironment
-		let status_bar_provider = self.environment.Require();
-
-		match status_bar_provider.SetStatusBarText(item_id.to_string(), text.to_string()).await {
-			Ok(_) => {
-				debug!("[WindowService] Status bar text updated for item: {}", item_id);
-				Ok(())
-			},
-			Err(error) => {
-				error!("[WindowService] Failed to set status bar text: {}", error);
-				Err(Status::internal(format!("Failed to set status bar text: {}", error)))
-			},
-		}
-	}
-
-	// ==================== Webview Operations ====================
-
-	/// Create a webview panel
-	///
-	/// # Parameters
-	/// - `view_type`: The type of webview (e.g., 'markdown.preview')
-	/// - `title`: Title of the panel
-	/// - `icon_path`: Optional path to icon
-	/// - `view_column`: The view column to use
-	/// - `preserve_focus`: Whether to preserve current focus
-	/// - `enable_find_widget`: Enable find widget
-	/// - `retain_context_when_hidden`: Retain DOM context when hidden
-	/// - `local_resource_roots`: Local resources allowed
-	///
-	/// # Returns
-	/// The handle of the created webview panel
-	pub async fn create_webview_panel_impl(
-		&self,
-		view_type: &str,
-		title: &str,
-		icon_path: &str,
-		view_column: ViewColumn,
-		preserve_focus: bool,
-		enable_find_widget: bool,
-		retain_context_when_hidden: bool,
-		local_resource_roots: &[String],
-	) -> Result<u32, Status> {
-		info!(
-			"[WindowService] Creating webview panel: {} (title: {})",
-			view_type, title
-		);
-
-		// Use WebviewProvider from MountainEnvironment
-		let webview_provider = self.environment.Require();
-
-		// Convert ViewColumn enum to integer
-		let view_column_int = view_column as i32;
-
-		// Generate unique handle
-		let handle = self.state_manager.next_webview_handle();
-
-		match webview_provider
-			.CreateWebviewPanel(
-				handle,
-				view_type.to_string(),
-				title.to_string(),
-				if icon_path.is_empty() {
-					None
-				} else {
-					Some(icon_path.to_string())
-				},
-				view_column_int,
-				preserve_focus,
-				enable_find_widget,
-				retain_context_when_hidden,
-				local_resource_roots.to_vec(),
-			)
-			.await
-		{
-			Ok(_) => {
-				info!("[WindowService] Webview panel created with handle: {}", handle);
-				Ok(handle)
-			},
-			Err(error) => {
-				error!("[WindowService] Failed to create webview panel: {}", error);
-				Err(Status::internal(format!("Failed to create webview panel: {}", error)))
-			},
-		}
-	}
-
-	/// Set the HTML content of a webview panel
-	///
-	/// # Parameters
-	/// - `handle`: The handle of the webview panel
-	/// - `html`: The HTML content to set
-	///
-	/// # Returns
-	/// Success status
-	pub async fn set_webview_html_impl(&self, handle: u32, html: &str) -> Result<(), Status> {
-		debug!(
-			"[WindowService] Setting webview HTML for handle {}: {} characters",
-			handle,
-			html.len()
-		);
-
-		// Use WebviewProvider from MountainEnvironment
-		let webview_provider = self.environment.Require();
-
-		match webview_provider.SetWebviewHtml(handle, html.to_string()).await {
-			Ok(_) => {
-				debug!("[WindowService] Webview HTML updated for handle: {}", handle);
-				Ok(())
-			},
-			Err(error) => {
-				error!("[WindowService] Failed to set webview HTML: {}", error);
-				Err(Status::internal(format!("Failed to set webview HTML: {}", error)))
-			},
-		}
-	}
-
-	/// Handle a message received from a webview
-	///
-	/// This is called when a webview sends a message back to Mountain.
-	///
-	/// # Parameters
-	/// - `handle`: The handle of the webview panel
-	/// - `message`: The message (string or bytes)
-	///
-	/// # Returns
-	/// Success status
-	pub async fn on_did_receive_message_impl(
-		&self,
-		handle: u32,
-		message: &str,
-	) -> Result<(), Status> {
-		debug!(
-			"[WindowService] Received webview message from handle {}: {}",
-			handle, message
-		);
-
-		// TODO: Forward message to appropriate extension handler
-		// - Look up extension that created the webview
-		// - Send message via gRPC to extension
-
-		Ok(())
-	}
+    pub async fn OnDidReceiveMessage(&self, handle: u32, message: &str) -> Result<(), Status> {
+        debug!("[WindowService] Received webview message from {}: {}", handle, message);
+        // TODO: Forward to extension handler
+        Ok(())
+    }
 }
 
 #[cfg(test)]
-mod tests {
-	use super::*;
-
-	// TODO: Add unit tests for WindowService methods
-	// These tests should mock the IPC layer to verify correct message formatting
-}
+mod tests { use super::*; // TODO: Add tests }

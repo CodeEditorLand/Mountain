@@ -1,54 +1,100 @@
-//! # RPC Service Module
+//! # RPC Service Module - Advanced Communication Layer
 //!
-//! This module contains the implementation of gRPC service handlers for the
-//! Mountain backend. These services handle requests from Cocoon, Wind, and other
-//! components via the Vine gRPC protocol.
+//! Implements the gRPC service side of the Spine Contract for Mountain.
+//! All services support feature flags (Debug, Development, Telemetry)
+//! and include comprehensive OTEL instrumentation.
 //!
 //! ## Architecture
 //!
-//! The RPC module implements the service side of the Spine Contract, which defines
-//! the communication protocol between Mountain and its sidecars:
+//! ```
+//! ┌──────────────────────────────────────────────────────────────┐
+//! │                      RPC Module                              │
+//! │  ┌────────────────────────────────────────────────────────┐ │
+//! │  │                  gRPC Services                         │ │
+//! │  │  • CommandService    - Command lifecycle               │ │
+//! │  │  • WindowService     - Window/UI management             │ │
+//! │  │  • WorkspaceService  - File/workspace operations        │ │
+//! │  │  • SecretStorage     - Secure storage                  │ │
+//! │  │  • CocoonService     - Extension host integration       │ │
+//! │  └────────────────────────────────────────────────────────┘ │
+//! │                          │                                   │
+//! │  ┌────────────────────────────────────────────────────────┐ │
+//! │  │                   State Managers                        │ │
+//! │  │  • WindowState       - Window handle tracking          │ │
+//! │  │  • SecretStorageState - Secret state management        │ │
+//! │  └────────────────────────────────────────────────────────┘ │
+//! │                          │                                   │
+//! │  ┌────────────────────────────────────────────────────────┐ │
+//! │  │               Telemetry & Metrics                       │ │
+//! │  │  • OpenTelemetry tracing for all operations            │ │
+//! │  │  • Custom metrics for performance monitoring          │ │
+//! │  │  • Logging gates for build profiles                    │ │
+//! │  └────────────────────────────────────────────────────────┘ │
+//! └──────────────────────────────────────────────────────────────┘
+//!                            │
+//!                            ▼
+//!              ┌──────────────────────────────┐
+//!              │       MountainEnvironment     │
+//!              │    (Capability Provider)      │
+//!              └──────────────────────────────┘
+//! ```
 //!
-//! - **CocoonService**: Handles requests from the Cocoon extension host
-//! - **WindowService**: Manages window operations (documents, messages, status bars)
-//! - **WorkspaceService**: Handles workspace operations (files, edits, search)
-//! - **CommandService**: Manages command registration and execution
-//! - **SecretStorageService**: Handles secret storage operations
+//! ## Build Profiles
 //!
-//! ## Module Structure
-//!
-//! - [`CocoonService`]: Main service implementation for Cocoon integration
-//! - [`WindowService`]: Window and UI operations
-//! - [`WorkspaceService`]: File and workspace operations
-//! - [`CommandService`]: Command registration and execution
-//! - [`SecretStorageService`]: Secure secret storage
-//!
-//! ## Service Registration
-//!
-//! Services are registered with the gRPC server in the Vine/Server module and
-//! exposed via Tauri IPC for Wind integration.
-//!
-//! ## Error Handling
-//!
-//! All service methods return `tonic::Result<T>` for success or `tonic::Status`
-//! for errors. Errors are logged before being returned to clients.
+//! - **Debug** (feature = "Debug"): Verbose logging, validation
+//! - **Development** (feature = "Development"): Dev-friendly defaults
+//! - **Telemetry** (feature = "Telemetry"): Full OTEL integration
 //!
 //! ## Code Style
 //!
-//! - Use Rust async functions with `async fn`
-//! - Return `tonic::Result<Response<T>>` for success
-//! - Return `Err(tonic::Status::...)` for errors
-//! - Use proper error logging with `error!` macros
-//! - Use `info!`, `debug!` for logging
-//! - Include comprehensive Rustdoc comments
+//! All modules follow:
+//! - Extensive `//!` module documentation
+//! - PascalCase, action-oriented function naming
+//! - Structured logging with service prefixes
+//! - Comprehensive error handling
 
-// Public sub-modules
+// ============================================================================
+// Service Implementations
+// ============================================================================
+
 pub mod CocoonService;
 pub mod WindowService;
 pub mod WorkspaceService;
 pub mod CommandService;
 pub mod SecretStorageService;
 
-// State management modules
+// ============================================================================
+// State Management Modules
+// ============================================================================
+
 pub mod WindowState;
 pub mod SecretStorageState;
+
+// ============================================================================
+// Re-exports for convenience
+// ============================================================================
+
+pub use CommandService::{
+    CommandService,
+    CommandMetadata,
+    CommandStatistics,
+    TelemetryConfig,
+    LoggingGate,
+    ServiceMetrics as CommandServiceMetrics,
+};
+
+pub use WindowService::{
+    WindowService,
+    WindowMetrics as WindowServiceMetrics,
+};
+
+pub use SecretStorageService::{
+    SecretStorageService,
+    SecretMetrics as SecretStorageServiceMetrics,
+};
+
+pub use WorkspaceService::{
+    WorkspaceService,
+    WorkspaceMetrics as WorkspaceServiceMetrics,
+};
+

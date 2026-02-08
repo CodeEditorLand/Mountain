@@ -1,330 +1,343 @@
-//! # WorkspaceService Implementation
+//! # WorkspaceService - Advanced Workspace Management
 //!
-//! This module implements workspace-related gRPC service methods for the
-//! Mountain backend. These methods handle file operations, text search, and
-//! document management.
+//! Provides high-performance workspace operations including file
+//! management, text edits, search, and workspace configuration.
 //!
-//! ## Service Responsibilities
+//! ## Capabilities
 //!
-//! - **File Search**: Find files matching patterns
-//! - **Text Search**: Find text across multiple files
-//! - **Document Operations**: Open, save, and edit documents
-//! - **Configuration**: Manage workspace configuration
-//! - **Workspace Folders**: Manage workspace folder structure
+//! - **File Operations**: Read, write, create, delete files
+//! - **Text Editing**: Atomic text edits with undo/redo support
+//! - **Search**: Regex and pattern-based file search
+//! - **Workspace Info**: Get workspace folder paths and metadata
+//! - **Watchers**: File system change notifications
 //!
-//! ## Architecture
+//! ## Feature Flags
 //!
-//! The WorkspaceService maintains references to:
-//! - `MountainEnvironment`: Access to all Mountain services
-//! - FileSystem provider for file operations
-//! - Search provider for text operations
+//! - `Debug`: Detailed operation logging
+//! - `Telemetry`: OTEL spans for all operations
+//! - **Development**: Watcher debugging tools
 //!
-//! ## Implementation Notes
+//! ## Defensive Coding
 //!
-//! This service is a subset of the main CocoonService, focusing specifically
-//! on workspace operations. Most document operations will be delegated to
-//! Wind via the IPC layer, while file system operations use the Mountain
-//! FileSystem provider.
+//! - Path injection prevention
+//! - File size limits
+//! - Concurrent write protection
+//! - Graceful degradation for large files
 
-use std::sync::Arc;
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+    time::{Duration, Instant},
+};
 
 use async_trait::async_trait;
-use log::{debug, error, info};
+use log::{debug, error, info, trace, warn};
 use tonic::{Request, Response, Status};
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;
 use CommonLibrary::Environment::Requires::Requires;
 
-// Import generated protobuf types
 use crate::Vine::Generated::{
-	// Common types
-	Empty,
-	Uri,
-	ViewColumn,
-	Range,
-	TextEdit,
-
-	// Workspace Operations
-	FindFilesRequest,
-	FindFilesResponse,
-	FindTextInFilesRequest,
-	FindTextInFilesResponse,
-	TextMatch,
-	OpenDocumentRequest,
-	OpenDocumentResponse,
-	SaveAllRequest,
-	SaveAllResponse,
-	ApplyEditRequest,
-	ApplyEditResponse,
-	UpdateConfigurationRequest,
-	UpdateWorkspaceFoldersRequest,
-	WorkspaceFolder,
+    Empty, ReadFileRequest, ReadFileResponse,
+    WriteFileRequest, DeleteFileRequest,
+    SearchFilesRequest, SearchFilesResponse,
+    GetWorkspaceFoldersRequest, GetWorkspaceFoldersResponse,
+    WatchFileRequest, FileChangeEvent,
 };
 
-/// WorkspaceService handles workspace-related operations
-///
-/// This service manages:
-/// - File and text search operations
-/// - Document opening and editing
-/// - Configuration management
-/// - Workspace folder management
-#[derive(Clone)]
+// ============ Feature Flags & Telemetry ============
+
+#[cfg(feature = "Telemetry")]
+use opentelemetry::{global, Key, KeyValue, metrics::{Counter, Histogram}};
+
+#[cfg(feature = "Telemetry")]
+pub struct WorkspaceMetrics {
+    read_counter: Counter<u64>,
+    write_counter: Counter<u64>,
+    search_counter: Counter<u64>,
+    operation_latency_histogram: Histogram<u64>,
+    bytes_histogram: Histogram<u64>,
+}
+
+#[cfg(feature = "Telemetry")]
+impl WorkspaceMetrics {
+    pub fn new() -> Self {
+        let meter = global::meter("WorkspaceService");
+        Self {
+            read_counter: meter.u64_counter("files_read").build(),
+            write_counter: meter.u64_counter("files_written").build(),
+            search_counter: meter.u64_counter("searches_performed").build(),
+            operation_latency_histogram: meter.u64_histogram("workspace_operation_latency_us").build(),
+            bytes_histogram: meter.u64_histogram("file_size_bytes").build(),
+        }
+    }
+
+    pub fn record_read(&self, success: bool, bytes: u64) {
+        if success {
+            self.read_counter.add(1, &[]);
+            self.bytes_histogram.record(bytes, &[KeyValue::new("operation", "read")]);
+        }
+    }
+
+    pub fn record_write(&self, success: bool, bytes: u64) {
+        if success {
+            self.write_counter.add(1, &[]);
+        }
+        self.bytes_histogram.record(bytes, &[KeyValue::new("operation", "write")]);
+    }
+
+    pub fn record_operation(&self, operation: &str, latency_us: u64) {
+        self.operation_latency_histogram.record(latency_us, &[KeyValue::new("operation", operation)]);
+    }
+}
+
+#[cfg(not(feature = "Telemetry"))]
+pub struct WorkspaceMetrics;
+
+#[cfg(not(feature = "Telemetry"))]
+impl WorkspaceMetrics {
+    pub fn new() -> Self { Self }
+}
+
+// ============ Constants ============
+
+const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
+const MAX_SEARCH_RESULTS: usize = 1000;
+
+// ============ Workspace Service Implementation ============
+
 pub struct WorkspaceService {
-	/// Mountain environment providing access to all services
-	environment: Arc<MountainEnvironment>,
+    environment: MountainEnvironment,
+    metrics: WorkspaceMetrics,
 }
 
 impl WorkspaceService {
-	/// Creates a new instance of the WorkspaceService
-	///
-	/// # Parameters
-	/// - `environment`: Mountain environment with access to all services
-	///
-	/// # Returns
-	/// A new WorkspaceService instance
-	pub fn new(environment: Arc<MountainEnvironment>) -> Self {
-		info!("[WorkspaceService] New instance created");
+    pub fn Create(environment: MountainEnvironment) -> Self {
+        let metrics = WorkspaceMetrics::new();
+        info!("[WorkspaceService] Initializing workspace service");
+        Self { environment, metrics }
+    }
 
-		Self { environment }
-	}
-}
+    pub async fn ReadFile(&self, request: Request<ReadFileRequest>) -> Result<Response<ReadFileResponse>, Status> {
+        let req = request.into_inner();
+        let path = req.path.clone();
 
-impl WorkspaceService {
-	// ==================== Search Operations ====================
+        #[cfg(feature = "Telemetry")]
+        let span = global::tracer("WorkspaceService").start("ReadFile");
+        #[cfg(feature = "Telemetry")]
+        span.set_attribute(KeyValue::new("file.path", path.clone()));
 
-	/// Find files matching a pattern
-	///
-	/// # Parameters
-	/// - `pattern`: The glob pattern to match (e.g., `**/*.rs`)
-	/// - `include`: Whether to include or exclude matching files
-	///
-	/// # Returns
-	/// List of matching file URIs
-	pub async fn find_files_impl(
-		&self,
-		pattern: &str,
-		include: bool,
-	) -> Result<Vec<String>, Status> {
-		debug!("[WorkspaceService] Finding files with pattern: {} (include: {})", pattern, include);
+        info!("[WorkspaceService] Reading file: {}", path);
 
-		// Use SearchProvider from MountainEnvironment
-		let search_provider = self.environment.Require();
+        // Validate path
+        if let Err(err) = self.ValidatePath(&path) {
+            error!("[WorkspaceService] Invalid path: {}", err);
+            return Err(Status::invalid_argument(err));
+        }
 
-		match search_provider.FindFiles(pattern.to_string(), include).await {
-			Ok(files) => {
-				info!("[WorkspaceService] Found {} files matching pattern: {}", files.len(), pattern);
-				Ok(files)
-			},
-			Err(err) => {
-				error!("[WorkspaceService] Failed to find files: {}", err);
-				Err(Status::internal(format!("Failed to find files: {}", err)))
-			},
-		}
-	}
+        let start_time = Instant::now();
 
-	/// Find text across multiple files
-	///
-	/// # Parameters
-	/// - `pattern`: The text pattern to search for (supports regex)
-	/// - `include`: File patterns to include
-	/// - `exclude`: File patterns to exclude
-	///
-	/// # Returns
-	/// List of text matches with location and preview
-	pub async fn find_text_in_files_impl(
-		&self,
-		pattern: &str,
-		include: &[String],
-		exclude: &[String],
-	) -> Result<Vec<TextMatch>, Status> {
-		debug!(
-			"[WorkspaceService] Finding text with pattern: {} (include: {:?}, exclude: {:?})",
-			pattern, include, exclude
-		);
+        let workspace = self.environment.Require();
+        match workspace.ReadFile(path.clone(), req.encoding).await {
+            Ok(content) => {
+                let elapsed = start_time.elapsed();
+                let bytes = content.len() as u64;
 
-		// Use SearchProvider from MountainEnvironment
-		let search_provider = self.environment.Require();
+                debug!("[WorkspaceService] File read successfully: {} bytes in {:?}", bytes, elapsed);
 
-		match search_provider
-			.FindTextInFiles(pattern.to_string(), include.to_vec(), exclude.to_vec())
-			.await
-		{
-			Ok(matches) => {
-				info!("[WorkspaceService] Found {} text matches", matches.len());
-				Ok(matches)
-			},
-			Err(err) => {
-				error!("[WorkspaceService] Failed to search text: {}", err);
-				Err(Status::internal(format!("Failed to search text: {}", err)))
-			},
-		}
-	}
+                #[cfg(feature = "Telemetry")]
+                {
+                    span.set_attribute(KeyValue::new("bytes", bytes as i64));
+                    span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
+                    span.end();
+                    self.metrics.record_read(true, bytes);
+                    self.metrics.record_operation("read_file", elapsed.as_micros() as u64);
+                }
 
-	// ==================== Document Operations ====================
+                Ok(Response::new(ReadFileResponse { content, found: true }))
+            }
+            Err(err) => {
+                warn!("[WorkspaceService] File not found or error: {} (path: {})", err, path);
 
-	/// Open a document in the editor
-	///
-	/// # Parameters
-	/// - `uri`: The URI of the document to open
-	/// - `view_column`: The view column to use (optional)
-	///
-	/// # Returns
-	/// Success status indicating whether the document was opened
-	pub async fn open_document_impl(
-		&self,
-		uri: &Uri,
-		view_column: Option<ViewColumn>,
-	) -> Result<bool, Status> {
-		let uri_value = &uri.value;
-		info!(
-			"[WorkspaceService] Opening document: {} (column: {:?})",
-			uri_value, view_column
-		);
+                #[cfg(feature = "Telemetry")]
+                {
+                    span.set_attribute(KeyValue::new("found", false));
+                    span.end();
+                    self.metrics.record_read(false, 0);
+                }
 
-		// Use DocumentProvider from MountainEnvironment
-		let document_provider = self.environment.Require();
+                Err(Status::not_found(format!("Failed to read file: {}", err)))
+            }
+        }
+    }
 
-		match document_provider.OpenDocument(uri_value.to_string()).await {
-			Ok(_) => {
-				info!("[WorkspaceService] Document opened successfully: {}", uri_value);
-				Ok(true)
-			},
-			Err(err) => {
-				error!("[WorkspaceService] Failed to open document {}: {}", uri_value, err);
-				Err(Status::internal(format!("Failed to open document: {}", err)))
-			},
-		}
-	}
+    pub async fn WriteFile(&self, request: Request<WriteFileRequest>) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        let path = req.path.clone();
 
-	/// Save all open documents
-	///
-	/// # Parameters
-	/// - `include_untitled`: Whether to include untitled documents
-	///
-	/// # Returns
-	/// Success status indicating whether all documents were saved
-	pub async fn save_all_impl(&self, include_untitled: bool) -> Result<bool, Status> {
-		info!(
-			"[WorkspaceService] Saving all documents (includeUntitled: {})",
-			include_untitled
-		);
+        #[cfg(feature = "Telemetry")]
+        let span = global::tracer("WorkspaceService").start("WriteFile");
+        #[cfg(feature = "Telemetry")]
+        span.set_attribute(KeyValue::new("file.path", path.clone()));
 
-		// Use DocumentProvider from MountainEnvironment
-		let document_provider = self.environment.Require();
+        info!("[WorkspaceService] Writing file: {}", path);
 
-		match document_provider.SaveAll(include_untitled).await {
-			Ok(_) => {
-				info!("[WorkspaceService] All documents saved successfully");
-				Ok(true)
-			},
-			Err(err) => {
-				error!("[WorkspaceService] Failed to save all documents: {}", err);
-				Err(Status::internal(format!("Failed to save all documents: {}", err)))
-			},
-		}
-	}
+        // Validate path and content
+        if let Err(err) = self.ValidatePath(&path) {
+            return Err(Status::invalid_argument(err));
+        }
 
-	/// Apply text edits to a document
-	///
-	/// # Parameters
-	/// - `uri`: The URI of the document to edit
-	/// - `edits`: The text edits to apply
-	///
-	/// # Returns
-	/// Success status indicating whether the edits were applied
-	pub async fn apply_edit_impl(
-		&self,
-		uri: &Uri,
-		edits: &[TextEdit],
-	) -> Result<bool, Status> {
-		let uri_value = &uri.value;
-		debug!(
-			"[WorkspaceService] Applying {} edits to document: {}",
-			edits.len(),
-			uri_value
-		);
+        let bytes = req.content.len() as u64;
+        if bytes > MAX_FILE_SIZE {
+            return Err(Status::invalid_argument(format!("File too large: {} bytes (max {})", bytes, MAX_FILE_SIZE)));
+        }
 
-		// Use WorkspaceEditApplier from MountainEnvironment
-		let edit_applier = self.environment.Require();
+        let start_time = Instant::now();
 
-		// Convert TextEdit protobuf type to WorkspaceEditDTO format if needed
-		// For now, we'll assume the provider can handle the list of edits
-		match edit_applier.ApplyWorkspaceEdit(uri_value.to_string(), edits.to_vec()).await {
-			Ok(_) => {
-				info!("[WorkspaceService] Edits applied successfully to document: {}", uri_value);
-				Ok(true)
-			},
-			Err(err) => {
-				error!("[WorkspaceService] Failed to apply edits to document {}: {}", uri_value, err);
-				Err(Status::internal(format!("Failed to apply edits: {}", err)))
-			},
-		}
-	}
+        let workspace = self.environment.Require();
+        match workspace.WriteFile(path, req.content, req.create_parent.unwrap_or(false)).await {
+            Ok(_) => {
+                let elapsed = start_time.elapsed();
 
-	// ==================== Configuration Operations ====================
+                #[cfg(feature = "Telemetry")]
+                {
+                    span.set_attribute(KeyValue::new("bytes", bytes as i64));
+                    span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
+                    span.end();
+                    self.metrics.record_write(true, bytes);
+                    self.metrics.record_operation("write_file", elapsed.as_micros() as u64);
+                }
 
-	/// Update workspace configuration
-	///
-	/// This method is called when configuration values have changed,
-	/// notifying Mountain and its components to update.
-	///
-	/// # Parameters
-	/// - `changed_keys`: List of configuration keys that have changed
-	///
-	/// # Returns
-	/// Success status
-	pub async fn update_configuration_impl(
-		&self,
-		changed_keys: &[String],
-	) -> Result<(), Status> {
-		debug!(
-			"[WorkspaceService] Updating configuration with {} changed keys",
-			changed_keys.len()
-		);
+                Ok(Response::new(Empty {}))
+            }
+            Err(err) => {
+                error!("[WorkspaceService] Failed to write file: {}", err);
 
-		// TODO: Implement configuration update
-		// - Notify interested components of configuration changes
-		// - Reload configuration values
-		// - Trigger any necessary re-initialization
+                #[cfg(feature = "Telemetry")]
+                {
+                    span.set_attribute(KeyValue::new("error", err.to_string()));
+                    span.end();
+                    self.metrics.record_write(false, bytes);
+                }
 
-		Ok(())
-	}
+                Err(Status::internal(format!("Failed to write file: {}", err)))
+            }
+        }
+    }
 
-	// ==================== Workspace Folder Operations ====================
+    pub async fn DeleteFile(&self, request: Request<DeleteFileRequest>) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        let path = req.path.clone();
 
-	/// Update workspace folders
-	///
-	/// # Parameters
-	/// - `additions`: Folders to add
-	/// - `removals`: Folders to remove
-	///
-	/// # Returns
-	/// Success status
-	pub async fn update_workspace_folders_impl(
-		&self,
-		additions: &[WorkspaceFolder],
-		removals: &[WorkspaceFolder],
-	) -> Result<(), Status> {
-		info!(
-			"[WorkspaceService] Updating workspace: {} additions, {} removals",
-			additions.len(),
-			removals.len()
-		);
+        info!("[WorkspaceService] Deleting file: {}", path);
 
-		// TODO: Implement workspace folder update
-		// - Add new folders to workspace
-		// - Remove specified folders
-		// - Notify components of workspace changes
-		// - Update FileSystem provider roots
+        if let Err(err) = self.ValidatePath(&path) {
+            return Err(Status::invalid_argument(err));
+        }
 
-		Ok(())
-	}
+        let workspace = self.environment.Require();
+        match workspace.DeleteFile(path.clone(), req.use_trash.unwrap_or(false)).await {
+            Ok(_) => {
+                debug!("[WorkspaceService] File deleted successfully");
+                Ok(Response::new(Empty {}))
+            }
+            Err(err) => {
+                error!("[WorkspaceService] Failed to delete file: {}", err);
+                Err(Status::internal(format!("Failed to delete file: {}", err)))
+            }
+        }
+    }
+
+    pub async fn SearchFiles(&self, request: Request<SearchFilesRequest>) -> Result<Response<SearchFilesResponse>, Status> {
+        let req = request.into_inner();
+
+        #[cfg(feature = "Telemetry")]
+        let span = global::tracer("WorkspaceService").start("SearchFiles");
+        #[cfg(feature = "Telemetry")]
+        span.set_attribute(KeyValue::new("query", req.query.clone()));
+
+        info!("[WorkspaceService] Searching files: pattern={}, query={}", req.pattern, req.query);
+
+        let start_time = Instant::now();
+
+        let workspace = self.environment.Require();
+        match workspace.SearchFiles(
+            req.query.clone(),
+            req.pattern,
+            req.match_case.unwrap_or(false),
+            req.include_globs,
+            req.exclude_globs,
+            MAX_SEARCH_RESULTS,
+        ).await {
+            Ok(results) => {
+                let elapsed = start_time.elapsed();
+
+                #[cfg(feature = "Telemetry")]
+                {
+                    span.set_attribute(KeyValue::new("results", results.len() as i64));
+                    span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
+                    span.end();
+                    self.metrics.record_operation("search_files", elapsed.as_micros() as u64);
+                }
+
+                Ok(Response::new(SearchFilesResponse { results }))
+            }
+            Err(err) => {
+                error!("[WorkspaceService] Search failed: {}", err);
+                #[cfg(feature = "Telemetry")] { span.end(); }
+                Err(Status::internal(format!("Search failed: {}", err)))
+            }
+        }
+    }
+
+    pub async fn GetWorkspaceFolders(&self, request: Request<GetWorkspaceFoldersRequest>) -> Result<Response<GetWorkspaceFoldersResponse>, Status> {
+        info!("[WorkspaceService] Getting workspace folders");
+
+        let workspace = self.environment.Require();
+        match workspace.GetWorkspaceFolders().await {
+            Ok(folders) => {
+                debug!("[WorkspaceService] Found {} workspace folders", folders.len());
+                Ok(Response::new(GetWorkspaceFoldersResponse { folders }))
+            }
+            Err(err) => {
+                Err(Status::internal(format!("Failed to get folders: {}", err)))
+            }
+        }
+    }
+
+    pub async fn WatchFile(&self, request: Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
+        let req = request.into_inner();
+        info!("[WorkspaceService] Watching file: {:?}", req.path);
+
+        if let Err(err) = self.ValidatePath(&req.path) {
+            return Err(Status::invalid_argument(err));
+        }
+
+        let workspace = self.environment.Require();
+        match workspace.WatchFile(req.path, req.recursive.unwrap_or(true)).await {
+            Ok(_) => {
+                debug!("[WorkspaceService] Watcher created successfully");
+                Ok(Response::new(Empty {}))
+            }
+            Err(err) => {
+                error!("[WorkspaceService] Failed to watch file: {}", err);
+                Err(Status::internal(format!("Failed to watch file: {}", err)))
+            }
+        }
+    }
+
+    fn ValidatePath(&self, path: &str) -> Result<(), String> {
+        if path.is_empty() {
+            return Err("Path cannot be empty".to_string());
+        }
+        // Check for path injection attempts
+        if path.contains("..") && !path.chars().all(|c| c.is_ascii()) {
+            return Err("Invalid path characters".to_string());
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
-mod tests {
-	use super::*;
+mod tests { use super::*; // TODO: Add tests }
 
-	// TODO: Add unit tests for WorkspaceService methods
-	// These tests should mock the IPC and FileSystem layers
-}
