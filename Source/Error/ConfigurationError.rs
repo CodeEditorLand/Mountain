@@ -92,12 +92,14 @@ impl ConfigurationError {
 
     /// Create an invalid value error
     pub fn invalid_value(key: impl Into<String>, expected_type: impl Into<String>) -> Self {
+        let key_str = key.into();
+        let expected_type_str = expected_type.into();
         Self::InvalidValue {
-            context: ErrorContext::new(format!("Invalid value for key '{}': expected type '{}'", key.into(), expected_type.into()))
+            context: ErrorContext::new(format!("Invalid value for key '{}': expected type '{}'", key_str, expected_type_str))
                 .with_kind(ErrorKind::Configuration)
                 .with_severity(ErrorSeverity::Error),
-            key: key.into(),
-            expected_type: expected_type.into(),
+            key: key_str,
+            expected_type: expected_type_str,
         }
     }
 
@@ -124,11 +126,12 @@ impl ConfigurationError {
 
     /// Create a file not found error
     pub fn file_not_found(path: impl Into<String>) -> Self {
+        let path_str = path.into();
         Self::FileNotFound {
-            context: ErrorContext::new(format!("Configuration file not found: {}", path.into()))
+            context: ErrorContext::new(format!("Configuration file not found: {}", path_str))
                 .with_kind(ErrorKind::Configuration)
                 .with_severity(ErrorSeverity::Error),
-            path: path.into(),
+            path: path_str,
         }
     }
 

@@ -64,68 +64,77 @@ impl ProviderError {
 
     /// Create a provider not registered error
     pub fn provider_not_registered(provider_name: impl Into<String>) -> Self {
+        let provider_name_str = provider_name.into();
         Self::ProviderNotRegistered {
-            context: ErrorContext::new(format!("Provider not registered: {}", provider_name.into()))
+            context: ErrorContext::new(format!("Provider not registered: {}", provider_name_str))
                 .with_kind(ErrorKind::Provider)
                 .with_severity(ErrorSeverity::Error),
-            provider_name: provider_name.into(),
+            provider_name: provider_name_str,
         }
     }
 
     /// Create an initialization failed error
     pub fn initialization_failed(provider_name: impl Into<String>, source: Option<String>) -> Self {
+        let provider_name_str = provider_name.into();
         Self::InitializationFailed {
-            context: ErrorContext::new(format!("Provider initialization failed: {}", provider_name.into()))
+            context: ErrorContext::new(format!("Provider initialization failed: {}", provider_name_str))
                 .with_kind(ErrorKind::Provider)
                 .with_severity(ErrorSeverity::Critical),
-            provider_name: provider_name.into(),
+            provider_name: provider_name_str,
             source,
         }
     }
 
     /// Create a method not implemented error
     pub fn method_not_implemented(provider_name: impl Into<String>, method_name: impl Into<String>) -> Self {
+        let provider_name_str = provider_name.into();
+        let method_name_str = method_name.into();
         Self::MethodNotImplemented {
-            context: ErrorContext::new(format!("Method '{}' not implemented in provider '{}'", method_name.into(), provider_name.into()))
+            context: ErrorContext::new(format!("Method '{}' not implemented in provider '{}'", method_name_str, provider_name_str))
                 .with_kind(ErrorKind::Provider)
                 .with_severity(ErrorSeverity::Error),
-            provider_name: provider_name.into(),
-            method_name: method_name.into(),
+            provider_name: provider_name_str,
+            method_name: method_name_str,
         }
     }
 
     /// Create an invalid configuration error
     pub fn invalid_configuration(provider_name: impl Into<String>, errors: Vec<String>) -> Self {
+        let provider_name_str = provider_name.into();
         Self::InvalidConfiguration {
-            context: ErrorContext::new(format!("Provider '{}' has invalid configuration: {} error(s)", provider_name.into(), errors.len()))
+            context: ErrorContext::new(format!("Provider '{}' has invalid configuration: {} error(s)", provider_name_str, errors.len()))
                 .with_kind(ErrorKind::Provider)
                 .with_severity(ErrorSeverity::Error),
-            provider_name: provider_name.into(),
+            provider_name: provider_name_str,
             errors,
         }
     }
 
     /// Create a timeout error
     pub fn timeout(provider_name: impl Into<String>, operation: impl Into<String>, timeout_ms: u64) -> Self {
+        let provider_name_str = provider_name.into();
+        let operation_str = operation.into();
         Self::Timeout {
-            context: ErrorContext::new(format!("Provider timeout: {} operation timed out after {}ms", provider_name.into(), timeout_ms))
+            context: ErrorContext::new(format!("Provider timeout: {} operation timed out after {}ms", provider_name_str, timeout_ms))
                 .with_kind(ErrorKind::Provider)
                 .with_severity(ErrorSeverity::Error)
-                .with_operation(operation),
-            provider_name: provider_name.into(),
-            operation: operation.into(),
+                .with_operation(operation_str.clone()),
+            provider_name: provider_name_str,
+            operation: operation_str,
             timeout_ms,
         }
     }
 
     /// Create an unavailable error
     pub fn unavailable(provider_name: impl Into<String>, reason: impl Into<String>) -> Self {
+        let provider_name_str = provider_name.into();
+        let reason_str = reason.into();
         Self::Unavailable {
-            context: ErrorContext::new(format!("Provider '{}' unavailable: {}", provider_name.into(), reason.into()))
+            context: ErrorContext::new(format!("Provider '{}' unavailable: {}", provider_name_str, reason_str))
                 .with_kind(ErrorKind::Provider)
                 .with_severity(ErrorSeverity::Error),
-            provider_name: provider_name.into(),
-            reason: reason.into(),
+            provider_name: provider_name_str,
+            reason: reason_str,
         }
     }
 }

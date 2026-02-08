@@ -94,13 +94,14 @@ impl FileSystemError {
 
     /// Create an I/O error
     pub fn io_error(operation: impl Into<String>, path: Option<PathBuf>, message: impl Into<String>) -> Self {
+        let operation_str = operation.into();
         Self::IOError {
             context: ErrorContext::new(message)
                 .with_kind(ErrorKind::FileSystem)
                 .with_severity(ErrorSeverity::Error)
-                .with_operation(operation),
+                .with_operation(operation_str.clone()),
             path,
-            operation: operation.into(),
+            operation: operation_str,
         }
     }
 

@@ -91,12 +91,13 @@ impl IPCError {
 
     /// Create a timeout error
     pub fn timeout(operation: impl Into<String>, timeout_ms: u64) -> Self {
+        let operation_str = operation.into();
         Self::Timeout {
             context: ErrorContext::new(format!("Operation timed out after {}ms", timeout_ms))
                 .with_kind(ErrorKind::IPC)
                 .with_severity(ErrorSeverity::Error)
-                .with_operation(operation),
-            operation: Some(operation.into()),
+                .with_operation(operation_str.clone()),
+            operation: Some(operation_str),
             timeout_ms,
         }
     }

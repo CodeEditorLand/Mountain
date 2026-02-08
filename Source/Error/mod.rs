@@ -41,10 +41,6 @@ pub mod ConfigurationError;
 pub mod ServiceError;
 pub mod ProviderError;
 
-// Re-export commonly used error types
+// Re-export commonly used error types from CoreError
 pub use CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
-pub use FileSystemError::FileSystemError;
-pub use IPCError::IPCError;
-pub use ConfigurationError::ConfigurationError;
-pub use ServiceError::ServiceError;
-pub use ProviderError::ProviderError;
+// Error types are available through their modules: Error::FileSystemError, Error::IPCError, etc.

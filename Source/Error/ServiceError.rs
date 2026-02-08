@@ -76,77 +76,86 @@ impl ServiceError {
 
     /// Create a service not found error
     pub fn service_not_found(service_name: impl Into<String>) -> Self {
+        let service_name_str = service_name.into();
         Self::ServiceNotFound {
-            context: ErrorContext::new(format!("Service not found: {}", service_name.into()))
+            context: ErrorContext::new(format!("Service not found: {}", service_name_str))
                 .with_kind(ErrorKind::Service)
                 .with_severity(ErrorSeverity::Error),
-            service_name: service_name.into(),
+            service_name: service_name_str,
         }
     }
 
     /// Create an initialization failed error
     pub fn initialization_failed(service_name: impl Into<String>, source: Option<String>) -> Self {
+        let service_name_str = service_name.into();
         Self::InitializationFailed {
-            context: ErrorContext::new(format!("Service initialization failed: {}", service_name.into()))
+            context: ErrorContext::new(format!("Service initialization failed: {}", service_name_str))
                 .with_kind(ErrorKind::Service)
                 .with_severity(ErrorSeverity::Critical),
-            service_name: service_name.into(),
+            service_name: service_name_str,
             source,
         }
     }
 
     /// Create an already running error
     pub fn already_running(service_name: impl Into<String>) -> Self {
+        let service_name_str = service_name.into();
         Self::AlreadyRunning {
-            context: ErrorContext::new(format!("Service already running: {}", service_name.into()))
+            context: ErrorContext::new(format!("Service already running: {}", service_name_str))
                 .with_kind(ErrorKind::Service)
                 .with_severity(ErrorSeverity::Warning),
-            service_name: service_name.into(),
+            service_name: service_name_str,
         }
     }
 
     /// Create a not running error
     pub fn not_running(service_name: impl Into<String>) -> Self {
+        let service_name_str = service_name.into();
         Self::NotRunning {
-            context: ErrorContext::new(format!("Service not running: {}", service_name.into()))
+            context: ErrorContext::new(format!("Service not running: {}", service_name_str))
                 .with_kind(ErrorKind::Service)
                 .with_severity(ErrorSeverity::Error),
-            service_name: service_name.into(),
+            service_name: service_name_str,
         }
     }
 
     /// Create a start failed error
     pub fn start_failed(service_name: impl Into<String>, source: Option<String>) -> Self {
+        let service_name_str = service_name.into();
         Self::StartFailed {
-            context: ErrorContext::new(format!("Service start failed: {}", service_name.into()))
+            context: ErrorContext::new(format!("Service start failed: {}", service_name_str))
                 .with_kind(ErrorKind::Service)
                 .with_severity(ErrorSeverity::Error),
-            service_name: service_name.into(),
+            service_name: service_name_str,
             source,
         }
     }
 
     /// Create a timeout error
     pub fn timeout(service_name: impl Into<String>, operation: impl Into<String>, timeout_ms: u64) -> Self {
+        let service_name_str = service_name.into();
+        let operation_str = operation.into();
         Self::Timeout {
-            context: ErrorContext::new(format!("Service timeout: {} operation timed out after {}ms", service_name.into(), timeout_ms))
+            context: ErrorContext::new(format!("Service timeout: {} operation timed out after {}ms", service_name_str, timeout_ms))
                 .with_kind(ErrorKind::Service)
                 .with_severity(ErrorSeverity::Error)
-                .with_operation(operation),
-            service_name: service_name.into(),
-            operation: operation.into(),
+                .with_operation(operation_str.clone()),
+            service_name: service_name_str,
+            operation: operation_str,
             timeout_ms,
         }
     }
 
     /// Create a dependency error
     pub fn dependency_error(service_name: impl Into<String>, dependency: impl Into<String>) -> Self {
+        let service_name_str = service_name.into();
+        let dependency_str = dependency.into();
         Self::DependencyError {
-            context: ErrorContext::new(format!("Service dependency error: {} depends on {}", service_name.into(), dependency.into()))
+            context: ErrorContext::new(format!("Service dependency error: {} depends on {}", service_name_str, dependency_str))
                 .with_kind(ErrorKind::Service)
                 .with_severity(ErrorSeverity::Critical),
-            service_name: service_name.into(),
-            dependency: dependency.into(),
+            service_name: service_name_str,
+            dependency: dependency_str,
         }
     }
 }
