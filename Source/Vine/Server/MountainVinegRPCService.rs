@@ -34,11 +34,15 @@
 //! - Method name sanitization
 //! - Safe error messages (no sensitive data)
 
-use std::sync::Arc;
+use std::{
+	collections::HashMap,
+	sync::Arc,
+};
 
 use log::{debug, error, info, trace, warn};
 use serde_json::Value;
 use tauri::AppHandle;
+use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
 
 use crate::{
@@ -78,6 +82,10 @@ pub struct MountainVinegRPCService {
 
 	/// Application runtime containing core dependencies
 	RunTime:Arc<ApplicationRunTime>,
+
+	/// Registry of active operations with their cancellation tokens
+	/// Maps request ID to cancellation token for operation cancellation
+	ActiveOperations:Arc<RwLock<HashMap<u64, tokio_util::sync::CancellationToken>>>,
 }
 
 impl MountainVinegRPCService {
@@ -92,7 +100,34 @@ impl MountainVinegRPCService {
 	pub fn Create(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Self {
 		info!("[MountainVinegRPCService] New instance created");
 
-		Self { ApplicationHandle, RunTime }
+		Self {
+			ApplicationHandle,
+			RunTime,
+			ActiveOperations:Arc::new(RwLock::new(HashMap::new())),
+		}
+	}
+
+	/// Registers an operation for potential cancellation
+	///
+	/// # Parameters
+	/// - `request_id`: The request identifier for the operation
+	///
+	/// # Returns
+	/// A cancellation token that can be used to cancel the operation
+	pub async fn RegisterOperation(&self, request_id:u64) -> tokio_util::sync::CancellationToken {
+		let token = tokio_util::sync::CancellationToken::new();
+		self.ActiveOperations.write().await.insert(request_id, token.clone());
+		debug!("[MountainVinegRPCService] Registered operation {} for cancellation", request_id);
+		token
+	}
+
+	/// Unregisters an operation after completion
+	///
+	/// # Parameters
+	/// - `request_id`: The request identifier to unregister
+	pub async fn UnregisterOperation(&self, request_id:u64) {
+		self.ActiveOperations.write().await.remove(&request_id);
+		debug!("[MountainVinegRPCService] Unregistered operation {}", request_id);
 	}
 
 	/// Validates a generic request before processing.
@@ -350,19 +385,6 @@ impl MountainService for MountainVinegRPCService {
 	/// # Returns
 	/// - `Ok(Response<Empty>)`: Cancellation was initiated
 	/// - `Err(Status)`: Critical error during cancellation
-	///
-	/// # TODO
-	/// Full implementation requires:
-	/// 1. Map RequestIdentifier to active operation in the gRPC request
-	///    registry
-	/// 2. Trigger cancellation token associated with that operation to signal
-	///    abort to the running task
-	/// 3. Verify operation was actually canceled (timeout or forced
-	///    termination)
-	/// 4. Return appropriate gRPC status (Ok if cancellation initiated, error
-	///    if operation not found or already completed)
-	/// 5. Clean up request registry entry and emit cancellation event for
-	///    observability
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		let cancel_request = request.into_inner();
 
@@ -373,15 +395,38 @@ impl MountainService for MountainVinegRPCService {
 			RequestIdentifierToCancel
 		);
 
-		// A full implementation would map the RequestIdentifier_to_cancel to a
-		// CancellationToken and trigger it.
+		// Look up the operation in the active operations registry
+		let cancel_token = {
+			let operations = self.ActiveOperations.read().await;
+			operations.get(&RequestIdentifierToCancel).cloned()
+		};
 
-		// Currently not implemented - just acknowledge the request
-		warn!(
-			"[MountainVinegRPCService] Operation cancellation not yet implemented for RequestID: {}",
-			RequestIdentifierToCancel
-		);
+		match cancel_token {
+			Some(token) => {
+				// Trigger cancellation token to signal the operation to abort
+				token.cancel();
 
-		Ok(Response::new(Empty {}))
+				info!(
+					"[MountainVinegRPCService] Successfully initiated cancellation for operation {}",
+					RequestIdentifierToCancel
+				);
+
+				// Note: We don't remove the token here - the operation itself should
+				// call UnregisterOperation when it completes. This allows the
+				// operation to detect the cancellation and clean up properly.
+
+				Ok(Response::new(Empty {}))
+			},
+			None => {
+				// Operation not found - it may have already completed
+				warn!(
+					"[MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have already completed)",
+					RequestIdentifierToCancel
+				);
+
+				// Return success anyway - the operation is not running
+				Ok(Response::new(Empty {}))
+			},
+		}
 	}
 }

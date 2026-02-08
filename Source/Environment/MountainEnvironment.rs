@@ -174,7 +174,9 @@ use std::sync::Arc;
 
 // Import Air service client when Air integration is enabled
 #[cfg(feature = "AirIntegration")]
-use AirLibrary::Vine::Generated::Air::air_service_client::AirServiceClient;
+use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
+#[cfg(feature = "AirIntegration")]
+use AirLibrary::Vine::Generated::air::HealthCheckRequest;
 use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
 	Configuration::{ConfigurationInspector::ConfigurationInspector, ConfigurationProvider::ConfigurationProvider},
@@ -282,7 +284,7 @@ impl MountainEnvironment {
 	pub async fn IsAirAvailable(&self) -> bool {
 		if let Some(AirClient) = &self.AirClient {
 			use tonic::Request;
-			use AirLibrary::Vine::Generated::Air::HealthCheckRequest;
+			use AirLibrary::Vine::Generated::air::HealthCheckRequest;
 
 			match AirClient.health_check(Request::new(HealthCheckRequest {})).await {
 				Ok(response) => {

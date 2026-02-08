@@ -60,6 +60,7 @@ hostname = { workspace = true }
 thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tokio-tungstenite = { workspace = true, features = ["rustls-tls-native-roots"] }
+tokio-util = { workspace = true, features = ["full"] }
 toml = { workspace = true }
 tonic = { workspace = true }
 tonic-prost = { workspace = true }
@@ -72,7 +73,7 @@ brotli = { workspace = true }
 hex = { workspace = true }
 
 [features]
-default = ["ExtensionHostCocoon", "MistNative"]
+default = ["ExtensionHostCocoon", "MistNative", "AirIntegration"]
 
 ExtensionHostCocoon = []
 
@@ -80,7 +81,7 @@ MistNative = []
 
 Debug = []
 
-AirIntegration = []
+AirIntegration = ["Air"]
 
 [lib]
 name = "Mountain"

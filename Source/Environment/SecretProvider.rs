@@ -219,7 +219,9 @@ use keyring::Entry;
 use log::{info, trace, warn};
 // Import Air client types when Air is available in the workspace
 #[cfg(feature = "AirIntegration")]
-use AirLibrary::Vine::Generated::Air::air_service_client::AirServiceClient;
+use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
+#[cfg(feature = "AirIntegration")]
+use AirLibrary::Vine::Generated::air::HealthCheckRequest;
 
 use super::MountainEnvironment::MountainEnvironment;
 
@@ -232,7 +234,7 @@ fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&
 #[cfg(feature = "AirIntegration")]
 async fn IsAirAvailable(AirClient:&mut AirServiceClient<tonic::transport::Channel>) -> bool {
 	use tonic::Request;
-	use AirLibrary::Vine::Generated::Air::HealthCheckRequest;
+	use AirLibrary::Vine::Generated::air::HealthCheckRequest;
 
 	match AirClient.health_check(Request::new(HealthCheckRequest {})).await {
 		Ok(response) => response.into_inner().healthy,
@@ -380,7 +382,7 @@ async fn GetSecretFromAir(
 	ExtensionIdentifier:String,
 	Key:String,
 ) -> Result<Option<String>, CommonError> {
-	use AirLibrary::Vine::Generated::Air::air_service_server;
+	use AirLibrary::Vine::Generated::air::air_service_server;
 
 	info!(
 		"[SecretProvider] Fetching secret from Air: ext='{}', key='{}'",
