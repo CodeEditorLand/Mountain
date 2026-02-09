@@ -135,14 +135,14 @@ impl AirClient {
             let endpoint = address.parse::<tonic::transport::Endpoint>().map_err(|e| {
                 error!("[AirClient] Failed to parse address '{}': {}", address, e);
                 CommonError::IPCError {
-                    Message: format!("Invalid address '{}': {}", address, e),
+                    Description: format!("Invalid address '{}': {}", address, e),
                 }
             })?;
 
             let channel = endpoint.connect().await.map_err(|e| {
                 error!("[AirClient] Failed to connect to Air daemon: {}", e);
                 CommonError::IPCError {
-                    Message: format!("Connection failed: {}", e),
+                    Description: format!("Connection failed: {}", e),
                 }
             })?;
 
@@ -236,14 +236,14 @@ impl AirClient {
                             username, response.error
                         );
                         Err(CommonError::AccessDenied {
-                            Message: response.error,
+                            Reason: response.error,
                         })
                     }
                 }
                 Err(e) => {
                     error!("[AirClient] Authentication RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Authentication RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Authentication RPC error: {}", e),
                     })
                 }
             }
@@ -309,8 +309,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Check for updates RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Check for updates RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Check for updates RPC error: {}", e),
                     })
                 }
             }
@@ -374,15 +374,15 @@ impl AirClient {
                         })
                     } else {
                         error!("[AirClient] Update download failed: {}", response.error);
-                        Err(CommonError::IPCError {
-                            Message: response.error,
+                        Err(CommonError::IPCError { Description: 
+ response.error,
                         })
                     }
                 }
                 Err(e) => {
                     error!("[AirClient] Download update RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Download update RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Download update RPC error: {}", e),
                     })
                 }
             }
@@ -433,15 +433,15 @@ impl AirClient {
                         Ok(())
                     } else {
                         error!("[AirClient] Update application failed: {}", response.error);
-                        Err(CommonError::IPCError {
-                            Message: response.error,
+                        Err(CommonError::IPCError { Description: 
+ response.error,
                         })
                     }
                 }
                 Err(e) => {
                     error!("[AirClient] Apply update RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Apply update RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Apply update RPC error: {}", e),
                     })
                 }
             }
@@ -509,15 +509,15 @@ impl AirClient {
                         })
                     } else {
                         error!("[AirClient] File download failed: {}", response.error);
-                        Err(CommonError::IPCError {
-                            Message: response.error,
+                        Err(CommonError::IPCError { Description: 
+ response.error,
                         })
                     }
                 }
                 Err(e) => {
                     error!("[AirClient] Download file RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Download file RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Download file RPC error: {}", e),
                     })
                 }
             }
@@ -609,8 +609,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Download stream RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Download stream RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Download stream RPC error: {}", e),
                     })
                 }
             }
@@ -677,15 +677,15 @@ impl AirClient {
                         })
                     } else {
                         error!("[AirClient] File indexing failed: {}", response.error);
-                        Err(CommonError::IPCError {
-                            Message: response.error,
+                        Err(CommonError::IPCError { Description: 
+ response.error,
                         })
                     }
                 }
                 Err(e) => {
                     error!("[AirClient] Index files RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Index files RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Index files RPC error: {}", e),
                     })
                 }
             }
@@ -752,8 +752,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Search files RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Search files RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Search files RPC error: {}", e),
                     })
                 }
             }
@@ -810,8 +810,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Get file info RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Get file info RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Get file info RPC error: {}", e),
                     })
                 }
             }
@@ -863,8 +863,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Get status RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Get status RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Get status RPC error: {}", e),
                     })
                 }
             }
@@ -902,8 +902,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Health check RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Health check RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Health check RPC error: {}", e),
                     })
                 }
             }
@@ -972,8 +972,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Get metrics RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Get metrics RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Get metrics RPC error: {}", e),
                     })
                 }
             }
@@ -1028,8 +1028,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Get resource usage RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Get resource usage RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Get resource usage RPC error: {}", e),
                     })
                 }
             }
@@ -1087,15 +1087,15 @@ impl AirClient {
                         Ok(())
                     } else {
                         error!("[AirClient] Failed to set resource limits: {}", response.error);
-                        Err(CommonError::IPCError {
-                            Message: response.error,
+                        Err(CommonError::IPCError { Description: 
+ response.error,
                         })
                     }
                 }
                 Err(e) => {
                     error!("[AirClient] Set resource limits RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Set resource limits RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Set resource limits RPC error: {}", e),
                     })
                 }
             }
@@ -1151,8 +1151,8 @@ impl AirClient {
                 }
                 Err(e) => {
                     error!("[AirClient] Get configuration RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Get configuration RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Get configuration RPC error: {}", e),
                     })
                 }
             }
@@ -1213,15 +1213,15 @@ impl AirClient {
                             "[AirClient] Failed to update configuration: {}",
                             response.error
                         );
-                        Err(CommonError::IPCError {
-                            Message: response.error,
+                        Err(CommonError::IPCError { Description: 
+ response.error,
                         })
                     }
                 }
                 Err(e) => {
                     error!("[AirClient] Update configuration RPC error: {}", e);
-                    Err(CommonError::IPCError {
-                        Message: format!("Update configuration RPC error: {}", e),
+                    Err(CommonError::IPCError { Description: 
+ format!("Update configuration RPC error: {}", e),
                     })
                 }
             }
@@ -1393,8 +1393,8 @@ impl DownloadStream {
             }
             Some(Err(e)) => {
                 error!("[DownloadStream] Stream error: {}", e);
-                Some(Err(CommonError::IPCError {
-                    Message: format!("Stream error: {}", e),
+                Some(Err(CommonError::IPCError { Description: 
+ format!("Stream error: {}", e),
                 }))
             }
             None => None,
