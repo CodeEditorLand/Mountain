@@ -30,49 +30,43 @@
 //! - [ ] Implement document lifecycle events
 //! - [ ] Add document metrics collection
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::{
+	collections::HashMap,
+	sync::{Arc, Mutex as StandardMutex},
+};
+
+use log::debug;
 
 use crate::ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO;
-use log::debug;
 
 /// Open documents state containing documents by URI.
 #[derive(Clone)]
 pub struct DocumentState {
 	/// Open documents organized by URI.
-	pub OpenDocuments: Arc<StandardMutex<HashMap<String, DocumentStateDTO>>>,
+	pub OpenDocuments:Arc<StandardMutex<HashMap<String, DocumentStateDTO>>>,
 }
 
 impl Default for DocumentState {
 	fn default() -> Self {
 		debug!("[DocumentState] Initializing default document state...");
 
-		Self {
-			OpenDocuments: Arc::new(StandardMutex::new(HashMap::new())),
-		}
+		Self { OpenDocuments:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
 
 impl DocumentState {
 	/// Gets all open documents.
 	pub fn GetAll(&self) -> HashMap<String, DocumentStateDTO> {
-		self.OpenDocuments
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.OpenDocuments.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
 	}
 
 	/// Gets a document by its URI.
-	pub fn Get(&self, uri: &str) -> Option<DocumentStateDTO> {
-		self.OpenDocuments
-			.lock()
-			.ok()
-			.and_then(|guard| guard.get(uri).cloned())
+	pub fn Get(&self, uri:&str) -> Option<DocumentStateDTO> {
+		self.OpenDocuments.lock().ok().and_then(|guard| guard.get(uri).cloned())
 	}
 
 	/// Adds or updates a document.
-	pub fn AddOrUpdate(&self, uri: String, document: DocumentStateDTO) {
+	pub fn AddOrUpdate(&self, uri:String, document:DocumentStateDTO) {
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
 			guard.insert(uri, document);
 			debug!("[DocumentState] Document added/updated");
@@ -80,7 +74,7 @@ impl DocumentState {
 	}
 
 	/// Removes a document by its URI.
-	pub fn Remove(&self, uri: &str) {
+	pub fn Remove(&self, uri:&str) {
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
 			guard.remove(uri);
 			debug!("[DocumentState] Document removed: {}", uri);
@@ -96,16 +90,10 @@ impl DocumentState {
 	}
 
 	/// Gets the count of open documents.
-	pub fn Count(&self) -> usize {
-		self.OpenDocuments
-			.lock()
-			.ok()
-			.map(|guard| guard.len())
-			.unwrap_or(0)
-	}
+	pub fn Count(&self) -> usize { self.OpenDocuments.lock().ok().map(|guard| guard.len()).unwrap_or(0) }
 
 	/// Checks if a document exists.
-	pub fn Contains(&self, uri: &str) -> bool {
+	pub fn Contains(&self, uri:&str) -> bool {
 		self.OpenDocuments
 			.lock()
 			.ok()

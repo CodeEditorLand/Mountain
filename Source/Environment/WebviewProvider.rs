@@ -154,14 +154,11 @@
 
 use std::collections::HashMap;
 
-use CommonLibrary::{
-	Error::CommonError::CommonError,
-	Webview::WebviewProvider::WebviewProvider,
-};
+use CommonLibrary::{Error::CommonError::CommonError, Webview::WebviewProvider::WebviewProvider};
 use async_trait::async_trait;
 use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tauri::{Emitter, Manager, WebviewWindow};
 use uuid::Uuid;
 
@@ -171,10 +168,10 @@ use crate::ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO;
 /// Represents a Webview message
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebviewMessage {
-	pub MessageIdentifier: String,
-	pub MessageType: String,
-	pub Payload: Value,
-	pub Source: Option<String>,
+	pub MessageIdentifier:String,
+	pub MessageType:String,
+	pub Payload:Value,
+	pub Source:Option<String>,
 }
 
 /// Webview lifecycle state
@@ -190,9 +187,9 @@ pub enum WebviewLifecycleState {
 
 /// Webview message handler context
 struct WebviewMessageContext {
-	Handle: String,
-	SideCarIdentifier: Option<String>,
-	PendingResponses: HashMap<String, tokio::sync::oneshot::Sender<Value>>,
+	Handle:String,
+	SideCarIdentifier:Option<String>,
+	PendingResponses:HashMap<String, tokio::sync::oneshot::Sender<Value>>,
 }
 
 // Private submodules containing the actual implementation
@@ -208,12 +205,12 @@ impl WebviewProvider for MountainEnvironment {
 	/// Creates a new Webview panel with proper security isolation.
 	async fn CreateWebviewPanel(
 		&self,
-		extension_data_value: Value,
-		view_type: String,
-		title: String,
-		_show_options_value: Value,
-		panel_options_value: Value,
-		content_options_value: Value,
+		extension_data_value:Value,
+		view_type:String,
+		title:String,
+		_show_options_value:Value,
+		panel_options_value:Value,
+		content_options_value:Value,
 	) -> Result<String, CommonError> {
 		lifecycle::create_webview_panel_impl(
 			self,
@@ -228,27 +225,27 @@ impl WebviewProvider for MountainEnvironment {
 	}
 
 	/// Disposes a Webview panel and cleans up all associated resources.
-	async fn DisposeWebviewPanel(&self, handle: String) -> Result<(), CommonError> {
+	async fn DisposeWebviewPanel(&self, handle:String) -> Result<(), CommonError> {
 		lifecycle::dispose_webview_panel_impl(self, handle).await
 	}
 
 	/// Reveals (shows and focuses) a Webview panel.
-	async fn RevealWebviewPanel(&self, handle: String, _show_options_value: Value) -> Result<(), CommonError> {
+	async fn RevealWebviewPanel(&self, handle:String, _show_options_value:Value) -> Result<(), CommonError> {
 		lifecycle::reveal_webview_panel_impl(self, handle, _show_options_value).await
 	}
 
 	/// Sets Webview options (title, icon, etc.).
-	async fn SetWebviewOptions(&self, handle: String, options_value: Value) -> Result<(), CommonError> {
+	async fn SetWebviewOptions(&self, handle:String, options_value:Value) -> Result<(), CommonError> {
 		configuration::set_webview_options_impl(self, handle, options_value).await
 	}
 
 	/// Sets the HTML content of a Webview.
-	async fn SetWebviewHTML(&self, handle: String, html: String) -> Result<(), CommonError> {
+	async fn SetWebviewHTML(&self, handle:String, html:String) -> Result<(), CommonError> {
 		configuration::set_webview_html_impl(self, handle, html).await
 	}
 
 	/// Posts a message to a Webview with proper error handling.
-	async fn PostMessageToWebview(&self, handle: String, message: Value) -> Result<bool, CommonError> {
+	async fn PostMessageToWebview(&self, handle:String, message:Value) -> Result<bool, CommonError> {
 		messaging::post_message_to_webview_impl(self, handle, message).await
 	}
 }

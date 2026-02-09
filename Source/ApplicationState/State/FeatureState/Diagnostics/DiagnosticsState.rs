@@ -31,11 +31,14 @@
 //! - [ ] Implement diagnostics change events
 //! - [ ] Add diagnostics metrics collection
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::{
+	collections::HashMap,
+	sync::{Arc, Mutex as StandardMutex},
+};
+
+use log::debug;
 
 use crate::ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO;
-use log::debug;
 
 /// Diagnostic errors state containing markers by owner and resource.
 #[derive(Clone)]
@@ -43,35 +46,25 @@ pub struct DiagnosticsState {
 	/// Diagnostics map organized by owner and resource URI.
 	///
 	/// Structure: owner -> resource URI -> list of markers
-	pub DiagnosticsMap: Arc<
-		StandardMutex<HashMap<String, HashMap<String, Vec<MarkerDataDTO>>>>,
-	>,
+	pub DiagnosticsMap:Arc<StandardMutex<HashMap<String, HashMap<String, Vec<MarkerDataDTO>>>>>,
 }
 
 impl Default for DiagnosticsState {
 	fn default() -> Self {
-		debug!(
-			"[DiagnosticsState] Initializing default diagnostics state..."
-		);
+		debug!("[DiagnosticsState] Initializing default diagnostics state...");
 
-		Self {
-			DiagnosticsMap: Arc::new(StandardMutex::new(HashMap::new())),
-		}
+		Self { DiagnosticsMap:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
 
 impl DiagnosticsState {
 	/// Gets all diagnostics for all owners and resources.
 	pub fn GetAll(&self) -> HashMap<String, HashMap<String, Vec<MarkerDataDTO>>> {
-		self.DiagnosticsMap
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.DiagnosticsMap.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
 	}
 
 	/// Gets all diagnostics for a specific owner.
-	pub fn GetByOwner(&self, owner: &str) -> HashMap<String, Vec<MarkerDataDTO>> {
+	pub fn GetByOwner(&self, owner:&str) -> HashMap<String, Vec<MarkerDataDTO>> {
 		self.DiagnosticsMap
 			.lock()
 			.ok()
@@ -80,22 +73,16 @@ impl DiagnosticsState {
 	}
 
 	/// Gets all diagnostics for a specific owner and resource.
-	pub fn GetByOwnerAndResource(
-		&self,
-		owner: &str,
-		resource: &str,
-	) -> Vec<MarkerDataDTO> {
+	pub fn GetByOwnerAndResource(&self, owner:&str, resource:&str) -> Vec<MarkerDataDTO> {
 		self.DiagnosticsMap
 			.lock()
 			.ok()
-			.and_then(|guard| {
-				guard.get(owner).and_then(|resources| resources.get(resource).cloned())
-			})
+			.and_then(|guard| guard.get(owner).and_then(|resources| resources.get(resource).cloned()))
 			.unwrap_or_default()
 	}
 
 	/// Sets all diagnostics for a specific owner.
-	pub fn SetByOwner(&self, owner: String, diagnostics: HashMap<String, Vec<MarkerDataDTO>>) {
+	pub fn SetByOwner(&self, owner:String, diagnostics:HashMap<String, Vec<MarkerDataDTO>>) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.insert(owner, diagnostics);
 			debug!("[DiagnosticsState] Diagnostics updated for owner");
@@ -103,23 +90,15 @@ impl DiagnosticsState {
 	}
 
 	/// Sets diagnostics for a specific owner and resource.
-	pub fn SetByOwnerAndResource(
-		&self,
-		owner: String,
-		resource: String,
-		markers: Vec<MarkerDataDTO>,
-	) {
+	pub fn SetByOwnerAndResource(&self, owner:String, resource:String, markers:Vec<MarkerDataDTO>) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
-			guard
-				.entry(owner)
-				.or_insert_with(HashMap::new)
-				.insert(resource, markers);
+			guard.entry(owner).or_insert_with(HashMap::new).insert(resource, markers);
 			debug!("[DiagnosticsState] Diagnostics updated for owner and resource");
 		}
 	}
 
 	/// Clears all diagnostics for a specific owner.
-	pub fn ClearByOwner(&self, owner: &str) {
+	pub fn ClearByOwner(&self, owner:&str) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.remove(owner);
 			debug!("[DiagnosticsState] Diagnostics cleared for owner: {}", owner);
@@ -127,13 +106,11 @@ impl DiagnosticsState {
 	}
 
 	/// Clears diagnostics for a specific owner and resource.
-	pub fn ClearByOwnerAndResource(&self, owner: &str, resource: &str) {
+	pub fn ClearByOwnerAndResource(&self, owner:&str, resource:&str) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			if let Some(resources) = guard.get_mut(owner) {
 				resources.remove(resource);
-				debug!(
-					"[DiagnosticsState] Diagnostics cleared for owner and resource"
-				);
+				debug!("[DiagnosticsState] Diagnostics cleared for owner and resource");
 			}
 		}
 	}

@@ -9,13 +9,13 @@ use serde::{Deserialize, Serialize};
 
 /// Common request/response structures
 pub mod common {
-    use super::*;
+	use super::*;
 
-    pub struct Request<T> {
-        pub data: T,
-    }
+	pub struct Request<T> {
+		pub data:T,
+	}
 
-    pub struct Response<T> {
-        pub data: T,
-    }
+	pub struct Response<T> {
+		pub data:T,
+	}
 }

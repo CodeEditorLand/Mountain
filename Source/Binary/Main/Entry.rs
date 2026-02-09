@@ -2,8 +2,8 @@
 //!
 //! ## RESPONSIBILITIES
 //!
-//! Main application entry point that orchestrates the complete application lifecycle.
-//! This function coordinates:
+//! Main application entry point that orchestrates the complete application
+//! lifecycle. This function coordinates:
 //! - Tokio runtime creation and management
 //! - CLI argument parsing
 //! - Application state initialization
@@ -23,7 +23,7 @@
 //!                                           │
 //!                                           ▼
 //!                                   Graceful Shutdown
-//!```
+//! ```
 //!
 //! ## KEY COMPONENTS
 //!
@@ -60,7 +60,6 @@ use std::sync::Arc;
 
 use log::{debug, error, info, trace, warn};
 use tauri::{App, RunEvent, Wry};
-
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 
 use crate::{
@@ -94,7 +93,6 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track,
 };
-
 use super::AppLifecycle::AppLifecycleSetup;
 
 // Note: Tauri commands are used with fully qualified paths in generate_handler

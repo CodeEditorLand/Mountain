@@ -49,7 +49,7 @@ use log::{error, warn};
 /// # Behavior
 /// - Retains only entries where validator returns true
 /// - In-place modification of the HashMap
-pub fn validate_and_clean_state<T>(state_data: &mut HashMap<String, T>, validator: impl Fn(&T) -> bool) {
+pub fn validate_and_clean_state<T>(state_data:&mut HashMap<String, T>, validator:impl Fn(&T) -> bool) {
 	let original_len = state_data.len();
 	state_data.retain(|_, value| validator(value));
 	let removed_count = original_len - state_data.len();
@@ -82,14 +82,13 @@ pub fn validate_and_clean_state<T>(state_data: &mut HashMap<String, T>, validato
 /// - Waits for result or timeout
 /// - Returns error if timeout occurs
 pub fn safe_state_operation_with_timeout<T, F>(
-	operation: F,
-	timeout_ms: u64,
-	operation_name: &str,
+	operation:F,
+	timeout_ms:u64,
+	operation_name:&str,
 ) -> Result<T, CommonError>
 where
 	F: FnOnce() -> Result<T, CommonError> + Send + 'static,
-	T: Send + 'static,
-{
+	T: Send + 'static, {
 	let (sender, receiver) = std::sync::mpsc::channel();
 
 	std::thread::spawn(move || {
@@ -100,13 +99,8 @@ where
 	match receiver.recv_timeout(std::time::Duration::from_millis(timeout_ms)) {
 		Ok(result) => result,
 		Err(_) => {
-			error!(
-				"[RecoverState] Operation '{}' timed out after {}ms",
-				operation_name, timeout_ms
-			);
-			Err(CommonError::Unknown {
-				Description: format!("Operation '{}' timed out", operation_name),
-			})
+			error!("[RecoverState] Operation '{}' timed out after {}ms", operation_name, timeout_ms);
+			Err(CommonError::Unknown { Description:format!("Operation '{}' timed out", operation_name) })
 		},
 	}
 }
@@ -131,13 +125,12 @@ where
 /// - Starts with 100ms delay
 /// - Logs each attempt and failure
 pub async fn recover_state_with_backoff<F, T>(
-	operation: F,
-	max_attempts: u32,
-	operation_name: &str,
+	operation:F,
+	max_attempts:u32,
+	operation_name:&str,
 ) -> Result<T, CommonError>
 where
-	F: Fn() -> Result<T, CommonError> + Send,
-{
+	F: Fn() -> Result<T, CommonError> + Send, {
 	let mut attempt = 0;
 	let mut delay_ms = 100;
 
@@ -165,7 +158,7 @@ where
 	}
 
 	Err(CommonError::Unknown {
-		Description: format!(
+		Description:format!(
 			"Failed to recover state for '{}' after {} attempts",
 			operation_name, max_attempts
 		),

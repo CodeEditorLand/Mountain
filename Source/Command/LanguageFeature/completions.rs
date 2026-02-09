@@ -5,10 +5,7 @@
 use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::{
-		DTO::{
-			CompletionContextDTO::CompletionContextDTO,
-			PositionDTO::PositionDTO,
-		},
+		DTO::{CompletionContextDTO::CompletionContextDTO, PositionDTO::PositionDTO},
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 };
@@ -19,12 +16,13 @@ use url::Url;
 
 use super::{invoke_provider::invoke_provider, validation::validate_language_feature_request};
 
-/// Implementation of completions command - called by the command wrapper in the parent module.
+/// Implementation of completions command - called by the command wrapper in the
+/// parent module.
 pub(super) async fn provide_completions_impl(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
-	context: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
+	context:Value,
 ) -> Result<Value, String> {
 	debug!("[Language Feature] Providing completions for: {} at {:?}", uri, position);
 
@@ -32,16 +30,18 @@ pub(super) async fn provide_completions_impl(
 
 	let document_uri = Url::parse(&uri).map_err(|error| error.to_string())?;
 
-	let position_dto: PositionDTO = serde_json::from_value(position.clone())
-		.map_err(|error| format!("Failed to parse position: {}", error))?;
+	let position_dto:PositionDTO =
+		serde_json::from_value(position.clone()).map_err(|error| format!("Failed to parse position: {}", error))?;
 
-	let context_dto: CompletionContextDTO = serde_json::from_value(context.clone())
-		.map_err(|error| format!("Failed to parse context: {}", error))?;
+	let context_dto:CompletionContextDTO =
+		serde_json::from_value(context.clone()).map_err(|error| format!("Failed to parse context: {}", error))?;
 
 	invoke_provider(application_handle, |provider| {
 		async move {
 			// Cancellation token currently not used, pass None
-			let result = provider.ProvideCompletions(document_uri, position_dto, context_dto, None).await?;
+			let result = provider
+				.ProvideCompletions(document_uri, position_dto, context_dto, None)
+				.await?;
 			Ok(serde_json::to_value(result)?)
 		}
 	})

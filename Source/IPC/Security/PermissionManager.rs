@@ -7,7 +7,8 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //! This module is the security enforcement layer in the IPC architecture,
-//! ensuring that all operations are authorized based on user roles and permissions.
+//! ensuring that all operations are authorized based on user roles and
+//! permissions.
 //!
 //! ## KEY COMPONENTS
 //!
@@ -35,19 +36,19 @@
 //! - Add permission alias support
 //! - Implement group-based permissions
 
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use log::debug;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
-use super::{Role::Role, Permission::Permission};
+use super::{Permission::Permission, Role::Role};
 
 /// Security context for permission validation
 ///
 /// This structure contains all information needed to validate whether an
-/// operation should be allowed based on the requester's identity and permissions.
+/// operation should be allowed based on the requester's identity and
+/// permissions.
 ///
 /// ## Context Flow
 ///
@@ -65,57 +66,42 @@ use super::{Role::Role, Permission::Permission};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityContext {
 	/// User identifier requesting the operation
-	pub user_id: String,
+	pub user_id:String,
 
 	/// List of roles assigned to the user
-	pub roles: Vec<String>,
+	pub roles:Vec<String>,
 
 	/// Direct permissions granted to the user
-	pub permissions: Vec<String>,
+	pub permissions:Vec<String>,
 
 	/// IP address of the requester (for location-based restrictions)
-	pub ip_address: String,
+	pub ip_address:String,
 
 	/// Timestamp of the request (for time-based restrictions)
-	pub timestamp: std::time::SystemTime,
+	pub timestamp:std::time::SystemTime,
 }
 
 impl SecurityContext {
 	/// Create a new security context
-	pub fn new(
-		user_id: String,
-		roles: Vec<String>,
-		permissions: Vec<String>,
-		ip_address: String,
-	) -> Self {
-		Self {
-			user_id,
-			roles,
-			permissions,
-			ip_address,
-			timestamp: std::time::SystemTime::now(),
-		}
+	pub fn new(user_id:String, roles:Vec<String>, permissions:Vec<String>, ip_address:String) -> Self {
+		Self { user_id, roles, permissions, ip_address, timestamp:std::time::SystemTime::now() }
 	}
 
 	/// Check if user has a specific role
-	pub fn has_role(&self, role: &str) -> bool {
-		self.roles.iter().any(|r| r == role)
-	}
+	pub fn has_role(&self, role:&str) -> bool { self.roles.iter().any(|r| r == role) }
 
 	/// Check if user has a specific permission
-	pub fn has_permission(&self, permission: &str) -> bool {
-		self.permissions.iter().any(|p| p == permission)
-	}
+	pub fn has_permission(&self, permission:&str) -> bool { self.permissions.iter().any(|p| p == permission) }
 
 	/// Create a default IPC context (used for local IPC connections)
 	/// IPC connections use loopback address for security (localhost only)
 	pub fn ipc_default() -> Self {
 		Self {
-			user_id: "ipc-connection".to_string(),
-			roles: vec!["user".to_string()],
-			permissions: vec![],
-			ip_address: "127.0.0.1".to_string(),
-			timestamp: std::time::SystemTime::now(),
+			user_id:"ipc-connection".to_string(),
+			roles:vec!["user".to_string()],
+			permissions:vec![],
+			ip_address:"127.0.0.1".to_string(),
+			timestamp:std::time::SystemTime::now(),
 		}
 	}
 }
@@ -127,36 +113,25 @@ impl SecurityContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityEvent {
 	/// Type of security event
-	pub event_type: SecurityEventType,
+	pub event_type:SecurityEventType,
 
 	/// User identifier who triggered the event
-	pub user_id: String,
+	pub user_id:String,
 
 	/// Operation that was attempted
-	pub operation: String,
+	pub operation:String,
 
 	/// When the event occurred
-	pub timestamp: std::time::SystemTime,
+	pub timestamp:std::time::SystemTime,
 
 	/// Additional details about the event
-	pub details: Option<String>,
+	pub details:Option<String>,
 }
 
 impl SecurityEvent {
 	/// Create a new security event
-	pub fn new(
-		event_type: SecurityEventType,
-		user_id: String,
-		operation: String,
-		details: Option<String>,
-	) -> Self {
-		Self {
-			event_type,
-			user_id,
-			operation,
-			timestamp: std::time::SystemTime::now(),
-			details,
-		}
+	pub fn new(event_type:SecurityEventType, user_id:String, operation:String, details:Option<String>) -> Self {
+		Self { event_type, user_id, operation, timestamp:std::time::SystemTime::now(), details }
 	}
 }
 
@@ -210,7 +185,8 @@ pub enum SecurityEventType {
 ///
 /// - **user**: Read-only access to files, configuration, and storage
 /// - **developer**: Read/write access to files and storage, configuration read
-/// - **admin**: Full access including system operations and configuration updates
+/// - **admin**: Full access including system operations and configuration
+///   updates
 ///
 /// ## Default Permissions
 ///
@@ -221,13 +197,13 @@ pub enum SecurityEventType {
 /// - system.external
 pub struct PermissionManager {
 	/// Role definitions with associated permissions
-	roles: Arc<RwLock<HashMap<String, Role>>>,
+	roles:Arc<RwLock<HashMap<String, Role>>>,
 
 	/// Permission definitions with descriptions
-	permissions: Arc<RwLock<HashMap<String, Permission>>>,
+	permissions:Arc<RwLock<HashMap<String, Permission>>>,
 
 	/// Security audit log (limited to last 1000 events)
-	audit_log: Arc<RwLock<Vec<SecurityEvent>>>,
+	audit_log:Arc<RwLock<Vec<SecurityEvent>>>,
 }
 
 impl PermissionManager {
@@ -236,9 +212,9 @@ impl PermissionManager {
 		debug!("[PermissionManager] Creating new PermissionManager instance");
 
 		Self {
-			roles: Arc::new(RwLock::new(HashMap::new())),
-			permissions: Arc::new(RwLock::new(HashMap::new())),
-			audit_log: Arc::new(RwLock::new(Vec::new())),
+			roles:Arc::new(RwLock::new(HashMap::new())),
+			permissions:Arc::new(RwLock::new(HashMap::new())),
+			audit_log:Arc::new(RwLock::new(Vec::new())),
 		}
 	}
 
@@ -248,7 +224,8 @@ impl PermissionManager {
 	/// permissions to perform the specified operation.
 	///
 	/// ## Parameters
-	/// - `operation`: The operation being attempted (e.g., "file:write", "config:update")
+	/// - `operation`: The operation being attempted (e.g., "file:write",
+	///   "config:update")
 	/// - `context`: The security context containing user information
 	///
 	/// ## Returns
@@ -261,20 +238,17 @@ impl PermissionManager {
 	/// let context = SecurityContext::ipc_default();
 	/// permission_manager.validate_permission("file:read", &context).await?;
 	/// ```
-	pub async fn validate_permission(&self, operation: &str, context: &SecurityContext) -> Result<(), String> {
+	pub async fn validate_permission(&self, operation:&str, context:&SecurityContext) -> Result<(), String> {
 		// Check if operation requires specific permissions
 		let required_permissions = self.get_required_permissions(operation).await;
 
 		if required_permissions.is_empty() {
-			debug!(
-				"[PermissionManager] Operation '{}' requires no special permissions",
-				operation
-			);
+			debug!("[PermissionManager] Operation '{}' requires no special permissions", operation);
 			return Ok(()); // No specific permissions required
 		}
 
 		// Collect all user permissions (direct + role-based)
-		let mut user_permissions: Vec<String> = context.permissions.iter().cloned().collect();
+		let mut user_permissions:Vec<String> = context.permissions.iter().cloned().collect();
 
 		for role in context.roles.iter() {
 			let role_perms = self.get_role_permissions(role).await;
@@ -292,11 +266,11 @@ impl PermissionManager {
 
 				// Log permission denial
 				self.log_security_event(SecurityEvent {
-					event_type: SecurityEventType::PermissionDenied,
-					user_id: context.user_id.clone(),
-					operation: operation.to_string(),
-					timestamp: std::time::SystemTime::now(),
-					details: Some(format!("Permission denied: {}", error)),
+					event_type:SecurityEventType::PermissionDenied,
+					user_id:context.user_id.clone(),
+					operation:operation.to_string(),
+					timestamp:std::time::SystemTime::now(),
+					details:Some(format!("Permission denied: {}", error)),
 				})
 				.await;
 
@@ -306,11 +280,11 @@ impl PermissionManager {
 
 		// Log successful access
 		self.log_security_event(SecurityEvent {
-			event_type: SecurityEventType::AccessGranted,
-			user_id: context.user_id.clone(),
-			operation: operation.to_string(),
-			timestamp: std::time::SystemTime::now(),
-			details: Some(format!("Access granted for operation: {}", operation)),
+			event_type:SecurityEventType::AccessGranted,
+			user_id:context.user_id.clone(),
+			operation:operation.to_string(),
+			timestamp:std::time::SystemTime::now(),
+			details:Some(format!("Access granted for operation: {}", operation)),
 		})
 		.await;
 
@@ -336,8 +310,7 @@ impl PermissionManager {
 	/// | configuration:update | config.update |
 	/// | storage:set | storage.write |
 	/// | native:openExternal | system.external |
-	///
-	async fn get_required_permissions(&self, operation: &str) -> Vec<String> {
+	async fn get_required_permissions(&self, operation:&str) -> Vec<String> {
 		match operation {
 			"file:write" | "file:delete" => vec!["file.write".to_string()],
 			"configuration:update" => vec!["config.update".to_string()],
@@ -349,16 +322,13 @@ impl PermissionManager {
 	}
 
 	/// Get permissions for a role
-	async fn get_role_permissions(&self, role_name: &str) -> Vec<String> {
+	async fn get_role_permissions(&self, role_name:&str) -> Vec<String> {
 		let roles = self.roles.read().await;
-		roles
-			.get(role_name)
-			.map(|role| role.permissions.clone())
-			.unwrap_or_default()
+		roles.get(role_name).map(|role| role.permissions.clone()).unwrap_or_default()
 	}
 
 	/// Log security event
-	pub async fn log_security_event(&self, event: SecurityEvent) {
+	pub async fn log_security_event(&self, event:SecurityEvent) {
 		let mut audit_log = self.audit_log.write().await;
 		audit_log.push(event.clone());
 
@@ -375,7 +345,7 @@ impl PermissionManager {
 					event.operation,
 					event.details
 				);
-			}
+			},
 			SecurityEventType::SecurityViolation => {
 				log::error!(
 					"[SecurityEvent] Security violation - User: {}, Operation: {}, Details: {:?}",
@@ -383,14 +353,14 @@ impl PermissionManager {
 					event.operation,
 					event.details
 				);
-			}
+			},
 			SecurityEventType::AccessGranted => {
 				log::info!(
 					"[SecurityEvent] Access granted - User: {}, Operation: {}",
 					event.user_id,
 					event.operation
 				);
-			}
+			},
 			_ => {
 				log::debug!(
 					"[SecurityEvent] {:?} - User: {}, Operation: {}",
@@ -398,14 +368,14 @@ impl PermissionManager {
 					event.user_id,
 					event.operation
 				);
-			}
+			},
 		}
 	}
 
 	/// Get security audit log
 	///
 	/// Returns the most recent security events up to the specified limit.
-	pub async fn get_audit_log(&self, limit: usize) -> Vec<SecurityEvent> {
+	pub async fn get_audit_log(&self, limit:usize) -> Vec<SecurityEvent> {
 		let audit_log = self.audit_log.read().await;
 		audit_log.iter().rev().take(limit).cloned().collect()
 	}
@@ -435,9 +405,9 @@ impl PermissionManager {
 			permissions.insert(
 				name.to_string(),
 				Permission {
-					name: name.to_string(),
-					description: description.to_string(),
-					category: "standard".to_string(),
+					name:name.to_string(),
+					description:description.to_string(),
+					category:"standard".to_string(),
 				},
 			);
 		}
@@ -467,18 +437,22 @@ impl PermissionManager {
 			roles.insert(
 				name.to_string(),
 				Role {
-					name: name.to_string(),
-					permissions: role_permissions.iter().map(|p| p.to_string()).collect(),
-					description: format!("{} role with standard permissions", name),
+					name:name.to_string(),
+					permissions:role_permissions.iter().map(|p| p.to_string()).collect(),
+					description:format!("{} role with standard permissions", name),
 				},
 			);
 		}
 
-		debug!("[PermissionManager] Initialized {} permissions and {} roles", permissions.len(), roles.len());
+		debug!(
+			"[PermissionManager] Initialized {} permissions and {} roles",
+			permissions.len(),
+			roles.len()
+		);
 	}
 
 	/// Add a custom role
-	pub async fn add_role(&self, role: Role) {
+	pub async fn add_role(&self, role:Role) {
 		let role_name = role.name.clone();
 		let mut roles = self.roles.write().await;
 		roles.insert(role_name.clone(), role);
@@ -486,7 +460,7 @@ impl PermissionManager {
 	}
 
 	/// Add a custom permission
-	pub async fn add_permission(&self, permission: Permission) {
+	pub async fn add_permission(&self, permission:Permission) {
 		let permission_name = permission.name.clone();
 		let mut permissions = self.permissions.write().await;
 		permissions.insert(permission_name.clone(), permission);
@@ -504,7 +478,7 @@ impl PermissionManager {
 	pub async fn get_audit_log_stats(&self) -> (usize, Vec<(&'static str, usize)>) {
 		let audit_log = self.audit_log.read().await;
 
-		let mut type_counts: Vec<(&'static str, usize)> = vec![
+		let mut type_counts:Vec<(&'static str, usize)> = vec![
 			("PermissionDenied", 0),
 			("AccessGranted", 0),
 			("ConfigurationChange", 0),
@@ -533,13 +507,13 @@ impl PermissionManager {
 mod tests {
 	use super::*;
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_permission_manager_creation() {
 		let manager = PermissionManager::new();
 		assert_eq!(manager.get_audit_log(10).await.len(), 0);
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_initialize_defaults() {
 		let manager = PermissionManager::new();
 		manager.initialize_defaults().await;
@@ -549,7 +523,7 @@ mod tests {
 		assert!(!log.is_empty());
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_security_context_ipc_default() {
 		let context = SecurityContext::ipc_default();
 		assert_eq!(context.user_id, "ipc-connection");
@@ -557,7 +531,7 @@ mod tests {
 		assert_eq!(context.ip_address, "127.0.0.1");
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_permission_validation_access_granted() {
 		let manager = PermissionManager::new();
 		manager.initialize_defaults().await;
@@ -578,7 +552,7 @@ mod tests {
 		assert!(log.iter().any(|e| matches!(e.event_type, SecurityEventType::AccessGranted)));
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_permission_validation_access_denied() {
 		let manager = PermissionManager::new();
 		manager.initialize_defaults().await;
@@ -599,7 +573,7 @@ mod tests {
 		assert!(log.iter().any(|e| matches!(e.event_type, SecurityEventType::PermissionDenied)));
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_operations_without_permissions() {
 		let manager = PermissionManager::new();
 		manager.initialize_defaults().await;
@@ -611,7 +585,7 @@ mod tests {
 		assert!(result.is_ok());
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_audit_log_limit() {
 		let manager = PermissionManager::new();
 		manager.initialize_defaults().await;
@@ -620,11 +594,11 @@ mod tests {
 		for i in 0..1100 {
 			manager
 				.log_security_event(SecurityEvent {
-					event_type: SecurityEventType::AccessGranted,
-					user_id: format!("user-{}", i),
-					operation: "test".to_string(),
-					timestamp: std::time::SystemTime::now(),
-					details: None,
+					event_type:SecurityEventType::AccessGranted,
+					user_id:format!("user-{}", i),
+					operation:"test".to_string(),
+					timestamp:std::time::SystemTime::now(),
+					details:None,
 				})
 				.await;
 		}
@@ -634,15 +608,15 @@ mod tests {
 		assert_eq!(log.len(), 1000);
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_custom_role() {
 		let manager = PermissionManager::new();
 		manager.initialize_defaults().await;
 
 		let custom_role = Role {
-			name: "custom".to_string(),
-			permissions: vec!["file.read".to_string()],
-			description: "Custom role".to_string(),
+			name:"custom".to_string(),
+			permissions:vec!["file.read".to_string()],
+			description:"Custom role".to_string(),
 		};
 
 		manager.add_role(custom_role).await;

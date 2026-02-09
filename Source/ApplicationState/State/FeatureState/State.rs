@@ -4,7 +4,8 @@
 //! Combines all feature-related state components into a single state struct.
 //!
 //! ## ARCHITECTURAL ROLE
-//! State is the main composite struct that combines all FeatureState components:
+//! State is the main composite struct that combines all FeatureState
+//! components:
 //! - Diagnostics: Diagnostic errors state
 //! - Documents: Open documents state
 //! - Terminals: Terminal instances state
@@ -34,40 +35,41 @@
 //! - [ ] Implement feature lifecycle events
 //! - [ ] Add feature state metrics collection
 
-use super::{
-    Diagnostics::DiagnosticsState::DiagnosticsState,
-    Documents::DocumentState::DocumentState,
-    Markers::MarkerState::MarkerState,
-    OutputChannels::OutputChannelState::OutputChannelState,
-    Terminals::TerminalState::TerminalState,
-    TreeViews::TreeViewState::TreeViewState,
-    Webviews::WebviewState::WebviewState,
-};
 use log::debug;
+
+use super::{
+	Diagnostics::DiagnosticsState::DiagnosticsState,
+	Documents::DocumentState::DocumentState,
+	Markers::MarkerState::MarkerState,
+	OutputChannels::OutputChannelState::OutputChannelState,
+	Terminals::TerminalState::TerminalState,
+	TreeViews::TreeViewState::TreeViewState,
+	Webviews::WebviewState::WebviewState,
+};
 
 /// Feature state combining all feature-related components.
 #[derive(Clone)]
 pub struct State {
 	/// Diagnostic errors state.
-	pub Diagnostics: DiagnosticsState,
+	pub Diagnostics:DiagnosticsState,
 
 	/// Open documents state.
-	pub Documents: DocumentState,
+	pub Documents:DocumentState,
 
 	/// Terminal instances state.
-	pub Terminals: TerminalState,
+	pub Terminals:TerminalState,
 
 	/// Webview panels state.
-	pub Webviews: WebviewState,
+	pub Webviews:WebviewState,
 
 	/// Tree view providers state.
-	pub TreeViews: TreeViewState,
+	pub TreeViews:TreeViewState,
 
 	/// Output channel state.
-	pub OutputChannels: OutputChannelState,
+	pub OutputChannels:OutputChannelState,
 
 	/// Marker-related state.
-	pub Markers: MarkerState,
+	pub Markers:MarkerState,
 }
 
 impl Default for State {
@@ -75,13 +77,13 @@ impl Default for State {
 		debug!("[FeatureState::State] Initializing default feature state...");
 
 		Self {
-			Diagnostics: Default::default(),
-			Documents: Default::default(),
-			Terminals: Default::default(),
-			Webviews: Default::default(),
-			TreeViews: Default::default(),
-			OutputChannels: Default::default(),
-			Markers: Default::default(),
+			Diagnostics:Default::default(),
+			Documents:Default::default(),
+			Terminals:Default::default(),
+			Webviews:Default::default(),
+			TreeViews:Default::default(),
+			OutputChannels:Default::default(),
+			Markers:Default::default(),
 		}
 	}
 }

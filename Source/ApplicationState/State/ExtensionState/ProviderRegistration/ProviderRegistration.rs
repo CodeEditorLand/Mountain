@@ -30,26 +30,27 @@
 //! - [ ] Implement provider lifecycle events
 //! - [ ] Add provider metrics collection
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::{
+	collections::HashMap,
+	sync::{Arc, Mutex as StandardMutex},
+};
+
+use log::debug;
 
 use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
-use log::debug;
 
 /// Language provider registration state.
 #[derive(Clone)]
 pub struct Registration {
 	/// Registered language providers by handle.
-	pub LanguageProviders: Arc<StandardMutex<HashMap<u32, ProviderRegistrationDTO>>>,
+	pub LanguageProviders:Arc<StandardMutex<HashMap<u32, ProviderRegistrationDTO>>>,
 }
 
 impl Default for Registration {
 	fn default() -> Self {
 		debug!("[ProviderRegistration] Initializing default provider registration...");
 
-		Self {
-			LanguageProviders: Arc::new(StandardMutex::new(HashMap::new())),
-		}
+		Self { LanguageProviders:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
 
@@ -64,15 +65,12 @@ impl Registration {
 	}
 
 	/// Gets a provider by its handle.
-	pub fn GetProvider(&self, handle: u32) -> Option<ProviderRegistrationDTO> {
-		self.LanguageProviders
-			.lock()
-			.ok()
-			.and_then(|guard| guard.get(&handle).cloned())
+	pub fn GetProvider(&self, handle:u32) -> Option<ProviderRegistrationDTO> {
+		self.LanguageProviders.lock().ok().and_then(|guard| guard.get(&handle).cloned())
 	}
 
 	/// Registers a language provider.
-	pub fn RegisterProvider(&self, handle: u32, provider: ProviderRegistrationDTO) {
+	pub fn RegisterProvider(&self, handle:u32, provider:ProviderRegistrationDTO) {
 		if let Ok(mut guard) = self.LanguageProviders.lock() {
 			guard.insert(handle, provider);
 			debug!("[ProviderRegistration] Provider registered with handle: {}", handle);
@@ -80,28 +78,19 @@ impl Registration {
 	}
 
 	/// Unregisters a language provider.
-	pub fn UnregisterProvider(&self, handle: u32) {
+	pub fn UnregisterProvider(&self, handle:u32) {
 		if let Ok(mut guard) = self.LanguageProviders.lock() {
 			guard.remove(&handle);
-			debug!(
-				"[ProviderRegistration] Provider unregistered with handle: {}",
-				handle
-			);
+			debug!("[ProviderRegistration] Provider unregistered with handle: {}", handle);
 		}
 	}
 
 	/// Gets all providers for a specific language.
-	pub fn GetProvidersForLanguage(&self, language: &str) -> Vec<ProviderRegistrationDTO> {
+	pub fn GetProvidersForLanguage(&self, language:&str) -> Vec<ProviderRegistrationDTO> {
 		self.LanguageProviders
 			.lock()
 			.ok()
-			.map(|guard| {
-				guard
-					.values()
-					.filter(|p| p.MatchesSelector("", language))
-					.cloned()
-					.collect()
-			})
+			.map(|guard| guard.values().filter(|p| p.MatchesSelector("", language)).cloned().collect())
 			.unwrap_or_default()
 	}
 }

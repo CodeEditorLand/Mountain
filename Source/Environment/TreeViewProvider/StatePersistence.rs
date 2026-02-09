@@ -12,14 +12,16 @@ use crate::Environment::Utility;
 /// Persists the current state of a tree view.
 /// Saves the expansion, selection, and other state for later restoration.
 pub(super) async fn persist_tree_view_state(
-	env: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	view_identifier: String,
+	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	view_identifier:String,
 ) -> Result<serde_json::Value, CommonError> {
 	info!("[TreeViewProvider] Persisting state for view '{}'", view_identifier);
 
 	let tree_views = env
 		.ApplicationState
-		.Feature.TreeViews.ActiveTreeViews
+		.Feature
+		.TreeViews
+		.ActiveTreeViews
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -35,21 +37,23 @@ pub(super) async fn persist_tree_view_state(
 		})
 	});
 
-	state.ok_or(CommonError::TreeViewProviderNotFound { ViewIdentifier: view_identifier })
+	state.ok_or(CommonError::TreeViewProviderNotFound { ViewIdentifier:view_identifier })
 }
 
 /// Restores a previously persisted tree view state.
 /// Restores expansion, selection, and other state from a JSON representation.
 pub(super) async fn restore_tree_view_state(
-	env: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	view_identifier: String,
-	state_value: serde_json::Value,
+	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	view_identifier:String,
+	state_value:serde_json::Value,
 ) -> Result<(), CommonError> {
 	info!("[TreeViewProvider] Restoring state for view '{}'", view_identifier);
 
 	let mut tree_views = env
 		.ApplicationState
-		.Feature.TreeViews.ActiveTreeViews
+		.Feature
+		.TreeViews
+		.ActiveTreeViews
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -78,12 +82,12 @@ pub(super) async fn restore_tree_view_state(
 			)
 			.map_err(|Error| {
 				CommonError::UserInterfaceInteraction {
-					Reason: format!("Failed to emit restore state event: {}", Error),
+					Reason:format!("Failed to emit restore state event: {}", Error),
 				}
 			})?;
 
 		Ok(())
 	} else {
-		Err(CommonError::TreeViewProviderNotFound { ViewIdentifier: view_identifier })
+		Err(CommonError::TreeViewProviderNotFound { ViewIdentifier:view_identifier })
 	}
 }

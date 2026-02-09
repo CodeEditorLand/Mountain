@@ -11,7 +11,8 @@
 //!
 //! ## KEY COMPONENTS
 //!
-//! - **PermissionManager**: Validates permissions and manages role/permission definitions
+//! - **PermissionManager**: Validates permissions and manages role/permission
+//!   definitions
 //! - **Role**: Role definitions with associated permissions
 //! - **Permission**: Individual permission definitions
 //!
@@ -20,7 +21,8 @@
 //! debugging access denials.
 //!
 //! ## LOGGING
-//! Info-level security event logging, debug for permission checks, error for violations.
+//! Info-level security event logging, debug for permission checks, error for
+//! violations.
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Permission definitions cached in RwLock for fast concurrent access

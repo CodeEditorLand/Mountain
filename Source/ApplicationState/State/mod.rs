@@ -38,7 +38,8 @@
 //! error handling via `MapLockError` helpers.
 //!
 //! ## LOGGING
-//! State operations are logged at appropriate levels (debug, info, warn, error).
+//! State operations are logged at appropriate levels (debug, info, warn,
+//! error).
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Lock mutexes briefly and release immediately

@@ -61,7 +61,8 @@
 //! 4. **Parsing**: Deserialize `package.json` into
 //!    `ExtensionDescriptionStateDTO`
 //! 5. **Augmentation**: Add `ExtensionLocation` (disk path) to metadata
-//! 6. **Storage**: Insert into `ApplicationState.Extension.ScannedExtensions` map
+//! 6. **Storage**: Insert into `ApplicationState.Extension.ScannedExtensions`
+//!    map
 //!
 //! ## CONFIGURATION MERGING
 //!
@@ -123,10 +124,7 @@ use serde_json::{Map, Value};
 use tauri::Manager;
 
 use crate::{
-	ApplicationState::{
-		ApplicationState,
-		DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
-	},
+	ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO},
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
@@ -202,7 +200,9 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 	let mut MergedDefaults = Map::new();
 
 	let Extensions = State
-		.Extension.ScannedExtensions.ScannedExtensions
+		.Extension
+		.ScannedExtensions
+		.ScannedExtensions
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

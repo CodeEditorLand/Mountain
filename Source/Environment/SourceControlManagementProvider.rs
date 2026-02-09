@@ -270,13 +270,17 @@ impl SourceControlManagementProvider for MountainEnvironment {
 		};
 
 		self.ApplicationState
-			.Feature.Markers.SourceControlManagementProviders
+			.Feature
+			.Markers
+			.SourceControlManagementProviders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(Handle, ProviderState.clone());
 
 		self.ApplicationState
-			.Feature.Markers.SourceControlManagementGroups
+			.Feature
+			.Markers
+			.SourceControlManagementGroups
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(Handle, Default::default());
@@ -297,13 +301,17 @@ impl SourceControlManagementProvider for MountainEnvironment {
 		);
 
 		self.ApplicationState
-			.Feature.Markers.SourceControlManagementProviders
+			.Feature
+			.Markers
+			.SourceControlManagementProviders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&ProviderHandle);
 
 		self.ApplicationState
-			.Feature.Markers.SourceControlManagementGroups
+			.Feature
+			.Markers
+			.SourceControlManagementGroups
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&ProviderHandle);
@@ -322,7 +330,9 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		let mut ProvidersGuard = self
 			.ApplicationState
-			.Feature.Markers.SourceControlManagementProviders
+			.Feature
+			.Markers
+			.SourceControlManagementProviders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -363,7 +373,9 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		let mut GroupsGuard = self
 			.ApplicationState
-			.Feature.Markers.SourceControlManagementGroups
+			.Feature
+			.Markers
+			.SourceControlManagementGroups
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -409,7 +421,9 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		let mut ProvidersGuard = self
 			.ApplicationState
-			.Feature.Markers.SourceControlManagementProviders
+			.Feature
+			.Markers
+			.SourceControlManagementProviders
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

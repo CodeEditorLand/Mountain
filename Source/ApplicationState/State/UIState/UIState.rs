@@ -32,8 +32,10 @@
 //! - [ ] Implement UI request timeout handling
 //! - [ ] Add UI request metrics collection
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::{
+	collections::HashMap,
+	sync::{Arc, Mutex as StandardMutex},
+};
 
 use CommonLibrary::Error::CommonError::CommonError;
 use log::debug;
@@ -44,25 +46,15 @@ pub struct State {
 	/// Pending user interface requests organized by request ID.
 	///
 	/// Each request has a oneshot sender for sending the response back.
-	pub PendingUserInterfaceRequests: Arc<
-		StandardMutex<
-			HashMap<
-				String,
-				tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>,
-			>,
-		>,
-	>,
+	pub PendingUserInterfaceRequests:
+		Arc<StandardMutex<HashMap<String, tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>>>>,
 }
 
 impl Default for State {
 	fn default() -> Self {
 		debug!("[UIState] Initializing default UI state...");
 
-		Self {
-			PendingUserInterfaceRequests: Arc::new(StandardMutex::new(
-				HashMap::new(),
-			)),
-		}
+		Self { PendingUserInterfaceRequests:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
 
@@ -80,8 +72,8 @@ impl State {
 	/// Adds a pending user interface request.
 	pub fn AddPendingRequest(
 		&self,
-		id: String,
-		sender: tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>,
+		id:String,
+		sender:tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>,
 	) {
 		if let Ok(mut guard) = self.PendingUserInterfaceRequests.lock() {
 			guard.insert(id, sender);
@@ -92,10 +84,8 @@ impl State {
 	/// Removes a pending user interface request by its ID.
 	pub fn RemovePendingRequest(
 		&self,
-		id: &str,
-	) -> Option<
-		tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>,
-	> {
+		id:&str,
+	) -> Option<tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>> {
 		if let Ok(mut guard) = self.PendingUserInterfaceRequests.lock() {
 			let sender = guard.remove(id);
 			debug!("[UIState] Pending UI request removed: {}", id);
@@ -123,7 +113,7 @@ impl State {
 	}
 
 	/// Checks if a pending user interface request exists.
-	pub fn Contains(&self, id: &str) -> bool {
+	pub fn Contains(&self, id:&str) -> bool {
 		self.PendingUserInterfaceRequests
 			.lock()
 			.ok()

@@ -13,10 +13,10 @@ use crate::Environment::Utility;
 /// Handles tree node expansion/collapse events.
 /// Called when a user expands or collapses a node in the tree view.
 pub(super) async fn on_tree_node_expanded(
-	env: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	view_identifier: String,
-	element_handle: String,
-	is_expanded: bool,
+	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	view_identifier:String,
+	element_handle:String,
+	is_expanded:bool,
 ) -> Result<(), CommonError> {
 	info!(
 		"[TreeViewProvider] Node '{}' in view '{}' expanded: {}",
@@ -36,18 +36,16 @@ pub(super) async fn on_tree_node_expanded(
 			}),
 		)
 		.map_err(|Error| {
-			CommonError::UserInterfaceInteraction {
-				Reason: format!("Failed to emit node expanded event: {}", Error),
-			}
+			CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit node expanded event: {}", Error) }
 		})
 }
 
 /// Handles tree selection changes.
 /// Called when the user selects or deselects items in the tree view.
 pub(super) async fn on_tree_selection_changed(
-	env: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	view_identifier: String,
-	selected_handles: Vec<String>,
+	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	view_identifier:String,
+	selected_handles:Vec<String>,
 ) -> Result<(), CommonError> {
 	info!(
 		"[TreeViewProvider] Selection changed in view '{}': {} items selected",
@@ -68,7 +66,7 @@ pub(super) async fn on_tree_selection_changed(
 		)
 		.map_err(|Error| {
 			CommonError::UserInterfaceInteraction {
-				Reason: format!("Failed to emit selection changed event: {}", Error),
+				Reason:format!("Failed to emit selection changed event: {}", Error),
 			}
 		})
 }

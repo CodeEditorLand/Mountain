@@ -13,7 +13,8 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! ResolveUIRequest acts as the **UI response handler** in Track's dispatch layer:
+//! ResolveUIRequest acts as the **UI response handler** in Track's dispatch
+//! layer:
 //!
 //! ```text
 //! UI (Frontend) ──► ResolveUIRequest ──► Complete Pending Request ──► Return Result
@@ -69,7 +70,11 @@ pub async fn ResolveUIRequest(
 	debug!("[Track/UIRequest] Resolving UI request ID: {}", RequestID);
 
 	let Sender = {
-		let mut PendingRequests = State.UI.PendingUserInterfaceRequests.lock().map_err(|Error| Error.to_string())?;
+		let mut PendingRequests = State
+			.UI
+			.PendingUserInterfaceRequests
+			.lock()
+			.map_err(|Error| Error.to_string())?;
 
 		PendingRequests.remove(&RequestID)
 	};

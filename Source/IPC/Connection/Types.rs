@@ -2,7 +2,8 @@
 //!
 //! ## RESPONSIBILITIES
 //! This module defines the core data structures for connection management in
-//! the IPC layer, including connection handles, statistics, and status tracking.
+//! the IPC layer, including connection handles, statistics, and status
+//! tracking.
 //!
 //! ## ARCHITECTURAL ROLE
 //! This module provides the type definitions used throughout the connection
@@ -54,14 +55,10 @@ pub enum ConnectionStatus {
 
 impl ConnectionStatus {
 	/// Check if connection is active
-	pub fn is_connected(&self) -> bool {
-		matches!(self, ConnectionStatus::Connected)
-	}
+	pub fn is_connected(&self) -> bool { matches!(self, ConnectionStatus::Connected) }
 
 	/// Check if connection has issues
-	pub fn has_issues(&self) -> bool {
-		matches!(self, ConnectionStatus::Degraded | ConnectionStatus::Failed)
-	}
+	pub fn has_issues(&self) -> bool { matches!(self, ConnectionStatus::Degraded | ConnectionStatus::Failed) }
 
 	/// Get human-readable description
 	pub fn description(&self) -> &'static str {
@@ -85,7 +82,7 @@ impl ConnectionStatus {
 }
 
 impl From<bool> for ConnectionStatus {
-	fn from(connected: bool) -> Self {
+	fn from(connected:bool) -> Self {
 		if connected {
 			ConnectionStatus::Connected
 		} else {
@@ -128,19 +125,19 @@ impl From<bool> for ConnectionStatus {
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ConnectionHandle {
 	/// Unique connection identifier (UUID)
-	pub id: String,
+	pub id:String,
 
 	/// When the connection was created (as SystemTime for serialization)
-	pub created_at: std::time::SystemTime,
+	pub created_at:std::time::SystemTime,
 
 	/// When the connection was last used (as SystemTime for serialization)
-	pub last_used: std::time::SystemTime,
+	pub last_used:std::time::SystemTime,
 
 	/// Health score (0.0 to 100.0)
-	pub health_score: f64,
+	pub health_score:f64,
 
 	/// Number of consecutive errors
-	pub error_count: usize,
+	pub error_count:usize,
 }
 
 impl ConnectionHandle {
@@ -148,11 +145,11 @@ impl ConnectionHandle {
 	pub fn new() -> Self {
 		let now = std::time::SystemTime::now();
 		Self {
-			id: uuid::Uuid::new_v4().to_string(),
-			created_at: now,
-			last_used: now,
-			health_score: 100.0,
-			error_count: 0,
+			id:uuid::Uuid::new_v4().to_string(),
+			created_at:now,
+			last_used:now,
+			health_score:100.0,
+			error_count:0,
 		}
 	}
 
@@ -164,7 +161,7 @@ impl ConnectionHandle {
 	/// ## Behavior
 	/// - Success: +10 points (capped at 100), reset error count
 	/// - Failure: -25 points (floored at 0), increment error count
-	pub fn update_health(&mut self, success: bool) {
+	pub fn update_health(&mut self, success:bool) {
 		if success {
 			self.health_score = (self.health_score + 10.0).min(100.0);
 			self.error_count = 0;
@@ -184,9 +181,7 @@ impl ConnectionHandle {
 	/// ## Returns
 	/// - `true`: Connection is healthy
 	/// - `false`: Connection is unhealthy
-	pub fn is_healthy(&self) -> bool {
-		self.health_score > 50.0 && self.error_count < 5
-	}
+	pub fn is_healthy(&self) -> bool { self.health_score > 50.0 && self.error_count < 5 }
 
 	/// Get connection age in seconds
 	pub fn age_seconds(&self) -> u64 {
@@ -216,9 +211,7 @@ impl ConnectionHandle {
 	}
 
 	/// Manually update the last used time
-	pub fn touch(&mut self) {
-		self.last_used = std::time::SystemTime::now();
-	}
+	pub fn touch(&mut self) { self.last_used = std::time::SystemTime::now(); }
 
 	/// Reset health score to perfect
 	pub fn reset_health(&mut self) {
@@ -236,22 +229,23 @@ trait SystemTimeExt {
 
 impl SystemTimeExt for std::time::SystemTime {
 	fn duration_since_epoch_secs(&self) -> Result<u64, std::time::SystemTimeError> {
-		self.duration_since(std::time::UNIX_EPOCH)
-			.map(|d| d.as_secs())
+		self.duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs())
 	}
 }
 
 impl std::fmt::Debug for ConnectionHandle {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		let created_age = self.created_at
+	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		let created_age = self
+			.created_at
 			.duration_since(std::time::UNIX_EPOCH)
 			.map(|d| d.as_secs())
 			.unwrap_or(0);
-		let last_used_age = self.last_used
+		let last_used_age = self
+			.last_used
 			.duration_since(std::time::UNIX_EPOCH)
 			.map(|d| d.as_secs())
 			.unwrap_or(0);
-		
+
 		f.debug_struct("ConnectionHandle")
 			.field("id", &self.id)
 			.field("created_at_age_seconds", &created_age)
@@ -280,19 +274,19 @@ impl std::fmt::Debug for ConnectionHandle {
 #[derive(Debug, Clone, Default)]
 pub struct ConnectionStats {
 	/// Total number of active connections
-	pub total_connections: usize,
+	pub total_connections:usize,
 
 	/// Number of healthy connections
-	pub healthy_connections: usize,
+	pub healthy_connections:usize,
 
 	/// Maximum number of connections allowed
-	pub max_connections: usize,
+	pub max_connections:usize,
 
 	/// Number of available connection permits
-	pub available_permits: usize,
+	pub available_permits:usize,
 
 	/// Connection timeout duration
-	pub connection_timeout: std::time::Duration,
+	pub connection_timeout:std::time::Duration,
 }
 
 impl ConnectionStats {
@@ -330,9 +324,7 @@ impl ConnectionStats {
 	/// ## Returns
 	/// - `true`: Pool is under stress
 	/// - `false`: Pool is healthy
-	pub fn is_under_stress(&self) -> bool {
-		self.utilization() > 80.0 || self.health_percentage() < 70.0
-	}
+	pub fn is_under_stress(&self) -> bool { self.utilization() > 80.0 || self.health_percentage() < 70.0 }
 
 	/// Get a human-readable status summary
 	pub fn summary(&self) -> String {
@@ -351,13 +343,13 @@ impl ConnectionStats {
 mod tests {
 	use super::*;
 
-#[test]
+	#[test]
 	fn test_connection_status_from_bool() {
 		assert!(matches!(ConnectionStatus::from(true), ConnectionStatus::Connected));
 		assert!(matches!(ConnectionStatus::from(false), ConnectionStatus::Disconnected));
 	}
 
-#[test]
+	#[test]
 	fn test_connection_status_description() {
 		assert_eq!(ConnectionStatus::Connected.description(), "Connected and healthy");
 		assert_eq!(ConnectionStatus::Disconnected.description(), "Disconnected");
@@ -365,7 +357,7 @@ mod tests {
 		assert_eq!(ConnectionStatus::Failed.description(), "Failed - connection lost");
 	}
 
-#[test]
+	#[test]
 	fn test_connection_status_level() {
 		assert_eq!(ConnectionStatus::Failed.level(), 0);
 		assert_eq!(ConnectionStatus::Degraded.level(), 1);
@@ -373,7 +365,7 @@ mod tests {
 		assert_eq!(ConnectionStatus::Connected.level(), 3);
 	}
 
-#[test]
+	#[test]
 	fn test_connection_handle_creation() {
 		let handle = ConnectionHandle::new();
 		assert!(!handle.id.is_empty());
@@ -382,7 +374,7 @@ mod tests {
 		assert!(handle.is_healthy());
 	}
 
-#[test]
+	#[test]
 	fn test_connection_handle_health_update_success() {
 		let mut handle = ConnectionHandle::new();
 
@@ -414,7 +406,7 @@ mod tests {
 		assert!(handle.is_healthy());
 	}
 
-#[test]
+	#[test]
 	fn test_connection_handle_health_boundaries() {
 		let mut handle = ConnectionHandle::new();
 
@@ -434,7 +426,7 @@ mod tests {
 		assert_eq!(handle.health_score, 0.0);
 	}
 
-#[test]
+	#[test]
 	fn test_connection_handle_is_healthy() {
 		let mut handle = ConnectionHandle::new();
 
@@ -451,7 +443,7 @@ mod tests {
 		assert!(!handle.is_healthy()); // Errors >= 5
 	}
 
-#[test]
+	#[test]
 	fn test_connection_handle_status() {
 		let mut handle = ConnectionHandle::new();
 		assert!(matches!(handle.status(), ConnectionStatus::Connected));
@@ -466,7 +458,7 @@ mod tests {
 		assert!(matches!(handle.status(), ConnectionStatus::Failed));
 	}
 
-#[test]
+	#[test]
 	fn test_connection_handle_reset() {
 		let mut handle = ConnectionHandle::new();
 
@@ -482,42 +474,42 @@ mod tests {
 		assert_eq!(handle.error_count, 0);
 	}
 
-#[test]
+	#[test]
 	fn test_connection_stats_utilization() {
 		let stats = ConnectionStats {
-			total_connections: 50,
-			healthy_connections: 45,
-			max_connections: 100,
-			available_permits: 50,
-			connection_timeout: std::time::Duration::from_secs(30),
+			total_connections:50,
+			healthy_connections:45,
+			max_connections:100,
+			available_permits:50,
+			connection_timeout:std::time::Duration::from_secs(30),
 		};
 
 		// 50 used out of 100 = 50%
 		assert_eq!(stats.utilization(), 50.0);
 	}
 
-#[test]
+	#[test]
 	fn test_connection_stats_health_percentage() {
 		let stats = ConnectionStats {
-			total_connections: 50,
-			healthy_connections: 45,
-			max_connections: 100,
-			available_permits: 50,
-			connection_timeout: std::time::Duration::from_secs(30),
+			total_connections:50,
+			healthy_connections:45,
+			max_connections:100,
+			available_permits:50,
+			connection_timeout:std::time::Duration::from_secs(30),
 		};
 
 		// 45 healthy out of 50 total = 90%
 		assert_eq!(stats.health_percentage(), 90.0);
 	}
 
-#[test]
+	#[test]
 	fn test_connection_stats_is_under_stress() {
 		let mut stats = ConnectionStats {
-			total_connections: 50,
-			healthy_connections: 45,
-			max_connections: 100,
-			available_permits: 50,
-			connection_timeout: std::time::Duration::from_secs(30),
+			total_connections:50,
+			healthy_connections:45,
+			max_connections:100,
+			available_permits:50,
+			connection_timeout:std::time::Duration::from_secs(30),
 		};
 
 		// Not under stress
@@ -533,14 +525,14 @@ mod tests {
 		assert!(stats.is_under_stress());
 	}
 
-#[test]
+	#[test]
 	fn test_connection_stats_empty_pool() {
 		let stats = ConnectionStats {
-			total_connections: 0,
-			healthy_connections: 0,
-			max_connections: 100,
-			available_permits: 100,
-			connection_timeout: std::time::Duration::from_secs(30),
+			total_connections:0,
+			healthy_connections:0,
+			max_connections:100,
+			available_permits:100,
+			connection_timeout:std::time::Duration::from_secs(30),
 		};
 
 		assert_eq!(stats.utilization(), 0.0);

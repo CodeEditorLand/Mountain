@@ -10,14 +10,14 @@ use serde::{Deserialize, Serialize};
 /// Vine connection info
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VineConnectionInfo {
-    pub service_name: String,
-    pub endpoint: String,
+	pub service_name:String,
+	pub endpoint:String,
 }
 
 /// Vine service status
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum VineServiceStatus {
-    Connected,
-    Disconnected,
-    Error,
+	Connected,
+	Disconnected,
+	Error,
 }

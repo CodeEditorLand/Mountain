@@ -13,7 +13,8 @@
 //!
 //! ## KEY COMPONENTS
 //!
-//! - **ApplicationRunTime**: Main runtime struct holding Scheduler and Environment
+//! - **ApplicationRunTime**: Main runtime struct holding Scheduler and
+//!   Environment
 //!
 //! ## ERROR HANDLING
 //!

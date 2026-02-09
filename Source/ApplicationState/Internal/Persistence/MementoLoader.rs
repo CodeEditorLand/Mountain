@@ -29,9 +29,7 @@
 //! - [ ] Implement memento version migration
 //! - [ ] Add incremental loading support
 
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
+use std::{collections::HashMap, fs, path::Path};
 
 use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::Value;
@@ -53,12 +51,9 @@ use log::{debug, error, warn};
 ///
 /// # Errors
 /// Errors are logged but not propagated; default values are returned.
-pub fn LoadInitialMementoFromDisk(StorageFilePath: &Path) -> HashMap<String, Value> {
+pub fn LoadInitialMementoFromDisk(StorageFilePath:&Path) -> HashMap<String, Value> {
 	if !StorageFilePath.exists() {
-		debug!(
-			"[MementoLoader] Memento file does not exist: {}",
-			StorageFilePath.display()
-		);
+		debug!("[MementoLoader] Memento file does not exist: {}", StorageFilePath.display());
 		return HashMap::new();
 	}
 
@@ -112,21 +107,16 @@ pub fn LoadInitialMementoFromDisk(StorageFilePath: &Path) -> HashMap<String, Val
 ///
 /// # Errors
 /// Returns CommonError for file I/O or parse errors
-pub fn LoadMementoWithRecovery(
-	StorageFilePath: &Path,
-) -> Result<HashMap<String, Value>, CommonError> {
+pub fn LoadMementoWithRecovery(StorageFilePath:&Path) -> Result<HashMap<String, Value>, CommonError> {
 	if !StorageFilePath.exists() {
-		debug!(
-			"[MementoLoader] Memento file does not exist: {}",
-			StorageFilePath.display()
-		);
+		debug!("[MementoLoader] Memento file does not exist: {}", StorageFilePath.display());
 		return Ok(HashMap::new());
 	}
 
 	let content = fs::read_to_string(StorageFilePath).map_err(|e| {
 		CommonError::FileSystemIO {
-			Path: StorageFilePath.to_path_buf(),
-			Description: format!("Failed to read memento file: {}", e),
+			Path:StorageFilePath.to_path_buf(),
+			Description:format!("Failed to read memento file: {}", e),
 		}
 	})?;
 
@@ -134,11 +124,7 @@ pub fn LoadMementoWithRecovery(
 		// Create backup of corrupted file
 		create_corrupted_backup(StorageFilePath, &content);
 		CommonError::SerializationError {
-			Description: format!(
-				"Failed to parse memento JSON from '{}': {}",
-				StorageFilePath.display(),
-				e
-			),
+			Description:format!("Failed to parse memento JSON from '{}': {}", StorageFilePath.display(), e),
 		}
 	})
 }
@@ -148,7 +134,7 @@ pub fn LoadMementoWithRecovery(
 /// # Arguments
 /// * `file_path` - Path to the corrupted memento file
 /// * `corrupted_content` - The corrupted content to backup
-fn attempt_memento_recovery(file_path: &Path, corrupted_content: &str) {
+fn attempt_memento_recovery(file_path:&Path, corrupted_content:&str) {
 	let backup_path = file_path.with_extension("json.backup");
 
 	match fs::write(&backup_path, corrupted_content) {
@@ -173,7 +159,7 @@ fn attempt_memento_recovery(file_path: &Path, corrupted_content: &str) {
 /// # Arguments
 /// * `file_path` - Path to the corrupted file
 /// * `content` - The content to backup
-fn create_corrupted_backup(file_path: &Path, content: &str) {
+fn create_corrupted_backup(file_path:&Path, content:&str) {
 	let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
 	let backup_path = file_path.with_extension(format!("json.corrupted.{}", timestamp));
 
@@ -184,9 +170,6 @@ fn create_corrupted_backup(file_path: &Path, content: &str) {
 			e
 		);
 	} else {
-		debug!(
-			"[MementoLoader] Created corrupted backup at: {}",
-			backup_path.display()
-		);
+		debug!("[MementoLoader] Created corrupted backup at: {}", backup_path.display());
 	}
 }

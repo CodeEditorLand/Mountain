@@ -2,10 +2,11 @@
 //!
 //! ## RESPONSIBILITIES
 //!
-//! This module provides the central routing table that maps string-based commands/RPC
-//! methods to typed effects. It creates MappedEffect (type-erased async closures)
-//! for dispatch execution and integrates with the effect system (ActionEffect) and
-//! provider traits. Some operations use direct provider calls for performance.
+//! This module provides the central routing table that maps string-based
+//! commands/RPC methods to typed effects. It creates MappedEffect (type-erased
+//! async closures) for dispatch execution and integrates with the effect system
+//! (ActionEffect) and provider traits. Some operations use direct provider
+//! calls for performance.
 //!
 //! ### Core Functions:
 //! - Map string-based method names to effect constructors
@@ -15,7 +16,8 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! CreateEffectForRequest acts as the **effect mapper** in Track's dispatch system:
+//! CreateEffectForRequest acts as the **effect mapper** in Track's dispatch
+//! system:
 //!
 //! ```text
 //! Dispatch Logic ──► CreateEffectForRequest (Match) ──► MappedEffect ──► ApplicationRunTime Execution
@@ -24,7 +26,8 @@
 //! ## KEY COMPONENTS
 //!
 //! - **Fn**: Main effect creation function (pub fn Fn<R:Runtime>)
-//! - **MappedEffect**: Type alias for boxed async closure (imported from MappedEffect module)
+//! - **MappedEffect**: Type alias for boxed async closure (imported from
+//!   MappedEffect module)
 //!
 //! ## ERROR HANDLING
 //!
@@ -43,7 +46,8 @@
 //!
 //! - Effect creation is cheap: match + constructor call + box
 //! - Direct provider calls avoid allocation (for hot paths)
-//! - TODO: Consider implementing an effect pool to cache frequently created effects
+//! - TODO: Consider implementing an effect pool to cache frequently created
+//!   effects
 //! - TODO: Add configurable command timeouts per command type and rate limiting
 //!
 //! ## DIRECT PROVIDER CALLS
@@ -66,9 +70,9 @@
 //! **Keybinding**: GetResolved
 //! **LanguageFeatures**: $languageFeatures:registerProvider
 //! **Search**: TextSearch
-//! **SourceControlManagement**: $scm:createSourceControl, updateSourceControl, updateGroup, registerInputBox
-//! **StatusBar**: $statusBar:set, dispose, $setStatusBarMessage, $disposeStatusBarMessage
-//! **Storage**: Get, Set
+//! **SourceControlManagement**: $scm:createSourceControl, updateSourceControl,
+//! updateGroup, registerInputBox **StatusBar**: $statusBar:set, dispose,
+//! $setStatusBarMessage, $disposeStatusBarMessage **Storage**: Get, Set
 //! **Terminal**: $terminal:create, sendText, dispose
 //! **TreeView**: $tree:register
 //! **UserInterface**: ShowMessage, ShowOpenDialog, ShowSaveDialog
@@ -131,14 +135,11 @@ use tauri::{AppHandle, Runtime};
 use url::Url;
 use log::warn;
 
-use crate::{
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Track::Effect::MappedEffectType::MappedEffect,
-};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
 /// Maps a string-based method name (command or RPC) to its corresponding effect
-/// constructor, returning a boxed closure ([`MappedEffect`]) that can be executed
-/// by the ApplicationRunTime.
+/// constructor, returning a boxed closure ([`MappedEffect`]) that can be
+/// executed by the ApplicationRunTime.
 ///
 /// # Arguments
 /// - `ApplicationHandle`: Tauri app handle for accessing state
@@ -551,11 +552,14 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						let (items, options) = match Parameters.as_slice() {
 							[Value::Array(items_arr), opts] => {
 								// Deserialize items from array
-								let items_vec: Vec<crate::Environment::UserInterface::DTO::QuickPickItemDTO> = items_arr.iter()
+								let items_vec:Vec<crate::Environment::UserInterface::DTO::QuickPickItemDTO> = items_arr
+									.iter()
 									.filter_map(|v| serde_json::from_value(v.clone()).ok())
 									.collect();
 								let options_dto = match opts {
-									Value::Object(_) => Some(crate::Environment::UserInterface::DTO::QuickPickOptionsDTO::default()),
+									Value::Object(_) => {
+										Some(crate::Environment::UserInterface::DTO::QuickPickOptionsDTO::default())
+									},
 									Value::Null => None,
 									_ => None,
 								};

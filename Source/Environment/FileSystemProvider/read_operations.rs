@@ -1,24 +1,24 @@
 //! # FileSystemProvider - Read Operations
 //!
-//! Implementation of [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) for
+//! Implementation of
+//! [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) for
 //! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
 //!
-//! Provides secure, validated filesystem read access with workspace trust enforcement.
+//! Provides secure, validated filesystem read access with workspace trust
+//! enforcement.
 
 use std::path::PathBuf;
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,
-	FileSystem::{
-		DTO::{FileSystemStatDTO::FileSystemStatDTO, FileTypeDTO::FileTypeDTO},
-	},
+	FileSystem::DTO::{FileSystemStatDTO::FileSystemStatDTO, FileTypeDTO::FileTypeDTO},
 };
 use tokio::fs;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 
 /// Read operations implementation for MountainEnvironment
-pub(super) async fn read_file_impl(env: &MountainEnvironment, path: &PathBuf) -> Result<Vec<u8>, CommonError> {
+pub(super) async fn read_file_impl(env:&MountainEnvironment, path:&PathBuf) -> Result<Vec<u8>, CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, path)?;
 
 	// Validate that the path exists and is a file, not a directory
@@ -28,8 +28,8 @@ pub(super) async fn read_file_impl(env: &MountainEnvironment, path: &PathBuf) ->
 
 	if metadata.is_dir() {
 		return Err(CommonError::InvalidArgument {
-			ArgumentName: "Path".to_string(),
-			Reason: format!("Cannot read directory as file: {}", path.display()),
+			ArgumentName:"Path".to_string(),
+			Reason:format!("Cannot read directory as file: {}", path.display()),
 		});
 	}
 
@@ -39,7 +39,7 @@ pub(super) async fn read_file_impl(env: &MountainEnvironment, path: &PathBuf) ->
 }
 
 /// Stat operations implementation for MountainEnvironment
-pub(super) async fn stat_file_impl(env: &MountainEnvironment, path: &PathBuf) -> Result<FileSystemStatDTO, CommonError> {
+pub(super) async fn stat_file_impl(env:&MountainEnvironment, path:&PathBuf) -> Result<FileSystemStatDTO, CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, path)?;
 
 	let metadata = fs::metadata(path)
@@ -66,7 +66,7 @@ pub(super) async fn stat_file_impl(env: &MountainEnvironment, path: &PathBuf) ->
 	}
 
 	// Note: Windows typically doesn't support creation_time, handle gracefully
-	let get_milli_timestamp = |system_time_result: Result<std::time::SystemTime, _>| -> u64 {
+	let get_milli_timestamp = |system_time_result:Result<std::time::SystemTime, _>| -> u64 {
 		system_time_result
 			.ok()
 			.and_then(|time| time.duration_since(std::time::SystemTime::UNIX_EPOCH).ok())
@@ -74,13 +74,13 @@ pub(super) async fn stat_file_impl(env: &MountainEnvironment, path: &PathBuf) ->
 	};
 
 	Ok(FileSystemStatDTO {
-		FileType: file_type,
+		FileType:file_type,
 
-		CreationTime: get_milli_timestamp(metadata.created()),
+		CreationTime:get_milli_timestamp(metadata.created()),
 
-		ModificationTime: get_milli_timestamp(metadata.modified()),
+		ModificationTime:get_milli_timestamp(metadata.modified()),
 
-		Size: metadata.len(),
+		Size:metadata.len(),
 
 		// Capture file permissions by extracting Unix file mode (st_mode) and Windows
 		// file attributes. On Unix, extract permission bits (rwx for owner/group/others)
@@ -88,12 +88,15 @@ pub(super) async fn stat_file_impl(env: &MountainEnvironment, path: &PathBuf) ->
 		// (readonly, hidden, system, archive). This enables preserving permissions
 		// during file operations and respecting the user's filesystem ACLs. Currently
 		// returns None, which defaults to inherited permissions.
-		Permissions: None,
+		Permissions:None,
 	})
 }
 
 /// ReadDirectory operations implementation for MountainEnvironment
-pub(super) async fn read_directory_impl(env: &MountainEnvironment, path: &PathBuf) -> Result<Vec<(String, FileTypeDTO)>, CommonError> {
+pub(super) async fn read_directory_impl(
+	env:&MountainEnvironment,
+	path:&PathBuf,
+) -> Result<Vec<(String, FileTypeDTO)>, CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, path)?;
 
 	// Validate that the path exists and is a directory
@@ -103,8 +106,8 @@ pub(super) async fn read_directory_impl(env: &MountainEnvironment, path: &PathBu
 
 	if !metadata.is_dir() {
 		return Err(CommonError::InvalidArgument {
-			ArgumentName: "Path".to_string(),
-			Reason: format!("Cannot read directory: path is not a directory: {}", path.display()),
+			ArgumentName:"Path".to_string(),
+			Reason:format!("Cannot read directory: path is not a directory: {}", path.display()),
 		});
 	}
 

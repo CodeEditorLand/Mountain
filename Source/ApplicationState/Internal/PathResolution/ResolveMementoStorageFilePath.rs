@@ -29,6 +29,7 @@
 //! - [ ] Add cross-platform path handling
 
 use std::path::Path;
+
 use log::debug;
 
 /// Resolves the absolute path for a Memento storage file based on scope.
@@ -43,12 +44,13 @@ use log::debug;
 ///
 /// # Behavior
 /// - Global scope: `{AppData}/User/globalStorage.json`
-/// - Workspace scope: `{AppData}/User/workspaceStorage/{sanitized-id}/storage.json`
+/// - Workspace scope:
+///   `{AppData}/User/workspaceStorage/{sanitized-id}/storage.json`
 /// - Sanitizes workspace identifier (alphanumeric, hyphens, underscores only)
 pub fn ResolveMementoStorageFilePath(
-	ApplicationDataDirectory: &Path,
-	IsGlobalScope: bool,
-	WorkspaceIdentifier: &str,
+	ApplicationDataDirectory:&Path,
+	IsGlobalScope:bool,
+	WorkspaceIdentifier:&str,
 ) -> std::path::PathBuf {
 	let user_storage_base_path = ApplicationDataDirectory.join("User");
 
@@ -61,8 +63,7 @@ pub fn ResolveMementoStorageFilePath(
 		path
 	} else {
 		// Sanitize the workspace identifier to be a safe directory name
-		let segment =
-			WorkspaceIdentifier.replace(|c: char| !c.is_alphanumeric() && c != '-' && c != '_', "_");
+		let segment = WorkspaceIdentifier.replace(|c:char| !c.is_alphanumeric() && c != '-' && c != '_', "_");
 
 		let path = user_storage_base_path
 			.join("workspaceStorage")

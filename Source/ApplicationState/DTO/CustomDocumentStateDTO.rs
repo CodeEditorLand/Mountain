@@ -17,7 +17,6 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use url::Url;
-
 use CommonLibrary::Utility::Serialization::URLSerializationHelper;
 
 /// Maximum length for ViewType string to prevent allocation attacks

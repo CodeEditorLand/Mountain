@@ -28,13 +28,10 @@
 //! - [ ] Implement atomic writes
 //! - [ ] Add compression support
 
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
+use std::{collections::HashMap, fs, path::Path};
 
 use serde_json::Value;
 use log::{debug, error};
-
 use CommonLibrary::Error::CommonError::CommonError;
 
 /// Asynchronously saves Memento storage data to a JSON file.
@@ -53,37 +50,25 @@ use CommonLibrary::Error::CommonError::CommonError;
 /// - Creates parent directory if it doesn't exist
 /// - Serializes data to JSON
 /// - Writes to file atomically (creates temp file then renames)
-pub async fn SaveMementoToDisk(
-	StorageFilePath: &Path,
-	MementoData: &HashMap<String, Value>,
-) -> Result<(), CommonError> {
+pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> Result<(), CommonError> {
 	// Ensure parent directory exists
 	if let Some(parent) = StorageFilePath.parent() {
 		if !parent.exists() {
 			fs::create_dir_all(parent).map_err(|e| {
-				error!(
-					"[MementoSaver] Failed to create directory '{}': {}",
-					parent.display(),
-					e
-				);
+				error!("[MementoSaver] Failed to create directory '{}': {}", parent.display(), e);
 				CommonError::FileSystemIO {
-					Path: parent.to_path_buf(),
-					Description: format!("Failed to create directory: {}", e),
+					Path:parent.to_path_buf(),
+					Description:format!("Failed to create directory: {}", e),
 				}
 			})?;
-			debug!(
-				"[MementoSaver] Created directory: {}",
-				parent.display()
-			);
+			debug!("[MementoSaver] Created directory: {}", parent.display());
 		}
 	}
 
 	// Serialize memento data to JSON
 	let json_content = serde_json::to_string_pretty(MementoData).map_err(|e| {
 		error!("[MementoSaver] Failed to serialize memento data: {}", e);
-		CommonError::SerializationError {
-			Description: format!("Failed to serialize memento data: {}", e),
-		}
+		CommonError::SerializationError { Description:format!("Failed to serialize memento data: {}", e) }
 	})?;
 
 	// Write to temporary file first, then rename for atomic write
@@ -94,10 +79,7 @@ pub async fn SaveMementoToDisk(
 			temp_path.display(),
 			e
 		);
-		CommonError::FileSystemIO {
-			Path: temp_path.clone(),
-			Description: format!("Failed to write memento: {}", e),
-		}
+		CommonError::FileSystemIO { Path:temp_path.clone(), Description:format!("Failed to write memento: {}", e) }
 	})?;
 
 	// Atomic rename from temp to actual file
@@ -110,15 +92,12 @@ pub async fn SaveMementoToDisk(
 		// Clean up temp file if rename fails
 		let _ = fs::remove_file(&temp_path);
 		CommonError::FileSystemIO {
-			Path: StorageFilePath.to_path_buf(),
-			Description: format!("Failed to rename memento file: {}", e),
+			Path:StorageFilePath.to_path_buf(),
+			Description:format!("Failed to rename memento file: {}", e),
 		}
 	})?;
 
-	debug!(
-		"[MementoSaver] Successfully saved memento to: {}",
-		StorageFilePath.display()
-	);
+	debug!("[MementoSaver] Successfully saved memento to: {}", StorageFilePath.display());
 
 	Ok(())
 }

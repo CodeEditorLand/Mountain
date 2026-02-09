@@ -1,9 +1,9 @@
 //! # Mountain RPC Services
 //!
 //! ☀️ 🟢 MOUNTAIN_SKY_ONLY - Core RPC service implementations
-//! 
-//! This module contains the complete RPC services for Mountain's Spine contract.
-//! All services support extension hosts based on their feature gates:
+//!
+//! This module contains the complete RPC services for Mountain's Spine
+//! contract. All services support extension hosts based on their feature gates:
 //!
 //! ## Service Classification by Support Level
 //!
@@ -96,10 +96,7 @@ pub use processes::ProcessService;
 
 // Telemetry modules
 pub mod telemetry;
-pub use telemetry::TelemetryService;
-pub use telemetry::spans::TraceSpan;
-pub use telemetry::metrics::ServiceMetrics;
+pub use telemetry::{TelemetryService, metrics::ServiceMetrics, spans::TraceSpan};
 
 // Re-export vine types
 pub mod vine;
-

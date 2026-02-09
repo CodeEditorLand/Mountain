@@ -1,8 +1,9 @@
 //! # Wind Advanced Sync Module (IPC)
 //!
 //! ## RESPONSIBILITIES
-//! This module provides advanced synchronization features between Wind's frontend
-//! state and Mountain's backend state, including document sync and UI state sync.
+//! This module provides advanced synchronization features between Wind's
+//! frontend state and Mountain's backend state, including document sync and UI
+//! state sync.
 //!
 //! ## ARCHITECTURAL ROLE
 //! This module is the synchronization layer that keeps Wind and Mountain state

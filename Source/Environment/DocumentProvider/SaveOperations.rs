@@ -2,19 +2,17 @@
 //!
 //! Handles SaveDocument, SaveDocumentAs, and SaveAllDocuments.
 
+use std::{path::PathBuf, sync::Arc};
+
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	FileSystem::WriteFileBytes::WriteFileBytes,
-	UserInterface::{
-		DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO, ShowSaveDialog::ShowSaveDialog,
-	},
+	UserInterface::{DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO, ShowSaveDialog::ShowSaveDialog},
 };
 use log::{error, info};
 use serde_json::json;
-use std::path::PathBuf;
-use std::sync::Arc;
 use tauri::{Emitter, Manager};
 use url::Url;
 
@@ -26,15 +24,16 @@ use crate::{
 
 /// Saves the document at the given URI.
 pub(super) async fn save_document(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	uri: Url,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	uri:Url,
 ) -> Result<bool, CommonError> {
 	info!("[DocumentProvider] Saving document: {}", uri);
 
 	let (content_bytes, file_path) = {
 		let mut open_documents_guard = environment
 			.ApplicationState
-			.Feature.Documents
+			.Feature
+			.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -51,27 +50,19 @@ pub(super) async fn save_document(
 				document.GetText().into_bytes(),
 				uri.to_file_path().map_err(|_| {
 					CommonError::InvalidArgument {
-						ArgumentName: "URI".into(),
-						Reason: "Cannot convert file URI to path".into(),
+						ArgumentName:"URI".into(),
+						Reason:"Cannot convert file URI to path".into(),
 					}
 				})?,
 			)
 		} else {
-			return Err(CommonError::FileSystemNotFound(
-				uri.to_file_path().unwrap_or_default(),
-			));
+			return Err(CommonError::FileSystemNotFound(uri.to_file_path().unwrap_or_default()));
 		}
 	};
 
-	let runtime = environment
-		.ApplicationHandle
-		.state::<Arc<ApplicationRunTime>>()
-		.inner()
-		.clone();
+	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-	runtime
-		.Run(WriteFileBytes(file_path, content_bytes, true, true))
-		.await?;
+	runtime.Run(WriteFileBytes(file_path, content_bytes, true, true)).await?;
 
 	if let Err(error) = environment
 		.ApplicationHandle
@@ -87,17 +78,13 @@ pub(super) async fn save_document(
 
 /// Saves a document to a new location.
 pub(super) async fn save_document_as(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	original_uri: Url,
-	new_target_uri: Option<Url>,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	original_uri:Url,
+	new_target_uri:Option<Url>,
 ) -> Result<Option<Url>, CommonError> {
 	info!("[DocumentProvider] Saving document as: {}", original_uri);
 
-	let runtime = environment
-		.ApplicationHandle
-		.state::<Arc<ApplicationRunTime>>()
-		.inner()
-		.clone();
+	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 	let new_file_path = match new_target_uri {
 		Some(uri) => uri.to_file_path().ok(),
@@ -108,15 +95,16 @@ pub(super) async fn save_document_as(
 
 	let new_uri = Url::from_file_path(&new_path).map_err(|_| {
 		CommonError::InvalidArgument {
-			ArgumentName: "NewPath".into(),
-			Reason: "Could not convert new path to URI".into(),
+			ArgumentName:"NewPath".into(),
+			Reason:"Could not convert new path to URI".into(),
 		}
 	})?;
 
 	let original_content = {
 		let guard = environment
 			.ApplicationState
-			.Feature.Documents
+			.Feature
+			.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -134,7 +122,8 @@ pub(super) async fn save_document_as(
 	let new_document_state = {
 		let mut guard = environment
 			.ApplicationState
-			.Feature.Documents
+			.Feature
+			.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -167,18 +156,19 @@ pub(super) async fn save_document_as(
 
 /// Saves all currently dirty documents.
 pub(super) async fn save_all_documents(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	include_untitled: bool,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	include_untitled:bool,
 ) -> Result<Vec<bool>, CommonError> {
 	info!(
 		"[DocumentProvider] SaveAllDocuments called (IncludeUntitled: {})",
 		include_untitled
 	);
 
-	let uris_to_save: Vec<Url> = {
+	let uris_to_save:Vec<Url> = {
 		let open_documents_guard = environment
 			.ApplicationState
-			.Feature.Documents
+			.Feature
+			.Documents
 			.OpenDocuments
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
@@ -212,10 +202,10 @@ pub(super) async fn save_all_documents(
 		match &result {
 			Ok(_) => {
 				info!("[DocumentProvider] Successfully saved {}", uri);
-			}
+			},
 			Err(error) => {
 				error!("[DocumentProvider] Failed to save {}: {}", uri, error);
-			}
+			},
 		}
 
 		results.push(result.is_ok());

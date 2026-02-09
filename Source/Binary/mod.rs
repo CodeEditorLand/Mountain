@@ -26,7 +26,7 @@
 //!                                AppLifecycle   Commands    Services    Vine/Cocoon
 //!                                         │            │             │
 //!                                   IPCCommands  IPCBridge   ProcessMgmt
-//!```
+//! ```
 //!
 //! ### Design Principles:
 //! 1. **Single Entry Point**: One clear entry point for the application
@@ -111,26 +111,30 @@ pub mod Shutdown;
 /// Debug and trace logging utilities.
 pub mod Debug;
 
-// --- Re-exports from Main sub-module for backward compatibility and convenience ---
+// --- Re-exports from Main sub-module for backward compatibility and
+// convenience ---
 
-use Main::{Entry, AppLifecycle, IPCCommands};
-
+use Main::{AppLifecycle, Entry, IPCCommands};
 pub use Entry::Fn as Main;
 pub use AppLifecycle::*;
 // Note: IPCCommands is now a placeholder, commands are in Binary/IPC/*
 // Note: Tray is now a placeholder, commands are in Binary/Tray/*
 
 // --- Convenience re-exports from other sub-modules ---
-
-pub use Build::{TauriBuild, WindowBuild, LoggingPlugin, LocalhostPlugin};
-pub use Register::{CommandRegister, IPCServerRegister, StatusReporterRegister, AdvancedFeaturesRegister, WindSyncRegister};
-pub use Service::{VineStart, CocoonStart, ConfigurationInitialize};
+pub use Build::{LocalhostPlugin, LoggingPlugin, TauriBuild, WindowBuild};
+pub use Register::{
+	AdvancedFeaturesRegister,
+	CommandRegister,
+	IPCServerRegister,
+	StatusReporterRegister,
+	WindSyncRegister,
+};
+pub use Service::{CocoonStart, ConfigurationInitialize, VineStart};
 pub use Initialize::{CliParse, LogLevel, PortSelector, RuntimeBuild, StateBuild};
 pub use Shutdown::{RuntimeShutdown, SchedulerShutdown};
 
 // --- Tray re-exports from atomic modules ---
 
 pub mod TrayModule {
-	pub use super::Tray::EnableTray::enable_tray as EnableTray;
-	pub use super::Tray::SwitchTrayIcon::SwitchTrayIcon;
+	pub use super::Tray::{EnableTray::enable_tray as EnableTray, SwitchTrayIcon::SwitchTrayIcon};
 }

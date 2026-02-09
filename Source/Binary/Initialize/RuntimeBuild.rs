@@ -1,6 +1,7 @@
 //! # RuntimeBuild - Advanced Runtime Scheduler Initialization
 //!
-//! Constructs the Echo async scheduler with telemetry integration and feature flags.
+//! Constructs the Echo async scheduler with telemetry integration and feature
+//! flags.
 //!
 //! ## Build Profiles
 //!
@@ -28,42 +29,42 @@ use log::{debug, info, warn};
 
 /// Scheduler configuration for different build profiles
 pub struct SchedulerConfig {
-    worker_count: Option<usize>,
-    enable_metrics: bool,
-    log_level: log::Level,
+	worker_count:Option<usize>,
+	enable_metrics:bool,
+	log_level:log::Level,
 }
 
 impl Default for SchedulerConfig {
-    fn default() -> Self {
-        // Default to CPU count for production builds
-        Self {
-            worker_count: None, // Uses CPU count by default
-            #[cfg(feature = "Telemetry")]
-            enable_metrics: true,
-            #[cfg(not(feature = "Telemetry"))]
-            enable_metrics: false,
-            #[cfg(feature = "Debug")]
-            log_level: log::Level::Debug,
-            #[cfg(feature = "Development")]
-            log_level: log::Level::Info,
-            #[cfg(not(any(feature = "Debug", feature = "Development")))]
-            log_level: log::Level::Warn,
-        }
-    }
+	fn default() -> Self {
+		// Default to CPU count for production builds
+		Self {
+			worker_count:None, // Uses CPU count by default
+			#[cfg(feature = "Telemetry")]
+			enable_metrics:true,
+			#[cfg(not(feature = "Telemetry"))]
+			enable_metrics:false,
+			#[cfg(feature = "Debug")]
+			log_level:log::Level::Debug,
+			#[cfg(feature = "Development")]
+			log_level:log::Level::Info,
+			#[cfg(not(any(feature = "Debug", feature = "Development")))]
+			log_level:log::Level::Warn,
+		}
+	}
 }
 
 /// Create configured scheduler builder
-pub fn CreateBuilder(config: SchedulerConfig) -> SchedulerBuilder {
-    let mut builder = SchedulerBuilder::Create();
-    
-    if let Some(count) = config.worker_count {
-        // Validate worker count bounds
-        let count = count.clamp(1, 256);
-        builder = builder.WithWorkerCount(count);
-        debug!("[RuntimeBuild] Configuring {} worker threads", count);
-    }
-    
-    builder
+pub fn CreateBuilder(config:SchedulerConfig) -> SchedulerBuilder {
+	let mut builder = SchedulerBuilder::Create();
+
+	if let Some(count) = config.worker_count {
+		// Validate worker count bounds
+		let count = count.clamp(1, 256);
+		builder = builder.WithWorkerCount(count);
+		debug!("[RuntimeBuild] Configuring {} worker threads", count);
+	}
+
+	builder
 }
 
 /// Build the Echo scheduler for async task execution
@@ -85,9 +86,7 @@ pub fn CreateBuilder(config: SchedulerConfig) -> SchedulerBuilder {
 ///
 /// Panics if scheduler construction fails (should never happen
 /// with valid configuration)
-pub fn Build() -> Arc<Scheduler> {
-    BuildWithConfig(SchedulerConfig::default())
-}
+pub fn Build() -> Arc<Scheduler> { BuildWithConfig(SchedulerConfig::default()) }
 
 /// Build scheduler with custom configuration
 ///
@@ -98,25 +97,25 @@ pub fn Build() -> Arc<Scheduler> {
 /// # Returns
 ///
 /// Configured scheduler instance
-pub fn BuildWithConfig(config: SchedulerConfig) -> Arc<Scheduler> {
-    info!("[RuntimeBuild] Initializing scheduler with config: {:?}", config);
-    
-    let builder = CreateBuilder(config);
-    let scheduler = builder.Build();
-    
-    #[cfg(feature = "Telemetry")]
-    {
-        // Initialize task metrics recording
-        info!("[RuntimeBuild] Task metrics enabled");
-    }
-    
-    #[cfg(feature = "Debug")]
-    {
-        debug!("[RuntimeBuild] Scheduler debugging enabled");
-    }
-    
-    info!("[RuntimeBuild] Scheduler initialized successfully");
-    Arc::new(scheduler)
+pub fn BuildWithConfig(config:SchedulerConfig) -> Arc<Scheduler> {
+	info!("[RuntimeBuild] Initializing scheduler with config: {:?}", config);
+
+	let builder = CreateBuilder(config);
+	let scheduler = builder.Build();
+
+	#[cfg(feature = "Telemetry")]
+	{
+		// Initialize task metrics recording
+		info!("[RuntimeBuild] Task metrics enabled");
+	}
+
+	#[cfg(feature = "Debug")]
+	{
+		debug!("[RuntimeBuild] Scheduler debugging enabled");
+	}
+
+	info!("[RuntimeBuild] Scheduler initialized successfully");
+	Arc::new(scheduler)
 }
 
 /// Build minimal debug scheduler (single-threaded)
@@ -125,28 +124,25 @@ pub fn BuildWithConfig(config: SchedulerConfig) -> Arc<Scheduler> {
 /// execution order matters.
 #[cfg(feature = "Debug")]
 pub fn BuildDebug() -> Arc<Scheduler> {
-    info!("[RuntimeBuild] Creating debug scheduler (single-threaded)");
-    BuildWithConfig(SchedulerConfig {
-        worker_count: Some(1),
-        ..Default::default()
-    })
+	info!("[RuntimeBuild] Creating debug scheduler (single-threaded)");
+	BuildWithConfig(SchedulerConfig { worker_count:Some(1), ..Default::default() })
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+	use super::*;
 
-    #[test]
-    fn test_default_build() {
-        let scheduler = Build();
-        // Scheduler should be usable
-        info!("[Test] Default scheduler created");
-    }
+	#[test]
+	fn test_default_build() {
+		let scheduler = Build();
+		// Scheduler should be usable
+		info!("[Test] Default scheduler created");
+	}
 
-    #[test]
-    fn test_custom_worker_count() {
-        let config = SchedulerConfig { worker_count: Some(2), ..Default::default() };
-        let scheduler = BuildWithConfig(config);
-        info!("[Test] Custom scheduler created");
-    }
+	#[test]
+	fn test_custom_worker_count() {
+		let config = SchedulerConfig { worker_count:Some(2), ..Default::default() };
+		let scheduler = BuildWithConfig(config);
+		info!("[Test] Custom scheduler created");
+	}
 }

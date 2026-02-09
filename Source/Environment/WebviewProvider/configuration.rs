@@ -1,44 +1,45 @@
 //! # WebviewProvider - Configuration Operations
 //!
-//! Implementation of webview configuration methods for [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! Implementation of webview configuration methods for
+//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
 //!
 //! Handles setting webview options and HTML content.
 
 use std::collections::HashMap;
 
-use CommonLibrary::{
-	Error::CommonError::CommonError,
-};
+use CommonLibrary::Error::CommonError::CommonError;
 use log::debug;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tauri::{Emitter, Manager, WebviewWindow};
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 
 /// Configuration operations implementation for MountainEnvironment
 pub(super) async fn set_webview_options_impl(
-	env: &MountainEnvironment,
-	handle: String,
-	options_value: Value,
+	env:&MountainEnvironment,
+	handle:String,
+	options_value:Value,
 ) -> Result<(), CommonError> {
 	debug!("[WebviewProvider] Setting options for Webview: {}", handle);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
-		let options_map: HashMap<String, Value> = serde_json::from_value(options_value.clone()).map_err(|error| {
-			CommonError::SerializationError { Description: format!("Failed to parse Webview options: {}", error) }
+		let options_map:HashMap<String, Value> = serde_json::from_value(options_value.clone()).map_err(|error| {
+			CommonError::SerializationError { Description:format!("Failed to parse Webview options: {}", error) }
 		})?;
 
 		// Update title
 		if let Some(title) = options_map.get("title").and_then(|v| v.as_str()) {
 			webview_window.set_title(title).map_err(|error| {
-				CommonError::UserInterfaceInteraction { Reason: format!("Failed to set Webview title: {}", error) }
+				CommonError::UserInterfaceInteraction { Reason:format!("Failed to set Webview title: {}", error) }
 			})?;
 
 			// Update state
 			{
 				let mut webview_guard = env
 					.ApplicationState
-					.Feature.Webviews.ActiveWebviews
+					.Feature
+					.Webviews
+					.ActiveWebviews
 					.lock()
 					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -64,7 +65,7 @@ pub(super) async fn set_webview_options_impl(
 			json!({ "Handle": handle, "Options": options_value }),
 		)
 		.map_err(|error| {
-			CommonError::IPCError { Description: format!("Failed to emit Webview options changed event: {}", error) }
+			CommonError::IPCError { Description:format!("Failed to emit Webview options changed event: {}", error) }
 		})?;
 
 	Ok(())
@@ -72,19 +73,19 @@ pub(super) async fn set_webview_options_impl(
 
 /// Sets the HTML content of a Webview.
 pub(super) async fn set_webview_html_impl(
-	env: &MountainEnvironment,
-	handle: String,
-	html: String,
+	env:&MountainEnvironment,
+	handle:String,
+	html:String,
 ) -> Result<(), CommonError> {
 	debug!("[WebviewProvider] Setting HTML for Webview: {} ({} bytes)", handle, html.len());
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
-		webview_window.emit::<String>("sky://webview/set-html", html).map_err(|error| {
-			CommonError::IPCError { Description: format!("Failed to set Webview HTML: {}", error) }
-		})?;
+		webview_window
+			.emit::<String>("sky://webview/set-html", html)
+			.map_err(|error| CommonError::IPCError { Description:format!("Failed to set Webview HTML: {}", error) })?;
 
 		Ok(())
 	} else {
-		Err(CommonError::WebviewNotFound { Handle: handle })
+		Err(CommonError::WebviewNotFound { Handle:handle })
 	}
 }

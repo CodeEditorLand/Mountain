@@ -7,7 +7,8 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! MappedEffect serves as the **effect abstraction** in Track's dispatch system:
+//! MappedEffect serves as the **effect abstraction** in Track's dispatch
+//! system:
 //!
 //! ```text
 //! Dispatch Logic ──► MappedEffect (Boxed Closure) ──► ApplicationRunTime Execution
@@ -32,7 +33,8 @@
 //!
 //! ## TODO
 //!
-//! - [ ] Consider implementing an effect pool to cache frequently created effects
+//! - [ ] Consider implementing an effect pool to cache frequently created
+//!   effects
 
 use std::{future::Future, pin::Pin, sync::Arc};
 

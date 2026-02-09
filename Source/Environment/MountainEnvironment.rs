@@ -210,11 +210,7 @@ use log::{info, warn};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Wry};
 
-use crate::ApplicationState::{
-	ApplicationState,
-	DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
-};
-
+use crate::ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO};
 // Import the macro for generating trait implementations
 // Note: Macros annotated with #[macro_export] are available at crate root
 use crate::impl_provider;
@@ -222,28 +218,28 @@ use crate::impl_provider;
 /// The concrete `Environment` for the Mountain application.
 #[derive(Clone)]
 pub struct MountainEnvironment {
-	pub ApplicationHandle: AppHandle<Wry>,
+	pub ApplicationHandle:AppHandle<Wry>,
 
-	pub ApplicationState: Arc<ApplicationState>,
+	pub ApplicationState:Arc<ApplicationState>,
 
 	/// Optional Air client for cloud-based services.
 	/// When provided, providers like SecretProvider and UpdateService can
 	/// delegate to Air.
 	#[cfg(feature = "AirIntegration")]
-	pub AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+	pub AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 }
 
 impl MountainEnvironment {
 	/// Creates a new `MountainEnvironment` instance.
 	#[allow(unused_mut)]
-	pub fn Create(ApplicationHandle: AppHandle<Wry>) -> Self {
+	pub fn Create(ApplicationHandle:AppHandle<Wry>) -> Self {
 		info!("[MountainEnvironment] New instance created.");
 
 		let ApplicationState = ApplicationHandle.state::<Arc<ApplicationState>>().inner().clone();
 
 		#[cfg(feature = "AirIntegration")]
 		{
-			Self { ApplicationHandle, ApplicationState, AirClient: None }
+			Self { ApplicationHandle, ApplicationState, AirClient:None }
 		}
 
 		#[cfg(not(feature = "AirIntegration"))]
@@ -257,8 +253,8 @@ impl MountainEnvironment {
 	/// cloud-based services.
 	#[cfg(feature = "AirIntegration")]
 	pub fn CreateWithAir(
-		ApplicationHandle: AppHandle<Wry>,
-		AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+		ApplicationHandle:AppHandle<Wry>,
+		AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
 	) -> Self {
 		info!(
 			"[MountainEnvironment] New instance created with Air client: {}",
@@ -273,7 +269,7 @@ impl MountainEnvironment {
 	/// Updates the Air client for this environment.
 	/// This allows dynamically switching between Air and local services.
 	#[cfg(feature = "AirIntegration")]
-	pub fn SetAirClient(&mut self, AirClient: Option<Arc<AirServiceClient<tonic::transport::Channel>>>) {
+	pub fn SetAirClient(&mut self, AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>) {
 		info!("[MountainEnvironment] Air client updated: {}", AirClient.is_some());
 
 		self.AirClient = AirClient;
@@ -312,7 +308,7 @@ impl MountainEnvironment {
 	pub async fn IsAirAvailable(&self) -> bool { false }
 
 	/// Scans a directory for extensions and returns their package.json data
-	async fn ScanExtensionDirectory(&self, path: &std::path::PathBuf) -> Result<Vec<serde_json::Value>, CommonError> {
+	async fn ScanExtensionDirectory(&self, path:&std::path::PathBuf) -> Result<Vec<serde_json::Value>, CommonError> {
 		use std::fs;
 
 		let mut extensions = Vec::new();
@@ -326,16 +322,16 @@ impl MountainEnvironment {
 		// Read directory contents
 		let entries = fs::read_dir(path).map_err(|error| {
 			CommonError::FileSystemIO {
-				Path: path.clone(),
-				Description: format!("Failed to read extension directory: {}", error),
+				Path:path.clone(),
+				Description:format!("Failed to read extension directory: {}", error),
 			}
 		})?;
 
 		for entry in entries {
 			let entry = entry.map_err(|error| {
 				CommonError::FileSystemIO {
-					Path: path.clone(),
-					Description: format!("Failed to read directory entry: {}", error),
+					Path:path.clone(),
+					Description:format!("Failed to read directory entry: {}", error),
 				}
 			})?;
 
@@ -389,14 +385,14 @@ impl ExtensionManagementService for MountainEnvironment {
 		info!("[ExtensionManagementService] Scanning for extensions...");
 
 		// Get the extension scan paths from ApplicationState
-		let ScanPaths: Vec<std::path::PathBuf> = {
+		let ScanPaths:Vec<std::path::PathBuf> = {
 			let ScanPathsGuard = self
 				.ApplicationState
 				.Extension
 				.Registry
 				.ExtensionScanPaths
 				.lock()
-				.map_err(|Error| CommonError::StateLockPoisoned { Context: Error.to_string() })?;
+				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 			ScanPathsGuard.clone()
 		};
 
@@ -416,7 +412,7 @@ impl ExtensionManagementService for MountainEnvironment {
 			.ScannedExtensions
 			.ScannedExtensions
 			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context: Error.to_string() })?;
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 
 		ScannedExtensionsGuard.clear();
 
@@ -424,29 +420,26 @@ impl ExtensionManagementService for MountainEnvironment {
 			if let Some(identifier) = extension.get("Identifier").and_then(|v| v.as_str()) {
 				// Convert the extension DTO to ExtensionDescriptionStateDTO
 				let extension_dto = ExtensionDescriptionStateDTO {
-					Identifier: serde_json::Value::String(identifier.to_string()),
-					Name: extension.get("Name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
-					Version: extension.get("Version").and_then(|v| v.as_str()).unwrap_or("0.0.0").to_string(),
-					Publisher: extension
+					Identifier:serde_json::Value::String(identifier.to_string()),
+					Name:extension.get("Name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
+					Version:extension.get("Version").and_then(|v| v.as_str()).unwrap_or("0.0.0").to_string(),
+					Publisher:extension
 						.get("Publisher")
 						.and_then(|v| v.as_str())
 						.unwrap_or("Unknown")
 						.to_string(),
-					Engines: extension.get("Engines").cloned().unwrap_or(serde_json::Value::Null),
-					Main: extension.get("Main").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					Browser: extension.get("Browser").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					ModuleType: extension.get("ModuleType").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					IsBuiltin: extension.get("IsBuiltin").and_then(|v| v.as_bool()).unwrap_or(false),
-					IsUnderDevelopment: extension
-						.get("IsUnderDevelopment")
-						.and_then(|v| v.as_bool())
-						.unwrap_or(false),
-					ExtensionLocation: extension.get("ExtensionLocation").cloned().unwrap_or(serde_json::Value::Null),
-					ActivationEvents: extension
+					Engines:extension.get("Engines").cloned().unwrap_or(serde_json::Value::Null),
+					Main:extension.get("Main").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					Browser:extension.get("Browser").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					ModuleType:extension.get("ModuleType").and_then(|v| v.as_str()).map(|s| s.to_string()),
+					IsBuiltin:extension.get("IsBuiltin").and_then(|v| v.as_bool()).unwrap_or(false),
+					IsUnderDevelopment:extension.get("IsUnderDevelopment").and_then(|v| v.as_bool()).unwrap_or(false),
+					ExtensionLocation:extension.get("ExtensionLocation").cloned().unwrap_or(serde_json::Value::Null),
+					ActivationEvents:extension
 						.get("ActivationEvents")
 						.and_then(|v| v.as_array())
 						.map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()),
-					Contributes: extension.get("Contributes").cloned(),
+					Contributes:extension.get("Contributes").cloned(),
 				};
 
 				ScannedExtensionsGuard.insert(identifier.to_string(), extension_dto);
@@ -464,9 +457,9 @@ impl ExtensionManagementService for MountainEnvironment {
 			.ScannedExtensions
 			.ScannedExtensions
 			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context: Error.to_string() })?;
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 
-		let Extensions: Vec<Value> = ScannedExtensionsGuard
+		let Extensions:Vec<Value> = ScannedExtensionsGuard
 			.values()
 			.map(|ext| serde_json::to_value(ext).unwrap_or(Value::Null))
 			.collect();
@@ -474,14 +467,14 @@ impl ExtensionManagementService for MountainEnvironment {
 		Ok(Extensions)
 	}
 
-	async fn GetExtension(&self, id: String) -> Result<Option<Value>, CommonError> {
+	async fn GetExtension(&self, id:String) -> Result<Option<Value>, CommonError> {
 		let ScannedExtensionsGuard = self
 			.ApplicationState
 			.Extension
 			.ScannedExtensions
 			.ScannedExtensions
 			.lock()
-			.map_err(|Error| CommonError::StateLockPoisoned { Context: Error.to_string() })?;
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 
 		if let Some(extension_dto) = ScannedExtensionsGuard.get(&id) {
 			// Convert ExtensionDescriptionStateDTO back to JSON Value
@@ -505,17 +498,11 @@ impl ExtensionManagementService for MountainEnvironment {
 			}
 
 			extension_value.insert("IsBuiltin".to_string(), Value::Bool(extension_dto.IsBuiltin));
-			extension_value.insert(
-				"IsUnderDevelopment".to_string(),
-				Value::Bool(extension_dto.IsUnderDevelopment),
-			);
-			extension_value.insert(
-				"ExtensionLocation".to_string(),
-				extension_dto.ExtensionLocation.clone(),
-			);
+			extension_value.insert("IsUnderDevelopment".to_string(), Value::Bool(extension_dto.IsUnderDevelopment));
+			extension_value.insert("ExtensionLocation".to_string(), extension_dto.ExtensionLocation.clone());
 
 			if let Some(activation_events) = &extension_dto.ActivationEvents {
-				let events: Vec<Value> = activation_events.iter().map(|e| Value::String(e.clone())).collect();
+				let events:Vec<Value> = activation_events.iter().map(|e| Value::String(e.clone())).collect();
 				extension_value.insert("ActivationEvents".to_string(), Value::Array(events));
 			}
 

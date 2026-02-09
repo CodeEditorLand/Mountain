@@ -42,8 +42,8 @@ use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
 
 use super::MountainVinegRPCService::MountainVinegRPCService;
-use crate::RPC::CocoonService::CocoonServiceImpl;
 use crate::{
+	RPC::CocoonService::CocoonServiceImpl,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine::{
 		Error::VineError,

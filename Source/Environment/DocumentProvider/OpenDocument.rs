@@ -3,6 +3,8 @@
 //! Handles opening documents from file:// URIs, custom scheme URIs (via sidecar
 //! providers), and already-open documents.
 
+use std::sync::Arc;
+
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Environment::Requires::Requires,
@@ -12,7 +14,6 @@ use CommonLibrary::{
 };
 use log::{error, info};
 use serde_json::{Value, json};
-use std::sync::Arc;
 use tauri::{Emitter, Manager};
 use url::Url;
 
@@ -26,10 +27,10 @@ use crate::{
 /// resolve the content from a registered sidecar provider
 /// (`TextDocumentContentProvider`).
 pub(super) async fn open_document(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	uri_components_dto: Value,
-	language_identifier: Option<String>,
-	content: Option<String>,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	uri_components_dto:Value,
+	language_identifier:Option<String>,
+	content:Option<String>,
 ) -> Result<Url, CommonError> {
 	let uri = Utility::GetURLFromURIComponentsDTO(&uri_components_dto)?;
 
@@ -38,7 +39,8 @@ pub(super) async fn open_document(
 	// First, check if the document is already open.
 	if let Some(existing_document) = environment
 		.ApplicationState
-		.Feature.Documents
+		.Feature
+		.Documents
 		.OpenDocuments
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
@@ -51,10 +53,10 @@ pub(super) async fn open_document(
 				if let Err(error) = environment.ApplicationHandle.emit("sky://documents/open", dto) {
 					error!("[DocumentProvider] Failed to emit document open event: {}", error);
 				}
-			}
+			},
 			Err(error) => {
 				error!("[DocumentProvider] Failed to serialize existing document DTO: {}", error);
-			}
+			},
 		}
 
 		return Ok(existing_document.URI.clone());
@@ -64,26 +66,19 @@ pub(super) async fn open_document(
 	let file_content = if let Some(c) = content {
 		c
 	} else if uri.scheme() == "file" {
-		let file_path = uri
-			.to_file_path()
-			.map_err(|_| CommonError::InvalidArgument {
-				ArgumentName: "URI".into(),
-				Reason: "Cannot convert non-file URI to path".into(),
-			})?;
+		let file_path = uri.to_file_path().map_err(|_| {
+			CommonError::InvalidArgument {
+				ArgumentName:"URI".into(),
+				Reason:"Cannot convert non-file URI to path".into(),
+			}
+		})?;
 
-		let runtime = environment
-			.ApplicationHandle
-			.state::<Arc<ApplicationRunTime>>()
-			.inner()
-			.clone();
+		let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 		let file_content_bytes = runtime.Run(ReadFile(file_path.clone())).await?;
 
 		String::from_utf8(file_content_bytes)
-			.map_err(|error| CommonError::FileSystemIO {
-				Path: file_path,
-				Description: error.to_string(),
-			})?
+			.map_err(|error| CommonError::FileSystemIO { Path:file_path, Description:error.to_string() })?
 	} else {
 		// Custom scheme: attempt to resolve from a sidecar provider.
 		info!(
@@ -91,7 +86,7 @@ pub(super) async fn open_document(
 			uri.scheme()
 		);
 
-		let ipc_provider: Arc<dyn IPCProvider> = environment.Require();
+		let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
 
 		let rpc_result = ipc_provider
 			.SendRequestToSideCar(
@@ -103,15 +98,11 @@ pub(super) async fn open_document(
 			)
 			.await?;
 
-		rpc_result
-			.as_str()
-			.map(String::from)
-			.ok_or_else(|| CommonError::IPCError {
-				Description: format!(
-					"Failed to get valid string content for custom URI scheme '{}'",
-					uri.scheme()
-				),
-			})?
+		rpc_result.as_str().map(String::from).ok_or_else(|| {
+			CommonError::IPCError {
+				Description:format!("Failed to get valid string content for custom URI scheme '{}'", uri.scheme()),
+			}
+		})?
 	};
 
 	// The rest of the flow is the same for all schemes.
@@ -121,7 +112,8 @@ pub(super) async fn open_document(
 
 	environment
 		.ApplicationState
-		.Feature.Documents
+		.Feature
+		.Documents
 		.OpenDocuments
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
@@ -134,11 +126,7 @@ pub(super) async fn open_document(
 		error!("[DocumentProvider] Failed to emit document open event: {}", error);
 	}
 
-	crate::Environment::DocumentProvider::Notifications::notify_model_added(
-		environment,
-		&dto_for_notification,
-	)
-	.await;
+	crate::Environment::DocumentProvider::Notifications::notify_model_added(environment, &dto_for_notification).await;
 
 	Ok(uri)
 }

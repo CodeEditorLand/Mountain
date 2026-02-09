@@ -1,5 +1,7 @@
 //! Provider invocation and generic LSP feature method helper.
 
+use std::{path::PathBuf, sync::Arc};
+
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Environment::Requires::Requires,
@@ -9,8 +11,6 @@ use CommonLibrary::{
 };
 use log::debug;
 use serde_json::{Value, json};
-use std::path::PathBuf;
-use std::sync::Arc;
 use tauri::Manager;
 use url::Url;
 
@@ -22,19 +22,22 @@ use crate::{
 
 /// Finds the best provider for a given feature and document.
 pub(super) async fn get_matching_provider(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	document_uri: &Url,
-	feature_type: ProviderType,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:&Url,
+	feature_type:ProviderType,
 ) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
 	let providers = environment
 		.ApplicationState
-		.Extension.ProviderRegistration.LanguageProviders
+		.Extension
+		.ProviderRegistration
+		.LanguageProviders
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 	let document = environment
 		.ApplicationState
-		.Feature.Documents
+		.Feature
+		.Documents
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.get(document_uri.as_str())
@@ -62,12 +65,13 @@ pub(super) async fn get_matching_provider(
 	Ok(None)
 }
 
-/// A generic helper to find the best provider, invoke it via RPC, and deserialize the result.
-pub(super) async fn invoke_provider<TResponse: serde::de::DeserializeOwned>(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	provider_type: ProviderType,
-	document_uri: &Url,
-	mut provider_arguments: Value,
+/// A generic helper to find the best provider, invoke it via RPC, and
+/// deserialize the result.
+pub(super) async fn invoke_provider<TResponse:serde::de::DeserializeOwned>(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	provider_type:ProviderType,
+	document_uri:&Url,
+	mut provider_arguments:Value,
 ) -> Result<Option<TResponse>, CommonError> {
 	if let Some(provider) = get_matching_provider(environment, document_uri, provider_type).await? {
 		let rpc_method = format!("$provide{}", provider.ProviderType.to_string());
@@ -76,8 +80,8 @@ pub(super) async fn invoke_provider<TResponse: serde::de::DeserializeOwned>(
 
 		let arguments_vector = provider_arguments.as_array_mut().ok_or_else(|| {
 			CommonError::InvalidArgument {
-				argument_name: "ProviderArguments".into(),
-				reason: "Expected provider arguments to be a JSON array.".into(),
+				argument_name:"ProviderArguments".into(),
+				reason:"Expected provider arguments to be a JSON array.".into(),
 			}
 		})?;
 
@@ -86,7 +90,7 @@ pub(super) async fn invoke_provider<TResponse: serde::de::DeserializeOwned>(
 
 		let final_arguments = json!(final_arguments_vector);
 
-		let ipc_provider: Arc<dyn IPCProvider> = environment.Require();
+		let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
 
 		let response = ipc_provider
 			.SendRequestToSideCar(provider.SideCarIdentifier, rpc_method, final_arguments, 5000)
@@ -97,7 +101,7 @@ pub(super) async fn invoke_provider<TResponse: serde::de::DeserializeOwned>(
 		}
 		serde_json::from_value(response).map_err(|error| {
 			CommonError::SerializationError {
-				description: format!("Failed to deserialize response for {:?}: {}", provider_type, error),
+				description:format!("Failed to deserialize response for {:?}: {}", provider_type, error),
 			}
 		})
 	} else {

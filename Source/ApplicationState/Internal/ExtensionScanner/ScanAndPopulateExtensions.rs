@@ -30,18 +30,14 @@
 //! - [ ] Implement extension caching
 //! - [ ] Add extension validation rules
 
-use std::collections::HashMap;
-use std::path::PathBuf;
+use std::{collections::HashMap, path::PathBuf};
 
 use CommonLibrary::Error::CommonError::CommonError;
 use log::{debug, error, info, trace, warn};
 use serde_json::Value;
 use tauri::AppHandle;
 
-use crate::{
-	ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
-	ExtensionManagement,
-};
+use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, ExtensionManagement};
 
 /// Scans all registered extension paths for valid extensions and populates the
 /// state.
@@ -59,16 +55,16 @@ use crate::{
 /// - Returns comprehensive scan statistics
 /// - Handles partial failures gracefully
 pub async fn ScanAndPopulateExtensions(
-	ApplicationHandle: AppHandle,
-	_State: &crate::ApplicationState::ExtensionState::State::State,
+	ApplicationHandle:AppHandle,
+	_State:&crate::ApplicationState::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
 	info!("[ExtensionScanner] Starting extension scan...");
 
-	let mut all_found_extensions: HashMap<String, ExtensionDescriptionStateDTO> = HashMap::new();
+	let mut all_found_extensions:HashMap<String, ExtensionDescriptionStateDTO> = HashMap::new();
 
 	// Note: This would need to be adapted to the new state structure
 	// For now, this is a placeholder showing the structure
-	let scan_paths: Vec<PathBuf> = Vec::new(); // Would get from State.Registry.Extension.Registry.ExtensionScanPaths
+	let scan_paths:Vec<PathBuf> = Vec::new(); // Would get from State.Registry.Extension.Registry.ExtensionScanPaths
 
 	trace!("[ExtensionScanner] Scanning paths: {:?}", scan_paths);
 
@@ -77,12 +73,7 @@ pub async fn ScanAndPopulateExtensions(
 
 	for path in scan_paths {
 		let path_clone = path.clone();
-		match ExtensionManagement::Scanner::ScanDirectoryForExtensions(
-			ApplicationHandle.clone(),
-			path_clone,
-		)
-		.await
-		{
+		match ExtensionManagement::Scanner::ScanDirectoryForExtensions(ApplicationHandle.clone(), path_clone).await {
 			Ok(found_in_path) => {
 				successful_scans += 1;
 				for extension in found_in_path {
@@ -109,7 +100,8 @@ pub async fn ScanAndPopulateExtensions(
 		}
 	}
 
-	// Note: Would populate State.Extension.ScannedExtensions.Extension.ScannedExtensions
+	// Note: Would populate
+	// State.Extension.ScannedExtensions.Extension.ScannedExtensions
 	debug!(
 		"[ExtensionScanner] Extension scan complete. Found {} extensions ({} successful scans, {} failed scans).",
 		all_found_extensions.len(),
@@ -118,10 +110,7 @@ pub async fn ScanAndPopulateExtensions(
 	);
 
 	if failed_scans > 0 {
-		warn!(
-			"[ExtensionScanner] {} extension paths failed to scan",
-			failed_scans
-		);
+		warn!("[ExtensionScanner] {} extension paths failed to scan", failed_scans);
 	}
 
 	Ok(())
@@ -142,20 +131,19 @@ pub async fn ScanAndPopulateExtensions(
 /// - Retries once on failure
 /// - Comprehensive error logging
 pub async fn ScanExtensionsWithRecovery(
-	ApplicationHandle: AppHandle,
-	State: &crate::ApplicationState::ExtensionState::State::State,
+	ApplicationHandle:AppHandle,
+	State:&crate::ApplicationState::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
 	info!("[ExtensionScanner] Starting robust extension scan with recovery...");
 
 	// Clear potentially corrupted extension state first
-	// Note: Would clear State.Extension.ScannedExtensions.Extension.ScannedExtensions
+	// Note: Would clear
+	// State.Extension.ScannedExtensions.Extension.ScannedExtensions
 
 	// Perform the scan
 	match ScanAndPopulateExtensions(ApplicationHandle.clone(), State).await {
 		Ok(()) => {
-			info!(
-				"[ExtensionScanner] Robust extension scan completed successfully"
-			);
+			info!("[ExtensionScanner] Robust extension scan completed successfully");
 			Ok(())
 		},
 		Err(error) => {
@@ -164,7 +152,8 @@ pub async fn ScanExtensionsWithRecovery(
 			warn!("[ExtensionScanner] Attempting recovery from extension scan failure...");
 
 			// Clear state again
-			// Note: Would clear State.Extension.ScannedExtensions.Extension.ScannedExtensions
+			// Note: Would clear
+			// State.Extension.ScannedExtensions.Extension.ScannedExtensions
 
 			// Retry the scan with a cloned handle
 			ScanAndPopulateExtensions(ApplicationHandle.clone(), State).await

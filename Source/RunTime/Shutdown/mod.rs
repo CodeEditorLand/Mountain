@@ -2,10 +2,12 @@
 //!
 //! ## RESPONSIBILITIES
 //!
-//! Service shutdown and lifecycle management for graceful application termination.
-//! Coordinates cleanup of all application services with error recovery.
+//! Service shutdown and lifecycle management for graceful application
+//! termination. Coordinates cleanup of all application services with error
+//! recovery.
 //!
-//! Provides comprehensive shutdown operations through impl blocks on ApplicationRunTime:
+//! Provides comprehensive shutdown operations through impl blocks on
+//! ApplicationRunTime:
 //! - Main shutdown orchestration
 //! - Cocoon sidecar shutdown with retry
 //! - Terminal disposal
@@ -24,8 +26,8 @@
 //! ## ERROR HANDLING
 //!
 //! All shutdown operations use error recovery to continue cleanup even when
-//! individual services fail. Errors are collected and reported without crashing.
-//! Multi-attempt retry for critical operations like Cocoon shutdown.
+//! individual services fail. Errors are collected and reported without
+//! crashing. Multi-attempt retry for critical operations like Cocoon shutdown.
 //!
 //! ## LOGGING
 //!
@@ -56,9 +58,11 @@
 
 // --- Sub-modules ---
 
-/// Shutdown orchestration and service cleanup implemented on ApplicationRunTime.
+/// Shutdown orchestration and service cleanup implemented on
+/// ApplicationRunTime.
 pub mod Shutdown;
 
-// Note: The shutdown functions (Shutdown, ShutdownWithRecovery, ShutdownCocoonWithRetry,
-// DisposeTerminalsSafely, SaveApplicationState, FlushPendingOperations) are now implemented
-// as methods on the ApplicationRunTime struct in Shutdown.rs
+// Note: The shutdown functions (Shutdown, ShutdownWithRecovery,
+// ShutdownCocoonWithRetry, DisposeTerminalsSafely, SaveApplicationState,
+// FlushPendingOperations) are now implemented as methods on the
+// ApplicationRunTime struct in Shutdown.rs

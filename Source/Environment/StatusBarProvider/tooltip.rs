@@ -1,6 +1,9 @@
 //! # StatusBarProvider - Tooltip Resolution
 //!
-//! Implementation of dynamic tooltip resolution for [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! Implementation of dynamic tooltip resolution for
+//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+
+use std::sync::Arc;
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -8,19 +11,18 @@ use CommonLibrary::{
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 };
 use log::info;
-use serde_json::{json, Value};
-use std::sync::Arc;
+use serde_json::{Value, json};
 
 use super::super::MountainEnvironment::MountainEnvironment;
 
 /// Tooltip resolution operations implementation for MountainEnvironment
 pub(super) async fn provide_tooltip_impl(
-	env: &MountainEnvironment,
-	entry_identifier: String,
+	env:&MountainEnvironment,
+	entry_identifier:String,
 ) -> Result<Option<Value>, CommonError> {
 	info!("[StatusBarProvider] Providing dynamic tooltip for entry: {}", entry_identifier);
 
-	let ipc_provider: Arc<dyn IPCProvider> = env.Require();
+	let ipc_provider:Arc<dyn IPCProvider> = env.Require();
 
 	// This is a "reverse" call, where the host needs data from the sidecar.
 	let rpc_method = format!("{}$ProvideStatusbarTooltip", ProxyTarget::ExtHostStatusBar.GetTargetPrefix());

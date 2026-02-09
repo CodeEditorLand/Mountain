@@ -4,7 +4,8 @@
 //! Combines all extension-related state components into a single state struct.
 //!
 //! ## ARCHITECTURAL ROLE
-//! State is the main composite struct that combines all ExtensionState components:
+//! State is the main composite struct that combines all ExtensionState
+//! components:
 //! - ExtensionRegistry: Command registry and provider handle management
 //! - ProviderRegistration: Language providers registration
 //! - ScannedExtensions: Discovered extensions metadata
@@ -30,20 +31,21 @@
 //! - [ ] Implement extension lifecycle events
 //! - [ ] Add extension state metrics collection
 
-use super::{ExtensionRegistry::Registry, ProviderRegistration::Registration, ScannedExtensions::Extensions};
 use log::debug;
+
+use super::{ExtensionRegistry::Registry, ProviderRegistration::Registration, ScannedExtensions::Extensions};
 
 /// Extension state combining all extension-related components.
 #[derive(Clone)]
 pub struct State {
 	/// Extension registry containing command registry and provider state.
-	pub Registry: Registry,
+	pub Registry:Registry,
 
 	/// Language provider registration state.
-	pub ProviderRegistration: Registration,
+	pub ProviderRegistration:Registration,
 
 	/// Scanned extensions containing discovered extensions.
-	pub ScannedExtensions: Extensions,
+	pub ScannedExtensions:Extensions,
 }
 
 impl Default for State {
@@ -51,9 +53,9 @@ impl Default for State {
 		debug!("[ExtensionState::State] Initializing default extension state...");
 
 		Self {
-			Registry: Default::default(),
-			ProviderRegistration: Default::default(),
-			ScannedExtensions: Default::default(),
+			Registry:Default::default(),
+			ProviderRegistration:Default::default(),
+			ScannedExtensions:Default::default(),
 		}
 	}
 }

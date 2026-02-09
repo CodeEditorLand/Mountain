@@ -32,7 +32,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	debug!("[Extensions] [ScanPaths] Locking ExtensionScanPaths...");
 
 	let mut ScanPathsGuard = AppState
-		.Extension.Registry.ExtensionScanPaths
+		.Extension
+		.Registry
+		.ExtensionScanPaths
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|e| format!("Failed to lock ExtensionScanPaths: {}", e))?;

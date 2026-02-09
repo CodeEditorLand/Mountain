@@ -16,11 +16,12 @@ use url::Url;
 
 use super::{invoke_provider::invoke_provider, validation::validate_language_feature_request};
 
-/// Implementation of hover command - called by the command wrapper in the parent module.
+/// Implementation of hover command - called by the command wrapper in the
+/// parent module.
 pub(super) async fn provide_hover_impl(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
 ) -> Result<Value, String> {
 	debug!("[Language Feature] Providing hover for: {} at {:?}", uri, position);
 
@@ -28,8 +29,8 @@ pub(super) async fn provide_hover_impl(
 
 	let document_uri = Url::parse(&uri).map_err(|error| error.to_string())?;
 
-	let position_dto: PositionDTO = serde_json::from_value(position.clone())
-		.map_err(|error| format!("Failed to parse position: {}", error))?;
+	let position_dto:PositionDTO =
+		serde_json::from_value(position.clone()).map_err(|error| format!("Failed to parse position: {}", error))?;
 
 	invoke_provider(application_handle, |provider| {
 		async move {

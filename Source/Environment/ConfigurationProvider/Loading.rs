@@ -1,5 +1,7 @@
 //! Configuration loading and merging utilities.
 
+use std::{path::PathBuf, sync::Arc};
+
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Error::CommonError::CommonError,
@@ -7,8 +9,6 @@ use CommonLibrary::{
 };
 use log::info;
 use serde_json::{Map, Value};
-use std::path::PathBuf;
-use std::sync::Arc;
 use tauri::Manager;
 
 use crate::{
@@ -19,15 +19,11 @@ use crate::{
 
 /// An internal helper to read and parse a single JSON configuration file.
 pub(super) async fn read_and_parse_configuration_file(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	path: &Option<PathBuf>,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	path:&Option<PathBuf>,
 ) -> Result<Value, CommonError> {
 	if let Some(p) = path {
-		let runtime = environment
-			.ApplicationHandle
-			.state::<Arc<ApplicationRunTime>>()
-			.inner()
-			.clone();
+		let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 		if let Ok(bytes) = runtime.Run(ReadFile(p.clone())).await {
 			return Ok(serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new())));
@@ -40,7 +36,7 @@ pub(super) async fn read_and_parse_configuration_file(
 /// Logic to load and merge all configuration files into the effective
 /// configuration stored in `ApplicationState`.
 pub async fn initialize_and_merge_configurations(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 ) -> Result<(), CommonError> {
 	info!("[ConfigurationProvider] Re-initializing and merging all configurations...");
 
@@ -55,7 +51,8 @@ pub async fn initialize_and_merge_configurations(
 
 	let workspace_settings_path = environment
 		.ApplicationState
-		.Workspace.WorkspaceConfigurationPath
+		.Workspace
+		.WorkspaceConfigurationPath
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.clone();
@@ -76,12 +73,9 @@ pub async fn initialize_and_merge_configurations(
 					(value.as_object(), merged.get(key.as_str()).and_then(|v| v.as_object()))
 				{
 					for (inner_key, inner_value) in user_value {
-						merged
-							.get_mut(key.as_str())
-							.and_then(|v| v.as_object_mut())
-							.map(|m| {
-								m.insert(inner_key.clone(), inner_value.clone());
-							});
+						merged.get_mut(key.as_str()).and_then(|v| v.as_object_mut()).map(|m| {
+							m.insert(inner_key.clone(), inner_value.clone());
+						});
 					}
 				}
 			} else {
@@ -97,12 +91,9 @@ pub async fn initialize_and_merge_configurations(
 					(value.as_object(), merged.get(key.as_str()).and_then(|v| v.as_object()))
 				{
 					for (inner_key, inner_value) in workspace_value {
-						merged
-							.get_mut(key.as_str())
-							.and_then(|v| v.as_object_mut())
-							.map(|m| {
-								m.insert(inner_key.clone(), inner_value.clone());
-							});
+						merged.get_mut(key.as_str()).and_then(|v| v.as_object_mut()).map(|m| {
+							m.insert(inner_key.clone(), inner_value.clone());
+						});
 					}
 				}
 			} else {
@@ -131,13 +122,15 @@ pub async fn initialize_and_merge_configurations(
 
 /// Collects default configurations from all installed extensions.
 pub(super) fn collect_default_configurations(
-	application_state: &crate::ApplicationState::ApplicationState,
+	application_state:&crate::ApplicationState::ApplicationState,
 ) -> Result<Value, CommonError> {
 	let mut default_config = Map::new();
 
 	// Collect configurations from all extensions' contributes.configuration
 	for extension in application_state
-		.Extension.ScannedExtensions.ScannedExtensions
+		.Extension
+		.ScannedExtensions
+		.ScannedExtensions
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.values()
@@ -146,10 +139,9 @@ pub(super) fn collect_default_configurations(
 			if let Some(config_array) = contributes.get("configuration").and_then(|c| c.as_array()) {
 				for config_value in config_array {
 					// Each config contribution may have "key" and "value"
-					if let (Some(key), Some(value)) = (
-						config_value.get("key").and_then(|k| k.as_str()),
-						config_value.get("value"),
-					) {
+					if let (Some(key), Some(value)) =
+						(config_value.get("key").and_then(|k| k.as_str()), config_value.get("value"))
+					{
 						if let Some(value_obj) = value.as_object() {
 							default_config.insert(key.to_string(), Value::Object(value_obj.clone()));
 						}

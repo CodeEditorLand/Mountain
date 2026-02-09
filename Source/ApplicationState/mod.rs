@@ -215,7 +215,8 @@ pub mod DTO;
 
 // --- Re-exports for backward compatibility ---
 
-/// Re-export the main ApplicationState struct and helpers for backward compatibility
+/// Re-export the main ApplicationState struct and helpers for backward
+/// compatibility
 pub use State::ApplicationState::{ApplicationState, MapLockError, MapLockErrorWithRecovery, StateOperationResult};
-pub use State::{WorkspaceState, ConfigurationState, ExtensionState, FeatureState, UIState};
-pub use Internal::{Persistence, PathResolution, Serialization, ExtensionScanner, TextProcessing, Recovery};
+pub use State::{ConfigurationState, ExtensionState, FeatureState, UIState, WorkspaceState};
+pub use Internal::{ExtensionScanner, PathResolution, Persistence, Recovery, Serialization, TextProcessing};

@@ -132,13 +132,7 @@
 //! - [`ConstructExtensionHostInitializationData`]: Build IExtensionHostInitData
 //!   for Cocoon
 
-use std::{
-	collections::HashMap,
-	env,
-	fs,
-	path::PathBuf,
-	sync::Arc,
-};
+use std::{collections::HashMap, env, fs, path::PathBuf, sync::Arc};
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -151,10 +145,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry};
 use uuid::Uuid;
 
-use crate::{
-	ApplicationState::ApplicationState,
-	Environment::MountainEnvironment::MountainEnvironment,
-};
+use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
 
 /// Loads or generates a persistent machine ID.
 ///
@@ -166,7 +157,7 @@ use crate::{
 ///
 /// # Returns
 /// The machine ID as a String
-fn get_or_generate_machine_id(app_data_dir: &PathBuf) -> String {
+fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 	let machine_id_path = app_data_dir.join("machine-id.txt");
 
 	// Try to load existing machine ID
@@ -180,7 +171,7 @@ fn get_or_generate_machine_id(app_data_dir: &PathBuf) -> String {
 
 	// Generate and save new machine ID
 	let new_machine_id = Uuid::new_v4().to_string();
-	
+
 	// Ensure directory exists
 	if let Some(parent) = machine_id_path.parent() {
 		if let Err(e) = fs::create_dir_all(parent) {

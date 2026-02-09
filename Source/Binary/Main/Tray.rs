@@ -6,11 +6,13 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! The tray module provides system tray integration for the Mountain application.
+//! The tray module provides system tray integration for the Mountain
+//! application.
 //!
 //! ## KEY COMPONENTS
 //!
-//! - **SwitchTrayIcon**: Platform-agnostic system tray icon switching (Binary/Tray/SwitchTrayIcon)
+//! - **SwitchTrayIcon**: Platform-agnostic system tray icon switching
+//!   (Binary/Tray/SwitchTrayIcon)
 //!
 //! ## ERROR HANDLING
 //!

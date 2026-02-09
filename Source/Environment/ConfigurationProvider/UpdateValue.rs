@@ -1,5 +1,7 @@
 //! Configuration value update and persistence.
 
+use std::{path::PathBuf, sync::Arc};
+
 use CommonLibrary::{
 	Configuration::DTO::{
 		ConfigurationOverridesDTO::ConfigurationOverridesDTO,
@@ -11,33 +13,24 @@ use CommonLibrary::{
 };
 use log::{info, warn};
 use serde_json::{Map, Value};
-use std::path::PathBuf;
-use std::sync::Arc;
 use tauri::Manager;
 
-use crate::{
-	Environment::Utility,
-	RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime,
-};
+use crate::{Environment::Utility, RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime};
 
 /// Updates a configuration value in the appropriate `settings.json` file.
 pub(super) async fn update_configuration_value(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	key: String,
-	value: Value,
-	target: ConfigurationTarget,
-	_overrides: ConfigurationOverridesDTO,
-	_scope_to_language: Option<bool>,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	key:String,
+	value:Value,
+	target:ConfigurationTarget,
+	_overrides:ConfigurationOverridesDTO,
+	_scope_to_language:Option<bool>,
 ) -> Result<(), CommonError> {
 	info!("[ConfigurationProvider] Updating key '{}' in target {:?}", key, target);
 
-	let runtime = environment
-		.ApplicationHandle
-		.state::<Arc<ApplicationRunTime>>()
-		.inner()
-		.clone();
+	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-	let config_path: PathBuf = match target {
+	let config_path:PathBuf = match target {
 		ConfigurationTarget::User => {
 			environment
 				.ApplicationHandle
@@ -46,38 +39,37 @@ pub(super) async fn update_configuration_value(
 				.map(|p| p.join("settings.json"))
 				.map_err(|error| {
 					CommonError::ConfigurationLoad {
-						Description: format!("Could not resolve user config path: {}", error),
+						Description:format!("Could not resolve user config path: {}", error),
 					}
 				})?
-		}
+		},
 
 		ConfigurationTarget::Workspace => {
 			environment
 				.ApplicationState
-				.Workspace.WorkspaceConfigurationPath
+				.Workspace
+				.WorkspaceConfigurationPath
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 				.clone()
 				.ok_or_else(|| {
-					CommonError::ConfigurationLoad {
-						Description: "No workspace configuration path set".into(),
-					}
+					CommonError::ConfigurationLoad { Description:"No workspace configuration path set".into() }
 				})?
-		}
+		},
 
 		_ => {
 			warn!("[ConfigurationProvider] Unsupported configuration target: {:?}", target);
 
 			return Err(CommonError::NotImplemented {
-				FeatureName: "This configuration target is not supported".into(),
+				FeatureName:"This configuration target is not supported".into(),
 			});
-		}
+		},
 	};
 
 	// Read the file, modify it, and write it back.
 	let bytes = runtime.Run(ReadFile(config_path.clone())).await.unwrap_or_default();
 
-	let mut current_config: Value = serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new()));
+	let mut current_config:Value = serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new()));
 
 	if let Value::Object(map) = &mut current_config {
 		if value.is_null() {

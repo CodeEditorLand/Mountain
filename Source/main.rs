@@ -4,6 +4,4 @@
 //! It delegates to the library's Binary module.
 
 #[tauri::mobile_entry_point]
-fn main() {
-	Mountain::Binary::Main::Fn();
-}
+fn main() { Mountain::Binary::Main::Fn(); }

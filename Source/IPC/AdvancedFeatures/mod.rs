@@ -33,10 +33,10 @@ pub mod Features;
 
 pub use Features::{
 	AdvancedFeatures,
-	initialize_advanced_features,
-	CollaborationSession,
-	CollaborationPermissions,
-	PerformanceStats,
-	MessageCache,
 	CachedMessage,
+	CollaborationPermissions,
+	CollaborationSession,
+	MessageCache,
+	PerformanceStats,
+	initialize_advanced_features,
 };

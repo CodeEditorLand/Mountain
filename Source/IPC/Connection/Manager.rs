@@ -1,13 +1,15 @@
-
-use std::collections::HashMap;
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use log::debug;
-use tokio::sync::{Mutex as AsyncMutex, Semaphore};
-use tokio::time::{timeout, Duration};
+use tokio::{
+	sync::{Mutex as AsyncMutex, Semaphore},
+	time::{Duration, timeout},
+};
 
-use super::Types::{ConnectionHandle, ConnectionStats};
-use super::Health::HealthChecker;
+use super::{
+	Health::HealthChecker,
+	Types::{ConnectionHandle, ConnectionStats},
+};
 
 /// Connection manager (alias for ConnectionPool)
 ///
@@ -67,19 +69,19 @@ pub type ConnectionManager = ConnectionPool;
 /// ```
 pub struct ConnectionPool {
 	/// Maximum number of concurrent connections allowed
-	MaxConnections: usize,
+	MaxConnections:usize,
 
 	/// Timeout for acquiring a connection from the pool
-	ConnectionTimeout: Duration,
+	ConnectionTimeout:Duration,
 
 	/// Semaphore to limit concurrent connections
-	Semaphore: Arc<Semaphore>,
+	Semaphore:Arc<Semaphore>,
 
 	/// Map of active connections by ID
-	ActiveConnections: Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
+	ActiveConnections:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
 
 	/// Health checker for monitoring connection health
-	HealthChecker: Arc<AsyncMutex<HealthChecker>>,
+	HealthChecker:Arc<AsyncMutex<HealthChecker>>,
 }
 
 impl ConnectionPool {
@@ -94,7 +96,7 @@ impl ConnectionPool {
 	/// ```rust,ignore
 	/// let pool = ConnectionPool::new(10, Duration::from_secs(30));
 	/// ```
-	pub fn new(MaxConnections: usize, ConnectionTimeout: Duration) -> Self {
+	pub fn new(MaxConnections:usize, ConnectionTimeout:Duration) -> Self {
 		debug!(
 			"[ConnectionPool] Creating pool with max: {}, timeout: {:?}",
 			MaxConnections, ConnectionTimeout
@@ -103,18 +105,16 @@ impl ConnectionPool {
 		Self {
 			MaxConnections,
 			ConnectionTimeout,
-			Semaphore: Arc::new(Semaphore::new(MaxConnections)),
-			ActiveConnections: Arc::new(AsyncMutex::new(HashMap::new())),
-			HealthChecker: Arc::new(AsyncMutex::new(HealthChecker::new())),
+			Semaphore:Arc::new(Semaphore::new(MaxConnections)),
+			ActiveConnections:Arc::new(AsyncMutex::new(HashMap::new())),
+			HealthChecker:Arc::new(AsyncMutex::new(HealthChecker::new())),
 		}
 	}
 
 	/// Create a connection pool with default settings
 	///
 	/// Default settings: 10 max connections, 30s timeout
-	pub fn default() -> Self {
-		Self::new(10, Duration::from_secs(30))
-	}
+	pub fn default() -> Self { Self::new(10, Duration::from_secs(30)) }
 
 	/// Get a connection handle from the pool with timeout
 	///
@@ -135,11 +135,10 @@ impl ConnectionPool {
 		debug!("[ConnectionPool] Acquiring connection permit");
 
 		// Acquire semaphore permit with timeout
-		let permit =
-			timeout(self.ConnectionTimeout, self.Semaphore.acquire())
-				.await
-				.map_err(|_| "Connection timeout - pool may be at capacity".to_string())?
-				.map_err(|e| format!("Failed to acquire connection permit: {}", e))?;
+		let permit = timeout(self.ConnectionTimeout, self.Semaphore.acquire())
+			.await
+			.map_err(|_| "Connection timeout - pool may be at capacity".to_string())?
+			.map_err(|e| format!("Failed to acquire connection permit: {}", e))?;
 
 		// Create new connection handle
 		let handle = ConnectionHandle::new();
@@ -150,10 +149,7 @@ impl ConnectionPool {
 			connections.insert(handle.id.clone(), handle.clone());
 		}
 
-		debug!(
-			"[ConnectionPool] Connection {} acquired (permit released on drop)",
-			handle.id
-		);
+		debug!("[ConnectionPool] Connection {} acquired (permit released on drop)", handle.id);
 
 		// Start health monitoring for this connection
 		self.StartHealthMonitoring(&handle.id).await;
@@ -177,7 +173,7 @@ impl ConnectionPool {
 	/// ```rust,ignore
 	/// pool.ReleaseConnection(handle).await;
 	/// ```
-	pub async fn ReleaseConnection(&self, handle: ConnectionHandle) {
+	pub async fn ReleaseConnection(&self, handle:ConnectionHandle) {
 		debug!("[ConnectionPool] Releasing connection {}", handle.id);
 
 		{
@@ -208,11 +204,11 @@ impl ConnectionPool {
 		let healthy_connections = connections.values().filter(|h| h.is_healthy()).count();
 
 		ConnectionStats {
-			total_connections: connections.len(),
+			total_connections:connections.len(),
 			healthy_connections,
-			max_connections: self.MaxConnections,
-			available_permits: self.Semaphore.available_permits(),
-			connection_timeout: self.ConnectionTimeout,
+			max_connections:self.MaxConnections,
+			available_permits:self.Semaphore.available_permits(),
+			connection_timeout:self.ConnectionTimeout,
 		}
 	}
 
@@ -239,7 +235,7 @@ impl ConnectionPool {
 		let now = std::time::SystemTime::now();
 		let stale_threshold = Duration::from_secs(300); // 5 minutes
 
-		let stale_ids: Vec<String> = connections
+		let stale_ids:Vec<String> = connections
 			.iter()
 			.filter(|(_, handle)| {
 				// Check if connection is stale using SystemTime
@@ -259,10 +255,7 @@ impl ConnectionPool {
 		}
 
 		if stale_count > 0 {
-			debug!(
-				"[ConnectionPool] Cleaned up {} stale connection(s)",
-				stale_count
-			);
+			debug!("[ConnectionPool] Cleaned up {} stale connection(s)", stale_count);
 		}
 
 		stale_count
@@ -275,7 +268,7 @@ impl ConnectionPool {
 	///
 	/// ## Parameters
 	/// - `connection_id`: The ID of the connection to monitor
-	async fn StartHealthMonitoring(&self, connection_id: &str) {
+	async fn StartHealthMonitoring(&self, connection_id:&str) {
 		let health_checker = self.HealthChecker.clone();
 		let active_connections = self.ActiveConnections.clone();
 		let connection_id = connection_id.to_string();
@@ -315,19 +308,13 @@ impl ConnectionPool {
 	}
 
 	/// Get the maximum number of connections
-	pub fn max_connections(&self) -> usize {
-		self.MaxConnections
-	}
+	pub fn max_connections(&self) -> usize { self.MaxConnections }
 
 	/// Get the connection timeout
-	pub fn connection_timeout(&self) -> Duration {
-		self.ConnectionTimeout
-	}
+	pub fn connection_timeout(&self) -> Duration { self.ConnectionTimeout }
 
 	/// Get the number of available permits
-	pub fn available_permits(&self) -> usize {
-		self.Semaphore.available_permits()
-	}
+	pub fn available_permits(&self) -> usize { self.Semaphore.available_permits() }
 
 	/// Get the number of active connections
 	pub async fn active_connections(&self) -> usize {
@@ -340,7 +327,7 @@ impl ConnectionPool {
 mod tests {
 	use super::*;
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_connection_pool_creation() {
 		let pool = ConnectionPool::new(10, Duration::from_secs(30));
 		assert_eq!(pool.max_connections(), 10);
@@ -349,14 +336,14 @@ mod tests {
 		assert_eq!(pool.active_connections().await, 0);
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_default_connection_pool() {
 		let pool = ConnectionPool::default();
 		assert_eq!(pool.max_connections(), 10);
 		assert_eq!(pool.connection_timeout(), Duration::from_secs(30));
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_get_and_release_connection() {
 		let pool = Arc::new(ConnectionPool::new(5, Duration::from_secs(5)));
 
@@ -371,20 +358,17 @@ mod tests {
 		assert_eq!(pool.available_permits(), 5); // Permit restored
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_multiple_connections() {
 		let pool = Arc::new(ConnectionPool::new(3, Duration::from_secs(5)));
 
-		let handles: Vec<ConnectionHandle> = (0..3)
-			.map(|_| pool.GetConnection().await.unwrap())
-			.collect();
+		let handles:Vec<ConnectionHandle> = (0..3).map(|_| pool.GetConnection().await.unwrap()).collect();
 
 		assert_eq!(pool.active_connections().await, 3);
 		assert_eq!(pool.available_permits(), 0);
 
 		// Try to get one more - should timeout
-		let result =
-			timeout(Duration::from_secs(1), pool.GetConnection()).await;
+		let result = timeout(Duration::from_secs(1), pool.GetConnection()).await;
 		assert!(result.is_err()); // Timeout
 
 		// Release one connection
@@ -402,7 +386,7 @@ mod tests {
 		pool.ReleaseConnection(handle).await;
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_connection_stats() {
 		let pool = Arc::new(ConnectionPool::new(5, Duration::from_secs(30)));
 
@@ -413,9 +397,7 @@ mod tests {
 		assert_eq!(stats.utilization(), 0.0);
 
 		// Add some connections
-		let _handles: Vec<ConnectionHandle> = (0..3)
-			.map(|_| pool.GetConnection().await.unwrap())
-			.collect();
+		let _handles:Vec<ConnectionHandle> = (0..3).map(|_| pool.GetConnection().await.unwrap()).collect();
 
 		let stats = pool.GetStats().await;
 		assert_eq!(stats.total_connections, 3);
@@ -423,7 +405,7 @@ mod tests {
 		assert!(stats.utilization() > 0.0);
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_cleanup_stale_connections() {
 		let pool = Arc::new(ConnectionPool::new(5, Duration::from_secs(5)));
 
@@ -443,22 +425,20 @@ mod tests {
 		// Release and try to clean up
 		pool.ReleaseConnection(handle).await;
 
-		// Clean up (will have to adjust logic for testing or add a method to force cleanup)
-		// For now, we'll just verify the method exists and runs
+		// Clean up (will have to adjust logic for testing or add a method to force
+		// cleanup) For now, we'll just verify the method exists and runs
 		let cleaned = pool.CleanUpStaleConnections().await;
 		assert!(cleaned >= 0);
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_pool_utilization() {
 		let pool = Arc::new(ConnectionPool::new(10, Duration::from_secs(30)));
 
 		assert_eq!(pool.GetStats().await.utilization(), 0.0);
 
 		// Use half the connections
-		let _handles: Vec<ConnectionHandle> = (0..5)
-			.map(|_| pool.GetConnection().await.unwrap())
-			.collect();
+		let _handles:Vec<ConnectionHandle> = (0..5).map(|_| pool.GetConnection().await.unwrap()).collect();
 
 		let stats = pool.GetStats().await;
 		assert_eq!(stats.utilization(), 50.0);

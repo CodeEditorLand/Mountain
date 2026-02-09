@@ -15,8 +15,7 @@
 //!   [`SourceControlManagementProvider`] implementations in the Environment
 //!   layer
 //! - Uses Tauri's `#[command]` attribute for IPC exposure
-//! - Reads from
-//!   [`ApplicationState.SourceControlManagement*
+//! - Reads from [`ApplicationState.SourceControlManagement*
 //!   `](crate::ApplicationState::ApplicationState) fields to gather state
 //! - TODO: Should forward commands to provider methods via DI (Require trait)
 //!
@@ -92,21 +91,27 @@ pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationS
 	log::debug!("[SourceControlManagement Command] Getting all SCM state for UI.");
 
 	let Providers = State
-		.Feature.Markers.SourceControlManagementProviders
+		.Feature
+		.Markers
+		.SourceControlManagementProviders
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let Groups = State
-		.Feature.Markers.SourceControlManagementGroups
+		.Feature
+		.Markers
+		.SourceControlManagementGroups
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?
 		.clone();
 
 	let Resources = State
-		.Feature.Markers.SourceControlManagementResources
+		.Feature
+		.Markers
+		.SourceControlManagementResources
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?
@@ -128,7 +133,9 @@ pub async fn GetSCMResourceChanges(
 	log::debug!("[SCM Command] Getting resource changes for provider: {}", ProviderIdentifier);
 
 	let resources_map = State
-		.Feature.Markers.SourceControlManagementResources
+		.Feature
+		.Markers
+		.SourceControlManagementResources
 		.lock()
 		.map_err(MapLockError)
 		.map_err(|Error| Error.to_string())?

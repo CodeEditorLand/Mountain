@@ -2,9 +2,9 @@
 //!
 //! ## RESPONSIBILITIES
 //!
-//! This module provides the primary Tauri command handler for requests originating
-//! from the Sky frontend. It serves as the general-purpose entry point for commands
-//! that are defined abstractly in the Common crate.
+//! This module provides the primary Tauri command handler for requests
+//! originating from the Sky frontend. It serves as the general-purpose entry
+//! point for commands that are defined abstractly in the Common crate.
 //!
 //! ### Core Functions:
 //! - Receive frontend commands via Tauri IPC
@@ -14,7 +14,8 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! DispatchFrontendCommand acts as the **frontend gateway** in Track's dispatch layer:
+//! DispatchFrontendCommand acts as the **frontend gateway** in Track's dispatch
+//! layer:
 //!
 //! ```text
 //! Sky (Frontend) ──► DispatchFrontendCommand ──► CreateEffectForRequest ──► ApplicationRunTime ──► Providers
@@ -54,10 +55,7 @@ use log::{debug, error};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Runtime, State, command};
 
-use crate::{
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Track::Effect::CreateEffectForRequest,
-};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::CreateEffectForRequest};
 
 /// The primary Tauri command handler for requests originating from the `Sky`
 /// frontend. This is the general-purpose entry point for commands that are
@@ -82,7 +80,10 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 		},
 
 		Err(Error) => {
-			error!("[Track/FrontendCommand] Failed to create effect for command '{}': {}", Command, Error);
+			error!(
+				"[Track/FrontendCommand] Failed to create effect for command '{}': {}",
+				Command, Error
+			);
 
 			Err(Error)
 		},

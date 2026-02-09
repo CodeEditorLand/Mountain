@@ -6,16 +6,17 @@
 //! large messages or high-frequency communication.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module is part of the performance optimization layer in the IPC architecture,
-//! reducing bandwidth usage and improving transfer speeds.
+//! This module is part of the performance optimization layer in the IPC
+//! architecture, reducing bandwidth usage and improving transfer speeds.
 //!
 //! ## KEY COMPONENTS
 //!
-//! - **MessageCompressor**: Main compression structure with configurable compression level
+//! - **MessageCompressor**: Main compression structure with configurable
+//!   compression level
 //!
 //! ## ERROR HANDLING
-//! Compression and decompression operations return Result types with descriptive
-//! error messages for failures.
+//! Compression and decompression operations return Result types with
+//! descriptive error messages for failures.
 //!
 //! ## LOGGING
 //! Debug-level logging for compression statistics, error for failures.
@@ -105,10 +106,10 @@ use super::super::Message::TauriIPCMessage;
 /// ```
 pub struct MessageCompressor {
 	/// Gzip compression level (0-9, where 0 is no compression)
-	CompressionLevel: u32,
+	CompressionLevel:u32,
 
 	/// Minimum number of messages required for batch processing
-	BatchSize: usize,
+	BatchSize:usize,
 }
 
 impl MessageCompressor {
@@ -123,15 +124,12 @@ impl MessageCompressor {
 	/// ```rust,ignore
 	/// let compressor = MessageCompressor::new(6, 10);
 	/// ```
-	pub fn new(CompressionLevel: u32, BatchSize: usize) -> Self {
+	pub fn new(CompressionLevel:u32, BatchSize:usize) -> Self {
 		debug!(
 			"[MessageCompressor] Created with level: {}, batch size: {}",
 			CompressionLevel, BatchSize
 		);
-		Self {
-			CompressionLevel,
-			BatchSize,
-		}
+		Self { CompressionLevel, BatchSize }
 	}
 
 	/// Compress messages using Gzip for efficient transfer
@@ -152,11 +150,8 @@ impl MessageCompressor {
 	/// let messages = vec![msg1, msg2, msg3];
 	/// let compressed = compressor.compress_messages(messages)?;
 	/// ```
-	pub fn compress_messages(&self, Messages: Vec<TauriIPCMessage>) -> Result<Vec<u8>, String> {
-		debug!(
-			"[MessageCompressor] Compressing {} messages",
-			Messages.len()
-		);
+	pub fn compress_messages(&self, Messages:Vec<TauriIPCMessage>) -> Result<Vec<u8>, String> {
+		debug!("[MessageCompressor] Compressing {} messages", Messages.len());
 
 		// Serialize messages to JSON
 		let SerializedMessages =
@@ -170,9 +165,7 @@ impl MessageCompressor {
 			.write_all(&SerializedMessages)
 			.map_err(|e| format!("Failed to compress messages: {}", e))?;
 
-		let compressed_data = encoder
-			.finish()
-			.map_err(|e| format!("Failed to finish compression: {}", e))?;
+		let compressed_data = encoder.finish().map_err(|e| format!("Failed to finish compression: {}", e))?;
 
 		let compressed_size = compressed_data.len();
 		let ratio = if original_size > 0 {
@@ -206,11 +199,8 @@ impl MessageCompressor {
 	/// ```rust,ignore
 	/// let messages = compressor.decompress_messages(&compressed_data)?;
 	/// ```
-	pub fn decompress_messages(&self, CompressedData: &[u8]) -> Result<Vec<TauriIPCMessage>, String> {
-		debug!(
-			"[MessageCompressor] Decompressing {} bytes",
-			CompressedData.len()
-		);
+	pub fn decompress_messages(&self, CompressedData:&[u8]) -> Result<Vec<TauriIPCMessage>, String> {
+		debug!("[MessageCompressor] Decompressing {} bytes", CompressedData.len());
 
 		let compressed_size = CompressedData.len();
 
@@ -224,12 +214,14 @@ impl MessageCompressor {
 		let decompressed_size = DecompressedData.len();
 
 		// Deserialize messages with explicit type annotation
-		let messages: Vec<TauriIPCMessage> = serde_json::from_slice(&DecompressedData)
-			.map_err(|e| format!("Failed to deserialize messages: {}", e))?;
+		let messages:Vec<TauriIPCMessage> =
+			serde_json::from_slice(&DecompressedData).map_err(|e| format!("Failed to deserialize messages: {}", e))?;
 
 		debug!(
 			"[MessageCompressor] Decompression complete: {} -> {} bytes, {} messages",
-			compressed_size, decompressed_size, messages.len()
+			compressed_size,
+			decompressed_size,
+			messages.len()
 		);
 
 		Ok(messages)
@@ -256,7 +248,7 @@ impl MessageCompressor {
 	///     // Send individually
 	/// }
 	/// ```
-	pub fn should_batch(&self, MessagesCount: usize) -> bool {
+	pub fn should_batch(&self, MessagesCount:usize) -> bool {
 		let should_batch = MessagesCount >= self.BatchSize;
 		debug!(
 			"[MessageCompressor] Batch check: {} >= {} = {}",
@@ -266,29 +258,19 @@ impl MessageCompressor {
 	}
 
 	/// Get the compression level
-	pub fn compression_level(&self) -> u32 {
-		self.CompressionLevel
-	}
+	pub fn compression_level(&self) -> u32 { self.CompressionLevel }
 
 	/// Get the batch size threshold
-	pub fn batch_size(&self) -> usize {
-		self.BatchSize
-	}
+	pub fn batch_size(&self) -> usize { self.BatchSize }
 
 	/// Create a compressor with default settings (level 6, batch size 10)
-	pub fn default() -> Self {
-		Self::new(6, 10)
-	}
+	pub fn default() -> Self { Self::new(6, 10) }
 
 	/// Create a fast compressor (level 3, batch size 5)
-	pub fn fast() -> Self {
-		Self::new(3, 5)
-	}
+	pub fn fast() -> Self { Self::new(3, 5) }
 
 	/// Create a maximum compression compressor (level 9, batch size 20)
-	pub fn max() -> Self {
-		Self::new(9, 20)
-	}
+	pub fn max() -> Self { Self::new(9, 20) }
 }
 
 #[cfg(test)]
@@ -296,7 +278,7 @@ mod tests {
 	use super::*;
 	use crate::Element::Mountain::Source::IPC::Message::TauriIPCMessage;
 
-	fn create_test_message(id: u32) -> TauriIPCMessage {
+	fn create_test_message(id:u32) -> TauriIPCMessage {
 		TauriIPCMessage::new(
 			format!("test_channel_{}", id),
 			serde_json::json!({
@@ -307,35 +289,35 @@ mod tests {
 		)
 	}
 
-#[test]
+	#[test]
 	fn test_compressor_creation() {
 		let compressor = MessageCompressor::new(6, 10);
 		assert_eq!(compressor.compression_level(), 6);
 		assert_eq!(compressor.batch_size(), 10);
 	}
 
-#[test]
+	#[test]
 	fn test_default_compressor() {
 		let compressor = MessageCompressor::default();
 		assert_eq!(compressor.compression_level(), 6);
 		assert_eq!(compressor.batch_size(), 10);
 	}
 
-#[test]
+	#[test]
 	fn test_fast_compressor() {
 		let compressor = MessageCompressor::fast();
 		assert_eq!(compressor.compression_level(), 3);
 		assert_eq!(compressor.batch_size(), 5);
 	}
 
-#[test]
+	#[test]
 	fn test_max_compressor() {
 		let compressor = MessageCompressor::max();
 		assert_eq!(compressor.compression_level(), 9);
 		assert_eq!(compressor.batch_size(), 20);
 	}
 
-#[test]
+	#[test]
 	fn test_should_batch() {
 		let compressor = MessageCompressor::new(6, 10);
 		assert!(!compressor.should_batch(5));
@@ -343,14 +325,10 @@ mod tests {
 		assert!(compressor.should_batch(15));
 	}
 
-#[test]
+	#[test]
 	fn test_compress_and_decompress() {
 		let compressor = MessageCompressor::default();
-		let original_messages = vec![
-			create_test_message(1),
-			create_test_message(2),
-			create_test_message(3),
-		];
+		let original_messages = vec![create_test_message(1), create_test_message(2), create_test_message(3)];
 
 		// Compress
 		let compressed = compressor.compress_messages(original_messages.clone()).unwrap();
@@ -366,14 +344,12 @@ mod tests {
 		}
 	}
 
-#[test]
+	#[test]
 	fn test_compression_ratio() {
 		let compressor = MessageCompressor::default();
 
 		// Create large messages that should compress well
-		let messages: Vec<TauriIPCMessage> = (0..20)
-			.map(|i| create_test_message(i))
-			.collect();
+		let messages:Vec<TauriIPCMessage> = (0..20).map(|i| create_test_message(i)).collect();
 
 		let compressed = compressor.compress_messages(messages.clone()).unwrap();
 
@@ -382,7 +358,7 @@ mod tests {
 		assert!(compressed.len() < original_data.len());
 	}
 
-#[test]
+	#[test]
 	fn test_empty_messages() {
 		let compressor = MessageCompressor::default();
 		let messages = vec![];
@@ -393,7 +369,7 @@ mod tests {
 		assert!(decompressed.is_empty());
 	}
 
-#[test]
+	#[test]
 	fn test_single_message() {
 		let compressor = MessageCompressor::default();
 		let messages = vec![create_test_message(1)];

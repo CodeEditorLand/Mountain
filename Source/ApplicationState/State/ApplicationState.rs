@@ -52,38 +52,39 @@ use CommonLibrary::Error::CommonError::CommonError;
 use log::debug;
 
 use super::{
-	WorkspaceState::State as WorkspaceState,
 	ConfigurationState::State as ConfigurationState,
 	ExtensionState::State::State as ExtensionState,
 	FeatureState::State::State as FeatureState,
 	UIState::State as UIState,
+	WorkspaceState::State as WorkspaceState,
 };
 use crate::Environment::TestProvider::TestProviderState;
 
 /// The central, shared, thread-safe state for the entire Mountain application.
 #[derive(Clone)]
 pub struct ApplicationState {
-	/// Workspace state containing workspace folders, trust, and active document.
-	pub Workspace: WorkspaceState,
+	/// Workspace state containing workspace folders, trust, and active
+	/// document.
+	pub Workspace:WorkspaceState,
 
 	/// Configuration and storage state.
-	pub Configuration: ConfigurationState,
+	pub Configuration:ConfigurationState,
 
 	/// Extension management state.
-	pub Extension: ExtensionState,
+	pub Extension:ExtensionState,
 
 	/// Feature-specific state.
-	pub Feature: FeatureState,
+	pub Feature:FeatureState,
 
 	/// User interface request state.
-	pub UI: UIState,
+	pub UI:UIState,
 
 	/// Test provider state.
-	pub TestProviderState: Arc<tokio::sync::RwLock<TestProviderState>>,
+	pub TestProviderState:Arc<tokio::sync::RwLock<TestProviderState>>,
 
 	/// Memento storage paths.
-	pub GlobalMementoPath: std::path::PathBuf,
-	pub WorkspaceMementoPath: Arc<StandardMutex<Option<std::path::PathBuf>>>,
+	pub GlobalMementoPath:std::path::PathBuf,
+	pub WorkspaceMementoPath:Arc<StandardMutex<Option<std::path::PathBuf>>>,
 }
 
 impl Default for ApplicationState {
@@ -91,16 +92,14 @@ impl Default for ApplicationState {
 		debug!("[ApplicationState] Initializing default application state...");
 
 		Self {
-			Workspace: Default::default(),
-			Configuration: Default::default(),
-			Extension: Default::default(),
-			Feature: Default::default(),
-			UI: Default::default(),
-			TestProviderState: Arc::new(tokio::sync::RwLock::new(
-				TestProviderState::new(),
-			)),
-			GlobalMementoPath: Default::default(),
-			WorkspaceMementoPath: Arc::new(StandardMutex::new(None)),
+			Workspace:Default::default(),
+			Configuration:Default::default(),
+			Extension:Default::default(),
+			Feature:Default::default(),
+			UI:Default::default(),
+			TestProviderState:Arc::new(tokio::sync::RwLock::new(TestProviderState::new())),
+			GlobalMementoPath:Default::default(),
+			WorkspaceMementoPath:Arc::new(StandardMutex::new(None)),
 		}
 	}
 }
@@ -110,9 +109,7 @@ impl ApplicationState {
 	pub fn GetNextProviderHandle(&self) -> u32 { self.Extension.GetNextProviderHandle() }
 
 	/// Gets the next available unique identifier for a terminal instance.
-	pub fn GetNextTerminalIdentifier(&self) -> u64 {
-		self.Feature.GetNextTerminalIdentifier()
-	}
+	pub fn GetNextTerminalIdentifier(&self) -> u64 { self.Feature.GetNextTerminalIdentifier() }
 
 	/// Gets the next available unique identifier for an SCM provider.
 	pub fn GetNextSourceControlManagementProviderHandle(&self) -> u32 {
@@ -126,35 +123,35 @@ impl ApplicationState {
 		// For now, generate a simple identifier based on the current timestamp
 		// In a proper implementation, this would be stored and persisted
 		use std::time::{SystemTime, UNIX_EPOCH};
-		
+
 		let timestamp = SystemTime::now()
 			.duration_since(UNIX_EPOCH)
-			.map_err(|e| CommonError::Unknown { Description: format!("Failed to get system time: {}", e) })?;
-		
+			.map_err(|e| CommonError::Unknown { Description:format!("Failed to get system time: {}", e) })?;
+
 		Ok(format!("workspace-{:x}", timestamp.as_millis()))
 	}
 }
 
 /// A helper to map a mutex poison error into a CommonError.
-pub fn MapLockError<T>(Error: PoisonError<T>) -> CommonError {
-	CommonError::StateLockPoisoned { Context: Error.to_string() }
+pub fn MapLockError<T>(Error:PoisonError<T>) -> CommonError {
+	CommonError::StateLockPoisoned { Context:Error.to_string() }
 }
 
 /// A helper to map a mutex poison error with recovery attempt.
-pub fn MapLockErrorWithRecovery<T>(Error: PoisonError<T>, RecoveryContext: &str) -> CommonError {
+pub fn MapLockErrorWithRecovery<T>(Error:PoisonError<T>, RecoveryContext:&str) -> CommonError {
 	log::warn!(
 		"[ApplicationState] Attempting recovery from poisoned lock in context: {}",
 		RecoveryContext
 	);
 	CommonError::StateLockPoisoned {
-		Context: format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext),
+		Context:format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext),
 	}
 }
 
 /// Error handling result with recovery information.
 #[derive(Debug)]
 pub struct StateOperationResult<T> {
-	pub result: Result<T, CommonError>,
-	pub recovery_attempted: bool,
-	pub recovery_successful: bool,
+	pub result:Result<T, CommonError>,
+	pub recovery_attempted:bool,
+	pub recovery_successful:bool,
 }

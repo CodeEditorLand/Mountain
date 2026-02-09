@@ -45,10 +45,7 @@
 use std::sync::Arc;
 
 use CommonLibrary::{
-	Effect::{
-		ActionEffect::ActionEffect,
-		ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait,
-	},
+	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 };
@@ -68,7 +65,8 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
-		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType: Requires<TCapabilityProvider>,
+		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType:
+			Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static,
 		TOutput: Send + Sync + 'static, {
 		let (ResultSender, ResultReceiver) = tokio::sync::oneshot::channel::<Result<TOutput, TError>>();
@@ -108,12 +106,15 @@ impl ApplicationRunTime {
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
-		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType: Requires<TCapabilityProvider>,
+		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType:
+			Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static,
 		TOutput: Send + Sync + 'static, {
-		tokio::time::timeout(timeout, ApplicationRunTimeTrait::Run(self, Effect)).await.map_err(|_| {
-			CommonError::Unknown { Description:format!("Effect execution timed out after {:?}", timeout) }.into()
-		})?
+		tokio::time::timeout(timeout, ApplicationRunTimeTrait::Run(self, Effect))
+			.await
+			.map_err(|_| {
+				CommonError::Unknown { Description:format!("Effect execution timed out after {:?}", timeout) }.into()
+			})?
 	}
 
 	/// Execute effect with retry mechanism.
@@ -125,7 +126,8 @@ impl ApplicationRunTime {
 	) -> Result<TOutput, TError>
 	where
 		TCapabilityProvider: ?Sized + Send + Sync + 'static,
-		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType: Requires<TCapabilityProvider>,
+		<Self as CommonLibrary::Environment::HasEnvironment::HasEnvironment>::EnvironmentType:
+			Requires<TCapabilityProvider>,
 		TError: From<CommonError> + Send + Sync + 'static + std::fmt::Display,
 		TOutput: Send + Sync + 'static, {
 		let mut retry_count = 0;

@@ -16,12 +16,13 @@ use url::Url;
 
 use super::{invoke_provider::invoke_provider, validation::validate_language_feature_request};
 
-/// Implementation of references command - called by the command wrapper in the parent module.
+/// Implementation of references command - called by the command wrapper in the
+/// parent module.
 pub(super) async fn provide_references_impl(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
-	context: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
+	context:Value,
 ) -> Result<Value, String> {
 	debug!("[Language Feature] Providing references for: {} at {:?}", uri, position);
 
@@ -29,8 +30,8 @@ pub(super) async fn provide_references_impl(
 
 	let document_uri = Url::parse(&uri).map_err(|error| error.to_string())?;
 
-	let position_dto: PositionDTO = serde_json::from_value(position.clone())
-		.map_err(|error| format!("Failed to parse position: {}", error))?;
+	let position_dto:PositionDTO =
+		serde_json::from_value(position.clone()).map_err(|error| format!("Failed to parse position: {}", error))?;
 
 	// Context is passed as raw Value per trait signature
 	invoke_provider(application_handle, |provider| {

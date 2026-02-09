@@ -9,9 +9,9 @@ use serde_json::Value;
 
 /// Retrieves a configuration value from the cached, merged configuration.
 pub(super) async fn get_configuration_value(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	section: Option<String>,
-	_overrides: ConfigurationOverridesDTO,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	section:Option<String>,
+	_overrides:ConfigurationOverridesDTO,
 ) -> Result<Value, CommonError> {
 	debug!("[ConfigurationProvider] Getting configuration for section: {:?}", section);
 
@@ -20,7 +20,7 @@ pub(super) async fn get_configuration_value(
 		.Configuration
 		.GlobalConfiguration
 		.lock()
-		.map_err(|e| CommonError::StateLockPoisoned { Context: format!("Failed to lock configuration: {}", e) })?;
+		.map_err(|e| CommonError::StateLockPoisoned { Context:format!("Failed to lock configuration: {}", e) })?;
 
 	let configuration_value = match section.as_deref() {
 		None => (*configuration_guard).clone(),
@@ -31,13 +31,16 @@ pub(super) async fn get_configuration_value(
 				current = match current.get(key) {
 					Some(value) => value,
 					None => {
-						warn!("[ConfigurationProvider] Configuration section '{}' not found in path: {:?}", key, section_path);
+						warn!(
+							"[ConfigurationProvider] Configuration section '{}' not found in path: {:?}",
+							key, section_path
+						);
 						return Ok(Value::Null);
-					}
+					},
 				};
 			}
 			current.clone()
-		}
+		},
 	};
 
 	// Validate that the configuration value exists

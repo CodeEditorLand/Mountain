@@ -1,29 +1,26 @@
 //! # FileSystemProvider - Write Operations
 //!
-//! Implementation of [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for
+//! Implementation of
+//! [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for
 //! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
 //!
-//! Provides secure, validated filesystem write access with workspace trust enforcement.
+//! Provides secure, validated filesystem write access with workspace trust
+//! enforcement.
 
 use std::path::PathBuf;
 
-use CommonLibrary::{
-	Error::CommonError::CommonError,
-	FileSystem::{
-		DTO::FileTypeDTO::FileTypeDTO,
-	},
-};
+use CommonLibrary::{Error::CommonError::CommonError, FileSystem::DTO::FileTypeDTO::FileTypeDTO};
 use tokio::fs;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 
 /// Write operations implementation for MountainEnvironment
 pub(super) async fn write_file_impl(
-	env: &MountainEnvironment,
-	path: &PathBuf,
-	content: Vec<u8>,
-	create: bool,
-	overwrite: bool,
+	env:&MountainEnvironment,
+	path:&PathBuf,
+	content:Vec<u8>,
+	create:bool,
+	overwrite:bool,
 ) -> Result<(), CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, path)?;
 
@@ -31,8 +28,8 @@ pub(super) async fn write_file_impl(
 	if content.len() > 1024 * 1024 * 1024 {
 		// 1 GB limit
 		return Err(CommonError::InvalidArgument {
-			ArgumentName: "Content".to_string(),
-			Reason: "Content exceeds maximum size limit of 1GB".to_string(),
+			ArgumentName:"Content".to_string(),
+			Reason:"Content exceeds maximum size limit of 1GB".to_string(),
 		});
 	}
 
@@ -74,9 +71,9 @@ pub(super) async fn write_file_impl(
 
 /// CreateDirectory operations implementation for MountainEnvironment
 pub(super) async fn create_directory_impl(
-	env: &MountainEnvironment,
-	path: &PathBuf,
-	recursive: bool,
+	env:&MountainEnvironment,
+	path:&PathBuf,
+	recursive:bool,
 ) -> Result<(), CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, path)?;
 
@@ -89,8 +86,8 @@ pub(super) async fn create_directory_impl(
 
 			if parent_metadata.is_file() {
 				return Err(CommonError::InvalidArgument {
-					ArgumentName: "Path".to_string(),
-					Reason: format!("Cannot create directory: parent path is a file: {}", parent_path.display()),
+					ArgumentName:"Path".to_string(),
+					Reason:format!("Cannot create directory: parent path is a file: {}", parent_path.display()),
 				});
 			}
 		}
@@ -107,10 +104,10 @@ pub(super) async fn create_directory_impl(
 
 /// Delete operations implementation for MountainEnvironment
 pub(super) async fn delete_impl(
-	env: &MountainEnvironment,
-	path: &PathBuf,
-	recursive: bool,
-	_use_trash: bool,
+	env:&MountainEnvironment,
+	path:&PathBuf,
+	recursive:bool,
+	_use_trash:bool,
 ) -> Result<(), CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, path)?;
 
@@ -139,10 +136,10 @@ pub(super) async fn delete_impl(
 
 /// Rename operations implementation for MountainEnvironment
 pub(super) async fn rename_impl(
-	env: &MountainEnvironment,
-	source: &PathBuf,
-	target: &PathBuf,
-	overwrite: bool,
+	env:&MountainEnvironment,
+	source:&PathBuf,
+	target:&PathBuf,
+	overwrite:bool,
 ) -> Result<(), CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, source)?;
 
@@ -159,10 +156,10 @@ pub(super) async fn rename_impl(
 
 /// Copy operations implementation for MountainEnvironment
 pub(super) async fn copy_impl(
-	env: &MountainEnvironment,
-	source: &PathBuf,
-	target: &PathBuf,
-	overwrite: bool,
+	env:&MountainEnvironment,
+	source:&PathBuf,
+	target:&PathBuf,
+	overwrite:bool,
 ) -> Result<(), CommonError> {
 	Utility::IsPathAllowedForAccess(&env.ApplicationState, source)?;
 
@@ -177,14 +174,14 @@ pub(super) async fn copy_impl(
 	let source_metadata = super::read_operations::stat_file_impl(env, source).await?;
 
 	if (source_metadata.FileType & FileTypeDTO::Directory as u8) != 0 {
-		return Err(CommonError::NotImplemented { FeatureName: "Recursive directory copy".to_string() });
+		return Err(CommonError::NotImplemented { FeatureName:"Recursive directory copy".to_string() });
 	}
 
 	// Prevent copying file to itself (which would truncate it)
 	if fs::canonicalize(source).await.ok().as_ref() == fs::canonicalize(target).await.ok().as_ref() {
 		return Err(CommonError::InvalidArgument {
-			ArgumentName: "Target".to_string(),
-			Reason: "Cannot copy file to itself".to_string(),
+			ArgumentName:"Target".to_string(),
+			Reason:"Cannot copy file to itself".to_string(),
 		});
 	}
 
@@ -208,7 +205,7 @@ pub(super) async fn copy_impl(
 }
 
 /// CreateFile operations implementation for MountainEnvironment
-pub(super) async fn create_file_impl(env: &MountainEnvironment, path: &PathBuf) -> Result<(), CommonError> {
+pub(super) async fn create_file_impl(env:&MountainEnvironment, path:&PathBuf) -> Result<(), CommonError> {
 	// Use WriteFile with an empty Vec, ensuring creation without overwrite.
 	// This ensures proper parent directory creation and path validation.
 	write_file_impl(env, path, vec![], true, false).await

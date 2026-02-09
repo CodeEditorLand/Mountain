@@ -11,7 +11,6 @@
 //! - Index: Zero-based position in workspace
 use serde::{Deserialize, Serialize};
 use url::Url;
-
 use CommonLibrary::Utility::Serialization::URLSerializationHelper;
 
 /// Maximum folder name length

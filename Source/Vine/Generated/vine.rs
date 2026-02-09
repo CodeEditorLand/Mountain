@@ -859,7 +859,7 @@ pub mod mountain_service_client {
     /// Service running on the Mountain host, listening for requests from Cocoon.
     #[derive(Debug, Clone)]
     pub struct MountainServiceClient<T> {
-        inner: tonic::client::gRPC<T>,
+        inner: tonic::client::Grpc<T>,
     }
     impl MountainServiceClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
@@ -874,17 +874,17 @@ pub mod mountain_service_client {
     }
     impl<T> MountainServiceClient<T>
     where
-        T: tonic::client::gRPCService<tonic::body::Body>,
+        T: tonic::client::GrpcService<tonic::body::Body>,
         T::Error: Into<StdError>,
         T::ResponseBody: Body<Data = Bytes> + std::marker::Send + 'static,
         <T::ResponseBody as Body>::Error: Into<StdError> + std::marker::Send,
     {
         pub fn new(inner: T) -> Self {
-            let inner = tonic::client::gRPC::new(inner);
+            let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
         pub fn with_origin(inner: T, origin: Uri) -> Self {
-            let inner = tonic::client::gRPC::with_origin(inner, origin);
+            let inner = tonic::client::Grpc::with_origin(inner, origin);
             Self { inner }
         }
         pub fn with_interceptor<F>(
@@ -897,7 +897,7 @@ pub mod mountain_service_client {
             T: tonic::codegen::Service<
                 http::Request<tonic::body::Body>,
                 Response = http::Response<
-                    <T as tonic::client::gRPCService<tonic::body::Body>>::ResponseBody,
+                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
                 >,
             >,
             <T as tonic::codegen::Service<
@@ -959,7 +959,7 @@ pub mod mountain_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.MountainService", "ProcessCocoonRequest"));
+                .insert(GrpcMethod::new("Vine.MountainService", "ProcessCocoonRequest"));
             self.inner.unary(req, path, codec).await
         }
         /// A generic fire-and-forget method for Cocoon to send a notification to Mountain.
@@ -982,7 +982,7 @@ pub mod mountain_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.MountainService", "SendCocoonNotification"),
+                    GrpcMethod::new("Vine.MountainService", "SendCocoonNotification"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -1005,7 +1005,7 @@ pub mod mountain_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.MountainService", "CancelOperation"));
+                .insert(GrpcMethod::new("Vine.MountainService", "CancelOperation"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -1151,7 +1151,7 @@ pub mod mountain_service_server {
                     let fut = async move {
                         let method = ProcessCocoonRequestSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -1200,7 +1200,7 @@ pub mod mountain_service_server {
                     let fut = async move {
                         let method = SendCocoonNotificationSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -1246,7 +1246,7 @@ pub mod mountain_service_server {
                     let fut = async move {
                         let method = CancelOperationSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -1314,7 +1314,7 @@ pub mod cocoon_service_client {
     /// Service running on the Cocoon sidecar, listening for requests from Mountain.
     #[derive(Debug, Clone)]
     pub struct CocoonServiceClient<T> {
-        inner: tonic::client::gRPC<T>,
+        inner: tonic::client::Grpc<T>,
     }
     impl CocoonServiceClient<tonic::transport::Channel> {
         /// Attempt to create a new client by connecting to a given endpoint.
@@ -1329,17 +1329,17 @@ pub mod cocoon_service_client {
     }
     impl<T> CocoonServiceClient<T>
     where
-        T: tonic::client::gRPCService<tonic::body::Body>,
+        T: tonic::client::GrpcService<tonic::body::Body>,
         T::Error: Into<StdError>,
         T::ResponseBody: Body<Data = Bytes> + std::marker::Send + 'static,
         <T::ResponseBody as Body>::Error: Into<StdError> + std::marker::Send,
     {
         pub fn new(inner: T) -> Self {
-            let inner = tonic::client::gRPC::new(inner);
+            let inner = tonic::client::Grpc::new(inner);
             Self { inner }
         }
         pub fn with_origin(inner: T, origin: Uri) -> Self {
-            let inner = tonic::client::gRPC::with_origin(inner, origin);
+            let inner = tonic::client::Grpc::with_origin(inner, origin);
             Self { inner }
         }
         pub fn with_interceptor<F>(
@@ -1352,7 +1352,7 @@ pub mod cocoon_service_client {
             T: tonic::codegen::Service<
                 http::Request<tonic::body::Body>,
                 Response = http::Response<
-                    <T as tonic::client::gRPCService<tonic::body::Body>>::ResponseBody,
+                    <T as tonic::client::GrpcService<tonic::body::Body>>::ResponseBody,
                 >,
             >,
             <T as tonic::codegen::Service<
@@ -1414,7 +1414,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "ProcessMountainRequest"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProcessMountainRequest"));
             self.inner.unary(req, path, codec).await
         }
         /// A generic fire-and-forget method for Mountain to send a notification to Cocoon.
@@ -1437,7 +1437,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "SendMountainNotification"),
+                    GrpcMethod::new("Vine.CocoonService", "SendMountainNotification"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -1460,7 +1460,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "CancelOperation"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "CancelOperation"));
             self.inner.unary(req, path, codec).await
         }
         /// Handshake - Called by Cocoon to signal readiness
@@ -1482,7 +1482,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "initial_handshake"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "initial_handshake"));
             self.inner.unary(req, path, codec).await
         }
         /// Initialize Extension Host - Mountain sends initialization data to Cocoon
@@ -1504,7 +1504,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "init_extension_host"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "init_extension_host"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Command - Cocoon registers an extension command
@@ -1526,7 +1526,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "register_command"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "register_command"));
             self.inner.unary(req, path, codec).await
         }
         /// Execute Contributed Command - Mountain executes an extension command
@@ -1552,7 +1552,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "execute_contributed_command"),
+                    GrpcMethod::new("Vine.CocoonService", "execute_contributed_command"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -1575,7 +1575,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "unregister_command"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "unregister_command"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Hover Provider - Register a hover provider
@@ -1598,7 +1598,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "register_hover_provider"),
+                    GrpcMethod::new("Vine.CocoonService", "register_hover_provider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -1624,7 +1624,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "provide_hover"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_hover"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Completion Item Provider - Register a completion provider
@@ -1647,7 +1647,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new(
+                    GrpcMethod::new(
                         "Vine.CocoonService",
                         "register_completion_item_provider",
                     ),
@@ -1677,7 +1677,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "provide_completion_items"),
+                    GrpcMethod::new("Vine.CocoonService", "provide_completion_items"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -1701,7 +1701,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "register_definition_provider"),
+                    GrpcMethod::new("Vine.CocoonService", "register_definition_provider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -1727,7 +1727,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "provide_definition"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_definition"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Reference Provider - Register a reference provider
@@ -1750,7 +1750,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "register_reference_provider"),
+                    GrpcMethod::new("Vine.CocoonService", "register_reference_provider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -1776,7 +1776,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "provide_references"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_references"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Code Actions Provider - Register code actions provider
@@ -1799,7 +1799,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new(
+                    GrpcMethod::new(
                         "Vine.CocoonService",
                         "register_code_actions_provider",
                     ),
@@ -1828,7 +1828,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "provide_code_actions"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_code_actions"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Text Document - Open a text document
@@ -1853,7 +1853,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "show_text_document"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "show_text_document"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Information Message - Display an info message
@@ -1879,7 +1879,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "show_information_message"),
+                    GrpcMethod::new("Vine.CocoonService", "show_information_message"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -1905,7 +1905,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "show_warning_message"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "show_warning_message"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Error Message - Display an error message
@@ -1930,7 +1930,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "show_error_message"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "show_error_message"));
             self.inner.unary(req, path, codec).await
         }
         /// Create Status Bar Item - Create a status bar item
@@ -1955,7 +1955,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "create_status_bar_item"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "create_status_bar_item"));
             self.inner.unary(req, path, codec).await
         }
         /// Set Status Bar Text - Set status bar text
@@ -1977,7 +1977,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "set_status_bar_text"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "set_status_bar_text"));
             self.inner.unary(req, path, codec).await
         }
         /// Create Webview Panel - Create a new webview panel
@@ -2002,7 +2002,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "create_webview_panel"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "create_webview_panel"));
             self.inner.unary(req, path, codec).await
         }
         /// Set Webview HTML - Update webview HTML content
@@ -2024,7 +2024,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "set_webview_html"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "set_webview_html"));
             self.inner.unary(req, path, codec).await
         }
         /// On Did Receive Message - Receive message from webview
@@ -2046,7 +2046,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "on_did_receive_message"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "on_did_receive_message"));
             self.inner.unary(req, path, codec).await
         }
         /// Read File - Read file contents
@@ -2071,7 +2071,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "read_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "read_file"));
             self.inner.unary(req, path, codec).await
         }
         /// Write File - Write file contents
@@ -2093,7 +2093,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "write_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "write_file"));
             self.inner.unary(req, path, codec).await
         }
         /// Stat - Get file metadata
@@ -2112,7 +2112,7 @@ pub mod cocoon_service_client {
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static("/Vine.CocoonService/stat");
             let mut req = request.into_request();
-            req.extensions_mut().insert(gRPCMethod::new("Vine.CocoonService", "stat"));
+            req.extensions_mut().insert(GrpcMethod::new("Vine.CocoonService", "stat"));
             self.inner.unary(req, path, codec).await
         }
         /// Read Directory - List directory contents
@@ -2137,7 +2137,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "readdir"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "readdir"));
             self.inner.unary(req, path, codec).await
         }
         /// Watch File - Watch file for changes
@@ -2159,7 +2159,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "watch_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "watch_file"));
             self.inner.unary(req, path, codec).await
         }
         /// Find Files - Search for files
@@ -2184,7 +2184,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "find_files"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "find_files"));
             self.inner.unary(req, path, codec).await
         }
         /// Find Text in Files - Search for text across files
@@ -2209,7 +2209,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "find_text_in_files"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "find_text_in_files"));
             self.inner.unary(req, path, codec).await
         }
         /// Open Document - Open a document
@@ -2234,7 +2234,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "open_document"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "open_document"));
             self.inner.unary(req, path, codec).await
         }
         /// Save All - Save all open documents
@@ -2259,7 +2259,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "save_all"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "save_all"));
             self.inner.unary(req, path, codec).await
         }
         /// Apply Edit - Apply a text edit to a document
@@ -2284,7 +2284,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "apply_edit"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "apply_edit"));
             self.inner.unary(req, path, codec).await
         }
         /// Update Configuration - Notify of configuration changes
@@ -2306,7 +2306,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "update_configuration"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "update_configuration"));
             self.inner.unary(req, path, codec).await
         }
         /// Update Workspace Folders - Update workspace folders
@@ -2329,7 +2329,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "update_workspace_folders"),
+                    GrpcMethod::new("Vine.CocoonService", "update_workspace_folders"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2352,7 +2352,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "open_terminal"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "open_terminal"));
             self.inner.unary(req, path, codec).await
         }
         /// Terminal Input - Send input to terminal
@@ -2374,7 +2374,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "terminal_input"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "terminal_input"));
             self.inner.unary(req, path, codec).await
         }
         /// Close Terminal - Close a terminal
@@ -2396,7 +2396,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "close_terminal"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "close_terminal"));
             self.inner.unary(req, path, codec).await
         }
         /// Accept Terminal Opened - Notification: Terminal opened
@@ -2418,7 +2418,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "accept_terminal_opened"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "accept_terminal_opened"));
             self.inner.unary(req, path, codec).await
         }
         /// Accept Terminal Closed - Notification: Terminal closed
@@ -2440,7 +2440,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "accept_terminal_closed"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "accept_terminal_closed"));
             self.inner.unary(req, path, codec).await
         }
         /// Accept Terminal Process ID - Notification: Terminal process ID
@@ -2463,7 +2463,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "accept_terminal_process_id"),
+                    GrpcMethod::new("Vine.CocoonService", "accept_terminal_process_id"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2487,7 +2487,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "accept_terminal_process_data"),
+                    GrpcMethod::new("Vine.CocoonService", "accept_terminal_process_data"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2511,7 +2511,7 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    gRPCMethod::new("Vine.CocoonService", "register_tree_view_provider"),
+                    GrpcMethod::new("Vine.CocoonService", "register_tree_view_provider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2537,7 +2537,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "get_tree_children"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "get_tree_children"));
             self.inner.unary(req, path, codec).await
         }
         /// Register SCM Provider - Register source control provider
@@ -2559,7 +2559,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "register_scm_provider"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "register_scm_provider"));
             self.inner.unary(req, path, codec).await
         }
         /// Update SCM Group - Update SCM group
@@ -2581,7 +2581,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "update_scm_group"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "update_scm_group"));
             self.inner.unary(req, path, codec).await
         }
         /// Execute Git - Execute git command
@@ -2606,7 +2606,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "git_exec"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "git_exec"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Debug Adapter - Register debug adapter
@@ -2628,7 +2628,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "register_debug_adapter"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "register_debug_adapter"));
             self.inner.unary(req, path, codec).await
         }
         /// Start Debugging - Start debug session
@@ -2653,7 +2653,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "start_debugging"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "start_debugging"));
             self.inner.unary(req, path, codec).await
         }
         /// Participate in Save - Extension participates in save
@@ -2678,7 +2678,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "participate_in_save"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "participate_in_save"));
             self.inner.unary(req, path, codec).await
         }
         /// Get Secret - Retrieve a secret from storage
@@ -2703,7 +2703,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "get_secret"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "get_secret"));
             self.inner.unary(req, path, codec).await
         }
         /// Store Secret - Store a secret in storage
@@ -2725,7 +2725,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "store_secret"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "store_secret"));
             self.inner.unary(req, path, codec).await
         }
         /// Delete Secret - Delete a secret from storage
@@ -2747,7 +2747,7 @@ pub mod cocoon_service_client {
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(gRPCMethod::new("Vine.CocoonService", "delete_secret"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "delete_secret"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -3226,7 +3226,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = ProcessMountainRequestSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3275,7 +3275,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = SendMountainNotificationSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3321,7 +3321,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = CancelOperationSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3365,7 +3365,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = initial_handshakeSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3411,7 +3411,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = init_extension_hostSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3457,7 +3457,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_commandSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3506,7 +3506,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = execute_contributed_commandSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3552,7 +3552,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = unregister_commandSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3601,7 +3601,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_hover_providerSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3646,7 +3646,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = provide_hoverSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3697,7 +3697,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_completion_item_providerSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3746,7 +3746,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = provide_completion_itemsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3795,7 +3795,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_definition_providerSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3841,7 +3841,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = provide_definitionSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3890,7 +3890,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_reference_providerSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3936,7 +3936,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = provide_referencesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -3987,7 +3987,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_code_actions_providerSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4033,7 +4033,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = provide_code_actionsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4079,7 +4079,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = show_text_documentSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4128,7 +4128,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = show_information_messageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4174,7 +4174,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = show_warning_messageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4220,7 +4220,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = show_error_messageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4269,7 +4269,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = create_status_bar_itemSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4315,7 +4315,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = set_status_bar_textSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4361,7 +4361,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = create_webview_panelSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4407,7 +4407,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = set_webview_htmlSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4456,7 +4456,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = on_did_receive_messageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4501,7 +4501,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = read_fileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4546,7 +4546,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = write_fileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4590,7 +4590,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = statSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4635,7 +4635,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = readdirSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4680,7 +4680,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = watch_fileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4725,7 +4725,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = find_filesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4771,7 +4771,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = find_text_in_filesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4816,7 +4816,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = open_documentSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4861,7 +4861,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = save_allSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4906,7 +4906,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = apply_editSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -4952,7 +4952,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = update_configurationSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5001,7 +5001,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = update_workspace_foldersSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5046,7 +5046,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = open_terminalSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5091,7 +5091,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = terminal_inputSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5136,7 +5136,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = close_terminalSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5185,7 +5185,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = accept_terminal_openedSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5234,7 +5234,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = accept_terminal_closedSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5283,7 +5283,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = accept_terminal_process_idSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5332,7 +5332,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = accept_terminal_process_dataSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5383,7 +5383,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_tree_view_providerSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5429,7 +5429,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = get_tree_childrenSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5475,7 +5475,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_scm_providerSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5521,7 +5521,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = update_scm_groupSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5566,7 +5566,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = git_execSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5615,7 +5615,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = register_debug_adapterSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5660,7 +5660,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = start_debuggingSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5706,7 +5706,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = participate_in_saveSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5751,7 +5751,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = get_secretSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5796,7 +5796,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = store_secretSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,
@@ -5841,7 +5841,7 @@ pub mod cocoon_service_server {
                     let fut = async move {
                         let method = delete_secretSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
-                        let mut grpc = tonic::server::gRPC::new(codec)
+                        let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
                                 accept_compression_encodings,
                                 send_compression_encodings,

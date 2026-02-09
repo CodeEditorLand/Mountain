@@ -1,7 +1,8 @@
 //! # MarkerState Module (ApplicationState)
 //!
 //! ## RESPONSIBILITIES
-//! Manages marker state including custom documents, status bar items, and SCM state.
+//! Manages marker state including custom documents, status bar items, and SCM
+//! state.
 //!
 //! ## ARCHITECTURAL ROLE
 //! MarkerState is part of the **FeatureState** module, representing

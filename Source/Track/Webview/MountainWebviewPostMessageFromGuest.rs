@@ -12,8 +12,8 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! MountainWebviewPostMessageFromGuest acts as the **webview message forwarder**
-//! in Track's dispatch layer:
+//! MountainWebviewPostMessageFromGuest acts as the **webview message
+//! forwarder** in Track's dispatch layer:
 //!
 //! ```text
 //! Webview (Guest) ──► MountainWebviewPostMessageFromGuest ──► IPC Provider ──► Cocoon (Sidecar)
@@ -48,13 +48,10 @@ use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, IPC::IPCProvider::IPCProvider};
 use log::error;
-use serde_json::{json, Value};
+use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, command};
 
-use crate::{
-	ApplicationState::ApplicationState,
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-};
+use crate::{ApplicationState::ApplicationState, RunTime::ApplicationRunTime::ApplicationRunTime};
 
 /// A specific Tauri command handler for a Webview guest to post a message back
 /// to the extension host.

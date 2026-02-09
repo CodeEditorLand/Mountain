@@ -31,22 +31,28 @@
 //! - [ ] Implement terminal lifecycle events
 //! - [ ] Add terminal metrics collection
 
-use std::collections::HashMap;
-use std::sync::atomic::AtomicU64;
-use std::sync::atomic::Ordering as AtomicOrdering;
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::{
+	collections::HashMap,
+	sync::{
+		Arc,
+		Mutex as StandardMutex,
+		atomic::{AtomicU64, Ordering as AtomicOrdering},
+	},
+};
 
-use crate::ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO;
 use log::debug;
 
-/// Active terminals state containing terminals by ID with next identifier counter.
+use crate::ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO;
+
+/// Active terminals state containing terminals by ID with next identifier
+/// counter.
 #[derive(Clone)]
 pub struct TerminalState {
-    /// Active terminals organized by ID.
-    pub ActiveTerminals: Arc<StandardMutex<HashMap<u64, Arc<StandardMutex<TerminalStateDTO>>>>>,
+	/// Active terminals organized by ID.
+	pub ActiveTerminals:Arc<StandardMutex<HashMap<u64, Arc<StandardMutex<TerminalStateDTO>>>>>,
 
 	/// Counter for generating unique terminal identifiers.
-	pub NextTerminalIdentifier: Arc<AtomicU64>,
+	pub NextTerminalIdentifier:Arc<AtomicU64>,
 }
 
 impl Default for TerminalState {
@@ -54,18 +60,15 @@ impl Default for TerminalState {
 		debug!("[TerminalState] Initializing default terminal state...");
 
 		Self {
-			ActiveTerminals: Arc::new(StandardMutex::new(HashMap::new())),
-			NextTerminalIdentifier: Arc::new(AtomicU64::new(1)),
+			ActiveTerminals:Arc::new(StandardMutex::new(HashMap::new())),
+			NextTerminalIdentifier:Arc::new(AtomicU64::new(1)),
 		}
 	}
 }
 
 impl TerminalState {
 	/// Gets the next available unique identifier for a terminal instance.
-	pub fn GetNextTerminalIdentifier(&self) -> u64 {
-		self.NextTerminalIdentifier
-			.fetch_add(1, AtomicOrdering::Relaxed)
-	}
+	pub fn GetNextTerminalIdentifier(&self) -> u64 { self.NextTerminalIdentifier.fetch_add(1, AtomicOrdering::Relaxed) }
 
 	/// Gets all active terminals.
 	pub fn GetAll(&self) -> HashMap<u64, TerminalStateDTO> {
@@ -75,38 +78,27 @@ impl TerminalState {
 			.map(|guard| {
 				guard
 					.iter()
-					.filter_map(|(id, arc)| {
-						arc.lock()
-							.ok()
-							.map(|dto| (*id, dto.clone()))
-					})
+					.filter_map(|(id, arc)| arc.lock().ok().map(|dto| (*id, dto.clone())))
 					.collect()
 			})
 			.unwrap_or_default()
 	}
 
 	/// Gets a terminal by its ID.
-	pub fn Get(&self, id: u64) -> Option<TerminalStateDTO> {
+	pub fn Get(&self, id:u64) -> Option<TerminalStateDTO> {
 		self.ActiveTerminals
 			.lock()
 			.ok()
-			.and_then(|guard| {
-				guard.get(&id).and_then(|arc| {
-					arc.lock().ok().map(|dto| dto.clone())
-				})
-			})
+			.and_then(|guard| guard.get(&id).and_then(|arc| arc.lock().ok().map(|dto| dto.clone())))
 	}
 
 	/// Gets a terminal's Arc<Mutex<>> by its ID for direct manipulation.
-	pub fn GetArc(&self, id: u64) -> Option<Arc<StandardMutex<TerminalStateDTO>>> {
-		self.ActiveTerminals
-			.lock()
-			.ok()
-			.and_then(|guard| guard.get(&id).cloned())
+	pub fn GetArc(&self, id:u64) -> Option<Arc<StandardMutex<TerminalStateDTO>>> {
+		self.ActiveTerminals.lock().ok().and_then(|guard| guard.get(&id).cloned())
 	}
 
 	/// Adds or updates a terminal.
-	pub fn AddOrUpdate(&self, id: u64, terminal: TerminalStateDTO) {
+	pub fn AddOrUpdate(&self, id:u64, terminal:TerminalStateDTO) {
 		if let Ok(mut guard) = self.ActiveTerminals.lock() {
 			guard.insert(id, Arc::new(StandardMutex::new(terminal)));
 			debug!("[TerminalState] Terminal added/updated with ID: {}", id);
@@ -114,7 +106,7 @@ impl TerminalState {
 	}
 
 	/// Removes a terminal by its ID.
-	pub fn Remove(&self, id: u64) {
+	pub fn Remove(&self, id:u64) {
 		if let Ok(mut guard) = self.ActiveTerminals.lock() {
 			guard.remove(&id);
 			debug!("[TerminalState] Terminal removed with ID: {}", id);
@@ -130,16 +122,10 @@ impl TerminalState {
 	}
 
 	/// Gets the count of active terminals.
-	pub fn Count(&self) -> usize {
-		self.ActiveTerminals
-			.lock()
-			.ok()
-			.map(|guard| guard.len())
-			.unwrap_or(0)
-	}
+	pub fn Count(&self) -> usize { self.ActiveTerminals.lock().ok().map(|guard| guard.len()).unwrap_or(0) }
 
 	/// Checks if a terminal exists.
-	pub fn Contains(&self, id: u64) -> bool {
+	pub fn Contains(&self, id:u64) -> bool {
 		self.ActiveTerminals
 			.lock()
 			.ok()

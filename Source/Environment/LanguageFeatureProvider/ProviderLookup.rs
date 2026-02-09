@@ -1,21 +1,33 @@
 //! Provider lookup and matching utilities.
 
-use CommonLibrary::{
-	Error::CommonError::CommonError,
-	LanguageFeature::DTO::ProviderType::ProviderType,
-};
-use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
-use crate::Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError;
+use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
 use log::warn;
 use url::Url;
 
+use crate::{
+	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
+	Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError,
+};
+
 pub(super) async fn get_matching_provider(
-	environment: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	document_uri: &Url,
-	feature_type: ProviderType,
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:&Url,
+	feature_type:ProviderType,
 ) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
-	let providers = environment.ApplicationState.Extension.ProviderRegistration.LanguageProviders.lock().map_err(MapApplicationStateLockErrorToCommonError)?;
-	let open_documents = environment.ApplicationState.Feature.Documents.OpenDocuments.lock().map_err(MapApplicationStateLockErrorToCommonError)?;
+	let providers = environment
+		.ApplicationState
+		.Extension
+		.ProviderRegistration
+		.LanguageProviders
+		.lock()
+		.map_err(MapApplicationStateLockErrorToCommonError)?;
+	let open_documents = environment
+		.ApplicationState
+		.Feature
+		.Documents
+		.OpenDocuments
+		.lock()
+		.map_err(MapApplicationStateLockErrorToCommonError)?;
 
 	if let Some(document) = open_documents.get(document_uri.as_str()) {
 		for provider in providers.values() {

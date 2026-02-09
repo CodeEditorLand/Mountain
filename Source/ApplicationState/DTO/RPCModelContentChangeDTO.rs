@@ -10,8 +10,9 @@
 //! - Range: The range of text to replace
 //! - Text: The new text to insert
 
-use super::RPCRangeDTO::RPCRangeDTO;
 use serde::Deserialize;
+
+use super::RPCRangeDTO::RPCRangeDTO;
 
 /// Represents a single text change operation, including the range to be
 /// replaced and the new text to insert. This is part of a collection sent when

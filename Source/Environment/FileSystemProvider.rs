@@ -53,8 +53,10 @@
 //! - Implement case sensitivity handling based on filesystem type
 //!
 //! MODULE STRUCTURE:
-//! - [`read_operations.rs`](read_operations.rs) - `FileSystemReader` implementation
-//! - [`write_operations.rs`](write_operations.rs) - `FileSystemWriter` implementation
+//! - [`read_operations.rs`](read_operations.rs) - `FileSystemReader`
+//!   implementation
+//! - [`write_operations.rs`](write_operations.rs) - `FileSystemWriter`
+//!   implementation
 
 use std::path::PathBuf;
 
@@ -79,17 +81,17 @@ mod write_operations;
 #[async_trait]
 impl FileSystemReader for MountainEnvironment {
 	/// Delegates to read_operations module
-	async fn ReadFile(&self, path: &PathBuf) -> Result<Vec<u8>, CommonError> {
+	async fn ReadFile(&self, path:&PathBuf) -> Result<Vec<u8>, CommonError> {
 		read_operations::read_file_impl(self, path).await
 	}
 
 	/// Delegates to read_operations module
-	async fn StatFile(&self, path: &PathBuf) -> Result<FileSystemStatDTO, CommonError> {
+	async fn StatFile(&self, path:&PathBuf) -> Result<FileSystemStatDTO, CommonError> {
 		read_operations::stat_file_impl(self, path).await
 	}
 
 	/// Delegates to read_operations module
-	async fn ReadDirectory(&self, path: &PathBuf) -> Result<Vec<(String, FileTypeDTO)>, CommonError> {
+	async fn ReadDirectory(&self, path:&PathBuf) -> Result<Vec<(String, FileTypeDTO)>, CommonError> {
 		read_operations::read_directory_impl(self, path).await
 	}
 }
@@ -97,32 +99,32 @@ impl FileSystemReader for MountainEnvironment {
 #[async_trait]
 impl FileSystemWriter for MountainEnvironment {
 	/// Delegates to write_operations module
-	async fn WriteFile(&self, path: &PathBuf, content: Vec<u8>, create: bool, overwrite: bool) -> Result<(), CommonError> {
+	async fn WriteFile(&self, path:&PathBuf, content:Vec<u8>, create:bool, overwrite:bool) -> Result<(), CommonError> {
 		write_operations::write_file_impl(self, path, content, create, overwrite).await
 	}
 
 	/// Delegates to write_operations module
-	async fn CreateDirectory(&self, path: &PathBuf, recursive: bool) -> Result<(), CommonError> {
+	async fn CreateDirectory(&self, path:&PathBuf, recursive:bool) -> Result<(), CommonError> {
 		write_operations::create_directory_impl(self, path, recursive).await
 	}
 
 	/// Delegates to write_operations module
-	async fn Delete(&self, path: &PathBuf, recursive: bool, use_trash: bool) -> Result<(), CommonError> {
+	async fn Delete(&self, path:&PathBuf, recursive:bool, use_trash:bool) -> Result<(), CommonError> {
 		write_operations::delete_impl(self, path, recursive, use_trash).await
 	}
 
 	/// Delegates to write_operations module
-	async fn Rename(&self, source: &PathBuf, target: &PathBuf, overwrite: bool) -> Result<(), CommonError> {
+	async fn Rename(&self, source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
 		write_operations::rename_impl(self, source, target, overwrite).await
 	}
 
 	/// Delegates to write_operations module
-	async fn Copy(&self, source: &PathBuf, target: &PathBuf, overwrite: bool) -> Result<(), CommonError> {
+	async fn Copy(&self, source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
 		write_operations::copy_impl(self, source, target, overwrite).await
 	}
 
 	/// Delegates to write_operations module
-	async fn CreateFile(&self, path: &PathBuf) -> Result<(), CommonError> {
+	async fn CreateFile(&self, path:&PathBuf) -> Result<(), CommonError> {
 		write_operations::create_file_impl(self, path).await
 	}
 }

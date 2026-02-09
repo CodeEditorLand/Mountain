@@ -1,8 +1,8 @@
 //! # IPC Common Abstractions
 //!
-//! This module provides shared types and abstractions used across the IPC layer.
-//! It eliminates code duplication and provides a consistent foundation for all
-//! IPC communication components.
+//! This module provides shared types and abstractions used across the IPC
+//! layer. It eliminates code duplication and provides a consistent foundation
+//! for all IPC communication components.
 //!
 //! ## Architecture
 //!

@@ -30,49 +30,43 @@
 //! - [ ] Implement tree view lifecycle events
 //! - [ ] Add tree view metrics collection
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::{
+	collections::HashMap,
+	sync::{Arc, Mutex as StandardMutex},
+};
+
+use log::debug;
 
 use crate::ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO;
-use log::debug;
 
 /// Active tree views state containing tree views by ID.
 #[derive(Clone)]
 pub struct TreeViewState {
 	/// Active tree views organized by ID.
-	pub ActiveTreeViews: Arc<StandardMutex<HashMap<String, TreeViewStateDTO>>>,
+	pub ActiveTreeViews:Arc<StandardMutex<HashMap<String, TreeViewStateDTO>>>,
 }
 
 impl Default for TreeViewState {
 	fn default() -> Self {
 		debug!("[TreeViewState] Initializing default tree view state...");
 
-		Self {
-			ActiveTreeViews: Arc::new(StandardMutex::new(HashMap::new())),
-		}
+		Self { ActiveTreeViews:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
 
 impl TreeViewState {
 	/// Gets all active tree views.
 	pub fn GetAll(&self) -> HashMap<String, TreeViewStateDTO> {
-		self.ActiveTreeViews
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.ActiveTreeViews.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
 	}
 
 	/// Gets a tree view by its ID.
-	pub fn Get(&self, id: &str) -> Option<TreeViewStateDTO> {
-		self.ActiveTreeViews
-			.lock()
-			.ok()
-			.and_then(|guard| guard.get(id).cloned())
+	pub fn Get(&self, id:&str) -> Option<TreeViewStateDTO> {
+		self.ActiveTreeViews.lock().ok().and_then(|guard| guard.get(id).cloned())
 	}
 
 	/// Adds or updates a tree view.
-	pub fn AddOrUpdate(&self, id: String, tree_view: TreeViewStateDTO) {
+	pub fn AddOrUpdate(&self, id:String, tree_view:TreeViewStateDTO) {
 		if let Ok(mut guard) = self.ActiveTreeViews.lock() {
 			guard.insert(id, tree_view);
 			debug!("[TreeViewState] Tree view added/updated");
@@ -80,7 +74,7 @@ impl TreeViewState {
 	}
 
 	/// Removes a tree view by its ID.
-	pub fn Remove(&self, id: &str) {
+	pub fn Remove(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveTreeViews.lock() {
 			guard.remove(id);
 			debug!("[TreeViewState] Tree view removed: {}", id);
@@ -96,16 +90,10 @@ impl TreeViewState {
 	}
 
 	/// Gets the count of active tree views.
-	pub fn Count(&self) -> usize {
-		self.ActiveTreeViews
-			.lock()
-			.ok()
-			.map(|guard| guard.len())
-			.unwrap_or(0)
-	}
+	pub fn Count(&self) -> usize { self.ActiveTreeViews.lock().ok().map(|guard| guard.len()).unwrap_or(0) }
 
 	/// Checks if a tree view exists.
-	pub fn Contains(&self, id: &str) -> bool {
+	pub fn Contains(&self, id:&str) -> bool {
 		self.ActiveTreeViews
 			.lock()
 			.ok()

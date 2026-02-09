@@ -2,8 +2,9 @@
 //!
 //! ## RESPONSIBILITIES
 //!
-//! Service shutdown and lifecycle management for graceful application termination.
-//! Coordinates cleanup of all application services with error recovery.
+//! Service shutdown and lifecycle management for graceful application
+//! termination. Coordinates cleanup of all application services with error
+//! recovery.
 //!
 //! ## ARCHITECTURAL ROLE
 //!
@@ -22,8 +23,8 @@
 //! ## ERROR HANDLING
 //!
 //! All shutdown operations use error recovery to continue cleanup even when
-//! individual services fail. Errors are collected and reported without crashing.
-//! Multi-attempt retry for critical operations like Cocoon shutdown.
+//! individual services fail. Errors are collected and reported without
+//! crashing. Multi-attempt retry for critical operations like Cocoon shutdown.
 //!
 //! ## LOGGING
 //!
@@ -162,7 +163,9 @@ impl ApplicationRunTime {
 			let TerminalsGuard = self
 				.Environment
 				.ApplicationState
-				.Feature.Terminals.ActiveTerminals
+				.Feature
+				.Terminals
+				.ActiveTerminals
 				.lock()
 				.map_err(|e| CommonError::StateLockPoisoned { Context:e.to_string() })?;
 
@@ -202,7 +205,8 @@ impl ApplicationRunTime {
 		let global_memento_guard = self
 			.Environment
 			.ApplicationState
-			.Configuration.MementoGlobalStorage
+			.Configuration
+			.MementoGlobalStorage
 			.lock()
 			.map_err(|e| CommonError::StateLockPoisoned { Context:e.to_string() })?;
 
@@ -230,7 +234,8 @@ impl ApplicationRunTime {
 		let mut pending_requests_guard = self
 			.Environment
 			.ApplicationState
-			.UI.PendingUserInterfaceRequests
+			.UI
+			.PendingUserInterfaceRequests
 			.lock()
 			.unwrap_or_else(|e| {
 				error!("[ApplicationRunTime] Failed to lock pending UI requests: {}", e);

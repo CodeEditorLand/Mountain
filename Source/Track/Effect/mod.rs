@@ -6,6 +6,5 @@ mod CreateEffectForRequest;
 mod MappedEffectType;
 
 // Re-export with both original name and Fn alias for backward compatibility
-pub use CreateEffectForRequest::CreateEffectForRequest;
-pub use CreateEffectForRequest::CreateEffectForRequest as Fn;
+pub use CreateEffectForRequest::{CreateEffectForRequest, CreateEffectForRequest as Fn};
 pub use MappedEffectType::MappedEffect;

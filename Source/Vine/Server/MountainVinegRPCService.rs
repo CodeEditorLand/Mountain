@@ -34,10 +34,7 @@
 //! - Method name sanitization
 //! - Safe error messages (no sensitive data)
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
 
 use log::{debug, error, info, trace, warn};
 use serde_json::Value;
@@ -420,7 +417,8 @@ impl MountainService for MountainVinegRPCService {
 			None => {
 				// Operation not found - it may have already completed
 				warn!(
-					"[MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have already completed)",
+					"[MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have already \
+					 completed)",
 					RequestIdentifierToCancel
 				);
 

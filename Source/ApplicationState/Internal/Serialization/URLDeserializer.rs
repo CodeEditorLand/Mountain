@@ -25,8 +25,7 @@
 //! - [ ] Implement custom error recovery
 //! - [ ] Add performance metrics
 
-use serde::de::Deserialize;
-use serde::Deserializer;
+use serde::{Deserializer, de::Deserialize};
 use url::Url;
 use log::debug;
 
@@ -42,16 +41,12 @@ use log::debug;
 /// - Deserializes a string value
 /// - Parses the string as a URL
 /// - Returns parse error as custom deserialization error
-pub fn DeserializeURL<'de, D>(DeserializerInstance: D) -> Result<Url, D::Error>
+pub fn DeserializeURL<'de, D>(DeserializerInstance:D) -> Result<Url, D::Error>
 where
-	D: Deserializer<'de>,
-{
+	D: Deserializer<'de>, {
 	let string_value = String::deserialize(DeserializerInstance)?;
-	
-	debug!(
-		"[URLDeserializer] Deserializing URL: {}",
-		string_value
-	);
-	
+
+	debug!("[URLDeserializer] Deserializing URL: {}", string_value);
+
 	Url::parse(&string_value).map_err(serde::de::Error::custom)
 }

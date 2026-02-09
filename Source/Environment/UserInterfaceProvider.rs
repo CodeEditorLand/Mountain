@@ -21,7 +21,8 @@
 //!
 //! ### 3. Thread Safety
 //! - All methods are async and safe for concurrent access
-//! - Pending requests stored in `ApplicationState.UI.PendingUserInterfaceRequests`
+//! - Pending requests stored in
+//!   `ApplicationState.UI.PendingUserInterfaceRequests`
 //! - Uses `tokio::sync::oneshot` for request-response coordination
 //!
 //! ## ARCHITECTURAL ROLE
@@ -314,7 +315,8 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 	{
 		let mut PendingRequestsGuard = Environment
 			.ApplicationState
-			.UI.PendingUserInterfaceRequests
+			.UI
+			.PendingUserInterfaceRequests
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -348,7 +350,8 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 
 			let mut Guard = Environment
 				.ApplicationState
-				.UI.PendingUserInterfaceRequests
+				.UI
+				.PendingUserInterfaceRequests
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

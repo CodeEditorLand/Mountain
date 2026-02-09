@@ -61,53 +61,43 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Role {
 	/// Unique role identifier
-	pub name: String,
+	pub name:String,
 
 	/// List of permissions granted by this role
-	pub permissions: Vec<String>,
+	pub permissions:Vec<String>,
 
 	/// Human-readable description of the role
-	pub description: String,
+	pub description:String,
 }
 
 impl Role {
 	/// Create a new role
-	pub fn new(name: String, permissions: Vec<String>, description: String) -> Self {
-		Self {
-			name,
-			permissions,
-			description,
-		}
+	pub fn new(name:String, permissions:Vec<String>, description:String) -> Self {
+		Self { name, permissions, description }
 	}
 
 	/// Check if role has a specific permission
-	pub fn has_permission(&self, permission: &str) -> bool {
-		self.permissions.iter().any(|p| p == permission)
-	}
+	pub fn has_permission(&self, permission:&str) -> bool { self.permissions.iter().any(|p| p == permission) }
 
 	/// Add a permission to the role
-	pub fn add_permission(&mut self, permission: String) {
+	pub fn add_permission(&mut self, permission:String) {
 		if !self.has_permission(&permission) {
 			self.permissions.push(permission);
 		}
 	}
 
 	/// Remove a permission from the role
-	pub fn remove_permission(&mut self, permission: &str) {
-		self.permissions.retain(|p| p != permission);
-	}
+	pub fn remove_permission(&mut self, permission:&str) { self.permissions.retain(|p| p != permission); }
 
 	/// Get the count of permissions
-	pub fn permission_count(&self) -> usize {
-		self.permissions.len()
-	}
+	pub fn permission_count(&self) -> usize { self.permissions.len() }
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
 
-#[test]
+	#[test]
 	fn test_role_creation() {
 		let role = Role::new(
 			"test".to_string(),
@@ -119,7 +109,7 @@ mod tests {
 		assert_eq!(role.permission_count(), 2);
 	}
 
-#[test]
+	#[test]
 	fn test_has_permission() {
 		let role = Role::new(
 			"test".to_string(),
@@ -131,13 +121,9 @@ mod tests {
 		assert!(!role.has_permission("permission3"));
 	}
 
-#[test]
+	#[test]
 	fn test_add_permission() {
-		let mut role = Role::new(
-			"test".to_string(),
-			vec!["permission1".to_string()],
-			"Test role".to_string(),
-		);
+		let mut role = Role::new("test".to_string(), vec!["permission1".to_string()], "Test role".to_string());
 
 		role.add_permission("permission2".to_string());
 		assert_eq!(role.permission_count(), 2);
@@ -147,7 +133,7 @@ mod tests {
 		assert_eq!(role.permission_count(), 2);
 	}
 
-#[test]
+	#[test]
 	fn test_remove_permission() {
 		let mut role = Role::new(
 			"test".to_string(),

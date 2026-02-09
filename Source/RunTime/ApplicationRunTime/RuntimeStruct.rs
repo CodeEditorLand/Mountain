@@ -13,12 +13,13 @@
 //! ## KEY COMPONENTS
 //!
 //! - **Scheduler**: Shared handle to Echo scheduler for task execution
-//! - **Environment**: Shared handle to MountainEnvironment for capability access
+//! - **Environment**: Shared handle to MountainEnvironment for capability
+//!   access
 //!
 //! ## ERROR HANDLING
 //!
-//! Uses Result types for fallible operations. The struct itself is infallible to create
-//! (all fields are Arc handles), but operations may return errors.
+//! Uses Result types for fallible operations. The struct itself is infallible
+//! to create (all fields are Arc handles), but operations may return errors.
 //!
 //! ## LOGGING
 //!
@@ -36,12 +37,7 @@
 
 use std::sync::Arc;
 
-use CommonLibrary::{
-	Environment::{
-		Environment::Environment,
-		HasEnvironment::HasEnvironment,
-	},
-};
+use CommonLibrary::Environment::{Environment::Environment, HasEnvironment::HasEnvironment};
 use Echo::Scheduler::Scheduler::Scheduler;
 
 use crate::Environment::MountainEnvironment::MountainEnvironment;

@@ -69,24 +69,18 @@ use super::super::Message::TauriIPCMessage;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedMessage {
 	/// Nonce used for encryption (12 bytes for AES-256-GCM)
-	pub nonce: Vec<u8>,
+	pub nonce:Vec<u8>,
 
 	/// Encrypted message data with authentication tag
-	pub ciphertext: Vec<u8>,
+	pub ciphertext:Vec<u8>,
 
 	/// HMAC tag for message authentication
-	pub hmac_tag: Vec<u8>,
+	pub hmac_tag:Vec<u8>,
 }
 
 impl EncryptedMessage {
 	/// Create a new encrypted message
-	pub fn new(nonce: Vec<u8>, ciphertext: Vec<u8>, hmac_tag: Vec<u8>) -> Self {
-		Self {
-			nonce,
-			ciphertext,
-			hmac_tag,
-		}
-	}
+	pub fn new(nonce:Vec<u8>, ciphertext:Vec<u8>, hmac_tag:Vec<u8>) -> Self { Self { nonce, ciphertext, hmac_tag } }
 
 	/// Validate the message structure
 	pub fn is_valid(&self) -> bool {
@@ -99,7 +93,8 @@ impl EncryptedMessage {
 /// Secure message channel with encryption and authentication
 ///
 /// This structure provides AES-256-GCM encryption with HMAC authentication
-/// for secure IPC communication. It ensures message confidentiality and integrity.
+/// for secure IPC communication. It ensures message confidentiality and
+/// integrity.
 ///
 /// ## Encryption Flow
 ///
@@ -160,10 +155,10 @@ impl EncryptedMessage {
 /// ```
 pub struct SecureMessageChannel {
 	/// AES-256-GCM encryption key
-	encryption_key: LessSafeKey,
+	encryption_key:LessSafeKey,
 
 	/// HMAC key for message authentication
-	hmac_key: Vec<u8>,
+	hmac_key:Vec<u8>,
 }
 
 impl SecureMessageChannel {
@@ -203,10 +198,7 @@ impl SecureMessageChannel {
 
 		debug!("[SecureMessageChannel] Secure channel created successfully");
 
-		Ok(Self {
-			encryption_key,
-			hmac_key,
-		})
+		Ok(Self { encryption_key, hmac_key })
 	}
 
 	/// Encrypt and authenticate a message
@@ -226,7 +218,7 @@ impl SecureMessageChannel {
 	/// ```rust,ignore
 	/// let encrypted = secure_channel.encrypt_message(&message)?;
 	/// ```
-	pub fn encrypt_message(&self, message: &TauriIPCMessage) -> Result<EncryptedMessage, String> {
+	pub fn encrypt_message(&self, message:&TauriIPCMessage) -> Result<EncryptedMessage, String> {
 		debug!("[SecureMessageChannel] Encrypting message on channel: {}", message.channel);
 
 		// Serialize message to bytes
@@ -242,22 +234,15 @@ impl SecureMessageChannel {
 		// Encrypt with AES-256-GCM (authenticated encryption)
 		let mut in_out = serialized_message.clone();
 		self.encryption_key
-			.seal_in_place_append_tag(
-				aead::Nonce::assume_unique_for_key(nonce),
-				aead::Aad::empty(),
-				&mut in_out,
-			)
+			.seal_in_place_append_tag(aead::Nonce::assume_unique_for_key(nonce), aead::Aad::empty(), &mut in_out)
 			.map_err(|e| format!("Encryption failed: {}", e))?;
 
 		// Generate HMAC for additional authentication
 		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
 		let hmac_tag = hmac::sign(&hmac_key, &in_out);
 
-		let encrypted_message = EncryptedMessage {
-			nonce: nonce.to_vec(),
-			ciphertext: in_out,
-			hmac_tag: hmac_tag.as_ref().to_vec(),
-		};
+		let encrypted_message =
+			EncryptedMessage { nonce:nonce.to_vec(), ciphertext:in_out, hmac_tag:hmac_tag.as_ref().to_vec() };
 
 		debug!(
 			"[SecureMessageChannel] Message encrypted: {} bytes -> {} bytes",
@@ -285,7 +270,7 @@ impl SecureMessageChannel {
 	/// ```rust,ignore
 	/// let decrypted = secure_channel.decrypt_message(&encrypted)?;
 	/// ```
-	pub fn decrypt_message(&self, encrypted: &EncryptedMessage) -> Result<TauriIPCMessage, String> {
+	pub fn decrypt_message(&self, encrypted:&EncryptedMessage) -> Result<TauriIPCMessage, String> {
 		debug!("[SecureMessageChannel] Decrypting message");
 
 		// Verify HMAC first (detect tampering)
@@ -294,8 +279,8 @@ impl SecureMessageChannel {
 			.map_err(|_| "HMAC verification failed - message may be tampered".to_string())?;
 
 		// Convert nonce slice to array
-		let nonce_slice: &[u8] = &encrypted.nonce;
-		let nonce_array: [u8; 12] = nonce_slice
+		let nonce_slice:&[u8] = &encrypted.nonce;
+		let nonce_array:[u8; 12] = nonce_slice
 			.try_into()
 			.map_err(|_| "Invalid nonce length - must be 12 bytes".to_string())?;
 
@@ -312,7 +297,7 @@ impl SecureMessageChannel {
 		in_out.truncate(plaintext_len);
 
 		// Deserialize message
-		let message: TauriIPCMessage =
+		let message:TauriIPCMessage =
 			serde_json::from_slice(&in_out).map_err(|e| format!("Failed to deserialize message: {}", e))?;
 
 		debug!(
@@ -358,9 +343,7 @@ impl SecureMessageChannel {
 	}
 
 	/// Get the authentication tag length (in bytes)
-	pub fn auth_tag_length(&self) -> usize {
-		AES_256_GCM.tag_len()
-	}
+	pub fn auth_tag_length(&self) -> usize { AES_256_GCM.tag_len() }
 
 	/// Get the key length (in bytes)
 	pub fn key_length(&self) -> usize {
@@ -384,13 +367,13 @@ mod tests {
 		)
 	}
 
-#[test]
+	#[test]
 	fn test_secure_channel_creation() {
 		let channel = SecureMessageChannel::new();
 		assert!(channel.is_ok());
 	}
 
-#[test]
+	#[test]
 	fn test_encrypt_and_decrypt() {
 		let channel = SecureMessageChannel::new().unwrap();
 		let original_message = create_test_message();
@@ -408,7 +391,7 @@ mod tests {
 		assert_eq!(decrypted.sender, original_message.sender);
 	}
 
-#[test]
+	#[test]
 	fn test_encryption_produces_different_outputs() {
 		let channel = SecureMessageChannel::new().unwrap();
 		let message = create_test_message();
@@ -421,7 +404,7 @@ mod tests {
 		assert_ne!(encrypted1.ciphertext, encrypted2.ciphertext);
 	}
 
-#[test]
+	#[test]
 	fn test_tampered_message_fails_hmac_verification() {
 		let channel = SecureMessageChannel::new().unwrap();
 		let message = create_test_message();
@@ -439,7 +422,7 @@ mod tests {
 		assert!(result.unwrap_err().contains("HMAC verification failed"));
 	}
 
-#[test]
+	#[test]
 	fn test_invalid_nonce_length() {
 		let channel = SecureMessageChannel::new().unwrap();
 		let message = create_test_message();
@@ -454,7 +437,7 @@ mod tests {
 		assert!(result.unwrap_err().contains("Invalid nonce length"));
 	}
 
-#[test]
+	#[test]
 	fn test_message_channel_key_lengths() {
 		let channel = SecureMessageChannel::new().unwrap();
 
@@ -464,7 +447,7 @@ mod tests {
 		assert_eq!(channel.hmac_tag_length(), 32); // HMAC-SHA256
 	}
 
-#[test]
+	#[test]
 	fn test_key_rotation() {
 		let mut channel = SecureMessageChannel::new().unwrap();
 		let message = create_test_message();
@@ -489,14 +472,10 @@ mod tests {
 		assert_ne!(encrypted1.nonce, encrypted2.nonce);
 	}
 
-#[test]
+	#[test]
 	fn test_empty_message() {
 		let channel = SecureMessageChannel::new().unwrap();
-		let message = TauriIPCMessage::new(
-			"test".to_string(),
-			serde_json::json!(null),
-			None,
-		);
+		let message = TauriIPCMessage::new("test".to_string(), serde_json::json!(null), None);
 
 		let encrypted = channel.encrypt_message(&message).unwrap();
 		let decrypted = channel.decrypt_message(&encrypted).unwrap();

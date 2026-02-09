@@ -218,7 +218,9 @@ impl DiagnosticManager for MountainEnvironment {
 
 		let mut DiagnosticsMapGuard = self
 			.ApplicationState
-			.Feature.Diagnostics.DiagnosticsMap
+			.Feature
+			.Diagnostics
+			.DiagnosticsMap
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -267,7 +269,9 @@ impl DiagnosticManager for MountainEnvironment {
 		let (ClearedCount, ChangedURIKeys):(usize, Vec<String>) = {
 			let mut DiagnosticsMapGuard = self
 				.ApplicationState
-				.Feature.Diagnostics.DiagnosticsMap
+				.Feature
+				.Diagnostics
+				.DiagnosticsMap
 				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -308,7 +312,9 @@ impl DiagnosticManager for MountainEnvironment {
 
 		let DiagnosticsMapGuard = self
 			.ApplicationState
-			.Feature.Diagnostics.DiagnosticsMap
+			.Feature
+			.Diagnostics
+			.DiagnosticsMap
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 

@@ -16,18 +16,19 @@ use crate::ApplicationState::ApplicationState;
 /// currently open and trusted workspace folders. This prevents extensions from
 /// performing arbitrary filesystem operations outside the user's intended
 /// scope.
-pub fn IsPathAllowedForAccess(ApplicationState: &ApplicationState, PathToCheck: &Path) -> Result<(), CommonError> {
+pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), CommonError> {
 	trace!("[EnvironmentSecurity] Verifying path: {}", PathToCheck.display());
 
 	if !ApplicationState.Workspace.IsTrusted.load(std::sync::atomic::Ordering::Relaxed) {
 		return Err(CommonError::FileSystemPermissionDenied {
-			Path: PathToCheck.to_path_buf(),
-			Reason: "Workspace is not trusted. File access is denied.".to_string(),
+			Path:PathToCheck.to_path_buf(),
+			Reason:"Workspace is not trusted. File access is denied.".to_string(),
 		});
 	}
 
 	let FoldersGuard = ApplicationState
-		.Workspace.WorkspaceFolders
+		.Workspace
+		.WorkspaceFolders
 		.lock()
 		.map_err(super::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
@@ -48,8 +49,8 @@ pub fn IsPathAllowedForAccess(ApplicationState: &ApplicationState, PathToCheck: 
 		Ok(())
 	} else {
 		Err(CommonError::FileSystemPermissionDenied {
-			Path: PathToCheck.to_path_buf(),
-			Reason: "Path is outside of the registered workspace folders.".to_string(),
+			Path:PathToCheck.to_path_buf(),
+			Reason:"Path is outside of the registered workspace folders.".to_string(),
 		})
 	}
 }

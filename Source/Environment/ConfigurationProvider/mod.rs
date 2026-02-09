@@ -11,12 +11,14 @@
 //! maintainability:
 //! - [`GetValue`]: `GetConfigurationValue` - retrieval from merged cache
 //! - [`UpdateValue`]: `UpdateConfigurationValue` - persistence and re-merge
-//! - [`InspectValue`]: `InspectConfigurationValue` - introspection across scopes
-//! - [`Loading`]: `ReadAndParseConfigurationFile`, `InitializeAndMergeConfigurations`
+//! - [`InspectValue`]: `InspectConfigurationValue` - introspection across
+//!   scopes
+//! - [`Loading`]: `ReadAndParseConfigurationFile`,
+//!   `InitializeAndMergeConfigurations`
 //!
-//! The single `impl ConfigurationProvider for MountainEnvironment` block in this
-//! file delegates to those helper functions. This satisfies Rust's orphan rules
-//! while keeping code organized.
+//! The single `impl ConfigurationProvider for MountainEnvironment` block in
+//! this file delegates to those helper functions. This satisfies Rust's orphan
+//! rules while keeping code organized.
 
 use CommonLibrary::{
 	Configuration::{
@@ -42,19 +44,19 @@ pub mod Loading; // Make public for external callers like ConfigurationInitializ
 impl ConfigurationProvider for crate::Environment::MountainEnvironment::MountainEnvironment {
 	async fn GetConfigurationValue(
 		&self,
-		Section: Option<String>,
-		Overrides: ConfigurationOverridesDTO,
+		Section:Option<String>,
+		Overrides:ConfigurationOverridesDTO,
 	) -> Result<serde_json::Value, CommonError> {
 		GetValue::get_configuration_value(self, Section, Overrides).await
 	}
 
 	async fn UpdateConfigurationValue(
 		&self,
-		Key: String,
-		Value: serde_json::Value,
-		Target: ConfigurationTarget,
-		Overrides: ConfigurationOverridesDTO,
-		ScopeToLanguage: Option<bool>,
+		Key:String,
+		Value:serde_json::Value,
+		Target:ConfigurationTarget,
+		Overrides:ConfigurationOverridesDTO,
+		ScopeToLanguage:Option<bool>,
 	) -> Result<(), CommonError> {
 		UpdateValue::update_configuration_value(self, Key, Value, Target, Overrides, ScopeToLanguage).await
 	}
@@ -64,8 +66,8 @@ impl ConfigurationProvider for crate::Environment::MountainEnvironment::Mountain
 impl ConfigurationInspector for crate::Environment::MountainEnvironment::MountainEnvironment {
 	async fn InspectConfigurationValue(
 		&self,
-		Key: String,
-		Overrides: ConfigurationOverridesDTO,
+		Key:String,
+		Overrides:ConfigurationOverridesDTO,
 	) -> Result<Option<InspectResultDataDTO>, CommonError> {
 		InspectValue::inspect_configuration_value(self, Key, Overrides).await
 	}

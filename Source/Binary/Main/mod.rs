@@ -3,10 +3,11 @@
 //! ## RESPONSIBILITIES
 //!
 //! Main application orchestration providing entry point, command handlers,
-//! lifecycle management, and tray integration for the Mountain desktop application.
+//! lifecycle management, and tray integration for the Mountain desktop
+//! application.
 //!
-//! This module serves as the primary entry point for the application and coordinates
-//! all initialization, execution, and shutdown operations.
+//! This module serves as the primary entry point for the application and
+//! coordinates all initialization, execution, and shutdown operations.
 //!
 //! ## ARCHITECTURAL ROLE
 //!
@@ -19,12 +20,14 @@
 //!                      ├─► IPCCommands (Tauri command handlers)
 //!                      ├─► AppLifecycle (Setup and initialization)
 //!                      └─► Tray (System tray icon management)
-//!```
+//! ```
 //!
 //! ## KEY COMPONENTS
 //!
-//! - **Entry** (`Entry::Fn`): Main application entry point exported as `Binary::Main::Fn()`
-//! - **IPCCommands**: All Tauri command handlers for frontend-backend communication
+//! - **Entry** (`Entry::Fn`): Main application entry point exported as
+//!   `Binary::Main::Fn()`
+//! - **IPCCommands**: All Tauri command handlers for frontend-backend
+//!   communication
 //!   - Workbench configuration commands
 //!   - IPC messaging commands
 //!   - Wind desktop configuration commands
@@ -69,7 +72,8 @@
 
 /// Main application entry point and orchestration.
 ///
-/// Contains the `Fn()` function which is the primary entry point for the Mountain
+/// Contains the `Fn()` function which is the primary entry point for the
+/// Mountain
 // desktop application. This function creates the Tokio runtime, initializes
 // application state, sets up the Tauri builder, and runs the application.
 pub mod Entry;
@@ -77,7 +81,8 @@ pub mod Entry;
 /// IPC command handlers.
 ///
 /// Contains all Tauri command handlers that provide the frontend-backend
-/// communication bridge. Commands include workbench configuration, IPC messaging,
+/// communication bridge. Commands include workbench configuration, IPC
+/// messaging,
 // Wind desktop integration, configuration management, status reporting,
 // performance monitoring, collaboration, and document synchronization.
 pub mod IPCCommands;
@@ -85,9 +90,9 @@ pub mod IPCCommands;
 /// Application lifecycle management.
 ///
 /// Contains the `AppLifecycleSetup()` function which handles all initialization
-// during the Tauri setup hook, including tray initialization, command registration,
-// IPC server setup, window creation, environment configuration, and async
-// service initialization.
+// during the Tauri setup hook, including tray initialization, command
+// registration, IPC server setup, window creation, environment configuration,
+// and async service initialization.
 pub mod AppLifecycle;
 
 /// System tray commands.

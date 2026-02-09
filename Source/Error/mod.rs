@@ -25,12 +25,16 @@
 //! ## Example Usage
 //!
 //! ```rust
-//! use crate::Error::{CoreError, IPCError, FileSystemError};
-//! use crate::Error::CoreError::{ErrorContext, ErrorSeverity};
+//! use crate::Error::{
+//! 	CoreError,
+//! 	CoreError::{ErrorContext, ErrorSeverity},
+//! 	FileSystemError,
+//! 	IPCError,
+//! };
 //!
 //! let error = IPCError::ConnectionFailed {
-//!     context: ErrorContext::new("Failed to connect to IPC server"),
-//!     source: None,
+//! 	context:ErrorContext::new("Failed to connect to IPC server"),
+//! 	source:None,
 //! };
 //! ```
 
@@ -43,4 +47,5 @@ pub mod ProviderError;
 
 // Re-export commonly used error types from CoreError
 pub use CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
-// Error types are available through their modules: Error::FileSystemError, Error::IPCError, etc.
+// Error types are available through their modules: Error::FileSystemError,
+// Error::IPCError, etc.

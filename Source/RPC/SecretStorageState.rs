@@ -1,13 +1,12 @@
 //! # Secret Storage State Management
 //!
-//! This module provides in-memory state management for secret storage operations.
-//! In production, this should be replaced with platform-specific secure storage
-//! (Keychain on macOS, Credential Manager on Windows, libsecret on Linux).
+//! This module provides in-memory state management for secret storage
+//! operations. In production, this should be replaced with platform-specific
+//! secure storage (Keychain on macOS, Credential Manager on Windows, libsecret
+//! on Linux).
 
-use std::{
-	collections::HashMap,
-	sync::Arc,
-};
+use std::{collections::HashMap, sync::Arc};
+
 use parking_lot::RwLock;
 
 /// Secret storage entry
@@ -17,36 +16,30 @@ use parking_lot::RwLock;
 #[derive(Clone, Debug)]
 pub struct SecretEntry {
 	/// Secret key
-	pub key: String,
+	pub key:String,
 
 	/// Secret value (encrypted in production)
-	pub value: String,
+	pub value:String,
 
 	/// Extension ID that owns this secret
-	pub extension_id: String,
+	pub extension_id:String,
 
 	/// Timestamp when secret was created
-	pub created_at: chrono::DateTime<chrono::Utc>,
+	pub created_at:chrono::DateTime<chrono::Utc>,
 
 	/// Timestamp when secret was last updated
-	pub updated_at: chrono::DateTime<chrono::Utc>,
+	pub updated_at:chrono::DateTime<chrono::Utc>,
 }
 
 impl SecretEntry {
 	/// Create a new secret entry
-	pub fn new(key: String, value: String, extension_id: String) -> Self {
+	pub fn new(key:String, value:String, extension_id:String) -> Self {
 		let now = chrono::Utc::now();
-		Self {
-			key,
-			value,
-			extension_id,
-			created_at: now,
-			updated_at: now,
-		}
+		Self { key, value, extension_id, created_at:now, updated_at:now }
 	}
 
 	/// Update the secret value
-	pub fn update_value(&mut self, value: String) {
+	pub fn update_value(&mut self, value:String) {
 		self.value = value;
 		self.updated_at = chrono::Utc::now();
 	}
@@ -71,23 +64,19 @@ impl SecretEntry {
 #[derive(Clone)]
 pub struct SecretStorageStateManager {
 	/// Registry of secrets (key -> SecretEntry)
-	secrets: Arc<RwLock<HashMap<String, SecretEntry>>>,
+	secrets:Arc<RwLock<HashMap<String, SecretEntry>>>,
 }
 
 impl SecretStorageStateManager {
 	/// Create a new secret storage state manager
-	pub fn new() -> Self {
-		Self {
-			secrets: Arc::new(RwLock::new(HashMap::new())),
-		}
-	}
+	pub fn new() -> Self { Self { secrets:Arc::new(RwLock::new(HashMap::new())) } }
 
 	// ==================== Secret Operations ====================
 
 	/// Store a secret
 	///
 	/// If the secret already exists, it will be updated.
-	pub fn store_secret(&self, key: String, value: String, extension_id: String) -> Result<(), String> {
+	pub fn store_secret(&self, key:String, value:String, extension_id:String) -> Result<(), String> {
 		// Validate inputs
 		if key.is_empty() {
 			return Err("Secret key cannot be empty".to_string());
@@ -117,7 +106,7 @@ impl SecretStorageStateManager {
 	/// Get a secret
 	///
 	/// Returns the secret value if it exists and the extension is authorized.
-	pub fn get_secret(&self, key: &str, extension_id: &str) -> Result<String, String> {
+	pub fn get_secret(&self, key:&str, extension_id:&str) -> Result<String, String> {
 		let secrets = self.secrets.read();
 
 		match secrets.get(key) {
@@ -138,7 +127,7 @@ impl SecretStorageStateManager {
 	/// Delete a secret
 	///
 	/// Returns success if the secret was deleted, error otherwise.
-	pub fn delete_secret(&self, key: &str, extension_id: &str) -> Result<(), String> {
+	pub fn delete_secret(&self, key:&str, extension_id:&str) -> Result<(), String> {
 		let mut secrets = self.secrets.write();
 
 		match secrets.get(key) {
@@ -161,13 +150,13 @@ impl SecretStorageStateManager {
 	}
 
 	/// Check if a secret exists
-	pub fn secret_exists(&self, key: &str) -> bool {
+	pub fn secret_exists(&self, key:&str) -> bool {
 		let secrets = self.secrets.read();
 		secrets.contains_key(key)
 	}
 
 	/// List all secret keys for an extension
-	pub fn list_secrets_for_extension(&self, extension_id: &str) -> Vec<String> {
+	pub fn list_secrets_for_extension(&self, extension_id:&str) -> Vec<String> {
 		let secrets = self.secrets.read();
 		secrets
 			.values()
@@ -179,7 +168,7 @@ impl SecretStorageStateManager {
 	/// Delete all secrets for an extension
 	///
 	/// Returns the number of secrets deleted.
-	pub fn delete_secrets_for_extension(&self, extension_id: &str) -> usize {
+	pub fn delete_secrets_for_extension(&self, extension_id:&str) -> usize {
 		let mut secrets = self.secrets.write();
 		let initial_count = secrets.len();
 
@@ -198,7 +187,5 @@ impl SecretStorageStateManager {
 }
 
 impl Default for SecretStorageStateManager {
-	fn default() -> Self {
-		Self::new()
-	}
+	fn default() -> Self { Self::new() }
 }

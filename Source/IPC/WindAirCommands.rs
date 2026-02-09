@@ -299,12 +299,12 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 use log::{debug, info};
+use CommonLibrary::Error::CommonError::CommonError;
 
 // Import Air types from the new AirClient implementation.
 // These provide actual gRPC connectivity to the Air daemon service.
 use crate::Air::AirClient as AirClientModule;
 use crate::Air::DEFAULT_AIR_SERVER_ADDRESS;
-use CommonLibrary::Error::CommonError::CommonError;
 
 /// Data Transfer Objects for Wind-Air communication
 
@@ -485,7 +485,13 @@ pub async fn DownloadUpdate(
 
 	// Delegate to Air via gRPC
 	let file_info = client
-		.download_update(request_id, url, destination, checksum.unwrap_or_default(), std::collections::HashMap::new())
+		.download_update(
+			request_id,
+			url,
+			destination,
+			checksum.unwrap_or_default(),
+			std::collections::HashMap::new(),
+		)
 		.await
 		.map_err(|e| format!("Update download failed: {:?}", e))?;
 
@@ -597,11 +603,7 @@ pub async fn AuthenticateUser(username:String, password:String, provider:String)
 		.await
 		.map_err(|e| format!("Authentication failed: {:?}", e))?;
 
-	let result = AuthResponseDTO {
-		success:true,
-		token,
-		error:None,
-	};
+	let result = AuthResponseDTO { success:true, token, error:None };
 
 	info!("[WindAirCommands] Authentication completed: success={}", result.success);
 	Ok(result)
@@ -687,17 +689,24 @@ pub async fn SearchFiles(
 	let max_results_count = max_results.unwrap_or(100);
 
 	let search_results = client
-		.search_files(request_id, query, file_patterns.first().map(|s| s.as_str()).unwrap_or("").to_string(), max_results_count)
+		.search_files(
+			request_id,
+			query,
+			file_patterns.first().map(|s| s.as_str()).unwrap_or("").to_string(),
+			max_results_count,
+		)
 		.await
 		.map_err(|e| format!("File search failed: {:?}", e))?;
 
 	let results:Vec<FileResultDTO> = search_results
 		.into_iter()
-		.map(|r| FileResultDTO {
-			path:r.path,
-			size:r.size,
-			line:Some(r.line_number),
-			content:Some(r.match_preview)
+		.map(|r| {
+			FileResultDTO {
+				path:r.path,
+				size:r.size,
+				line:Some(r.line_number),
+				content:Some(r.match_preview),
+			}
 		})
 		.collect();
 

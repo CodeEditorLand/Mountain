@@ -41,14 +41,10 @@ use log::debug;
 /// # Behavior
 /// - Converts URL to its string representation
 /// - Uses the serializer to create a JSON string value
-pub fn SerializeURL<S>(URLInstance: &Url, SerializerInstance: S) -> Result<S::Ok, S::Error>
+pub fn SerializeURL<S>(URLInstance:&Url, SerializerInstance:S) -> Result<S::Ok, S::Error>
 where
-	S: Serializer,
-{
+	S: Serializer, {
 	let url_string = URLInstance.as_str();
-	debug!(
-		"[URLSerializer] Serializing URL: {}",
-		url_string
-	);
+	debug!("[URLSerializer] Serializing URL: {}", url_string);
 	SerializerInstance.serialize_str(url_string)
 }

@@ -30,26 +30,27 @@
 //! - [ ] Implement extension discovery events
 //! - [ ] Add extension metrics collection
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::{
+	collections::HashMap,
+	sync::{Arc, Mutex as StandardMutex},
+};
+
+use log::debug;
 
 use crate::ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO;
-use log::debug;
 
 /// Scanned extensions containing discovered extension metadata.
 #[derive(Clone)]
 pub struct Extensions {
 	/// Scanned extensions by identifier.
-	pub ScannedExtensions: Arc<StandardMutex<HashMap<String, ExtensionDescriptionStateDTO>>>,
+	pub ScannedExtensions:Arc<StandardMutex<HashMap<String, ExtensionDescriptionStateDTO>>>,
 }
 
 impl Default for Extensions {
 	fn default() -> Self {
 		debug!("[ScannedExtensions] Initializing default scanned extensions...");
 
-		Self {
-			ScannedExtensions: Arc::new(StandardMutex::new(HashMap::new())),
-		}
+		Self { ScannedExtensions:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
 
@@ -64,7 +65,7 @@ impl Extensions {
 	}
 
 	/// Gets an extension by its identifier.
-	pub fn Get(&self, identifier: &str) -> Option<ExtensionDescriptionStateDTO> {
+	pub fn Get(&self, identifier:&str) -> Option<ExtensionDescriptionStateDTO> {
 		self.ScannedExtensions
 			.lock()
 			.ok()
@@ -72,18 +73,15 @@ impl Extensions {
 	}
 
 	/// Sets all scanned extensions.
-	pub fn SetAll(&self, extensions: HashMap<String, ExtensionDescriptionStateDTO>) {
+	pub fn SetAll(&self, extensions:HashMap<String, ExtensionDescriptionStateDTO>) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			*guard = extensions;
-			debug!(
-				"[ScannedExtensions] Scanned extensions updated ({} extensions)",
-				guard.len()
-			);
+			debug!("[ScannedExtensions] Scanned extensions updated ({} extensions)", guard.len());
 		}
 	}
 
 	/// Adds or updates an extension.
-	pub fn AddOrUpdate(&self, identifier: String, extension: ExtensionDescriptionStateDTO) {
+	pub fn AddOrUpdate(&self, identifier:String, extension:ExtensionDescriptionStateDTO) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			guard.insert(identifier, extension);
 			debug!("[ScannedExtensions] Extension added/updated");
@@ -91,7 +89,7 @@ impl Extensions {
 	}
 
 	/// Removes an extension by its identifier.
-	pub fn Remove(&self, identifier: &str) {
+	pub fn Remove(&self, identifier:&str) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			guard.remove(identifier);
 			debug!("[ScannedExtensions] Extension removed: {}", identifier);
@@ -107,16 +105,10 @@ impl Extensions {
 	}
 
 	/// Gets the count of scanned extensions.
-	pub fn Count(&self) -> usize {
-		self.ScannedExtensions
-			.lock()
-			.ok()
-			.map(|guard| guard.len())
-			.unwrap_or(0)
-	}
+	pub fn Count(&self) -> usize { self.ScannedExtensions.lock().ok().map(|guard| guard.len()).unwrap_or(0) }
 
 	/// Checks if an extension exists.
-	pub fn Contains(&self, identifier: &str) -> bool {
+	pub fn Contains(&self, identifier:&str) -> bool {
 		self.ScannedExtensions
 			.lock()
 			.ok()

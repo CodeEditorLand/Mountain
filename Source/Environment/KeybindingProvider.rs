@@ -177,7 +177,9 @@ impl KeybindingProvider for MountainEnvironment {
 		// 1. Collect default keybindings from extensions
 		let Extensions = self
 			.ApplicationState
-			.Extension.ScannedExtensions.ScannedExtensions
+			.Extension
+			.ScannedExtensions
+			.ScannedExtensions
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.clone();

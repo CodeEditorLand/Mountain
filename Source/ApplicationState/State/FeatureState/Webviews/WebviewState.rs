@@ -30,49 +30,43 @@
 //! - [ ] Implement webview lifecycle events
 //! - [ ] Add webview metrics collection
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex as StandardMutex};
+use std::{
+	collections::HashMap,
+	sync::{Arc, Mutex as StandardMutex},
+};
+
+use log::debug;
 
 use crate::ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO;
-use log::debug;
 
 /// Active webviews state containing webviews by ID.
 #[derive(Clone)]
 pub struct WebviewState {
 	/// Active webviews organized by ID.
-	pub ActiveWebviews: Arc<StandardMutex<HashMap<String, WebviewStateDTO>>>,
+	pub ActiveWebviews:Arc<StandardMutex<HashMap<String, WebviewStateDTO>>>,
 }
 
 impl Default for WebviewState {
 	fn default() -> Self {
 		debug!("[WebviewState] Initializing default webview state...");
 
-		Self {
-			ActiveWebviews: Arc::new(StandardMutex::new(HashMap::new())),
-		}
+		Self { ActiveWebviews:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
 
 impl WebviewState {
 	/// Gets all active webviews.
 	pub fn GetAll(&self) -> HashMap<String, WebviewStateDTO> {
-		self.ActiveWebviews
-			.lock()
-			.ok()
-			.map(|guard| guard.clone())
-			.unwrap_or_default()
+		self.ActiveWebviews.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
 	}
 
 	/// Gets a webview by its ID.
-	pub fn Get(&self, id: &str) -> Option<WebviewStateDTO> {
-		self.ActiveWebviews
-			.lock()
-			.ok()
-			.and_then(|guard| guard.get(id).cloned())
+	pub fn Get(&self, id:&str) -> Option<WebviewStateDTO> {
+		self.ActiveWebviews.lock().ok().and_then(|guard| guard.get(id).cloned())
 	}
 
 	/// Adds or updates a webview.
-	pub fn AddOrUpdate(&self, id: String, webview: WebviewStateDTO) {
+	pub fn AddOrUpdate(&self, id:String, webview:WebviewStateDTO) {
 		if let Ok(mut guard) = self.ActiveWebviews.lock() {
 			guard.insert(id, webview);
 			debug!("[WebviewState] Webview added/updated");
@@ -80,7 +74,7 @@ impl WebviewState {
 	}
 
 	/// Removes a webview by its ID.
-	pub fn Remove(&self, id: &str) {
+	pub fn Remove(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveWebviews.lock() {
 			guard.remove(id);
 			debug!("[WebviewState] Webview removed: {}", id);
@@ -96,16 +90,10 @@ impl WebviewState {
 	}
 
 	/// Gets the count of active webviews.
-	pub fn Count(&self) -> usize {
-		self.ActiveWebviews
-			.lock()
-			.ok()
-			.map(|guard| guard.len())
-			.unwrap_or(0)
-	}
+	pub fn Count(&self) -> usize { self.ActiveWebviews.lock().ok().map(|guard| guard.len()).unwrap_or(0) }
 
 	/// Checks if a webview exists.
-	pub fn Contains(&self, id: &str) -> bool {
+	pub fn Contains(&self, id:&str) -> bool {
 		self.ActiveWebviews
 			.lock()
 			.ok()

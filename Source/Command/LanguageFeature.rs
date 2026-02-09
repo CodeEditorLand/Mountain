@@ -74,7 +74,8 @@
 //! MODULE STRUCTURE:
 //! - [`validation.rs`](validation.rs) - request validation helper
 //! - [`invoke_provider.rs`](invoke_provider.rs) - generic provider invoker
-//! - Individual command modules for each language feature (containing impls only)
+//! - Individual command modules for each language feature (containing impls
+//!   only)
 
 use log::debug;
 use serde_json::Value;
@@ -104,9 +105,9 @@ mod references;
 /// Provides hover information at cursor position
 #[command]
 pub async fn MountainProvideHover(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
 ) -> Result<Value, String> {
 	debug!("[Language Feature] Providing hover for: {} at {:?}", uri, position);
 	hover::provide_hover_impl(application_handle, uri, position).await
@@ -115,10 +116,10 @@ pub async fn MountainProvideHover(
 /// Provides code actions (quick fixes and refactorings) for a code range
 #[command]
 pub async fn MountainProvideCodeActions(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
-	context: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
+	context:Value,
 ) -> Result<Value, String> {
 	debug!("[Language Feature] Providing code actions for: {} at {:?}", uri, position);
 	code_actions::provide_code_actions_impl(application_handle, uri, position, context).await
@@ -127,21 +128,24 @@ pub async fn MountainProvideCodeActions(
 /// Finds symbol occurrences (document highlights) in a document
 #[command]
 pub async fn MountainProvideDocumentHighlights(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
 ) -> Result<Value, String> {
-	debug!("[Language Feature] Providing document highlights for: {} at {:?}", uri, position);
+	debug!(
+		"[Language Feature] Providing document highlights for: {} at {:?}",
+		uri, position
+	);
 	highlights::provide_document_highlights_impl(application_handle, uri, position).await
 }
 
 /// Provides code completion suggestions
 #[command]
 pub async fn MountainProvideCompletions(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
-	context: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
+	context:Value,
 ) -> Result<Value, String> {
 	debug!("[Language Feature] Providing completions for: {} at {:?}", uri, position);
 	completions::provide_completions_impl(application_handle, uri, position, context).await
@@ -150,9 +154,9 @@ pub async fn MountainProvideCompletions(
 /// Provides go-to-definition functionality
 #[command]
 pub async fn MountainProvideDefinition(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
 ) -> Result<Value, String> {
 	debug!("[Language Feature] Providing definition for: {} at {:?}", uri, position);
 	definition::provide_definition_impl(application_handle, uri, position).await
@@ -161,10 +165,10 @@ pub async fn MountainProvideDefinition(
 /// Finds all references to a symbol
 #[command]
 pub async fn MountainProvideReferences(
-	application_handle: AppHandle<Wry>,
-	uri: String,
-	position: Value,
-	context: Value,
+	application_handle:AppHandle<Wry>,
+	uri:String,
+	position:Value,
+	context:Value,
 ) -> Result<Value, String> {
 	debug!("[Language Feature] Providing references for: {} at {:?}", uri, position);
 	references::provide_references_impl(application_handle, uri, position, context).await

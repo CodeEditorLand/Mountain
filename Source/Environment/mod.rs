@@ -6,7 +6,8 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! The Environment module is the central dependency injection system for Mountain:
+//! The Environment module is the central dependency injection system for
+//! Mountain:
 //!
 //! ```text
 //! Component ──► Requires<T> ──► MountainEnvironment ──► Arc<dyn T>

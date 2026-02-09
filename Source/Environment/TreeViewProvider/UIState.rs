@@ -12,16 +12,21 @@ use crate::Environment::Utility;
 
 /// Updates the tree view message displayed in the UI.
 pub(super) async fn set_tree_view_message(
-	env: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	view_identifier: String,
-	message: Option<String>,
+	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	view_identifier:String,
+	message:Option<String>,
 ) -> Result<(), CommonError> {
-	info!("[TreeViewProvider] Setting message for view '{}': {:?}", view_identifier, message);
+	info!(
+		"[TreeViewProvider] Setting message for view '{}': {:?}",
+		view_identifier, message
+	);
 
 	{
 		let mut tree_view_guard = env
 			.ApplicationState
-			.Feature.TreeViews.ActiveTreeViews
+			.Feature
+			.TreeViews
+			.ActiveTreeViews
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -36,18 +41,16 @@ pub(super) async fn set_tree_view_message(
 			json!({ "ViewIdentifier": view_identifier, "Message": message }),
 		)
 		.map_err(|Error| {
-			CommonError::UserInterfaceInteraction {
-				Reason: format!("Failed to emit tree view message: {}", Error),
-			}
+			CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view message: {}", Error) }
 		})
 }
 
 /// Updates the tree view's title and description.
 pub(super) async fn set_tree_view_title(
-	env: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	view_identifier: String,
-	title: Option<String>,
-	description: Option<String>,
+	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	view_identifier:String,
+	title:Option<String>,
+	description:Option<String>,
 ) -> Result<(), CommonError> {
 	info!(
 		"[TreeViewProvider] Setting title/description for view '{}': {:?} {:?}",
@@ -57,7 +60,9 @@ pub(super) async fn set_tree_view_title(
 	{
 		let mut tree_view_guard = env
 			.ApplicationState
-			.Feature.TreeViews.ActiveTreeViews
+			.Feature
+			.TreeViews
+			.ActiveTreeViews
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -77,17 +82,15 @@ pub(super) async fn set_tree_view_title(
 			}),
 		)
 		.map_err(|Error| {
-			CommonError::UserInterfaceInteraction {
-				Reason: format!("Failed to emit tree view title: {}", Error),
-			}
+			CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view title: {}", Error) }
 		})
 }
 
 /// Sets a badge on the tree view.
 pub(super) async fn set_tree_view_badge(
-	env: &crate::Environment::MountainEnvironment::MountainEnvironment,
-	view_identifier: String,
-	badge: Option<serde_json::Value>,
+	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	view_identifier:String,
+	badge:Option<serde_json::Value>,
 ) -> Result<(), CommonError> {
 	info!("[TreeViewProvider] Setting badge for view '{}': {:?}", view_identifier, badge);
 
@@ -95,12 +98,15 @@ pub(super) async fn set_tree_view_badge(
 	{
 		let mut tree_view_guard = env
 			.ApplicationState
-			.Feature.TreeViews.ActiveTreeViews
+			.Feature
+			.TreeViews
+			.ActiveTreeViews
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 		if let Some(_view_state) = tree_view_guard.get_mut(&view_identifier) {
-			// TODO: Store badge in ViewState when field is added to TreeViewStateDTO
+			// TODO: Store badge in ViewState when field is added to
+			// TreeViewStateDTO
 		}
 	}
 
@@ -111,8 +117,6 @@ pub(super) async fn set_tree_view_badge(
 			json!({ "ViewIdentifier": view_identifier, "Badge": badge }),
 		)
 		.map_err(|Error| {
-			CommonError::UserInterfaceInteraction {
-				Reason: format!("Failed to emit tree view badge: {}", Error),
-			}
+			CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view badge: {}", Error) }
 		})
 }

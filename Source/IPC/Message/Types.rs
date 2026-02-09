@@ -1,9 +1,10 @@
 //! # Message Types (IPC)
 //!
 //! ## RESPONSIBILITIES
-//! This module defines the core data structures used for IPC communication between
-//! Wind (frontend) and Mountain (backend). It provides type-safe message formats
-//! that are serialized/deserialized for transport across the IPC boundary.
+//! This module defines the core data structures used for IPC communication
+//! between Wind (frontend) and Mountain (backend). It provides type-safe
+//! message formats that are serialized/deserialized for transport across the
+//! IPC boundary.
 //!
 //! ## ARCHITECTURAL ROLE
 //! This module defines the contract for all IPC messages. It's the foundation
@@ -21,7 +22,8 @@
 //! will fail to parse with descriptive error messages.
 //!
 //! ## LOGGING
-//! Debug-level logging for message metadata, trace for detailed message inspection.
+//! Debug-level logging for message metadata, trace for detailed message
+//! inspection.
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Messages use efficient serde_json::Value for flexible data payloads
@@ -73,17 +75,18 @@ use serde::{Deserialize, Serialize};
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TauriIPCMessage {
-	/// IPC channel identifier that determines which handler processes the message
-	pub channel: String,
+	/// IPC channel identifier that determines which handler processes the
+	/// message
+	pub channel:String,
 
 	/// Message payload data in flexible JSON format
-	pub data: serde_json::Value,
+	pub data:serde_json::Value,
 
 	/// Optional sender identifier for tracking message origin
-	pub sender: Option<String>,
+	pub sender:Option<String>,
 
 	/// Unix timestamp in milliseconds for message ordering and debugging
-	pub timestamp: u64,
+	pub timestamp:u64,
 }
 
 impl TauriIPCMessage {
@@ -96,12 +99,12 @@ impl TauriIPCMessage {
 	///
 	/// ## Returns
 	/// A new TauriIPCMessage with current timestamp
-	pub fn new(channel: String, data: serde_json::Value, sender: Option<String>) -> Self {
+	pub fn new(channel:String, data:serde_json::Value, sender:Option<String>) -> Self {
 		Self {
 			channel,
 			data,
 			sender,
-			timestamp: std::time::SystemTime::now()
+			timestamp:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_millis() as u64,
@@ -109,9 +112,7 @@ impl TauriIPCMessage {
 	}
 
 	/// Check if message is from a specific sender
-	pub fn is_from(&self, sender: &str) -> bool {
-		self.sender.as_deref() == Some(sender)
-	}
+	pub fn is_from(&self, sender:&str) -> bool { self.sender.as_deref() == Some(sender) }
 
 	/// Get message age in milliseconds
 	pub fn age_ms(&self) -> u64 {
@@ -152,14 +153,12 @@ impl TauriIPCMessage {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SimpleConnectionStatus {
 	/// Whether the IPC connection is currently active
-	pub connected: bool,
+	pub connected:bool,
 }
 
 impl SimpleConnectionStatus {
 	/// Create a new connection status
-	pub fn new(connected: bool) -> Self {
-		Self { connected }
-	}
+	pub fn new(connected:bool) -> Self { Self { connected } }
 
 	/// Get human-readable status description
 	pub fn description(&self) -> &'static str {
@@ -211,11 +210,7 @@ mod tests {
 
 	#[test]
 	fn test_message_age() {
-		let message = TauriIPCMessage::new(
-			"test_channel".to_string(),
-			serde_json::json!({}),
-			None,
-		);
+		let message = TauriIPCMessage::new("test_channel".to_string(), serde_json::json!({}), None);
 
 		// Age should be small (less than 100ms)
 		assert!(message.age_ms() < 100);

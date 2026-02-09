@@ -31,5 +31,5 @@
 
 // Re-export the original ConfigurationBridge types for backward compatibility
 // The actual implementation is in the parent directory ConfigurationBridge.rs
-// TODO: In future refactoring, split ConfigurationBridge.rs into atomic structure
-// and move that structure into Bridge.rs file within this directory.
+// TODO: In future refactoring, split ConfigurationBridge.rs into atomic
+// structure and move that structure into Bridge.rs file within this directory.

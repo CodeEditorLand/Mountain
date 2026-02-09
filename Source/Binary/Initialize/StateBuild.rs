@@ -18,39 +18,36 @@
 use std::sync::Arc;
 
 use log::{debug, error, info, warn};
-
-use crate::ApplicationState::State::ApplicationState;
-use crate::Environment::MountainEnvironment::MountainEnvironment;
-
 // ============ Feature Flags ============
-
 #[cfg(feature = "Telemetry")]
-use opentelemetry::{global, KeyValue};
+use opentelemetry::{KeyValue, global};
+
+use crate::{ApplicationState::State::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
 
 /// State build configuration
 pub struct StateBuildConfig {
-    /// Enable comprehensive validation
-    pub strict_validation: bool,
-    /// Enable state snapshotting
-    pub enable_snapshots: bool,
-    /// Log state initialization
-    pub verbose_logging: bool,
+	/// Enable comprehensive validation
+	pub strict_validation:bool,
+	/// Enable state snapshotting
+	pub enable_snapshots:bool,
+	/// Log state initialization
+	pub verbose_logging:bool,
 }
 
 impl Default for StateBuildConfig {
-    fn default() -> Self {
-        Self {
-            #[cfg(feature = "Debug")]
-            strict_validation: true,
-            #[cfg(not(feature = "Debug"))]
-            strict_validation: false,
-            enable_snapshots: false,
-            #[cfg(feature = "Debug")]
-            verbose_logging: true,
-            #[cfg(not(feature = "Debug"))]
-            verbose_logging: false,
-        }
-    }
+	fn default() -> Self {
+		Self {
+			#[cfg(feature = "Debug")]
+			strict_validation:true,
+			#[cfg(not(feature = "Debug"))]
+			strict_validation:false,
+			enable_snapshots:false,
+			#[cfg(feature = "Debug")]
+			verbose_logging:true,
+			#[cfg(not(feature = "Debug"))]
+			verbose_logging:false,
+		}
+	}
 }
 
 /// Build application state from environment
@@ -69,8 +66,8 @@ impl Default for StateBuildConfig {
 /// # Errors
 ///
 /// Returns error if required capabilities are not available
-pub fn Build(environment: MountainEnvironment) -> Result<ApplicationState, String> {
-    BuildWithConfig(environment, StateBuildConfig::default())
+pub fn Build(environment:MountainEnvironment) -> Result<ApplicationState, String> {
+	BuildWithConfig(environment, StateBuildConfig::default())
 }
 
 /// Build application state with custom configuration
@@ -83,67 +80,64 @@ pub fn Build(environment: MountainEnvironment) -> Result<ApplicationState, Strin
 /// # Returns
 ///
 /// Configured application state
-pub fn BuildWithConfig(
-    environment: MountainEnvironment,
-    config: StateBuildConfig,
-) -> Result<ApplicationState, String> {
-    #[cfg(feature = "Telemetry")]
-    let span = global::tracer("StateBuild").start("Build");
-    
-    info!("[StateBuild] Initializing application state");
-    
-    if config.verbose_logging {
-        debug!("[StateBuild] Config: {:?}", config);
-    }
+pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig) -> Result<ApplicationState, String> {
+	#[cfg(feature = "Telemetry")]
+	let span = global::tracer("StateBuild").start("Build");
 
-    // Validate required capabilities if strict mode enabled
-    if config.strict_validation {
-        #[cfg(feature = "Telemetry")]
-        span.set_attribute(KeyValue::new("validation", "strict"));
-        
-        if let Err(err) = ValidateCapabilities(&environment) {
-            error!("[StateBuild] Capability validation failed: {}", err);
-            #[cfg(feature = "Telemetry")]
-            span.set_attribute(KeyValue::new("error", err.clone()));
-            return Err(format!("Capability validation failed: {}", err));
-        }
-        info!("[StateBuild] All required capabilities validated");
-    }
+	info!("[StateBuild] Initializing application state");
 
-    // Create state with injected capabilities
-    let state = ApplicationState::Create(environment);
+	if config.verbose_logging {
+		debug!("[StateBuild] Config: {:?}", config);
+	}
 
-    #[cfg(feature = "Telemetry")]
-    {
-        span.add_event("state_initialized", vec![]);
-        span.end();
-    }
+	// Validate required capabilities if strict mode enabled
+	if config.strict_validation {
+		#[cfg(feature = "Telemetry")]
+		span.set_attribute(KeyValue::new("validation", "strict"));
 
-    info!("[StateBuild] Application state initialized successfully");
-    Ok(state)
+		if let Err(err) = ValidateCapabilities(&environment) {
+			error!("[StateBuild] Capability validation failed: {}", err);
+			#[cfg(feature = "Telemetry")]
+			span.set_attribute(KeyValue::new("error", err.clone()));
+			return Err(format!("Capability validation failed: {}", err));
+		}
+		info!("[StateBuild] All required capabilities validated");
+	}
+
+	// Create state with injected capabilities
+	let state = ApplicationState::Create(environment);
+
+	#[cfg(feature = "Telemetry")]
+	{
+		span.add_event("state_initialized", vec![]);
+		span.end();
+	}
+
+	info!("[StateBuild] Application state initialized successfully");
+	Ok(state)
 }
 
 /// Validate required capabilities are available
-fn ValidateCapabilities(environment: &MountainEnvironment) -> Result<(), String> {
-    // Check critical capabilities
-    // TODO: Implement actual capability checks based on Environment API
-    Ok(())
+fn ValidateCapabilities(environment:&MountainEnvironment) -> Result<(), String> {
+	// Check critical capabilities
+	// TODO: Implement actual capability checks based on Environment API
+	Ok(())
 }
 
 /// Create minimal state for testing (reduced requirements)
 #[cfg(any(test, feature = "Test"))]
 pub fn BuildMinimal() -> Result<ApplicationState, String> {
-    info!("[StateBuild] Creating minimal test state");
-    // TODO: Create minimal environment for tests
-    unimplemented!()
+	info!("[StateBuild] Creating minimal test state");
+	// TODO: Create minimal environment for tests
+	unimplemented!()
 }
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+	use super::*;
 
-    #[test]
-    fn test_state_build() {
-        // TODO: Add actual tests
-    }
+	#[test]
+	fn test_state_build() {
+		// TODO: Add actual tests
+	}
 }

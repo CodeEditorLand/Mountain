@@ -42,7 +42,7 @@ use log::debug;
 /// - Detects CRLF ("\r\n") or LF ("\n") line endings
 /// - Splits text into lines vector using detected EOL
 /// - Returns LF as default if text doesn't contain CRLF
-pub fn AnalyzeTextLinesAndEOL(TextContent: &str) -> (Vec<String>, String) {
+pub fn AnalyzeTextLinesAndEOL(TextContent:&str) -> (Vec<String>, String) {
 	let detected_eol = if TextContent.contains("\r\n") {
 		debug!("[AnalyzeTextLinesAndEOL] Detected CRLF line endings");
 		"\r\n"
@@ -51,15 +51,12 @@ pub fn AnalyzeTextLinesAndEOL(TextContent: &str) -> (Vec<String>, String) {
 		"\n"
 	};
 
-	let lines: Vec<String> = TextContent
-		.split(detected_eol)
-		.map(String::from)
-		.collect();
+	let lines:Vec<String> = TextContent.split(detected_eol).map(String::from).collect();
 
 	debug!(
 		"[AnalyzeTextLinesAndEOL] Analyzed {} lines with EOL: {:?}",
 		lines.len(),
-			detected_eol
+		detected_eol
 	);
 
 	(lines, detected_eol.to_string())

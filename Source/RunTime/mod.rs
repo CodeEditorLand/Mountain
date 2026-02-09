@@ -28,7 +28,8 @@
 //! 3. **Non-Blocking**: Uses Echo's work-stealing scheduler
 //! 4. **Type-Safe**: Effect execution is type-safe through generics
 //! 5. **Error Recovery**: Continues shutdown even when services fail
-//! 6. **Graceful Degradation**: Provides fallback strategies for service unavailability
+//! 6. **Graceful Degradation**: Provides fallback strategies for service
+//!    unavailability
 //!
 //! ## Key Components
 //!
@@ -53,7 +54,8 @@
 // --- Sub-modules ---
 
 /// Application runtime module containing the struct definition.
-/// The struct is accessible as `RunTime::ApplicationRunTime::ApplicationRunTime`.
+/// The struct is accessible as
+/// `RunTime::ApplicationRunTime::ApplicationRunTime`.
 pub mod ApplicationRunTime;
 
 /// Effect execution logic.

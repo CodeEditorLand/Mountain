@@ -69,7 +69,7 @@ use super::Types::ConnectionHandle;
 /// ```
 pub struct HealthChecker {
 	/// Maximum allowed response time for a connection to be considered healthy
-	ping_timeout: std::time::Duration,
+	ping_timeout:std::time::Duration,
 }
 
 impl HealthChecker {
@@ -78,20 +78,15 @@ impl HealthChecker {
 	/// Default ping timeout is 5 seconds.
 	pub fn new() -> Self {
 		debug!("[HealthChecker] Creating health checker with 5s timeout");
-		Self {
-			ping_timeout: std::time::Duration::from_secs(5),
-		}
+		Self { ping_timeout:std::time::Duration::from_secs(5) }
 	}
 
 	/// Create a new health checker with custom timeout
 	///
 	/// ## Parameters
 	/// - `ping_timeout`: Maximum allowed response time
-	pub fn with_timeout(ping_timeout: std::time::Duration) -> Self {
-		debug!(
-			"[HealthChecker] Creating health checker with {:?} timeout",
-			ping_timeout
-		);
+	pub fn with_timeout(ping_timeout:std::time::Duration) -> Self {
+		debug!("[HealthChecker] Creating health checker with {:?} timeout", ping_timeout);
 		Self { ping_timeout }
 	}
 
@@ -102,7 +97,8 @@ impl HealthChecker {
 	/// through the connection.
 	///
 	/// ## Parameters
-	/// - `handle`: Mutable reference to the connection handle to update based on health
+	/// - `handle`: Mutable reference to the connection handle to update based
+	///   on health
 	///
 	/// ## Returns
 	/// - `true`: Connection is healthy
@@ -113,7 +109,7 @@ impl HealthChecker {
 	/// ```rust,ignore
 	/// let is_healthy = checker.check_connection_health(&mut handle).await;
 	/// ```
-	pub async fn check_connection_health(&self, handle: &mut ConnectionHandle) -> bool {
+	pub async fn check_connection_health(&self, handle:&mut ConnectionHandle) -> bool {
 		let start_time = std::time::Instant::now();
 
 		// Simulate network latency (in production, this would be an actual ping)
@@ -141,41 +137,37 @@ impl HealthChecker {
 	}
 
 	/// Get the ping timeout
-	pub fn ping_timeout(&self) -> std::time::Duration {
-		self.ping_timeout
-	}
+	pub fn ping_timeout(&self) -> std::time::Duration { self.ping_timeout }
 
 	/// Set a new ping timeout
-	pub fn set_ping_timeout(&mut self, timeout: std::time::Duration) {
+	pub fn set_ping_timeout(&mut self, timeout:std::time::Duration) {
 		self.ping_timeout = timeout;
 		debug!("[HealthChecker] Ping timeout updated to {:?}", timeout);
 	}
 }
 
 impl Default for HealthChecker {
-	fn default() -> Self {
-		Self::new()
-	}
+	fn default() -> Self { Self::new() }
 }
 
 #[cfg(test)]
 mod tests {
 	use super::*;
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_health_checker_creation() {
 		let checker = HealthChecker::new();
 		assert_eq!(checker.ping_timeout, std::time::Duration::from_secs(5));
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_health_checker_custom_timeout() {
 		let timeout = std::time::Duration::from_secs(10);
 		let checker = HealthChecker::with_timeout(timeout);
 		assert_eq!(checker.ping_timeout, timeout);
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_check_connection_health_healthy() {
 		let checker = HealthChecker::new();
 		let mut handle = ConnectionHandle::new();
@@ -184,7 +176,7 @@ mod tests {
 		assert!(is_healthy);
 	}
 
-#[tokio::test]
+	#[tokio::test]
 	async fn test_check_connection_health_unhealthy() {
 		// Create a checker with very short timeout
 		let timeout = std::time::Duration::from_millis(1);
@@ -196,13 +188,13 @@ mod tests {
 		assert!(!is_healthy);
 	}
 
-#[test]
+	#[test]
 	fn test_default_health_checker() {
 		let checker = HealthChecker::default();
 		assert_eq!(checker.ping_timeout, std::time::Duration::from_secs(5));
 	}
 
-#[test]
+	#[test]
 	fn test_set_ping_timeout() {
 		let mut checker = HealthChecker::new();
 		assert_eq!(checker.ping_timeout, std::time::Duration::from_secs(5));

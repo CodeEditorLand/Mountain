@@ -2,14 +2,16 @@
 //!
 //! ## RESPONSIBILITIES
 //!
-//! Application lifecycle management for the Tauri application setup and initialization.
-//! This module handles the complete setup process during the Tauri setup hook,
-//! including tray initialization, command registration, IPC server setup,
-//! window creation, environment configuration, and async service initialization.
+//! Application lifecycle management for the Tauri application setup and
+//! initialization. This module handles the complete setup process during the
+//! Tauri setup hook, including tray initialization, command registration, IPC
+//! server setup, window creation, environment configuration, and async service
+//! initialization.
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! The AppLifecycle module is the **initialization layer** in Mountain's architecture:
+//! The AppLifecycle module is the **initialization layer** in Mountain's
+//! architecture:
 //!
 //! ```text
 //! Tauri Builder Setup ──► AppLifecycle::AppLifecycleSetup()
@@ -21,13 +23,15 @@
 //!                              ├─► Environment Setup
 //!                              ├─► Runtime Setup
 //!                              └─► Async Service Initialization
-//!```
+//! ```
 //!
 //! ## KEY COMPONENTS
 //!
-//! - **AppLifecycleSetup()**: Main setup function orchestrating all initialization
+//! - **AppLifecycleSetup()**: Main setup function orchestrating all
+//!   initialization
 //! - **Tray Initialization**: System tray icon with Dark/Light mode support
-//! - **Command Registration**: Native command registration with application state
+//! - **Command Registration**: Native command registration with application
+//!   state
 //! - **IPC Server**: Mountain IPC server for frontend-backend communication
 //! - **Window Building**: Main application window configuration
 //! - **MountainEnvironment**: Environment context for application services
@@ -117,13 +121,14 @@ macro_rules! TraceStep {
 ///
 /// # Returns
 ///
-/// `Result<(), Box<dyn std::error::Error>>` - Ok on success, Err on critical failure
+/// `Result<(), Box<dyn std::error::Error>>` - Ok on success, Err on critical
+/// failure
 pub fn AppLifecycleSetup(
-	app: &mut tauri::App,
-	app_handle: tauri::AppHandle,
-	localhost_url: String,
-	scheduler: Arc<Scheduler>,
-	app_state: Arc<ApplicationState>,
+	app:&mut tauri::App,
+	app_handle:tauri::AppHandle,
+	localhost_url:String,
+	scheduler:Arc<Scheduler>,
+	app_state:Arc<ApplicationState>,
 ) -> Result<(), Box<dyn std::error::Error>> {
 	info!("[Lifecycle] [Setup] Setup hook started.");
 	debug!("[Lifecycle] [Setup] LocalhostUrl={}", localhost_url);

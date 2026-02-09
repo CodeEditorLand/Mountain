@@ -124,8 +124,7 @@
 use std::sync::Arc;
 
 use CommonLibrary::{
-	Effect::ApplicationRunTime,
-	Effect::ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait,
+	Effect::{ApplicationRunTime, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
 	Environment::Environment::Environment,
 	Error::CommonError::CommonError,
 	FileSystem::{DTO::FileTypeDTO::FileTypeDTO, ReadDirectory::ReadDirectory},
@@ -315,7 +314,7 @@ impl TreeViewProvider for FileExplorerViewProvider {
 
 		// This now works because `RunTime` has the correct type and implements the
 		// `ApplicationRunTime` trait.
-		let Entries: Vec<(String, CommonLibrary::FileSystem::DTO::FileTypeDTO::FileTypeDTO)> =
+		let Entries:Vec<(String, CommonLibrary::FileSystem::DTO::FileTypeDTO::FileTypeDTO)> =
 			RunTime.Run(ReadDirectory(PathToRead.clone())).await?;
 
 		let Items = Entries

@@ -142,7 +142,8 @@
 // # Command Execution Flow
 //
 // 1. Extension or system calls ExecuteCommand(identifier, args)
-// 2. CommandProvider looks up the command in ApplicationState.Extension.Registry.CommandRegistry
+// 2. CommandProvider looks up the command in
+//    ApplicationState.Extension.Registry.CommandRegistry
 // 3. If native handler: executes Rust function directly with AppHandle and
 //    arguments
 // 4. If proxied handler: sends IPC request to the owning sidecar via Vine
@@ -230,7 +231,9 @@ impl CommandExecutor for MountainEnvironment {
 	async fn ExecuteCommand(&self, CommandIdentifier:String, Argument:Value) -> Result<Value, CommonError> {
 		let HandlerInfoOption = self
 			.ApplicationState
-			.Extension.Registry.CommandRegistry
+			.Extension
+			.Registry
+			.CommandRegistry
 			.lock()
 			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
 			.get(&CommandIdentifier)
@@ -286,7 +289,9 @@ impl CommandExecutor for MountainEnvironment {
 
 		let mut Registry = self
 			.ApplicationState
-			.Extension.Registry.CommandRegistry
+			.Extension
+			.Registry
+			.CommandRegistry
 			.lock()
 			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?;
 
@@ -303,7 +308,9 @@ impl CommandExecutor for MountainEnvironment {
 		info!("[CommandProvider] Unregistering command '{}'", CommandIdentifier);
 
 		self.ApplicationState
-			.Extension.Registry.CommandRegistry
+			.Extension
+			.Registry
+			.CommandRegistry
 			.lock()
 			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
 			.remove(&CommandIdentifier);
@@ -317,7 +324,9 @@ impl CommandExecutor for MountainEnvironment {
 
 		let Registry = self
 			.ApplicationState
-			.Extension.Registry.CommandRegistry
+			.Extension
+			.Registry
+			.CommandRegistry
 			.lock()
 			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?;
 

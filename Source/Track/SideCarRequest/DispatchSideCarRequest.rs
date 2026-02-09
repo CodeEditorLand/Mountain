@@ -14,7 +14,8 @@
 //!
 //! ## ARCHITECTURAL ROLE
 //!
-//! DispatchSideCarRequest acts as the **sidecar gateway** in Track's dispatch layer:
+//! DispatchSideCarRequest acts as the **sidecar gateway** in Track's dispatch
+//! layer:
 //!
 //! ```text
 //! Cocoon (Sidecar) ──► DispatchSideCarRequest ──► CreateEffectForRequest ──► ApplicationRunTime ──► Providers
@@ -34,7 +35,8 @@
 //!
 //! - All incoming sidecar requests are logged at debug level with sidecar ID
 //! - Effect creation failures are logged at error level
-//! - Log format: "[Track/SideCarRequest] Dispatching sidecar request from '{}': {}"
+//! - Log format: "[Track/SideCarRequest] Dispatching sidecar request from '{}':
+//!   {}"
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //!
@@ -55,10 +57,7 @@ use log::{debug, error};
 use serde_json::Value;
 use tauri::{AppHandle, Runtime};
 
-use crate::{
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Track::Effect::CreateEffectForRequest,
-};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::CreateEffectForRequest};
 
 /// The primary dispatcher for requests originating from a `Cocoon` sidecar via
 /// gRPC. This routes RPC calls to the correct effect-based implementation.

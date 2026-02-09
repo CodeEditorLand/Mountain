@@ -16,9 +16,10 @@
 //! - RelatedInformation: Related diagnostic information
 //! - Tags: Additional marker tags (deprecated, unnecessary)
 
-use super::MarkerSeverity::MarkerSeverity;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+
+use super::MarkerSeverity::MarkerSeverity;
 
 /// Maximum message length for a marker
 const MAX_MARKER_MESSAGE_LENGTH:usize = 10_000;

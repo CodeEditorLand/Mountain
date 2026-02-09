@@ -8,42 +8,38 @@ use serde::{Deserialize, Serialize};
 pub struct TelemetryService;
 
 impl TelemetryService {
-    pub fn new() -> Self {
-        Self {}
-    }
+	pub fn new() -> Self { Self {} }
 }
 
 impl Default for TelemetryService {
-    fn default() -> Self {
-        Self::new()
-    }
+	fn default() -> Self { Self::new() }
 }
 
 /// Telemetry span
 pub mod spans {
-    use super::*;
+	use super::*;
 
-    /// Trace span
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct TraceSpan {
-        pub trace_id: String,
-        pub span_id: String,
-        pub parent_span_id: Option<String>,
-        pub name: String,
-        pub start_time: i64,
-        pub end_time: Option<i64>,
-    }
+	/// Trace span
+	#[derive(Debug, Clone, Serialize, Deserialize)]
+	pub struct TraceSpan {
+		pub trace_id:String,
+		pub span_id:String,
+		pub parent_span_id:Option<String>,
+		pub name:String,
+		pub start_time:i64,
+		pub end_time:Option<i64>,
+	}
 }
 
 /// Service metrics
 pub mod metrics {
-    use super::*;
+	use super::*;
 
-    /// Service metrics
-    #[derive(Debug, Clone, Serialize, Deserialize)]
-    pub struct ServiceMetrics {
-        pub name: String,
-        pub count: u64,
-        pub sum: f64,
-    }
+	/// Service metrics
+	#[derive(Debug, Clone, Serialize, Deserialize)]
+	pub struct ServiceMetrics {
+		pub name:String,
+		pub count:u64,
+		pub sum:f64,
+	}
 }

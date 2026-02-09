@@ -61,87 +61,87 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 /// ```
 #[derive(Clone)]
 pub struct AdvancedFeatures {
-	runtime: Arc<ApplicationRunTime>,
-	performance_stats: Arc<Mutex<PerformanceStats>>,
-	collaboration_sessions: Arc<Mutex<HashMap<String, CollaborationSession>>>,
-	message_cache: Arc<Mutex<MessageCache>>,
+	runtime:Arc<ApplicationRunTime>,
+	performance_stats:Arc<Mutex<PerformanceStats>>,
+	collaboration_sessions:Arc<Mutex<HashMap<String, CollaborationSession>>>,
+	message_cache:Arc<Mutex<MessageCache>>,
 }
 
 /// Performance statistics for IPC monitoring
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PerformanceStats {
-	pub total_messages_sent: u64,
-	pub total_messages_received: u64,
-	pub average_processing_time_ms: f64,
-	pub peak_message_rate: u32,
-	pub error_count: u32,
-	pub last_update: u64,
-	pub connection_uptime: u64,
+	pub total_messages_sent:u64,
+	pub total_messages_received:u64,
+	pub average_processing_time_ms:f64,
+	pub peak_message_rate:u32,
+	pub error_count:u32,
+	pub last_update:u64,
+	pub connection_uptime:u64,
 }
 
 /// Real-time collaboration session
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborationSession {
-	pub session_id: String,
-	pub participants: Vec<String>,
-	pub active_documents: Vec<String>,
-	pub last_activity: u64,
-	pub permissions: CollaborationPermissions,
+	pub session_id:String,
+	pub participants:Vec<String>,
+	pub active_documents:Vec<String>,
+	pub last_activity:u64,
+	pub permissions:CollaborationPermissions,
 }
 
 /// Collaboration permissions
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollaborationPermissions {
-	pub can_edit: bool,
-	pub can_view: bool,
-	pub can_comment: bool,
-	pub can_share: bool,
+	pub can_edit:bool,
+	pub can_view:bool,
+	pub can_comment:bool,
+	pub can_share:bool,
 }
 
 /// Message cache for performance optimization
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MessageCache {
-	pub cached_messages: HashMap<String, CachedMessage>,
-	pub cache_hits: u64,
-	pub cache_misses: u64,
-	pub cache_size: usize,
+	pub cached_messages:HashMap<String, CachedMessage>,
+	pub cache_hits:u64,
+	pub cache_misses:u64,
+	pub cache_size:usize,
 }
 
 /// Cached message with timestamp
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CachedMessage {
-	pub data: serde_json::Value,
+	pub data:serde_json::Value,
 	/// Unix timestamp in seconds when this message was cached
-	pub timestamp: u64,
+	pub timestamp:u64,
 	/// Time-to-live in seconds for cache entry expiration
-	pub ttl: u64,
+	pub ttl:u64,
 }
 
 impl AdvancedFeatures {
 	/// Create new advanced features instance
-	pub fn new(runtime: Arc<ApplicationRunTime>) -> Self {
+	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
 		info!("[AdvancedFeatures] Initializing advanced IPC features");
 
 		Self {
 			runtime,
-			performance_stats: Arc::new(Mutex::new(PerformanceStats {
-				total_messages_sent: 0,
-				total_messages_received: 0,
-				average_processing_time_ms: 0.0,
-				peak_message_rate: 0,
-				error_count: 0,
-				last_update: SystemTime::now()
+			performance_stats:Arc::new(Mutex::new(PerformanceStats {
+				total_messages_sent:0,
+				total_messages_received:0,
+				average_processing_time_ms:0.0,
+				peak_message_rate:0,
+				error_count:0,
+				last_update:SystemTime::now()
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
 					.as_secs(),
-				connection_uptime: 0,
+				connection_uptime:0,
 			})),
-			collaboration_sessions: Arc::new(Mutex::new(HashMap::new())),
-			message_cache: Arc::new(Mutex::new(MessageCache {
-				cached_messages: HashMap::new(),
-				cache_hits: 0,
-				cache_misses: 0,
-				cache_size: 0,
+			collaboration_sessions:Arc::new(Mutex::new(HashMap::new())),
+			message_cache:Arc::new(Mutex::new(MessageCache {
+				cached_messages:HashMap::new(),
+				cache_hits:0,
+				cache_misses:0,
+				cache_size:0,
 			})),
 		}
 	}
@@ -182,12 +182,7 @@ impl AdvancedFeatures {
 			let stats = self.calculate_performance_stats().await;
 
 			// Emit performance stats to Sky
-			if let Err(e) =
-				self.runtime
-					.Environment
-					.ApplicationHandle
-					.emit("ipc-performance-stats", &stats)
-			{
+			if let Err(e) = self.runtime.Environment.ApplicationHandle.emit("ipc-performance-stats", &stats) {
 				error!("[AdvancedFeatures] Failed to emit performance stats: {}", e);
 			}
 
@@ -234,10 +229,7 @@ impl AdvancedFeatures {
 
 			cache.cache_size = cache.cached_messages.len();
 
-			debug!(
-				"[AdvancedFeatures] Cache cleaned, {} entries remaining",
-				cache.cache_size
-			);
+			debug!("[AdvancedFeatures] Cache cleaned, {} entries remaining", cache.cache_size);
 		}
 	}
 
@@ -259,7 +251,7 @@ impl AdvancedFeatures {
 			sessions.retain(|_, session| current_time - session.last_activity < 300); // 5 minutes inactivity
 
 			// Emit session updates
-			let active_sessions: Vec<CollaborationSession> = sessions.values().cloned().collect();
+			let active_sessions:Vec<CollaborationSession> = sessions.values().cloned().collect();
 
 			if let Err(e) = self
 				.runtime
@@ -270,20 +262,12 @@ impl AdvancedFeatures {
 				error!("[AdvancedFeatures] Failed to emit collaboration sessions: {}", e);
 			}
 
-			debug!(
-				"[AdvancedFeatures] Collaboration sessions monitored, {} active",
-				sessions.len()
-			);
+			debug!("[AdvancedFeatures] Collaboration sessions monitored, {} active", sessions.len());
 		}
 	}
 
 	/// Cache a message for future reuse
-	pub async fn cache_message(
-		&self,
-		message_id: String,
-		data: serde_json::Value,
-		ttl: u64,
-	) -> Result<(), String> {
+	pub async fn cache_message(&self, message_id:String, data:serde_json::Value, ttl:u64) -> Result<(), String> {
 		let mut cache = self
 			.message_cache
 			.lock()
@@ -291,7 +275,7 @@ impl AdvancedFeatures {
 
 		let cached_message = CachedMessage {
 			data,
-			timestamp: SystemTime::now()
+			timestamp:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_secs(),
@@ -301,15 +285,12 @@ impl AdvancedFeatures {
 		cache.cached_messages.insert(message_id.clone(), cached_message);
 		cache.cache_size = cache.cached_messages.len();
 
-		debug!(
-			"[AdvancedFeatures] Message cached: {}, TTL: {}s",
-			message_id, ttl
-		);
+		debug!("[AdvancedFeatures] Message cached: {}, TTL: {}s", message_id, ttl);
 		Ok(())
 	}
 
 	/// Get cached message
-	pub async fn get_cached_message(&self, message_id: &str) -> Option<serde_json::Value> {
+	pub async fn get_cached_message(&self, message_id:&str) -> Option<serde_json::Value> {
 		let mut cache = self.message_cache.lock().unwrap();
 
 		let result = cache
@@ -330,8 +311,8 @@ impl AdvancedFeatures {
 	/// Create collaboration session
 	pub async fn create_collaboration_session(
 		&self,
-		session_id: String,
-		permissions: CollaborationPermissions,
+		session_id:String,
+		permissions:CollaborationPermissions,
 	) -> Result<(), String> {
 		let mut sessions = self
 			.collaboration_sessions
@@ -339,10 +320,10 @@ impl AdvancedFeatures {
 			.map_err(|e| format!("Failed to access collaboration sessions: {}", e))?;
 
 		let session = CollaborationSession {
-			session_id: session_id.clone(),
-			participants: Vec::new(),
-			active_documents: Vec::new(),
-			last_activity: SystemTime::now()
+			session_id:session_id.clone(),
+			participants:Vec::new(),
+			active_documents:Vec::new(),
+			last_activity:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_secs(),
@@ -356,11 +337,7 @@ impl AdvancedFeatures {
 	}
 
 	/// Add participant to collaboration session
-	pub async fn add_participant(
-		&self,
-		session_id: &str,
-		participant: String,
-	) -> Result<(), String> {
+	pub async fn add_participant(&self, session_id:&str, participant:String) -> Result<(), String> {
 		let mut sessions = self
 			.collaboration_sessions
 			.lock()
@@ -374,10 +351,7 @@ impl AdvancedFeatures {
 					.unwrap_or_default()
 					.as_secs();
 
-				debug!(
-					"[AdvancedFeatures] Participant added to session: {}",
-					session_id
-				);
+				debug!("[AdvancedFeatures] Participant added to session: {}", session_id);
 			}
 		} else {
 			return Err(format!("Session not found: {}", session_id));
@@ -387,7 +361,7 @@ impl AdvancedFeatures {
 	}
 
 	/// Record message statistics
-	pub async fn record_message_statistics(&self, sent: bool, processing_time_ms: u64) {
+	pub async fn record_message_statistics(&self, sent:bool, processing_time_ms:u64) {
 		let mut stats = self.performance_stats.lock().unwrap();
 
 		if sent {
@@ -398,9 +372,9 @@ impl AdvancedFeatures {
 
 		// Update average processing time
 		let total_messages = stats.total_messages_sent + stats.total_messages_received;
-		stats.average_processing_time_ms =
-			(stats.average_processing_time_ms * (total_messages - 1) as f64 + processing_time_ms as f64)
-				/ total_messages as f64;
+		stats.average_processing_time_ms = (stats.average_processing_time_ms * (total_messages - 1) as f64
+			+ processing_time_ms as f64)
+			/ total_messages as f64;
 	}
 
 	/// Record error
@@ -429,18 +403,18 @@ impl AdvancedFeatures {
 	/// Clone features for async tasks
 	fn clone_features(&self) -> AdvancedFeatures {
 		AdvancedFeatures {
-			runtime: self.runtime.clone(),
-			performance_stats: self.performance_stats.clone(),
-			collaboration_sessions: self.collaboration_sessions.clone(),
-			message_cache: self.message_cache.clone(),
+			runtime:self.runtime.clone(),
+			performance_stats:self.performance_stats.clone(),
+			collaboration_sessions:self.collaboration_sessions.clone(),
+			message_cache:self.message_cache.clone(),
 		}
 	}
 }
 
 /// Initialize advanced features in Mountain's setup
 pub fn initialize_advanced_features(
-	app_handle: &tauri::AppHandle,
-	runtime: Arc<ApplicationRunTime>,
+	app_handle:&tauri::AppHandle,
+	runtime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
 	info!("[AdvancedFeatures] Initializing advanced IPC features");
 

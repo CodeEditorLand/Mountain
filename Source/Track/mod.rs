@@ -80,9 +80,8 @@ pub mod Effect;
 
 // --- Re-exports for backward compatibility ---
 
-pub use FrontendCommand::DispatchFrontendCommand as DispatchFrontendCommand;
-pub use SideCarRequest::DispatchSideCarRequest as DispatchSideCarRequest;
-pub use UIRequest::ResolveUIRequest as ResolveUIRequest;
-pub use Webview::MountainWebviewPostMessageFromGuest as MountainWebviewPostMessageFromGuest;
-pub use Effect::CreateEffectForRequest as CreateEffectForRequest;
-pub use Effect::MappedEffect;
+pub use FrontendCommand::DispatchFrontendCommand;
+pub use SideCarRequest::DispatchSideCarRequest;
+pub use UIRequest::ResolveUIRequest;
+pub use Webview::MountainWebviewPostMessageFromGuest;
+pub use Effect::{CreateEffectForRequest, MappedEffect};

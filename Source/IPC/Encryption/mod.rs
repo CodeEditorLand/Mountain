@@ -2,12 +2,13 @@
 //!
 //! ## RESPONSIBILITIES
 //! This module provides message compression and secure channel encryption for
-//! IPC operations. It optimizes message transfer through compression and ensures
-//! message confidentiality through AES-256-GCM encryption.
+//! IPC operations. It optimizes message transfer through compression and
+//! ensures message confidentiality through AES-256-GCM encryption.
 //!
 //! ## ARCHITECTURAL ROLE
-//! This module is part of the security and performance layer in the IPC architecture,
-//! providing compression for efficiency and encryption for confidentiality.
+//! This module is part of the security and performance layer in the IPC
+//! architecture, providing compression for efficiency and encryption for
+//! confidentiality.
 //!
 //! ## KEY COMPONENTS
 //!

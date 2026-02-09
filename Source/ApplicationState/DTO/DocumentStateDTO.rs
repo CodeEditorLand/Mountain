@@ -20,14 +20,13 @@
 //! to Air. For now, Mountain handles this synchronously to ensure UI
 //! responsiveness.
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, Utility::Serialization::URLSerializationHelper};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
-use super::{RPCRangeDTO::RPCRangeDTO, RPCModelContentChangeDTO::RPCModelContentChangeDTO};
+use super::{RPCModelContentChangeDTO::RPCModelContentChangeDTO, RPCRangeDTO::RPCRangeDTO};
 use crate::ApplicationState::Internal::AnalyzeTextLinesAndEOL;
-use CommonLibrary::Utility::Serialization::URLSerializationHelper;
 
 /// Maximum line count for a document to prevent memory exhaustion
 const MAX_DOCUMENT_LINES:usize = 1_000_000;
@@ -238,7 +237,6 @@ impl DocumentStateDTO {
 /// # Returns
 /// Updated lines vector after applying all changes
 fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChangeDTO]) -> Vec<String> {
-
 	// Join lines into full text for offset-based manipulation
 	let mut ResultText = Lines.join(EOL);
 

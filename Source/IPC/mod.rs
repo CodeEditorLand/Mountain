@@ -3,8 +3,9 @@
 //! ## RESPONSIBILITIES
 //!
 //! Inter-process communication (IPC) for the Mountain application, handling
-//! communication between the Tauri frontend and the Rust backend through various
-//! protocols including Tauri commands, WebSocket, and custom message formats.
+//! communication between the Tauri frontend and the Rust backend through
+//! various protocols including Tauri commands, WebSocket, and custom message
+//! formats.
 //!
 //! ### Core Functions:
 //! - **Message Routing**: Route IPC messages to appropriate handlers
@@ -131,59 +132,66 @@ pub mod Permission;
 // --- Re-exports for backward compatibility ---
 
 pub use Common::{ConnectionStatus, HealthStatus, MessageType, PerformanceMetrics, ServiceInfo};
-pub use Message::SimpleConnectionStatus;
+pub use Message::{ListenerCallback, SimpleConnectionStatus, TauriIPCMessage};
 pub use TauriIPCServer_Old as TauriIPCServer;
-pub use Message::{TauriIPCMessage, ListenerCallback};
 pub use Connection::{ConnectionHandle, ConnectionManager, ConnectionStats, HealthChecker};
-pub use Encryption::MessageCompressor::MessageCompressor;
-pub use Encryption::SecureChannel::{SecureMessageChannel, EncryptedMessage};
-pub use Security::PermissionManager::{PermissionManager, SecurityContext, SecurityEvent, SecurityEventType};
-pub use Security::Role::Role;
-pub use AdvancedFeatures::{AdvancedFeatures as AdvancedFeatures_New, initialize_advanced_features, CollaborationSession, CollaborationPermissions, PerformanceStats, MessageCache, CachedMessage};
+pub use Encryption::{
+	MessageCompressor::MessageCompressor,
+	SecureChannel::{EncryptedMessage, SecureMessageChannel},
+};
+pub use Security::{
+	PermissionManager::{PermissionManager, SecurityContext, SecurityEvent, SecurityEventType},
+	Role::Role,
+};
+pub use AdvancedFeatures::{
+	AdvancedFeatures as AdvancedFeatures_New,
+	CachedMessage,
+	CollaborationPermissions,
+	CollaborationSession,
+	MessageCache,
+	PerformanceStats,
+	initialize_advanced_features,
+};
 pub use ConfigurationBridge as ConfigurationBridge_New;
 pub use StatusReporter as StatusReporter_New;
 pub use WindAdvancedSync as WindAdvancedSync_New;
-
 // --- Legacy compatibility function re-exports ---
 
 // Note: initialize_advanced_features is already exported above
-
 pub use StatusReporter::initialize_status_reporter;
 pub use WindAdvancedSync::initialize_wind_advanced_sync;
 
 // --- Notes on Migration ---
 
-/*
-MIGRATION PATH TO ATOMIC STRUCTURE:
-
-Phase 1: ✅ Create Atomic Structure
-- Created new atomic module directories
-- Implemented core functionality
-- Added comprehensive documentation
-
-Phase 2: 🔄 Backward Compatibility (Current)
-- Keeping legacy files for compatibility
-- Using #[path = "..."] to reference legacy files
-- Gradually migrating dependent code
-
-Phase 3: ⏳ Migration
-- Update dependent files to use new structure
-- Test migration incrementally
-- Monitor for issues
-
-Phase 4: ⏳ Cleanup
-- Remove legacy files
-- Update all documentation
-- Final verification
-
-The following atomic modules are ready for migration:
-- IPC/TauriIPCServer/ (Server.rs)
-- IPC/Message/ (Types.rs)
-- IPC/Connection/ (Manager.rs, Types.rs, Health.rs)
-- IPC/Encryption/ (MessageCompressor.rs, SecureChannel.rs)
-- IPC/Security/ (PermissionManager.rs, Role.rs, Permission.rs)
-- IPC/AdvancedFeatures/ (Features.rs)
-- IPC/ConfigurationBridge/ (mod.rs - placeholder)
-- IPC/StatusReporter/ (mod.rs - placeholder)
-- IPC/WindAdvancedSync/ (mod.rs - placeholder)
-*/
+// MIGRATION PATH TO ATOMIC STRUCTURE:
+//
+// Phase 1: ✅ Create Atomic Structure
+// - Created new atomic module directories
+// - Implemented core functionality
+// - Added comprehensive documentation
+//
+// Phase 2: 🔄 Backward Compatibility (Current)
+// - Keeping legacy files for compatibility
+// - Using #[path = "..."] to reference legacy files
+// - Gradually migrating dependent code
+//
+// Phase 3: ⏳ Migration
+// - Update dependent files to use new structure
+// - Test migration incrementally
+// - Monitor for issues
+//
+// Phase 4: ⏳ Cleanup
+// - Remove legacy files
+// - Update all documentation
+// - Final verification
+//
+// The following atomic modules are ready for migration:
+// - IPC/TauriIPCServer/ (Server.rs)
+// - IPC/Message/ (Types.rs)
+// - IPC/Connection/ (Manager.rs, Types.rs, Health.rs)
+// - IPC/Encryption/ (MessageCompressor.rs, SecureChannel.rs)
+// - IPC/Security/ (PermissionManager.rs, Role.rs, Permission.rs)
+// - IPC/AdvancedFeatures/ (Features.rs)
+// - IPC/ConfigurationBridge/ (mod.rs - placeholder)
+// - IPC/StatusReporter/ (mod.rs - placeholder)
+// - IPC/WindAdvancedSync/ (mod.rs - placeholder)
