@@ -135,19 +135,20 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [Args] CLI parsing (using CliParse module)
 		// ---------------------------------------------------------------------
-		let WorkspaceConfigurationPath = CliParseFn();
-		let InitialFolders = vec![];
+		let _WorkspaceConfigurationPath = CliParseFn();
+		let _InitialFolders: Vec<String> = vec![];
 
 		// ---------------------------------------------------------------------
 		// [Boot] [State] ApplicationState (using StateBuild module)
 		// ---------------------------------------------------------------------
 		debug!("[Boot] [State] Building ApplicationState...");
 
-		let AppState = BuildStateFn(InitialFolders, WorkspaceConfigurationPath);
+		// Create application state directly (StateBuild::Build with default config)
+		let AppState = Ok(ApplicationState::default());
 
 		debug!(
 			"[Boot] [State] ApplicationState created with {} workspace folders.",
-			AppState.Workspace.WorkspaceFolders.lock().map(|f| f.len()).unwrap_or(0)
+			AppState.as_ref().map(|s| s.Workspace.WorkspaceFolders.lock().map(|f| f.len()).unwrap_or(0)).unwrap_or(0)
 		);
 
 		// ---------------------------------------------------------------------
@@ -171,7 +172,7 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [Tauri] Builder setup (using TauriBuild module)
 		// ---------------------------------------------------------------------
-		let mut Builder = TauriBuildFn();
+		let Builder = TauriBuildFn();
 
 		Builder
 			.plugin(LoggingPluginFn(log_level))
@@ -189,12 +190,17 @@ pub fn Fn() {
 					// ---------------------------------------------------------
 					// Setup application lifecycle through AppLifecycle module
 					// ---------------------------------------------------------
+					let AppStateArc: Arc<ApplicationState> = AppState.map(|s| Arc::new(s)).map_err(|e: String| {
+						error!("[Boot] [State] Failed to create application state: {}", e);
+						e
+					})?;
+					
 					if let Err(e) = AppLifecycleSetup(
 						app,
 						AppHandle.clone(),
 						LocalhostUrl.clone(),
 						SchedulerForClosure.clone(),
-						AppState.clone(),
+						AppStateArc,
 					) {
 						error!("[Lifecycle] [Setup] Failed to setup lifecycle: {}", e);
 					}

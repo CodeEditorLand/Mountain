@@ -22,12 +22,14 @@
 
 use std::sync::Arc;
 
-use Echo::Scheduler::{Scheduler, SchedulerBuilder};
+use Echo::Scheduler::Scheduler::Scheduler;
+use Echo::Scheduler::SchedulerBuilder::SchedulerBuilder;
 use log::{debug, info, warn};
 
 // ============ Feature Flags ============
 
 /// Scheduler configuration for different build profiles
+#[derive(Debug)]
 pub struct SchedulerConfig {
 	worker_count:Option<usize>,
 	enable_metrics:bool,
@@ -134,7 +136,7 @@ mod tests {
 
 	#[test]
 	fn test_default_build() {
-		let scheduler = Build();
+		let _scheduler = Build();
 		// Scheduler should be usable
 		info!("[Test] Default scheduler created");
 	}
@@ -142,7 +144,7 @@ mod tests {
 	#[test]
 	fn test_custom_worker_count() {
 		let config = SchedulerConfig { worker_count:Some(2), ..Default::default() };
-		let scheduler = BuildWithConfig(config);
+		let _scheduler = BuildWithConfig(config);
 		info!("[Test] Custom scheduler created");
 	}
 }

@@ -68,7 +68,7 @@ impl HealthIssue {
 }
 
 /// Health monitoring state
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct HealthMonitor {
 	/// Overall health score (0-100, where 100 is perfect health)
 	pub health_score:u8,
@@ -77,7 +77,19 @@ pub struct HealthMonitor {
 	/// Number of recovery attempts made
 	pub recovery_attempts:u32,
 	/// Timestamp of last health check
+	#[serde(skip)]
 	pub last_check:Instant,
+}
+
+impl Default for HealthMonitor {
+	fn default() -> Self {
+		Self {
+			health_score:100,
+			issues:Vec::new(),
+			recovery_attempts:0,
+			last_check:Instant::now(),
+		}
+	}
 }
 
 impl HealthMonitor {
@@ -144,6 +156,3 @@ impl HealthMonitor {
 	pub fn increment_recovery_attempts(&mut self) { self.recovery_attempts += 1; }
 }
 
-impl Default for HealthMonitor {
-	fn default() -> Self { Self::new() }
-}

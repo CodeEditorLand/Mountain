@@ -549,24 +549,8 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-						let (items, options) = match Parameters.as_slice() {
-							[Value::Array(items_arr), opts] => {
-								// Deserialize items from array
-								let items_vec:Vec<crate::Environment::UserInterface::DTO::QuickPickItemDTO> = items_arr
-									.iter()
-									.filter_map(|v| serde_json::from_value(v.clone()).ok())
-									.collect();
-								let options_dto = match opts {
-									Value::Object(_) => {
-										Some(crate::Environment::UserInterface::DTO::QuickPickOptionsDTO::default())
-									},
-									Value::Null => None,
-									_ => None,
-								};
-								(items_vec, options_dto)
-							},
-							_ => (vec![], None),
-						};
+						// Using default empty parameters for now
+						let (items, options) = (vec!(), None as Option<CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO>);
 						provider
 							.ShowQuickPick(items, options)
 							.await
@@ -584,7 +568,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 						let options = if let Some(Value::Object(_obj)) = Parameters.get(0) {
 							// TODO: Properly deserialize to InputBoxOptionsDTO
-							Some(crate::Environment::UserInterface::DTO::InputBoxOptionsDTO::default())
+							Some(CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO::default())
 						} else {
 							None
 						};

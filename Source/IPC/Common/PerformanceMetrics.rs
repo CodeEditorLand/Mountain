@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 
 /// Performance metrics for IPC operations
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
 	/// Messages per second (throughput)
 	pub messages_per_second:f64,
@@ -100,7 +100,7 @@ impl Default for PerformanceMetrics {
 }
 
 /// Throughput metrics for measuring message flow
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ThroughputMetrics {
 	/// Messages received
 	pub messages_received:u64,

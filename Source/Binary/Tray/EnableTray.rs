@@ -19,7 +19,7 @@ use tauri::App;
 ///
 /// # Returns
 /// `Ok(())` if tray initialization succeeded, or `Err(String)` if it failed.
-pub fn enable_tray(app:&App) -> Result<(), String> {
+pub fn enable_tray(_app:&App) -> Result<(), String> {
 	info!("[Tray] Initializing system tray...");
 
 	// Implement full system tray functionality using Tauri's SystemTray API.

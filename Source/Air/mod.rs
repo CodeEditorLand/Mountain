@@ -74,9 +74,10 @@
 pub mod AirClient;
 pub mod AirServiceProvider;
 
-// Access AirClient struct as: crate::Air::AirClient::AirClient
+// Access AirClient struct as: crate::Air::AirClient::AirClientImpl
+// Re-exports using module prefix to avoid naming conflicts
 pub use AirClient::{
-	AirClient,
+	AirClient as Client,
 	AirMetrics,
 	AirStatus,
 	DEFAULT_AIR_SERVER_ADDRESS,
@@ -89,6 +90,8 @@ pub use AirClient::{
 	ResourceUsage,
 	UpdateInfo,
 };
+
+// Re-export the original name for compatibility (using type alias inside the module)
 pub use AirServiceProvider::generate_request_id;
 
 // Note: AirServiceProvider struct is available via

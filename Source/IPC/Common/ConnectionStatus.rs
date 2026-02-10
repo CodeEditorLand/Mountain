@@ -25,7 +25,7 @@ pub enum ConnectionState {
 }
 
 /// Comprehensive connection status tracking
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ConnectionStatus {
 	/// Current connection state
 	pub state:ConnectionState,
@@ -49,9 +49,8 @@ pub struct ConnectionStatus {
 	pub last_error:Option<String>,
 }
 
-impl ConnectionStatus {
-	/// Create a new connection status
-	pub fn new() -> Self {
+impl Default for ConnectionStatus {
+	fn default() -> Self {
 		Self {
 			state:ConnectionState::Disconnected,
 			state_since:Instant::now(),
@@ -62,6 +61,11 @@ impl ConnectionStatus {
 			last_error:None,
 		}
 	}
+}
+
+impl ConnectionStatus {
+	/// Create a new connection status
+	pub fn new() -> Self { Self::default() }
 
 	/// Update connection state
 	pub fn update_state(&mut self, new_state:ConnectionState, error:Option<String>) {
@@ -104,6 +108,3 @@ impl ConnectionStatus {
 	pub fn time_since_last_connection(&self) -> Option<Duration> { self.last_connected.map(|t| t.elapsed()) }
 }
 
-impl Default for ConnectionStatus {
-	fn default() -> Self { Self::new() }
-}

@@ -35,7 +35,7 @@ impl ServiceState {
 }
 
 /// Information about a single service
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ServiceInfo {
 	/// Service name
 	pub name:String,
@@ -62,7 +62,7 @@ pub struct ServiceInfo {
 }
 
 /// Performance metrics for a service
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ServicePerformance {
 	/// Request count
 	pub request_count:u64,
@@ -210,7 +210,7 @@ impl ServiceInfo {
 }
 
 /// Registry of all discovered services
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone)]
 pub struct ServiceRegistry {
 	/// Map of service name to service info
 	pub services:HashMap<String, ServiceInfo>,

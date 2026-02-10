@@ -18,12 +18,13 @@ use tauri::Wry;
 /// - macOS: Uses default threading (no special configuration)
 pub fn TauriBuild() -> tauri::Builder<Wry> {
 	// Initialize the builder with default configuration
-	let mut Builder = tauri::Builder::default();
+	let Builder = tauri::Builder::default();
 
 	// Apply platform-specific configurations
 	#[cfg(any(windows, target_os = "linux"))]
 	{
-		Builder = Builder.any_thread();
+		let Builder = Builder.any_thread();
+		return Builder;
 	}
 
 	Builder

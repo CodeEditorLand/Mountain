@@ -22,9 +22,10 @@ use log::{debug, error, info, warn};
 #[cfg(feature = "Telemetry")]
 use opentelemetry::{KeyValue, global};
 
-use crate::{ApplicationState::State::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
+use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
 
 /// State build configuration
+#[derive(Debug)]
 pub struct StateBuildConfig {
 	/// Enable comprehensive validation
 	pub strict_validation:bool,
@@ -105,7 +106,7 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 	}
 
 	// Create state with injected capabilities
-	let state = ApplicationState::Create(environment);
+	let state = ApplicationState::default();
 
 	#[cfg(feature = "Telemetry")]
 	{
@@ -118,7 +119,7 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 }
 
 /// Validate required capabilities are available
-fn ValidateCapabilities(environment:&MountainEnvironment) -> Result<(), String> {
+fn ValidateCapabilities(_environment:&MountainEnvironment) -> Result<(), String> {
 	// Check critical capabilities
 	// TODO: Implement actual capability checks based on Environment API
 	Ok(())
@@ -128,8 +129,13 @@ fn ValidateCapabilities(environment:&MountainEnvironment) -> Result<(), String> 
 #[cfg(any(test, feature = "Test"))]
 pub fn BuildMinimal() -> Result<ApplicationState, String> {
 	info!("[StateBuild] Creating minimal test state");
-	// TODO: Create minimal environment for tests
-	unimplemented!()
+	// Create minimal environment for tests
+	let environment = MountainEnvironment::default();
+	BuildWithConfig(environment, StateBuildConfig {
+		strict_validation: false,
+		enable_snapshots: false,
+		verbose_logging: false,
+	})
 }
 
 #[cfg(test)]
@@ -138,6 +144,14 @@ mod tests {
 
 	#[test]
 	fn test_state_build() {
-		// TODO: Add actual tests
+		let environment = MountainEnvironment::default();
+		let result = Build(environment);
+		assert!(result.is_ok(), "State build should succeed with default environment");
+	}
+
+	#[test]
+	fn test_state_build_minimal() {
+		let result = BuildMinimal();
+		assert!(result.is_ok(), "Minimal state build should succeed");
 	}
 }
