@@ -690,7 +690,7 @@ mod Tests {
 		assert!(user_perms.contains(&"file.read".to_string()));
 
 		let admin_perms = validator.GetRolePermissions("admin").await;
-		assert!(admin_perms.len(), "Admin should have many permissions");
+		assert_ne!(admin_perms.len(), 0, "Admin should have many permissions");
 	}
 
 	#[tokio::test]

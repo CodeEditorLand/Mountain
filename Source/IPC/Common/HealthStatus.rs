@@ -68,7 +68,7 @@ impl HealthIssue {
 }
 
 /// Health monitoring state
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct HealthMonitor {
 	/// Overall health score (0-100, where 100 is perfect health)
 	pub health_score:u8,
@@ -76,7 +76,7 @@ pub struct HealthMonitor {
 	pub issues:Vec<(HealthIssue, SeverityLevel)>,
 	/// Number of recovery attempts made
 	pub recovery_attempts:u32,
-	/// Timestamp of last health check
+	/// Timestamp of last health check (skipped for serialization as Instant is not serializable)
 	#[serde(skip)]
 	pub last_check:Instant,
 }

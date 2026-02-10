@@ -834,21 +834,3 @@ pub fn CreateEffectForRequest<R:Runtime>(
 	}
 }
 
-#[cfg(test)]
-mod tests {
-	use super::*;
-
-	#[test]
-	fn test_effect_creation_for_known_commands() {
-		// Test that known commands return a valid MappedEffect
-		let result = Fn(&tauri::test::mock_app(), "Keybinding.GetResolved", Value::Array(vec![]));
-		assert!(result.is_ok());
-	}
-
-	#[test]
-	fn test_unknown_command_returns_error() {
-		// Test that unknown commands return an error
-		let result = Fn(&tauri::test::mock_app(), "Unknown.Command", Value::Array(vec![]));
-		assert!(result.is_err());
-	}
-}

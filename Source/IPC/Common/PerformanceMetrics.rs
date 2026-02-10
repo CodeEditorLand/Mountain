@@ -8,7 +8,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 
 /// Performance metrics for IPC operations
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct PerformanceMetrics {
 	/// Messages per second (throughput)
 	pub messages_per_second:f64,
@@ -28,8 +28,7 @@ pub struct PerformanceMetrics {
 	pub total_messages:u64,
 	/// Failed messages
 	pub failed_messages:u64,
-	/// Last update timestamp (skipped for serialization as Instant is not
-	/// serializable)
+	/// Last update timestamp (skipped for serialization as Instant is not serializable)
 	#[serde(skip)]
 	pub last_updated:Instant,
 }
@@ -110,9 +109,7 @@ pub struct ThroughputMetrics {
 	pub bytes_received:u64,
 	/// Bytes sent
 	pub bytes_sent:u64,
-	/// Start time of measurement period (skipped for serialization as Instant
-	/// is not serializable)
-	#[serde(skip)]
+	/// Start time of measurement period
 	pub start_time:Instant,
 }
 

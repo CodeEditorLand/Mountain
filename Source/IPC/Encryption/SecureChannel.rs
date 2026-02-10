@@ -352,9 +352,9 @@ impl SecureMessageChannel {
 }
 
 #[cfg(test)]
+#[allow(unused_imports)]
 mod tests {
 	use super::*;
-	use crate::Element::Mountain::Source::IPC::Message::TauriIPCMessage;
 
 	fn create_test_message() -> TauriIPCMessage {
 		TauriIPCMessage::new(

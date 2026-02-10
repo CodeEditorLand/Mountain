@@ -274,9 +274,9 @@ impl MessageCompressor {
 }
 
 #[cfg(test)]
+#[allow(unused_imports)]
 mod tests {
 	use super::*;
-	use crate::Element::Mountain::Source::IPC::Message::TauriIPCMessage;
 
 	fn create_test_message(id:u32) -> TauriIPCMessage {
 		TauriIPCMessage::new(

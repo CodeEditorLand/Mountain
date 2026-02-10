@@ -25,7 +25,7 @@ pub enum ConnectionState {
 }
 
 /// Comprehensive connection status tracking
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ConnectionStatus {
 	/// Current connection state
 	pub state:ConnectionState,

@@ -362,7 +362,11 @@ mod tests {
 	async fn test_multiple_connections() {
 		let pool = Arc::new(ConnectionPool::new(3, Duration::from_secs(5)));
 
-		let handles:Vec<ConnectionHandle> = (0..3).map(|_| pool.GetConnection().await.unwrap()).collect();
+		// Collect handles properly without await in sync closure
+		let mut handles = Vec::new();
+		for _ in 0..3 {
+			handles.push(pool.GetConnection().await.unwrap());
+		}
 
 		assert_eq!(pool.active_connections().await, 3);
 		assert_eq!(pool.available_permits(), 0);
@@ -397,7 +401,9 @@ mod tests {
 		assert_eq!(stats.utilization(), 0.0);
 
 		// Add some connections
-		let _handles:Vec<ConnectionHandle> = (0..3).map(|_| pool.GetConnection().await.unwrap()).collect();
+		for _ in 0..3 {
+			let _ = pool.GetConnection().await.unwrap();
+		}
 
 		let stats = pool.GetStats().await;
 		assert_eq!(stats.total_connections, 3);
@@ -438,7 +444,9 @@ mod tests {
 		assert_eq!(pool.GetStats().await.utilization(), 0.0);
 
 		// Use half the connections
-		let _handles:Vec<ConnectionHandle> = (0..5).map(|_| pool.GetConnection().await.unwrap()).collect();
+		for _ in 0..5 {
+			let _ = pool.GetConnection().await.unwrap();
+		}
 
 		let stats = pool.GetStats().await;
 		assert_eq!(stats.utilization(), 50.0);

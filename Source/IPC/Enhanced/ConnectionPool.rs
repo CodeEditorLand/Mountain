@@ -595,8 +595,11 @@ mod tests {
 		let pool = ConnectionPool::default_pool();
 		pool.start().await.unwrap();
 
-		// Get some connections
-		let handles:Vec<ConnectionHandle> = (0..3).map(|_| pool.get_connection().await.unwrap()).collect();
+		// Get some connections without await in sync closure
+		let mut handles = Vec::new();
+		for _ in 0..3 {
+			handles.push(pool.get_connection().await.unwrap());
+		}
 
 		let stats = pool.get_stats().await;
 		assert_eq!(stats.active_connections, 3);

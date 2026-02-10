@@ -35,7 +35,7 @@ impl ServiceState {
 }
 
 /// Information about a single service
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ServiceInfo {
 	/// Service name
 	pub name:String,
@@ -43,14 +43,12 @@ pub struct ServiceInfo {
 	pub version:String,
 	/// Current state
 	pub state:ServiceState,
-	/// When the service entered its current state (skipped for serialization as
-	/// Instant is not serializable)
+	/// When the service entered its current state (skipped for serialization as Instant is not serializable)
 	#[serde(skip)]
 	pub state_since:Instant,
 	/// Service uptime
 	pub uptime:Duration,
-	/// Last heartbeat timestamp (skipped for serialization as Instant is not
-	/// serializable)
+	/// Last heartbeat timestamp (skipped for serialization as Instant is not serializable)
 	#[serde(skip)]
 	pub last_heartbeat:Option<Instant>,
 	/// Services this service depends on
@@ -62,7 +60,7 @@ pub struct ServiceInfo {
 }
 
 /// Performance metrics for a service
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ServicePerformance {
 	/// Request count
 	pub request_count:u64,
@@ -214,9 +212,7 @@ impl ServiceInfo {
 pub struct ServiceRegistry {
 	/// Map of service name to service info
 	pub services:HashMap<String, ServiceInfo>,
-	/// Last discovery timestamp (skipped for serialization as Instant is not
-	/// serializable)
-	#[serde(skip)]
+	/// Last discovery timestamp (not serializable)
 	pub last_discovery:Instant,
 	/// Configurable discovery interval
 	pub discovery_interval:Duration,

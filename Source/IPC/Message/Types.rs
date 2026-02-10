@@ -218,11 +218,11 @@ mod tests {
 
 	#[test]
 	fn test_connection_status() {
-		let status = ConnectionStatus::new(true);
+		let status = SimpleConnectionStatus::new(true);
 		assert!(status.connected);
 		assert_eq!(status.description(), "Connected to Mountain");
 
-		let status = ConnectionStatus::new(false);
+		let status = SimpleConnectionStatus::new(false);
 		assert!(!status.connected);
 		assert_eq!(status.description(), "Disconnected from Mountain");
 	}
