@@ -88,7 +88,7 @@
 //!
 //! ## INITIALIZATION SEQUENCE
 //!
-//! 1. **Create Environment**: `MountainEnvironment::Create(app_handle)`
+//! 1. **Create Environment**: `MountainEnvironment::Create(app_handle, app_state)`
 //! 2. **Provider Instantiation**: Lazy through `Requires<T>` trait calls
 //! 3. **State Access**: Each provider can access `ApplicationState` and
 //!    `AppHandle` via self
@@ -232,10 +232,8 @@ pub struct MountainEnvironment {
 impl MountainEnvironment {
 	/// Creates a new `MountainEnvironment` instance.
 	#[allow(unused_mut)]
-	pub fn Create(ApplicationHandle:AppHandle<Wry>) -> Self {
+	pub fn Create(ApplicationHandle:AppHandle<Wry>, ApplicationState:Arc<ApplicationState>) -> Self {
 		info!("[MountainEnvironment] New instance created.");
-
-		let ApplicationState = ApplicationHandle.state::<Arc<ApplicationState>>().inner().clone();
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -254,14 +252,13 @@ impl MountainEnvironment {
 	#[cfg(feature = "AirIntegration")]
 	pub fn CreateWithAir(
 		ApplicationHandle:AppHandle<Wry>,
+		ApplicationState:Arc<ApplicationState>,
 		AirClient:Option<AirServiceClient<tonic::transport::Channel>>,
 	) -> Self {
 		info!(
 			"[MountainEnvironment] New instance created with Air client: {}",
 			AirClient.is_some()
 		);
-
-		let ApplicationState = ApplicationHandle.state::<Arc<ApplicationState>>().inner().clone();
 
 		Self { ApplicationHandle, ApplicationState, AirClient }
 	}

@@ -178,7 +178,7 @@ pub fn AppLifecycleSetup(
 	// [Backend] [Env] Mountain environment
 	// -------------------------------------------------------------------------
 	debug!("[Backend] [Env] Creating MountainEnvironment...");
-	let Environment = Arc::new(MountainEnvironment::Create(app_handle_for_setup.clone()));
+	let Environment = Arc::new(MountainEnvironment::Create(app_handle_for_setup.clone(), app_state.clone()));
 	info!("[Backend] [Env] MountainEnvironment ready.");
 
 	// -------------------------------------------------------------------------

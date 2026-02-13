@@ -129,13 +129,10 @@ fn ValidateCapabilities(_environment:&MountainEnvironment) -> Result<(), String>
 #[cfg(any(test, feature = "Test"))]
 pub fn BuildMinimal(_app_handle: tauri::AppHandle) -> Result<ApplicationState, String> {
 	info!("[StateBuild] Creating minimal test state");
-	// Create minimal environment for tests
-	let environment = MountainEnvironment::Create(_app_handle);
-	BuildWithConfig(environment, StateBuildConfig {
-		strict_validation: false,
-		enable_snapshots: false,
-		verbose_logging: false,
-	})
+	// Create minimal ApplicationState for tests (no environment needed)
+	// The environment is created later in the actual application lifecycle
+	let app_state = ApplicationState::default();
+	Ok(app_state)
 }
 
 #[cfg(test)]

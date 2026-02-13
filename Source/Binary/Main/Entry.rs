@@ -144,12 +144,15 @@ pub fn Fn() {
 		debug!("[Boot] [State] Building ApplicationState...");
 
 		// Create application state directly (StateBuild::Build with default config)
-		let AppState = Ok(ApplicationState::default());
+		let AppState = ApplicationState::default();
 
 		debug!(
 			"[Boot] [State] ApplicationState created with {} workspace folders.",
-			AppState.as_ref().map(|s| s.Workspace.WorkspaceFolders.lock().map(|f| f.len()).unwrap_or(0)).unwrap_or(0)
+			AppState.Workspace.WorkspaceFolders.lock().map(|f| f.len()).unwrap_or(0)
 		);
+
+		// Create Arc for application state to be managed by Tauri
+		let AppStateArcForClosure = Arc::new(AppState.clone());
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Runtime] Scheduler handles (using RuntimeBuild module)
@@ -177,7 +180,7 @@ pub fn Fn() {
 		Builder
 			.plugin(LoggingPluginFn(log_level))
 			.plugin(LocalhostPluginFn(ServerPort))
-			.manage(AppState.clone())
+			.manage(AppStateArcForClosure.clone())
 			.setup({
 				let LocalhostUrl = LocalhostUrl.clone();
 				move |app:&mut App| {
@@ -190,17 +193,14 @@ pub fn Fn() {
 					// ---------------------------------------------------------
 					// Setup application lifecycle through AppLifecycle module
 					// ---------------------------------------------------------
-					let AppStateArc: Arc<ApplicationState> = AppState.map(|s| Arc::new(s)).map_err(|e: String| {
-						error!("[Boot] [State] Failed to create application state: {}", e);
-						e
-					})?;
+					let AppStateArcFromClosure = AppStateArcForClosure.clone();
 					
 					if let Err(e) = AppLifecycleSetup(
 						app,
 						AppHandle.clone(),
 						LocalhostUrl.clone(),
 						SchedulerForClosure.clone(),
-						AppStateArc,
+						AppStateArcFromClosure,
 					) {
 						error!("[Lifecycle] [Setup] Failed to setup lifecycle: {}", e);
 					}
