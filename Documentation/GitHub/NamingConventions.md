@@ -41,7 +41,10 @@
 
 # **Naming Conventions** 📝
 
-This document defines the comprehensive naming conventions used throughout the **Mountain** codebase and the broader Land ecosystem. These conventions ensure consistency, maintainability, and alignment with cross-language interoperability requirements.
+This document defines the comprehensive naming conventions used throughout the
+**Mountain** codebase and the broader Land ecosystem. These conventions ensure
+consistency, maintainability, and alignment with cross-language interoperability
+requirements.
 
 ---
 
@@ -59,20 +62,28 @@ This document defines the comprehensive naming conventions used throughout the *
 
 ## Overview
 
-**Mountain** adopts **PascalCase** as the primary naming convention for nearly all Rust elements, diverging from Rust's traditional `snake_case` conventions. This intentional design choice serves critical ecosystem requirements:
+**Mountain** adopts **PascalCase** as the primary naming convention for nearly
+all Rust elements, diverging from Rust's traditional `snake_case` conventions.
+This intentional design choice serves critical ecosystem requirements:
 
-- **Cross-Language DTO Alignment**: All Data Transfer Objects (DTOs) must map directly between Rust, TypeScript, and gRPC Protocol Buffers
-- **gRPC/Protocol Buffer Compatibility**: gRPC services and messages use PascalCase by specification
-- **Ecosystem Consistency**: Other components (Cocoon/Node.js sidecar, Wind/TypeScript UI) use PascalCase
-- **TypeScript Interoperability**: Seamless translation between Rust types and TypeScript interfaces
+- **Cross-Language DTO Alignment**: All Data Transfer Objects (DTOs) must map
+  directly between Rust, TypeScript, and gRPC Protocol Buffers
+- **gRPC/Protocol Buffer Compatibility**: gRPC services and messages use
+  PascalCase by specification
+- **Ecosystem Consistency**: Other components (Cocoon/Node.js sidecar,
+  Wind/TypeScript UI) use PascalCase
+- **TypeScript Interoperability**: Seamless translation between Rust types and
+  TypeScript interfaces
 
-The following attribute is placed at the top of all modules that follow this convention:
+The following attribute is placed at the top of all modules that follow this
+convention:
 
 ```rust
 #![allow(non_snake_case, non_camel_case_types)]
 ```
 
-This attribute signals to the Rust compiler and developers that the intentional deviation from Rust conventions is deliberate and approved.
+This attribute signals to the Rust compiler and developers that the intentional
+deviation from Rust conventions is deliberate and approved.
 
 ---
 
@@ -80,17 +91,19 @@ This attribute signals to the Rust compiler and developers that the intentional 
 
 ### 1. Ecosystem Consistency
 
-The Land ecosystem consists of multiple language-specific components that must interoperate seamlessly:
+The Land ecosystem consists of multiple language-specific components that must
+interoperate seamlessly:
 
-| Component | Language | Naming Convention |
-|-----------|----------|-------------------|
-| **Mountain** | Rust | **PascalCase** (this convention) |
-| **Cocoon** | Node.js/TypeScript | **PascalCase** |
-| **Wind** | TypeScript/React | **PascalCase** |
-| **Common** | Rust (shared) | **PascalCase** |
-| **Vine gRPC** | Protocol Buffers | **PascalCase** |
+| Component     | Language           | Naming Convention                |
+| ------------- | ------------------ | -------------------------------- |
+| **Mountain**  | Rust               | **PascalCase** (this convention) |
+| **Cocoon**    | Node.js/TypeScript | **PascalCase**                   |
+| **Wind**      | TypeScript/React   | **PascalCase**                   |
+| **Common**    | Rust (shared)      | **PascalCase**                   |
+| **Vine gRPC** | Protocol Buffers   | **PascalCase**                   |
 
-Using PascalCase across all components eliminates cognitive overhead during cross-language development and ensures type safety in gRPC interfaces.
+Using PascalCase across all components eliminates cognitive overhead during
+cross-language development and ensures type safety in gRPC interfaces.
 
 ### 2. DTO Alignment
 
@@ -132,11 +145,14 @@ interface WorkSpaceFolderStateDTO {
 
 ### 3. gRPC Compatibility
 
-gRPC services and Protocol Buffer messages **require** PascalCase by specification. Using PascalCase in Rust eliminates the need for custom field name mappings and serialization aliases.
+gRPC services and Protocol Buffer messages **require** PascalCase by
+specification. Using PascalCase in Rust eliminates the need for custom field
+name mappings and serialization aliases.
 
 ### 4. Implementation Benefits
 
-- **Simplified Interop Protocol**: No need for `#[serde(rename = "...")]` attributes for DTOs
+- **Simplified Interop Protocol**: No need for `#[serde(rename = "...")]`
+  attributes for DTOs
 - **Type Safety**: Direct mapping prevents typos between Rust and TypeScript
 - **Developer Experience**: Consistent naming across the entire stack
 - **Build Simplicity**: No custom protobuf code generation filters needed
@@ -145,23 +161,23 @@ gRPC services and Protocol Buffer messages **require** PascalCase by specificati
 
 ## Complete Naming Patterns
 
-| Element Type | Convention | Example | Notes |
-|--------------|------------|---------|-------|
-| **Structs** | PascalCase | `WorkSpaceFolderStateDTO` | All structs, including DTOs |
-| **Enums** | PascalCase | `CommandHandler` | All enum variants |
-| **Traits** | PascalCase | `ConfigurationProvider` | All trait names |
-| **Functions** | PascalCase | `GetConfigurationValue` | All public and private functions |
-| **Methods** | PascalCase | `CreateWorkSpace` | All instance methods |
-| **Modules** | PascalCase | `ApplicationState` | File and module names PascalCase |
-| **Constants** | PascalCase | `MAX_CONNECTIONS` | Global constants |
-| **Static Items** | PascalCase | `SIDECAR_CLIENTS` | Static variables |
-| **Type Aliases** | PascalCase | `CocoonClient` | Type aliases and generic types |
-| **Generics** | PascalCase | `TCapabilityProvider` | Type parameters with 'T' prefix |
-| **Lifetimes** | lowercase with 'a prefix | `'a`, `'result` | Standard Rust lifetime conventions |
-| **Local Variables** | PascalCase | `WorkSpaceIdentifier` | All local variables |
-| **Function Parameters** | PascalCase | `ApplicationHandle:AppHandle` | All parameters |
-| **Fields** | PascalCase | `ActiveDocuments` | All struct fields |
-| **File Names** | PascalCase | `ApplicationState.rs` | Rust source files |
+| Element Type            | Convention               | Example                       | Notes                              |
+| ----------------------- | ------------------------ | ----------------------------- | ---------------------------------- |
+| **Structs**             | PascalCase               | `WorkSpaceFolderStateDTO`     | All structs, including DTOs        |
+| **Enums**               | PascalCase               | `CommandHandler`              | All enum variants                  |
+| **Traits**              | PascalCase               | `ConfigurationProvider`       | All trait names                    |
+| **Functions**           | PascalCase               | `GetConfigurationValue`       | All public and private functions   |
+| **Methods**             | PascalCase               | `CreateWorkSpace`             | All instance methods               |
+| **Modules**             | PascalCase               | `ApplicationState`            | File and module names PascalCase   |
+| **Constants**           | PascalCase               | `MAX_CONNECTIONS`             | Global constants                   |
+| **Static Items**        | PascalCase               | `SIDECAR_CLIENTS`             | Static variables                   |
+| **Type Aliases**        | PascalCase               | `CocoonClient`                | Type aliases and generic types     |
+| **Generics**            | PascalCase               | `TCapabilityProvider`         | Type parameters with 'T' prefix    |
+| **Lifetimes**           | lowercase with 'a prefix | `'a`, `'result`               | Standard Rust lifetime conventions |
+| **Local Variables**     | PascalCase               | `WorkSpaceIdentifier`         | All local variables                |
+| **Function Parameters** | PascalCase               | `ApplicationHandle:AppHandle` | All parameters                     |
+| **Fields**              | PascalCase               | `ActiveDocuments`             | All struct fields                  |
+| **File Names**          | PascalCase               | `ApplicationState.rs`         | Rust source files                  |
 
 ---
 
@@ -359,7 +375,8 @@ async fn ProcessRequest(&self, RequestIdentifier: String) -> Result<Value, Commo
 
 ### 1. External Crate Types
 
-**Exception**: Types from external crates retain their original naming conventions.
+**Exception**: Types from external crates retain their original naming
+conventions.
 
 ```rust
 // tokio::spawn, tokio::time::sleep - retain original crate conventions
@@ -397,7 +414,8 @@ File.read_to_string(&mut Buffer)?;
 
 ### 3. Lifetime Parameters
 
-**Exception**: Lifetime parameters use Rust convention (lowercase with 'a prefix).
+**Exception**: Lifetime parameters use Rust convention (lowercase with 'a
+prefix).
 
 ```rust
 pub struct BorrowHolder<'a> {
@@ -469,7 +487,7 @@ std::env::var("PATH")?;
 //! Brief description of the module.
 //!
 //! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/NamingConventions.md
+//! See https://github.com/CodeEditorLand/Mountain/blob/Current/Documentation/GitHub/NamingConventions.md
 
 use std::sync::Arc;
 
@@ -493,15 +511,16 @@ impl MyNewService {
 
 **Gradual Migration**:
 
-1. **High-Priority Files**: Start with files that are frequently modified or shared with other components
-   - DTO files (all `*DTO.rs` files)
-   - IPC and gRPC interfaces
-   - Provider implementations
+1. **High-Priority Files**: Start with files that are frequently modified or
+   shared with other components
+    - DTO files (all `*DTO.rs` files)
+    - IPC and gRPC interfaces
+    - Provider implementations
 
 2. **Medium-Priority Files**: Service implementations and state management
-   - Environment providers
-   - Application state components
-   - Runtime components
+    - Environment providers
+    - Application state components
+    - Runtime components
 
 3. **Low-Priority Files**: Utilities, helpers, and isolated modules
 
@@ -553,17 +572,17 @@ impl MyStruct {
 Before renaming, assess the impact:
 
 1. **Public API**: Does this rename break the public API?
-   - If yes, consider adding a deprecated alias first
-   - Document the breaking change in CHANGELOG.md
+    - If yes, consider adding a deprecated alias first
+    - Document the breaking change in CHANGELOG.md
 
 2. **gRPC Interfaces**: Does this affect Protocol Buffer definitions?
-   - Must update `.proto` files and regenerate code
-   - Verify compatibility with Cocoon and Wind
+    - Must update `.proto` files and regenerate code
+    - Verify compatibility with Cocoon and Wind
 
 3. **Tests**: Update all test references to use new names
-   - Unit tests
-   - Integration tests
-   - E2E tests
+    - Unit tests
+    - Integration tests
+    - E2E tests
 
 4. **Documentation**: Update inline documentation and comments
 
@@ -573,15 +592,15 @@ Before renaming, assess the impact:
 
 ### Core Modules ✅
 
-| Module | Status | Notes |
-|--------|--------|-------|
-| `ApplicationState` | ✅ Complete | All structs, DTOs, and methods follow PascalCase |
-| `Environment` | ✅ Complete | All providers and helpers follow PascalCase |
-| `RunTime` | ✅ Complete | ApplicationRunTime and all helpers follow PascalCase |
-| `Track` | ✅ Complete | DispatchLogic and EffectCreation follow PascalCase |
-| `Vine` | ✅ Complete | Client, Server, and gRPC integration follow PascalCase |
-| `IPC` | ✅ Complete | All IPC handlers and adapters follow PascalCase |
-| `WorkSpace` | ✅ Complete | WorkSpaceFileService follows PascalCase |
+| Module             | Status      | Notes                                                  |
+| ------------------ | ----------- | ------------------------------------------------------ |
+| `ApplicationState` | ✅ Complete | All structs, DTOs, and methods follow PascalCase       |
+| `Environment`      | ✅ Complete | All providers and helpers follow PascalCase            |
+| `RunTime`          | ✅ Complete | ApplicationRunTime and all helpers follow PascalCase   |
+| `Track`            | ✅ Complete | DispatchLogic and EffectCreation follow PascalCase     |
+| `Vine`             | ✅ Complete | Client, Server, and gRPC integration follow PascalCase |
+| `IPC`              | ✅ Complete | All IPC handlers and adapters follow PascalCase        |
+| `WorkSpace`        | ✅ Complete | WorkSpaceFileService follows PascalCase                |
 
 ### DTOs ✅
 
@@ -637,14 +656,14 @@ All modules include the naming convention header:
 ```rust
 // At the top of each .rs file (after the initial doc comments):
 //! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/NamingConventions.md
+//! See https://github.com/CodeEditorLand/Mountain/blob/Current/Documentation/GitHub/NamingConventions.md
 ```
 
 ---
 
 ## Further Reading
 
-- [Deep Dive & Architecture](https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/DeepDive.md)
+- [Deep Dive & Architecture](https://github.com/CodeEditorLand/Mountain/blob/Current/Documentation/GitHub/DeepDive.md)
 - [Common Crate Documentation](https://github.com/CodeEditorLand/Common)
 - [gRPC Best Practices](https://grpc.io/docs/guides/)
 - [Protocol Buffers Style Guide](https://developers.google.com/protocol-buffers/docs/style)
@@ -675,12 +694,13 @@ Rust in Mountain/Cocoon/Wind
 
 ## Changelog
 
-| Date | Version | Changes |
-|------|---------|---------|
-| 2026-01-28 | 1.0.0 | Initial naming conventions documentation |
+| Date       | Version | Changes                                  |
+| ---------- | ------- | ---------------------------------------- |
+| 2026-01-28 | 1.0.0   | Initial naming conventions documentation |
 
 ---
 
 **Maintained by**: [CodeEditorLand Team](https://Editor.Land)
 
-**License**: See [LICENSE](https://github.com/CodeEditorLand/Mountain/blob/main/LICENSE)
+**License**: See
+[LICENSE](https://github.com/CodeEditorLand/Mountain/blob/Current/LICENSE)
