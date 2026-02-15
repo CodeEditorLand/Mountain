@@ -469,7 +469,7 @@ std::env::var("PATH")?;
 //! Brief description of the module.
 //!
 //! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/NamingConventions.md
 
 use std::sync::Arc;
 
@@ -637,14 +637,14 @@ All modules include the naming convention header:
 ```rust
 // At the top of each .rs file (after the initial doc comments):
 //! This module follows the Land ecosystem's PascalCase naming convention.
-//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Naming%20Conventions.md
+//! See https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/NamingConventions.md
 ```
 
 ---
 
 ## Further Reading
 
-- [Deep Dive & Architecture](https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/Deep%20Dive.md)
+- [Deep Dive & Architecture](https://github.com/CodeEditorLand/Mountain/blob/main/Documentation/GitHub/DeepDive.md)
 - [Common Crate Documentation](https://github.com/CodeEditorLand/Common)
 - [gRPC Best Practices](https://grpc.io/docs/guides/)
 - [Protocol Buffers Style Guide](https://developers.google.com/protocol-buffers/docs/style)
