@@ -4,7 +4,7 @@
 //! - Implements
 //!   [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) and
 //!   [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for
-//!   [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! `MountainEnvironment`
 //! - Provides secure, validated filesystem access with workspace trust
 //!   enforcement
 //! - Handles file operations: read, write, stat, delete, rename, copy,
@@ -14,7 +14,7 @@
 //!
 //! SECURITY MODEL:
 //! - Sandboxed filesystem access limited to registered workspace folders
-//! - All operations call [`Utility::IsPathAllowedForAccess`](crate::Utility)
+//! - All operations call `Utility::IsPathAllowedForAccess`
 //!   first
 //! - Requires workspace trust to be enabled for any file access
 //! - Path normalization prevents `../` attacks

@@ -36,7 +36,7 @@ use log::debug;
 /// * `TextContent` - The text content to analyze
 ///
 /// # Returns
-/// Tuple containing (Vec<String> of lines, String of detected EOL)
+/// Tuple containing (`Vec<String>` of lines, String of detected EOL)
 ///
 /// # Behavior
 /// - Detects CRLF ("\r\n") or LF ("\n") line endings

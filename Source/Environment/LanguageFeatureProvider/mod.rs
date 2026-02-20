@@ -7,9 +7,9 @@
 //! ## Implementation Strategy
 //!
 //! The trait implementation is split across multiple helper modules:
-//! - [`Registration`]: RegisterProvider, UnregisterProvider
-//! - [`ProviderLookup`]: GetMatchingProvider (private helper)
-//! - [`FeatureMethods`]: All LSP feature methods (Hover, Completion, etc.)
+//! - `Registration`: RegisterProvider, UnregisterProvider
+//! - `ProviderLookup`: GetMatchingProvider (private helper)
+//! - `FeatureMethods`: All LSP feature methods (Hover, Completion, etc.)
 //!
 //! The single `impl LanguageFeatureProviderRegistry for MountainEnvironment`
 //! block in this file delegates to those helper functions. This satisfies

@@ -14,9 +14,9 @@
 //!
 //! The trait implementation is split across multiple helper modules for
 //! maintainability:
-//! - [`ChannelLifecycle`]: `RegisterChannel`, `Dispose`
-//! - [`ChannelContent`]: `Append`, `Replace`, `Clear`
-//! - [`ChannelVisibility`]: `Reveal`, `Close`
+//! - `ChannelLifecycle`: `RegisterChannel`, `Dispose`
+//! - `ChannelContent`: `Append`, `Replace`, `Clear`
+//! - `ChannelVisibility`: `Reveal`, `Close`
 //!
 //! The single `impl OutputChannelManager for MountainEnvironment` block in this
 //! file delegates to those helper functions. This satisfies Rust's orphan rules

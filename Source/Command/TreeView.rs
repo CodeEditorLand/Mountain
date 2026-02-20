@@ -17,22 +17,14 @@
 //!   mapping
 //!
 //! COMMAND REFERENCE (Tauri IPC):
-//! - [`GetTreeViewChildren`](crate::Command::TreeView::GetTreeViewChildren):
-//!   Fetch child items for a tree node (by `ElementHandle`, null for root)
-//! - [`GetTreeViewItem`](crate::Command::TreeView::GetTreeViewItem): Get tree
-//!   item metadata (label, icon, description) by handle
-//! - [`OnTreeViewExpansionChanged`](crate::Command::TreeView::OnTreeViewExpansionChanged):
-//!   Notify when user expands/collapses a node (stub - trait method missing)
-//! - [`OnTreeViewSelectionChanged`](crate::Command::TreeView::OnTreeViewSelectionChanged):
-//!   Notify when user selects/deselects tree items (stub - trait method missing)
-//! - [`RefreshTreeView`](crate::Command::TreeView::RefreshTreeView): Request
-//!   tree view to refresh its data, optionally specific items
-//! - [`RevealTreeViewItem`](crate::Command::TreeView::RevealTreeViewItem):
-//!   Request to reveal/focus a specific tree item in the UI
-//! - [`PersistTreeView`](crate::Command::TreeView::PersistTreeView): Save tree
-//!   view state (scroll position, expansion) (stub)
-//! - [`RestoreTreeView`](crate::Command::TreeView::RestoreTreeView): Restore
-//!   previously saved tree view state (stub)
+//! - [`GetTreeViewChildren`]: Fetch child items for a tree node (by `ElementHandle`, null for root)
+//! - [`GetTreeViewItem`]: Get tree item metadata (label, icon, description) by handle
+//! - [`OnTreeViewExpansionChanged`]: Notify when user expands/collapses a node (stub - trait method missing)
+//! - [`OnTreeViewSelectionChanged`]: Notify when user selects/deselects tree items (stub - trait method missing)
+//! - [`RefreshTreeView`]: Request tree view to refresh its data, optionally specific items
+//! - [`RevealTreeViewItem`]: Request to reveal/focus a specific tree item in the UI
+//! - [`PersistTreeView`]: Save tree view state (scroll position, expansion) (stub)
+//! - [`RestoreTreeView`]: Restore previously saved tree view state (stub)
 //!
 //! ERROR HANDLING:
 //! - Returns `Result<Value, String>` with error strings sent to frontend

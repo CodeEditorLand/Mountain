@@ -32,22 +32,22 @@
 //!
 //! Services are split into atomic submodules for granular feature gates:
 //!
-//! ```
+//! ```text
 //! RPC/
-//! ├── EchoAction/           # ☀️ 🟢 Central EchoAction system
-//! ├── Commands/             # ☀️ 🟢 Command registration
-//! │   └── Validation/       # Input validation
-//! ├── Workspace/            # ☀️ 🟢 File/workspace operations
-//! ├── Configuration/        # ☀️ 🟢 Configuration management
-//! ├── Windows/              # ☀️ 🟡 Window and document services
-//! ├── Terminals/            # ☀️ 🔴 Terminal services (Cocoon only)
-//! ├── Debug/                # ☀️ 🔴 Debug protocol (Cocoon only)
-//! ├── SCM/                  # ☀️ 🔴 Source control (Cocoon only)
-//! ├── Processes/            # ☀️ 🔴 Child processes (Cocoon only)
-//! ├── Telemetry/            # OTEL integration
-//! │   ├── Spans/            # Span management
-//! │   └── Metrics/          # Metrics recording
-//! └── types/                # Shared types
+//! ├── EchoAction/ # ☀️ 🟢 Central EchoAction system
+//! ├── Commands/ # ☀️ 🟢 Command registration
+//! │ └── Validation/ # Input validation
+//! ├── Workspace/ # ☀️ 🟢 File/workspace operations
+//! ├── Configuration/ # ☀️ 🟢 Configuration management
+//! ├── Windows/ # ☀️ 🟡 Window and document services
+//! ├── Terminals/ # ☀️ 🔴 Terminal services (Cocoon only)
+//! ├── Debug/ # ☀️ 🔴 Debug protocol (Cocoon only)
+//! ├── SCM/ # ☀️ 🔴 Source control (Cocoon only)
+//! ├── Processes/ # ☀️ 🔴 Child processes (Cocoon only)
+//! ├── Telemetry/ # OTEL integration
+//! │ ├── Spans/ # Span management
+//! │ └── Metrics/ # Metrics recording
+//! └── types/ # Shared types
 //! ```
 
 pub mod CocoonService;

@@ -2,7 +2,7 @@
 //!
 //! Implementation of
 //! [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for
-//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! [`MountainEnvironment`]
 //!
 //! Provides secure, validated filesystem write access with workspace trust
 //! enforcement.

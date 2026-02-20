@@ -1,7 +1,7 @@
 //! # WebviewProvider - Lifecycle Operations
 //!
 //! Implementation of webview panel lifecycle methods for
-//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! [`MountainEnvironment`]
 //!
 //! Handles creation, disposal, and visibility management of webview panels.
 

@@ -13,7 +13,7 @@
 //! - Optional provider for cloud sync functionality (currently stub)
 //! - Would integrate with external sync service (Firebase, Supabase, custom
 //!   backend)
-//! - Uses authentication from [`AuthenticationProvider`] (to be implemented)
+//! - Uses authentication from `AuthenticationProvider` (to be implemented)
 //! - Syncs multiple data types: settings, keybindings, workspaces, extensions,
 //!   snippets
 //! - Store sync metadata in
@@ -90,10 +90,10 @@
 //!
 //! MODULE CONTENTS:
 //! - [`SynchronizationProvider`](CommonLibrary::Synchronization::SynchronizationProvider) implementation:
-//!   - [`PushUserData`](Self::PushUserData) - upload local data to remote
-//!     (stub)
-//!   - [`PullUserData`](Self::PullUserData) - download remote data to local
-//!     (stub)
+//! - `PushUserData` - upload local data to remote
+//! (stub)
+//! - `PullUserData` - download remote data to local
+//! (stub)
 //! - Current state: Stub with logging only; production implementation pending
 //!
 //! ---

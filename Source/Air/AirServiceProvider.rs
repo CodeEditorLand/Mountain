@@ -19,7 +19,7 @@
 //! - Request ID generation for tracing
 //! - Connection state management
 //!
-//! ```
+//! ```text
 //! Application ──► AirServiceProvider ──► AirClient ──► gRPC ──► Air Daemon
 //! ```
 //!
@@ -47,7 +47,7 @@
 //! ## PERFORMANCE
 //!
 //! - Request ID generation uses UUID v4 (cryptographically random)
-//! - Thread-safe operations via Arc<AirClient>
+//! - Thread-safe operations via `Arc<AirClient>`
 //! - Non-blocking async operations via tokio
 //!
 //! ## VSCODE REFERENCE
@@ -100,7 +100,7 @@ use super::{
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```text
 /// use Mountain::Air::AirServiceProvider::{AirServiceProvider, DEFAULT_AIR_SERVER_ADDRESS};
 /// use CommonLibrary::Error::CommonError::CommonError;
 ///
@@ -140,7 +140,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// use CommonLibrary::Error::CommonError::CommonError;
 	///
@@ -170,7 +170,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// use CommonLibrary::Error::CommonError::CommonError;
 	///
@@ -239,7 +239,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// # use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// # use CommonLibrary::Error::CommonError::CommonError;
 	/// # #[tokio::main]
@@ -278,7 +278,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// # use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// # use CommonLibrary::Error::CommonError::CommonError;
 	/// # #[tokio::main]
@@ -389,7 +389,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// # use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// # use CommonLibrary::Error::CommonError::CommonError;
 	/// # #[tokio::main]
@@ -447,7 +447,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// # use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// # use CommonLibrary::Error::CommonError::CommonError;
 	/// # #[tokio::main]
@@ -493,7 +493,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// # use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// # use CommonLibrary::Error::CommonError::CommonError;
 	/// # #[tokio::main]
@@ -565,7 +565,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// # use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// # use CommonLibrary::Error::CommonError::CommonError;
 	/// # #[tokio::main]
@@ -654,7 +654,7 @@ impl AirServiceProvider {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// # use Mountain::Air::AirServiceProvider::AirServiceProvider;
 	/// # use CommonLibrary::Error::CommonError::CommonError;
 	/// # #[tokio::main]
@@ -715,7 +715,7 @@ impl AirServiceProvider {
 ///
 /// # Example
 ///
-/// ```rust
+/// ```text
 /// use Mountain::Air::AirServiceProvider::generate_request_id;
 ///
 /// let id = generate_request_id();

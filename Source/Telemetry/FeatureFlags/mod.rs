@@ -13,7 +13,7 @@
 //!
 //! ## Usage Example
 //!
-//! ```rust
+//! ```text
 //! use Mountain::Telemetry::FeatureFlags;
 //!
 //! // Check if a feature is enabled

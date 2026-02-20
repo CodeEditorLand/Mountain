@@ -25,7 +25,7 @@
 //! ## ARCHITECTURAL ROLE
 //!
 //! The Command module is the **UI-to-Backend bridge**:
-//! ```
+//! ```text
 //! Sky Frontend ──► Tauri invoke ──► Command Handler ──► Effect System ──► Providers
 //! ```
 //!

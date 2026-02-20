@@ -40,8 +40,8 @@
 //! # Module Contents
 //!
 //! - [`InitializeCocoon`]: Main entry point for Cocoon initialization
-//! - [`LaunchAndManageCocoonSideCar`]: Process spawning and lifecycle
-//!   management
+//! - `LaunchAndManageCocoonSideCar`: Process spawning and lifecycle
+//! management
 //!
 //! ## Example
 //!

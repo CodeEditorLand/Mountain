@@ -65,10 +65,10 @@
 //!
 //! MODULE CONTENTS:
 //! - [`DebugService`](CommonLibrary::Debug::DebugService) implementation:
-//!   - [`RegisterDebugConfigurationProvider`](Self::RegisterDebugConfigurationProvider) - register config resolver
-//!   - [`RegisterDebugAdapterDescriptorFactory`](Self::RegisterDebugAdapterDescriptorFactory) - register adapter factory
-//!   - [`StartDebugging`](Self::StartDebugging) - start debug session (partial)
-//!   - [`SendCommand`](Self::SendCommand) - send DAP command to adapter (stub)
+//! - `RegisterDebugConfigurationProvider` - register config resolver
+//! - `RegisterDebugAdapterDescriptorFactory` - register adapter factory
+//! - `StartDebugging` - start debug session (partial)
+//! - `SendCommand` - send DAP command to adapter (stub)
 
 use std::sync::Arc;
 

@@ -9,8 +9,8 @@ use log::{error, info};
 /// # Arguments
 ///
 /// * `ApplicationHandle` - The Tauri application handle
-/// * `PrimaryAddress` - The primary server address (e.g., "[::1]:50051")
-/// * `SecondaryAddress` - The secondary server address (e.g., "[::1]:50052")
+/// * `PrimaryAddress` - The primary server address (e.g., "\\[::1\\]:50051")
+/// * `SecondaryAddress` - The secondary server address (e.g., "\\[::1\\]:50052")
 ///
 /// # Returns
 ///

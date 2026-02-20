@@ -78,7 +78,7 @@
 //! ### Native Commands
 //! - Implemented directly in Rust
 //! - Registered via `RegisterCommand` function
-//! - Handler is a function pointer or Arc<Fn>
+//! - Handler is a function pointer or `Arc<Fn>`
 //! - Zero IPC overhead, direct call
 //!
 //! ### Extension Commands
@@ -123,7 +123,7 @@
 //!
 //! ## MODULE CONTENTS
 //!
-//! - [`CommandProvider`]: Main struct implementing `CommandExecutor`
+//! - `CommandProvider`: Main struct implementing `CommandExecutor`
 //! - Command registration functions (to be added)
 //! - Extension command proxy logic
 

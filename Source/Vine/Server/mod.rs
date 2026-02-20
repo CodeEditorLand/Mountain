@@ -77,7 +77,7 @@
 //! - [`Initialize`]: Server initialization and startup logic
 //! - [`MountainVinegRPCService`]: Implementation of MountainService (Cocoon →
 //!   Mountain)
-//! - [`CocoonServiceImpl`]: Implementation of CocoonService (Mountain → Cocoon)
+//! - `CocoonServiceImpl`: Implementation of CocoonService (Mountain → Cocoon)
 
 #![allow(non_snake_case)]
 

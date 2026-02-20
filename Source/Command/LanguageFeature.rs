@@ -4,7 +4,7 @@
 //! - Defines Tauri command handlers for language feature requests from Sky
 //!   frontend
 //! - Bridges Monaco Editor language requests to
-//!   [`LanguageFeatureProviderRegistry`]
+//! `LanguageFeatureProviderRegistry`
 //! - Provides type-safe parameter handling and validation for LSP features
 //! - Implements hover, code actions, document highlights, completions,
 //!   definition, references
@@ -19,18 +19,12 @@
 //! - Error strings returned directly to frontend for display
 //!
 //! COMMAND REFERENCE (Tauri IPC):
-//! - [`MountainProvideHover`](crate::Command::LanguageFeature::MountainProvideHover):
-//!   Show hover information at cursor position
-//! - [`MountainProvideCodeActions`](crate::Command::LanguageFeature::MountainProvideCodeActions):
-//!   Get quick fixes and refactorings for a code range
-//! - [`MountainProvideDocumentHighlights`](crate::Command::LanguageFeature::MountainProvideDocumentHighlights):
-//!   Find symbol occurrences in document
-//! - [`MountainProvideCompletions`](crate::Command::LanguageFeature::MountainProvideCompletions):
-//!   Get code completion suggestions with context
-//! - [`MountainProvideDefinition`](crate::Command::LanguageFeature::MountainProvideDefinition):
-//!   Jump to symbol definition location
-//! - [`MountainProvideReferences`](crate::Command::LanguageFeature::MountainProvideReferences):
-//!   Find all references to a symbol
+//! - [`MountainProvideHover`]: Show hover information at cursor position
+//! - [`MountainProvideCodeActions`]: Get quick fixes and refactorings for a code range
+//! - [`MountainProvideDocumentHighlights`]: Find symbol occurrences in document
+//! - [`MountainProvideCompletions`]: Get code completion suggestions with context
+//! - [`MountainProvideDefinition`]: Jump to symbol definition location
+//! - [`MountainProvideReferences`]: Find all references to a symbol
 //!
 //! ERROR HANDLING:
 //! - Returns `Result<Value, String>` where errors sent directly to frontend

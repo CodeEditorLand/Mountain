@@ -1,7 +1,7 @@
 //! # StatusBarProvider - Tooltip Resolution
 //!
 //! Implementation of dynamic tooltip resolution for
-//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! [`MountainEnvironment`]
 
 use std::sync::Arc;
 

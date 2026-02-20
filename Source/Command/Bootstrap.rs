@@ -100,10 +100,10 @@
 //!
 //! ## MODULE CONTENTS
 //!
-//! - [`RegisterAll`]: Main registration function called from Binary::Main
-//! - [`RegisterCommands`]: Internal function to register all command handlers
-//! - [`RegisterTreeViewProviders`]: Internal function to register tree view
-//!   providers
+//! - `RegisterAll`: Main registration function called from Binary::Main
+//! - `RegisterCommands`: Internal function to register all command handlers
+//! - `RegisterTreeViewProviders`: Internal function to register tree view
+//! providers
 
 // ## VSCode Reference:
 // - vs/workbench/services/actions/common/menuService.ts

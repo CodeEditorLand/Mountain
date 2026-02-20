@@ -68,18 +68,13 @@
 //!
 //! MODULE CONTENTS:
 //! - [`TestController`](CommonLibrary::Testing::TestController) implementation:
-//!   - [`RegisterTestController`](Self::RegisterTestController) - register
-//!     extension's controller
-//!   - [`UnregisterTestController`](Self::UnregisterTestController) - remove
-//!     controller
-//!   - [`ResolveTests`](Self::ResolveTests) - discover tests (async with
-//!     cancellation)
-//!   - [`RunTest`](Self::RunTest) - run single test by ID
-//!   - [`RunTests`](Self::RunTests) - run multiple tests (by ID or all in
-//!     parent)
-//!   - [`StopTestRun`](Self::StopTestRun) - cancel ongoing test run
-//!   - [`DidTestItemDiscoveryStart`](Self::DidTestItemDiscoveryStart) -
-//!     discovery progress event
+//! - `RegisterTestController` - register extension's controller
+//! - `UnregisterTestController` - remove controller
+//! - `ResolveTests` - discover tests (async with cancellation)
+//! - `RunTest` - run single test by ID
+//! - `RunTests` - run multiple tests (by ID or all in parent)
+//! - `StopTestRun` - cancel ongoing test run
+//! - `DidTestItemDiscoveryStart` - discovery progress event
 //!   - `TestRunStarted`/`TestItemStarted`/`TestItemPassed`/`TestItemFailed`/
 //!     `TestRunEnded` - events
 //! - Data types: `TestControllerState`, `TestItemState`, `TestRunProfile`,

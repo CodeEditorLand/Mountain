@@ -13,12 +13,12 @@
 //!
 //! The trait implementation is split across multiple helper modules for
 //! maintainability:
-//! - [`Registration`]: `RegisterTreeDataProvider`, `UnregisterTreeDataProvider`
-//! - [`DataAccess`]: `GetChildren`, `GetTreeItem` (dispatcher logic)
-//! - [`UIState`]: `SetTreeViewMessage`, `SetTreeViewTitle`, `SetTreeViewBadge`
-//! - [`Events`]: `OnTreeNodeExpanded`, `OnTreeSelectionChanged`
-//! - [`StatePersistence`]: `PersistTreeViewState`, `RestoreTreeViewState`
-//! - [`Visibility`]: `RevealTreeItem`, `RefreshTreeView`
+//! - `Registration`: `RegisterTreeDataProvider`, `UnregisterTreeDataProvider`
+//! - `DataAccess`: `GetChildren`, `GetTreeItem` (dispatcher logic)
+//! - `UIState`: `SetTreeViewMessage`, `SetTreeViewTitle`, `SetTreeViewBadge`
+//! - `Events`: `OnTreeNodeExpanded`, `OnTreeSelectionChanged`
+//! - `StatePersistence`: `PersistTreeViewState`, `RestoreTreeViewState`
+//! - `Visibility`: `RevealTreeItem`, `RefreshTreeView`
 //!
 //! The single `impl TreeViewProvider for MountainEnvironment` block in this
 //! file delegates to those helper functions. This satisfies Rust's orphan rules

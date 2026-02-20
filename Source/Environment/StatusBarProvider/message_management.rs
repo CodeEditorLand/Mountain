@@ -1,7 +1,7 @@
 //! # StatusBarProvider - Message Management
 //!
 //! Implementation of status bar temporary message handling for
-//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! [`MountainEnvironment`]
 
 use CommonLibrary::Error::CommonError::CommonError;
 use log::info;

@@ -10,10 +10,10 @@
 //! submodules to maintain backward compatibility.
 //!
 //! ## Module Organization
-//! - [`ErrorMapping`](ErrorMapping): Error conversion utilities
-//! - [`LanguageDetection`](LanguageDetection): Language identifier detection
-//! - [`PathSecurity`](PathSecurity): Workspace trust and path validation
-//! - [`UriParsing`](UriParsing): URI/URL parsing and conversion
+//! - [`ErrorMapping`]: Error conversion utilities
+//! - [`LanguageDetection`]: Language identifier detection
+//! - [`PathSecurity`]: Workspace trust and path validation
+//! - [`UriParsing`]: URI/URL parsing and conversion
 
 // Submodules
 pub mod ErrorMapping;

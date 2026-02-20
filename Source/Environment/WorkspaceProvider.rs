@@ -50,24 +50,17 @@
 //! MODULE CONTENTS:
 //! - [`WorkspaceProvider`](CommonLibrary::Workspace::WorkspaceProvider)
 //!   implementation:
-//!   - [`GetWorkspaceFoldersInfo`](Self::GetWorkspaceFoldersInfo) - enumerate
-//!     all workspace folders
-//!   - [`GetWorkspaceFolderInfo`](Self::GetWorkspaceFolderInfo) - find folder
-//!     containing a URI
-//!   - [`GetWorkspaceName`](Self::GetWorkspaceName) - workspace identifier from
-//!     state
-//!   - [`GetWorkspaceConfigurationPath`](Self::GetWorkspaceConfigurationPath) -
-//!     .code-workspace path
-//!   - [`IsWorkspaceTrusted`](Self::IsWorkspaceTrusted) - trust status check
-//!   - [`RequestWorkspaceTrust`](Self::RequestWorkspaceTrust) - trust
-//!     acquisition (stub)
-//!   - [`FindFilesInWorkspace`](Self::FindFilesInWorkspace) - file discovery
-//!     (stub)
-//!   - [`OpenFile`](Self::OpenFile) - file opening (stub)
+//! - `GetWorkspaceFoldersInfo` - enumerate all workspace folders
+//! - `GetWorkspaceFolderInfo` - find folder containing a URI
+//! - `GetWorkspaceName` - workspace identifier from state
+//! - `GetWorkspaceConfigurationPath` - .code-workspace path
+//! - `IsWorkspaceTrusted` - trust status check
+//! - `RequestWorkspaceTrust` - trust acquisition (stub)
+//! - `FindFilesInWorkspace` - file discovery (stub)
+//! - `OpenFile` - file opening (stub)
 //! - [`WorkspaceEditApplier`](CommonLibrary::Workspace::WorkspaceEditApplier)
 //!   implementation:
-//!   - [`ApplyWorkspaceEdit`](Self::ApplyWorkspaceEdit) - edit application
-//!     (stub)
+//! - `ApplyWorkspaceEdit` - edit application (stub)
 //! - Data types: [`(Url, String, usize)`] tuple for folder info (URI, name,
 //!   index)
 

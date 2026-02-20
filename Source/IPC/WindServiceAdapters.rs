@@ -86,13 +86,13 @@
 //! }
 //! ```
 //!
-//! ```rust
+//! ```text
 //! // Mountain Rust Configuration (after conversion)
 //! struct WindDesktopConfiguration {
-//! 	pub window_id:u32,
-//! 	pub app_root:String,
-//! 	pub user_data_path:String,
-//! 	// ... more fields
+//! pub window_id:u32,
+//! pub app_root:String,
+//! pub user_data_path:String,
+//! // ... more fields
 //! }
 //! ```
 //!
@@ -100,7 +100,7 @@
 //!
 //! Mountain's file system uses traits for abstraction:
 //!
-//! ```rust
+//! ```text
 //! let reader:Arc<dyn FileSystemReader> = runtime.Environment.Require();
 //! let writer:Arc<dyn FileSystemWriter> = runtime.Environment.Require();
 //!
@@ -125,7 +125,7 @@
 //!
 //! **Usage Pattern:**
 //!
-//! ```rust
+//! ```text
 //! // Create adapter
 //! let adapter = WindServiceAdapter::new(runtime);
 //!

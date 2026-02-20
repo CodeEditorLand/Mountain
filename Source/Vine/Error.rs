@@ -41,23 +41,23 @@
 //!
 //! ## Usage Example
 //!
-//! ```rust,no_run
+//! ```text
 //! # use Vine::Error::VineError;
 //! fn handle_error(error:VineError) {
-//! 	match error {
-//! 		VineError::RequestTimeout { SideCarIdentifier, MethodName, TimeoutMilliseconds } => {
-//! 			eprintln!(
-//! 				"Request to {} method '{}' timed out after {}ms",
-//! 				SideCarIdentifier, MethodName, TimeoutMilliseconds
-//! 			);
-//! 			// Implement retry logic or fallback behavior
-//! 		},
-//! 		VineError::ClientNotConnected(id) => {
-//! 			eprintln!("Sidecar '{}' not connected, attempting reconnection...", id);
-//! 			// Attempt to reconnect
-//! 		},
-//! 		_ => eprintln!("Vine error: {}", error),
-//! 	}
+//! match error {
+//! VineError::RequestTimeout { SideCarIdentifier, MethodName, TimeoutMilliseconds } => {
+//! eprintln!(
+//! "Request to {} method '{}' timed out after {}ms",
+//! SideCarIdentifier, MethodName, TimeoutMilliseconds
+//! );
+//! // Implement retry logic or fallback behavior
+//! },
+//! VineError::ClientNotConnected(id) => {
+//! eprintln!("Sidecar '{}' not connected, attempting reconnection...", id);
+//! // Attempt to reconnect
+//! },
+//! _ => eprintln!("Vine error: {}", error),
+//! }
 //! }
 //! ```
 

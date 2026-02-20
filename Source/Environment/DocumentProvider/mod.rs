@@ -10,12 +10,12 @@
 //!
 //! The trait implementation is split across multiple helper modules for
 //! maintainability:
-//! - [`OpenDocument`]: Document opening and content resolution (file:// and
-//!   custom schemes)
-//! - [`SaveOperations`]: SaveDocument, SaveDocumentAs, SaveAllDocuments
-//! - [`ApplyChanges`]: ApplyDocumentChanges (incremental text edits)
-//! - [`Notifications`]: NotifyModelAdded, NotifyModelChanged, NotifyModelSaved,
-//!   NotifyModelRemoved
+//! - `OpenDocument`: Document opening and content resolution (file:// and
+//! custom schemes)
+//! - `SaveOperations`: SaveDocument, SaveDocumentAs, SaveAllDocuments
+//! - `ApplyChanges`: ApplyDocumentChanges (incremental text edits)
+//! - `Notifications`: NotifyModelAdded, NotifyModelChanged, NotifyModelSaved,
+//! NotifyModelRemoved
 //!
 //! The single `impl DocumentProvider for MountainEnvironment` block in this
 //! file delegates to those helper functions. This satisfies Rust's orphan rules

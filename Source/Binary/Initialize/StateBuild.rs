@@ -21,6 +21,10 @@ use log::{debug, error, info, warn};
 // ============ Feature Flags ============
 #[cfg(feature = "Telemetry")]
 use opentelemetry::{KeyValue, global};
+#[cfg(feature = "Telemetry")]
+use opentelemetry::trace::Tracer;
+#[cfg(feature = "Telemetry")]
+use opentelemetry::trace::Span;
 
 use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
 

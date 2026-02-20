@@ -71,6 +71,7 @@ ring = { workspace = true }
 bincode = { workspace = true }
 brotli = { workspace = true }
 hex = { workspace = true }
+opentelemetry = { workspace = true }
 
 [features]
 default = ["ExtensionHostCocoon", "MistNative", "AirIntegration"]
@@ -82,6 +83,17 @@ MistNative = []
 Debug = []
 
 AirIntegration = ["Air"]
+
+# Feature flags for conditional compilation
+grove = []
+cocoon = []
+terminals = []
+debug-protocol = []
+scm-support = []
+child-processes = []
+Telemetry = []
+Development = []
+Test = []
 
 [lib]
 name = "Mountain"

@@ -16,15 +16,14 @@
 //!   [`CommonError::IPCError`](CommonLibrary::Error::CommonError)
 //!
 //! COMMUNICATION PATTERNS:
-//! - **Request/Response** [`SendRequestToSideCar`](Self::SendRequestToSideCar):
-//!   - Synchronous RPC with timeout protection
-//!   - Returns `Result<Value, CommonError>`
-//!   - Used for config resolution, URI lookup, content retrieval
-//! - **Notification**
-//!   [`SendNotificationToSideCar`](Self::SendNotificationToSideCar):
-//!   - Fire-and-forget pattern
-//!   - Returns `Result<(), CommonError>` (indicating send success only)
-//!   - Used for document changes, diagnostics, UI events
+//! - **Request/Response** `SendRequestToSideCar`:
+//! - Synchronous RPC with timeout protection
+//! - Returns `Result<Value, CommonError>`
+//! - Used for config resolution, URI lookup, content retrieval
+//! - **Notification** `SendNotificationToSideCar`:
+//! - Fire-and-forget pattern
+//! - Returns `Result<(), CommonError>` (indicating send success only)
+//! - Used for document changes, diagnostics, UI events
 //!
 //! PERFORMANCE:
 //! - Vine client manages connection pooling and reuse
@@ -52,9 +51,8 @@
 //!
 //! MODULE CONTENTS:
 //! - [`IPCProvider`](CommonLibrary::IPC::IPCProvider) implementation:
-//!   - [`SendNotificationToSideCar`](Self::SendNotificationToSideCar) -
-//!     fire-and-forget
-//!   - [`SendRequestToSideCar`](Self::SendRequestToSideCar) - synchronous RPC
+//! - `SendNotificationToSideCar` - fire-and-forget
+//! - `SendRequestToSideCar` - synchronous RPC
 //! - Delegate: [`Vine::Client`](crate::Vine::Client) handles all transport
 //!   concerns
 

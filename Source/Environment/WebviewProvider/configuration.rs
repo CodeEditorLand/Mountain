@@ -1,7 +1,7 @@
 //! # WebviewProvider - Configuration Operations
 //!
 //! Implementation of webview configuration methods for
-//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! [`MountainEnvironment`]
 //!
 //! Handles setting webview options and HTML content.
 

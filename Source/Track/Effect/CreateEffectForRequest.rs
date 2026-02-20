@@ -40,7 +40,7 @@
 //! ## LOGGING
 //!
 //! - Unknown commands are logged at warn level
-//! - Log format: "[EffectCreation] Unknown method: {}"
+//! - Log format: "[`CreateEffectForRequest`] Unknown method: {}"
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //!

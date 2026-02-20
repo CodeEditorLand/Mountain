@@ -109,7 +109,8 @@
 //! ```
 //!
 //! **Message Rate:**
-//! ```rosu//! messages_per_second = total_messages / time_window_seconds
+//! ```text
+//! messages_per_second = total_messages / time_window_seconds
 //! ```
 //!
 //! **4. Background Services:**
@@ -143,7 +144,7 @@
 //!
 //! **Initialization:**
 //!
-//! ```rust
+//! ```text
 //! // In Mountain setup
 //! let features = AdvancedFeatures::new(runtime);
 //! app_handle.manage(features.clone_features());
@@ -153,11 +154,11 @@
 //! **Usage Examples:**
 //!
 //! **Caching a Message:**
-//! ```rust
+//! ```text
 //! features.cache_message(
-//!     "config:editor".to_string(),
-//!     serde_json::json!({ "theme": "dark" }),
-//!     300 // 5 minutes TTL
+//! "config:editor".to_string(),
+//! serde_json::json!({ "theme": "dark" }),
+//! 300 // 5 minutes TTL
 //! ).await?;
 //!
 //! // Retrieve later

@@ -120,9 +120,10 @@ frontend and the `Cocoon` extension host.
 
 To understand how `Mountain`'s internal components are structured and how they
 implement the application's core logic, please refer to the detailed technical
-breakdown in [`Documentation/GitHub/DeepDive.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/Documentation/GitHub/DeepDive.md). This document explains
-the roles of the `ApplicationRunTime`, `ApplicationState`, `Handler`,
-`Environment`, and the `Vine` gRPC layer.
+breakdown in
+[`Documentation/GitHub/DeepDive.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/Documentation/GitHub/DeepDive.md).
+This document explains the roles of the `ApplicationRunTime`,
+`ApplicationState`, `Handler`, `Environment`, and the `Vine` gRPC layer.
 
 ---
 
@@ -224,14 +225,16 @@ set up, build, and run the entire application.
 This project is released into the public domain under the **Creative Commons CC0
 Universal** license. You are free to use, modify, distribute, and build upon
 this work for any purpose, without any restrictions. For the full legal text,
-see the [`LICENSE`](https://github.com/CodeEditorLand/Mountain/tree/Current/) file.
+see the [`LICENSE`](https://github.com/CodeEditorLand/Mountain/tree/Current/)
+file.
 
 ---
 
 ## Changelog 📜
 
-Stay updated with our progress! See [`CHANGELOG.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/) for a history
-of changes specific to **Mountain**.
+Stay updated with our progress! See
+[`CHANGELOG.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/) for a
+history of changes specific to **Mountain**.
 
 ---
 

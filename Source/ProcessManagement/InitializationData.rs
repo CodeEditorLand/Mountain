@@ -30,10 +30,10 @@
 //! InitializationData is the **bootstrap orchestrator** for Mountain's
 //! startup sequence:
 //!
-//! ```
+//! ```text
 //! Binary::Main ──► InitializationData ──► Sky (Frontend)
-//!                        │
-//!                        └─► Cocoon (Extension Host)
+//! │
+//! └─► Cocoon (Extension Host)
 //! ```
 //!
 //! ### Position in Mountain

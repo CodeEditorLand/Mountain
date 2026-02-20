@@ -21,7 +21,7 @@
 //! AirClient serves as the primary interface between Mountain and the Air
 //! backend service:
 //!
-//! ```
+//! ```text
 //! Mountain (Frontend) ──► AirClient ──► gRPC ──► Air Daemon (Backend)
 //! ```
 //!
@@ -114,7 +114,7 @@ impl AirClient {
 	/// Creates a new AirClient and connects to the Air daemon service.
 	///
 	/// # Arguments
-	/// * `address` - The gRPC server address (e.g., "http://[::1]:50053")
+	/// * `address` - The gRPC server address (e.g., "http://\\[::1\\]:50053")
 	///
 	/// # Returns
 	/// * `Ok(Self)` - Successfully created client
@@ -122,7 +122,7 @@ impl AirClient {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// use Mountain::Air::AirClient::{AirClient, DEFAULT_AIR_SERVER_ADDRESS};
 	///
 	/// # #[tokio::main]
@@ -490,7 +490,7 @@ impl AirClient {
 	///
 	/// # Example
 	///
-	/// ```rust,no_run
+	/// ```text
 	/// use Mountain::Air::AirClient::AirClient;
 	/// use CommonLibrary::Error::CommonError::CommonError;
 	///
@@ -1180,7 +1180,7 @@ pub struct DownloadStreamChunk {
 ///
 /// # Example
 ///
-/// ```rust,no_run
+/// ```text
 /// use Mountain::Air::AirClient::DownloadStream;
 /// use CommonLibrary::Error::CommonError::CommonError;
 ///

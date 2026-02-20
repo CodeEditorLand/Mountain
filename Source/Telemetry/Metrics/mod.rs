@@ -13,7 +13,7 @@
 //!
 //! ## Usage Example
 //!
-//! ```rust
+//! ```text
 //! use Mountain::Telemetry::Metrics;
 //!
 //! // Record a metric

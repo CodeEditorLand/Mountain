@@ -48,14 +48,10 @@
 //!
 //! MODULE CONTENTS:
 //! - [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider) implementation:
-//!   - [`RegisterCustomEditorProvider`](Self::RegisterCustomEditorProvider) -
-//!     register extension provider
-//!   - [`UnregisterCustomEditorProvider`](Self::UnregisterCustomEditorProvider)
-//!     - unregister provider
-//!   - [`OnSaveCustomDocument`](Self::OnSaveCustomDocument) - save handler
-//!     (stub)
-//!   - [`ResolveCustomEditor`](Self::ResolveCustomEditor) - resolve editor
-//!     content via RPC
+//! - `RegisterCustomEditorProvider` - register extension provider
+//! - `UnregisterCustomEditorProvider` - unregister provider
+//! - `OnSaveCustomDocument` - save handler (stub)
+//! - `ResolveCustomEditor` - resolve editor content via RPC
 
 use std::sync::Arc;
 

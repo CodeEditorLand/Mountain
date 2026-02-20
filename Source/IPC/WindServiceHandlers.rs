@@ -109,7 +109,7 @@
 //! });
 //! ```
 //!
-//! ```rust
+//! ```text
 //! // Mountain (Rust)
 //! args.get(0).and_then(|v| v.as_str()) // Extract path
 //! args.get(1).and_then(|v| v.as_object()) // Extract options
@@ -145,7 +145,7 @@
 //!
 //! Handlers use Mountain's dependency injection system via `Requires` trait:
 //!
-//! ```rust
+//! ```text
 //! let provider: Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
 //! provider.GetConfigurationValue(...).await?;
 //! ```

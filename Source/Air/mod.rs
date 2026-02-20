@@ -7,13 +7,13 @@
 //!   - Authentication and credential management
 //!   - File indexing and search operations
 //!   - System monitoring and metrics collection
-//! - Handles connection management and error translation to [`CommonError`]
-//! - Wraps client in [`Arc`] for shared access across the application
+//! - Handles connection management and error translation to `CommonError`
+//! - Wraps client in `Arc` for shared access across the application
 //!
 //! ARCHITECTURAL ROLE:
 //! - Integration point with the Air background service (daemon)
 //! - Used by multiple Mountain components:
-//!   - [`UpdateService`](crate::Update::UpdateService) for self-updates
+//! - `UpdateService` for self-updates
 //!   - [`SearchProvider`](crate::Environment::SearchProvider) for file search
 //!   - [`SecretProvider`](crate::Environment::SecretProvider) for secret
 //!     storage
@@ -32,7 +32,7 @@
 //! - Uses tonic gRPC client for transport
 //! - Connection establishment via `connect()` method
 //! - Health checking with timeout protection
-//! - Thread-safe operations via Arc<AirClient>
+//! - Thread-safe operations via `Arc<AirClient>`
 //!
 //! ERROR HANDLING:
 //! - All gRPC errors translated to
@@ -42,7 +42,7 @@
 //!   fallback)
 //!
 //! PERFORMANCE:
-//! - gRPC channels are expensive; reuse via Arc<AirClient>
+//! - gRPC channels are expensive; reuse via `Arc<AirClient>`
 //! - Non-blocking async operations via tokio
 //! - Request ID generation for tracing
 //!

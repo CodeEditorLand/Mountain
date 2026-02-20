@@ -38,7 +38,7 @@
 //! **Communication Patterns:**
 //!
 //! **1. Request-Response Pattern:**
-//! ```rust
+//! ```text
 //! // Wind sends request
 //! let result = app_handle.invoke_handler("command", args).await?;
 //!
@@ -48,7 +48,7 @@
 //! ```
 //!
 //! **2. Event Emission Pattern:**
-//! ```rust
+//! ```text
 //! // Mountain emits events to Wind subscribers
 //! app.emit("configuration-updated", new_config).await;
 //! app.emit("file-changed", file_event).await;
@@ -63,23 +63,23 @@
 //! ```
 //!
 //! **Message Flow:**
-//! ```
+//! ```text
 //! Wind Frontend
-//!     |
-//!     | 4. Response
-//!     v
+//! |
+//! | 4. Response
+//! v
 //! Tauri Bridge (JS Bridge)
-//!     |
-//!     | 1. IPC Invoke
-//!     v
+//! |
+//! | 1. IPC Invoke
+//! v
 //! TauriIPCServer (Rust)
-//!     |
-//!     | 2. Route & Validate
-//!     v
+//! |
+//! | 2. Route & Validate
+//! v
 //! WindServiceHandlers
-//!     |
-//!     | 3. Execute
-//!     v
+//! |
+//! | 3. Execute
+//! v
 //! Mountain Services
 //! ```
 //!

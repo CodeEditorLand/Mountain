@@ -20,7 +20,7 @@
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Role definitions are stored in HashMap for O(1) lookup
-//! - Permissions are stored as Vec<String> for iteration
+//! - Permissions are stored as `Vec<String>` for iteration
 //!
 //! ## TODO
 //! - Add role inheritance support

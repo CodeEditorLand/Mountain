@@ -40,7 +40,7 @@
 //! trait resolution at compile time, ensuring type safety.
 //!
 //! ## PERFORMANCE CONSIDERATIONS
-//! - Thread-safe access via Arc<T>
+//! - Thread-safe access via `Arc<T>`
 //! - Lazy initialization through trait-based lookups
 //! - Zero-cost abstractions - macro-generated code is identical to hand-written
 //!

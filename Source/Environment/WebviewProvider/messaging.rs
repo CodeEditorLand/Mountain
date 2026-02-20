@@ -1,7 +1,7 @@
 //! # WebviewProvider - Messaging Operations
 //!
 //! Implementation of webview message passing for
-//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! [`MountainEnvironment`]
 //!
 //! Handles secure bidirectional communication between host and webview.
 

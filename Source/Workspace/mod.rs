@@ -62,7 +62,7 @@
 //! ## WORKSPACE STATE
 //!
 //! Stored in `ApplicationState`:
-//! - `WorkspaceFolders`: Vec<WorkspaceFolderStateDTO>
+//! - `WorkspaceFolders`: `Vec<WorkspaceFolderStateDTO>`
 //! - `WorkspaceConfigurationPath`: Optional PathBuf to `.code-workspace` file
 //! - `IsTrusted`: Trust status flag
 //! - `WindowState`: Window geometry and placement

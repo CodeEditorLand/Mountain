@@ -12,7 +12,7 @@
 //!
 //! ARCHITECTURAL ROLE:
 //! - Command module that bridges Sky UI requests to
-//!   [`SourceControlManagementProvider`] implementations in the Environment
+//! `SourceControlManagementProvider` implementations in the Environment
 //!   layer
 //! - Uses Tauri's `#[command]` attribute for IPC exposure
 //! - Reads from [`ApplicationState.SourceControlManagement*
@@ -20,20 +20,13 @@
 //! - TODO: Should forward commands to provider methods via DI (Require trait)
 //!
 //! COMMAND REFERENCE (Tauri IPC):
-//! - [`GetAllSourceControlManagementState`](crate::Command::SourceControlManagement::GetAllSourceControlManagementState):
-//!   Returns complete snapshot of providers, groups, and resources for SCM view
-//! - [`GetSCMResourceChanges`](crate::Command::SourceControlManagement::GetSCMResourceChanges):
-//!   Get file changes for a specific provider
-//! - [`ExecuteSCMCommand`](crate::Command::SourceControlManagement::ExecuteSCMCommand):
-//!   Execute SCM operation (commit, push, pull, etc.)
-//! - [`GetSCMBranches`](crate::Command::SourceControlManagement::GetSCMBranches):
-//!   List branches for provider
-//! - [`CheckoutSCMBranch`](crate::Command::SourceControlManagement::CheckoutSCMBranch):
-//!   Switch to a different branch
-//! - [`GetSCMCommitHistory`](crate::Command::SourceControlManagement::GetSCMCommitHistory):
-//!   Retrieve commit log with optional limit
-//! - [`StageSCMResource`](crate::Command::SourceControlManagement::StageSCMResource):
-//!   Stage or unstage a file resource
+//! - [`GetAllSourceControlManagementState`]: Returns complete snapshot of providers, groups, and resources for SCM view
+//! - [`GetSCMResourceChanges`]: Get file changes for a specific provider
+//! - [`ExecuteSCMCommand`]: Execute SCM operation (commit, push, pull, etc.)
+//! - [`GetSCMBranches`]: List branches for provider
+//! - [`CheckoutSCMBranch`]: Switch to a different branch
+//! - [`GetSCMCommitHistory`]: Retrieve commit log with optional limit
+//! - [`StageSCMResource`]: Stage or unstage a file resource
 //!
 //! ERROR HANDLING:
 //! - Returns `Result<Value, String>` where error string is sent to frontend

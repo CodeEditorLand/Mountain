@@ -2,7 +2,7 @@
 //!
 //! Implementation of
 //! [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) for
-//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! [`MountainEnvironment`]
 //!
 //! Provides secure, validated filesystem read access with workspace trust
 //! enforcement.

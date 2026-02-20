@@ -29,7 +29,7 @@
 //!
 //! The Extension Scanner is part of the **Extension Management** subsystem:
 //!
-//! ```
+//! ```text
 //! Startup ──► ScanPaths ──► Scanner ──► Extensions Map ──► ApplicationState
 //! ```
 //!
@@ -109,8 +109,8 @@
 //! - [`ScanDirectoryForExtensions`]: Scan a single directory for extensions
 //! - [`CollectDefaultConfigurations`]: Merge configuration defaults from all
 //!   extensions
-//! - [`process_configuration_properties`]: Recursive configuration property
-//!   processor
+//! - `process_configuration_properties`: Recursive configuration property
+//! processor
 
 use std::{path::PathBuf, sync::Arc};
 

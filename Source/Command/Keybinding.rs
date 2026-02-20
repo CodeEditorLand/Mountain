@@ -17,16 +17,11 @@
 //! - Acts as thin façade layer; all logic resides in provider implementation
 //!
 //! COMMAND REFERENCE (Tauri IPC):
-//! - [`GetResolvedKeybinding`](crate::Command::Keybinding::GetResolvedKeybinding):
-//!   Get the final resolved keybindings after merging all sources
-//! - [`GetUserKeybindings`](crate::Command::Keybinding::GetUserKeybindings):
-//!   Retrieve user-defined keybinding overrides (stub)
-//! - [`RegisterExtensionKeybindings`](crate::Command::Keybinding::RegisterExtensionKeybindings):
-//!   Register keybindings contributed by an extension (stub)
-//! - [`UnregisterExtensionKeybindings`](crate::Command::Keybinding::UnregisterExtensionKeybindings):
-//!   Remove keybindings for an extension (stub)
-//! - [`CheckKeybindingConflicts`](crate::Command::Keybinding::CheckKeybindingConflicts):
-//!   Check if a keybinding conflicts with existing ones (stub)
+//! - [`GetResolvedKeybinding`]: Get the final resolved keybindings after merging all sources
+//! - [`GetUserKeybindings`]: Retrieve user-defined keybinding overrides (stub)
+//! - [`RegisterExtensionKeybindings`]: Register keybindings contributed by an extension (stub)
+//! - [`UnregisterExtensionKeybindings`]: Remove keybindings for an extension (stub)
+//! - [`CheckKeybindingConflicts`]: Check if a keybinding conflicts with existing ones (stub)
 //!
 //! ERROR HANDLING:
 //! - Returns `Result<Value, String>` where errors sent to frontend

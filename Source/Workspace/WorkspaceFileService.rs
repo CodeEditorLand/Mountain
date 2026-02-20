@@ -20,8 +20,7 @@
 //! - Top-level object contains `folders` array (can also have `settings`,
 //!   `extensions`)
 //! - Each folder entry has at least a `path` field (relative to workspace file)
-//! - Example: ```json { "folders": [ { "path": "." }, { "path":
-//!   "../other-project" } ] } ```
+//! - Example: `{"folders": [{"path": "."}, {"path": "../other-project"}]}`
 //!
 //! PARSING FLOW:
 //! 1. Read `.code-workspace` file content as string

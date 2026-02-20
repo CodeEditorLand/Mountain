@@ -9,12 +9,12 @@
 //!
 //! The trait implementation is split across multiple helper modules for
 //! maintainability:
-//! - [`GetValue`]: `GetConfigurationValue` - retrieval from merged cache
-//! - [`UpdateValue`]: `UpdateConfigurationValue` - persistence and re-merge
-//! - [`InspectValue`]: `InspectConfigurationValue` - introspection across
-//!   scopes
-//! - [`Loading`]: `ReadAndParseConfigurationFile`,
-//!   `InitializeAndMergeConfigurations`
+//! - `GetValue`: `GetConfigurationValue` - retrieval from merged cache
+//! - `UpdateValue`: `UpdateConfigurationValue` - persistence and re-merge
+//! - `InspectValue`: `InspectConfigurationValue` - introspection across
+//! scopes
+//! - `Loading`: `ReadAndParseConfigurationFile`,
+//! `InitializeAndMergeConfigurations`
 //!
 //! The single `impl ConfigurationProvider for MountainEnvironment` block in
 //! this file delegates to those helper functions. This satisfies Rust's orphan

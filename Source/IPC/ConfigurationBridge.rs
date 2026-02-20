@@ -170,7 +170,7 @@
 //! ```
 //!
 //! **Example 3: Mountain Updates Setting**
-//! ```rust
+//! ```text
 //! // Mountain service updates configuration
 //! let bridge = ConfigurationBridge::new(runtime);
 //! bridge.synchronize_configuration().await?;
@@ -221,6 +221,7 @@
 use std::sync::Arc;
 
 use log::{debug, info, warn};
+use rand::RngExt;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager, command};
 // Type aliases for Configuration DTOs to simplify usage

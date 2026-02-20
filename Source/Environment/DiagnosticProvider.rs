@@ -54,7 +54,7 @@
 //!
 //! ### Data Storage
 //! - `ApplicationState.Feature.Diagnostics`: HashMap<String, HashMap<String,
-//!   Vec<MarkerDataDTO>>>
+//! `Vec<MarkerDataDTO>`>>
 //!   - Outer key: Owner (e.g., "typescript", "rust-analyzer")
 //!   - Inner key: URI string
 //!   - Value: Vector of diagnostic markers
@@ -129,7 +129,7 @@
 //!
 //! ## MODULE CONTENTS
 //!
-//! - [`DiagnosticProvider`]: Main struct implementing `DiagnosticManager`
+//! - `DiagnosticProvider`: Main struct implementing `DiagnosticManager`
 //! - Diagnostic storage and retrieval methods
 //! - Change notification and event emission
 //! - Owner management functions

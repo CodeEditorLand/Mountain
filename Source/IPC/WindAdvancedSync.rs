@@ -190,7 +190,7 @@
 //!
 //! **Initialization:**
 //!
-//! ```rust
+//! ```text
 //! // In Mountain setup
 //! let sync = Arc::new(WindAdvancedSync::new(runtime));
 //! app_handle.manage(sync.clone());
@@ -198,7 +198,7 @@
 //! // Start sync tasks
 //! let sync_clone = sync.clone();
 //! tokio::spawn(async move {
-//! 	sync_clone.start_synchronization().await;
+//! sync_clone.start_synchronization().await;
 //! });
 //! ```
 //!
@@ -242,12 +242,12 @@
 //! - Sync duration
 //!
 //! **Logged on Every Operation:**
-//! ```rust
+//! ```text
 //! trace!(
-//! 	"Document sync completed: {} success, {} errors, {:.2}ms",
-//! 	success_count,
-//! 	error_count,
-//! 	sync_duration.as_millis()
+//! "Document sync completed: {} success, {} errors, {:.2}ms",
+//! success_count,
+//! error_count,
+//! sync_duration.as_millis()
 //! );
 //! ```
 //!

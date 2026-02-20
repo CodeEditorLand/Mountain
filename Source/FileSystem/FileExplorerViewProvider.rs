@@ -119,7 +119,7 @@
 //! ## MODULE CONTENTS
 //!
 //! - [`FileExplorerViewProvider`]: Main provider struct
-//! - [`CreateTreeItemDTO`]: Helper to build tree item JSON
+//! - `CreateTreeItemDTO`: Helper to build tree item JSON
 
 use std::sync::Arc;
 

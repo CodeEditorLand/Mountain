@@ -35,7 +35,7 @@
 //!
 //! ### Usage Examples
 //!
-//! ```rust
+//! ```text
 //! use Mountain::Telemetry::*;
 //! #[cfg(feature = "Telemetry")]
 //! use tracing::{info, instrument};

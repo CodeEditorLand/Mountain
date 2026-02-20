@@ -1,7 +1,7 @@
 //! # StatusBarProvider - Entry Management
 //!
 //! Implementation of status bar entry creation and disposal for
-//! [`MountainEnvironment`](crate::MountainEnvironment::MountainEnvironment)
+//! [`MountainEnvironment`]
 
 use CommonLibrary::{Error::CommonError::CommonError, StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO};
 use log::info;
