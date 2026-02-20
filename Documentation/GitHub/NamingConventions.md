@@ -137,9 +137,9 @@ message WorkSpaceFolderStateDTO {
 ```typescript
 // TypeScript interface
 interface WorkSpaceFolderStateDTO {
-    URI: string;
-    Name: string;
-    Index: number;
+	URI: string;
+	Name: string;
+	Index: number;
 }
 ```
 
