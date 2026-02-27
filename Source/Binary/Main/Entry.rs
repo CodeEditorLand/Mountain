@@ -59,15 +59,28 @@
 use std::sync::Arc;
 
 use log::{debug, error, info, trace, warn};
-use tauri::{App, RunEvent, Wry};
+use tauri::{App, Manager, RunEvent, Wry}; // Manager trait provides manage() method
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 
 use crate::{
 	// Crate root imports
 	ApplicationState::ApplicationState,
+	Binary::Build::DnsCommands::{
+		self, // Import the module itself
+		dns_get_forward_allowlist,
+		dns_get_health_status,
+		dns_get_server_info,
+		dns_get_zone_info,
+		dns_health_check,
+		dns_resolve,
+		dns_test_resolution,
+	},
 	// Binary submodule imports
 	Binary::Build::LocalhostPlugin::LocalhostPlugin as LocalhostPluginFn,
 	Binary::Build::LoggingPlugin::LoggingPlugin as LoggingPluginFn,
+	Binary::Build::Scheme::{self, DnsPort, init_service_registry, land_scheme_handler, register_land_service},
+	Binary::Build::DnsCommands::init_dns_startup_time,
+	Binary::Build::ServiceRegistry::ServiceRegistry as ServiceRegistryFn,
 	Binary::Build::TauriBuild::TauriBuild as TauriBuildFn,
 	Binary::Build::WindowBuild::WindowBuild as WindowBuildFn,
 	Binary::Extension::ExtensionPopulate::ExtensionPopulate as ExtensionPopulateFn,
@@ -136,7 +149,7 @@ pub fn Fn() {
 		// [Boot] [Args] CLI parsing (using CliParse module)
 		// ---------------------------------------------------------------------
 		let _WorkspaceConfigurationPath = CliParseFn();
-		let _InitialFolders: Vec<String> = vec![];
+		let _InitialFolders:Vec<String> = vec![];
 
 		// ---------------------------------------------------------------------
 		// [Boot] [State] ApplicationState (using StateBuild module)
@@ -183,9 +196,65 @@ pub fn Fn() {
 			.manage(AppStateArcForClosure.clone())
 			.setup({
 				let LocalhostUrl = LocalhostUrl.clone();
+				let ServerPortForClosure = ServerPort;
 				move |app:&mut App| {
 					info!("[Lifecycle] [Setup] Setup hook started.");
 					debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
+
+					// ---------------------------------------------------------
+					// [Service Registry] Initialize service registry for land:// routing
+					// ---------------------------------------------------------
+					info!("[Lifecycle] [Setup] Initializing ServiceRegistry for land:// scheme...");
+					let service_registry = ServiceRegistryFn::new();
+					init_service_registry(service_registry.clone());
+
+					// ---------------------------------------------------------
+					// [Service Registry] Register local HTTP services
+					// ---------------------------------------------------------
+					// Register the main code editor service
+					info!(
+						"[Lifecycle] [Setup] Registering code.editor.land service on port {}",
+						ServerPortForClosure
+					);
+					register_land_service("code.editor.land", ServerPortForClosure);
+
+					// Register API editor service (same port for now, can be separate later)
+					register_land_service("api.editor.land", ServerPortForClosure);
+
+					// Register assets editor service (same port for now, can be separate later)
+					register_land_service("assets.editor.land", ServerPortForClosure);
+
+					// Make the registry available as managed state for Tauri commands
+					app.manage(service_registry);
+					info!("[Lifecycle] [Setup] ServiceRegistry initialized and services registered.");
+
+					// ---------------------------------------------------------
+					// [DNS Server] Start the Hickory DNS server
+					// ---------------------------------------------------------
+					// The DNS server must start BEFORE any webview loads to ensure
+					// that land:// protocol_resolution is available
+					info!("[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
+					let dns_port = tauri::async_runtime::block_on(async {
+						mist::start(5380).unwrap_or_else(|e| {
+							warn!("[Lifecycle] [Setup] Failed to start DNS server on port 5380: {}", e);
+							// Fallback to random port if preferred port fails
+							mist::start(0).unwrap_or_else(|e| {
+								error!("[Lifecycle] [Setup] Completely failed to start DNS server: {}", e);
+								0 // Return 0 as error indicator
+							})
+						})
+					});
+
+					if dns_port == 0 {
+						warn!("[Lifecycle] [Setup] DNS server failed to start, land:// protocol will not be available");
+					} else {
+						info!("[Lifecycle] [Setup] DNS server started successfully on port {}", dns_port);
+						// Initialize DNS startup time for tracking
+						crate::Binary::Build::DnsCommands::init_dns_startup_time();
+					}
+
+					// Register DnsPort as managed state for Tauri commands
+					app.manage(DnsPort(dns_port));
 
 					let AppHandle = app.handle().clone();
 					TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
@@ -194,7 +263,7 @@ pub fn Fn() {
 					// Setup application lifecycle through AppLifecycle module
 					// ---------------------------------------------------------
 					let AppStateArcFromClosure = AppStateArcForClosure.clone();
-					
+
 					if let Err(e) = AppLifecycleSetup(
 						app,
 						AppHandle.clone(),
@@ -207,6 +276,11 @@ pub fn Fn() {
 
 					Ok(())
 				}
+			})
+			.register_asynchronous_uri_scheme_protocol("land", |_ctx, request, responder| {
+					// TODO: Implement async scheme handler with proper signature
+					let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
+					responder.respond(response);
 			})
 			.plugin(tauri_plugin_dialog::init())
 			.plugin(tauri_plugin_fs::init())
@@ -242,6 +316,13 @@ pub fn Fn() {
 				crate::Binary::IPC::UpdateSubscriptionCommand::MountainSubscribeToUpdates,
 				crate::Binary::IPC::ConfigurationDataCommand::GetConfigurationData,
 				crate::Binary::IPC::ConfigurationDataCommand::SaveConfigurationData,
+				crate::Binary::Build::DnsCommands::dns_get_server_info,
+				crate::Binary::Build::DnsCommands::dns_get_zone_info,
+				crate::Binary::Build::DnsCommands::dns_get_forward_allowlist,
+				crate::Binary::Build::DnsCommands::dns_get_health_status,
+				crate::Binary::Build::DnsCommands::dns_resolve,
+				crate::Binary::Build::DnsCommands::dns_test_resolution,
+				crate::Binary::Build::DnsCommands::dns_health_check,
 			])
 			.build(tauri::generate_context!())
 			.expect("FATAL: Error while building Mountain Tauri application")

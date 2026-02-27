@@ -1,6 +1,6 @@
 [[bin]]
 name = "Mountain"
-path = "Source/Library.rs"
+path = "Source/main.rs"
 
 [build-dependencies]
 json5 = { workspace = true }
@@ -11,6 +11,10 @@ tauri-build = { workspace = true, features = [] }
 toml = { workspace = true }
 tonic-build = { workspace = true, features = ["transport"] }
 tonic-prost-build = { workspace = true }
+
+[dev-dependencies]
+tokio-test = { workspace = true }
+futures = { workspace = true }
 
 [dependencies]
 tauri = { workspace = true, features = [
@@ -28,6 +32,7 @@ tauri-plugin-localhost = { workspace = true }
 tauri-plugin-log = { workspace = true }
 
 async-trait = { workspace = true }
+anyhow = { workspace = true }  # TODO: Added for error handling in CertificateManager
 base64 = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 colored = { workspace = true }
@@ -35,6 +40,7 @@ Common = { workspace = true }
 dirs = { workspace = true }
 Echo = { workspace = true }
 Air = { workspace = true, optional = true }
+Mist = { workspace = true }
 env_logger = { workspace = true }
 futures-util = { workspace = true, features = ["sink", "std"] }
 globset = { workspace = true }
@@ -61,6 +67,12 @@ thiserror = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 tokio-tungstenite = { workspace = true, features = ["rustls-tls-native-roots"] }
 tokio-util = { workspace = true, features = ["full"] }
+pem = { workspace = true }
+rcgen = { workspace = true }
+p256 = { workspace = true }
+x509-parser = { workspace = true }
+rustls-pki-types = { workspace = true }
+rustls = { workspace = true }  # TODO: Added for TLS configuration in CertificateManager
 toml = { workspace = true }
 tonic = { workspace = true }
 tonic-prost = { workspace = true }
