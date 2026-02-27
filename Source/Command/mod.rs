@@ -74,12 +74,14 @@
 //! ## MODULE CONTENTS
 //!
 //! - [`Bootstrap`]: Command registration entry point
-//! - [`LanguageFeature`]: LSP hover/completion/definition commands
+//! - [`Hover`]: Hover language feature (atomic structure example)
+//! - [`LanguageFeature`]: LSP hover/completion/definition commands (legacy)
 //! - [`TreeView`]: Tree view manipulation commands
 //! - [`Keybinding`]: Keybinding resolution commands
 //! - [`SourceControlManagement`]: Git/SCM commands
 
 pub mod Bootstrap;
+pub mod Hover;          // Atomic structure (new)
 pub mod Keybinding;
 pub mod LanguageFeature;
 pub mod SourceControlManagement;
