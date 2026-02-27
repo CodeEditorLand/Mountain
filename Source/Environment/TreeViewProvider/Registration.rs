@@ -2,11 +2,7 @@
 //!
 //! Internal helper functions for tree view provider registration and lifecycle.
 
-use CommonLibrary::{
-	Environment::Requires::Requires,
-	Error::CommonError::CommonError,
-	TreeView::DTO::TreeViewOptionsDTO::TreeViewOptionsDTO,
-};
+use CommonLibrary::{Error::CommonError::CommonError, TreeView::DTO::TreeViewOptionsDTO::TreeViewOptionsDTO};
 use log::info;
 use serde_json::json;
 use tauri::Emitter;

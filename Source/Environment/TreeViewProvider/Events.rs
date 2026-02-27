@@ -8,8 +8,6 @@ use log::info;
 use serde_json::json;
 use tauri::Emitter;
 
-use crate::Environment::Utility;
-
 /// Handles tree node expansion/collapse events.
 /// Called when a user expands or collapses a node in the tree view.
 pub(super) async fn on_tree_node_expanded(

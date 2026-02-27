@@ -36,15 +36,11 @@ pub struct TerminalService;
 
 #[cfg(feature = "terminals")]
 impl TerminalService {
-    /// Create a new TerminalService instance
-    pub fn new() -> Self {
-        TerminalService
-    }
+	/// Create a new TerminalService instance
+	pub fn new() -> Self { TerminalService }
 }
 
 #[cfg(feature = "terminals")]
 impl Default for TerminalService {
-    fn default() -> Self {
-        Self::new()
-    }
+	fn default() -> Self { Self::new() }
 }

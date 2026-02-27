@@ -36,15 +36,11 @@ pub struct ProcessService;
 
 #[cfg(feature = "child-processes")]
 impl ProcessService {
-    /// Create a new ProcessService instance
-    pub fn new() -> Self {
-        ProcessService
-    }
+	/// Create a new ProcessService instance
+	pub fn new() -> Self { ProcessService }
 }
 
 #[cfg(feature = "child-processes")]
 impl Default for ProcessService {
-    fn default() -> Self {
-        Self::new()
-    }
+	fn default() -> Self { Self::new() }
 }

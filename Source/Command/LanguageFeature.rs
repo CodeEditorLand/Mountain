@@ -1,6 +1,8 @@
 //! # LanguageFeature (Command)
 //!
 //! RESPONSIBILITIES:
+
+#[allow(unused_imports)]
 //! - Defines Tauri command handlers for language feature requests from Sky
 //!   frontend
 //! - Bridges Monaco Editor language requests to
@@ -20,9 +22,11 @@
 //!
 //! COMMAND REFERENCE (Tauri IPC):
 //! - [`MountainProvideHover`]: Show hover information at cursor position
-//! - [`MountainProvideCodeActions`]: Get quick fixes and refactorings for a code range
+//! - [`MountainProvideCodeActions`]: Get quick fixes and refactorings for a
+//!   code range
 //! - [`MountainProvideDocumentHighlights`]: Find symbol occurrences in document
-//! - [`MountainProvideCompletions`]: Get code completion suggestions with context
+//! - [`MountainProvideCompletions`]: Get code completion suggestions with
+//!   context
 //! - [`MountainProvideDefinition`]: Jump to symbol definition location
 //! - [`MountainProvideReferences`]: Find all references to a symbol
 //!

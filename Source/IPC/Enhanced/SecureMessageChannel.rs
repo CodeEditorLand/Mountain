@@ -10,7 +10,7 @@ use std::{
 	time::{Duration, SystemTime},
 };
 
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, trace};
 use ring::{
 	aead::{self, AES_256_GCM, LessSafeKey, NONCE_LEN, UnboundKey},
 	hmac,

@@ -279,7 +279,7 @@ impl ConnectionPool {
 			loop {
 				interval.tick().await;
 
-				let mut checker = health_checker.lock().await;
+				let checker = health_checker.lock().await;
 				let mut connections = match active_connections.try_lock() {
 					Ok(conns) => conns,
 					Err(_) => continue,

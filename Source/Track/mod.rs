@@ -1,7 +1,8 @@
 //! # Track Module
 //!
 //! ## Responsibilities
-//!
+
+#![allow(unused_imports, unused_variables)]
 //! This module acts as the central request dispatcher for the Mountain
 //! application. It is the primary entry point for all incoming commands and RPC
 //! calls, whether they originate from the `Sky` frontend or a `Cocoon`

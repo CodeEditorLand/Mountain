@@ -221,9 +221,8 @@
 use std::sync::Arc;
 
 use log::{debug, info, warn};
-use rand::RngExt;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, command};
+use tauri::Manager;
 // Type aliases for Configuration DTOs to simplify usage
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
@@ -581,11 +580,8 @@ impl ConfigurationBridge {
 	async fn generate_session_id(&self) -> Result<String, String> {
 		use std::time::{SystemTime, UNIX_EPOCH};
 
-		use rand::{Rng, rng};
-
 		// IMPLEMENTATION: Secure session ID generation
-		let mut rng = rng();
-		let random_part:u64 = rng.random_range(0..=u64::MAX);
+		let random_part:u64 = rand::random();
 
 		let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_millis();
 

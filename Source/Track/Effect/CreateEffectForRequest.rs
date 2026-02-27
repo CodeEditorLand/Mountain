@@ -1,6 +1,8 @@
 //! # CreateEffectForRequest (Track)
 //!
 //! ## RESPONSIBILITIES
+
+#[allow(unused_imports)]
 //!
 //! This module provides the central routing table that maps string-based
 //! commands/RPC methods to typed effects. It creates MappedEffect (type-erased
@@ -550,7 +552,10 @@ pub fn CreateEffectForRequest<R:Runtime>(
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 						// Using default empty parameters for now
-						let (items, options) = (vec!(), None as Option<CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO>);
+						let (items, options) = (
+							vec![],
+							None as Option<CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO>,
+						);
 						provider
 							.ShowQuickPick(items, options)
 							.await
@@ -833,4 +838,3 @@ pub fn CreateEffectForRequest<R:Runtime>(
 		},
 	}
 }
-

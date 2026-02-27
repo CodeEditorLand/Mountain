@@ -36,15 +36,11 @@ pub struct DebugService;
 
 #[cfg(feature = "debug-protocol")]
 impl DebugService {
-    /// Create a new DebugService instance
-    pub fn new() -> Self {
-        DebugService
-    }
+	/// Create a new DebugService instance
+	pub fn new() -> Self { DebugService }
 }
 
 #[cfg(feature = "debug-protocol")]
 impl Default for DebugService {
-    fn default() -> Self {
-        Self::new()
-    }
+	fn default() -> Self { Self::new() }
 }

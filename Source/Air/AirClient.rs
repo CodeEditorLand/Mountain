@@ -79,13 +79,12 @@
 //! - [`DEFAULT_AIR_SERVER_ADDRESS`]: Default gRPC server address constant
 
 use std::{collections::HashMap, sync::Arc};
-use tokio::sync::Mutex;
 
+use tokio::sync::Mutex;
 use CommonLibrary::Error::CommonError::CommonError;
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
-use futures_util::StreamExt;
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use tonic::{Request, transport::Channel};
 
 /// Default gRPC server address for the Air daemon.
@@ -104,7 +103,8 @@ pub const DEFAULT_AIR_SERVER_ADDRESS:&str = "[::1]:50053";
 #[derive(Clone)]
 pub struct AirClient {
 	#[cfg(feature = "AirIntegration")]
-	/// The underlying tonic gRPC client wrapped in Arc<Mutex<>> for thread-safe access
+	/// The underlying tonic gRPC client wrapped in Arc<Mutex<>> for thread-safe
+	/// access
 	client:Option<Arc<Mutex<AirServiceClient<Channel>>>>,
 	/// Address of the Air daemon
 	address:String,
@@ -213,9 +213,10 @@ impl AirClient {
 			let username_display = username.clone();
 			let request = AuthenticationRequest { request_id, username, password, provider };
 
-			let client = self.client.as_ref().ok_or_else(|| {
-				CommonError::IPCError { Description:"Air client not initialized".to_string() }
-			})?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 
 			let mut client_guard = client.lock().await;
 			match client_guard.authenticate(Request::new(request)).await {
@@ -225,7 +226,10 @@ impl AirClient {
 						info!("[AirClient] Authentication successful for user '{}'", username_display);
 						Ok(response.token)
 					} else {
-						error!("[AirClient] Authentication failed for user '{}': {}", username_display, response.error);
+						error!(
+							"[AirClient] Authentication failed for user '{}': {}",
+							username_display, response.error
+						);
 						Err(CommonError::AccessDenied { Reason:response.error })
 					}
 				},
@@ -269,12 +273,15 @@ impl AirClient {
 
 			let request = UpdateCheckRequest { request_id, current_version, channel };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.check_for_updates(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::UpdateCheckResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::UpdateCheckResponse = response.into_inner();
 					info!(
 						"[AirClient] Update check completed. Update available: {}",
 						response.update_available
@@ -326,12 +333,15 @@ impl AirClient {
 
 			let request = DownloadRequest { request_id, url, destination_path, checksum, headers };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.download_update(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::DownloadResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::DownloadResponse = response.into_inner();
 					if response.success {
 						info!("[AirClient] Update downloaded successfully to: {}", response.file_path);
 						Ok(FileInfo {
@@ -375,12 +385,15 @@ impl AirClient {
 
 			let request = ApplyUpdateRequest { request_id, version, update_path };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.apply_update(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::ApplyUpdateResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::ApplyUpdateResponse = response.into_inner();
 					if response.success {
 						info!("[AirClient] Update applied successfully");
 						Ok(())
@@ -433,12 +446,15 @@ impl AirClient {
 
 			let request = DownloadRequest { request_id, url, destination_path, checksum, headers };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.download_file(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::DownloadResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::DownloadResponse = response.into_inner();
 					if response.success {
 						info!("[AirClient] File downloaded successfully to: {}", response.file_path);
 						Ok(FileInfo {
@@ -531,7 +547,10 @@ impl AirClient {
 
 			let request = DownloadStreamRequest { request_id, url, headers };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.download_stream(Request::new(request)).await {
@@ -583,7 +602,10 @@ impl AirClient {
 
 			let request = IndexRequest { request_id, path, patterns, exclude_patterns, max_depth };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.index_files(Request::new(request)).await {
@@ -634,7 +656,10 @@ impl AirClient {
 
 			let request = SearchRequest { request_id, query, path, max_results };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.search_files(Request::new(request)).await {
@@ -674,13 +699,19 @@ impl AirClient {
 
 			let request = FileInfoRequest { request_id, path };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.get_file_info(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::FileInfoResponse = response.into_inner();
-					info!("[AirClient] File info retrieved for: {} (exists: {})", path_display, response.exists);
+					let response:AirLibrary::Vine::Generated::air::FileInfoResponse = response.into_inner();
+					info!(
+						"[AirClient] File info retrieved for: {} (exists: {})",
+						path_display, response.exists
+					);
 					Ok(ExtendedFileInfo {
 						exists:response.exists,
 						size:response.size,
@@ -720,12 +751,15 @@ impl AirClient {
 
 			let request = StatusRequest { request_id };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.get_status(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::StatusResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::StatusResponse = response.into_inner();
 					info!("[AirClient] Status retrieved. Active requests: {}", response.active_requests);
 					Ok(AirStatus {
 						version:response.version,
@@ -766,12 +800,15 @@ impl AirClient {
 
 			let request = HealthCheckRequest {};
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.health_check(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::HealthCheckResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::HealthCheckResponse = response.into_inner();
 					debug!("[AirClient] Health check result: {}", response.healthy);
 					Ok(response.healthy)
 				},
@@ -808,12 +845,15 @@ impl AirClient {
 
 			let request = MetricsRequest { request_id, metric_type:metric_type.unwrap_or_default() };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.get_metrics(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::MetricsResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::MetricsResponse = response.into_inner();
 					info!("[AirClient] Metrics retrieved");
 					// Parse metrics from the string map - this is a simplified implementation
 					let metrics = AirMetrics {
@@ -879,12 +919,15 @@ impl AirClient {
 
 			let request = ResourceUsageRequest { request_id };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.get_resource_usage(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::ResourceUsageResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::ResourceUsageResponse = response.into_inner();
 					info!("[AirClient] Resource usage retrieved");
 					Ok(ResourceUsage {
 						memory_usage_mb:response.memory_usage_mb,
@@ -937,12 +980,15 @@ impl AirClient {
 
 			let request = ResourceLimitsRequest { request_id, memory_limit_mb, cpu_limit_percent, disk_limit_mb };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.set_resource_limits(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::ResourceLimitsResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::ResourceLimitsResponse = response.into_inner();
 					if response.success {
 						info!("[AirClient] Resource limits set successfully");
 						Ok(())
@@ -991,12 +1037,15 @@ impl AirClient {
 
 			let request = ConfigurationRequest { request_id, section };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.get_configuration(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::ConfigurationResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::ConfigurationResponse = response.into_inner();
 					info!(
 						"[AirClient] Configuration retrieved for section: {} ({} keys)",
 						section_display,
@@ -1045,14 +1094,20 @@ impl AirClient {
 
 			let request = UpdateConfigurationRequest { request_id, section, updates };
 
-			let client = self.client.as_ref().ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
+			let client = self
+				.client
+				.as_ref()
+				.ok_or_else(|| CommonError::IPCError { Description:"Air client not initialized".to_string() })?;
 			let mut client_guard = client.lock().await;
 
 			match client_guard.update_configuration(Request::new(request)).await {
 				Ok(response) => {
-					let response: AirLibrary::Vine::Generated::air::UpdateConfigurationResponse = response.into_inner();
+					let response:AirLibrary::Vine::Generated::air::UpdateConfigurationResponse = response.into_inner();
 					if response.success {
-						info!("[AirClient] Configuration updated successfully for section: {}", section_display);
+						info!(
+							"[AirClient] Configuration updated successfully for section: {}",
+							section_display
+						);
 						Ok(())
 					} else {
 						error!("[AirClient] Failed to update configuration: {}", response.error);
@@ -1236,9 +1291,7 @@ impl DownloadStream {
 // ============================================================================
 
 impl std::fmt::Debug for AirClient {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		write!(f, "AirClient({})", self.address)
-	}
+	fn fmt(&self, f:&mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "AirClient({})", self.address) }
 }
 
 // ============================================================================

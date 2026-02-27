@@ -88,7 +88,8 @@
 //!
 //! ## INITIALIZATION SEQUENCE
 //!
-//! 1. **Create Environment**: `MountainEnvironment::Create(app_handle, app_state)`
+//! 1. **Create Environment**: `MountainEnvironment::Create(app_handle,
+//!    app_state)`
 //! 2. **Provider Instantiation**: Lazy through `Requires<T>` trait calls
 //! 3. **State Access**: Each provider can access `ApplicationState` and
 //!    `AppHandle` via self
@@ -175,8 +176,6 @@ use std::sync::Arc;
 // Import Air service client when Air integration is enabled
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
-#[cfg(feature = "AirIntegration")]
-use AirLibrary::Vine::Generated::air::HealthCheckRequest;
 use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
 	Configuration::{ConfigurationInspector::ConfigurationInspector, ConfigurationProvider::ConfigurationProvider},
@@ -208,7 +207,7 @@ use CommonLibrary::{
 use async_trait::async_trait;
 use log::{info, warn};
 use serde_json::Value;
-use tauri::{AppHandle, Manager, Wry};
+use tauri::{AppHandle, Wry};
 
 use crate::ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO};
 // Import the macro for generating trait implementations
@@ -276,9 +275,9 @@ impl MountainEnvironment {
 	#[cfg(feature = "AirIntegration")]
 	pub async fn IsAirAvailable(&self) -> bool {
 		// TODO: Implement proper health check when AirClient wrapper is available
-		// The raw gRPC client requires &mut self for health_check, but MountainEnvironment
-		// stores an immutable reference. This will be fixed when the AirClient wrapper
-		// is properly integrated.
+		// The raw gRPC client requires &mut self for health_check, but
+		// MountainEnvironment stores an immutable reference. This will be fixed when
+		// the AirClient wrapper is properly integrated.
 		if let Some(_AirClient) = &self.AirClient {
 			// For now, assume Air is available if the client exists
 			info!("[MountainEnvironment] Air client configured (health check disabled pending integration)");

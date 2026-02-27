@@ -1,6 +1,8 @@
 //! # Command Module
 //!
 //! Defines and registers all native (Rust-implemented) commands for the
+
+#![allow(unused_imports, unused_variables)]
 //! Mountain application. Commands are organized by functionality and registered
 //! at startup via the `Bootstrap` module.
 //!

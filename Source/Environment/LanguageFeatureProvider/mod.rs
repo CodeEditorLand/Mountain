@@ -34,10 +34,7 @@ use async_trait::async_trait;
 use serde_json::Value;
 use url::Url;
 
-use crate::{
-	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
-	Environment::MountainEnvironment::MountainEnvironment,
-};
+use crate::Environment::MountainEnvironment::MountainEnvironment;
 
 // Private helper modules (not re-exported)
 mod Registration;

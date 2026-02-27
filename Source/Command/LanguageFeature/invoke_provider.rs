@@ -2,6 +2,7 @@
 //!
 //! Generic helper to reduce boilerplate in language feature command handlers.
 
+#[allow(unused_imports)]
 use std::sync::Arc;
 
 use CommonLibrary::{

@@ -80,7 +80,7 @@
 use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
-use log::{debug, info, warn};
+use log::{debug, info};
 
 /// Role definition for RBAC system
 #[derive(Debug, Clone, Serialize, Deserialize)]

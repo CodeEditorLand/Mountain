@@ -1,6 +1,8 @@
 //! # MountainWebviewPostMessageFromGuest (Track)
 //!
 //! ## RESPONSIBILITIES
+
+#[allow(unused_imports)]
 //!
 //! This module provides a Tauri command handler for a Webview guest to post
 //! a message back to the extension host.

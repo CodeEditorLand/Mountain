@@ -1,6 +1,8 @@
 //! # Entry (Binary/Main)
 //!
 //! ## RESPONSIBILITIES
+
+#[allow(unused_imports)]
 //!
 //! Main application entry point that orchestrates the complete application
 //! lifecycle. This function coordinates:
@@ -65,6 +67,7 @@ use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 use crate::{
 	// Crate root imports
 	ApplicationState::ApplicationState,
+	Binary::Build::DnsCommands::init_dns_startup_time,
 	Binary::Build::DnsCommands::{
 		self, // Import the module itself
 		dns_get_forward_allowlist,
@@ -79,7 +82,6 @@ use crate::{
 	Binary::Build::LocalhostPlugin::LocalhostPlugin as LocalhostPluginFn,
 	Binary::Build::LoggingPlugin::LoggingPlugin as LoggingPluginFn,
 	Binary::Build::Scheme::{self, DnsPort, init_service_registry, land_scheme_handler, register_land_service},
-	Binary::Build::DnsCommands::init_dns_startup_time,
 	Binary::Build::ServiceRegistry::ServiceRegistry as ServiceRegistryFn,
 	Binary::Build::TauriBuild::TauriBuild as TauriBuildFn,
 	Binary::Build::WindowBuild::WindowBuild as WindowBuildFn,
@@ -278,9 +280,9 @@ pub fn Fn() {
 				}
 			})
 			.register_asynchronous_uri_scheme_protocol("land", |_ctx, request, responder| {
-					// TODO: Implement async scheme handler with proper signature
-					let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
-					responder.respond(response);
+				// TODO: Implement async scheme handler with proper signature
+				let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
+				responder.respond(response);
 			})
 			.plugin(tauri_plugin_dialog::init())
 			.plugin(tauri_plugin_fs::init())

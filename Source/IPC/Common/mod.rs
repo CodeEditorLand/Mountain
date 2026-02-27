@@ -38,12 +38,12 @@ pub mod PerformanceMetrics;
 pub mod ServiceInfo;
 
 // Re-export commonly used types (use module prefix to avoid naming conflicts)
-pub use ConnectionStatus::{ConnectionState as ConnectionState};
+pub use ConnectionStatus::ConnectionState;
 pub use HealthStatus::{HealthIssue, HealthMonitor, SeverityLevel};
 pub use MessageType::{IPCCommand, IPCMessage, IPCResponse};
-pub use PerformanceMetrics::{ThroughputMetrics};
+pub use PerformanceMetrics::ThroughputMetrics;
 pub use ServiceInfo::{ServiceRegistry, ServiceState};
-
 // Re-exports for struct types (using module prefix)
 pub use ConnectionStatus::ConnectionStatus as Status;
-// Note: PerformanceMetrics and ServiceInfo are modules, not types - use directly
+// Note: PerformanceMetrics and ServiceInfo are modules, not types - use
+// directly

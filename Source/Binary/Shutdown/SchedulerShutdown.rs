@@ -2,6 +2,7 @@
 //!
 //! Handles graceful shutdown of the Echo task scheduler.
 
+#[allow(unused_imports)]
 use std::sync::Arc;
 
 use log::{debug, error, info};

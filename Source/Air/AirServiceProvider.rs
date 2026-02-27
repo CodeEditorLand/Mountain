@@ -66,9 +66,10 @@
 use std::{collections::HashMap, sync::Arc};
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{debug, info, trace};
+use log::{info, trace};
 use uuid::Uuid;
 
+#[allow(unused_imports)]
 use super::{
 	AirClient::{
 		AirClient,

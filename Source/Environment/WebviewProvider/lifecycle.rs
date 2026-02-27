@@ -11,7 +11,7 @@ use CommonLibrary::{
 };
 use log::{error, info, warn};
 use serde_json::{Value, json};
-use tauri::{Emitter, Manager, WebviewWindow, WebviewWindowBuilder};
+use tauri::{Emitter, Manager, WebviewWindowBuilder};
 use uuid::Uuid;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};

@@ -156,14 +156,10 @@ use std::collections::HashMap;
 
 use CommonLibrary::{Error::CommonError::CommonError, Webview::WebviewProvider::WebviewProvider};
 use async_trait::async_trait;
-use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
-use serde_json::{Value, json};
-use tauri::{Emitter, Manager, WebviewWindow};
-use uuid::Uuid;
+use serde_json::Value;
 
-use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO;
+use super::MountainEnvironment::MountainEnvironment;
 
 /// Represents a Webview message
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -186,6 +182,7 @@ pub enum WebviewLifecycleState {
 }
 
 /// Webview message handler context
+#[allow(dead_code)]
 struct WebviewMessageContext {
 	Handle:String,
 	SideCarIdentifier:Option<String>,

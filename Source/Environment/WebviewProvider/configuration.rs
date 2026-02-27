@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use CommonLibrary::Error::CommonError::CommonError;
 use log::debug;
 use serde_json::{Value, json};
-use tauri::{Emitter, Manager, WebviewWindow};
+use tauri::{Emitter, Manager};
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 

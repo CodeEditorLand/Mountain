@@ -1,6 +1,8 @@
 //! # RuntimeBuild - Advanced Runtime Scheduler Initialization
 //!
 //! Constructs the Echo async scheduler with telemetry integration and feature
+
+#[allow(unused_imports)]
 //! flags.
 //!
 //! ## Build Profiles
@@ -22,8 +24,7 @@
 
 use std::sync::Arc;
 
-use Echo::Scheduler::Scheduler::Scheduler;
-use Echo::Scheduler::SchedulerBuilder::SchedulerBuilder;
+use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 use log::{debug, info, warn};
 
 // ============ Feature Flags ============

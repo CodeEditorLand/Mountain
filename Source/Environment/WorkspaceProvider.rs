@@ -64,7 +64,7 @@
 //! - Data types: [`(Url, String, usize)`] tuple for folder info (URI, name,
 //!   index)
 
-use std::{path::PathBuf, sync::Arc};
+use std::path::PathBuf;
 
 use CommonLibrary::{
 	DTO::WorkspaceEditDTO::WorkspaceEditDTO,

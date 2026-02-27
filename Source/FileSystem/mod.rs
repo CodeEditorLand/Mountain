@@ -1,6 +1,8 @@
 //! # FileSystem Module
 //!
 //! ## RESPONSIBILITY
+
+#![allow(unused_imports, unused_variables)]
 //! - File system abstraction and service providers
 //! - File explorer view provider for the sidebar.
 //! - Directory tree navigation and state management

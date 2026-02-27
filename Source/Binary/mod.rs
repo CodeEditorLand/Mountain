@@ -1,7 +1,8 @@
 //! # Binary Module
 //!
 //! ## RESPONSIBILITIES
-//!
+
+#![allow(unused_imports, unused_variables)]
 //! Main entry point and initialization for the Mountain desktop application.
 //! This module handles application startup, Tauri command registration,
 //! configuration, and lifecycle management.

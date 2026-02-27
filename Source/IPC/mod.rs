@@ -1,7 +1,8 @@
 //! # IPC Module
 //!
 //! ## RESPONSIBILITIES
-//!
+
+#![allow(unused_imports, unused_variables)]
 //! Inter-process communication (IPC) for the Mountain application, handling
 //! communication between the Tauri frontend and the Rust backend through
 //! various protocols including Tauri commands, WebSocket, and custom message
@@ -67,8 +68,7 @@
 pub mod Common;
 
 /// Main Tauri IPC server orchestrator.
-// Note: Legacy TauriIPCServer.rs is used for backward compatibility
-// TODO: Migrate to TauriIPCServer/mod.rs in future phase
+// Legacy TauriIPCServer.rs for backward compatibility
 #[path = "TauriIPCServer.rs"]
 pub mod TauriIPCServer_Old;
 
@@ -87,26 +87,22 @@ pub mod Security;
 // --- Feature Sub-modules ---
 
 /// Advanced experimental features.
-// Note: Legacy AdvancedFeatures.rs is used for backward compatibility
-// TODO: Migrate to AdvancedFeatures/mod.rs in future phase
+// Legacy AdvancedFeatures.rs for backward compatibility
 #[path = "AdvancedFeatures.rs"]
 pub mod AdvancedFeatures;
 
 /// Configuration synchronization bridge.
-// Note: Legacy ConfigurationBridge.rs is used for backward compatibility
-// TODO: Migrate to ConfigurationBridge/mod.rs in future phase
+// Legacy ConfigurationBridge.rs for backward compatibility
 #[path = "ConfigurationBridge.rs"]
 pub mod ConfigurationBridge;
 
 /// Status and metrics reporting.
-// Note: Legacy StatusReporter.rs is used for backward compatibility
-// TODO: Migrate to StatusReporter/mod.rs in future phase
+// Legacy StatusReporter.rs for backward compatibility
 #[path = "StatusReporter.rs"]
 pub mod StatusReporter;
 
 /// Wind UI framework synchronization.
-// Note: Legacy WindAdvancedSync.rs is used for backward compatibility
-// TODO: Migrate to WindAdvancedSync/mod.rs in future phase
+// Legacy WindAdvancedSync.rs for backward compatibility
 #[path = "WindAdvancedSync.rs"]
 pub mod WindAdvancedSync;
 

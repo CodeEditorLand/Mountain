@@ -3,7 +3,7 @@
 //! Provides health monitoring and scoring for IPC components.
 //! Used to track the overall health of the IPC system.
 
-use std::{collections::HashSet, time::Instant};
+use std::time::Instant;
 
 use serde::{Deserialize, Serialize};
 
@@ -76,7 +76,8 @@ pub struct HealthMonitor {
 	pub issues:Vec<(HealthIssue, SeverityLevel)>,
 	/// Number of recovery attempts made
 	pub recovery_attempts:u32,
-	/// Timestamp of last health check (skipped for serialization as Instant is not serializable)
+	/// Timestamp of last health check (skipped for serialization as Instant is
+	/// not serializable)
 	#[serde(skip)]
 	pub last_check:Instant,
 }
@@ -155,4 +156,3 @@ impl HealthMonitor {
 	/// Increment recovery attempt counter
 	pub fn increment_recovery_attempts(&mut self) { self.recovery_attempts += 1; }
 }
-

@@ -102,15 +102,6 @@
 //! - [ ] Add real-time alerting for critical events
 //! - [ ] Implement log aggregation across multiple instances
 
-use std::{
-	collections::VecDeque,
-	net::IpAddr,
-	sync::Arc,
-	time::{Duration, SystemTime, UNIX_EPOCH},
-};
-
-use tokio::sync::RwLock;
-use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 
 /// Maximum number of events to store in the audit log

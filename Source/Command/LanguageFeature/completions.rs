@@ -2,6 +2,7 @@
 //!
 //! Provides code completion suggestions
 
+#[allow(unused_imports)]
 use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::{

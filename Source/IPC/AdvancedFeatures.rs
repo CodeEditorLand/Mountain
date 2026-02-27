@@ -209,10 +209,10 @@ use std::{
 	time::{Duration, SystemTime},
 };
 
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{Emitter, Manager};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 

@@ -8,7 +8,7 @@ use log::info;
 use serde_json::{Value, json};
 use tauri::Emitter;
 
-use super::super::{MountainEnvironment::MountainEnvironment, Utility};
+use super::super::MountainEnvironment::MountainEnvironment;
 
 /// Message management operations implementation for MountainEnvironment
 pub(super) async fn set_status_bar_message_impl(

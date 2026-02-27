@@ -93,10 +93,7 @@ use tokio::sync::RwLock;
 use log::{debug, error, warn};
 use serde::{Deserialize, Serialize};
 
-use super::super::{
-	Audit::LogEvent::SecurityEventType,
-	Role::ManageRole::{Permission, Role},
-};
+use super::super::Role::ManageRole::{Permission, Role};
 
 /// Security context for permission validation
 #[derive(Debug, Clone, Serialize, Deserialize)]

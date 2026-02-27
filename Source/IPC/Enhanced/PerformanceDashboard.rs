@@ -6,10 +6,10 @@
 use std::{
 	collections::{HashMap, VecDeque},
 	sync::Arc,
-	time::{Duration, Instant, SystemTime},
+	time::{Duration, SystemTime},
 };
 
-use log::{debug, error, info, trace, warn};
+use log::{debug, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::{
 	sync::{Mutex as AsyncMutex, RwLock},
@@ -285,7 +285,7 @@ impl PerformanceDashboard {
 	pub async fn end_trace_span(&self, span_id:&str) -> Result<(), String> {
 		let mut traces = self.traces.write().await;
 
-		if let Some(mut span) = traces.get_mut(span_id) {
+		if let Some(span) = traces.get_mut(span_id) {
 			let end_time = SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()

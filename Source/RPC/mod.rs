@@ -1,7 +1,8 @@
 //! # Mountain RPC Services
 //!
 //! ☀️ 🟢 MOUNTAIN_SKY_ONLY - Core RPC service implementations
-//!
+
+#![allow(unused_imports, unused_variables)]
 //! This module contains the complete RPC services for Mountain's Spine
 //! contract. All services support extension hosts based on their feature gates:
 //!

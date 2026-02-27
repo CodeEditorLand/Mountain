@@ -1,6 +1,8 @@
 //! # CocoonServiceImpl Implementation
 //!
 //! This module implements the main gRPC service for Mountain-Cocoon
+
+#[allow(unused_imports)]
 //! communication. It handles all requests from the Cocoon extension host
 //! sidecar.
 //!

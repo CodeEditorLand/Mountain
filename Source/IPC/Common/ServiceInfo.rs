@@ -43,12 +43,14 @@ pub struct ServiceInfo {
 	pub version:String,
 	/// Current state
 	pub state:ServiceState,
-	/// When the service entered its current state (skipped for serialization as Instant is not serializable)
+	/// When the service entered its current state (skipped for serialization as
+	/// Instant is not serializable)
 	#[serde(skip)]
 	pub state_since:Instant,
 	/// Service uptime
 	pub uptime:Duration,
-	/// Last heartbeat timestamp (skipped for serialization as Instant is not serializable)
+	/// Last heartbeat timestamp (skipped for serialization as Instant is not
+	/// serializable)
 	#[serde(skip)]
 	pub last_heartbeat:Option<Instant>,
 	/// Services this service depends on

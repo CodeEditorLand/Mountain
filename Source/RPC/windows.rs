@@ -35,15 +35,11 @@ pub struct WindowService;
 
 #[cfg(any(feature = "grove", feature = "cocoon"))]
 impl WindowService {
-    /// Create a new WindowService instance
-    pub fn new() -> Self {
-        WindowService
-    }
+	/// Create a new WindowService instance
+	pub fn new() -> Self { WindowService }
 }
 
 #[cfg(any(feature = "grove", feature = "cocoon"))]
 impl Default for WindowService {
-    fn default() -> Self {
-        Self::new()
-    }
+	fn default() -> Self { Self::new() }
 }

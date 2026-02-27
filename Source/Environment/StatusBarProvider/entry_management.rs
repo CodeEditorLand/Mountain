@@ -6,7 +6,7 @@
 use CommonLibrary::{Error::CommonError::CommonError, StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO};
 use log::info;
 use serde_json::json;
-use tauri::{Emitter, Manager};
+use tauri::Emitter;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 

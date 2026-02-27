@@ -2,6 +2,7 @@
 //!
 //! Provides hover information at cursor position
 
+#[allow(unused_imports)]
 use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::{

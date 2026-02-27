@@ -2,6 +2,7 @@
 //!
 //! Finds all references to a symbol
 
+#[allow(unused_imports)]
 use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::{

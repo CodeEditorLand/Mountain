@@ -107,4 +107,3 @@ impl ConnectionStatus {
 	/// Get the duration since last successful connection
 	pub fn time_since_last_connection(&self) -> Option<Duration> { self.last_connected.map(|t| t.elapsed()) }
 }
-

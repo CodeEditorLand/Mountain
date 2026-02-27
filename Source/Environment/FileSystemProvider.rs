@@ -14,8 +14,7 @@
 //!
 //! SECURITY MODEL:
 //! - Sandboxed filesystem access limited to registered workspace folders
-//! - All operations call `Utility::IsPathAllowedForAccess`
-//!   first
+//! - All operations call `Utility::IsPathAllowedForAccess` first
 //! - Requires workspace trust to be enabled for any file access
 //! - Path normalization prevents `../` attacks
 //! - Symbolic link detection avoids following untrusted links outside
@@ -70,7 +69,7 @@ use CommonLibrary::{
 };
 use async_trait::async_trait;
 
-use super::{MountainEnvironment::MountainEnvironment, Utility};
+use super::MountainEnvironment::MountainEnvironment;
 
 // Private submodules containing the actual implementation
 #[path = "FileSystemProvider/read_operations.rs"]

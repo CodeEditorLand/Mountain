@@ -7,7 +7,6 @@
 use std::{
 	collections::VecDeque,
 	io::{Read, Write},
-	time::Duration,
 };
 
 use brotli::{CompressorReader, CompressorWriter, enc::BrotliEncoderParams};
@@ -15,7 +14,6 @@ use flate2::{
 	Compression,
 	write::{GzEncoder, ZlibEncoder},
 };
-use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::time::Instant;
 use bincode::serde::{decode_from_slice, encode_to_vec};

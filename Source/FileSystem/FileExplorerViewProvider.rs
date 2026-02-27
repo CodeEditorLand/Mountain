@@ -1,6 +1,8 @@
 //! # FileExplorerViewProvider (FileSystem)
 //!
 //! A native (Rust-implemented) `TreeViewProvider` that provides the data for
+
+#[allow(unused_imports)]
 //! the file explorer (tree) view in Mountain. This is a **native provider**,
 //! meaning it is implemented directly in Rust rather than being provided by an
 //! extension.

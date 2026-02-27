@@ -4,6 +4,8 @@
 //
 //! # Enable Tray Function
 //!
+
+#[allow(unused_imports)]
 //! System tray configuration and initialization.
 
 use log::{debug, error, info, warn};

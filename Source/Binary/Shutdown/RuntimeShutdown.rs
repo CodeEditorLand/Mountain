@@ -2,6 +2,7 @@
 //!
 //! Handles graceful shutdown of the ApplicationRunTime.
 
+#[allow(unused_imports)]
 use std::sync::Arc;
 
 use log::{debug, error, info};

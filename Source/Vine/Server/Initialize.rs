@@ -35,7 +35,7 @@
 //! - Not automatically restart on failure (caller should implement retry logic
 //!   if needed)
 
-use std::{net::SocketAddr, sync::Arc, time::Duration};
+use std::{net::SocketAddr, sync::Arc};
 
 use log::{debug, error, info, warn};
 use tauri::{AppHandle, Manager};

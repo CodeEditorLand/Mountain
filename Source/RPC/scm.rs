@@ -36,15 +36,11 @@ pub struct SCMService;
 
 #[cfg(feature = "scm-support")]
 impl SCMService {
-    /// Create a new SCMService instance
-    pub fn new() -> Self {
-        SCMService
-    }
+	/// Create a new SCMService instance
+	pub fn new() -> Self { SCMService }
 }
 
 #[cfg(feature = "scm-support")]
 impl Default for SCMService {
-    fn default() -> Self {
-        Self::new()
-    }
+	fn default() -> Self { Self::new() }
 }

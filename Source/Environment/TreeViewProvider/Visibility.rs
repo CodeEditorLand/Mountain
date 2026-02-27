@@ -7,8 +7,6 @@ use log::info;
 use serde_json::json;
 use tauri::Emitter;
 
-use crate::Environment::Utility;
-
 /// Reveals a specific item in the tree view by notifying the UI.
 pub(super) async fn reveal_tree_item(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,

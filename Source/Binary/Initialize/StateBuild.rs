@@ -1,6 +1,8 @@
 //! # StateBuild - Advanced Application State Initialization
 //!
 //! Builds the application state with dependency injection, telemetry
+
+#[allow(unused_imports)]
 //! and feature flag support for different build configurations.
 //!
 //! ## Build Profiles
@@ -131,7 +133,7 @@ fn ValidateCapabilities(_environment:&MountainEnvironment) -> Result<(), String>
 
 /// Create minimal state for testing (reduced requirements)
 #[cfg(any(test, feature = "Test"))]
-pub fn BuildMinimal(_app_handle: tauri::AppHandle) -> Result<ApplicationState, String> {
+pub fn BuildMinimal(_app_handle:tauri::AppHandle) -> Result<ApplicationState, String> {
 	info!("[StateBuild] Creating minimal test state");
 	// Create minimal ApplicationState for tests (no environment needed)
 	// The environment is created later in the actual application lifecycle

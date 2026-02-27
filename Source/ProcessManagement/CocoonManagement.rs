@@ -111,7 +111,7 @@ impl Default for CocoonProcessState {
 	}
 }
 
-/// Global state for Cocoon process management
+// Global state for Cocoon process management
 lazy_static::lazy_static! {
 	static ref COCOON_STATE: Arc<Mutex<CocoonProcessState>> =
 		Arc::new(Mutex::new(CocoonProcessState::default()));

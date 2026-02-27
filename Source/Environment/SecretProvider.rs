@@ -211,8 +211,6 @@
 //   period (e.g., 2 weeks of stable operation). Keep fallback for Air
 //   unavailability
 
-use std::sync::Arc;
-
 use CommonLibrary::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProvider};
 use async_trait::async_trait;
 use keyring::Entry;
@@ -220,8 +218,6 @@ use log::{info, trace, warn};
 // Import Air client types when Air is available in the workspace
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
-#[cfg(feature = "AirIntegration")]
-use AirLibrary::Vine::Generated::air::HealthCheckRequest;
 
 use super::MountainEnvironment::MountainEnvironment;
 
@@ -234,9 +230,9 @@ fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&
 #[cfg(feature = "AirIntegration")]
 async fn IsAirAvailable(_AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool {
 	// TODO: Implement proper health check when AirClient wrapper is available
-	// The raw gRPC client requires &mut self for health_check, but MountainEnvironment
-	// stores an immutable reference. This will be fixed when the AirClient wrapper
-	// is properly integrated.
+	// The raw gRPC client requires &mut self for health_check, but
+	// MountainEnvironment stores an immutable reference. This will be fixed when
+	// the AirClient wrapper is properly integrated.
 	// For now, assume Air is available if the client exists
 	true
 }
@@ -368,18 +364,13 @@ impl SecretProvider for MountainEnvironment {
 // Air Integration Functions
 // ============================================================================
 
-#[cfg(feature = "AirIntegration")]
-use tonic::Request;
-
 /// Retrieves a secret from the Air service.
 #[cfg(feature = "AirIntegration")]
 async fn GetSecretFromAir(
-	AirClient:&AirServiceClient<tonic::transport::Channel>,
+	_AirClient:&AirServiceClient<tonic::transport::Channel>,
 	ExtensionIdentifier:String,
 	Key:String,
 ) -> Result<Option<String>, CommonError> {
-	use AirLibrary::Vine::Generated::air::air_service_server;
-
 	info!(
 		"[SecretProvider] Fetching secret from Air: ext='{}', key='{}'",
 		ExtensionIdentifier, Key
@@ -399,10 +390,10 @@ async fn GetSecretFromAir(
 /// Stores a secret in the Air service.
 #[cfg(feature = "AirIntegration")]
 async fn StoreSecretToAir(
-	AirClient:&AirServiceClient<tonic::transport::Channel>,
+	_AirClient:&AirServiceClient<tonic::transport::Channel>,
 	ExtensionIdentifier:String,
 	Key:String,
-	Value:String,
+	_Value:String,
 ) -> Result<(), CommonError> {
 	info!(
 		"[SecretProvider] Storing secret in Air: ext='{}', key='{}'",
@@ -423,7 +414,7 @@ async fn StoreSecretToAir(
 /// Deletes a secret from the Air service.
 #[cfg(feature = "AirIntegration")]
 async fn DeleteSecretFromAir(
-	AirClient:&AirServiceClient<tonic::transport::Channel>,
+	_AirClient:&AirServiceClient<tonic::transport::Channel>,
 	ExtensionIdentifier:String,
 	Key:String,
 ) -> Result<(), CommonError> {

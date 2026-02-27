@@ -294,12 +294,9 @@
 //! - Large file downloads streamed via Air
 //! - Indexing operations run asynchronously in Air
 
-use std::sync::Arc;
-
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager};
+use tauri::Manager;
 use log::{debug, info};
-use CommonLibrary::Error::CommonError::CommonError;
 
 // Import Air types from the new AirClient implementation.
 // These provide actual gRPC connectivity to the Air daemon service.

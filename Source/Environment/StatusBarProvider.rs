@@ -5,20 +5,14 @@
 //! orchestrates communication between the `Cocoon` sidecar and the `Sky`
 //! frontend.
 
-use std::sync::Arc;
-
 use CommonLibrary::{
-	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
 };
 use async_trait::async_trait;
-use log::info;
-use serde_json::{Value, json};
-use tauri::Emitter;
+use serde_json::Value;
 
-use super::{MountainEnvironment::MountainEnvironment, Utility};
+use super::MountainEnvironment::MountainEnvironment;
 
 // Private submodules containing the actual implementation
 #[path = "StatusBarProvider/entry_management.rs"]

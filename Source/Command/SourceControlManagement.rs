@@ -20,7 +20,8 @@
 //! - TODO: Should forward commands to provider methods via DI (Require trait)
 //!
 //! COMMAND REFERENCE (Tauri IPC):
-//! - [`GetAllSourceControlManagementState`]: Returns complete snapshot of providers, groups, and resources for SCM view
+//! - [`GetAllSourceControlManagementState`]: Returns complete snapshot of
+//!   providers, groups, and resources for SCM view
 //! - [`GetSCMResourceChanges`]: Get file changes for a specific provider
 //! - [`ExecuteSCMCommand`]: Execute SCM operation (commit, push, pull, etc.)
 //! - [`GetSCMBranches`]: List branches for provider

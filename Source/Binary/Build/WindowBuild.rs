@@ -23,9 +23,9 @@ use tauri::{App, WebviewUrl, WebviewWindowBuilder, Wry};
 pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewWindow<Wry> {
 	// Create the window URL pointing to the application
 	let WindowUrl = WebviewUrl::External(
-	        format!("{}/index.html", LocalhostUrl)
-	        .parse()
-	        .expect("FATAL: Failed to parse localhost URL"),
+		format!("{}/index.html", LocalhostUrl)
+			.parse()
+			.expect("FATAL: Failed to parse localhost URL"),
 	);
 
 	// Configure window builder with base settings

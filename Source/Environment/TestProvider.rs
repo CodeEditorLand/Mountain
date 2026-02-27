@@ -93,10 +93,9 @@ use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tauri::Emitter;
-use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use super::{MountainEnvironment::MountainEnvironment, Utility};
+use super::MountainEnvironment::MountainEnvironment;
 
 /// Represents a test controller's state
 #[derive(Debug, Clone, Serialize, Deserialize)]

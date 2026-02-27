@@ -30,5 +30,4 @@
 //! - Add historical data tracking
 
 // Re-export the original file for backward compatibility
-// TODO: Convert to atomic format in future refactoring
 pub use crate::Element::Mountain::Source::IPC::StatusReporter as Reporter;

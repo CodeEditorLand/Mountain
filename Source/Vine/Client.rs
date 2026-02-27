@@ -48,13 +48,13 @@
 //! - SerializationError: JSON parsing/serialization failure
 
 use std::{
-	collections::{HashMap, hash_map::DefaultHasher},
+	collections::HashMap,
 	sync::Arc,
 	time::{Duration, Instant},
 };
 
 use lazy_static::lazy_static;
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 use parking_lot::Mutex;
 use serde_json::{Value, from_slice, to_vec};
 use tokio::time::timeout;
@@ -360,7 +360,7 @@ pub async fn SendRequest(
 		to_vec(&Parameters).map_err(|e| VineError::RPCError(format!("Failed to serialize parameters: {}", e)))?;
 	ValidateMessageSize(&parameter_bytes)?;
 
-	let mut client = {
+	let client = {
 		let guard = SIDECAR_CLIENTS.lock();
 		guard.get(SideCarIdentifier).cloned()
 	};

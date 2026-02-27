@@ -13,6 +13,7 @@ pub mod PerformanceDashboard;
 
 use std::collections::HashMap;
 
+#[allow(unused_imports)]
 use log::{debug, info};
 use bincode::serde::encode_to_vec;
 

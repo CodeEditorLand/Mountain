@@ -191,7 +191,7 @@ use std::{
 
 use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{Emitter, Manager};
 use tokio::sync::RwLock;
 
 /// Comprehensive status report combining all monitoring data

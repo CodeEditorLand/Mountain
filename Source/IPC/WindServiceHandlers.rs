@@ -1,3 +1,5 @@
+#![allow(unused_variables, dead_code)]
+
 //! # Wind Service Handlers - Cross-Language Service Bridge
 //!
 //! **File Responsibilities:**
@@ -171,7 +173,7 @@ use std::{path::PathBuf, sync::Arc};
 
 use log::{debug, error, info};
 use serde_json::{Value, json};
-use tauri::{AppHandle, Manager, command};
+use tauri::{AppHandle, Manager};
 // Type aliases for Configuration DTOs to simplify usage
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
@@ -188,7 +190,7 @@ use CommonLibrary::{
 	Storage::StorageProvider::StorageProvider,
 };
 
-use crate::{ApplicationState::ApplicationState, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system

@@ -79,7 +79,7 @@ use CommonLibrary::{
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 };
 use async_trait::async_trait;
-use log::{info, warn};
+use log::info;
 use serde_json::{Value, json};
 use url::Url;
 

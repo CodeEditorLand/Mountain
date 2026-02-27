@@ -9,7 +9,7 @@ use std::{
 	time::{Duration, Instant},
 };
 
-use log::{debug, error, info, trace, warn};
+use log::{debug, error, info, trace};
 use serde::{Deserialize, Serialize};
 use tokio::{
 	sync::{Mutex as AsyncMutex, Notify, RwLock, Semaphore},

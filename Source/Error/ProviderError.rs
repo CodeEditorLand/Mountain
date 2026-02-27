@@ -8,7 +8,7 @@ use std::{error::Error as StdError, fmt};
 
 use serde::{Deserialize, Serialize};
 
-use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError, Result};
+use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 
 /// Provider operation error types
 #[derive(Debug, Clone, Serialize, Deserialize)]

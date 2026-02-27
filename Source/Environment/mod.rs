@@ -1,6 +1,8 @@
 //! # Environment Module
 //!
 //! ## RESPONSIBILITIES
+
+#![allow(unused_imports, unused_variables)]
 //! Dependency Injection (DI) container that provides thread-safe access to
 //! all Mountain providers through trait-based lookups using the Requires trait.
 //!
