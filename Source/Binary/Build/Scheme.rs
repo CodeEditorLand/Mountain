@@ -66,12 +66,9 @@ pub fn init_service_registry(registry:ServiceRegistry) {
 /// 2. We only write to it during initialization (before any land:// requests)
 /// 3. After initialization, we only read from it
 /// 4. The RwLock guarantees thread-safe access
-#[allow(unsafe_code)]
-fn get_service_registry() -> Option<&'static ServiceRegistry> {
-	unsafe {
-		let registry:&Option<ServiceRegistry> = &*SERVICE_REGISTRY.data_ptr();
-		registry.as_ref()
-	}
+fn get_service_registry() -> Option<ServiceRegistry> {
+let guard = SERVICE_REGISTRY.read().ok()?;
+guard.clone()
 }
 
 /// DNS port managed state structure

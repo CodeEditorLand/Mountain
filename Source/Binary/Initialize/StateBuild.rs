@@ -1,8 +1,8 @@
+#![allow(unused_imports)]
+
 //! # StateBuild - Advanced Application State Initialization
 //!
 //! Builds the application state with dependency injection, telemetry
-
-#[allow(unused_imports)]
 //! and feature flag support for different build configurations.
 //!
 //! ## Build Profiles

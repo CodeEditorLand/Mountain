@@ -1,8 +1,8 @@
+#![allow(unused_imports)]
+
 //! # Entry (Binary/Main)
 //!
 //! ## RESPONSIBILITIES
-
-#[allow(unused_imports)]
 //!
 //! Main application entry point that orchestrates the complete application
 //! lifecycle. This function coordinates:
@@ -61,7 +61,7 @@
 use std::sync::Arc;
 
 use log::{debug, error, info, trace, warn};
-use tauri::{App, Manager, RunEvent, Wry}; // Manager trait provides manage() method
+use tauri::{App, Manager, RunEvent, Wry};
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 
 use crate::{
@@ -69,7 +69,7 @@ use crate::{
 	ApplicationState::ApplicationState,
 	Binary::Build::DnsCommands::init_dns_startup_time,
 	Binary::Build::DnsCommands::{
-		self, // Import the module itself
+		self,
 		dns_get_forward_allowlist,
 		dns_get_health_status,
 		dns_get_server_info,
@@ -236,15 +236,13 @@ pub fn Fn() {
 					// The DNS server must start BEFORE any webview loads to ensure
 					// that land:// protocol_resolution is available
 					info!("[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
-					let dns_port = tauri::async_runtime::block_on(async {
-						mist::start(5380).unwrap_or_else(|e| {
-							warn!("[Lifecycle] [Setup] Failed to start DNS server on port 5380: {}", e);
-							// Fallback to random port if preferred port fails
-							mist::start(0).unwrap_or_else(|e| {
-								error!("[Lifecycle] [Setup] Completely failed to start DNS server: {}", e);
-								0 // Return 0 as error indicator
-							})
-						})
+					let dns_port = mist::start(5380).unwrap_or_else(|e| {
+					    warn!("[Lifecycle] [Setup] Failed to start DNS server on port 5380: {}", e);
+					    // Fallback to random port if preferred port fails
+					    mist::start(0).unwrap_or_else(|e| {
+					        error!("[Lifecycle] [Setup] Completely failed to start DNS server: {}", e);
+					        0 // Return 0 as error indicator
+					    })
 					});
 
 					if dns_port == 0 {

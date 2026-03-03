@@ -1,8 +1,6 @@
 //! # FileExplorerViewProvider (FileSystem)
 //!
 //! A native (Rust-implemented) `TreeViewProvider` that provides the data for
-
-#[allow(unused_imports)]
 //! the file explorer (tree) view in Mountain. This is a **native provider**,
 //! meaning it is implemented directly in Rust rather than being provided by an
 //! extension.
@@ -22,12 +20,11 @@
 //!
 //! ### 3. Tree Item Construction
 //! - Build `TreeItemDTO` JSON objects with proper structure:
-//!   - `handle`: Unique identifier (file URI)
-//!   - `label`: Display name
-//!   - `collapsibleState`: 1 for directories, 0 for files
-//!   - `resourceUri`: File URI with `external` property
-//!   - `command`: Open file command for leaf nodes
-//!
+//! - `handle`: Unique identifier (file URI)
+//! - `label`: Display name
+//! - `collapsibleState`: 1 for directories, 0 for files
+//! - `resourceUri`: File URI with `external` property
+//! - `command`: Open file command for leaf nodes
 //! ## ARCHITECTURAL ROLE
 //!
 //! The FileExplorerViewProvider is a **native TreeViewProvider**:

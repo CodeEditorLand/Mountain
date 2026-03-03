@@ -3,32 +3,32 @@
 //! This module implements the main gRPC service for Mountain-Cocoon
 
 #[allow(unused_imports)]
-//! communication. It handles all requests from the Cocoon extension host
-//! sidecar.
-//!
-//! ## Service Responsibilities
-//!
-//! - **Initialization**: Handshake and extension host initialization
-//! - **Commands**: Register and execute extension commands
-//! - **Language Features**: Hover, completion, definition, references, code
-//!   actions
-//! - **File System**: Read, write, stat, and watch files
-//! - **Terminal**: Manage terminal instances and I/O
-//! - **Tree View**: Register providers and get tree children
-//! - **SCM**: Source control management and git operations
-//! - **Debug**: Debug adapter registration and session management
-//! - **Save Participants**: Handle save events from extensions
-//!
-//! ## Architecture
-//!
-//! The service maintains references to:
-//! - `MountainEnvironment`: Access to all Mountain services and providers
-//! - `ActiveOperations`: Registry of cancellable operations
-//!
-//! ## Error Handling
-//!
-//! All methods return `tonic::Result<T>` and use proper error conversion
-//! from internal errors to gRPC status codes.
+// communication. It handles all requests from the Cocoon extension host
+// sidecar.
+//
+// ## Service Responsibilities
+//
+// - **Initialization**: Handshake and extension host initialization
+// - **Commands**: Register and execute extension commands
+// - **Language Features**: Hover, completion, definition, references, code
+// actions
+// - **File System**: Read, write, stat, and watch files
+// - **Terminal**: Manage terminal instances and I/O
+// - **Tree View**: Register providers and get tree children
+// - **SCM**: Source control management and git operations
+// - **Debug**: Debug adapter registration and session management
+// - **Save Participants**: Handle save events from extensions
+//
+// ## Architecture
+//
+// The service maintains references to:
+// - `MountainEnvironment`: Access to all Mountain services and providers
+// - `ActiveOperations`: Registry of cancellable operations
+//
+// ## Error Handling
+//
+// All methods return `tonic::Result<T>` and use proper error conversion
+/// from internal errors to gRPC status codes.
 
 use std::{collections::HashMap, sync::Arc};
 

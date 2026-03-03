@@ -347,7 +347,7 @@ impl MountainEnvironment {
 			Err(Error) => {
 				error!("[TestProvider] Failed to run tests: {}", Error);
 
-				Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
+				let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
 
 				Err(Error)
 			},

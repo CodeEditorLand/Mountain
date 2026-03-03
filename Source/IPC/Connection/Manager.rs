@@ -77,8 +77,8 @@ pub struct ConnectionPool {
 	/// Semaphore to limit concurrent connections
 	Semaphore:Arc<Semaphore>,
 
-	/// Map of active connections by ID
-	ActiveConnections:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
+	/// Map of active connection by ID
+	ActiveConnection:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
 
 	/// Health checker for monitoring connection health
 	HealthChecker:Arc<AsyncMutex<HealthChecker>>,
@@ -103,11 +103,11 @@ impl ConnectionPool {
 		);
 
 		Self {
-			MaxConnections,
-			ConnectionTimeout,
-			Semaphore:Arc::new(Semaphore::new(MaxConnections)),
-			ActiveConnections:Arc::new(AsyncMutex::new(HashMap::new())),
-			HealthChecker:Arc::new(AsyncMutex::new(HealthChecker::new())),
+		MaxConnections,
+		ConnectionTimeout,
+		Semaphore:Arc::new(Semaphore::new(MaxConnections)),
+		ActiveConnection:Arc::new(AsyncMutex::new(HashMap::new())),
+		HealthChecker:Arc::new(AsyncMutex::new(HealthChecker::new())),
 		}
 	}
 
@@ -145,7 +145,7 @@ impl ConnectionPool {
 
 		// Add to active connections
 		{
-			let mut connections = self.ActiveConnections.lock().await;
+		let mut connections = self.ActiveConnection.lock().await;
 			connections.insert(handle.id.clone(), handle.clone());
 		}
 
@@ -177,7 +177,7 @@ impl ConnectionPool {
 		debug!("[ConnectionPool] Releasing connection {}", handle.id);
 
 		{
-			let mut connections = self.ActiveConnections.lock().await;
+		let mut connections = self.ActiveConnection.lock().await;
 			connections.remove(&handle.id);
 		}
 
@@ -200,7 +200,7 @@ impl ConnectionPool {
 	/// println!("Pool stats: {:?}", stats.summary());
 	/// ```
 	pub async fn GetStats(&self) -> ConnectionStats {
-		let connections = self.ActiveConnections.lock().await;
+	let connections = self.ActiveConnection.lock().await;
 		let healthy_connections = connections.values().filter(|h| h.is_healthy()).count();
 
 		ConnectionStats {
@@ -231,7 +231,7 @@ impl ConnectionPool {
 	/// println!("Cleaned up {} stale connections", cleaned);
 	/// ```
 	pub async fn CleanUpStaleConnections(&self) -> usize {
-		let mut connections = self.ActiveConnections.lock().await;
+	let mut connections = self.ActiveConnection.lock().await;
 		let now = std::time::SystemTime::now();
 		let stale_threshold = Duration::from_secs(300); // 5 minutes
 
@@ -270,7 +270,7 @@ impl ConnectionPool {
 	/// - `connection_id`: The ID of the connection to monitor
 	async fn StartHealthMonitoring(&self, connection_id:&str) {
 		let health_checker = self.HealthChecker.clone();
-		let active_connections = self.ActiveConnections.clone();
+		let active_connection = self.ActiveConnection.clone();
 		let connection_id = connection_id.to_string();
 
 		tokio::spawn(async move {
@@ -280,7 +280,7 @@ impl ConnectionPool {
 				interval.tick().await;
 
 				let checker = health_checker.lock().await;
-				let mut connections = match active_connections.try_lock() {
+				let mut connections = match active_connection.try_lock() {
 					Ok(conns) => conns,
 					Err(_) => continue,
 				};
@@ -317,8 +317,8 @@ impl ConnectionPool {
 	pub fn available_permits(&self) -> usize { self.Semaphore.available_permits() }
 
 	/// Get the number of active connections
-	pub async fn active_connections(&self) -> usize {
-		let connections = self.ActiveConnections.lock().await;
+	pub async fn active_connection(&self) -> usize {
+	let connections = self.ActiveConnection.lock().await;
 		connections.len()
 	}
 }

@@ -112,8 +112,9 @@ pub mod Binary;
 // Mobile Build Entry Point
 // ============================================================================
 
-/// Main entry point for mobile builds, which is required by Tauri but
-/// delegates to the primary binary logic in the Binary module.
-#[allow(dead_code)]
+/// Main entry point for both mobile and desktop builds.
+/// - On mobile: marked as Tauri mobile entry point
+/// - On desktop: serves as the standard binary entry point
+/// Delegates to the primary binary logic in the Binary module.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 fn main() { Binary::Main::Main(); }

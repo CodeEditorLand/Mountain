@@ -95,7 +95,7 @@
 //! - `SourceControlManagement*` - SCM provider state
 //!
 //! **IPC & UI State:**
-//! - `PendingUserInterfaceRequests` - Pending UI interactions (dialogs, etc.)
+//! - `PendingUserInterfaceRequest` - Pending UI interactions (dialogs, etc.)
 //!
 //! ### DTOs
 //! Type-safe representations of state components:

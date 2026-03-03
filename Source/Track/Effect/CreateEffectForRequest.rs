@@ -1,8 +1,8 @@
+#![allow(unused_imports)]
+
 //! # CreateEffectForRequest (Track)
 //!
 //! ## RESPONSIBILITIES
-
-#[allow(unused_imports)]
 //!
 //! This module provides the central routing table that maps string-based
 //! commands/RPC methods to typed effects. It creates MappedEffect (type-erased

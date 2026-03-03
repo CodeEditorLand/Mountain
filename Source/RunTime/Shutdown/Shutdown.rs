@@ -232,20 +232,20 @@ impl ApplicationRunTime {
 
 		// Flush pending UI requests
 		let mut pending_requests_guard = self
-			.Environment
-			.ApplicationState
-			.UI
-			.PendingUserInterfaceRequests
-			.lock()
-			.unwrap_or_else(|e| {
-				error!("[ApplicationRunTime] Failed to lock pending UI requests: {}", e);
-				e.into_inner()
-			});
-
+		.Environment
+		.ApplicationState
+		.UI
+		.PendingUserInterfaceRequest
+		.lock()
+		.unwrap_or_else(|e| {
+		error!("[ApplicationRunTime] Failed to lock pending UI requests: {}", e);
+		e.into_inner()
+		});
+	
 		for (_request_id, sender) in pending_requests_guard.drain() {
-			let _ = sender.send(Err(CommonError::Unknown {
-				Description:"Application shutting down".to_string(),
-			}));
+		let _ = sender.send(Err(CommonError::Unknown {
+		Description:"Application shutting down".to_string(),
+		}));
 		}
 
 		debug!("[ApplicationRunTime] Pending operations flushed");

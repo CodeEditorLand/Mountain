@@ -33,31 +33,31 @@
 
 use log::debug;
 
-use super::{ExtensionRegistry::Registry, ProviderRegistration::Registration, ScannedExtensions::Extensions};
+use super::{ExtensionRegistry, ProviderRegistration, ScannedExtensions};
 
 /// Extension state combining all extension-related components.
 #[derive(Clone)]
 pub struct State {
-	/// Extension registry containing command registry and provider state.
-	pub Registry:Registry,
+/// Extension registry containing command registry and provider state.
+pub Registry:ExtensionRegistry::Registry,
 
-	/// Language provider registration state.
-	pub ProviderRegistration:Registration,
+/// Language provider registration state.
+pub ProviderRegistration:ProviderRegistration::Registration,
 
-	/// Scanned extensions containing discovered extensions.
-	pub ScannedExtensions:Extensions,
+/// Scanned extensions containing discovered extensions.
+pub ScannedExtensions:ScannedExtensions::ScannedExtensionCollection,
 }
 
 impl Default for State {
-	fn default() -> Self {
-		debug!("[ExtensionState::State] Initializing default extension state...");
+fn default() -> Self {
+debug!("[ExtensionState::State] Initializing default extension state...");
 
-		Self {
-			Registry:Default::default(),
-			ProviderRegistration:Default::default(),
-			ScannedExtensions:Default::default(),
-		}
-	}
+Self {
+Registry:ExtensionRegistry::Registry::default(),
+ProviderRegistration:ProviderRegistration::Registration::default(),
+ScannedExtensions:ScannedExtensions::ScannedExtensionCollection::default(),
+}
+}
 }
 
 impl State {

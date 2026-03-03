@@ -14,14 +14,14 @@
 				"connect-src": "'self' land: http://localhost:* https://tauri.localhost wss://tauri.localhost https: https://update.editor.land",
 				"default-src": "'self' land:",
 				"font-src": "'self' land: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost",
-				"frame-src": "'self' vscode-webview: http://localhost:* https://tauri.localhost",
+				"frame-src": "'self' vscode-webview: http://localhost:* https://tauri.localhost https://*.vscode-cdn.net",
 				"img-src": "'self' land: data: blob: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost https:",
 				"manifest-src": "'self' http://localhost:* https://tauri.localhost",
 				"media-src": "'self' http://localhost:* https://tauri.localhost",
 				"require-trusted-types-for": "'script'",
-				"script-src": "'self'",
+				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost",
 				"style-src": "'self' 'unsafe-inline'",
-				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController richScreenReaderContent collapsedCellPreview"
+				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController richScreenReaderContent collapsedCellPreview chatDebugTokenizer"
 			},
 			"dangerousDisableAssetCspModification": true,
 			"devCsp": {
@@ -29,14 +29,14 @@
 				"connect-src": "'self' land: http://localhost:* https://tauri.localhost wss://tauri.localhost https: https://update.editor.land",
 				"default-src": "'self' land:",
 				"font-src": "'self' land: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost",
-				"frame-src": "'self' vscode-webview: http://localhost:* https://tauri.localhost",
+				"frame-src": "'self' vscode-webview: http://localhost:* https://tauri.localhost https://*.vscode-cdn.net",
 				"img-src": "'self' land: data: blob: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost https:",
 				"manifest-src": "'self' http://localhost:* https://tauri.localhost",
 				"media-src": "'self' http://localhost:* https://tauri.localhost",
 				"require-trusted-types-for": "'script'",
-				"script-src": "'self'",
+				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost",
 				"style-src": "'self' 'unsafe-inline'",
-				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController richScreenReaderContent collapsedCellPreview"
+				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController richScreenReaderContent collapsedCellPreview chatDebugTokenizer"
 			},
 			"freezePrototype": false,
 			"pattern": {

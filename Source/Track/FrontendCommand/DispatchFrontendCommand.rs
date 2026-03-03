@@ -1,8 +1,8 @@
+#![allow(unused_imports)]
+
 //! # DispatchFrontendCommand (Track)
 //!
 //! ## RESPONSIBILITIES
-
-#[allow(unused_imports)]
 //!
 //! This module provides the primary Tauri command handler for requests
 //! originating from the Sky frontend. It serves as the general-purpose entry
