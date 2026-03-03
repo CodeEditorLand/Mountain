@@ -1,21 +1,65 @@
-Target/debug/*.exe filter=lfs diff=lfs merge=lfs -text
+# =============================================================================
+# Git LFS (Large File Storage) Configuration
+# =============================================================================
+# This file configures Git LFS to track large binary files.
+#
+# IMPORTANT: GitHub has a 100MB hard limit per file.
+# Files EXCEEDING 100MB cannot be pushed even with LFS!
+# Use GitHub Releases for distribution of large files.
+#
+# Current files that exceed 100MB (use GitHub Releases instead):
+# - DMG files: 100-102 MB
+# - node binary in .app: 105 MB
+# =============================================================================
 
-Target/debug/bundle/msi/*.msi filter=lfs diff=lfs merge=lfs -text
+# ------------------------------ Windows Executables ------------------------------
+# Windows executables and installers (typically under 100MB)
+Target/debug/*.exe filter=lfs diff=lfs merge=lfs -text
 Target/debug/bundle/nsis/*.exe filter=lfs diff=lfs merge=lfs -text
+Target/debug/bundle/msi/*.msi filter=lfs diff=lfs merge=lfs -text
 
 Target/release/*.exe filter=lfs diff=lfs merge=lfs -text
-
-Target/release/bundle/msi/*.msi filter=lfs diff=lfs merge=lfs -text
 Target/release/bundle/nsis/*.exe filter=lfs diff=lfs merge=lfs -text
+Target/release/bundle/msi/*.msi filter=lfs diff=lfs merge=lfs -text
 
+Target/x86_64-pc-windows-msvc/*.exe filter=lfs diff=lfs merge=lfs -text
+Target/x86_64-pc-windows-msvc/bundle/nsis/*.exe filter=lfs diff=lfs merge=lfs -text
+Target/x86_64-pc-windows-msvc/bundle/msi/*.msi filter=lfs diff=lfs merge=lfs -text
+
+# ------------------------------ macOS DMG Files ------------------------------
+# DMG files EXCEED 100MB and CANNOT be pushed even with LFS!
+# Use GitHub Releases for distribution instead.
+# Target/debug/bundle/dmg/*.dmg filter=lfs diff=lfs merge=lfs -text
+# Target/release/bundle/dmg/*.dmg filter=lfs diff=lfs merge=lfs -text
+
+# ------------------------------ macOS App Bundles ------------------------------
+# App bundles with node binary EXCEED 100MB and CANNOT be pushed!
+# The node binary alone is 105MB.
+# Use GitHub Releases for distribution instead.
+# Target/**/*.app filter=lfs diff=lfs merge=lfs -text
+# Target/debug/bundle/macos/*.app/Contents/MacOS/* filter=lfs diff=lfs merge=lfs -text
+
+# ------------------------------ macOS App Info.plist (if you build without node) ------------------------------
+# These small files CAN be tracked with LFS (if you build stripped versions):
+# Target/debug/bundle/macos/*.app/Contents/Info.plist filter=lfs diff=lfs merge=lfs -text
+# Target/debug/bundle/macos/*.app/Contents/Resources/* filter=lfs diff=lfs merge=lfs -text
+
+# ------------------------------ Linux AppImage ------------------------------
+Target/debug/bundle/appimage/*.AppImage filter=lfs diff=lfs merge=lfs -text
+Target/release/bundle/appimage/*.AppImage filter=lfs diff=lfs merge=lfs -text
+
+# ------------------------------ Main Executables ------------------------------
+# The main Mountain binary - check size, should be under 100MB
 Target/debug/Mountain filter=lfs diff=lfs merge=lfs -text
 Target/release/Mountain filter=lfs diff=lfs merge=lfs -text
+Target/debug/Mountain.exe filter=lfs diff=lfs merge=lfs -text
+Target/release/Mountain.exe filter=lfs diff=lfs merge=lfs -text
 
-Target/debug/bundle/dmg/*.dmg filter=lfs diff=lfs merge=lfs -text
-Target/release/bundle/dmg/*.dmg filter=lfs diff=lfs merge=lfs -text
-
-Target/debug/bundle/macos/*.dmg filter=lfs diff=lfs merge=lfs -text
-Target/release/bundle/macos/*.dmg filter=lfs diff=lfs merge=lfs -text
-
-Target/debug/bundle/macos/*.app/Contents/MacOS/* filter=lfs diff=lfs merge=lfs -text
-Target/release/bundle/macos/*.app/Contents/MacOS/* filter=lfs diff=lfs merge=lfs -text
+# ------------------------------ Icons and Assets ------------------------------
+# Icon files (typically small, under 100MB)
+Target/debug/bundle/**/icon.icns filter=lfs diff=lfs merge=lfs -text
+Target/debug/bundle/**/icon.ico filter=lfs diff=lfs merge=lfs -text
+Target/debug/bundle/**/icon.png filter=lfs diff=lfs merge=lfs -text
+Target/release/bundle/**/icon.icns filter=lfs diff=lfs merge=lfs -text
+Target/release/bundle/**/icon.ico filter=lfs diff=lfs merge=lfs -text
+Target/release/bundle/**/icon.png filter=lfs diff=lfs merge=lfs -text
