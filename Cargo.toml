@@ -113,7 +113,7 @@ path = "Source/Library.rs"
 crate-type = ["lib", "staticlib"]
 
 [package]
-authors = ["Source 🖋️ Open 👐🏻 <Source/Open@Editor.Land>"]
+authors = ["Source 🖋️🖋️ Open 👐🏻 <Source/Open@Editor.Land>"]
 autobenches = false
 autobins = false
 autoexamples = false
