@@ -1,11 +1,11 @@
 // =============================================================================
 // Binary / Tray / EnableTray
 // =============================================================================
-//
+
+#![allow(unused_imports)]
+
 //! # Enable Tray Function
 //!
-
-#[allow(unused_imports)]
 //! System tray configuration and initialization.
 
 use log::{debug, error, info, warn};

@@ -22,7 +22,7 @@
 //! ### 3. Thread Safety
 //! - All methods are async and safe for concurrent access
 //! - Pending requests stored in
-//!   `ApplicationState.UI.PendingUserInterfaceRequests`
+//! `ApplicationState.UI.PendingUserInterfaceRequest`
 //! - Uses `tokio::sync::oneshot` for request-response coordination
 //!
 //! ## ARCHITECTURAL ROLE
@@ -61,7 +61,7 @@
 //!
 //! 1. Provider method called (e.g., `ShowMessage`)
 //! 2. Generate unique request ID
-//! 3. Store `oneshot::Sender` in `PendingUserInterfaceRequests` map
+//! 3. Store `oneshot::Sender` in `PendingUserInterfaceRequest` map
 //! 4. Send IPC message to Sky with request ID and options
 //! 5. Sky shows UI and waits for user action
 //! 6. User responds → Sky calls `ResolveUIRequest` Tauri command
@@ -313,11 +313,11 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 	let (Sender, Receiver) = tokio::sync::oneshot::channel();
 
 	{
-		let mut PendingRequestsGuard = Environment
-			.ApplicationState
-			.UI
-			.PendingUserInterfaceRequests
-			.lock()
+	let mut PendingRequestsGuard = Environment
+	.ApplicationState
+	.UI
+	.PendingUserInterfaceRequest
+	.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 		PendingRequestsGuard.insert(RequestIdentifier.clone(), Sender);
@@ -349,10 +349,10 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 			);
 
 			let mut Guard = Environment
-				.ApplicationState
-				.UI
-				.PendingUserInterfaceRequests
-				.lock()
+			.ApplicationState
+			.UI
+			.PendingUserInterfaceRequest
+			.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 			Guard.remove(&RequestIdentifier);

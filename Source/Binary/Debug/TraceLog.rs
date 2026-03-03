@@ -1,8 +1,8 @@
+#![allow(unused_imports)]
+
 //! # TraceLog
 //!
 //! Provides debug tracing macro for fine-grained execution step tracking.
-
-#[allow(unused_imports)]
 //!
 //! ## RESPONSIBILITIES
 //!

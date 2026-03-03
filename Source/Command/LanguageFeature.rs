@@ -1,22 +1,22 @@
+#![allow(unused_imports)]
+
 //! # LanguageFeature (Command)
 //!
 //! RESPONSIBILITIES:
-
-#[allow(unused_imports)]
 //! - Defines Tauri command handlers for language feature requests from Sky
-//!   frontend
+//! frontend
 //! - Bridges Monaco Editor language requests to
 //! `LanguageFeatureProviderRegistry`
 //! - Provides type-safe parameter handling and validation for LSP features
 //! - Implements hover, code actions, document highlights, completions,
-//!   definition, references
+//! definition, references
 //! - Uses generic `InvokeProvider` helper to reduce boilerplate
 //!
 //! ARCHITECTURAL ROLE:
 //! - Command layer that exposes language features via Tauri IPC (`#[command]`)
 //! - Delegates to Environment's
-//!   [`LanguageFeatureProvider`](crate::Environment::LanguageFeatureProvider)
-//!   via DI with `Require()` trait
+//! [`LanguageFeatureProvider`](crate::Environment::LanguageFeatureProvider)
+//! via DI with `Require()` trait
 //! - Translates between frontend JSON parameters and Rust DTO types
 //! - Error strings returned directly to frontend for display
 //!

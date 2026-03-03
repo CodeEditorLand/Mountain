@@ -112,7 +112,7 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 	info!("[WebviewProvider] Disposing WebviewPanel: {}", handle);
 
 	// Remove message listener
-	crate::Environment::WebviewProvider::messaging::remove_webview_message_listener_impl(env, &handle);
+	let _ = crate::Environment::WebviewProvider::messaging::remove_webview_message_listener_impl(env, &handle).await;
 
 	// Close the window
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {

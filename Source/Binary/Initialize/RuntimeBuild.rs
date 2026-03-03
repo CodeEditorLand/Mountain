@@ -1,8 +1,8 @@
+#![allow(unused_imports)]
+
 //! # RuntimeBuild - Advanced Runtime Scheduler Initialization
 //!
 //! Constructs the Echo async scheduler with telemetry integration and feature
-
-#[allow(unused_imports)]
 //! flags.
 //!
 //! ## Build Profiles

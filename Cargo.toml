@@ -1,6 +1,6 @@
 [[bin]]
 name = "Mountain"
-path = "Source/main.rs"
+path = "Source/Library.rs"
 
 [build-dependencies]
 json5 = { workspace = true }
@@ -110,10 +110,10 @@ Test = []
 [lib]
 name = "Mountain"
 path = "Source/Library.rs"
-crate-type = ["lib"]
+crate-type = ["lib", "staticlib"]
 
 [package]
-authors = ["Source 🖋️ Open 👐🏻 <Source/Open@Editor.Land>"]
+authors = ["Source 🖋️🖋️ Open 👐🏻 <Source/Open@Editor.Land>"]
 autobenches = false
 autobins = false
 autoexamples = false

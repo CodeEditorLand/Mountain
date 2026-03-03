@@ -357,11 +357,11 @@ pub struct RealTimeUpdate {
 }
 
 /// Real-time updates manager
-pub struct RealTimeUpdates {
-	pub updates:Vec<RealTimeUpdate>,
-	pub subscribers:HashMap<String, Vec<String>>,
-	pub update_queue:Vec<RealTimeUpdate>,
-	pub last_broadcast:u64,
+pub struct RealTimeUpdateManager {
+    pub Updates:Vec<RealTimeUpdate>,
+    pub Subscribers:HashMap<String, Vec<String>>,
+    pub UpdateQueue:Vec<RealTimeUpdate>,
+    pub LastBroadcast:u64,
 }
 
 /// View state
@@ -407,7 +407,7 @@ pub struct WindAdvancedSync {
 	runtime:Arc<ApplicationRunTime>,
 	document_sync:Arc<Mutex<DocumentSynchronization>>,
 	ui_state_sync:Arc<Mutex<UIStateSynchronization>>,
-	real_time_updates:Arc<Mutex<RealTimeUpdates>>,
+	real_time_updates:Arc<Mutex<RealTimeUpdateManager>>,
 	performance_stats:Arc<Mutex<PerformanceStats>>,
 	// mountain_ipc: Arc<MountainIPC>, // Module doesn't exist
 }
@@ -446,11 +446,11 @@ impl WindAdvancedSync {
 					grid_layout:GridLayout { rows:1, columns:1, cell_width:100, cell_height:100 },
 				},
 			})),
-			real_time_updates:Arc::new(Mutex::new(RealTimeUpdates {
-				updates:Vec::new(),
-				subscribers:HashMap::new(),
-				update_queue:Vec::new(),
-				last_broadcast:0,
+			real_time_updates:Arc::new(Mutex::new(RealTimeUpdateManager {
+			Updates:Vec::new(),
+			Subscribers:HashMap::new(),
+			UpdateQueue:Vec::new(),
+			LastBroadcast:0,
 			})),
 			performance_stats:Arc::new(Mutex::new(PerformanceStats {
 				total_messages_sent:0,
@@ -852,8 +852,8 @@ impl WindAdvancedSync {
 	/// Get pending updates
 	async fn get_pending_updates(&self) -> Vec<RealTimeUpdate> {
 		let mut updates = self.real_time_updates.lock().unwrap();
-		let pending = updates.update_queue.clone();
-		updates.update_queue.clear();
+		let pending = updates.UpdateQueue.clone();
+		updates.UpdateQueue.clear();
 		pending
 	}
 
@@ -863,7 +863,7 @@ impl WindAdvancedSync {
 			// Get subscribers for this target
 			let subscribers = {
 				let rt = self.real_time_updates.lock().unwrap();
-				rt.subscribers.get(&update.target).cloned()
+				rt.Subscribers.get(&update.target).cloned()
 			};
 
 			// Broadcast to all subscribers for this target
@@ -912,8 +912,8 @@ impl WindAdvancedSync {
 
 		let target_clone = target.clone();
 		updates
-			.subscribers
-			.entry(target_clone.clone())
+		.Subscribers
+		.entry(target_clone.clone())
 			.or_insert_with(Vec::new)
 			.push(subscriber);
 
@@ -925,9 +925,9 @@ impl WindAdvancedSync {
 	pub async fn queue_update(&self, update:RealTimeUpdate) -> Result<(), String> {
 		let mut updates = self.real_time_updates.lock().unwrap();
 
-		updates.update_queue.push(update);
-		updates.last_broadcast = SystemTime::now()
-			.duration_since(SystemTime::UNIX_EPOCH)
+		updates.UpdateQueue.push(update);
+		updates.LastBroadcast = SystemTime::now()
+		.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap_or_default()
 			.as_secs();
 

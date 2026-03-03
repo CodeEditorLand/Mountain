@@ -41,23 +41,23 @@ use crate::ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescrip
 
 /// Scanned extensions containing discovered extension metadata.
 #[derive(Clone)]
-pub struct Extensions {
-	/// Scanned extensions by identifier.
-	pub ScannedExtensions:Arc<StandardMutex<HashMap<String, ExtensionDescriptionStateDTO>>>,
+pub struct ScannedExtensionCollection {
+    /// Scanned extensions by identifier.
+    pub ScannedExtensions:Arc<StandardMutex<HashMap<String, ExtensionDescriptionStateDTO>>>,
 }
 
-impl Default for Extensions {
-	fn default() -> Self {
-		debug!("[ScannedExtensions] Initializing default scanned extensions...");
+impl Default for ScannedExtensionCollection {
+    fn default() -> Self {
+        debug!("[ScannedExtensions] Initializing default scanned extensions...");
 
-		Self { ScannedExtensions:Arc::new(StandardMutex::new(HashMap::new())) }
-	}
+        Self { ScannedExtensions:Arc::new(StandardMutex::new(HashMap::new())) }
+    }
 }
 
-impl Extensions {
-	/// Gets all scanned extensions.
-	pub fn GetAll(&self) -> HashMap<String, ExtensionDescriptionStateDTO> {
-		self.ScannedExtensions
+impl ScannedExtensionCollection {
+    /// Gets all scanned extensions.
+    pub fn GetAll(&self) -> HashMap<String, ExtensionDescriptionStateDTO> {
+        self.ScannedExtensions
 			.lock()
 			.ok()
 			.map(|guard| guard.clone())
