@@ -634,11 +634,11 @@ impl TauriIPCServer {
 /// reusing them **Features:** Health monitoring, automatic cleanup,
 /// configurable timeouts
 pub struct ConnectionPool {
- MaxConnections:usize,
- ConnectionTimeout:Duration,
- Semaphore:Arc<Semaphore>,
- ActiveConnection:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
- HealthChecker:Arc<AsyncMutex<ConnectionHealthChecker>>,
+	MaxConnections:usize,
+	ConnectionTimeout:Duration,
+	Semaphore:Arc<Semaphore>,
+	ActiveConnection:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
+	HealthChecker:Arc<AsyncMutex<ConnectionHealthChecker>>,
 }
 
 /// Handle representing an active connection
@@ -683,11 +683,11 @@ impl ConnectionPool {
 	/// Create a new connection pool with specified parameters
 	pub fn new(MaxConnections:usize, ConnectionTimeout:Duration) -> Self {
 		Self {
-		MaxConnections,
-		ConnectionTimeout,
-		Semaphore:Arc::new(Semaphore::new(MaxConnections)),
-		ActiveConnection:Arc::new(AsyncMutex::new(HashMap::new())),
-		HealthChecker:Arc::new(AsyncMutex::new(ConnectionHealthChecker::new())),
+			MaxConnections,
+			ConnectionTimeout,
+			Semaphore:Arc::new(Semaphore::new(MaxConnections)),
+			ActiveConnection:Arc::new(AsyncMutex::new(HashMap::new())),
+			HealthChecker:Arc::new(AsyncMutex::new(ConnectionHealthChecker::new())),
 		}
 	}
 
@@ -701,28 +701,28 @@ impl ConnectionPool {
 		let handle = ConnectionHandle::new();
 
 		{
-		let mut connections = self.ActiveConnection.lock().await;
-		connections.insert(handle.id.clone(), handle.clone());
+			let mut connections = self.ActiveConnection.lock().await;
+			connections.insert(handle.id.clone(), handle.clone());
 		}
-	
+
 		// Start health monitoring for this connection
 		self.StartHealthMonitoring(&handle.id).await;
-	
+
 		Ok(handle)
-		}
-	
-		/// Release a connection handle back to the pool
-		pub async fn ReleaseConnection(&self, handle:ConnectionHandle) {
+	}
+
+	/// Release a connection handle back to the pool
+	pub async fn ReleaseConnection(&self, handle:ConnectionHandle) {
 		{
-		let mut connections = self.ActiveConnection.lock().await;
-		connections.remove(&handle.id);
+			let mut connections = self.ActiveConnection.lock().await;
+			connections.remove(&handle.id);
 		}
-	
+
 		// The permit is released when dropped
-		}
-	
-		/// Get connection statistics for monitoring
-		pub async fn GetStats(&self) -> ConnectionStats {
+	}
+
+	/// Get connection statistics for monitoring
+	pub async fn GetStats(&self) -> ConnectionStats {
 		let connections = self.ActiveConnection.lock().await;
 		let healthy_connections = connections.values().filter(|h| h.is_healthy()).count();
 
@@ -737,7 +737,7 @@ impl ConnectionPool {
 
 	/// Clean up stale connections
 	pub async fn CleanUpStaleConnections(&self) -> usize {
-	let mut connections = self.ActiveConnection.lock().await;
+		let mut connections = self.ActiveConnection.lock().await;
 		let now = std::time::Instant::now();
 		// Stale connections are those unused for 5 minutes (300 seconds)
 		let stale_threshold = Duration::from_secs(300);
@@ -758,8 +758,8 @@ impl ConnectionPool {
 
 	/// Start health monitoring for a connection
 	async fn StartHealthMonitoring(&self, connection_id:&str) {
-	let health_checker = self.HealthChecker.clone();
-	let active_connection = self.ActiveConnection.clone();
+		let health_checker = self.HealthChecker.clone();
+		let active_connection = self.ActiveConnection.clone();
 		let connection_id = connection_id.to_string();
 
 		tokio::spawn(async move {

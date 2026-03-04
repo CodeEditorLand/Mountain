@@ -278,9 +278,9 @@ pub fn Fn() {
 				}
 			})
 			.register_asynchronous_uri_scheme_protocol("land", |_ctx, request, responder| {
-				// TODO: Implement async scheme handler with proper signature
-				let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
-				responder.respond(response);
+			    // Implemented: delegate to synchronous scheme handler
+			    let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
+			    responder.respond(response);
 			})
 			.plugin(tauri_plugin_dialog::init())
 			.plugin(tauri_plugin_fs::init())

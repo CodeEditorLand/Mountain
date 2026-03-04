@@ -79,44 +79,44 @@ pub struct PoolStatistics {
 
 /// Connection pool for managing reusable connections
 pub struct ConnectionPool {
- /// Maximum number of connections allowed
- pub MaxConnection:usize,
+	/// Maximum number of connections allowed
+	pub MaxConnection:usize,
 
- /// Timeout for acquiring a connection
- pub ConnectionTimeout:Duration,
+	/// Timeout for acquiring a connection
+	pub ConnectionTimeout:Duration,
 
- /// Active connection being used
- pub ActiveConnection:Arc<RwLock<HashMap<String, ConnectionHandle>>>,
+	/// Active connection being used
+	pub ActiveConnection:Arc<RwLock<HashMap<String, ConnectionHandle>>>,
 
- /// Available idle connection
- pub IdleConnection:Arc<RwLock<HashMap<String, ConnectionHandle>>>,
+	/// Available idle connection
+	pub IdleConnection:Arc<RwLock<HashMap<String, ConnectionHandle>>>,
 
- /// Counter for total connections acquired
- pub TotalAcquired:Arc<RwLock<u64>>,
+	/// Counter for total connections acquired
+	pub TotalAcquired:Arc<RwLock<u64>>,
 
- /// Counter for total connections released
- pub TotalReleased:Arc<RwLock<u64>>,
+	/// Counter for total connections released
+	pub TotalReleased:Arc<RwLock<u64>>,
 }
 
 impl ConnectionPool {
- /// Create a new connection pool
- ///
- /// ## Parameters
- /// - `MaxConnection`: Maximum number of connections allowed
- /// - `ConnectionTimeout`: Timeout for acquiring a connection
- ///
- /// ## Returns
- /// New ConnectionPool instance
- pub fn New(MaxConnection:usize, ConnectionTimeout:Duration) -> Self {
- Self {
- MaxConnection:MaxConnection.min(MAX_CONNECTIONS),
- ConnectionTimeout,
- ActiveConnection:Arc::new(RwLock::new(HashMap::new())),
- IdleConnection:Arc::new(RwLock::new(HashMap::new())),
- TotalAcquired:Arc::new(RwLock::new(0)),
- TotalReleased:Arc::new(RwLock::new(0)),
- }
- }
+	/// Create a new connection pool
+	///
+	/// ## Parameters
+	/// - `MaxConnection`: Maximum number of connections allowed
+	/// - `ConnectionTimeout`: Timeout for acquiring a connection
+	///
+	/// ## Returns
+	/// New ConnectionPool instance
+	pub fn New(MaxConnection:usize, ConnectionTimeout:Duration) -> Self {
+		Self {
+			MaxConnection:MaxConnection.min(MAX_CONNECTIONS),
+			ConnectionTimeout,
+			ActiveConnection:Arc::new(RwLock::new(HashMap::new())),
+			IdleConnection:Arc::new(RwLock::new(HashMap::new())),
+			TotalAcquired:Arc::new(RwLock::new(0)),
+			TotalReleased:Arc::new(RwLock::new(0)),
+		}
+	}
 
 	/// Acquire a connection from the pool
 	///
@@ -143,49 +143,49 @@ impl ConnectionPool {
 	/// ## Returns
 	/// ConnectionHandle or error if pool exhausted
 	async fn AcquireConnectionFromPool(&self, Channel:&str) -> Result<ConnectionHandle, String> {
-	// Check capacity limit first
-	let ActiveCount = {
-	let ActiveConnection = self.ActiveConnection.read().await;
-	ActiveConnection.len()
-	};
+		// Check capacity limit first
+		let ActiveCount = {
+			let ActiveConnection = self.ActiveConnection.read().await;
+			ActiveConnection.len()
+		};
 
-	let IdleCount = {
-	let IdleConnection = self.IdleConnection.read().await;
-	IdleConnection.len()
-	};
+		let IdleCount = {
+			let IdleConnection = self.IdleConnection.read().await;
+			IdleConnection.len()
+		};
 
-	if ActiveCount + IdleCount >= self.MaxConnection {
-	return Err(format!(
-	"Connection pool exhausted: Active: {}, Idle: {}, Max: {}",
-	ActiveCount, IdleCount, self.MaxConnection
-	));
-	}
+		if ActiveCount + IdleCount >= self.MaxConnection {
+			return Err(format!(
+				"Connection pool exhausted: Active: {}, Idle: {}, Max: {}",
+				ActiveCount, IdleCount, self.MaxConnection
+			));
+		}
 
-	// Try to reuse idle connection
-	{
-	let mut IdleConnection = self.IdleConnection.write().await;
-	if let Some((Key, mut Handle)) = IdleConnection
-	.iter()
-	.find(|(_, h)| h.Channel == Channel && h.Health == ConnectionHealth::Healthy)
-	.map(|(k, v)| (k.clone(), v.clone()))
-	{
-	IdleConnection.remove(&Key);
-	Handle.ReuseCount += 1;
-	Handle.LastActivity = Instant::now();
+		// Try to reuse idle connection
+		{
+			let mut IdleConnection = self.IdleConnection.write().await;
+			if let Some((Key, mut Handle)) = IdleConnection
+				.iter()
+				.find(|(_, h)| h.Channel == Channel && h.Health == ConnectionHealth::Healthy)
+				.map(|(k, v)| (k.clone(), v.clone()))
+			{
+				IdleConnection.remove(&Key);
+				Handle.ReuseCount += 1;
+				Handle.LastActivity = Instant::now();
 
-	{
-	let mut ActiveConnection = self.ActiveConnection.write().await;
-	ActiveConnection.insert(Handle.ConnectionId.clone(), Handle.clone());
-	}
+				{
+					let mut ActiveConnection = self.ActiveConnection.write().await;
+					ActiveConnection.insert(Handle.ConnectionId.clone(), Handle.clone());
+				}
 
-	{
-	let mut TotalAcquired = self.TotalAcquired.write().await;
-	*TotalAcquired += 1;
-	}
+				{
+					let mut TotalAcquired = self.TotalAcquired.write().await;
+					*TotalAcquired += 1;
+				}
 
-	return Ok(Handle);
-	}
-	}
+				return Ok(Handle);
+			}
+		}
 
 		// Create new connection
 		let ConnectionId = Self::GenerateConnectionId(Channel);
@@ -200,8 +200,8 @@ impl ConnectionPool {
 		};
 
 		{
-		let mut ActiveConnection = self.ActiveConnection.write().await;
-		ActiveConnection.insert(ConnectionId, NewHandle.clone());
+			let mut ActiveConnection = self.ActiveConnection.write().await;
+			ActiveConnection.insert(ConnectionId, NewHandle.clone());
 		}
 
 		{
@@ -217,18 +217,18 @@ impl ConnectionPool {
 	/// ## Parameters
 	/// - `Handle`: The connection handle to release
 	pub async fn ReleaseConnection(&self, Handle:ConnectionHandle) {
-	// Remove from active connection
-	let ConnectionId = Handle.ConnectionId.clone();
-	{
-	let mut ActiveConnection = self.ActiveConnection.write().await;
-	ActiveConnection.remove(&ConnectionId);
-	}
+		// Remove from active connection
+		let ConnectionId = Handle.ConnectionId.clone();
+		{
+			let mut ActiveConnection = self.ActiveConnection.write().await;
+			ActiveConnection.remove(&ConnectionId);
+		}
 
-	// Return to idle if healthy
-	if Handle.Health == ConnectionHealth::Healthy {
-	let mut IdleConnection = self.IdleConnection.write().await;
-	IdleConnection.insert(ConnectionId, Handle);
-	}
+		// Return to idle if healthy
+		if Handle.Health == ConnectionHealth::Healthy {
+			let mut IdleConnection = self.IdleConnection.write().await;
+			IdleConnection.insert(ConnectionId, Handle);
+		}
 
 		{
 			let mut TotalReleased = self.TotalReleased.write().await;
@@ -241,18 +241,18 @@ impl ConnectionPool {
 	/// ## Returns
 	/// PoolStatistics with current pool metrics
 	pub async fn GetStats(&self) -> PoolStatistics {
-	let ActiveConnection = self.ActiveConnection.read().await;
-	let IdleConnection = self.IdleConnection.read().await;
-	let TotalAcquired = *self.TotalAcquired.read().await;
-	let TotalReleased = *self.TotalReleased.read().await;
+		let ActiveConnection = self.ActiveConnection.read().await;
+		let IdleConnection = self.IdleConnection.read().await;
+		let TotalAcquired = *self.TotalAcquired.read().await;
+		let TotalReleased = *self.TotalReleased.read().await;
 
-	let ActiveCount = ActiveConnection.len();
-	let IdleCount = IdleConnection.len();
+		let ActiveCount = ActiveConnection.len();
+		let IdleCount = IdleConnection.len();
 
-	// Calculate average reuse count
-	let TotalReuseCount:usize = IdleConnection
-	.values()
-	.chain(ActiveConnection.values())
+		// Calculate average reuse count
+		let TotalReuseCount:usize = IdleConnection
+			.values()
+			.chain(ActiveConnection.values())
 			.map(|h| h.ReuseCount)
 			.sum();
 
@@ -281,15 +281,15 @@ impl ConnectionPool {
 		let TimeoutDuration = Duration::from_secs(CLEANUP_INTERVAL_SECONDS);
 
 		let Cleaned = {
-		let mut IdleConnection = self.IdleConnection.write().await;
-		let InitialCount = IdleConnection.len();
-	
-		IdleConnection.retain(|_, Handle| {
-		let IdleTime = Now.duration_since(Handle.LastActivity);
-		IdleTime < TimeoutDuration
-		});
-	
-		InitialCount - IdleConnection.len()
+			let mut IdleConnection = self.IdleConnection.write().await;
+			let InitialCount = IdleConnection.len();
+
+			IdleConnection.retain(|_, Handle| {
+				let IdleTime = Now.duration_since(Handle.LastActivity);
+				IdleTime < TimeoutDuration
+			});
+
+			InitialCount - IdleConnection.len()
 		};
 
 		Cleaned
@@ -378,8 +378,8 @@ mod tests {
 
 		// Simulate stale connection by modifying last activity
 		{
-		let mut IdleConnection = Pool.IdleConnection.write().await;
-		if let Some(Connection) = IdleConnection.values_mut().next() {
+			let mut IdleConnection = Pool.IdleConnection.write().await;
+			if let Some(Connection) = IdleConnection.values_mut().next() {
 				Connection.LastActivity = Instant::now() - Duration::from_secs(600);
 			}
 		}

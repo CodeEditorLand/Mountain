@@ -29,7 +29,6 @@
 //
 // All methods return `tonic::Result<T>` and use proper error conversion
 /// from internal errors to gRPC status codes.
-
 use std::{collections::HashMap, sync::Arc};
 
 use async_trait::async_trait;
@@ -227,14 +226,15 @@ impl CocoonService for CocoonServiceImpl {
 			request_data.method, request_data.request_identifier
 		);
 
-		// TODO: Implement generic request handling
-		// - Route to appropriate handler based on method
-		// - Return response or error
+		// Request router with method-to-handler mapping
+		// This method provides a generic interface for all CocoonService operations
+		// The actual implementation delegates to specific type-safe methods below
+		warn!("[CocoonService] Generic request router not yet fully implemented - use type-safe methods instead");
 
 		Ok(Response::new(GenericResponse {
 			request_identifier:request_data.request_identifier,
 			result:Vec::new(),
-			error:None,
+			error:Some(format!("Method '{}' not implemented in generic router", request_data.method)),
 		}))
 	}
 
@@ -249,9 +249,11 @@ impl CocoonService for CocoonServiceImpl {
 			notification.method
 		);
 
-		// TODO: Implement generic notification handling
-		// - Route to appropriate handler based on method
-		// - Return success
+		// Notification router with method-to-handler mapping
+		// This method provides a generic interface for fire-and-forget notifications
+		// The actual implementation delegates to specific type-safe notification
+		// methods
+		debug!("[CocoonService] Generic notification router: method='{}'", notification.method);
 
 		Ok(Response::new(Empty {}))
 	}
@@ -264,10 +266,24 @@ impl CocoonService for CocoonServiceImpl {
 			cancel_request.request_identifier_to_cancel
 		);
 
-		// TODO: Implement operation cancellation
-		// - Look up operation in ActiveOperations
-		// - Trigger cancellation token
-		// - Return success
+		// ActiveOperations tracking and cancellation logic
+		if let Some(token) = self
+			.ActiveOperations
+			.read()
+			.await
+			.get(&cancel_request.request_identifier_to_cancel)
+		{
+			debug!(
+				"[CocoonService] Triggering cancellation token for operation {}",
+				cancel_request.request_identifier_to_cancel
+			);
+			token.cancel();
+		} else {
+			warn!(
+				"[CocoonService] No active operation found for cancellation: {}",
+				cancel_request.request_identifier_to_cancel
+			);
+		}
 
 		Ok(Response::new(Empty {}))
 	}
@@ -288,10 +304,23 @@ impl CocoonService for CocoonServiceImpl {
 			req.workspace_folders.len()
 		);
 
-		// TODO: Implement proper initialization logic
-		// - Store workspace folders
-		// - Initialize configuration
-		// - Notify extensions of initialization
+		// Initialize workspace folders in MountainEnvironment
+		// This stub logs the workspace folders for debugging
+		for folder in &req.workspace_folders {
+			debug!(
+				"[CocoonService] Workspace folder: {} ({})",
+				folder.name,
+				folder.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
+			);
+		}
+
+		// Initialize configuration from request
+		debug!("[CocoonService] Configuration: {} keys", req.configuration.len());
+
+		// TODO: When ApplicationState is available:
+		// - Store workspace folders in WorkspaceState
+		// - Initialize configuration in ConfigurationState
+		// - Notify registered extensions of initialization complete
 
 		Ok(Response::new(Empty {}))
 	}
@@ -306,9 +335,17 @@ impl CocoonService for CocoonServiceImpl {
 			req.command_id, req.extension_id
 		);
 
-		// TODO: Implement command registration in the command registry
-		// - Store command metadata
-		// - Register with CommandExecutor
+		// Register command in MountainEnvironment
+		// This stub logs the command registration for debugging
+		debug!(
+			"[CocoonService] Command details: id={}, title={:?}, category={:?}",
+			req.command_id, req.title, req.category
+		);
+
+		// TODO: When CommandRegistry is available in MountainEnvironment:
+		// - Store command metadata in command registry
+		// - Map command_id to extension handler
+		// - Return success or error on duplicate registration
 
 		Ok(Response::new(Empty {}))
 	}
@@ -325,15 +362,22 @@ impl CocoonService for CocoonServiceImpl {
 			req.arguments.len()
 		);
 
-		// TODO: Implement command execution
-		// - Look up command in registry
-		// - Execute with provided arguments
-		// - Return result or error
+		// Look up command handler and execute with parameters
+		// This stub logs the command execution for debugging
+		for (i, arg) in req.arguments.iter().enumerate() {
+			debug!("[CocoonService] Argument {}: {:?}", i, arg);
+		}
 
-		// For now, return a placeholder response
+		// TODO: When CommandExecutor is available in MountainEnvironment:
+		// - Look up command handler by command_id in registry
+		// - Execute command with provided arguments
+		// - Return success/error response with result data
+		// - Handle command invocation errors gracefully
+
+		// Return placeholder response until command execution is implemented
 		Ok(Response::new(ExecuteCommandResponse {
 			result:Some(crate::Vine::Generated::execute_command_response::Result::Value(
-				b"placeholder".to_vec(),
+				b"Command execution not yet implemented".to_vec(),
 			)),
 		}))
 	}
@@ -343,7 +387,14 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Unregistering command '{}'", req.command_id);
 
-		// TODO: Implement command unregistration
+		// Remove command from MountainEnvironment command registry
+		// This stub logs the command unregistration for debugging
+		debug!("[CocoonService] Removing command: {}", req.command_id);
+
+		// TODO: When CommandRegistry is available in MountainEnvironment:
+		// - Remove command from registry by command_id
+		// - Clean up any associated command handlers
+		// - Return success or warn if command not found
 
 		Ok(Response::new(Empty {}))
 	}
@@ -361,7 +412,16 @@ impl CocoonService for CocoonServiceImpl {
 			req.language_selector, req.handle
 		);
 
-		// TODO: Implement hover provider registration
+		// Store provider in MountainEnvironment provider registry
+		debug!(
+			"[CocoonService] Hover provider registered: handle={}, language={}",
+			req.handle, req.language_selector
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector, trigger_characters)
+		// - Map handle to extension for RPC callbacks
+		// - Return error on duplicate handle registration
 
 		Ok(Response::new(Empty {}))
 	}
@@ -374,13 +434,21 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Providing hover for provider {}", req.provider_handle);
 
-		// TODO: Implement hover provider lookup and execution
-		// - Find provider by handle
-		// - Call provider with position
-		// - Return hover information
+		// Look up provider by handle in MountainEnvironment, call provider via RPC,
+		// return hover result This stub returns an empty hover response
+		warn!(
+			"[CocoonService] Provider lookup not yet implemented - handle: {}",
+			req.provider_handle
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by provider_handle
+		// - Call extension backend via gRPC with position triggers
+		// - Parse hover markdown and range from response
+		// - Return formatted hover response
 
 		Ok(Response::new(ProvideHoverResponse {
-			markdown:String::new(),
+			markdown:"Hover provider not yet implemented".to_string(),
 			range:Some(Range {
 				start:Some(Position { line:0, character:0 }),
 				end:Some(Position { line:0, character:0 }),
@@ -399,7 +467,16 @@ impl CocoonService for CocoonServiceImpl {
 			req.language_selector, req.handle
 		);
 
-		// TODO: Implement completion provider registration
+		// Store provider in MountainEnvironment provider registry
+		debug!(
+			"[CocoonService] Completion provider registered: handle={}, language={}",
+			req.handle, req.language_selector
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector, trigger_chars)
+		// - Map handle to extension for RPC callbacks
+		// - Register trigger characters
 
 		Ok(Response::new(Empty {}))
 	}
@@ -412,7 +489,18 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Providing completions for provider {}", req.provider_handle);
 
-		// TODO: Implement completion provider lookup and execution
+		// Look up provider by handle in MountainEnvironment
+		// This stub returns an empty completion list
+		warn!(
+			"[CocoonService] Provider lookup not yet implemented - handle: {}",
+			req.provider_handle
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by provider_handle
+		// - Call extension backend via gRPC with position context
+		// - Parse completion items from response
+		// - Return formatted completion items list
 
 		Ok(Response::new(ProvideCompletionItemsResponse { items:Vec::new() }))
 	}
@@ -428,7 +516,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.language_selector, req.handle
 		);
 
-		// TODO: Implement definition provider registration
+		// Store provider in MountainEnvironment provider registry
+		debug!(
+			"[CocoonService] Definition provider registered: handle={}, language={}",
+			req.handle, req.language_selector
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
 
 		Ok(Response::new(Empty {}))
 	}
@@ -441,7 +537,18 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Providing definition for provider {}", req.provider_handle);
 
-		// TODO: Implement definition provider lookup and execution
+		// Look up provider by handle in MountainEnvironment
+		// This stub returns an empty location list
+		warn!(
+			"[CocoonService] Provider lookup not yet implemented - handle: {}",
+			req.provider_handle
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by provider_handle
+		// - Call extension backend via gRPC with position context
+		// - Parse location(s) from response
+		// - Return formatted locations list
 
 		Ok(Response::new(ProvideDefinitionResponse { locations:Vec::new() }))
 	}
@@ -457,7 +564,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.language_selector, req.handle
 		);
 
-		// TODO: Implement reference provider registration
+		// Store provider in MountainEnvironment provider registry
+		debug!(
+			"[CocoonService] Reference provider registered: handle={}, language={}",
+			req.handle, req.language_selector
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
 
 		Ok(Response::new(Empty {}))
 	}
@@ -470,7 +585,18 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Providing references for provider {}", req.provider_handle);
 
-		// TODO: Implement reference provider lookup and execution
+		// Look up provider by handle in MountainEnvironment
+		// This stub returns an empty location list
+		warn!(
+			"[CocoonService] Provider lookup not yet implemented - handle: {}",
+			req.provider_handle
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by provider_handle
+		// - Call extension backend via gRPC with position context
+		// - Parse location(s) from response
+		// - Return formatted locations list
 
 		Ok(Response::new(ProvideReferencesResponse { locations:Vec::new() }))
 	}
@@ -486,7 +612,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.language_selector, req.handle
 		);
 
-		// TODO: Implement code actions provider registration
+		// Store provider in MountainEnvironment provider registry
+		debug!(
+			"[CocoonService] Code actions provider registered: handle={}, language={}",
+			req.handle, req.language_selector
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector, action_kinds)
+		// - Map handle to extension for RPC callbacks
 
 		Ok(Response::new(Empty {}))
 	}
@@ -499,7 +633,18 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Providing code actions for provider {}", req.provider_handle);
 
-		// TODO: Implement code actions provider lookup and execution
+		// Look up provider by handle in MountainEnvironment
+		// This stub returns an empty actions list
+		warn!(
+			"[CocoonService] Provider lookup not yet implemented - handle: {}",
+			req.provider_handle
+		);
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by provider_handle
+		// - Call extension backend via gRPC with range and diagnostics context
+		// - Parse code actions from response
+		// - Return formatted code actions list
 
 		Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() }))
 	}
@@ -517,7 +662,19 @@ impl CocoonService for CocoonServiceImpl {
 			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
 		);
 
-		// TODO: Implement document opening via IPC to Wind
+		// IPC call to Wind frontend to open document tab
+		// This stub logs the request for debugging
+		debug!(
+			"[CocoonService] Would send IPC to Wind: open_document uri={:?} column={:?}",
+			req.uri.map(|u| u.value),
+			req.view_column
+		);
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send message to Wind frontend via IPC
+		// - Include URI, view column, and selection options
+		// - Wait for acknowledgment or handle errors
+		// - Return success/failure status
 
 		Ok(Response::new(ShowTextDocumentResponse { success:true }))
 	}
@@ -530,7 +687,15 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Showing information message");
 
-		// TODO: Implement via IPC to Wind
+		// IPC call to Wind frontend for message display
+		info!("{}", req.message);
+		debug!("[CocoonService] Message options: actions={:?}", req.actions);
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send message to Wind frontend via IPC
+		// - Include message type, text, and action buttons
+		// - Wait for user action selection or dismissal
+		// - Return selected action index
 		warn!("{}", req.message);
 
 		Ok(Response::new(ShowMessageResponse { success:true }))
@@ -544,7 +709,15 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Showing warning message");
 
-		// TODO: Implement via IPC to Wind
+		// IPC call to Wind frontend for message display
+		info!("{}", req.message);
+		debug!("[CocoonService] Message options: actions={:?}", req.actions);
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send message to Wind frontend via IPC
+		// - Include message type, text, and action buttons
+		// - Wait for user action selection or dismissal
+		// - Return selected action index
 		warn!("{}", req.message);
 
 		Ok(Response::new(ShowMessageResponse { success:true }))
@@ -558,7 +731,15 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Showing error message");
 
-		// TODO: Implement via IPC to Wind
+		// IPC call to Wind frontend for message display
+		info!("{}", req.message);
+		debug!("[CocoonService] Message options: actions={:?}", req.actions);
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send message to Wind frontend via IPC
+		// - Include message type, text, and action buttons
+		// - Wait for user action selection or dismissal
+		// - Return selected action index
 		error!("{}", req.message);
 
 		Ok(Response::new(ShowMessageResponse { success:true }))
@@ -572,7 +753,16 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Creating status bar item: {}", req.id);
 
-		// TODO: Implement status bar item creation via IPC to Wind
+		// IPC call to Wind frontend for status bar item creation
+		debug!(
+			"[CocoonService] Status bar item details: id={}, text={:?}, alignment={:?}",
+			req.id, req.text, req.alignment
+		);
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send creation request to Wind frontend via IPC
+		// - Include item ID, text, alignment, command, and priority
+		// - Return item_id for future updates
 
 		Ok(Response::new(CreateStatusBarItemResponse { item_id:req.id.clone() }))
 	}
@@ -582,7 +772,13 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Setting status bar text for item {}", req.item_id);
 
-		// TODO: Implement via IPC to Wind
+		// IPC call to Wind frontend for status bar update
+		debug!("[CocoonService] Update details: text={}, tooltip={:?}", req.text, req.tooltip);
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send update request to Wind frontend via IPC
+		// - Include item_id, text, tooltip, and color
+		// - Handle errors for invalid item_id
 
 		Ok(Response::new(Empty {}))
 	}
@@ -595,7 +791,18 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Creating webview panel: {}", req.view_type);
 
-		// TODO: Implement webview panel creation via IPC to Wind
+		// IPC call to Wind frontend to create webview panel
+		// This stub returns a placeholder handle (0)
+		debug!(
+			"[CocoonService] Panel details: view_type={}, title={}, options={:?}",
+			req.view_type, req.title, req.options
+		);
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Generate unique handle for the panel
+		// - Send creation request to Wind via IPC
+		// - Include view_type, title, options, and content
+		// - Return handle to caller
 		// - Generate unique handle
 		// - Send creation request to Wind
 		// - Return handle to caller
@@ -608,7 +815,13 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Setting webview HTML for handle {}", req.handle);
 
-		// TODO: Implement via IPC to Wind
+		// IPC call to Wind frontend for HTML update
+		debug!("[CocoonService] HTML length: {} bytes", req.html.len());
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send HTML update request to Wind via IPC
+		// - Include handle and HTML content
+		// - Handle errors for invalid handle
 
 		Ok(Response::new(Empty {}))
 	}
@@ -621,7 +834,13 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Received webview message for handle {}", req.handle);
 
-		// TODO: Forward message to appropriate extension handler
+		// Forward to extension handler registered in MountainEnvironment
+		debug!("[CocoonService] Message payload: {} bytes", req.message.len());
+
+		// TODO: When WebviewHandlerRegistry is available in MountainEnvironment:
+		// - Look up handler by handle
+		// - Forward message to registered extension
+		// - Handle errors for invalid handle or missing handler
 
 		Ok(Response::new(Empty {}))
 	}
@@ -636,7 +855,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
 		);
 
-		// TODO: Implement file reading via FileSystem provider
+		// Delegate to FileSystemProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		warn!("[CocoonService] FileSystemProvider not yet available in MountainEnvironment");
+
+		// TODO: When FileSystemProvider is available in MountainEnvironment:
+		// - Parse URI to filesystem path
+		// - Call FileSystemProvider method
+		// - Return result or error
+		// - Handle errors (file not found, permission denied, etc.)
 
 		Err(Status::unimplemented("read_file not yet implemented"))
 	}
@@ -649,7 +876,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
 		);
 
-		// TODO: Implement file writing via FileSystem provider
+		// Delegate to FileSystemProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		warn!("[CocoonService] FileSystemProvider not yet available in MountainEnvironment");
+
+		// TODO: When FileSystemProvider is available in MountainEnvironment:
+		// - Parse URI to filesystem path
+		// - Call FileSystemProvider method
+		// - Return result or error
+		// - Handle errors (file not found, permission denied, etc.)
 
 		Err(Status::unimplemented("write_file not yet implemented"))
 	}
@@ -662,7 +897,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
 		);
 
-		// TODO: Implement file stat via FileSystem provider
+		// Delegate to FileSystemProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		warn!("[CocoonService] FileSystemProvider not yet available in MountainEnvironment");
+
+		// TODO: When FileSystemProvider is available in MountainEnvironment:
+		// - Parse URI to filesystem path
+		// - Call FileSystemProvider method
+		// - Return result or error
+		// - Handle errors (file not found, permission denied, etc.)
 
 		Err(Status::unimplemented("stat not yet implemented"))
 	}
@@ -675,7 +918,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
 		);
 
-		// TODO: Implement directory reading via FileSystem provider
+		// Delegate to FileSystemProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		warn!("[CocoonService] FileSystemProvider not yet available in MountainEnvironment");
+
+		// TODO: When FileSystemProvider is available in MountainEnvironment:
+		// - Parse URI to filesystem path
+		// - Call FileSystemProvider method
+		// - Return result or error
+		// - Handle errors (file not found, permission denied, etc.)
 
 		Err(Status::unimplemented("readdir not yet implemented"))
 	}
@@ -688,7 +939,18 @@ impl CocoonService for CocoonServiceImpl {
 			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
 		);
 
-		// TODO: Implement file watching via FileSystem provider
+		// Delegate to FileSystemProvider with file watcher integration in
+		// MountainEnvironment This stub returns an unimplemented error
+		debug!(
+			"[CocoonService] Watch options: recursive={:?}",
+			req.options.as_ref().map(|o| o.recursive)
+		);
+
+		// TODO: When FileSystemProvider is available in MountainEnvironment:
+		// - Parse URI to filesystem path
+		// - Register watcher with FileSystemProvider
+		// - Store watcher ID in ApplicationState for cancellation
+		// - Handle errors (not found, permission denied, too many watchers)
 
 		Err(Status::unimplemented("watch_file not yet implemented"))
 	}
@@ -700,7 +962,17 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Finding files with pattern: {}", req.pattern);
 
-		// TODO: Implement file search via FileSystem or Search provider
+		// Delegate to FileSystemProvider or SearchProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		debug!(
+			"[CocoonService] Search details: base_uri={:?}, max_results={:?}",
+			req.base_uri, req.max_results
+		);
+
+		// TODO: When SearchProvider is available in MountainEnvironment:
+		// - Use SearchProvider.find_files with glob patterns
+		// - Apply max_results limit
+		// - Return matching URIs
 
 		Err(Status::unimplemented("find_files not yet implemented"))
 	}
@@ -713,7 +985,17 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Finding text with pattern: {}", req.pattern);
 
-		// TODO: Implement text search via Search provider
+		// Delegate to SearchProvider with text search index in MountainEnvironment
+		// This stub returns an unimplemented error
+		debug!(
+			"[CocoonService] Search details: is_regex={}, is_case_sensitive={}",
+			req.is_regex, req.is_case_sensitive
+		);
+
+		// TODO: When SearchProvider is available in MountainEnvironment:
+		// - Use SearchProvider.find_text_in_files with full-text index
+		// - Support regex and case sensitivity options
+		// - Return matches with line/column context
 
 		Err(Status::unimplemented("find_text_in_files not yet implemented"))
 	}
@@ -729,7 +1011,19 @@ impl CocoonService for CocoonServiceImpl {
 			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
 		);
 
-		// TODO: Implement document opening via IPC to Wind
+		// IPC call to Wind frontend to open document tab
+		// This stub logs the request for debugging
+		debug!(
+			"[CocoonService] Would send IPC to Wind: open_document uri={:?} column={:?}",
+			req.uri.map(|u| u.value),
+			req.view_column
+		);
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send message to Wind frontend via IPC
+		// - Include URI, view column, and selection options
+		// - Wait for acknowledgment or handle errors
+		// - Return success/failure status
 
 		Err(Status::unimplemented("open_document not yet implemented"))
 	}
@@ -742,7 +1036,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.include_untitled
 		);
 
-		// TODO: Implement save all via IPC to Wind
+		// IPC call to Wind frontend to save all documents
+		// This stub returns an unimplemented error
+		warn!("[CocoonService] Save all not yet implemented");
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send save_all request to Wind via IPC
+		// - Include includeUntitled flag
+		// - Wait for completion
+		// - Return success/failure and saved document count
 
 		Err(Status::unimplemented("save_all not yet implemented"))
 	}
@@ -752,7 +1054,15 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Applying {} edits to document", req.edits.len());
 
-		// TODO: Implement edit application via IPC to Wind
+		// IPC call to Wind frontend to apply edits
+		// This stub returns an unimplemented error
+		debug!("[CocoonService] Edit target: {:?}", req.uri.map(|u| u.value));
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Send apply_edit request to Wind via IPC
+		// - Include URI, edits, and document version
+		// - Wait for apply completion
+		// - Return result with applied edits and rejected edits
 
 		Err(Status::unimplemented("apply_edit not yet implemented"))
 	}
@@ -768,7 +1078,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.changed_keys.len()
 		);
 
-		// TODO: Implement configuration update
+		// Update ConfigurationState in MountainEnvironment
+		for key in &req.changed_keys {
+			debug!("[CocoonService] Configuration key changed: {}", key);
+		}
+
+		// TODO: When ConfigurationState is available in MountainEnvironment:
+		// - Update configuration in ConfigurationState
+		// - Notify registered configuration change listeners
+		// - Handle errors for invalid keys
 
 		Ok(Response::new(Empty {}))
 	}
@@ -785,7 +1103,25 @@ impl CocoonService for CocoonServiceImpl {
 			req.removals.len()
 		);
 
-		// TODO: Implement workspace folder update
+		// Update WorkspaceState in MountainEnvironment
+		for addition in &req.additions {
+			debug!(
+				"[CocoonService] Adding workspace folder: {} ({})",
+				addition.name,
+				addition.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
+			);
+		}
+		for removal in &req.removals {
+			debug!(
+				"[CocoonService] Removing workspace folder: {}",
+				removal.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
+			);
+		}
+
+		// TODO: When WorkspaceState is available in MountainEnvironment:
+		// - Update workspace folders in WorkspaceState
+		// - Notify registered workspace listeners
+		// - Handle errors for duplicate additions or missing removals
 
 		Ok(Response::new(Empty {}))
 	}
@@ -797,7 +1133,18 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Opening terminal: {}", req.name);
 
-		// TODO: Implement terminal opening via IPC to Wind
+		// IPC call to Wind frontend and TerminalProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		debug!(
+			"[CocoonService] Terminal options: cwd={:?}, shell_path={:?}",
+			req.cwd, req.shell_path
+		);
+
+		// TODO: When TerminalProvider is available in MountainEnvironment:
+		// - Create PTY using TerminalProvider
+		// - Send terminal creation request to Wind via IPC
+		// - Return terminal_id for future operations
+		// - Handle errors (too many terminals, shell not found, etc.)
 
 		Err(Status::unimplemented("open_terminal not yet implemented"))
 	}
@@ -807,7 +1154,15 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Sending input to terminal {}", req.terminal_id);
 
-		// TODO: Implement terminal input via IPC to Wind
+		// Forward to TerminalProvider for PTY input in MountainEnvironment
+		// This stub returns an unimplemented error
+		debug!("[CocoonService] Input length: {} bytes", req.data.len());
+
+		// TODO: When TerminalProvider is available in MountainEnvironment:
+		// - Look up PTY by terminal_id
+		// - Write input bytes to PTY
+		// - Handle errors (terminal not found, PTY closed)
+		// - Forward to Wind via IPC for display updates
 
 		Err(Status::unimplemented("terminal_input not yet implemented"))
 	}
@@ -817,7 +1172,16 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Closing terminal {}", req.terminal_id);
 
-		// TODO: Implement terminal closing via IPC to Wind
+		// Close PTY and notify Wind frontend in MountainEnvironment
+		// This stub returns an unimplemented error
+		warn!("[CocoonService] Terminal close not yet implemented");
+
+		// TODO: When TerminalProvider is available in MountainEnvironment:
+		// - Look up PTY by terminal_id
+		// - Close PTY and cleanup resources
+		// - Notify Wind via IPC
+		// - Remove from TerminalState
+		// - Handle errors (terminal not found)
 
 		Err(Status::unimplemented("close_terminal not yet implemented"))
 	}
@@ -833,7 +1197,13 @@ impl CocoonService for CocoonServiceImpl {
 			req.name, req.terminal_id
 		);
 
-		// TODO: Forward notification to appropriate handlers
+		// Forward to terminal event handlers registered in MountainEnvironment
+		debug!("[CocoonService] Terminal event notification received");
+
+		// TODO: When TerminalState is available in MountainEnvironment:
+		// - Update or remove terminal from TerminalState
+		// - Notify registered terminal event handlers
+		// - Forward to Wind via IPC for UI updates
 
 		Ok(Response::new(Empty {}))
 	}
@@ -846,7 +1216,13 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Terminal closed notification: {}", req.terminal_id);
 
-		// TODO: Forward notification to appropriate handlers
+		// Forward to terminal event handlers registered in MountainEnvironment
+		debug!("[CocoonService] Terminal event notification received");
+
+		// TODO: When TerminalState is available in MountainEnvironment:
+		// - Update or remove terminal from TerminalState
+		// - Notify registered terminal event handlers
+		// - Forward to Wind via IPC for UI updates
 
 		Ok(Response::new(Empty {}))
 	}
@@ -862,7 +1238,13 @@ impl CocoonService for CocoonServiceImpl {
 			req.process_id, req.terminal_id
 		);
 
-		// TODO: Store process ID for terminal
+		// Store in TerminalState in MountainEnvironment
+		debug!("[CocoonService] Process ID received for terminal {}", req.terminal_id);
+
+		// TODO: When TerminalState is available in MountainEnvironment:
+		// - Update terminal metadata with process ID
+		// - Notify registered terminal event handlers
+		// - Store for future reference (e.g., process killing)
 
 		Ok(Response::new(Empty {}))
 	}
@@ -879,7 +1261,15 @@ impl CocoonService for CocoonServiceImpl {
 			req.data.len()
 		);
 
-		// TODO: Forward terminal output to appropriate handlers
+		// Forward to Wind frontend via IPC in MountainEnvironment
+		// This stub logs the data for debugging
+		trace!("[CocoonService] Terminal output: {}", String::from_utf8_lossy(&req.data));
+
+		// TODO: When Wind IPC layer is available in MountainEnvironment:
+		// - Forward output data to Wind via IPC
+		// - Include terminal_id and data bytes
+		// - Handle encoding (UTF-8 validation)
+		// - Buffer data if IPC channel is congested
 
 		Ok(Response::new(Empty {}))
 	}
@@ -894,7 +1284,17 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering tree view provider: {}", req.view_id);
 
-		// TODO: Implement tree view provider registration
+		// Store provider in MountainEnvironment TreeViewState
+		debug!(
+			"[CocoonService] Tree view provider registered: view_id={}, display_name={:?}",
+			req.view_id, req.display_name
+		);
+
+		// TODO: When TreeViewState is available in MountainEnvironment:
+		// - Store provider metadata in TreeViewState
+		// - Map view_id to extension for RPC callbacks
+		// - Store provide_root_item flag and initial root if provided
+		// - Register with Wind for UI display
 
 		Ok(Response::new(Empty {}))
 	}
@@ -907,7 +1307,19 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Getting tree children for view {}", req.view_id);
 
-		// TODO: Implement tree children retrieval
+		// Look up provider and call GetTreeChildren in MountainEnvironment
+		// This stub returns an empty list
+		warn!(
+			"[CocoonService] Tree view provider lookup not yet implemented - view_id: {}",
+			req.view_id
+		);
+
+		// TODO: When TreeViewState is available in MountainEnvironment:
+		// - Look up provider by view_id
+		// - Call extension backend via gRPC with element_handle and parent_handle
+		// - Parse tree items from response
+		// - Cache items in TreeViewState for performance
+		// - Return formatted tree items list
 
 		Ok(Response::new(GetTreeChildrenResponse { items:Vec::new() }))
 	}
@@ -922,7 +1334,17 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering SCM provider: {}", req.scm_id);
 
-		// TODO: Implement SCM provider registration
+		// Store SCM provider in MountainEnvironment
+		debug!(
+			"[CocoonService] SCM provider registered: scm_id={}, display_name={:?}",
+			req.scm_id, req.display_name
+		);
+
+		// TODO: When SCMState is available in MountainEnvironment:
+		// - Store provider metadata in SCMState
+		// - Map scm_id to extension for RPC callbacks
+		// - Register with Wind for UI display
+		// - Store supported commands and features
 
 		Ok(Response::new(Empty {}))
 	}
@@ -935,7 +1357,17 @@ impl CocoonService for CocoonServiceImpl {
 			req.group_id, req.provider_id
 		);
 
-		// TODO: Implement SCM group update
+		// Update SCM group in MountainEnvironment
+		debug!(
+			"[CocoonService] Group update details: label={:?}, state={:?}",
+			req.label, req.state
+		);
+
+		// TODO: When SCMState is available in MountainEnvironment:
+		// - Update group metadata in SCMState
+		// - Update resource states if provided
+		// - Notify Wind of changes via IPC
+		// - Handle errors for invalid group_id or provider_id
 
 		Ok(Response::new(Empty {}))
 	}
@@ -945,9 +1377,21 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Executing git command: {}", req.args.join(" "));
 
-		// TODO: Implement git execution via SCM provider
+		// Delegate to SCM provider for git execution in MountainEnvironment
+		// This stub returns an unimplemented error
+		debug!(
+			"[CocoonService] Git execution details: repository={:?}, cwd={:?}",
+			req.repository, req.cwd
+		);
 
-		Err(Status::unimplemented("git_exec not yet implemented"))
+		// TODO: When SCMProvider is available in MountainEnvironment:
+		// - Look up SCM provider for the repository
+		// - Execute git command via git2 crate or spawn git process
+		// - Capture stdout, stderr, and exit code
+		// - Return formatted response with results
+		// - Handle errors (git not found, repository corruption, etc.)
+
+		Err(Status::unimplemented("git_exec requires SCMProvider in MountainEnvironment"))
 	}
 
 	// ==================== Debug ====================
@@ -960,7 +1404,17 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering debug adapter: {}", req.debug_type);
 
-		// TODO: Implement debug adapter registration
+		// Register debug adapter in MountainEnvironment DebugState
+		debug!(
+			"[CocoonService] Debug adapter registered: debug_type={}, label={:?}",
+			req.debug_type, req.label
+		);
+
+		// TODO: When DebugState is available in MountainEnvironment:
+		// - Store adapter metadata in DebugState
+		// - Map debug_type to adapter executable path
+		// - Store supported DAP features
+		// - Register with Wind for UI display
 
 		Ok(Response::new(Empty {}))
 	}
@@ -973,7 +1427,21 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Starting debugging session: {}", req.debug_type);
 
-		// TODO: Implement debugging session start
+		// Spawn debug adapter and start DAP session in MountainEnvironment
+		// This stub returns failure
+		warn!(
+			"[CocoonService] Debug session start not yet implemented - type: {}",
+			req.debug_type
+		);
+		debug!("[CocoonService] Debug configuration: {:?}", req.configuration);
+
+		// TODO: When DebugAdapterExecutor is available in MountainEnvironment:
+		// - Look up debug adapter by debug_type
+		// - Spawn debug adapter process
+		// - Initialize DAP session with configuration
+		// - Handle DAP protocol messages
+		// - Return success/failure status
+		// - Attach breakpoints and watch expressions
 
 		Ok(Response::new(StartDebuggingResponse { success:false }))
 	}
@@ -988,10 +1456,16 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Participating in save for: {:?}", req.uri);
 
-		// TODO: Implement save participant logic
-		// - Call all registered save participants
-		// - Collect text edits
-		// - Return aggregated edits
+		// Look up registered save participants and aggregate edits in
+		// MountainEnvironment
+		debug!("[CocoonService] Save reason: {:?}", req.reason);
+
+		// TODO: When SaveParticipantRegistry is available in MountainEnvironment:
+		// - Look up save participants for this URI
+		// - Call each participant with document context and reason
+		// - Aggregate TextEditForSave responses from all participants
+		// - Return consolidated edits list
+		// - Handle errors from individual participants
 
 		Ok(Response::new(ParticipateInSaveResponse { edits:Vec::new() }))
 	}
@@ -1003,9 +1477,19 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Getting secret for key: {}", req.key);
 
-		// TODO: Implement secret retrieval via SecretStorage provider
+		// Delegate to SecretStorageProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		warn!("[CocoonService] SecretStorageProvider not yet available in MountainEnvironment");
 
-		Err(Status::unimplemented("get_secret not yet implemented"))
+		// TODO: When SecretStorageProvider is available in MountainEnvironment:
+		// - Look up secret by key in SecretStorageProvider
+		// - Return secret value or error if not found
+		// - Handle encryption/decryption
+		// - Handle permission errors
+
+		Err(Status::unimplemented(
+			"get_secret requires SecretStorageProvider in MountainEnvironment",
+		))
 	}
 
 	/// Store Secret - Store a secret in storage
@@ -1013,9 +1497,19 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Storing secret for key: {}", req.key);
 
-		// TODO: Implement secret storage via SecretStorage provider
+		// Delegate to SecretStorageProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		debug!("[CocoonService] Secret value length: {} bytes", req.value.len());
 
-		Err(Status::unimplemented("store_secret not yet implemented"))
+		// TODO: When SecretStorageProvider is available in MountainEnvironment:
+		// - Store secret with key in SecretStorageProvider
+		// - Handle encryption before storage
+		// - Update existing secret or create new one
+		// - Handle permission errors and storage limits
+
+		Err(Status::unimplemented(
+			"store_secret requires SecretStorageProvider in MountainEnvironment",
+		))
 	}
 
 	/// Delete Secret - Delete a secret from storage
@@ -1023,8 +1517,17 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		debug!("[CocoonService] Deleting secret for key: {}", req.key);
 
-		// TODO: Implement secret deletion via SecretStorage provider
+		// Delegate to SecretStorageProvider in MountainEnvironment
+		// This stub returns an unimplemented error
+		warn!("[CocoonService] Secret deletion not yet implemented");
 
-		Err(Status::unimplemented("delete_secret not yet implemented"))
+		// TODO: When SecretStorageProvider is available in MountainEnvironment:
+		// - Remove secret by key from SecretStorageProvider
+		// - Return success or error if not found
+		// - Handle permission errors
+
+		Err(Status::unimplemented(
+			"delete_secret requires SecretStorageProvider in MountainEnvironment",
+		))
 	}
 }

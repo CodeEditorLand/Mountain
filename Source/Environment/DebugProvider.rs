@@ -109,12 +109,12 @@ impl DebugService for MountainEnvironment {
 			DebugType, ProviderHandle, SideCarIdentifier
 		);
 
-		// TODO: Store debug configuration provider registration in ApplicationState
-		// to enable debug adapter resolution and lifecycle management. Should:
-		// - Map debug_type to (provider_handle, sidecar_identifier) tuple
-		// - Support multiple providers per debug type with priority ordering
-		// - Validate that debug type is not already registered to prevent conflicts
-		// - Track registration source (extension ID) for debugging and cleanup
+		// Store debug configuration provider registration in ApplicationState
+		self.ApplicationState
+			.Feature
+			.Debug
+			.RegisterDebugConfigurationProvider(DebugType, ProviderHandle, SideCarIdentifier)
+			.map_err(|e| CommonError::Unknown { Description:e })?;
 
 		Ok(())
 	}
@@ -141,12 +141,12 @@ impl DebugService for MountainEnvironment {
 			DebugType, FactoryHandle, SideCarIdentifier
 		);
 
-		// TODO: Store debug adapter descriptor factory registration in ApplicationState
-		// for use during debug session creation. Should:
-		// - Map debug_type to (factory_handle, sidecar_identifier)
-		// - Support multiple adapter factories with fallback chain for resilience
-		// - Allow factory override based on debug configuration version
-		// - Enable runtime lookup of appropriate factory for requested debug type
+		// Store debug adapter descriptor factory registration in ApplicationState
+		self.ApplicationState
+			.Feature
+			.Debug
+			.RegisterDebugAdapterDescriptorFactory(DebugType, FactoryHandle, SideCarIdentifier)
+			.map_err(|e| CommonError::Unknown { Description:e })?;
 
 		Ok(())
 	}

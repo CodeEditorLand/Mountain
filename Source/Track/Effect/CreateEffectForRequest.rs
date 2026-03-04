@@ -571,9 +571,18 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-						let options = if let Some(Value::Object(_obj)) = Parameters.get(0) {
-							// TODO: Properly deserialize to InputBoxOptionsDTO
-							Some(CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO::default())
+						let options = if let Some(Value::Object(obj)) = Parameters.get(0) {
+							// Properly deserialize to InputBoxOptionsDTO
+							match serde_json::from_value::<
+								CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
+							>(obj.clone())
+							{
+								Ok(dto) => Some(dto),
+								Err(e) => {
+									warn!("Failed to deserialize InputBoxOptionsDTO: {}", e);
+									Some(CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO::default())
+								},
+							}
 						} else {
 							None
 						};
@@ -592,9 +601,18 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-						let options = if let Some(Value::Object(_obj)) = Parameters.get(0) {
-							// TODO: Properly deserialize to OpenDialogOptionsDTO
-							Some(Default::default())
+						let options = if let Some(Value::Object(obj)) = Parameters.get(0) {
+							// Properly deserialize to OpenDialogOptionsDTO
+							match serde_json::from_value::<
+								CommonLibrary::UserInterface::DTO::OpenDialogOptionsDTO::OpenDialogOptionsDTO,
+							>(obj.clone())
+							{
+								Ok(dto) => Some(dto),
+								Err(e) => {
+									warn!("Failed to deserialize OpenDialogOptionsDTO: {}", e);
+									Some(Default::default())
+								},
+							}
 						} else {
 							None
 						};
@@ -613,9 +631,18 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-						let options = if let Some(Value::Object(_obj)) = Parameters.get(0) {
-							// TODO: Properly deserialize to SaveDialogOptionsDTO
-							Some(Default::default())
+						let options = if let Some(Value::Object(obj)) = Parameters.get(0) {
+							// Properly deserialize to SaveDialogOptionsDTO
+							match serde_json::from_value::<
+								CommonLibrary::UserInterface::DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO,
+							>(obj.clone())
+							{
+								Ok(dto) => Some(dto),
+								Err(e) => {
+									warn!("Failed to deserialize SaveDialogOptionsDTO: {}", e);
+									Some(Default::default())
+								},
+							}
 						} else {
 							None
 						};

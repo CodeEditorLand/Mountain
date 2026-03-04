@@ -34,6 +34,7 @@
 //! - [ ] Implement feature lifecycle events
 //! - [ ] Add feature metrics
 
+pub mod Debug;
 pub mod Diagnostics;
 pub mod Documents;
 pub mod Terminals;
@@ -43,6 +44,7 @@ pub mod OutputChannels;
 pub mod Markers;
 pub mod State;
 
+pub use Debug::*;
 pub use Diagnostics::*;
 pub use Documents::*;
 pub use Terminals::*;

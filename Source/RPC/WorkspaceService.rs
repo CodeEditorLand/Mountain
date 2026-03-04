@@ -25,70 +25,81 @@
 //! - Graceful degradation for large files
 
 use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-    time::{Duration, Instant},
+	path::{Path, PathBuf},
+	sync::Arc,
+	time::{Duration, Instant},
 };
 
 use async_trait::async_trait;
 use log::{debug, error, info, trace, warn};
 use tonic::{Request, Response, Status};
-
-use crate::Environment::MountainEnvironment::MountainEnvironment;
 use CommonLibrary::Environment::Requires::Requires;
-
-use crate::Vine::Generated::{
-    Empty, ReadFileRequest, ReadFileResponse,
-    WriteFileRequest, DeleteFileRequest,
-    SearchFilesRequest, SearchFilesResponse,
-    GetWorkspaceFoldersRequest, GetWorkspaceFoldersResponse,
-    WatchFileRequest, FileChangeEvent,
+// ============ Feature Flags & Telemetry ============
+#[cfg(feature = "Telemetry")]
+use opentelemetry::{
+	Key,
+	KeyValue,
+	global,
+	metrics::{Counter, Histogram},
 };
 
-// ============ Feature Flags & Telemetry ============
-
-#[cfg(feature = "Telemetry")]
-use opentelemetry::{global, Key, KeyValue, metrics::{Counter, Histogram}};
+use crate::{
+	Environment::MountainEnvironment::MountainEnvironment,
+	Vine::Generated::{
+		DeleteFileRequest,
+		Empty,
+		FileChangeEvent,
+		GetWorkspaceFoldersRequest,
+		GetWorkspaceFoldersResponse,
+		ReadFileRequest,
+		ReadFileResponse,
+		SearchFilesRequest,
+		SearchFilesResponse,
+		WatchFileRequest,
+		WriteFileRequest,
+	},
+};
 
 #[cfg(feature = "Telemetry")]
 pub struct WorkspaceMetrics {
-    read_counter: Counter<u64>,
-    write_counter: Counter<u64>,
-    search_counter: Counter<u64>,
-    operation_latency_histogram: Histogram<u64>,
-    bytes_histogram: Histogram<u64>,
+	read_counter:Counter<u64>,
+	write_counter:Counter<u64>,
+	search_counter:Counter<u64>,
+	operation_latency_histogram:Histogram<u64>,
+	bytes_histogram:Histogram<u64>,
 }
 
 #[cfg(feature = "Telemetry")]
 impl WorkspaceMetrics {
-    pub fn new() -> Self {
-        let meter = global::meter("WorkspaceService");
-        Self {
-            read_counter: meter.u64_counter("files_read").build(),
-            write_counter: meter.u64_counter("files_written").build(),
-            search_counter: meter.u64_counter("searches_performed").build(),
-            operation_latency_histogram: meter.u64_histogram("workspace_operation_latency_us").build(),
-            bytes_histogram: meter.u64_histogram("file_size_bytes").build(),
-        }
-    }
+	pub fn new() -> Self {
+		let meter = global::meter("WorkspaceService");
+		Self {
+			read_counter:meter.u64_counter("files_read").build(),
+			write_counter:meter.u64_counter("files_written").build(),
+			search_counter:meter.u64_counter("searches_performed").build(),
+			operation_latency_histogram:meter.u64_histogram("workspace_operation_latency_us").build(),
+			bytes_histogram:meter.u64_histogram("file_size_bytes").build(),
+		}
+	}
 
-    pub fn record_read(&self, success: bool, bytes: u64) {
-        if success {
-            self.read_counter.add(1, &[]);
-            self.bytes_histogram.record(bytes, &[KeyValue::new("operation", "read")]);
-        }
-    }
+	pub fn record_read(&self, success:bool, bytes:u64) {
+		if success {
+			self.read_counter.add(1, &[]);
+			self.bytes_histogram.record(bytes, &[KeyValue::new("operation", "read")]);
+		}
+	}
 
-    pub fn record_write(&self, success: bool, bytes: u64) {
-        if success {
-            self.write_counter.add(1, &[]);
-        }
-        self.bytes_histogram.record(bytes, &[KeyValue::new("operation", "write")]);
-    }
+	pub fn record_write(&self, success:bool, bytes:u64) {
+		if success {
+			self.write_counter.add(1, &[]);
+		}
+		self.bytes_histogram.record(bytes, &[KeyValue::new("operation", "write")]);
+	}
 
-    pub fn record_operation(&self, operation: &str, latency_us: u64) {
-        self.operation_latency_histogram.record(latency_us, &[KeyValue::new("operation", operation)]);
-    }
+	pub fn record_operation(&self, operation:&str, latency_us:u64) {
+		self.operation_latency_histogram
+			.record(latency_us, &[KeyValue::new("operation", operation)]);
+	}
 }
 
 #[cfg(not(feature = "Telemetry"))]
@@ -96,248 +107,270 @@ pub struct WorkspaceMetrics;
 
 #[cfg(not(feature = "Telemetry"))]
 impl WorkspaceMetrics {
-    pub fn new() -> Self { Self }
+	pub fn new() -> Self { Self }
 }
 
 // ============ Constants ============
 
-const MAX_FILE_SIZE: u64 = 50 * 1024 * 1024; // 50MB
-const MAX_SEARCH_RESULTS: usize = 1000;
+const MAX_FILE_SIZE:u64 = 50 * 1024 * 1024; // 50MB
+const MAX_SEARCH_RESULTS:usize = 1000;
 
 // ============ Workspace Service Implementation ============
 
 pub struct WorkspaceService {
-    environment: MountainEnvironment,
-    metrics: WorkspaceMetrics,
+	environment:MountainEnvironment,
+	metrics:WorkspaceMetrics,
 }
 
 impl WorkspaceService {
-    pub fn Create(environment: MountainEnvironment) -> Self {
-        let metrics = WorkspaceMetrics::new();
-        info!("[WorkspaceService] Initializing workspace service");
-        Self { environment, metrics }
-    }
+	pub fn Create(environment:MountainEnvironment) -> Self {
+		let metrics = WorkspaceMetrics::new();
+		info!("[WorkspaceService] Initializing workspace service");
+		Self { environment, metrics }
+	}
 
-    pub async fn ReadFile(&self, request: Request<ReadFileRequest>) -> Result<Response<ReadFileResponse>, Status> {
-        let req = request.into_inner();
-        let path = req.path.clone();
+	pub async fn ReadFile(&self, request:Request<ReadFileRequest>) -> Result<Response<ReadFileResponse>, Status> {
+		let req = request.into_inner();
+		let path = req.path.clone();
 
-        #[cfg(feature = "Telemetry")]
-        let span = global::tracer("WorkspaceService").start("ReadFile");
-        #[cfg(feature = "Telemetry")]
-        span.set_attribute(KeyValue::new("file.path", path.clone()));
+		#[cfg(feature = "Telemetry")]
+		let span = global::tracer("WorkspaceService").start("ReadFile");
+		#[cfg(feature = "Telemetry")]
+		span.set_attribute(KeyValue::new("file.path", path.clone()));
 
-        info!("[WorkspaceService] Reading file: {}", path);
+		info!("[WorkspaceService] Reading file: {}", path);
 
-        // Validate path
-        if let Err(err) = self.ValidatePath(&path) {
-            error!("[WorkspaceService] Invalid path: {}", err);
-            return Err(Status::invalid_argument(err));
-        }
+		// Validate path
+		if let Err(err) = self.ValidatePath(&path) {
+			error!("[WorkspaceService] Invalid path: {}", err);
+			return Err(Status::invalid_argument(err));
+		}
 
-        let start_time = Instant::now();
+		let start_time = Instant::now();
 
-        let workspace = self.environment.Require();
-        match workspace.ReadFile(path.clone(), req.encoding).await {
-            Ok(content) => {
-                let elapsed = start_time.elapsed();
-                let bytes = content.len() as u64;
+		let workspace = self.environment.Require();
+		match workspace.ReadFile(path.clone(), req.encoding).await {
+			Ok(content) => {
+				let elapsed = start_time.elapsed();
+				let bytes = content.len() as u64;
 
-                debug!("[WorkspaceService] File read successfully: {} bytes in {:?}", bytes, elapsed);
+				debug!("[WorkspaceService] File read successfully: {} bytes in {:?}", bytes, elapsed);
 
-                #[cfg(feature = "Telemetry")]
-                {
-                    span.set_attribute(KeyValue::new("bytes", bytes as i64));
-                    span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
-                    span.end();
-                    self.metrics.record_read(true, bytes);
-                    self.metrics.record_operation("read_file", elapsed.as_micros() as u64);
-                }
+				#[cfg(feature = "Telemetry")]
+				{
+					span.set_attribute(KeyValue::new("bytes", bytes as i64));
+					span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
+					span.end();
+					self.metrics.record_read(true, bytes);
+					self.metrics.record_operation("read_file", elapsed.as_micros() as u64);
+				}
 
-                Ok(Response::new(ReadFileResponse { content, found: true }))
-            }
-            Err(err) => {
-                warn!("[WorkspaceService] File not found or error: {} (path: {})", err, path);
+				Ok(Response::new(ReadFileResponse { content, found:true }))
+			},
+			Err(err) => {
+				warn!("[WorkspaceService] File not found or error: {} (path: {})", err, path);
 
-                #[cfg(feature = "Telemetry")]
-                {
-                    span.set_attribute(KeyValue::new("found", false));
-                    span.end();
-                    self.metrics.record_read(false, 0);
-                }
+				#[cfg(feature = "Telemetry")]
+				{
+					span.set_attribute(KeyValue::new("found", false));
+					span.end();
+					self.metrics.record_read(false, 0);
+				}
 
-                Err(Status::not_found(format!("Failed to read file: {}", err)))
-            }
-        }
-    }
+				Err(Status::not_found(format!("Failed to read file: {}", err)))
+			},
+		}
+	}
 
-    pub async fn WriteFile(&self, request: Request<WriteFileRequest>) -> Result<Response<Empty>, Status> {
-        let req = request.into_inner();
-        let path = req.path.clone();
+	pub async fn WriteFile(&self, request:Request<WriteFileRequest>) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		let path = req.path.clone();
 
-        #[cfg(feature = "Telemetry")]
-        let span = global::tracer("WorkspaceService").start("WriteFile");
-        #[cfg(feature = "Telemetry")]
-        span.set_attribute(KeyValue::new("file.path", path.clone()));
+		#[cfg(feature = "Telemetry")]
+		let span = global::tracer("WorkspaceService").start("WriteFile");
+		#[cfg(feature = "Telemetry")]
+		span.set_attribute(KeyValue::new("file.path", path.clone()));
 
-        info!("[WorkspaceService] Writing file: {}", path);
+		info!("[WorkspaceService] Writing file: {}", path);
 
-        // Validate path and content
-        if let Err(err) = self.ValidatePath(&path) {
-            return Err(Status::invalid_argument(err));
-        }
+		// Validate path and content
+		if let Err(err) = self.ValidatePath(&path) {
+			return Err(Status::invalid_argument(err));
+		}
 
-        let bytes = req.content.len() as u64;
-        if bytes > MAX_FILE_SIZE {
-            return Err(Status::invalid_argument(format!("File too large: {} bytes (max {})", bytes, MAX_FILE_SIZE)));
-        }
+		let bytes = req.content.len() as u64;
+		if bytes > MAX_FILE_SIZE {
+			return Err(Status::invalid_argument(format!(
+				"File too large: {} bytes (max {})",
+				bytes, MAX_FILE_SIZE
+			)));
+		}
 
-        let start_time = Instant::now();
+		let start_time = Instant::now();
 
-        let workspace = self.environment.Require();
-        match workspace.WriteFile(path, req.content, req.create_parent.unwrap_or(false)).await {
-            Ok(_) => {
-                let elapsed = start_time.elapsed();
+		let workspace = self.environment.Require();
+		match workspace.WriteFile(path, req.content, req.create_parent.unwrap_or(false)).await {
+			Ok(_) => {
+				let elapsed = start_time.elapsed();
 
-                #[cfg(feature = "Telemetry")]
-                {
-                    span.set_attribute(KeyValue::new("bytes", bytes as i64));
-                    span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
-                    span.end();
-                    self.metrics.record_write(true, bytes);
-                    self.metrics.record_operation("write_file", elapsed.as_micros() as u64);
-                }
+				#[cfg(feature = "Telemetry")]
+				{
+					span.set_attribute(KeyValue::new("bytes", bytes as i64));
+					span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
+					span.end();
+					self.metrics.record_write(true, bytes);
+					self.metrics.record_operation("write_file", elapsed.as_micros() as u64);
+				}
 
-                Ok(Response::new(Empty {}))
-            }
-            Err(err) => {
-                error!("[WorkspaceService] Failed to write file: {}", err);
+				Ok(Response::new(Empty {}))
+			},
+			Err(err) => {
+				error!("[WorkspaceService] Failed to write file: {}", err);
 
-                #[cfg(feature = "Telemetry")]
-                {
-                    span.set_attribute(KeyValue::new("error", err.to_string()));
-                    span.end();
-                    self.metrics.record_write(false, bytes);
-                }
+				#[cfg(feature = "Telemetry")]
+				{
+					span.set_attribute(KeyValue::new("error", err.to_string()));
+					span.end();
+					self.metrics.record_write(false, bytes);
+				}
 
-                Err(Status::internal(format!("Failed to write file: {}", err)))
-            }
-        }
-    }
+				Err(Status::internal(format!("Failed to write file: {}", err)))
+			},
+		}
+	}
 
-    pub async fn DeleteFile(&self, request: Request<DeleteFileRequest>) -> Result<Response<Empty>, Status> {
-        let req = request.into_inner();
-        let path = req.path.clone();
+	pub async fn DeleteFile(&self, request:Request<DeleteFileRequest>) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		let path = req.path.clone();
 
-        info!("[WorkspaceService] Deleting file: {}", path);
+		info!("[WorkspaceService] Deleting file: {}", path);
 
-        if let Err(err) = self.ValidatePath(&path) {
-            return Err(Status::invalid_argument(err));
-        }
+		if let Err(err) = self.ValidatePath(&path) {
+			return Err(Status::invalid_argument(err));
+		}
 
-        let workspace = self.environment.Require();
-        match workspace.DeleteFile(path.clone(), req.use_trash.unwrap_or(false)).await {
-            Ok(_) => {
-                debug!("[WorkspaceService] File deleted successfully");
-                Ok(Response::new(Empty {}))
-            }
-            Err(err) => {
-                error!("[WorkspaceService] Failed to delete file: {}", err);
-                Err(Status::internal(format!("Failed to delete file: {}", err)))
-            }
-        }
-    }
+		let workspace = self.environment.Require();
+		match workspace.DeleteFile(path.clone(), req.use_trash.unwrap_or(false)).await {
+			Ok(_) => {
+				debug!("[WorkspaceService] File deleted successfully");
+				Ok(Response::new(Empty {}))
+			},
+			Err(err) => {
+				error!("[WorkspaceService] Failed to delete file: {}", err);
+				Err(Status::internal(format!("Failed to delete file: {}", err)))
+			},
+		}
+	}
 
-    pub async fn SearchFiles(&self, request: Request<SearchFilesRequest>) -> Result<Response<SearchFilesResponse>, Status> {
-        let req = request.into_inner();
+	pub async fn SearchFiles(
+		&self,
+		request:Request<SearchFilesRequest>,
+	) -> Result<Response<SearchFilesResponse>, Status> {
+		let req = request.into_inner();
 
-        #[cfg(feature = "Telemetry")]
-        let span = global::tracer("WorkspaceService").start("SearchFiles");
-        #[cfg(feature = "Telemetry")]
-        span.set_attribute(KeyValue::new("query", req.query.clone()));
+		#[cfg(feature = "Telemetry")]
+		let span = global::tracer("WorkspaceService").start("SearchFiles");
+		#[cfg(feature = "Telemetry")]
+		span.set_attribute(KeyValue::new("query", req.query.clone()));
 
-        info!("[WorkspaceService] Searching files: pattern={}, query={}", req.pattern, req.query);
+		info!(
+			"[WorkspaceService] Searching files: pattern={}, query={}",
+			req.pattern, req.query
+		);
 
-        let start_time = Instant::now();
+		let start_time = Instant::now();
 
-        let workspace = self.environment.Require();
-        match workspace.SearchFiles(
-            req.query.clone(),
-            req.pattern,
-            req.match_case.unwrap_or(false),
-            req.include_globs,
-            req.exclude_globs,
-            MAX_SEARCH_RESULTS,
-        ).await {
-            Ok(results) => {
-                let elapsed = start_time.elapsed();
+		let workspace = self.environment.Require();
+		match workspace
+			.SearchFiles(
+				req.query.clone(),
+				req.pattern,
+				req.match_case.unwrap_or(false),
+				req.include_globs,
+				req.exclude_globs,
+				MAX_SEARCH_RESULTS,
+			)
+			.await
+		{
+			Ok(results) => {
+				let elapsed = start_time.elapsed();
 
-                #[cfg(feature = "Telemetry")]
-                {
-                    span.set_attribute(KeyValue::new("results", results.len() as i64));
-                    span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
-                    span.end();
-                    self.metrics.record_operation("search_files", elapsed.as_micros() as u64);
-                }
+				#[cfg(feature = "Telemetry")]
+				{
+					span.set_attribute(KeyValue::new("results", results.len() as i64));
+					span.set_attribute(KeyValue::new("duration_ms", elapsed.as_millis() as i64));
+					span.end();
+					self.metrics.record_operation("search_files", elapsed.as_micros() as u64);
+				}
 
-                Ok(Response::new(SearchFilesResponse { results }))
-            }
-            Err(err) => {
-                error!("[WorkspaceService] Search failed: {}", err);
-                #[cfg(feature = "Telemetry")] { span.end(); }
-                Err(Status::internal(format!("Search failed: {}", err)))
-            }
-        }
-    }
+				Ok(Response::new(SearchFilesResponse { results }))
+			},
+			Err(err) => {
+				error!("[WorkspaceService] Search failed: {}", err);
+				#[cfg(feature = "Telemetry")]
+				{
+					span.end();
+				}
+				Err(Status::internal(format!("Search failed: {}", err)))
+			},
+		}
+	}
 
-    pub async fn GetWorkspaceFolders(&self, request: Request<GetWorkspaceFoldersRequest>) -> Result<Response<GetWorkspaceFoldersResponse>, Status> {
-        info!("[WorkspaceService] Getting workspace folders");
+	pub async fn GetWorkspaceFolders(
+		&self,
+		request:Request<GetWorkspaceFoldersRequest>,
+	) -> Result<Response<GetWorkspaceFoldersResponse>, Status> {
+		info!("[WorkspaceService] Getting workspace folders");
 
-        let workspace = self.environment.Require();
-        match workspace.GetWorkspaceFolders().await {
-            Ok(folders) => {
-                debug!("[WorkspaceService] Found {} workspace folders", folders.len());
-                Ok(Response::new(GetWorkspaceFoldersResponse { folders }))
-            }
-            Err(err) => {
-                Err(Status::internal(format!("Failed to get folders: {}", err)))
-            }
-        }
-    }
+		let workspace = self.environment.Require();
+		match workspace.GetWorkspaceFolders().await {
+			Ok(folders) => {
+				debug!("[WorkspaceService] Found {} workspace folders", folders.len());
+				Ok(Response::new(GetWorkspaceFoldersResponse { folders }))
+			},
+			Err(err) => Err(Status::internal(format!("Failed to get folders: {}", err))),
+		}
+	}
 
-    pub async fn WatchFile(&self, request: Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
-        let req = request.into_inner();
-        info!("[WorkspaceService] Watching file: {:?}", req.path);
+	pub async fn WatchFile(&self, request:Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[WorkspaceService] Watching file: {:?}", req.path);
 
-        if let Err(err) = self.ValidatePath(&req.path) {
-            return Err(Status::invalid_argument(err));
-        }
+		if let Err(err) = self.ValidatePath(&req.path) {
+			return Err(Status::invalid_argument(err));
+		}
 
-        let workspace = self.environment.Require();
-        match workspace.WatchFile(req.path, req.recursive.unwrap_or(true)).await {
-            Ok(_) => {
-                debug!("[WorkspaceService] Watcher created successfully");
-                Ok(Response::new(Empty {}))
-            }
-            Err(err) => {
-                error!("[WorkspaceService] Failed to watch file: {}", err);
-                Err(Status::internal(format!("Failed to watch file: {}", err)))
-            }
-        }
-    }
+		let workspace = self.environment.Require();
+		match workspace.WatchFile(req.path, req.recursive.unwrap_or(true)).await {
+			Ok(_) => {
+				debug!("[WorkspaceService] Watcher created successfully");
+				Ok(Response::new(Empty {}))
+			},
+			Err(err) => {
+				error!("[WorkspaceService] Failed to watch file: {}", err);
+				Err(Status::internal(format!("Failed to watch file: {}", err)))
+			},
+		}
+	}
 
-    fn ValidatePath(&self, path: &str) -> Result<(), String> {
-        if path.is_empty() {
-            return Err("Path cannot be empty".to_string());
-        }
-        // Check for path injection attempts
-        if path.contains("..") && !path.chars().all(|c| c.is_ascii()) {
-            return Err("Invalid path characters".to_string());
-        }
-        Ok(())
-    }
+	fn ValidatePath(&self, path:&str) -> Result<(), String> {
+		if path.is_empty() {
+			return Err("Path cannot be empty".to_string());
+		}
+		// Check for path injection attempts
+		if path.contains("..") && !path.chars().all(|c| c.is_ascii()) {
+			return Err("Invalid path characters".to_string());
+		}
+		Ok(())
+	}
 }
 
 #[cfg(test)]
-mod tests { use super::*; // TODO: Add tests }
-
+mod tests {
+	use super::*;
+	// DEPENDENCY: Tests require full workspace service implementation
+	// including:
+	// - Workspace folder management
+	// - Configuration handling
+	// - File system integration
+}

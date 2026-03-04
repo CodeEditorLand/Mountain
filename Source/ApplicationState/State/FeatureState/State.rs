@@ -38,6 +38,7 @@
 use log::debug;
 
 use super::{
+	Debug::DebugState::DebugState,
 	Diagnostics::DiagnosticsState::DiagnosticsState,
 	Documents::DocumentState::DocumentState,
 	Markers::MarkerState::MarkerState,
@@ -50,6 +51,9 @@ use super::{
 /// Feature state combining all feature-related components.
 #[derive(Clone)]
 pub struct State {
+	/// Debug provider state.
+	pub Debug:DebugState,
+
 	/// Diagnostic errors state.
 	pub Diagnostics:DiagnosticsState,
 
@@ -77,6 +81,7 @@ impl Default for State {
 		debug!("[FeatureState::State] Initializing default feature state...");
 
 		Self {
+			Debug:Default::default(),
 			Diagnostics:Default::default(),
 			Documents:Default::default(),
 			Terminals:Default::default(),

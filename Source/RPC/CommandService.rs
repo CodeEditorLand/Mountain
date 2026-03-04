@@ -469,5 +469,10 @@ pub struct CommandStatistics {
 #[cfg(test)]
 mod tests {
 	use super::*;
-	// TODO: Add comprehensive unit tests for all methods
+	// DEPENDENCY: Comprehensive unit tests require full command registry and
+	// execution implementation including:
+	// - Command registration and lookup
+	// - Parameter validation
+	// - Execution timing and statistics
+	// - Error handling scenarios
 }

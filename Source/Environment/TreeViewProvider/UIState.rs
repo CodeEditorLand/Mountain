@@ -104,9 +104,14 @@ pub(super) async fn set_tree_view_badge(
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
-		if let Some(_view_state) = tree_view_guard.get_mut(&view_identifier) {
-			// TODO: Store badge in ViewState when field is added to
-			// TreeViewStateDTO
+		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
+			// Store badge in ViewState
+			if let Some(badge_value) = &badge {
+				let badge_str = badge_value.to_string();
+				if let Err(e) = view_state.SetBadge(badge_str) {
+					warn!("Failed to set badge for view '{}': {}", view_identifier, e);
+				}
+			}
 		}
 	}
 

@@ -313,11 +313,11 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 	let (Sender, Receiver) = tokio::sync::oneshot::channel();
 
 	{
-	let mut PendingRequestsGuard = Environment
-	.ApplicationState
-	.UI
-	.PendingUserInterfaceRequest
-	.lock()
+		let mut PendingRequestsGuard = Environment
+			.ApplicationState
+			.UI
+			.PendingUserInterfaceRequest
+			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 		PendingRequestsGuard.insert(RequestIdentifier.clone(), Sender);
@@ -349,10 +349,10 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 			);
 
 			let mut Guard = Environment
-			.ApplicationState
-			.UI
-			.PendingUserInterfaceRequest
-			.lock()
+				.ApplicationState
+				.UI
+				.PendingUserInterfaceRequest
+				.lock()
 				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
 
 			Guard.remove(&RequestIdentifier);

@@ -103,11 +103,11 @@ impl ConnectionPool {
 		);
 
 		Self {
-		MaxConnections,
-		ConnectionTimeout,
-		Semaphore:Arc::new(Semaphore::new(MaxConnections)),
-		ActiveConnection:Arc::new(AsyncMutex::new(HashMap::new())),
-		HealthChecker:Arc::new(AsyncMutex::new(HealthChecker::new())),
+			MaxConnections,
+			ConnectionTimeout,
+			Semaphore:Arc::new(Semaphore::new(MaxConnections)),
+			ActiveConnection:Arc::new(AsyncMutex::new(HashMap::new())),
+			HealthChecker:Arc::new(AsyncMutex::new(HealthChecker::new())),
 		}
 	}
 
@@ -145,7 +145,7 @@ impl ConnectionPool {
 
 		// Add to active connections
 		{
-		let mut connections = self.ActiveConnection.lock().await;
+			let mut connections = self.ActiveConnection.lock().await;
 			connections.insert(handle.id.clone(), handle.clone());
 		}
 
@@ -177,7 +177,7 @@ impl ConnectionPool {
 		debug!("[ConnectionPool] Releasing connection {}", handle.id);
 
 		{
-		let mut connections = self.ActiveConnection.lock().await;
+			let mut connections = self.ActiveConnection.lock().await;
 			connections.remove(&handle.id);
 		}
 
@@ -200,7 +200,7 @@ impl ConnectionPool {
 	/// println!("Pool stats: {:?}", stats.summary());
 	/// ```
 	pub async fn GetStats(&self) -> ConnectionStats {
-	let connections = self.ActiveConnection.lock().await;
+		let connections = self.ActiveConnection.lock().await;
 		let healthy_connections = connections.values().filter(|h| h.is_healthy()).count();
 
 		ConnectionStats {
@@ -231,7 +231,7 @@ impl ConnectionPool {
 	/// println!("Cleaned up {} stale connections", cleaned);
 	/// ```
 	pub async fn CleanUpStaleConnections(&self) -> usize {
-	let mut connections = self.ActiveConnection.lock().await;
+		let mut connections = self.ActiveConnection.lock().await;
 		let now = std::time::SystemTime::now();
 		let stale_threshold = Duration::from_secs(300); // 5 minutes
 
@@ -318,7 +318,7 @@ impl ConnectionPool {
 
 	/// Get the number of active connections
 	pub async fn active_connection(&self) -> usize {
-	let connections = self.ActiveConnection.lock().await;
+		let connections = self.ActiveConnection.lock().await;
 		connections.len()
 	}
 }

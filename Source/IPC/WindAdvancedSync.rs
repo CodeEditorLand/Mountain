@@ -358,10 +358,10 @@ pub struct RealTimeUpdate {
 
 /// Real-time updates manager
 pub struct RealTimeUpdateManager {
-    pub Updates:Vec<RealTimeUpdate>,
-    pub Subscribers:HashMap<String, Vec<String>>,
-    pub UpdateQueue:Vec<RealTimeUpdate>,
-    pub LastBroadcast:u64,
+	pub Updates:Vec<RealTimeUpdate>,
+	pub Subscribers:HashMap<String, Vec<String>>,
+	pub UpdateQueue:Vec<RealTimeUpdate>,
+	pub LastBroadcast:u64,
 }
 
 /// View state
@@ -447,10 +447,10 @@ impl WindAdvancedSync {
 				},
 			})),
 			real_time_updates:Arc::new(Mutex::new(RealTimeUpdateManager {
-			Updates:Vec::new(),
-			Subscribers:HashMap::new(),
-			UpdateQueue:Vec::new(),
-			LastBroadcast:0,
+				Updates:Vec::new(),
+				Subscribers:HashMap::new(),
+				UpdateQueue:Vec::new(),
+				LastBroadcast:0,
 			})),
 			performance_stats:Arc::new(Mutex::new(PerformanceStats {
 				total_messages_sent:0,
@@ -912,8 +912,8 @@ impl WindAdvancedSync {
 
 		let target_clone = target.clone();
 		updates
-		.Subscribers
-		.entry(target_clone.clone())
+			.Subscribers
+			.entry(target_clone.clone())
 			.or_insert_with(Vec::new)
 			.push(subscriber);
 
@@ -927,7 +927,7 @@ impl WindAdvancedSync {
 
 		updates.UpdateQueue.push(update);
 		updates.LastBroadcast = SystemTime::now()
-		.duration_since(SystemTime::UNIX_EPOCH)
+			.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap_or_default()
 			.as_secs();
 

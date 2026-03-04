@@ -35,6 +35,9 @@ const MAX_TITLE_LENGTH:usize = 256;
 /// Maximum description length
 const MAX_DESCRIPTION_LENGTH:usize = 512;
 
+/// Maximum badge length (serialized JSON)
+const MAX_BADGE_LENGTH:usize = 2048;
+
 /// Holds the static options and provider for a tree view instance that has been
 /// registered by an extension or natively. This is stored in `ApplicationState`
 /// to track active tree views.
@@ -75,6 +78,9 @@ pub struct TreeViewStateDTO {
 
 	/// An optional description that appears with the title.
 	pub Description:Option<String>,
+
+	/// Badge to display on the tree view (typically a count or string)
+	pub Badge:Option<String>,
 }
 
 impl TreeViewStateDTO {
@@ -126,6 +132,7 @@ impl TreeViewStateDTO {
 			Message:None,
 			Title:None,
 			Description:None,
+			Badge:None,
 		})
 	}
 
@@ -177,6 +184,22 @@ impl TreeViewStateDTO {
 		}
 
 		self.Description = Some(Description);
+		Ok(())
+	}
+
+	/// Sets the badge with validation.
+	///
+	/// # Arguments
+	/// * `Badge` - Badge value (typically a count or string)
+	///
+	/// # Returns
+	/// Result indicating success or error if badge too long
+	pub fn SetBadge(&mut self, Badge:String) -> Result<(), String> {
+		if Badge.len() > MAX_BADGE_LENGTH {
+			return Err(format!("Badge exceeds maximum length of {} bytes", MAX_BADGE_LENGTH));
+		}
+
+		self.Badge = Some(Badge);
 		Ok(())
 	}
 
