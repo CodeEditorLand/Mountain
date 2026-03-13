@@ -4,7 +4,7 @@
 //! (message, title, badge).
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::info;
+use log::{info, warn};
 use serde_json::json;
 use tauri::Emitter;
 

@@ -465,6 +465,8 @@ pub fn RegisterNativeCommands(
 			Title:Some("Explorer".to_string()),
 
 			Description:None,
+
+			Badge:None,
 		},
 	);
 

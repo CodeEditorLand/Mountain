@@ -575,7 +575,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							// Properly deserialize to InputBoxOptionsDTO
 							match serde_json::from_value::<
 								CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
-							>(obj.clone())
+							>(Value::Object(obj.clone()))
 							{
 								Ok(dto) => Some(dto),
 								Err(e) => {
@@ -605,7 +605,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							// Properly deserialize to OpenDialogOptionsDTO
 							match serde_json::from_value::<
 								CommonLibrary::UserInterface::DTO::OpenDialogOptionsDTO::OpenDialogOptionsDTO,
-							>(obj.clone())
+							>(Value::Object(obj.clone()))
 							{
 								Ok(dto) => Some(dto),
 								Err(e) => {
@@ -635,7 +635,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							// Properly deserialize to SaveDialogOptionsDTO
 							match serde_json::from_value::<
 								CommonLibrary::UserInterface::DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO,
-							>(obj.clone())
+							>(Value::Object(obj.clone()))
 							{
 								Ok(dto) => Some(dto),
 								Err(e) => {

@@ -32,7 +32,7 @@
 use std::{collections::HashMap, sync::Arc};
 
 use async_trait::async_trait;
-use log::{debug, error, info, warn};
+use log::{debug, error, info, trace, warn};
 use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
 
@@ -67,6 +67,7 @@ use crate::Vine::Generated::{
 	// Common generic types
 	GenericRequest,
 	GenericResponse,
+	RpcError,
 	// Secret Storage
 	GetSecretRequest,
 	GetSecretResponse,
@@ -234,7 +235,11 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(GenericResponse {
 			request_identifier:request_data.request_identifier,
 			result:Vec::new(),
-			error:Some(format!("Method '{}' not implemented in generic router", request_data.method)),
+			error:Some(RpcError {
+				code: -32601, // Method not found (JSON-RPC error code)
+				message: format!("Method '{}' not implemented in generic router", request_data.method),
+				data: Vec::new(),
+			}),
 		}))
 	}
 
@@ -689,7 +694,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		// IPC call to Wind frontend for message display
 		info!("{}", req.message);
-		debug!("[CocoonService] Message options: actions={:?}", req.actions);
+		// TODO: ShowMessageRequest only has 'message' field (no actions)
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Send message to Wind frontend via IPC
@@ -711,7 +716,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		// IPC call to Wind frontend for message display
 		info!("{}", req.message);
-		debug!("[CocoonService] Message options: actions={:?}", req.actions);
+		// TODO: ShowMessageRequest only has 'message' field (no actions)
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Send message to Wind frontend via IPC
@@ -733,7 +738,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		// IPC call to Wind frontend for message display
 		info!("{}", req.message);
-		debug!("[CocoonService] Message options: actions={:?}", req.actions);
+		// TODO: ShowMessageRequest only has 'message' field (no actions)
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Send message to Wind frontend via IPC
@@ -755,9 +760,10 @@ impl CocoonService for CocoonServiceImpl {
 
 		// IPC call to Wind frontend for status bar item creation
 		debug!(
-			"[CocoonService] Status bar item details: id={}, text={:?}, alignment={:?}",
-			req.id, req.text, req.alignment
+			"[CocoonService] Status bar item details: id={}, text={:?}",
+			req.id, req.text
 		);
+		// Note: CreateStatusBarItemRequest has fields: id, text, tooltip (no alignment)
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Send creation request to Wind frontend via IPC
@@ -773,7 +779,8 @@ impl CocoonService for CocoonServiceImpl {
 		debug!("[CocoonService] Setting status bar text for item {}", req.item_id);
 
 		// IPC call to Wind frontend for status bar update
-		debug!("[CocoonService] Update details: text={}, tooltip={:?}", req.text, req.tooltip);
+		debug!("[CocoonService] Update details: item_id={}, text={}", req.item_id, req.text);
+		// Note: SetStatusBarTextRequest has fields: item_id, text (no tooltip)
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Send update request to Wind frontend via IPC
@@ -794,9 +801,10 @@ impl CocoonService for CocoonServiceImpl {
 		// IPC call to Wind frontend to create webview panel
 		// This stub returns a placeholder handle (0)
 		debug!(
-			"[CocoonService] Panel details: view_type={}, title={}, options={:?}",
-			req.view_type, req.title, req.options
+			"[CocoonService] Panel details: view_type={}, title={}",
+			req.view_type, req.title
 		);
+		// Note: CreateWebviewPanelRequest fields: view_type, title, icon_path, view_column, preserve_focus, etc. (no options)
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Generate unique handle for the panel
@@ -941,10 +949,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Delegate to FileSystemProvider with file watcher integration in
 		// MountainEnvironment This stub returns an unimplemented error
-		debug!(
-			"[CocoonService] Watch options: recursive={:?}",
-			req.options.as_ref().map(|o| o.recursive)
-		);
+		// Note: WatchFileRequest only has 'uri' field (no options)
 
 		// TODO: When FileSystemProvider is available in MountainEnvironment:
 		// - Parse URI to filesystem path
@@ -965,14 +970,13 @@ impl CocoonService for CocoonServiceImpl {
 		// Delegate to FileSystemProvider or SearchProvider in MountainEnvironment
 		// This stub returns an unimplemented error
 		debug!(
-			"[CocoonService] Search details: base_uri={:?}, max_results={:?}",
-			req.base_uri, req.max_results
+			"[CocoonService] Search details: pattern={}, include={:?}",
+			req.pattern, req.include
 		);
 
 		// TODO: When SearchProvider is available in MountainEnvironment:
 		// - Use SearchProvider.find_files with glob patterns
-		// - Apply max_results limit
-		// - Return matching URIs
+		// - Return matching URIs (FindFilesResponse has no max_results limit)
 
 		Err(Status::unimplemented("find_files not yet implemented"))
 	}
@@ -988,13 +992,12 @@ impl CocoonService for CocoonServiceImpl {
 		// Delegate to SearchProvider with text search index in MountainEnvironment
 		// This stub returns an unimplemented error
 		debug!(
-			"[CocoonService] Search details: is_regex={}, is_case_sensitive={}",
-			req.is_regex, req.is_case_sensitive
+			"[CocoonService] Search details: pattern={}, include={:?}",
+			req.pattern, req.include
 		);
 
 		// TODO: When SearchProvider is available in MountainEnvironment:
 		// - Use SearchProvider.find_text_in_files with full-text index
-		// - Support regex and case sensitivity options
 		// - Return matches with line/column context
 
 		Err(Status::unimplemented("find_text_in_files not yet implemented"))
@@ -1286,9 +1289,10 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Store provider in MountainEnvironment TreeViewState
 		debug!(
-			"[CocoonService] Tree view provider registered: view_id={}, display_name={:?}",
-			req.view_id, req.display_name
+			"[CocoonService] Tree view provider registered: view_id={}, extension_id={:?}",
+			req.view_id, req.extension_id
 		);
+		// Note: RegisterTreeViewProviderRequest fields: view_id, extension_id (no display_name)
 
 		// TODO: When TreeViewState is available in MountainEnvironment:
 		// - Store provider metadata in TreeViewState
@@ -1336,9 +1340,10 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Store SCM provider in MountainEnvironment
 		debug!(
-			"[CocoonService] SCM provider registered: scm_id={}, display_name={:?}",
-			req.scm_id, req.display_name
+			"[CocoonService] SCM provider registered: scm_id={}, extension_id={:?}",
+			req.scm_id, req.extension_id
 		);
+		// Note: RegisterScmProviderRequest fields: scm_id, extension_id (no display_name)
 
 		// TODO: When SCMState is available in MountainEnvironment:
 		// - Store provider metadata in SCMState
@@ -1359,9 +1364,10 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Update SCM group in MountainEnvironment
 		debug!(
-			"[CocoonService] Group update details: label={:?}, state={:?}",
-			req.label, req.state
+			"[CocoonService] Group update details: provider_id={}, group_id={}, resource_states={:?}",
+			req.provider_id, req.group_id, req.resource_states
 		);
+		// Note: UpdateScmGroupRequest fields: provider_id, group_id, resource_states (no label, state)
 
 		// TODO: When SCMState is available in MountainEnvironment:
 		// - Update group metadata in SCMState
@@ -1380,9 +1386,10 @@ impl CocoonService for CocoonServiceImpl {
 		// Delegate to SCM provider for git execution in MountainEnvironment
 		// This stub returns an unimplemented error
 		debug!(
-			"[CocoonService] Git execution details: repository={:?}, cwd={:?}",
-			req.repository, req.cwd
+			"[CocoonService] Git execution details: repository_path={:?}, args={:?}",
+			req.repository_path, req.args
 		);
+		// Note: GitExecRequest fields: repository_path (string), args (repeated string)
 
 		// TODO: When SCMProvider is available in MountainEnvironment:
 		// - Look up SCM provider for the repository
@@ -1406,8 +1413,8 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Register debug adapter in MountainEnvironment DebugState
 		debug!(
-			"[CocoonService] Debug adapter registered: debug_type={}, label={:?}",
-			req.debug_type, req.label
+			"[CocoonService] Debug adapter registered: debug_type={}, extension_id={:?}",
+			req.debug_type, req.extension_id
 		);
 
 		// TODO: When DebugState is available in MountainEnvironment:

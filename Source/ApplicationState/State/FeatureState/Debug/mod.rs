@@ -10,5 +10,3 @@
 //! - DebugState: Main struct containing debug provider registrations
 
 pub mod DebugState;
-
-pub use DebugState::DebugState;
