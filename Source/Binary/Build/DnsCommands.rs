@@ -234,7 +234,7 @@ pub struct ZoneInfo {
 /// ```javascript
 /// const allowlist = await invoke('dns_get_forward_allowlist');
 /// console.log('Allowed domains:', allowlist.domains);
-/// // Output: ["update.editor.land.", "cdn.crashlytics.com."]
+/// // Output: ["update.editor.land."]
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ForwardAllowList {
@@ -508,8 +508,8 @@ pub fn dns_get_forward_allowlist(dns_port:State<DnsPort>) -> Result<ForwardAllow
 
 	// Return the default forward allowlist from
 	// Mist::forward_security::default_forward_allowlist() The default includes:
-	// update.editor.land. and cdn.crashlytics.com.
-	let domains = vec!["update.editor.land.".to_string(), "cdn.crashlytics.com.".to_string()];
+	// update.editor.land
+	let domains = vec!["update.editor.land.".to_string()];
 
 	Ok(ForwardAllowList { domains })
 }
@@ -636,7 +636,7 @@ pub fn dns_resolve(domain:String, dns_port:State<DnsPort>) -> Result<DnsResoluti
 	}
 
 	// Check if domain is in forward allowlist
-	let allowlist = vec!["update.editor.land.", "cdn.crashlytics.com."];
+	let allowlist = vec!["update.editor.land."];
 
 	let is_allowed = allowlist.iter().any(|d| {
 		let test_domain = if domain.ends_with('.') { domain.clone() } else { format!("{}.", domain) };
@@ -783,7 +783,7 @@ mod tests {
 	#[test]
 	fn test_forward_allowlist_serialization() {
 		let allowlist = ForwardAllowList {
-			domains:vec!["update.editor.land.".to_string(), "cdn.crashlytics.com.".to_string()],
+			domains:vec!["update.editor.land.".to_string()],
 		};
 
 		let json = serde_json::to_string(&allowlist).unwrap();
@@ -791,7 +791,6 @@ mod tests {
 
 		assert_eq!(deserialized.domains.len(), 2);
 		assert_eq!(deserialized.domains[0], "update.editor.land.");
-		assert_eq!(deserialized.domains[1], "cdn.crashlytics.com.");
 	}
 
 	#[test]
