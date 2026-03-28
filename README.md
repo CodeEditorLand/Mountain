@@ -1,13 +1,13 @@
 <table>
-	<tr>
-		<td align="left" valign="middle">
-			<h3 align="left"> Mountain</h3>
-		</td>
-		<td align="left" valign="middle">
-			<h3 align="left">
-				⛰️
-			</h3>
-		</td>
+<tr>
+<td align="left" valign="middle">
+<h3 align="left"> Mountain</h3>
+</td>
+<td align="left" valign="middle">
+<h3 align="left">
+ ⛰️
+</h3>
+</td>
 		<td align="left" valign="middle">
 			<h3 align="left"> + </h3>
 		</td>
