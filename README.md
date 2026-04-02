@@ -5,7 +5,7 @@
 </td>
 <td align="left" valign="middle">
 <h3 align="left">
- ⛰️
+ ⛰️
 </h3>
 </td>
 		<td align="left" valign="middle">
@@ -53,7 +53,9 @@
 
 ---
 
-# **Mountain** ⛰️ The Bedrock of Land: Native Backend & Service Host
+# **Mountain** ⛰️
+
+The Bedrock of Land: Native Backend & Service Host
 
 [![License: CC0-1.0](https://img.shields.io/badge/License-CC0_1.0-lightgrey.svg)](https://github.com/CodeEditorLand/Mountain/tree/Current/LICENSE)
 [![Rust Version](https://img.shields.io/badge/Rust-1.77+-blue.svg)](https://www.rust-lang.org/)
@@ -68,38 +70,38 @@ frontend and the `Cocoon` extension host.
 
 **Mountain** is engineered to:
 
-1.  **Be the Native Core:** Act as the primary Rust application, leveraging
-    Tauri to create a lightweight, cross-platform windowing and webview host.
-2.  **Provide High-Performance Services:** Implement the abstract service traits
-    defined in the `Common` crate, offering native-speed implementations for
-    filesystem I/O, process management, secure storage, and more.
-3.  **Orchestrate Sidecars:** Reliably launch, manage, and communicate with the
-    `Cocoon` (Node.js) extension host sidecar via a robust gRPC interface.
-4.  **Power the User Interface:** Serve as the backend for the `Wind` User
-    Interface layer, responding to requests via Tauri commands and pushing state
-    updates via Tauri events.
+1. **Be the Native Core:** Act as the primary Rust application, leveraging Tauri
+   to create a lightweight, cross-platform windowing and webview host.
+2. **Provide High-Performance Services:** Implement the abstract service traits
+   defined in the `Common` crate, offering native-speed implementations for
+   filesystem I/O, process management, secure storage, and more.
+3. **Orchestrate Sidecars:** Reliably launch, manage, and communicate with the
+   `Cocoon` (Node.js) extension host sidecar via a robust gRPC interface.
+4. **Power the User Interface:** Serve as the backend for the `Wind` User
+   Interface layer, responding to requests via Tauri commands and pushing state
+   updates via Tauri events.
 
 ---
 
-## Key Features 🔐
+## Key Features 🔐
 
 - **Declarative Effect System:** Built on a Rust `ActionEffect` system defined
   in the `Common` crate. Business logic is described as declarative, composable
-  effects, which are executed by a central `ApplicationRunTime`.
+  effects, executed by a central `ApplicationRunTime`.
 - **gRPC-Powered IPC:** Hosts a `tonic`-based gRPC server (`Vine`) to provide a
   strongly-typed, high-performance communication channel for the `Cocoon`
   extension host.
-- **Centralized State Management:** Utilizes a thread-safe, Tauri-managed
-  `ApplicationState` to act as the single source of truth for the entire
-  application's state, from open documents to provider registrations.
-- **Native PTY Management:** Implements a full-featured integrated terminal
-  service by spawning and managing native pseudo-terminals (`PTY`) using the
-  `portable-pty` crate.
+- **Centralized State Management:** Uses a thread-safe, Tauri-managed
+  `ApplicationState` as the single source of truth for the entire application's
+  state, from open documents to provider registrations.
+- **Native PTY Management:** A full-featured integrated terminal service that
+  spawns and manages native pseudo-terminals (`PTY`) using the `portable-pty`
+  crate.
 - **Secure Storage Integration:** Leverages the native OS keychain via the
   `keyring` crate to securely store sensitive data like authentication tokens.
 - **Robust Command Dispatching:** A central `Track` dispatcher intelligently
-  routes all incoming requests from the User Interface (`Wind`) and extensions
-  (`Cocoon`) to the appropriate native `Environment` provider or `ActionEffect`.
+  routes all incoming requests from `Wind` and `Cocoon` to the appropriate
+  native `Environment` provider or `ActionEffect`.
 
 ---
 
@@ -116,18 +118,19 @@ frontend and the `Cocoon` extension host.
 
 ---
 
-## Deep Dive & Component Breakdown 🔬
+## Deep Dive & Component Breakdown 🔬
 
 To understand how `Mountain`'s internal components are structured and how they
 implement the application's core logic, please refer to the detailed technical
 breakdown in
 [`Documentation/GitHub/DeepDive.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/Documentation/GitHub/DeepDive.md).
+
 This document explains the roles of the `ApplicationRunTime`,
 `ApplicationState`, `Handler`, `Environment`, and the `Vine` gRPC layer.
 
 ---
 
-## `Mountain` in the Land Ecosystem ⛰️ + 🏞️
+## `Mountain` in the Land Ecosystem ⛰️ + 🏞️
 
 This diagram illustrates `Mountain`'s central role as the native orchestrator
 for the entire Land application.
@@ -172,7 +175,7 @@ graph LR
 
 ---
 
-## Project Structure Overview 🗺️
+## Project Structure Overview 🗺️
 
 The `Mountain` repository is organized to clearly separate concerns, following
 the architectural patterns defined in `Common`.
@@ -199,7 +202,7 @@ Mountain/
 
 ---
 
-## Development Setup 🛠️
+## Development Setup 🛠️
 
 `Mountain` is a Rust crate and a core component of the main `Land` repository.
 It is not intended to be built or run standalone. Please follow the instructions
@@ -223,10 +226,11 @@ set up, build, and run the entire application.
 ## License ⚖️
 
 This project is released into the public domain under the **Creative Commons CC0
-Universal** license. You are free to use, modify, distribute, and build upon
-this work for any purpose, without any restrictions. For the full legal text,
-see the [`LICENSE`](https://github.com/CodeEditorLand/Mountain/tree/Current/)
-file.
+Universal** license.
+
+You are free to use, modify, distribute, and build upon this work for any
+purpose, without any restrictions. For the full legal text, see the
+[`LICENSE`](https://github.com/CodeEditorLand/Mountain/tree/Current/) file.
 
 ---
 
@@ -245,6 +249,11 @@ through [NGI0 Commons Fund](https://NLnet.NL/Commonsfund), a fund established by
 [NLnet](https://NLnet.NL) with financial support from the European Commission's
 [Next Generation Internet](https://ngi.eu) program. Learn more at the
 [NLnet project page](https://NLnet.NL/project/Land).
+
+The project is operated by PlayForm, based in Sofia, Bulgaria.
+
+PlayForm acts as the open-source steward for Code Editor Land under the NGI0
+Commons Fund grant.
 
 <table>
 	<thead>
