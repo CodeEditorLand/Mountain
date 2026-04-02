@@ -93,7 +93,7 @@
 // Summary for Mountain
 // --------------------
 // - **Type**: Rust/Tauri Desktop Application
-// - **TODOs**: 265 found 🔴
+// - **TODOs**: 265 found 🔴
 // - **Key Changes**: Thread safety (RwLock), naming consistency, LFS
 // - **Last Commit Changes**: NC-09, NC-10, NC-11, TS-01, TS-02, ARCH-31, ARCH-32
 //

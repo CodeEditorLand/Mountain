@@ -1,6 +1,6 @@
 //! # Mountain RPC Services
 //!
-//! ☀️ 🟢 MOUNTAIN_SKY_ONLY - Core RPC service implementations
+//! ☀️ 🟢 MOUNTAIN_SKY_ONLY - Core RPC service implementations
 
 #![allow(unused_imports, unused_variables)]
 //! This module contains the complete RPC services for Mountain's Spine
@@ -8,24 +8,24 @@
 //!
 //! ## Service Classification by Support Level
 //!
-//! ### 🟢 GREEN - Full Support (All Hosts)
+//! ### 🟢 GREEN - Full Support (All Hosts)
 //! - **EchoAction**: Bidirectional actions, host registration, routing
 //! - **Commands**: Command registration and execution
 //! - **Workspace**: File operations, document management
 //! - **Configuration**: Configuration read/write
 //!
-//! ### 🟡 YELLOW - Partial Support (Grove, Cocoon)
+//! ### 🟡 YELLOW - Partial Support (Grove, Cocoon)
 //! - **Windows**: Webviews, documents (limited in Sky)
 //! - **Tree Views**: Tree data providers (read-only in Sky)
 //! - **Language Features**: Completion, diagnostics (basic in Sky)
 //!
-//! ### 🔴 RED - Cocoon Only Services
+//! ### 🔴 RED - Cocoon Only Services
 //! - **Terminals**: Terminal emulation and pseudo-terminals
 //! - **Debug**: Debug adapter protocol integration
 //! - **SCM**: Source control management (git)
 //! - **Processes**: Child process execution
 //!
-//! ### 🔵 BLUE - WASM Optimized
+//! ### 🔵 BLUE - WASM Optimized
 //! - **Document Operations**: Zero-copy memory access in WASM
 //! - **File Operations**: Parallel search in WASM
 //!
@@ -35,16 +35,16 @@
 //!
 //! ```text
 //! RPC/
-//! ├── EchoAction/ # ☀️ 🟢 Central EchoAction system
-//! ├── Commands/ # ☀️ 🟢 Command registration
+//! ├── EchoAction/ # ☀️ 🟢 Central EchoAction system
+//! ├── Commands/ # ☀️ 🟢 Command registration
 //! │ └── Validation/ # Input validation
-//! ├── Workspace/ # ☀️ 🟢 File/workspace operations
-//! ├── Configuration/ # ☀️ 🟢 Configuration management
-//! ├── Windows/ # ☀️ 🟡 Window and document services
-//! ├── Terminals/ # ☀️ 🔴 Terminal services (Cocoon only)
-//! ├── Debug/ # ☀️ 🔴 Debug protocol (Cocoon only)
-//! ├── SCM/ # ☀️ 🔴 Source control (Cocoon only)
-//! ├── Processes/ # ☀️ 🔴 Child processes (Cocoon only)
+//! ├── Workspace/ # ☀️ 🟢 File/workspace operations
+//! ├── Configuration/ # ☀️ 🟢 Configuration management
+//! ├── Windows/ # ☀️ 🟡 Window and document services
+//! ├── Terminals/ # ☀️ 🔴 Terminal services (Cocoon only)
+//! ├── Debug/ # ☀️ 🔴 Debug protocol (Cocoon only)
+//! ├── SCM/ # ☀️ 🔴 Source control (Cocoon only)
+//! ├── Processes/ # ☀️ 🔴 Child processes (Cocoon only)
 //! ├── Telemetry/ # OTEL integration
 //! │ ├── Spans/ # Span management
 //! │ └── Metrics/ # Metrics recording

@@ -1,6 +1,6 @@
 //! # Debug Protocol RPC Service
 //!
-//! ## ⚠️ Placeholder Module
+//! ## ⚠️ Placeholder Module
 //!
 //! This module is planned for future implementation and will provide:
 //! - Debug Adapter Protocol (DAP) integration for Cocoon

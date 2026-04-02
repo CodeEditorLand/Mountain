@@ -1,6 +1,6 @@
 //! # Source Control Management (SCM) RPC Service
 //!
-//! ## ⚠️ Placeholder Module
+//! ## ⚠️ Placeholder Module
 //!
 //! This module is planned for future implementation and will provide:
 //! - Source control management services for Cocoon

@@ -1,6 +1,6 @@
 //! # Terminals RPC Service
 //!
-//! ## ⚠️ Placeholder Module
+//! ## ⚠️ Placeholder Module
 //!
 //! This module is planned for future implementation and will provide:
 //! - Terminal emulation services for Cocoon extension host

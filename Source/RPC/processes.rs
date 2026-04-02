@@ -1,6 +1,6 @@
 //! # Child Processes RPC Service
 //!
-//! ## ⚠️ Placeholder Module
+//! ## ⚠️ Placeholder Module
 //!
 //! This module is planned for future implementation and will provide:
 //! - Child process execution services for Cocoon
