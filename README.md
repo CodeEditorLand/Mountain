@@ -53,7 +53,7 @@
 
 ---
 
-# **Mountain** ⛰️
+# **Mountain** ⛰️
 
 The Bedrock of Land: Native Backend & Service Host
 
@@ -83,7 +83,7 @@ frontend and the `Cocoon` extension host.
 
 ---
 
-## Key Features 🔐
+## Key Features 🔐
 
 - **Declarative Effect System:** Built on a Rust `ActionEffect` system defined
   in the `Common` crate. Business logic is described as declarative, composable
@@ -118,7 +118,7 @@ frontend and the `Cocoon` extension host.
 
 ---
 
-## Deep Dive & Component Breakdown 🔬
+## Deep Dive & Component Breakdown 🔬
 
 To understand how `Mountain`'s internal components are structured and how they
 implement the application's core logic, please refer to the detailed technical
@@ -130,7 +130,7 @@ This document explains the roles of the `ApplicationRunTime`,
 
 ---
 
-## `Mountain` in the Land Ecosystem ⛰️ + 🏞️
+## `Mountain` in the Land Ecosystem ⛰️ + 🏞️
 
 This diagram illustrates `Mountain`'s central role as the native orchestrator
 for the entire Land application.
@@ -175,7 +175,7 @@ graph LR
 
 ---
 
-## Project Structure Overview 🗺️
+## Project Structure Overview 🗺️
 
 The `Mountain` repository is organized to clearly separate concerns, following
 the architectural patterns defined in `Common`.
@@ -202,7 +202,7 @@ Mountain/
 
 ---
 
-## Development Setup 🛠️
+## Development Setup 🛠️
 
 `Mountain` is a Rust crate and a core component of the main `Land` repository.
 It is not intended to be built or run standalone. Please follow the instructions
