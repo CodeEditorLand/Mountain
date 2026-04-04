@@ -105,7 +105,3 @@ pub mod Workspace;
 // Entry Point
 pub mod Binary;
 
-/// Main entry point for both mobile and desktop builds.
-/// Delegates to the primary binary logic in the Binary module.
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-fn main() { Binary::Main::Main(); }
