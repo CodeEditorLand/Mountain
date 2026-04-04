@@ -159,6 +159,76 @@ use crate::Vine::Generated::{
 	WorkspaceFolder,
 	WriteFileRequest,
 	// Service trait
+	// Extended Language + Window + FS + Output + Task + Auth + Debug + Extension types
+	AppendOutputRequest,
+	ClearOutputRequest,
+	CopyFileRequest,
+	CreateDirectoryRequest,
+	CreateOutputChannelRequest,
+	CreateOutputChannelResponse,
+	DeleteFileRequest,
+	DisposeOutputRequest,
+	DisposeWebviewPanelRequest,
+	ExecuteTaskRequest,
+	ExecuteTaskResponse,
+	GetAllExtensionsResponse,
+	GetAuthenticationSessionRequest,
+	GetAuthenticationSessionResponse,
+	GetConfigurationRequest,
+	GetConfigurationResponse,
+	GetExtensionRequest,
+	GetExtensionResponse,
+	OpenExternalRequest,
+	PostWebviewMessageRequest,
+	ProvideCallHierarchyRequest,
+	ProvideCallHierarchyResponse,
+	ProvideCodeLensesRequest,
+	ProvideCodeLensesResponse,
+	ProvideDocumentFormattingRequest,
+	ProvideDocumentFormattingResponse,
+	ProvideDocumentHighlightsRequest,
+	ProvideDocumentHighlightsResponse,
+	ProvideDocumentRangeFormattingRequest,
+	ProvideDocumentRangeFormattingResponse,
+	ProvideDocumentSymbolsRequest,
+	ProvideDocumentSymbolsResponse,
+	ProvideFoldingRangesRequest,
+	ProvideFoldingRangesResponse,
+	ProvideInlayHintsRequest,
+	ProvideInlayHintsResponse,
+	ProvideLinkedEditingRangesRequest,
+	ProvideLinkedEditingRangesResponse,
+	ProvideOnTypeFormattingRequest,
+	ProvideOnTypeFormattingResponse,
+	ProvideRenameEditsRequest,
+	ProvideRenameEditsResponse,
+	ProvideSelectionRangesRequest,
+	ProvideSelectionRangesResponse,
+	ProvideSemanticTokensRequest,
+	ProvideSemanticTokensResponse,
+	ProvideSignatureHelpRequest,
+	ProvideSignatureHelpResponse,
+	ProvideTypeHierarchyRequest,
+	ProvideTypeHierarchyResponse,
+	ProvideWorkspaceSymbolsRequest,
+	ProvideWorkspaceSymbolsResponse,
+	RegisterAuthenticationProviderRequest,
+	RegisterOnTypeFormattingProviderRequest,
+	RegisterSemanticTokensProviderRequest,
+	RegisterSignatureHelpProviderRequest,
+	RegisterTaskProviderRequest,
+	RenameFileRequest,
+	ReportProgressRequest,
+	ResizeTerminalRequest,
+	ShowInputBoxRequest,
+	ShowInputBoxResponse,
+	ShowOutputRequest,
+	ShowProgressRequest,
+	ShowProgressResponse,
+	ShowQuickPickRequest,
+	ShowQuickPickResponse,
+	StopDebuggingRequest,
+	TerminateTaskRequest,
 	cocoon_service_server::CocoonService,
 };
 
@@ -1536,5 +1606,877 @@ impl CocoonService for CocoonServiceImpl {
 		Err(Status::unimplemented(
 			"delete_secret requires SecretStorageProvider in MountainEnvironment",
 		))
+	}
+
+	// ==================== Extended Language Provider Handlers ====================
+
+	/// Document Highlight Provider - Register
+	async fn register_document_highlight_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Document Highlight Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// document highlights - Provide
+	async fn provide_document_highlights(
+		&self,
+		request:Request<ProvideDocumentHighlightsRequest>,
+	) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing document highlights");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideDocumentHighlightsResponse::default()))
+	}
+
+	/// Document Symbol Provider - Register
+	async fn register_document_symbol_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Document Symbol Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// document symbols - Provide
+	async fn provide_document_symbols(
+		&self,
+		request:Request<ProvideDocumentSymbolsRequest>,
+	) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing document symbols");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideDocumentSymbolsResponse::default()))
+	}
+
+	/// Workspace Symbol Provider - Register
+	async fn register_workspace_symbol_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Workspace Symbol Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// workspace symbols - Provide
+	async fn provide_workspace_symbols(
+		&self,
+		request:Request<ProvideWorkspaceSymbolsRequest>,
+	) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing workspace symbols");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideWorkspaceSymbolsResponse::default()))
+	}
+
+	/// Rename Provider - Register
+	async fn register_rename_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Rename Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// rename edits - Provide
+	async fn provide_rename_edits(
+		&self,
+		request:Request<ProvideRenameEditsRequest>,
+	) -> Result<Response<ProvideRenameEditsResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing rename edits");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideRenameEditsResponse::default()))
+	}
+
+	/// Document Formatting Provider - Register
+	async fn register_document_formatting_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Document Formatting Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// document formatting - Provide
+	async fn provide_document_formatting(
+		&self,
+		request:Request<ProvideDocumentFormattingRequest>,
+	) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing document formatting");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideDocumentFormattingResponse::default()))
+	}
+
+	/// Document Range Formatting Provider - Register
+	async fn register_document_range_formatting_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Document Range Formatting Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// document range formatting - Provide
+	async fn provide_document_range_formatting(
+		&self,
+		request:Request<ProvideDocumentRangeFormattingRequest>,
+	) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing document range formatting");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideDocumentRangeFormattingResponse::default()))
+	}
+
+	/// On Type Formatting Provider - Register
+	async fn register_on_type_formatting_provider(
+		&self,
+		request:Request<RegisterOnTypeFormattingProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering On Type Formatting Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// on-type formatting - Provide
+	async fn provide_on_type_formatting(
+		&self,
+		request:Request<ProvideOnTypeFormattingRequest>,
+	) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing on-type formatting");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideOnTypeFormattingResponse::default()))
+	}
+
+	/// Signature Help Provider - Register
+	async fn register_signature_help_provider(
+		&self,
+		request:Request<RegisterSignatureHelpProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Signature Help Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// signature help - Provide
+	async fn provide_signature_help(
+		&self,
+		request:Request<ProvideSignatureHelpRequest>,
+	) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing signature help");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideSignatureHelpResponse::default()))
+	}
+
+	/// Code Lens Provider - Register
+	async fn register_code_lens_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Code Lens Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// code lenses - Provide
+	async fn provide_code_lenses(
+		&self,
+		request:Request<ProvideCodeLensesRequest>,
+	) -> Result<Response<ProvideCodeLensesResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing code lenses");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideCodeLensesResponse::default()))
+	}
+
+	/// Folding Range Provider - Register
+	async fn register_folding_range_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Folding Range Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// folding ranges - Provide
+	async fn provide_folding_ranges(
+		&self,
+		request:Request<ProvideFoldingRangesRequest>,
+	) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing folding ranges");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideFoldingRangesResponse::default()))
+	}
+
+	/// Selection Range Provider - Register
+	async fn register_selection_range_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Selection Range Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// selection ranges - Provide
+	async fn provide_selection_ranges(
+		&self,
+		request:Request<ProvideSelectionRangesRequest>,
+	) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing selection ranges");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideSelectionRangesResponse::default()))
+	}
+
+	/// Semantic Tokens Provider - Register
+	async fn register_semantic_tokens_provider(
+		&self,
+		request:Request<RegisterSemanticTokensProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Semantic Tokens Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// semantic tokens - Provide
+	async fn provide_semantic_tokens_full(
+		&self,
+		request:Request<ProvideSemanticTokensRequest>,
+	) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing semantic tokens");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideSemanticTokensResponse::default()))
+	}
+
+	/// Inlay Hints Provider - Register
+	async fn register_inlay_hints_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Inlay Hints Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// inlay hints - Provide
+	async fn provide_inlay_hints(
+		&self,
+		request:Request<ProvideInlayHintsRequest>,
+	) -> Result<Response<ProvideInlayHintsResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing inlay hints");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideInlayHintsResponse::default()))
+	}
+
+	/// Type Hierarchy Provider - Register
+	async fn register_type_hierarchy_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Type Hierarchy Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// type hierarchy supertypes - Provide
+	async fn provide_type_hierarchy_supertypes(
+		&self,
+		request:Request<ProvideTypeHierarchyRequest>,
+	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing type hierarchy supertypes");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideTypeHierarchyResponse::default()))
+	}
+
+	/// type hierarchy subtypes - Provide
+	async fn provide_type_hierarchy_subtypes(
+		&self,
+		request:Request<ProvideTypeHierarchyRequest>,
+	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing type hierarchy subtypes");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideTypeHierarchyResponse::default()))
+	}
+
+	/// Call Hierarchy Provider - Register
+	async fn register_call_hierarchy_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Call Hierarchy Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// call hierarchy incoming - Provide
+	async fn provide_call_hierarchy_incoming_calls(
+		&self,
+		request:Request<ProvideCallHierarchyRequest>,
+	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing call hierarchy incoming");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideCallHierarchyResponse::default()))
+	}
+
+	/// call hierarchy outgoing - Provide
+	async fn provide_call_hierarchy_outgoing_calls(
+		&self,
+		request:Request<ProvideCallHierarchyRequest>,
+	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing call hierarchy outgoing");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideCallHierarchyResponse::default()))
+	}
+
+	/// Linked Editing Range Provider - Register
+	async fn register_linked_editing_range_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Linked Editing Range Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// linked editing ranges - Provide
+	async fn provide_linked_editing_ranges(
+		&self,
+		request:Request<ProvideLinkedEditingRangesRequest>,
+	) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
+		let _req = request.into_inner();
+		debug!("[CocoonService] Providing linked editing ranges");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Look up provider by handle
+		// - Call extension backend via gRPC
+		// - Return result
+
+		Ok(Response::new(ProvideLinkedEditingRangesResponse::default()))
+	}
+
+	/// quick pick
+	async fn show_quick_pick(
+		&self,
+		request:Request<ShowQuickPickRequest>,
+	) -> Result<Response<ShowQuickPickResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling quick pick");
+
+		// TODO: Implement quick pick in MountainEnvironment
+
+		Ok(Response::new(ShowQuickPickResponse { ..Default::default() }))
+	}
+
+	/// input box
+	async fn show_input_box(
+		&self,
+		request:Request<ShowInputBoxRequest>,
+	) -> Result<Response<ShowInputBoxResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling input box");
+
+		// TODO: Implement input box in MountainEnvironment
+
+		Ok(Response::new(ShowInputBoxResponse { ..Default::default() }))
+	}
+
+	/// progress
+	async fn show_progress(
+		&self,
+		request:Request<ShowProgressRequest>,
+	) -> Result<Response<ShowProgressResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling progress");
+
+		// TODO: Implement progress in MountainEnvironment
+
+		Ok(Response::new(ShowProgressResponse { ..Default::default() }))
+	}
+
+	/// progress report
+	async fn report_progress(
+		&self,
+		request:Request<ReportProgressRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling progress report");
+
+		// TODO: Implement progress report in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// webview message
+	async fn post_webview_message(
+		&self,
+		request:Request<PostWebviewMessageRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling webview message");
+
+		// TODO: Implement webview message in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// webview dispose
+	async fn dispose_webview_panel(
+		&self,
+		request:Request<DisposeWebviewPanelRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling webview dispose");
+
+		// TODO: Implement webview dispose in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// external URI
+	async fn open_external(
+		&self,
+		request:Request<OpenExternalRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling external URI");
+
+		// TODO: Implement external URI in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// file delete
+	async fn delete_file(
+		&self,
+		request:Request<DeleteFileRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling file delete");
+
+		// TODO: Implement file delete in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// file rename
+	async fn rename_file(
+		&self,
+		request:Request<RenameFileRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling file rename");
+
+		// TODO: Implement file rename in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// file copy
+	async fn copy_file(
+		&self,
+		request:Request<CopyFileRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling file copy");
+
+		// TODO: Implement file copy in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// directory creation
+	async fn create_directory(
+		&self,
+		request:Request<CreateDirectoryRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling directory creation");
+
+		// TODO: Implement directory creation in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// output channel creation
+	async fn create_output_channel(
+		&self,
+		request:Request<CreateOutputChannelRequest>,
+	) -> Result<Response<CreateOutputChannelResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling output channel creation");
+
+		// TODO: Implement output channel creation in MountainEnvironment
+
+		Ok(Response::new(CreateOutputChannelResponse { ..Default::default() }))
+	}
+
+	/// output append
+	async fn append_output(
+		&self,
+		request:Request<AppendOutputRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling output append");
+
+		// TODO: Implement output append in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// output clear
+	async fn clear_output(
+		&self,
+		request:Request<ClearOutputRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling output clear");
+
+		// TODO: Implement output clear in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// output show
+	async fn show_output(
+		&self,
+		request:Request<ShowOutputRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling output show");
+
+		// TODO: Implement output show in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// output dispose
+	async fn dispose_output(
+		&self,
+		request:Request<DisposeOutputRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling output dispose");
+
+		// TODO: Implement output dispose in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// Task Provider - Register
+	async fn register_task_provider(
+		&self,
+		request:Request<RegisterTaskProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Task Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// task execution
+	async fn execute_task(
+		&self,
+		request:Request<ExecuteTaskRequest>,
+	) -> Result<Response<ExecuteTaskResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling task execution");
+
+		// TODO: Implement task execution in MountainEnvironment
+
+		Ok(Response::new(ExecuteTaskResponse { ..Default::default() }))
+	}
+
+	/// task termination
+	async fn terminate_task(
+		&self,
+		request:Request<TerminateTaskRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling task termination");
+
+		// TODO: Implement task termination in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// authentication session
+	async fn get_authentication_session(
+		&self,
+		request:Request<GetAuthenticationSessionRequest>,
+	) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling authentication session");
+
+		// TODO: Implement authentication session in MountainEnvironment
+
+		Ok(Response::new(GetAuthenticationSessionResponse { ..Default::default() }))
+	}
+
+	/// Authentication Provider - Register
+	async fn register_authentication_provider(
+		&self,
+		request:Request<RegisterAuthenticationProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let req = request.into_inner();
+		info!("[CocoonService] Registering Authentication Provider");
+
+		// TODO: When ProviderRegistry is available in MountainEnvironment:
+		// - Store provider metadata (handle, language_selector)
+		// - Map handle to extension for RPC callbacks
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// debug stop
+	async fn stop_debugging(
+		&self,
+		request:Request<StopDebuggingRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling debug stop");
+
+		// TODO: Implement debug stop in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// extension info
+	async fn get_extension(
+		&self,
+		request:Request<GetExtensionRequest>,
+	) -> Result<Response<GetExtensionResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling extension info");
+
+		// TODO: Implement extension info in MountainEnvironment
+
+		Ok(Response::new(GetExtensionResponse { ..Default::default() }))
+	}
+
+	/// all extensions
+	async fn get_all_extensions(
+		&self,
+		request:Request<Empty>,
+	) -> Result<Response<GetAllExtensionsResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling all extensions");
+
+		// TODO: Implement all extensions in MountainEnvironment
+
+		Ok(Response::new(GetAllExtensionsResponse { ..Default::default() }))
+	}
+
+	/// terminal resize
+	async fn resize_terminal(
+		&self,
+		request:Request<ResizeTerminalRequest>,
+	) -> Result<Response<Empty>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling terminal resize");
+
+		// TODO: Implement terminal resize in MountainEnvironment
+
+		Ok(Response::new(Empty {}))
+	}
+
+	/// configuration value
+	async fn get_configuration(
+		&self,
+		request:Request<GetConfigurationRequest>,
+	) -> Result<Response<GetConfigurationResponse>, Status> {
+		let _req = request.into_inner();
+		info!("[CocoonService] Handling configuration value");
+
+		// TODO: Implement configuration value in MountainEnvironment
+
+		Ok(Response::new(GetConfigurationResponse { ..Default::default() }))
 	}
 }

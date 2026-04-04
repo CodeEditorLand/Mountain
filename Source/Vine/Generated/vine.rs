@@ -761,6 +761,819 @@ pub struct DeleteSecretRequest {
     #[prost(string, tag = "1")]
     pub key: ::prost::alloc::string::String,
 }
+/// Document filter for language selector.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DocumentFilter {
+    #[prost(string, tag = "1")]
+    pub language: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub scheme: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub pattern: ::prost::alloc::string::String,
+}
+/// Request for document highlights.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideDocumentHighlightsRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(uint32, tag = "3")]
+    pub provider_handle: u32,
+}
+/// A document highlight.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DocumentHighlight {
+    #[prost(message, optional, tag = "1")]
+    pub range: ::core::option::Option<Range>,
+    /// 0 = Text, 1 = Read, 2 = Write
+    #[prost(uint32, tag = "2")]
+    pub kind: u32,
+}
+/// Response with document highlights.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideDocumentHighlightsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub highlights: ::prost::alloc::vec::Vec<DocumentHighlight>,
+}
+/// Request for document symbols.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideDocumentSymbolsRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(uint32, tag = "2")]
+    pub provider_handle: u32,
+}
+/// A document symbol.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct DocumentSymbol {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub detail: ::prost::alloc::string::String,
+    /// SymbolKind enum value
+    #[prost(uint32, tag = "3")]
+    pub kind: u32,
+    #[prost(message, optional, tag = "4")]
+    pub range: ::core::option::Option<Range>,
+    #[prost(message, optional, tag = "5")]
+    pub selection_range: ::core::option::Option<Range>,
+    #[prost(message, repeated, tag = "6")]
+    pub children: ::prost::alloc::vec::Vec<DocumentSymbol>,
+}
+/// Response with document symbols.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideDocumentSymbolsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub symbols: ::prost::alloc::vec::Vec<DocumentSymbol>,
+}
+/// Request for workspace symbols.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideWorkspaceSymbolsRequest {
+    #[prost(string, tag = "1")]
+    pub query: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "2")]
+    pub provider_handle: u32,
+}
+/// A workspace symbol.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct WorkspaceSymbol {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    /// SymbolKind enum value
+    #[prost(uint32, tag = "2")]
+    pub kind: u32,
+    #[prost(message, optional, tag = "3")]
+    pub location: ::core::option::Option<Location>,
+    #[prost(string, tag = "4")]
+    pub container_name: ::prost::alloc::string::String,
+}
+/// Response with workspace symbols.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideWorkspaceSymbolsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub symbols: ::prost::alloc::vec::Vec<WorkspaceSymbol>,
+}
+/// Request for rename edits.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideRenameEditsRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(string, tag = "3")]
+    pub new_name: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "4")]
+    pub provider_handle: u32,
+}
+/// A workspace edit containing edits across multiple files.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct WorkspaceEdit {
+    #[prost(message, repeated, tag = "1")]
+    pub edits: ::prost::alloc::vec::Vec<TextEditForSave>,
+}
+/// Response with rename edits.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideRenameEditsResponse {
+    #[prost(message, optional, tag = "1")]
+    pub workspace_edit: ::core::option::Option<WorkspaceEdit>,
+}
+/// Request for document formatting.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideDocumentFormattingRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(uint32, tag = "2")]
+    pub tab_size: u32,
+    #[prost(bool, tag = "3")]
+    pub insert_spaces: bool,
+    #[prost(uint32, tag = "4")]
+    pub provider_handle: u32,
+}
+/// Response with formatting edits.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideDocumentFormattingResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub edits: ::prost::alloc::vec::Vec<TextEdit>,
+}
+/// Request for range formatting.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideDocumentRangeFormattingRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub range: ::core::option::Option<Range>,
+    #[prost(uint32, tag = "3")]
+    pub tab_size: u32,
+    #[prost(bool, tag = "4")]
+    pub insert_spaces: bool,
+    #[prost(uint32, tag = "5")]
+    pub provider_handle: u32,
+}
+/// Response with range formatting edits.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideDocumentRangeFormattingResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub edits: ::prost::alloc::vec::Vec<TextEdit>,
+}
+/// Request to register on-type formatting provider with trigger characters.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RegisterOnTypeFormattingProviderRequest {
+    #[prost(string, tag = "1")]
+    pub language_selector: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "2")]
+    pub handle: u32,
+    #[prost(string, tag = "3")]
+    pub extension_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "4")]
+    pub trigger_characters: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request for on-type formatting.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideOnTypeFormattingRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(string, tag = "3")]
+    pub character: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "4")]
+    pub tab_size: u32,
+    #[prost(bool, tag = "5")]
+    pub insert_spaces: bool,
+    #[prost(uint32, tag = "6")]
+    pub provider_handle: u32,
+}
+/// Response with on-type formatting edits.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideOnTypeFormattingResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub edits: ::prost::alloc::vec::Vec<TextEdit>,
+}
+/// Request to register signature help provider with metadata.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RegisterSignatureHelpProviderRequest {
+    #[prost(string, tag = "1")]
+    pub language_selector: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "2")]
+    pub handle: u32,
+    #[prost(string, tag = "3")]
+    pub extension_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "4")]
+    pub trigger_characters: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag = "5")]
+    pub retrigger_characters: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request for signature help.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideSignatureHelpRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(uint32, tag = "3")]
+    pub provider_handle: u32,
+}
+/// A parameter information.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ParameterInformation {
+    #[prost(string, tag = "1")]
+    pub label: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub documentation: ::prost::alloc::string::String,
+}
+/// A signature information.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct SignatureInformation {
+    #[prost(string, tag = "1")]
+    pub label: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub documentation: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "3")]
+    pub parameters: ::prost::alloc::vec::Vec<ParameterInformation>,
+    #[prost(uint32, tag = "4")]
+    pub active_parameter: u32,
+}
+/// Response with signature help.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideSignatureHelpResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub signatures: ::prost::alloc::vec::Vec<SignatureInformation>,
+    #[prost(uint32, tag = "2")]
+    pub active_signature: u32,
+    #[prost(uint32, tag = "3")]
+    pub active_parameter: u32,
+}
+/// Request for code lenses.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideCodeLensesRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(uint32, tag = "2")]
+    pub provider_handle: u32,
+}
+/// A code lens.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CodeLens {
+    #[prost(message, optional, tag = "1")]
+    pub range: ::core::option::Option<Range>,
+    #[prost(string, tag = "2")]
+    pub command_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub command_title: ::prost::alloc::string::String,
+    #[prost(message, repeated, tag = "4")]
+    pub command_arguments: ::prost::alloc::vec::Vec<Argument>,
+}
+/// Response with code lenses.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideCodeLensesResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub lenses: ::prost::alloc::vec::Vec<CodeLens>,
+}
+/// Request for folding ranges.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideFoldingRangesRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(uint32, tag = "2")]
+    pub provider_handle: u32,
+}
+/// A folding range.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct FoldingRange {
+    #[prost(uint32, tag = "1")]
+    pub start_line: u32,
+    #[prost(uint32, tag = "2")]
+    pub end_line: u32,
+    /// 0 = Comment, 1 = Imports, 2 = Region
+    #[prost(uint32, tag = "3")]
+    pub kind: u32,
+}
+/// Response with folding ranges.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideFoldingRangesResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub ranges: ::prost::alloc::vec::Vec<FoldingRange>,
+}
+/// Request for selection ranges.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideSelectionRangesRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, repeated, tag = "2")]
+    pub positions: ::prost::alloc::vec::Vec<Position>,
+    #[prost(uint32, tag = "3")]
+    pub provider_handle: u32,
+}
+/// A selection range (nested).
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct SelectionRange {
+    #[prost(message, optional, tag = "1")]
+    pub range: ::core::option::Option<Range>,
+}
+/// Response with selection ranges.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideSelectionRangesResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub ranges: ::prost::alloc::vec::Vec<SelectionRange>,
+}
+/// Request to register semantic tokens provider with legend.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RegisterSemanticTokensProviderRequest {
+    #[prost(string, tag = "1")]
+    pub language_selector: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "2")]
+    pub handle: u32,
+    #[prost(string, tag = "3")]
+    pub extension_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "4")]
+    pub token_types: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, repeated, tag = "5")]
+    pub token_modifiers: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request for semantic tokens.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideSemanticTokensRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(uint32, tag = "2")]
+    pub provider_handle: u32,
+}
+/// Response with semantic tokens (encoded as delta array per LSP spec).
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideSemanticTokensResponse {
+    /// Flat array: \[deltaLine, deltaStartChar, length, tokenType, tokenModifiers, ...\]
+    #[prost(uint32, repeated, tag = "1")]
+    pub data: ::prost::alloc::vec::Vec<u32>,
+    #[prost(uint32, tag = "2")]
+    pub result_id: u32,
+}
+/// Request for inlay hints.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideInlayHintsRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub range: ::core::option::Option<Range>,
+    #[prost(uint32, tag = "3")]
+    pub provider_handle: u32,
+}
+/// An inlay hint.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct InlayHint {
+    #[prost(message, optional, tag = "1")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(string, tag = "2")]
+    pub label: ::prost::alloc::string::String,
+    /// 0 = Type, 1 = Parameter
+    #[prost(uint32, tag = "3")]
+    pub kind: u32,
+    #[prost(string, tag = "4")]
+    pub tooltip: ::prost::alloc::string::String,
+    #[prost(bool, tag = "5")]
+    pub padding_left: bool,
+    #[prost(bool, tag = "6")]
+    pub padding_right: bool,
+}
+/// Response with inlay hints.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideInlayHintsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub hints: ::prost::alloc::vec::Vec<InlayHint>,
+}
+/// A type hierarchy item (used for both supertypes and subtypes).
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct TypeHierarchyItem {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "2")]
+    pub kind: u32,
+    #[prost(message, optional, tag = "3")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "4")]
+    pub range: ::core::option::Option<Range>,
+    #[prost(message, optional, tag = "5")]
+    pub selection_range: ::core::option::Option<Range>,
+    #[prost(string, tag = "6")]
+    pub detail: ::prost::alloc::string::String,
+}
+/// Request for type hierarchy.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideTypeHierarchyRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(uint32, tag = "3")]
+    pub provider_handle: u32,
+    #[prost(message, optional, tag = "4")]
+    pub item: ::core::option::Option<TypeHierarchyItem>,
+}
+/// Response with type hierarchy items.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideTypeHierarchyResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub items: ::prost::alloc::vec::Vec<TypeHierarchyItem>,
+}
+/// A call hierarchy item (used for both incoming and outgoing calls).
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct CallHierarchyItem {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "2")]
+    pub kind: u32,
+    #[prost(message, optional, tag = "3")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "4")]
+    pub range: ::core::option::Option<Range>,
+    #[prost(message, optional, tag = "5")]
+    pub selection_range: ::core::option::Option<Range>,
+    #[prost(string, tag = "6")]
+    pub detail: ::prost::alloc::string::String,
+}
+/// Request for call hierarchy.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideCallHierarchyRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(uint32, tag = "3")]
+    pub provider_handle: u32,
+    #[prost(message, optional, tag = "4")]
+    pub item: ::core::option::Option<CallHierarchyItem>,
+}
+/// A call hierarchy call.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct CallHierarchyCall {
+    #[prost(message, optional, tag = "1")]
+    pub from_or_to: ::core::option::Option<CallHierarchyItem>,
+    #[prost(message, repeated, tag = "2")]
+    pub from_ranges: ::prost::alloc::vec::Vec<Range>,
+}
+/// Response with call hierarchy.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideCallHierarchyResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub calls: ::prost::alloc::vec::Vec<CallHierarchyCall>,
+}
+/// Request for linked editing ranges.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ProvideLinkedEditingRangesRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub position: ::core::option::Option<Position>,
+    #[prost(uint32, tag = "3")]
+    pub provider_handle: u32,
+}
+/// Response with linked editing ranges.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ProvideLinkedEditingRangesResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub ranges: ::prost::alloc::vec::Vec<Range>,
+    #[prost(string, tag = "2")]
+    pub word_pattern: ::prost::alloc::string::String,
+}
+/// A quick pick item.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct QuickPickItem {
+    #[prost(string, tag = "1")]
+    pub label: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub description: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub detail: ::prost::alloc::string::String,
+    #[prost(bool, tag = "4")]
+    pub picked: bool,
+    #[prost(bool, tag = "5")]
+    pub always_show: bool,
+}
+/// Request to show a quick pick.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ShowQuickPickRequest {
+    #[prost(message, repeated, tag = "1")]
+    pub items: ::prost::alloc::vec::Vec<QuickPickItem>,
+    #[prost(string, tag = "2")]
+    pub placeholder: ::prost::alloc::string::String,
+    #[prost(bool, tag = "3")]
+    pub can_pick_many: bool,
+    #[prost(string, tag = "4")]
+    pub title: ::prost::alloc::string::String,
+}
+/// Response with selected quick pick item(s).
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ShowQuickPickResponse {
+    #[prost(uint32, repeated, tag = "1")]
+    pub selected_indices: ::prost::alloc::vec::Vec<u32>,
+}
+/// Request to show an input box.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ShowInputBoxRequest {
+    #[prost(string, tag = "1")]
+    pub prompt: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub value: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub placeholder: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(bool, tag = "5")]
+    pub password: bool,
+}
+/// Response with input box value.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ShowInputBoxResponse {
+    #[prost(string, tag = "1")]
+    pub value: ::prost::alloc::string::String,
+    #[prost(bool, tag = "2")]
+    pub cancelled: bool,
+}
+/// Request to show a progress indicator.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ShowProgressRequest {
+    #[prost(uint32, tag = "1")]
+    pub handle: u32,
+    #[prost(enumeration = "ProgressLocation", tag = "2")]
+    pub location: i32,
+    #[prost(string, tag = "3")]
+    pub title: ::prost::alloc::string::String,
+    #[prost(bool, tag = "4")]
+    pub cancellable: bool,
+    #[prost(string, tag = "5")]
+    pub extension_id: ::prost::alloc::string::String,
+}
+/// Response acknowledging progress start.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ShowProgressResponse {
+    #[prost(uint32, tag = "1")]
+    pub handle: u32,
+}
+/// Request to report progress.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ReportProgressRequest {
+    #[prost(uint32, tag = "1")]
+    pub handle: u32,
+    #[prost(string, tag = "2")]
+    pub message: ::prost::alloc::string::String,
+    #[prost(uint32, tag = "3")]
+    pub increment: u32,
+}
+/// Request to post a message to a webview.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct PostWebviewMessageRequest {
+    #[prost(uint32, tag = "1")]
+    pub handle: u32,
+    #[prost(oneof = "post_webview_message_request::Message", tags = "2, 3")]
+    pub message: ::core::option::Option<post_webview_message_request::Message>,
+}
+/// Nested message and enum types in `PostWebviewMessageRequest`.
+pub mod post_webview_message_request {
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
+    pub enum Message {
+        #[prost(string, tag = "2")]
+        StringMessage(::prost::alloc::string::String),
+        #[prost(bytes, tag = "3")]
+        BytesMessage(::prost::alloc::vec::Vec<u8>),
+    }
+}
+/// Request to dispose a webview panel.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DisposeWebviewPanelRequest {
+    #[prost(uint32, tag = "1")]
+    pub handle: u32,
+}
+/// Request to open an external URI.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct OpenExternalRequest {
+    #[prost(string, tag = "1")]
+    pub uri: ::prost::alloc::string::String,
+}
+/// Request to delete a file.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DeleteFileRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+    #[prost(bool, tag = "2")]
+    pub recursive: bool,
+    #[prost(bool, tag = "3")]
+    pub use_trash: bool,
+}
+/// Request to rename a file.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RenameFileRequest {
+    #[prost(message, optional, tag = "1")]
+    pub source: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub target: ::core::option::Option<Uri>,
+    #[prost(bool, tag = "3")]
+    pub overwrite: bool,
+}
+/// Request to copy a file.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct CopyFileRequest {
+    #[prost(message, optional, tag = "1")]
+    pub source: ::core::option::Option<Uri>,
+    #[prost(message, optional, tag = "2")]
+    pub target: ::core::option::Option<Uri>,
+    #[prost(bool, tag = "3")]
+    pub overwrite: bool,
+}
+/// Request to create a directory.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct CreateDirectoryRequest {
+    #[prost(message, optional, tag = "1")]
+    pub uri: ::core::option::Option<Uri>,
+}
+/// Request to create an output channel.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct CreateOutputChannelRequest {
+    #[prost(string, tag = "1")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub language_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub extension_id: ::prost::alloc::string::String,
+}
+/// Response with channel ID.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct CreateOutputChannelResponse {
+    #[prost(string, tag = "1")]
+    pub channel_id: ::prost::alloc::string::String,
+}
+/// Request to append to an output channel.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct AppendOutputRequest {
+    #[prost(string, tag = "1")]
+    pub channel_id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub value: ::prost::alloc::string::String,
+}
+/// Request to clear an output channel.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ClearOutputRequest {
+    #[prost(string, tag = "1")]
+    pub channel_id: ::prost::alloc::string::String,
+}
+/// Request to show an output channel.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ShowOutputRequest {
+    #[prost(string, tag = "1")]
+    pub channel_id: ::prost::alloc::string::String,
+    #[prost(bool, tag = "2")]
+    pub preserve_focus: bool,
+}
+/// Request to dispose an output channel.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct DisposeOutputRequest {
+    #[prost(string, tag = "1")]
+    pub channel_id: ::prost::alloc::string::String,
+}
+/// A task definition.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct TaskDefinition {
+    #[prost(string, tag = "1")]
+    pub r#type: ::prost::alloc::string::String,
+    #[prost(map = "string, string", tag = "2")]
+    pub attributes: ::std::collections::HashMap<
+        ::prost::alloc::string::String,
+        ::prost::alloc::string::String,
+    >,
+}
+/// Request to register a task provider.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RegisterTaskProviderRequest {
+    #[prost(string, tag = "1")]
+    pub r#type: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub extension_id: ::prost::alloc::string::String,
+}
+/// Request to execute a task.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct ExecuteTaskRequest {
+    #[prost(message, optional, tag = "1")]
+    pub definition: ::core::option::Option<TaskDefinition>,
+    #[prost(string, tag = "2")]
+    pub name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub source: ::prost::alloc::string::String,
+}
+/// Response with task execution.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ExecuteTaskResponse {
+    #[prost(uint32, tag = "1")]
+    pub task_id: u32,
+    #[prost(bool, tag = "2")]
+    pub success: bool,
+}
+/// Request to terminate a task.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct TerminateTaskRequest {
+    #[prost(uint32, tag = "1")]
+    pub task_id: u32,
+}
+/// Request to get an authentication session.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GetAuthenticationSessionRequest {
+    #[prost(string, tag = "1")]
+    pub provider_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "2")]
+    pub scopes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+    #[prost(string, tag = "3")]
+    pub extension_id: ::prost::alloc::string::String,
+    #[prost(bool, tag = "4")]
+    pub create_if_none: bool,
+    #[prost(bool, tag = "5")]
+    pub clear_session_preference: bool,
+}
+/// Response with authentication session.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GetAuthenticationSessionResponse {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub access_token: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub account_label: ::prost::alloc::string::String,
+    #[prost(string, tag = "4")]
+    pub account_id: ::prost::alloc::string::String,
+    #[prost(string, repeated, tag = "5")]
+    pub scopes: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
+}
+/// Request to register an authentication provider.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct RegisterAuthenticationProviderRequest {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub label: ::prost::alloc::string::String,
+    #[prost(bool, tag = "3")]
+    pub supports_multiple_accounts: bool,
+    #[prost(string, tag = "4")]
+    pub extension_id: ::prost::alloc::string::String,
+}
+/// Request to stop debugging.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct StopDebuggingRequest {
+    #[prost(string, tag = "1")]
+    pub session_id: ::prost::alloc::string::String,
+}
+/// Request to get an extension.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GetExtensionRequest {
+    #[prost(string, tag = "1")]
+    pub extension_id: ::prost::alloc::string::String,
+}
+/// Extension information.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ExtensionInfo {
+    #[prost(string, tag = "1")]
+    pub id: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub display_name: ::prost::alloc::string::String,
+    #[prost(string, tag = "3")]
+    pub version: ::prost::alloc::string::String,
+    #[prost(bool, tag = "4")]
+    pub is_active: bool,
+    #[prost(string, tag = "5")]
+    pub extension_path: ::prost::alloc::string::String,
+}
+/// Response with extension info.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GetExtensionResponse {
+    #[prost(message, optional, tag = "1")]
+    pub extension: ::core::option::Option<ExtensionInfo>,
+}
+/// Response with all extensions.
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct GetAllExtensionsResponse {
+    #[prost(message, repeated, tag = "1")]
+    pub extensions: ::prost::alloc::vec::Vec<ExtensionInfo>,
+}
+/// Request to resize a terminal.
+#[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct ResizeTerminalRequest {
+    #[prost(uint32, tag = "1")]
+    pub terminal_id: u32,
+    #[prost(uint32, tag = "2")]
+    pub cols: u32,
+    #[prost(uint32, tag = "3")]
+    pub rows: u32,
+}
+/// Request to get a configuration value.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GetConfigurationRequest {
+    #[prost(string, tag = "1")]
+    pub section: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub key: ::prost::alloc::string::String,
+}
+/// Response with configuration value.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct GetConfigurationResponse {
+    #[prost(bytes = "vec", tag = "1")]
+    pub value: ::prost::alloc::vec::Vec<u8>,
+}
 /// A view column (editor location).
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
 #[repr(i32)]
@@ -841,6 +1654,36 @@ impl TextDocumentSaveReason {
             "SAVE_REASON_MANUAL" => Some(Self::SaveReasonManual),
             "SAVE_REASON_AFTER_DELAY" => Some(Self::SaveReasonAfterDelay),
             "SAVE_REASON_FOCUS_OUT" => Some(Self::SaveReasonFocusOut),
+            _ => None,
+        }
+    }
+}
+/// Progress location.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, ::prost::Enumeration)]
+#[repr(i32)]
+pub enum ProgressLocation {
+    Notification = 0,
+    SourceControl = 1,
+    Window = 2,
+}
+impl ProgressLocation {
+    /// String value of the enum field names used in the ProtoBuf definition.
+    ///
+    /// The values are not transformed in any way and thus are considered stable
+    /// (if the ProtoBuf definition does not change) and safe for programmatic use.
+    pub fn as_str_name(&self) -> &'static str {
+        match self {
+            Self::Notification => "PROGRESS_LOCATION_NOTIFICATION",
+            Self::SourceControl => "PROGRESS_LOCATION_SOURCE_CONTROL",
+            Self::Window => "PROGRESS_LOCATION_WINDOW",
+        }
+    }
+    /// Creates an enum from field names used in the ProtoBuf definition.
+    pub fn from_str_name(value: &str) -> ::core::option::Option<Self> {
+        match value {
+            "PROGRESS_LOCATION_NOTIFICATION" => Some(Self::Notification),
+            "PROGRESS_LOCATION_SOURCE_CONTROL" => Some(Self::SourceControl),
+            "PROGRESS_LOCATION_WINDOW" => Some(Self::Window),
             _ => None,
         }
     }
@@ -1829,6 +2672,1540 @@ pub mod cocoon_service_client {
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(GrpcMethod::new("Vine.CocoonService", "provide_code_actions"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Document Highlight Provider
+        pub async fn register_document_highlight_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_document_highlight_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_document_highlight_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Document Highlights
+        pub async fn provide_document_highlights(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideDocumentHighlightsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideDocumentHighlightsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_document_highlights",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "provide_document_highlights"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Document Symbol Provider
+        pub async fn register_document_symbol_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_document_symbol_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_document_symbol_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Document Symbols
+        pub async fn provide_document_symbols(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideDocumentSymbolsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideDocumentSymbolsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_document_symbols",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "provide_document_symbols"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Workspace Symbol Provider
+        pub async fn register_workspace_symbol_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_workspace_symbol_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_workspace_symbol_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Workspace Symbols
+        pub async fn provide_workspace_symbols(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideWorkspaceSymbolsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideWorkspaceSymbolsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_workspace_symbols",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "provide_workspace_symbols"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Rename Provider
+        pub async fn register_rename_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_rename_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "register_rename_provider"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Rename Edits
+        pub async fn provide_rename_edits(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideRenameEditsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideRenameEditsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_rename_edits",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_rename_edits"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Document Formatting Provider
+        pub async fn register_document_formatting_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_document_formatting_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_document_formatting_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Document Formatting
+        pub async fn provide_document_formatting(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideDocumentFormattingRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideDocumentFormattingResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_document_formatting",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "provide_document_formatting"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Document Range Formatting Provider
+        pub async fn register_document_range_formatting_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_document_range_formatting_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_document_range_formatting_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Document Range Formatting
+        pub async fn provide_document_range_formatting(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::ProvideDocumentRangeFormattingRequest,
+            >,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideDocumentRangeFormattingResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_document_range_formatting",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "provide_document_range_formatting",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register On Type Formatting Provider
+        pub async fn register_on_type_formatting_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::RegisterOnTypeFormattingProviderRequest,
+            >,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_on_type_formatting_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_on_type_formatting_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide On Type Formatting
+        pub async fn provide_on_type_formatting(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideOnTypeFormattingRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideOnTypeFormattingResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_on_type_formatting",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "provide_on_type_formatting"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Signature Help Provider
+        pub async fn register_signature_help_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterSignatureHelpProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_signature_help_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_signature_help_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Signature Help
+        pub async fn provide_signature_help(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideSignatureHelpRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideSignatureHelpResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_signature_help",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_signature_help"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Code Lens Provider
+        pub async fn register_code_lens_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_code_lens_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "register_code_lens_provider"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Code Lenses
+        pub async fn provide_code_lenses(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideCodeLensesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideCodeLensesResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_code_lenses",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_code_lenses"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Folding Range Provider
+        pub async fn register_folding_range_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_folding_range_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_folding_range_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Folding Ranges
+        pub async fn provide_folding_ranges(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideFoldingRangesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideFoldingRangesResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_folding_ranges",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_folding_ranges"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Selection Range Provider
+        pub async fn register_selection_range_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_selection_range_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_selection_range_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Selection Ranges
+        pub async fn provide_selection_ranges(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideSelectionRangesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideSelectionRangesResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_selection_ranges",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "provide_selection_ranges"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Semantic Tokens Provider
+        pub async fn register_semantic_tokens_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::RegisterSemanticTokensProviderRequest,
+            >,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_semantic_tokens_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_semantic_tokens_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Semantic Tokens Full
+        pub async fn provide_semantic_tokens_full(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideSemanticTokensRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideSemanticTokensResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_semantic_tokens_full",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "provide_semantic_tokens_full"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Inlay Hints Provider
+        pub async fn register_inlay_hints_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_inlay_hints_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_inlay_hints_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Inlay Hints
+        pub async fn provide_inlay_hints(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideInlayHintsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideInlayHintsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_inlay_hints",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "provide_inlay_hints"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Type Hierarchy Provider
+        pub async fn register_type_hierarchy_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_type_hierarchy_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_type_hierarchy_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Type Hierarchy Supertypes
+        pub async fn provide_type_hierarchy_supertypes(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideTypeHierarchyRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideTypeHierarchyResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_type_hierarchy_supertypes",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "provide_type_hierarchy_supertypes",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Type Hierarchy Subtypes
+        pub async fn provide_type_hierarchy_subtypes(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideTypeHierarchyRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideTypeHierarchyResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_type_hierarchy_subtypes",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "provide_type_hierarchy_subtypes",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Call Hierarchy Provider
+        pub async fn register_call_hierarchy_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_call_hierarchy_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_call_hierarchy_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Call Hierarchy Incoming Calls
+        pub async fn provide_call_hierarchy_incoming_calls(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideCallHierarchyRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideCallHierarchyResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_call_hierarchy_incoming_calls",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "provide_call_hierarchy_incoming_calls",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Call Hierarchy Outgoing Calls
+        pub async fn provide_call_hierarchy_outgoing_calls(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideCallHierarchyRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideCallHierarchyResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_call_hierarchy_outgoing_calls",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "provide_call_hierarchy_outgoing_calls",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Linked Editing Range Provider
+        pub async fn register_linked_editing_range_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_linked_editing_range_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_linked_editing_range_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Provide Linked Editing Ranges
+        pub async fn provide_linked_editing_ranges(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ProvideLinkedEditingRangesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideLinkedEditingRangesResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/provide_linked_editing_ranges",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "provide_linked_editing_ranges",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Show Quick Pick
+        pub async fn show_quick_pick(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ShowQuickPickRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ShowQuickPickResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/show_quick_pick",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "show_quick_pick"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Show Input Box
+        pub async fn show_input_box(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ShowInputBoxRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ShowInputBoxResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/show_input_box",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "show_input_box"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Show Progress
+        pub async fn show_progress(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ShowProgressRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ShowProgressResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/show_progress",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "show_progress"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Report Progress
+        pub async fn report_progress(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ReportProgressRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/report_progress",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "report_progress"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Post Message to Webview
+        pub async fn post_webview_message(
+            &mut self,
+            request: impl tonic::IntoRequest<super::PostWebviewMessageRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/post_webview_message",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "post_webview_message"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Dispose Webview Panel
+        pub async fn dispose_webview_panel(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DisposeWebviewPanelRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/dispose_webview_panel",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "dispose_webview_panel"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Open External URI
+        pub async fn open_external(
+            &mut self,
+            request: impl tonic::IntoRequest<super::OpenExternalRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/open_external",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "open_external"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Delete File
+        pub async fn delete_file(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DeleteFileRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/delete_file",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "delete_file"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Rename File
+        pub async fn rename_file(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RenameFileRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/rename_file",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "rename_file"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Copy File
+        pub async fn copy_file(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CopyFileRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/copy_file",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "copy_file"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Create Directory
+        pub async fn create_directory(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateDirectoryRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/create_directory",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "create_directory"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Create Output Channel
+        pub async fn create_output_channel(
+            &mut self,
+            request: impl tonic::IntoRequest<super::CreateOutputChannelRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CreateOutputChannelResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/create_output_channel",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "create_output_channel"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Append to Output Channel
+        pub async fn append_output(
+            &mut self,
+            request: impl tonic::IntoRequest<super::AppendOutputRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/append_output",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "append_output"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Clear Output Channel
+        pub async fn clear_output(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ClearOutputRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/clear_output",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "clear_output"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Show Output Channel
+        pub async fn show_output(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ShowOutputRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/show_output",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "show_output"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Dispose Output Channel
+        pub async fn dispose_output(
+            &mut self,
+            request: impl tonic::IntoRequest<super::DisposeOutputRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/dispose_output",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "dispose_output"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Task Provider
+        pub async fn register_task_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<super::RegisterTaskProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_task_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "register_task_provider"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Execute Task
+        pub async fn execute_task(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ExecuteTaskRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ExecuteTaskResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/execute_task",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "execute_task"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Terminate Task
+        pub async fn terminate_task(
+            &mut self,
+            request: impl tonic::IntoRequest<super::TerminateTaskRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/terminate_task",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "terminate_task"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Get Authentication Session
+        pub async fn get_authentication_session(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetAuthenticationSessionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetAuthenticationSessionResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/get_authentication_session",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "get_authentication_session"),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Register Authentication Provider
+        pub async fn register_authentication_provider(
+            &mut self,
+            request: impl tonic::IntoRequest<
+                super::RegisterAuthenticationProviderRequest,
+            >,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/register_authentication_provider",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new(
+                        "Vine.CocoonService",
+                        "register_authentication_provider",
+                    ),
+                );
+            self.inner.unary(req, path, codec).await
+        }
+        /// Stop Debugging
+        pub async fn stop_debugging(
+            &mut self,
+            request: impl tonic::IntoRequest<super::StopDebuggingRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/stop_debugging",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "stop_debugging"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Get Extension
+        pub async fn get_extension(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetExtensionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetExtensionResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/get_extension",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "get_extension"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Get All Extensions
+        pub async fn get_all_extensions(
+            &mut self,
+            request: impl tonic::IntoRequest<super::Empty>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetAllExtensionsResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/get_all_extensions",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "get_all_extensions"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Resize Terminal
+        pub async fn resize_terminal(
+            &mut self,
+            request: impl tonic::IntoRequest<super::ResizeTerminalRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/resize_terminal",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "resize_terminal"));
+            self.inner.unary(req, path, codec).await
+        }
+        /// Get Configuration Value
+        pub async fn get_configuration(
+            &mut self,
+            request: impl tonic::IntoRequest<super::GetConfigurationRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetConfigurationResponse>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/get_configuration",
+            );
+            let mut req = request.into_request();
+            req.extensions_mut()
+                .insert(GrpcMethod::new("Vine.CocoonService", "get_configuration"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Text Document - Open a text document
@@ -2871,6 +5248,387 @@ pub mod cocoon_service_server {
             request: tonic::Request<super::ProvideCodeActionsRequest>,
         ) -> std::result::Result<
             tonic::Response<super::ProvideCodeActionsResponse>,
+            tonic::Status,
+        >;
+        /// Register Document Highlight Provider
+        async fn register_document_highlight_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Document Highlights
+        async fn provide_document_highlights(
+            &self,
+            request: tonic::Request<super::ProvideDocumentHighlightsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideDocumentHighlightsResponse>,
+            tonic::Status,
+        >;
+        /// Register Document Symbol Provider
+        async fn register_document_symbol_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Document Symbols
+        async fn provide_document_symbols(
+            &self,
+            request: tonic::Request<super::ProvideDocumentSymbolsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideDocumentSymbolsResponse>,
+            tonic::Status,
+        >;
+        /// Register Workspace Symbol Provider
+        async fn register_workspace_symbol_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Workspace Symbols
+        async fn provide_workspace_symbols(
+            &self,
+            request: tonic::Request<super::ProvideWorkspaceSymbolsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideWorkspaceSymbolsResponse>,
+            tonic::Status,
+        >;
+        /// Register Rename Provider
+        async fn register_rename_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Rename Edits
+        async fn provide_rename_edits(
+            &self,
+            request: tonic::Request<super::ProvideRenameEditsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideRenameEditsResponse>,
+            tonic::Status,
+        >;
+        /// Register Document Formatting Provider
+        async fn register_document_formatting_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Document Formatting
+        async fn provide_document_formatting(
+            &self,
+            request: tonic::Request<super::ProvideDocumentFormattingRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideDocumentFormattingResponse>,
+            tonic::Status,
+        >;
+        /// Register Document Range Formatting Provider
+        async fn register_document_range_formatting_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Document Range Formatting
+        async fn provide_document_range_formatting(
+            &self,
+            request: tonic::Request<super::ProvideDocumentRangeFormattingRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideDocumentRangeFormattingResponse>,
+            tonic::Status,
+        >;
+        /// Register On Type Formatting Provider
+        async fn register_on_type_formatting_provider(
+            &self,
+            request: tonic::Request<super::RegisterOnTypeFormattingProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide On Type Formatting
+        async fn provide_on_type_formatting(
+            &self,
+            request: tonic::Request<super::ProvideOnTypeFormattingRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideOnTypeFormattingResponse>,
+            tonic::Status,
+        >;
+        /// Register Signature Help Provider
+        async fn register_signature_help_provider(
+            &self,
+            request: tonic::Request<super::RegisterSignatureHelpProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Signature Help
+        async fn provide_signature_help(
+            &self,
+            request: tonic::Request<super::ProvideSignatureHelpRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideSignatureHelpResponse>,
+            tonic::Status,
+        >;
+        /// Register Code Lens Provider
+        async fn register_code_lens_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Code Lenses
+        async fn provide_code_lenses(
+            &self,
+            request: tonic::Request<super::ProvideCodeLensesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideCodeLensesResponse>,
+            tonic::Status,
+        >;
+        /// Register Folding Range Provider
+        async fn register_folding_range_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Folding Ranges
+        async fn provide_folding_ranges(
+            &self,
+            request: tonic::Request<super::ProvideFoldingRangesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideFoldingRangesResponse>,
+            tonic::Status,
+        >;
+        /// Register Selection Range Provider
+        async fn register_selection_range_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Selection Ranges
+        async fn provide_selection_ranges(
+            &self,
+            request: tonic::Request<super::ProvideSelectionRangesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideSelectionRangesResponse>,
+            tonic::Status,
+        >;
+        /// Register Semantic Tokens Provider
+        async fn register_semantic_tokens_provider(
+            &self,
+            request: tonic::Request<super::RegisterSemanticTokensProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Semantic Tokens Full
+        async fn provide_semantic_tokens_full(
+            &self,
+            request: tonic::Request<super::ProvideSemanticTokensRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideSemanticTokensResponse>,
+            tonic::Status,
+        >;
+        /// Register Inlay Hints Provider
+        async fn register_inlay_hints_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Inlay Hints
+        async fn provide_inlay_hints(
+            &self,
+            request: tonic::Request<super::ProvideInlayHintsRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideInlayHintsResponse>,
+            tonic::Status,
+        >;
+        /// Register Type Hierarchy Provider
+        async fn register_type_hierarchy_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Type Hierarchy Supertypes
+        async fn provide_type_hierarchy_supertypes(
+            &self,
+            request: tonic::Request<super::ProvideTypeHierarchyRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideTypeHierarchyResponse>,
+            tonic::Status,
+        >;
+        /// Provide Type Hierarchy Subtypes
+        async fn provide_type_hierarchy_subtypes(
+            &self,
+            request: tonic::Request<super::ProvideTypeHierarchyRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideTypeHierarchyResponse>,
+            tonic::Status,
+        >;
+        /// Register Call Hierarchy Provider
+        async fn register_call_hierarchy_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Call Hierarchy Incoming Calls
+        async fn provide_call_hierarchy_incoming_calls(
+            &self,
+            request: tonic::Request<super::ProvideCallHierarchyRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideCallHierarchyResponse>,
+            tonic::Status,
+        >;
+        /// Provide Call Hierarchy Outgoing Calls
+        async fn provide_call_hierarchy_outgoing_calls(
+            &self,
+            request: tonic::Request<super::ProvideCallHierarchyRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideCallHierarchyResponse>,
+            tonic::Status,
+        >;
+        /// Register Linked Editing Range Provider
+        async fn register_linked_editing_range_provider(
+            &self,
+            request: tonic::Request<super::RegisterProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Provide Linked Editing Ranges
+        async fn provide_linked_editing_ranges(
+            &self,
+            request: tonic::Request<super::ProvideLinkedEditingRangesRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ProvideLinkedEditingRangesResponse>,
+            tonic::Status,
+        >;
+        /// Show Quick Pick
+        async fn show_quick_pick(
+            &self,
+            request: tonic::Request<super::ShowQuickPickRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ShowQuickPickResponse>,
+            tonic::Status,
+        >;
+        /// Show Input Box
+        async fn show_input_box(
+            &self,
+            request: tonic::Request<super::ShowInputBoxRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ShowInputBoxResponse>,
+            tonic::Status,
+        >;
+        /// Show Progress
+        async fn show_progress(
+            &self,
+            request: tonic::Request<super::ShowProgressRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ShowProgressResponse>,
+            tonic::Status,
+        >;
+        /// Report Progress
+        async fn report_progress(
+            &self,
+            request: tonic::Request<super::ReportProgressRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Post Message to Webview
+        async fn post_webview_message(
+            &self,
+            request: tonic::Request<super::PostWebviewMessageRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Dispose Webview Panel
+        async fn dispose_webview_panel(
+            &self,
+            request: tonic::Request<super::DisposeWebviewPanelRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Open External URI
+        async fn open_external(
+            &self,
+            request: tonic::Request<super::OpenExternalRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Delete File
+        async fn delete_file(
+            &self,
+            request: tonic::Request<super::DeleteFileRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Rename File
+        async fn rename_file(
+            &self,
+            request: tonic::Request<super::RenameFileRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Copy File
+        async fn copy_file(
+            &self,
+            request: tonic::Request<super::CopyFileRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Create Directory
+        async fn create_directory(
+            &self,
+            request: tonic::Request<super::CreateDirectoryRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Create Output Channel
+        async fn create_output_channel(
+            &self,
+            request: tonic::Request<super::CreateOutputChannelRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::CreateOutputChannelResponse>,
+            tonic::Status,
+        >;
+        /// Append to Output Channel
+        async fn append_output(
+            &self,
+            request: tonic::Request<super::AppendOutputRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Clear Output Channel
+        async fn clear_output(
+            &self,
+            request: tonic::Request<super::ClearOutputRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Show Output Channel
+        async fn show_output(
+            &self,
+            request: tonic::Request<super::ShowOutputRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Dispose Output Channel
+        async fn dispose_output(
+            &self,
+            request: tonic::Request<super::DisposeOutputRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Register Task Provider
+        async fn register_task_provider(
+            &self,
+            request: tonic::Request<super::RegisterTaskProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Execute Task
+        async fn execute_task(
+            &self,
+            request: tonic::Request<super::ExecuteTaskRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::ExecuteTaskResponse>,
+            tonic::Status,
+        >;
+        /// Terminate Task
+        async fn terminate_task(
+            &self,
+            request: tonic::Request<super::TerminateTaskRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Get Authentication Session
+        async fn get_authentication_session(
+            &self,
+            request: tonic::Request<super::GetAuthenticationSessionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetAuthenticationSessionResponse>,
+            tonic::Status,
+        >;
+        /// Register Authentication Provider
+        async fn register_authentication_provider(
+            &self,
+            request: tonic::Request<super::RegisterAuthenticationProviderRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Stop Debugging
+        async fn stop_debugging(
+            &self,
+            request: tonic::Request<super::StopDebuggingRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Get Extension
+        async fn get_extension(
+            &self,
+            request: tonic::Request<super::GetExtensionRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetExtensionResponse>,
+            tonic::Status,
+        >;
+        /// Get All Extensions
+        async fn get_all_extensions(
+            &self,
+            request: tonic::Request<super::Empty>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetAllExtensionsResponse>,
+            tonic::Status,
+        >;
+        /// Resize Terminal
+        async fn resize_terminal(
+            &self,
+            request: tonic::Request<super::ResizeTerminalRequest>,
+        ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Get Configuration Value
+        async fn get_configuration(
+            &self,
+            request: tonic::Request<super::GetConfigurationRequest>,
+        ) -> std::result::Result<
+            tonic::Response<super::GetConfigurationResponse>,
             tonic::Status,
         >;
         /// Show Text Document - Open a text document
@@ -4032,6 +6790,2925 @@ pub mod cocoon_service_server {
                     let inner = self.inner.clone();
                     let fut = async move {
                         let method = provide_code_actionsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_document_highlight_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_document_highlight_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_document_highlight_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_document_highlight_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_document_highlight_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_document_highlights" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_document_highlightsSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<
+                        super::ProvideDocumentHighlightsRequest,
+                    > for provide_document_highlightsSvc<T> {
+                        type Response = super::ProvideDocumentHighlightsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::ProvideDocumentHighlightsRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_document_highlights(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_document_highlightsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_document_symbol_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_document_symbol_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_document_symbol_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_document_symbol_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_document_symbol_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_document_symbols" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_document_symbolsSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideDocumentSymbolsRequest>
+                    for provide_document_symbolsSvc<T> {
+                        type Response = super::ProvideDocumentSymbolsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideDocumentSymbolsRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_document_symbols(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_document_symbolsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_workspace_symbol_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_workspace_symbol_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_workspace_symbol_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_workspace_symbol_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_workspace_symbol_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_workspace_symbols" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_workspace_symbolsSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideWorkspaceSymbolsRequest>
+                    for provide_workspace_symbolsSvc<T> {
+                        type Response = super::ProvideWorkspaceSymbolsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::ProvideWorkspaceSymbolsRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_workspace_symbols(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_workspace_symbolsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_rename_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_rename_providerSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_rename_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_rename_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_rename_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_rename_edits" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_rename_editsSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideRenameEditsRequest>
+                    for provide_rename_editsSvc<T> {
+                        type Response = super::ProvideRenameEditsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideRenameEditsRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_rename_edits(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_rename_editsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_document_formatting_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_document_formatting_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_document_formatting_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_document_formatting_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_document_formatting_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_document_formatting" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_document_formattingSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<
+                        super::ProvideDocumentFormattingRequest,
+                    > for provide_document_formattingSvc<T> {
+                        type Response = super::ProvideDocumentFormattingResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::ProvideDocumentFormattingRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_document_formatting(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_document_formattingSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_document_range_formatting_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_document_range_formatting_providerSvc<
+                        T: CocoonService,
+                    >(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_document_range_formatting_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_document_range_formatting_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_document_range_formatting_providerSvc(
+                            inner,
+                        );
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_document_range_formatting" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_document_range_formattingSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<
+                        super::ProvideDocumentRangeFormattingRequest,
+                    > for provide_document_range_formattingSvc<T> {
+                        type Response = super::ProvideDocumentRangeFormattingResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::ProvideDocumentRangeFormattingRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_document_range_formatting(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_document_range_formattingSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_on_type_formatting_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_on_type_formatting_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<
+                        super::RegisterOnTypeFormattingProviderRequest,
+                    > for register_on_type_formatting_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::RegisterOnTypeFormattingProviderRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_on_type_formatting_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_on_type_formatting_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_on_type_formatting" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_on_type_formattingSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideOnTypeFormattingRequest>
+                    for provide_on_type_formattingSvc<T> {
+                        type Response = super::ProvideOnTypeFormattingResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::ProvideOnTypeFormattingRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_on_type_formatting(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_on_type_formattingSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_signature_help_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_signature_help_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<
+                        super::RegisterSignatureHelpProviderRequest,
+                    > for register_signature_help_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::RegisterSignatureHelpProviderRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_signature_help_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_signature_help_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_signature_help" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_signature_helpSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideSignatureHelpRequest>
+                    for provide_signature_helpSvc<T> {
+                        type Response = super::ProvideSignatureHelpResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideSignatureHelpRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_signature_help(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_signature_helpSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_code_lens_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_code_lens_providerSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_code_lens_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_code_lens_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_code_lens_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_code_lenses" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_code_lensesSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideCodeLensesRequest>
+                    for provide_code_lensesSvc<T> {
+                        type Response = super::ProvideCodeLensesResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideCodeLensesRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_code_lenses(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_code_lensesSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_folding_range_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_folding_range_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_folding_range_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_folding_range_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_folding_range_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_folding_ranges" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_folding_rangesSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideFoldingRangesRequest>
+                    for provide_folding_rangesSvc<T> {
+                        type Response = super::ProvideFoldingRangesResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideFoldingRangesRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_folding_ranges(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_folding_rangesSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_selection_range_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_selection_range_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_selection_range_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_selection_range_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_selection_range_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_selection_ranges" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_selection_rangesSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideSelectionRangesRequest>
+                    for provide_selection_rangesSvc<T> {
+                        type Response = super::ProvideSelectionRangesResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideSelectionRangesRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_selection_ranges(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_selection_rangesSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_semantic_tokens_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_semantic_tokens_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<
+                        super::RegisterSemanticTokensProviderRequest,
+                    > for register_semantic_tokens_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::RegisterSemanticTokensProviderRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_semantic_tokens_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_semantic_tokens_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_semantic_tokens_full" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_semantic_tokens_fullSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideSemanticTokensRequest>
+                    for provide_semantic_tokens_fullSvc<T> {
+                        type Response = super::ProvideSemanticTokensResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideSemanticTokensRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_semantic_tokens_full(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_semantic_tokens_fullSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_inlay_hints_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_inlay_hints_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_inlay_hints_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_inlay_hints_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_inlay_hints_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_inlay_hints" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_inlay_hintsSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideInlayHintsRequest>
+                    for provide_inlay_hintsSvc<T> {
+                        type Response = super::ProvideInlayHintsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideInlayHintsRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_inlay_hints(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_inlay_hintsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_type_hierarchy_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_type_hierarchy_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_type_hierarchy_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_type_hierarchy_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_type_hierarchy_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_type_hierarchy_supertypes" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_type_hierarchy_supertypesSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideTypeHierarchyRequest>
+                    for provide_type_hierarchy_supertypesSvc<T> {
+                        type Response = super::ProvideTypeHierarchyResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideTypeHierarchyRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_type_hierarchy_supertypes(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_type_hierarchy_supertypesSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_type_hierarchy_subtypes" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_type_hierarchy_subtypesSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideTypeHierarchyRequest>
+                    for provide_type_hierarchy_subtypesSvc<T> {
+                        type Response = super::ProvideTypeHierarchyResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideTypeHierarchyRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_type_hierarchy_subtypes(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_type_hierarchy_subtypesSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_call_hierarchy_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_call_hierarchy_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_call_hierarchy_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_call_hierarchy_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_call_hierarchy_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_call_hierarchy_incoming_calls" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_call_hierarchy_incoming_callsSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideCallHierarchyRequest>
+                    for provide_call_hierarchy_incoming_callsSvc<T> {
+                        type Response = super::ProvideCallHierarchyResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideCallHierarchyRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_call_hierarchy_incoming_calls(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_call_hierarchy_incoming_callsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_call_hierarchy_outgoing_calls" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_call_hierarchy_outgoing_callsSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ProvideCallHierarchyRequest>
+                    for provide_call_hierarchy_outgoing_callsSvc<T> {
+                        type Response = super::ProvideCallHierarchyResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ProvideCallHierarchyRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_call_hierarchy_outgoing_calls(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_call_hierarchy_outgoing_callsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_linked_editing_range_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_linked_editing_range_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterProviderRequest>
+                    for register_linked_editing_range_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_linked_editing_range_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_linked_editing_range_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/provide_linked_editing_ranges" => {
+                    #[allow(non_camel_case_types)]
+                    struct provide_linked_editing_rangesSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<
+                        super::ProvideLinkedEditingRangesRequest,
+                    > for provide_linked_editing_rangesSvc<T> {
+                        type Response = super::ProvideLinkedEditingRangesResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::ProvideLinkedEditingRangesRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::provide_linked_editing_ranges(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = provide_linked_editing_rangesSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/show_quick_pick" => {
+                    #[allow(non_camel_case_types)]
+                    struct show_quick_pickSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ShowQuickPickRequest>
+                    for show_quick_pickSvc<T> {
+                        type Response = super::ShowQuickPickResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ShowQuickPickRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::show_quick_pick(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = show_quick_pickSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/show_input_box" => {
+                    #[allow(non_camel_case_types)]
+                    struct show_input_boxSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ShowInputBoxRequest>
+                    for show_input_boxSvc<T> {
+                        type Response = super::ShowInputBoxResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ShowInputBoxRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::show_input_box(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = show_input_boxSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/show_progress" => {
+                    #[allow(non_camel_case_types)]
+                    struct show_progressSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ShowProgressRequest>
+                    for show_progressSvc<T> {
+                        type Response = super::ShowProgressResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ShowProgressRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::show_progress(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = show_progressSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/report_progress" => {
+                    #[allow(non_camel_case_types)]
+                    struct report_progressSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ReportProgressRequest>
+                    for report_progressSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ReportProgressRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::report_progress(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = report_progressSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/post_webview_message" => {
+                    #[allow(non_camel_case_types)]
+                    struct post_webview_messageSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::PostWebviewMessageRequest>
+                    for post_webview_messageSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::PostWebviewMessageRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::post_webview_message(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = post_webview_messageSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/dispose_webview_panel" => {
+                    #[allow(non_camel_case_types)]
+                    struct dispose_webview_panelSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::DisposeWebviewPanelRequest>
+                    for dispose_webview_panelSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::DisposeWebviewPanelRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::dispose_webview_panel(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = dispose_webview_panelSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/open_external" => {
+                    #[allow(non_camel_case_types)]
+                    struct open_externalSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::OpenExternalRequest>
+                    for open_externalSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::OpenExternalRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::open_external(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = open_externalSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/delete_file" => {
+                    #[allow(non_camel_case_types)]
+                    struct delete_fileSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::DeleteFileRequest>
+                    for delete_fileSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::DeleteFileRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::delete_file(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = delete_fileSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/rename_file" => {
+                    #[allow(non_camel_case_types)]
+                    struct rename_fileSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RenameFileRequest>
+                    for rename_fileSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RenameFileRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::rename_file(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = rename_fileSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/copy_file" => {
+                    #[allow(non_camel_case_types)]
+                    struct copy_fileSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::CopyFileRequest>
+                    for copy_fileSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CopyFileRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::copy_file(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = copy_fileSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/create_directory" => {
+                    #[allow(non_camel_case_types)]
+                    struct create_directorySvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::CreateDirectoryRequest>
+                    for create_directorySvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreateDirectoryRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::create_directory(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = create_directorySvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/create_output_channel" => {
+                    #[allow(non_camel_case_types)]
+                    struct create_output_channelSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::CreateOutputChannelRequest>
+                    for create_output_channelSvc<T> {
+                        type Response = super::CreateOutputChannelResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::CreateOutputChannelRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::create_output_channel(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = create_output_channelSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/append_output" => {
+                    #[allow(non_camel_case_types)]
+                    struct append_outputSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::AppendOutputRequest>
+                    for append_outputSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::AppendOutputRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::append_output(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = append_outputSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/clear_output" => {
+                    #[allow(non_camel_case_types)]
+                    struct clear_outputSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ClearOutputRequest>
+                    for clear_outputSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ClearOutputRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::clear_output(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = clear_outputSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/show_output" => {
+                    #[allow(non_camel_case_types)]
+                    struct show_outputSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ShowOutputRequest>
+                    for show_outputSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ShowOutputRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::show_output(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = show_outputSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/dispose_output" => {
+                    #[allow(non_camel_case_types)]
+                    struct dispose_outputSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::DisposeOutputRequest>
+                    for dispose_outputSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::DisposeOutputRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::dispose_output(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = dispose_outputSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_task_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_task_providerSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::RegisterTaskProviderRequest>
+                    for register_task_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::RegisterTaskProviderRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_task_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_task_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/execute_task" => {
+                    #[allow(non_camel_case_types)]
+                    struct execute_taskSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ExecuteTaskRequest>
+                    for execute_taskSvc<T> {
+                        type Response = super::ExecuteTaskResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ExecuteTaskRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::execute_task(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = execute_taskSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/terminate_task" => {
+                    #[allow(non_camel_case_types)]
+                    struct terminate_taskSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::TerminateTaskRequest>
+                    for terminate_taskSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::TerminateTaskRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::terminate_task(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = terminate_taskSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/get_authentication_session" => {
+                    #[allow(non_camel_case_types)]
+                    struct get_authentication_sessionSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::GetAuthenticationSessionRequest>
+                    for get_authentication_sessionSvc<T> {
+                        type Response = super::GetAuthenticationSessionResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::GetAuthenticationSessionRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::get_authentication_session(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = get_authentication_sessionSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/register_authentication_provider" => {
+                    #[allow(non_camel_case_types)]
+                    struct register_authentication_providerSvc<T: CocoonService>(
+                        pub Arc<T>,
+                    );
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<
+                        super::RegisterAuthenticationProviderRequest,
+                    > for register_authentication_providerSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<
+                                super::RegisterAuthenticationProviderRequest,
+                            >,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::register_authentication_provider(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = register_authentication_providerSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/stop_debugging" => {
+                    #[allow(non_camel_case_types)]
+                    struct stop_debuggingSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::StopDebuggingRequest>
+                    for stop_debuggingSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::StopDebuggingRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::stop_debugging(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = stop_debuggingSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/get_extension" => {
+                    #[allow(non_camel_case_types)]
+                    struct get_extensionSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::GetExtensionRequest>
+                    for get_extensionSvc<T> {
+                        type Response = super::GetExtensionResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetExtensionRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::get_extension(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = get_extensionSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/get_all_extensions" => {
+                    #[allow(non_camel_case_types)]
+                    struct get_all_extensionsSvc<T: CocoonService>(pub Arc<T>);
+                    impl<T: CocoonService> tonic::server::UnaryService<super::Empty>
+                    for get_all_extensionsSvc<T> {
+                        type Response = super::GetAllExtensionsResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::Empty>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::get_all_extensions(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = get_all_extensionsSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/resize_terminal" => {
+                    #[allow(non_camel_case_types)]
+                    struct resize_terminalSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::ResizeTerminalRequest>
+                    for resize_terminalSvc<T> {
+                        type Response = super::Empty;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::ResizeTerminalRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::resize_terminal(&inner, request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = resize_terminalSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/get_configuration" => {
+                    #[allow(non_camel_case_types)]
+                    struct get_configurationSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::UnaryService<super::GetConfigurationRequest>
+                    for get_configurationSvc<T> {
+                        type Response = super::GetConfigurationResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::GetConfigurationRequest>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::get_configuration(&inner, request)
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = get_configurationSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
