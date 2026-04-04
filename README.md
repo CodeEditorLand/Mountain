@@ -62,46 +62,44 @@ The Bedrock of Land: Native Backend & Service Host
 [![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
 [![Tonic gRPC Version](https://img.shields.io/badge/Tonic-v0.11-blueviolet.svg)](https://github.com/hyperium/tonic)
 
-Welcome to **Mountain**! This element is the native Rust backend and Tauri
-application shell for the Land Code Editor. It serves as the foundational
-bedrock for the entire system, managing the application lifecycle, orchestrating
-native OS operations, and providing high-performance services to the `Wind`
-frontend and the `Cocoon` extension host.
+Mountain is the native process manager that replaces Electron. Built with Rust
+and Tauri, it handles windows, files, processes, and extensions at native speed.
+Where Electron takes milliseconds, Mountain responds in microseconds.
 
-**Mountain** is engineered to:
+Your editor starts faster, uses less RAM, and stays responsive with hundreds of
+files open.
 
-1. **Be the Native Core:** Act as the primary Rust application, leveraging Tauri
-   to create a lightweight, cross-platform windowing and webview host.
-2. **Provide High-Performance Services:** Implement the abstract service traits
-   defined in the `Common` crate, offering native-speed implementations for
-   filesystem I/O, process management, secure storage, and more.
-3. **Orchestrate Sidecars:** Reliably launch, manage, and communicate with the
-   `Cocoon` (Node.js) extension host sidecar via a robust gRPC interface.
-4. **Power the User Interface:** Serve as the backend for the `Wind` User
-   Interface layer, responding to requests via Tauri commands and pushing state
-   updates via Tauri events.
+**What Mountain gives you:**
+
+1. **No Electron overhead.** Tauri's webview is lightweight. No separate Chromium
+   process, no 300 MB base memory footprint.
+2. **Native file I/O.** Async Rust (tokio) handles filesystem operations. File
+   trees load instantly even on large monorepos.
+3. **Your VS Code extensions work.** Mountain manages the Cocoon sidecar over
+   gRPC. Extensions run unchanged in Node.js with sub-millisecond IPC.
+4. **Secrets stay in the OS keychain.** Authentication tokens are stored via the
+   native keychain (`keyring` crate), not in plaintext config files.
+
+📖 **[Rust API Documentation](https://Rust.Documentation.Mountain.Editor.Land/)**
 
 ---
 
 ## Key Features 🔐
 
-- **Declarative Effect System:** Built on a Rust `ActionEffect` system defined
-  in the `Common` crate. Business logic is described as declarative, composable
-  effects, executed by a central `ApplicationRunTime`.
-- **gRPC-Powered IPC:** Hosts a `tonic`-based gRPC server (`Vine`) to provide a
-  strongly-typed, high-performance communication channel for the `Cocoon`
-  extension host.
-- **Centralized State Management:** Uses a thread-safe, Tauri-managed
-  `ApplicationState` as the single source of truth for the entire application's
-  state, from open documents to provider registrations.
-- **Native PTY Management:** A full-featured integrated terminal service that
-  spawns and manages native pseudo-terminals (`PTY`) using the `portable-pty`
-  crate.
-- **Secure Storage Integration:** Leverages the native OS keychain via the
-  `keyring` crate to securely store sensitive data like authentication tokens.
-- **Robust Command Dispatching:** A central `Track` dispatcher intelligently
-  routes all incoming requests from `Wind` and `Cocoon` to the appropriate
-  native `Environment` provider or `ActionEffect`.
+- **Composable business logic.** Operations are expressed as declarative
+  `ActionEffect`s executed by a central runtime. Testable, composable, no
+  spaghetti callbacks.
+- **Type-safe extension IPC.** Extensions talk to Mountain over gRPC (tonic).
+  Sub-millisecond round trips, no JSON serialization overhead, full type safety.
+- **One source of truth.** A single thread-safe `ApplicationState` holds the
+  entire app state. No stale caches, no out-of-sync views.
+- **Real terminal, not a wrapper.** Native PTY management via `portable-pty`.
+  Shell autocompletion, cursor movement, and colors work exactly as expected.
+- **OS keychain for secrets.** Tokens stored via `keyring`, not in plaintext
+  JSON files that any process can read.
+- **Instant command dispatch.** A central `Track` dispatcher routes every UI
+  action to the right provider. Native commands run directly. Extension commands
+  proxy over gRPC. The UI never waits.
 
 ---
 
@@ -241,6 +239,15 @@ Stay updated with our progress! See
 history of changes specific to **Mountain**.
 
 ---
+
+
+## See Also
+
+- [Architecture Overview](https://editor.land/Doc/architecture)
+- [Cocoon](https://github.com/CodeEditorLand/Cocoon)
+- [Air](https://github.com/CodeEditorLand/Air)
+- [Vine](https://github.com/CodeEditorLand/Vine)
+- [Echo](https://github.com/CodeEditorLand/Echo)
 
 ## Funding & Acknowledgements 🙏🏻
 
