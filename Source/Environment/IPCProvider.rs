@@ -9,7 +9,7 @@
 //! - Provides both request/response and notification patterns
 //!
 //! ARCHITECTURAL ROLE:
-//! - Thin wrapper layer over [`Vine::Client`]
+//! - Thin wrapper layer over `Vine::Client`
 //! - All IPC operations are async and use JSON-RPC 2.0 protocol
 //! - Sidecar routing via `SideCarIdentifier` to target specific extension hosts
 //! - Error translation from Vine errors to
@@ -53,8 +53,7 @@
 //! - [`IPCProvider`](CommonLibrary::IPC::IPCProvider) implementation:
 //! - `SendNotificationToSideCar` - fire-and-forget
 //! - `SendRequestToSideCar` - synchronous RPC
-//! - Delegate: [`Vine::Client`] handles all transport
-//!   concerns
+//! - Delegate: `Vine::Client` handles all transport concerns
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
 use async_trait::async_trait;

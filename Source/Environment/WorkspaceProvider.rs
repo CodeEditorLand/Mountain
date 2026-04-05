@@ -11,13 +11,10 @@
 //!
 //! ARCHITECTURAL ROLE:
 //! - Core provider in the Environment system, exposing workspace-level
-//!   functionality to frontend via gRPC through the
-//!   [`AirService`]
+//!   functionality to frontend via gRPC through the `AirService`
 //! - Workspace provider is one of the foundational services alongside Document,
 //!   Configuration, and Diagnostic providers
-//! - Integrates with
-//!   [`ApplicationState`] for
-//!   persistent workspace folder storage
+//! - Integrates with `ApplicationState` for persistent workspace folder storage
 //!
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations

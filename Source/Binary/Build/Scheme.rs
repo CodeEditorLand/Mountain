@@ -67,8 +67,8 @@ pub fn init_service_registry(registry:ServiceRegistry) {
 /// 3. After initialization, we only read from it
 /// 4. The RwLock guarantees thread-safe access
 fn get_service_registry() -> Option<ServiceRegistry> {
-let guard = SERVICE_REGISTRY.read().ok()?;
-guard.clone()
+	let guard = SERVICE_REGISTRY.read().ok()?;
+	guard.clone()
 }
 
 /// DNS port managed state structure
@@ -649,7 +649,7 @@ pub fn land_scheme_handler_async<R:tauri::Runtime>(
 ///
 /// Tauri uses different origins for custom URI schemes on different platforms:
 /// - macOS, Linux: land://localhost/
-/// - Windows: http://land.localhost/
+/// - Windows: <http://land.localhost/>
 ///
 /// Returns a comma-separated list of origins to support all platforms.
 fn get_cors_origins() -> &'static str {

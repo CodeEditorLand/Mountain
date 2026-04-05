@@ -13,9 +13,7 @@
 //! - Environment provider that enables extension-contributed custom editors
 //! - Uses [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
 //!   communication with Cocoon
-//! - Integrates with
-//!   [`ApplicationState`] for
-//!   provider registration persistence
+//! - Integrates with `ApplicationState` for provider registration persistence
 //!
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations

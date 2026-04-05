@@ -16,8 +16,7 @@
 //! - Uses authentication from `AuthenticationProvider` (to be implemented)
 //! - Syncs multiple data types: settings, keybindings, workspaces, extensions,
 //!   snippets
-//! - Store sync metadata in
-//!   [`ApplicationState`]
+//! - Store sync metadata in `ApplicationState`
 //!
 //! SYNC ARCHITECTURE:
 //! **PushUserData**:

@@ -2,7 +2,7 @@
 //!
 //! Shared utility functions used across all Environment provider
 //! implementations in
-//! [`MountainEnvironment`].
+//! `MountainEnvironment`.
 //! These handle cross-cutting concerns: error mapping, security validation,
 //! language detection, and URI conversions.
 //!

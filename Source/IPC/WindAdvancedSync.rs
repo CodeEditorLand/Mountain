@@ -28,7 +28,7 @@
 //! **Three Sync Layers:**
 //!
 //! **1. Document Synchronization (Every 5 seconds):**
-//! ```
+//! ```text
 //! Wind Editor (User Edits)
 //!     |
 //!     | Detect changes
@@ -45,7 +45,7 @@
 //! ```
 //!
 //! **2. UI State Synchronization (Every 1 second):**
-//! ```
+//! ```text
 //! Wind UI Window
 //!     |
 //!     | Capture state (cursor, selection, zoom)
@@ -58,7 +58,7 @@
 //! ```
 //!
 //! **3. Real-time Updates (Every 100ms):**
-//! ```
+//! ```text
 //! Subscribed Listeners
 //!     ^
 //!     | Broadcast updates

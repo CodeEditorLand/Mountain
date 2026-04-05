@@ -82,7 +82,7 @@ impl LocalService {
 /// provisioning.
 #[derive(Clone)]
 pub struct ServiceRegistry {
-	/// Inner storage using Arc<RwLock> for thread-safe concurrent access
+	/// Inner storage using `Arc<RwLock>` for thread-safe concurrent access
 	services:Arc<RwLock<HashMap<String, LocalService>>>,
 	/// Optional certificate manager for HTTPS support
 	cert_manager:Option<std::sync::Arc<std::sync::Mutex<super::CertificateManager::CertificateManager>>>,

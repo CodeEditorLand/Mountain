@@ -9,10 +9,10 @@
 //!
 //! ARCHITECTURAL ROLE:
 //! - Utility module for workspace configuration management
-//! - Used by [`MountainEnvironment`]
+//! - Used by `MountainEnvironment`
 //!   during workspace initialization and configuration loading
 //! - Integrates with
-//!   [`ApplicationState`] for
+//!   `ApplicationState` for
 //!   workspace folder state management
 //!
 //! FILE FORMAT:

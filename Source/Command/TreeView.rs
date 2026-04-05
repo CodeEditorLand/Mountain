@@ -11,7 +11,7 @@
 //! - Command module exposing TreeView functionality via Tauri IPC
 //!   (`#[command]`)
 //! - Delegates to Environment's
-//!   [`TreeViewProvider`] via DI with
+//!   `TreeViewProvider` via DI with
 //!   `Require()` trait from `MountainEnvironment`
 //! - Translates frontend requests to provider method calls with proper error
 //!   mapping

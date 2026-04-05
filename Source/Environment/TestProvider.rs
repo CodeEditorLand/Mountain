@@ -16,8 +16,7 @@
 //!   extensions
 //! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
 //!   to test runners
-//! - Stores controller state in
-//!   [`ApplicationState`]
+//! - Stores controller state in `ApplicationState`
 //!
 //! TEST EXECUTION FLOW:
 //! 1. Extension registers test controller via `RegisterTestController`

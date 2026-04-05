@@ -83,7 +83,7 @@ ring = { workspace = true }
 bincode = { workspace = true }
 brotli = { workspace = true }
 hex = { workspace = true }
-opentelemetry = { workspace = true }
+opentelemetry = { workspace = true, features = ["trace"] }
 
 [features]
 default = ["ExtensionHostCocoon", "MistNative", "AirIntegration"]

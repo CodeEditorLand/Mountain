@@ -14,9 +14,8 @@
 //! - Integration point with the Air background service (daemon)
 //! - Used by multiple Mountain components:
 //! - `UpdateService` for self-updates
-//!   - [`SearchProvider`] for file search
-//!   - [`SecretProvider`] for secret
-//!     storage
+//!   - `SearchProvider` for file search
+//!   - `SecretProvider` for secret storage
 //! - Connection is optional; Mountain can function without Air (graceful
 //!   degradation)
 //! - Service discovery and health checking via gRPC

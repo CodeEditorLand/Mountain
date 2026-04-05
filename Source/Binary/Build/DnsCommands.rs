@@ -782,9 +782,7 @@ mod tests {
 
 	#[test]
 	fn test_forward_allowlist_serialization() {
-		let allowlist = ForwardAllowList {
-			domains:vec!["update.editor.land.".to_string()],
-		};
+		let allowlist = ForwardAllowList { domains:vec!["update.editor.land.".to_string()] };
 
 		let json = serde_json::to_string(&allowlist).unwrap();
 		let deserialized:ForwardAllowList = serde_json::from_str(&json).unwrap();

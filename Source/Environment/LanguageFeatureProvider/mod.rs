@@ -151,7 +151,9 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 	async fn ProvideRenameEdits(&self, _:Url, _:PositionDTO, _:String) -> Result<Option<Value>, CommonError> { todo!() }
 	async fn ProvideDocumentSymbols(&self, _:Url) -> Result<Option<Value>, CommonError> { todo!() }
 	async fn ProvideWorkspaceSymbols(&self, _:String) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideSignatureHelp(&self, _:Url, _:PositionDTO, _:Value) -> Result<Option<Value>, CommonError> { todo!() }
+	async fn ProvideSignatureHelp(&self, _:Url, _:PositionDTO, _:Value) -> Result<Option<Value>, CommonError> {
+		todo!()
+	}
 	async fn ProvideFoldingRanges(&self, _:Url) -> Result<Option<Value>, CommonError> { todo!() }
 	async fn ProvideSelectionRanges(&self, _:Url, _:Vec<PositionDTO>) -> Result<Option<Value>, CommonError> { todo!() }
 	async fn ProvideSemanticTokensFull(&self, _:Url) -> Result<Option<Value>, CommonError> { todo!() }
@@ -161,5 +163,13 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 	async fn ProvideCallHierarchyIncomingCalls(&self, _:Value) -> Result<Option<Value>, CommonError> { todo!() }
 	async fn ProvideCallHierarchyOutgoingCalls(&self, _:Value) -> Result<Option<Value>, CommonError> { todo!() }
 	async fn ProvideLinkedEditingRanges(&self, _:Url, _:PositionDTO) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideOnTypeFormattingEdits(&self, _:Url, _:PositionDTO, _:String, _:Value) -> Result<Option<Vec<TextEditDTO>>, CommonError> { todo!() }
+	async fn ProvideOnTypeFormattingEdits(
+		&self,
+		_:Url,
+		_:PositionDTO,
+		_:String,
+		_:Value,
+	) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
+		todo!()
+	}
 }

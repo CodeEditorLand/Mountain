@@ -65,7 +65,7 @@
 //!
 //! **Communication Pattern:**
 //!
-//! ```
+//! ```text
 //! Wind (TypeScript)
 //!   |
 //!   | app.handle.invoke('command', args)

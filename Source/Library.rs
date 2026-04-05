@@ -43,7 +43,8 @@
 //! - [`RPC`]: Remote procedure call service implementations
 //!
 //! ### Services
-//! - [`ProcessManagement`]: Sidecar process lifecycle (launch, monitor, restart)
+//! - [`ProcessManagement`]: Sidecar process lifecycle (launch, monitor,
+//!   restart)
 //! - [`FileSystem`]: Native TreeView provider for the File Explorer
 //! - [`ExtensionManagement`]: Extension discovery, scanning, and activation
 //!
@@ -107,7 +108,4 @@ pub mod Binary;
 
 /// Main entry point for desktop/mobile builds
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn main() {
-	Binary::Main::Main();
-}
-
+pub fn main() { Binary::Main::Main(); }

@@ -3,7 +3,7 @@
 //! Implements the
 //! [`OutputChannelManager`](CommonLibrary::Output::OutputChannelManager) trait
 //! for
-//! [`MountainEnvironment`].
+//! `MountainEnvironment`.
 //!
 //! This provider manages multiple output channels (e.g., 'Extension Host',
 //! 'JavaScript', 'Git'), handling channel lifecycle, content management, and UI

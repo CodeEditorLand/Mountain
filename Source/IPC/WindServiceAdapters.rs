@@ -23,7 +23,7 @@
 //! This module implements the Adapter design pattern to bridge the interface
 //! gap:
 //!
-//! ```
+//! ```text
 //! Wind's IFileService (TypeScript interface)
 //!        |
 //!        |  Expected interface

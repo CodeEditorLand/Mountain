@@ -237,12 +237,12 @@ pub fn Fn() {
 					// that land:// protocol_resolution is available
 					info!("[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
 					let dns_port = mist::start(5380).unwrap_or_else(|e| {
-					    warn!("[Lifecycle] [Setup] Failed to start DNS server on port 5380: {}", e);
-					    // Fallback to random port if preferred port fails
-					    mist::start(0).unwrap_or_else(|e| {
-					        error!("[Lifecycle] [Setup] Completely failed to start DNS server: {}", e);
-					        0 // Return 0 as error indicator
-					    })
+						warn!("[Lifecycle] [Setup] Failed to start DNS server on port 5380: {}", e);
+						// Fallback to random port if preferred port fails
+						mist::start(0).unwrap_or_else(|e| {
+							error!("[Lifecycle] [Setup] Completely failed to start DNS server: {}", e);
+							0 // Return 0 as error indicator
+						})
 					});
 
 					if dns_port == 0 {
@@ -278,9 +278,9 @@ pub fn Fn() {
 				}
 			})
 			.register_asynchronous_uri_scheme_protocol("land", |_ctx, request, responder| {
-			    // Implemented: delegate to synchronous scheme handler
-			    let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
-			    responder.respond(response);
+				// Implemented: delegate to synchronous scheme handler
+				let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
+				responder.respond(response);
 			})
 			.plugin(tauri_plugin_dialog::init())
 			.plugin(tauri_plugin_fs::init())

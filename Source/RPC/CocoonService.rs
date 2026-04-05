@@ -39,25 +39,38 @@ use tonic::{Request, Response, Status};
 use crate::Environment::MountainEnvironment::MountainEnvironment;
 // Import generated protobuf types
 use crate::Vine::Generated::{
+	// Service trait
+	// Extended Language + Window + FS + Output + Task + Auth + Debug + Extension types
+	AppendOutputRequest,
 	ApplyEditRequest,
 	ApplyEditResponse,
 	Argument,
 	CancelOperationRequest,
 
+	ClearOutputRequest,
 	CloseTerminalRequest,
 	CodeAction,
 
 	CompletionItem,
+	CopyFileRequest,
+	CreateDirectoryRequest,
+	CreateOutputChannelRequest,
+	CreateOutputChannelResponse,
 	CreateStatusBarItemRequest,
 	CreateStatusBarItemResponse,
 	CreateWebviewPanelRequest,
 	CreateWebviewPanelResponse,
 	DebugConfiguration,
+	DeleteFileRequest,
 	DeleteSecretRequest,
+	DisposeOutputRequest,
+	DisposeWebviewPanelRequest,
 	// Common types
 	Empty,
 	ExecuteCommandRequest,
 	ExecuteCommandResponse,
+	ExecuteTaskRequest,
+	ExecuteTaskResponse,
 	// Workspace Operations
 	FindFilesRequest,
 	FindFilesResponse,
@@ -67,7 +80,13 @@ use crate::Vine::Generated::{
 	// Common generic types
 	GenericRequest,
 	GenericResponse,
-	RpcError,
+	GetAllExtensionsResponse,
+	GetAuthenticationSessionRequest,
+	GetAuthenticationSessionResponse,
+	GetConfigurationRequest,
+	GetConfigurationResponse,
+	GetExtensionRequest,
+	GetExtensionResponse,
 	// Secret Storage
 	GetSecretRequest,
 	GetSecretResponse,
@@ -84,44 +103,94 @@ use crate::Vine::Generated::{
 
 	OpenDocumentRequest,
 	OpenDocumentResponse,
+	OpenExternalRequest,
 	// Terminal
 	OpenTerminalRequest,
 	// Save Participants
 	ParticipateInSaveRequest,
 	ParticipateInSaveResponse,
 	Position,
+	PostWebviewMessageRequest,
+	ProvideCallHierarchyRequest,
+	ProvideCallHierarchyResponse,
 	ProvideCodeActionsRequest,
 	ProvideCodeActionsResponse,
+	ProvideCodeLensesRequest,
+	ProvideCodeLensesResponse,
 	ProvideCompletionItemsRequest,
 	ProvideCompletionItemsResponse,
 	ProvideDefinitionRequest,
 	ProvideDefinitionResponse,
+	ProvideDocumentFormattingRequest,
+	ProvideDocumentFormattingResponse,
+	ProvideDocumentHighlightsRequest,
+	ProvideDocumentHighlightsResponse,
+	ProvideDocumentRangeFormattingRequest,
+	ProvideDocumentRangeFormattingResponse,
+	ProvideDocumentSymbolsRequest,
+	ProvideDocumentSymbolsResponse,
+	ProvideFoldingRangesRequest,
+	ProvideFoldingRangesResponse,
 	ProvideHoverRequest,
 	ProvideHoverResponse,
+	ProvideInlayHintsRequest,
+	ProvideInlayHintsResponse,
+	ProvideLinkedEditingRangesRequest,
+	ProvideLinkedEditingRangesResponse,
+	ProvideOnTypeFormattingRequest,
+	ProvideOnTypeFormattingResponse,
 	ProvideReferencesRequest,
 	ProvideReferencesResponse,
+	ProvideRenameEditsRequest,
+	ProvideRenameEditsResponse,
+	ProvideSelectionRangesRequest,
+	ProvideSelectionRangesResponse,
+	ProvideSemanticTokensRequest,
+	ProvideSemanticTokensResponse,
+	ProvideSignatureHelpRequest,
+	ProvideSignatureHelpResponse,
+	ProvideTypeHierarchyRequest,
+	ProvideTypeHierarchyResponse,
+	ProvideWorkspaceSymbolsRequest,
+	ProvideWorkspaceSymbolsResponse,
 	Range,
 	// File System
 	ReadFileRequest,
 	ReadFileResponse,
 	ReaddirRequest,
 	ReaddirResponse,
+	RegisterAuthenticationProviderRequest,
 	// Commands
 	RegisterCommandRequest,
 	// Debug
 	RegisterDebugAdapterRequest,
+	RegisterOnTypeFormattingProviderRequest,
 	// Language Features
 	RegisterProviderRequest,
 	// SCM
 	RegisterScmProviderRequest,
+	RegisterSemanticTokensProviderRequest,
+	RegisterSignatureHelpProviderRequest,
+	RegisterTaskProviderRequest,
 	// Tree View
 	RegisterTreeViewProviderRequest,
+	RenameFileRequest,
+	ReportProgressRequest,
+	ResizeTerminalRequest,
+	RpcError,
 	SaveAllRequest,
 	SaveAllResponse,
 	SetStatusBarTextRequest,
 	SetWebviewHtmlRequest,
+	ShowInputBoxRequest,
+	ShowInputBoxResponse,
 	ShowMessageRequest,
 	ShowMessageResponse,
+	ShowOutputRequest,
+	ShowProgressRequest,
+	ShowProgressResponse,
+	ShowQuickPickRequest,
+	ShowQuickPickResponse,
 	// Window Operations
 	ShowTextDocumentRequest,
 	ShowTextDocumentResponse,
@@ -131,6 +200,7 @@ use crate::Vine::Generated::{
 
 	StatRequest,
 	StatResponse,
+	StopDebuggingRequest,
 	StoreSecretRequest,
 	TerminalClosedNotification,
 	TerminalDataNotification,
@@ -138,6 +208,7 @@ use crate::Vine::Generated::{
 	TerminalInputRequest,
 	TerminalOpenedNotification,
 	TerminalProcessIdNotification,
+	TerminateTaskRequest,
 	TextDocumentSaveReason,
 	TextEdit,
 	TextEditForSave,
@@ -158,77 +229,6 @@ use crate::Vine::Generated::{
 
 	WorkspaceFolder,
 	WriteFileRequest,
-	// Service trait
-	// Extended Language + Window + FS + Output + Task + Auth + Debug + Extension types
-	AppendOutputRequest,
-	ClearOutputRequest,
-	CopyFileRequest,
-	CreateDirectoryRequest,
-	CreateOutputChannelRequest,
-	CreateOutputChannelResponse,
-	DeleteFileRequest,
-	DisposeOutputRequest,
-	DisposeWebviewPanelRequest,
-	ExecuteTaskRequest,
-	ExecuteTaskResponse,
-	GetAllExtensionsResponse,
-	GetAuthenticationSessionRequest,
-	GetAuthenticationSessionResponse,
-	GetConfigurationRequest,
-	GetConfigurationResponse,
-	GetExtensionRequest,
-	GetExtensionResponse,
-	OpenExternalRequest,
-	PostWebviewMessageRequest,
-	ProvideCallHierarchyRequest,
-	ProvideCallHierarchyResponse,
-	ProvideCodeLensesRequest,
-	ProvideCodeLensesResponse,
-	ProvideDocumentFormattingRequest,
-	ProvideDocumentFormattingResponse,
-	ProvideDocumentHighlightsRequest,
-	ProvideDocumentHighlightsResponse,
-	ProvideDocumentRangeFormattingRequest,
-	ProvideDocumentRangeFormattingResponse,
-	ProvideDocumentSymbolsRequest,
-	ProvideDocumentSymbolsResponse,
-	ProvideFoldingRangesRequest,
-	ProvideFoldingRangesResponse,
-	ProvideInlayHintsRequest,
-	ProvideInlayHintsResponse,
-	ProvideLinkedEditingRangesRequest,
-	ProvideLinkedEditingRangesResponse,
-	ProvideOnTypeFormattingRequest,
-	ProvideOnTypeFormattingResponse,
-	ProvideRenameEditsRequest,
-	ProvideRenameEditsResponse,
-	ProvideSelectionRangesRequest,
-	ProvideSelectionRangesResponse,
-	ProvideSemanticTokensRequest,
-	ProvideSemanticTokensResponse,
-	ProvideSignatureHelpRequest,
-	ProvideSignatureHelpResponse,
-	ProvideTypeHierarchyRequest,
-	ProvideTypeHierarchyResponse,
-	ProvideWorkspaceSymbolsRequest,
-	ProvideWorkspaceSymbolsResponse,
-	RegisterAuthenticationProviderRequest,
-	RegisterOnTypeFormattingProviderRequest,
-	RegisterSemanticTokensProviderRequest,
-	RegisterSignatureHelpProviderRequest,
-	RegisterTaskProviderRequest,
-	RenameFileRequest,
-	ReportProgressRequest,
-	ResizeTerminalRequest,
-	ShowInputBoxRequest,
-	ShowInputBoxResponse,
-	ShowOutputRequest,
-	ShowProgressRequest,
-	ShowProgressResponse,
-	ShowQuickPickRequest,
-	ShowQuickPickResponse,
-	StopDebuggingRequest,
-	TerminateTaskRequest,
 	cocoon_service_server::CocoonService,
 };
 
@@ -306,9 +306,9 @@ impl CocoonService for CocoonServiceImpl {
 			request_identifier:request_data.request_identifier,
 			result:Vec::new(),
 			error:Some(RpcError {
-				code: -32601, // Method not found (JSON-RPC error code)
-				message: format!("Method '{}' not implemented in generic router", request_data.method),
-				data: Vec::new(),
+				code:-32601, // Method not found (JSON-RPC error code)
+				message:format!("Method '{}' not implemented in generic router", request_data.method),
+				data:Vec::new(),
 			}),
 		}))
 	}
@@ -412,10 +412,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Register command in MountainEnvironment
 		// This stub logs the command registration for debugging
-		debug!(
-			"[CocoonService] Command details: id={}, title={:?}",
-			req.command_id, req.title
-		);
+		debug!("[CocoonService] Command details: id={}, title={:?}", req.command_id, req.title);
 
 		// TODO: When CommandRegistry is available in MountainEnvironment:
 		// - Store command metadata in command registry
@@ -829,10 +826,7 @@ impl CocoonService for CocoonServiceImpl {
 		info!("[CocoonService] Creating status bar item: {}", req.id);
 
 		// IPC call to Wind frontend for status bar item creation
-		debug!(
-			"[CocoonService] Status bar item details: id={}, text={:?}",
-			req.id, req.text
-		);
+		debug!("[CocoonService] Status bar item details: id={}, text={:?}", req.id, req.text);
 		// Note: CreateStatusBarItemRequest has fields: id, text, tooltip (no alignment)
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
@@ -874,7 +868,8 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] Panel details: view_type={}, title={}",
 			req.view_type, req.title
 		);
-		// Note: CreateWebviewPanelRequest fields: view_type, title, icon_path, view_column, preserve_focus, etc. (no options)
+		// Note: CreateWebviewPanelRequest fields: view_type, title, icon_path,
+		// view_column, preserve_focus, etc. (no options)
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Generate unique handle for the panel
@@ -913,7 +908,10 @@ impl CocoonService for CocoonServiceImpl {
 		debug!("[CocoonService] Received webview message for handle {}", req.handle);
 
 		// Forward to extension handler registered in MountainEnvironment
-		debug!("[CocoonService] Message payload: {} bytes", req.message.as_ref().map_or(0, |m| m.len()));
+		debug!(
+			"[CocoonService] Message payload: {}",
+			req.message.as_ref().map_or("absent", |_| "present")
+		);
 
 		// TODO: When WebviewHandlerRegistry is available in MountainEnvironment:
 		// - Look up handler by handle
@@ -1362,7 +1360,8 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] Tree view provider registered: view_id={}, extension_id={:?}",
 			req.view_id, req.extension_id
 		);
-		// Note: RegisterTreeViewProviderRequest fields: view_id, extension_id (no display_name)
+		// Note: RegisterTreeViewProviderRequest fields: view_id, extension_id (no
+		// display_name)
 
 		// TODO: When TreeViewState is available in MountainEnvironment:
 		// - Store provider metadata in TreeViewState
@@ -1413,7 +1412,8 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] SCM provider registered: scm_id={}, extension_id={:?}",
 			req.scm_id, req.extension_id
 		);
-		// Note: RegisterScmProviderRequest fields: scm_id, extension_id (no display_name)
+		// Note: RegisterScmProviderRequest fields: scm_id, extension_id (no
+		// display_name)
 
 		// TODO: When SCMState is available in MountainEnvironment:
 		// - Store provider metadata in SCMState
@@ -1437,7 +1437,8 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] Group update details: provider_id={}, group_id={}, resource_states={:?}",
 			req.provider_id, req.group_id, req.resource_states
 		);
-		// Note: UpdateScmGroupRequest fields: provider_id, group_id, resource_states (no label, state)
+		// Note: UpdateScmGroupRequest fields: provider_id, group_id, resource_states
+		// (no label, state)
 
 		// TODO: When SCMState is available in MountainEnvironment:
 		// - Update group metadata in SCMState
@@ -2178,10 +2179,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// progress report
-	async fn report_progress(
-		&self,
-		request:Request<ReportProgressRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn report_progress(&self, request:Request<ReportProgressRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling progress report");
 
@@ -2217,10 +2215,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// external URI
-	async fn open_external(
-		&self,
-		request:Request<OpenExternalRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn open_external(&self, request:Request<OpenExternalRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling external URI");
 
@@ -2230,10 +2225,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// file delete
-	async fn delete_file(
-		&self,
-		request:Request<DeleteFileRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn delete_file(&self, request:Request<DeleteFileRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling file delete");
 
@@ -2243,10 +2235,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// file rename
-	async fn rename_file(
-		&self,
-		request:Request<RenameFileRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn rename_file(&self, request:Request<RenameFileRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling file rename");
 
@@ -2256,10 +2245,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// file copy
-	async fn copy_file(
-		&self,
-		request:Request<CopyFileRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn copy_file(&self, request:Request<CopyFileRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling file copy");
 
@@ -2269,10 +2255,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// directory creation
-	async fn create_directory(
-		&self,
-		request:Request<CreateDirectoryRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn create_directory(&self, request:Request<CreateDirectoryRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling directory creation");
 
@@ -2295,10 +2278,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// output append
-	async fn append_output(
-		&self,
-		request:Request<AppendOutputRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn append_output(&self, request:Request<AppendOutputRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling output append");
 
@@ -2308,10 +2288,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// output clear
-	async fn clear_output(
-		&self,
-		request:Request<ClearOutputRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn clear_output(&self, request:Request<ClearOutputRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling output clear");
 
@@ -2321,10 +2298,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// output show
-	async fn show_output(
-		&self,
-		request:Request<ShowOutputRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn show_output(&self, request:Request<ShowOutputRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling output show");
 
@@ -2334,10 +2308,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// output dispose
-	async fn dispose_output(
-		&self,
-		request:Request<DisposeOutputRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn dispose_output(&self, request:Request<DisposeOutputRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling output dispose");
 
@@ -2362,10 +2333,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// task execution
-	async fn execute_task(
-		&self,
-		request:Request<ExecuteTaskRequest>,
-	) -> Result<Response<ExecuteTaskResponse>, Status> {
+	async fn execute_task(&self, request:Request<ExecuteTaskRequest>) -> Result<Response<ExecuteTaskResponse>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling task execution");
 
@@ -2375,10 +2343,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// task termination
-	async fn terminate_task(
-		&self,
-		request:Request<TerminateTaskRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn terminate_task(&self, request:Request<TerminateTaskRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling task termination");
 
@@ -2416,10 +2381,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// debug stop
-	async fn stop_debugging(
-		&self,
-		request:Request<StopDebuggingRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn stop_debugging(&self, request:Request<StopDebuggingRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling debug stop");
 
@@ -2442,10 +2404,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// all extensions
-	async fn get_all_extensions(
-		&self,
-		request:Request<Empty>,
-	) -> Result<Response<GetAllExtensionsResponse>, Status> {
+	async fn get_all_extensions(&self, request:Request<Empty>) -> Result<Response<GetAllExtensionsResponse>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling all extensions");
 
@@ -2455,10 +2414,7 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// terminal resize
-	async fn resize_terminal(
-		&self,
-		request:Request<ResizeTerminalRequest>,
-	) -> Result<Response<Empty>, Status> {
+	async fn resize_terminal(&self, request:Request<ResizeTerminalRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
 		info!("[CocoonService] Handling terminal resize");
 

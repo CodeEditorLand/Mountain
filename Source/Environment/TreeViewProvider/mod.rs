@@ -2,7 +2,7 @@
 //!
 //! Implements the
 //! [`TreeViewProvider`](CommonLibrary::TreeView::TreeViewProvider) trait for
-//! [`MountainEnvironment`].
+//! `MountainEnvironment`.
 //!
 //! This provider manages the lifecycle of custom tree views and orchestrates
 //! data flow between the extension host (Cocoon) and the UI (Sky). It handles
