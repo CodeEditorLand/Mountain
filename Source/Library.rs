@@ -102,6 +102,12 @@ pub mod Track;
 
 pub mod Workspace;
 
-// Entry Point
+// Entry Point - binary and lib share this
 pub mod Binary;
+
+/// Main entry point for desktop/mobile builds
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn main() {
+	Binary::Main::Main();
+}
 

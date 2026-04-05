@@ -33,6 +33,7 @@ pub(super) async fn register_tree_data_provider(
 		Message:None,
 		Title:None,
 		Description:None,
+		Badge:None,
 	};
 
 	env.ApplicationState

@@ -413,8 +413,8 @@ impl CocoonService for CocoonServiceImpl {
 		// Register command in MountainEnvironment
 		// This stub logs the command registration for debugging
 		debug!(
-			"[CocoonService] Command details: id={}, title={:?}, category={:?}",
-			req.command_id, req.title, req.category
+			"[CocoonService] Command details: id={}, title={:?}",
+			req.command_id, req.title
 		);
 
 		// TODO: When CommandRegistry is available in MountainEnvironment:
@@ -913,7 +913,7 @@ impl CocoonService for CocoonServiceImpl {
 		debug!("[CocoonService] Received webview message for handle {}", req.handle);
 
 		// Forward to extension handler registered in MountainEnvironment
-		debug!("[CocoonService] Message payload: {} bytes", req.message.len());
+		debug!("[CocoonService] Message payload: {} bytes", req.message.as_ref().map_or(0, |m| m.len()));
 
 		// TODO: When WebviewHandlerRegistry is available in MountainEnvironment:
 		// - Look up handler by handle
