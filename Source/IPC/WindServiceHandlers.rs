@@ -245,6 +245,25 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"extensions:get" => handle_extensions_get(runtime.inner().clone(), args).await,
 		"extensions:isActive" => handle_extensions_is_active(runtime.inner().clone(), args).await,
 
+		// Terminal commands
+		"terminal:create" => handle_terminal_create(runtime.inner().clone(), args).await,
+		"terminal:sendText" => handle_terminal_send_text(runtime.inner().clone(), args).await,
+		"terminal:dispose" => handle_terminal_dispose(runtime.inner().clone(), args).await,
+		"terminal:show" => handle_terminal_show(runtime.inner().clone(), args).await,
+		"terminal:hide" => handle_terminal_hide(runtime.inner().clone(), args).await,
+
+		// Output channel commands
+		"output:create" => handle_output_create(app_handle.clone(), args).await,
+		"output:append" => handle_output_append(app_handle.clone(), args).await,
+		"output:appendLine" => handle_output_append_line(app_handle.clone(), args).await,
+		"output:clear" => handle_output_clear(app_handle.clone(), args).await,
+		"output:show" => handle_output_show(app_handle.clone(), args).await,
+
+		// TextFile commands
+		"textFile:read" => handle_textfile_read(runtime.inner().clone(), args).await,
+		"textFile:write" => handle_textfile_write(runtime.inner().clone(), args).await,
+		"textFile:save" => handle_textfile_save(runtime.inner().clone(), args).await,
+
 		// IPC status commands
 		"mountain_get_status" => {
 			let status = json!({
@@ -818,6 +837,188 @@ async fn handle_workbench_configuration(runtime:Arc<ApplicationRunTime>, _args:V
 
 	debug!("[WindServiceHandlers] Workbench configuration retrieved");
 	Ok(config)
+}
+
+// ============================================================================
+// Terminal Handlers
+// ============================================================================
+
+/// Create a new PTY terminal via TerminalProvider.
+async fn handle_terminal_create(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
+
+	let Options = args.first().cloned().unwrap_or(Value::Null);
+	runtime
+		.Environment
+		.CreateTerminal(Options)
+		.await
+		.map_err(|Error| format!("terminal:create failed: {}", Error))
+}
+
+/// Write text to PTY stdin via TerminalProvider.
+async fn handle_terminal_send_text(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
+
+	let TerminalId = args
+		.first()
+		.and_then(|V| V.as_u64())
+		.ok_or_else(|| "terminal:sendText requires terminal_id as first argument".to_string())?;
+	let Text = args
+		.get(1)
+		.and_then(|V| V.as_str())
+		.unwrap_or("")
+		.to_string();
+
+	runtime
+		.Environment
+		.SendTextToTerminal(TerminalId, Text)
+		.await
+		.map(|()| Value::Null)
+		.map_err(|Error| format!("terminal:sendText failed: {}", Error))
+}
+
+/// Dispose a terminal via TerminalProvider.
+async fn handle_terminal_dispose(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
+
+	let TerminalId = args
+		.first()
+		.and_then(|V| V.as_u64())
+		.ok_or_else(|| "terminal:dispose requires terminal_id as first argument".to_string())?;
+
+	runtime
+		.Environment
+		.DisposeTerminal(TerminalId)
+		.await
+		.map(|()| Value::Null)
+		.map_err(|Error| format!("terminal:dispose failed: {}", Error))
+}
+
+/// Show a terminal in the UI.
+async fn handle_terminal_show(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
+
+	let TerminalId = args.first().and_then(|V| V.as_u64()).unwrap_or(0);
+	let PreserveFocus = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+
+	runtime
+		.Environment
+		.ShowTerminal(TerminalId, PreserveFocus)
+		.await
+		.map(|()| Value::Null)
+		.map_err(|Error| format!("terminal:show failed: {}", Error))
+}
+
+/// Hide a terminal.
+async fn handle_terminal_hide(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
+
+	let TerminalId = args.first().and_then(|V| V.as_u64()).unwrap_or(0);
+
+	runtime
+		.Environment
+		.HideTerminal(TerminalId)
+		.await
+		.map(|()| Value::Null)
+		.map_err(|Error| format!("terminal:hide failed: {}", Error))
+}
+
+// ============================================================================
+// Output Channel Handlers
+// ============================================================================
+
+/// Create a named output channel. Returns the channel name as its handle.
+async fn handle_output_create(_app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	let ChannelName = args
+		.first()
+		.and_then(|V| V.as_str())
+		.unwrap_or("Output")
+		.to_string();
+	info!("[WindServiceHandlers] output:create channel='{}'", ChannelName);
+	// Sky/frontend creates the channel panel on the `sky://output/create` event
+	Ok(json!({ "channelName": ChannelName }))
+}
+
+/// Append text to an output channel.
+async fn handle_output_append(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Text = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+
+	let _ = app_handle.emit("sky://output/append", json!({ "channel": ChannelName, "text": Text }));
+	Ok(Value::Null)
+}
+
+/// Append a line to an output channel (text + newline).
+async fn handle_output_append_line(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Text = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Line = format!("{}\n", Text);
+
+	let _ = app_handle.emit("sky://output/append", json!({ "channel": ChannelName, "text": Line }));
+	Ok(Value::Null)
+}
+
+/// Clear an output channel.
+async fn handle_output_clear(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let _ = app_handle.emit("sky://output/clear", json!({ "channel": ChannelName }));
+	Ok(Value::Null)
+}
+
+/// Show an output channel panel.
+async fn handle_output_show(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let _ = app_handle.emit("sky://output/show", json!({ "channel": ChannelName }));
+	Ok(Value::Null)
+}
+
+// ============================================================================
+// TextFile Handlers
+// ============================================================================
+
+/// Read a text file from disk.
+async fn handle_textfile_read(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Path = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or_else(|| "textFile:read requires path as first argument".to_string())?;
+
+	tokio::fs::read_to_string(Path).await.map(Value::String).map_err(|Error| {
+		format!("textFile:read failed: {}", Error)
+	})
+}
+
+/// Write text to a file on disk.
+async fn handle_textfile_write(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Path = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or_else(|| "textFile:write requires path as first argument".to_string())?;
+	let Content = args
+		.get(1)
+		.and_then(|V| V.as_str())
+		.unwrap_or("")
+		.to_string();
+
+	tokio::fs::write(Path, Content.as_bytes()).await.map(|()| Value::Null).map_err(|Error| {
+		format!("textFile:write failed: {}", Error)
+	})
+}
+
+/// Save a document — forward save intent to Sky frontend.
+async fn handle_textfile_save(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	// Actual disk write happens via textFile:write; this is a UI-dirty-state hint.
+	let _Uri = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	info!("[WindServiceHandlers] textFile:save uri={:?}", _Uri);
+	Ok(Value::Null)
 }
 
 /// Register all Wind IPC command handlers
