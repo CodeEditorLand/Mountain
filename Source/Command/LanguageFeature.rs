@@ -15,7 +15,7 @@
 //! ARCHITECTURAL ROLE:
 //! - Command layer that exposes language features via Tauri IPC (`#[command]`)
 //! - Delegates to Environment's
-//! [`LanguageFeatureProvider`](crate::Environment::LanguageFeatureProvider)
+//! [`LanguageFeatureProvider`]
 //! via DI with `Require()` trait
 //! - Translates between frontend JSON parameters and Rust DTO types
 //! - Error strings returned directly to frontend for display

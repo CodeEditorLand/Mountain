@@ -17,7 +17,7 @@
 //! - Syncs multiple data types: settings, keybindings, workspaces, extensions,
 //!   snippets
 //! - Store sync metadata in
-//!   [`ApplicationState`](crate::ApplicationState::ApplicationState)
+//!   [`ApplicationState`]
 //!
 //! SYNC ARCHITECTURE:
 //! **PushUserData**:

@@ -16,7 +16,7 @@
 //!   layer
 //! - Uses Tauri's `#[command]` attribute for IPC exposure
 //! - Reads from [`ApplicationState.SourceControlManagement*
-//!   `](crate::ApplicationState::ApplicationState) fields to gather state
+//!   `] fields to gather state
 //! - TODO: Should forward commands to provider methods via DI (Require trait)
 //!
 //! COMMAND REFERENCE (Tauri IPC):

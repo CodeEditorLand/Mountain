@@ -14,8 +14,8 @@
 //! - Integration point with the Air background service (daemon)
 //! - Used by multiple Mountain components:
 //! - `UpdateService` for self-updates
-//!   - [`SearchProvider`](crate::Environment::SearchProvider) for file search
-//!   - [`SecretProvider`](crate::Environment::SecretProvider) for secret
+//!   - [`SearchProvider`] for file search
+//!   - [`SecretProvider`] for secret
 //!     storage
 //! - Connection is optional; Mountain can function without Air (graceful
 //!   degradation)

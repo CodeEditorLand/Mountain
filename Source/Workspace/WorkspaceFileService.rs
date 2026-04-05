@@ -9,10 +9,10 @@
 //!
 //! ARCHITECTURAL ROLE:
 //! - Utility module for workspace configuration management
-//! - Used by [`MountainEnvironment`](crate::Environment::MountainEnvironment)
+//! - Used by [`MountainEnvironment`]
 //!   during workspace initialization and configuration loading
 //! - Integrates with
-//!   [`ApplicationState`](crate::ApplicationState::ApplicationState) for
+//!   [`ApplicationState`] for
 //!   workspace folder state management
 //!
 //! FILE FORMAT:
@@ -70,7 +70,7 @@
 //! - Structs: `WorkspaceFile`, `WorkspaceFolderEntry` (serde deserialization)
 //! - Function: `ParseWorkspaceFile` - main entry point
 //! - Data type:
-//!   [`WorkspaceFolderStateDTO`](crate::ApplicationState::DTO::WorkspaceFolderStateDTO)
+//!   [`WorkspaceFolderStateDTO`]
 
 use std::path::Path;
 

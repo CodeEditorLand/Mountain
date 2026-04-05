@@ -14,7 +14,7 @@
 //! - Uses [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
 //!   communication with Cocoon
 //! - Integrates with
-//!   [`ApplicationState`](crate::ApplicationState::ApplicationState) for
+//!   [`ApplicationState`] for
 //!   provider registration persistence
 //!
 //! ERROR HANDLING:

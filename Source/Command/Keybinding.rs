@@ -12,7 +12,7 @@
 //! - Command module exposing keybinding functionality via Tauri IPC
 //!   (`#[command]`)
 //! - Delegates to Environment's
-//!   [`KeybindingProvider`](crate::Environment::KeybindingProvider) via DI with
+//!   [`KeybindingProvider`] via DI with
 //!   `Require()` trait
 //! - Acts as thin façade layer; all logic resides in provider implementation
 //!

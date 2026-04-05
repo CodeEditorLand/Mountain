@@ -12,11 +12,11 @@
 //! ARCHITECTURAL ROLE:
 //! - Core provider in the Environment system, exposing workspace-level
 //!   functionality to frontend via gRPC through the
-//!   [`AirService`](crate::Air::AirServiceProvider)
+//!   [`AirService`]
 //! - Workspace provider is one of the foundational services alongside Document,
 //!   Configuration, and Diagnostic providers
 //! - Integrates with
-//!   [`ApplicationState`](crate::ApplicationState::ApplicationState) for
+//!   [`ApplicationState`] for
 //!   persistent workspace folder storage
 //!
 //! ERROR HANDLING:
