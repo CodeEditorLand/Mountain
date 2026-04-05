@@ -653,18 +653,41 @@ impl CocoonService for CocoonServiceImpl {
 			debug!("[CocoonService] Argument {}: {:?}", i, arg);
 		}
 
-		// TODO: When CommandExecutor is available in MountainEnvironment:
-		// - Look up command handler by command_id in registry
-		// - Execute command with provided arguments
-		// - Return success/error response with result data
-		// - Handle command invocation errors gracefully
+		// Convert the first Argument oneof value to a serde_json::Value
+		let Arg:serde_json::Value = req
+			.arguments
+			.first()
+			.and_then(|A| A.value.as_ref())
+			.map(|V| match V {
+				crate::Vine::Generated::argument::Value::StringValue(S) => json!(S),
+				crate::Vine::Generated::argument::Value::IntValue(I) => json!(I),
+				crate::Vine::Generated::argument::Value::BoolValue(B) => json!(B),
+				crate::Vine::Generated::argument::Value::BytesValue(Bytes) => {
+					serde_json::from_slice(Bytes).unwrap_or(serde_json::Value::Null)
+				},
+			})
+			.unwrap_or(serde_json::Value::Null);
 
-		// Return placeholder response until command execution is implemented
-		Ok(Response::new(ExecuteCommandResponse {
-			result:Some(crate::Vine::Generated::execute_command_response::Result::Value(
-				b"Command execution not yet implemented".to_vec(),
-			)),
-		}))
+		match self.environment.ExecuteCommand(req.command_id, Arg).await {
+			Ok(Value) => {
+				let Bytes = serde_json::to_vec(&Value).unwrap_or_default();
+				Ok(Response::new(ExecuteCommandResponse {
+					result:Some(crate::Vine::Generated::execute_command_response::Result::Value(Bytes)),
+				}))
+			},
+			Err(Error) => {
+				let Bytes = serde_json::to_vec(&Error.to_string()).unwrap_or_default();
+				Ok(Response::new(ExecuteCommandResponse {
+					result:Some(crate::Vine::Generated::execute_command_response::Result::Error(
+						crate::Vine::Generated::RpcError {
+							code:-32000,
+							message:Error.to_string(),
+							data:Bytes,
+						},
+					)),
+				}))
+			},
+		}
 	}
 
 	/// Unregister Command - Unregister a previously registered command
@@ -889,71 +912,56 @@ impl CocoonService for CocoonServiceImpl {
 
 	// ==================== Window Operations ====================
 
-	/// Show Text Document - Open a text document
+	/// Show Text Document — emit a Tauri event so Sky opens the document tab.
 	async fn show_text_document(
 		&self,
 		request:Request<ShowTextDocumentRequest>,
 	) -> Result<Response<ShowTextDocumentResponse>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		info!(
-			"[CocoonService] Showing text document: {}",
-			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
-		);
+		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
+		info!("[CocoonService] show_text_document: {}", Uri);
 
-		// IPC call to Wind frontend to open document tab
-		// This stub logs the request for debugging
-		debug!(
-			"[CocoonService] Would send IPC to Wind: open_document uri={:?} column={:?}",
-			req.uri.map(|u| u.value),
-			req.view_column
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://editor/openDocument",
+			json!({ "uri": Uri, "viewColumn": req.view_column }),
 		);
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send message to Wind frontend via IPC
-		// - Include URI, view column, and selection options
-		// - Wait for acknowledgment or handle errors
-		// - Return success/failure status
 
 		Ok(Response::new(ShowTextDocumentResponse { success:true }))
 	}
 
-	/// Show Information Message - Display an info message
+	/// Show Information Message — delegate to UserInterfaceProvider::ShowMessage.
 	async fn show_information_message(
 		&self,
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
+		use CommonLibrary::UserInterface::{DTO::MessageSeverity::MessageSeverity, UserInterfaceProvider::UserInterfaceProvider};
+
 		let req = request.into_inner();
-		debug!("[CocoonService] Showing information message");
+		info!("[CocoonService] show_information_message: {}", req.message);
 
-		// IPC call to Wind frontend for message display
-		info!("{}", req.message);
-		// TODO: ShowMessageRequest only has 'message' field (no actions)
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send message to Wind frontend via IPC
-		// - Include message type, text, and action buttons
-		// - Wait for user action selection or dismissal
-		// - Return selected action index
-		warn!("{}", req.message);
+		let _ = self.environment.ShowMessage(MessageSeverity::Info, req.message, None).await;
 
 		Ok(Response::new(ShowMessageResponse { success:true }))
 	}
 
-	/// Show Warning Message - Display a warning message
+	/// Show Warning Message — delegate to UserInterfaceProvider::ShowMessage.
 	async fn show_warning_message(
 		&self,
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
+		use CommonLibrary::UserInterface::{DTO::MessageSeverity::MessageSeverity, UserInterfaceProvider::UserInterfaceProvider};
+
 		let req = request.into_inner();
-		debug!("[CocoonService] Showing warning message");
+		warn!("[CocoonService] show_warning_message: {}", req.message);
 
-		// IPC call to Wind frontend for message display
-		info!("{}", req.message);
-		// TODO: ShowMessageRequest only has 'message' field (no actions)
+		let _ = self.environment.ShowMessage(MessageSeverity::Warning, req.message, None).await;
 
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send message to Wind frontend via IPC
-		// - Include message type, text, and action buttons
+		Ok(Response::new(ShowMessageResponse { success:true }))
+	}
+
+	/// (placeholder for the old duplicate pattern — removed)
 		// - Wait for user action selection or dismissal
 		// - Return selected action index
 		warn!("{}", req.message);
@@ -961,61 +969,50 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ShowMessageResponse { success:true }))
 	}
 
-	/// Show Error Message - Display an error message
+	/// Show Error Message — delegate to UserInterfaceProvider::ShowMessage.
 	async fn show_error_message(
 		&self,
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
+		use CommonLibrary::UserInterface::{DTO::MessageSeverity::MessageSeverity, UserInterfaceProvider::UserInterfaceProvider};
+
 		let req = request.into_inner();
-		debug!("[CocoonService] Showing error message");
+		error!("[CocoonService] show_error_message: {}", req.message);
 
-		// IPC call to Wind frontend for message display
-		info!("{}", req.message);
-		// TODO: ShowMessageRequest only has 'message' field (no actions)
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send message to Wind frontend via IPC
-		// - Include message type, text, and action buttons
-		// - Wait for user action selection or dismissal
-		// - Return selected action index
-		error!("{}", req.message);
+		let _ = self.environment.ShowMessage(MessageSeverity::Error, req.message, None).await;
 
 		Ok(Response::new(ShowMessageResponse { success:true }))
 	}
 
-	/// Create Status Bar Item - Create a status bar item
+	/// Create Status Bar Item — emit Tauri event for Sky to render status bar entry.
 	async fn create_status_bar_item(
 		&self,
 		request:Request<CreateStatusBarItemRequest>,
 	) -> Result<Response<CreateStatusBarItemResponse>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		info!("[CocoonService] Creating status bar item: {}", req.id);
+		info!("[CocoonService] create_status_bar_item: {}", req.id);
 
-		// IPC call to Wind frontend for status bar item creation
-		debug!("[CocoonService] Status bar item details: id={}, text={:?}", req.id, req.text);
-		// Note: CreateStatusBarItemRequest has fields: id, text, tooltip (no alignment)
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send creation request to Wind frontend via IPC
-		// - Include item ID, text, alignment, command, and priority
-		// - Return item_id for future updates
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://statusbar/create",
+			json!({ "id": req.id, "text": req.text, "tooltip": req.tooltip }),
+		);
 
 		Ok(Response::new(CreateStatusBarItemResponse { item_id:req.id.clone() }))
 	}
 
-	/// Set Status Bar Text - Set status bar text
+	/// Set Status Bar Text — emit Tauri event for Sky status bar update.
 	async fn set_status_bar_text(&self, request:Request<SetStatusBarTextRequest>) -> Result<Response<Empty>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		debug!("[CocoonService] Setting status bar text for item {}", req.item_id);
+		debug!("[CocoonService] set_status_bar_text: id={} text={}", req.item_id, req.text);
 
-		// IPC call to Wind frontend for status bar update
-		debug!("[CocoonService] Update details: item_id={}, text={}", req.item_id, req.text);
-		// Note: SetStatusBarTextRequest has fields: item_id, text (no tooltip)
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send update request to Wind frontend via IPC
-		// - Include item_id, text, tooltip, and color
-		// - Handle errors for invalid item_id
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://statusbar/update",
+			json!({ "id": req.item_id, "text": req.text }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
@@ -1254,93 +1251,146 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(FindFilesResponse { uris:Uris }))
 	}
 
-	/// Find Text in Files - Search for text across files
+	/// Find Text in Files — walk workspace and grep for pattern.
+	///
+	/// Uses a simple line-by-line scan (not indexed). Returns up to 1000
+	/// matches. Indexing integration is a P2 task.
 	async fn find_text_in_files(
 		&self,
 		request:Request<FindTextInFilesRequest>,
 	) -> Result<Response<FindTextInFilesResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Finding text with pattern: {}", req.pattern);
+		if req.pattern.is_empty() {
+			return Ok(Response::new(FindTextInFilesResponse::default()));
+		}
+		debug!("[CocoonService] find_text_in_files: pattern='{}'", req.pattern);
 
-		// Delegate to SearchProvider with text search index in MountainEnvironment
-		// This stub returns an unimplemented error
-		debug!(
-			"[CocoonService] Search details: pattern={}, include={:?}",
-			req.pattern, req.include
-		);
+		let Roots:Vec<std::path::PathBuf> = {
+			match self.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
+				Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.path())).collect(),
+				Err(_) => Vec::new(),
+			}
+		};
+		let SearchRoots = if Roots.is_empty() {
+			vec![std::env::current_dir().unwrap_or_default()]
+		} else {
+			Roots
+		};
 
-		// TODO: When SearchProvider is available in MountainEnvironment:
-		// - Use SearchProvider.find_text_in_files with full-text index
-		// - Return matches with line/column context
+		let Pattern = req.pattern.clone();
+		let Matches = tokio::task::spawn_blocking(move || {
+			let mut Results:Vec<TextMatch> = Vec::new();
+			const MAX_MATCHES:usize = 1000;
 
-		Err(Status::unimplemented("find_text_in_files not yet implemented"))
+			fn WalkAndSearch(
+				Dir:&std::path::Path,
+				Pattern:&str,
+				Results:&mut Vec<TextMatch>,
+			) {
+				if Results.len() >= 1000 { return; }
+				if let Ok(Entries) = std::fs::read_dir(Dir) {
+					for Entry in Entries.flatten() {
+						if Results.len() >= MAX_MATCHES { break; }
+						let Path = Entry.path();
+						if Path.is_dir() {
+							// Skip hidden dirs and common noise dirs
+							let DirName = Path.file_name().and_then(|N| N.to_str()).unwrap_or("");
+							if DirName.starts_with('.') || DirName == "node_modules" || DirName == "target" {
+								continue;
+							}
+							WalkAndSearch(&Path, Pattern, Results);
+						} else if Path.is_file() {
+							if let Ok(Content) = std::fs::read_to_string(&Path) {
+								for (LineIdx, Line) in Content.lines().enumerate() {
+									if Results.len() >= MAX_MATCHES { break; }
+									if let Some(ColIdx) = Line.find(Pattern) {
+										Results.push(TextMatch {
+											uri:Some(Uri { value:format!("file://{}", Path.display()) }),
+											range:Some(Range {
+												start:Some(Position { line:LineIdx as u32, character:ColIdx as u32 }),
+												end:Some(Position { line:LineIdx as u32, character:(ColIdx + Pattern.len()) as u32 }),
+											}),
+											preview:Line.to_string(),
+										});
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+
+			for Root in &SearchRoots {
+				WalkAndSearch(Root, &Pattern, &mut Results);
+				if Results.len() >= MAX_MATCHES { break; }
+			}
+			Results
+		})
+		.await
+		.unwrap_or_default();
+
+		debug!("[CocoonService] find_text_in_files: {} matches for '{}'", Matches.len(), req.pattern);
+		Ok(Response::new(FindTextInFilesResponse { matches:Matches }))
 	}
 
-	/// Open Document - Open a document
+	/// Open Document — emit Tauri event for Sky to open the editor tab.
 	async fn open_document(
 		&self,
 		request:Request<OpenDocumentRequest>,
 	) -> Result<Response<OpenDocumentResponse>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		info!(
-			"[CocoonService] Opening document: {}",
-			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
+		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
+		info!("[CocoonService] open_document: {}", Uri);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://editor/openDocument",
+			json!({ "uri": Uri, "viewColumn": req.view_column }),
 		);
 
-		// IPC call to Wind frontend to open document tab
-		// This stub logs the request for debugging
-		debug!(
-			"[CocoonService] Would send IPC to Wind: open_document uri={:?} column={:?}",
-			req.uri.map(|u| u.value),
-			req.view_column
-		);
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send message to Wind frontend via IPC
-		// - Include URI, view column, and selection options
-		// - Wait for acknowledgment or handle errors
-		// - Return success/failure status
-
-		Err(Status::unimplemented("open_document not yet implemented"))
+		Ok(Response::new(OpenDocumentResponse { success:true }))
 	}
 
-	/// Save All - Save all open documents
+	/// Save All — emit Tauri event for Sky to save all open documents.
 	async fn save_all(&self, request:Request<SaveAllRequest>) -> Result<Response<SaveAllResponse>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		info!(
-			"[CocoonService] Saving all documents (includeUntitled: {})",
-			req.include_untitled
+		info!("[CocoonService] save_all: includeUntitled={}", req.include_untitled);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://editor/saveAll",
+			json!({ "includeUntitled": req.include_untitled }),
 		);
 
-		// IPC call to Wind frontend to save all documents
-		// This stub returns an unimplemented error
-		warn!("[CocoonService] Save all not yet implemented");
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send save_all request to Wind via IPC
-		// - Include includeUntitled flag
-		// - Wait for completion
-		// - Return success/failure and saved document count
-
-		Err(Status::unimplemented("save_all not yet implemented"))
+		Ok(Response::new(SaveAllResponse { success:true }))
 	}
 
-	/// Apply Edit - Apply a text edit to a document
+	/// Apply Edit — emit Tauri event for Sky to apply text edits in the editor.
 	async fn apply_edit(&self, request:Request<ApplyEditRequest>) -> Result<Response<ApplyEditResponse>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		debug!("[CocoonService] Applying {} edits to document", req.edits.len());
+		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
+		debug!("[CocoonService] apply_edit: uri={} edits={}", Uri, req.edits.len());
 
-		// IPC call to Wind frontend to apply edits
-		// This stub returns an unimplemented error
-		debug!("[CocoonService] Edit target: {:?}", req.uri.map(|u| u.value));
+		let EditsJson:Vec<serde_json::Value> = req.edits.iter().map(|E| {
+			json!({
+				"range": {
+					"start": E.range.as_ref().and_then(|R| R.start.as_ref()).map(|P| json!({ "line": P.line, "character": P.character })),
+					"end": E.range.as_ref().and_then(|R| R.end.as_ref()).map(|P| json!({ "line": P.line, "character": P.character })),
+				},
+				"newText": E.new_text,
+			})
+		}).collect();
 
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send apply_edit request to Wind via IPC
-		// - Include URI, edits, and document version
-		// - Wait for apply completion
-		// - Return result with applied edits and rejected edits
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://editor/applyEdits",
+			json!({ "uri": Uri, "edits": EditsJson }),
+		);
 
-		Err(Status::unimplemented("apply_edit not yet implemented"))
+		Ok(Response::new(ApplyEditResponse { success:true }))
 	}
 
 	/// Update Configuration - Notify of configuration changes
@@ -1394,10 +1444,35 @@ impl CocoonService for CocoonServiceImpl {
 			);
 		}
 
-		// TODO: When WorkspaceState is available in MountainEnvironment:
-		// - Update workspace folders in WorkspaceState
-		// - Notify registered workspace listeners
-		// - Handle errors for duplicate additions or missing removals
+		// Apply additions and removals to ApplicationState.Workspace
+		{
+			let mut Folders = self.environment.ApplicationState.Workspace.GetWorkspaceFolders();
+
+			// Remove by URI
+			let RemovalUris:Vec<String> = req
+				.removals
+				.iter()
+				.filter_map(|F| F.uri.as_ref().map(|U| U.value.clone()))
+				.collect();
+			Folders.retain(|F| !RemovalUris.contains(&F.URI.to_string()));
+
+			// Append additions
+			let ExistingCount = Folders.len();
+			for (Idx, Addition) in req.additions.iter().enumerate() {
+				let UriValue = Addition.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
+				if let Ok(ParsedUrl) = url::Url::parse(UriValue) {
+					if let Ok(DTO) = WorkspaceFolderStateDTO::New(
+						ParsedUrl,
+						Addition.name.clone(),
+						ExistingCount + Idx,
+					) {
+						Folders.push(DTO);
+					}
+				}
+			}
+
+			self.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
+		}
 
 		Ok(Response::new(Empty {}))
 	}
