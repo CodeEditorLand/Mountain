@@ -2537,56 +2537,69 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// output channel creation
+	/// Create output channel — notify Sky to create a named output panel.
 	async fn create_output_channel(
 		&self,
 		request:Request<CreateOutputChannelRequest>,
 	) -> Result<Response<CreateOutputChannelResponse>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling output channel creation");
+		use tauri::Emitter;
 
-		// TODO: Implement output channel creation in MountainEnvironment
+		let req = request.into_inner();
+		info!("[CocoonService] create_output_channel: '{}'", req.name);
 
-		Ok(Response::new(CreateOutputChannelResponse { ..Default::default() }))
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://output/create",
+			json!({ "channel": req.name }),
+		);
+
+		Ok(Response::new(CreateOutputChannelResponse { channel_id:req.name.clone() }))
 	}
 
-	/// output append
+	/// Append text to an output channel panel.
 	async fn append_output(&self, request:Request<AppendOutputRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling output append");
+		use tauri::Emitter;
 
-		// TODO: Implement output append in MountainEnvironment
-
+		let req = request.into_inner();
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://output/append",
+			json!({ "channel": req.channel_id, "text": req.value }),
+		);
 		Ok(Response::new(Empty {}))
 	}
 
-	/// output clear
+	/// Clear an output channel panel.
 	async fn clear_output(&self, request:Request<ClearOutputRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling output clear");
+		use tauri::Emitter;
 
-		// TODO: Implement output clear in MountainEnvironment
-
+		let req = request.into_inner();
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://output/clear",
+			json!({ "channel": req.channel_id }),
+		);
 		Ok(Response::new(Empty {}))
 	}
 
-	/// output show
+	/// Show an output channel panel.
 	async fn show_output(&self, request:Request<ShowOutputRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling output show");
+		use tauri::Emitter;
 
-		// TODO: Implement output show in MountainEnvironment
-
+		let req = request.into_inner();
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://output/show",
+			json!({ "channel": req.channel_id }),
+		);
 		Ok(Response::new(Empty {}))
 	}
 
-	/// output dispose
+	/// Dispose an output channel (no cleanup needed; Sky removes the panel on demand).
 	async fn dispose_output(&self, request:Request<DisposeOutputRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling output dispose");
+		use tauri::Emitter;
 
-		// TODO: Implement output dispose in MountainEnvironment
-
+		let req = request.into_inner();
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://output/dispose",
+			json!({ "channel": req.channel_id }),
+		);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -2742,16 +2755,36 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// configuration value
+	/// Get Configuration — retrieve a configuration value from ConfigurationProvider.
 	async fn get_configuration(
 		&self,
 		request:Request<GetConfigurationRequest>,
 	) -> Result<Response<GetConfigurationResponse>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling configuration value");
+		use CommonLibrary::Configuration::{
+			ConfigurationProvider::ConfigurationProvider,
+			DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
+		};
 
-		// TODO: Implement configuration value in MountainEnvironment
+		let req = request.into_inner();
+		let Key = if req.section.is_empty() {
+			if req.key.is_empty() { None } else { Some(req.key.clone()) }
+		} else if req.key.is_empty() {
+			Some(req.section.clone())
+		} else {
+			Some(format!("{}.{}", req.section, req.key))
+		};
 
-		Ok(Response::new(GetConfigurationResponse { ..Default::default() }))
+		debug!("[CocoonService] get_configuration: key={:?}", Key);
+
+		match self.environment.GetConfigurationValue(Key, ConfigurationOverridesDTO::default()).await {
+			Ok(Value) => {
+				let Bytes = serde_json::to_vec(&Value).unwrap_or_default();
+				Ok(Response::new(GetConfigurationResponse { value:Bytes }))
+			},
+			Err(Error) => {
+				warn!("[CocoonService] get_configuration failed: {}", Error);
+				Ok(Response::new(GetConfigurationResponse::default()))
+			},
+		}
 	}
 }
