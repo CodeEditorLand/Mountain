@@ -29,14 +29,39 @@
 //
 // All methods return `tonic::Result<T>` and use proper error conversion
 /// from internal errors to gRPC status codes.
-use std::{collections::HashMap, sync::Arc};
+use std::{
+	collections::HashMap,
+	sync::Arc,
+	time::{SystemTime, UNIX_EPOCH},
+};
 
 use async_trait::async_trait;
+use CommonLibrary::{
+	Command::CommandExecutor::CommandExecutor,
+	LanguageFeature::DTO::ProviderType::ProviderType,
+	Secret::SecretProvider::SecretProvider,
+	Terminal::TerminalProvider::TerminalProvider,
+	UserInterface::{
+		DTO::{
+			InputBoxOptionsDTO::InputBoxOptionsDTO,
+			QuickPickItemDTO::QuickPickItemDTO,
+			QuickPickOptionsDTO::QuickPickOptionsDTO,
+		},
+		UserInterfaceProvider::UserInterfaceProvider,
+	},
+};
 use log::{debug, error, info, trace, warn};
+use serde_json::json;
 use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
 
-use crate::Environment::MountainEnvironment::MountainEnvironment;
+use crate::{
+	ApplicationState::DTO::{
+		ProviderRegistrationDTO::ProviderRegistrationDTO,
+		WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+	},
+	Environment::MountainEnvironment::MountainEnvironment,
+};
 // Import generated protobuf types
 use crate::Vine::Generated::{
 	// Service trait
@@ -65,6 +90,7 @@ use crate::Vine::Generated::{
 	DeleteSecretRequest,
 	DisposeOutputRequest,
 	DisposeWebviewPanelRequest,
+	ExtensionInfo,
 	// Common types
 	Empty,
 	ExecuteCommandRequest,
@@ -282,6 +308,60 @@ impl CocoonServiceImpl {
 		self.ActiveOperations.write().await.remove(&request_id);
 		debug!("[CocoonService] Unregistered operation {}", request_id);
 	}
+
+	/// Registers a language feature provider in ApplicationState.
+	///
+	/// Converts the gRPC request fields into a `ProviderRegistrationDTO` and
+	/// stores it in `ApplicationState.Extension.ProviderRegistration`.
+	///
+	/// # Parameters
+	/// - `handle`: Unique provider handle
+	/// - `provider_type`: The type of language feature
+	/// - `language_selector`: Language scope (e.g. "typescript")
+	/// - `extension_id`: Extension that registered this provider
+	fn RegisterProvider(
+		&self,
+		handle:u32,
+		provider_type:ProviderType,
+		language_selector:&str,
+		extension_id:&str,
+	) {
+		let dto = ProviderRegistrationDTO {
+			Handle:handle,
+			ProviderType:provider_type,
+			Selector:json!({ "language": [language_selector] }),
+			SideCarIdentifier:extension_id.to_string(),
+			ExtensionIdentifier:json!(extension_id),
+			Options:None,
+		};
+		self.environment.ApplicationState.Extension.ProviderRegistration.RegisterProvider(handle, dto);
+		debug!(
+			"[CocoonService] Provider {:?} registered: handle={}, language={}",
+			provider_type, handle, language_selector
+		);
+	}
+
+	/// Extracts a filesystem path from a URI proto message.
+	///
+	/// Handles both `file://` URIs and bare paths. Returns `None` if the URI
+	/// is absent or the path cannot be extracted.
+	fn UriToPath(uri_opt:Option<&Uri>) -> Option<std::path::PathBuf> {
+		let value = uri_opt?.value.as_str();
+		if value.is_empty() {
+			return None;
+		}
+		// Strip file:// prefix if present
+		let path_str = if let Some(Stripped) = value.strip_prefix("file://") {
+			Stripped
+		} else if value.starts_with('/') || (value.len() > 1 && value.as_bytes()[1] == b':') {
+			// Bare absolute path (Unix or Windows)
+			value
+		} else {
+			// Unknown scheme - return as-is
+			value
+		};
+		Some(std::path::PathBuf::from(path_str))
+	}
 }
 
 #[async_trait]
@@ -392,10 +472,30 @@ impl CocoonService for CocoonServiceImpl {
 		// Initialize configuration from request
 		debug!("[CocoonService] Configuration: {} keys", req.configuration.len());
 
-		// TODO: When ApplicationState is available:
-		// - Store workspace folders in WorkspaceState
-		// - Initialize configuration in ConfigurationState
-		// - Notify registered extensions of initialization complete
+		// Store workspace folders from the init payload into ApplicationState
+		let Folders:Vec<WorkspaceFolderStateDTO> = req
+			.workspace_folders
+			.iter()
+			.enumerate()
+			.filter_map(|(Index, F)| {
+				let UriValue = F.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
+				url::Url::parse(UriValue)
+					.ok()
+					.and_then(|ParsedUrl| {
+						WorkspaceFolderStateDTO::New(
+							ParsedUrl,
+							F.name.clone(),
+							Index,
+						)
+						.ok()
+					})
+			})
+			.collect();
+
+		if !Folders.is_empty() {
+			self.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
+			debug!("[CocoonService] Workspace folders stored: {}", req.workspace_folders.len());
+		}
 
 		Ok(Response::new(Empty {}))
 	}
@@ -410,14 +510,17 @@ impl CocoonService for CocoonServiceImpl {
 			req.command_id, req.extension_id
 		);
 
-		// Register command in MountainEnvironment
-		// This stub logs the command registration for debugging
-		debug!("[CocoonService] Command details: id={}, title={:?}", req.command_id, req.title);
-
-		// TODO: When CommandRegistry is available in MountainEnvironment:
-		// - Store command metadata in command registry
-		// - Map command_id to extension handler
-		// - Return success or error on duplicate registration
+		// Wire to CommandExecutor::RegisterCommand which stores a Proxied handler
+		// pointing back to the Cocoon sidecar.
+		if let Err(Error) = self
+			.environment
+			.RegisterCommand(req.extension_id.clone(), req.command_id.clone())
+			.await
+		{
+			warn!("[CocoonService] Failed to register command '{}': {:?}", req.command_id, Error);
+		} else {
+			debug!("[CocoonService] Command registered: id={}, title={:?}", req.command_id, req.title);
+		}
 
 		Ok(Response::new(Empty {}))
 	}
@@ -459,14 +562,16 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		info!("[CocoonService] Unregistering command '{}'", req.command_id);
 
-		// Remove command from MountainEnvironment command registry
-		// This stub logs the command unregistration for debugging
-		debug!("[CocoonService] Removing command: {}", req.command_id);
-
-		// TODO: When CommandRegistry is available in MountainEnvironment:
-		// - Remove command from registry by command_id
-		// - Clean up any associated command handlers
-		// - Return success or warn if command not found
+		// Wire to CommandExecutor::UnregisterCommand
+		if let Err(Error) = self
+			.environment
+			.UnregisterCommand(String::new(), req.command_id.clone())
+			.await
+		{
+			warn!("[CocoonService] Failed to unregister command '{}': {:?}", req.command_id, Error);
+		} else {
+			debug!("[CocoonService] Command removed: {}", req.command_id);
+		}
 
 		Ok(Response::new(Empty {}))
 	}
@@ -483,18 +588,7 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] Registering hover provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
-
-		// Store provider in MountainEnvironment provider registry
-		debug!(
-			"[CocoonService] Hover provider registered: handle={}, language={}",
-			req.handle, req.language_selector
-		);
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector, trigger_characters)
-		// - Map handle to extension for RPC callbacks
-		// - Return error on duplicate handle registration
-
+		self.RegisterProvider(req.handle, ProviderType::Hover, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -538,18 +632,7 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] Registering completion provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
-
-		// Store provider in MountainEnvironment provider registry
-		debug!(
-			"[CocoonService] Completion provider registered: handle={}, language={}",
-			req.handle, req.language_selector
-		);
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector, trigger_chars)
-		// - Map handle to extension for RPC callbacks
-		// - Register trigger characters
-
+		self.RegisterProvider(req.handle, ProviderType::Completion, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -587,15 +670,8 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] Registering definition provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
-
-		// Store provider in MountainEnvironment provider registry
-		debug!(
-			"[CocoonService] Definition provider registered: handle={}, language={}",
-			req.handle, req.language_selector
-		);
-
+		self.RegisterProvider(req.handle, ProviderType::Definition, &req.language_selector, &req.extension_id);
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
 		// - Map handle to extension for RPC callbacks
 
 		Ok(Response::new(Empty {}))
@@ -635,17 +711,7 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] Registering reference provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
-
-		// Store provider in MountainEnvironment provider registry
-		debug!(
-			"[CocoonService] Reference provider registered: handle={}, language={}",
-			req.handle, req.language_selector
-		);
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::References, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -683,17 +749,7 @@ impl CocoonService for CocoonServiceImpl {
 			"[CocoonService] Registering code actions provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
-
-		// Store provider in MountainEnvironment provider registry
-		debug!(
-			"[CocoonService] Code actions provider registered: handle={}, language={}",
-			req.handle, req.language_selector
-		);
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector, action_kinds)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::CodeAction, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -926,127 +982,166 @@ impl CocoonService for CocoonServiceImpl {
 	/// Read File - Read file contents
 	async fn read_file(&self, request:Request<ReadFileRequest>) -> Result<Response<ReadFileResponse>, Status> {
 		let req = request.into_inner();
-		debug!(
-			"[CocoonService] Reading file: {}",
-			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
-		);
+		let Path = Self::UriToPath(req.uri.as_ref())
+			.ok_or_else(|| Status::invalid_argument("read_file: missing or empty URI"))?;
 
-		// Delegate to FileSystemProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		warn!("[CocoonService] FileSystemProvider not yet available in MountainEnvironment");
+		debug!("[CocoonService] Reading file: {:?}", Path);
 
-		// TODO: When FileSystemProvider is available in MountainEnvironment:
-		// - Parse URI to filesystem path
-		// - Call FileSystemProvider method
-		// - Return result or error
-		// - Handle errors (file not found, permission denied, etc.)
+		let Content = tokio::fs::read(&Path).await.map_err(|Error| {
+			warn!("[CocoonService] read_file failed for {:?}: {}", Path, Error);
+			Status::not_found(format!("read_file: {}: {}", Path.display(), Error))
+		})?;
 
-		Err(Status::unimplemented("read_file not yet implemented"))
+		Ok(Response::new(ReadFileResponse { content:Content, encoding:"utf-8".to_string() }))
 	}
 
 	/// Write File - Write file contents
 	async fn write_file(&self, request:Request<WriteFileRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!(
-			"[CocoonService] Writing file: {}",
-			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
-		);
+		let Path = Self::UriToPath(req.uri.as_ref())
+			.ok_or_else(|| Status::invalid_argument("write_file: missing or empty URI"))?;
 
-		// Delegate to FileSystemProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		warn!("[CocoonService] FileSystemProvider not yet available in MountainEnvironment");
+		debug!("[CocoonService] Writing file: {:?} ({} bytes)", Path, req.content.len());
 
-		// TODO: When FileSystemProvider is available in MountainEnvironment:
-		// - Parse URI to filesystem path
-		// - Call FileSystemProvider method
-		// - Return result or error
-		// - Handle errors (file not found, permission denied, etc.)
+		// Ensure parent directory exists
+		if let Some(Parent) = Path.parent() {
+			if !Parent.as_os_str().is_empty() {
+				tokio::fs::create_dir_all(Parent).await.map_err(|Error| {
+					Status::internal(format!("write_file: create_dir_all {:?}: {}", Parent, Error))
+				})?;
+			}
+		}
 
-		Err(Status::unimplemented("write_file not yet implemented"))
+		tokio::fs::write(&Path, &req.content).await.map_err(|Error| {
+			warn!("[CocoonService] write_file failed for {:?}: {}", Path, Error);
+			Status::internal(format!("write_file: {}: {}", Path.display(), Error))
+		})?;
+
+		Ok(Response::new(Empty {}))
 	}
 
 	/// Stat - Get file metadata
 	async fn stat(&self, request:Request<StatRequest>) -> Result<Response<StatResponse>, Status> {
 		let req = request.into_inner();
-		debug!(
-			"[CocoonService] Getting file metadata: {}",
-			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
-		);
+		let Path = Self::UriToPath(req.uri.as_ref())
+			.ok_or_else(|| Status::invalid_argument("stat: missing or empty URI"))?;
 
-		// Delegate to FileSystemProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		warn!("[CocoonService] FileSystemProvider not yet available in MountainEnvironment");
+		debug!("[CocoonService] Stat: {:?}", Path);
 
-		// TODO: When FileSystemProvider is available in MountainEnvironment:
-		// - Parse URI to filesystem path
-		// - Call FileSystemProvider method
-		// - Return result or error
-		// - Handle errors (file not found, permission denied, etc.)
+		let Metadata = tokio::fs::metadata(&Path).await.map_err(|Error| {
+			warn!("[CocoonService] stat failed for {:?}: {}", Path, Error);
+			Status::not_found(format!("stat: {}: {}", Path.display(), Error))
+		})?;
 
-		Err(Status::unimplemented("stat not yet implemented"))
+		let Mtime = Metadata
+			.modified()
+			.ok()
+			.and_then(|T| T.duration_since(UNIX_EPOCH).ok())
+			.map(|D| D.as_millis() as u64)
+			.unwrap_or(0);
+
+		Ok(Response::new(StatResponse {
+			is_file:Metadata.is_file(),
+			is_directory:Metadata.is_dir(),
+			size:Metadata.len(),
+			mtime:Mtime,
+		}))
 	}
 
 	/// Read Directory - List directory contents
 	async fn readdir(&self, request:Request<ReaddirRequest>) -> Result<Response<ReaddirResponse>, Status> {
 		let req = request.into_inner();
-		debug!(
-			"[CocoonService] Reading directory: {}",
-			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
-		);
+		let Path = Self::UriToPath(req.uri.as_ref())
+			.ok_or_else(|| Status::invalid_argument("readdir: missing or empty URI"))?;
 
-		// Delegate to FileSystemProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		warn!("[CocoonService] FileSystemProvider not yet available in MountainEnvironment");
+		debug!("[CocoonService] Readdir: {:?}", Path);
 
-		// TODO: When FileSystemProvider is available in MountainEnvironment:
-		// - Parse URI to filesystem path
-		// - Call FileSystemProvider method
-		// - Return result or error
-		// - Handle errors (file not found, permission denied, etc.)
+		let mut ReadDir = tokio::fs::read_dir(&Path).await.map_err(|Error| {
+			warn!("[CocoonService] readdir failed for {:?}: {}", Path, Error);
+			Status::not_found(format!("readdir: {}: {}", Path.display(), Error))
+		})?;
 
-		Err(Status::unimplemented("readdir not yet implemented"))
+		let mut Entries = Vec::new();
+		while let Ok(Some(Entry)) = ReadDir.next_entry().await {
+			if let Some(Name) = Entry.file_name().to_str() {
+				Entries.push(Name.to_string());
+			}
+		}
+
+		Ok(Response::new(ReaddirResponse { entries:Entries }))
 	}
 
 	/// Watch File - Watch file for changes
+	///
+	/// Logs the watch request. Full inotify/FSEvents integration is a P1 task
+	/// requiring the `notify` crate wired into ApplicationState.
 	async fn watch_file(&self, request:Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!(
-			"[CocoonService] Watching file: {}",
-			req.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
-		);
-
-		// Delegate to FileSystemProvider with file watcher integration in
-		// MountainEnvironment This stub returns an unimplemented error
-		// Note: WatchFileRequest only has 'uri' field (no options)
-
-		// TODO: When FileSystemProvider is available in MountainEnvironment:
-		// - Parse URI to filesystem path
-		// - Register watcher with FileSystemProvider
-		// - Store watcher ID in ApplicationState for cancellation
-		// - Handle errors (not found, permission denied, too many watchers)
-
-		Err(Status::unimplemented("watch_file not yet implemented"))
+		let Uri = req.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
+		info!("[CocoonService] watch_file registered (polling not yet active): {}", Uri);
+		// TODO(P1): Wire notify crate watcher; store WatcherHandle in
+		// ApplicationState.Feature.Watchers keyed by URI for cancellation on
+		// cancel_operation.
+		Ok(Response::new(Empty {}))
 	}
 
 	// ==================== Workspace Operations ====================
 
-	/// Find Files - Search for files
+	/// Find Files - Search for files using glob pattern across workspace folders.
 	async fn find_files(&self, request:Request<FindFilesRequest>) -> Result<Response<FindFilesResponse>, Status> {
 		let req = request.into_inner();
 		debug!("[CocoonService] Finding files with pattern: {}", req.pattern);
 
-		// Delegate to FileSystemProvider or SearchProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		debug!(
-			"[CocoonService] Search details: pattern={}, include={:?}",
-			req.pattern, req.include
-		);
+		use globset::{Glob, GlobSetBuilder};
 
-		// TODO: When SearchProvider is available in MountainEnvironment:
-		// - Use SearchProvider.find_files with glob patterns
-		// - Return matching URIs (FindFilesResponse has no max_results limit)
+		// Build glob matcher
+		let GlobMatcher = Glob::new(&req.pattern)
+			.map_err(|Error| Status::invalid_argument(format!("find_files: invalid pattern '{}': {}", req.pattern, Error)))?
+			.compile_matcher();
 
-		Err(Status::unimplemented("find_files not yet implemented"))
+		// Collect workspace root folders from ApplicationState
+		let Roots:Vec<std::path::PathBuf> = {
+			match self.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
+				Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.path())).collect(),
+				Err(_) => Vec::new(),
+			}
+		};
+
+		let SearchRoots = if Roots.is_empty() {
+			vec![std::env::current_dir().unwrap_or_default()]
+		} else {
+			Roots
+		};
+
+		// Walk each root and collect matching paths
+		let mut Uris = Vec::new();
+
+		fn WalkAndCollect(
+			Directory:&std::path::Path,
+			Root:&std::path::Path,
+			Matcher:&globset::GlobMatcher,
+			Results:&mut Vec<String>,
+		) {
+			if let Ok(Entries) = std::fs::read_dir(Directory) {
+				for Entry in Entries.flatten() {
+					let EntryPath = Entry.path();
+					if EntryPath.is_dir() {
+						WalkAndCollect(&EntryPath, Root, Matcher, Results);
+					} else if let Ok(Relative) = EntryPath.strip_prefix(Root) {
+						if Matcher.is_match(Relative) {
+							Results.push(format!("file://{}", EntryPath.display()));
+						}
+					}
+				}
+			}
+		}
+
+		for Root in &SearchRoots {
+			WalkAndCollect(Root, Root, &GlobMatcher, &mut Uris);
+		}
+
+		debug!("[CocoonService] find_files: {} results for pattern '{}'", Uris.len(), req.pattern);
+		Ok(Response::new(FindFilesResponse { uris:Uris }))
 	}
 
 	/// Find Text in Files - Search for text across files
@@ -1199,25 +1294,29 @@ impl CocoonService for CocoonServiceImpl {
 
 	// ==================== Terminal ====================
 
-	/// Open Terminal - Open a new terminal
+	/// Open Terminal — create PTY via TerminalProvider and return the terminal ID.
 	async fn open_terminal(&self, request:Request<OpenTerminalRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Opening terminal: {}", req.name);
 
-		// IPC call to Wind frontend and TerminalProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		debug!(
-			"[CocoonService] Terminal options: cwd={:?}, shell_path={:?}",
-			req.cwd, req.shell_path
-		);
+		// Build options JSON matching TerminalStateDTO::Create expectations
+		let Options = json!({
+			"name": req.name,
+			"shellPath": if req.shell_path.is_empty() { serde_json::Value::Null } else { json!(req.shell_path) },
+			"shellArgs": req.shell_args,
+			"cwd": if req.cwd.is_empty() { serde_json::Value::Null } else { json!(req.cwd) },
+		});
 
-		// TODO: When TerminalProvider is available in MountainEnvironment:
-		// - Create PTY using TerminalProvider
-		// - Send terminal creation request to Wind via IPC
-		// - Return terminal_id for future operations
-		// - Handle errors (too many terminals, shell not found, etc.)
-
-		Err(Status::unimplemented("open_terminal not yet implemented"))
+		match self.environment.CreateTerminal(Options).await {
+			Ok(Info) => {
+				info!("[CocoonService] Terminal created: {:?}", Info);
+				Ok(Response::new(Empty {}))
+			},
+			Err(Error) => {
+				error!("[CocoonService] open_terminal failed: {}", Error);
+				Err(Status::internal(format!("open_terminal: {}", Error)))
+			},
+		}
 	}
 
 	/// Terminal Input - Send input to terminal
@@ -1449,27 +1548,49 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Execute Git - Execute git command
+	/// Execute Git - Spawn native `git` process with provided arguments.
+	///
+	/// Runs git in the repository directory supplied by the extension host, captures
+	/// stdout/stderr, and returns the raw bytes. Mirrors VS Code's `$gitExec` IPC
+	/// call used by the built-in Git extension.
 	async fn git_exec(&self, request:Request<GitExecRequest>) -> Result<Response<GitExecResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Executing git command: {}", req.args.join(" "));
+		debug!("[CocoonService] git_exec: {}", req.args.join(" "));
 
-		// Delegate to SCM provider for git execution in MountainEnvironment
-		// This stub returns an unimplemented error
+		let WorkingDir = if req.repository_path.is_empty() {
+			std::env::current_dir().unwrap_or_default()
+		} else {
+			std::path::PathBuf::from(&req.repository_path)
+		};
+
+		let Output = tokio::process::Command::new("git")
+			.args(&req.args)
+			.current_dir(&WorkingDir)
+			.output()
+			.await
+			.map_err(|Error| {
+				error!("[CocoonService] git_exec failed to spawn: {}", Error);
+				Status::internal(format!("git_exec: failed to spawn git: {}", Error))
+			})?;
+
+		let ExitCode = Output.status.code().unwrap_or(-1);
 		debug!(
-			"[CocoonService] Git execution details: repository_path={:?}, args={:?}",
-			req.repository_path, req.args
+			"[CocoonService] git_exec exit={} stdout={} bytes stderr={} bytes",
+			ExitCode,
+			Output.stdout.len(),
+			Output.stderr.len()
 		);
-		// Note: GitExecRequest fields: repository_path (string), args (repeated string)
 
-		// TODO: When SCMProvider is available in MountainEnvironment:
-		// - Look up SCM provider for the repository
-		// - Execute git command via git2 crate or spawn git process
-		// - Capture stdout, stderr, and exit code
-		// - Return formatted response with results
-		// - Handle errors (git not found, repository corruption, etc.)
+		// Combine stdout lines into repeated string output; prepend stderr lines
+		// with "stderr: " prefix so extension can differentiate them.
+		let StdoutStr = String::from_utf8_lossy(&Output.stdout);
+		let StderrStr = String::from_utf8_lossy(&Output.stderr);
+		let mut OutputLines:Vec<String> = StdoutStr.lines().map(|L| L.to_string()).collect();
+		for Line in StderrStr.lines() {
+			OutputLines.push(format!("stderr: {}", Line));
+		}
 
-		Err(Status::unimplemented("git_exec requires SCMProvider in MountainEnvironment"))
+		Ok(Response::new(GitExecResponse { output:OutputLines, exit_code:ExitCode }))
 	}
 
 	// ==================== Debug ====================
@@ -1618,11 +1739,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Document Highlight Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::DocumentHighlight, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1649,11 +1766,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Document Symbol Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::DocumentSymbol, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1680,11 +1793,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Workspace Symbol Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::WorkspaceSymbol, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1711,11 +1820,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Rename Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::Rename, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1742,11 +1847,12 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Document Formatting Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(
+			req.handle,
+			ProviderType::DocumentFormatting,
+			&req.language_selector,
+			&req.extension_id,
+		);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1773,11 +1879,12 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Document Range Formatting Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(
+			req.handle,
+			ProviderType::DocumentRangeFormatting,
+			&req.language_selector,
+			&req.extension_id,
+		);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1804,11 +1911,12 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering On Type Formatting Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(
+			req.handle,
+			ProviderType::OnTypeFormatting,
+			&req.language_selector,
+			&req.extension_id,
+		);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1835,11 +1943,12 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Signature Help Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(
+			req.handle,
+			ProviderType::SignatureHelp,
+			&req.language_selector,
+			&req.extension_id,
+		);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1866,11 +1975,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Code Lens Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::CodeLens, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1897,11 +2002,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Folding Range Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::FoldingRange, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1928,11 +2029,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Selection Range Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::SelectionRange, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1959,11 +2056,12 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Semantic Tokens Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(
+			req.handle,
+			ProviderType::SemanticTokens,
+			&req.language_selector,
+			&req.extension_id,
+		);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1990,11 +2088,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Inlay Hints Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::InlayHint, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -2021,11 +2115,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Type Hierarchy Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::TypeHierarchy, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -2068,11 +2158,7 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Call Hierarchy Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(req.handle, ProviderType::CallHierarchy, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -2115,11 +2201,12 @@ impl CocoonService for CocoonServiceImpl {
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		info!("[CocoonService] Registering Linked Editing Range Provider");
-
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
-
+		self.RegisterProvider(
+			req.handle,
+			ProviderType::LinkedEditingRange,
+			&req.language_selector,
+			&req.extension_id,
+		);
 		Ok(Response::new(Empty {}))
 	}
 
@@ -2226,40 +2313,83 @@ impl CocoonService for CocoonServiceImpl {
 
 	/// file delete
 	async fn delete_file(&self, request:Request<DeleteFileRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling file delete");
+		let req = request.into_inner();
+		let Path = Self::UriToPath(req.uri.as_ref())
+			.ok_or_else(|| Status::invalid_argument("delete_file: missing URI"))?;
 
-		// TODO: Implement file delete in MountainEnvironment
+		debug!("[CocoonService] delete_file: {:?}", Path);
+
+		if Path.is_dir() {
+			tokio::fs::remove_dir_all(&Path).await
+		} else {
+			tokio::fs::remove_file(&Path).await
+		}
+		.map_err(|Error| Status::internal(format!("delete_file: {}: {}", Path.display(), Error)))?;
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// file rename
+	/// file rename (move)
 	async fn rename_file(&self, request:Request<RenameFileRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling file rename");
+		let req = request.into_inner();
+		let OldPath = Self::UriToPath(req.source.as_ref())
+			.ok_or_else(|| Status::invalid_argument("rename_file: missing source URI"))?;
+		let NewPath = Self::UriToPath(req.target.as_ref())
+			.ok_or_else(|| Status::invalid_argument("rename_file: missing target URI"))?;
 
-		// TODO: Implement file rename in MountainEnvironment
+		debug!("[CocoonService] rename_file: {:?} → {:?}", OldPath, NewPath);
+
+		if let Some(Parent) = NewPath.parent() {
+			if !Parent.as_os_str().is_empty() {
+				tokio::fs::create_dir_all(Parent).await.map_err(|Error| {
+					Status::internal(format!("rename_file: create_dir_all failed: {}", Error))
+				})?;
+			}
+		}
+
+		tokio::fs::rename(&OldPath, &NewPath).await.map_err(|Error| {
+			Status::internal(format!("rename_file: {}: {}", OldPath.display(), Error))
+		})?;
 
 		Ok(Response::new(Empty {}))
 	}
 
 	/// file copy
 	async fn copy_file(&self, request:Request<CopyFileRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling file copy");
+		let req = request.into_inner();
+		let SrcPath = Self::UriToPath(req.source.as_ref())
+			.ok_or_else(|| Status::invalid_argument("copy_file: missing source URI"))?;
+		let DstPath = Self::UriToPath(req.target.as_ref())
+			.ok_or_else(|| Status::invalid_argument("copy_file: missing target URI"))?;
 
-		// TODO: Implement file copy in MountainEnvironment
+		debug!("[CocoonService] copy_file: {:?} → {:?}", SrcPath, DstPath);
+
+		if let Some(Parent) = DstPath.parent() {
+			if !Parent.as_os_str().is_empty() {
+				tokio::fs::create_dir_all(Parent).await.map_err(|Error| {
+					Status::internal(format!("copy_file: create_dir_all failed: {}", Error))
+				})?;
+			}
+		}
+
+		tokio::fs::copy(&SrcPath, &DstPath).await.map_err(|Error| {
+			Status::internal(format!("copy_file: {}: {}", SrcPath.display(), Error))
+		})?;
 
 		Ok(Response::new(Empty {}))
 	}
 
 	/// directory creation
 	async fn create_directory(&self, request:Request<CreateDirectoryRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling directory creation");
+		let req = request.into_inner();
+		let Path = Self::UriToPath(req.uri.as_ref())
+			.ok_or_else(|| Status::invalid_argument("create_directory: missing URI"))?;
 
-		// TODO: Implement directory creation in MountainEnvironment
+		debug!("[CocoonService] create_directory: {:?}", Path);
+
+		tokio::fs::create_dir_all(&Path).await.map_err(|Error| {
+			Status::internal(format!("create_directory: {}: {}", Path.display(), Error))
+		})?;
 
 		Ok(Response::new(Empty {}))
 	}
@@ -2390,27 +2520,57 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// extension info
+	/// extension info — look up a single extension by ID in ApplicationState
 	async fn get_extension(
 		&self,
 		request:Request<GetExtensionRequest>,
 	) -> Result<Response<GetExtensionResponse>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling extension info");
+		use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 
-		// TODO: Implement extension info in MountainEnvironment
+		let req = request.into_inner();
+		debug!("[CocoonService] get_extension: {}", req.extension_id);
 
-		Ok(Response::new(GetExtensionResponse { ..Default::default() }))
+		let ExtensionOption = self.environment.GetExtension(req.extension_id.clone()).await.ok().flatten();
+
+		let InfoOption = ExtensionOption.map(|Value| ExtensionInfo {
+			id:req.extension_id,
+			display_name:Value.get("Name").and_then(|V| V.as_str()).unwrap_or("").to_string(),
+			version:Value.get("Version").and_then(|V| V.as_str()).unwrap_or("").to_string(),
+			is_active:true, // scanned = considered active for now
+			extension_path:Value
+				.get("ExtensionLocation")
+				.and_then(|V| V.as_str())
+				.unwrap_or("")
+				.to_string(),
+		});
+
+		Ok(Response::new(GetExtensionResponse { extension:InfoOption }))
 	}
 
-	/// all extensions
+	/// all extensions — return all scanned extensions from ApplicationState
 	async fn get_all_extensions(&self, request:Request<Empty>) -> Result<Response<GetAllExtensionsResponse>, Status> {
+		use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
+
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling all extensions");
 
-		// TODO: Implement all extensions in MountainEnvironment
+		let Extensions = self.environment.GetExtensions().await.unwrap_or_default();
 
-		Ok(Response::new(GetAllExtensionsResponse { ..Default::default() }))
+		let ExtensionInfoList = Extensions
+			.iter()
+			.map(|Value| ExtensionInfo {
+				id:Value.get("Identifier").and_then(|V| V.as_str()).unwrap_or("").to_string(),
+				display_name:Value.get("Name").and_then(|V| V.as_str()).unwrap_or("").to_string(),
+				version:Value.get("Version").and_then(|V| V.as_str()).unwrap_or("").to_string(),
+				is_active:true,
+				extension_path:Value
+					.get("ExtensionLocation")
+					.and_then(|V| V.as_str())
+					.unwrap_or("")
+					.to_string(),
+			})
+			.collect();
+
+		Ok(Response::new(GetAllExtensionsResponse { extensions:ExtensionInfoList }))
 	}
 
 	/// terminal resize

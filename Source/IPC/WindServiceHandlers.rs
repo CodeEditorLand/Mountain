@@ -183,9 +183,11 @@ type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationO
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
 use CommonLibrary::{
+	Command::CommandExecutor::CommandExecutor,
 	Configuration::ConfigurationProvider::ConfigurationProvider,
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
+	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 	Storage::StorageProvider::StorageProvider,
 };
@@ -233,6 +235,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 
 		// Workbench commands
 		"workbench:getConfiguration" => handle_workbench_configuration(runtime.inner().clone(), args).await,
+
+		// Command registry commands
+		"commands:execute" => handle_commands_execute(runtime.inner().clone(), args).await,
+		"commands:getAll" => handle_commands_get_all(runtime.inner().clone()).await,
+
+		// Extension host commands
+		"extensions:getAll" => handle_extensions_get_all(runtime.inner().clone()).await,
+		"extensions:get" => handle_extensions_get(runtime.inner().clone(), args).await,
+		"extensions:isActive" => handle_extensions_is_active(runtime.inner().clone(), args).await,
 
 		// IPC status commands
 		"mountain_get_status" => {
@@ -817,4 +828,87 @@ pub fn register_wind_ipc_handlers(app_handle:&tauri::AppHandle) -> Result<(), St
 	// Tauri invoke_handler macro in the main binary
 
 	Ok(())
+}
+
+// ============================================================================
+// Command Registry Handlers
+// ============================================================================
+
+/// Execute a command by ID, dispatching to Mountain's CommandExecutor.
+async fn handle_commands_execute(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let CommandId = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or_else(|| "commands:execute requires string command_id as first argument".to_string())?
+		.to_string();
+
+	let Argument = args.get(1).cloned().unwrap_or(Value::Null);
+
+	debug!("[WindServiceHandlers] commands:execute id={}", CommandId);
+
+	runtime
+		.Environment
+		.ExecuteCommand(CommandId, Argument)
+		.await
+		.map_err(|Error| format!("commands:execute failed: {}", Error))
+}
+
+/// Return all registered command IDs from Mountain's CommandRegistry.
+async fn handle_commands_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Commands = runtime
+		.Environment
+		.GetAllCommands()
+		.await
+		.map_err(|Error| format!("commands:getAll failed: {}", Error))?;
+
+	Ok(json!(Commands))
+}
+
+// ============================================================================
+// Extension Host Handlers
+// ============================================================================
+
+/// Return metadata for all scanned extensions.
+async fn handle_extensions_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Extensions = runtime
+		.Environment
+		.GetExtensions()
+		.await
+		.map_err(|Error| format!("extensions:getAll failed: {}", Error))?;
+
+	Ok(json!(Extensions))
+}
+
+/// Return metadata for a single extension by ID.
+async fn handle_extensions_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Id = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or_else(|| "extensions:get requires string id as first argument".to_string())?
+		.to_string();
+
+	let Extension = runtime
+		.Environment
+		.GetExtension(Id)
+		.await
+		.map_err(|Error| format!("extensions:get failed: {}", Error))?;
+
+	Ok(Extension.unwrap_or(Value::Null))
+}
+
+/// Check whether an extension is currently active (scanned and present).
+async fn handle_extensions_is_active(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Id = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or_else(|| "extensions:isActive requires string id as first argument".to_string())?
+		.to_string();
+
+	let Extension = runtime
+		.Environment
+		.GetExtension(Id)
+		.await
+		.map_err(|Error| format!("extensions:isActive failed: {}", Error))?;
+
+	Ok(json!(Extension.is_some()))
 }
