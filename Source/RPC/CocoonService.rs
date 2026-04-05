@@ -366,31 +366,141 @@ impl CocoonServiceImpl {
 
 #[async_trait]
 impl CocoonService for CocoonServiceImpl {
-	/// Process Mountain requests from Cocoon (generic request-response)
+	/// Process Mountain requests from Cocoon (generic request-response).
+	///
+	/// Routes legacy `fs.*` / `commands.*` / `secrets.*` method names used by
+	/// Cocoon's `FileSystemService` and other services that call Mountain via
+	/// the generic `ProcessCocoonRequest` RPC instead of the typed methods.
+	///
+	/// Parameters are JSON-encoded bytes in `request.parameter`. Results are
+	/// JSON-encoded bytes in `response.result`.
 	async fn process_mountain_request(
 		&self,
 		request:Request<GenericRequest>,
 	) -> Result<Response<GenericResponse>, Status> {
-		let request_data = request.into_inner();
-		info!(
-			"[CocoonService] Processing generic Mountain request '{}' with ID {}",
-			request_data.method, request_data.request_identifier
-		);
+		let Req = request.into_inner();
+		let RequestId = Req.request_identifier;
 
-		// Request router with method-to-handler mapping
-		// This method provides a generic interface for all CocoonService operations
-		// The actual implementation delegates to specific type-safe methods below
-		warn!("[CocoonService] Generic request router not yet fully implemented - use type-safe methods instead");
+		debug!("[CocoonService] generic request: method={} id={}", Req.method, RequestId);
 
-		Ok(Response::new(GenericResponse {
-			request_identifier:request_data.request_identifier,
-			result:Vec::new(),
-			error:Some(RpcError {
-				code:-32601, // Method not found (JSON-RPC error code)
-				message:format!("Method '{}' not implemented in generic router", request_data.method),
-				data:Vec::new(),
-			}),
-		}))
+		/// Serialise a value into the `result` bytes of a GenericResponse.
+		fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<GenericResponse> {
+			let Bytes = serde_json::to_vec(Value).unwrap_or_default();
+			Response::new(GenericResponse { request_identifier:RequestId, result:Bytes, error:None })
+		}
+
+		/// Build an error GenericResponse.
+		fn ErrResponse(RequestId:u64, Code:i32, Message:String) -> Response<GenericResponse> {
+			Response::new(GenericResponse {
+				request_identifier:RequestId,
+				result:Vec::new(),
+				error:Some(RpcError { code:Code, message:Message, data:Vec::new() }),
+			})
+		}
+
+		// Deserialise the generic parameter bytes as a JSON value
+		let Params:serde_json::Value = if Req.parameter.is_empty() {
+			serde_json::Value::Null
+		} else {
+			serde_json::from_slice(&Req.parameter).unwrap_or(serde_json::Value::Null)
+		};
+
+		match Req.method.as_str() {
+			// ---- File System ---- (Cocoon FileSystemService uses these paths)
+			"fs.readFile" | "file:read" => {
+				let Path = Params.as_str().or_else(|| Params.get("path").and_then(|V| V.as_str())).unwrap_or("");
+				match tokio::fs::read(Path).await {
+					Ok(Content) => Ok(OkResponse(RequestId, &Content)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.readFile: {}", Error))),
+				}
+			},
+			"fs.writeFile" | "file:write" => {
+				let Path = Params.get("path").and_then(|V| V.as_str()).unwrap_or("");
+				let Content:Vec<u8> = Params
+					.get("content")
+					.and_then(|V| V.as_array())
+					.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
+					.unwrap_or_default();
+				match tokio::fs::write(Path, &Content).await {
+					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.writeFile: {}", Error))),
+				}
+			},
+			"fs.stat" | "file:stat" => {
+				let Path = Params.as_str().or_else(|| Params.get("path").and_then(|V| V.as_str())).unwrap_or("");
+				match tokio::fs::metadata(Path).await {
+					Ok(Meta) => {
+						let Mtime = Meta.modified().ok()
+							.and_then(|T| T.duration_since(UNIX_EPOCH).ok())
+							.map(|D| D.as_millis() as u64).unwrap_or(0);
+						Ok(OkResponse(RequestId, &json!({
+							"type": if Meta.is_dir() { 2 } else { 1 },
+							"is_file": Meta.is_file(),
+							"is_directory": Meta.is_dir(),
+							"size": Meta.len(),
+							"mtime": Mtime,
+						})))
+					},
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.stat: {}", Error))),
+				}
+			},
+			"fs.listDir" | "fs.readdir" | "file:readdir" => {
+				let Path = Params.as_str().or_else(|| Params.get("path").and_then(|V| V.as_str())).unwrap_or("");
+				match tokio::fs::read_dir(Path).await {
+					Ok(mut Entries) => {
+						let mut Names:Vec<String> = Vec::new();
+						while let Ok(Some(Entry)) = Entries.next_entry().await {
+							if let Some(Name) = Entry.file_name().to_str() {
+								Names.push(Name.to_string());
+							}
+						}
+						Ok(OkResponse(RequestId, &Names))
+					},
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.listDir: {}", Error))),
+				}
+			},
+			"fs.createDir" | "file:mkdir" => {
+				let Path = Params.as_str().or_else(|| Params.get("path").and_then(|V| V.as_str())).unwrap_or("");
+				match tokio::fs::create_dir_all(Path).await {
+					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.createDir: {}", Error))),
+				}
+			},
+			"fs.delete" | "file:delete" => {
+				let Path = Params.as_str().or_else(|| Params.get("path").and_then(|V| V.as_str())).unwrap_or("");
+				let Result = if std::path::Path::new(Path).is_dir() {
+					tokio::fs::remove_dir_all(Path).await
+				} else {
+					tokio::fs::remove_file(Path).await
+				};
+				match Result {
+					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.delete: {}", Error))),
+				}
+			},
+			"fs.rename" | "file:move" => {
+				let From = Params.get("from").and_then(|V| V.as_str()).unwrap_or("");
+				let To = Params.get("to").and_then(|V| V.as_str()).unwrap_or("");
+				match tokio::fs::rename(From, To).await {
+					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.rename: {}", Error))),
+				}
+			},
+			// ---- Commands ----
+			"commands.execute" => {
+				let CommandId = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Arg = Params.get("arg").cloned().unwrap_or(serde_json::Value::Null);
+				match self.environment.ExecuteCommand(CommandId, Arg).await {
+					Ok(Value) => Ok(OkResponse(RequestId, &Value)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
+			},
+			// ---- Unknown ----
+			_ => {
+				warn!("[CocoonService] Unknown generic method: {}", Req.method);
+				Ok(ErrResponse(RequestId, -32601, format!("Method '{}' not found", Req.method)))
+			},
+		}
 	}
 
 	/// Send Mountain notifications to Cocoon (generic fire-and-forget)
