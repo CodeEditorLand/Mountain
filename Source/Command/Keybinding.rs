@@ -11,9 +11,8 @@
 //! ARCHITECTURAL ROLE:
 //! - Command module exposing keybinding functionality via Tauri IPC
 //!   (`#[command]`)
-//! - Delegates to Environment's
-//!   [`KeybindingProvider`] via DI with
-//!   `Require()` trait
+//! - Delegates to Environment's [`KeybindingProvider`] via DI with `Require()`
+//!   trait
 //! - Acts as thin façade layer; all logic resides in provider implementation
 //!
 //! COMMAND REFERENCE (Tauri IPC):

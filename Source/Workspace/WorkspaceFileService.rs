@@ -9,11 +9,9 @@
 //!
 //! ARCHITECTURAL ROLE:
 //! - Utility module for workspace configuration management
-//! - Used by `MountainEnvironment`
-//!   during workspace initialization and configuration loading
-//! - Integrates with
-//!   `ApplicationState` for
-//!   workspace folder state management
+//! - Used by `MountainEnvironment` during workspace initialization and
+//!   configuration loading
+//! - Integrates with `ApplicationState` for workspace folder state management
 //!
 //! FILE FORMAT:
 //! - Expects JSON format conforming to VSCode `.code-workspace` schema
@@ -69,8 +67,7 @@
 //! MODULE CONTENTS:
 //! - Structs: `WorkspaceFile`, `WorkspaceFolderEntry` (serde deserialization)
 //! - Function: `ParseWorkspaceFile` - main entry point
-//! - Data type:
-//!   [`WorkspaceFolderStateDTO`]
+//! - Data type: [`WorkspaceFolderStateDTO`]
 
 use std::path::Path;
 

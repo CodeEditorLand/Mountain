@@ -15,7 +15,8 @@
 //! `SourceControlManagementProvider` implementations in the Environment
 //!   layer
 //! - Uses Tauri's `#[command]` attribute for IPC exposure
-//! - Reads from `ApplicationState.SourceControlManagement*` fields to gather state
+//! - Reads from `ApplicationState.SourceControlManagement*` fields to gather
+//!   state
 //! - TODO: Should forward commands to provider methods via DI (Require trait)
 //!
 //! COMMAND REFERENCE (Tauri IPC):
