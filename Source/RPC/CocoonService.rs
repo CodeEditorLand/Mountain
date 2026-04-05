@@ -1319,41 +1319,36 @@ impl CocoonService for CocoonServiceImpl {
 		}
 	}
 
-	/// Terminal Input - Send input to terminal
+	/// Terminal Input — write bytes to PTY stdin via TerminalProvider.
 	async fn terminal_input(&self, request:Request<TerminalInputRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Sending input to terminal {}", req.terminal_id);
+		let TerminalId = req.terminal_id as u64;
+		debug!("[CocoonService] terminal_input: id={} bytes={}", TerminalId, req.data.len());
 
-		// Forward to TerminalProvider for PTY input in MountainEnvironment
-		// This stub returns an unimplemented error
-		debug!("[CocoonService] Input length: {} bytes", req.data.len());
+		let Text = String::from_utf8_lossy(&req.data).into_owned();
 
-		// TODO: When TerminalProvider is available in MountainEnvironment:
-		// - Look up PTY by terminal_id
-		// - Write input bytes to PTY
-		// - Handle errors (terminal not found, PTY closed)
-		// - Forward to Wind via IPC for display updates
-
-		Err(Status::unimplemented("terminal_input not yet implemented"))
+		match self.environment.SendTextToTerminal(TerminalId, Text).await {
+			Ok(()) => Ok(Response::new(Empty {})),
+			Err(Error) => {
+				warn!("[CocoonService] terminal_input failed id={}: {}", TerminalId, Error);
+				Err(Status::not_found(format!("terminal_input: {}", Error)))
+			},
+		}
 	}
 
-	/// Close Terminal - Close a terminal
+	/// Close Terminal — dispose PTY and cleanup resources via TerminalProvider.
 	async fn close_terminal(&self, request:Request<CloseTerminalRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Closing terminal {}", req.terminal_id);
+		let TerminalId = req.terminal_id as u64;
+		info!("[CocoonService] close_terminal: id={}", TerminalId);
 
-		// Close PTY and notify Wind frontend in MountainEnvironment
-		// This stub returns an unimplemented error
-		warn!("[CocoonService] Terminal close not yet implemented");
-
-		// TODO: When TerminalProvider is available in MountainEnvironment:
-		// - Look up PTY by terminal_id
-		// - Close PTY and cleanup resources
-		// - Notify Wind via IPC
-		// - Remove from TerminalState
-		// - Handle errors (terminal not found)
-
-		Err(Status::unimplemented("close_terminal not yet implemented"))
+		match self.environment.DisposeTerminal(TerminalId).await {
+			Ok(()) => Ok(Response::new(Empty {})),
+			Err(Error) => {
+				warn!("[CocoonService] close_terminal failed id={}: {}", TerminalId, Error);
+				Err(Status::internal(format!("close_terminal: {}", Error)))
+			},
+		}
 	}
 
 	/// Accept Terminal Opened - Notification: Terminal opened
@@ -1671,63 +1666,49 @@ impl CocoonService for CocoonServiceImpl {
 
 	// ==================== Secret Storage ====================
 
-	/// Get Secret - Retrieve a secret from storage
+	/// Get Secret — retrieve from the OS keychain via SecretProvider.
 	async fn get_secret(&self, request:Request<GetSecretRequest>) -> Result<Response<GetSecretResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Getting secret for key: {}", req.key);
+		debug!("[CocoonService] get_secret: key={}", req.key);
 
-		// Delegate to SecretStorageProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		warn!("[CocoonService] SecretStorageProvider not yet available in MountainEnvironment");
-
-		// TODO: When SecretStorageProvider is available in MountainEnvironment:
-		// - Look up secret by key in SecretStorageProvider
-		// - Return secret value or error if not found
-		// - Handle encryption/decryption
-		// - Handle permission errors
-
-		Err(Status::unimplemented(
-			"get_secret requires SecretStorageProvider in MountainEnvironment",
-		))
+		// The gRPC proto only carries `key`; we use the app name as the
+		// extension identifier (keyring service scoping).
+		match self.environment.GetSecret(String::new(), req.key.clone()).await {
+			Ok(Some(Value)) => Ok(Response::new(GetSecretResponse { value:Value })),
+			Ok(None) => Ok(Response::new(GetSecretResponse { value:String::new() })),
+			Err(Error) => {
+				warn!("[CocoonService] get_secret failed key={}: {}", req.key, Error);
+				Err(Status::internal(format!("get_secret: {}", Error)))
+			},
+		}
 	}
 
-	/// Store Secret - Store a secret in storage
+	/// Store Secret — persist to the OS keychain via SecretProvider.
 	async fn store_secret(&self, request:Request<StoreSecretRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Storing secret for key: {}", req.key);
+		debug!("[CocoonService] store_secret: key={}", req.key);
 
-		// Delegate to SecretStorageProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		debug!("[CocoonService] Secret value length: {} bytes", req.value.len());
-
-		// TODO: When SecretStorageProvider is available in MountainEnvironment:
-		// - Store secret with key in SecretStorageProvider
-		// - Handle encryption before storage
-		// - Update existing secret or create new one
-		// - Handle permission errors and storage limits
-
-		Err(Status::unimplemented(
-			"store_secret requires SecretStorageProvider in MountainEnvironment",
-		))
+		match self.environment.StoreSecret(String::new(), req.key.clone(), req.value).await {
+			Ok(()) => Ok(Response::new(Empty {})),
+			Err(Error) => {
+				warn!("[CocoonService] store_secret failed key={}: {}", req.key, Error);
+				Err(Status::internal(format!("store_secret: {}", Error)))
+			},
+		}
 	}
 
-	/// Delete Secret - Delete a secret from storage
+	/// Delete Secret — remove from the OS keychain via SecretProvider.
 	async fn delete_secret(&self, request:Request<DeleteSecretRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Deleting secret for key: {}", req.key);
+		debug!("[CocoonService] delete_secret: key={}", req.key);
 
-		// Delegate to SecretStorageProvider in MountainEnvironment
-		// This stub returns an unimplemented error
-		warn!("[CocoonService] Secret deletion not yet implemented");
-
-		// TODO: When SecretStorageProvider is available in MountainEnvironment:
-		// - Remove secret by key from SecretStorageProvider
-		// - Return success or error if not found
-		// - Handle permission errors
-
-		Err(Status::unimplemented(
-			"delete_secret requires SecretStorageProvider in MountainEnvironment",
-		))
+		match self.environment.DeleteSecret(String::new(), req.key.clone()).await {
+			Ok(()) => Ok(Response::new(Empty {})),
+			Err(Error) => {
+				warn!("[CocoonService] delete_secret failed key={}: {}", req.key, Error);
+				Err(Status::internal(format!("delete_secret: {}", Error)))
+			},
+		}
 	}
 
 	// ==================== Extended Language Provider Handlers ====================
@@ -2226,30 +2207,82 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ProvideLinkedEditingRangesResponse::default()))
 	}
 
-	/// quick pick
+	/// Show Quick Pick — present a selection list via UserInterfaceProvider.
 	async fn show_quick_pick(
 		&self,
 		request:Request<ShowQuickPickRequest>,
 	) -> Result<Response<ShowQuickPickResponse>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling quick pick");
+		let req = request.into_inner();
+		info!("[CocoonService] show_quick_pick: {} items", req.items.len());
 
-		// TODO: Implement quick pick in MountainEnvironment
+		let Items:Vec<QuickPickItemDTO> = req
+			.items
+			.iter()
+			.map(|Item| QuickPickItemDTO {
+				Label:Item.label.clone(),
+				Description:if Item.description.is_empty() { None } else { Some(Item.description.clone()) },
+				Detail:None,
+				Picked:Some(Item.picked),
+				AlwaysShow:None,
+			})
+			.collect();
 
-		Ok(Response::new(ShowQuickPickResponse { ..Default::default() }))
+		let Options = Some(QuickPickOptionsDTO {
+			Title:if req.title.is_empty() { None } else { Some(req.title) },
+			PlaceHolder:if req.placeholder.is_empty() { None } else { Some(req.placeholder) },
+			CanPickMany:Some(req.can_pick_many),
+			IgnoreFocusOut:None,
+		});
+
+		match self.environment.ShowQuickPick(Items, Options).await {
+			Ok(Some(Selected)) => {
+				// Map selected label strings back to indices via linear search
+				let SelectedIndices:Vec<u32> = Selected
+					.iter()
+					.filter_map(|Label| {
+						req.items
+							.iter()
+							.position(|Item| &Item.label == Label)
+							.map(|Idx| Idx as u32)
+					})
+					.collect();
+				Ok(Response::new(ShowQuickPickResponse { selected_indices:SelectedIndices }))
+			},
+			Ok(None) => Ok(Response::new(ShowQuickPickResponse::default())),
+			Err(Error) => {
+				warn!("[CocoonService] show_quick_pick failed: {}", Error);
+				Ok(Response::new(ShowQuickPickResponse::default()))
+			},
+		}
 	}
 
-	/// input box
+	/// Show Input Box — present a text entry dialog via UserInterfaceProvider.
 	async fn show_input_box(
 		&self,
 		request:Request<ShowInputBoxRequest>,
 	) -> Result<Response<ShowInputBoxResponse>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling input box");
+		let req = request.into_inner();
+		info!("[CocoonService] show_input_box");
 
-		// TODO: Implement input box in MountainEnvironment
+		let Options = Some(InputBoxOptionsDTO {
+			Title:if req.title.is_empty() { None } else { Some(req.title) },
+			PlaceHolder:if req.placeholder.is_empty() { None } else { Some(req.placeholder) },
+			Value:if req.value.is_empty() { None } else { Some(req.value) },
+			Prompt:if req.prompt.is_empty() { None } else { Some(req.prompt) },
+			IsPassword:if req.password { Some(true) } else { None },
+			IgnoreFocusOut:None,
+		});
 
-		Ok(Response::new(ShowInputBoxResponse { ..Default::default() }))
+		match self.environment.ShowInputBox(Options).await {
+			Ok(Some(Value)) => {
+				Ok(Response::new(ShowInputBoxResponse { value:Value, cancelled:false }))
+			},
+			Ok(None) => Ok(Response::new(ShowInputBoxResponse { value:String::new(), cancelled:true })),
+			Err(Error) => {
+				warn!("[CocoonService] show_input_box failed: {}", Error);
+				Ok(Response::new(ShowInputBoxResponse { value:String::new(), cancelled:true }))
+			},
+		}
 	}
 
 	/// progress
@@ -2573,12 +2606,28 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(GetAllExtensionsResponse { extensions:ExtensionInfoList }))
 	}
 
-	/// terminal resize
+	/// Terminal Resize — emit a Tauri event so Sky can resize the xterm view.
+	///
+	/// PTY-level resize (via `portable_pty::MasterPty::resize`) is a P1 task
+	/// that requires storing the PTY master handle in `TerminalStateDTO`.
+	/// The Tauri event lets the UI immediately resize its canvas.
 	async fn resize_terminal(&self, request:Request<ResizeTerminalRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		info!("[CocoonService] Handling terminal resize");
+		use tauri::Emitter;
 
-		// TODO: Implement terminal resize in MountainEnvironment
+		let req = request.into_inner();
+		debug!(
+			"[CocoonService] resize_terminal: id={} cols={} rows={}",
+			req.terminal_id, req.cols, req.rows
+		);
+
+		// Notify Sky/Wind of the new dimensions for UI resize
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://terminal/resize",
+			json!({ "id": req.terminal_id, "cols": req.cols, "rows": req.rows }),
+		);
+
+		// TODO(P1): Call portable_pty::MasterPty::resize once PtyMaster handle
+		// is stored in TerminalStateDTO (requires wrapping MasterPty in Arc<Mutex>)
 
 		Ok(Response::new(Empty {}))
 	}
