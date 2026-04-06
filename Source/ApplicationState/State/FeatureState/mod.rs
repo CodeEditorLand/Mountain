@@ -35,20 +35,28 @@
 //! - [ ] Add feature metrics
 
 pub mod Debug;
+pub mod Decorations;
 pub mod Diagnostics;
 pub mod Documents;
-pub mod Terminals;
-pub mod Webviews;
-pub mod TreeViews;
-pub mod OutputChannels;
+pub mod Keybindings;
+pub mod LifecyclePhase;
 pub mod Markers;
+pub mod OutputChannels;
+pub mod Terminals;
+pub mod TreeViews;
+pub mod Webviews;
+pub mod WorkingCopy;
 pub mod State;
 
 pub use Debug::*;
+pub use Decorations::*;
 pub use Diagnostics::*;
 pub use Documents::*;
-pub use Terminals::*;
-pub use Webviews::*;
-pub use TreeViews::*;
-pub use OutputChannels::*;
+pub use Keybindings::*;
+pub use LifecyclePhase::*;
 pub use Markers::*;
+pub use OutputChannels::*;
+pub use Terminals::*;
+pub use TreeViews::*;
+pub use Webviews::*;
+pub use WorkingCopy::*;

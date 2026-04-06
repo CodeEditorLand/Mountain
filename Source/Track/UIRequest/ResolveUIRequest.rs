@@ -70,11 +70,7 @@ pub async fn ResolveUIRequest(
 	debug!("[Track/UIRequest] Resolving UI request ID: {}", RequestID);
 
 	let Sender = {
-	let mut PendingRequests = State
-	.UI
-	.PendingUserInterfaceRequest
-	.lock()
-	.map_err(|Error| Error.to_string())?;
+		let mut PendingRequests = State.UI.PendingUserInterfaceRequest.lock().map_err(|Error| Error.to_string())?;
 
 		PendingRequests.remove(&RequestID)
 	};

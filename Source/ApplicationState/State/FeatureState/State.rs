@@ -39,13 +39,17 @@ use log::debug;
 
 use super::{
 	Debug::DebugState::DebugState,
+	Decorations::DecorationsState::DecorationsState,
 	Diagnostics::DiagnosticsState::DiagnosticsState,
 	Documents::DocumentState::DocumentState,
+	Keybindings::KeybindingState::KeybindingState,
+	LifecyclePhase::LifecyclePhaseState::LifecyclePhaseState,
 	Markers::MarkerState::MarkerState,
 	OutputChannels::OutputChannelState::OutputChannelState,
 	Terminals::TerminalState::TerminalState,
 	TreeViews::TreeViewState::TreeViewState,
 	Webviews::WebviewState::WebviewState,
+	WorkingCopy::WorkingCopyState::WorkingCopyState,
 };
 
 /// Feature state combining all feature-related components.
@@ -54,26 +58,39 @@ pub struct State {
 	/// Debug provider state.
 	pub Debug:DebugState,
 
+	/// File/folder decoration state (git badges, error squiggles, custom
+	/// badges).
+	pub Decorations:DecorationsState,
+
 	/// Diagnostic errors state.
 	pub Diagnostics:DiagnosticsState,
 
 	/// Open documents state.
 	pub Documents:DocumentState,
 
-	/// Terminal instances state.
-	pub Terminals:TerminalState,
+	/// Dynamic keybinding registry.
+	pub Keybindings:KeybindingState,
 
-	/// Webview panels state.
-	pub Webviews:WebviewState,
+	/// Application lifecycle phase state.
+	pub Lifecycle:LifecyclePhaseState,
 
-	/// Tree view providers state.
-	pub TreeViews:TreeViewState,
+	/// Marker-related state.
+	pub Markers:MarkerState,
 
 	/// Output channel state.
 	pub OutputChannels:OutputChannelState,
 
-	/// Marker-related state.
-	pub Markers:MarkerState,
+	/// Terminal instances state.
+	pub Terminals:TerminalState,
+
+	/// Tree view providers state.
+	pub TreeViews:TreeViewState,
+
+	/// Webview panels state.
+	pub Webviews:WebviewState,
+
+	/// Working-copy (dirty) state — drives the dirty dot in editor tabs.
+	pub WorkingCopy:WorkingCopyState,
 }
 
 impl Default for State {
@@ -82,13 +99,17 @@ impl Default for State {
 
 		Self {
 			Debug:Default::default(),
+			Decorations:Default::default(),
 			Diagnostics:Default::default(),
 			Documents:Default::default(),
-			Terminals:Default::default(),
-			Webviews:Default::default(),
-			TreeViews:Default::default(),
-			OutputChannels:Default::default(),
+			Keybindings:Default::default(),
+			Lifecycle:Default::default(),
 			Markers:Default::default(),
+			OutputChannels:Default::default(),
+			Terminals:Default::default(),
+			TreeViews:Default::default(),
+			Webviews:Default::default(),
+			WorkingCopy:Default::default(),
 		}
 	}
 }

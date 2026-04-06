@@ -549,7 +549,13 @@ impl CocoonService for CocoonServiceImpl {
 					.and_then(|V| V.get("title"))
 					.and_then(|T| T.as_str())
 					.map(|S| S.to_string());
-				let Options = OpenDialogOptionsDTO { Base: CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO { Title, ..Default::default() }, ..OpenDialogOptionsDTO::default() };
+				let Options = OpenDialogOptionsDTO {
+					Base:CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO {
+						Title,
+						..Default::default()
+					},
+					..OpenDialogOptionsDTO::default()
+				};
 				match self.environment.ShowOpenDialog(Some(Options)).await {
 					Ok(Some(Paths)) => {
 						let Uris:Vec<String> = Paths.iter().map(|P| format!("file://{}", P.display())).collect();
@@ -569,7 +575,13 @@ impl CocoonService for CocoonServiceImpl {
 					.and_then(|V| V.get("title"))
 					.and_then(|T| T.as_str())
 					.map(|S| S.to_string());
-				let Options = SaveDialogOptionsDTO { Base: CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO { Title, ..Default::default() }, ..SaveDialogOptionsDTO::default() };
+				let Options = SaveDialogOptionsDTO {
+					Base:CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO {
+						Title,
+						..Default::default()
+					},
+					..SaveDialogOptionsDTO::default()
+				};
 				match self.environment.ShowSaveDialog(Some(Options)).await {
 					Ok(Some(Path)) => Ok(OkResponse(RequestId, &json!(format!("file://{}", Path.display())))),
 					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
@@ -638,43 +650,52 @@ impl CocoonService for CocoonServiceImpl {
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
 			"showInformation" => {
-					use CommonLibrary::UserInterface::{
-						DTO::MessageSeverity::MessageSeverity,
-						UserInterfaceProvider::UserInterfaceProvider,
-					};
-					let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
-					let Items:Option<serde_json::Value> = Params.get("items").cloned().filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
-					match self.environment.ShowMessage(MessageSeverity::Info, Message, Items).await {
-						Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
-						Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
-						Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
-					}
+				use CommonLibrary::UserInterface::{
+					DTO::MessageSeverity::MessageSeverity,
+					UserInterfaceProvider::UserInterfaceProvider,
+				};
+				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Items:Option<serde_json::Value> = Params
+					.get("items")
+					.cloned()
+					.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
+				match self.environment.ShowMessage(MessageSeverity::Info, Message, Items).await {
+					Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
+					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
 			},
 			"showWarning" => {
-					use CommonLibrary::UserInterface::{
-						DTO::MessageSeverity::MessageSeverity,
-						UserInterfaceProvider::UserInterfaceProvider,
-					};
-					let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
-					let Items:Option<serde_json::Value> = Params.get("items").cloned().filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
-					match self.environment.ShowMessage(MessageSeverity::Warning, Message, Items).await {
-						Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
-						Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
-						Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
-					}
+				use CommonLibrary::UserInterface::{
+					DTO::MessageSeverity::MessageSeverity,
+					UserInterfaceProvider::UserInterfaceProvider,
+				};
+				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Items:Option<serde_json::Value> = Params
+					.get("items")
+					.cloned()
+					.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
+				match self.environment.ShowMessage(MessageSeverity::Warning, Message, Items).await {
+					Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
+					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
 			},
 			"showError" => {
-					use CommonLibrary::UserInterface::{
-						DTO::MessageSeverity::MessageSeverity,
-						UserInterfaceProvider::UserInterfaceProvider,
-					};
-					let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
-					let Items:Option<serde_json::Value> = Params.get("items").cloned().filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
-					match self.environment.ShowMessage(MessageSeverity::Error, Message, Items).await {
-						Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
-						Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
-						Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
-					}
+				use CommonLibrary::UserInterface::{
+					DTO::MessageSeverity::MessageSeverity,
+					UserInterfaceProvider::UserInterfaceProvider,
+				};
+				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Items:Option<serde_json::Value> = Params
+					.get("items")
+					.cloned()
+					.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
+				match self.environment.ShowMessage(MessageSeverity::Error, Message, Items).await {
+					Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
+					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
 			},
 			"createStatusBarItem" => {
 				use tauri::Emitter;
@@ -1220,12 +1241,18 @@ impl CocoonService for CocoonServiceImpl {
 				let PanelId = Params.get("panelId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let Method = Params.get("method").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let MsgParams = Params.get("params").cloned().unwrap_or(serde_json::Value::Null);
-				let _ = self.environment.ApplicationHandle.emit("sky://webview/message", json!({ "panelId": PanelId, "method": Method, "params": MsgParams }));
+				let _ = self.environment.ApplicationHandle.emit(
+					"sky://webview/message",
+					json!({ "panelId": PanelId, "method": Method, "params": MsgParams }),
+				);
 			},
 			"webview.dispose" => {
 				use tauri::Emitter;
 				let PanelId = Params.get("panelId").and_then(|V| V.as_str()).unwrap_or("").to_string();
-				let _ = self.environment.ApplicationHandle.emit("sky://webview/dispose", json!({ "panelId": PanelId }));
+				let _ = self
+					.environment
+					.ApplicationHandle
+					.emit("sky://webview/dispose", json!({ "panelId": PanelId }));
 			},
 			// ---- Progress indicator ----
 			"progress.start" => {
@@ -1234,19 +1261,28 @@ impl CocoonService for CocoonServiceImpl {
 				let Title = Params.get("title").and_then(|V| V.as_str()).map(|S| S.to_string());
 				let Location = Params.get("location").cloned();
 				let Cancellable = Params.get("cancellable").and_then(|V| V.as_bool()).unwrap_or(false);
-				let _ = self.environment.ApplicationHandle.emit("sky://progress/start", json!({ "id": Id, "title": Title, "location": Location, "cancellable": Cancellable }));
+				let _ = self.environment.ApplicationHandle.emit(
+					"sky://progress/start",
+					json!({ "id": Id, "title": Title, "location": Location, "cancellable": Cancellable }),
+				);
 			},
 			"progress.update" => {
 				use tauri::Emitter;
 				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let Message = Params.get("message").and_then(|V| V.as_str()).map(|S| S.to_string());
 				let Increment = Params.get("increment").and_then(|V| V.as_f64());
-				let _ = self.environment.ApplicationHandle.emit("sky://progress/update", json!({ "id": Id, "message": Message, "increment": Increment }));
+				let _ = self.environment.ApplicationHandle.emit(
+					"sky://progress/update",
+					json!({ "id": Id, "message": Message, "increment": Increment }),
+				);
 			},
 			"progress.complete" => {
 				use tauri::Emitter;
 				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
-				let _ = self.environment.ApplicationHandle.emit("sky://progress/complete", json!({ "id": Id }));
+				let _ = self
+					.environment
+					.ApplicationHandle
+					.emit("sky://progress/complete", json!({ "id": Id }));
 			},
 			// ---- Native shell ----
 			"openExternal" => {
