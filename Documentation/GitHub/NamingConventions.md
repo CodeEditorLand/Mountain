@@ -469,13 +469,11 @@ std::env::var("PATH")?;
 
 **Checklist** when creating new modules:
 
-1. ✅ Add `#![allow(non_snake_case, non_camel_case_types)]` at the top
-2. ✅ Use PascalCase for struct/enum/trait names
-3. ✅ Use PascalCase for all functions and methods
-4. ✅ Use PascalCase for all fields and variables
-5. ✅ Align DTO fields with Protocol Buffer message fields
-6. ✅ Use PascalCase for generic type parameters with 'T' prefix
-7. ✅ Use PascalCase for file names
+1. ✅ Add `#![allow(non_snake_case, non_camel_case_types)]` at the top 2. ✅ Use
+PascalCase for struct/enum/trait names 3. ✅ Use PascalCase for all functions
+and methods 4. ✅ Use PascalCase for all fields and variables 5. ✅ Align DTO
+fields with Protocol Buffer message fields 6. ✅ Use PascalCase for generic type
+parameters with 'T' prefix 7. ✅ Use PascalCase for file names
 
 **Example**:
 

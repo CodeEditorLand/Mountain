@@ -32,7 +32,7 @@ tauri-plugin-localhost = { workspace = true }
 tauri-plugin-log = { workspace = true }
 
 async-trait = { workspace = true }
-anyhow = { workspace = true }  # TODO: Added for error handling in CertificateManager
+anyhow = { workspace = true }                                                    # TODO: Added for error handling in CertificateManager
 base64 = { workspace = true }
 chrono = { workspace = true, features = ["serde"] }
 colored = { workspace = true }
@@ -72,7 +72,7 @@ rcgen = { workspace = true }
 p256 = { workspace = true }
 x509-parser = { workspace = true }
 rustls-pki-types = { workspace = true }
-rustls = { workspace = true }  # TODO: Added for TLS configuration in CertificateManager
+rustls = { workspace = true }                                                    # TODO: Added for TLS configuration in CertificateManager
 toml = { workspace = true }
 tonic = { workspace = true }
 tonic-prost = { workspace = true }
