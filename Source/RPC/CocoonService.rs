@@ -549,12 +549,13 @@ impl CocoonService for CocoonServiceImpl {
 					.and_then(|V| V.get("title"))
 					.and_then(|T| T.as_str())
 					.map(|S| S.to_string());
-				let Options = OpenDialogOptionsDTO { Title, ..OpenDialogOptionsDTO::default() };
+				let Options = OpenDialogOptionsDTO { Base: CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO { Title, ..Default::default() }, ..OpenDialogOptionsDTO::default() };
 				match self.environment.ShowOpenDialog(Some(Options)).await {
-					Ok(Paths) => {
-						let Uris:Vec<String> = Paths.iter().map(|P| format!("file://{}", P)).collect();
+					Ok(Some(Paths)) => {
+						let Uris:Vec<String> = Paths.iter().map(|P| format!("file://{}", P.display())).collect();
 						Ok(OkResponse(RequestId, &json!(Uris)))
 					},
+					Ok(None) => Ok(OkResponse(RequestId, &json!(serde_json::Value::Array(vec![])))),
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
@@ -568,9 +569,9 @@ impl CocoonService for CocoonServiceImpl {
 					.and_then(|V| V.get("title"))
 					.and_then(|T| T.as_str())
 					.map(|S| S.to_string());
-				let Options = SaveDialogOptionsDTO { Title, ..SaveDialogOptionsDTO::default() };
+				let Options = SaveDialogOptionsDTO { Base: CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO { Title, ..Default::default() }, ..SaveDialogOptionsDTO::default() };
 				match self.environment.ShowSaveDialog(Some(Options)).await {
-					Ok(Some(Path)) => Ok(OkResponse(RequestId, &json!(format!("file://{}", Path)))),
+					Ok(Some(Path)) => Ok(OkResponse(RequestId, &json!(format!("file://{}", Path.display())))),
 					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
