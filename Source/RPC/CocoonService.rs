@@ -450,13 +450,15 @@ impl CocoonService for CocoonServiceImpl {
 				let Path = Params.as_str().or_else(|| Params.get("path").and_then(|V| V.as_str())).unwrap_or("");
 				match tokio::fs::read_dir(Path).await {
 					Ok(mut Entries) => {
-						let mut Names:Vec<String> = Vec::new();
+						// Return [{name, type}] where type 1=File 2=Directory
+						let mut Items:Vec<serde_json::Value> = Vec::new();
 						while let Ok(Some(Entry)) = Entries.next_entry().await {
 							if let Some(Name) = Entry.file_name().to_str() {
-								Names.push(Name.to_string());
+								let IsDir = Entry.file_type().await.map(|T| T.is_dir()).unwrap_or(false);
+								Items.push(json!({ "name": Name, "type": if IsDir { 2u32 } else { 1u32 } }));
 							}
 						}
-						Ok(OkResponse(RequestId, &Names))
+						Ok(OkResponse(RequestId, &Items))
 					},
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.listDir: {}", Error))),
 				}
