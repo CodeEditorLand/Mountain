@@ -320,11 +320,15 @@ impl CocoonServiceImpl {
 	/// - `language_selector`: Language scope (e.g. "typescript")
 	/// - `extension_id`: Extension that registered this provider
 	fn RegisterProvider(&self, handle:u32, provider_type:ProviderType, language_selector:&str, extension_id:&str) {
+		// SideCarIdentifier = "cocoon-main" so FeatureMethods::invoke_provider can
+		// route back via Vine::Client::SendRequestToSideCar("cocoon-main", ...).
+		// Selector stored as array so ProviderLookup::get_matching_provider's
+		// `.as_array()` call finds the language entry: [{ "language": "typescript" }].
 		let dto = ProviderRegistrationDTO {
 			Handle:handle,
 			ProviderType:provider_type,
-			Selector:json!({ "language": [language_selector] }),
-			SideCarIdentifier:extension_id.to_string(),
+			Selector:json!([{ "language": language_selector }]),
+			SideCarIdentifier:"cocoon-main".to_string(),
 			ExtensionIdentifier:json!(extension_id),
 			Options:None,
 		};
