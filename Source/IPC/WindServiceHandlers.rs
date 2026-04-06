@@ -324,6 +324,27 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"lifecycle:whenPhase" => handle_lifecycle_when_phase(runtime.inner().clone(), args).await,
 		"lifecycle:requestShutdown" => handle_lifecycle_request_shutdown(app_handle.clone()).await,
 
+		// Label commands
+		"label:getUri" => handle_label_get_uri(runtime.inner().clone(), args).await,
+		"label:getWorkspace" => handle_label_get_workspace(runtime.inner().clone()).await,
+		"label:getBase" => handle_label_get_base(args).await,
+
+		// Model (text model registry) commands
+		"model:open" => handle_model_open(runtime.inner().clone(), args).await,
+		"model:close" => handle_model_close(runtime.inner().clone(), args).await,
+		"model:get" => handle_model_get(runtime.inner().clone(), args).await,
+		"model:getAll" => handle_model_get_all(runtime.inner().clone()).await,
+		"model:updateContent" => handle_model_update_content(runtime.inner().clone(), args).await,
+
+		// Navigation history commands
+		"history:goBack" => handle_history_go_back(runtime.inner().clone()).await,
+		"history:goForward" => handle_history_go_forward(runtime.inner().clone()).await,
+		"history:canGoBack" => handle_history_can_go_back(runtime.inner().clone()).await,
+		"history:canGoForward" => handle_history_can_go_forward(runtime.inner().clone()).await,
+		"history:push" => handle_history_push(runtime.inner().clone(), args).await,
+		"history:clear" => handle_history_clear(runtime.inner().clone()).await,
+		"history:getStack" => handle_history_get_stack(runtime.inner().clone()).await,
+
 		// IPC status commands
 		"mountain_get_status" => {
 			let status = json!({
@@ -1999,4 +2020,328 @@ async fn handle_lifecycle_when_phase(runtime:Arc<ApplicationRunTime>, args:Vec<V
 async fn handle_lifecycle_request_shutdown(app_handle:AppHandle) -> Result<Value, String> {
 	app_handle.exit(0);
 	Ok(Value::Null)
+}
+
+// ============================================================================
+// Navigation History Handlers
+// ============================================================================
+
+/// Navigate backward in the editor history stack.
+async fn handle_history_go_back(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Uri = runtime.Environment.ApplicationState.Feature.NavigationHistory.GoBack();
+	Ok(Uri.map(Value::String).unwrap_or(Value::Null))
+}
+
+/// Navigate forward in the editor history stack.
+async fn handle_history_go_forward(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Uri = runtime.Environment.ApplicationState.Feature.NavigationHistory.GoForward();
+	Ok(Uri.map(Value::String).unwrap_or(Value::Null))
+}
+
+/// Return whether backward navigation is available.
+async fn handle_history_can_go_back(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	Ok(Value::Bool(runtime.Environment.ApplicationState.Feature.NavigationHistory.CanGoBack()))
+}
+
+/// Return whether forward navigation is available.
+async fn handle_history_can_go_forward(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	Ok(Value::Bool(runtime.Environment.ApplicationState.Feature.NavigationHistory.CanGoForward()))
+}
+
+/// Push a URI onto the navigation history stack.
+async fn handle_history_push(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("history:push requires uri".to_string())?
+		.to_owned();
+
+	runtime.Environment.ApplicationState.Feature.NavigationHistory.Push(Uri);
+	Ok(Value::Null)
+}
+
+/// Clear the entire navigation history stack.
+async fn handle_history_clear(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	runtime.Environment.ApplicationState.Feature.NavigationHistory.Clear();
+	Ok(Value::Null)
+}
+
+/// Return the full navigation history stack as an array of URI strings.
+async fn handle_history_get_stack(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Stack = runtime.Environment.ApplicationState.Feature.NavigationHistory.GetStack();
+	Ok(Value::Array(Stack.into_iter().map(Value::String).collect()))
+}
+
+// ============================================================================
+// Label Handlers
+// ============================================================================
+
+/// Resolve a human-readable display label for a URI.
+///
+/// Args: [uri: string, relative: bool]
+/// Returns: string label
+async fn handle_label_get_uri(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("label:getUri requires uri".to_string())?
+		.to_owned();
+
+	let Relative = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+
+	if !Relative {
+		// Absolute: strip file:// scheme if present, return raw path
+		let Label = if Uri.starts_with("file://") {
+			Uri.trim_start_matches("file://").to_owned()
+		} else {
+			Uri.clone()
+		};
+		return Ok(Value::String(Label));
+	}
+
+	// Relative: make path relative to workspace root if possible
+	let WorkspaceRoot = runtime
+		.Environment
+		.ApplicationState
+		.Workspace
+		.GetWorkspaceFolders()
+		.into_iter()
+		.next()
+		.map(|F| F.URI.to_string())
+		.unwrap_or_default();
+
+	let RawPath = if Uri.starts_with("file://") {
+		Uri.trim_start_matches("file://").to_owned()
+	} else {
+		Uri.clone()
+	};
+
+	let RootPath = if WorkspaceRoot.starts_with("file://") {
+		WorkspaceRoot.trim_start_matches("file://").to_owned()
+	} else {
+		WorkspaceRoot
+	};
+
+	let Label = if !RootPath.is_empty() && RawPath.starts_with(&RootPath) {
+		RawPath[RootPath.len()..].trim_start_matches('/').to_owned()
+	} else {
+		RawPath
+	};
+
+	Ok(Value::String(Label))
+}
+
+/// Return the display label for the current workspace root folder.
+async fn handle_label_get_workspace(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Label = runtime
+		.Environment
+		.ApplicationState
+		.Workspace
+		.GetWorkspaceFolders()
+		.into_iter()
+		.next()
+		.map(|F| {
+			if !F.Name.is_empty() {
+				F.Name
+			} else {
+				F.URI
+					.path_segments()
+					.and_then(|mut S| S.next_back())
+					.map(|S| S.to_owned())
+					.unwrap_or_else(|| F.URI.to_string())
+			}
+		})
+		.unwrap_or_default();
+
+	Ok(Value::String(Label))
+}
+
+/// Return only the basename (filename + extension) of a URI.
+async fn handle_label_get_base(args:Vec<Value>) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("label:getBase requires uri".to_string())?;
+
+	let Base = Uri.split('/').next_back().unwrap_or(Uri);
+	Ok(Value::String(Base.to_owned()))
+}
+
+// ============================================================================
+// Model (Text Model Registry) Handlers
+// ============================================================================
+
+/// Open a text model: read content from disk and register in DocumentState.
+/// Returns { uri, content, version, languageId }.
+async fn handle_model_open(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("model:open requires uri".to_string())?
+		.to_owned();
+
+	// Derive file path from URI
+	let FilePath = if Uri.starts_with("file://") {
+		Uri.trim_start_matches("file://").to_owned()
+	} else {
+		Uri.clone()
+	};
+
+	// Read file content from disk
+	let Content = tokio::fs::read_to_string(&FilePath)
+		.await
+		.unwrap_or_default();
+
+	// Detect language from extension
+	let LanguageId = std::path::Path::new(&FilePath)
+		.extension()
+		.and_then(|E| E.to_str())
+		.map(|Ext| match Ext {
+			"rs" => "rust",
+			"ts" | "tsx" => "typescript",
+			"js" | "jsx" | "mjs" | "cjs" => "javascript",
+			"json" | "jsonc" => "json",
+			"toml" => "toml",
+			"yaml" | "yml" => "yaml",
+			"md" => "markdown",
+			"html" | "htm" => "html",
+			"css" | "scss" | "less" => "css",
+			"sh" | "bash" | "zsh" => "shellscript",
+			"py" => "python",
+			"go" => "go",
+			"c" | "h" => "c",
+			"cpp" | "cc" | "cxx" | "hpp" => "cpp",
+			_ => "plaintext",
+		})
+		.unwrap_or("plaintext")
+		.to_owned();
+
+	// Determine next version (1 if new, increment if exists)
+	let Version = runtime
+		.Environment
+		.ApplicationState
+		.Feature
+		.Documents
+		.Get(&Uri)
+		.map(|D| D.Version + 1)
+		.unwrap_or(1);
+
+	// Register in document state
+	{
+		use crate::ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO;
+
+		if let Ok(ParsedUri) = url::Url::parse(&Uri) {
+			let Lines:Vec<String> = Content.lines().map(|L| L.to_owned()).collect();
+			let Eol = if Content.contains("\r\n") { "\r\n" } else { "\n" }.to_owned();
+
+			let Document = DocumentStateDTO {
+				URI:ParsedUri,
+				LanguageIdentifier:LanguageId.clone(),
+				Version,
+				Lines,
+				EOL:Eol,
+				IsDirty:false,
+				Encoding:"utf-8".to_owned(),
+				VersionIdentifier:Version,
+			};
+
+			runtime.Environment.ApplicationState.Feature.Documents.AddOrUpdate(Uri.clone(), Document);
+		}
+	}
+
+	Ok(json!({
+		"uri": Uri,
+		"content": Content,
+		"version": Version,
+		"languageId": LanguageId,
+	}))
+}
+
+/// Close a text model and remove it from DocumentState.
+async fn handle_model_close(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("model:close requires uri".to_string())?;
+
+	runtime.Environment.ApplicationState.Feature.Documents.Remove(Uri);
+	Ok(Value::Null)
+}
+
+/// Get the current snapshot of an open text model, or null if not open.
+async fn handle_model_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("model:get requires uri".to_string())?;
+
+	match runtime.Environment.ApplicationState.Feature.Documents.Get(Uri) {
+		None => Ok(Value::Null),
+		Some(Document) => Ok(json!({
+			"uri": Uri,
+			"content": Document.Lines.join(&Document.EOL),
+			"version": Document.Version,
+			"languageId": Document.LanguageIdentifier,
+		})),
+	}
+}
+
+/// Return all currently open text models.
+async fn handle_model_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let All = runtime
+		.Environment
+		.ApplicationState
+		.Feature
+		.Documents
+		.GetAll()
+		.into_iter()
+		.map(|(Uri, Document)| {
+			json!({
+				"uri": Uri,
+				"content": Document.Lines.join(&Document.EOL),
+				"version": Document.Version,
+				"languageId": Document.LanguageIdentifier,
+			})
+		})
+		.collect::<Vec<_>>();
+
+	Ok(Value::Array(All))
+}
+
+/// Update the content of an open text model, incrementing its version.
+async fn handle_model_update_content(
+	runtime:Arc<ApplicationRunTime>,
+	args:Vec<Value>,
+) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("model:updateContent requires uri".to_string())?
+		.to_owned();
+
+	let NewContent = args
+		.get(1)
+		.and_then(|V| V.as_str())
+		.ok_or("model:updateContent requires content".to_string())?
+		.to_owned();
+
+	let (NewVersion, LanguageId) = match runtime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
+		None => return Err(format!("model:updateContent — model not open: {}", Uri)),
+		Some(mut Document) => {
+			Document.Version += 1;
+			Document.Lines = NewContent.lines().map(|L| L.to_owned()).collect();
+			Document.IsDirty = true;
+			let Version = Document.Version;
+			let LangId = Document.LanguageIdentifier.clone();
+			runtime.Environment.ApplicationState.Feature.Documents.AddOrUpdate(Uri.clone(), Document);
+			(Version, LangId)
+		},
+	};
+
+	Ok(json!({
+		"uri": Uri,
+		"content": NewContent,
+		"version": NewVersion,
+		"languageId": LanguageId,
+	}))
 }

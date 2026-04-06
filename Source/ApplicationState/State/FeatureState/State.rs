@@ -45,6 +45,7 @@ use super::{
 	Keybindings::KeybindingState::KeybindingState,
 	LifecyclePhase::LifecyclePhaseState::LifecyclePhaseState,
 	Markers::MarkerState::MarkerState,
+	NavigationHistory::NavigationHistoryState::NavigationHistoryState,
 	OutputChannels::OutputChannelState::OutputChannelState,
 	Terminals::TerminalState::TerminalState,
 	TreeViews::TreeViewState::TreeViewState,
@@ -73,6 +74,9 @@ pub struct State {
 
 	/// Application lifecycle phase state.
 	pub Lifecycle:LifecyclePhaseState,
+
+	/// Editor navigation history (back/forward stack).
+	pub NavigationHistory:NavigationHistoryState,
 
 	/// Marker-related state.
 	pub Markers:MarkerState,
@@ -105,6 +109,7 @@ impl Default for State {
 			Keybindings:Default::default(),
 			Lifecycle:Default::default(),
 			Markers:Default::default(),
+			NavigationHistory:Default::default(),
 			OutputChannels:Default::default(),
 			Terminals:Default::default(),
 			TreeViews:Default::default(),
