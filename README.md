@@ -9,7 +9,7 @@
 </h3>
 </td>
 		<td align="left" valign="middle">
-			<h3 align="left"> + </h3>
+			<h3 align="left"> + </h3>
 		</td>
 		<td align="left" valign="middle">
 			<h3 align="left">
@@ -35,7 +35,7 @@
 			</h3>
 		</td>
 		<td align="left" valign="middle">
-			<h3 align="left"> + </h3>
+			<h3 align="left"> + </h3>
 		</td>
 		<td align="left" valign="middle" width="190">
 			<h3 align="left">
@@ -138,7 +138,7 @@ This document explains the roles of the `ApplicationRunTime`,
 
 ---
 
-## `Mountain` in the Land Ecosystem&#x2001;⛰️ + 🏞️
+## `Mountain` in the Land Ecosystem&#x2001;⛰️ + 🏞️
 
 This diagram illustrates `Mountain`'s central role as the native orchestrator
 for the entire Land application.

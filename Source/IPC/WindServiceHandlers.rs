@@ -264,6 +264,40 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"textFile:write" => handle_textfile_write(runtime.inner().clone(), args).await,
 		"textFile:save" => handle_textfile_save(runtime.inner().clone(), args).await,
 
+		// Storage commands
+		"storage:delete" => handle_storage_delete(runtime.inner().clone(), args).await,
+		"storage:keys" => handle_storage_keys(runtime.inner().clone()).await,
+
+		// Notification commands (emit sky:// events for Sky to render)
+		"notification:show" => handle_notification_show(app_handle.clone(), args).await,
+		"notification:showProgress" => handle_notification_show_progress(app_handle.clone(), args).await,
+		"notification:updateProgress" => handle_notification_update_progress(app_handle.clone(), args).await,
+		"notification:endProgress" => handle_notification_end_progress(app_handle.clone(), args).await,
+
+		// Progress commands
+		"progress:begin" => handle_progress_begin(app_handle.clone(), args).await,
+		"progress:report" => handle_progress_report(app_handle.clone(), args).await,
+		"progress:end" => handle_progress_end(app_handle.clone(), args).await,
+
+		// QuickInput commands (routed through UserInterfaceProvider in CocoonService)
+		"quickInput:showQuickPick" => handle_quick_input_show_quick_pick(runtime.inner().clone(), args).await,
+		"quickInput:showInputBox" => handle_quick_input_show_input_box(runtime.inner().clone(), args).await,
+
+		// Workspaces commands
+		"workspaces:getFolders" => handle_workspaces_get_folders(runtime.inner().clone()).await,
+		"workspaces:addFolder" => handle_workspaces_add_folder(runtime.inner().clone(), args).await,
+		"workspaces:removeFolder" => handle_workspaces_remove_folder(runtime.inner().clone(), args).await,
+		"workspaces:getName" => handle_workspaces_get_name(runtime.inner().clone()).await,
+
+		// Themes commands
+		"themes:getActive" => handle_themes_get_active(runtime.inner().clone()).await,
+		"themes:list" => handle_themes_list(runtime.inner().clone()).await,
+		"themes:set" => handle_themes_set(runtime.inner().clone(), args).await,
+
+		// Search commands
+		"search:findInFiles" => handle_search_find_in_files(runtime.inner().clone(), args).await,
+		"search:findFiles" => handle_search_find_files(runtime.inner().clone(), args).await,
+
 		// IPC status commands
 		"mountain_get_status" => {
 			let status = json!({
@@ -1112,4 +1146,566 @@ async fn handle_extensions_is_active(runtime:Arc<ApplicationRunTime>, args:Vec<V
 		.map_err(|Error| format!("extensions:isActive failed: {}", Error))?;
 
 	Ok(json!(Extension.is_some()))
+}
+
+// ============================================================================
+// Storage handlers
+// ============================================================================
+
+/// Delete a persistent storage key.
+async fn handle_storage_delete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::Storage::StorageProvider::StorageProvider;
+
+	let Key = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("storage:delete requires key as first argument".to_string())?
+		.to_string();
+
+	runtime
+		.Environment
+		.DeleteItem(Key)
+		.await
+		.map_err(|Error| format!("storage:delete failed: {}", Error))?;
+
+	Ok(Value::Null)
+}
+
+/// Return all storage keys.
+async fn handle_storage_keys(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	use CommonLibrary::Storage::StorageProvider::StorageProvider;
+
+	let Keys = runtime
+		.Environment
+		.GetKeys()
+		.await
+		.map_err(|Error| format!("storage:keys failed: {}", Error))?;
+
+	Ok(json!(Keys))
+}
+
+// ============================================================================
+// Notification handlers
+// ============================================================================
+
+/// Show a notification message — emits sky://notification/show for Sky to render.
+async fn handle_notification_show(app_handle:tauri::AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let Message = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Severity = args.get(1).and_then(|V| V.as_str()).unwrap_or("info").to_string();
+	let Actions = args.get(2).cloned().unwrap_or(json!([]));
+
+	let Id = format!("notification-{}", std::time::SystemTime::now()
+		.duration_since(std::time::UNIX_EPOCH)
+		.map(|D| D.as_millis())
+		.unwrap_or(0));
+
+	let _ = app_handle.emit("sky://notification/show", json!({
+		"id": Id,
+		"message": Message,
+		"severity": Severity,
+		"actions": Actions,
+	}));
+
+	Ok(json!(Id))
+}
+
+/// Begin a progress notification — emits sky://notification/progress-begin.
+async fn handle_notification_show_progress(app_handle:tauri::AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let Title = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Cancellable = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+
+	let Id = format!("progress-{}", std::time::SystemTime::now()
+		.duration_since(std::time::UNIX_EPOCH)
+		.map(|D| D.as_millis())
+		.unwrap_or(0));
+
+	let _ = app_handle.emit("sky://notification/progress-begin", json!({
+		"id": Id,
+		"title": Title,
+		"cancellable": Cancellable,
+	}));
+
+	Ok(json!(Id))
+}
+
+/// Update an in-progress notification progress bar.
+async fn handle_notification_update_progress(app_handle:tauri::AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Increment = args.get(1).and_then(|V| V.as_f64()).unwrap_or(0.0);
+	let Message = args.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
+
+	let _ = app_handle.emit("sky://notification/progress-update", json!({
+		"id": Id,
+		"increment": Increment,
+		"message": Message,
+	}));
+
+	Ok(Value::Null)
+}
+
+/// End a progress notification.
+async fn handle_notification_end_progress(app_handle:tauri::AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+
+	let _ = app_handle.emit("sky://notification/progress-end", json!({ "id": Id }));
+
+	Ok(Value::Null)
+}
+
+// ============================================================================
+// Progress handlers
+// ============================================================================
+
+/// Begin a window-level or status-bar progress indicator.
+async fn handle_progress_begin(app_handle:tauri::AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let Location = args.first().and_then(|V| V.as_str()).unwrap_or("notification").to_string();
+	let Title = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Cancellable = args.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+
+	let Id = format!("progress-{}", std::time::SystemTime::now()
+		.duration_since(std::time::UNIX_EPOCH)
+		.map(|D| D.as_millis())
+		.unwrap_or(0));
+
+	let _ = app_handle.emit("sky://progress/begin", json!({
+		"id": Id,
+		"location": Location,
+		"title": Title,
+		"cancellable": Cancellable,
+	}));
+
+	Ok(json!(Id))
+}
+
+/// Report incremental progress on an active indicator.
+async fn handle_progress_report(app_handle:tauri::AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Increment = args.get(1).and_then(|V| V.as_f64()).unwrap_or(0.0);
+	let Message = args.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
+
+	let _ = app_handle.emit("sky://progress/report", json!({
+		"id": Id,
+		"increment": Increment,
+		"message": Message,
+	}));
+
+	Ok(Value::Null)
+}
+
+/// End a progress indicator.
+async fn handle_progress_end(app_handle:tauri::AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+
+	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+
+	let _ = app_handle.emit("sky://progress/end", json!({ "id": Id }));
+
+	Ok(Value::Null)
+}
+
+// ============================================================================
+// QuickInput handlers
+// ============================================================================
+
+/// Show a quick-pick dialog. Routes through UserInterfaceProvider (blocking oneshot).
+async fn handle_quick_input_show_quick_pick(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::UserInterface::UserInterfaceProvider::UserInterfaceProvider;
+	use CommonLibrary::UserInterface::DTO::QuickPickItemDTO::QuickPickItemDTO;
+	use CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO;
+
+	let Items:Vec<QuickPickItemDTO> = args
+		.first()
+		.and_then(|V| V.as_array())
+		.map(|Arr| {
+			Arr.iter()
+				.filter_map(|Item| {
+					let Label = Item.get("label").and_then(|L| L.as_str()).unwrap_or("").to_string();
+					let Description = Item.get("description").and_then(|D| D.as_str()).map(|S| S.to_string());
+					let Detail = Item.get("detail").and_then(|D| D.as_str()).map(|S| S.to_string());
+					let Picked = Item.get("picked").and_then(|P| P.as_bool()).unwrap_or(false);
+					Some(QuickPickItemDTO { Label, Description, Detail, Picked, AlwaysShow:false })
+				})
+				.collect()
+		})
+		.unwrap_or_default();
+
+	let Options = QuickPickOptionsDTO {
+		Placeholder:args.get(1).and_then(|V| V.get("placeholder")).and_then(|P| P.as_str()).map(|S| S.to_string()),
+		CanPickMany:args.get(1).and_then(|V| V.get("canPickMany")).and_then(|B| B.as_bool()).unwrap_or(false),
+		Title:args.get(1).and_then(|V| V.get("title")).and_then(|T| T.as_str()).map(|S| S.to_string()),
+	};
+
+	let Result = runtime
+		.Environment
+		.ShowQuickPick(Items, Options)
+		.await
+		.map_err(|Error| format!("quickInput:showQuickPick failed: {}", Error))?;
+
+	match Result {
+		Some(Item) => Ok(json!({
+			"label": Item.Label,
+			"description": Item.Description,
+			"detail": Item.Detail,
+			"picked": Item.Picked,
+		})),
+		None => Ok(Value::Null),
+	}
+}
+
+/// Show an input box dialog. Routes through UserInterfaceProvider (blocking oneshot).
+async fn handle_quick_input_show_input_box(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::UserInterface::UserInterfaceProvider::UserInterfaceProvider;
+	use CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO;
+
+	let Opts = args.first();
+	let Options = InputBoxOptionsDTO {
+		Prompt:Opts.and_then(|V| V.get("prompt")).and_then(|P| P.as_str()).map(|S| S.to_string()),
+		Placeholder:Opts.and_then(|V| V.get("placeholder")).and_then(|P| P.as_str()).map(|S| S.to_string()),
+		IsPassword:Opts.and_then(|V| V.get("password")).and_then(|B| B.as_bool()).unwrap_or(false),
+		Value:Opts.and_then(|V| V.get("value")).and_then(|V| V.as_str()).map(|S| S.to_string()),
+		Title:Opts.and_then(|V| V.get("title")).and_then(|T| T.as_str()).map(|S| S.to_string()),
+	};
+
+	let Result = runtime
+		.Environment
+		.ShowInputBox(Options)
+		.await
+		.map_err(|Error| format!("quickInput:showInputBox failed: {}", Error))?;
+
+	Ok(Result.map(|S| json!(S)).unwrap_or(Value::Null))
+}
+
+// ============================================================================
+// Workspaces handlers
+// ============================================================================
+
+/// Return the current workspace folders.
+async fn handle_workspaces_get_folders(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Folders = runtime
+		.Environment
+		.Workspace
+		.GetFolders()
+		.await
+		.map_err(|Error| format!("workspaces:getFolders failed: {}", Error))?;
+
+	let FolderList:Vec<Value> = Folders
+		.iter()
+		.enumerate()
+		.map(|(Index, Folder)| json!({
+			"uri": Folder.Uri,
+			"name": Folder.Name,
+			"index": Index,
+		}))
+		.collect();
+
+	Ok(json!(FolderList))
+}
+
+/// Add a workspace folder.
+async fn handle_workspaces_add_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("workspaces:addFolder requires uri as first argument".to_string())?
+		.to_string();
+
+	let Name = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+
+	runtime
+		.Environment
+		.Workspace
+		.AddFolder(Uri, Name)
+		.await
+		.map_err(|Error| format!("workspaces:addFolder failed: {}", Error))?;
+
+	Ok(Value::Null)
+}
+
+/// Remove a workspace folder by URI.
+async fn handle_workspaces_remove_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let Uri = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("workspaces:removeFolder requires uri as first argument".to_string())?
+		.to_string();
+
+	runtime
+		.Environment
+		.Workspace
+		.RemoveFolder(Uri)
+		.await
+		.map_err(|Error| format!("workspaces:removeFolder failed: {}", Error))?;
+
+	Ok(Value::Null)
+}
+
+/// Return the workspace name (basename of root folder, or None if untitled).
+async fn handle_workspaces_get_name(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Name = runtime
+		.Environment
+		.Workspace
+		.GetName()
+		.await
+		.map_err(|Error| format!("workspaces:getName failed: {}", Error))?;
+
+	Ok(Name.map(|N| json!(N)).unwrap_or(Value::Null))
+}
+
+// ============================================================================
+// Themes handlers
+// ============================================================================
+
+/// Return the active color theme metadata from ConfigurationProvider.
+async fn handle_themes_get_active(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	use CommonLibrary::Configuration::ConfigurationProvider::ConfigurationProvider;
+
+	let ThemeId = runtime
+		.Environment
+		.GetConfigurationValue("workbench.colorTheme".to_string())
+		.await
+		.map_err(|Error| format!("themes:getActive failed: {}", Error))?;
+
+	let Id = ThemeId
+		.as_ref()
+		.and_then(|V| V.as_str())
+		.unwrap_or("Default Dark Modern")
+		.to_string();
+
+	// Infer kind from id string
+	let Kind = if Id.to_lowercase().contains("light") { "light" }
+		else if Id.to_lowercase().contains("high contrast light") { "highContrastLight" }
+		else if Id.to_lowercase().contains("high contrast") { "highContrast" }
+		else { "dark" };
+
+	Ok(json!({ "id": Id, "label": Id, "kind": Kind }))
+}
+
+/// Return installed theme extensions.
+async fn handle_themes_list(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	// For now return a hardcoded set of built-in themes; extensions contribute more.
+	let Themes = vec![
+		json!({ "id": "Default Dark Modern", "label": "Default Dark Modern", "kind": "dark" }),
+		json!({ "id": "Default Light Modern", "label": "Default Light Modern", "kind": "light" }),
+		json!({ "id": "Default Dark+", "label": "Default Dark+", "kind": "dark" }),
+		json!({ "id": "Default Light+", "label": "Default Light+", "kind": "light" }),
+		json!({ "id": "High Contrast", "label": "High Contrast", "kind": "highContrast" }),
+		json!({ "id": "High Contrast Light", "label": "High Contrast Light", "kind": "highContrastLight" }),
+	];
+
+	Ok(json!(Themes))
+}
+
+/// Set the active color theme by updating ConfigurationProvider.
+async fn handle_themes_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use CommonLibrary::Configuration::ConfigurationProvider::ConfigurationProvider;
+	use tauri::Emitter;
+
+	let ThemeId = args
+		.first()
+		.and_then(|V| V.as_str())
+		.ok_or("themes:set requires themeId as first argument".to_string())?
+		.to_string();
+
+	runtime
+		.Environment
+		.UpdateConfigurationValue("workbench.colorTheme".to_string(), json!(ThemeId))
+		.await
+		.map_err(|Error| format!("themes:set failed: {}", Error))?;
+
+	let _ = runtime.Environment.ApplicationHandle.emit("sky://theme/change", json!({ "themeId": ThemeId }));
+
+	Ok(Value::Null)
+}
+
+// ============================================================================
+// Search handlers
+// ============================================================================
+
+/// Search text across all workspace files (line-by-line grep, max 1000 results).
+async fn handle_search_find_in_files(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use globset::GlobBuilder;
+	use tokio::fs;
+	use std::path::PathBuf;
+
+	let Pattern = args.first().and_then(|V| V.as_str()).ok_or("search:findInFiles requires pattern".to_string())?.to_string();
+	let IsRegex = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+	let IsCaseSensitive = args.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+	let _IsWordMatch = args.get(3).and_then(|V| V.as_bool()).unwrap_or(false);
+	let IncludeGlob = args.get(4).and_then(|V| V.as_str()).unwrap_or("**").to_string();
+	let ExcludeGlob = args.get(5).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let MaxResults = args.get(6).and_then(|V| V.as_u64()).unwrap_or(1000) as usize;
+
+	let WorkspaceFolders = runtime
+		.Environment
+		.Workspace
+		.GetFolders()
+		.await
+		.unwrap_or_default();
+
+	if WorkspaceFolders.is_empty() {
+		return Ok(json!([]));
+	}
+
+	let RootPath = PathBuf::from(&WorkspaceFolders[0].Uri.replace("file://", ""));
+
+	// Build include matcher
+	let IncludeMatcher = GlobBuilder::new(&IncludeGlob)
+		.literal_separator(false)
+		.build()
+		.map(|G| G.compile_matcher())
+		.ok();
+
+	// Build exclude matcher
+	let ExcludeMatcher = if !ExcludeGlob.is_empty() {
+		GlobBuilder::new(&ExcludeGlob)
+			.literal_separator(false)
+			.build()
+			.map(|G| G.compile_matcher())
+			.ok()
+	} else {
+		None
+	};
+
+	let SearchText = Pattern.clone();
+	let mut Matches = Vec::new();
+
+	// Walk directory recursively
+	let mut Stack = vec![RootPath.clone()];
+	while let Some(Dir) = Stack.pop() {
+		let mut Entries = match fs::read_dir(&Dir).await {
+			Ok(E) => E,
+			Err(_) => continue,
+		};
+
+		while let Ok(Some(Entry)) = Entries.next_entry().await {
+			let Path = Entry.path();
+			let RelPath = Path.strip_prefix(&RootPath).unwrap_or(&Path).to_string_lossy().to_string();
+
+			// Skip hidden dirs
+			if Path.file_name().map(|N| N.to_string_lossy().starts_with('.')).unwrap_or(false) {
+				continue;
+			}
+
+			if Path.is_dir() {
+				Stack.push(Path);
+				continue;
+			}
+
+			// Check include/exclude globs
+			if let Some(Ref) = &IncludeMatcher {
+				if !Ref.is_match(&RelPath) { continue; }
+			}
+			if let Some(Ref) = &ExcludeMatcher {
+				if Ref.is_match(&RelPath) { continue; }
+			}
+
+			// Read file and search line by line
+			let Content = match fs::read_to_string(&Path).await {
+				Ok(C) => C,
+				Err(_) => continue,
+			};
+
+			for (LineIndex, Line) in Content.lines().enumerate() {
+				let Hit = if IsRegex {
+					// Simple contains fallback (no regex crate available here)
+					Line.contains(&SearchText)
+				} else if IsCaseSensitive {
+					Line.contains(&SearchText)
+				} else {
+					Line.to_lowercase().contains(&SearchText.to_lowercase())
+				};
+
+				if Hit {
+					let Uri = format!("file://{}", Path.to_string_lossy());
+					Matches.push(json!({
+						"uri": Uri,
+						"lineNumber": LineIndex + 1,
+						"preview": Line.trim(),
+					}));
+
+					if Matches.len() >= MaxResults {
+						return Ok(json!(Matches));
+					}
+				}
+			}
+		}
+	}
+
+	Ok(json!(Matches))
+}
+
+/// Search file paths by glob pattern in workspace.
+async fn handle_search_find_files(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	use globset::GlobBuilder;
+	use tokio::fs;
+	use std::path::PathBuf;
+
+	let Pattern = args.first().and_then(|V| V.as_str()).ok_or("search:findFiles requires pattern".to_string())?.to_string();
+	let MaxResults = args.get(1).and_then(|V| V.as_u64()).unwrap_or(500) as usize;
+
+	let WorkspaceFolders = runtime
+		.Environment
+		.Workspace
+		.GetFolders()
+		.await
+		.unwrap_or_default();
+
+	if WorkspaceFolders.is_empty() {
+		return Ok(json!([]));
+	}
+
+	let RootPath = PathBuf::from(&WorkspaceFolders[0].Uri.replace("file://", ""));
+
+	let Matcher = GlobBuilder::new(&Pattern)
+		.literal_separator(false)
+		.build()
+		.map(|G| G.compile_matcher())
+		.map_err(|Error| format!("Invalid glob pattern: {}", Error))?;
+
+	let mut Files = Vec::new();
+	let mut Stack = vec![RootPath.clone()];
+
+	while let Some(Dir) = Stack.pop() {
+		let mut Entries = match fs::read_dir(&Dir).await {
+			Ok(E) => E,
+			Err(_) => continue,
+		};
+
+		while let Ok(Some(Entry)) = Entries.next_entry().await {
+			let Path = Entry.path();
+
+			if Path.file_name().map(|N| N.to_string_lossy().starts_with('.')).unwrap_or(false) {
+				continue;
+			}
+
+			if Path.is_dir() {
+				Stack.push(Path);
+				continue;
+			}
+
+			let RelPath = Path.strip_prefix(&RootPath).unwrap_or(&Path).to_string_lossy().to_string();
+
+			if Matcher.is_match(&RelPath) {
+				Files.push(format!("file://{}", Path.to_string_lossy()));
+
+				if Files.len() >= MaxResults {
+					return Ok(json!(Files));
+				}
+			}
+		}
+	}
+
+	Ok(json!(Files))
 }

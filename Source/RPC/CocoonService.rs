@@ -1,8 +1,6 @@
-//! # CocoonServiceImpl Implementation
-//!
-//! This module implements the main gRPC service for Mountain-Cocoon
-
-#[allow(unused_imports)]
+// # CocoonServiceImpl Implementation
+//
+// This module implements the main gRPC service for Mountain-Cocoon
 // communication. It handles all requests from the Cocoon extension host
 // sidecar.
 //
@@ -28,7 +26,9 @@
 // ## Error Handling
 //
 // All methods return `tonic::Result<T>` and use proper error conversion
-/// from internal errors to gRPC status codes.
+// from internal errors to gRPC status codes.
+
+#[allow(unused_imports)]
 use std::{
 	collections::HashMap,
 	sync::Arc,
@@ -364,6 +364,8 @@ impl CocoonServiceImpl {
 	}
 }
 
+
+
 #[async_trait]
 impl CocoonService for CocoonServiceImpl {
 	/// Process Mountain requests from Cocoon (generic request-response).
@@ -495,6 +497,234 @@ impl CocoonService for CocoonServiceImpl {
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+			// ---- Commands (Cocoon MountainGRPCClient format) ----
+			"executeCommand" => {
+				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Arg = Params.get("arguments").and_then(|A| A.as_array()).and_then(|A| A.first()).cloned().unwrap_or(serde_json::Value::Null);
+				match self.environment.ExecuteCommand(CommandId, Arg).await {
+					Ok(Value) => Ok(OkResponse(RequestId, &json!({ "result": Value }))),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
+			},
+			"unregisterCommand" => {
+				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				match self.environment.UnregisterCommand(ExtensionId, CommandId).await {
+					Ok(()) => Ok(OkResponse(RequestId, &json!({ "success": true }))),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
+			},
+			// ---- Window (Cocoon MountainGRPCClient format) ----
+			"showTextDocument" => {
+				use tauri::Emitter;
+				let Uri = Params.get("uri").and_then(|V| V.get("value").or(Some(V))).and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let ViewColumn = Params.get("viewColumn").and_then(|V| V.as_i64()).map(|N| N + 2);
+				let PreserveFocus = Params.get("preserveFocus").and_then(|V| V.as_bool()).unwrap_or(false);
+				let _ = self.environment.ApplicationHandle.emit("sky://editor/openDocument", json!({ "uri": Uri, "viewColumn": ViewColumn, "preserveFocus": PreserveFocus }));
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			"showInformation" => {
+				use CommonLibrary::UserInterface::DTO::MessageSeverity::MessageSeverity;
+				use CommonLibrary::UserInterface::UserInterfaceProvider::UserInterfaceProvider;
+				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.ShowMessage(MessageSeverity::Info, Message, None).await;
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			"showWarning" => {
+				use CommonLibrary::UserInterface::DTO::MessageSeverity::MessageSeverity;
+				use CommonLibrary::UserInterface::UserInterfaceProvider::UserInterfaceProvider;
+				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.ShowMessage(MessageSeverity::Warning, Message, None).await;
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			"showError" => {
+				use CommonLibrary::UserInterface::DTO::MessageSeverity::MessageSeverity;
+				use CommonLibrary::UserInterface::UserInterfaceProvider::UserInterfaceProvider;
+				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.ShowMessage(MessageSeverity::Error, Message, None).await;
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			"createStatusBarItem" => {
+				use tauri::Emitter;
+				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Tooltip = Params.get("tooltip").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.ApplicationHandle.emit("sky://statusbar/create", json!({ "id": Id, "text": Text, "tooltip": Tooltip }));
+				Ok(OkResponse(RequestId, &json!({ "itemId": Id })))
+			},
+			"setStatusBarText" => {
+				use tauri::Emitter;
+				let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.ApplicationHandle.emit("sky://statusbar/update", json!({ "id": ItemId, "text": Text }));
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			"createWebviewPanel" => {
+				use tauri::Emitter;
+				let ViewType = Params.get("viewType").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Title = Params.get("title").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Handle = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|D| D.as_millis() as u64).unwrap_or(0);
+				let _ = self.environment.ApplicationHandle.emit("sky://webview/create", json!({ "handle": Handle, "viewType": ViewType, "title": Title, "viewColumn": Params.get("viewColumn"), "preserveFocus": Params.get("preserveFocus").and_then(|V| V.as_bool()).unwrap_or(false) }));
+				Ok(OkResponse(RequestId, &json!({ "handle": Handle })))
+			},
+			"setWebviewHtml" => {
+				use tauri::Emitter;
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
+				let Html = Params.get("html").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.ApplicationHandle.emit("sky://webview/setHtml", json!({ "handle": Handle, "html": Html }));
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			// ---- Workspace (Cocoon MountainGRPCClient format) ----
+			"findFiles" => {
+				use globset::GlobBuilder;
+				use std::path::PathBuf;
+				let Pattern = Params.get("pattern").and_then(|V| V.as_str()).unwrap_or("**").to_string();
+				let WorkspaceFolders = self.environment.ApplicationState.Workspace.GetFolders().await.unwrap_or_default();
+				if WorkspaceFolders.is_empty() {
+					return Ok(OkResponse(RequestId, &json!({ "uris": Vec::<String>::new() })));
+				}
+				let RootPath = PathBuf::from(&WorkspaceFolders[0].Uri.replace("file://", ""));
+				let Matcher = match GlobBuilder::new(&Pattern).literal_separator(false).build() {
+					Ok(G) => G.compile_matcher(),
+					Err(E) => return Ok(ErrResponse(RequestId, -32000, format!("Invalid glob: {}", E))),
+				};
+				let mut Files: Vec<String> = Vec::new();
+				let mut Stack = vec![RootPath.clone()];
+				'find_outer: while let Some(Dir) = Stack.pop() {
+					let mut Entries = match tokio::fs::read_dir(&Dir).await { Ok(E) => E, Err(_) => continue };
+					while let Ok(Some(Entry)) = Entries.next_entry().await {
+						let Path = Entry.path();
+						if Path.file_name().map(|N| N.to_string_lossy().starts_with('.')).unwrap_or(false) { continue; }
+						if Path.is_dir() { Stack.push(Path); continue; }
+						let Rel = Path.strip_prefix(&RootPath).unwrap_or(&Path).to_string_lossy().to_string();
+						if Matcher.is_match(&Rel) {
+							Files.push(format!("file://{}", Path.to_string_lossy()));
+							if Files.len() >= 500 { break 'find_outer; }
+						}
+					}
+				}
+				Ok(OkResponse(RequestId, &json!({ "uris": Files })))
+			},
+			"findTextInFiles" => {
+				use globset::GlobBuilder;
+				use std::path::PathBuf;
+				let Pattern = Params.get("pattern").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let IncludeStr = Params.get("include").and_then(|V| V.as_array()).and_then(|A| A.first()).and_then(|V| V.as_str()).map(|S| S.to_string()).unwrap_or_else(|| "**".to_string());
+				let WorkspaceFolders = self.environment.ApplicationState.Workspace.GetFolders().await.unwrap_or_default();
+				if WorkspaceFolders.is_empty() { return Ok(OkResponse(RequestId, &json!({ "matches": Vec::<serde_json::Value>::new() }))); }
+				let RootPath = PathBuf::from(&WorkspaceFolders[0].Uri.replace("file://", ""));
+				let Matcher = GlobBuilder::new(&IncludeStr).literal_separator(false).build().map(|G| G.compile_matcher()).ok();
+				let PatternLower = Pattern.to_lowercase();
+				let mut Matches: Vec<serde_json::Value> = Vec::new();
+				let mut Stack = vec![RootPath.clone()];
+				'text_outer: while let Some(Dir) = Stack.pop() {
+					let mut Entries = match tokio::fs::read_dir(&Dir).await { Ok(E) => E, Err(_) => continue };
+					while let Ok(Some(Entry)) = Entries.next_entry().await {
+						let Path = Entry.path();
+						if Path.file_name().map(|N| N.to_string_lossy().starts_with('.')).unwrap_or(false) { continue; }
+						if Path.is_dir() { Stack.push(Path); continue; }
+						let Rel = Path.strip_prefix(&RootPath).unwrap_or(&Path).to_string_lossy().to_string();
+						if let Some(Ref) = &Matcher { if !Ref.is_match(&Rel) { continue; } }
+						let Content = match tokio::fs::read_to_string(&Path).await { Ok(C) => C, Err(_) => continue };
+						for (LineIdx, Line) in Content.lines().enumerate() {
+							if Line.to_lowercase().contains(&PatternLower) {
+								Matches.push(json!({ "uri": format!("file://{}", Path.to_string_lossy()), "lineNumber": LineIdx + 1, "preview": Line.trim() }));
+								if Matches.len() >= 1000 { break 'text_outer; }
+							}
+						}
+					}
+				}
+				Ok(OkResponse(RequestId, &json!({ "matches": Matches })))
+			},
+			"openDocument" => {
+				use tauri::Emitter;
+				let Uri = Params.get("uri").and_then(|V| V.get("value").or(Some(V))).and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let ViewColumn = Params.get("viewColumn").and_then(|V| V.as_i64());
+				let _ = self.environment.ApplicationHandle.emit("sky://editor/openDocument", json!({ "uri": Uri, "viewColumn": ViewColumn }));
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			"saveAll" => {
+				use tauri::Emitter;
+				let IncludeUntitled = Params.get("includeUntitled").and_then(|V| V.as_bool()).unwrap_or(false);
+				let _ = self.environment.ApplicationHandle.emit("sky://editor/saveAll", json!({ "includeUntitled": IncludeUntitled }));
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			"applyEdit" => {
+				use tauri::Emitter;
+				let Uri = Params.get("uri").and_then(|V| V.get("value").or(Some(V))).and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Edits = Params.get("edits").cloned().unwrap_or(json!([]));
+				let _ = self.environment.ApplicationHandle.emit("sky://editor/applyEdits", json!({ "uri": Uri, "edits": Edits }));
+				Ok(OkResponse(RequestId, &json!({ "success": true })))
+			},
+			// ---- Secret Storage (Cocoon MountainGRPCClient format) ----
+			"getSecret" => {
+				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				match self.environment.GetSecret(ExtensionId, Key).await {
+					Ok(Some(Value)) => Ok(OkResponse(RequestId, &json!({ "value": Value }))),
+					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
+			},
+			"storeSecret" => {
+				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Value = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				match self.environment.StoreSecret(ExtensionId, Key, Value).await {
+					Ok(()) => Ok(OkResponse(RequestId, &json!({ "success": true }))),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
+			},
+			"deleteSecret" => {
+				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				match self.environment.DeleteSecret(ExtensionId, Key).await {
+					Ok(()) => Ok(OkResponse(RequestId, &json!({ "success": true }))),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
+				}
+			},
+			// ---- FS aliases (Cocoon MountainGRPCClient uses different key names) ----
+			"readFile" => {
+				let Uri = Params.get("uri").and_then(|V| V.as_str()).or_else(|| Params.as_str()).unwrap_or("").replace("file://", "");
+				match tokio::fs::read(&Uri).await {
+					Ok(Content) => Ok(OkResponse(RequestId, &Content)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("readFile: {}", Error))),
+				}
+			},
+			"writeFile" => {
+				let Uri = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("").replace("file://", "");
+				let Content: Vec<u8> = Params.get("content").and_then(|V| V.as_array()).map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect()).unwrap_or_default();
+				match tokio::fs::write(&Uri, &Content).await {
+					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("writeFile: {}", Error))),
+				}
+			},
+			"stat" => {
+				let Uri = Params.get("uri").and_then(|V| V.as_str()).or_else(|| Params.as_str()).unwrap_or("").replace("file://", "");
+				match tokio::fs::metadata(&Uri).await {
+					Ok(Meta) => {
+						let Mtime = Meta.modified().ok().and_then(|T| T.duration_since(UNIX_EPOCH).ok()).map(|D| D.as_millis() as u64).unwrap_or(0);
+						Ok(OkResponse(RequestId, &json!({ "type": if Meta.is_dir() { 2 } else { 1 }, "is_file": Meta.is_file(), "is_directory": Meta.is_dir(), "size": Meta.len(), "mtime": Mtime })))
+					},
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("stat: {}", Error))),
+				}
+			},
+			"readdir" => {
+				let Uri = Params.get("uri").and_then(|V| V.as_str()).or_else(|| Params.as_str()).unwrap_or("").replace("file://", "");
+				match tokio::fs::read_dir(&Uri).await {
+					Ok(mut Entries) => {
+						let mut Names: Vec<String> = Vec::new();
+						while let Ok(Some(Entry)) = Entries.next_entry().await {
+							if let Some(Name) = Entry.file_name().to_str() { Names.push(Name.to_string()); }
+						}
+						Ok(OkResponse(RequestId, &Names))
+					},
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("readdir: {}", Error))),
+				}
+			},
 			// ---- Unknown ----
 			_ => {
 				warn!("[CocoonService] Unknown generic method: {}", Req.method);
@@ -504,21 +734,250 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// Send Mountain notifications to Cocoon (generic fire-and-forget)
+	/// Routes by notification.method string to the appropriate Mountain handler.
+	/// Called by Cocoon's `MountainGRPCClient.sendNotification(method, params)`.
 	async fn send_mountain_notification(
 		&self,
 		request:Request<GenericNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let notification = request.into_inner();
 		debug!(
-			"[CocoonService] Sending generic Mountain notification '{}'",
+			"[CocoonService] Notification router: method='{}'",
 			notification.method
 		);
 
-		// Notification router with method-to-handler mapping
-		// This method provides a generic interface for fire-and-forget notifications
-		// The actual implementation delegates to specific type-safe notification
-		// methods
-		debug!("[CocoonService] Generic notification router: method='{}'", notification.method);
+		// Deserialise notification parameters as JSON
+		let Params:serde_json::Value = if notification.parameter.is_empty() {
+			serde_json::Value::Null
+		} else {
+			serde_json::from_slice(&notification.parameter).unwrap_or(serde_json::Value::Null)
+		};
+
+		match notification.method.as_str() {
+			// ---- Commands ----
+			"registerCommand" => {
+				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				if let Err(Error) = self.environment.RegisterCommand(ExtensionId, CommandId.clone()).await {
+					warn!("[CocoonService] notification: registerCommand '{}' failed: {:?}", CommandId, Error);
+				}
+			},
+			"unregisterCommand" => {
+				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.UnregisterCommand(ExtensionId, CommandId).await;
+			},
+			// ---- Language Providers (APIFactoryService.ts register_*_provider strings) ----
+			"register_hover_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::Hover, Selector, ExtId);
+			},
+			"register_completion_item_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::Completion, Selector, ExtId);
+			},
+			"register_definition_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::Definition, Selector, ExtId);
+			},
+			"register_reference_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::References, Selector, ExtId);
+			},
+			"register_code_actions_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::CodeAction, Selector, ExtId);
+			},
+			"register_document_highlight_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::DocumentHighlight, Selector, ExtId);
+			},
+			"register_document_symbol_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::DocumentSymbol, Selector, ExtId);
+			},
+			"register_workspace_symbol_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::WorkspaceSymbol, Selector, ExtId);
+			},
+			"register_rename_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::Rename, Selector, ExtId);
+			},
+			"register_document_formatting_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::DocumentFormatting, Selector, ExtId);
+			},
+			"register_document_range_formatting_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::DocumentRangeFormatting, Selector, ExtId);
+			},
+			"register_on_type_formatting_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::OnTypeFormatting, Selector, ExtId);
+			},
+			"register_signature_help_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::SignatureHelp, Selector, ExtId);
+			},
+			"register_code_lens_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::CodeLens, Selector, ExtId);
+			},
+			"register_folding_range_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::FoldingRange, Selector, ExtId);
+			},
+			"register_selection_range_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::SelectionRange, Selector, ExtId);
+			},
+			"register_semantic_tokens_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::SemanticTokens, Selector, ExtId);
+			},
+			"register_inlay_hints_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::InlayHint, Selector, ExtId);
+			},
+			"register_type_hierarchy_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::TypeHierarchy, Selector, ExtId);
+			},
+			"register_call_hierarchy_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::CallHierarchy, Selector, ExtId);
+			},
+			"register_linked_editing_range_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::LinkedEditingRange, Selector, ExtId);
+			},
+			"register_document_link_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::DocumentLink, Selector, ExtId);
+			},
+			"register_color_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::Color, Selector, ExtId);
+			},
+			"register_implementation_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::Implementation, Selector, ExtId);
+			},
+			"register_type_definition_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::TypeDefinition, Selector, ExtId);
+			},
+			"register_declaration_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::Declaration, Selector, ExtId);
+			},
+			"register_evaluatable_expression_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::EvaluatableExpression, Selector, ExtId);
+			},
+			"register_inline_values_provider" => {
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+				self.RegisterProvider(Handle, ProviderType::InlineValues, Selector, ExtId);
+			},
+			// ---- Webview ----
+			"onDidReceiveMessage" => {
+				use tauri::Emitter;
+				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
+				let Message = Params.get("stringMessage").and_then(|V| V.as_str()).map(|S| S.to_string())
+					.or_else(|| Params.get("bytesMessage").map(|_| "[binary]".to_string()))
+					.unwrap_or_default();
+				let _ = self.environment.ApplicationHandle.emit("sky://webview/message", json!({ "handle": Handle, "message": Message }));
+			},
+			// ---- Secrets (fire-and-forget variants) ----
+			"storeSecret" => {
+				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Value = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.StoreSecret(ExtensionId, Key, Value).await;
+			},
+			"deleteSecret" => {
+				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.DeleteSecret(ExtensionId, Key).await;
+			},
+			// ---- File system (fire-and-forget write) ----
+			"writeFile" => {
+				let Uri = Params.get("uri").and_then(|V| V.get("value").or(Some(V))).and_then(|V| V.as_str()).unwrap_or("").replace("file://", "");
+				let Content:Vec<u8> = Params.get("content").and_then(|V| V.as_array())
+					.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
+					.unwrap_or_default();
+				let _ = tokio::fs::write(&Uri, &Content).await;
+			},
+			// ---- Language configuration ----
+			"set_language_configuration" => {
+				// Language configuration is consumed by Sky — emit for workbench to pick up
+				use tauri::Emitter;
+				let Language = Params.get("language").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				let _ = self.environment.ApplicationHandle.emit("sky://language/configure", json!({ "language": Language }));
+			},
+			_ => {
+				debug!("[CocoonService] Unknown notification method: '{}'", notification.method);
+			},
+		}
 
 		Ok(Response::new(Empty {}))
 	}
@@ -957,14 +1416,6 @@ impl CocoonService for CocoonServiceImpl {
 		warn!("[CocoonService] show_warning_message: {}", req.message);
 
 		let _ = self.environment.ShowMessage(MessageSeverity::Warning, req.message, None).await;
-
-		Ok(Response::new(ShowMessageResponse { success:true }))
-	}
-
-	/// (placeholder for the old duplicate pattern — removed)
-		// - Wait for user action selection or dismissal
-		// - Return selected action index
-		warn!("{}", req.message);
 
 		Ok(Response::new(ShowMessageResponse { success:true }))
 	}
