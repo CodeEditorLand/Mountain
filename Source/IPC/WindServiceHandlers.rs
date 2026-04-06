@@ -192,7 +192,10 @@ use CommonLibrary::{
 	Storage::StorageProvider::StorageProvider,
 };
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{
+	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system
@@ -1373,6 +1376,7 @@ async fn handle_quick_input_show_input_box(runtime:Arc<ApplicationRunTime>, args
 		IsPassword:Some(Opts.and_then(|V| V.get("password")).and_then(|B| B.as_bool()).unwrap_or(false)),
 		Value:Opts.and_then(|V| V.get("value")).and_then(|V| V.as_str()).map(|S| S.to_string()),
 		Title:Opts.and_then(|V| V.get("title")).and_then(|T| T.as_str()).map(|S| S.to_string()),
+		IgnoreFocusOut:None,
 	};
 
 	let Result = runtime
@@ -1390,18 +1394,14 @@ async fn handle_quick_input_show_input_box(runtime:Arc<ApplicationRunTime>, args
 
 /// Return the current workspace folders.
 async fn handle_workspaces_get_folders(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let Folders = runtime
-		.Environment
-		.ApplicationState.Workspace
-		.GetFolders()
-		.await
-		.map_err(|Error| format!("workspaces:getFolders failed: {}", Error))?;
+	let Workspace = &runtime.Environment.ApplicationState.Workspace;
+	let Folders = Workspace.GetWorkspaceFolders();
 
 	let FolderList:Vec<Value> = Folders
 		.iter()
 		.enumerate()
 		.map(|(Index, Folder)| json!({
-			"uri": Folder.Uri,
+			"uri": Folder.URI.to_string(),
 			"name": Folder.Name,
 			"index": Index,
 		}))
@@ -1412,7 +1412,9 @@ async fn handle_workspaces_get_folders(runtime:Arc<ApplicationRunTime>) -> Resul
 
 /// Add a workspace folder.
 async fn handle_workspaces_add_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+	use url::Url;
+
+	let UriStr = args
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("workspaces:addFolder requires uri as first argument".to_string())?
@@ -1420,30 +1422,33 @@ async fn handle_workspaces_add_folder(runtime:Arc<ApplicationRunTime>, args:Vec<
 
 	let Name = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	runtime
-		.Environment
-		.ApplicationState.Workspace
-		.AddFolder(Uri, Name)
-		.await
-		.map_err(|Error| format!("workspaces:addFolder failed: {}", Error))?;
+	let Workspace = &runtime.Environment.ApplicationState.Workspace;
+	let mut Folders = Workspace.GetWorkspaceFolders();
+	let Index = Folders.len();
+	let URI = Url::parse(&UriStr).map_err(|E| format!("workspaces:addFolder invalid URI: {}", E))?;
+	if let Ok(Folder) = WorkspaceFolderStateDTO::New(URI, Name, Index) {
+		Folders.push(Folder);
+		Workspace.SetWorkspaceFolders(Folders);
+	}
 
 	Ok(Value::Null)
 }
 
 /// Remove a workspace folder by URI.
 async fn handle_workspaces_remove_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+	let UriStr = args
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("workspaces:removeFolder requires uri as first argument".to_string())?
 		.to_string();
 
-	runtime
-		.Environment
-		.ApplicationState.Workspace
-		.RemoveFolder(Uri)
-		.await
-		.map_err(|Error| format!("workspaces:removeFolder failed: {}", Error))?;
+	let Workspace = &runtime.Environment.ApplicationState.Workspace;
+	let mut Folders = Workspace.GetWorkspaceFolders();
+	Folders.retain(|F| F.URI.to_string() != UriStr);
+	for (I, F) in Folders.iter_mut().enumerate() {
+		F.Index = I;
+	}
+	Workspace.SetWorkspaceFolders(Folders);
 
 	Ok(Value::Null)
 }
@@ -1453,9 +1458,10 @@ async fn handle_workspaces_get_name(runtime:Arc<ApplicationRunTime>) -> Result<V
 	let Name = runtime
 		.Environment
 		.ApplicationState.Workspace
-		.GetName()
-		.await
-		.map_err(|Error| format!("workspaces:getName failed: {}", Error))?;
+		.GetWorkspaceFolders()
+		.into_iter()
+		.next()
+		.map(|F| F.GetDisplayName());
 
 	Ok(Name.map(|N| json!(N)).unwrap_or(Value::Null))
 }
@@ -1551,15 +1557,13 @@ async fn handle_search_find_in_files(runtime:Arc<ApplicationRunTime>, args:Vec<V
 	let WorkspaceFolders = runtime
 		.Environment
 		.ApplicationState.Workspace
-		.GetFolders()
-		.await
-		.unwrap_or_default();
+		.GetWorkspaceFolders();
 
 	if WorkspaceFolders.is_empty() {
 		return Ok(json!([]));
 	}
 
-	let RootPath = PathBuf::from(&WorkspaceFolders[0].Uri.replace("file://", ""));
+	let RootPath = PathBuf::from(&WorkspaceFolders[0].URI.to_string().replace("file://", ""));
 
 	// Build include matcher
 	let IncludeMatcher = GlobBuilder::new(&IncludeGlob)
@@ -1659,15 +1663,13 @@ async fn handle_search_find_files(runtime:Arc<ApplicationRunTime>, args:Vec<Valu
 	let WorkspaceFolders = runtime
 		.Environment
 		.ApplicationState.Workspace
-		.GetFolders()
-		.await
-		.unwrap_or_default();
+		.GetWorkspaceFolders();
 
 	if WorkspaceFolders.is_empty() {
 		return Ok(json!([]));
 	}
 
-	let RootPath = PathBuf::from(&WorkspaceFolders[0].Uri.replace("file://", ""));
+	let RootPath = PathBuf::from(&WorkspaceFolders[0].URI.to_string().replace("file://", ""));
 
 	let Matcher = GlobBuilder::new(&Pattern)
 		.literal_separator(false)

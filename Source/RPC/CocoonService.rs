@@ -579,11 +579,11 @@ impl CocoonService for CocoonServiceImpl {
 				use globset::GlobBuilder;
 				use std::path::PathBuf;
 				let Pattern = Params.get("pattern").and_then(|V| V.as_str()).unwrap_or("**").to_string();
-				let WorkspaceFolders = self.environment.ApplicationState.Workspace.GetFolders().await.unwrap_or_default();
+				let WorkspaceFolders = self.environment.ApplicationState.Workspace.GetWorkspaceFolders();
 				if WorkspaceFolders.is_empty() {
 					return Ok(OkResponse(RequestId, &json!({ "uris": Vec::<String>::new() })));
 				}
-				let RootPath = PathBuf::from(&WorkspaceFolders[0].Uri.replace("file://", ""));
+				let RootPath = PathBuf::from(&WorkspaceFolders[0].URI.to_string().replace("file://", ""));
 				let Matcher = match GlobBuilder::new(&Pattern).literal_separator(false).build() {
 					Ok(G) => G.compile_matcher(),
 					Err(E) => return Ok(ErrResponse(RequestId, -32000, format!("Invalid glob: {}", E))),
@@ -610,9 +610,9 @@ impl CocoonService for CocoonServiceImpl {
 				use std::path::PathBuf;
 				let Pattern = Params.get("pattern").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let IncludeStr = Params.get("include").and_then(|V| V.as_array()).and_then(|A| A.first()).and_then(|V| V.as_str()).map(|S| S.to_string()).unwrap_or_else(|| "**".to_string());
-				let WorkspaceFolders = self.environment.ApplicationState.Workspace.GetFolders().await.unwrap_or_default();
+				let WorkspaceFolders = self.environment.ApplicationState.Workspace.GetWorkspaceFolders();
 				if WorkspaceFolders.is_empty() { return Ok(OkResponse(RequestId, &json!({ "matches": Vec::<serde_json::Value>::new() }))); }
-				let RootPath = PathBuf::from(&WorkspaceFolders[0].Uri.replace("file://", ""));
+				let RootPath = PathBuf::from(&WorkspaceFolders[0].URI.to_string().replace("file://", ""));
 				let Matcher = GlobBuilder::new(&IncludeStr).literal_separator(false).build().map(|G| G.compile_matcher()).ok();
 				let PatternLower = Pattern.to_lowercase();
 				let mut Matches: Vec<serde_json::Value> = Vec::new();
