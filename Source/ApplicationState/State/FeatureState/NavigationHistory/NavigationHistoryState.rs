@@ -29,7 +29,7 @@ impl NavigationHistoryState {
 	/// Returns `true` if there is a previous location to navigate to.
 	pub fn CanGoBack(&self) -> bool {
 		let Stack = self.Stack.lock().ok().map(|G| G.len()).unwrap_or(0);
-		let Index = self.Index.lock().ok().copied().unwrap_or(0);
+		let Index = self.Index.lock().ok().as_deref().copied().unwrap_or(0);
 
 		Stack > 0 && Index > 0
 	}
@@ -37,7 +37,7 @@ impl NavigationHistoryState {
 	/// Returns `true` if there is a next location to navigate to.
 	pub fn CanGoForward(&self) -> bool {
 		let Stack = self.Stack.lock().ok().map(|G| G.len()).unwrap_or(0);
-		let Index = self.Index.lock().ok().copied().unwrap_or(0);
+		let Index = self.Index.lock().ok().as_deref().copied().unwrap_or(0);
 
 		Stack > 0 && Index + 1 < Stack
 	}
