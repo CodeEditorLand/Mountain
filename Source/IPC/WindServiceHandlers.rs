@@ -1164,7 +1164,7 @@ async fn handle_storage_delete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>)
 
 	runtime
 		.Environment
-		.DeleteItem(Key)
+		.UpdateStorageValue(true, Key, None)
 		.await
 		.map_err(|Error| format!("storage:delete failed: {}", Error))?;
 
@@ -1175,12 +1175,13 @@ async fn handle_storage_delete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>)
 async fn handle_storage_keys(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	use CommonLibrary::Storage::StorageProvider::StorageProvider;
 
-	let Keys = runtime
+	let Storage = runtime
 		.Environment
-		.GetKeys()
+		.GetAllStorage(true)
 		.await
 		.map_err(|Error| format!("storage:keys failed: {}", Error))?;
 
+	let Keys:Vec<String> = Storage.as_object().map(|O| O.keys().cloned().collect()).unwrap_or_default();
 	Ok(json!(Keys))
 }
 
@@ -1335,31 +1336,27 @@ async fn handle_quick_input_show_quick_pick(runtime:Arc<ApplicationRunTime>, arg
 					let Description = Item.get("description").and_then(|D| D.as_str()).map(|S| S.to_string());
 					let Detail = Item.get("detail").and_then(|D| D.as_str()).map(|S| S.to_string());
 					let Picked = Item.get("picked").and_then(|P| P.as_bool()).unwrap_or(false);
-					Some(QuickPickItemDTO { Label, Description, Detail, Picked, AlwaysShow:false })
+					Some(QuickPickItemDTO { Label, Description, Detail, Picked: Some(Picked), AlwaysShow: Some(false) })
 				})
 				.collect()
 		})
 		.unwrap_or_default();
 
 	let Options = QuickPickOptionsDTO {
-		Placeholder:args.get(1).and_then(|V| V.get("placeholder")).and_then(|P| P.as_str()).map(|S| S.to_string()),
-		CanPickMany:args.get(1).and_then(|V| V.get("canPickMany")).and_then(|B| B.as_bool()).unwrap_or(false),
+		PlaceHolder:args.get(1).and_then(|V| V.get("placeholder")).and_then(|P| P.as_str()).map(|S| S.to_string()),
+		CanPickMany:Some(args.get(1).and_then(|V| V.get("canPickMany")).and_then(|B| B.as_bool()).unwrap_or(false)),
 		Title:args.get(1).and_then(|V| V.get("title")).and_then(|T| T.as_str()).map(|S| S.to_string()),
+		..Default::default()
 	};
 
 	let Result = runtime
 		.Environment
-		.ShowQuickPick(Items, Options)
+		.ShowQuickPick(Items, Some(Options))
 		.await
 		.map_err(|Error| format!("quickInput:showQuickPick failed: {}", Error))?;
 
 	match Result {
-		Some(Item) => Ok(json!({
-			"label": Item.Label,
-			"description": Item.Description,
-			"detail": Item.Detail,
-			"picked": Item.Picked,
-		})),
+		Some(Labels) => Ok(Labels.into_iter().next().map(|S| json!(S)).unwrap_or(Value::Null)),
 		None => Ok(Value::Null),
 	}
 }
@@ -1372,15 +1369,15 @@ async fn handle_quick_input_show_input_box(runtime:Arc<ApplicationRunTime>, args
 	let Opts = args.first();
 	let Options = InputBoxOptionsDTO {
 		Prompt:Opts.and_then(|V| V.get("prompt")).and_then(|P| P.as_str()).map(|S| S.to_string()),
-		Placeholder:Opts.and_then(|V| V.get("placeholder")).and_then(|P| P.as_str()).map(|S| S.to_string()),
-		IsPassword:Opts.and_then(|V| V.get("password")).and_then(|B| B.as_bool()).unwrap_or(false),
+		PlaceHolder:Opts.and_then(|V| V.get("placeholder")).and_then(|P| P.as_str()).map(|S| S.to_string()),
+		IsPassword:Some(Opts.and_then(|V| V.get("password")).and_then(|B| B.as_bool()).unwrap_or(false)),
 		Value:Opts.and_then(|V| V.get("value")).and_then(|V| V.as_str()).map(|S| S.to_string()),
 		Title:Opts.and_then(|V| V.get("title")).and_then(|T| T.as_str()).map(|S| S.to_string()),
 	};
 
 	let Result = runtime
 		.Environment
-		.ShowInputBox(Options)
+		.ShowInputBox(Some(Options))
 		.await
 		.map_err(|Error| format!("quickInput:showInputBox failed: {}", Error))?;
 
@@ -1395,7 +1392,7 @@ async fn handle_quick_input_show_input_box(runtime:Arc<ApplicationRunTime>, args
 async fn handle_workspaces_get_folders(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Folders = runtime
 		.Environment
-		.Workspace
+		.ApplicationState.Workspace
 		.GetFolders()
 		.await
 		.map_err(|Error| format!("workspaces:getFolders failed: {}", Error))?;
@@ -1425,7 +1422,7 @@ async fn handle_workspaces_add_folder(runtime:Arc<ApplicationRunTime>, args:Vec<
 
 	runtime
 		.Environment
-		.Workspace
+		.ApplicationState.Workspace
 		.AddFolder(Uri, Name)
 		.await
 		.map_err(|Error| format!("workspaces:addFolder failed: {}", Error))?;
@@ -1443,7 +1440,7 @@ async fn handle_workspaces_remove_folder(runtime:Arc<ApplicationRunTime>, args:V
 
 	runtime
 		.Environment
-		.Workspace
+		.ApplicationState.Workspace
 		.RemoveFolder(Uri)
 		.await
 		.map_err(|Error| format!("workspaces:removeFolder failed: {}", Error))?;
@@ -1455,7 +1452,7 @@ async fn handle_workspaces_remove_folder(runtime:Arc<ApplicationRunTime>, args:V
 async fn handle_workspaces_get_name(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Name = runtime
 		.Environment
-		.Workspace
+		.ApplicationState.Workspace
 		.GetName()
 		.await
 		.map_err(|Error| format!("workspaces:getName failed: {}", Error))?;
@@ -1470,16 +1467,16 @@ async fn handle_workspaces_get_name(runtime:Arc<ApplicationRunTime>) -> Result<V
 /// Return the active color theme metadata from ConfigurationProvider.
 async fn handle_themes_get_active(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	use CommonLibrary::Configuration::ConfigurationProvider::ConfigurationProvider;
+	use CommonLibrary::Configuration::DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO;
 
 	let ThemeId = runtime
 		.Environment
-		.GetConfigurationValue("workbench.colorTheme".to_string())
+		.GetConfigurationValue(Some("workbench.colorTheme".to_string()), ConfigurationOverridesDTO::default())
 		.await
 		.map_err(|Error| format!("themes:getActive failed: {}", Error))?;
 
 	let Id = ThemeId
-		.as_ref()
-		.and_then(|V| V.as_str())
+		.as_str()
 		.unwrap_or("Default Dark Modern")
 		.to_string();
 
@@ -1510,6 +1507,10 @@ async fn handle_themes_list(runtime:Arc<ApplicationRunTime>) -> Result<Value, St
 /// Set the active color theme by updating ConfigurationProvider.
 async fn handle_themes_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Configuration::ConfigurationProvider::ConfigurationProvider;
+	use CommonLibrary::Configuration::DTO::{
+		ConfigurationOverridesDTO::ConfigurationOverridesDTO,
+		ConfigurationTarget::ConfigurationTarget,
+	};
 	use tauri::Emitter;
 
 	let ThemeId = args
@@ -1520,7 +1521,7 @@ async fn handle_themes_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 
 	runtime
 		.Environment
-		.UpdateConfigurationValue("workbench.colorTheme".to_string(), json!(ThemeId))
+		.UpdateConfigurationValue("workbench.colorTheme".to_string(), json!(ThemeId), ConfigurationTarget::User, ConfigurationOverridesDTO::default(), None)
 		.await
 		.map_err(|Error| format!("themes:set failed: {}", Error))?;
 
@@ -1549,7 +1550,7 @@ async fn handle_search_find_in_files(runtime:Arc<ApplicationRunTime>, args:Vec<V
 
 	let WorkspaceFolders = runtime
 		.Environment
-		.Workspace
+		.ApplicationState.Workspace
 		.GetFolders()
 		.await
 		.unwrap_or_default();
@@ -1657,7 +1658,7 @@ async fn handle_search_find_files(runtime:Arc<ApplicationRunTime>, args:Vec<Valu
 
 	let WorkspaceFolders = runtime
 		.Environment
-		.Workspace
+		.ApplicationState.Workspace
 		.GetFolders()
 		.await
 		.unwrap_or_default();
