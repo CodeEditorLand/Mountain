@@ -282,6 +282,15 @@ pub fn Fn() {
 				let response = crate::Binary::Build::Scheme::land_scheme_handler(&request);
 				responder.respond(response);
 			})
+			.register_asynchronous_uri_scheme_protocol("vscode-file", |ctx, request, responder| {
+				// VS Code Electron workbench uses vscode-file:// to load assets.
+				// Maps to embedded frontend assets from Sky/Target.
+				let AppHandle = ctx.app_handle().clone();
+				std::thread::spawn(move || {
+					let response = crate::Binary::Build::Scheme::VscodeFileSchemeHandler(&AppHandle, &request);
+					responder.respond(response);
+				});
+			})
 			.plugin(tauri_plugin_dialog::init())
 			.plugin(tauri_plugin_fs::init())
 			.invoke_handler(tauri::generate_handler![

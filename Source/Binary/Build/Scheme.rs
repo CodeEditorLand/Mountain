@@ -663,3 +663,124 @@ fn get_cors_origins() -> &'static str {
 /// initialization logic needed by the scheme handler.
 #[inline]
 pub fn Scheme() {}
+
+// ==========================================================================
+// vscode-file:// Protocol Handler
+// ==========================================================================
+
+/// MIME type detection from file extension
+fn MimeFromExtension(Path:&str) -> &'static str {
+	if Path.ends_with(".js") || Path.ends_with(".mjs") {
+		"application/javascript"
+	} else if Path.ends_with(".css") {
+		"text/css"
+	} else if Path.ends_with(".html") || Path.ends_with(".htm") {
+		"text/html"
+	} else if Path.ends_with(".json") {
+		"application/json"
+	} else if Path.ends_with(".svg") {
+		"image/svg+xml"
+	} else if Path.ends_with(".png") {
+		"image/png"
+	} else if Path.ends_with(".jpg") || Path.ends_with(".jpeg") {
+		"image/jpeg"
+	} else if Path.ends_with(".gif") {
+		"image/gif"
+	} else if Path.ends_with(".woff") {
+		"font/woff"
+	} else if Path.ends_with(".woff2") {
+		"font/woff2"
+	} else if Path.ends_with(".ttf") {
+		"font/ttf"
+	} else if Path.ends_with(".wasm") {
+		"application/wasm"
+	} else if Path.ends_with(".map") {
+		"application/json"
+	} else if Path.ends_with(".txt") || Path.ends_with(".md") {
+		"text/plain"
+	} else if Path.ends_with(".xml") {
+		"application/xml"
+	} else {
+		"application/octet-stream"
+	}
+}
+
+/// Handles `vscode-file://` custom protocol requests.
+///
+/// VS Code's Electron workbench computes asset URLs as:
+///   `vscode-file://vscode-app/{appRoot}/out/vs/workbench/...`
+///
+/// This handler maps those URLs to the embedded frontend assets
+/// served from the `frontendDist` directory (`../Sky/Target`).
+///
+/// # URL Mapping
+///
+/// ```text
+/// vscode-file://vscode-app/Static/Application/vs/workbench/foo.js
+///                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+///                          This path maps to Sky/Target/Static/Application/vs/workbench/foo.js
+/// ```
+///
+/// The `/out/` prefix that the workbench appends is stripped if present,
+/// since our assets live at `/Static/Application/vs/` not
+/// `/Static/Application/out/vs/`.
+///
+/// # Parameters
+///
+/// - `AppHandle`: Tauri AppHandle for resolving the frontend dist path
+/// - `Request`: The incoming request
+///
+/// # Returns
+///
+/// Response with file contents and correct MIME type, or 404
+pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
+	AppHandle:&tauri::AppHandle<R>,
+	Request:&tauri::http::request::Request<Vec<u8>>,
+) -> Response<Vec<u8>> {
+	let Uri = Request.uri().to_string();
+	debug!("[VscodeFile] Request: {}", Uri);
+
+	// Extract path from: vscode-file://vscode-app/path/to/file
+	// The authority is "vscode-app", the path starts after it
+	let FilePath = Uri
+		.strip_prefix("vscode-file://vscode-app/")
+		.or_else(|| Uri.strip_prefix("vscode-file://vscode-app"))
+		.unwrap_or("");
+
+	// Strip /out/ prefix if present — our assets are at /Static/Application/vs/
+	// not /Static/Application/out/vs/
+	let CleanPath = if FilePath.starts_with("Static/Application//out/") {
+		FilePath.replacen("Static/Application//out/", "Static/Application/", 1)
+	} else if FilePath.starts_with("Static/Application/out/") {
+		FilePath.replacen("Static/Application/out/", "Static/Application/", 1)
+	} else {
+		FilePath.to_string()
+	};
+
+	debug!("[VscodeFile] Resolved path: {}", CleanPath);
+
+	// Resolve against the frontendDist directory
+	// In debug: Sky/Target/{path}
+	// In production: embedded in the binary
+	let AssetResult = AppHandle.asset_resolver().get(CleanPath.clone());
+
+	match AssetResult {
+		Some(Asset) => {
+			let Mime = MimeFromExtension(&CleanPath);
+
+			debug!("[VscodeFile] Serving {} ({}, {} bytes)", CleanPath, Mime, Asset.bytes.len());
+
+			Builder::new()
+				.status(200)
+				.header("Content-Type", Mime)
+				.header("Access-Control-Allow-Origin", "*")
+				.header("Cache-Control", "public, max-age=31536000, immutable")
+				.body(Asset.bytes.to_vec())
+				.unwrap_or_else(|_| build_error_response(500, "Failed to build response"))
+		},
+		None => {
+			warn!("[VscodeFile] Not found: {} (resolved: {})", Uri, CleanPath);
+			build_error_response(404, &format!("Not Found: {}", CleanPath))
+		},
+	}
+}
