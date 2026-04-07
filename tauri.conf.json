@@ -11,7 +11,7 @@
 			"capabilities": [],
 			"csp": {
 				"block-all-mixed-content": "",
-				"connect-src": "'self' land: http://localhost:* https://tauri.localhost wss://tauri.localhost https: https://update.editor.land",
+				"connect-src": "'self' ipc: land: http://localhost:* https://tauri.localhost wss://tauri.localhost https: https://update.editor.land",
 				"default-src": "'self' land:",
 				"font-src": "'self' land: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost",
 				"frame-src": "'self' vscode-webview: http://localhost:* https://tauri.localhost https://*.vscode-cdn.net",
@@ -26,7 +26,7 @@
 			"dangerousDisableAssetCspModification": true,
 			"devCsp": {
 				"block-all-mixed-content": "",
-				"connect-src": "'self' land: http://localhost:* https://tauri.localhost wss://tauri.localhost https: https://update.editor.land",
+				"connect-src": "'self' ipc: land: http://localhost:* https://tauri.localhost wss://tauri.localhost https: https://update.editor.land",
 				"default-src": "'self' land:",
 				"font-src": "'self' land: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost",
 				"frame-src": "'self' vscode-webview: http://localhost:* https://tauri.localhost https://*.vscode-cdn.net",
