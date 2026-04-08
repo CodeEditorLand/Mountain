@@ -52,7 +52,7 @@
 			"tooltip": "Open"
 		},
 		"windows": [],
-		"withGlobalTauri": false
+		"withGlobalTauri": true
 	},
 	"build": {
 		"beforeBuildCommand": "pnpm run prepublishOnly --filter=@codeeditorland/sky --force",
