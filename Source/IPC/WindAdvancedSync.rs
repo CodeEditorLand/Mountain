@@ -280,6 +280,7 @@ use std::{
 };
 
 use log::{debug, error, info, trace, warn};
+use crate::dev_log;
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tauri::{Emitter, Manager};
@@ -572,7 +573,7 @@ impl WindAdvancedSync {
 impl WindAdvancedSync {
 	/// Start advanced synchronization
 	pub async fn start_synchronization(self: Arc<Self>) -> Result<(), String> {
-		info!("[WindAdvancedSync] Starting advanced synchronization");
+		dev_log!("lifecycle", "Starting advanced synchronization");
 
 		// Start document synchronization
 		let sync1 = self.clone();
@@ -604,7 +605,7 @@ impl WindAdvancedSync {
 		loop {
 			interval.tick().await;
 
-			debug!("[WindAdvancedSync] Synchronizing documents");
+			dev_log!("lifecycle", "Synchronizing documents");
 
 			// ERROR RECOVERY: Microsoft-inspired circuit breaker pattern
 			let sync_start = std::time::Instant::now();
@@ -625,7 +626,7 @@ impl WindAdvancedSync {
 						// ERROR HANDLING: Exponential backoff on consecutive failures
 						consecutive_failures += 1;
 						if consecutive_failures >= max_consecutive_failures {
-							warn!("[WindAdvancedSync] Too many consecutive failures, slowing sync interval");
+							dev_log!("lifecycle", "Too many consecutive failures, slowing sync interval");
 							// Reduce sync frequency to 30-second interval to prevent system overload
 							// during persistent error conditions (circuit breaker pattern).
 							interval = tokio::time::interval(Duration::from_secs(30));
@@ -700,14 +701,14 @@ impl WindAdvancedSync {
 
 	/// Apply document change
 	async fn apply_document_change(&self, change:DocumentChange) -> Result<(), String> {
-		debug!("[WindAdvancedSync] Applying document change: {}", change.change_id);
+		dev_log!("lifecycle", "Applying document change: {}", change.change_id);
 
 		// CONFLICT RESOLUTION: Microsoft-inspired conflict handling
 		let change_start = std::time::Instant::now();
 
 		// Check for conflicts before applying changes
 		if let Err(conflict) = self.check_for_conflicts(&change).await {
-			warn!("[WindAdvancedSync] Conflict detected: {}", conflict);
+			dev_log!("lifecycle", "Conflict detected: {}", conflict);
 			return Err(format!("Conflict detected: {}", conflict));
 		}
 
@@ -750,7 +751,7 @@ impl WindAdvancedSync {
 				// IPC: {}", e))?;
 			},
 			_ => {
-				warn!("[WindAdvancedSync] Unsupported change type: {:?}", change.change_type);
+				dev_log!("lifecycle", "Unsupported change type: {:?}", change.change_type);
 			},
 		}
 
@@ -902,7 +903,7 @@ impl WindAdvancedSync {
 
 		sync.synchronized_documents.insert(document_id, document);
 
-		debug!("[WindAdvancedSync] Document added for synchronization");
+		dev_log!("lifecycle", "Document added for synchronization");
 		Ok(())
 	}
 
@@ -917,7 +918,7 @@ impl WindAdvancedSync {
 			.or_insert_with(Vec::new)
 			.push(subscriber);
 
-		debug!("[WindAdvancedSync] Subscriber added for target: {}", target_clone);
+		dev_log!("lifecycle", "Subscriber added for target: {}", target_clone);
 		Ok(())
 	}
 
@@ -964,7 +965,7 @@ pub async fn mountain_add_document_for_sync(
 	document_id:String,
 	file_path:String,
 ) -> Result<(), String> {
-	debug!("[WindAdvancedSync] Tauri command: add_document_for_sync");
+	dev_log!("lifecycle", "Tauri command: add_document_for_sync");
 
 	if let Some(sync) = app_handle.try_state::<WindAdvancedSync>() {
 		sync.add_document(document_id, file_path).await
@@ -976,7 +977,7 @@ pub async fn mountain_add_document_for_sync(
 /// Tauri command to get sync status
 #[tauri::command]
 pub async fn mountain_get_sync_status(app_handle:tauri::AppHandle) -> Result<SyncStatus, String> {
-	debug!("[WindAdvancedSync] Tauri command: get_sync_status");
+	dev_log!("lifecycle", "Tauri command: get_sync_status");
 
 	if let Some(sync) = app_handle.try_state::<WindAdvancedSync>() {
 		Ok(sync.get_sync_status().await)
@@ -992,7 +993,7 @@ pub async fn mountain_subscribe_to_updates(
 	target:String,
 	subscriber:String,
 ) -> Result<(), String> {
-	debug!("[WindAdvancedSync] Tauri command: subscribe_to_updates");
+	dev_log!("lifecycle", "Tauri command: subscribe_to_updates");
 
 	if let Some(sync) = app_handle.try_state::<WindAdvancedSync>() {
 		sync.subscribe_to_updates(target, subscriber).await
@@ -1006,7 +1007,7 @@ pub fn initialize_wind_advanced_sync(
 	app_handle:&tauri::AppHandle,
 	runtime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
-	info!("[WindAdvancedSync] Initializing Wind advanced synchronization");
+	dev_log!("lifecycle", "Initializing Wind advanced synchronization");
 
 	let sync = Arc::new(WindAdvancedSync::new(runtime));
 

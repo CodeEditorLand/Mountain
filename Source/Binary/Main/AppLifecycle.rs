@@ -66,7 +66,7 @@
 
 use std::sync::Arc;
 
-use log::{debug, error, info, trace};
+use log::{debug, error, info, trace, warn};
 use tauri::Manager;
 use Echo::Scheduler::Scheduler::Scheduler;
 
@@ -172,6 +172,69 @@ pub fn AppLifecycleSetup(
 	{
 		debug!("[UI] [Window] Debug build: opening DevTools.");
 		MainWindow.open_devtools();
+	}
+
+	// -------------------------------------------------------------------------
+	// [Backend] [Dirs] Ensure userdata directories exist
+	// -------------------------------------------------------------------------
+	{
+		let PathResolver = app.path();
+		let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
+		let LogDir = PathResolver.app_log_dir().unwrap_or_default();
+		let HomeDir = PathResolver.home_dir().unwrap_or_default();
+
+		// Set the canonical userdata base so WindServiceHandlers resolves
+		// /User/... paths to the real Tauri app_data_dir (not hardcoded "Land").
+		crate::IPC::WindServiceHandlers::set_userdata_base_dir(
+			AppDataDir.to_string_lossy().to_string()
+		);
+
+		// Every directory VS Code may stat or readdir during startup
+		let Dirs = [
+			// User profile directories
+			AppDataDir.join("User"),
+			AppDataDir.join("User/globalStorage"),
+			AppDataDir.join("User/workspaceStorage"),
+			AppDataDir.join("User/workspaceStorage/vscode-chat-images"),
+			AppDataDir.join("User/extensions"),
+			AppDataDir.join("User/profiles/__default__profile__"),
+			AppDataDir.join("User/snippets"),
+			AppDataDir.join("User/prompts"),
+			AppDataDir.join("User/caches"),
+			// Configuration cache
+			AppDataDir.join("CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides"),
+			// Log directories
+			LogDir.join("window1"),
+			// Agent directories VS Code probes for (create to avoid stat errors)
+			HomeDir.join(".claude/agents"),
+			HomeDir.join(".copilot/agents"),
+		];
+		for Dir in &Dirs {
+			if let Err(Error) = std::fs::create_dir_all(Dir) {
+				warn!("[Lifecycle] [Dirs] Failed to create {}: {}", Dir.display(), Error);
+			}
+		}
+
+		// Default empty files VS Code reads on startup
+		let DefaultFiles: &[(&std::path::Path, &str)] = &[
+			(&AppDataDir.join("User/settings.json"), "{}"),
+			(&AppDataDir.join("User/keybindings.json"), "[]"),
+			(&AppDataDir.join("User/tasks.json"), "{}"),
+			(&AppDataDir.join("User/extensions.json"), "[]"),
+			(&AppDataDir.join("User/mcp.json"), "{}"),
+		];
+		for (FilePath, DefaultContent) in DefaultFiles {
+			if !FilePath.exists() {
+				let _ = std::fs::write(FilePath, DefaultContent);
+			}
+		}
+
+		// Set GlobalMementoPath now that we know the real Tauri app data dir
+		if let Ok(mut Path) = app_state.GlobalMementoPath.lock() {
+			*Path = AppDataDir.join("User/globalStorage/global.json");
+			debug!("[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
+		}
+		debug!("[Lifecycle] [Dirs] Userdata directories ensured at {}", AppDataDir.display());
 	}
 
 	// -------------------------------------------------------------------------

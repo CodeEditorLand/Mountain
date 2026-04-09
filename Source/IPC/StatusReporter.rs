@@ -190,6 +190,7 @@ use std::{
 };
 
 use log::{debug, error, info, warn};
+use crate::dev_log;
 use serde::{Deserialize, Serialize};
 use tauri::{Emitter, Manager};
 use tokio::sync::RwLock;
@@ -341,7 +342,7 @@ pub struct StatusReporter {
 impl StatusReporter {
 	/// Create a new status reporter
 	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
-		info!("[StatusReporter] Creating IPC status reporter");
+		dev_log!("lifecycle", "Creating IPC status reporter");
 
 		Self {
 			runtime,
@@ -392,7 +393,7 @@ impl StatusReporter {
 
 	/// Generate a status report
 	pub async fn generate_status_report(&self) -> Result<IPCStatusReport, String> {
-		debug!("[StatusReporter] Generating IPC status report");
+		dev_log!("lifecycle", "Generating IPC status report");
 
 		let ipc_server = self.ipc_server.as_ref().ok_or("IPC Server not set".to_string())?;
 
@@ -478,7 +479,7 @@ impl StatusReporter {
 
 	/// STATUS REPORTING: Microsoft-inspired comprehensive reporting
 	pub async fn report_to_sky(&self) -> Result<(), String> {
-		debug!("[StatusReporter] Reporting IPC status to Sky");
+		dev_log!("lifecycle", "Reporting IPC status to Sky");
 
 		let report = self.generate_status_report().await?;
 
@@ -533,7 +534,7 @@ impl StatusReporter {
 			error!("[StatusReporter] Failed to emit health status: {}", e);
 		}
 
-		debug!("[StatusReporter] Comprehensive status report sent to Sky");
+		dev_log!("lifecycle", "Comprehensive status report sent to Sky");
 		Ok(())
 	}
 
@@ -803,7 +804,7 @@ impl StatusReporter {
 
 	/// SERVICE DISCOVERY: Discover available Mountain services
 	pub async fn discover_services(&self) -> Result<Vec<ServiceInfo>, String> {
-		info!("[StatusReporter] Starting service discovery");
+		dev_log!("lifecycle", "Starting service discovery");
 
 		let mut registry = self.service_registry.write().await;
 		let mut discovered = self.discovered_services.write().await;
@@ -950,7 +951,7 @@ impl StatusReporter {
 
 	/// Start periodic service discovery
 	pub async fn start_periodic_discovery(&self) -> Result<(), String> {
-		info!("[StatusReporter] Starting periodic service discovery");
+		dev_log!("lifecycle", "Starting periodic service discovery");
 
 		let registry = self.service_registry.read().await;
 		let interval = registry.discovery_interval;
@@ -1056,7 +1057,7 @@ impl StatusReporter {
 /// Tauri command to get current IPC status
 #[tauri::command]
 pub async fn mountain_get_ipc_status(app_handle:tauri::AppHandle) -> Result<serde_json::Value, String> {
-	debug!("[StatusReporter] Tauri command: get_ipc_status");
+	dev_log!("lifecycle", "Tauri command: get_ipc_status");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter
@@ -1071,7 +1072,7 @@ pub async fn mountain_get_ipc_status(app_handle:tauri::AppHandle) -> Result<serd
 /// Tauri command to get IPC status history
 #[tauri::command]
 pub async fn mountain_get_ipc_status_history(app_handle:tauri::AppHandle) -> Result<serde_json::Value, String> {
-	debug!("[StatusReporter] Tauri command: get_ipc_status_history");
+	dev_log!("lifecycle", "Tauri command: get_ipc_status_history");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter
@@ -1088,7 +1089,7 @@ pub async fn mountain_start_ipc_status_reporting(
 	app_handle:tauri::AppHandle,
 	interval_seconds:u64,
 ) -> Result<serde_json::Value, String> {
-	debug!("[StatusReporter] Tauri command: start_ipc_status_reporting");
+	dev_log!("lifecycle", "Tauri command: start_ipc_status_reporting");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter
@@ -1105,7 +1106,7 @@ pub async fn mountain_start_ipc_status_reporting(
 /// Tauri command to get performance metrics
 #[tauri::command]
 pub async fn mountain_get_performance_metrics(app_handle:tauri::AppHandle) -> Result<PerformanceMetrics, String> {
-	debug!("[StatusReporter] Tauri command: get_performance_metrics");
+	dev_log!("lifecycle", "Tauri command: get_performance_metrics");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter.get_performance_metrics()
@@ -1117,7 +1118,7 @@ pub async fn mountain_get_performance_metrics(app_handle:tauri::AppHandle) -> Re
 /// Tauri command to get health status
 #[tauri::command]
 pub async fn mountain_get_health_status(app_handle:tauri::AppHandle) -> Result<HealthMonitor, String> {
-	debug!("[StatusReporter] Tauri command: get_health_status");
+	dev_log!("lifecycle", "Tauri command: get_health_status");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter.get_health_status()
@@ -1129,7 +1130,7 @@ pub async fn mountain_get_health_status(app_handle:tauri::AppHandle) -> Result<H
 /// Tauri command to perform health check
 #[tauri::command]
 pub async fn mountain_perform_health_check(app_handle:tauri::AppHandle) -> Result<HealthMonitor, String> {
-	debug!("[StatusReporter] Tauri command: perform_health_check");
+	dev_log!("lifecycle", "Tauri command: perform_health_check");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter.perform_health_check().await?;
@@ -1142,7 +1143,7 @@ pub async fn mountain_perform_health_check(app_handle:tauri::AppHandle) -> Resul
 /// Tauri command to attempt recovery
 #[tauri::command]
 pub async fn mountain_attempt_recovery(app_handle:tauri::AppHandle) -> Result<(), String> {
-	debug!("[StatusReporter] Tauri command: attempt_recovery");
+	dev_log!("lifecycle", "Tauri command: attempt_recovery");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter.attempt_recovery().await
@@ -1154,7 +1155,7 @@ pub async fn mountain_attempt_recovery(app_handle:tauri::AppHandle) -> Result<()
 /// Tauri command to get service registry
 #[tauri::command]
 pub async fn mountain_get_service_registry(app_handle:tauri::AppHandle) -> Result<ServiceRegistry, String> {
-	debug!("[StatusReporter] Tauri command: get_service_registry");
+	dev_log!("lifecycle", "Tauri command: get_service_registry");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter.get_service_registry().await
@@ -1169,7 +1170,7 @@ pub async fn mountain_get_service_info(
 	app_handle:tauri::AppHandle,
 	service_name:String,
 ) -> Result<Option<ServiceInfo>, String> {
-	debug!("[StatusReporter] Tauri command: get_service_info");
+	dev_log!("lifecycle", "Tauri command: get_service_info");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter.get_service_info(&service_name).await
@@ -1181,7 +1182,7 @@ pub async fn mountain_get_service_info(
 /// Tauri command to discover services
 #[tauri::command]
 pub async fn mountain_discover_services(app_handle:tauri::AppHandle) -> Result<Vec<ServiceInfo>, String> {
-	debug!("[StatusReporter] Tauri command: discover_services");
+	dev_log!("lifecycle", "Tauri command: discover_services");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter.discover_services().await
@@ -1193,7 +1194,7 @@ pub async fn mountain_discover_services(app_handle:tauri::AppHandle) -> Result<V
 /// Tauri command to start periodic service discovery
 #[tauri::command]
 pub async fn mountain_start_service_discovery(app_handle:tauri::AppHandle) -> Result<(), String> {
-	debug!("[StatusReporter] Tauri command: start_service_discovery");
+	dev_log!("lifecycle", "Tauri command: start_service_discovery");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		reporter.start_periodic_discovery().await
@@ -1207,7 +1208,7 @@ pub async fn mountain_start_service_discovery(app_handle:tauri::AppHandle) -> Re
 pub async fn mountain_get_comprehensive_status(
 	app_handle:tauri::AppHandle,
 ) -> Result<ComprehensiveStatusReport, String> {
-	debug!("[StatusReporter] Tauri command: get_comprehensive_status");
+	dev_log!("lifecycle", "Tauri command: get_comprehensive_status");
 
 	if let Some(reporter) = app_handle.try_state::<StatusReporter>() {
 		let basic_status = reporter.generate_status_report().await?;
@@ -1230,7 +1231,7 @@ pub async fn mountain_get_comprehensive_status(
 
 /// Initialize status reporter in Mountain's setup
 pub fn initialize_status_reporter(app_handle:&tauri::AppHandle, runtime:Arc<ApplicationRunTime>) -> Result<(), String> {
-	info!("[StatusReporter] Initializing status reporter");
+	dev_log!("lifecycle", "Initializing status reporter");
 
 	let reporter = StatusReporter::new(runtime);
 

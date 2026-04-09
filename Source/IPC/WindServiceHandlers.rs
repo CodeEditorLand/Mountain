@@ -171,6 +171,7 @@
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
+use crate::dev_log;
 use log::{debug, error, info};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
@@ -198,8 +199,8 @@ use crate::{
 };
 
 /// Extract a filesystem path from a VS Code argument.
-/// VS Code sends URI objects `{ scheme: "file", path: "/C:/foo", fsPath: "C:\\foo" }`
-/// but Mountain handlers expect platform-native path strings.
+/// VS Code sends URI objects `{ scheme: "file", path: "/C:/foo", fsPath:
+/// "C:\\foo" }` but Mountain handlers expect platform-native path strings.
 ///
 /// Windows URI paths have a leading slash: `/C:/Users/...` → strip it.
 /// Unix paths start with `/` normally.
@@ -242,18 +243,15 @@ fn normalize_uri_path(Path:&str) -> String {
 	let Decoded = percent_decode(Path);
 
 	// Map vscode-userdata paths: /User/... → ~/.land/User/...
-	// Wind's configuration sets profiles.home = { scheme: "vscode-userdata", path: "/User" }
-	// VS Code's FileUserDataProvider converts vscode-userdata: → file: but keeps the path.
-	// We need to prepend the real userdata directory.
+	// Wind's configuration sets profiles.home = { scheme: "vscode-userdata", path:
+	// "/User" } VS Code's FileUserDataProvider converts vscode-userdata: → file:
+	// but keeps the path. We need to prepend the real userdata directory.
 	let Resolved = resolve_userdata_path(&Decoded);
 
 	#[cfg(target_os = "windows")]
 	{
 		// Windows: URI path "/C:/Users/foo" → "C:\\Users\\foo"
-		let Trimmed = if Resolved.len() >= 3
-			&& Resolved.starts_with('/')
-			&& Resolved.as_bytes().get(2) == Some(&b':')
-		{
+		let Trimmed = if Resolved.len() >= 3 && Resolved.starts_with('/') && Resolved.as_bytes().get(2) == Some(&b':') {
 			// /C:/path → C:/path
 			Resolved[1..].to_string()
 		} else {
@@ -279,48 +277,35 @@ fn resolve_userdata_path(Path:&str) -> String {
 	}
 
 	let UserDataBase = get_userdata_base_dir();
+	let Resolved = format!("{}{}", UserDataBase, Path);
+	dev_log!("vfs", "resolve_userdata: {} -> {}", Path, Resolved);
+	Resolved
+}
 
-	// /User/settings.json → {base}/User/settings.json
-	format!("{}{}", UserDataBase, Path)
+/// Canonical userdata base directory, set once from Tauri's PathResolver.
+/// All /User/... paths resolve against this so the VFS mapping matches
+/// the real Tauri app_data_dir (which includes the full bundle identifier).
+static USERDATA_BASE_DIR: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+/// Set the userdata base from Tauri's app_data_dir. Call once at startup.
+pub fn set_userdata_base_dir(Path: String) {
+	let _ = USERDATA_BASE_DIR.set(Path);
 }
 
 /// Get the base directory for userdata storage.
-/// macOS: ~/Library/Application Support/Land
-/// Windows: %APPDATA%/Land
-/// Linux: ~/.config/Land
+/// Returns the Tauri-resolved path if available, otherwise a fallback.
 fn get_userdata_base_dir() -> String {
-	// Use dirs crate if available, otherwise fallback
-	#[cfg(target_os = "macos")]
-	{
-		if let Ok(Home) = std::env::var("HOME") {
-			return format!("{}/Library/Application Support/Land", Home);
-		}
-		"/tmp/Land".to_string()
+	if let Some(Dir) = USERDATA_BASE_DIR.get() {
+		return Dir.clone();
 	}
-
-	#[cfg(target_os = "windows")]
-	{
-		if let Ok(AppData) = std::env::var("APPDATA") {
-			return format!("{}\\Land", AppData);
-		}
-		"C:\\Land".to_string()
+	// Fallback before Tauri sets it (should not happen in normal flow)
+	if let Ok(Home) = std::env::var("HOME") {
+		#[cfg(target_os = "macos")]
+		return format!("{}/Library/Application Support/Land", Home);
+		#[cfg(target_os = "linux")]
+		return format!("{}/.local/share/Land", Home);
 	}
-
-	#[cfg(target_os = "linux")]
-	{
-		if let Ok(XdgConfig) = std::env::var("XDG_CONFIG_HOME") {
-			return format!("{}/Land", XdgConfig);
-		}
-		if let Ok(Home) = std::env::var("HOME") {
-			return format!("{}/.config/Land", Home);
-		}
-		"/tmp/Land".to_string()
-	}
-
-	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
-	{
-		"/tmp/Land".to_string()
-	}
+	"/tmp/Land".to_string()
 }
 
 /// Decode percent-encoded characters in URI paths.
@@ -368,13 +353,15 @@ fn metadata_to_istat(Metadata:&std::fs::Metadata) -> Value {
 
 	let Size = Metadata.len();
 
-	let Mtime = Metadata.modified()
+	let Mtime = Metadata
+		.modified()
 		.ok()
 		.and_then(|T| T.duration_since(std::time::UNIX_EPOCH).ok())
 		.map(|D| D.as_millis() as u64)
 		.unwrap_or(0);
 
-	let Ctime = Metadata.created()
+	let Ctime = Metadata
+		.created()
 		.ok()
 		.and_then(|T| T.duration_since(std::time::UNIX_EPOCH).ok())
 		.map(|D| D.as_millis() as u64)
@@ -407,12 +394,15 @@ fn ensure_userdata_dirs() {
 		format!("{}/User/cacheHome", Base),
 		format!("{}/logs", Base),
 		format!("{}/User/workspaceStorage", Base),
-		format!("{}/CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides", Base),
+		format!(
+			"{}/CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides",
+			Base
+		),
 	];
 
 	for Dir in &Dirs {
 		if let Err(E) = std::fs::create_dir_all(Dir) {
-			debug!("[WindServiceHandlers] Failed to create userdata dir {}: {}", Dir, E);
+			dev_log!("lifecycle", "Failed to create userdata dir {}: {}", Dir, E);
 		}
 	}
 
@@ -428,19 +418,19 @@ fn ensure_userdata_dirs() {
 	for (FilePath, DefaultContent) in &DefaultFiles {
 		if !std::path::Path::new(FilePath).exists() {
 			if let Err(E) = std::fs::write(FilePath, DefaultContent) {
-				debug!("[WindServiceHandlers] Failed to create default file {}: {}", FilePath, E);
+				dev_log!("lifecycle", "Failed to create default file {}: {}", FilePath, E);
 			}
 		}
 	}
 
-	info!("[WindServiceHandlers] Userdata directories initialized at: {}/User/", Base);
+	dev_log!("lifecycle", "userdata dirs initialized at: {}/User/", Base);
 }
 
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system
 #[tauri::command]
 pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<Value>) -> Result<Value, String> {
-	debug!("[WindServiceHandlers] IPC Invoke command: {}, args: {:?}", command, args);
+	dev_log!("ipc", "invoke: {} args_count={}", command, args.len());
 
 	// Ensure userdata directories exist on first IPC call
 	ensure_userdata_dirs();
@@ -453,6 +443,23 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// Configuration commands
 		"configuration:get" => handle_configuration_get(runtime.inner().clone(), args).await,
 		"configuration:update" => handle_configuration_update(runtime.inner().clone(), args).await,
+
+		// Logger commands — fire-and-forget from Wind, just acknowledge
+		"logger:log"
+		| "logger:warn"
+		| "logger:error"
+		| "logger:info"
+		| "logger:debug"
+		| "logger:trace"
+		| "logger:critical"
+		| "logger:flush"
+		| "logger:setLevel"
+		| "logger:getLevel"
+		| "logger:createLogger"
+		| "logger:registerLogger"
+		| "logger:deregisterLogger"
+		| "logger:getRegisteredLoggers"
+		| "logger:setVisibility" => Ok(Value::Null),
 
 		// File system commands — use native handlers with URI support
 		"file:read" => handle_file_read_native(args).await,
@@ -634,19 +641,19 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"file:rename" => handle_file_rename_native(args).await,
 		"file:realpath" => handle_file_realpath(args).await,
 		"file:watch" => {
-			debug!("[WindServiceHandlers] file:watch stub — no-op");
+			dev_log!("vfs", "file:watch stub — no-op");
 			Ok(Value::Null)
 		},
 		"file:unwatch" => {
-			debug!("[WindServiceHandlers] file:unwatch stub — no-op");
+			dev_log!("vfs", "file:unwatch stub — no-op");
 			Ok(Value::Null)
 		},
 		"file:open" => {
-			debug!("[WindServiceHandlers] file:open stub — no fd support yet");
+			dev_log!("vfs", "file:open stub — no fd support yet");
 			Ok(json!(0))
 		},
 		"file:close" => {
-			debug!("[WindServiceHandlers] file:close stub");
+			dev_log!("vfs", "file:close stub");
 			Ok(Value::Null)
 		},
 		"file:cloneFile" => handle_file_clone_native(args).await,
@@ -663,6 +670,24 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"nativeHost:showOpenDialog" => handle_native_show_open_dialog(app_handle.clone(), args).await,
 		"nativeHost:showSaveDialog" => Ok(json!({ "canceled": true })),
 		"nativeHost:showMessageBox" => Ok(json!({ "response": 0 })),
+
+		// Environment paths — called by ResolveConfiguration to get real Tauri paths
+		"nativeHost:getEnvironmentPaths" => {
+			let PathResolver = app_handle.path();
+			let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
+			let LogDir = PathResolver.app_log_dir().unwrap_or_default();
+			let HomeDir = PathResolver.home_dir().unwrap_or_default();
+			let TmpDir = std::env::temp_dir();
+			dev_log!("config", "getEnvironmentPaths: userDataDir={} logsPath={} homeDir={}", AppDataDir.display(), LogDir.display(), HomeDir.display());
+			let DevLogEnv = std::env::var("LAND_DEV_LOG").unwrap_or_default();
+			Ok(json!({
+				"userDataDir": AppDataDir.to_string_lossy(),
+				"logsPath": LogDir.to_string_lossy(),
+				"homeDir": HomeDir.to_string_lossy(),
+				"tmpDir": TmpDir.to_string_lossy(),
+				"devLog": if DevLogEnv.is_empty() { Value::Null } else { json!(DevLogEnv) },
+			}))
+		},
 
 		// OS info
 		"nativeHost:getOSColorScheme" => handle_native_get_color_scheme().await,
@@ -708,7 +733,8 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				let Output = std::process::Command::new("sysctl")
 					.args(["-n", "sysctl.proc_translated"])
 					.output();
-				let IsTranslated = Output.ok()
+				let IsTranslated = Output
+					.ok()
 					.map(|O| String::from_utf8_lossy(&O.stdout).trim() == "1")
 					.unwrap_or(false);
 				Ok(json!(IsTranslated))
@@ -824,11 +850,13 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 
 		// =====================================================================
 		// Extension host starter
+		// VS Code's localProcessExtensionHost.ts reads .id from createExtensionHost
+		// and .pid from start(). Return minimal stubs so it doesn't crash.
 		// =====================================================================
-		"extensionHostStarter:createExtensionHost" => Ok(Value::Null),
-		"extensionHostStarter:start" => Ok(Value::Null),
+		"extensionHostStarter:createExtensionHost" => Ok(json!({ "id": 1 })),
+		"extensionHostStarter:start" => Ok(json!({ "pid": 0 })),
 		"extensionHostStarter:kill" => Ok(Value::Null),
-		"extensionHostStarter:getExitInfo" => Ok(Value::Null),
+		"extensionHostStarter:getExitInfo" => Ok(json!({ "code": null, "signal": null })),
 
 		// =====================================================================
 		// Extension host debug service
@@ -839,10 +867,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// =====================================================================
 		// Workspaces — additional commands
 		// =====================================================================
-		"workspaces:getRecentlyOpened" => Ok(json!({
-			"workspaces": [],
-			"files": []
-		})),
+		"workspaces:getRecentlyOpened" => {
+			Ok(json!({
+				"workspaces": [],
+				"files": []
+			}))
+		},
 		"workspaces:removeRecentlyOpened" => Ok(Value::Null),
 		"workspaces:addRecentlyOpened" => Ok(Value::Null),
 		"workspaces:clearRecentlyOpened" => Ok(Value::Null),
@@ -876,7 +906,7 @@ async fn handle_configuration_get(runtime:Arc<ApplicationRunTime>, args:Vec<Valu
 		.await
 		.map_err(|e| format!("Failed to get configuration: {}", e))?;
 
-	debug!("[WindServiceHandlers] Configuration get: {} = {:?}", key, value);
+	dev_log!("config", "get: {} = {:?}", key, value);
 	Ok(value)
 }
 
@@ -904,7 +934,7 @@ async fn handle_configuration_update(runtime:Arc<ApplicationRunTime>, args:Vec<V
 		.await
 		.map_err(|e| format!("Failed to update configuration: {}", e))?;
 
-	debug!("[WindServiceHandlers] Configuration updated: {}", key);
+	dev_log!("config", "updated: {}", key);
 	Ok(Value::Null)
 }
 
@@ -924,7 +954,7 @@ async fn handle_file_read(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 		.await
 		.map_err(|e| format!("Failed to read file: {}", e))?;
 
-	debug!("[WindServiceHandlers] File read: {} ({} bytes)", path, content.len());
+	dev_log!("vfs", "read: {} ({} bytes)", path, content.len());
 	Ok(json!(content))
 }
 
@@ -950,7 +980,7 @@ async fn handle_file_write(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 		.await
 		.map_err(|e:CommonError| format!("Failed to write file: {}", e))?;
 
-	debug!("[WindServiceHandlers] File written: {} ({} bytes)", path, content.len());
+	dev_log!("vfs", "written: {} ({} bytes)", path, content.len());
 	Ok(Value::Null)
 }
 
@@ -970,7 +1000,7 @@ async fn handle_file_stat(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 		.await
 		.map_err(|e| format!("Failed to stat file: {}", e))?;
 
-	debug!("[WindServiceHandlers] File stat: {}", path);
+	dev_log!("vfs", "legacy_stat: {}", path);
 	Ok(json!(stats))
 }
 
@@ -987,7 +1017,7 @@ async fn handle_file_exists(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) ->
 
 	let exists = provider.StatFile(&PathBuf::from(path)).await.is_ok();
 
-	debug!("[WindServiceHandlers] File exists check: {} = {}", path, exists);
+	dev_log!("vfs", "exists: {} = {}", path, exists);
 	Ok(json!(exists))
 }
 
@@ -1007,7 +1037,7 @@ async fn handle_file_delete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) ->
 		.await
 		.map_err(|e:CommonError| format!("Failed to delete file: {}", e))?;
 
-	debug!("[WindServiceHandlers] File deleted: {}", path);
+	dev_log!("vfs", "deleted: {}", path);
 	Ok(Value::Null)
 }
 
@@ -1033,7 +1063,7 @@ async fn handle_file_copy(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 		.await
 		.map_err(|e:CommonError| format!("Failed to copy file: {} -> {}", source, destination))?;
 
-	debug!("[WindServiceHandlers] File copied: {} -> {}", source, destination);
+	dev_log!("vfs", "copied: {} -> {}", source, destination);
 	Ok(Value::Null)
 }
 
@@ -1059,7 +1089,7 @@ async fn handle_file_move(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 		.await
 		.map_err(|e:CommonError| format!("Failed to move file: {} -> {}", source, destination))?;
 
-	debug!("[WindServiceHandlers] File moved: {} -> {}", source, destination);
+	dev_log!("vfs", "moved: {} -> {}", source, destination);
 	Ok(Value::Null)
 }
 
@@ -1081,7 +1111,7 @@ async fn handle_file_mkdir(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 		.await
 		.map_err(|e:CommonError| format!("Failed to create directory: {}", e))?;
 
-	debug!("[WindServiceHandlers] Directory created: {} (recursive: {})", path, recursive);
+	dev_log!("vfs", "mkdir: {} (recursive: {})", path, recursive);
 	Ok(Value::Null)
 }
 
@@ -1101,7 +1131,7 @@ async fn handle_file_readdir(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -
 		.await
 		.map_err(|e| format!("Failed to read directory: {}", e))?;
 
-	debug!("[WindServiceHandlers] Directory read: {} ({} entries)", path, entries.len());
+	dev_log!("vfs", "readdir_legacy: {} ({} entries)", path, entries.len());
 	Ok(json!(entries))
 }
 
@@ -1121,7 +1151,7 @@ async fn handle_file_read_binary(runtime:Arc<ApplicationRunTime>, args:Vec<Value
 		.await
 		.map_err(|e| format!("Failed to read binary file: {}", e))?;
 
-	debug!("[WindServiceHandlers] Binary file read: {} ({} bytes)", path, content.len());
+	dev_log!("vfs", "readBinary: {} ({} bytes)", path, content.len());
 	Ok(json!(content))
 }
 
@@ -1151,7 +1181,7 @@ async fn handle_file_write_binary(runtime:Arc<ApplicationRunTime>, args:Vec<Valu
 		.await
 		.map_err(|e:CommonError| format!("Failed to write binary file: {}", e))?;
 
-	debug!("[WindServiceHandlers] Binary file written: {} ({} bytes)", path, content_len);
+	dev_log!("vfs", "writeBinary: {} ({} bytes)", path, content_len);
 	Ok(Value::Null)
 }
 
@@ -1171,7 +1201,7 @@ async fn handle_storage_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) ->
 		.await
 		.map_err(|e| format!("Failed to get storage item: {}", e))?;
 
-	debug!("[WindServiceHandlers] Storage get: {}", key);
+	dev_log!("storage", "get: {}", key);
 	Ok(value.unwrap_or(Value::Null))
 }
 
@@ -1193,7 +1223,7 @@ async fn handle_storage_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) ->
 		.await
 		.map_err(|e| format!("Failed to set storage item: {}", e))?;
 
-	debug!("[WindServiceHandlers] Storage set: {}", key);
+	dev_log!("storage", "set: {}", key);
 	Ok(Value::Null)
 }
 
@@ -1208,7 +1238,7 @@ async fn handle_environment_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 	// Use std::env for environment variables
 	let value = std::env::var(key).map_err(|e| format!("Failed to get environment variable: {}", e))?;
 
-	debug!("[WindServiceHandlers] Environment get: {}", key);
+	dev_log!("config", "env_get: {}", key);
 	Ok(json!(value))
 }
 
@@ -1221,7 +1251,7 @@ async fn handle_show_item_in_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Va
 		.ok_or("File path must be a string".to_string())?;
 
 	// IMPLEMENTATION: Microsoft-inspired native file system integration
-	debug!("[WindServiceHandlers] Show item in folder: {}", path_str);
+	dev_log!("vfs", "showInFolder: {}", path_str);
 
 	let path = std::path::PathBuf::from(path_str);
 
@@ -1281,7 +1311,7 @@ async fn handle_show_item_in_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Va
 
 			match result {
 				Ok(output) if output.status.success() => {
-					debug!("[WindServiceHandlers] Successfully opened with {}", manager);
+					dev_log!("lifecycle", "opened with {}", manager);
 					break;
 				},
 				Err(e) => {
@@ -1297,7 +1327,7 @@ async fn handle_show_item_in_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Va
 		}
 	}
 
-	info!("[WindServiceHandlers] Successfully showed item in folder: {}", path_str);
+	dev_log!("vfs", "showed in folder: {}", path_str);
 	Ok(Value::Bool(true))
 }
 
@@ -1310,7 +1340,7 @@ async fn handle_open_external(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 		.ok_or("URL must be a string".to_string())?;
 
 	// IMPLEMENTATION: Microsoft-inspired URL validation and opening
-	debug!("[WindServiceHandlers] Open external: {}", url_str);
+	dev_log!("lifecycle", "openExternal: {}", url_str);
 
 	// Validate URL format
 	if !url_str.starts_with("http://") && !url_str.starts_with("https://") {
@@ -1362,7 +1392,7 @@ async fn handle_open_external(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 
 			match result {
 				Ok(output) if output.status.success() => {
-					debug!("[WindServiceHandlers] Successfully opened with {}", handler);
+					dev_log!("lifecycle", "opened with {}", handler);
 					break;
 				},
 				Err(e) => {
@@ -1378,7 +1408,7 @@ async fn handle_open_external(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 		}
 	}
 
-	info!("[WindServiceHandlers] Successfully opened external URL: {}", url_str);
+	dev_log!("lifecycle", "opened URL: {}", url_str);
 	Ok(Value::Bool(true))
 }
 
@@ -1392,7 +1422,7 @@ async fn handle_workbench_configuration(runtime:Arc<ApplicationRunTime>, _args:V
 		.await
 		.map_err(|e| format!("Failed to get workbench configuration: {}", e))?;
 
-	debug!("[WindServiceHandlers] Workbench configuration retrieved");
+	dev_log!("config", "workbench config retrieved");
 	Ok(config)
 }
 
@@ -1483,7 +1513,7 @@ async fn handle_terminal_hide(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 /// Create a named output channel. Returns the channel name as its handle.
 async fn handle_output_create(_app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("Output").to_string();
-	info!("[WindServiceHandlers] output:create channel='{}'", ChannelName);
+	dev_log!("ipc", "output:create channel='{}'", ChannelName);
 	// Sky/frontend creates the channel panel on the `sky://output/create` event
 	Ok(json!({ "channelName": ChannelName }))
 }
@@ -1564,13 +1594,13 @@ async fn handle_textfile_write(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 async fn handle_textfile_save(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	// Actual disk write happens via textFile:write; this is a UI-dirty-state hint.
 	let _Uri = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	info!("[WindServiceHandlers] textFile:save uri={:?}", _Uri);
+	dev_log!("vfs", "textFile:save uri={:?}", _Uri);
 	Ok(Value::Null)
 }
 
 /// Register all Wind IPC command handlers
 pub fn register_wind_ipc_handlers(app_handle:&tauri::AppHandle) -> Result<(), String> {
-	info!("[WindServiceHandlers] Registering Wind IPC command handlers");
+	dev_log!("lifecycle", "registering IPC handlers");
 
 	// Note: These handlers are automatically registered when included in the
 	// Tauri invoke_handler macro in the main binary
@@ -1592,7 +1622,7 @@ async fn handle_commands_execute(runtime:Arc<ApplicationRunTime>, args:Vec<Value
 
 	let Argument = args.get(1).cloned().unwrap_or(Value::Null);
 
-	debug!("[WindServiceHandlers] commands:execute id={}", CommandId);
+	dev_log!("ipc", "commands:execute id={}", CommandId);
 
 	runtime
 		.Environment
@@ -2516,12 +2546,16 @@ async fn handle_history_go_forward(runtime:Arc<ApplicationRunTime>) -> Result<Va
 
 /// Return whether backward navigation is available.
 async fn handle_history_can_go_back(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	Ok(Value::Bool(runtime.Environment.ApplicationState.Feature.NavigationHistory.CanGoBack()))
+	Ok(Value::Bool(
+		runtime.Environment.ApplicationState.Feature.NavigationHistory.CanGoBack(),
+	))
 }
 
 /// Return whether forward navigation is available.
 async fn handle_history_can_go_forward(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	Ok(Value::Bool(runtime.Environment.ApplicationState.Feature.NavigationHistory.CanGoForward()))
+	Ok(Value::Bool(
+		runtime.Environment.ApplicationState.Feature.NavigationHistory.CanGoForward(),
+	))
 }
 
 /// Push a URI onto the navigation history stack.
@@ -2664,30 +2698,30 @@ async fn handle_model_open(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 	};
 
 	// Read file content from disk
-	let Content = tokio::fs::read_to_string(&FilePath)
-		.await
-		.unwrap_or_default();
+	let Content = tokio::fs::read_to_string(&FilePath).await.unwrap_or_default();
 
 	// Detect language from extension
 	let LanguageId = std::path::Path::new(&FilePath)
 		.extension()
 		.and_then(|E| E.to_str())
-		.map(|Ext| match Ext {
-			"rs" => "rust",
-			"ts" | "tsx" => "typescript",
-			"js" | "jsx" | "mjs" | "cjs" => "javascript",
-			"json" | "jsonc" => "json",
-			"toml" => "toml",
-			"yaml" | "yml" => "yaml",
-			"md" => "markdown",
-			"html" | "htm" => "html",
-			"css" | "scss" | "less" => "css",
-			"sh" | "bash" | "zsh" => "shellscript",
-			"py" => "python",
-			"go" => "go",
-			"c" | "h" => "c",
-			"cpp" | "cc" | "cxx" | "hpp" => "cpp",
-			_ => "plaintext",
+		.map(|Ext| {
+			match Ext {
+				"rs" => "rust",
+				"ts" | "tsx" => "typescript",
+				"js" | "jsx" | "mjs" | "cjs" => "javascript",
+				"json" | "jsonc" => "json",
+				"toml" => "toml",
+				"yaml" | "yml" => "yaml",
+				"md" => "markdown",
+				"html" | "htm" => "html",
+				"css" | "scss" | "less" => "css",
+				"sh" | "bash" | "zsh" => "shellscript",
+				"py" => "python",
+				"go" => "go",
+				"c" | "h" => "c",
+				"cpp" | "cc" | "cxx" | "hpp" => "cpp",
+				_ => "plaintext",
+			}
 		})
 		.unwrap_or("plaintext")
 		.to_owned();
@@ -2721,7 +2755,12 @@ async fn handle_model_open(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 				VersionIdentifier:Version,
 			};
 
-			runtime.Environment.ApplicationState.Feature.Documents.AddOrUpdate(Uri.clone(), Document);
+			runtime
+				.Environment
+				.ApplicationState
+				.Feature
+				.Documents
+				.AddOrUpdate(Uri.clone(), Document);
 		}
 	}
 
@@ -2753,12 +2792,14 @@ async fn handle_model_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 
 	match runtime.Environment.ApplicationState.Feature.Documents.Get(Uri) {
 		None => Ok(Value::Null),
-		Some(Document) => Ok(json!({
-			"uri": Uri,
-			"content": Document.Lines.join(&Document.EOL),
-			"version": Document.Version,
-			"languageId": Document.LanguageIdentifier,
-		})),
+		Some(Document) => {
+			Ok(json!({
+				"uri": Uri,
+				"content": Document.Lines.join(&Document.EOL),
+				"version": Document.Version,
+				"languageId": Document.LanguageIdentifier,
+			}))
+		},
 	}
 }
 
@@ -2785,10 +2826,7 @@ async fn handle_model_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, 
 }
 
 /// Update the content of an open text model, incrementing its version.
-async fn handle_model_update_content(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+async fn handle_model_update_content(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -2809,7 +2847,12 @@ async fn handle_model_update_content(
 			Document.IsDirty = true;
 			let Version = Document.Version;
 			let LangId = Document.LanguageIdentifier.clone();
-			runtime.Environment.ApplicationState.Feature.Documents.AddOrUpdate(Uri.clone(), Document);
+			runtime
+				.Environment
+				.ApplicationState
+				.Feature
+				.Documents
+				.AddOrUpdate(Uri.clone(), Document);
 			(Version, LangId)
 		},
 	};
@@ -2823,21 +2866,24 @@ async fn handle_model_update_content(
 }
 
 // =============================================================================
-// Native file system handlers (use extract_path_from_arg for URI deserialization)
+// Native file system handlers (use extract_path_from_arg for URI
+// deserialization)
 // =============================================================================
 
 /// Read file with URI arg support (VS Code sends { scheme, path } objects)
 /// Returns { buffer: number[] } where buffer is the raw byte content.
 /// VS Code's DiskFileSystemProviderClient wraps this with VSBuffer.wrap().
 async fn handle_file_read_native(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(
-		args.get(0).ok_or("Missing file path")?
-	)?;
+	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
+
+	dev_log!("vfs", "readFile: {}", Path);
 
 	// Read as raw bytes (not string) to preserve binary content
 	let Bytes = tokio::fs::read(&Path)
 		.await
 		.map_err(|E| format!("Failed to read file: {} (path: {})", E, Path))?;
+
+	dev_log!("vfs", "readFile OK: {} ({} bytes)", Path, Bytes.len());
 
 	// Return as { buffer: [byte, byte, ...] } — VS Code reconstructs as VSBuffer
 	// The buffer field must be an array of u8 values for proper deserialization
@@ -2847,13 +2893,10 @@ async fn handle_file_read_native(args:Vec<Value>) -> Result<Value, String> {
 
 /// Write file with URI arg support
 async fn handle_file_write_native(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(
-		args.get(0).ok_or("Missing file path")?
-	)?;
+	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
 
 	// args[1] is VSBuffer (content), args[2] is options
-	let Content = args.get(1)
-		.ok_or("Missing file content")?;
+	let Content = args.get(1).ok_or("Missing file content")?;
 
 	let Bytes = if let Some(S) = Content.as_str() {
 		S.as_bytes().to_vec()
@@ -2888,12 +2931,8 @@ async fn handle_file_write_native(args:Vec<Value>) -> Result<Value, String> {
 
 /// Rename/move file with URI arg support
 async fn handle_file_rename_native(args:Vec<Value>) -> Result<Value, String> {
-	let Source = extract_path_from_arg(
-		args.get(0).ok_or("Missing source path")?
-	)?;
-	let Target = extract_path_from_arg(
-		args.get(1).ok_or("Missing target path")?
-	)?;
+	let Source = extract_path_from_arg(args.get(0).ok_or("Missing source path")?)?;
+	let Target = extract_path_from_arg(args.get(1).ok_or("Missing target path")?)?;
 
 	tokio::fs::rename(&Source, &Target)
 		.await
@@ -2904,9 +2943,7 @@ async fn handle_file_rename_native(args:Vec<Value>) -> Result<Value, String> {
 
 /// Resolve real path (follow symlinks)
 async fn handle_file_realpath(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(
-		args.get(0).ok_or("Missing path")?
-	)?;
+	let Path = extract_path_from_arg(args.get(0).ok_or("Missing path")?)?;
 
 	let Canonical = tokio::fs::canonicalize(&Path)
 		.await
@@ -2921,12 +2958,8 @@ async fn handle_file_realpath(args:Vec<Value>) -> Result<Value, String> {
 
 /// Clone file (copy with metadata)
 async fn handle_file_clone_native(args:Vec<Value>) -> Result<Value, String> {
-	let Source = extract_path_from_arg(
-		args.get(0).ok_or("Missing source path")?
-	)?;
-	let Target = extract_path_from_arg(
-		args.get(1).ok_or("Missing target path")?
-	)?;
+	let Source = extract_path_from_arg(args.get(0).ok_or("Missing source path")?)?;
+	let Target = extract_path_from_arg(args.get(1).ok_or("Missing target path")?)?;
 
 	tokio::fs::copy(&Source, &Target)
 		.await
@@ -2939,32 +2972,39 @@ async fn handle_file_clone_native(args:Vec<Value>) -> Result<Value, String> {
 // Native host handlers
 // =============================================================================
 
-/// Pick folder using Tauri dialog plugin and emit open event
+/// Pick folder using Tauri dialog plugin and reload webview with folder param.
+/// In Electron, pickFolderAndOpen causes the main process to reload the window
+/// with the new workspace. We replicate this by navigating the webview to the
+/// same origin with `?folder=<path>`, which ResolveConfiguration reads.
 async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -> Result<Value, String> {
-	use tauri::Emitter;
 	use tauri_plugin_dialog::DialogExt;
+	use tauri::WebviewWindow;
 
-	debug!("[WindServiceHandlers] pickFolderAndOpen requested");
+	dev_log!("folder", "pickFolderAndOpen requested");
 
-	// Spawn blocking dialog on separate thread to avoid blocking IPC
+	dev_log!("folder", "pickFolderAndOpen requested");
+
 	let Handle = app_handle.clone();
 	tokio::task::spawn_blocking(move || {
-		let FolderPath = Handle.dialog()
-			.file()
-			.blocking_pick_folder();
+		let FolderPath = Handle.dialog().file().blocking_pick_folder();
 
 		if let Some(Path) = FolderPath {
 			let PathStr = Path.to_string();
-			info!("[WindServiceHandlers] Folder picked: {}", PathStr);
+			dev_log!("folder", "picked: {}", PathStr);
 
-			// Emit event so workbench opens the folder
-			let _ = Handle.emit("vscode:openFolder", json!({
-				"uri": {
-					"scheme": "file",
-					"path": PathStr,
-					"authority": ""
+			// Navigate the webview to reload with the folder as workspace.
+			// This mirrors Electron's behaviour of reloading the renderer.
+			if let Some(Window) = Handle.get_webview_window("main") {
+				if let Ok(CurrentUrl) = Window.url() {
+					let Origin = CurrentUrl.origin().unicode_serialization();
+					let EncodedPath = url::form_urlencoded::Serializer::new(String::new())
+						.append_pair("folder", &PathStr)
+						.finish();
+					let NewUrl = format!("{}/?{}", Origin, EncodedPath);
+					dev_log!("folder", "navigating: {}", NewUrl);
+					let _ = Window.navigate(NewUrl.parse().unwrap());
 				}
-			}));
+			}
 		}
 	});
 
@@ -2973,7 +3013,7 @@ async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -> Re
 
 /// Show open dialog with file/folder picker
 async fn handle_native_show_open_dialog(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
-	debug!("[WindServiceHandlers] showOpenDialog: {:?}", args);
+	dev_log!("folder", "showOpenDialog: {:?}", args);
 	// Return canceled for now — real dialog integration needs tauri_plugin_dialog
 	Ok(json!({ "canceled": true, "filePaths": [] }))
 }
@@ -3010,7 +3050,8 @@ async fn handle_native_os_properties() -> Result<Value, String> {
 				.map(|O| {
 					let Output = String::from_utf8_lossy(&O.stdout);
 					// Extract version number from "Microsoft Windows [Version 10.0.22631.4890]"
-					Output.split('[')
+					Output
+						.split('[')
 						.nth(1)
 						.and_then(|S| S.split(']').next())
 						.and_then(|S| S.strip_prefix("Version "))
@@ -3038,12 +3079,16 @@ async fn handle_native_os_properties() -> Result<Value, String> {
 	// CPU info via sysinfo
 	let mut Sys = System::new();
 	Sys.refresh_cpu_all();
-	let Cpus:Vec<Value> = Sys.cpus().iter().map(|Cpu| {
-		json!({
-			"model": Cpu.brand(),
-			"speed": Cpu.frequency()
+	let Cpus:Vec<Value> = Sys
+		.cpus()
+		.iter()
+		.map(|Cpu| {
+			json!({
+				"model": Cpu.brand(),
+				"speed": Cpu.frequency()
+			})
 		})
-	}).collect();
+		.collect();
 
 	Ok(json!({
 		"type": OsType,
@@ -3108,9 +3153,7 @@ async fn handle_native_is_maximized(app_handle:AppHandle) -> Result<Value, Strin
 
 /// Find a free port starting from a given port
 async fn handle_native_find_free_port(args:Vec<Value>) -> Result<Value, String> {
-	let StartPort = args.get(0)
-		.and_then(|V| V.as_u64())
-		.unwrap_or(9000) as u16;
+	let StartPort = args.get(0).and_then(|V| V.as_u64()).unwrap_or(9000) as u16;
 
 	for Port in StartPort..StartPort + 100 {
 		if std::net::TcpListener::bind(("127.0.0.1", Port)).is_ok() {
@@ -3143,11 +3186,11 @@ async fn handle_local_pty_get_profiles() -> Result<Value, String> {
 			"/usr/local/bin/fish",
 			"/usr/local/bin/zsh",
 			"/usr/local/bin/bash",
-			"/bin/dash",       // Ubuntu/Debian default /bin/sh symlink target
-			"/usr/bin/ksh",    // KornShell (RHEL, Solaris)
-			"/usr/bin/tcsh",   // C Shell variant
-			"/bin/csh",        // C Shell
-			"/usr/bin/pwsh",   // PowerShell on Linux/macOS
+			"/bin/dash",     // Ubuntu/Debian default /bin/sh symlink target
+			"/usr/bin/ksh",  // KornShell (RHEL, Solaris)
+			"/usr/bin/tcsh", // C Shell variant
+			"/bin/csh",      // C Shell
+			"/usr/bin/pwsh", // PowerShell on Linux/macOS
 			"/usr/local/bin/pwsh",
 		];
 
@@ -3174,9 +3217,7 @@ async fn handle_local_pty_get_profiles() -> Result<Value, String> {
 			for Line in ShellsFile.lines() {
 				let Trimmed = Line.trim();
 				if Trimmed.starts_with('/') && !Trimmed.starts_with('#') {
-					let AlreadyAdded = Profiles.iter().any(|P| {
-						P.get("path").and_then(|V| V.as_str()) == Some(Trimmed)
-					});
+					let AlreadyAdded = Profiles.iter().any(|P| P.get("path").and_then(|V| V.as_str()) == Some(Trimmed));
 					if !AlreadyAdded && std::path::Path::new(Trimmed).exists() {
 						let Name = std::path::Path::new(Trimmed)
 							.file_name()
@@ -3202,14 +3243,31 @@ async fn handle_local_pty_get_profiles() -> Result<Value, String> {
 		// Windows terminal profiles
 		let SystemRoot = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
 		let ProgramFiles = std::env::var("ProgramFiles").unwrap_or_else(|_| "C:\\Program Files".to_string());
-		let LocalAppData = std::env::var("LOCALAPPDATA").unwrap_or_else(|_| "C:\\Users\\User\\AppData\\Local".to_string());
+		let LocalAppData =
+			std::env::var("LOCALAPPDATA").unwrap_or_else(|_| "C:\\Users\\User\\AppData\\Local".to_string());
 
 		let WindowsShells:Vec<(&str, String, Vec<&str>)> = vec![
-			("PowerShell", format!("{}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", SystemRoot), vec!["-NoLogo"]),
-			("PowerShell 7", format!("{}\\PowerShell\\7\\pwsh.exe", ProgramFiles), vec!["-NoLogo"]),
+			(
+				"PowerShell",
+				format!("{}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", SystemRoot),
+				vec!["-NoLogo"],
+			),
+			(
+				"PowerShell 7",
+				format!("{}\\PowerShell\\7\\pwsh.exe", ProgramFiles),
+				vec!["-NoLogo"],
+			),
 			("Command Prompt", format!("{}\\System32\\cmd.exe", SystemRoot), vec![]),
-			("Git Bash", format!("{}\\Git\\bin\\bash.exe", ProgramFiles), vec!["--login", "-i"]),
-			("Git Bash (User)", format!("{}\\Programs\\Git\\bin\\bash.exe", LocalAppData), vec!["--login", "-i"]),
+			(
+				"Git Bash",
+				format!("{}\\Git\\bin\\bash.exe", ProgramFiles),
+				vec!["--login", "-i"],
+			),
+			(
+				"Git Bash (User)",
+				format!("{}\\Programs\\Git\\bin\\bash.exe", LocalAppData),
+				vec!["--login", "-i"],
+			),
 			("WSL", format!("{}\\System32\\wsl.exe", SystemRoot), vec![]),
 			("MSYS2", "C:\\msys64\\usr\\bin\\bash.exe".to_string(), vec!["--login", "-i"]),
 			("Cygwin", "C:\\cygwin64\\bin\\bash.exe".to_string(), vec!["--login", "-i"]),
@@ -3258,7 +3316,10 @@ async fn handle_local_pty_get_default_shell() -> Result<Value, String> {
 		if std::path::Path::new(&PwshPath).exists() {
 			return Ok(json!(PwshPath));
 		}
-		Ok(json!(format!("{}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", SystemRoot)))
+		Ok(json!(format!(
+			"{}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+			SystemRoot
+		)))
 	}
 
 	#[cfg(not(any(unix, target_os = "windows")))]
@@ -3330,8 +3391,8 @@ fn detect_dark_mode() -> bool {
 
 	#[cfg(target_os = "windows")]
 	{
-		// Windows: HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\AppsUseLightTheme
-		// 0 = dark, 1 = light
+		// Windows: HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\
+		// AppsUseLightTheme 0 = dark, 1 = light
 		std::process::Command::new("reg")
 			.args([
 				"query",
@@ -3359,7 +3420,9 @@ fn detect_dark_mode() -> bool {
 			.map(|O| String::from_utf8_lossy(&O.stdout).contains("dark"))
 			.unwrap_or(false);
 
-		if GtkDark { return true; }
+		if GtkDark {
+			return true;
+		}
 
 		// 2. GTK theme name contains "dark"
 		let GtkTheme = std::process::Command::new("gsettings")
@@ -3369,7 +3432,9 @@ fn detect_dark_mode() -> bool {
 			.map(|O| String::from_utf8_lossy(&O.stdout).to_lowercase().contains("dark"))
 			.unwrap_or(false);
 
-		if GtkTheme { return true; }
+		if GtkTheme {
+			return true;
+		}
 
 		// 3. KDE/Plasma
 		let KdeDark = std::env::var("KDE_COLOR_SCHEME")
@@ -3377,7 +3442,9 @@ fn detect_dark_mode() -> bool {
 			.map(|V| V.to_lowercase().contains("dark"))
 			.unwrap_or(false);
 
-		if KdeDark { return true; }
+		if KdeDark {
+			return true;
+		}
 
 		// 4. xfce4
 		let XfceDark = std::process::Command::new("xfconf-query")
@@ -3400,36 +3467,37 @@ fn detect_dark_mode() -> bool {
 // Native file system handlers (stat, exists, delete, mkdir, readdir)
 // =============================================================================
 
-/// Stat file — returns IStat shape with URI arg support
+/// Stat file — pure stat, no side effects. Returns IStat shape.
 async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(
-		args.get(0).ok_or("Missing file path")?
-	)?;
+	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
+
+	dev_log!("vfs", "stat: {}", Path);
 
 	let Metadata = tokio::fs::symlink_metadata(&Path)
 		.await
-		.map_err(|E| format!("Failed to stat file: {} (path: {})", E, Path))?;
+		.map_err(|E| {
+			dev_log!("vfs", "stat ENOENT: {}", Path);
+			format!("Failed to stat file: {} (path: {})", E, Path)
+		})?;
 
+	dev_log!("vfs", "stat OK: {} (dir={})", Path, Metadata.is_dir());
 	Ok(metadata_to_istat(&Metadata))
 }
 
 /// Check file existence with URI arg support
 async fn handle_file_exists_native(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(
-		args.get(0).ok_or("Missing file path")?
-	)?;
+	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
 
 	Ok(json!(tokio::fs::try_exists(&Path).await.unwrap_or(false)))
 }
 
 /// Delete file or directory with URI arg support
 async fn handle_file_delete_native(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(
-		args.get(0).ok_or("Missing file path")?
-	)?;
+	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
 
 	// Options may include { recursive, useTrash }
-	let Recursive = args.get(1)
+	let Recursive = args
+		.get(1)
 		.and_then(|V| V.as_object())
 		.and_then(|O| O.get("recursive"))
 		.and_then(|V| V.as_bool())
@@ -3445,16 +3513,15 @@ async fn handle_file_delete_native(args:Vec<Value>) -> Result<Value, String> {
 		}
 	} else {
 		tokio::fs::remove_file(&Path).await
-	}.map_err(|E| format!("Failed to delete: {} ({})", Path, E))?;
+	}
+	.map_err(|E| format!("Failed to delete: {} ({})", Path, E))?;
 
 	Ok(Value::Null)
 }
 
 /// Create directory with URI arg support
 async fn handle_file_mkdir_native(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(
-		args.get(0).ok_or("Missing directory path")?
-	)?;
+	let Path = extract_path_from_arg(args.get(0).ok_or("Missing directory path")?)?;
 
 	tokio::fs::create_dir_all(&Path)
 		.await
@@ -3466,9 +3533,9 @@ async fn handle_file_mkdir_native(args:Vec<Value>) -> Result<Value, String> {
 /// Read directory contents with URI arg support
 /// Returns array of [name, fileType] tuples matching VS Code's ReadDirResult
 async fn handle_file_readdir_native(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(
-		args.get(0).ok_or("Missing directory path")?
-	)?;
+	let Path = extract_path_from_arg(args.get(0).ok_or("Missing directory path")?)?;
+
+	dev_log!("vfs", "readdir: {}", Path);
 
 	let mut Entries = tokio::fs::read_dir(&Path)
 		.await
@@ -3507,7 +3574,8 @@ async fn handle_storage_get_items(runtime:Arc<ApplicationRunTime>, _args:Vec<Val
 		Ok(State) => {
 			// Convert JSON object to array of [key, value] tuples
 			if let Some(Obj) = State.as_object() {
-				let Tuples:Vec<Value> = Obj.iter()
+				let Tuples:Vec<Value> = Obj
+					.iter()
 					.map(|(K, V)| {
 						let ValStr = match V {
 							Value::String(S) => S.clone(),
@@ -3537,10 +3605,7 @@ async fn handle_storage_update_items(runtime:Arc<ApplicationRunTime>, args:Vec<V
 			if let Some(Arr) = Inserts.as_array() {
 				for Item in Arr {
 					if let Some(Pair) = Item.as_array() {
-						if let (Some(Key), Some(Val)) = (
-							Pair.get(0).and_then(|V| V.as_str()),
-							Pair.get(1),
-						) {
+						if let (Some(Key), Some(Val)) = (Pair.get(0).and_then(|V| V.as_str()), Pair.get(1)) {
 							let _ = provider.UpdateStorageValue(true, Key.to_string(), Some(Val.clone())).await;
 						}
 					}

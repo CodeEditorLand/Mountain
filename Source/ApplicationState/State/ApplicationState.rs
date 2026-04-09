@@ -83,7 +83,7 @@ pub struct ApplicationState {
 	pub TestProviderState:Arc<tokio::sync::RwLock<TestProviderState>>,
 
 	/// Memento storage paths.
-	pub GlobalMementoPath:std::path::PathBuf,
+	pub GlobalMementoPath:Arc<StandardMutex<std::path::PathBuf>>,
 	pub WorkspaceMementoPath:Arc<StandardMutex<Option<std::path::PathBuf>>>,
 }
 
@@ -98,7 +98,7 @@ impl Default for ApplicationState {
 			Feature:Default::default(),
 			UI:Default::default(),
 			TestProviderState:Arc::new(tokio::sync::RwLock::new(TestProviderState::new())),
-			GlobalMementoPath:Default::default(),
+			GlobalMementoPath:Arc::new(StandardMutex::new(Default::default())),
 			WorkspaceMementoPath:Arc::new(StandardMutex::new(None)),
 		}
 	}

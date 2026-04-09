@@ -2,7 +2,7 @@
 	"$schema": "../gen/schemas/desktop-schema.json",
 	"identifier": "default",
 	"windows": ["*"],
-	"urls": ["http://localhost:*", "http://localhost:*/*", "https://tauri.localhost", "https://tauri.localhost/*", "tauri://localhost", "tauri://localhost/*"],
+	"urls": ["http://localhost:*", "http://localhost:*/", "http://localhost:*/*", "https://tauri.localhost", "https://tauri.localhost/*", "tauri://localhost", "tauri://localhost/*"],
 	"permissions": [
 		"core:path:default",
 		"core:event:default",

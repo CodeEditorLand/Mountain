@@ -210,7 +210,10 @@ impl ApplicationRunTime {
 			.lock()
 			.map_err(|e| CommonError::StateLockPoisoned { Context:e.to_string() })?;
 
-		let global_memento_path = &self.Environment.ApplicationState.GlobalMementoPath;
+		let global_memento_path = self.Environment.ApplicationState.GlobalMementoPath
+			.lock()
+			.map_err(|e| CommonError::StateLockPoisoned { Context:e.to_string() })?
+			.clone();
 
 		if let Some(parent) = global_memento_path.parent() {
 			if !parent.exists() {
@@ -222,7 +225,7 @@ impl ApplicationRunTime {
 		let memento_json = serde_json::to_string_pretty(&*global_memento_guard)
 			.map_err(|e| CommonError::SerializationError { Description:e.to_string() })?;
 
-		std::fs::write(global_memento_path, memento_json)
+		std::fs::write(&global_memento_path, memento_json)
 			.map_err(|e| CommonError::FileSystemIO { Path:global_memento_path.clone(), Description:e.to_string() })
 	}
 
