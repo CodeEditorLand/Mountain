@@ -169,7 +169,7 @@
 //! ])
 //! ```
 
-use std::{path::PathBuf, sync::Arc};
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use log::{debug, error, info};
 use serde_json::{Value, json};
@@ -197,11 +197,253 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
+/// Extract a filesystem path from a VS Code argument.
+/// VS Code sends URI objects `{ scheme: "file", path: "/C:/foo", fsPath: "C:\\foo" }`
+/// but Mountain handlers expect platform-native path strings.
+///
+/// Windows URI paths have a leading slash: `/C:/Users/...` → strip it.
+/// Unix paths start with `/` normally.
+fn extract_path_from_arg(Arg:&Value) -> Result<String, String> {
+	// Direct string path
+	if let Some(Path) = Arg.as_str() {
+		return Ok(normalize_uri_path(Path));
+	}
+	// URI object { scheme, path, fsPath, ... }
+	if let Some(Object) = Arg.as_object() {
+		// Prefer fsPath (already OS-normalized by VS Code)
+		if let Some(FsPath) = Object.get("fsPath").and_then(|V| V.as_str()) {
+			if !FsPath.is_empty() {
+				return Ok(FsPath.to_string());
+			}
+		}
+		// Fall back to path field (URI-encoded, may have leading / on Windows)
+		if let Some(Path) = Object.get("path").and_then(|V| V.as_str()) {
+			if !Path.is_empty() {
+				return Ok(normalize_uri_path(Path));
+			}
+		}
+		// Handle external (full URI string like file:///C:/foo or file:///home/user)
+		if let Some(External) = Object.get("external").and_then(|V| V.as_str()) {
+			if External.starts_with("file://") {
+				let Stripped = External.trim_start_matches("file://");
+				return Ok(normalize_uri_path(Stripped));
+			}
+		}
+	}
+	Err("File path must be a string or URI object with path/fsPath field".to_string())
+}
+
+/// Normalize a URI-style path to a platform-native path.
+/// On Windows, URI paths look like `/C:/Users/...` — strip the leading slash.
+/// On Unix, paths already start with `/`.
+/// Also handles percent-encoded characters (%20 for space, etc.)
+/// Also maps vscode-userdata paths `/User/...` to the real userdata directory.
+fn normalize_uri_path(Path:&str) -> String {
+	let Decoded = percent_decode(Path);
+
+	// Map vscode-userdata paths: /User/... → ~/.land/User/...
+	// Wind's configuration sets profiles.home = { scheme: "vscode-userdata", path: "/User" }
+	// VS Code's FileUserDataProvider converts vscode-userdata: → file: but keeps the path.
+	// We need to prepend the real userdata directory.
+	let Resolved = resolve_userdata_path(&Decoded);
+
+	#[cfg(target_os = "windows")]
+	{
+		// Windows: URI path "/C:/Users/foo" → "C:\\Users\\foo"
+		let Trimmed = if Resolved.len() >= 3
+			&& Resolved.starts_with('/')
+			&& Resolved.as_bytes().get(2) == Some(&b':')
+		{
+			// /C:/path → C:/path
+			Resolved[1..].to_string()
+		} else {
+			Resolved
+		};
+		// Normalize forward slashes to backslashes for Windows
+		Trimmed.replace('/', "\\")
+	}
+
+	#[cfg(not(target_os = "windows"))]
+	{
+		Resolved
+	}
+}
+
+/// Map vscode-userdata paths to real filesystem paths.
+/// /User/settings.json → ~/.land/User/settings.json
+/// /User/profiles/__default__profile__/... → ~/.land/User/profiles/...
+/// Paths not starting with /User/ are returned unchanged.
+fn resolve_userdata_path(Path:&str) -> String {
+	if !Path.starts_with("/User/") && Path != "/User" {
+		return Path.to_string();
+	}
+
+	let UserDataBase = get_userdata_base_dir();
+
+	// /User/settings.json → {base}/User/settings.json
+	format!("{}{}", UserDataBase, Path)
+}
+
+/// Get the base directory for userdata storage.
+/// macOS: ~/Library/Application Support/Land
+/// Windows: %APPDATA%/Land
+/// Linux: ~/.config/Land
+fn get_userdata_base_dir() -> String {
+	// Use dirs crate if available, otherwise fallback
+	#[cfg(target_os = "macos")]
+	{
+		if let Ok(Home) = std::env::var("HOME") {
+			return format!("{}/Library/Application Support/Land", Home);
+		}
+		"/tmp/Land".to_string()
+	}
+
+	#[cfg(target_os = "windows")]
+	{
+		if let Ok(AppData) = std::env::var("APPDATA") {
+			return format!("{}\\Land", AppData);
+		}
+		"C:\\Land".to_string()
+	}
+
+	#[cfg(target_os = "linux")]
+	{
+		if let Ok(XdgConfig) = std::env::var("XDG_CONFIG_HOME") {
+			return format!("{}/Land", XdgConfig);
+		}
+		if let Ok(Home) = std::env::var("HOME") {
+			return format!("{}/.config/Land", Home);
+		}
+		"/tmp/Land".to_string()
+	}
+
+	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+	{
+		"/tmp/Land".to_string()
+	}
+}
+
+/// Decode percent-encoded characters in URI paths.
+/// Handles: %20 (space), %23 (#), %25 (%), %5B ([), %5D (]), etc.
+fn percent_decode(Input:&str) -> String {
+	let mut Result = String::with_capacity(Input.len());
+	let Bytes = Input.as_bytes();
+	let mut I = 0;
+
+	while I < Bytes.len() {
+		if Bytes[I] == b'%' && I + 2 < Bytes.len() {
+			let High = hex_digit(Bytes[I + 1]);
+			let Low = hex_digit(Bytes[I + 2]);
+			if let (Some(H), Some(L)) = (High, Low) {
+				Result.push((H * 16 + L) as char);
+				I += 3;
+				continue;
+			}
+		}
+		Result.push(Bytes[I] as char);
+		I += 1;
+	}
+
+	Result
+}
+
+fn hex_digit(Byte:u8) -> Option<u8> {
+	match Byte {
+		b'0'..=b'9' => Some(Byte - b'0'),
+		b'a'..=b'f' => Some(Byte - b'a' + 10),
+		b'A'..=b'F' => Some(Byte - b'A' + 10),
+		_ => None,
+	}
+}
+
+/// Convert a `std::fs::Metadata` to VS Code's `IStat` shape.
+fn metadata_to_istat(Metadata:&std::fs::Metadata) -> Value {
+	let FileType = if Metadata.is_symlink() {
+		64 // SymbolicLink
+	} else if Metadata.is_dir() {
+		2 // Directory
+	} else {
+		1 // File
+	};
+
+	let Size = Metadata.len();
+
+	let Mtime = Metadata.modified()
+		.ok()
+		.and_then(|T| T.duration_since(std::time::UNIX_EPOCH).ok())
+		.map(|D| D.as_millis() as u64)
+		.unwrap_or(0);
+
+	let Ctime = Metadata.created()
+		.ok()
+		.and_then(|T| T.duration_since(std::time::UNIX_EPOCH).ok())
+		.map(|D| D.as_millis() as u64)
+		.unwrap_or(Mtime);
+
+	json!({
+		"type": FileType,
+		"size": Size,
+		"mtime": Mtime,
+		"ctime": Ctime
+	})
+}
+
+/// Ensure userdata directories exist on first access.
+/// Creates ~/.land/User/ and subdirectories that VS Code expects.
+static USERDATA_INITIALIZED:std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn ensure_userdata_dirs() {
+	if USERDATA_INITIALIZED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+		return; // Already initialized
+	}
+
+	let Base = get_userdata_base_dir();
+	let Dirs = [
+		format!("{}/User", Base),
+		format!("{}/User/globalStorage", Base),
+		format!("{}/User/profiles/__default__profile__", Base),
+		format!("{}/User/snippets", Base),
+		format!("{}/User/prompts", Base),
+		format!("{}/User/cacheHome", Base),
+		format!("{}/logs", Base),
+		format!("{}/User/workspaceStorage", Base),
+		format!("{}/CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides", Base),
+	];
+
+	for Dir in &Dirs {
+		if let Err(E) = std::fs::create_dir_all(Dir) {
+			debug!("[WindServiceHandlers] Failed to create userdata dir {}: {}", Dir, E);
+		}
+	}
+
+	// Create default empty files if they don't exist
+	let DefaultFiles = [
+		(format!("{}/User/settings.json", Base), "{}"),
+		(format!("{}/User/keybindings.json", Base), "[]"),
+		(format!("{}/User/tasks.json", Base), "{}"),
+		(format!("{}/User/extensions.json", Base), "[]"),
+		(format!("{}/User/mcp.json", Base), "{}"),
+	];
+
+	for (FilePath, DefaultContent) in &DefaultFiles {
+		if !std::path::Path::new(FilePath).exists() {
+			if let Err(E) = std::fs::write(FilePath, DefaultContent) {
+				debug!("[WindServiceHandlers] Failed to create default file {}: {}", FilePath, E);
+			}
+		}
+	}
+
+	info!("[WindServiceHandlers] Userdata directories initialized at: {}/User/", Base);
+}
+
 /// Handler for Wind's MainProcessService.invoke() calls
 /// Maps Tauri IPC commands to Mountain's internal command system
 #[tauri::command]
 pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<Value>) -> Result<Value, String> {
 	debug!("[WindServiceHandlers] IPC Invoke command: {}, args: {:?}", command, args);
+
+	// Ensure userdata directories exist on first IPC call
+	ensure_userdata_dirs();
 
 	// Get the application runtime
 	let runtime = app_handle.state::<Arc<ApplicationRunTime>>();
@@ -212,22 +454,28 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"configuration:get" => handle_configuration_get(runtime.inner().clone(), args).await,
 		"configuration:update" => handle_configuration_update(runtime.inner().clone(), args).await,
 
-		// File system commands
-		"file:read" => handle_file_read(runtime.inner().clone(), args).await,
-		"file:write" => handle_file_write(runtime.inner().clone(), args).await,
-		"file:stat" => handle_file_stat(runtime.inner().clone(), args).await,
-		"file:exists" => handle_file_exists(runtime.inner().clone(), args).await,
-		"file:delete" => handle_file_delete(runtime.inner().clone(), args).await,
-		"file:copy" => handle_file_copy(runtime.inner().clone(), args).await,
-		"file:move" => handle_file_move(runtime.inner().clone(), args).await,
-		"file:mkdir" => handle_file_mkdir(runtime.inner().clone(), args).await,
-		"file:readdir" => handle_file_readdir(runtime.inner().clone(), args).await,
+		// File system commands — use native handlers with URI support
+		"file:read" => handle_file_read_native(args).await,
+		"file:write" => handle_file_write_native(args).await,
+		"file:stat" => handle_file_stat_native(args).await,
+		"file:exists" => handle_file_exists_native(args).await,
+		"file:delete" => handle_file_delete_native(args).await,
+		"file:copy" => handle_file_clone_native(args).await,
+		"file:move" => handle_file_rename_native(args).await,
+		"file:mkdir" => handle_file_mkdir_native(args).await,
+		"file:readdir" => handle_file_readdir_native(args).await,
 		"file:readBinary" => handle_file_read_binary(runtime.inner().clone(), args).await,
 		"file:writeBinary" => handle_file_write_binary(runtime.inner().clone(), args).await,
 
 		// Storage commands
 		"storage:get" => handle_storage_get(runtime.inner().clone(), args).await,
 		"storage:set" => handle_storage_set(runtime.inner().clone(), args).await,
+		// VS Code's NativeWorkbenchStorageService uses getItems/updateItems
+		"storage:getItems" => handle_storage_get_items(runtime.inner().clone(), args).await,
+		"storage:updateItems" => handle_storage_update_items(runtime.inner().clone(), args).await,
+		"storage:optimize" => Ok(Value::Null),
+		"storage:isUsed" => Ok(Value::Null),
+		"storage:close" => Ok(Value::Null),
 
 		// Environment commands
 		"environment:get" => handle_environment_get(runtime.inner().clone(), args).await,
@@ -375,6 +623,234 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			});
 			Ok(state)
 		},
+
+		// =====================================================================
+		// File system command ALIASES
+		// VS Code's DiskFileSystemProviderClient calls readFile/writeFile/rename
+		// but Mountain's original handlers use read/write/move.
+		// =====================================================================
+		"file:readFile" => handle_file_read_native(args).await,
+		"file:writeFile" => handle_file_write_native(args).await,
+		"file:rename" => handle_file_rename_native(args).await,
+		"file:realpath" => handle_file_realpath(args).await,
+		"file:watch" => {
+			debug!("[WindServiceHandlers] file:watch stub — no-op");
+			Ok(Value::Null)
+		},
+		"file:unwatch" => {
+			debug!("[WindServiceHandlers] file:unwatch stub — no-op");
+			Ok(Value::Null)
+		},
+		"file:open" => {
+			debug!("[WindServiceHandlers] file:open stub — no fd support yet");
+			Ok(json!(0))
+		},
+		"file:close" => {
+			debug!("[WindServiceHandlers] file:close stub");
+			Ok(Value::Null)
+		},
+		"file:cloneFile" => handle_file_clone_native(args).await,
+
+		// =====================================================================
+		// Native Host commands (INativeHostService)
+		// =====================================================================
+
+		// Dialogs
+		"nativeHost:pickFolderAndOpen" => handle_native_pick_folder(app_handle.clone(), args).await,
+		"nativeHost:pickFileAndOpen" => handle_native_pick_folder(app_handle.clone(), args).await,
+		"nativeHost:pickFileFolderAndOpen" => handle_native_pick_folder(app_handle.clone(), args).await,
+		"nativeHost:pickWorkspaceAndOpen" => handle_native_pick_folder(app_handle.clone(), args).await,
+		"nativeHost:showOpenDialog" => handle_native_show_open_dialog(app_handle.clone(), args).await,
+		"nativeHost:showSaveDialog" => Ok(json!({ "canceled": true })),
+		"nativeHost:showMessageBox" => Ok(json!({ "response": 0 })),
+
+		// OS info
+		"nativeHost:getOSColorScheme" => handle_native_get_color_scheme().await,
+		"nativeHost:getOSProperties" => handle_native_os_properties().await,
+		"nativeHost:getOSStatistics" => handle_native_os_statistics().await,
+		"nativeHost:getOSVirtualMachineHint" => Ok(json!(0)),
+
+		// Window state
+		"nativeHost:isWindowAlwaysOnTop" => Ok(json!(false)),
+		"nativeHost:isFullScreen" => handle_native_is_fullscreen(app_handle.clone()).await,
+		"nativeHost:isMaximized" => handle_native_is_maximized(app_handle.clone()).await,
+		"nativeHost:getActiveWindowId" => Ok(json!(1)),
+		"nativeHost:getWindows" => Ok(json!([{ "id": 1, "title": "Land", "filename": "" }])),
+		"nativeHost:getWindowCount" => Ok(json!(1)),
+
+		// Window control (fire-and-forget)
+		"nativeHost:updateWindowControls" => Ok(Value::Null),
+		"nativeHost:setMinimumSize" => Ok(Value::Null),
+		"nativeHost:notifyReady" => Ok(Value::Null),
+		"nativeHost:saveWindowSplash" => Ok(Value::Null),
+		"nativeHost:updateTouchBar" => Ok(Value::Null),
+		"nativeHost:focusWindow" => Ok(Value::Null),
+		"nativeHost:maximizeWindow" => Ok(Value::Null),
+		"nativeHost:minimizeWindow" => Ok(Value::Null),
+		"nativeHost:unmaximizeWindow" => Ok(Value::Null),
+		"nativeHost:moveWindowTop" => Ok(Value::Null),
+		"nativeHost:positionWindow" => Ok(Value::Null),
+		"nativeHost:toggleFullScreen" => Ok(Value::Null),
+		"nativeHost:setWindowAlwaysOnTop" => Ok(Value::Null),
+		"nativeHost:toggleWindowAlwaysOnTop" => Ok(Value::Null),
+		"nativeHost:closeWindow" => Ok(Value::Null),
+		"nativeHost:setDocumentEdited" => Ok(Value::Null),
+		"nativeHost:setRepresentedFilename" => Ok(Value::Null),
+		"nativeHost:setBackgroundThrottling" => Ok(Value::Null),
+		"nativeHost:updateWindowAccentColor" => Ok(Value::Null),
+
+		// OS operations
+		"nativeHost:isAdmin" => Ok(json!(false)),
+		"nativeHost:isRunningUnderARM64Translation" => {
+			#[cfg(target_os = "macos")]
+			{
+				// macOS: check if running under Rosetta 2
+				let Output = std::process::Command::new("sysctl")
+					.args(["-n", "sysctl.proc_translated"])
+					.output();
+				let IsTranslated = Output.ok()
+					.map(|O| String::from_utf8_lossy(&O.stdout).trim() == "1")
+					.unwrap_or(false);
+				Ok(json!(IsTranslated))
+			}
+			#[cfg(not(target_os = "macos"))]
+			{
+				Ok(json!(false))
+			}
+		},
+		"nativeHost:hasWSLFeatureInstalled" => {
+			#[cfg(target_os = "windows")]
+			{
+				Ok(json!(std::path::Path::new("C:\\Windows\\System32\\wsl.exe").exists()))
+			}
+			#[cfg(not(target_os = "windows"))]
+			{
+				Ok(json!(false))
+			}
+		},
+		"nativeHost:showItemInFolder" => handle_show_item_in_folder(runtime.inner().clone(), args).await,
+		"nativeHost:openExternal" => handle_open_external(runtime.inner().clone(), args).await,
+		"nativeHost:moveItemToTrash" => Ok(Value::Null),
+
+		// Clipboard
+		"nativeHost:readClipboardText" => Ok(json!("")),
+		"nativeHost:writeClipboardText" => Ok(Value::Null),
+		"nativeHost:readClipboardFindText" => Ok(json!("")),
+		"nativeHost:writeClipboardFindText" => Ok(Value::Null),
+		"nativeHost:readClipboardBuffer" => Ok(json!([])),
+		"nativeHost:writeClipboardBuffer" => Ok(Value::Null),
+		"nativeHost:hasClipboard" => Ok(json!(false)),
+		"nativeHost:readImage" => Ok(json!([])),
+		"nativeHost:triggerPaste" => Ok(Value::Null),
+
+		// Process
+		"nativeHost:getProcessId" => Ok(json!(std::process::id())),
+		"nativeHost:killProcess" => Ok(Value::Null),
+
+		// Network
+		"nativeHost:findFreePort" => handle_native_find_free_port(args).await,
+		"nativeHost:isPortFree" => Ok(json!(true)),
+		"nativeHost:resolveProxy" => Ok(Value::Null),
+		"nativeHost:lookupAuthorization" => Ok(Value::Null),
+		"nativeHost:lookupKerberosAuthorization" => Ok(Value::Null),
+		"nativeHost:loadCertificates" => Ok(json!([])),
+
+		// Lifecycle
+		"nativeHost:relaunch" => Ok(Value::Null),
+		"nativeHost:reload" => Ok(Value::Null),
+		"nativeHost:quit" => Ok(Value::Null),
+		"nativeHost:exit" => Ok(Value::Null),
+
+		// Dev tools
+		"nativeHost:openDevTools" => Ok(Value::Null),
+		"nativeHost:toggleDevTools" => Ok(Value::Null),
+
+		// Power
+		"nativeHost:getSystemIdleState" => Ok(json!("active")),
+		"nativeHost:getSystemIdleTime" => Ok(json!(0)),
+		"nativeHost:getCurrentThermalState" => Ok(json!("nominal")),
+		"nativeHost:isOnBatteryPower" => Ok(json!(false)),
+		"nativeHost:startPowerSaveBlocker" => Ok(json!(0)),
+		"nativeHost:stopPowerSaveBlocker" => Ok(json!(false)),
+		"nativeHost:isPowerSaveBlockerStarted" => Ok(json!(false)),
+
+		// macOS specific
+		"nativeHost:newWindowTab" => Ok(Value::Null),
+		"nativeHost:showPreviousWindowTab" => Ok(Value::Null),
+		"nativeHost:showNextWindowTab" => Ok(Value::Null),
+		"nativeHost:moveWindowTabToNewWindow" => Ok(Value::Null),
+		"nativeHost:mergeAllWindowTabs" => Ok(Value::Null),
+		"nativeHost:toggleWindowTabsBar" => Ok(Value::Null),
+		"nativeHost:installShellCommand" => Ok(Value::Null),
+		"nativeHost:uninstallShellCommand" => Ok(Value::Null),
+
+		// =====================================================================
+		// Local PTY (terminal) commands
+		// =====================================================================
+		"localPty:getProfiles" => handle_local_pty_get_profiles().await,
+		"localPty:getDefaultSystemShell" => handle_local_pty_get_default_shell().await,
+		"localPty:getTerminalLayoutInfo" => Ok(Value::Null),
+		"localPty:setTerminalLayoutInfo" => Ok(Value::Null),
+		"localPty:getPerformanceMarks" => Ok(json!([])),
+		"localPty:reduceConnectionGraceTime" => Ok(Value::Null),
+		"localPty:listProcesses" => Ok(json!([])),
+		"localPty:getEnvironment" => handle_local_pty_get_environment().await,
+
+		// =====================================================================
+		// Update service
+		// =====================================================================
+		"update:_getInitialState" => Ok(json!({ "type": "idle", "updateType": 0 })),
+		"update:isLatestVersion" => Ok(json!(true)),
+		"update:checkForUpdates" => Ok(Value::Null),
+		"update:downloadUpdate" => Ok(Value::Null),
+		"update:applyUpdate" => Ok(Value::Null),
+		"update:quitAndInstall" => Ok(Value::Null),
+
+		// =====================================================================
+		// Menubar
+		// =====================================================================
+		"menubar:updateMenubar" => Ok(Value::Null),
+
+		// =====================================================================
+		// URL handler
+		// =====================================================================
+		"url:registerExternalUriOpener" => Ok(Value::Null),
+
+		// =====================================================================
+		// Encryption
+		// =====================================================================
+		"encryption:encrypt" => Ok(json!("")),
+		"encryption:decrypt" => Ok(json!("")),
+
+		// =====================================================================
+		// Extension host starter
+		// =====================================================================
+		"extensionHostStarter:createExtensionHost" => Ok(Value::Null),
+		"extensionHostStarter:start" => Ok(Value::Null),
+		"extensionHostStarter:kill" => Ok(Value::Null),
+		"extensionHostStarter:getExitInfo" => Ok(Value::Null),
+
+		// =====================================================================
+		// Extension host debug service
+		// =====================================================================
+		"extensionhostdebugservice:reload" => Ok(Value::Null),
+		"extensionhostdebugservice:close" => Ok(Value::Null),
+
+		// =====================================================================
+		// Workspaces — additional commands
+		// =====================================================================
+		"workspaces:getRecentlyOpened" => Ok(json!({
+			"workspaces": [],
+			"files": []
+		})),
+		"workspaces:removeRecentlyOpened" => Ok(Value::Null),
+		"workspaces:addRecentlyOpened" => Ok(Value::Null),
+		"workspaces:clearRecentlyOpened" => Ok(Value::Null),
+		"workspaces:enterWorkspace" => Ok(Value::Null),
+		"workspaces:createUntitledWorkspace" => Ok(Value::Null),
+		"workspaces:deleteUntitledWorkspace" => Ok(Value::Null),
+		"workspaces:getWorkspaceIdentifier" => Ok(Value::Null),
+		"workspaces:getDirtyWorkspaces" => Ok(json!([])),
 
 		// Default handler for unknown commands
 		_ => {
@@ -2344,4 +2820,747 @@ async fn handle_model_update_content(
 		"version": NewVersion,
 		"languageId": LanguageId,
 	}))
+}
+
+// =============================================================================
+// Native file system handlers (use extract_path_from_arg for URI deserialization)
+// =============================================================================
+
+/// Read file with URI arg support (VS Code sends { scheme, path } objects)
+/// Returns { buffer: number[] } where buffer is the raw byte content.
+/// VS Code's DiskFileSystemProviderClient wraps this with VSBuffer.wrap().
+async fn handle_file_read_native(args:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(
+		args.get(0).ok_or("Missing file path")?
+	)?;
+
+	// Read as raw bytes (not string) to preserve binary content
+	let Bytes = tokio::fs::read(&Path)
+		.await
+		.map_err(|E| format!("Failed to read file: {} (path: {})", E, Path))?;
+
+	// Return as { buffer: [byte, byte, ...] } — VS Code reconstructs as VSBuffer
+	// The buffer field must be an array of u8 values for proper deserialization
+	let ByteArray:Vec<Value> = Bytes.iter().map(|B| json!(*B)).collect();
+	Ok(json!({ "buffer": ByteArray }))
+}
+
+/// Write file with URI arg support
+async fn handle_file_write_native(args:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(
+		args.get(0).ok_or("Missing file path")?
+	)?;
+
+	// args[1] is VSBuffer (content), args[2] is options
+	let Content = args.get(1)
+		.ok_or("Missing file content")?;
+
+	let Bytes = if let Some(S) = Content.as_str() {
+		S.as_bytes().to_vec()
+	} else if let Some(Obj) = Content.as_object() {
+		// VSBuffer wraps { buffer: Uint8Array } — extract bytes
+		if let Some(Buf) = Obj.get("buffer") {
+			if let Some(Arr) = Buf.as_array() {
+				Arr.iter().filter_map(|V| V.as_u64().map(|N| N as u8)).collect()
+			} else if let Some(S) = Buf.as_str() {
+				S.as_bytes().to_vec()
+			} else {
+				return Err("Unsupported buffer format".to_string());
+			}
+		} else {
+			serde_json::to_string(Content).unwrap_or_default().into_bytes()
+		}
+	} else {
+		return Err("File content must be a string or VSBuffer".to_string());
+	};
+
+	// Ensure parent directory exists
+	if let Some(Parent) = std::path::Path::new(&Path).parent() {
+		tokio::fs::create_dir_all(Parent).await.ok();
+	}
+
+	tokio::fs::write(&Path, &Bytes)
+		.await
+		.map_err(|E| format!("Failed to write file: {} (path: {})", E, Path))?;
+
+	Ok(Value::Null)
+}
+
+/// Rename/move file with URI arg support
+async fn handle_file_rename_native(args:Vec<Value>) -> Result<Value, String> {
+	let Source = extract_path_from_arg(
+		args.get(0).ok_or("Missing source path")?
+	)?;
+	let Target = extract_path_from_arg(
+		args.get(1).ok_or("Missing target path")?
+	)?;
+
+	tokio::fs::rename(&Source, &Target)
+		.await
+		.map_err(|E| format!("Failed to rename: {} -> {} ({})", Source, Target, E))?;
+
+	Ok(Value::Null)
+}
+
+/// Resolve real path (follow symlinks)
+async fn handle_file_realpath(args:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(
+		args.get(0).ok_or("Missing path")?
+	)?;
+
+	let Canonical = tokio::fs::canonicalize(&Path)
+		.await
+		.map_err(|E| format!("Failed to realpath: {} ({})", Path, E))?;
+
+	Ok(json!({
+		"scheme": "file",
+		"path": Canonical.to_string_lossy(),
+		"authority": ""
+	}))
+}
+
+/// Clone file (copy with metadata)
+async fn handle_file_clone_native(args:Vec<Value>) -> Result<Value, String> {
+	let Source = extract_path_from_arg(
+		args.get(0).ok_or("Missing source path")?
+	)?;
+	let Target = extract_path_from_arg(
+		args.get(1).ok_or("Missing target path")?
+	)?;
+
+	tokio::fs::copy(&Source, &Target)
+		.await
+		.map_err(|E| format!("Failed to clone: {} -> {} ({})", Source, Target, E))?;
+
+	Ok(Value::Null)
+}
+
+// =============================================================================
+// Native host handlers
+// =============================================================================
+
+/// Pick folder using Tauri dialog plugin and emit open event
+async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -> Result<Value, String> {
+	use tauri::Emitter;
+	use tauri_plugin_dialog::DialogExt;
+
+	debug!("[WindServiceHandlers] pickFolderAndOpen requested");
+
+	// Spawn blocking dialog on separate thread to avoid blocking IPC
+	let Handle = app_handle.clone();
+	tokio::task::spawn_blocking(move || {
+		let FolderPath = Handle.dialog()
+			.file()
+			.blocking_pick_folder();
+
+		if let Some(Path) = FolderPath {
+			let PathStr = Path.to_string();
+			info!("[WindServiceHandlers] Folder picked: {}", PathStr);
+
+			// Emit event so workbench opens the folder
+			let _ = Handle.emit("vscode:openFolder", json!({
+				"uri": {
+					"scheme": "file",
+					"path": PathStr,
+					"authority": ""
+				}
+			}));
+		}
+	});
+
+	Ok(Value::Null)
+}
+
+/// Show open dialog with file/folder picker
+async fn handle_native_show_open_dialog(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+	debug!("[WindServiceHandlers] showOpenDialog: {:?}", args);
+	// Return canceled for now — real dialog integration needs tauri_plugin_dialog
+	Ok(json!({ "canceled": true, "filePaths": [] }))
+}
+
+/// Get OS properties — cross-platform (macOS, Windows, Linux)
+async fn handle_native_os_properties() -> Result<Value, String> {
+	use sysinfo::System;
+
+	let OsType = match std::env::consts::OS {
+		"macos" => "Darwin",
+		"windows" => "Windows_NT",
+		"linux" => "Linux",
+		_ => std::env::consts::OS,
+	};
+
+	// Get OS release version
+	let Release = {
+		#[cfg(target_os = "macos")]
+		{
+			std::process::Command::new("sw_vers")
+				.arg("-productVersion")
+				.output()
+				.ok()
+				.map(|O| String::from_utf8_lossy(&O.stdout).trim().to_string())
+				.unwrap_or_else(|| "14.0".to_string())
+		}
+		#[cfg(target_os = "windows")]
+		{
+			// Windows 10/11 version from registry or ver command
+			std::process::Command::new("cmd")
+				.args(["/c", "ver"])
+				.output()
+				.ok()
+				.map(|O| {
+					let Output = String::from_utf8_lossy(&O.stdout);
+					// Extract version number from "Microsoft Windows [Version 10.0.22631.4890]"
+					Output.split('[')
+						.nth(1)
+						.and_then(|S| S.split(']').next())
+						.and_then(|S| S.strip_prefix("Version "))
+						.unwrap_or("10.0.0")
+						.to_string()
+				})
+				.unwrap_or_else(|| "10.0.0".to_string())
+		}
+		#[cfg(target_os = "linux")]
+		{
+			// Linux kernel version from uname -r
+			std::process::Command::new("uname")
+				.arg("-r")
+				.output()
+				.ok()
+				.map(|O| String::from_utf8_lossy(&O.stdout).trim().to_string())
+				.unwrap_or_else(|| "6.1.0".to_string())
+		}
+		#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+		{
+			"0.0.0".to_string()
+		}
+	};
+
+	// CPU info via sysinfo
+	let mut Sys = System::new();
+	Sys.refresh_cpu_all();
+	let Cpus:Vec<Value> = Sys.cpus().iter().map(|Cpu| {
+		json!({
+			"model": Cpu.brand(),
+			"speed": Cpu.frequency()
+		})
+	}).collect();
+
+	Ok(json!({
+		"type": OsType,
+		"release": Release,
+		"arch": std::env::consts::ARCH,
+		"platform": std::env::consts::OS,
+		"cpus": Cpus
+	}))
+}
+
+/// Get OS statistics — cross-platform memory/load stats
+async fn handle_native_os_statistics() -> Result<Value, String> {
+	use sysinfo::System;
+
+	let mut Sys = System::new();
+	Sys.refresh_memory();
+
+	let TotalMem = Sys.total_memory();
+	let FreeMem = Sys.available_memory();
+
+	// Load average: available on Unix, not on Windows
+	let LoadAvg = {
+		#[cfg(unix)]
+		{
+			let Load = System::load_average();
+			vec![Load.one, Load.five, Load.fifteen]
+		}
+		#[cfg(not(unix))]
+		{
+			vec![0.0, 0.0, 0.0]
+		}
+	};
+
+	Ok(json!({
+		"totalmem": TotalMem,
+		"freemem": FreeMem,
+		"loadavg": LoadAvg
+	}))
+}
+
+/// Check if window is fullscreen
+async fn handle_native_is_fullscreen(app_handle:AppHandle) -> Result<Value, String> {
+	use tauri::Manager;
+	let Window = app_handle.get_webview_window("main");
+	if let Some(W) = Window {
+		Ok(json!(W.is_fullscreen().unwrap_or(false)))
+	} else {
+		Ok(json!(false))
+	}
+}
+
+/// Check if window is maximized
+async fn handle_native_is_maximized(app_handle:AppHandle) -> Result<Value, String> {
+	use tauri::Manager;
+	let Window = app_handle.get_webview_window("main");
+	if let Some(W) = Window {
+		Ok(json!(W.is_maximized().unwrap_or(false)))
+	} else {
+		Ok(json!(false))
+	}
+}
+
+/// Find a free port starting from a given port
+async fn handle_native_find_free_port(args:Vec<Value>) -> Result<Value, String> {
+	let StartPort = args.get(0)
+		.and_then(|V| V.as_u64())
+		.unwrap_or(9000) as u16;
+
+	for Port in StartPort..StartPort + 100 {
+		if std::net::TcpListener::bind(("127.0.0.1", Port)).is_ok() {
+			return Ok(json!(Port));
+		}
+	}
+	Ok(json!(0))
+}
+
+// =============================================================================
+// Local PTY handlers
+// =============================================================================
+
+/// Detect available terminal profiles — cross-platform
+async fn handle_local_pty_get_profiles() -> Result<Value, String> {
+	let mut Profiles = Vec::new();
+
+	#[cfg(unix)]
+	{
+		let DefaultShell = std::env::var("SHELL").unwrap_or_else(|_| "/bin/sh".to_string());
+
+		// Common Unix shells — macOS, Ubuntu, RHEL, Fedora, Arch, etc.
+		let UnixShells = [
+			"/bin/zsh",
+			"/bin/bash",
+			"/bin/sh",
+			"/usr/bin/zsh",
+			"/usr/bin/bash",
+			"/usr/bin/fish",
+			"/usr/local/bin/fish",
+			"/usr/local/bin/zsh",
+			"/usr/local/bin/bash",
+			"/bin/dash",       // Ubuntu/Debian default /bin/sh symlink target
+			"/usr/bin/ksh",    // KornShell (RHEL, Solaris)
+			"/usr/bin/tcsh",   // C Shell variant
+			"/bin/csh",        // C Shell
+			"/usr/bin/pwsh",   // PowerShell on Linux/macOS
+			"/usr/local/bin/pwsh",
+		];
+
+		for Shell in &UnixShells {
+			if std::path::Path::new(Shell).exists() {
+				let Name = std::path::Path::new(Shell)
+					.file_name()
+					.and_then(|N| N.to_str())
+					.unwrap_or("shell");
+
+				Profiles.push(json!({
+					"profileName": Name,
+					"path": Shell,
+					"isDefault": *Shell == DefaultShell.as_str(),
+					"args": [],
+					"env": {},
+					"icon": "terminal"
+				}));
+			}
+		}
+
+		// Also check /etc/shells for additional entries
+		if let Ok(ShellsFile) = std::fs::read_to_string("/etc/shells") {
+			for Line in ShellsFile.lines() {
+				let Trimmed = Line.trim();
+				if Trimmed.starts_with('/') && !Trimmed.starts_with('#') {
+					let AlreadyAdded = Profiles.iter().any(|P| {
+						P.get("path").and_then(|V| V.as_str()) == Some(Trimmed)
+					});
+					if !AlreadyAdded && std::path::Path::new(Trimmed).exists() {
+						let Name = std::path::Path::new(Trimmed)
+							.file_name()
+							.and_then(|N| N.to_str())
+							.unwrap_or("shell");
+
+						Profiles.push(json!({
+							"profileName": Name,
+							"path": Trimmed,
+							"isDefault": Trimmed == DefaultShell.as_str(),
+							"args": [],
+							"env": {},
+							"icon": "terminal"
+						}));
+					}
+				}
+			}
+		}
+	}
+
+	#[cfg(target_os = "windows")]
+	{
+		// Windows terminal profiles
+		let SystemRoot = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+		let ProgramFiles = std::env::var("ProgramFiles").unwrap_or_else(|_| "C:\\Program Files".to_string());
+		let LocalAppData = std::env::var("LOCALAPPDATA").unwrap_or_else(|_| "C:\\Users\\User\\AppData\\Local".to_string());
+
+		let WindowsShells:Vec<(&str, String, Vec<&str>)> = vec![
+			("PowerShell", format!("{}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", SystemRoot), vec!["-NoLogo"]),
+			("PowerShell 7", format!("{}\\PowerShell\\7\\pwsh.exe", ProgramFiles), vec!["-NoLogo"]),
+			("Command Prompt", format!("{}\\System32\\cmd.exe", SystemRoot), vec![]),
+			("Git Bash", format!("{}\\Git\\bin\\bash.exe", ProgramFiles), vec!["--login", "-i"]),
+			("Git Bash (User)", format!("{}\\Programs\\Git\\bin\\bash.exe", LocalAppData), vec!["--login", "-i"]),
+			("WSL", format!("{}\\System32\\wsl.exe", SystemRoot), vec![]),
+			("MSYS2", "C:\\msys64\\usr\\bin\\bash.exe".to_string(), vec!["--login", "-i"]),
+			("Cygwin", "C:\\cygwin64\\bin\\bash.exe".to_string(), vec!["--login", "-i"]),
+		];
+
+		let mut IsFirstFound = true;
+		for (Name, Path, Args) in &WindowsShells {
+			if std::path::Path::new(Path).exists() {
+				Profiles.push(json!({
+					"profileName": Name,
+					"path": Path,
+					"isDefault": IsFirstFound,
+					"args": Args,
+					"env": {},
+					"icon": "terminal"
+				}));
+				IsFirstFound = false;
+			}
+		}
+	}
+
+	Ok(json!(Profiles))
+}
+
+/// Get default system shell — cross-platform
+async fn handle_local_pty_get_default_shell() -> Result<Value, String> {
+	#[cfg(unix)]
+	{
+		let Shell = std::env::var("SHELL").unwrap_or_else(|_| {
+			// Try common fallbacks
+			for Path in &["/bin/zsh", "/bin/bash", "/bin/sh"] {
+				if std::path::Path::new(Path).exists() {
+					return Path.to_string();
+				}
+			}
+			"/bin/sh".to_string()
+		});
+		Ok(json!(Shell))
+	}
+
+	#[cfg(target_os = "windows")]
+	{
+		let SystemRoot = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+		// Check for PowerShell 7 first, then Windows PowerShell, then cmd
+		let PwshPath = format!("{}\\PowerShell\\7\\pwsh.exe", std::env::var("ProgramFiles").unwrap_or_default());
+		if std::path::Path::new(&PwshPath).exists() {
+			return Ok(json!(PwshPath));
+		}
+		Ok(json!(format!("{}\\System32\\WindowsPowerShell\\v1.0\\powershell.exe", SystemRoot)))
+	}
+
+	#[cfg(not(any(unix, target_os = "windows")))]
+	{
+		Ok(json!("/bin/sh"))
+	}
+}
+
+/// Get terminal environment
+async fn handle_local_pty_get_environment() -> Result<Value, String> {
+	let Env:HashMap<String, String> = std::env::vars().collect();
+	Ok(json!(Env))
+}
+
+/// Detect OS color scheme — cross-platform dark mode detection
+async fn handle_native_get_color_scheme() -> Result<Value, String> {
+	let Dark = detect_dark_mode();
+	// High contrast detection
+	let HighContrast = {
+		#[cfg(target_os = "windows")]
+		{
+			// Windows: check SystemParametersInfo for HIGH_CONTRAST
+			std::process::Command::new("reg")
+				.args(["query", "HKCU\\Control Panel\\Accessibility\\HighContrast", "/v", "Flags"])
+				.output()
+				.ok()
+				.map(|O| {
+					let Output = String::from_utf8_lossy(&O.stdout);
+					// Flag 1 = HCF_HIGHCONTRASTON
+					Output.contains("0x1") || Output.contains("REG_DWORD    1")
+				})
+				.unwrap_or(false)
+		}
+		#[cfg(not(target_os = "windows"))]
+		{
+			// macOS/Linux: high contrast not natively detectable the same way
+			// GTK: gsettings get org.gnome.desktop.a11y.interface high-contrast
+			#[cfg(target_os = "linux")]
+			{
+				std::process::Command::new("gsettings")
+					.args(["get", "org.gnome.desktop.a11y.interface", "high-contrast"])
+					.output()
+					.ok()
+					.map(|O| String::from_utf8_lossy(&O.stdout).trim() == "true")
+					.unwrap_or(false)
+			}
+			#[cfg(not(target_os = "linux"))]
+			{
+				false
+			}
+		}
+	};
+
+	Ok(json!({ "dark": Dark, "highContrast": HighContrast }))
+}
+
+/// Cross-platform dark mode detection
+fn detect_dark_mode() -> bool {
+	#[cfg(target_os = "macos")]
+	{
+		// macOS: defaults read -g AppleInterfaceStyle returns "Dark" if dark mode
+		std::process::Command::new("defaults")
+			.args(["read", "-g", "AppleInterfaceStyle"])
+			.output()
+			.ok()
+			.map(|O| String::from_utf8_lossy(&O.stdout).trim().to_lowercase().contains("dark"))
+			.unwrap_or(false)
+	}
+
+	#[cfg(target_os = "windows")]
+	{
+		// Windows: HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\AppsUseLightTheme
+		// 0 = dark, 1 = light
+		std::process::Command::new("reg")
+			.args([
+				"query",
+				"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
+				"/v",
+				"AppsUseLightTheme",
+			])
+			.output()
+			.ok()
+			.map(|O| {
+				let Output = String::from_utf8_lossy(&O.stdout);
+				Output.contains("0x0") || Output.contains("REG_DWORD    0")
+			})
+			.unwrap_or(false)
+	}
+
+	#[cfg(target_os = "linux")]
+	{
+		// Linux: Try multiple approaches
+		// 1. GTK theme (GNOME, Ubuntu, Fedora, etc.)
+		let GtkDark = std::process::Command::new("gsettings")
+			.args(["get", "org.gnome.desktop.interface", "color-scheme"])
+			.output()
+			.ok()
+			.map(|O| String::from_utf8_lossy(&O.stdout).contains("dark"))
+			.unwrap_or(false);
+
+		if GtkDark { return true; }
+
+		// 2. GTK theme name contains "dark"
+		let GtkTheme = std::process::Command::new("gsettings")
+			.args(["get", "org.gnome.desktop.interface", "gtk-theme"])
+			.output()
+			.ok()
+			.map(|O| String::from_utf8_lossy(&O.stdout).to_lowercase().contains("dark"))
+			.unwrap_or(false);
+
+		if GtkTheme { return true; }
+
+		// 3. KDE/Plasma
+		let KdeDark = std::env::var("KDE_COLOR_SCHEME")
+			.ok()
+			.map(|V| V.to_lowercase().contains("dark"))
+			.unwrap_or(false);
+
+		if KdeDark { return true; }
+
+		// 4. xfce4
+		let XfceDark = std::process::Command::new("xfconf-query")
+			.args(["-c", "xsettings", "-p", "/Net/ThemeName"])
+			.output()
+			.ok()
+			.map(|O| String::from_utf8_lossy(&O.stdout).to_lowercase().contains("dark"))
+			.unwrap_or(false);
+
+		XfceDark
+	}
+
+	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
+	{
+		false
+	}
+}
+
+// =============================================================================
+// Native file system handlers (stat, exists, delete, mkdir, readdir)
+// =============================================================================
+
+/// Stat file — returns IStat shape with URI arg support
+async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(
+		args.get(0).ok_or("Missing file path")?
+	)?;
+
+	let Metadata = tokio::fs::symlink_metadata(&Path)
+		.await
+		.map_err(|E| format!("Failed to stat file: {} (path: {})", E, Path))?;
+
+	Ok(metadata_to_istat(&Metadata))
+}
+
+/// Check file existence with URI arg support
+async fn handle_file_exists_native(args:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(
+		args.get(0).ok_or("Missing file path")?
+	)?;
+
+	Ok(json!(tokio::fs::try_exists(&Path).await.unwrap_or(false)))
+}
+
+/// Delete file or directory with URI arg support
+async fn handle_file_delete_native(args:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(
+		args.get(0).ok_or("Missing file path")?
+	)?;
+
+	// Options may include { recursive, useTrash }
+	let Recursive = args.get(1)
+		.and_then(|V| V.as_object())
+		.and_then(|O| O.get("recursive"))
+		.and_then(|V| V.as_bool())
+		.unwrap_or(false);
+
+	let PathBuf = std::path::Path::new(&Path);
+
+	if PathBuf.is_dir() {
+		if Recursive {
+			tokio::fs::remove_dir_all(&Path).await
+		} else {
+			tokio::fs::remove_dir(&Path).await
+		}
+	} else {
+		tokio::fs::remove_file(&Path).await
+	}.map_err(|E| format!("Failed to delete: {} ({})", Path, E))?;
+
+	Ok(Value::Null)
+}
+
+/// Create directory with URI arg support
+async fn handle_file_mkdir_native(args:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(
+		args.get(0).ok_or("Missing directory path")?
+	)?;
+
+	tokio::fs::create_dir_all(&Path)
+		.await
+		.map_err(|E| format!("Failed to mkdir: {} ({})", Path, E))?;
+
+	Ok(Value::Null)
+}
+
+/// Read directory contents with URI arg support
+/// Returns array of [name, fileType] tuples matching VS Code's ReadDirResult
+async fn handle_file_readdir_native(args:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(
+		args.get(0).ok_or("Missing directory path")?
+	)?;
+
+	let mut Entries = tokio::fs::read_dir(&Path)
+		.await
+		.map_err(|E| format!("Failed to readdir: {} ({})", Path, E))?;
+
+	let mut Result = Vec::new();
+
+	while let Some(Entry) = Entries.next_entry().await.map_err(|E| E.to_string())? {
+		let Name = Entry.file_name().to_string_lossy().to_string();
+		let FileType = Entry.file_type().await.map_err(|E| E.to_string())?;
+
+		let TypeValue = if FileType.is_symlink() {
+			64 // SymbolicLink
+		} else if FileType.is_dir() {
+			2 // Directory
+		} else {
+			1 // File
+		};
+
+		Result.push(json!([Name, TypeValue]));
+	}
+
+	Ok(json!(Result))
+}
+
+// =============================================================================
+// Storage handlers (VS Code NativeWorkbenchStorageService)
+// =============================================================================
+
+/// Get all storage items as [key, value] tuples.
+/// VS Code's NativeWorkbenchStorageService calls this on initialization.
+async fn handle_storage_get_items(runtime:Arc<ApplicationRunTime>, _args:Vec<Value>) -> Result<Value, String> {
+	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
+
+	match provider.GetAllStorage(true).await {
+		Ok(State) => {
+			// Convert JSON object to array of [key, value] tuples
+			if let Some(Obj) = State.as_object() {
+				let Tuples:Vec<Value> = Obj.iter()
+					.map(|(K, V)| {
+						let ValStr = match V {
+							Value::String(S) => S.clone(),
+							_ => V.to_string(),
+						};
+						json!([K, ValStr])
+					})
+					.collect();
+				Ok(json!(Tuples))
+			} else {
+				Ok(json!([]))
+			}
+		},
+		Err(_) => Ok(json!([])),
+	}
+}
+
+/// Update storage items. VS Code sends { insert, delete } where:
+/// - insert: Array of [key, value] tuples or Map<string, string>
+/// - delete: Array of keys to remove
+async fn handle_storage_update_items(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
+
+	if let Some(Updates) = args.get(0).and_then(|V| V.as_object()) {
+		// Handle inserts
+		if let Some(Inserts) = Updates.get("insert") {
+			if let Some(Arr) = Inserts.as_array() {
+				for Item in Arr {
+					if let Some(Pair) = Item.as_array() {
+						if let (Some(Key), Some(Val)) = (
+							Pair.get(0).and_then(|V| V.as_str()),
+							Pair.get(1),
+						) {
+							let _ = provider.UpdateStorageValue(true, Key.to_string(), Some(Val.clone())).await;
+						}
+					}
+				}
+			} else if let Some(Obj) = Inserts.as_object() {
+				for (Key, Val) in Obj {
+					let _ = provider.UpdateStorageValue(true, Key.clone(), Some(Val.clone())).await;
+				}
+			}
+		}
+
+		// Handle deletes
+		if let Some(Deletes) = Updates.get("delete").and_then(|V| V.as_array()) {
+			for Key in Deletes {
+				if let Some(K) = Key.as_str() {
+					let _ = provider.UpdateStorageValue(true, K.to_string(), None).await;
+				}
+			}
+		}
+	}
+
+	Ok(Value::Null)
 }

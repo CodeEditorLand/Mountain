@@ -332,6 +332,18 @@ pub fn Fn() {
 				crate::Binary::Build::DnsCommands::dns_resolve,
 				crate::Binary::Build::DnsCommands::dns_test_resolution,
 				crate::Binary::Build::DnsCommands::dns_health_check,
+				// Process commands (direct Tauri invoke from ProcessPolyfill)
+				crate::Binary::IPC::ProcessCommand::process_get_exec_path,
+				crate::Binary::IPC::ProcessCommand::process_get_platform,
+				crate::Binary::IPC::ProcessCommand::process_get_arch,
+				crate::Binary::IPC::ProcessCommand::process_get_pid,
+				crate::Binary::IPC::ProcessCommand::process_get_shell_env,
+				crate::Binary::IPC::ProcessCommand::process_get_memory_info,
+				// Health check commands (direct Tauri invoke from SharedProcessProxy)
+				crate::Binary::IPC::HealthCommand::cocoon_extension_host_health,
+				crate::Binary::IPC::HealthCommand::cocoon_search_service_health,
+				crate::Binary::IPC::HealthCommand::cocoon_debug_service_health,
+				crate::Binary::IPC::HealthCommand::shared_process_service_health,
 			])
 			.build(tauri::generate_context!())
 			.expect("FATAL: Error while building Mountain Tauri application")

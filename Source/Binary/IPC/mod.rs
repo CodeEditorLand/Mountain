@@ -49,3 +49,5 @@ pub mod CollaborationSessionCommand;
 pub mod DocumentSyncCommand;
 pub mod UpdateSubscriptionCommand;
 pub mod CacheStatsCommand;
+pub mod ProcessCommand;
+pub mod HealthCommand;
