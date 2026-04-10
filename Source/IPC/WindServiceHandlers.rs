@@ -325,6 +325,10 @@ fn resolve_static_application_path(Path:&str) -> String {
 /// the real Tauri app_data_dir (which includes the full bundle identifier).
 static USERDATA_BASE_DIR:std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
+/// Session timestamp, generated once per process lifetime so every call to
+/// `getEnvironmentPaths` returns the same `logsPath`.
+static SESSION_TIMESTAMP:std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
 /// Set the userdata base from Tauri's app_data_dir. Call once at startup.
 pub fn set_userdata_base_dir(Path:String) { let _ = USERDATA_BASE_DIR.set(Path); }
 
@@ -474,11 +478,20 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	// Get the application runtime
 	let runtime = app_handle.state::<Arc<ApplicationRunTime>>();
 
-	// Route the command based on the command name
+	// =========================================================================
+	// Route dispatch — every arm has a dev_log! with a granular tag.
+	// Tags match the route prefix: vfs, config, storage, extensions,
+	// terminal, output, textfile, notification, progress, quickinput,
+	// workspaces, themes, search, decorations, workingcopy, keybinding,
+	// lifecycle, label, model, history, commands, nativehost, window,
+	// exthost, encryption, menubar, update, url, grpc.
+	// Activate: LAND_DEV_LOG=all   or   LAND_DEV_LOG=vfs,ipc,config
+	// =========================================================================
+
 	match command.as_str() {
 		// Configuration commands
-		"configuration:get" => handle_configuration_get(runtime.inner().clone(), args).await,
-		"configuration:update" => handle_configuration_update(runtime.inner().clone(), args).await,
+		"configuration:get" => { dev_log!("config", "configuration:get"); handle_configuration_get(runtime.inner().clone(), args).await },
+		"configuration:update" => { dev_log!("config", "configuration:update"); handle_configuration_update(runtime.inner().clone(), args).await },
 
 		// Logger commands — fire-and-forget from Wind, just acknowledge
 		"logger:log"
@@ -513,15 +526,14 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// Storage commands
 		"storage:get" => handle_storage_get(runtime.inner().clone(), args).await,
 		"storage:set" => handle_storage_set(runtime.inner().clone(), args).await,
-		// VS Code's NativeWorkbenchStorageService uses getItems/updateItems
-		"storage:getItems" => handle_storage_get_items(runtime.inner().clone(), args).await,
-		"storage:updateItems" => handle_storage_update_items(runtime.inner().clone(), args).await,
-		"storage:optimize" => Ok(Value::Null),
-		"storage:isUsed" => Ok(Value::Null),
-		"storage:close" => Ok(Value::Null),
+		"storage:getItems" => { dev_log!("storage", "storage:getItems"); handle_storage_get_items(runtime.inner().clone(), args).await },
+		"storage:updateItems" => { dev_log!("storage", "storage:updateItems"); handle_storage_update_items(runtime.inner().clone(), args).await },
+		"storage:optimize" => { dev_log!("storage", "storage:optimize"); Ok(Value::Null) },
+		"storage:isUsed" => { dev_log!("storage", "storage:isUsed"); Ok(Value::Null) },
+		"storage:close" => { dev_log!("storage", "storage:close"); Ok(Value::Null) },
 
 		// Environment commands
-		"environment:get" => handle_environment_get(runtime.inner().clone(), args).await,
+		"environment:get" => { dev_log!("config", "environment:get"); handle_environment_get(runtime.inner().clone(), args).await },
 
 		// Native host commands
 		"native:showItemInFolder" => handle_show_item_in_folder(runtime.inner().clone(), args).await,
@@ -532,109 +544,109 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 
 		// Command registry commands
 		"commands:execute" => handle_commands_execute(runtime.inner().clone(), args).await,
-		"commands:getAll" => handle_commands_get_all(runtime.inner().clone()).await,
+		"commands:getAll" => { dev_log!("commands", "commands:getAll"); handle_commands_get_all(runtime.inner().clone()).await },
 
 		// Extension host commands
-		"extensions:getAll" => handle_extensions_get_all(runtime.inner().clone()).await,
-		"extensions:get" => handle_extensions_get(runtime.inner().clone(), args).await,
-		"extensions:isActive" => handle_extensions_is_active(runtime.inner().clone(), args).await,
+		"extensions:getAll" => { dev_log!("extensions", "extensions:getAll"); handle_extensions_get_all(runtime.inner().clone()).await },
+		"extensions:get" => { dev_log!("extensions", "extensions:get"); handle_extensions_get(runtime.inner().clone(), args).await },
+		"extensions:isActive" => { dev_log!("extensions", "extensions:isActive"); handle_extensions_is_active(runtime.inner().clone(), args).await },
 
 		// Terminal commands
-		"terminal:create" => handle_terminal_create(runtime.inner().clone(), args).await,
-		"terminal:sendText" => handle_terminal_send_text(runtime.inner().clone(), args).await,
-		"terminal:dispose" => handle_terminal_dispose(runtime.inner().clone(), args).await,
-		"terminal:show" => handle_terminal_show(runtime.inner().clone(), args).await,
-		"terminal:hide" => handle_terminal_hide(runtime.inner().clone(), args).await,
+		"terminal:create" => { dev_log!("terminal", "terminal:create"); handle_terminal_create(runtime.inner().clone(), args).await },
+		"terminal:sendText" => { dev_log!("terminal", "terminal:sendText"); handle_terminal_send_text(runtime.inner().clone(), args).await },
+		"terminal:dispose" => { dev_log!("terminal", "terminal:dispose"); handle_terminal_dispose(runtime.inner().clone(), args).await },
+		"terminal:show" => { dev_log!("terminal", "terminal:show"); handle_terminal_show(runtime.inner().clone(), args).await },
+		"terminal:hide" => { dev_log!("terminal", "terminal:hide"); handle_terminal_hide(runtime.inner().clone(), args).await },
 
 		// Output channel commands
 		"output:create" => handle_output_create(app_handle.clone(), args).await,
-		"output:append" => handle_output_append(app_handle.clone(), args).await,
-		"output:appendLine" => handle_output_append_line(app_handle.clone(), args).await,
-		"output:clear" => handle_output_clear(app_handle.clone(), args).await,
-		"output:show" => handle_output_show(app_handle.clone(), args).await,
+		"output:append" => { dev_log!("output", "output:append"); handle_output_append(app_handle.clone(), args).await },
+		"output:appendLine" => { dev_log!("output", "output:appendLine"); handle_output_append_line(app_handle.clone(), args).await },
+		"output:clear" => { dev_log!("output", "output:clear"); handle_output_clear(app_handle.clone(), args).await },
+		"output:show" => { dev_log!("output", "output:show"); handle_output_show(app_handle.clone(), args).await },
 
 		// TextFile commands
-		"textFile:read" => handle_textfile_read(runtime.inner().clone(), args).await,
-		"textFile:write" => handle_textfile_write(runtime.inner().clone(), args).await,
+		"textFile:read" => { dev_log!("textfile", "textFile:read"); handle_textfile_read(runtime.inner().clone(), args).await },
+		"textFile:write" => { dev_log!("textfile", "textFile:write"); handle_textfile_write(runtime.inner().clone(), args).await },
 		"textFile:save" => handle_textfile_save(runtime.inner().clone(), args).await,
 
-		// Storage commands
-		"storage:delete" => handle_storage_delete(runtime.inner().clone(), args).await,
-		"storage:keys" => handle_storage_keys(runtime.inner().clone()).await,
+		// Storage commands (additional)
+		"storage:delete" => { dev_log!("storage", "storage:delete"); handle_storage_delete(runtime.inner().clone(), args).await },
+		"storage:keys" => { dev_log!("storage", "storage:keys"); handle_storage_keys(runtime.inner().clone()).await },
 
 		// Notification commands (emit sky:// events for Sky to render)
-		"notification:show" => handle_notification_show(app_handle.clone(), args).await,
-		"notification:showProgress" => handle_notification_show_progress(app_handle.clone(), args).await,
-		"notification:updateProgress" => handle_notification_update_progress(app_handle.clone(), args).await,
-		"notification:endProgress" => handle_notification_end_progress(app_handle.clone(), args).await,
+		"notification:show" => { dev_log!("notification", "notification:show"); handle_notification_show(app_handle.clone(), args).await },
+		"notification:showProgress" => { dev_log!("notification", "notification:showProgress"); handle_notification_show_progress(app_handle.clone(), args).await },
+		"notification:updateProgress" => { dev_log!("notification", "notification:updateProgress"); handle_notification_update_progress(app_handle.clone(), args).await },
+		"notification:endProgress" => { dev_log!("notification", "notification:endProgress"); handle_notification_end_progress(app_handle.clone(), args).await },
 
 		// Progress commands
-		"progress:begin" => handle_progress_begin(app_handle.clone(), args).await,
-		"progress:report" => handle_progress_report(app_handle.clone(), args).await,
-		"progress:end" => handle_progress_end(app_handle.clone(), args).await,
+		"progress:begin" => { dev_log!("progress", "progress:begin"); handle_progress_begin(app_handle.clone(), args).await },
+		"progress:report" => { dev_log!("progress", "progress:report"); handle_progress_report(app_handle.clone(), args).await },
+		"progress:end" => { dev_log!("progress", "progress:end"); handle_progress_end(app_handle.clone(), args).await },
 
-		// QuickInput commands (routed through UserInterfaceProvider in CocoonService)
-		"quickInput:showQuickPick" => handle_quick_input_show_quick_pick(runtime.inner().clone(), args).await,
-		"quickInput:showInputBox" => handle_quick_input_show_input_box(runtime.inner().clone(), args).await,
+		// QuickInput commands
+		"quickInput:showQuickPick" => { dev_log!("quickinput", "quickInput:showQuickPick"); handle_quick_input_show_quick_pick(runtime.inner().clone(), args).await },
+		"quickInput:showInputBox" => { dev_log!("quickinput", "quickInput:showInputBox"); handle_quick_input_show_input_box(runtime.inner().clone(), args).await },
 
 		// Workspaces commands
-		"workspaces:getFolders" => handle_workspaces_get_folders(runtime.inner().clone()).await,
-		"workspaces:addFolder" => handle_workspaces_add_folder(runtime.inner().clone(), args).await,
-		"workspaces:removeFolder" => handle_workspaces_remove_folder(runtime.inner().clone(), args).await,
-		"workspaces:getName" => handle_workspaces_get_name(runtime.inner().clone()).await,
+		"workspaces:getFolders" => { dev_log!("workspaces", "workspaces:getFolders"); handle_workspaces_get_folders(runtime.inner().clone()).await },
+		"workspaces:addFolder" => { dev_log!("workspaces", "workspaces:addFolder"); handle_workspaces_add_folder(runtime.inner().clone(), args).await },
+		"workspaces:removeFolder" => { dev_log!("workspaces", "workspaces:removeFolder"); handle_workspaces_remove_folder(runtime.inner().clone(), args).await },
+		"workspaces:getName" => { dev_log!("workspaces", "workspaces:getName"); handle_workspaces_get_name(runtime.inner().clone()).await },
 
 		// Themes commands
-		"themes:getActive" => handle_themes_get_active(runtime.inner().clone()).await,
-		"themes:list" => handle_themes_list(runtime.inner().clone()).await,
-		"themes:set" => handle_themes_set(runtime.inner().clone(), args).await,
+		"themes:getActive" => { dev_log!("themes", "themes:getActive"); handle_themes_get_active(runtime.inner().clone()).await },
+		"themes:list" => { dev_log!("themes", "themes:list"); handle_themes_list(runtime.inner().clone()).await },
+		"themes:set" => { dev_log!("themes", "themes:set"); handle_themes_set(runtime.inner().clone(), args).await },
 
 		// Search commands
-		"search:findInFiles" => handle_search_find_in_files(runtime.inner().clone(), args).await,
-		"search:findFiles" => handle_search_find_files(runtime.inner().clone(), args).await,
+		"search:findInFiles" => { dev_log!("search", "search:findInFiles"); handle_search_find_in_files(runtime.inner().clone(), args).await },
+		"search:findFiles" => { dev_log!("search", "search:findFiles"); handle_search_find_files(runtime.inner().clone(), args).await },
 
 		// Decorations commands
-		"decorations:get" => handle_decorations_get(runtime.inner().clone(), args).await,
-		"decorations:getMany" => handle_decorations_get_many(runtime.inner().clone(), args).await,
-		"decorations:set" => handle_decorations_set(runtime.inner().clone(), args).await,
-		"decorations:clear" => handle_decorations_clear(runtime.inner().clone(), args).await,
+		"decorations:get" => { dev_log!("decorations", "decorations:get"); handle_decorations_get(runtime.inner().clone(), args).await },
+		"decorations:getMany" => { dev_log!("decorations", "decorations:getMany"); handle_decorations_get_many(runtime.inner().clone(), args).await },
+		"decorations:set" => { dev_log!("decorations", "decorations:set"); handle_decorations_set(runtime.inner().clone(), args).await },
+		"decorations:clear" => { dev_log!("decorations", "decorations:clear"); handle_decorations_clear(runtime.inner().clone(), args).await },
 
 		// WorkingCopy commands
-		"workingCopy:isDirty" => handle_working_copy_is_dirty(runtime.inner().clone(), args).await,
-		"workingCopy:setDirty" => handle_working_copy_set_dirty(runtime.inner().clone(), args).await,
-		"workingCopy:getAllDirty" => handle_working_copy_get_all_dirty(runtime.inner().clone()).await,
-		"workingCopy:getDirtyCount" => handle_working_copy_get_dirty_count(runtime.inner().clone()).await,
+		"workingCopy:isDirty" => { dev_log!("workingcopy", "workingCopy:isDirty"); handle_working_copy_is_dirty(runtime.inner().clone(), args).await },
+		"workingCopy:setDirty" => { dev_log!("workingcopy", "workingCopy:setDirty"); handle_working_copy_set_dirty(runtime.inner().clone(), args).await },
+		"workingCopy:getAllDirty" => { dev_log!("workingcopy", "workingCopy:getAllDirty"); handle_working_copy_get_all_dirty(runtime.inner().clone()).await },
+		"workingCopy:getDirtyCount" => { dev_log!("workingcopy", "workingCopy:getDirtyCount"); handle_working_copy_get_dirty_count(runtime.inner().clone()).await },
 
 		// Keybinding commands
-		"keybinding:add" => handle_keybinding_add(runtime.inner().clone(), args).await,
-		"keybinding:remove" => handle_keybinding_remove(runtime.inner().clone(), args).await,
-		"keybinding:lookup" => handle_keybinding_lookup(runtime.inner().clone(), args).await,
-		"keybinding:getAll" => handle_keybinding_get_all(runtime.inner().clone()).await,
+		"keybinding:add" => { dev_log!("keybinding", "keybinding:add"); handle_keybinding_add(runtime.inner().clone(), args).await },
+		"keybinding:remove" => { dev_log!("keybinding", "keybinding:remove"); handle_keybinding_remove(runtime.inner().clone(), args).await },
+		"keybinding:lookup" => { dev_log!("keybinding", "keybinding:lookup"); handle_keybinding_lookup(runtime.inner().clone(), args).await },
+		"keybinding:getAll" => { dev_log!("keybinding", "keybinding:getAll"); handle_keybinding_get_all(runtime.inner().clone()).await },
 
 		// Lifecycle commands
-		"lifecycle:getPhase" => handle_lifecycle_get_phase(runtime.inner().clone()).await,
-		"lifecycle:whenPhase" => handle_lifecycle_when_phase(runtime.inner().clone(), args).await,
-		"lifecycle:requestShutdown" => handle_lifecycle_request_shutdown(app_handle.clone()).await,
+		"lifecycle:getPhase" => { dev_log!("lifecycle", "lifecycle:getPhase"); handle_lifecycle_get_phase(runtime.inner().clone()).await },
+		"lifecycle:whenPhase" => { dev_log!("lifecycle", "lifecycle:whenPhase"); handle_lifecycle_when_phase(runtime.inner().clone(), args).await },
+		"lifecycle:requestShutdown" => { dev_log!("lifecycle", "lifecycle:requestShutdown"); handle_lifecycle_request_shutdown(app_handle.clone()).await },
 
 		// Label commands
-		"label:getUri" => handle_label_get_uri(runtime.inner().clone(), args).await,
-		"label:getWorkspace" => handle_label_get_workspace(runtime.inner().clone()).await,
-		"label:getBase" => handle_label_get_base(args).await,
+		"label:getUri" => { dev_log!("label", "label:getUri"); handle_label_get_uri(runtime.inner().clone(), args).await },
+		"label:getWorkspace" => { dev_log!("label", "label:getWorkspace"); handle_label_get_workspace(runtime.inner().clone()).await },
+		"label:getBase" => { dev_log!("label", "label:getBase"); handle_label_get_base(args).await },
 
 		// Model (text model registry) commands
-		"model:open" => handle_model_open(runtime.inner().clone(), args).await,
-		"model:close" => handle_model_close(runtime.inner().clone(), args).await,
-		"model:get" => handle_model_get(runtime.inner().clone(), args).await,
-		"model:getAll" => handle_model_get_all(runtime.inner().clone()).await,
-		"model:updateContent" => handle_model_update_content(runtime.inner().clone(), args).await,
+		"model:open" => { dev_log!("model", "model:open"); handle_model_open(runtime.inner().clone(), args).await },
+		"model:close" => { dev_log!("model", "model:close"); handle_model_close(runtime.inner().clone(), args).await },
+		"model:get" => { dev_log!("model", "model:get"); handle_model_get(runtime.inner().clone(), args).await },
+		"model:getAll" => { dev_log!("model", "model:getAll"); handle_model_get_all(runtime.inner().clone()).await },
+		"model:updateContent" => { dev_log!("model", "model:updateContent"); handle_model_update_content(runtime.inner().clone(), args).await },
 
 		// Navigation history commands
-		"history:goBack" => handle_history_go_back(runtime.inner().clone()).await,
-		"history:goForward" => handle_history_go_forward(runtime.inner().clone()).await,
-		"history:canGoBack" => handle_history_can_go_back(runtime.inner().clone()).await,
-		"history:canGoForward" => handle_history_can_go_forward(runtime.inner().clone()).await,
-		"history:push" => handle_history_push(runtime.inner().clone(), args).await,
-		"history:clear" => handle_history_clear(runtime.inner().clone()).await,
-		"history:getStack" => handle_history_get_stack(runtime.inner().clone()).await,
+		"history:goBack" => { dev_log!("history", "history:goBack"); handle_history_go_back(runtime.inner().clone()).await },
+		"history:goForward" => { dev_log!("history", "history:goForward"); handle_history_go_forward(runtime.inner().clone()).await },
+		"history:canGoBack" => { dev_log!("history", "history:canGoBack"); handle_history_can_go_back(runtime.inner().clone()).await },
+		"history:canGoForward" => { dev_log!("history", "history:canGoForward"); handle_history_can_go_forward(runtime.inner().clone()).await },
+		"history:push" => { dev_log!("history", "history:push"); handle_history_push(runtime.inner().clone(), args).await },
+		"history:clear" => { dev_log!("history", "history:clear"); handle_history_clear(runtime.inner().clone()).await },
+		"history:getStack" => { dev_log!("history", "history:getStack"); handle_history_get_stack(runtime.inner().clone()).await },
 
 		// IPC status commands
 		"mountain_get_status" => {
@@ -719,9 +731,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			// Logs go under {appDataDir}/logs/{sessionTimestamp}/ — same tree as
 			// all other VS Code data, not Tauri's separate app_log_dir().
 			// VS Code requires a session-timestamped subdir for log rotation.
-			let Now = chrono::Local::now();
-			let SessionTimestamp = Now.format("%Y%m%dT%H%M%S").to_string();
-			let SessionLogRoot = AppDataDir.join("logs").join(&SessionTimestamp);
+			// The timestamp is generated ONCE per process so every call returns
+			// the same logsPath (prevents VS Code from seeing stale dirs).
+			let SessionTimestamp = SESSION_TIMESTAMP.get_or_init(|| {
+				chrono::Local::now().format("%Y%m%dT%H%M%S").to_string()
+			});
+			let SessionLogRoot = AppDataDir.join("logs").join(SessionTimestamp);
 			let SessionLogWindowDir = SessionLogRoot.join("window1");
 			let _ = std::fs::create_dir_all(&SessionLogWindowDir);
 
@@ -743,39 +758,39 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		},
 
 		// OS info
-		"nativeHost:getOSColorScheme" => handle_native_get_color_scheme().await,
-		"nativeHost:getOSProperties" => handle_native_os_properties().await,
-		"nativeHost:getOSStatistics" => handle_native_os_statistics().await,
-		"nativeHost:getOSVirtualMachineHint" => Ok(json!(0)),
+		"nativeHost:getOSColorScheme" => { dev_log!("nativehost", "nativeHost:getOSColorScheme"); handle_native_get_color_scheme().await },
+		"nativeHost:getOSProperties" => { dev_log!("nativehost", "nativeHost:getOSProperties"); handle_native_os_properties().await },
+		"nativeHost:getOSStatistics" => { dev_log!("nativehost", "nativeHost:getOSStatistics"); handle_native_os_statistics().await },
+		"nativeHost:getOSVirtualMachineHint" => { dev_log!("nativehost", "nativeHost:getOSVirtualMachineHint"); Ok(json!(0)) },
 
 		// Window state
-		"nativeHost:isWindowAlwaysOnTop" => Ok(json!(false)),
-		"nativeHost:isFullScreen" => handle_native_is_fullscreen(app_handle.clone()).await,
-		"nativeHost:isMaximized" => handle_native_is_maximized(app_handle.clone()).await,
-		"nativeHost:getActiveWindowId" => Ok(json!(1)),
+		"nativeHost:isWindowAlwaysOnTop" => { dev_log!("window", "nativeHost:isWindowAlwaysOnTop"); Ok(json!(false)) },
+		"nativeHost:isFullScreen" => { dev_log!("window", "nativeHost:isFullScreen"); handle_native_is_fullscreen(app_handle.clone()).await },
+		"nativeHost:isMaximized" => { dev_log!("window", "nativeHost:isMaximized"); handle_native_is_maximized(app_handle.clone()).await },
+		"nativeHost:getActiveWindowId" => { dev_log!("window", "nativeHost:getActiveWindowId"); Ok(json!(1)) },
 		"nativeHost:getWindows" => Ok(json!([{ "id": 1, "title": "Land", "filename": "" }])),
 		"nativeHost:getWindowCount" => Ok(json!(1)),
 
 		// Window control (fire-and-forget)
-		"nativeHost:updateWindowControls" => Ok(Value::Null),
-		"nativeHost:setMinimumSize" => Ok(Value::Null),
-		"nativeHost:notifyReady" => Ok(Value::Null),
-		"nativeHost:saveWindowSplash" => Ok(Value::Null),
-		"nativeHost:updateTouchBar" => Ok(Value::Null),
-		"nativeHost:focusWindow" => Ok(Value::Null),
-		"nativeHost:maximizeWindow" => Ok(Value::Null),
-		"nativeHost:minimizeWindow" => Ok(Value::Null),
-		"nativeHost:unmaximizeWindow" => Ok(Value::Null),
-		"nativeHost:moveWindowTop" => Ok(Value::Null),
-		"nativeHost:positionWindow" => Ok(Value::Null),
-		"nativeHost:toggleFullScreen" => Ok(Value::Null),
-		"nativeHost:setWindowAlwaysOnTop" => Ok(Value::Null),
-		"nativeHost:toggleWindowAlwaysOnTop" => Ok(Value::Null),
-		"nativeHost:closeWindow" => Ok(Value::Null),
-		"nativeHost:setDocumentEdited" => Ok(Value::Null),
-		"nativeHost:setRepresentedFilename" => Ok(Value::Null),
-		"nativeHost:setBackgroundThrottling" => Ok(Value::Null),
-		"nativeHost:updateWindowAccentColor" => Ok(Value::Null),
+		"nativeHost:updateWindowControls"
+		| "nativeHost:setMinimumSize"
+		| "nativeHost:notifyReady"
+		| "nativeHost:saveWindowSplash"
+		| "nativeHost:updateTouchBar"
+		| "nativeHost:focusWindow"
+		| "nativeHost:maximizeWindow"
+		| "nativeHost:minimizeWindow"
+		| "nativeHost:unmaximizeWindow"
+		| "nativeHost:moveWindowTop"
+		| "nativeHost:positionWindow"
+		| "nativeHost:toggleFullScreen"
+		| "nativeHost:setWindowAlwaysOnTop"
+		| "nativeHost:toggleWindowAlwaysOnTop"
+		| "nativeHost:closeWindow"
+		| "nativeHost:setDocumentEdited"
+		| "nativeHost:setRepresentedFilename"
+		| "nativeHost:setBackgroundThrottling"
+		| "nativeHost:updateWindowAccentColor" => { dev_log!("window", "{}", command); Ok(Value::Null) },
 
 		// OS operations
 		"nativeHost:isAdmin" => Ok(json!(false)),
@@ -812,15 +827,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"nativeHost:moveItemToTrash" => Ok(Value::Null),
 
 		// Clipboard
-		"nativeHost:readClipboardText" => Ok(json!("")),
-		"nativeHost:writeClipboardText" => Ok(Value::Null),
-		"nativeHost:readClipboardFindText" => Ok(json!("")),
-		"nativeHost:writeClipboardFindText" => Ok(Value::Null),
-		"nativeHost:readClipboardBuffer" => Ok(json!([])),
-		"nativeHost:writeClipboardBuffer" => Ok(Value::Null),
-		"nativeHost:hasClipboard" => Ok(json!(false)),
-		"nativeHost:readImage" => Ok(json!([])),
-		"nativeHost:triggerPaste" => Ok(Value::Null),
+		"nativeHost:readClipboardText" => { dev_log!("clipboard", "readClipboardText"); Ok(json!("")) },
+		"nativeHost:writeClipboardText" => { dev_log!("clipboard", "writeClipboardText"); Ok(Value::Null) },
+		"nativeHost:readClipboardFindText" => { dev_log!("clipboard", "readClipboardFindText"); Ok(json!("")) },
+		"nativeHost:writeClipboardFindText" => { dev_log!("clipboard", "writeClipboardFindText"); Ok(Value::Null) },
+		"nativeHost:readClipboardBuffer" => { dev_log!("clipboard", "readClipboardBuffer"); Ok(json!([])) },
+		"nativeHost:writeClipboardBuffer" => { dev_log!("clipboard", "writeClipboardBuffer"); Ok(Value::Null) },
+		"nativeHost:hasClipboard" => { dev_log!("clipboard", "hasClipboard"); Ok(json!(false)) },
+		"nativeHost:readImage" => { dev_log!("clipboard", "readImage"); Ok(json!([])) },
+		"nativeHost:triggerPaste" => { dev_log!("clipboard", "triggerPaste"); Ok(Value::Null) },
 
 		// Process
 		"nativeHost:getProcessId" => Ok(json!(std::process::id())),
@@ -866,72 +881,71 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// =====================================================================
 		// Local PTY (terminal) commands
 		// =====================================================================
-		"localPty:getProfiles" => handle_local_pty_get_profiles().await,
-		"localPty:getDefaultSystemShell" => handle_local_pty_get_default_shell().await,
-		"localPty:getTerminalLayoutInfo" => Ok(Value::Null),
-		"localPty:setTerminalLayoutInfo" => Ok(Value::Null),
-		"localPty:getPerformanceMarks" => Ok(json!([])),
-		"localPty:reduceConnectionGraceTime" => Ok(Value::Null),
-		"localPty:listProcesses" => Ok(json!([])),
-		"localPty:getEnvironment" => handle_local_pty_get_environment().await,
+		"localPty:getProfiles" => { dev_log!("terminal", "localPty:getProfiles"); handle_local_pty_get_profiles().await },
+		"localPty:getDefaultSystemShell" => { dev_log!("terminal", "localPty:getDefaultSystemShell"); handle_local_pty_get_default_shell().await },
+		"localPty:getTerminalLayoutInfo" => { dev_log!("terminal", "localPty:getTerminalLayoutInfo"); Ok(Value::Null) },
+		"localPty:setTerminalLayoutInfo" => { dev_log!("terminal", "localPty:setTerminalLayoutInfo"); Ok(Value::Null) },
+		"localPty:getPerformanceMarks" => { dev_log!("terminal", "localPty:getPerformanceMarks"); Ok(json!([])) },
+		"localPty:reduceConnectionGraceTime" => { dev_log!("terminal", "localPty:reduceConnectionGraceTime"); Ok(Value::Null) },
+		"localPty:listProcesses" => { dev_log!("terminal", "localPty:listProcesses"); Ok(json!([])) },
+		"localPty:getEnvironment" => { dev_log!("terminal", "localPty:getEnvironment"); handle_local_pty_get_environment().await },
 
 		// =====================================================================
 		// Update service
 		// =====================================================================
-		"update:_getInitialState" => Ok(json!({ "type": "idle", "updateType": 0 })),
-		"update:isLatestVersion" => Ok(json!(true)),
-		"update:checkForUpdates" => Ok(Value::Null),
-		"update:downloadUpdate" => Ok(Value::Null),
-		"update:applyUpdate" => Ok(Value::Null),
-		"update:quitAndInstall" => Ok(Value::Null),
+		"update:_getInitialState" => { dev_log!("update", "update:_getInitialState"); Ok(json!({ "type": "idle", "updateType": 0 })) },
+		"update:isLatestVersion" => { dev_log!("update", "update:isLatestVersion"); Ok(json!(true)) },
+		"update:checkForUpdates" => { dev_log!("update", "update:checkForUpdates"); Ok(Value::Null) },
+		"update:downloadUpdate" => { dev_log!("update", "update:downloadUpdate"); Ok(Value::Null) },
+		"update:applyUpdate" => { dev_log!("update", "update:applyUpdate"); Ok(Value::Null) },
+		"update:quitAndInstall" => { dev_log!("update", "update:quitAndInstall"); Ok(Value::Null) },
 
 		// =====================================================================
 		// Menubar
 		// =====================================================================
-		"menubar:updateMenubar" => Ok(Value::Null),
+		"menubar:updateMenubar" => { dev_log!("menubar", "menubar:updateMenubar"); Ok(Value::Null) },
 
 		// =====================================================================
 		// URL handler
 		// =====================================================================
-		"url:registerExternalUriOpener" => Ok(Value::Null),
+		"url:registerExternalUriOpener" => { dev_log!("url", "url:registerExternalUriOpener"); Ok(Value::Null) },
 
 		// =====================================================================
 		// Encryption
 		// =====================================================================
-		"encryption:encrypt" => Ok(json!("")),
-		"encryption:decrypt" => Ok(json!("")),
+		"encryption:encrypt" => { dev_log!("encryption", "encryption:encrypt"); Ok(json!("")) },
+		"encryption:decrypt" => { dev_log!("encryption", "encryption:decrypt"); Ok(json!("")) },
 
 		// =====================================================================
 		// Extension host starter
-		// VS Code's localProcessExtensionHost.ts reads .id from createExtensionHost
-		// and .pid from start(). Return minimal stubs so it doesn't crash.
 		// =====================================================================
-		"extensionHostStarter:createExtensionHost" => Ok(json!({ "id": 1 })),
-		"extensionHostStarter:start" => Ok(json!({ "pid": 0 })),
-		"extensionHostStarter:kill" => Ok(Value::Null),
-		"extensionHostStarter:getExitInfo" => Ok(json!({ "code": null, "signal": null })),
+		"extensionHostStarter:createExtensionHost" => { dev_log!("exthost", "extensionHostStarter:createExtensionHost"); Ok(json!({ "id": "1" })) },
+		"extensionHostStarter:start" => { dev_log!("exthost", "extensionHostStarter:start pid={}", std::process::id()); Ok(json!({ "pid": std::process::id() })) },
+		"extensionHostStarter:kill" => { dev_log!("exthost", "extensionHostStarter:kill"); Ok(Value::Null) },
+		"extensionHostStarter:getExitInfo" => { dev_log!("exthost", "extensionHostStarter:getExitInfo"); Ok(json!({ "code": null, "signal": null })) },
 
 		// =====================================================================
 		// Extension host debug service
 		// =====================================================================
-		"extensionhostdebugservice:reload" => Ok(Value::Null),
-		"extensionhostdebugservice:close" => Ok(Value::Null),
+		"extensionhostdebugservice:reload" => { dev_log!("exthost", "extensionhostdebugservice:reload"); Ok(Value::Null) },
+		"extensionhostdebugservice:close" => { dev_log!("exthost", "extensionhostdebugservice:close"); Ok(Value::Null) },
 
 		// =====================================================================
 		// Workspaces — additional commands
 		// =====================================================================
 		"workspaces:getRecentlyOpened" => {
+			dev_log!("workspaces", "workspaces:getRecentlyOpened");
 			Ok(json!({
 				"workspaces": [],
 				"files": []
 			}))
 		},
-		"workspaces:removeRecentlyOpened" => Ok(Value::Null),
-		"workspaces:addRecentlyOpened" => Ok(Value::Null),
-		"workspaces:clearRecentlyOpened" => Ok(Value::Null),
-		"workspaces:enterWorkspace" => Ok(Value::Null),
-		"workspaces:createUntitledWorkspace" => Ok(Value::Null),
-		"workspaces:deleteUntitledWorkspace" => Ok(Value::Null),
+		"workspaces:removeRecentlyOpened" => { dev_log!("workspaces", "workspaces:removeRecentlyOpened"); Ok(Value::Null) },
+		"workspaces:addRecentlyOpened" => { dev_log!("workspaces", "workspaces:addRecentlyOpened"); Ok(Value::Null) },
+		"workspaces:clearRecentlyOpened" => { dev_log!("workspaces", "workspaces:clearRecentlyOpened"); Ok(Value::Null) },
+		"workspaces:enterWorkspace" => { dev_log!("workspaces", "workspaces:enterWorkspace"); Ok(Value::Null) },
+		"workspaces:createUntitledWorkspace" => { dev_log!("workspaces", "workspaces:createUntitledWorkspace"); Ok(Value::Null) },
+		"workspaces:deleteUntitledWorkspace" => { dev_log!("workspaces", "workspaces:deleteUntitledWorkspace"); Ok(Value::Null) },
 		"workspaces:getWorkspaceIdentifier" => Ok(Value::Null),
 		"workspaces:getDirtyWorkspaces" => Ok(json!([])),
 

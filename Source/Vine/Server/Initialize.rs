@@ -161,6 +161,7 @@ pub fn Initialize(
 	CocoonAddressString:String,
 ) -> Result<(), VineError> {
 	info!("[VineServer] Initializing Vine gRPC servers...");
+	crate::dev_log!("grpc", "initializing Vine gRPC servers");
 
 	// Validate and parse socket addresses
 	let MountainAddress = ValidateSocketAddress(&MountainAddressString, "MountainService")?;
@@ -168,6 +169,7 @@ pub fn Initialize(
 
 	info!("[VineServer] MountainService will bind to: {}", MountainAddress);
 	info!("[VineServer] CocoonService will bind to: {}", CocoonAddress);
+	crate::dev_log!("grpc", "Mountain={} Cocoon={}", MountainAddress, CocoonAddress);
 
 	// Retrieve ApplicationRunTime from Tauri managed state
 	let RunTime = ApplicationHandle

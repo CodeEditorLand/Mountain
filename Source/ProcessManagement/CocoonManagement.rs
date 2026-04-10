@@ -211,22 +211,29 @@ async fn LaunchAndManageCocoonSideCar(
 	let SideCarIdentifier = COCOON_SIDE_CAR_IDENTIFIER.to_string();
 	let path_resolver:PathResolver<Wry> = ApplicationHandle.path().clone();
 
-	// Resolve bootstrap script path with validation
+	// Resolve bootstrap script path.
+	// 1) Try Tauri bundled resources (production builds).
+	// 2) Fallback: resolve relative to the executable (dev builds).
+	//    Dev layout: Target/debug/binary → ../../scripts/cocoon/bootstrap-fork.js
 	let ScriptPath = path_resolver
 		.resolve(BOOTSTRAP_SCRIPT_PATH, BaseDirectory::Resource)
-		.map_err(|Error| {
+		.ok()
+		.filter(|P| P.exists())
+		.or_else(|| {
+			std::env::current_exe().ok().and_then(|Exe| {
+				let MountainRoot = Exe.parent()?.parent()?.parent()?;
+				let Candidate = MountainRoot.join(BOOTSTRAP_SCRIPT_PATH);
+				if Candidate.exists() { Some(Candidate) } else { None }
+			})
+		})
+		.ok_or_else(|| {
 			CommonError::FileSystemNotFound(
-				format!("Failed to resolve bootstrap script '{}': {}", BOOTSTRAP_SCRIPT_PATH, Error).into(),
+				format!("Cocoon bootstrap script '{}' not found in resources or relative to executable", BOOTSTRAP_SCRIPT_PATH).into(),
 			)
 		})?;
 
-	if !ScriptPath.exists() {
-		return Err(CommonError::FileSystemNotFound(
-			format!("Cocoon bootstrap script not found at: {}", ScriptPath.display()).into(),
-		));
-	}
-
 	info!("[CocoonManagement] Found bootstrap script at: {}", ScriptPath.display());
+	crate::dev_log!("cocoon", "bootstrap script: {}", ScriptPath.display());
 
 	// Build Node.js command with comprehensive environment configuration
 	let mut NodeCommand = Command::new("node");
@@ -241,6 +248,14 @@ async fn LaunchAndManageCocoonSideCar(
 	// gRPC port configuration for Vine communication
 	EnvironmentVariables.insert("MOUNTAIN_GRPC_PORT".to_string(), MOUNTAIN_GRPC_PORT.to_string());
 	EnvironmentVariables.insert("COCOON_GRPC_PORT".to_string(), COCOON_GRPC_PORT.to_string());
+
+	// Preserve PATH so `node` resolves. env_clear() was stripping it.
+	if let Ok(Path) = std::env::var("PATH") {
+		EnvironmentVariables.insert("PATH".to_string(), Path);
+	}
+	if let Ok(Home) = std::env::var("HOME") {
+		EnvironmentVariables.insert("HOME".to_string(), Home);
+	}
 
 	NodeCommand
 		.arg(&ScriptPath)
@@ -259,6 +274,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 	let ProcessId = ChildProcess.id().unwrap_or(0);
 	info!("[CocoonManagement] Cocoon process spawned [PID: {}]", ProcessId);
+	crate::dev_log!("cocoon", "spawned PID={}", ProcessId);
 
 	// Capture stdout for trace logging
 	if let Some(stdout) = ChildProcess.stdout.take() {
@@ -294,6 +310,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// Establish Vine connection to Cocoon
 	let GRPCAddress = format!("127.0.0.1:{}", COCOON_GRPC_PORT);
 	info!("[CocoonManagement] Connecting to Cocoon gRPC server at: {}", GRPCAddress);
+	crate::dev_log!("grpc", "connecting to Cocoon at {}", GRPCAddress);
 
 	Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), GRPCAddress.clone())
 		.await

@@ -1,24 +1,57 @@
 //! # DevLog — Tag-filtered development logging
 //!
 //! Controlled by `LAND_DEV_LOG` environment variable.
+//! The same tags work in both Mountain (Rust) and Wind/Sky (TypeScript).
 //!
 //! ## Usage
 //! ```bash
 //! LAND_DEV_LOG=vfs,ipc ./Mountain          # only VFS + IPC
 //! LAND_DEV_LOG=all ./Mountain              # everything
-//! LAND_DEV_LOG=folder,config ./Mountain    # folder picker + config
+//! LAND_DEV_LOG=terminal,exthost ./Mountain # terminal + extension host
 //! ./Mountain                               # nothing (only normal log!() output)
 //! ```
 //!
-//! ## Tags
-//! - `vfs`       — file stat, read, write, readdir, path resolution
-//! - `ipc`       — MountainIPCInvoke routing, channel dispatch
-//! - `config`    — configuration loading, environment paths
-//! - `lifecycle` — startup, shutdown, dir creation
-//! - `storage`   — StorageProvider read/write/persist
-//! - `exthost`   — extension host starter, cocoon
-//! - `folder`    — folder picker, workspace open, navigation
-//! - `logger`    — VS Code logger channel commands
+//! Browser console: `window.__LAND_DEV_LOG = "config,vfs"`
+//!
+//! ## Tags (38 granular tags across all Elements)
+//!
+//! | Tag           | Scope                                               |
+//! |---------------|-----------------------------------------------------|
+//! | `vfs`         | File stat, read, write, readdir, mkdir, delete, copy|
+//! | `ipc`         | IPC routing: invoke dispatch, channel calls          |
+//! | `config`      | Configuration get/set, env paths, workbench config   |
+//! | `lifecycle`   | Startup, shutdown, phases, window events             |
+//! | `storage`     | Storage get/set/delete, items, optimize              |
+//! | `folder`      | Folder picker, workspace navigation                  |
+//! | `exthost`     | Extension host: create, start, kill, exit info       |
+//! | `extensions`  | Extension scanning, activation, management           |
+//! | `terminal`    | Terminal/PTY: create, sendText, profiles, shell      |
+//! | `search`      | Search: findFiles, findInFiles                       |
+//! | `themes`      | Theme: list, get active, set                         |
+//! | `window`      | Window: focus, maximize, minimize, fullscreen        |
+//! | `nativehost`  | OS integration: process, devtools, shell             |
+//! | `clipboard`   | Clipboard: read/write text, buffer, image            |
+//! | `commands`    | Command registry: execute, getAll                    |
+//! | `model`       | Text model: open, close, get, updateContent          |
+//! | `output`      | Output channels: create, append, show                |
+//! | `notification`| Notifications: show, progress                        |
+//! | `progress`    | Progress: begin, end, report                         |
+//! | `quickinput`  | Quick input: showQuickPick, showInputBox             |
+//! | `workingcopy` | Working copy: dirty state                            |
+//! | `workspaces`  | Workspace: folders, recent, enter                    |
+//! | `keybinding`  | Keybindings: add, remove, lookup                     |
+//! | `label`       | Label service: getBase, getUri                       |
+//! | `history`     | Navigation history: push, goBack, goForward          |
+//! | `decorations` | Decorations: get, set, clear                         |
+//! | `textfile`    | Text file operations: read, write, save              |
+//! | `update`      | Update service: check, download, apply               |
+//! | `encryption`  | Encryption: encrypt, decrypt                         |
+//! | `menubar`     | Menubar updates                                      |
+//! | `url`         | URL handler: registerExternalUriOpener               |
+//! | `grpc`        | gRPC/Vine: server, client, connections               |
+//! | `cocoon`      | Cocoon sidecar: spawn, health, handshake             |
+//! | `bootstrap`   | Effect-TS bootstrap stages                           |
+//! | `preload`     | Preload: globals, polyfills, ipcRenderer             |
 
 use std::sync::OnceLock;
 
