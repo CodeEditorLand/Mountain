@@ -171,7 +171,6 @@
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-use crate::dev_log;
 use log::{debug, error, info};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
@@ -180,6 +179,8 @@ use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
 	ConfigurationTarget as ConfigurationTargetModule,
 };
+
+use crate::dev_log;
 type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationOverridesDTO;
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
@@ -248,6 +249,12 @@ fn normalize_uri_path(Path:&str) -> String {
 	// but keeps the path. We need to prepend the real userdata directory.
 	let Resolved = resolve_userdata_path(&Decoded);
 
+	// Map /Static/Application/... → real Sky Target directory.
+	// VS Code computes builtinExtensionsPath as appRoot + "/../extensions"
+	// which resolves to /Static/Application/extensions. Since appRoot is a
+	// URL path served by Vite/Tauri, we map it to the real filesystem.
+	let Resolved = resolve_static_application_path(&Resolved);
+
 	#[cfg(target_os = "windows")]
 	{
 		// Windows: URI path "/C:/Users/foo" → "C:\\Users\\foo"
@@ -282,15 +289,44 @@ fn resolve_userdata_path(Path:&str) -> String {
 	Resolved
 }
 
+/// Map paths starting with /Static/Application/ to the real Sky Target
+/// directory. VS Code's environmentService computes builtinExtensionsPath as
+/// `join(FileAccess.asFileUri("").fsPath, "..", "extensions")` which resolves
+/// to `/Static/Application/extensions`. Since /Static/Application/ is a URL
+/// path (not a real filesystem path), we map it to the actual Sky Target
+/// directory where the VS Code assets are served from.
+///
+/// The Sky Target directory is determined relative to the executable's location
+/// in dev mode, or from Tauri's resource directory in production.
+static STATIC_APPLICATION_ROOT:std::sync::OnceLock<String> = std::sync::OnceLock::new();
+
+/// Set the real filesystem root for /Static/Application/ paths.
+/// Call once at startup with the Sky Target directory.
+pub fn set_static_application_root(Path:String) { let _ = STATIC_APPLICATION_ROOT.set(Path); }
+
+fn resolve_static_application_path(Path:&str) -> String {
+	if !Path.starts_with("/Static/Application/") && Path != "/Static/Application" {
+		return Path.to_string();
+	}
+
+	if let Some(Root) = STATIC_APPLICATION_ROOT.get() {
+		let Relative = Path.strip_prefix("/Static/Application").unwrap_or("");
+		let Resolved = format!("{}/Static/Application{}", Root, Relative);
+		dev_log!("vfs", "resolve_static: {} -> {}", Path, Resolved);
+		Resolved
+	} else {
+		// Fallback: return path unchanged (will fail with ENOENT)
+		Path.to_string()
+	}
+}
+
 /// Canonical userdata base directory, set once from Tauri's PathResolver.
 /// All /User/... paths resolve against this so the VFS mapping matches
 /// the real Tauri app_data_dir (which includes the full bundle identifier).
-static USERDATA_BASE_DIR: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+static USERDATA_BASE_DIR:std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
 /// Set the userdata base from Tauri's app_data_dir. Call once at startup.
-pub fn set_userdata_base_dir(Path: String) {
-	let _ = USERDATA_BASE_DIR.set(Path);
-}
+pub fn set_userdata_base_dir(Path:String) { let _ = USERDATA_BASE_DIR.set(Path); }
 
 /// Get the base directory for userdata storage.
 /// Returns the Tauri-resolved path if available, otherwise a fallback.
@@ -671,18 +707,35 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"nativeHost:showSaveDialog" => Ok(json!({ "canceled": true })),
 		"nativeHost:showMessageBox" => Ok(json!({ "response": 0 })),
 
-		// Environment paths — called by ResolveConfiguration to get real Tauri paths
+		// Environment paths — called by ResolveConfiguration to get real Tauri paths.
+		// Returns the session log directory (with timestamp + window1 subdir)
+		// so VS Code can immediately write output files without stat errors.
 		"nativeHost:getEnvironmentPaths" => {
 			let PathResolver = app_handle.path();
 			let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
-			let LogDir = PathResolver.app_log_dir().unwrap_or_default();
 			let HomeDir = PathResolver.home_dir().unwrap_or_default();
 			let TmpDir = std::env::temp_dir();
-			dev_log!("config", "getEnvironmentPaths: userDataDir={} logsPath={} homeDir={}", AppDataDir.display(), LogDir.display(), HomeDir.display());
+
+			// Logs go under {appDataDir}/logs/{sessionTimestamp}/ — same tree as
+			// all other VS Code data, not Tauri's separate app_log_dir().
+			// VS Code requires a session-timestamped subdir for log rotation.
+			let Now = chrono::Local::now();
+			let SessionTimestamp = Now.format("%Y%m%dT%H%M%S").to_string();
+			let SessionLogRoot = AppDataDir.join("logs").join(&SessionTimestamp);
+			let SessionLogWindowDir = SessionLogRoot.join("window1");
+			let _ = std::fs::create_dir_all(&SessionLogWindowDir);
+
+			dev_log!(
+				"config",
+				"getEnvironmentPaths: userDataDir={} logsPath={} homeDir={}",
+				AppDataDir.display(),
+				SessionLogRoot.display(),
+				HomeDir.display()
+			);
 			let DevLogEnv = std::env::var("LAND_DEV_LOG").unwrap_or_default();
 			Ok(json!({
 				"userDataDir": AppDataDir.to_string_lossy(),
-				"logsPath": LogDir.to_string_lossy(),
+				"logsPath": SessionLogRoot.to_string_lossy(),
 				"homeDir": HomeDir.to_string_lossy(),
 				"tmpDir": TmpDir.to_string_lossy(),
 				"devLog": if DevLogEnv.is_empty() { Value::Null } else { json!(DevLogEnv) },
@@ -3473,12 +3526,10 @@ async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {
 
 	dev_log!("vfs", "stat: {}", Path);
 
-	let Metadata = tokio::fs::symlink_metadata(&Path)
-		.await
-		.map_err(|E| {
-			dev_log!("vfs", "stat ENOENT: {}", Path);
-			format!("Failed to stat file: {} (path: {})", E, Path)
-		})?;
+	let Metadata = tokio::fs::symlink_metadata(&Path).await.map_err(|E| {
+		dev_log!("vfs", "stat ENOENT: {}", Path);
+		format!("Failed to stat file: {} (path: {})", E, Path)
+	})?;
 
 	dev_log!("vfs", "stat OK: {} (dir={})", Path, Metadata.is_dir());
 	Ok(metadata_to_istat(&Metadata))

@@ -185,9 +185,21 @@ pub fn AppLifecycleSetup(
 
 		// Set the canonical userdata base so WindServiceHandlers resolves
 		// /User/... paths to the real Tauri app_data_dir (not hardcoded "Land").
-		crate::IPC::WindServiceHandlers::set_userdata_base_dir(
-			AppDataDir.to_string_lossy().to_string()
-		);
+		crate::IPC::WindServiceHandlers::set_userdata_base_dir(AppDataDir.to_string_lossy().to_string());
+
+		// Set the real filesystem root for /Static/Application/ path mapping.
+		// In dev mode, Tauri serves from ../Sky/Target relative to Mountain.
+		// Tauri's resource_dir gives us the frontendDist path.
+		let SkyTargetDir = PathResolver.resource_dir().unwrap_or_else(|_| {
+			// Fallback: resolve relative to the executable
+			std::env::current_exe()
+				.ok()
+				.and_then(|Exe| Exe.parent().map(|P| P.to_path_buf()))
+				.unwrap_or_default()
+				.join("../../../Element/Sky/Target")
+		});
+		crate::IPC::WindServiceHandlers::set_static_application_root(SkyTargetDir.to_string_lossy().to_string());
+		debug!("[Lifecycle] [Dirs] Static application root: {}", SkyTargetDir.display());
 
 		// Every directory VS Code may stat or readdir during startup
 		let Dirs = [
@@ -203,8 +215,11 @@ pub fn AppLifecycleSetup(
 			AppDataDir.join("User/caches"),
 			// Configuration cache
 			AppDataDir.join("CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides"),
-			// Log directories
+			// Log directories — VS Code stats {logsPath}/window1/output_{timestamp}
 			LogDir.join("window1"),
+			// System extensions directory — VS Code scans appRoot/../extensions
+			// which resolves to /Static/Application/extensions (mapped to Sky Target).
+			SkyTargetDir.join("Static/Application/extensions"),
 			// Agent directories VS Code probes for (create to avoid stat errors)
 			HomeDir.join(".claude/agents"),
 			HomeDir.join(".copilot/agents"),
@@ -216,7 +231,7 @@ pub fn AppLifecycleSetup(
 		}
 
 		// Default empty files VS Code reads on startup
-		let DefaultFiles: &[(&std::path::Path, &str)] = &[
+		let DefaultFiles:&[(&std::path::Path, &str)] = &[
 			(&AppDataDir.join("User/settings.json"), "{}"),
 			(&AppDataDir.join("User/keybindings.json"), "[]"),
 			(&AppDataDir.join("User/tasks.json"), "{}"),
