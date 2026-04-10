@@ -259,7 +259,11 @@ impl StorageProvider for MountainEnvironment {
 	) -> Result<(), CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		info!("[StorageProvider] Updating value in {} scope for key: {}", ScopeName, Key);
+		if crate::IPC::DevLog::IsShort() {
+			crate::dev_log!("storage", "update {} {}", ScopeName, Key);
+		} else {
+			info!("[StorageProvider] Updating value in {} scope for key: {}", ScopeName, Key);
+		}
 
 		// Validate key to prevent injection or invalid storage paths
 		if Key.is_empty() {

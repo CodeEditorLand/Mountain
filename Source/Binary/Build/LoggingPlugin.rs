@@ -7,6 +7,16 @@ use log::LevelFilter;
 use tauri::plugin::TauriPlugin;
 use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 
+use crate::IPC::DevLog;
+
+/// Compress a Rust module target path to its final segment.
+///
+/// `D::Binary::Main::Entry` → `Entry`
+/// `D::Environment::StorageProvider` → `StorageProvider`
+fn CompressTarget(Target: &str) -> &str {
+	Target.rsplit("::").next().unwrap_or(Target)
+}
+
 /// Creates and configures the logging plugin with multi-target output and level
 /// filtering.
 ///
@@ -23,6 +33,13 @@ use tauri_plugin_log::{RotationStrategy, Target, TargetKind, TimezoneStrategy};
 /// - Release default: Info (low noise) unless RUST_LOG overrides
 /// - Debug default: Debug (high fidelity) unless RUST_LOG overrides
 /// - Very noisy dependencies are capped using level_for(...) and filter(...)
+///
+/// # Short Mode
+///
+/// When `LAND_DEV_LOG=short`:
+/// - Module targets compressed to last segment
+/// - Long app-data paths aliased to `$APP`
+/// - Storage key-by-key logs suppressed (batch count only)
 ///
 /// # Targets
 ///
@@ -71,12 +88,24 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		})
 		// Format logs with category-like structure: [LEVEL] [TARGET] message
 		.format(|out, message, record| {
-			out.finish(format_args!(
-				"[{:<5}] [{}] {}",
-				record.level(),
-				record.target(),
-				message
-			))
+			if DevLog::IsShort() {
+				let ShortTarget = CompressTarget(record.target());
+				let RawMessage = format!("{}", message);
+				let Aliased = DevLog::AliasPath(&RawMessage);
+				out.finish(format_args!(
+					"[{:<5}] [{}] {}",
+					record.level(),
+					ShortTarget,
+					Aliased
+				))
+			} else {
+				out.finish(format_args!(
+					"[{:<5}] [{}] {}",
+					record.level(),
+					record.target(),
+					message
+				))
+			}
 		})
 		.build()
 }
