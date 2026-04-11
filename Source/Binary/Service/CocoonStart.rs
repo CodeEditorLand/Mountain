@@ -2,7 +2,7 @@
 //!
 //! Initializes and starts the Cocoon sidecar process.
 
-use log::{error, info};
+use log::{info, warn};
 
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,

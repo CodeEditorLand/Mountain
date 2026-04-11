@@ -54,14 +54,21 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			debug!("[Extensions] [ScanPaths] + {}", LocalPath.display());
 			ScanPathsGuard.push(LocalPath);
 
-			// Sky Target path: where CopyVSCodeAssets (Step 13) copies built-in
-			// extensions during the build. This is the primary source in dev.
-			// Resolve: Target/debug/../../../Element/Sky/Target/Static/Application/
-			// extensions
+			// Sky Target path: where CopyVSCodeAssets copies built-in
+			// extensions during the build.
 			let SkyTargetPath = Parent.join("../../../Element/Sky/Target/Static/Application/extensions");
 			if SkyTargetPath.exists() {
 				debug!("[Extensions] [ScanPaths] + {} (Sky Target)", SkyTargetPath.display());
 				ScanPathsGuard.push(SkyTargetPath);
+			}
+
+			// VS Code dependency path: built-in extensions from the VS Code
+			// source checkout. Primary source in dev — avoids requiring a copy
+			// step. Production builds use Sky Target or Resources instead.
+			let DependencyPath = Parent.join("../../../Dependency/Microsoft/Dependency/Editor/extensions");
+			if DependencyPath.exists() {
+				debug!("[Extensions] [ScanPaths] + {} (VS Code Dependency)", DependencyPath.display());
+				ScanPathsGuard.push(DependencyPath);
 			}
 		}
 	}
