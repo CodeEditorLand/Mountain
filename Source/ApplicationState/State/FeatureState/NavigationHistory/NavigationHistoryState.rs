@@ -109,7 +109,5 @@ impl NavigationHistoryState {
 	}
 
 	/// Return all URIs in the stack (oldest first).
-	pub fn GetStack(&self) -> Vec<String> {
-		self.Stack.lock().ok().map(|G| G.clone()).unwrap_or_default()
-	}
+	pub fn GetStack(&self) -> Vec<String> { self.Stack.lock().ok().map(|G| G.clone()).unwrap_or_default() }
 }

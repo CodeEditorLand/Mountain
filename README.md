@@ -105,7 +105,7 @@ frontend and the `Cocoon` extension host.
 | :------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------ |
 | **Implementation of Contracts**        | Implement the abstract service `trait`s from `Common`, providing concrete logic for the application's architecture.                                  | `Environment/*` providers                         |
 | **Separation of Concerns**             | Isolate service logic into distinct `Environment` provider modules, each responsible for a specific domain (e.g., `FileSystem`, `Documents`).        | `Environment/*`, `Command/*`                      |
-| **Declarative Logic**                  | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` — composable, testable, and robust.                                  | `RunTime/*`, `Track/EffectCreation.rs`, `Common`  |
+| **Declarative Logic**                  | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` - composable, testable, and robust.                                  | `RunTime/*`, `Track/EffectCreation.rs`, `Common`  |
 | **Centralized State**                  | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application.                      | `ApplicationState/*`                              |
 | **Secure & Performant IPC**            | Use `gRPC` for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                               | `Vine/*`                                          |
 | **UI–Backend Decoupling**               | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                                  | `Binary.rs` (invoke handler), `Command/*`         |
@@ -122,7 +122,7 @@ This document explains the roles of `ApplicationRunTime`, `ApplicationState`,
 
 ---
 
-## `Mountain`&#x2001;⛰️ in the `Land`&#x2001;🏞️ Ecosystem&#x2001;&#x2001;&#x2001;⛰️&#x2001;+&#x2001;🏞️
+## `Mountain`&#x2001;⛰️ in the `Land`&#x2001;🏞️ Ecosystem&#x2001;⛰️&#x2001;+&#x2001;🏞️
 
 This diagram illustrates `Mountain`'s central role as the native orchestrator
 for the entire `Land` application.
@@ -135,14 +135,14 @@ graph LR
     classDef common   fill:#d4f5d4,stroke:#27ae60,stroke-width:1px,stroke-dasharray:5 5,color:#0a3a0a;
     classDef ipc      fill:#fff3c0,stroke:#f39c12,stroke-width:1px,stroke-dasharray:5 5,color:#5a3e00;
 
-    subgraph "⛰️ Mountain — Native Rust/Tauri Backend"
+    subgraph "⛰️ Mountain - Native Rust/Tauri Backend"
         TauriRuntime["🚀 Tauri App & Window"]:::mountain
         ApplicationRunTime["⚡ ApplicationRunTime Engine"]:::mountain
-        ApplicationState["🗄️ ApplicationState — Shared State"]:::mountain
+        ApplicationState["🗄️ ApplicationState - Shared State"]:::mountain
         TrackDispatcher["🔀 Track Dispatcher"]:::mountain
-        VinegRPC["🌿 Vine — gRPC Server"]:::ipc
+        VinegRPC["🌿 Vine - gRPC Server"]:::ipc
         EnvironmentProviders["⚙️ Environment Providers"]:::mountain
-        CommonCrate["📐 Common Crate — Traits & DTOs"]:::common
+        CommonCrate["📐 Common Crate - Traits & DTOs"]:::common
 
         TauriRuntime --> ApplicationState
         TauriRuntime --> ApplicationRunTime
@@ -151,8 +151,8 @@ graph LR
     end
 
     subgraph "🖥️ Clients"
-        WindUI["🍃 Wind / Sky — UI WebView"]:::wind
-        CocoonSideCar["🦋 Cocoon — Extension Host (Node.js)"]:::cocoon
+        WindUI["🍃 Wind / Sky - UI WebView"]:::wind
+        CocoonSideCar["🦋 Cocoon - Extension Host (Node.js)"]:::cocoon
     end
 
     TauriRuntime -- hosts --> WindUI
@@ -203,13 +203,13 @@ set up, build, and run the entire application.
 
 | Crate / Package        | Purpose                                               |
 | :--------------------- | :---------------------------------------------------- |
-| `Common`               | Local path dependency — abstract traits & DTOs        |
-| `Echo`                 | Local path dependency — work-stealing scheduler       |
+| `Common`               | Local path dependency - abstract traits & DTOs        |
+| `Echo`                 | Local path dependency - work-stealing scheduler       |
 | `keyring`              | Secure OS keychain access                             |
 | `log` & `env_logger`   | Structured logging                                    |
 | `portable-pty`         | Cross-platform native PTY for integrated terminal     |
 | `serde` & `serde_json` | Serialization / deserialization                       |
-| `tauri`                | `^2.x` — windowing, WebView, command dispatch         |
+| `tauri`                | `^2.x` - windowing, WebView, command dispatch         |
 | `tokio`                | Async runtime                                         |
 | `tonic`                | `gRPC` server implementation                          |
 

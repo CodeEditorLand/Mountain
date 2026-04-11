@@ -210,12 +210,11 @@ use std::{
 };
 
 use log::{debug, error, info};
-use crate::dev_log;
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tauri::{Emitter, Manager};
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Advanced IPC features for enhanced Mountain-Wind synchronization
 #[derive(Clone)]

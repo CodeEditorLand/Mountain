@@ -304,7 +304,7 @@ Mountain provides concrete implementations of VSCode file system services:
 ```rust
 #[async_trait]
 impl FileSystemService for MountainEnvironment {
-    async fn read_file(&self, uri: &str) -> Result<Vec<u8>, CommonError> {
+    async fn ReadFile(&self, uri: &str) -> Result<Vec<u8>, CommonError> {
         let path = convert_uri_to_path(uri)?;
 
         // Use tokio for async file operations
@@ -314,7 +314,7 @@ impl FileSystemService for MountainEnvironment {
         }
     }
 
-    async fn write_file(&self, uri: &str, content: &[u8]) -> Result<(), CommonError> {
+    async fn WriteFile(&self, uri: &str, content: &[u8]) -> Result<(), CommonError> {
         let path = convert_uri_to_path(uri)?;
 
         // Create directory if it doesn't exist
@@ -364,7 +364,7 @@ impl WindowService for MountainEnvironment {
         Ok(terminal)
     }
 
-    async fn show_information_message(&self, message: &str) -> Result<(), CommonError> {
+    async fn ShowInformationMessage(&self, message: &str) -> Result<(), CommonError> {
         // Use Tauri's notification system
         tauri::api::notification::Notification::new(&self.app_handle)
             .title("Information")
@@ -388,7 +388,7 @@ impl WorkspaceService for MountainEnvironment {
         Ok(state.workspace_folders.clone())
     }
 
-    async fn update_workspace_folders(&self, folders: Vec<WorkspaceFolder>) -> Result<(), CommonError> {
+    async fn UpdateWorkspaceFolders(&self, folders: Vec<WorkspaceFolder>) -> Result<(), CommonError> {
         let mut state = self.app_state.write().await;
         state.workspace_folders = folders;
 
@@ -399,7 +399,7 @@ impl WorkspaceService for MountainEnvironment {
     }
 
     async fn open_text_document(&self, uri: &str) -> Result<TextDocument, CommonError> {
-        let content = self.read_file(uri).await?;
+        let content = self.ReadFile(uri).await?;
         let language_id = detect_language_id(uri);
 
         let document = TextDocument {
@@ -715,7 +715,7 @@ mod performance_tests {
 
         // Measure execution time
         let start = std::time::Instant::now();
-        let result = environment.read_file("test://large-file").await;
+        let result = environment.ReadFile("test://large-file").await;
         let duration = start.elapsed();
 
         assert!(result.is_ok());

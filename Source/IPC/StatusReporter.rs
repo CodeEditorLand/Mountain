@@ -190,10 +190,11 @@ use std::{
 };
 
 use log::{debug, error, info, warn};
-use crate::dev_log;
 use serde::{Deserialize, Serialize};
 use tauri::{Emitter, Manager};
 use tokio::sync::RwLock;
+
+use crate::dev_log;
 
 /// Comprehensive status report combining all monitoring data
 #[derive(Debug, Clone, Serialize, Deserialize)]

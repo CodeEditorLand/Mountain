@@ -21,7 +21,7 @@ pub async fn cocoon_search_service_health() -> Result<bool, String> {
 /// Check debug service health.
 #[tauri::command]
 pub async fn cocoon_debug_service_health() -> Result<bool, String> {
-	// Debug adapter protocol — not yet wired
+	// Debug adapter protocol - not yet wired
 	Ok(false)
 }
 
@@ -29,9 +29,9 @@ pub async fn cocoon_debug_service_health() -> Result<bool, String> {
 #[tauri::command]
 pub async fn shared_process_service_health(service:String) -> Result<bool, String> {
 	match service.as_str() {
-		"storage" => Ok(true),   // Storage is always available (file-backed)
-		"update" => Ok(true),    // Update service always reports idle
-		"search" => Ok(true),    // Search available via file system
+		"storage" => Ok(true), // Storage is always available (file-backed)
+		"update" => Ok(true),  // Update service always reports idle
+		"search" => Ok(true),  // Search available via file system
 		_ => Ok(false),
 	}
 }

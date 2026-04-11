@@ -24,28 +24,23 @@ pub async fn process_get_platform() -> Result<String, String> {
 		"windows" => "win32",
 		"linux" => "linux",
 		Other => Other,
-	}.to_string())
+	}
+	.to_string())
 }
 
 /// Get the CPU architecture.
 #[tauri::command]
-pub async fn process_get_arch() -> Result<String, String> {
-	Ok(std::env::consts::ARCH.to_string())
-}
+pub async fn process_get_arch() -> Result<String, String> { Ok(std::env::consts::ARCH.to_string()) }
 
 /// Get the process ID.
 #[tauri::command]
-pub async fn process_get_pid() -> Result<u32, String> {
-	Ok(std::process::id())
-}
+pub async fn process_get_pid() -> Result<u32, String> { Ok(std::process::id()) }
 
 /// Get the shell environment variables.
 /// Returns the full environment of the Mountain process, which inherits
 /// the user's shell environment on all platforms.
 #[tauri::command]
-pub async fn process_get_shell_env() -> Result<HashMap<String, String>, String> {
-	Ok(std::env::vars().collect())
-}
+pub async fn process_get_shell_env() -> Result<HashMap<String, String>, String> { Ok(std::env::vars().collect()) }
 
 /// Get process memory information.
 /// Returns private, shared, and residentSet memory in bytes.
@@ -86,7 +81,8 @@ pub async fn process_get_memory_info() -> Result<Value, String> {
 				let Text = String::from_utf8_lossy(&Out.stdout);
 				// Parse "Image Name","PID","Session Name","Session#","Mem Usage"
 				let MemStr = Text.split(',').nth(4).unwrap_or("\"0 K\"");
-				let MemKb:u64 = MemStr.chars()
+				let MemKb:u64 = MemStr
+					.chars()
 					.filter(|C| C.is_ascii_digit())
 					.collect::<String>()
 					.parse()

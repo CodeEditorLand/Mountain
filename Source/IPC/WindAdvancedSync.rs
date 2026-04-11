@@ -280,12 +280,11 @@ use std::{
 };
 
 use log::{debug, error, info, trace, warn};
-use crate::dev_log;
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tauri::{Emitter, Manager};
 
-use crate::{IPC::AdvancedFeatures::PerformanceStats, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{IPC::AdvancedFeatures::PerformanceStats, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 // TEMPORARY: MountainIPC module not yet implemented
 // This import is needed for full document synchronization with Mountain

@@ -28,388 +28,388 @@ service CocoonService {
   // ==================== Initialization ====================
 
   // Handshake - Called by Cocoon to signal readiness
-  rpc initial_handshake(Empty) returns (Empty);
+  rpc InitialHandshake(Empty) returns (Empty);
 
   // Initialize Extension Host - Mountain sends initialization data to Cocoon
-  rpc init_extension_host(InitExtensionHostRequest) returns (Empty);
+  rpc InitExtensionHost(InitExtensionHostRequest) returns (Empty);
 
   // ==================== Commands ====================
 
   // Register Command - Cocoon registers an extension command
-  rpc register_command(RegisterCommandRequest) returns (Empty);
+  rpc RegisterCommand(RegisterCommandRequest) returns (Empty);
 
   // Execute Contributed Command - Mountain executes an extension command
-  rpc execute_contributed_command(ExecuteCommandRequest) returns (ExecuteCommandResponse);
+  rpc ExecuteContributedCommand(ExecuteCommandRequest) returns (ExecuteCommandResponse);
 
   // Unregister Command - Unregister a previously registered command
-  rpc unregister_command(UnregisterCommandRequest) returns (Empty);
+  rpc UnregisterCommand(UnregisterCommandRequest) returns (Empty);
 
   // ==================== Language Features ====================
 
   // Register Hover Provider - Register a hover provider
-  rpc register_hover_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterHoverProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Hover - Request hover information
-  rpc provide_hover(ProvideHoverRequest) returns (ProvideHoverResponse);
+  rpc ProvideHover(ProvideHoverRequest) returns (ProvideHoverResponse);
 
   // Register Completion Item Provider - Register a completion provider
-  rpc register_completion_item_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterCompletionItemProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Completion Items - Request completion items
-  rpc provide_completion_items(ProvideCompletionItemsRequest) returns (ProvideCompletionItemsResponse);
+  rpc ProvideCompletionItems(ProvideCompletionItemsRequest) returns (ProvideCompletionItemsResponse);
 
   // Register Definition Provider - Register a definition provider
-  rpc register_definition_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterDefinitionProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Definition - Request definition location
-  rpc provide_definition(ProvideDefinitionRequest) returns (ProvideDefinitionResponse);
+  rpc ProvideDefinition(ProvideDefinitionRequest) returns (ProvideDefinitionResponse);
 
   // Register Reference Provider - Register a reference provider
-  rpc register_reference_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterReferenceProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide References - Request references
-  rpc provide_references(ProvideReferencesRequest) returns (ProvideReferencesResponse);
+  rpc ProvideReferences(ProvideReferencesRequest) returns (ProvideReferencesResponse);
 
   // Register Code Actions Provider - Register code actions provider
-  rpc register_code_actions_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterCodeActionsProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Code Actions - Request code actions
-  rpc provide_code_actions(ProvideCodeActionsRequest) returns (ProvideCodeActionsResponse);
+  rpc ProvideCodeActions(ProvideCodeActionsRequest) returns (ProvideCodeActionsResponse);
 
   // ==================== Language Features (Extended) ====================
 
   // Register Document Highlight Provider
-  rpc register_document_highlight_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterDocumentHighlightProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Document Highlights
-  rpc provide_document_highlights(ProvideDocumentHighlightsRequest) returns (ProvideDocumentHighlightsResponse);
+  rpc ProvideDocumentHighlights(ProvideDocumentHighlightsRequest) returns (ProvideDocumentHighlightsResponse);
 
   // Register Document Symbol Provider
-  rpc register_document_symbol_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterDocumentSymbolProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Document Symbols
-  rpc provide_document_symbols(ProvideDocumentSymbolsRequest) returns (ProvideDocumentSymbolsResponse);
+  rpc ProvideDocumentSymbols(ProvideDocumentSymbolsRequest) returns (ProvideDocumentSymbolsResponse);
 
   // Register Workspace Symbol Provider
-  rpc register_workspace_symbol_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterWorkspaceSymbolProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Workspace Symbols
-  rpc provide_workspace_symbols(ProvideWorkspaceSymbolsRequest) returns (ProvideWorkspaceSymbolsResponse);
+  rpc ProvideWorkspaceSymbols(ProvideWorkspaceSymbolsRequest) returns (ProvideWorkspaceSymbolsResponse);
 
   // Register Rename Provider
-  rpc register_rename_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterRenameProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Rename Edits
-  rpc provide_rename_edits(ProvideRenameEditsRequest) returns (ProvideRenameEditsResponse);
+  rpc ProvideRenameEdits(ProvideRenameEditsRequest) returns (ProvideRenameEditsResponse);
 
   // Register Document Formatting Provider
-  rpc register_document_formatting_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterDocumentFormattingProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Document Formatting
-  rpc provide_document_formatting(ProvideDocumentFormattingRequest) returns (ProvideDocumentFormattingResponse);
+  rpc ProvideDocumentFormatting(ProvideDocumentFormattingRequest) returns (ProvideDocumentFormattingResponse);
 
   // Register Document Range Formatting Provider
-  rpc register_document_range_formatting_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterDocumentRangeFormattingProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Document Range Formatting
-  rpc provide_document_range_formatting(ProvideDocumentRangeFormattingRequest) returns (ProvideDocumentRangeFormattingResponse);
+  rpc ProvideDocumentRangeFormatting(ProvideDocumentRangeFormattingRequest) returns (ProvideDocumentRangeFormattingResponse);
 
   // Register On Type Formatting Provider
-  rpc register_on_type_formatting_provider(RegisterOnTypeFormattingProviderRequest) returns (Empty);
+  rpc RegisterOnTypeFormattingProvider(RegisterOnTypeFormattingProviderRequest) returns (Empty);
 
   // Provide On Type Formatting
-  rpc provide_on_type_formatting(ProvideOnTypeFormattingRequest) returns (ProvideOnTypeFormattingResponse);
+  rpc ProvideOnTypeFormatting(ProvideOnTypeFormattingRequest) returns (ProvideOnTypeFormattingResponse);
 
   // Register Signature Help Provider
-  rpc register_signature_help_provider(RegisterSignatureHelpProviderRequest) returns (Empty);
+  rpc RegisterSignatureHelpProvider(RegisterSignatureHelpProviderRequest) returns (Empty);
 
   // Provide Signature Help
-  rpc provide_signature_help(ProvideSignatureHelpRequest) returns (ProvideSignatureHelpResponse);
+  rpc ProvideSignatureHelp(ProvideSignatureHelpRequest) returns (ProvideSignatureHelpResponse);
 
   // Register Code Lens Provider
-  rpc register_code_lens_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterCodeLensProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Code Lenses
-  rpc provide_code_lenses(ProvideCodeLensesRequest) returns (ProvideCodeLensesResponse);
+  rpc ProvideCodeLenses(ProvideCodeLensesRequest) returns (ProvideCodeLensesResponse);
 
   // Register Folding Range Provider
-  rpc register_folding_range_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterFoldingRangeProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Folding Ranges
-  rpc provide_folding_ranges(ProvideFoldingRangesRequest) returns (ProvideFoldingRangesResponse);
+  rpc ProvideFoldingRanges(ProvideFoldingRangesRequest) returns (ProvideFoldingRangesResponse);
 
   // Register Selection Range Provider
-  rpc register_selection_range_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterSelectionRangeProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Selection Ranges
-  rpc provide_selection_ranges(ProvideSelectionRangesRequest) returns (ProvideSelectionRangesResponse);
+  rpc ProvideSelectionRanges(ProvideSelectionRangesRequest) returns (ProvideSelectionRangesResponse);
 
   // Register Semantic Tokens Provider
-  rpc register_semantic_tokens_provider(RegisterSemanticTokensProviderRequest) returns (Empty);
+  rpc RegisterSemanticTokensProvider(RegisterSemanticTokensProviderRequest) returns (Empty);
 
   // Provide Semantic Tokens Full
-  rpc provide_semantic_tokens_full(ProvideSemanticTokensRequest) returns (ProvideSemanticTokensResponse);
+  rpc ProvideSemanticTokensFull(ProvideSemanticTokensRequest) returns (ProvideSemanticTokensResponse);
 
   // Register Inlay Hints Provider
-  rpc register_inlay_hints_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterInlayHintsProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Inlay Hints
-  rpc provide_inlay_hints(ProvideInlayHintsRequest) returns (ProvideInlayHintsResponse);
+  rpc ProvideInlayHints(ProvideInlayHintsRequest) returns (ProvideInlayHintsResponse);
 
   // Register Type Hierarchy Provider
-  rpc register_type_hierarchy_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterTypeHierarchyProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Type Hierarchy Supertypes
-  rpc provide_type_hierarchy_supertypes(ProvideTypeHierarchyRequest) returns (ProvideTypeHierarchyResponse);
+  rpc ProvideTypeHierarchySupertypes(ProvideTypeHierarchyRequest) returns (ProvideTypeHierarchyResponse);
 
   // Provide Type Hierarchy Subtypes
-  rpc provide_type_hierarchy_subtypes(ProvideTypeHierarchyRequest) returns (ProvideTypeHierarchyResponse);
+  rpc ProvideTypeHierarchySubtypes(ProvideTypeHierarchyRequest) returns (ProvideTypeHierarchyResponse);
 
   // Register Call Hierarchy Provider
-  rpc register_call_hierarchy_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterCallHierarchyProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Call Hierarchy Incoming Calls
-  rpc provide_call_hierarchy_incoming_calls(ProvideCallHierarchyRequest) returns (ProvideCallHierarchyResponse);
+  rpc ProvideCallHierarchyIncomingCalls(ProvideCallHierarchyRequest) returns (ProvideCallHierarchyResponse);
 
   // Provide Call Hierarchy Outgoing Calls
-  rpc provide_call_hierarchy_outgoing_calls(ProvideCallHierarchyRequest) returns (ProvideCallHierarchyResponse);
+  rpc ProvideCallHierarchyOutgoingCalls(ProvideCallHierarchyRequest) returns (ProvideCallHierarchyResponse);
 
   // Register Linked Editing Range Provider
-  rpc register_linked_editing_range_provider(RegisterProviderRequest) returns (Empty);
+  rpc RegisterLinkedEditingRangeProvider(RegisterProviderRequest) returns (Empty);
 
   // Provide Linked Editing Ranges
-  rpc provide_linked_editing_ranges(ProvideLinkedEditingRangesRequest) returns (ProvideLinkedEditingRangesResponse);
+  rpc ProvideLinkedEditingRanges(ProvideLinkedEditingRangesRequest) returns (ProvideLinkedEditingRangesResponse);
 
   // ==================== Window Operations (Extended) ====================
 
   // Show Quick Pick
-  rpc show_quick_pick(ShowQuickPickRequest) returns (ShowQuickPickResponse);
+  rpc ShowQuickPick(ShowQuickPickRequest) returns (ShowQuickPickResponse);
 
   // Show Input Box
-  rpc show_input_box(ShowInputBoxRequest) returns (ShowInputBoxResponse);
+  rpc ShowInputBox(ShowInputBoxRequest) returns (ShowInputBoxResponse);
 
   // Show Progress
-  rpc show_progress(ShowProgressRequest) returns (ShowProgressResponse);
+  rpc ShowProgress(ShowProgressRequest) returns (ShowProgressResponse);
 
   // Report Progress
-  rpc report_progress(ReportProgressRequest) returns (Empty);
+  rpc ReportProgress(ReportProgressRequest) returns (Empty);
 
   // Post Message to Webview
-  rpc post_webview_message(PostWebviewMessageRequest) returns (Empty);
+  rpc PostWebviewMessage(PostWebviewMessageRequest) returns (Empty);
 
   // Dispose Webview Panel
-  rpc dispose_webview_panel(DisposeWebviewPanelRequest) returns (Empty);
+  rpc DisposeWebviewPanel(DisposeWebviewPanelRequest) returns (Empty);
 
   // Open External URI
-  rpc open_external(OpenExternalRequest) returns (Empty);
+  rpc OpenExternal(OpenExternalRequest) returns (Empty);
 
   // ==================== File System (Extended) ====================
 
   // Delete File
-  rpc delete_file(DeleteFileRequest) returns (Empty);
+  rpc DeleteFile(DeleteFileRequest) returns (Empty);
 
   // Rename File
-  rpc rename_file(RenameFileRequest) returns (Empty);
+  rpc RenameFile(RenameFileRequest) returns (Empty);
 
   // Copy File
-  rpc copy_file(CopyFileRequest) returns (Empty);
+  rpc CopyFile(CopyFileRequest) returns (Empty);
 
   // Create Directory
-  rpc create_directory(CreateDirectoryRequest) returns (Empty);
+  rpc CreateDirectory(CreateDirectoryRequest) returns (Empty);
 
   // ==================== Output Channels ====================
 
   // Create Output Channel
-  rpc create_output_channel(CreateOutputChannelRequest) returns (CreateOutputChannelResponse);
+  rpc CreateOutputChannel(CreateOutputChannelRequest) returns (CreateOutputChannelResponse);
 
   // Append to Output Channel
-  rpc append_output(AppendOutputRequest) returns (Empty);
+  rpc AppendOutput(AppendOutputRequest) returns (Empty);
 
   // Clear Output Channel
-  rpc clear_output(ClearOutputRequest) returns (Empty);
+  rpc ClearOutput(ClearOutputRequest) returns (Empty);
 
   // Show Output Channel
-  rpc show_output(ShowOutputRequest) returns (Empty);
+  rpc ShowOutput(ShowOutputRequest) returns (Empty);
 
   // Dispose Output Channel
-  rpc dispose_output(DisposeOutputRequest) returns (Empty);
+  rpc DisposeOutput(DisposeOutputRequest) returns (Empty);
 
   // ==================== Tasks ====================
 
   // Register Task Provider
-  rpc register_task_provider(RegisterTaskProviderRequest) returns (Empty);
+  rpc RegisterTaskProvider(RegisterTaskProviderRequest) returns (Empty);
 
   // Execute Task
-  rpc execute_task(ExecuteTaskRequest) returns (ExecuteTaskResponse);
+  rpc ExecuteTask(ExecuteTaskRequest) returns (ExecuteTaskResponse);
 
   // Terminate Task
-  rpc terminate_task(TerminateTaskRequest) returns (Empty);
+  rpc TerminateTask(TerminateTaskRequest) returns (Empty);
 
   // ==================== Authentication ====================
 
   // Get Authentication Session
-  rpc get_authentication_session(GetAuthenticationSessionRequest) returns (GetAuthenticationSessionResponse);
+  rpc GetAuthenticationSession(GetAuthenticationSessionRequest) returns (GetAuthenticationSessionResponse);
 
   // Register Authentication Provider
-  rpc register_authentication_provider(RegisterAuthenticationProviderRequest) returns (Empty);
+  rpc RegisterAuthenticationProvider(RegisterAuthenticationProviderRequest) returns (Empty);
 
   // ==================== Debug (Extended) ====================
 
   // Stop Debugging
-  rpc stop_debugging(StopDebuggingRequest) returns (Empty);
+  rpc StopDebugging(StopDebuggingRequest) returns (Empty);
 
   // ==================== Extensions ====================
 
   // Get Extension
-  rpc get_extension(GetExtensionRequest) returns (GetExtensionResponse);
+  rpc GetExtension(GetExtensionRequest) returns (GetExtensionResponse);
 
   // Get All Extensions
-  rpc get_all_extensions(Empty) returns (GetAllExtensionsResponse);
+  rpc GetAllExtensions(Empty) returns (GetAllExtensionsResponse);
 
   // ==================== Terminal (Extended) ====================
 
   // Resize Terminal
-  rpc resize_terminal(ResizeTerminalRequest) returns (Empty);
+  rpc ResizeTerminal(ResizeTerminalRequest) returns (Empty);
 
   // ==================== Configuration (Extended) ====================
 
   // Get Configuration Value
-  rpc get_configuration(GetConfigurationRequest) returns (GetConfigurationResponse);
+  rpc GetConfiguration(GetConfigurationRequest) returns (GetConfigurationResponse);
 
   // ==================== Window Operations ====================
 
   // Show Text Document - Open a text document
-  rpc show_text_document(ShowTextDocumentRequest) returns (ShowTextDocumentResponse);
+  rpc ShowTextDocument(ShowTextDocumentRequest) returns (ShowTextDocumentResponse);
 
   // Show Information Message - Display an info message
-  rpc show_information_message(ShowMessageRequest) returns (ShowMessageResponse);
+  rpc ShowInformationMessage(ShowMessageRequest) returns (ShowMessageResponse);
 
   // Show Warning Message - Display a warning message
-  rpc show_warning_message(ShowMessageRequest) returns (ShowMessageResponse);
+  rpc ShowWarningMessage(ShowMessageRequest) returns (ShowMessageResponse);
 
   // Show Error Message - Display an error message
-  rpc show_error_message(ShowMessageRequest) returns (ShowMessageResponse);
+  rpc ShowErrorMessage(ShowMessageRequest) returns (ShowMessageResponse);
 
   // Create Status Bar Item - Create a status bar item
-  rpc create_status_bar_item(CreateStatusBarItemRequest) returns (CreateStatusBarItemResponse);
+  rpc CreateStatusBarItem(CreateStatusBarItemRequest) returns (CreateStatusBarItemResponse);
 
   // Set Status Bar Text - Set status bar text
-  rpc set_status_bar_text(SetStatusBarTextRequest) returns (Empty);
+  rpc SetStatusBarText(SetStatusBarTextRequest) returns (Empty);
 
   // Create Webview Panel - Create a new webview panel
-  rpc create_webview_panel(CreateWebviewPanelRequest) returns (CreateWebviewPanelResponse);
+  rpc CreateWebviewPanel(CreateWebviewPanelRequest) returns (CreateWebviewPanelResponse);
 
   // Set Webview HTML - Update webview HTML content
-  rpc set_webview_html(SetWebviewHtmlRequest) returns (Empty);
+  rpc SetWebviewHTML(SetWebviewHtmlRequest) returns (Empty);
 
   // On Did Receive Message - Receive message from webview
-  rpc on_did_receive_message(OnDidReceiveMessageRequest) returns (Empty);
+  rpc OnDidReceiveMessage(OnDidReceiveMessageRequest) returns (Empty);
 
   // ==================== File System ====================
 
   // Read File - Read file contents
-  rpc read_file(ReadFileRequest) returns (ReadFileResponse);
+  rpc ReadFile(ReadFileRequest) returns (ReadFileResponse);
 
   // Write File - Write file contents
-  rpc write_file(WriteFileRequest) returns (Empty);
+  rpc WriteFile(WriteFileRequest) returns (Empty);
 
   // Stat - Get file metadata
-  rpc stat(StatRequest) returns (StatResponse);
+  rpc Stat(StatRequest) returns (StatResponse);
 
   // Read Directory - List directory contents
-  rpc readdir(ReaddirRequest) returns (ReaddirResponse);
+  rpc Readdir(ReaddirRequest) returns (ReaddirResponse);
 
   // Watch File - Watch file for changes
-  rpc watch_file(WatchFileRequest) returns (Empty);
+  rpc WatchFile(WatchFileRequest) returns (Empty);
 
   // ==================== Workspace Operations ====================
 
   // Find Files - Search for files
-  rpc find_files(FindFilesRequest) returns (FindFilesResponse);
+  rpc FindFiles(FindFilesRequest) returns (FindFilesResponse);
 
   // Find Text in Files - Search for text across files
-  rpc find_text_in_files(FindTextInFilesRequest) returns (FindTextInFilesResponse);
+  rpc FindTextInFiles(FindTextInFilesRequest) returns (FindTextInFilesResponse);
 
   // Open Document - Open a document
-  rpc open_document(OpenDocumentRequest) returns (OpenDocumentResponse);
+  rpc OpenDocument(OpenDocumentRequest) returns (OpenDocumentResponse);
 
   // Save All - Save all open documents
-  rpc save_all(SaveAllRequest) returns (SaveAllResponse);
+  rpc SaveAll(SaveAllRequest) returns (SaveAllResponse);
 
   // Apply Edit - Apply a text edit to a document
-  rpc apply_edit(ApplyEditRequest) returns (ApplyEditResponse);
+  rpc ApplyEdit(ApplyEditRequest) returns (ApplyEditResponse);
 
   // Update Configuration - Notify of configuration changes
-  rpc update_configuration(UpdateConfigurationRequest) returns (Empty);
+  rpc UpdateConfiguration(UpdateConfigurationRequest) returns (Empty);
 
   // Update Workspace Folders - Update workspace folders
-  rpc update_workspace_folders(UpdateWorkspaceFoldersRequest) returns (Empty);
+  rpc UpdateWorkspaceFolders(UpdateWorkspaceFoldersRequest) returns (Empty);
 
   // ==================== Terminal ====================
 
   // Open Terminal - Open a new terminal
-  rpc open_terminal(OpenTerminalRequest) returns (Empty);
+  rpc OpenTerminal(OpenTerminalRequest) returns (Empty);
 
   // Terminal Input - Send input to terminal
-  rpc terminal_input(TerminalInputRequest) returns (Empty);
+  rpc TerminalInput(TerminalInputRequest) returns (Empty);
 
   // Close Terminal - Close a terminal
-  rpc close_terminal(CloseTerminalRequest) returns (Empty);
+  rpc CloseTerminal(CloseTerminalRequest) returns (Empty);
 
   // Accept Terminal Opened - Notification: Terminal opened
-  rpc accept_terminal_opened(TerminalOpenedNotification) returns (Empty);
+  rpc AcceptTerminalOpened(TerminalOpenedNotification) returns (Empty);
 
   // Accept Terminal Closed - Notification: Terminal closed
-  rpc accept_terminal_closed(TerminalClosedNotification) returns (Empty);
+  rpc AcceptTerminalClosed(TerminalClosedNotification) returns (Empty);
 
   // Accept Terminal Process ID - Notification: Terminal process ID
-  rpc accept_terminal_process_id(TerminalProcessIdNotification) returns (Empty);
+  rpc AcceptTerminalProcessId(TerminalProcessIdNotification) returns (Empty);
 
   // Accept Terminal Process Data - Notification: Terminal output
-  rpc accept_terminal_process_data(TerminalDataNotification) returns (Empty);
+  rpc AcceptTerminalProcessData(TerminalDataNotification) returns (Empty);
 
   // ==================== Tree View ====================
 
   // Register Tree View Provider - Register a tree view provider
-  rpc register_tree_view_provider(RegisterTreeViewProviderRequest) returns (Empty);
+  rpc RegisterTreeViewProvider(RegisterTreeViewProviderRequest) returns (Empty);
 
   // Get Tree Children - Request tree view children
-  rpc get_tree_children(GetTreeChildrenRequest) returns (GetTreeChildrenResponse);
+  rpc GetTreeChildren(GetTreeChildrenRequest) returns (GetTreeChildrenResponse);
 
   // ==================== SCM ====================
 
   // Register SCM Provider - Register source control provider
-  rpc register_scm_provider(RegisterScmProviderRequest) returns (Empty);
+  rpc RegisterSCMProvider(RegisterScmProviderRequest) returns (Empty);
 
   // Update SCM Group - Update SCM group
-  rpc update_scm_group(UpdateScmGroupRequest) returns (Empty);
+  rpc UpdateSCMGroup(UpdateScmGroupRequest) returns (Empty);
 
   // Execute Git - Execute git command
-  rpc git_exec(GitExecRequest) returns (GitExecResponse);
+  rpc GitExec(GitExecRequest) returns (GitExecResponse);
 
   // ==================== Debug ====================
 
   // Register Debug Adapter - Register debug adapter
-  rpc register_debug_adapter(RegisterDebugAdapterRequest) returns (Empty);
+  rpc RegisterDebugAdapter(RegisterDebugAdapterRequest) returns (Empty);
 
   // Start Debugging - Start debug session
-  rpc start_debugging(StartDebuggingRequest) returns (StartDebuggingResponse);
+  rpc StartDebugging(StartDebuggingRequest) returns (StartDebuggingResponse);
 
   // ==================== Save Participants ====================
 
   // Participate in Save - Extension participates in save
-  rpc participate_in_save(ParticipateInSaveRequest) returns (ParticipateInSaveResponse);
+  rpc ParticipateInSave(ParticipateInSaveRequest) returns (ParticipateInSaveResponse);
 
   // ==================== Secret Storage ====================
 
   // Get Secret - Retrieve a secret from storage
-  rpc get_secret(GetSecretRequest) returns (GetSecretResponse);
+  rpc GetSecret(GetSecretRequest) returns (GetSecretResponse);
 
   // Store Secret - Store a secret in storage
-  rpc store_secret(StoreSecretRequest) returns (Empty);
+  rpc StoreSecret(StoreSecretRequest) returns (Empty);
 
   // Delete Secret - Delete a secret from storage
-  rpc delete_secret(DeleteSecretRequest) returns (Empty);
+  rpc DeleteSecret(DeleteSecretRequest) returns (Empty);
 }
 
 // Represents an empty message, typically used for RPCs that don't need to return data.
@@ -467,35 +467,35 @@ message RPCDataPayload {
 
 // A position in a text document, expressed as zero-based line and character offset.
 message Position {
-  uint32 line = 1;
-  uint32 character = 2;
+  uint32 Line = 1;
+  uint32 Character = 2;
 }
 
 // A range in a text document, expressed as start and end positions.
 message Range {
-  Position start = 1;
-  Position end = 2;
+  Position Start = 1;
+  Position End = 2;
 }
 
 // A Uniform Resource Identifier (URI).
 message Uri {
-  string value = 1;
+  string Value = 1;
 }
 
 // A command argument, which can be one of several types.
 message Argument {
-  oneof value {
-    string string_value = 1;
-    int32 int_value = 2;
-    bool bool_value = 3;
-    bytes bytes_value = 4;
+  oneof Value {
+    string StringValue = 1;
+    int32 IntValue = 2;
+    bool BoolValue = 3;
+    bytes BytesValue = 4;
   }
 }
 
 // A workspace folder.
 message WorkspaceFolder {
-  Uri uri = 1;
-  string name = 2;
+  Uri Uri = 1;
+  string Name = 2;
 }
 
 // A view column (editor location).
@@ -524,200 +524,200 @@ enum TextDocumentSaveReason {
 
 // Request to initialize the extension host.
 message InitExtensionHostRequest {
-  repeated WorkspaceFolder workspace_folders = 1;
-  map<string, string> configuration = 2;
-  string workspace_id = 3;
+  repeated WorkspaceFolder WorkspaceFolders = 1;
+  map<string, string> Configuration = 2;
+  string WorkspaceId = 3;
 }
 
 // ==================== Commands ====================
 
 // Request to register a command.
 message RegisterCommandRequest {
-  string command_id = 1;
-  string extension_id = 2;
-  string title = 3;
+  string CommandId = 1;
+  string ExtensionId = 2;
+  string Title = 3;
 }
 
 // Request to execute a command.
 message ExecuteCommandRequest {
-  string command_id = 1;
-  repeated Argument arguments = 2;
+  string CommandId = 1;
+  repeated Argument Arguments = 2;
 }
 
 // Response from command execution.
 message ExecuteCommandResponse {
-  oneof result {
-    bytes value = 1;
-    RPCError error = 2;
+  oneof Result {
+    bytes Value = 1;
+    RPCError Error = 2;
   }
 }
 
 // Request to unregister a command.
 message UnregisterCommandRequest {
-  string command_id = 1;
+  string CommandId = 1;
 }
 
 // ==================== Language Features ====================
 
 // Request to register a provider.
 message RegisterProviderRequest {
-  string language_selector = 1;
-  uint32 handle = 2;
-  string extension_id = 3;
+  string LanguageSelector = 1;
+  uint32 Handle = 2;
+  string ExtensionId = 3;
 }
 
 // Request for hover information.
 message ProvideHoverRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // Response with hover information.
 message ProvideHoverResponse {
-  string markdown = 1;
-  Range range = 2;
+  string Markdown = 1;
+  Range Range = 2;
 }
 
 // Request for completion items.
 message ProvideCompletionItemsRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
-  string trigger_character = 4;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
+  string TriggerCharacter = 4;
 }
 
 // Response with completion items.
 message ProvideCompletionItemsResponse {
-  repeated CompletionItem items = 1;
+  repeated CompletionItem Items = 1;
 }
 
 message CompletionItem {
-  string label = 1;
-  string kind = 2;
-  string detail = 3;
-  bytes documentation = 4;
-  string insert_text = 5;
+  string Label = 1;
+  string Kind = 2;
+  string Detail = 3;
+  bytes Documentation = 4;
+  string InsertText = 5;
 }
 
 // Request for definition location.
 message ProvideDefinitionRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // Response with definition location.
 message ProvideDefinitionResponse {
-  repeated Location locations = 1;
+  repeated Location Locations = 1;
 }
 
 message Location {
-  Uri uri = 1;
-  Range range = 2;
+  Uri Uri = 1;
+  Range Range = 2;
 }
 
 // Request for references.
 message ProvideReferencesRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // Response with references.
 message ProvideReferencesResponse {
-  repeated Location locations = 1;
+  repeated Location Locations = 1;
 }
 
 // Request for code actions.
 message ProvideCodeActionsRequest {
-  Uri uri = 1;
-  Range range = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  Range Range = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // Response with code actions.
 message ProvideCodeActionsResponse {
-  repeated CodeAction actions = 1;
+  repeated CodeAction Actions = 1;
 }
 
 message CodeAction {
-  string title = 1;
-  string kind = 2;
-  bool is_preferred = 3;
+  string Title = 1;
+  string Kind = 2;
+  bool IsPreferred = 3;
 }
 
 // ==================== Window Operations ====================
 
 // Request to show a text document.
 message ShowTextDocumentRequest {
-  Uri uri = 1;
-  ViewColumn view_column = 2;
-  bool preserve_focus = 3;
+  Uri Uri = 1;
+  ViewColumn ViewColumn = 2;
+  bool PreserveFocus = 3;
 }
 
 // Response for showing a text document.
 message ShowTextDocumentResponse {
-  bool success = 1;
+  bool Success = 1;
 }
 
 // Request to show a message.
 message ShowMessageRequest {
-  string message = 1;
+  string Message = 1;
 }
 
 // Response for showing a message.
 message ShowMessageResponse {
-  bool success = 1;
+  bool Success = 1;
 }
 
 // Request to create a status bar item.
 message CreateStatusBarItemRequest {
-  string id = 1;
-  string text = 2;
-  string tooltip = 3;
+  string Id = 1;
+  string Text = 2;
+  string Tooltip = 3;
 }
 
 // Response for creating a status bar item.
 message CreateStatusBarItemResponse {
-  string item_id = 1;
+  string ItemId = 1;
 }
 
 // Request to set status bar text.
 message SetStatusBarTextRequest {
-  string item_id = 1;
-  string text = 2;
+  string ItemId = 1;
+  string Text = 2;
 }
 
 // Request to create a webview panel.
 message CreateWebviewPanelRequest {
-  string view_type = 1;
-  string title = 2;
-  string icon_path = 3;
-  ViewColumn view_column = 4;
-  bool preserve_focus = 5;
-  bool enable_find_widget = 6;
-  bool retain_context_when_hidden = 7;
-  repeated string local_resource_roots = 8;
+  string ViewType = 1;
+  string Title = 2;
+  string IconPath = 3;
+  ViewColumn ViewColumn = 4;
+  bool PreserveFocus = 5;
+  bool EnableFindWidget = 6;
+  bool RetainContextWhenHidden = 7;
+  repeated string LocalResourceRoots = 8;
 }
 
 // Response for creating a webview panel.
 message CreateWebviewPanelResponse {
-  uint32 handle = 1;
+  uint32 Handle = 1;
 }
 
 // Request to set webview HTML.
 message SetWebviewHtmlRequest {
-  uint32 handle = 1;
-  string html = 2;
+  uint32 Handle = 1;
+  string Html = 2;
 }
 
 // Request for webview message.
 message OnDidReceiveMessageRequest {
-  uint32 handle = 1;
-  oneof message {
-    string string_message = 2;
-    bytes bytes_message = 3;
+  uint32 Handle = 1;
+  oneof Message {
+    string StringMessage = 2;
+    bytes BytesMessage = 3;
   }
 }
 
@@ -725,90 +725,90 @@ message OnDidReceiveMessageRequest {
 
 // Request to read a file.
 message ReadFileRequest {
-  Uri uri = 1;
+  Uri Uri = 1;
 }
 
 // Response with file contents.
 message ReadFileResponse {
-  bytes content = 1;
-  string encoding = 2;
+  bytes Content = 1;
+  string Encoding = 2;
 }
 
 // Request to write a file.
 message WriteFileRequest {
-  Uri uri = 1;
-  bytes content = 2;
-  string encoding = 3;
+  Uri Uri = 1;
+  bytes Content = 2;
+  string Encoding = 3;
 }
 
 // Request for file metadata.
 message StatRequest {
-  Uri uri = 1;
+  Uri Uri = 1;
 }
 
 // Response with file metadata.
 message StatResponse {
-  bool is_file = 1;
-  bool is_directory = 2;
-  uint64 size = 3;
-  uint64 mtime = 4;
+  bool IsFile = 1;
+  bool IsDirectory = 2;
+  uint64 Size = 3;
+  uint64 Mtime = 4;
 }
 
 // Request to read directory contents.
 message ReaddirRequest {
-  Uri uri = 1;
+  Uri Uri = 1;
 }
 
 // Response with directory contents.
 message ReaddirResponse {
-  repeated string entries = 1;
+  repeated string Entries = 1;
 }
 
 // Request to watch a file.
 message WatchFileRequest {
-  Uri uri = 1;
+  Uri Uri = 1;
 }
 
 // ==================== Workspace Operations ====================
 
 // Request to find files.
 message FindFilesRequest {
-  string pattern = 1;
-  bool include = 2;
+  string Pattern = 1;
+  bool Include = 2;
 }
 
 // Response with found files.
 message FindFilesResponse {
-  repeated string uris = 1;
+  repeated string Uris = 1;
 }
 
 // Request to find text in files.
 message FindTextInFilesRequest {
-  string pattern = 1;
-  repeated string include = 2;
-  repeated string exclude = 3;
+  string Pattern = 1;
+  repeated string Include = 2;
+  repeated string Exclude = 3;
 }
 
 // Response with text matches.
 message FindTextInFilesResponse {
-  repeated TextMatch matches = 1;
+  repeated TextMatch Matches = 1;
 }
 
 message TextMatch {
-  Uri uri = 1;
-  Range range = 2;
-  string preview = 3;
+  Uri Uri = 1;
+  Range Range = 2;
+  string Preview = 3;
 }
 
 // Request to open a document.
 message OpenDocumentRequest {
-  Uri uri = 1;
-  ViewColumn view_column = 2;
+  Uri Uri = 1;
+  ViewColumn ViewColumn = 2;
 }
 
 // Response for opening a document.
 message OpenDocumentResponse {
-  bool success = 1;
+  bool Success = 1;
 }
 
 // Request to save all documents.
@@ -818,583 +818,583 @@ message SaveAllRequest {
 
 // Response for saving all documents.
 message SaveAllResponse {
-  bool success = 1;
+  bool Success = 1;
 }
 
 // Request to apply an edit.
 message ApplyEditRequest {
-  Uri uri = 1;
-  repeated TextEdit edits = 2;
+  Uri Uri = 1;
+  repeated TextEdit Edits = 2;
 }
 
 message TextEdit {
-  Range range = 1;
-  string new_text = 2;
+  Range Range = 1;
+  string NewText = 2;
 }
 
 // Response for applying an edit.
 message ApplyEditResponse {
-  bool success = 1;
+  bool Success = 1;
 }
 
 // Request to update configuration.
 message UpdateConfigurationRequest {
-  repeated string changed_keys = 1;
+  repeated string ChangedKeys = 1;
 }
 
 // Request to update workspace folders.
 message UpdateWorkspaceFoldersRequest {
-  repeated WorkspaceFolder additions = 1;
-  repeated WorkspaceFolder removals = 2;
+  repeated WorkspaceFolder Additions = 1;
+  repeated WorkspaceFolder Removals = 2;
 }
 
 // ==================== Terminal ====================
 
 // Request to open a terminal.
 message OpenTerminalRequest {
-  string name = 1;
-  string shell_path = 2;
-  repeated string shell_args = 3;
-  string cwd = 4;
+  string Name = 1;
+  string ShellPath = 2;
+  repeated string ShellArgs = 3;
+  string Cwd = 4;
 }
 
 // Request for terminal input.
 message TerminalInputRequest {
-  uint32 terminal_id = 1;
-  bytes data = 2;
+  uint32 TerminalId = 1;
+  bytes Data = 2;
 }
 
 // Request to close a terminal.
 message CloseTerminalRequest {
-  uint32 terminal_id = 1;
+  uint32 TerminalId = 1;
 }
 
 // Notification that a terminal was opened.
 message TerminalOpenedNotification {
-  uint32 terminal_id = 1;
-  string name = 2;
+  uint32 TerminalId = 1;
+  string Name = 2;
 }
 
 // Notification that a terminal was closed.
 message TerminalClosedNotification {
-  uint32 terminal_id = 1;
+  uint32 TerminalId = 1;
 }
 
 // Notification of terminal process ID.
 message TerminalProcessIdNotification {
-  uint32 terminal_id = 1;
-  uint32 process_id = 2;
+  uint32 TerminalId = 1;
+  uint32 ProcessId = 2;
 }
 
 // Notification of terminal output.
 message TerminalDataNotification {
-  uint32 terminal_id = 1;
-  bytes data = 2;
+  uint32 TerminalId = 1;
+  bytes Data = 2;
 }
 
 // ==================== Tree View ====================
 
 // Request to register a tree view provider.
 message RegisterTreeViewProviderRequest {
-  string view_id = 1;
-  string extension_id = 2;
+  string ViewId = 1;
+  string ExtensionId = 2;
 }
 
 // Request for tree children.
 message GetTreeChildrenRequest {
-  string view_id = 1;
-  string tree_item_handle = 2;
+  string ViewId = 1;
+  string TreeItemHandle = 2;
 }
 
 // Response with tree children.
 message GetTreeChildrenResponse {
-  repeated TreeItem items = 1;
+  repeated TreeItem Items = 1;
 }
 
 message TreeItem {
-  string handle = 1;
-  string label = 2;
-  bool is_collapsed = 3;
-  string icon = 4;
+  string Handle = 1;
+  string Label = 2;
+  bool IsCollapsed = 3;
+  string Icon = 4;
 }
 
 // ==================== SCM ====================
 
 // Request to register an SCM provider.
 message RegisterScmProviderRequest {
-  string scm_id = 1;
-  string extension_id = 2;
+  string SCMId = 1;
+  string ExtensionId = 2;
 }
 
 // Request to update SCM group.
 message UpdateScmGroupRequest {
-  string provider_id = 1;
-  string group_id = 2;
-  repeated SourceControlResourceState resource_states = 3;
+  string ProviderId = 1;
+  string GroupId = 2;
+  repeated SourceControlResourceState ResourceStates = 3;
 }
 
 message SourceControlResourceState {
-  Uri uri = 1;
-  string state = 2;
-  string decorations = 3;
+  Uri Uri = 1;
+  string State = 2;
+  string Decorations = 3;
 }
 
 // Request to execute a git command.
 message GitExecRequest {
-  string repository_path = 1;
-  repeated string args = 2;
+  string RepositoryPath = 1;
+  repeated string Args = 2;
 }
 
 // Response from git execution.
 message GitExecResponse {
-  repeated string output = 1;
-  int32 exit_code = 2;
+  repeated string Output = 1;
+  int32 ExitCode = 2;
 }
 
 // ==================== Debug ====================
 
 // Request to register a debug adapter.
 message RegisterDebugAdapterRequest {
-  string debug_type = 1;
-  string extension_id = 2;
+  string DebugType = 1;
+  string ExtensionId = 2;
 }
 
 message DebugConfiguration {
-  string type = 1;
-  string name = 2;
-  string request = 3;
-  map<string, string> options = 4;
+  string Type = 1;
+  string Name = 2;
+  string Request = 3;
+  map<string, string> Options = 4;
 }
 
 // Request to start debugging.
 message StartDebuggingRequest {
-  string debug_type = 1;
-  DebugConfiguration configuration = 2;
+  string DebugType = 1;
+  DebugConfiguration Configuration = 2;
 }
 
 // Response for starting debugging.
 message StartDebuggingResponse {
-  bool success = 1;
+  bool Success = 1;
 }
 
 // ==================== Save Participants ====================
 
 // Request to participate in save.
 message ParticipateInSaveRequest {
-  Uri uri = 1;
-  TextDocumentSaveReason reason = 2;
+  Uri Uri = 1;
+  TextDocumentSaveReason Reason = 2;
 }
 
 message TextEditForSave {
-  Uri uri = 1;
-  repeated TextEdit edits = 2;
+  Uri Uri = 1;
+  repeated TextEdit Edits = 2;
 }
 
 // Response for participating in save.
 message ParticipateInSaveResponse {
-  repeated TextEditForSave edits = 1;
+  repeated TextEditForSave Edits = 1;
 }
 
 // ==================== Secret Storage ====================
 
 // Request to get a secret.
 message GetSecretRequest {
-  string key = 1;
+  string Key = 1;
 }
 
 // Response with secret value.
 message GetSecretResponse {
-  string value = 1;
+  string Value = 1;
 }
 
 // Request to store a secret.
 message StoreSecretRequest {
-  string key = 1;
-  string value = 2;
+  string Key = 1;
+  string Value = 2;
 }
 
 // Request to delete a secret.
 message DeleteSecretRequest {
-  string key = 1;
+  string Key = 1;
 }
 
 // ==================== Language Features (Extended) Messages ====================
 
 // Document filter for language selector.
 message DocumentFilter {
-  string language = 1;
-  string scheme = 2;
-  string pattern = 3;
+  string Language = 1;
+  string Scheme = 2;
+  string Pattern = 3;
 }
 
 // Request for document highlights.
 message ProvideDocumentHighlightsRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // A document highlight.
 message DocumentHighlight {
-  Range range = 1;
+  Range Range = 1;
   // 0 = Text, 1 = Read, 2 = Write
-  uint32 kind = 2;
+  uint32 Kind = 2;
 }
 
 // Response with document highlights.
 message ProvideDocumentHighlightsResponse {
-  repeated DocumentHighlight highlights = 1;
+  repeated DocumentHighlight Highlights = 1;
 }
 
 // Request for document symbols.
 message ProvideDocumentSymbolsRequest {
-  Uri uri = 1;
-  uint32 provider_handle = 2;
+  Uri Uri = 1;
+  uint32 ProviderHandle = 2;
 }
 
 // A document symbol.
 message DocumentSymbol {
-  string name = 1;
-  string detail = 2;
+  string Name = 1;
+  string Detail = 2;
   // SymbolKind enum value
-  uint32 kind = 3;
-  Range range = 4;
-  Range selection_range = 5;
-  repeated DocumentSymbol children = 6;
+  uint32 Kind = 3;
+  Range Range = 4;
+  Range SelectionRange = 5;
+  repeated DocumentSymbol Children = 6;
 }
 
 // Response with document symbols.
 message ProvideDocumentSymbolsResponse {
-  repeated DocumentSymbol symbols = 1;
+  repeated DocumentSymbol Symbols = 1;
 }
 
 // Request for workspace symbols.
 message ProvideWorkspaceSymbolsRequest {
-  string query = 1;
-  uint32 provider_handle = 2;
+  string Query = 1;
+  uint32 ProviderHandle = 2;
 }
 
 // A workspace symbol.
 message WorkspaceSymbol {
-  string name = 1;
+  string Name = 1;
   // SymbolKind enum value
-  uint32 kind = 2;
-  Location location = 3;
-  string container_name = 4;
+  uint32 Kind = 2;
+  Location Location = 3;
+  string ContainerName = 4;
 }
 
 // Response with workspace symbols.
 message ProvideWorkspaceSymbolsResponse {
-  repeated WorkspaceSymbol symbols = 1;
+  repeated WorkspaceSymbol Symbols = 1;
 }
 
 // Request for rename edits.
 message ProvideRenameEditsRequest {
-  Uri uri = 1;
-  Position position = 2;
-  string new_name = 3;
-  uint32 provider_handle = 4;
+  Uri Uri = 1;
+  Position Position = 2;
+  string NewName = 3;
+  uint32 ProviderHandle = 4;
 }
 
 // A workspace edit containing edits across multiple files.
 message WorkspaceEdit {
-  repeated TextEditForSave edits = 1;
+  repeated TextEditForSave Edits = 1;
 }
 
 // Response with rename edits.
 message ProvideRenameEditsResponse {
-  WorkspaceEdit workspace_edit = 1;
+  WorkspaceEdit WorkspaceEdit = 1;
 }
 
 // Request for document formatting.
 message ProvideDocumentFormattingRequest {
-  Uri uri = 1;
-  uint32 tab_size = 2;
-  bool insert_spaces = 3;
-  uint32 provider_handle = 4;
+  Uri Uri = 1;
+  uint32 TabSize = 2;
+  bool InsertSpaces = 3;
+  uint32 ProviderHandle = 4;
 }
 
 // Response with formatting edits.
 message ProvideDocumentFormattingResponse {
-  repeated TextEdit edits = 1;
+  repeated TextEdit Edits = 1;
 }
 
 // Request for range formatting.
 message ProvideDocumentRangeFormattingRequest {
-  Uri uri = 1;
-  Range range = 2;
-  uint32 tab_size = 3;
-  bool insert_spaces = 4;
-  uint32 provider_handle = 5;
+  Uri Uri = 1;
+  Range Range = 2;
+  uint32 TabSize = 3;
+  bool InsertSpaces = 4;
+  uint32 ProviderHandle = 5;
 }
 
 // Response with range formatting edits.
 message ProvideDocumentRangeFormattingResponse {
-  repeated TextEdit edits = 1;
+  repeated TextEdit Edits = 1;
 }
 
 // Request to register on-type formatting provider with trigger characters.
 message RegisterOnTypeFormattingProviderRequest {
-  string language_selector = 1;
-  uint32 handle = 2;
-  string extension_id = 3;
-  repeated string trigger_characters = 4;
+  string LanguageSelector = 1;
+  uint32 Handle = 2;
+  string ExtensionId = 3;
+  repeated string TriggerCharacters = 4;
 }
 
 // Request for on-type formatting.
 message ProvideOnTypeFormattingRequest {
-  Uri uri = 1;
-  Position position = 2;
-  string character = 3;
-  uint32 tab_size = 4;
-  bool insert_spaces = 5;
-  uint32 provider_handle = 6;
+  Uri Uri = 1;
+  Position Position = 2;
+  string Character = 3;
+  uint32 TabSize = 4;
+  bool InsertSpaces = 5;
+  uint32 ProviderHandle = 6;
 }
 
 // Response with on-type formatting edits.
 message ProvideOnTypeFormattingResponse {
-  repeated TextEdit edits = 1;
+  repeated TextEdit Edits = 1;
 }
 
 // Request to register signature help provider with metadata.
 message RegisterSignatureHelpProviderRequest {
-  string language_selector = 1;
-  uint32 handle = 2;
-  string extension_id = 3;
-  repeated string trigger_characters = 4;
-  repeated string retrigger_characters = 5;
+  string LanguageSelector = 1;
+  uint32 Handle = 2;
+  string ExtensionId = 3;
+  repeated string TriggerCharacters = 4;
+  repeated string RetriggerCharacters = 5;
 }
 
 // Request for signature help.
 message ProvideSignatureHelpRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // A parameter information.
 message ParameterInformation {
-  string label = 1;
-  string documentation = 2;
+  string Label = 1;
+  string Documentation = 2;
 }
 
 // A signature information.
 message SignatureInformation {
-  string label = 1;
-  string documentation = 2;
-  repeated ParameterInformation parameters = 3;
-  uint32 active_parameter = 4;
+  string Label = 1;
+  string Documentation = 2;
+  repeated ParameterInformation Parameters = 3;
+  uint32 ActiveParameter = 4;
 }
 
 // Response with signature help.
 message ProvideSignatureHelpResponse {
-  repeated SignatureInformation signatures = 1;
-  uint32 active_signature = 2;
-  uint32 active_parameter = 3;
+  repeated SignatureInformation Signatures = 1;
+  uint32 ActiveSignature = 2;
+  uint32 ActiveParameter = 3;
 }
 
 // Request for code lenses.
 message ProvideCodeLensesRequest {
-  Uri uri = 1;
-  uint32 provider_handle = 2;
+  Uri Uri = 1;
+  uint32 ProviderHandle = 2;
 }
 
 // A code lens.
 message CodeLens {
-  Range range = 1;
-  string command_id = 2;
-  string command_title = 3;
-  repeated Argument command_arguments = 4;
+  Range Range = 1;
+  string CommandId = 2;
+  string CommandTitle = 3;
+  repeated Argument CommandArguments = 4;
 }
 
 // Response with code lenses.
 message ProvideCodeLensesResponse {
-  repeated CodeLens lenses = 1;
+  repeated CodeLens Lenses = 1;
 }
 
 // Request for folding ranges.
 message ProvideFoldingRangesRequest {
-  Uri uri = 1;
-  uint32 provider_handle = 2;
+  Uri Uri = 1;
+  uint32 ProviderHandle = 2;
 }
 
 // A folding range.
 message FoldingRange {
-  uint32 start_line = 1;
-  uint32 end_line = 2;
+  uint32 StartLine = 1;
+  uint32 EndLine = 2;
   // 0 = Comment, 1 = Imports, 2 = Region
-  uint32 kind = 3;
+  uint32 Kind = 3;
 }
 
 // Response with folding ranges.
 message ProvideFoldingRangesResponse {
-  repeated FoldingRange ranges = 1;
+  repeated FoldingRange Ranges = 1;
 }
 
 // Request for selection ranges.
 message ProvideSelectionRangesRequest {
-  Uri uri = 1;
-  repeated Position positions = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  repeated Position Positions = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // A selection range (nested).
 message SelectionRange {
-  Range range = 1;
+  Range Range = 1;
 }
 
 // Response with selection ranges.
 message ProvideSelectionRangesResponse {
-  repeated SelectionRange ranges = 1;
+  repeated SelectionRange Ranges = 1;
 }
 
 // Request to register semantic tokens provider with legend.
 message RegisterSemanticTokensProviderRequest {
-  string language_selector = 1;
-  uint32 handle = 2;
-  string extension_id = 3;
-  repeated string token_types = 4;
-  repeated string token_modifiers = 5;
+  string LanguageSelector = 1;
+  uint32 Handle = 2;
+  string ExtensionId = 3;
+  repeated string TokenTypes = 4;
+  repeated string TokenModifiers = 5;
 }
 
 // Request for semantic tokens.
 message ProvideSemanticTokensRequest {
-  Uri uri = 1;
-  uint32 provider_handle = 2;
+  Uri Uri = 1;
+  uint32 ProviderHandle = 2;
 }
 
 // Response with semantic tokens (encoded as delta array per LSP spec).
 message ProvideSemanticTokensResponse {
   // Flat array: [deltaLine, deltaStartChar, length, tokenType, tokenModifiers, ...]
-  repeated uint32 data = 1;
-  uint32 result_id = 2;
+  repeated uint32 Data = 1;
+  uint32 ResultId = 2;
 }
 
 // Request for inlay hints.
 message ProvideInlayHintsRequest {
-  Uri uri = 1;
-  Range range = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  Range Range = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // An inlay hint.
 message InlayHint {
-  Position position = 1;
-  string label = 2;
+  Position Position = 1;
+  string Label = 2;
   // 0 = Type, 1 = Parameter
-  uint32 kind = 3;
-  string tooltip = 4;
-  bool padding_left = 5;
-  bool padding_right = 6;
+  uint32 Kind = 3;
+  string Tooltip = 4;
+  bool PaddingLeft = 5;
+  bool PaddingRight = 6;
 }
 
 // Response with inlay hints.
 message ProvideInlayHintsResponse {
-  repeated InlayHint hints = 1;
+  repeated InlayHint Hints = 1;
 }
 
 // A type hierarchy item (used for both supertypes and subtypes).
 message TypeHierarchyItem {
-  string name = 1;
-  uint32 kind = 2;
-  Uri uri = 3;
-  Range range = 4;
-  Range selection_range = 5;
-  string detail = 6;
+  string Name = 1;
+  uint32 Kind = 2;
+  Uri Uri = 3;
+  Range Range = 4;
+  Range SelectionRange = 5;
+  string Detail = 6;
 }
 
 // Request for type hierarchy.
 message ProvideTypeHierarchyRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
-  TypeHierarchyItem item = 4;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
+  TypeHierarchyItem Item = 4;
 }
 
 // Response with type hierarchy items.
 message ProvideTypeHierarchyResponse {
-  repeated TypeHierarchyItem items = 1;
+  repeated TypeHierarchyItem Items = 1;
 }
 
 // A call hierarchy item (used for both incoming and outgoing calls).
 message CallHierarchyItem {
-  string name = 1;
-  uint32 kind = 2;
-  Uri uri = 3;
-  Range range = 4;
-  Range selection_range = 5;
-  string detail = 6;
+  string Name = 1;
+  uint32 Kind = 2;
+  Uri Uri = 3;
+  Range Range = 4;
+  Range SelectionRange = 5;
+  string Detail = 6;
 }
 
 // Request for call hierarchy.
 message ProvideCallHierarchyRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
-  CallHierarchyItem item = 4;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
+  CallHierarchyItem Item = 4;
 }
 
 // A call hierarchy call.
 message CallHierarchyCall {
-  CallHierarchyItem from_or_to = 1;
-  repeated Range from_ranges = 2;
+  CallHierarchyItem FromOrTo = 1;
+  repeated Range FromRanges = 2;
 }
 
 // Response with call hierarchy.
 message ProvideCallHierarchyResponse {
-  repeated CallHierarchyCall calls = 1;
+  repeated CallHierarchyCall Calls = 1;
 }
 
 // Request for linked editing ranges.
 message ProvideLinkedEditingRangesRequest {
-  Uri uri = 1;
-  Position position = 2;
-  uint32 provider_handle = 3;
+  Uri Uri = 1;
+  Position Position = 2;
+  uint32 ProviderHandle = 3;
 }
 
 // Response with linked editing ranges.
 message ProvideLinkedEditingRangesResponse {
-  repeated Range ranges = 1;
-  string word_pattern = 2;
+  repeated Range Ranges = 1;
+  string WordPattern = 2;
 }
 
 // ==================== Window Operations (Extended) Messages ====================
 
 // A quick pick item.
 message QuickPickItem {
-  string label = 1;
-  string description = 2;
-  string detail = 3;
-  bool picked = 4;
-  bool always_show = 5;
+  string Label = 1;
+  string Description = 2;
+  string Detail = 3;
+  bool Picked = 4;
+  bool AlwaysShow = 5;
 }
 
 // Request to show a quick pick.
 message ShowQuickPickRequest {
-  repeated QuickPickItem items = 1;
-  string placeholder = 2;
-  bool can_pick_many = 3;
-  string title = 4;
+  repeated QuickPickItem Items = 1;
+  string Placeholder = 2;
+  bool CanPickMany = 3;
+  string Title = 4;
 }
 
 // Response with selected quick pick item(s).
 message ShowQuickPickResponse {
-  repeated uint32 selected_indices = 1;
+  repeated uint32 SelectedIndices = 1;
 }
 
 // Request to show an input box.
 message ShowInputBoxRequest {
-  string prompt = 1;
-  string value = 2;
-  string placeholder = 3;
-  string title = 4;
-  bool password = 5;
+  string Prompt = 1;
+  string Value = 2;
+  string Placeholder = 3;
+  string Title = 4;
+  bool Password = 5;
 }
 
 // Response with input box value.
 message ShowInputBoxResponse {
-  string value = 1;
-  bool cancelled = 2;
+  string Value = 1;
+  bool Cancelled = 2;
 }
 
 // Progress location.
@@ -1406,219 +1406,219 @@ enum ProgressLocation {
 
 // Request to show a progress indicator.
 message ShowProgressRequest {
-  uint32 handle = 1;
-  ProgressLocation location = 2;
-  string title = 3;
-  bool cancellable = 4;
-  string extension_id = 5;
+  uint32 Handle = 1;
+  ProgressLocation Location = 2;
+  string Title = 3;
+  bool Cancellable = 4;
+  string ExtensionId = 5;
 }
 
 // Response acknowledging progress start.
 message ShowProgressResponse {
-  uint32 handle = 1;
+  uint32 Handle = 1;
 }
 
 // Request to report progress.
 message ReportProgressRequest {
-  uint32 handle = 1;
-  string message = 2;
-  uint32 increment = 3;
+  uint32 Handle = 1;
+  string Message = 2;
+  uint32 Increment = 3;
 }
 
 // Request to post a message to a webview.
 message PostWebviewMessageRequest {
-  uint32 handle = 1;
-  oneof message {
-    string string_message = 2;
-    bytes bytes_message = 3;
+  uint32 Handle = 1;
+  oneof Message {
+    string StringMessage = 2;
+    bytes BytesMessage = 3;
   }
 }
 
 // Request to dispose a webview panel.
 message DisposeWebviewPanelRequest {
-  uint32 handle = 1;
+  uint32 Handle = 1;
 }
 
 // Request to open an external URI.
 message OpenExternalRequest {
-  string uri = 1;
+  string Uri = 1;
 }
 
 // ==================== File System (Extended) Messages ====================
 
 // Request to delete a file.
 message DeleteFileRequest {
-  Uri uri = 1;
-  bool recursive = 2;
-  bool use_trash = 3;
+  Uri Uri = 1;
+  bool Recursive = 2;
+  bool UseTrash = 3;
 }
 
 // Request to rename a file.
 message RenameFileRequest {
-  Uri source = 1;
-  Uri target = 2;
-  bool overwrite = 3;
+  Uri Source = 1;
+  Uri Target = 2;
+  bool Overwrite = 3;
 }
 
 // Request to copy a file.
 message CopyFileRequest {
-  Uri source = 1;
-  Uri target = 2;
-  bool overwrite = 3;
+  Uri Source = 1;
+  Uri Target = 2;
+  bool Overwrite = 3;
 }
 
 // Request to create a directory.
 message CreateDirectoryRequest {
-  Uri uri = 1;
+  Uri Uri = 1;
 }
 
 // ==================== Output Channel Messages ====================
 
 // Request to create an output channel.
 message CreateOutputChannelRequest {
-  string name = 1;
-  string language_id = 2;
-  string extension_id = 3;
+  string Name = 1;
+  string LanguageId = 2;
+  string ExtensionId = 3;
 }
 
 // Response with channel ID.
 message CreateOutputChannelResponse {
-  string channel_id = 1;
+  string ChannelId = 1;
 }
 
 // Request to append to an output channel.
 message AppendOutputRequest {
-  string channel_id = 1;
-  string value = 2;
+  string ChannelId = 1;
+  string Value = 2;
 }
 
 // Request to clear an output channel.
 message ClearOutputRequest {
-  string channel_id = 1;
+  string ChannelId = 1;
 }
 
 // Request to show an output channel.
 message ShowOutputRequest {
-  string channel_id = 1;
-  bool preserve_focus = 2;
+  string ChannelId = 1;
+  bool PreserveFocus = 2;
 }
 
 // Request to dispose an output channel.
 message DisposeOutputRequest {
-  string channel_id = 1;
+  string ChannelId = 1;
 }
 
 // ==================== Task Messages ====================
 
 // A task definition.
 message TaskDefinition {
-  string type = 1;
-  map<string, string> attributes = 2;
+  string Type = 1;
+  map<string, string> Attributes = 2;
 }
 
 // Request to register a task provider.
 message RegisterTaskProviderRequest {
-  string type = 1;
-  string extension_id = 2;
+  string Type = 1;
+  string ExtensionId = 2;
 }
 
 // Request to execute a task.
 message ExecuteTaskRequest {
-  TaskDefinition definition = 1;
-  string name = 2;
-  string source = 3;
+  TaskDefinition Definition = 1;
+  string Name = 2;
+  string Source = 3;
 }
 
 // Response with task execution.
 message ExecuteTaskResponse {
-  uint32 task_id = 1;
-  bool success = 2;
+  uint32 TaskId = 1;
+  bool Success = 2;
 }
 
 // Request to terminate a task.
 message TerminateTaskRequest {
-  uint32 task_id = 1;
+  uint32 TaskId = 1;
 }
 
 // ==================== Authentication Messages ====================
 
 // Request to get an authentication session.
 message GetAuthenticationSessionRequest {
-  string provider_id = 1;
-  repeated string scopes = 2;
-  string extension_id = 3;
-  bool create_if_none = 4;
-  bool clear_session_preference = 5;
+  string ProviderId = 1;
+  repeated string Scopes = 2;
+  string ExtensionId = 3;
+  bool CreateIfNone = 4;
+  bool ClearSessionPreference = 5;
 }
 
 // Response with authentication session.
 message GetAuthenticationSessionResponse {
-  string id = 1;
-  string access_token = 2;
-  string account_label = 3;
-  string account_id = 4;
-  repeated string scopes = 5;
+  string Id = 1;
+  string AccessToken = 2;
+  string AccountLabel = 3;
+  string AccountId = 4;
+  repeated string Scopes = 5;
 }
 
 // Request to register an authentication provider.
 message RegisterAuthenticationProviderRequest {
-  string id = 1;
-  string label = 2;
-  bool supports_multiple_accounts = 3;
-  string extension_id = 4;
+  string Id = 1;
+  string Label = 2;
+  bool SupportsMultipleAccounts = 3;
+  string ExtensionId = 4;
 }
 
 // ==================== Debug (Extended) Messages ====================
 
 // Request to stop debugging.
 message StopDebuggingRequest {
-  string session_id = 1;
+  string SessionId = 1;
 }
 
 // ==================== Extension Messages ====================
 
 // Request to get an extension.
 message GetExtensionRequest {
-  string extension_id = 1;
+  string ExtensionId = 1;
 }
 
 // Extension information.
 message ExtensionInfo {
-  string id = 1;
-  string display_name = 2;
-  string version = 3;
-  bool is_active = 4;
-  string extension_path = 5;
+  string Id = 1;
+  string DisplayName = 2;
+  string Version = 3;
+  bool IsActive = 4;
+  string ExtensionPath = 5;
 }
 
 // Response with extension info.
 message GetExtensionResponse {
-  ExtensionInfo extension = 1;
+  ExtensionInfo Extension = 1;
 }
 
 // Response with all extensions.
 message GetAllExtensionsResponse {
-  repeated ExtensionInfo extensions = 1;
+  repeated ExtensionInfo Extensions = 1;
 }
 
 // ==================== Terminal (Extended) Messages ====================
 
 // Request to resize a terminal.
 message ResizeTerminalRequest {
-  uint32 terminal_id = 1;
-  uint32 cols = 2;
-  uint32 rows = 3;
+  uint32 TerminalId = 1;
+  uint32 Cols = 2;
+  uint32 Rows = 3;
 }
 
 // ==================== Configuration (Extended) Messages ====================
 
 // Request to get a configuration value.
 message GetConfigurationRequest {
-  string section = 1;
-  string key = 2;
+  string Section = 1;
+  string Key = 2;
 }
 
 // Response with configuration value.
 message GetConfigurationResponse {
-  bytes value = 1;
+  bytes Value = 1;
 }

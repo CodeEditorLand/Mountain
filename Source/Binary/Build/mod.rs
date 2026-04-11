@@ -11,3 +11,4 @@ pub mod ServiceRegistry;
 pub mod DnsCommands;
 pub mod CertificateManager;
 pub mod TlsCommands;
+pub mod PostHogPlugin;

@@ -13,9 +13,7 @@ use crate::IPC::DevLog;
 ///
 /// `D::Binary::Main::Entry` → `Entry`
 /// `D::Environment::StorageProvider` → `StorageProvider`
-fn CompressTarget(Target: &str) -> &str {
-	Target.rsplit("::").next().unwrap_or(Target)
-}
+fn CompressTarget(Target:&str) -> &str { Target.rsplit("::").next().unwrap_or(Target) }
 
 /// Creates and configures the logging plugin with multi-target output and level
 /// filtering.

@@ -747,7 +747,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 		.or_else(|| Uri.strip_prefix("vscode-file://vscode-app"))
 		.unwrap_or("");
 
-	// Strip /out/ prefix if present — our assets are at /Static/Application/vs/
+	// Strip /out/ prefix if present - our assets are at /Static/Application/vs/
 	// not /Static/Application/out/vs/
 	let CleanPath = if FilePath.starts_with("Static/Application//out/") {
 		FilePath.replacen("Static/Application//out/", "Static/Application/", 1)

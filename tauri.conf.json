@@ -19,7 +19,7 @@
 				"manifest-src": "'self' http://localhost:* https://tauri.localhost",
 				"media-src": "'self' http://localhost:* https://tauri.localhost",
 				"require-trusted-types-for": "'script'",
-				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost vscode-file://vscode-app",
+				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost vscode-file://vscode-app https://eu-assets.i.posthog.com",
 				"style-src": "'self' 'unsafe-inline'",
 				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController richScreenReaderContent collapsedCellPreview chatDebugTokenizer"
 			},
@@ -34,7 +34,7 @@
 				"manifest-src": "'self' http://localhost:* https://tauri.localhost",
 				"media-src": "'self' http://localhost:* https://tauri.localhost",
 				"require-trusted-types-for": "'script'",
-				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost vscode-file://vscode-app",
+				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost vscode-file://vscode-app https://eu-assets.i.posthog.com",
 				"style-src": "'self' 'unsafe-inline'",
 				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController richScreenReaderContent collapsedCellPreview chatDebugTokenizer"
 			},
@@ -71,9 +71,7 @@
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
-		"externalBin": [
-			"Binary/node"
-		],
+		"externalBin": [],
 		"fileAssociations": [],
 		"homepage": "https://Editor.Land",
 		"iOS": {
@@ -143,7 +141,7 @@
 			}
 		}
 	},
-	"identifier": "land.editor.binary.development.node.environment.microsoft.vscode.dependency.node.22.bundle.clean.debug.mountain",
-	"productName": "DevelopmentNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Debug_Mountain",
+	"identifier": "land.editor.binary",
+	"productName": "Mountain",
 	"version": "0.0.1"
 }

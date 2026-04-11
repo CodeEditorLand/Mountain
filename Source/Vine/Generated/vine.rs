@@ -2321,11 +2321,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/initial_handshake",
+                "/Vine.CocoonService/InitialHandshake",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "initial_handshake"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "InitialHandshake"));
             self.inner.unary(req, path, codec).await
         }
         /// Initialize Extension Host - Mountain sends initialization data to Cocoon
@@ -2343,11 +2343,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/init_extension_host",
+                "/Vine.CocoonService/InitExtensionHost",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "init_extension_host"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "InitExtensionHost"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Command - Cocoon registers an extension command
@@ -2365,11 +2365,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_command",
+                "/Vine.CocoonService/RegisterCommand",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "register_command"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "RegisterCommand"));
             self.inner.unary(req, path, codec).await
         }
         /// Execute Contributed Command - Mountain executes an extension command
@@ -2390,12 +2390,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/execute_contributed_command",
+                "/Vine.CocoonService/ExecuteContributedCommand",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "execute_contributed_command"),
+                    GrpcMethod::new("Vine.CocoonService", "ExecuteContributedCommand"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2414,11 +2414,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/unregister_command",
+                "/Vine.CocoonService/UnregisterCommand",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "unregister_command"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "UnregisterCommand"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Hover Provider - Register a hover provider
@@ -2436,13 +2436,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_hover_provider",
+                "/Vine.CocoonService/RegisterHoverProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("Vine.CocoonService", "register_hover_provider"),
-                );
+                .insert(GrpcMethod::new("Vine.CocoonService", "RegisterHoverProvider"));
             self.inner.unary(req, path, codec).await
         }
         /// Provide Hover - Request hover information
@@ -2463,11 +2461,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_hover",
+                "/Vine.CocoonService/ProvideHover",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_hover"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideHover"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Completion Item Provider - Register a completion provider
@@ -2485,14 +2483,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_completion_item_provider",
+                "/Vine.CocoonService/RegisterCompletionItemProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_completion_item_provider",
+                        "RegisterCompletionItemProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -2515,13 +2513,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_completion_items",
+                "/Vine.CocoonService/ProvideCompletionItems",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("Vine.CocoonService", "provide_completion_items"),
-                );
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideCompletionItems"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Definition Provider - Register a definition provider
@@ -2539,12 +2535,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_definition_provider",
+                "/Vine.CocoonService/RegisterDefinitionProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "register_definition_provider"),
+                    GrpcMethod::new("Vine.CocoonService", "RegisterDefinitionProvider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2566,11 +2562,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_definition",
+                "/Vine.CocoonService/ProvideDefinition",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_definition"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideDefinition"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Reference Provider - Register a reference provider
@@ -2588,12 +2584,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_reference_provider",
+                "/Vine.CocoonService/RegisterReferenceProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "register_reference_provider"),
+                    GrpcMethod::new("Vine.CocoonService", "RegisterReferenceProvider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2615,11 +2611,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_references",
+                "/Vine.CocoonService/ProvideReferences",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_references"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideReferences"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Code Actions Provider - Register code actions provider
@@ -2637,15 +2633,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_code_actions_provider",
+                "/Vine.CocoonService/RegisterCodeActionsProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new(
-                        "Vine.CocoonService",
-                        "register_code_actions_provider",
-                    ),
+                    GrpcMethod::new("Vine.CocoonService", "RegisterCodeActionsProvider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2667,11 +2660,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_code_actions",
+                "/Vine.CocoonService/ProvideCodeActions",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_code_actions"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideCodeActions"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Document Highlight Provider
@@ -2689,14 +2682,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_document_highlight_provider",
+                "/Vine.CocoonService/RegisterDocumentHighlightProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_document_highlight_provider",
+                        "RegisterDocumentHighlightProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -2719,12 +2712,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_document_highlights",
+                "/Vine.CocoonService/ProvideDocumentHighlights",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "provide_document_highlights"),
+                    GrpcMethod::new("Vine.CocoonService", "ProvideDocumentHighlights"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2743,14 +2736,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_document_symbol_provider",
+                "/Vine.CocoonService/RegisterDocumentSymbolProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_document_symbol_provider",
+                        "RegisterDocumentSymbolProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -2773,13 +2766,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_document_symbols",
+                "/Vine.CocoonService/ProvideDocumentSymbols",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("Vine.CocoonService", "provide_document_symbols"),
-                );
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideDocumentSymbols"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Workspace Symbol Provider
@@ -2797,14 +2788,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_workspace_symbol_provider",
+                "/Vine.CocoonService/RegisterWorkspaceSymbolProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_workspace_symbol_provider",
+                        "RegisterWorkspaceSymbolProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -2827,12 +2818,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_workspace_symbols",
+                "/Vine.CocoonService/ProvideWorkspaceSymbols",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "provide_workspace_symbols"),
+                    GrpcMethod::new("Vine.CocoonService", "ProvideWorkspaceSymbols"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2851,13 +2842,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_rename_provider",
+                "/Vine.CocoonService/RegisterRenameProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("Vine.CocoonService", "register_rename_provider"),
-                );
+                .insert(GrpcMethod::new("Vine.CocoonService", "RegisterRenameProvider"));
             self.inner.unary(req, path, codec).await
         }
         /// Provide Rename Edits
@@ -2878,11 +2867,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_rename_edits",
+                "/Vine.CocoonService/ProvideRenameEdits",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_rename_edits"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideRenameEdits"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Document Formatting Provider
@@ -2900,14 +2889,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_document_formatting_provider",
+                "/Vine.CocoonService/RegisterDocumentFormattingProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_document_formatting_provider",
+                        "RegisterDocumentFormattingProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -2930,12 +2919,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_document_formatting",
+                "/Vine.CocoonService/ProvideDocumentFormatting",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "provide_document_formatting"),
+                    GrpcMethod::new("Vine.CocoonService", "ProvideDocumentFormatting"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -2954,14 +2943,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_document_range_formatting_provider",
+                "/Vine.CocoonService/RegisterDocumentRangeFormattingProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_document_range_formatting_provider",
+                        "RegisterDocumentRangeFormattingProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -2986,14 +2975,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_document_range_formatting",
+                "/Vine.CocoonService/ProvideDocumentRangeFormatting",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "provide_document_range_formatting",
+                        "ProvideDocumentRangeFormatting",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3015,14 +3004,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_on_type_formatting_provider",
+                "/Vine.CocoonService/RegisterOnTypeFormattingProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_on_type_formatting_provider",
+                        "RegisterOnTypeFormattingProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3045,12 +3034,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_on_type_formatting",
+                "/Vine.CocoonService/ProvideOnTypeFormatting",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "provide_on_type_formatting"),
+                    GrpcMethod::new("Vine.CocoonService", "ProvideOnTypeFormatting"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -3069,14 +3058,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_signature_help_provider",
+                "/Vine.CocoonService/RegisterSignatureHelpProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_signature_help_provider",
+                        "RegisterSignatureHelpProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3099,11 +3088,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_signature_help",
+                "/Vine.CocoonService/ProvideSignatureHelp",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_signature_help"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideSignatureHelp"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Code Lens Provider
@@ -3121,12 +3110,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_code_lens_provider",
+                "/Vine.CocoonService/RegisterCodeLensProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "register_code_lens_provider"),
+                    GrpcMethod::new("Vine.CocoonService", "RegisterCodeLensProvider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -3148,11 +3137,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_code_lenses",
+                "/Vine.CocoonService/ProvideCodeLenses",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_code_lenses"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideCodeLenses"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Folding Range Provider
@@ -3170,15 +3159,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_folding_range_provider",
+                "/Vine.CocoonService/RegisterFoldingRangeProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new(
-                        "Vine.CocoonService",
-                        "register_folding_range_provider",
-                    ),
+                    GrpcMethod::new("Vine.CocoonService", "RegisterFoldingRangeProvider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -3200,11 +3186,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_folding_ranges",
+                "/Vine.CocoonService/ProvideFoldingRanges",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_folding_ranges"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideFoldingRanges"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Selection Range Provider
@@ -3222,14 +3208,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_selection_range_provider",
+                "/Vine.CocoonService/RegisterSelectionRangeProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_selection_range_provider",
+                        "RegisterSelectionRangeProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3252,13 +3238,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_selection_ranges",
+                "/Vine.CocoonService/ProvideSelectionRanges",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("Vine.CocoonService", "provide_selection_ranges"),
-                );
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideSelectionRanges"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Semantic Tokens Provider
@@ -3278,14 +3262,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_semantic_tokens_provider",
+                "/Vine.CocoonService/RegisterSemanticTokensProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_semantic_tokens_provider",
+                        "RegisterSemanticTokensProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3308,12 +3292,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_semantic_tokens_full",
+                "/Vine.CocoonService/ProvideSemanticTokensFull",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "provide_semantic_tokens_full"),
+                    GrpcMethod::new("Vine.CocoonService", "ProvideSemanticTokensFull"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -3332,15 +3316,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_inlay_hints_provider",
+                "/Vine.CocoonService/RegisterInlayHintsProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new(
-                        "Vine.CocoonService",
-                        "register_inlay_hints_provider",
-                    ),
+                    GrpcMethod::new("Vine.CocoonService", "RegisterInlayHintsProvider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -3362,11 +3343,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_inlay_hints",
+                "/Vine.CocoonService/ProvideInlayHints",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "provide_inlay_hints"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ProvideInlayHints"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Type Hierarchy Provider
@@ -3384,14 +3365,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_type_hierarchy_provider",
+                "/Vine.CocoonService/RegisterTypeHierarchyProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_type_hierarchy_provider",
+                        "RegisterTypeHierarchyProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3414,14 +3395,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_type_hierarchy_supertypes",
+                "/Vine.CocoonService/ProvideTypeHierarchySupertypes",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "provide_type_hierarchy_supertypes",
+                        "ProvideTypeHierarchySupertypes",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3444,15 +3425,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_type_hierarchy_subtypes",
+                "/Vine.CocoonService/ProvideTypeHierarchySubtypes",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new(
-                        "Vine.CocoonService",
-                        "provide_type_hierarchy_subtypes",
-                    ),
+                    GrpcMethod::new("Vine.CocoonService", "ProvideTypeHierarchySubtypes"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -3471,14 +3449,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_call_hierarchy_provider",
+                "/Vine.CocoonService/RegisterCallHierarchyProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_call_hierarchy_provider",
+                        "RegisterCallHierarchyProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3501,14 +3479,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_call_hierarchy_incoming_calls",
+                "/Vine.CocoonService/ProvideCallHierarchyIncomingCalls",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "provide_call_hierarchy_incoming_calls",
+                        "ProvideCallHierarchyIncomingCalls",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3531,14 +3509,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_call_hierarchy_outgoing_calls",
+                "/Vine.CocoonService/ProvideCallHierarchyOutgoingCalls",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "provide_call_hierarchy_outgoing_calls",
+                        "ProvideCallHierarchyOutgoingCalls",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3558,14 +3536,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_linked_editing_range_provider",
+                "/Vine.CocoonService/RegisterLinkedEditingRangeProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_linked_editing_range_provider",
+                        "RegisterLinkedEditingRangeProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -3588,15 +3566,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/provide_linked_editing_ranges",
+                "/Vine.CocoonService/ProvideLinkedEditingRanges",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new(
-                        "Vine.CocoonService",
-                        "provide_linked_editing_ranges",
-                    ),
+                    GrpcMethod::new("Vine.CocoonService", "ProvideLinkedEditingRanges"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -3618,11 +3593,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/show_quick_pick",
+                "/Vine.CocoonService/ShowQuickPick",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "show_quick_pick"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ShowQuickPick"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Input Box
@@ -3643,11 +3618,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/show_input_box",
+                "/Vine.CocoonService/ShowInputBox",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "show_input_box"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ShowInputBox"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Progress
@@ -3668,11 +3643,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/show_progress",
+                "/Vine.CocoonService/ShowProgress",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "show_progress"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ShowProgress"));
             self.inner.unary(req, path, codec).await
         }
         /// Report Progress
@@ -3690,11 +3665,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/report_progress",
+                "/Vine.CocoonService/ReportProgress",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "report_progress"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ReportProgress"));
             self.inner.unary(req, path, codec).await
         }
         /// Post Message to Webview
@@ -3712,11 +3687,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/post_webview_message",
+                "/Vine.CocoonService/PostWebviewMessage",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "post_webview_message"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "PostWebviewMessage"));
             self.inner.unary(req, path, codec).await
         }
         /// Dispose Webview Panel
@@ -3734,11 +3709,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/dispose_webview_panel",
+                "/Vine.CocoonService/DisposeWebviewPanel",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "dispose_webview_panel"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "DisposeWebviewPanel"));
             self.inner.unary(req, path, codec).await
         }
         /// Open External URI
@@ -3756,11 +3731,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/open_external",
+                "/Vine.CocoonService/OpenExternal",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "open_external"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "OpenExternal"));
             self.inner.unary(req, path, codec).await
         }
         /// Delete File
@@ -3778,11 +3753,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/delete_file",
+                "/Vine.CocoonService/DeleteFile",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "delete_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "DeleteFile"));
             self.inner.unary(req, path, codec).await
         }
         /// Rename File
@@ -3800,11 +3775,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/rename_file",
+                "/Vine.CocoonService/RenameFile",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "rename_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "RenameFile"));
             self.inner.unary(req, path, codec).await
         }
         /// Copy File
@@ -3822,11 +3797,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/copy_file",
+                "/Vine.CocoonService/CopyFile",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "copy_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "CopyFile"));
             self.inner.unary(req, path, codec).await
         }
         /// Create Directory
@@ -3844,11 +3819,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/create_directory",
+                "/Vine.CocoonService/CreateDirectory",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "create_directory"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "CreateDirectory"));
             self.inner.unary(req, path, codec).await
         }
         /// Create Output Channel
@@ -3869,11 +3844,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/create_output_channel",
+                "/Vine.CocoonService/CreateOutputChannel",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "create_output_channel"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "CreateOutputChannel"));
             self.inner.unary(req, path, codec).await
         }
         /// Append to Output Channel
@@ -3891,11 +3866,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/append_output",
+                "/Vine.CocoonService/AppendOutput",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "append_output"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "AppendOutput"));
             self.inner.unary(req, path, codec).await
         }
         /// Clear Output Channel
@@ -3913,11 +3888,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/clear_output",
+                "/Vine.CocoonService/ClearOutput",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "clear_output"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ClearOutput"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Output Channel
@@ -3935,11 +3910,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/show_output",
+                "/Vine.CocoonService/ShowOutput",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "show_output"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ShowOutput"));
             self.inner.unary(req, path, codec).await
         }
         /// Dispose Output Channel
@@ -3957,11 +3932,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/dispose_output",
+                "/Vine.CocoonService/DisposeOutput",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "dispose_output"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "DisposeOutput"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Task Provider
@@ -3979,11 +3954,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_task_provider",
+                "/Vine.CocoonService/RegisterTaskProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "register_task_provider"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "RegisterTaskProvider"));
             self.inner.unary(req, path, codec).await
         }
         /// Execute Task
@@ -4004,11 +3979,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/execute_task",
+                "/Vine.CocoonService/ExecuteTask",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "execute_task"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ExecuteTask"));
             self.inner.unary(req, path, codec).await
         }
         /// Terminate Task
@@ -4026,11 +4001,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/terminate_task",
+                "/Vine.CocoonService/TerminateTask",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "terminate_task"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "TerminateTask"));
             self.inner.unary(req, path, codec).await
         }
         /// Get Authentication Session
@@ -4051,12 +4026,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/get_authentication_session",
+                "/Vine.CocoonService/GetAuthenticationSession",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "get_authentication_session"),
+                    GrpcMethod::new("Vine.CocoonService", "GetAuthenticationSession"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -4077,14 +4052,14 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_authentication_provider",
+                "/Vine.CocoonService/RegisterAuthenticationProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
                     GrpcMethod::new(
                         "Vine.CocoonService",
-                        "register_authentication_provider",
+                        "RegisterAuthenticationProvider",
                     ),
                 );
             self.inner.unary(req, path, codec).await
@@ -4104,11 +4079,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/stop_debugging",
+                "/Vine.CocoonService/StopDebugging",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "stop_debugging"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "StopDebugging"));
             self.inner.unary(req, path, codec).await
         }
         /// Get Extension
@@ -4129,11 +4104,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/get_extension",
+                "/Vine.CocoonService/GetExtension",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "get_extension"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "GetExtension"));
             self.inner.unary(req, path, codec).await
         }
         /// Get All Extensions
@@ -4154,11 +4129,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/get_all_extensions",
+                "/Vine.CocoonService/GetAllExtensions",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "get_all_extensions"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "GetAllExtensions"));
             self.inner.unary(req, path, codec).await
         }
         /// Resize Terminal
@@ -4176,11 +4151,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/resize_terminal",
+                "/Vine.CocoonService/ResizeTerminal",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "resize_terminal"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ResizeTerminal"));
             self.inner.unary(req, path, codec).await
         }
         /// Get Configuration Value
@@ -4201,11 +4176,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/get_configuration",
+                "/Vine.CocoonService/GetConfiguration",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "get_configuration"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "GetConfiguration"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Text Document - Open a text document
@@ -4226,11 +4201,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/show_text_document",
+                "/Vine.CocoonService/ShowTextDocument",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "show_text_document"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ShowTextDocument"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Information Message - Display an info message
@@ -4251,13 +4226,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/show_information_message",
+                "/Vine.CocoonService/ShowInformationMessage",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("Vine.CocoonService", "show_information_message"),
-                );
+                .insert(GrpcMethod::new("Vine.CocoonService", "ShowInformationMessage"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Warning Message - Display a warning message
@@ -4278,11 +4251,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/show_warning_message",
+                "/Vine.CocoonService/ShowWarningMessage",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "show_warning_message"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ShowWarningMessage"));
             self.inner.unary(req, path, codec).await
         }
         /// Show Error Message - Display an error message
@@ -4303,11 +4276,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/show_error_message",
+                "/Vine.CocoonService/ShowErrorMessage",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "show_error_message"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ShowErrorMessage"));
             self.inner.unary(req, path, codec).await
         }
         /// Create Status Bar Item - Create a status bar item
@@ -4328,11 +4301,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/create_status_bar_item",
+                "/Vine.CocoonService/CreateStatusBarItem",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "create_status_bar_item"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "CreateStatusBarItem"));
             self.inner.unary(req, path, codec).await
         }
         /// Set Status Bar Text - Set status bar text
@@ -4350,11 +4323,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/set_status_bar_text",
+                "/Vine.CocoonService/SetStatusBarText",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "set_status_bar_text"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "SetStatusBarText"));
             self.inner.unary(req, path, codec).await
         }
         /// Create Webview Panel - Create a new webview panel
@@ -4375,11 +4348,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/create_webview_panel",
+                "/Vine.CocoonService/CreateWebviewPanel",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "create_webview_panel"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "CreateWebviewPanel"));
             self.inner.unary(req, path, codec).await
         }
         /// Set Webview HTML - Update webview HTML content
@@ -4397,11 +4370,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/set_webview_html",
+                "/Vine.CocoonService/SetWebviewHTML",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "set_webview_html"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "SetWebviewHTML"));
             self.inner.unary(req, path, codec).await
         }
         /// On Did Receive Message - Receive message from webview
@@ -4419,11 +4392,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/on_did_receive_message",
+                "/Vine.CocoonService/OnDidReceiveMessage",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "on_did_receive_message"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "OnDidReceiveMessage"));
             self.inner.unary(req, path, codec).await
         }
         /// Read File - Read file contents
@@ -4444,11 +4417,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/read_file",
+                "/Vine.CocoonService/ReadFile",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "read_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ReadFile"));
             self.inner.unary(req, path, codec).await
         }
         /// Write File - Write file contents
@@ -4466,11 +4439,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/write_file",
+                "/Vine.CocoonService/WriteFile",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "write_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "WriteFile"));
             self.inner.unary(req, path, codec).await
         }
         /// Stat - Get file metadata
@@ -4487,9 +4460,9 @@ pub mod cocoon_service_client {
                     )
                 })?;
             let codec = tonic_prost::ProstCodec::default();
-            let path = http::uri::PathAndQuery::from_static("/Vine.CocoonService/stat");
+            let path = http::uri::PathAndQuery::from_static("/Vine.CocoonService/Stat");
             let mut req = request.into_request();
-            req.extensions_mut().insert(GrpcMethod::new("Vine.CocoonService", "stat"));
+            req.extensions_mut().insert(GrpcMethod::new("Vine.CocoonService", "Stat"));
             self.inner.unary(req, path, codec).await
         }
         /// Read Directory - List directory contents
@@ -4510,11 +4483,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/readdir",
+                "/Vine.CocoonService/Readdir",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "readdir"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "Readdir"));
             self.inner.unary(req, path, codec).await
         }
         /// Watch File - Watch file for changes
@@ -4532,11 +4505,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/watch_file",
+                "/Vine.CocoonService/WatchFile",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "watch_file"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "WatchFile"));
             self.inner.unary(req, path, codec).await
         }
         /// Find Files - Search for files
@@ -4557,11 +4530,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/find_files",
+                "/Vine.CocoonService/FindFiles",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "find_files"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "FindFiles"));
             self.inner.unary(req, path, codec).await
         }
         /// Find Text in Files - Search for text across files
@@ -4582,11 +4555,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/find_text_in_files",
+                "/Vine.CocoonService/FindTextInFiles",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "find_text_in_files"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "FindTextInFiles"));
             self.inner.unary(req, path, codec).await
         }
         /// Open Document - Open a document
@@ -4607,11 +4580,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/open_document",
+                "/Vine.CocoonService/OpenDocument",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "open_document"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "OpenDocument"));
             self.inner.unary(req, path, codec).await
         }
         /// Save All - Save all open documents
@@ -4632,11 +4605,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/save_all",
+                "/Vine.CocoonService/SaveAll",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "save_all"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "SaveAll"));
             self.inner.unary(req, path, codec).await
         }
         /// Apply Edit - Apply a text edit to a document
@@ -4657,11 +4630,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/apply_edit",
+                "/Vine.CocoonService/ApplyEdit",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "apply_edit"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ApplyEdit"));
             self.inner.unary(req, path, codec).await
         }
         /// Update Configuration - Notify of configuration changes
@@ -4679,11 +4652,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/update_configuration",
+                "/Vine.CocoonService/UpdateConfiguration",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "update_configuration"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "UpdateConfiguration"));
             self.inner.unary(req, path, codec).await
         }
         /// Update Workspace Folders - Update workspace folders
@@ -4701,13 +4674,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/update_workspace_folders",
+                "/Vine.CocoonService/UpdateWorkspaceFolders",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(
-                    GrpcMethod::new("Vine.CocoonService", "update_workspace_folders"),
-                );
+                .insert(GrpcMethod::new("Vine.CocoonService", "UpdateWorkspaceFolders"));
             self.inner.unary(req, path, codec).await
         }
         /// Open Terminal - Open a new terminal
@@ -4725,11 +4696,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/open_terminal",
+                "/Vine.CocoonService/OpenTerminal",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "open_terminal"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "OpenTerminal"));
             self.inner.unary(req, path, codec).await
         }
         /// Terminal Input - Send input to terminal
@@ -4747,11 +4718,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/terminal_input",
+                "/Vine.CocoonService/TerminalInput",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "terminal_input"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "TerminalInput"));
             self.inner.unary(req, path, codec).await
         }
         /// Close Terminal - Close a terminal
@@ -4769,11 +4740,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/close_terminal",
+                "/Vine.CocoonService/CloseTerminal",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "close_terminal"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "CloseTerminal"));
             self.inner.unary(req, path, codec).await
         }
         /// Accept Terminal Opened - Notification: Terminal opened
@@ -4791,11 +4762,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/accept_terminal_opened",
+                "/Vine.CocoonService/AcceptTerminalOpened",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "accept_terminal_opened"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "AcceptTerminalOpened"));
             self.inner.unary(req, path, codec).await
         }
         /// Accept Terminal Closed - Notification: Terminal closed
@@ -4813,11 +4784,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/accept_terminal_closed",
+                "/Vine.CocoonService/AcceptTerminalClosed",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "accept_terminal_closed"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "AcceptTerminalClosed"));
             self.inner.unary(req, path, codec).await
         }
         /// Accept Terminal Process ID - Notification: Terminal process ID
@@ -4835,12 +4806,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/accept_terminal_process_id",
+                "/Vine.CocoonService/AcceptTerminalProcessId",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "accept_terminal_process_id"),
+                    GrpcMethod::new("Vine.CocoonService", "AcceptTerminalProcessId"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -4859,12 +4830,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/accept_terminal_process_data",
+                "/Vine.CocoonService/AcceptTerminalProcessData",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "accept_terminal_process_data"),
+                    GrpcMethod::new("Vine.CocoonService", "AcceptTerminalProcessData"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -4883,12 +4854,12 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_tree_view_provider",
+                "/Vine.CocoonService/RegisterTreeViewProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
                 .insert(
-                    GrpcMethod::new("Vine.CocoonService", "register_tree_view_provider"),
+                    GrpcMethod::new("Vine.CocoonService", "RegisterTreeViewProvider"),
                 );
             self.inner.unary(req, path, codec).await
         }
@@ -4910,11 +4881,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/get_tree_children",
+                "/Vine.CocoonService/GetTreeChildren",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "get_tree_children"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "GetTreeChildren"));
             self.inner.unary(req, path, codec).await
         }
         /// Register SCM Provider - Register source control provider
@@ -4932,11 +4903,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_scm_provider",
+                "/Vine.CocoonService/RegisterSCMProvider",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "register_scm_provider"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "RegisterSCMProvider"));
             self.inner.unary(req, path, codec).await
         }
         /// Update SCM Group - Update SCM group
@@ -4954,11 +4925,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/update_scm_group",
+                "/Vine.CocoonService/UpdateSCMGroup",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "update_scm_group"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "UpdateSCMGroup"));
             self.inner.unary(req, path, codec).await
         }
         /// Execute Git - Execute git command
@@ -4979,11 +4950,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/git_exec",
+                "/Vine.CocoonService/GitExec",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "git_exec"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "GitExec"));
             self.inner.unary(req, path, codec).await
         }
         /// Register Debug Adapter - Register debug adapter
@@ -5001,11 +4972,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/register_debug_adapter",
+                "/Vine.CocoonService/RegisterDebugAdapter",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "register_debug_adapter"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "RegisterDebugAdapter"));
             self.inner.unary(req, path, codec).await
         }
         /// Start Debugging - Start debug session
@@ -5026,11 +4997,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/start_debugging",
+                "/Vine.CocoonService/StartDebugging",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "start_debugging"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "StartDebugging"));
             self.inner.unary(req, path, codec).await
         }
         /// Participate in Save - Extension participates in save
@@ -5051,11 +5022,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/participate_in_save",
+                "/Vine.CocoonService/ParticipateInSave",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "participate_in_save"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "ParticipateInSave"));
             self.inner.unary(req, path, codec).await
         }
         /// Get Secret - Retrieve a secret from storage
@@ -5076,11 +5047,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/get_secret",
+                "/Vine.CocoonService/GetSecret",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "get_secret"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "GetSecret"));
             self.inner.unary(req, path, codec).await
         }
         /// Store Secret - Store a secret in storage
@@ -5098,11 +5069,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/store_secret",
+                "/Vine.CocoonService/StoreSecret",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "store_secret"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "StoreSecret"));
             self.inner.unary(req, path, codec).await
         }
         /// Delete Secret - Delete a secret from storage
@@ -5120,11 +5091,11 @@ pub mod cocoon_service_client {
                 })?;
             let codec = tonic_prost::ProstCodec::default();
             let path = http::uri::PathAndQuery::from_static(
-                "/Vine.CocoonService/delete_secret",
+                "/Vine.CocoonService/DeleteSecret",
             );
             let mut req = request.into_request();
             req.extensions_mut()
-                .insert(GrpcMethod::new("Vine.CocoonService", "delete_secret"));
+                .insert(GrpcMethod::new("Vine.CocoonService", "DeleteSecret"));
             self.inner.unary(req, path, codec).await
         }
     }
@@ -6093,11 +6064,11 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/initial_handshake" => {
+                "/Vine.CocoonService/InitialHandshake" => {
                     #[allow(non_camel_case_types)]
-                    struct initial_handshakeSvc<T: CocoonService>(pub Arc<T>);
+                    struct InitialHandshakeSvc<T: CocoonService>(pub Arc<T>);
                     impl<T: CocoonService> tonic::server::UnaryService<super::Empty>
-                    for initial_handshakeSvc<T> {
+                    for InitialHandshakeSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6121,7 +6092,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = initial_handshakeSvc(inner);
+                        let method = InitialHandshakeSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6137,13 +6108,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/init_extension_host" => {
+                "/Vine.CocoonService/InitExtensionHost" => {
                     #[allow(non_camel_case_types)]
-                    struct init_extension_hostSvc<T: CocoonService>(pub Arc<T>);
+                    struct InitExtensionHostSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::InitExtensionHostRequest>
-                    for init_extension_hostSvc<T> {
+                    for InitExtensionHostSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6167,7 +6138,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = init_extension_hostSvc(inner);
+                        let method = InitExtensionHostSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6183,13 +6154,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_command" => {
+                "/Vine.CocoonService/RegisterCommand" => {
                     #[allow(non_camel_case_types)]
-                    struct register_commandSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterCommandSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterCommandRequest>
-                    for register_commandSvc<T> {
+                    for RegisterCommandSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6213,7 +6184,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_commandSvc(inner);
+                        let method = RegisterCommandSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6229,13 +6200,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/execute_contributed_command" => {
+                "/Vine.CocoonService/ExecuteContributedCommand" => {
                     #[allow(non_camel_case_types)]
-                    struct execute_contributed_commandSvc<T: CocoonService>(pub Arc<T>);
+                    struct ExecuteContributedCommandSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ExecuteCommandRequest>
-                    for execute_contributed_commandSvc<T> {
+                    for ExecuteContributedCommandSvc<T> {
                         type Response = super::ExecuteCommandResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6262,7 +6233,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = execute_contributed_commandSvc(inner);
+                        let method = ExecuteContributedCommandSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6278,13 +6249,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/unregister_command" => {
+                "/Vine.CocoonService/UnregisterCommand" => {
                     #[allow(non_camel_case_types)]
-                    struct unregister_commandSvc<T: CocoonService>(pub Arc<T>);
+                    struct UnregisterCommandSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::UnregisterCommandRequest>
-                    for unregister_commandSvc<T> {
+                    for UnregisterCommandSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6308,7 +6279,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = unregister_commandSvc(inner);
+                        let method = UnregisterCommandSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6324,13 +6295,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_hover_provider" => {
+                "/Vine.CocoonService/RegisterHoverProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_hover_providerSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterHoverProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_hover_providerSvc<T> {
+                    for RegisterHoverProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6357,7 +6328,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_hover_providerSvc(inner);
+                        let method = RegisterHoverProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6373,13 +6344,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_hover" => {
+                "/Vine.CocoonService/ProvideHover" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_hoverSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideHoverSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideHoverRequest>
-                    for provide_hoverSvc<T> {
+                    for ProvideHoverSvc<T> {
                         type Response = super::ProvideHoverResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6402,7 +6373,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_hoverSvc(inner);
+                        let method = ProvideHoverSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6418,15 +6389,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_completion_item_provider" => {
+                "/Vine.CocoonService/RegisterCompletionItemProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_completion_item_providerSvc<T: CocoonService>(
+                    struct RegisterCompletionItemProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_completion_item_providerSvc<T> {
+                    for RegisterCompletionItemProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6453,7 +6424,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_completion_item_providerSvc(inner);
+                        let method = RegisterCompletionItemProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6469,13 +6440,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_completion_items" => {
+                "/Vine.CocoonService/ProvideCompletionItems" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_completion_itemsSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideCompletionItemsSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideCompletionItemsRequest>
-                    for provide_completion_itemsSvc<T> {
+                    for ProvideCompletionItemsSvc<T> {
                         type Response = super::ProvideCompletionItemsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6502,7 +6473,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_completion_itemsSvc(inner);
+                        let method = ProvideCompletionItemsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6518,13 +6489,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_definition_provider" => {
+                "/Vine.CocoonService/RegisterDefinitionProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_definition_providerSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterDefinitionProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_definition_providerSvc<T> {
+                    for RegisterDefinitionProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6551,7 +6522,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_definition_providerSvc(inner);
+                        let method = RegisterDefinitionProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6567,13 +6538,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_definition" => {
+                "/Vine.CocoonService/ProvideDefinition" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_definitionSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideDefinitionSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideDefinitionRequest>
-                    for provide_definitionSvc<T> {
+                    for ProvideDefinitionSvc<T> {
                         type Response = super::ProvideDefinitionResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6597,7 +6568,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_definitionSvc(inner);
+                        let method = ProvideDefinitionSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6613,13 +6584,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_reference_provider" => {
+                "/Vine.CocoonService/RegisterReferenceProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_reference_providerSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterReferenceProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_reference_providerSvc<T> {
+                    for RegisterReferenceProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6646,7 +6617,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_reference_providerSvc(inner);
+                        let method = RegisterReferenceProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6662,13 +6633,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_references" => {
+                "/Vine.CocoonService/ProvideReferences" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_referencesSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideReferencesSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideReferencesRequest>
-                    for provide_referencesSvc<T> {
+                    for ProvideReferencesSvc<T> {
                         type Response = super::ProvideReferencesResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6692,7 +6663,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_referencesSvc(inner);
+                        let method = ProvideReferencesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6708,15 +6679,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_code_actions_provider" => {
+                "/Vine.CocoonService/RegisterCodeActionsProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_code_actions_providerSvc<T: CocoonService>(
-                        pub Arc<T>,
-                    );
+                    struct RegisterCodeActionsProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_code_actions_providerSvc<T> {
+                    for RegisterCodeActionsProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6743,7 +6712,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_code_actions_providerSvc(inner);
+                        let method = RegisterCodeActionsProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6759,13 +6728,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_code_actions" => {
+                "/Vine.CocoonService/ProvideCodeActions" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_code_actionsSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideCodeActionsSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideCodeActionsRequest>
-                    for provide_code_actionsSvc<T> {
+                    for ProvideCodeActionsSvc<T> {
                         type Response = super::ProvideCodeActionsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6789,7 +6758,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_code_actionsSvc(inner);
+                        let method = ProvideCodeActionsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6805,15 +6774,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_document_highlight_provider" => {
+                "/Vine.CocoonService/RegisterDocumentHighlightProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_document_highlight_providerSvc<T: CocoonService>(
+                    struct RegisterDocumentHighlightProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_document_highlight_providerSvc<T> {
+                    for RegisterDocumentHighlightProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6840,7 +6809,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_document_highlight_providerSvc(inner);
+                        let method = RegisterDocumentHighlightProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6856,14 +6825,14 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_document_highlights" => {
+                "/Vine.CocoonService/ProvideDocumentHighlights" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_document_highlightsSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideDocumentHighlightsSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<
                         super::ProvideDocumentHighlightsRequest,
-                    > for provide_document_highlightsSvc<T> {
+                    > for ProvideDocumentHighlightsSvc<T> {
                         type Response = super::ProvideDocumentHighlightsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6892,7 +6861,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_document_highlightsSvc(inner);
+                        let method = ProvideDocumentHighlightsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6908,15 +6877,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_document_symbol_provider" => {
+                "/Vine.CocoonService/RegisterDocumentSymbolProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_document_symbol_providerSvc<T: CocoonService>(
+                    struct RegisterDocumentSymbolProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_document_symbol_providerSvc<T> {
+                    for RegisterDocumentSymbolProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6943,7 +6912,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_document_symbol_providerSvc(inner);
+                        let method = RegisterDocumentSymbolProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -6959,13 +6928,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_document_symbols" => {
+                "/Vine.CocoonService/ProvideDocumentSymbols" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_document_symbolsSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideDocumentSymbolsSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideDocumentSymbolsRequest>
-                    for provide_document_symbolsSvc<T> {
+                    for ProvideDocumentSymbolsSvc<T> {
                         type Response = super::ProvideDocumentSymbolsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -6992,7 +6961,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_document_symbolsSvc(inner);
+                        let method = ProvideDocumentSymbolsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7008,15 +6977,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_workspace_symbol_provider" => {
+                "/Vine.CocoonService/RegisterWorkspaceSymbolProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_workspace_symbol_providerSvc<T: CocoonService>(
+                    struct RegisterWorkspaceSymbolProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_workspace_symbol_providerSvc<T> {
+                    for RegisterWorkspaceSymbolProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7043,7 +7012,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_workspace_symbol_providerSvc(inner);
+                        let method = RegisterWorkspaceSymbolProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7059,13 +7028,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_workspace_symbols" => {
+                "/Vine.CocoonService/ProvideWorkspaceSymbols" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_workspace_symbolsSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideWorkspaceSymbolsSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideWorkspaceSymbolsRequest>
-                    for provide_workspace_symbolsSvc<T> {
+                    for ProvideWorkspaceSymbolsSvc<T> {
                         type Response = super::ProvideWorkspaceSymbolsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7094,7 +7063,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_workspace_symbolsSvc(inner);
+                        let method = ProvideWorkspaceSymbolsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7110,13 +7079,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_rename_provider" => {
+                "/Vine.CocoonService/RegisterRenameProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_rename_providerSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterRenameProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_rename_providerSvc<T> {
+                    for RegisterRenameProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7143,7 +7112,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_rename_providerSvc(inner);
+                        let method = RegisterRenameProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7159,13 +7128,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_rename_edits" => {
+                "/Vine.CocoonService/ProvideRenameEdits" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_rename_editsSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideRenameEditsSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideRenameEditsRequest>
-                    for provide_rename_editsSvc<T> {
+                    for ProvideRenameEditsSvc<T> {
                         type Response = super::ProvideRenameEditsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7189,7 +7158,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_rename_editsSvc(inner);
+                        let method = ProvideRenameEditsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7205,15 +7174,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_document_formatting_provider" => {
+                "/Vine.CocoonService/RegisterDocumentFormattingProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_document_formatting_providerSvc<T: CocoonService>(
+                    struct RegisterDocumentFormattingProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_document_formatting_providerSvc<T> {
+                    for RegisterDocumentFormattingProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7240,7 +7209,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_document_formatting_providerSvc(inner);
+                        let method = RegisterDocumentFormattingProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7256,14 +7225,14 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_document_formatting" => {
+                "/Vine.CocoonService/ProvideDocumentFormatting" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_document_formattingSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideDocumentFormattingSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<
                         super::ProvideDocumentFormattingRequest,
-                    > for provide_document_formattingSvc<T> {
+                    > for ProvideDocumentFormattingSvc<T> {
                         type Response = super::ProvideDocumentFormattingResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7292,7 +7261,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_document_formattingSvc(inner);
+                        let method = ProvideDocumentFormattingSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7308,17 +7277,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_document_range_formatting_provider" => {
+                "/Vine.CocoonService/RegisterDocumentRangeFormattingProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_document_range_formatting_providerSvc<
-                        T: CocoonService,
-                    >(
+                    struct RegisterDocumentRangeFormattingProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_document_range_formatting_providerSvc<T> {
+                    for RegisterDocumentRangeFormattingProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7345,9 +7312,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_document_range_formatting_providerSvc(
-                            inner,
-                        );
+                        let method = RegisterDocumentRangeFormattingProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7363,16 +7328,16 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_document_range_formatting" => {
+                "/Vine.CocoonService/ProvideDocumentRangeFormatting" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_document_range_formattingSvc<T: CocoonService>(
+                    struct ProvideDocumentRangeFormattingSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<
                         super::ProvideDocumentRangeFormattingRequest,
-                    > for provide_document_range_formattingSvc<T> {
+                    > for ProvideDocumentRangeFormattingSvc<T> {
                         type Response = super::ProvideDocumentRangeFormattingResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7401,7 +7366,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_document_range_formattingSvc(inner);
+                        let method = ProvideDocumentRangeFormattingSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7417,16 +7382,16 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_on_type_formatting_provider" => {
+                "/Vine.CocoonService/RegisterOnTypeFormattingProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_on_type_formatting_providerSvc<T: CocoonService>(
+                    struct RegisterOnTypeFormattingProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<
                         super::RegisterOnTypeFormattingProviderRequest,
-                    > for register_on_type_formatting_providerSvc<T> {
+                    > for RegisterOnTypeFormattingProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7455,7 +7420,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_on_type_formatting_providerSvc(inner);
+                        let method = RegisterOnTypeFormattingProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7471,13 +7436,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_on_type_formatting" => {
+                "/Vine.CocoonService/ProvideOnTypeFormatting" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_on_type_formattingSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideOnTypeFormattingSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideOnTypeFormattingRequest>
-                    for provide_on_type_formattingSvc<T> {
+                    for ProvideOnTypeFormattingSvc<T> {
                         type Response = super::ProvideOnTypeFormattingResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7506,7 +7471,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_on_type_formattingSvc(inner);
+                        let method = ProvideOnTypeFormattingSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7522,16 +7487,16 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_signature_help_provider" => {
+                "/Vine.CocoonService/RegisterSignatureHelpProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_signature_help_providerSvc<T: CocoonService>(
+                    struct RegisterSignatureHelpProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<
                         super::RegisterSignatureHelpProviderRequest,
-                    > for register_signature_help_providerSvc<T> {
+                    > for RegisterSignatureHelpProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7560,7 +7525,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_signature_help_providerSvc(inner);
+                        let method = RegisterSignatureHelpProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7576,13 +7541,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_signature_help" => {
+                "/Vine.CocoonService/ProvideSignatureHelp" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_signature_helpSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideSignatureHelpSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideSignatureHelpRequest>
-                    for provide_signature_helpSvc<T> {
+                    for ProvideSignatureHelpSvc<T> {
                         type Response = super::ProvideSignatureHelpResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7609,7 +7574,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_signature_helpSvc(inner);
+                        let method = ProvideSignatureHelpSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7625,13 +7590,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_code_lens_provider" => {
+                "/Vine.CocoonService/RegisterCodeLensProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_code_lens_providerSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterCodeLensProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_code_lens_providerSvc<T> {
+                    for RegisterCodeLensProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7658,7 +7623,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_code_lens_providerSvc(inner);
+                        let method = RegisterCodeLensProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7674,13 +7639,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_code_lenses" => {
+                "/Vine.CocoonService/ProvideCodeLenses" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_code_lensesSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideCodeLensesSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideCodeLensesRequest>
-                    for provide_code_lensesSvc<T> {
+                    for ProvideCodeLensesSvc<T> {
                         type Response = super::ProvideCodeLensesResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7704,7 +7669,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_code_lensesSvc(inner);
+                        let method = ProvideCodeLensesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7720,15 +7685,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_folding_range_provider" => {
+                "/Vine.CocoonService/RegisterFoldingRangeProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_folding_range_providerSvc<T: CocoonService>(
-                        pub Arc<T>,
-                    );
+                    struct RegisterFoldingRangeProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_folding_range_providerSvc<T> {
+                    for RegisterFoldingRangeProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7755,7 +7718,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_folding_range_providerSvc(inner);
+                        let method = RegisterFoldingRangeProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7771,13 +7734,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_folding_ranges" => {
+                "/Vine.CocoonService/ProvideFoldingRanges" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_folding_rangesSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideFoldingRangesSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideFoldingRangesRequest>
-                    for provide_folding_rangesSvc<T> {
+                    for ProvideFoldingRangesSvc<T> {
                         type Response = super::ProvideFoldingRangesResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7804,7 +7767,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_folding_rangesSvc(inner);
+                        let method = ProvideFoldingRangesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7820,15 +7783,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_selection_range_provider" => {
+                "/Vine.CocoonService/RegisterSelectionRangeProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_selection_range_providerSvc<T: CocoonService>(
+                    struct RegisterSelectionRangeProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_selection_range_providerSvc<T> {
+                    for RegisterSelectionRangeProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7855,7 +7818,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_selection_range_providerSvc(inner);
+                        let method = RegisterSelectionRangeProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7871,13 +7834,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_selection_ranges" => {
+                "/Vine.CocoonService/ProvideSelectionRanges" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_selection_rangesSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideSelectionRangesSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideSelectionRangesRequest>
-                    for provide_selection_rangesSvc<T> {
+                    for ProvideSelectionRangesSvc<T> {
                         type Response = super::ProvideSelectionRangesResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7904,7 +7867,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_selection_rangesSvc(inner);
+                        let method = ProvideSelectionRangesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7920,16 +7883,16 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_semantic_tokens_provider" => {
+                "/Vine.CocoonService/RegisterSemanticTokensProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_semantic_tokens_providerSvc<T: CocoonService>(
+                    struct RegisterSemanticTokensProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<
                         super::RegisterSemanticTokensProviderRequest,
-                    > for register_semantic_tokens_providerSvc<T> {
+                    > for RegisterSemanticTokensProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -7958,7 +7921,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_semantic_tokens_providerSvc(inner);
+                        let method = RegisterSemanticTokensProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -7974,13 +7937,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_semantic_tokens_full" => {
+                "/Vine.CocoonService/ProvideSemanticTokensFull" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_semantic_tokens_fullSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideSemanticTokensFullSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideSemanticTokensRequest>
-                    for provide_semantic_tokens_fullSvc<T> {
+                    for ProvideSemanticTokensFullSvc<T> {
                         type Response = super::ProvideSemanticTokensResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8007,7 +7970,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_semantic_tokens_fullSvc(inner);
+                        let method = ProvideSemanticTokensFullSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8023,15 +7986,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_inlay_hints_provider" => {
+                "/Vine.CocoonService/RegisterInlayHintsProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_inlay_hints_providerSvc<T: CocoonService>(
-                        pub Arc<T>,
-                    );
+                    struct RegisterInlayHintsProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_inlay_hints_providerSvc<T> {
+                    for RegisterInlayHintsProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8058,7 +8019,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_inlay_hints_providerSvc(inner);
+                        let method = RegisterInlayHintsProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8074,13 +8035,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_inlay_hints" => {
+                "/Vine.CocoonService/ProvideInlayHints" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_inlay_hintsSvc<T: CocoonService>(pub Arc<T>);
+                    struct ProvideInlayHintsSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideInlayHintsRequest>
-                    for provide_inlay_hintsSvc<T> {
+                    for ProvideInlayHintsSvc<T> {
                         type Response = super::ProvideInlayHintsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8104,7 +8065,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_inlay_hintsSvc(inner);
+                        let method = ProvideInlayHintsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8120,15 +8081,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_type_hierarchy_provider" => {
+                "/Vine.CocoonService/RegisterTypeHierarchyProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_type_hierarchy_providerSvc<T: CocoonService>(
+                    struct RegisterTypeHierarchyProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_type_hierarchy_providerSvc<T> {
+                    for RegisterTypeHierarchyProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8155,7 +8116,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_type_hierarchy_providerSvc(inner);
+                        let method = RegisterTypeHierarchyProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8171,15 +8132,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_type_hierarchy_supertypes" => {
+                "/Vine.CocoonService/ProvideTypeHierarchySupertypes" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_type_hierarchy_supertypesSvc<T: CocoonService>(
+                    struct ProvideTypeHierarchySupertypesSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideTypeHierarchyRequest>
-                    for provide_type_hierarchy_supertypesSvc<T> {
+                    for ProvideTypeHierarchySupertypesSvc<T> {
                         type Response = super::ProvideTypeHierarchyResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8206,7 +8167,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_type_hierarchy_supertypesSvc(inner);
+                        let method = ProvideTypeHierarchySupertypesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8222,15 +8183,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_type_hierarchy_subtypes" => {
+                "/Vine.CocoonService/ProvideTypeHierarchySubtypes" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_type_hierarchy_subtypesSvc<T: CocoonService>(
-                        pub Arc<T>,
-                    );
+                    struct ProvideTypeHierarchySubtypesSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideTypeHierarchyRequest>
-                    for provide_type_hierarchy_subtypesSvc<T> {
+                    for ProvideTypeHierarchySubtypesSvc<T> {
                         type Response = super::ProvideTypeHierarchyResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8257,7 +8216,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_type_hierarchy_subtypesSvc(inner);
+                        let method = ProvideTypeHierarchySubtypesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8273,15 +8232,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_call_hierarchy_provider" => {
+                "/Vine.CocoonService/RegisterCallHierarchyProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_call_hierarchy_providerSvc<T: CocoonService>(
+                    struct RegisterCallHierarchyProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_call_hierarchy_providerSvc<T> {
+                    for RegisterCallHierarchyProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8308,7 +8267,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_call_hierarchy_providerSvc(inner);
+                        let method = RegisterCallHierarchyProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8324,15 +8283,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_call_hierarchy_incoming_calls" => {
+                "/Vine.CocoonService/ProvideCallHierarchyIncomingCalls" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_call_hierarchy_incoming_callsSvc<T: CocoonService>(
+                    struct ProvideCallHierarchyIncomingCallsSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideCallHierarchyRequest>
-                    for provide_call_hierarchy_incoming_callsSvc<T> {
+                    for ProvideCallHierarchyIncomingCallsSvc<T> {
                         type Response = super::ProvideCallHierarchyResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8359,7 +8318,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_call_hierarchy_incoming_callsSvc(inner);
+                        let method = ProvideCallHierarchyIncomingCallsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8375,15 +8334,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_call_hierarchy_outgoing_calls" => {
+                "/Vine.CocoonService/ProvideCallHierarchyOutgoingCalls" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_call_hierarchy_outgoing_callsSvc<T: CocoonService>(
+                    struct ProvideCallHierarchyOutgoingCallsSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ProvideCallHierarchyRequest>
-                    for provide_call_hierarchy_outgoing_callsSvc<T> {
+                    for ProvideCallHierarchyOutgoingCallsSvc<T> {
                         type Response = super::ProvideCallHierarchyResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8410,7 +8369,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_call_hierarchy_outgoing_callsSvc(inner);
+                        let method = ProvideCallHierarchyOutgoingCallsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8426,15 +8385,15 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_linked_editing_range_provider" => {
+                "/Vine.CocoonService/RegisterLinkedEditingRangeProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_linked_editing_range_providerSvc<T: CocoonService>(
+                    struct RegisterLinkedEditingRangeProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterProviderRequest>
-                    for register_linked_editing_range_providerSvc<T> {
+                    for RegisterLinkedEditingRangeProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8461,7 +8420,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_linked_editing_range_providerSvc(inner);
+                        let method = RegisterLinkedEditingRangeProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8477,16 +8436,14 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/provide_linked_editing_ranges" => {
+                "/Vine.CocoonService/ProvideLinkedEditingRanges" => {
                     #[allow(non_camel_case_types)]
-                    struct provide_linked_editing_rangesSvc<T: CocoonService>(
-                        pub Arc<T>,
-                    );
+                    struct ProvideLinkedEditingRangesSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<
                         super::ProvideLinkedEditingRangesRequest,
-                    > for provide_linked_editing_rangesSvc<T> {
+                    > for ProvideLinkedEditingRangesSvc<T> {
                         type Response = super::ProvideLinkedEditingRangesResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8515,7 +8472,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = provide_linked_editing_rangesSvc(inner);
+                        let method = ProvideLinkedEditingRangesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8531,13 +8488,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/show_quick_pick" => {
+                "/Vine.CocoonService/ShowQuickPick" => {
                     #[allow(non_camel_case_types)]
-                    struct show_quick_pickSvc<T: CocoonService>(pub Arc<T>);
+                    struct ShowQuickPickSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ShowQuickPickRequest>
-                    for show_quick_pickSvc<T> {
+                    for ShowQuickPickSvc<T> {
                         type Response = super::ShowQuickPickResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8560,7 +8517,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = show_quick_pickSvc(inner);
+                        let method = ShowQuickPickSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8576,13 +8533,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/show_input_box" => {
+                "/Vine.CocoonService/ShowInputBox" => {
                     #[allow(non_camel_case_types)]
-                    struct show_input_boxSvc<T: CocoonService>(pub Arc<T>);
+                    struct ShowInputBoxSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ShowInputBoxRequest>
-                    for show_input_boxSvc<T> {
+                    for ShowInputBoxSvc<T> {
                         type Response = super::ShowInputBoxResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8605,7 +8562,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = show_input_boxSvc(inner);
+                        let method = ShowInputBoxSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8621,13 +8578,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/show_progress" => {
+                "/Vine.CocoonService/ShowProgress" => {
                     #[allow(non_camel_case_types)]
-                    struct show_progressSvc<T: CocoonService>(pub Arc<T>);
+                    struct ShowProgressSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ShowProgressRequest>
-                    for show_progressSvc<T> {
+                    for ShowProgressSvc<T> {
                         type Response = super::ShowProgressResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8650,7 +8607,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = show_progressSvc(inner);
+                        let method = ShowProgressSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8666,13 +8623,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/report_progress" => {
+                "/Vine.CocoonService/ReportProgress" => {
                     #[allow(non_camel_case_types)]
-                    struct report_progressSvc<T: CocoonService>(pub Arc<T>);
+                    struct ReportProgressSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ReportProgressRequest>
-                    for report_progressSvc<T> {
+                    for ReportProgressSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8695,7 +8652,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = report_progressSvc(inner);
+                        let method = ReportProgressSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8711,13 +8668,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/post_webview_message" => {
+                "/Vine.CocoonService/PostWebviewMessage" => {
                     #[allow(non_camel_case_types)]
-                    struct post_webview_messageSvc<T: CocoonService>(pub Arc<T>);
+                    struct PostWebviewMessageSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::PostWebviewMessageRequest>
-                    for post_webview_messageSvc<T> {
+                    for PostWebviewMessageSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8741,7 +8698,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = post_webview_messageSvc(inner);
+                        let method = PostWebviewMessageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8757,13 +8714,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/dispose_webview_panel" => {
+                "/Vine.CocoonService/DisposeWebviewPanel" => {
                     #[allow(non_camel_case_types)]
-                    struct dispose_webview_panelSvc<T: CocoonService>(pub Arc<T>);
+                    struct DisposeWebviewPanelSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::DisposeWebviewPanelRequest>
-                    for dispose_webview_panelSvc<T> {
+                    for DisposeWebviewPanelSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8787,7 +8744,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = dispose_webview_panelSvc(inner);
+                        let method = DisposeWebviewPanelSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8803,13 +8760,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/open_external" => {
+                "/Vine.CocoonService/OpenExternal" => {
                     #[allow(non_camel_case_types)]
-                    struct open_externalSvc<T: CocoonService>(pub Arc<T>);
+                    struct OpenExternalSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::OpenExternalRequest>
-                    for open_externalSvc<T> {
+                    for OpenExternalSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8832,7 +8789,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = open_externalSvc(inner);
+                        let method = OpenExternalSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8848,13 +8805,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/delete_file" => {
+                "/Vine.CocoonService/DeleteFile" => {
                     #[allow(non_camel_case_types)]
-                    struct delete_fileSvc<T: CocoonService>(pub Arc<T>);
+                    struct DeleteFileSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::DeleteFileRequest>
-                    for delete_fileSvc<T> {
+                    for DeleteFileSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8877,7 +8834,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = delete_fileSvc(inner);
+                        let method = DeleteFileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8893,13 +8850,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/rename_file" => {
+                "/Vine.CocoonService/RenameFile" => {
                     #[allow(non_camel_case_types)]
-                    struct rename_fileSvc<T: CocoonService>(pub Arc<T>);
+                    struct RenameFileSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RenameFileRequest>
-                    for rename_fileSvc<T> {
+                    for RenameFileSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8922,7 +8879,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = rename_fileSvc(inner);
+                        let method = RenameFileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8938,13 +8895,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/copy_file" => {
+                "/Vine.CocoonService/CopyFile" => {
                     #[allow(non_camel_case_types)]
-                    struct copy_fileSvc<T: CocoonService>(pub Arc<T>);
+                    struct CopyFileSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::CopyFileRequest>
-                    for copy_fileSvc<T> {
+                    for CopyFileSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -8967,7 +8924,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = copy_fileSvc(inner);
+                        let method = CopyFileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -8983,13 +8940,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/create_directory" => {
+                "/Vine.CocoonService/CreateDirectory" => {
                     #[allow(non_camel_case_types)]
-                    struct create_directorySvc<T: CocoonService>(pub Arc<T>);
+                    struct CreateDirectorySvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::CreateDirectoryRequest>
-                    for create_directorySvc<T> {
+                    for CreateDirectorySvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9013,7 +8970,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = create_directorySvc(inner);
+                        let method = CreateDirectorySvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9029,13 +8986,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/create_output_channel" => {
+                "/Vine.CocoonService/CreateOutputChannel" => {
                     #[allow(non_camel_case_types)]
-                    struct create_output_channelSvc<T: CocoonService>(pub Arc<T>);
+                    struct CreateOutputChannelSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::CreateOutputChannelRequest>
-                    for create_output_channelSvc<T> {
+                    for CreateOutputChannelSvc<T> {
                         type Response = super::CreateOutputChannelResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9059,7 +9016,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = create_output_channelSvc(inner);
+                        let method = CreateOutputChannelSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9075,13 +9032,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/append_output" => {
+                "/Vine.CocoonService/AppendOutput" => {
                     #[allow(non_camel_case_types)]
-                    struct append_outputSvc<T: CocoonService>(pub Arc<T>);
+                    struct AppendOutputSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::AppendOutputRequest>
-                    for append_outputSvc<T> {
+                    for AppendOutputSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9104,7 +9061,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = append_outputSvc(inner);
+                        let method = AppendOutputSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9120,13 +9077,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/clear_output" => {
+                "/Vine.CocoonService/ClearOutput" => {
                     #[allow(non_camel_case_types)]
-                    struct clear_outputSvc<T: CocoonService>(pub Arc<T>);
+                    struct ClearOutputSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ClearOutputRequest>
-                    for clear_outputSvc<T> {
+                    for ClearOutputSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9149,7 +9106,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = clear_outputSvc(inner);
+                        let method = ClearOutputSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9165,13 +9122,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/show_output" => {
+                "/Vine.CocoonService/ShowOutput" => {
                     #[allow(non_camel_case_types)]
-                    struct show_outputSvc<T: CocoonService>(pub Arc<T>);
+                    struct ShowOutputSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ShowOutputRequest>
-                    for show_outputSvc<T> {
+                    for ShowOutputSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9194,7 +9151,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = show_outputSvc(inner);
+                        let method = ShowOutputSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9210,13 +9167,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/dispose_output" => {
+                "/Vine.CocoonService/DisposeOutput" => {
                     #[allow(non_camel_case_types)]
-                    struct dispose_outputSvc<T: CocoonService>(pub Arc<T>);
+                    struct DisposeOutputSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::DisposeOutputRequest>
-                    for dispose_outputSvc<T> {
+                    for DisposeOutputSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9239,7 +9196,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = dispose_outputSvc(inner);
+                        let method = DisposeOutputSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9255,13 +9212,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_task_provider" => {
+                "/Vine.CocoonService/RegisterTaskProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_task_providerSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterTaskProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterTaskProviderRequest>
-                    for register_task_providerSvc<T> {
+                    for RegisterTaskProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9288,7 +9245,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_task_providerSvc(inner);
+                        let method = RegisterTaskProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9304,13 +9261,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/execute_task" => {
+                "/Vine.CocoonService/ExecuteTask" => {
                     #[allow(non_camel_case_types)]
-                    struct execute_taskSvc<T: CocoonService>(pub Arc<T>);
+                    struct ExecuteTaskSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ExecuteTaskRequest>
-                    for execute_taskSvc<T> {
+                    for ExecuteTaskSvc<T> {
                         type Response = super::ExecuteTaskResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9333,7 +9290,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = execute_taskSvc(inner);
+                        let method = ExecuteTaskSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9349,13 +9306,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/terminate_task" => {
+                "/Vine.CocoonService/TerminateTask" => {
                     #[allow(non_camel_case_types)]
-                    struct terminate_taskSvc<T: CocoonService>(pub Arc<T>);
+                    struct TerminateTaskSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::TerminateTaskRequest>
-                    for terminate_taskSvc<T> {
+                    for TerminateTaskSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9378,7 +9335,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = terminate_taskSvc(inner);
+                        let method = TerminateTaskSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9394,13 +9351,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/get_authentication_session" => {
+                "/Vine.CocoonService/GetAuthenticationSession" => {
                     #[allow(non_camel_case_types)]
-                    struct get_authentication_sessionSvc<T: CocoonService>(pub Arc<T>);
+                    struct GetAuthenticationSessionSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::GetAuthenticationSessionRequest>
-                    for get_authentication_sessionSvc<T> {
+                    for GetAuthenticationSessionSvc<T> {
                         type Response = super::GetAuthenticationSessionResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9429,7 +9386,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = get_authentication_sessionSvc(inner);
+                        let method = GetAuthenticationSessionSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9445,16 +9402,16 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_authentication_provider" => {
+                "/Vine.CocoonService/RegisterAuthenticationProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_authentication_providerSvc<T: CocoonService>(
+                    struct RegisterAuthenticationProviderSvc<T: CocoonService>(
                         pub Arc<T>,
                     );
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<
                         super::RegisterAuthenticationProviderRequest,
-                    > for register_authentication_providerSvc<T> {
+                    > for RegisterAuthenticationProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9483,7 +9440,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_authentication_providerSvc(inner);
+                        let method = RegisterAuthenticationProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9499,13 +9456,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/stop_debugging" => {
+                "/Vine.CocoonService/StopDebugging" => {
                     #[allow(non_camel_case_types)]
-                    struct stop_debuggingSvc<T: CocoonService>(pub Arc<T>);
+                    struct StopDebuggingSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::StopDebuggingRequest>
-                    for stop_debuggingSvc<T> {
+                    for StopDebuggingSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9528,7 +9485,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = stop_debuggingSvc(inner);
+                        let method = StopDebuggingSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9544,13 +9501,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/get_extension" => {
+                "/Vine.CocoonService/GetExtension" => {
                     #[allow(non_camel_case_types)]
-                    struct get_extensionSvc<T: CocoonService>(pub Arc<T>);
+                    struct GetExtensionSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::GetExtensionRequest>
-                    for get_extensionSvc<T> {
+                    for GetExtensionSvc<T> {
                         type Response = super::GetExtensionResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9573,7 +9530,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = get_extensionSvc(inner);
+                        let method = GetExtensionSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9589,11 +9546,11 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/get_all_extensions" => {
+                "/Vine.CocoonService/GetAllExtensions" => {
                     #[allow(non_camel_case_types)]
-                    struct get_all_extensionsSvc<T: CocoonService>(pub Arc<T>);
+                    struct GetAllExtensionsSvc<T: CocoonService>(pub Arc<T>);
                     impl<T: CocoonService> tonic::server::UnaryService<super::Empty>
-                    for get_all_extensionsSvc<T> {
+                    for GetAllExtensionsSvc<T> {
                         type Response = super::GetAllExtensionsResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9617,7 +9574,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = get_all_extensionsSvc(inner);
+                        let method = GetAllExtensionsSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9633,13 +9590,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/resize_terminal" => {
+                "/Vine.CocoonService/ResizeTerminal" => {
                     #[allow(non_camel_case_types)]
-                    struct resize_terminalSvc<T: CocoonService>(pub Arc<T>);
+                    struct ResizeTerminalSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ResizeTerminalRequest>
-                    for resize_terminalSvc<T> {
+                    for ResizeTerminalSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9662,7 +9619,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = resize_terminalSvc(inner);
+                        let method = ResizeTerminalSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9678,13 +9635,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/get_configuration" => {
+                "/Vine.CocoonService/GetConfiguration" => {
                     #[allow(non_camel_case_types)]
-                    struct get_configurationSvc<T: CocoonService>(pub Arc<T>);
+                    struct GetConfigurationSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::GetConfigurationRequest>
-                    for get_configurationSvc<T> {
+                    for GetConfigurationSvc<T> {
                         type Response = super::GetConfigurationResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9708,7 +9665,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = get_configurationSvc(inner);
+                        let method = GetConfigurationSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9724,13 +9681,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/show_text_document" => {
+                "/Vine.CocoonService/ShowTextDocument" => {
                     #[allow(non_camel_case_types)]
-                    struct show_text_documentSvc<T: CocoonService>(pub Arc<T>);
+                    struct ShowTextDocumentSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ShowTextDocumentRequest>
-                    for show_text_documentSvc<T> {
+                    for ShowTextDocumentSvc<T> {
                         type Response = super::ShowTextDocumentResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9754,7 +9711,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = show_text_documentSvc(inner);
+                        let method = ShowTextDocumentSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9770,13 +9727,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/show_information_message" => {
+                "/Vine.CocoonService/ShowInformationMessage" => {
                     #[allow(non_camel_case_types)]
-                    struct show_information_messageSvc<T: CocoonService>(pub Arc<T>);
+                    struct ShowInformationMessageSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ShowMessageRequest>
-                    for show_information_messageSvc<T> {
+                    for ShowInformationMessageSvc<T> {
                         type Response = super::ShowMessageResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9803,7 +9760,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = show_information_messageSvc(inner);
+                        let method = ShowInformationMessageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9819,13 +9776,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/show_warning_message" => {
+                "/Vine.CocoonService/ShowWarningMessage" => {
                     #[allow(non_camel_case_types)]
-                    struct show_warning_messageSvc<T: CocoonService>(pub Arc<T>);
+                    struct ShowWarningMessageSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ShowMessageRequest>
-                    for show_warning_messageSvc<T> {
+                    for ShowWarningMessageSvc<T> {
                         type Response = super::ShowMessageResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9849,7 +9806,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = show_warning_messageSvc(inner);
+                        let method = ShowWarningMessageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9865,13 +9822,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/show_error_message" => {
+                "/Vine.CocoonService/ShowErrorMessage" => {
                     #[allow(non_camel_case_types)]
-                    struct show_error_messageSvc<T: CocoonService>(pub Arc<T>);
+                    struct ShowErrorMessageSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ShowMessageRequest>
-                    for show_error_messageSvc<T> {
+                    for ShowErrorMessageSvc<T> {
                         type Response = super::ShowMessageResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9895,7 +9852,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = show_error_messageSvc(inner);
+                        let method = ShowErrorMessageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9911,13 +9868,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/create_status_bar_item" => {
+                "/Vine.CocoonService/CreateStatusBarItem" => {
                     #[allow(non_camel_case_types)]
-                    struct create_status_bar_itemSvc<T: CocoonService>(pub Arc<T>);
+                    struct CreateStatusBarItemSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::CreateStatusBarItemRequest>
-                    for create_status_bar_itemSvc<T> {
+                    for CreateStatusBarItemSvc<T> {
                         type Response = super::CreateStatusBarItemResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9944,7 +9901,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = create_status_bar_itemSvc(inner);
+                        let method = CreateStatusBarItemSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -9960,13 +9917,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/set_status_bar_text" => {
+                "/Vine.CocoonService/SetStatusBarText" => {
                     #[allow(non_camel_case_types)]
-                    struct set_status_bar_textSvc<T: CocoonService>(pub Arc<T>);
+                    struct SetStatusBarTextSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::SetStatusBarTextRequest>
-                    for set_status_bar_textSvc<T> {
+                    for SetStatusBarTextSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -9990,7 +9947,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = set_status_bar_textSvc(inner);
+                        let method = SetStatusBarTextSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10006,13 +9963,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/create_webview_panel" => {
+                "/Vine.CocoonService/CreateWebviewPanel" => {
                     #[allow(non_camel_case_types)]
-                    struct create_webview_panelSvc<T: CocoonService>(pub Arc<T>);
+                    struct CreateWebviewPanelSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::CreateWebviewPanelRequest>
-                    for create_webview_panelSvc<T> {
+                    for CreateWebviewPanelSvc<T> {
                         type Response = super::CreateWebviewPanelResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10036,7 +9993,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = create_webview_panelSvc(inner);
+                        let method = CreateWebviewPanelSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10052,13 +10009,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/set_webview_html" => {
+                "/Vine.CocoonService/SetWebviewHTML" => {
                     #[allow(non_camel_case_types)]
-                    struct set_webview_htmlSvc<T: CocoonService>(pub Arc<T>);
+                    struct SetWebviewHTMLSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::SetWebviewHtmlRequest>
-                    for set_webview_htmlSvc<T> {
+                    for SetWebviewHTMLSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10082,7 +10039,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = set_webview_htmlSvc(inner);
+                        let method = SetWebviewHTMLSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10098,13 +10055,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/on_did_receive_message" => {
+                "/Vine.CocoonService/OnDidReceiveMessage" => {
                     #[allow(non_camel_case_types)]
-                    struct on_did_receive_messageSvc<T: CocoonService>(pub Arc<T>);
+                    struct OnDidReceiveMessageSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::OnDidReceiveMessageRequest>
-                    for on_did_receive_messageSvc<T> {
+                    for OnDidReceiveMessageSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10131,7 +10088,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = on_did_receive_messageSvc(inner);
+                        let method = OnDidReceiveMessageSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10147,13 +10104,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/read_file" => {
+                "/Vine.CocoonService/ReadFile" => {
                     #[allow(non_camel_case_types)]
-                    struct read_fileSvc<T: CocoonService>(pub Arc<T>);
+                    struct ReadFileSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ReadFileRequest>
-                    for read_fileSvc<T> {
+                    for ReadFileSvc<T> {
                         type Response = super::ReadFileResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10176,7 +10133,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = read_fileSvc(inner);
+                        let method = ReadFileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10192,13 +10149,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/write_file" => {
+                "/Vine.CocoonService/WriteFile" => {
                     #[allow(non_camel_case_types)]
-                    struct write_fileSvc<T: CocoonService>(pub Arc<T>);
+                    struct WriteFileSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::WriteFileRequest>
-                    for write_fileSvc<T> {
+                    for WriteFileSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10221,7 +10178,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = write_fileSvc(inner);
+                        let method = WriteFileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10237,12 +10194,12 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/stat" => {
+                "/Vine.CocoonService/Stat" => {
                     #[allow(non_camel_case_types)]
-                    struct statSvc<T: CocoonService>(pub Arc<T>);
+                    struct StatSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
-                    > tonic::server::UnaryService<super::StatRequest> for statSvc<T> {
+                    > tonic::server::UnaryService<super::StatRequest> for StatSvc<T> {
                         type Response = super::StatResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10265,7 +10222,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = statSvc(inner);
+                        let method = StatSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10281,13 +10238,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/readdir" => {
+                "/Vine.CocoonService/Readdir" => {
                     #[allow(non_camel_case_types)]
-                    struct readdirSvc<T: CocoonService>(pub Arc<T>);
+                    struct ReaddirSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ReaddirRequest>
-                    for readdirSvc<T> {
+                    for ReaddirSvc<T> {
                         type Response = super::ReaddirResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10310,7 +10267,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = readdirSvc(inner);
+                        let method = ReaddirSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10326,13 +10283,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/watch_file" => {
+                "/Vine.CocoonService/WatchFile" => {
                     #[allow(non_camel_case_types)]
-                    struct watch_fileSvc<T: CocoonService>(pub Arc<T>);
+                    struct WatchFileSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::WatchFileRequest>
-                    for watch_fileSvc<T> {
+                    for WatchFileSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10355,7 +10312,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = watch_fileSvc(inner);
+                        let method = WatchFileSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10371,13 +10328,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/find_files" => {
+                "/Vine.CocoonService/FindFiles" => {
                     #[allow(non_camel_case_types)]
-                    struct find_filesSvc<T: CocoonService>(pub Arc<T>);
+                    struct FindFilesSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::FindFilesRequest>
-                    for find_filesSvc<T> {
+                    for FindFilesSvc<T> {
                         type Response = super::FindFilesResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10400,7 +10357,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = find_filesSvc(inner);
+                        let method = FindFilesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10416,13 +10373,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/find_text_in_files" => {
+                "/Vine.CocoonService/FindTextInFiles" => {
                     #[allow(non_camel_case_types)]
-                    struct find_text_in_filesSvc<T: CocoonService>(pub Arc<T>);
+                    struct FindTextInFilesSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::FindTextInFilesRequest>
-                    for find_text_in_filesSvc<T> {
+                    for FindTextInFilesSvc<T> {
                         type Response = super::FindTextInFilesResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10446,7 +10403,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = find_text_in_filesSvc(inner);
+                        let method = FindTextInFilesSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10462,13 +10419,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/open_document" => {
+                "/Vine.CocoonService/OpenDocument" => {
                     #[allow(non_camel_case_types)]
-                    struct open_documentSvc<T: CocoonService>(pub Arc<T>);
+                    struct OpenDocumentSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::OpenDocumentRequest>
-                    for open_documentSvc<T> {
+                    for OpenDocumentSvc<T> {
                         type Response = super::OpenDocumentResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10491,7 +10448,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = open_documentSvc(inner);
+                        let method = OpenDocumentSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10507,13 +10464,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/save_all" => {
+                "/Vine.CocoonService/SaveAll" => {
                     #[allow(non_camel_case_types)]
-                    struct save_allSvc<T: CocoonService>(pub Arc<T>);
+                    struct SaveAllSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::SaveAllRequest>
-                    for save_allSvc<T> {
+                    for SaveAllSvc<T> {
                         type Response = super::SaveAllResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10536,7 +10493,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = save_allSvc(inner);
+                        let method = SaveAllSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10552,13 +10509,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/apply_edit" => {
+                "/Vine.CocoonService/ApplyEdit" => {
                     #[allow(non_camel_case_types)]
-                    struct apply_editSvc<T: CocoonService>(pub Arc<T>);
+                    struct ApplyEditSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ApplyEditRequest>
-                    for apply_editSvc<T> {
+                    for ApplyEditSvc<T> {
                         type Response = super::ApplyEditResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10581,7 +10538,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = apply_editSvc(inner);
+                        let method = ApplyEditSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10597,13 +10554,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/update_configuration" => {
+                "/Vine.CocoonService/UpdateConfiguration" => {
                     #[allow(non_camel_case_types)]
-                    struct update_configurationSvc<T: CocoonService>(pub Arc<T>);
+                    struct UpdateConfigurationSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::UpdateConfigurationRequest>
-                    for update_configurationSvc<T> {
+                    for UpdateConfigurationSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10627,7 +10584,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = update_configurationSvc(inner);
+                        let method = UpdateConfigurationSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10643,13 +10600,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/update_workspace_folders" => {
+                "/Vine.CocoonService/UpdateWorkspaceFolders" => {
                     #[allow(non_camel_case_types)]
-                    struct update_workspace_foldersSvc<T: CocoonService>(pub Arc<T>);
+                    struct UpdateWorkspaceFoldersSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::UpdateWorkspaceFoldersRequest>
-                    for update_workspace_foldersSvc<T> {
+                    for UpdateWorkspaceFoldersSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10676,7 +10633,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = update_workspace_foldersSvc(inner);
+                        let method = UpdateWorkspaceFoldersSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10692,13 +10649,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/open_terminal" => {
+                "/Vine.CocoonService/OpenTerminal" => {
                     #[allow(non_camel_case_types)]
-                    struct open_terminalSvc<T: CocoonService>(pub Arc<T>);
+                    struct OpenTerminalSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::OpenTerminalRequest>
-                    for open_terminalSvc<T> {
+                    for OpenTerminalSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10721,7 +10678,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = open_terminalSvc(inner);
+                        let method = OpenTerminalSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10737,13 +10694,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/terminal_input" => {
+                "/Vine.CocoonService/TerminalInput" => {
                     #[allow(non_camel_case_types)]
-                    struct terminal_inputSvc<T: CocoonService>(pub Arc<T>);
+                    struct TerminalInputSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::TerminalInputRequest>
-                    for terminal_inputSvc<T> {
+                    for TerminalInputSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10766,7 +10723,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = terminal_inputSvc(inner);
+                        let method = TerminalInputSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10782,13 +10739,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/close_terminal" => {
+                "/Vine.CocoonService/CloseTerminal" => {
                     #[allow(non_camel_case_types)]
-                    struct close_terminalSvc<T: CocoonService>(pub Arc<T>);
+                    struct CloseTerminalSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::CloseTerminalRequest>
-                    for close_terminalSvc<T> {
+                    for CloseTerminalSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10811,7 +10768,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = close_terminalSvc(inner);
+                        let method = CloseTerminalSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10827,13 +10784,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/accept_terminal_opened" => {
+                "/Vine.CocoonService/AcceptTerminalOpened" => {
                     #[allow(non_camel_case_types)]
-                    struct accept_terminal_openedSvc<T: CocoonService>(pub Arc<T>);
+                    struct AcceptTerminalOpenedSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::TerminalOpenedNotification>
-                    for accept_terminal_openedSvc<T> {
+                    for AcceptTerminalOpenedSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10860,7 +10817,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = accept_terminal_openedSvc(inner);
+                        let method = AcceptTerminalOpenedSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10876,13 +10833,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/accept_terminal_closed" => {
+                "/Vine.CocoonService/AcceptTerminalClosed" => {
                     #[allow(non_camel_case_types)]
-                    struct accept_terminal_closedSvc<T: CocoonService>(pub Arc<T>);
+                    struct AcceptTerminalClosedSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::TerminalClosedNotification>
-                    for accept_terminal_closedSvc<T> {
+                    for AcceptTerminalClosedSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10909,7 +10866,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = accept_terminal_closedSvc(inner);
+                        let method = AcceptTerminalClosedSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10925,13 +10882,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/accept_terminal_process_id" => {
+                "/Vine.CocoonService/AcceptTerminalProcessId" => {
                     #[allow(non_camel_case_types)]
-                    struct accept_terminal_process_idSvc<T: CocoonService>(pub Arc<T>);
+                    struct AcceptTerminalProcessIdSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::TerminalProcessIdNotification>
-                    for accept_terminal_process_idSvc<T> {
+                    for AcceptTerminalProcessIdSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -10958,7 +10915,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = accept_terminal_process_idSvc(inner);
+                        let method = AcceptTerminalProcessIdSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -10974,13 +10931,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/accept_terminal_process_data" => {
+                "/Vine.CocoonService/AcceptTerminalProcessData" => {
                     #[allow(non_camel_case_types)]
-                    struct accept_terminal_process_dataSvc<T: CocoonService>(pub Arc<T>);
+                    struct AcceptTerminalProcessDataSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::TerminalDataNotification>
-                    for accept_terminal_process_dataSvc<T> {
+                    for AcceptTerminalProcessDataSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11007,7 +10964,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = accept_terminal_process_dataSvc(inner);
+                        let method = AcceptTerminalProcessDataSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11023,13 +10980,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_tree_view_provider" => {
+                "/Vine.CocoonService/RegisterTreeViewProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_tree_view_providerSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterTreeViewProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterTreeViewProviderRequest>
-                    for register_tree_view_providerSvc<T> {
+                    for RegisterTreeViewProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11058,7 +11015,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_tree_view_providerSvc(inner);
+                        let method = RegisterTreeViewProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11074,13 +11031,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/get_tree_children" => {
+                "/Vine.CocoonService/GetTreeChildren" => {
                     #[allow(non_camel_case_types)]
-                    struct get_tree_childrenSvc<T: CocoonService>(pub Arc<T>);
+                    struct GetTreeChildrenSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::GetTreeChildrenRequest>
-                    for get_tree_childrenSvc<T> {
+                    for GetTreeChildrenSvc<T> {
                         type Response = super::GetTreeChildrenResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11104,7 +11061,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = get_tree_childrenSvc(inner);
+                        let method = GetTreeChildrenSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11120,13 +11077,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_scm_provider" => {
+                "/Vine.CocoonService/RegisterSCMProvider" => {
                     #[allow(non_camel_case_types)]
-                    struct register_scm_providerSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterSCMProviderSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterScmProviderRequest>
-                    for register_scm_providerSvc<T> {
+                    for RegisterSCMProviderSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11150,7 +11107,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_scm_providerSvc(inner);
+                        let method = RegisterSCMProviderSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11166,13 +11123,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/update_scm_group" => {
+                "/Vine.CocoonService/UpdateSCMGroup" => {
                     #[allow(non_camel_case_types)]
-                    struct update_scm_groupSvc<T: CocoonService>(pub Arc<T>);
+                    struct UpdateSCMGroupSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::UpdateScmGroupRequest>
-                    for update_scm_groupSvc<T> {
+                    for UpdateSCMGroupSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11196,7 +11153,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = update_scm_groupSvc(inner);
+                        let method = UpdateSCMGroupSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11212,13 +11169,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/git_exec" => {
+                "/Vine.CocoonService/GitExec" => {
                     #[allow(non_camel_case_types)]
-                    struct git_execSvc<T: CocoonService>(pub Arc<T>);
+                    struct GitExecSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::GitExecRequest>
-                    for git_execSvc<T> {
+                    for GitExecSvc<T> {
                         type Response = super::GitExecResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11241,7 +11198,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = git_execSvc(inner);
+                        let method = GitExecSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11257,13 +11214,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/register_debug_adapter" => {
+                "/Vine.CocoonService/RegisterDebugAdapter" => {
                     #[allow(non_camel_case_types)]
-                    struct register_debug_adapterSvc<T: CocoonService>(pub Arc<T>);
+                    struct RegisterDebugAdapterSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::RegisterDebugAdapterRequest>
-                    for register_debug_adapterSvc<T> {
+                    for RegisterDebugAdapterSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11290,7 +11247,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = register_debug_adapterSvc(inner);
+                        let method = RegisterDebugAdapterSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11306,13 +11263,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/start_debugging" => {
+                "/Vine.CocoonService/StartDebugging" => {
                     #[allow(non_camel_case_types)]
-                    struct start_debuggingSvc<T: CocoonService>(pub Arc<T>);
+                    struct StartDebuggingSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::StartDebuggingRequest>
-                    for start_debuggingSvc<T> {
+                    for StartDebuggingSvc<T> {
                         type Response = super::StartDebuggingResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11335,7 +11292,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = start_debuggingSvc(inner);
+                        let method = StartDebuggingSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11351,13 +11308,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/participate_in_save" => {
+                "/Vine.CocoonService/ParticipateInSave" => {
                     #[allow(non_camel_case_types)]
-                    struct participate_in_saveSvc<T: CocoonService>(pub Arc<T>);
+                    struct ParticipateInSaveSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::ParticipateInSaveRequest>
-                    for participate_in_saveSvc<T> {
+                    for ParticipateInSaveSvc<T> {
                         type Response = super::ParticipateInSaveResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11381,7 +11338,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = participate_in_saveSvc(inner);
+                        let method = ParticipateInSaveSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11397,13 +11354,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/get_secret" => {
+                "/Vine.CocoonService/GetSecret" => {
                     #[allow(non_camel_case_types)]
-                    struct get_secretSvc<T: CocoonService>(pub Arc<T>);
+                    struct GetSecretSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::GetSecretRequest>
-                    for get_secretSvc<T> {
+                    for GetSecretSvc<T> {
                         type Response = super::GetSecretResponse;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11426,7 +11383,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = get_secretSvc(inner);
+                        let method = GetSecretSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11442,13 +11399,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/store_secret" => {
+                "/Vine.CocoonService/StoreSecret" => {
                     #[allow(non_camel_case_types)]
-                    struct store_secretSvc<T: CocoonService>(pub Arc<T>);
+                    struct StoreSecretSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::StoreSecretRequest>
-                    for store_secretSvc<T> {
+                    for StoreSecretSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11471,7 +11428,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = store_secretSvc(inner);
+                        let method = StoreSecretSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(
@@ -11487,13 +11444,13 @@ pub mod cocoon_service_server {
                     };
                     Box::pin(fut)
                 }
-                "/Vine.CocoonService/delete_secret" => {
+                "/Vine.CocoonService/DeleteSecret" => {
                     #[allow(non_camel_case_types)]
-                    struct delete_secretSvc<T: CocoonService>(pub Arc<T>);
+                    struct DeleteSecretSvc<T: CocoonService>(pub Arc<T>);
                     impl<
                         T: CocoonService,
                     > tonic::server::UnaryService<super::DeleteSecretRequest>
-                    for delete_secretSvc<T> {
+                    for DeleteSecretSvc<T> {
                         type Response = super::Empty;
                         type Future = BoxFuture<
                             tonic::Response<Self::Response>,
@@ -11516,7 +11473,7 @@ pub mod cocoon_service_server {
                     let max_encoding_message_size = self.max_encoding_message_size;
                     let inner = self.inner.clone();
                     let fut = async move {
-                        let method = delete_secretSvc(inner);
+                        let method = DeleteSecretSvc(inner);
                         let codec = tonic_prost::ProstCodec::default();
                         let mut grpc = tonic::server::Grpc::new(codec)
                             .apply_compression_config(

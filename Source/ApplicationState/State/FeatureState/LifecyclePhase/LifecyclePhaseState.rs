@@ -24,7 +24,7 @@ impl LifecyclePhaseState {
 	/// Return the current lifecycle phase.
 	pub fn GetPhase(&self) -> Phase { self.CurrentPhase.lock().ok().map(|Guard| *Guard).unwrap_or(1) }
 
-	/// Advance the lifecycle phase. Only advances forward — never backwards.
+	/// Advance the lifecycle phase. Only advances forward - never backwards.
 	pub fn SetPhase(&self, NewPhase:Phase) {
 		if let Ok(mut Guard) = self.CurrentPhase.lock() {
 			if NewPhase > *Guard {

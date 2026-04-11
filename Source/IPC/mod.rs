@@ -115,7 +115,8 @@ pub mod WindAirCommands;
 pub mod WindServiceAdapters;
 
 /// Tag-filtered development logging (LAND_DEV_LOG env var).
-/// Must be declared before WindServiceHandlers so the dev_log! macro is available.
+/// Must be declared before WindServiceHandlers so the dev_log! macro is
+/// available.
 pub mod DevLog;
 
 /// Legacy Wind Service Handlers.

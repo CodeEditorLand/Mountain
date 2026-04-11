@@ -93,7 +93,7 @@ pub struct State {
 	/// Webview panels state.
 	pub Webviews:WebviewState,
 
-	/// Working-copy (dirty) state — drives the dirty dot in editor tabs.
+	/// Working-copy (dirty) state - drives the dirty dot in editor tabs.
 	pub WorkingCopy:WorkingCopyState,
 }
 

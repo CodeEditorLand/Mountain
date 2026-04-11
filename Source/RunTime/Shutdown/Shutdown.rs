@@ -210,7 +210,10 @@ impl ApplicationRunTime {
 			.lock()
 			.map_err(|e| CommonError::StateLockPoisoned { Context:e.to_string() })?;
 
-		let global_memento_path = self.Environment.ApplicationState.GlobalMementoPath
+		let global_memento_path = self
+			.Environment
+			.ApplicationState
+			.GlobalMementoPath
 			.lock()
 			.map_err(|e| CommonError::StateLockPoisoned { Context:e.to_string() })?
 			.clone();

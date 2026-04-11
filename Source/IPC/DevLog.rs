@@ -1,4 +1,4 @@
-//! # DevLog — Tag-filtered development logging
+//! # DevLog - Tag-filtered development logging
 //!
 //! Controlled by `LAND_DEV_LOG` environment variable.
 //! The same tags work in both Mountain (Rust) and Wind/Sky (TypeScript).
@@ -61,20 +61,17 @@
 
 use std::sync::{Mutex, OnceLock};
 
-static ENABLED_TAGS: OnceLock<Vec<String>> = OnceLock::new();
-static SHORT_MODE: OnceLock<bool> = OnceLock::new();
+static ENABLED_TAGS:OnceLock<Vec<String>> = OnceLock::new();
+static SHORT_MODE:OnceLock<bool> = OnceLock::new();
 
 // ── Path alias ──────────────────────────────────────────────────────────
 // The app-data directory name is absurdly long. In short mode, alias it.
-static APP_DATA_PREFIX: OnceLock<Option<String>> = OnceLock::new();
+static APP_DATA_PREFIX:OnceLock<Option<String>> = OnceLock::new();
 
 fn DetectAppDataPrefix() -> Option<String> {
 	// Match the bundle identifier pattern used by Mountain
 	if let Ok(Home) = std::env::var("HOME") {
-		let Base = format!(
-			"{}/Library/Application Support",
-			Home
-		);
+		let Base = format!("{}/Library/Application Support", Home);
 		if let Ok(Entries) = std::fs::read_dir(&Base) {
 			for Entry in Entries.flatten() {
 				let Name = Entry.file_name();
@@ -89,12 +86,10 @@ fn DetectAppDataPrefix() -> Option<String> {
 }
 
 /// Get the app-data path prefix for aliasing (cached).
-pub fn AppDataPrefix() -> &'static Option<String> {
-	APP_DATA_PREFIX.get_or_init(DetectAppDataPrefix)
-}
+pub fn AppDataPrefix() -> &'static Option<String> { APP_DATA_PREFIX.get_or_init(DetectAppDataPrefix) }
 
 /// Replace the long app-data path with `$APP` in a string.
-pub fn AliasPath(Input: &str) -> String {
+pub fn AliasPath(Input:&str) -> String {
 	if let Some(Prefix) = AppDataPrefix() {
 		Input.replace(Prefix.as_str(), "$APP")
 	} else {
@@ -105,16 +100,13 @@ pub fn AliasPath(Input: &str) -> String {
 // ── Dedup buffer ────────────────────────────────────────────────────────
 
 pub struct DedupState {
-	pub LastKey: String,
-	pub Count: u64,
+	pub LastKey:String,
+	pub Count:u64,
 }
 
-pub static DEDUP: Mutex<DedupState> = Mutex::new(DedupState {
-	LastKey: String::new(),
-	Count: 0,
-});
+pub static DEDUP:Mutex<DedupState> = Mutex::new(DedupState { LastKey:String::new(), Count:0 });
 
-/// Flush the dedup buffer — prints the pending count if > 1.
+/// Flush the dedup buffer - prints the pending count if > 1.
 pub fn FlushDedup() {
 	if let Ok(mut State) = DEDUP.lock() {
 		if State.Count > 1 {
@@ -137,14 +129,10 @@ fn EnabledTags() -> &'static Vec<String> {
 }
 
 /// Whether `LAND_DEV_LOG=short` is active.
-pub fn IsShort() -> bool {
-	*SHORT_MODE.get_or_init(|| {
-		EnabledTags().iter().any(|T| T == "short")
-	})
-}
+pub fn IsShort() -> bool { *SHORT_MODE.get_or_init(|| EnabledTags().iter().any(|T| T == "short")) }
 
 /// Check if a tag is enabled.
-pub fn IsEnabled(Tag: &str) -> bool {
+pub fn IsEnabled(Tag:&str) -> bool {
 	let Tags = EnabledTags();
 	if Tags.is_empty() {
 		return false;
@@ -153,9 +141,11 @@ pub fn IsEnabled(Tag: &str) -> bool {
 	Tags.iter().any(|T| T == "all" || T == "short" || T == Lower.as_str())
 }
 
-/// Log a tagged dev message. Only prints if the tag is enabled via LAND_DEV_LOG.
+/// Log a tagged dev message. Only prints if the tag is enabled via
+/// LAND_DEV_LOG.
 ///
-/// In `short` mode: aliases long paths, deduplicates consecutive identical lines.
+/// In `short` mode: aliases long paths, deduplicates consecutive identical
+/// lines.
 #[macro_export]
 macro_rules! dev_log {
 	($Tag:expr, $($Arg:tt)*) => {

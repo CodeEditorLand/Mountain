@@ -33,24 +33,26 @@ pub(super) async fn get_matching_provider(
 	let LanguageId:String = if let Some(Document) = open_documents.get(document_uri.as_str()) {
 		Document.LanguageIdentifier.clone()
 	} else {
-		// Document not yet opened via model:open — infer from file extension.
+		// Document not yet opened via model:open - infer from file extension.
 		document_uri
 			.path()
 			.split('.')
 			.next_back()
-			.map(|Ext| match Ext {
-				"rs" => "rust",
-				"ts" | "tsx" => "typescript",
-				"js" | "jsx" | "mjs" | "cjs" => "javascript",
-				"json" | "jsonc" => "json",
-				"toml" => "toml",
-				"yaml" | "yml" => "yaml",
-				"md" => "markdown",
-				"py" => "python",
-				"go" => "go",
-				"c" | "h" => "c",
-				"cpp" | "cc" | "cxx" | "hpp" => "cpp",
-				Other => Other,
+			.map(|Ext| {
+				match Ext {
+					"rs" => "rust",
+					"ts" | "tsx" => "typescript",
+					"js" | "jsx" | "mjs" | "cjs" => "javascript",
+					"json" | "jsonc" => "json",
+					"toml" => "toml",
+					"yaml" | "yml" => "yaml",
+					"md" => "markdown",
+					"py" => "python",
+					"go" => "go",
+					"c" | "h" => "c",
+					"cpp" | "cc" | "cxx" | "hpp" => "cpp",
+					Other => Other,
+				}
 			})
 			.unwrap_or("plaintext")
 			.to_string()
@@ -70,14 +72,14 @@ pub(super) async fn get_matching_provider(
 				match S.get("language") {
 					Some(L) if L.as_str() == Some(&LanguageId) => true,
 					Some(L) if L.as_str() == Some("*") => true,
-					Some(L) => L
-						.as_array()
-						.map(|Arr| {
-							Arr.iter().any(|Item| {
-								Item.as_str() == Some(&LanguageId) || Item.as_str() == Some("*")
+					Some(L) => {
+						L.as_array()
+							.map(|Arr| {
+								Arr.iter()
+									.any(|Item| Item.as_str() == Some(&LanguageId) || Item.as_str() == Some("*"))
 							})
-						})
-						.unwrap_or(false),
+							.unwrap_or(false)
+					},
 					None => false,
 				}
 			})
@@ -87,9 +89,8 @@ pub(super) async fn get_matching_provider(
 				|| LangValue
 					.as_array()
 					.map(|Arr| {
-						Arr.iter().any(|Item| {
-							Item.as_str() == Some(&LanguageId) || Item.as_str() == Some("*")
-						})
+						Arr.iter()
+							.any(|Item| Item.as_str() == Some(&LanguageId) || Item.as_str() == Some("*"))
 					})
 					.unwrap_or(false)
 		} else if let Some(LangStr) = Provider.Selector.as_str() {

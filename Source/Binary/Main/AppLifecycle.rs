@@ -215,9 +215,9 @@ pub fn AppLifecycleSetup(
 			AppDataDir.join("User/caches"),
 			// Configuration cache
 			AppDataDir.join("CachedConfigurations/defaults/__default__profile__-configurationDefaultsOverrides"),
-			// Log directories — VS Code stats {logsPath}/window1/output_{timestamp}
+			// Log directories - VS Code stats {logsPath}/window1/output_{timestamp}
 			LogDir.join("window1"),
-			// System extensions directory — VS Code scans appRoot/../extensions
+			// System extensions directory - VS Code scans appRoot/../extensions
 			// which resolves to /Static/Application/extensions (mapped to Sky Target).
 			SkyTargetDir.join("Static/Application/extensions"),
 			// Agent directories VS Code probes for (create to avoid stat errors)

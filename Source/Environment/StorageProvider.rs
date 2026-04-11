@@ -296,9 +296,13 @@ impl StorageProvider for MountainEnvironment {
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
 				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
-				Some(self.ApplicationState.GlobalMementoPath.lock()
-					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
-					.clone()),
+				Some(
+					self.ApplicationState
+						.GlobalMementoPath
+						.lock()
+						.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+						.clone(),
+				),
 			)
 		} else {
 			(
@@ -365,9 +369,13 @@ impl StorageProvider for MountainEnvironment {
 		let (StorageMapMutex, StoragePathOption) = if IsGlobalScope {
 			(
 				self.ApplicationState.Configuration.MementoGlobalStorage.clone(),
-				Some(self.ApplicationState.GlobalMementoPath.lock()
-					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
-					.clone()),
+				Some(
+					self.ApplicationState
+						.GlobalMementoPath
+						.lock()
+						.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+						.clone(),
+				),
 			)
 		} else {
 			(

@@ -213,8 +213,8 @@ async fn LaunchAndManageCocoonSideCar(
 
 	// Resolve bootstrap script path.
 	// 1) Try Tauri bundled resources (production builds).
-	// 2) Fallback: resolve relative to the executable (dev builds).
-	//    Dev layout: Target/debug/binary → ../../scripts/cocoon/bootstrap-fork.js
+	// 2) Fallback: resolve relative to the executable (dev builds). Dev layout:
+	//    Target/debug/binary → ../../scripts/cocoon/bootstrap-fork.js
 	let ScriptPath = path_resolver
 		.resolve(BOOTSTRAP_SCRIPT_PATH, BaseDirectory::Resource)
 		.ok()
@@ -228,7 +228,11 @@ async fn LaunchAndManageCocoonSideCar(
 		})
 		.ok_or_else(|| {
 			CommonError::FileSystemNotFound(
-				format!("Cocoon bootstrap script '{}' not found in resources or relative to executable", BOOTSTRAP_SCRIPT_PATH).into(),
+				format!(
+					"Cocoon bootstrap script '{}' not found in resources or relative to executable",
+					BOOTSTRAP_SCRIPT_PATH
+				)
+				.into(),
 			)
 		})?;
 

@@ -629,7 +629,7 @@ impl CocoonService for CocoonServiceImpl {
 					.or_else(|| Params.get("url").and_then(|V| V.as_str()))
 					.unwrap_or("")
 					.to_string();
-				// Emit to Sky — Sky uses Tauri shell plugin to open the URL
+				// Emit to Sky - Sky uses Tauri shell plugin to open the URL
 				let _ = self
 					.environment
 					.ApplicationHandle
@@ -1369,7 +1369,7 @@ impl CocoonService for CocoonServiceImpl {
 			},
 			// ---- Language configuration ----
 			"set_language_configuration" => {
-				// Language configuration is consumed by Sky — emit for workbench to pick up
+				// Language configuration is consumed by Sky - emit for workbench to pick up
 				use tauri::Emitter;
 				let Language = Params.get("language").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let _ = self
@@ -1764,7 +1764,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	// ==================== Window Operations ====================
 
-	/// Show Text Document — emit a Tauri event so Sky opens the document tab.
+	/// Show Text Document - emit a Tauri event so Sky opens the document tab.
 	async fn show_text_document(
 		&self,
 		request:Request<ShowTextDocumentRequest>,
@@ -1783,7 +1783,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ShowTextDocumentResponse { success:true }))
 	}
 
-	/// Show Information Message — delegate to
+	/// Show Information Message - delegate to
 	/// UserInterfaceProvider::ShowMessage.
 	async fn show_information_message(
 		&self,
@@ -1802,7 +1802,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ShowMessageResponse { success:true }))
 	}
 
-	/// Show Warning Message — delegate to UserInterfaceProvider::ShowMessage.
+	/// Show Warning Message - delegate to UserInterfaceProvider::ShowMessage.
 	async fn show_warning_message(
 		&self,
 		request:Request<ShowMessageRequest>,
@@ -1820,7 +1820,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ShowMessageResponse { success:true }))
 	}
 
-	/// Show Error Message — delegate to UserInterfaceProvider::ShowMessage.
+	/// Show Error Message - delegate to UserInterfaceProvider::ShowMessage.
 	async fn show_error_message(
 		&self,
 		request:Request<ShowMessageRequest>,
@@ -1838,7 +1838,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ShowMessageResponse { success:true }))
 	}
 
-	/// Create Status Bar Item — emit Tauri event for Sky to render status bar
+	/// Create Status Bar Item - emit Tauri event for Sky to render status bar
 	/// entry.
 	async fn create_status_bar_item(
 		&self,
@@ -1857,7 +1857,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(CreateStatusBarItemResponse { item_id:req.id.clone() }))
 	}
 
-	/// Set Status Bar Text — emit Tauri event for Sky status bar update.
+	/// Set Status Bar Text - emit Tauri event for Sky status bar update.
 	async fn set_status_bar_text(&self, request:Request<SetStatusBarTextRequest>) -> Result<Response<Empty>, Status> {
 		use tauri::Emitter;
 
@@ -2116,7 +2116,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(FindFilesResponse { uris:Uris }))
 	}
 
-	/// Find Text in Files — walk workspace and grep for pattern.
+	/// Find Text in Files - walk workspace and grep for pattern.
 	///
 	/// Uses a simple line-by-line scan (not indexed). Returns up to 1000
 	/// matches. Indexing integration is a P2 task.
@@ -2209,7 +2209,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(FindTextInFilesResponse { matches:Matches }))
 	}
 
-	/// Open Document — emit Tauri event for Sky to open the editor tab.
+	/// Open Document - emit Tauri event for Sky to open the editor tab.
 	async fn open_document(
 		&self,
 		request:Request<OpenDocumentRequest>,
@@ -2228,7 +2228,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(OpenDocumentResponse { success:true }))
 	}
 
-	/// Save All — emit Tauri event for Sky to save all open documents.
+	/// Save All - emit Tauri event for Sky to save all open documents.
 	async fn save_all(&self, request:Request<SaveAllRequest>) -> Result<Response<SaveAllResponse>, Status> {
 		use tauri::Emitter;
 
@@ -2243,7 +2243,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(SaveAllResponse { success:true }))
 	}
 
-	/// Apply Edit — emit Tauri event for Sky to apply text edits in the editor.
+	/// Apply Edit - emit Tauri event for Sky to apply text edits in the editor.
 	async fn apply_edit(&self, request:Request<ApplyEditRequest>) -> Result<Response<ApplyEditResponse>, Status> {
 		use tauri::Emitter;
 
@@ -2352,7 +2352,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	// ==================== Terminal ====================
 
-	/// Open Terminal — create PTY via TerminalProvider and return the terminal
+	/// Open Terminal - create PTY via TerminalProvider and return the terminal
 	/// ID.
 	async fn open_terminal(&self, request:Request<OpenTerminalRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
@@ -2378,7 +2378,7 @@ impl CocoonService for CocoonServiceImpl {
 		}
 	}
 
-	/// Terminal Input — write bytes to PTY stdin via TerminalProvider.
+	/// Terminal Input - write bytes to PTY stdin via TerminalProvider.
 	async fn terminal_input(&self, request:Request<TerminalInputRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		let TerminalId = req.terminal_id as u64;
@@ -2395,7 +2395,7 @@ impl CocoonService for CocoonServiceImpl {
 		}
 	}
 
-	/// Close Terminal — dispose PTY and cleanup resources via TerminalProvider.
+	/// Close Terminal - dispose PTY and cleanup resources via TerminalProvider.
 	async fn close_terminal(&self, request:Request<CloseTerminalRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		let TerminalId = req.terminal_id as u64;
@@ -2725,7 +2725,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	// ==================== Secret Storage ====================
 
-	/// Get Secret — retrieve from the OS keychain via SecretProvider.
+	/// Get Secret - retrieve from the OS keychain via SecretProvider.
 	async fn get_secret(&self, request:Request<GetSecretRequest>) -> Result<Response<GetSecretResponse>, Status> {
 		let req = request.into_inner();
 		debug!("[CocoonService] get_secret: key={}", req.key);
@@ -2742,7 +2742,7 @@ impl CocoonService for CocoonServiceImpl {
 		}
 	}
 
-	/// Store Secret — persist to the OS keychain via SecretProvider.
+	/// Store Secret - persist to the OS keychain via SecretProvider.
 	async fn store_secret(&self, request:Request<StoreSecretRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		debug!("[CocoonService] store_secret: key={}", req.key);
@@ -2756,7 +2756,7 @@ impl CocoonService for CocoonServiceImpl {
 		}
 	}
 
-	/// Delete Secret — remove from the OS keychain via SecretProvider.
+	/// Delete Secret - remove from the OS keychain via SecretProvider.
 	async fn delete_secret(&self, request:Request<DeleteSecretRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		debug!("[CocoonService] delete_secret: key={}", req.key);
@@ -3301,7 +3301,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ProvideLinkedEditingRangesResponse::default()))
 	}
 
-	/// Show Quick Pick — present a selection list via UserInterfaceProvider.
+	/// Show Quick Pick - present a selection list via UserInterfaceProvider.
 	async fn show_quick_pick(
 		&self,
 		request:Request<ShowQuickPickRequest>,
@@ -3347,7 +3347,7 @@ impl CocoonService for CocoonServiceImpl {
 		}
 	}
 
-	/// Show Input Box — present a text entry dialog via UserInterfaceProvider.
+	/// Show Input Box - present a text entry dialog via UserInterfaceProvider.
 	async fn show_input_box(
 		&self,
 		request:Request<ShowInputBoxRequest>,
@@ -3516,7 +3516,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Create output channel — notify Sky to create a named output panel.
+	/// Create output channel - notify Sky to create a named output panel.
 	async fn create_output_channel(
 		&self,
 		request:Request<CreateOutputChannelRequest>,
@@ -3656,7 +3656,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// extension info — look up a single extension by ID in ApplicationState
+	/// extension info - look up a single extension by ID in ApplicationState
 	async fn get_extension(
 		&self,
 		request:Request<GetExtensionRequest>,
@@ -3685,7 +3685,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(GetExtensionResponse { extension:InfoOption }))
 	}
 
-	/// all extensions — return all scanned extensions from ApplicationState
+	/// all extensions - return all scanned extensions from ApplicationState
 	async fn get_all_extensions(&self, request:Request<Empty>) -> Result<Response<GetAllExtensionsResponse>, Status> {
 		use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 
@@ -3713,7 +3713,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(GetAllExtensionsResponse { extensions:ExtensionInfoList }))
 	}
 
-	/// Terminal Resize — emit a Tauri event so Sky can resize the xterm view.
+	/// Terminal Resize - emit a Tauri event so Sky can resize the xterm view.
 	///
 	/// PTY-level resize (via `portable_pty::MasterPty::resize`) is a P1 task
 	/// that requires storing the PTY master handle in `TerminalStateDTO`.
@@ -3739,7 +3739,7 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Get Configuration — retrieve a configuration value from
+	/// Get Configuration - retrieve a configuration value from
 	/// ConfigurationProvider.
 	async fn get_configuration(
 		&self,
