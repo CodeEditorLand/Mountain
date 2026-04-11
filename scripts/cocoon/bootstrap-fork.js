@@ -40,6 +40,7 @@ const PostHogHost = "https://eu.i.posthog.com";
 const DistinctId = `land-dev-${process.env.USER || process.env.USERNAME || "unknown"}`;
 
 const PostHogCapture = async (EventName, Properties = {}) => {
+	if (process.env.NODE_ENV === "production") return;
 	try {
 		const { request } = await import("node:https");
 		const Body = JSON.stringify({
@@ -79,6 +80,7 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 // ============================================================================
 
 const OTLPFlush = async () => {
+	if (process.env.NODE_ENV === "production") return;
 	try {
 		const Entries = performance.getEntriesByType("mark").filter(E => E.name.startsWith("land:"));
 		if (Entries.length === 0) return;

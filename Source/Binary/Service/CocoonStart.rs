@@ -40,8 +40,8 @@ pub async fn CocoonStart(
 			Ok(())
 		},
 		Err(e) => {
-			error!("[Cocoon] [Start] Failed to start: {}", e);
-			Err(format!("Failed to start Cocoon sidecar: {}", e))
+			warn!("[Cocoon] [Start] Cocoon unavailable (degraded mode): {}", e);
+			Ok(()) // Graceful degradation — workbench works without Cocoon
 		},
 	}
 }

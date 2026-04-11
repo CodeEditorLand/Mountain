@@ -219,6 +219,9 @@ pub fn NowNano() -> u64 {
 /// Emit an OTLP span to the local collector (Jaeger at 127.0.0.1:4318).
 /// Fire-and-forget on a background thread. Stops trying after first failure.
 pub fn EmitOTLPSpan(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
+	if !cfg!(debug_assertions) {
+		return;
+	}
 	if !OTLP_AVAILABLE.load(Ordering::Relaxed) {
 		return;
 	}
