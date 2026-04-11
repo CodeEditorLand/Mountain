@@ -2108,6 +2108,10 @@ async fn handle_extensions_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Va
 		.await
 		.map_err(|Error| format!("extensions:getAll failed: {}", Error))?;
 
+	dev_log!("extensions", "extensions:getAll returning {} extensions", Extensions.len());
+	if let Some(First) = Extensions.first() {
+		dev_log!("extensions", "extensions:getAll sample: {}", serde_json::to_string(First).unwrap_or_default().chars().take(300).collect::<String>());
+	}
 	Ok(json!(Extensions))
 }
 

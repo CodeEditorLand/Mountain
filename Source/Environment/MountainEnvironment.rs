@@ -402,32 +402,25 @@ impl ExtensionManagementService for MountainEnvironment {
 		ScannedExtensionsGuard.clear();
 
 		for extension in extensions {
-			if let Some(identifier) = extension.get("Identifier").and_then(|v| v.as_str()) {
-				// Convert the extension DTO to ExtensionDescriptionStateDTO
-				let extension_dto = ExtensionDescriptionStateDTO {
-					Identifier:serde_json::Value::String(identifier.to_string()),
-					Name:extension.get("Name").and_then(|v| v.as_str()).unwrap_or("Unknown").to_string(),
-					Version:extension.get("Version").and_then(|v| v.as_str()).unwrap_or("0.0.0").to_string(),
-					Publisher:extension
-						.get("Publisher")
-						.and_then(|v| v.as_str())
-						.unwrap_or("Unknown")
-						.to_string(),
-					Engines:extension.get("Engines").cloned().unwrap_or(serde_json::Value::Null),
-					Main:extension.get("Main").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					Browser:extension.get("Browser").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					ModuleType:extension.get("ModuleType").and_then(|v| v.as_str()).map(|s| s.to_string()),
-					IsBuiltin:extension.get("IsBuiltin").and_then(|v| v.as_bool()).unwrap_or(false),
-					IsUnderDevelopment:extension.get("IsUnderDevelopment").and_then(|v| v.as_bool()).unwrap_or(false),
-					ExtensionLocation:extension.get("ExtensionLocation").cloned().unwrap_or(serde_json::Value::Null),
-					ActivationEvents:extension
-						.get("ActivationEvents")
-						.and_then(|v| v.as_array())
-						.map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect()),
-					Contributes:extension.get("Contributes").cloned(),
-				};
-
-				ScannedExtensionsGuard.insert(identifier.to_string(), extension_dto);
+			// The scanner returns camelCase JSON (serde rename_all = "camelCase").
+			// Deserialize directly into ExtensionDescriptionStateDTO.
+			match serde_json::from_value::<ExtensionDescriptionStateDTO>(extension.clone()) {
+				Ok(Dto) => {
+					// Use identifier.value or fall back to name
+					let Key = Dto.Identifier
+						.as_object()
+						.and_then(|O| O.get("value"))
+						.and_then(|V| V.as_str())
+						.unwrap_or(&Dto.Name)
+						.to_string();
+					if !Key.is_empty() {
+						ScannedExtensionsGuard.insert(Key, Dto);
+					}
+				},
+				Err(Error) => {
+					let Name = extension.get("name").and_then(|V| V.as_str()).unwrap_or("?");
+					warn!("[ExtensionManagementService] Failed to parse extension '{}': {}", Name, Error);
+				},
 			}
 		}
 

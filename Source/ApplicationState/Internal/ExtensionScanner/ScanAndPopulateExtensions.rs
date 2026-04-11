@@ -100,8 +100,16 @@ pub async fn ScanAndPopulateExtensions(
 		}
 	}
 
-	// Note: Would populate
-	// State.Extension.ScannedExtensions.Extension.ScannedExtensions
+	// Store discovered extensions into ApplicationState
+	{
+		let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock()
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+		Guard.clear();
+		for (Key, Dto) in &all_found_extensions {
+			Guard.insert(Key.clone(), Dto.clone());
+		}
+	}
+
 	debug!(
 		"[ExtensionScanner] Extension scan complete. Found {} extensions ({} successful scans, {} failed scans).",
 		all_found_extensions.len(),
