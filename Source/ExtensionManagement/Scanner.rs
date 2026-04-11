@@ -173,8 +173,21 @@ pub async fn ScanDirectoryForExtensions(
 					Ok(mut Description) => {
 						// Augment the description with its location on disk.
 						Description.ExtensionLocation =
-							serde_json::to_value(url::Url::from_directory_path(PotentialExtensionPath).unwrap())
+							serde_json::to_value(url::Url::from_directory_path(&PotentialExtensionPath).unwrap())
 								.unwrap_or(Value::Null);
+
+						// Construct identifier from publisher.name if not set
+						if Description.Identifier == Value::Null || Description.Identifier == Value::Object(Default::default()) {
+							let Id = if Description.Publisher.is_empty() {
+								Description.Name.clone()
+							} else {
+								format!("{}.{}", Description.Publisher, Description.Name)
+							};
+							Description.Identifier = serde_json::json!({ "value": Id });
+						}
+
+						// Mark as built-in extension
+						Description.IsBuiltin = true;
 
 						FoundExtensions.push(Description);
 					},

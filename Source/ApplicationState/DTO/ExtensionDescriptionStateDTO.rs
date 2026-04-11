@@ -40,44 +40,50 @@ const MAX_ACTIVATION_EVENTS:usize = 100;
 ///
 /// This is stored in `ApplicationState` to provide the extension host with the
 /// list of available extensions and their capabilities.
+/// VS Code extensions use camelCase in package.json. Serde renames from
+/// PascalCase Rust fields to camelCase JSON automatically. Fields that
+/// don't exist in package.json (Identifier, ExtensionLocation, IsBuiltin)
+/// default to their zero values on deserialization.
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct ExtensionDescriptionStateDTO {
 	// --- Core Metadata ---
-	// DTO: { value: string, uuid?: string }
+	/// Extension identifier: { value: string, uuid?: string }
+	/// Not present in package.json — constructed from publisher.name after parsing.
+	#[serde(default)]
 	pub Identifier:Value,
 
-	/// Extension display name
-	#[serde(skip_serializing_if = "String::is_empty")]
+	/// Extension name (from package.json "name")
+	#[serde(default, skip_serializing_if = "String::is_empty")]
 	pub Name:String,
 
 	/// Semantic version string (e.g., "1.0.0")
-	#[serde(skip_serializing_if = "String::is_empty")]
+	#[serde(default, skip_serializing_if = "String::is_empty")]
 	pub Version:String,
 
 	/// Publisher name or identifier
-	#[serde(skip_serializing_if = "String::is_empty")]
+	#[serde(default, skip_serializing_if = "String::is_empty")]
 	pub Publisher:String,
 
-	// DTO: { vscode: string }
-	/// Engine compatibility requirements
+	/// Engine compatibility requirements: { vscode: string }
+	#[serde(default)]
 	pub Engines:Value,
 
 	// --- Entry Points ---
 	/// Main entry point path (Node.js runtime)
-	#[serde(skip_serializing_if = "Option::is_none")]
+	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub Main:Option<String>,
 
 	/// Browser entry point path (web extension)
-	#[serde(skip_serializing_if = "Option::is_none")]
+	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub Browser:Option<String>,
 
 	// --- Type & Flags ---
 	/// Module type: commonjs or esm
-	#[serde(rename = "Type", skip_serializing_if = "Option::is_none")]
+	#[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
 	pub ModuleType:Option<String>,
 
-	/// Whether this is a built-in extension
+	/// Whether this is a built-in extension (not in package.json, set by scanner)
 	#[serde(default)]
 	pub IsBuiltin:bool,
 
@@ -86,17 +92,17 @@ pub struct ExtensionDescriptionStateDTO {
 	pub IsUnderDevelopment:bool,
 
 	// --- Location & Activation ---
-	// Serialized UriComponents DTO
-	/// Installation location URI
+	/// Installation location URI (set by scanner, not in package.json)
+	#[serde(default)]
 	pub ExtensionLocation:Value,
 
 	/// Activation event triggers (e.g., "onStartupFinished")
-	#[serde(skip_serializing_if = "Option::is_none")]
+	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub ActivationEvents:Option<Vec<String>>,
 
 	// --- Contributions ---
 	/// Extension contributions (commands, views, etc.)
-	#[serde(skip_serializing_if = "Option::is_none")]
+	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub Contributes:Option<Value>,
 }
 
