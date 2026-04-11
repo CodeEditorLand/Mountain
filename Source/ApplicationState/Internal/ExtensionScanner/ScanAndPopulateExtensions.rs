@@ -64,7 +64,7 @@ pub async fn ScanAndPopulateExtensions(
 
 	// Note: This would need to be adapted to the new state structure
 	// For now, this is a placeholder showing the structure
-	let scan_paths:Vec<PathBuf> = Vec::new(); // Would get from State.Registry.Extension.Registry.ExtensionScanPaths
+	let scan_paths:Vec<PathBuf> = _State.Registry.GetExtensionScanPaths();
 
 	trace!("[ExtensionScanner] Scanning paths: {:?}", scan_paths);
 

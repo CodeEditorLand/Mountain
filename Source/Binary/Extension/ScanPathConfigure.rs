@@ -44,17 +44,25 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// Resolve paths from executable directory
 	if let Ok(ExecutableDirectory) = std::env::current_exe() {
 		if let Some(Parent) = ExecutableDirectory.parent() {
+			// Standard Tauri bundle path: ../Resources/extensions
 			let ResourcesPath = Parent.join("../Resources/extensions");
-
-			let LocalPath = Parent.join("extensions");
-
 			debug!("[Extensions] [ScanPaths] + {}", ResourcesPath.display());
-
 			ScanPathsGuard.push(ResourcesPath);
 
+			// Debug/dev path: Target/debug/extensions
+			let LocalPath = Parent.join("extensions");
 			debug!("[Extensions] [ScanPaths] + {}", LocalPath.display());
-
 			ScanPathsGuard.push(LocalPath);
+
+			// Sky Target path: where CopyVSCodeAssets (Step 13) copies built-in
+			// extensions during the build. This is the primary source in dev.
+			// Resolve: Target/debug/../../../Element/Sky/Target/Static/Application/
+			// extensions
+			let SkyTargetPath = Parent.join("../../../Element/Sky/Target/Static/Application/extensions");
+			if SkyTargetPath.exists() {
+				debug!("[Extensions] [ScanPaths] + {} (Sky Target)", SkyTargetPath.display());
+				ScanPathsGuard.push(SkyTargetPath);
+			}
 		}
 	}
 

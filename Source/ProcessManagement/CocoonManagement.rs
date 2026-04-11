@@ -83,7 +83,8 @@ use crate::{
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
 const COCOON_GRPC_PORT:u16 = 50052;
 const MOUNTAIN_GRPC_PORT:u16 = 50051;
-const GRPC_SERVER_READY_DELAY_MS:u64 = 2000;
+const GRPC_CONNECT_RETRY_INTERVAL_MS:u64 = 500;
+const GRPC_CONNECT_MAX_ATTEMPTS:u32 = 10;
 const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
 const HANDSHAKE_TIMEOUT_MS:u64 = 60000;
 const HEALTH_CHECK_INTERVAL_SECONDS:u64 = 5;
@@ -304,28 +305,57 @@ async fn LaunchAndManageCocoonSideCar(
 		});
 	}
 
-	// Wait for gRPC server to initialize and listen
-	info!(
-		"[CocoonManagement] Waiting {}ms for Cocoon gRPC server to start...",
-		GRPC_SERVER_READY_DELAY_MS
-	);
-	sleep(Duration::from_millis(GRPC_SERVER_READY_DELAY_MS)).await;
-
-	// Establish Vine connection to Cocoon
+	// Establish Vine connection to Cocoon with retry loop
 	let GRPCAddress = format!("127.0.0.1:{}", COCOON_GRPC_PORT);
-	info!("[CocoonManagement] Connecting to Cocoon gRPC server at: {}", GRPCAddress);
-	crate::dev_log!("grpc", "connecting to Cocoon at {}", GRPCAddress);
+	info!(
+		"[CocoonManagement] Connecting to Cocoon gRPC at {} (up to {} attempts, {}ms interval)...",
+		GRPCAddress, GRPC_CONNECT_MAX_ATTEMPTS, GRPC_CONNECT_RETRY_INTERVAL_MS
+	);
 
-	Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), GRPCAddress.clone())
-		.await
-		.map_err(|Error| {
-			CommonError::IPCError {
-				Description:format!(
-					"Failed to connect to Cocoon gRPC server at {}: {} (is Cocoon running?)",
-					GRPCAddress, Error
-				),
-			}
-		})?;
+	let mut ConnectAttempt = 0u32;
+	let mut LastError = None;
+
+	loop {
+		ConnectAttempt += 1;
+		crate::dev_log!(
+			"grpc",
+			"connecting to Cocoon at {} (attempt {}/{})",
+			GRPCAddress,
+			ConnectAttempt,
+			GRPC_CONNECT_MAX_ATTEMPTS
+		);
+
+		match Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), GRPCAddress.clone()).await
+		{
+			Ok(()) => {
+				crate::dev_log!("grpc", "connected to Cocoon on attempt {}", ConnectAttempt);
+				break;
+			},
+			Err(Error) => {
+				crate::dev_log!(
+					"grpc",
+					"attempt {}/{} failed: {}",
+					ConnectAttempt,
+					GRPC_CONNECT_MAX_ATTEMPTS,
+					Error
+				);
+				LastError = Some(Error);
+
+				if ConnectAttempt >= GRPC_CONNECT_MAX_ATTEMPTS {
+					return Err(CommonError::IPCError {
+						Description:format!(
+							"Failed to connect to Cocoon gRPC at {} after {} attempts: {} (is Cocoon running?)",
+							GRPCAddress,
+							GRPC_CONNECT_MAX_ATTEMPTS,
+							LastError.unwrap()
+						),
+					});
+				}
+
+				sleep(Duration::from_millis(GRPC_CONNECT_RETRY_INTERVAL_MS)).await;
+			},
+		}
+	}
 
 	info!("[CocoonManagement] Connected to Cocoon. Sending initialization data...");
 

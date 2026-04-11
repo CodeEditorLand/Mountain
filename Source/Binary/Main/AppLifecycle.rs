@@ -302,6 +302,9 @@ pub fn AppLifecycleSetup(
 		// [Config]
 		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
 
+		// [Workspace] [Trust] Desktop app — trust local workspace by default
+		AppStateForSetup.Workspace.SetTrustStatus(true);
+
 		// [Extensions] [ScanPaths]
 		let _ = ScanPathConfigureFn(&AppStateForSetup);
 

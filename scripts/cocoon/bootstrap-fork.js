@@ -162,6 +162,7 @@ PostHogCapture("cocoon:session:start", {
 // ============================================================================
 
 const CocoonEntryPaths = [
+	new URL("../../../Cocoon/Target/ESBuild/Cocoon.js", import.meta.url),
 	new URL("../../../Cocoon/Target/Bootstrap/Implementation/CocoonMain.js", import.meta.url),
 	new URL("../../../Cocoon/Target/ESBuild/CocoonMain.js", import.meta.url),
 ];
