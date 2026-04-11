@@ -1264,6 +1264,19 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		},
 
 		// =====================================================================
+		// Extension host message relay (Wind → Mountain → Cocoon)
+		// =====================================================================
+		"cocoon:extensionHostMessage" => {
+			dev_log!("exthost", "cocoon:extensionHostMessage bytes={}", args.first().map(|P| {
+				P.get("data").and_then(|D| D.as_array()).map(|A| A.len()).unwrap_or(0)
+			}).unwrap_or(0));
+			// TODO: Forward binary message to Cocoon via gRPC streaming RPC.
+			// For now, acknowledge receipt. Cocoon's gRPC server must implement
+			// the ExtensionHostMessage RPC to receive and process these.
+			Ok(Value::Null)
+		},
+
+		// =====================================================================
 		// Extension host debug service
 		// =====================================================================
 		"extensionhostdebugservice:reload" => {
