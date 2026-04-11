@@ -296,27 +296,37 @@ pub fn AppLifecycleSetup(
 
 	tauri::async_runtime::spawn(async move {
 		info!("[Lifecycle] [PostSetup] Starting...");
+		let PostSetupStart = crate::IPC::DevLog::NowNano();
 		let AppStateForSetup = PostSetupEnvironment.ApplicationState.clone();
 		TraceStep!("[Lifecycle] [PostSetup] AppState cloned.");
 
 		// [Config]
+		let ConfigStart = crate::IPC::DevLog::NowNano();
 		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
+		crate::otel_span!("lifecycle:config:initialize", ConfigStart);
 
 		// [Workspace] [Trust] Desktop app — trust local workspace by default
 		AppStateForSetup.Workspace.SetTrustStatus(true);
 
 		// [Extensions] [ScanPaths]
+		let ExtScanStart = crate::IPC::DevLog::NowNano();
 		let _ = ScanPathConfigureFn(&AppStateForSetup);
 
 		// [Extensions] [Scan]
 		let _ = ExtensionPopulateFn(PostSetupAppHandle.clone(), &AppStateForSetup).await;
+		crate::otel_span!("lifecycle:extensions:scan", ExtScanStart);
 
 		// [Vine] [gRPC]
+		let VineStart = crate::IPC::DevLog::NowNano();
 		let _ = VineStartFn(PostSetupAppHandle.clone(), "[::1]:50051".to_string(), "[::1]:50052".to_string()).await;
+		crate::otel_span!("lifecycle:vine:start", VineStart);
 
 		// [Cocoon] [Sidecar]
+		let CocoonStart = crate::IPC::DevLog::NowNano();
 		let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
+		crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
 
+		crate::otel_span!("lifecycle:postsetup:complete", PostSetupStart);
 		info!("[Lifecycle] [PostSetup] Complete. System ready.");
 	});
 

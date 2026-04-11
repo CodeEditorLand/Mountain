@@ -470,6 +470,7 @@ fn ensure_userdata_dirs() {
 /// Maps Tauri IPC commands to Mountain's internal command system
 #[tauri::command]
 pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<Value>) -> Result<Value, String> {
+	let OTLPStart = crate::IPC::DevLog::NowNano();
 	dev_log!("ipc", "invoke: {} args_count={}", command, args.len());
 
 	// Ensure userdata directories exist on first IPC call
@@ -488,7 +489,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	// Activate: LAND_DEV_LOG=all   or   LAND_DEV_LOG=vfs,ipc,config
 	// =========================================================================
 
-	match command.as_str() {
+	let Result = match command.as_str() {
 		// Configuration commands
 		"configuration:get" => {
 			dev_log!("config", "configuration:get");
@@ -1316,7 +1317,18 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			error!("[WindServiceHandlers] Unknown IPC command: {}", command);
 			Err(format!("Unknown IPC command: {}", command))
 		},
-	}
+	};
+
+	// Emit OTLP span for every IPC call — visible in Jaeger at localhost:16686
+	let IsErr = Result.is_err();
+	let SpanName = if IsErr {
+		format!("ipc:{}:error", command)
+	} else {
+		format!("ipc:{}", command)
+	};
+	crate::otel_span!(&SpanName, OTLPStart, &[("ipc.command", command.as_str())]);
+
+	Result
 }
 
 /// Handler for configuration get requests

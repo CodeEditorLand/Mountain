@@ -183,3 +183,129 @@ macro_rules! dev_log {
 		}
 	};
 }
+
+// ============================================================================
+// OTLP Span Emission — sends spans directly to Jaeger/OTEL collector
+// ============================================================================
+
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
+
+static OTLP_AVAILABLE:AtomicBool = AtomicBool::new(true);
+static OTLP_TRACE_ID:OnceLock<String> = OnceLock::new();
+
+fn GetTraceId() -> &'static str {
+	OTLP_TRACE_ID.get_or_init(|| {
+		use std::collections::hash_map::DefaultHasher;
+		use std::hash::{Hash, Hasher};
+		let mut H = DefaultHasher::new();
+		std::process::id().hash(&mut H);
+		SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.unwrap_or_default()
+			.as_nanos()
+			.hash(&mut H);
+		format!("{:032x}", H.finish() as u128)
+	})
+}
+
+pub fn NowNano() -> u64 {
+	SystemTime::now()
+		.duration_since(UNIX_EPOCH)
+		.unwrap_or_default()
+		.as_nanos() as u64
+}
+
+/// Emit an OTLP span to the local collector (Jaeger at 127.0.0.1:4318).
+/// Fire-and-forget on a background thread. Stops trying after first failure.
+pub fn EmitOTLPSpan(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
+	if !OTLP_AVAILABLE.load(Ordering::Relaxed) {
+		return;
+	}
+
+	let SpanId = format!("{:016x}", rand_u64());
+	let TraceId = GetTraceId().to_string();
+	let SpanName = Name.to_string();
+
+	let AttributesJson:Vec<String> = Attributes
+		.iter()
+		.map(|(K, V)| {
+			format!(
+				r#"{{"key":"{}","value":{{"stringValue":"{}"}}}}"#,
+				K,
+				V.replace('\\', "\\\\").replace('"', "\\\"")
+			)
+		})
+		.collect();
+
+	let IsError = SpanName.contains("error");
+
+	let StatusCode = if IsError { 2 } else { 1 };
+	let Payload = format!(
+		concat!(
+			r#"{{"resourceSpans":[{{"resource":{{"attributes":["#,
+			r#"{{"key":"service.name","value":{{"stringValue":"land-editor-mountain"}}}},"#,
+			r#"{{"key":"service.version","value":{{"stringValue":"0.0.1"}}}}"#,
+			r#"]}},"scopeSpans":[{{"scope":{{"name":"mountain.ipc","version":"1.0.0"}},"#,
+			r#""spans":[{{"traceId":"{}","spanId":"{}","name":"{}","kind":1,"#,
+			r#""startTimeUnixNano":"{}","endTimeUnixNano":"{}","#,
+			r#""attributes":[{}],"status":{{"code":{}}}}}]}}]}}]}}"#,
+		),
+		TraceId,
+		SpanId,
+		SpanName,
+		StartNano,
+		EndNano,
+		AttributesJson.join(","),
+		StatusCode,
+	);
+
+	// Fire-and-forget on a background thread
+	std::thread::spawn(move || {
+		use std::io::{Read as IoRead, Write as IoWrite};
+		use std::net::TcpStream;
+		use std::time::Duration;
+
+		let Ok(mut Stream) =
+			TcpStream::connect_timeout(&"127.0.0.1:4318".parse().unwrap(), Duration::from_millis(200))
+		else {
+			OTLP_AVAILABLE.store(false, Ordering::Relaxed);
+			return;
+		};
+		let _ = Stream.set_write_timeout(Some(Duration::from_millis(200)));
+		let _ = Stream.set_read_timeout(Some(Duration::from_millis(200)));
+
+		let HttpReq = format!(
+			"POST /v1/traces HTTP/1.1\r\nHost: 127.0.0.1:4318\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n",
+			Payload.len()
+		);
+		if Stream.write_all(HttpReq.as_bytes()).is_err() { return; }
+		if Stream.write_all(Payload.as_bytes()).is_err() { return; }
+		let mut Buf = [0u8; 32];
+		let _ = Stream.read(&mut Buf);
+		if !(Buf.starts_with(b"HTTP/1.1 2") || Buf.starts_with(b"HTTP/1.0 2")) {
+			OTLP_AVAILABLE.store(false, Ordering::Relaxed);
+		}
+	});
+}
+
+fn rand_u64() -> u64 {
+	use std::collections::hash_map::DefaultHasher;
+	use std::hash::{Hash, Hasher};
+	let mut H = DefaultHasher::new();
+	std::thread::current().id().hash(&mut H);
+	NowNano().hash(&mut H);
+	H.finish()
+}
+
+/// Convenience macro: emit an OTLP span for an IPC handler.
+/// Usage: `otel_span!("file:readFile", StartNano, &[("path", &SomePath)]);`
+#[macro_export]
+macro_rules! otel_span {
+	($Name:expr, $Start:expr, $Attrs:expr) => {
+		$crate::IPC::DevLog::EmitOTLPSpan($Name, $Start, $crate::IPC::DevLog::NowNano(), $Attrs)
+	};
+	($Name:expr, $Start:expr) => {
+		$crate::IPC::DevLog::EmitOTLPSpan($Name, $Start, $crate::IPC::DevLog::NowNano(), &[])
+	};
+}

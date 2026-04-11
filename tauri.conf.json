@@ -18,7 +18,6 @@
 				"img-src": "'self' land: data: blob: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost https:",
 				"manifest-src": "'self' http://localhost:* https://tauri.localhost",
 				"media-src": "'self' http://localhost:* https://tauri.localhost",
-				"require-trusted-types-for": "'script'",
 				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost vscode-file://vscode-app https://eu-assets.i.posthog.com",
 				"style-src": "'self' 'unsafe-inline'",
 				"trusted-types": "WorkerApplication amdLoader cellRendererEditorText defaultWorkerFactory diffEditorWidget diffReview domLineBreaksComputer dompurify editorGhostText editorViewLayer notebookRenderer stickyScrollViewLayer tokenizeToString notebookChatEditController richScreenReaderContent collapsedCellPreview chatDebugTokenizer"
