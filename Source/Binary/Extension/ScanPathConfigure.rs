@@ -65,7 +65,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			// VS Code dependency path: built-in extensions from the VS Code
 			// source checkout. Primary source in dev — avoids requiring a copy
 			// step. Production builds use Sky Target or Resources instead.
-			let DependencyPath = Parent.join("../../../Dependency/Microsoft/Dependency/Editor/extensions");
+			let DependencyPath = Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
 			if DependencyPath.exists() {
 				debug!("[Extensions] [ScanPaths] + {} (VS Code Dependency)", DependencyPath.display());
 				ScanPathsGuard.push(DependencyPath);

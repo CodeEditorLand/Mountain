@@ -3,6 +3,9 @@
 	"identifier": "default",
 	"windows": ["*"],
 	"urls": ["http://localhost:*", "http://localhost:*/", "http://localhost:*/*", "https://tauri.localhost", "https://tauri.localhost/*", "tauri://localhost", "tauri://localhost/*"],
+	"remote": {
+		"urls": ["http://localhost:*", "http://localhost:*/*"]
+	},
 	"permissions": [
 		"core:path:default",
 		"core:event:default",
