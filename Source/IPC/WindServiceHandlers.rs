@@ -1267,12 +1267,26 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// Extension host message relay (Wind → Mountain → Cocoon)
 		// =====================================================================
 		"cocoon:extensionHostMessage" => {
-			dev_log!("exthost", "cocoon:extensionHostMessage bytes={}", args.first().map(|P| {
-				P.get("data").and_then(|D| D.as_array()).map(|A| A.len()).unwrap_or(0)
-			}).unwrap_or(0));
-			// TODO: Forward binary message to Cocoon via gRPC streaming RPC.
-			// For now, acknowledge receipt. Cocoon's gRPC server must implement
-			// the ExtensionHostMessage RPC to receive and process these.
+			let ByteCount = args
+				.first()
+				.map(|P| P.get("data").and_then(|D| D.as_array()).map(|A| A.len()).unwrap_or(0))
+				.unwrap_or(0);
+			dev_log!("exthost", "cocoon:extensionHostMessage bytes={}", ByteCount);
+
+			// Forward binary message to Cocoon via gRPC GenericNotification.
+			// Fire-and-forget — the extension host protocol is async.
+			let Payload = args.first().cloned().unwrap_or(Value::Null);
+			tokio::spawn(async move {
+				if let Err(Error) = crate::Vine::Client::SendNotification(
+					"cocoon-main".to_string(),
+					"extensionHostMessage".to_string(),
+					Payload,
+				)
+				.await
+				{
+					dev_log!("exthost", "cocoon:extensionHostMessage forward failed: {}", Error);
+				}
+			});
 			Ok(Value::Null)
 		},
 
@@ -2110,7 +2124,15 @@ async fn handle_extensions_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Va
 
 	dev_log!("extensions", "extensions:getAll returning {} extensions", Extensions.len());
 	if let Some(First) = Extensions.first() {
-		dev_log!("extensions", "extensions:getAll sample: {}", serde_json::to_string(First).unwrap_or_default().chars().take(300).collect::<String>());
+		dev_log!(
+			"extensions",
+			"extensions:getAll sample: {}",
+			serde_json::to_string(First)
+				.unwrap_or_default()
+				.chars()
+				.take(300)
+				.collect::<String>()
+		);
 	}
 	Ok(json!(Extensions))
 }
