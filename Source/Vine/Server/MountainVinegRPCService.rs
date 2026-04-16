@@ -36,7 +36,7 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use serde_json::Value;
+use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
 use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
