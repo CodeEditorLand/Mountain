@@ -378,6 +378,64 @@ impl MountainService for MountainVinegRPCService {
 			"WebviewReady" => {
 				dev_log!("grpc", "[MountainVinegRPCService] Webview ready notification received");
 			},
+			// Cocoon → Mountain → Sky: window messages (info/warn/error)
+			"window.showMessage" => {
+				dev_log!("grpc", "[MountainVinegRPCService] Window message from Cocoon: {:?}",
+					Parameter.get("message").and_then(|m| m.as_str()).unwrap_or(""));
+				if let Err(Error) = self.ApplicationHandle.emit("sky://notification/show", &Parameter) {
+					dev_log!("grpc", "warn: [MountainVinegRPCService] Failed to emit sky://notification/show: {}", Error);
+				}
+			},
+			// Cocoon → Mountain: command registration from extensions
+			"registerCommand" => {
+				let CommandId = Parameter.get("commandId").and_then(|c| c.as_str()).unwrap_or("");
+				dev_log!("grpc", "[MountainVinegRPCService] Cocoon registered command: {}", CommandId);
+				// Store in CommandRegistry as proxied command → Cocoon handles execution
+				if !CommandId.is_empty() {
+					self.Environment.ApplicationState.Extension.CommandRegistry
+						.RegisterProxied(
+							CommandId.to_string(),
+							"cocoon-main".to_string(),
+							CommandId.to_string(),
+						);
+				}
+			},
+			// Cocoon → Mountain: provider registration from extensions
+			"register_hover_provider" | "register_completion_item_provider" |
+			"register_definition_provider" | "register_reference_provider" |
+			"register_code_actions_provider" | "register_document_symbol_provider" |
+			"register_document_formatting_provider" => {
+				let Handle = Parameter.get("handle").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
+				let Selector = Parameter.get("language_selector").and_then(|s| s.as_str()).unwrap_or("*");
+				let ExtId = Parameter.get("extension_id").and_then(|e| e.as_str()).unwrap_or("");
+				let ProviderTypeName = MethodName.strip_prefix("register_").and_then(|s| s.strip_suffix("_provider")).unwrap_or("");
+				dev_log!("grpc", "[MountainVinegRPCService] Cocoon registered {} provider: handle={}, lang={}", ProviderTypeName, Handle, Selector);
+				// Provider registration happens in CocoonService.RegisterProvider via the typed RPC path.
+				// This notification path is a fallback for providers registered via the vscode API shim.
+				use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType as PT;
+				let ProvType = match ProviderTypeName {
+					"hover" => Some(PT::Hover),
+					"completion_item" => Some(PT::Completion),
+					"definition" => Some(PT::Definition),
+					"reference" => Some(PT::References),
+					"code_actions" => Some(PT::CodeAction),
+					"document_symbol" => Some(PT::DocumentSymbol),
+					"document_formatting" => Some(PT::DocumentFormatting),
+					_ => None,
+				};
+				if let Some(ProviderType) = ProvType {
+					use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
+					let Dto = ProviderRegistrationDTO {
+						Handle,
+						ProviderType,
+						Selector:json!([{ "language": Selector }]),
+						SideCarIdentifier:"cocoon-main".to_string(),
+						ExtensionIdentifier:json!(ExtId),
+						Options:None,
+					};
+					self.Environment.ApplicationState.Extension.ProviderRegistration.RegisterProvider(Handle, Dto);
+				}
+			},
 			_ => {
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon notification: {}", MethodName);
 				// Forward all unknown notifications as Tauri events so Wind
