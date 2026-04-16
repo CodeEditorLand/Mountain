@@ -2845,20 +2845,26 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// document highlights - Provide
+	/// document highlights - delegates to LanguageFeatureProviderRegistry
 	async fn provide_document_highlights(
 		&self,
 		request:Request<ProvideDocumentHighlightsRequest>,
 	) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing document highlights");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
 
-		Ok(Response::new(ProvideDocumentHighlightsResponse::default()))
+		match self.environment.ProvideDocumentHighlights(document_uri, position_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideDocumentHighlightsResponse::default())),
+			Err(e) => Err(Status::internal(format!("Document highlights failed: {}", e))),
+		}
 	}
 
 	/// Document Symbol Provider - Register
@@ -2877,20 +2883,21 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// document symbols - Provide
+	/// document symbols - delegates to LanguageFeatureProviderRegistry
 	async fn provide_document_symbols(
 		&self,
 		request:Request<ProvideDocumentSymbolsRequest>,
 	) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing document symbols");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
-		Ok(Response::new(ProvideDocumentSymbolsResponse::default()))
+		match self.environment.ProvideDocumentSymbols(document_uri).await {
+			Ok(_result) => Ok(Response::new(ProvideDocumentSymbolsResponse::default())),
+			Err(e) => Err(Status::internal(format!("Document symbols failed: {}", e))),
+		}
 	}
 
 	/// Workspace Symbol Provider - Register
@@ -2909,20 +2916,18 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// workspace symbols - Provide
+	/// workspace symbols - delegates to LanguageFeatureProviderRegistry
 	async fn provide_workspace_symbols(
 		&self,
 		request:Request<ProvideWorkspaceSymbolsRequest>,
 	) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing workspace symbols");
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] Providing workspace symbols for query: {}", req.query);
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
-
-		Ok(Response::new(ProvideWorkspaceSymbolsResponse::default()))
+		match self.environment.ProvideWorkspaceSymbols(req.query).await {
+			Ok(_result) => Ok(Response::new(ProvideWorkspaceSymbolsResponse::default())),
+			Err(e) => Err(Status::internal(format!("Workspace symbols failed: {}", e))),
+		}
 	}
 
 	/// Rename Provider - Register
@@ -2936,20 +2941,26 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// rename edits - Provide
+	/// rename edits - delegates to LanguageFeatureProviderRegistry
 	async fn provide_rename_edits(
 		&self,
 		request:Request<ProvideRenameEditsRequest>,
 	) -> Result<Response<ProvideRenameEditsResponse>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing rename edits");
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] Providing rename edits: new_name={}", req.new_name);
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
 
-		Ok(Response::new(ProvideRenameEditsResponse::default()))
+		match self.environment.ProvideRenameEdits(document_uri, position_dto, req.new_name).await {
+			Ok(_result) => Ok(Response::new(ProvideRenameEditsResponse::default())),
+			Err(e) => Err(Status::internal(format!("Rename edits failed: {}", e))),
+		}
 	}
 
 	/// Document Formatting Provider - Register
@@ -2968,20 +2979,22 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// document formatting - Provide
+	/// document formatting - delegates to LanguageFeatureProviderRegistry
 	async fn provide_document_formatting(
 		&self,
 		request:Request<ProvideDocumentFormattingRequest>,
 	) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing document formatting");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
-		Ok(Response::new(ProvideDocumentFormattingResponse::default()))
+		match self.environment.ProvideDocumentFormattingEdits(document_uri, options_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideDocumentFormattingResponse::default())),
+			Err(e) => Err(Status::internal(format!("Document formatting failed: {}", e))),
+		}
 	}
 
 	/// Document Range Formatting Provider - Register
@@ -3000,20 +3013,29 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// document range formatting - Provide
+	/// document range formatting - delegates to LanguageFeatureProviderRegistry
 	async fn provide_document_range_formatting(
 		&self,
 		request:Request<ProvideDocumentRangeFormattingRequest>,
 	) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing document range formatting");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let range = req.range.as_ref();
+		let range_dto = json!({
+			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
+			"StartColumn": range.and_then(|r| r.start.as_ref()).map(|p| p.character).unwrap_or(0),
+			"EndLineNumber": range.and_then(|r| r.end.as_ref()).map(|p| p.line).unwrap_or(0),
+			"EndColumn": range.and_then(|r| r.end.as_ref()).map(|p| p.character).unwrap_or(0),
+		});
+		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
-		Ok(Response::new(ProvideDocumentRangeFormattingResponse::default()))
+		match self.environment.ProvideDocumentRangeFormattingEdits(document_uri, range_dto, options_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideDocumentRangeFormattingResponse::default())),
+			Err(e) => Err(Status::internal(format!("Document range formatting failed: {}", e))),
+		}
 	}
 
 	/// On Type Formatting Provider - Register
@@ -3032,20 +3054,27 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// on-type formatting - Provide
+	/// on-type formatting - delegates to LanguageFeatureProviderRegistry
 	async fn provide_on_type_formatting(
 		&self,
 		request:Request<ProvideOnTypeFormattingRequest>,
 	) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing on-type formatting");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
+		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
-		Ok(Response::new(ProvideOnTypeFormattingResponse::default()))
+		match self.environment.ProvideOnTypeFormattingEdits(document_uri, position_dto, req.character, options_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideOnTypeFormattingResponse::default())),
+			Err(e) => Err(Status::internal(format!("On-type formatting failed: {}", e))),
+		}
 	}
 
 	/// Signature Help Provider - Register
@@ -3064,20 +3093,27 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// signature help - Provide
+	/// signature help - delegates to LanguageFeatureProviderRegistry
 	async fn provide_signature_help(
 		&self,
 		request:Request<ProvideSignatureHelpRequest>,
 	) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing signature help");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
+		let context_dto = json!({ "triggerKind": 1, "isRetrigger": false });
 
-		Ok(Response::new(ProvideSignatureHelpResponse::default()))
+		match self.environment.ProvideSignatureHelp(document_uri, position_dto, context_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideSignatureHelpResponse::default())),
+			Err(e) => Err(Status::internal(format!("Signature help failed: {}", e))),
+		}
 	}
 
 	/// Code Lens Provider - Register
@@ -3091,20 +3127,21 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// code lenses - Provide
+	/// code lenses - delegates to LanguageFeatureProviderRegistry
 	async fn provide_code_lenses(
 		&self,
 		request:Request<ProvideCodeLensesRequest>,
 	) -> Result<Response<ProvideCodeLensesResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing code lenses");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
-		Ok(Response::new(ProvideCodeLensesResponse::default()))
+		match self.environment.ProvideCodeLenses(document_uri).await {
+			Ok(_result) => Ok(Response::new(ProvideCodeLensesResponse::default())),
+			Err(e) => Err(Status::internal(format!("Code lenses failed: {}", e))),
+		}
 	}
 
 	/// Folding Range Provider - Register
@@ -3123,20 +3160,21 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// folding ranges - Provide
+	/// folding ranges - delegates to LanguageFeatureProviderRegistry
 	async fn provide_folding_ranges(
 		&self,
 		request:Request<ProvideFoldingRangesRequest>,
 	) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing folding ranges");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
-		Ok(Response::new(ProvideFoldingRangesResponse::default()))
+		match self.environment.ProvideFoldingRanges(document_uri).await {
+			Ok(_result) => Ok(Response::new(ProvideFoldingRangesResponse::default())),
+			Err(e) => Err(Status::internal(format!("Folding ranges failed: {}", e))),
+		}
 	}
 
 	/// Selection Range Provider - Register
@@ -3155,20 +3193,26 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// selection ranges - Provide
+	/// selection ranges - delegates to LanguageFeatureProviderRegistry
 	async fn provide_selection_ranges(
 		&self,
 		request:Request<ProvideSelectionRangesRequest>,
 	) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing selection ranges");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
 
-		Ok(Response::new(ProvideSelectionRangesResponse::default()))
+		match self.environment.ProvideSelectionRanges(document_uri, vec![position_dto]).await {
+			Ok(_result) => Ok(Response::new(ProvideSelectionRangesResponse::default())),
+			Err(e) => Err(Status::internal(format!("Selection ranges failed: {}", e))),
+		}
 	}
 
 	/// Semantic Tokens Provider - Register
@@ -3187,20 +3231,21 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// semantic tokens - Provide
+	/// semantic tokens - delegates to LanguageFeatureProviderRegistry
 	async fn provide_semantic_tokens_full(
 		&self,
 		request:Request<ProvideSemanticTokensRequest>,
 	) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing semantic tokens");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
-		Ok(Response::new(ProvideSemanticTokensResponse::default()))
+		match self.environment.ProvideSemanticTokensFull(document_uri).await {
+			Ok(_result) => Ok(Response::new(ProvideSemanticTokensResponse::default())),
+			Err(e) => Err(Status::internal(format!("Semantic tokens failed: {}", e))),
+		}
 	}
 
 	/// Inlay Hints Provider - Register
@@ -3214,20 +3259,28 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// inlay hints - Provide
+	/// inlay hints - delegates to LanguageFeatureProviderRegistry
 	async fn provide_inlay_hints(
 		&self,
 		request:Request<ProvideInlayHintsRequest>,
 	) -> Result<Response<ProvideInlayHintsResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing inlay hints");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let range = req.range.as_ref();
+		let range_dto = json!({
+			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
+			"StartColumn": range.and_then(|r| r.start.as_ref()).map(|p| p.character).unwrap_or(0),
+			"EndLineNumber": range.and_then(|r| r.end.as_ref()).map(|p| p.line).unwrap_or(0),
+			"EndColumn": range.and_then(|r| r.end.as_ref()).map(|p| p.character).unwrap_or(0),
+		});
 
-		Ok(Response::new(ProvideInlayHintsResponse::default()))
+		match self.environment.ProvideInlayHints(document_uri, range_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideInlayHintsResponse::default())),
+			Err(e) => Err(Status::internal(format!("Inlay hints failed: {}", e))),
+		}
 	}
 
 	/// Type Hierarchy Provider - Register
@@ -3246,36 +3299,34 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// type hierarchy supertypes - Provide
+	/// type hierarchy supertypes - delegates to LanguageFeatureProviderRegistry
 	async fn provide_type_hierarchy_supertypes(
 		&self,
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing type hierarchy supertypes");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
-
-		Ok(Response::new(ProvideTypeHierarchyResponse::default()))
+		let item_dto = json!({ "item": req.item });
+		match self.environment.ProvideTypeHierarchySupertypes(item_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideTypeHierarchyResponse::default())),
+			Err(e) => Err(Status::internal(format!("Type hierarchy supertypes failed: {}", e))),
+		}
 	}
 
-	/// type hierarchy subtypes - Provide
+	/// type hierarchy subtypes - delegates to LanguageFeatureProviderRegistry
 	async fn provide_type_hierarchy_subtypes(
 		&self,
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing type hierarchy subtypes");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
-
-		Ok(Response::new(ProvideTypeHierarchyResponse::default()))
+		let item_dto = json!({ "item": req.item });
+		match self.environment.ProvideTypeHierarchySubtypes(item_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideTypeHierarchyResponse::default())),
+			Err(e) => Err(Status::internal(format!("Type hierarchy subtypes failed: {}", e))),
+		}
 	}
 
 	/// Call Hierarchy Provider - Register
@@ -3294,36 +3345,34 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// call hierarchy incoming - Provide
+	/// call hierarchy incoming - delegates to LanguageFeatureProviderRegistry
 	async fn provide_call_hierarchy_incoming_calls(
 		&self,
 		request:Request<ProvideCallHierarchyRequest>,
 	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing call hierarchy incoming");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
-
-		Ok(Response::new(ProvideCallHierarchyResponse::default()))
+		let item_dto = json!({ "item": req.item });
+		match self.environment.ProvideCallHierarchyIncomingCalls(item_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideCallHierarchyResponse::default())),
+			Err(e) => Err(Status::internal(format!("Call hierarchy incoming failed: {}", e))),
+		}
 	}
 
-	/// call hierarchy outgoing - Provide
+	/// call hierarchy outgoing - delegates to LanguageFeatureProviderRegistry
 	async fn provide_call_hierarchy_outgoing_calls(
 		&self,
 		request:Request<ProvideCallHierarchyRequest>,
 	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing call hierarchy outgoing");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
-
-		Ok(Response::new(ProvideCallHierarchyResponse::default()))
+		let item_dto = json!({ "item": req.item });
+		match self.environment.ProvideCallHierarchyOutgoingCalls(item_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideCallHierarchyResponse::default())),
+			Err(e) => Err(Status::internal(format!("Call hierarchy outgoing failed: {}", e))),
+		}
 	}
 
 	/// Linked Editing Range Provider - Register
@@ -3342,20 +3391,26 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// linked editing ranges - Provide
+	/// linked editing ranges - delegates to LanguageFeatureProviderRegistry
 	async fn provide_linked_editing_ranges(
 		&self,
 		request:Request<ProvideLinkedEditingRangesRequest>,
 	) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
-		let _req = request.into_inner();
+		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing linked editing ranges");
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by handle
-		// - Call extension backend via gRPC
-		// - Return result
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
 
-		Ok(Response::new(ProvideLinkedEditingRangesResponse::default()))
+		match self.environment.ProvideLinkedEditingRanges(document_uri, position_dto).await {
+			Ok(_result) => Ok(Response::new(ProvideLinkedEditingRangesResponse::default())),
+			Err(e) => Err(Status::internal(format!("Linked editing ranges failed: {}", e))),
+		}
 	}
 
 	/// Show Quick Pick - present a selection list via UserInterfaceProvider.
