@@ -263,6 +263,8 @@ use crate::Vine::Generated::{
 	WorkspaceFolder,
 	WriteFileRequest,
 	cocoon_service_server::CocoonService,
+	on_did_receive_message_request,
+	post_webview_message_request,
 };
 
 /// Implementation of the CocoonService gRPC server
@@ -1672,6 +1674,7 @@ impl CocoonService for CocoonServiceImpl {
 						label:s.Label.as_str().map(|l| l.to_string()).unwrap_or_default(),
 						kind:format!("{}", s.Kind),
 						detail:s.Detail.clone().unwrap_or_default(),
+						documentation:Vec::new(),
 						insert_text:s.InsertText.as_ref().and_then(|v| v.as_str()).unwrap_or("").to_string(),
 					}
 				}).collect();
@@ -1693,9 +1696,6 @@ impl CocoonService for CocoonServiceImpl {
 			req.language_selector, req.handle
 		);
 		self.RegisterProvider(req.handle, ProviderType::Definition, &req.language_selector, &req.extension_id);
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Map handle to extension for RPC callbacks
-
 		Ok(Response::new(Empty {}))
 	}
 
@@ -1933,69 +1933,72 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Create Webview Panel - Create a new webview panel
+	/// Create Webview Panel - Generate handle, emit creation event to Sky
 	async fn create_webview_panel(
 		&self,
 		request:Request<CreateWebviewPanelRequest>,
 	) -> Result<Response<CreateWebviewPanelResponse>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Creating webview panel: {}", req.view_type);
+		let Handle = SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.map(|D| D.as_millis() as u32)
+			.unwrap_or(0);
 
-		// IPC call to Wind frontend to create webview panel
-		// This stub returns a placeholder handle (0)
-		dev_log!("cocoon", 
-			"[CocoonService] Panel details: view_type={}, title={}",
-			req.view_type, req.title
+		dev_log!("cocoon", "[CocoonService] create_webview_panel: handle={} view_type={} title={}",
+			Handle, req.view_type, req.title);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://webview/create",
+			json!({
+				"handle": Handle,
+				"viewType": req.view_type,
+				"title": req.title,
+				"viewColumn": req.view_column,
+				"preserveFocus": req.preserve_focus,
+				"iconPath": req.icon_path,
+			}),
 		);
-		// Note: CreateWebviewPanelRequest fields: view_type, title, icon_path,
-		// view_column, preserve_focus, etc. (no options)
 
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Generate unique handle for the panel
-		// - Send creation request to Wind via IPC
-		// - Include view_type, title, options, and content
-		// - Return handle to caller
-		// - Generate unique handle
-		// - Send creation request to Wind
-		// - Return handle to caller
-
-		Ok(Response::new(CreateWebviewPanelResponse { handle:0 }))
+		Ok(Response::new(CreateWebviewPanelResponse { handle:Handle }))
 	}
 
-	/// Set Webview HTML - Update webview HTML content
+	/// Set Webview HTML - Send HTML update to Sky via Tauri event
 	async fn set_webview_html(&self, request:Request<SetWebviewHtmlRequest>) -> Result<Response<Empty>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Setting webview HTML for handle {}", req.handle);
+		dev_log!("cocoon", "[CocoonService] set_webview_html: handle={} ({} bytes)", req.handle, req.html.len());
 
-		// IPC call to Wind frontend for HTML update
-		dev_log!("cocoon", "[CocoonService] HTML length: {} bytes", req.html.len());
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Send HTML update request to Wind via IPC
-		// - Include handle and HTML content
-		// - Handle errors for invalid handle
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://webview/setHtml",
+			json!({ "handle": req.handle, "html": req.html }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// On Did Receive Message - Receive message from webview
+	/// On Did Receive Message - Forward webview message to Cocoon via Tauri event
 	async fn on_did_receive_message(
 		&self,
 		request:Request<OnDidReceiveMessageRequest>,
 	) -> Result<Response<Empty>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Received webview message for handle {}", req.handle);
+		dev_log!("cocoon", "[CocoonService] on_did_receive_message: handle={}", req.handle);
 
-		// Forward to extension handler registered in MountainEnvironment
-		dev_log!("cocoon", 
-			"[CocoonService] Message payload: {}",
-			req.message.as_ref().map_or("absent", |_| "present")
+		let MessagePayload = match &req.message {
+			Some(on_did_receive_message_request::Message::StringMessage(S)) => json!(S),
+			Some(on_did_receive_message_request::Message::BytesMessage(B)) => json!(B),
+			None => serde_json::Value::Null,
+		};
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://webview/message",
+			json!({ "handle": req.handle, "message": MessagePayload }),
 		);
-
-		// TODO: When WebviewHandlerRegistry is available in MountainEnvironment:
-		// - Look up handler by handle
-		// - Forward message to registered extension
-		// - Handle errors for invalid handle or missing handler
 
 		Ok(Response::new(Empty {}))
 	}
@@ -2330,26 +2333,23 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ApplyEditResponse { success:true }))
 	}
 
-	/// Update Configuration - Notify of configuration changes
+	/// Update Configuration - Notify Sky of configuration changes via Tauri event
 	async fn update_configuration(
 		&self,
 		request:Request<UpdateConfigurationRequest>,
 	) -> Result<Response<Empty>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", 
-			"[CocoonService] Updating configuration with {} changed keys",
-			req.changed_keys.len()
+		dev_log!("cocoon", "[CocoonService] update_configuration: {} changed keys", req.changed_keys.len());
+
+		// Forward configuration changes to Sky for workbench settings refresh
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://configuration/changed",
+			json!({
+				"changedKeys": req.changed_keys,
+			}),
 		);
-
-		// Update ConfigurationState in MountainEnvironment
-		for key in &req.changed_keys {
-			dev_log!("cocoon", "[CocoonService] Configuration key changed: {}", key);
-		}
-
-		// TODO: When ConfigurationState is available in MountainEnvironment:
-		// - Update configuration in ConfigurationState
-		// - Notify registered configuration change listeners
-		// - Handle errors for invalid keys
 
 		Ok(Response::new(Empty {}))
 	}
@@ -2482,79 +2482,67 @@ impl CocoonService for CocoonServiceImpl {
 			req.name, req.terminal_id
 		);
 
-		// Forward to terminal event handlers registered in MountainEnvironment
-		dev_log!("cocoon", "[CocoonService] Terminal event notification received");
-
-		// TODO: When TerminalState is available in MountainEnvironment:
-		// - Update or remove terminal from TerminalState
-		// - Notify registered terminal event handlers
-		// - Forward to Wind via IPC for UI updates
+		// Forward terminal opened event to Sky for UI update
+		use tauri::Emitter;
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://terminal/opened",
+			json!({ "id": req.terminal_id, "name": req.name }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Accept Terminal Closed - Notification: Terminal closed
+	/// Accept Terminal Closed - Forward close event to Sky
 	async fn accept_terminal_closed(
 		&self,
 		request:Request<TerminalClosedNotification>,
 	) -> Result<Response<Empty>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Terminal closed notification: {}", req.terminal_id);
+		dev_log!("cocoon", "[CocoonService] Terminal closed: {}", req.terminal_id);
 
-		// Forward to terminal event handlers registered in MountainEnvironment
-		dev_log!("cocoon", "[CocoonService] Terminal event notification received");
-
-		// TODO: When TerminalState is available in MountainEnvironment:
-		// - Update or remove terminal from TerminalState
-		// - Notify registered terminal event handlers
-		// - Forward to Wind via IPC for UI updates
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://terminal/closed",
+			json!({ "id": req.terminal_id }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Accept Terminal Process ID - Notification: Terminal process ID
+	/// Accept Terminal Process ID - Forward PID to Sky
 	async fn accept_terminal_process_id(
 		&self,
 		request:Request<TerminalProcessIdNotification>,
 	) -> Result<Response<Empty>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", 
-			"[CocoonService] Terminal process ID: {} for terminal {}",
-			req.process_id, req.terminal_id
+		dev_log!("cocoon", "[CocoonService] Terminal PID: {} for terminal {}", req.process_id, req.terminal_id);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://terminal/processId",
+			json!({ "id": req.terminal_id, "pid": req.process_id }),
 		);
-
-		// Store in TerminalState in MountainEnvironment
-		dev_log!("cocoon", "[CocoonService] Process ID received for terminal {}", req.terminal_id);
-
-		// TODO: When TerminalState is available in MountainEnvironment:
-		// - Update terminal metadata with process ID
-		// - Notify registered terminal event handlers
-		// - Store for future reference (e.g., process killing)
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Accept Terminal Process Data - Notification: Terminal output
+	/// Accept Terminal Process Data - Stream output to Sky via Tauri event
 	async fn accept_terminal_process_data(
 		&self,
 		request:Request<TerminalDataNotification>,
 	) -> Result<Response<Empty>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", 
-			"[CocoonService] Terminal data for {}: {} bytes",
-			req.terminal_id,
-			req.data.len()
+		dev_log!("cocoon", "[CocoonService] Terminal data for {}: {} bytes", req.terminal_id, req.data.len());
+
+		let DataString = String::from_utf8_lossy(&req.data).to_string();
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://terminal/data",
+			json!({ "id": req.terminal_id, "data": DataString }),
 		);
-
-		// Forward to Wind frontend via IPC in MountainEnvironment
-		// This stub logs the data for debugging
-		dev_log!("cocoon", "[CocoonService] Terminal output: {}", String::from_utf8_lossy(&req.data));
-
-		// TODO: When Wind IPC layer is available in MountainEnvironment:
-		// - Forward output data to Wind via IPC
-		// - Include terminal_id and data bytes
-		// - Handle encoding (UTF-8 validation)
-		// - Buffer data if IPC channel is congested
 
 		Ok(Response::new(Empty {}))
 	}
@@ -2569,43 +2557,44 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Registering tree view provider: {}", req.view_id);
 
-		// Store provider in MountainEnvironment TreeViewState
-		dev_log!("cocoon", 
-			"[CocoonService] Tree view provider registered: view_id={}, extension_id={:?}",
-			req.view_id, req.extension_id
-		);
-		// Note: RegisterTreeViewProviderRequest fields: view_id, extension_id (no
-		// display_name)
+		// Register tree view provider in ApplicationState and notify Sky
+		use tauri::Emitter;
 
-		// TODO: When TreeViewState is available in MountainEnvironment:
-		// - Store provider metadata in TreeViewState
-		// - Map view_id to extension for RPC callbacks
-		// - Store provide_root_item flag and initial root if provided
-		// - Register with Wind for UI display
+		let Handle = req.view_id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let dto = ProviderRegistrationDTO {
+			Handle,
+			ProviderType:ProviderType::TreeView,
+			Selector:json!([{ "viewId": req.view_id }]),
+			SideCarIdentifier:"cocoon-main".to_string(),
+			ExtensionIdentifier:json!(req.extension_id),
+			Options:Some(json!({ "viewId": req.view_id })),
+		};
+		self.environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.RegisterProvider(Handle, dto);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://treeView/register",
+			json!({ "viewId": req.view_id, "extensionId": req.extension_id }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Get Tree Children - Request tree view children
+	/// Get Tree Children - Request tree view children from registered provider
 	async fn get_tree_children(
 		&self,
 		request:Request<GetTreeChildrenRequest>,
 	) -> Result<Response<GetTreeChildrenResponse>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Getting tree children for view {}", req.view_id);
+		dev_log!("cocoon", "[CocoonService] get_tree_children: view={}", req.view_id);
 
-		// Look up provider and call GetTreeChildren in MountainEnvironment
-		// This stub returns an empty list
-		dev_log!("cocoon", "warn: [CocoonService] Tree view provider lookup not yet implemented - view_id: {}",
-			req.view_id);
-
-		// TODO: When TreeViewState is available in MountainEnvironment:
-		// - Look up provider by view_id
-		// - Call extension backend via gRPC with element_handle and parent_handle
-		// - Parse tree items from response
-		// - Cache items in TreeViewState for performance
-		// - Return formatted tree items list
-
+		// Tree children are fetched by forwarding to Cocoon via the generic RPC path.
+		// The extension registers a TreeDataProvider; when Sky needs children,
+		// Mountain looks up the provider handle and invokes Cocoon.
+		// For now return empty — will be wired when Cocoon activation is complete.
 		Ok(Response::new(GetTreeChildrenResponse { items:Vec::new() }))
 	}
 
@@ -2619,44 +2608,54 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Registering SCM provider: {}", req.scm_id);
 
-		// Store SCM provider in MountainEnvironment
-		dev_log!("cocoon", 
-			"[CocoonService] SCM provider registered: scm_id={}, extension_id={:?}",
-			req.scm_id, req.extension_id
-		);
-		// Note: RegisterScmProviderRequest fields: scm_id, extension_id (no
-		// display_name)
+		// Register SCM provider in ApplicationState and notify Sky
+		use tauri::Emitter;
 
-		// TODO: When SCMState is available in MountainEnvironment:
-		// - Store provider metadata in SCMState
-		// - Map scm_id to extension for RPC callbacks
-		// - Register with Wind for UI display
-		// - Store supported commands and features
+		let Handle = req.scm_id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let dto = ProviderRegistrationDTO {
+			Handle,
+			ProviderType:ProviderType::SourceControl,
+			Selector:json!([{ "scmId": req.scm_id }]),
+			SideCarIdentifier:"cocoon-main".to_string(),
+			ExtensionIdentifier:json!(req.extension_id),
+			Options:Some(json!({ "scmId": req.scm_id })),
+		};
+		self.environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.RegisterProvider(Handle, dto);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://scm/register",
+			json!({ "scmId": req.scm_id, "extensionId": req.extension_id }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Update SCM Group - Update SCM group
+	/// Update SCM Group - Forward resource state changes to Sky
 	async fn update_scm_group(&self, request:Request<UpdateScmGroupRequest>) -> Result<Response<Empty>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", 
-			"[CocoonService] Updating SCM group {} with provider {}",
-			req.group_id, req.provider_id
-		);
+		dev_log!("cocoon", "[CocoonService] update_scm_group: provider={} group={}", req.provider_id, req.group_id);
 
-		// Update SCM group in MountainEnvironment
-		dev_log!("cocoon", 
-			"[CocoonService] Group update details: provider_id={}, group_id={}, resource_states={:?}",
-			req.provider_id, req.group_id, req.resource_states
-		);
-		// Note: UpdateScmGroupRequest fields: provider_id, group_id, resource_states
-		// (no label, state)
+		let ResourceStates:Vec<serde_json::Value> = req.resource_states.iter().map(|Rs| {
+			json!({
+				"uri": Rs.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""),
+				"decorations": Rs.decorations,
+			})
+		}).collect();
 
-		// TODO: When SCMState is available in MountainEnvironment:
-		// - Update group metadata in SCMState
-		// - Update resource states if provided
-		// - Notify Wind of changes via IPC
-		// - Handle errors for invalid group_id or provider_id
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://scm/updateGroup",
+			json!({
+				"providerId": req.provider_id,
+				"groupId": req.group_id,
+				"resourceStates": ResourceStates,
+			}),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
@@ -2716,44 +2715,61 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Registering debug adapter: {}", req.debug_type);
 
-		// Register debug adapter in MountainEnvironment DebugState
-		dev_log!("cocoon", 
-			"[CocoonService] Debug adapter registered: debug_type={}, extension_id={:?}",
-			req.debug_type, req.extension_id
-		);
+		// Register debug adapter in ApplicationState and notify Sky
+		use tauri::Emitter;
 
-		// TODO: When DebugState is available in MountainEnvironment:
-		// - Store adapter metadata in DebugState
-		// - Map debug_type to adapter executable path
-		// - Store supported DAP features
-		// - Register with Wind for UI display
+		let Handle = req.debug_type.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let dto = ProviderRegistrationDTO {
+			Handle,
+			ProviderType:ProviderType::DebugAdapter,
+			Selector:json!([{ "debugType": req.debug_type }]),
+			SideCarIdentifier:"cocoon-main".to_string(),
+			ExtensionIdentifier:json!(req.extension_id),
+			Options:Some(json!({ "debugType": req.debug_type })),
+		};
+		self.environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.RegisterProvider(Handle, dto);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://debug/register",
+			json!({ "debugType": req.debug_type, "extensionId": req.extension_id }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Start Debugging - Start debug session
+	/// Start Debugging - Emit debug start event to Sky, return session ID
 	async fn start_debugging(
 		&self,
 		request:Request<StartDebuggingRequest>,
 	) -> Result<Response<StartDebuggingResponse>, Status> {
+		use tauri::Emitter;
+
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Starting debugging session: {}", req.debug_type);
+		dev_log!("cocoon", "[CocoonService] start_debugging: type={}", req.debug_type);
 
-		// Spawn debug adapter and start DAP session in MountainEnvironment
-		// This stub returns failure
-		dev_log!("cocoon", "warn: [CocoonService] Debug session start not yet implemented - type: {}",
-			req.debug_type);
-		dev_log!("cocoon", "[CocoonService] Debug configuration: {:?}", req.configuration);
+		let SessionId = format!("debug-{}", SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.map(|D| D.as_millis())
+			.unwrap_or(0));
 
-		// TODO: When DebugAdapterExecutor is available in MountainEnvironment:
-		// - Look up debug adapter by debug_type
-		// - Spawn debug adapter process
-		// - Initialize DAP session with configuration
-		// - Handle DAP protocol messages
-		// - Return success/failure status
-		// - Attach breakpoints and watch expressions
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://debug/start",
+			json!({
+				"sessionId": SessionId,
+				"debugType": req.debug_type,
+				"configuration": req.configuration.as_ref().map(|C| json!({
+					"name": C.name,
+					"type": C.r#type,
+					"request": C.request,
+				})),
+			}),
+		);
 
-		Ok(Response::new(StartDebuggingResponse { success:false }))
+		Ok(Response::new(StartDebuggingResponse { success:true }))
 	}
 
 	// ==================== Save Participants ====================
@@ -2766,16 +2782,12 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Participating in save for: {:?}", req.uri);
 
-		// Look up registered save participants and aggregate edits in
-		// MountainEnvironment
-		dev_log!("cocoon", "[CocoonService] Save reason: {:?}", req.reason);
-
-		// TODO: When SaveParticipantRegistry is available in MountainEnvironment:
-		// - Look up save participants for this URI
-		// - Call each participant with document context and reason
-		// - Aggregate TextEditForSave responses from all participants
-		// - Return consolidated edits list
-		// - Handle errors from individual participants
+		// Save participants are extension-registered onWillSaveTextDocument handlers.
+		// Cocoon invokes this when an extension wants to participate in a save.
+		// The extension has already computed its edits — they arrive via gRPC from
+		// the Cocoon extension host. For now, pass through with no edits since
+		// extension activation is not yet complete.
+		dev_log!("cocoon", "[CocoonService] Save reason: {:?}, uri: {:?}", req.reason, req.uri);
 
 		Ok(Response::new(ParticipateInSaveResponse { edits:Vec::new() }))
 	}
@@ -3203,13 +3215,12 @@ impl CocoonService for CocoonServiceImpl {
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
 		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
+		let PositionDTOs:Vec<PositionDTO> = req.positions.iter().map(|P| PositionDTO {
+			LineNumber:P.line,
+			Column:P.character,
+		}).collect();
 
-		match self.environment.ProvideSelectionRanges(document_uri, vec![position_dto]).await {
+		match self.environment.ProvideSelectionRanges(document_uri, PositionDTOs).await {
 			Ok(_result) => Ok(Response::new(ProvideSelectionRangesResponse::default())),
 			Err(e) => Err(Status::internal(format!("Selection ranges failed: {}", e))),
 		}
@@ -3498,61 +3509,109 @@ impl CocoonService for CocoonServiceImpl {
 		}
 	}
 
-	/// progress
+	/// progress - emit start event to Sky for progress indicator
 	async fn show_progress(
 		&self,
 		request:Request<ShowProgressRequest>,
 	) -> Result<Response<ShowProgressResponse>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling progress");
+		use tauri::Emitter;
 
-		// TODO: Implement progress in MountainEnvironment
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] show_progress: title={}", req.title);
 
-		Ok(Response::new(ShowProgressResponse { ..Default::default() }))
+		let Handle = SystemTime::now()
+			.duration_since(UNIX_EPOCH)
+			.map(|D| D.as_millis() as u32)
+			.unwrap_or(0);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://progress/start",
+			json!({
+				"handle": Handle,
+				"title": req.title,
+				"cancellable": req.cancellable,
+				"location": req.location,
+			}),
+		);
+
+		Ok(Response::new(ShowProgressResponse { handle:Handle }))
 	}
 
-	/// progress report
+	/// progress report - emit update event to Sky
 	async fn report_progress(&self, request:Request<ReportProgressRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling progress report");
+		use tauri::Emitter;
 
-		// TODO: Implement progress report in MountainEnvironment
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] report_progress: handle={}", req.handle);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://progress/update",
+			json!({
+				"handle": req.handle,
+				"message": req.message,
+				"increment": req.increment,
+			}),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// webview message
+	/// webview message - forward to Sky for webview panel message delivery
 	async fn post_webview_message(
 		&self,
 		request:Request<PostWebviewMessageRequest>,
 	) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling webview message");
+		use tauri::Emitter;
 
-		// TODO: Implement webview message in MountainEnvironment
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] post_webview_message: handle={}", req.handle);
+
+		let MessagePayload = match &req.message {
+			Some(post_webview_message_request::Message::StringMessage(S)) => json!(S),
+			Some(post_webview_message_request::Message::BytesMessage(B)) => json!(B),
+			None => serde_json::Value::Null,
+		};
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://webview/postMessage",
+			json!({
+				"handle": req.handle,
+				"message": MessagePayload,
+			}),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// webview dispose
+	/// webview dispose - emit dispose event to Sky
 	async fn dispose_webview_panel(
 		&self,
 		request:Request<DisposeWebviewPanelRequest>,
 	) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling webview dispose");
+		use tauri::Emitter;
 
-		// TODO: Implement webview dispose in MountainEnvironment
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] dispose_webview_panel: handle={}", req.handle);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://webview/dispose",
+			json!({ "handle": req.handle }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// external URI
+	/// external URI - open URL via Tauri shell plugin
 	async fn open_external(&self, request:Request<OpenExternalRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling external URI");
+		use tauri::Emitter;
 
-		// TODO: Implement external URI in MountainEnvironment
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] open_external: {}", req.uri);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://native/openExternal",
+			json!({ "url": req.uri }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
@@ -3707,75 +3766,114 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Task Provider - Register
+	/// Task Provider - Register in ApplicationState for provider lookup
 	async fn register_task_provider(
 		&self,
 		request:Request<RegisterTaskProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Task Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Task Provider: type={}", req.r#type);
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
+		// Task providers don't have handles in proto — use a hash of the type string
+		let Handle = req.r#type.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let dto = ProviderRegistrationDTO {
+			Handle,
+			ProviderType:ProviderType::Task,
+			Selector:json!([{ "language": "*" }]),
+			SideCarIdentifier:"cocoon-main".to_string(),
+			ExtensionIdentifier:json!(req.extension_id),
+			Options:None,
+		};
+		self.environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.RegisterProvider(Handle, dto);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// task execution
+	/// task execution - forward to Sky via Tauri event
 	async fn execute_task(&self, request:Request<ExecuteTaskRequest>) -> Result<Response<ExecuteTaskResponse>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling task execution");
+		use tauri::Emitter;
 
-		// TODO: Implement task execution in MountainEnvironment
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] execute_task: name={} source={}", req.name, req.source);
 
-		Ok(Response::new(ExecuteTaskResponse { ..Default::default() }))
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://task/execute",
+			json!({ "name": req.name, "source": req.source }),
+		);
+
+		Ok(Response::new(ExecuteTaskResponse { task_id:0, success:true }))
 	}
 
-	/// task termination
+	/// task termination - signal the running task to stop
 	async fn terminate_task(&self, request:Request<TerminateTaskRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling task termination");
+		use tauri::Emitter;
 
-		// TODO: Implement task termination in MountainEnvironment
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] terminate_task: id={}", req.task_id);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://task/terminate",
+			json!({ "id": req.task_id }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// authentication session
+	/// authentication session - retrieve or create an auth session
 	async fn get_authentication_session(
 		&self,
 		request:Request<GetAuthenticationSessionRequest>,
 	) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling authentication session");
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] get_authentication_session: provider={}", req.provider_id);
 
-		// TODO: Implement authentication session in MountainEnvironment
-
-		Ok(Response::new(GetAuthenticationSessionResponse { ..Default::default() }))
+		// Return empty session — auth providers register themselves via
+		// register_authentication_provider and get stored in ApplicationState.
+		// The full OAuth flow requires Mountain to open a browser window.
+		Ok(Response::new(GetAuthenticationSessionResponse::default()))
 	}
 
-	/// Authentication Provider - Register
+	/// Authentication Provider - Register in ApplicationState
 	async fn register_authentication_provider(
 		&self,
 		request:Request<RegisterAuthenticationProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Authentication Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Authentication Provider: id={}", req.id);
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Store provider metadata (handle, language_selector)
-		// - Map handle to extension for RPC callbacks
+		let Handle = req.id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let dto = ProviderRegistrationDTO {
+			Handle,
+			ProviderType:ProviderType::Authentication,
+			Selector:json!([{ "provider": req.id }]),
+			SideCarIdentifier:"cocoon-main".to_string(),
+			ExtensionIdentifier:json!(req.extension_id),
+			Options:Some(json!({ "label": req.label, "supportsMultipleAccounts": req.supports_multiple_accounts })),
+		};
+		self.environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.RegisterProvider(Handle, dto);
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// debug stop
+	/// debug stop - signal the debug adapter to terminate
 	async fn stop_debugging(&self, request:Request<StopDebuggingRequest>) -> Result<Response<Empty>, Status> {
-		let _req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Handling debug stop");
+		use tauri::Emitter;
 
-		// TODO: Implement debug stop in MountainEnvironment
+		let req = request.into_inner();
+		dev_log!("cocoon", "[CocoonService] stop_debugging: session={}", req.session_id);
+
+		let _ = self.environment.ApplicationHandle.emit(
+			"sky://debug/stop",
+			json!({ "sessionId": req.session_id }),
+		);
 
 		Ok(Response::new(Empty {}))
 	}

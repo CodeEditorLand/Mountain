@@ -284,7 +284,6 @@ use tokio::time::interval;
 use tauri::{Emitter, Manager};
 
 use crate::{IPC::AdvancedFeatures::PerformanceStats, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
-use crate::dev_log;
 
 // TEMPORARY: MountainIPC module not yet implemented
 // This import is needed for full document synchronization with Mountain

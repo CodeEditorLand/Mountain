@@ -122,6 +122,9 @@ pub mod DevLog;
 /// Legacy Wind Service Handlers.
 pub mod WindServiceHandlers;
 
+/// Wind Service Handler - atomic domain modules split from WindServiceHandlers.
+pub mod WindServiceHandler;
+
 // --- Legacy Subdirectories ---
 
 /// Legacy Enhanced subdirectory.

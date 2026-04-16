@@ -411,18 +411,18 @@ pub(super) async fn provide_workspace_symbols(
 ) -> Result<Option<Value>, CommonError> {
 	// Workspace symbols don't have a specific document URI — use a dummy lookup.
 	// The provider is registered globally, so we pick the first WorkspaceSymbol provider.
-	let providers = environment
-		.ApplicationState
-		.Extension
-		.ProviderRegistration
-		.LanguageProviders
-		.lock()
-		.map_err(crate::Environment::Utility::MapApplicationStateLockErrorToCommonError)?;
-	let provider = providers.values().find(|p| p.ProviderType == ProviderType::WorkspaceSymbol);
-	match provider {
+	let MatchingRegistration = {
+		let providers = environment
+			.ApplicationState
+			.Extension
+			.ProviderRegistration
+			.LanguageProviders
+			.lock()
+			.map_err(crate::Environment::Utility::MapApplicationStateLockErrorToCommonError)?;
+		providers.values().find(|p| p.ProviderType == ProviderType::WorkspaceSymbol).cloned()
+	};
+	match MatchingRegistration {
 		Some(registration) => {
-			let registration = registration.clone();
-			drop(providers);
 			let response = invoke_provider(
 				environment,
 				&registration,
@@ -431,7 +431,7 @@ pub(super) async fn provide_workspace_symbols(
 			.await?;
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
-		None => { drop(providers); Ok(None) },
+		None => Ok(None),
 	}
 }
 

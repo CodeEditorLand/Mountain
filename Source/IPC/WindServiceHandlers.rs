@@ -204,7 +204,7 @@ use crate::{
 ///
 /// Windows URI paths have a leading slash: `/C:/Users/...` → strip it.
 /// Unix paths start with `/` normally.
-fn extract_path_from_arg(Arg:&Value) -> Result<String, String> {
+pub fn extract_path_from_arg(Arg:&Value) -> Result<String, String> {
 	// Direct string path
 	if let Some(Path) = Arg.as_str() {
 		return Ok(normalize_uri_path(Path));
@@ -385,7 +385,7 @@ fn hex_digit(Byte:u8) -> Option<u8> {
 }
 
 /// Convert a `std::fs::Metadata` to VS Code's `IStat` shape.
-fn metadata_to_istat(Metadata:&std::fs::Metadata) -> Value {
+pub fn metadata_to_istat(Metadata:&std::fs::Metadata) -> Value {
 	let FileType = if Metadata.is_symlink() {
 		64 // SymbolicLink
 	} else if Metadata.is_dir() {

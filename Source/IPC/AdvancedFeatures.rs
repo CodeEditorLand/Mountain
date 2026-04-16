@@ -214,7 +214,6 @@ use tokio::time::interval;
 use tauri::{Emitter, Manager};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
-use crate::dev_log;
 
 /// Advanced IPC features for enhanced Mountain-Wind synchronization
 #[derive(Clone)]
