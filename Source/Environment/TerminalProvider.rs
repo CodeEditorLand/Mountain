@@ -107,7 +107,6 @@ use CommonLibrary::{
 	Terminal::TerminalProvider::TerminalProvider,
 };
 use async_trait::async_trait;
-use log::{error, info, trace, warn};
 use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
 use serde_json::{Value, json};
 use tauri::Emitter;
@@ -115,6 +114,7 @@ use tokio::sync::mpsc as TokioMPSC;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO;
+use crate::dev_log;
 
 #[async_trait]
 impl TerminalProvider for MountainEnvironment {
@@ -134,7 +134,7 @@ impl TerminalProvider for MountainEnvironment {
 			.unwrap_or("terminal")
 			.to_string();
 
-		info!(
+		dev_log!("terminal", 
 			"[TerminalProvider] Creating terminal ID: {}, Name: '{}'",
 			TerminalIdentifier, Name
 		);
@@ -181,7 +181,7 @@ impl TerminalProvider for MountainEnvironment {
 		tokio::spawn(async move {
 			while let Some(Data) = InputReceiver.recv().await {
 				if let Err(Error) = PTYWriter.write_all(Data.as_bytes()) {
-					error!("[TerminalProvider] PTY write failed for ID {}: {}", TermIDForInput, Error);
+					dev_log!("terminal", "error: [TerminalProvider] PTY write failed for ID {}: {}", TermIDForInput, Error);
 
 					break;
 				}
@@ -218,10 +218,8 @@ impl TerminalProvider for MountainEnvironment {
 							)
 							.await
 						{
-							warn!(
-								"[TerminalProvider] Failed to send process data for ID {}: {}",
-								TermIDForOutput, Error
-							);
+							dev_log!("terminal", "warn: [TerminalProvider] Failed to send process data for ID {}: {}",
+								TermIDForOutput, Error);
 						}
 					},
 
@@ -238,7 +236,7 @@ impl TerminalProvider for MountainEnvironment {
 		tokio::spawn(async move {
 			let _exit_status = ChildProcess.wait();
 
-			info!("[TerminalProvider] Process for terminal ID {} has exited.", TermIDForExit);
+			dev_log!("terminal", "[TerminalProvider] Process for terminal ID {} has exited.", TermIDForExit);
 
 			let IPCProvider:Arc<dyn IPCProvider> = EnvironmentClone.Require();
 
@@ -250,10 +248,8 @@ impl TerminalProvider for MountainEnvironment {
 				)
 				.await
 			{
-				warn!(
-					"[TerminalProvider] Failed to send process exit notification for ID {}: {}",
-					TermIDForExit, Error
-				);
+				dev_log!("terminal", "warn: [TerminalProvider] Failed to send process exit notification for ID {}: {}",
+					TermIDForExit, Error);
 			}
 
 			// Clean up the terminal from the state
@@ -274,7 +270,7 @@ impl TerminalProvider for MountainEnvironment {
 	}
 
 	async fn SendTextToTerminal(&self, TerminalId:u64, Text:String) -> Result<(), CommonError> {
-		trace!("[TerminalProvider] Sending text to terminal ID: {}", TerminalId);
+		dev_log!("terminal", "[TerminalProvider] Sending text to terminal ID: {}", TerminalId);
 
 		let SenderOption = {
 			let TerminalsGuard = self
@@ -304,7 +300,7 @@ impl TerminalProvider for MountainEnvironment {
 	}
 
 	async fn DisposeTerminal(&self, TerminalId:u64) -> Result<(), CommonError> {
-		info!("[TerminalProvider] Disposing terminal ID: {}", TerminalId);
+		dev_log!("terminal", "[TerminalProvider] Disposing terminal ID: {}", TerminalId);
 
 		let TerminalArc = self
 			.ApplicationState
@@ -325,7 +321,7 @@ impl TerminalProvider for MountainEnvironment {
 	}
 
 	async fn ShowTerminal(&self, TerminalId:u64, PreserveFocus:bool) -> Result<(), CommonError> {
-		info!("[TerminalProvider] Showing terminal ID: {}", TerminalId);
+		dev_log!("terminal", "[TerminalProvider] Showing terminal ID: {}", TerminalId);
 
 		self.ApplicationHandle
 			.emit(
@@ -336,7 +332,7 @@ impl TerminalProvider for MountainEnvironment {
 	}
 
 	async fn HideTerminal(&self, TerminalId:u64) -> Result<(), CommonError> {
-		info!("[TerminalProvider] Hiding terminal ID: {}", TerminalId);
+		dev_log!("terminal", "[TerminalProvider] Hiding terminal ID: {}", TerminalId);
 
 		self.ApplicationHandle
 			.emit("sky://terminal/hide", json!({ "id": TerminalId }))

@@ -142,7 +142,6 @@
 
 use std::{path::PathBuf, sync::Arc};
 
-use log::{debug, info};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 // use url::Url; // Temporarily disabled - verify usage
@@ -165,6 +164,7 @@ type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationO
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::dev_log;
 
 /// Wind desktop configuration structure
 /// Mirrors Wind's IDesktopConfiguration interface
@@ -241,7 +241,7 @@ pub struct WindServiceAdapter {
 impl WindServiceAdapter {
 	/// Create a new Wind service adapter
 	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
-		info!("[WindServiceAdapters] Creating Wind service adapter");
+		dev_log!("ipc", "[WindServiceAdapters] Creating Wind service adapter");
 		Self { runtime }
 	}
 
@@ -250,7 +250,7 @@ impl WindServiceAdapter {
 		&self,
 		mountain_config:serde_json::Value,
 	) -> Result<WindDesktopConfiguration, String> {
-		debug!("[WindServiceAdapters] Converting Mountain config to Wind config");
+		dev_log!("ipc", "[WindServiceAdapters] Converting Mountain config to Wind config");
 
 		// Parse the Mountain configuration
 		let config:MountainSandboxConfiguration = serde_json::from_value(mountain_config)
@@ -287,14 +287,14 @@ impl WindServiceAdapter {
 
 	/// Get Wind-compatible environment service
 	pub async fn get_environment_service(&self) -> Result<WindEnvironmentService, String> {
-		debug!("[WindServiceAdapters] Getting Wind environment service");
+		dev_log!("ipc", "[WindServiceAdapters] Getting Wind environment service");
 
 		Ok(WindEnvironmentService::new())
 	}
 
 	/// Get Wind-compatible file service
 	pub async fn get_file_service(&self) -> Result<WindFileService, String> {
-		debug!("[WindServiceAdapters] Getting Wind file service");
+		dev_log!("ipc", "[WindServiceAdapters] Getting Wind file service");
 
 		let file_system_reader:Arc<dyn FileSystemReader> = self.runtime.Environment.Require();
 
@@ -305,7 +305,7 @@ impl WindServiceAdapter {
 
 	/// Get Wind-compatible storage service
 	pub async fn get_storage_service(&self) -> Result<WindStorageService, String> {
-		debug!("[WindServiceAdapters] Getting Wind storage service");
+		dev_log!("ipc", "[WindServiceAdapters] Getting Wind storage service");
 
 		let storage:Arc<dyn StorageProvider> = self.runtime.Environment.Require();
 
@@ -314,7 +314,7 @@ impl WindServiceAdapter {
 
 	/// Get Wind-compatible configuration service
 	pub async fn get_configuration_service(&self) -> Result<WindConfigurationService, String> {
-		debug!("[WindServiceAdapters] Getting Wind configuration service");
+		dev_log!("ipc", "[WindServiceAdapters] Getting Wind configuration service");
 
 		let config:Arc<dyn ConfigurationProvider> = self.runtime.Environment.Require();
 

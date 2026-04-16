@@ -8,11 +8,11 @@
 use std::collections::HashMap;
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::debug;
 use serde_json::{Value, json};
 use tauri::{Emitter, Manager};
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::dev_log;
 
 /// Configuration operations implementation for MountainEnvironment
 pub(super) async fn set_webview_options_impl(
@@ -20,7 +20,7 @@ pub(super) async fn set_webview_options_impl(
 	handle:String,
 	options_value:Value,
 ) -> Result<(), CommonError> {
-	debug!("[WebviewProvider] Setting options for Webview: {}", handle);
+	dev_log!("extensions", "[WebviewProvider] Setting options for Webview: {}", handle);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		let options_map:HashMap<String, Value> = serde_json::from_value(options_value.clone()).map_err(|error| {
@@ -77,7 +77,7 @@ pub(super) async fn set_webview_html_impl(
 	handle:String,
 	html:String,
 ) -> Result<(), CommonError> {
-	debug!("[WebviewProvider] Setting HTML for Webview: {} ({} bytes)", handle, html.len());
+	dev_log!("extensions", "[WebviewProvider] Setting HTML for Webview: {} ({} bytes)", handle, html.len());
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		webview_window

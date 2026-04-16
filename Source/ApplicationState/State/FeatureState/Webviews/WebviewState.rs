@@ -35,9 +35,9 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO;
+use crate::dev_log;
 
 /// Active webviews state containing webviews by ID.
 #[derive(Clone)]
@@ -48,7 +48,7 @@ pub struct WebviewState {
 
 impl Default for WebviewState {
 	fn default() -> Self {
-		debug!("[WebviewState] Initializing default webview state...");
+		dev_log!("extensions", "[WebviewState] Initializing default webview state...");
 
 		Self { ActiveWebviews:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
@@ -69,7 +69,7 @@ impl WebviewState {
 	pub fn AddOrUpdate(&self, id:String, webview:WebviewStateDTO) {
 		if let Ok(mut guard) = self.ActiveWebviews.lock() {
 			guard.insert(id, webview);
-			debug!("[WebviewState] Webview added/updated");
+			dev_log!("extensions", "[WebviewState] Webview added/updated");
 		}
 	}
 
@@ -77,7 +77,7 @@ impl WebviewState {
 	pub fn Remove(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveWebviews.lock() {
 			guard.remove(id);
-			debug!("[WebviewState] Webview removed: {}", id);
+			dev_log!("extensions", "[WebviewState] Webview removed: {}", id);
 		}
 	}
 
@@ -85,7 +85,7 @@ impl WebviewState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.ActiveWebviews.lock() {
 			guard.clear();
-			debug!("[WebviewState] All webviews cleared");
+			dev_log!("extensions", "[WebviewState] All webviews cleared");
 		}
 	}
 

@@ -27,7 +27,7 @@
 
 use serde::{Deserializer, de::Deserialize};
 use url::Url;
-use log::debug;
+use crate::dev_log;
 
 /// Deserializes a JSON string value to a URL.
 ///
@@ -46,7 +46,7 @@ where
 	D: Deserializer<'de>, {
 	let string_value = String::deserialize(DeserializerInstance)?;
 
-	debug!("[URLDeserializer] Deserializing URL: {}", string_value);
+	dev_log!("ipc", "[URLDeserializer] Deserializing URL: {}", string_value);
 
 	Url::parse(&string_value).map_err(serde::de::Error::custom)
 }

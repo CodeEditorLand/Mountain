@@ -39,6 +39,8 @@ use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager}; // Manager trait provides try_state() method
 
+use crate::dev_log;
+
 use super::CertificateManager::{CertificateInfo, CertificateManager};
 
 /// Initialize TLS certificate manager
@@ -47,7 +49,7 @@ use super::CertificateManager::{CertificateInfo, CertificateManager};
 /// It will load an existing CA from the keyring or generate a new one.
 #[tauri::command]
 pub async fn tls_initialize(app_handle:AppHandle) -> Result<String, String> {
-	log::info!("[TlsCommands] Initializing TLS certificate manager");
+	dev_log!("security", "TLS certificate manager initializing");
 
 	// Try to get existing certificate manager from state
 	let state = app_handle
@@ -62,7 +64,7 @@ pub async fn tls_initialize(app_handle:AppHandle) -> Result<String, String> {
 		.await
 		.map_err(|e| format!("Failed to initialize CA: {}", e))?;
 
-	log::info!("[TlsCommands] TLS certificate manager initialized successfully");
+	dev_log!("security", "TLS certificate manager initialized");
 	Ok("TLS certificate manager initialized".to_string())
 }
 
@@ -74,7 +76,7 @@ pub async fn tls_initialize(app_handle:AppHandle) -> Result<String, String> {
 /// Returns the CA certificate PEM string, or an error if not initialized.
 #[tauri::command]
 pub async fn tls_get_ca_cert(app_handle:AppHandle) -> Result<String, String> {
-	log::debug!("[TlsCommands] Getting CA certificate");
+	dev_log!("security", "getting CA certificate");
 
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
@@ -99,7 +101,7 @@ pub async fn tls_get_server_cert_info(
 	app_handle:AppHandle,
 	hostname:String,
 ) -> Result<Option<CertificateInfo>, String> {
-	log::debug!("[TlsCommands] Getting server cert info for {}", hostname);
+	dev_log!("security", "getting server cert info for {}", hostname);
 
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
@@ -119,7 +121,7 @@ pub async fn tls_get_server_cert_info(
 /// * `hostname` - The hostname whose certificate should be renewed
 #[tauri::command]
 pub async fn tls_renew_certificate(app_handle:AppHandle, hostname:String) -> Result<String, String> {
-	log::info!("[TlsCommands] Renewing certificate for {}", hostname);
+	dev_log!("security", "renewing certificate for {}", hostname);
 
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
@@ -146,7 +148,7 @@ pub async fn tls_renew_certificate(app_handle:AppHandle, hostname:String) -> Res
 pub async fn tls_get_all_certs(
 	app_handle:AppHandle,
 ) -> Result<std::collections::HashMap<String, CertificateInfo>, String> {
-	log::debug!("[TlsCommands] Getting all server certificates");
+	dev_log!("security", "getting all server certificates");
 
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
@@ -166,7 +168,7 @@ pub async fn tls_get_all_certs(
 /// Returns true if the certificate is expiring within 30 days.
 #[tauri::command]
 pub async fn tls_check_cert_status(app_handle:AppHandle, hostname:String) -> Result<CertificateStatus, String> {
-	log::debug!("[TlsCommands] Checking certificate status for {}", hostname);
+	dev_log!("security", "checking certificate status for {}", hostname);
 
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
@@ -216,7 +218,7 @@ pub async fn tls_check_cert_status(app_handle:AppHandle, hostname:String) -> Res
 /// Returns success message with certificate details.
 #[tauri::command]
 pub async fn tls_generate_cert(app_handle:AppHandle, hostname:String) -> Result<CertificateGenerationResult, String> {
-	log::info!("[TlsCommands] Generating certificate for {}", hostname);
+	dev_log!("security", "generating certificate for {}", hostname);
 
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
@@ -253,7 +255,7 @@ pub async fn tls_generate_cert(app_handle:AppHandle, hostname:String) -> Result<
 /// * `hostname` - The hostname whose certificate should be deleted
 #[tauri::command]
 pub async fn tls_delete_cert(app_handle:AppHandle, hostname:String) -> Result<String, String> {
-	log::info!("[TlsCommands] Deleting certificate for {}", hostname);
+	dev_log!("security", "deleting certificate for {}", hostname);
 
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()

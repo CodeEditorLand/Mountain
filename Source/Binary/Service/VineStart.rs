@@ -2,7 +2,6 @@
 //!
 //! Initializes and starts the Vine gRPC server.
 
-use log::{error, info};
 
 /// Starts the Vine gRPC server at the specified addresses.
 ///
@@ -39,12 +38,13 @@ pub async fn VineStart(
 ) -> Result<(), String> {
 	match crate::Vine::Server::Initialize::Initialize(ApplicationHandle, PrimaryAddress, SecondaryAddress) {
 		Ok(()) => {
-			info!("[Vine] [Start] Vine gRPC server started successfully.");
+			dev_log!("grpc", "[Vine] [Start] Vine gRPC server started successfully.");
 			Ok(())
 		},
 		Err(e) => {
-			error!("[Vine] [Start] Failed to start: {}", e);
+			dev_log!("grpc", "error: [Vine] [Start] Failed to start: {}", e);
 			Err(format!("Failed to start Vine gRPC server: {}", e))
 		},
 	}
 }
+use crate::dev_log;

@@ -11,11 +11,11 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	FileSystem::{ReadFile::ReadFile, WriteFileBytes::WriteFileBytes},
 };
-use log::{info, warn};
 use serde_json::{Map, Value};
 use tauri::Manager;
 
 use crate::{Environment::Utility, RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime};
+use crate::dev_log;
 
 /// Updates a configuration value in the appropriate `settings.json` file.
 pub(super) async fn update_configuration_value(
@@ -26,7 +26,7 @@ pub(super) async fn update_configuration_value(
 	_overrides:ConfigurationOverridesDTO,
 	_scope_to_language:Option<bool>,
 ) -> Result<(), CommonError> {
-	info!("[ConfigurationProvider] Updating key '{}' in target {:?}", key, target);
+	dev_log!("config", "[ConfigurationProvider] Updating key '{}' in target {:?}", key, target);
 
 	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
@@ -58,7 +58,7 @@ pub(super) async fn update_configuration_value(
 		},
 
 		_ => {
-			warn!("[ConfigurationProvider] Unsupported configuration target: {:?}", target);
+			dev_log!("config", "warn: [ConfigurationProvider] Unsupported configuration target: {:?}", target);
 
 			return Err(CommonError::NotImplemented {
 				FeatureName:"This configuration target is not supported".into(),
@@ -74,10 +74,10 @@ pub(super) async fn update_configuration_value(
 	if let Value::Object(map) = &mut current_config {
 		if value.is_null() {
 			map.remove(&key);
-			info!("[ConfigurationProvider] Removed configuration key '{}'", key);
+			dev_log!("config", "[ConfigurationProvider] Removed configuration key '{}'", key);
 		} else {
 			map.insert(key.clone(), value.clone());
-			info!("[ConfigurationProvider] Updated configuration key '{}'", key);
+			dev_log!("config", "[ConfigurationProvider] Updated configuration key '{}'", key);
 		}
 	}
 

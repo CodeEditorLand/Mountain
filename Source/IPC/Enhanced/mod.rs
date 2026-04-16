@@ -14,7 +14,6 @@ pub mod PerformanceDashboard;
 use std::collections::HashMap;
 
 #[allow(unused_imports)]
-use log::{debug, info};
 use bincode::serde::encode_to_vec;
 
 // Import only the types, not the modules themselves (modules are already in scope via `pub mod`)
@@ -24,6 +23,7 @@ use crate::IPC::Enhanced::{
 	PerformanceDashboard::{DashboardConfig, DashboardStatistics, MetricType},
 	SecureMessageChannel::{EncryptedMessage, SecurityConfig, SecurityStats},
 };
+use crate::dev_log;
 
 /// Enhanced IPC manager that combines all advanced features
 pub struct EnhancedIPCManager {
@@ -55,7 +55,7 @@ impl EnhancedIPCManager {
 		self.secure_channel.start().await?;
 		self.performance_dashboard.start().await?;
 
-		log::info!("[EnhancedIPCManager] All enhanced IPC features started");
+		dev_log!("ipc", "[EnhancedIPCManager] All enhanced IPC features started");
 		Ok(())
 	}
 
@@ -65,7 +65,7 @@ impl EnhancedIPCManager {
 		self.secure_channel.stop().await?;
 		self.performance_dashboard.stop().await?;
 
-		log::info!("[EnhancedIPCManager] All enhanced IPC features stopped");
+		dev_log!("ipc", "[EnhancedIPCManager] All enhanced IPC features stopped");
 		Ok(())
 	}
 
@@ -118,21 +118,21 @@ impl EnhancedIPCManager {
 	/// Send encrypted message
 	async fn send_encrypted_message(&self, channel:&str, _encrypted:&EncryptedMessage) -> Result<(), String> {
 		// Implementation would integrate with existing IPC infrastructure
-		log::debug!("[EnhancedIPCManager] Sending encrypted message on channel: {}", channel);
+		dev_log!("ipc", "[EnhancedIPCManager] Sending encrypted message on channel: {}", channel);
 		Ok(())
 	}
 
 	/// Send compressed message
 	async fn send_compressed_message(&self, channel:&str, _data:&[u8]) -> Result<(), String> {
 		// Implementation would integrate with existing IPC infrastructure
-		log::debug!("[EnhancedIPCManager] Sending compressed message on channel: {}", channel);
+		dev_log!("ipc", "[EnhancedIPCManager] Sending compressed message on channel: {}", channel);
 		Ok(())
 	}
 
 	/// Send raw message
 	async fn send_raw_message(&self, channel:&str, _data:&[u8]) -> Result<(), String> {
 		// Implementation would integrate with existing IPC infrastructure
-		log::debug!("[EnhancedIPCManager] Sending raw message on channel: {}", channel);
+		dev_log!("ipc", "[EnhancedIPCManager] Sending raw message on channel: {}", channel);
 		Ok(())
 	}
 
@@ -165,7 +165,7 @@ pub async fn initialize_enhanced_ipc() -> Result<EnhancedIPCManager, String> {
 	let manager = EnhancedIPCManager::new()?;
 	manager.start().await?;
 
-	log::info!("[EnhancedIPCManager] Enhanced IPC features initialized");
+	dev_log!("ipc", "[EnhancedIPCManager] Enhanced IPC features initialized");
 	Ok(manager)
 }
 
@@ -261,7 +261,7 @@ impl EnhancedIPCManager {
 		&self,
 		_ipc_server:&crate::IPC::TauriIPCServer::TauriIPCServer,
 	) -> Result<(), String> {
-		log::info!("[EnhancedIPCManager] Integrating with Tauri IPC server");
+		dev_log!("ipc", "[EnhancedIPCManager] Integrating with Tauri IPC server");
 
 		// Register enhanced message handlers
 		// This would involve setting up callbacks and event handlers
@@ -276,7 +276,7 @@ impl EnhancedIPCManager {
 	) -> impl Fn(crate::IPC::TauriIPCServer::TauriIPCMessage) -> Result<(), String> {
 		// Return a closure that handles messages with enhanced features
 		|message:crate::IPC::TauriIPCServer::TauriIPCMessage| {
-			log::debug!("[EnhancedIPCManager] Handling message on channel: {}", message.channel);
+			dev_log!("ipc", "[EnhancedIPCManager] Handling message on channel: {}", message.channel);
 			Ok(())
 		}
 	}

@@ -35,7 +35,6 @@
 //! - [ ] Implement feature lifecycle events
 //! - [ ] Add feature state metrics collection
 
-use log::debug;
 
 use super::{
 	Debug::DebugState::DebugState,
@@ -52,6 +51,7 @@ use super::{
 	Webviews::WebviewState::WebviewState,
 	WorkingCopy::WorkingCopyState::WorkingCopyState,
 };
+use crate::dev_log;
 
 /// Feature state combining all feature-related components.
 #[derive(Clone)]
@@ -99,7 +99,7 @@ pub struct State {
 
 impl Default for State {
 	fn default() -> Self {
-		debug!("[FeatureState::State] Initializing default feature state...");
+		dev_log!("lifecycle", "[FeatureState::State] Initializing default feature state...");
 
 		Self {
 			Debug:Default::default(),

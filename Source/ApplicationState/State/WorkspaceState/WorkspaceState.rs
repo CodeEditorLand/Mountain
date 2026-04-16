@@ -44,9 +44,9 @@ use std::sync::{
 	atomic::{AtomicBool, Ordering as AtomicOrdering},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::{WindowStateDTO::WindowStateDTO, WorkspaceFolderStateDTO::WorkspaceFolderStateDTO};
+use crate::dev_log;
 
 /// Workspace state containing all workspace-related fields.
 #[derive(Clone)]
@@ -69,7 +69,7 @@ pub struct State {
 
 impl Default for State {
 	fn default() -> Self {
-		debug!("[WorkspaceState] Initializing default workspace state...");
+		dev_log!("workspaces", "[WorkspaceState] Initializing default workspace state...");
 
 		Self {
 			WorkspaceFolders:Arc::new(StandardMutex::new(Vec::new())),
@@ -88,7 +88,7 @@ impl State {
 	/// Sets the workspace trust status.
 	pub fn SetTrustStatus(&self, trusted:bool) {
 		self.IsTrusted.store(trusted, AtomicOrdering::Relaxed);
-		debug!("[WorkspaceState] Trust status set to: {}", trusted);
+		dev_log!("workspaces", "[WorkspaceState] Trust status set to: {}", trusted);
 	}
 
 	/// Gets the workspace configuration path.
@@ -100,7 +100,7 @@ impl State {
 	pub fn SetConfigurationPath(&self, path:Option<std::path::PathBuf>) {
 		if let Ok(mut guard) = self.WorkspaceConfigurationPath.lock() {
 			*guard = path.clone();
-			debug!("[WorkspaceState] Configuration path updated to: {:?}", path);
+			dev_log!("workspaces", "[WorkspaceState] Configuration path updated to: {:?}", path);
 		}
 	}
 
@@ -113,7 +113,7 @@ impl State {
 	pub fn SetActiveDocumentURI(&self, uri:Option<String>) {
 		if let Ok(mut guard) = self.ActiveDocumentURI.lock() {
 			*guard = uri.clone();
-			debug!("[WorkspaceState] Active document URI updated to: {:?}", uri);
+			dev_log!("workspaces", "[WorkspaceState] Active document URI updated to: {:?}", uri);
 		}
 	}
 
@@ -126,7 +126,7 @@ impl State {
 	pub fn SetWorkspaceFolders(&self, folders:Vec<WorkspaceFolderStateDTO>) {
 		if let Ok(mut guard) = self.WorkspaceFolders.lock() {
 			*guard = folders;
-			debug!("[WorkspaceState] Workspace folders updated ({} folders)", guard.len());
+			dev_log!("workspaces", "[WorkspaceState] Workspace folders updated ({} folders)", guard.len());
 		}
 	}
 
@@ -143,7 +143,7 @@ impl State {
 	pub fn SetWindowState(&self, state:WindowStateDTO) {
 		if let Ok(mut guard) = self.WindowState.lock() {
 			*guard = state;
-			debug!("[WorkspaceState] Window state updated");
+			dev_log!("workspaces", "[WorkspaceState] Window state updated");
 		}
 	}
 }

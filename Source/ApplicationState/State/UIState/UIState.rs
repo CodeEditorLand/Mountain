@@ -38,7 +38,7 @@ use std::{
 };
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::debug;
+use crate::dev_log;
 
 /// User interface request state containing pending UI interactions.
 #[derive(Clone)]
@@ -52,7 +52,7 @@ pub struct State {
 
 impl Default for State {
 	fn default() -> Self {
-		debug!("[UIState] Initializing default UI state...");
+		dev_log!("window", "[UIState] Initializing default UI state...");
 
 		Self { PendingUserInterfaceRequest:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
@@ -77,7 +77,7 @@ impl State {
 	) {
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
 			guard.insert(id, sender);
-			debug!("[UIState] Pending UI request added");
+			dev_log!("window", "[UIState] Pending UI request added");
 		}
 	}
 
@@ -88,7 +88,7 @@ impl State {
 	) -> Option<tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>> {
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
 			let sender = guard.remove(id);
-			debug!("[UIState] Pending UI request removed: {}", id);
+			dev_log!("window", "[UIState] Pending UI request removed: {}", id);
 			sender
 		} else {
 			None
@@ -99,7 +99,7 @@ impl State {
 	pub fn ClearAll(&self) {
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
 			guard.clear();
-			debug!("[UIState] All pending UI requests cleared");
+			dev_log!("window", "[UIState] All pending UI requests cleared");
 		}
 	}
 

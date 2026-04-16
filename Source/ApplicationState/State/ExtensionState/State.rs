@@ -31,9 +31,9 @@
 //! - [ ] Implement extension lifecycle events
 //! - [ ] Add extension state metrics collection
 
-use log::debug;
 
 use super::{ExtensionRegistry, ProviderRegistration, ScannedExtensions};
+use crate::dev_log;
 
 /// Extension state combining all extension-related components.
 #[derive(Clone)]
@@ -50,7 +50,7 @@ pub struct State {
 
 impl Default for State {
 	fn default() -> Self {
-		debug!("[ExtensionState::State] Initializing default extension state...");
+		dev_log!("extensions", "[ExtensionState::State] Initializing default extension state...");
 
 		Self {
 			Registry:ExtensionRegistry::Registry::default(),

@@ -73,7 +73,7 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use tauri::{State, command};
 
-use crate::ApplicationState::{ApplicationState, MapLockError};
+use crate::{ApplicationState::{ApplicationState, MapLockError}, dev_log};
 
 /// Retrieves the complete state of all Source Control Management providers,
 /// groups, and resources for rendering in the UI.
@@ -82,7 +82,7 @@ use crate::ApplicationState::{ApplicationState, MapLockError};
 /// view.
 #[command]
 pub async fn GetAllSourceControlManagementState(State:State<'_, Arc<ApplicationState>>) -> Result<Value, String> {
-	log::debug!("[SourceControlManagement Command] Getting all SCM state for UI.");
+	dev_log!("commands", "getting all SCM state for UI");
 
 	let Providers = State
 		.Feature
@@ -124,7 +124,7 @@ pub async fn GetSCMResourceChanges(
 
 	ProviderIdentifier:String,
 ) -> Result<Value, String> {
-	log::debug!("[SCM Command] Getting resource changes for provider: {}", ProviderIdentifier);
+	dev_log!("commands", "getting resource changes for provider: {}", ProviderIdentifier);
 
 	let resources_map = State
 		.Feature
@@ -160,7 +160,7 @@ pub async fn ExecuteSCMCommand(
 
 	Arguments:Value,
 ) -> Result<Value, String> {
-	log::debug!("[SCM Command] Executing command: {}", CommandName);
+	dev_log!("commands", "executing command: {}", CommandName);
 
 	// Execute SCM commands by routing them through the
 	// SourceControlManagementProvider trait. The provider registered in
@@ -170,15 +170,15 @@ pub async fn ExecuteSCMCommand(
 	// for demonstration purposes only.
 	match CommandName.as_str() {
 		"git.commit" | "commit" => {
-			log::info!("[SCM Command] Executing commit");
+			dev_log!("commands", "executing commit");
 			Ok(json!({ "success": true, "message": "Commit successful" }))
 		},
 		"git.push" | "push" => {
-			log::info!("[SCM Command] Executing push");
+			dev_log!("commands", "executing push");
 			Ok(json!({ "success": true, "message": "Push successful" }))
 		},
 		"git.pull" | "pull" => {
-			log::info!("[SCM Command] Executing pull");
+			dev_log!("commands", "executing pull");
 			Ok(json!({ "success": true, "message": "Pull successful" }))
 		},
 		_ => Err(format!("Unknown SCM command: {}", CommandName)),
@@ -191,7 +191,7 @@ pub async fn GetSCMBranches(
 
 	ProviderIdentifier:String,
 ) -> Result<Value, String> {
-	log::debug!("[SCM Command] Getting branches for provider: {}", ProviderIdentifier);
+	dev_log!("commands", "getting branches for provider: {}", ProviderIdentifier);
 
 	// Retrieve branch information by querying the SCM provider via
 	// SourceControlManagementProvider::GetBranches. This fetches local and remote
@@ -208,7 +208,7 @@ pub async fn GetSCMBranches(
 
 #[command]
 pub async fn CheckoutSCMBranch(_State:State<'_, Arc<ApplicationState>>, BranchName:String) -> Result<Value, String> {
-	log::debug!("[SCM Command] Checking out branch: {}", BranchName);
+	dev_log!("commands", "checking out branch: {}", BranchName);
 
 	// Switch to a different branch by invoking the SCM provider's checkout method.
 	// This updates the working directory to the specified branch, handling
@@ -224,7 +224,7 @@ pub async fn GetSCMCommitHistory(
 
 	MaxCount:Option<usize>,
 ) -> Result<Value, String> {
-	log::debug!("[SCM Command] Getting commit history, max count: {:?}", MaxCount);
+	dev_log!("commands", "getting commit history, max count: {:?}", MaxCount);
 
 	// Retrieve commit history by querying the SCM provider's log or history API.
 	// Returns structured commit data including hash, author, date, message, and
@@ -246,7 +246,7 @@ pub async fn StageSCMResource(
 
 	Staged:bool,
 ) -> Result<Value, String> {
-	log::debug!("[SCM Command] Staging resource: {}, staged: {}", ResourceURI, Staged);
+	dev_log!("commands", "staging resource: {}, staged: {}", ResourceURI, Staged);
 
 	// Control which changes are included in the next commit by calling the SCM
 	// provider's stage/unstage methods. Staging adds files to the git index, while

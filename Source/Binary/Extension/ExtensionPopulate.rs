@@ -2,9 +2,9 @@
 //!
 //! Scans and populates extensions from configured scan paths.
 
-use log::{error, info};
 
 use crate::ApplicationState::{ApplicationState, Internal::ScanAndPopulateExtensions};
+use crate::dev_log;
 
 /// Scans and populates extensions from the configured scan paths.
 ///
@@ -34,11 +34,11 @@ pub async fn ExtensionPopulate(
 ) -> Result<(), String> {
 	match ScanAndPopulateExtensions(ApplicationHandle.clone(), &AppState.Extension).await {
 		Ok(()) => {
-			info!("[Extensions] [Populate] Extensions scanned and populated successfully.");
+			dev_log!("extensions", "[Extensions] [Populate] Extensions scanned and populated successfully.");
 			Ok(())
 		},
 		Err(e) => {
-			error!("[Extensions] [Populate] Failed: {}", e);
+			dev_log!("extensions", "error: [Extensions] [Populate] Failed: {}", e);
 			Err(format!("Failed to scan and populate extensions: {}", e))
 		},
 	}

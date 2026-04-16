@@ -38,7 +38,13 @@ use std::{
 use async_trait::async_trait;
 use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
-	LanguageFeature::DTO::ProviderType::ProviderType,
+	LanguageFeature::{
+		DTO::{
+			PositionDTO::PositionDTO,
+			ProviderType::ProviderType,
+		},
+		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
+	},
 	Secret::SecretProvider::SecretProvider,
 	Terminal::TerminalProvider::TerminalProvider,
 	UserInterface::{
@@ -50,10 +56,10 @@ use CommonLibrary::{
 		UserInterfaceProvider::UserInterfaceProvider,
 	},
 };
-use log::{debug, error, info, trace, warn};
 use serde_json::json;
 use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
+use url::Url;
 
 use crate::{
 	ApplicationState::DTO::{
@@ -64,6 +70,7 @@ use crate::{
 };
 // Import generated protobuf types
 use crate::Vine::Generated::{
+use crate::dev_log;
 	// Service trait
 	// Extended Language + Window + FS + Output + Task + Auth + Debug + Extension types
 	AppendOutputRequest,
@@ -281,7 +288,7 @@ impl CocoonServiceImpl {
 	/// # Returns
 	/// A new CocoonService instance
 	pub fn new(environment:Arc<MountainEnvironment>) -> Self {
-		info!("[CocoonService] New instance created");
+		dev_log!("cocoon", "[CocoonService] New instance created");
 
 		Self { environment, ActiveOperations:Arc::new(RwLock::new(HashMap::new())) }
 	}
@@ -296,7 +303,7 @@ impl CocoonServiceImpl {
 	pub async fn RegisterOperation(&self, request_id:u64) -> tokio_util::sync::CancellationToken {
 		let token = tokio_util::sync::CancellationToken::new();
 		self.ActiveOperations.write().await.insert(request_id, token.clone());
-		debug!("[CocoonService] Registered operation {} for cancellation", request_id);
+		dev_log!("cocoon", "[CocoonService] Registered operation {} for cancellation", request_id);
 		token
 	}
 
@@ -306,7 +313,7 @@ impl CocoonServiceImpl {
 	/// - `request_id`: The request identifier to unregister
 	pub async fn UnregisterOperation(&self, request_id:u64) {
 		self.ActiveOperations.write().await.remove(&request_id);
-		debug!("[CocoonService] Unregistered operation {}", request_id);
+		dev_log!("cocoon", "[CocoonService] Unregistered operation {}", request_id);
 	}
 
 	/// Registers a language feature provider in ApplicationState.
@@ -337,7 +344,7 @@ impl CocoonServiceImpl {
 			.Extension
 			.ProviderRegistration
 			.RegisterProvider(handle, dto);
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Provider {:?} registered: handle={}, language={}",
 			provider_type, handle, language_selector
 		);
@@ -383,7 +390,7 @@ impl CocoonService for CocoonServiceImpl {
 		let Req = request.into_inner();
 		let RequestId = Req.request_identifier;
 
-		debug!("[CocoonService] generic request: method={} id={}", Req.method, RequestId);
+		dev_log!("cocoon", "[CocoonService] generic request: method={} id={}", Req.method, RequestId);
 
 		/// Serialise a value into the `result` bytes of a GenericResponse.
 		fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<GenericResponse> {
@@ -985,7 +992,7 @@ impl CocoonService for CocoonServiceImpl {
 			},
 			// ---- Unknown ----
 			_ => {
-				warn!("[CocoonService] Unknown generic method: {}", Req.method);
+				dev_log!("cocoon", "warn: [CocoonService] Unknown generic method: {}", Req.method);
 				Ok(ErrResponse(RequestId, -32601, format!("Method '{}' not found", Req.method)))
 			},
 		}
@@ -1000,7 +1007,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<GenericNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let notification = request.into_inner();
-		debug!("[CocoonService] Notification router: method='{}'", notification.method);
+		dev_log!("cocoon", "[CocoonService] Notification router: method='{}'", notification.method);
 
 		// Deserialise notification parameters as JSON
 		let Params:serde_json::Value = if notification.parameter.is_empty() {
@@ -1015,10 +1022,8 @@ impl CocoonService for CocoonServiceImpl {
 				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				if let Err(Error) = self.environment.RegisterCommand(ExtensionId, CommandId.clone()).await {
-					warn!(
-						"[CocoonService] notification: registerCommand '{}' failed: {:?}",
-						CommandId, Error
-					);
+					dev_log!("cocoon", "warn: [CocoonService] notification: registerCommand '{}' failed: {:?}",
+						CommandId, Error);
 				}
 			},
 			"unregisterCommand" => {
@@ -1378,7 +1383,7 @@ impl CocoonService for CocoonServiceImpl {
 					.emit("sky://language/configure", json!({ "language": Language }));
 			},
 			_ => {
-				debug!("[CocoonService] Unknown notification method: '{}'", notification.method);
+				dev_log!("cocoon", "[CocoonService] Unknown notification method: '{}'", notification.method);
 			},
 		}
 
@@ -1388,7 +1393,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// Cancel operations requested by Mountain
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		let cancel_request = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Cancel operation request: {}",
 			cancel_request.request_identifier_to_cancel
 		);
@@ -1400,16 +1405,14 @@ impl CocoonService for CocoonServiceImpl {
 			.await
 			.get(&cancel_request.request_identifier_to_cancel)
 		{
-			debug!(
+			dev_log!("cocoon", 
 				"[CocoonService] Triggering cancellation token for operation {}",
 				cancel_request.request_identifier_to_cancel
 			);
 			token.cancel();
 		} else {
-			warn!(
-				"[CocoonService] No active operation found for cancellation: {}",
-				cancel_request.request_identifier_to_cancel
-			);
+			dev_log!("cocoon", "warn: [CocoonService] No active operation found for cancellation: {}",
+				cancel_request.request_identifier_to_cancel);
 		}
 
 		Ok(Response::new(Empty {}))
@@ -1419,14 +1422,14 @@ impl CocoonService for CocoonServiceImpl {
 
 	/// Handshake - Called by Cocoon to signal readiness
 	async fn initial_handshake(&self, _request:Request<Empty>) -> Result<Response<Empty>, Status> {
-		info!("[CocoonService] Initial handshake received from Cocoon");
+		dev_log!("cocoon", "[CocoonService] Initial handshake received from Cocoon");
 		Ok(Response::new(Empty {}))
 	}
 
 	/// Initialize Extension Host - Mountain sends initialization data to Cocoon
 	async fn init_extension_host(&self, request:Request<InitExtensionHostRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Initializing extension host with {} workspace folders",
 			req.workspace_folders.len()
 		);
@@ -1434,7 +1437,7 @@ impl CocoonService for CocoonServiceImpl {
 		// Initialize workspace folders in MountainEnvironment
 		// This stub logs the workspace folders for debugging
 		for folder in &req.workspace_folders {
-			debug!(
+			dev_log!("cocoon", 
 				"[CocoonService] Workspace folder: {} ({})",
 				folder.name,
 				folder.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
@@ -1442,7 +1445,7 @@ impl CocoonService for CocoonServiceImpl {
 		}
 
 		// Initialize configuration from request
-		debug!("[CocoonService] Configuration: {} keys", req.configuration.len());
+		dev_log!("cocoon", "[CocoonService] Configuration: {} keys", req.configuration.len());
 
 		// Store workspace folders from the init payload into ApplicationState
 		let Folders:Vec<WorkspaceFolderStateDTO> = req
@@ -1459,7 +1462,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		if !Folders.is_empty() {
 			self.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
-			debug!("[CocoonService] Workspace folders stored: {}", req.workspace_folders.len());
+			dev_log!("cocoon", "[CocoonService] Workspace folders stored: {}", req.workspace_folders.len());
 		}
 
 		Ok(Response::new(Empty {}))
@@ -1470,7 +1473,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// Register Command - Cocoon registers an extension command
 	async fn register_command(&self, request:Request<RegisterCommandRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Registering command '{}' from extension '{}'",
 			req.command_id, req.extension_id
 		);
@@ -1482,9 +1485,9 @@ impl CocoonService for CocoonServiceImpl {
 			.RegisterCommand(req.extension_id.clone(), req.command_id.clone())
 			.await
 		{
-			warn!("[CocoonService] Failed to register command '{}': {:?}", req.command_id, Error);
+			dev_log!("cocoon", "warn: [CocoonService] Failed to register command '{}': {:?}", req.command_id, Error);
 		} else {
-			debug!(
+			dev_log!("cocoon", 
 				"[CocoonService] Command registered: id={}, title={:?}",
 				req.command_id, req.title
 			);
@@ -1499,7 +1502,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ExecuteCommandRequest>,
 	) -> Result<Response<ExecuteCommandResponse>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Executing command '{}' with {} arguments",
 			req.command_id,
 			req.arguments.len()
@@ -1508,7 +1511,7 @@ impl CocoonService for CocoonServiceImpl {
 		// Look up command handler and execute with parameters
 		// This stub logs the command execution for debugging
 		for (i, arg) in req.arguments.iter().enumerate() {
-			debug!("[CocoonService] Argument {}: {:?}", i, arg);
+			dev_log!("cocoon", "[CocoonService] Argument {}: {:?}", i, arg);
 		}
 
 		// Convert the first Argument oneof value to a serde_json::Value
@@ -1549,13 +1552,13 @@ impl CocoonService for CocoonServiceImpl {
 	/// Unregister Command - Unregister a previously registered command
 	async fn unregister_command(&self, request:Request<UnregisterCommandRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Unregistering command '{}'", req.command_id);
+		dev_log!("cocoon", "[CocoonService] Unregistering command '{}'", req.command_id);
 
 		// Wire to CommandExecutor::UnregisterCommand
 		if let Err(Error) = self.environment.UnregisterCommand(String::new(), req.command_id.clone()).await {
-			warn!("[CocoonService] Failed to unregister command '{}': {:?}", req.command_id, Error);
+			dev_log!("cocoon", "warn: [CocoonService] Failed to unregister command '{}': {:?}", req.command_id, Error);
 		} else {
-			debug!("[CocoonService] Command removed: {}", req.command_id);
+			dev_log!("cocoon", "[CocoonService] Command removed: {}", req.command_id);
 		}
 
 		Ok(Response::new(Empty {}))
@@ -1569,7 +1572,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Registering hover provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
@@ -1578,33 +1581,54 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// Provide Hover - Request hover information
+	///
+	/// Delegates to LanguageFeatureProviderRegistry::ProvideHover which:
+	/// 1. Looks up the matching provider in ProviderRegistration by document URI
+	/// 2. Forwards to Cocoon via generic gRPC ($provideHover)
+	/// 3. Cocoon's InvokeLanguageProvider calls the JS extension provider
+	/// 4. Result bubbles back through the chain
 	async fn provide_hover(
 		&self,
 		request:Request<ProvideHoverRequest>,
 	) -> Result<Response<ProvideHoverResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Providing hover for provider {}", req.provider_handle);
+		dev_log!("cocoon", "[CocoonService] Providing hover for provider {}", req.provider_handle);
 
-		// Look up provider by handle in MountainEnvironment, call provider via RPC,
-		// return hover result This stub returns an empty hover response
-		warn!(
-			"[CocoonService] Provider lookup not yet implemented - handle: {}",
-			req.provider_handle
-		);
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| {
+			Status::invalid_argument(format!("Invalid URI: {}", e))
+		})?;
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by provider_handle
-		// - Call extension backend via gRPC with position triggers
-		// - Parse hover markdown and range from response
-		// - Return formatted hover response
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
 
-		Ok(Response::new(ProvideHoverResponse {
-			markdown:"Hover provider not yet implemented".to_string(),
-			range:Some(Range {
-				start:Some(Position { line:0, character:0 }),
-				end:Some(Position { line:0, character:0 }),
-			}),
-		}))
+		match self.environment.ProvideHover(document_uri, position_dto).await {
+			Ok(Some(hover)) => {
+				let markdown = hover.Contents.iter()
+					.map(|c| c.Value.as_str())
+					.collect::<Vec<_>>()
+					.join("\n---\n");
+				let range = hover.Range.map(|r| Range {
+					start:Some(Position { line:r.StartLineNumber, character:r.StartColumn }),
+					end:Some(Position { line:r.EndLineNumber, character:r.EndColumn }),
+				});
+				Ok(Response::new(ProvideHoverResponse { markdown, range }))
+			},
+			Ok(None) => {
+				dev_log!("cocoon", "[CocoonService] No hover provider found for request");
+				Ok(Response::new(ProvideHoverResponse {
+					markdown:String::new(),
+					range:None,
+				}))
+			},
+			Err(e) => {
+				dev_log!("cocoon", "warn: [CocoonService] Hover failed: {}", e);
+				Err(Status::internal(format!("Hover failed: {}", e)))
+			},
+		}
 	}
 
 	/// Register Completion Item Provider - Register a completion provider
@@ -1613,7 +1637,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Registering completion provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
@@ -1621,28 +1645,41 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Provide Completion Items - Request completion items
+	/// Provide Completion Items - delegates to LanguageFeatureProviderRegistry
 	async fn provide_completion_items(
 		&self,
 		request:Request<ProvideCompletionItemsRequest>,
 	) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Providing completions for provider {}", req.provider_handle);
+		dev_log!("cocoon", "[CocoonService] Providing completions for provider {}", req.provider_handle);
 
-		// Look up provider by handle in MountainEnvironment
-		// This stub returns an empty completion list
-		warn!(
-			"[CocoonService] Provider lookup not yet implemented - handle: {}",
-			req.provider_handle
-		);
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
+		let context_dto = CommonLibrary::LanguageFeature::DTO::CompletionContextDTO::CompletionContextDTO {
+			TriggerKind:CommonLibrary::LanguageFeature::DTO::CompletionContextDTO::CompletionTriggerKindDTO::Invoke,
+			TriggerCharacter:if req.trigger_character.is_empty() { None } else { Some(req.trigger_character.clone()) },
+		};
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by provider_handle
-		// - Call extension backend via gRPC with position context
-		// - Parse completion items from response
-		// - Return formatted completion items list
-
-		Ok(Response::new(ProvideCompletionItemsResponse { items:Vec::new() }))
+		match self.environment.ProvideCompletions(document_uri, position_dto, context_dto, None).await {
+			Ok(Some(list)) => {
+				let items = list.Suggestions.iter().map(|s| {
+					CompletionItem {
+						label:s.Label.as_str().map(|l| l.to_string()).unwrap_or_default(),
+						kind:format!("{}", s.Kind),
+						detail:s.Detail.clone().unwrap_or_default(),
+						insert_text:s.InsertText.clone().unwrap_or_default(),
+					}
+				}).collect();
+				Ok(Response::new(ProvideCompletionItemsResponse { items }))
+			},
+			Ok(None) => Ok(Response::new(ProvideCompletionItemsResponse { items:Vec::new() })),
+			Err(e) => Err(Status::internal(format!("Completions failed: {}", e))),
+		}
 	}
 
 	/// Register Definition Provider - Register a definition provider
@@ -1651,7 +1688,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Registering definition provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
@@ -1662,28 +1699,36 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Provide Definition - Request definition location
+	/// Provide Definition - delegates to LanguageFeatureProviderRegistry
 	async fn provide_definition(
 		&self,
 		request:Request<ProvideDefinitionRequest>,
 	) -> Result<Response<ProvideDefinitionResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Providing definition for provider {}", req.provider_handle);
+		dev_log!("cocoon", "[CocoonService] Providing definition for provider {}", req.provider_handle);
 
-		// Look up provider by handle in MountainEnvironment
-		// This stub returns an empty location list
-		warn!(
-			"[CocoonService] Provider lookup not yet implemented - handle: {}",
-			req.provider_handle
-		);
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by provider_handle
-		// - Call extension backend via gRPC with position context
-		// - Parse location(s) from response
-		// - Return formatted locations list
-
-		Ok(Response::new(ProvideDefinitionResponse { locations:Vec::new() }))
+		match self.environment.ProvideDefinition(document_uri, position_dto).await {
+			Ok(Some(locations)) => {
+				let proto_locations = locations.iter().map(|loc| Location {
+					uri:Some(Uri { value:loc.Uri.to_string() }),
+					range:Some(Range {
+						start:Some(Position { line:loc.Range.StartLineNumber, character:loc.Range.StartColumn }),
+						end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
+					}),
+				}).collect();
+				Ok(Response::new(ProvideDefinitionResponse { locations:proto_locations }))
+			},
+			Ok(None) => Ok(Response::new(ProvideDefinitionResponse { locations:Vec::new() })),
+			Err(e) => Err(Status::internal(format!("Definition failed: {}", e))),
+		}
 	}
 
 	/// Register Reference Provider - Register a reference provider
@@ -1692,7 +1737,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Registering reference provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
@@ -1700,28 +1745,37 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Provide References - Request references
+	/// Provide References - delegates to LanguageFeatureProviderRegistry
 	async fn provide_references(
 		&self,
 		request:Request<ProvideReferencesRequest>,
 	) -> Result<Response<ProvideReferencesResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Providing references for provider {}", req.provider_handle);
+		dev_log!("cocoon", "[CocoonService] Providing references for provider {}", req.provider_handle);
 
-		// Look up provider by handle in MountainEnvironment
-		// This stub returns an empty location list
-		warn!(
-			"[CocoonService] Provider lookup not yet implemented - handle: {}",
-			req.provider_handle
-		);
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let position = req.position.as_ref();
+		let position_dto = PositionDTO {
+			LineNumber:position.map(|p| p.line).unwrap_or(0),
+			Column:position.map(|p| p.character).unwrap_or(0),
+		};
+		let context_dto = json!({ "includeDeclaration": true });
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by provider_handle
-		// - Call extension backend via gRPC with position context
-		// - Parse location(s) from response
-		// - Return formatted locations list
-
-		Ok(Response::new(ProvideReferencesResponse { locations:Vec::new() }))
+		match self.environment.ProvideReferences(document_uri, position_dto, context_dto).await {
+			Ok(Some(locations)) => {
+				let proto_locations = locations.iter().map(|loc| Location {
+					uri:Some(Uri { value:loc.Uri.to_string() }),
+					range:Some(Range {
+						start:Some(Position { line:loc.Range.StartLineNumber, character:loc.Range.StartColumn }),
+						end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
+					}),
+				}).collect();
+				Ok(Response::new(ProvideReferencesResponse { locations:proto_locations }))
+			},
+			Ok(None) => Ok(Response::new(ProvideReferencesResponse { locations:Vec::new() })),
+			Err(e) => Err(Status::internal(format!("References failed: {}", e))),
+		}
 	}
 
 	/// Register Code Actions Provider - Register code actions provider
@@ -1730,7 +1784,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Registering code actions provider for '{}' with handle {}",
 			req.language_selector, req.handle
 		);
@@ -1738,28 +1792,35 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(Empty {}))
 	}
 
-	/// Provide Code Actions - Request code actions
+	/// Provide Code Actions - delegates to LanguageFeatureProviderRegistry
 	async fn provide_code_actions(
 		&self,
 		request:Request<ProvideCodeActionsRequest>,
 	) -> Result<Response<ProvideCodeActionsResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Providing code actions for provider {}", req.provider_handle);
+		dev_log!("cocoon", "[CocoonService] Providing code actions for provider {}", req.provider_handle);
 
-		// Look up provider by handle in MountainEnvironment
-		// This stub returns an empty actions list
-		warn!(
-			"[CocoonService] Provider lookup not yet implemented - handle: {}",
-			req.provider_handle
-		);
+		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let range = req.range.as_ref();
+		let range_dto = json!({
+			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
+			"StartColumn": range.and_then(|r| r.start.as_ref()).map(|p| p.character).unwrap_or(0),
+			"EndLineNumber": range.and_then(|r| r.end.as_ref()).map(|p| p.line).unwrap_or(0),
+			"EndColumn": range.and_then(|r| r.end.as_ref()).map(|p| p.character).unwrap_or(0),
+		});
+		let context_dto = json!({ "diagnostics": [], "only": null });
 
-		// TODO: When ProviderRegistry is available in MountainEnvironment:
-		// - Look up provider by provider_handle
-		// - Call extension backend via gRPC with range and diagnostics context
-		// - Parse code actions from response
-		// - Return formatted code actions list
-
-		Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() }))
+		match self.environment.ProvideCodeActions(document_uri, range_dto, context_dto).await {
+			Ok(Some(value)) => {
+				// CodeActions returns raw Value — proto response has actions:Vec<CodeAction>
+				// For now, return empty if we can't parse. Full mapping requires matching
+				// the CodeAction proto fields to the VS Code code action format.
+				Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() }))
+			},
+			Ok(None) => Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() })),
+			Err(e) => Err(Status::internal(format!("Code actions failed: {}", e))),
+		}
 	}
 
 	// ==================== Window Operations ====================
@@ -1773,7 +1834,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		let req = request.into_inner();
 		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
-		info!("[CocoonService] show_text_document: {}", Uri);
+		dev_log!("cocoon", "[CocoonService] show_text_document: {}", Uri);
 
 		let _ = self.environment.ApplicationHandle.emit(
 			"sky://editor/openDocument",
@@ -1795,7 +1856,7 @@ impl CocoonService for CocoonServiceImpl {
 		};
 
 		let req = request.into_inner();
-		info!("[CocoonService] show_information_message: {}", req.message);
+		dev_log!("cocoon", "[CocoonService] show_information_message: {}", req.message);
 
 		let _ = self.environment.ShowMessage(MessageSeverity::Info, req.message, None).await;
 
@@ -1813,7 +1874,7 @@ impl CocoonService for CocoonServiceImpl {
 		};
 
 		let req = request.into_inner();
-		warn!("[CocoonService] show_warning_message: {}", req.message);
+		dev_log!("cocoon", "warn: [CocoonService] show_warning_message: {}", req.message);
 
 		let _ = self.environment.ShowMessage(MessageSeverity::Warning, req.message, None).await;
 
@@ -1831,7 +1892,7 @@ impl CocoonService for CocoonServiceImpl {
 		};
 
 		let req = request.into_inner();
-		error!("[CocoonService] show_error_message: {}", req.message);
+		dev_log!("cocoon", "error: [CocoonService] show_error_message: {}", req.message);
 
 		let _ = self.environment.ShowMessage(MessageSeverity::Error, req.message, None).await;
 
@@ -1847,7 +1908,7 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		info!("[CocoonService] create_status_bar_item: {}", req.id);
+		dev_log!("cocoon", "[CocoonService] create_status_bar_item: {}", req.id);
 
 		let _ = self.environment.ApplicationHandle.emit(
 			"sky://statusbar/create",
@@ -1862,7 +1923,7 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		debug!("[CocoonService] set_status_bar_text: id={} text={}", req.item_id, req.text);
+		dev_log!("cocoon", "[CocoonService] set_status_bar_text: id={} text={}", req.item_id, req.text);
 
 		let _ = self
 			.environment
@@ -1878,11 +1939,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<CreateWebviewPanelRequest>,
 	) -> Result<Response<CreateWebviewPanelResponse>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Creating webview panel: {}", req.view_type);
+		dev_log!("cocoon", "[CocoonService] Creating webview panel: {}", req.view_type);
 
 		// IPC call to Wind frontend to create webview panel
 		// This stub returns a placeholder handle (0)
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Panel details: view_type={}, title={}",
 			req.view_type, req.title
 		);
@@ -1904,10 +1965,10 @@ impl CocoonService for CocoonServiceImpl {
 	/// Set Webview HTML - Update webview HTML content
 	async fn set_webview_html(&self, request:Request<SetWebviewHtmlRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Setting webview HTML for handle {}", req.handle);
+		dev_log!("cocoon", "[CocoonService] Setting webview HTML for handle {}", req.handle);
 
 		// IPC call to Wind frontend for HTML update
-		debug!("[CocoonService] HTML length: {} bytes", req.html.len());
+		dev_log!("cocoon", "[CocoonService] HTML length: {} bytes", req.html.len());
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Send HTML update request to Wind via IPC
@@ -1923,10 +1984,10 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<OnDidReceiveMessageRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Received webview message for handle {}", req.handle);
+		dev_log!("cocoon", "[CocoonService] Received webview message for handle {}", req.handle);
 
 		// Forward to extension handler registered in MountainEnvironment
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Message payload: {}",
 			req.message.as_ref().map_or("absent", |_| "present")
 		);
@@ -1947,10 +2008,10 @@ impl CocoonService for CocoonServiceImpl {
 		let Path = Self::UriToPath(req.uri.as_ref())
 			.ok_or_else(|| Status::invalid_argument("read_file: missing or empty URI"))?;
 
-		debug!("[CocoonService] Reading file: {:?}", Path);
+		dev_log!("cocoon", "[CocoonService] Reading file: {:?}", Path);
 
 		let Content = tokio::fs::read(&Path).await.map_err(|Error| {
-			warn!("[CocoonService] read_file failed for {:?}: {}", Path, Error);
+			dev_log!("cocoon", "warn: [CocoonService] read_file failed for {:?}: {}", Path, Error);
 			Status::not_found(format!("read_file: {}: {}", Path.display(), Error))
 		})?;
 
@@ -1966,7 +2027,7 @@ impl CocoonService for CocoonServiceImpl {
 		let Path = Self::UriToPath(req.uri.as_ref())
 			.ok_or_else(|| Status::invalid_argument("write_file: missing or empty URI"))?;
 
-		debug!("[CocoonService] Writing file: {:?} ({} bytes)", Path, req.content.len());
+		dev_log!("cocoon", "[CocoonService] Writing file: {:?} ({} bytes)", Path, req.content.len());
 
 		// Ensure parent directory exists
 		if let Some(Parent) = Path.parent() {
@@ -1978,7 +2039,7 @@ impl CocoonService for CocoonServiceImpl {
 		}
 
 		tokio::fs::write(&Path, &req.content).await.map_err(|Error| {
-			warn!("[CocoonService] write_file failed for {:?}: {}", Path, Error);
+			dev_log!("cocoon", "warn: [CocoonService] write_file failed for {:?}: {}", Path, Error);
 			Status::internal(format!("write_file: {}: {}", Path.display(), Error))
 		})?;
 
@@ -1991,10 +2052,10 @@ impl CocoonService for CocoonServiceImpl {
 		let Path =
 			Self::UriToPath(req.uri.as_ref()).ok_or_else(|| Status::invalid_argument("stat: missing or empty URI"))?;
 
-		debug!("[CocoonService] Stat: {:?}", Path);
+		dev_log!("cocoon", "[CocoonService] Stat: {:?}", Path);
 
 		let Metadata = tokio::fs::metadata(&Path).await.map_err(|Error| {
-			warn!("[CocoonService] stat failed for {:?}: {}", Path, Error);
+			dev_log!("cocoon", "warn: [CocoonService] stat failed for {:?}: {}", Path, Error);
 			Status::not_found(format!("stat: {}: {}", Path.display(), Error))
 		})?;
 
@@ -2019,10 +2080,10 @@ impl CocoonService for CocoonServiceImpl {
 		let Path = Self::UriToPath(req.uri.as_ref())
 			.ok_or_else(|| Status::invalid_argument("readdir: missing or empty URI"))?;
 
-		debug!("[CocoonService] Readdir: {:?}", Path);
+		dev_log!("cocoon", "[CocoonService] Readdir: {:?}", Path);
 
 		let mut ReadDir = tokio::fs::read_dir(&Path).await.map_err(|Error| {
-			warn!("[CocoonService] readdir failed for {:?}: {}", Path, Error);
+			dev_log!("cocoon", "warn: [CocoonService] readdir failed for {:?}: {}", Path, Error);
 			Status::not_found(format!("readdir: {}: {}", Path.display(), Error))
 		})?;
 
@@ -2043,7 +2104,7 @@ impl CocoonService for CocoonServiceImpl {
 	async fn watch_file(&self, request:Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		let Uri = req.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
-		info!("[CocoonService] watch_file registered (polling not yet active): {}", Uri);
+		dev_log!("cocoon", "[CocoonService] watch_file registered (polling not yet active): {}", Uri);
 		// TODO(P1): Wire notify crate watcher; store WatcherHandle in
 		// ApplicationState.Feature.Watchers keyed by URI for cancellation on
 		// cancel_operation.
@@ -2056,7 +2117,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// folders.
 	async fn find_files(&self, request:Request<FindFilesRequest>) -> Result<Response<FindFilesResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Finding files with pattern: {}", req.pattern);
+		dev_log!("cocoon", "[CocoonService] Finding files with pattern: {}", req.pattern);
 
 		use globset::{Glob, GlobSetBuilder};
 
@@ -2108,7 +2169,7 @@ impl CocoonService for CocoonServiceImpl {
 			WalkAndCollect(Root, Root, &GlobMatcher, &mut Uris);
 		}
 
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] find_files: {} results for pattern '{}'",
 			Uris.len(),
 			req.pattern
@@ -2128,7 +2189,7 @@ impl CocoonService for CocoonServiceImpl {
 		if req.pattern.is_empty() {
 			return Ok(Response::new(FindTextInFilesResponse::default()));
 		}
-		debug!("[CocoonService] find_text_in_files: pattern='{}'", req.pattern);
+		dev_log!("cocoon", "[CocoonService] find_text_in_files: pattern='{}'", req.pattern);
 
 		let Roots:Vec<std::path::PathBuf> = {
 			match self.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
@@ -2201,7 +2262,7 @@ impl CocoonService for CocoonServiceImpl {
 		.await
 		.unwrap_or_default();
 
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] find_text_in_files: {} matches for '{}'",
 			Matches.len(),
 			req.pattern
@@ -2218,7 +2279,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		let req = request.into_inner();
 		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
-		info!("[CocoonService] open_document: {}", Uri);
+		dev_log!("cocoon", "[CocoonService] open_document: {}", Uri);
 
 		let _ = self.environment.ApplicationHandle.emit(
 			"sky://editor/openDocument",
@@ -2233,7 +2294,7 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		info!("[CocoonService] save_all: includeUntitled={}", req.include_untitled);
+		dev_log!("cocoon", "[CocoonService] save_all: includeUntitled={}", req.include_untitled);
 
 		let _ = self
 			.environment
@@ -2249,7 +2310,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		let req = request.into_inner();
 		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
-		debug!("[CocoonService] apply_edit: uri={} edits={}", Uri, req.edits.len());
+		dev_log!("cocoon", "[CocoonService] apply_edit: uri={} edits={}", Uri, req.edits.len());
 
 		let EditsJson:Vec<serde_json::Value> = req.edits.iter().map(|E| {
 			json!({
@@ -2275,14 +2336,14 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<UpdateConfigurationRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Updating configuration with {} changed keys",
 			req.changed_keys.len()
 		);
 
 		// Update ConfigurationState in MountainEnvironment
 		for key in &req.changed_keys {
-			debug!("[CocoonService] Configuration key changed: {}", key);
+			dev_log!("cocoon", "[CocoonService] Configuration key changed: {}", key);
 		}
 
 		// TODO: When ConfigurationState is available in MountainEnvironment:
@@ -2299,7 +2360,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<UpdateWorkspaceFoldersRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Updating workspace: {} additions, {} removals",
 			req.additions.len(),
 			req.removals.len()
@@ -2307,14 +2368,14 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Update WorkspaceState in MountainEnvironment
 		for addition in &req.additions {
-			debug!(
+			dev_log!("cocoon", 
 				"[CocoonService] Adding workspace folder: {} ({})",
 				addition.name,
 				addition.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
 			);
 		}
 		for removal in &req.removals {
-			debug!(
+			dev_log!("cocoon", 
 				"[CocoonService] Removing workspace folder: {}",
 				removal.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
 			);
@@ -2356,7 +2417,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// ID.
 	async fn open_terminal(&self, request:Request<OpenTerminalRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Opening terminal: {}", req.name);
+		dev_log!("cocoon", "[CocoonService] Opening terminal: {}", req.name);
 
 		// Build options JSON matching TerminalStateDTO::Create expectations
 		let Options = json!({
@@ -2368,11 +2429,11 @@ impl CocoonService for CocoonServiceImpl {
 
 		match self.environment.CreateTerminal(Options).await {
 			Ok(Info) => {
-				info!("[CocoonService] Terminal created: {:?}", Info);
+				dev_log!("cocoon", "[CocoonService] Terminal created: {:?}", Info);
 				Ok(Response::new(Empty {}))
 			},
 			Err(Error) => {
-				error!("[CocoonService] open_terminal failed: {}", Error);
+				dev_log!("cocoon", "error: [CocoonService] open_terminal failed: {}", Error);
 				Err(Status::internal(format!("open_terminal: {}", Error)))
 			},
 		}
@@ -2382,14 +2443,14 @@ impl CocoonService for CocoonServiceImpl {
 	async fn terminal_input(&self, request:Request<TerminalInputRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		let TerminalId = req.terminal_id as u64;
-		debug!("[CocoonService] terminal_input: id={} bytes={}", TerminalId, req.data.len());
+		dev_log!("cocoon", "[CocoonService] terminal_input: id={} bytes={}", TerminalId, req.data.len());
 
 		let Text = String::from_utf8_lossy(&req.data).into_owned();
 
 		match self.environment.SendTextToTerminal(TerminalId, Text).await {
 			Ok(()) => Ok(Response::new(Empty {})),
 			Err(Error) => {
-				warn!("[CocoonService] terminal_input failed id={}: {}", TerminalId, Error);
+				dev_log!("cocoon", "warn: [CocoonService] terminal_input failed id={}: {}", TerminalId, Error);
 				Err(Status::not_found(format!("terminal_input: {}", Error)))
 			},
 		}
@@ -2399,12 +2460,12 @@ impl CocoonService for CocoonServiceImpl {
 	async fn close_terminal(&self, request:Request<CloseTerminalRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		let TerminalId = req.terminal_id as u64;
-		info!("[CocoonService] close_terminal: id={}", TerminalId);
+		dev_log!("cocoon", "[CocoonService] close_terminal: id={}", TerminalId);
 
 		match self.environment.DisposeTerminal(TerminalId).await {
 			Ok(()) => Ok(Response::new(Empty {})),
 			Err(Error) => {
-				warn!("[CocoonService] close_terminal failed id={}: {}", TerminalId, Error);
+				dev_log!("cocoon", "warn: [CocoonService] close_terminal failed id={}: {}", TerminalId, Error);
 				Err(Status::internal(format!("close_terminal: {}", Error)))
 			},
 		}
@@ -2416,13 +2477,13 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<TerminalOpenedNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!(
+		dev_log!("cocoon", 
 			"[CocoonService] Terminal opened notification: {} (ID: {})",
 			req.name, req.terminal_id
 		);
 
 		// Forward to terminal event handlers registered in MountainEnvironment
-		debug!("[CocoonService] Terminal event notification received");
+		dev_log!("cocoon", "[CocoonService] Terminal event notification received");
 
 		// TODO: When TerminalState is available in MountainEnvironment:
 		// - Update or remove terminal from TerminalState
@@ -2438,10 +2499,10 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<TerminalClosedNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Terminal closed notification: {}", req.terminal_id);
+		dev_log!("cocoon", "[CocoonService] Terminal closed notification: {}", req.terminal_id);
 
 		// Forward to terminal event handlers registered in MountainEnvironment
-		debug!("[CocoonService] Terminal event notification received");
+		dev_log!("cocoon", "[CocoonService] Terminal event notification received");
 
 		// TODO: When TerminalState is available in MountainEnvironment:
 		// - Update or remove terminal from TerminalState
@@ -2457,13 +2518,13 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<TerminalProcessIdNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Terminal process ID: {} for terminal {}",
 			req.process_id, req.terminal_id
 		);
 
 		// Store in TerminalState in MountainEnvironment
-		debug!("[CocoonService] Process ID received for terminal {}", req.terminal_id);
+		dev_log!("cocoon", "[CocoonService] Process ID received for terminal {}", req.terminal_id);
 
 		// TODO: When TerminalState is available in MountainEnvironment:
 		// - Update terminal metadata with process ID
@@ -2479,7 +2540,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<TerminalDataNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Terminal data for {}: {} bytes",
 			req.terminal_id,
 			req.data.len()
@@ -2487,7 +2548,7 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Forward to Wind frontend via IPC in MountainEnvironment
 		// This stub logs the data for debugging
-		trace!("[CocoonService] Terminal output: {}", String::from_utf8_lossy(&req.data));
+		dev_log!("cocoon", "[CocoonService] Terminal output: {}", String::from_utf8_lossy(&req.data));
 
 		// TODO: When Wind IPC layer is available in MountainEnvironment:
 		// - Forward output data to Wind via IPC
@@ -2506,10 +2567,10 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterTreeViewProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering tree view provider: {}", req.view_id);
+		dev_log!("cocoon", "[CocoonService] Registering tree view provider: {}", req.view_id);
 
 		// Store provider in MountainEnvironment TreeViewState
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Tree view provider registered: view_id={}, extension_id={:?}",
 			req.view_id, req.extension_id
 		);
@@ -2531,14 +2592,12 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<GetTreeChildrenRequest>,
 	) -> Result<Response<GetTreeChildrenResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Getting tree children for view {}", req.view_id);
+		dev_log!("cocoon", "[CocoonService] Getting tree children for view {}", req.view_id);
 
 		// Look up provider and call GetTreeChildren in MountainEnvironment
 		// This stub returns an empty list
-		warn!(
-			"[CocoonService] Tree view provider lookup not yet implemented - view_id: {}",
-			req.view_id
-		);
+		dev_log!("cocoon", "warn: [CocoonService] Tree view provider lookup not yet implemented - view_id: {}",
+			req.view_id);
 
 		// TODO: When TreeViewState is available in MountainEnvironment:
 		// - Look up provider by view_id
@@ -2558,10 +2617,10 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterScmProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering SCM provider: {}", req.scm_id);
+		dev_log!("cocoon", "[CocoonService] Registering SCM provider: {}", req.scm_id);
 
 		// Store SCM provider in MountainEnvironment
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] SCM provider registered: scm_id={}, extension_id={:?}",
 			req.scm_id, req.extension_id
 		);
@@ -2580,13 +2639,13 @@ impl CocoonService for CocoonServiceImpl {
 	/// Update SCM Group - Update SCM group
 	async fn update_scm_group(&self, request:Request<UpdateScmGroupRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Updating SCM group {} with provider {}",
 			req.group_id, req.provider_id
 		);
 
 		// Update SCM group in MountainEnvironment
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Group update details: provider_id={}, group_id={}, resource_states={:?}",
 			req.provider_id, req.group_id, req.resource_states
 		);
@@ -2609,7 +2668,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// `$gitExec` IPC call used by the built-in Git extension.
 	async fn git_exec(&self, request:Request<GitExecRequest>) -> Result<Response<GitExecResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] git_exec: {}", req.args.join(" "));
+		dev_log!("cocoon", "[CocoonService] git_exec: {}", req.args.join(" "));
 
 		let WorkingDir = if req.repository_path.is_empty() {
 			std::env::current_dir().unwrap_or_default()
@@ -2623,12 +2682,12 @@ impl CocoonService for CocoonServiceImpl {
 			.output()
 			.await
 			.map_err(|Error| {
-				error!("[CocoonService] git_exec failed to spawn: {}", Error);
+				dev_log!("cocoon", "error: [CocoonService] git_exec failed to spawn: {}", Error);
 				Status::internal(format!("git_exec: failed to spawn git: {}", Error))
 			})?;
 
 		let ExitCode = Output.status.code().unwrap_or(-1);
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] git_exec exit={} stdout={} bytes stderr={} bytes",
 			ExitCode,
 			Output.stdout.len(),
@@ -2655,10 +2714,10 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterDebugAdapterRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering debug adapter: {}", req.debug_type);
+		dev_log!("cocoon", "[CocoonService] Registering debug adapter: {}", req.debug_type);
 
 		// Register debug adapter in MountainEnvironment DebugState
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] Debug adapter registered: debug_type={}, extension_id={:?}",
 			req.debug_type, req.extension_id
 		);
@@ -2678,15 +2737,13 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<StartDebuggingRequest>,
 	) -> Result<Response<StartDebuggingResponse>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Starting debugging session: {}", req.debug_type);
+		dev_log!("cocoon", "[CocoonService] Starting debugging session: {}", req.debug_type);
 
 		// Spawn debug adapter and start DAP session in MountainEnvironment
 		// This stub returns failure
-		warn!(
-			"[CocoonService] Debug session start not yet implemented - type: {}",
-			req.debug_type
-		);
-		debug!("[CocoonService] Debug configuration: {:?}", req.configuration);
+		dev_log!("cocoon", "warn: [CocoonService] Debug session start not yet implemented - type: {}",
+			req.debug_type);
+		dev_log!("cocoon", "[CocoonService] Debug configuration: {:?}", req.configuration);
 
 		// TODO: When DebugAdapterExecutor is available in MountainEnvironment:
 		// - Look up debug adapter by debug_type
@@ -2707,11 +2764,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ParticipateInSaveRequest>,
 	) -> Result<Response<ParticipateInSaveResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] Participating in save for: {:?}", req.uri);
+		dev_log!("cocoon", "[CocoonService] Participating in save for: {:?}", req.uri);
 
 		// Look up registered save participants and aggregate edits in
 		// MountainEnvironment
-		debug!("[CocoonService] Save reason: {:?}", req.reason);
+		dev_log!("cocoon", "[CocoonService] Save reason: {:?}", req.reason);
 
 		// TODO: When SaveParticipantRegistry is available in MountainEnvironment:
 		// - Look up save participants for this URI
@@ -2728,7 +2785,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// Get Secret - retrieve from the OS keychain via SecretProvider.
 	async fn get_secret(&self, request:Request<GetSecretRequest>) -> Result<Response<GetSecretResponse>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] get_secret: key={}", req.key);
+		dev_log!("cocoon", "[CocoonService] get_secret: key={}", req.key);
 
 		// The gRPC proto only carries `key`; we use the app name as the
 		// extension identifier (keyring service scoping).
@@ -2736,7 +2793,7 @@ impl CocoonService for CocoonServiceImpl {
 			Ok(Some(Value)) => Ok(Response::new(GetSecretResponse { value:Value })),
 			Ok(None) => Ok(Response::new(GetSecretResponse { value:String::new() })),
 			Err(Error) => {
-				warn!("[CocoonService] get_secret failed key={}: {}", req.key, Error);
+				dev_log!("cocoon", "warn: [CocoonService] get_secret failed key={}: {}", req.key, Error);
 				Err(Status::internal(format!("get_secret: {}", Error)))
 			},
 		}
@@ -2745,12 +2802,12 @@ impl CocoonService for CocoonServiceImpl {
 	/// Store Secret - persist to the OS keychain via SecretProvider.
 	async fn store_secret(&self, request:Request<StoreSecretRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] store_secret: key={}", req.key);
+		dev_log!("cocoon", "[CocoonService] store_secret: key={}", req.key);
 
 		match self.environment.StoreSecret(String::new(), req.key.clone(), req.value).await {
 			Ok(()) => Ok(Response::new(Empty {})),
 			Err(Error) => {
-				warn!("[CocoonService] store_secret failed key={}: {}", req.key, Error);
+				dev_log!("cocoon", "warn: [CocoonService] store_secret failed key={}: {}", req.key, Error);
 				Err(Status::internal(format!("store_secret: {}", Error)))
 			},
 		}
@@ -2759,12 +2816,12 @@ impl CocoonService for CocoonServiceImpl {
 	/// Delete Secret - remove from the OS keychain via SecretProvider.
 	async fn delete_secret(&self, request:Request<DeleteSecretRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		debug!("[CocoonService] delete_secret: key={}", req.key);
+		dev_log!("cocoon", "[CocoonService] delete_secret: key={}", req.key);
 
 		match self.environment.DeleteSecret(String::new(), req.key.clone()).await {
 			Ok(()) => Ok(Response::new(Empty {})),
 			Err(Error) => {
-				warn!("[CocoonService] delete_secret failed key={}: {}", req.key, Error);
+				dev_log!("cocoon", "warn: [CocoonService] delete_secret failed key={}: {}", req.key, Error);
 				Err(Status::internal(format!("delete_secret: {}", Error)))
 			},
 		}
@@ -2778,7 +2835,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Document Highlight Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Document Highlight Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::DocumentHighlight,
@@ -2794,7 +2851,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideDocumentHighlightsRequest>,
 	) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing document highlights");
+		dev_log!("cocoon", "[CocoonService] Providing document highlights");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -2810,7 +2867,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Document Symbol Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Document Symbol Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::DocumentSymbol,
@@ -2826,7 +2883,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideDocumentSymbolsRequest>,
 	) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing document symbols");
+		dev_log!("cocoon", "[CocoonService] Providing document symbols");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -2842,7 +2899,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Workspace Symbol Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Workspace Symbol Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::WorkspaceSymbol,
@@ -2858,7 +2915,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideWorkspaceSymbolsRequest>,
 	) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing workspace symbols");
+		dev_log!("cocoon", "[CocoonService] Providing workspace symbols");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -2874,7 +2931,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Rename Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Rename Provider");
 		self.RegisterProvider(req.handle, ProviderType::Rename, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
@@ -2885,7 +2942,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideRenameEditsRequest>,
 	) -> Result<Response<ProvideRenameEditsResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing rename edits");
+		dev_log!("cocoon", "[CocoonService] Providing rename edits");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -2901,7 +2958,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Document Formatting Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Document Formatting Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::DocumentFormatting,
@@ -2917,7 +2974,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideDocumentFormattingRequest>,
 	) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing document formatting");
+		dev_log!("cocoon", "[CocoonService] Providing document formatting");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -2933,7 +2990,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Document Range Formatting Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Document Range Formatting Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::DocumentRangeFormatting,
@@ -2949,7 +3006,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideDocumentRangeFormattingRequest>,
 	) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing document range formatting");
+		dev_log!("cocoon", "[CocoonService] Providing document range formatting");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -2965,7 +3022,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterOnTypeFormattingProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering On Type Formatting Provider");
+		dev_log!("cocoon", "[CocoonService] Registering On Type Formatting Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::OnTypeFormatting,
@@ -2981,7 +3038,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideOnTypeFormattingRequest>,
 	) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing on-type formatting");
+		dev_log!("cocoon", "[CocoonService] Providing on-type formatting");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -2997,7 +3054,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterSignatureHelpProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Signature Help Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Signature Help Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::SignatureHelp,
@@ -3013,7 +3070,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideSignatureHelpRequest>,
 	) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing signature help");
+		dev_log!("cocoon", "[CocoonService] Providing signature help");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3029,7 +3086,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Code Lens Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Code Lens Provider");
 		self.RegisterProvider(req.handle, ProviderType::CodeLens, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
@@ -3040,7 +3097,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideCodeLensesRequest>,
 	) -> Result<Response<ProvideCodeLensesResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing code lenses");
+		dev_log!("cocoon", "[CocoonService] Providing code lenses");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3056,7 +3113,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Folding Range Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Folding Range Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::FoldingRange,
@@ -3072,7 +3129,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideFoldingRangesRequest>,
 	) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing folding ranges");
+		dev_log!("cocoon", "[CocoonService] Providing folding ranges");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3088,7 +3145,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Selection Range Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Selection Range Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::SelectionRange,
@@ -3104,7 +3161,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideSelectionRangesRequest>,
 	) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing selection ranges");
+		dev_log!("cocoon", "[CocoonService] Providing selection ranges");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3120,7 +3177,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterSemanticTokensProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Semantic Tokens Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Semantic Tokens Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::SemanticTokens,
@@ -3136,7 +3193,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideSemanticTokensRequest>,
 	) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing semantic tokens");
+		dev_log!("cocoon", "[CocoonService] Providing semantic tokens");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3152,7 +3209,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Inlay Hints Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Inlay Hints Provider");
 		self.RegisterProvider(req.handle, ProviderType::InlayHint, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
 	}
@@ -3163,7 +3220,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideInlayHintsRequest>,
 	) -> Result<Response<ProvideInlayHintsResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing inlay hints");
+		dev_log!("cocoon", "[CocoonService] Providing inlay hints");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3179,7 +3236,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Type Hierarchy Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Type Hierarchy Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::TypeHierarchy,
@@ -3195,7 +3252,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing type hierarchy supertypes");
+		dev_log!("cocoon", "[CocoonService] Providing type hierarchy supertypes");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3211,7 +3268,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing type hierarchy subtypes");
+		dev_log!("cocoon", "[CocoonService] Providing type hierarchy subtypes");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3227,7 +3284,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Call Hierarchy Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Call Hierarchy Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::CallHierarchy,
@@ -3243,7 +3300,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideCallHierarchyRequest>,
 	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing call hierarchy incoming");
+		dev_log!("cocoon", "[CocoonService] Providing call hierarchy incoming");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3259,7 +3316,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideCallHierarchyRequest>,
 	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing call hierarchy outgoing");
+		dev_log!("cocoon", "[CocoonService] Providing call hierarchy outgoing");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3275,7 +3332,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Linked Editing Range Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Linked Editing Range Provider");
 		self.RegisterProvider(
 			req.handle,
 			ProviderType::LinkedEditingRange,
@@ -3291,7 +3348,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideLinkedEditingRangesRequest>,
 	) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
 		let _req = request.into_inner();
-		debug!("[CocoonService] Providing linked editing ranges");
+		dev_log!("cocoon", "[CocoonService] Providing linked editing ranges");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Look up provider by handle
@@ -3307,7 +3364,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ShowQuickPickRequest>,
 	) -> Result<Response<ShowQuickPickResponse>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] show_quick_pick: {} items", req.items.len());
+		dev_log!("cocoon", "[CocoonService] show_quick_pick: {} items", req.items.len());
 
 		let Items:Vec<QuickPickItemDTO> = req
 			.items
@@ -3341,7 +3398,7 @@ impl CocoonService for CocoonServiceImpl {
 			},
 			Ok(None) => Ok(Response::new(ShowQuickPickResponse::default())),
 			Err(Error) => {
-				warn!("[CocoonService] show_quick_pick failed: {}", Error);
+				dev_log!("cocoon", "warn: [CocoonService] show_quick_pick failed: {}", Error);
 				Ok(Response::new(ShowQuickPickResponse::default()))
 			},
 		}
@@ -3353,7 +3410,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ShowInputBoxRequest>,
 	) -> Result<Response<ShowInputBoxResponse>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] show_input_box");
+		dev_log!("cocoon", "[CocoonService] show_input_box");
 
 		let Options = Some(InputBoxOptionsDTO {
 			Title:if req.title.is_empty() { None } else { Some(req.title) },
@@ -3368,7 +3425,7 @@ impl CocoonService for CocoonServiceImpl {
 			Ok(Some(Value)) => Ok(Response::new(ShowInputBoxResponse { value:Value, cancelled:false })),
 			Ok(None) => Ok(Response::new(ShowInputBoxResponse { value:String::new(), cancelled:true })),
 			Err(Error) => {
-				warn!("[CocoonService] show_input_box failed: {}", Error);
+				dev_log!("cocoon", "warn: [CocoonService] show_input_box failed: {}", Error);
 				Ok(Response::new(ShowInputBoxResponse { value:String::new(), cancelled:true }))
 			},
 		}
@@ -3380,7 +3437,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ShowProgressRequest>,
 	) -> Result<Response<ShowProgressResponse>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling progress");
+		dev_log!("cocoon", "[CocoonService] Handling progress");
 
 		// TODO: Implement progress in MountainEnvironment
 
@@ -3390,7 +3447,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// progress report
 	async fn report_progress(&self, request:Request<ReportProgressRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling progress report");
+		dev_log!("cocoon", "[CocoonService] Handling progress report");
 
 		// TODO: Implement progress report in MountainEnvironment
 
@@ -3403,7 +3460,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<PostWebviewMessageRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling webview message");
+		dev_log!("cocoon", "[CocoonService] Handling webview message");
 
 		// TODO: Implement webview message in MountainEnvironment
 
@@ -3416,7 +3473,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<DisposeWebviewPanelRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling webview dispose");
+		dev_log!("cocoon", "[CocoonService] Handling webview dispose");
 
 		// TODO: Implement webview dispose in MountainEnvironment
 
@@ -3426,7 +3483,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// external URI
 	async fn open_external(&self, request:Request<OpenExternalRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling external URI");
+		dev_log!("cocoon", "[CocoonService] Handling external URI");
 
 		// TODO: Implement external URI in MountainEnvironment
 
@@ -3439,7 +3496,7 @@ impl CocoonService for CocoonServiceImpl {
 		let Path =
 			Self::UriToPath(req.uri.as_ref()).ok_or_else(|| Status::invalid_argument("delete_file: missing URI"))?;
 
-		debug!("[CocoonService] delete_file: {:?}", Path);
+		dev_log!("cocoon", "[CocoonService] delete_file: {:?}", Path);
 
 		if Path.is_dir() {
 			tokio::fs::remove_dir_all(&Path).await
@@ -3459,7 +3516,7 @@ impl CocoonService for CocoonServiceImpl {
 		let NewPath = Self::UriToPath(req.target.as_ref())
 			.ok_or_else(|| Status::invalid_argument("rename_file: missing target URI"))?;
 
-		debug!("[CocoonService] rename_file: {:?} → {:?}", OldPath, NewPath);
+		dev_log!("cocoon", "[CocoonService] rename_file: {:?} → {:?}", OldPath, NewPath);
 
 		if let Some(Parent) = NewPath.parent() {
 			if !Parent.as_os_str().is_empty() {
@@ -3484,7 +3541,7 @@ impl CocoonService for CocoonServiceImpl {
 		let DstPath = Self::UriToPath(req.target.as_ref())
 			.ok_or_else(|| Status::invalid_argument("copy_file: missing target URI"))?;
 
-		debug!("[CocoonService] copy_file: {:?} → {:?}", SrcPath, DstPath);
+		dev_log!("cocoon", "[CocoonService] copy_file: {:?} → {:?}", SrcPath, DstPath);
 
 		if let Some(Parent) = DstPath.parent() {
 			if !Parent.as_os_str().is_empty() {
@@ -3507,7 +3564,7 @@ impl CocoonService for CocoonServiceImpl {
 		let Path = Self::UriToPath(req.uri.as_ref())
 			.ok_or_else(|| Status::invalid_argument("create_directory: missing URI"))?;
 
-		debug!("[CocoonService] create_directory: {:?}", Path);
+		dev_log!("cocoon", "[CocoonService] create_directory: {:?}", Path);
 
 		tokio::fs::create_dir_all(&Path)
 			.await
@@ -3524,7 +3581,7 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		info!("[CocoonService] create_output_channel: '{}'", req.name);
+		dev_log!("cocoon", "[CocoonService] create_output_channel: '{}'", req.name);
 
 		let _ = self
 			.environment
@@ -3589,7 +3646,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterTaskProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Task Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Task Provider");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Store provider metadata (handle, language_selector)
@@ -3601,7 +3658,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// task execution
 	async fn execute_task(&self, request:Request<ExecuteTaskRequest>) -> Result<Response<ExecuteTaskResponse>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling task execution");
+		dev_log!("cocoon", "[CocoonService] Handling task execution");
 
 		// TODO: Implement task execution in MountainEnvironment
 
@@ -3611,7 +3668,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// task termination
 	async fn terminate_task(&self, request:Request<TerminateTaskRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling task termination");
+		dev_log!("cocoon", "[CocoonService] Handling task termination");
 
 		// TODO: Implement task termination in MountainEnvironment
 
@@ -3624,7 +3681,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<GetAuthenticationSessionRequest>,
 	) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling authentication session");
+		dev_log!("cocoon", "[CocoonService] Handling authentication session");
 
 		// TODO: Implement authentication session in MountainEnvironment
 
@@ -3637,7 +3694,7 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterAuthenticationProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[CocoonService] Registering Authentication Provider");
+		dev_log!("cocoon", "[CocoonService] Registering Authentication Provider");
 
 		// TODO: When ProviderRegistry is available in MountainEnvironment:
 		// - Store provider metadata (handle, language_selector)
@@ -3649,7 +3706,7 @@ impl CocoonService for CocoonServiceImpl {
 	/// debug stop
 	async fn stop_debugging(&self, request:Request<StopDebuggingRequest>) -> Result<Response<Empty>, Status> {
 		let _req = request.into_inner();
-		info!("[CocoonService] Handling debug stop");
+		dev_log!("cocoon", "[CocoonService] Handling debug stop");
 
 		// TODO: Implement debug stop in MountainEnvironment
 
@@ -3664,7 +3721,7 @@ impl CocoonService for CocoonServiceImpl {
 		use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 
 		let req = request.into_inner();
-		debug!("[CocoonService] get_extension: {}", req.extension_id);
+		dev_log!("cocoon", "[CocoonService] get_extension: {}", req.extension_id);
 
 		let ExtensionOption = self.environment.GetExtension(req.extension_id.clone()).await.ok().flatten();
 
@@ -3722,7 +3779,7 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		debug!(
+		dev_log!("cocoon", 
 			"[CocoonService] resize_terminal: id={} cols={} rows={}",
 			req.terminal_id, req.cols, req.rows
 		);
@@ -3759,7 +3816,7 @@ impl CocoonService for CocoonServiceImpl {
 			Some(format!("{}.{}", req.section, req.key))
 		};
 
-		debug!("[CocoonService] get_configuration: key={:?}", Key);
+		dev_log!("cocoon", "[CocoonService] get_configuration: key={:?}", Key);
 
 		match self
 			.environment
@@ -3771,7 +3828,7 @@ impl CocoonService for CocoonServiceImpl {
 				Ok(Response::new(GetConfigurationResponse { value:Bytes }))
 			},
 			Err(Error) => {
-				warn!("[CocoonService] get_configuration failed: {}", Error);
+				dev_log!("cocoon", "warn: [CocoonService] get_configuration failed: {}", Error);
 				Ok(Response::new(GetConfigurationResponse::default()))
 			},
 		}

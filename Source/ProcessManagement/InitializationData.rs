@@ -140,12 +140,12 @@ use CommonLibrary::{
 	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
 	Workspace::WorkspaceProvider::WorkspaceProvider,
 };
-use log::info;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry};
 use uuid::Uuid;
 
 use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
+use crate::dev_log;
 
 /// Loads or generates a persistent machine ID.
 ///
@@ -164,7 +164,7 @@ fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 	if let Ok(content) = fs::read_to_string(&machine_id_path) {
 		let trimmed = content.trim();
 		if !trimmed.is_empty() {
-			log::info!("[InitializationData] Loaded existing machine ID from disk");
+			dev_log!("cocoon", "[InitializationData] Loaded existing machine ID from disk");
 			return trimmed.to_string();
 		}
 	}
@@ -175,15 +175,15 @@ fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 	// Ensure directory exists
 	if let Some(parent) = machine_id_path.parent() {
 		if let Err(e) = fs::create_dir_all(parent) {
-			log::warn!("[InitializationData] Failed to create machine ID directory: {}", e);
+			dev_log!("cocoon", "warn: [InitializationData] Failed to create machine ID directory: {}", e);
 		}
 	}
 
 	// Save to disk
 	if let Err(e) = fs::write(&machine_id_path, &new_machine_id) {
-		log::warn!("[InitializationData] Failed to persist machine ID to disk: {}", e);
+		dev_log!("cocoon", "warn: [InitializationData] Failed to persist machine ID to disk: {}", e);
 	} else {
-		log::info!("[InitializationData] Generated and persisted new machine ID");
+		dev_log!("cocoon", "[InitializationData] Generated and persisted new machine ID");
 	}
 
 	new_machine_id
@@ -195,7 +195,7 @@ pub async fn ConstructSandboxConfiguration(
 
 	ApplicationState:&Arc<ApplicationState>,
 ) -> Result<Value, CommonError> {
-	info!("[InitializationData] Constructing ISandboxConfiguration for Sky.");
+	dev_log!("cocoon", "[InitializationData] Constructing ISandboxConfiguration for Sky.");
 
 	let PathResolver = ApplicationHandle.path();
 
@@ -315,7 +315,7 @@ pub async fn ConstructSandboxConfiguration(
 
 /// Constructs the `IExtensionHostInitData` payload sent to `Cocoon`.
 pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvironment) -> Result<Value, CommonError> {
-	info!("[InitializationData] Constructing IExtensionHostInitData for Cocoon.");
+	dev_log!("cocoon", "[InitializationData] Constructing IExtensionHostInitData for Cocoon.");
 
 	let ApplicationState = &Environment.ApplicationState;
 
@@ -355,6 +355,21 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	let AppRoot = PathResolver
 		.resource_dir()
+		.or_else(|_| {
+			// Debug builds: resource_dir() fails because the binary runs
+			// outside a proper Tauri bundle. Fall back to the exe-relative
+			// Sky Target directory (same path used for STATIC_APPLICATION_ROOT).
+			let ExeDir = std::env::current_exe()
+				.ok()
+				.and_then(|P| P.parent().map(|D| D.to_path_buf()))
+				.unwrap_or_default();
+			let SkyTarget = ExeDir.join("../../../Element/Sky/Target");
+			if SkyTarget.exists() {
+				Ok(SkyTarget.canonicalize().unwrap_or(SkyTarget))
+			} else {
+				Err(tauri::Error::UnknownPath)
+			}
+		})
 		.map_err(|Error| CommonError::ConfigurationLoad { Description:Error.to_string() })?;
 
 	let AppData = PathResolver

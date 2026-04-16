@@ -60,16 +60,16 @@ use CommonLibrary::{
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 };
 use async_trait::async_trait;
-use log::{info, warn};
 use serde_json::{Value, json};
 use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;
+use crate::dev_log;
 
 #[async_trait]
 impl CustomEditorProvider for MountainEnvironment {
 	async fn RegisterCustomEditorProvider(&self, ViewType:String, _Options:Value) -> Result<(), CommonError> {
-		info!("[CustomEditorProvider] Registering provider for view type: {}", ViewType);
+		dev_log!("extensions", "[CustomEditorProvider] Registering provider for view type: {}", ViewType);
 
 		// Validate ViewType is non-empty
 		if ViewType.is_empty() {
@@ -90,7 +90,7 @@ impl CustomEditorProvider for MountainEnvironment {
 	}
 
 	async fn UnregisterCustomEditorProvider(&self, ViewType:String) -> Result<(), CommonError> {
-		info!("[CustomEditorProvider] Unregistering provider for view type: {}", ViewType);
+		dev_log!("extensions", "[CustomEditorProvider] Unregistering provider for view type: {}", ViewType);
 
 		// Remove custom editor provider registration from ApplicationState. Should
 		// check if any active editors are currently using this ViewType and either
@@ -103,7 +103,7 @@ impl CustomEditorProvider for MountainEnvironment {
 	}
 
 	async fn OnSaveCustomDocument(&self, ViewType:String, ResourceURI:Url) -> Result<(), CommonError> {
-		info!(
+		dev_log!("extensions", 
 			"[CustomEditorProvider] OnSaveCustomDocument called for '{}' at '{}'",
 			ViewType, ResourceURI
 		);
@@ -118,7 +118,7 @@ impl CustomEditorProvider for MountainEnvironment {
 		// (formatters, linters, extension notifications). This enables custom editors
 		// to participate in the standard save lifecycle.
 
-		warn!("[CustomEditorProvider] OnSaveCustomDocument is not fully implemented.");
+		dev_log!("extensions", "warn: [CustomEditorProvider] OnSaveCustomDocument is not fully implemented.");
 		Ok(())
 	}
 
@@ -128,7 +128,7 @@ impl CustomEditorProvider for MountainEnvironment {
 		ResourceURI:Url,
 		WebviewPanelHandle:String,
 	) -> Result<(), CommonError> {
-		info!(
+		dev_log!("extensions", 
 			"[CustomEditorProvider] Resolving custom editor for '{}' on resource '{}'",
 			ViewType, ResourceURI
 		);

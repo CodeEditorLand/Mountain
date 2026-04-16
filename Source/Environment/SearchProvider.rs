@@ -203,11 +203,11 @@ use async_trait::async_trait;
 use grep_regex::RegexMatcherBuilder;
 use grep_searcher::{Searcher, Sink, SinkMatch};
 use ignore::WalkBuilder;
-use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::dev_log;
 
 #[derive(Deserialize, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -283,7 +283,7 @@ impl SearchProvider for MountainEnvironment {
 	async fn TextSearch(&self, QueryValue:Value, _OptionsValue:Value) -> Result<Value, CommonError> {
 		let Query:TextSearchQuery = serde_json::from_value(QueryValue)?;
 
-		info!("[SearchProvider] Performing text search for: {:?}", Query);
+		dev_log!("search", "[SearchProvider] Performing text search for: {:?}", Query);
 
 		let mut Builder = RegexMatcherBuilder::new();
 
@@ -306,7 +306,7 @@ impl SearchProvider for MountainEnvironment {
 			.clone();
 
 		if Folders.is_empty() {
-			warn!("[SearchProvider] No workspace folders to search in.");
+			dev_log!("search", "warn: [SearchProvider] No workspace folders to search in.");
 
 			return Ok(json!([]));
 		}
@@ -332,11 +332,9 @@ impl SearchProvider for MountainEnvironment {
 								let Sink = PerFileSink { path:Entry.path().to_path_buf(), results:AllMatches.clone() };
 
 								if let Err(Error) = Searcher.search_path(&Matcher, Entry.path(), Sink) {
-									warn!(
-										"[SearchProvider] Error searching path {}: {}",
+									dev_log!("search", "warn: [SearchProvider] Error searching path {}: {}",
 										Entry.path().display(),
-										Error
-									);
+										Error);
 								}
 							}
 						}

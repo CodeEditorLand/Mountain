@@ -149,7 +149,6 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	UserInterface::{DTO::MessageSeverity::MessageSeverity, ShowMessage::ShowMessage},
 };
-use log::{error, info, warn};
 use serde_json::json;
 use tauri::AppHandle;
 use tauri_plugin_updater::UpdaterExt;
@@ -158,6 +157,7 @@ use tauri_plugin_updater::UpdaterExt;
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime as Runtime;
+use crate::dev_log;
 
 /// Update delegation mode for controlling which update mechanism to use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -186,7 +186,7 @@ pub async fn CheckForUpdates(
 
 	NotifyNoUpdate:bool,
 ) -> Result<(), CommonError> {
-	info!("[UpdateService] Checking for updates...");
+	dev_log!("update", "[UpdateService] Checking for updates...");
 
 	let updater = ApplicationHandle.updater_builder().build().map_err(|Error| {
 		CommonError::ExternalServiceError { ServiceName:"Updater".into(), Description:Error.to_string() }
@@ -194,7 +194,7 @@ pub async fn CheckForUpdates(
 
 	match updater.check().await {
 		Ok(Some(update)) => {
-			info!("Update available: v{} ({:?})", update.version, update.date);
+			dev_log!("update", "Update available: v{} ({:?})", update.version, update.date);
 
 			let update_notes = update.body.clone().unwrap_or_else(|| "No release notes provided.".to_string());
 
@@ -218,18 +218,18 @@ pub async fn CheckForUpdates(
 				.await?;
 
 			if user_response == Some("Install".to_string()) {
-				info!("[UpdateService] User chose to install. Downloading and installing...");
+				dev_log!("update", "[UpdateService] User chose to install. Downloading and installing...");
 
 				let on_chunk = |chunk_size, total_size| {
-					info!("[Update] Download progress: {} / {:?}", chunk_size, total_size);
+					dev_log!("update", "[Update] Download progress: {} / {:?}", chunk_size, total_size);
 				};
 
 				let on_download_finish = || {
-					info!("[Update] Download complete, starting installation.");
+					dev_log!("update", "[Update] Download complete, starting installation.");
 				};
 
 				if let Err(Error) = update.download_and_install(on_chunk, on_download_finish).await {
-					error!("[UpdateService] Update failed: {}", Error);
+					dev_log!("update", "error: [UpdateService] Update failed: {}", Error);
 
 					RunTime
 						.Run(ShowMessage(
@@ -240,13 +240,13 @@ pub async fn CheckForUpdates(
 						.await?;
 				}
 			} else {
-				info!("[UpdateService] User chose not to install.");
+				dev_log!("update", "[UpdateService] User chose not to install.");
 			}
 		},
 
 		Ok(None) => {
 			if NotifyNoUpdate {
-				info!("[UpdateService] No updates available.");
+				dev_log!("update", "[UpdateService] No updates available.");
 
 				RunTime
 					.Run(ShowMessage(
@@ -256,12 +256,12 @@ pub async fn CheckForUpdates(
 					))
 					.await?;
 			} else {
-				info!("[UpdateService] No updates available (silent check).");
+				dev_log!("update", "[UpdateService] No updates available (silent check).");
 			}
 		},
 
 		Err(Error) => {
-			error!("[UpdateService] Failed to check for updates: {}", Error);
+			dev_log!("update", "error: [UpdateService] Failed to check for updates: {}", Error);
 
 			if NotifyNoUpdate {
 				RunTime
@@ -324,14 +324,14 @@ pub async fn CheckForUpdatesWithAir(
 ) -> Result<(), CommonError> {
 	match Mode {
 		UpdateMode::ForceAir => {
-			error!("[UpdateService] ForceAir mode specified but Air integration is disabled");
+			dev_log!("update", "error: [UpdateService] ForceAir mode specified but Air integration is disabled");
 			return Err(CommonError::Configuration {
 				Message:"Air integration is not enabled. Build with `--features AirIntegration` to use ForceAir mode."
 					.to_string(),
 			});
 		},
 		UpdateMode::AutoDetect | UpdateMode::ForceTauri => {
-			info!("[UpdateService] Using Tauri updater (Air integration disabled)");
+			dev_log!("update", "[UpdateService] Using Tauri updater (Air integration disabled)");
 		},
 	}
 
@@ -385,7 +385,7 @@ pub async fn CheckForUpdatesWithAir(
 ) -> Result<(), CommonError> {
 	match Mode {
 		UpdateMode::ForceAir => {
-			info!("[UpdateService] ForceAir mode specified - requiring Air service");
+			dev_log!("update", "[UpdateService] ForceAir mode specified - requiring Air service");
 
 			let AirClientRef = AirClient.as_ref().ok_or_else(|| {
 				CommonError::Configuration { Message:"ForceAir mode requires a valid AirClient".to_string() }
@@ -395,20 +395,20 @@ pub async fn CheckForUpdatesWithAir(
 		},
 
 		UpdateMode::ForceTauri => {
-			info!("[UpdateService] ForceTauri mode specified - using Tauri updater");
+			dev_log!("update", "[UpdateService] ForceTauri mode specified - using Tauri updater");
 			return CheckForUpdates(ApplicationHandle, RunTime, NotifyNoUpdate).await;
 		},
 
 		UpdateMode::AutoDetect => {
 			if let Some(AirClientRef) = &AirClient {
 				if IsAirAvailable(AirClientRef).await {
-					info!("[UpdateService] Air service available - delegating update check to Air");
+					dev_log!("update", "[UpdateService] Air service available - delegating update check to Air");
 					return CheckForUpdatesViaAir(ApplicationHandle, RunTime, NotifyNoUpdate, AirClientRef).await;
 				} else {
-					warn!("[UpdateService] Air client provided but unhealthy - falling back to Tauri updater");
+					dev_log!("update", "warn: [UpdateService] Air client provided but unhealthy - falling back to Tauri updater");
 				}
 			} else {
-				info!("[UpdateService] No Air client provided - using Tauri updater");
+				dev_log!("update", "[UpdateService] No Air client provided - using Tauri updater");
 			}
 
 			CheckForUpdates(ApplicationHandle, RunTime, NotifyNoUpdate).await
@@ -427,7 +427,7 @@ async fn CheckForUpdatesViaAir(
 	NotifyNoUpdate:bool,
 	AirClient:&Arc<AirServiceClient<tonic::transport::Channel>>,
 ) -> Result<(), CommonError> {
-	info!("[UpdateService] Checking for updates via Air service...");
+	dev_log!("update", "[UpdateService] Checking for updates via Air service...");
 
 	use tonic::Request;
 
@@ -445,7 +445,7 @@ async fn CheckForUpdatesViaAir(
 			let UpdateCheckResponse = Response.into_inner();
 
 			if UpdateCheckResponse.update_available {
-				info!("[UpdateService] Air reports update available: v{}", UpdateCheckResponse.version);
+				dev_log!("update", "[UpdateService] Air reports update available: v{}", UpdateCheckResponse.version);
 
 				let message = format!(
 					"A new version of Mountain is available: v{}.\n\n{}",
@@ -464,7 +464,7 @@ async fn CheckForUpdatesViaAir(
 					.await?;
 
 				if user_response == Some("Install".to_string()) {
-					info!("[UpdateService] User chose to install via Air");
+					dev_log!("update", "[UpdateService] User chose to install via Air");
 
 					// Download and install updates via the Air service after user confirmation.
 					// Call Air's download_update endpoint to fetch the update package, track
@@ -479,11 +479,11 @@ async fn CheckForUpdatesViaAir(
 						))
 						.await?;
 				} else {
-					info!("[UpdateService] User chose not to install");
+					dev_log!("update", "[UpdateService] User chose not to install");
 				}
 			} else {
 				if NotifyNoUpdate {
-					info!("[UpdateService] Air reports no updates available");
+					dev_log!("update", "[UpdateService] Air reports no updates available");
 
 					RunTime
 						.Run(ShowMessage(
@@ -493,7 +493,7 @@ async fn CheckForUpdatesViaAir(
 						))
 						.await?;
 				} else {
-					info!("[UpdateService] Air reports no updates available (silent check)");
+					dev_log!("update", "[UpdateService] Air reports no updates available (silent check)");
 				}
 			}
 
@@ -501,7 +501,7 @@ async fn CheckForUpdatesViaAir(
 		},
 
 		Err(Status) => {
-			error!("[UpdateService] Air update check failed: {}", Status);
+			dev_log!("update", "error: [UpdateService] Air update check failed: {}", Status);
 
 			let error_message = if NotifyNoUpdate {
 				format!("Failed to check for updates via Air: {}", Status)
@@ -538,14 +538,14 @@ async fn IsAirAvailable(AirClient:&AirServiceClient<tonic::transport::Channel>) 
 			let is_healthy = Response.into_inner().healthy;
 
 			if !is_healthy {
-				warn!("[UpdateService] Air health check returned unhealthy");
+				dev_log!("update", "warn: [UpdateService] Air health check returned unhealthy");
 			}
 
 			is_healthy
 		},
 
 		Err(Error) => {
-			warn!("[UpdateService] Air health check failed: {}", Error);
+			dev_log!("update", "warn: [UpdateService] Air health check failed: {}", Error);
 			false
 		},
 	}

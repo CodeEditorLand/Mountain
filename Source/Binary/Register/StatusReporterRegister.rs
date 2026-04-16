@@ -4,9 +4,9 @@
 
 use std::sync::Arc;
 
-use log::{error, info};
 
 use crate::{IPC::initialize_status_reporter, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::dev_log;
 
 /// Initializes the IPC status reporting with the ApplicationRunTime.
 ///
@@ -36,11 +36,11 @@ pub fn StatusReporterRegister(
 ) -> Result<(), String> {
 	match initialize_status_reporter(ApplicationHandle, RunTime) {
 		Ok(()) => {
-			info!("[IPC] [StatusReporter] Status reporter initialized successfully.");
+			dev_log!("lifecycle", "[IPC] [StatusReporter] Status reporter initialized successfully.");
 			Ok(())
 		},
 		Err(e) => {
-			error!("[IPC] [StatusReporter] Failed to initialize: {}", e);
+			dev_log!("lifecycle", "error: [IPC] [StatusReporter] Failed to initialize: {}", e);
 			Err(format!("Failed to initialize status reporter: {}", e))
 		},
 	}

@@ -3,11 +3,11 @@
 //! Internal helper functions for tree view provider registration and lifecycle.
 
 use CommonLibrary::{Error::CommonError::CommonError, TreeView::DTO::TreeViewOptionsDTO::TreeViewOptionsDTO};
-use log::info;
 use serde_json::json;
 use tauri::Emitter;
 
 use crate::{ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO, Environment::Utility};
+use crate::dev_log;
 
 /// Registers a new tree data provider.
 pub(super) async fn register_tree_data_provider(
@@ -15,7 +15,7 @@ pub(super) async fn register_tree_data_provider(
 	view_identifier:String,
 	options:serde_json::Value,
 ) -> Result<(), CommonError> {
-	info!("[TreeViewProvider] Registering data provider for view: {}", view_identifier);
+	dev_log!("extensions", "[TreeViewProvider] Registering data provider for view: {}", view_identifier);
 
 	let options_dto:TreeViewOptionsDTO = serde_json::from_value(options.clone())
 		.map_err(|error| CommonError::InvalidArgument { ArgumentName:"Options".into(), Reason:error.to_string() })?;
@@ -59,7 +59,7 @@ pub(super) async fn unregister_tree_data_provider(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	view_identifier:String,
 ) -> Result<(), CommonError> {
-	info!("[TreeViewProvider] Unregistering data provider for view: {}", view_identifier);
+	dev_log!("extensions", "[TreeViewProvider] Unregistering data provider for view: {}", view_identifier);
 
 	env.ApplicationState
 		.Feature

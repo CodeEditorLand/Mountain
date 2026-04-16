@@ -10,7 +10,6 @@ use std::{
 };
 
 use async_trait::async_trait;
-use log::{debug, error, info, trace, warn};
 use tonic::{Request, Response, Status};
 use CommonLibrary::Environment::Requires::Requires;
 // ============ Feature Flags & Telemetry ============
@@ -23,6 +22,7 @@ use opentelemetry::{
 };
 
 use crate::{
+use crate::dev_log;
 	Environment::MountainEnvironment::MountainEnvironment,
 	RPC::WindowState::WindowState,
 	Vine::Generated::{
@@ -101,7 +101,7 @@ pub struct WindowService {
 impl WindowService {
 	pub fn Create(environment:MountainEnvironment, state_manager:Arc<WindowState>) -> Self {
 		let metrics = WindowMetrics::new();
-		info!("[WindowService] Initializing window service");
+		dev_log!("grpc", "[WindowService] Initializing window service");
 		Self { environment, state_manager, metrics }
 	}
 
@@ -109,7 +109,7 @@ impl WindowService {
 		let req = request.into_inner();
 		#[cfg(feature = "Telemetry")]
 		let _span = global::tracer("WindowService").start("ShowInformation");
-		info!("[WindowService] Showing information message: {}", req.message);
+		dev_log!("grpc", "[WindowService] Showing information message: {}", req.message);
 
 		let window_provider = self.environment.Require();
 		match window_provider.ShowInformation(req.message).await {
@@ -119,7 +119,7 @@ impl WindowService {
 				Ok(Response::new(Empty {}))
 			},
 			Err(err) => {
-				error!("[WindowService] Failed: {}", err);
+				dev_log!("grpc", "error: [WindowService] Failed: {}", err);
 				Err(Status::internal(format!("Failed: {}", err)))
 			},
 		}
@@ -127,7 +127,7 @@ impl WindowService {
 
 	pub async fn ShowWarning(&self, request:Request<ShowWarningRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		warn!("[WindowService] Showing warning: {}", req.message);
+		dev_log!("grpc", "warn: [WindowService] Showing warning: {}", req.message);
 		let window_provider = self.environment.Require();
 		match window_provider.ShowWarning(req.message).await {
 			Ok(_) => {
@@ -141,7 +141,7 @@ impl WindowService {
 
 	pub async fn ShowError(&self, request:Request<ShowErrorRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		error!("[WindowService] Showing error: {}", req.message);
+		dev_log!("grpc", "error: [WindowService] Showing error: {}", req.message);
 		let window_provider = self.environment.Require();
 		match window_provider.ShowError(req.message).await {
 			Ok(_) => {
@@ -160,7 +160,7 @@ impl WindowService {
 		let req = request.into_inner();
 		#[cfg(feature = "Telemetry")]
 		let span = global::tracer("WindowService").start("ShowDocument");
-		info!("[WindowService] Opening document: {}", req.path);
+		dev_log!("grpc", "[WindowService] Opening document: {}", req.path);
 		let start = Instant::now();
 		let document_provider = self.environment.Require();
 		match document_provider
@@ -195,7 +195,7 @@ impl WindowService {
 		let req = request.into_inner();
 		#[cfg(feature = "Telemetry")]
 		let span = global::tracer("WindowService").start("CreateWindow");
-		info!("[WindowService] Creating window: {:?}", req.window_type);
+		dev_log!("grpc", "[WindowService] Creating window: {:?}", req.window_type);
 		let window_provider = self.environment.Require();
 		match window_provider.CreateWindow(req.window_type, req.title).await {
 			Ok(handle) => {
@@ -220,7 +220,7 @@ impl WindowService {
 		let req = request.into_inner();
 		#[cfg(feature = "Telemetry")]
 		let span = global::tracer("WindowService").start("ShowInput");
-		info!("[WindowService] Showing input dialog: {}", req.prompt);
+		dev_log!("grpc", "[WindowService] Showing input dialog: {}", req.prompt);
 		let start = Instant::now();
 		let window_provider = self.environment.Require();
 		match window_provider
@@ -299,7 +299,7 @@ impl WindowService {
 	}
 
 	pub async fn OnDidReceiveMessage(&self, handle:u32, message:&str) -> Result<(), Status> {
-		debug!("[WindowService] Received webview message from {}: {}", handle, message);
+		dev_log!("grpc", "[WindowService] Received webview message from {}: {}", handle, message);
 		// DEPENDENCY: Forward to extension handler - requires ExtensionHandler
 		// implementation in Wind/Sky frontend communication layer
 		Ok(())

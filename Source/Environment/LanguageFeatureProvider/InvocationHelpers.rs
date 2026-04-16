@@ -9,12 +9,12 @@ use CommonLibrary::{
 	FileSystem::WriteFileBytes::WriteFileBytes,
 	IPC::IPCProvider::IPCProvider,
 };
-use log::debug;
 use serde_json::{Value, json};
 use tauri::Manager;
 use url::Url;
 
 use crate::{
+use crate::dev_log;
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
@@ -51,7 +51,7 @@ pub(super) async fn get_matching_provider(
 					for selector in selector_array {
 						if let Some(lang) = selector.get("language").and_then(|l| l.as_str()) {
 							if lang == doc.LanguageIdentifier {
-								debug!("Found provider with handle {} for document {}", provider.Handle, document_uri);
+								dev_log!("extensions", "Found provider with handle {} for document {}", provider.Handle, document_uri);
 								return Ok(Some(provider.clone()));
 							}
 						}
@@ -60,7 +60,7 @@ pub(super) async fn get_matching_provider(
 			}
 		}
 	}
-	warn!("No provider found for {:?} on document {}", feature_type, document_uri);
+	dev_log!("extensions", "warn: No provider found for {:?} on document {}", feature_type, document_uri);
 
 	Ok(None)
 }

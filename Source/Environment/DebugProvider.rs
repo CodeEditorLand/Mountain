@@ -79,11 +79,11 @@ use CommonLibrary::{
 	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
 };
 use async_trait::async_trait;
-use log::info;
 use serde_json::{Value, json};
 use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;
+use crate::dev_log;
 
 #[async_trait]
 impl DebugService for MountainEnvironment {
@@ -104,7 +104,7 @@ impl DebugService for MountainEnvironment {
 			});
 		}
 
-		info!(
+		dev_log!("exthost", 
 			"[DebugProvider] Registering DebugConfigurationProvider for type '{}' (handle: {}, sidecar: {})",
 			DebugType, ProviderHandle, SideCarIdentifier
 		);
@@ -136,7 +136,7 @@ impl DebugService for MountainEnvironment {
 			});
 		}
 
-		info!(
+		dev_log!("exthost", 
 			"[DebugProvider] Registering DebugAdapterDescriptorFactory for type '{}' (handle: {}, sidecar: {})",
 			DebugType, FactoryHandle, SideCarIdentifier
 		);
@@ -153,7 +153,7 @@ impl DebugService for MountainEnvironment {
 
 	async fn StartDebugging(&self, _FolderURI:Option<Url>, Configuration:Value) -> Result<String, CommonError> {
 		let SessionID = uuid::Uuid::new_v4().to_string();
-		info!(
+		dev_log!("exthost", 
 			"[DebugProvider] Starting debug session '{}' with config: {:?}",
 			SessionID, Configuration
 		);
@@ -178,8 +178,8 @@ impl DebugService for MountainEnvironment {
 		let TargetSideCar = "cocoon-main".to_string();
 
 		// 1. Resolve configuration (Reverse-RPC to Cocoon)
-		info!("[DebugProvider] Resolving debug configuration for type '{}'", DebugType);
-		info!("[DebugProvider] Resolving debug configuration...");
+		dev_log!("exthost", "[DebugProvider] Resolving debug configuration for type '{}'", DebugType);
+		dev_log!("exthost", "[DebugProvider] Resolving debug configuration...");
 		let ResolveConfigMethod = format!("{}$resolveDebugConfiguration", ProxyTarget::ExtHostDebug.GetTargetPrefix());
 		let ResolvedConfig = IPCProvider
 			.SendRequestToSideCar(
@@ -191,7 +191,7 @@ impl DebugService for MountainEnvironment {
 			.await?;
 
 		// 2. Get the Debug Adapter Descriptor (Reverse-RPC to Cocoon)
-		info!("[DebugProvider] Creating debug adapter descriptor...");
+		dev_log!("exthost", "[DebugProvider] Creating debug adapter descriptor...");
 		let CreateDescriptorMethod =
 			format!("{}$createDebugAdapterDescriptor", ProxyTarget::ExtHostDebug.GetTargetPrefix());
 		let Descriptor = IPCProvider
@@ -204,7 +204,7 @@ impl DebugService for MountainEnvironment {
 			.await?;
 
 		// 3. Spawn the Debug Adapter process based on the descriptor.
-		info!("[DebugProvider] Spawning Debug Adapter based on descriptor: {:?}", Descriptor);
+		dev_log!("exthost", "[DebugProvider] Spawning Debug Adapter based on descriptor: {:?}", Descriptor);
 
 		// TODO: Implement full debug adapter spawning based on the descriptor.
 		// A complete implementation would:
@@ -222,12 +222,12 @@ impl DebugService for MountainEnvironment {
 		// - Handle adapter launch failures with descriptive error messages and proper
 		//   session state cleanup
 
-		info!("[DebugProvider] Debug session '{}' started (simulation).", SessionID);
+		dev_log!("exthost", "[DebugProvider] Debug session '{}' started (simulation).", SessionID);
 		Ok(SessionID)
 	}
 
 	async fn SendCommand(&self, SessionID:String, Command:String, Arguments:Value) -> Result<Value, CommonError> {
-		info!(
+		dev_log!("exthost", 
 			"[DebugProvider] SendCommand for session '{}' (command: '{}', args: {:?})",
 			SessionID, Command, Arguments
 		);

@@ -38,9 +38,9 @@ use ring::{
 	rand::{SecureRandom, SystemRandom},
 };
 use serde::{Deserialize, Serialize};
-use log::debug;
 
 use super::super::Message::TauriIPCMessage;
+use crate::dev_log;
 
 /// Encrypted message structure
 ///
@@ -177,7 +177,7 @@ impl SecureMessageChannel {
 	/// let secure_channel = SecureMessageChannel::new()?;
 	/// ```
 	pub fn new() -> Result<Self, String> {
-		debug!("[SecureMessageChannel] Creating new secure channel");
+		dev_log!("encryption", "[SecureMessageChannel] Creating new secure channel");
 
 		let rng = SystemRandom::new();
 
@@ -196,7 +196,7 @@ impl SecureMessageChannel {
 		rng.fill(&mut hmac_key)
 			.map_err(|e| format!("Failed to generate HMAC key: {}", e))?;
 
-		debug!("[SecureMessageChannel] Secure channel created successfully");
+		dev_log!("encryption", "[SecureMessageChannel] Secure channel created successfully");
 
 		Ok(Self { encryption_key, hmac_key })
 	}
@@ -219,7 +219,7 @@ impl SecureMessageChannel {
 	/// let encrypted = secure_channel.encrypt_message(&message)?;
 	/// ```
 	pub fn encrypt_message(&self, message:&TauriIPCMessage) -> Result<EncryptedMessage, String> {
-		debug!("[SecureMessageChannel] Encrypting message on channel: {}", message.channel);
+		dev_log!("encryption", "[SecureMessageChannel] Encrypting message on channel: {}", message.channel);
 
 		// Serialize message to bytes
 		let serialized_message =
@@ -244,7 +244,7 @@ impl SecureMessageChannel {
 		let encrypted_message =
 			EncryptedMessage { nonce:nonce.to_vec(), ciphertext:in_out, hmac_tag:hmac_tag.as_ref().to_vec() };
 
-		debug!(
+		dev_log!("encryption", 
 			"[SecureMessageChannel] Message encrypted: {} bytes -> {} bytes",
 			serialized_message.len(),
 			encrypted_message.ciphertext.len()
@@ -271,7 +271,7 @@ impl SecureMessageChannel {
 	/// let decrypted = secure_channel.decrypt_message(&encrypted)?;
 	/// ```
 	pub fn decrypt_message(&self, encrypted:&EncryptedMessage) -> Result<TauriIPCMessage, String> {
-		debug!("[SecureMessageChannel] Decrypting message");
+		dev_log!("encryption", "[SecureMessageChannel] Decrypting message");
 
 		// Verify HMAC first (detect tampering)
 		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
@@ -300,7 +300,7 @@ impl SecureMessageChannel {
 		let message:TauriIPCMessage =
 			serde_json::from_slice(&in_out).map_err(|e| format!("Failed to deserialize message: {}", e))?;
 
-		debug!(
+		dev_log!("encryption", 
 			"[SecureMessageChannel] Message decrypted successfully on channel: {}",
 			message.channel
 		);
@@ -323,11 +323,11 @@ impl SecureMessageChannel {
 	/// secure_channel.rotate_keys()?;
 	/// ```
 	pub fn rotate_keys(&mut self) -> Result<(), String> {
-		debug!("[SecureMessageChannel] Rotating encryption keys");
+		dev_log!("encryption", "[SecureMessageChannel] Rotating encryption keys");
 
 		*self = Self::new()?;
 
-		debug!("[SecureMessageChannel] Keys rotated successfully");
+		dev_log!("encryption", "[SecureMessageChannel] Keys rotated successfully");
 
 		Ok(())
 	}

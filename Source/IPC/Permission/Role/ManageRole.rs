@@ -80,7 +80,7 @@
 use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
-use log::{debug, info};
+use crate::dev_log;
 
 /// Role definition for RBAC system
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -176,9 +176,9 @@ impl Role {
 	pub fn AddPermission(mut self, Permission:String) -> Self {
 		if !self.Permissions.contains(&Permission) {
 			self.Permissions.push(Permission.clone());
-			debug!("[Role] Added permission '{}' to role '{}'", Permission, self.Name);
+			dev_log!("ipc", "[Role] Added permission '{}' to role '{}'", Permission, self.Name);
 		} else {
-			debug!(
+			dev_log!("ipc", 
 				"[Role] Permission '{}' already exists in role '{}', skipping",
 				Permission, self.Name
 			);
@@ -197,7 +197,7 @@ impl Role {
 		for Permission in Permissions {
 			if !self.Permissions.contains(&Permission) {
 				self.Permissions.push(Permission.clone());
-				debug!("[Role] Added permission '{}' to role '{}'", Permission, self.Name);
+				dev_log!("ipc", "[Role] Added permission '{}' to role '{}'", Permission, self.Name);
 			}
 		}
 		self
@@ -398,7 +398,7 @@ pub fn CreateAdminRole() -> Role {
 /// ## Returns
 /// Vector containing user, developer, and admin roles
 pub fn CreateStandardRoles() -> Vec<Role> {
-	info!("[ManageRole] Creating standard roles");
+	dev_log!("ipc", "[ManageRole] Creating standard roles");
 	vec![CreateUserRole(), CreateDeveloperRole(), CreateAdminRole()]
 }
 
@@ -407,7 +407,7 @@ pub fn CreateStandardRoles() -> Vec<Role> {
 /// ## Returns
 /// Vector containing standard permission definitions
 pub fn CreateStandardPermissions() -> Vec<Permission> {
-	info!("[ManageRole] Creating standard permissions");
+	dev_log!("ipc", "[ManageRole] Creating standard permissions");
 	vec![
 		// File permissions
 		Permission::New("file.read".to_string(), "Read file operations".to_string(), "file".to_string()),

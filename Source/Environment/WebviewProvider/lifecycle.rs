@@ -9,13 +9,13 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	Webview::DTO::WebviewContentOptionsDTO::WebviewContentOptionsDTO,
 };
-use log::{error, info, warn};
 use serde_json::{Value, json};
 use tauri::{Emitter, Manager, WebviewWindowBuilder};
 use uuid::Uuid;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO;
+use crate::dev_log;
 
 /// Lifecycle operations implementation for MountainEnvironment
 pub(super) async fn create_webview_panel_impl(
@@ -29,7 +29,7 @@ pub(super) async fn create_webview_panel_impl(
 ) -> Result<String, CommonError> {
 	let handle = Uuid::new_v4().to_string();
 
-	info!(
+	dev_log!("extensions", 
 		"[WebviewProvider] Creating WebviewPanel with handle: {}, viewType: {}",
 		handle, view_type
 	);
@@ -87,7 +87,7 @@ pub(super) async fn create_webview_panel_impl(
 	))
 	.build()
 	.map_err(|error| {
-		error!("[WebviewProvider] Failed to create Webview window: {}", error);
+		dev_log!("extensions", "error: [WebviewProvider] Failed to create Webview window: {}", error);
 		CommonError::UserInterfaceInteraction { Reason:error.to_string() }
 	})?;
 
@@ -109,7 +109,7 @@ pub(super) async fn create_webview_panel_impl(
 
 /// Disposes a Webview panel and cleans up all associated resources.
 pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:String) -> Result<(), CommonError> {
-	info!("[WebviewProvider] Disposing WebviewPanel: {}", handle);
+	dev_log!("extensions", "[WebviewProvider] Disposing WebviewPanel: {}", handle);
 
 	// Remove message listener
 	let _ = crate::Environment::WebviewProvider::messaging::remove_webview_message_listener_impl(env, &handle).await;
@@ -117,7 +117,7 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 	// Close the window
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		if let Err(error) = webview_window.close() {
-			warn!("[WebviewProvider] Failed to close Webview window: {}", error);
+			dev_log!("extensions", "warn: [WebviewProvider] Failed to close Webview window: {}", error);
 		}
 	}
 
@@ -146,7 +146,7 @@ pub(super) async fn reveal_webview_panel_impl(
 	handle:String,
 	_show_options_value:Value,
 ) -> Result<(), CommonError> {
-	info!("[WebviewProvider] Revealing WebviewPanel: {}", handle);
+	dev_log!("extensions", "[WebviewProvider] Revealing WebviewPanel: {}", handle);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		webview_window.show().map_err(|error| {

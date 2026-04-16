@@ -38,9 +38,9 @@
 //! - Subscription operations should be fast
 //! - Consider batching for bulk subscriptions
 
-use log::error;
 use serde_json::Value;
 use tauri::AppHandle;
+use crate::dev_log;
 
 /// Subscribe to updates.
 ///
@@ -65,14 +65,14 @@ pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:
 	let Target = subscription_data["target"]
 		.as_str()
 		.ok_or_else(|| {
-			error!("[IPC] [Sync] Missing target in subscription_data");
+			dev_log!("ipc", "error: [IPC] [Sync] Missing target in subscription_data");
 			"Missing target"
 		})?
 		.to_string();
 	let Subscriber = subscription_data["subscriber"]
 		.as_str()
 		.ok_or_else(|| {
-			error!("[IPC] [Sync] Missing subscriber in subscription_data");
+			dev_log!("ipc", "error: [IPC] [Sync] Missing subscriber in subscription_data");
 			"Missing subscriber"
 		})?
 		.to_string();
@@ -80,7 +80,7 @@ pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:
 	crate::IPC::WindAdvancedSync::mountain_subscribe_to_updates(app_handle, Target, Subscriber)
 		.await
 		.map_err(|Error| {
-			error!("[IPC] [Sync] Failed to subscribe to updates: {}", Error);
+			dev_log!("ipc", "error: [IPC] [Sync] Failed to subscribe to updates: {}", Error);
 			Error.to_string()
 		})
 		.map(|_| Value::Null)

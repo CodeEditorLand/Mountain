@@ -7,12 +7,12 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
-use log::debug;
 use serde_json::Value;
 use tauri::{AppHandle, Wry};
 use url::Url;
 
 use super::{invoke_provider::invoke_provider, validation::validate_language_feature_request};
+use crate::dev_log;
 
 /// Implementation of code actions command - called by the command wrapper in
 /// the parent module.
@@ -22,7 +22,7 @@ pub(super) async fn provide_code_actions_impl(
 	position:Value,
 	context:Value,
 ) -> Result<Value, String> {
-	debug!("[Language Feature] Providing code actions for: {} at {:?}", uri, position);
+	dev_log!("commands", "[Language Feature] Providing code actions for: {} at {:?}", uri, position);
 
 	validate_language_feature_request("code_actions", &uri, &position)?;
 

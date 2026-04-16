@@ -35,9 +35,9 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO;
+use crate::dev_log;
 
 /// Open documents state containing documents by URI.
 #[derive(Clone)]
@@ -48,7 +48,7 @@ pub struct DocumentState {
 
 impl Default for DocumentState {
 	fn default() -> Self {
-		debug!("[DocumentState] Initializing default document state...");
+		dev_log!("model", "[DocumentState] Initializing default document state...");
 
 		Self { OpenDocuments:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
@@ -69,7 +69,7 @@ impl DocumentState {
 	pub fn AddOrUpdate(&self, uri:String, document:DocumentStateDTO) {
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
 			guard.insert(uri, document);
-			debug!("[DocumentState] Document added/updated");
+			dev_log!("model", "[DocumentState] Document added/updated");
 		}
 	}
 
@@ -77,7 +77,7 @@ impl DocumentState {
 	pub fn Remove(&self, uri:&str) {
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
 			guard.remove(uri);
-			debug!("[DocumentState] Document removed: {}", uri);
+			dev_log!("model", "[DocumentState] Document removed: {}", uri);
 		}
 	}
 
@@ -85,7 +85,7 @@ impl DocumentState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
 			guard.clear();
-			debug!("[DocumentState] All documents cleared");
+			dev_log!("model", "[DocumentState] All documents cleared");
 		}
 	}
 

@@ -28,11 +28,7 @@
 		<td align="left" valign="middle" width="190">
 			<h3 align="left">
 				<a href="https://Tauri.App" target="_blank">
-					<picture>
-						<source media="(prefers-color-scheme: dark)" srcset="https://PlayForm.Cloud/Dark/Image/GitHub/Made/Tauri.svg">
-						<source media="(prefers-color-scheme: light)" srcset="https://PlayForm.Cloud/Image/GitHub/Made/Tauri.svg">
-						<img width="160" alt="Made With Tauri" src="https://PlayForm.Cloud/Image/GitHub/Made/Tauri.svg">
-					</picture>
+					<img width="160" alt="Made With Tauri" src="https://avatars.githubusercontent.com/u/54536011?v=4">
 				</a>
 			</h3>
 		</td>
@@ -247,7 +243,7 @@ history of changes specific to **Mountain**&#x2001;⛰️.
 ## Funding \& Acknowledgements&#x2001;🙏🏻
 
 **Mountain**&#x2001;⛰️ is a core element of the **Land**&#x2001;🏞️ ecosystem. This project is
-funded through [NGI0 Commons Fund](https://NLnet.NL/Commonsfund), a fund
+funded through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund
 established by [NLnet](https://NLnet.NL) with financial support from the
 European Commission's [Next Generation Internet](https://ngi.eu) program.
 Learn more at the [NLnet project page](https://NLnet.NL/project/Land).

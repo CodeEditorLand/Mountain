@@ -3,8 +3,8 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-use log::debug;
 use serde_json::Value;
+use crate::dev_log;
 
 /// A single file/folder decoration: badge letter, tooltip, color hint.
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
@@ -29,7 +29,7 @@ pub struct DecorationsState {
 
 impl Default for DecorationsState {
 	fn default() -> Self {
-		debug!("[DecorationsState] Initializing default decorations state...");
+		dev_log!("decorations", "[DecorationsState] Initializing default decorations state...");
 		Self { Entries:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
@@ -44,7 +44,7 @@ impl DecorationsState {
 	pub fn SetDecoration(&self, Uri:&str, Decoration:Value) {
 		if let Ok(mut Guard) = self.Entries.lock() {
 			Guard.insert(Uri.to_owned(), Decoration);
-			debug!("[DecorationsState] Decoration set for: {}", Uri);
+			dev_log!("decorations", "[DecorationsState] Decoration set for: {}", Uri);
 		}
 	}
 
@@ -52,7 +52,7 @@ impl DecorationsState {
 	pub fn ClearDecoration(&self, Uri:&str) {
 		if let Ok(mut Guard) = self.Entries.lock() {
 			Guard.remove(Uri);
-			debug!("[DecorationsState] Decoration cleared for: {}", Uri);
+			dev_log!("decorations", "[DecorationsState] Decoration cleared for: {}", Uri);
 		}
 	}
 

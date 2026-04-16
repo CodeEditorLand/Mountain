@@ -205,7 +205,6 @@ use CommonLibrary::{
 	Workspace::{WorkspaceEditApplier::WorkspaceEditApplier, WorkspaceProvider::WorkspaceProvider},
 };
 use async_trait::async_trait;
-use log::{info, warn};
 use serde_json::Value;
 use tauri::{AppHandle, Wry};
 
@@ -213,6 +212,7 @@ use crate::ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDT
 // Import the macro for generating trait implementations
 // Note: Macros annotated with #[macro_export] are available at crate root
 use crate::impl_provider;
+use crate::dev_log;
 
 /// The concrete `Environment` for the Mountain application.
 #[derive(Clone)]
@@ -232,7 +232,7 @@ impl MountainEnvironment {
 	/// Creates a new `MountainEnvironment` instance.
 	#[allow(unused_mut)]
 	pub fn Create(ApplicationHandle:AppHandle<Wry>, ApplicationState:Arc<ApplicationState>) -> Self {
-		info!("[MountainEnvironment] New instance created.");
+		dev_log!("lifecycle", "[MountainEnvironment] New instance created.");
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -254,7 +254,7 @@ impl MountainEnvironment {
 		ApplicationState:Arc<ApplicationState>,
 		AirClient:Option<AirServiceClient<tonic::transport::Channel>>,
 	) -> Self {
-		info!(
+		dev_log!("lifecycle", 
 			"[MountainEnvironment] New instance created with Air client: {}",
 			AirClient.is_some()
 		);
@@ -266,7 +266,7 @@ impl MountainEnvironment {
 	/// This allows dynamically switching between Air and local services.
 	#[cfg(feature = "AirIntegration")]
 	pub fn SetAirClient(&mut self, AirClient:Option<AirServiceClient<tonic::transport::Channel>>) {
-		info!("[MountainEnvironment] Air client updated: {}", AirClient.is_some());
+		dev_log!("lifecycle", "[MountainEnvironment] Air client updated: {}", AirClient.is_some());
 
 		self.AirClient = AirClient;
 	}
@@ -280,10 +280,10 @@ impl MountainEnvironment {
 		// the AirClient wrapper is properly integrated.
 		if let Some(_AirClient) = &self.AirClient {
 			// For now, assume Air is available if the client exists
-			info!("[MountainEnvironment] Air client configured (health check disabled pending integration)");
+			dev_log!("lifecycle", "[MountainEnvironment] Air client configured (health check disabled pending integration)");
 			true
 		} else {
-			info!("[MountainEnvironment] No Air client configured");
+			dev_log!("lifecycle", "[MountainEnvironment] No Air client configured");
 			false
 		}
 	}
@@ -300,7 +300,7 @@ impl MountainEnvironment {
 
 		// Check if directory exists
 		if !path.exists() || !path.is_dir() {
-			warn!("[ExtensionManagementService] Extension directory does not exist: {:?}", path);
+			dev_log!("lifecycle", "warn: [ExtensionManagementService] Extension directory does not exist: {:?}", path);
 			return Ok(extensions);
 		}
 
@@ -337,21 +337,17 @@ impl MountainEnvironment {
 										);
 									}
 									extensions.push(package_json);
-									info!("[ExtensionManagementService] Found extension at: {:?}", entry_path);
+									dev_log!("lifecycle", "[ExtensionManagementService] Found extension at: {:?}", entry_path);
 								},
 								Err(error) => {
-									warn!(
-										"[ExtensionManagementService] Failed to parse package.json at {:?}: {}",
-										package_json_path, error
-									);
+									dev_log!("lifecycle", "warn: [ExtensionManagementService] Failed to parse package.json at {:?}: {}",
+										package_json_path, error);
 								},
 							}
 						},
 						Err(error) => {
-							warn!(
-								"[ExtensionManagementService] Failed to read package.json at {:?}: {}",
-								package_json_path, error
-							);
+							dev_log!("lifecycle", "warn: [ExtensionManagementService] Failed to read package.json at {:?}: {}",
+								package_json_path, error);
 						},
 					}
 				}
@@ -367,7 +363,7 @@ impl Environment for MountainEnvironment {}
 #[async_trait]
 impl ExtensionManagementService for MountainEnvironment {
 	async fn ScanForExtensions(&self) -> Result<(), CommonError> {
-		info!("[ExtensionManagementService] Scanning for extensions...");
+		dev_log!("lifecycle", "[ExtensionManagementService] Scanning for extensions...");
 
 		// Get the extension scan paths from ApplicationState
 		let ScanPaths:Vec<std::path::PathBuf> = {
@@ -419,12 +415,12 @@ impl ExtensionManagementService for MountainEnvironment {
 				},
 				Err(Error) => {
 					let Name = extension.get("name").and_then(|V| V.as_str()).unwrap_or("?");
-					warn!("[ExtensionManagementService] Failed to parse extension '{}': {}", Name, Error);
+					dev_log!("lifecycle", "warn: [ExtensionManagementService] Failed to parse extension '{}': {}", Name, Error);
 				},
 			}
 		}
 
-		info!("[ExtensionManagementService] Found {} extensions", ScannedExtensionsGuard.len());
+		dev_log!("lifecycle", "[ExtensionManagementService] Found {} extensions", ScannedExtensionsGuard.len());
 		Ok(())
 	}
 

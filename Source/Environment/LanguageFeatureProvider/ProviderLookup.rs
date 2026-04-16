@@ -1,10 +1,10 @@
 //! Provider lookup and matching utilities.
 
 use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
-use log::warn;
 use url::Url;
 
 use crate::{
+use crate::dev_log;
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError,
 };
@@ -104,9 +104,7 @@ pub(super) async fn get_matching_provider(
 		}
 	}
 
-	warn!(
-		"[ProviderLookup] No {:?} provider for language '{}' (uri={})",
-		feature_type, LanguageId, document_uri
-	);
+	dev_log!("extensions", "warn: [ProviderLookup] No {:?} provider for language '{}' (uri={})",
+		feature_type, LanguageId, document_uri);
 	Ok(None)
 }

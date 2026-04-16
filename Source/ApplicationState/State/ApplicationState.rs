@@ -49,7 +49,6 @@
 use std::sync::{Arc, Mutex as StandardMutex, PoisonError};
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::debug;
 
 use super::{
 	ConfigurationState::State as ConfigurationState,
@@ -59,6 +58,7 @@ use super::{
 	WorkspaceState::State as WorkspaceState,
 };
 use crate::Environment::TestProvider::TestProviderState;
+use crate::dev_log;
 
 /// The central, shared, thread-safe state for the entire Mountain application.
 #[derive(Clone)]
@@ -89,7 +89,7 @@ pub struct ApplicationState {
 
 impl Default for ApplicationState {
 	fn default() -> Self {
-		debug!("[ApplicationState] Initializing default application state...");
+		dev_log!("lifecycle", "[ApplicationState] Initializing default application state...");
 
 		Self {
 			Workspace:Default::default(),
@@ -139,10 +139,8 @@ pub fn MapLockError<T>(Error:PoisonError<T>) -> CommonError {
 
 /// A helper to map a mutex poison error with recovery attempt.
 pub fn MapLockErrorWithRecovery<T>(Error:PoisonError<T>, RecoveryContext:&str) -> CommonError {
-	log::warn!(
-		"[ApplicationState] Attempting recovery from poisoned lock in context: {}",
-		RecoveryContext
-	);
+	dev_log!("lifecycle", "warn: [ApplicationState] Attempting recovery from poisoned lock in context: {}",
+		RecoveryContext);
 	CommonError::StateLockPoisoned {
 		Context:format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext),
 	}

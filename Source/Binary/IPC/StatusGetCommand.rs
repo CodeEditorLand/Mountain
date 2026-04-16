@@ -37,9 +37,9 @@
 //! - Status query is typically fast, in-memory operation
 //! - Consider rate limiting if called frequently
 
-use log::error;
 use serde_json::Value;
 use tauri::AppHandle;
+use crate::dev_log;
 
 /// Get Mountain IPC status.
 ///
@@ -64,7 +64,7 @@ pub async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<Value, String>
 	let Status = crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle)
 		.await
 		.map_err(|Error| {
-			error!("[IPC] [Command] Failed to get IPC status: {}", Error);
+			dev_log!("ipc", "error: [IPC] [Command] Failed to get IPC status: {}", Error);
 			Error.to_string()
 		})?;
 	Ok(serde_json::to_value(Status).map_err(|e| e.to_string())?)

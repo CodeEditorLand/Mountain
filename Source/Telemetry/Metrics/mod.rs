@@ -33,6 +33,8 @@ use std::{
 
 use parking_lot::RwLock;
 
+use crate::dev_log;
+
 // ============================================================================
 // Metric Types
 // ============================================================================
@@ -183,7 +185,7 @@ pub fn get_all_metrics() -> Vec<Metric> { GLOBAL_REGISTRY.get_all_metrics() }
 /// Initialize metrics collection
 #[cfg(feature = "Telemetry")]
 pub fn initialize_metrics() -> Result<(), Box<dyn std::error::Error>> {
-	log::info!("Metrics system initialized");
+	dev_log!("metrics", "metrics system initialized");
 	Ok(())
 }
 

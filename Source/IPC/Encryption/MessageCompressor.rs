@@ -35,9 +35,9 @@
 use std::io::{Read, Write};
 
 use flate2::{Compression, read::GzDecoder, write::GzEncoder};
-use log::debug;
 
 use super::super::Message::TauriIPCMessage;
+use crate::dev_log;
 
 /// Message compression utility for optimizing IPC message transfer
 ///
@@ -125,7 +125,7 @@ impl MessageCompressor {
 	/// let compressor = MessageCompressor::new(6, 10);
 	/// ```
 	pub fn new(CompressionLevel:u32, BatchSize:usize) -> Self {
-		debug!(
+		dev_log!("encryption", 
 			"[MessageCompressor] Created with level: {}, batch size: {}",
 			CompressionLevel, BatchSize
 		);
@@ -151,7 +151,7 @@ impl MessageCompressor {
 	/// let compressed = compressor.compress_messages(messages)?;
 	/// ```
 	pub fn compress_messages(&self, Messages:Vec<TauriIPCMessage>) -> Result<Vec<u8>, String> {
-		debug!("[MessageCompressor] Compressing {} messages", Messages.len());
+		dev_log!("encryption", "[MessageCompressor] Compressing {} messages", Messages.len());
 
 		// Serialize messages to JSON
 		let SerializedMessages =
@@ -174,7 +174,7 @@ impl MessageCompressor {
 			100.0
 		};
 
-		debug!(
+		dev_log!("encryption", 
 			"[MessageCompressor] Compression complete: {} -> {} bytes ({:.1}%)",
 			original_size, compressed_size, ratio
 		);
@@ -200,7 +200,7 @@ impl MessageCompressor {
 	/// let messages = compressor.decompress_messages(&compressed_data)?;
 	/// ```
 	pub fn decompress_messages(&self, CompressedData:&[u8]) -> Result<Vec<TauriIPCMessage>, String> {
-		debug!("[MessageCompressor] Decompressing {} bytes", CompressedData.len());
+		dev_log!("encryption", "[MessageCompressor] Decompressing {} bytes", CompressedData.len());
 
 		let compressed_size = CompressedData.len();
 
@@ -217,7 +217,7 @@ impl MessageCompressor {
 		let messages:Vec<TauriIPCMessage> =
 			serde_json::from_slice(&DecompressedData).map_err(|e| format!("Failed to deserialize messages: {}", e))?;
 
-		debug!(
+		dev_log!("encryption", 
 			"[MessageCompressor] Decompression complete: {} -> {} bytes, {} messages",
 			compressed_size,
 			decompressed_size,
@@ -250,7 +250,7 @@ impl MessageCompressor {
 	/// ```
 	pub fn should_batch(&self, MessagesCount:usize) -> bool {
 		let should_batch = MessagesCount >= self.BatchSize;
-		debug!(
+		dev_log!("encryption", 
 			"[MessageCompressor] Batch check: {} >= {} = {}",
 			MessagesCount, self.BatchSize, should_batch
 		);

@@ -39,9 +39,9 @@
 //! - Implement progress reporting for large files
 //! - Consider delta sync for large documents
 
-use log::error;
 use serde_json::Value;
 use tauri::AppHandle;
+use crate::dev_log;
 
 /// Add document for sync.
 ///
@@ -66,14 +66,14 @@ pub async fn MountainAddDocumentForSync(app_handle:AppHandle, document_data:Valu
 	let DocumentId = document_data["document_id"]
 		.as_str()
 		.ok_or_else(|| {
-			error!("[IPC] [Sync] Missing document_id in document_data");
+			dev_log!("ipc", "error: [IPC] [Sync] Missing document_id in document_data");
 			"Missing document_id"
 		})?
 		.to_string();
 	let FilePath = document_data["file_path"]
 		.as_str()
 		.ok_or_else(|| {
-			error!("[IPC] [Sync] Missing file_path in document_data");
+			dev_log!("ipc", "error: [IPC] [Sync] Missing file_path in document_data");
 			"Missing file_path"
 		})?
 		.to_string();
@@ -81,7 +81,7 @@ pub async fn MountainAddDocumentForSync(app_handle:AppHandle, document_data:Valu
 	crate::IPC::WindAdvancedSync::mountain_add_document_for_sync(app_handle, DocumentId, FilePath)
 		.await
 		.map_err(|Error| {
-			error!("[IPC] [Sync] Failed to add document for sync: {}", Error);
+			dev_log!("ipc", "error: [IPC] [Sync] Failed to add document for sync: {}", Error);
 			Error.to_string()
 		})
 		.map(|_| Value::Null)
@@ -107,7 +107,7 @@ pub async fn MountainGetSyncStatus(app_handle:AppHandle) -> Result<Value, String
 	crate::IPC::WindAdvancedSync::mountain_get_sync_status(app_handle)
 		.await
 		.map_err(|Error| {
-			error!("[IPC] [Sync] Failed to get sync status: {}", Error);
+			dev_log!("ipc", "error: [IPC] [Sync] Failed to get sync status: {}", Error);
 			Error.to_string()
 		})
 		.map(|Status| serde_json::to_value(Status).unwrap_or(Value::Null))

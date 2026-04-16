@@ -9,13 +9,13 @@ use std::{
 	time::{Duration, Instant},
 };
 
-use log::{debug, error, info, trace};
 use serde::{Deserialize, Serialize};
 use tokio::{
 	sync::{Mutex as AsyncMutex, Notify, RwLock, Semaphore},
 	time::{interval, timeout},
 };
 use uuid::Uuid;
+use crate::dev_log;
 
 /// Connection pool configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -191,7 +191,7 @@ impl ConnectionPool {
 			is_running:Arc::new(AsyncMutex::new(false)),
 		};
 
-		info!("[ConnectionPool] Created pool with max {} connections", max_connections);
+		dev_log!("ipc", "[ConnectionPool] Created pool with max {} connections", max_connections);
 		pool
 	}
 
@@ -215,7 +215,7 @@ impl ConnectionPool {
 		// Initialize minimum connections
 		self.initialize_min_connections().await;
 
-		info!("[ConnectionPool] Started connection pool");
+		dev_log!("ipc", "[ConnectionPool] Started connection pool");
 		Ok(())
 	}
 
@@ -244,7 +244,7 @@ impl ConnectionPool {
 			}
 		}
 
-		info!("[ConnectionPool] Stopped connection pool");
+		dev_log!("ipc", "[ConnectionPool] Stopped connection pool");
 		Ok(())
 	}
 
@@ -280,7 +280,7 @@ impl ConnectionPool {
 			stats.total_operations += 1;
 		}
 
-		trace!("[ConnectionPool] Connection acquired: {}", connection.id);
+		dev_log!("ipc", "[ConnectionPool] Connection acquired: {}", connection.id);
 		Ok(connection)
 	}
 
@@ -306,7 +306,7 @@ impl ConnectionPool {
 		// Release the semaphore permit when the handle is dropped.
 		drop(handle);
 
-		trace!("[ConnectionPool] Connection released: {}", connection_id);
+		dev_log!("ipc", "[ConnectionPool] Connection released: {}", connection_id);
 	}
 
 	/// Find or create a healthy connection
@@ -346,7 +346,7 @@ impl ConnectionPool {
 				interval.tick().await;
 
 				if let Err(e) = pool.check_connection_health().await {
-					error!("[ConnectionPool] Health check failed: {}", e);
+					dev_log!("ipc", "error: [ConnectionPool] Health check failed: {}", e);
 				}
 			}
 		});
@@ -365,7 +365,7 @@ impl ConnectionPool {
 
 				let cleaned_count = pool.cleanup_stale_connections().await;
 				if cleaned_count > 0 {
-					debug!("[ConnectionPool] Cleaned {} stale connections", cleaned_count);
+					dev_log!("ipc", "[ConnectionPool] Cleaned {} stale connections", cleaned_count);
 				}
 			}
 		});
@@ -384,7 +384,7 @@ impl ConnectionPool {
 				connections.insert(handle.id.clone(), handle);
 			}
 
-			debug!("[ConnectionPool] Initialized {} minimum connections", needed);
+			dev_log!("ipc", "[ConnectionPool] Initialized {} minimum connections", needed);
 		}
 	}
 

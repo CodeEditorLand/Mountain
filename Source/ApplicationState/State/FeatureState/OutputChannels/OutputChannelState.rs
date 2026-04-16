@@ -35,9 +35,9 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO;
+use crate::dev_log;
 
 /// Output channels state containing channels by ID.
 #[derive(Clone)]
@@ -48,7 +48,7 @@ pub struct OutputChannelState {
 
 impl Default for OutputChannelState {
 	fn default() -> Self {
-		debug!("[OutputChannelState] Initializing default output channel state...");
+		dev_log!("output", "[OutputChannelState] Initializing default output channel state...");
 
 		Self { OutputChannels:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
@@ -69,7 +69,7 @@ impl OutputChannelState {
 	pub fn AddOrUpdate(&self, id:String, channel:OutputChannelStateDTO) {
 		if let Ok(mut guard) = self.OutputChannels.lock() {
 			guard.insert(id, channel);
-			debug!("[OutputChannelState] Output channel added/updated");
+			dev_log!("output", "[OutputChannelState] Output channel added/updated");
 		}
 	}
 
@@ -77,7 +77,7 @@ impl OutputChannelState {
 	pub fn Remove(&self, id:&str) {
 		if let Ok(mut guard) = self.OutputChannels.lock() {
 			guard.remove(id);
-			debug!("[OutputChannelState] Output channel removed: {}", id);
+			dev_log!("output", "[OutputChannelState] Output channel removed: {}", id);
 		}
 	}
 
@@ -85,7 +85,7 @@ impl OutputChannelState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.OutputChannels.lock() {
 			guard.clear();
-			debug!("[OutputChannelState] All output channels cleared");
+			dev_log!("output", "[OutputChannelState] All output channels cleared");
 		}
 	}
 

@@ -78,10 +78,10 @@
 use std::io::{Read, Write};
 
 use flate2::{Compression, read::GzDecoder, write::GzEncoder};
-use log::{debug, error, warn};
 use serde::Serialize;
 
 use super::super::Define::DefineMessage::TauriIPCMessage;
+use crate::dev_log;
 
 /// Maximum decompressed size to prevent compression bomb attacks (10MB)
 const MAX_DECOMPRESSED_SIZE:usize = 10 * 1024 * 1024;
@@ -159,7 +159,7 @@ impl Compressor {
 
 		// Check if compression is beneficial (only compress if size exceeds threshold)
 		if SerializedMessages.len() < self.SingleMessageThreshold {
-			debug!(
+			dev_log!("ipc", 
 				"[Compress] Skipping compression: data size {} < threshold {}",
 				SerializedMessages.len(),
 				self.SingleMessageThreshold
@@ -178,7 +178,7 @@ impl Compressor {
 		// Only return compressed if it's smaller than original
 		let compression_ratio = (compressed_data.len() as f64 / SerializedMessages.len() as f64) * 100.0;
 		if compressed_data.len() >= SerializedMessages.len() {
-			debug!(
+			dev_log!("ipc", 
 				"[Compress] Compression not beneficial: {}% ({} bytes vs {})",
 				compression_ratio,
 				compressed_data.len(),
@@ -187,7 +187,7 @@ impl Compressor {
 			return Ok(SerializedMessages);
 		}
 
-		debug!(
+		dev_log!("ipc", 
 			"[Compress] Compressed {} messages: {} -> {} bytes ({:.1}%)",
 			Messages.len(),
 			SerializedMessages.len(),

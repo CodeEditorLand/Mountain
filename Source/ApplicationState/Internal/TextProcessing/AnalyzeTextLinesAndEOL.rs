@@ -27,7 +27,6 @@
 //! - [ ] Implement line ending normalization
 //! - [ ] Add performance metrics
 
-use log::debug;
 
 /// Analyzes text content to determine its line endings and splits it into a
 /// vector of lines.
@@ -44,16 +43,16 @@ use log::debug;
 /// - Returns LF as default if text doesn't contain CRLF
 pub fn AnalyzeTextLinesAndEOL(TextContent:&str) -> (Vec<String>, String) {
 	let detected_eol = if TextContent.contains("\r\n") {
-		debug!("[AnalyzeTextLinesAndEOL] Detected CRLF line endings");
+		dev_log!("model", "[AnalyzeTextLinesAndEOL] Detected CRLF line endings");
 		"\r\n"
 	} else {
-		debug!("[AnalyzeTextLinesAndEOL] Detected LF line endings");
+		dev_log!("model", "[AnalyzeTextLinesAndEOL] Detected LF line endings");
 		"\n"
 	};
 
 	let lines:Vec<String> = TextContent.split(detected_eol).map(String::from).collect();
 
-	debug!(
+	dev_log!("model", 
 		"[AnalyzeTextLinesAndEOL] Analyzed {} lines with EOL: {:?}",
 		lines.len(),
 		detected_eol
@@ -61,3 +60,4 @@ pub fn AnalyzeTextLinesAndEOL(TextContent:&str) -> (Vec<String>, String) {
 
 	(lines, detected_eol.to_string())
 }
+use crate::dev_log;

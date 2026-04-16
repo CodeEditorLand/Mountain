@@ -38,11 +38,11 @@
 
 use std::{collections::HashMap, sync::Arc};
 
-use log::debug;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
 use super::{Permission::Permission, Role::Role};
+use crate::dev_log;
 
 /// Security context for permission validation
 ///
@@ -209,7 +209,7 @@ pub struct PermissionManager {
 impl PermissionManager {
 	/// Create a new permission manager
 	pub fn new() -> Self {
-		debug!("[PermissionManager] Creating new PermissionManager instance");
+		dev_log!("ipc", "[PermissionManager] Creating new PermissionManager instance");
 
 		Self {
 			roles:Arc::new(RwLock::new(HashMap::new())),
@@ -243,7 +243,7 @@ impl PermissionManager {
 		let required_permissions = self.get_required_permissions(operation).await;
 
 		if required_permissions.is_empty() {
-			debug!("[PermissionManager] Operation '{}' requires no special permissions", operation);
+			dev_log!("ipc", "[PermissionManager] Operation '{}' requires no special permissions", operation);
 			return Ok(()); // No specific permissions required
 		}
 
@@ -259,7 +259,7 @@ impl PermissionManager {
 		for required in &required_permissions {
 			if !user_permissions.contains(required) {
 				let error = format!("Missing permission: {}", required);
-				debug!(
+				dev_log!("ipc", 
 					"[PermissionManager] Permission denied for user '{}' on operation '{}': {}",
 					context.user_id, operation, error
 				);
@@ -288,7 +288,7 @@ impl PermissionManager {
 		})
 		.await;
 
-		debug!(
+		dev_log!("ipc", 
 			"[PermissionManager] Access granted for user '{}' on operation '{}'",
 			context.user_id, operation
 		);
@@ -339,30 +339,26 @@ impl PermissionManager {
 
 		match event.event_type {
 			SecurityEventType::PermissionDenied => {
-				log::warn!(
-					"[SecurityEvent] Permission denied - User: {}, Operation: {}, Details: {:?}",
+				dev_log!("ipc", "warn: [SecurityEvent] Permission denied - User: {}, Operation: {}, Details: {:?}",
 					event.user_id,
 					event.operation,
-					event.details
-				);
+					event.details);
 			},
 			SecurityEventType::SecurityViolation => {
-				log::error!(
-					"[SecurityEvent] Security violation - User: {}, Operation: {}, Details: {:?}",
+				dev_log!("ipc", "error: [SecurityEvent] Security violation - User: {}, Operation: {}, Details: {:?}",
 					event.user_id,
 					event.operation,
-					event.details
-				);
+					event.details);
 			},
 			SecurityEventType::AccessGranted => {
-				log::info!(
+				dev_log!("ipc", 
 					"[SecurityEvent] Access granted - User: {}, Operation: {}",
 					event.user_id,
 					event.operation
 				);
 			},
 			_ => {
-				log::debug!(
+				dev_log!("ipc", 
 					"[SecurityEvent] {:?} - User: {}, Operation: {}",
 					event.event_type,
 					event.user_id,
@@ -385,7 +381,7 @@ impl PermissionManager {
 	/// This method sets up the standard RBAC structure with three default roles
 	/// and their associated permissions.
 	pub async fn initialize_defaults(&self) {
-		debug!("[PermissionManager] Initializing default roles and permissions");
+		dev_log!("ipc", "[PermissionManager] Initializing default roles and permissions");
 
 		let mut permissions = self.permissions.write().await;
 		let mut roles = self.roles.write().await;
@@ -444,7 +440,7 @@ impl PermissionManager {
 			);
 		}
 
-		debug!(
+		dev_log!("ipc", 
 			"[PermissionManager] Initialized {} permissions and {} roles",
 			permissions.len(),
 			roles.len()
@@ -456,7 +452,7 @@ impl PermissionManager {
 		let role_name = role.name.clone();
 		let mut roles = self.roles.write().await;
 		roles.insert(role_name.clone(), role);
-		debug!("[PermissionManager] Added role: {}", role_name);
+		dev_log!("ipc", "[PermissionManager] Added role: {}", role_name);
 	}
 
 	/// Add a custom permission
@@ -464,14 +460,14 @@ impl PermissionManager {
 		let permission_name = permission.name.clone();
 		let mut permissions = self.permissions.write().await;
 		permissions.insert(permission_name.clone(), permission);
-		debug!("[PermissionManager] Added permission: {}", permission_name);
+		dev_log!("ipc", "[PermissionManager] Added permission: {}", permission_name);
 	}
 
 	/// Clear the audit log
 	pub async fn clear_audit_log(&self) {
 		let mut audit_log = self.audit_log.write().await;
 		audit_log.clear();
-		debug!("[PermissionManager] Audit log cleared");
+		dev_log!("ipc", "[PermissionManager] Audit log cleared");
 	}
 
 	/// Get audit log statistics

@@ -40,9 +40,9 @@ use std::{
 	},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO;
+use crate::dev_log;
 
 /// Active terminals state containing terminals by ID with next identifier
 /// counter.
@@ -57,7 +57,7 @@ pub struct TerminalState {
 
 impl Default for TerminalState {
 	fn default() -> Self {
-		debug!("[TerminalState] Initializing default terminal state...");
+		dev_log!("terminal", "[TerminalState] Initializing default terminal state...");
 
 		Self {
 			ActiveTerminals:Arc::new(StandardMutex::new(HashMap::new())),
@@ -101,7 +101,7 @@ impl TerminalState {
 	pub fn AddOrUpdate(&self, id:u64, terminal:TerminalStateDTO) {
 		if let Ok(mut guard) = self.ActiveTerminals.lock() {
 			guard.insert(id, Arc::new(StandardMutex::new(terminal)));
-			debug!("[TerminalState] Terminal added/updated with ID: {}", id);
+			dev_log!("terminal", "[TerminalState] Terminal added/updated with ID: {}", id);
 		}
 	}
 
@@ -109,7 +109,7 @@ impl TerminalState {
 	pub fn Remove(&self, id:u64) {
 		if let Ok(mut guard) = self.ActiveTerminals.lock() {
 			guard.remove(&id);
-			debug!("[TerminalState] Terminal removed with ID: {}", id);
+			dev_log!("terminal", "[TerminalState] Terminal removed with ID: {}", id);
 		}
 	}
 
@@ -117,7 +117,7 @@ impl TerminalState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.ActiveTerminals.lock() {
 			guard.clear();
-			debug!("[TerminalState] All terminals cleared");
+			dev_log!("terminal", "[TerminalState] All terminals cleared");
 		}
 	}
 

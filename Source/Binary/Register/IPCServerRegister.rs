@@ -2,10 +2,10 @@
 //!
 //! Initializes and manages the IPC server in Tauri state.
 
-use log::info;
 use tauri::Manager;
 
 use crate::IPC::TauriIPCServer::TauriIPCServer;
+use crate::dev_log;
 
 /// Creates and initializes the Tauri IPC server, storing it in Tauri state.
 ///
@@ -33,7 +33,7 @@ pub fn IPCServerRegister(ApplicationHandle:&tauri::AppHandle) -> Result<TauriIPC
 
 	ApplicationHandle.manage(ipc_server.clone());
 
-	info!("[IPC] [Server] IPC server initialized and managed.");
+	dev_log!("lifecycle", "[IPC] [Server] IPC server initialized and managed.");
 
 	Ok(ipc_server)
 }

@@ -7,11 +7,11 @@ use CommonLibrary::{
 	},
 	Error::CommonError::CommonError,
 };
-use log::info;
 use serde_json::Value;
 use tauri::Manager;
 
 use crate::Environment::Utility;
+use crate::dev_log;
 
 /// Inspects a configuration key to get its value from all relevant scopes.
 pub(super) async fn inspect_configuration_value(
@@ -19,7 +19,7 @@ pub(super) async fn inspect_configuration_value(
 	key:String,
 	_overrides:ConfigurationOverridesDTO,
 ) -> Result<Option<InspectResultDataDTO>, CommonError> {
-	info!("[ConfigurationProvider] Inspecting key: {}", key);
+	dev_log!("config", "[ConfigurationProvider] Inspecting key: {}", key);
 
 	let user_settings_path = environment
 		.ApplicationHandle

@@ -38,12 +38,12 @@ use std::{
 	time::{Duration, SystemTime},
 };
 
-use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::dev_log;
 
 /// Advanced IPC features for enhanced Mountain-Wind synchronization
 ///
@@ -120,7 +120,7 @@ pub struct CachedMessage {
 impl AdvancedFeatures {
 	/// Create new advanced features instance
 	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
-		info!("[AdvancedFeatures] Initializing advanced IPC features");
+		dev_log!("ipc", "[AdvancedFeatures] Initializing advanced IPC features");
 
 		Self {
 			runtime,
@@ -148,7 +148,7 @@ impl AdvancedFeatures {
 
 	/// Start advanced monitoring
 	pub async fn start_monitoring(&self) -> Result<(), String> {
-		info!("[AdvancedFeatures] Starting advanced monitoring");
+		dev_log!("ipc", "[AdvancedFeatures] Starting advanced monitoring");
 
 		let features1 = self.clone_features();
 		let features2 = self.clone_features();
@@ -183,10 +183,10 @@ impl AdvancedFeatures {
 
 			// Emit performance stats to Sky
 			if let Err(e) = self.runtime.Environment.ApplicationHandle.emit("ipc-performance-stats", &stats) {
-				error!("[AdvancedFeatures] Failed to emit performance stats: {}", e);
+				dev_log!("ipc", "error: [AdvancedFeatures] Failed to emit performance stats: {}", e);
 			}
 
-			debug!("[AdvancedFeatures] Performance stats updated");
+			dev_log!("ipc", "[AdvancedFeatures] Performance stats updated");
 		}
 	}
 
@@ -229,7 +229,7 @@ impl AdvancedFeatures {
 
 			cache.cache_size = cache.cached_messages.len();
 
-			debug!("[AdvancedFeatures] Cache cleaned, {} entries remaining", cache.cache_size);
+			dev_log!("ipc", "[AdvancedFeatures] Cache cleaned, {} entries remaining", cache.cache_size);
 		}
 	}
 
@@ -259,10 +259,10 @@ impl AdvancedFeatures {
 				.ApplicationHandle
 				.emit("collaboration-sessions-update", &active_sessions)
 			{
-				error!("[AdvancedFeatures] Failed to emit collaboration sessions: {}", e);
+				dev_log!("ipc", "error: [AdvancedFeatures] Failed to emit collaboration sessions: {}", e);
 			}
 
-			debug!("[AdvancedFeatures] Collaboration sessions monitored, {} active", sessions.len());
+			dev_log!("ipc", "[AdvancedFeatures] Collaboration sessions monitored, {} active", sessions.len());
 		}
 	}
 
@@ -285,7 +285,7 @@ impl AdvancedFeatures {
 		cache.cached_messages.insert(message_id.clone(), cached_message);
 		cache.cache_size = cache.cached_messages.len();
 
-		debug!("[AdvancedFeatures] Message cached: {}, TTL: {}s", message_id, ttl);
+		dev_log!("ipc", "[AdvancedFeatures] Message cached: {}, TTL: {}s", message_id, ttl);
 		Ok(())
 	}
 
@@ -332,7 +332,7 @@ impl AdvancedFeatures {
 
 		sessions.insert(session_id, session);
 
-		info!("[AdvancedFeatures] Collaboration session created");
+		dev_log!("ipc", "[AdvancedFeatures] Collaboration session created");
 		Ok(())
 	}
 
@@ -351,7 +351,7 @@ impl AdvancedFeatures {
 					.unwrap_or_default()
 					.as_secs();
 
-				debug!("[AdvancedFeatures] Participant added to session: {}", session_id);
+				dev_log!("ipc", "[AdvancedFeatures] Participant added to session: {}", session_id);
 			}
 		} else {
 			return Err(format!("Session not found: {}", session_id));
@@ -416,7 +416,7 @@ pub fn initialize_advanced_features(
 	app_handle:&tauri::AppHandle,
 	runtime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
-	info!("[AdvancedFeatures] Initializing advanced IPC features");
+	dev_log!("ipc", "[AdvancedFeatures] Initializing advanced IPC features");
 
 	let features = AdvancedFeatures::new(runtime);
 
@@ -427,7 +427,7 @@ pub fn initialize_advanced_features(
 	let features_clone = features.clone();
 	tokio::spawn(async move {
 		if let Err(e) = features_clone.start_monitoring().await {
-			error!("[AdvancedFeatures] Failed to start monitoring: {}", e);
+			dev_log!("ipc", "error: [AdvancedFeatures] Failed to start monitoring: {}", e);
 		}
 	});
 

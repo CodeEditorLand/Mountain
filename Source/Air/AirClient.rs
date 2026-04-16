@@ -84,8 +84,8 @@ use tokio::sync::Mutex;
 use CommonLibrary::Error::CommonError::CommonError;
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
-use log::{debug, error, info};
 use tonic::{Request, transport::Channel};
+use crate::dev_log;
 
 /// Default gRPC server address for the Air daemon.
 ///
@@ -132,21 +132,21 @@ impl AirClient {
 	/// # }
 	/// ```
 	pub async fn new(address:&str) -> Result<Self, CommonError> {
-		info!("[AirClient] Connecting to Air daemon at: {}", address);
+		dev_log!("grpc", "[AirClient] Connecting to Air daemon at: {}", address);
 
 		#[cfg(feature = "AirIntegration")]
 		{
 			let endpoint = address.parse::<tonic::transport::Endpoint>().map_err(|e| {
-				error!("[AirClient] Failed to parse address '{}': {}", address, e);
+				dev_log!("grpc", "error: [AirClient] Failed to parse address '{}': {}", address, e);
 				CommonError::IPCError { Description:format!("Invalid address '{}': {}", address, e) }
 			})?;
 
 			let channel = endpoint.connect().await.map_err(|e| {
-				error!("[AirClient] Failed to connect to Air daemon: {}", e);
+				dev_log!("grpc", "error: [AirClient] Failed to connect to Air daemon: {}", e);
 				CommonError::IPCError { Description:format!("Connection failed: {}", e) }
 			})?;
 
-			info!("[AirClient] Successfully connected to Air daemon at: {}", address);
+			dev_log!("grpc", "[AirClient] Successfully connected to Air daemon at: {}", address);
 
 			let client = Arc::new(Mutex::new(AirServiceClient::new(channel)));
 			Ok(Self { client:Some(client), address:address.to_string() })
@@ -154,7 +154,7 @@ impl AirClient {
 
 		#[cfg(not(feature = "AirIntegration"))]
 		{
-			error!("[AirClient] AirIntegration feature is not enabled");
+			dev_log!("grpc", "error: [AirClient] AirIntegration feature is not enabled");
 			Err(CommonError::FeatureNotAvailable { FeatureName:"AirIntegration".to_string() })
 		}
 	}
@@ -204,7 +204,7 @@ impl AirClient {
 		password:String,
 		provider:String,
 	) -> Result<String, CommonError> {
-		debug!("[AirClient] Authenticating user '{}' with provider '{}'", username, provider);
+		dev_log!("grpc", "[AirClient] Authenticating user '{}' with provider '{}'", username, provider);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -223,18 +223,16 @@ impl AirClient {
 				Ok(response) => {
 					let response = response.into_inner();
 					if response.success {
-						info!("[AirClient] Authentication successful for user '{}'", username_display);
+						dev_log!("grpc", "[AirClient] Authentication successful for user '{}'", username_display);
 						Ok(response.token)
 					} else {
-						error!(
-							"[AirClient] Authentication failed for user '{}': {}",
-							username_display, response.error
-						);
+						dev_log!("grpc", "error: [AirClient] Authentication failed for user '{}': {}",
+							username_display, response.error);
 						Err(CommonError::AccessDenied { Reason:response.error })
 					}
 				},
 				Err(e) => {
-					error!("[AirClient] Authentication RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Authentication RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Authentication RPC error: {}", e) })
 				},
 			}
@@ -265,7 +263,7 @@ impl AirClient {
 		current_version:String,
 		channel:String,
 	) -> Result<UpdateInfo, CommonError> {
-		debug!("[AirClient] Checking for updates for version '{}'", current_version);
+		dev_log!("grpc", "[AirClient] Checking for updates for version '{}'", current_version);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -282,7 +280,7 @@ impl AirClient {
 			match client_guard.check_for_updates(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::UpdateCheckResponse = response.into_inner();
-					info!(
+					dev_log!("grpc", 
 						"[AirClient] Update check completed. Update available: {}",
 						response.update_available
 					);
@@ -294,7 +292,7 @@ impl AirClient {
 					})
 				},
 				Err(e) => {
-					error!("[AirClient] Check for updates RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Check for updates RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Check for updates RPC error: {}", e) })
 				},
 			}
@@ -325,7 +323,7 @@ impl AirClient {
 		checksum:String,
 		headers:HashMap<String, String>,
 	) -> Result<FileInfo, CommonError> {
-		debug!("[AirClient] Downloading update from: {}", url);
+		dev_log!("grpc", "[AirClient] Downloading update from: {}", url);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -343,19 +341,19 @@ impl AirClient {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::DownloadResponse = response.into_inner();
 					if response.success {
-						info!("[AirClient] Update downloaded successfully to: {}", response.file_path);
+						dev_log!("grpc", "[AirClient] Update downloaded successfully to: {}", response.file_path);
 						Ok(FileInfo {
 							file_path:response.file_path,
 							file_size:response.file_size,
 							checksum:response.checksum,
 						})
 					} else {
-						error!("[AirClient] Update download failed: {}", response.error);
+						dev_log!("grpc", "error: [AirClient] Update download failed: {}", response.error);
 						Err(CommonError::IPCError { Description:response.error })
 					}
 				},
 				Err(e) => {
-					error!("[AirClient] Download update RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Download update RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Download update RPC error: {}", e) })
 				},
 			}
@@ -377,7 +375,7 @@ impl AirClient {
 	/// * `Ok(())` - Update applied successfully
 	/// * `Err(CommonError)` - Application failure
 	pub async fn apply_update(&self, request_id:String, version:String, update_path:String) -> Result<(), CommonError> {
-		debug!("[AirClient] Applying update version: {}", version);
+		dev_log!("grpc", "[AirClient] Applying update version: {}", version);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -395,15 +393,15 @@ impl AirClient {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::ApplyUpdateResponse = response.into_inner();
 					if response.success {
-						info!("[AirClient] Update applied successfully");
+						dev_log!("grpc", "[AirClient] Update applied successfully");
 						Ok(())
 					} else {
-						error!("[AirClient] Update application failed: {}", response.error);
+						dev_log!("grpc", "error: [AirClient] Update application failed: {}", response.error);
 						Err(CommonError::IPCError { Description:response.error })
 					}
 				},
 				Err(e) => {
-					error!("[AirClient] Apply update RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Apply update RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Apply update RPC error: {}", e) })
 				},
 			}
@@ -438,7 +436,7 @@ impl AirClient {
 		checksum:String,
 		headers:HashMap<String, String>,
 	) -> Result<FileInfo, CommonError> {
-		debug!("[AirClient] Downloading file from: {}", url);
+		dev_log!("grpc", "[AirClient] Downloading file from: {}", url);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -456,19 +454,19 @@ impl AirClient {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::DownloadResponse = response.into_inner();
 					if response.success {
-						info!("[AirClient] File downloaded successfully to: {}", response.file_path);
+						dev_log!("grpc", "[AirClient] File downloaded successfully to: {}", response.file_path);
 						Ok(FileInfo {
 							file_path:response.file_path,
 							file_size:response.file_size,
 							checksum:response.checksum,
 						})
 					} else {
-						error!("[AirClient] File download failed: {}", response.error);
+						dev_log!("grpc", "error: [AirClient] File download failed: {}", response.error);
 						Err(CommonError::IPCError { Description:response.error })
 					}
 				},
 				Err(e) => {
-					error!("[AirClient] Download file RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Download file RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Download file RPC error: {}", e) })
 				},
 			}
@@ -539,7 +537,7 @@ impl AirClient {
 		url:String,
 		headers:HashMap<String, String>,
 	) -> Result<DownloadStream, CommonError> {
-		debug!("[AirClient] Starting stream download from: {}", url);
+		dev_log!("grpc", "[AirClient] Starting stream download from: {}", url);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -555,11 +553,11 @@ impl AirClient {
 
 			match client_guard.download_stream(Request::new(request)).await {
 				Ok(response) => {
-					info!("[AirClient] Stream download initiated successfully");
+					dev_log!("grpc", "[AirClient] Stream download initiated successfully");
 					Ok(DownloadStream::new(response.into_inner()))
 				},
 				Err(e) => {
-					error!("[AirClient] Download stream RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Download stream RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Download stream RPC error: {}", e) })
 				},
 			}
@@ -594,7 +592,7 @@ impl AirClient {
 		exclude_patterns:Vec<String>,
 		max_depth:u32,
 	) -> Result<IndexInfo, CommonError> {
-		debug!("[AirClient] Indexing files in: {}", path);
+		dev_log!("grpc", "[AirClient] Indexing files in: {}", path);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -612,14 +610,14 @@ impl AirClient {
 				Ok(response) => {
 					let response = response.into_inner();
 					// Use fields that actually exist in IndexResponse
-					info!(
+					dev_log!("grpc", 
 						"[AirClient] Files indexed: {} (total size: {} bytes)",
 						response.files_indexed, response.total_size
 					);
 					Ok(IndexInfo { files_indexed:response.files_indexed, total_size:response.total_size })
 				},
 				Err(e) => {
-					error!("[AirClient] Index files RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Index files RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Index files RPC error: {}", e) })
 				},
 			}
@@ -648,7 +646,7 @@ impl AirClient {
 		path:String,
 		max_results:u32,
 	) -> Result<Vec<FileResult>, CommonError> {
-		debug!("[AirClient] Searching for files with query: '{}' in: {}", query, path);
+		dev_log!("grpc", "[AirClient] Searching for files with query: '{}' in: {}", query, path);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -664,12 +662,12 @@ impl AirClient {
 
 			match client_guard.search_files(Request::new(request)).await {
 				Ok(_response) => {
-					info!("[AirClient] Search completed");
+					dev_log!("grpc", "[AirClient] Search completed");
 					// Placeholder implementation - actual response structure may vary
 					Ok(Vec::new())
 				},
 				Err(e) => {
-					error!("[AirClient] Search files RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Search files RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Search files RPC error: {}", e) })
 				},
 			}
@@ -691,7 +689,7 @@ impl AirClient {
 	/// * `Err(CommonError)` - Request failure
 	pub async fn get_file_info(&self, request_id:String, path:String) -> Result<ExtendedFileInfo, CommonError> {
 		let path_display = path.clone();
-		debug!("[AirClient] Getting file info for: {}", path);
+		dev_log!("grpc", "[AirClient] Getting file info for: {}", path);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -708,7 +706,7 @@ impl AirClient {
 			match client_guard.get_file_info(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::FileInfoResponse = response.into_inner();
-					info!(
+					dev_log!("grpc", 
 						"[AirClient] File info retrieved for: {} (exists: {})",
 						path_display, response.exists
 					);
@@ -721,7 +719,7 @@ impl AirClient {
 					})
 				},
 				Err(e) => {
-					error!("[AirClient] Get file info RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Get file info RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Get file info RPC error: {}", e) })
 				},
 			}
@@ -743,7 +741,7 @@ impl AirClient {
 	/// * `Ok(status)` - Air daemon status
 	/// * `Err(CommonError)` - Request failure
 	pub async fn get_status(&self, request_id:String) -> Result<AirStatus, CommonError> {
-		debug!("[AirClient] Getting Air daemon status");
+		dev_log!("grpc", "[AirClient] Getting Air daemon status");
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -760,7 +758,7 @@ impl AirClient {
 			match client_guard.get_status(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::StatusResponse = response.into_inner();
-					info!("[AirClient] Status retrieved. Active requests: {}", response.active_requests);
+					dev_log!("grpc", "[AirClient] Status retrieved. Active requests: {}", response.active_requests);
 					Ok(AirStatus {
 						version:response.version,
 						uptime_seconds:response.uptime_seconds,
@@ -774,7 +772,7 @@ impl AirClient {
 					})
 				},
 				Err(e) => {
-					error!("[AirClient] Get status RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Get status RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Get status RPC error: {}", e) })
 				},
 			}
@@ -792,7 +790,7 @@ impl AirClient {
 	/// * `Ok(healthy)` - Health status
 	/// * `Err(CommonError)` - Check failure
 	pub async fn health_check(&self) -> Result<bool, CommonError> {
-		debug!("[AirClient] Performing health check");
+		dev_log!("grpc", "[AirClient] Performing health check");
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -809,11 +807,11 @@ impl AirClient {
 			match client_guard.health_check(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::HealthCheckResponse = response.into_inner();
-					debug!("[AirClient] Health check result: {}", response.healthy);
+					dev_log!("grpc", "[AirClient] Health check result: {}", response.healthy);
 					Ok(response.healthy)
 				},
 				Err(e) => {
-					error!("[AirClient] Health check RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Health check RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Health check RPC error: {}", e) })
 				},
 			}
@@ -837,7 +835,7 @@ impl AirClient {
 	/// * `Ok(metrics)` - Metrics data
 	/// * `Err(CommonError)` - Request failure
 	pub async fn get_metrics(&self, request_id:String, metric_type:Option<String>) -> Result<AirMetrics, CommonError> {
-		debug!("[AirClient] Getting metrics (type: {:?})", metric_type.as_deref());
+		dev_log!("grpc", "[AirClient] Getting metrics (type: {:?})", metric_type.as_deref());
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -854,7 +852,7 @@ impl AirClient {
 			match client_guard.get_metrics(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::MetricsResponse = response.into_inner();
-					info!("[AirClient] Metrics retrieved");
+					dev_log!("grpc", "[AirClient] Metrics retrieved");
 					// Parse metrics from the string map - this is a simplified implementation
 					let metrics = AirMetrics {
 						memory_usage_mb:response
@@ -886,7 +884,7 @@ impl AirClient {
 					Ok(metrics)
 				},
 				Err(e) => {
-					error!("[AirClient] Get metrics RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Get metrics RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Get metrics RPC error: {}", e) })
 				},
 			}
@@ -911,7 +909,7 @@ impl AirClient {
 	/// * `Ok(usage)` - Resource usage data
 	/// * `Err(CommonError)` - Request failure
 	pub async fn get_resource_usage(&self, request_id:String) -> Result<ResourceUsage, CommonError> {
-		debug!("[AirClient] Getting resource usage");
+		dev_log!("grpc", "[AirClient] Getting resource usage");
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -928,7 +926,7 @@ impl AirClient {
 			match client_guard.get_resource_usage(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::ResourceUsageResponse = response.into_inner();
-					info!("[AirClient] Resource usage retrieved");
+					dev_log!("grpc", "[AirClient] Resource usage retrieved");
 					Ok(ResourceUsage {
 						memory_usage_mb:response.memory_usage_mb,
 						cpu_usage_percent:response.cpu_usage_percent,
@@ -939,7 +937,7 @@ impl AirClient {
 					})
 				},
 				Err(e) => {
-					error!("[AirClient] Get resource usage RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Get resource usage RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Get resource usage RPC error: {}", e) })
 				},
 			}
@@ -969,7 +967,7 @@ impl AirClient {
 		cpu_limit_percent:u32,
 		disk_limit_mb:u32,
 	) -> Result<(), CommonError> {
-		debug!(
+		dev_log!("grpc", 
 			"[AirClient] Setting resource limits: memory={}MB, cpu={}%, disk={}MB",
 			memory_limit_mb, cpu_limit_percent, disk_limit_mb
 		);
@@ -990,15 +988,15 @@ impl AirClient {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::ResourceLimitsResponse = response.into_inner();
 					if response.success {
-						info!("[AirClient] Resource limits set successfully");
+						dev_log!("grpc", "[AirClient] Resource limits set successfully");
 						Ok(())
 					} else {
-						error!("[AirClient] Failed to set resource limits: {}", response.error);
+						dev_log!("grpc", "error: [AirClient] Failed to set resource limits: {}", response.error);
 						Err(CommonError::IPCError { Description:response.error })
 					}
 				},
 				Err(e) => {
-					error!("[AirClient] Set resource limits RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Set resource limits RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Set resource limits RPC error: {}", e) })
 				},
 			}
@@ -1029,7 +1027,7 @@ impl AirClient {
 		section:String,
 	) -> Result<HashMap<String, String>, CommonError> {
 		let section_display = section.clone();
-		debug!("[AirClient] Getting configuration for section: {}", section);
+		dev_log!("grpc", "[AirClient] Getting configuration for section: {}", section);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -1046,7 +1044,7 @@ impl AirClient {
 			match client_guard.get_configuration(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::ConfigurationResponse = response.into_inner();
-					info!(
+					dev_log!("grpc", 
 						"[AirClient] Configuration retrieved for section: {} ({} keys)",
 						section_display,
 						response.configuration.len()
@@ -1054,7 +1052,7 @@ impl AirClient {
 					Ok(response.configuration)
 				},
 				Err(e) => {
-					error!("[AirClient] Get configuration RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Get configuration RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Get configuration RPC error: {}", e) })
 				},
 			}
@@ -1082,7 +1080,7 @@ impl AirClient {
 		updates:HashMap<String, String>,
 	) -> Result<(), CommonError> {
 		let section_display = section.clone();
-		debug!(
+		dev_log!("grpc", 
 			"[AirClient] Updating configuration for section: {} ({} keys)",
 			section_display,
 			updates.len()
@@ -1104,18 +1102,18 @@ impl AirClient {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::UpdateConfigurationResponse = response.into_inner();
 					if response.success {
-						info!(
+						dev_log!("grpc", 
 							"[AirClient] Configuration updated successfully for section: {}",
 							section_display
 						);
 						Ok(())
 					} else {
-						error!("[AirClient] Failed to update configuration: {}", response.error);
+						dev_log!("grpc", "error: [AirClient] Failed to update configuration: {}", response.error);
 						Err(CommonError::IPCError { Description:response.error })
 					}
 				},
 				Err(e) => {
-					error!("[AirClient] Update configuration RPC error: {}", e);
+					dev_log!("grpc", "error: [AirClient] Update configuration RPC error: {}", e);
 					Err(CommonError::IPCError { Description:format!("Update configuration RPC error: {}", e) })
 				},
 			}
@@ -1278,7 +1276,7 @@ impl DownloadStream {
 				}))
 			},
 			Some(Err(e)) => {
-				error!("[DownloadStream] Stream error: {}", e);
+				dev_log!("grpc", "error: [DownloadStream] Stream error: {}", e);
 				Some(Err(CommonError::IPCError { Description:format!("Stream error: {}", e) }))
 			},
 			None => None,

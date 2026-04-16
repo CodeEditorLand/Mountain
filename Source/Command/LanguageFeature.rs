@@ -75,12 +75,12 @@
 //! - Individual command modules for each language feature (containing impls
 //!   only)
 
-use log::debug;
 use serde_json::Value;
 use tauri::{AppHandle, Wry, command};
 use url::Url;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::dev_log;
 
 // Private submodules containing implementation (without #[command] attributes)
 #[path = "LanguageFeature/validation.rs"]
@@ -107,7 +107,7 @@ pub async fn MountainProvideHover(
 	uri:String,
 	position:Value,
 ) -> Result<Value, String> {
-	debug!("[Language Feature] Providing hover for: {} at {:?}", uri, position);
+	dev_log!("commands", "[Language Feature] Providing hover for: {} at {:?}", uri, position);
 	hover::provide_hover_impl(application_handle, uri, position).await
 }
 
@@ -119,7 +119,7 @@ pub async fn MountainProvideCodeActions(
 	position:Value,
 	context:Value,
 ) -> Result<Value, String> {
-	debug!("[Language Feature] Providing code actions for: {} at {:?}", uri, position);
+	dev_log!("commands", "[Language Feature] Providing code actions for: {} at {:?}", uri, position);
 	code_actions::provide_code_actions_impl(application_handle, uri, position, context).await
 }
 
@@ -130,7 +130,7 @@ pub async fn MountainProvideDocumentHighlights(
 	uri:String,
 	position:Value,
 ) -> Result<Value, String> {
-	debug!(
+	dev_log!("commands", 
 		"[Language Feature] Providing document highlights for: {} at {:?}",
 		uri, position
 	);
@@ -145,7 +145,7 @@ pub async fn MountainProvideCompletions(
 	position:Value,
 	context:Value,
 ) -> Result<Value, String> {
-	debug!("[Language Feature] Providing completions for: {} at {:?}", uri, position);
+	dev_log!("commands", "[Language Feature] Providing completions for: {} at {:?}", uri, position);
 	completions::provide_completions_impl(application_handle, uri, position, context).await
 }
 
@@ -156,7 +156,7 @@ pub async fn MountainProvideDefinition(
 	uri:String,
 	position:Value,
 ) -> Result<Value, String> {
-	debug!("[Language Feature] Providing definition for: {} at {:?}", uri, position);
+	dev_log!("commands", "[Language Feature] Providing definition for: {} at {:?}", uri, position);
 	definition::provide_definition_impl(application_handle, uri, position).await
 }
 
@@ -168,6 +168,6 @@ pub async fn MountainProvideReferences(
 	position:Value,
 	context:Value,
 ) -> Result<Value, String> {
-	debug!("[Language Feature] Providing references for: {} at {:?}", uri, position);
+	dev_log!("commands", "[Language Feature] Providing references for: {} at {:?}", uri, position);
 	references::provide_references_impl(application_handle, uri, position, context).await
 }

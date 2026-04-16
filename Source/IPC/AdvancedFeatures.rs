@@ -209,12 +209,12 @@ use std::{
 	time::{Duration, SystemTime},
 };
 
-use log::{debug, error, info};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tauri::{Emitter, Manager};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::dev_log;
 
 /// Advanced IPC features for enhanced Mountain-Wind synchronization
 #[derive(Clone)]
@@ -341,7 +341,7 @@ impl AdvancedFeatures {
 
 			// Emit performance stats to Sky
 			if let Err(e) = self.runtime.Environment.ApplicationHandle.emit("ipc-performance-stats", &stats) {
-				error!("[AdvancedFeatures] Failed to emit performance stats: {}", e);
+				dev_log!("ipc", "error: [AdvancedFeatures] Failed to emit performance stats: {}", e);
 			}
 
 			dev_log!("lifecycle", "Performance stats updated");
@@ -419,7 +419,7 @@ impl AdvancedFeatures {
 				.ApplicationHandle
 				.emit("collaboration-sessions-update", &active_sessions)
 			{
-				error!("[AdvancedFeatures] Failed to emit collaboration sessions: {}", e);
+				dev_log!("ipc", "error: [AdvancedFeatures] Failed to emit collaboration sessions: {}", e);
 			}
 
 			dev_log!("lifecycle", "Collaboration sessions monitored, {} active", sessions.len());
@@ -641,7 +641,7 @@ pub fn initialize_advanced_features(
 	let features_clone = features.clone();
 	tokio::spawn(async move {
 		if let Err(e) = features_clone.start_monitoring().await {
-			error!("[AdvancedFeatures] Failed to start monitoring: {}", e);
+			dev_log!("ipc", "error: [AdvancedFeatures] Failed to start monitoring: {}", e);
 		}
 	});
 

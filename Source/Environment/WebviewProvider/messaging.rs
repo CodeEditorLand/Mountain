@@ -8,13 +8,13 @@
 use std::collections::HashMap;
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{debug, warn};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{Emitter, Manager};
 use uuid::Uuid;
 
 use super::super::MountainEnvironment::MountainEnvironment;
+use crate::dev_log;
 
 /// Represents a Webview message
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,7 +38,7 @@ pub(super) async fn post_message_to_webview_impl(
 	handle:String,
 	message:Value,
 ) -> Result<bool, CommonError> {
-	debug!("[WebviewProvider] Posting message to Webview: {}", handle);
+	dev_log!("extensions", "[WebviewProvider] Posting message to Webview: {}", handle);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		let webview_message = WebviewMessage {
@@ -54,10 +54,10 @@ pub(super) async fn post_message_to_webview_impl(
 				CommonError::IPCError { Description:format!("Failed to post message to Webview: {}", error) }
 			})?;
 
-		debug!("[WebviewProvider] Message sent successfully to Webview: {}", handle);
+		dev_log!("extensions", "[WebviewProvider] Message sent successfully to Webview: {}", handle);
 		Ok(true)
 	} else {
-		warn!("[WebviewProvider] Webview not found for message: {}", handle);
+		dev_log!("extensions", "warn: [WebviewProvider] Webview not found for message: {}", handle);
 		Ok(false)
 	}
 }
@@ -67,7 +67,7 @@ pub(super) async fn setup_webview_message_listener_impl(
 	env:&MountainEnvironment,
 	handle:String,
 ) -> Result<(), CommonError> {
-	debug!("[WebviewProvider] Setting up message listener for Webview: {}", handle);
+	dev_log!("extensions", "[WebviewProvider] Setting up message listener for Webview: {}", handle);
 
 	// In a full implementation, this would register an event listener
 	// that forwards Webview messages to the appropriate handler.

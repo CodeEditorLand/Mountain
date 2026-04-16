@@ -208,7 +208,7 @@ console.log("All certificates:", allCerts);
 ### Updating ServiceRegistry
 
 The
-[`ServiceRegistry`](Element/Mountain/Source/Binary/Build/ServiceRegistry.rs:59)
+[`ServiceRegistry`](https://github.com/CodeEditorLand/Mountain/tree/Current/Source/Binary/Build/ServiceRegistry.rs)
 has been updated to support HTTPS services:
 
 ```rust
@@ -227,7 +227,7 @@ registry.register_with_options(
 
 ### HTTP vs HTTPS Routing
 
-The [`Scheme`](Element/Mountain/Source/Binary/Build/Scheme.rs) handler can be
+The [`Scheme`](https://github.com/CodeEditorLand/Mountain/tree/Current/Source/Binary/Build/Scheme.rs) handler can be
 extended to support HTTPS:
 
 ```rust

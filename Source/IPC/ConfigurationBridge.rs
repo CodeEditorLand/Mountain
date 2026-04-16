@@ -220,7 +220,6 @@
 
 use std::sync::Arc;
 
-use log::{debug, info, warn};
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
 // Type aliases for Configuration DTOs to simplify usage
@@ -235,6 +234,7 @@ use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider,
 use sha2::Digest;
 
 use crate::{
+use crate::dev_log;
 	IPC::WindServiceAdapters::{WindDesktopConfiguration, WindServiceAdapter},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
@@ -247,13 +247,13 @@ pub struct ConfigurationBridge {
 impl ConfigurationBridge {
 	/// Create a new configuration bridge
 	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
-		info!("[ConfigurationBridge] Creating configuration bridge");
+		dev_log!("config", "[ConfigurationBridge] Creating configuration bridge");
 		Self { runtime }
 	}
 
 	/// Get Wind-compatible desktop configuration
 	pub async fn get_wind_desktop_configuration(&self) -> Result<WindDesktopConfiguration, String> {
-		debug!("[ConfigurationBridge] Getting Wind desktop configuration");
+		dev_log!("config", "[ConfigurationBridge] Getting Wind desktop configuration");
 
 		// Get the current Mountain configuration
 		let mountain_config = self.get_mountain_configuration().await?;
@@ -262,13 +262,13 @@ impl ConfigurationBridge {
 		let service_adapter = WindServiceAdapter::new(self.runtime.clone());
 		let wind_config = service_adapter.convert_to_wind_configuration(mountain_config).await?;
 
-		debug!("[ConfigurationBridge] Wind configuration ready");
+		dev_log!("config", "[ConfigurationBridge] Wind configuration ready");
 		Ok(wind_config)
 	}
 
 	/// Update configuration from Wind frontend
 	pub async fn update_configuration_from_wind(&self, wind_config:WindDesktopConfiguration) -> Result<(), String> {
-		debug!("[ConfigurationBridge] Updating configuration from Wind");
+		dev_log!("config", "[ConfigurationBridge] Updating configuration from Wind");
 
 		// Convert Wind configuration to Mountain format
 		let mountain_config = self.convert_to_mountain_configuration(wind_config).await?;
@@ -276,13 +276,13 @@ impl ConfigurationBridge {
 		// Update Mountain's configuration system
 		self.update_mountain_configuration(mountain_config).await?;
 
-		debug!("[ConfigurationBridge] Configuration updated successfully");
+		dev_log!("config", "[ConfigurationBridge] Configuration updated successfully");
 		Ok(())
 	}
 
 	/// Get Mountain's current configuration
 	async fn get_mountain_configuration(&self) -> Result<serde_json::Value, String> {
-		debug!("[ConfigurationBridge] Getting Mountain configuration");
+		dev_log!("config", "[ConfigurationBridge] Getting Mountain configuration");
 
 		let config_provider:Arc<dyn ConfigurationProvider> = self.runtime.Environment.Require();
 
@@ -296,7 +296,7 @@ impl ConfigurationBridge {
 
 	/// Update Mountain's configuration
 	async fn update_mountain_configuration(&self, config:serde_json::Value) -> Result<(), String> {
-		debug!("[ConfigurationBridge] Updating Mountain configuration");
+		dev_log!("config", "[ConfigurationBridge] Updating Mountain configuration");
 
 		// Validate configuration before updating
 		if !self.validate_configuration(&config) {
@@ -381,15 +381,15 @@ impl ConfigurationBridge {
 		&self,
 		wind_config:WindDesktopConfiguration,
 	) -> Result<serde_json::Value, String> {
-		debug!("[ConfigurationBridge] Converting Wind config to Mountain format");
+		dev_log!("config", "[ConfigurationBridge] Converting Wind config to Mountain format");
 
 		let machine_id = self.generate_machine_id().await.unwrap_or_else(|e| {
-			warn!("[ConfigurationBridge] Failed to generate machine ID: {}", e);
+			dev_log!("config", "warn: [ConfigurationBridge] Failed to generate machine ID: {}", e);
 			"wind-machine-fallback".to_string()
 		});
 
 		let session_id = self.generate_session_id().await.unwrap_or_else(|e| {
-			warn!("[ConfigurationBridge] Failed to generate session ID: {}", e);
+			dev_log!("config", "warn: [ConfigurationBridge] Failed to generate session ID: {}", e);
 			"wind-session-fallback".to_string()
 		});
 
@@ -414,7 +414,7 @@ impl ConfigurationBridge {
 
 	/// Synchronize configuration between Mountain and Wind
 	pub async fn synchronize_configuration(&self) -> Result<(), String> {
-		debug!("[ConfigurationBridge] Synchronizing configuration");
+		dev_log!("config", "[ConfigurationBridge] Synchronizing configuration");
 
 		// Get Mountain's current configuration
 		let mountain_config = self.get_mountain_configuration().await?;
@@ -426,13 +426,13 @@ impl ConfigurationBridge {
 		// Send configuration to Wind via IPC
 		self.send_configuration_to_wind(wind_config).await?;
 
-		debug!("[ConfigurationBridge] Configuration synchronized");
+		dev_log!("config", "[ConfigurationBridge] Configuration synchronized");
 		Ok(())
 	}
 
 	/// Send configuration to Wind frontend via IPC
 	async fn send_configuration_to_wind(&self, config:WindDesktopConfiguration) -> Result<(), String> {
-		debug!("[ConfigurationBridge] Sending configuration to Wind");
+		dev_log!("config", "[ConfigurationBridge] Sending configuration to Wind");
 
 		// Get the IPC server
 		if let Some(ipc_server) = self
@@ -457,7 +457,7 @@ impl ConfigurationBridge {
 
 	/// Handle configuration changes from Wind
 	pub async fn handle_wind_configuration_change(&self, new_config:serde_json::Value) -> Result<(), String> {
-		debug!("[ConfigurationBridge] Handling Wind configuration change");
+		dev_log!("config", "[ConfigurationBridge] Handling Wind configuration change");
 
 		// Parse Wind configuration
 		let wind_config:WindDesktopConfiguration =
@@ -466,13 +466,13 @@ impl ConfigurationBridge {
 		// Update Mountain configuration
 		self.update_configuration_from_wind(wind_config).await?;
 
-		debug!("[ConfigurationBridge] Wind configuration change handled");
+		dev_log!("config", "[ConfigurationBridge] Wind configuration change handled");
 		Ok(())
 	}
 
 	/// Get configuration status
 	pub async fn get_configuration_status(&self) -> Result<ConfigurationStatus, String> {
-		debug!("[ConfigurationBridge] Getting configuration status");
+		dev_log!("config", "[ConfigurationBridge] Getting configuration status");
 
 		let mountain_config = self.get_mountain_configuration().await?;
 		let is_valid = !mountain_config.is_null();
@@ -598,7 +598,7 @@ impl ConfigurationBridge {
 		let hex_string = format!("{:x}", result);
 		let session_id = hex_string.chars().take(16).collect::<String>();
 
-		info!("[ConfigurationBridge] Generated session ID: {}", session_id);
+		dev_log!("config", "[ConfigurationBridge] Generated session ID: {}", session_id);
 		Ok(format!("session-{}", session_id))
 	}
 }
@@ -616,7 +616,7 @@ pub struct ConfigurationStatus {
 pub async fn mountain_get_wind_desktop_configuration(
 	app_handle:tauri::AppHandle,
 ) -> Result<WindDesktopConfiguration, String> {
-	debug!("[ConfigurationBridge] Tauri command: get_wind_desktop_configuration");
+	dev_log!("config", "[ConfigurationBridge] Tauri command: get_wind_desktop_configuration");
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
@@ -629,7 +629,7 @@ pub async fn mountain_get_wind_desktop_configuration(
 /// Tauri command to get configuration data for Wind frontend
 #[tauri::command]
 pub async fn get_configuration_data(app_handle:tauri::AppHandle) -> Result<serde_json::Value, String> {
-	debug!("[ConfigurationBridge] Tauri command: get_configuration_data");
+	dev_log!("config", "[ConfigurationBridge] Tauri command: get_configuration_data");
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
@@ -644,7 +644,7 @@ pub async fn get_configuration_data(app_handle:tauri::AppHandle) -> Result<serde
 			"profile": mountain_config.clone()
 		});
 
-		debug!("[ConfigurationBridge] Configuration data retrieved successfully");
+		dev_log!("config", "[ConfigurationBridge] Configuration data retrieved successfully");
 		Ok(config_data)
 	} else {
 		Err("ApplicationRunTime not found".to_string())
@@ -654,7 +654,7 @@ pub async fn get_configuration_data(app_handle:tauri::AppHandle) -> Result<serde
 /// Tauri command to save configuration data from Wind frontend
 #[tauri::command]
 pub async fn save_configuration_data(app_handle:tauri::AppHandle, config_data:serde_json::Value) -> Result<(), String> {
-	debug!("[ConfigurationBridge] Tauri command: save_configuration_data");
+	dev_log!("config", "[ConfigurationBridge] Tauri command: save_configuration_data");
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
@@ -662,7 +662,7 @@ pub async fn save_configuration_data(app_handle:tauri::AppHandle, config_data:se
 		// Update Mountain configuration with the new data
 		bridge.update_mountain_configuration(config_data).await?;
 
-		debug!("[ConfigurationBridge] Configuration data saved successfully");
+		dev_log!("config", "[ConfigurationBridge] Configuration data saved successfully");
 		Ok(())
 	} else {
 		Err("ApplicationRunTime not found".to_string())
@@ -675,7 +675,7 @@ pub async fn mountain_update_configuration_from_wind(
 	app_handle:tauri::AppHandle,
 	config:serde_json::Value,
 ) -> Result<(), String> {
-	debug!("[ConfigurationBridge] Tauri command: update_configuration_from_wind");
+	dev_log!("config", "[ConfigurationBridge] Tauri command: update_configuration_from_wind");
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
@@ -688,7 +688,7 @@ pub async fn mountain_update_configuration_from_wind(
 /// Tauri command to synchronize configuration
 #[tauri::command]
 pub async fn mountain_synchronize_configuration(app_handle:tauri::AppHandle) -> Result<serde_json::Value, String> {
-	debug!("[ConfigurationBridge] Tauri command: synchronize_configuration");
+	dev_log!("config", "[ConfigurationBridge] Tauri command: synchronize_configuration");
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
@@ -704,7 +704,7 @@ pub async fn mountain_synchronize_configuration(app_handle:tauri::AppHandle) -> 
 /// Tauri command to get configuration status
 #[tauri::command]
 pub async fn mountain_get_configuration_status(app_handle:tauri::AppHandle) -> Result<serde_json::Value, String> {
-	debug!("[ConfigurationBridge] Tauri command: get_configuration_status");
+	dev_log!("config", "[ConfigurationBridge] Tauri command: get_configuration_status");
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());

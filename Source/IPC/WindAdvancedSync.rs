@@ -243,7 +243,7 @@
 //!
 //! **Logged on Every Operation:**
 //! ```text
-//! trace!(
+//! dev_log!("ipc", 
 //! "Document sync completed: {} success, {} errors, {:.2}ms",
 //! success_count,
 //! error_count,
@@ -279,12 +279,12 @@ use std::{
 	time::{Duration, SystemTime},
 };
 
-use log::{debug, error, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tauri::{Emitter, Manager};
 
 use crate::{IPC::AdvancedFeatures::PerformanceStats, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::dev_log;
 
 // TEMPORARY: MountainIPC module not yet implemented
 // This import is needed for full document synchronization with Mountain
@@ -467,7 +467,7 @@ impl WindAdvancedSync {
 
 	/// Initialize the synchronization service
 	pub async fn initialize(&self) -> Result<(), String> {
-		info!("Initializing Wind Advanced Sync service");
+		dev_log!("ipc", "Initializing Wind Advanced Sync service");
 
 		// Start background synchronization task
 		self.start_sync_task().await;
@@ -475,7 +475,7 @@ impl WindAdvancedSync {
 		// Start performance monitoring
 		self.start_performance_monitoring().await;
 
-		info!("Wind Advanced Sync service initialized successfully");
+		dev_log!("ipc", "Wind Advanced Sync service initialized successfully");
 		Ok(())
 	}
 
@@ -500,7 +500,7 @@ impl WindAdvancedSync {
 						.collect();
 
 					if !modified_docs.is_empty() {
-						debug!("Synchronizing {} documents", modified_docs.len());
+						dev_log!("ipc", "Synchronizing {} documents", modified_docs.len());
 
 						// Simulate synchronization process
 						sync.last_sync_time =
@@ -564,7 +564,7 @@ impl WindAdvancedSync {
 
 	/// Register IPC commands
 	pub fn register_commands(_app:&mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
-		info!("Registering Wind Advanced Sync IPC commands");
+		dev_log!("ipc", "Registering Wind Advanced Sync IPC commands");
 		Ok(())
 	}
 }
@@ -620,7 +620,7 @@ impl WindAdvancedSync {
 					Ok(_) => success_count += 1,
 					Err(e) => {
 						error_count += 1;
-						error!("[WindAdvancedSync] Failed to apply document change: {}", e);
+						dev_log!("ipc", "error: [WindAdvancedSync] Failed to apply document change: {}", e);
 
 						// ERROR HANDLING: Exponential backoff on consecutive failures
 						consecutive_failures += 1;
@@ -646,7 +646,7 @@ impl WindAdvancedSync {
 
 			// PERFORMANCE MONITORING: Microsoft-inspired metrics collection
 			let sync_duration = sync_start.elapsed();
-			trace!(
+			dev_log!("ipc", 
 				"[WindAdvancedSync] Document sync completed: {} success, {} errors, {:.2}ms",
 				success_count,
 				error_count,
@@ -662,14 +662,14 @@ impl WindAdvancedSync {
 		loop {
 			interval.tick().await;
 
-			trace!("[WindAdvancedSync] Synchronizing UI state");
+			dev_log!("ipc", "[WindAdvancedSync] Synchronizing UI state");
 
 			// Get UI state from Wind
 			let ui_state = self.get_ui_state().await;
 
 			// Update Mountain's UI state
 			if let Err(e) = self.update_ui_state(ui_state).await {
-				error!("[WindAdvancedSync] Failed to update UI state: {}", e);
+				dev_log!("ipc", "error: [WindAdvancedSync] Failed to update UI state: {}", e);
 			}
 		}
 	}
@@ -686,7 +686,7 @@ impl WindAdvancedSync {
 			if !updates.is_empty() {
 				// Broadcast updates to subscribers
 				if let Err(e) = self.broadcast_updates(updates).await {
-					error!("[WindAdvancedSync] Failed to broadcast updates: {}", e);
+					dev_log!("ipc", "error: [WindAdvancedSync] Failed to broadcast updates: {}", e);
 				}
 			}
 		}
@@ -764,7 +764,7 @@ impl WindAdvancedSync {
 
 		// PERFORMANCE TRACKING: Microsoft-inspired operation metrics
 		let change_duration = change_start.elapsed();
-		trace!(
+		dev_log!("ipc", 
 			"[WindAdvancedSync] Change applied successfully in {:.2}ms: {}",
 			change_duration.as_millis(),
 			change.change_id
@@ -843,7 +843,7 @@ impl WindAdvancedSync {
 
 		// Emit UI state update via Mountain IPC
 		// if let Err(e) = self.mountain_ipc.update_ui_state(&sync).await {
-		//     error!("[WindAdvancedSync] Failed to update UI state via Mountain IPC:
+		//     dev_log!("ipc", "error: [WindAdvancedSync] Failed to update UI state via Mountain IPC:
 		// {}", e); }
 
 		Ok(())
@@ -875,7 +875,7 @@ impl WindAdvancedSync {
 						.ApplicationHandle
 						.emit(&format!("real-time-update-{}", subscriber), &update)
 					{
-						error!("[WindAdvancedSync] Failed to broadcast to {}: {}", subscriber, e);
+						dev_log!("ipc", "error: [WindAdvancedSync] Failed to broadcast to {}: {}", subscriber, e);
 					}
 				}
 			}
@@ -931,7 +931,7 @@ impl WindAdvancedSync {
 			.unwrap_or_default()
 			.as_secs();
 
-		trace!("[WindAdvancedSync] Update queued");
+		dev_log!("ipc", "[WindAdvancedSync] Update queued");
 		Ok(())
 	}
 
@@ -1017,7 +1017,7 @@ pub fn initialize_wind_advanced_sync(
 	let sync_clone = sync.clone();
 	tokio::spawn(async move {
 		if let Err(e) = sync_clone.start_synchronization().await {
-			error!("[WindAdvancedSync] Failed to start synchronization: {}", e);
+			dev_log!("ipc", "error: [WindAdvancedSync] Failed to start synchronization: {}", e);
 		}
 	});
 

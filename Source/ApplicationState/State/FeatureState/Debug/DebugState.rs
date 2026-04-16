@@ -28,8 +28,8 @@ use std::{
 	collections::HashMap,
 	sync::{Arc, Mutex as StandardMutex},
 };
+use crate::dev_log;
 
-use log::debug;
 
 /// Debug configuration provider registration info
 #[derive(Clone, Debug)]
@@ -60,7 +60,7 @@ pub struct DebugState {
 
 impl Default for DebugState {
 	fn default() -> Self {
-		debug!("[DebugState] Initializing default debug state...");
+		dev_log!("exthost", "[DebugState] Initializing default debug state...");
 
 		Self {
 			DebugConfigurationProviders:Arc::new(StandardMutex::new(HashMap::new())),

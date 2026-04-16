@@ -205,11 +205,11 @@ use std::{collections::HashMap, path::PathBuf};
 
 use CommonLibrary::{Error::CommonError::CommonError, Storage::StorageProvider::StorageProvider};
 use async_trait::async_trait;
-use log::{error, info, trace};
 use serde_json::Value;
 use tokio::fs;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::dev_log;
 
 #[async_trait]
 impl StorageProvider for MountainEnvironment {
@@ -218,7 +218,7 @@ impl StorageProvider for MountainEnvironment {
 	async fn GetStorageValue(&self, IsGlobalScope:bool, Key:&str) -> Result<Option<Value>, CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		trace!("[StorageProvider] Getting value from {} scope for key: {}", ScopeName, Key);
+		dev_log!("storage", "[StorageProvider] Getting value from {} scope for key: {}", ScopeName, Key);
 
 		// Validate key to prevent injection or invalid storage paths
 		if Key.is_empty() {
@@ -262,7 +262,7 @@ impl StorageProvider for MountainEnvironment {
 		if crate::IPC::DevLog::IsShort() {
 			crate::dev_log!("storage", "update {} {}", ScopeName, Key);
 		} else {
-			info!("[StorageProvider] Updating value in {} scope for key: {}", ScopeName, Key);
+			dev_log!("storage", "[StorageProvider] Updating value in {} scope for key: {}", ScopeName, Key);
 		}
 
 		// Validate key to prevent injection or invalid storage paths
@@ -343,7 +343,7 @@ impl StorageProvider for MountainEnvironment {
 	async fn GetAllStorage(&self, IsGlobalScope:bool) -> Result<Value, CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		trace!("[StorageProvider] Getting all values from {} scope.", ScopeName);
+		dev_log!("storage", "[StorageProvider] Getting all values from {} scope.", ScopeName);
 
 		let StorageMapMutex = if IsGlobalScope {
 			&self.ApplicationState.Configuration.MementoGlobalStorage
@@ -362,7 +362,7 @@ impl StorageProvider for MountainEnvironment {
 	async fn SetAllStorage(&self, IsGlobalScope:bool, FullState:Value) -> Result<(), CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		info!("[StorageProvider] Setting all values for {} scope.", ScopeName);
+		dev_log!("storage", "[StorageProvider] Setting all values for {} scope.", ScopeName);
 
 		let DeserializedState:HashMap<String, Value> = serde_json::from_value(FullState)?;
 
@@ -409,37 +409,31 @@ impl StorageProvider for MountainEnvironment {
 /// An internal helper function to asynchronously write the storage map to a
 /// file.
 async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
-	trace!("[StorageProvider] Persisting storage to disk: {}", Path.display());
+	dev_log!("storage", "[StorageProvider] Persisting storage to disk: {}", Path.display());
 
 	match serde_json::to_string_pretty(&Data) {
 		Ok(JSONString) => {
 			if let Some(ParentDirectory) = Path.parent() {
 				if let Err(Error) = fs::create_dir_all(ParentDirectory).await {
-					error!(
-						"[StorageProvider] Failed to create parent directory for '{}': {}",
+					dev_log!("storage", "error: [StorageProvider] Failed to create parent directory for '{}': {}",
 						Path.display(),
-						Error
-					);
+						Error);
 
 					return;
 				}
 			}
 
 			if let Err(Error) = fs::write(&Path, JSONString).await {
-				error!(
-					"[StorageProvider] Failed to write storage file to '{}': {}",
+				dev_log!("storage", "error: [StorageProvider] Failed to write storage file to '{}': {}",
 					Path.display(),
-					Error
-				);
+					Error);
 			}
 		},
 
 		Err(Error) => {
-			error!(
-				"[StorageProvider] Failed to serialize storage data for '{}': {}",
+			dev_log!("storage", "error: [StorageProvider] Failed to serialize storage data for '{}': {}",
 				Path.display(),
-				Error
-			);
+				Error);
 		},
 	}
 }

@@ -135,9 +135,9 @@ use CommonLibrary::{
 use serde_json::{Value, json};
 use tauri::{AppHandle, Runtime};
 use url::Url;
-use log::warn;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
+use crate::dev_log;
 
 /// Maps a string-based method name (command or RPC) to its corresponding effect
 /// constructor, returning a boxed closure ([`MappedEffect`]) that can be
@@ -579,7 +579,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							{
 								Ok(dto) => Some(dto),
 								Err(e) => {
-									warn!("Failed to deserialize InputBoxOptionsDTO: {}", e);
+									dev_log!("ipc", "warn: Failed to deserialize InputBoxOptionsDTO: {}", e);
 									Some(CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO::default())
 								},
 							}
@@ -609,7 +609,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							{
 								Ok(dto) => Some(dto),
 								Err(e) => {
-									warn!("Failed to deserialize OpenDialogOptionsDTO: {}", e);
+									dev_log!("ipc", "warn: Failed to deserialize OpenDialogOptionsDTO: {}", e);
 									Some(Default::default())
 								},
 							}
@@ -639,7 +639,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							{
 								Ok(dto) => Some(dto),
 								Err(e) => {
-									warn!("Failed to deserialize SaveDialogOptionsDTO: {}", e);
+									dev_log!("ipc", "warn: Failed to deserialize SaveDialogOptionsDTO: {}", e);
 									Some(Default::default())
 								},
 							}
@@ -707,7 +707,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						warn!("$webview:create not fully implemented");
+						dev_log!("ipc", "warn: $webview:create not fully implemented");
 						Ok(json!({"handle": "webview-123"}))
 					})
 				};
@@ -860,7 +860,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 
 		// Unknown command
 		_ => {
-			warn!("[EffectCreation] Unknown method: {}", MethodName);
+			dev_log!("ipc", "warn: [EffectCreation] Unknown method: {}", MethodName);
 			Err(format!("Unknown method: {}", MethodName))
 		},
 	}

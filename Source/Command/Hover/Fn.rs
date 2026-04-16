@@ -20,12 +20,12 @@
 //! - Delegates to providers for actual implementation
 //! - Returns standardized response
 
-use log::debug;
 use serde_json::Value;
 use tauri::{AppHandle, Wry};
 use url::Url;
 
 use crate::Command::Hover::Interface::{HoverRequest, HoverResponse, Position};
+use crate::dev_log;
 
 /// Validates a hover request
 fn ValidateRequest(uri:&str, position:&Value) -> Result<HoverRequest, String> {
@@ -54,7 +54,7 @@ fn ValidateRequest(uri:&str, position:&Value) -> Result<HoverRequest, String> {
 ///
 /// Returns a `HoverResponse` containing the hover contents, or an error string.
 pub async fn Hover(application_handle:AppHandle<Wry>, uri:String, position:Value) -> Result<HoverResponse, String> {
-	debug!("[Hover] Providing hover for: {} at {:?}", uri, position);
+	dev_log!("commands", "[Hover] Providing hover for: {} at {:?}", uri, position);
 
 	// Validate request
 	let request = ValidateRequest(&uri, &position)?;
@@ -82,7 +82,7 @@ async fn ProvideHover(_uri:Url, _position:Position) -> Result<HoverResponse, Str
 	// 2. RPC call to language server via CocoonService
 	// 3. Result transformation to HoverResponse
 
-	debug!("[Hover] Calling provider for hover information");
+	dev_log!("commands", "[Hover] Calling provider for hover information");
 
 	Ok(HoverResponse::default())
 }

@@ -58,7 +58,6 @@
 use std::{collections::HashMap, process::Stdio, sync::Arc, time::Duration};
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{info, trace, warn};
 use tauri::{
 	AppHandle,
 	Manager,
@@ -74,6 +73,7 @@ use tokio::{
 
 use super::InitializationData;
 use crate::{
+use crate::dev_log;
 	Environment::MountainEnvironment::MountainEnvironment,
 	IPC::Common::HealthStatus::{HealthIssue, HealthMonitor},
 	Vine,
@@ -83,8 +83,8 @@ use crate::{
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
 const COCOON_GRPC_PORT:u16 = 50052;
 const MOUNTAIN_GRPC_PORT:u16 = 50051;
-const GRPC_CONNECT_RETRY_INTERVAL_MS:u64 = 500;
-const GRPC_CONNECT_MAX_ATTEMPTS:u32 = 10;
+const GRPC_CONNECT_RETRY_INTERVAL_MS:u64 = 1000;
+const GRPC_CONNECT_MAX_ATTEMPTS:u32 = 20;
 const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
 const HANDSHAKE_TIMEOUT_MS:u64 = 60000;
 const HEALTH_CHECK_INTERVAL_SECONDS:u64 = 5;
@@ -158,7 +158,7 @@ pub async fn InitializeCocoon(
 	ApplicationHandle:&AppHandle,
 	Environment:&Arc<MountainEnvironment>,
 ) -> Result<(), CommonError> {
-	info!("[CocoonManagement] Initializing Cocoon sidecar manager...");
+	dev_log!("cocoon", "[CocoonManagement] Initializing Cocoon sidecar manager...");
 
 	#[cfg(feature = "ExtensionHostCocoon")]
 	{
@@ -167,7 +167,7 @@ pub async fn InitializeCocoon(
 
 	#[cfg(not(feature = "ExtensionHostCocoon"))]
 	{
-		info!("[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched.");
+		dev_log!("cocoon", "[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched.");
 		Ok(())
 	}
 }
@@ -237,7 +237,7 @@ async fn LaunchAndManageCocoonSideCar(
 			)
 		})?;
 
-	info!("[CocoonManagement] Found bootstrap script at: {}", ScriptPath.display());
+	dev_log!("cocoon", "[CocoonManagement] Found bootstrap script at: {}", ScriptPath.display());
 	crate::dev_log!("cocoon", "bootstrap script: {}", ScriptPath.display());
 
 	// Build Node.js command with comprehensive environment configuration
@@ -278,7 +278,7 @@ async fn LaunchAndManageCocoonSideCar(
 	})?;
 
 	let ProcessId = ChildProcess.id().unwrap_or(0);
-	info!("[CocoonManagement] Cocoon process spawned [PID: {}]", ProcessId);
+	dev_log!("cocoon", "[CocoonManagement] Cocoon process spawned [PID: {}]", ProcessId);
 	crate::dev_log!("cocoon", "spawned PID={}", ProcessId);
 
 	// Capture stdout for trace logging
@@ -288,7 +288,7 @@ async fn LaunchAndManageCocoonSideCar(
 			let mut Lines = Reader.lines();
 
 			while let Ok(Some(Line)) = Lines.next_line().await {
-				trace!("[Cocoon stdout] {}", Line);
+				dev_log!("cocoon", "[Cocoon stdout] {}", Line);
 			}
 		});
 	}
@@ -300,14 +300,14 @@ async fn LaunchAndManageCocoonSideCar(
 			let mut Lines = Reader.lines();
 
 			while let Ok(Some(Line)) = Lines.next_line().await {
-				warn!("[Cocoon stderr] {}", Line);
+				dev_log!("cocoon", "warn: [Cocoon stderr] {}", Line);
 			}
 		});
 	}
 
 	// Establish Vine connection to Cocoon with retry loop
 	let GRPCAddress = format!("127.0.0.1:{}", COCOON_GRPC_PORT);
-	info!(
+	dev_log!("cocoon", 
 		"[CocoonManagement] Connecting to Cocoon gRPC at {} (up to {} attempts, {}ms interval)...",
 		GRPCAddress, GRPC_CONNECT_MAX_ATTEMPTS, GRPC_CONNECT_RETRY_INTERVAL_MS
 	);
@@ -357,7 +357,11 @@ async fn LaunchAndManageCocoonSideCar(
 		}
 	}
 
-	info!("[CocoonManagement] Connected to Cocoon. Sending initialization data...");
+	dev_log!("cocoon", "[CocoonManagement] Connected to Cocoon. Sending initialization data...");
+
+	// Brief delay to ensure Cocoon's gRPC service handlers are fully registered
+	// after bindAsync resolves (race condition on fast connections like attempt 1)
+	sleep(Duration::from_millis(200)).await;
 
 	// Construct initialization payload
 	let MainInitializationData = InitializationData::ConstructExtensionHostInitializationData(&Environment)
@@ -383,7 +387,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// Validate handshake response
 	match Response.as_str() {
 		Some("initialized") => {
-			info!("[CocoonManagement] Cocoon handshake complete. Extension host is ready.");
+			dev_log!("cocoon", "[CocoonManagement] Cocoon handshake complete. Extension host is ready.");
 		},
 		Some(other) => {
 			return Err(CommonError::IPCError {
@@ -397,26 +401,48 @@ async fn LaunchAndManageCocoonSideCar(
 		},
 	}
 
+	// Trigger startup extension activation. Cocoon is fully reactive —
+	// it won't activate any extensions until Mountain tells it to.
+	// Fire-and-forget: don't block on activation, and don't fail init if it errors.
+	let SideCarId = SideCarIdentifier.clone();
+	tokio::spawn(async move {
+		// Small delay to let Cocoon finish processing the init response
+		sleep(Duration::from_millis(500)).await;
+
+		crate::dev_log!("exthost", "Sending $activateByEvent(\"*\") to Cocoon");
+
+		if let Err(Error) = Vine::Client::SendRequest(
+			&SideCarId,
+			"$activateByEvent".to_string(),
+			serde_json::json!({ "activationEvent": "*" }),
+			30_000,
+		).await {
+			dev_log!("cocoon", "warn: [CocoonManagement] $activateByEvent(\"*\") failed: {}", Error);
+		} else {
+			dev_log!("cocoon", "[CocoonManagement] Startup extensions activation triggered");
+		}
+	});
+
 	// Store process handle for health monitoring and management
 	{
 		let mut state = COCOON_STATE.lock().await;
 		state.ChildProcess = Some(ChildProcess);
 		state.IsRunning = true;
 		state.StartTime = Some(tokio::time::Instant::now());
-		info!("[CocoonManagement] Process state updated: Running");
+		dev_log!("cocoon", "[CocoonManagement] Process state updated: Running");
 	}
 
 	// Reset health monitor on successful initialization
 	{
 		let mut health = COCOON_HEALTH.lock().await;
 		health.clear_issues();
-		info!("[CocoonManagement] Health monitor reset to active state");
+		dev_log!("cocoon", "[CocoonManagement] Health monitor reset to active state");
 	}
 
 	// Start background health monitoring
 	let state_clone = Arc::clone(&COCOON_STATE);
 	tokio::spawn(monitor_cocoon_health_task(state_clone));
-	info!("[CocoonManagement] Background health monitoring started");
+	dev_log!("cocoon", "[CocoonManagement] Background health monitoring started");
 
 	Ok(())
 }
@@ -444,12 +470,10 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					// Process has exited (crashed or terminated)
 					let uptime = state_guard.StartTime.map(|t| t.elapsed().as_secs()).unwrap_or(0);
 					let exit_code_num = exit_code.code().unwrap_or(-1);
-					warn!(
-						"[CocoonHealth] Cocoon process crashed [PID: {}] [Exit Code: {}] [Uptime: {}s]",
+					dev_log!("cocoon", "warn: [CocoonHealth] Cocoon process crashed [PID: {}] [Exit Code: {}] [Uptime: {}s]",
 						process_id.unwrap_or(0),
 						exit_code_num,
-						uptime
-					);
+						uptime);
 
 					// Update state
 					state_guard.IsRunning = false;
@@ -459,22 +483,20 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					{
 						let mut health = COCOON_HEALTH.lock().await;
 						health.add_issue(HealthIssue::Custom(format!("ProcessCrashed (Exit code: {})", exit_code_num)));
-						warn!("[CocoonHealth] Health score: {}", health.health_score);
+						dev_log!("cocoon", "warn: [CocoonHealth] Health score: {}", health.health_score);
 					}
 
 					// Log that automatic restart would be needed
-					warn!(
-						"[CocoonHealth] CRASH DETECTED: Cocoon process has crashed and must be restarted manually or \
-						 via application reinitialization"
-					);
+					dev_log!("cocoon", "warn: [CocoonHealth] CRASH DETECTED: Cocoon process has crashed and must be restarted manually or \
+						 via application reinitialization");
 				},
 				Ok(None) => {
 					// Process is still running
-					trace!("[CocoonHealth] Cocoon process is healthy [PID: {}]", process_id.unwrap_or(0));
+					dev_log!("cocoon", "[CocoonHealth] Cocoon process is healthy [PID: {}]", process_id.unwrap_or(0));
 				},
 				Err(e) => {
 					// Error checking process status
-					warn!("[CocoonHealth] Error checking process status: {}", e);
+					dev_log!("cocoon", "warn: [CocoonHealth] Error checking process status: {}", e);
 
 					// Report health issue
 					{
@@ -485,7 +507,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 			}
 		} else {
 			// No child process exists
-			trace!("[CocoonHealth] No Cocoon process to monitor");
+			dev_log!("cocoon", "[CocoonHealth] No Cocoon process to monitor");
 		}
 	}
 }

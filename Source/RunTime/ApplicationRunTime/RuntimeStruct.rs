@@ -40,7 +40,7 @@ use std::sync::Arc;
 use CommonLibrary::Environment::{Environment::Environment, HasEnvironment::HasEnvironment};
 use Echo::Scheduler::Scheduler::Scheduler;
 
-use crate::Environment::MountainEnvironment::MountainEnvironment;
+use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
 
 /// A `RunTime` that uses a high-performance, work-stealing scheduler (`Echo`)
 /// to execute all `ActionEffect`s.
@@ -58,7 +58,7 @@ impl ApplicationRunTime {
 	/// Creates a new `ApplicationRunTime` that is powered by an `Echo`
 	/// scheduler.
 	pub fn Create(Scheduler:Arc<Scheduler>, Environment:Arc<MountainEnvironment>) -> Self {
-		log::info!("[ApplicationRunTime] New Echo-based instance created.");
+		dev_log!("lifecycle", "new Echo-based instance created");
 
 		Self { Scheduler, Environment }
 	}

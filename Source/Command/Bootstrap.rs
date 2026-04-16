@@ -124,12 +124,12 @@ use CommonLibrary::{
 	UserInterface::ShowOpenDialog::ShowOpenDialog,
 	Workspace::ApplyWorkspaceEdit::ApplyWorkspaceEdit,
 };
-use log::info;
 use serde_json::{Value, json};
 use tauri::{AppHandle, WebviewWindow, Wry};
 use url::Url;
 
 use crate::{
+use crate::dev_log;
 	ApplicationState::{ApplicationState, DTO::TreeViewStateDTO::TreeViewStateDTO, MapLockError},
 	Environment::CommandProvider::CommandHandler,
 	FileSystem::FileExplorerViewProvider::FileExplorerViewProvider,
@@ -149,7 +149,7 @@ fn CommandHelloWorld(
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
-		info!("[Native Command] Hello from Mountain!");
+		dev_log!("commands", "[Native Command] Hello from Mountain!");
 
 		Ok(json!("Hello from Mountain's native command!"))
 	})
@@ -166,7 +166,7 @@ fn CommandOpenFile(
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
-		info!("[Native Command] Executing Open File...");
+		dev_log!("commands", "[Native Command] Executing Open File...");
 
 		let DialogResult = RunTime.Run(ShowOpenDialog(None)).await.map_err(|Error| Error.to_string())?;
 
@@ -196,7 +196,7 @@ fn CommandFormatDocument(
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
-		info!("[Native Command] Executing Format Document...");
+		dev_log!("commands", "[Native Command] Executing Format Document...");
 
 		let AppState = &RunTime.Environment.ApplicationState;
 
@@ -224,7 +224,7 @@ fn CommandFormatDocument(
 
 		if let Some(Edits) = EditsOption {
 			if Edits.is_empty() {
-				info!("[Native Command] No formatting changes to apply.");
+				dev_log!("commands", "[Native Command] No formatting changes to apply.");
 
 				return Ok(Value::Null);
 			}
@@ -242,14 +242,14 @@ fn CommandFormatDocument(
 			};
 
 			// 3. Apply the workspace edit.
-			info!("[Native Command] Applying formatting edits...");
+			dev_log!("commands", "[Native Command] Applying formatting edits...");
 
 			RunTime
 				.Run(ApplyWorkspaceEdit(WorkspaceEdit))
 				.await
 				.map_err(|Error| Error.to_string())?;
 		} else {
-			info!("[Native Command] No formatting provider found for this document.");
+			dev_log!("commands", "[Native Command] No formatting provider found for this document.");
 		}
 
 		Ok(Value::Null)
@@ -267,7 +267,7 @@ fn CommandSaveDocument(
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
-		info!("[Native Command] Executing Save Document...");
+		dev_log!("commands", "[Native Command] Executing Save Document...");
 
 		let AppState = &RunTime.Environment.ApplicationState;
 
@@ -288,7 +288,7 @@ fn CommandSaveDocument(
 		// handling, atomic writes, and backup creation. Current implementation only
 		// logs the action; full implementation requires integration with the document
 		// lifecycle and file system provider.
-		info!("[Native Command] Saving document: {}", URI);
+		dev_log!("commands", "[Native Command] Saving document: {}", URI);
 
 		Ok(Value::Null)
 	})
@@ -305,7 +305,7 @@ fn CommandCloseDocument(
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
-		info!("[Native Command] Executing Close Document...");
+		dev_log!("commands", "[Native Command] Executing Close Document...");
 
 		let AppState = &RunTime.Environment.ApplicationState;
 
@@ -326,7 +326,7 @@ fn CommandCloseDocument(
 		// lifecycle manager to release resources and update the UI. May invoke
 		// Workbench::closeEditor or equivalent command. Current implementation only
 		// logs the action.
-		info!("[Native Command] Closing document: {}", URI);
+		dev_log!("commands", "[Native Command] Closing document: {}", URI);
 
 		Ok(Value::Null)
 	})
@@ -343,7 +343,7 @@ fn CommandReloadWindow(
 	_Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
-		info!("[Native Command] Executing Reload Window...");
+		dev_log!("commands", "[Native Command] Executing Reload Window...");
 
 		// Refresh the entire application UI by calling WebviewWindow::reload. This
 		// reinitializes the frontend, reapplies window state, and restarts extension
@@ -385,7 +385,7 @@ pub fn RegisterNativeCommands(
 		.lock()
 		.map_err(MapLockError)?;
 
-	info!("[Bootstrap] Registering native commands...");
+	dev_log!("commands", "[Bootstrap] Registering native commands...");
 
 	// Register core commands
 	CommandRegistry.insert("mountain.helloWorld".to_string(), CommandHandler::Native(CommandHelloWorld));
@@ -417,12 +417,12 @@ pub fn RegisterNativeCommands(
 		CommandHandler::Native(CommandReloadWindow),
 	);
 
-	info!("[Bootstrap] {} native commands registered.", CommandRegistry.len());
+	dev_log!("commands", "[Bootstrap] {} native commands registered.", CommandRegistry.len());
 
 	drop(CommandRegistry);
 
 	// --- Command Validation ---
-	info!("[Bootstrap] Validating registered commands...");
+	dev_log!("commands", "[Bootstrap] Validating registered commands...");
 	// Validate all registered commands at startup to catch configuration errors
 	// early. Verification includes command signature correctness, parameter type
 	// matching, required permissions and capabilities, and extension metadata
@@ -438,7 +438,7 @@ pub fn RegisterNativeCommands(
 		.lock()
 		.map_err(MapLockError)?;
 
-	info!("[Bootstrap] Registering native tree view providers...");
+	dev_log!("commands", "[Bootstrap] Registering native tree view providers...");
 
 	let ExplorerViewID = "workbench.view.explorer".to_string();
 
@@ -470,7 +470,7 @@ pub fn RegisterNativeCommands(
 		},
 	);
 
-	info!("[Bootstrap] {} native tree view providers registered.", TreeViewRegistry.len());
+	dev_log!("commands", "[Bootstrap] {} native tree view providers registered.", TreeViewRegistry.len());
 
 	Ok(())
 }

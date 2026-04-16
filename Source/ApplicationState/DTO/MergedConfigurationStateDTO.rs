@@ -11,6 +11,8 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
+use crate::dev_log;
+
 /// Maximum configuration depth to prevent stack overflow from deeply nested
 /// paths
 const MAX_CONFIGURATION_DEPTH:usize = 50;
@@ -47,8 +49,9 @@ impl MergedConfigurationStateDTO {
 		if let Some(Path) = Section {
 			let Depth = Path.matches('.').count();
 			if Depth > MAX_CONFIGURATION_DEPTH {
-				log::warn!(
-					"Configuration path depth {} exceeds maximum of {}",
+				dev_log!(
+					"config",
+					"warn: configuration path depth {} exceeds maximum of {}",
 					Depth,
 					MAX_CONFIGURATION_DEPTH
 				);

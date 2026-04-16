@@ -2,9 +2,9 @@
 //!
 //! Initializes and merges application configurations from multiple sources.
 
-use log::{error, info};
 
 use crate::Environment::{
+use crate::dev_log;
 	ConfigurationProvider::Loading::initialize_and_merge_configurations,
 	MountainEnvironment::MountainEnvironment,
 };
@@ -34,11 +34,11 @@ use crate::Environment::{
 pub async fn ConfigurationInitialize(Environment:&std::sync::Arc<MountainEnvironment>) -> Result<(), String> {
 	match initialize_and_merge_configurations(Environment).await {
 		Ok(()) => {
-			info!("[Config] [Initialize] Configuration initialized and merged successfully.");
+			dev_log!("config", "[Config] [Initialize] Configuration initialized and merged successfully.");
 			Ok(())
 		},
 		Err(e) => {
-			error!("[Config] [Initialize] Failed: {}", e);
+			dev_log!("config", "error: [Config] [Initialize] Failed: {}", e);
 			Err(format!("Failed to initialize and merge configurations: {}", e))
 		},
 	}

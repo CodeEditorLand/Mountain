@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex as StandardMutex};
+use crate::dev_log;
 
-use log::debug;
 
 /// Tracks the editor navigation history stack (back/forward).
 ///
@@ -17,7 +17,7 @@ pub struct NavigationHistoryState {
 
 impl Default for NavigationHistoryState {
 	fn default() -> Self {
-		debug!("[NavigationHistoryState] Initializing default navigation history state...");
+		dev_log!("history", "[NavigationHistoryState] Initializing default navigation history state...");
 		Self {
 			Stack:Arc::new(StandardMutex::new(Vec::new())),
 			Index:Arc::new(StandardMutex::new(0)),
@@ -59,7 +59,7 @@ impl NavigationHistoryState {
 
 		*Index -= 1;
 		let Uri = Stack.get(*Index).cloned();
-		debug!("[NavigationHistoryState] GoBack → index={} uri={:?}", *Index, Uri);
+		dev_log!("history", "[NavigationHistoryState] GoBack → index={} uri={:?}", *Index, Uri);
 
 		Uri
 	}
@@ -81,7 +81,7 @@ impl NavigationHistoryState {
 
 		*Index += 1;
 		let Uri = Stack.get(*Index).cloned();
-		debug!("[NavigationHistoryState] GoForward → index={} uri={:?}", *Index, Uri);
+		dev_log!("history", "[NavigationHistoryState] GoForward → index={} uri={:?}", *Index, Uri);
 
 		Uri
 	}
@@ -95,7 +95,7 @@ impl NavigationHistoryState {
 			Stack.truncate(NewIndex);
 			Stack.push(Uri.clone());
 			*Index = Stack.len() - 1;
-			debug!("[NavigationHistoryState] Push uri={} index={}", Uri, *Index);
+			dev_log!("history", "[NavigationHistoryState] Push uri={} index={}", Uri, *Index);
 		}
 	}
 
@@ -104,7 +104,7 @@ impl NavigationHistoryState {
 		if let (Ok(mut Stack), Ok(mut Index)) = (self.Stack.lock(), self.Index.lock()) {
 			Stack.clear();
 			*Index = 0;
-			debug!("[NavigationHistoryState] Stack cleared");
+			dev_log!("history", "[NavigationHistoryState] Stack cleared");
 		}
 	}
 

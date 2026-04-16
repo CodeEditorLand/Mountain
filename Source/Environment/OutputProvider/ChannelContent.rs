@@ -5,11 +5,11 @@
 //! implementation.
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{info, trace, warn};
 use serde_json::json;
 use tauri::Emitter;
 
 use crate::Environment::Utility;
+use crate::dev_log;
 
 /// Appends text to an output channel.
 /// Includes buffer size validation to prevent memory exhaustion.
@@ -18,7 +18,7 @@ pub(super) async fn append_to_channel(
 	channel_identifier:String,
 	value:String,
 ) -> Result<(), CommonError> {
-	trace!("[OutputProvider] Appending to channel: '{}'", channel_identifier);
+	dev_log!("output", "[OutputProvider] Appending to channel: '{}'", channel_identifier);
 
 	// Validate input size to prevent memory exhaustion
 	if value.len() > 1_048_576 {
@@ -58,7 +58,7 @@ pub(super) async fn append_to_channel(
 			.emit("sky://output/append", event_payload)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
-		warn!("[OutputProvider] Channel '{}' not found for append.", channel_identifier);
+		dev_log!("output", "warn: [OutputProvider] Channel '{}' not found for append.", channel_identifier);
 	}
 
 	Ok(())
@@ -70,7 +70,7 @@ pub(super) async fn replace_channel_content(
 	channel_identifier:String,
 	value:String,
 ) -> Result<(), CommonError> {
-	info!("[OutputProvider] Replacing content of channel: '{}'", channel_identifier);
+	dev_log!("output", "[OutputProvider] Replacing content of channel: '{}'", channel_identifier);
 
 	let mut channels_guard = env
 		.ApplicationState
@@ -89,7 +89,7 @@ pub(super) async fn replace_channel_content(
 			.emit("sky://output/replace", event_payload)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
-		warn!("[OutputProvider] Channel '{}' not found for replace.", channel_identifier);
+		dev_log!("output", "warn: [OutputProvider] Channel '{}' not found for replace.", channel_identifier);
 	}
 
 	Ok(())
@@ -100,7 +100,7 @@ pub(super) async fn clear_channel(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	channel_identifier:String,
 ) -> Result<(), CommonError> {
-	info!("[OutputProvider] Clearing channel: '{}'", channel_identifier);
+	dev_log!("output", "[OutputProvider] Clearing channel: '{}'", channel_identifier);
 
 	let mut channels_guard = env
 		.ApplicationState
@@ -117,7 +117,7 @@ pub(super) async fn clear_channel(
 			.emit("sky://output/clear", json!({ "Id": channel_identifier }))
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
-		warn!("[OutputProvider] Channel '{}' not found for clear.", channel_identifier);
+		dev_log!("output", "warn: [OutputProvider] Channel '{}' not found for clear.", channel_identifier);
 	}
 
 	Ok(())

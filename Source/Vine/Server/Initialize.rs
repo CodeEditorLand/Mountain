@@ -37,12 +37,12 @@
 
 use std::{net::SocketAddr, sync::Arc};
 
-use log::{debug, error, info, warn};
 use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
 
 use super::MountainVinegRPCService::MountainVinegRPCService;
 use crate::{
+use crate::dev_log;
 	RPC::CocoonService::CocoonServiceImpl,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Vine::{
@@ -99,11 +99,9 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 		Ok(addr) => {
 			// Validate port is within valid range
 			if addr.port() < 1024 {
-				warn!(
-					"[VineServer] {} using privileged port {}, this may require elevated privileges",
+				dev_log!("grpc", "warn: [VineServer] {} using privileged port {}, this may require elevated privileges",
 					ServerName,
-					addr.port()
-				);
+					addr.port());
 			}
 
 			Ok(addr)
@@ -160,16 +158,16 @@ pub fn Initialize(
 	MountainAddressString:String,
 	CocoonAddressString:String,
 ) -> Result<(), VineError> {
-	info!("[VineServer] Initializing Vine gRPC servers...");
+	dev_log!("grpc", "[VineServer] Initializing Vine gRPC servers...");
 	crate::dev_log!("grpc", "initializing Vine gRPC servers");
 
 	// Validate and parse socket addresses
 	let MountainAddress = ValidateSocketAddress(&MountainAddressString, "MountainService")?;
 	let CocoonAddress = ValidateSocketAddress(&CocoonAddressString, "CocoonService")?;
 
-	info!("[VineServer] MountainService will bind to: {}", MountainAddress);
-	info!("[VineServer] CocoonService will bind to: {}", CocoonAddress);
-	crate::dev_log!("grpc", "Mountain={} Cocoon={}", MountainAddress, CocoonAddress);
+	dev_log!("grpc", "[VineServer] MountainService will bind to: {}", MountainAddress);
+	dev_log!("grpc", "[VineServer] Cocoon expected on: {} (started by Cocoon process)", CocoonAddress);
+	crate::dev_log!("grpc", "Mountain={} Cocoon(remote)={}", MountainAddress, CocoonAddress);
 
 	// Retrieve ApplicationRunTime from Tauri managed state
 	let RunTime = ApplicationHandle
@@ -177,14 +175,14 @@ pub fn Initialize(
 		.ok_or_else(|| {
 			let msg = "[VineServer] CRITICAL: ApplicationRunTime not found in Tauri state. Server cannot start.";
 
-			error!("{}", msg);
+			dev_log!("grpc", "error: {}", msg);
 
 			VineError::InternalLockError(msg.to_string())
 		})?
 		.inner()
 		.clone();
 
-	debug!("[VineServer] ApplicationRunTime retrieved successfully");
+	dev_log!("grpc", "[VineServer] ApplicationRunTime retrieved successfully");
 
 	// Create MountainService implementation (handles calls from Cocoon to Mountain)
 	let MountainService = MountainVinegRPCService::Create(ApplicationHandle.clone(), RunTime.clone());
@@ -192,12 +190,12 @@ pub fn Initialize(
 	// Create CocoonService implementation (handles calls from Mountain to Cocoon)
 	let cocoon_service_impl = CocoonServiceImpl::new(RunTime.Environment.clone());
 
-	debug!("[VineServer] Service implementations created");
+	dev_log!("grpc", "[VineServer] Service implementations created");
 
 	// Spawn Mountain server to run in the background
 	let MountainServerName = MountainAddress.to_string();
 	tokio::spawn(async move {
-		info!("[VineServer] Starting MountainService gRPC server on {}", MountainServerName);
+		dev_log!("grpc", "[VineServer] Starting MountainService gRPC server on {}", MountainServerName);
 
 		let ServerResult = Server::builder()
 			.add_service(
@@ -210,39 +208,23 @@ pub fn Initialize(
 
 		match ServerResult {
 			Ok(_) => {
-				info!("[VineServer] MountainService server shut down gracefully");
+				dev_log!("grpc", "[VineServer] MountainService server shut down gracefully");
 			},
 			Err(e) => {
-				error!("[VineServer] MountainService gRPC server error: {}", e);
+				dev_log!("grpc", "error: [VineServer] MountainService gRPC server error: {}", e);
 			},
 		}
 	});
 
-	// Spawn Cocoon server to run in the background
-	let CocoonServerName = CocoonAddress.to_string();
-	tokio::spawn(async move {
-		info!("[VineServer] Starting CocoonService gRPC server on {}", CocoonServerName);
+	// NOTE: CocoonService gRPC server is NOT started by Mountain.
+	// Port 50052 is reserved for Cocoon's own gRPC server (started by
+	// Cocoon's Effect-TS bootstrap, Stage 5). Mountain connects to Cocoon
+	// as a CLIENT on 50052 via Vine::Client::ConnectToSideCar.
+	// Starting CocoonServiceServer here would cause EADDRINUSE when Cocoon
+	// tries to bind the same port.
+	let _ = cocoon_service_impl; // suppress unused variable warning
 
-		let ServerResult = Server::builder()
-			.add_service(
-				CocoonServiceServer::new(cocoon_service_impl)
-					.max_decoding_message_size(ServerConfig::MAX_MESSAGE_SIZE)
-					.max_encoding_message_size(ServerConfig::MAX_MESSAGE_SIZE),
-			)
-			.serve(CocoonAddress)
-			.await;
-
-		match ServerResult {
-			Ok(_) => {
-				info!("[VineServer] CocoonService server shut down gracefully");
-			},
-			Err(e) => {
-				error!("[VineServer] CocoonService gRPC server error: {}", e);
-			},
-		}
-	});
-
-	info!("[VineServer] Both gRPC servers initialized successfully and running in background");
+	dev_log!("grpc", "[VineServer] MountainService gRPC server initialized on {}", MountainAddress);
 
 	Ok(())
 }

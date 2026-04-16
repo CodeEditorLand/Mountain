@@ -16,7 +16,6 @@
 //! - Length limits
 //! - Character filtering
 
-use log::{debug, warn};
 
 pub struct CommandValidationError {
 	pub field:String,

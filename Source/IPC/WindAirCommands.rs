@@ -296,12 +296,12 @@
 
 use serde::{Deserialize, Serialize};
 use tauri::Manager;
-use log::{debug, info};
 
 // Import Air types from the new AirClient implementation.
 // These provide actual gRPC connectivity to the Air daemon service.
 use crate::Air::AirClient as AirClientModule;
 use crate::Air::DEFAULT_AIR_SERVER_ADDRESS;
+use crate::dev_log;
 
 /// Data Transfer Objects for Wind-Air communication
 
@@ -378,26 +378,26 @@ pub struct AirClientWrapper {
 impl AirClientWrapper {
 	/// Create a new AirClient connected to the Air daemon
 	pub async fn new(address:String) -> Result<Self, String> {
-		debug!("[WindAirCommands] Connecting to Air daemon at: {}", address);
+		dev_log!("grpc", "[WindAirCommands] Connecting to Air daemon at: {}", address);
 
 		let client = AirClientModule::AirClient::new(&address)
 			.await
 			.map_err(|e| format!("Failed to connect to Air daemon: {:?}", e))?;
 
-		info!("[WindAirCommands] Successfully connected to Air daemon");
+		dev_log!("grpc", "[WindAirCommands] Successfully connected to Air daemon");
 		Ok(Self { client })
 	}
 
 	/// Reconnect to Air daemon
 	pub async fn reconnect(&mut self, address:String) -> Result<(), String> {
-		debug!("[WindAirCommands] Reconnecting to Air daemon at: {}", address);
+		dev_log!("grpc", "[WindAirCommands] Reconnecting to Air daemon at: {}", address);
 
 		let client = AirClientModule::AirClient::new(&address)
 			.await
 			.map_err(|e| format!("Failed to reconnect to Air daemon: {:?}", e))?;
 
 		self.client = client;
-		info!("[WindAirCommands] Successfully reconnected to Air daemon");
+		dev_log!("grpc", "[WindAirCommands] Successfully reconnected to Air daemon");
 		Ok(())
 	}
 }
@@ -420,7 +420,7 @@ impl AirClientWrapper {
 /// `UpdateInfoDTO` with update information or error message
 #[tauri::command]
 pub async fn CheckForUpdates(current_version:Option<String>, channel:Option<String>) -> Result<UpdateInfoDTO, String> {
-	debug!(
+	dev_log!("grpc", 
 		"[WindAirCommands] CheckForUpdates called with version: {:?}, channel: {:?}",
 		current_version, channel
 	);
@@ -447,7 +447,7 @@ pub async fn CheckForUpdates(current_version:Option<String>, channel:Option<Stri
 		release_notes:update_info.release_notes,
 	};
 
-	info!(
+	dev_log!("grpc", 
 		"[WindAirCommands] Update check completed: available={}",
 		result.update_available
 	);
@@ -473,7 +473,7 @@ pub async fn DownloadUpdate(
 	destination:String,
 	checksum:Option<String>,
 ) -> Result<DownloadResultDTO, String> {
-	debug!("[WindAirCommands] DownloadUpdate called: {} -> {}", url, destination);
+	dev_log!("grpc", "[WindAirCommands] DownloadUpdate called: {} -> {}", url, destination);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -499,7 +499,7 @@ pub async fn DownloadUpdate(
 		checksum:file_info.checksum,
 	};
 
-	info!("[WindAirCommands] Update download completed: success={}", result.success);
+	dev_log!("grpc", "[WindAirCommands] Update download completed: success={}", result.success);
 	Ok(result)
 }
 
@@ -517,7 +517,7 @@ pub async fn DownloadUpdate(
 /// Success status or error message
 #[tauri::command]
 pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, String> {
-	debug!("[WindAirCommands] ApplyUpdate called: id={}, path={}", update_id, update_path);
+	dev_log!("grpc", "[WindAirCommands] ApplyUpdate called: id={}, path={}", update_id, update_path);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -532,7 +532,7 @@ pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, S
 		.await
 		.map_err(|e| format!("Update application failed: {:?}", e))?;
 
-	info!("[WindAirCommands] Update applied successfully");
+	dev_log!("grpc", "[WindAirCommands] Update applied successfully");
 	Ok(true)
 }
 
@@ -550,7 +550,7 @@ pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, S
 /// `DownloadResultDTO` with download status
 #[tauri::command]
 pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResultDTO, String> {
-	debug!("[WindAirCommands] DownloadFile called: {} -> {}", url, destination);
+	dev_log!("grpc", "[WindAirCommands] DownloadFile called: {} -> {}", url, destination);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -569,7 +569,7 @@ pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResu
 		checksum:file_info.checksum,
 	};
 
-	info!("[WindAirCommands] File download completed");
+	dev_log!("grpc", "[WindAirCommands] File download completed");
 	Ok(result)
 }
 
@@ -588,7 +588,7 @@ pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResu
 /// `AuthResponseDTO` with authentication token
 #[tauri::command]
 pub async fn AuthenticateUser(username:String, password:String, provider:String) -> Result<AuthResponseDTO, String> {
-	debug!("[WindAirCommands] AuthenticateUser called: {} via {}", username, provider);
+	dev_log!("grpc", "[WindAirCommands] AuthenticateUser called: {} via {}", username, provider);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -602,7 +602,7 @@ pub async fn AuthenticateUser(username:String, password:String, provider:String)
 
 	let result = AuthResponseDTO { success:true, token, error:None };
 
-	info!("[WindAirCommands] Authentication completed: success={}", result.success);
+	dev_log!("grpc", "[WindAirCommands] Authentication completed: success={}", result.success);
 	Ok(result)
 }
 
@@ -627,7 +627,7 @@ pub async fn IndexFiles(
 	exclude_patterns:Option<Vec<String>>,
 	max_depth:Option<u32>,
 ) -> Result<IndexResultDTO, String> {
-	debug!("[WindAirCommands] IndexFiles called: {} with patterns: {:?}", path, patterns);
+	dev_log!("grpc", "[WindAirCommands] IndexFiles called: {} with patterns: {:?}", path, patterns);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -651,7 +651,7 @@ pub async fn IndexFiles(
 		total_size:index_info.total_size,
 	};
 
-	info!("[WindAirCommands] File indexing completed: {} files", result.files_indexed);
+	dev_log!("grpc", "[WindAirCommands] File indexing completed: {} files", result.files_indexed);
 	Ok(result)
 }
 
@@ -674,7 +674,7 @@ pub async fn SearchFiles(
 	file_patterns:Vec<String>,
 	max_results:Option<u32>,
 ) -> Result<SearchResultsDTO, String> {
-	debug!(
+	dev_log!("grpc", 
 		"[WindAirCommands] SearchFiles called: query={}, patterns={:?}",
 		query, file_patterns
 	);
@@ -710,7 +710,7 @@ pub async fn SearchFiles(
 	let total_results = results.len() as u32;
 	let result = SearchResultsDTO { results, total_results };
 
-	info!("[WindAirCommands] File search completed: {} results", result.total_results);
+	dev_log!("grpc", "[WindAirCommands] File search completed: {} results", result.total_results);
 	Ok(result)
 }
 
@@ -726,7 +726,7 @@ pub async fn SearchFiles(
 /// `AirServiceStatusDTO` with service status information
 #[tauri::command]
 pub async fn GetAirStatus() -> Result<AirServiceStatusDTO, String> {
-	debug!("[WindAirCommands] GetAirStatus called");
+	dev_log!("grpc", "[WindAirCommands] GetAirStatus called");
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -751,7 +751,7 @@ pub async fn GetAirStatus() -> Result<AirServiceStatusDTO, String> {
 		healthy,
 	};
 
-	info!("[WindAirCommands] Air status retrieved: healthy={}", result.healthy);
+	dev_log!("grpc", "[WindAirCommands] Air status retrieved: healthy={}", result.healthy);
 	Ok(result)
 }
 
@@ -769,7 +769,7 @@ pub async fn GetAirStatus() -> Result<AirServiceStatusDTO, String> {
 /// `AirMetricsDTO` with metrics data
 #[tauri::command]
 pub async fn GetAirMetrics(metric_type:Option<String>) -> Result<AirMetricsDTO, String> {
-	debug!("[WindAirCommands] GetAirMetrics called with type: {:?}", metric_type);
+	dev_log!("grpc", "[WindAirCommands] GetAirMetrics called with type: {:?}", metric_type);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -789,7 +789,7 @@ pub async fn GetAirMetrics(metric_type:Option<String>) -> Result<AirMetricsDTO, 
 		network_usage_mbps:metrics.network_usage_mbps,
 	};
 
-	debug!("[WindAirCommands] Air metrics retrieved");
+	dev_log!("grpc", "[WindAirCommands] Air metrics retrieved");
 	Ok(result)
 }
 

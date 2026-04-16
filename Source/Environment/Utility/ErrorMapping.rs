@@ -6,14 +6,14 @@
 use std::sync::{MutexGuard, PoisonError};
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::error;
+use crate::dev_log;
 
 /// Maps a `PoisonError` from a failed `ApplicationState` Mutex lock into a
 /// structured `CommonError::StateLockPoisoned`.
 pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>) -> CommonError {
 	let ErrorMessage = format!("[EnvironmentUtility] Failed to lock ApplicationState section: {}", Error);
 
-	error!("{}", ErrorMessage);
+	dev_log!("vfs", "error: {}", ErrorMessage);
 
 	CommonError::StateLockPoisoned { Context:ErrorMessage }
 }
@@ -23,7 +23,7 @@ pub fn MapApplicationStateLockErrorToCommonError<T>(Error:PoisonError<MutexGuard
 pub fn MapLockErrorToCommonError<T>(Error:PoisonError<MutexGuard<'_, T>>) -> CommonError {
 	let ErrorMessage = format!("[EnvironmentUtility] Failed to lock Mutex: {}", Error);
 
-	error!("{}", ErrorMessage);
+	dev_log!("vfs", "error: {}", ErrorMessage);
 
 	CommonError::StateLockPoisoned { Context:ErrorMessage }
 }

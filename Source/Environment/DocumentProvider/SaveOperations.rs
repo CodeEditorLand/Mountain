@@ -10,12 +10,12 @@ use CommonLibrary::{
 	FileSystem::WriteFileBytes::WriteFileBytes,
 	UserInterface::{DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO, ShowSaveDialog::ShowSaveDialog},
 };
-use log::{error, info};
 use serde_json::json;
 use tauri::{Emitter, Manager};
 use url::Url;
 
 use crate::{
+use crate::dev_log;
 	ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO,
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
@@ -26,7 +26,7 @@ pub(super) async fn save_document(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	uri:Url,
 ) -> Result<bool, CommonError> {
-	info!("[DocumentProvider] Saving document: {}", uri);
+	dev_log!("model", "[DocumentProvider] Saving document: {}", uri);
 
 	let (content_bytes, file_path) = {
 		let mut open_documents_guard = environment
@@ -40,7 +40,7 @@ pub(super) async fn save_document(
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			// For non-file URIs, use temporary file location
 			if uri.scheme() != "file" {
-				info!("[DocumentProvider] Saving non-file URI '{}' to temporary location", uri);
+				dev_log!("model", "[DocumentProvider] Saving non-file URI '{}' to temporary location", uri);
 			}
 
 			document.IsDirty = false;
@@ -67,7 +67,7 @@ pub(super) async fn save_document(
 		.ApplicationHandle
 		.emit("sky://documents/saved", json!({ "uri": uri.to_string() }))
 	{
-		error!("[DocumentProvider] Failed to emit document saved event: {}", error);
+		dev_log!("model", "error: [DocumentProvider] Failed to emit document saved event: {}", error);
 	}
 
 	crate::Environment::DocumentProvider::Notifications::notify_model_saved(environment, &uri).await;
@@ -81,7 +81,7 @@ pub(super) async fn save_document_as(
 	original_uri:Url,
 	new_target_uri:Option<Url>,
 ) -> Result<Option<Url>, CommonError> {
-	info!("[DocumentProvider] Saving document as: {}", original_uri);
+	dev_log!("model", "[DocumentProvider] Saving document as: {}", original_uri);
 
 	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
@@ -147,7 +147,7 @@ pub(super) async fn save_document_as(
 		"sky://documents/renamed",
 		json!({ "oldUri": original_uri.to_string(), "newUri": new_uri.to_string() }),
 	) {
-		error!("[DocumentProvider] Failed to emit document renamed event: {}", error);
+		dev_log!("model", "error: [DocumentProvider] Failed to emit document renamed event: {}", error);
 	}
 
 	Ok(Some(new_uri))
@@ -158,7 +158,7 @@ pub(super) async fn save_all_documents(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	include_untitled:bool,
 ) -> Result<Vec<bool>, CommonError> {
-	info!(
+	dev_log!("model", 
 		"[DocumentProvider] SaveAllDocuments called (IncludeUntitled: {})",
 		include_untitled
 	);
@@ -193,17 +193,17 @@ pub(super) async fn save_all_documents(
 
 	let mut results = Vec::with_capacity(uris_to_save.len());
 
-	info!("[DocumentProvider] Saving {} dirty document(s)", uris_to_save.len());
+	dev_log!("model", "[DocumentProvider] Saving {} dirty document(s)", uris_to_save.len());
 
 	for uri in uris_to_save {
 		let result = save_document(environment, uri.clone()).await;
 
 		match &result {
 			Ok(_) => {
-				info!("[DocumentProvider] Successfully saved {}", uri);
+				dev_log!("model", "[DocumentProvider] Successfully saved {}", uri);
 			},
 			Err(error) => {
-				error!("[DocumentProvider] Failed to save {}: {}", uri, error);
+				dev_log!("model", "error: [DocumentProvider] Failed to save {}: {}", uri, error);
 			},
 		}
 

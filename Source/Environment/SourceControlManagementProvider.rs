@@ -242,11 +242,11 @@ use CommonLibrary::{
 	},
 };
 use async_trait::async_trait;
-use log::{info, warn};
 use serde_json::{Value, json};
 use tauri::Emitter;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::dev_log;
 
 #[async_trait]
 impl SourceControlManagementProvider for MountainEnvironment {
@@ -255,7 +255,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		let Handle = self.ApplicationState.GetNextSourceControlManagementProviderHandle();
 
-		info!(
+		dev_log!("extensions", 
 			"[SourceControlManagementProvider] Creating new SCM provider with handle {}",
 			Handle
 		);
@@ -295,7 +295,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 	}
 
 	async fn DisposeSourceControl(&self, ProviderHandle:u32) -> Result<(), CommonError> {
-		info!(
+		dev_log!("extensions", 
 			"[SourceControlManagementProvider] Disposing SCM provider with handle {}",
 			ProviderHandle
 		);
@@ -326,7 +326,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 	async fn UpdateSourceControl(&self, ProviderHandle:u32, UpdateDataValue:Value) -> Result<(), CommonError> {
 		let UpdateData:SourceControlUpdateDTO = serde_json::from_value(UpdateDataValue)?;
 
-		info!("[SourceControlManagementProvider] Updating provider {}", ProviderHandle);
+		dev_log!("extensions", "[SourceControlManagementProvider] Updating provider {}", ProviderHandle);
 
 		let mut ProvidersGuard = self
 			.ApplicationState
@@ -366,7 +366,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 	async fn UpdateSourceControlGroup(&self, ProviderHandle:u32, GroupDataValue:Value) -> Result<(), CommonError> {
 		let GroupData:SourceControlGroupUpdateDTO = serde_json::from_value(GroupDataValue)?;
 
-		info!(
+		dev_log!("extensions", 
 			"[SourceControlManagementProvider] Updating group '{}' for provider {}",
 			GroupData.GroupID, ProviderHandle
 		);
@@ -402,10 +402,8 @@ impl SourceControlManagementProvider for MountainEnvironment {
 				)
 				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 		} else {
-			warn!(
-				"[SourceControlManagementProvider] Received group update for unknown provider handle: {}",
-				ProviderHandle
-			);
+			dev_log!("extensions", "warn: [SourceControlManagementProvider] Received group update for unknown provider handle: {}",
+				ProviderHandle);
 		}
 
 		Ok(())
@@ -414,7 +412,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 	async fn RegisterInputBox(&self, ProviderHandle:u32, InputBoxDataValue:Value) -> Result<(), CommonError> {
 		let InputBoxData:SourceControlInputBoxDTO = serde_json::from_value(InputBoxDataValue)?;
 
-		info!(
+		dev_log!("extensions", 
 			"[SourceControlManagementProvider] Registering input box for provider {}",
 			ProviderHandle
 		);

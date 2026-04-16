@@ -34,7 +34,7 @@
 use std::collections::HashMap;
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{error, warn};
+use crate::dev_log;
 
 /// Validates and cleans up state data by removing entries that don't pass
 /// validation.
@@ -55,11 +55,9 @@ pub fn validate_and_clean_state<T>(state_data:&mut HashMap<String, T>, validator
 	let removed_count = original_len - state_data.len();
 
 	if removed_count > 0 {
-		warn!(
-			"[RecoverState] Removed {} invalid state entries ({} remaining)",
+		dev_log!("lifecycle", "warn: [RecoverState] Removed {} invalid state entries ({} remaining)",
 			removed_count,
-			state_data.len()
-		);
+			state_data.len());
 	}
 }
 
@@ -99,7 +97,7 @@ where
 	match receiver.recv_timeout(std::time::Duration::from_millis(timeout_ms)) {
 		Ok(result) => result,
 		Err(_) => {
-			error!("[RecoverState] Operation '{}' timed out after {}ms", operation_name, timeout_ms);
+			dev_log!("lifecycle", "error: [RecoverState] Operation '{}' timed out after {}ms", operation_name, timeout_ms);
 			Err(CommonError::Unknown { Description:format!("Operation '{}' timed out", operation_name) })
 		},
 	}
@@ -143,10 +141,8 @@ where
 					return Err(error);
 				}
 
-				warn!(
-					"[RecoverState] Attempt {} failed for '{}': {}. Retrying in {}ms...",
-					attempt, operation_name, error, delay_ms
-				);
+				dev_log!("lifecycle", "warn: [RecoverState] Attempt {} failed for '{}': {}. Retrying in {}ms...",
+					attempt, operation_name, error, delay_ms);
 
 				tokio::time::sleep(tokio::time::Duration::from_millis(delay_ms)).await;
 

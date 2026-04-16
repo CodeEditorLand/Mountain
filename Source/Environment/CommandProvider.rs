@@ -182,12 +182,12 @@ use CommonLibrary::{
 	IPC::DTO::ProxyTarget::ProxyTarget,
 };
 use async_trait::async_trait;
-use log::{debug, error, info};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 
 use super::MountainEnvironment::MountainEnvironment;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Vine::Client};
+use crate::dev_log;
 
 /// An enum representing the different ways a command can be handled.
 pub enum CommandHandler<R:Runtime + 'static> {
@@ -241,7 +241,7 @@ impl CommandExecutor for MountainEnvironment {
 
 		match HandlerInfoOption {
 			Some(CommandHandler::Native(Function)) => {
-				debug!("[CommandProvider] Executing NATIVE command '{}'.", CommandIdentifier);
+				dev_log!("commands", "[CommandProvider] Executing NATIVE command '{}'.", CommandIdentifier);
 
 				let RunTime:Arc<ApplicationRunTime> =
 					self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
@@ -258,7 +258,7 @@ impl CommandExecutor for MountainEnvironment {
 			},
 
 			Some(CommandHandler::Proxied { SideCarIdentifier, CommandIdentifier: ProxiedCommandIdentifier }) => {
-				debug!(
+				dev_log!("commands", 
 					"[CommandProvider] Executing PROXIED command '{}' on sidecar '{}'.",
 					CommandIdentifier, SideCarIdentifier
 				);
@@ -273,7 +273,7 @@ impl CommandExecutor for MountainEnvironment {
 			},
 
 			None => {
-				error!("[CommandProvider] Command '{}' not found in registry.", CommandIdentifier);
+				dev_log!("commands", "error: [CommandProvider] Command '{}' not found in registry.", CommandIdentifier);
 
 				Err(CommonError::CommandNotFound { Identifier:CommandIdentifier })
 			},
@@ -282,7 +282,7 @@ impl CommandExecutor for MountainEnvironment {
 
 	/// Registers a command contributed by a sidecar process.
 	async fn RegisterCommand(&self, SideCarIdentifier:String, CommandIdentifier:String) -> Result<(), CommonError> {
-		info!(
+		dev_log!("commands", 
 			"[CommandProvider] Registering PROXY command '{}' from sidecar '{}'",
 			CommandIdentifier, SideCarIdentifier
 		);
@@ -305,7 +305,7 @@ impl CommandExecutor for MountainEnvironment {
 
 	/// Unregisters a previously registered command.
 	async fn UnregisterCommand(&self, _SideCarIdentifier:String, CommandIdentifier:String) -> Result<(), CommonError> {
-		info!("[CommandProvider] Unregistering command '{}'", CommandIdentifier);
+		dev_log!("commands", "[CommandProvider] Unregistering command '{}'", CommandIdentifier);
 
 		self.ApplicationState
 			.Extension
@@ -320,7 +320,7 @@ impl CommandExecutor for MountainEnvironment {
 
 	/// Gets a list of all currently registered command IDs.
 	async fn GetAllCommands(&self) -> Result<Vec<String>, CommonError> {
-		debug!("[CommandProvider] Getting all command identifiers.");
+		dev_log!("commands", "[CommandProvider] Getting all command identifiers.");
 
 		let Registry = self
 			.ApplicationState

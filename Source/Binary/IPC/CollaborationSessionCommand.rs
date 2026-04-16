@@ -37,7 +37,6 @@
 //! - Session operations should be fast
 //! - Consider connection pooling for active sessions
 
-use log::error;
 use serde_json::Value;
 use tauri::AppHandle;
 

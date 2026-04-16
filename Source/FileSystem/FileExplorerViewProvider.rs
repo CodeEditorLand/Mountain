@@ -130,13 +130,13 @@ use CommonLibrary::{
 	TreeView::TreeViewProvider::TreeViewProvider,
 };
 use async_trait::async_trait;
-use log::info;
 use serde_json::{Value, json};
 // Import AppHandle and Manager trait
 use tauri::{AppHandle, Manager};
 use url::Url;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime as Runtime;
+use crate::dev_log;
 
 #[derive(Clone)]
 pub struct FileExplorerViewProvider {
@@ -235,7 +235,7 @@ impl TreeViewProvider for FileExplorerViewProvider {
 		_ElementHandle:String,
 		_IsExpanded:bool,
 	) -> Result<(), CommonError> {
-		info!("[FileExplorer] OnTreeNodeExpanded called - not implemented for native providers");
+		dev_log!("vfs", "[FileExplorer] OnTreeNodeExpanded called - not implemented for native providers");
 		Ok(())
 	}
 
@@ -246,21 +246,21 @@ impl TreeViewProvider for FileExplorerViewProvider {
 		_ViewIdentifier:String,
 		_SelectedHandles:Vec<String>,
 	) -> Result<(), CommonError> {
-		info!("[FileExplorer] OnTreeSelectionChanged called - not implemented for native providers");
+		dev_log!("vfs", "[FileExplorer] OnTreeSelectionChanged called - not implemented for native providers");
 		Ok(())
 	}
 
 	/// Persists tree view state.
 	/// These events are not relevant for the native file explorer provider.
 	async fn PersistTreeViewState(&self, _ViewIdentifier:String) -> Result<Value, CommonError> {
-		info!("[FileExplorer] PersistTreeViewState called - not implemented for native providers");
+		dev_log!("vfs", "[FileExplorer] PersistTreeViewState called - not implemented for native providers");
 		Ok(json!({ "supported": false }))
 	}
 
 	/// Restores tree view state.
 	/// These events are not relevant for the native file explorer provider.
 	async fn RestoreTreeViewState(&self, _ViewIdentifier:String, _StateValue:Value) -> Result<(), CommonError> {
-		info!("[FileExplorer] RestoreTreeViewState called - not implemented for native providers");
+		dev_log!("vfs", "[FileExplorer] RestoreTreeViewState called - not implemented for native providers");
 		Ok(())
 	}
 
@@ -309,7 +309,7 @@ impl TreeViewProvider for FileExplorerViewProvider {
 			return Ok(RootItems);
 		};
 
-		info!("[FileExplorer] Getting children for path: {}", PathToRead.display());
+		dev_log!("vfs", "[FileExplorer] Getting children for path: {}", PathToRead.display());
 
 		// This now works because `RunTime` has the correct type and implements the
 		// `ApplicationRunTime` trait.

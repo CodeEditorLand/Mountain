@@ -5,11 +5,11 @@
 //! implementation.
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{error, info};
 use serde_json::json;
 use tauri::Emitter;
 
 use crate::{ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO, Environment::Utility};
+use crate::dev_log;
 
 /// Registers a new output channel.
 pub(super) async fn register_channel(
@@ -17,7 +17,7 @@ pub(super) async fn register_channel(
 	name:String,
 	language_identifier:Option<String>,
 ) -> Result<String, CommonError> {
-	info!("[OutputProvider] Registering channel: '{}'", name);
+	dev_log!("output", "[OutputProvider] Registering channel: '{}'", name);
 
 	// Validate channel name
 	if name.is_empty() {
@@ -56,7 +56,7 @@ pub(super) async fn register_channel(
 
 	channels_guard.entry(channel_identifier.clone()).or_insert_with(|| {
 		OutputChannelStateDTO::Create(&name, language_identifier.clone()).unwrap_or_else(|e| {
-			error!("[OutputProvider] Failed to create output channel: {}", e);
+			dev_log!("output", "error: [OutputProvider] Failed to create output channel: {}", e);
 			OutputChannelStateDTO::default()
 		})
 	});
@@ -77,7 +77,7 @@ pub(super) async fn dispose_channel(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	channel_identifier:String,
 ) -> Result<(), CommonError> {
-	info!("[OutputProvider] Disposing channel: '{}'", channel_identifier);
+	dev_log!("output", "[OutputProvider] Disposing channel: '{}'", channel_identifier);
 
 	env.ApplicationState
 		.Feature

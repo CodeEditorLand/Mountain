@@ -2,9 +2,9 @@
 //!
 //! Initializes and starts the Cocoon sidecar process.
 
-use log::{info, warn};
 
 use crate::{
+use crate::dev_log;
 	Environment::MountainEnvironment::MountainEnvironment,
 	ProcessManagement::CocoonManagement::InitializeCocoon,
 };
@@ -36,11 +36,11 @@ pub async fn CocoonStart(
 ) -> Result<(), String> {
 	match InitializeCocoon(ApplicationHandle, Environment).await {
 		Ok(()) => {
-			info!("[Cocoon] [Start] Cocoon sidecar started successfully.");
+			dev_log!("cocoon", "[Cocoon] [Start] Cocoon sidecar started successfully.");
 			Ok(())
 		},
 		Err(e) => {
-			warn!("[Cocoon] [Start] Cocoon unavailable (degraded mode): {}", e);
+			dev_log!("cocoon", "warn: [Cocoon] [Start] Cocoon unavailable (degraded mode): {}", e);
 			Ok(()) // Graceful degradation — workbench works without Cocoon
 		},
 	}

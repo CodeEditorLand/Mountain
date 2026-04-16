@@ -1,3 +1,4 @@
+use crate::dev_log;
 #![allow(unused_imports)]
 
 //! # TraceLog
@@ -38,13 +39,12 @@
 //! - Zero runtime cost when RUST_LOG does not include TRACE level
 //! - Minimal code generation overhead from macro expansion
 
-use log::trace;
 
 /// Logs a checkpoint message at TRACE level (for "every step" tracing).
 ///
 /// This macro provides a low-intrusion way to trace execution flow through
 /// the application startup and shutdown sequences. It expands to a single
-/// trace!() call which incurs zero overhead when TRACE logging is disabled.
+/// dev_log!("lifecycle", ) call which incurs zero overhead when TRACE logging is disabled.
 ///
 /// # Example
 ///
@@ -59,6 +59,6 @@ use log::trace;
 #[macro_export]
 macro_rules! TraceStep {
 	($($arg:tt)*) => {{
-		trace!($($arg)*);
+		dev_log!("lifecycle", $($arg)*);
 	}};
 }

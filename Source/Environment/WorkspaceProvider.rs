@@ -69,17 +69,17 @@ use CommonLibrary::{
 	Workspace::{WorkspaceEditApplier::WorkspaceEditApplier, WorkspaceProvider::WorkspaceProvider},
 };
 use async_trait::async_trait;
-use log::{info, warn};
 use serde_json::Value;
 use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::dev_log;
 
 #[async_trait]
 impl WorkspaceProvider for MountainEnvironment {
 	/// Retrieves information about all currently open workspace folders.
 	async fn GetWorkspaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
-		info!("[WorkspaceProvider] Getting workspace folders info.");
+		dev_log!("workspaces", "[WorkspaceProvider] Getting workspace folders info.");
 		let FoldersGuard = self
 			.ApplicationState
 			.Workspace
@@ -134,7 +134,7 @@ impl WorkspaceProvider for MountainEnvironment {
 
 	/// Requests workspace trust from the user.
 	async fn RequestWorkspaceTrust(&self, _Options:Option<Value>) -> Result<bool, CommonError> {
-		warn!("[WorkspaceProvider] RequestWorkspaceTrust is not implemented; defaulting to trusted.");
+		dev_log!("workspaces", "warn: [WorkspaceProvider] RequestWorkspaceTrust is not implemented; defaulting to trusted.");
 		Ok(true)
 	}
 
@@ -147,7 +147,7 @@ impl WorkspaceProvider for MountainEnvironment {
 		_:bool,
 		_:bool,
 	) -> Result<Vec<Url>, CommonError> {
-		info!("[WorkspaceProvider] FindFilesInWorkspace called");
+		dev_log!("workspaces", "[WorkspaceProvider] FindFilesInWorkspace called");
 		// Scan all workspace folders to find files matching the query pattern. This
 		// integrates with FileSystemReader to traverse directories, apply glob and
 		// exclude patterns, and return matching file URIs. Respect query parameters
@@ -159,7 +159,7 @@ impl WorkspaceProvider for MountainEnvironment {
 
 	/// Opens a file in the workspace.
 	async fn OpenFile(&self, path:PathBuf) -> Result<(), CommonError> {
-		info!("[WorkspaceProvider] OpenFile called for: {:?}", path);
+		dev_log!("workspaces", "[WorkspaceProvider] OpenFile called for: {:?}", path);
 		// Open a file in the editor by delegating to the Workbench or command system.
 		// Resolves the path relative to workspace roots, handles URI schemes (file://,
 		// untitled:), and triggers the 'workbench.action.files.open' command or
@@ -174,13 +174,13 @@ impl WorkspaceProvider for MountainEnvironment {
 impl WorkspaceEditApplier for MountainEnvironment {
 	/// Applies a workspace edit to the workspace.
 	async fn ApplyWorkspaceEdit(&self, Edit:WorkspaceEditDTO) -> Result<bool, CommonError> {
-		info!("[WorkspaceEditApplier] Applying workspace edit");
+		dev_log!("workspaces", "[WorkspaceEditApplier] Applying workspace edit");
 
 		// For now, just log the edit details
 		match Edit {
 			WorkspaceEditDTO { Edits } => {
 				for (DocumentURI, TextEdits) in Edits {
-					info!(
+					dev_log!("workspaces", 
 						"[WorkspaceEditApplier] Would apply {} edits to document: {}",
 						TextEdits.len(),
 						DocumentURI
@@ -197,7 +197,7 @@ impl WorkspaceEditApplier for MountainEnvironment {
 		// failure, emit before/after events for extension observability, and return
 		// false if any edit fails with detailed error information. This enables
 		// multi-file refactorings, code actions, and automated fixes.
-		warn!("[WorkspaceEditApplier] ApplyWorkspaceEdit is not fully implemented");
+		dev_log!("workspaces", "warn: [WorkspaceEditApplier] ApplyWorkspaceEdit is not fully implemented");
 
 		Ok(true)
 	}

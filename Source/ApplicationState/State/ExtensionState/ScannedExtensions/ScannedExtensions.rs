@@ -35,9 +35,9 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO;
+use crate::dev_log;
 
 /// Scanned extensions containing discovered extension metadata.
 #[derive(Clone)]
@@ -48,7 +48,7 @@ pub struct ScannedExtensionCollection {
 
 impl Default for ScannedExtensionCollection {
 	fn default() -> Self {
-		debug!("[ScannedExtensions] Initializing default scanned extensions...");
+		dev_log!("extensions", "[ScannedExtensions] Initializing default scanned extensions...");
 
 		Self { ScannedExtensions:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
@@ -76,7 +76,7 @@ impl ScannedExtensionCollection {
 	pub fn SetAll(&self, extensions:HashMap<String, ExtensionDescriptionStateDTO>) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			*guard = extensions;
-			debug!("[ScannedExtensions] Scanned extensions updated ({} extensions)", guard.len());
+			dev_log!("extensions", "[ScannedExtensions] Scanned extensions updated ({} extensions)", guard.len());
 		}
 	}
 
@@ -84,7 +84,7 @@ impl ScannedExtensionCollection {
 	pub fn AddOrUpdate(&self, identifier:String, extension:ExtensionDescriptionStateDTO) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			guard.insert(identifier, extension);
-			debug!("[ScannedExtensions] Extension added/updated");
+			dev_log!("extensions", "[ScannedExtensions] Extension added/updated");
 		}
 	}
 
@@ -92,7 +92,7 @@ impl ScannedExtensionCollection {
 	pub fn Remove(&self, identifier:&str) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			guard.remove(identifier);
-			debug!("[ScannedExtensions] Extension removed: {}", identifier);
+			dev_log!("extensions", "[ScannedExtensions] Extension removed: {}", identifier);
 		}
 	}
 
@@ -100,7 +100,7 @@ impl ScannedExtensionCollection {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			guard.clear();
-			debug!("[ScannedExtensions] All extensions cleared");
+			dev_log!("extensions", "[ScannedExtensions] All extensions cleared");
 		}
 	}
 

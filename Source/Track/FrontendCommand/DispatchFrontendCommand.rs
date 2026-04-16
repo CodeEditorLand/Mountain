@@ -53,11 +53,11 @@
 
 use std::sync::Arc;
 
-use log::{debug, error};
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Runtime, State, command};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::CreateEffectForRequest};
+use crate::dev_log;
 
 /// The primary Tauri command handler for requests originating from the `Sky`
 /// frontend. This is the general-purpose entry point for commands that are
@@ -72,7 +72,7 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 
 	Argument:Value,
 ) -> Result<Value, String> {
-	debug!("[Track/FrontendCommand] Dispatching frontend command: {}", Command);
+	dev_log!("ipc", "[Track/FrontendCommand] Dispatching frontend command: {}", Command);
 
 	match CreateEffectForRequest(&ApplicationHandle, &Command, Argument) {
 		Ok(EffectFn) => {
@@ -82,10 +82,8 @@ pub async fn DispatchFrontendCommand<R:Runtime>(
 		},
 
 		Err(Error) => {
-			error!(
-				"[Track/FrontendCommand] Failed to create effect for command '{}': {}",
-				Command, Error
-			);
+			dev_log!("ipc", "error: [Track/FrontendCommand] Failed to create effect for command '{}': {}",
+				Command, Error);
 
 			Err(Error)
 		},

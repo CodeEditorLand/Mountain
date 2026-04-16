@@ -1,10 +1,10 @@
 //! Provider registration and unregistration logic.
 
 use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
-use log::warn;
 use serde_json::Value;
 
 use crate::{
+use crate::dev_log;
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError,
 };
@@ -49,7 +49,7 @@ pub(super) async fn unregister_provider(
 		.lock()
 		.map_err(MapApplicationStateLockErrorToCommonError)?;
 	if providers.remove(&handle).is_none() {
-		warn!("Attempted to unregister non-existent provider handle: {}", handle);
+		dev_log!("extensions", "warn: Attempted to unregister non-existent provider handle: {}", handle);
 	}
 	Ok(())
 }

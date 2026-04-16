@@ -43,11 +43,11 @@
 
 use std::sync::Arc;
 
-use log::debug;
 use tauri::{AppHandle, State};
 use serde_json::Value;
 
 use crate::{ApplicationState::ApplicationState, ProcessManagement::InitializationData};
+use crate::dev_log;
 
 /// Provides the initial workbench configuration to the Sky frontend.
 ///
@@ -76,18 +76,18 @@ pub async fn MountainGetWorkbenchConfiguration(
 	ApplicationHandle:AppHandle,
 	State:State<'_, Arc<ApplicationState>>,
 ) -> Result<Value, String> {
-	debug!("[IPC] [WorkbenchConfig] Request received.");
+	dev_log!("ipc", "[IPC] [WorkbenchConfig] Request received.");
 
-	debug!("[IPC] [WorkbenchConfig] Constructing sandbox configuration...");
+	dev_log!("ipc", "[IPC] [WorkbenchConfig] Constructing sandbox configuration...");
 
 	let Config = InitializationData::ConstructSandboxConfiguration(&ApplicationHandle, State.inner())
 		.await
 		.map_err(|Error| {
-			debug!("[IPC] [WorkbenchConfig] Failed: {}", Error);
+			dev_log!("ipc", "[IPC] [WorkbenchConfig] Failed: {}", Error);
 			Error.to_string()
 		})?;
 
-	debug!("[IPC] [WorkbenchConfig] Success. Returning payload.");
+	dev_log!("ipc", "[IPC] [WorkbenchConfig] Success. Returning payload.");
 
 	Ok(Config)
 }

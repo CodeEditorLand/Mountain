@@ -29,6 +29,8 @@ use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::RwLock;
 
+use crate::dev_log;
+
 // ============================================================================
 // Feature Flag Data Structures
 // ============================================================================
@@ -208,7 +210,7 @@ pub fn get_all_flags() -> Vec<FeatureFlag> { GLOBAL_REGISTRY.get_all_flags() }
 
 /// Initialize feature flags from configuration
 pub fn initialize_feature_flags() -> Result<(), FeatureFlagError> {
-	log::debug!("Feature flags system initialized");
+	dev_log!("config", "feature flags system initialized");
 	Ok(())
 }
 

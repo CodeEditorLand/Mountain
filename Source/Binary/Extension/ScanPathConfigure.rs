@@ -4,9 +4,9 @@
 
 use std::path::PathBuf;
 
-use log::{debug, info};
 
 use crate::ApplicationState::{ApplicationState, MapLockError};
+use crate::dev_log;
 
 /// Configures extension scan paths by resolving paths from the executable
 /// directory.
@@ -29,7 +29,7 @@ use crate::ApplicationState::{ApplicationState, MapLockError};
 ///
 /// Returns an error if ExtensionScanPaths mutex lock fails.
 pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<Vec<PathBuf>, String> {
-	debug!("[Extensions] [ScanPaths] Locking ExtensionScanPaths...");
+	dev_log!("extensions", "[Extensions] [ScanPaths] Locking ExtensionScanPaths...");
 
 	let mut ScanPathsGuard = AppState
 		.Extension
@@ -39,26 +39,26 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		.map_err(MapLockError)
 		.map_err(|e| format!("Failed to lock ExtensionScanPaths: {}", e))?;
 
-	debug!("[Extensions] [ScanPaths] Adding default scan paths...");
+	dev_log!("extensions", "[Extensions] [ScanPaths] Adding default scan paths...");
 
 	// Resolve paths from executable directory
 	if let Ok(ExecutableDirectory) = std::env::current_exe() {
 		if let Some(Parent) = ExecutableDirectory.parent() {
 			// Standard Tauri bundle path: ../Resources/extensions
 			let ResourcesPath = Parent.join("../Resources/extensions");
-			debug!("[Extensions] [ScanPaths] + {}", ResourcesPath.display());
+			dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesPath.display());
 			ScanPathsGuard.push(ResourcesPath);
 
 			// Debug/dev path: Target/debug/extensions
 			let LocalPath = Parent.join("extensions");
-			debug!("[Extensions] [ScanPaths] + {}", LocalPath.display());
+			dev_log!("extensions", "[Extensions] [ScanPaths] + {}", LocalPath.display());
 			ScanPathsGuard.push(LocalPath);
 
 			// Sky Target path: where CopyVSCodeAssets copies built-in
 			// extensions during the build.
 			let SkyTargetPath = Parent.join("../../../Element/Sky/Target/Static/Application/extensions");
 			if SkyTargetPath.exists() {
-				debug!("[Extensions] [ScanPaths] + {} (Sky Target)", SkyTargetPath.display());
+				dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Sky Target)", SkyTargetPath.display());
 				ScanPathsGuard.push(SkyTargetPath);
 			}
 
@@ -67,7 +67,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			// step. Production builds use Sky Target or Resources instead.
 			let DependencyPath = Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
 			if DependencyPath.exists() {
-				debug!("[Extensions] [ScanPaths] + {} (VS Code Dependency)", DependencyPath.display());
+				dev_log!("extensions", "[Extensions] [ScanPaths] + {} (VS Code Dependency)", DependencyPath.display());
 				ScanPathsGuard.push(DependencyPath);
 			}
 		}
@@ -75,7 +75,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 
 	let ScanPaths = ScanPathsGuard.clone();
 
-	info!("[Extensions] [ScanPaths] Configured: {:?}", ScanPaths);
+	dev_log!("extensions", "[Extensions] [ScanPaths] Configured: {:?}", ScanPaths);
 
 	Ok(ScanPaths)
 }

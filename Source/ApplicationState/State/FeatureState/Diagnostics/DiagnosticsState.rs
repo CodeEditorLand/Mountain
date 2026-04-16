@@ -36,9 +36,9 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO;
+use crate::dev_log;
 
 /// Diagnostic errors state containing markers by owner and resource.
 #[derive(Clone)]
@@ -51,7 +51,7 @@ pub struct DiagnosticsState {
 
 impl Default for DiagnosticsState {
 	fn default() -> Self {
-		debug!("[DiagnosticsState] Initializing default diagnostics state...");
+		dev_log!("extensions", "[DiagnosticsState] Initializing default diagnostics state...");
 
 		Self { DiagnosticsMap:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
@@ -85,7 +85,7 @@ impl DiagnosticsState {
 	pub fn SetByOwner(&self, owner:String, diagnostics:HashMap<String, Vec<MarkerDataDTO>>) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.insert(owner, diagnostics);
-			debug!("[DiagnosticsState] Diagnostics updated for owner");
+			dev_log!("extensions", "[DiagnosticsState] Diagnostics updated for owner");
 		}
 	}
 
@@ -93,7 +93,7 @@ impl DiagnosticsState {
 	pub fn SetByOwnerAndResource(&self, owner:String, resource:String, markers:Vec<MarkerDataDTO>) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.entry(owner).or_insert_with(HashMap::new).insert(resource, markers);
-			debug!("[DiagnosticsState] Diagnostics updated for owner and resource");
+			dev_log!("extensions", "[DiagnosticsState] Diagnostics updated for owner and resource");
 		}
 	}
 
@@ -101,7 +101,7 @@ impl DiagnosticsState {
 	pub fn ClearByOwner(&self, owner:&str) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.remove(owner);
-			debug!("[DiagnosticsState] Diagnostics cleared for owner: {}", owner);
+			dev_log!("extensions", "[DiagnosticsState] Diagnostics cleared for owner: {}", owner);
 		}
 	}
 
@@ -110,7 +110,7 @@ impl DiagnosticsState {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			if let Some(resources) = guard.get_mut(owner) {
 				resources.remove(resource);
-				debug!("[DiagnosticsState] Diagnostics cleared for owner and resource");
+				dev_log!("extensions", "[DiagnosticsState] Diagnostics cleared for owner and resource");
 			}
 		}
 	}
@@ -119,7 +119,7 @@ impl DiagnosticsState {
 	pub fn ClearAll(&self) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.clear();
-			debug!("[DiagnosticsState] All diagnostics cleared");
+			dev_log!("extensions", "[DiagnosticsState] All diagnostics cleared");
 		}
 	}
 }

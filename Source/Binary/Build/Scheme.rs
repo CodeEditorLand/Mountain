@@ -39,9 +39,9 @@ use tauri::http::{
 	request::Request,
 	response::{Builder, Response},
 };
-use log::{debug, error, info, warn};
 
 use super::ServiceRegistry::ServiceRegistry;
+use crate::dev_log;
 
 // Global service registry (will be initialized in Tauri setup)
 static SERVICE_REGISTRY:RwLock<Option<ServiceRegistry>> = RwLock::new(None);
@@ -175,7 +175,7 @@ fn parse_land_uri(uri:&str) -> Result<(String, String), String> {
 
 	let path = if parts.len() > 1 { format!("/{}", parts[1]) } else { "/".to_string() };
 
-	debug!("[Scheme] Parsed URI: {} -> domain={}, path={}", uri, domain, path);
+	dev_log!("lifecycle", "[Scheme] Parsed URI: {} -> domain={}, path={}", uri, domain, path);
 	Ok((domain, path))
 }
 
@@ -208,7 +208,7 @@ fn forward_http_request(
 
 	let addr = format!("{}:{}", host, port);
 
-	debug!("[Scheme] Connecting to {} at {}", url, addr);
+	dev_log!("lifecycle", "[Scheme] Connecting to {} at {}", url, addr);
 
 	// Clone request body and headers for use in thread
 	let body = request.body().clone();
@@ -298,7 +298,7 @@ fn forward_http_request(
 				// of headers)
 				if buffer.len() > 1024 * 1024 {
 					// Limit to 1MB
-					warn!("[Scheme] Response too large, truncating");
+					dev_log!("lifecycle", "warn: [Scheme] Response too large, truncating");
 					break;
 				}
 
@@ -408,27 +408,27 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 
 	// Get URI
 	let uri = request.uri().to_string();
-	debug!("[Scheme] Handling land:// request: {}", uri);
+	dev_log!("lifecycle", "[Scheme] Handling land:// request: {}", uri);
 
 	// Parse URI to extract domain and path
 	let (domain, path) = match parse_land_uri(&uri) {
 		Ok(result) => result,
 		Err(e) => {
-			error!("[Scheme] Failed to parse URI: {}", e);
+			dev_log!("lifecycle", "error: [Scheme] Failed to parse URI: {}", e);
 			return build_error_response(400, &format!("Bad Request: {}", e));
 		},
 	};
 
 	// Handle CORS preflight requests
 	if request.method() == Method::OPTIONS {
-		debug!("[Scheme] Handling CORS preflight request");
+		dev_log!("lifecycle", "[Scheme] Handling CORS preflight request");
 		return build_cors_preflight_response();
 	}
 
 	// Check cache for static assets
 	if should_cache(&path) {
 		if let Some(cached) = get_cached(&path) {
-			debug!("[Scheme] Cache hit for: {}", path);
+			dev_log!("lifecycle", "[Scheme] Cache hit for: {}", path);
 			return build_cached_response(cached);
 		}
 	}
@@ -437,7 +437,7 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 	let registry = match get_service_registry() {
 		Some(r) => r,
 		None => {
-			error!("[Scheme] Service registry not initialized");
+			dev_log!("lifecycle", "error: [Scheme] Service registry not initialized");
 			return build_error_response(503, "Service Unavailable: Registry not initialized");
 		},
 	};
@@ -445,7 +445,7 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 	let service = match registry.lookup(&domain) {
 		Some(s) => s,
 		None => {
-			warn!("[Scheme] Service not found: {}", domain);
+			dev_log!("lifecycle", "warn: [Scheme] Service not found: {}", domain);
 			return build_error_response(404, &format!("Not Found: Service {} not registered", domain));
 		},
 	};
@@ -453,7 +453,7 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 	// Build local service URL
 	let local_url = format!("http://127.0.0.1:{}{}", service.port, path);
 
-	debug!(
+	dev_log!("lifecycle", 
 		"[Scheme] Routing {} {} to local service at {}",
 		request.method(),
 		uri,
@@ -511,13 +511,13 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 
 				let entry = CacheEntry { body, content_type, cache_control, etag, last_modified };
 				set_cached(&path, entry);
-				debug!("[Scheme] Cached response for: {}", path);
+				dev_log!("lifecycle", "[Scheme] Cached response for: {}", path);
 			}
 
 			response.unwrap_or_else(|_| build_error_response(500, "Internal Server Error"))
 		},
 		Err(e) => {
-			error!("[Scheme] Failed to forward request: {}", e);
+			dev_log!("lifecycle", "error: [Scheme] Failed to forward request: {}", e);
 			build_error_response(503, &format!("Service Unavailable: {}", e))
 		},
 	}
@@ -582,7 +582,7 @@ fn build_cached_response(entry:CacheEntry) -> Response<Vec<u8>> {
 pub fn register_land_service(name:&str, port:u16) {
 	let registry = get_service_registry().expect("Service registry not initialized. Call init_service_registry first.");
 	registry.register(name.to_string(), port, Some("/health".to_string()));
-	info!("[Scheme] Registered service: {} -> {}", name, port);
+	dev_log!("lifecycle", "[Scheme] Registered service: {} -> {}", name, port);
 }
 
 /// Get the port for a registered service
@@ -738,7 +738,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
 	let Uri = Request.uri().to_string();
-	debug!("[VscodeFile] Request: {}", Uri);
+	dev_log!("lifecycle", "[VscodeFile] Request: {}", Uri);
 
 	// Extract path from: vscode-file://vscode-app/path/to/file
 	// The authority is "vscode-app", the path starts after it
@@ -757,30 +757,69 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 		FilePath.to_string()
 	};
 
-	debug!("[VscodeFile] Resolved path: {}", CleanPath);
+	// VS Code's nodeModulesPath = 'vs/../../node_modules' resolves ../../ from
+	// Static/Application/vs/ up to Static/. The browser canonicalizes this to
+	// Static/node_modules/ but our files live at Static/Application/node_modules/.
+	let CleanPath = if CleanPath.starts_with("Static/node_modules/") {
+		CleanPath.replacen("Static/node_modules/", "Static/Application/node_modules/", 1)
+	} else {
+		CleanPath
+	};
+
+	dev_log!("lifecycle", "[VscodeFile] Resolved path: {}", CleanPath);
 
 	// Resolve against the frontendDist directory
-	// In debug: Sky/Target/{path}
-	// In production: embedded in the binary
+	// In production: embedded in the binary via asset_resolver
+	// In debug: fall back to filesystem read from Sky/Target
 	let AssetResult = AppHandle.asset_resolver().get(CleanPath.clone());
 
-	match AssetResult {
-		Some(Asset) => {
-			let Mime = MimeFromExtension(&CleanPath);
+	if let Some(Asset) = AssetResult {
+		let Mime = MimeFromExtension(&CleanPath);
 
-			debug!("[VscodeFile] Serving {} ({}, {} bytes)", CleanPath, Mime, Asset.bytes.len());
+		dev_log!("lifecycle", "[VscodeFile] Serving (embedded) {} ({}, {} bytes)", CleanPath, Mime, Asset.bytes.len());
 
-			Builder::new()
-				.status(200)
-				.header("Content-Type", Mime)
-				.header("Access-Control-Allow-Origin", "*")
-				.header("Cache-Control", "public, max-age=31536000, immutable")
-				.body(Asset.bytes.to_vec())
-				.unwrap_or_else(|_| build_error_response(500, "Failed to build response"))
-		},
-		None => {
-			warn!("[VscodeFile] Not found: {} (resolved: {})", Uri, CleanPath);
-			build_error_response(404, &format!("Not Found: {}", CleanPath))
-		},
+		return Builder::new()
+			.status(200)
+			.header("Content-Type", Mime)
+			.header("Access-Control-Allow-Origin", "*")
+			.header("Cache-Control", "public, max-age=31536000, immutable")
+			.body(Asset.bytes.to_vec())
+			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 	}
+
+	// Fallback: read from filesystem (dev mode where assets aren't embedded)
+	let StaticRoot = crate::IPC::WindServiceHandlers::get_static_application_root();
+
+	if let Some(Root) = StaticRoot {
+		let FilesystemPath = std::path::Path::new(&Root).join(&CleanPath);
+
+		if FilesystemPath.exists() && FilesystemPath.is_file() {
+			match std::fs::read(&FilesystemPath) {
+				Ok(Bytes) => {
+					let Mime = MimeFromExtension(&CleanPath);
+
+					dev_log!("lifecycle", 
+						"[VscodeFile] Serving (fs) {} ({}, {} bytes)",
+						CleanPath,
+						Mime,
+						Bytes.len()
+					);
+
+					return Builder::new()
+						.status(200)
+						.header("Content-Type", Mime)
+						.header("Access-Control-Allow-Origin", "*")
+						.header("Cache-Control", "public, max-age=3600")
+						.body(Bytes)
+						.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
+				},
+				Err(Error) => {
+					dev_log!("lifecycle", "warn: [VscodeFile] Failed to read {}: {}", FilesystemPath.display(), Error);
+				},
+			}
+		}
+	}
+
+	dev_log!("lifecycle", "warn: [VscodeFile] Not found: {} (resolved: {})", Uri, CleanPath);
+	build_error_response(404, &format!("Not Found: {}", CleanPath))
 }

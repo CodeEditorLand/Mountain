@@ -27,7 +27,7 @@
 
 use serde::Serializer;
 use url::Url;
-use log::debug;
+use crate::dev_log;
 
 /// Serializes a URL to a JSON string value.
 ///
@@ -45,6 +45,6 @@ pub fn SerializeURL<S>(URLInstance:&Url, SerializerInstance:S) -> Result<S::Ok, 
 where
 	S: Serializer, {
 	let url_string = URLInstance.as_str();
-	debug!("[URLSerializer] Serializing URL: {}", url_string);
+	dev_log!("ipc", "[URLSerializer] Serializing URL: {}", url_string);
 	SerializerInstance.serialize_str(url_string)
 }

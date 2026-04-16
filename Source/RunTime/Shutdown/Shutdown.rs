@@ -53,53 +53,53 @@ use CommonLibrary::{
 	IPC::IPCProvider::IPCProvider,
 	Terminal::TerminalProvider::TerminalProvider as TerminalProviderTrait,
 };
-use log::{debug, error, info, warn};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::dev_log;
 
 impl ApplicationRunTime {
 	/// Orchestrates the graceful shutdown of all services.
 	pub async fn Shutdown(&self) {
-		info!("[ApplicationRunTime] Initiating graceful shutdown of services...");
+		dev_log!("lifecycle", "[ApplicationRunTime] Initiating graceful shutdown of services...");
 
 		let shutdown_result = self.ShutdownWithRecovery().await;
 
 		match shutdown_result {
-			Ok(()) => info!("[ApplicationRunTime] Service shutdown tasks completed successfully."),
-			Err(error) => error!("[ApplicationRunTime] Service shutdown completed with errors: {}", error),
+			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Service shutdown tasks completed successfully."),
+			Err(error) => dev_log!("lifecycle", "error: [ApplicationRunTime] Service shutdown completed with errors: {}", error),
 		}
 	}
 
 	/// Enhanced shutdown with comprehensive error handling and recovery.
 	pub async fn ShutdownWithRecovery(&self) -> Result<(), CommonError> {
-		info!("[ApplicationRunTime] Initiating robust shutdown with recovery...");
+		dev_log!("lifecycle", "[ApplicationRunTime] Initiating robust shutdown with recovery...");
 
 		let mut shutdown_errors:Vec<String> = Vec::new();
 
 		// 1. Shutdown Cocoon with retry mechanism
 		match self.ShutdownCocoonWithRetry().await {
-			Ok(()) => debug!("[ApplicationRunTime] Cocoon shutdown successful"),
+			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Cocoon shutdown successful"),
 			Err(error) => {
 				shutdown_errors.push(format!("Cocoon shutdown failed: {}", error));
-				warn!("[ApplicationRunTime] Cocoon shutdown failed, continuing with other services...");
+				dev_log!("lifecycle", "warn: [ApplicationRunTime] Cocoon shutdown failed, continuing with other services...");
 			},
 		}
 
 		// 2. Dispose of all active terminals with error handling
 		match self.DisposeTerminalsSafely().await {
-			Ok(()) => debug!("[ApplicationRunTime] Terminal disposal successful"),
+			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Terminal disposal successful"),
 			Err(error) => {
 				shutdown_errors.push(format!("Terminal disposal failed: {}", error));
-				warn!("[ApplicationRunTime] Terminal disposal failed, continuing...");
+				dev_log!("lifecycle", "warn: [ApplicationRunTime] Terminal disposal failed, continuing...");
 			},
 		}
 
 		// 3. Save application state
 		match self.SaveApplicationState().await {
-			Ok(()) => debug!("[ApplicationRunTime] Application state saved"),
+			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Application state saved"),
 			Err(error) => {
 				shutdown_errors.push(format!("State save failed: {}", error));
-				warn!("[ApplicationRunTime] Failed to save application state, continuing...");
+				dev_log!("lifecycle", "warn: [ApplicationRunTime] Failed to save application state, continuing...");
 			},
 		}
 
@@ -142,10 +142,8 @@ impl ApplicationRunTime {
 						return Err(error);
 					}
 
-					warn!(
-						"[ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
-						attempts, error
-					);
+					dev_log!("lifecycle", "warn: [ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
+						attempts, error);
 
 					tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 				},
@@ -176,10 +174,10 @@ impl ApplicationRunTime {
 
 		for id in TerminalIds {
 			match TerminalProvider.DisposeTerminal(id).await {
-				Ok(()) => debug!("[ApplicationRunTime] Terminal {} disposed successfully", id),
+				Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Terminal {} disposed successfully", id),
 				Err(error) => {
 					disposal_errors.push(format!("Terminal {}: {}", id, error));
-					warn!("[ApplicationRunTime] Failed to dispose terminal {}: {}", id, error);
+					dev_log!("lifecycle", "warn: [ApplicationRunTime] Failed to dispose terminal {}: {}", id, error);
 				},
 			}
 		}
@@ -199,7 +197,7 @@ impl ApplicationRunTime {
 
 	/// Save application state before shutdown.
 	pub async fn SaveApplicationState(&self) -> Result<(), CommonError> {
-		debug!("[ApplicationRunTime] Saving application state...");
+		dev_log!("lifecycle", "[ApplicationRunTime] Saving application state...");
 
 		// Save global memento
 		let global_memento_guard = self
@@ -234,7 +232,7 @@ impl ApplicationRunTime {
 
 	/// Flush any pending operations.
 	pub async fn FlushPendingOperations(&self) {
-		debug!("[ApplicationRunTime] Flushing pending operations...");
+		dev_log!("lifecycle", "[ApplicationRunTime] Flushing pending operations...");
 
 		// Flush pending UI requests
 		let mut pending_requests_guard = self
@@ -244,7 +242,7 @@ impl ApplicationRunTime {
 			.PendingUserInterfaceRequest
 			.lock()
 			.unwrap_or_else(|e| {
-				error!("[ApplicationRunTime] Failed to lock pending UI requests: {}", e);
+				dev_log!("lifecycle", "error: [ApplicationRunTime] Failed to lock pending UI requests: {}", e);
 				e.into_inner()
 			});
 
@@ -254,6 +252,6 @@ impl ApplicationRunTime {
 			}));
 		}
 
-		debug!("[ApplicationRunTime] Pending operations flushed");
+		dev_log!("lifecycle", "[ApplicationRunTime] Pending operations flushed");
 	}
 }

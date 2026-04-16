@@ -51,11 +51,11 @@
 
 use std::sync::Arc;
 
-use log::{debug, error, warn};
 use serde_json::Value;
 use tauri::{State, command};
 
 use crate::ApplicationState::ApplicationState;
+use crate::dev_log;
 
 /// A specific Tauri command handler for the UI to send back the result of a
 /// request-response interaction (like a dialog or message box).
@@ -67,7 +67,7 @@ pub async fn ResolveUIRequest(
 
 	Result:Value,
 ) -> Result<(), String> {
-	debug!("[Track/UIRequest] Resolving UI request ID: {}", RequestID);
+	dev_log!("ipc", "[Track/UIRequest] Resolving UI request ID: {}", RequestID);
 
 	let Sender = {
 		let mut PendingRequests = State.UI.PendingUserInterfaceRequest.lock().map_err(|Error| Error.to_string())?;
@@ -79,15 +79,13 @@ pub async fn ResolveUIRequest(
 		if Sender.send(Ok(Result)).is_err() {
 			let ErrorMessage = format!("Failed to send result for UI request '{}': receiver was dropped.", RequestID);
 
-			error!("{}", ErrorMessage);
+			dev_log!("ipc", "error: {}", ErrorMessage);
 
 			return Err(ErrorMessage);
 		}
 	} else {
-		warn!(
-			"[Track/UIRequest] Received a result for an unknown or timed-out UI request ID: {}",
-			RequestID
-		);
+		dev_log!("ipc", "warn: [Track/UIRequest] Received a result for an unknown or timed-out UI request ID: {}",
+			RequestID);
 	}
 
 	Ok(())

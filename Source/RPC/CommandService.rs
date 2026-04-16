@@ -53,7 +53,6 @@ use std::{
 };
 
 use async_trait::async_trait;
-use log::{debug, error, info, trace, warn};
 use tonic::{Request, Response, Status};
 use CommonLibrary::Environment::Requires::Requires;
 // ========================
@@ -69,6 +68,7 @@ use opentelemetry::{
 };
 
 use crate::{
+use crate::dev_log;
 	Environment::MountainEnvironment::MountainEnvironment,
 	Vine::Generated::{
 		Argument,
@@ -247,7 +247,7 @@ impl CommandService {
 		let logging_gate = LoggingGate::new(telemetry_config.clone());
 		let metrics = ServiceMetrics::new();
 
-		info!("[CommandService] Initializing with telemetry: {:?}", telemetry_config);
+		dev_log!("grpc", "[CommandService] Initializing with telemetry: {:?}", telemetry_config);
 
 		Self {
 			environment,
@@ -267,11 +267,11 @@ impl CommandService {
 		#[cfg(feature = "Telemetry")]
 		span.set_attribute(KeyValue::new("command.id", command_id.clone()));
 
-		info!("[CommandService] Registering command: {} ({})", command_id, req.title);
+		dev_log!("grpc", "[CommandService] Registering command: {} ({})", command_id, req.title);
 
 		let validation = self.ValidateCommandInput(&req);
 		if let Err(err) = validation {
-			error!("[CommandService] Validation failed: {}", err);
+			dev_log!("grpc", "error: [CommandService] Validation failed: {}", err);
 			return Err(err);
 		}
 
@@ -392,7 +392,7 @@ impl CommandService {
 		let req = request.into_inner();
 		let command_id = req.id.clone();
 
-		info!("[CommandService] Unregistering command: {}", command_id);
+		dev_log!("grpc", "[CommandService] Unregistering command: {}", command_id);
 
 		let (removed, extension_id) = {
 			let mut commands = self.commands.write();

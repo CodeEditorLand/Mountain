@@ -171,7 +171,6 @@
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-use log::{debug, error, info};
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
 // Type aliases for Configuration DTOs to simplify usage
@@ -303,6 +302,10 @@ static STATIC_APPLICATION_ROOT:std::sync::OnceLock<String> = std::sync::OnceLock
 /// Set the real filesystem root for /Static/Application/ paths.
 /// Call once at startup with the Sky Target directory.
 pub fn set_static_application_root(Path:String) { let _ = STATIC_APPLICATION_ROOT.set(Path); }
+
+/// Get the filesystem root for /Static/Application/ paths.
+/// Returns None if not yet initialized.
+pub fn get_static_application_root() -> Option<String> { STATIC_APPLICATION_ROOT.get().cloned() }
 
 fn resolve_static_application_path(Path:&str) -> String {
 	if !Path.starts_with("/Static/Application/") && Path != "/Static/Application" {
@@ -1341,7 +1344,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 
 		// Default handler for unknown commands
 		_ => {
-			error!("[WindServiceHandlers] Unknown IPC command: {}", command);
+			dev_log!("ipc", "error: [WindServiceHandlers] Unknown IPC command: {}", command);
 			Err(format!("Unknown IPC command: {}", command))
 		},
 	};

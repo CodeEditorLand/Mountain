@@ -21,9 +21,9 @@
 //! - `tracing-subscriber`
 
 #[cfg(feature = "Telemetry")]
-use tracing::{debug, error, info, instrument, warn};
 #[cfg(feature = "Telemetry")]
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use crate::dev_log;
 
 // ============================================================================
 // Initialization
@@ -44,7 +44,7 @@ pub fn initialize_tracing() -> Result<(), Box<dyn std::error::Error>> {
 		.with(tracing_subscriber::fmt::layer())
 		.init();
 
-	info!("OpenTelemetry tracing initialized");
+	dev_log!("lifecycle", "OpenTelemetry tracing initialized");
 	Ok(())
 }
 
@@ -93,14 +93,14 @@ where
 
 	let _enter = span.enter();
 
-	info!("RPC call started: {}.{}", service_name, method_name);
+	dev_log!("lifecycle", "RPC call started: {}.{}", service_name, method_name);
 
 	let start = std::time::Instant::now();
 
 	match operation.await {
 		Ok(result) => {
 			let duration = start.elapsed();
-			info!(
+			dev_log!("lifecycle", 
 				"RPC call completed: {}.{} (duration: {:?})",
 				service_name, method_name, duration
 			);
@@ -108,10 +108,8 @@ where
 		},
 		Err(err) => {
 			let duration = start.elapsed();
-			error!(
-				"RPC call failed: {}.{} (duration: {:?}, error: {})",
-				service_name, method_name, duration, err
-			);
+			dev_log!("lifecycle", "error: RPC call failed: {}.{} (duration: {:?}, error: {})",
+				service_name, method_name, duration, err);
 			Err(err)
 		},
 	}
@@ -138,22 +136,20 @@ where
 
 	let _enter = span.enter();
 
-	info!("Executing command: {}", command_name);
+	dev_log!("lifecycle", "Executing command: {}", command_name);
 
 	let start = std::time::Instant::now();
 
 	match operation.await {
 		Ok(result) => {
 			let duration = start.elapsed();
-			info!("Command executed successfully: {} (duration: {:?})", command_name, duration);
+			dev_log!("lifecycle", "Command executed successfully: {} (duration: {:?})", command_name, duration);
 			Ok(result)
 		},
 		Err(err) => {
 			let duration = start.elapsed();
-			error!(
-				"Command execution failed: {} (duration: {:?}, error: {})",
-				command_name, duration, err
-			);
+			dev_log!("lifecycle", "error: Command execution failed: {} (duration: {:?}, error: {})",
+				command_name, duration, err);
 			Err(err)
 		},
 	}
@@ -179,7 +175,7 @@ macro_rules! measure_time {
 		let start = std::time::Instant::now();
 		let result = $block;
 		let duration = start.elapsed();
-		tracing::info!("{} took {:?}", $name, duration);
+		dev_log!("lifecycle", "{} took {:?}", $name, duration);
 		result
 	}};
 }

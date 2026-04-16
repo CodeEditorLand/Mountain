@@ -79,9 +79,9 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
-use log::{debug, error, warn};
 
 use super::super::Define::DefineMessage::{ListenerCallback, TauriIPCMessage};
+use crate::dev_log;
 
 /// Maximum listeners per channel to prevent resource exhaustion
 const MAX_LISTENERS_PER_CHANNEL:usize = 100;
@@ -130,7 +130,7 @@ impl Router {
 
 		channel_listeners.push(Callback);
 
-		debug!(
+		dev_log!("ipc", 
 			"[Router] Listener registered for channel: {} (total: {})",
 			Channel,
 			channel_listeners.len()
@@ -162,16 +162,16 @@ impl Router {
 			// Clean up empty channels
 			if channel_listeners.is_empty() {
 				listeners.remove(Channel);
-				debug!("[Router] Channel cleaned up: {} (removed {} listeners)", Channel, removed_count);
+				dev_log!("ipc", "[Router] Channel cleaned up: {} (removed {} listeners)", Channel, removed_count);
 			} else {
-				debug!(
+				dev_log!("ipc", 
 					"[Router] Listener removed from channel: {}, remaining: {}",
 					Channel,
 					channel_listeners.len()
 				);
 			}
 		} else {
-			warn!("[Router] Channel not found for listener removal: {}", Channel);
+			dev_log!("ipc", "warn: [Router] Channel not found for listener removal: {}", Channel);
 		}
 
 		Ok(())
@@ -187,7 +187,7 @@ impl Router {
 	/// Errors from individual listeners are logged but don't fail the entire
 	/// operation
 	pub fn RouteMessage(&self, Message:&TauriIPCMessage) -> Result<(), String> {
-		debug!("[Router] Routing message on channel: {}", Message.channel);
+		dev_log!("ipc", "[Router] Routing message on channel: {}", Message.channel);
 
 		// Validate message before routing
 		Message.validate().map_err(|e| format!("Message validation failed: {}", e))?;
@@ -211,22 +211,22 @@ impl Router {
 				match callback(message_data) {
 					Ok(_) => success_count += 1,
 					Err(e) => {
-						error!("[Router] Error in listener {} for channel {}: {}", index, Message.channel, e);
+						dev_log!("ipc", "error: [Router] Error in listener {} for channel {}: {}", index, Message.channel, e);
 						error_count += 1;
 					},
 				}
 			}
 
-			debug!(
+			dev_log!("ipc", 
 				"[Router] Message routed to channel {}: {}/{} listeners succeeded",
 				Message.channel, success_count, listener_count
 			);
 
 			if error_count > 0 {
-				warn!("[Router] {} listener(s) failed on channel {}", error_count, Message.channel);
+				dev_log!("ipc", "warn: [Router] {} listener(s) failed on channel {}", error_count, Message.channel);
 			}
 		} else {
-			debug!("[Router] No listeners found for channel: {}", Message.channel);
+			dev_log!("ipc", "[Router] No listeners found for channel: {}", Message.channel);
 		}
 
 		Ok(())
@@ -279,7 +279,7 @@ impl Router {
 		let count = listeners.get(Channel).map_or(0, |l| l.len());
 		listeners.remove(Channel);
 
-		debug!("[Router] Cleared {} listeners from channel: {}", count, Channel);
+		dev_log!("ipc", "[Router] Cleared {} listeners from channel: {}", count, Channel);
 
 		Ok(())
 	}
@@ -297,7 +297,7 @@ impl Router {
 		let total_listeners:usize = listeners.values().map(|l| l.len()).sum();
 		listeners.clear();
 
-		debug!(
+		dev_log!("ipc", 
 			"[Router] Cleared {} listeners from {} channels",
 			total_listeners,
 			listeners.len()

@@ -31,7 +31,6 @@ use std::{
 };
 
 use async_trait::async_trait;
-use log::{debug, error, info, trace, warn};
 use tonic::{Request, Response, Status};
 use CommonLibrary::Environment::Requires::Requires;
 // ============ Feature Flags & Telemetry ============
@@ -44,6 +43,7 @@ use opentelemetry::{
 };
 
 use crate::{
+use crate::dev_log;
 	Environment::MountainEnvironment::MountainEnvironment,
 	Vine::Generated::{
 		DeleteFileRequest,
@@ -125,7 +125,7 @@ pub struct WorkspaceService {
 impl WorkspaceService {
 	pub fn Create(environment:MountainEnvironment) -> Self {
 		let metrics = WorkspaceMetrics::new();
-		info!("[WorkspaceService] Initializing workspace service");
+		dev_log!("grpc", "[WorkspaceService] Initializing workspace service");
 		Self { environment, metrics }
 	}
 
@@ -138,11 +138,11 @@ impl WorkspaceService {
 		#[cfg(feature = "Telemetry")]
 		span.set_attribute(KeyValue::new("file.path", path.clone()));
 
-		info!("[WorkspaceService] Reading file: {}", path);
+		dev_log!("grpc", "[WorkspaceService] Reading file: {}", path);
 
 		// Validate path
 		if let Err(err) = self.ValidatePath(&path) {
-			error!("[WorkspaceService] Invalid path: {}", err);
+			dev_log!("grpc", "error: [WorkspaceService] Invalid path: {}", err);
 			return Err(Status::invalid_argument(err));
 		}
 
@@ -154,7 +154,7 @@ impl WorkspaceService {
 				let elapsed = start_time.elapsed();
 				let bytes = content.len() as u64;
 
-				debug!("[WorkspaceService] File read successfully: {} bytes in {:?}", bytes, elapsed);
+				dev_log!("grpc", "[WorkspaceService] File read successfully: {} bytes in {:?}", bytes, elapsed);
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -168,7 +168,7 @@ impl WorkspaceService {
 				Ok(Response::new(ReadFileResponse { content, found:true }))
 			},
 			Err(err) => {
-				warn!("[WorkspaceService] File not found or error: {} (path: {})", err, path);
+				dev_log!("grpc", "warn: [WorkspaceService] File not found or error: {} (path: {})", err, path);
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -191,7 +191,7 @@ impl WorkspaceService {
 		#[cfg(feature = "Telemetry")]
 		span.set_attribute(KeyValue::new("file.path", path.clone()));
 
-		info!("[WorkspaceService] Writing file: {}", path);
+		dev_log!("grpc", "[WorkspaceService] Writing file: {}", path);
 
 		// Validate path and content
 		if let Err(err) = self.ValidatePath(&path) {
@@ -225,7 +225,7 @@ impl WorkspaceService {
 				Ok(Response::new(Empty {}))
 			},
 			Err(err) => {
-				error!("[WorkspaceService] Failed to write file: {}", err);
+				dev_log!("grpc", "error: [WorkspaceService] Failed to write file: {}", err);
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -243,7 +243,7 @@ impl WorkspaceService {
 		let req = request.into_inner();
 		let path = req.path.clone();
 
-		info!("[WorkspaceService] Deleting file: {}", path);
+		dev_log!("grpc", "[WorkspaceService] Deleting file: {}", path);
 
 		if let Err(err) = self.ValidatePath(&path) {
 			return Err(Status::invalid_argument(err));
@@ -252,11 +252,11 @@ impl WorkspaceService {
 		let workspace = self.environment.Require();
 		match workspace.DeleteFile(path.clone(), req.use_trash.unwrap_or(false)).await {
 			Ok(_) => {
-				debug!("[WorkspaceService] File deleted successfully");
+				dev_log!("grpc", "[WorkspaceService] File deleted successfully");
 				Ok(Response::new(Empty {}))
 			},
 			Err(err) => {
-				error!("[WorkspaceService] Failed to delete file: {}", err);
+				dev_log!("grpc", "error: [WorkspaceService] Failed to delete file: {}", err);
 				Err(Status::internal(format!("Failed to delete file: {}", err)))
 			},
 		}
@@ -273,7 +273,7 @@ impl WorkspaceService {
 		#[cfg(feature = "Telemetry")]
 		span.set_attribute(KeyValue::new("query", req.query.clone()));
 
-		info!(
+		dev_log!("grpc", 
 			"[WorkspaceService] Searching files: pattern={}, query={}",
 			req.pattern, req.query
 		);
@@ -306,7 +306,7 @@ impl WorkspaceService {
 				Ok(Response::new(SearchFilesResponse { results }))
 			},
 			Err(err) => {
-				error!("[WorkspaceService] Search failed: {}", err);
+				dev_log!("grpc", "error: [WorkspaceService] Search failed: {}", err);
 				#[cfg(feature = "Telemetry")]
 				{
 					span.end();
@@ -320,12 +320,12 @@ impl WorkspaceService {
 		&self,
 		request:Request<GetWorkspaceFoldersRequest>,
 	) -> Result<Response<GetWorkspaceFoldersResponse>, Status> {
-		info!("[WorkspaceService] Getting workspace folders");
+		dev_log!("grpc", "[WorkspaceService] Getting workspace folders");
 
 		let workspace = self.environment.Require();
 		match workspace.GetWorkspaceFolders().await {
 			Ok(folders) => {
-				debug!("[WorkspaceService] Found {} workspace folders", folders.len());
+				dev_log!("grpc", "[WorkspaceService] Found {} workspace folders", folders.len());
 				Ok(Response::new(GetWorkspaceFoldersResponse { folders }))
 			},
 			Err(err) => Err(Status::internal(format!("Failed to get folders: {}", err))),
@@ -334,7 +334,7 @@ impl WorkspaceService {
 
 	pub async fn WatchFile(&self, request:Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		info!("[WorkspaceService] Watching file: {:?}", req.path);
+		dev_log!("grpc", "[WorkspaceService] Watching file: {:?}", req.path);
 
 		if let Err(err) = self.ValidatePath(&req.path) {
 			return Err(Status::invalid_argument(err));
@@ -343,11 +343,11 @@ impl WorkspaceService {
 		let workspace = self.environment.Require();
 		match workspace.WatchFile(req.path, req.recursive.unwrap_or(true)).await {
 			Ok(_) => {
-				debug!("[WorkspaceService] Watcher created successfully");
+				dev_log!("grpc", "[WorkspaceService] Watcher created successfully");
 				Ok(Response::new(Empty {}))
 			},
 			Err(err) => {
-				error!("[WorkspaceService] Failed to watch file: {}", err);
+				dev_log!("grpc", "error: [WorkspaceService] Failed to watch file: {}", err);
 				Err(Status::internal(format!("Failed to watch file: {}", err)))
 			},
 		}

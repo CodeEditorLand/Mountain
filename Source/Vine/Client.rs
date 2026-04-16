@@ -54,7 +54,6 @@ use std::{
 };
 
 use lazy_static::lazy_static;
-use log::{debug, error, info};
 use parking_lot::Mutex;
 use serde_json::{Value, from_slice, to_vec};
 use tokio::time::timeout;
@@ -63,6 +62,7 @@ use super::{
 	Error::VineError,
 	Generated::{GenericNotification, GenericRequest, cocoon_service_client::CocoonServiceClient},
 };
+use crate::dev_log;
 
 /// Type alias for the Cocoon gRPC client with Channel transport
 type CocoonClient = CocoonServiceClient<tonic::transport::Channel>;
@@ -129,7 +129,7 @@ lazy_static! {
 /// # }
 /// ```
 pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Result<(), VineError> {
-	info!("[VineClient] Connecting to sidecar '{}' at '{}'...", SideCarIdentifier, Address);
+	dev_log!("grpc", "[VineClient] Connecting to sidecar '{}' at '{}'...", SideCarIdentifier, Address);
 
 	let endpoint = format!("http://{}", Address);
 
@@ -151,7 +151,7 @@ pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Resul
 				ConnectionMetadata { LastActivity:Instant::now(), FailureCount:0, IsHealthy:true },
 			);
 
-			info!("[VineClient] Successfully connected to sidecar '{}'", SideCarIdentifier);
+			dev_log!("grpc", "[VineClient] Successfully connected to sidecar '{}'", SideCarIdentifier);
 
 			return Ok(result?);
 		}
@@ -217,7 +217,7 @@ pub fn DisconnectFromSideCar(SideCarIdentifier:String) -> Result<(), VineError> 
 	if clients.remove(&SideCarIdentifier).is_some() {
 		CONNECTION_METADATA.lock().remove(&SideCarIdentifier);
 
-		info!("[VineClient] Disconnected from sidecar '{}'", SideCarIdentifier);
+		dev_log!("grpc", "[VineClient] Disconnected from sidecar '{}'", SideCarIdentifier);
 
 		Ok(())
 	} else {
@@ -383,7 +383,7 @@ pub async fn SendRequest(
 	match result {
 		Ok(Ok(response)) => {
 			UpdateSideCarActivity(SideCarIdentifier);
-			debug!(
+			dev_log!("grpc", 
 				"[VineClient] Request sent successfully to sidecar '{}': method='{}'",
 				SideCarIdentifier, method_clone
 			);
@@ -460,15 +460,13 @@ pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameter
 		match client.send_mountain_notification(request).await {
 			Ok(_) => {
 				UpdateSideCarActivity(&SideCarIdentifier);
-				debug!("[VineClient] Notification sent successfully to sidecar '{}'", SideCarIdentifier);
+				dev_log!("grpc", "[VineClient] Notification sent successfully to sidecar '{}'", SideCarIdentifier);
 				Ok(())
 			},
 			Err(status) => {
 				RecordSideCarFailure(&SideCarIdentifier);
-				error!(
-					"[VineClient] Failed to send notification to sidecar '{}': {}",
-					SideCarIdentifier, status
-				);
+				dev_log!("grpc", "error: [VineClient] Failed to send notification to sidecar '{}': {}",
+					SideCarIdentifier, status);
 				Err(VineError::from(status))
 			},
 		}

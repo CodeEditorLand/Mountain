@@ -119,11 +119,11 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	FileSystem::{DTO::FileTypeDTO::FileTypeDTO, ReadDirectory::ReadDirectory, ReadFile::ReadFile},
 };
-use log::{trace, warn};
 use serde_json::{Map, Value};
 use tauri::Manager;
 
 use crate::{
+use crate::dev_log;
 	ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO},
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
@@ -147,11 +147,9 @@ pub async fn ScanDirectoryForExtensions(
 		Ok(entries) => entries,
 
 		Err(error) => {
-			warn!(
-				"[ExtensionScanner] Could not read extension directory '{}': {}. Skipping.",
+			dev_log!("extensions", "warn: [ExtensionScanner] Could not read extension directory '{}': {}. Skipping.",
 				DirectoryPath.display(),
-				error
-			);
+				error);
 
 			return Ok(Vec::new());
 		},
@@ -163,7 +161,7 @@ pub async fn ScanDirectoryForExtensions(
 
 			let PackageJsonPath = PotentialExtensionPath.join("package.json");
 
-			trace!(
+			dev_log!("extensions", 
 				"[ExtensionScanner] Checking for package.json in: {}",
 				PotentialExtensionPath.display()
 			);
@@ -193,11 +191,9 @@ pub async fn ScanDirectoryForExtensions(
 					},
 
 					Err(error) => {
-						warn!(
-							"[ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
+						dev_log!("extensions", "warn: [ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
 							PotentialExtensionPath.display(),
-							error
-						);
+							error);
 					},
 				}
 			}

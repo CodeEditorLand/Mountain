@@ -5,9 +5,9 @@
 use std::path::Path;
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::trace;
 
 use crate::ApplicationState::ApplicationState;
+use crate::dev_log;
 
 /// A critical security helper that checks if a given filesystem path is
 /// allowed for access.
@@ -17,7 +17,7 @@ use crate::ApplicationState::ApplicationState;
 /// performing arbitrary filesystem operations outside the user's intended
 /// scope.
 pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), CommonError> {
-	trace!("[EnvironmentSecurity] Verifying path: {}", PathToCheck.display());
+	dev_log!("vfs", "[EnvironmentSecurity] Verifying path: {}", PathToCheck.display());
 
 	if !ApplicationState.Workspace.IsTrusted.load(std::sync::atomic::Ordering::Relaxed) {
 		return Err(CommonError::FileSystemPermissionDenied {

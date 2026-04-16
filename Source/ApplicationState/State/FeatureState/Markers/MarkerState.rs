@@ -52,9 +52,9 @@ use CommonLibrary::{
 	},
 	StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO,
 };
-use log::debug;
 
 use crate::ApplicationState::DTO::CustomDocumentStateDTO::CustomDocumentStateDTO;
+use crate::dev_log;
 
 /// Marker-related state containing custom documents, status bar, and SCM state.
 #[derive(Clone)]
@@ -82,7 +82,7 @@ pub struct MarkerState {
 
 impl Default for MarkerState {
 	fn default() -> Self {
-		debug!("[MarkerState] Initializing default marker state...");
+		dev_log!("extensions", "[MarkerState] Initializing default marker state...");
 
 		Self {
 			ActiveCustomDocuments:Arc::new(StandardMutex::new(HashMap::new())),
@@ -115,7 +115,7 @@ impl MarkerState {
 	pub fn AddOrUpdateCustomDocument(&self, id:String, document:CustomDocumentStateDTO) {
 		if let Ok(mut guard) = self.ActiveCustomDocuments.lock() {
 			guard.insert(id, document);
-			debug!("[MarkerState] Custom document added/updated");
+			dev_log!("extensions", "[MarkerState] Custom document added/updated");
 		}
 	}
 
@@ -123,7 +123,7 @@ impl MarkerState {
 	pub fn RemoveCustomDocument(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveCustomDocuments.lock() {
 			guard.remove(id);
-			debug!("[MarkerState] Custom document removed: {}", id);
+			dev_log!("extensions", "[MarkerState] Custom document removed: {}", id);
 		}
 	}
 
@@ -140,7 +140,7 @@ impl MarkerState {
 	pub fn AddOrUpdateStatusBarItem(&self, id:String, item:StatusBarEntryDTO) {
 		if let Ok(mut guard) = self.ActiveStatusBarItems.lock() {
 			guard.insert(id, item);
-			debug!("[MarkerState] Status bar item added/updated");
+			dev_log!("extensions", "[MarkerState] Status bar item added/updated");
 		}
 	}
 
@@ -148,7 +148,7 @@ impl MarkerState {
 	pub fn RemoveStatusBarItem(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveStatusBarItems.lock() {
 			guard.remove(id);
-			debug!("[MarkerState] Status bar item removed: {}", id);
+			dev_log!("extensions", "[MarkerState] Status bar item removed: {}", id);
 		}
 	}
 }

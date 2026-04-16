@@ -43,7 +43,7 @@
 //! #[cfg(feature = "Telemetry")]
 //! #[instrument(skip(env))]
 //! async fn process_command(env:&MountainEnvironment, command:Command) {
-//! 	info!("Processing command: {:?}", command);
+//! 	dev_log!("lifecycle", "Processing command: {:?}", command);
 //! 	// ... command processing logic
 //! }
 //! ```
@@ -109,3 +109,4 @@ pub fn is_debug_build() -> bool { cfg!(debug_assertions) }
 /// Check if this is a development build
 #[inline]
 pub fn is_development_build() -> bool { cfg!(feature = "Development") || cfg!(debug_assertions) }
+use crate::dev_log;

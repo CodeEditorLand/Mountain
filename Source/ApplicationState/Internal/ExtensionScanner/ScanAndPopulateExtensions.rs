@@ -33,11 +33,11 @@
 use std::{collections::HashMap, path::PathBuf};
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{debug, error, info, trace, warn};
 use serde_json::Value;
 use tauri::AppHandle;
 
 use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, ExtensionManagement};
+use crate::dev_log;
 
 /// Scans all registered extension paths for valid extensions and populates the
 /// state.
@@ -58,7 +58,7 @@ pub async fn ScanAndPopulateExtensions(
 	ApplicationHandle:AppHandle,
 	_State:&crate::ApplicationState::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
-	info!("[ExtensionScanner] Starting extension scan...");
+	dev_log!("extensions", "[ExtensionScanner] Starting extension scan...");
 
 	let mut all_found_extensions:HashMap<String, ExtensionDescriptionStateDTO> = HashMap::new();
 
@@ -66,7 +66,7 @@ pub async fn ScanAndPopulateExtensions(
 	// For now, this is a placeholder showing the structure
 	let scan_paths:Vec<PathBuf> = _State.Registry.GetExtensionScanPaths();
 
-	trace!("[ExtensionScanner] Scanning paths: {:?}", scan_paths);
+	dev_log!("extensions", "[ExtensionScanner] Scanning paths: {:?}", scan_paths);
 
 	let mut successful_scans = 0;
 	let mut failed_scans = 0;
@@ -91,11 +91,9 @@ pub async fn ScanAndPopulateExtensions(
 			},
 			Err(error) => {
 				failed_scans += 1;
-				warn!(
-					"[ExtensionScanner] Failed to scan extension path '{}': {}",
+				dev_log!("extensions", "warn: [ExtensionScanner] Failed to scan extension path '{}': {}",
 					path.display(),
-					error
-				);
+					error);
 			},
 		}
 	}
@@ -110,7 +108,7 @@ pub async fn ScanAndPopulateExtensions(
 		}
 	}
 
-	debug!(
+	dev_log!("extensions", 
 		"[ExtensionScanner] Extension scan complete. Found {} extensions ({} successful scans, {} failed scans).",
 		all_found_extensions.len(),
 		successful_scans,
@@ -118,7 +116,7 @@ pub async fn ScanAndPopulateExtensions(
 	);
 
 	if failed_scans > 0 {
-		warn!("[ExtensionScanner] {} extension paths failed to scan", failed_scans);
+		dev_log!("extensions", "warn: [ExtensionScanner] {} extension paths failed to scan", failed_scans);
 	}
 
 	Ok(())
@@ -142,7 +140,7 @@ pub async fn ScanExtensionsWithRecovery(
 	ApplicationHandle:AppHandle,
 	State:&crate::ApplicationState::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
-	info!("[ExtensionScanner] Starting robust extension scan with recovery...");
+	dev_log!("extensions", "[ExtensionScanner] Starting robust extension scan with recovery...");
 
 	// Clear potentially corrupted extension state first
 	// Note: Would clear
@@ -151,13 +149,13 @@ pub async fn ScanExtensionsWithRecovery(
 	// Perform the scan
 	match ScanAndPopulateExtensions(ApplicationHandle.clone(), State).await {
 		Ok(()) => {
-			info!("[ExtensionScanner] Robust extension scan completed successfully");
+			dev_log!("extensions", "[ExtensionScanner] Robust extension scan completed successfully");
 			Ok(())
 		},
 		Err(error) => {
-			error!("[ExtensionScanner] Robust extension scan failed: {}", error);
+			dev_log!("extensions", "error: [ExtensionScanner] Robust extension scan failed: {}", error);
 			// Attempt recovery by clearing state and retrying once
-			warn!("[ExtensionScanner] Attempting recovery from extension scan failure...");
+			dev_log!("extensions", "warn: [ExtensionScanner] Attempting recovery from extension scan failure...");
 
 			// Clear state again
 			// Note: Would clear

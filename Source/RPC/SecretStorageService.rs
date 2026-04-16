@@ -30,7 +30,6 @@ use std::{
 };
 
 use async_trait::async_trait;
-use log::{debug, error, info, trace, warn};
 use tonic::{Request, Response, Status};
 use CommonLibrary::Environment::Requires::Requires;
 // ============ Feature Flags & Telemetry ============
@@ -43,6 +42,7 @@ use opentelemetry::{
 };
 
 use crate::{
+use crate::dev_log;
 	Environment::MountainEnvironment::MountainEnvironment,
 	RPC::SecretStorageState::SecretStorageState,
 	Vine::Generated::{DeleteSecretRequest, Empty, RetrieveSecretRequest, RetrieveSecretResponse, StoreSecretRequest},
@@ -109,7 +109,7 @@ pub struct SecretStorageService {
 impl SecretStorageService {
 	pub fn Create(environment:MountainEnvironment, state_manager:Arc<SecretStorageState>) -> Self {
 		let metrics = SecretMetrics::new();
-		info!("[SecretStorageService] Initializing secret storage service");
+		dev_log!("grpc", "[SecretStorageService] Initializing secret storage service");
 		Self { environment, state_manager, metrics }
 	}
 
@@ -125,16 +125,16 @@ impl SecretStorageService {
 		#[cfg(feature = "Telemetry")]
 		span.set_attribute(KeyValue::new("secret.key", key.clone()));
 
-		info!("[SecretStorageService] Storing secret for extension: {}", extension_id);
+		dev_log!("grpc", "[SecretStorageService] Storing secret for extension: {}", extension_id);
 
 		// Validate input
 		if let Err(err) = self.ValidateKey(&key) {
-			error!("[SecretStorageService] Invalid key: {}", err);
+			dev_log!("grpc", "error: [SecretStorageService] Invalid key: {}", err);
 			return Err(Status::invalid_argument(err));
 		}
 
 		if let Err(err) = self.ValidateSecret(&req.secret, &req.secret_type) {
-			error!("[SecretStorageService] Invalid secret: {}", err);
+			dev_log!("grpc", "error: [SecretStorageService] Invalid secret: {}", err);
 			return Err(Status::invalid_argument(err));
 		}
 
@@ -148,7 +148,7 @@ impl SecretStorageService {
 		{
 			Ok(_) => {
 				let elapsed = start_time.elapsed();
-				debug!("[SecretStorageService] Secret stored successfully in {:?}", elapsed);
+				dev_log!("grpc", "[SecretStorageService] Secret stored successfully in {:?}", elapsed);
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -161,7 +161,7 @@ impl SecretStorageService {
 				Ok(Response::new(Empty {}))
 			},
 			Err(err) => {
-				error!("[SecretStorageService] Failed to store secret: {}", err);
+				dev_log!("grpc", "error: [SecretStorageService] Failed to store secret: {}", err);
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -187,7 +187,7 @@ impl SecretStorageService {
 		#[cfg(feature = "Telemetry")]
 		span.set_attribute(KeyValue::new("extension.id", extension_id.clone()));
 
-		info!("[SecretStorageService] Retrieving secret for extension: {}", extension_id);
+		dev_log!("grpc", "[SecretStorageService] Retrieving secret for extension: {}", extension_id);
 
 		let start_time = Instant::now();
 
@@ -201,7 +201,7 @@ impl SecretStorageService {
 		match secret_store.RetrieveSecret(extension_id.clone(), key.clone()).await {
 			Ok(secret) => {
 				let elapsed = start_time.elapsed();
-				debug!("[SecretStorageService] Secret retrieved successfully in {:?}", elapsed);
+				dev_log!("grpc", "[SecretStorageService] Secret retrieved successfully in {:?}", elapsed);
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -214,7 +214,7 @@ impl SecretStorageService {
 				Ok(Response::new(RetrieveSecretResponse { secret }))
 			},
 			Err(err) => {
-				warn!("[SecretStorageService] Secret not found: {} (key: {})", err, key);
+				dev_log!("grpc", "warn: [SecretStorageService] Secret not found: {} (key: {})", err, key);
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -239,7 +239,7 @@ impl SecretStorageService {
 		#[cfg(feature = "Telemetry")]
 		span.set_attribute(KeyValue::new("extension.id", extension_id.clone()));
 
-		info!("[SecretStorageService] Deleting secret for extension: {}", extension_id);
+		dev_log!("grpc", "[SecretStorageService] Deleting secret for extension: {}", extension_id);
 
 		// Validate input
 		if let Err(err) = self.ValidateKey(&key) {
@@ -250,7 +250,7 @@ impl SecretStorageService {
 		let secret_store = self.environment.Require();
 		match secret_store.DeleteSecret(extension_id.clone(), key.clone()).await {
 			Ok(_) => {
-				debug!("[SecretStorageService] Secret deleted successfully");
+				dev_log!("grpc", "[SecretStorageService] Secret deleted successfully");
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -262,7 +262,7 @@ impl SecretStorageService {
 				Ok(Response::new(Empty {}))
 			},
 			Err(err) => {
-				warn!("[SecretStorageService] Failed to delete secret: {}", err);
+				dev_log!("grpc", "warn: [SecretStorageService] Failed to delete secret: {}", err);
 
 				#[cfg(feature = "Telemetry")]
 				{
@@ -299,7 +299,7 @@ impl SecretStorageService {
 		match secret_type {
 			"password" | "token" | "api_key" => {}, // No additional validation
 			_ => {
-				warn!("[SecretStorageService] Unknown secret type: {}", secret_type);
+				dev_log!("grpc", "warn: [SecretStorageService] Unknown secret type: {}", secret_type);
 			},
 		}
 		Ok(())

@@ -19,7 +19,6 @@
 
 use std::sync::Arc;
 
-use log::{debug, error, info, warn};
 // ============ Feature Flags ============
 #[cfg(feature = "Telemetry")]
 use opentelemetry::{KeyValue, global};
@@ -29,6 +28,7 @@ use opentelemetry::trace::Tracer;
 use opentelemetry::trace::Span;
 
 use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
+use crate::dev_log;
 
 /// State build configuration
 #[derive(Debug)]
@@ -91,10 +91,10 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 	#[cfg(feature = "Telemetry")]
 	let span = global::tracer("StateBuild").start("Build");
 
-	info!("[StateBuild] Initializing application state");
+	dev_log!("lifecycle", "[StateBuild] Initializing application state");
 
 	if config.verbose_logging {
-		debug!("[StateBuild] Config: {:?}", config);
+		dev_log!("lifecycle", "[StateBuild] Config: {:?}", config);
 	}
 
 	// Validate required capabilities if strict mode enabled
@@ -103,12 +103,12 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 		span.set_attribute(KeyValue::new("validation", "strict"));
 
 		if let Err(err) = ValidateCapabilities(&environment) {
-			error!("[StateBuild] Capability validation failed: {}", err);
+			dev_log!("lifecycle", "error: [StateBuild] Capability validation failed: {}", err);
 			#[cfg(feature = "Telemetry")]
 			span.set_attribute(KeyValue::new("error", err.clone()));
 			return Err(format!("Capability validation failed: {}", err));
 		}
-		info!("[StateBuild] All required capabilities validated");
+		dev_log!("lifecycle", "[StateBuild] All required capabilities validated");
 	}
 
 	// Create state with injected capabilities
@@ -120,7 +120,7 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 		span.end();
 	}
 
-	info!("[StateBuild] Application state initialized successfully");
+	dev_log!("lifecycle", "[StateBuild] Application state initialized successfully");
 	Ok(state)
 }
 
@@ -134,7 +134,7 @@ fn ValidateCapabilities(_environment:&MountainEnvironment) -> Result<(), String>
 /// Create minimal state for testing (reduced requirements)
 #[cfg(any(test, feature = "Test"))]
 pub fn BuildMinimal(_app_handle:tauri::AppHandle) -> Result<ApplicationState, String> {
-	info!("[StateBuild] Creating minimal test state");
+	dev_log!("lifecycle", "[StateBuild] Creating minimal test state");
 	// Create minimal ApplicationState for tests (no environment needed)
 	// The environment is created later in the actual application lifecycle
 	let app_state = ApplicationState::default();

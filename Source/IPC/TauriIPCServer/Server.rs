@@ -56,13 +56,13 @@
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
-use log::{debug, error, info, trace};
 use tauri::{AppHandle, Emitter, Manager};
 
 use super::super::Message::{TauriIPCMessage, ConnectionStatus, ListenerCallback};
 use super::super::Security::{PermissionManager, SecurityContext, SecurityEvent, SecurityEventType};
 use super::super::Encryption::{MessageCompressor, SecureMessageChannel};
 use super::super::Connection::{ConnectionManager, ConnectionStats};
+use crate::dev_log;
 
 /// Mountain's IPC Server counterpart to Wind's TauriIPCServer
 ///
@@ -133,7 +133,7 @@ impl TauriIPCServer {
 	/// let ipc_server = TauriIPCServer::new(app_handle);
 	/// ```
 	pub fn new(app_handle: AppHandle) -> Self {
-		info!("[TauriIPCServer] Initializing Mountain IPC Server");
+		dev_log!("ipc", "[TauriIPCServer] Initializing Mountain IPC Server");
 
 		Self {
 			app_handle,
@@ -159,7 +159,7 @@ impl TauriIPCServer {
 	/// ipc_server.initialize().await?;
 	/// ```
 	pub async fn initialize(&self) -> Result<(), String> {
-		info!("[TauriIPCServer] Setting up IPC listeners");
+		dev_log!("ipc", "[TauriIPCServer] Setting up IPC listeners");
 
 		// Set up connection status
 		{
@@ -191,7 +191,7 @@ impl TauriIPCServer {
 			.await
 			.map_err(|e| format!("Failed to send connection status: {}", e))?;
 
-		info!("[TauriIPCServer] IPC Server initialized successfully");
+		dev_log!("ipc", "[TauriIPCServer] IPC Server initialized successfully");
 
 		// Process any queued messages
 		self.process_message_queue().await;
@@ -243,7 +243,7 @@ impl TauriIPCServer {
 				.lock()
 				.map_err(|e| format!("Failed to access message queue: {}", e))?;
 			queue.push(message);
-			debug!(
+			dev_log!("ipc", 
 				"[TauriIPCServer] Message queued (channel: {}, queue size: {})",
 				channel,
 				queue.len()
@@ -284,7 +284,7 @@ impl TauriIPCServer {
 			.or_insert_with(Vec::new)
 			.push(callback);
 
-		debug!("[TauriIPCServer] Listener registered for channel: {}", channel);
+		dev_log!("ipc", "[TauriIPCServer] Listener registered for channel: {}", channel);
 		Ok(())
 	}
 
@@ -313,7 +313,7 @@ impl TauriIPCServer {
 			}
 		}
 
-		debug!("[TauriIPCServer] Listener removed from channel: {}", channel);
+		dev_log!("ipc", "[TauriIPCServer] Listener removed from channel: {}", channel);
 		Ok(())
 	}
 
@@ -326,7 +326,7 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Message handled successfully
 	/// - `Err(String)`: Error message if handling fails
 	pub async fn handle_incoming_message(&self, message: TauriIPCMessage) -> Result<(), String> {
-		trace!("[TauriIPCServer] Received message on channel: {}", message.channel);
+		dev_log!("ipc", "[TauriIPCServer] Received message on channel: {}", message.channel);
 
 		let listeners = self
 			.listeners
@@ -336,14 +336,12 @@ impl TauriIPCServer {
 		if let Some(channel_listeners) = listeners.get(&message.channel) {
 			for callback in channel_listeners {
 				if let Err(e) = callback(message.data.clone()) {
-					error!(
-						"[TauriIPCServer] Error in listener for channel {}: {}",
-						message.channel, e
-					);
+					dev_log!("ipc", "error: [TauriIPCServer] Error in listener for channel {}: {}",
+						message.channel, e);
 				}
 			}
 		} else {
-			debug!("[TauriIPCServer] No listeners found for channel: {}", message.channel);
+			dev_log!("ipc", "[TauriIPCServer] No listeners found for channel: {}", message.channel);
 		}
 
 		Ok(())
@@ -364,7 +362,7 @@ impl TauriIPCServer {
 			.emit("vscode-ipc-status", status)
 			.map_err(|e| format!("Failed to emit connection status: {}", e))?;
 
-		debug!("[TauriIPCServer] Connection status sent: {}", connected);
+		dev_log!("ipc", "[TauriIPCServer] Connection status sent: {}", connected);
 		Ok(())
 	}
 
@@ -381,7 +379,7 @@ impl TauriIPCServer {
 			.emit("vscode-ipc-message", message)
 			.map_err(|e| format!("Failed to emit message: {}", e))?;
 
-		trace!("[TauriIPCServer] Message emitted on channel: {}", message.channel);
+		dev_log!("ipc", "[TauriIPCServer] Message emitted on channel: {}", message.channel);
 		Ok(())
 	}
 
@@ -392,21 +390,21 @@ impl TauriIPCServer {
 		let mut queue = match self.message_queue.lock() {
 			Ok(queue) => queue,
 			Err(e) => {
-				error!("[TauriIPCServer] Failed to access message queue: {}", e);
+				dev_log!("ipc", "error: [TauriIPCServer] Failed to access message queue: {}", e);
 				return;
 			}
 		};
 
 		while let Some(message) = queue.pop() {
 			if let Err(e) = self.emit_message(&message).await {
-				error!("[TauriIPCServer] Failed to send queued message: {}", e);
+				dev_log!("ipc", "error: [TauriIPCServer] Failed to send queued message: {}", e);
 				// Put the message back in the queue
 				queue.insert(0, message);
 				break;
 			}
 		}
 
-		debug!(
+		dev_log!("ipc", 
 			"[TauriIPCServer] Message queue processed, {} messages remaining",
 			queue.len()
 		);
@@ -468,7 +466,7 @@ impl TauriIPCServer {
 			*is_connected = false;
 		}
 
-		info!("[TauriIPCServer] IPC Server disposed");
+		dev_log!("ipc", "[TauriIPCServer] IPC Server disposed");
 		Ok(())
 	}
 
@@ -526,7 +524,7 @@ impl TauriIPCServer {
 		let permission_manager_guard = match self.permission_manager.lock() {
 			Ok(guard) => guard,
 			Err(e) => {
-				error!("[TauriIPCServer] Failed to access permission manager: {}", e);
+				dev_log!("ipc", "error: [TauriIPCServer] Failed to access permission manager: {}", e);
 				return;
 			}
 		};
@@ -548,7 +546,7 @@ impl TauriIPCServer {
 		duration: std::time::Duration,
 		success: bool,
 	) {
-		debug!(
+		dev_log!("ipc", 
 			"[TauriIPCServer] Performance recorded - Channel: {}, Duration: {:?}, Success: {}",
 			channel, duration, success
 		);

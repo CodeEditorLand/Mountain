@@ -148,12 +148,12 @@ use CommonLibrary::{
 	Keybinding::KeybindingProvider::KeybindingProvider,
 };
 use async_trait::async_trait;
-use log::{info, warn};
 use serde_json::{Value, json};
 use tauri::Manager;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::dev_log;
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -170,7 +170,7 @@ struct KeybindingRule {
 #[async_trait]
 impl KeybindingProvider for MountainEnvironment {
 	async fn GetResolvedKeybinding(&self) -> Result<Value, CommonError> {
-		info!("[KeybindingProvider] Resolving all keybindings...");
+		dev_log!("keybinding", "[KeybindingProvider] Resolving all keybindings...");
 
 		let mut ResolvedKeybindings:HashMap<String, KeybindingRule> = HashMap::new();
 
@@ -225,7 +225,7 @@ impl KeybindingProvider for MountainEnvironment {
 					}
 				}
 			} else {
-				warn!("[KeybindingProvider] Failed to parse user keybindings.json. It may be malformed.");
+				dev_log!("keybinding", "warn: [KeybindingProvider] Failed to parse user keybindings.json. It may be malformed.");
 			}
 		}
 

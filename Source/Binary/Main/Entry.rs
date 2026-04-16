@@ -60,11 +60,11 @@
 
 use std::sync::Arc;
 
-use log::{debug, error, info, trace, warn};
 use tauri::{App, Manager, RunEvent, Wry};
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 
 use crate::{
+use crate::dev_log;
 	// Crate root imports
 	ApplicationState::ApplicationState,
 	Binary::Build::DnsCommands::init_dns_startup_time,
@@ -116,7 +116,7 @@ use super::AppLifecycle::AppLifecycleSetup;
 /// Logs a checkpoint message at TRACE level.
 macro_rules! TraceStep {
 	($($arg:tt)*) => {{
-		trace!($($arg)*);
+		dev_log!("lifecycle", $($arg)*);
 	}};
 }
 
@@ -156,12 +156,12 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [State] ApplicationState (using StateBuild module)
 		// ---------------------------------------------------------------------
-		debug!("[Boot] [State] Building ApplicationState...");
+		dev_log!("lifecycle", "[Boot] [State] Building ApplicationState...");
 
 		// Create application state directly (StateBuild::Build with default config)
 		let AppState = ApplicationState::default();
 
-		debug!(
+		dev_log!("lifecycle", 
 			"[Boot] [State] ApplicationState created with {} workspace folders.",
 			AppState.Workspace.WorkspaceFolders.lock().map(|f| f.len()).unwrap_or(0)
 		);
@@ -200,13 +200,13 @@ pub fn Fn() {
 				let LocalhostUrl = LocalhostUrl.clone();
 				let ServerPortForClosure = ServerPort;
 				move |app:&mut App| {
-					info!("[Lifecycle] [Setup] Setup hook started.");
-					debug!("[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
+					dev_log!("lifecycle", "[Lifecycle] [Setup] Setup hook started.");
+					dev_log!("lifecycle", "[Lifecycle] [Setup] LocalhostUrl={}", LocalhostUrl);
 
 					// ---------------------------------------------------------
 					// [Service Registry] Initialize service registry for land:// routing
 					// ---------------------------------------------------------
-					info!("[Lifecycle] [Setup] Initializing ServiceRegistry for land:// scheme...");
+					dev_log!("lifecycle", "[Lifecycle] [Setup] Initializing ServiceRegistry for land:// scheme...");
 					let service_registry = ServiceRegistryFn::new();
 					init_service_registry(service_registry.clone());
 
@@ -214,7 +214,7 @@ pub fn Fn() {
 					// [Service Registry] Register local HTTP services
 					// ---------------------------------------------------------
 					// Register the main code editor service
-					info!(
+					dev_log!("lifecycle", 
 						"[Lifecycle] [Setup] Registering code.editor.land service on port {}",
 						ServerPortForClosure
 					);
@@ -228,27 +228,27 @@ pub fn Fn() {
 
 					// Make the registry available as managed state for Tauri commands
 					app.manage(service_registry);
-					info!("[Lifecycle] [Setup] ServiceRegistry initialized and services registered.");
+					dev_log!("lifecycle", "[Lifecycle] [Setup] ServiceRegistry initialized and services registered.");
 
 					// ---------------------------------------------------------
 					// [DNS Server] Start the Hickory DNS server
 					// ---------------------------------------------------------
 					// The DNS server must start BEFORE any webview loads to ensure
 					// that land:// protocol_resolution is available
-					info!("[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
+					dev_log!("lifecycle", "[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
 					let dns_port = mist::start(5380).unwrap_or_else(|e| {
-						warn!("[Lifecycle] [Setup] Failed to start DNS server on port 5380: {}", e);
+						dev_log!("lifecycle", "warn: [Lifecycle] [Setup] Failed to start DNS server on port 5380: {}", e);
 						// Fallback to random port if preferred port fails
 						mist::start(0).unwrap_or_else(|e| {
-							error!("[Lifecycle] [Setup] Completely failed to start DNS server: {}", e);
+							dev_log!("lifecycle", "error: [Lifecycle] [Setup] Completely failed to start DNS server: {}", e);
 							0 // Return 0 as error indicator
 						})
 					});
 
 					if dns_port == 0 {
-						warn!("[Lifecycle] [Setup] DNS server failed to start, land:// protocol will not be available");
+						dev_log!("lifecycle", "warn: [Lifecycle] [Setup] DNS server failed to start, land:// protocol will not be available");
 					} else {
-						info!("[Lifecycle] [Setup] DNS server started successfully on port {}", dns_port);
+						dev_log!("lifecycle", "[Lifecycle] [Setup] DNS server started successfully on port {}", dns_port);
 						// Initialize DNS startup time for tracking
 						crate::Binary::Build::DnsCommands::init_dns_startup_time();
 					}
@@ -271,7 +271,7 @@ pub fn Fn() {
 						SchedulerForClosure.clone(),
 						AppStateArcFromClosure,
 					) {
-						error!("[Lifecycle] [Setup] Failed to setup lifecycle: {}", e);
+						dev_log!("lifecycle", "error: [Lifecycle] [Setup] Failed to setup lifecycle: {}", e);
 					}
 
 					Ok(())
@@ -353,30 +353,30 @@ pub fn Fn() {
 					match &event {
 						RunEvent::MainEventsCleared => {},
 						RunEvent::WindowEvent { .. } => {},
-						_ => debug!("[Lifecycle] [RunEvent] {:?}", event),
+						_ => dev_log!("lifecycle", "[Lifecycle] [RunEvent] {:?}", event),
 					}
 				}
 
 				if let RunEvent::ExitRequested { api, .. } = event {
-					warn!("[Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown...");
+					dev_log!("lifecycle", "warn: [Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown...");
 					api.prevent_exit();
 
 					let SchedulerHandle = Scheduler.clone();
 					let app_handle_clone = app_handle.clone();
 
 					tokio::spawn(async move {
-						debug!("[Lifecycle] [Shutdown] Shutting down ApplicationRunTime...");
+						dev_log!("lifecycle", "[Lifecycle] [Shutdown] Shutting down ApplicationRunTime...");
 						let _ = RuntimeShutdownFn(&app_handle_clone).await;
 
-						debug!("[Lifecycle] [Shutdown] Stopping Echo scheduler...");
+						dev_log!("lifecycle", "[Lifecycle] [Shutdown] Stopping Echo scheduler...");
 						let _ = SchedulerShutdownFn(SchedulerHandle).await;
 
-						info!("[Lifecycle] [Shutdown] Done. Exiting process.");
+						dev_log!("lifecycle", "[Lifecycle] [Shutdown] Done. Exiting process.");
 						app_handle_clone.exit(0);
 					});
 				}
 			});
 
-		info!("[Lifecycle] [Exit] Mountain application has shut down.");
+		dev_log!("lifecycle", "[Lifecycle] [Exit] Mountain application has shut down.");
 	});
 }

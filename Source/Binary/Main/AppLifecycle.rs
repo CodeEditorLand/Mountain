@@ -66,11 +66,11 @@
 
 use std::sync::Arc;
 
-use log::{debug, error, info, trace, warn};
 use tauri::Manager;
 use Echo::Scheduler::Scheduler::Scheduler;
 
 use crate::{
+use crate::dev_log;
 	// Crate root imports
 	ApplicationState::ApplicationState,
 	// Binary submodule imports
@@ -93,7 +93,7 @@ use crate::{
 /// Logs a checkpoint message at TRACE level.
 macro_rules! TraceStep {
 	($($arg:tt)*) => {{
-		trace!($($arg)*);
+		dev_log!("lifecycle", $($arg)*);
 	}};
 }
 
@@ -130,8 +130,8 @@ pub fn AppLifecycleSetup(
 	scheduler:Arc<Scheduler>,
 	app_state:Arc<ApplicationState>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-	info!("[Lifecycle] [Setup] Setup hook started.");
-	debug!("[Lifecycle] [Setup] LocalhostUrl={}", localhost_url);
+	dev_log!("lifecycle", "[Lifecycle] [Setup] Setup hook started.");
+	dev_log!("lifecycle", "[Lifecycle] [Setup] LocalhostUrl={}", localhost_url);
 
 	let app_handle_for_setup = app_handle.clone();
 	TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
@@ -139,38 +139,38 @@ pub fn AppLifecycleSetup(
 	// -------------------------------------------------------------------------
 	// [UI] [Tray] Initialize System Tray
 	// -------------------------------------------------------------------------
-	debug!("[UI] [Tray] Initializing system tray...");
+	dev_log!("lifecycle", "[UI] [Tray] Initializing system tray...");
 	if let Err(Error) = EnableTrayFn::enable_tray(app) {
-		error!("[UI] [Tray] Failed to enable tray: {}", Error);
+		dev_log!("lifecycle", "error: [UI] [Tray] Failed to enable tray: {}", Error);
 	}
 
 	// -------------------------------------------------------------------------
 	// [Lifecycle] [Commands] Register native commands
 	// -------------------------------------------------------------------------
-	debug!("[Lifecycle] [Commands] Registering native commands...");
+	dev_log!("lifecycle", "[Lifecycle] [Commands] Registering native commands...");
 	if let Err(e) = CommandRegisterFn(&app_handle_for_setup, &app_state) {
-		error!("[Lifecycle] [Commands] Failed to register commands: {}", e);
+		dev_log!("lifecycle", "error: [Lifecycle] [Commands] Failed to register commands: {}", e);
 	}
-	debug!("[Lifecycle] [Commands] Native commands registered.");
+	dev_log!("lifecycle", "[Lifecycle] [Commands] Native commands registered.");
 
 	// -------------------------------------------------------------------------
 	// [Lifecycle] [IPC] Initialize IPC Server
 	// -------------------------------------------------------------------------
-	debug!("[Lifecycle] [IPC] Initializing Mountain IPC Server...");
+	dev_log!("lifecycle", "[Lifecycle] [IPC] Initializing Mountain IPC Server...");
 	if let Err(e) = IPCServerRegisterFn(&app_handle_for_setup) {
-		error!("[Lifecycle] [IPC] Failed to register IPC server: {}", e);
+		dev_log!("lifecycle", "error: [Lifecycle] [IPC] Failed to register IPC server: {}", e);
 	}
 
 	// -------------------------------------------------------------------------
 	// [UI] [Window] Build main window
 	// -------------------------------------------------------------------------
-	debug!("[UI] [Window] Building main window...");
+	dev_log!("lifecycle", "[UI] [Window] Building main window...");
 	let MainWindow = WindowBuildFn(app, localhost_url.clone());
-	info!("[UI] [Window] Main window ready.");
+	dev_log!("lifecycle", "[UI] [Window] Main window ready.");
 
 	#[cfg(debug_assertions)]
 	{
-		debug!("[UI] [Window] Debug build: opening DevTools.");
+		dev_log!("lifecycle", "[UI] [Window] Debug build: opening DevTools.");
 		MainWindow.open_devtools();
 	}
 
@@ -199,7 +199,7 @@ pub fn AppLifecycleSetup(
 				.join("../../../Element/Sky/Target")
 		});
 		crate::IPC::WindServiceHandlers::set_static_application_root(SkyTargetDir.to_string_lossy().to_string());
-		debug!("[Lifecycle] [Dirs] Static application root: {}", SkyTargetDir.display());
+		dev_log!("lifecycle", "[Lifecycle] [Dirs] Static application root: {}", SkyTargetDir.display());
 
 		// Every directory VS Code may stat or readdir during startup
 		let Dirs = [
@@ -226,7 +226,7 @@ pub fn AppLifecycleSetup(
 		];
 		for Dir in &Dirs {
 			if let Err(Error) = std::fs::create_dir_all(Dir) {
-				warn!("[Lifecycle] [Dirs] Failed to create {}: {}", Dir.display(), Error);
+				dev_log!("lifecycle", "warn: [Lifecycle] [Dirs] Failed to create {}: {}", Dir.display(), Error);
 			}
 		}
 
@@ -247,45 +247,45 @@ pub fn AppLifecycleSetup(
 		// Set GlobalMementoPath now that we know the real Tauri app data dir
 		if let Ok(mut Path) = app_state.GlobalMementoPath.lock() {
 			*Path = AppDataDir.join("User/globalStorage/global.json");
-			debug!("[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
+			dev_log!("lifecycle", "[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
 		}
-		debug!("[Lifecycle] [Dirs] Userdata directories ensured at {}", AppDataDir.display());
+		dev_log!("lifecycle", "[Lifecycle] [Dirs] Userdata directories ensured at {}", AppDataDir.display());
 	}
 
 	// -------------------------------------------------------------------------
 	// [Backend] [Env] Mountain environment
 	// -------------------------------------------------------------------------
-	debug!("[Backend] [Env] Creating MountainEnvironment...");
+	dev_log!("lifecycle", "[Backend] [Env] Creating MountainEnvironment...");
 	let Environment = Arc::new(MountainEnvironment::Create(app_handle_for_setup.clone(), app_state.clone()));
-	info!("[Backend] [Env] MountainEnvironment ready.");
+	dev_log!("lifecycle", "[Backend] [Env] MountainEnvironment ready.");
 
 	// -------------------------------------------------------------------------
 	// [Backend] [Runtime] ApplicationRunTime
 	// -------------------------------------------------------------------------
-	debug!("[Backend] [Runtime] Creating ApplicationRunTime...");
+	dev_log!("lifecycle", "[Backend] [Runtime] Creating ApplicationRunTime...");
 	let Runtime = Arc::new(ApplicationRunTime::Create(scheduler.clone(), Environment.clone()));
 	app_handle_for_setup.manage(Runtime.clone());
-	info!("[Backend] [Runtime] ApplicationRunTime managed.");
+	dev_log!("lifecycle", "[Backend] [Runtime] ApplicationRunTime managed.");
 
 	// -------------------------------------------------------------------------
 	// [Lifecycle] [IPC] Initialize Status Reporter
 	// -------------------------------------------------------------------------
 	if let Err(e) = StatusReporterRegisterFn(&app_handle_for_setup, Runtime.clone()) {
-		error!("[Lifecycle] [IPC] Failed to initialize status reporter: {}", e);
+		dev_log!("lifecycle", "error: [Lifecycle] [IPC] Failed to initialize status reporter: {}", e);
 	}
 
 	// -------------------------------------------------------------------------
 	// [Lifecycle] [IPC] Initialize Advanced Features
 	// -------------------------------------------------------------------------
 	if let Err(e) = AdvancedFeaturesRegisterFn(&app_handle_for_setup, Runtime.clone()) {
-		error!("[Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
+		dev_log!("lifecycle", "error: [Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
 	}
 
 	// -------------------------------------------------------------------------
 	// [Lifecycle] [IPC] Initialize Wind Advanced Sync
 	// -------------------------------------------------------------------------
 	if let Err(e) = WindSyncRegisterFn(&app_handle_for_setup, Runtime.clone()) {
-		error!("[Lifecycle] [IPC] Failed to initialize wind advanced sync: {}", e);
+		dev_log!("lifecycle", "error: [Lifecycle] [IPC] Failed to initialize wind advanced sync: {}", e);
 	}
 
 	// -------------------------------------------------------------------------
@@ -295,7 +295,7 @@ pub fn AppLifecycleSetup(
 	let PostSetupEnvironment = Environment.clone();
 
 	tauri::async_runtime::spawn(async move {
-		info!("[Lifecycle] [PostSetup] Starting...");
+		dev_log!("lifecycle", "[Lifecycle] [PostSetup] Starting...");
 		let PostSetupStart = crate::IPC::DevLog::NowNano();
 		let AppStateForSetup = PostSetupEnvironment.ApplicationState.clone();
 		TraceStep!("[Lifecycle] [PostSetup] AppState cloned.");
@@ -318,7 +318,7 @@ pub fn AppLifecycleSetup(
 
 		// [Vine] [gRPC]
 		let VineStart = crate::IPC::DevLog::NowNano();
-		let _ = VineStartFn(PostSetupAppHandle.clone(), "[::1]:50051".to_string(), "[::1]:50052".to_string()).await;
+		let _ = VineStartFn(PostSetupAppHandle.clone(), "127.0.0.1:50051".to_string(), "127.0.0.1:50052".to_string()).await;
 		crate::otel_span!("lifecycle:vine:start", VineStart);
 
 		// [Cocoon] [Sidecar]
@@ -327,7 +327,7 @@ pub fn AppLifecycleSetup(
 		crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
 
 		crate::otel_span!("lifecycle:postsetup:complete", PostSetupStart);
-		info!("[Lifecycle] [PostSetup] Complete. System ready.");
+		dev_log!("lifecycle", "[Lifecycle] [PostSetup] Complete. System ready.");
 	});
 
 	Ok(())

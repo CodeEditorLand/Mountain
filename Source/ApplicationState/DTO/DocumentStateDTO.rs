@@ -21,6 +21,7 @@
 //! responsiveness.
 
 use CommonLibrary::{Error::CommonError::CommonError, Utility::Serialization::URLSerializationHelper};
+use crate::dev_log;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
@@ -188,7 +189,7 @@ impl DocumentStateDTO {
 
 		// Attempt to deserialize as an array of delta changes first.
 		if let Ok(RPCChange) = serde_json::from_value::<Vec<RPCModelContentChangeDTO>>(ChangesValue.clone()) {
-			log::trace!("Applying {} delta change(s) to document {}", RPCChange.len(), self.URI);
+			dev_log!("model", "applying {} delta change(s) to document {}", RPCChange.len(), self.URI);
 
 			self.Lines = ApplyDeltaChanges(&self.Lines, &self.EOL, &RPCChange);
 		} else if let Some(FullText) = ChangesValue.as_str() {
@@ -259,8 +260,9 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 
 		// Validate offsets
 		if StartOffset > EndOffset {
-			log::error!(
-				"[ApplyDeltaChanges] Invalid range: start ({}) > end ({}) for text length {}",
+			dev_log!(
+				"model",
+				"error: invalid range: start ({}) > end ({}) for text length {}",
 				StartOffset,
 				EndOffset,
 				ResultText.len()
@@ -270,8 +272,9 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 
 		let TextLength = ResultText.len();
 		if StartOffset > TextLength || EndOffset > TextLength {
-			log::error!(
-				"[ApplyDeltaChanges] Out of bounds: start ({}) or end ({}) exceeds text length {}",
+			dev_log!(
+				"model",
+				"error: out of bounds: start ({}) or end ({}) exceeds text length {}",
 				StartOffset,
 				EndOffset,
 				TextLength

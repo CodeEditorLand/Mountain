@@ -5,10 +5,10 @@
 #[allow(unused_imports)]
 use std::sync::Arc;
 
-use log::{debug, error, info};
 use tauri::Manager;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
+use crate::dev_log;
 
 /// Shuts down the ApplicationRunTime and its effect execution engine.
 ///
@@ -31,13 +31,13 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 ///
 /// Returns an error if ApplicationRunTime is not found or shutdown fails.
 pub async fn RuntimeShutdown(ApplicationHandle:&tauri::AppHandle) -> Result<(), String> {
-	debug!("[Shutdown] [Runtime] Shutting down ApplicationRunTime...");
+	dev_log!("lifecycle", "[Shutdown] [Runtime] Shutting down ApplicationRunTime...");
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 	RunTime.Shutdown().await;
 
-	info!("[Shutdown] [Runtime] ApplicationRunTime stopped.");
+	dev_log!("lifecycle", "[Shutdown] [Runtime] ApplicationRunTime stopped.");
 
 	Ok(())
 }

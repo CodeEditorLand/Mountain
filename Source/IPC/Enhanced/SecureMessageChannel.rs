@@ -10,7 +10,6 @@ use std::{
 	time::{Duration, SystemTime},
 };
 
-use log::{debug, error, info, trace};
 use ring::{
 	aead::{self, AES_256_GCM, LessSafeKey, NONCE_LEN, UnboundKey},
 	hmac,
@@ -19,6 +18,7 @@ use ring::{
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use bincode::serde::{decode_from_slice, encode_to_vec};
+use crate::dev_log;
 
 /// Security configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -118,7 +118,7 @@ impl SecureMessageChannel {
 			key_rotation_task:Arc::new(RwLock::new(None)),
 		};
 
-		info!(
+		dev_log!("ipc", 
 			"[SecureMessageChannel] Created secure channel with {} encryption",
 			channel.config.encryption_algorithm
 		);
@@ -131,7 +131,7 @@ impl SecureMessageChannel {
 		// Start key rotation task
 		self.start_key_rotation().await;
 
-		info!("[SecureMessageChannel] Secure channel started");
+		dev_log!("ipc", "[SecureMessageChannel] Secure channel started");
 		Ok(())
 	}
 
@@ -163,7 +163,7 @@ impl SecureMessageChannel {
 			hmac_key.fill(0);
 		}
 
-		info!("[SecureMessageChannel] Secure channel stopped");
+		dev_log!("ipc", "[SecureMessageChannel] Secure channel stopped");
 		Ok(())
 	}
 
@@ -216,7 +216,7 @@ impl SecureMessageChannel {
 				.as_millis() as u64,
 		};
 
-		trace!(
+		dev_log!("ipc", 
 			"[SecureMessageChannel] Message encrypted (size: {} bytes)",
 			encrypted_message.ciphertext.len()
 		);
@@ -256,14 +256,14 @@ impl SecureMessageChannel {
 		let (message, _) = decode_from_slice(&in_out, bincode::config::standard())
 			.map_err(|e| format!("Failed to deserialize message: {}", e))?;
 
-		trace!("[SecureMessageChannel] Message decrypted successfully");
+		dev_log!("ipc", "[SecureMessageChannel] Message decrypted successfully");
 
 		Ok(message)
 	}
 
 	/// Rotate encryption keys
 	pub async fn rotate_keys(&self) -> Result<(), String> {
-		info!("[SecureMessageChannel] Rotating encryption keys");
+		dev_log!("ipc", "[SecureMessageChannel] Rotating encryption keys");
 
 		// Generate new encryption key
 		let mut new_key_bytes = vec![0u8; 32];
@@ -285,7 +285,7 @@ impl SecureMessageChannel {
 		// Clean up old keys
 		self.cleanup_old_keys().await;
 
-		debug!("[SecureMessageChannel] Key rotation completed");
+		dev_log!("ipc", "[SecureMessageChannel] Key rotation completed");
 		Ok(())
 	}
 
@@ -319,7 +319,7 @@ impl SecureMessageChannel {
 				interval.tick().await;
 
 				if let Err(e) = channel.rotate_keys().await {
-					error!("[SecureMessageChannel] Automatic key rotation failed: {}", e);
+					dev_log!("ipc", "error: [SecureMessageChannel] Automatic key rotation failed: {}", e);
 				}
 			}
 		});
@@ -340,7 +340,7 @@ impl SecureMessageChannel {
 
 		previous_keys.retain(|_, key| !key.is_expired(max_age));
 
-		debug!("[SecureMessageChannel] Cleaned up {} old keys", previous_keys.len());
+		dev_log!("ipc", "[SecureMessageChannel] Cleaned up {} old keys", previous_keys.len());
 	}
 
 	/// Get security statistics

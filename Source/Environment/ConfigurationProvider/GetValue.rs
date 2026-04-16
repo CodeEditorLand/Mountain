@@ -4,8 +4,8 @@ use CommonLibrary::{
 	Configuration::DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
 	Error::CommonError::CommonError,
 };
-use log::{debug, warn};
 use serde_json::Value;
+use crate::dev_log;
 
 /// Retrieves a configuration value from the cached, merged configuration.
 pub(super) async fn get_configuration_value(
@@ -13,7 +13,7 @@ pub(super) async fn get_configuration_value(
 	section:Option<String>,
 	_overrides:ConfigurationOverridesDTO,
 ) -> Result<Value, CommonError> {
-	debug!("[ConfigurationProvider] Getting configuration for section: {:?}", section);
+	dev_log!("config", "[ConfigurationProvider] Getting configuration for section: {:?}", section);
 
 	let configuration_guard = environment
 		.ApplicationState
@@ -31,10 +31,8 @@ pub(super) async fn get_configuration_value(
 				current = match current.get(key) {
 					Some(value) => value,
 					None => {
-						warn!(
-							"[ConfigurationProvider] Configuration section '{}' not found in path: {:?}",
-							key, section_path
-						);
+						dev_log!("config", "warn: [ConfigurationProvider] Configuration section '{}' not found in path: {:?}",
+							key, section_path);
 						return Ok(Value::Null);
 					},
 				};
@@ -45,7 +43,7 @@ pub(super) async fn get_configuration_value(
 
 	// Validate that the configuration value exists
 	if configuration_value.is_null() {
-		warn!("[ConfigurationProvider] Configuration section not found: {:?}", section);
+		dev_log!("config", "warn: [ConfigurationProvider] Configuration section not found: {:?}", section);
 	}
 
 	Ok(configuration_value)

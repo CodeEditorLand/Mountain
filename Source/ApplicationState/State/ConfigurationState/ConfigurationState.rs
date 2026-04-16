@@ -45,9 +45,9 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::MergedConfigurationStateDTO::MergedConfigurationStateDTO;
+use crate::dev_log;
 
 /// Configuration and storage state.
 #[derive(Clone)]
@@ -67,7 +67,7 @@ pub struct State {
 
 impl Default for State {
 	fn default() -> Self {
-		debug!("[ConfigurationState] Initializing default configuration state...");
+		dev_log!("config", "[ConfigurationState] Initializing default configuration state...");
 
 		Self {
 			GlobalConfiguration:Arc::new(StandardMutex::new(serde_json::Value::Object(serde_json::Map::new()))),
@@ -91,7 +91,7 @@ impl State {
 	pub fn SetGlobalConfiguration(&self, config:serde_json::Value) {
 		if let Ok(mut guard) = self.GlobalConfiguration.lock() {
 			*guard = config;
-			debug!("[ConfigurationState] Global configuration updated");
+			dev_log!("config", "[ConfigurationState] Global configuration updated");
 		}
 	}
 
@@ -107,7 +107,7 @@ impl State {
 	pub fn SetWorkspaceConfiguration(&self, config:serde_json::Value) {
 		if let Ok(mut guard) = self.WorkspaceConfiguration.lock() {
 			*guard = config;
-			debug!("[ConfigurationState] Workspace configuration updated");
+			dev_log!("config", "[ConfigurationState] Workspace configuration updated");
 		}
 	}
 
@@ -130,14 +130,14 @@ impl State {
 
 			// Use the DTO's SetValue method which handles nested paths properly
 			if let Err(e) = dto.SetValue(path, value) {
-				log::warn!("[ConfigurationState] Failed to set value at path '{}': {}", path, e);
+				dev_log!("config", "warn: [ConfigurationState] Failed to set value at path '{}': {}", path, e);
 				return;
 			}
 
 			// Write the updated data back
 			*config_guard = dto.Data;
 
-			debug!("[ConfigurationState] Global configuration value updated at: {}", path);
+			dev_log!("config", "[ConfigurationState] Global configuration value updated at: {}", path);
 		}
 	}
 
@@ -154,7 +154,7 @@ impl State {
 	pub fn SetGlobalMemento(&self, storage:HashMap<String, serde_json::Value>) {
 		if let Ok(mut guard) = self.MementoGlobalStorage.lock() {
 			*guard = storage;
-			debug!("[ConfigurationState] Global memento storage updated ({} keys)", guard.len());
+			dev_log!("config", "[ConfigurationState] Global memento storage updated ({} keys)", guard.len());
 		}
 	}
 
@@ -167,7 +167,7 @@ impl State {
 	pub fn SetGlobalMementoValue(&self, key:String, value:serde_json::Value) {
 		if let Ok(mut guard) = self.MementoGlobalStorage.lock() {
 			guard.insert(key.clone(), value);
-			debug!("[ConfigurationState] Global memento value updated for key: {}", key);
+			dev_log!("config", "[ConfigurationState] Global memento value updated for key: {}", key);
 		}
 	}
 
@@ -184,7 +184,7 @@ impl State {
 	pub fn SetWorkspaceMemento(&self, storage:HashMap<String, serde_json::Value>) {
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
 			*guard = storage;
-			debug!("[ConfigurationState] Workspace memento storage updated ({} keys)", guard.len());
+			dev_log!("config", "[ConfigurationState] Workspace memento storage updated ({} keys)", guard.len());
 		}
 	}
 
@@ -200,7 +200,7 @@ impl State {
 	pub fn SetWorkspaceMementoValue(&self, key:String, value:serde_json::Value) {
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
 			guard.insert(key.clone(), value);
-			debug!("[ConfigurationState] Workspace memento value updated for key: {}", key);
+			dev_log!("config", "[ConfigurationState] Workspace memento value updated for key: {}", key);
 		}
 	}
 
@@ -208,7 +208,7 @@ impl State {
 	pub fn ClearWorkspaceMementoValue(&self, key:&str) {
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
 			guard.remove(key);
-			debug!("[ConfigurationState] Workspace memento value removed for key: {}", key);
+			dev_log!("config", "[ConfigurationState] Workspace memento value removed for key: {}", key);
 		}
 	}
 
@@ -216,7 +216,7 @@ impl State {
 	pub fn ClearGlobalMemento(&self) {
 		if let Ok(mut guard) = self.MementoGlobalStorage.lock() {
 			guard.clear();
-			debug!("[ConfigurationState] Global memento storage cleared");
+			dev_log!("config", "[ConfigurationState] Global memento storage cleared");
 		}
 	}
 
@@ -224,7 +224,7 @@ impl State {
 	pub fn ClearWorkspaceMemento(&self) {
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
 			guard.clear();
-			debug!("[ConfigurationState] Workspace memento storage cleared");
+			dev_log!("config", "[ConfigurationState] Workspace memento storage cleared");
 		}
 	}
 }

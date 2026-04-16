@@ -83,7 +83,6 @@
 use std::array::TryFromSliceError;
 
 use base64::{Engine, engine::general_purpose};
-use log::error;
 use ring::{
 	aead,
 	hmac,

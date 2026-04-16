@@ -31,9 +31,9 @@
 // - Add health history tracking
 // - Support multiple health check types
 
-use log::debug;
 
 use super::Types::ConnectionHandle;
+use crate::dev_log;
 
 /// Connection health checker
 ///
@@ -77,7 +77,7 @@ impl HealthChecker {
 	///
 	/// Default ping timeout is 5 seconds.
 	pub fn new() -> Self {
-		debug!("[HealthChecker] Creating health checker with 5s timeout");
+		dev_log!("ipc", "[HealthChecker] Creating health checker with 5s timeout");
 		Self { ping_timeout:std::time::Duration::from_secs(5) }
 	}
 
@@ -86,7 +86,7 @@ impl HealthChecker {
 	/// ## Parameters
 	/// - `ping_timeout`: Maximum allowed response time
 	pub fn with_timeout(ping_timeout:std::time::Duration) -> Self {
-		debug!("[HealthChecker] Creating health checker with {:?} timeout", ping_timeout);
+		dev_log!("ipc", "[HealthChecker] Creating health checker with {:?} timeout", ping_timeout);
 		Self { ping_timeout }
 	}
 
@@ -122,12 +122,12 @@ impl HealthChecker {
 		let is_healthy = response_time < self.ping_timeout;
 
 		if is_healthy {
-			debug!(
+			dev_log!("ipc", 
 				"[HealthChecker] Connection {} is healthy (response time: {:?})",
 				handle.id, response_time
 			);
 		} else {
-			debug!(
+			dev_log!("ipc", 
 				"[HealthChecker] Connection {} is unhealthy (response time: {:?}, timeout: {:?})",
 				handle.id, response_time, self.ping_timeout
 			);
@@ -142,7 +142,7 @@ impl HealthChecker {
 	/// Set a new ping timeout
 	pub fn set_ping_timeout(&mut self, timeout:std::time::Duration) {
 		self.ping_timeout = timeout;
-		debug!("[HealthChecker] Ping timeout updated to {:?}", timeout);
+		dev_log!("ipc", "[HealthChecker] Ping timeout updated to {:?}", timeout);
 	}
 }
 

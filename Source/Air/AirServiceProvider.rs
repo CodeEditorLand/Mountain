@@ -66,7 +66,6 @@
 use std::{collections::HashMap, sync::Arc};
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{info, trace};
 use uuid::Uuid;
 
 #[allow(unused_imports)]
@@ -86,6 +85,7 @@ use super::{
 	},
 	DEFAULT_AIR_SERVER_ADDRESS,
 };
+use crate::dev_log;
 
 // ============================================================================
 // AirServiceProvider - High-level API Implementation
@@ -152,11 +152,11 @@ impl AirServiceProvider {
 	/// # }
 	/// ```
 	pub async fn new(address:String) -> Result<Self, CommonError> {
-		info!("[AirServiceProvider] Creating AirServiceProvider at: {}", address);
+		dev_log!("grpc", "[AirServiceProvider] Creating AirServiceProvider at: {}", address);
 
 		let client = AirClient::new(&address).await?;
 
-		info!("[AirServiceProvider] AirServiceProvider created successfully");
+		dev_log!("grpc", "[AirServiceProvider] AirServiceProvider created successfully");
 
 		Ok(Self { client:Arc::new(client) })
 	}
@@ -194,7 +194,7 @@ impl AirServiceProvider {
 	/// # Returns
 	/// * `Self` - The new provider
 	pub fn from_client(client:Arc<AirClient>) -> Self {
-		info!("[AirServiceProvider] Creating AirServiceProvider from existing client");
+		dev_log!("grpc", "[AirServiceProvider] Creating AirServiceProvider from existing client");
 		Self { client }
 	}
 
@@ -255,7 +255,7 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn authenticate(&self, username:String, password:String, provider:String) -> Result<String, CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] authenticate (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] authenticate (request_id: {})", request_id);
 
 		self.client.authenticate(request_id, username, password, provider).await
 	}
@@ -299,7 +299,7 @@ impl AirServiceProvider {
 		channel:String,
 	) -> Result<Option<UpdateInfo>, CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] check_for_updates (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] check_for_updates (request_id: {})", request_id);
 
 		let info = self.client.check_for_updates(request_id, current_version, channel).await?;
 
@@ -323,7 +323,7 @@ impl AirServiceProvider {
 		checksum:String,
 	) -> Result<FileInfo, CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] download_update (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] download_update (request_id: {})", request_id);
 
 		self.client
 			.download_update(request_id, url, destination_path, checksum, HashMap::new())
@@ -341,7 +341,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Application error
 	pub async fn apply_update(&self, version:String, update_path:String) -> Result<(), CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] apply_update (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] apply_update (request_id: {})", request_id);
 
 		self.client.apply_update(request_id, version, update_path).await
 	}
@@ -367,7 +367,7 @@ impl AirServiceProvider {
 		checksum:String,
 	) -> Result<FileInfo, CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] download_file (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] download_file (request_id: {})", request_id);
 
 		self.client
 			.download_file(request_id, url, destination_path, checksum, HashMap::new())
@@ -421,7 +421,7 @@ impl AirServiceProvider {
 		headers:HashMap<String, String>,
 	) -> Result<DownloadStream, CommonError> {
 		let request_id = generate_request_id();
-		trace!(
+		dev_log!("grpc", 
 			"[AirServiceProvider] download_stream (request_id: {}, url: {})",
 			request_id, url
 		);
@@ -474,7 +474,7 @@ impl AirServiceProvider {
 		max_depth:u32,
 	) -> Result<IndexInfo, CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] index_files (request_id: {}, path: {})", request_id, path);
+		dev_log!("grpc", "[AirServiceProvider] index_files (request_id: {}, path: {})", request_id, path);
 
 		self.client
 			.index_files(request_id, path, patterns, exclude_patterns, max_depth)
@@ -516,7 +516,7 @@ impl AirServiceProvider {
 		max_results:u32,
 	) -> Result<Vec<FileResult>, CommonError> {
 		let request_id = generate_request_id();
-		trace!(
+		dev_log!("grpc", 
 			"[AirServiceProvider] search_files (request_id: {}, query: {})",
 			request_id, query
 		);
@@ -534,7 +534,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_file_info(&self, path:String) -> Result<ExtendedFileInfo, CommonError> {
 		let request_id = generate_request_id();
-		trace!(
+		dev_log!("grpc", 
 			"[AirServiceProvider] get_file_info (request_id: {}, path: {})",
 			request_id, path
 		);
@@ -553,7 +553,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_status(&self) -> Result<AirStatus, CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] get_status (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] get_status (request_id: {})", request_id);
 
 		self.client.get_status(request_id).await
 	}
@@ -579,7 +579,7 @@ impl AirServiceProvider {
 	/// # }
 	/// ```
 	pub async fn health_check(&self) -> Result<bool, CommonError> {
-		trace!("[AirServiceProvider] health_check");
+		dev_log!("grpc", "[AirServiceProvider] health_check");
 		self.client.health_check().await
 	}
 
@@ -594,7 +594,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_metrics(&self, metric_type:Option<String>) -> Result<AirMetrics, CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] get_metrics (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] get_metrics (request_id: {})", request_id);
 
 		self.client.get_metrics(request_id, metric_type).await
 	}
@@ -610,7 +610,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_resource_usage(&self) -> Result<ResourceUsage, CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] get_resource_usage (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] get_resource_usage (request_id: {})", request_id);
 
 		self.client.get_resource_usage(request_id).await
 	}
@@ -632,7 +632,7 @@ impl AirServiceProvider {
 		disk_limit_mb:u32,
 	) -> Result<(), CommonError> {
 		let request_id = generate_request_id();
-		trace!("[AirServiceProvider] set_resource_limits (request_id: {})", request_id);
+		dev_log!("grpc", "[AirServiceProvider] set_resource_limits (request_id: {})", request_id);
 
 		self.client
 			.set_resource_limits(request_id, memory_limit_mb, cpu_limit_percent, disk_limit_mb)
@@ -670,7 +670,7 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn get_configuration(&self, section:String) -> Result<HashMap<String, String>, CommonError> {
 		let request_id = generate_request_id();
-		trace!(
+		dev_log!("grpc", 
 			"[AirServiceProvider] get_configuration (request_id: {}, section: {})",
 			request_id, section
 		);
@@ -693,7 +693,7 @@ impl AirServiceProvider {
 		updates:HashMap<String, String>,
 	) -> Result<(), CommonError> {
 		let request_id = generate_request_id();
-		trace!(
+		dev_log!("grpc", 
 			"[AirServiceProvider] update_configuration (request_id: {}, section: {})",
 			request_id, section
 		);

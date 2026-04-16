@@ -4,11 +4,11 @@
 //! (message, title, badge).
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{info, warn};
 use serde_json::json;
 use tauri::Emitter;
 
 use crate::Environment::Utility;
+use crate::dev_log;
 
 /// Updates the tree view message displayed in the UI.
 pub(super) async fn set_tree_view_message(
@@ -16,7 +16,7 @@ pub(super) async fn set_tree_view_message(
 	view_identifier:String,
 	message:Option<String>,
 ) -> Result<(), CommonError> {
-	info!(
+	dev_log!("extensions", 
 		"[TreeViewProvider] Setting message for view '{}': {:?}",
 		view_identifier, message
 	);
@@ -52,7 +52,7 @@ pub(super) async fn set_tree_view_title(
 	title:Option<String>,
 	description:Option<String>,
 ) -> Result<(), CommonError> {
-	info!(
+	dev_log!("extensions", 
 		"[TreeViewProvider] Setting title/description for view '{}': {:?} {:?}",
 		view_identifier, title, description
 	);
@@ -92,7 +92,7 @@ pub(super) async fn set_tree_view_badge(
 	view_identifier:String,
 	badge:Option<serde_json::Value>,
 ) -> Result<(), CommonError> {
-	info!("[TreeViewProvider] Setting badge for view '{}': {:?}", view_identifier, badge);
+	dev_log!("extensions", "[TreeViewProvider] Setting badge for view '{}': {:?}", view_identifier, badge);
 
 	// Update state (badge field may need to be added to TreeViewStateDTO)
 	{
@@ -109,7 +109,7 @@ pub(super) async fn set_tree_view_badge(
 			if let Some(badge_value) = &badge {
 				let badge_str = badge_value.to_string();
 				if let Err(e) = view_state.SetBadge(badge_str) {
-					warn!("Failed to set badge for view '{}': {}", view_identifier, e);
+					dev_log!("extensions", "warn: Failed to set badge for view '{}': {}", view_identifier, e);
 				}
 			}
 		}

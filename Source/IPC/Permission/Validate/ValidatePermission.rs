@@ -90,10 +90,10 @@ use std::{
 };
 
 use tokio::sync::RwLock;
-use log::{debug, error, warn};
 use serde::{Deserialize, Serialize};
 
 use super::super::Role::ManageRole::{Permission, Role};
+use crate::dev_log;
 
 /// Security context for permission validation
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -226,10 +226,8 @@ impl PermissionValidator {
 		match result {
 			Ok(validation_result) => validation_result,
 			Err(_) => {
-				error!(
-					"[PermissionValidator] Permission validation timed out for operation: {}",
-					Operation
-				);
+				dev_log!("ipc", "error: [PermissionValidator] Permission validation timed out for operation: {}",
+					Operation);
 				Err("Permission validation timeout".to_string())
 			},
 		}
@@ -246,17 +244,17 @@ impl PermissionValidator {
 	async fn ValidatePermissionInternal(&self, Operation:&str, Context:&SecurityContext) -> Result<(), String> {
 		// Validate inputs
 		if Operation.is_empty() {
-			warn!("[PermissionValidator] Empty operation name provided");
+			dev_log!("ipc", "warn: [PermissionValidator] Empty operation name provided");
 			return Err("Operation name cannot be empty".to_string());
 		}
 
 		if Context.UserId.is_empty() {
-			warn!("[PermissionValidator] Empty user ID in security context");
+			dev_log!("ipc", "warn: [PermissionValidator] Empty user ID in security context");
 			return Err("User ID cannot be empty".to_string());
 		}
 
 		if Context.Roles.is_empty() && Context.Permissions.is_empty() {
-			warn!("[PermissionValidator] User has no roles or permissions: {}", Context.UserId);
+			dev_log!("ipc", "warn: [PermissionValidator] User has no roles or permissions: {}", Context.UserId);
 			return Err("User has no assigned roles or permissions".to_string());
 		}
 
@@ -265,7 +263,7 @@ impl PermissionValidator {
 			Some(perms) => perms.clone(),
 			None => {
 				// No specific permissions required for this operation
-				debug!(
+				dev_log!("ipc", 
 					"[PermissionValidator] No specific permissions required for operation: {}",
 					Operation
 				);
@@ -275,7 +273,7 @@ impl PermissionValidator {
 
 		if RequiredPermissions.is_empty() {
 			// No permissions needed
-			debug!(
+			dev_log!("ipc", 
 				"[PermissionValidator] Access granted (no permissions required): {} by {}",
 				Operation, Context.UserId
 			);
@@ -287,16 +285,14 @@ impl PermissionValidator {
 			// Check if user has all required permissions
 			for RequiredPermission in &RequiredPermissions {
 				if !UserPermissions.contains(RequiredPermission) {
-					warn!(
-						"[PermissionValidator] Permission denied: {} required, user {} has {:?}",
-						RequiredPermission, Context.UserId, UserPermissions
-					);
+					dev_log!("ipc", "warn: [PermissionValidator] Permission denied: {} required, user {} has {:?}",
+						RequiredPermission, Context.UserId, UserPermissions);
 					return Err(format!("Missing required permission: {}", RequiredPermission));
 				}
 			}
 
 			// All permissions granted
-			debug!("[PermissionValidator] Access granted: {} by {}", Operation, Context.UserId);
+			dev_log!("ipc", "[PermissionValidator] Access granted: {} by {}", Operation, Context.UserId);
 			Ok(())
 		}
 	}
@@ -321,7 +317,7 @@ impl PermissionValidator {
 					}
 				}
 			} else {
-				debug!("[PermissionValidator] Role not found: {}, skipping", RoleName);
+				dev_log!("ipc", "[PermissionValidator] Role not found: {}, skipping", RoleName);
 			}
 		}
 
@@ -342,7 +338,7 @@ impl PermissionValidator {
 		}
 
 		if Role.Permissions.is_empty() {
-			warn!("[PermissionValidator] Role '{}' has no permissions", Role.Name);
+			dev_log!("ipc", "warn: [PermissionValidator] Role '{}' has no permissions", Role.Name);
 		}
 
 		let mut roles = self.Roles.write().await;
@@ -351,17 +347,15 @@ impl PermissionValidator {
 		let permissions_read = self.Permissions.read().await;
 		for PermissionName in &Role.Permissions {
 			if !permissions_read.contains_key(PermissionName) {
-				warn!(
-					"[PermissionValidator] Permission '{}' referenced by role '{}' does not exist",
-					PermissionName, Role.Name
-				);
+				dev_log!("ipc", "warn: [PermissionValidator] Permission '{}' referenced by role '{}' does not exist",
+					PermissionName, Role.Name);
 			}
 		}
 		drop(permissions_read);
 
 		let RoleName = Role.Name.clone();
 		roles.insert(RoleName.clone(), Role);
-		debug!("[PermissionValidator] Role registered: {}", RoleName);
+		dev_log!("ipc", "[PermissionValidator] Role registered: {}", RoleName);
 		Ok(())
 	}
 
@@ -385,7 +379,7 @@ impl PermissionValidator {
 		let mut permissions = self.Permissions.write().await;
 		let PermissionName = Permission.Name.clone();
 		permissions.insert(PermissionName.clone(), Permission);
-		debug!("[PermissionValidator] Permission registered: {}", PermissionName);
+		dev_log!("ipc", "[PermissionValidator] Permission registered: {}", PermissionName);
 		Ok(())
 	}
 
@@ -438,7 +432,7 @@ impl PermissionValidator {
 	/// - `developer`: Read/write access to files and storage
 	/// - `admin`: Full access including system operations
 	pub async fn InitializeDefaults(&self) -> Result<(), String> {
-		debug!("[PermissionValidator] Initializing default roles and permissions");
+		dev_log!("ipc", "[PermissionValidator] Initializing default roles and permissions");
 
 		// Define default permissions
 		let DefaultPermissions = vec![
@@ -549,7 +543,7 @@ impl PermissionValidator {
 			self.RegisterRole(Role).await?;
 		}
 
-		debug!("[PermissionValidator] Default roles and permissions initialized successfully");
+		dev_log!("ipc", "[PermissionValidator] Default roles and permissions initialized successfully");
 		Ok(())
 	}
 }

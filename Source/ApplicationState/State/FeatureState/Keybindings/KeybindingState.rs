@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex as StandardMutex};
 
-use log::debug;
 use serde::{Deserialize, Serialize};
+use crate::dev_log;
 
 /// A single registered dynamic keybinding entry.
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -22,7 +22,7 @@ pub struct KeybindingState {
 
 impl Default for KeybindingState {
 	fn default() -> Self {
-		debug!("[KeybindingState] Initializing default keybinding state...");
+		dev_log!("keybinding", "[KeybindingState] Initializing default keybinding state...");
 		Self { Entries:Arc::new(StandardMutex::new(Vec::new())) }
 	}
 }
@@ -34,7 +34,7 @@ impl KeybindingState {
 		if let Ok(mut Guard) = self.Entries.lock() {
 			Guard.retain(|E| E.CommandId != CommandId);
 			Guard.push(KeybindingEntry { CommandId:CommandId.clone(), Keybinding, When });
-			debug!("[KeybindingState] Keybinding added for: {}", CommandId);
+			dev_log!("keybinding", "[KeybindingState] Keybinding added for: {}", CommandId);
 		}
 	}
 
@@ -42,7 +42,7 @@ impl KeybindingState {
 	pub fn RemoveKeybinding(&self, CommandId:&str) {
 		if let Ok(mut Guard) = self.Entries.lock() {
 			Guard.retain(|E| E.CommandId != CommandId);
-			debug!("[KeybindingState] Keybinding removed for: {}", CommandId);
+			dev_log!("keybinding", "[KeybindingState] Keybinding removed for: {}", CommandId);
 		}
 	}
 

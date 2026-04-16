@@ -2,8 +2,8 @@ use std::{
 	collections::HashSet,
 	sync::{Arc, Mutex as StandardMutex},
 };
+use crate::dev_log;
 
-use log::debug;
 
 /// Tracks which URIs have unsaved changes (dirty state).
 /// Drives the dirty dot in editor tabs and the explorer badge count.
@@ -14,7 +14,7 @@ pub struct WorkingCopyState {
 
 impl Default for WorkingCopyState {
 	fn default() -> Self {
-		debug!("[WorkingCopyState] Initializing default working-copy state...");
+		dev_log!("workingcopy", "[WorkingCopyState] Initializing default working-copy state...");
 		Self { DirtyUris:Arc::new(StandardMutex::new(HashSet::new())) }
 	}
 }
@@ -30,10 +30,10 @@ impl WorkingCopyState {
 		if let Ok(mut Guard) = self.DirtyUris.lock() {
 			if Dirty {
 				Guard.insert(Uri.to_owned());
-				debug!("[WorkingCopyState] URI marked dirty: {}", Uri);
+				dev_log!("workingcopy", "[WorkingCopyState] URI marked dirty: {}", Uri);
 			} else {
 				Guard.remove(Uri);
-				debug!("[WorkingCopyState] URI marked clean: {}", Uri);
+				dev_log!("workingcopy", "[WorkingCopyState] URI marked clean: {}", Uri);
 			}
 		}
 	}

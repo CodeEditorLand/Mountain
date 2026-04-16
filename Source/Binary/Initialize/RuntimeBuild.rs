@@ -25,7 +25,7 @@
 use std::sync::Arc;
 
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
-use log::{debug, info, warn};
+use crate::dev_log;
 
 // ============ Feature Flags ============
 
@@ -64,7 +64,7 @@ pub fn CreateBuilder(config:SchedulerConfig) -> SchedulerBuilder {
 		// Validate worker count bounds
 		let count = count.clamp(1, 256);
 		builder = builder.WithWorkerCount(count);
-		debug!("[RuntimeBuild] Configuring {} worker threads", count);
+		dev_log!("lifecycle", "[RuntimeBuild] Configuring {} worker threads", count);
 	}
 
 	builder
@@ -101,7 +101,7 @@ pub fn Build() -> Arc<Scheduler> { BuildWithConfig(SchedulerConfig::default()) }
 ///
 /// Configured scheduler instance
 pub fn BuildWithConfig(config:SchedulerConfig) -> Arc<Scheduler> {
-	info!("[RuntimeBuild] Initializing scheduler with config: {:?}", config);
+	dev_log!("lifecycle", "[RuntimeBuild] Initializing scheduler with config: {:?}", config);
 
 	let builder = CreateBuilder(config);
 	let scheduler = builder.Build();
@@ -109,15 +109,15 @@ pub fn BuildWithConfig(config:SchedulerConfig) -> Arc<Scheduler> {
 	#[cfg(feature = "Telemetry")]
 	{
 		// Initialize task metrics recording
-		info!("[RuntimeBuild] Task metrics enabled");
+		dev_log!("lifecycle", "[RuntimeBuild] Task metrics enabled");
 	}
 
 	#[cfg(feature = "Debug")]
 	{
-		debug!("[RuntimeBuild] Scheduler debugging enabled");
+		dev_log!("lifecycle", "[RuntimeBuild] Scheduler debugging enabled");
 	}
 
-	info!("[RuntimeBuild] Scheduler initialized successfully");
+	dev_log!("lifecycle", "[RuntimeBuild] Scheduler initialized successfully");
 	Arc::new(scheduler)
 }
 
@@ -127,7 +127,7 @@ pub fn BuildWithConfig(config:SchedulerConfig) -> Arc<Scheduler> {
 /// execution order matters.
 #[cfg(feature = "Debug")]
 pub fn BuildDebug() -> Arc<Scheduler> {
-	info!("[RuntimeBuild] Creating debug scheduler (single-threaded)");
+	dev_log!("lifecycle", "[RuntimeBuild] Creating debug scheduler (single-threaded)");
 	BuildWithConfig(SchedulerConfig { worker_count:Some(1), ..Default::default() })
 }
 
@@ -139,13 +139,13 @@ mod tests {
 	fn test_default_build() {
 		let _scheduler = Build();
 		// Scheduler should be usable
-		info!("[Test] Default scheduler created");
+		dev_log!("lifecycle", "[Test] Default scheduler created");
 	}
 
 	#[test]
 	fn test_custom_worker_count() {
 		let config = SchedulerConfig { worker_count:Some(2), ..Default::default() };
 		let _scheduler = BuildWithConfig(config);
-		info!("[Test] Custom scheduler created");
+		dev_log!("lifecycle", "[Test] Custom scheduler created");
 	}
 }

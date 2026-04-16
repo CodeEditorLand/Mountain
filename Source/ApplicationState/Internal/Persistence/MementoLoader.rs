@@ -33,7 +33,7 @@ use std::{collections::HashMap, fs, path::Path};
 
 use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::Value;
-use log::{debug, error, warn};
+use crate::dev_log;
 
 /// Synchronously loads Memento storage data from a JSON file.
 /// Used during the initial `default()` setup of `ApplicationState`.
@@ -53,18 +53,16 @@ use log::{debug, error, warn};
 /// Errors are logged but not propagated; default values are returned.
 pub fn LoadInitialMementoFromDisk(StorageFilePath:&Path) -> HashMap<String, Value> {
 	if !StorageFilePath.exists() {
-		debug!("[MementoLoader] Memento file does not exist: {}", StorageFilePath.display());
+		dev_log!("storage", "[MementoLoader] Memento file does not exist: {}", StorageFilePath.display());
 		return HashMap::new();
 	}
 
 	match fs::read_to_string(StorageFilePath) {
 		Ok(Content) => {
 			serde_json::from_str(&Content).unwrap_or_else(|Error| {
-				error!(
-					"[MementoLoader] Failed to parse JSON from '{}': {}. Attempting recovery.",
+				dev_log!("storage", "error: [MementoLoader] Failed to parse JSON from '{}': {}. Attempting recovery.",
 					StorageFilePath.display(),
-					Error
-				);
+					Error);
 
 				// Attempt recovery by creating backup and returning empty map
 				attempt_memento_recovery(StorageFilePath, &Content);
@@ -73,21 +71,17 @@ pub fn LoadInitialMementoFromDisk(StorageFilePath:&Path) -> HashMap<String, Valu
 		},
 
 		Err(Error) => {
-			error!(
-				"[MementoLoader] Failed to read '{}': {}. Attempting recovery.",
+			dev_log!("storage", "error: [MementoLoader] Failed to read '{}': {}. Attempting recovery.",
 				StorageFilePath.display(),
-				Error
-			);
+				Error);
 
 			// Attempt recovery by ensuring directory exists
 			if let Some(parent) = StorageFilePath.parent() {
 				if !parent.exists() {
 					if let Err(dir_error) = fs::create_dir_all(parent) {
-						warn!(
-							"[MementoLoader] Failed to create directory '{}': {}",
+						dev_log!("storage", "warn: [MementoLoader] Failed to create directory '{}': {}",
 							parent.display(),
-							dir_error
-						);
+							dir_error);
 					}
 				}
 			}
@@ -109,7 +103,7 @@ pub fn LoadInitialMementoFromDisk(StorageFilePath:&Path) -> HashMap<String, Valu
 /// Returns CommonError for file I/O or parse errors
 pub fn LoadMementoWithRecovery(StorageFilePath:&Path) -> Result<HashMap<String, Value>, CommonError> {
 	if !StorageFilePath.exists() {
-		debug!("[MementoLoader] Memento file does not exist: {}", StorageFilePath.display());
+		dev_log!("storage", "[MementoLoader] Memento file does not exist: {}", StorageFilePath.display());
 		return Ok(HashMap::new());
 	}
 
@@ -139,17 +133,13 @@ fn attempt_memento_recovery(file_path:&Path, corrupted_content:&str) {
 
 	match fs::write(&backup_path, corrupted_content) {
 		Ok(()) => {
-			warn!(
-				"[MementoLoader] Created backup of corrupted memento at: {}",
-				backup_path.display()
-			);
+			dev_log!("storage", "warn: [MementoLoader] Created backup of corrupted memento at: {}",
+				backup_path.display());
 		},
 		Err(e) => {
-			error!(
-				"[MementoLoader] Failed to create backup of corrupted memento at '{}': {}",
+			dev_log!("storage", "error: [MementoLoader] Failed to create backup of corrupted memento at '{}': {}",
 				backup_path.display(),
-				e
-			);
+				e);
 		},
 	}
 }
@@ -164,12 +154,10 @@ fn create_corrupted_backup(file_path:&Path, content:&str) {
 	let backup_path = file_path.with_extension(format!("json.corrupted.{}", timestamp));
 
 	if let Err(e) = fs::write(&backup_path, content) {
-		error!(
-			"[MementoLoader] Failed to create corrupted backup at '{}': {}",
+		dev_log!("storage", "error: [MementoLoader] Failed to create corrupted backup at '{}': {}",
 			backup_path.display(),
-			e
-		);
+			e);
 	} else {
-		debug!("[MementoLoader] Created corrupted backup at: {}", backup_path.display());
+		dev_log!("storage", "[MementoLoader] Created corrupted backup at: {}", backup_path.display());
 	}
 }

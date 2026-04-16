@@ -126,7 +126,6 @@ use CommonLibrary::{
 	},
 };
 use async_trait::async_trait;
-use log::{info, warn};
 use serde::Serialize;
 use serde_json::{Value, json};
 use tauri::Emitter;
@@ -135,6 +134,7 @@ use tokio::time::{Duration, timeout};
 use uuid::Uuid;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::dev_log;
 
 #[derive(Serialize, Clone)]
 struct UserInterfaceRequest<TPayload:Serialize + Clone> {
@@ -156,7 +156,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 		Options:Option<Value>,
 	) -> Result<Option<String>, CommonError> {
-		info!("[UserInterfaceProvider] Showing interactive message: {}", Message);
+		dev_log!("window", "[UserInterfaceProvider] Showing interactive message: {}", Message);
 
 		let Payload = json!({ "Severity": Severity, "Message": Message, "Options": Options });
 
@@ -168,7 +168,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 	/// Shows a dialog for opening files or folders using the
 	/// tauri-plugin-dialog.
 	async fn ShowOpenDialog(&self, Options:Option<OpenDialogOptionsDTO>) -> Result<Option<Vec<PathBuf>>, CommonError> {
-		info!("[UserInterfaceProvider] Showing open dialog.");
+		dev_log!("window", "[UserInterfaceProvider] Showing open dialog.");
 
 		let mut Builder = self.ApplicationHandle.dialog().file();
 
@@ -223,7 +223,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 	/// Shows a dialog for saving a file using the tauri-plugin-dialog.
 	async fn ShowSaveDialog(&self, Options:Option<SaveDialogOptionsDTO>) -> Result<Option<PathBuf>, CommonError> {
-		info!("[UserInterfaceProvider] Showing save dialog.");
+		dev_log!("window", "[UserInterfaceProvider] Showing save dialog.");
 
 		let mut Builder = self.ApplicationHandle.dialog().file();
 
@@ -270,7 +270,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 		Options:Option<QuickPickOptionsDTO>,
 	) -> Result<Option<Vec<String>>, CommonError> {
-		info!("[UserInterfaceProvider] Showing quick pick with {} items.", Items.len());
+		dev_log!("window", "[UserInterfaceProvider] Showing quick pick with {} items.", Items.len());
 
 		let Payload = json!({ "Items": Items, "Options": Options });
 
@@ -285,7 +285,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 	/// Shows an input box to solicit a string input from the user.
 	async fn ShowInputBox(&self, Options:Option<InputBoxOptionsDTO>) -> Result<Option<String>, CommonError> {
-		info!("[UserInterfaceProvider] Showing input box.");
+		dev_log!("window", "[UserInterfaceProvider] Showing input box.");
 
 		let ResponseValue = SendUserInterfaceRequest(self, "sky://ui/show-input-box-request", Options).await?;
 
@@ -343,10 +343,8 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 		},
 
 		Err(_) => {
-			warn!(
-				"[UserInterfaceProvider] UI request '{}' with ID {} timed out.",
-				EventName, RequestIdentifier
-			);
+			dev_log!("window", "warn: [UserInterfaceProvider] UI request '{}' with ID {} timed out.",
+				EventName, RequestIdentifier);
 
 			let mut Guard = Environment
 				.ApplicationState

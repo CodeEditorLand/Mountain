@@ -37,13 +37,13 @@ use std::{
 	sync::{Arc, RwLock},
 };
 
-use log::{debug, error, info, warn};
 #[allow(unused_imports)]
 use http::{Request as HttpRequest, Response as HttpResponse, header};
 use tokio::{
 	io::{AsyncReadExt, AsyncWriteExt},
 	net::TcpStream,
 };
+use crate::dev_log;
 
 /// Represents a local HTTP/HTTPS service registered with the land:// scheme
 ///
@@ -93,7 +93,7 @@ impl ServiceRegistry {
 	///
 	/// Returns an empty registry ready to accept service registrations.
 	pub fn new() -> Self {
-		info!("[ServiceRegistry] Creating new ServiceRegistry");
+		dev_log!("lifecycle", "[ServiceRegistry] Creating new ServiceRegistry");
 		Self { services:Arc::new(RwLock::new(HashMap::new())), cert_manager:None }
 	}
 
@@ -108,7 +108,7 @@ impl ServiceRegistry {
 	pub fn with_tls(
 		cert_manager:std::sync::Arc<std::sync::Mutex<super::CertificateManager::CertificateManager>>,
 	) -> Self {
-		info!("[ServiceRegistry] Creating new ServiceRegistry with TLS support");
+		dev_log!("lifecycle", "[ServiceRegistry] Creating new ServiceRegistry with TLS support");
 		Self { services:Arc::new(RwLock::new(HashMap::new())), cert_manager:Some(cert_manager) }
 	}
 
@@ -160,7 +160,7 @@ impl ServiceRegistry {
 		use_tls:bool,
 		health_check_path:Option<String>,
 	) {
-		info!(
+		dev_log!("lifecycle", 
 			"[ServiceRegistry] Registering service: {} -> HTTP:{}, TLS:{}, use_tls:{}",
 			name,
 			port,
@@ -174,24 +174,22 @@ impl ServiceRegistry {
 		if use_tls {
 			if let Some(cert_manager) = &self.cert_manager {
 				// NOTE: TLS certificate is generated on-demand when needed
-				info!("[ServiceRegistry] TLS will be provisioned on-demand for {}", name);
+				dev_log!("lifecycle", "[ServiceRegistry] TLS will be provisioned on-demand for {}", name);
 			} else {
-				warn!(
-					"[ServiceRegistry] Service {} requested TLS but no certificate manager available",
-					name
-				);
+				dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} requested TLS but no certificate manager available",
+					name);
 			}
 		}
 
 		if let Ok(mut services) = self.services.write() {
 			// Check if service already exists
 			if services.contains_key(&name) {
-				warn!("[ServiceRegistry] Service {} already registered, overwriting", name);
+				dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} already registered, overwriting", name);
 			}
 			services.insert(name.clone(), service);
-			debug!("[ServiceRegistry] Service {} registered successfully", name);
+			dev_log!("lifecycle", "[ServiceRegistry] Service {} registered successfully", name);
 		} else {
-			error!("[ServiceRegistry] Failed to acquire write lock for registration");
+			dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire write lock for registration");
 		}
 	}
 
@@ -215,18 +213,18 @@ impl ServiceRegistry {
 	/// }
 	/// ```
 	pub fn lookup(&self, name:&str) -> Option<LocalService> {
-		debug!("[ServiceRegistry] Looking up service: {}", name);
+		dev_log!("lifecycle", "[ServiceRegistry] Looking up service: {}", name);
 
 		if let Ok(services) = self.services.read() {
 			let service = services.get(name).cloned();
 			if service.is_some() {
-				debug!("[ServiceRegistry] Service {} found", name);
+				dev_log!("lifecycle", "[ServiceRegistry] Service {} found", name);
 			} else {
-				debug!("[ServiceRegistry] Service {} not found", name);
+				dev_log!("lifecycle", "[ServiceRegistry] Service {} not found", name);
 			}
 			service
 		} else {
-			error!("[ServiceRegistry] Failed to acquire read lock for lookup");
+			dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire read lock for lookup");
 			None
 		}
 	}
@@ -240,7 +238,7 @@ impl ServiceRegistry {
 		if let Ok(services) = self.services.read() {
 			services.values().cloned().collect()
 		} else {
-			error!("[ServiceRegistry] Failed to acquire read lock for all_services");
+			dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire read lock for all_services");
 			Vec::new()
 		}
 	}
@@ -262,7 +260,7 @@ impl ServiceRegistry {
 		let health_path = service.health_check_path.as_deref().unwrap_or("/health");
 		let addr = format!("127.0.0.1:{}", service.port);
 
-		debug!(
+		dev_log!("lifecycle", 
 			"[ServiceRegistry] Performing health check for {} at {}:{}",
 			name, addr, health_path
 		);
@@ -282,26 +280,26 @@ impl ServiceRegistry {
 								let response = String::from_utf8_lossy(&buffer[..n]);
 								let is_healthy = response.contains("HTTP/1.1 200") || response.contains("HTTP/1.0 200");
 								if is_healthy {
-									debug!("[ServiceRegistry] Service {} is healthy", name);
+									dev_log!("lifecycle", "[ServiceRegistry] Service {} is healthy", name);
 								} else {
-									warn!("[ServiceRegistry] Service {} health check failed: not 200", name);
+									dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} health check failed: not 200", name);
 								}
 								Ok(is_healthy)
 							},
 							Err(e) => {
-								warn!("[ServiceRegistry] Service {} health check failed to read: {}", name, e);
+								dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} health check failed to read: {}", name, e);
 								Ok(false)
 							},
 						}
 					},
 					Err(e) => {
-						warn!("[ServiceRegistry] Service {} health check failed to write: {}", name, e);
+						dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} health check failed to write: {}", name, e);
 						Ok(false)
 					},
 				}
 			},
 			Err(e) => {
-				warn!("[ServiceRegistry] Service {} health check failed to connect: {}", name, e);
+				dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} health check failed to connect: {}", name, e);
 				Ok(false)
 			},
 		}
@@ -318,12 +316,12 @@ impl ServiceRegistry {
 	/// - `Some(LocalService)` if service was removed
 	/// - `None` if service was not found
 	pub fn unregister(&self, name:&str) -> Option<LocalService> {
-		info!("[ServiceRegistry] Unregistering service: {}", name);
+		dev_log!("lifecycle", "[ServiceRegistry] Unregistering service: {}", name);
 
 		if let Ok(mut services) = self.services.write() {
 			services.remove(name)
 		} else {
-			error!("[ServiceRegistry] Failed to acquire write lock for unregistration");
+			dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire write lock for unregistration");
 			None
 		}
 	}
@@ -351,7 +349,7 @@ impl ServiceRegistry {
 		let manager = cert_manager
 			.lock()
 			.map_err(|e| {
-				log::error!("[ServiceRegistry] Failed to acquire lock: {}", e);
+				dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire lock: {}", e);
 			})
 			.ok()?;
 		manager.build_server_config(name).await.ok()

@@ -3,9 +3,9 @@
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, IPC::IPCProvider::IPCProvider};
-use log::{error, info};
 use serde_json::json;
 use url::Url;
+use crate::dev_log;
 
 /// Notifies Cocoon that a new document model has been added.
 pub(super) async fn notify_model_added(
@@ -17,7 +17,7 @@ pub(super) async fn notify_model_added(
 		.and_then(serde_json::Value::as_str)
 		.unwrap_or("unknown");
 
-	info!("[DocumentProvider] Notifying ModelAdded for: {}", uri_string);
+	dev_log!("model", "[DocumentProvider] Notifying ModelAdded for: {}", uri_string);
 
 	let payload = json!([document_state_dto]);
 
@@ -27,10 +27,8 @@ pub(super) async fn notify_model_added(
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelAdded".to_string(), payload)
 		.await
 	{
-		error!(
-			"[DocumentProvider] Failed to send $acceptModelAdded for {}: {}",
-			uri_string, error
-		);
+		dev_log!("model", "error: [DocumentProvider] Failed to send $acceptModelAdded for {}: {}",
+			uri_string, error);
 	}
 }
 
@@ -41,7 +39,7 @@ pub(super) async fn notify_model_changed(
 	new_version:i64,
 	changes:serde_json::Value,
 ) {
-	info!("[DocumentProvider] Notifying ModelChanged for: {}", uri);
+	dev_log!("model", "[DocumentProvider] Notifying ModelChanged for: {}", uri);
 
 	let uri_components = json!({ "external": uri.to_string(), "$mid": 1 });
 
@@ -55,7 +53,7 @@ pub(super) async fn notify_model_changed(
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelChanged".to_string(), payload)
 		.await
 	{
-		error!("[DocumentProvider] Failed to send $acceptModelChanged for {}: {}", uri, error);
+		dev_log!("model", "error: [DocumentProvider] Failed to send $acceptModelChanged for {}: {}", uri, error);
 	}
 }
 
@@ -64,7 +62,7 @@ pub(super) async fn notify_model_saved(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	uri:&Url,
 ) {
-	info!("[DocumentProvider] Notifying ModelSaved for: {}", uri);
+	dev_log!("model", "[DocumentProvider] Notifying ModelSaved for: {}", uri);
 
 	let uri_components = json!({ "external": uri.to_string(), "$mid": 1 });
 
@@ -76,7 +74,7 @@ pub(super) async fn notify_model_saved(
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelSaved".to_string(), payload)
 		.await
 	{
-		error!("[DocumentProvider] Failed to send $acceptModelSaved for {}: {}", uri, error);
+		dev_log!("model", "error: [DocumentProvider] Failed to send $acceptModelSaved for {}: {}", uri, error);
 	}
 }
 
@@ -85,7 +83,7 @@ pub(super) async fn notify_model_removed(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	uri:&Url,
 ) {
-	info!("[DocumentProvider] Notifying ModelRemoved for: {}", uri);
+	dev_log!("model", "[DocumentProvider] Notifying ModelRemoved for: {}", uri);
 
 	let uri_components = json!({ "external": uri.to_string(), "$mid": 1 });
 
@@ -97,6 +95,6 @@ pub(super) async fn notify_model_removed(
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelRemoved".to_string(), payload)
 		.await
 	{
-		error!("[DocumentProvider] Failed to send $acceptModelRemoved for {}: {}", uri, error);
+		dev_log!("model", "error: [DocumentProvider] Failed to send $acceptModelRemoved for {}: {}", uri, error);
 	}
 }

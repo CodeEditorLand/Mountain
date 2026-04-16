@@ -5,8 +5,8 @@
 //! Disabled in release builds (compile-time gated).
 
 use std::sync::OnceLock;
+use crate::dev_log;
 
-use log::debug;
 
 /// PostHog EU Cloud project token (debug builds only).
 const POSTHOG_API_KEY:&str = "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA";
@@ -40,7 +40,7 @@ pub async fn Initialize() {
 
 	let PostHogClient = posthog_rs::client(Options).await;
 	let _ = CLIENT.set(PostHogClient);
-	debug!("[PostHog] Initialized (EU Cloud, debug mode)");
+	dev_log!("lifecycle", "[PostHog] Initialized (EU Cloud, debug mode)");
 	CaptureEvent("mountain:session:start", None);
 }
 

@@ -105,15 +105,15 @@ use CommonLibrary::{
 	Synchronization::SynchronizationProvider::SynchronizationProvider,
 };
 use async_trait::async_trait;
-use log::warn;
 use serde_json::Value;
 
 use super::MountainEnvironment::MountainEnvironment;
+use crate::dev_log;
 
 #[async_trait]
 impl SynchronizationProvider for MountainEnvironment {
 	async fn PushUserData(&self, _UserData:Value) -> Result<(), CommonError> {
-		warn!("[SyncProvider] PushUserData is not implemented.");
+		dev_log!("workingcopy", "warn: [SyncProvider] PushUserData is not implemented.");
 
 		// A real implementation would connect to a settings sync service,
 		// authenticate, and upload the user data payload.
@@ -121,7 +121,7 @@ impl SynchronizationProvider for MountainEnvironment {
 	}
 
 	async fn PullUserData(&self) -> Result<Value, CommonError> {
-		warn!("[SyncProvider] PullUserData is not implemented.");
+		dev_log!("workingcopy", "warn: [SyncProvider] PullUserData is not implemented.");
 
 		// A real implementation would connect to a settings sync service,
 		// authenticate, and download the latest user data snapshot.

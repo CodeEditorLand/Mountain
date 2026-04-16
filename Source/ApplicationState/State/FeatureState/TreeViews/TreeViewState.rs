@@ -35,9 +35,9 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-use log::debug;
 
 use crate::ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO;
+use crate::dev_log;
 
 /// Active tree views state containing tree views by ID.
 #[derive(Clone)]
@@ -48,7 +48,7 @@ pub struct TreeViewState {
 
 impl Default for TreeViewState {
 	fn default() -> Self {
-		debug!("[TreeViewState] Initializing default tree view state...");
+		dev_log!("extensions", "[TreeViewState] Initializing default tree view state...");
 
 		Self { ActiveTreeViews:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
@@ -69,7 +69,7 @@ impl TreeViewState {
 	pub fn AddOrUpdate(&self, id:String, tree_view:TreeViewStateDTO) {
 		if let Ok(mut guard) = self.ActiveTreeViews.lock() {
 			guard.insert(id, tree_view);
-			debug!("[TreeViewState] Tree view added/updated");
+			dev_log!("extensions", "[TreeViewState] Tree view added/updated");
 		}
 	}
 
@@ -77,7 +77,7 @@ impl TreeViewState {
 	pub fn Remove(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveTreeViews.lock() {
 			guard.remove(id);
-			debug!("[TreeViewState] Tree view removed: {}", id);
+			dev_log!("extensions", "[TreeViewState] Tree view removed: {}", id);
 		}
 	}
 
@@ -85,7 +85,7 @@ impl TreeViewState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.ActiveTreeViews.lock() {
 			guard.clear();
-			debug!("[TreeViewState] All tree views cleared");
+			dev_log!("extensions", "[TreeViewState] All tree views cleared");
 		}
 	}
 

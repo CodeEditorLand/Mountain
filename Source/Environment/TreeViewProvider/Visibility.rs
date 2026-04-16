@@ -3,9 +3,9 @@
 //! Internal helper functions for tree view visibility and refresh operations.
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::info;
 use serde_json::json;
 use tauri::Emitter;
+use crate::dev_log;
 
 /// Reveals a specific item in the tree view by notifying the UI.
 pub(super) async fn reveal_tree_item(
@@ -14,7 +14,7 @@ pub(super) async fn reveal_tree_item(
 	item_handle:String,
 	options:serde_json::Value,
 ) -> Result<(), CommonError> {
-	info!(
+	dev_log!("extensions", 
 		"[TreeViewProvider] Revealing item '{}' in view '{}'",
 		item_handle, view_identifier
 	);
@@ -33,7 +33,7 @@ pub(super) async fn refresh_tree_view(
 	view_identifier:String,
 	items_to_refresh:Option<serde_json::Value>,
 ) -> Result<(), CommonError> {
-	info!("[TreeViewProvider] Refreshing view '{}'", view_identifier);
+	dev_log!("extensions", "[TreeViewProvider] Refreshing view '{}'", view_identifier);
 
 	env.ApplicationHandle
 		.emit(

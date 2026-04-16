@@ -1,6 +1,5 @@
 use std::{collections::HashMap, sync::Arc};
 
-use log::debug;
 use tokio::{
 	sync::{Mutex as AsyncMutex, Semaphore},
 	time::{Duration, timeout},
@@ -10,6 +9,7 @@ use super::{
 	Health::HealthChecker,
 	Types::{ConnectionHandle, ConnectionStats},
 };
+use crate::dev_log;
 
 /// Connection manager (alias for ConnectionPool)
 ///
@@ -97,7 +97,7 @@ impl ConnectionPool {
 	/// let pool = ConnectionPool::new(10, Duration::from_secs(30));
 	/// ```
 	pub fn new(MaxConnections:usize, ConnectionTimeout:Duration) -> Self {
-		debug!(
+		dev_log!("ipc", 
 			"[ConnectionPool] Creating pool with max: {}, timeout: {:?}",
 			MaxConnections, ConnectionTimeout
 		);
@@ -132,7 +132,7 @@ impl ConnectionPool {
 	/// let handle = pool.GetConnection().await?;
 	/// ```
 	pub async fn GetConnection(&self) -> Result<ConnectionHandle, String> {
-		debug!("[ConnectionPool] Acquiring connection permit");
+		dev_log!("ipc", "[ConnectionPool] Acquiring connection permit");
 
 		// Acquire semaphore permit with timeout
 		let permit = timeout(self.ConnectionTimeout, self.Semaphore.acquire())
@@ -149,7 +149,7 @@ impl ConnectionPool {
 			connections.insert(handle.id.clone(), handle.clone());
 		}
 
-		debug!("[ConnectionPool] Connection {} acquired (permit released on drop)", handle.id);
+		dev_log!("ipc", "[ConnectionPool] Connection {} acquired (permit released on drop)", handle.id);
 
 		// Start health monitoring for this connection
 		self.StartHealthMonitoring(&handle.id).await;
@@ -174,14 +174,14 @@ impl ConnectionPool {
 	/// pool.ReleaseConnection(handle).await;
 	/// ```
 	pub async fn ReleaseConnection(&self, handle:ConnectionHandle) {
-		debug!("[ConnectionPool] Releasing connection {}", handle.id);
+		dev_log!("ipc", "[ConnectionPool] Releasing connection {}", handle.id);
 
 		{
 			let mut connections = self.ActiveConnection.lock().await;
 			connections.remove(&handle.id);
 		}
 
-		debug!("[ConnectionPool] Connection {} released", handle.id);
+		dev_log!("ipc", "[ConnectionPool] Connection {} released", handle.id);
 	}
 
 	/// Get connection statistics for monitoring
@@ -250,12 +250,12 @@ impl ConnectionPool {
 
 		let stale_count = stale_ids.len();
 		for id in stale_ids {
-			debug!("[ConnectionPool] Removing stale connection {}", id);
+			dev_log!("ipc", "[ConnectionPool] Removing stale connection {}", id);
 			connections.remove(&id);
 		}
 
 		if stale_count > 0 {
-			debug!("[ConnectionPool] Cleaned up {} stale connection(s)", stale_count);
+			dev_log!("ipc", "[ConnectionPool] Cleaned up {} stale connection(s)", stale_count);
 		}
 
 		stale_count
@@ -290,14 +290,14 @@ impl ConnectionPool {
 					handle.update_health(is_healthy);
 
 					if !handle.is_healthy() {
-						debug!(
+						dev_log!("ipc", 
 							"[ConnectionPool] Connection {} marked as unhealthy (score: {:.1}, errors: {})",
 							handle.id, handle.health_score, handle.error_count
 						);
 					}
 				} else {
 					// Connection removed from pool, stop monitoring
-					debug!(
+					dev_log!("ipc", 
 						"[ConnectionPool] Connection {} removed from pool, stopping health monitoring",
 						connection_id
 					);

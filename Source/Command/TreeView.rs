@@ -88,6 +88,7 @@ use crate::{
 	ApplicationState::ApplicationState,
 	Environment::MountainEnvironment::MountainEnvironment,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
 };
 
 /// A specific Tauri command handler for the UI to fetch the children of a tree
@@ -103,11 +104,7 @@ pub async fn GetTreeViewChildren(
 
 	ElementHandle:Option<String>,
 ) -> Result<Value, String> {
-	log::debug!(
-		"[DispatchLogic] Getting TreeView children for '{}', element: {:?}",
-		ViewId,
-		ElementHandle
-	);
+	dev_log!("commands", "getting TreeView children for '{}', element: {:?}", ViewId, ElementHandle);
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
@@ -119,7 +116,7 @@ pub async fn GetTreeViewChildren(
 		Ok(Children) => Ok(json!(Children)),
 		Err(Error) => {
 			let ErrorMessage = format!("Failed to get children for tree view '{}': {}", ViewId, Error);
-			log::error!("{}", ErrorMessage);
+			dev_log!("commands", "error: {}", ErrorMessage);
 			Err(ErrorMessage)
 		},
 	}
@@ -136,11 +133,7 @@ pub async fn GetTreeViewItem(
 
 	ElementHandle:String,
 ) -> Result<Value, String> {
-	log::debug!(
-		"[DispatchLogic] Getting TreeView item for '{}', element: {}",
-		ViewId,
-		ElementHandle
-	);
+	dev_log!("commands", "getting TreeView item for '{}', element: {}", ViewId, ElementHandle);
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
@@ -152,7 +145,7 @@ pub async fn GetTreeViewItem(
 		Ok(Item) => Ok(json!(Item)),
 		Err(Error) => {
 			let ErrorMessage = format!("Failed to get tree item for view '{}': {}", ViewId, Error);
-			log::error!("{}", ErrorMessage);
+			dev_log!("commands", "error: {}", ErrorMessage);
 			Err(ErrorMessage)
 		},
 	}
@@ -176,7 +169,7 @@ pub async fn OnTreeViewExpansionChanged(
 
 	_IsExpanded:bool,
 ) -> Result<Value, String> {
-	log::warn!("[TreeView Command] OnTreeViewExpansionChanged not implemented");
+	dev_log!("commands", "warn: OnTreeViewExpansionChanged not implemented");
 
 	Ok(json!({ "success": false, "error": "OnTreeNodeExpanded method not implemented" }))
 }
@@ -198,7 +191,7 @@ pub async fn OnTreeViewSelectionChanged(
 
 	_SelectedHandles:Vec<String>,
 ) -> Result<Value, String> {
-	log::warn!("[TreeView Command] OnTreeViewSelectionChanged not implemented");
+	dev_log!("commands", "warn: OnTreeViewSelectionChanged not implemented");
 
 	Ok(json!({ "success": false, "error": "OnTreeSelectionChanged method not implemented" }))
 }
@@ -214,11 +207,7 @@ pub async fn RefreshTreeView(
 
 	ItemsToRefresh:Option<Vec<String>>,
 ) -> Result<Value, String> {
-	log::debug!(
-		"[TreeView Command] Refreshing tree view '{}', items: {:?}",
-		ViewId,
-		ItemsToRefresh
-	);
+	dev_log!("commands", "refreshing tree view '{}', items: {:?}", ViewId, ItemsToRefresh);
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
@@ -230,7 +219,7 @@ pub async fn RefreshTreeView(
 		Ok(_) => Ok(json!({ "success": true })),
 		Err(Error) => {
 			let ErrorMessage = format!("Failed to refresh tree view '{}': {}", ViewId, Error);
-			log::error!("{}", ErrorMessage);
+			dev_log!("commands", "error: {}", ErrorMessage);
 			Err(ErrorMessage)
 		},
 	}
@@ -249,7 +238,7 @@ pub async fn RevealTreeViewItem(
 
 	Options:Option<Value>,
 ) -> Result<Value, String> {
-	log::debug!("[TreeView Command] Revealing item '{}' in view '{}'", ItemHandle, ViewId);
+	dev_log!("commands", "revealing item '{}' in view '{}'", ItemHandle, ViewId);
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
@@ -261,7 +250,7 @@ pub async fn RevealTreeViewItem(
 		Ok(_) => Ok(json!({ "success": true })),
 		Err(Error) => {
 			let ErrorMessage = format!("Failed to reveal tree item in view '{}': {}", ViewId, Error);
-			log::error!("{}", ErrorMessage);
+			dev_log!("commands", "error: {}", ErrorMessage);
 			Err(ErrorMessage)
 		},
 	}
@@ -281,7 +270,7 @@ pub async fn PersistTreeView(
 
 	_ViewId:String,
 ) -> Result<Value, String> {
-	log::warn!("[TreeView Command] PersistTreeView not implemented");
+	dev_log!("commands", "warn: PersistTreeView not implemented");
 
 	Ok(json!({ "success": false, "error": "PersistTreeViewState method not implemented" }))
 }
@@ -302,7 +291,7 @@ pub async fn RestoreTreeView(
 
 	_StateValue:Value,
 ) -> Result<Value, String> {
-	log::warn!("[TreeView Command] RestoreTreeView not implemented");
+	dev_log!("commands", "warn: RestoreTreeView not implemented");
 
 	Ok(json!({ "success": false, "error": "RestoreTreeViewState method not implemented" }))
 }

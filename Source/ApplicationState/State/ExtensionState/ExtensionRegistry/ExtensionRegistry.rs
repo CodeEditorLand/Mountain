@@ -42,9 +42,9 @@ use std::{
 };
 
 use tauri::Wry;
-use log::debug;
 
 use crate::Environment::CommandProvider::CommandHandler;
+use crate::dev_log;
 
 /// Extension registry containing command registry and provider handle state.
 #[derive(Clone)]
@@ -64,7 +64,7 @@ pub struct Registry {
 
 impl Default for Registry {
 	fn default() -> Self {
-		debug!("[ExtensionRegistry] Initializing default extension registry...");
+		dev_log!("extensions", "[ExtensionRegistry] Initializing default extension registry...");
 
 		Self {
 			CommandRegistry:Arc::new(StandardMutex::new(HashMap::new())),
@@ -88,7 +88,7 @@ impl Registry {
 	pub fn RegisterCommand(&self, name:String, handler:CommandHandler<Wry>) {
 		if let Ok(mut guard) = self.CommandRegistry.lock() {
 			guard.insert(name, handler);
-			debug!("[ExtensionRegistry] Command registered");
+			dev_log!("extensions", "[ExtensionRegistry] Command registered");
 		}
 	}
 
@@ -96,7 +96,7 @@ impl Registry {
 	pub fn UnregisterCommand(&self, name:&str) {
 		if let Ok(mut guard) = self.CommandRegistry.lock() {
 			guard.remove(name);
-			debug!("[ExtensionRegistry] Command unregistered: {}", name);
+			dev_log!("extensions", "[ExtensionRegistry] Command unregistered: {}", name);
 		}
 	}
 
@@ -113,7 +113,7 @@ impl Registry {
 	pub fn SetExtensionScanPaths(&self, paths:Vec<PathBuf>) {
 		if let Ok(mut guard) = self.ExtensionScanPaths.lock() {
 			*guard = paths;
-			debug!("[ExtensionRegistry] Extension scan paths updated ({} paths)", guard.len());
+			dev_log!("extensions", "[ExtensionRegistry] Extension scan paths updated ({} paths)", guard.len());
 		}
 	}
 
@@ -121,7 +121,7 @@ impl Registry {
 	pub fn AddExtensionScanPath(&self, path:PathBuf) {
 		if let Ok(mut guard) = self.ExtensionScanPaths.lock() {
 			guard.push(path.clone());
-			debug!("[ExtensionRegistry] Extension scan path added: {:?}", path);
+			dev_log!("extensions", "[ExtensionRegistry] Extension scan path added: {:?}", path);
 		}
 	}
 
@@ -138,7 +138,7 @@ impl Registry {
 	pub fn SetEnabledProposedAPIs(&self, apis:HashMap<String, Vec<String>>) {
 		if let Ok(mut guard) = self.EnabledProposedAPIs.lock() {
 			*guard = apis;
-			debug!("[ExtensionRegistry] Enabled proposed APIs updated ({} entries)", guard.len());
+			dev_log!("extensions", "[ExtensionRegistry] Enabled proposed APIs updated ({} entries)", guard.len());
 		}
 	}
 
@@ -146,7 +146,7 @@ impl Registry {
 	pub fn EnableProposedAPI(&self, extension_id:String, api_name:String) {
 		if let Ok(mut guard) = self.EnabledProposedAPIs.lock() {
 			guard.entry(extension_id).or_insert_with(Vec::new).push(api_name);
-			debug!("[ExtensionRegistry] Proposed API enabled");
+			dev_log!("extensions", "[ExtensionRegistry] Proposed API enabled");
 		}
 	}
 }

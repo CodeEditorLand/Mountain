@@ -3,11 +3,11 @@
 //! Internal helper functions for saving and restoring tree view state.
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::info;
 use serde_json::json;
 use tauri::Emitter;
 
 use crate::Environment::Utility;
+use crate::dev_log;
 
 /// Persists the current state of a tree view.
 /// Saves the expansion, selection, and other state for later restoration.
@@ -15,7 +15,7 @@ pub(super) async fn persist_tree_view_state(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	view_identifier:String,
 ) -> Result<serde_json::Value, CommonError> {
-	info!("[TreeViewProvider] Persisting state for view '{}'", view_identifier);
+	dev_log!("extensions", "[TreeViewProvider] Persisting state for view '{}'", view_identifier);
 
 	let tree_views = env
 		.ApplicationState
@@ -47,7 +47,7 @@ pub(super) async fn restore_tree_view_state(
 	view_identifier:String,
 	state_value:serde_json::Value,
 ) -> Result<(), CommonError> {
-	info!("[TreeViewProvider] Restoring state for view '{}'", view_identifier);
+	dev_log!("extensions", "[TreeViewProvider] Restoring state for view '{}'", view_identifier);
 
 	let mut tree_views = env
 		.ApplicationState

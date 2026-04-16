@@ -193,12 +193,12 @@
 
 use CommonLibrary::{Diagnostic::DiagnosticManager::DiagnosticManager, Error::CommonError::CommonError};
 use async_trait::async_trait;
-use log::{debug, error, info};
 use serde_json::{Value, json};
 use tauri::Emitter;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO;
+use crate::dev_log;
 
 #[async_trait]
 impl DiagnosticManager for MountainEnvironment {
@@ -206,7 +206,7 @@ impl DiagnosticManager for MountainEnvironment {
 	/// owner. Empty marker arrays are treated as clearing diagnostics for that
 	/// URI.
 	async fn SetDiagnostics(&self, Owner:String, EntriesDTOValue:Value) -> Result<(), CommonError> {
-		info!("[DiagnosticProvider] Setting diagnostics for owner: {}", Owner);
+		dev_log!("extensions", "[DiagnosticProvider] Setting diagnostics for owner: {}", Owner);
 
 		let DeserializedEntries:Vec<(Value, Option<Vec<MarkerDataDTO>>)> = serde_json::from_value(EntriesDTOValue)
 			.map_err(|Error| {
@@ -251,10 +251,10 @@ impl DiagnosticManager for MountainEnvironment {
 		let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
 
 		if let Err(Error) = self.ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
-			error!("[DiagnosticProvider] Failed to emit 'diagnostics_changed': {}", Error);
+			dev_log!("extensions", "error: [DiagnosticProvider] Failed to emit 'diagnostics_changed': {}", Error);
 		}
 
-		info!(
+		dev_log!("extensions", 
 			"[DiagnosticProvider] Emitted diagnostics changed for {} URI(s)",
 			ChangedURIKeys.len()
 		);
@@ -264,7 +264,7 @@ impl DiagnosticManager for MountainEnvironment {
 
 	/// Clears all diagnostics from a specific owner.
 	async fn ClearDiagnostics(&self, Owner:String) -> Result<(), CommonError> {
-		info!("[DiagnosticProvider] Clearing all diagnostics for owner: {}", Owner);
+		dev_log!("extensions", "[DiagnosticProvider] Clearing all diagnostics for owner: {}", Owner);
 
 		let (ClearedCount, ChangedURIKeys):(usize, Vec<String>) = {
 			let mut DiagnosticsMapGuard = self
@@ -285,7 +285,7 @@ impl DiagnosticManager for MountainEnvironment {
 		};
 
 		if !ChangedURIKeys.is_empty() {
-			info!(
+			dev_log!("extensions", 
 				"[DiagnosticProvider] Cleared {} diagnostics across {} URI(s)",
 				ClearedCount,
 				ChangedURIKeys.len()
@@ -294,7 +294,7 @@ impl DiagnosticManager for MountainEnvironment {
 			let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
 
 			if let Err(Error) = self.ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
-				error!("[DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}", Error);
+				dev_log!("extensions", "error: [DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}", Error);
 			}
 		}
 
@@ -305,7 +305,7 @@ impl DiagnosticManager for MountainEnvironment {
 	/// Returns diagnostics aggregated from all owners for the specified
 	/// resource(s).
 	async fn GetAllDiagnostics(&self, ResourceURIFilterOption:Option<Value>) -> Result<Value, CommonError> {
-		debug!(
+		dev_log!("extensions", 
 			"[DiagnosticProvider] Getting all diagnostics with filter: {:?}",
 			ResourceURIFilterOption
 		);
@@ -339,7 +339,7 @@ impl DiagnosticManager for MountainEnvironment {
 
 		let ResultList:Vec<(String, Vec<MarkerDataDTO>)> = ResultMap.into_iter().collect();
 
-		debug!("[DiagnosticProvider] Returning {} diagnostic collection(s)", ResultList.len());
+		dev_log!("extensions", "[DiagnosticProvider] Returning {} diagnostic collection(s)", ResultList.len());
 
 		serde_json::to_value(ResultList).map_err(|Error| CommonError::from(Error))
 	}

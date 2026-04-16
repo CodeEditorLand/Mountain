@@ -4,18 +4,18 @@
 //! [`MountainEnvironment`]
 
 use CommonLibrary::{Error::CommonError::CommonError, StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO};
-use log::info;
 use serde_json::json;
 use tauri::Emitter;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
+use crate::dev_log;
 
 /// Entry management operations implementation for MountainEnvironment
 pub(super) async fn set_status_bar_entry_impl(
 	env:&MountainEnvironment,
 	entry:StatusBarEntryDTO,
 ) -> Result<(), CommonError> {
-	info!("[StatusBarProvider] Setting entry: {}", entry.EntryIdentifier);
+	dev_log!("lifecycle", "[StatusBarProvider] Setting entry: {}", entry.EntryIdentifier);
 
 	let mut items_guard = env
 		.ApplicationState
@@ -39,7 +39,7 @@ pub(super) async fn dispose_status_bar_entry_impl(
 	env:&MountainEnvironment,
 	entry_identifier:String,
 ) -> Result<(), CommonError> {
-	info!("[StatusBarProvider] Disposing entry: {}", entry_identifier);
+	dev_log!("lifecycle", "[StatusBarProvider] Disposing entry: {}", entry_identifier);
 
 	env.ApplicationState
 		.Feature

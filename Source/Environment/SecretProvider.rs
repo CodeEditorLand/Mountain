@@ -214,12 +214,12 @@
 use CommonLibrary::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProvider};
 use async_trait::async_trait;
 use keyring::Entry;
-use log::{info, trace, warn};
 // Import Air client types when Air is available in the workspace
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
 
 use super::MountainEnvironment::MountainEnvironment;
+use crate::dev_log;
 
 /// Constructs the service name for the keyring entry.
 fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&str) -> String {
@@ -244,7 +244,7 @@ impl SecretProvider for MountainEnvironment {
 	/// Falls back to local keyring if Air is unavailable.
 	#[allow(unused_mut, unused_variables)]
 	async fn GetSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<Option<String>, CommonError> {
-		trace!(
+		dev_log!("storage", 
 			"[SecretProvider] Getting secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier, Key
 		);
@@ -253,19 +253,17 @@ impl SecretProvider for MountainEnvironment {
 		{
 			if let Some(AirClient) = &self.AirClient {
 				if IsAirAvailable(AirClient).await {
-					info!("[SecretProvider] Delegating GetSecret to Air service for key: '{}'", Key);
+					dev_log!("storage", "[SecretProvider] Delegating GetSecret to Air service for key: '{}'", Key);
 
 					return GetSecretFromAir(AirClient, ExtensionIdentifier.clone(), Key).await;
 				} else {
-					warn!(
-						"[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
-						Key
-					);
+					dev_log!("storage", "warn: [SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+						Key);
 				}
 			}
 		}
 
-		info!("[SecretProvider] Using local keyring for ext: '{}'", ExtensionIdentifier);
+		dev_log!("storage", "[SecretProvider] Using local keyring for ext: '{}'", ExtensionIdentifier);
 
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
@@ -286,7 +284,7 @@ impl SecretProvider for MountainEnvironment {
 	/// Falls back to local keyring if Air is unavailable.
 	#[allow(unused_mut, unused_variables)]
 	async fn StoreSecret(&self, ExtensionIdentifier:String, Key:String, Value:String) -> Result<(), CommonError> {
-		info!(
+		dev_log!("storage", 
 			"[SecretProvider] Storing secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier, Key
 		);
@@ -295,19 +293,17 @@ impl SecretProvider for MountainEnvironment {
 		{
 			if let Some(AirClient) = &self.AirClient {
 				if IsAirAvailable(AirClient).await {
-					info!("[SecretProvider] Delegating StoreSecret to Air service for key: '{}'", Key);
+					dev_log!("storage", "[SecretProvider] Delegating StoreSecret to Air service for key: '{}'", Key);
 
 					return StoreSecretToAir(AirClient, ExtensionIdentifier.clone(), Key, Value).await;
 				} else {
-					warn!(
-						"[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
-						Key
-					);
+					dev_log!("storage", "warn: [SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+						Key);
 				}
 			}
 		}
 
-		info!("[SecretProvider] Using local keyring for ext: '{}'", ExtensionIdentifier);
+		dev_log!("storage", "[SecretProvider] Using local keyring for ext: '{}'", ExtensionIdentifier);
 
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
@@ -324,7 +320,7 @@ impl SecretProvider for MountainEnvironment {
 	/// Falls back to local keyring if Air is unavailable.
 	#[allow(unused_mut, unused_variables)]
 	async fn DeleteSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<(), CommonError> {
-		info!(
+		dev_log!("storage", 
 			"[SecretProvider] Deleting secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier, Key
 		);
@@ -333,19 +329,17 @@ impl SecretProvider for MountainEnvironment {
 		{
 			if let Some(AirClient) = &self.AirClient {
 				if IsAirAvailable(AirClient).await {
-					info!("[SecretProvider] Delegating DeleteSecret to Air service for key: '{}'", Key);
+					dev_log!("storage", "[SecretProvider] Delegating DeleteSecret to Air service for key: '{}'", Key);
 
 					return DeleteSecretFromAir(AirClient, ExtensionIdentifier.clone(), Key).await;
 				} else {
-					warn!(
-						"[SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
-						Key
-					);
+					dev_log!("storage", "warn: [SecretProvider] Air client unavailable, falling back to local keyring for key: '{}'",
+						Key);
 				}
 			}
 		}
 
-		info!("[SecretProvider] Using local keyring for ext: '{}'", ExtensionIdentifier);
+		dev_log!("storage", "[SecretProvider] Using local keyring for ext: '{}'", ExtensionIdentifier);
 
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
@@ -371,7 +365,7 @@ async fn GetSecretFromAir(
 	ExtensionIdentifier:String,
 	Key:String,
 ) -> Result<Option<String>, CommonError> {
-	info!(
+	dev_log!("storage", 
 		"[SecretProvider] Fetching secret from Air: ext='{}', key='{}'",
 		ExtensionIdentifier, Key
 	);
@@ -395,7 +389,7 @@ async fn StoreSecretToAir(
 	Key:String,
 	_Value:String,
 ) -> Result<(), CommonError> {
-	info!(
+	dev_log!("storage", 
 		"[SecretProvider] Storing secret in Air: ext='{}', key='{}'",
 		ExtensionIdentifier, Key
 	);
@@ -418,7 +412,7 @@ async fn DeleteSecretFromAir(
 	ExtensionIdentifier:String,
 	Key:String,
 ) -> Result<(), CommonError> {
-	info!(
+	dev_log!("storage", 
 		"[SecretProvider] Deleting secret from Air: ext='{}', key='{}'",
 		ExtensionIdentifier, Key
 	);

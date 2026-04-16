@@ -8,8 +8,8 @@
 //!
 //! System tray configuration and initialization.
 
-use log::{debug, error, info, warn};
 use tauri::App;
+use crate::dev_log;
 
 /// Enables and configures the system tray for the application.
 ///
@@ -22,7 +22,7 @@ use tauri::App;
 /// # Returns
 /// `Ok(())` if tray initialization succeeded, or `Err(String)` if it failed.
 pub fn enable_tray(_app:&App) -> Result<(), String> {
-	info!("[Tray] Initializing system tray...");
+	dev_log!("window", "[Tray] Initializing system tray...");
 
 	// Implement full system tray functionality using Tauri's SystemTray API.
 	// Create tray icon with platform-appropriate format (template for macOS,
@@ -33,6 +33,6 @@ pub fn enable_tray(_app:&App) -> Result<(), String> {
 	// tooltip and status icon states (normal, warning, error) for background
 	// operations like updates or sync status.
 
-	debug!("[Tray] System tray enabled");
+	dev_log!("window", "[Tray] System tray enabled");
 	Ok(())
 }

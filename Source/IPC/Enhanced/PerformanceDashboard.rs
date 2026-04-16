@@ -9,12 +9,12 @@ use std::{
 	time::{Duration, SystemTime},
 };
 
-use log::{debug, info, trace, warn};
 use serde::{Deserialize, Serialize};
 use tokio::{
 	sync::{Mutex as AsyncMutex, RwLock},
 	time::interval,
 };
+use crate::dev_log;
 
 /// Performance metrics configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -169,7 +169,7 @@ impl PerformanceDashboard {
 			is_running:Arc::new(AsyncMutex::new(false)),
 		};
 
-		info!(
+		dev_log!("ipc", 
 			"[PerformanceDashboard] Created dashboard with {}ms update interval",
 			config_clone.update_interval_ms
 		);
@@ -197,7 +197,7 @@ impl PerformanceDashboard {
 		// Start data cleanup
 		self.start_data_cleanup().await;
 
-		info!("[PerformanceDashboard] Performance dashboard started");
+		dev_log!("ipc", "[PerformanceDashboard] Performance dashboard started");
 		Ok(())
 	}
 
@@ -228,7 +228,7 @@ impl PerformanceDashboard {
 			alerts.clear();
 		}
 
-		info!("[PerformanceDashboard] Performance dashboard stopped");
+		dev_log!("ipc", "[PerformanceDashboard] Performance dashboard stopped");
 		Ok(())
 	}
 
@@ -243,7 +243,7 @@ impl PerformanceDashboard {
 		// Check for alerts
 		self.check_alerts(&metric).await;
 
-		trace!("[PerformanceDashboard] Recorded metric: {:?}", metric.metric_type);
+		dev_log!("ipc", "[PerformanceDashboard] Recorded metric: {:?}", metric.metric_type);
 	}
 
 	/// Start a new trace span
@@ -294,7 +294,7 @@ impl PerformanceDashboard {
 			span.end_time = Some(end_time);
 			span.duration_ms = Some(end_time.saturating_sub(span.start_time));
 
-			trace!(
+			dev_log!("ipc", 
 				"[PerformanceDashboard] Ended trace span: {} (duration: {}ms)",
 				span.operation_name,
 				span.duration_ms.unwrap_or(0)
@@ -510,7 +510,7 @@ impl PerformanceDashboard {
 				stats.total_alerts_triggered += 1;
 			}
 
-			warn!("[PerformanceDashboard] Alert triggered: {}", alert.message);
+			dev_log!("ipc", "warn: [PerformanceDashboard] Alert triggered: {}", alert.message);
 		}
 	}
 
@@ -518,7 +518,7 @@ impl PerformanceDashboard {
 	async fn check_performance_alerts(&self) {
 		// This method can be extended to check for complex alert conditions
 		// that require evaluating multiple metrics over time
-		debug!("[PerformanceDashboard] Checking performance alerts");
+		dev_log!("ipc", "[PerformanceDashboard] Checking performance alerts");
 	}
 
 	/// Cleanup old data
@@ -557,7 +557,7 @@ impl PerformanceDashboard {
 			alerts.retain(|a| a.timestamp >= retention_threshold);
 		}
 
-		debug!("[PerformanceDashboard] Cleaned up old data");
+		dev_log!("ipc", "[PerformanceDashboard] Cleaned up old data");
 	}
 
 	/// Get memory usage (simplified implementation)

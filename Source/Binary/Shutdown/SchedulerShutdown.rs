@@ -5,8 +5,8 @@
 #[allow(unused_imports)]
 use std::sync::Arc;
 
-use log::{debug, error, info};
 use Echo::Scheduler::Scheduler::Scheduler;
+use crate::dev_log;
 
 /// Stops the Echo task scheduler and cleans up its resources.
 ///
@@ -29,13 +29,13 @@ use Echo::Scheduler::Scheduler::Scheduler;
 ///
 /// Returns an error if the scheduler is not exclusively owned or stop fails.
 pub async fn SchedulerShutdown(SchedulerForShutdown:Arc<Scheduler>) -> Result<(), String> {
-	debug!("[Shutdown] [Scheduler] Stopping Echo scheduler...");
+	dev_log!("lifecycle", "[Shutdown] [Scheduler] Stopping Echo scheduler...");
 
 	// Try to get exclusive ownership for shutdown
 	match Arc::try_unwrap(SchedulerForShutdown) {
 		Ok(mut Scheduler) => {
 			Scheduler.Stop().await;
-			info!("[Shutdown] [Scheduler] Echo scheduler stopped successfully.");
+			dev_log!("lifecycle", "[Shutdown] [Scheduler] Echo scheduler stopped successfully.");
 			Ok(())
 		},
 		Err(_) => Err("Scheduler not exclusively owned".to_string()),

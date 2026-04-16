@@ -51,6 +51,8 @@
 use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::RwLock;
+
+use crate::dev_log;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use rustls::ServerConfig;
@@ -159,12 +161,12 @@ impl CertificateManager {
 	/// ```
 	pub async fn initialize_ca(&mut self) -> Result<()> {
 		if let Some((cert, key)) = self.load_ca_from_keyring()? {
-			log::info!("[CertificateManager] Loading CA certificate from keyring");
+			dev_log!("security", "loading CA certificate from keyring");
 			self.ca_cert = Some(cert.clone());
 			self.ca_key = Some(key.clone());
-			log::info!("[CertificateManager] CA certificate loaded successfully");
+			dev_log!("security", "CA certificate loaded successfully");
 		} else {
-			log::info!("[CertificateManager] CA certificate not found in keyring, generating new CA");
+			dev_log!("security", "CA certificate not found in keyring, generating new CA");
 			let (cert, key) = self.generate_ca_cert()?;
 
 			// Store in keyring
@@ -173,7 +175,7 @@ impl CertificateManager {
 			self.ca_cert = Some(cert.clone());
 			self.ca_key = Some(key);
 
-			log::info!("[CertificateManager] New CA certificate generated and stored");
+			dev_log!("security", "new CA certificate generated and stored");
 		}
 
 		Ok(())
@@ -190,7 +192,7 @@ impl CertificateManager {
 	/// - Valid for 10 years
 	/// - Includes proper extensions for CA functionality
 	fn generate_ca_cert(&self) -> Result<(Vec<u8>, Vec<u8>)> {
-		log::info!("[CertificateManager] Generating new CA certificate");
+		dev_log!("security", "generating new CA certificate");
 
 		// NOTE: Using rcgen CertificateParams::default() which provides working API
 
@@ -221,7 +223,7 @@ impl CertificateManager {
 		let cert_pem = cert.pem();
 		let key_pem = key_pair.serialize_pem();
 
-		log::info!("[CertificateManager] CA certificate generated successfully");
+		dev_log!("security", "CA certificate generated successfully");
 
 		Ok((cert_pem.into_bytes(), key_pem.into_bytes()))
 	}
@@ -254,7 +256,7 @@ impl CertificateManager {
 			if let Some(cert_data) = certs.get(hostname) {
 				// Check if certificate is still valid
 				if !self.should_renew(&cert_data.cert_pem) {
-					log::debug!("[CertificateManager] Using cached server certificate for {}", hostname);
+					dev_log!("security", "using cached server certificate for {}", hostname);
 					return Ok(cert_data.server_config.clone());
 				}
 				// Certificate needs renewal, drop lock and continue
@@ -263,7 +265,7 @@ impl CertificateManager {
 		}
 
 		// Generate or renew certificate
-		log::info!("[CertificateManager] Generating server certificate for {}", hostname);
+		dev_log!("security", "generating server certificate for {}", hostname);
 		let cert_data = self.generate_server_cert(hostname)?;
 
 		// Cache the certificate
@@ -353,11 +355,7 @@ impl CertificateManager {
 		let info = self.extract_cert_info(&cert_der_for_info, hostname, true)?;
 		let valid_until = Utc::now() + chrono::Duration::days(Self::SERVER_VALIDITY_DAYS);
 
-		log::info!(
-			"[CertificateManager] Server certificate generated for {} (valid until {})",
-			hostname,
-			valid_until
-		);
+		dev_log!("security", "server certificate generated for {} (valid until {})", hostname, valid_until);
 
 		Ok(ServerCertData { cert_pem, key_pem, server_config:Arc::new(server_config), info, valid_until })
 	}
@@ -384,7 +382,7 @@ impl CertificateManager {
 			.map_err(|e| anyhow::anyhow!("Failed to load CA key from keyring: {}", e))?
 			.into_bytes();
 
-		log::debug!("[CertificateManager] CA certificate loaded from keyring");
+		dev_log!("security", "CA certificate loaded from keyring");
 		Ok(Some((cert, key)))
 	}
 
@@ -409,7 +407,7 @@ impl CertificateManager {
 			.set_password(&key_str)
 			.map_err(|e| anyhow::anyhow!("Failed to save CA key to keyring: {}", e))?;
 
-		log::info!("[CertificateManager] CA certificate saved to keyring");
+		dev_log!("security", "CA certificate saved to keyring");
 		Ok(())
 	}
 
@@ -422,7 +420,7 @@ impl CertificateManager {
 			result.should_renew
 		} else {
 			// If we can't parse validity, err on the side of renewal
-			log::warn!("[CertificateManager] Could not parse certificate validity, forcing renewal");
+			dev_log!("security", "warn: could not parse certificate validity, forcing renewal");
 			true
 		}
 	}
@@ -445,7 +443,7 @@ impl CertificateManager {
 	/// # }
 	/// ```
 	pub async fn renew_certificate(&mut self, hostname:&str) -> Result<()> {
-		log::info!("[CertificateManager] Forcing renewal of certificate for {}", hostname);
+		dev_log!("security", "forcing renewal of certificate for {}", hostname);
 
 		// Remove from cache
 		let mut certs = self.server_certs.write();
@@ -459,7 +457,7 @@ impl CertificateManager {
 		let mut certs = self.server_certs.write();
 		certs.insert(hostname.to_string(), cert_data);
 
-		log::info!("[CertificateManager] Certificate renewed for {}", hostname);
+		dev_log!("security", "certificate renewed for {}", hostname);
 		Ok(())
 	}
 

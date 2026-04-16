@@ -4,11 +4,11 @@
 //! DidChangeTextDocument notifications.
 
 use CommonLibrary::Error::CommonError::CommonError;
-use log::{trace, warn};
 use serde_json::Value;
 use url::Url;
 
 use crate::Environment::Utility;
+use crate::dev_log;
 
 /// Applies a collection of content changes to a document.
 pub(super) async fn apply_document_changes(
@@ -20,7 +20,7 @@ pub(super) async fn apply_document_changes(
 	_is_undoing:bool,
 	_is_redoing:bool,
 ) -> Result<(), CommonError> {
-	trace!("[DocumentProvider] Applying changes to document: {}", uri);
+	dev_log!("model", "[DocumentProvider] Applying changes to document: {}", uri);
 
 	{
 		let mut open_documents_guard = environment
@@ -34,7 +34,7 @@ pub(super) async fn apply_document_changes(
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			document.ApplyChanges(new_version_identifier, &changes_dto_collection)?;
 		} else {
-			warn!("[DocumentProvider] Received changes for unknown document: {}", uri);
+			dev_log!("model", "warn: [DocumentProvider] Received changes for unknown document: {}", uri);
 
 			return Ok(());
 		}
