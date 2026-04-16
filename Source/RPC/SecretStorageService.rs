@@ -41,8 +41,8 @@ use opentelemetry::{
 	metrics::{Counter, Histogram},
 };
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	RPC::SecretStorageState::SecretStorageState,
 	Vine::Generated::{DeleteSecretRequest, Empty, RetrieveSecretRequest, RetrieveSecretResponse, StoreSecretRequest},

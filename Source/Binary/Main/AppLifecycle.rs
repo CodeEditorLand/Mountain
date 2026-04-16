@@ -69,8 +69,8 @@ use std::sync::Arc;
 use tauri::Manager;
 use Echo::Scheduler::Scheduler::Scheduler;
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	// Crate root imports
 	ApplicationState::ApplicationState,
 	// Binary submodule imports

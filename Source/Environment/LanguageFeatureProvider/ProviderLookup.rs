@@ -3,8 +3,8 @@
 use CommonLibrary::{Error::CommonError::CommonError, LanguageFeature::DTO::ProviderType::ProviderType};
 use url::Url;
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError,
 };

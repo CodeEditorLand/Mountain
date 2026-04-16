@@ -42,8 +42,8 @@ use opentelemetry::{
 	metrics::{Counter, Histogram},
 };
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	Vine::Generated::{
 		DeleteFileRequest,

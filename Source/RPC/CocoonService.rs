@@ -69,8 +69,8 @@ use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 };
 // Import generated protobuf types
-use crate::Vine::Generated::{
 use crate::dev_log;
+use crate::Vine::Generated::{
 	// Service trait
 	// Extended Language + Window + FS + Output + Task + Auth + Debug + Extension types
 	AppendOutputRequest,
@@ -1672,7 +1672,7 @@ impl CocoonService for CocoonServiceImpl {
 						label:s.Label.as_str().map(|l| l.to_string()).unwrap_or_default(),
 						kind:format!("{}", s.Kind),
 						detail:s.Detail.clone().unwrap_or_default(),
-						insert_text:s.InsertText.clone().unwrap_or_default(),
+						insert_text:s.InsertText.as_ref().and_then(|v| v.as_str()).unwrap_or("").to_string(),
 					}
 				}).collect();
 				Ok(Response::new(ProvideCompletionItemsResponse { items }))
@@ -3307,7 +3307,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing type hierarchy supertypes");
 
-		let item_dto = json!({ "item": req.item });
+		let item_dto = json!({
+			"name": req.item.as_ref().map(|i| i.name.as_str()).unwrap_or(""),
+			"uri": req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or(""),
+		});
 		match self.environment.ProvideTypeHierarchySupertypes(item_dto).await {
 			Ok(_result) => Ok(Response::new(ProvideTypeHierarchyResponse::default())),
 			Err(e) => Err(Status::internal(format!("Type hierarchy supertypes failed: {}", e))),
@@ -3322,7 +3325,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing type hierarchy subtypes");
 
-		let item_dto = json!({ "item": req.item });
+		let item_dto = json!({
+			"name": req.item.as_ref().map(|i| i.name.as_str()).unwrap_or(""),
+			"uri": req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or(""),
+		});
 		match self.environment.ProvideTypeHierarchySubtypes(item_dto).await {
 			Ok(_result) => Ok(Response::new(ProvideTypeHierarchyResponse::default())),
 			Err(e) => Err(Status::internal(format!("Type hierarchy subtypes failed: {}", e))),
@@ -3353,7 +3359,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing call hierarchy incoming");
 
-		let item_dto = json!({ "item": req.item });
+		let item_dto = json!({
+			"name": req.item.as_ref().map(|i| i.name.as_str()).unwrap_or(""),
+			"uri": req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or(""),
+		});
 		match self.environment.ProvideCallHierarchyIncomingCalls(item_dto).await {
 			Ok(_result) => Ok(Response::new(ProvideCallHierarchyResponse::default())),
 			Err(e) => Err(Status::internal(format!("Call hierarchy incoming failed: {}", e))),
@@ -3368,7 +3377,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Providing call hierarchy outgoing");
 
-		let item_dto = json!({ "item": req.item });
+		let item_dto = json!({
+			"name": req.item.as_ref().map(|i| i.name.as_str()).unwrap_or(""),
+			"uri": req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or(""),
+		});
 		match self.environment.ProvideCallHierarchyOutgoingCalls(item_dto).await {
 			Ok(_result) => Ok(Response::new(ProvideCallHierarchyResponse::default())),
 			Err(e) => Err(Status::internal(format!("Call hierarchy outgoing failed: {}", e))),

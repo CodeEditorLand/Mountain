@@ -63,8 +63,8 @@ use std::sync::Arc;
 use tauri::{App, Manager, RunEvent, Wry};
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	// Crate root imports
 	ApplicationState::ApplicationState,
 	Binary::Build::DnsCommands::init_dns_startup_time,

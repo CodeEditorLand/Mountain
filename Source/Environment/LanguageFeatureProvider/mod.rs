@@ -147,29 +147,52 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 		FeatureMethods::prepare_rename(self, DocumentURI, PositionDTO).await
 	}
 
-	// Missing trait implementations - TODO: wire to actual providers
-	async fn ProvideRenameEdits(&self, _:Url, _:PositionDTO, _:String) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideDocumentSymbols(&self, _:Url) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideWorkspaceSymbols(&self, _:String) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideSignatureHelp(&self, _:Url, _:PositionDTO, _:Value) -> Result<Option<Value>, CommonError> {
-		todo!()
+	async fn ProvideRenameEdits(&self, DocumentURI:Url, PositionDTO:PositionDTO, NewName:String) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_rename_edits(self, DocumentURI, PositionDTO, NewName).await
 	}
-	async fn ProvideFoldingRanges(&self, _:Url) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideSelectionRanges(&self, _:Url, _:Vec<PositionDTO>) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideSemanticTokensFull(&self, _:Url) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideInlayHints(&self, _:Url, _:Value) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideTypeHierarchySupertypes(&self, _:Value) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideTypeHierarchySubtypes(&self, _:Value) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideCallHierarchyIncomingCalls(&self, _:Value) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideCallHierarchyOutgoingCalls(&self, _:Value) -> Result<Option<Value>, CommonError> { todo!() }
-	async fn ProvideLinkedEditingRanges(&self, _:Url, _:PositionDTO) -> Result<Option<Value>, CommonError> { todo!() }
+	async fn ProvideDocumentSymbols(&self, DocumentURI:Url) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_document_symbols(self, DocumentURI).await
+	}
+	async fn ProvideWorkspaceSymbols(&self, Query:String) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_workspace_symbols(self, Query).await
+	}
+	async fn ProvideSignatureHelp(&self, DocumentURI:Url, PositionDTO:PositionDTO, ContextDTO:Value) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_signature_help(self, DocumentURI, PositionDTO, ContextDTO).await
+	}
+	async fn ProvideFoldingRanges(&self, DocumentURI:Url) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_folding_ranges(self, DocumentURI).await
+	}
+	async fn ProvideSelectionRanges(&self, DocumentURI:Url, Positions:Vec<PositionDTO>) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_selection_ranges(self, DocumentURI, Positions).await
+	}
+	async fn ProvideSemanticTokensFull(&self, DocumentURI:Url) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_semantic_tokens_full(self, DocumentURI).await
+	}
+	async fn ProvideInlayHints(&self, DocumentURI:Url, RangeDTO:Value) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_inlay_hints(self, DocumentURI, RangeDTO).await
+	}
+	async fn ProvideTypeHierarchySupertypes(&self, ItemDTO:Value) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_type_hierarchy_supertypes(self, ItemDTO).await
+	}
+	async fn ProvideTypeHierarchySubtypes(&self, ItemDTO:Value) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_type_hierarchy_subtypes(self, ItemDTO).await
+	}
+	async fn ProvideCallHierarchyIncomingCalls(&self, ItemDTO:Value) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_call_hierarchy_incoming_calls(self, ItemDTO).await
+	}
+	async fn ProvideCallHierarchyOutgoingCalls(&self, ItemDTO:Value) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_call_hierarchy_outgoing_calls(self, ItemDTO).await
+	}
+	async fn ProvideLinkedEditingRanges(&self, DocumentURI:Url, PositionDTO:PositionDTO) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::provide_linked_editing_ranges(self, DocumentURI, PositionDTO).await
+	}
 	async fn ProvideOnTypeFormattingEdits(
 		&self,
-		_:Url,
-		_:PositionDTO,
-		_:String,
-		_:Value,
+		DocumentURI:Url,
+		PositionDTO:PositionDTO,
+		Character:String,
+		OptionsDTO:Value,
 	) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
-		todo!()
+		FeatureMethods::provide_on_type_formatting_edits(self, DocumentURI, PositionDTO, Character, OptionsDTO).await
 	}
 }

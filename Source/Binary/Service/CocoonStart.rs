@@ -3,8 +3,8 @@
 //! Initializes and starts the Cocoon sidecar process.
 
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	ProcessManagement::CocoonManagement::InitializeCocoon,
 };

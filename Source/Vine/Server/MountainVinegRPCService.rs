@@ -41,8 +41,8 @@ use tauri::{AppHandle, Emitter};
 use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track,
 	Vine::Generated::{

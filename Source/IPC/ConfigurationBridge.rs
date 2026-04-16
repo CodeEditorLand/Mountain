@@ -233,8 +233,8 @@ type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider, Environment::Requires::Requires};
 use sha2::Digest;
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	IPC::WindServiceAdapters::{WindDesktopConfiguration, WindServiceAdapter},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };

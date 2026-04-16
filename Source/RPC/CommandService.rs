@@ -67,8 +67,8 @@ use opentelemetry::{
 	trace::{Span, Tracer},
 };
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	Vine::Generated::{
 		Argument,

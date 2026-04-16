@@ -21,8 +21,8 @@ use opentelemetry::{
 	metrics::{Counter, Histogram},
 };
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	RPC::WindowState::WindowState,
 	Vine::Generated::{

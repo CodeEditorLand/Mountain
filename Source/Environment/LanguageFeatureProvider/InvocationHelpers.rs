@@ -13,8 +13,8 @@ use serde_json::{Value, json};
 use tauri::Manager;
 use url::Url;
 
-use crate::{
 use crate::dev_log;
+use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,

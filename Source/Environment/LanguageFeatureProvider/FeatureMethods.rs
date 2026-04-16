@@ -355,6 +355,360 @@ pub(super) async fn prepare_rename(
 	}
 }
 
+pub(super) async fn provide_rename_edits(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+	position_dto:PositionDTO,
+	new_name:String,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::Rename).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+					json!(position_dto),
+					json!(new_name),
+				],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_document_symbols(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::DocumentSymbol).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+				],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_workspace_symbols(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	query:String,
+) -> Result<Option<Value>, CommonError> {
+	// Workspace symbols don't have a specific document URI — use a dummy lookup.
+	// The provider is registered globally, so we pick the first WorkspaceSymbol provider.
+	let providers = environment
+		.ApplicationState
+		.Extension
+		.ProviderRegistration
+		.LanguageProviders
+		.lock()
+		.map_err(crate::Environment::Utility::MapApplicationStateLockErrorToCommonError)?;
+	let provider = providers.values().find(|p| p.ProviderType == ProviderType::WorkspaceSymbol);
+	match provider {
+		Some(registration) => {
+			let registration = registration.clone();
+			drop(providers);
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![json!(registration.Handle), json!(query)],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => { drop(providers); Ok(None) },
+	}
+}
+
+pub(super) async fn provide_signature_help(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+	position_dto:PositionDTO,
+	context_dto:Value,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::SignatureHelp).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+					json!(position_dto),
+					context_dto,
+				],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_folding_ranges(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::FoldingRange).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+				],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_selection_ranges(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+	positions:Vec<PositionDTO>,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::SelectionRange).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+					json!(positions),
+				],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_semantic_tokens_full(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::SemanticTokens).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+				],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_inlay_hints(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+	range_dto:Value,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::InlayHint).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+					range_dto,
+				],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_type_hierarchy_supertypes(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	item_dto:Value,
+) -> Result<Option<Value>, CommonError> {
+	// Type hierarchy uses the item's URI to find the provider
+	let uri_str = item_dto.get("uri").and_then(|u| u.as_str()).unwrap_or("");
+	let document_uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///unknown").unwrap());
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::TypeHierarchy).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![json!(registration.Handle), item_dto],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_type_hierarchy_subtypes(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	item_dto:Value,
+) -> Result<Option<Value>, CommonError> {
+	let uri_str = item_dto.get("uri").and_then(|u| u.as_str()).unwrap_or("");
+	let document_uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///unknown").unwrap());
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::TypeHierarchy).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![json!(registration.Handle), item_dto],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_call_hierarchy_incoming_calls(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	item_dto:Value,
+) -> Result<Option<Value>, CommonError> {
+	let uri_str = item_dto.get("uri").and_then(|u| u.as_str()).unwrap_or("");
+	let document_uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///unknown").unwrap());
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::CallHierarchy).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![json!(registration.Handle), item_dto],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_call_hierarchy_outgoing_calls(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	item_dto:Value,
+) -> Result<Option<Value>, CommonError> {
+	let uri_str = item_dto.get("uri").and_then(|u| u.as_str()).unwrap_or("");
+	let document_uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///unknown").unwrap());
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::CallHierarchy).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![json!(registration.Handle), item_dto],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_linked_editing_ranges(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+	position_dto:PositionDTO,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::LinkedEditingRange).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+					json!(position_dto),
+				],
+			)
+			.await?;
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+		None => Ok(None),
+	}
+}
+
+pub(super) async fn provide_on_type_formatting_edits(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	document_uri:Url,
+	position_dto:PositionDTO,
+	character:String,
+	options_dto:Value,
+) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::OnTypeFormatting).await?;
+	match provider {
+		Some(registration) => {
+			let response = invoke_provider(
+				environment,
+				&registration,
+				vec![
+					json!(registration.Handle),
+					json!({ "external": document_uri.to_string(), "$mid": 1 }),
+					json!(position_dto),
+					json!(character),
+					options_dto,
+				],
+			)
+			.await?;
+			if response.is_null() {
+				Ok(None)
+			} else {
+				serde_json::from_value(response).map_err(|error| {
+					CommonError::SerializationError {
+						Description:format!("Failed to deserialize Vec<TextEditDTO>: {}", error),
+					}
+				})
+			}
+		},
+		None => Ok(None),
+	}
+}
+
 async fn invoke_provider(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	registration:&ProviderRegistrationDTO,

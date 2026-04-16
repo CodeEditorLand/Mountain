@@ -72,8 +72,8 @@ use tokio::{
 };
 
 use super::InitializationData;
-use crate::{
 use crate::dev_log;
+use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	IPC::Common::HealthStatus::{HealthIssue, HealthMonitor},
 	Vine,
