@@ -392,12 +392,16 @@ impl MountainService for MountainVinegRPCService {
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon registered command: {}", CommandId);
 				// Store in CommandRegistry as proxied command → Cocoon handles execution
 				if !CommandId.is_empty() {
-					self.Environment.ApplicationState.Extension.CommandRegistry
-						.RegisterProxied(
+					if let Ok(mut Registry) = self.RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock() {
+						use crate::Environment::CommandProvider::CommandHandler;
+						Registry.insert(
 							CommandId.to_string(),
-							"cocoon-main".to_string(),
-							CommandId.to_string(),
+							CommandHandler::Proxied {
+								SideCarIdentifier:"cocoon-main".to_string(),
+								CommandIdentifier:CommandId.to_string(),
+							},
 						);
+					}
 				}
 			},
 			// Cocoon → Mountain: provider registration from extensions
@@ -433,7 +437,7 @@ impl MountainService for MountainVinegRPCService {
 						ExtensionIdentifier:json!(ExtId),
 						Options:None,
 					};
-					self.Environment.ApplicationState.Extension.ProviderRegistration.RegisterProvider(Handle, Dto);
+					self.RunTime.Environment.ApplicationState.Extension.ProviderRegistration.RegisterProvider(Handle, Dto);
 				}
 			},
 			_ => {
