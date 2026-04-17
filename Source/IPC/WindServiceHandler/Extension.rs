@@ -21,7 +21,15 @@ pub async fn handle_extensions_get_all(Runtime:Arc<ApplicationRunTime>) -> Resul
 		.await
 		.map_err(|Error| format!("extensions:getAll failed: {}", Error))?;
 
-	dev_log!("extensions", "extensions:getAll returning {} extensions", Extensions.len());
+	let ExtensionCount = Extensions.len();
+	let Response = json!(Extensions);
+	let PayloadBytes = serde_json::to_string(&Response).map(|S| S.len()).unwrap_or(0);
+
+	dev_log!(
+		"extensions",
+		"extensions:getAll returning {} extensions ({} bytes serialized)",
+		ExtensionCount, PayloadBytes
+	);
 	if let Some(First) = Extensions.first() {
 		dev_log!(
 			"extensions",
@@ -32,8 +40,13 @@ pub async fn handle_extensions_get_all(Runtime:Arc<ApplicationRunTime>) -> Resul
 				.take(300)
 				.collect::<String>()
 		);
+	} else if ExtensionCount == 0 {
+		dev_log!(
+			"extensions",
+			"warn: extensions:getAll returning EMPTY — scan has not populated ScannedExtensions, or all inserts were rejected"
+		);
 	}
-	Ok(json!(Extensions))
+	Ok(Response)
 }
 
 /// Return metadata for a single extension by ID.

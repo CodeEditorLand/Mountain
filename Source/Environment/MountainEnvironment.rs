@@ -433,10 +433,18 @@ impl ExtensionManagementService for MountainEnvironment {
 			.lock()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 
+		let GuardLen = ScannedExtensionsGuard.len();
+
 		let Extensions:Vec<Value> = ScannedExtensionsGuard
 			.values()
 			.map(|ext| serde_json::to_value(ext).unwrap_or(Value::Null))
 			.collect();
+
+		let SerializedCount = Extensions.iter().filter(|v| !v.is_null()).count();
+
+		dev_log!("lifecycle",
+			"[MountainEnvironment] GetExtensions: ScannedExtensions map={} entries, serialized={} non-null",
+			GuardLen, SerializedCount);
 
 		Ok(Extensions)
 	}

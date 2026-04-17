@@ -191,12 +191,23 @@ pub fn AppLifecycleSetup(
 		// In dev mode, Tauri serves from ../Sky/Target relative to Mountain.
 		// Tauri's resource_dir gives us the frontendDist path.
 		let SkyTargetDir = PathResolver.resource_dir().unwrap_or_else(|_| {
-			// Fallback: resolve relative to the executable
-			std::env::current_exe()
-				.ok()
-				.and_then(|Exe| Exe.parent().map(|P| P.to_path_buf()))
-				.unwrap_or_default()
-				.join("../../../Element/Sky/Target")
+			// Fallback: dev-only path based on the monorepo layout. Release
+			// builds must rely on Tauri's bundled resource_dir() — if that
+			// fails in prod, something is wrong with the bundle. The cfg
+			// keeps the dev fallback out of release binaries so a broken
+			// bundle fails loudly instead of creating directories outside it.
+			#[cfg(debug_assertions)]
+			{
+				std::env::current_exe()
+					.ok()
+					.and_then(|Exe| Exe.parent().map(|P| P.to_path_buf()))
+					.unwrap_or_default()
+					.join("../../../Sky/Target")
+			}
+			#[cfg(not(debug_assertions))]
+			{
+				std::path::PathBuf::new()
+			}
 		});
 		crate::IPC::WindServiceHandlers::set_static_application_root(SkyTargetDir.to_string_lossy().to_string());
 		dev_log!("lifecycle", "[Lifecycle] [Dirs] Static application root: {}", SkyTargetDir.display());

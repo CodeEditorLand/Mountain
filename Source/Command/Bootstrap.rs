@@ -332,6 +332,26 @@ fn CommandCloseDocument(
 	})
 }
 
+/// Native no-op for VS Code's built-in `setContext` command. Extensions call
+/// `vscode.commands.executeCommand('setContext', key, value)` to set UI
+/// context-key state used for when-clauses. Wind/Sky owns the actual context
+/// key service; Mountain forwards the value so CommandProvider doesn't raise
+/// "not found". Returns null because the real VS Code command returns void.
+fn CommandSetContext(
+	_ApplicationHandle:AppHandle<Wry>,
+
+	_Window:WebviewWindow<Wry>,
+
+	_RunTime:Arc<ApplicationRunTime>,
+
+	Argument:Value,
+) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+	Box::pin(async move {
+		dev_log!("commands", "[Native Command] setContext: {}", Argument);
+		Ok(Value::Null)
+	})
+}
+
 /// A native command for reloading the window.
 fn CommandReloadWindow(
 	_ApplicationHandle:AppHandle<Wry>,
@@ -416,6 +436,11 @@ pub fn RegisterNativeCommands(
 		"workbench.action.reloadWindow".to_string(),
 		CommandHandler::Native(CommandReloadWindow),
 	);
+
+	// setContext is VS Code built-in — extensions invoke it on activation to
+	// declare UI context keys. Registering as a no-op silences the routing
+	// error until Wind/Sky wire through a real context key service.
+	CommandRegistry.insert("setContext".to_string(), CommandHandler::Native(CommandSetContext));
 
 	dev_log!("commands", "[Bootstrap] {} native commands registered.", CommandRegistry.len());
 

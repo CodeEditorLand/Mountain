@@ -76,6 +76,9 @@ pub async fn ScanAndPopulateExtensions(
 		match ExtensionManagement::Scanner::ScanDirectoryForExtensions(ApplicationHandle.clone(), path_clone).await {
 			Ok(found_in_path) => {
 				successful_scans += 1;
+				let path_count = found_in_path.len();
+				let mut inserted_from_path = 0;
+				let mut rejected_empty_identifier = 0;
 				for extension in found_in_path {
 					let identifier = extension
 						.Identifier
@@ -86,8 +89,17 @@ pub async fn ScanAndPopulateExtensions(
 
 					if !identifier.is_empty() {
 						all_found_extensions.insert(identifier, extension);
+						inserted_from_path += 1;
+					} else {
+						rejected_empty_identifier += 1;
+						dev_log!("extensions",
+							"warn: [ExtensionScanner] Rejected extension '{}' — empty identifier (publisher='{}', Identifier={:?})",
+							extension.Name, extension.Publisher, extension.Identifier);
 					}
 				}
+				dev_log!("extensions",
+					"[ExtensionScanner] Path '{}' yielded {} parsed, {} inserted, {} rejected",
+					path.display(), path_count, inserted_from_path, rejected_empty_identifier);
 			},
 			Err(error) => {
 				failed_scans += 1;
@@ -99,20 +111,22 @@ pub async fn ScanAndPopulateExtensions(
 	}
 
 	// Store discovered extensions into ApplicationState
-	{
+	let post_write_count = {
 		let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 		Guard.clear();
 		for (Key, Dto) in &all_found_extensions {
 			Guard.insert(Key.clone(), Dto.clone());
 		}
-	}
+		Guard.len()
+	};
 
-	dev_log!("extensions", 
-		"[ExtensionScanner] Extension scan complete. Found {} extensions ({} successful scans, {} failed scans).",
+	dev_log!("extensions",
+		"[ExtensionScanner] Extension scan complete. Found {} extensions ({} successful scans, {} failed scans). ScannedExtensions map now has {} entries.",
 		all_found_extensions.len(),
 		successful_scans,
-		failed_scans
+		failed_scans,
+		post_write_count
 	);
 
 	if failed_scans > 0 {

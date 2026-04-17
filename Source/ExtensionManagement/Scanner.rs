@@ -155,6 +155,13 @@ pub async fn ScanDirectoryForExtensions(
 		},
 	};
 
+	dev_log!("extensions",
+		"[ExtensionScanner] Directory '{}' contains {} top-level entries",
+		DirectoryPath.display(), TopLevelEntries.len());
+
+	let mut parse_failures = 0usize;
+	let mut missing_package_json = 0usize;
+
 	for (EntryName, FileType) in TopLevelEntries {
 		if FileType == FileTypeDTO::Directory {
 			let PotentialExtensionPath = DirectoryPath.join(EntryName);
@@ -166,39 +173,52 @@ pub async fn ScanDirectoryForExtensions(
 				PotentialExtensionPath.display()
 			);
 
-			if let Ok(PackageJsonContent) = RunTime.Run(ReadFile(PackageJsonPath)).await {
-				match serde_json::from_slice::<ExtensionDescriptionStateDTO>(&PackageJsonContent) {
-					Ok(mut Description) => {
-						// Augment the description with its location on disk.
-						Description.ExtensionLocation =
-							serde_json::to_value(url::Url::from_directory_path(&PotentialExtensionPath).unwrap())
-								.unwrap_or(Value::Null);
+			match RunTime.Run(ReadFile(PackageJsonPath.clone())).await {
+				Ok(PackageJsonContent) => {
+					match serde_json::from_slice::<ExtensionDescriptionStateDTO>(&PackageJsonContent) {
+						Ok(mut Description) => {
+							// Augment the description with its location on disk.
+							Description.ExtensionLocation =
+								serde_json::to_value(url::Url::from_directory_path(&PotentialExtensionPath).unwrap())
+									.unwrap_or(Value::Null);
 
-						// Construct identifier from publisher.name if not set
-						if Description.Identifier == Value::Null || Description.Identifier == Value::Object(Default::default()) {
-							let Id = if Description.Publisher.is_empty() {
-								Description.Name.clone()
-							} else {
-								format!("{}.{}", Description.Publisher, Description.Name)
-							};
-							Description.Identifier = serde_json::json!({ "value": Id });
-						}
+							// Construct identifier from publisher.name if not set
+							if Description.Identifier == Value::Null || Description.Identifier == Value::Object(Default::default()) {
+								let Id = if Description.Publisher.is_empty() {
+									Description.Name.clone()
+								} else {
+									format!("{}.{}", Description.Publisher, Description.Name)
+								};
+								Description.Identifier = serde_json::json!({ "value": Id });
+							}
 
-						// Mark as built-in extension
-						Description.IsBuiltin = true;
+							// Mark as built-in extension
+							Description.IsBuiltin = true;
 
-						FoundExtensions.push(Description);
-					},
+							FoundExtensions.push(Description);
+						},
 
-					Err(error) => {
-						dev_log!("extensions", "warn: [ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
-							PotentialExtensionPath.display(),
-							error);
-					},
-				}
+						Err(error) => {
+							parse_failures += 1;
+							dev_log!("extensions", "warn: [ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
+								PotentialExtensionPath.display(),
+								error);
+						},
+					}
+				},
+				Err(error) => {
+					missing_package_json += 1;
+					dev_log!("extensions", "warn: [ExtensionScanner] Could not read package.json at '{}': {}",
+						PackageJsonPath.display(),
+						error);
+				},
 			}
 		}
 	}
+
+	dev_log!("extensions",
+		"[ExtensionScanner] Directory '{}' scan done: {} parsed, {} parse-failures, {} missing package.json",
+		DirectoryPath.display(), FoundExtensions.len(), parse_failures, missing_package_json);
 
 	Ok(FoundExtensions)
 }

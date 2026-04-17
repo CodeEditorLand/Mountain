@@ -363,7 +363,10 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 				.ok()
 				.and_then(|P| P.parent().map(|D| D.to_path_buf()))
 				.unwrap_or_default();
-			let SkyTarget = ExeDir.join("../../../Element/Sky/Target");
+			// Exe at Element/Mountain/Target/debug/ — ../../../ lands in
+			// Element/, so join "Sky/Target" (not "Element/Sky/Target"
+			// which would create a bogus Element/Element/Sky/ path).
+			let SkyTarget = ExeDir.join("../../../Sky/Target");
 			if SkyTarget.exists() {
 				Ok(SkyTarget.canonicalize().unwrap_or(SkyTarget))
 			} else {

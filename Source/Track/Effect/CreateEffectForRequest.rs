@@ -348,6 +348,100 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			Ok(Box::new(effect))
 		},
 
+		"FileSystem.Stat" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
+						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let path = std::path::PathBuf::from(path_str);
+						fs_reader
+							.StatFile(&path)
+							.await
+							.map(|stat| json!(stat))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"FileSystem.CreateDirectory" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let path = std::path::PathBuf::from(path_str);
+						fs_writer
+							.CreateDirectory(&path, true)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"FileSystem.Delete" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let path = std::path::PathBuf::from(path_str);
+						let recursive = Parameters.get(1).and_then(Value::as_bool).unwrap_or(false);
+						fs_writer
+							.Delete(&path, recursive, false)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"FileSystem.Rename" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+						let source = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let target = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
+						fs_writer
+							.Rename(
+								&std::path::PathBuf::from(source),
+								&std::path::PathBuf::from(target),
+								true,
+							)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"FileSystem.Copy" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
+						let source = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let target = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
+						fs_writer
+							.Copy(
+								&std::path::PathBuf::from(source),
+								&std::path::PathBuf::from(target),
+								true,
+							)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
 		// Keybinding
 		"Keybinding.GetResolved" => {
 			let effect =

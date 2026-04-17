@@ -54,21 +54,27 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			dev_log!("extensions", "[Extensions] [ScanPaths] + {}", LocalPath.display());
 			ScanPathsGuard.push(LocalPath);
 
-			// Sky Target path: where CopyVSCodeAssets copies built-in
-			// extensions during the build.
-			let SkyTargetPath = Parent.join("../../../Element/Sky/Target/Static/Application/extensions");
-			if SkyTargetPath.exists() {
-				dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Sky Target)", SkyTargetPath.display());
-				ScanPathsGuard.push(SkyTargetPath);
-			}
+			// Dev-only fallback paths: the monorepo layout
+			// (Element/Mountain/Target/debug/) is not present in shipped
+			// bundles. In production, the ../Resources/extensions path above
+			// is authoritative. Gate with cfg to keep release builds lean.
+			#[cfg(debug_assertions)]
+			{
+				// Sky Target path: where CopyVSCodeAssets copies built-in
+				// extensions during the build.
+				let SkyTargetPath = Parent.join("../../../Sky/Target/Static/Application/extensions");
+				if SkyTargetPath.exists() {
+					dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Sky Target, dev)", SkyTargetPath.display());
+					ScanPathsGuard.push(SkyTargetPath);
+				}
 
-			// VS Code dependency path: built-in extensions from the VS Code
-			// source checkout. Primary source in dev — avoids requiring a copy
-			// step. Production builds use Sky Target or Resources instead.
-			let DependencyPath = Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
-			if DependencyPath.exists() {
-				dev_log!("extensions", "[Extensions] [ScanPaths] + {} (VS Code Dependency)", DependencyPath.display());
-				ScanPathsGuard.push(DependencyPath);
+				// VS Code dependency path: built-in extensions from the VS
+				// Code source checkout — avoids requiring a copy step in dev.
+				let DependencyPath = Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
+				if DependencyPath.exists() {
+					dev_log!("extensions", "[Extensions] [ScanPaths] + {} (VS Code Dependency, dev)", DependencyPath.display());
+					ScanPathsGuard.push(DependencyPath);
+				}
 			}
 		}
 	}
