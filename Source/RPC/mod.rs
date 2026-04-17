@@ -56,8 +56,9 @@ pub use CocoonService::CocoonServiceImpl;
 
 pub mod types;
 
-pub mod echo_action;
-pub use echo_action::{EchoActionServer, ExtensionHostRegistry, ExtensionRouter};
+#[path = "EchoAction.rs"]
+pub mod EchoAction;
+pub use EchoAction::{EchoActionServer, ExtensionHostRegistry, ExtensionRouter};
 
 pub mod commands;
 pub use commands::{CommandService, CommandValidation};
