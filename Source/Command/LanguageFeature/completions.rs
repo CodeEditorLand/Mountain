@@ -14,7 +14,7 @@ use serde_json::Value;
 use tauri::{AppHandle, Wry};
 use url::Url;
 
-use super::{invoke_provider::invoke_provider, validation::validate_language_feature_request};
+use super::{InvokeProvider::invoke_provider, validation::validate_language_feature_request};
 use crate::dev_log;
 
 /// Implementation of completions command - called by the command wrapper in the

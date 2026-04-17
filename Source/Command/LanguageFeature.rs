@@ -71,7 +71,7 @@
 //!
 //! MODULE STRUCTURE:
 //! - [`validation.rs`](validation.rs) - request validation helper
-//! - [`invoke_provider.rs`](invoke_provider.rs) - generic provider invoker
+//! - [`InvokeProvider.rs`](InvokeProvider.rs) - generic provider invoker
 //! - Individual command modules for each language feature (containing impls
 //!   only)
 
@@ -85,12 +85,12 @@ use crate::dev_log;
 // Private submodules containing implementation (without #[command] attributes)
 #[path = "LanguageFeature/validation.rs"]
 mod validation;
-#[path = "LanguageFeature/invoke_provider.rs"]
-mod invoke_provider;
+#[path = "LanguageFeature/InvokeProvider.rs"]
+mod InvokeProvider;
 #[path = "LanguageFeature/hover.rs"]
 mod hover;
-#[path = "LanguageFeature/code_actions.rs"]
-mod code_actions;
+#[path = "LanguageFeature/CodeActions.rs"]
+mod CodeActions;
 #[path = "LanguageFeature/highlights.rs"]
 mod highlights;
 #[path = "LanguageFeature/completions.rs"]
@@ -120,7 +120,7 @@ pub async fn MountainProvideCodeActions(
 	context:Value,
 ) -> Result<Value, String> {
 	dev_log!("commands", "[Language Feature] Providing code actions for: {} at {:?}", uri, position);
-	code_actions::provide_code_actions_impl(application_handle, uri, position, context).await
+	CodeActions::provide_CodeActions_impl(application_handle, uri, position, context).await
 }
 
 /// Finds symbol occurrences (document highlights) in a document

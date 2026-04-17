@@ -69,9 +69,7 @@
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
-		"externalBin": [
-			"Binary/node"
-		],
+		"externalBin": [],
 		"fileAssociations": [],
 		"homepage": "https://Editor.Land",
 		"iOS": {
@@ -141,7 +139,7 @@
 			}
 		}
 	},
-	"identifier": "land.editor.binary.development.node.environment.microsoft.vscode.dependency.node.22.bundle.clean.debug.mountain",
-	"productName": "DevelopmentNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Debug_Mountain",
+	"identifier": "land.editor.binary",
+	"productName": "Mountain",
 	"version": "0.0.1"
 }

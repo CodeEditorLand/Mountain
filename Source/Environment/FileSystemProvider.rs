@@ -52,9 +52,9 @@
 //! - Implement case sensitivity handling based on filesystem type
 //!
 //! MODULE STRUCTURE:
-//! - [`read_operations.rs`](read_operations.rs) - `FileSystemReader`
+//! - [`ReadOperations.rs`](ReadOperations.rs) - `FileSystemReader`
 //!   implementation
-//! - [`write_operations.rs`](write_operations.rs) - `FileSystemWriter`
+//! - [`WriteOperations.rs`](WriteOperations.rs) - `FileSystemWriter`
 //!   implementation
 
 use std::path::PathBuf;
@@ -72,58 +72,58 @@ use async_trait::async_trait;
 use super::MountainEnvironment::MountainEnvironment;
 
 // Private submodules containing the actual implementation
-#[path = "FileSystemProvider/read_operations.rs"]
-mod read_operations;
-#[path = "FileSystemProvider/write_operations.rs"]
-mod write_operations;
+#[path = "FileSystemProvider/ReadOperations.rs"]
+mod ReadOperations;
+#[path = "FileSystemProvider/WriteOperations.rs"]
+mod WriteOperations;
 
 #[async_trait]
 impl FileSystemReader for MountainEnvironment {
-	/// Delegates to read_operations module
+	/// Delegates to ReadOperations module
 	async fn ReadFile(&self, path:&PathBuf) -> Result<Vec<u8>, CommonError> {
-		read_operations::read_file_impl(self, path).await
+		ReadOperations::read_file_impl(self, path).await
 	}
 
-	/// Delegates to read_operations module
+	/// Delegates to ReadOperations module
 	async fn StatFile(&self, path:&PathBuf) -> Result<FileSystemStatDTO, CommonError> {
-		read_operations::stat_file_impl(self, path).await
+		ReadOperations::stat_file_impl(self, path).await
 	}
 
-	/// Delegates to read_operations module
+	/// Delegates to ReadOperations module
 	async fn ReadDirectory(&self, path:&PathBuf) -> Result<Vec<(String, FileTypeDTO)>, CommonError> {
-		read_operations::read_directory_impl(self, path).await
+		ReadOperations::read_directory_impl(self, path).await
 	}
 }
 
 #[async_trait]
 impl FileSystemWriter for MountainEnvironment {
-	/// Delegates to write_operations module
+	/// Delegates to WriteOperations module
 	async fn WriteFile(&self, path:&PathBuf, content:Vec<u8>, create:bool, overwrite:bool) -> Result<(), CommonError> {
-		write_operations::write_file_impl(self, path, content, create, overwrite).await
+		WriteOperations::write_file_impl(self, path, content, create, overwrite).await
 	}
 
-	/// Delegates to write_operations module
+	/// Delegates to WriteOperations module
 	async fn CreateDirectory(&self, path:&PathBuf, recursive:bool) -> Result<(), CommonError> {
-		write_operations::create_directory_impl(self, path, recursive).await
+		WriteOperations::create_directory_impl(self, path, recursive).await
 	}
 
-	/// Delegates to write_operations module
+	/// Delegates to WriteOperations module
 	async fn Delete(&self, path:&PathBuf, recursive:bool, use_trash:bool) -> Result<(), CommonError> {
-		write_operations::delete_impl(self, path, recursive, use_trash).await
+		WriteOperations::delete_impl(self, path, recursive, use_trash).await
 	}
 
-	/// Delegates to write_operations module
+	/// Delegates to WriteOperations module
 	async fn Rename(&self, source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
-		write_operations::rename_impl(self, source, target, overwrite).await
+		WriteOperations::rename_impl(self, source, target, overwrite).await
 	}
 
-	/// Delegates to write_operations module
+	/// Delegates to WriteOperations module
 	async fn Copy(&self, source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
-		write_operations::copy_impl(self, source, target, overwrite).await
+		WriteOperations::copy_impl(self, source, target, overwrite).await
 	}
 
-	/// Delegates to write_operations module
+	/// Delegates to WriteOperations module
 	async fn CreateFile(&self, path:&PathBuf) -> Result<(), CommonError> {
-		write_operations::create_file_impl(self, path).await
+		WriteOperations::create_file_impl(self, path).await
 	}
 }
