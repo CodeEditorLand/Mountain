@@ -54,51 +54,62 @@
 pub mod CocoonService;
 pub use CocoonService::CocoonServiceImpl;
 
-pub mod types;
+#[path = "Types.rs"]
+pub mod Types;
 
 #[path = "EchoAction.rs"]
 pub mod EchoAction;
 pub use EchoAction::{EchoActionServer, ExtensionHostRegistry, ExtensionRouter};
 
-pub mod commands;
-pub use commands::{CommandService, CommandValidation};
+#[path = "Commands.rs"]
+pub mod Commands;
+pub use Commands::{CommandService, CommandValidation};
 
-pub mod workspace;
-pub use workspace::WorkspaceService;
+#[path = "Workspace.rs"]
+pub mod Workspace;
+pub use Workspace::WorkspaceService;
 
-pub mod configuration;
-pub use configuration::ConfigurationService;
+#[path = "Configuration.rs"]
+pub mod Configuration;
+pub use Configuration::ConfigurationService;
 
 // Conditionally include services based on feature flags
 
 #[cfg(any(feature = "grove", feature = "cocoon"))]
-pub mod windows;
+#[path = "Windows.rs"]
+pub mod Windows;
 #[cfg(any(feature = "grove", feature = "cocoon"))]
-pub use windows::WindowService;
+pub use Windows::WindowService;
 
 #[cfg(feature = "terminals")]
-pub mod terminals;
+#[path = "Terminals.rs"]
+pub mod Terminals;
 #[cfg(feature = "terminals")]
-pub use terminals::TerminalService;
+pub use Terminals::TerminalService;
 
 #[cfg(feature = "debug-protocol")]
-pub mod debug;
+#[path = "Debug.rs"]
+pub mod Debug;
 #[cfg(feature = "debug-protocol")]
-pub use debug::DebugService;
+pub use Debug::DebugService;
 
 #[cfg(feature = "scm-support")]
-pub mod scm;
+#[path = "SCM.rs"]
+pub mod SCM;
 #[cfg(feature = "scm-support")]
-pub use scm::SCMService;
+pub use SCM::SCMService;
 
 #[cfg(feature = "child-processes")]
-pub mod processes;
+#[path = "Processes.rs"]
+pub mod Processes;
 #[cfg(feature = "child-processes")]
-pub use processes::ProcessService;
+pub use Processes::ProcessService;
 
 // Telemetry modules
-pub mod telemetry;
-pub use telemetry::{TelemetryService, metrics::ServiceMetrics, spans::TraceSpan};
+#[path = "Telemetry.rs"]
+pub mod Telemetry;
+pub use Telemetry::{TelemetryService, metrics::ServiceMetrics, spans::TraceSpan};
 
 // Re-export vine types
-pub mod vine;
+#[path = "Vine.rs"]
+pub mod Vine;
