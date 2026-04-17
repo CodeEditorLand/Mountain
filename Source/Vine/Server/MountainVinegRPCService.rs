@@ -297,8 +297,25 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			Err(ErrorString) => {
-				dev_log!("grpc", "error: [MountainVinegRPCService] Request [ID: {}] failed: {}",
-					RequestIdentifier, ErrorString);
+				// `FileSystem.ReadFile` "Resource not found" is a routine
+				// occurrence — extensions probe for optional cache files on
+				// activate (terminal-suggest, json-language-features schema
+				// associations, etc.). Downgrade 404s to an info-level note
+				// so the error log reflects genuine failures only. The
+				// response itself is still returned with code -32000 so
+				// Cocoon's `readFile` shim can convert it into a proper
+				// `vscode.FileSystemError.FileNotFound`.
+				let LooksLike404 = MethodName == "FileSystem.ReadFile"
+					&& (ErrorString.to_lowercase().contains("resource not found")
+						|| ErrorString.to_lowercase().contains("not found"));
+				if LooksLike404 {
+					dev_log!("grpc",
+						"[LandFix:MountainVinegRPC] Request [ID: {}] {} 404 (benign): {}",
+						RequestIdentifier, MethodName, ErrorString);
+				} else {
+					dev_log!("grpc", "error: [MountainVinegRPCService] Request [ID: {}] failed: {}",
+						RequestIdentifier, ErrorString);
+				}
 
 				Ok(Response::new(Self::CreateErrorResponse(
 					RequestIdentifier,

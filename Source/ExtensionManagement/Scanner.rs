@@ -175,7 +175,32 @@ pub async fn ScanDirectoryForExtensions(
 
 			match RunTime.Run(ReadFile(PackageJsonPath.clone())).await {
 				Ok(PackageJsonContent) => {
-					match serde_json::from_slice::<ExtensionDescriptionStateDTO>(&PackageJsonContent) {
+					// Parse to a dynamic JSON value first so we can resolve
+					// VS Code NLS placeholders (`%key%` strings referencing
+					// `package.nls.json` entries) across every typed field.
+					// Without this the UI renders literal `%command.clone%`,
+					// `%displayName%`, etc. in the Command Palette and menus.
+					let mut ManifestValue:Value = match serde_json::from_slice::<Value>(&PackageJsonContent) {
+						Ok(v) => v,
+						Err(error) => {
+							parse_failures += 1;
+							dev_log!("extensions", "warn: [ExtensionScanner] Failed to parse package.json at '{}': {}",
+								PotentialExtensionPath.display(),
+								error);
+							continue;
+						},
+					};
+
+					if let Some(NLSMap) = LoadNLSBundle(&RunTime, &PotentialExtensionPath).await {
+						let mut Replaced = 0u32;
+						let mut Unresolved = 0u32;
+						ResolveNLSPlaceholdersInner(&mut ManifestValue, &NLSMap, &mut Replaced, &mut Unresolved);
+						dev_log!("extensions",
+							"[LandFix:NLS] {} → {} replaced, {} unresolved placeholders",
+							PotentialExtensionPath.display(), Replaced, Unresolved);
+					}
+
+					match serde_json::from_value::<ExtensionDescriptionStateDTO>(ManifestValue) {
 						Ok(mut Description) => {
 							// Augment the description with its location on disk.
 							Description.ExtensionLocation =
@@ -221,6 +246,94 @@ pub async fn ScanDirectoryForExtensions(
 		DirectoryPath.display(), FoundExtensions.len(), parse_failures, missing_package_json);
 
 	Ok(FoundExtensions)
+}
+
+/// Load an extension's NLS bundle (`package.nls.json`) into a `{key → string}`
+/// map. Returns `None` if the bundle is absent or unreadable; placeholders stay
+/// as-is in that case. Entries can be bare strings or `{message, comment}`
+/// objects — we only keep `message`.
+async fn LoadNLSBundle(
+	RunTime:&Arc<ApplicationRunTime>,
+	ExtensionPath:&PathBuf,
+) -> Option<Map<String, Value>> {
+	let NLSPath = ExtensionPath.join("package.nls.json");
+	let Content = match RunTime.Run(ReadFile(NLSPath.clone())).await {
+		Ok(Bytes) => Bytes,
+		Err(Error) => {
+			dev_log!("extensions",
+				"[LandFix:NLS] no bundle for {} ({})",
+				ExtensionPath.display(), Error);
+			return None;
+		},
+	};
+	let Parsed:Value = match serde_json::from_slice(&Content) {
+		Ok(V) => V,
+		Err(Error) => {
+			dev_log!("extensions",
+				"warn: [LandFix:NLS] failed to parse {}: {}",
+				NLSPath.display(), Error);
+			return None;
+		},
+	};
+	let Object = Parsed.as_object()?;
+	let mut Resolved = Map::with_capacity(Object.len());
+	for (Key, RawValue) in Object {
+		let Text = if let Some(s) = RawValue.as_str() {
+			Some(s.to_string())
+		} else if let Some(obj) = RawValue.as_object() {
+			obj.get("message").and_then(|m| m.as_str()).map(|s| s.to_string())
+		} else {
+			None
+		};
+		if let Some(t) = Text {
+			Resolved.insert(Key.clone(), Value::String(t));
+		}
+	}
+	dev_log!("extensions",
+		"[LandFix:NLS] loaded {} keys for {}",
+		Resolved.len(), ExtensionPath.display());
+	Some(Resolved)
+}
+
+/// Recursively walks a JSON `Value` tree and replaces every string of the form
+/// `%key%` with the corresponding NLS entry. Mirrors VS Code's
+/// `replaceNLStrings` in `src/vs/platform/extensionManagement/common/
+/// extensionNls.ts`. Unknown keys are left untouched so UIs at least show the
+/// key rather than nothing.
+fn ResolveNLSPlaceholders(Value:&mut Value, NLS:&Map<String, Value>) {
+	ResolveNLSPlaceholdersInner(Value, NLS, &mut 0u32, &mut 0u32);
+}
+
+/// Internal NLS walker that also counts substitutions made vs. unresolved
+/// placeholders it saw, so the outer scanner can log a one-line summary per
+/// extension.
+fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Replaced:&mut u32, Unresolved:&mut u32) {
+	match Value {
+		serde_json::Value::String(Text) => {
+			if Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') {
+				let Key = &Text[1..Text.len() - 1];
+				if !Key.is_empty() && !Key.contains('%') {
+					if let Some(Replacement) = NLS.get(Key).and_then(|v| v.as_str()) {
+						*Text = Replacement.to_string();
+						*Replaced += 1;
+					} else {
+						*Unresolved += 1;
+					}
+				}
+			}
+		},
+		serde_json::Value::Array(Items) => {
+			for Item in Items {
+				ResolveNLSPlaceholdersInner(Item, NLS, Replaced, Unresolved);
+			}
+		},
+		serde_json::Value::Object(Map) => {
+			for (_, FieldValue) in Map {
+				ResolveNLSPlaceholdersInner(FieldValue, NLS, Replaced, Unresolved);
+			}
+		},
+		_ => {},
+	}
 }
 
 /// A helper function to extract default configuration values from all

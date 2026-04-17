@@ -47,6 +47,6 @@ impl StatusBarProvider for MountainEnvironment {
 	/// Resolves a dynamic Tooltip by making a reverse call to the extension
 	/// host.
 	async fn ProvideTooltip(&self, entry_identifier:String) -> Result<Option<Value>, CommonError> {
-		Tooltip::provide_Tooltip_impl(self, entry_identifier).await
+		Tooltip::provide_tooltip_impl(self, entry_identifier).await
 	}
 }

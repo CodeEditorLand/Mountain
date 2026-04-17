@@ -170,8 +170,8 @@ pub(super) async fn copy_impl(
 		return Err(CommonError::FileSystemNotFound(source.clone()));
 	}
 
-	// Call stat_file_impl from the read_operations module
-	let source_metadata = super::read_operations::stat_file_impl(env, source).await?;
+	// Call stat_file_impl from the ReadOperations module
+	let source_metadata = super::ReadOperations::stat_file_impl(env, source).await?;
 
 	if (source_metadata.FileType & FileTypeDTO::Directory as u8) != 0 {
 		return Err(CommonError::NotImplemented { FeatureName:"Recursive directory copy".to_string() });

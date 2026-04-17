@@ -92,7 +92,7 @@ pub(super) async fn create_webview_panel_impl(
 	})?;
 
 	// Setup message listener for this Webview
-	crate::Environment::WebviewProvider::messaging::setup_webview_message_listener_impl(env, handle.clone()).await?;
+	crate::Environment::WebviewProvider::Messaging::setup_webview_message_listener_impl(env, handle.clone()).await?;
 
 	// Notify frontend about Webview creation
 	env.ApplicationHandle
@@ -112,7 +112,7 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 	dev_log!("extensions", "[WebviewProvider] Disposing WebviewPanel: {}", handle);
 
 	// Remove message listener
-	let _ = crate::Environment::WebviewProvider::messaging::remove_webview_message_listener_impl(env, &handle).await;
+	let _ = crate::Environment::WebviewProvider::Messaging::remove_webview_message_listener_impl(env, &handle).await;
 
 	// Close the window
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {

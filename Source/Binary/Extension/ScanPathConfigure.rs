@@ -92,14 +92,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// was launched from the repo, a `.app`, or a symlink on the Desktop.
 	// Mirrors VS Code's `~/.vscode-oss/extensions` convention.
 	if let Some(HomeDirectory) = dirs::home_dir() {
-		for Suffix in [
-			".codeeditorland/extensions",
-			".land/extensions",
-		] {
-			let UserExtensionPath = HomeDirectory.join(Suffix);
-			dev_log!("extensions", "[Extensions] [ScanPaths] + {} (User)", UserExtensionPath.display());
-			ScanPathsGuard.push(UserExtensionPath);
-		}
+		let UserExtensionPath = HomeDirectory.join(".land/extensions");
+		dev_log!("extensions", "[Extensions] [ScanPaths] + {} (User)", UserExtensionPath.display());
+		ScanPathsGuard.push(UserExtensionPath);
 	}
 
 	let ScanPaths = ScanPathsGuard.clone();
