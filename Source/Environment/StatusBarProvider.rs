@@ -19,8 +19,8 @@ use super::MountainEnvironment::MountainEnvironment;
 mod EntryManagement;
 #[path = "StatusBarProvider/MessageManagement.rs"]
 mod MessageManagement;
-#[path = "StatusBarProvider/tooltip.rs"]
-mod tooltip;
+#[path = "StatusBarProvider/Tooltip.rs"]
+mod Tooltip;
 
 #[async_trait]
 impl StatusBarProvider for MountainEnvironment {
@@ -44,9 +44,9 @@ impl StatusBarProvider for MountainEnvironment {
 		MessageManagement::dispose_status_bar_message_impl(self, message_identifier).await
 	}
 
-	/// Resolves a dynamic tooltip by making a reverse call to the extension
+	/// Resolves a dynamic Tooltip by making a reverse call to the extension
 	/// host.
 	async fn ProvideTooltip(&self, entry_identifier:String) -> Result<Option<Value>, CommonError> {
-		tooltip::provide_tooltip_impl(self, entry_identifier).await
+		Tooltip::provide_Tooltip_impl(self, entry_identifier).await
 	}
 }

@@ -190,12 +190,12 @@ struct WebviewMessageContext {
 }
 
 // Private submodules containing the actual implementation
-#[path = "WebviewProvider/lifecycle.rs"]
-mod lifecycle;
-#[path = "WebviewProvider/configuration.rs"]
-mod configuration;
-#[path = "WebviewProvider/messaging.rs"]
-mod messaging;
+#[path = "WebviewProvider/Lifecycle.rs"]
+mod Lifecycle;
+#[path = "WebviewProvider/Configuration.rs"]
+mod Configuration;
+#[path = "WebviewProvider/Messaging.rs"]
+mod Messaging;
 
 #[async_trait]
 impl WebviewProvider for MountainEnvironment {
@@ -209,7 +209,7 @@ impl WebviewProvider for MountainEnvironment {
 		panel_options_value:Value,
 		content_options_value:Value,
 	) -> Result<String, CommonError> {
-		lifecycle::create_webview_panel_impl(
+		Lifecycle::create_webview_panel_impl(
 			self,
 			extension_data_value,
 			view_type,
@@ -223,26 +223,26 @@ impl WebviewProvider for MountainEnvironment {
 
 	/// Disposes a Webview panel and cleans up all associated resources.
 	async fn DisposeWebviewPanel(&self, handle:String) -> Result<(), CommonError> {
-		lifecycle::dispose_webview_panel_impl(self, handle).await
+		Lifecycle::dispose_webview_panel_impl(self, handle).await
 	}
 
 	/// Reveals (shows and focuses) a Webview panel.
 	async fn RevealWebviewPanel(&self, handle:String, _show_options_value:Value) -> Result<(), CommonError> {
-		lifecycle::reveal_webview_panel_impl(self, handle, _show_options_value).await
+		Lifecycle::reveal_webview_panel_impl(self, handle, _show_options_value).await
 	}
 
 	/// Sets Webview options (title, icon, etc.).
 	async fn SetWebviewOptions(&self, handle:String, options_value:Value) -> Result<(), CommonError> {
-		configuration::set_webview_options_impl(self, handle, options_value).await
+		Configuration::set_webview_options_impl(self, handle, options_value).await
 	}
 
 	/// Sets the HTML content of a Webview.
 	async fn SetWebviewHTML(&self, handle:String, html:String) -> Result<(), CommonError> {
-		configuration::set_webview_html_impl(self, handle, html).await
+		Configuration::set_webview_html_impl(self, handle, html).await
 	}
 
 	/// Posts a message to a Webview with proper error handling.
 	async fn PostMessageToWebview(&self, handle:String, message:Value) -> Result<bool, CommonError> {
-		messaging::post_message_to_webview_impl(self, handle, message).await
+		Messaging::post_message_to_webview_impl(self, handle, message).await
 	}
 }

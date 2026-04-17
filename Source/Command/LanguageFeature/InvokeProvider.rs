@@ -13,7 +13,7 @@ use CommonLibrary::{
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Wry};
 
-use super::validation::validate_language_feature_request;
+use super::Validation::validate_language_feature_request;
 
 /// A generic helper to reduce boilerplate in language feature command handlers.
 pub(super) async fn invoke_provider<F, T>(application_handle:AppHandle<Wry>, handler:F) -> Result<Value, String>

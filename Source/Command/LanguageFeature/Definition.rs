@@ -1,6 +1,6 @@
-//! # LanguageFeature - Hover
+//! # LanguageFeature - Definition
 //!
-//! Provides hover information at cursor position
+//! Provides go-to-definition functionality
 
 #[allow(unused_imports)]
 use CommonLibrary::{
@@ -14,19 +14,19 @@ use serde_json::Value;
 use tauri::{AppHandle, Wry};
 use url::Url;
 
-use super::{InvokeProvider::invoke_provider, validation::validate_language_feature_request};
+use super::{InvokeProvider::invoke_provider, Validation::validate_language_feature_request};
 use crate::dev_log;
 
-/// Implementation of hover command - called by the command wrapper in the
+/// Implementation of definition command - called by the command wrapper in the
 /// parent module.
-pub(super) async fn provide_hover_impl(
+pub(super) async fn provide_definition_impl(
 	application_handle:AppHandle<Wry>,
 	uri:String,
 	position:Value,
 ) -> Result<Value, String> {
-	dev_log!("commands", "[Language Feature] Providing hover for: {} at {:?}", uri, position);
+	dev_log!("commands", "[Language Feature] Providing definition for: {} at {:?}", uri, position);
 
-	validate_language_feature_request("hover", &uri, &position)?;
+	validate_language_feature_request("definition", &uri, &position)?;
 
 	let document_uri = Url::parse(&uri).map_err(|error| error.to_string())?;
 
@@ -35,7 +35,7 @@ pub(super) async fn provide_hover_impl(
 
 	invoke_provider(application_handle, |provider| {
 		async move {
-			let result = provider.ProvideHover(document_uri, position_dto).await?;
+			let result = provider.ProvideDefinition(document_uri, position_dto).await?;
 			Ok(serde_json::to_value(result)?)
 		}
 	})

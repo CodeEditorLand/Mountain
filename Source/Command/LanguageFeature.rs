@@ -70,7 +70,7 @@
 //! - Support selection range provider
 //!
 //! MODULE STRUCTURE:
-//! - [`validation.rs`](validation.rs) - request validation helper
+//! - [`Validation.rs`](Validation.rs) - request validation helper
 //! - [`InvokeProvider.rs`](InvokeProvider.rs) - generic provider invoker
 //! - Individual command modules for each language feature (containing impls
 //!   only)
@@ -83,22 +83,22 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 use crate::dev_log;
 
 // Private submodules containing implementation (without #[command] attributes)
-#[path = "LanguageFeature/validation.rs"]
-mod validation;
+#[path = "LanguageFeature/Validation.rs"]
+mod Validation;
 #[path = "LanguageFeature/InvokeProvider.rs"]
 mod InvokeProvider;
-#[path = "LanguageFeature/hover.rs"]
-mod hover;
+#[path = "LanguageFeature/Hover.rs"]
+mod Hover;
 #[path = "LanguageFeature/CodeActions.rs"]
 mod CodeActions;
-#[path = "LanguageFeature/highlights.rs"]
-mod highlights;
-#[path = "LanguageFeature/completions.rs"]
-mod completions;
-#[path = "LanguageFeature/definition.rs"]
-mod definition;
-#[path = "LanguageFeature/references.rs"]
-mod references;
+#[path = "LanguageFeature/Highlights.rs"]
+mod Highlights;
+#[path = "LanguageFeature/Completions.rs"]
+mod Completions;
+#[path = "LanguageFeature/Definition.rs"]
+mod Definition;
+#[path = "LanguageFeature/References.rs"]
+mod References;
 
 /// Provides hover information at cursor position
 #[command]
@@ -108,7 +108,7 @@ pub async fn MountainProvideHover(
 	position:Value,
 ) -> Result<Value, String> {
 	dev_log!("commands", "[Language Feature] Providing hover for: {} at {:?}", uri, position);
-	hover::provide_hover_impl(application_handle, uri, position).await
+	Hover::provide_hover_impl(application_handle, uri, position).await
 }
 
 /// Provides code actions (quick fixes and refactorings) for a code range
@@ -120,7 +120,7 @@ pub async fn MountainProvideCodeActions(
 	context:Value,
 ) -> Result<Value, String> {
 	dev_log!("commands", "[Language Feature] Providing code actions for: {} at {:?}", uri, position);
-	CodeActions::provide_CodeActions_impl(application_handle, uri, position, context).await
+	CodeActions::provide_code_actions_impl(application_handle, uri, position, context).await
 }
 
 /// Finds symbol occurrences (document highlights) in a document
@@ -134,7 +134,7 @@ pub async fn MountainProvideDocumentHighlights(
 		"[Language Feature] Providing document highlights for: {} at {:?}",
 		uri, position
 	);
-	highlights::provide_document_highlights_impl(application_handle, uri, position).await
+	Highlights::provide_document_highlights_impl(application_handle, uri, position).await
 }
 
 /// Provides code completion suggestions
@@ -146,7 +146,7 @@ pub async fn MountainProvideCompletions(
 	context:Value,
 ) -> Result<Value, String> {
 	dev_log!("commands", "[Language Feature] Providing completions for: {} at {:?}", uri, position);
-	completions::provide_completions_impl(application_handle, uri, position, context).await
+	Completions::provide_completions_impl(application_handle, uri, position, context).await
 }
 
 /// Provides go-to-definition functionality
@@ -157,7 +157,7 @@ pub async fn MountainProvideDefinition(
 	position:Value,
 ) -> Result<Value, String> {
 	dev_log!("commands", "[Language Feature] Providing definition for: {} at {:?}", uri, position);
-	definition::provide_definition_impl(application_handle, uri, position).await
+	Definition::provide_definition_impl(application_handle, uri, position).await
 }
 
 /// Finds all references to a symbol
@@ -169,5 +169,5 @@ pub async fn MountainProvideReferences(
 	context:Value,
 ) -> Result<Value, String> {
 	dev_log!("commands", "[Language Feature] Providing references for: {} at {:?}", uri, position);
-	references::provide_references_impl(application_handle, uri, position, context).await
+	References::provide_references_impl(application_handle, uri, position, context).await
 }
