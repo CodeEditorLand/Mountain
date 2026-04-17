@@ -952,6 +952,129 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			Ok(Box::new(effect))
 		},
 
+		// Debug — Stop (Cascade-8 stub; DebugService has no StopDebugging yet,
+		// extensions receive `null` instead of "Unknown method")
+		"Debug.Stop" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let session_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						dev_log!("ipc", "[Debug.Stop] stub — session={} (TODO: DebugService::StopDebugging)", session_id);
+						Ok(json!(null))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Task — Fetch/Execute (Cascade-8 stubs; no TaskProvider trait in
+		// Common yet. Returning safe defaults keeps extensions from
+		// crashing on `vscode.tasks.fetchTasks()` / `executeTask`.)
+		"Task.Fetch" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						dev_log!("ipc", "[Task.Fetch] stub — returning [] (TODO: TaskProvider trait)");
+						Ok(json!([]))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"Task.Execute" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						dev_log!("ipc", "[Task.Execute] stub — returning null (TODO: TaskProvider trait)");
+						Ok(json!(null))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Authentication — GetSession/GetAccounts (Cascade-8 stubs; no
+		// AuthenticationProvider trait yet. Returning `null` / `[]` lets
+		// GitHub/Copilot extensions proceed in "unauthenticated" mode
+		// instead of crashing.)
+		"Authentication.GetSession" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider_id =
+							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						dev_log!("ipc", "[Authentication.GetSession] stub — provider={} (TODO: AuthenticationProvider trait)", provider_id);
+						Ok(json!(null))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"Authentication.GetAccounts" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider_id =
+							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						dev_log!("ipc", "[Authentication.GetAccounts] stub — provider={} (TODO: AuthenticationProvider trait)", provider_id);
+						Ok(json!([]))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Clipboard — Read/Write (Cascade-8 stubs; tauri-plugin-clipboard-manager
+		// not yet on the Mountain crate. Read returns "", Write accepts and drops.)
+		"Clipboard.Read" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						dev_log!("ipc", "[Clipboard.Read] stub — returning '' (TODO: tauri-plugin-clipboard-manager)");
+						Ok(json!(""))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"Clipboard.Write" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let text_len = Parameters.get(0).and_then(Value::as_str).map(str::len).unwrap_or(0);
+						dev_log!("ipc", "[Clipboard.Write] stub — text_len={} (TODO: tauri-plugin-clipboard-manager)", text_len);
+						Ok(json!(null))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// NativeHost — OpenExternal (Cascade-8 stub; tauri-plugin-shell not
+		// on the Mountain crate yet. Logs the URL; returns success so the
+		// extension's promise resolves.)
+		"NativeHost.OpenExternal" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let uri = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						dev_log!("ipc", "[NativeHost.OpenExternal] stub — uri={} (TODO: tauri-plugin-shell)", uri);
+						Ok(json!(true))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Languages — GetAll (Cascade-8 stub; enumerates nothing yet. Real
+		// implementation would walk ApplicationState.Extension.ScannedExtensions
+		// collecting `contributes.languages[]`.)
+		"Languages.GetAll" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						dev_log!("ipc", "[Languages.GetAll] stub — returning [] (TODO: enumerate ScannedExtensions)");
+						Ok(json!([]))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
 		// Unknown command
 		_ => {
 			dev_log!("ipc", "warn: [EffectCreation] Unknown method: {}", MethodName);

@@ -447,8 +447,14 @@ async fn LaunchAndManageCocoonSideCar(
 	Ok(())
 }
 
-/// Background task that monitors Cocoon process health and logs crashes
+/// Background task that monitors Cocoon process health and logs crashes.
+///
+/// Once the child process has exited (or never existed), the monitor no
+/// longer has anything useful to say — it exits quietly instead of
+/// flooding the log with "No Cocoon process to monitor" every 5s, which
+/// was rendering the dev log unreadable after any Cocoon crash.
 async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
+	let mut empty_ticks:u32 = 0;
 	loop {
 		tokio::time::sleep(Duration::from_secs(HEALTH_CHECK_INTERVAL_SECONDS)).await;
 
@@ -456,6 +462,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 
 		// Check if we have a child process to monitor
 		if state_guard.ChildProcess.is_some() {
+			empty_ticks = 0;
 			// Get process ID before checking status
 			let process_id = state_guard.ChildProcess.as_ref().map(|c| c.id().unwrap_or(0));
 
@@ -506,8 +513,17 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 				},
 			}
 		} else {
-			// No child process exists
-			dev_log!("cocoon", "[CocoonHealth] No Cocoon process to monitor");
+			// No child process exists — log exactly once, then exit the
+			// monitor loop. Prior behaviour: flood the log with
+			// "No Cocoon process to monitor" every 5s forever after a
+			// crash, making the dev log unreadable. A future respawn will
+			// spawn a fresh monitor via `StartCocoon`.
+			if empty_ticks == 0 {
+				dev_log!("cocoon", "[CocoonHealth] No Cocoon process to monitor — exiting monitor loop");
+			}
+			empty_ticks = empty_ticks.saturating_add(1);
+			drop(state_guard);
+			return;
 		}
 	}
 }

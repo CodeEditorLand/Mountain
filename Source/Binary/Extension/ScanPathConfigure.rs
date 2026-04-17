@@ -44,10 +44,19 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// Resolve paths from executable directory
 	if let Ok(ExecutableDirectory) = std::env::current_exe() {
 		if let Some(Parent) = ExecutableDirectory.parent() {
-			// Standard Tauri bundle path: ../Resources/extensions
+			// Standard Tauri bundle path: ../Resources/extensions.
+			// When launched from a `.app`, Parent is `Contents/MacOS/` and
+			// this resolves to `Contents/Resources/extensions`.
 			let ResourcesPath = Parent.join("../Resources/extensions");
 			dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesPath.display());
 			ScanPathsGuard.push(ResourcesPath);
+
+			// VS Code-style bundle layout: `.app/Contents/Resources/app/extensions`.
+			// Some tooling copies built-ins here; probe both conventions so a
+			// single bundle works regardless of which copy step placed them.
+			let ResourcesAppPath = Parent.join("../Resources/app/extensions");
+			dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesAppPath.display());
+			ScanPathsGuard.push(ResourcesAppPath);
 
 			// Debug/dev path: Target/debug/extensions
 			let LocalPath = Parent.join("extensions");
@@ -76,6 +85,20 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 					ScanPathsGuard.push(DependencyPath);
 				}
 			}
+		}
+	}
+
+	// User-scope paths: always scanned, independent of whether the binary
+	// was launched from the repo, a `.app`, or a symlink on the Desktop.
+	// Mirrors VS Code's `~/.vscode-oss/extensions` convention.
+	if let Some(HomeDirectory) = dirs::home_dir() {
+		for Suffix in [
+			".codeeditorland/extensions",
+			".land/extensions",
+		] {
+			let UserExtensionPath = HomeDirectory.join(Suffix);
+			dev_log!("extensions", "[Extensions] [ScanPaths] + {} (User)", UserExtensionPath.display());
+			ScanPathsGuard.push(UserExtensionPath);
 		}
 	}
 

@@ -328,17 +328,26 @@ pub async fn ProvideHover(
 	Service:&CocoonServiceImpl,
 	req:ProvideHoverRequest,
 ) -> Result<Response<ProvideHoverResponse>, Status> {
-	dev_log!("cocoon", "[CocoonService] Providing hover for provider {}", req.provider_handle);
-
 	let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
+	let position = req.position.as_ref();
+	let line = position.map(|p| p.line).unwrap_or(0);
+	let character = position.map(|p| p.character).unwrap_or(0);
+	dev_log!(
+		"provider",
+		"ProvideHover entry handle={} uri={} line={} char={}",
+		req.provider_handle,
+		uri_string,
+		line,
+		character
+	);
+
 	let document_uri = Url::parse(uri_string).map_err(|e| {
 		Status::invalid_argument(format!("Invalid URI: {}", e))
 	})?;
 
-	let position = req.position.as_ref();
 	let position_dto = PositionDTO {
-		LineNumber:position.map(|p| p.line).unwrap_or(0),
-		Column:position.map(|p| p.character).unwrap_or(0),
+		LineNumber:line,
+		Column:character,
 	};
 
 	match Service.environment.ProvideHover(document_uri, position_dto).await {
@@ -351,17 +360,28 @@ pub async fn ProvideHover(
 				start:Some(Position { line:r.StartLineNumber, character:r.StartColumn }),
 				end:Some(Position { line:r.EndLineNumber, character:r.EndColumn }),
 			});
+			dev_log!(
+				"provider",
+				"ProvideHover result handle={} contents_len={} hasRange={}",
+				req.provider_handle,
+				markdown.len(),
+				range.is_some()
+			);
 			Ok(Response::new(ProvideHoverResponse { markdown, range }))
 		},
 		Ok(None) => {
-			dev_log!("cocoon", "[CocoonService] No hover provider found for request");
+			dev_log!(
+				"provider",
+				"ProvideHover result handle={} (no provider)",
+				req.provider_handle
+			);
 			Ok(Response::new(ProvideHoverResponse {
 				markdown:String::new(),
 				range:None,
 			}))
 		},
 		Err(e) => {
-			dev_log!("cocoon", "warn: [CocoonService] Hover failed: {}", e);
+			dev_log!("provider", "warn: ProvideHover failed handle={} err={}", req.provider_handle, e);
 			Err(Status::internal(format!("Hover failed: {}", e)))
 		},
 	}
