@@ -83,7 +83,7 @@ use super::{
 		ResourceUsage,
 		UpdateInfo,
 	},
-	DEFAULT_AIR_SERVER_ADDRESS,
+	AirClient::DEFAULT_AIR_SERVER_ADDRESS,
 };
 use crate::dev_log;
 

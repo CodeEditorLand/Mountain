@@ -300,7 +300,8 @@ use tauri::Manager;
 // Import Air types from the new AirClient implementation.
 // These provide actual gRPC connectivity to the Air daemon service.
 use crate::Air::AirClient as AirClientModule;
-use crate::{Air::DEFAULT_AIR_SERVER_ADDRESS, dev_log};
+use crate::Air::AirClient::DEFAULT_AIR_SERVER_ADDRESS;
+use crate::dev_log;
 
 /// Data Transfer Objects for Wind-Air communication
 

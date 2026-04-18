@@ -244,14 +244,14 @@ pub fn Fn() {
 					// The DNS server must start BEFORE any webview loads to ensure
 					// that land:// protocol_resolution is available
 					dev_log!("lifecycle", "[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
-					let dns_port = mist::start(5380).unwrap_or_else(|e| {
+					let dns_port = Mist::start(5380).unwrap_or_else(|e| {
 						dev_log!(
 							"lifecycle",
 							"warn: [Lifecycle] [Setup] Failed to start DNS server on port 5380: {}",
 							e
 						);
 						// Fallback to random port if preferred port fails
-						mist::start(0).unwrap_or_else(|e| {
+						Mist::start(0).unwrap_or_else(|e| {
 							dev_log!(
 								"lifecycle",
 								"error: [Lifecycle] [Setup] Completely failed to start DNS server: {}",

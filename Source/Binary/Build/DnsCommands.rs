@@ -12,7 +12,7 @@ use tauri::State;
 use once_cell::sync::OnceCell;
 // Import Mist crate for DNS functionality
 #[allow(unused_imports)]
-use mist::dns_port;
+use Mist::dns_port;
 
 use crate::Binary::Build::Scheme::DnsPort; // Using lowercase library name
 

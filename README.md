@@ -28,7 +28,7 @@
 		<td align="left" valign="middle" width="190">
 			<h3 align="left">
 				<a href="https://Tauri.App" target="_blank">
-					<img width="160" alt="Made With Tauri" src="https://avatars.githubusercontent.com/u/54536011?v=4">
+					<img width="160" alt="Made With Tauri" src="https://PlayForm.Cloud/Image/GitHub/Made/Tauri.svg">
 				</a>
 			</h3>
 		</td>

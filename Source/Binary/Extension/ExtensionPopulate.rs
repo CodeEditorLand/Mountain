@@ -3,8 +3,8 @@
 //! Scans and populates extensions from configured scan paths.
 
 use crate::{
-	ApplicationState::{ApplicationState, Internal::ScanAndPopulateExtensions},
-	dev_log,
+    ApplicationState::ApplicationState,
+    dev_log,
 };
 
 /// Scans and populates extensions from the configured scan paths.
@@ -33,7 +33,7 @@ pub async fn ExtensionPopulate(
 	ApplicationHandle:tauri::AppHandle,
 	AppState:&std::sync::Arc<ApplicationState>,
 ) -> Result<(), String> {
-	match ScanAndPopulateExtensions(ApplicationHandle.clone(), &AppState.Extension).await {
+	match crate::ApplicationState::Internal::ExtensionScanner::ScanAndPopulateExtensions::ScanAndPopulateExtensions(ApplicationHandle.clone(), &AppState.Extension).await {
 		Ok(()) => {
 			dev_log!(
 				"extensions",
