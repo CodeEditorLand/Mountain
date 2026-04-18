@@ -79,7 +79,6 @@ use std::{
 	sync::{Arc, Mutex},
 };
 
-
 use super::super::Define::DefineMessage::{ListenerCallback, TauriIPCMessage};
 use crate::dev_log;
 
@@ -130,7 +129,8 @@ impl Router {
 
 		channel_listeners.push(Callback);
 
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[Router] Listener registered for channel: {} (total: {})",
 			Channel,
 			channel_listeners.len()
@@ -162,9 +162,15 @@ impl Router {
 			// Clean up empty channels
 			if channel_listeners.is_empty() {
 				listeners.remove(Channel);
-				dev_log!("ipc", "[Router] Channel cleaned up: {} (removed {} listeners)", Channel, removed_count);
+				dev_log!(
+					"ipc",
+					"[Router] Channel cleaned up: {} (removed {} listeners)",
+					Channel,
+					removed_count
+				);
 			} else {
-				dev_log!("ipc", 
+				dev_log!(
+					"ipc",
 					"[Router] Listener removed from channel: {}, remaining: {}",
 					Channel,
 					channel_listeners.len()
@@ -211,19 +217,33 @@ impl Router {
 				match callback(message_data) {
 					Ok(_) => success_count += 1,
 					Err(e) => {
-						dev_log!("ipc", "error: [Router] Error in listener {} for channel {}: {}", index, Message.channel, e);
+						dev_log!(
+							"ipc",
+							"error: [Router] Error in listener {} for channel {}: {}",
+							index,
+							Message.channel,
+							e
+						);
 						error_count += 1;
 					},
 				}
 			}
 
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[Router] Message routed to channel {}: {}/{} listeners succeeded",
-				Message.channel, success_count, listener_count
+				Message.channel,
+				success_count,
+				listener_count
 			);
 
 			if error_count > 0 {
-				dev_log!("ipc", "warn: [Router] {} listener(s) failed on channel {}", error_count, Message.channel);
+				dev_log!(
+					"ipc",
+					"warn: [Router] {} listener(s) failed on channel {}",
+					error_count,
+					Message.channel
+				);
 			}
 		} else {
 			dev_log!("ipc", "[Router] No listeners found for channel: {}", Message.channel);
@@ -297,7 +317,8 @@ impl Router {
 		let total_listeners:usize = listeners.values().map(|l| l.len()).sum();
 		listeners.clear();
 
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[Router] Cleared {} listeners from {} channels",
 			total_listeners,
 			listeners.len()

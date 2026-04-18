@@ -10,11 +10,11 @@ use CommonLibrary::{
 use serde_json::{Map, Value};
 use tauri::Manager;
 
-use crate::dev_log;
 use crate::{
 	ApplicationState::DTO::MergedConfigurationStateDTO::MergedConfigurationStateDTO,
 	Environment::Utility,
 	RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime,
+	dev_log,
 };
 
 /// An internal helper to read and parse a single JSON configuration file.
@@ -38,7 +38,10 @@ pub(super) async fn read_and_parse_configuration_file(
 pub async fn initialize_and_merge_configurations(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 ) -> Result<(), CommonError> {
-	dev_log!("config", "[ConfigurationProvider] Re-initializing and merging all configurations...");
+	dev_log!(
+		"config",
+		"[ConfigurationProvider] Re-initializing and merging all configurations..."
+	);
 
 	let default_config = collect_default_configurations(&environment.ApplicationState)?;
 
@@ -112,7 +115,8 @@ pub async fn initialize_and_merge_configurations(
 		.lock()
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = final_config.Data;
 
-	dev_log!("config", 
+	dev_log!(
+		"config",
 		"[ConfigurationProvider] Configuration merged successfully with {} top-level keys.",
 		configuration_size
 	);

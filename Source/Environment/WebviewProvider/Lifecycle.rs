@@ -14,8 +14,7 @@ use tauri::{Emitter, Manager, WebviewWindowBuilder};
 use uuid::Uuid;
 
 use super::super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO, dev_log};
 
 /// Lifecycle operations implementation for MountainEnvironment
 pub(super) async fn create_webview_panel_impl(
@@ -29,9 +28,11 @@ pub(super) async fn create_webview_panel_impl(
 ) -> Result<String, CommonError> {
 	let handle = Uuid::new_v4().to_string();
 
-	dev_log!("extensions", 
+	dev_log!(
+		"extensions",
 		"[WebviewProvider] Creating WebviewPanel with handle: {}, viewType: {}",
-		handle, view_type
+		handle,
+		view_type
 	);
 
 	// Parse content options to ensure security settings
@@ -87,7 +88,11 @@ pub(super) async fn create_webview_panel_impl(
 	))
 	.build()
 	.map_err(|error| {
-		dev_log!("extensions", "error: [WebviewProvider] Failed to create Webview window: {}", error);
+		dev_log!(
+			"extensions",
+			"error: [WebviewProvider] Failed to create Webview window: {}",
+			error
+		);
 		CommonError::UserInterfaceInteraction { Reason:error.to_string() }
 	})?;
 
@@ -117,7 +122,11 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 	// Close the window
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		if let Err(error) = webview_window.close() {
-			dev_log!("extensions", "warn: [WebviewProvider] Failed to close Webview window: {}", error);
+			dev_log!(
+				"extensions",
+				"warn: [WebviewProvider] Failed to close Webview window: {}",
+				error
+			);
 		}
 	}
 

@@ -31,7 +31,6 @@
 // - Add health history tracking
 // - Support multiple health check types
 
-
 use super::Types::ConnectionHandle;
 use crate::dev_log;
 
@@ -122,14 +121,19 @@ impl HealthChecker {
 		let is_healthy = response_time < self.ping_timeout;
 
 		if is_healthy {
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[HealthChecker] Connection {} is healthy (response time: {:?})",
-				handle.id, response_time
+				handle.id,
+				response_time
 			);
 		} else {
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[HealthChecker] Connection {} is unhealthy (response time: {:?}, timeout: {:?})",
-				handle.id, response_time, self.ping_timeout
+				handle.id,
+				response_time,
+				self.ping_timeout
 			);
 		}
 

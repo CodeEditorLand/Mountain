@@ -18,12 +18,14 @@ use bincode::serde::encode_to_vec;
 
 // Import only the types, not the modules themselves (modules are already in scope via `pub mod`)
 use crate::IPC::Enhanced::MessageCompressor::{BatchConfig, CompressionAlgorithm, CompressionLevel};
-use crate::IPC::Enhanced::{
-	ConnectionPool::{PoolConfig, PoolStats},
-	PerformanceDashboard::{DashboardConfig, DashboardStatistics, MetricType},
-	SecureMessageChannel::{EncryptedMessage, SecurityConfig, SecurityStats},
+use crate::{
+	IPC::Enhanced::{
+		ConnectionPool::{PoolConfig, PoolStats},
+		PerformanceDashboard::{DashboardConfig, DashboardStatistics, MetricType},
+		SecureMessageChannel::{EncryptedMessage, SecurityConfig, SecurityStats},
+	},
+	dev_log,
 };
-use crate::dev_log;
 
 /// Enhanced IPC manager that combines all advanced features
 pub struct EnhancedIPCManager {

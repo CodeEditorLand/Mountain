@@ -332,9 +332,12 @@ impl SearchProvider for MountainEnvironment {
 								let Sink = PerFileSink { path:Entry.path().to_path_buf(), results:AllMatches.clone() };
 
 								if let Err(Error) = Searcher.search_path(&Matcher, Entry.path(), Sink) {
-									dev_log!("search", "warn: [SearchProvider] Error searching path {}: {}",
+									dev_log!(
+										"search",
+										"warn: [SearchProvider] Error searching path {}: {}",
 										Entry.path().display(),
-										Error);
+										Error
+									);
 								}
 							}
 						}

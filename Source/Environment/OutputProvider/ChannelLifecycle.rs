@@ -8,8 +8,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::json;
 use tauri::Emitter;
 
-use crate::{ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO, Environment::Utility};
-use crate::dev_log;
+use crate::{ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO, Environment::Utility, dev_log};
 
 /// Registers a new output channel.
 pub(super) async fn register_channel(

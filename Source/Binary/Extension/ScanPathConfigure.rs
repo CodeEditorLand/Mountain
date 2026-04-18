@@ -4,9 +4,10 @@
 
 use std::path::PathBuf;
 
-
-use crate::ApplicationState::{ApplicationState, MapLockError};
-use crate::dev_log;
+use crate::{
+	ApplicationState::{ApplicationState, MapLockError},
+	dev_log,
+};
 
 /// Configures extension scan paths by resolving paths from the executable
 /// directory.
@@ -73,7 +74,11 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				// extensions during the build.
 				let SkyTargetPath = Parent.join("../../../Sky/Target/Static/Application/extensions");
 				if SkyTargetPath.exists() {
-					dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Sky Target, dev)", SkyTargetPath.display());
+					dev_log!(
+						"extensions",
+						"[Extensions] [ScanPaths] + {} (Sky Target, dev)",
+						SkyTargetPath.display()
+					);
 					ScanPathsGuard.push(SkyTargetPath);
 				}
 
@@ -81,7 +86,11 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				// Code source checkout — avoids requiring a copy step in dev.
 				let DependencyPath = Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
 				if DependencyPath.exists() {
-					dev_log!("extensions", "[Extensions] [ScanPaths] + {} (VS Code Dependency, dev)", DependencyPath.display());
+					dev_log!(
+						"extensions",
+						"[Extensions] [ScanPaths] + {} (VS Code Dependency, dev)",
+						DependencyPath.display()
+					);
 					ScanPathsGuard.push(DependencyPath);
 				}
 			}
@@ -93,7 +102,11 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// Mirrors VS Code's `~/.vscode-oss/extensions` convention.
 	if let Some(HomeDirectory) = dirs::home_dir() {
 		let UserExtensionPath = HomeDirectory.join(".land/extensions");
-		dev_log!("extensions", "[Extensions] [ScanPaths] + {} (User)", UserExtensionPath.display());
+		dev_log!(
+			"extensions",
+			"[Extensions] [ScanPaths] + {} (User)",
+			UserExtensionPath.display()
+		);
 		ScanPathsGuard.push(UserExtensionPath);
 	}
 

@@ -10,10 +10,7 @@
 //! call_hierarchy, linked_editing_ranges).
 
 use CommonLibrary::LanguageFeature::{
-	DTO::{
-		PositionDTO::PositionDTO,
-		ProviderType::ProviderType,
-	},
+	DTO::{PositionDTO::PositionDTO, ProviderType::ProviderType},
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 };
 use serde_json::json;
@@ -21,34 +18,62 @@ use tonic::{Response, Status};
 use url::Url;
 
 use super::CocoonServiceImpl;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	CompletionItem, Empty, Location, Position, Range, Uri,
-	ProvideCallHierarchyRequest, ProvideCallHierarchyResponse,
-	ProvideCodeActionsRequest, ProvideCodeActionsResponse,
-	ProvideCodeLensesRequest, ProvideCodeLensesResponse,
-	ProvideCompletionItemsRequest, ProvideCompletionItemsResponse,
-	ProvideDefinitionRequest, ProvideDefinitionResponse,
-	ProvideDocumentFormattingRequest, ProvideDocumentFormattingResponse,
-	ProvideDocumentHighlightsRequest, ProvideDocumentHighlightsResponse,
-	ProvideDocumentRangeFormattingRequest,
-	ProvideDocumentRangeFormattingResponse,
-	ProvideDocumentSymbolsRequest, ProvideDocumentSymbolsResponse,
-	ProvideFoldingRangesRequest, ProvideFoldingRangesResponse,
-	ProvideHoverRequest, ProvideHoverResponse,
-	ProvideInlayHintsRequest, ProvideInlayHintsResponse,
-	ProvideLinkedEditingRangesRequest, ProvideLinkedEditingRangesResponse,
-	ProvideOnTypeFormattingRequest, ProvideOnTypeFormattingResponse,
-	ProvideReferencesRequest, ProvideReferencesResponse,
-	ProvideRenameEditsRequest, ProvideRenameEditsResponse,
-	ProvideSelectionRangesRequest, ProvideSelectionRangesResponse,
-	ProvideSemanticTokensRequest, ProvideSemanticTokensResponse,
-	ProvideSignatureHelpRequest, ProvideSignatureHelpResponse,
-	ProvideTypeHierarchyRequest, ProvideTypeHierarchyResponse,
-	ProvideWorkspaceSymbolsRequest, ProvideWorkspaceSymbolsResponse,
-	RegisterOnTypeFormattingProviderRequest, RegisterProviderRequest,
-	RegisterSemanticTokensProviderRequest,
-	RegisterSignatureHelpProviderRequest,
+use crate::{
+	Vine::Generated::{
+		CompletionItem,
+		Empty,
+		Location,
+		Position,
+		ProvideCallHierarchyRequest,
+		ProvideCallHierarchyResponse,
+		ProvideCodeActionsRequest,
+		ProvideCodeActionsResponse,
+		ProvideCodeLensesRequest,
+		ProvideCodeLensesResponse,
+		ProvideCompletionItemsRequest,
+		ProvideCompletionItemsResponse,
+		ProvideDefinitionRequest,
+		ProvideDefinitionResponse,
+		ProvideDocumentFormattingRequest,
+		ProvideDocumentFormattingResponse,
+		ProvideDocumentHighlightsRequest,
+		ProvideDocumentHighlightsResponse,
+		ProvideDocumentRangeFormattingRequest,
+		ProvideDocumentRangeFormattingResponse,
+		ProvideDocumentSymbolsRequest,
+		ProvideDocumentSymbolsResponse,
+		ProvideFoldingRangesRequest,
+		ProvideFoldingRangesResponse,
+		ProvideHoverRequest,
+		ProvideHoverResponse,
+		ProvideInlayHintsRequest,
+		ProvideInlayHintsResponse,
+		ProvideLinkedEditingRangesRequest,
+		ProvideLinkedEditingRangesResponse,
+		ProvideOnTypeFormattingRequest,
+		ProvideOnTypeFormattingResponse,
+		ProvideReferencesRequest,
+		ProvideReferencesResponse,
+		ProvideRenameEditsRequest,
+		ProvideRenameEditsResponse,
+		ProvideSelectionRangesRequest,
+		ProvideSelectionRangesResponse,
+		ProvideSemanticTokensRequest,
+		ProvideSemanticTokensResponse,
+		ProvideSignatureHelpRequest,
+		ProvideSignatureHelpResponse,
+		ProvideTypeHierarchyRequest,
+		ProvideTypeHierarchyResponse,
+		ProvideWorkspaceSymbolsRequest,
+		ProvideWorkspaceSymbolsResponse,
+		Range,
+		RegisterOnTypeFormattingProviderRequest,
+		RegisterProviderRequest,
+		RegisterSemanticTokensProviderRequest,
+		RegisterSignatureHelpProviderRequest,
+		Uri,
+	},
+	dev_log,
 };
 
 // ==================== Registration Helpers ====================
@@ -57,9 +82,11 @@ pub async fn RegisterHoverProvider(
 	Service:&CocoonServiceImpl,
 	req:RegisterProviderRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Registering hover provider for '{}' with handle {}",
-		req.language_selector, req.handle
+		req.language_selector,
+		req.handle
 	);
 	Service.RegisterProvider(req.handle, ProviderType::Hover, &req.language_selector, &req.extension_id);
 	Ok(Response::new(Empty {}))
@@ -69,9 +96,11 @@ pub async fn RegisterCompletionItemProvider(
 	Service:&CocoonServiceImpl,
 	req:RegisterProviderRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Registering completion provider for '{}' with handle {}",
-		req.language_selector, req.handle
+		req.language_selector,
+		req.handle
 	);
 	Service.RegisterProvider(req.handle, ProviderType::Completion, &req.language_selector, &req.extension_id);
 	Ok(Response::new(Empty {}))
@@ -81,9 +110,11 @@ pub async fn RegisterDefinitionProvider(
 	Service:&CocoonServiceImpl,
 	req:RegisterProviderRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Registering definition provider for '{}' with handle {}",
-		req.language_selector, req.handle
+		req.language_selector,
+		req.handle
 	);
 	Service.RegisterProvider(req.handle, ProviderType::Definition, &req.language_selector, &req.extension_id);
 	Ok(Response::new(Empty {}))
@@ -93,9 +124,11 @@ pub async fn RegisterReferenceProvider(
 	Service:&CocoonServiceImpl,
 	req:RegisterProviderRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Registering reference provider for '{}' with handle {}",
-		req.language_selector, req.handle
+		req.language_selector,
+		req.handle
 	);
 	Service.RegisterProvider(req.handle, ProviderType::References, &req.language_selector, &req.extension_id);
 	Ok(Response::new(Empty {}))
@@ -105,9 +138,11 @@ pub async fn RegisterCodeActionsProvider(
 	Service:&CocoonServiceImpl,
 	req:RegisterProviderRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Registering code actions provider for '{}' with handle {}",
-		req.language_selector, req.handle
+		req.language_selector,
+		req.handle
 	);
 	Service.RegisterProvider(req.handle, ProviderType::CodeAction, &req.language_selector, &req.extension_id);
 	Ok(Response::new(Empty {}))
@@ -341,24 +376,23 @@ pub async fn ProvideHover(
 		character
 	);
 
-	let document_uri = Url::parse(uri_string).map_err(|e| {
-		Status::invalid_argument(format!("Invalid URI: {}", e))
-	})?;
+	let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
-	let position_dto = PositionDTO {
-		LineNumber:line,
-		Column:character,
-	};
+	let position_dto = PositionDTO { LineNumber:line, Column:character };
 
 	match Service.environment.ProvideHover(document_uri, position_dto).await {
 		Ok(Some(hover)) => {
-			let markdown = hover.Contents.iter()
+			let markdown = hover
+				.Contents
+				.iter()
 				.map(|c| c.Value.as_str())
 				.collect::<Vec<_>>()
 				.join("\n---\n");
-			let range = hover.Range.map(|r| Range {
-				start:Some(Position { line:r.StartLineNumber, character:r.StartColumn }),
-				end:Some(Position { line:r.EndLineNumber, character:r.EndColumn }),
+			let range = hover.Range.map(|r| {
+				Range {
+					start:Some(Position { line:r.StartLineNumber, character:r.StartColumn }),
+					end:Some(Position { line:r.EndLineNumber, character:r.EndColumn }),
+				}
 			});
 			dev_log!(
 				"provider",
@@ -370,15 +404,8 @@ pub async fn ProvideHover(
 			Ok(Response::new(ProvideHoverResponse { markdown, range }))
 		},
 		Ok(None) => {
-			dev_log!(
-				"provider",
-				"ProvideHover result handle={} (no provider)",
-				req.provider_handle
-			);
-			Ok(Response::new(ProvideHoverResponse {
-				markdown:String::new(),
-				range:None,
-			}))
+			dev_log!("provider", "ProvideHover result handle={} (no provider)", req.provider_handle);
+			Ok(Response::new(ProvideHoverResponse { markdown:String::new(), range:None }))
 		},
 		Err(e) => {
 			dev_log!("provider", "warn: ProvideHover failed handle={} err={}", req.provider_handle, e);
@@ -391,7 +418,11 @@ pub async fn ProvideCompletionItems(
 	Service:&CocoonServiceImpl,
 	req:ProvideCompletionItemsRequest,
 ) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
-	dev_log!("cocoon", "[CocoonService] Providing completions for provider {}", req.provider_handle);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] Providing completions for provider {}",
+		req.provider_handle
+	);
 
 	let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
 	let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
@@ -402,20 +433,32 @@ pub async fn ProvideCompletionItems(
 	};
 	let context_dto = CommonLibrary::LanguageFeature::DTO::CompletionContextDTO::CompletionContextDTO {
 		TriggerKind:CommonLibrary::LanguageFeature::DTO::CompletionContextDTO::CompletionTriggerKindDTO::Invoke,
-		TriggerCharacter:if req.trigger_character.is_empty() { None } else { Some(req.trigger_character.clone()) },
+		TriggerCharacter:if req.trigger_character.is_empty() {
+			None
+		} else {
+			Some(req.trigger_character.clone())
+		},
 	};
 
-	match Service.environment.ProvideCompletions(document_uri, position_dto, context_dto, None).await {
+	match Service
+		.environment
+		.ProvideCompletions(document_uri, position_dto, context_dto, None)
+		.await
+	{
 		Ok(Some(list)) => {
-			let items = list.Suggestions.iter().map(|s| {
-				CompletionItem {
-					label:s.Label.as_str().map(|l| l.to_string()).unwrap_or_default(),
-					kind:format!("{}", s.Kind),
-					detail:s.Detail.clone().unwrap_or_default(),
-					documentation:Vec::new(),
-					insert_text:s.InsertText.as_ref().and_then(|v| v.as_str()).unwrap_or("").to_string(),
-				}
-			}).collect();
+			let items = list
+				.Suggestions
+				.iter()
+				.map(|s| {
+					CompletionItem {
+						label:s.Label.as_str().map(|l| l.to_string()).unwrap_or_default(),
+						kind:format!("{}", s.Kind),
+						detail:s.Detail.clone().unwrap_or_default(),
+						documentation:Vec::new(),
+						insert_text:s.InsertText.as_ref().and_then(|v| v.as_str()).unwrap_or("").to_string(),
+					}
+				})
+				.collect();
 			Ok(Response::new(ProvideCompletionItemsResponse { items }))
 		},
 		Ok(None) => Ok(Response::new(ProvideCompletionItemsResponse { items:Vec::new() })),
@@ -427,7 +470,11 @@ pub async fn ProvideDefinition(
 	Service:&CocoonServiceImpl,
 	req:ProvideDefinitionRequest,
 ) -> Result<Response<ProvideDefinitionResponse>, Status> {
-	dev_log!("cocoon", "[CocoonService] Providing definition for provider {}", req.provider_handle);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] Providing definition for provider {}",
+		req.provider_handle
+	);
 
 	let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
 	let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
@@ -439,13 +486,18 @@ pub async fn ProvideDefinition(
 
 	match Service.environment.ProvideDefinition(document_uri, position_dto).await {
 		Ok(Some(locations)) => {
-			let proto_locations = locations.iter().map(|loc| Location {
-				uri:Some(Uri { value:loc.Uri.to_string() }),
-				range:Some(Range {
-					start:Some(Position { line:loc.Range.StartLineNumber, character:loc.Range.StartColumn }),
-					end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
-				}),
-			}).collect();
+			let proto_locations = locations
+				.iter()
+				.map(|loc| {
+					Location {
+						uri:Some(Uri { value:loc.Uri.to_string() }),
+						range:Some(Range {
+							start:Some(Position { line:loc.Range.StartLineNumber, character:loc.Range.StartColumn }),
+							end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
+						}),
+					}
+				})
+				.collect();
 			Ok(Response::new(ProvideDefinitionResponse { locations:proto_locations }))
 		},
 		Ok(None) => Ok(Response::new(ProvideDefinitionResponse { locations:Vec::new() })),
@@ -457,7 +509,11 @@ pub async fn ProvideReferences(
 	Service:&CocoonServiceImpl,
 	req:ProvideReferencesRequest,
 ) -> Result<Response<ProvideReferencesResponse>, Status> {
-	dev_log!("cocoon", "[CocoonService] Providing references for provider {}", req.provider_handle);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] Providing references for provider {}",
+		req.provider_handle
+	);
 
 	let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
 	let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
@@ -468,15 +524,24 @@ pub async fn ProvideReferences(
 	};
 	let context_dto = json!({ "includeDeclaration": true });
 
-	match Service.environment.ProvideReferences(document_uri, position_dto, context_dto).await {
+	match Service
+		.environment
+		.ProvideReferences(document_uri, position_dto, context_dto)
+		.await
+	{
 		Ok(Some(locations)) => {
-			let proto_locations = locations.iter().map(|loc| Location {
-				uri:Some(Uri { value:loc.Uri.to_string() }),
-				range:Some(Range {
-					start:Some(Position { line:loc.Range.StartLineNumber, character:loc.Range.StartColumn }),
-					end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
-				}),
-			}).collect();
+			let proto_locations = locations
+				.iter()
+				.map(|loc| {
+					Location {
+						uri:Some(Uri { value:loc.Uri.to_string() }),
+						range:Some(Range {
+							start:Some(Position { line:loc.Range.StartLineNumber, character:loc.Range.StartColumn }),
+							end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
+						}),
+					}
+				})
+				.collect();
 			Ok(Response::new(ProvideReferencesResponse { locations:proto_locations }))
 		},
 		Ok(None) => Ok(Response::new(ProvideReferencesResponse { locations:Vec::new() })),
@@ -488,7 +553,11 @@ pub async fn ProvideCodeActions(
 	Service:&CocoonServiceImpl,
 	req:ProvideCodeActionsRequest,
 ) -> Result<Response<ProvideCodeActionsResponse>, Status> {
-	dev_log!("cocoon", "[CocoonService] Providing code actions for provider {}", req.provider_handle);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] Providing code actions for provider {}",
+		req.provider_handle
+	);
 
 	let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
 	let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
@@ -501,10 +570,12 @@ pub async fn ProvideCodeActions(
 	});
 	let context_dto = json!({ "diagnostics": [], "only": null });
 
-	match Service.environment.ProvideCodeActions(document_uri, range_dto, context_dto).await {
-		Ok(Some(_value)) => {
-			Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() }))
-		},
+	match Service
+		.environment
+		.ProvideCodeActions(document_uri, range_dto, context_dto)
+		.await
+	{
+		Ok(Some(_value)) => Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() })),
 		Ok(None) => Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() })),
 		Err(e) => Err(Status::internal(format!("Code actions failed: {}", e))),
 	}
@@ -571,7 +642,11 @@ pub async fn ProvideRenameEdits(
 		Column:position.map(|p| p.character).unwrap_or(0),
 	};
 
-	match Service.environment.ProvideRenameEdits(document_uri, position_dto, req.new_name).await {
+	match Service
+		.environment
+		.ProvideRenameEdits(document_uri, position_dto, req.new_name)
+		.await
+	{
 		Ok(_result) => Ok(Response::new(ProvideRenameEditsResponse::default())),
 		Err(e) => Err(Status::internal(format!("Rename edits failed: {}", e))),
 	}
@@ -587,7 +662,11 @@ pub async fn ProvideDocumentFormatting(
 	let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 	let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
-	match Service.environment.ProvideDocumentFormattingEdits(document_uri, options_dto).await {
+	match Service
+		.environment
+		.ProvideDocumentFormattingEdits(document_uri, options_dto)
+		.await
+	{
 		Ok(_result) => Ok(Response::new(ProvideDocumentFormattingResponse::default())),
 		Err(e) => Err(Status::internal(format!("Document formatting failed: {}", e))),
 	}
@@ -610,7 +689,11 @@ pub async fn ProvideDocumentRangeFormatting(
 	});
 	let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
-	match Service.environment.ProvideDocumentRangeFormattingEdits(document_uri, range_dto, options_dto).await {
+	match Service
+		.environment
+		.ProvideDocumentRangeFormattingEdits(document_uri, range_dto, options_dto)
+		.await
+	{
 		Ok(_result) => Ok(Response::new(ProvideDocumentRangeFormattingResponse::default())),
 		Err(e) => Err(Status::internal(format!("Document range formatting failed: {}", e))),
 	}
@@ -631,7 +714,11 @@ pub async fn ProvideOnTypeFormatting(
 	};
 	let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
-	match Service.environment.ProvideOnTypeFormattingEdits(document_uri, position_dto, req.character, options_dto).await {
+	match Service
+		.environment
+		.ProvideOnTypeFormattingEdits(document_uri, position_dto, req.character, options_dto)
+		.await
+	{
 		Ok(_result) => Ok(Response::new(ProvideOnTypeFormattingResponse::default())),
 		Err(e) => Err(Status::internal(format!("On-type formatting failed: {}", e))),
 	}
@@ -652,7 +739,11 @@ pub async fn ProvideSignatureHelp(
 	};
 	let context_dto = json!({ "triggerKind": 1, "isRetrigger": false });
 
-	match Service.environment.ProvideSignatureHelp(document_uri, position_dto, context_dto).await {
+	match Service
+		.environment
+		.ProvideSignatureHelp(document_uri, position_dto, context_dto)
+		.await
+	{
 		Ok(_result) => Ok(Response::new(ProvideSignatureHelpResponse::default())),
 		Err(e) => Err(Status::internal(format!("Signature help failed: {}", e))),
 	}
@@ -696,10 +787,11 @@ pub async fn ProvideSelectionRanges(
 
 	let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
 	let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-	let PositionDTOs:Vec<PositionDTO> = req.positions.iter().map(|P| PositionDTO {
-		LineNumber:P.line,
-		Column:P.character,
-	}).collect();
+	let PositionDTOs:Vec<PositionDTO> = req
+		.positions
+		.iter()
+		.map(|P| PositionDTO { LineNumber:P.line, Column:P.character })
+		.collect();
 
 	match Service.environment.ProvideSelectionRanges(document_uri, PositionDTOs).await {
 		Ok(_result) => Ok(Response::new(ProvideSelectionRangesResponse::default())),

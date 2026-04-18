@@ -210,7 +210,11 @@ pub fn AppLifecycleSetup(
 			}
 		});
 		crate::IPC::WindServiceHandlers::set_static_application_root(SkyTargetDir.to_string_lossy().to_string());
-		dev_log!("lifecycle", "[Lifecycle] [Dirs] Static application root: {}", SkyTargetDir.display());
+		dev_log!(
+			"lifecycle",
+			"[Lifecycle] [Dirs] Static application root: {}",
+			SkyTargetDir.display()
+		);
 
 		// Every directory VS Code may stat or readdir during startup
 		let Dirs = [
@@ -237,7 +241,12 @@ pub fn AppLifecycleSetup(
 		];
 		for Dir in &Dirs {
 			if let Err(Error) = std::fs::create_dir_all(Dir) {
-				dev_log!("lifecycle", "warn: [Lifecycle] [Dirs] Failed to create {}: {}", Dir.display(), Error);
+				dev_log!(
+					"lifecycle",
+					"warn: [Lifecycle] [Dirs] Failed to create {}: {}",
+					Dir.display(),
+					Error
+				);
 			}
 		}
 
@@ -260,7 +269,11 @@ pub fn AppLifecycleSetup(
 			*Path = AppDataDir.join("User/globalStorage/global.json");
 			dev_log!("lifecycle", "[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
 		}
-		dev_log!("lifecycle", "[Lifecycle] [Dirs] Userdata directories ensured at {}", AppDataDir.display());
+		dev_log!(
+			"lifecycle",
+			"[Lifecycle] [Dirs] Userdata directories ensured at {}",
+			AppDataDir.display()
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -282,21 +295,33 @@ pub fn AppLifecycleSetup(
 	// [Lifecycle] [IPC] Initialize Status Reporter
 	// -------------------------------------------------------------------------
 	if let Err(e) = StatusReporterRegisterFn(&app_handle_for_setup, Runtime.clone()) {
-		dev_log!("lifecycle", "error: [Lifecycle] [IPC] Failed to initialize status reporter: {}", e);
+		dev_log!(
+			"lifecycle",
+			"error: [Lifecycle] [IPC] Failed to initialize status reporter: {}",
+			e
+		);
 	}
 
 	// -------------------------------------------------------------------------
 	// [Lifecycle] [IPC] Initialize Advanced Features
 	// -------------------------------------------------------------------------
 	if let Err(e) = AdvancedFeaturesRegisterFn(&app_handle_for_setup, Runtime.clone()) {
-		dev_log!("lifecycle", "error: [Lifecycle] [IPC] Failed to initialize advanced features: {}", e);
+		dev_log!(
+			"lifecycle",
+			"error: [Lifecycle] [IPC] Failed to initialize advanced features: {}",
+			e
+		);
 	}
 
 	// -------------------------------------------------------------------------
 	// [Lifecycle] [IPC] Initialize Wind Advanced Sync
 	// -------------------------------------------------------------------------
 	if let Err(e) = WindSyncRegisterFn(&app_handle_for_setup, Runtime.clone()) {
-		dev_log!("lifecycle", "error: [Lifecycle] [IPC] Failed to initialize wind advanced sync: {}", e);
+		dev_log!(
+			"lifecycle",
+			"error: [Lifecycle] [IPC] Failed to initialize wind advanced sync: {}",
+			e
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -329,7 +354,12 @@ pub fn AppLifecycleSetup(
 
 		// [Vine] [gRPC]
 		let VineStart = crate::IPC::DevLog::NowNano();
-		let _ = VineStartFn(PostSetupAppHandle.clone(), "127.0.0.1:50051".to_string(), "127.0.0.1:50052".to_string()).await;
+		let _ = VineStartFn(
+			PostSetupAppHandle.clone(),
+			"127.0.0.1:50051".to_string(),
+			"127.0.0.1:50052".to_string(),
+		)
+		.await;
 		crate::otel_span!("lifecycle:vine:start", VineStart);
 
 		// [Cocoon] [Sidecar]

@@ -6,10 +6,7 @@ use std::sync::Arc;
 
 use serde_json::{Value, json};
 
-use crate::{
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	dev_log,
-};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Handler for environment get requests
 pub async fn handle_environment_get(Runtime:Arc<ApplicationRunTime>, Args:Vec<Value>) -> Result<Value, String> {

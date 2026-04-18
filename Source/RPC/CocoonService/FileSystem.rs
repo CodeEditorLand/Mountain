@@ -11,20 +11,34 @@ use serde_json::json;
 use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	CopyFileRequest, CreateDirectoryRequest, DeleteFileRequest, Empty,
-	FindFilesRequest, FindFilesResponse, FindTextInFilesRequest,
-	FindTextInFilesResponse, Position, Range, ReadFileRequest,
-	ReadFileResponse, ReaddirRequest, ReaddirResponse, RenameFileRequest,
-	StatRequest, StatResponse, TextMatch, Uri, WatchFileRequest,
-	WriteFileRequest,
+use crate::{
+	Vine::Generated::{
+		CopyFileRequest,
+		CreateDirectoryRequest,
+		DeleteFileRequest,
+		Empty,
+		FindFilesRequest,
+		FindFilesResponse,
+		FindTextInFilesRequest,
+		FindTextInFilesResponse,
+		Position,
+		Range,
+		ReadFileRequest,
+		ReadFileResponse,
+		ReaddirRequest,
+		ReaddirResponse,
+		RenameFileRequest,
+		StatRequest,
+		StatResponse,
+		TextMatch,
+		Uri,
+		WatchFileRequest,
+		WriteFileRequest,
+	},
+	dev_log,
 };
 
-pub async fn ReadFile(
-	Service:&CocoonServiceImpl,
-	req:ReadFileRequest,
-) -> Result<Response<ReadFileResponse>, Status> {
+pub async fn ReadFile(Service:&CocoonServiceImpl, req:ReadFileRequest) -> Result<Response<ReadFileResponse>, Status> {
 	let Path = CocoonServiceImpl::UriToPath(req.uri.as_ref())
 		.ok_or_else(|| Status::invalid_argument("read_file: missing or empty URI"))?;
 
@@ -41,14 +55,16 @@ pub async fn ReadFile(
 	}))
 }
 
-pub async fn WriteFile(
-	Service:&CocoonServiceImpl,
-	req:WriteFileRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn WriteFile(Service:&CocoonServiceImpl, req:WriteFileRequest) -> Result<Response<Empty>, Status> {
 	let Path = CocoonServiceImpl::UriToPath(req.uri.as_ref())
 		.ok_or_else(|| Status::invalid_argument("write_file: missing or empty URI"))?;
 
-	dev_log!("cocoon", "[CocoonService] Writing file: {:?} ({} bytes)", Path, req.content.len());
+	dev_log!(
+		"cocoon",
+		"[CocoonService] Writing file: {:?} ({} bytes)",
+		Path,
+		req.content.len()
+	);
 
 	// Ensure parent directory exists
 	if let Some(Parent) = Path.parent() {
@@ -67,12 +83,9 @@ pub async fn WriteFile(
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn Stat(
-	Service:&CocoonServiceImpl,
-	req:StatRequest,
-) -> Result<Response<StatResponse>, Status> {
-	let Path =
-		CocoonServiceImpl::UriToPath(req.uri.as_ref()).ok_or_else(|| Status::invalid_argument("stat: missing or empty URI"))?;
+pub async fn Stat(Service:&CocoonServiceImpl, req:StatRequest) -> Result<Response<StatResponse>, Status> {
+	let Path = CocoonServiceImpl::UriToPath(req.uri.as_ref())
+		.ok_or_else(|| Status::invalid_argument("stat: missing or empty URI"))?;
 
 	dev_log!("cocoon", "[CocoonService] Stat: {:?}", Path);
 
@@ -96,10 +109,7 @@ pub async fn Stat(
 	}))
 }
 
-pub async fn Readdir(
-	Service:&CocoonServiceImpl,
-	req:ReaddirRequest,
-) -> Result<Response<ReaddirResponse>, Status> {
+pub async fn Readdir(Service:&CocoonServiceImpl, req:ReaddirRequest) -> Result<Response<ReaddirResponse>, Status> {
 	let Path = CocoonServiceImpl::UriToPath(req.uri.as_ref())
 		.ok_or_else(|| Status::invalid_argument("readdir: missing or empty URI"))?;
 
@@ -120,12 +130,13 @@ pub async fn Readdir(
 	Ok(Response::new(ReaddirResponse { entries:Entries }))
 }
 
-pub async fn WatchFile(
-	Service:&CocoonServiceImpl,
-	req:WatchFileRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn WatchFile(Service:&CocoonServiceImpl, req:WatchFileRequest) -> Result<Response<Empty>, Status> {
 	let Uri = req.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
-	dev_log!("cocoon", "[CocoonService] watch_file registered (polling not yet active): {}", Uri);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] watch_file registered (polling not yet active): {}",
+		Uri
+	);
 	// TODO(P1): Wire notify crate watcher; store WatcherHandle in
 	// ApplicationState.Feature.Watchers keyed by URI for cancellation on
 	// cancel_operation.
@@ -142,9 +153,7 @@ pub async fn FindFiles(
 
 	// Build glob matcher
 	let GlobMatcher = Glob::new(&req.pattern)
-		.map_err(|Error| {
-			Status::invalid_argument(format!("find_files: invalid pattern '{}': {}", req.pattern, Error))
-		})?
+		.map_err(|Error| Status::invalid_argument(format!("find_files: invalid pattern '{}': {}", req.pattern, Error)))?
 		.compile_matcher();
 
 	// Collect workspace root folders from ApplicationState
@@ -188,7 +197,8 @@ pub async fn FindFiles(
 		WalkAndCollect(Root, Root, &GlobMatcher, &mut Uris);
 	}
 
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] find_files: {} results for pattern '{}'",
 		Uris.len(),
 		req.pattern
@@ -276,7 +286,8 @@ pub async fn FindTextInFiles(
 	.await
 	.unwrap_or_default();
 
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] find_text_in_files: {} matches for '{}'",
 		Matches.len(),
 		req.pattern
@@ -284,12 +295,9 @@ pub async fn FindTextInFiles(
 	Ok(Response::new(FindTextInFilesResponse { matches:Matches }))
 }
 
-pub async fn DeleteFile(
-	Service:&CocoonServiceImpl,
-	req:DeleteFileRequest,
-) -> Result<Response<Empty>, Status> {
-	let Path =
-		CocoonServiceImpl::UriToPath(req.uri.as_ref()).ok_or_else(|| Status::invalid_argument("delete_file: missing URI"))?;
+pub async fn DeleteFile(Service:&CocoonServiceImpl, req:DeleteFileRequest) -> Result<Response<Empty>, Status> {
+	let Path = CocoonServiceImpl::UriToPath(req.uri.as_ref())
+		.ok_or_else(|| Status::invalid_argument("delete_file: missing URI"))?;
 
 	dev_log!("cocoon", "[CocoonService] delete_file: {:?}", Path);
 
@@ -303,10 +311,7 @@ pub async fn DeleteFile(
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn RenameFile(
-	Service:&CocoonServiceImpl,
-	req:RenameFileRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn RenameFile(Service:&CocoonServiceImpl, req:RenameFileRequest) -> Result<Response<Empty>, Status> {
 	let OldPath = CocoonServiceImpl::UriToPath(req.source.as_ref())
 		.ok_or_else(|| Status::invalid_argument("rename_file: missing source URI"))?;
 	let NewPath = CocoonServiceImpl::UriToPath(req.target.as_ref())
@@ -329,10 +334,7 @@ pub async fn RenameFile(
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn CopyFile(
-	Service:&CocoonServiceImpl,
-	req:CopyFileRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn CopyFile(Service:&CocoonServiceImpl, req:CopyFileRequest) -> Result<Response<Empty>, Status> {
 	let SrcPath = CocoonServiceImpl::UriToPath(req.source.as_ref())
 		.ok_or_else(|| Status::invalid_argument("copy_file: missing source URI"))?;
 	let DstPath = CocoonServiceImpl::UriToPath(req.target.as_ref())

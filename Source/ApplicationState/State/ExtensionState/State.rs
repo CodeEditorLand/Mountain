@@ -31,7 +31,6 @@
 //! - [ ] Implement extension lifecycle events
 //! - [ ] Add extension state metrics collection
 
-
 use super::{ExtensionRegistry, ProviderRegistration, ScannedExtensions};
 use crate::dev_log;
 

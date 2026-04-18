@@ -18,6 +18,7 @@ use ring::{
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 use bincode::serde::{decode_from_slice, encode_to_vec};
+
 use crate::dev_log;
 
 /// Security configuration
@@ -118,7 +119,8 @@ impl SecureMessageChannel {
 			key_rotation_task:Arc::new(RwLock::new(None)),
 		};
 
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[SecureMessageChannel] Created secure channel with {} encryption",
 			channel.config.encryption_algorithm
 		);
@@ -216,7 +218,8 @@ impl SecureMessageChannel {
 				.as_millis() as u64,
 		};
 
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[SecureMessageChannel] Message encrypted (size: {} bytes)",
 			encrypted_message.ciphertext.len()
 		);

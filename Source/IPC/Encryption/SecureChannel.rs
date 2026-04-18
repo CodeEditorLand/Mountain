@@ -219,7 +219,11 @@ impl SecureMessageChannel {
 	/// let encrypted = secure_channel.encrypt_message(&message)?;
 	/// ```
 	pub fn encrypt_message(&self, message:&TauriIPCMessage) -> Result<EncryptedMessage, String> {
-		dev_log!("encryption", "[SecureMessageChannel] Encrypting message on channel: {}", message.channel);
+		dev_log!(
+			"encryption",
+			"[SecureMessageChannel] Encrypting message on channel: {}",
+			message.channel
+		);
 
 		// Serialize message to bytes
 		let serialized_message =
@@ -244,7 +248,8 @@ impl SecureMessageChannel {
 		let encrypted_message =
 			EncryptedMessage { nonce:nonce.to_vec(), ciphertext:in_out, hmac_tag:hmac_tag.as_ref().to_vec() };
 
-		dev_log!("encryption", 
+		dev_log!(
+			"encryption",
 			"[SecureMessageChannel] Message encrypted: {} bytes -> {} bytes",
 			serialized_message.len(),
 			encrypted_message.ciphertext.len()
@@ -300,7 +305,8 @@ impl SecureMessageChannel {
 		let message:TauriIPCMessage =
 			serde_json::from_slice(&in_out).map_err(|e| format!("Failed to deserialize message: {}", e))?;
 
-		dev_log!("encryption", 
+		dev_log!(
+			"encryption",
 			"[SecureMessageChannel] Message decrypted successfully on channel: {}",
 			message.channel
 		);

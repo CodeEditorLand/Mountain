@@ -41,7 +41,6 @@ use tauri::{AppHandle, Emitter};
 use tokio::sync::RwLock;
 use tonic::{Request, Response, Status};
 
-use crate::dev_log;
 use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	Track,
@@ -54,6 +53,7 @@ use crate::{
 		RpcError as RPCError,
 		mountain_service_server::MountainService,
 	},
+	dev_log,
 };
 
 /// Configuration for MountainService
@@ -114,7 +114,11 @@ impl MountainVinegRPCService {
 	pub async fn RegisterOperation(&self, request_id:u64) -> tokio_util::sync::CancellationToken {
 		let token = tokio_util::sync::CancellationToken::new();
 		self.ActiveOperations.write().await.insert(request_id, token.clone());
-		dev_log!("grpc", "[MountainVinegRPCService] Registered operation {} for cancellation", request_id);
+		dev_log!(
+			"grpc",
+			"[MountainVinegRPCService] Registered operation {} for cancellation",
+			request_id
+		);
 		token
 	}
 
@@ -233,9 +237,11 @@ impl MountainService for MountainVinegRPCService {
 
 		let RequestIdentifier = RequestData.request_identifier;
 
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[MountainVinegRPCService] Received gRPC Request [ID: {}]: Method='{}'",
-			RequestIdentifier, MethodName
+			RequestIdentifier,
+			MethodName
 		);
 
 		// Validate request before processing
@@ -253,7 +259,12 @@ impl MountainService for MountainVinegRPCService {
 		// Deserialize JSON parameters
 		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
 			Ok(v) => {
-				dev_log!("grpc", "[MountainVinegRPCService] Params for [ID: {}]: {:?}", RequestIdentifier, v);
+				dev_log!(
+					"grpc",
+					"[MountainVinegRPCService] Params for [ID: {}]: {:?}",
+					RequestIdentifier,
+					v
+				);
 				v
 			},
 			Err(e) => {
@@ -270,7 +281,8 @@ impl MountainService for MountainVinegRPCService {
 			},
 		};
 
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[MountainVinegRPCService] Dispatching request [ID: {}] to Track::DispatchLogic",
 			RequestIdentifier
 		);
@@ -288,7 +300,8 @@ impl MountainService for MountainVinegRPCService {
 
 		match DispatchResult {
 			Ok(SuccessfulResult) => {
-				dev_log!("grpc", 
+				dev_log!(
+					"grpc",
 					"[MountainVinegRPCService] Request [ID: {}] completed successfully",
 					RequestIdentifier
 				);
@@ -309,12 +322,20 @@ impl MountainService for MountainVinegRPCService {
 					&& (ErrorString.to_lowercase().contains("resource not found")
 						|| ErrorString.to_lowercase().contains("not found"));
 				if LooksLike404 {
-					dev_log!("grpc",
+					dev_log!(
+						"grpc",
 						"[LandFix:MountainVinegRPC] Request [ID: {}] {} 404 (benign): {}",
-						RequestIdentifier, MethodName, ErrorString);
+						RequestIdentifier,
+						MethodName,
+						ErrorString
+					);
 				} else {
-					dev_log!("grpc", "error: [MountainVinegRPCService] Request [ID: {}] failed: {}",
-						RequestIdentifier, ErrorString);
+					dev_log!(
+						"grpc",
+						"error: [MountainVinegRPCService] Request [ID: {}] failed: {}",
+						RequestIdentifier,
+						ErrorString
+					);
 				}
 
 				Ok(Response::new(Self::CreateErrorResponse(
@@ -351,11 +372,18 @@ impl MountainService for MountainVinegRPCService {
 
 		let MethodName = NotificationData.method;
 
-		dev_log!("grpc", "[MountainVinegRPCService] Received gRPC Notification: Method='{}'", MethodName);
+		dev_log!(
+			"grpc",
+			"[MountainVinegRPCService] Received gRPC Notification: Method='{}'",
+			MethodName
+		);
 
 		// Validate notification method name
 		if MethodName.is_empty() {
-			dev_log!("grpc", "warn: [MountainVinegRPCService] Received notification with empty method name");
+			dev_log!(
+				"grpc",
+				"warn: [MountainVinegRPCService] Received notification with empty method name"
+			);
 			return Err(Status::invalid_argument("Method name cannot be empty"));
 		}
 
@@ -378,15 +406,26 @@ impl MountainService for MountainVinegRPCService {
 		match MethodName.as_str() {
 			// Cocoon → Mountain → Wind: extension host binary protocol reply
 			"extensionHostMessage" => {
-				dev_log!("grpc", "[MountainVinegRPCService] Extension host message from Cocoon, forwarding to Wind");
+				dev_log!(
+					"grpc",
+					"[MountainVinegRPCService] Extension host message from Cocoon, forwarding to Wind"
+				);
 				if let Err(Error) = self.ApplicationHandle.emit("cocoon:extensionHostReply", &Parameter) {
-					dev_log!("grpc", "warn: [MountainVinegRPCService] Failed to emit cocoon:extensionHostReply: {}", Error);
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] Failed to emit cocoon:extensionHostReply: {}",
+						Error
+					);
 				}
 			},
 			"ExtensionActivated" => {
 				dev_log!("grpc", "[MountainVinegRPCService] Extension activated notification received");
 				if let Err(Error) = self.ApplicationHandle.emit("cocoon:extensionActivated", &Parameter) {
-					dev_log!("grpc", "warn: [MountainVinegRPCService] Failed to emit cocoon:extensionActivated: {}", Error);
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] Failed to emit cocoon:extensionActivated: {}",
+						Error
+					);
 				}
 			},
 			"ExtensionDeactivated" => {
@@ -397,10 +436,17 @@ impl MountainService for MountainVinegRPCService {
 			},
 			// Cocoon → Mountain → Sky: window messages (info/warn/error)
 			"window.showMessage" => {
-				dev_log!("grpc", "[MountainVinegRPCService] Window message from Cocoon: {:?}",
-					Parameter.get("message").and_then(|m| m.as_str()).unwrap_or(""));
+				dev_log!(
+					"grpc",
+					"[MountainVinegRPCService] Window message from Cocoon: {:?}",
+					Parameter.get("message").and_then(|m| m.as_str()).unwrap_or("")
+				);
 				if let Err(Error) = self.ApplicationHandle.emit("sky://notification/show", &Parameter) {
-					dev_log!("grpc", "warn: [MountainVinegRPCService] Failed to emit sky://notification/show: {}", Error);
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] Failed to emit sky://notification/show: {}",
+						Error
+					);
 				}
 			},
 			// Cocoon → Mountain: command registration from extensions
@@ -409,7 +455,15 @@ impl MountainService for MountainVinegRPCService {
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon registered command: {}", CommandId);
 				// Store in CommandRegistry as proxied command → Cocoon handles execution
 				if !CommandId.is_empty() {
-					if let Ok(mut Registry) = self.RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock() {
+					if let Ok(mut Registry) = self
+						.RunTime
+						.Environment
+						.ApplicationState
+						.Extension
+						.Registry
+						.CommandRegistry
+						.lock()
+					{
 						use crate::Environment::CommandProvider::CommandHandler;
 						Registry.insert(
 							CommandId.to_string(),
@@ -422,17 +476,30 @@ impl MountainService for MountainVinegRPCService {
 				}
 			},
 			// Cocoon → Mountain: provider registration from extensions
-			"register_hover_provider" | "register_completion_item_provider" |
-			"register_definition_provider" | "register_reference_provider" |
-			"register_code_actions_provider" | "register_document_symbol_provider" |
-			"register_document_formatting_provider" => {
+			"register_hover_provider"
+			| "register_completion_item_provider"
+			| "register_definition_provider"
+			| "register_reference_provider"
+			| "register_code_actions_provider"
+			| "register_document_symbol_provider"
+			| "register_document_formatting_provider" => {
 				let Handle = Parameter.get("handle").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
 				let Selector = Parameter.get("language_selector").and_then(|s| s.as_str()).unwrap_or("*");
 				let ExtId = Parameter.get("extension_id").and_then(|e| e.as_str()).unwrap_or("");
-				let ProviderTypeName = MethodName.strip_prefix("register_").and_then(|s| s.strip_suffix("_provider")).unwrap_or("");
-				dev_log!("grpc", "[MountainVinegRPCService] Cocoon registered {} provider: handle={}, lang={}", ProviderTypeName, Handle, Selector);
-				// Provider registration happens in CocoonService.RegisterProvider via the typed RPC path.
-				// This notification path is a fallback for providers registered via the vscode API shim.
+				let ProviderTypeName = MethodName
+					.strip_prefix("register_")
+					.and_then(|s| s.strip_suffix("_provider"))
+					.unwrap_or("");
+				dev_log!(
+					"grpc",
+					"[MountainVinegRPCService] Cocoon registered {} provider: handle={}, lang={}",
+					ProviderTypeName,
+					Handle,
+					Selector
+				);
+				// Provider registration happens in CocoonService.RegisterProvider via the typed
+				// RPC path. This notification path is a fallback for providers registered
+				// via the vscode API shim.
 				use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType as PT;
 				let ProvType = match ProviderTypeName {
 					"hover" => Some(PT::Hover),
@@ -454,7 +521,12 @@ impl MountainService for MountainVinegRPCService {
 						ExtensionIdentifier:json!(ExtId),
 						Options:None,
 					};
-					self.RunTime.Environment.ApplicationState.Extension.ProviderRegistration.RegisterProvider(Handle, Dto);
+					self.RunTime
+						.Environment
+						.ApplicationState
+						.Extension
+						.ProviderRegistration
+						.RegisterProvider(Handle, Dto);
 				}
 			},
 			_ => {
@@ -463,7 +535,12 @@ impl MountainService for MountainVinegRPCService {
 				// can subscribe to any Cocoon-originated event.
 				let EventName = format!("cocoon:{}", MethodName);
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-					dev_log!("grpc", "warn: [MountainVinegRPCService] Failed to emit {}: {}", EventName, Error);
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] Failed to emit {}: {}",
+						EventName,
+						Error
+					);
 				}
 			},
 		}
@@ -487,7 +564,8 @@ impl MountainService for MountainVinegRPCService {
 
 		let RequestIdentifierToCancel = cancel_request.request_identifier_to_cancel;
 
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[MountainVinegRPCService] Received CancelOperation request for RequestID: {}",
 			RequestIdentifierToCancel
 		);
@@ -503,7 +581,8 @@ impl MountainService for MountainVinegRPCService {
 				// Trigger cancellation token to signal the operation to abort
 				token.cancel();
 
-				dev_log!("grpc", 
+				dev_log!(
+					"grpc",
 					"[MountainVinegRPCService] Successfully initiated cancellation for operation {}",
 					RequestIdentifierToCancel
 				);
@@ -516,9 +595,12 @@ impl MountainService for MountainVinegRPCService {
 			},
 			None => {
 				// Operation not found - it may have already completed
-				dev_log!("grpc", "warn: [MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have already \
-					 completed)",
-					RequestIdentifierToCancel);
+				dev_log!(
+					"grpc",
+					"warn: [MountainVinegRPCService] Cannot cancel operation {}: operation not found (may have \
+					 already completed)",
+					RequestIdentifierToCancel
+				);
 
 				// Return success anyway - the operation is not running
 				Ok(Response::new(Empty {}))

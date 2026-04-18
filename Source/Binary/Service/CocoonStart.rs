@@ -2,11 +2,10 @@
 //!
 //! Initializes and starts the Cocoon sidecar process.
 
-
-use crate::dev_log;
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	ProcessManagement::CocoonManagement::InitializeCocoon,
+	dev_log,
 };
 
 /// Starts the Cocoon sidecar process for build tool support.

@@ -48,6 +48,7 @@
 //! - Icon loading performance characteristics
 
 use tauri::{AppHandle, image::Image};
+
 use crate::dev_log;
 
 /// Dynamically switches the tray icon based on the theme (Light/Dark).

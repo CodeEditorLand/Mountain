@@ -56,7 +56,10 @@ pub async fn handle_workspaces_add_folder(Runtime:Arc<ApplicationRunTime>, Args:
 }
 
 /// Remove a workspace folder by URI.
-pub async fn handle_workspaces_remove_folder(Runtime:Arc<ApplicationRunTime>, Args:Vec<Value>) -> Result<Value, String> {
+pub async fn handle_workspaces_remove_folder(
+	Runtime:Arc<ApplicationRunTime>,
+	Args:Vec<Value>,
+) -> Result<Value, String> {
 	let UriStr = Args
 		.first()
 		.and_then(|V| V.as_str())

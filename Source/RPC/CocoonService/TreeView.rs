@@ -6,15 +6,14 @@
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
+use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 use super::CocoonServiceImpl;
-use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	Empty, GetTreeChildrenRequest, GetTreeChildrenResponse,
-	RegisterTreeViewProviderRequest,
+use crate::{
+	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
+	Vine::Generated::{Empty, GetTreeChildrenRequest, GetTreeChildrenResponse, RegisterTreeViewProviderRequest},
+	dev_log,
 };
-use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 pub async fn RegisterTreeViewProvider(
 	Service:&CocoonServiceImpl,
@@ -22,7 +21,11 @@ pub async fn RegisterTreeViewProvider(
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering tree view provider: {}", req.view_id);
 
-	let Handle = req.view_id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+	let Handle = req
+		.view_id
+		.as_bytes()
+		.iter()
+		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 	let dto = ProviderRegistrationDTO {
 		Handle,
 		ProviderType:ProviderType::TreeView,

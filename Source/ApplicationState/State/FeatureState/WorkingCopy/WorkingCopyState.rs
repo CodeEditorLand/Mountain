@@ -2,8 +2,8 @@ use std::{
 	collections::HashSet,
 	sync::{Arc, Mutex as StandardMutex},
 };
-use crate::dev_log;
 
+use crate::dev_log;
 
 /// Tracks which URIs have unsaved changes (dirty state).
 /// Drives the dirty dot in editor tabs and the explorer badge count.

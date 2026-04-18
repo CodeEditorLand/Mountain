@@ -166,6 +166,7 @@ use tokio::{
 	sync::{Mutex as AsyncMutex, RwLock, Semaphore},
 	time::timeout,
 };
+
 use crate::dev_log;
 
 /// IPC message structure matching Wind's ITauriIPCMessage interface
@@ -299,7 +300,8 @@ impl TauriIPCServer {
 				.lock()
 				.map_err(|e| format!("Failed to access message queue: {}", e))?;
 			queue.push(message);
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[TauriIPCServer] Message queued (channel: {}, queue size: {})",
 				channel,
 				queue.len()
@@ -355,7 +357,12 @@ impl TauriIPCServer {
 		if let Some(channel_listeners) = listeners.get(&message.channel) {
 			for callback in channel_listeners {
 				if let Err(e) = callback(message.data.clone()) {
-					dev_log!("ipc", "error: [TauriIPCServer] Error in listener for channel {}: {}", message.channel, e);
+					dev_log!(
+						"ipc",
+						"error: [TauriIPCServer] Error in listener for channel {}: {}",
+						message.channel,
+						e
+					);
 				}
 			}
 		} else {
@@ -406,7 +413,11 @@ impl TauriIPCServer {
 			}
 		}
 
-		dev_log!("ipc", "[TauriIPCServer] Message queue processed, {} messages remaining", queue.len());
+		dev_log!(
+			"ipc",
+			"[TauriIPCServer] Message queue processed, {} messages remaining",
+			queue.len()
+		);
 	}
 
 	/// Get connection status
@@ -493,9 +504,12 @@ impl TauriIPCServer {
 	/// Advanced: Record performance metrics
 	pub async fn record_performance_metrics(&self, channel:String, duration:std::time::Duration, success:bool) {
 		// This would integrate with the PerformanceDashboard
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[TauriIPCServer] Performance recorded - Channel: {}, Duration: {:?}, Success: {}",
-			channel, duration, success
+			channel,
+			duration,
+			success
 		);
 	}
 
@@ -779,9 +793,11 @@ impl ConnectionPool {
 					handle.update_health(is_healthy);
 
 					if !handle.is_healthy() {
-						dev_log!("ipc", 
+						dev_log!(
+							"ipc",
 							"Connection {} marked as unhealthy (score: {:.1})",
-							handle.id, handle.health_score
+							handle.id,
+							handle.health_score
 						);
 					}
 				} else {
@@ -924,7 +940,8 @@ pub struct EncryptedMessage {
 /// Advanced permission-based IPC message handler
 #[tauri::command]
 pub async fn mountain_ipc_receive_message(app_handle:tauri::AppHandle, message:TauriIPCMessage) -> Result<(), String> {
-	dev_log!("ipc", 
+	dev_log!(
+		"ipc",
 		"[TauriIPCServer] Received IPC message from Wind on channel: {}",
 		message.channel
 	);
@@ -933,8 +950,12 @@ pub async fn mountain_ipc_receive_message(app_handle:tauri::AppHandle, message:T
 	if let Some(ipc_server) = app_handle.try_state::<TauriIPCServer>() {
 		// Advanced security: Validate permissions before processing
 		if let Err(e) = ipc_server.validate_message_permissions(&message).await {
-			dev_log!("ipc", "error: [TauriIPCServer] Permission validation failed for channel {}: {}",
-				message.channel, e);
+			dev_log!(
+				"ipc",
+				"error: [TauriIPCServer] Permission validation failed for channel {}: {}",
+				message.channel,
+				e
+			);
 
 			// Log security event
 			ipc_server

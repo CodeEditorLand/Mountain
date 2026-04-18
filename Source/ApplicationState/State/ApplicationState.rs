@@ -57,8 +57,7 @@ use super::{
 	UIState::State as UIState,
 	WorkspaceState::State as WorkspaceState,
 };
-use crate::Environment::TestProvider::TestProviderState;
-use crate::dev_log;
+use crate::{Environment::TestProvider::TestProviderState, dev_log};
 
 /// The central, shared, thread-safe state for the entire Mountain application.
 #[derive(Clone)]
@@ -139,8 +138,11 @@ pub fn MapLockError<T>(Error:PoisonError<T>) -> CommonError {
 
 /// A helper to map a mutex poison error with recovery attempt.
 pub fn MapLockErrorWithRecovery<T>(Error:PoisonError<T>, RecoveryContext:&str) -> CommonError {
-	dev_log!("lifecycle", "warn: [ApplicationState] Attempting recovery from poisoned lock in context: {}",
-		RecoveryContext);
+	dev_log!(
+		"lifecycle",
+		"warn: [ApplicationState] Attempting recovery from poisoned lock in context: {}",
+		RecoveryContext
+	);
 	CommonError::StateLockPoisoned {
 		Context:format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext),
 	}

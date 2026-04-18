@@ -13,11 +13,11 @@ use serde_json::{Value, json};
 use tauri::Manager;
 use url::Url;
 
-use crate::dev_log;
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
 };
 
 /// Finds the best provider for a given feature and document.
@@ -51,7 +51,12 @@ pub(super) async fn get_matching_provider(
 					for selector in selector_array {
 						if let Some(lang) = selector.get("language").and_then(|l| l.as_str()) {
 							if lang == doc.LanguageIdentifier {
-								dev_log!("extensions", "Found provider with handle {} for document {}", provider.Handle, document_uri);
+								dev_log!(
+									"extensions",
+									"Found provider with handle {} for document {}",
+									provider.Handle,
+									document_uri
+								);
 								return Ok(Some(provider.clone()));
 							}
 						}
@@ -60,7 +65,12 @@ pub(super) async fn get_matching_provider(
 			}
 		}
 	}
-	dev_log!("extensions", "warn: No provider found for {:?} on document {}", feature_type, document_uri);
+	dev_log!(
+		"extensions",
+		"warn: No provider found for {:?} on document {}",
+		feature_type,
+		document_uri
+	);
 
 	Ok(None)
 }

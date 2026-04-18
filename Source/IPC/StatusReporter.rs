@@ -511,7 +511,11 @@ impl StatusReporter {
 			.ApplicationHandle
 			.emit("ipc-status-report", &comprehensive_report)
 		{
-			dev_log!("lifecycle", "error: [StatusReporter] Failed to emit status report to Sky: {}", e);
+			dev_log!(
+				"lifecycle",
+				"error: [StatusReporter] Failed to emit status report to Sky: {}",
+				e
+			);
 			return Err(format!("Failed to emit status report: {}", e));
 		}
 
@@ -540,7 +544,8 @@ impl StatusReporter {
 
 	/// Start periodic status reporting
 	pub async fn start_periodic_reporting(&self, interval_seconds:u64) -> Result<(), String> {
-		dev_log!("lifecycle", 
+		dev_log!(
+			"lifecycle",
 			"[StatusReporter] Starting periodic status reporting (interval: {}s)",
 			interval_seconds
 		);
@@ -617,9 +622,11 @@ impl StatusReporter {
 		metrics.cpu_usage_percent = cpu_usage_percent;
 		metrics.last_update = last_update;
 
-		dev_log!("lifecycle", 
+		dev_log!(
+			"lifecycle",
 			"[StatusReporter] Performance metrics updated: {:.2} msg/s, {:.2}ms latency",
-			metrics.messages_per_second, metrics.average_latency_ms
+			metrics.messages_per_second,
+			metrics.average_latency_ms
 		);
 
 		Ok(())
@@ -700,9 +707,12 @@ impl StatusReporter {
 
 		// Emit health alert if score is low
 		if health_score < 70.0 {
-			dev_log!("lifecycle", "warn: [StatusReporter] Health check failed: score {:.1}%
+			dev_log!(
+				"lifecycle",
+				"warn: [StatusReporter] Health check failed: score {:.1}%
 ",
-				health_score);
+				health_score
+			);
 
 			if let Err(e) = self
 				.runtime
@@ -854,7 +864,8 @@ impl StatusReporter {
 			.unwrap_or_default()
 			.as_millis() as u64;
 
-		dev_log!("lifecycle", 
+		dev_log!(
+			"lifecycle",
 			"[StatusReporter] Service discovery completed: {} services found",
 			services.len()
 		);
@@ -866,7 +877,11 @@ impl StatusReporter {
 			.ApplicationHandle
 			.emit("mountain_service_discovery", &services)
 		{
-			dev_log!("lifecycle", "error: [StatusReporter] Failed to emit service discovery event: {}", e);
+			dev_log!(
+				"lifecycle",
+				"error: [StatusReporter] Failed to emit service discovery event: {}",
+				e
+			);
 		}
 
 		Ok(services)
@@ -1011,7 +1026,8 @@ impl StatusReporter {
 			*error_count = 0;
 		}
 
-		dev_log!("lifecycle", 
+		dev_log!(
+			"lifecycle",
 			"[StatusReporter] Recovery attempt {} completed",
 			health_monitor.recovery_attempts
 		);

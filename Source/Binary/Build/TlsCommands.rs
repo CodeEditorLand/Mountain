@@ -40,7 +40,6 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager}; // Manager trait provides try_state() method
 
 use crate::dev_log;
-
 use super::CertificateManager::{CertificateInfo, CertificateManager};
 
 /// Initialize TLS certificate manager

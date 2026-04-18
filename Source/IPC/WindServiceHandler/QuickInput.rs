@@ -10,7 +10,10 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 /// Show a quick-pick dialog. Routes through UserInterfaceProvider (blocking
 /// oneshot).
-pub async fn handle_quick_input_show_quick_pick(Runtime:Arc<ApplicationRunTime>, Args:Vec<Value>) -> Result<Value, String> {
+pub async fn handle_quick_input_show_quick_pick(
+	Runtime:Arc<ApplicationRunTime>,
+	Args:Vec<Value>,
+) -> Result<Value, String> {
 	use CommonLibrary::UserInterface::{
 		DTO::{QuickPickItemDTO::QuickPickItemDTO, QuickPickOptionsDTO::QuickPickOptionsDTO},
 		UserInterfaceProvider::UserInterfaceProvider,
@@ -66,7 +69,10 @@ pub async fn handle_quick_input_show_quick_pick(Runtime:Arc<ApplicationRunTime>,
 
 /// Show an input box dialog. Routes through UserInterfaceProvider (blocking
 /// oneshot).
-pub async fn handle_quick_input_show_input_box(Runtime:Arc<ApplicationRunTime>, Args:Vec<Value>) -> Result<Value, String> {
+pub async fn handle_quick_input_show_input_box(
+	Runtime:Arc<ApplicationRunTime>,
+	Args:Vec<Value>,
+) -> Result<Value, String> {
 	use CommonLibrary::UserInterface::{
 		DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
 		UserInterfaceProvider::UserInterfaceProvider,

@@ -41,7 +41,6 @@ use tauri::{AppHandle, Manager};
 use tonic::transport::Server;
 
 use super::MountainVinegRPCService::MountainVinegRPCService;
-use crate::dev_log;
 use crate::{
 	RPC::CocoonService::CocoonServiceImpl,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
@@ -49,6 +48,7 @@ use crate::{
 		Error::VineError,
 		Generated::{cocoon_service_server::CocoonServiceServer, mountain_service_server::MountainServiceServer},
 	},
+	dev_log,
 };
 
 /// Server configuration constants
@@ -99,9 +99,12 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 		Ok(addr) => {
 			// Validate port is within valid range
 			if addr.port() < 1024 {
-				dev_log!("grpc", "warn: [VineServer] {} using privileged port {}, this may require elevated privileges",
+				dev_log!(
+					"grpc",
+					"warn: [VineServer] {} using privileged port {}, this may require elevated privileges",
 					ServerName,
-					addr.port());
+					addr.port()
+				);
 			}
 
 			Ok(addr)
@@ -166,7 +169,11 @@ pub fn Initialize(
 	let CocoonAddress = ValidateSocketAddress(&CocoonAddressString, "CocoonService")?;
 
 	dev_log!("grpc", "[VineServer] MountainService will bind to: {}", MountainAddress);
-	dev_log!("grpc", "[VineServer] Cocoon expected on: {} (started by Cocoon process)", CocoonAddress);
+	dev_log!(
+		"grpc",
+		"[VineServer] Cocoon expected on: {} (started by Cocoon process)",
+		CocoonAddress
+	);
 	crate::dev_log!("grpc", "Mountain={} Cocoon(remote)={}", MountainAddress, CocoonAddress);
 
 	// Retrieve ApplicationRunTime from Tauri managed state
@@ -195,7 +202,11 @@ pub fn Initialize(
 	// Spawn Mountain server to run in the background
 	let MountainServerName = MountainAddress.to_string();
 	tokio::spawn(async move {
-		dev_log!("grpc", "[VineServer] Starting MountainService gRPC server on {}", MountainServerName);
+		dev_log!(
+			"grpc",
+			"[VineServer] Starting MountainService gRPC server on {}",
+			MountainServerName
+		);
 
 		let ServerResult = Server::builder()
 			.add_service(
@@ -224,7 +235,11 @@ pub fn Initialize(
 	// tries to bind the same port.
 	let _ = cocoon_service_impl; // suppress unused variable warning
 
-	dev_log!("grpc", "[VineServer] MountainService gRPC server initialized on {}", MountainAddress);
+	dev_log!(
+		"grpc",
+		"[VineServer] MountainService gRPC server initialized on {}",
+		MountainAddress
+	);
 
 	Ok(())
 }

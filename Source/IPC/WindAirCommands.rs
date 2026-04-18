@@ -300,8 +300,7 @@ use tauri::Manager;
 // Import Air types from the new AirClient implementation.
 // These provide actual gRPC connectivity to the Air daemon service.
 use crate::Air::AirClient as AirClientModule;
-use crate::Air::DEFAULT_AIR_SERVER_ADDRESS;
-use crate::dev_log;
+use crate::{Air::DEFAULT_AIR_SERVER_ADDRESS, dev_log};
 
 /// Data Transfer Objects for Wind-Air communication
 
@@ -420,9 +419,11 @@ impl AirClientWrapper {
 /// `UpdateInfoDTO` with update information or error message
 #[tauri::command]
 pub async fn CheckForUpdates(current_version:Option<String>, channel:Option<String>) -> Result<UpdateInfoDTO, String> {
-	dev_log!("grpc", 
+	dev_log!(
+		"grpc",
 		"[WindAirCommands] CheckForUpdates called with version: {:?}, channel: {:?}",
-		current_version, channel
+		current_version,
+		channel
 	);
 
 	// Get the Air client from app state or configuration
@@ -447,7 +448,8 @@ pub async fn CheckForUpdates(current_version:Option<String>, channel:Option<Stri
 		release_notes:update_info.release_notes,
 	};
 
-	dev_log!("grpc", 
+	dev_log!(
+		"grpc",
 		"[WindAirCommands] Update check completed: available={}",
 		result.update_available
 	);
@@ -499,7 +501,11 @@ pub async fn DownloadUpdate(
 		checksum:file_info.checksum,
 	};
 
-	dev_log!("grpc", "[WindAirCommands] Update download completed: success={}", result.success);
+	dev_log!(
+		"grpc",
+		"[WindAirCommands] Update download completed: success={}",
+		result.success
+	);
 	Ok(result)
 }
 
@@ -517,7 +523,12 @@ pub async fn DownloadUpdate(
 /// Success status or error message
 #[tauri::command]
 pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, String> {
-	dev_log!("grpc", "[WindAirCommands] ApplyUpdate called: id={}, path={}", update_id, update_path);
+	dev_log!(
+		"grpc",
+		"[WindAirCommands] ApplyUpdate called: id={}, path={}",
+		update_id,
+		update_path
+	);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -588,7 +599,12 @@ pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResu
 /// `AuthResponseDTO` with authentication token
 #[tauri::command]
 pub async fn AuthenticateUser(username:String, password:String, provider:String) -> Result<AuthResponseDTO, String> {
-	dev_log!("grpc", "[WindAirCommands] AuthenticateUser called: {} via {}", username, provider);
+	dev_log!(
+		"grpc",
+		"[WindAirCommands] AuthenticateUser called: {} via {}",
+		username,
+		provider
+	);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -627,7 +643,12 @@ pub async fn IndexFiles(
 	exclude_patterns:Option<Vec<String>>,
 	max_depth:Option<u32>,
 ) -> Result<IndexResultDTO, String> {
-	dev_log!("grpc", "[WindAirCommands] IndexFiles called: {} with patterns: {:?}", path, patterns);
+	dev_log!(
+		"grpc",
+		"[WindAirCommands] IndexFiles called: {} with patterns: {:?}",
+		path,
+		patterns
+	);
 
 	let air_address = get_air_address()?;
 	let client = get_or_create_air_client(air_address).await?;
@@ -651,7 +672,11 @@ pub async fn IndexFiles(
 		total_size:index_info.total_size,
 	};
 
-	dev_log!("grpc", "[WindAirCommands] File indexing completed: {} files", result.files_indexed);
+	dev_log!(
+		"grpc",
+		"[WindAirCommands] File indexing completed: {} files",
+		result.files_indexed
+	);
 	Ok(result)
 }
 
@@ -674,9 +699,11 @@ pub async fn SearchFiles(
 	file_patterns:Vec<String>,
 	max_results:Option<u32>,
 ) -> Result<SearchResultsDTO, String> {
-	dev_log!("grpc", 
+	dev_log!(
+		"grpc",
 		"[WindAirCommands] SearchFiles called: query={}, patterns={:?}",
-		query, file_patterns
+		query,
+		file_patterns
 	);
 
 	let air_address = get_air_address()?;
@@ -710,7 +737,11 @@ pub async fn SearchFiles(
 	let total_results = results.len() as u32;
 	let result = SearchResultsDTO { results, total_results };
 
-	dev_log!("grpc", "[WindAirCommands] File search completed: {} results", result.total_results);
+	dev_log!(
+		"grpc",
+		"[WindAirCommands] File search completed: {} results",
+		result.total_results
+	);
 	Ok(result)
 }
 

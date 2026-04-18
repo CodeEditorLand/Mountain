@@ -15,6 +15,7 @@ use tokio::{
 	time::{interval, timeout},
 };
 use uuid::Uuid;
+
 use crate::dev_log;
 
 /// Connection pool configuration

@@ -186,8 +186,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Runtime, WebviewWindow};
 
 use super::MountainEnvironment::MountainEnvironment;
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Vine::Client};
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Vine::Client, dev_log};
 
 /// An enum representing the different ways a command can be handled.
 pub enum CommandHandler<R:Runtime + 'static> {
@@ -241,7 +240,11 @@ impl CommandExecutor for MountainEnvironment {
 
 		match HandlerInfoOption {
 			Some(CommandHandler::Native(Function)) => {
-				dev_log!("commands", "[CommandProvider] Executing NATIVE command '{}'.", CommandIdentifier);
+				dev_log!(
+					"commands",
+					"[CommandProvider] Executing NATIVE command '{}'.",
+					CommandIdentifier
+				);
 
 				let RunTime:Arc<ApplicationRunTime> =
 					self.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
@@ -258,9 +261,11 @@ impl CommandExecutor for MountainEnvironment {
 			},
 
 			Some(CommandHandler::Proxied { SideCarIdentifier, CommandIdentifier: ProxiedCommandIdentifier }) => {
-				dev_log!("commands", 
+				dev_log!(
+					"commands",
 					"[CommandProvider] Executing PROXIED command '{}' on sidecar '{}'.",
-					CommandIdentifier, SideCarIdentifier
+					CommandIdentifier,
+					SideCarIdentifier
 				);
 
 				let RPCParameters = json!([ProxiedCommandIdentifier, Argument]);
@@ -273,7 +278,11 @@ impl CommandExecutor for MountainEnvironment {
 			},
 
 			None => {
-				dev_log!("commands", "error: [CommandProvider] Command '{}' not found in registry.", CommandIdentifier);
+				dev_log!(
+					"commands",
+					"error: [CommandProvider] Command '{}' not found in registry.",
+					CommandIdentifier
+				);
 
 				Err(CommonError::CommandNotFound { Identifier:CommandIdentifier })
 			},
@@ -282,9 +291,11 @@ impl CommandExecutor for MountainEnvironment {
 
 	/// Registers a command contributed by a sidecar process.
 	async fn RegisterCommand(&self, SideCarIdentifier:String, CommandIdentifier:String) -> Result<(), CommonError> {
-		dev_log!("commands", 
+		dev_log!(
+			"commands",
 			"[CommandProvider] Registering PROXY command '{}' from sidecar '{}'",
-			CommandIdentifier, SideCarIdentifier
+			CommandIdentifier,
+			SideCarIdentifier
 		);
 
 		let mut Registry = self

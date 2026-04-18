@@ -147,7 +147,12 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 		FeatureMethods::prepare_rename(self, DocumentURI, PositionDTO).await
 	}
 
-	async fn ProvideRenameEdits(&self, DocumentURI:Url, PositionDTO:PositionDTO, NewName:String) -> Result<Option<Value>, CommonError> {
+	async fn ProvideRenameEdits(
+		&self,
+		DocumentURI:Url,
+		PositionDTO:PositionDTO,
+		NewName:String,
+	) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::provide_rename_edits(self, DocumentURI, PositionDTO, NewName).await
 	}
 	async fn ProvideDocumentSymbols(&self, DocumentURI:Url) -> Result<Option<Value>, CommonError> {
@@ -156,13 +161,22 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 	async fn ProvideWorkspaceSymbols(&self, Query:String) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::provide_workspace_symbols(self, Query).await
 	}
-	async fn ProvideSignatureHelp(&self, DocumentURI:Url, PositionDTO:PositionDTO, ContextDTO:Value) -> Result<Option<Value>, CommonError> {
+	async fn ProvideSignatureHelp(
+		&self,
+		DocumentURI:Url,
+		PositionDTO:PositionDTO,
+		ContextDTO:Value,
+	) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::provide_signature_help(self, DocumentURI, PositionDTO, ContextDTO).await
 	}
 	async fn ProvideFoldingRanges(&self, DocumentURI:Url) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::provide_folding_ranges(self, DocumentURI).await
 	}
-	async fn ProvideSelectionRanges(&self, DocumentURI:Url, Positions:Vec<PositionDTO>) -> Result<Option<Value>, CommonError> {
+	async fn ProvideSelectionRanges(
+		&self,
+		DocumentURI:Url,
+		Positions:Vec<PositionDTO>,
+	) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::provide_selection_ranges(self, DocumentURI, Positions).await
 	}
 	async fn ProvideSemanticTokensFull(&self, DocumentURI:Url) -> Result<Option<Value>, CommonError> {
@@ -183,7 +197,11 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 	async fn ProvideCallHierarchyOutgoingCalls(&self, ItemDTO:Value) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::provide_call_hierarchy_outgoing_calls(self, ItemDTO).await
 	}
-	async fn ProvideLinkedEditingRanges(&self, DocumentURI:Url, PositionDTO:PositionDTO) -> Result<Option<Value>, CommonError> {
+	async fn ProvideLinkedEditingRanges(
+		&self,
+		DocumentURI:Url,
+		PositionDTO:PositionDTO,
+	) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::provide_linked_editing_ranges(self, DocumentURI, PositionDTO).await
 	}
 	async fn ProvideOnTypeFormattingEdits(

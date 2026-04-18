@@ -53,8 +53,7 @@ use CommonLibrary::{
 	StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO,
 };
 
-use crate::ApplicationState::DTO::CustomDocumentStateDTO::CustomDocumentStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::CustomDocumentStateDTO::CustomDocumentStateDTO, dev_log};
 
 /// Marker-related state containing custom documents, status bar, and SCM state.
 #[derive(Clone)]

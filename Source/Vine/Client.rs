@@ -129,7 +129,12 @@ lazy_static! {
 /// # }
 /// ```
 pub async fn ConnectToSideCar(SideCarIdentifier:String, Address:String) -> Result<(), VineError> {
-	dev_log!("grpc", "[VineClient] Connecting to sidecar '{}' at '{}'...", SideCarIdentifier, Address);
+	dev_log!(
+		"grpc",
+		"[VineClient] Connecting to sidecar '{}' at '{}'...",
+		SideCarIdentifier,
+		Address
+	);
 
 	let endpoint = format!("http://{}", Address);
 
@@ -383,9 +388,11 @@ pub async fn SendRequest(
 	match result {
 		Ok(Ok(response)) => {
 			UpdateSideCarActivity(SideCarIdentifier);
-			dev_log!("grpc", 
+			dev_log!(
+				"grpc",
 				"[VineClient] Request sent successfully to sidecar '{}': method='{}'",
-				SideCarIdentifier, method_clone
+				SideCarIdentifier,
+				method_clone
 			);
 
 			// Get the inner response message
@@ -460,13 +467,21 @@ pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameter
 		match client.send_mountain_notification(request).await {
 			Ok(_) => {
 				UpdateSideCarActivity(&SideCarIdentifier);
-				dev_log!("grpc", "[VineClient] Notification sent successfully to sidecar '{}'", SideCarIdentifier);
+				dev_log!(
+					"grpc",
+					"[VineClient] Notification sent successfully to sidecar '{}'",
+					SideCarIdentifier
+				);
 				Ok(())
 			},
 			Err(status) => {
 				RecordSideCarFailure(&SideCarIdentifier);
-				dev_log!("grpc", "error: [VineClient] Failed to send notification to sidecar '{}': {}",
-					SideCarIdentifier, status);
+				dev_log!(
+					"grpc",
+					"error: [VineClient] Failed to send notification to sidecar '{}': {}",
+					SideCarIdentifier,
+					status
+				);
 				Err(VineError::from(status))
 			},
 		}

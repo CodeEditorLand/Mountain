@@ -243,7 +243,7 @@
 //!
 //! **Logged on Every Operation:**
 //! ```text
-//! dev_log!("ipc", 
+//! dev_log!("ipc",
 //! "Document sync completed: {} success, {} errors, {:.2}ms",
 //! success_count,
 //! error_count,
@@ -645,7 +645,8 @@ impl WindAdvancedSync {
 
 			// PERFORMANCE MONITORING: Microsoft-inspired metrics collection
 			let sync_duration = sync_start.elapsed();
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[WindAdvancedSync] Document sync completed: {} success, {} errors, {:.2}ms",
 				success_count,
 				error_count,
@@ -763,7 +764,8 @@ impl WindAdvancedSync {
 
 		// PERFORMANCE TRACKING: Microsoft-inspired operation metrics
 		let change_duration = change_start.elapsed();
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[WindAdvancedSync] Change applied successfully in {:.2}ms: {}",
 			change_duration.as_millis(),
 			change.change_id
@@ -842,8 +844,8 @@ impl WindAdvancedSync {
 
 		// Emit UI state update via Mountain IPC
 		// if let Err(e) = self.mountain_ipc.update_ui_state(&sync).await {
-		//     dev_log!("ipc", "error: [WindAdvancedSync] Failed to update UI state via Mountain IPC:
-		// {}", e); }
+		//     dev_log!("ipc", "error: [WindAdvancedSync] Failed to update UI state via
+		// Mountain IPC: {}", e); }
 
 		Ok(())
 	}

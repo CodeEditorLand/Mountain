@@ -10,8 +10,7 @@ use CommonLibrary::{
 use serde_json::Value;
 use tauri::Manager;
 
-use crate::Environment::Utility;
-use crate::dev_log;
+use crate::{Environment::Utility, dev_log};
 
 /// Inspects a configuration key to get its value from all relevant scopes.
 pub(super) async fn inspect_configuration_value(

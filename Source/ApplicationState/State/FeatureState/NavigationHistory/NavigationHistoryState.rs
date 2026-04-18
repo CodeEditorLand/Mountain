@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex as StandardMutex};
-use crate::dev_log;
 
+use crate::dev_log;
 
 /// Tracks the editor navigation history stack (back/forward).
 ///
@@ -17,7 +17,10 @@ pub struct NavigationHistoryState {
 
 impl Default for NavigationHistoryState {
 	fn default() -> Self {
-		dev_log!("history", "[NavigationHistoryState] Initializing default navigation history state...");
+		dev_log!(
+			"history",
+			"[NavigationHistoryState] Initializing default navigation history state..."
+		);
 		Self {
 			Stack:Arc::new(StandardMutex::new(Vec::new())),
 			Index:Arc::new(StandardMutex::new(0)),

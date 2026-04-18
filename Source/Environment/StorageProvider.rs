@@ -218,7 +218,12 @@ impl StorageProvider for MountainEnvironment {
 	async fn GetStorageValue(&self, IsGlobalScope:bool, Key:&str) -> Result<Option<Value>, CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		dev_log!("storage", "[StorageProvider] Getting value from {} scope for key: {}", ScopeName, Key);
+		dev_log!(
+			"storage",
+			"[StorageProvider] Getting value from {} scope for key: {}",
+			ScopeName,
+			Key
+		);
 
 		// Validate key to prevent injection or invalid storage paths
 		if Key.is_empty() {
@@ -262,7 +267,12 @@ impl StorageProvider for MountainEnvironment {
 		if crate::IPC::DevLog::IsShort() {
 			crate::dev_log!("storage", "update {} {}", ScopeName, Key);
 		} else {
-			dev_log!("storage", "[StorageProvider] Updating value in {} scope for key: {}", ScopeName, Key);
+			dev_log!(
+				"storage",
+				"[StorageProvider] Updating value in {} scope for key: {}",
+				ScopeName,
+				Key
+			);
 		}
 
 		// Validate key to prevent injection or invalid storage paths
@@ -415,25 +425,34 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 		Ok(JSONString) => {
 			if let Some(ParentDirectory) = Path.parent() {
 				if let Err(Error) = fs::create_dir_all(ParentDirectory).await {
-					dev_log!("storage", "error: [StorageProvider] Failed to create parent directory for '{}': {}",
+					dev_log!(
+						"storage",
+						"error: [StorageProvider] Failed to create parent directory for '{}': {}",
 						Path.display(),
-						Error);
+						Error
+					);
 
 					return;
 				}
 			}
 
 			if let Err(Error) = fs::write(&Path, JSONString).await {
-				dev_log!("storage", "error: [StorageProvider] Failed to write storage file to '{}': {}",
+				dev_log!(
+					"storage",
+					"error: [StorageProvider] Failed to write storage file to '{}': {}",
 					Path.display(),
-					Error);
+					Error
+				);
 			}
 		},
 
 		Err(Error) => {
-			dev_log!("storage", "error: [StorageProvider] Failed to serialize storage data for '{}': {}",
+			dev_log!(
+				"storage",
+				"error: [StorageProvider] Failed to serialize storage data for '{}': {}",
 				Path.display(),
-				Error);
+				Error
+			);
 		},
 	}
 }

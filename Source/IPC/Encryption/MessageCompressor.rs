@@ -125,9 +125,11 @@ impl MessageCompressor {
 	/// let compressor = MessageCompressor::new(6, 10);
 	/// ```
 	pub fn new(CompressionLevel:u32, BatchSize:usize) -> Self {
-		dev_log!("encryption", 
+		dev_log!(
+			"encryption",
 			"[MessageCompressor] Created with level: {}, batch size: {}",
-			CompressionLevel, BatchSize
+			CompressionLevel,
+			BatchSize
 		);
 		Self { CompressionLevel, BatchSize }
 	}
@@ -174,9 +176,12 @@ impl MessageCompressor {
 			100.0
 		};
 
-		dev_log!("encryption", 
+		dev_log!(
+			"encryption",
 			"[MessageCompressor] Compression complete: {} -> {} bytes ({:.1}%)",
-			original_size, compressed_size, ratio
+			original_size,
+			compressed_size,
+			ratio
 		);
 
 		Ok(compressed_data)
@@ -217,7 +222,8 @@ impl MessageCompressor {
 		let messages:Vec<TauriIPCMessage> =
 			serde_json::from_slice(&DecompressedData).map_err(|e| format!("Failed to deserialize messages: {}", e))?;
 
-		dev_log!("encryption", 
+		dev_log!(
+			"encryption",
 			"[MessageCompressor] Decompression complete: {} -> {} bytes, {} messages",
 			compressed_size,
 			decompressed_size,
@@ -250,9 +256,12 @@ impl MessageCompressor {
 	/// ```
 	pub fn should_batch(&self, MessagesCount:usize) -> bool {
 		let should_batch = MessagesCount >= self.BatchSize;
-		dev_log!("encryption", 
+		dev_log!(
+			"encryption",
 			"[MessageCompressor] Batch check: {} >= {} = {}",
-			MessagesCount, self.BatchSize, should_batch
+			MessagesCount,
+			self.BatchSize,
+			should_batch
 		);
 		should_batch
 	}

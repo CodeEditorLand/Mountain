@@ -11,8 +11,7 @@ use CommonLibrary::{
 };
 use serde_json::Value;
 
-use crate::Environment::Utility;
-use crate::dev_log;
+use crate::{Environment::Utility, dev_log};
 
 /// Gets the children for a given element.
 /// Acts as a dispatcher to native or extension providers.
@@ -21,9 +20,11 @@ pub(super) async fn get_children(
 	view_identifier:String,
 	element_handle:Option<String>,
 ) -> Result<Vec<Value>, CommonError> {
-	dev_log!("extensions", 
+	dev_log!(
+		"extensions",
 		"[TreeViewProvider] Getting children for view '{}', handle: {:?}",
-		view_identifier, element_handle
+		view_identifier,
+		element_handle
 	);
 
 	let provider_info = env
@@ -65,9 +66,11 @@ pub(super) async fn get_tree_item(
 	view_identifier:String,
 	element_handle:String,
 ) -> Result<Value, CommonError> {
-	dev_log!("extensions", 
+	dev_log!(
+		"extensions",
 		"[TreeViewProvider] Getting item for view '{}', handle: {}",
-		view_identifier, element_handle
+		view_identifier,
+		element_handle
 	);
 
 	let provider_info = env

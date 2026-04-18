@@ -5,8 +5,8 @@
 //! Disabled in release builds (compile-time gated).
 
 use std::sync::OnceLock;
-use crate::dev_log;
 
+use crate::dev_log;
 
 /// PostHog EU Cloud project token (debug builds only).
 const POSTHOG_API_KEY:&str = "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA";

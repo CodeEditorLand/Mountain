@@ -161,7 +161,8 @@ pub fn Fn() {
 		// Create application state directly (StateBuild::Build with default config)
 		let AppState = ApplicationState::default();
 
-		dev_log!("lifecycle", 
+		dev_log!(
+			"lifecycle",
 			"[Boot] [State] ApplicationState created with {} workspace folders.",
 			AppState.Workspace.WorkspaceFolders.lock().map(|f| f.len()).unwrap_or(0)
 		);
@@ -206,7 +207,10 @@ pub fn Fn() {
 					// ---------------------------------------------------------
 					// [Service Registry] Initialize service registry for land:// routing
 					// ---------------------------------------------------------
-					dev_log!("lifecycle", "[Lifecycle] [Setup] Initializing ServiceRegistry for land:// scheme...");
+					dev_log!(
+						"lifecycle",
+						"[Lifecycle] [Setup] Initializing ServiceRegistry for land:// scheme..."
+					);
 					let service_registry = ServiceRegistryFn::new();
 					init_service_registry(service_registry.clone());
 
@@ -214,7 +218,8 @@ pub fn Fn() {
 					// [Service Registry] Register local HTTP services
 					// ---------------------------------------------------------
 					// Register the main code editor service
-					dev_log!("lifecycle", 
+					dev_log!(
+						"lifecycle",
 						"[Lifecycle] [Setup] Registering code.editor.land service on port {}",
 						ServerPortForClosure
 					);
@@ -228,7 +233,10 @@ pub fn Fn() {
 
 					// Make the registry available as managed state for Tauri commands
 					app.manage(service_registry);
-					dev_log!("lifecycle", "[Lifecycle] [Setup] ServiceRegistry initialized and services registered.");
+					dev_log!(
+						"lifecycle",
+						"[Lifecycle] [Setup] ServiceRegistry initialized and services registered."
+					);
 
 					// ---------------------------------------------------------
 					// [DNS Server] Start the Hickory DNS server
@@ -237,18 +245,34 @@ pub fn Fn() {
 					// that land:// protocol_resolution is available
 					dev_log!("lifecycle", "[Lifecycle] [Setup] Starting DNS server on preferred port 5380...");
 					let dns_port = mist::start(5380).unwrap_or_else(|e| {
-						dev_log!("lifecycle", "warn: [Lifecycle] [Setup] Failed to start DNS server on port 5380: {}", e);
+						dev_log!(
+							"lifecycle",
+							"warn: [Lifecycle] [Setup] Failed to start DNS server on port 5380: {}",
+							e
+						);
 						// Fallback to random port if preferred port fails
 						mist::start(0).unwrap_or_else(|e| {
-							dev_log!("lifecycle", "error: [Lifecycle] [Setup] Completely failed to start DNS server: {}", e);
+							dev_log!(
+								"lifecycle",
+								"error: [Lifecycle] [Setup] Completely failed to start DNS server: {}",
+								e
+							);
 							0 // Return 0 as error indicator
 						})
 					});
 
 					if dns_port == 0 {
-						dev_log!("lifecycle", "warn: [Lifecycle] [Setup] DNS server failed to start, land:// protocol will not be available");
+						dev_log!(
+							"lifecycle",
+							"warn: [Lifecycle] [Setup] DNS server failed to start, land:// protocol will not be \
+							 available"
+						);
 					} else {
-						dev_log!("lifecycle", "[Lifecycle] [Setup] DNS server started successfully on port {}", dns_port);
+						dev_log!(
+							"lifecycle",
+							"[Lifecycle] [Setup] DNS server started successfully on port {}",
+							dns_port
+						);
 						// Initialize DNS startup time for tracking
 						crate::Binary::Build::DnsCommands::init_dns_startup_time();
 					}
@@ -358,7 +382,10 @@ pub fn Fn() {
 				}
 
 				if let RunEvent::ExitRequested { api, .. } = event {
-					dev_log!("lifecycle", "warn: [Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown...");
+					dev_log!(
+						"lifecycle",
+						"warn: [Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown..."
+					);
 					api.prevent_exit();
 
 					let SchedulerHandle = Scheduler.clone();

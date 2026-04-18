@@ -21,13 +21,12 @@
 //! responsiveness.
 
 use CommonLibrary::{Error::CommonError::CommonError, Utility::Serialization::URLSerializationHelper};
-use crate::dev_log;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use url::Url;
 
+use crate::{ApplicationState::Internal::AnalyzeTextLinesAndEOL, dev_log};
 use super::{RPCModelContentChangeDTO::RPCModelContentChangeDTO, RPCRangeDTO::RPCRangeDTO};
-use crate::ApplicationState::Internal::AnalyzeTextLinesAndEOL;
 
 /// Maximum line count for a document to prevent memory exhaustion
 const MAX_DOCUMENT_LINES:usize = 1_000_000;

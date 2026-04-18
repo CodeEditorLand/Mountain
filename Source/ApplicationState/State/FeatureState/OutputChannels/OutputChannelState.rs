@@ -35,9 +35,7 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-
-use crate::ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO, dev_log};
 
 /// Output channels state containing channels by ID.
 #[derive(Clone)]

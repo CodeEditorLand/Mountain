@@ -27,7 +27,6 @@
 //! - [ ] Implement line ending normalization
 //! - [ ] Add performance metrics
 
-
 /// Analyzes text content to determine its line endings and splits it into a
 /// vector of lines.
 ///
@@ -52,7 +51,8 @@ pub fn AnalyzeTextLinesAndEOL(TextContent:&str) -> (Vec<String>, String) {
 
 	let lines:Vec<String> = TextContent.split(detected_eol).map(String::from).collect();
 
-	dev_log!("model", 
+	dev_log!(
+		"model",
 		"[AnalyzeTextLinesAndEOL] Analyzed {} lines with EOL: {:?}",
 		lines.len(),
 		detected_eol

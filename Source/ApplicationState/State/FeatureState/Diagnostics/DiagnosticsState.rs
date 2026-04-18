@@ -36,9 +36,7 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-
-use crate::ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, dev_log};
 
 /// Diagnostic errors state containing markers by owner and resource.
 #[derive(Clone)]

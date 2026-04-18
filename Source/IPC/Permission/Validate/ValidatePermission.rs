@@ -226,8 +226,11 @@ impl PermissionValidator {
 		match result {
 			Ok(validation_result) => validation_result,
 			Err(_) => {
-				dev_log!("ipc", "error: [PermissionValidator] Permission validation timed out for operation: {}",
-					Operation);
+				dev_log!(
+					"ipc",
+					"error: [PermissionValidator] Permission validation timed out for operation: {}",
+					Operation
+				);
 				Err("Permission validation timeout".to_string())
 			},
 		}
@@ -254,7 +257,11 @@ impl PermissionValidator {
 		}
 
 		if Context.Roles.is_empty() && Context.Permissions.is_empty() {
-			dev_log!("ipc", "warn: [PermissionValidator] User has no roles or permissions: {}", Context.UserId);
+			dev_log!(
+				"ipc",
+				"warn: [PermissionValidator] User has no roles or permissions: {}",
+				Context.UserId
+			);
 			return Err("User has no assigned roles or permissions".to_string());
 		}
 
@@ -263,7 +270,8 @@ impl PermissionValidator {
 			Some(perms) => perms.clone(),
 			None => {
 				// No specific permissions required for this operation
-				dev_log!("ipc", 
+				dev_log!(
+					"ipc",
 					"[PermissionValidator] No specific permissions required for operation: {}",
 					Operation
 				);
@@ -273,9 +281,11 @@ impl PermissionValidator {
 
 		if RequiredPermissions.is_empty() {
 			// No permissions needed
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[PermissionValidator] Access granted (no permissions required): {} by {}",
-				Operation, Context.UserId
+				Operation,
+				Context.UserId
 			);
 			Ok(())
 		} else {
@@ -285,14 +295,24 @@ impl PermissionValidator {
 			// Check if user has all required permissions
 			for RequiredPermission in &RequiredPermissions {
 				if !UserPermissions.contains(RequiredPermission) {
-					dev_log!("ipc", "warn: [PermissionValidator] Permission denied: {} required, user {} has {:?}",
-						RequiredPermission, Context.UserId, UserPermissions);
+					dev_log!(
+						"ipc",
+						"warn: [PermissionValidator] Permission denied: {} required, user {} has {:?}",
+						RequiredPermission,
+						Context.UserId,
+						UserPermissions
+					);
 					return Err(format!("Missing required permission: {}", RequiredPermission));
 				}
 			}
 
 			// All permissions granted
-			dev_log!("ipc", "[PermissionValidator] Access granted: {} by {}", Operation, Context.UserId);
+			dev_log!(
+				"ipc",
+				"[PermissionValidator] Access granted: {} by {}",
+				Operation,
+				Context.UserId
+			);
 			Ok(())
 		}
 	}
@@ -347,8 +367,12 @@ impl PermissionValidator {
 		let permissions_read = self.Permissions.read().await;
 		for PermissionName in &Role.Permissions {
 			if !permissions_read.contains_key(PermissionName) {
-				dev_log!("ipc", "warn: [PermissionValidator] Permission '{}' referenced by role '{}' does not exist",
-					PermissionName, Role.Name);
+				dev_log!(
+					"ipc",
+					"warn: [PermissionValidator] Permission '{}' referenced by role '{}' does not exist",
+					PermissionName,
+					Role.Name
+				);
 			}
 		}
 		drop(permissions_read);
@@ -543,7 +567,10 @@ impl PermissionValidator {
 			self.RegisterRole(Role).await?;
 		}
 
-		dev_log!("ipc", "[PermissionValidator] Default roles and permissions initialized successfully");
+		dev_log!(
+			"ipc",
+			"[PermissionValidator] Default roles and permissions initialized successfully"
+		);
 		Ok(())
 	}
 }

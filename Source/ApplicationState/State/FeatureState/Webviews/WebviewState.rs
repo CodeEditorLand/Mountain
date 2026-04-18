@@ -35,9 +35,7 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-
-use crate::ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO, dev_log};
 
 /// Active webviews state containing webviews by ID.
 #[derive(Clone)]

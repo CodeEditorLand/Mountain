@@ -51,13 +51,13 @@
 use std::{collections::HashMap, sync::Arc};
 
 use parking_lot::RwLock;
-
-use crate::dev_log;
 use anyhow::Result;
 use chrono::{DateTime, Utc};
 use rustls::ServerConfig;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use keyring::Entry;
+
+use crate::dev_log;
 
 /// Certificate information for display and validation
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -355,7 +355,12 @@ impl CertificateManager {
 		let info = self.extract_cert_info(&cert_der_for_info, hostname, true)?;
 		let valid_until = Utc::now() + chrono::Duration::days(Self::SERVER_VALIDITY_DAYS);
 
-		dev_log!("security", "server certificate generated for {} (valid until {})", hostname, valid_until);
+		dev_log!(
+			"security",
+			"server certificate generated for {} (valid until {})",
+			hostname,
+			valid_until
+		);
 
 		Ok(ServerCertData { cert_pem, key_pem, server_config:Arc::new(server_config), info, valid_until })
 	}

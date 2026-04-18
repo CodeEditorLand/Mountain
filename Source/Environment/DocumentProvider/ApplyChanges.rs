@@ -7,8 +7,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::Value;
 use url::Url;
 
-use crate::Environment::Utility;
-use crate::dev_log;
+use crate::{Environment::Utility, dev_log};
 
 /// Applies a collection of content changes to a document.
 pub(super) async fn apply_document_changes(
@@ -34,7 +33,11 @@ pub(super) async fn apply_document_changes(
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			document.ApplyChanges(new_version_identifier, &changes_dto_collection)?;
 		} else {
-			dev_log!("model", "warn: [DocumentProvider] Received changes for unknown document: {}", uri);
+			dev_log!(
+				"model",
+				"warn: [DocumentProvider] Received changes for unknown document: {}",
+				uri
+			);
 
 			return Ok(());
 		}

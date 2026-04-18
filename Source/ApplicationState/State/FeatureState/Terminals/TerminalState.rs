@@ -40,9 +40,7 @@ use std::{
 	},
 };
 
-
-use crate::ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
 
 /// Active terminals state containing terminals by ID with next identifier
 /// counter.

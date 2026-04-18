@@ -20,17 +20,34 @@ use tauri::Emitter;
 use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	CreateStatusBarItemRequest, CreateStatusBarItemResponse,
-	CreateWebviewPanelRequest, CreateWebviewPanelResponse,
-	DisposeWebviewPanelRequest, Empty, OnDidReceiveMessageRequest,
-	OpenExternalRequest, PostWebviewMessageRequest, ReportProgressRequest,
-	SetStatusBarTextRequest, SetWebviewHtmlRequest, ShowInputBoxRequest,
-	ShowInputBoxResponse, ShowMessageRequest, ShowMessageResponse,
-	ShowProgressRequest, ShowProgressResponse, ShowQuickPickRequest,
-	ShowQuickPickResponse, ShowTextDocumentRequest, ShowTextDocumentResponse,
-	on_did_receive_message_request, post_webview_message_request,
+use crate::{
+	Vine::Generated::{
+		CreateStatusBarItemRequest,
+		CreateStatusBarItemResponse,
+		CreateWebviewPanelRequest,
+		CreateWebviewPanelResponse,
+		DisposeWebviewPanelRequest,
+		Empty,
+		OnDidReceiveMessageRequest,
+		OpenExternalRequest,
+		PostWebviewMessageRequest,
+		ReportProgressRequest,
+		SetStatusBarTextRequest,
+		SetWebviewHtmlRequest,
+		ShowInputBoxRequest,
+		ShowInputBoxResponse,
+		ShowMessageRequest,
+		ShowMessageResponse,
+		ShowProgressRequest,
+		ShowProgressResponse,
+		ShowQuickPickRequest,
+		ShowQuickPickResponse,
+		ShowTextDocumentRequest,
+		ShowTextDocumentResponse,
+		on_did_receive_message_request,
+		post_webview_message_request,
+	},
+	dev_log,
 };
 
 pub async fn ShowTextDocument(
@@ -75,7 +92,10 @@ pub async fn ShowWarningMessage(
 
 	dev_log!("cocoon", "warn: [CocoonService] show_warning_message: {}", req.message);
 
-	let _ = Service.environment.ShowMessage(MessageSeverity::Warning, req.message, None).await;
+	let _ = Service
+		.environment
+		.ShowMessage(MessageSeverity::Warning, req.message, None)
+		.await;
 
 	Ok(Response::new(ShowMessageResponse { success:true }))
 }
@@ -114,7 +134,12 @@ pub async fn SetStatusBarText(
 	Service:&CocoonServiceImpl,
 	req:SetStatusBarTextRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] set_status_bar_text: id={} text={}", req.item_id, req.text);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] set_status_bar_text: id={} text={}",
+		req.item_id,
+		req.text
+	);
 
 	let _ = Service
 		.environment
@@ -133,8 +158,13 @@ pub async fn CreateWebviewPanel(
 		.map(|D| D.as_millis() as u32)
 		.unwrap_or(0);
 
-	dev_log!("cocoon", "[CocoonService] create_webview_panel: handle={} view_type={} title={}",
-		Handle, req.view_type, req.title);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] create_webview_panel: handle={} view_type={} title={}",
+		Handle,
+		req.view_type,
+		req.title
+	);
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://webview/create",
@@ -151,16 +181,18 @@ pub async fn CreateWebviewPanel(
 	Ok(Response::new(CreateWebviewPanelResponse { handle:Handle }))
 }
 
-pub async fn SetWebviewHtml(
-	Service:&CocoonServiceImpl,
-	req:SetWebviewHtmlRequest,
-) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] set_webview_html: handle={} ({} bytes)", req.handle, req.html.len());
-
-	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://webview/setHtml",
-		json!({ "handle": req.handle, "html": req.html }),
+pub async fn SetWebviewHtml(Service:&CocoonServiceImpl, req:SetWebviewHtmlRequest) -> Result<Response<Empty>, Status> {
+	dev_log!(
+		"cocoon",
+		"[CocoonService] set_webview_html: handle={} ({} bytes)",
+		req.handle,
+		req.html.len()
 	);
+
+	let _ = Service
+		.environment
+		.ApplicationHandle
+		.emit("sky://webview/setHtml", json!({ "handle": req.handle, "html": req.html }));
 
 	Ok(Response::new(Empty {}))
 }
@@ -214,24 +246,21 @@ pub async fn DisposeWebviewPanel(
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] dispose_webview_panel: handle={}", req.handle);
 
-	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://webview/dispose",
-		json!({ "handle": req.handle }),
-	);
+	let _ = Service
+		.environment
+		.ApplicationHandle
+		.emit("sky://webview/dispose", json!({ "handle": req.handle }));
 
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn OpenExternal(
-	Service:&CocoonServiceImpl,
-	req:OpenExternalRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn OpenExternal(Service:&CocoonServiceImpl, req:OpenExternalRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] open_external: {}", req.uri);
 
-	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://native/openExternal",
-		json!({ "url": req.uri }),
-	);
+	let _ = Service
+		.environment
+		.ApplicationHandle
+		.emit("sky://native/openExternal", json!({ "url": req.uri }));
 
 	Ok(Response::new(Empty {}))
 }
@@ -333,10 +362,7 @@ pub async fn ShowProgress(
 	Ok(Response::new(ShowProgressResponse { handle:Handle }))
 }
 
-pub async fn ReportProgress(
-	Service:&CocoonServiceImpl,
-	req:ReportProgressRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn ReportProgress(Service:&CocoonServiceImpl, req:ReportProgressRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] report_progress: handle={}", req.handle);
 
 	let _ = Service.environment.ApplicationHandle.emit(

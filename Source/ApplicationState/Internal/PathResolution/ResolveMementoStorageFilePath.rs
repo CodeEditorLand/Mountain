@@ -29,8 +29,8 @@
 //! - [ ] Add cross-platform path handling
 
 use std::path::Path;
-use crate::dev_log;
 
+use crate::dev_log;
 
 /// Resolves the absolute path for a Memento storage file based on scope.
 ///
@@ -56,7 +56,8 @@ pub fn ResolveMementoStorageFilePath(
 
 	if IsGlobalScope {
 		let path = user_storage_base_path.join("globalStorage.json");
-		dev_log!("storage", 
+		dev_log!(
+			"storage",
 			"[ResolveMementoStorageFilePath] Resolved global memento path: {}",
 			path.display()
 		);
@@ -70,7 +71,8 @@ pub fn ResolveMementoStorageFilePath(
 			.join(&segment)
 			.join("storage.json");
 
-		dev_log!("storage", 
+		dev_log!(
+			"storage",
 			"[ResolveMementoStorageFilePath] Resolved workspace memento path: {}",
 			path.display()
 		);

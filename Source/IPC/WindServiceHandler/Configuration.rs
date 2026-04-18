@@ -5,17 +5,9 @@
 use std::sync::Arc;
 
 use serde_json::Value;
+use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider, Environment::Requires::Requires};
 
-use CommonLibrary::{
-	Configuration::ConfigurationProvider::ConfigurationProvider,
-	Environment::Requires::Requires,
-};
-
-use crate::{
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	dev_log,
-};
-
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 use super::{ConfigurationOverridesDTO, ConfigurationTarget};
 
 /// Handler for configuration get requests
@@ -65,7 +57,10 @@ pub async fn handle_configuration_update(Runtime:Arc<ApplicationRunTime>, Args:V
 }
 
 /// Handler for workbench configuration requests
-pub async fn handle_workbench_configuration(Runtime:Arc<ApplicationRunTime>, _Args:Vec<Value>) -> Result<Value, String> {
+pub async fn handle_workbench_configuration(
+	Runtime:Arc<ApplicationRunTime>,
+	_Args:Vec<Value>,
+) -> Result<Value, String> {
 	let Provider:Arc<dyn ConfigurationProvider> = Runtime.Environment.Require();
 
 	let Config = Provider

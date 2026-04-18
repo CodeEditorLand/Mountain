@@ -159,7 +159,8 @@ impl Compressor {
 
 		// Check if compression is beneficial (only compress if size exceeds threshold)
 		if SerializedMessages.len() < self.SingleMessageThreshold {
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[Compress] Skipping compression: data size {} < threshold {}",
 				SerializedMessages.len(),
 				self.SingleMessageThreshold
@@ -178,7 +179,8 @@ impl Compressor {
 		// Only return compressed if it's smaller than original
 		let compression_ratio = (compressed_data.len() as f64 / SerializedMessages.len() as f64) * 100.0;
 		if compressed_data.len() >= SerializedMessages.len() {
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[Compress] Compression not beneficial: {}% ({} bytes vs {})",
 				compression_ratio,
 				compressed_data.len(),
@@ -187,7 +189,8 @@ impl Compressor {
 			return Ok(SerializedMessages);
 		}
 
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[Compress] Compressed {} messages: {} -> {} bytes ({:.1}%)",
 			Messages.len(),
 			SerializedMessages.len(),

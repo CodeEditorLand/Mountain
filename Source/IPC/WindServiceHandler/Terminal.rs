@@ -5,13 +5,9 @@
 use std::{collections::HashMap, sync::Arc};
 
 use serde_json::{Value, json};
-
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
-use crate::{
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	dev_log,
-};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Create a new PTY terminal via TerminalProvider.
 pub async fn handle_terminal_create(Runtime:Arc<ApplicationRunTime>, Args:Vec<Value>) -> Result<Value, String> {

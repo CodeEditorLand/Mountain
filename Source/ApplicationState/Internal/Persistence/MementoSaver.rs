@@ -32,6 +32,7 @@ use std::{collections::HashMap, fs, path::Path};
 
 use serde_json::Value;
 use CommonLibrary::Error::CommonError::CommonError;
+
 use crate::dev_log;
 
 /// Asynchronously saves Memento storage data to a JSON file.
@@ -55,7 +56,12 @@ pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<Strin
 	if let Some(parent) = StorageFilePath.parent() {
 		if !parent.exists() {
 			fs::create_dir_all(parent).map_err(|e| {
-				dev_log!("storage", "error: [MementoSaver] Failed to create directory '{}': {}", parent.display(), e);
+				dev_log!(
+					"storage",
+					"error: [MementoSaver] Failed to create directory '{}': {}",
+					parent.display(),
+					e
+				);
 				CommonError::FileSystemIO {
 					Path:parent.to_path_buf(),
 					Description:format!("Failed to create directory: {}", e),
@@ -74,17 +80,23 @@ pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<Strin
 	// Write to temporary file first, then rename for atomic write
 	let temp_path = StorageFilePath.with_extension("json.tmp");
 	fs::write(&temp_path, json_content).map_err(|e| {
-		dev_log!("storage", "error: [MementoSaver] Failed to write memento to temp file '{}': {}",
+		dev_log!(
+			"storage",
+			"error: [MementoSaver] Failed to write memento to temp file '{}': {}",
 			temp_path.display(),
-			e);
+			e
+		);
 		CommonError::FileSystemIO { Path:temp_path.clone(), Description:format!("Failed to write memento: {}", e) }
 	})?;
 
 	// Atomic rename from temp to actual file
 	fs::rename(&temp_path, StorageFilePath).map_err(|e| {
-		dev_log!("storage", "error: [MementoSaver] Failed to rename temp file to '{}': {}",
+		dev_log!(
+			"storage",
+			"error: [MementoSaver] Failed to rename temp file to '{}': {}",
 			StorageFilePath.display(),
-			e);
+			e
+		);
 		// Clean up temp file if rename fails
 		let _ = fs::remove_file(&temp_path);
 		CommonError::FileSystemIO {
@@ -93,7 +105,11 @@ pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<Strin
 		}
 	})?;
 
-	dev_log!("storage", "[MementoSaver] Successfully saved memento to: {}", StorageFilePath.display());
+	dev_log!(
+		"storage",
+		"[MementoSaver] Successfully saved memento to: {}",
+		StorageFilePath.display()
+	);
 
 	Ok(())
 }

@@ -410,7 +410,8 @@ pub(super) async fn provide_workspace_symbols(
 	query:String,
 ) -> Result<Option<Value>, CommonError> {
 	// Workspace symbols don't have a specific document URI — use a dummy lookup.
-	// The provider is registered globally, so we pick the first WorkspaceSymbol provider.
+	// The provider is registered globally, so we pick the first WorkspaceSymbol
+	// provider.
 	let MatchingRegistration = {
 		let providers = environment
 			.ApplicationState
@@ -419,16 +420,15 @@ pub(super) async fn provide_workspace_symbols(
 			.LanguageProviders
 			.lock()
 			.map_err(crate::Environment::Utility::MapApplicationStateLockErrorToCommonError)?;
-		providers.values().find(|p| p.ProviderType == ProviderType::WorkspaceSymbol).cloned()
+		providers
+			.values()
+			.find(|p| p.ProviderType == ProviderType::WorkspaceSymbol)
+			.cloned()
 	};
 	match MatchingRegistration {
 		Some(registration) => {
-			let response = invoke_provider(
-				environment,
-				&registration,
-				vec![json!(registration.Handle), json!(query)],
-			)
-			.await?;
+			let response =
+				invoke_provider(environment, &registration, vec![json!(registration.Handle), json!(query)]).await?;
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
 		None => Ok(None),
@@ -569,12 +569,8 @@ pub(super) async fn provide_type_hierarchy_supertypes(
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::TypeHierarchy).await?;
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
-				environment,
-				&registration,
-				vec![json!(registration.Handle), item_dto],
-			)
-			.await?;
+			let response =
+				invoke_provider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
 		None => Ok(None),
@@ -591,12 +587,8 @@ pub(super) async fn provide_type_hierarchy_subtypes(
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::TypeHierarchy).await?;
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
-				environment,
-				&registration,
-				vec![json!(registration.Handle), item_dto],
-			)
-			.await?;
+			let response =
+				invoke_provider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
 		None => Ok(None),
@@ -613,12 +605,8 @@ pub(super) async fn provide_call_hierarchy_incoming_calls(
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::CallHierarchy).await?;
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
-				environment,
-				&registration,
-				vec![json!(registration.Handle), item_dto],
-			)
-			.await?;
+			let response =
+				invoke_provider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
 		None => Ok(None),
@@ -635,12 +623,8 @@ pub(super) async fn provide_call_hierarchy_outgoing_calls(
 		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::CallHierarchy).await?;
 	match provider {
 		Some(registration) => {
-			let response = invoke_provider(
-				environment,
-				&registration,
-				vec![json!(registration.Handle), item_dto],
-			)
-			.await?;
+			let response =
+				invoke_provider(environment, &registration, vec![json!(registration.Handle), item_dto]).await?;
 			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
 		},
 		None => Ok(None),
@@ -653,7 +637,8 @@ pub(super) async fn provide_linked_editing_ranges(
 	position_dto:PositionDTO,
 ) -> Result<Option<Value>, CommonError> {
 	let provider =
-		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::LinkedEditingRange).await?;
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::LinkedEditingRange)
+			.await?;
 	match provider {
 		Some(registration) => {
 			let response = invoke_provider(
@@ -680,7 +665,8 @@ pub(super) async fn provide_on_type_formatting_edits(
 	options_dto:Value,
 ) -> Result<Option<Vec<TextEditDTO>>, CommonError> {
 	let provider =
-		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::OnTypeFormatting).await?;
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::OnTypeFormatting)
+			.await?;
 	match provider {
 		Some(registration) => {
 			let response = invoke_provider(

@@ -1,9 +1,12 @@
-// Configuration Initialize Module — Initializes and merges application configurations.
+// Configuration Initialize Module — Initializes and merges application
+// configurations.
 
-use crate::dev_log;
-use crate::Environment::{
-	ConfigurationProvider::Loading::initialize_and_merge_configurations,
-	MountainEnvironment::MountainEnvironment,
+use crate::{
+	Environment::{
+		ConfigurationProvider::Loading::initialize_and_merge_configurations,
+		MountainEnvironment::MountainEnvironment,
+	},
+	dev_log,
 };
 
 /// Initializes and merges all application configurations.
@@ -18,7 +21,10 @@ use crate::Environment::{
 pub async fn ConfigurationInitialize(Environment:&std::sync::Arc<MountainEnvironment>) -> Result<(), String> {
 	match initialize_and_merge_configurations(Environment).await {
 		Ok(()) => {
-			dev_log!("config", "[Config] [Initialize] Configuration initialized and merged successfully.");
+			dev_log!(
+				"config",
+				"[Config] [Initialize] Configuration initialized and merged successfully."
+			);
 			Ok(())
 		},
 		Err(e) => {

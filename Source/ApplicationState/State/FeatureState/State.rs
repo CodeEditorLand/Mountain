@@ -35,7 +35,6 @@
 //! - [ ] Implement feature lifecycle events
 //! - [ ] Add feature state metrics collection
 
-
 use super::{
 	Debug::DebugState::DebugState,
 	Decorations::DecorationsState::DecorationsState,

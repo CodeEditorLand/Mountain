@@ -4,6 +4,7 @@ use std::{
 };
 
 use serde_json::Value;
+
 use crate::dev_log;
 
 /// A single file/folder decoration: badge letter, tooltip, color hint.

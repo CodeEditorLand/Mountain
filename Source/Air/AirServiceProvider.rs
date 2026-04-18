@@ -421,9 +421,11 @@ impl AirServiceProvider {
 		headers:HashMap<String, String>,
 	) -> Result<DownloadStream, CommonError> {
 		let request_id = generate_request_id();
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[AirServiceProvider] download_stream (request_id: {}, url: {})",
-			request_id, url
+			request_id,
+			url
 		);
 
 		self.client.download_stream(request_id, url, headers).await
@@ -474,7 +476,12 @@ impl AirServiceProvider {
 		max_depth:u32,
 	) -> Result<IndexInfo, CommonError> {
 		let request_id = generate_request_id();
-		dev_log!("grpc", "[AirServiceProvider] index_files (request_id: {}, path: {})", request_id, path);
+		dev_log!(
+			"grpc",
+			"[AirServiceProvider] index_files (request_id: {}, path: {})",
+			request_id,
+			path
+		);
 
 		self.client
 			.index_files(request_id, path, patterns, exclude_patterns, max_depth)
@@ -516,9 +523,11 @@ impl AirServiceProvider {
 		max_results:u32,
 	) -> Result<Vec<FileResult>, CommonError> {
 		let request_id = generate_request_id();
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[AirServiceProvider] search_files (request_id: {}, query: {})",
-			request_id, query
+			request_id,
+			query
 		);
 
 		self.client.search_files(request_id, query, path, max_results).await
@@ -534,9 +543,11 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Request error
 	pub async fn get_file_info(&self, path:String) -> Result<ExtendedFileInfo, CommonError> {
 		let request_id = generate_request_id();
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[AirServiceProvider] get_file_info (request_id: {}, path: {})",
-			request_id, path
+			request_id,
+			path
 		);
 
 		self.client.get_file_info(request_id, path).await
@@ -670,9 +681,11 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn get_configuration(&self, section:String) -> Result<HashMap<String, String>, CommonError> {
 		let request_id = generate_request_id();
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[AirServiceProvider] get_configuration (request_id: {}, section: {})",
-			request_id, section
+			request_id,
+			section
 		);
 
 		self.client.get_configuration(request_id, section).await
@@ -693,9 +706,11 @@ impl AirServiceProvider {
 		updates:HashMap<String, String>,
 	) -> Result<(), CommonError> {
 		let request_id = generate_request_id();
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[AirServiceProvider] update_configuration (request_id: {}, section: {})",
-			request_id, section
+			request_id,
+			section
 		);
 
 		self.client.update_configuration(request_id, section, updates).await

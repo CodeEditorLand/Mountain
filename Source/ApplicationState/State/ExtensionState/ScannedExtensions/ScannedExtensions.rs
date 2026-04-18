@@ -35,9 +35,7 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-
-use crate::ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, dev_log};
 
 /// Scanned extensions containing discovered extension metadata.
 #[derive(Clone)]
@@ -76,7 +74,11 @@ impl ScannedExtensionCollection {
 	pub fn SetAll(&self, extensions:HashMap<String, ExtensionDescriptionStateDTO>) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			*guard = extensions;
-			dev_log!("extensions", "[ScannedExtensions] Scanned extensions updated ({} extensions)", guard.len());
+			dev_log!(
+				"extensions",
+				"[ScannedExtensions] Scanned extensions updated ({} extensions)",
+				guard.len()
+			);
 		}
 	}
 

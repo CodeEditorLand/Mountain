@@ -16,7 +16,12 @@ pub(super) async fn set_status_bar_message_impl(
 	message_identifier:String,
 	text:String,
 ) -> Result<(), CommonError> {
-	dev_log!("lifecycle", "[StatusBarProvider] Setting status message '{}': {}", message_identifier, text);
+	dev_log!(
+		"lifecycle",
+		"[StatusBarProvider] Setting status message '{}': {}",
+		message_identifier,
+		text
+	);
 
 	env.ApplicationHandle
 		.emit::<Value>("sky://statusbar/set-message", json!({ "id": message_identifier, "text": text }))
@@ -28,7 +33,11 @@ pub(super) async fn dispose_status_bar_message_impl(
 	env:&MountainEnvironment,
 	message_identifier:String,
 ) -> Result<(), CommonError> {
-	dev_log!("lifecycle", "[StatusBarProvider] Disposing status message '{}'", message_identifier);
+	dev_log!(
+		"lifecycle",
+		"[StatusBarProvider] Disposing status message '{}'",
+		message_identifier
+	);
 
 	env.ApplicationHandle
 		.emit::<Value>("sky://statusbar/dispose-message", json!({ "id": message_identifier }))

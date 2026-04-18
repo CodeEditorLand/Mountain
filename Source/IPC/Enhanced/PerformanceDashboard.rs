@@ -14,6 +14,7 @@ use tokio::{
 	sync::{Mutex as AsyncMutex, RwLock},
 	time::interval,
 };
+
 use crate::dev_log;
 
 /// Performance metrics configuration
@@ -169,7 +170,8 @@ impl PerformanceDashboard {
 			is_running:Arc::new(AsyncMutex::new(false)),
 		};
 
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[PerformanceDashboard] Created dashboard with {}ms update interval",
 			config_clone.update_interval_ms
 		);
@@ -294,7 +296,8 @@ impl PerformanceDashboard {
 			span.end_time = Some(end_time);
 			span.duration_ms = Some(end_time.saturating_sub(span.start_time));
 
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[PerformanceDashboard] Ended trace span: {} (duration: {}ms)",
 				span.operation_name,
 				span.duration_ms.unwrap_or(0)

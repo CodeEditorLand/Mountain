@@ -7,8 +7,7 @@ use std::sync::Arc;
 
 use tauri::Manager;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Shuts down the ApplicationRunTime and its effect execution engine.
 ///

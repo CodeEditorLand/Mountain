@@ -39,10 +39,7 @@ use async_trait::async_trait;
 use CommonLibrary::{
 	Command::CommandExecutor::CommandExecutor,
 	LanguageFeature::{
-		DTO::{
-			PositionDTO::PositionDTO,
-			ProviderType::ProviderType,
-		},
+		DTO::{PositionDTO::PositionDTO, ProviderType::ProviderType},
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 	Secret::SecretProvider::SecretProvider,
@@ -346,9 +343,12 @@ impl CocoonServiceImpl {
 			.Extension
 			.ProviderRegistration
 			.RegisterProvider(handle, dto);
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Provider {:?} registered: handle={}, language={}",
-			provider_type, handle, language_selector
+			provider_type,
+			handle,
+			language_selector
 		);
 	}
 
@@ -392,7 +392,12 @@ impl CocoonService for CocoonServiceImpl {
 		let Req = request.into_inner();
 		let RequestId = Req.request_identifier;
 
-		dev_log!("cocoon", "[CocoonService] generic request: method={} id={}", Req.method, RequestId);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] generic request: method={} id={}",
+			Req.method,
+			RequestId
+		);
 
 		/// Serialise a value into the `result` bytes of a GenericResponse.
 		fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<GenericResponse> {
@@ -1009,7 +1014,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<GenericNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let notification = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Notification router: method='{}'", notification.method);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] Notification router: method='{}'",
+			notification.method
+		);
 
 		// Deserialise notification parameters as JSON
 		let Params:serde_json::Value = if notification.parameter.is_empty() {
@@ -1024,8 +1033,12 @@ impl CocoonService for CocoonServiceImpl {
 				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				if let Err(Error) = self.environment.RegisterCommand(ExtensionId, CommandId.clone()).await {
-					dev_log!("cocoon", "warn: [CocoonService] notification: registerCommand '{}' failed: {:?}",
-						CommandId, Error);
+					dev_log!(
+						"cocoon",
+						"warn: [CocoonService] notification: registerCommand '{}' failed: {:?}",
+						CommandId,
+						Error
+					);
 				}
 			},
 			"unregisterCommand" => {
@@ -1385,7 +1398,11 @@ impl CocoonService for CocoonServiceImpl {
 					.emit("sky://language/configure", json!({ "language": Language }));
 			},
 			_ => {
-				dev_log!("cocoon", "[CocoonService] Unknown notification method: '{}'", notification.method);
+				dev_log!(
+					"cocoon",
+					"[CocoonService] Unknown notification method: '{}'",
+					notification.method
+				);
 			},
 		}
 
@@ -1395,7 +1412,8 @@ impl CocoonService for CocoonServiceImpl {
 	/// Cancel operations requested by Mountain
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
 		let cancel_request = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Cancel operation request: {}",
 			cancel_request.request_identifier_to_cancel
 		);
@@ -1407,14 +1425,18 @@ impl CocoonService for CocoonServiceImpl {
 			.await
 			.get(&cancel_request.request_identifier_to_cancel)
 		{
-			dev_log!("cocoon", 
+			dev_log!(
+				"cocoon",
 				"[CocoonService] Triggering cancellation token for operation {}",
 				cancel_request.request_identifier_to_cancel
 			);
 			token.cancel();
 		} else {
-			dev_log!("cocoon", "warn: [CocoonService] No active operation found for cancellation: {}",
-				cancel_request.request_identifier_to_cancel);
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonService] No active operation found for cancellation: {}",
+				cancel_request.request_identifier_to_cancel
+			);
 		}
 
 		Ok(Response::new(Empty {}))
@@ -1431,7 +1453,8 @@ impl CocoonService for CocoonServiceImpl {
 	/// Initialize Extension Host - Mountain sends initialization data to Cocoon
 	async fn init_extension_host(&self, request:Request<InitExtensionHostRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Initializing extension host with {} workspace folders",
 			req.workspace_folders.len()
 		);
@@ -1439,7 +1462,8 @@ impl CocoonService for CocoonServiceImpl {
 		// Initialize workspace folders in MountainEnvironment
 		// This stub logs the workspace folders for debugging
 		for folder in &req.workspace_folders {
-			dev_log!("cocoon", 
+			dev_log!(
+				"cocoon",
 				"[CocoonService] Workspace folder: {} ({})",
 				folder.name,
 				folder.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
@@ -1464,7 +1488,11 @@ impl CocoonService for CocoonServiceImpl {
 
 		if !Folders.is_empty() {
 			self.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
-			dev_log!("cocoon", "[CocoonService] Workspace folders stored: {}", req.workspace_folders.len());
+			dev_log!(
+				"cocoon",
+				"[CocoonService] Workspace folders stored: {}",
+				req.workspace_folders.len()
+			);
 		}
 
 		Ok(Response::new(Empty {}))
@@ -1475,9 +1503,11 @@ impl CocoonService for CocoonServiceImpl {
 	/// Register Command - Cocoon registers an extension command
 	async fn register_command(&self, request:Request<RegisterCommandRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Registering command '{}' from extension '{}'",
-			req.command_id, req.extension_id
+			req.command_id,
+			req.extension_id
 		);
 
 		// Wire to CommandExecutor::RegisterCommand which stores a Proxied handler
@@ -1487,11 +1517,18 @@ impl CocoonService for CocoonServiceImpl {
 			.RegisterCommand(req.extension_id.clone(), req.command_id.clone())
 			.await
 		{
-			dev_log!("cocoon", "warn: [CocoonService] Failed to register command '{}': {:?}", req.command_id, Error);
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonService] Failed to register command '{}': {:?}",
+				req.command_id,
+				Error
+			);
 		} else {
-			dev_log!("cocoon", 
+			dev_log!(
+				"cocoon",
 				"[CocoonService] Command registered: id={}, title={:?}",
-				req.command_id, req.title
+				req.command_id,
+				req.title
 			);
 		}
 
@@ -1504,7 +1541,8 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ExecuteCommandRequest>,
 	) -> Result<Response<ExecuteCommandResponse>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Executing command '{}' with {} arguments",
 			req.command_id,
 			req.arguments.len()
@@ -1558,7 +1596,12 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Wire to CommandExecutor::UnregisterCommand
 		if let Err(Error) = self.environment.UnregisterCommand(String::new(), req.command_id.clone()).await {
-			dev_log!("cocoon", "warn: [CocoonService] Failed to unregister command '{}': {:?}", req.command_id, Error);
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonService] Failed to unregister command '{}': {:?}",
+				req.command_id,
+				Error
+			);
 		} else {
 			dev_log!("cocoon", "[CocoonService] Command removed: {}", req.command_id);
 		}
@@ -1574,9 +1617,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Registering hover provider for '{}' with handle {}",
-			req.language_selector, req.handle
+			req.language_selector,
+			req.handle
 		);
 		self.RegisterProvider(req.handle, ProviderType::Hover, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
@@ -1585,7 +1630,8 @@ impl CocoonService for CocoonServiceImpl {
 	/// Provide Hover - Request hover information
 	///
 	/// Delegates to LanguageFeatureProviderRegistry::ProvideHover which:
-	/// 1. Looks up the matching provider in ProviderRegistration by document URI
+	/// 1. Looks up the matching provider in ProviderRegistration by document
+	///    URI
 	/// 2. Forwards to Cocoon via generic gRPC ($provideHover)
 	/// 3. Cocoon's InvokeLanguageProvider calls the JS extension provider
 	/// 4. Result bubbles back through the chain
@@ -1597,9 +1643,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing hover for provider {}", req.provider_handle);
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| {
-			Status::invalid_argument(format!("Invalid URI: {}", e))
-		})?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
@@ -1609,22 +1654,23 @@ impl CocoonService for CocoonServiceImpl {
 
 		match self.environment.ProvideHover(document_uri, position_dto).await {
 			Ok(Some(hover)) => {
-				let markdown = hover.Contents.iter()
+				let markdown = hover
+					.Contents
+					.iter()
 					.map(|c| c.Value.as_str())
 					.collect::<Vec<_>>()
 					.join("\n---\n");
-				let range = hover.Range.map(|r| Range {
-					start:Some(Position { line:r.StartLineNumber, character:r.StartColumn }),
-					end:Some(Position { line:r.EndLineNumber, character:r.EndColumn }),
+				let range = hover.Range.map(|r| {
+					Range {
+						start:Some(Position { line:r.StartLineNumber, character:r.StartColumn }),
+						end:Some(Position { line:r.EndLineNumber, character:r.EndColumn }),
+					}
 				});
 				Ok(Response::new(ProvideHoverResponse { markdown, range }))
 			},
 			Ok(None) => {
 				dev_log!("cocoon", "[CocoonService] No hover provider found for request");
-				Ok(Response::new(ProvideHoverResponse {
-					markdown:String::new(),
-					range:None,
-				}))
+				Ok(Response::new(ProvideHoverResponse { markdown:String::new(), range:None }))
 			},
 			Err(e) => {
 				dev_log!("cocoon", "warn: [CocoonService] Hover failed: {}", e);
@@ -1639,9 +1685,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Registering completion provider for '{}' with handle {}",
-			req.language_selector, req.handle
+			req.language_selector,
+			req.handle
 		);
 		self.RegisterProvider(req.handle, ProviderType::Completion, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
@@ -1653,10 +1701,15 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideCompletionItemsRequest>,
 	) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing completions for provider {}", req.provider_handle);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] Providing completions for provider {}",
+			req.provider_handle
+		);
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
 			LineNumber:position.map(|p| p.line).unwrap_or(0),
@@ -1664,20 +1717,32 @@ impl CocoonService for CocoonServiceImpl {
 		};
 		let context_dto = CommonLibrary::LanguageFeature::DTO::CompletionContextDTO::CompletionContextDTO {
 			TriggerKind:CommonLibrary::LanguageFeature::DTO::CompletionContextDTO::CompletionTriggerKindDTO::Invoke,
-			TriggerCharacter:if req.trigger_character.is_empty() { None } else { Some(req.trigger_character.clone()) },
+			TriggerCharacter:if req.trigger_character.is_empty() {
+				None
+			} else {
+				Some(req.trigger_character.clone())
+			},
 		};
 
-		match self.environment.ProvideCompletions(document_uri, position_dto, context_dto, None).await {
+		match self
+			.environment
+			.ProvideCompletions(document_uri, position_dto, context_dto, None)
+			.await
+		{
 			Ok(Some(list)) => {
-				let items = list.Suggestions.iter().map(|s| {
-					CompletionItem {
-						label:s.Label.as_str().map(|l| l.to_string()).unwrap_or_default(),
-						kind:format!("{}", s.Kind),
-						detail:s.Detail.clone().unwrap_or_default(),
-						documentation:Vec::new(),
-						insert_text:s.InsertText.as_ref().and_then(|v| v.as_str()).unwrap_or("").to_string(),
-					}
-				}).collect();
+				let items = list
+					.Suggestions
+					.iter()
+					.map(|s| {
+						CompletionItem {
+							label:s.Label.as_str().map(|l| l.to_string()).unwrap_or_default(),
+							kind:format!("{}", s.Kind),
+							detail:s.Detail.clone().unwrap_or_default(),
+							documentation:Vec::new(),
+							insert_text:s.InsertText.as_ref().and_then(|v| v.as_str()).unwrap_or("").to_string(),
+						}
+					})
+					.collect();
 				Ok(Response::new(ProvideCompletionItemsResponse { items }))
 			},
 			Ok(None) => Ok(Response::new(ProvideCompletionItemsResponse { items:Vec::new() })),
@@ -1691,9 +1756,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Registering definition provider for '{}' with handle {}",
-			req.language_selector, req.handle
+			req.language_selector,
+			req.handle
 		);
 		self.RegisterProvider(req.handle, ProviderType::Definition, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
@@ -1705,10 +1772,15 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideDefinitionRequest>,
 	) -> Result<Response<ProvideDefinitionResponse>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing definition for provider {}", req.provider_handle);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] Providing definition for provider {}",
+			req.provider_handle
+		);
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
 			LineNumber:position.map(|p| p.line).unwrap_or(0),
@@ -1717,13 +1789,21 @@ impl CocoonService for CocoonServiceImpl {
 
 		match self.environment.ProvideDefinition(document_uri, position_dto).await {
 			Ok(Some(locations)) => {
-				let proto_locations = locations.iter().map(|loc| Location {
-					uri:Some(Uri { value:loc.Uri.to_string() }),
-					range:Some(Range {
-						start:Some(Position { line:loc.Range.StartLineNumber, character:loc.Range.StartColumn }),
-						end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
-					}),
-				}).collect();
+				let proto_locations = locations
+					.iter()
+					.map(|loc| {
+						Location {
+							uri:Some(Uri { value:loc.Uri.to_string() }),
+							range:Some(Range {
+								start:Some(Position {
+									line:loc.Range.StartLineNumber,
+									character:loc.Range.StartColumn,
+								}),
+								end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
+							}),
+						}
+					})
+					.collect();
 				Ok(Response::new(ProvideDefinitionResponse { locations:proto_locations }))
 			},
 			Ok(None) => Ok(Response::new(ProvideDefinitionResponse { locations:Vec::new() })),
@@ -1737,9 +1817,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Registering reference provider for '{}' with handle {}",
-			req.language_selector, req.handle
+			req.language_selector,
+			req.handle
 		);
 		self.RegisterProvider(req.handle, ProviderType::References, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
@@ -1751,10 +1833,15 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideReferencesRequest>,
 	) -> Result<Response<ProvideReferencesResponse>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing references for provider {}", req.provider_handle);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] Providing references for provider {}",
+			req.provider_handle
+		);
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
 			LineNumber:position.map(|p| p.line).unwrap_or(0),
@@ -1762,15 +1849,27 @@ impl CocoonService for CocoonServiceImpl {
 		};
 		let context_dto = json!({ "includeDeclaration": true });
 
-		match self.environment.ProvideReferences(document_uri, position_dto, context_dto).await {
+		match self
+			.environment
+			.ProvideReferences(document_uri, position_dto, context_dto)
+			.await
+		{
 			Ok(Some(locations)) => {
-				let proto_locations = locations.iter().map(|loc| Location {
-					uri:Some(Uri { value:loc.Uri.to_string() }),
-					range:Some(Range {
-						start:Some(Position { line:loc.Range.StartLineNumber, character:loc.Range.StartColumn }),
-						end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
-					}),
-				}).collect();
+				let proto_locations = locations
+					.iter()
+					.map(|loc| {
+						Location {
+							uri:Some(Uri { value:loc.Uri.to_string() }),
+							range:Some(Range {
+								start:Some(Position {
+									line:loc.Range.StartLineNumber,
+									character:loc.Range.StartColumn,
+								}),
+								end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
+							}),
+						}
+					})
+					.collect();
 				Ok(Response::new(ProvideReferencesResponse { locations:proto_locations }))
 			},
 			Ok(None) => Ok(Response::new(ProvideReferencesResponse { locations:Vec::new() })),
@@ -1784,9 +1883,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Registering code actions provider for '{}' with handle {}",
-			req.language_selector, req.handle
+			req.language_selector,
+			req.handle
 		);
 		self.RegisterProvider(req.handle, ProviderType::CodeAction, &req.language_selector, &req.extension_id);
 		Ok(Response::new(Empty {}))
@@ -1798,10 +1899,15 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideCodeActionsRequest>,
 	) -> Result<Response<ProvideCodeActionsResponse>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing code actions for provider {}", req.provider_handle);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] Providing code actions for provider {}",
+			req.provider_handle
+		);
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let range = req.range.as_ref();
 		let range_dto = json!({
 			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
@@ -1923,7 +2029,12 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] set_status_bar_text: id={} text={}", req.item_id, req.text);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] set_status_bar_text: id={} text={}",
+			req.item_id,
+			req.text
+		);
 
 		let _ = self
 			.environment
@@ -1946,8 +2057,13 @@ impl CocoonService for CocoonServiceImpl {
 			.map(|D| D.as_millis() as u32)
 			.unwrap_or(0);
 
-		dev_log!("cocoon", "[CocoonService] create_webview_panel: handle={} view_type={} title={}",
-			Handle, req.view_type, req.title);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] create_webview_panel: handle={} view_type={} title={}",
+			Handle,
+			req.view_type,
+			req.title
+		);
 
 		let _ = self.environment.ApplicationHandle.emit(
 			"sky://webview/create",
@@ -1969,17 +2085,23 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] set_webview_html: handle={} ({} bytes)", req.handle, req.html.len());
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://webview/setHtml",
-			json!({ "handle": req.handle, "html": req.html }),
+		dev_log!(
+			"cocoon",
+			"[CocoonService] set_webview_html: handle={} ({} bytes)",
+			req.handle,
+			req.html.len()
 		);
+
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://webview/setHtml", json!({ "handle": req.handle, "html": req.html }));
 
 		Ok(Response::new(Empty {}))
 	}
 
-	/// On Did Receive Message - Forward webview message to Cocoon via Tauri event
+	/// On Did Receive Message - Forward webview message to Cocoon via Tauri
+	/// event
 	async fn on_did_receive_message(
 		&self,
 		request:Request<OnDidReceiveMessageRequest>,
@@ -2030,7 +2152,12 @@ impl CocoonService for CocoonServiceImpl {
 		let Path = Self::UriToPath(req.uri.as_ref())
 			.ok_or_else(|| Status::invalid_argument("write_file: missing or empty URI"))?;
 
-		dev_log!("cocoon", "[CocoonService] Writing file: {:?} ({} bytes)", Path, req.content.len());
+		dev_log!(
+			"cocoon",
+			"[CocoonService] Writing file: {:?} ({} bytes)",
+			Path,
+			req.content.len()
+		);
 
 		// Ensure parent directory exists
 		if let Some(Parent) = Path.parent() {
@@ -2107,7 +2234,11 @@ impl CocoonService for CocoonServiceImpl {
 	async fn watch_file(&self, request:Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		let Uri = req.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
-		dev_log!("cocoon", "[CocoonService] watch_file registered (polling not yet active): {}", Uri);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] watch_file registered (polling not yet active): {}",
+			Uri
+		);
 		// TODO(P1): Wire notify crate watcher; store WatcherHandle in
 		// ApplicationState.Feature.Watchers keyed by URI for cancellation on
 		// cancel_operation.
@@ -2172,7 +2303,8 @@ impl CocoonService for CocoonServiceImpl {
 			WalkAndCollect(Root, Root, &GlobMatcher, &mut Uris);
 		}
 
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] find_files: {} results for pattern '{}'",
 			Uris.len(),
 			req.pattern
@@ -2265,7 +2397,8 @@ impl CocoonService for CocoonServiceImpl {
 		.await
 		.unwrap_or_default();
 
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] find_text_in_files: {} matches for '{}'",
 			Matches.len(),
 			req.pattern
@@ -2333,7 +2466,8 @@ impl CocoonService for CocoonServiceImpl {
 		Ok(Response::new(ApplyEditResponse { success:true }))
 	}
 
-	/// Update Configuration - Notify Sky of configuration changes via Tauri event
+	/// Update Configuration - Notify Sky of configuration changes via Tauri
+	/// event
 	async fn update_configuration(
 		&self,
 		request:Request<UpdateConfigurationRequest>,
@@ -2341,7 +2475,11 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] update_configuration: {} changed keys", req.changed_keys.len());
+		dev_log!(
+			"cocoon",
+			"[CocoonService] update_configuration: {} changed keys",
+			req.changed_keys.len()
+		);
 
 		// Forward configuration changes to Sky for workbench settings refresh
 		let _ = self.environment.ApplicationHandle.emit(
@@ -2360,7 +2498,8 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<UpdateWorkspaceFoldersRequest>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Updating workspace: {} additions, {} removals",
 			req.additions.len(),
 			req.removals.len()
@@ -2368,14 +2507,16 @@ impl CocoonService for CocoonServiceImpl {
 
 		// Update WorkspaceState in MountainEnvironment
 		for addition in &req.additions {
-			dev_log!("cocoon", 
+			dev_log!(
+				"cocoon",
 				"[CocoonService] Adding workspace folder: {} ({})",
 				addition.name,
 				addition.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
 			);
 		}
 		for removal in &req.removals {
-			dev_log!("cocoon", 
+			dev_log!(
+				"cocoon",
 				"[CocoonService] Removing workspace folder: {}",
 				removal.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
 			);
@@ -2443,14 +2584,24 @@ impl CocoonService for CocoonServiceImpl {
 	async fn terminal_input(&self, request:Request<TerminalInputRequest>) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
 		let TerminalId = req.terminal_id as u64;
-		dev_log!("cocoon", "[CocoonService] terminal_input: id={} bytes={}", TerminalId, req.data.len());
+		dev_log!(
+			"cocoon",
+			"[CocoonService] terminal_input: id={} bytes={}",
+			TerminalId,
+			req.data.len()
+		);
 
 		let Text = String::from_utf8_lossy(&req.data).into_owned();
 
 		match self.environment.SendTextToTerminal(TerminalId, Text).await {
 			Ok(()) => Ok(Response::new(Empty {})),
 			Err(Error) => {
-				dev_log!("cocoon", "warn: [CocoonService] terminal_input failed id={}: {}", TerminalId, Error);
+				dev_log!(
+					"cocoon",
+					"warn: [CocoonService] terminal_input failed id={}: {}",
+					TerminalId,
+					Error
+				);
 				Err(Status::not_found(format!("terminal_input: {}", Error)))
 			},
 		}
@@ -2465,7 +2616,12 @@ impl CocoonService for CocoonServiceImpl {
 		match self.environment.DisposeTerminal(TerminalId).await {
 			Ok(()) => Ok(Response::new(Empty {})),
 			Err(Error) => {
-				dev_log!("cocoon", "warn: [CocoonService] close_terminal failed id={}: {}", TerminalId, Error);
+				dev_log!(
+					"cocoon",
+					"warn: [CocoonService] close_terminal failed id={}: {}",
+					TerminalId,
+					Error
+				);
 				Err(Status::internal(format!("close_terminal: {}", Error)))
 			},
 		}
@@ -2477,17 +2633,19 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<TerminalOpenedNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Terminal opened notification: {} (ID: {})",
-			req.name, req.terminal_id
+			req.name,
+			req.terminal_id
 		);
 
 		// Forward terminal opened event to Sky for UI update
 		use tauri::Emitter;
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://terminal/opened",
-			json!({ "id": req.terminal_id, "name": req.name }),
-		);
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://terminal/opened", json!({ "id": req.terminal_id, "name": req.name }));
 
 		Ok(Response::new(Empty {}))
 	}
@@ -2502,10 +2660,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Terminal closed: {}", req.terminal_id);
 
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://terminal/closed",
-			json!({ "id": req.terminal_id }),
-		);
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://terminal/closed", json!({ "id": req.terminal_id }));
 
 		Ok(Response::new(Empty {}))
 	}
@@ -2518,7 +2676,12 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Terminal PID: {} for terminal {}", req.process_id, req.terminal_id);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] Terminal PID: {} for terminal {}",
+			req.process_id,
+			req.terminal_id
+		);
 
 		let _ = self.environment.ApplicationHandle.emit(
 			"sky://terminal/processId",
@@ -2536,13 +2699,18 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Terminal data for {}: {} bytes", req.terminal_id, req.data.len());
+		dev_log!(
+			"cocoon",
+			"[CocoonService] Terminal data for {}: {} bytes",
+			req.terminal_id,
+			req.data.len()
+		);
 
 		let DataString = String::from_utf8_lossy(&req.data).to_string();
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://terminal/data",
-			json!({ "id": req.terminal_id, "data": DataString }),
-		);
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://terminal/data", json!({ "id": req.terminal_id, "data": DataString }));
 
 		Ok(Response::new(Empty {}))
 	}
@@ -2560,7 +2728,11 @@ impl CocoonService for CocoonServiceImpl {
 		// Register tree view provider in ApplicationState and notify Sky
 		use tauri::Emitter;
 
-		let Handle = req.view_id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let Handle = req
+			.view_id
+			.as_bytes()
+			.iter()
+			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 		let dto = ProviderRegistrationDTO {
 			Handle,
 			ProviderType:ProviderType::TreeView,
@@ -2611,7 +2783,11 @@ impl CocoonService for CocoonServiceImpl {
 		// Register SCM provider in ApplicationState and notify Sky
 		use tauri::Emitter;
 
-		let Handle = req.scm_id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let Handle = req
+			.scm_id
+			.as_bytes()
+			.iter()
+			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 		let dto = ProviderRegistrationDTO {
 			Handle,
 			ProviderType:ProviderType::SourceControl,
@@ -2639,14 +2815,23 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] update_scm_group: provider={} group={}", req.provider_id, req.group_id);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] update_scm_group: provider={} group={}",
+			req.provider_id,
+			req.group_id
+		);
 
-		let ResourceStates:Vec<serde_json::Value> = req.resource_states.iter().map(|Rs| {
-			json!({
-				"uri": Rs.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""),
-				"decorations": Rs.decorations,
+		let ResourceStates:Vec<serde_json::Value> = req
+			.resource_states
+			.iter()
+			.map(|Rs| {
+				json!({
+					"uri": Rs.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""),
+					"decorations": Rs.decorations,
+				})
 			})
-		}).collect();
+			.collect();
 
 		let _ = self.environment.ApplicationHandle.emit(
 			"sky://scm/updateGroup",
@@ -2686,7 +2871,8 @@ impl CocoonService for CocoonServiceImpl {
 			})?;
 
 		let ExitCode = Output.status.code().unwrap_or(-1);
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] git_exec exit={} stdout={} bytes stderr={} bytes",
 			ExitCode,
 			Output.stdout.len(),
@@ -2718,7 +2904,11 @@ impl CocoonService for CocoonServiceImpl {
 		// Register debug adapter in ApplicationState and notify Sky
 		use tauri::Emitter;
 
-		let Handle = req.debug_type.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let Handle = req
+			.debug_type
+			.as_bytes()
+			.iter()
+			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 		let dto = ProviderRegistrationDTO {
 			Handle,
 			ProviderType:ProviderType::DebugAdapter,
@@ -2751,10 +2941,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] start_debugging: type={}", req.debug_type);
 
-		let SessionId = format!("debug-{}", SystemTime::now()
-			.duration_since(UNIX_EPOCH)
-			.map(|D| D.as_millis())
-			.unwrap_or(0));
+		let SessionId = format!(
+			"debug-{}",
+			SystemTime::now().duration_since(UNIX_EPOCH).map(|D| D.as_millis()).unwrap_or(0)
+		);
 
 		let _ = self.environment.ApplicationHandle.emit(
 			"sky://debug/start",
@@ -2833,7 +3023,12 @@ impl CocoonService for CocoonServiceImpl {
 		match self.environment.DeleteSecret(String::new(), req.key.clone()).await {
 			Ok(()) => Ok(Response::new(Empty {})),
 			Err(Error) => {
-				dev_log!("cocoon", "warn: [CocoonService] delete_secret failed key={}: {}", req.key, Error);
+				dev_log!(
+					"cocoon",
+					"warn: [CocoonService] delete_secret failed key={}: {}",
+					req.key,
+					Error
+				);
 				Err(Status::internal(format!("delete_secret: {}", Error)))
 			},
 		}
@@ -2866,7 +3061,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing document highlights");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
 			LineNumber:position.map(|p| p.line).unwrap_or(0),
@@ -2904,7 +3100,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing document symbols");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
 		match self.environment.ProvideDocumentSymbols(document_uri).await {
 			Ok(_result) => Ok(Response::new(ProvideDocumentSymbolsResponse::default())),
@@ -2962,14 +3159,19 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing rename edits: new_name={}", req.new_name);
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
 			LineNumber:position.map(|p| p.line).unwrap_or(0),
 			Column:position.map(|p| p.character).unwrap_or(0),
 		};
 
-		match self.environment.ProvideRenameEdits(document_uri, position_dto, req.new_name).await {
+		match self
+			.environment
+			.ProvideRenameEdits(document_uri, position_dto, req.new_name)
+			.await
+		{
 			Ok(_result) => Ok(Response::new(ProvideRenameEditsResponse::default())),
 			Err(e) => Err(Status::internal(format!("Rename edits failed: {}", e))),
 		}
@@ -3000,7 +3202,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing document formatting");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
 		match self.environment.ProvideDocumentFormattingEdits(document_uri, options_dto).await {
@@ -3034,7 +3237,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing document range formatting");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let range = req.range.as_ref();
 		let range_dto = json!({
 			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
@@ -3044,7 +3248,11 @@ impl CocoonService for CocoonServiceImpl {
 		});
 		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
-		match self.environment.ProvideDocumentRangeFormattingEdits(document_uri, range_dto, options_dto).await {
+		match self
+			.environment
+			.ProvideDocumentRangeFormattingEdits(document_uri, range_dto, options_dto)
+			.await
+		{
 			Ok(_result) => Ok(Response::new(ProvideDocumentRangeFormattingResponse::default())),
 			Err(e) => Err(Status::internal(format!("Document range formatting failed: {}", e))),
 		}
@@ -3075,7 +3283,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing on-type formatting");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
 			LineNumber:position.map(|p| p.line).unwrap_or(0),
@@ -3083,7 +3292,11 @@ impl CocoonService for CocoonServiceImpl {
 		};
 		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
 
-		match self.environment.ProvideOnTypeFormattingEdits(document_uri, position_dto, req.character, options_dto).await {
+		match self
+			.environment
+			.ProvideOnTypeFormattingEdits(document_uri, position_dto, req.character, options_dto)
+			.await
+		{
 			Ok(_result) => Ok(Response::new(ProvideOnTypeFormattingResponse::default())),
 			Err(e) => Err(Status::internal(format!("On-type formatting failed: {}", e))),
 		}
@@ -3114,7 +3327,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing signature help");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
 			LineNumber:position.map(|p| p.line).unwrap_or(0),
@@ -3122,7 +3336,11 @@ impl CocoonService for CocoonServiceImpl {
 		};
 		let context_dto = json!({ "triggerKind": 1, "isRetrigger": false });
 
-		match self.environment.ProvideSignatureHelp(document_uri, position_dto, context_dto).await {
+		match self
+			.environment
+			.ProvideSignatureHelp(document_uri, position_dto, context_dto)
+			.await
+		{
 			Ok(_result) => Ok(Response::new(ProvideSignatureHelpResponse::default())),
 			Err(e) => Err(Status::internal(format!("Signature help failed: {}", e))),
 		}
@@ -3148,7 +3366,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing code lenses");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
 		match self.environment.ProvideCodeLenses(document_uri).await {
 			Ok(_result) => Ok(Response::new(ProvideCodeLensesResponse::default())),
@@ -3181,7 +3400,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing folding ranges");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
 		match self.environment.ProvideFoldingRanges(document_uri).await {
 			Ok(_result) => Ok(Response::new(ProvideFoldingRangesResponse::default())),
@@ -3214,11 +3434,13 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing selection ranges");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let PositionDTOs:Vec<PositionDTO> = req.positions.iter().map(|P| PositionDTO {
-			LineNumber:P.line,
-			Column:P.character,
-		}).collect();
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let PositionDTOs:Vec<PositionDTO> = req
+			.positions
+			.iter()
+			.map(|P| PositionDTO { LineNumber:P.line, Column:P.character })
+			.collect();
 
 		match self.environment.ProvideSelectionRanges(document_uri, PositionDTOs).await {
 			Ok(_result) => Ok(Response::new(ProvideSelectionRangesResponse::default())),
@@ -3251,7 +3473,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing semantic tokens");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 
 		match self.environment.ProvideSemanticTokensFull(document_uri).await {
 			Ok(_result) => Ok(Response::new(ProvideSemanticTokensResponse::default())),
@@ -3279,7 +3502,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing inlay hints");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let range = req.range.as_ref();
 		let range_dto = json!({
 			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
@@ -3423,7 +3647,8 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Providing linked editing ranges");
 
 		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri = Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
+		let document_uri =
+			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
 		let position = req.position.as_ref();
 		let position_dto = PositionDTO {
 			LineNumber:position.map(|p| p.line).unwrap_or(0),
@@ -3593,10 +3818,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] dispose_webview_panel: handle={}", req.handle);
 
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://webview/dispose",
-			json!({ "handle": req.handle }),
-		);
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://webview/dispose", json!({ "handle": req.handle }));
 
 		Ok(Response::new(Empty {}))
 	}
@@ -3608,10 +3833,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] open_external: {}", req.uri);
 
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://native/openExternal",
-			json!({ "url": req.uri }),
-		);
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://native/openExternal", json!({ "url": req.uri }));
 
 		Ok(Response::new(Empty {}))
 	}
@@ -3775,7 +4000,11 @@ impl CocoonService for CocoonServiceImpl {
 		dev_log!("cocoon", "[CocoonService] Registering Task Provider: type={}", req.r#type);
 
 		// Task providers don't have handles in proto — use a hash of the type string
-		let Handle = req.r#type.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let Handle = req
+			.r#type
+			.as_bytes()
+			.iter()
+			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 		let dto = ProviderRegistrationDTO {
 			Handle,
 			ProviderType:ProviderType::Task,
@@ -3798,12 +4027,17 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] execute_task: name={} source={}", req.name, req.source);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://task/execute",
-			json!({ "name": req.name, "source": req.source }),
+		dev_log!(
+			"cocoon",
+			"[CocoonService] execute_task: name={} source={}",
+			req.name,
+			req.source
 		);
+
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://task/execute", json!({ "name": req.name, "source": req.source }));
 
 		Ok(Response::new(ExecuteTaskResponse { task_id:0, success:true }))
 	}
@@ -3815,10 +4049,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] terminate_task: id={}", req.task_id);
 
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://task/terminate",
-			json!({ "id": req.task_id }),
-		);
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://task/terminate", json!({ "id": req.task_id }));
 
 		Ok(Response::new(Empty {}))
 	}
@@ -3829,7 +4063,11 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<GetAuthenticationSessionRequest>,
 	) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
 		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] get_authentication_session: provider={}", req.provider_id);
+		dev_log!(
+			"cocoon",
+			"[CocoonService] get_authentication_session: provider={}",
+			req.provider_id
+		);
 
 		// Return empty session — auth providers register themselves via
 		// register_authentication_provider and get stored in ApplicationState.
@@ -3845,7 +4083,11 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] Registering Authentication Provider: id={}", req.id);
 
-		let Handle = req.id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+		let Handle = req
+			.id
+			.as_bytes()
+			.iter()
+			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 		let dto = ProviderRegistrationDTO {
 			Handle,
 			ProviderType:ProviderType::Authentication,
@@ -3870,10 +4112,10 @@ impl CocoonService for CocoonServiceImpl {
 		let req = request.into_inner();
 		dev_log!("cocoon", "[CocoonService] stop_debugging: session={}", req.session_id);
 
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://debug/stop",
-			json!({ "sessionId": req.session_id }),
-		);
+		let _ = self
+			.environment
+			.ApplicationHandle
+			.emit("sky://debug/stop", json!({ "sessionId": req.session_id }));
 
 		Ok(Response::new(Empty {}))
 	}
@@ -3944,9 +4186,12 @@ impl CocoonService for CocoonServiceImpl {
 		use tauri::Emitter;
 
 		let req = request.into_inner();
-		dev_log!("cocoon", 
+		dev_log!(
+			"cocoon",
 			"[CocoonService] resize_terminal: id={} cols={} rows={}",
-			req.terminal_id, req.cols, req.rows
+			req.terminal_id,
+			req.cols,
+			req.rows
 		);
 
 		// Notify Sky/Wind of the new dimensions for UI resize

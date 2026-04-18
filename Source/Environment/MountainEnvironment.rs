@@ -208,11 +208,13 @@ use async_trait::async_trait;
 use serde_json::Value;
 use tauri::{AppHandle, Wry};
 
-use crate::ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO};
+use crate::{
+	ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO},
+	dev_log,
+};
 // Import the macro for generating trait implementations
 // Note: Macros annotated with #[macro_export] are available at crate root
 use crate::impl_provider;
-use crate::dev_log;
 
 /// The concrete `Environment` for the Mountain application.
 #[derive(Clone)]
@@ -254,7 +256,8 @@ impl MountainEnvironment {
 		ApplicationState:Arc<ApplicationState>,
 		AirClient:Option<AirServiceClient<tonic::transport::Channel>>,
 	) -> Self {
-		dev_log!("lifecycle", 
+		dev_log!(
+			"lifecycle",
 			"[MountainEnvironment] New instance created with Air client: {}",
 			AirClient.is_some()
 		);
@@ -280,7 +283,10 @@ impl MountainEnvironment {
 		// the AirClient wrapper is properly integrated.
 		if let Some(_AirClient) = &self.AirClient {
 			// For now, assume Air is available if the client exists
-			dev_log!("lifecycle", "[MountainEnvironment] Air client configured (health check disabled pending integration)");
+			dev_log!(
+				"lifecycle",
+				"[MountainEnvironment] Air client configured (health check disabled pending integration)"
+			);
 			true
 		} else {
 			dev_log!("lifecycle", "[MountainEnvironment] No Air client configured");
@@ -300,7 +306,11 @@ impl MountainEnvironment {
 
 		// Check if directory exists
 		if !path.exists() || !path.is_dir() {
-			dev_log!("lifecycle", "warn: [ExtensionManagementService] Extension directory does not exist: {:?}", path);
+			dev_log!(
+				"lifecycle",
+				"warn: [ExtensionManagementService] Extension directory does not exist: {:?}",
+				path
+			);
 			return Ok(extensions);
 		}
 
@@ -337,17 +347,29 @@ impl MountainEnvironment {
 										);
 									}
 									extensions.push(package_json);
-									dev_log!("lifecycle", "[ExtensionManagementService] Found extension at: {:?}", entry_path);
+									dev_log!(
+										"lifecycle",
+										"[ExtensionManagementService] Found extension at: {:?}",
+										entry_path
+									);
 								},
 								Err(error) => {
-									dev_log!("lifecycle", "warn: [ExtensionManagementService] Failed to parse package.json at {:?}: {}",
-										package_json_path, error);
+									dev_log!(
+										"lifecycle",
+										"warn: [ExtensionManagementService] Failed to parse package.json at {:?}: {}",
+										package_json_path,
+										error
+									);
 								},
 							}
 						},
 						Err(error) => {
-							dev_log!("lifecycle", "warn: [ExtensionManagementService] Failed to read package.json at {:?}: {}",
-								package_json_path, error);
+							dev_log!(
+								"lifecycle",
+								"warn: [ExtensionManagementService] Failed to read package.json at {:?}: {}",
+								package_json_path,
+								error
+							);
 						},
 					}
 				}
@@ -403,7 +425,8 @@ impl ExtensionManagementService for MountainEnvironment {
 			match serde_json::from_value::<ExtensionDescriptionStateDTO>(extension.clone()) {
 				Ok(Dto) => {
 					// Use identifier.value or fall back to name
-					let Key = Dto.Identifier
+					let Key = Dto
+						.Identifier
 						.as_object()
 						.and_then(|O| O.get("value"))
 						.and_then(|V| V.as_str())
@@ -415,12 +438,21 @@ impl ExtensionManagementService for MountainEnvironment {
 				},
 				Err(Error) => {
 					let Name = extension.get("name").and_then(|V| V.as_str()).unwrap_or("?");
-					dev_log!("lifecycle", "warn: [ExtensionManagementService] Failed to parse extension '{}': {}", Name, Error);
+					dev_log!(
+						"lifecycle",
+						"warn: [ExtensionManagementService] Failed to parse extension '{}': {}",
+						Name,
+						Error
+					);
 				},
 			}
 		}
 
-		dev_log!("lifecycle", "[ExtensionManagementService] Found {} extensions", ScannedExtensionsGuard.len());
+		dev_log!(
+			"lifecycle",
+			"[ExtensionManagementService] Found {} extensions",
+			ScannedExtensionsGuard.len()
+		);
 		Ok(())
 	}
 
@@ -442,9 +474,12 @@ impl ExtensionManagementService for MountainEnvironment {
 
 		let SerializedCount = Extensions.iter().filter(|v| !v.is_null()).count();
 
-		dev_log!("lifecycle",
+		dev_log!(
+			"lifecycle",
 			"[MountainEnvironment] GetExtensions: ScannedExtensions map={} entries, serialized={} non-null",
-			GuardLen, SerializedCount);
+			GuardLen,
+			SerializedCount
+		);
 
 		Ok(Extensions)
 	}

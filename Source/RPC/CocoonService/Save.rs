@@ -6,9 +6,9 @@
 use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	ParticipateInSaveRequest, ParticipateInSaveResponse,
+use crate::{
+	Vine::Generated::{ParticipateInSaveRequest, ParticipateInSaveResponse},
+	dev_log,
 };
 
 pub async fn ParticipateInSave(

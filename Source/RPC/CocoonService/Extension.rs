@@ -10,10 +10,17 @@ use CommonLibrary::Configuration::{
 use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	Empty, ExtensionInfo, GetAllExtensionsResponse, GetConfigurationRequest,
-	GetConfigurationResponse, GetExtensionRequest, GetExtensionResponse,
+use crate::{
+	Vine::Generated::{
+		Empty,
+		ExtensionInfo,
+		GetAllExtensionsResponse,
+		GetConfigurationRequest,
+		GetConfigurationResponse,
+		GetExtensionRequest,
+		GetExtensionResponse,
+	},
+	dev_log,
 };
 
 pub async fn GetExtension(

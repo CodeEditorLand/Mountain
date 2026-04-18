@@ -14,11 +14,11 @@ use serde_json::json;
 use tauri::{Emitter, Manager};
 use url::Url;
 
-use crate::dev_log;
 use crate::{
 	ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO,
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
 };
 
 /// Saves the document at the given URI.
@@ -40,7 +40,11 @@ pub(super) async fn save_document(
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			// For non-file URIs, use temporary file location
 			if uri.scheme() != "file" {
-				dev_log!("model", "[DocumentProvider] Saving non-file URI '{}' to temporary location", uri);
+				dev_log!(
+					"model",
+					"[DocumentProvider] Saving non-file URI '{}' to temporary location",
+					uri
+				);
 			}
 
 			document.IsDirty = false;
@@ -67,7 +71,11 @@ pub(super) async fn save_document(
 		.ApplicationHandle
 		.emit("sky://documents/saved", json!({ "uri": uri.to_string() }))
 	{
-		dev_log!("model", "error: [DocumentProvider] Failed to emit document saved event: {}", error);
+		dev_log!(
+			"model",
+			"error: [DocumentProvider] Failed to emit document saved event: {}",
+			error
+		);
 	}
 
 	crate::Environment::DocumentProvider::Notifications::notify_model_saved(environment, &uri).await;
@@ -147,7 +155,11 @@ pub(super) async fn save_document_as(
 		"sky://documents/renamed",
 		json!({ "oldUri": original_uri.to_string(), "newUri": new_uri.to_string() }),
 	) {
-		dev_log!("model", "error: [DocumentProvider] Failed to emit document renamed event: {}", error);
+		dev_log!(
+			"model",
+			"error: [DocumentProvider] Failed to emit document renamed event: {}",
+			error
+		);
 	}
 
 	Ok(Some(new_uri))
@@ -158,7 +170,8 @@ pub(super) async fn save_all_documents(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	include_untitled:bool,
 ) -> Result<Vec<bool>, CommonError> {
-	dev_log!("model", 
+	dev_log!(
+		"model",
 		"[DocumentProvider] SaveAllDocuments called (IncludeUntitled: {})",
 		include_untitled
 	);

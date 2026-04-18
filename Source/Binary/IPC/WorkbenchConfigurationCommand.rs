@@ -46,8 +46,7 @@ use std::sync::Arc;
 use tauri::{AppHandle, State};
 use serde_json::Value;
 
-use crate::{ApplicationState::ApplicationState, ProcessManagement::InitializationData};
-use crate::dev_log;
+use crate::{ApplicationState::ApplicationState, ProcessManagement::InitializationData, dev_log};
 
 /// Provides the initial workbench configuration to the Sky frontend.
 ///

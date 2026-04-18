@@ -5,13 +5,9 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 
-use crate::{
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	dev_log,
-};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Return metadata for all scanned extensions.
 pub async fn handle_extensions_get_all(Runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
@@ -28,7 +24,8 @@ pub async fn handle_extensions_get_all(Runtime:Arc<ApplicationRunTime>) -> Resul
 	dev_log!(
 		"extensions",
 		"extensions:getAll returning {} extensions ({} bytes serialized)",
-		ExtensionCount, PayloadBytes
+		ExtensionCount,
+		PayloadBytes
 	);
 	if let Some(First) = Extensions.first() {
 		dev_log!(
@@ -43,7 +40,8 @@ pub async fn handle_extensions_get_all(Runtime:Arc<ApplicationRunTime>) -> Resul
 	} else if ExtensionCount == 0 {
 		dev_log!(
 			"extensions",
-			"warn: extensions:getAll returning EMPTY — scan has not populated ScannedExtensions, or all inserts were rejected"
+			"warn: extensions:getAll returning EMPTY — scan has not populated ScannedExtensions, or all inserts were \
+			 rejected"
 		);
 	}
 	Ok(Response)

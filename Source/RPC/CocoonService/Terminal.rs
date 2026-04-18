@@ -12,17 +12,22 @@ use tauri::Emitter;
 use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	CloseTerminalRequest, Empty, OpenTerminalRequest, ResizeTerminalRequest,
-	TerminalClosedNotification, TerminalDataNotification, TerminalInputRequest,
-	TerminalOpenedNotification, TerminalProcessIdNotification,
+use crate::{
+	Vine::Generated::{
+		CloseTerminalRequest,
+		Empty,
+		OpenTerminalRequest,
+		ResizeTerminalRequest,
+		TerminalClosedNotification,
+		TerminalDataNotification,
+		TerminalInputRequest,
+		TerminalOpenedNotification,
+		TerminalProcessIdNotification,
+	},
+	dev_log,
 };
 
-pub async fn OpenTerminal(
-	Service:&CocoonServiceImpl,
-	req:OpenTerminalRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn OpenTerminal(Service:&CocoonServiceImpl, req:OpenTerminalRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Opening terminal: {}", req.name);
 
 	// Build options JSON matching TerminalStateDTO::Create expectations
@@ -45,35 +50,44 @@ pub async fn OpenTerminal(
 	}
 }
 
-pub async fn TerminalInput(
-	Service:&CocoonServiceImpl,
-	req:TerminalInputRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn TerminalInput(Service:&CocoonServiceImpl, req:TerminalInputRequest) -> Result<Response<Empty>, Status> {
 	let TerminalId = req.terminal_id as u64;
-	dev_log!("cocoon", "[CocoonService] terminal_input: id={} bytes={}", TerminalId, req.data.len());
+	dev_log!(
+		"cocoon",
+		"[CocoonService] terminal_input: id={} bytes={}",
+		TerminalId,
+		req.data.len()
+	);
 
 	let Text = String::from_utf8_lossy(&req.data).into_owned();
 
 	match Service.environment.SendTextToTerminal(TerminalId, Text).await {
 		Ok(()) => Ok(Response::new(Empty {})),
 		Err(Error) => {
-			dev_log!("cocoon", "warn: [CocoonService] terminal_input failed id={}: {}", TerminalId, Error);
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonService] terminal_input failed id={}: {}",
+				TerminalId,
+				Error
+			);
 			Err(Status::not_found(format!("terminal_input: {}", Error)))
 		},
 	}
 }
 
-pub async fn CloseTerminal(
-	Service:&CocoonServiceImpl,
-	req:CloseTerminalRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn CloseTerminal(Service:&CocoonServiceImpl, req:CloseTerminalRequest) -> Result<Response<Empty>, Status> {
 	let TerminalId = req.terminal_id as u64;
 	dev_log!("cocoon", "[CocoonService] close_terminal: id={}", TerminalId);
 
 	match Service.environment.DisposeTerminal(TerminalId).await {
 		Ok(()) => Ok(Response::new(Empty {})),
 		Err(Error) => {
-			dev_log!("cocoon", "warn: [CocoonService] close_terminal failed id={}: {}", TerminalId, Error);
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonService] close_terminal failed id={}: {}",
+				TerminalId,
+				Error
+			);
 			Err(Status::internal(format!("close_terminal: {}", Error)))
 		},
 	}
@@ -83,16 +97,18 @@ pub async fn AcceptTerminalOpened(
 	Service:&CocoonServiceImpl,
 	req:TerminalOpenedNotification,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Terminal opened notification: {} (ID: {})",
-		req.name, req.terminal_id
+		req.name,
+		req.terminal_id
 	);
 
 	// Forward terminal opened event to Sky for UI update
-	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://terminal/opened",
-		json!({ "id": req.terminal_id, "name": req.name }),
-	);
+	let _ = Service
+		.environment
+		.ApplicationHandle
+		.emit("sky://terminal/opened", json!({ "id": req.terminal_id, "name": req.name }));
 
 	Ok(Response::new(Empty {}))
 }
@@ -103,10 +119,10 @@ pub async fn AcceptTerminalClosed(
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Terminal closed: {}", req.terminal_id);
 
-	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://terminal/closed",
-		json!({ "id": req.terminal_id }),
-	);
+	let _ = Service
+		.environment
+		.ApplicationHandle
+		.emit("sky://terminal/closed", json!({ "id": req.terminal_id }));
 
 	Ok(Response::new(Empty {}))
 }
@@ -115,7 +131,12 @@ pub async fn AcceptTerminalProcessId(
 	Service:&CocoonServiceImpl,
 	req:TerminalProcessIdNotification,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] Terminal PID: {} for terminal {}", req.process_id, req.terminal_id);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] Terminal PID: {} for terminal {}",
+		req.process_id,
+		req.terminal_id
+	);
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://terminal/processId",
@@ -129,24 +150,29 @@ pub async fn AcceptTerminalProcessData(
 	Service:&CocoonServiceImpl,
 	req:TerminalDataNotification,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] Terminal data for {}: {} bytes", req.terminal_id, req.data.len());
+	dev_log!(
+		"cocoon",
+		"[CocoonService] Terminal data for {}: {} bytes",
+		req.terminal_id,
+		req.data.len()
+	);
 
 	let DataString = String::from_utf8_lossy(&req.data).to_string();
-	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://terminal/data",
-		json!({ "id": req.terminal_id, "data": DataString }),
-	);
+	let _ = Service
+		.environment
+		.ApplicationHandle
+		.emit("sky://terminal/data", json!({ "id": req.terminal_id, "data": DataString }));
 
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn ResizeTerminal(
-	Service:&CocoonServiceImpl,
-	req:ResizeTerminalRequest,
-) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+pub async fn ResizeTerminal(Service:&CocoonServiceImpl, req:ResizeTerminalRequest) -> Result<Response<Empty>, Status> {
+	dev_log!(
+		"cocoon",
 		"[CocoonService] resize_terminal: id={} cols={} rows={}",
-		req.terminal_id, req.cols, req.rows
+		req.terminal_id,
+		req.cols,
+		req.rows
 	);
 
 	// Notify Sky/Wind of the new dimensions for UI resize

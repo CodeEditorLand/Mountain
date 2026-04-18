@@ -49,7 +49,8 @@ const MAX_ACTIVATION_EVENTS:usize = 100;
 pub struct ExtensionDescriptionStateDTO {
 	// --- Core Metadata ---
 	/// Extension identifier: { value: string, uuid?: string }
-	/// Not present in package.json — constructed from publisher.name after parsing.
+	/// Not present in package.json — constructed from publisher.name after
+	/// parsing.
 	#[serde(default)]
 	pub Identifier:Value,
 
@@ -83,7 +84,8 @@ pub struct ExtensionDescriptionStateDTO {
 	#[serde(rename = "type", default, skip_serializing_if = "Option::is_none")]
 	pub ModuleType:Option<String>,
 
-	/// Whether this is a built-in extension (not in package.json, set by scanner)
+	/// Whether this is a built-in extension (not in package.json, set by
+	/// scanner)
 	#[serde(default)]
 	pub IsBuiltin:bool,
 

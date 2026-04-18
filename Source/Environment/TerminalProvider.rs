@@ -113,8 +113,7 @@ use tauri::Emitter;
 use tokio::sync::mpsc as TokioMPSC;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
 
 #[async_trait]
 impl TerminalProvider for MountainEnvironment {
@@ -134,9 +133,11 @@ impl TerminalProvider for MountainEnvironment {
 			.unwrap_or("terminal")
 			.to_string();
 
-		dev_log!("terminal", 
+		dev_log!(
+			"terminal",
 			"[TerminalProvider] Creating terminal ID: {}, Name: '{}'",
-			TerminalIdentifier, Name
+			TerminalIdentifier,
+			Name
 		);
 
 		let mut TerminalState = TerminalStateDTO::Create(TerminalIdentifier, Name.clone(), &OptionsValue, DefaultShell)
@@ -181,7 +182,12 @@ impl TerminalProvider for MountainEnvironment {
 		tokio::spawn(async move {
 			while let Some(Data) = InputReceiver.recv().await {
 				if let Err(Error) = PTYWriter.write_all(Data.as_bytes()) {
-					dev_log!("terminal", "error: [TerminalProvider] PTY write failed for ID {}: {}", TermIDForInput, Error);
+					dev_log!(
+						"terminal",
+						"error: [TerminalProvider] PTY write failed for ID {}: {}",
+						TermIDForInput,
+						Error
+					);
 
 					break;
 				}
@@ -218,8 +224,12 @@ impl TerminalProvider for MountainEnvironment {
 							)
 							.await
 						{
-							dev_log!("terminal", "warn: [TerminalProvider] Failed to send process data for ID {}: {}",
-								TermIDForOutput, Error);
+							dev_log!(
+								"terminal",
+								"warn: [TerminalProvider] Failed to send process data for ID {}: {}",
+								TermIDForOutput,
+								Error
+							);
 						}
 					},
 
@@ -236,7 +246,11 @@ impl TerminalProvider for MountainEnvironment {
 		tokio::spawn(async move {
 			let _exit_status = ChildProcess.wait();
 
-			dev_log!("terminal", "[TerminalProvider] Process for terminal ID {} has exited.", TermIDForExit);
+			dev_log!(
+				"terminal",
+				"[TerminalProvider] Process for terminal ID {} has exited.",
+				TermIDForExit
+			);
 
 			let IPCProvider:Arc<dyn IPCProvider> = EnvironmentClone.Require();
 
@@ -248,8 +262,12 @@ impl TerminalProvider for MountainEnvironment {
 				)
 				.await
 			{
-				dev_log!("terminal", "warn: [TerminalProvider] Failed to send process exit notification for ID {}: {}",
-					TermIDForExit, Error);
+				dev_log!(
+					"terminal",
+					"warn: [TerminalProvider] Failed to send process exit notification for ID {}: {}",
+					TermIDForExit,
+					Error
+				);
 			}
 
 			// Clean up the terminal from the state

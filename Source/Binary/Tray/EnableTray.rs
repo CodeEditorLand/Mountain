@@ -9,6 +9,7 @@
 //! System tray configuration and initialization.
 
 use tauri::App;
+
 use crate::dev_log;
 
 /// Enables and configures the system tray for the application.

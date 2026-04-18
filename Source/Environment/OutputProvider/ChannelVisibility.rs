@@ -8,8 +8,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::json;
 use tauri::Emitter;
 
-use crate::Environment::Utility;
-use crate::dev_log;
+use crate::{Environment::Utility, dev_log};
 
 /// Reveals an output channel in the UI.
 pub(super) async fn reveal_channel(
@@ -36,7 +35,11 @@ pub(super) async fn reveal_channel(
 			.emit("sky://output/reveal", event_payload)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
-		dev_log!("output", "warn: [OutputProvider] Channel '{}' not found for reveal.", channel_identifier);
+		dev_log!(
+			"output",
+			"warn: [OutputProvider] Channel '{}' not found for reveal.",
+			channel_identifier
+		);
 	}
 
 	Ok(())

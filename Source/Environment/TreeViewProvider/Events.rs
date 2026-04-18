@@ -6,6 +6,7 @@
 use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::json;
 use tauri::Emitter;
+
 use crate::dev_log;
 
 /// Handles tree node expansion/collapse events.
@@ -16,9 +17,12 @@ pub(super) async fn on_tree_node_expanded(
 	element_handle:String,
 	is_expanded:bool,
 ) -> Result<(), CommonError> {
-	dev_log!("extensions", 
+	dev_log!(
+		"extensions",
 		"[TreeViewProvider] Node '{}' in view '{}' expanded: {}",
-		element_handle, view_identifier, is_expanded
+		element_handle,
+		view_identifier,
+		is_expanded
 	);
 
 	// Persist expansion state in TreeViewStateDTO for state restoration
@@ -45,7 +49,8 @@ pub(super) async fn on_tree_selection_changed(
 	view_identifier:String,
 	selected_handles:Vec<String>,
 ) -> Result<(), CommonError> {
-	dev_log!("extensions", 
+	dev_log!(
+		"extensions",
 		"[TreeViewProvider] Selection changed in view '{}': {} items selected",
 		view_identifier,
 		selected_handles.len()

@@ -1,6 +1,7 @@
 use std::sync::{Arc, Mutex as StandardMutex};
 
 use serde::{Deserialize, Serialize};
+
 use crate::dev_log;
 
 /// A single registered dynamic keybinding entry.

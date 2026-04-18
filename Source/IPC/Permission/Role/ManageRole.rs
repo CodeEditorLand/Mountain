@@ -80,6 +80,7 @@
 use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
+
 use crate::dev_log;
 
 /// Role definition for RBAC system
@@ -178,9 +179,11 @@ impl Role {
 			self.Permissions.push(Permission.clone());
 			dev_log!("ipc", "[Role] Added permission '{}' to role '{}'", Permission, self.Name);
 		} else {
-			dev_log!("ipc", 
+			dev_log!(
+				"ipc",
 				"[Role] Permission '{}' already exists in role '{}', skipping",
-				Permission, self.Name
+				Permission,
+				self.Name
 			);
 		}
 		self

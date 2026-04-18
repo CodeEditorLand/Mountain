@@ -104,9 +104,12 @@ impl DebugService for MountainEnvironment {
 			});
 		}
 
-		dev_log!("exthost", 
+		dev_log!(
+			"exthost",
 			"[DebugProvider] Registering DebugConfigurationProvider for type '{}' (handle: {}, sidecar: {})",
-			DebugType, ProviderHandle, SideCarIdentifier
+			DebugType,
+			ProviderHandle,
+			SideCarIdentifier
 		);
 
 		// Store debug configuration provider registration in ApplicationState
@@ -136,9 +139,12 @@ impl DebugService for MountainEnvironment {
 			});
 		}
 
-		dev_log!("exthost", 
+		dev_log!(
+			"exthost",
 			"[DebugProvider] Registering DebugAdapterDescriptorFactory for type '{}' (handle: {}, sidecar: {})",
-			DebugType, FactoryHandle, SideCarIdentifier
+			DebugType,
+			FactoryHandle,
+			SideCarIdentifier
 		);
 
 		// Store debug adapter descriptor factory registration in ApplicationState
@@ -153,9 +159,11 @@ impl DebugService for MountainEnvironment {
 
 	async fn StartDebugging(&self, _FolderURI:Option<Url>, Configuration:Value) -> Result<String, CommonError> {
 		let SessionID = uuid::Uuid::new_v4().to_string();
-		dev_log!("exthost", 
+		dev_log!(
+			"exthost",
 			"[DebugProvider] Starting debug session '{}' with config: {:?}",
-			SessionID, Configuration
+			SessionID,
+			Configuration
 		);
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
@@ -178,7 +186,11 @@ impl DebugService for MountainEnvironment {
 		let TargetSideCar = "cocoon-main".to_string();
 
 		// 1. Resolve configuration (Reverse-RPC to Cocoon)
-		dev_log!("exthost", "[DebugProvider] Resolving debug configuration for type '{}'", DebugType);
+		dev_log!(
+			"exthost",
+			"[DebugProvider] Resolving debug configuration for type '{}'",
+			DebugType
+		);
 		dev_log!("exthost", "[DebugProvider] Resolving debug configuration...");
 		let ResolveConfigMethod = format!("{}$resolveDebugConfiguration", ProxyTarget::ExtHostDebug.GetTargetPrefix());
 		let ResolvedConfig = IPCProvider
@@ -204,7 +216,11 @@ impl DebugService for MountainEnvironment {
 			.await?;
 
 		// 3. Spawn the Debug Adapter process based on the descriptor.
-		dev_log!("exthost", "[DebugProvider] Spawning Debug Adapter based on descriptor: {:?}", Descriptor);
+		dev_log!(
+			"exthost",
+			"[DebugProvider] Spawning Debug Adapter based on descriptor: {:?}",
+			Descriptor
+		);
 
 		// TODO: Implement full debug adapter spawning based on the descriptor.
 		// A complete implementation would:
@@ -227,9 +243,12 @@ impl DebugService for MountainEnvironment {
 	}
 
 	async fn SendCommand(&self, SessionID:String, Command:String, Arguments:Value) -> Result<Value, CommonError> {
-		dev_log!("exthost", 
+		dev_log!(
+			"exthost",
 			"[DebugProvider] SendCommand for session '{}' (command: '{}', args: {:?})",
-			SessionID, Command, Arguments
+			SessionID,
+			Command,
+			Arguments
 		);
 
 		// TODO: Implement proper debug session management to route commands to

@@ -97,9 +97,11 @@ impl ConnectionPool {
 	/// let pool = ConnectionPool::new(10, Duration::from_secs(30));
 	/// ```
 	pub fn new(MaxConnections:usize, ConnectionTimeout:Duration) -> Self {
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[ConnectionPool] Creating pool with max: {}, timeout: {:?}",
-			MaxConnections, ConnectionTimeout
+			MaxConnections,
+			ConnectionTimeout
 		);
 
 		Self {
@@ -149,7 +151,11 @@ impl ConnectionPool {
 			connections.insert(handle.id.clone(), handle.clone());
 		}
 
-		dev_log!("ipc", "[ConnectionPool] Connection {} acquired (permit released on drop)", handle.id);
+		dev_log!(
+			"ipc",
+			"[ConnectionPool] Connection {} acquired (permit released on drop)",
+			handle.id
+		);
 
 		// Start health monitoring for this connection
 		self.StartHealthMonitoring(&handle.id).await;
@@ -290,14 +296,18 @@ impl ConnectionPool {
 					handle.update_health(is_healthy);
 
 					if !handle.is_healthy() {
-						dev_log!("ipc", 
+						dev_log!(
+							"ipc",
 							"[ConnectionPool] Connection {} marked as unhealthy (score: {:.1}, errors: {})",
-							handle.id, handle.health_score, handle.error_count
+							handle.id,
+							handle.health_score,
+							handle.error_count
 						);
 					}
 				} else {
 					// Connection removed from pool, stop monitoring
-					dev_log!("ipc", 
+					dev_log!(
+						"ipc",
 						"[ConnectionPool] Connection {} removed from pool, stopping health monitoring",
 						connection_id
 					);

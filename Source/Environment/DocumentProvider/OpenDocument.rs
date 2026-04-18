@@ -16,11 +16,11 @@ use serde_json::{Value, json};
 use tauri::{Emitter, Manager};
 use url::Url;
 
-use crate::dev_log;
 use crate::{
 	ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO,
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
 };
 
 /// Opens a document. If the URI scheme is not native (`file`), it attempts to
@@ -51,11 +51,19 @@ pub(super) async fn open_document(
 		match existing_document.ToDTO() {
 			Ok(dto) => {
 				if let Err(error) = environment.ApplicationHandle.emit("sky://documents/open", dto) {
-					dev_log!("model", "error: [DocumentProvider] Failed to emit document open event: {}", error);
+					dev_log!(
+						"model",
+						"error: [DocumentProvider] Failed to emit document open event: {}",
+						error
+					);
 				}
 			},
 			Err(error) => {
-				dev_log!("model", "error: [DocumentProvider] Failed to serialize existing document DTO: {}", error);
+				dev_log!(
+					"model",
+					"error: [DocumentProvider] Failed to serialize existing document DTO: {}",
+					error
+				);
 			},
 		}
 
@@ -81,7 +89,8 @@ pub(super) async fn open_document(
 			.map_err(|error| CommonError::FileSystemIO { Path:file_path, Description:error.to_string() })?
 	} else {
 		// Custom scheme: attempt to resolve from a sidecar provider.
-		dev_log!("model", 
+		dev_log!(
+			"model",
 			"[DocumentProvider] Non-native scheme '{}'. Attempting to resolve from sidecar.",
 			uri.scheme()
 		);
@@ -123,7 +132,11 @@ pub(super) async fn open_document(
 		.ApplicationHandle
 		.emit("sky://documents/open", dto_for_notification.clone())
 	{
-		dev_log!("model", "error: [DocumentProvider] Failed to emit document open event: {}", error);
+		dev_log!(
+			"model",
+			"error: [DocumentProvider] Failed to emit document open event: {}",
+			error
+		);
 	}
 
 	crate::Environment::DocumentProvider::Notifications::notify_model_added(environment, &dto_for_notification).await;

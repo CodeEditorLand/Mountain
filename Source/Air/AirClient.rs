@@ -85,6 +85,7 @@ use CommonLibrary::Error::CommonError::CommonError;
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
 use tonic::{Request, transport::Channel};
+
 use crate::dev_log;
 
 /// Default gRPC server address for the Air daemon.
@@ -204,7 +205,12 @@ impl AirClient {
 		password:String,
 		provider:String,
 	) -> Result<String, CommonError> {
-		dev_log!("grpc", "[AirClient] Authenticating user '{}' with provider '{}'", username, provider);
+		dev_log!(
+			"grpc",
+			"[AirClient] Authenticating user '{}' with provider '{}'",
+			username,
+			provider
+		);
 
 		#[cfg(feature = "AirIntegration")]
 		{
@@ -226,8 +232,12 @@ impl AirClient {
 						dev_log!("grpc", "[AirClient] Authentication successful for user '{}'", username_display);
 						Ok(response.token)
 					} else {
-						dev_log!("grpc", "error: [AirClient] Authentication failed for user '{}': {}",
-							username_display, response.error);
+						dev_log!(
+							"grpc",
+							"error: [AirClient] Authentication failed for user '{}': {}",
+							username_display,
+							response.error
+						);
 						Err(CommonError::AccessDenied { Reason:response.error })
 					}
 				},
@@ -280,7 +290,8 @@ impl AirClient {
 			match client_guard.check_for_updates(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::UpdateCheckResponse = response.into_inner();
-					dev_log!("grpc", 
+					dev_log!(
+						"grpc",
 						"[AirClient] Update check completed. Update available: {}",
 						response.update_available
 					);
@@ -610,9 +621,11 @@ impl AirClient {
 				Ok(response) => {
 					let response = response.into_inner();
 					// Use fields that actually exist in IndexResponse
-					dev_log!("grpc", 
+					dev_log!(
+						"grpc",
 						"[AirClient] Files indexed: {} (total size: {} bytes)",
-						response.files_indexed, response.total_size
+						response.files_indexed,
+						response.total_size
 					);
 					Ok(IndexInfo { files_indexed:response.files_indexed, total_size:response.total_size })
 				},
@@ -706,9 +719,11 @@ impl AirClient {
 			match client_guard.get_file_info(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::FileInfoResponse = response.into_inner();
-					dev_log!("grpc", 
+					dev_log!(
+						"grpc",
 						"[AirClient] File info retrieved for: {} (exists: {})",
-						path_display, response.exists
+						path_display,
+						response.exists
 					);
 					Ok(ExtendedFileInfo {
 						exists:response.exists,
@@ -758,7 +773,11 @@ impl AirClient {
 			match client_guard.get_status(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::StatusResponse = response.into_inner();
-					dev_log!("grpc", "[AirClient] Status retrieved. Active requests: {}", response.active_requests);
+					dev_log!(
+						"grpc",
+						"[AirClient] Status retrieved. Active requests: {}",
+						response.active_requests
+					);
 					Ok(AirStatus {
 						version:response.version,
 						uptime_seconds:response.uptime_seconds,
@@ -967,9 +986,12 @@ impl AirClient {
 		cpu_limit_percent:u32,
 		disk_limit_mb:u32,
 	) -> Result<(), CommonError> {
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[AirClient] Setting resource limits: memory={}MB, cpu={}%, disk={}MB",
-			memory_limit_mb, cpu_limit_percent, disk_limit_mb
+			memory_limit_mb,
+			cpu_limit_percent,
+			disk_limit_mb
 		);
 
 		#[cfg(feature = "AirIntegration")]
@@ -1044,7 +1066,8 @@ impl AirClient {
 			match client_guard.get_configuration(Request::new(request)).await {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::ConfigurationResponse = response.into_inner();
-					dev_log!("grpc", 
+					dev_log!(
+						"grpc",
 						"[AirClient] Configuration retrieved for section: {} ({} keys)",
 						section_display,
 						response.configuration.len()
@@ -1080,7 +1103,8 @@ impl AirClient {
 		updates:HashMap<String, String>,
 	) -> Result<(), CommonError> {
 		let section_display = section.clone();
-		dev_log!("grpc", 
+		dev_log!(
+			"grpc",
 			"[AirClient] Updating configuration for section: {} ({} keys)",
 			section_display,
 			updates.len()
@@ -1102,7 +1126,8 @@ impl AirClient {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::UpdateConfigurationResponse = response.into_inner();
 					if response.success {
-						dev_log!("grpc", 
+						dev_log!(
+							"grpc",
 							"[AirClient] Configuration updated successfully for section: {}",
 							section_display
 						);

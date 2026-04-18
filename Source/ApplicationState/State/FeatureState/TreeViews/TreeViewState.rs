@@ -35,9 +35,7 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-
-use crate::ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO, dev_log};
 
 /// Active tree views state containing tree views by ID.
 #[derive(Clone)]

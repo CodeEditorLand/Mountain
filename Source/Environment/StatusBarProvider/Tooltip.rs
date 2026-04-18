@@ -20,7 +20,11 @@ pub(super) async fn provide_tooltip_impl(
 	env:&MountainEnvironment,
 	entry_identifier:String,
 ) -> Result<Option<Value>, CommonError> {
-	dev_log!("lifecycle", "[StatusBarProvider] Providing dynamic tooltip for entry: {}", entry_identifier);
+	dev_log!(
+		"lifecycle",
+		"[StatusBarProvider] Providing dynamic tooltip for entry: {}",
+		entry_identifier
+	);
 
 	let ipc_provider:Arc<dyn IPCProvider> = env.Require();
 

@@ -453,7 +453,8 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 	// Build local service URL
 	let local_url = format!("http://127.0.0.1:{}{}", service.port, path);
 
-	dev_log!("lifecycle", 
+	dev_log!(
+		"lifecycle",
 		"[Scheme] Routing {} {} to local service at {}",
 		request.method(),
 		uri,
@@ -766,6 +767,21 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 		CleanPath
 	};
 
+	// P1.5 fix: DevTools fetches `*.js.map` for every bundled script it loads
+	// to render pretty stack traces. Our `Static/Application/` tree ships the
+	// JS files without their `.map` siblings (esbuild's `sourcemap:false` path)
+	// so those requests always 404. Short-circuit here with a clean
+	// `204 No Content` — Chromium treats 204 as "no map available" and moves
+	// on silently, avoiding both the noisy stderr lines and the filesystem
+	// stat round-trip per request.
+	if CleanPath.ends_with(".map") {
+		return Builder::new()
+			.status(204)
+			.header("Access-Control-Allow-Origin", "*")
+			.body(Vec::new())
+			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
+	}
+
 	// Icon themes, grammars and other extension-contributed assets generate
 	// URIs like `vscode-file://vscode-app/Volumes/CORSAIR/.../seti.woff` after
 	// `FileAccess.uriToBrowserUri` rewrites a plain `file:///Volumes/...`
@@ -796,18 +812,24 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	if IsAbsoluteOSPath {
 		let AbsolutePath = format!("/{}", CleanPath);
 		let FilesystemPath = std::path::Path::new(&AbsolutePath);
-		dev_log!("lifecycle",
+		dev_log!(
+			"lifecycle",
 			"[LandFix:VscodeFile] os-abs candidate {} (exists={}, is_file={})",
 			AbsolutePath,
 			FilesystemPath.exists(),
-			FilesystemPath.is_file());
+			FilesystemPath.is_file()
+		);
 		if FilesystemPath.exists() && FilesystemPath.is_file() {
 			match std::fs::read(FilesystemPath) {
 				Ok(Bytes) => {
 					let Mime = MimeFromExtension(&CleanPath);
-					dev_log!("lifecycle",
+					dev_log!(
+						"lifecycle",
 						"[LandFix:VscodeFile] os-abs served {} ({}, {} bytes)",
-						AbsolutePath, Mime, Bytes.len());
+						AbsolutePath,
+						Mime,
+						Bytes.len()
+					);
 					return Builder::new()
 						.status(200)
 						.header("Content-Type", Mime)
@@ -817,15 +839,16 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 						.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 				},
 				Err(Error) => {
-					dev_log!("lifecycle",
+					dev_log!(
+						"lifecycle",
 						"warn: [LandFix:VscodeFile] os-abs read failure {}: {}",
-						AbsolutePath, Error);
+						AbsolutePath,
+						Error
+					);
 				},
 			}
 		} else {
-			dev_log!("lifecycle",
-				"warn: [LandFix:VscodeFile] os-abs not on disk: {}",
-				AbsolutePath);
+			dev_log!("lifecycle", "warn: [LandFix:VscodeFile] os-abs not on disk: {}", AbsolutePath);
 		}
 	}
 
@@ -839,7 +862,13 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	if let Some(Asset) = AssetResult {
 		let Mime = MimeFromExtension(&CleanPath);
 
-		dev_log!("lifecycle", "[LandFix:VscodeFile] Serving (embedded) {} ({}, {} bytes)", CleanPath, Mime, Asset.bytes.len());
+		dev_log!(
+			"lifecycle",
+			"[LandFix:VscodeFile] Serving (embedded) {} ({}, {} bytes)",
+			CleanPath,
+			Mime,
+			Asset.bytes.len()
+		);
 
 		return Builder::new()
 			.status(200)
@@ -861,7 +890,8 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 				Ok(Bytes) => {
 					let Mime = MimeFromExtension(&CleanPath);
 
-					dev_log!("lifecycle",
+					dev_log!(
+						"lifecycle",
 						"[LandFix:VscodeFile] Serving (fs) {} ({}, {} bytes)",
 						CleanPath,
 						Mime,
@@ -877,12 +907,22 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 						.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 				},
 				Err(Error) => {
-					dev_log!("lifecycle", "warn: [LandFix:VscodeFile] Failed to read {}: {}", FilesystemPath.display(), Error);
+					dev_log!(
+						"lifecycle",
+						"warn: [LandFix:VscodeFile] Failed to read {}: {}",
+						FilesystemPath.display(),
+						Error
+					);
 				},
 			}
 		}
 	}
 
-	dev_log!("lifecycle", "warn: [LandFix:VscodeFile] Not found: {} (resolved: {})", Uri, CleanPath);
+	dev_log!(
+		"lifecycle",
+		"warn: [LandFix:VscodeFile] Not found: {} (resolved: {})",
+		Uri,
+		CleanPath
+	);
 	build_error_response(404, &format!("Not Found: {}", CleanPath))
 }

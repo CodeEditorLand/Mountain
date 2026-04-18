@@ -6,6 +6,7 @@
 use std::sync::{MutexGuard, PoisonError};
 
 use CommonLibrary::Error::CommonError::CommonError;
+
 use crate::dev_log;
 
 /// Maps a `PoisonError` from a failed `ApplicationState` Mutex lock into a

@@ -6,8 +6,7 @@ use std::path::Path;
 
 use CommonLibrary::Error::CommonError::CommonError;
 
-use crate::ApplicationState::ApplicationState;
-use crate::dev_log;
+use crate::{ApplicationState::ApplicationState, dev_log};
 
 /// A critical security helper that checks if a given filesystem path is
 /// allowed for access.

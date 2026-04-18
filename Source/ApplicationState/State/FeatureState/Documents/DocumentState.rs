@@ -35,9 +35,7 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-
-use crate::ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO, dev_log};
 
 /// Open documents state containing documents by URI.
 #[derive(Clone)]

@@ -6,22 +6,29 @@
 
 use serde_json::json;
 use tonic::{Response, Status};
+use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 use super::CocoonServiceImpl;
-use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	Empty, GetAuthenticationSessionRequest,
-	GetAuthenticationSessionResponse,
-	RegisterAuthenticationProviderRequest,
+use crate::{
+	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
+	Vine::Generated::{
+		Empty,
+		GetAuthenticationSessionRequest,
+		GetAuthenticationSessionResponse,
+		RegisterAuthenticationProviderRequest,
+	},
+	dev_log,
 };
-use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 pub async fn GetAuthenticationSession(
 	Service:&CocoonServiceImpl,
 	req:GetAuthenticationSessionRequest,
 ) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
-	dev_log!("cocoon", "[CocoonService] get_authentication_session: provider={}", req.provider_id);
+	dev_log!(
+		"cocoon",
+		"[CocoonService] get_authentication_session: provider={}",
+		req.provider_id
+	);
 
 	// Return empty session — auth providers register themselves via
 	// register_authentication_provider and get stored in ApplicationState.
@@ -35,7 +42,11 @@ pub async fn RegisterAuthenticationProvider(
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering Authentication Provider: id={}", req.id);
 
-	let Handle = req.id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+	let Handle = req
+		.id
+		.as_bytes()
+		.iter()
+		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 	let dto = ProviderRegistrationDTO {
 		Handle,
 		ProviderType:ProviderType::Authentication,

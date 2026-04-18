@@ -5,6 +5,7 @@
 use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::json;
 use tauri::Emitter;
+
 use crate::dev_log;
 
 /// Reveals a specific item in the tree view by notifying the UI.
@@ -14,9 +15,11 @@ pub(super) async fn reveal_tree_item(
 	item_handle:String,
 	options:serde_json::Value,
 ) -> Result<(), CommonError> {
-	dev_log!("extensions", 
+	dev_log!(
+		"extensions",
 		"[TreeViewProvider] Revealing item '{}' in view '{}'",
-		item_handle, view_identifier
+		item_handle,
+		view_identifier
 	);
 
 	env.ApplicationHandle

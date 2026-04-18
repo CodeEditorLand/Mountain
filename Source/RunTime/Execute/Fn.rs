@@ -52,8 +52,7 @@ use CommonLibrary::{
 use Echo::Task::Priority::Priority;
 use async_trait::async_trait;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// The core integration logic between `Common::ActionEffect` and
 /// `Echo::Scheduler`.
@@ -77,7 +76,10 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 			let Result = Effect.Apply(CapabilityProvider).await;
 
 			if ResultSender.send(Result).is_err() {
-				dev_log!("lifecycle", "error: [ApplicationRunTime] Failed to send effect result; receiver was dropped.");
+				dev_log!(
+					"lifecycle",
+					"error: [ApplicationRunTime] Failed to send effect result; receiver was dropped."
+				);
 			}
 		};
 
@@ -142,8 +144,13 @@ impl ApplicationRunTime {
 					}
 
 					retry_count += 1;
-					dev_log!("lifecycle", "warn: [ApplicationRunTime] Effect execution failed (attempt {}): {}. Retrying in {:?}...",
-						retry_count, error, current_delay);
+					dev_log!(
+						"lifecycle",
+						"warn: [ApplicationRunTime] Effect execution failed (attempt {}): {}. Retrying in {:?}...",
+						retry_count,
+						error,
+						current_delay
+					);
 
 					tokio::time::sleep(current_delay).await;
 

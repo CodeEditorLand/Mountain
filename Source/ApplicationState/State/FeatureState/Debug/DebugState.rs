@@ -28,8 +28,8 @@ use std::{
 	collections::HashMap,
 	sync::{Arc, Mutex as StandardMutex},
 };
-use crate::dev_log;
 
+use crate::dev_log;
 
 /// Debug configuration provider registration info
 #[derive(Clone, Debug)]

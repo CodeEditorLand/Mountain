@@ -152,8 +152,7 @@ use serde_json::{Value, json};
 use tauri::Manager;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -225,7 +224,10 @@ impl KeybindingProvider for MountainEnvironment {
 					}
 				}
 			} else {
-				dev_log!("keybinding", "warn: [KeybindingProvider] Failed to parse user keybindings.json. It may be malformed.");
+				dev_log!(
+					"keybinding",
+					"warn: [KeybindingProvider] Failed to parse user keybindings.json. It may be malformed."
+				);
 			}
 		}
 

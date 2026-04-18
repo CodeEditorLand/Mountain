@@ -9,11 +9,17 @@ use tauri::Emitter;
 use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	AppendOutputRequest, ClearOutputRequest, CreateOutputChannelRequest,
-	CreateOutputChannelResponse, DisposeOutputRequest, Empty,
-	ShowOutputRequest,
+use crate::{
+	Vine::Generated::{
+		AppendOutputRequest,
+		ClearOutputRequest,
+		CreateOutputChannelRequest,
+		CreateOutputChannelResponse,
+		DisposeOutputRequest,
+		Empty,
+		ShowOutputRequest,
+	},
+	dev_log,
 };
 
 pub async fn CreateOutputChannel(
@@ -30,10 +36,7 @@ pub async fn CreateOutputChannel(
 	Ok(Response::new(CreateOutputChannelResponse { channel_id:req.name.clone() }))
 }
 
-pub async fn AppendOutput(
-	Service:&CocoonServiceImpl,
-	req:AppendOutputRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn AppendOutput(Service:&CocoonServiceImpl, req:AppendOutputRequest) -> Result<Response<Empty>, Status> {
 	let _ = Service
 		.environment
 		.ApplicationHandle
@@ -41,10 +44,7 @@ pub async fn AppendOutput(
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn ClearOutput(
-	Service:&CocoonServiceImpl,
-	req:ClearOutputRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn ClearOutput(Service:&CocoonServiceImpl, req:ClearOutputRequest) -> Result<Response<Empty>, Status> {
 	let _ = Service
 		.environment
 		.ApplicationHandle
@@ -52,10 +52,7 @@ pub async fn ClearOutput(
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn ShowOutput(
-	Service:&CocoonServiceImpl,
-	req:ShowOutputRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn ShowOutput(Service:&CocoonServiceImpl, req:ShowOutputRequest) -> Result<Response<Empty>, Status> {
 	let _ = Service
 		.environment
 		.ApplicationHandle
@@ -63,10 +60,7 @@ pub async fn ShowOutput(
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn DisposeOutput(
-	Service:&CocoonServiceImpl,
-	req:DisposeOutputRequest,
-) -> Result<Response<Empty>, Status> {
+pub async fn DisposeOutput(Service:&CocoonServiceImpl, req:DisposeOutputRequest) -> Result<Response<Empty>, Status> {
 	let _ = Service
 		.environment
 		.ApplicationHandle

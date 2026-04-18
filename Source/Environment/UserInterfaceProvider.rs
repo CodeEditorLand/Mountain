@@ -270,7 +270,11 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 		Options:Option<QuickPickOptionsDTO>,
 	) -> Result<Option<Vec<String>>, CommonError> {
-		dev_log!("window", "[UserInterfaceProvider] Showing quick pick with {} items.", Items.len());
+		dev_log!(
+			"window",
+			"[UserInterfaceProvider] Showing quick pick with {} items.",
+			Items.len()
+		);
 
 		let Payload = json!({ "Items": Items, "Options": Options });
 
@@ -343,8 +347,12 @@ async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 		},
 
 		Err(_) => {
-			dev_log!("window", "warn: [UserInterfaceProvider] UI request '{}' with ID {} timed out.",
-				EventName, RequestIdentifier);
+			dev_log!(
+				"window",
+				"warn: [UserInterfaceProvider] UI request '{}' with ID {} timed out.",
+				EventName,
+				RequestIdentifier
+			);
 
 			let mut Guard = Environment
 				.ApplicationState

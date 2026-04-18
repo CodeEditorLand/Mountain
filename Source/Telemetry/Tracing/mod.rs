@@ -23,6 +23,7 @@
 #[cfg(feature = "Telemetry")]
 #[cfg(feature = "Telemetry")]
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
 use crate::dev_log;
 
 // ============================================================================
@@ -100,16 +101,25 @@ where
 	match operation.await {
 		Ok(result) => {
 			let duration = start.elapsed();
-			dev_log!("lifecycle", 
+			dev_log!(
+				"lifecycle",
 				"RPC call completed: {}.{} (duration: {:?})",
-				service_name, method_name, duration
+				service_name,
+				method_name,
+				duration
 			);
 			Ok(result)
 		},
 		Err(err) => {
 			let duration = start.elapsed();
-			dev_log!("lifecycle", "error: RPC call failed: {}.{} (duration: {:?}, error: {})",
-				service_name, method_name, duration, err);
+			dev_log!(
+				"lifecycle",
+				"error: RPC call failed: {}.{} (duration: {:?}, error: {})",
+				service_name,
+				method_name,
+				duration,
+				err
+			);
 			Err(err)
 		},
 	}
@@ -143,13 +153,23 @@ where
 	match operation.await {
 		Ok(result) => {
 			let duration = start.elapsed();
-			dev_log!("lifecycle", "Command executed successfully: {} (duration: {:?})", command_name, duration);
+			dev_log!(
+				"lifecycle",
+				"Command executed successfully: {} (duration: {:?})",
+				command_name,
+				duration
+			);
 			Ok(result)
 		},
 		Err(err) => {
 			let duration = start.elapsed();
-			dev_log!("lifecycle", "error: Command execution failed: {} (duration: {:?}, error: {})",
-				command_name, duration, err);
+			dev_log!(
+				"lifecycle",
+				"error: Command execution failed: {} (duration: {:?}, error: {})",
+				command_name,
+				duration,
+				err
+			);
 			Err(err)
 		},
 	}

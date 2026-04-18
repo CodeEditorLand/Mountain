@@ -54,10 +54,18 @@ pub(super) async fn post_message_to_webview_impl(
 				CommonError::IPCError { Description:format!("Failed to post message to Webview: {}", error) }
 			})?;
 
-		dev_log!("extensions", "[WebviewProvider] Message sent successfully to Webview: {}", handle);
+		dev_log!(
+			"extensions",
+			"[WebviewProvider] Message sent successfully to Webview: {}",
+			handle
+		);
 		Ok(true)
 	} else {
-		dev_log!("extensions", "warn: [WebviewProvider] Webview not found for message: {}", handle);
+		dev_log!(
+			"extensions",
+			"warn: [WebviewProvider] Webview not found for message: {}",
+			handle
+		);
 		Ok(false)
 	}
 }
@@ -67,7 +75,11 @@ pub(super) async fn setup_webview_message_listener_impl(
 	env:&MountainEnvironment,
 	handle:String,
 ) -> Result<(), CommonError> {
-	dev_log!("extensions", "[WebviewProvider] Setting up message listener for Webview: {}", handle);
+	dev_log!(
+		"extensions",
+		"[WebviewProvider] Setting up message listener for Webview: {}",
+		handle
+	);
 
 	// In a full implementation, this would register an event listener
 	// that forwards Webview messages to the appropriate handler.

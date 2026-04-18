@@ -9,19 +9,26 @@ use serde_json::json;
 use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	Empty, ExecuteCommandRequest, ExecuteCommandResponse,
-	RegisterCommandRequest, UnregisterCommandRequest,
+use crate::{
+	Vine::Generated::{
+		Empty,
+		ExecuteCommandRequest,
+		ExecuteCommandResponse,
+		RegisterCommandRequest,
+		UnregisterCommandRequest,
+	},
+	dev_log,
 };
 
 pub async fn RegisterCommand(
 	Service:&CocoonServiceImpl,
 	req:RegisterCommandRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Registering command '{}' from extension '{}'",
-		req.command_id, req.extension_id
+		req.command_id,
+		req.extension_id
 	);
 
 	// Wire to CommandExecutor::RegisterCommand which stores a Proxied handler
@@ -31,11 +38,18 @@ pub async fn RegisterCommand(
 		.RegisterCommand(req.extension_id.clone(), req.command_id.clone())
 		.await
 	{
-		dev_log!("cocoon", "warn: [CocoonService] Failed to register command '{}': {:?}", req.command_id, Error);
+		dev_log!(
+			"cocoon",
+			"warn: [CocoonService] Failed to register command '{}': {:?}",
+			req.command_id,
+			Error
+		);
 	} else {
-		dev_log!("cocoon",
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Command registered: id={}, title={:?}",
-			req.command_id, req.title
+			req.command_id,
+			req.title
 		);
 	}
 
@@ -46,7 +60,8 @@ pub async fn ExecuteContributedCommand(
 	Service:&CocoonServiceImpl,
 	req:ExecuteCommandRequest,
 ) -> Result<Response<ExecuteCommandResponse>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Executing command '{}' with {} arguments",
 		req.command_id,
 		req.arguments.len()
@@ -99,8 +114,17 @@ pub async fn UnregisterCommand(
 	dev_log!("cocoon", "[CocoonService] Unregistering command '{}'", req.command_id);
 
 	// Wire to CommandExecutor::UnregisterCommand
-	if let Err(Error) = Service.environment.UnregisterCommand(String::new(), req.command_id.clone()).await {
-		dev_log!("cocoon", "warn: [CocoonService] Failed to unregister command '{}': {:?}", req.command_id, Error);
+	if let Err(Error) = Service
+		.environment
+		.UnregisterCommand(String::new(), req.command_id.clone())
+		.await
+	{
+		dev_log!(
+			"cocoon",
+			"warn: [CocoonService] Failed to unregister command '{}': {:?}",
+			req.command_id,
+			Error
+		);
 	} else {
 		dev_log!("cocoon", "[CocoonService] Command removed: {}", req.command_id);
 	}

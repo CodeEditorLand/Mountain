@@ -77,7 +77,12 @@ pub(super) async fn set_webview_html_impl(
 	handle:String,
 	html:String,
 ) -> Result<(), CommonError> {
-	dev_log!("extensions", "[WebviewProvider] Setting HTML for Webview: {} ({} bytes)", handle, html.len());
+	dev_log!(
+		"extensions",
+		"[WebviewProvider] Setting HTML for Webview: {} ({} bytes)",
+		handle,
+		html.len()
+	);
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		webview_window

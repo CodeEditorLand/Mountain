@@ -14,8 +14,7 @@ use CommonLibrary::{
 use serde_json::{Map, Value};
 use tauri::Manager;
 
-use crate::{Environment::Utility, RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime};
-use crate::dev_log;
+use crate::{Environment::Utility, RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime, dev_log};
 
 /// Updates a configuration value in the appropriate `settings.json` file.
 pub(super) async fn update_configuration_value(
@@ -26,7 +25,12 @@ pub(super) async fn update_configuration_value(
 	_overrides:ConfigurationOverridesDTO,
 	_scope_to_language:Option<bool>,
 ) -> Result<(), CommonError> {
-	dev_log!("config", "[ConfigurationProvider] Updating key '{}' in target {:?}", key, target);
+	dev_log!(
+		"config",
+		"[ConfigurationProvider] Updating key '{}' in target {:?}",
+		key,
+		target
+	);
 
 	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
@@ -58,7 +62,11 @@ pub(super) async fn update_configuration_value(
 		},
 
 		_ => {
-			dev_log!("config", "warn: [ConfigurationProvider] Unsupported configuration target: {:?}", target);
+			dev_log!(
+				"config",
+				"warn: [ConfigurationProvider] Unsupported configuration target: {:?}",
+				target
+			);
 
 			return Err(CommonError::NotImplemented {
 				FeatureName:"This configuration target is not supported".into(),

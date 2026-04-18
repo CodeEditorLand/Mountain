@@ -54,8 +54,7 @@ use CommonLibrary::{
 	Terminal::TerminalProvider::TerminalProvider as TerminalProviderTrait,
 };
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 impl ApplicationRunTime {
 	/// Orchestrates the graceful shutdown of all services.
@@ -65,8 +64,19 @@ impl ApplicationRunTime {
 		let shutdown_result = self.ShutdownWithRecovery().await;
 
 		match shutdown_result {
-			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Service shutdown tasks completed successfully."),
-			Err(error) => dev_log!("lifecycle", "error: [ApplicationRunTime] Service shutdown completed with errors: {}", error),
+			Ok(()) => {
+				dev_log!(
+					"lifecycle",
+					"[ApplicationRunTime] Service shutdown tasks completed successfully."
+				)
+			},
+			Err(error) => {
+				dev_log!(
+					"lifecycle",
+					"error: [ApplicationRunTime] Service shutdown completed with errors: {}",
+					error
+				)
+			},
 		}
 	}
 
@@ -81,7 +91,10 @@ impl ApplicationRunTime {
 			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Cocoon shutdown successful"),
 			Err(error) => {
 				shutdown_errors.push(format!("Cocoon shutdown failed: {}", error));
-				dev_log!("lifecycle", "warn: [ApplicationRunTime] Cocoon shutdown failed, continuing with other services...");
+				dev_log!(
+					"lifecycle",
+					"warn: [ApplicationRunTime] Cocoon shutdown failed, continuing with other services..."
+				);
 			},
 		}
 
@@ -90,7 +103,10 @@ impl ApplicationRunTime {
 			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Terminal disposal successful"),
 			Err(error) => {
 				shutdown_errors.push(format!("Terminal disposal failed: {}", error));
-				dev_log!("lifecycle", "warn: [ApplicationRunTime] Terminal disposal failed, continuing...");
+				dev_log!(
+					"lifecycle",
+					"warn: [ApplicationRunTime] Terminal disposal failed, continuing..."
+				);
 			},
 		}
 
@@ -99,7 +115,10 @@ impl ApplicationRunTime {
 			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Application state saved"),
 			Err(error) => {
 				shutdown_errors.push(format!("State save failed: {}", error));
-				dev_log!("lifecycle", "warn: [ApplicationRunTime] Failed to save application state, continuing...");
+				dev_log!(
+					"lifecycle",
+					"warn: [ApplicationRunTime] Failed to save application state, continuing..."
+				);
 			},
 		}
 
@@ -142,8 +161,12 @@ impl ApplicationRunTime {
 						return Err(error);
 					}
 
-					dev_log!("lifecycle", "warn: [ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
-						attempts, error);
+					dev_log!(
+						"lifecycle",
+						"warn: [ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
+						attempts,
+						error
+					);
 
 					tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 				},
@@ -177,7 +200,12 @@ impl ApplicationRunTime {
 				Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Terminal {} disposed successfully", id),
 				Err(error) => {
 					disposal_errors.push(format!("Terminal {}: {}", id, error));
-					dev_log!("lifecycle", "warn: [ApplicationRunTime] Failed to dispose terminal {}: {}", id, error);
+					dev_log!(
+						"lifecycle",
+						"warn: [ApplicationRunTime] Failed to dispose terminal {}: {}",
+						id,
+						error
+					);
 				},
 			}
 		}
@@ -242,7 +270,11 @@ impl ApplicationRunTime {
 			.PendingUserInterfaceRequest
 			.lock()
 			.unwrap_or_else(|e| {
-				dev_log!("lifecycle", "error: [ApplicationRunTime] Failed to lock pending UI requests: {}", e);
+				dev_log!(
+					"lifecycle",
+					"error: [ApplicationRunTime] Failed to lock pending UI requests: {}",
+					e
+				);
 				e.into_inner()
 			});
 

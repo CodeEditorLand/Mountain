@@ -43,8 +43,7 @@ use std::{
 
 use tauri::Wry;
 
-use crate::Environment::CommandProvider::CommandHandler;
-use crate::dev_log;
+use crate::{Environment::CommandProvider::CommandHandler, dev_log};
 
 /// Extension registry containing command registry and provider handle state.
 #[derive(Clone)]
@@ -113,7 +112,11 @@ impl Registry {
 	pub fn SetExtensionScanPaths(&self, paths:Vec<PathBuf>) {
 		if let Ok(mut guard) = self.ExtensionScanPaths.lock() {
 			*guard = paths;
-			dev_log!("extensions", "[ExtensionRegistry] Extension scan paths updated ({} paths)", guard.len());
+			dev_log!(
+				"extensions",
+				"[ExtensionRegistry] Extension scan paths updated ({} paths)",
+				guard.len()
+			);
 		}
 	}
 
@@ -138,7 +141,11 @@ impl Registry {
 	pub fn SetEnabledProposedAPIs(&self, apis:HashMap<String, Vec<String>>) {
 		if let Ok(mut guard) = self.EnabledProposedAPIs.lock() {
 			*guard = apis;
-			dev_log!("extensions", "[ExtensionRegistry] Enabled proposed APIs updated ({} entries)", guard.len());
+			dev_log!(
+				"extensions",
+				"[ExtensionRegistry] Enabled proposed APIs updated ({} entries)",
+				guard.len()
+			);
 		}
 	}
 

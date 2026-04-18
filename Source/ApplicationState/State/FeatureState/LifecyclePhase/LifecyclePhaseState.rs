@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex as StandardMutex};
-use crate::dev_log;
 
+use crate::dev_log;
 
 /// Application lifecycle phases (mirrors VS Code LifecyclePhase).
 /// 1 = Starting, 2 = Ready, 3 = Restored, 4 = Eventually
@@ -15,7 +15,10 @@ pub struct LifecyclePhaseState {
 
 impl Default for LifecyclePhaseState {
 	fn default() -> Self {
-		dev_log!("lifecycle", "[LifecyclePhaseState] Initializing default lifecycle state (phase 1: Starting)...");
+		dev_log!(
+			"lifecycle",
+			"[LifecyclePhaseState] Initializing default lifecycle state (phase 1: Starting)..."
+		);
 		Self { CurrentPhase:Arc::new(StandardMutex::new(1)) }
 	}
 }

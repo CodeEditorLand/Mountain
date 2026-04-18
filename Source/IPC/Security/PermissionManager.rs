@@ -243,7 +243,11 @@ impl PermissionManager {
 		let required_permissions = self.get_required_permissions(operation).await;
 
 		if required_permissions.is_empty() {
-			dev_log!("ipc", "[PermissionManager] Operation '{}' requires no special permissions", operation);
+			dev_log!(
+				"ipc",
+				"[PermissionManager] Operation '{}' requires no special permissions",
+				operation
+			);
 			return Ok(()); // No specific permissions required
 		}
 
@@ -259,9 +263,12 @@ impl PermissionManager {
 		for required in &required_permissions {
 			if !user_permissions.contains(required) {
 				let error = format!("Missing permission: {}", required);
-				dev_log!("ipc", 
+				dev_log!(
+					"ipc",
 					"[PermissionManager] Permission denied for user '{}' on operation '{}': {}",
-					context.user_id, operation, error
+					context.user_id,
+					operation,
+					error
 				);
 
 				// Log permission denial
@@ -288,9 +295,11 @@ impl PermissionManager {
 		})
 		.await;
 
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[PermissionManager] Access granted for user '{}' on operation '{}'",
-			context.user_id, operation
+			context.user_id,
+			operation
 		);
 
 		Ok(())
@@ -339,26 +348,34 @@ impl PermissionManager {
 
 		match event.event_type {
 			SecurityEventType::PermissionDenied => {
-				dev_log!("ipc", "warn: [SecurityEvent] Permission denied - User: {}, Operation: {}, Details: {:?}",
+				dev_log!(
+					"ipc",
+					"warn: [SecurityEvent] Permission denied - User: {}, Operation: {}, Details: {:?}",
 					event.user_id,
 					event.operation,
-					event.details);
+					event.details
+				);
 			},
 			SecurityEventType::SecurityViolation => {
-				dev_log!("ipc", "error: [SecurityEvent] Security violation - User: {}, Operation: {}, Details: {:?}",
+				dev_log!(
+					"ipc",
+					"error: [SecurityEvent] Security violation - User: {}, Operation: {}, Details: {:?}",
 					event.user_id,
 					event.operation,
-					event.details);
+					event.details
+				);
 			},
 			SecurityEventType::AccessGranted => {
-				dev_log!("ipc", 
+				dev_log!(
+					"ipc",
 					"[SecurityEvent] Access granted - User: {}, Operation: {}",
 					event.user_id,
 					event.operation
 				);
 			},
 			_ => {
-				dev_log!("ipc", 
+				dev_log!(
+					"ipc",
 					"[SecurityEvent] {:?} - User: {}, Operation: {}",
 					event.event_type,
 					event.user_id,
@@ -440,7 +457,8 @@ impl PermissionManager {
 			);
 		}
 
-		dev_log!("ipc", 
+		dev_log!(
+			"ipc",
 			"[PermissionManager] Initialized {} permissions and {} roles",
 			permissions.len(),
 			roles.len()

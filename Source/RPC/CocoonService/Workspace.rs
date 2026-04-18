@@ -9,12 +9,20 @@ use tauri::Emitter;
 use tonic::{Response, Status};
 
 use super::CocoonServiceImpl;
-use crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	ApplyEditRequest, ApplyEditResponse, Empty, OpenDocumentRequest,
-	OpenDocumentResponse, SaveAllRequest, SaveAllResponse,
-	UpdateConfigurationRequest, UpdateWorkspaceFoldersRequest,
+use crate::{
+	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+	Vine::Generated::{
+		ApplyEditRequest,
+		ApplyEditResponse,
+		Empty,
+		OpenDocumentRequest,
+		OpenDocumentResponse,
+		SaveAllRequest,
+		SaveAllResponse,
+		UpdateConfigurationRequest,
+		UpdateWorkspaceFoldersRequest,
+	},
+	dev_log,
 };
 
 pub async fn OpenDocument(
@@ -32,10 +40,7 @@ pub async fn OpenDocument(
 	Ok(Response::new(OpenDocumentResponse { success:true }))
 }
 
-pub async fn SaveAll(
-	Service:&CocoonServiceImpl,
-	req:SaveAllRequest,
-) -> Result<Response<SaveAllResponse>, Status> {
+pub async fn SaveAll(Service:&CocoonServiceImpl, req:SaveAllRequest) -> Result<Response<SaveAllResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] save_all: includeUntitled={}", req.include_untitled);
 
 	let _ = Service
@@ -75,7 +80,11 @@ pub async fn UpdateConfiguration(
 	Service:&CocoonServiceImpl,
 	req:UpdateConfigurationRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] update_configuration: {} changed keys", req.changed_keys.len());
+	dev_log!(
+		"cocoon",
+		"[CocoonService] update_configuration: {} changed keys",
+		req.changed_keys.len()
+	);
 
 	// Forward configuration changes to Sky for workbench settings refresh
 	let _ = Service.environment.ApplicationHandle.emit(
@@ -92,7 +101,8 @@ pub async fn UpdateWorkspaceFolders(
 	Service:&CocoonServiceImpl,
 	req:UpdateWorkspaceFoldersRequest,
 ) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] Updating workspace: {} additions, {} removals",
 		req.additions.len(),
 		req.removals.len()
@@ -100,14 +110,16 @@ pub async fn UpdateWorkspaceFolders(
 
 	// Update WorkspaceState in MountainEnvironment
 	for addition in &req.additions {
-		dev_log!("cocoon",
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Adding workspace folder: {} ({})",
 			addition.name,
 			addition.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
 		);
 	}
 	for removal in &req.removals {
-		dev_log!("cocoon",
+		dev_log!(
+			"cocoon",
 			"[CocoonService] Removing workspace folder: {}",
 			removal.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
 		);
@@ -130,8 +142,7 @@ pub async fn UpdateWorkspaceFolders(
 		for (Idx, Addition) in req.additions.iter().enumerate() {
 			let UriValue = Addition.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
 			if let Ok(ParsedUrl) = url::Url::parse(UriValue) {
-				if let Ok(DTO) = WorkspaceFolderStateDTO::New(ParsedUrl, Addition.name.clone(), ExistingCount + Idx)
-				{
+				if let Ok(DTO) = WorkspaceFolderStateDTO::New(ParsedUrl, Addition.name.clone(), ExistingCount + Idx) {
 					Folders.push(DTO);
 				}
 			}

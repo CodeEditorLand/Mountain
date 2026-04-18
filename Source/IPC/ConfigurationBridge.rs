@@ -233,10 +233,10 @@ type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider, Environment::Requires::Requires};
 use sha2::Digest;
 
-use crate::dev_log;
 use crate::{
 	IPC::WindServiceAdapters::{WindDesktopConfiguration, WindServiceAdapter},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
 };
 
 /// Configuration bridge that handles Wind's desktop configuration needs

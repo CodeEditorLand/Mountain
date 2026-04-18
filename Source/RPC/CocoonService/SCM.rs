@@ -6,15 +6,14 @@
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
+use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 use super::CocoonServiceImpl;
-use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
-use crate::dev_log;
-use crate::Vine::Generated::{
-	Empty, GitExecRequest, GitExecResponse, RegisterScmProviderRequest,
-	UpdateScmGroupRequest,
+use crate::{
+	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
+	Vine::Generated::{Empty, GitExecRequest, GitExecResponse, RegisterScmProviderRequest, UpdateScmGroupRequest},
+	dev_log,
 };
-use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 pub async fn RegisterScmProvider(
 	Service:&CocoonServiceImpl,
@@ -22,7 +21,11 @@ pub async fn RegisterScmProvider(
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering SCM provider: {}", req.scm_id);
 
-	let Handle = req.scm_id.as_bytes().iter().fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+	let Handle = req
+		.scm_id
+		.as_bytes()
+		.iter()
+		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 	let dto = ProviderRegistrationDTO {
 		Handle,
 		ProviderType:ProviderType::SourceControl,
@@ -46,18 +49,24 @@ pub async fn RegisterScmProvider(
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn UpdateScmGroup(
-	Service:&CocoonServiceImpl,
-	req:UpdateScmGroupRequest,
-) -> Result<Response<Empty>, Status> {
-	dev_log!("cocoon", "[CocoonService] update_scm_group: provider={} group={}", req.provider_id, req.group_id);
+pub async fn UpdateScmGroup(Service:&CocoonServiceImpl, req:UpdateScmGroupRequest) -> Result<Response<Empty>, Status> {
+	dev_log!(
+		"cocoon",
+		"[CocoonService] update_scm_group: provider={} group={}",
+		req.provider_id,
+		req.group_id
+	);
 
-	let ResourceStates:Vec<serde_json::Value> = req.resource_states.iter().map(|Rs| {
-		json!({
-			"uri": Rs.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""),
-			"decorations": Rs.decorations,
+	let ResourceStates:Vec<serde_json::Value> = req
+		.resource_states
+		.iter()
+		.map(|Rs| {
+			json!({
+				"uri": Rs.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""),
+				"decorations": Rs.decorations,
+			})
 		})
-	}).collect();
+		.collect();
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://scm/updateGroup",
@@ -71,10 +80,7 @@ pub async fn UpdateScmGroup(
 	Ok(Response::new(Empty {}))
 }
 
-pub async fn GitExec(
-	Service:&CocoonServiceImpl,
-	req:GitExecRequest,
-) -> Result<Response<GitExecResponse>, Status> {
+pub async fn GitExec(Service:&CocoonServiceImpl, req:GitExecRequest) -> Result<Response<GitExecResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] git_exec: {}", req.args.join(" "));
 
 	let WorkingDir = if req.repository_path.is_empty() {
@@ -94,7 +100,8 @@ pub async fn GitExec(
 		})?;
 
 	let ExitCode = Output.status.code().unwrap_or(-1);
-	dev_log!("cocoon",
+	dev_log!(
+		"cocoon",
 		"[CocoonService] git_exec exit={} stdout={} bytes stderr={} bytes",
 		ExitCode,
 		Output.stdout.len(),

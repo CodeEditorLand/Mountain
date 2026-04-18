@@ -163,8 +163,7 @@ use CommonLibrary::{
 type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationOverridesDTO;
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Wind desktop configuration structure
 /// Mirrors Wind's IDesktopConfiguration interface

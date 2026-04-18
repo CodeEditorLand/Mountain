@@ -35,9 +35,7 @@ use std::{
 	sync::{Arc, Mutex as StandardMutex},
 };
 
-
-use crate::ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO;
-use crate::dev_log;
+use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO, dev_log};
 
 /// Language provider registration state.
 #[derive(Clone)]
@@ -48,7 +46,10 @@ pub struct Registration {
 
 impl Default for Registration {
 	fn default() -> Self {
-		dev_log!("extensions", "[ProviderRegistration] Initializing default provider registration...");
+		dev_log!(
+			"extensions",
+			"[ProviderRegistration] Initializing default provider registration..."
+		);
 
 		Self { LanguageProviders:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
@@ -73,7 +74,11 @@ impl Registration {
 	pub fn RegisterProvider(&self, handle:u32, provider:ProviderRegistrationDTO) {
 		if let Ok(mut guard) = self.LanguageProviders.lock() {
 			guard.insert(handle, provider);
-			dev_log!("extensions", "[ProviderRegistration] Provider registered with handle: {}", handle);
+			dev_log!(
+				"extensions",
+				"[ProviderRegistration] Provider registered with handle: {}",
+				handle
+			);
 		}
 	}
 
@@ -81,7 +86,11 @@ impl Registration {
 	pub fn UnregisterProvider(&self, handle:u32) {
 		if let Ok(mut guard) = self.LanguageProviders.lock() {
 			guard.remove(&handle);
-			dev_log!("extensions", "[ProviderRegistration] Provider unregistered with handle: {}", handle);
+			dev_log!(
+				"extensions",
+				"[ProviderRegistration] Provider unregistered with handle: {}",
+				handle
+			);
 		}
 	}
 

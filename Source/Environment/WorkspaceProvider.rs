@@ -134,7 +134,10 @@ impl WorkspaceProvider for MountainEnvironment {
 
 	/// Requests workspace trust from the user.
 	async fn RequestWorkspaceTrust(&self, _Options:Option<Value>) -> Result<bool, CommonError> {
-		dev_log!("workspaces", "warn: [WorkspaceProvider] RequestWorkspaceTrust is not implemented; defaulting to trusted.");
+		dev_log!(
+			"workspaces",
+			"warn: [WorkspaceProvider] RequestWorkspaceTrust is not implemented; defaulting to trusted."
+		);
 		Ok(true)
 	}
 
@@ -180,7 +183,8 @@ impl WorkspaceEditApplier for MountainEnvironment {
 		match Edit {
 			WorkspaceEditDTO { Edits } => {
 				for (DocumentURI, TextEdits) in Edits {
-					dev_log!("workspaces", 
+					dev_log!(
+						"workspaces",
 						"[WorkspaceEditApplier] Would apply {} edits to document: {}",
 						TextEdits.len(),
 						DocumentURI
@@ -197,7 +201,10 @@ impl WorkspaceEditApplier for MountainEnvironment {
 		// failure, emit before/after events for extension observability, and return
 		// false if any edit fails with detailed error information. This enables
 		// multi-file refactorings, code actions, and automated fixes.
-		dev_log!("workspaces", "warn: [WorkspaceEditApplier] ApplyWorkspaceEdit is not fully implemented");
+		dev_log!(
+			"workspaces",
+			"warn: [WorkspaceEditApplier] ApplyWorkspaceEdit is not fully implemented"
+		);
 
 		Ok(true)
 	}

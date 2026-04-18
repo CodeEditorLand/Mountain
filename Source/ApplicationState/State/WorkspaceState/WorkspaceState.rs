@@ -44,9 +44,10 @@ use std::sync::{
 	atomic::{AtomicBool, Ordering as AtomicOrdering},
 };
 
-
-use crate::ApplicationState::DTO::{WindowStateDTO::WindowStateDTO, WorkspaceFolderStateDTO::WorkspaceFolderStateDTO};
-use crate::dev_log;
+use crate::{
+	ApplicationState::DTO::{WindowStateDTO::WindowStateDTO, WorkspaceFolderStateDTO::WorkspaceFolderStateDTO},
+	dev_log,
+};
 
 /// Workspace state containing all workspace-related fields.
 #[derive(Clone)]
@@ -126,7 +127,11 @@ impl State {
 	pub fn SetWorkspaceFolders(&self, folders:Vec<WorkspaceFolderStateDTO>) {
 		if let Ok(mut guard) = self.WorkspaceFolders.lock() {
 			*guard = folders;
-			dev_log!("workspaces", "[WorkspaceState] Workspace folders updated ({} folders)", guard.len());
+			dev_log!(
+				"workspaces",
+				"[WorkspaceState] Workspace folders updated ({} folders)",
+				guard.len()
+			);
 		}
 	}
 

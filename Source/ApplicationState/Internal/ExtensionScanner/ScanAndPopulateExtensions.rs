@@ -36,8 +36,11 @@ use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::Value;
 use tauri::AppHandle;
 
-use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, ExtensionManagement};
-use crate::dev_log;
+use crate::{
+	ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
+	ExtensionManagement,
+	dev_log,
+};
 
 /// Scans all registered extension paths for valid extensions and populates the
 /// state.
@@ -92,27 +95,43 @@ pub async fn ScanAndPopulateExtensions(
 						inserted_from_path += 1;
 					} else {
 						rejected_empty_identifier += 1;
-						dev_log!("extensions",
-							"warn: [ExtensionScanner] Rejected extension '{}' — empty identifier (publisher='{}', Identifier={:?})",
-							extension.Name, extension.Publisher, extension.Identifier);
+						dev_log!(
+							"extensions",
+							"warn: [ExtensionScanner] Rejected extension '{}' — empty identifier (publisher='{}', \
+							 Identifier={:?})",
+							extension.Name,
+							extension.Publisher,
+							extension.Identifier
+						);
 					}
 				}
-				dev_log!("extensions",
+				dev_log!(
+					"extensions",
 					"[ExtensionScanner] Path '{}' yielded {} parsed, {} inserted, {} rejected",
-					path.display(), path_count, inserted_from_path, rejected_empty_identifier);
+					path.display(),
+					path_count,
+					inserted_from_path,
+					rejected_empty_identifier
+				);
 			},
 			Err(error) => {
 				failed_scans += 1;
-				dev_log!("extensions", "warn: [ExtensionScanner] Failed to scan extension path '{}': {}",
+				dev_log!(
+					"extensions",
+					"warn: [ExtensionScanner] Failed to scan extension path '{}': {}",
 					path.display(),
-					error);
+					error
+				);
 			},
 		}
 	}
 
 	// Store discovered extensions into ApplicationState
 	let post_write_count = {
-		let mut Guard = _State.ScannedExtensions.ScannedExtensions.lock()
+		let mut Guard = _State
+			.ScannedExtensions
+			.ScannedExtensions
+			.lock()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 		Guard.clear();
 		for (Key, Dto) in &all_found_extensions {
@@ -121,8 +140,10 @@ pub async fn ScanAndPopulateExtensions(
 		Guard.len()
 	};
 
-	dev_log!("extensions",
-		"[ExtensionScanner] Extension scan complete. Found {} extensions ({} successful scans, {} failed scans). ScannedExtensions map now has {} entries.",
+	dev_log!(
+		"extensions",
+		"[ExtensionScanner] Extension scan complete. Found {} extensions ({} successful scans, {} failed scans). \
+		 ScannedExtensions map now has {} entries.",
 		all_found_extensions.len(),
 		successful_scans,
 		failed_scans,
@@ -130,7 +151,11 @@ pub async fn ScanAndPopulateExtensions(
 	);
 
 	if failed_scans > 0 {
-		dev_log!("extensions", "warn: [ExtensionScanner] {} extension paths failed to scan", failed_scans);
+		dev_log!(
+			"extensions",
+			"warn: [ExtensionScanner] {} extension paths failed to scan",
+			failed_scans
+		);
 	}
 
 	Ok(())
@@ -154,7 +179,10 @@ pub async fn ScanExtensionsWithRecovery(
 	ApplicationHandle:AppHandle,
 	State:&crate::ApplicationState::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
-	dev_log!("extensions", "[ExtensionScanner] Starting robust extension scan with recovery...");
+	dev_log!(
+		"extensions",
+		"[ExtensionScanner] Starting robust extension scan with recovery..."
+	);
 
 	// Clear potentially corrupted extension state first
 	// Note: Would clear
@@ -167,9 +195,16 @@ pub async fn ScanExtensionsWithRecovery(
 			Ok(())
 		},
 		Err(error) => {
-			dev_log!("extensions", "error: [ExtensionScanner] Robust extension scan failed: {}", error);
+			dev_log!(
+				"extensions",
+				"error: [ExtensionScanner] Robust extension scan failed: {}",
+				error
+			);
 			// Attempt recovery by clearing state and retrying once
-			dev_log!("extensions", "warn: [ExtensionScanner] Attempting recovery from extension scan failure...");
+			dev_log!(
+				"extensions",
+				"warn: [ExtensionScanner] Attempting recovery from extension scan failure..."
+			);
 
 			// Clear state again
 			// Note: Would clear

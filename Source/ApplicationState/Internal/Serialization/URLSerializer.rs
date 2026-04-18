@@ -27,6 +27,7 @@
 
 use serde::Serializer;
 use url::Url;
+
 use crate::dev_log;
 
 /// Serializes a URL to a JSON string value.

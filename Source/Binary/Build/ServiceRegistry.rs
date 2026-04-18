@@ -43,6 +43,7 @@ use tokio::{
 	io::{AsyncReadExt, AsyncWriteExt},
 	net::TcpStream,
 };
+
 use crate::dev_log;
 
 /// Represents a local HTTP/HTTPS service registered with the land:// scheme
@@ -160,7 +161,8 @@ impl ServiceRegistry {
 		use_tls:bool,
 		health_check_path:Option<String>,
 	) {
-		dev_log!("lifecycle", 
+		dev_log!(
+			"lifecycle",
 			"[ServiceRegistry] Registering service: {} -> HTTP:{}, TLS:{}, use_tls:{}",
 			name,
 			port,
@@ -176,20 +178,30 @@ impl ServiceRegistry {
 				// NOTE: TLS certificate is generated on-demand when needed
 				dev_log!("lifecycle", "[ServiceRegistry] TLS will be provisioned on-demand for {}", name);
 			} else {
-				dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} requested TLS but no certificate manager available",
-					name);
+				dev_log!(
+					"lifecycle",
+					"warn: [ServiceRegistry] Service {} requested TLS but no certificate manager available",
+					name
+				);
 			}
 		}
 
 		if let Ok(mut services) = self.services.write() {
 			// Check if service already exists
 			if services.contains_key(&name) {
-				dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} already registered, overwriting", name);
+				dev_log!(
+					"lifecycle",
+					"warn: [ServiceRegistry] Service {} already registered, overwriting",
+					name
+				);
 			}
 			services.insert(name.clone(), service);
 			dev_log!("lifecycle", "[ServiceRegistry] Service {} registered successfully", name);
 		} else {
-			dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire write lock for registration");
+			dev_log!(
+				"lifecycle",
+				"error: [ServiceRegistry] Failed to acquire write lock for registration"
+			);
 		}
 	}
 
@@ -238,7 +250,10 @@ impl ServiceRegistry {
 		if let Ok(services) = self.services.read() {
 			services.values().cloned().collect()
 		} else {
-			dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire read lock for all_services");
+			dev_log!(
+				"lifecycle",
+				"error: [ServiceRegistry] Failed to acquire read lock for all_services"
+			);
 			Vec::new()
 		}
 	}
@@ -260,9 +275,12 @@ impl ServiceRegistry {
 		let health_path = service.health_check_path.as_deref().unwrap_or("/health");
 		let addr = format!("127.0.0.1:{}", service.port);
 
-		dev_log!("lifecycle", 
+		dev_log!(
+			"lifecycle",
 			"[ServiceRegistry] Performing health check for {} at {}:{}",
-			name, addr, health_path
+			name,
+			addr,
+			health_path
 		);
 
 		// Try to connect to the service
@@ -282,24 +300,43 @@ impl ServiceRegistry {
 								if is_healthy {
 									dev_log!("lifecycle", "[ServiceRegistry] Service {} is healthy", name);
 								} else {
-									dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} health check failed: not 200", name);
+									dev_log!(
+										"lifecycle",
+										"warn: [ServiceRegistry] Service {} health check failed: not 200",
+										name
+									);
 								}
 								Ok(is_healthy)
 							},
 							Err(e) => {
-								dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} health check failed to read: {}", name, e);
+								dev_log!(
+									"lifecycle",
+									"warn: [ServiceRegistry] Service {} health check failed to read: {}",
+									name,
+									e
+								);
 								Ok(false)
 							},
 						}
 					},
 					Err(e) => {
-						dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} health check failed to write: {}", name, e);
+						dev_log!(
+							"lifecycle",
+							"warn: [ServiceRegistry] Service {} health check failed to write: {}",
+							name,
+							e
+						);
 						Ok(false)
 					},
 				}
 			},
 			Err(e) => {
-				dev_log!("lifecycle", "warn: [ServiceRegistry] Service {} health check failed to connect: {}", name, e);
+				dev_log!(
+					"lifecycle",
+					"warn: [ServiceRegistry] Service {} health check failed to connect: {}",
+					name,
+					e
+				);
 				Ok(false)
 			},
 		}
@@ -321,7 +358,10 @@ impl ServiceRegistry {
 		if let Ok(mut services) = self.services.write() {
 			services.remove(name)
 		} else {
-			dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire write lock for unregistration");
+			dev_log!(
+				"lifecycle",
+				"error: [ServiceRegistry] Failed to acquire write lock for unregistration"
+			);
 			None
 		}
 	}

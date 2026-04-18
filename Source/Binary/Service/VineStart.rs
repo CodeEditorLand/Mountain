@@ -2,7 +2,6 @@
 //!
 //! Initializes and starts the Vine gRPC server.
 
-
 /// Starts the Vine gRPC server at the specified addresses.
 ///
 /// # Arguments

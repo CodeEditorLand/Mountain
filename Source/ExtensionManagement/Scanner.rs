@@ -122,11 +122,11 @@ use CommonLibrary::{
 use serde_json::{Map, Value};
 use tauri::Manager;
 
-use crate::dev_log;
 use crate::{
 	ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO},
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
 };
 
 /// Scans a single directory for valid extensions.
@@ -143,21 +143,51 @@ pub async fn ScanDirectoryForExtensions(
 
 	let mut FoundExtensions = Vec::new();
 
+	// Distinguish "directory does not exist" (first-run, no user extensions
+	// installed yet — perfectly normal) from a real I/O failure. Only the
+	// latter deserves a `warn:` prefix; the former is debug-level noise.
+	match DirectoryPath.try_exists() {
+		Ok(false) => {
+			dev_log!(
+				"extensions",
+				"[ExtensionScanner] Extension path '{}' does not exist, skipping (no extensions installed here)",
+				DirectoryPath.display()
+			);
+			return Ok(Vec::new());
+		},
+		Err(error) => {
+			dev_log!(
+				"extensions",
+				"[ExtensionScanner] Could not stat extension path '{}': {} — skipping",
+				DirectoryPath.display(),
+				error
+			);
+			return Ok(Vec::new());
+		},
+		Ok(true) => {},
+	}
+
 	let TopLevelEntries = match RunTime.Run(ReadDirectory(DirectoryPath.clone())).await {
 		Ok(entries) => entries,
 
 		Err(error) => {
-			dev_log!("extensions", "warn: [ExtensionScanner] Could not read extension directory '{}': {}. Skipping.",
+			dev_log!(
+				"extensions",
+				"warn: [ExtensionScanner] Could not read extension directory '{}': {}. Skipping.",
 				DirectoryPath.display(),
-				error);
+				error
+			);
 
 			return Ok(Vec::new());
 		},
 	};
 
-	dev_log!("extensions",
+	dev_log!(
+		"extensions",
 		"[ExtensionScanner] Directory '{}' contains {} top-level entries",
-		DirectoryPath.display(), TopLevelEntries.len());
+		DirectoryPath.display(),
+		TopLevelEntries.len()
+	);
 
 	let mut parse_failures = 0usize;
 	let mut missing_package_json = 0usize;
@@ -168,7 +198,8 @@ pub async fn ScanDirectoryForExtensions(
 
 			let PackageJsonPath = PotentialExtensionPath.join("package.json");
 
-			dev_log!("extensions", 
+			dev_log!(
+				"extensions",
 				"[ExtensionScanner] Checking for package.json in: {}",
 				PotentialExtensionPath.display()
 			);
@@ -184,9 +215,12 @@ pub async fn ScanDirectoryForExtensions(
 						Ok(v) => v,
 						Err(error) => {
 							parse_failures += 1;
-							dev_log!("extensions", "warn: [ExtensionScanner] Failed to parse package.json at '{}': {}",
+							dev_log!(
+								"extensions",
+								"warn: [ExtensionScanner] Failed to parse package.json at '{}': {}",
 								PotentialExtensionPath.display(),
-								error);
+								error
+							);
 							continue;
 						},
 					};
@@ -195,9 +229,13 @@ pub async fn ScanDirectoryForExtensions(
 						let mut Replaced = 0u32;
 						let mut Unresolved = 0u32;
 						ResolveNLSPlaceholdersInner(&mut ManifestValue, &NLSMap, &mut Replaced, &mut Unresolved);
-						dev_log!("extensions",
+						dev_log!(
+							"extensions",
 							"[LandFix:NLS] {} → {} replaced, {} unresolved placeholders",
-							PotentialExtensionPath.display(), Replaced, Unresolved);
+							PotentialExtensionPath.display(),
+							Replaced,
+							Unresolved
+						);
 					}
 
 					match serde_json::from_value::<ExtensionDescriptionStateDTO>(ManifestValue) {
@@ -208,7 +246,9 @@ pub async fn ScanDirectoryForExtensions(
 									.unwrap_or(Value::Null);
 
 							// Construct identifier from publisher.name if not set
-							if Description.Identifier == Value::Null || Description.Identifier == Value::Object(Default::default()) {
+							if Description.Identifier == Value::Null
+								|| Description.Identifier == Value::Object(Default::default())
+							{
 								let Id = if Description.Publisher.is_empty() {
 									Description.Name.clone()
 								} else {
@@ -225,25 +265,36 @@ pub async fn ScanDirectoryForExtensions(
 
 						Err(error) => {
 							parse_failures += 1;
-							dev_log!("extensions", "warn: [ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
+							dev_log!(
+								"extensions",
+								"warn: [ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
 								PotentialExtensionPath.display(),
-								error);
+								error
+							);
 						},
 					}
 				},
 				Err(error) => {
 					missing_package_json += 1;
-					dev_log!("extensions", "warn: [ExtensionScanner] Could not read package.json at '{}': {}",
+					dev_log!(
+						"extensions",
+						"warn: [ExtensionScanner] Could not read package.json at '{}': {}",
 						PackageJsonPath.display(),
-						error);
+						error
+					);
 				},
 			}
 		}
 	}
 
-	dev_log!("extensions",
+	dev_log!(
+		"extensions",
 		"[ExtensionScanner] Directory '{}' scan done: {} parsed, {} parse-failures, {} missing package.json",
-		DirectoryPath.display(), FoundExtensions.len(), parse_failures, missing_package_json);
+		DirectoryPath.display(),
+		FoundExtensions.len(),
+		parse_failures,
+		missing_package_json
+	);
 
 	Ok(FoundExtensions)
 }
@@ -252,26 +303,29 @@ pub async fn ScanDirectoryForExtensions(
 /// map. Returns `None` if the bundle is absent or unreadable; placeholders stay
 /// as-is in that case. Entries can be bare strings or `{message, comment}`
 /// objects — we only keep `message`.
-async fn LoadNLSBundle(
-	RunTime:&Arc<ApplicationRunTime>,
-	ExtensionPath:&PathBuf,
-) -> Option<Map<String, Value>> {
+async fn LoadNLSBundle(RunTime:&Arc<ApplicationRunTime>, ExtensionPath:&PathBuf) -> Option<Map<String, Value>> {
 	let NLSPath = ExtensionPath.join("package.nls.json");
 	let Content = match RunTime.Run(ReadFile(NLSPath.clone())).await {
 		Ok(Bytes) => Bytes,
 		Err(Error) => {
-			dev_log!("extensions",
+			dev_log!(
+				"extensions",
 				"[LandFix:NLS] no bundle for {} ({})",
-				ExtensionPath.display(), Error);
+				ExtensionPath.display(),
+				Error
+			);
 			return None;
 		},
 	};
 	let Parsed:Value = match serde_json::from_slice(&Content) {
 		Ok(V) => V,
 		Err(Error) => {
-			dev_log!("extensions",
+			dev_log!(
+				"extensions",
 				"warn: [LandFix:NLS] failed to parse {}: {}",
-				NLSPath.display(), Error);
+				NLSPath.display(),
+				Error
+			);
 			return None;
 		},
 	};
@@ -289,9 +343,12 @@ async fn LoadNLSBundle(
 			Resolved.insert(Key.clone(), Value::String(t));
 		}
 	}
-	dev_log!("extensions",
+	dev_log!(
+		"extensions",
 		"[LandFix:NLS] loaded {} keys for {}",
-		Resolved.len(), ExtensionPath.display());
+		Resolved.len(),
+		ExtensionPath.display()
+	);
 	Some(Resolved)
 }
 

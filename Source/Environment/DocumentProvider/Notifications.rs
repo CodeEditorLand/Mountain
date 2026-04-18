@@ -5,6 +5,7 @@ use std::sync::Arc;
 use CommonLibrary::{Environment::Requires::Requires, IPC::IPCProvider::IPCProvider};
 use serde_json::json;
 use url::Url;
+
 use crate::dev_log;
 
 /// Notifies Cocoon that a new document model has been added.
@@ -27,8 +28,12 @@ pub(super) async fn notify_model_added(
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelAdded".to_string(), payload)
 		.await
 	{
-		dev_log!("model", "error: [DocumentProvider] Failed to send $acceptModelAdded for {}: {}",
-			uri_string, error);
+		dev_log!(
+			"model",
+			"error: [DocumentProvider] Failed to send $acceptModelAdded for {}: {}",
+			uri_string,
+			error
+		);
 	}
 }
 
@@ -53,7 +58,12 @@ pub(super) async fn notify_model_changed(
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelChanged".to_string(), payload)
 		.await
 	{
-		dev_log!("model", "error: [DocumentProvider] Failed to send $acceptModelChanged for {}: {}", uri, error);
+		dev_log!(
+			"model",
+			"error: [DocumentProvider] Failed to send $acceptModelChanged for {}: {}",
+			uri,
+			error
+		);
 	}
 }
 
@@ -74,7 +84,12 @@ pub(super) async fn notify_model_saved(
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelSaved".to_string(), payload)
 		.await
 	{
-		dev_log!("model", "error: [DocumentProvider] Failed to send $acceptModelSaved for {}: {}", uri, error);
+		dev_log!(
+			"model",
+			"error: [DocumentProvider] Failed to send $acceptModelSaved for {}: {}",
+			uri,
+			error
+		);
 	}
 }
 
@@ -95,6 +110,11 @@ pub(super) async fn notify_model_removed(
 		.SendNotificationToSideCar("cocoon-main".to_string(), "$acceptModelRemoved".to_string(), payload)
 		.await
 	{
-		dev_log!("model", "error: [DocumentProvider] Failed to send $acceptModelRemoved for {}: {}", uri, error);
+		dev_log!(
+			"model",
+			"error: [DocumentProvider] Failed to send $acceptModelRemoved for {}: {}",
+			uri,
+			error
+		);
 	}
 }

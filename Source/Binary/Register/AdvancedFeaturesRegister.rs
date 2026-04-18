@@ -4,9 +4,7 @@
 
 use std::sync::Arc;
 
-
-use crate::{IPC::initialize_advanced_features, RunTime::ApplicationRunTime::ApplicationRunTime};
-use crate::dev_log;
+use crate::{IPC::initialize_advanced_features, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Initializes the IPC advanced features with the ApplicationRunTime.
 ///
@@ -36,7 +34,10 @@ pub fn AdvancedFeaturesRegister(
 ) -> Result<(), String> {
 	match initialize_advanced_features(ApplicationHandle, RunTime) {
 		Ok(()) => {
-			dev_log!("lifecycle", "[IPC] [AdvancedFeatures] Advanced features initialized successfully.");
+			dev_log!(
+				"lifecycle",
+				"[IPC] [AdvancedFeatures] Advanced features initialized successfully."
+			);
 			Ok(())
 		},
 		Err(e) => {

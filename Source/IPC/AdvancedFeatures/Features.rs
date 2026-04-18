@@ -42,8 +42,7 @@ use serde::{Deserialize, Serialize};
 use tokio::time::interval;
 use tauri::{AppHandle, Emitter, Manager};
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Advanced IPC features for enhanced Mountain-Wind synchronization
 ///
@@ -229,7 +228,11 @@ impl AdvancedFeatures {
 
 			cache.cache_size = cache.cached_messages.len();
 
-			dev_log!("ipc", "[AdvancedFeatures] Cache cleaned, {} entries remaining", cache.cache_size);
+			dev_log!(
+				"ipc",
+				"[AdvancedFeatures] Cache cleaned, {} entries remaining",
+				cache.cache_size
+			);
 		}
 	}
 
@@ -262,7 +265,11 @@ impl AdvancedFeatures {
 				dev_log!("ipc", "error: [AdvancedFeatures] Failed to emit collaboration sessions: {}", e);
 			}
 
-			dev_log!("ipc", "[AdvancedFeatures] Collaboration sessions monitored, {} active", sessions.len());
+			dev_log!(
+				"ipc",
+				"[AdvancedFeatures] Collaboration sessions monitored, {} active",
+				sessions.len()
+			);
 		}
 	}
 

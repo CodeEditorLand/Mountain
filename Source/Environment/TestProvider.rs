@@ -175,9 +175,11 @@ impl TestController for MountainEnvironment {
 	/// This method creates a TestControllerState entry and notifies the
 	/// frontend about the available test controller.
 	async fn RegisterTestController(&self, ControllerId:String, Label:String) -> Result<(), CommonError> {
-		dev_log!("extensions", 
+		dev_log!(
+			"extensions",
 			"[TestProvider] Registering test controller '{}' with label '{}'",
-			ControllerId, Label
+			ControllerId,
+			Label
 		);
 
 		// For now, assume all extension providers come from the main sidecar
@@ -209,7 +211,11 @@ impl TestController for MountainEnvironment {
 				CommonError::IPCError { Description:format!("Failed to emit test registration event: {}", Error) }
 			})?;
 
-		dev_log!("extensions", "[TestProvider] Test controller '{}' registered successfully", ControllerId);
+		dev_log!(
+			"extensions",
+			"[TestProvider] Test controller '{}' registered successfully",
+			ControllerId
+		);
 
 		Ok(())
 	}
@@ -220,9 +226,11 @@ impl TestController for MountainEnvironment {
 	/// test controllers, with proper test discovery, execution, and result
 	/// reporting.
 	async fn RunTests(&self, ControllerIdentifier:String, TestRunRequest:Value) -> Result<(), CommonError> {
-		dev_log!("extensions", 
+		dev_log!(
+			"extensions",
 			"[TestProvider] Running tests for controller '{}': {:?}",
-			ControllerIdentifier, TestRunRequest
+			ControllerIdentifier,
+			TestRunRequest
 		);
 
 		// Get controller state
@@ -271,8 +279,11 @@ impl TestController for MountainEnvironment {
 			Self::RunProxiedTests(self, SideCarIdentifier, &RunIdentifier, TestRunRequest).await?;
 		} else {
 			// Native Rust test controller (currently not supported)
-			dev_log!("extensions", "warn: [TestProvider] Native test controllers not yet implemented for '{}'",
-				ControllerIdentifier);
+			dev_log!(
+				"extensions",
+				"warn: [TestProvider] Native test controllers not yet implemented for '{}'",
+				ControllerIdentifier
+			);
 
 			Self::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Skipped).await;
 		}
@@ -296,9 +307,11 @@ impl MountainEnvironment {
 
 		TestRunRequest:Value,
 	) -> Result<(), CommonError> {
-		dev_log!("extensions", 
+		dev_log!(
+			"extensions",
 			"[TestProvider] Running proxied tests for run '{}' on sidecar '{}'",
-			RunIdentifier, SideCarIdentifier
+			RunIdentifier,
+			SideCarIdentifier
 		);
 
 		// Update test run status to running
@@ -329,12 +342,18 @@ impl MountainEnvironment {
 
 					Self::UpdateRunStatus(self, RunIdentifier, FinalStatus).await;
 
-					dev_log!("extensions", 
+					dev_log!(
+						"extensions",
 						"[TestProvider] Test run '{}' completed with status {:?}",
-						RunIdentifier, FinalStatus
+						RunIdentifier,
+						FinalStatus
 					);
 				} else {
-					dev_log!("extensions", "error: [TestProvider] Failed to parse test results for run '{}'", RunIdentifier);
+					dev_log!(
+						"extensions",
+						"error: [TestProvider] Failed to parse test results for run '{}'",
+						RunIdentifier
+					);
 
 					Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
 				}

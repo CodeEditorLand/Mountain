@@ -27,8 +27,7 @@ use opentelemetry::trace::Tracer;
 #[cfg(feature = "Telemetry")]
 use opentelemetry::trace::Span;
 
-use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
-use crate::dev_log;
+use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment, dev_log};
 
 /// State build configuration
 #[derive(Debug)]
