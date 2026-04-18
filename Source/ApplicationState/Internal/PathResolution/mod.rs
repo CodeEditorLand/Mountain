@@ -26,5 +26,3 @@
 //! - [ ] Add cross-platform handling
 
 pub mod ResolveMementoStorageFilePath;
-
-pub use ResolveMementoStorageFilePath::*;

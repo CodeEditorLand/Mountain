@@ -29,5 +29,3 @@
 //! - [ ] Add recovery metrics
 
 pub mod RecoverState;
-
-pub use RecoverState::*;

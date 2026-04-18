@@ -28,6 +28,3 @@
 
 pub mod URLSerializer;
 pub mod URLDeserializer;
-
-pub use URLSerializer::SerializeURL;
-pub use URLDeserializer::DeserializeURL;

@@ -73,28 +73,6 @@
 pub mod AirClient;
 pub mod AirServiceProvider;
 
-// Access AirClient struct as: crate::Air::AirClient::AirClientImpl
-// Re-exports using module prefix to avoid naming conflicts
-pub use AirClient::{
-	AirClient as Client,
-	AirMetrics,
-	AirStatus,
-	DEFAULT_AIR_SERVER_ADDRESS,
-	DownloadStream,
-	DownloadStreamChunk,
-	ExtendedFileInfo,
-	FileInfo,
-	FileResult,
-	IndexInfo,
-	ResourceUsage,
-	UpdateInfo,
-};
-// Re-export the original name for compatibility (using type alias inside the module)
-pub use AirServiceProvider::generate_request_id;
-
-// Note: AirServiceProvider struct is available via
-// crate::Air::AirServiceProvider::AirServiceProvider
-
 // Stub types for Air integration when AirLibrary is not available (legacy)
 // Note: These are kept for backward compatibility but should not be used in new
 // code

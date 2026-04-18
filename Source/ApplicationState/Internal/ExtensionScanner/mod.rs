@@ -29,5 +29,3 @@
 //! - [ ] Add validation rules
 
 pub mod ScanAndPopulateExtensions;
-
-pub use ScanAndPopulateExtensions::*;
