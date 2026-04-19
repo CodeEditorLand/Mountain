@@ -60,7 +60,179 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		.compile_well_known_types(true)
 		.compile_protos(&["Proto/Vine.proto"], &["Proto"])?;
 
+	PropagateTierGating();
+
 	tauri_build::build();
 
 	Ok(())
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Tier-gating: read `.env.Land` at the workspace root, expose every value as
+// `cargo:rustc-env=Tier<Capability>=<Value>` so `env!("TierFileSystem")` works
+// at runtime, and activate matching Cargo features so `#[cfg(feature = "…")]`
+// arms compile in.
+//
+// The feature-name whitelist below is intentional: an unknown pair in
+// `.env.Land` produces a `cargo:warning` but never activates anything,
+// so typos fail loud at `cargo build` instead of silently at runtime.
+//
+// See `Documentation/GitHub/Workflow/TierGatedImplementationSelection.md`
+// for the full build-time propagation workflow.
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+fn PropagateTierGating() {
+	// Emit defaults for every tier variable FIRST so that `env!("Tier…")` at
+	// compile time always resolves, even when `.env.Land` is absent or when a
+	// file exists but omits a key. File values emitted later override — Cargo
+	// honours the last `rustc-env` for a given key.
+	EmitTierDefaults();
+
+	let Manifest = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
+	let ManifestPath = std::path::PathBuf::from(Manifest);
+
+	// Mountain/Cargo.toml is at Land/Element/Mountain/Cargo.toml — three
+	// ancestors up (Mountain → Element → Land) is the Land monorepo root,
+	// four is the repo root. Try both to find the env file.
+	let Ancestors:Vec<_> = ManifestPath.ancestors().take(5).map(|p| p.to_path_buf()).collect();
+
+	for Base in &Ancestors {
+		for Candidate in [".env.Land", ".env.Land.Sample"] {
+			let Full = Base.join(Candidate);
+			if !Full.exists() {
+				continue;
+			}
+			println!("cargo:rerun-if-changed={}", Full.display());
+			let Contents = match std::fs::read_to_string(&Full) {
+				Ok(text) => text,
+				Err(error) => {
+					println!("cargo:warning=Failed to read {}: {}", Full.display(), error);
+					return;
+				},
+			};
+			ApplyEnvFile(&Full, &Contents);
+			// Stop after the first env file we find — subsequent ones would
+			// duplicate directives (defaults are already emitted upstream).
+			return;
+		}
+	}
+}
+
+/// Parse a loaded `.env.Land` file body, emitting `rustc-env` overrides and
+/// `rustc-cfg` feature flags for recognised tier values.
+fn ApplyEnvFile(Path:&std::path::Path, Contents:&str) {
+	for Line in Contents.lines() {
+		let Trimmed = Line.trim();
+		if Trimmed.is_empty() || Trimmed.starts_with('#') {
+			continue;
+		}
+		let Pair = Trimmed.split_once('=');
+		let (Key, Value) = match Pair {
+			Some(pair) => pair,
+			None => continue,
+		};
+		let Key = Key.trim();
+		let Value = Value.trim().trim_matches('"');
+
+		if !Key.starts_with("Tier") {
+			continue;
+		}
+
+		// Override the default emitted by EmitTierDefaults. Multiple
+		// rustc-env directives for the same key: last wins.
+		println!("cargo:rustc-env={}={}", Key, Value);
+
+		let FeatureName = format!("{}{}", Key, Value);
+		if IsDeclaredTierFeature(&FeatureName) {
+			println!("cargo:rustc-cfg=feature=\"{}\"", FeatureName);
+		} else if IsDefaultTierValue(Key, Value) {
+			// Default-tier values (GRPC, Layer2, Standard, …) do not need
+			// Cargo features — they are the compiled-in baseline. Silent.
+		} else {
+			println!(
+				"cargo:warning={}={} declared in {} but has no matching Cargo feature — update IsDeclaredTierFeature or Cargo.toml",
+				Key,
+				Value,
+				Path.display()
+			);
+		}
+	}
+}
+
+/// Emit compile-time defaults for every tier variable. Called unconditionally
+/// so `env!(...)` in LandFixTier resolves even in a clean checkout with no
+/// `.env.Land` file.
+fn EmitTierDefaults() {
+	for (Key, Default) in [
+		("TierRemoteProcedureCall", "GRPC"),
+		("TierHTTPProxy", "HandRolled"),
+		("TierLogger", "Standard"),
+		("TierFileSystem", "Layer2"),
+		("TierFindFiles", "Layer3"),
+		("TierGlob", "JavaScript"),
+		("TierFileWatcher", "Stub"),
+		("TierSchemeAssets", "Embedded"),
+		("TierConfiguration", "Cache"),
+		("TierDiagnostics", "Full"),
+		("TierClipboard", "Layer3"),
+		("TierOpenExternal", "Layer3"),
+		("TierDocumentMirror", "Full"),
+		("TierExtensionActivation", "Parallel8"),
+		("TierExtensionScan", "Sequential"),
+		("TierModuleCache", "Simple"),
+		("TierTelemetry", "Synchronous"),
+	] {
+		println!("cargo:rustc-env={}={}", Key, Default);
+	}
+}
+
+/// Whitelist of Rust-side tier feature names. An unknown combination in
+/// `.env.Land` surfaces as a build warning rather than a silent no-op.
+fn IsDeclaredTierFeature(Name:&str) -> bool {
+	matches!(
+		Name,
+		"TierRemoteProcedureCallSharedMemory"
+			| "TierHTTPProxyHyper"
+			| "TierLoggerRing"
+			| "TierFileSystemLayer4"
+			| "TierFindFilesLayer4"
+			| "TierGlobNative"
+			| "TierFileWatcherLayer4"
+			| "TierSchemeAssetsHybrid"
+			| "TierConfigurationEager"
+			| "TierDiagnosticsDelta"
+			| "TierClipboardLayer4"
+			| "TierOpenExternalLayer4"
+			| "TierExtensionScanParallel"
+	)
+}
+
+/// Whitelist of tier (Key, Value) pairs that are compiled-in defaults — they
+/// don't activate a Cargo feature because they ARE the baseline. Keeping a
+/// dedicated table (rather than one big negation) means typos in `.env.Land`
+/// still surface as warnings; only the exact default-value spelling is
+/// silent.
+fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
+	matches!(
+		(Key, Value),
+		("TierRemoteProcedureCall", "GRPC")
+			| ("TierHTTPProxy", "HandRolled")
+			| ("TierLogger", "Standard")
+			| ("TierFileSystem", "Layer2" | "Layer3")
+			| ("TierFindFiles", "Layer3")
+			| ("TierGlob", "JavaScript")
+			| ("TierFileWatcher", "Stub")
+			| ("TierSchemeAssets", "Embedded" | "FileSystem")
+			| ("TierConfiguration", "Cache")
+			| ("TierDiagnostics", "Full")
+			| ("TierClipboard", "Layer3" | "Layer5")
+			| ("TierOpenExternal", "Layer3")
+			| ("TierDocumentMirror", "Full" | "Lazy")
+			| (
+				"TierExtensionActivation",
+				"Sequential" | "Parallel4" | "Parallel8" | "Parallel16"
+			) | ("TierExtensionScan", "Sequential")
+			| ("TierModuleCache", "Off" | "Simple" | "Shared")
+			| ("TierTelemetry", "Synchronous" | "Batched" | "Off")
+	)
 }

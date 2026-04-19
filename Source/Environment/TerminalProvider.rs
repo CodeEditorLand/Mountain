@@ -107,7 +107,7 @@ use CommonLibrary::{
 	Terminal::TerminalProvider::TerminalProvider,
 };
 use async_trait::async_trait;
-use portable_pty::{CommandBuilder, NativePtySystem, PtySize, PtySystem};
+use portable_pty::{CommandBuilder, MasterPty, NativePtySystem, PtySize, PtySystem};
 use serde_json::{Value, json};
 use tauri::Emitter;
 use tokio::sync::mpsc as TokioMPSC;
@@ -201,6 +201,13 @@ impl TerminalProvider for MountainEnvironment {
 				Description:format!("Failed to clone PTY reader: {}", Error),
 			}
 		})?;
+
+		// Keep the master PTY alive past `CreateTerminal` so `ResizeTerminal`
+		// can call `resize()` on it and so dropping it during `DisposeTerminal`
+		// tears the shell down cleanly.
+		let PTYMasterHandle:crate::ApplicationState::DTO::TerminalStateDTO::PtyMasterHandle =
+			Arc::new(std::sync::Mutex::new(PtyPair.master));
+		TerminalState.PTYMaster = Some(PTYMasterHandle);
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 
@@ -369,5 +376,59 @@ impl TerminalProvider for MountainEnvironment {
 		Ok(TerminalsGuard
 			.get(&TerminalId)
 			.and_then(|t| t.lock().ok().and_then(|g| g.OSProcessIdentifier)))
+	}
+
+	async fn ResizeTerminal(&self, TerminalId:u64, Columns:u16, Rows:u16) -> Result<(), CommonError> {
+		if Columns == 0 || Rows == 0 {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"Columns/Rows".to_string(),
+				Reason:format!("Columns and Rows must be ≥ 1 (got {}×{})", Columns, Rows),
+			});
+		}
+
+		// Pull the shared master-PTY handle out of the state lock before touching
+		// it so we never hold the outer terminals map while performing IO.
+		let MasterOption = {
+			let TerminalsGuard = self
+				.ApplicationState
+				.Feature
+				.Terminals
+				.ActiveTerminals
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			TerminalsGuard
+				.get(&TerminalId)
+				.and_then(|TerminalArc| TerminalArc.lock().ok())
+				.and_then(|TerminalStateGuard| TerminalStateGuard.PTYMaster.clone())
+		};
+
+		let Master = MasterOption.ok_or_else(|| CommonError::IPCError {
+			Description:format!("Terminal with ID {} not found or has no PTY master handle.", TerminalId),
+		})?;
+
+		let Size = PtySize { rows:Rows, cols:Columns, pixel_width:0, pixel_height:0 };
+
+		// Method resolution walks through MutexGuard → Box → dyn MasterPty,
+		// so `Guard.resize(...)` dispatches straight to the trait impl. Keep
+		// the call inside `spawn_blocking` even though portable-pty's resize
+		// is nominally fast — SIGWINCH delivery can stall briefly when the
+		// child shell is ptrace-frozen or mid-syscall.
+		tokio::task::spawn_blocking(move || {
+			let Guard = Master.lock().map_err(|_| "PTY master mutex poisoned".to_string())?;
+			Guard.resize(Size).map_err(|Error| Error.to_string())
+		})
+		.await
+		.map_err(|Error| CommonError::IPCError { Description:format!("resize join error: {}", Error) })?
+		.map_err(|Error| CommonError::IPCError { Description:format!("PTY resize failed: {}", Error) })?;
+
+		dev_log!(
+			"terminal",
+			"[TerminalProvider] Resized terminal ID {} to {}×{}",
+			TerminalId,
+			Columns,
+			Rows
+		);
+
+		Ok(())
 	}
 }

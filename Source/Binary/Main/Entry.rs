@@ -135,6 +135,11 @@ macro_rules! TraceStep {
 /// 10. Handles graceful shutdown
 pub fn Fn() {
 	// -------------------------------------------------------------------------
+	// [Boot] [Tier] Resolved tier banner (Plan A Wave 1.7 runtime banner)
+	// -------------------------------------------------------------------------
+	crate::LandFixTier::LogResolvedTiers();
+
+	// -------------------------------------------------------------------------
 	// [Boot] [Runtime] Tokio runtime creation
 	// -------------------------------------------------------------------------
 	TraceStep!("[Boot] [Runtime] Building Tokio runtime...");
@@ -160,6 +165,62 @@ pub fn Fn() {
 
 		// Create application state directly (StateBuild::Build with default config)
 		let AppState = ApplicationState::default();
+
+		// -------------------------------------------------------------------
+		// [Boot] [Workspace] Seed initial workspace folders so every extension
+		// that calls `vscode.workspace.findFiles(...)` at activation has
+		// something to walk. Precedence: --folder flags → positional dirs →
+		// LAND_WORKSPACE_FOLDER env → CWD fallback. See CliParse::ParseWorkspaceFolders.
+		// -------------------------------------------------------------------
+		{
+			let InitialFolderPaths = crate::Binary::Initialize::CliParse::ParseWorkspaceFolders();
+			if InitialFolderPaths.is_empty() {
+				dev_log!(
+					"lifecycle",
+					"[Boot] [Workspace] No initial folders resolved — editor will open in \"no folder\" mode."
+				);
+			} else {
+				use crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;
+				let mut Folders:Vec<WorkspaceFolderStateDTO> = Vec::new();
+				for (Index, Path) in InitialFolderPaths.iter().enumerate() {
+					let Uri = match url::Url::from_directory_path(Path) {
+						Ok(U) => U,
+						Err(()) => {
+							dev_log!(
+								"lifecycle",
+								"warn: [Boot] [Workspace] Failed to build URL for {}; skipping",
+								Path.display()
+							);
+							continue;
+						},
+					};
+					let Name = Path
+						.file_name()
+						.and_then(|N| N.to_str())
+						.map(str::to_string)
+						.unwrap_or_else(|| Path.display().to_string());
+					match WorkspaceFolderStateDTO::New(Uri, Name, Index) {
+						Ok(Dto) => Folders.push(Dto),
+						Err(Error) => {
+							dev_log!(
+								"lifecycle",
+								"warn: [Boot] [Workspace] Failed to build folder DTO for {}: {}",
+								Path.display(),
+								Error
+							);
+						},
+					}
+				}
+				if !Folders.is_empty() {
+					AppState.Workspace.SetWorkspaceFolders(Folders);
+					dev_log!(
+						"lifecycle",
+						"[Boot] [Workspace] Seeded {} workspace folder(s).",
+						InitialFolderPaths.len()
+					);
+				}
+			}
+		}
 
 		dev_log!(
 			"lifecycle",
@@ -349,6 +410,9 @@ pub fn Fn() {
 				crate::Binary::IPC::UpdateSubscriptionCommand::MountainSubscribeToUpdates,
 				crate::Binary::IPC::ConfigurationDataCommand::GetConfigurationData,
 				crate::Binary::IPC::ConfigurationDataCommand::SaveConfigurationData,
+				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceOpenFolder,
+				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceListFolders,
+				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceCloseAllFolders,
 				crate::Binary::Build::DnsCommands::dns_get_server_info,
 				crate::Binary::Build::DnsCommands::dns_get_zone_info,
 				crate::Binary::Build::DnsCommands::dns_get_forward_allowlist,

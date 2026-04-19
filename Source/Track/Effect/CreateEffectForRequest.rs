@@ -117,7 +117,12 @@ use CommonLibrary::{
 	Diagnostic::DiagnosticManager::DiagnosticManager,
 	Document::DocumentProvider::DocumentProvider,
 	Environment::Requires::Requires,
-	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
+	FileSystem::{
+		FileSystemReader::FileSystemReader,
+		FileSystemWriter::FileSystemWriter,
+		FileWatcherProvider::FileWatcherProvider,
+	},
+	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider as IPCProviderTrait},
 	Keybinding::KeybindingProvider::KeybindingProvider,
 	LanguageFeature::{
 		DTO::ProviderType::ProviderType,
@@ -130,14 +135,13 @@ use CommonLibrary::{
 	Terminal::TerminalProvider::TerminalProvider,
 	TreeView::TreeViewProvider::TreeViewProvider,
 	UserInterface::{DTO::MessageSeverity::MessageSeverity, UserInterfaceProvider::UserInterfaceProvider},
-	Webview::WebviewProvider,
+	Webview::WebviewProvider::WebviewProvider,
 };
 use serde_json::{Value, json};
 use tauri::{AppHandle, Runtime};
 use url::Url;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
 /// Maps a string-based method name (command or RPC) to its corresponding effect
 /// constructor, returning a boxed closure ([`MappedEffect`]) that can be
@@ -293,8 +297,20 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+
+						// Virtual `vscode://` resources: VS Code's language-features
+						// code fetches a schemas-associations document at startup to
+						// discover schema↔pattern mappings. We don't ship one, but an
+						// empty well-formed payload satisfies the contract and keeps
+						// the request off the 404 path.
+						if path_str.starts_with("vscode://schemas-associations/") {
+							let payload = serde_json::to_vec(&json!({ "schemas": [] }))
+								.unwrap_or_else(|_| b"{\"schemas\":[]}".to_vec());
+							return Ok(json!(payload));
+						}
+
+						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 						let path = std::path::PathBuf::from(path_str);
 						fs_reader
 							.ReadFile(&path)
@@ -408,13 +424,58 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						let source = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
 						let target = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
 						fs_writer
-							.Rename(
-								&std::path::PathBuf::from(source),
-								&std::path::PathBuf::from(target),
-								true,
-							)
+							.Rename(&std::path::PathBuf::from(source), &std::path::PathBuf::from(target), true)
 							.await
 							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"FileWatcher.Register" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let handle = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						if handle.is_empty() {
+							return Err("FileWatcher.Register: empty handle".to_string());
+						}
+						let root_str = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
+						if root_str.is_empty() {
+							return Err("FileWatcher.Register: empty root path".to_string());
+						}
+						let recursive = Parameters.get(2).and_then(Value::as_bool).unwrap_or(true);
+						// Cocoon sends the compiled glob pattern as the 4th arg when
+						// TierFileWatcher=Layer4 is active. Older callers pass only
+						// three args — Mountain falls through to "no filter".
+						let pattern = Parameters
+							.get(3)
+							.and_then(Value::as_str)
+							.filter(|p| !p.is_empty())
+							.map(str::to_string);
+						let root = std::path::PathBuf::from(root_str);
+						let watcher:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
+						watcher
+							.RegisterWatcher(handle, root, recursive, pattern)
+							.await
+							.map(|()| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"FileWatcher.Unregister" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let handle = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let watcher:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
+						watcher
+							.UnregisterWatcher(handle)
+							.await
+							.map(|()| json!(null))
 							.map_err(|e| e.to_string())
 					})
 				};
@@ -429,11 +490,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						let source = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
 						let target = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
 						fs_writer
-							.Copy(
-								&std::path::PathBuf::from(source),
-								&std::path::PathBuf::from(target),
-								true,
-							)
+							.Copy(&std::path::PathBuf::from(source), &std::path::PathBuf::from(target), true)
 							.await
 							.map(|_| json!(null))
 							.map_err(|e| e.to_string())
@@ -796,13 +853,78 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			Ok(Box::new(effect))
 		},
 
-		// Webview
-		"$webview:create" => {
+		// Terminal.Resize propagates a new cols×rows to the PTY master. The
+		// shell inside receives SIGWINCH and line-editing utilities redraw.
+		// Extensions call this from `vscode.window.Terminal.resize(cols,rows)`.
+		//
+		// Cocoon sends the handle either as a numeric id or as a string like
+		// "terminal:7"; accept both shapes to stay compatible with both the
+		// current Cocoon wiring and any future migration to string handles.
+		"Terminal.Resize" | "$terminal:resize" => {
 			let effect =
-				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						dev_log!("ipc", "warn: $webview:create not fully implemented");
-						Ok(json!({"handle": "webview-123"}))
+						let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+						let terminal_id = match Parameters.get(0) {
+							Some(Value::Number(n)) => n.as_u64().unwrap_or(0),
+							Some(Value::String(s)) => {
+								s.rsplit(':').next().and_then(|token| token.parse::<u64>().ok()).unwrap_or(0)
+							},
+							_ => 0,
+						};
+						let cols = Parameters.get(1).and_then(Value::as_u64).map(|n| n as u16).unwrap_or(80);
+						let rows = Parameters.get(2).and_then(Value::as_u64).map(|n| n as u16).unwrap_or(24);
+						provider
+							.ResizeTerminal(terminal_id, cols, rows)
+							.await
+							.map(|()| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Webview — Cocoon registers panels, registers view providers, and
+		// forwards state mutations. Mountain re-emits every event as a
+		// `sky://webview/<suffix>` Tauri event so the UI layer can render
+		// and relay DOM → extension messages without a bespoke gRPC channel
+		// per action.
+		//
+		// The full payload (handle + method args) is forwarded verbatim, which
+		// matches the pattern established by TerminalProvider::ShowTerminal.
+		// Sky's Workbench webview dispatcher subscribes once and routes per
+		// method to the relevant panel/view provider.
+		"$webview:create"
+		| "webview.create"
+		| "webview.setHtml"
+		| "webview.setOptions"
+		| "webview.postMessage"
+		| "webview.reveal"
+		| "webview.dispose"
+		| "webview.registerView"
+		| "webview.unregisterView"
+		| "webview.registerCustomEditor"
+		| "webview.unregisterCustomEditor" => {
+			let Method = MethodName.to_string();
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					let Method = Method.clone();
+					Box::pin(async move {
+						use tauri::Emitter;
+						let Handle = Parameters.get(0).cloned().unwrap_or(Value::Null);
+						let Payload = json!({
+							"method": Method,
+							"handle": Handle,
+							"args": Parameters,
+						});
+						// Convert `$webview:create` / `webview.create` → `create` so
+						// Sky subscribes to a single clean event namespace.
+						let Suffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");
+						let EventName = format!("sky://webview/{}", Suffix);
+						if let Err(Error) = run_time.Environment.ApplicationHandle.emit(&EventName, &Payload) {
+							dev_log!("ipc", "warn: [WebviewEffect] emit {} failed: {}", EventName, Error);
+						}
+						Ok(json!(null))
 					})
 				};
 			Ok(Box::new(effect))
@@ -866,19 +988,43 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			Ok(Box::new(effect))
 		},
 
-		// Tree View
-		"$tree:register" => {
+		// Tree View — Cocoon registers a TreeDataProvider by handle. Mountain
+		// stores the (handle, viewId) mapping so Sky's sidebar can render the
+		// tree by round-tripping `tree.getChildren` back through Cocoon.
+		"$tree:register" | "tree.register" => {
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
-						let view_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("viewId").to_string();
-						let options = Parameters.get(1).cloned().unwrap_or_default();
+						// Cocoon calls with [handle, viewId, options]; the old
+						// call shape was [viewId, options]. Accept both.
+						let first = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let (view_id, options) = if Parameters.get(2).is_some() {
+							let vid = Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();
+							let opts = Parameters.get(2).cloned().unwrap_or_default();
+							(vid, opts)
+						} else {
+							let vid = first.to_string();
+							let opts = Parameters.get(1).cloned().unwrap_or_default();
+							(vid, opts)
+						};
 						provider
 							.RegisterTreeDataProvider(view_id, options)
 							.await
 							.map(|_| json!(null))
 							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		"tree.unregister" | "tree.dispose" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let handle = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						dev_log!("ipc", "[tree.unregister] handle={}", handle);
+						Ok(json!(null))
 					})
 				};
 			Ok(Box::new(effect))
@@ -952,29 +1098,51 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			Ok(Box::new(effect))
 		},
 
-		// Debug — Stop (Cascade-8 stub; DebugService has no StopDebugging yet,
-		// extensions receive `null` instead of "Unknown method")
+		// Debug — Stop
 		"Debug.Stop" => {
 			let effect =
-				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let session_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						dev_log!("ipc", "[Debug.Stop] stub — session={} (TODO: DebugService::StopDebugging)", session_id);
-						Ok(json!(null))
+						let debug_service:Arc<dyn DebugService> = run_time.Environment.Require();
+						debug_service
+							.StopDebugging(session_id)
+							.await
+							.map(|()| json!(null))
+							.map_err(|e| e.to_string())
 					})
 				};
 			Ok(Box::new(effect))
 		},
 
-		// Task — Fetch/Execute (Cascade-8 stubs; no TaskProvider trait in
-		// Common yet. Returning safe defaults keeps extensions from
-		// crashing on `vscode.tasks.fetchTasks()` / `executeTask`.)
+		// Task — Fetch/Execute
+		//
+		// Cocoon hosts the actual TaskProvider implementations contributed by
+		// extensions. Mountain forwards the call through the IPCProvider
+		// reverse-RPC channel (ExtHostTaskService) and returns whatever the
+		// extension gives us. If no sidecar answers within the timeout, return
+		// safe defaults so `vscode.tasks.fetchTasks()` doesn't reject.
 		"Task.Fetch" => {
 			let effect =
-				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						dev_log!("ipc", "[Task.Fetch] stub — returning [] (TODO: TaskProvider trait)");
-						Ok(json!([]))
+						let filter = Parameters.get(0).cloned().unwrap_or(Value::Null);
+						let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+						let Method = format!("{}$fetchTasks", ProxyTarget::ExtHostTaskService.GetTargetPrefix());
+						match IPCProvider
+							.SendRequestToSideCar("cocoon-main".to_string(), Method, json!([filter]), 5000)
+							.await
+						{
+							Ok(value) => Ok(value),
+							Err(error) => {
+								dev_log!(
+									"ipc",
+									"warn: [Task.Fetch] extension did not answer ({:?}); returning []",
+									error
+								);
+								Ok(json!([]))
+							},
+						}
 					})
 				};
 			Ok(Box::new(effect))
@@ -982,27 +1150,65 @@ pub fn CreateEffectForRequest<R:Runtime>(
 
 		"Task.Execute" => {
 			let effect =
-				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						dev_log!("ipc", "[Task.Execute] stub — returning null (TODO: TaskProvider trait)");
-						Ok(json!(null))
+						let task = Parameters.get(0).cloned().unwrap_or(Value::Null);
+						let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+						let Method = format!("{}$executeTask", ProxyTarget::ExtHostTaskService.GetTargetPrefix());
+						match IPCProvider
+							.SendRequestToSideCar("cocoon-main".to_string(), Method, json!([task]), 30000)
+							.await
+						{
+							Ok(value) => Ok(value),
+							Err(error) => {
+								dev_log!(
+									"ipc",
+									"warn: [Task.Execute] extension did not answer ({:?}); returning null",
+									error
+								);
+								Ok(json!(null))
+							},
+						}
 					})
 				};
 			Ok(Box::new(effect))
 		},
 
-		// Authentication — GetSession/GetAccounts (Cascade-8 stubs; no
-		// AuthenticationProvider trait yet. Returning `null` / `[]` lets
-		// GitHub/Copilot extensions proceed in "unauthenticated" mode
-		// instead of crashing.)
+		// Authentication — GetSession/GetAccounts
+		//
+		// Auth sessions live in the extension that registered as the provider
+		// (`vscode.authentication.registerAuthenticationProvider`), hosted in
+		// Cocoon. Mountain forwards the request through ExtHostAuthentication.
+		// Failing sidecars resolve to `null` / `[]` so Copilot / GitHub can
+		// proceed in an unauthenticated path rather than rejecting at startup.
 		"Authentication.GetSession" => {
 			let effect =
-				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let provider_id =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						dev_log!("ipc", "[Authentication.GetSession] stub — provider={} (TODO: AuthenticationProvider trait)", provider_id);
-						Ok(json!(null))
+						let provider_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let scopes = Parameters.get(1).cloned().unwrap_or(json!([]));
+						let options = Parameters.get(2).cloned().unwrap_or(json!({}));
+						let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+						let Method = format!("{}$getSession", ProxyTarget::ExtHostAuthentication.GetTargetPrefix());
+						match IPCProvider
+							.SendRequestToSideCar(
+								"cocoon-main".to_string(),
+								Method,
+								json!([provider_id, scopes, options]),
+								5000,
+							)
+							.await
+						{
+							Ok(value) => Ok(value),
+							Err(error) => {
+								dev_log!(
+									"ipc",
+									"warn: [Authentication.GetSession] extension did not answer ({:?}); returning null",
+									error
+								);
+								Ok(json!(null))
+							},
+						}
 					})
 				};
 			Ok(Box::new(effect))
@@ -1010,25 +1216,58 @@ pub fn CreateEffectForRequest<R:Runtime>(
 
 		"Authentication.GetAccounts" => {
 			let effect =
-				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let provider_id =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						dev_log!("ipc", "[Authentication.GetAccounts] stub — provider={} (TODO: AuthenticationProvider trait)", provider_id);
-						Ok(json!([]))
+						let provider_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+						let Method = format!("{}$getAccounts", ProxyTarget::ExtHostAuthentication.GetTargetPrefix());
+						match IPCProvider
+							.SendRequestToSideCar("cocoon-main".to_string(), Method, json!([provider_id]), 5000)
+							.await
+						{
+							Ok(value) => Ok(value),
+							Err(error) => {
+								dev_log!(
+									"ipc",
+									"warn: [Authentication.GetAccounts] extension did not answer ({:?}); returning []",
+									error
+								);
+								Ok(json!([]))
+							},
+						}
 					})
 				};
 			Ok(Box::new(effect))
 		},
 
-		// Clipboard — Read/Write (Cascade-8 stubs; tauri-plugin-clipboard-manager
-		// not yet on the Mountain crate. Read returns "", Write accepts and drops.)
+		// Clipboard — Read/Write, backed by the cross-platform `arboard` crate
+		// so we don't depend on the optional tauri-plugin-clipboard-manager.
+		// arboard's API is blocking; we dispatch to tokio's blocking pool to
+		// keep the async scheduler responsive.
 		"Clipboard.Read" => {
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						dev_log!("ipc", "[Clipboard.Read] stub — returning '' (TODO: tauri-plugin-clipboard-manager)");
-						Ok(json!(""))
+						let result = tokio::task::spawn_blocking(|| -> Result<String, String> {
+							let mut Clipboard = arboard::Clipboard::new().map_err(|e| e.to_string())?;
+							Clipboard.get_text().map_err(|e| e.to_string())
+						})
+						.await
+						.map_err(|e| format!("Clipboard.Read join error: {}", e))?;
+						match result {
+							Ok(text) => Ok(json!(text)),
+							Err(e) => {
+								// Empty clipboard is reported as an error by arboard on
+								// some platforms; treat those as empty-string instead of
+								// bubbling to the extension.
+								if e.contains("empty") || e.contains("Empty") {
+									Ok(json!(""))
+								} else {
+									dev_log!("ipc", "warn: [Clipboard.Read] {}", e);
+									Err(e)
+								}
+							},
+						}
 					})
 				};
 			Ok(Box::new(effect))
@@ -1038,38 +1277,144 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let text_len = Parameters.get(0).and_then(Value::as_str).map(str::len).unwrap_or(0);
-						dev_log!("ipc", "[Clipboard.Write] stub — text_len={} (TODO: tauri-plugin-clipboard-manager)", text_len);
-						Ok(json!(null))
+						let text = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let text_len = text.len();
+						let result = tokio::task::spawn_blocking(move || -> Result<(), String> {
+							let mut Clipboard = arboard::Clipboard::new().map_err(|e| e.to_string())?;
+							Clipboard.set_text(text).map_err(|e| e.to_string())
+						})
+						.await
+						.map_err(|e| format!("Clipboard.Write join error: {}", e))?;
+						result.map(|()| {
+							dev_log!("ipc", "[Clipboard.Write] wrote {} byte(s)", text_len);
+							json!(null)
+						})
 					})
 				};
 			Ok(Box::new(effect))
 		},
 
-		// NativeHost — OpenExternal (Cascade-8 stub; tauri-plugin-shell not
-		// on the Mountain crate yet. Logs the URL; returns success so the
-		// extension's promise resolves.)
+		// NativeHost — OpenExternal. Uses the `open` crate to hand the URI to
+		// the OS default handler (xdg-open / `open` on macOS / ShellExecute on
+		// Windows). We reject unsafe schemes (javascript:, data:, vbscript:,
+		// file: written as an arbitrary path) because they can execute code
+		// with host privileges, per Ladder §6.3 risk checklist.
 		"NativeHost.OpenExternal" => {
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let uri = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						dev_log!("ipc", "[NativeHost.OpenExternal] stub — uri={} (TODO: tauri-plugin-shell)", uri);
-						Ok(json!(true))
+						let lower = uri.to_ascii_lowercase();
+						const BlockedSchemes:&[&str] = &["javascript:", "data:", "vbscript:", "file:"];
+						for scheme in BlockedSchemes {
+							if lower.starts_with(scheme) {
+								dev_log!("ipc", "warn: [NativeHost.OpenExternal] rejected scheme '{}': {}", scheme, uri);
+								return Err(format!("NativeHost.OpenExternal: scheme '{}' is not allowed", scheme));
+							}
+						}
+						if uri.is_empty() {
+							return Err("NativeHost.OpenExternal: empty URI".to_string());
+						}
+						let uri_owned = uri.clone();
+						let result = tokio::task::spawn_blocking(move || open::that_detached(uri_owned))
+							.await
+							.map_err(|e| format!("NativeHost.OpenExternal join error: {}", e))?;
+						match result {
+							Ok(()) => {
+								dev_log!("ipc", "[NativeHost.OpenExternal] opened {}", uri);
+								Ok(json!(true))
+							},
+							Err(e) => {
+								dev_log!("ipc", "warn: [NativeHost.OpenExternal] failed uri={} error={}", uri, e);
+								Err(e.to_string())
+							},
+						}
 					})
 				};
 			Ok(Box::new(effect))
 		},
 
-		// Languages — GetAll (Cascade-8 stub; enumerates nothing yet. Real
-		// implementation would walk ApplicationState.Extension.ScannedExtensions
-		// collecting `contributes.languages[]`.)
+		// Languages — GetAll
+		//
+		// Walk every scanned extension's `contributes.languages[]`, merge by
+		// language id, and return the union. Returned shape matches the VS Code
+		// contract: `[{ id, aliases, extensions, filenames, mimetypes,
+		// configuration }]`. Unknown fields survive as `null` / `[]`.
 		"Languages.GetAll" => {
 			let effect =
-				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						dev_log!("ipc", "[Languages.GetAll] stub — returning [] (TODO: enumerate ScannedExtensions)");
-						Ok(json!([]))
+						use std::collections::HashMap;
+
+						let scanned = run_time
+							.Environment
+							.ApplicationState
+							.Extension
+							.ScannedExtensions
+							.ScannedExtensions
+							.clone();
+						let Guard = match scanned.lock() {
+							Ok(g) => g,
+							Err(error) => {
+								return Err(format!("Languages.GetAll: scanned-extensions lock poisoned: {}", error));
+							},
+						};
+
+						let mut merged:HashMap<String, serde_json::Map<String, Value>> = HashMap::new();
+						for Dto in Guard.values() {
+							let Contributes = match Dto.Contributes.as_ref() {
+								Some(c) => c,
+								None => continue,
+							};
+							let Languages = Contributes.get("languages").and_then(Value::as_array);
+							let Some(Languages) = Languages else { continue };
+							for Entry in Languages {
+								let Id = match Entry.get("id").and_then(Value::as_str) {
+									Some(id) if !id.is_empty() => id.to_string(),
+									_ => continue,
+								};
+								let Existing = merged.entry(Id.clone()).or_insert_with(|| {
+									let mut seed = serde_json::Map::new();
+									seed.insert("id".to_string(), json!(Id));
+									seed.insert("aliases".to_string(), json!([]));
+									seed.insert("extensions".to_string(), json!([]));
+									seed.insert("filenames".to_string(), json!([]));
+									seed.insert("filenamePatterns".to_string(), json!([]));
+									seed.insert("mimetypes".to_string(), json!([]));
+									seed.insert("configuration".to_string(), Value::Null);
+									seed
+								});
+								let merge_array =
+									|target:&mut serde_json::Map<String, Value>, key:&str, incoming:&Value| {
+										let Some(incoming_arr) = incoming.get(key).and_then(Value::as_array) else {
+											return;
+										};
+										let bucket = target.entry(key.to_string()).or_insert_with(|| json!([]));
+										if let Some(bucket_arr) = bucket.as_array_mut() {
+											for v in incoming_arr {
+												if !bucket_arr.iter().any(|e| e == v) {
+													bucket_arr.push(v.clone());
+												}
+											}
+										}
+									};
+								merge_array(Existing, "aliases", Entry);
+								merge_array(Existing, "extensions", Entry);
+								merge_array(Existing, "filenames", Entry);
+								merge_array(Existing, "filenamePatterns", Entry);
+								merge_array(Existing, "mimetypes", Entry);
+								if Existing.get("configuration").map(Value::is_null).unwrap_or(true) {
+									if let Some(cfg) = Entry.get("configuration") {
+										Existing.insert("configuration".to_string(), cfg.clone());
+									}
+								}
+							}
+						}
+						drop(Guard);
+
+						let result:Vec<Value> = merged.into_values().map(Value::Object).collect();
+						dev_log!("ipc", "[Languages.GetAll] returning {} languages", result.len());
+						Ok(json!(result))
 					})
 				};
 			Ok(Box::new(effect))

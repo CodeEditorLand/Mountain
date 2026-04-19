@@ -186,7 +186,11 @@ use CommonLibrary::{
 	Environment::{Environment::Environment, Requires::Requires},
 	Error::CommonError::CommonError,
 	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
-	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
+	FileSystem::{
+		FileSystemReader::FileSystemReader,
+		FileSystemWriter::FileSystemWriter,
+		FileWatcherProvider::FileWatcherProvider,
+	},
 	IPC::IPCProvider::IPCProvider,
 	Keybinding::KeybindingProvider::KeybindingProvider,
 	LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
@@ -553,6 +557,7 @@ impl_provider!(DiagnosticManager);
 // File System
 impl_provider!(FileSystemReader);
 impl_provider!(FileSystemWriter);
+impl_provider!(FileWatcherProvider);
 
 // IPC and Keybinding
 impl_provider!(IPCProvider);

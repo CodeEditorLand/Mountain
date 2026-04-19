@@ -74,6 +74,8 @@ pub mod DocumentProvider;
 
 pub mod FileSystemProvider;
 
+pub mod FileWatcherProvider;
+
 pub mod IPCProvider;
 
 pub mod KeybindingProvider;

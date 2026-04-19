@@ -19,6 +19,21 @@
 //! - Consecutive duplicate messages counted (`(x14)` suffix)
 //! - Rust log targets compressed (`D::Binary::Main::Entry` → `Entry`)
 //!
+//! ## File sink
+//!
+//! When `LAND_DEV_LOG_FILE=1` (or, in debug builds, `LAND_DEV_LOG` is set),
+//! every emitted line is mirrored to:
+//!
+//! ```
+//! ~/Library/Application Support/<bundle>/logs/<YYYYMMDDTHHMMSS>/Mountain.dev.log
+//! ```
+//!
+//! The timestamp directory follows Tauri's `tauri-plugin-log` format, so
+//! the dev log sits next to the plugin's own log file for the same boot
+//! (one directory per process start). Use `LAND_DEV_LOG_FILE=0` to force-
+//! disable even in debug. File writes are flushed per line so `tail -f`
+//! shows live output.
+//!
 //! ## Tags (38 granular tags across all Elements)
 //!
 //! | Tag           | Scope                                               |
@@ -59,10 +74,185 @@
 //! | `bootstrap`   | Effect-TS bootstrap stages                           |
 //! | `preload`     | Preload: globals, polyfills, ipcRenderer             |
 
-use std::sync::{Mutex, OnceLock};
+use std::{
+	fs::{File, OpenOptions, create_dir_all},
+	io::{BufWriter, Write as IoWrite},
+	path::PathBuf,
+	sync::{
+		Mutex,
+		OnceLock,
+		atomic::{AtomicBool, Ordering},
+	},
+	time::{SystemTime, UNIX_EPOCH},
+};
 
 static ENABLED_TAGS:OnceLock<Vec<String>> = OnceLock::new();
 static SHORT_MODE:OnceLock<bool> = OnceLock::new();
+
+// ── File sink ────────────────────────────────────────────────────────────
+//
+// Mirrors every `dev_log!` line to a timestamped file under the app's
+// `logs/<YYYYMMDDTHHMMSS>/` directory so long sessions can be inspected
+// post-mortem without scrolling terminal history. Enable with:
+//
+//     LAND_DEV_LOG_FILE=1     # explicit opt-in
+//     LAND_DEV_LOG_FILE=0     # explicit opt-out (wins over defaults)
+//
+// When unset, file logging is auto-enabled in debug builds iff
+// `LAND_DEV_LOG` itself is set to at least one tag. Release builds stay
+// silent unless the opt-in flag is present, to avoid surprise writes in
+// shipped binaries.
+//
+// Directory layout matches Tauri's tauri-plugin-log output (same parent
+// `logs/` and same `YYYYMMDDTHHMMSS` subdir format) so the two logs sit
+// side by side when the user greps one timestamp.
+
+static LOG_FILE:OnceLock<Mutex<Option<BufWriter<File>>>> = OnceLock::new();
+
+/// Decide whether the file sink should be active. Returns the final flag
+/// once per process; subsequent calls are cached.
+fn FileSinkEnabled() -> bool {
+	static ENABLED:OnceLock<bool> = OnceLock::new();
+	*ENABLED.get_or_init(|| {
+		match std::env::var("LAND_DEV_LOG_FILE") {
+			Ok(Value) => matches!(Value.as_str(), "1" | "true" | "yes" | "on"),
+			Err(_) => {
+				// Auto-enable when LAND_DEV_LOG is set in a debug build.
+				cfg!(debug_assertions) && std::env::var("LAND_DEV_LOG").is_ok()
+			},
+		}
+	})
+}
+
+/// Resolve the log directory for this session:
+///   ~/Library/Application Support/<bundle>/logs/<YYYYMMDDTHHMMSS>/
+///
+/// The timestamp is picked once per process at first call. If the app-data
+/// prefix can't be detected (Tauri hasn't spawned yet, say), fall back to
+/// the system temp directory with the same naming — dev_log still works
+/// and the file ends up somewhere predictable.
+fn ResolveLogDirectory() -> PathBuf {
+	let Stamp = FormatTimestamp();
+	let Base = match AppDataPrefix() {
+		Some(Prefix) => PathBuf::from(Prefix).join("logs"),
+		None => std::env::temp_dir().join("land-editor-logs"),
+	};
+	Base.join(Stamp)
+}
+
+fn FormatTimestamp() -> String {
+	static STAMP:OnceLock<String> = OnceLock::new();
+	STAMP
+		.get_or_init(|| {
+			let Duration = SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
+			let Secs = Duration.as_secs() as i64;
+			// Minimal UTC breakdown without pulling chrono into DevLog: the
+			// Tauri plugin format is `YYYYMMDDTHHMMSS`, which is easy to build
+			// manually from the epoch.
+			let Days = Secs / 86_400;
+			let SecondsOfDay = (Secs % 86_400) as u32;
+			let Hour = SecondsOfDay / 3_600;
+			let Minute = (SecondsOfDay % 3_600) / 60;
+			let Second = SecondsOfDay % 60;
+			let (Year, Month, Day) = DaysToYMD(Days);
+			format!("{:04}{:02}{:02}T{:02}{:02}{:02}", Year, Month, Day, Hour, Minute, Second)
+		})
+		.clone()
+}
+
+/// Convert days-since-epoch to (year, month, day). Vendored here to avoid
+/// dragging chrono into the dev-log hot path.
+fn DaysToYMD(Days:i64) -> (i64, u32, u32) {
+	let mut Year = 1970_i64;
+	let mut Remaining = Days;
+	loop {
+		let YearLen = if IsLeap(Year) { 366 } else { 365 };
+		if Remaining < YearLen as i64 {
+			break;
+		}
+		Remaining -= YearLen as i64;
+		Year += 1;
+	}
+	let MonthLengths = [
+		31u32,
+		if IsLeap(Year) { 29 } else { 28 },
+		31,
+		30,
+		31,
+		30,
+		31,
+		31,
+		30,
+		31,
+		30,
+		31,
+	];
+	let mut Month = 0_usize;
+	let mut Day = Remaining as u32;
+	while Month < 12 && Day >= MonthLengths[Month] {
+		Day -= MonthLengths[Month];
+		Month += 1;
+	}
+	(Year, (Month as u32) + 1, Day + 1)
+}
+
+fn IsLeap(Year:i64) -> bool { (Year % 4 == 0 && Year % 100 != 0) || Year % 400 == 0 }
+
+/// Initialise the file sink on first call. Silently falls through to a
+/// disabled sink if the directory or file can't be created — the caller
+/// must never panic because of a log-file failure.
+fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
+	LOG_FILE.get_or_init(|| {
+		if !FileSinkEnabled() {
+			return Mutex::new(None);
+		}
+		let Dir = ResolveLogDirectory();
+		if create_dir_all(&Dir).is_err() {
+			eprintln!("[DEV:LOG] Failed to create log directory {}", Dir.display());
+			return Mutex::new(None);
+		}
+		let Path = Dir.join("Mountain.dev.log");
+		match OpenOptions::new().create(true).append(true).open(&Path) {
+			Ok(File) => {
+				let mut Writer = BufWriter::with_capacity(64 * 1024, File);
+				// Header pins the boot-time context so every session's file
+				// is self-describing even without the surrounding terminal.
+				let Header = format!(
+					"# Land dev log — started {}, pid {}, tags={:?}, short={}\n",
+					FormatTimestamp(),
+					std::process::id(),
+					EnabledTags(),
+					IsShort(),
+				);
+				let _ = Writer.write_all(Header.as_bytes());
+				let _ = Writer.flush();
+				eprintln!("[DEV:LOG] File sink → {}", Path.display());
+				Mutex::new(Some(Writer))
+			},
+			Err(Error) => {
+				eprintln!("[DEV:LOG] Failed to open {}: {}", Path.display(), Error);
+				Mutex::new(None)
+			},
+		}
+	})
+}
+
+/// Append a single formatted line to the session's log file if the file
+/// sink is active. Swallows every error — dev_log must never crash.
+pub fn WriteToFile(Line:&str) {
+	let Sink = InitFileSink();
+	if let Ok(mut Guard) = Sink.lock() {
+		if let Some(Writer) = Guard.as_mut() {
+			let _ = Writer.write_all(Line.as_bytes());
+			if !Line.ends_with('\n') {
+				let _ = Writer.write_all(b"\n");
+			}
+			// Flush on every line — ordering/tail-f matters more than throughput
+			// for dev logs, and the BufWriter coalesces partial writes anyway.
+			let _ = Writer.flush();
+		}
+	}
+}
 
 // ── Path alias ──────────────────────────────────────────────────────────
 // The app-data directory name is absurdly long. In short mode, alias it.
@@ -110,7 +300,9 @@ pub static DEDUP:Mutex<DedupState> = Mutex::new(DedupState { LastKey:String::new
 pub fn FlushDedup() {
 	if let Ok(mut State) = DEDUP.lock() {
 		if State.Count > 1 {
-			eprintln!("  (x{})", State.Count);
+			let Tail = format!("  (x{})", State.Count);
+			eprintln!("{}", Tail);
+			WriteToFile(&Tail);
 		}
 		State.LastKey.clear();
 		State.Count = 0;
@@ -166,7 +358,9 @@ macro_rules! dev_log {
 							State.LastKey = Key;
 							State.Count = 1;
 							if HadPrev && PrevCount > 1 {
-								eprintln!("  (x{})", PrevCount);
+								let Tail = format!("  (x{})", PrevCount);
+								eprintln!("{}", Tail);
+								$crate::IPC::DevLog::WriteToFile(&Tail);
 							}
 							true
 						}
@@ -175,10 +369,14 @@ macro_rules! dev_log {
 					}
 				};
 				if ShouldPrint {
-					eprintln!("[DEV:{}] {}", TagUpper, Aliased);
+					let Formatted = format!("[DEV:{}] {}", TagUpper, Aliased);
+					eprintln!("{}", Formatted);
+					$crate::IPC::DevLog::WriteToFile(&Formatted);
 				}
 			} else {
-				eprintln!("[DEV:{}] {}", TagUpper, RawMessage);
+				let Formatted = format!("[DEV:{}] {}", TagUpper, RawMessage);
+				eprintln!("{}", Formatted);
+				$crate::IPC::DevLog::WriteToFile(&Formatted);
 			}
 		}
 	};
@@ -187,11 +385,6 @@ macro_rules! dev_log {
 // ============================================================================
 // OTLP Span Emission — sends spans directly to Jaeger/OTEL collector
 // ============================================================================
-
-use std::{
-	sync::atomic::{AtomicBool, Ordering},
-	time::{SystemTime, UNIX_EPOCH},
-};
 
 static OTLP_AVAILABLE:AtomicBool = AtomicBool::new(true);
 static OTLP_TRACE_ID:OnceLock<String> = OnceLock::new();

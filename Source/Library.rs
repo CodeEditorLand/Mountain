@@ -103,6 +103,9 @@ pub mod Track;
 
 pub mod Workspace;
 
+// Tier-gating runtime banner
+pub mod LandFixTier;
+
 // Entry Point
 pub mod Binary;
 

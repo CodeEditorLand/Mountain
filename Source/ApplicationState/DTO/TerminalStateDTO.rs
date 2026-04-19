@@ -18,14 +18,24 @@
 //! - PTYInputTransmitter: PTY input channel sender
 //! - ReaderTaskHandle: Output reader task handle
 //! - ProcessWaitHandle: Process wait task handle
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
+use std::{
+	collections::HashMap,
+	path::PathBuf,
+	sync::{Arc, Mutex as StandardMutex},
+};
 
+use portable_pty::MasterPty;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tokio::{
 	sync::{Mutex as TokioMutex, mpsc as TokioMPSC},
 	task::JoinHandle,
 };
+
+/// Thread-safe handle around a portable-pty master PTY. We keep the handle
+/// alive past CreateTerminal so Resize / drop-to-kill semantics work. Not
+/// Clone / Serialize; the surrounding struct marks it `#[serde(skip)]`.
+pub type PtyMasterHandle = Arc<StandardMutex<Box<dyn MasterPty + Send>>>;
 
 /// Maximum terminal name length
 const MAX_TERMINAL_NAME_LENGTH:usize = 128;
@@ -45,7 +55,12 @@ const MAX_ENV_VARS:usize = 1000;
 /// Holds the complete state and runtime resources for a single pseudo-terminal
 /// (PTY) instance. This includes configuration, process identifiers, and
 /// handles for I/O tasks.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+///
+/// `Debug` is implemented manually at the bottom of this file because the
+/// `PTYMaster` field stores `dyn MasterPty + Send`, which does not itself
+/// implement `Debug`. The manual impl prints the master handle as an opaque
+/// placeholder so the surrounding struct remains `Debug`-printable.
+#[derive(Clone, Serialize, Deserialize)]
 pub struct TerminalStateDTO {
 	// --- Identifiers ---
 	/// Unique terminal identifier
@@ -89,6 +104,11 @@ pub struct TerminalStateDTO {
 	/// Handle for process wait task
 	#[serde(skip)]
 	pub ProcessWaitHandle:Option<Arc<TokioMutex<Option<JoinHandle<()>>>>>,
+
+	/// Master PTY handle kept alive for `Resize` and for ownership semantics
+	/// (dropping the master closes the slave, terminating the shell).
+	#[serde(skip)]
+	pub PTYMaster:Option<PtyMasterHandle>,
 }
 
 impl TerminalStateDTO {
@@ -165,6 +185,7 @@ impl TerminalStateDTO {
 			PTYInputTransmitter:None,
 			ReaderTaskHandle:None,
 			ProcessWaitHandle:None,
+			PTYMaster:None,
 		})
 	}
 
@@ -188,5 +209,29 @@ impl TerminalStateDTO {
 		self.PTYInputTransmitter = None;
 		self.ReaderTaskHandle = None;
 		self.ProcessWaitHandle = None;
+		self.PTYMaster = None;
+	}
+}
+
+impl std::fmt::Debug for TerminalStateDTO {
+	fn fmt(&self, Formatter:&mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		Formatter
+			.debug_struct("TerminalStateDTO")
+			.field("Identifier", &self.Identifier)
+			.field("Name", &self.Name)
+			.field("OSProcessIdentifier", &self.OSProcessIdentifier)
+			.field("ShellPath", &self.ShellPath)
+			.field("ShellArguments", &self.ShellArguments)
+			.field("CurrentWorkingDirectory", &self.CurrentWorkingDirectory)
+			.field("EnvironmentVariables", &self.EnvironmentVariables)
+			.field("IsPTY", &self.IsPTY)
+			.field(
+				"PTYInputTransmitter",
+				&self.PTYInputTransmitter.as_ref().map(|_| "<channel>"),
+			)
+			.field("ReaderTaskHandle", &self.ReaderTaskHandle.as_ref().map(|_| "<task>"))
+			.field("ProcessWaitHandle", &self.ProcessWaitHandle.as_ref().map(|_| "<task>"))
+			.field("PTYMaster", &self.PTYMaster.as_ref().map(|_| "<master-pty>"))
+			.finish()
 	}
 }
