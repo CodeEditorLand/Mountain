@@ -367,6 +367,30 @@ pub fn AppLifecycleSetup(
 		let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
 		crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
 
+		// [Lifecycle] [Phase] Advance Starting → Ready now that the gRPC
+		// server + Cocoon sidecar + extension scan have all finished. Wind's
+		// `TauriChannel("lifecycle").listen("onDidChangePhase")` subscribers
+		// fire so long-running services can start pulling.
+		AppStateForSetup
+			.Feature
+			.Lifecycle
+			.AdvanceAndBroadcast(2, &PostSetupAppHandle);
+
+		// Schedule a background transition to Restored (3) after a short
+		// settle delay — matches VS Code's behaviour of deferring non-
+		// critical UI restoration (workbench layout, webview panels,
+		// recent-files list) until the main editor is interactive. A
+		// second transition to Eventually (4) follows so late-binding
+		// extensions know to stop blocking on "ready".
+		let LifecycleStateClone = AppStateForSetup.Feature.Lifecycle.clone();
+		let AppHandleForPhase = PostSetupAppHandle.clone();
+		tauri::async_runtime::spawn(async move {
+			tokio::time::sleep(tokio::time::Duration::from_millis(2_000)).await;
+			LifecycleStateClone.AdvanceAndBroadcast(3, &AppHandleForPhase);
+			tokio::time::sleep(tokio::time::Duration::from_millis(5_000)).await;
+			LifecycleStateClone.AdvanceAndBroadcast(4, &AppHandleForPhase);
+		});
+
 		crate::otel_span!("lifecycle:postsetup:complete", PostSetupStart);
 		dev_log!("lifecycle", "[Lifecycle] [PostSetup] Complete. System ready.");
 	});

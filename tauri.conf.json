@@ -120,7 +120,7 @@
 			"entitlements": "./Entitlements.plist",
 			"files": {},
 			"hardenedRuntime": true,
-			"minimumSystemVersion": "10.0"
+			"minimumSystemVersion": "10.15"
 		},
 		"publisher": "PlayForm",
 		"resources": null,

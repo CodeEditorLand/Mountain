@@ -7,7 +7,10 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 
 use crate::{
-	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+	ApplicationState::{
+		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify,
+	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
@@ -49,7 +52,7 @@ pub async fn handle_workspaces_add_folder(Runtime:Arc<ApplicationRunTime>, Args:
 	let URI = Url::parse(&UriStr).map_err(|E| format!("workspaces:addFolder invalid URI: {}", E))?;
 	if let Ok(Folder) = WorkspaceFolderStateDTO::New(URI, Name, Index) {
 		Folders.push(Folder);
-		Workspace.SetWorkspaceFolders(Folders);
+		UpdateWorkspaceFoldersAndNotify(Workspace, Folders);
 	}
 
 	Ok(Value::Null)
@@ -72,7 +75,7 @@ pub async fn handle_workspaces_remove_folder(
 	for (I, F) in Folders.iter_mut().enumerate() {
 		F.Index = I;
 	}
-	Workspace.SetWorkspaceFolders(Folders);
+	UpdateWorkspaceFoldersAndNotify(Workspace, Folders);
 
 	Ok(Value::Null)
 }

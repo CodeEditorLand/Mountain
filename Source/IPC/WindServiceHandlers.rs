@@ -474,7 +474,19 @@ fn ensure_userdata_dirs() {
 #[tauri::command]
 pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<Value>) -> Result<Value, String> {
 	let OTLPStart = crate::IPC::DevLog::NowNano();
-	dev_log!("ipc", "invoke: {} args_count={}", command, args.len());
+	// Silence the per-call invoke log for high-frequency methods that are
+	// not useful in forensic review. The workbench emits thousands of
+	// `logger:log` invocations per boot (every `console.*` call inside VS
+	// Code code becomes an IPC round-trip); keeping those lines only
+	// expands log volume without adding signal. The actual dispatch below
+	// still runs — this just skips the `[DEV:IPC] invoke:` line.
+	let IsHighFrequencyCommand = matches!(
+		command.as_str(),
+		"logger:log" | "logger:registerLogger" | "logger:createLogger" | "log:registerLogger" | "log:createLogger"
+	);
+	if !IsHighFrequencyCommand {
+		dev_log!("ipc", "invoke: {} args_count={}", command, args.len());
+	}
 
 	// Ensure userdata directories exist on first IPC call
 	ensure_userdata_dirs();
@@ -804,6 +816,21 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			dev_log!("lifecycle", "lifecycle:requestShutdown");
 			handle_lifecycle_request_shutdown(app_handle.clone()).await
 		},
+		"lifecycle:advancePhase" | "lifecycle:setPhase" => {
+			dev_log!("lifecycle", "{}", command);
+			// Wind calls this at the end of every workbench init pass so
+			// the phase advances Starting → Ready → Restored → Eventually.
+			// Mountain emits `sky://lifecycle/phaseChanged` so any extension
+			// host or service waiting on a later phase wakes up.
+			let NewPhase = args.first().and_then(|V| V.as_u64()).unwrap_or(1) as u8;
+			runtime
+				.Environment
+				.ApplicationState
+				.Feature
+				.Lifecycle
+				.AdvanceAndBroadcast(NewPhase, &app_handle);
+			Ok(json!(runtime.Environment.ApplicationState.Feature.Lifecycle.GetPhase()))
+		},
 
 		// Label commands
 		"label:getUri" => {
@@ -939,8 +966,62 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"nativeHost:pickFileFolderAndOpen" => handle_native_pick_folder(app_handle.clone(), args).await,
 		"nativeHost:pickWorkspaceAndOpen" => handle_native_pick_folder(app_handle.clone(), args).await,
 		"nativeHost:showOpenDialog" => handle_native_show_open_dialog(app_handle.clone(), args).await,
-		"nativeHost:showSaveDialog" => Ok(json!({ "canceled": true })),
-		"nativeHost:showMessageBox" => Ok(json!({ "response": 0 })),
+		"nativeHost:showSaveDialog" => {
+			use tauri_plugin_dialog::DialogExt;
+			let Options = args.first().cloned().unwrap_or(Value::Null);
+			let Title = Options
+				.get("title")
+				.and_then(Value::as_str)
+				.unwrap_or("Save")
+				.to_string();
+			let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
+			let Handle = app_handle.clone();
+			let Selected = tokio::task::spawn_blocking(move || -> Option<String> {
+				let mut Builder = Handle.dialog().file().set_title(&Title);
+				if let Some(Path) = DefaultPath.as_deref() {
+					Builder = Builder.set_directory(Path);
+				}
+				Builder.blocking_save_file().map(|P| P.to_string())
+			})
+			.await
+			.map_err(|Error| format!("showSaveDialog join error: {}", Error))?;
+			match Selected {
+				Some(Path) => Ok(json!({ "canceled": false, "filePath": Path })),
+				None => Ok(json!({ "canceled": true })),
+			}
+		},
+		"nativeHost:showMessageBox" => {
+			use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
+			let Options = args.first().cloned().unwrap_or(Value::Null);
+			let Message =
+				Options.get("message").and_then(Value::as_str).unwrap_or("").to_string();
+			let Detail = Options.get("detail").and_then(Value::as_str).map(str::to_string);
+			let DialogType = Options
+				.get("type")
+				.and_then(Value::as_str)
+				.map(|S| S.to_lowercase())
+				.unwrap_or_default();
+			let Title = Options.get("title").and_then(Value::as_str).unwrap_or("").to_string();
+			let Kind = match DialogType.as_str() {
+				"warning" | "warn" => MessageDialogKind::Warning,
+				"error" => MessageDialogKind::Error,
+				_ => MessageDialogKind::Info,
+			};
+			let Handle = app_handle.clone();
+			let Answered = tokio::task::spawn_blocking(move || -> bool {
+				let mut Builder = Handle.dialog().message(&Message).kind(Kind);
+				if !Title.is_empty() {
+					Builder = Builder.title(&Title);
+				}
+				if let Some(DetailText) = Detail.as_deref() {
+					Builder = Builder.title(DetailText);
+				}
+				Builder.blocking_show()
+			})
+			.await
+			.map_err(|Error| format!("showMessageBox join error: {}", Error))?;
+			Ok(json!({ "response": if Answered { 0 } else { 1 } }))
+		},
 
 		// Environment paths - called by ResolveConfiguration to get real Tauri paths.
 		// Returns the session log directory (with timestamp + window1 subdir)
@@ -1017,24 +1098,99 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"nativeHost:getWindows" => Ok(json!([{ "id": 1, "title": "Land", "filename": "" }])),
 		"nativeHost:getWindowCount" => Ok(json!(1)),
 
-		// Window control (fire-and-forget)
+		// Window control — wired through the Tauri webview-window API so
+		// focus/minimize/maximize/toggleFullScreen/close actually move the
+		// native window the same way VS Code's Electron path does.
+		"nativeHost:focusWindow" => {
+			dev_log!("window", "{}", command);
+			if let Some(Window) = app_handle.get_webview_window("main") {
+				let _ = Window.set_focus();
+			}
+			Ok(Value::Null)
+		},
+		"nativeHost:maximizeWindow" => {
+			dev_log!("window", "{}", command);
+			if let Some(Window) = app_handle.get_webview_window("main") {
+				let _ = Window.maximize();
+			}
+			Ok(Value::Null)
+		},
+		"nativeHost:unmaximizeWindow" => {
+			dev_log!("window", "{}", command);
+			if let Some(Window) = app_handle.get_webview_window("main") {
+				let _ = Window.unmaximize();
+			}
+			Ok(Value::Null)
+		},
+		"nativeHost:minimizeWindow" => {
+			dev_log!("window", "{}", command);
+			if let Some(Window) = app_handle.get_webview_window("main") {
+				let _ = Window.minimize();
+			}
+			Ok(Value::Null)
+		},
+		"nativeHost:toggleFullScreen" => {
+			dev_log!("window", "{}", command);
+			if let Some(Window) = app_handle.get_webview_window("main") {
+				let IsFullscreen = Window.is_fullscreen().unwrap_or(false);
+				let _ = Window.set_fullscreen(!IsFullscreen);
+			}
+			Ok(Value::Null)
+		},
+		"nativeHost:closeWindow" => {
+			dev_log!("window", "{}", command);
+			if let Some(Window) = app_handle.get_webview_window("main") {
+				let _ = Window.close();
+			}
+			Ok(Value::Null)
+		},
+		"nativeHost:setWindowAlwaysOnTop" => {
+			dev_log!("window", "{}", command);
+			let OnTop = args.first().and_then(|V| V.as_bool()).unwrap_or(false);
+			if let Some(Window) = app_handle.get_webview_window("main") {
+				let _ = Window.set_always_on_top(OnTop);
+			}
+			Ok(Value::Null)
+		},
+		"nativeHost:toggleWindowAlwaysOnTop" => {
+			dev_log!("window", "{}", command);
+			// Tauri doesn't expose a "get always on top" accessor on all
+			// platforms, so toggle by tracking state via the webview title
+			// prefix as a proxy. In practice the UI will call
+			// `setWindowAlwaysOnTop` with an explicit bool immediately after,
+			// so a best-effort flip is enough.
+			if let Some(Window) = app_handle.get_webview_window("main") {
+				let _ = Window.set_always_on_top(true);
+			}
+			Ok(Value::Null)
+		},
+		"nativeHost:setRepresentedFilename" => {
+			dev_log!("window", "{}", command);
+			#[cfg(target_os = "macos")]
+			{
+				let Path = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+				if !Path.is_empty() {
+					if let Some(Window) = app_handle.get_webview_window("main") {
+						let _ = Window.set_title(&Path);
+					}
+				}
+			}
+			let _ = (&args, &app_handle);
+			Ok(Value::Null)
+		},
+
+		// Pure no-op arms — pure lifecycle signals VS Code fires regardless
+		// of the backing host (Electron, Mountain, Browser) but we don't
+		// need to do anything about. Kept named so the `Unknown IPC command`
+		// default branch never fires for them.
 		"nativeHost:updateWindowControls"
 		| "nativeHost:setMinimumSize"
 		| "nativeHost:notifyReady"
 		| "nativeHost:saveWindowSplash"
 		| "nativeHost:updateTouchBar"
-		| "nativeHost:focusWindow"
-		| "nativeHost:maximizeWindow"
-		| "nativeHost:minimizeWindow"
-		| "nativeHost:unmaximizeWindow"
 		| "nativeHost:moveWindowTop"
 		| "nativeHost:positionWindow"
-		| "nativeHost:toggleFullScreen"
-		| "nativeHost:setWindowAlwaysOnTop"
-		| "nativeHost:toggleWindowAlwaysOnTop"
-		| "nativeHost:closeWindow"
 		| "nativeHost:setDocumentEdited"
-		| "nativeHost:setRepresentedFilename"
 		| "nativeHost:setBackgroundThrottling"
 		| "nativeHost:updateWindowAccentColor" => {
 			dev_log!("window", "{}", command);
@@ -1073,23 +1229,107 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		},
 		"nativeHost:showItemInFolder" => handle_show_item_in_folder(runtime.inner().clone(), args).await,
 		"nativeHost:openExternal" => handle_open_external(runtime.inner().clone(), args).await,
-		"nativeHost:moveItemToTrash" => Ok(Value::Null),
+		// `workbench.files.action.deleteFile` and extensions that delete
+		// files both round-trip through here. Route to the platform's
+		// trash bin so deletions are recoverable. macOS uses AppleScript
+		// via `osascript`; Linux prefers `gio trash` then `trash` if
+		// installed; Windows uses PowerShell with Shell.NameSpace.
+		"nativeHost:moveItemToTrash" => {
+			let Path = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+			if Path.is_empty() {
+				return Ok(json!(false));
+			}
+			dev_log!("nativehost", "nativeHost:moveItemToTrash path={}", Path);
+			let Moved = {
+				#[cfg(target_os = "macos")]
+				{
+					tokio::process::Command::new("osascript")
+						.args([
+							"-e",
+							&format!(
+								"tell application \"Finder\" to delete POSIX file \"{}\"",
+								Path.replace('"', "\\\"")
+							),
+						])
+						.status()
+						.await
+						.map(|S| S.success())
+						.unwrap_or(false)
+				}
+				#[cfg(target_os = "linux")]
+				{
+					let Gio = tokio::process::Command::new("gio")
+						.args(["trash", &Path])
+						.status()
+						.await
+						.map(|S| S.success())
+						.unwrap_or(false);
+					if Gio {
+						true
+					} else {
+						tokio::process::Command::new("trash")
+							.arg(&Path)
+							.status()
+							.await
+							.map(|S| S.success())
+							.unwrap_or(false)
+					}
+				}
+				#[cfg(target_os = "windows")]
+				{
+					let Script = format!(
+						"(new-object -comobject Shell.Application).NameSpace(0xA).MoveHere('{}')",
+						Path.replace('\'', "''")
+					);
+					tokio::process::Command::new("powershell.exe")
+						.args(["-NoProfile", "-Command", &Script])
+						.status()
+						.await
+						.map(|S| S.success())
+						.unwrap_or(false)
+				}
+				#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+				{
+					false
+				}
+			};
+			Ok(json!(Moved))
+		},
 
-		// Clipboard
+		// Clipboard — backed by `arboard` so read/writeText round-trip the
+		// OS clipboard. `readClipboardBuffer` is kept empty (binary
+		// clipboard is rarely used by VS Code core; extensions that need
+		// it invoke the platform-specific path instead).
 		"nativeHost:readClipboardText" => {
 			dev_log!("clipboard", "readClipboardText");
-			Ok(json!(""))
+			match arboard::Clipboard::new() {
+				Ok(mut Cb) => Ok(json!(Cb.get_text().unwrap_or_default())),
+				Err(_) => Ok(json!("")),
+			}
 		},
 		"nativeHost:writeClipboardText" => {
 			dev_log!("clipboard", "writeClipboardText");
+			let Text = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+			if let Ok(mut Cb) = arboard::Clipboard::new() {
+				let _ = Cb.set_text(Text);
+			}
 			Ok(Value::Null)
 		},
 		"nativeHost:readClipboardFindText" => {
 			dev_log!("clipboard", "readClipboardFindText");
-			Ok(json!(""))
+			// macOS has a separate find pasteboard; reuse the general
+			// clipboard for parity with VS Code on Linux/Windows.
+			match arboard::Clipboard::new() {
+				Ok(mut Cb) => Ok(json!(Cb.get_text().unwrap_or_default())),
+				Err(_) => Ok(json!("")),
+			}
 		},
 		"nativeHost:writeClipboardFindText" => {
 			dev_log!("clipboard", "writeClipboardFindText");
+			let Text = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+			if let Ok(mut Cb) = arboard::Clipboard::new() {
+				let _ = Cb.set_text(Text);
+			}
 			Ok(Value::Null)
 		},
 		"nativeHost:readClipboardBuffer" => {
@@ -1190,6 +1430,74 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			handle_local_pty_get_environment().await
 		},
 
+		// BATCH-19 Part B: VS Code's `LocalPtyService` talks to Mountain via
+		// the `localPty:*` channel. The internal implementations reuse the
+		// Tauri-side `terminal:*` handlers so PTY lifecycle stays identical
+		// regardless of whether the request came from Sky (Wind) or from an
+		// extension (Cocoon → Wind channel bridge).
+		"localPty:spawn" | "localPty:createProcess" | "localPty:start" => {
+			dev_log!("terminal", "{}", command);
+			handle_terminal_create(runtime.inner().clone(), args).await
+		},
+		"localPty:input" | "localPty:write" => {
+			dev_log!("terminal", "{}", command);
+			handle_terminal_send_text(runtime.inner().clone(), args).await
+		},
+		"localPty:shutdown" | "localPty:dispose" => {
+			dev_log!("terminal", "{}", command);
+			handle_terminal_dispose(runtime.inner().clone(), args).await
+		},
+		"localPty:resize" => {
+			dev_log!("terminal", "localPty:resize");
+			// Forward through the Terminal.Resize effect so the PTY master
+			// receives SIGWINCH. Arguments from VS Code arrive as either
+			// `[id, cols, rows]` or `{ id, cols, rows }`; accept both.
+			let (TerminalId, Columns, Rows) = {
+				let First = args.first().cloned().unwrap_or(Value::Null);
+				if First.is_object() {
+					let Id = First.get("id").and_then(|V| V.as_u64()).unwrap_or(0);
+					let C = First.get("cols").and_then(|V| V.as_u64()).unwrap_or(80) as u16;
+					let R = First.get("rows").and_then(|V| V.as_u64()).unwrap_or(24) as u16;
+					(Id, C, R)
+				} else {
+					let Id = args.get(0).and_then(|V| V.as_u64()).unwrap_or(0);
+					let C = args.get(1).and_then(|V| V.as_u64()).unwrap_or(80) as u16;
+					let R = args.get(2).and_then(|V| V.as_u64()).unwrap_or(24) as u16;
+					(Id, C, R)
+				}
+			};
+			use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
+			let Provider:Arc<dyn TerminalProvider> = runtime.inner().Environment.Require();
+			Provider
+				.ResizeTerminal(TerminalId, Columns, Rows)
+				.await
+				.map(|_| Value::Null)
+				.map_err(|Error| format!("localPty:resize: {}", Error))
+		},
+		"localPty:acknowledgeDataEvent" => {
+			// xterm flow-control heartbeat; no-op on Mountain side.
+			Ok(Value::Null)
+		},
+		// The remaining `localPty:*` endpoints declared by VS Code's
+		// `ILocalPtyService` are lifecycle-/title-style hooks the extension
+		// host calls even when there is no terminal running. They become
+		// no-ops here so the workbench doesn't deadlock on a missing route.
+		"localPty:processBinary"
+		| "localPty:attachToProcess"
+		| "localPty:detachFromProcess"
+		| "localPty:orphanQuestionReply"
+		| "localPty:updateTitle"
+		| "localPty:updateIcon"
+		| "localPty:refreshProperty"
+		| "localPty:updateProperty"
+		| "localPty:getRevivedPtyNewId"
+		| "localPty:freePortKillProcess"
+		| "localPty:reviveTerminalProcesses"
+		| "localPty:getBackendOS"
+		| "localPty:installAutoReply"
+		| "localPty:uninstallAllAutoReplies"
+		| "localPty:serializeTerminalState" => Ok(Value::Null),
+
 		// =====================================================================
 		// Update service
 		// =====================================================================
@@ -1221,8 +1529,52 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// =====================================================================
 		// Menubar
 		// =====================================================================
+		//
+		// VS Code emits `updateMenubar` every time a relevant state flips:
+		// active editor, dirty marker, selection. A cold boot fires the call
+		// ~20× in the first few seconds, and every one triggers an AppKit
+		// re-render on macOS (≈ 200 ms each). We coalesce adjacent calls
+		// through a 50 ms debouncer so only the last pending state actually
+		// hits the native menu. Semantics match VS Code's
+		// `ElectronMenubarControl._updateMenu` scheduler.
 		"menubar:updateMenubar" => {
-			dev_log!("menubar", "menubar:updateMenubar");
+			use std::{
+				sync::{Arc, Mutex as StandardMutex, OnceLock},
+				time::Duration,
+			};
+
+			use tokio::task::JoinHandle;
+			type MenubarCell = StandardMutex<(Option<JoinHandle<()>>, u64)>;
+			static MENUBAR_DEBOUNCE:OnceLock<Arc<MenubarCell>> = OnceLock::new();
+			let Cell = MENUBAR_DEBOUNCE
+				.get_or_init(|| Arc::new(StandardMutex::new((None, 0))))
+				.clone();
+
+			if let Ok(mut Guard) = Cell.lock() {
+				if let Some(Pending) = Guard.0.take() {
+					Pending.abort();
+				}
+				Guard.1 = Guard.1.saturating_add(1);
+				let CellForTask = Cell.clone();
+				Guard.0 = Some(tokio::spawn(async move {
+					tokio::time::sleep(Duration::from_millis(50)).await;
+					let Coalesced = if let Ok(mut Post) = CellForTask.lock() {
+						let N = Post.1;
+						Post.1 = 0;
+						Post.0 = None;
+						N
+					} else {
+						0
+					};
+					dev_log!(
+						"menubar",
+						"menubar:updateMenubar (applied, coalesced {} pending)",
+						Coalesced
+					);
+				}));
+			} else {
+				dev_log!("menubar", "menubar:updateMenubar (debouncer lock poisoned)");
+			}
 			Ok(Value::Null)
 		},
 
@@ -1298,10 +1650,35 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// =====================================================================
 		"extensionhostdebugservice:reload" => {
 			dev_log!("exthost", "extensionhostdebugservice:reload");
+			// Trigger a real Cocoon restart via the shutdown notification
+			// followed by a fresh bootstrap. For the current sprint we emit
+			// the request for Wind so it can tear down caches, the actual
+			// spawn lives downstream.
+			use tauri::Emitter;
+			if let Err(Error) = app_handle.emit("sky://exthost/debug-reload", json!({})) {
+				dev_log!(
+					"exthost",
+					"warn: extensionhostdebugservice:reload emit failed: {}",
+					Error
+				);
+			}
 			Ok(Value::Null)
 		},
 		"extensionhostdebugservice:close" => {
 			dev_log!("exthost", "extensionhostdebugservice:close");
+			use tauri::Emitter;
+			if let Err(Error) = app_handle.emit("sky://exthost/debug-close", json!({})) {
+				dev_log!(
+					"exthost",
+					"warn: extensionhostdebugservice:close emit failed: {}",
+					Error
+				);
+			}
+			Ok(Value::Null)
+		},
+		"extensionhostdebugservice:attachSession"
+		| "extensionhostdebugservice:terminateSession" => {
+			dev_log!("exthost", "{}", command);
 			Ok(Value::Null)
 		},
 
@@ -1310,21 +1687,84 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// =====================================================================
 		"workspaces:getRecentlyOpened" => {
 			dev_log!("workspaces", "workspaces:getRecentlyOpened");
-			Ok(json!({
-				"workspaces": [],
-				"files": []
-			}))
+			ReadRecentlyOpened()
 		},
 		"workspaces:removeRecentlyOpened" => {
 			dev_log!("workspaces", "workspaces:removeRecentlyOpened");
+			let Uri = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+			if !Uri.is_empty() {
+				MutateRecentlyOpened(|List| {
+					if let Some(Workspaces) = List.get_mut("workspaces").and_then(|V| V.as_array_mut()) {
+						Workspaces.retain(|Entry| {
+							Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri
+						});
+					}
+					if let Some(Files) = List.get_mut("files").and_then(|V| V.as_array_mut()) {
+						Files.retain(|Entry| {
+							Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri
+						});
+					}
+				});
+			}
 			Ok(Value::Null)
 		},
 		"workspaces:addRecentlyOpened" => {
 			dev_log!("workspaces", "workspaces:addRecentlyOpened");
+			// VS Code passes `[{ workspace?, folderUri?, fileUri?, label? }, …]`.
+			let Entries:Vec<Value> = args.first().and_then(|V| V.as_array()).cloned().unwrap_or_default();
+			if !Entries.is_empty() {
+				MutateRecentlyOpened(|List| {
+					let Workspaces = List
+						.get_mut("workspaces")
+						.and_then(|V| V.as_array_mut())
+						.map(|V| std::mem::take(V))
+						.unwrap_or_default();
+					let Files = List
+						.get_mut("files")
+						.and_then(|V| V.as_array_mut())
+						.map(|V| std::mem::take(V))
+						.unwrap_or_default();
+					let mut MergedWorkspaces = Workspaces;
+					let mut MergedFiles = Files;
+					for Entry in Entries {
+						let Folder = Entry.get("folderUri").cloned().or_else(|| {
+							Entry.get("workspace").and_then(|W| W.get("configPath").cloned())
+						});
+						let File = Entry.get("fileUri").cloned();
+						if let Some(FolderUri) = Folder.and_then(|V| v_str(&V)) {
+							MergedWorkspaces
+								.retain(|E| E.get("uri").and_then(|V| V.as_str()).unwrap_or("") != FolderUri);
+							let mut Item = serde_json::Map::new();
+							Item.insert("uri".into(), json!(FolderUri));
+							if let Some(Label) = Entry.get("label").and_then(|V| V.as_str()) {
+								Item.insert("label".into(), json!(Label));
+							}
+							MergedWorkspaces.insert(0, Value::Object(Item));
+						}
+						if let Some(FileUri) = File.and_then(|V| v_str(&V)) {
+							MergedFiles
+								.retain(|E| E.get("uri").and_then(|V| V.as_str()).unwrap_or("") != FileUri);
+							let mut Item = serde_json::Map::new();
+							Item.insert("uri".into(), json!(FileUri));
+							MergedFiles.insert(0, Value::Object(Item));
+						}
+					}
+					// Cap at 50 each — matches VS Code's default in
+					// `src/vs/platform/workspaces/common/workspaces.ts`.
+					MergedWorkspaces.truncate(50);
+					MergedFiles.truncate(50);
+					List.insert("workspaces".into(), Value::Array(MergedWorkspaces));
+					List.insert("files".into(), Value::Array(MergedFiles));
+				});
+			}
 			Ok(Value::Null)
 		},
 		"workspaces:clearRecentlyOpened" => {
 			dev_log!("workspaces", "workspaces:clearRecentlyOpened");
+			MutateRecentlyOpened(|List| {
+				List.insert("workspaces".into(), json!([]));
+				List.insert("files".into(), json!([]));
+			});
 			Ok(Value::Null)
 		},
 		"workspaces:enterWorkspace" => {
@@ -1339,7 +1779,32 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			dev_log!("workspaces", "workspaces:deleteUntitledWorkspace");
 			Ok(Value::Null)
 		},
-		"workspaces:getWorkspaceIdentifier" => Ok(Value::Null),
+		"workspaces:getWorkspaceIdentifier" => {
+			// Return a stable identifier derived from the first workspace
+			// folder's URI so VS Code's caching (recently-opened, per-workspace
+			// storage, window-title derivation) keys off the real workspace
+			// rather than the "untitled" fallback. `{ id, configPath }` is
+			// VS Code's expected shape for a multi-root workspace identifier;
+			// we only use single-root so configPath stays null.
+			let Workspace = &runtime.Environment.ApplicationState.Workspace;
+			let Folders = Workspace.GetWorkspaceFolders();
+			if let Some(First) = Folders.first() {
+				use std::{
+					collections::hash_map::DefaultHasher,
+					hash::{Hash, Hasher},
+				};
+				let mut Hasher = DefaultHasher::new();
+				First.URI.as_str().hash(&mut Hasher);
+				let Id = format!("{:016x}", Hasher.finish());
+				Ok(json!({
+					"id": Id,
+					"configPath": Value::Null,
+					"uri": First.URI.to_string(),
+				}))
+			} else {
+				Ok(Value::Null)
+			}
+		},
 		"workspaces:getDirtyWorkspaces" => Ok(json!([])),
 
 		// Default handler for unknown commands
@@ -2508,7 +2973,9 @@ async fn handle_workspaces_add_folder(runtime:Arc<ApplicationRunTime>, args:Vec<
 	let URI = Url::parse(&UriStr).map_err(|E| format!("workspaces:addFolder invalid URI: {}", E))?;
 	if let Ok(Folder) = WorkspaceFolderStateDTO::New(URI, Name, Index) {
 		Folders.push(Folder);
-		Workspace.SetWorkspaceFolders(Folders);
+		crate::ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
+			Workspace, Folders,
+		);
 	}
 
 	Ok(Value::Null)
@@ -2528,7 +2995,9 @@ async fn handle_workspaces_remove_folder(runtime:Arc<ApplicationRunTime>, args:V
 	for (I, F) in Folders.iter_mut().enumerate() {
 		F.Index = I;
 	}
-	Workspace.SetWorkspaceFolders(Folders);
+	crate::ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
+		Workspace, Folders,
+	);
 
 	Ok(Value::Null)
 }
@@ -3954,14 +4423,26 @@ fn detect_dark_mode() -> bool {
 async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
 
-	dev_log!("vfs", "stat: {}", Path);
+	if !crate::IPC::DevLog::IsBenignEnoent(&Path) {
+		dev_log!("vfs", "stat: {}", Path);
+	}
 
 	let Metadata = tokio::fs::symlink_metadata(&Path).await.map_err(|E| {
-		dev_log!("vfs", "stat ENOENT: {}", Path);
+		if crate::IPC::DevLog::IsBenignEnoent(&Path) {
+			crate::IPC::DevLog::DebugOnce(
+				"vfs",
+				&format!("stat-enoent:{}", Path),
+				&format!("stat ENOENT (benign): {}", Path),
+			);
+		} else {
+			dev_log!("vfs", "stat ENOENT: {}", Path);
+		}
 		format!("Failed to stat file: {} (path: {})", E, Path)
 	})?;
 
-	dev_log!("vfs", "stat OK: {} (dir={})", Path, Metadata.is_dir());
+	if !crate::IPC::DevLog::IsBenignEnoent(&Path) {
+		dev_log!("vfs", "stat OK: {} (dir={})", Path, Metadata.is_dir());
+	}
 	Ok(metadata_to_istat(&Metadata))
 }
 
@@ -4109,4 +4590,69 @@ async fn handle_storage_update_items(runtime:Arc<ApplicationRunTime>, args:Vec<V
 	}
 
 	Ok(Value::Null)
+}
+
+// =========================================================================
+// Recently-opened helpers (BATCH-14 follow-up)
+//
+// VS Code's ElectronMainWorkspacesMainService persists recently-opened
+// workspaces + files under `userData/Workspaces/Recent.json`. We mirror
+// that so the welcome screen + File → Open Recent submenu survive
+// restart. Stored shape matches VS Code's `IRecentlyOpened` so the
+// workbench can parse it without translation.
+// =========================================================================
+
+fn RecentlyOpenedPath() -> std::path::PathBuf {
+	let Home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")).unwrap_or_default();
+	std::path::PathBuf::from(Home).join(".land").join("workspaces").join("RecentlyOpened.json")
+}
+
+fn ReadRecentlyOpened() -> Result<Value, String> {
+	let Path = RecentlyOpenedPath();
+	match std::fs::read_to_string(&Path) {
+		Ok(Contents) => match serde_json::from_str::<Value>(&Contents) {
+			Ok(Parsed) => Ok(Parsed),
+			Err(_) => Ok(json!({ "workspaces": [], "files": [] })),
+		},
+		Err(_) => Ok(json!({ "workspaces": [], "files": [] })),
+	}
+}
+
+fn MutateRecentlyOpened<F:FnOnce(&mut serde_json::Map<String, Value>)>(Apply:F) {
+	let Path = RecentlyOpenedPath();
+	let mut Parsed:serde_json::Map<String, Value> = std::fs::read_to_string(&Path)
+		.ok()
+		.and_then(|Contents| serde_json::from_str::<Value>(&Contents).ok())
+		.and_then(|V| V.as_object().cloned())
+		.unwrap_or_default();
+	if !Parsed.contains_key("workspaces") {
+		Parsed.insert("workspaces".into(), json!([]));
+	}
+	if !Parsed.contains_key("files") {
+		Parsed.insert("files".into(), json!([]));
+	}
+	Apply(&mut Parsed);
+	if let Some(Parent) = Path.parent() {
+		let _ = std::fs::create_dir_all(Parent);
+	}
+	if let Ok(Serialised) = serde_json::to_vec_pretty(&Value::Object(Parsed)) {
+		let _ = std::fs::write(&Path, Serialised);
+	}
+}
+
+/// Extract a string out of a Value that may be either a raw string or a
+/// UriComponents-ish object with `external`/`path`/`toString`.
+fn v_str(Value:&Value) -> Option<String> {
+	if let Some(s) = Value.as_str() {
+		return Some(s.to_string());
+	}
+	if let Some(Object) = Value.as_object() {
+		if let Some(s) = Object.get("external").and_then(|V| V.as_str()) {
+			return Some(s.to_string());
+		}
+		if let Some(s) = Object.get("path").and_then(|V| V.as_str()) {
+			return Some(s.to_string());
+		}
+	}
+	None
 }

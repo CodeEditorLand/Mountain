@@ -129,6 +129,36 @@ use crate::{
 	dev_log,
 };
 
+/// Directory names that are never extensions themselves even though they
+/// sit at the top level of `extensions/`. VS Code's shipped tree keeps
+/// TypeScript type declarations in `types/`, build output in `out/`, and a
+/// flat `node_modules/` for shared dependencies. Scanning into those emits
+/// noise like `[ExtensionScanner] Could not read package.json at .../out/package.json`
+/// on every boot; callers use `ExtensionScanDenyList` to skip them without
+/// losing the ability to scan *nested* `node_modules` inside a real
+/// extension (e.g. a language server's bundled deps).
+const EXTENSION_SCAN_DENY_LIST:&[&str] = &["types", "out", "node_modules", "test", ".vscode-test", ".git"];
+
+/// Test-only extensions that only serve the upstream VS Code test harness.
+/// Excluded unless `LAND_INCLUDE_TEST_EXTENSIONS=1` is set, because they
+/// pollute the registry with events nobody listens for and drag down boot
+/// time on every user session.
+const TEST_ONLY_EXTENSIONS:&[&str] = &[
+	"vscode-api-tests",
+	"vscode-test-resolver",
+	"vscode-colorize-tests",
+	"vscode-colorize-perf-tests",
+	"vscode-notebook-tests",
+];
+
+fn IncludeTestExtensions() -> bool {
+	matches!(std::env::var("LAND_INCLUDE_TEST_EXTENSIONS").as_deref(), Ok("1") | Ok("true"))
+}
+
+fn IsDeniedDirectory(Name:&str) -> bool { EXTENSION_SCAN_DENY_LIST.iter().any(|Denied| *Denied == Name) }
+
+fn IsTestOnlyExtension(Name:&str) -> bool { TEST_ONLY_EXTENSIONS.iter().any(|TestOnly| *TestOnly == Name) }
+
 /// Scans a single directory for valid extensions.
 ///
 /// This function iterates through a given directory, looking for subdirectories
@@ -191,9 +221,22 @@ pub async fn ScanDirectoryForExtensions(
 
 	let mut parse_failures = 0usize;
 	let mut missing_package_json = 0usize;
+	let mut denied_directory_count = 0usize;
+	let mut test_extension_skips = 0usize;
+	let AllowTestExtensions = IncludeTestExtensions();
 
 	for (EntryName, FileType) in TopLevelEntries {
 		if FileType == FileTypeDTO::Directory {
+			// BATCH-18: skip scanner traversal into directories that are
+			// build output / shared deps, not extensions.
+			if IsDeniedDirectory(&EntryName) {
+				denied_directory_count += 1;
+				continue;
+			}
+			if !AllowTestExtensions && IsTestOnlyExtension(&EntryName) {
+				test_extension_skips += 1;
+				continue;
+			}
 			let PotentialExtensionPath = DirectoryPath.join(EntryName);
 
 			let PackageJsonPath = PotentialExtensionPath.join("package.json");
@@ -225,7 +268,15 @@ pub async fn ScanDirectoryForExtensions(
 						},
 					};
 
-					if let Some(NLSMap) = LoadNLSBundle(&RunTime, &PotentialExtensionPath).await {
+					// BATCH-18: only report "no bundle" when the manifest
+					// actually contains `%placeholder%` strings that need
+					// substitution. Many shipped extensions (js-debug-companion,
+					// js-profile-table) publish English-only manifests with no
+					// placeholders — surfacing a warning there is misleading
+					// because the UI renders correctly with the raw fields.
+					let ManifestUsesPlaceholders = ManifestContainsNLSPlaceholders(&ManifestValue);
+					if let Some(NLSMap) = LoadNLSBundle(&RunTime, &PotentialExtensionPath, ManifestUsesPlaceholders).await
+					{
 						let mut Replaced = 0u32;
 						let mut Unresolved = 0u32;
 						ResolveNLSPlaceholdersInner(&mut ManifestValue, &NLSMap, &mut Replaced, &mut Unresolved);
@@ -289,31 +340,66 @@ pub async fn ScanDirectoryForExtensions(
 
 	dev_log!(
 		"extensions",
-		"[ExtensionScanner] Directory '{}' scan done: {} parsed, {} parse-failures, {} missing package.json",
+		"[ExtensionScanner] Directory '{}' scan done: {} parsed, {} parse-failures, {} missing package.json, {} \
+		 denied-dirs, {} test-extensions-skipped (LAND_INCLUDE_TEST_EXTENSIONS={})",
 		DirectoryPath.display(),
 		FoundExtensions.len(),
 		parse_failures,
-		missing_package_json
+		missing_package_json,
+		denied_directory_count,
+		test_extension_skips,
+		AllowTestExtensions,
 	);
 
 	Ok(FoundExtensions)
+}
+
+/// Walk a manifest value and return true as soon as any `%placeholder%` string
+/// is encountered. Used to decide whether a missing `package.nls.json` bundle
+/// is a real problem or a shipped-as-English extension.
+fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
+	match Value {
+		serde_json::Value::String(Text) => {
+			Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') && !Text[1..Text.len() - 1].contains('%')
+		},
+		serde_json::Value::Array(Items) => Items.iter().any(ManifestContainsNLSPlaceholders),
+		serde_json::Value::Object(Object) => Object.values().any(ManifestContainsNLSPlaceholders),
+		_ => false,
+	}
 }
 
 /// Load an extension's NLS bundle (`package.nls.json`) into a `{key → string}`
 /// map. Returns `None` if the bundle is absent or unreadable; placeholders stay
 /// as-is in that case. Entries can be bare strings or `{message, comment}`
 /// objects — we only keep `message`.
-async fn LoadNLSBundle(RunTime:&Arc<ApplicationRunTime>, ExtensionPath:&PathBuf) -> Option<Map<String, Value>> {
+///
+/// The `PlaceholdersNeeded` flag downgrades the "no bundle" warning when the
+/// caller already proved the manifest has no `%placeholder%` entries to
+/// resolve — in that case the bundle is optional and its absence is benign
+/// (BATCH-18).
+async fn LoadNLSBundle(
+	RunTime:&Arc<ApplicationRunTime>,
+	ExtensionPath:&PathBuf,
+	PlaceholdersNeeded:bool,
+) -> Option<Map<String, Value>> {
 	let NLSPath = ExtensionPath.join("package.nls.json");
 	let Content = match RunTime.Run(ReadFile(NLSPath.clone())).await {
 		Ok(Bytes) => Bytes,
 		Err(Error) => {
-			dev_log!(
-				"extensions",
-				"[LandFix:NLS] no bundle for {} ({})",
-				ExtensionPath.display(),
-				Error
-			);
+			if PlaceholdersNeeded {
+				dev_log!(
+					"extensions",
+					"[LandFix:NLS] no bundle for {} ({})",
+					ExtensionPath.display(),
+					Error
+				);
+			} else {
+				dev_log!(
+					"extensions",
+					"[LandFix:NLS] {} has no placeholders, no bundle needed",
+					ExtensionPath.display()
+				);
+			}
 			return None;
 		},
 	};
@@ -350,15 +436,6 @@ async fn LoadNLSBundle(RunTime:&Arc<ApplicationRunTime>, ExtensionPath:&PathBuf)
 		ExtensionPath.display()
 	);
 	Some(Resolved)
-}
-
-/// Recursively walks a JSON `Value` tree and replaces every string of the form
-/// `%key%` with the corresponding NLS entry. Mirrors VS Code's
-/// `replaceNLStrings` in `src/vs/platform/extensionManagement/common/
-/// extensionNls.ts`. Unknown keys are left untouched so UIs at least show the
-/// key rather than nothing.
-fn ResolveNLSPlaceholders(Value:&mut Value, NLS:&Map<String, Value>) {
-	ResolveNLSPlaceholdersInner(Value, NLS, &mut 0u32, &mut 0u32);
 }
 
 /// Internal NLS walker that also counts substitutions made vs. unresolved

@@ -36,6 +36,7 @@ use crate::{
 	ApplicationState::{
 		ApplicationState,
 		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndBroadcast,
 	},
 	dev_log,
 };
@@ -66,7 +67,7 @@ impl From<&WorkspaceFolderStateDTO> for WorkspaceFolderPayload {
 /// are accepted and parsed, but Tauri dialog results are typically paths.
 #[tauri::command]
 pub async fn MountainWorkspaceOpenFolder(
-	_app_handle:AppHandle,
+	app_handle:AppHandle,
 	state:State<'_, Arc<ApplicationState>>,
 	paths:Vec<String>,
 ) -> Result<Vec<WorkspaceFolderPayload>, String> {
@@ -95,7 +96,7 @@ pub async fn MountainWorkspaceOpenFolder(
 		Folders.push(WorkspaceFolderStateDTO::New(Uri, Name, Index)?);
 	}
 
-	state.Workspace.SetWorkspaceFolders(Folders.clone());
+	UpdateWorkspaceFoldersAndBroadcast(&app_handle, &state.Workspace, Folders.clone());
 	dev_log!(
 		"lifecycle",
 		"[WorkspaceFolderCommand] Opened {} folder(s); first URI={}",
@@ -125,9 +126,10 @@ pub async fn MountainWorkspaceListFolders(
 /// contains every previously-open folder.
 #[tauri::command]
 pub async fn MountainWorkspaceCloseAllFolders(
+	app_handle:AppHandle,
 	state:State<'_, Arc<ApplicationState>>,
 ) -> Result<Value, String> {
-	state.Workspace.SetWorkspaceFolders(Vec::new());
+	UpdateWorkspaceFoldersAndBroadcast(&app_handle, &state.Workspace, Vec::new());
 	dev_log!("lifecycle", "[WorkspaceFolderCommand] All folders closed");
 	Ok(Value::Null)
 }

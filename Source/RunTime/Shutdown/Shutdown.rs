@@ -61,6 +61,24 @@ impl ApplicationRunTime {
 	pub async fn Shutdown(&self) {
 		dev_log!("lifecycle", "[ApplicationRunTime] Initiating graceful shutdown of services...");
 
+		// Wake Wind/Sky so it can flush dirty editors, dispose sockets, and
+		// cancel async tasks before the runtime tears down. Subscribers live
+		// in `TauriMainProcessService::getChannel("lifecycle").listen(…)`.
+		{
+			use tauri::Emitter;
+			if let Err(Error) = self
+				.Environment
+				.ApplicationHandle
+				.emit("sky://lifecycle/willShutdown", serde_json::json!({ "reason": "quit" }))
+			{
+				dev_log!(
+					"lifecycle",
+					"warn: [ApplicationRunTime] sky://lifecycle/willShutdown emit failed: {}",
+					Error
+				);
+			}
+		}
+
 		let shutdown_result = self.ShutdownWithRecovery().await;
 
 		match shutdown_result {

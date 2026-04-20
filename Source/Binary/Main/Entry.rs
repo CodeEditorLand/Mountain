@@ -140,6 +140,55 @@ pub fn Fn() {
 	crate::LandFixTier::LogResolvedTiers();
 
 	// -------------------------------------------------------------------------
+	// [Boot] [Profile] Self-report (BATCH-13 step 6)
+	//
+	// Build.sh sets one of `Browser`/`Mountain`/`Electron` env vars
+	// depending on the `--profile` the user invoked. `LAND_PROFILE` is also
+	// exported when the build script resolves a named profile. Emit one
+	// line per boot so every downstream log can be bisected against a
+	// concrete profile without guessing from the binary path.
+	// -------------------------------------------------------------------------
+	{
+		let Browser = std::env::var("Browser").ok().unwrap_or_default();
+		let MountainProfile = std::env::var("Mountain").ok().unwrap_or_default();
+		let Electron = std::env::var("Electron").ok().unwrap_or_default();
+		let Bundle = std::env::var("Bundle").ok().unwrap_or_default();
+		let Compiler = std::env::var("Compiler").ok().unwrap_or_default();
+		let NamedProfile = std::env::var("LAND_PROFILE").ok().unwrap_or_else(|| {
+			if Electron == "true" {
+				if Compiler.eq_ignore_ascii_case("rest") {
+					"debug-electron-rest".into()
+				} else {
+					"debug-electron".into()
+				}
+			} else if MountainProfile == "true" {
+				"debug-mountain".into()
+			} else if Browser == "true" {
+				"debug".into()
+			} else {
+				"unknown".into()
+			}
+		});
+		let Workbench = if Electron == "true" {
+			"Electron"
+		} else if MountainProfile == "true" {
+			"Mountain"
+		} else if Browser == "true" {
+			"Browser"
+		} else {
+			"Unknown"
+		};
+		dev_log!(
+			"lifecycle",
+			"[LandFix:Profile] Active profile={} workbench={} bundle={} compiler={}",
+			NamedProfile,
+			Workbench,
+			Bundle,
+			if Compiler.is_empty() { "default" } else { Compiler.as_str() }
+		);
+	}
+
+	// -------------------------------------------------------------------------
 	// [Boot] [Runtime] Tokio runtime creation
 	// -------------------------------------------------------------------------
 	TraceStep!("[Boot] [Runtime] Building Tokio runtime...");
@@ -212,6 +261,10 @@ pub fn Fn() {
 					}
 				}
 				if !Folders.is_empty() {
+					// Seed state directly; Cocoon is not yet spawned at this
+					// point, so there is no sidecar to notify. The initial
+					// workspace makes it to Cocoon via `InitializeExtensionHost`'s
+					// `workspace` payload during its handshake instead.
 					AppState.Workspace.SetWorkspaceFolders(Folders);
 					dev_log!(
 						"lifecycle",

@@ -135,6 +135,50 @@ impl State {
 		}
 	}
 
+	/// Atomically replace the workspace folders and return the (added, removed)
+	/// delta. `added` contains every folder present in the new list but not the
+	/// old one; `removed` contains every folder present in the old list but not
+	/// the new. Comparison is by URI, so re-indexing does not produce spurious
+	/// add/remove pairs.
+	///
+	/// Callers use the delta to drive downstream events such as
+	/// `$deltaWorkspaceFolders` (Cocoon) and `onDidChangeWorkspaceFolders`
+	/// listeners inside extensions.
+	pub fn SetWorkspaceFoldersReturnDelta(
+		&self,
+		folders:Vec<WorkspaceFolderStateDTO>,
+	) -> (Vec<WorkspaceFolderStateDTO>, Vec<WorkspaceFolderStateDTO>) {
+		match self.WorkspaceFolders.lock() {
+			Ok(mut guard) => {
+				let Old = guard.clone();
+				let OldUris:std::collections::HashSet<String> =
+					Old.iter().map(|F| F.URI.to_string()).collect();
+				let NewUris:std::collections::HashSet<String> =
+					folders.iter().map(|F| F.URI.to_string()).collect();
+				let Added:Vec<WorkspaceFolderStateDTO> = folders
+					.iter()
+					.filter(|F| !OldUris.contains(&F.URI.to_string()))
+					.cloned()
+					.collect();
+				let Removed:Vec<WorkspaceFolderStateDTO> = Old
+					.iter()
+					.filter(|F| !NewUris.contains(&F.URI.to_string()))
+					.cloned()
+					.collect();
+				*guard = folders;
+				dev_log!(
+					"workspaces",
+					"[WorkspaceState] Workspace folders updated ({} folders, +{} -{})",
+					guard.len(),
+					Added.len(),
+					Removed.len()
+				);
+				(Added, Removed)
+			},
+			Err(_) => (Vec::new(), Vec::new()),
+		}
+	}
+
 	/// Gets the window state.
 	pub fn GetWindowState(&self) -> WindowStateDTO {
 		self.WorkspaceFolders

@@ -212,6 +212,7 @@ impl TerminalProvider for MountainEnvironment {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 
 		let TermIDForOutput = TerminalIdentifier;
+		let AppHandleForOutput = self.ApplicationHandle.clone();
 
 		tokio::spawn(async move {
 			let mut Buffer = [0u8; 8192];
@@ -219,10 +220,23 @@ impl TerminalProvider for MountainEnvironment {
 			loop {
 				match PTYReader.read(&mut Buffer) {
 					Ok(count) if count > 0 => {
-						let DataString = String::from_utf8_lossy(&Buffer[..count]);
+						let DataString = String::from_utf8_lossy(&Buffer[..count]).to_string();
 
-						let Payload = json!([TermIDForOutput, DataString.to_string()]);
-
+						// Fan out in two directions so both consumers see
+						// the bytes:
+						//   1. Cocoon's extension host (via gRPC) — lets
+						//      `vscode.window.onDidWriteTerminalData` and
+						//      the SCM `$acceptTerminalProcessData` chain
+						//      continue to function.
+						//   2. Sky's webview (via Tauri event) — the UI
+						//      xterm renderer subscribes to
+						//      `sky://terminal/data` and draws the bytes
+						//      into the user-visible terminal panel.
+						// Without the Tauri emit the user sees a terminal
+						// panel open but no shell output because gRPC-only
+						// delivery bypasses the webview entirely (BATCH-19
+						// Part B).
+						let Payload = json!([TermIDForOutput, DataString.clone()]);
 						if let Err(Error) = IPCProvider
 							.SendNotificationToSideCar(
 								"cocoon-main".into(),
@@ -234,6 +248,21 @@ impl TerminalProvider for MountainEnvironment {
 							dev_log!(
 								"terminal",
 								"warn: [TerminalProvider] Failed to send process data for ID {}: {}",
+								TermIDForOutput,
+								Error
+							);
+						}
+
+						if let Err(Error) = AppHandleForOutput.emit(
+							"sky://terminal/data",
+							json!({
+								"id": TermIDForOutput,
+								"data": DataString,
+							}),
+						) {
+							dev_log!(
+								"terminal",
+								"warn: [TerminalProvider] sky://terminal/data emit failed for ID {}: {}",
 								TermIDForOutput,
 								Error
 							);
@@ -281,6 +310,22 @@ impl TerminalProvider for MountainEnvironment {
 			if let Ok(mut Guard) = EnvironmentClone.ApplicationState.Feature.Terminals.ActiveTerminals.lock() {
 				Guard.remove(&TermIDForExit);
 			}
+
+			// Tell Sky the xterm panel should drop — mirrors the `sky://`
+			// create emit above. Without this, the UI keeps a ghost panel
+			// after the shell exits (user types `exit` and the pane still
+			// lingers until the next render cycle).
+			if let Err(Error) = EnvironmentClone
+				.ApplicationHandle
+				.emit("sky://terminal/exit", json!({ "id": TermIDForExit }))
+			{
+				dev_log!(
+					"terminal",
+					"warn: [TerminalProvider] sky://terminal/exit emit failed for ID {}: {}",
+					TermIDForExit,
+					Error
+				);
+			}
 		});
 
 		self.ApplicationState
@@ -290,6 +335,32 @@ impl TerminalProvider for MountainEnvironment {
 			.lock()
 			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 			.insert(TerminalIdentifier, Arc::new(std::sync::Mutex::new(TerminalState.clone())));
+
+		// BATCH-19 Part B: let Sky render the new terminal panel without
+		// waiting for Cocoon to round-trip a notification. The `sky://` event
+		// channel is already how ShowTerminal / HideTerminal talk to the UI.
+		if let Err(Error) = self.ApplicationHandle.emit(
+			"sky://terminal/create",
+			json!({
+				"id": TerminalIdentifier,
+				"name": Name,
+				"pid": TerminalState.OSProcessIdentifier,
+			}),
+		) {
+			dev_log!(
+				"terminal",
+				"warn: [TerminalProvider] sky://terminal/create emit failed for ID {}: {}",
+				TerminalIdentifier,
+				Error
+			);
+		}
+
+		dev_log!(
+			"terminal",
+			"[TerminalProvider] localPty:spawn OK id={} pid={:?}",
+			TerminalIdentifier,
+			TerminalState.OSProcessIdentifier
+		);
 
 		Ok(json!({ "id": TerminalIdentifier, "name": Name, "pid": TerminalState.OSProcessIdentifier }))
 	}

@@ -356,7 +356,7 @@ fn CommandSetContext(
 fn CommandReloadWindow(
 	_ApplicationHandle:AppHandle<Wry>,
 
-	_Window:WebviewWindow<Wry>,
+	Window:WebviewWindow<Wry>,
 
 	_RunTime:Arc<ApplicationRunTime>,
 
@@ -365,12 +365,84 @@ fn CommandReloadWindow(
 	Box::pin(async move {
 		dev_log!("commands", "[Native Command] Executing Reload Window...");
 
-		// Refresh the entire application UI by calling WebviewWindow::reload. This
-		// reinitializes the frontend, reapplies window state, and restarts extension
-		// host processes if configuration changes require it. Used after settings
-		// updates, extension installations, or development hot-reload. Current
-		// implementation returns success without performing the actual reload.
+		// Drive the real webview reload so extensions, settings, and locale
+		// changes take effect without restarting the process. Swallow the
+		// error — VS Code's contract returns `{ success: true }` on
+		// best-effort reload and extensions don't inspect it further.
+		if let Err(Error) = Window.eval("location.reload()") {
+			dev_log!(
+				"commands",
+				"warn: [Native Command] Reload Window eval failed: {}",
+				Error
+			);
+		}
+
 		Ok(json!({ "success": true }))
+	})
+}
+
+/// `vscode.open(uri, columnOrOptions?)` — the built-in command every
+/// extension uses to jump to a file or open an external URL. Routes to
+/// `window.showTextDocument` for `file://` URIs (via the sky-channel so Sky
+/// can open the editor) and to `NativeHost.OpenExternal` for anything else.
+fn CommandVscodeOpen(
+	ApplicationHandle:AppHandle<Wry>,
+
+	_Window:WebviewWindow<Wry>,
+
+	_RunTime:Arc<ApplicationRunTime>,
+
+	Argument:Value,
+) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+	Box::pin(async move {
+		use tauri::Emitter;
+
+		let UriRaw = if Argument.is_array() {
+			Argument.get(0).cloned().unwrap_or_default()
+		} else {
+			Argument.clone()
+		};
+		let UriString = match &UriRaw {
+			Value::String(S) => S.clone(),
+			Value::Object(Object) => Object
+				.get("external")
+				.and_then(Value::as_str)
+				.or_else(|| Object.get("path").and_then(Value::as_str))
+				.map(str::to_string)
+				.unwrap_or_default(),
+			Value::Null => String::new(),
+			_ => UriRaw.to_string(),
+		};
+		if UriString.is_empty() {
+			return Err("vscode.open requires a URI".to_string());
+		}
+		let IsFileLike = UriString.starts_with("file:") || UriString.starts_with('/');
+		if IsFileLike {
+			if let Err(Error) = ApplicationHandle.emit(
+				"sky://window/showTextDocument",
+				json!({ "uri": UriString }),
+			) {
+				dev_log!(
+					"commands",
+					"warn: [vscode.open] sky://window/showTextDocument emit failed: {}",
+					Error
+				);
+			}
+			Ok(json!(true))
+		} else {
+			// Fall through to platform open. Mirrors `NativeHost.OpenExternal`.
+			let Command:Option<(&str, Vec<String>)> = if cfg!(target_os = "macos") {
+				Some(("open", vec![UriString.clone()]))
+			} else if cfg!(target_os = "windows") {
+				Some(("cmd.exe", vec!["/c".into(), "start".into(), String::new(), UriString.clone()]))
+			} else {
+				Some(("xdg-open", vec![UriString.clone()]))
+			};
+			if let Some((Bin, Args)) = Command {
+				let _ = tokio::process::Command::new(Bin).args(&Args).spawn();
+			}
+			Ok(json!(true))
+		}
 	})
 }
 
@@ -441,6 +513,16 @@ pub fn RegisterNativeCommands(
 	// declare UI context keys. Registering as a no-op silences the routing
 	// error until Wind/Sky wire through a real context key service.
 	CommandRegistry.insert("setContext".to_string(), CommandHandler::Native(CommandSetContext));
+
+	// `vscode.open(uri)` — dispatches to the editor for file URIs and to the
+	// platform shell for everything else. Extensions call this without
+	// guarding on whether we've registered it; a missing registration shows
+	// up as "command 'vscode.open' not found" in user-visible error toasts.
+	CommandRegistry.insert("vscode.open".to_string(), CommandHandler::Native(CommandVscodeOpen));
+	CommandRegistry.insert(
+		"vscode.openFolder".to_string(),
+		CommandHandler::Native(CommandVscodeOpen),
+	);
 
 	dev_log!("commands", "[Bootstrap] {} native commands registered.", CommandRegistry.len());
 

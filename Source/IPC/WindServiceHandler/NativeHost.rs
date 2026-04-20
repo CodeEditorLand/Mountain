@@ -5,12 +5,48 @@
 //! Covers INativeHostService commands: dialogs, OS info, window state,
 //! color scheme, dark mode detection, port scanning.
 
+use std::{path::PathBuf, sync::Arc};
+
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
 
-use crate::dev_log;
+use crate::{
+	ApplicationState::{
+		ApplicationState,
+		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndBroadcast,
+	},
+	dev_log,
+};
+
+/// Build a workspace folder DTO from the selected path so every pick-folder
+/// flow goes through the same validated path → URI → name translation that
+/// `MountainWorkspaceOpenFolder` uses. Returns `None` when the path is not a
+/// directory or fails URL conversion.
+fn BuildFolderDtoFromPath(Raw:&str, Index:usize) -> Option<WorkspaceFolderStateDTO> {
+	let Path = PathBuf::from(Raw);
+	if !Path.exists() {
+		return None;
+	}
+	let Canonical = Path.canonicalize().unwrap_or(Path.clone());
+	let Uri = url::Url::from_directory_path(&Canonical).ok()?;
+	let Name = Canonical
+		.file_name()
+		.and_then(|N| N.to_str())
+		.map(str::to_string)
+		.unwrap_or_else(|| Canonical.display().to_string());
+	WorkspaceFolderStateDTO::New(Uri, Name, Index).ok()
+}
 
 /// Pick folder using Tauri dialog plugin and reload webview with folder param.
+///
+/// After the dialog resolves but before navigating the webview, we push the
+/// picked folder into `ApplicationState.Workspace` and fire the
+/// `$deltaWorkspaceFolders` gRPC notification so Cocoon's extension host sees
+/// the mutation before the new URL reloads the workbench. Without this step
+/// the `workspaceContains:*` activation pass (BATCH-15) has nothing to match,
+/// and `findFiles folders=0` persists because the Cocoon-side snapshot never
+/// mirrored the pick.
 pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) -> Result<Value, String> {
 	use tauri_plugin_dialog::DialogExt;
 
@@ -23,6 +59,28 @@ pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) ->
 		if let Some(Path) = FolderPath {
 			let PathStr = Path.to_string();
 			dev_log!("folder", "picked: {}", PathStr);
+
+			// Mutate workspace state + emit $deltaWorkspaceFolders *before*
+			// navigating — the webview reload discards the current Sky
+			// context, but Cocoon keeps its state machine alive and must see
+			// the delta to drive workspaceContains activation.
+			if let Some(State) = Handle.try_state::<Arc<ApplicationState>>() {
+				if let Some(Dto) = BuildFolderDtoFromPath(&PathStr, 0) {
+					UpdateWorkspaceFoldersAndBroadcast(&Handle, &State.Workspace, vec![Dto]);
+				} else {
+					dev_log!(
+						"folder",
+						"warn: [pickFolderAndOpen] Failed to build WorkspaceFolderStateDTO for {}",
+						PathStr
+					);
+				}
+			} else {
+				dev_log!(
+					"folder",
+					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri — workspace \
+					 mutation skipped"
+				);
+			}
 
 			if let Some(Window) = Handle.get_webview_window("main") {
 				if let Ok(CurrentUrl) = Window.url() {

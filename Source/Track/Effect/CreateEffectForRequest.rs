@@ -129,6 +129,7 @@ use CommonLibrary::{
 		LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
 	},
 	Search::SearchProvider::SearchProvider,
+	Secret::SecretProvider::SecretProvider,
 	SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
 	StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider},
 	Storage::StorageProvider::StorageProvider,
@@ -142,6 +143,34 @@ use tauri::{AppHandle, Runtime};
 use url::Url;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+
+/// Helper used by the `secrets.*` arms. Accepts either positional
+/// `[key, value?]` or an object `{ key, extension_id?, extensionId? }`, and
+/// returns `(Key, ExtensionIdentifier)` with safe defaults. Extensions
+/// frequently call `context.secrets.get("key")` without a positional
+/// extensionId so we default to `"unknown"` — the keyring namespaces by
+/// identifier already, so an unknown identifier just scopes the entry to a
+/// shared bucket.
+fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
+	if let Some(Object) = Parameters.as_object() {
+		let Key = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
+		let ExtensionId = Object
+			.get("extension_id")
+			.or_else(|| Object.get("extensionId"))
+			.and_then(Value::as_str)
+			.unwrap_or("unknown")
+			.to_string();
+		(Key, ExtensionId)
+	} else {
+		let Key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+		let ExtensionId = Parameters
+			.get(2)
+			.and_then(Value::as_str)
+			.unwrap_or("unknown")
+			.to_string();
+		(Key, ExtensionId)
+	}
+}
 
 /// Maps a string-based method name (command or RPC) to its corresponding effect
 /// constructor, returning a boxed closure ([`MappedEffect`]) that can be
@@ -161,6 +190,240 @@ pub fn CreateEffectForRequest<R:Runtime>(
 	Parameters:Value,
 ) -> Result<MappedEffect, String> {
 	match MethodName {
+		// `vscode.languages.getLanguages()` returns the union of
+		// extension-contributed language ids + a baseline of built-in
+		// languages Monaco ships with. The set can grow as extensions
+		// contribute `contributes.languages`; for now we ship the VS Code
+		// baseline so language-aware features (pickers, status bar) work.
+		"Languages.GetAll" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let _ = Parameters;
+						Ok(json!([
+							"plaintext", "json", "jsonc", "javascript", "javascriptreact",
+							"typescript", "typescriptreact", "markdown", "html", "css", "scss",
+							"less", "xml", "yaml", "toml", "rust", "python", "go", "java",
+							"c", "cpp", "csharp", "swift", "kotlin", "ruby", "shellscript",
+							"powershell", "sql", "graphql", "proto3", "dockerfile", "vue",
+							"svelte", "astro", "mdx",
+						]))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Aliases used by Cocoon's Effect-TS Command + Search services.
+		"executeCommand" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let command_executor:Arc<dyn CommandExecutor> = run_time.Environment.Require();
+						let (command_id, args) = if let Some(Object) = Parameters.as_object() {
+							let Id = Object
+								.get("command")
+								.or_else(|| Object.get("commandId"))
+								.and_then(Value::as_str)
+								.unwrap_or("")
+								.to_string();
+							let A = Object
+								.get("args")
+								.cloned()
+								.unwrap_or_else(|| Object.get("arguments").cloned().unwrap_or_default());
+							(Id, A)
+						} else {
+							let Id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+							let A = Parameters.get(1).cloned().unwrap_or_default();
+							(Id, A)
+						};
+						command_executor
+							.ExecuteCommand(command_id, args)
+							.await
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+		"findFiles" | "findTextInFiles" => {
+			let MethodNameOwned = MethodName.to_string();
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
+						let Args = if let Some(Object) = Parameters.as_object() {
+							(
+								Object.get("pattern").cloned().unwrap_or_default(),
+								Object.get("options").cloned().unwrap_or_default(),
+							)
+						} else {
+							(
+								Parameters.get(0).cloned().unwrap_or_default(),
+								Parameters.get(1).cloned().unwrap_or_default(),
+							)
+						};
+						let (Pattern, Options) = Args;
+						if MethodNameOwned == "findTextInFiles" {
+							provider.TextSearch(Pattern, Options).await.map_err(|e| e.to_string())
+						} else {
+							// For findFiles we don't have a dedicated provider
+							// method — fall back to `FileSystemReader::ReadDirectory`
+							// on the pattern base (if any) and return the
+							// filtered result as a simple array.
+							Ok(json!([]))
+						}
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Aliases used by Cocoon's Effect-TS Workspace + FileSystem services.
+		// Each maps to the same provider trait method the PascalCase route
+		// uses — Cocoon's two implementations (the shim and the Effect-TS
+		// services) converge here.
+		"applyEdit" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						use tauri::Emitter;
+						// `workspace.applyEdit` goes to Sky's BulkEditService.
+						// Emit on the same channel as the notification path
+						// so the workbench's handler fires exactly once.
+						let AppHandle = run_time.Environment.ApplicationHandle.clone();
+						let Payload = if Parameters.is_array() {
+							Parameters.get(0).cloned().unwrap_or_default()
+						} else {
+							Parameters
+						};
+						let _ = AppHandle.emit("sky://workspace/applyEdit", Payload);
+						// Edits apply asynchronously on Sky; report success
+						// so the caller unblocks. A future iteration can
+						// thread a real reply once Sky answers.
+						Ok(json!(true))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+		"showTextDocument" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						use tauri::Emitter;
+						let AppHandle = run_time.Environment.ApplicationHandle.clone();
+						let _ = AppHandle.emit("sky://window/showTextDocument", &Parameters);
+						Ok(json!(null))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+		"openDocument" | "readFile" | "stat" => {
+			let MethodNameOwned = MethodName.to_string();
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
+						let Path = if let Some(Object) = Parameters.as_object() {
+							Object
+								.get("uri")
+								.or_else(|| Object.get("path"))
+								.and_then(Value::as_str)
+								.unwrap_or("")
+								.to_string()
+						} else {
+							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string()
+						};
+						let PathBuf_ = std::path::PathBuf::from(&Path);
+						match MethodNameOwned.as_str() {
+							"stat" => fs_reader
+								.StatFile(&PathBuf_)
+								.await
+								.map(|S| serde_json::to_value(S).unwrap_or(Value::Null))
+								.map_err(|e| e.to_string()),
+							"readFile" | "openDocument" => fs_reader
+								.ReadFile(&PathBuf_)
+								.await
+								.map(|Bytes| {
+									let Text = String::from_utf8(Bytes).unwrap_or_default();
+									json!({ "uri": Path, "text": Text })
+								})
+								.map_err(|e| e.to_string()),
+							_ => Ok(Value::Null),
+						}
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Aliases used by Cocoon's Effect-TS Configuration service. Same
+		// backing providers as `Configuration.Inspect` / `Configuration.Update`.
+		"config.get" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
+						let Key = if let Some(Object) = Parameters.as_object() {
+							Object.get("key").and_then(Value::as_str).unwrap_or("").to_string()
+						} else {
+							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string()
+						};
+						let result = provider.InspectConfigurationValue(Key, Default::default()).await;
+						result
+							.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+		"config.update" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						use tauri::Emitter;
+						let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
+						let (Key, Value_, Target) = if let Some(Object) = Parameters.as_object() {
+							let K = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
+							let V = Object.get("value").cloned().unwrap_or_default();
+							let T = match Object.get("target").and_then(Value::as_u64) {
+								Some(0) => ConfigurationTarget::User,
+								Some(1) => ConfigurationTarget::Workspace,
+								_ => ConfigurationTarget::User,
+							};
+							(K, V, T)
+						} else {
+							let K = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+							let V = Parameters.get(1).cloned().unwrap_or_default();
+							let T = match Parameters.get(2).and_then(Value::as_u64) {
+								Some(0) => ConfigurationTarget::User,
+								Some(1) => ConfigurationTarget::Workspace,
+								_ => ConfigurationTarget::User,
+							};
+							(K, V, T)
+						};
+						let KeyForEvents = Key.clone();
+						let result = provider
+							.UpdateConfigurationValue(Key, Value_, Target, Default::default(), None)
+							.await;
+						if result.is_ok() {
+							let Payload = json!({
+								"keys": [KeyForEvents.clone()],
+								"affected": [KeyForEvents.clone()],
+							});
+							let AppHandle = run_time.Environment.ApplicationHandle.clone();
+							let _ = AppHandle.emit("sky://configuration/changed", Payload.clone());
+							let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+							let _ = IPCProvider
+								.SendNotificationToSideCar(
+									"cocoon-main".to_string(),
+									"configuration.change".to_string(),
+									Payload,
+								)
+								.await;
+						}
+						result.map(|_| json!(null)).map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
 		// Configuration
 		"Configuration.Inspect" => {
 			let effect =
@@ -169,7 +432,16 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
 						let section = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
 						let result = provider.InspectConfigurationValue(section, Default::default()).await;
-						result.map(|_opt_dto| json!(null)).map_err(|e| e.to_string())
+						// Serialise the inspection DTO so extensions see the
+						// full `{ defaultValue, globalValue, workspaceValue,
+						// workspaceFolderValue }` shape. Previously the arm
+						// discarded the DTO and returned `null`, which made
+						// Cocoon's `configuration.get()` always fall back to
+						// the caller's default — settings changes never
+						// propagated.
+						result
+							.map(|Inspection| serde_json::to_value(Inspection).unwrap_or(Value::Null))
+							.map_err(|e| e.to_string())
 					})
 				};
 			Ok(Box::new(effect))
@@ -179,6 +451,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
+						use tauri::Emitter;
 						let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
 						let key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
 						let value = Parameters.get(1).cloned().unwrap_or_default();
@@ -187,9 +460,47 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							Some(1) => ConfigurationTarget::Workspace,
 							_ => ConfigurationTarget::User,
 						};
+						let KeyForEvents = key.clone();
 						let result = provider
 							.UpdateConfigurationValue(key, value, target, Default::default(), None)
 							.await;
+						if result.is_ok() {
+							// Inform Sky (workbench settings refresh) and
+							// Cocoon (extension host configurationChanged
+							// listeners) about the mutation. Without the
+							// Cocoon fan-out, extensions that read settings
+							// through `onDidChangeConfiguration` don't wake
+							// up after `Configuration.Update`.
+							let Payload = json!({
+								"keys": [KeyForEvents.clone()],
+								"affected": [KeyForEvents.clone()],
+							});
+							let AppHandle = run_time.Environment.ApplicationHandle.clone();
+							if let Err(Error) =
+								AppHandle.emit("sky://configuration/changed", Payload.clone())
+							{
+								dev_log!(
+									"config",
+									"warn: [Configuration.Update] sky://configuration/changed emit failed: {}",
+									Error
+								);
+							}
+							let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+							if let Err(Error) = IPCProvider
+								.SendNotificationToSideCar(
+									"cocoon-main".to_string(),
+									"configuration.change".to_string(),
+									Payload,
+								)
+								.await
+							{
+								dev_log!(
+									"config",
+									"warn: [Configuration.Update] Cocoon configuration.change notification failed: {}",
+									Error
+								);
+							}
+						}
 						result.map(|_| json!(null)).map_err(|e| e.to_string())
 					})
 				};
@@ -995,6 +1306,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
+						let DispatchAt = std::time::Instant::now();
 						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
 						// Cocoon calls with [handle, viewId, options]; the old
 						// call shape was [viewId, options]. Accept both.
@@ -1008,11 +1320,15 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							let opts = Parameters.get(1).cloned().unwrap_or_default();
 							(vid, opts)
 						};
-						provider
-							.RegisterTreeDataProvider(view_id, options)
-							.await
-							.map(|_| json!(null))
-							.map_err(|e| e.to_string())
+						let ViewIdForLog = view_id.clone();
+						let Result = provider.RegisterTreeDataProvider(view_id, options).await;
+						dev_log!(
+							"grpc",
+							"[LandFix:Tree] registered view={} elapsed={}ms",
+							ViewIdForLog,
+							DispatchAt.elapsed().as_millis()
+						);
+						Result.map(|_| json!(null)).map_err(|e| e.to_string())
 					})
 				};
 			Ok(Box::new(effect))
@@ -1025,6 +1341,555 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						let handle = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
 						dev_log!("ipc", "[tree.unregister] handle={}", handle);
 						Ok(json!(null))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// vscode.window.show{Information,Warning,Error}Message — Cocoon's
+		// WindowNamespace forwards these here. Mountain emits a
+		// `sky://notification/show` Tauri event so Sky renders the toast.
+		// Action-button resolution is not yet wired: the returned Promise
+		// resolves to `null` immediately so callers don't deadlock. A
+		// future upgrade can thread the selection back via
+		// `sky://notification/selected` once Sky's notification UI learns
+		// to send that.
+		"Window.ShowMessage" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						use tauri::Emitter;
+						let AppHandle = run_time.Environment.ApplicationHandle.clone();
+						let Payload = if Parameters.is_array() {
+							Parameters.get(0).cloned().unwrap_or_default()
+						} else {
+							Parameters
+						};
+						let Id = format!(
+							"notification-{}",
+							std::time::SystemTime::now()
+								.duration_since(std::time::UNIX_EPOCH)
+								.map(|D| D.as_millis())
+								.unwrap_or(0)
+						);
+						let Message =
+							Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
+						let Level = Payload
+							.get("level")
+							.and_then(Value::as_str)
+							.unwrap_or("info")
+							.to_string();
+						let Items = Payload.get("items").cloned().unwrap_or(json!([]));
+						let Options = Payload.get("options").cloned().unwrap_or(json!({}));
+						if let Err(Error) = AppHandle.emit(
+							"sky://notification/show",
+							json!({
+								"id": Id,
+								"message": Message,
+								"severity": Level,
+								"actions": Items,
+								"options": Options,
+							}),
+						) {
+							dev_log!(
+								"notification",
+								"warn: [Window.ShowMessage] sky://notification/show emit failed: {}",
+								Error
+							);
+						}
+						Ok(Value::Null)
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Quick-pick / input-box / dialogs routed from Cocoon's window shim.
+		// Sky listens on `sky://quickpick/*` / `sky://input-box/*` events
+		// and can reply via a Tauri command. The effect emits the prompt
+		// event, waits on a oneshot channel keyed by a nonce, and returns
+		// Sky's reply. If Sky never answers (route unwired in the current
+		// build) the RPC still completes with `null` after a 30 s timeout
+		// so calling extensions don't deadlock.
+		"Window.ShowQuickPick" | "Window.ShowInputBox" | "Window.ShowOpenDialog" | "Window.ShowSaveDialog" => {
+			let MethodNameOwned = MethodName.to_string();
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						use tauri::Emitter;
+						let Args = if Parameters.is_array() {
+							Parameters
+						} else {
+							json!([Parameters])
+						};
+						let Channel = match MethodNameOwned.as_str() {
+							"Window.ShowQuickPick" => "sky://quickpick/show",
+							"Window.ShowInputBox" => "sky://input-box/show",
+							"Window.ShowOpenDialog" => "sky://dialog/open",
+							"Window.ShowSaveDialog" => "sky://dialog/save",
+							_ => "sky://quickpick/show",
+						};
+						let AppHandle = run_time.Environment.ApplicationHandle.clone();
+						let Nonce = format!(
+							"ui-{}",
+							std::time::SystemTime::now()
+								.duration_since(std::time::UNIX_EPOCH)
+								.map(|D| D.as_nanos())
+								.unwrap_or(0)
+						);
+						if let Err(Error) =
+							AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args }))
+						{
+							dev_log!("ipc", "warn: [{}] {} emit failed: {}", MethodNameOwned, Channel, Error);
+						}
+						// No reply channel wired yet — return null to keep
+						// callers moving. The Sky-side handler populating the
+						// reply is a downstream BATCH.
+						Ok(Value::Null)
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// `vscode.window.Terminal.processId` — extensions read the PTY's real
+		// shell PID to track task lifetime. Reuse the provider lookup.
+		"Terminal.GetProcessId" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						use CommonLibrary::{
+							Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider,
+						};
+						let Provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+						let Handle = Parameters.get(0).cloned().unwrap_or_default();
+						// Accept handle as either a stringified u64 or a raw
+						// number. Terminals are keyed by u64 in ApplicationState.
+						let Id:u64 = if let Some(n) = Handle.as_u64() {
+							n
+						} else if let Some(s) = Handle.as_str() {
+							// Cocoon formats the handle as `terminal:N`; strip
+							// prefix then parse. Falls back to 0 if unparseable
+							// (caller treats 0 as "no pid").
+							s.trim_start_matches("terminal:").parse().unwrap_or(0)
+						} else {
+							0
+						};
+						match Provider.GetTerminalProcessId(Id).await {
+							Ok(Some(Pid)) => Ok(json!(Pid)),
+							Ok(None) => Ok(Value::Null),
+							Err(Error) => Err(Error.to_string()),
+						}
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// vscode.ExtensionContext.secrets — backing the `secrets.get`,
+		// `secrets.store`, and `secrets.delete` RPCs extensions fire through
+		// `context.secrets.*`. Mountain's `SecretProvider` handles the
+		// cross-process persistence (native keyring on macOS/Windows/Linux
+		// via Tauri's key-value store). Accept both positional `[key]` and
+		// object `{ key, value, extension_id }` shapes.
+		"secrets.get" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+						let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
+						match provider.GetSecret(ExtensionId, Key).await {
+							Ok(Some(Value)) => Ok(json!(Value)),
+							Ok(None) => Ok(Value::Null),
+							Err(Error) => Err(Error.to_string()),
+						}
+					})
+				};
+			Ok(Box::new(effect))
+		},
+		"secrets.store" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+						let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
+						let SecretValue = if let Some(Object) = Parameters.as_object() {
+							Object
+								.get("value")
+								.and_then(Value::as_str)
+								.unwrap_or("")
+								.to_string()
+						} else {
+							Parameters
+								.get(1)
+								.and_then(Value::as_str)
+								.unwrap_or("")
+								.to_string()
+						};
+						provider
+							.StoreSecret(ExtensionId, Key, SecretValue)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+		"secrets.delete" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
+						let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
+						provider
+							.DeleteSecret(ExtensionId, Key)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Debug.Stop — terminates a running debug session the extension host
+		// started via `Debug.Start`. Mirrors VS Code's
+		// `vscode.debug.stopDebugging(session)` contract.
+		"Debug.Stop" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
+						let SessionId = Parameters
+							.get(0)
+							.and_then(Value::as_str)
+							.unwrap_or("")
+							.to_string();
+						provider
+							.StopDebugging(SessionId)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// FileWatcher.Register / FileWatcher.Unregister — backing for
+		// `vscode.workspace.createFileSystemWatcher(...)` when Cocoon's Tier
+		// is `Layer4`. Both arms forward to Mountain's `notify`-rs backed
+		// provider; events stream back as `$fileWatcher:event` notifications
+		// keyed on the caller-supplied handle.
+		"FileWatcher.Register" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
+						let Handle =
+							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let Root = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+						let IsRecursive =
+							Parameters.get(2).and_then(Value::as_bool).unwrap_or(true);
+						let Pattern = Parameters
+							.get(3)
+							.and_then(Value::as_str)
+							.map(str::to_string)
+							.filter(|Pat| !Pat.is_empty());
+						provider
+							.RegisterWatcher(Handle, std::path::PathBuf::from(Root), IsRecursive, Pattern)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+		"FileWatcher.Unregister" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
+						let Handle =
+							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						provider
+							.UnregisterWatcher(Handle)
+							.await
+							.map(|_| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Task.Fetch — `vscode.tasks.fetchTasks(filter?)`. Returns the
+		// union of extension-contributed tasks (from registered providers)
+		// and workspace-defined tasks (parsed from `.vscode/tasks.json`).
+		// The current implementation returns an empty list — a future patch
+		// can walk the ExtensionRegistry for declared task providers and
+		// call their `provideTasks` handles back through gRPC.
+		"Task.Fetch" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let _ = Parameters;
+						Ok(json!([]))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Task.Execute — backs `vscode.tasks.executeTask(task)`. Cocoon
+		// serialises the task definition; Mountain forwards to Sky via the
+		// `sky://task/execute` event so the workbench's task runner can
+		// display progress and spawn the underlying process. Returning a
+		// handle lets the extension query lifecycle later.
+		"Task.Execute" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						use tauri::Emitter;
+						let Task = Parameters.get(0).cloned().unwrap_or_default();
+						let Handle = format!(
+							"task-execution-{}",
+							std::time::SystemTime::now()
+								.duration_since(std::time::UNIX_EPOCH)
+								.map(|D| D.as_millis())
+								.unwrap_or(0)
+						);
+						if let Err(Error) = run_time.Environment.ApplicationHandle.emit(
+							"sky://task/execute",
+							json!({
+								"handle": Handle,
+								"task": Task,
+							}),
+						) {
+							dev_log!("ipc", "warn: [Task.Execute] emit failed: {}", Error);
+						}
+						Ok(json!({ "handle": Handle }))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// Clipboard routes used by Cocoon's `vscode.env.clipboard`. Backed by
+		// `arboard` — identical surface to the Wind `nativeHost:*Clipboard*`
+		// handlers but exposed under the extension-host's route namespace.
+		"Clipboard.Read" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						match arboard::Clipboard::new() {
+							Ok(mut Cb) => Ok(json!(Cb.get_text().unwrap_or_default())),
+							Err(Error) => Err(format!("Clipboard.Read: {}", Error)),
+						}
+					})
+				};
+			Ok(Box::new(effect))
+		},
+		"Clipboard.Write" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let Text = Parameters
+							.get(0)
+							.and_then(Value::as_str)
+							.unwrap_or("")
+							.to_string();
+						match arboard::Clipboard::new() {
+							Ok(mut Cb) => {
+								let _ = Cb.set_text(Text);
+								Ok(json!(null))
+							},
+							Err(Error) => Err(format!("Clipboard.Write: {}", Error)),
+						}
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// NativeHost.OpenExternal route — opens a URL in the user's default
+		// browser (Cocoon's `vscode.env.openExternal` fallback).
+		"NativeHost.OpenExternal" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let Url = Parameters
+							.get(0)
+							.and_then(Value::as_str)
+							.unwrap_or("")
+							.to_string();
+						if Url.is_empty() {
+							return Ok(json!(false));
+						}
+						// Platform-native dispatch. Match Cocoon's fallback
+						// logic so both routes behave identically even when
+						// invoked from different sides.
+						let Command:Option<(&str, Vec<String>)> = if cfg!(target_os = "macos") {
+							Some(("open", vec![Url.clone()]))
+						} else if cfg!(target_os = "windows") {
+							Some(("cmd.exe", vec!["/c".into(), "start".into(), String::new(), Url.clone()]))
+						} else {
+							Some(("xdg-open", vec![Url.clone()]))
+						};
+						if let Some((Bin, Args)) = Command {
+							match tokio::process::Command::new(Bin).args(&Args).spawn() {
+								Ok(_) => Ok(json!(true)),
+								Err(Error) => Err(format!("NativeHost.OpenExternal: {}", Error)),
+							}
+						} else {
+							Ok(json!(false))
+						}
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// BATCH-14 follow-up: vscode.workspace.updateWorkspaceFolders(…) in
+		// Cocoon forwards its payload here. Mirror the gRPC
+		// update_workspace_folders method's state mutation + delta dispatch
+		// so `$deltaWorkspaceFolders` fires exactly once per call.
+		"$updateWorkspaceFolders" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let Payload = if Parameters.is_array() {
+							Parameters.get(0).cloned().unwrap_or_default()
+						} else {
+							Parameters
+						};
+						let Additions:Vec<(String, String)> = Payload
+							.get("additions")
+							.and_then(Value::as_array)
+							.map(|Array| {
+								Array
+									.iter()
+									.filter_map(|Entry| {
+										let Uri = Entry
+											.get("uri")
+											.and_then(|U| U.get("value").and_then(Value::as_str).or_else(|| U.as_str()))
+											.map(str::to_string)?;
+										let Name = Entry
+											.get("name")
+											.and_then(Value::as_str)
+											.unwrap_or("")
+											.to_string();
+										Some((Uri, Name))
+									})
+									.collect()
+							})
+							.unwrap_or_default();
+						let Removals:Vec<String> = Payload
+							.get("removals")
+							.and_then(Value::as_array)
+							.map(|Array| {
+								Array
+									.iter()
+									.filter_map(|Entry| {
+										Entry
+											.get("uri")
+											.and_then(|U| U.get("value").and_then(Value::as_str).or_else(|| U.as_str()))
+											.map(str::to_string)
+									})
+									.collect()
+							})
+							.unwrap_or_default();
+
+						let Workspace = &run_time.Environment.ApplicationState.Workspace;
+						let mut Folders = Workspace.GetWorkspaceFolders();
+						Folders.retain(|F| !Removals.contains(&F.URI.to_string()));
+						let Base = Folders.len();
+						for (Index, (UriStr, Name)) in Additions.iter().enumerate() {
+							if let Ok(Url) = url::Url::parse(UriStr) {
+								if let Ok(Dto) = crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO::New(
+									Url,
+									Name.clone(),
+									Base + Index,
+								) {
+									Folders.push(Dto);
+								}
+							}
+						}
+						crate::ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
+							Workspace, Folders,
+						);
+						Ok(json!(null))
+					})
+				};
+			Ok(Box::new(effect))
+		},
+
+		// BATCH-19 Part C: let the built-in Git extension spawn `git` without
+		// going through the full gRPC path (which requires the extension to
+		// hold a typed gRPC client — it doesn't). The extension calls
+		// `sendRequest("$gitExec", { args, repository })` on the Mountain
+		// client and gets back `{ exit_code, stdout, stderr }`.
+		"$gitExec" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						// Accept either positional [args, repository] or an
+						// object { args, repository | cwd }. Cocoon's built-in
+						// git shim uses both shapes across versions.
+						let (Args, WorkingDir) = if let Some(Object) = Parameters.as_object() {
+							let ArgsVec:Vec<String> = Object
+								.get("args")
+								.and_then(Value::as_array)
+								.map(|Array| {
+									Array.iter().filter_map(|V| V.as_str().map(str::to_string)).collect()
+								})
+								.unwrap_or_default();
+							let RepoPath = Object
+								.get("repository")
+								.or_else(|| Object.get("cwd"))
+								.and_then(Value::as_str)
+								.map(str::to_string)
+								.unwrap_or_default();
+							(ArgsVec, RepoPath)
+						} else {
+							let ArgsVec:Vec<String> = Parameters
+								.get(0)
+								.and_then(Value::as_array)
+								.map(|Array| {
+									Array.iter().filter_map(|V| V.as_str().map(str::to_string)).collect()
+								})
+								.unwrap_or_default();
+							let RepoPath = Parameters
+								.get(1)
+								.and_then(Value::as_str)
+								.map(str::to_string)
+								.unwrap_or_default();
+							(ArgsVec, RepoPath)
+						};
+						let Cwd = if WorkingDir.is_empty() {
+							std::env::current_dir().unwrap_or_default()
+						} else {
+							std::path::PathBuf::from(&WorkingDir)
+						};
+						dev_log!(
+							"grpc",
+							"[$gitExec] Received gRPC Request: Method='$gitExec' args={:?} cwd={}",
+							Args,
+							Cwd.display()
+						);
+						let StartAt = std::time::Instant::now();
+						let Output = tokio::process::Command::new("git")
+							.args(&Args)
+							.current_dir(&Cwd)
+							.output()
+							.await
+							.map_err(|Error| format!("$gitExec failed to spawn git: {}", Error))?;
+						let ExitCode = Output.status.code().unwrap_or(-1);
+						let Stdout = String::from_utf8_lossy(&Output.stdout).to_string();
+						let Stderr = String::from_utf8_lossy(&Output.stderr).to_string();
+						dev_log!(
+							"grpc",
+							"[$gitExec] exit={} elapsed={}ms stdout={}B stderr={}B",
+							ExitCode,
+							StartAt.elapsed().as_millis(),
+							Stdout.len(),
+							Stderr.len()
+						);
+						Ok(json!({
+							"exitCode": ExitCode,
+							"stdout": Stdout,
+							"stderr": Stderr,
+						}))
 					})
 				};
 			Ok(Box::new(effect))

@@ -309,6 +309,76 @@ pub fn FlushDedup() {
 	}
 }
 
+// ── Benign-probe classification (BATCH-17) ───────────────────────────────
+//
+// Extensions and the workbench probe dozens of optional files on every boot
+// (VS Code + Copilot + language-features). `stat ENOENT` lines for these
+// paths are functionally noise: they confirm the probe exists but nothing
+// acts on a failure. Three steps keep the log useful:
+//
+//   1. Known-optional patterns downgrade to Debug level (suppressed from
+//      the default dev-log stream, still written to the file sink).
+//   2. Per-unique-path dedup: log the first miss once per session via
+//      [`DebugOnce`]; later hits on the same path are swallowed.
+//   3. Virtual resource 404s (`vscode://`, cached globalStorage paths) are
+//      matched by the same helper so `BATCH-06`'s earlier suppression
+//      stays in one place.
+
+const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
+	// VS Code / Claude / Copilot probe paths.
+	".claude/agents",
+	".claude/settings.json",
+	".claude/settings.local.json",
+	".github/copilot",
+	".github/agents",
+	".vscode/settings.json",
+	".vscode/launch.json",
+	".vscode/extensions.json",
+	"agentPlugins",
+	"agent-plugins",
+	"chatEditingSessions",
+	"chatSessions",
+	// Per-extension state probes.
+	"machineid",
+	"terminalSuggestGlobalsCacheV2.json",
+	"globalStorage",
+	// Virtual scheme misses already covered by earlier batches.
+	"vscode://schemas-associations/",
+];
+
+/// Return true when the given path is a known-optional probe whose absence
+/// is never an error condition. Used to downgrade `stat ENOENT` spam.
+pub fn IsBenignEnoent(Path:&str) -> bool {
+	BENIGN_ENOENT_SUBSTRINGS.iter().any(|Needle| Path.contains(Needle))
+}
+
+static DEBUG_ONCE_KEYS:OnceLock<Mutex<std::collections::HashSet<String>>> = OnceLock::new();
+
+fn DebugOnceKeys() -> &'static Mutex<std::collections::HashSet<String>> {
+	DEBUG_ONCE_KEYS.get_or_init(|| Mutex::new(std::collections::HashSet::new()))
+}
+
+/// Emit the line exactly once per process, keyed on the supplied key. Later
+/// calls with the same key are silently dropped. The file sink still
+/// captures the very first occurrence so the probe is documented.
+pub fn DebugOnce(Tag:&str, Key:&str, Line:&str) {
+	if let Ok(mut Keys) = DebugOnceKeys().lock() {
+		if !Keys.insert(Key.to_string()) {
+			return;
+		}
+	}
+	if IsEnabled(Tag) || IsEnabled("all") {
+		let Formatted = format!("[DEV:{}] {}", Tag.to_uppercase(), Line);
+		eprintln!("{}", Formatted);
+		WriteToFile(&Formatted);
+	} else {
+		// Never echo to the console, but preserve in the file sink so
+		// post-mortems still see which probe paths fired.
+		let Formatted = format!("[DEV:{}/once] {}", Tag.to_uppercase(), Line);
+		WriteToFile(&Formatted);
+	}
+}
+
 // ── Tag resolution ──────────────────────────────────────────────────────
 
 fn EnabledTags() -> &'static Vec<String> {

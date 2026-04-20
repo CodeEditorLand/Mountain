@@ -236,6 +236,7 @@ impl MountainService for MountainVinegRPCService {
 		let MethodName = RequestData.method.clone();
 
 		let RequestIdentifier = RequestData.request_identifier;
+		let ReceiveInstant = std::time::Instant::now();
 
 		dev_log!(
 			"grpc",
@@ -243,6 +244,24 @@ impl MountainService for MountainVinegRPCService {
 			RequestIdentifier,
 			MethodName
 		);
+
+		// Hot-path instrumentation (BATCH-16). Every RPC that shows up with
+		// uniform 700 ms latency (tree.register, Configuration.Inspect,
+		// Command.Execute) emits a `[LandFix:RPC]` marker here so p50/p95 can
+		// be derived from the log without patching every handler.
+		let IsHotRpc = matches!(
+			MethodName.as_str(),
+			"$tree:register" | "tree.register" | "Configuration.Inspect" | "Command.Execute"
+		);
+		if IsHotRpc {
+			dev_log!(
+				"grpc",
+				"[LandFix:RPC] grpc-recv method={} id={} size={}",
+				MethodName,
+				RequestIdentifier,
+				RequestData.parameter.len()
+			);
+		}
 
 		// Validate request before processing
 		if let Err(status) = self.ValidateRequest(&RequestData) {
@@ -259,11 +278,18 @@ impl MountainService for MountainVinegRPCService {
 		// Deserialize JSON parameters
 		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
 			Ok(v) => {
+				// The previous `{:?}` Debug format serialised the full
+				// `Value` on every request — cheap for small payloads
+				// (`Diagnostic.Clear`), catastrophic for `tree.register` and
+				// `Configuration.Inspect` whose options blobs walk recursive
+				// structures. Only log param size at the default dev-log
+				// level and let the DevLog `all` target surface the body if
+				// the caller opts in.
 				dev_log!(
 					"grpc",
-					"[MountainVinegRPCService] Params for [ID: {}]: {:?}",
+					"[MountainVinegRPCService] Params for [ID: {}] ({} bytes)",
 					RequestIdentifier,
-					v
+					RequestData.parameter.len()
 				);
 				v
 			},
@@ -300,6 +326,15 @@ impl MountainService for MountainVinegRPCService {
 
 		match DispatchResult {
 			Ok(SuccessfulResult) => {
+				if IsHotRpc {
+					dev_log!(
+						"grpc",
+						"[LandFix:RPC] dispatched method={} id={} elapsed={}ms",
+						MethodName,
+						RequestIdentifier,
+						ReceiveInstant.elapsed().as_millis()
+					);
+				}
 				dev_log!(
 					"grpc",
 					"[MountainVinegRPCService] Request [ID: {}] completed successfully",
@@ -434,6 +469,323 @@ impl MountainService for MountainVinegRPCService {
 			"WebviewReady" => {
 				dev_log!("grpc", "[MountainVinegRPCService] Webview ready notification received");
 			},
+			// Cocoon → Mountain → Sky: progress notifications emitted by
+			// `vscode.window.withProgress`. Each extension progress task fires
+			// `progress.start` / `progress.report` / `progress.end` with a
+			// unique handle. Mountain normalises them onto the existing
+			// `sky://notification/progress-*` channels so Sky's progress
+			// indicator renders identically whether the trigger came from an
+			// extension or a Mountain handler.
+			"progress.start" => {
+				let Handle = Parameter.get("handle").and_then(|h| h.as_str()).unwrap_or("");
+				let Title = Parameter.get("title").and_then(|h| h.as_str()).unwrap_or("");
+				let Cancellable = Parameter.get("cancellable").and_then(|h| h.as_bool()).unwrap_or(false);
+				if let Err(Error) = self.ApplicationHandle.emit(
+					"sky://notification/progress-begin",
+					json!({
+						"id": Handle,
+						"title": Title,
+						"cancellable": Cancellable,
+					}),
+				) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] sky://notification/progress-begin emit failed: {}",
+						Error
+					);
+				}
+			},
+			"progress.report" => {
+				let Handle = Parameter.get("handle").and_then(|h| h.as_str()).unwrap_or("");
+				let Message = Parameter.get("message").and_then(|h| h.as_str()).unwrap_or("");
+				let Increment = Parameter.get("increment").and_then(|h| h.as_f64()).unwrap_or(0.0);
+				if let Err(Error) = self.ApplicationHandle.emit(
+					"sky://notification/progress-update",
+					json!({
+						"id": Handle,
+						"message": Message,
+						"increment": Increment,
+					}),
+				) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] sky://notification/progress-update emit failed: {}",
+						Error
+					);
+				}
+			},
+			"progress.end" => {
+				let Handle = Parameter.get("handle").and_then(|h| h.as_str()).unwrap_or("");
+				if let Err(Error) = self
+					.ApplicationHandle
+					.emit("sky://notification/progress-end", json!({ "id": Handle }))
+				{
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] sky://notification/progress-end emit failed: {}",
+						Error
+					);
+				}
+			},
+
+			// Cocoon → Mountain → Sky: `vscode.languages.setTextDocumentLanguage(document, languageId)`
+			// fires this so Monaco swaps the language mode on the editor.
+			"languages.setDocumentLanguage" => {
+				if let Err(Error) =
+					self.ApplicationHandle.emit("sky://languages/setDocumentLanguage", &Parameter)
+				{
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] sky://languages/setDocumentLanguage emit failed: {}",
+						Error
+					);
+				}
+			},
+
+			// Cocoon → Mountain → Sky: webview lifecycle notifications from
+			// extensions. `webview.setTitle`, `webview.setIconPath`, and the
+			// pane-visibility transitions all fan through here.
+			"webview.setTitle" | "webview.setIconPath" | "webview.setHtml" => {
+				let EventName =
+					format!("sky://webview/{}", &MethodName["webview.".len()..]);
+				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] {} emit failed: {}",
+						EventName,
+						Error
+					);
+				}
+			},
+
+			// Cocoon → Mountain: `vscode.window.createTerminal(...)` is a
+			// fire-and-forget from Cocoon's shim. Spawn the PTY via the
+			// TerminalProvider so the xterm panel can start receiving data
+			// immediately. Emit `sky://terminal/create` with the Cocoon-
+			// generated handle so Sky can correlate the panel with the
+			// extension-owned terminal instance.
+			"window.createTerminal" => {
+				use CommonLibrary::{
+					Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider,
+				};
+				let Provider:Arc<dyn TerminalProvider> = self.RunTime.Environment.Require();
+				let Name = Parameter
+					.get("name")
+					.and_then(|V| V.as_str())
+					.unwrap_or("terminal")
+					.to_string();
+				let Options = Parameter.get("options").cloned().unwrap_or_default();
+				let Handle = Parameter
+					.get("handle")
+					.and_then(|V| V.as_str())
+					.map(str::to_string)
+					.unwrap_or_default();
+				let AppHandleForTask = self.ApplicationHandle.clone();
+				let NameForTask = Name.clone();
+				tokio::spawn(async move {
+					let OptionsPayload = if Options.is_object() {
+						let mut Map = Options.as_object().cloned().unwrap_or_default();
+						Map.entry("name".to_string())
+							.or_insert_with(|| json!(NameForTask));
+						serde_json::Value::Object(Map)
+					} else {
+						json!({ "name": NameForTask })
+					};
+					if let Ok(Created) = Provider.CreateTerminal(OptionsPayload).await {
+						if let Err(Error) = AppHandleForTask.emit(
+							"sky://terminal/create",
+							json!({
+								"handle": Handle,
+								"id": Created.get("id").cloned().unwrap_or(Value::Null),
+								"pid": Created.get("pid").cloned().unwrap_or(Value::Null),
+								"name": Created.get("name").cloned().unwrap_or(Value::Null),
+							}),
+						) {
+							dev_log!(
+								"grpc",
+								"warn: [window.createTerminal] sky://terminal/create emit failed: {}",
+								Error
+							);
+						}
+					}
+				});
+			},
+
+			// Cocoon → Mountain: extension-driven terminal lifecycle. The
+			// Cocoon shim for `vscode.window.Terminal` fires these as
+			// notifications (fire-and-forget). Route them to Sky so the
+			// xterm panel can show/hide the focused terminal; the actual
+			// PTY is driven by the same provider the Wind `terminal:*`
+			// commands use, so data is already flowing.
+			"terminal.sendText" | "terminal.show" | "terminal.hide" | "terminal.dispose" => {
+				let EventName = format!("sky://terminal/{}", &MethodName["terminal.".len()..]);
+				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] {} emit failed: {}",
+						EventName,
+						Error
+					);
+				}
+				// Also drive the provider directly so the underlying PTY
+				// responds (sendText) or disposes (dispose). Terminal
+				// handles from Cocoon come in the `terminal:N` shape; strip
+				// the prefix to recover the numeric identifier.
+				let HandleNumeric = Parameter
+					.get("handle")
+					.and_then(|H| H.as_str())
+					.and_then(|S| S.trim_start_matches("terminal:").parse::<u64>().ok());
+				if let Some(TerminalId) = HandleNumeric {
+					use CommonLibrary::{
+						Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider,
+					};
+					let Provider:Arc<dyn TerminalProvider> = self.RunTime.Environment.Require();
+					match MethodName.as_str() {
+						"terminal.sendText" => {
+							let Text = Parameter
+								.get("text")
+								.and_then(|T| T.as_str())
+								.unwrap_or("")
+								.to_string();
+							let ProviderForTask = Provider.clone();
+							tokio::spawn(async move {
+								let _ = ProviderForTask.SendTextToTerminal(TerminalId, Text).await;
+							});
+						},
+						"terminal.dispose" => {
+							let ProviderForTask = Provider.clone();
+							tokio::spawn(async move {
+								let _ = ProviderForTask.DisposeTerminal(TerminalId).await;
+							});
+						},
+						_ => {},
+					}
+				}
+			},
+
+			// Cocoon → Mountain → Sky: `vscode.workspace.applyEdit(edit)`
+			// fires this when an extension wants to apply a multi-file
+			// WorkspaceEdit. The payload shape matches VS Code's `IWorkspaceEdit`
+			// — Sky delegates to its BulkEditService to apply the edits
+			// against the open models.
+			"workspace.applyEdit" => {
+				if let Err(Error) = self.ApplicationHandle.emit("sky://workspace/applyEdit", &Parameter) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] sky://workspace/applyEdit emit failed: {}",
+						Error
+					);
+				}
+			},
+
+			// Cocoon → Mountain → Sky: `vscode.window.showTextDocument(uri, options)`
+			// asks the workbench to open and focus a file. Extension activation
+			// commonly uses this for "jump to definition" and "reveal config".
+			"window.showTextDocument" => {
+				if let Err(Error) = self.ApplicationHandle.emit("sky://window/showTextDocument", &Parameter) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] sky://window/showTextDocument emit failed: {}",
+						Error
+					);
+				}
+			},
+
+			// Cocoon → Mountain → Sky: decoration-type lifecycle. Extensions
+			// create a decoration type (colour, gutter icon), then apply
+			// ranges to it per-editor. Mountain keeps the full lifecycle on
+			// the sky:// channel so the editor renderer doesn't need its own
+			// gRPC stub.
+			"window.createTextEditorDecorationType" | "window.disposeTextEditorDecorationType" => {
+				let EventName =
+					format!("sky://decoration/{}", &MethodName["window.".len()..]);
+				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] {} emit failed: {}",
+						EventName,
+						Error
+					);
+				}
+			},
+
+			// Cocoon → Mountain → Sky: debug breakpoint + console
+			// notifications. `vscode.debug.addBreakpoints(...)` /
+			// `removeBreakpoints(...)` / `onDidReceiveDebugSessionCustomEvent`
+			// all fan through here.
+			"debug.addBreakpoints" | "debug.removeBreakpoints" | "debug.consoleAppend" => {
+				let EventName = format!("sky://debug/{}", &MethodName["debug.".len()..]);
+				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] {} emit failed: {}",
+						EventName,
+						Error
+					);
+				}
+			},
+
+			// Cocoon → Mountain → Sky: extension-owned output-channel
+			// lifecycle. Each `vscode.window.createOutputChannel(...)` fires
+			// `outputChannel.create` with a handle + name; subsequent
+			// `append`/`clear`/`show`/`hide`/`dispose` reference the handle.
+			// Fan every arm to a matching `sky://output-channel/*` event so
+			// the workbench's Output panel can render the stream.
+			"outputChannel.create"
+			| "outputChannel.append"
+			| "outputChannel.clear"
+			| "outputChannel.show"
+			| "outputChannel.hide"
+			| "outputChannel.dispose" => {
+				let EventName =
+					format!("sky://output-channel/{}", &MethodName["outputChannel.".len()..]);
+				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] {} emit failed: {}",
+						EventName,
+						Error
+					);
+				}
+			},
+
+			// Cocoon → Mountain → Sky: per-item status-bar updates. Each
+			// `vscode.window.createStatusBarItem(...)` instance fires
+			// `statusBar.update` with its text/tooltip/alignment. Sky's
+			// workbench status-bar renderer subscribes to the downstream
+			// Tauri event.
+			"statusBar.update" | "statusBar.dispose" => {
+				let EventName = format!("sky://status-bar/{}", &MethodName["statusBar.".len()..]);
+				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] {} emit failed: {}",
+						EventName,
+						Error
+					);
+				}
+			},
+			// Cocoon → Mountain → Sky: status-bar messages from extensions.
+			// Fire as a `sky://status-bar/message` event so the workbench's
+			// status-bar component can render the text.
+			"statusBar.message" => {
+				let Text = Parameter.get("text").and_then(|h| h.as_str()).unwrap_or("");
+				let HideAfter = Parameter.get("hideAfter").and_then(|h| h.as_u64());
+				if let Err(Error) = self.ApplicationHandle.emit(
+					"sky://status-bar/message",
+					json!({
+						"text": Text,
+						"hideAfter": HideAfter,
+					}),
+				) {
+					dev_log!(
+						"grpc",
+						"warn: [MountainVinegRPCService] sky://status-bar/message emit failed: {}",
+						Error
+					);
+				}
+			},
+
 			// Cocoon → Mountain → Sky: window messages (info/warn/error)
 			"window.showMessage" => {
 				dev_log!(
@@ -475,6 +827,28 @@ impl MountainService for MountainVinegRPCService {
 					}
 				}
 			},
+			// Cocoon → Mountain: unregister a previously-registered command.
+			// Paired with `registerCommand` above; removes the proxied
+			// CommandHandler so subsequent `commands.executeCommand` no
+			// longer routes back to the extension.
+			"unregisterCommand" => {
+				let CommandId = Parameter.get("commandId").and_then(|c| c.as_str()).unwrap_or("");
+				if !CommandId.is_empty() {
+					if let Ok(mut Registry) = self
+						.RunTime
+						.Environment
+						.ApplicationState
+						.Extension
+						.Registry
+						.CommandRegistry
+						.lock()
+					{
+						Registry.remove(CommandId);
+						dev_log!("grpc", "[MountainVinegRPCService] Cocoon unregistered command: {}", CommandId);
+					}
+				}
+			},
+
 			// Cocoon → Mountain: provider registration from extensions
 			"register_hover_provider"
 			| "register_completion_item_provider"

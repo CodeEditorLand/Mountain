@@ -148,7 +148,10 @@ pub async fn UpdateWorkspaceFolders(
 			}
 		}
 
-		Service.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
+		crate::ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
+			&Service.environment.ApplicationState.Workspace,
+			Folders,
+		);
 	}
 
 	Ok(Response::new(Empty {}))

@@ -36,4 +36,44 @@ impl LifecyclePhaseState {
 			}
 		}
 	}
+
+	/// Advance the phase and emit a `sky://lifecycle/phaseChanged` Tauri
+	/// event so the workbench (subscribed via
+	/// `TauriChannel("lifecycle").listen("onDidChangePhase")`) can gate
+	/// long-running services (extension discovery, telemetry, heavy
+	/// providers) until the editor is fully restored. Mirrors VS Code's
+	/// `ILifecycleService.onDidChangePhase` signal.
+	pub fn AdvanceAndBroadcast<R:tauri::Runtime>(
+		&self,
+		NewPhase:Phase,
+		ApplicationHandle:&tauri::AppHandle<R>,
+	) {
+		use tauri::Emitter;
+		let Previous = self.GetPhase();
+		if NewPhase <= Previous {
+			return;
+		}
+		self.SetPhase(NewPhase);
+		let Label = match NewPhase {
+			1 => "Starting",
+			2 => "Ready",
+			3 => "Restored",
+			4 => "Eventually",
+			_ => "Unknown",
+		};
+		if let Err(Error) = ApplicationHandle.emit(
+			"sky://lifecycle/phaseChanged",
+			serde_json::json!({
+				"phase": NewPhase,
+				"previous": Previous,
+				"label": Label,
+			}),
+		) {
+			dev_log!(
+				"lifecycle",
+				"warn: [LifecyclePhaseState] sky://lifecycle/phaseChanged emit failed: {}",
+				Error
+			);
+		}
+	}
 }

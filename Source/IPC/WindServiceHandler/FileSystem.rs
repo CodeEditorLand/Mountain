@@ -316,14 +316,28 @@ pub async fn handle_file_write_native(Args:Vec<Value>) -> Result<Value, String> 
 pub async fn handle_file_stat_native(Args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(Args.get(0).ok_or("Missing file path")?)?;
 
-	dev_log!("vfs", "stat: {}", Path);
+	// Skip the per-stat `stat: <path>` echo for known-optional probes —
+	// those paths are handled by `DebugOnce` on the ENOENT branch instead.
+	if !crate::IPC::DevLog::IsBenignEnoent(&Path) {
+		dev_log!("vfs", "stat: {}", Path);
+	}
 
 	let Metadata = tokio::fs::symlink_metadata(&Path).await.map_err(|E| {
-		dev_log!("vfs", "stat ENOENT: {}", Path);
+		if crate::IPC::DevLog::IsBenignEnoent(&Path) {
+			crate::IPC::DevLog::DebugOnce(
+				"vfs",
+				&format!("stat-enoent:{}", Path),
+				&format!("stat ENOENT (benign): {}", Path),
+			);
+		} else {
+			dev_log!("vfs", "stat ENOENT: {}", Path);
+		}
 		format!("Failed to stat file: {} (path: {})", E, Path)
 	})?;
 
-	dev_log!("vfs", "stat OK: {} (dir={})", Path, Metadata.is_dir());
+	if !crate::IPC::DevLog::IsBenignEnoent(&Path) {
+		dev_log!("vfs", "stat OK: {} (dir={})", Path, Metadata.is_dir());
+	}
 	Ok(metadata_to_istat(&Metadata))
 }
 

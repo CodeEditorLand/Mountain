@@ -1487,6 +1487,9 @@ impl CocoonService for CocoonServiceImpl {
 			.collect();
 
 		if !Folders.is_empty() {
+			// Cocoon is the sender of this request, so we intentionally don't
+			// fan the delta back at it — just update local state. Extensions
+			// see the folders via the init payload they already have.
 			self.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
 			dev_log!(
 				"cocoon",
@@ -2546,7 +2549,10 @@ impl CocoonService for CocoonServiceImpl {
 				}
 			}
 
-			self.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
+			crate::ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
+				&self.environment.ApplicationState.Workspace,
+				Folders,
+			);
 		}
 
 		Ok(Response::new(Empty {}))

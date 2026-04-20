@@ -27,6 +27,7 @@
 //! - [ ] Implement workspace change events
 //! - [ ] Add workspace metrics
 
+pub mod WorkspaceDelta;
 pub mod WorkspaceState;
 
 pub use WorkspaceState::*;

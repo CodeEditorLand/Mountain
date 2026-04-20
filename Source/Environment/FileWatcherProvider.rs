@@ -86,6 +86,7 @@ impl WatcherState {
 				// it unwinds cleanly if the env is ever torn down.
 				let env_clone = env.clone();
 				tokio::spawn(async move {
+					use tauri::Emitter;
 					while let Some(WatchEvent { Handle, Kind, Path }) = rx.recv().await {
 						let ipc_provider:Arc<dyn IPCProvider> = env_clone.Require();
 						let payload = json!({
@@ -97,7 +98,7 @@ impl WatcherState {
 							.SendNotificationToSideCar(
 								"cocoon-main".to_string(),
 								"$fileWatcher:event".to_string(),
-								payload,
+								payload.clone(),
 							)
 							.await
 						{
@@ -108,6 +109,21 @@ impl WatcherState {
 								Kind.AsString(),
 								Path,
 								error
+							);
+						}
+						// Dual-emit to Wind/Sky so the Explorer tree, the
+						// search index, and any other webview-side consumer
+						// can react to disk mutations without going through
+						// Cocoon. Wind's `TauriChannel` subscribes to
+						// `sky://vfs/fileChange` under the localFilesystem
+						// channel.
+						if let Err(Error) =
+							env_clone.ApplicationHandle.emit("sky://vfs/fileChange", &payload)
+						{
+							dev_log!(
+								"filewatcher",
+								"warn: [FileWatcherProvider] sky://vfs/fileChange emit failed: {}",
+								Error
 							);
 						}
 					}
