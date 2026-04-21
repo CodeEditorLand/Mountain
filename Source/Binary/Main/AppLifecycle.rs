@@ -264,6 +264,44 @@ pub fn AppLifecycleSetup(
 			}
 		}
 
+		// Atom I7: ensure `security.workspace.trust.enabled: false` lives
+		// in User/settings.json. Without it, opening the Land repo as a
+		// workspace triggers VS Code's workspace-trust gate: built-in
+		// extensions whose `location` is inside the picked folder are
+		// marked `DisabledByTrustRequirement` (see
+		// `extensionEnablementService.ts:549`). Since our built-ins ship
+		// under `Element/Sky/Target/Static/Application/extensions/` —
+		// which IS inside the repo — any user picking the repo as a
+		// workspace hits this filter for every extension. Disabling the
+		// trust system wholesale is the correct Land-level policy; we're
+		// a personal editor, not a multi-user sandbox. Users can opt
+		// back in by flipping this key in their User/settings.json.
+		{
+			let SettingsPath = AppDataDir.join("User/settings.json");
+			let Current = std::fs::read_to_string(&SettingsPath).unwrap_or_else(|_| "{}".to_string());
+			if !Current.contains("\"security.workspace.trust.enabled\"") {
+				if let Ok(mut Parsed) = serde_json::from_str::<serde_json::Value>(&Current) {
+					if !Parsed.is_object() {
+						Parsed = serde_json::json!({});
+					}
+					if let Some(Obj) = Parsed.as_object_mut() {
+						Obj.insert(
+							"security.workspace.trust.enabled".to_string(),
+							serde_json::Value::Bool(false),
+						);
+					}
+					if let Ok(Serialized) = serde_json::to_string_pretty(&Parsed) {
+						let _ = std::fs::write(&SettingsPath, Serialized);
+						dev_log!(
+							"lifecycle",
+							"[Lifecycle] [Dirs] Injected default 'security.workspace.trust.enabled=false' into {}",
+							SettingsPath.display()
+						);
+					}
+				}
+			}
+		}
+
 		// Set GlobalMementoPath now that we know the real Tauri app data dir
 		if let Ok(mut Path) = app_state.GlobalMementoPath.lock() {
 			*Path = AppDataDir.join("User/globalStorage/global.json");
