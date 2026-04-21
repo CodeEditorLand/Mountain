@@ -689,8 +689,35 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				"autoUpdate": {},
 			}))
 		},
-		"extensions:install" | "extensions:uninstall" | "extensions:reinstall" | "extensions:updateMetadata" => {
-			dev_log!("extensions", "{} (gallery not implemented — no-op)", command);
+		// Atom K2: local VSIX install. Wind passes the file path from a
+		// "Install from VSIX…" prompt or drag-and-drop through to us; the
+		// previous stub silently returned `null` and the UI believed it
+		// had succeeded (that's the "VSIX isn't triggering or loading"
+		// regression). We now unpack the archive, stamp a DTO, register
+		// it in ScannedExtensions, and return the ILocalExtension wrapper
+		// so the sidebar refreshes without a window reload.
+		"extensions:install" => {
+			super::WindServiceHandler::Extension::handle_extensions_install(
+				app_handle.clone(),
+				runtime.inner().clone(),
+				args,
+			)
+			.await
+		},
+		"extensions:uninstall" => {
+			super::WindServiceHandler::Extension::handle_extensions_uninstall(
+				app_handle.clone(),
+				runtime.inner().clone(),
+				args,
+			)
+			.await
+		},
+		// Reinstall and metadata-update still no-op for now; reinstall needs
+		// a gallery cache (we only have the on-disk unpack), and metadata
+		// update only matters for ratings/icons/readme which Land does not
+		// track. Left as explicit logs so the UI doesn't silently fail.
+		"extensions:reinstall" | "extensions:updateMetadata" => {
+			dev_log!("extensions", "{} (no-op: no gallery backend)", command);
 			Ok(Value::Null)
 		},
 
@@ -1913,10 +1940,30 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		},
 		"workspaces:getDirtyWorkspaces" => Ok(json!([])),
 
-		// Default handler for unknown commands
+		// Atom L2: unknown-command fallback consults the Channel registry so
+		// the log distinguishes three states:
+		//   1. typo / never-registered wire string (registry::from_str Err)
+		//   2. registered but dispatch missing (registry OK but arm absent)
+		//   3. legitimately unknown
+		// Case (2) is the shape of the VSIX stub bug before K2 landed — an
+		// entry present in the registry with no handler. Making it visible
+		// turns silent drift into a loud dev-log line.
 		_ => {
-			dev_log!("ipc", "error: [WindServiceHandlers] Unknown IPC command: {}", command);
-			Err(format!("Unknown IPC command: {}", command))
+			use std::str::FromStr;
+			match CommonLibrary::IPC::Channel::Channel::from_str(&command) {
+				Ok(KnownChannel) => {
+					dev_log!(
+						"ipc",
+						"error: [WindServiceHandlers] Channel {:?} is registered but has no dispatch arm",
+						KnownChannel
+					);
+					Err(format!("IPC channel registered but unimplemented: {}", command))
+				},
+				Err(_) => {
+					dev_log!("ipc", "error: [WindServiceHandlers] Unknown IPC command: {}", command);
+					Err(format!("Unknown IPC command: {}", command))
+				},
+			}
 		},
 	};
 

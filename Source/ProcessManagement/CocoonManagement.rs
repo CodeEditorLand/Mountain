@@ -160,6 +160,16 @@ pub async fn InitializeCocoon(
 ) -> Result<(), CommonError> {
 	dev_log!("cocoon", "[CocoonManagement] Initializing Cocoon sidecar manager...");
 
+	// Atom N1: `debug-mountain-only` / `release-mountain-only` profiles set
+	// LAND_SPAWN_COCOON=false so Mountain boots without the extension host.
+	// Extension-related IPC returns the empty-state envelope; the workbench
+	// loads but no extension activates. Useful for integration tests that
+	// exercise Mountain in isolation and for the smallest shippable surface.
+	if matches!(std::env::var("LAND_SPAWN_COCOON").as_deref(), Ok("0") | Ok("false")) {
+		dev_log!("cocoon", "[CocoonManagement] Skipping spawn (LAND_SPAWN_COCOON=false)");
+		return Ok(());
+	}
+
 	#[cfg(feature = "ExtensionHostCocoon")]
 	{
 		LaunchAndManageCocoonSideCar(ApplicationHandle.clone(), Environment.clone()).await
@@ -285,6 +295,18 @@ async fn LaunchAndManageCocoonSideCar(
 		}
 	}
 
+	// Atom I11: forward NODE_ENV / LAND_DEV_LOG / TAURI_ENV_DEBUG so
+	// Cocoon's Bootstrap.ts stage2_configuration resolves real values.
+	// Without this, env_clear() above leaves Cocoon seeing NodeEnv=
+	// "production" / DevLog=<unset> / TauriDebug=false even on the
+	// debug-electron profile — silently disabling dev-only logging,
+	// stricter validation, and debug-only diagnostics in Cocoon.
+	for Key in ["NODE_ENV", "LAND_DEV_LOG", "TAURI_ENV_DEBUG"] {
+		if let Ok(Value) = std::env::var(Key) {
+			EnvironmentVariables.insert(Key.to_string(), Value);
+		}
+	}
+
 	NodeCommand
 		.arg(&ScriptPath)
 		.env_clear()
@@ -355,16 +377,23 @@ async fn LaunchAndManageCocoonSideCar(
 				break;
 			},
 			Err(Error) => {
-				crate::dev_log!(
-					"grpc",
-					"attempt {}/{} failed: {}",
-					ConnectAttempt,
-					GRPC_CONNECT_MAX_ATTEMPTS,
-					Error
-				);
-				LastError = Some(Error);
-
+				// Atom I12: Cocoon's gRPC server binds concurrently with
+				// Mountain's first dial, so attempt 1 (and occasionally 2)
+				// routinely hit `transport error` while Cocoon is still in
+				// stage2_configuration. Log as a non-alarming probe retry
+				// until the budget is exhausted; promote to "failed" only
+				// on the final attempt so a pasted log makes a real
+				// problem visually distinct from the expected startup
+				// race.
 				if ConnectAttempt >= GRPC_CONNECT_MAX_ATTEMPTS {
+					crate::dev_log!(
+						"grpc",
+						"attempt {}/{} failed (final): {}",
+						ConnectAttempt,
+						GRPC_CONNECT_MAX_ATTEMPTS,
+						Error
+					);
+					LastError = Some(Error);
 					return Err(CommonError::IPCError {
 						Description:format!(
 							"Failed to connect to Cocoon gRPC at {} after {} attempts: {} (is Cocoon running?)",
@@ -374,6 +403,15 @@ async fn LaunchAndManageCocoonSideCar(
 						),
 					});
 				}
+
+				crate::dev_log!(
+					"grpc",
+					"attempt {}/{} pending (Cocoon still booting), retrying in {}ms",
+					ConnectAttempt,
+					GRPC_CONNECT_MAX_ATTEMPTS,
+					GRPC_CONNECT_RETRY_INTERVAL_MS
+				);
+				LastError = Some(Error);
 
 				sleep(Duration::from_millis(GRPC_CONNECT_RETRY_INTERVAL_MS)).await;
 			},

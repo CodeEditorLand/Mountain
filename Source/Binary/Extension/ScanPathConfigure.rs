@@ -40,9 +40,25 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		.map_err(MapLockError)
 		.map_err(|e| format!("Failed to lock ExtensionScanPaths: {}", e))?;
 
-	dev_log!("extensions", "[Extensions] [ScanPaths] Adding default scan paths...");
+	// Atom J3: kernel / minimal profiles set LAND_SKIP_BUILTIN_EXTENSIONS=true
+	// to ship without any bundled extensions. The user-extensions path
+	// (`~/.land/extensions`) still scans so VSIX-installed extensions work.
+	let SkipBuiltins = matches!(
+		std::env::var("LAND_SKIP_BUILTIN_EXTENSIONS").as_deref(),
+		Ok("1") | Ok("true")
+	);
+
+	if SkipBuiltins {
+		dev_log!(
+			"extensions",
+			"[Extensions] [ScanPaths] LAND_SKIP_BUILTIN_EXTENSIONS=true — skipping all built-in paths, keeping user path"
+		);
+	} else {
+		dev_log!("extensions", "[Extensions] [ScanPaths] Adding default scan paths...");
+	}
 
 	// Resolve paths from executable directory
+	if !SkipBuiltins {
 	if let Ok(ExecutableDirectory) = std::env::current_exe() {
 		if let Some(Parent) = ExecutableDirectory.parent() {
 			// Standard Tauri bundle path: ../Resources/extensions.
@@ -99,6 +115,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			}
 		}
 	}
+	} // end !SkipBuiltins
 
 	// User-scope paths: always scanned, independent of whether the binary
 	// was launched from the repo, a `.app`, or a symlink on the Desktop.

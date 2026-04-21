@@ -90,6 +90,7 @@ brotli = { workspace = true }
 hex = { workspace = true }
 opentelemetry = { workspace = true, features = ["trace"] }
 posthog-rs = { workspace = true }
+zip = { workspace = true }
 
 [features]
 default = ["ExtensionHostCocoon", "MistNative", "AirIntegration"]
