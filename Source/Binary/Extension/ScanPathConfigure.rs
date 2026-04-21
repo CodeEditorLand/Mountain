@@ -64,35 +64,38 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			dev_log!("extensions", "[Extensions] [ScanPaths] + {}", LocalPath.display());
 			ScanPathsGuard.push(LocalPath);
 
-			// Dev-only fallback paths: the monorepo layout
-			// (Element/Mountain/Target/debug/) is not present in shipped
-			// bundles. In production, the ../Resources/extensions path above
-			// is authoritative. Gate with cfg to keep release builds lean.
-			#[cfg(debug_assertions)]
-			{
-				// Sky Target path: where CopyVSCodeAssets copies built-in
-				// extensions during the build.
-				let SkyTargetPath = Parent.join("../../../Sky/Target/Static/Application/extensions");
-				if SkyTargetPath.exists() {
-					dev_log!(
-						"extensions",
-						"[Extensions] [ScanPaths] + {} (Sky Target, dev)",
-						SkyTargetPath.display()
-					);
-					ScanPathsGuard.push(SkyTargetPath);
-				}
+			// Monorepo-layout fallback paths: resolved relative to
+			// `Element/Mountain/Target/{debug,release}/`, so they only
+			// materialise when the binary runs from inside the repo.
+			// Shipped `.app`s launched from `/Applications/` hit the
+			// `.exists()` guard and silently skip — no need for a
+			// `cfg(debug_assertions)` gate. Keeping these live in release
+			// lets a raw `Target/release/<name>` launch find the same 98
+			// built-in extensions a debug build does.
+			//
+			// Sky Target path: where CopyVSCodeAssets copies built-in
+			// extensions during the Sky build.
+			let SkyTargetPath = Parent.join("../../../Sky/Target/Static/Application/extensions");
+			if SkyTargetPath.exists() {
+				dev_log!(
+					"extensions",
+					"[Extensions] [ScanPaths] + {} (Sky Target, repo-layout)",
+					SkyTargetPath.display()
+				);
+				ScanPathsGuard.push(SkyTargetPath);
+			}
 
-				// VS Code dependency path: built-in extensions from the VS
-				// Code source checkout — avoids requiring a copy step in dev.
-				let DependencyPath = Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
-				if DependencyPath.exists() {
-					dev_log!(
-						"extensions",
-						"[Extensions] [ScanPaths] + {} (VS Code Dependency, dev)",
-						DependencyPath.display()
-					);
-					ScanPathsGuard.push(DependencyPath);
-				}
+			// VS Code dependency path: built-in extensions from the VS
+			// Code source checkout — avoids requiring a copy step.
+			let DependencyPath =
+				Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
+			if DependencyPath.exists() {
+				dev_log!(
+					"extensions",
+					"[Extensions] [ScanPaths] + {} (VS Code Dependency, repo-layout)",
+					DependencyPath.display()
+				);
+				ScanPathsGuard.push(DependencyPath);
 			}
 		}
 	}

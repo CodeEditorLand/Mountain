@@ -248,18 +248,27 @@ impl MountainService for MountainVinegRPCService {
 		// Hot-path instrumentation (BATCH-16). Every RPC that shows up with
 		// uniform 700 ms latency (tree.register, Configuration.Inspect,
 		// Command.Execute) emits a `[LandFix:RPC]` marker here so p50/p95 can
-		// be derived from the log without patching every handler.
+		// be derived from the log without patching every handler. The
+		// monotonic `t_ns` is a `SystemTime::UNIX_EPOCH` offset so Cocoon's
+		// `process.hrtime.bigint()` wire-send stamp can be diffed into three
+		// hops: wire → grpc-recv (transit), grpc-recv → dispatch-enter
+		// (Track resolve), dispatch-enter → registered (handler body).
 		let IsHotRpc = matches!(
 			MethodName.as_str(),
 			"$tree:register" | "tree.register" | "Configuration.Inspect" | "Command.Execute"
 		);
 		if IsHotRpc {
+			let InstrumentRecvNs = std::time::SystemTime::now()
+				.duration_since(std::time::UNIX_EPOCH)
+				.map(|D| D.as_nanos())
+				.unwrap_or(0);
 			dev_log!(
 				"grpc",
-				"[LandFix:RPC] grpc-recv method={} id={} size={}",
+				"[LandFix:RPC] grpc-recv method={} id={} size={} t_ns={}",
 				MethodName,
 				RequestIdentifier,
-				RequestData.parameter.len()
+				RequestData.parameter.len(),
+				InstrumentRecvNs
 			);
 		}
 

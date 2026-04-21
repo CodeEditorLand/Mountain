@@ -376,19 +376,47 @@ pub fn AppLifecycleSetup(
 			.Lifecycle
 			.AdvanceAndBroadcast(2, &PostSetupAppHandle);
 
-		// Schedule a background transition to Restored (3) after a short
-		// settle delay — matches VS Code's behaviour of deferring non-
-		// critical UI restoration (workbench layout, webview panels,
-		// recent-files list) until the main editor is interactive. A
-		// second transition to Eventually (4) follows so late-binding
-		// extensions know to stop blocking on "ready".
+		// Schedule a background transition to Restored (3), then Eventually
+		// (4). Sky/Wind are the authoritative signal — they call
+		// `lifecycle:advancePhase` over Tauri IPC when the workbench is
+		// truly interactive (`Restored`) and when late-binding extensions
+		// should stop blocking (`Eventually`). `AdvanceAndBroadcast`
+		// rejects backwards/same-phase advances (LifecyclePhaseState.rs:53),
+		// so the timers below are pure fallbacks: if Sky has already driven
+		// the phase, these become no-ops and log nothing visible.
+		//
+		// The windows are deliberately generous — a debug-electron cold
+		// boot with 98 extensions has been observed to finish its
+		// `$activateByEvent("*")` burst at ~3.5 s on an M4 mini and
+		// noticeably later on older hardware. The previous 2 s / 5 s
+		// timings ran the risk of flipping Restored while the burst was
+		// still in flight, which prematurely unblocked services gated on
+		// "the editor is interactive". 8 s / 15 s keeps a safety margin
+		// without visibly delaying late-binding extensions that legitimately
+		// need Eventually to fire.
 		let LifecycleStateClone = AppStateForSetup.Feature.Lifecycle.clone();
 		let AppHandleForPhase = PostSetupAppHandle.clone();
 		tauri::async_runtime::spawn(async move {
-			tokio::time::sleep(tokio::time::Duration::from_millis(2_000)).await;
-			LifecycleStateClone.AdvanceAndBroadcast(3, &AppHandleForPhase);
-			tokio::time::sleep(tokio::time::Duration::from_millis(5_000)).await;
-			LifecycleStateClone.AdvanceAndBroadcast(4, &AppHandleForPhase);
+			tokio::time::sleep(tokio::time::Duration::from_millis(8_000)).await;
+			if LifecycleStateClone.GetPhase() < 3 {
+				dev_log!(
+					"lifecycle",
+					"[Lifecycle] [Fallback] Sky did not advance to Restored within 8s; Mountain \
+					 auto-advancing (current phase={})",
+					LifecycleStateClone.GetPhase()
+				);
+				LifecycleStateClone.AdvanceAndBroadcast(3, &AppHandleForPhase);
+			}
+			tokio::time::sleep(tokio::time::Duration::from_millis(15_000)).await;
+			if LifecycleStateClone.GetPhase() < 4 {
+				dev_log!(
+					"lifecycle",
+					"[Lifecycle] [Fallback] Sky did not advance to Eventually within 23s total; \
+					 Mountain auto-advancing (current phase={})",
+					LifecycleStateClone.GetPhase()
+				);
+				LifecycleStateClone.AdvanceAndBroadcast(4, &AppHandleForPhase);
+			}
 		});
 
 		crate::otel_span!("lifecycle:postsetup:complete", PostSetupStart);

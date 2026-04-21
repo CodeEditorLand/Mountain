@@ -90,7 +90,17 @@ pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) ->
 						.finish();
 					let NewUrl = format!("{}/?{}", Origin, EncodedPath);
 					dev_log!("folder", "navigating: {}", NewUrl);
+					// Atom H1b: Cocoon liveness snapshot at the exact moment
+					// of page reload. If Cocoon is alive here but the new
+					// workbench never re-handshakes, the root cause is on
+					// the Wind/Sky side; if dead, we need a re-spawn hook.
+					dev_log!(
+						"folder",
+						"pre-nav cocoon-state: pid_known={} extension_host_ready_flag=see \"CocoonHealth healthy\" cadence below",
+						Handle.try_state::<Arc<ApplicationState>>().is_some()
+					);
 					let _ = Window.navigate(NewUrl.parse().unwrap());
+					dev_log!("folder", "post-nav Window.navigate() returned; webview reloading to {}", NewUrl);
 				}
 			}
 		} else {

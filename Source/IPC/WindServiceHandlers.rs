@@ -328,9 +328,12 @@ fn resolve_static_application_path(Path:&str) -> String {
 /// the real Tauri app_data_dir (which includes the full bundle identifier).
 static USERDATA_BASE_DIR:std::sync::OnceLock<String> = std::sync::OnceLock::new();
 
-/// Session timestamp, generated once per process lifetime so every call to
-/// `getEnvironmentPaths` returns the same `logsPath`.
-static SESSION_TIMESTAMP:std::sync::OnceLock<String> = std::sync::OnceLock::new();
+// Session timestamp is now owned by `DevLog::SessionTimestamp()` so
+// `getEnvironmentPaths` and the `Mountain.dev.log` file sink agree on
+// which `logs/<YYYYMMDDTHHMMSS>/` directory the session owns. Previously
+// this handler minted its own local-time stamp while DevLog minted a UTC
+// one — the two trees drifted by the host's UTC offset and every
+// post-mortem began with "which folder has the real log?".
 
 /// Set the userdata base from Tauri's app_data_dir. Call once at startup.
 pub fn set_userdata_base_dir(Path:String) { let _ = USERDATA_BASE_DIR.set(Path); }
@@ -582,6 +585,27 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		// Workbench commands
 		"workbench:getConfiguration" => handle_workbench_configuration(runtime.inner().clone(), args).await,
 
+		// Diagnostic: webview → Mountain dev-log bridge.
+		// First arg is a tag ("boot", "extService", …), second is the
+		// message, rest are optional structured fields we stringify.
+		// Atom H1c: added so workbench.js can surface diagnostic state
+		// into the same Mountain.dev.log that carries Rust-side events.
+		"diagnostic:log" => {
+			let Tag = args.first().and_then(|V| V.as_str()).unwrap_or("webview").to_string();
+			let Message = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+			let Extras = if args.len() > 2 {
+				let Tail:Vec<String> = args.iter().skip(2).map(|V| {
+					let S = serde_json::to_string(V).unwrap_or_default();
+					if S.len() > 240 { format!("{}…", &S[..240]) } else { S }
+				}).collect();
+				format!(" {}", Tail.join(" "))
+			} else {
+				String::new()
+			};
+			dev_log!("diagnostic", "[{}] {}{}", Tag, Message, Extras);
+			Ok(Value::Null)
+		},
+
 		// Command registry commands
 		"commands:execute" => handle_commands_execute(runtime.inner().clone(), args).await,
 		"commands:getAll" => {
@@ -601,6 +625,69 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		"extensions:isActive" => {
 			dev_log!("extensions", "extensions:isActive");
 			handle_extensions_is_active(runtime.inner().clone(), args).await
+		},
+
+		// VS Code's Extensions sidebar →
+		// `ExtensionManagementChannelClient.getInstalled` goes through
+		// `sharedProcessService.getChannel('extensions')`. Sky's
+		// astro.config.ts Step 7b swaps the native SharedProcessService
+		// for a TauriMainProcessService-backed shim, so the call lands
+		// here as `extensions:getInstalled`. The expected return is
+		// `ILocalExtension[]` — a wrapper around each scanned manifest
+		// with `identifier.id`, `manifest`, `location`, `isBuiltin`, etc.
+		// `handle_extensions_get_installed` builds that envelope;
+		// `handle_extensions_get_all` returns the raw manifest for
+		// callers (Cocoon, Wind Effect services) that want the flat
+		// shape. Do NOT alias these two — the payload shapes differ.
+		"extensions:getInstalled" | "extensions:scanSystemExtensions" => {
+			// Atom H1a: args[0]=type, args[1]=profileLocation URI,
+			// args[2]=productVersion, args[3]=??? (VS Code canonical is
+			// 3; shim appears to add a 4th). Dump to find out what it
+			// contains on post-nav page reloads where the sidebar
+			// renders 0 entries despite Mountain returning 94.
+			let ArgsSummary = args.iter().enumerate().map(|(Idx, V)| {
+				let Preview = serde_json::to_string(V).unwrap_or_default();
+				let Trimmed = if Preview.len() > 180 {
+					format!("{}…", &Preview[..180])
+				} else {
+					Preview
+				};
+				format!("[{}]={}", Idx, Trimmed)
+			}).collect::<Vec<_>>().join(" ");
+			dev_log!("extensions", "{} args={}", command, ArgsSummary);
+			handle_extensions_get_installed(runtime.inner().clone()).await
+		},
+		"extensions:scanUserExtensions" | "extensions:getUninstalled" => {
+			// Land doesn't support user-installed extensions yet — the
+			// workbench treats an empty array as "no user extensions",
+			// which is correct for the current Mountain architecture.
+			dev_log!("extensions", "{} (returning [])", command);
+			Ok(Value::Array(Vec::new()))
+		},
+		// Gallery is offline: Mountain has no marketplace backend. Return
+		// empty arrays for every read and swallow every write, which
+		// mirrors what a network-air-gapped VS Code session shows.
+		"extensions:query" | "extensions:getExtensions" | "extensions:getRecommendations" => {
+			dev_log!("extensions", "{} (offline gallery — returning [])", command);
+			Ok(Value::Array(Vec::new()))
+		},
+		// `IExtensionsControlManifest` — consulted by the Extensions
+		// sidebar on every render (ExtensionEnablementService.ts:793)
+		// to mark malicious / deprecated / auto-updateable entries.
+		// With the gallery offline an empty envelope is correct; the
+		// shape (not null) matters — VS Code destructures each field.
+		"extensions:getExtensionsControlManifest" => {
+			dev_log!("extensions", "{} (offline gallery — empty manifest)", command);
+			Ok(json!({
+				"malicious": [],
+				"deprecated": {},
+				"search": [],
+				"autoUpdate": {},
+			}))
+		},
+		"extensions:install" | "extensions:uninstall" | "extensions:reinstall" | "extensions:updateMetadata" => {
+			dev_log!("extensions", "{} (gallery not implemented — no-op)", command);
+			Ok(Value::Null)
 		},
 
 		// Terminal commands
@@ -1035,11 +1122,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			// Logs go under {appDataDir}/logs/{sessionTimestamp}/ - same tree as
 			// all other VS Code data, not Tauri's separate app_log_dir().
 			// VS Code requires a session-timestamped subdir for log rotation.
-			// The timestamp is generated ONCE per process so every call returns
-			// the same logsPath (prevents VS Code from seeing stale dirs).
-			let SessionTimestamp =
-				SESSION_TIMESTAMP.get_or_init(|| chrono::Local::now().format("%Y%m%dT%H%M%S").to_string());
-			let SessionLogRoot = AppDataDir.join("logs").join(SessionTimestamp);
+			// `DevLog::SessionTimestamp` is the single source of truth so that
+			// `Mountain.dev.log` (written by DevLog) and VS Code's
+			// `window1/output/*.log` files (written into `logsPath`) share one
+			// directory per session.
+			let SessionLogRoot =
+				AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp());
 			let SessionLogWindowDir = SessionLogRoot.join("window1");
 			let _ = std::fs::create_dir_all(&SessionLogWindowDir);
 
@@ -1097,6 +1185,20 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		},
 		"nativeHost:getWindows" => Ok(json!([{ "id": 1, "title": "Land", "filename": "" }])),
 		"nativeHost:getWindowCount" => Ok(json!(1)),
+
+		// Auxiliary window spawners. VS Code's `nativeHostMainService.ts`
+		// exposes `openAgentsWindow`, `openDevToolsWindow`, and
+		// `openAuxiliaryWindow`, and Sky/Wind route these through the
+		// `nativeHost:<method>` IPC channel. Without stubs, every call fires
+		// `land:ipc:error:nativeHost.openAgentsWindow` in PostHog (1499
+		// occurrences per the 2026-04-21 error report). Land doesn't have
+		// AgentsView yet, so these are no-op acknowledgements — the calling
+		// extension treats `undefined` as "window wasn't opened" rather than
+		// an error.
+		"nativeHost:openAgentsWindow" | "nativeHost:openDevToolsWindow" | "nativeHost:openAuxiliaryWindow" => {
+			dev_log!("window", "{} (acknowledged, no-op — aux window unsupported)", command);
+			Ok(Value::Null)
+		},
 
 		// Window control — wired through the Tauri webview-window API so
 		// focus/minimize/maximize/toggleFullScreen/close actually move the
@@ -2581,6 +2683,102 @@ async fn handle_commands_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Valu
 // ============================================================================
 // Extension Host Handlers
 // ============================================================================
+
+/// Return scanned extensions reshaped as VS Code's `ILocalExtension[]`
+/// so `ExtensionManagementChannelClient.getInstalled` — which backs the
+/// Extensions sidebar's `@builtin` query — can destructure
+/// `extension.identifier.id`, `extension.manifest.*`, and
+/// `extension.location` without blowing up.
+///
+/// Mountain's raw `GetExtensions()` returns plain manifest JSON (the same
+/// payload `extensions:getAll` has always sent). That shape satisfies
+/// callers that read manifest fields directly (Cocoon, Wind Effect
+/// services, etc.) but not the sidebar's `NativeExtensionManagementService`
+/// which expects the outer `ILocalExtension` envelope:
+///
+/// ```ts
+/// interface ILocalExtension extends IExtension {
+///     type: 0 | 1;                  // System | User
+///     identifier: { id, uuid? };
+///     manifest: IExtensionManifest;
+///     location: URI;
+///     targetPlatform: string;
+///     isBuiltin, isValid, preRelease: boolean;
+///     validations: [Severity, string][];
+///     // …plus ILocalExtension-only fields below
+/// }
+/// ```
+///
+/// Build that envelope around every scanned extension. All Land
+/// extensions are system built-ins (the extension host is seeded from
+/// Mountain's scan — user-installed extensions aren't supported yet),
+/// so the scope/pin/preRelease flags are all `false`.
+async fn handle_extensions_get_installed(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Extensions = runtime
+		.Environment
+		.GetExtensions()
+		.await
+		.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
+
+	let Wrapped:Vec<Value> = Extensions
+		.into_iter()
+		.map(|Manifest| {
+			// The manifest JSON Mountain produces uses camelCase keys for
+			// most fields (serde rename on ExtensionDescriptionStateDTO).
+			// VS Code's ILocalExtension.identifier.id is `publisher.name`.
+			let Publisher = Manifest
+				.get("publisher")
+				.and_then(Value::as_str)
+				.unwrap_or("unknown")
+				.to_string();
+			let Name = Manifest.get("name").and_then(Value::as_str).unwrap_or("unknown").to_string();
+			let Id = format!("{}.{}", Publisher, Name);
+
+			// `extensionLocation` is already a URI object or string from
+			// the scanner. If it's a string, wrap it; if it's already an
+			// object, pass through. VS Code's URI.revive handles both.
+			let Location = Manifest.get("extensionLocation").cloned().unwrap_or_else(|| {
+				// Fallback — should never hit this unless the scanner
+				// produced a malformed entry.
+				json!({ "scheme": "file", "path": "/extensions/unknown", "authority": "" })
+			});
+
+			json!({
+				// IExtension (base)
+				"type": 0, // ExtensionType.System
+				"isBuiltin": true,
+				"identifier": { "id": Id },
+				"manifest": Manifest,
+				"location": Location,
+				"targetPlatform": "undefined",
+				"isValid": true,
+				"validations": [],
+				"preRelease": false,
+				// ILocalExtension (extras)
+				"isWorkspaceScoped": false,
+				"isMachineScoped": false,
+				"isApplicationScoped": false,
+				"publisherId": null,
+				"isPreReleaseVersion": false,
+				"hasPreReleaseVersion": false,
+				"private": false,
+				"updated": false,
+				"pinned": false,
+				"forceAutoUpdate": false,
+				"source": "system",
+				"size": 0,
+			})
+		})
+		.collect();
+
+	dev_log!(
+		"extensions",
+		"extensions:getInstalled returning {} ILocalExtension-shaped entries",
+		Wrapped.len()
+	);
+
+	Ok(json!(Wrapped))
+}
 
 /// Return metadata for all scanned extensions.
 async fn handle_extensions_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {

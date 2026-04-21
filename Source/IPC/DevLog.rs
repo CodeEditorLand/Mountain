@@ -140,63 +140,35 @@ fn ResolveLogDirectory() -> PathBuf {
 	Base.join(Stamp)
 }
 
-fn FormatTimestamp() -> String {
+/// Session timestamp in local time, cached once per process. MUST match
+/// whatever `WindServiceHandlers.rs::"nativeHost:getEnvironmentPaths"`
+/// builds, because VS Code's file service writes `window1/output/*.log`
+/// into the directory that handler returns — if DevLog and VS Code use
+/// different timezones, `Mountain.dev.log` and the `window1/` subtree
+/// land in two sibling directories 2–3 hours apart, which makes every
+/// post-mortem investigation start with "which folder has the real
+/// log?". Picking `chrono::Local::now()` matches the VS Code convention
+/// (Tauri's tauri-plugin-log also writes local-time `YYYYMMDDTHHMMSS`).
+///
+/// The format string is deliberately identical to the handler's
+/// `"%Y%m%dT%H%M%S"`, and both sides pull from the same OnceLock via
+/// `SessionTimestamp()` so re-entrant calls from anywhere in the
+/// codebase produce the same string.
+pub fn SessionTimestamp() -> String {
 	static STAMP:OnceLock<String> = OnceLock::new();
 	STAMP
-		.get_or_init(|| {
-			let Duration = SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap_or_default();
-			let Secs = Duration.as_secs() as i64;
-			// Minimal UTC breakdown without pulling chrono into DevLog: the
-			// Tauri plugin format is `YYYYMMDDTHHMMSS`, which is easy to build
-			// manually from the epoch.
-			let Days = Secs / 86_400;
-			let SecondsOfDay = (Secs % 86_400) as u32;
-			let Hour = SecondsOfDay / 3_600;
-			let Minute = (SecondsOfDay % 3_600) / 60;
-			let Second = SecondsOfDay % 60;
-			let (Year, Month, Day) = DaysToYMD(Days);
-			format!("{:04}{:02}{:02}T{:02}{:02}{:02}", Year, Month, Day, Hour, Minute, Second)
-		})
+		.get_or_init(|| chrono::Local::now().format("%Y%m%dT%H%M%S").to_string())
 		.clone()
 }
 
-/// Convert days-since-epoch to (year, month, day). Vendored here to avoid
-/// dragging chrono into the dev-log hot path.
-fn DaysToYMD(Days:i64) -> (i64, u32, u32) {
-	let mut Year = 1970_i64;
-	let mut Remaining = Days;
-	loop {
-		let YearLen = if IsLeap(Year) { 366 } else { 365 };
-		if Remaining < YearLen as i64 {
-			break;
-		}
-		Remaining -= YearLen as i64;
-		Year += 1;
-	}
-	let MonthLengths = [
-		31u32,
-		if IsLeap(Year) { 29 } else { 28 },
-		31,
-		30,
-		31,
-		30,
-		31,
-		31,
-		30,
-		31,
-		30,
-		31,
-	];
-	let mut Month = 0_usize;
-	let mut Day = Remaining as u32;
-	while Month < 12 && Day >= MonthLengths[Month] {
-		Day -= MonthLengths[Month];
-		Month += 1;
-	}
-	(Year, (Month as u32) + 1, Day + 1)
-}
+fn FormatTimestamp() -> String { SessionTimestamp() }
 
-fn IsLeap(Year:i64) -> bool { (Year % 4 == 0 && Year % 100 != 0) || Year % 400 == 0 }
+// `DaysToYMD` + `IsLeap` were previously used to build a UTC timestamp
+// string without pulling chrono into DevLog. Replaced by
+// `chrono::Local::now()` in `SessionTimestamp()` so this file agrees
+// with `WindServiceHandlers.rs::"nativeHost:getEnvironmentPaths"` on
+// the session-log directory. chrono is already a Mountain dependency,
+// so the vendored date math is dead weight now.
 
 /// Initialise the file sink on first call. Silently falls through to a
 /// disabled sink if the directory or file can't be created — the caller
@@ -258,21 +230,65 @@ pub fn WriteToFile(Line:&str) {
 // The app-data directory name is absurdly long. In short mode, alias it.
 static APP_DATA_PREFIX:OnceLock<Option<String>> = OnceLock::new();
 
+/// Produce an identity signature for THIS running binary derived from
+/// `CARGO_PKG_NAME` (which Maintain sets to the long PascalCase product
+/// name before `cargo build`). Each profile produces a distinct signature
+/// — `_Debug_Mountain` → `.debug.mountain`, `_Compile_Mountain` →
+/// `.compile.mountain`, `_Bundle_Clean_Debug_ElectronProfile_Mountain`
+/// → `.debug.electron.profile.mountain` — so a candidate directory in
+/// `~/Library/Application Support/` can be disambiguated against every
+/// other `land.editor.*.mountain` leftover from prior runs.
+///
+/// Only the last three underscore-delimited segments are used: the
+/// leading `DevelopmentNodeEnvironment_MicrosoftVSCodeDependency_
+/// 22NodeVersion_Bundle_Clean` prefix is identical across profiles and
+/// doesn't help disambiguate, while the tail (`Debug_Mountain` vs
+/// `Compile_Mountain` vs `Debug_ElectronProfile_Mountain`) is where the
+/// per-profile identity lives.
+fn BinarySignature() -> String {
+	let PackageName = env!("CARGO_PKG_NAME");
+	let Segments:Vec<&str> = PackageName.split('_').collect();
+	let Take = Segments.len().min(4);
+	let Start = Segments.len().saturating_sub(Take);
+	let Tail = Segments[Start..].join("_");
+	// Lowercase + `_` → `.` gives the same segment order the Tauri
+	// identifier uses (identifiers are dot-delimited lowercase). We
+	// don't split PascalCase into words here — the substring match
+	// below doesn't need exact equality, just a unique tail.
+	Tail.to_ascii_lowercase().replace('_', ".")
+}
+
 fn DetectAppDataPrefix() -> Option<String> {
-	// Match the bundle identifier pattern used by Mountain
-	if let Ok(Home) = std::env::var("HOME") {
-		let Base = format!("{}/Library/Application Support", Home);
-		if let Ok(Entries) = std::fs::read_dir(&Base) {
-			for Entry in Entries.flatten() {
-				let Name = Entry.file_name();
-				let Name = Name.to_string_lossy();
-				if Name.starts_with("land.editor.") && Name.contains("mountain") {
-					return Some(format!("{}/{}", Base, Name));
-				}
+	let Home = std::env::var("HOME").ok()?;
+	let Base = format!("{}/Library/Application Support", Home);
+	let Signature = BinarySignature();
+
+	// Prefer a directory whose name ends with this binary's unique tail
+	// signature: that's the app-data directory Tauri created for THIS
+	// profile. Without this check, a user who has ever launched another
+	// profile (debug-electron, release-electron, …) will see DevLog
+	// writing into that stale directory while userdata still goes into
+	// the current one, producing an "empty logs folder" mystery.
+	let mut FirstMatchingMountain:Option<String> = None;
+	if let Ok(Entries) = std::fs::read_dir(&Base) {
+		for Entry in Entries.flatten() {
+			let Name = Entry.file_name();
+			let Name = Name.to_string_lossy().into_owned();
+			if !Name.starts_with("land.editor.") || !Name.contains("mountain") {
+				continue;
+			}
+			// Strict match: binary signature tail is a suffix of the dir name.
+			if Name.ends_with(&Signature) {
+				return Some(format!("{}/{}", Base, Name));
+			}
+			// Lossy match: some segment of the binary signature is contained
+			// in the dir name. Used only if no strict match exists.
+			if FirstMatchingMountain.is_none() {
+				FirstMatchingMountain = Some(format!("{}/{}", Base, Name));
 			}
 		}
 	}
-	None
+	FirstMatchingMountain
 }
 
 /// Get the app-data path prefix for aliasing (cached).

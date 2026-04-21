@@ -277,15 +277,36 @@ impl TerminalProvider for MountainEnvironment {
 
 		let TermIDForExit = TerminalIdentifier;
 
+		// BATCH-19 Part B: capture the PID before `ChildProcess` is moved into
+		// the exit-watcher task so the exit log line can correlate with the
+		// spawn log (`[TerminalProvider] localPty:spawn OK id=N pid=M`). Also
+		// surface the actual exit status code — previously discarded via
+		// `let _exit_status = …`, which meant the log could only say "has
+		// exited" without distinguishing a clean `exit 0`, `echo hi; exit`
+		// flow from a crash. That distinction is what the BATCH-19 smoke test
+		// needs to confirm the shell really ran and returned.
+		let PidForExit = ChildProcess.process_id();
+
 		let EnvironmentClone = self.clone();
 
 		tokio::spawn(async move {
-			let _exit_status = ChildProcess.wait();
+			let ExitStatus = ChildProcess.wait();
+
+			// portable-pty's `Child::wait()` returns `io::Result<ExitStatus>`.
+			// `{:?}` on ExitStatus shows `success` and any captured code
+			// without needing to commit to a specific accessor name (the
+			// crate's exit-status API has varied across versions).
+			let StatusSummary = match &ExitStatus {
+				Ok(Code) => format!("exited {:?}", Code),
+				Err(Error) => format!("wait failed: {}", Error),
+			};
 
 			dev_log!(
 				"terminal",
-				"[TerminalProvider] Process for terminal ID {} has exited.",
-				TermIDForExit
+				"[TerminalProvider] Process for terminal ID {} pid={:?} {}",
+				TermIDForExit,
+				PidForExit,
+				StatusSummary
 			);
 
 			let IPCProvider:Arc<dyn IPCProvider> = EnvironmentClone.Require();

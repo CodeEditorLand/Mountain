@@ -1303,10 +1303,34 @@ pub fn CreateEffectForRequest<R:Runtime>(
 		// stores the (handle, viewId) mapping so Sky's sidebar can render the
 		// tree by round-tripping `tree.getChildren` back through Cocoon.
 		"$tree:register" | "tree.register" => {
+			// BATCH-16 hop 3: mark when the match arm matched and the effect
+			// closure is being constructed. Diffing against the upstream
+			// `[LandFix:RPC] grpc-recv` stamp isolates how much time the
+			// gRPC server spent between Tonic handoff and Track's match
+			// dispatch. If this delta is large, the fix candidate is the
+			// closure cache in the batch plan.
+			let DispatchEnterNs = std::time::SystemTime::now()
+				.duration_since(std::time::UNIX_EPOCH)
+				.map(|D| D.as_nanos())
+				.unwrap_or(0);
+			dev_log!(
+				"grpc",
+				"[LandFix:Tree] dispatch-enter method={} t_ns={}",
+				MethodName,
+				DispatchEnterNs
+			);
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let DispatchAt = std::time::Instant::now();
+						// BATCH-16 hop 4a: mark when the effect body actually
+						// starts running. Diff against `dispatch-enter` for
+						// the Track spawn-queue latency.
+						let BodyStartNs = std::time::SystemTime::now()
+							.duration_since(std::time::UNIX_EPOCH)
+							.map(|D| D.as_nanos())
+							.unwrap_or(0);
 						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
 						// Cocoon calls with [handle, viewId, options]; the old
 						// call shape was [viewId, options]. Accept both.
@@ -1321,12 +1345,23 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							(vid, opts)
 						};
 						let ViewIdForLog = view_id.clone();
-						let Result = provider.RegisterTreeDataProvider(view_id, options).await;
 						dev_log!(
 							"grpc",
-							"[LandFix:Tree] registered view={} elapsed={}ms",
+							"[LandFix:Tree] body-start view={} t_ns={}",
 							ViewIdForLog,
-							DispatchAt.elapsed().as_millis()
+							BodyStartNs
+						);
+						let Result = provider.RegisterTreeDataProvider(view_id, options).await;
+						let RegisteredNs = std::time::SystemTime::now()
+							.duration_since(std::time::UNIX_EPOCH)
+							.map(|D| D.as_nanos())
+							.unwrap_or(0);
+						dev_log!(
+							"grpc",
+							"[LandFix:Tree] registered view={} elapsed={}ms t_ns={}",
+							ViewIdForLog,
+							DispatchAt.elapsed().as_millis(),
+							RegisteredNs
 						);
 						Result.map(|_| json!(null)).map_err(|e| e.to_string())
 					})

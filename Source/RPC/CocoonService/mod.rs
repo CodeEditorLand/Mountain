@@ -2724,6 +2724,14 @@ impl CocoonService for CocoonServiceImpl {
 	// ==================== Tree View ====================
 
 	/// Register Tree View Provider - Register a tree view provider
+	///
+	/// Note: this is the typed-RPC path (`RegisterTreeViewProviderRequest`
+	/// proto). Cocoon's observed 700 ms `tree.register` calls travel the
+	/// string-method path instead, entering Mountain at
+	/// `Vine/Server/MountainVinegRPCService.rs` and dispatching through
+	/// `Track/Effect/CreateEffectForRequest.rs::"$tree:register" | "tree.register"`.
+	/// BATCH-16 instrumentation lives on that path; this typed path stays
+	/// unchanged so uniform measurement requires no branch logic.
 	async fn register_tree_view_provider(
 		&self,
 		request:Request<RegisterTreeViewProviderRequest>,
