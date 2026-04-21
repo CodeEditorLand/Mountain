@@ -43,11 +43,7 @@ impl LifecyclePhaseState {
 	/// long-running services (extension discovery, telemetry, heavy
 	/// providers) until the editor is fully restored. Mirrors VS Code's
 	/// `ILifecycleService.onDidChangePhase` signal.
-	pub fn AdvanceAndBroadcast<R:tauri::Runtime>(
-		&self,
-		NewPhase:Phase,
-		ApplicationHandle:&tauri::AppHandle<R>,
-	) {
+	pub fn AdvanceAndBroadcast<R:tauri::Runtime>(&self, NewPhase:Phase, ApplicationHandle:&tauri::AppHandle<R>) {
 		use tauri::Emitter;
 		let Previous = self.GetPhase();
 		if NewPhase <= Previous {

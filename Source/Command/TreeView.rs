@@ -104,7 +104,12 @@ pub async fn GetTreeViewChildren(
 
 	ElementHandle:Option<String>,
 ) -> Result<Value, String> {
-	dev_log!("commands", "getting TreeView children for '{}', element: {:?}", ViewId, ElementHandle);
+	dev_log!(
+		"commands",
+		"getting TreeView children for '{}', element: {:?}",
+		ViewId,
+		ElementHandle
+	);
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 

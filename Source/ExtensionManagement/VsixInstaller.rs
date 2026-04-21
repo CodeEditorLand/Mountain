@@ -13,8 +13,8 @@
 //!      version). These three determine the install directory.
 //!    - Compute target: `<InstallRoot>/<publisher>.<name>-<version>/`.
 //!    - If target already exists, refuse (caller decides whether to reinstall).
-//!    - Stream every entry whose path begins with `extension/` into the
-//!      target, stripping that prefix.
+//!    - Stream every entry whose path begins with `extension/` into the target,
+//!      stripping that prefix.
 //!    - Re-parse the extracted `package.json` as a full
 //!      `ExtensionDescriptionStateDTO`, stamp `ExtensionLocation`,
 //!      `Identifier`, and `IsBuiltin=false`.
@@ -53,10 +53,7 @@ use std::{
 use serde_json::Value;
 use zip::ZipArchive;
 
-use crate::{
-	ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
-	dev_log,
-};
+use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO, dev_log};
 
 /// Everything an IPC handler needs after a successful install.
 #[derive(Debug)]
@@ -143,7 +140,11 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 /// Delete the install directory. Returns `Ok` if the path was already absent.
 pub fn UninstallExtension(InstallDir:&Path) -> Result<(), InstallError> {
 	if !InstallDir.exists() {
-		dev_log!("extensions", "[VsixInstaller] Uninstall skipped — {} already absent", InstallDir.display());
+		dev_log!(
+			"extensions",
+			"[VsixInstaller] Uninstall skipped — {} already absent",
+			InstallDir.display()
+		);
 
 		return Ok(());
 	}
@@ -171,7 +172,8 @@ fn ReadManifestFacts(VsixPath:&Path) -> Result<ManifestFacts, InstallError> {
 		.read_to_string(&mut Raw)
 		.map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
 
-	let Manifest:Value = serde_json::from_str(&Raw).map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
+	let Manifest:Value =
+		serde_json::from_str(&Raw).map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
 
 	let Publisher = ReadStringField(&Manifest, "publisher")?;
 	let Name = ReadStringField(&Manifest, "name")?;
@@ -241,8 +243,7 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 			fs::create_dir_all(Parent).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
 		}
 
-		let mut Output =
-			File::create(&Target).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
+		let mut Output = File::create(&Target).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
 
 		io::copy(&mut Entry, &mut Output).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
 	}
@@ -255,16 +256,17 @@ fn BuildDescription(InstalledAt:&Path) -> Result<ExtensionDescriptionStateDTO, I
 
 	let Raw = fs::read_to_string(&ManifestPath).map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
 
-	let mut ManifestValue:Value = serde_json::from_str(&Raw).map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
+	let mut ManifestValue:Value =
+		serde_json::from_str(&Raw).map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
 
 	let mut Description:ExtensionDescriptionStateDTO = serde_json::from_value(ManifestValue.clone())
 		.map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
 
-	Description.ExtensionLocation =
-		serde_json::to_value(url::Url::from_directory_path(InstalledAt).unwrap_or_else(|_| {
-			url::Url::parse("file:///").expect("file:/// is a valid URL")
-		}))
-		.unwrap_or(Value::Null);
+	Description.ExtensionLocation = serde_json::to_value(
+		url::Url::from_directory_path(InstalledAt)
+			.unwrap_or_else(|_| url::Url::parse("file:///").expect("file:/// is a valid URL")),
+	)
+	.unwrap_or(Value::Null);
 
 	if Description.Identifier == Value::Null || Description.Identifier == Value::Object(Default::default()) {
 		let Identifier = if Description.Publisher.is_empty() {

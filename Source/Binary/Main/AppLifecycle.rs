@@ -285,10 +285,7 @@ pub fn AppLifecycleSetup(
 						Parsed = serde_json::json!({});
 					}
 					if let Some(Obj) = Parsed.as_object_mut() {
-						Obj.insert(
-							"security.workspace.trust.enabled".to_string(),
-							serde_json::Value::Bool(false),
-						);
+						Obj.insert("security.workspace.trust.enabled".to_string(), serde_json::Value::Bool(false));
 					}
 					if let Ok(Serialized) = serde_json::to_string_pretty(&Parsed) {
 						let _ = std::fs::write(&SettingsPath, Serialized);
@@ -409,10 +406,7 @@ pub fn AppLifecycleSetup(
 		// server + Cocoon sidecar + extension scan have all finished. Wind's
 		// `TauriChannel("lifecycle").listen("onDidChangePhase")` subscribers
 		// fire so long-running services can start pulling.
-		AppStateForSetup
-			.Feature
-			.Lifecycle
-			.AdvanceAndBroadcast(2, &PostSetupAppHandle);
+		AppStateForSetup.Feature.Lifecycle.AdvanceAndBroadcast(2, &PostSetupAppHandle);
 
 		// Schedule a background transition to Restored (3), then Eventually
 		// (4). Sky/Wind are the authoritative signal — they call
@@ -439,8 +433,8 @@ pub fn AppLifecycleSetup(
 			if LifecycleStateClone.GetPhase() < 3 {
 				dev_log!(
 					"lifecycle",
-					"[Lifecycle] [Fallback] Sky did not advance to Restored within 8s; Mountain \
-					 auto-advancing (current phase={})",
+					"[Lifecycle] [Fallback] Sky did not advance to Restored within 8s; Mountain auto-advancing \
+					 (current phase={})",
 					LifecycleStateClone.GetPhase()
 				);
 				LifecycleStateClone.AdvanceAndBroadcast(3, &AppHandleForPhase);
@@ -449,8 +443,8 @@ pub fn AppLifecycleSetup(
 			if LifecycleStateClone.GetPhase() < 4 {
 				dev_log!(
 					"lifecycle",
-					"[Lifecycle] [Fallback] Sky did not advance to Eventually within 23s total; \
-					 Mountain auto-advancing (current phase={})",
+					"[Lifecycle] [Fallback] Sky did not advance to Eventually within 23s total; Mountain \
+					 auto-advancing (current phase={})",
 					LifecycleStateClone.GetPhase()
 				);
 				LifecycleStateClone.AdvanceAndBroadcast(4, &AppHandleForPhase);

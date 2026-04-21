@@ -135,8 +135,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
 use url::Url;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime as Runtime;
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[derive(Clone)]
 pub struct FileExplorerViewProvider {
@@ -235,7 +234,10 @@ impl TreeViewProvider for FileExplorerViewProvider {
 		_ElementHandle:String,
 		_IsExpanded:bool,
 	) -> Result<(), CommonError> {
-		dev_log!("vfs", "[FileExplorer] OnTreeNodeExpanded called - not implemented for native providers");
+		dev_log!(
+			"vfs",
+			"[FileExplorer] OnTreeNodeExpanded called - not implemented for native providers"
+		);
 		Ok(())
 	}
 
@@ -246,21 +248,30 @@ impl TreeViewProvider for FileExplorerViewProvider {
 		_ViewIdentifier:String,
 		_SelectedHandles:Vec<String>,
 	) -> Result<(), CommonError> {
-		dev_log!("vfs", "[FileExplorer] OnTreeSelectionChanged called - not implemented for native providers");
+		dev_log!(
+			"vfs",
+			"[FileExplorer] OnTreeSelectionChanged called - not implemented for native providers"
+		);
 		Ok(())
 	}
 
 	/// Persists tree view state.
 	/// These events are not relevant for the native file explorer provider.
 	async fn PersistTreeViewState(&self, _ViewIdentifier:String) -> Result<Value, CommonError> {
-		dev_log!("vfs", "[FileExplorer] PersistTreeViewState called - not implemented for native providers");
+		dev_log!(
+			"vfs",
+			"[FileExplorer] PersistTreeViewState called - not implemented for native providers"
+		);
 		Ok(json!({ "supported": false }))
 	}
 
 	/// Restores tree view state.
 	/// These events are not relevant for the native file explorer provider.
 	async fn RestoreTreeViewState(&self, _ViewIdentifier:String, _StateValue:Value) -> Result<(), CommonError> {
-		dev_log!("vfs", "[FileExplorer] RestoreTreeViewState called - not implemented for native providers");
+		dev_log!(
+			"vfs",
+			"[FileExplorer] RestoreTreeViewState called - not implemented for native providers"
+		);
 		Ok(())
 	}
 

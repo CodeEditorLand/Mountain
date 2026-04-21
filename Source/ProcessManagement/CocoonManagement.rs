@@ -72,11 +72,11 @@ use tokio::{
 };
 
 use super::InitializationData;
-use crate::dev_log;
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	IPC::Common::HealthStatus::{HealthIssue, HealthMonitor},
 	Vine,
+	dev_log,
 };
 
 /// Configuration constants for Cocoon process management
@@ -177,7 +177,10 @@ pub async fn InitializeCocoon(
 
 	#[cfg(not(feature = "ExtensionHostCocoon"))]
 	{
-		dev_log!("cocoon", "[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched.");
+		dev_log!(
+			"cocoon",
+			"[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched."
+		);
 		Ok(())
 	}
 }
@@ -247,7 +250,11 @@ async fn LaunchAndManageCocoonSideCar(
 			)
 		})?;
 
-	dev_log!("cocoon", "[CocoonManagement] Found bootstrap script at: {}", ScriptPath.display());
+	dev_log!(
+		"cocoon",
+		"[CocoonManagement] Found bootstrap script at: {}",
+		ScriptPath.display()
+	);
 	crate::dev_log!("cocoon", "bootstrap script: {}", ScriptPath.display());
 
 	// Atom I6: zombie-Cocoon sweep. If a prior Mountain exited without
@@ -352,9 +359,12 @@ async fn LaunchAndManageCocoonSideCar(
 
 	// Establish Vine connection to Cocoon with retry loop
 	let GRPCAddress = format!("127.0.0.1:{}", COCOON_GRPC_PORT);
-	dev_log!("cocoon", 
+	dev_log!(
+		"cocoon",
 		"[CocoonManagement] Connecting to Cocoon gRPC at {} (up to {} attempts, {}ms interval)...",
-		GRPCAddress, GRPC_CONNECT_MAX_ATTEMPTS, GRPC_CONNECT_RETRY_INTERVAL_MS
+		GRPCAddress,
+		GRPC_CONNECT_MAX_ATTEMPTS,
+		GRPC_CONNECT_RETRY_INTERVAL_MS
 	);
 
 	let mut ConnectAttempt = 0u32;
@@ -370,8 +380,7 @@ async fn LaunchAndManageCocoonSideCar(
 			GRPC_CONNECT_MAX_ATTEMPTS
 		);
 
-		match Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), GRPCAddress.clone()).await
-		{
+		match Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), GRPCAddress.clone()).await {
 			Ok(()) => {
 				crate::dev_log!("grpc", "connected to Cocoon on attempt {}", ConnectAttempt);
 				break;
@@ -418,7 +427,10 @@ async fn LaunchAndManageCocoonSideCar(
 		}
 	}
 
-	dev_log!("cocoon", "[CocoonManagement] Connected to Cocoon. Sending initialization data...");
+	dev_log!(
+		"cocoon",
+		"[CocoonManagement] Connected to Cocoon. Sending initialization data..."
+	);
 
 	// Brief delay to ensure Cocoon's gRPC service handlers are fully registered
 	// after bindAsync resolves (race condition on fast connections like attempt 1)
@@ -448,7 +460,10 @@ async fn LaunchAndManageCocoonSideCar(
 	// Validate handshake response
 	match Response.as_str() {
 		Some("initialized") => {
-			dev_log!("cocoon", "[CocoonManagement] Cocoon handshake complete. Extension host is ready.");
+			dev_log!(
+				"cocoon",
+				"[CocoonManagement] Cocoon handshake complete. Extension host is ready."
+			);
 		},
 		Some(other) => {
 			return Err(CommonError::IPCError {
@@ -477,7 +492,9 @@ async fn LaunchAndManageCocoonSideCar(
 			"$activateByEvent".to_string(),
 			serde_json::json!({ "activationEvent": "*" }),
 			30_000,
-		).await {
+		)
+		.await
+		{
 			dev_log!("cocoon", "warn: [CocoonManagement] $activateByEvent(\"*\") failed: {}", Error);
 		} else {
 			dev_log!("cocoon", "[CocoonManagement] Startup extensions activation triggered");
@@ -536,10 +553,13 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					// Process has exited (crashed or terminated)
 					let uptime = state_guard.StartTime.map(|t| t.elapsed().as_secs()).unwrap_or(0);
 					let exit_code_num = exit_code.code().unwrap_or(-1);
-					dev_log!("cocoon", "warn: [CocoonHealth] Cocoon process crashed [PID: {}] [Exit Code: {}] [Uptime: {}s]",
+					dev_log!(
+						"cocoon",
+						"warn: [CocoonHealth] Cocoon process crashed [PID: {}] [Exit Code: {}] [Uptime: {}s]",
 						process_id.unwrap_or(0),
 						exit_code_num,
-						uptime);
+						uptime
+					);
 
 					// Update state
 					state_guard.IsRunning = false;
@@ -553,12 +573,19 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					}
 
 					// Log that automatic restart would be needed
-					dev_log!("cocoon", "warn: [CocoonHealth] CRASH DETECTED: Cocoon process has crashed and must be restarted manually or \
-						 via application reinitialization");
+					dev_log!(
+						"cocoon",
+						"warn: [CocoonHealth] CRASH DETECTED: Cocoon process has crashed and must be restarted \
+						 manually or via application reinitialization"
+					);
 				},
 				Ok(None) => {
 					// Process is still running
-					dev_log!("cocoon", "[CocoonHealth] Cocoon process is healthy [PID: {}]", process_id.unwrap_or(0));
+					dev_log!(
+						"cocoon",
+						"[CocoonHealth] Cocoon process is healthy [PID: {}]",
+						process_id.unwrap_or(0)
+					);
 				},
 				Err(e) => {
 					// Error checking process status
@@ -599,11 +626,7 @@ pub async fn HardKillCocoon() {
 		let Pid = Child.id().unwrap_or(0);
 		match Child.try_wait() {
 			Ok(Some(_Status)) => {
-				dev_log!(
-					"cocoon",
-					"[CocoonShutdown] Child PID {} already exited; clearing handle.",
-					Pid
-				);
+				dev_log!("cocoon", "[CocoonShutdown] Child PID {} already exited; clearing handle.", Pid);
 			},
 			Ok(None) => {
 				dev_log!(
@@ -612,27 +635,13 @@ pub async fn HardKillCocoon() {
 					Pid
 				);
 				if let Err(Error) = Child.start_kill() {
-					dev_log!(
-						"cocoon",
-						"warn: [CocoonShutdown] start_kill failed on PID {}: {}",
-						Pid,
-						Error
-					);
+					dev_log!("cocoon", "warn: [CocoonShutdown] start_kill failed on PID {}: {}", Pid, Error);
 				}
 				// Best-effort wait so the OS reaps and frees the port.
-				let _ = tokio::time::timeout(
-					std::time::Duration::from_secs(2),
-					Child.wait(),
-				)
-				.await;
+				let _ = tokio::time::timeout(std::time::Duration::from_secs(2), Child.wait()).await;
 			},
 			Err(Error) => {
-				dev_log!(
-					"cocoon",
-					"warn: [CocoonShutdown] try_wait failed on PID {}: {}",
-					Pid,
-					Error
-				);
+				dev_log!("cocoon", "warn: [CocoonShutdown] try_wait failed on PID {}: {}", Pid, Error);
 			},
 		}
 	}
@@ -646,26 +655,23 @@ pub async fn HardKillCocoon() {
 ///
 /// Behaviour:
 /// - If the port answers a TCP connect, assume an owner is listening.
-/// - Use `lsof -nP -iTCP:<port> -sTCP:LISTEN -t` (macOS/Linux) to resolve
-///   the PID. `lsof` is ubiquitous on macOS/Linux and doesn't require root
-///   for local user-owned processes.
+/// - Use `lsof -nP -iTCP:<port> -sTCP:LISTEN -t` (macOS/Linux) to resolve the
+///   PID. `lsof` is ubiquitous on macOS/Linux and doesn't require root for
+///   local user-owned processes.
 /// - SIGTERM first, 500ms grace window, then SIGKILL if still alive.
-/// - Logs every step via `dev_log!("cocoon", …)` so the sweep is visible
-///   in Mountain.dev.log without parsing stderr.
-/// - Best-effort: failures don't abort Mountain boot. A real
-///   EADDRINUSE later will surface via Cocoon's own bootstrap error.
+/// - Logs every step via `dev_log!("cocoon", …)` so the sweep is visible in
+///   Mountain.dev.log without parsing stderr.
+/// - Best-effort: failures don't abort Mountain boot. A real EADDRINUSE later
+///   will surface via Cocoon's own bootstrap error.
 fn SweepStaleCocoon(Port:u16) {
-	use std::net::TcpStream;
-	use std::time::Duration;
+	use std::{net::TcpStream, time::Duration};
 
 	let Addr = format!("127.0.0.1:{}", Port);
 
 	// Cheap liveness probe. Timeout is aggressive — zombie ports answer
 	// immediately; a clean port is ECONNREFUSED and returns instantly.
-	let Probe = TcpStream::connect_timeout(
-		&Addr.parse().expect("valid socket addr literal"),
-		Duration::from_millis(200),
-	);
+	let Probe =
+		TcpStream::connect_timeout(&Addr.parse().expect("valid socket addr literal"), Duration::from_millis(200));
 	if Probe.is_err() {
 		dev_log!("cocoon", "[CocoonSweep] Port {} is clean (no prior listener).", Port);
 		return;
@@ -679,12 +685,7 @@ fn SweepStaleCocoon(Port:u16) {
 
 	// `lsof -nP -iTCP:<port> -sTCP:LISTEN -t` → one PID per line.
 	let LsofOutput = std::process::Command::new("lsof")
-		.args([
-			"-nP",
-			&format!("-iTCP:{}", Port),
-			"-sTCP:LISTEN",
-			"-t",
-		])
+		.args(["-nP", &format!("-iTCP:{}", Port), "-sTCP:LISTEN", "-t"])
 		.output();
 
 	let Output = match LsofOutput {
@@ -700,18 +701,12 @@ fn SweepStaleCocoon(Port:u16) {
 	};
 
 	if !Output.status.success() {
-		dev_log!(
-			"cocoon",
-			"warn: [CocoonSweep] lsof exited non-zero. Skipping sweep."
-		);
+		dev_log!("cocoon", "warn: [CocoonSweep] lsof exited non-zero. Skipping sweep.");
 		return;
 	}
 
 	let Stdout = String::from_utf8_lossy(&Output.stdout);
-	let Pids:Vec<i32> = Stdout
-		.lines()
-		.filter_map(|L| L.trim().parse::<i32>().ok())
-		.collect();
+	let Pids:Vec<i32> = Stdout.lines().filter_map(|L| L.trim().parse::<i32>().ok()).collect();
 
 	if Pids.is_empty() {
 		dev_log!(
@@ -730,14 +725,13 @@ fn SweepStaleCocoon(Port:u16) {
 			dev_log!(
 				"cocoon",
 				"warn: [CocoonSweep] Port {} owned by Mountain itself (PID {}); refusing to kill.",
-				Port, Pid
+				Port,
+				Pid
 			);
 			continue;
 		}
 		dev_log!("cocoon", "[CocoonSweep] Killing stale PID {} (SIGTERM).", Pid);
-		let _ = std::process::Command::new("kill")
-			.arg(Pid.to_string())
-			.status();
+		let _ = std::process::Command::new("kill").arg(Pid.to_string()).status();
 		std::thread::sleep(Duration::from_millis(500));
 		// Recheck — if still alive, escalate.
 		let StillAlive = std::process::Command::new("kill")
@@ -746,14 +740,8 @@ fn SweepStaleCocoon(Port:u16) {
 			.map(|S| S.success())
 			.unwrap_or(false);
 		if StillAlive {
-			dev_log!(
-				"cocoon",
-				"warn: [CocoonSweep] PID {} survived SIGTERM; sending SIGKILL.",
-				Pid
-			);
-			let _ = std::process::Command::new("kill")
-				.args(["-9", &Pid.to_string()])
-				.status();
+			dev_log!("cocoon", "warn: [CocoonSweep] PID {} survived SIGTERM; sending SIGKILL.", Pid);
+			let _ = std::process::Command::new("kill").args(["-9", &Pid.to_string()]).status();
 			std::thread::sleep(Duration::from_millis(200));
 		}
 		dev_log!("cocoon", "[CocoonSweep] PID {} reaped.", Pid);

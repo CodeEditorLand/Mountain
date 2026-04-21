@@ -540,9 +540,7 @@ impl MountainService for MountainVinegRPCService {
 			// Cocoon → Mountain → Sky: `vscode.languages.setTextDocumentLanguage(document, languageId)`
 			// fires this so Monaco swaps the language mode on the editor.
 			"languages.setDocumentLanguage" => {
-				if let Err(Error) =
-					self.ApplicationHandle.emit("sky://languages/setDocumentLanguage", &Parameter)
-				{
+				if let Err(Error) = self.ApplicationHandle.emit("sky://languages/setDocumentLanguage", &Parameter) {
 					dev_log!(
 						"grpc",
 						"warn: [MountainVinegRPCService] sky://languages/setDocumentLanguage emit failed: {}",
@@ -555,15 +553,9 @@ impl MountainService for MountainVinegRPCService {
 			// extensions. `webview.setTitle`, `webview.setIconPath`, and the
 			// pane-visibility transitions all fan through here.
 			"webview.setTitle" | "webview.setIconPath" | "webview.setHtml" => {
-				let EventName =
-					format!("sky://webview/{}", &MethodName["webview.".len()..]);
+				let EventName = format!("sky://webview/{}", &MethodName["webview.".len()..]);
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] {} emit failed: {}",
-						EventName,
-						Error
-					);
+					dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 				}
 			},
 
@@ -574,15 +566,9 @@ impl MountainService for MountainVinegRPCService {
 			// generated handle so Sky can correlate the panel with the
 			// extension-owned terminal instance.
 			"window.createTerminal" => {
-				use CommonLibrary::{
-					Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider,
-				};
+				use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
 				let Provider:Arc<dyn TerminalProvider> = self.RunTime.Environment.Require();
-				let Name = Parameter
-					.get("name")
-					.and_then(|V| V.as_str())
-					.unwrap_or("terminal")
-					.to_string();
+				let Name = Parameter.get("name").and_then(|V| V.as_str()).unwrap_or("terminal").to_string();
 				let Options = Parameter.get("options").cloned().unwrap_or_default();
 				let Handle = Parameter
 					.get("handle")
@@ -594,8 +580,7 @@ impl MountainService for MountainVinegRPCService {
 				tokio::spawn(async move {
 					let OptionsPayload = if Options.is_object() {
 						let mut Map = Options.as_object().cloned().unwrap_or_default();
-						Map.entry("name".to_string())
-							.or_insert_with(|| json!(NameForTask));
+						Map.entry("name".to_string()).or_insert_with(|| json!(NameForTask));
 						serde_json::Value::Object(Map)
 					} else {
 						json!({ "name": NameForTask })
@@ -629,12 +614,7 @@ impl MountainService for MountainVinegRPCService {
 			"terminal.sendText" | "terminal.show" | "terminal.hide" | "terminal.dispose" => {
 				let EventName = format!("sky://terminal/{}", &MethodName["terminal.".len()..]);
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] {} emit failed: {}",
-						EventName,
-						Error
-					);
+					dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 				}
 				// Also drive the provider directly so the underlying PTY
 				// responds (sendText) or disposes (dispose). Terminal
@@ -646,16 +626,13 @@ impl MountainService for MountainVinegRPCService {
 					.and_then(|S| S.trim_start_matches("terminal:").parse::<u64>().ok());
 				if let Some(TerminalId) = HandleNumeric {
 					use CommonLibrary::{
-						Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider,
+						Environment::Requires::Requires,
+						Terminal::TerminalProvider::TerminalProvider,
 					};
 					let Provider:Arc<dyn TerminalProvider> = self.RunTime.Environment.Require();
 					match MethodName.as_str() {
 						"terminal.sendText" => {
-							let Text = Parameter
-								.get("text")
-								.and_then(|T| T.as_str())
-								.unwrap_or("")
-								.to_string();
+							let Text = Parameter.get("text").and_then(|T| T.as_str()).unwrap_or("").to_string();
 							let ProviderForTask = Provider.clone();
 							tokio::spawn(async move {
 								let _ = ProviderForTask.SendTextToTerminal(TerminalId, Text).await;
@@ -706,15 +683,9 @@ impl MountainService for MountainVinegRPCService {
 			// the sky:// channel so the editor renderer doesn't need its own
 			// gRPC stub.
 			"window.createTextEditorDecorationType" | "window.disposeTextEditorDecorationType" => {
-				let EventName =
-					format!("sky://decoration/{}", &MethodName["window.".len()..]);
+				let EventName = format!("sky://decoration/{}", &MethodName["window.".len()..]);
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] {} emit failed: {}",
-						EventName,
-						Error
-					);
+					dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 				}
 			},
 
@@ -725,12 +696,7 @@ impl MountainService for MountainVinegRPCService {
 			"debug.addBreakpoints" | "debug.removeBreakpoints" | "debug.consoleAppend" => {
 				let EventName = format!("sky://debug/{}", &MethodName["debug.".len()..]);
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] {} emit failed: {}",
-						EventName,
-						Error
-					);
+					dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 				}
 			},
 
@@ -746,15 +712,9 @@ impl MountainService for MountainVinegRPCService {
 			| "outputChannel.show"
 			| "outputChannel.hide"
 			| "outputChannel.dispose" => {
-				let EventName =
-					format!("sky://output-channel/{}", &MethodName["outputChannel.".len()..]);
+				let EventName = format!("sky://output-channel/{}", &MethodName["outputChannel.".len()..]);
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] {} emit failed: {}",
-						EventName,
-						Error
-					);
+					dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 				}
 			},
 
@@ -766,12 +726,7 @@ impl MountainService for MountainVinegRPCService {
 			"statusBar.update" | "statusBar.dispose" => {
 				let EventName = format!("sky://status-bar/{}", &MethodName["statusBar.".len()..]);
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] {} emit failed: {}",
-						EventName,
-						Error
-					);
+					dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 				}
 			},
 			// Cocoon → Mountain → Sky: status-bar messages from extensions.

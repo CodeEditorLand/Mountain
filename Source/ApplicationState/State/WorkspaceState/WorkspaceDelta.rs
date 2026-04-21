@@ -39,10 +39,7 @@ fn FolderToWire(Folder:&WorkspaceFolderStateDTO) -> serde_json::Value {
 /// the caller, so a failed notification should not roll the mutation back. The
 /// log tag `[LandFix:WsDelta]` keeps the event grep-able in dev logs and is
 /// deliberately consistent with `[LandFix:WsNs]` on the Cocoon side.
-pub async fn DispatchDeltaWorkspaceFolders(
-	Added:Vec<WorkspaceFolderStateDTO>,
-	Removed:Vec<WorkspaceFolderStateDTO>,
-) {
+pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, Removed:Vec<WorkspaceFolderStateDTO>) {
 	if Added.is_empty() && Removed.is_empty() {
 		return;
 	}
@@ -63,12 +60,8 @@ pub async fn DispatchDeltaWorkspaceFolders(
 		"removed": RemovedWire,
 	});
 
-	if let Err(Error) = Client::SendNotification(
-		"cocoon-main".to_string(),
-		"$deltaWorkspaceFolders".to_string(),
-		Payload,
-	)
-	.await
+	if let Err(Error) =
+		Client::SendNotification("cocoon-main".to_string(), "$deltaWorkspaceFolders".to_string(), Payload).await
 	{
 		dev_log!(
 			"workspaces",
@@ -99,8 +92,7 @@ pub fn UpdateWorkspaceFoldersAndNotify(
 	} else {
 		dev_log!(
 			"workspaces",
-			"warn: [LandFix:WsDelta] No tokio runtime available — delta dropped ({} added, {} \
-			 removed)",
+			"warn: [LandFix:WsDelta] No tokio runtime available — delta dropped ({} added, {} removed)",
 			Added.len(),
 			Removed.len()
 		);
@@ -160,11 +152,16 @@ fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 	if Added.is_empty() {
 		return;
 	}
-	let Home = std::env::var("HOME").or_else(|_| std::env::var("USERPROFILE")).unwrap_or_default();
+	let Home = std::env::var("HOME")
+		.or_else(|_| std::env::var("USERPROFILE"))
+		.unwrap_or_default();
 	if Home.is_empty() {
 		return;
 	}
-	let Path = std::path::PathBuf::from(Home).join(".land").join("workspaces").join("RecentlyOpened.json");
+	let Path = std::path::PathBuf::from(Home)
+		.join(".land")
+		.join("workspaces")
+		.join("RecentlyOpened.json");
 	let mut Current:serde_json::Map<String, serde_json::Value> = std::fs::read_to_string(&Path)
 		.ok()
 		.and_then(|Contents| serde_json::from_str::<serde_json::Value>(&Contents).ok())

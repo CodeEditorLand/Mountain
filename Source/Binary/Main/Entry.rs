@@ -144,7 +144,7 @@ pub fn Fn() {
 	// cwd is arbitrary).
 	// -------------------------------------------------------------------------
 	{
-		fn LoadEnvFile(Path: &std::path::Path) -> bool {
+		fn LoadEnvFile(Path:&std::path::Path) -> bool {
 			let Ok(Content) = std::fs::read_to_string(Path) else {
 				return false;
 			};
@@ -190,11 +190,7 @@ pub fn Fn() {
 		let mut Loaded = false;
 		for Candidate in Candidates {
 			if Candidate.exists() && LoadEnvFile(&Candidate) {
-				crate::dev_log!(
-					"lifecycle",
-					"[Boot] [Env] Loaded env from {}",
-					Candidate.display()
-				);
+				crate::dev_log!("lifecycle", "[Boot] [Env] Loaded env from {}", Candidate.display());
 				Loaded = true;
 				break;
 			}
@@ -292,7 +288,8 @@ pub fn Fn() {
 		// [Boot] [Workspace] Seed initial workspace folders so every extension
 		// that calls `vscode.workspace.findFiles(...)` at activation has
 		// something to walk. Precedence: --folder flags → positional dirs →
-		// LAND_WORKSPACE_FOLDER env → CWD fallback. See CliParse::ParseWorkspaceFolders.
+		// LAND_WORKSPACE_FOLDER env → CWD fallback. See
+		// CliParse::ParseWorkspaceFolders.
 		// -------------------------------------------------------------------
 		{
 			let InitialFolderPaths = crate::Binary::Initialize::CliParse::ParseWorkspaceFolders();

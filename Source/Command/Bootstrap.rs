@@ -128,12 +128,12 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, WebviewWindow, Wry};
 use url::Url;
 
-use crate::dev_log;
 use crate::{
 	ApplicationState::{ApplicationState, DTO::TreeViewStateDTO::TreeViewStateDTO, MapLockError},
 	Environment::CommandProvider::CommandHandler,
 	FileSystem::FileExplorerViewProvider::FileExplorerViewProvider,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
 };
 
 // --- Command Implementations ---
@@ -370,11 +370,7 @@ fn CommandReloadWindow(
 		// error — VS Code's contract returns `{ success: true }` on
 		// best-effort reload and extensions don't inspect it further.
 		if let Err(Error) = Window.eval("location.reload()") {
-			dev_log!(
-				"commands",
-				"warn: [Native Command] Reload Window eval failed: {}",
-				Error
-			);
+			dev_log!("commands", "warn: [Native Command] Reload Window eval failed: {}", Error);
 		}
 
 		Ok(json!({ "success": true }))
@@ -404,12 +400,14 @@ fn CommandVscodeOpen(
 		};
 		let UriString = match &UriRaw {
 			Value::String(S) => S.clone(),
-			Value::Object(Object) => Object
-				.get("external")
-				.and_then(Value::as_str)
-				.or_else(|| Object.get("path").and_then(Value::as_str))
-				.map(str::to_string)
-				.unwrap_or_default(),
+			Value::Object(Object) => {
+				Object
+					.get("external")
+					.and_then(Value::as_str)
+					.or_else(|| Object.get("path").and_then(Value::as_str))
+					.map(str::to_string)
+					.unwrap_or_default()
+			},
 			Value::Null => String::new(),
 			_ => UriRaw.to_string(),
 		};
@@ -418,10 +416,7 @@ fn CommandVscodeOpen(
 		}
 		let IsFileLike = UriString.starts_with("file:") || UriString.starts_with('/');
 		if IsFileLike {
-			if let Err(Error) = ApplicationHandle.emit(
-				"sky://window/showTextDocument",
-				json!({ "uri": UriString }),
-			) {
+			if let Err(Error) = ApplicationHandle.emit("sky://window/showTextDocument", json!({ "uri": UriString })) {
 				dev_log!(
 					"commands",
 					"warn: [vscode.open] sky://window/showTextDocument emit failed: {}",
@@ -519,10 +514,7 @@ pub fn RegisterNativeCommands(
 	// guarding on whether we've registered it; a missing registration shows
 	// up as "command 'vscode.open' not found" in user-visible error toasts.
 	CommandRegistry.insert("vscode.open".to_string(), CommandHandler::Native(CommandVscodeOpen));
-	CommandRegistry.insert(
-		"vscode.openFolder".to_string(),
-		CommandHandler::Native(CommandVscodeOpen),
-	);
+	CommandRegistry.insert("vscode.openFolder".to_string(), CommandHandler::Native(CommandVscodeOpen));
 
 	dev_log!("commands", "[Bootstrap] {} native commands registered.", CommandRegistry.len());
 
@@ -577,7 +569,11 @@ pub fn RegisterNativeCommands(
 		},
 	);
 
-	dev_log!("commands", "[Bootstrap] {} native tree view providers registered.", TreeViewRegistry.len());
+	dev_log!(
+		"commands",
+		"[Bootstrap] {} native tree view providers registered.",
+		TreeViewRegistry.len()
+	);
 
 	Ok(())
 }

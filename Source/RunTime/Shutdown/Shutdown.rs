@@ -160,12 +160,11 @@ impl ApplicationRunTime {
 	///
 	/// Sequence:
 	///   1. Send `$shutdown` gRPC notification to Cocoon (up to 3 attempts).
-	///   2. Regardless of gRPC outcome, call `HardKillCocoon()` which
-	///      SIGKILLs the stored child if still alive. Atom I6 addition —
-	///      without this, a gRPC failure (transport error, broken pipe)
-	///      left the child process orphaned, holding port 50052, and the
-	///      next Mountain launch hit EADDRINUSE with the extension host
-	///      stuck in degraded mode.
+	///   2. Regardless of gRPC outcome, call `HardKillCocoon()` which SIGKILLs
+	///      the stored child if still alive. Atom I6 addition — without this, a
+	///      gRPC failure (transport error, broken pipe) left the child process
+	///      orphaned, holding port 50052, and the next Mountain launch hit
+	///      EADDRINUSE with the extension host stuck in degraded mode.
 	pub async fn ShutdownCocoonWithRetry(&self) -> Result<(), CommonError> {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
 
@@ -207,8 +206,8 @@ impl ApplicationRunTime {
 		if GracefulOk {
 			Ok(())
 		} else {
-			Err(LastError.unwrap_or_else(|| CommonError::Unknown {
-				Description:"Failed to shutdown Cocoon after maximum retries".to_string(),
+			Err(LastError.unwrap_or_else(|| {
+				CommonError::Unknown { Description:"Failed to shutdown Cocoon after maximum retries".to_string() }
 			}))
 		}
 	}

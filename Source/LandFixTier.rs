@@ -44,12 +44,9 @@ use crate::dev_log;
 pub fn LogResolvedTiers() {
 	dev_log!(
 		"lifecycle",
-		"[LandFix:Tier] Mountain tiers: \
-		 RemoteProcedureCall={} HTTPProxy={} Logger={} \
-		 FileSystem={} FindFiles={} Glob={} FileWatcher={} SchemeAssets={} \
-		 Configuration={} Diagnostics={} Clipboard={} OpenExternal={} \
-		 DocumentMirror={} ExtensionActivation={} ExtensionScan={} \
-		 ModuleCache={} Telemetry={}",
+		"[LandFix:Tier] Mountain tiers: RemoteProcedureCall={} HTTPProxy={} Logger={} FileSystem={} FindFiles={} \
+		 Glob={} FileWatcher={} SchemeAssets={} Configuration={} Diagnostics={} Clipboard={} OpenExternal={} \
+		 DocumentMirror={} ExtensionActivation={} ExtensionScan={} ModuleCache={} Telemetry={}",
 		env!("TierRemoteProcedureCall"),
 		env!("TierHTTPProxy"),
 		env!("TierLogger"),

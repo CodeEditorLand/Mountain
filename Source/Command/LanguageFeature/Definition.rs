@@ -24,7 +24,12 @@ pub(super) async fn provide_definition_impl(
 	uri:String,
 	position:Value,
 ) -> Result<Value, String> {
-	dev_log!("commands", "[Language Feature] Providing definition for: {} at {:?}", uri, position);
+	dev_log!(
+		"commands",
+		"[Language Feature] Providing definition for: {} at {:?}",
+		uri,
+		position
+	);
 
 	validate_language_feature_request("definition", &uri, &position)?;
 

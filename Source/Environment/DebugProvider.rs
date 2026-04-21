@@ -283,12 +283,13 @@ impl DebugService for MountainEnvironment {
 	async fn StopDebugging(&self, SessionID:String) -> Result<(), CommonError> {
 		dev_log!("exthost", "[DebugProvider] StopDebugging request for session '{}'", SessionID);
 
-		// TODO: When StartDebugging stores spawned adapters in ApplicationState.Feature.Debug,
-		// look up the session by ID, send a DAP `disconnect` request, terminate the adapter
-		// process, and emit `$onDidTerminateDebugSession` to Cocoon. The current StartDebugging
-		// impl doesn't persist sessions yet (see TODO block at line 218+), so there is nothing
-		// concrete to tear down. Always returning Ok keeps extensions from hanging on the
-		// `vscode.debug.stopDebugging()` promise.
+		// TODO: When StartDebugging stores spawned adapters in
+		// ApplicationState.Feature.Debug, look up the session by ID, send a DAP
+		// `disconnect` request, terminate the adapter process, and emit
+		// `$onDidTerminateDebugSession` to Cocoon. The current StartDebugging
+		// impl doesn't persist sessions yet (see TODO block at line 218+), so there is
+		// nothing concrete to tear down. Always returning Ok keeps extensions from
+		// hanging on the `vscode.debug.stopDebugging()` promise.
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 		let TerminateMethod = format!("{}$onDidTerminateDebugSession", ProxyTarget::ExtHostDebug.GetTargetPrefix());
 		if let Err(error) = IPCProvider

@@ -151,20 +151,15 @@ impl State {
 		match self.WorkspaceFolders.lock() {
 			Ok(mut guard) => {
 				let Old = guard.clone();
-				let OldUris:std::collections::HashSet<String> =
-					Old.iter().map(|F| F.URI.to_string()).collect();
-				let NewUris:std::collections::HashSet<String> =
-					folders.iter().map(|F| F.URI.to_string()).collect();
+				let OldUris:std::collections::HashSet<String> = Old.iter().map(|F| F.URI.to_string()).collect();
+				let NewUris:std::collections::HashSet<String> = folders.iter().map(|F| F.URI.to_string()).collect();
 				let Added:Vec<WorkspaceFolderStateDTO> = folders
 					.iter()
 					.filter(|F| !OldUris.contains(&F.URI.to_string()))
 					.cloned()
 					.collect();
-				let Removed:Vec<WorkspaceFolderStateDTO> = Old
-					.iter()
-					.filter(|F| !NewUris.contains(&F.URI.to_string()))
-					.cloned()
-					.collect();
+				let Removed:Vec<WorkspaceFolderStateDTO> =
+					Old.iter().filter(|F| !NewUris.contains(&F.URI.to_string())).cloned().collect();
 				*guard = folders;
 				dev_log!(
 					"workspaces",

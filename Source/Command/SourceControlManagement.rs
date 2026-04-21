@@ -73,7 +73,10 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use tauri::{State, command};
 
-use crate::{ApplicationState::{ApplicationState, MapLockError}, dev_log};
+use crate::{
+	ApplicationState::{ApplicationState, MapLockError},
+	dev_log,
+};
 
 /// Retrieves the complete state of all Source Control Management providers,
 /// groups, and resources for rendering in the UI.

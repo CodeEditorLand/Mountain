@@ -24,9 +24,11 @@ pub(super) async fn provide_document_highlights_impl(
 	uri:String,
 	position:Value,
 ) -> Result<Value, String> {
-	dev_log!("commands", 
+	dev_log!(
+		"commands",
 		"[Language Feature] Providing document highlights for: {} at {:?}",
-		uri, position
+		uri,
+		position
 	);
 
 	validate_language_feature_request("document_highlights", &uri, &position)?;

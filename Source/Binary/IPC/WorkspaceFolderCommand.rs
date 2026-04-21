@@ -52,11 +52,7 @@ pub struct WorkspaceFolderPayload {
 
 impl From<&WorkspaceFolderStateDTO> for WorkspaceFolderPayload {
 	fn from(Dto:&WorkspaceFolderStateDTO) -> Self {
-		Self {
-			Uri:Dto.URI.to_string(),
-			Name:Dto.Name.clone(),
-			Index:Dto.Index,
-		}
+		Self { Uri:Dto.URI.to_string(), Name:Dto.Name.clone(), Index:Dto.Index }
 	}
 }
 

@@ -225,10 +225,7 @@ impl std::fmt::Debug for TerminalStateDTO {
 			.field("CurrentWorkingDirectory", &self.CurrentWorkingDirectory)
 			.field("EnvironmentVariables", &self.EnvironmentVariables)
 			.field("IsPTY", &self.IsPTY)
-			.field(
-				"PTYInputTransmitter",
-				&self.PTYInputTransmitter.as_ref().map(|_| "<channel>"),
-			)
+			.field("PTYInputTransmitter", &self.PTYInputTransmitter.as_ref().map(|_| "<channel>"))
 			.field("ReaderTaskHandle", &self.ReaderTaskHandle.as_ref().map(|_| "<task>"))
 			.field("ProcessWaitHandle", &self.ProcessWaitHandle.as_ref().map(|_| "<task>"))
 			.field("PTYMaster", &self.PTYMaster.as_ref().map(|_| "<master-pty>"))

@@ -8,12 +8,7 @@ use serde_json::{Value, json};
 use tauri::AppHandle;
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 
-use crate::{
-	ExtensionManagement::VsixInstaller,
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	Vine,
-	dev_log,
-};
+use crate::{ExtensionManagement::VsixInstaller, RunTime::ApplicationRunTime::ApplicationRunTime, Vine, dev_log};
 
 /// Cocoon sidecar id (matches `CocoonManagement::COCOON_SIDE_CAR_IDENTIFIER`).
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
@@ -130,19 +125,19 @@ pub async fn handle_extensions_is_active(Runtime:Arc<ApplicationRunTime>, Args:V
 // ---------------------------------------------------------------------------
 //
 // Wind ships two kinds of install call:
-//   1. from the "Install from VSIX…" dialog — args[0] is a URI string
-//      pointing at a local `.vsix`.
-//   2. from the Extensions sidebar row — args[0] is a gallery identifier,
-//      which we do not support (no marketplace backend) and which returns
-//      null with a clear log line.
+//   1. from the "Install from VSIX…" dialog — args[0] is a URI string pointing
+//      at a local `.vsix`.
+//   2. from the Extensions sidebar row — args[0] is a gallery identifier, which
+//      we do not support (no marketplace backend) and which returns null with a
+//      clear log line.
 //
 // Uninstall always receives an identifier string (args[0]) matching one of
 // the entries we previously returned from `extensions:getInstalled`.
 //
 // Every successful install / uninstall:
 //   - mutates `ApplicationState.Extension.ScannedExtensions`,
-//   - emits `sky://extensions/installed` or `…/uninstalled` so Wind
-//     re-fetches the sidebar,
+//   - emits `sky://extensions/installed` or `…/uninstalled` so Wind re-fetches
+//     the sidebar,
 //   - logs one summary line under the `extensions` tag.
 
 /// `~/.land/extensions` — matches the user-scope scan path in
@@ -189,16 +184,20 @@ pub async fn handle_extensions_install(
 	Runtime:Arc<ApplicationRunTime>,
 	Args:Vec<Value>,
 ) -> Result<Value, String> {
+	let OTELStart = crate::IPC::DevLog::NowNano();
+
 	let VsixPath = match VsixPathFromArgs(&Args) {
 		Some(Path) => Path,
 		None => {
 			dev_log!("extensions", "extensions:install no-op: args[0] missing or non-file URI");
+			crate::otel_span!("extensions:install:noop-missing-arg", OTELStart);
 			return Ok(Value::Null);
 		},
 	};
 
 	if VsixPath.extension().and_then(|Value| Value.to_str()) != Some("vsix") {
 		dev_log!("extensions", "extensions:install no-op: {} is not a .vsix", VsixPath.display());
+		crate::otel_span!("extensions:install:noop-not-vsix", OTELStart);
 		return Ok(Value::Null);
 	}
 
@@ -251,6 +250,15 @@ pub async fn handle_extensions_install(
 		Outcome.InstalledAt.display()
 	);
 
+	crate::otel_span!(
+		"extensions:install:ok",
+		OTELStart,
+		&[
+			("extension.identifier", Outcome.Identifier.as_str()),
+			("extension.version", Outcome.Version.as_str()),
+		]
+	);
+
 	// ILocalExtension envelope — matches `handle_extensions_get_installed`
 	// so VS Code's ExtensionEnablementService merges it into the sidebar.
 	Ok(json!({
@@ -288,6 +296,8 @@ pub async fn handle_extensions_uninstall(
 	Runtime:Arc<ApplicationRunTime>,
 	Args:Vec<Value>,
 ) -> Result<Value, String> {
+	let OTELStart = crate::IPC::DevLog::NowNano();
+
 	let Identifier = match Args.first().and_then(|Value| {
 		Value
 			.as_str()
@@ -297,6 +307,7 @@ pub async fn handle_extensions_uninstall(
 		Some(Value) => Value,
 		None => {
 			dev_log!("extensions", "extensions:uninstall no-op: args[0] missing identifier");
+			crate::otel_span!("extensions:uninstall:noop-missing-id", OTELStart);
 			return Ok(Value::Null);
 		},
 	};
@@ -355,6 +366,12 @@ pub async fn handle_extensions_uninstall(
 	}
 
 	dev_log!("extensions", "extensions:uninstall succeeded: {}", Identifier);
+
+	crate::otel_span!(
+		"extensions:uninstall:ok",
+		OTELStart,
+		&[("extension.identifier", Identifier.as_str())]
+	);
 
 	Ok(Value::Bool(true))
 }

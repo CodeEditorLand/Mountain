@@ -133,10 +133,10 @@ use crate::{
 /// sit at the top level of `extensions/`. VS Code's shipped tree keeps
 /// TypeScript type declarations in `types/`, build output in `out/`, and a
 /// flat `node_modules/` for shared dependencies. Scanning into those emits
-/// noise like `[ExtensionScanner] Could not read package.json at .../out/package.json`
-/// on every boot; callers use `ExtensionScanDenyList` to skip them without
-/// losing the ability to scan *nested* `node_modules` inside a real
-/// extension (e.g. a language server's bundled deps).
+/// noise like `[ExtensionScanner] Could not read package.json at
+/// .../out/package.json` on every boot; callers use `ExtensionScanDenyList` to
+/// skip them without losing the ability to scan *nested* `node_modules` inside
+/// a real extension (e.g. a language server's bundled deps).
 const EXTENSION_SCAN_DENY_LIST:&[&str] = &["types", "out", "node_modules", "test", ".vscode-test", ".git"];
 
 /// Test-only extensions that only serve the upstream VS Code test harness.
@@ -275,7 +275,8 @@ pub async fn ScanDirectoryForExtensions(
 					// placeholders — surfacing a warning there is misleading
 					// because the UI renders correctly with the raw fields.
 					let ManifestUsesPlaceholders = ManifestContainsNLSPlaceholders(&ManifestValue);
-					if let Some(NLSMap) = LoadNLSBundle(&RunTime, &PotentialExtensionPath, ManifestUsesPlaceholders).await
+					if let Some(NLSMap) =
+						LoadNLSBundle(&RunTime, &PotentialExtensionPath, ManifestUsesPlaceholders).await
 					{
 						let mut Replaced = 0u32;
 						let mut Unresolved = 0u32;

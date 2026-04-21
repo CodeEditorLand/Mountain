@@ -144,8 +144,7 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry};
 use uuid::Uuid;
 
-use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment};
-use crate::dev_log;
+use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment, dev_log};
 
 /// Loads or generates a persistent machine ID.
 ///
@@ -175,13 +174,21 @@ fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 	// Ensure directory exists
 	if let Some(parent) = machine_id_path.parent() {
 		if let Err(e) = fs::create_dir_all(parent) {
-			dev_log!("cocoon", "warn: [InitializationData] Failed to create machine ID directory: {}", e);
+			dev_log!(
+				"cocoon",
+				"warn: [InitializationData] Failed to create machine ID directory: {}",
+				e
+			);
 		}
 	}
 
 	// Save to disk
 	if let Err(e) = fs::write(&machine_id_path, &new_machine_id) {
-		dev_log!("cocoon", "warn: [InitializationData] Failed to persist machine ID to disk: {}", e);
+		dev_log!(
+			"cocoon",
+			"warn: [InitializationData] Failed to persist machine ID to disk: {}",
+			e
+		);
 	} else {
 		dev_log!("cocoon", "[InitializationData] Generated and persisted new machine ID");
 	}

@@ -163,11 +163,7 @@ fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 		(Key, ExtensionId)
 	} else {
 		let Key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-		let ExtensionId = Parameters
-			.get(2)
-			.and_then(Value::as_str)
-			.unwrap_or("unknown")
-			.to_string();
+		let ExtensionId = Parameters.get(2).and_then(Value::as_str).unwrap_or("unknown").to_string();
 		(Key, ExtensionId)
 	}
 }
@@ -333,19 +329,23 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						};
 						let PathBuf_ = std::path::PathBuf::from(&Path);
 						match MethodNameOwned.as_str() {
-							"stat" => fs_reader
-								.StatFile(&PathBuf_)
-								.await
-								.map(|S| serde_json::to_value(S).unwrap_or(Value::Null))
-								.map_err(|e| e.to_string()),
-							"readFile" | "openDocument" => fs_reader
-								.ReadFile(&PathBuf_)
-								.await
-								.map(|Bytes| {
-									let Text = String::from_utf8(Bytes).unwrap_or_default();
-									json!({ "uri": Path, "text": Text })
-								})
-								.map_err(|e| e.to_string()),
+							"stat" => {
+								fs_reader
+									.StatFile(&PathBuf_)
+									.await
+									.map(|S| serde_json::to_value(S).unwrap_or(Value::Null))
+									.map_err(|e| e.to_string())
+							},
+							"readFile" | "openDocument" => {
+								fs_reader
+									.ReadFile(&PathBuf_)
+									.await
+									.map(|Bytes| {
+										let Text = String::from_utf8(Bytes).unwrap_or_default();
+										json!({ "uri": Path, "text": Text })
+									})
+									.map_err(|e| e.to_string())
+							},
 							_ => Ok(Value::Null),
 						}
 					})
@@ -476,9 +476,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 								"affected": [KeyForEvents.clone()],
 							});
 							let AppHandle = run_time.Environment.ApplicationHandle.clone();
-							if let Err(Error) =
-								AppHandle.emit("sky://configuration/changed", Payload.clone())
-							{
+							if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
 								dev_log!(
 									"config",
 									"warn: [Configuration.Update] sky://configuration/changed emit failed: {}",
@@ -1345,12 +1343,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 							(vid, opts)
 						};
 						let ViewIdForLog = view_id.clone();
-						dev_log!(
-							"grpc",
-							"[LandFix:Tree] body-start view={} t_ns={}",
-							ViewIdForLog,
-							BodyStartNs
-						);
+						dev_log!("grpc", "[LandFix:Tree] body-start view={} t_ns={}", ViewIdForLog, BodyStartNs);
 						let Result = provider.RegisterTreeDataProvider(view_id, options).await;
 						let RegisteredNs = std::time::SystemTime::now()
 							.duration_since(std::time::UNIX_EPOCH)
@@ -1407,13 +1400,8 @@ pub fn CreateEffectForRequest<R:Runtime>(
 								.map(|D| D.as_millis())
 								.unwrap_or(0)
 						);
-						let Message =
-							Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
-						let Level = Payload
-							.get("level")
-							.and_then(Value::as_str)
-							.unwrap_or("info")
-							.to_string();
+						let Message = Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
+						let Level = Payload.get("level").and_then(Value::as_str).unwrap_or("info").to_string();
 						let Items = Payload.get("items").cloned().unwrap_or(json!([]));
 						let Options = Payload.get("options").cloned().unwrap_or(json!({}));
 						if let Err(Error) = AppHandle.emit(
@@ -1451,11 +1439,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						use tauri::Emitter;
-						let Args = if Parameters.is_array() {
-							Parameters
-						} else {
-							json!([Parameters])
-						};
+						let Args = if Parameters.is_array() { Parameters } else { json!([Parameters]) };
 						let Channel = match MethodNameOwned.as_str() {
 							"Window.ShowQuickPick" => "sky://quickpick/show",
 							"Window.ShowInputBox" => "sky://input-box/show",
@@ -1471,9 +1455,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 								.map(|D| D.as_nanos())
 								.unwrap_or(0)
 						);
-						if let Err(Error) =
-							AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args }))
-						{
+						if let Err(Error) = AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args })) {
 							dev_log!("ipc", "warn: [{}] {} emit failed: {}", MethodNameOwned, Channel, Error);
 						}
 						// No reply channel wired yet — return null to keep
@@ -1492,7 +1474,8 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						use CommonLibrary::{
-							Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider,
+							Environment::Requires::Requires,
+							Terminal::TerminalProvider::TerminalProvider,
 						};
 						let Provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
 						let Handle = Parameters.get(0).cloned().unwrap_or_default();
@@ -1546,17 +1529,9 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
 						let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
 						let SecretValue = if let Some(Object) = Parameters.as_object() {
-							Object
-								.get("value")
-								.and_then(Value::as_str)
-								.unwrap_or("")
-								.to_string()
+							Object.get("value").and_then(Value::as_str).unwrap_or("").to_string()
 						} else {
-							Parameters
-								.get(1)
-								.and_then(Value::as_str)
-								.unwrap_or("")
-								.to_string()
+							Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string()
 						};
 						provider
 							.StoreSecret(ExtensionId, Key, SecretValue)
@@ -1591,11 +1566,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
-						let SessionId = Parameters
-							.get(0)
-							.and_then(Value::as_str)
-							.unwrap_or("")
-							.to_string();
+						let SessionId = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
 						provider
 							.StopDebugging(SessionId)
 							.await
@@ -1616,11 +1587,9 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
-						let Handle =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let Handle = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
 						let Root = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
-						let IsRecursive =
-							Parameters.get(2).and_then(Value::as_bool).unwrap_or(true);
+						let IsRecursive = Parameters.get(2).and_then(Value::as_bool).unwrap_or(true);
 						let Pattern = Parameters
 							.get(3)
 							.and_then(Value::as_str)
@@ -1640,8 +1609,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
-						let Handle =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let Handle = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
 						provider
 							.UnregisterWatcher(Handle)
 							.await
@@ -1799,11 +1767,7 @@ pub fn CreateEffectForRequest<R:Runtime>(
 											.get("uri")
 											.and_then(|U| U.get("value").and_then(Value::as_str).or_else(|| U.as_str()))
 											.map(str::to_string)?;
-										let Name = Entry
-											.get("name")
-											.and_then(Value::as_str)
-											.unwrap_or("")
-											.to_string();
+										let Name = Entry.get("name").and_then(Value::as_str).unwrap_or("").to_string();
 										Some((Uri, Name))
 									})
 									.collect()
@@ -1831,11 +1795,12 @@ pub fn CreateEffectForRequest<R:Runtime>(
 						let Base = Folders.len();
 						for (Index, (UriStr, Name)) in Additions.iter().enumerate() {
 							if let Ok(Url) = url::Url::parse(UriStr) {
-								if let Ok(Dto) = crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO::New(
-									Url,
-									Name.clone(),
-									Base + Index,
-								) {
+								if let Ok(Dto) =
+									crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO::New(
+										Url,
+										Name.clone(),
+										Base + Index,
+									) {
 									Folders.push(Dto);
 								}
 							}

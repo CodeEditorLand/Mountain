@@ -156,8 +156,7 @@ use tauri_plugin_updater::UpdaterExt;
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
 
-use crate::RunTime::ApplicationRunTime::ApplicationRunTime as Runtime;
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 /// Update delegation mode for controlling which update mechanism to use.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -324,7 +323,10 @@ pub async fn CheckForUpdatesWithAir(
 ) -> Result<(), CommonError> {
 	match Mode {
 		UpdateMode::ForceAir => {
-			dev_log!("update", "error: [UpdateService] ForceAir mode specified but Air integration is disabled");
+			dev_log!(
+				"update",
+				"error: [UpdateService] ForceAir mode specified but Air integration is disabled"
+			);
 			return Err(CommonError::Configuration {
 				Message:"Air integration is not enabled. Build with `--features AirIntegration` to use ForceAir mode."
 					.to_string(),
@@ -402,10 +404,16 @@ pub async fn CheckForUpdatesWithAir(
 		UpdateMode::AutoDetect => {
 			if let Some(AirClientRef) = &AirClient {
 				if IsAirAvailable(AirClientRef).await {
-					dev_log!("update", "[UpdateService] Air service available - delegating update check to Air");
+					dev_log!(
+						"update",
+						"[UpdateService] Air service available - delegating update check to Air"
+					);
 					return CheckForUpdatesViaAir(ApplicationHandle, RunTime, NotifyNoUpdate, AirClientRef).await;
 				} else {
-					dev_log!("update", "warn: [UpdateService] Air client provided but unhealthy - falling back to Tauri updater");
+					dev_log!(
+						"update",
+						"warn: [UpdateService] Air client provided but unhealthy - falling back to Tauri updater"
+					);
 				}
 			} else {
 				dev_log!("update", "[UpdateService] No Air client provided - using Tauri updater");
@@ -445,7 +453,11 @@ async fn CheckForUpdatesViaAir(
 			let UpdateCheckResponse = Response.into_inner();
 
 			if UpdateCheckResponse.update_available {
-				dev_log!("update", "[UpdateService] Air reports update available: v{}", UpdateCheckResponse.version);
+				dev_log!(
+					"update",
+					"[UpdateService] Air reports update available: v{}",
+					UpdateCheckResponse.version
+				);
 
 				let message = format!(
 					"A new version of Mountain is available: v{}.\n\n{}",

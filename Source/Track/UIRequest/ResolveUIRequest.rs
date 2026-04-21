@@ -54,8 +54,7 @@ use std::sync::Arc;
 use serde_json::Value;
 use tauri::{State, command};
 
-use crate::ApplicationState::ApplicationState;
-use crate::dev_log;
+use crate::{ApplicationState::ApplicationState, dev_log};
 
 /// A specific Tauri command handler for the UI to send back the result of a
 /// request-response interaction (like a dialog or message box).
@@ -84,8 +83,11 @@ pub async fn ResolveUIRequest(
 			return Err(ErrorMessage);
 		}
 	} else {
-		dev_log!("ipc", "warn: [Track/UIRequest] Received a result for an unknown or timed-out UI request ID: {}",
-			RequestID);
+		dev_log!(
+			"ipc",
+			"warn: [Track/UIRequest] Received a result for an unknown or timed-out UI request ID: {}",
+			RequestID
+		);
 	}
 
 	Ok(())

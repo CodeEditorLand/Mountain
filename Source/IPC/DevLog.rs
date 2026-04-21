@@ -332,13 +332,13 @@ pub fn FlushDedup() {
 // paths are functionally noise: they confirm the probe exists but nothing
 // acts on a failure. Three steps keep the log useful:
 //
-//   1. Known-optional patterns downgrade to Debug level (suppressed from
-//      the default dev-log stream, still written to the file sink).
+//   1. Known-optional patterns downgrade to Debug level (suppressed from the
+//      default dev-log stream, still written to the file sink).
 //   2. Per-unique-path dedup: log the first miss once per session via
 //      [`DebugOnce`]; later hits on the same path are swallowed.
 //   3. Virtual resource 404s (`vscode://`, cached globalStorage paths) are
-//      matched by the same helper so `BATCH-06`'s earlier suppression
-//      stays in one place.
+//      matched by the same helper so `BATCH-06`'s earlier suppression stays in
+//      one place.
 
 const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	// VS Code / Claude / Copilot probe paths.
@@ -364,9 +364,7 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 
 /// Return true when the given path is a known-optional probe whose absence
 /// is never an error condition. Used to downgrade `stat ENOENT` spam.
-pub fn IsBenignEnoent(Path:&str) -> bool {
-	BENIGN_ENOENT_SUBSTRINGS.iter().any(|Needle| Path.contains(Needle))
-}
+pub fn IsBenignEnoent(Path:&str) -> bool { BENIGN_ENOENT_SUBSTRINGS.iter().any(|Needle| Path.contains(Needle)) }
 
 static DEBUG_ONCE_KEYS:OnceLock<Mutex<std::collections::HashSet<String>>> = OnceLock::new();
 

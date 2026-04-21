@@ -56,8 +56,7 @@ use std::sync::Arc;
 use serde_json::Value;
 use tauri::{AppHandle, Runtime};
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::CreateEffectForRequest};
-use crate::dev_log;
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::CreateEffectForRequest, dev_log};
 
 /// The primary dispatcher for requests originating from a `Cocoon` sidecar via
 /// gRPC. This routes RPC calls to the correct effect-based implementation.
@@ -72,17 +71,23 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 
 	Parameters:Value,
 ) -> Result<Value, String> {
-	dev_log!("ipc", 
+	dev_log!(
+		"ipc",
 		"[Track/SideCarRequest] Dispatching sidecar request from '{}': {}",
-		SideCarIdentifier, MethodName
+		SideCarIdentifier,
+		MethodName
 	);
 
 	match CreateEffectForRequest(&ApplicationHandle, &MethodName, Parameters) {
 		Ok(EffectFn) => EffectFn(RunTime).await,
 
 		Err(Error) => {
-			dev_log!("ipc", "error: [Track/SideCarRequest] Failed to create effect for sidecar method '{}': {}",
-				MethodName, Error);
+			dev_log!(
+				"ipc",
+				"error: [Track/SideCarRequest] Failed to create effect for sidecar method '{}': {}",
+				MethodName,
+				Error
+			);
 
 			Err(Error)
 		},

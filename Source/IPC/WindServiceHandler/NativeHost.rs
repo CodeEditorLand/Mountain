@@ -77,8 +77,7 @@ pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) ->
 			} else {
 				dev_log!(
 					"folder",
-					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri — workspace \
-					 mutation skipped"
+					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri — workspace mutation skipped"
 				);
 			}
 
@@ -96,7 +95,8 @@ pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) ->
 					// the Wind/Sky side; if dead, we need a re-spawn hook.
 					dev_log!(
 						"folder",
-						"pre-nav cocoon-state: pid_known={} extension_host_ready_flag=see \"CocoonHealth healthy\" cadence below",
+						"pre-nav cocoon-state: pid_known={} extension_host_ready_flag=see \"CocoonHealth healthy\" \
+						 cadence below",
 						Handle.try_state::<Arc<ApplicationState>>().is_some()
 					);
 					let _ = Window.navigate(NewUrl.parse().unwrap());
@@ -158,10 +158,7 @@ pub async fn handle_native_show_open_dialog(AppHandle:AppHandle, Args:Vec<Value>
 					.map(|P| P.to_string())
 					.collect()
 			} else {
-				Builder
-					.blocking_pick_folder()
-					.map(|P| vec![P.to_string()])
-					.unwrap_or_default()
+				Builder.blocking_pick_folder().map(|P| vec![P.to_string()]).unwrap_or_default()
 			}
 		} else if IsMultiple {
 			Builder
@@ -171,10 +168,7 @@ pub async fn handle_native_show_open_dialog(AppHandle:AppHandle, Args:Vec<Value>
 				.map(|P| P.to_string())
 				.collect()
 		} else {
-			Builder
-				.blocking_pick_file()
-				.map(|P| vec![P.to_string()])
-				.unwrap_or_default()
+			Builder.blocking_pick_file().map(|P| vec![P.to_string()]).unwrap_or_default()
 		}
 	})
 	.await

@@ -25,7 +25,12 @@ pub(super) async fn provide_references_impl(
 	position:Value,
 	context:Value,
 ) -> Result<Value, String> {
-	dev_log!("commands", "[Language Feature] Providing references for: {} at {:?}", uri, position);
+	dev_log!(
+		"commands",
+		"[Language Feature] Providing references for: {} at {:?}",
+		uri,
+		position
+	);
 
 	validate_language_feature_request("references", &uri, &position)?;
 

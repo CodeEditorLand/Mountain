@@ -24,8 +24,10 @@ use serde_json::Value;
 use tauri::{AppHandle, Wry};
 use url::Url;
 
-use crate::Command::Hover::Interface::{HoverRequest, HoverResponse, Position};
-use crate::dev_log;
+use crate::{
+	Command::Hover::Interface::{HoverRequest, HoverResponse, Position},
+	dev_log,
+};
 
 /// Validates a hover request
 fn ValidateRequest(uri:&str, position:&Value) -> Result<HoverRequest, String> {

@@ -12,16 +12,17 @@
 //!
 //! # Concurrency notes
 //!
-//! - `notify::recommended_watcher` executes callbacks on its own native
-//!   thread, so we tunnel events through a bounded channel before touching
-//!   async code. The forwarder task is spawned once on first registration
-//!   and lives for the entire process lifetime.
-//! - macOS FSEvents may emit duplicate Create/Change events for the same
-//!   path in very short succession. We debounce by path within a 100 ms
-//!   window per-handle, keyed on `(handle, path, kind)`.
-//! - Linux inotify has a small per-user watcher cap (`fs.inotify.max_user_watches`);
-//!   hitting it surfaces as `notify::Error::MaxFilesWatch`. We propagate
-//!   that verbatim to the caller so the UI can show a guidance message.
+//! - `notify::recommended_watcher` executes callbacks on its own native thread,
+//!   so we tunnel events through a bounded channel before touching async code.
+//!   The forwarder task is spawned once on first registration and lives for the
+//!   entire process lifetime.
+//! - macOS FSEvents may emit duplicate Create/Change events for the same path
+//!   in very short succession. We debounce by path within a 100 ms window
+//!   per-handle, keyed on `(handle, path, kind)`.
+//! - Linux inotify has a small per-user watcher cap
+//!   (`fs.inotify.max_user_watches`); hitting it surfaces as
+//!   `notify::Error::MaxFilesWatch`. We propagate that verbatim to the caller
+//!   so the UI can show a guidance message.
 
 use std::{
 	collections::HashMap,
@@ -77,10 +78,8 @@ impl WatcherState {
 		GLOBAL
 			.get_or_init(|| {
 				let (tx, mut rx) = TokioMPSC::unbounded_channel::<WatchEvent>();
-				let state = Arc::new(WatcherState {
-					Entries:Arc::new(StandardMutex::new(HashMap::new())),
-					EventSender:tx,
-				});
+				let state =
+					Arc::new(WatcherState { Entries:Arc::new(StandardMutex::new(HashMap::new())), EventSender:tx });
 
 				// The forwarder task holds a weak ref to the environment so
 				// it unwinds cleanly if the env is ever torn down.
@@ -117,9 +116,7 @@ impl WatcherState {
 						// Cocoon. Wind's `TauriChannel` subscribes to
 						// `sky://vfs/fileChange` under the localFilesystem
 						// channel.
-						if let Err(Error) =
-							env_clone.ApplicationHandle.emit("sky://vfs/fileChange", &payload)
-						{
+						if let Err(Error) = env_clone.ApplicationHandle.emit("sky://vfs/fileChange", &payload) {
 							dev_log!(
 								"filewatcher",
 								"warn: [FileWatcherProvider] sky://vfs/fileChange emit failed: {}",
@@ -152,9 +149,9 @@ fn MapEventKind(raw:&EventKind) -> Option<WatchEventKind> {
 /// the other ship-time extensions rely on.
 fn CompileGlobToRegex(Pattern:&str) -> Option<regex::Regex> {
 	let mut Regex = String::with_capacity(Pattern.len() * 2 + 4);
-	// Case-insensitive on macOS + Windows where the OS is typically case-insensitive;
-	// on case-sensitive Linux filesystems extensions commonly still use lowercase
-	// patterns, so the flag is safe across all three targets.
+	// Case-insensitive on macOS + Windows where the OS is typically
+	// case-insensitive; on case-sensitive Linux filesystems extensions commonly
+	// still use lowercase patterns, so the flag is safe across all three targets.
 	if cfg!(any(target_os = "macos", target_os = "windows")) {
 		Regex.push_str("(?i)");
 	}
@@ -251,9 +248,11 @@ impl FileWatcherProvider for MountainEnvironment {
 			let matched_paths:Vec<PathBuf> = event
 				.paths
 				.into_iter()
-				.filter(|path| match &pattern_for_callback {
-					Some(re) => re.is_match(&path.to_string_lossy()),
-					None => true,
+				.filter(|path| {
+					match &pattern_for_callback {
+						Some(re) => re.is_match(&path.to_string_lossy()),
+						None => true,
+					}
 				})
 				.collect();
 			if matched_paths.is_empty() {
@@ -266,7 +265,9 @@ impl FileWatcherProvider for MountainEnvironment {
 			if let Ok(mut guard) = entries.lock() {
 				if let Some(entry) = guard.get_mut(&handle_for_callback) {
 					let now = Instant::now();
-					entry.LastSeen.retain(|_, instant| now.duration_since(*instant) < Duration::from_secs(10));
+					entry
+						.LastSeen
+						.retain(|_, instant| now.duration_since(*instant) < Duration::from_secs(10));
 					for path in matched_paths {
 						let key = (path.clone(), kind_tag);
 						let keep = match entry.LastSeen.get(&key) {
@@ -294,8 +295,10 @@ impl FileWatcherProvider for MountainEnvironment {
 		.map_err(|error| CommonError::Unknown { Description:format!("FileWatcher create failed: {}", error) })?;
 
 		let mode = if IsRecursive { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive };
-		watcher.watch(&Root, mode).map_err(|error| CommonError::Unknown {
-			Description:format!("FileWatcher watch failed for {}: {}", Root.display(), error),
+		watcher.watch(&Root, mode).map_err(|error| {
+			CommonError::Unknown {
+				Description:format!("FileWatcher watch failed for {}: {}", Root.display(), error),
+			}
 		})?;
 
 		let mut guard = state
@@ -306,10 +309,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		// `pattern_for_callback`) — no need to store a second copy on the
 		// entry. The `Watcher` handle alone holds the OS watch alive.
 		let _ = CompiledPattern;
-		guard.insert(
-			Handle.clone(),
-			WatcherEntry { Watcher:watcher, LastSeen:HashMap::new() },
-		);
+		guard.insert(Handle.clone(), WatcherEntry { Watcher:watcher, LastSeen:HashMap::new() });
 
 		dev_log!(
 			"filewatcher",

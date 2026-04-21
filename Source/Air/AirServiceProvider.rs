@@ -70,6 +70,7 @@ use uuid::Uuid;
 
 #[allow(unused_imports)]
 use super::{
+	AirClient::DEFAULT_AIR_SERVER_ADDRESS,
 	AirClient::{
 		AirClient,
 		AirMetrics,
@@ -83,7 +84,6 @@ use super::{
 		ResourceUsage,
 		UpdateInfo,
 	},
-	AirClient::DEFAULT_AIR_SERVER_ADDRESS,
 };
 use crate::dev_log;
 

@@ -225,13 +225,11 @@ impl TerminalProvider for MountainEnvironment {
 						// Fan out in two directions so both consumers see
 						// the bytes:
 						//   1. Cocoon's extension host (via gRPC) — lets
-						//      `vscode.window.onDidWriteTerminalData` and
-						//      the SCM `$acceptTerminalProcessData` chain
-						//      continue to function.
-						//   2. Sky's webview (via Tauri event) — the UI
-						//      xterm renderer subscribes to
-						//      `sky://terminal/data` and draws the bytes
-						//      into the user-visible terminal panel.
+						//      `vscode.window.onDidWriteTerminalData` and the SCM
+						//      `$acceptTerminalProcessData` chain continue to function.
+						//   2. Sky's webview (via Tauri event) — the UI xterm renderer subscribes to
+						//      `sky://terminal/data` and draws the bytes into the user-visible terminal
+						//      panel.
 						// Without the Tauri emit the user sees a terminal
 						// panel open but no shell output because gRPC-only
 						// delivery bypasses the webview entirely (BATCH-19
@@ -494,8 +492,10 @@ impl TerminalProvider for MountainEnvironment {
 				.and_then(|TerminalStateGuard| TerminalStateGuard.PTYMaster.clone())
 		};
 
-		let Master = MasterOption.ok_or_else(|| CommonError::IPCError {
-			Description:format!("Terminal with ID {} not found or has no PTY master handle.", TerminalId),
+		let Master = MasterOption.ok_or_else(|| {
+			CommonError::IPCError {
+				Description:format!("Terminal with ID {} not found or has no PTY master handle.", TerminalId),
+			}
 		})?;
 
 		let Size = PtySize { rows:Rows, cols:Columns, pixel_width:0, pixel_height:0 };

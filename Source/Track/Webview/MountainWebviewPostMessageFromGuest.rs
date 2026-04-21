@@ -52,8 +52,7 @@ use CommonLibrary::{Environment::Requires::Requires, IPC::IPCProvider::IPCProvid
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, command};
 
-use crate::{ApplicationState::ApplicationState, RunTime::ApplicationRunTime::ApplicationRunTime};
-use crate::dev_log;
+use crate::{ApplicationState::ApplicationState, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// A specific Tauri command handler for a Webview guest to post a message back
 /// to the extension host.
@@ -76,7 +75,11 @@ pub async fn MountainWebviewPostMessageFromGuest(
 		.await;
 
 	if let Err(Error) = RPCResult {
-		dev_log!("ipc", "error: [Track/Webview] Failed to forward webview message to Cocoon: {}", Error);
+		dev_log!(
+			"ipc",
+			"error: [Track/Webview] Failed to forward webview message to Cocoon: {}",
+			Error
+		);
 
 		return Err(Error.to_string());
 	}
