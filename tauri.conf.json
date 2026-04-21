@@ -125,7 +125,7 @@
 		"publisher": "PlayForm",
 		"resources": null,
 		"shortDescription": "",
-		"targets": "all",
+		"targets": ["app"],
 		"windows": {
 			"allowDowngrades": true,
 			"certificateThumbprint": null,
