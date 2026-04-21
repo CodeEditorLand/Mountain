@@ -156,12 +156,23 @@ impl ApplicationRunTime {
 		}
 	}
 
-	/// Shutdown Cocoon with retry mechanism.
+	/// Shutdown Cocoon with retry mechanism, then a hard-kill fallback.
+	///
+	/// Sequence:
+	///   1. Send `$shutdown` gRPC notification to Cocoon (up to 3 attempts).
+	///   2. Regardless of gRPC outcome, call `HardKillCocoon()` which
+	///      SIGKILLs the stored child if still alive. Atom I6 addition —
+	///      without this, a gRPC failure (transport error, broken pipe)
+	///      left the child process orphaned, holding port 50052, and the
+	///      next Mountain launch hit EADDRINUSE with the extension host
+	///      stuck in degraded mode.
 	pub async fn ShutdownCocoonWithRetry(&self) -> Result<(), CommonError> {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
 
 		let mut attempts = 0;
 		let max_attempts = 3;
+		let mut GracefulOk = false;
+		let mut LastError:Option<CommonError> = None;
 
 		while attempts < max_attempts {
 			match IPCProvider
@@ -169,29 +180,37 @@ impl ApplicationRunTime {
 				.await
 			{
 				Ok(()) => {
-					// Give Cocoon a moment to process the shutdown
 					tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
-					return Ok(());
+					GracefulOk = true;
+					break;
 				},
 				Err(error) => {
 					attempts += 1;
-					if attempts == max_attempts {
-						return Err(error);
+					LastError = Some(error.clone());
+					if attempts < max_attempts {
+						dev_log!(
+							"lifecycle",
+							"warn: [ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
+							attempts,
+							error
+						);
+						tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 					}
-
-					dev_log!(
-						"lifecycle",
-						"warn: [ApplicationRunTime] Cocoon shutdown attempt {} failed: {}. Retrying...",
-						attempts,
-						error
-					);
-
-					tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 				},
 			}
 		}
 
-		Err(CommonError::Unknown { Description:"Failed to shutdown Cocoon after maximum retries".to_string() })
+		// Atom I6: always reap the child process after the graceful
+		// attempt. No-op if the child already exited from $shutdown.
+		crate::ProcessManagement::CocoonManagement::HardKillCocoon().await;
+
+		if GracefulOk {
+			Ok(())
+		} else {
+			Err(LastError.unwrap_or_else(|| CommonError::Unknown {
+				Description:"Failed to shutdown Cocoon after maximum retries".to_string(),
+			}))
+		}
 	}
 
 	/// Safely dispose of all active terminals.

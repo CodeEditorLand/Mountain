@@ -298,13 +298,16 @@ pub async fn ConstructSandboxConfiguration(
 
 		"productConfiguration": {
 
-			"nameShort": "Mountain",
+			// Atom I5: read from process env (populated from .env.Land at
+			// Mountain startup). Fallback strings keep a sensible identity
+			// if the env file is absent at a release-profile launch.
+			"nameShort": std::env::var("ProductNameShort").unwrap_or_else(|_| "Land".into()),
 
-			"nameLong": "Mountain Editor",
+			"nameLong": std::env::var("ProductNameLong").unwrap_or_else(|_| "Land Editor".into()),
 
-			"applicationName": "mountain",
+			"applicationName": std::env::var("ProductApplicationName").unwrap_or_else(|_| "land".into()),
 
-			"embedderIdentifier": "mountain-desktop"
+			"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "land-desktop".into())
 		},
 
 		"resourcesPath": PathResolver.resource_dir().unwrap_or_default().to_string_lossy(),
@@ -389,11 +392,18 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	Ok(json!({
 
-		"commit": "dev-commit-hash",
+		// Atom I5: product version + commit + quality come from .env.Land via
+		// process env. `Tauri's package_info().version` reads tauri.conf.json
+		// which still carries a placeholder "0.0.1" — we can't trust it for
+		// extension compat checks. `ProductVersion` from env is the canonical
+		// value shared with Wind and Cocoon.
+		"commit": std::env::var("ProductCommit").unwrap_or_else(|_| "dev".into()),
 
-		"version": ApplicationHandle.package_info().version.to_string(),
+		"version": std::env::var("ProductVersion").unwrap_or_else(|_| {
+			ApplicationHandle.package_info().version.to_string()
+		}),
 
-		"quality": "development",
+		"quality": std::env::var("ProductQuality").unwrap_or_else(|_| "development".into()),
 
 		"parentPid": std::process::id(),
 

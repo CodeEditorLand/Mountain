@@ -194,7 +194,11 @@ use CommonLibrary::{
 };
 
 use crate::{
-	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+	ApplicationState::{
+		ApplicationState,
+		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndBroadcast,
+	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
@@ -4126,11 +4130,17 @@ async fn handle_file_clone_native(args:Vec<Value>) -> Result<Value, String> {
 /// In Electron, pickFolderAndOpen causes the main process to reload the window
 /// with the new workspace. We replicate this by navigating the webview to the
 /// same origin with `?folder=<path>`, which ResolveConfiguration reads.
+///
+/// Atom I1 (2026-04-21): before the reload, mutate ApplicationState.Workspace
+/// and fire `$deltaWorkspaceFolders` to Cocoon. Without this, Cocoon keeps its
+/// pre-nav snapshot (0 folders), workspaceContains:* activations never match,
+/// and extensions that would light up for the new workspace sit idle. This
+/// block was previously in a parallel (dead) copy of this handler under
+/// WindServiceHandler/NativeHost.rs; consolidating here.
 async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -> Result<Value, String> {
-	use tauri_plugin_dialog::DialogExt;
-	use tauri::WebviewWindow;
+	use std::path::PathBuf;
 
-	dev_log!("folder", "pickFolderAndOpen requested");
+	use tauri_plugin_dialog::DialogExt;
 
 	dev_log!("folder", "pickFolderAndOpen requested");
 
@@ -4141,6 +4151,50 @@ async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -> Re
 		if let Some(Path) = FolderPath {
 			let PathStr = Path.to_string();
 			dev_log!("folder", "picked: {}", PathStr);
+
+			// Atom I1: synchronous workspace mutation + $deltaWorkspaceFolders
+			// broadcast. Must complete BEFORE Window.navigate() because the
+			// webview reload throws away Wind state but leaves Cocoon running,
+			// so Cocoon is the only place the workspace delta can land ahead
+			// of the new workbench's first query.
+			if let Some(State) = Handle.try_state::<Arc<ApplicationState>>() {
+				let PathBuf = PathBuf::from(&PathStr);
+				let Canonical = PathBuf.canonicalize().unwrap_or(PathBuf.clone());
+				if let Ok(Uri) = url::Url::from_directory_path(&Canonical) {
+					let Name = Canonical
+						.file_name()
+						.and_then(|N| N.to_str())
+						.map(str::to_string)
+						.unwrap_or_else(|| Canonical.display().to_string());
+					match WorkspaceFolderStateDTO::New(Uri, Name, 0) {
+						Ok(Dto) => {
+							dev_log!(
+								"folder",
+								"pre-nav workspace-delta: broadcasting 1 folder to Cocoon"
+							);
+							UpdateWorkspaceFoldersAndBroadcast(&Handle, &State.Workspace, vec![Dto]);
+						},
+						Err(Error) => {
+							dev_log!(
+								"folder",
+								"warn: [pickFolderAndOpen] WorkspaceFolderStateDTO::New failed: {}",
+								Error
+							);
+						},
+					}
+				} else {
+					dev_log!(
+						"folder",
+						"warn: [pickFolderAndOpen] path → file URI conversion failed for {}",
+						PathStr
+					);
+				}
+			} else {
+				dev_log!(
+					"folder",
+					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri — delta skipped"
+				);
+			}
 
 			// Navigate the webview to reload with the folder as workspace.
 			// This mirrors Electron's behaviour of reloading the renderer.
@@ -4153,8 +4207,11 @@ async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -> Re
 					let NewUrl = format!("{}/?{}", Origin, EncodedPath);
 					dev_log!("folder", "navigating: {}", NewUrl);
 					let _ = Window.navigate(NewUrl.parse().unwrap());
+					dev_log!("folder", "post-nav Window.navigate() returned; webview reloading");
 				}
 			}
+		} else {
+			dev_log!("folder", "pickFolderAndOpen cancelled by user");
 		}
 	});
 

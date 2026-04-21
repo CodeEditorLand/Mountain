@@ -135,6 +135,79 @@ macro_rules! TraceStep {
 /// 10. Handles graceful shutdown
 pub fn Fn() {
 	// -------------------------------------------------------------------------
+	// [Boot] [Env] Load .env.Land into process env so standalone binary
+	// invocations pick up Product*, Tier*, Network* vars without requiring
+	// the shell to pre-source the env file. Search order matches
+	// TierEnvironment.sh: cwd .env.Land → parent .env.Land → cwd
+	// .env.Land.Sample → parent .env.Land.Sample → repo-layout probe from
+	// the binary's canonical path (for `target/debug/...` launches where
+	// cwd is arbitrary).
+	// -------------------------------------------------------------------------
+	{
+		fn LoadEnvFile(Path: &std::path::Path) -> bool {
+			let Ok(Content) = std::fs::read_to_string(Path) else {
+				return false;
+			};
+			for Line in Content.lines() {
+				let Trimmed = Line.trim();
+				if Trimmed.is_empty() || Trimmed.starts_with('#') {
+					continue;
+				}
+				if let Some((Key, Value)) = Trimmed.split_once('=') {
+					let CleanKey = Key.trim();
+					let CleanValue = Value.trim().trim_matches('"').trim_matches('\'');
+					if std::env::var_os(CleanKey).is_none() {
+						// SAFETY: set_var is called once per key during bootstrap
+						// before any threads read env (Tokio runtime starts later
+						// in this function).
+						unsafe { std::env::set_var(CleanKey, CleanValue) };
+					}
+				}
+			}
+			true
+		}
+
+		let mut Candidates:Vec<std::path::PathBuf> = Vec::new();
+		if let Ok(Cwd) = std::env::current_dir() {
+			Candidates.push(Cwd.join(".env.Land"));
+			if let Some(Parent) = Cwd.parent() {
+				Candidates.push(Parent.join(".env.Land"));
+			}
+			Candidates.push(Cwd.join(".env.Land.Sample"));
+			if let Some(Parent) = Cwd.parent() {
+				Candidates.push(Parent.join(".env.Land.Sample"));
+			}
+		}
+		// Repo-layout probe: Target/debug/<bin> → four hops up lands at Land/.
+		if let Ok(Exe) = std::env::current_exe() {
+			let Ancestors:Vec<&std::path::Path> = Exe.ancestors().collect();
+			for Candidate in Ancestors.iter().take(6) {
+				Candidates.push(Candidate.join(".env.Land"));
+				Candidates.push(Candidate.join(".env.Land.Sample"));
+			}
+		}
+
+		let mut Loaded = false;
+		for Candidate in Candidates {
+			if Candidate.exists() && LoadEnvFile(&Candidate) {
+				crate::dev_log!(
+					"lifecycle",
+					"[Boot] [Env] Loaded env from {}",
+					Candidate.display()
+				);
+				Loaded = true;
+				break;
+			}
+		}
+		if !Loaded {
+			crate::dev_log!(
+				"lifecycle",
+				"[Boot] [Env] No .env.Land / .env.Land.Sample found — using defaults"
+			);
+		}
+	}
+
+	// -------------------------------------------------------------------------
 	// [Boot] [Tier] Resolved tier banner (Plan A Wave 1.7 runtime banner)
 	// -------------------------------------------------------------------------
 	crate::LandFixTier::LogResolvedTiers();

@@ -240,6 +240,17 @@ async fn LaunchAndManageCocoonSideCar(
 	dev_log!("cocoon", "[CocoonManagement] Found bootstrap script at: {}", ScriptPath.display());
 	crate::dev_log!("cocoon", "bootstrap script: {}", ScriptPath.display());
 
+	// Atom I6: zombie-Cocoon sweep. If a prior Mountain exited without
+	// killing its child (segfault, SIGKILL, debugger detach, …), the stale
+	// node process keeps port COCOON_GRPC_PORT bound. The new Mountain's
+	// VineClient then "successfully connects" to the zombie while the
+	// freshly-spawned Cocoon fails to bind with EADDRINUSE, and the whole
+	// extension host enters degraded mode with zero extensions visible.
+	//
+	// Probe the port. If it answers, find the owning PID via `lsof -t -i
+	// :<port>` and SIGTERM → 500ms wait → SIGKILL. Then proceed as normal.
+	SweepStaleCocoon(COCOON_GRPC_PORT);
+
 	// Build Node.js command with comprehensive environment configuration
 	let mut NodeCommand = Command::new("node");
 
@@ -260,6 +271,18 @@ async fn LaunchAndManageCocoonSideCar(
 	}
 	if let Ok(Home) = std::env::var("HOME") {
 		EnvironmentVariables.insert("HOME".to_string(), Home);
+	}
+
+	// Atom I5: forward every Product*, Tier*, Network* env var from
+	// .env.Land into the Cocoon subprocess. Cocoon's InitData.ts +
+	// ExtensionHostHandler.ts read these at startup for version,
+	// identity, and port configuration. Without this forwarding, the
+	// whitelist above drops them and Cocoon falls back to defaults,
+	// defeating the single-source-of-truth design.
+	for (Key, Value) in std::env::vars() {
+		if Key.starts_with("Product") || Key.starts_with("Tier") || Key.starts_with("Network") {
+			EnvironmentVariables.insert(Key, Value);
+		}
 	}
 
 	NodeCommand
@@ -520,5 +543,181 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 			drop(state_guard);
 			return;
 		}
+	}
+}
+
+/// Atom I6: post-shutdown hard-kill. Called by RuntimeShutdown after the
+/// `$shutdown` gRPC notification has been sent (and either succeeded or
+/// timed out). Grabs the stored `Child` handle and force-terminates it if
+/// still alive, then resets COCOON_STATE. This plugs the "Mountain exits
+/// cleanly but child stays running" leak that leads to zombie-Cocoon
+/// zombies holding the gRPC port.
+///
+/// Call AFTER the graceful $shutdown attempt — we don't want to race the
+/// child's own cleanup. Safe to call with no stored child (no-op).
+pub async fn HardKillCocoon() {
+	let mut State = COCOON_STATE.lock().await;
+	if let Some(mut Child) = State.ChildProcess.take() {
+		let Pid = Child.id().unwrap_or(0);
+		match Child.try_wait() {
+			Ok(Some(_Status)) => {
+				dev_log!(
+					"cocoon",
+					"[CocoonShutdown] Child PID {} already exited; clearing handle.",
+					Pid
+				);
+			},
+			Ok(None) => {
+				dev_log!(
+					"cocoon",
+					"[CocoonShutdown] Child PID {} still alive after $shutdown; sending SIGKILL.",
+					Pid
+				);
+				if let Err(Error) = Child.start_kill() {
+					dev_log!(
+						"cocoon",
+						"warn: [CocoonShutdown] start_kill failed on PID {}: {}",
+						Pid,
+						Error
+					);
+				}
+				// Best-effort wait so the OS reaps and frees the port.
+				let _ = tokio::time::timeout(
+					std::time::Duration::from_secs(2),
+					Child.wait(),
+				)
+				.await;
+			},
+			Err(Error) => {
+				dev_log!(
+					"cocoon",
+					"warn: [CocoonShutdown] try_wait failed on PID {}: {}",
+					Pid,
+					Error
+				);
+			},
+		}
+	}
+	State.IsRunning = false;
+}
+
+/// Atom I6: pre-boot sweep. TCP-probe the Cocoon gRPC port and kill any
+/// stale process still bound to it. Prevents the EADDRINUSE cascade that
+/// leaves the extension host in degraded mode when a prior Mountain exited
+/// without cleaning up its child.
+///
+/// Behaviour:
+/// - If the port answers a TCP connect, assume an owner is listening.
+/// - Use `lsof -nP -iTCP:<port> -sTCP:LISTEN -t` (macOS/Linux) to resolve
+///   the PID. `lsof` is ubiquitous on macOS/Linux and doesn't require root
+///   for local user-owned processes.
+/// - SIGTERM first, 500ms grace window, then SIGKILL if still alive.
+/// - Logs every step via `dev_log!("cocoon", …)` so the sweep is visible
+///   in Mountain.dev.log without parsing stderr.
+/// - Best-effort: failures don't abort Mountain boot. A real
+///   EADDRINUSE later will surface via Cocoon's own bootstrap error.
+fn SweepStaleCocoon(Port:u16) {
+	use std::net::TcpStream;
+	use std::time::Duration;
+
+	let Addr = format!("127.0.0.1:{}", Port);
+
+	// Cheap liveness probe. Timeout is aggressive — zombie ports answer
+	// immediately; a clean port is ECONNREFUSED and returns instantly.
+	let Probe = TcpStream::connect_timeout(
+		&Addr.parse().expect("valid socket addr literal"),
+		Duration::from_millis(200),
+	);
+	if Probe.is_err() {
+		dev_log!("cocoon", "[CocoonSweep] Port {} is clean (no prior listener).", Port);
+		return;
+	}
+
+	dev_log!(
+		"cocoon",
+		"[CocoonSweep] Port {} has a listener — attempting to resolve owner via lsof.",
+		Port
+	);
+
+	// `lsof -nP -iTCP:<port> -sTCP:LISTEN -t` → one PID per line.
+	let LsofOutput = std::process::Command::new("lsof")
+		.args([
+			"-nP",
+			&format!("-iTCP:{}", Port),
+			"-sTCP:LISTEN",
+			"-t",
+		])
+		.output();
+
+	let Output = match LsofOutput {
+		Ok(O) => O,
+		Err(Error) => {
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonSweep] lsof unavailable ({}). Skipping sweep; Cocoon spawn may fail with EADDRINUSE.",
+				Error
+			);
+			return;
+		},
+	};
+
+	if !Output.status.success() {
+		dev_log!(
+			"cocoon",
+			"warn: [CocoonSweep] lsof exited non-zero. Skipping sweep."
+		);
+		return;
+	}
+
+	let Stdout = String::from_utf8_lossy(&Output.stdout);
+	let Pids:Vec<i32> = Stdout
+		.lines()
+		.filter_map(|L| L.trim().parse::<i32>().ok())
+		.collect();
+
+	if Pids.is_empty() {
+		dev_log!(
+			"cocoon",
+			"warn: [CocoonSweep] Port {} answered but lsof found no LISTEN PID — giving up.",
+			Port
+		);
+		return;
+	}
+
+	// Guard against self-kill. Mountain currently binds 50051, not Cocoon's
+	// 50052, but belt-and-braces for future refactors.
+	let SelfPid = std::process::id() as i32;
+	for Pid in Pids {
+		if Pid == SelfPid {
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonSweep] Port {} owned by Mountain itself (PID {}); refusing to kill.",
+				Port, Pid
+			);
+			continue;
+		}
+		dev_log!("cocoon", "[CocoonSweep] Killing stale PID {} (SIGTERM).", Pid);
+		let _ = std::process::Command::new("kill")
+			.arg(Pid.to_string())
+			.status();
+		std::thread::sleep(Duration::from_millis(500));
+		// Recheck — if still alive, escalate.
+		let StillAlive = std::process::Command::new("kill")
+			.args(["-0", &Pid.to_string()])
+			.status()
+			.map(|S| S.success())
+			.unwrap_or(false);
+		if StillAlive {
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonSweep] PID {} survived SIGTERM; sending SIGKILL.",
+				Pid
+			);
+			let _ = std::process::Command::new("kill")
+				.args(["-9", &Pid.to_string()])
+				.status();
+			std::thread::sleep(Duration::from_millis(200));
+		}
+		dev_log!("cocoon", "[CocoonSweep] PID {} reaped.", Pid);
 	}
 }
