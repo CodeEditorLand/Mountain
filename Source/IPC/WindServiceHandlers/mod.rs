@@ -300,12 +300,47 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						.collect::<Vec<_>>()
 						.join(" ");
 					dev_log!("extensions", "{} args={}", command, ArgsSummary);
-					handle_extensions_get_installed(runtime.clone()).await
+					// `scanSystemExtensions` is conceptually
+					// `getInstalled(type=ExtensionType.System)`, so override
+					// `args[0]` to `0` before forwarding. Without the override
+					// a plain alias would inherit whatever the caller passed
+					// in args[0] (which for the VS Code channel client is
+					// usually `null`) and leak User extensions into the
+					// System list - the same bug we just fixed at the
+					// handler layer, one level up.
+					let EffectiveArgs = if command == "extensions:scanSystemExtensions" {
+						let mut Overridden = args.clone();
+						if Overridden.is_empty() {
+							Overridden.push(Value::Null);
+						}
+						Overridden[0] = json!(0);
+						Overridden
+					} else {
+						args.clone()
+					};
+					handle_extensions_get_installed(runtime.clone(), EffectiveArgs).await
 				},
-				"extensions:scanUserExtensions" | "extensions:getUninstalled" => {
-					// Land doesn't support user-installed extensions yet - the
-					// workbench treats an empty array as "no user extensions",
-					// which is correct for the current Mountain architecture.
+				"extensions:scanUserExtensions" => {
+					// User-scope scan. Forward to the unified handler with
+					// `type=ExtensionType.User (1)` so VSIX-installed
+					// extensions under `~/.land/extensions/*` come back
+					// even when the caller didn't pass an explicit type
+					// filter (VS Code's channel client does that on
+					// scan-user-extensions, which is why the sidebar
+					// previously saw an empty list after every
+					// Install-from-VSIX).
+					dev_log!("extensions", "{} (forwarded to getInstalled with type=User)", command);
+					let mut UserArgs = args.clone();
+					if UserArgs.is_empty() {
+						UserArgs.push(Value::Null);
+					}
+					UserArgs[0] = json!(1);
+					handle_extensions_get_installed(runtime.clone(), UserArgs).await
+				},
+				"extensions:getUninstalled" => {
+					// Uninstalled state (extensions soft-deleted but kept in
+					// the profile) isn't tracked yet; an empty array is the
+					// correct "nothing pending uninstall" response.
 					dev_log!("extensions", "{} (returning [])", command);
 					Ok(Value::Array(Vec::new()))
 				},

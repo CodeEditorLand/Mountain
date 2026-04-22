@@ -13,11 +13,48 @@ use crate::{
 	dev_log,
 };
 
+/// VS Code's `ExtensionType` enum - mirror the numeric values used by the
+/// renderer's `getInstalled(type?)` IPC so the filter in `GetInstalledArgs`
+/// matches what the channel client sends.
+///
+/// `src/vs/platform/extensions/common/extensions.ts` in the pinned VS Code
+/// dependency:
+/// ```ts
+/// export const enum ExtensionType { System = 0, User = 1 }
+/// ```
+const EXTENSION_TYPE_SYSTEM:u8 = 0;
+const EXTENSION_TYPE_USER:u8 = 1;
+
 /// Return scanned extensions reshaped as VS Code's `ILocalExtension[]`
 /// so `ExtensionManagementChannelClient.getInstalled` can destructure
 /// `extension.identifier.id`, `extension.manifest.*`, and
 /// `extension.location` without blowing up.
-pub async fn handle_extensions_get_installed(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+///
+/// # Argument contract
+///
+/// `args[0]` is the optional `ExtensionType` filter VS Code passes in:
+/// - `0` (System) → only return built-in extensions.
+/// - `1` (User) → only return VSIX-installed extensions.
+/// - `null` / missing → return every known extension.
+///
+/// Previously this filter was silently dropped and every call returned the
+/// full list hardcoded as `type: 0, isBuiltin: true`. That produced three
+/// cascading symptoms:
+///   1. VSIX-installed extensions (e.g. `Anthropic.claude-code`) showed up
+///      under "Built-in" in the Extensions sidebar and had no Uninstall
+///      action because the UI keys off `type === User`.
+///   2. The trusted-publishers boot migration iterated every extension as
+///      User and attempted `manifest.publisher.toLowerCase()` against
+///      System manifests.
+///   3. `extensions:scanUserExtensions` (which shares the user-only
+///      semantic) returned zero, making the "Install from VSIX…" refresh
+///      appear to do nothing even when the install itself succeeded.
+pub async fn handle_extensions_get_installed(
+	runtime:Arc<ApplicationRunTime>,
+	args:Vec<Value>,
+) -> Result<Value, String> {
+	let TypeFilter:Option<u8> = args.first().and_then(|V| V.as_u64()).map(|N| N as u8);
+
 	let Extensions = runtime
 		.Environment
 		.GetExtensions()
@@ -26,7 +63,20 @@ pub async fn handle_extensions_get_installed(runtime:Arc<ApplicationRunTime>) ->
 
 	let Wrapped:Vec<Value> = Extensions
 		.into_iter()
-		.map(|Manifest| {
+		.filter_map(|Manifest| {
+			// `isBuiltin` is authored by the scanner; default to `true` for
+			// safety when the field is missing (matches the pre-filter
+			// hardcoded behaviour so we never drop an extension the renderer
+			// used to see).
+			let IsBuiltin = Manifest.get("isBuiltin").and_then(Value::as_bool).unwrap_or(true);
+			let ExtensionType = if IsBuiltin { EXTENSION_TYPE_SYSTEM } else { EXTENSION_TYPE_USER };
+
+			if let Some(Wanted) = TypeFilter {
+				if Wanted != ExtensionType {
+					return None;
+				}
+			}
+
 			let Publisher = Manifest
 				.get("publisher")
 				.and_then(Value::as_str)
@@ -71,10 +121,10 @@ pub async fn handle_extensions_get_installed(runtime:Arc<ApplicationRunTime>) ->
 				Map.entry("version".to_string()).or_insert_with(|| json!("0.0.0"));
 			}
 
-			json!({
+			Some(json!({
 				// IExtension (base)
-				"type": 0, // ExtensionType.System
-				"isBuiltin": true,
+				"type": ExtensionType,
+				"isBuiltin": IsBuiltin,
 				"identifier": { "id": Id },
 				"manifest": Manifest,
 				"location": Location,
@@ -93,15 +143,20 @@ pub async fn handle_extensions_get_installed(runtime:Arc<ApplicationRunTime>) ->
 				"updated": false,
 				"pinned": false,
 				"forceAutoUpdate": false,
-				"source": "system",
+				// `source` distinguishes the disk origin: built-ins ship with
+				// the bundle ("system"); VSIX-installed extensions live under
+				// `~/.land/extensions/*` ("vsix"). The sidebar keys off this
+				// for the "Uninstall" gesture.
+				"source": if IsBuiltin { "system" } else { "vsix" },
 				"size": 0,
-			})
+			}))
 		})
 		.collect();
 
 	dev_log!(
 		"extensions",
-		"extensions:getInstalled returning {} ILocalExtension-shaped entries",
+		"extensions:getInstalled type={:?} returning {} ILocalExtension-shaped entries",
+		TypeFilter,
 		Wrapped.len()
 	);
 

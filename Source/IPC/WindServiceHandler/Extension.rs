@@ -24,9 +24,34 @@ const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
 /// blocked on a stalled extension host.
 const COCOON_DELTA_TIMEOUT_MS:u64 = 10_000;
 
-/// Tell Cocoon to diff the extension registry by the provided descriptors.
-/// Fire-and-forget: a missing Cocoon (LAND_SPAWN_COCOON=false) or a transient
-/// RPC failure is logged but does not fail the install/uninstall IPC call.
+/// Tell Cocoon to diff the extension registry by the provided descriptors,
+/// then fire the "already-satisfied" activation events on the result so
+/// newly-added extensions activate without a workbench reload.
+///
+/// Fire-and-forget: a missing Cocoon (LAND_SPAWN_COCOON=false) or a
+/// transient RPC failure is logged but does not fail the install/uninstall
+/// IPC call.
+///
+/// # Why the follow-up `$activateByEvent` burst
+///
+/// `$deltaExtensions` adds the extension to Cocoon's registry and indexes
+/// its `activationEvents`, but it does **not** fire those events. The
+/// workbench boots by emitting `$activateByEvent("*")` exactly once; any
+/// extension installed after that point never sees its startup events
+/// re-fired. Without this burst a VSIX with `onStartupFinished` (the most
+/// common activation trigger used by tool-extensions like
+/// `Anthropic.claude-code`) registers but never activates - its sidebar
+/// contributions, commands and webview panels all silently no-op until
+/// the next full boot, which is exactly the "install succeeded but
+/// nothing happened" symptom.
+///
+/// We fire the events we know are currently satisfied: `"*"` (always
+/// satisfied) and `"onStartupFinished"` (satisfied once Mountain has
+/// crossed lifecycle phase Ready, which is true by the time any user
+/// interaction - including "Install from VSIX…" - could have reached
+/// this handler). `workspaceContains:*` activation is handled Cocoon-side
+/// by `WorkspaceContainsActivator`, which subscribes to the
+/// `deltaExtensions` emitter and re-scans automatically.
 fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 	tokio::spawn(async move {
 		let Parameters = json!({
@@ -49,7 +74,52 @@ fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 				// Non-fatal - most commonly hit when Cocoon is intentionally
 				// off (LAND_SPAWN_COCOON=false) or still booting.
 				dev_log!("extensions", "warn: $deltaExtensions failed (non-fatal): {}", Error);
+				// Skip the activation burst when delta itself failed: firing
+				// activation events against a Cocoon that didn't receive the
+				// registry update would match zero extensions and waste two
+				// round-trips per install.
+				return;
 			},
+		}
+
+		// Activation events are sent sequentially (not spawned in parallel)
+		// so they observe the registry state that `$deltaExtensions` just
+		// committed. Only `onStartupFinished` is fired here - it is the
+		// one event that's guaranteed to be already satisfied by the time
+		// user interaction could reach the install handler (lifecycle
+		// phase is past `Ready`). Firing Cocoon's `"*"` pseudo-event
+		// would over-activate: Cocoon treats `"*"` as "collect every
+		// extension that declares any activation event", which would
+		// eagerly load lazy-activation extensions like
+		// `onLanguage:python` or `onCommand:foo` that should stay dormant
+		// until their real trigger fires.
+		for Event in ["onStartupFinished"] {
+			let ActivationParameters = json!({ "activationEvent": Event });
+			match Vine::Client::SendRequest(
+				&COCOON_SIDE_CAR_IDENTIFIER.to_string(),
+				"$activateByEvent".to_string(),
+				ActivationParameters,
+				COCOON_DELTA_TIMEOUT_MS,
+			)
+			.await
+			{
+				Ok(Response) => {
+					dev_log!(
+						"extensions",
+						"$activateByEvent({}) post-delta applied: {}",
+						Event,
+						Response
+					);
+				},
+				Err(Error) => {
+					dev_log!(
+						"extensions",
+						"warn: $activateByEvent({}) post-delta failed (non-fatal): {}",
+						Event,
+						Error
+					);
+				},
+			}
 		}
 	});
 }
