@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Native OS handlers — file picker, open external, OS info, window state,
+//! Native OS handlers - file picker, open external, OS info, window state,
 //! port finding, color scheme detection.
 
 use std::sync::Arc;
@@ -241,7 +241,7 @@ pub async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -
 			} else {
 				dev_log!(
 					"folder",
-					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri — delta skipped"
+					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri - delta skipped"
 				);
 			}
 
@@ -273,7 +273,7 @@ pub async fn handle_native_show_open_dialog(app_handle:AppHandle, args:Vec<Value
 	Ok(json!({ "canceled": true, "filePaths": [] }))
 }
 
-/// Get OS properties — cross-platform (macOS, Windows, Linux)
+/// Get OS properties - cross-platform (macOS, Windows, Linux)
 pub async fn handle_native_os_properties() -> Result<Value, String> {
 	use sysinfo::System;
 
@@ -351,7 +351,7 @@ pub async fn handle_native_os_properties() -> Result<Value, String> {
 	}))
 }
 
-/// Get OS statistics — cross-platform memory/load stats
+/// Get OS statistics - cross-platform memory/load stats
 pub async fn handle_native_os_statistics() -> Result<Value, String> {
 	use sysinfo::System;
 
@@ -413,7 +413,7 @@ pub async fn handle_native_find_free_port(args:Vec<Value>) -> Result<Value, Stri
 	Ok(json!(0))
 }
 
-/// Detect OS color scheme — cross-platform dark mode detection
+/// Detect OS color scheme - cross-platform dark mode detection
 pub async fn handle_native_get_color_scheme() -> Result<Value, String> {
 	let Dark = detect_dark_mode();
 	// High contrast detection

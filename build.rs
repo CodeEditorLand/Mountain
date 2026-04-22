@@ -62,9 +62,77 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	PropagateTierGating();
 
+	PropagateProfileSentinel();
+
 	tauri_build::build();
 
 	Ok(())
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Profile sentinel: Build.sh exports `Browser=true` / `Mountain=true` /
+// `Electron=true` / `Bundle` / `Compiler` / `LAND_PROFILE` into the shell
+// that invokes cargo. These shell env vars don't survive to the resulting
+// binary; only `cargo:rustc-env` does. Bake a LAND_* set into the binary so
+// `option_env!("LAND_PROFILE")` resolves after launch without depending on
+// the shell the user runs the binary from.
+//
+// Follow-up to playbook item #3 — previously the sentinel logged
+// `Active profile=unknown` because it ran `std::env::var` at runtime.
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+fn PropagateProfileSentinel() {
+	let Browser = std::env::var("Browser").unwrap_or_default();
+
+	let MountainProfile = std::env::var("Mountain").unwrap_or_default();
+
+	let Electron = std::env::var("Electron").unwrap_or_default();
+
+	let Bundle = std::env::var("Bundle").unwrap_or_default();
+
+	let Compiler = std::env::var("Compiler").unwrap_or_default();
+
+	// rerun on any of these changing so incremental builds pick up a
+	// `Compiler=rest` flip without a clean.
+	for Key in ["Browser", "Mountain", "Electron", "Bundle", "Compiler", "LAND_PROFILE"] {
+		println!("cargo:rerun-if-env-changed={Key}");
+	}
+
+	let Named = std::env::var("LAND_PROFILE").unwrap_or_else(|_| {
+		if Electron == "true" {
+			if Compiler.eq_ignore_ascii_case("rest") {
+				"debug-electron-rest".into()
+			} else {
+				"debug-electron".into()
+			}
+		} else if MountainProfile == "true" {
+			"debug-mountain".into()
+		} else if Browser == "true" {
+			"debug".into()
+		} else {
+			"unknown".into()
+		}
+	});
+
+	let Workbench = if Electron == "true" {
+		"Electron"
+	} else if MountainProfile == "true" {
+		"Mountain"
+	} else if Browser == "true" {
+		"Browser"
+	} else {
+		"Unknown"
+	};
+
+	let CompilerLabel = if Compiler.is_empty() { "default" } else { Compiler.as_str() };
+
+	println!("cargo:rustc-env=LAND_PROFILE={Named}");
+
+	println!("cargo:rustc-env=LAND_WORKBENCH={Workbench}");
+
+	println!("cargo:rustc-env=LAND_BUNDLE={Bundle}");
+
+	println!("cargo:rustc-env=LAND_COMPILER={CompilerLabel}");
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -84,14 +152,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 fn PropagateTierGating() {
 	// Emit defaults for every tier variable FIRST so that `env!("Tier…")` at
 	// compile time always resolves, even when `.env.Land` is absent or when a
-	// file exists but omits a key. File values emitted later override — Cargo
+	// file exists but omits a key. File values emitted later override - Cargo
 	// honours the last `rustc-env` for a given key.
 	EmitTierDefaults();
 
 	let Manifest = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
 	let ManifestPath = std::path::PathBuf::from(Manifest);
 
-	// Mountain/Cargo.toml is at Land/Element/Mountain/Cargo.toml — three
+	// Mountain/Cargo.toml is at Land/Element/Mountain/Cargo.toml - three
 	// ancestors up (Mountain → Element → Land) is the Land monorepo root,
 	// four is the repo root. Try both to find the env file.
 	let Ancestors:Vec<_> = ManifestPath.ancestors().take(5).map(|p| p.to_path_buf()).collect();
@@ -111,7 +179,7 @@ fn PropagateTierGating() {
 				},
 			};
 			ApplyEnvFile(&Full, &Contents);
-			// Stop after the first env file we find — subsequent ones would
+			// Stop after the first env file we find - subsequent ones would
 			// duplicate directives (defaults are already emitted upstream).
 			return;
 		}
@@ -147,10 +215,10 @@ fn ApplyEnvFile(Path:&std::path::Path, Contents:&str) {
 			println!("cargo:rustc-cfg=feature=\"{}\"", FeatureName);
 		} else if IsDefaultTierValue(Key, Value) {
 			// Default-tier values (GRPC, Layer2, Standard, …) do not need
-			// Cargo features — they are the compiled-in baseline. Silent.
+			// Cargo features - they are the compiled-in baseline. Silent.
 		} else {
 			println!(
-				"cargo:warning={}={} declared in {} but has no matching Cargo feature — update IsDeclaredTierFeature or Cargo.toml",
+				"cargo:warning={}={} declared in {} but has no matching Cargo feature - update IsDeclaredTierFeature or Cargo.toml",
 				Key,
 				Value,
 				Path.display()
@@ -207,7 +275,7 @@ fn IsDeclaredTierFeature(Name:&str) -> bool {
 	)
 }
 
-/// Whitelist of tier (Key, Value) pairs that are compiled-in defaults — they
+/// Whitelist of tier (Key, Value) pairs that are compiled-in defaults - they
 /// don't activate a Cargo feature because they ARE the baseline. Keeping a
 /// dedicated table (rather than one big negation) means typos in `.env.Land`
 /// still surface as warnings; only the exact default-value spelling is

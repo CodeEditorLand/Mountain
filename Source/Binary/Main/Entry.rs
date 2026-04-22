@@ -198,7 +198,7 @@ pub fn Fn() {
 		if !Loaded {
 			crate::dev_log!(
 				"lifecycle",
-				"[Boot] [Env] No .env.Land / .env.Land.Sample found — using defaults"
+				"[Boot] [Env] No .env.Land / .env.Land.Sample found - using defaults"
 			);
 		}
 	}
@@ -211,49 +211,29 @@ pub fn Fn() {
 	// -------------------------------------------------------------------------
 	// [Boot] [Profile] Self-report (BATCH-13 step 6)
 	//
-	// Build.sh sets one of `Browser`/`Mountain`/`Electron` env vars
-	// depending on the `--profile` the user invoked. `LAND_PROFILE` is also
-	// exported when the build script resolves a named profile. Emit one
-	// line per boot so every downstream log can be bisected against a
-	// concrete profile without guessing from the binary path.
+	// Build.sh exports `Browser`/`Mountain`/`Electron`/`Bundle`/`Compiler`/
+	// `LAND_PROFILE` into the shell that invokes cargo. `build.rs` captures
+	// those into `cargo:rustc-env=LAND_*` so they're baked into the binary —
+	// runtime env lookups don't survive launching the binary from Finder /
+	// another shell. `option_env!` falls back to "unknown" when the build
+	// ran outside Build.sh (e.g. plain `cargo build`).
 	// -------------------------------------------------------------------------
 	{
-		let Browser = std::env::var("Browser").ok().unwrap_or_default();
-		let MountainProfile = std::env::var("Mountain").ok().unwrap_or_default();
-		let Electron = std::env::var("Electron").ok().unwrap_or_default();
-		let Bundle = std::env::var("Bundle").ok().unwrap_or_default();
-		let Compiler = std::env::var("Compiler").ok().unwrap_or_default();
-		let NamedProfile = std::env::var("LAND_PROFILE").ok().unwrap_or_else(|| {
-			if Electron == "true" {
-				if Compiler.eq_ignore_ascii_case("rest") {
-					"debug-electron-rest".into()
-				} else {
-					"debug-electron".into()
-				}
-			} else if MountainProfile == "true" {
-				"debug-mountain".into()
-			} else if Browser == "true" {
-				"debug".into()
-			} else {
-				"unknown".into()
-			}
-		});
-		let Workbench = if Electron == "true" {
-			"Electron"
-		} else if MountainProfile == "true" {
-			"Mountain"
-		} else if Browser == "true" {
-			"Browser"
-		} else {
-			"Unknown"
-		};
+		let NamedProfile = option_env!("LAND_PROFILE").unwrap_or("unknown");
+
+		let Workbench = option_env!("LAND_WORKBENCH").unwrap_or("Unknown");
+
+		let Bundle = option_env!("LAND_BUNDLE").unwrap_or("");
+
+		let Compiler = option_env!("LAND_COMPILER").unwrap_or("default");
+
 		dev_log!(
 			"lifecycle",
 			"[LandFix:Profile] Active profile={} workbench={} bundle={} compiler={}",
 			NamedProfile,
 			Workbench,
 			Bundle,
-			if Compiler.is_empty() { "default" } else { Compiler.as_str() }
+			Compiler
 		);
 	}
 
@@ -296,7 +276,7 @@ pub fn Fn() {
 			if InitialFolderPaths.is_empty() {
 				dev_log!(
 					"lifecycle",
-					"[Boot] [Workspace] No initial folders resolved — editor will open in \"no folder\" mode."
+					"[Boot] [Workspace] No initial folders resolved - editor will open in \"no folder\" mode."
 				);
 			} else {
 				use crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO;

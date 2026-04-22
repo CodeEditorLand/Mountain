@@ -34,7 +34,7 @@ fn FolderToWire(Folder:&WorkspaceFolderStateDTO) -> serde_json::Value {
 }
 
 /// Dispatch `$deltaWorkspaceFolders` to Cocoon. Returns immediately if both
-/// arrays are empty — no point waking the sidecar for a no-op mutation.
+/// arrays are empty - no point waking the sidecar for a no-op mutation.
 ///
 /// Errors are logged and swallowed: the workspace state is already updated by
 /// the caller, so a failed notification should not roll the mutation back. The
@@ -77,7 +77,7 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 /// Spawns the notification on the current tokio runtime so callers in sync
 /// contexts (Tauri command handlers, boot-time seeding) don't have to build an
 /// async scope just to reach Cocoon. If no runtime is available (very early
-/// boot, unit tests), the notification is dropped — the state still mutates.
+/// boot, unit tests), the notification is dropped - the state still mutates.
 pub fn UpdateWorkspaceFoldersAndNotify(
 	State:&crate::ApplicationState::State::WorkspaceState::State,
 	Folders:Vec<WorkspaceFolderStateDTO>,
@@ -93,7 +93,7 @@ pub fn UpdateWorkspaceFoldersAndNotify(
 	} else {
 		dev_log!(
 			"workspaces",
-			"warn: [LandFix:WsDelta] No tokio runtime available — delta dropped ({} added, {} removed)",
+			"warn: [LandFix:WsDelta] No tokio runtime available - delta dropped ({} added, {} removed)",
 			Added.len(),
 			Removed.len()
 		);
@@ -148,7 +148,7 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 
 /// Append every folder in `Added` to `~/.land/workspaces/RecentlyOpened.json`,
 /// deduping by URI and capping at 50 entries (the VS Code default). Swallows
-/// every error — a failed write must not prevent the workspace change.
+/// every error - a failed write must not prevent the workspace change.
 fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 	if Added.is_empty() {
 		return;

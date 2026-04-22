@@ -3,7 +3,7 @@
 All notable changes to Mountain (Rust Backend) are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/).
 
-## [v2.1] — Q2 2026: Full Workbench Lift
+## [v2.1] - Q2 2026: Full Workbench Lift
 
 ### Added
 
@@ -43,20 +43,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - node_modules path resolution in vscode-file scheme handler
 - Cocoon connection retry intervals with race condition prevention
 
-## [v2.0] — Q1 2026: Editor Launch Sprint
+## [v2.0] - Q1 2026: Editor Launch Sprint
 
 ### January (374 commits): Foundation and Binary Module Architecture
 
 #### Added
 
 - `Source/Binary/` modular startup system:
-  - `Tray/` — SwitchTrayIcon.rs, EnableTray.rs
-  - `Shutdown/` — SchedulerShutdown.rs, RuntimeShutdown.rs
-  - `Service/` — VineStart.rs (gRPC on 50051/50052), CocoonStart.rs,
+  - `Tray/` - SwitchTrayIcon.rs, EnableTray.rs
+  - `Shutdown/` - SchedulerShutdown.rs, RuntimeShutdown.rs
+  - `Service/` - VineStart.rs (gRPC on 50051/50052), CocoonStart.rs,
     ConfigurationInitialize.rs
-  - `Register/` — AdvancedFeaturesRegister.rs, IPCServerRegister.rs,
+  - `Register/` - AdvancedFeaturesRegister.rs, IPCServerRegister.rs,
     StatusReporterRegister.rs, WindSyncRegister.rs
-  - `Initialize/` — RuntimeBuild.rs, StateBuild.rs, CLI argument parser,
+  - `Initialize/` - RuntimeBuild.rs, StateBuild.rs, CLI argument parser,
     dynamic port selection
 - 20+ Tauri commands exposed: WorkbenchConfigurationQuery,
   DesktopConfigurationQuery, UpdateSubscriptionEndpoint, TrayIconSwitch,
@@ -87,7 +87,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 
 #### Added
 
-- `Source/ApplicationState/State/FeatureState/Debug/` — DebugState.rs (155
+- `Source/ApplicationState/State/FeatureState/Debug/` - DebugState.rs (155
   lines) with DebugConfigurationProviderRegistration and
   DebugAdapterDescriptorFactoryRegistration
 - TreeView badge: SetBadge() method with length validation
@@ -102,11 +102,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
   display_name → extension_id, GitExecRequest repository/cwd →
   repository_path/args
 
-## [v1.3] — Q4 2025: Dependency Maintenance
+## [v1.3] - Q4 2025: Dependency Maintenance
 
 ### Added
 
-- `gen/schemas/macOS-schema.json` — platform-specific capabilities for tray,
+- `gen/schemas/macOS-schema.json` - platform-specific capabilities for tray,
   menu bar, dock integration
 
 ### Changed
@@ -115,7 +115,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - actions/checkout 5.0.0 → 6.0.1
 - Regular `.github/Update.md` auto-increments
 
-## [v1.2] — Q3 2025: Full Stack Integration
+## [v1.2] - Q3 2025: Full Stack Integration
 
 ### Changed
 
@@ -125,28 +125,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - Build artifacts renamed with "22NodeVersion" label for Node.js versioning
 - Windows installer naming standardized across debug/release profiles
 
-## [v1.1] — Q2 2025: Architecture Buildout
+## [v1.1] - Q2 2025: Architecture Buildout
 
-**185 commits — the complete architecture implementation quarter.**
+**185 commits - the complete architecture implementation quarter.**
 
 ### Added
 
-- `Source/Command/` — CommandRegistry, Keybinding, LanguageFeature,
+- `Source/Command/` - CommandRegistry, Keybinding, LanguageFeature,
   SourceControlManagement, TreeView, Bootstrap, Hover
-- `Source/Environment/` — 14 provider implementations: ConfigurationProvider,
+- `Source/Environment/` - 14 provider implementations: ConfigurationProvider,
   DocumentProvider, FileSystemProvider, OutputProvider, SearchProvider,
   SecretProvider, StatusBarProvider, StorageProvider, TerminalProvider,
   TreeViewProvider, UserInterfaceProvider, WebviewProvider, WorkspaceProvider,
   Utility
-- `Source/ProcessManagement/` — CocoonManagement, InitializationData
-- `Source/RunTime/` — ApplicationRunTime executable lifecycle
-- `Source/Track/` — DispatchLogic, EffectCreation (request routing and effect
+- `Source/ProcessManagement/` - CocoonManagement, InitializationData
+- `Source/RunTime/` - ApplicationRunTime executable lifecycle
+- `Source/Track/` - DispatchLogic, EffectCreation (request routing and effect
   system)
-- `Source/Update/` — UpdateService
-- `Source/Workspace/` — WorkSpaceFileService
-- `Source/FileSystem/` — FileExplorerViewProvider
-- `Source/Vine/Server/` — MountainVinegRPCService, Initialize.rs
-- `Source/Vine/Generated/vine_ipc.rs` — 1,714 lines auto-generated from
+- `Source/Update/` - UpdateService
+- `Source/Workspace/` - WorkSpaceFileService
+- `Source/FileSystem/` - FileExplorerViewProvider
+- `Source/Vine/Server/` - MountainVinegRPCService, Initialize.rs
+- `Source/Vine/Generated/vine_ipc.rs` - 1,714 lines auto-generated from
   Vine.proto
 - Node.js sidecar bundled (Target/debug/node.exe, Target/release/node.exe)
 - Build artifacts: .exe, .msi Windows installers
@@ -159,29 +159,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - `docs/Deep Dive.md` rewritten (182 lines)
 - License transitioned to CC0 1.0 Universal
 
-## [v1.0] — Q1 2025: Integration Phase
+## [v1.0] - Q1 2025: Integration Phase
 
 ### Added
 
 - `Source/ApplicationState/` reorganization:
-  - `Internal/` — Persistence, Recovery, TextProcessing, PathResolution,
+  - `Internal/` - Persistence, Recovery, TextProcessing, PathResolution,
     ExtensionScanner, Serialization
-  - `DTO/` — 12 DTO classes (DocumentStateDTO, TerminalStateDTO,
+  - `DTO/` - 12 DTO classes (DocumentStateDTO, TerminalStateDTO,
     TreeViewStateDTO, WindowStateDTO, etc.)
-  - `State/` — organized feature state classes
-- `.github/workflows/Auto.yml` (68 lines) — automated update/push CI
-- `Knowledge.dot` + `Knowledge.svg` — module dependency graph (Graphviz)
+  - `State/` - organized feature state classes
+- `.github/workflows/Auto.yml` (68 lines) - automated update/push CI
+- `Knowledge.dot` + `Knowledge.svg` - module dependency graph (Graphviz)
 
 ### Changed
 
 - Deprecated `Source/app_state/` → `Source/ApplicationState/`
 - Cargo.toml: removed 45 redundant entries, added 17 new entries
 
-## [v0.2] — Q4 2024: Architecture Solidification
+## [v0.2] - Q4 2024: Architecture Solidification
 
 ### Added
 
-- `gen/android/` — full Android Gradle project scaffold:
+- `gen/android/` - full Android Gradle project scaffold:
   - AndroidManifest.xml, MainActivity.kt
   - RustPlugin.kt, BuildTask.kt (Rust → Android cross-compilation)
   - Resources: drawable, mipmap (hdpi through xxxhdpi), layout, values
@@ -190,7 +190,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - Cargo.toml feature flags: AirIntegration, ExtensionHostCocoon, MistNative,
   Debug, grove, cocoon, terminals, debug-protocol, scm-support, Telemetry
 
-## [v0.1] — Q3 2024: Rapid Development
+## [v0.1] - Q3 2024: Rapid Development
 
 ### Changed
 
@@ -199,19 +199,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - Binary function refactoring: `Source/Fn/Binary.rs` 106 → ~20 lines
 - Added `Source/Fn/Binary/Notes.md` (91 lines) architecture documentation
 
-## [v0.0] — Q2 2024: Project Inception
+## [v0.0] - Q2 2024: Project Inception
 
 ### Added
 
 - Project relocated from `Editor/editor/src-tauri/` to monorepo root
-- `Source/Library.rs` — single Tauri entry point
-- `tauri.conf.json` (94 lines) — bundle targets: Windows NSIS, macOS DMG, deb
-- `build.rs` — Tauri build system integration
+- `Source/Library.rs` - single Tauri entry point
+- `tauri.conf.json` (94 lines) - bundle targets: Windows NSIS, macOS DMG, deb
+- `build.rs` - Tauri build system integration
 - `.github/workflows/Rust.yml` (78 lines), `GitHub.yml` (57 lines),
   `dependabot.yml`
 - App icons: PNG, ICNS, ICO, Windows tile assets
-- `capabilities/` — Tauri capabilities manifest
-- `gen/schemas/` — desktop-schema.json, windows-schema.json
+- `capabilities/` - Tauri capabilities manifest
+- `gen/schemas/` - desktop-schema.json, windows-schema.json
 
 ### Dependencies (First Release)
 

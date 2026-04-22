@@ -72,7 +72,7 @@ impl WatcherState {
 	pub fn Get(env:&MountainEnvironment) -> Arc<WatcherState> {
 		use std::sync::OnceLock;
 
-		// One WatcherState per process — the backing notify watchers are
+		// One WatcherState per process - the backing notify watchers are
 		// cheap and multiplex fine, and we want a single forwarder task.
 		static GLOBAL:OnceLock<Arc<WatcherState>> = OnceLock::new();
 		GLOBAL
@@ -145,7 +145,7 @@ fn MapEventKind(raw:&EventKind) -> Option<WatchEventKind> {
 /// Translate a VS Code glob pattern into a `regex::Regex` so the native
 /// watcher can apply the caller's filter before paying for an IPC hop. A
 /// small subset of the glob grammar is supported (`**`, `*`, `?`, `[…]`,
-/// `{…,…}` alternation) — exactly what TypeScript-language-features and
+/// `{…,…}` alternation) - exactly what TypeScript-language-features and
 /// the other ship-time extensions rely on.
 fn CompileGlobToRegex(Pattern:&str) -> Option<regex::Regex> {
 	let mut Regex = String::with_capacity(Pattern.len() * 2 + 4);
@@ -213,7 +213,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		// De-dup: the typescript-language-features extension alone registers
 		// ~10 watchers against the same workspace root during activation.
 		// If we already have a watcher on this exact (root, recursive)
-		// combination, reuse it and just record the handle — the forwarder
+		// combination, reuse it and just record the handle - the forwarder
 		// task fans events out to every subscribed handle.
 		{
 			let guard = state
@@ -235,7 +235,7 @@ impl FileWatcherProvider for MountainEnvironment {
 
 		// Prepare the per-event callback. It owns clones of the handle and
 		// the forwarder channel; debouncing state lives in the entry under
-		// the global mutex (fine — the callback is not hot).
+		// the global mutex (fine - the callback is not hot).
 		let handle_for_callback = Handle.clone();
 		let sender = state.EventSender.clone();
 		let entries = state.Entries.clone();
@@ -244,7 +244,7 @@ impl FileWatcherProvider for MountainEnvironment {
 			let Some(kind) = MapEventKind(&event.kind) else { return };
 			let kind_tag = kind.AsString();
 
-			// Pattern filter — reject early so the event never crosses IPC.
+			// Pattern filter - reject early so the event never crosses IPC.
 			let matched_paths:Vec<PathBuf> = event
 				.paths
 				.into_iter()
@@ -306,7 +306,7 @@ impl FileWatcherProvider for MountainEnvironment {
 			.lock()
 			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
 		// CompiledPattern is held by the callback closure (captured in
-		// `pattern_for_callback`) — no need to store a second copy on the
+		// `pattern_for_callback`) - no need to store a second copy on the
 		// entry. The `Watcher` handle alone holds the OS watch alive.
 		let _ = CompiledPattern;
 		guard.insert(Handle.clone(), WatcherEntry { Watcher:watcher, LastSeen:HashMap::new() });

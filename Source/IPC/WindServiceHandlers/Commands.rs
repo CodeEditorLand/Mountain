@@ -1,9 +1,10 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Command registry handlers — execute and list all registered commands.
+//! Command registry handlers - execute and list all registered commands.
 
 use std::sync::Arc;
 
+use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 use serde_json::{Value, json};
 
 use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};

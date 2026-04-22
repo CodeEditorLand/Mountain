@@ -373,7 +373,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 				.ok()
 				.and_then(|P| P.parent().map(|D| D.to_path_buf()))
 				.unwrap_or_default();
-			// Exe at Element/Mountain/Target/debug/ — ../../../ lands in
+			// Exe at Element/Mountain/Target/debug/ - ../../../ lands in
 			// Element/, so join "Sky/Target" (not "Element/Sky/Target"
 			// which would create a bogus Element/Element/Sky/ path).
 			let SkyTarget = ExeDir.join("../../../Sky/Target");
@@ -401,7 +401,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 		// Atom I5: product version + commit + quality come from .env.Land via
 		// process env. `Tauri's package_info().version` reads tauri.conf.json
-		// which still carries a placeholder "0.0.1" — we can't trust it for
+		// which still carries a placeholder "0.0.1" - we can't trust it for
 		// extension compat checks. `ProductVersion` from env is the canonical
 		// value shared with Wind and Cocoon.
 		"commit": std::env::var("ProductCommit").unwrap_or_else(|_| "dev".into()),

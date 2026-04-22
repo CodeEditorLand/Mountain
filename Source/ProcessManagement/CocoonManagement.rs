@@ -71,7 +71,7 @@ use tokio::{
 	time::sleep,
 };
 
-use super::InitializationData;
+use super::{InitializationData, NodeResolver};
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	IPC::Common::HealthStatus::{HealthIssue, HealthMonitor},
@@ -268,8 +268,13 @@ async fn LaunchAndManageCocoonSideCar(
 	// :<port>` and SIGTERM → 500ms wait → SIGKILL. Then proceed as normal.
 	SweepStaleCocoon(COCOON_GRPC_PORT);
 
+	// Atom N1: resolve Node binary via NodeResolver (shipped → version
+	// managers → homebrew → PATH). Logs the pick + source for forensics.
+	// Overridable via `LAND_NODE_BINARY=/absolute/path/to/node`.
+	let ResolvedNodeBinary = NodeResolver::ResolveNodeBinary(&ApplicationHandle);
+
 	// Build Node.js command with comprehensive environment configuration
-	let mut NodeCommand = Command::new("node");
+	let mut NodeCommand = Command::new(&ResolvedNodeBinary.Path);
 
 	let mut EnvironmentVariables = HashMap::new();
 
@@ -306,7 +311,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// Cocoon's Bootstrap.ts stage2_configuration resolves real values.
 	// Without this, env_clear() above leaves Cocoon seeing NodeEnv=
 	// "production" / DevLog=<unset> / TauriDebug=false even on the
-	// debug-electron profile — silently disabling dev-only logging,
+	// debug-electron profile - silently disabling dev-only logging,
 	// stricter validation, and debug-only diagnostics in Cocoon.
 	for Key in ["NODE_ENV", "LAND_DEV_LOG", "TAURI_ENV_DEBUG"] {
 		if let Ok(Value) = std::env::var(Key) {
@@ -325,7 +330,13 @@ async fn LaunchAndManageCocoonSideCar(
 	// Spawn the process with error handling
 	let mut ChildProcess = NodeCommand.spawn().map_err(|Error| {
 		CommonError::IPCError {
-			Description:format!("Failed to spawn Cocoon process: {} (is Node.js installed and in PATH?)", Error),
+			Description:format!(
+				"Failed to spawn Cocoon with node={} (source={}): {}. Override with \
+				 LAND_NODE_BINARY=/absolute/path or install Node.js.",
+				ResolvedNodeBinary.Path.display(),
+				ResolvedNodeBinary.Source.AsLabel(),
+				Error
+			),
 		}
 	})?;
 
@@ -368,7 +379,6 @@ async fn LaunchAndManageCocoonSideCar(
 	);
 
 	let mut ConnectAttempt = 0u32;
-	let mut LastError = None;
 
 	loop {
 		ConnectAttempt += 1;
@@ -402,25 +412,22 @@ async fn LaunchAndManageCocoonSideCar(
 						GRPC_CONNECT_MAX_ATTEMPTS,
 						Error
 					);
-					LastError = Some(Error);
 					return Err(CommonError::IPCError {
 						Description:format!(
 							"Failed to connect to Cocoon gRPC at {} after {} attempts: {} (is Cocoon running?)",
-							GRPCAddress,
-							GRPC_CONNECT_MAX_ATTEMPTS,
-							LastError.unwrap()
+							GRPCAddress, GRPC_CONNECT_MAX_ATTEMPTS, Error
 						),
 					});
 				}
 
 				crate::dev_log!(
 					"grpc",
-					"attempt {}/{} pending (Cocoon still booting), retrying in {}ms",
+					"attempt {}/{} pending (Cocoon still booting): {}, retrying in {}ms",
 					ConnectAttempt,
 					GRPC_CONNECT_MAX_ATTEMPTS,
+					Error,
 					GRPC_CONNECT_RETRY_INTERVAL_MS
 				);
-				LastError = Some(Error);
 
 				sleep(Duration::from_millis(GRPC_CONNECT_RETRY_INTERVAL_MS)).await;
 			},
@@ -477,7 +484,7 @@ async fn LaunchAndManageCocoonSideCar(
 		},
 	}
 
-	// Trigger startup extension activation. Cocoon is fully reactive —
+	// Trigger startup extension activation. Cocoon is fully reactive -
 	// it won't activate any extensions until Mountain tells it to.
 	// Fire-and-forget: don't block on activation, and don't fail init if it errors.
 	let SideCarId = SideCarIdentifier.clone();
@@ -528,7 +535,7 @@ async fn LaunchAndManageCocoonSideCar(
 /// Background task that monitors Cocoon process health and logs crashes.
 ///
 /// Once the child process has exited (or never existed), the monitor no
-/// longer has anything useful to say — it exits quietly instead of
+/// longer has anything useful to say - it exits quietly instead of
 /// flooding the log with "No Cocoon process to monitor" every 5s, which
 /// was rendering the dev log unreadable after any Cocoon crash.
 async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
@@ -599,12 +606,12 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 				},
 			}
 		} else {
-			// No child process exists — log exactly once, then exit the
+			// No child process exists - log exactly once, then exit the
 			// monitor loop. Prior behaviour: flood the log with
 			// "No Cocoon process to monitor" every 5s forever after a
 			// crash, making the dev log unreadable. A future respawn will
 			// spawn a fresh monitor via `StartCocoon`.
-			dev_log!("cocoon", "[CocoonHealth] No Cocoon process to monitor — exiting monitor loop");
+			dev_log!("cocoon", "[CocoonHealth] No Cocoon process to monitor - exiting monitor loop");
 			drop(state_guard);
 			return;
 		}
@@ -618,7 +625,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 /// cleanly but child stays running" leak that leads to zombie-Cocoon
 /// zombies holding the gRPC port.
 ///
-/// Call AFTER the graceful $shutdown attempt — we don't want to race the
+/// Call AFTER the graceful $shutdown attempt - we don't want to race the
 /// child's own cleanup. Safe to call with no stored child (no-op).
 pub async fn HardKillCocoon() {
 	let mut State = COCOON_STATE.lock().await;
@@ -668,7 +675,7 @@ fn SweepStaleCocoon(Port:u16) {
 
 	let Addr = format!("127.0.0.1:{}", Port);
 
-	// Cheap liveness probe. Timeout is aggressive — zombie ports answer
+	// Cheap liveness probe. Timeout is aggressive - zombie ports answer
 	// immediately; a clean port is ECONNREFUSED and returns instantly.
 	let Probe =
 		TcpStream::connect_timeout(&Addr.parse().expect("valid socket addr literal"), Duration::from_millis(200));
@@ -679,7 +686,7 @@ fn SweepStaleCocoon(Port:u16) {
 
 	dev_log!(
 		"cocoon",
-		"[CocoonSweep] Port {} has a listener — attempting to resolve owner via lsof.",
+		"[CocoonSweep] Port {} has a listener - attempting to resolve owner via lsof.",
 		Port
 	);
 
@@ -711,7 +718,7 @@ fn SweepStaleCocoon(Port:u16) {
 	if Pids.is_empty() {
 		dev_log!(
 			"cocoon",
-			"warn: [CocoonSweep] Port {} answered but lsof found no LISTEN PID — giving up.",
+			"warn: [CocoonSweep] Port {} answered but lsof found no LISTEN PID - giving up.",
 			Port
 		);
 		return;
@@ -733,7 +740,7 @@ fn SweepStaleCocoon(Port:u16) {
 		dev_log!("cocoon", "[CocoonSweep] Killing stale PID {} (SIGTERM).", Pid);
 		let _ = std::process::Command::new("kill").arg(Pid.to_string()).status();
 		std::thread::sleep(Duration::from_millis(500));
-		// Recheck — if still alive, escalate.
+		// Recheck - if still alive, escalate.
 		let StillAlive = std::process::Command::new("kill")
 			.args(["-0", &Pid.to_string()])
 			.status()

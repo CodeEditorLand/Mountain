@@ -1,9 +1,10 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Extension management handlers — list, get, query, install/uninstall stubs.
+//! Extension management handlers - list, get, query, install/uninstall stubs.
 
 use std::sync::Arc;
 
+use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 use serde_json::{Value, json};
 
 use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};

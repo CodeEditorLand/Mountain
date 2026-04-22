@@ -174,7 +174,7 @@ pub async fn ScanDirectoryForExtensions(
 	let mut FoundExtensions = Vec::new();
 
 	// Distinguish "directory does not exist" (first-run, no user extensions
-	// installed yet — perfectly normal) from a real I/O failure. Only the
+	// installed yet - perfectly normal) from a real I/O failure. Only the
 	// latter deserves a `warn:` prefix; the former is debug-level noise.
 	match DirectoryPath.try_exists() {
 		Ok(false) => {
@@ -188,7 +188,7 @@ pub async fn ScanDirectoryForExtensions(
 		Err(error) => {
 			dev_log!(
 				"extensions",
-				"[ExtensionScanner] Could not stat extension path '{}': {} — skipping",
+				"[ExtensionScanner] Could not stat extension path '{}': {} - skipping",
 				DirectoryPath.display(),
 				error
 			);
@@ -272,7 +272,7 @@ pub async fn ScanDirectoryForExtensions(
 					// actually contains `%placeholder%` strings that need
 					// substitution. Many shipped extensions (js-debug-companion,
 					// js-profile-table) publish English-only manifests with no
-					// placeholders — surfacing a warning there is misleading
+					// placeholders - surfacing a warning there is misleading
 					// because the UI renders correctly with the raw fields.
 					let ManifestUsesPlaceholders = ManifestContainsNLSPlaceholders(&ManifestValue);
 					if let Some(NLSMap) =
@@ -372,11 +372,11 @@ fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
 /// Load an extension's NLS bundle (`package.nls.json`) into a `{key → string}`
 /// map. Returns `None` if the bundle is absent or unreadable; placeholders stay
 /// as-is in that case. Entries can be bare strings or `{message, comment}`
-/// objects — we only keep `message`.
+/// objects - we only keep `message`.
 ///
 /// The `PlaceholdersNeeded` flag downgrades the "no bundle" warning when the
 /// caller already proved the manifest has no `%placeholder%` entries to
-/// resolve — in that case the bundle is optional and its absence is benign
+/// resolve - in that case the bundle is optional and its absence is benign
 /// (BATCH-18).
 async fn LoadNLSBundle(
 	RunTime:&Arc<ApplicationRunTime>,

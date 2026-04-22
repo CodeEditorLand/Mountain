@@ -25,7 +25,7 @@ const OTLP_HOST:&str = "127.0.0.1:4318";
 /// actually loads; the patched plugin keeps our value instead of overwriting.
 ///
 /// Returns `None` for unknown extensions so the plugin's `asset.mime_type`
-/// fallback still applies (e.g. images, fonts, WASM — the asset resolver
+/// fallback still applies (e.g. images, fonts, WASM - the asset resolver
 /// handles those correctly).
 fn MimeFromUrl(Url:&str) -> Option<&'static str> {
 	// Strip query string / fragment before extension match.

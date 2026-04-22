@@ -61,7 +61,7 @@ pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) ->
 			dev_log!("folder", "picked: {}", PathStr);
 
 			// Mutate workspace state + emit $deltaWorkspaceFolders *before*
-			// navigating — the webview reload discards the current Sky
+			// navigating - the webview reload discards the current Sky
 			// context, but Cocoon keeps its state machine alive and must see
 			// the delta to drive workspaceContains activation.
 			if let Some(State) = Handle.try_state::<Arc<ApplicationState>>() {
@@ -77,7 +77,7 @@ pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) ->
 			} else {
 				dev_log!(
 					"folder",
-					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri — workspace mutation skipped"
+					"warn: [pickFolderAndOpen] ApplicationState not managed by Tauri - workspace mutation skipped"
 				);
 			}
 
@@ -118,7 +118,7 @@ pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) ->
 /// "multiSelections" | "createDirectory"]`. The expected return shape is
 /// `{ canceled: bool, filePaths: string[] }`.
 ///
-/// This handler was previously a stub returning "canceled: true" — that's
+/// This handler was previously a stub returning "canceled: true" - that's
 /// why clicking the Explorer's "Open Folder" button (which goes through
 /// this method, not through `pickFolderAndOpen`) silently did nothing. We
 /// now drive the Tauri dialog plugin directly, honouring the `properties`

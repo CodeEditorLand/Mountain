@@ -161,7 +161,7 @@ impl ApplicationRunTime {
 	/// Sequence:
 	///   1. Send `$shutdown` gRPC notification to Cocoon (up to 3 attempts).
 	///   2. Regardless of gRPC outcome, call `HardKillCocoon()` which SIGKILLs
-	///      the stored child if still alive. Atom I6 addition — without this, a
+	///      the stored child if still alive. Atom I6 addition - without this, a
 	///      gRPC failure (transport error, broken pipe) left the child process
 	///      orphaned, holding port 50052, and the next Mountain launch hit
 	///      EADDRINUSE with the extension host stuck in degraded mode.

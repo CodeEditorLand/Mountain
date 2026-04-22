@@ -1,4 +1,4 @@
-// Configuration Initialize Module — Initializes and merges application
+// Configuration Initialize Module - Initializes and merges application
 // configurations.
 
 use crate::{

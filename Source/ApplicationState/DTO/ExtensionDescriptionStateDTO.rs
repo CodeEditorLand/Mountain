@@ -49,7 +49,7 @@ const MAX_ACTIVATION_EVENTS:usize = 100;
 pub struct ExtensionDescriptionStateDTO {
 	// --- Core Metadata ---
 	/// Extension identifier: { value: string, uuid?: string }
-	/// Not present in package.json — constructed from publisher.name after
+	/// Not present in package.json - constructed from publisher.name after
 	/// parsing.
 	#[serde(default)]
 	pub Identifier:Value,

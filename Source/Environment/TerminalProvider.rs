@@ -224,10 +224,10 @@ impl TerminalProvider for MountainEnvironment {
 
 						// Fan out in two directions so both consumers see
 						// the bytes:
-						//   1. Cocoon's extension host (via gRPC) — lets
+						//   1. Cocoon's extension host (via gRPC) - lets
 						//      `vscode.window.onDidWriteTerminalData` and the SCM
 						//      `$acceptTerminalProcessData` chain continue to function.
-						//   2. Sky's webview (via Tauri event) — the UI xterm renderer subscribes to
+						//   2. Sky's webview (via Tauri event) - the UI xterm renderer subscribes to
 						//      `sky://terminal/data` and draws the bytes into the user-visible terminal
 						//      panel.
 						// Without the Tauri emit the user sees a terminal
@@ -278,7 +278,7 @@ impl TerminalProvider for MountainEnvironment {
 		// BATCH-19 Part B: capture the PID before `ChildProcess` is moved into
 		// the exit-watcher task so the exit log line can correlate with the
 		// spawn log (`[TerminalProvider] localPty:spawn OK id=N pid=M`). Also
-		// surface the actual exit status code — previously discarded via
+		// surface the actual exit status code - previously discarded via
 		// `let _exit_status = …`, which meant the log could only say "has
 		// exited" without distinguishing a clean `exit 0`, `echo hi; exit`
 		// flow from a crash. That distinction is what the BATCH-19 smoke test
@@ -330,7 +330,7 @@ impl TerminalProvider for MountainEnvironment {
 				Guard.remove(&TermIDForExit);
 			}
 
-			// Tell Sky the xterm panel should drop — mirrors the `sky://`
+			// Tell Sky the xterm panel should drop - mirrors the `sky://`
 			// create emit above. Without this, the UI keeps a ghost panel
 			// after the shell exits (user types `exit` and the pane still
 			// lingers until the next render cycle).
@@ -503,7 +503,7 @@ impl TerminalProvider for MountainEnvironment {
 		// Method resolution walks through MutexGuard → Box → dyn MasterPty,
 		// so `Guard.resize(...)` dispatches straight to the trait impl. Keep
 		// the call inside `spawn_blocking` even though portable-pty's resize
-		// is nominally fast — SIGWINCH delivery can stall briefly when the
+		// is nominally fast - SIGWINCH delivery can stall briefly when the
 		// child shell is ptrace-frozen or mid-syscall.
 		tokio::task::spawn_blocking(move || {
 			let Guard = Master.lock().map_err(|_| "PTY master mutex poisoned".to_string())?;

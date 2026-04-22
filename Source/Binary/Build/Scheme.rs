@@ -771,7 +771,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	// to render pretty stack traces. Our `Static/Application/` tree ships the
 	// JS files without their `.map` siblings (esbuild's `sourcemap:false` path)
 	// so those requests always 404. Short-circuit here with a clean
-	// `204 No Content` — Chromium treats 204 as "no map available" and moves
+	// `204 No Content` - Chromium treats 204 as "no map available" and moves
 	// on silently, avoiding both the noisy stderr lines and the filesystem
 	// stat round-trip per request.
 	if CleanPath.ends_with(".map") {

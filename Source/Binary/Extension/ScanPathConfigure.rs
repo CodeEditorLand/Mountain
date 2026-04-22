@@ -43,16 +43,45 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// Atom J3: kernel / minimal profiles set LAND_SKIP_BUILTIN_EXTENSIONS=true
 	// to ship without any bundled extensions. The user-extensions path
 	// (`~/.land/extensions`) still scans so VSIX-installed extensions work.
-	let SkipBuiltins = matches!(std::env::var("LAND_SKIP_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"));
+	//
+	// Atom U1: `.env.Land.Extensions` also exposes `LAND_DISABLE_BUILTIN_EXTENSIONS`
+	// — same effect, different name. Accept both so the skill-file env and
+	// the legacy SKIP flag don't diverge.
+	let SkipBuiltins = matches!(std::env::var("LAND_SKIP_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"))
+		|| matches!(std::env::var("LAND_DISABLE_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"));
 
 	if SkipBuiltins {
 		dev_log!(
 			"extensions",
-			"[Extensions] [ScanPaths] LAND_SKIP_BUILTIN_EXTENSIONS=true — skipping all built-in paths, keeping user \
+			"[Extensions] [ScanPaths] LAND_SKIP_BUILTIN_EXTENSIONS=true - skipping all built-in paths, keeping user \
 			 path"
 		);
 	} else {
 		dev_log!("extensions", "[Extensions] [ScanPaths] Adding default scan paths...");
+	}
+
+	// Atom U1: `LAND_BUILTIN_EXTENSIONS_DIR` (from `.env.Land.Extensions`)
+	// takes precedence over the executable-relative probing chain. Useful for
+	// CI builds where the bundle layout differs from both the Tauri `.app`
+	// convention and the repo layout.
+	if !SkipBuiltins {
+		if let Ok(Override) = std::env::var("LAND_BUILTIN_EXTENSIONS_DIR") {
+			let OverridePath = ExpandUserPath(&Override);
+			if OverridePath.exists() {
+				dev_log!(
+					"extensions",
+					"[Extensions] [ScanPaths] + {} (LAND_BUILTIN_EXTENSIONS_DIR)",
+					OverridePath.display()
+				);
+				ScanPathsGuard.push(OverridePath);
+			} else {
+				dev_log!(
+					"extensions",
+					"warn: [Extensions] [ScanPaths] LAND_BUILTIN_EXTENSIONS_DIR={} does not exist; ignoring",
+					Override
+				);
+			}
+		}
 	}
 
 	// Resolve paths from executable directory
@@ -82,7 +111,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				// `Element/Mountain/Target/{debug,release}/`, so they only
 				// materialise when the binary runs from inside the repo.
 				// Shipped `.app`s launched from `/Applications/` hit the
-				// `.exists()` guard and silently skip — no need for a
+				// `.exists()` guard and silently skip - no need for a
 				// `cfg(debug_assertions)` gate. Keeping these live in release
 				// lets a raw `Target/release/<name>` launch find the same 98
 				// built-in extensions a debug build does.
@@ -100,7 +129,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				}
 
 				// VS Code dependency path: built-in extensions from the VS
-				// Code source checkout — avoids requiring a copy step.
+				// Code source checkout - avoids requiring a copy step.
 				let DependencyPath = Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
 				if DependencyPath.exists() {
 					dev_log!(
@@ -117,7 +146,20 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// User-scope paths: always scanned, independent of whether the binary
 	// was launched from the repo, a `.app`, or a symlink on the Desktop.
 	// Mirrors VS Code's `~/.vscode-oss/extensions` convention.
-	if let Some(HomeDirectory) = dirs::home_dir() {
+	//
+	// Atom U1: `LAND_USER_EXTENSIONS_DIR` overrides the default
+	// `~/.land/extensions`. Useful for per-workspace sandboxes, shared
+	// caches on CI, or running against a test extensions set without
+	// polluting the user's real profile.
+	if let Ok(UserOverride) = std::env::var("LAND_USER_EXTENSIONS_DIR") {
+		let OverridePath = ExpandUserPath(&UserOverride);
+		dev_log!(
+			"extensions",
+			"[Extensions] [ScanPaths] + {} (LAND_USER_EXTENSIONS_DIR)",
+			OverridePath.display()
+		);
+		ScanPathsGuard.push(OverridePath);
+	} else if let Some(HomeDirectory) = dirs::home_dir() {
 		let UserExtensionPath = HomeDirectory.join(".land/extensions");
 		dev_log!(
 			"extensions",
@@ -127,9 +169,56 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		ScanPathsGuard.push(UserExtensionPath);
 	}
 
+	// Atom U1: additional paths via `LAND_EXTRA_EXTENSIONS_DIRS`. Mirrors
+	// VS Code's `--extensions-dir=<a>:<b>:<c>` CLI. Platform-separator:
+	// semicolon on Windows (matches PATHEXT), colon elsewhere.
+	if let Ok(Extras) = std::env::var("LAND_EXTRA_EXTENSIONS_DIRS") {
+		let Separator = if cfg!(target_os = "windows") { ';' } else { ':' };
+		for Candidate in Extras.split(Separator) {
+			let Trimmed = Candidate.trim();
+			if Trimmed.is_empty() {
+				continue;
+			}
+			let ExtraPath = ExpandUserPath(Trimmed);
+			dev_log!(
+				"extensions",
+				"[Extensions] [ScanPaths] + {} (LAND_EXTRA_EXTENSIONS_DIRS)",
+				ExtraPath.display()
+			);
+			ScanPathsGuard.push(ExtraPath);
+		}
+	}
+
+	// Atom U1: development extensions path — the VS Code equivalent of
+	// `--extensionDevelopmentPath=<dir>`. Extensions here always load
+	// regardless of enablement state; kept separate from user-scope so a
+	// broken dev extension doesn't persist into the user's profile.
+	if let Ok(DevExtensions) = std::env::var("LAND_DEV_EXTENSIONS_DIR") {
+		let DevPath = ExpandUserPath(&DevExtensions);
+		dev_log!(
+			"extensions",
+			"[Extensions] [ScanPaths] + {} (LAND_DEV_EXTENSIONS_DIR)",
+			DevPath.display()
+		);
+		ScanPathsGuard.push(DevPath);
+	}
+
 	let ScanPaths = ScanPathsGuard.clone();
 
 	dev_log!("extensions", "[Extensions] [ScanPaths] Configured: {:?}", ScanPaths);
 
 	Ok(ScanPaths)
+}
+
+/// Expand a leading `~/` to `$HOME/` for user-provided paths. Env-var
+/// overrides frequently come from operators typing `~/.vscode/extensions`
+/// without shell expansion (e.g. in `.env` files, GUI launchers, sidecar
+/// manifests). Leaves absolute and relative paths untouched.
+fn ExpandUserPath(Raw:&str) -> PathBuf {
+	if let Some(Stripped) = Raw.strip_prefix("~/") {
+		if let Some(Home) = dirs::home_dir() {
+			return Home.join(Stripped);
+		}
+	}
+	PathBuf::from(Raw)
 }

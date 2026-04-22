@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Wind Service Handlers — dispatcher and sub-module aggregator.
+//! Wind Service Handlers - dispatcher and sub-module aggregator.
 //! Domain files handle the individual handler implementations.
 
 pub mod Commands;
@@ -30,10 +30,6 @@ pub use Storage::*;
 pub use Terminal::*;
 pub use UI::*;
 pub use Utilities::*;
-
-//!     // ... other commands
-//! ])
-//! ```
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
@@ -78,7 +74,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	// `logger:log` invocations per boot (every `console.*` call inside VS
 	// Code code becomes an IPC round-trip); keeping those lines only
 	// expands log volume without adding signal. The actual dispatch below
-	// still runs — this just skips the `[DEV:IPC] invoke:` line.
+	// still runs - this just skips the `[DEV:IPC] invoke:` line.
 	let IsHighFrequencyCommand = matches!(
 		command.as_str(),
 		"logger:log" | "logger:registerLogger" | "logger:createLogger" | "log:registerLogger" | "log:createLogger"
@@ -90,7 +86,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	// Ensure userdata directories exist on first IPC call
 	ensure_userdata_dirs();
 
-	// Get the application runtime — deref the Tauri State into an owned Arc
+	// Get the application runtime - deref the Tauri State into an owned Arc
 	// so we can hand it to an Echo scheduler task below (State<T> isn't
 	// Send across task boundaries).
 	let runtime:Arc<ApplicationRunTime> = app_handle.state::<Arc<ApplicationRunTime>>().inner().clone();
@@ -106,7 +102,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	//
 	// Atom O1 + O3: every invoke flows through `SubmitToEcho` below so the
 	// Echo work-stealing scheduler picks a lane based on `Channel::Priority()`.
-	// The dispatch match still runs inline — Echo's real value is queuing
+	// The dispatch match still runs inline - Echo's real value is queuing
 	// decisions under load, not moving a single future across threads. This
 	// keeps the 4900-line match legible while guaranteeing every inbound
 	// IPC hits the scheduler's priority machinery on its way out.
@@ -266,12 +262,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// astro.config.ts Step 7b swaps the native SharedProcessService
 				// for a TauriMainProcessService-backed shim, so the call lands
 				// here as `extensions:getInstalled`. The expected return is
-				// `ILocalExtension[]` — a wrapper around each scanned manifest
+				// `ILocalExtension[]` - a wrapper around each scanned manifest
 				// with `identifier.id`, `manifest`, `location`, `isBuiltin`, etc.
 				// `handle_extensions_get_installed` builds that envelope;
 				// `handle_extensions_get_all` returns the raw manifest for
 				// callers (Cocoon, Wind Effect services) that want the flat
-				// shape. Do NOT alias these two — the payload shapes differ.
+				// shape. Do NOT alias these two - the payload shapes differ.
 				"extensions:getInstalled" | "extensions:scanSystemExtensions" => {
 					// Atom H1a: args[0]=type, args[1]=profileLocation URI,
 					// args[2]=productVersion, args[3]=??? (VS Code canonical is
@@ -292,7 +288,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					handle_extensions_get_installed(runtime.clone()).await
 				},
 				"extensions:scanUserExtensions" | "extensions:getUninstalled" => {
-					// Land doesn't support user-installed extensions yet — the
+					// Land doesn't support user-installed extensions yet - the
 					// workbench treats an empty array as "no user extensions",
 					// which is correct for the current Mountain architecture.
 					dev_log!("extensions", "{} (returning [])", command);
@@ -302,22 +298,32 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// empty arrays for every read and swallow every write, which
 				// mirrors what a network-air-gapped VS Code session shows.
 				"extensions:query" | "extensions:getExtensions" | "extensions:getRecommendations" => {
-					dev_log!("extensions", "{} (offline gallery — returning [])", command);
+					dev_log!("extensions", "{} (offline gallery - returning [])", command);
 					Ok(Value::Array(Vec::new()))
 				},
-				// `IExtensionsControlManifest` — consulted by the Extensions
+				// `IExtensionsControlManifest` - consulted by the Extensions
 				// sidebar on every render (ExtensionEnablementService.ts:793)
 				// to mark malicious / deprecated / auto-updateable entries.
 				// With the gallery offline an empty envelope is correct; the
-				// shape (not null) matters — VS Code destructures each field.
+				// shape (not null) matters - VS Code destructures each field.
 				"extensions:getExtensionsControlManifest" => {
-					dev_log!("extensions", "{} (offline gallery — empty manifest)", command);
+					dev_log!("extensions", "{} (offline gallery - empty manifest)", command);
 					Ok(json!({
 						"malicious": [],
 						"deprecated": {},
 						"search": [],
 						"autoUpdate": {},
 					}))
+				},
+				// Atom P1: `ExtensionsWorkbenchService.resetPinnedStateForAllUserExtensions`
+				// is invoked when the user toggles pinning semantics in the
+				// sidebar. Pin state is Wind-owned (Cocoon never sees it); the
+				// only Mountain-side cost is an acknowledgement so the
+				// extension-enablement service doesn't retry forever. Payload
+				// is optional — VS Code sometimes passes `{ refreshPinned: true }`.
+				"extensions:resetPinnedStateForAllUserExtensions" => {
+					dev_log!("extensions", "{} (no-op, pin state is UI-local)", command);
+					Ok(Value::Null)
 				},
 				// Atom K2: local VSIX install. Wind passes the file path from a
 				// "Install from VSIX…" prompt or drag-and-drop through to us; the
@@ -720,18 +726,18 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					let Title = Options.get("title").and_then(Value::as_str).unwrap_or("Save").to_string();
 					let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
 					let Handle = app_handle.clone();
-					let Selected = tokio::task::spawn_blocking(move || -> Option<String> {
+					let Joined = tokio::task::spawn_blocking(move || -> Option<String> {
 						let mut Builder = Handle.dialog().file().set_title(&Title);
 						if let Some(Path) = DefaultPath.as_deref() {
 							Builder = Builder.set_directory(Path);
 						}
 						Builder.blocking_save_file().map(|P| P.to_string())
 					})
-					.await
-					.map_err(|Error| format!("showSaveDialog join error: {}", Error))?;
-					match Selected {
-						Some(Path) => Ok(json!({ "canceled": false, "filePath": Path })),
-						None => Ok(json!({ "canceled": true })),
+					.await;
+					match Joined {
+						Ok(Some(Path)) => Ok(json!({ "canceled": false, "filePath": Path })),
+						Ok(None) => Ok(json!({ "canceled": true })),
+						Err(Error) => Err(format!("showSaveDialog join error: {}", Error)),
 					}
 				},
 				"nativeHost:showMessageBox" => {
@@ -751,7 +757,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						_ => MessageDialogKind::Info,
 					};
 					let Handle = app_handle.clone();
-					let Answered = tokio::task::spawn_blocking(move || -> bool {
+					let Joined = tokio::task::spawn_blocking(move || -> bool {
 						let mut Builder = Handle.dialog().message(&Message).kind(Kind);
 						if !Title.is_empty() {
 							Builder = Builder.title(&Title);
@@ -761,9 +767,11 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						}
 						Builder.blocking_show()
 					})
-					.await
-					.map_err(|Error| format!("showMessageBox join error: {}", Error))?;
-					Ok(json!({ "response": if Answered { 0 } else { 1 } }))
+					.await;
+					match Joined {
+						Ok(Answered) => Ok(json!({ "response": if Answered { 0 } else { 1 } })),
+						Err(Error) => Err(format!("showMessageBox join error: {}", Error)),
+					}
 				},
 
 				// Environment paths - called by ResolveConfiguration to get real Tauri paths.
@@ -847,15 +855,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// `nativeHost:<method>` IPC channel. Without stubs, every call fires
 				// `land:ipc:error:nativeHost.openAgentsWindow` in PostHog (1499
 				// occurrences per the 2026-04-21 error report). Land doesn't have
-				// AgentsView yet, so these are no-op acknowledgements — the calling
+				// AgentsView yet, so these are no-op acknowledgements - the calling
 				// extension treats `undefined` as "window wasn't opened" rather than
 				// an error.
 				"nativeHost:openAgentsWindow" | "nativeHost:openDevToolsWindow" | "nativeHost:openAuxiliaryWindow" => {
-					dev_log!("window", "{} (acknowledged, no-op — aux window unsupported)", command);
+					dev_log!("window", "{} (acknowledged, no-op - aux window unsupported)", command);
 					Ok(Value::Null)
 				},
 
-				// Window control — wired through the Tauri webview-window API so
+				// Window control - wired through the Tauri webview-window API so
 				// focus/minimize/maximize/toggleFullScreen/close actually move the
 				// native window the same way VS Code's Electron path does.
 				"nativeHost:focusWindow" => {
@@ -936,7 +944,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					Ok(Value::Null)
 				},
 
-				// Pure no-op arms — pure lifecycle signals VS Code fires regardless
+				// Pure no-op arms - pure lifecycle signals VS Code fires regardless
 				// of the backing host (Electron, Mountain, Browser) but we don't
 				// need to do anything about. Kept named so the `Unknown IPC command`
 				// default branch never fires for them.
@@ -994,10 +1002,10 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				"nativeHost:moveItemToTrash" => {
 					let Path = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 					if Path.is_empty() {
-						return Ok(json!(false));
-					}
-					dev_log!("nativehost", "nativeHost:moveItemToTrash path={}", Path);
-					let Moved = {
+						Ok(json!(false))
+					} else {
+						dev_log!("nativehost", "nativeHost:moveItemToTrash path={}", Path);
+						let Moved = {
 						#[cfg(target_os = "macos")]
 						{
 							tokio::process::Command::new("osascript")
@@ -1049,11 +1057,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						{
 							false
 						}
-					};
-					Ok(json!(Moved))
+						};
+						Ok(json!(Moved))
+					}
 				},
 
-				// Clipboard — backed by `arboard` so read/writeText round-trip the
+				// Clipboard - backed by `arboard` so read/writeText round-trip the
 				// OS clipboard. `readClipboardBuffer` is kept empty (binary
 				// clipboard is rarely used by VS Code core; extensions that need
 				// it invoke the platform-specific path instead).
@@ -1227,7 +1236,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						Environment::Requires::Requires,
 						Terminal::TerminalProvider::TerminalProvider,
 					};
-					let Provider:Arc<dyn TerminalProvider> = runtime.inner().Environment.Require();
+					let Provider:Arc<dyn TerminalProvider> = runtime.Environment.Require();
 					Provider
 						.ResizeTerminal(TerminalId, Columns, Rows)
 						.await
@@ -1383,7 +1392,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					dev_log!("exthost", "cocoon:extensionHostMessage bytes={}", ByteCount);
 
 					// Forward binary message to Cocoon via gRPC GenericNotification.
-					// Fire-and-forget — the extension host protocol is async.
+					// Fire-and-forget - the extension host protocol is async.
 					let Payload = args.first().cloned().unwrap_or(Value::Null);
 					tokio::spawn(async move {
 						if let Err(Error) = crate::Vine::Client::SendNotification(
@@ -1492,7 +1501,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 									MergedFiles.insert(0, Value::Object(Item));
 								}
 							}
-							// Cap at 50 each — matches VS Code's default in
+							// Cap at 50 each - matches VS Code's default in
 							// `src/vs/platform/workspaces/common/workspaces.ts`.
 							MergedWorkspaces.truncate(50);
 							MergedFiles.truncate(50);
@@ -1555,7 +1564,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				//   1. typo / never-registered wire string (registry::from_str Err)
 				//   2. registered but dispatch missing (registry OK but arm absent)
 				//   3. legitimately unknown
-				// Case (2) is the shape of the VSIX stub bug before K2 landed — an
+				// Case (2) is the shape of the VSIX stub bug before K2 landed - an
 				// entry present in the registry with no handler. Making it visible
 				// turns silent drift into a loud dev-log line.
 				_ => {
@@ -1598,7 +1607,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		},
 	};
 
-	// Emit OTLP span for every IPC call — visible in Jaeger at localhost:16686
+	// Emit OTLP span for every IPC call - visible in Jaeger at localhost:16686
 	let IsErr = Result.is_err();
 	let SpanName = if IsErr {
 		format!("ipc:{}:error", command)

@@ -288,7 +288,7 @@ impl MountainService for MountainVinegRPCService {
 		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
 			Ok(v) => {
 				// The previous `{:?}` Debug format serialised the full
-				// `Value` on every request — cheap for small payloads
+				// `Value` on every request - cheap for small payloads
 				// (`Diagnostic.Clear`), catastrophic for `tree.register` and
 				// `Configuration.Inspect` whose options blobs walk recursive
 				// structures. Only log param size at the default dev-log
@@ -355,7 +355,7 @@ impl MountainService for MountainVinegRPCService {
 
 			Err(ErrorString) => {
 				// `FileSystem.ReadFile` "Resource not found" is a routine
-				// occurrence — extensions probe for optional cache files on
+				// occurrence - extensions probe for optional cache files on
 				// activate (terminal-suggest, json-language-features schema
 				// associations, etc.). Downgrade 404s to an info-level note
 				// so the error log reflects genuine failures only. The
@@ -652,7 +652,7 @@ impl MountainService for MountainVinegRPCService {
 			// Cocoon → Mountain → Sky: `vscode.workspace.applyEdit(edit)`
 			// fires this when an extension wants to apply a multi-file
 			// WorkspaceEdit. The payload shape matches VS Code's `IWorkspaceEdit`
-			// — Sky delegates to its BulkEditService to apply the edits
+			// - Sky delegates to its BulkEditService to apply the edits
 			// against the open models.
 			"workspace.applyEdit" => {
 				if let Err(Error) = self.ApplicationHandle.emit("sky://workspace/applyEdit", &Parameter) {

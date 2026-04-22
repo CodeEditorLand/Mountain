@@ -27,7 +27,7 @@ pub async fn RegisterTaskProvider(
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering Task Provider: type={}", req.r#type);
 
-	// Task providers don't have handles in proto — use a hash of the type string
+	// Task providers don't have handles in proto - use a hash of the type string
 	let Handle = req
 		.r#type
 		.as_bytes()

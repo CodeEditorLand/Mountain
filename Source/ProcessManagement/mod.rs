@@ -54,3 +54,4 @@
 
 pub mod CocoonManagement;
 pub mod InitializationData;
+pub mod NodeResolver;

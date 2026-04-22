@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Search handlers — find in files, find files by glob.
+//! Search handlers - find in files, find files by glob.
 
 use std::{path::PathBuf, sync::Arc};
 

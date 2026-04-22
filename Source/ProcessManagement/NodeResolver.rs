@@ -1,0 +1,308 @@
+#![allow(non_snake_case, dead_code)]
+
+//! # Node Binary Resolver
+//!
+//! Resolves the Node.js binary used to spawn the Cocoon sidecar. Checks, in
+//! order:
+//!
+//! 1. **Explicit override** — `LAND_NODE_BINARY` env var. Operators set this
+//!    to pin to a specific Node install for reproducibility.
+//! 2. **Shipped runtime** — `Resources/Node/bin/node` relative to the Tauri
+//!    bundle (production) or `Target/<profile>/../Node/bin/node` relative to
+//!    the executable (dev). Ships alongside Mountain for hermetic builds.
+//! 3. **Version managers** — fnm, volta, asdf, nvm in their canonical
+//!    locations. Preferred over system PATH because the user's selected
+//!    version tracks their workspace (`.nvmrc`, `.tool-versions`).
+//! 4. **Package managers** — Homebrew on macOS/Linux, the most common way
+//!    Node gets installed on developer machines.
+//! 5. **PATH fallback** — `which node`. Last resort — works, but version is
+//!    whatever happens to be first in PATH.
+//!
+//! Every attempt is logged with its source so a log tells you exactly which
+//! Node Mountain picked and why. Resolution happens once at Cocoon spawn
+//! time; cached for the life of the Mountain process.
+
+use std::{
+	path::{Path, PathBuf},
+	sync::OnceLock,
+};
+
+use tauri::{AppHandle, Manager, Runtime, path::BaseDirectory};
+
+use crate::dev_log;
+
+/// Result of a Node binary resolution attempt. Carries both the path and
+/// the source so logs can distinguish shipped Node from system Node.
+#[derive(Debug, Clone)]
+pub struct ResolvedNode {
+	pub Path:PathBuf,
+	pub Source:NodeSource,
+}
+
+/// Where the Node binary came from. Ordered by preference.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum NodeSource {
+	/// `LAND_NODE_BINARY` environment variable.
+	Override,
+	/// Shipped with Mountain — `Resources/Node/bin/node` or dev-tree
+	/// equivalent.
+	Shipped,
+	/// fnm's `current/bin/node`.
+	Fnm,
+	/// Volta's `tools/image/node/<version>/bin/node`.
+	Volta,
+	/// asdf's `shims/node` — resolves via `.tool-versions`.
+	Asdf,
+	/// nvm's `versions/node/<default>/bin/node`.
+	Nvm,
+	/// Homebrew — `/opt/homebrew/bin/node` (Apple Silicon) or
+	/// `/usr/local/bin/node` (Intel macOS / Linuxbrew).
+	Homebrew,
+	/// PATH-resolved `node` — last resort fallback.
+	Path,
+}
+
+impl NodeSource {
+	pub fn AsLabel(self) -> &'static str {
+		match self {
+			Self::Override => "override",
+			Self::Shipped => "shipped",
+			Self::Fnm => "fnm",
+			Self::Volta => "volta",
+			Self::Asdf => "asdf",
+			Self::Nvm => "nvm",
+			Self::Homebrew => "homebrew",
+			Self::Path => "path",
+		}
+	}
+}
+
+static RESOLVED: OnceLock<ResolvedNode> = OnceLock::new();
+
+/// Resolve the Node binary to spawn Cocoon with. Caches the result for the
+/// life of the process. If all resolution fails, returns the string `"node"`
+/// so `Command::new` still tries a bare PATH lookup at spawn time — that
+/// matches the legacy behaviour while logging the chain of misses.
+pub fn ResolveNodeBinary<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode {
+	if let Some(Cached) = RESOLVED.get() {
+		return Cached.clone();
+	}
+
+	let Resolved = ResolveUncached(ApplicationHandle);
+
+	dev_log!(
+		"cocoon",
+		"[NodeResolver] Using: {} (source={})",
+		Resolved.Path.display(),
+		Resolved.Source.AsLabel()
+	);
+
+	// OnceLock::set is infallible after the None check above, and a race is
+	// benign — both callers would resolve to the same result.
+	let _ = RESOLVED.set(Resolved.clone());
+
+	Resolved
+}
+
+fn ResolveUncached<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode {
+	if let Some(Found) = TryOverride() {
+		return Found;
+	}
+	if let Some(Found) = TryShipped(ApplicationHandle) {
+		return Found;
+	}
+	if let Some(Found) = TryFnm() {
+		return Found;
+	}
+	if let Some(Found) = TryVolta() {
+		return Found;
+	}
+	if let Some(Found) = TryAsdf() {
+		return Found;
+	}
+	if let Some(Found) = TryNvm() {
+		return Found;
+	}
+	if let Some(Found) = TryHomebrew() {
+		return Found;
+	}
+
+	dev_log!(
+		"cocoon",
+		"[NodeResolver] No specific install found; falling back to `node` on PATH"
+	);
+
+	ResolvedNode { Path:PathBuf::from("node"), Source:NodeSource::Path }
+}
+
+fn TryOverride() -> Option<ResolvedNode> {
+	let Raw = std::env::var("LAND_NODE_BINARY").ok()?;
+	let Expanded = ExpandHome(&Raw);
+	if Expanded.exists() {
+		Some(ResolvedNode { Path:Expanded, Source:NodeSource::Override })
+	} else {
+		dev_log!(
+			"cocoon",
+			"warn: [NodeResolver] LAND_NODE_BINARY={} does not exist; ignoring",
+			Raw
+		);
+		None
+	}
+}
+
+fn TryShipped<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> Option<ResolvedNode> {
+	// Production: Tauri bundles the shipped Node under Resources/Node/bin/node
+	// (or Resources/Node/node.exe on Windows).
+	let RelativeToResource = if cfg!(target_os = "windows") {
+		"Node/node.exe"
+	} else {
+		"Node/bin/node"
+	};
+
+	if let Ok(Resolved) = ApplicationHandle.path().resolve(RelativeToResource, BaseDirectory::Resource) {
+		if Resolved.exists() {
+			return Some(ResolvedNode { Path:Resolved, Source:NodeSource::Shipped });
+		}
+	}
+
+	// Dev: executable at Target/<profile>/Mountain. Shipped Node would live
+	// at Target/<profile>/Node/bin/node alongside the binary so the dev
+	// build can dogfood the same resolution path as production.
+	let ExecutablePath = std::env::current_exe().ok()?;
+	let ExecutableDirectory = ExecutablePath.parent()?;
+	let SiblingNode = ExecutableDirectory.join(RelativeToResource);
+	if SiblingNode.exists() {
+		return Some(ResolvedNode { Path:SiblingNode, Source:NodeSource::Shipped });
+	}
+
+	None
+}
+
+fn TryFnm() -> Option<ResolvedNode> {
+	// fnm exposes `FNM_MULTISHELL_PATH` in the active shell; its `bin/node`
+	// is the version pinned by the current directory's `.nvmrc` /
+	// `.node-version`.
+	if let Ok(Multishell) = std::env::var("FNM_MULTISHELL_PATH") {
+		let Candidate = PathBuf::from(Multishell).join("bin").join(NodeExecutableName());
+		if Candidate.exists() {
+			return Some(ResolvedNode { Path:Candidate, Source:NodeSource::Fnm });
+		}
+	}
+
+	// Fallback: `~/.local/share/fnm/current` symlink (Linux default).
+	let Home = std::env::var("HOME").ok()?;
+	for Relative in ["/.local/share/fnm/current/bin", "/Library/Caches/fnm_multishells/current/bin"] {
+		let Candidate = PathBuf::from(&Home)
+			.join(Relative.trim_start_matches('/'))
+			.join(NodeExecutableName());
+		if Candidate.exists() {
+			return Some(ResolvedNode { Path:Candidate, Source:NodeSource::Fnm });
+		}
+	}
+	None
+}
+
+fn TryVolta() -> Option<ResolvedNode> {
+	let VoltaHome = std::env::var("VOLTA_HOME").ok().or_else(|| {
+		std::env::var("HOME").ok().map(|H| PathBuf::from(H).join(".volta").to_string_lossy().into_owned())
+	})?;
+	// Volta's default-version symlink: <VOLTA_HOME>/tools/image/node/current/bin/node
+	// but in practice Volta creates shim binaries under <VOLTA_HOME>/bin.
+	let ShimCandidate = PathBuf::from(&VoltaHome).join("bin").join(NodeExecutableName());
+	if ShimCandidate.exists() {
+		return Some(ResolvedNode { Path:ShimCandidate, Source:NodeSource::Volta });
+	}
+	None
+}
+
+fn TryAsdf() -> Option<ResolvedNode> {
+	let AsdfDataDir = std::env::var("ASDF_DATA_DIR").ok().or_else(|| {
+		std::env::var("HOME").ok().map(|H| PathBuf::from(H).join(".asdf").to_string_lossy().into_owned())
+	})?;
+	// asdf shims resolve the active `.tool-versions` entry on every call.
+	let ShimCandidate = PathBuf::from(&AsdfDataDir).join("shims").join(NodeExecutableName());
+	if ShimCandidate.exists() {
+		return Some(ResolvedNode { Path:ShimCandidate, Source:NodeSource::Asdf });
+	}
+	None
+}
+
+fn TryNvm() -> Option<ResolvedNode> {
+	// `NVM_BIN` is set inside a shell with nvm sourced; it points directly
+	// at `<nvm_dir>/versions/node/<current>/bin`.
+	if let Ok(NvmBin) = std::env::var("NVM_BIN") {
+		let Candidate = PathBuf::from(NvmBin).join(NodeExecutableName());
+		if Candidate.exists() {
+			return Some(ResolvedNode { Path:Candidate, Source:NodeSource::Nvm });
+		}
+	}
+
+	// Fallback: walk `$NVM_DIR/versions/node` / `~/.nvm/versions/node` and
+	// pick the lexicographically largest version (rough proxy for "latest
+	// installed"). Users who want a specific version should export
+	// `LAND_NODE_BINARY` instead.
+	let NvmDir = std::env::var("NVM_DIR").ok().or_else(|| {
+		std::env::var("HOME").ok().map(|H| PathBuf::from(H).join(".nvm").to_string_lossy().into_owned())
+	})?;
+
+	let VersionsDirectory = PathBuf::from(&NvmDir).join("versions").join("node");
+	let Entries = std::fs::read_dir(&VersionsDirectory).ok()?;
+
+	let mut BestCandidate:Option<PathBuf> = None;
+	for Entry in Entries.flatten() {
+		let NodePath = Entry.path().join("bin").join(NodeExecutableName());
+		if !NodePath.exists() {
+			continue;
+		}
+		BestCandidate = match BestCandidate {
+			Some(Existing) if Existing > NodePath => Some(Existing),
+			_ => Some(NodePath),
+		};
+	}
+
+	BestCandidate.map(|Path| ResolvedNode { Path, Source:NodeSource::Nvm })
+}
+
+fn TryHomebrew() -> Option<ResolvedNode> {
+	for Candidate in ["/opt/homebrew/bin/node", "/usr/local/bin/node", "/home/linuxbrew/.linuxbrew/bin/node"] {
+		let Path = PathBuf::from(Candidate);
+		if Path.exists() {
+			return Some(ResolvedNode { Path, Source:NodeSource::Homebrew });
+		}
+	}
+	None
+}
+
+fn NodeExecutableName() -> &'static str {
+	if cfg!(target_os = "windows") { "node.exe" } else { "node" }
+}
+
+fn ExpandHome(Raw:&str) -> PathBuf {
+	if let Some(Stripped) = Raw.strip_prefix("~/") {
+		if let Ok(Home) = std::env::var("HOME") {
+			return PathBuf::from(Home).join(Stripped);
+		}
+	}
+	PathBuf::from(Raw)
+}
+
+#[cfg(test)]
+mod Tests {
+	use super::*;
+
+	#[test]
+	fn NodeExecutableNameMatchesPlatform() {
+		let Name = NodeExecutableName();
+		if cfg!(target_os = "windows") {
+			assert_eq!(Name, "node.exe");
+		} else {
+			assert_eq!(Name, "node");
+		}
+	}
+
+	#[test]
+	fn ExpandHomePreservesAbsolute() {
+		let Absolute = Path::new("/usr/local/bin/node");
+		assert_eq!(ExpandHome("/usr/local/bin/node"), Absolute);
+	}
+}

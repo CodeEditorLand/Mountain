@@ -40,6 +40,6 @@ pub use CommonLibrary::Configuration::DTO::{
 	ConfigurationTarget::ConfigurationTarget,
 };
 
-// Helper functions from WindServiceHandlers.rs — re-exported for submodule use
+// Helper functions from WindServiceHandlers.rs - re-exported for submodule use
 pub use super::WindServiceHandlers::extract_path_from_arg;
 pub use super::WindServiceHandlers::metadata_to_istat;

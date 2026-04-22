@@ -1,8 +1,8 @@
-//! # EchoAction — Cocoon → Mountain routing through Echo (Atom O4)
+//! # EchoAction - Cocoon → Mountain routing through Echo (Atom O4)
 //!
 //! Every request that Cocoon sends back into Mountain (via `MountainService`
 //! gRPC) used to execute inline on the tonic handler future. That's fine in
-//! the steady state but pathological under bursts — a `$activateByEvent("*")`
+//! the steady state but pathological under bursts - a `$activateByEvent("*")`
 //! fan-out can fire 28+ `ReadFile` + 28+ `Stat` + 28+ `Configuration.Inspect`
 //! calls within a few hundred milliseconds and starve any interactive Wind
 //! IPC that arrives during the burst.
@@ -75,7 +75,7 @@ impl EchoActionServer {
 				let Output = Task.await;
 
 				if Sender.send(Output).is_err() {
-					// Receiver dropped — tonic future was cancelled. Fine;
+					// Receiver dropped - tonic future was cancelled. Fine;
 					// nothing to do.
 				}
 			},

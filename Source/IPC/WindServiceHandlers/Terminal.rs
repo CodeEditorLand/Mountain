@@ -107,7 +107,7 @@ pub async fn handle_terminal_hide(
 // Local PTY handlers
 // ============================================================================
 
-/// Detect available terminal profiles — cross-platform.
+/// Detect available terminal profiles - cross-platform.
 pub async fn handle_local_pty_get_profiles() -> Result<Value, String> {
 	let mut Profiles = Vec::new();
 
@@ -233,7 +233,7 @@ pub async fn handle_local_pty_get_profiles() -> Result<Value, String> {
 	Ok(json!(Profiles))
 }
 
-/// Get default system shell — cross-platform.
+/// Get default system shell - cross-platform.
 pub async fn handle_local_pty_get_default_shell() -> Result<Value, String> {
 	#[cfg(unix)]
 	{

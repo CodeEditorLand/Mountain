@@ -1,4 +1,4 @@
-// TraceLog — debug tracing macro for fine-grained execution step tracking.
+// TraceLog - debug tracing macro for fine-grained execution step tracking.
 
 /// Logs a checkpoint message at TRACE level (for "every step" tracing).
 ///

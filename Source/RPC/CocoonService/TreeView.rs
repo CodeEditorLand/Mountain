@@ -58,6 +58,6 @@ pub async fn GetTreeChildren(
 	// Tree children are fetched by forwarding to Cocoon via the generic RPC path.
 	// The extension registers a TreeDataProvider; when Sky needs children,
 	// Mountain looks up the provider handle and invokes Cocoon.
-	// For now return empty — will be wired when Cocoon activation is complete.
+	// For now return empty - will be wired when Cocoon activation is complete.
 	Ok(Response::new(GetTreeChildrenResponse { items:Vec::new() }))
 }

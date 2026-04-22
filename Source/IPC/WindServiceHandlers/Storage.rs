@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Persistent storage handlers — get, set, delete, keys, bulk operations.
+//! Persistent storage handlers - get, set, delete, keys, bulk operations.
 
 use std::sync::Arc;
 

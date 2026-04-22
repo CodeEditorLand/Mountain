@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Output channel handlers — create, append, clear, show.
+//! Output channel handlers - create, append, clear, show.
 
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 use serde_json::{Value, json};

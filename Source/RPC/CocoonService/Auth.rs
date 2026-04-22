@@ -30,7 +30,7 @@ pub async fn GetAuthenticationSession(
 		req.provider_id
 	);
 
-	// Return empty session — auth providers register themselves via
+	// Return empty session - auth providers register themselves via
 	// register_authentication_provider and get stored in ApplicationState.
 	// The full OAuth flow requires Mountain to open a browser window.
 	Ok(Response::new(GetAuthenticationSessionResponse::default()))

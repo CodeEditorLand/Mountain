@@ -116,7 +116,7 @@ pub async fn MountainWorkspaceListFolders(
 		.collect())
 }
 
-/// Close every workspace folder — equivalent to VS Code's
+/// Close every workspace folder - equivalent to VS Code's
 /// `workbench.action.closeFolder`. Extensions that subscribe to
 /// `onDidChangeWorkspaceFolders` receive an event whose `removed` array
 /// contains every previously-open folder.

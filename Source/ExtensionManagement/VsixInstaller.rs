@@ -30,14 +30,14 @@
 //! The first pass reads only `extension/package.json` to compute the install
 //! path (we need publisher+name+version *before* writing any files, so we can
 //! reject collisions without partial writes). The second pass streams
-//! everything to disk. This keeps memory low — we never hold the full archive
+//! everything to disk. This keeps memory low - we never hold the full archive
 //! in RAM, and we don't unpack to a temp dir just to move it.
 //!
 //! ## Why no gallery API?
 //!
 //! `extensions:install` in `WindServiceHandlers.rs` previously responded to
 //! both `install` (gallery) and `install-vsix` (local file). This installer
-//! handles the local-file case — VS Code's gallery contract requires an
+//! handles the local-file case - VS Code's gallery contract requires an
 //! online marketplace which Land does not currently host. Gallery support
 //! can layer on later by resolving a publisher identifier + version to a
 //! VSIX URL, downloading to a temp file, and calling `InstallVsix`.
@@ -58,7 +58,7 @@ use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescri
 /// Everything an IPC handler needs after a successful install.
 #[derive(Debug)]
 pub struct InstallOutcome {
-	/// `<publisher>.<name>` — the canonical identifier string.
+	/// `<publisher>.<name>` - the canonical identifier string.
 	pub Identifier:String,
 	/// Semver string from the manifest.
 	pub Version:String,
@@ -142,7 +142,7 @@ pub fn UninstallExtension(InstallDir:&Path) -> Result<(), InstallError> {
 	if !InstallDir.exists() {
 		dev_log!(
 			"extensions",
-			"[VsixInstaller] Uninstall skipped — {} already absent",
+			"[VsixInstaller] Uninstall skipped - {} already absent",
 			InstallDir.display()
 		);
 

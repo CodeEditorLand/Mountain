@@ -129,7 +129,7 @@ fn FileSinkEnabled() -> bool {
 ///
 /// The timestamp is picked once per process at first call. If the app-data
 /// prefix can't be detected (Tauri hasn't spawned yet, say), fall back to
-/// the system temp directory with the same naming — dev_log still works
+/// the system temp directory with the same naming - dev_log still works
 /// and the file ends up somewhere predictable.
 fn ResolveLogDirectory() -> PathBuf {
 	let Stamp = FormatTimestamp();
@@ -143,7 +143,7 @@ fn ResolveLogDirectory() -> PathBuf {
 /// Session timestamp in local time, cached once per process. MUST match
 /// whatever `WindServiceHandlers.rs::"nativeHost:getEnvironmentPaths"`
 /// builds, because VS Code's file service writes `window1/output/*.log`
-/// into the directory that handler returns — if DevLog and VS Code use
+/// into the directory that handler returns - if DevLog and VS Code use
 /// different timezones, `Mountain.dev.log` and the `window1/` subtree
 /// land in two sibling directories 2–3 hours apart, which makes every
 /// post-mortem investigation start with "which folder has the real
@@ -171,7 +171,7 @@ fn FormatTimestamp() -> String { SessionTimestamp() }
 // so the vendored date math is dead weight now.
 
 /// Initialise the file sink on first call. Silently falls through to a
-/// disabled sink if the directory or file can't be created — the caller
+/// disabled sink if the directory or file can't be created - the caller
 /// must never panic because of a log-file failure.
 fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 	LOG_FILE.get_or_init(|| {
@@ -190,7 +190,7 @@ fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 				// Header pins the boot-time context so every session's file
 				// is self-describing even without the surrounding terminal.
 				let Header = format!(
-					"# Land dev log — started {}, pid {}, tags={:?}, short={}\n",
+					"# Land dev log - started {}, pid {}, tags={:?}, short={}\n",
 					FormatTimestamp(),
 					std::process::id(),
 					EnabledTags(),
@@ -210,7 +210,7 @@ fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 }
 
 /// Append a single formatted line to the session's log file if the file
-/// sink is active. Swallows every error — dev_log must never crash.
+/// sink is active. Swallows every error - dev_log must never crash.
 pub fn WriteToFile(Line:&str) {
 	let Sink = InitFileSink();
 	if let Ok(mut Guard) = Sink.lock() {
@@ -219,7 +219,7 @@ pub fn WriteToFile(Line:&str) {
 			if !Line.ends_with('\n') {
 				let _ = Writer.write_all(b"\n");
 			}
-			// Flush on every line — ordering/tail-f matters more than throughput
+			// Flush on every line - ordering/tail-f matters more than throughput
 			// for dev logs, and the BufWriter coalesces partial writes anyway.
 			let _ = Writer.flush();
 		}
@@ -233,9 +233,9 @@ static APP_DATA_PREFIX:OnceLock<Option<String>> = OnceLock::new();
 /// Produce an identity signature for THIS running binary derived from
 /// `CARGO_PKG_NAME` (which Maintain sets to the long PascalCase product
 /// name before `cargo build`). Each profile produces a distinct signature
-/// — `_Debug_Mountain` → `.debug.mountain`, `_Compile_Mountain` →
+/// - `_Debug_Mountain` → `.debug.mountain`, `_Compile_Mountain` →
 /// `.compile.mountain`, `_Bundle_Clean_Debug_ElectronProfile_Mountain`
-/// → `.debug.electron.profile.mountain` — so a candidate directory in
+/// → `.debug.electron.profile.mountain` - so a candidate directory in
 /// `~/Library/Application Support/` can be disambiguated against every
 /// other `land.editor.*.mountain` leftover from prior runs.
 ///
@@ -253,7 +253,7 @@ fn BinarySignature() -> String {
 	let Tail = Segments[Start..].join("_");
 	// Lowercase + `_` → `.` gives the same segment order the Tauri
 	// identifier uses (identifiers are dot-delimited lowercase). We
-	// don't split PascalCase into words here — the substring match
+	// don't split PascalCase into words here - the substring match
 	// below doesn't need exact equality, just a unique tail.
 	Tail.to_ascii_lowercase().replace('_', ".")
 }
@@ -467,7 +467,7 @@ macro_rules! dev_log {
 }
 
 // ============================================================================
-// OTLP Span Emission — sends spans directly to Jaeger/OTEL collector
+// OTLP Span Emission - sends spans directly to Jaeger/OTEL collector
 // ============================================================================
 
 static OTLP_AVAILABLE:AtomicBool = AtomicBool::new(true);

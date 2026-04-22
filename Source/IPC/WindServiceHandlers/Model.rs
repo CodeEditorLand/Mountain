@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Text model registry and TextFile handlers — open, close, get, update,
+//! Text model registry and TextFile handlers - open, close, get, update,
 //! read, write, save.
 
 use std::sync::Arc;

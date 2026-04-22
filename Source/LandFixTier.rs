@@ -1,4 +1,4 @@
-//! # LandFixTier — Mountain's runtime tier banner
+//! # LandFixTier - Mountain's runtime tier banner
 //!
 //! Emits one ISO-timestamped line at boot listing every tier variable's
 //! compiled value. Because the values are resolved at compile time via
@@ -14,7 +14,7 @@
 //! | ----------------------- | ----------------------------------------------------------------- |
 //! | Log readers (humans)    | A pasted session log must show at-a-glance which tier was active. |
 //! | Regression triage       | Confirms the binary on disk matches the `.env.Land` that shipped. |
-//! | Cross-Element agreement | Pairs with Cocoon's `[LandFix:Tier] Cocoon tier set resolved:` and Sky's `[LandFix:Tier] Sky tier set:` — if Mountain disagrees with either, configuration drift is the root cause. |
+//! | Cross-Element agreement | Pairs with Cocoon's `[LandFix:Tier] Cocoon tier set resolved:` and Sky's `[LandFix:Tier] Sky tier set:` - if Mountain disagrees with either, configuration drift is the root cause. |
 //!
 //! ## Call site
 //!
@@ -22,7 +22,7 @@
 //! before the Tokio runtime starts spawning tasks, because `dev_log!` is
 //! synchronous and the banner should land before any extension code runs.
 //!
-//! Runtime overhead is zero — all `env!(...)` invocations resolve to string
+//! Runtime overhead is zero - all `env!(...)` invocations resolve to string
 //! literals at compile time and Rust's `println!`/`dev_log!` codegen inlines
 //! the format arguments into a single write call.
 //!

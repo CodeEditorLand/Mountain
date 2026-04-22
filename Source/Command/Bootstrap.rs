@@ -367,7 +367,7 @@ fn CommandReloadWindow(
 
 		// Drive the real webview reload so extensions, settings, and locale
 		// changes take effect without restarting the process. Swallow the
-		// error — VS Code's contract returns `{ success: true }` on
+		// error - VS Code's contract returns `{ success: true }` on
 		// best-effort reload and extensions don't inspect it further.
 		if let Err(Error) = Window.eval("location.reload()") {
 			dev_log!("commands", "warn: [Native Command] Reload Window eval failed: {}", Error);
@@ -377,7 +377,7 @@ fn CommandReloadWindow(
 	})
 }
 
-/// `vscode.open(uri, columnOrOptions?)` — the built-in command every
+/// `vscode.open(uri, columnOrOptions?)` - the built-in command every
 /// extension uses to jump to a file or open an external URL. Routes to
 /// `window.showTextDocument` for `file://` URIs (via the sky-channel so Sky
 /// can open the editor) and to `NativeHost.OpenExternal` for anything else.
@@ -504,12 +504,12 @@ pub fn RegisterNativeCommands(
 		CommandHandler::Native(CommandReloadWindow),
 	);
 
-	// setContext is VS Code built-in — extensions invoke it on activation to
+	// setContext is VS Code built-in - extensions invoke it on activation to
 	// declare UI context keys. Registering as a no-op silences the routing
 	// error until Wind/Sky wire through a real context key service.
 	CommandRegistry.insert("setContext".to_string(), CommandHandler::Native(CommandSetContext));
 
-	// `vscode.open(uri)` — dispatches to the editor for file URIs and to the
+	// `vscode.open(uri)` - dispatches to the editor for file URIs and to the
 	// platform shell for everything else. Extensions call this without
 	// guarding on whether we've registered it; a missing registration shows
 	// up as "command 'vscode.open' not found" in user-visible error toasts.

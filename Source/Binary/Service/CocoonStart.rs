@@ -40,7 +40,7 @@ pub async fn CocoonStart(
 		},
 		Err(e) => {
 			dev_log!("cocoon", "warn: [Cocoon] [Start] Cocoon unavailable (degraded mode): {}", e);
-			Ok(()) // Graceful degradation — workbench works without Cocoon
+			Ok(()) // Graceful degradation - workbench works without Cocoon
 		},
 	}
 }

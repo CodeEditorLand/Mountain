@@ -130,9 +130,9 @@ TierLoggerRing = []
 TierFileSystemLayer4 = []
 # Tier:FindFiles:Layer4 🟣 Experimental
 TierFindFilesLayer4 = []
-# Tier:Glob:Native 🟣 Experimental — globset-compiled patterns
+# Tier:Glob:Native 🟣 Experimental - globset-compiled patterns
 TierGlobNative = []
-# Tier:FileWatcher:Layer4 🟣 Experimental — notify-rs FS events (dep is already on the crate)
+# Tier:FileWatcher:Layer4 🟣 Experimental - notify-rs FS events (dep is already on the crate)
 TierFileWatcherLayer4 = []
 # Tier:SchemeAssets:Hybrid 🟣 Experimental
 TierSchemeAssetsHybrid = []
@@ -140,9 +140,9 @@ TierSchemeAssetsHybrid = []
 TierConfigurationEager = []
 # Tier:Diagnostics:Delta 🟣 Experimental
 TierDiagnosticsDelta = []
-# Tier:Clipboard:Layer4 🟣 Experimental — arboard crate is on the crate unconditionally
+# Tier:Clipboard:Layer4 🟣 Experimental - arboard crate is on the crate unconditionally
 TierClipboardLayer4 = []
-# Tier:OpenExternal:Layer4 🟣 Experimental — `open` crate is on the crate unconditionally
+# Tier:OpenExternal:Layer4 🟣 Experimental - `open` crate is on the crate unconditionally
 TierOpenExternalLayer4 = []
 # Tier:ExtensionScan:Parallel 🟣 Experimental
 TierExtensionScanParallel = []

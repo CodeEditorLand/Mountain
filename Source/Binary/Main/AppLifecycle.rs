@@ -192,7 +192,7 @@ pub fn AppLifecycleSetup(
 		// Tauri's resource_dir gives us the frontendDist path.
 		let SkyTargetDir = PathResolver.resource_dir().unwrap_or_else(|_| {
 			// Fallback: dev-only path based on the monorepo layout. Release
-			// builds must rely on Tauri's bundled resource_dir() — if that
+			// builds must rely on Tauri's bundled resource_dir() - if that
 			// fails in prod, something is wrong with the bundle. The cfg
 			// keeps the dev fallback out of release binaries so a broken
 			// bundle fails loudly instead of creating directories outside it.
@@ -270,8 +270,8 @@ pub fn AppLifecycleSetup(
 		// extensions whose `location` is inside the picked folder are
 		// marked `DisabledByTrustRequirement` (see
 		// `extensionEnablementService.ts:549`). Since our built-ins ship
-		// under `Element/Sky/Target/Static/Application/extensions/` —
-		// which IS inside the repo — any user picking the repo as a
+		// under `Element/Sky/Target/Static/Application/extensions/` -
+		// which IS inside the repo - any user picking the repo as a
 		// workspace hits this filter for every extension. Disabling the
 		// trust system wholesale is the correct Land-level policy; we're
 		// a personal editor, not a multi-user sandbox. Users can opt
@@ -376,7 +376,7 @@ pub fn AppLifecycleSetup(
 		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
 		crate::otel_span!("lifecycle:config:initialize", ConfigStart);
 
-		// [Workspace] [Trust] Desktop app — trust local workspace by default
+		// [Workspace] [Trust] Desktop app - trust local workspace by default
 		AppStateForSetup.Workspace.SetTrustStatus(true);
 
 		// [Extensions] [ScanPaths]
@@ -409,7 +409,7 @@ pub fn AppLifecycleSetup(
 		AppStateForSetup.Feature.Lifecycle.AdvanceAndBroadcast(2, &PostSetupAppHandle);
 
 		// Schedule a background transition to Restored (3), then Eventually
-		// (4). Sky/Wind are the authoritative signal — they call
+		// (4). Sky/Wind are the authoritative signal - they call
 		// `lifecycle:advancePhase` over Tauri IPC when the workbench is
 		// truly interactive (`Restored`) and when late-binding extensions
 		// should stop blocking (`Eventually`). `AdvanceAndBroadcast`
@@ -417,7 +417,7 @@ pub fn AppLifecycleSetup(
 		// so the timers below are pure fallbacks: if Sky has already driven
 		// the phase, these become no-ops and log nothing visible.
 		//
-		// The windows are deliberately generous — a debug-electron cold
+		// The windows are deliberately generous - a debug-electron cold
 		// boot with 98 extensions has been observed to finish its
 		// `$activateByEvent("*")` burst at ~3.5 s on an M4 mini and
 		// noticeably later on older hardware. The previous 2 s / 5 s

@@ -11,7 +11,7 @@
  *   VSCODE_PARENT_PID   - Mountain's PID for orphan detection
  *
  * Telemetry:
- *   - PostHog EU Cloud (debug only) — sends cocoon:* events
+ *   - PostHog EU Cloud (debug only) - sends cocoon:* events
  *   - OTEL via performance marks (Node 16+ performance.mark)
  */
 
@@ -22,7 +22,7 @@ const CocoonGRPCPort = process.env.COCOON_GRPC_PORT || "50052";
 const ParentPID = process.env.VSCODE_PARENT_PID;
 
 // ============================================================================
-// Trace — performance.mark only, zero console.log in normal operation
+// Trace - performance.mark only, zero console.log in normal operation
 // ============================================================================
 
 const Trace = (Tag, Message) => {
@@ -32,7 +32,7 @@ const Trace = (Tag, Message) => {
 Trace("bootstrap", "start");
 
 // ============================================================================
-// PostHog — debug only, fire-and-forget via HTTP POST
+// PostHog - debug only, fire-and-forget via HTTP POST
 // ============================================================================
 
 const PostHogAPIKey = "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA";
@@ -67,16 +67,16 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 			method: "POST",
 			headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(Body) },
 		});
-		Req.on("error", () => {}); // Swallow — fire and forget
+		Req.on("error", () => {}); // Swallow - fire and forget
 		Req.write(Body);
 		Req.end();
 	} catch {
-		// PostHog unavailable — no-op
+		// PostHog unavailable - no-op
 	}
 };
 
 // ============================================================================
-// OTEL — send performance marks to Mountain's OTLP proxy
+// OTEL - send performance marks to Mountain's OTLP proxy
 // ============================================================================
 
 const OTLPFlush = async () => {
@@ -135,7 +135,7 @@ const OTLPFlush = async () => {
 setInterval(OTLPFlush, 5000);
 
 // ============================================================================
-// Orphan detection — exit if Mountain dies
+// Orphan detection - exit if Mountain dies
 // ============================================================================
 
 if (ParentPID) {
@@ -200,7 +200,7 @@ if (!Loaded) {
 		searched: CocoonEntryPaths.map(P => P.pathname),
 	});
 
-	// Keep alive — Mountain health monitor checks every 5s
+	// Keep alive - Mountain health monitor checks every 5s
 	setInterval(() => {}, 30000);
 }
 

@@ -97,7 +97,7 @@ pub async fn ScanAndPopulateExtensions(
 						rejected_empty_identifier += 1;
 						dev_log!(
 							"extensions",
-							"warn: [ExtensionScanner] Rejected extension '{}' — empty identifier (publisher='{}', \
+							"warn: [ExtensionScanner] Rejected extension '{}' - empty identifier (publisher='{}', \
 							 Identifier={:?})",
 							extension.Name,
 							extension.Publisher,

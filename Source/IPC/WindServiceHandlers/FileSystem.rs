@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! File system handlers — both legacy (runtime-routed) and native (URI-aware).
+//! File system handlers - both legacy (runtime-routed) and native (URI-aware).
 
 use std::{path::PathBuf, sync::Arc};
 

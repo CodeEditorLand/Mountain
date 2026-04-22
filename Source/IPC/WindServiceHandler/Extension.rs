@@ -40,7 +40,7 @@ fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 				dev_log!("extensions", "$deltaExtensions applied: {}", Response);
 			},
 			Err(Error) => {
-				// Non-fatal — most commonly hit when Cocoon is intentionally
+				// Non-fatal - most commonly hit when Cocoon is intentionally
 				// off (LAND_SPAWN_COCOON=false) or still booting.
 				dev_log!("extensions", "warn: $deltaExtensions failed (non-fatal): {}", Error);
 			},
@@ -79,7 +79,7 @@ pub async fn handle_extensions_get_all(Runtime:Arc<ApplicationRunTime>) -> Resul
 	} else if ExtensionCount == 0 {
 		dev_log!(
 			"extensions",
-			"warn: extensions:getAll returning EMPTY — scan has not populated ScannedExtensions, or all inserts were \
+			"warn: extensions:getAll returning EMPTY - scan has not populated ScannedExtensions, or all inserts were \
 			 rejected"
 		);
 	}
@@ -121,13 +121,13 @@ pub async fn handle_extensions_is_active(Runtime:Arc<ApplicationRunTime>, Args:V
 }
 
 // ---------------------------------------------------------------------------
-// Atom K2 / K3 — local VSIX install & uninstall
+// Atom K2 / K3 - local VSIX install & uninstall
 // ---------------------------------------------------------------------------
 //
 // Wind ships two kinds of install call:
-//   1. from the "Install from VSIX…" dialog — args[0] is a URI string pointing
+//   1. from the "Install from VSIX…" dialog - args[0] is a URI string pointing
 //      at a local `.vsix`.
-//   2. from the Extensions sidebar row — args[0] is a gallery identifier, which
+//   2. from the Extensions sidebar row - args[0] is a gallery identifier, which
 //      we do not support (no marketplace backend) and which returns null with a
 //      clear log line.
 //
@@ -140,7 +140,7 @@ pub async fn handle_extensions_is_active(Runtime:Arc<ApplicationRunTime>, Args:V
 //     the sidebar,
 //   - logs one summary line under the `extensions` tag.
 
-/// `~/.land/extensions` — matches the user-scope scan path in
+/// `~/.land/extensions` - matches the user-scope scan path in
 /// `Binary/Extension/ScanPathConfigure.rs` so VSIX-installed extensions
 /// appear on the next Mountain boot without a separate sync step.
 fn UserExtensionDirectory() -> PathBuf {
@@ -178,7 +178,7 @@ fn VsixPathFromArgs(Args:&[Value]) -> Option<PathBuf> {
 	Some(PathBuf::from(RawString))
 }
 
-/// `extensions:install` — local VSIX only. Gallery installs are declined.
+/// `extensions:install` - local VSIX only. Gallery installs are declined.
 pub async fn handle_extensions_install(
 	ApplicationHandle:AppHandle,
 	Runtime:Arc<ApplicationRunTime>,
@@ -219,7 +219,7 @@ pub async fn handle_extensions_install(
 
 	let Descriptor = serde_json::to_value(&Outcome.Description).unwrap_or(Value::Null);
 
-	// Atom K4: tell Cocoon to hot-activate the new extension — no window
+	// Atom K4: tell Cocoon to hot-activate the new extension - no window
 	// reload required. Cocoon's `$deltaExtensions` handler adds the
 	// descriptor to its registry, indexes `activationEvents`, and fires its
 	// own `deltaExtensions` event so any live consumers (ExtensionsNamespace
@@ -259,7 +259,7 @@ pub async fn handle_extensions_install(
 		]
 	);
 
-	// ILocalExtension envelope — matches `handle_extensions_get_installed`
+	// ILocalExtension envelope - matches `handle_extensions_get_installed`
 	// so VS Code's ExtensionEnablementService merges it into the sidebar.
 	Ok(json!({
 		"type": 1,
@@ -290,7 +290,7 @@ pub async fn handle_extensions_install(
 	}))
 }
 
-/// `extensions:uninstall` — remove install dir, clear registry entry.
+/// `extensions:uninstall` - remove install dir, clear registry entry.
 pub async fn handle_extensions_uninstall(
 	ApplicationHandle:AppHandle,
 	Runtime:Arc<ApplicationRunTime>,
@@ -345,7 +345,7 @@ pub async fn handle_extensions_uninstall(
 		.ScannedExtensions
 		.Remove(&Identifier);
 
-	// Atom K4: symmetric with install — tell Cocoon to drop the extension
+	// Atom K4: symmetric with install - tell Cocoon to drop the extension
 	// from its registry so live consumers (`onDidChangeExtensions`) refresh.
 	if !RemovedDescriptor.is_null() {
 		NotifyCocoonDeltaExtensions(Vec::new(), vec![RemovedDescriptor]);

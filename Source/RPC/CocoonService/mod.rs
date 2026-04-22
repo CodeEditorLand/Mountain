@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-// # CocoonServiceImpl — thin-wrapper dispatcher
+// # CocoonServiceImpl - thin-wrapper dispatcher
 //
 // Domain files hold all typed RPC implementations. This module keeps:
 // - CocoonServiceImpl struct + helper methods
@@ -1474,19 +1474,19 @@ impl CocoonService for CocoonServiceImpl {
 		Provider::ProvideCodeActions(self, request.into_inner()).await
 	}
 
-	async fn show_text_document(&self, request:Request<ShowTextDocumentRequest>) -> Result<Response<Empty>, Status> {
+	async fn show_text_document(&self, request:Request<ShowTextDocumentRequest>) -> Result<Response<ShowTextDocumentResponse>, Status> {
 		Window::ShowTextDocument(self, request.into_inner()).await
 	}
 
-	async fn show_information_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<Empty>, Status> {
+	async fn show_information_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowInformationMessage(self, request.into_inner()).await
 	}
 
-	async fn show_warning_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<Empty>, Status> {
+	async fn show_warning_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowWarningMessage(self, request.into_inner()).await
 	}
 
-	async fn show_error_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<Empty>, Status> {
+	async fn show_error_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowErrorMessage(self, request.into_inner()).await
 	}
 
@@ -1638,7 +1638,7 @@ impl CocoonService for CocoonServiceImpl {
 		Debug::RegisterDebugAdapter(self, request.into_inner()).await
 	}
 
-	async fn start_debugging(&self, request:Request<StartDebuggingRequest>) -> Result<Response<Empty>, Status> {
+	async fn start_debugging(&self, request:Request<StartDebuggingRequest>) -> Result<Response<StartDebuggingResponse>, Status> {
 		Debug::StartDebugging(self, request.into_inner()).await
 	}
 
