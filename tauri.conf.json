@@ -15,7 +15,7 @@
 				"default-src": "'self' land:",
 				"font-src": "'self' land: vscode-file: vscode-file://vscode-app vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost",
 				"frame-src": "'self' vscode-webview: http://localhost:* https://tauri.localhost https://*.vscode-cdn.net",
-				"img-src": "'self' land: data: blob: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost https:",
+				"img-src": "'self' land: data: blob: vscode-file: vscode-file://vscode-app vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost https:",
 				"manifest-src": "'self' http://localhost:* https://tauri.localhost",
 				"media-src": "'self' http://localhost:* https://tauri.localhost",
 				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost vscode-file://vscode-app https://eu-assets.i.posthog.com",
@@ -29,7 +29,7 @@
 				"default-src": "'self' land:",
 				"font-src": "'self' land: vscode-file: vscode-file://vscode-app vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost",
 				"frame-src": "'self' vscode-webview: http://localhost:* https://tauri.localhost https://*.vscode-cdn.net",
-				"img-src": "'self' land: data: blob: vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost https:",
+				"img-src": "'self' land: data: blob: vscode-file: vscode-file://vscode-app vscode-remote-resource: vscode-managed-remote-resource: http://localhost:* https://tauri.localhost https:",
 				"manifest-src": "'self' http://localhost:* https://tauri.localhost",
 				"media-src": "'self' http://localhost:* https://tauri.localhost",
 				"script-src": "'self' 'unsafe-inline' 'unsafe-eval' blob: http://localhost:* https://tauri.localhost vscode-file://vscode-app https://eu-assets.i.posthog.com",
@@ -69,9 +69,7 @@
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
-		"externalBin": [
-			"Binary/node"
-		],
+		"externalBin": [],
 		"fileAssociations": [],
 		"homepage": "https://Editor.Land",
 		"iOS": {
@@ -127,9 +125,7 @@
 		"publisher": "PlayForm",
 		"resources": null,
 		"shortDescription": "",
-		"targets": [
-			"app"
-		],
+		"targets": ["app"],
 		"windows": {
 			"allowDowngrades": true,
 			"certificateThumbprint": null,
@@ -143,7 +139,7 @@
 			}
 		}
 	},
-	"identifier": "land.editor.binary.development.node.environment.microsoft.vscode.dependency.node.22.bundle.clean.debug.electron.profile.mountain",
-	"productName": "DevelopmentNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Debug_ElectronProfile_Mountain",
+	"identifier": "land.editor.binary",
+	"productName": "Mountain",
 	"version": "0.0.1"
 }
