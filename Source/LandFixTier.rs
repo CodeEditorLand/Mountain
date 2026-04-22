@@ -3,7 +3,7 @@
 //! Emits a single ISO-timestamped boot banner listing the compiled-in value of
 //! every tier variable. Because all `env!("Tier…")` calls are resolved by
 //! `build.rs::PropagateTierGating` at compile time, the banner always reflects
-//! the exact configuration baked into *this* binary — not whatever the host
+//! the exact configuration baked into *this* binary - not whatever the host
 //! environment happens to export at runtime.
 //!
 //! ## Design Rationale
@@ -22,7 +22,7 @@
 //! before the Tokio runtime begins spawning tasks. `dev_log!` is synchronous,
 //! so the banner is guaranteed to land in the log before any extension code runs.
 //!
-//! Runtime overhead is zero — all `env!(...)` invocations become string
+//! Runtime overhead is zero - all `env!(...)` invocations become string
 //! literals at compile time and are inlined into a single write call.
 //!
 //! ## References

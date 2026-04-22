@@ -113,7 +113,7 @@ pub struct ExtensionDescriptionStateDTO {
 	/// "Keymaps", "SCM Providers", "Testing", "Education", "Other").
 	///
 	/// Atom TH1: Wind's Extensions sidebar filters `@builtin category:themes`
-	/// against this array. Without the field the filter never matches —
+	/// against this array. Without the field the filter never matches -
 	/// user reported theme extensions absent on @builtin search despite
 	/// being on disk. Scanner-passthrough surfaces the raw package.json
 	/// value; resolved NLS placeholders survive because the serde
@@ -133,7 +133,7 @@ pub struct ExtensionDescriptionStateDTO {
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub Description:Option<String>,
 
-	/// Extension keywords array — searched by the sidebar when the query
+	/// Extension keywords array - searched by the sidebar when the query
 	/// doesn't match `name`, `displayName`, or `description`.
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub Keywords:Option<Vec<String>>,
@@ -158,7 +158,7 @@ pub struct ExtensionDescriptionStateDTO {
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub Icon:Option<String>,
 
-	/// Marketplace API key placeholder — still present in some upstream
+	/// Marketplace API key placeholder - still present in some upstream
 	/// built-in manifests. `@vscode/extension-telemetry` reads its
 	/// length on construction; if missing the activate throws
 	/// `Cannot read properties of undefined (reading 'length')`.
@@ -171,15 +171,15 @@ pub struct ExtensionDescriptionStateDTO {
 	#[serde(default, skip_serializing_if = "Option::is_none", rename = "extensionKind")]
 	pub ExtensionKind:Option<Value>,
 
-	/// Capabilities descriptor — `untrustedWorkspaces`, `virtualWorkspaces`.
+	/// Capabilities descriptor - `untrustedWorkspaces`, `virtualWorkspaces`.
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub Capabilities:Option<Value>,
 
-	/// Dependency list — other extensions this one needs activated first.
+	/// Dependency list - other extensions this one needs activated first.
 	#[serde(default, skip_serializing_if = "Option::is_none", rename = "extensionDependencies")]
 	pub ExtensionDependencies:Option<Vec<String>>,
 
-	/// Extension-pack children — extensions this one bundles by reference.
+	/// Extension-pack children - extensions this one bundles by reference.
 	#[serde(default, skip_serializing_if = "Option::is_none", rename = "extensionPack")]
 	pub ExtensionPack:Option<Vec<String>>,
 }
