@@ -135,6 +135,16 @@ macro_rules! TraceStep {
 /// 9. Runs the Tauri application
 /// 10. Handles graceful shutdown
 pub fn Fn() {
+	// Open `Mountain.dev.log` up front. Forces `InitFileSink` to create
+	// the session log header on disk before any other code can panic, so
+	// an early crash still leaves a file with a timestamp + pid + tag
+	// context for post-mortem. Env vars are read from the shell here (the
+	// `.env.Land` load below may add MORE keys but never overrides
+	// LAND_DEV_LOG / LAND_DEV_LOG_FILE because `set_var` only runs when a
+	// key is currently unset). Harmless to call: the inner `OnceLock`
+	// gates repeat invocations.
+	crate::IPC::DevLog::InitEager();
+
 	// -------------------------------------------------------------------------
 	// [Boot] [Env] Load .env.Land into process env so standalone binary
 	// invocations pick up Product*, Tier*, Network* vars without requiring

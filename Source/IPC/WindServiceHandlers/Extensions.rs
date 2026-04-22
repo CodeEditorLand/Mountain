@@ -30,9 +30,15 @@ pub async fn handle_extensions_get_installed(runtime:Arc<ApplicationRunTime>) ->
 			let Publisher = Manifest
 				.get("publisher")
 				.and_then(Value::as_str)
+				.filter(|S| !S.is_empty())
 				.unwrap_or("unknown")
 				.to_string();
-			let Name = Manifest.get("name").and_then(Value::as_str).unwrap_or("unknown").to_string();
+			let Name = Manifest
+				.get("name")
+				.and_then(Value::as_str)
+				.filter(|S| !S.is_empty())
+				.unwrap_or("unknown")
+				.to_string();
 			let Id = format!("{}.{}", Publisher, Name);
 
 			// VS Code's `URI.revive()` is a no-op on strings, so the scanner's
@@ -43,9 +49,26 @@ pub async fn handle_extensions_get_installed(runtime:Arc<ApplicationRunTime>) ->
 			// `location` and the mirror inside `manifest.extensionLocation` so
 			// callers that read either field get the same shape.
 			let Location = NormalizeUri(Manifest.get("extensionLocation"));
-			let mut Manifest = Manifest;
+			// Guarantee the manifest is an object with non-empty `publisher`,
+			// `name` and `version` fields before it reaches the renderer. VS
+			// Code runs a trusted-publishers migration at first-boot
+			// (`extensions.contribution.ts`) that unconditionally calls
+			// `extension.manifest.publisher.toLowerCase()`; any missing
+			// `manifest` object, or a manifest with `publisher === undefined`,
+			// crashes the webview with
+			// `TypeError: undefined is not an object (evaluating 'manifest.publisher')`
+			// before the workbench can render a single pixel. A non-object
+			// value here (null / Value::Null from upstream scan failures) is
+			// replaced with a bare skeleton so the renderer always has shape.
+			let mut Manifest = match Manifest {
+				Value::Object(_) => Manifest,
+				_ => json!({}),
+			};
 			if let Value::Object(ref mut Map) = Manifest {
 				Map.insert("extensionLocation".to_string(), Location.clone());
+				Map.entry("publisher".to_string()).or_insert_with(|| json!(Publisher.clone()));
+				Map.entry("name".to_string()).or_insert_with(|| json!(Name.clone()));
+				Map.entry("version".to_string()).or_insert_with(|| json!("0.0.0"));
 			}
 
 			json!({

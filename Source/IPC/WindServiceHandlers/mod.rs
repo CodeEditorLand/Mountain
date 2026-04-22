@@ -363,6 +363,45 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					)
 					.await
 				},
+
+				// `ExtensionManagementChannelClient.getManifest(vsix: URI)` - reads
+				// the `extension/package.json` from a `.vsix` archive without
+				// extracting it. Called by the "Install from VSIX…" preview and
+				// by drag-and-drop onto the Extensions sidebar. The renderer then
+				// accesses `manifest.publisher` / `.name` / `.displayName` on the
+				// returned object unconditionally; a missing handler or an Err
+				// response crashes the webview with
+				// `TypeError: undefined is not an object (evaluating 'manifest.publisher')`.
+				"extensions:getManifest" => {
+					let VsixPath = match args.first() {
+						Some(serde_json::Value::String(Path)) => Path.clone(),
+						Some(Obj) => Obj
+							.get("fsPath")
+							.and_then(|V| V.as_str())
+							.map(str::to_owned)
+							.or_else(|| Obj.get("path").and_then(|V| V.as_str()).map(str::to_owned))
+							.unwrap_or_default(),
+						None => String::new(),
+					};
+					dev_log!("extensions", "extensions:getManifest vsix={}", VsixPath);
+					if VsixPath.is_empty() {
+						Err("extensions:getManifest: missing VSIX path argument".to_string())
+					} else {
+						let Path = std::path::PathBuf::from(&VsixPath);
+						match crate::ExtensionManagement::VsixInstaller::ReadFullManifest(&Path) {
+							Ok(Manifest) => Ok(Manifest),
+							Err(Error) => {
+								dev_log!(
+									"extensions",
+									"warn: [WindServiceHandlers] extensions:getManifest failed for '{}': {}",
+									VsixPath,
+									Error
+								);
+								Err(format!("extensions:getManifest failed: {}", Error))
+							},
+						}
+					}
+				},
 				// Reinstall and metadata-update still no-op for now; reinstall needs
 				// a gallery cache (we only have the on-disk unpack), and metadata
 				// update only matters for ratings/icons/readme which Land does not

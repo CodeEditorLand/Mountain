@@ -55,15 +55,32 @@ pub struct ExtensionDescriptionStateDTO {
 	pub Identifier:Value,
 
 	/// Extension name (from package.json "name")
-	#[serde(default, skip_serializing_if = "String::is_empty")]
+	///
+	/// Always serialized, even when empty, because VS Code's scanner and
+	/// the trusted-publishers migration (`extensions.contribution.ts`) both
+	/// evaluate `extension.manifest.name.toLowerCase()` unconditionally.
+	/// Dropping the field would leave a bare `undefined` and crash the
+	/// renderer with `TypeError: undefined is not an object`.
+	#[serde(default)]
 	pub Name:String,
 
-	/// Semantic version string (e.g., "1.0.0")
-	#[serde(default, skip_serializing_if = "String::is_empty")]
+	/// Semantic version string (e.g., "1.0.0").
+	///
+	/// Always serialized for the same reason as `Name` / `Publisher`: the
+	/// renderer reads `manifest.version` in several hot paths and crashes
+	/// if the field is missing outright.
+	#[serde(default)]
 	pub Version:String,
 
-	/// Publisher name or identifier
-	#[serde(default, skip_serializing_if = "String::is_empty")]
+	/// Publisher name or identifier.
+	///
+	/// Always serialized, even when empty. VS Code's
+	/// `extensions.contribution.ts` trusted-publishers migration runs on
+	/// every User-extension at workbench boot and executes
+	/// `extension.manifest.publisher.toLowerCase()`. If the key is omitted
+	/// the renderer crashes with
+	/// `TypeError: undefined is not an object (evaluating 'manifest.publisher')`.
+	#[serde(default)]
 	pub Publisher:String,
 
 	/// Engine compatibility requirements: { vscode: string }

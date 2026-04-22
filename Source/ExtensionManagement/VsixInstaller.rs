@@ -159,6 +159,26 @@ pub fn UninstallExtension(InstallDir:&Path) -> Result<(), InstallError> {
 // --- Internals ----------------------------------------------------------
 
 fn ReadManifestFacts(VsixPath:&Path) -> Result<ManifestFacts, InstallError> {
+	let Manifest = ReadFullManifest(VsixPath)?;
+
+	let Publisher = ReadStringField(&Manifest, "publisher")?;
+	let Name = ReadStringField(&Manifest, "name")?;
+	let Version = ReadStringField(&Manifest, "version")?;
+
+	Ok(ManifestFacts { Publisher, Name, Version })
+}
+
+/// Read the full `extension/package.json` from a `.vsix` without extracting
+/// the archive to disk. Used by the IPC `extensions:getManifest` handler so
+/// the "Install from VSIX…" preview dialog and drag-and-drop flow can inspect
+/// a manifest before the user confirms installation.
+///
+/// The returned value is the raw parsed JSON (`serde_json::Value`) - callers
+/// can project it into VS Code's `IExtensionManifest` shape. No NLS bundle
+/// resolution is performed here (the renderer only needs publisher/name/
+/// version/displayName for the preview UI, and NLS keys would require
+/// unpacking `package.nls.json` from the archive too).
+pub fn ReadFullManifest(VsixPath:&Path) -> Result<Value, InstallError> {
 	let Archive = File::open(VsixPath).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
 	let mut Archive = ZipArchive::new(Archive).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
 
@@ -172,14 +192,7 @@ fn ReadManifestFacts(VsixPath:&Path) -> Result<ManifestFacts, InstallError> {
 		.read_to_string(&mut Raw)
 		.map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
 
-	let Manifest:Value =
-		serde_json::from_str(&Raw).map_err(|Error| InstallError::ManifestMissing(Error.to_string()))?;
-
-	let Publisher = ReadStringField(&Manifest, "publisher")?;
-	let Name = ReadStringField(&Manifest, "name")?;
-	let Version = ReadStringField(&Manifest, "version")?;
-
-	Ok(ManifestFacts { Publisher, Name, Version })
+	serde_json::from_str(&Raw).map_err(|Error| InstallError::ManifestMissing(Error.to_string()))
 }
 
 fn ReadStringField(Manifest:&Value, Field:&'static str) -> Result<String, InstallError> {

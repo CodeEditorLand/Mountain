@@ -209,6 +209,20 @@ fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 	})
 }
 
+/// Force the file sink to initialize before any `dev_log!` has run.
+///
+/// `WriteToFile` is otherwise lazy - the log file is only opened the first
+/// time a tagged `dev_log!` call fires. When Mountain panics (or the
+/// webview traps the user with an early error) before the first enabled
+/// tag emits, the session log directory ends up with an empty shell and
+/// the post-mortem evidence is lost.
+///
+/// Call this once at the top of `Binary::Main::Fn()` - as early as the
+/// binary can reach - so the header line + `LAND_DEV_LOG_FILE=1` opt-in
+/// are honoured even when nothing else ever logs. Harmless to call
+/// multiple times; the `OnceLock` inside `InitFileSink` gates it.
+pub fn InitEager() { let _ = InitFileSink(); }
+
 /// Append a single formatted line to the session's log file if the file
 /// sink is active. Swallows every error - dev_log must never crash.
 pub fn WriteToFile(Line:&str) {
@@ -250,12 +264,51 @@ fn BinarySignature() -> String {
 	let Segments:Vec<&str> = PackageName.split('_').collect();
 	let Take = Segments.len().min(4);
 	let Start = Segments.len().saturating_sub(Take);
-	let Tail = Segments[Start..].join("_");
-	// Lowercase + `_` → `.` gives the same segment order the Tauri
-	// identifier uses (identifiers are dot-delimited lowercase). We
-	// don't split PascalCase into words here - the substring match
-	// below doesn't need exact equality, just a unique tail.
-	Tail.to_ascii_lowercase().replace('_', ".")
+	// Each underscore-delimited segment is PascalCase (e.g. `ElectronProfile`,
+	// `MountainProfile`, `RestCompiler`). The Tauri identifier Maintain
+	// generates splits every PascalCase word on its capital boundary, so
+	// `ElectronProfile` → `electron.profile`, not `electronprofile`. Without
+	// the per-segment split here the signature becomes `electronprofile`
+	// and `ends_with` never matches the real Tauri app-data dir
+	// `…clean.debug.electron.profile.mountain`, so DevLog silently falls
+	// back to whichever other `*.mountain` directory `read_dir` yielded
+	// first - the bug that sent the electron-profile binary's logs into
+	// the compile-profile directory.
+	let Dotted:String = Segments[Start..]
+		.iter()
+		.flat_map(|Segment| SplitPascalCaseIntoWords(Segment))
+		.collect::<Vec<String>>()
+		.join(".")
+		.to_ascii_lowercase();
+	Dotted
+}
+
+/// Split a PascalCase / UPPERCASE string into lowercase component words,
+/// matching the tokenisation Maintain's `Build/Process.rs` applies when it
+/// stamps the Tauri `identifier`. Example: `ElectronProfile` →
+/// `["electron", "profile"]`; `22NodeVersion` → `["22", "node", "version"]`.
+/// Empty segments are filtered out.
+fn SplitPascalCaseIntoWords(Segment:&str) -> Vec<String> {
+	let mut Words:Vec<String> = Vec::new();
+	let mut Current = String::new();
+	let mut PrevWasUpper = false;
+	let mut PrevWasDigit = false;
+	for Ch in Segment.chars() {
+		let IsUpper = Ch.is_ascii_uppercase();
+		let IsDigit = Ch.is_ascii_digit();
+		let NeedBreak = !Current.is_empty()
+			&& ((IsUpper && !PrevWasUpper) || (IsDigit != PrevWasDigit && !Current.is_empty()));
+		if NeedBreak {
+			Words.push(std::mem::take(&mut Current));
+		}
+		Current.push(Ch);
+		PrevWasUpper = IsUpper;
+		PrevWasDigit = IsDigit;
+	}
+	if !Current.is_empty() {
+		Words.push(Current);
+	}
+	Words.into_iter().filter(|Word| !Word.is_empty()).collect()
 }
 
 fn DetectAppDataPrefix() -> Option<String> {
@@ -366,11 +419,26 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	// `resolve_userdata`.
 	"/User/tasks.json",
 	"/User/mcp.json",
+	// Chat language-model registry is written on first chat interaction.
+	// Absent on fresh profiles; VS Code reads-before-first-write every boot.
+	"chatLanguageModels.json",
+	// VS Code writes per-profile configuration default overrides lazily; on
+	// a fresh profile the file does not yet exist and the workbench probes
+	// on every boot to see if it needs reading.
+	"configurationDefaultsOverrides",
 	// Chat images cache directory is lazy-created on first chat attachment.
 	"vscode-chat-images",
 	// Per-window output channel log files probed lazily by the workbench
 	// before first write. Path shape: `$APP/logs/<SESSION>/window<N>/output_<TIMESTAMP>`.
 	"/output_20",
+	// Per-window named log files VS Code stats on boot to detect crash-log
+	// rollovers. The `/<logsPath>/window<N>/<name>.log` layout means the
+	// window index can change, so match on filename alone - these names
+	// are stable VS Code conventions and never collide with real files.
+	"/network.log",
+	"/renderer.log",
+	"/views.log",
+	"/notebook.rendering.log",
 	// Virtual scheme misses already covered by earlier batches.
 	"vscode://schemas-associations/",
 ];
