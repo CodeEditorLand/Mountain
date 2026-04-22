@@ -119,6 +119,14 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 	// broadcast. Probe them in the same priority order the workbench
 	// itself uses in `getRecentlyOpenedWorkspaces`.
 	let Probe = |Entry:&serde_json::Value| -> Option<String> {
+		// Mountain's own writer emits `{ uri: "file://…", label }` (see
+		// `RecentlyOpened.json` on a freshly closed window). VS Code's
+		// historical `folderUri` / `workspace.configPath` shapes are kept
+		// as fallbacks so imported profiles and third-party writers keep
+		// working.
+		if let Some(Uri) = Entry.get("uri").and_then(|V| V.as_str()) {
+			return Some(Uri.to_string());
+		}
 		if let Some(Uri) = Entry.get("folderUri").and_then(|V| V.as_str()) {
 			return Some(Uri.to_string());
 		}
