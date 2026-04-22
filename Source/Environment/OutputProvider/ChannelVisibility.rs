@@ -4,7 +4,7 @@
 //! These are not public API - they are called by the main provider
 //! implementation.
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde_json::json;
 use tauri::Emitter;
 
@@ -32,7 +32,7 @@ pub(super) async fn reveal_channel(
 		let event_payload = json!({ "Id": channel_identifier, "PreserveFocus": preserve_focus });
 
 		env.ApplicationHandle
-			.emit("sky://output/reveal", event_payload)
+			.emit(SkyEvent::OutputReveal.AsStr(), event_payload)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
 		dev_log!(
