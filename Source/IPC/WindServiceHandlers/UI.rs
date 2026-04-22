@@ -5,6 +5,7 @@
 
 use std::sync::Arc;
 
+use CommonLibrary::IPC::SkyEvent::SkyEvent;
 use serde_json::{Value, json};
 use tauri::AppHandle;
 
@@ -93,7 +94,7 @@ pub async fn handle_themes_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>)
 	let _ = runtime
 		.Environment
 		.ApplicationHandle
-		.emit("sky://theme/change", json!({ "themeId": ThemeId }));
+		.emit(SkyEvent::ThemeChange.AsStr(), json!({ "themeId": ThemeId }));
 
 	Ok(Value::Null)
 }
@@ -250,7 +251,7 @@ pub async fn handle_notification_show(app_handle:tauri::AppHandle, args:Vec<Valu
 	);
 
 	let _ = app_handle.emit(
-		"sky://notification/show",
+		SkyEvent::NotificationShow.AsStr(),
 		json!({
 			"id": Id,
 			"message": Message,
@@ -281,7 +282,7 @@ pub async fn handle_notification_show_progress(
 	);
 
 	let _ = app_handle.emit(
-		"sky://notification/progress-begin",
+		SkyEvent::NotificationProgressBegin.AsStr(),
 		json!({
 			"id": Id,
 			"title": Title,
@@ -304,7 +305,7 @@ pub async fn handle_notification_update_progress(
 	let Message = args.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = app_handle.emit(
-		"sky://notification/progress-update",
+		SkyEvent::NotificationProgressUpdate.AsStr(),
 		json!({
 			"id": Id,
 			"increment": Increment,
@@ -324,7 +325,7 @@ pub async fn handle_notification_end_progress(
 
 	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	let _ = app_handle.emit("sky://notification/progress-end", json!({ "id": Id }));
+	let _ = app_handle.emit(SkyEvent::NotificationProgressEnd.AsStr(), json!({ "id": Id }));
 
 	Ok(Value::Null)
 }
@@ -350,7 +351,7 @@ pub async fn handle_progress_begin(app_handle:tauri::AppHandle, args:Vec<Value>)
 	);
 
 	let _ = app_handle.emit(
-		"sky://progress/begin",
+		SkyEvent::ProgressBegin.AsStr(),
 		json!({
 			"id": Id,
 			"location": Location,
@@ -371,7 +372,7 @@ pub async fn handle_progress_report(app_handle:tauri::AppHandle, args:Vec<Value>
 	let Message = args.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = app_handle.emit(
-		"sky://progress/report",
+		SkyEvent::ProgressReport.AsStr(),
 		json!({
 			"id": Id,
 			"increment": Increment,
@@ -388,7 +389,7 @@ pub async fn handle_progress_end(app_handle:tauri::AppHandle, args:Vec<Value>) -
 
 	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	let _ = app_handle.emit("sky://progress/end", json!({ "id": Id }));
+	let _ = app_handle.emit(SkyEvent::ProgressEnd.AsStr(), json!({ "id": Id }));
 
 	Ok(Value::Null)
 }

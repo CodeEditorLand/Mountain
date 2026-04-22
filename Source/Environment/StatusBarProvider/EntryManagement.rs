@@ -3,7 +3,11 @@
 //! Implementation of status bar entry creation and disposal for
 //! [`MountainEnvironment`]
 
-use CommonLibrary::{Error::CommonError::CommonError, StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO};
+use CommonLibrary::{
+	Error::CommonError::CommonError,
+	IPC::SkyEvent::SkyEvent,
+	StatusBar::DTO::StatusBarEntryDTO::StatusBarEntryDTO,
+};
 use serde_json::json;
 use tauri::Emitter;
 
@@ -30,7 +34,7 @@ pub(super) async fn set_status_bar_entry_impl(
 	drop(items_guard);
 
 	env.ApplicationHandle
-		.emit("sky://statusbar/set-entry", entry)
+		.emit(SkyEvent::StatusBarSetEntry.AsStr(), entry)
 		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }
 
@@ -50,6 +54,6 @@ pub(super) async fn dispose_status_bar_entry_impl(
 		.remove(&entry_identifier);
 
 	env.ApplicationHandle
-		.emit("sky://statusbar/dispose-entry", json!({ "EntryIdentifier": entry_identifier }))
+		.emit(SkyEvent::StatusBarDisposeEntry.AsStr(), json!({ "EntryIdentifier": entry_identifier }))
 		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }

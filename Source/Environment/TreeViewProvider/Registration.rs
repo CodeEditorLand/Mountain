@@ -2,7 +2,11 @@
 //!
 //! Internal helper functions for tree view provider registration and lifecycle.
 
-use CommonLibrary::{Error::CommonError::CommonError, TreeView::DTO::TreeViewOptionsDTO::TreeViewOptionsDTO};
+use CommonLibrary::{
+	Error::CommonError::CommonError,
+	IPC::SkyEvent::SkyEvent,
+	TreeView::DTO::TreeViewOptionsDTO::TreeViewOptionsDTO,
+};
 use serde_json::json;
 use tauri::Emitter;
 
@@ -49,7 +53,7 @@ pub(super) async fn register_tree_data_provider(
 
 	env.ApplicationHandle
 		.emit(
-			"sky://tree-view/create",
+			SkyEvent::TreeViewCreate.AsStr(),
 			json!({ "ViewIdentifier": view_identifier, "Options": options }),
 		)
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
@@ -77,6 +81,6 @@ pub(super) async fn unregister_tree_data_provider(
 		.remove(&view_identifier);
 
 	env.ApplicationHandle
-		.emit("sky://tree-view/dispose", json!({ "ViewIdentifier": view_identifier }))
+		.emit(SkyEvent::TreeViewDispose.AsStr(), json!({ "ViewIdentifier": view_identifier }))
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 }

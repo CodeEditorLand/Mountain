@@ -3,7 +3,7 @@
 //! Internal helper functions for handling user interaction events
 //! (expansion, selection).
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde_json::json;
 use tauri::Emitter;
 
@@ -30,7 +30,7 @@ pub(super) async fn on_tree_node_expanded(
 	// Propagate to frontend
 	env.ApplicationHandle
 		.emit(
-			"sky://tree-view/node-expanded",
+			SkyEvent::TreeViewNodeExpanded.AsStr(),
 			json!({
 				"ViewIdentifier": view_identifier,
 				"ElementHandle": element_handle,
@@ -61,7 +61,7 @@ pub(super) async fn on_tree_selection_changed(
 	// Propagate to frontend
 	env.ApplicationHandle
 		.emit(
-			"sky://tree-view/selection-changed",
+			SkyEvent::TreeViewSelectionChanged.AsStr(),
 			json!({
 				"ViewIdentifier": view_identifier,
 				"SelectedHandles": selected_handles

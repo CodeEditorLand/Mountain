@@ -7,7 +7,7 @@
 
 use std::collections::HashMap;
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tauri::{Emitter, Manager};
@@ -49,7 +49,7 @@ pub(super) async fn post_message_to_webview_impl(
 		};
 
 		webview_window
-			.emit::<WebviewMessage>("sky://webview/post-message", webview_message)
+			.emit::<WebviewMessage>(SkyEvent::WebviewPostMessage.AsStr(), webview_message)
 			.map_err(|error| {
 				CommonError::IPCError { Description:format!("Failed to post message to Webview: {}", error) }
 			})?;

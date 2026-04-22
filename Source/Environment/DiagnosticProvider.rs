@@ -191,7 +191,11 @@
 // - [ ] Consider implementing diagnostic versioning for change detection
 // - [ ] Add support for diagnostic workspace-wide filtering (exclude files)
 
-use CommonLibrary::{Diagnostic::DiagnosticManager::DiagnosticManager, Error::CommonError::CommonError};
+use CommonLibrary::{
+	Diagnostic::DiagnosticManager::DiagnosticManager,
+	Error::CommonError::CommonError,
+	IPC::SkyEvent::SkyEvent,
+};
 use async_trait::async_trait;
 use serde_json::{Value, json};
 use tauri::Emitter;
@@ -249,7 +253,7 @@ impl DiagnosticManager for MountainEnvironment {
 		// Include both added/cleared URIs so UI can update accurately.
 		let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
 
-		if let Err(Error) = self.ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
+		if let Err(Error) = self.ApplicationHandle.emit(SkyEvent::DiagnosticsChanged.AsStr(), EventPayload) {
 			dev_log!(
 				"extensions",
 				"error: [DiagnosticProvider] Failed to emit 'diagnostics_changed': {}",
@@ -302,7 +306,7 @@ impl DiagnosticManager for MountainEnvironment {
 
 			let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
 
-			if let Err(Error) = self.ApplicationHandle.emit("sky://diagnostics/changed", EventPayload) {
+			if let Err(Error) = self.ApplicationHandle.emit(SkyEvent::DiagnosticsChanged.AsStr(), EventPayload) {
 				dev_log!(
 					"extensions",
 					"error: [DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}",

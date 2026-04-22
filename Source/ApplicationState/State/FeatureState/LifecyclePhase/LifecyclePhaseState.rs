@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex as StandardMutex};
 
+use CommonLibrary::IPC::SkyEvent::SkyEvent;
+
 use crate::dev_log;
 
 /// Application lifecycle phases (mirrors VS Code LifecyclePhase).
@@ -58,7 +60,7 @@ impl LifecyclePhaseState {
 			_ => "Unknown",
 		};
 		if let Err(Error) = ApplicationHandle.emit(
-			"sky://lifecycle/phaseChanged",
+			SkyEvent::LifecyclePhaseChanged.AsStr(),
 			serde_json::json!({
 				"phase": NewPhase,
 				"previous": Previous,

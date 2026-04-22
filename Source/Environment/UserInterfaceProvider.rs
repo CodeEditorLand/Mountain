@@ -113,6 +113,7 @@ use std::path::PathBuf;
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,
+	IPC::SkyEvent::SkyEvent,
 	UserInterface::{
 		DTO::{
 			InputBoxOptionsDTO::InputBoxOptionsDTO,
@@ -160,7 +161,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 		let Payload = json!({ "Severity": Severity, "Message": Message, "Options": Options });
 
-		let ResponseValue = SendUserInterfaceRequest(self, "sky://ui/show-message-request", Payload).await?;
+		let ResponseValue = SendUserInterfaceRequest(self, SkyEvent::UIShowMessageRequest.AsStr(), Payload).await?;
 
 		Ok(ResponseValue.as_str().map(String::from))
 	}
@@ -278,7 +279,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 		let Payload = json!({ "Items": Items, "Options": Options });
 
-		let ResponseValue = SendUserInterfaceRequest(self, "sky://ui/show-quick-pick-request", Payload).await?;
+		let ResponseValue = SendUserInterfaceRequest(self, SkyEvent::UIShowQuickPickRequest.AsStr(), Payload).await?;
 
 		serde_json::from_value(ResponseValue).map_err(|Error| {
 			CommonError::SerializationError {
@@ -291,7 +292,7 @@ impl UserInterfaceProvider for MountainEnvironment {
 	async fn ShowInputBox(&self, Options:Option<InputBoxOptionsDTO>) -> Result<Option<String>, CommonError> {
 		dev_log!("window", "[UserInterfaceProvider] Showing input box.");
 
-		let ResponseValue = SendUserInterfaceRequest(self, "sky://ui/show-input-box-request", Options).await?;
+		let ResponseValue = SendUserInterfaceRequest(self, SkyEvent::UIShowInputBoxRequest.AsStr(), Options).await?;
 
 		serde_json::from_value(ResponseValue).map_err(|Error| {
 			CommonError::SerializationError {

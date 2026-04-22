@@ -8,6 +8,7 @@ use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Error::CommonError::CommonError,
 	FileSystem::WriteFileBytes::WriteFileBytes,
+	IPC::SkyEvent::SkyEvent,
 	UserInterface::{DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO, ShowSaveDialog::ShowSaveDialog},
 };
 use serde_json::json;
@@ -69,7 +70,7 @@ pub(super) async fn save_document(
 
 	if let Err(error) = environment
 		.ApplicationHandle
-		.emit("sky://documents/saved", json!({ "uri": uri.to_string() }))
+		.emit(SkyEvent::DocumentsSaved.AsStr(), json!({ "uri": uri.to_string() }))
 	{
 		dev_log!(
 			"model",
@@ -152,7 +153,7 @@ pub(super) async fn save_document_as(
 	crate::Environment::DocumentProvider::Notifications::notify_model_added(environment, &new_document_state).await;
 
 	if let Err(error) = environment.ApplicationHandle.emit(
-		"sky://documents/renamed",
+		SkyEvent::DocumentsRenamed.AsStr(),
 		json!({ "oldUri": original_uri.to_string(), "newUri": new_uri.to_string() }),
 	) {
 		dev_log!(

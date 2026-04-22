@@ -35,7 +35,7 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	FileSystem::FileWatcherProvider::{FileWatcherProvider, WatchEvent, WatchEventKind},
-	IPC::IPCProvider::IPCProvider,
+	IPC::{IPCProvider::IPCProvider, SkyEvent::SkyEvent},
 };
 use async_trait::async_trait;
 use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
@@ -116,7 +116,7 @@ impl WatcherState {
 						// Cocoon. Wind's `TauriChannel` subscribes to
 						// `sky://vfs/fileChange` under the localFilesystem
 						// channel.
-						if let Err(Error) = env_clone.ApplicationHandle.emit("sky://vfs/fileChange", &payload) {
+						if let Err(Error) = env_clone.ApplicationHandle.emit(SkyEvent::VFSFileChange.AsStr(), &payload) {
 							dev_log!(
 								"filewatcher",
 								"warn: [FileWatcherProvider] sky://vfs/fileChange emit failed: {}",

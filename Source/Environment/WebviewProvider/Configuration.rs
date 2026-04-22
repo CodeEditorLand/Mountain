@@ -7,7 +7,7 @@
 
 use std::collections::HashMap;
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde_json::{Value, json};
 use tauri::{Emitter, Manager};
 
@@ -61,7 +61,7 @@ pub(super) async fn set_webview_options_impl(
 	// Emit options changed event
 	env.ApplicationHandle
 		.emit::<Value>(
-			"sky://webview/options-changed",
+			SkyEvent::WebviewOptionsChanged.AsStr(),
 			json!({ "Handle": handle, "Options": options_value }),
 		)
 		.map_err(|error| {
@@ -86,7 +86,7 @@ pub(super) async fn set_webview_html_impl(
 
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		webview_window
-			.emit::<String>("sky://webview/set-html", html)
+			.emit::<String>(SkyEvent::WebviewSetHTML.AsStr(), html)
 			.map_err(|error| CommonError::IPCError { Description:format!("Failed to set Webview HTML: {}", error) })?;
 
 		Ok(())

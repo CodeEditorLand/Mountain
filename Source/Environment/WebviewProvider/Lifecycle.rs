@@ -7,6 +7,7 @@
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,
+	IPC::SkyEvent::SkyEvent,
 	Webview::DTO::WebviewContentOptionsDTO::WebviewContentOptionsDTO,
 };
 use serde_json::{Value, json};
@@ -102,7 +103,7 @@ pub(super) async fn create_webview_panel_impl(
 	// Notify frontend about Webview creation
 	env.ApplicationHandle
 		.emit::<Value>(
-			"sky://webview/created",
+			SkyEvent::WebviewCreated.AsStr(),
 			json!({ "Handle": handle.clone(), "ViewType": view_type.clone(), "Title": title_clone }),
 		)
 		.map_err(|error| {
@@ -141,7 +142,7 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 
 	// Notify frontend about Webview disposal
 	env.ApplicationHandle
-		.emit::<Value>("sky://webview/disposed", json!({ "Handle": handle }))
+		.emit::<Value>(SkyEvent::WebviewDisposed.AsStr(), json!({ "Handle": handle }))
 		.map_err(|error| {
 			CommonError::IPCError { Description:format!("Failed to emit Webview disposal event: {}", error) }
 		})?;
@@ -183,7 +184,7 @@ pub(super) async fn reveal_webview_panel_impl(
 
 		// Emit visibility event
 		env.ApplicationHandle
-			.emit::<Value>("sky://webview/revealed", json!({ "Handle": handle }))
+			.emit::<Value>(SkyEvent::WebviewRevealed.AsStr(), json!({ "Handle": handle }))
 			.map_err(|error| {
 				CommonError::IPCError { Description:format!("Failed to emit Webview revealed event: {}", error) }
 			})?;

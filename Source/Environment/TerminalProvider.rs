@@ -103,7 +103,7 @@ use std::{env, io::Write, sync::Arc};
 use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	IPC::IPCProvider::IPCProvider,
+	IPC::{IPCProvider::IPCProvider, SkyEvent::SkyEvent},
 	Terminal::TerminalProvider::TerminalProvider,
 };
 use async_trait::async_trait;
@@ -252,7 +252,7 @@ impl TerminalProvider for MountainEnvironment {
 						}
 
 						if let Err(Error) = AppHandleForOutput.emit(
-							"sky://terminal/data",
+							SkyEvent::TerminalData.AsStr(),
 							json!({
 								"id": TermIDForOutput,
 								"data": DataString,
@@ -336,7 +336,7 @@ impl TerminalProvider for MountainEnvironment {
 			// lingers until the next render cycle).
 			if let Err(Error) = EnvironmentClone
 				.ApplicationHandle
-				.emit("sky://terminal/exit", json!({ "id": TermIDForExit }))
+				.emit(SkyEvent::TerminalExit.AsStr(), json!({ "id": TermIDForExit }))
 			{
 				dev_log!(
 					"terminal",
@@ -359,7 +359,7 @@ impl TerminalProvider for MountainEnvironment {
 		// waiting for Cocoon to round-trip a notification. The `sky://` event
 		// channel is already how ShowTerminal / HideTerminal talk to the UI.
 		if let Err(Error) = self.ApplicationHandle.emit(
-			"sky://terminal/create",
+			SkyEvent::TerminalCreate.AsStr(),
 			json!({
 				"id": TerminalIdentifier,
 				"name": Name,
@@ -440,7 +440,7 @@ impl TerminalProvider for MountainEnvironment {
 
 		self.ApplicationHandle
 			.emit(
-				"sky://terminal/show",
+				SkyEvent::TerminalShow.AsStr(),
 				json!({ "id": TerminalId, "preserveFocus": PreserveFocus }),
 			)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
@@ -450,7 +450,7 @@ impl TerminalProvider for MountainEnvironment {
 		dev_log!("terminal", "[TerminalProvider] Hiding terminal ID: {}", TerminalId);
 
 		self.ApplicationHandle
-			.emit("sky://terminal/hide", json!({ "id": TerminalId }))
+			.emit(SkyEvent::TerminalHide.AsStr(), json!({ "id": TerminalId }))
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 

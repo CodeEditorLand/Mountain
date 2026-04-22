@@ -229,6 +229,7 @@
 
 use CommonLibrary::{
 	Error::CommonError::CommonError,
+	IPC::SkyEvent::SkyEvent,
 	SourceControlManagement::{
 		DTO::{
 			SourceControlCreateDTO::SourceControlCreateDTO,
@@ -287,7 +288,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			.insert(Handle, Default::default());
 
 		self.ApplicationHandle
-			.emit("sky://scm/provider/added", ProviderState)
+			.emit(SkyEvent::SCMProviderAdded.AsStr(), ProviderState)
 			.map_err(|Error| {
 				CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit scm event: {}", Error) }
 			})?;
@@ -319,7 +320,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			.remove(&ProviderHandle);
 
 		self.ApplicationHandle
-			.emit("sky://scm/provider/removed", ProviderHandle)
+			.emit(SkyEvent::SCMProviderRemoved.AsStr(), ProviderHandle)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
 		Ok(())
@@ -360,7 +361,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 			self.ApplicationHandle
 				.emit(
-					"sky://scm/provider/changed",
+					SkyEvent::SCMProviderChanged.AsStr(),
 					json!({ "handle": ProviderHandle, "provider": ProviderClone }),
 				)
 				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
@@ -405,7 +406,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 			self.ApplicationHandle
 				.emit(
-					"sky://scm/group/changed",
+					SkyEvent::SCMGroupChanged.AsStr(),
 					json!({ "providerHandle": ProviderHandle, "group": GroupClone }),
 				)
 				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
@@ -447,7 +448,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 			self.ApplicationHandle
 				.emit(
-					"sky://scm/provider/changed",
+					SkyEvent::SCMProviderChanged.AsStr(),
 					json!({ "handle": ProviderHandle, "provider": ProviderClone }),
 				)
 				.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;

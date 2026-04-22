@@ -57,6 +57,7 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	ExtensionManagement::ExtensionManagementService::ExtensionManagementService,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
+	IPC::SkyEvent::SkyEvent,
 	Storage::StorageProvider::StorageProvider,
 };
 
@@ -69,18 +70,6 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
-/// Extract a filesystem path from a VS Code argument.
-/// VS Code sends URI objects `{ scheme: "file", path: "/C:/foo", fsPath:
-/// "C:\\foo" }` but Mountain handlers expect platform-native path strings.
-///
-/// Windows URI paths have a leading slash: `/C:/Users/...` → strip it.
-/// Unix paths start with `/` normally.
-pub fn extract_path_from_arg(Arg:&Value) -> Result<String, String> {
-	// Direct string path
-	if let Some(Path) = Arg.as_str() {
-		return Ok(normalize_uri_path(Path));
-
-/// Maps Tauri IPC commands to Mountain's internal command system
 #[tauri::command]
 pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<Value>) -> Result<Value, String> {
 	let OTLPStart = crate::IPC::DevLog::NowNano();
@@ -1420,7 +1409,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// the request for Wind so it can tear down caches, the actual
 					// spawn lives downstream.
 					use tauri::Emitter;
-					if let Err(Error) = app_handle.emit("sky://exthost/debug-reload", json!({})) {
+					if let Err(Error) = app_handle.emit(SkyEvent::ExtHostDebugReload.AsStr(), json!({})) {
 						dev_log!("exthost", "warn: extensionhostdebugservice:reload emit failed: {}", Error);
 					}
 					Ok(Value::Null)

@@ -16,6 +16,7 @@
 //! `vscode.workspace.workspaceFolders` returns the fresh list on subsequent
 //! synchronous reads.
 
+use CommonLibrary::IPC::SkyEvent::SkyEvent;
 use serde_json::json;
 
 use crate::{ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO, Vine::Client, dev_log};
@@ -125,7 +126,7 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 			.map(FolderToWire)
 			.collect::<Vec<_>>(),
 	});
-	if let Err(Error) = ApplicationHandle.emit("sky://workspaces/changed", BroadcastPayload) {
+	if let Err(Error) = ApplicationHandle.emit(SkyEvent::WorkspacesChanged.AsStr(), BroadcastPayload) {
 		dev_log!(
 			"workspaces",
 			"warn: [LandFix:WsDelta] sky://workspaces/changed emit failed: {}",

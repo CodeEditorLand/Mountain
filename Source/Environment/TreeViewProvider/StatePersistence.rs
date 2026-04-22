@@ -2,7 +2,7 @@
 //!
 //! Internal helper functions for saving and restoring tree view state.
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde_json::json;
 use tauri::Emitter;
 
@@ -81,7 +81,7 @@ pub(super) async fn restore_tree_view_state(
 		// Emit to frontend
 		env.ApplicationHandle
 			.emit(
-				"sky://tree-view/restore-state",
+				SkyEvent::TreeViewRestoreState.AsStr(),
 				json!({
 					"ViewIdentifier": view_identifier,
 					"State": state_value

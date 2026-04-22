@@ -84,7 +84,7 @@ use std::{collections::HashMap, sync::Arc};
 use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
-	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider},
+	IPC::{DTO::ProxyTarget::ProxyTarget, IPCProvider::IPCProvider, SkyEvent::SkyEvent},
 	Testing::TestController::TestController,
 };
 use async_trait::async_trait;
@@ -206,7 +206,7 @@ impl TestController for MountainEnvironment {
 
 		// Notify the frontend about the new test controller
 		self.ApplicationHandle
-			.emit("sky://test/registered", json!({ "ControllerIdentifier": ControllerId }))
+			.emit(SkyEvent::TestRegistered.AsStr(), json!({ "ControllerIdentifier": ControllerId }))
 			.map_err(|Error| {
 				CommonError::IPCError { Description:format!("Failed to emit test registration event: {}", Error) }
 			})?;
@@ -266,7 +266,7 @@ impl TestController for MountainEnvironment {
 		// Notify frontend about test run start
 		self.ApplicationHandle
 			.emit(
-				"sky://test/run-started",
+				SkyEvent::TestRunStarted.AsStr(),
 				json!({ "RunIdentifier": RunIdentifier, "ControllerIdentifier": ControllerIdentifier }),
 			)
 			.map_err(|Error| {
@@ -382,7 +382,7 @@ impl MountainEnvironment {
 			// Notify frontend about status change
 			self.ApplicationHandle
 				.emit(
-					"sky://test/run-status-changed",
+					SkyEvent::TestRunStatusChanged.AsStr(),
 					json!({
 						"RunIdentifier": RunIdentifier,
 

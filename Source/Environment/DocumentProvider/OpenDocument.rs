@@ -10,7 +10,7 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 	FileSystem::ReadFile::ReadFile,
-	IPC::IPCProvider::IPCProvider,
+	IPC::{IPCProvider::IPCProvider, SkyEvent::SkyEvent},
 };
 use serde_json::{Value, json};
 use tauri::{Emitter, Manager};
@@ -50,7 +50,7 @@ pub(super) async fn open_document(
 
 		match existing_document.ToDTO() {
 			Ok(dto) => {
-				if let Err(error) = environment.ApplicationHandle.emit("sky://documents/open", dto) {
+				if let Err(error) = environment.ApplicationHandle.emit(SkyEvent::DocumentsOpen.AsStr(), dto) {
 					dev_log!(
 						"model",
 						"error: [DocumentProvider] Failed to emit document open event: {}",
@@ -130,7 +130,7 @@ pub(super) async fn open_document(
 
 	if let Err(error) = environment
 		.ApplicationHandle
-		.emit("sky://documents/open", dto_for_notification.clone())
+		.emit(SkyEvent::DocumentsOpen.AsStr(), dto_for_notification.clone())
 	{
 		dev_log!(
 			"model",

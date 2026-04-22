@@ -3,7 +3,7 @@
 //! Implementation of status bar temporary message handling for
 //! [`MountainEnvironment`]
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde_json::{Value, json};
 use tauri::Emitter;
 
@@ -24,7 +24,7 @@ pub(super) async fn set_status_bar_message_impl(
 	);
 
 	env.ApplicationHandle
-		.emit::<Value>("sky://statusbar/set-message", json!({ "id": message_identifier, "text": text }))
+		.emit::<Value>(SkyEvent::StatusBarSetMessage.AsStr(), json!({ "id": message_identifier, "text": text }))
 		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }
 
@@ -40,6 +40,6 @@ pub(super) async fn dispose_status_bar_message_impl(
 	);
 
 	env.ApplicationHandle
-		.emit::<Value>("sky://statusbar/dispose-message", json!({ "id": message_identifier }))
+		.emit::<Value>(SkyEvent::StatusBarDisposeMessage.AsStr(), json!({ "id": message_identifier }))
 		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }

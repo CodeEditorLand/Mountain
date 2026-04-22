@@ -3,7 +3,7 @@
 //! Internal helper functions for updating tree view UI properties
 //! (message, title, badge).
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde_json::json;
 use tauri::Emitter;
 
@@ -38,7 +38,7 @@ pub(super) async fn set_tree_view_message(
 
 	env.ApplicationHandle
 		.emit(
-			"sky://tree-view/set-message",
+			SkyEvent::TreeViewSetMessage.AsStr(),
 			json!({ "ViewIdentifier": view_identifier, "Message": message }),
 		)
 		.map_err(|Error| {
@@ -78,7 +78,7 @@ pub(super) async fn set_tree_view_title(
 
 	env.ApplicationHandle
 		.emit(
-			"sky://tree-view/set-title",
+			SkyEvent::TreeViewSetTitle.AsStr(),
 			json!({
 				"ViewIdentifier": view_identifier,
 				"Title": title,
@@ -127,7 +127,7 @@ pub(super) async fn set_tree_view_badge(
 	// Emit to frontend
 	env.ApplicationHandle
 		.emit(
-			"sky://tree-view/set-badge",
+			SkyEvent::TreeViewSetBadge.AsStr(),
 			json!({ "ViewIdentifier": view_identifier, "Badge": badge }),
 		)
 		.map_err(|Error| {
