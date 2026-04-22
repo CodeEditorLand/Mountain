@@ -40,13 +40,11 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		.map_err(MapLockError)
 		.map_err(|e| format!("Failed to lock ExtensionScanPaths: {}", e))?;
 
-	// Atom J3: kernel / minimal profiles set LAND_SKIP_BUILTIN_EXTENSIONS=true
-	// to ship without any bundled extensions. The user-extensions path
-	// (`~/.land/extensions`) still scans so VSIX-installed extensions work.
-	//
-	// Atom U1: `.env.Land.Extensions` also exposes `LAND_DISABLE_BUILTIN_EXTENSIONS`
-	// - same effect, different name. Accept both so the skill-file env and
-	// the legacy SKIP flag don't diverge.
+	// Skip all built-in extensions when either the legacy
+	// `LAND_SKIP_BUILTIN_EXTENSIONS` or the `.env.Land.Extensions` flag
+	// `LAND_DISABLE_BUILTIN_EXTENSIONS` is set. Both accepted so kernel /
+	// minimal profiles and the skill-file env stay in sync. User scan path
+	// still runs so VSIX-installed extensions remain visible.
 	let SkipBuiltins = matches!(std::env::var("LAND_SKIP_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"))
 		|| matches!(std::env::var("LAND_DISABLE_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"));
 
@@ -60,10 +58,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		dev_log!("extensions", "[Extensions] [ScanPaths] Adding default scan paths...");
 	}
 
-	// Atom U1: `LAND_BUILTIN_EXTENSIONS_DIR` (from `.env.Land.Extensions`)
-	// takes precedence over the executable-relative probing chain. Useful for
-	// CI builds where the bundle layout differs from both the Tauri `.app`
-	// convention and the repo layout.
+	// `LAND_BUILTIN_EXTENSIONS_DIR` takes precedence over the executable-
+	// relative probing chain. Useful for CI builds where the bundle layout
+	// differs from both the `.app` convention and the repo layout.
 	if !SkipBuiltins {
 		if let Ok(Override) = std::env::var("LAND_BUILTIN_EXTENSIONS_DIR") {
 			let OverridePath = ExpandUserPath(&Override);

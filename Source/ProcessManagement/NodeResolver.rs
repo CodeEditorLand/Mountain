@@ -1,26 +1,12 @@
 #![allow(non_snake_case, dead_code)]
 
-//! # Node Binary Resolver
+//! Resolves the Node.js binary used to spawn Cocoon.
 //!
-//! Resolves the Node.js binary used to spawn the Cocoon sidecar. Checks, in
-//! order:
+//! Ladder (first hit wins, cached in `OnceLock`):
+//! `LAND_NODE_BINARY` override → shipped (`Resources/Node/bin/node`) →
+//! fnm → volta → asdf → nvm → homebrew → PATH `node`.
 //!
-//! 1. **Explicit override** - `LAND_NODE_BINARY` env var. Operators set this
-//!    to pin to a specific Node install for reproducibility.
-//! 2. **Shipped runtime** - `Resources/Node/bin/node` relative to the Tauri
-//!    bundle (production) or `Target/<profile>/../Node/bin/node` relative to
-//!    the executable (dev). Ships alongside Mountain for hermetic builds.
-//! 3. **Version managers** - fnm, volta, asdf, nvm in their canonical
-//!    locations. Preferred over system PATH because the user's selected
-//!    version tracks their workspace (`.nvmrc`, `.tool-versions`).
-//! 4. **Package managers** - Homebrew on macOS/Linux, the most common way
-//!    Node gets installed on developer machines.
-//! 5. **PATH fallback** - `which node`. Last resort - works, but version is
-//!    whatever happens to be first in PATH.
-//!
-//! Every attempt is logged with its source so a log tells you exactly which
-//! Node Mountain picked and why. Resolution happens once at Cocoon spawn
-//! time; cached for the life of the Mountain process.
+//! Each step logs its outcome so the resolved source is visible in the log.
 
 use std::{
 	path::{Path, PathBuf},
