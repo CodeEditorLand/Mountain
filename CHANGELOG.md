@@ -348,7 +348,79 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 
 ---
 
-### Earlier v2.1 (pre-April 17)
+### April 16, 2026
+
+#### Added
+
+- **Extension registration notification handlers** (`MountainVinegRPCService`):
+  Three new notification handlers process messages from the Cocoon extension
+  host — `window.showMessage` forwards info/warn/error messages to Sky via
+  `sky://notification/show`; `registerCommand` stores proxied extension commands
+  in `CommandRegistry` with `cocoon-main` sidecar identifier; provider
+  registration fallback handles `register_hover_provider`,
+  `register_completion_item_provider`, etc. for providers registered outside
+  the typed RPC path.
+- **Full language feature provider delegation** (`CocoonService`): 18 stub
+  handlers replaced with actual delegations to `LanguageFeatureProviderRegistry`
+  via `self.environment` — document highlights, symbols, workspace symbols,
+  rename edits, document/range/on-type formatting, signature help, code lenses,
+  folding ranges, selection ranges, semantic tokens (full), inlay hints, type
+  hierarchy (super/subtypes), call hierarchy (incoming/outgoing), linked editing
+  ranges.
+- **Remaining 14 `FeatureMethods` implementations**
+  (`LanguageFeatureProviderRegistry`): All remaining TODO stubs replaced —
+  rename edits, document/workspace symbols, signature help, folding ranges,
+  selection ranges, semantic tokens (full), inlay hints, type hierarchy
+  (super/subtypes), call hierarchy (incoming/outgoing), linked editing ranges,
+  on-type formatting. Each delegates to `FeatureMethods` →
+  `ProviderLookup::get_matching_provider` → `invoke_provider`. `InsertText`
+  handling in completion items fixed to properly extract string from JSON value.
+
+#### Changed
+
+- **`dev_log!` macro replaces `log` crate** (`b27a154`): All
+  `log::{info, debug, error, warn, trace}` instances replaced with `dev_log!`
+  macro accepting a category string across the entire Mountain codebase.
+  Categories: `lifecycle`, `grpc`, `ipc`, `cocoon`, `extensions`, `config`,
+  `model`, `storage`, `commands`, `output`, `terminal`.
+- **Domain module split — Wind IPC** (`f8dd70e`): Monolithic
+  `WindServiceHandlers` (167 KB) broken into 24 focused domain modules:
+  Command, Configuration, Decoration, Environment, Extension, FileSystem,
+  History, Keybinding, Label, Lifecycle, Model, NativeHost, Notification,
+  Output, Progress, QuickInput, Search, Storage, Terminal, TextFile, Theme,
+  WorkingCopy, Workspace.
+- **Domain module split — Cocoon RPC** (`f8dd70e`): 2,800-line monolithic
+  `CocoonService` split into 15 domain modules: Auth, Command, Debug, Extension,
+  FileSystem, Output, Provider, SCM, Save, Secret, Task, Terminal, TreeView,
+  Window, Workspace. Language feature provider handlers consolidated in
+  `Provider.rs`.
+- **Vine gRPC binding** changed from IPv6 `[::1]` to IPv4 `127.0.0.1`.
+- **Startup extension activation trigger** (`$activateByEvent("*")`) added
+  after Cocoon handshake.
+- **`node_modules` path resolution** in `vscode-file` scheme handler corrected
+  from `Static/node_modules/` to `Static/Application/node_modules/`.
+- **Filesystem asset fallback** added for dev mode when assets aren't embedded.
+- **Tauri CSP** updated to include `vscode-file:` protocol in `connect-src`.
+- **`serde_json::json` macro import** added to `MountainVinegRPCService` for
+  structured JSON payload construction in the Vine protocol service layer.
+
+#### Fixed
+
+- **`MutexGuard` Send fix** (`FeatureMethods.rs`): Lock scope narrowed to
+  prevent `MutexGuard` from being held across `.await` point.
+- **Duplicate `dev_log` imports** removed from `AdvancedFeatures.rs` and
+  `WindAdvancedSync.rs`.
+- **`TraceLog.rs`** syntax error and **`ConfigurationInitialize.rs`** broken
+  imports resolved.
+- **Provider registration** fixed to use `self.RunTime.Environment` instead of
+  `self.Environment` for correct runtime state access.
+- **Command registration locking** corrected — `CommandRegistry` now properly
+  locked before insertion, using correct `CommandHandler::Proxied` structure
+  with `SideCarIdentifier` and `CommandIdentifier` fields.
+
+---
+
+### Earlier v2.1 (pre-April 16)
 
 - 14 language feature provider methods in `FeatureMethods.rs` (354 lines):
   `renameEdits`, `documentSymbols`, `workspaceSymbols`, `signatureHelp`,
