@@ -57,9 +57,14 @@ pub async fn Initialize() {
 		return;
 	}
 
+	// posthog-rs 0.5 renamed `api_endpoint` → `host` on `ClientOptionsBuilder`
+	// to match the JS/Python SDK vocabulary. Behaviour unchanged: the value is
+	// the base URL the ingestion client POSTs to. Pass `String`-typed so the
+	// `#[builder(setter(into, strip_option))]` attribute on `host` wraps it in
+	// `Some(...)` without another hop.
 	let Options = posthog_rs::ClientOptionsBuilder::default()
 		.api_key(POSTHOG_API_KEY.to_string())
-		.api_endpoint(POSTHOG_HOST.to_string())
+		.host(POSTHOG_HOST.to_string())
 		.build()
 		.expect("PostHog client options");
 

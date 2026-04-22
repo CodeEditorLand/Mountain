@@ -594,8 +594,11 @@ impl ConfigurationBridge {
 		hasher.update(session_data.as_bytes());
 		let result = hasher.finalize();
 
-		// Convert to hex string and take first 16 characters
-		let hex_string = format!("{:x}", result);
+		// Convert to hex string and take first 16 characters. sha2 0.11
+		// dropped the `LowerHex` impl from `Digest::finalize()`'s output
+		// (now `hybrid_array::Array`); `hex::encode` produces the same
+		// lowercase-hex string the old `format!("{:x}", …)` emitted.
+		let hex_string = hex::encode(result);
 		let session_id = hex_string.chars().take(16).collect::<String>();
 
 		dev_log!("config", "[ConfigurationBridge] Generated session ID: {}", session_id);
