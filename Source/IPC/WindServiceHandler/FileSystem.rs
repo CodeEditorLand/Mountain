@@ -14,7 +14,11 @@ use CommonLibrary::{
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 };
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{
+	IPC::UriComponents::FromFilePath as UriFromFilePath,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
+};
 use super::{extract_path_from_arg, metadata_to_istat};
 
 // ============================================================================
@@ -437,11 +441,8 @@ pub async fn handle_file_realpath(Args:Vec<Value>) -> Result<Value, String> {
 		.await
 		.map_err(|E| format!("Failed to realpath: {} ({})", Path, E))?;
 
-	Ok(json!({
-		"scheme": "file",
-		"path": Canonical.to_string_lossy(),
-		"authority": ""
-	}))
+	// VS Code-marked UriComponents (`$mid: 1`) for the renderer reviver.
+	Ok(UriFromFilePath(Canonical.to_string_lossy()))
 }
 
 /// Clone file (copy with metadata)

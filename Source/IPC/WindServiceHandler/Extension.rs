@@ -8,7 +8,13 @@ use serde_json::{Value, json};
 use tauri::AppHandle;
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 
-use crate::{ExtensionManagement::VsixInstaller, RunTime::ApplicationRunTime::ApplicationRunTime, Vine, dev_log};
+use crate::{
+	ExtensionManagement::VsixInstaller,
+	IPC::UriComponents::FromFilePath as UriFromFilePath,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Vine,
+	dev_log,
+};
 
 /// Cocoon sidecar id (matches `CocoonManagement::COCOON_SIDE_CAR_IDENTIFIER`).
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
@@ -279,16 +285,16 @@ pub async fn handle_extensions_install(
 
 	// ILocalExtension envelope - matches `handle_extensions_get_installed`
 	// so VS Code's ExtensionEnablementService merges it into the sidebar.
+	// `location` must carry `$mid: 1` so the renderer's `URI.revive()` runs;
+	// otherwise the sidebar's `resources.joinPath(local.location, …)` hits
+	// `uri.with is not a function`. Routed through the shared helper so the
+	// marker never drops off.
 	Ok(json!({
 		"type": 1,
 		"isBuiltin": false,
 		"identifier": { "id": Outcome.Identifier },
 		"manifest": Descriptor,
-		"location": {
-			"scheme": "file",
-			"path": Outcome.InstalledAt.to_string_lossy(),
-			"authority": "",
-		},
+		"location": UriFromFilePath(Outcome.InstalledAt.to_string_lossy()),
 		"targetPlatform": "undefined",
 		"isValid": true,
 		"validations": [],

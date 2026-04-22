@@ -8,7 +8,7 @@ use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionMan
 use serde_json::{Value, json};
 
 use crate::{
-	IPC::UriComponents::{Normalize as NormalizeUri, StampMidUri},
+	IPC::UriComponents::Normalize as NormalizeUri,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
