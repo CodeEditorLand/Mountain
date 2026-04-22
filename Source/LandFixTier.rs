@@ -1,46 +1,43 @@
-//! # LandFixTier - Mountain's runtime tier banner
+//! # LandFixTier
 //!
-//! Emits one ISO-timestamped line at boot listing every tier variable's
-//! compiled value. Because the values are resolved at compile time via
-//! `env!("Tier…")` (populated by `build.rs::PropagateTierGating`), the
-//! banner is always correct for *this particular binary*, not "whatever
-//! is in the env right now".
+//! Emits a single ISO-timestamped boot banner listing the compiled-in value of
+//! every tier variable. Because all `env!("Tier…")` calls are resolved by
+//! `build.rs::PropagateTierGating` at compile time, the banner always reflects
+//! the exact configuration baked into *this* binary — not whatever the host
+//! environment happens to export at runtime.
 //!
-//! ## Why this shape
+//! ## Design Rationale
 //!
-//! Three distinct audiences need the banner:
+//! Three distinct audiences depend on this banner:
 //!
-//! | Audience                | Reason                                                            |
-//! | ----------------------- | ----------------------------------------------------------------- |
-//! | Log readers (humans)    | A pasted session log must show at-a-glance which tier was active. |
-//! | Regression triage       | Confirms the binary on disk matches the `.env.Land` that shipped. |
-//! | Cross-Element agreement | Pairs with Cocoon's `[LandFix:Tier] Cocoon tier set resolved:` and Sky's `[LandFix:Tier] Sky tier set:` - if Mountain disagrees with either, configuration drift is the root cause. |
+//! | Audience | Why it matters |
+//! |---|---|
+//! | Log readers (humans) | A pasted session log must show at-a-glance which tier was active when the problem occurred. |
+//! | Regression triage | Confirms the binary on disk was built from the same `.env.Land` that shipped. |
+//! | Cross-element agreement | Pairs with Cocoon's `[LandFix:Tier] Cocoon tier set resolved:` and Sky's `[LandFix:Tier] Sky tier set:`. A mismatch between any two signals configuration drift as the root cause. |
 //!
-//! ## Call site
+//! ## Call Site
 //!
 //! `LogResolvedTiers()` is called unconditionally from `Binary/Main/Entry::Fn`
-//! before the Tokio runtime starts spawning tasks, because `dev_log!` is
-//! synchronous and the banner should land before any extension code runs.
+//! before the Tokio runtime begins spawning tasks. `dev_log!` is synchronous,
+//! so the banner is guaranteed to land in the log before any extension code runs.
 //!
-//! Runtime overhead is zero - all `env!(...)` invocations resolve to string
-//! literals at compile time and Rust's `println!`/`dev_log!` codegen inlines
-//! the format arguments into a single write call.
+//! Runtime overhead is zero — all `env!(...)` invocations become string
+//! literals at compile time and are inlined into a single write call.
 //!
 //! ## References
 //!
-//! See `Documentation/GitHub/Workflow/TierGatedImplementationSelection.md`
-//! (rendered at
-//! <https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/Workflow/TierGatedImplementationSelection.md>)
-//! for the end-to-end workflow and the matching call sites in Cocoon, Wind
-//! and Sky. Every capability listed in the banner below maps to one or more
-//! tier-marker comments of the form `// Tier:<Capability>:<Value>` at the
-//! corresponding dispatch site.
+//! See `Documentation/GitHub/Workflow/TierGatedImplementationSelection.md` for
+//! the end-to-end tier-gating workflow and the matching call sites in Cocoon,
+//! Wind, and Sky. Every capability listed in the boot banner maps to one or
+//! more `// Tier:<Capability>:<Value>` comments at its dispatch site.
 
 use crate::dev_log;
 
-/// Emits one line at boot listing every tier variable's compiled value.
-/// Call once, from `tauri::Builder`'s setup hook, after the logging
-/// infrastructure is ready.
+/// Emits one ISO-timestamped line at boot listing the compiled-in value of all
+/// 17 tier variables (`TierRemoteProcedureCall` … `TierTelemetry`). Call once,
+/// from `Binary/Main/Entry::Fn`, after the logging infrastructure is ready and
+/// before the Tokio runtime spawns any tasks.
 pub fn LogResolvedTiers() {
 	dev_log!(
 		"lifecycle",
