@@ -114,11 +114,11 @@ Telemetry = []
 Development = []
 Test = []
 
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ===========================================================================
 # Tier-gating (Plan A §Rust feature flags). Every name here is mirrored by
 # `build.rs::IsDeclaredTierFeature`. Adding a new tier requires editing
 # BOTH places so typos in `.env.Land` fail loud.
-# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ===========================================================================
 
 # Tier:RemoteProcedureCall:SharedMemory 🟣 Experimental
 TierRemoteProcedureCallSharedMemory = []

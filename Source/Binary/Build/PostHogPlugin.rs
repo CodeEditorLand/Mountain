@@ -8,27 +8,52 @@ use std::sync::OnceLock;
 
 use crate::dev_log;
 
-/// PostHog EU Cloud project token (debug builds only).
-const POSTHOG_API_KEY:&str = "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA";
+/// PostHog project token. Source of truth: `.env.Land.PostHog` LAND_POSTHOG_KEY;
+/// `build.rs` bakes the value via `cargo:rustc-env` so `env!` at compile
+/// time always resolves, even on a clean checkout.
+const POSTHOG_API_KEY:&str = env!("LAND_POSTHOG_KEY");
 
-/// PostHog EU Cloud host.
-const POSTHOG_HOST:&str = "https://eu.i.posthog.com";
+/// PostHog region host (default EU Cloud; operators override via
+/// `.env.Land.PostHog` LAND_POSTHOG_HOST).
+const POSTHOG_HOST:&str = env!("LAND_POSTHOG_HOST");
+
+/// Per-tier enable flag baked from `.env.Land.PostHog`. Cheap early-exit in
+/// every capture path without forking the binary per env value.
+const POSTHOG_ENABLED:&str = env!("LAND_POSTHOG_MOUNTAIN_ENABLED");
+
+/// Optional pinned distinct-id seed (empty string → auto-generate per
+/// process). Useful for CI runs where correlating events across restarts
+/// matters more than per-dev isolation.
+const POSTHOG_DISTINCT_ID_SEED:&str = env!("LAND_POSTHOG_DISTINCT_ID");
 
 /// Global PostHog client instance.
 static CLIENT:OnceLock<posthog_rs::Client> = OnceLock::new();
 
-/// Machine-stable distinct ID for the dev session.
+/// Machine-stable distinct ID for the dev session. When LAND_POSTHOG_DISTINCT_ID
+/// is set, it wins - same value across every process in the same dev run.
 fn DistinctId() -> String {
+	if !POSTHOG_DISTINCT_ID_SEED.is_empty() {
+		return POSTHOG_DISTINCT_ID_SEED.to_string();
+	}
 	let User = std::env::var("USER")
 		.or_else(|_| std::env::var("USERNAME"))
 		.unwrap_or_else(|_| "unknown".to_string());
 	format!("land-dev-{}", User)
 }
 
-/// Initialize the PostHog client. Call once during app setup.
-/// No-op in release builds.
-pub async fn Initialize() {
+/// Whether the Mountain tier should capture at all. Combines compile-time
+/// debug gate with the `.env.Land.PostHog` enable switch.
+fn CaptureAllowed() -> bool {
 	if !cfg!(debug_assertions) {
+		return false;
+	}
+	!matches!(POSTHOG_ENABLED, "false" | "0" | "off")
+}
+
+/// Initialize the PostHog client. Call once during app setup.
+/// No-op in release builds or when LAND_POSTHOG_MOUNTAIN_ENABLED=false.
+pub async fn Initialize() {
+	if !CaptureAllowed() {
 		return;
 	}
 
@@ -40,13 +65,13 @@ pub async fn Initialize() {
 
 	let PostHogClient = posthog_rs::client(Options).await;
 	let _ = CLIENT.set(PostHogClient);
-	dev_log!("lifecycle", "[PostHog] Initialized (EU Cloud, debug mode)");
+	dev_log!("lifecycle", "[PostHog] Initialized (host={}, debug mode)", POSTHOG_HOST);
 	CaptureEvent("mountain:session:start", None);
 }
 
 /// Capture a named event with optional properties.
 pub fn CaptureEvent(EventName:&str, Properties:Option<Vec<(&str, &str)>>) {
-	if !cfg!(debug_assertions) {
+	if !CaptureAllowed() {
 		return;
 	}
 
@@ -70,7 +95,7 @@ pub fn CaptureEvent(EventName:&str, Properties:Option<Vec<(&str, &str)>>) {
 
 /// Capture an error event.
 pub fn CaptureError(Tag:&str, Message:&str) {
-	if !cfg!(debug_assertions) {
+	if !CaptureAllowed() {
 		return;
 	}
 
@@ -79,7 +104,7 @@ pub fn CaptureError(Tag:&str, Message:&str) {
 
 /// Capture an IPC command invocation.
 pub fn CaptureIPC(Method:&str) {
-	if !cfg!(debug_assertions) {
+	if !CaptureAllowed() {
 		return;
 	}
 

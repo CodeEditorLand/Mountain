@@ -64,12 +64,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	PropagateProfileSentinel();
 
+	PropagatePostHogSentinel();
+
 	tauri_build::build();
 
 	Ok(())
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ===========================================================================
 // Profile sentinel: Build.sh exports `Browser=true` / `Mountain=true` /
 // `Electron=true` / `Bundle` / `Compiler` / `LAND_PROFILE` into the shell
 // that invokes cargo. These shell env vars don't survive to the resulting
@@ -77,9 +79,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 // `option_env!("LAND_PROFILE")` resolves after launch without depending on
 // the shell the user runs the binary from.
 //
-// Follow-up to playbook item #3 — previously the sentinel logged
+// Follow-up to playbook item #3 - previously the sentinel logged
 // `Active profile=unknown` because it ran `std::env::var` at runtime.
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ===========================================================================
 
 fn PropagateProfileSentinel() {
 	let Browser = std::env::var("Browser").unwrap_or_default();
@@ -135,7 +137,42 @@ fn PropagateProfileSentinel() {
 	println!("cargo:rustc-env=LAND_COMPILER={CompilerLabel}");
 }
 
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ===========================================================================
+// PostHog sentinel: `.env.Land.PostHog` exposes LAND_POSTHOG_KEY /
+// LAND_POSTHOG_HOST / LAND_POSTHOG_MOUNTAIN_ENABLED / LAND_POSTHOG_DISTINCT_ID.
+// TierEnvironment.sh sources that overlay before cargo runs, so values are
+// available here. Bake them as `cargo:rustc-env` so Mountain reads a single
+// source of truth across every build profile without a hardcoded const.
+// ===========================================================================
+
+fn PropagatePostHogSentinel() {
+	for Key in [
+		"LAND_POSTHOG_KEY",
+		"LAND_POSTHOG_HOST",
+		"LAND_POSTHOG_MOUNTAIN_ENABLED",
+		"LAND_POSTHOG_DISTINCT_ID",
+	] {
+		println!("cargo:rerun-if-env-changed={Key}");
+	}
+
+	let Key = std::env::var("LAND_POSTHOG_KEY").unwrap_or_else(|_| "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA".into());
+
+	let Host = std::env::var("LAND_POSTHOG_HOST").unwrap_or_else(|_| "https://eu.i.posthog.com".into());
+
+	let Enabled = std::env::var("LAND_POSTHOG_MOUNTAIN_ENABLED").unwrap_or_else(|_| "true".into());
+
+	let DistinctId = std::env::var("LAND_POSTHOG_DISTINCT_ID").unwrap_or_default();
+
+	println!("cargo:rustc-env=LAND_POSTHOG_KEY={Key}");
+
+	println!("cargo:rustc-env=LAND_POSTHOG_HOST={Host}");
+
+	println!("cargo:rustc-env=LAND_POSTHOG_MOUNTAIN_ENABLED={Enabled}");
+
+	println!("cargo:rustc-env=LAND_POSTHOG_DISTINCT_ID={DistinctId}");
+}
+
+// ===========================================================================
 // Tier-gating: read `.env.Land` at the workspace root, expose every value as
 // `cargo:rustc-env=Tier<Capability>=<Value>` so `env!("TierFileSystem")` works
 // at runtime, and activate matching Cargo features so `#[cfg(feature = "…")]`
@@ -147,7 +184,7 @@ fn PropagateProfileSentinel() {
 //
 // See `Documentation/GitHub/Workflow/TierGatedImplementationSelection.md`
 // for the full build-time propagation workflow.
-// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// ===========================================================================
 
 fn PropagateTierGating() {
 	// Emit defaults for every tier variable FIRST so that `env!("Tier…")` at

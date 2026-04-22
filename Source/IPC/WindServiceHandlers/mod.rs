@@ -320,7 +320,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// sidebar. Pin state is Wind-owned (Cocoon never sees it); the
 				// only Mountain-side cost is an acknowledgement so the
 				// extension-enablement service doesn't retry forever. Payload
-				// is optional — VS Code sometimes passes `{ refreshPinned: true }`.
+				// is optional - VS Code sometimes passes `{ refreshPinned: true }`.
 				"extensions:resetPinnedStateForAllUserExtensions" => {
 					dev_log!("extensions", "{} (no-op, pin state is UI-local)", command);
 					Ok(Value::Null)
@@ -1615,6 +1615,25 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 		format!("ipc:{}", command)
 	};
 	crate::otel_span!(&SpanName, OTLPStart, &[("ipc.command", command.as_str())]);
+
+	// Atom I13: paired entry/exit line per invoke. `invoke: <cmd>` on the way
+	// in (emitted at the top of this fn); `done: <cmd> ok=… t_ns=…` on the
+	// way out. A `grep "logger:log"` before showed only the entry half;
+	// having both halves makes latency diagnosis a single pipe:
+	//     grep "logger:log" Mountain.dev.log | awk '…'
+	// without hopping across Jaeger. High-frequency commands still skip the
+	// entry line but DO emit an exit - frequencies still aggregate, but each
+	// is individually accounted for.
+	if !IsHighFrequencyCommand {
+		let ElapsedNanos = crate::IPC::DevLog::NowNano().saturating_sub(OTLPStart);
+		dev_log!(
+			"ipc",
+			"done: {} ok={} t_ns={}",
+			command,
+			!IsErr,
+			ElapsedNanos
+		);
+	}
 
 	Result
 }

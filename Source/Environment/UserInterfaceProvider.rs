@@ -306,7 +306,12 @@ impl UserInterfaceProvider for MountainEnvironment {
 
 /// A generic helper function to send a request to the Sky UI and wait for a
 /// response.
-async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
+///
+/// Atom T1: made `pub(crate)` so Track effect creators
+/// (`applyEdit` / `showTextDocument` / `Task.Execute`, etc.) can reuse the
+/// same RequestIdentifier/oneshot pattern instead of emitting fire-and-
+/// forget events that resolve to synthetic success.
+pub(crate) async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 	Environment:&MountainEnvironment,
 
 	EventName:&str,

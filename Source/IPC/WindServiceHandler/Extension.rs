@@ -146,10 +146,10 @@ pub async fn handle_extensions_is_active(Runtime:Arc<ApplicationRunTime>, Args:V
 ///
 /// Atom V1: honours `LAND_USER_EXTENSIONS_DIR` (from `.env.Land.Extensions`).
 /// Resolution order:
-///   1. `$LAND_USER_EXTENSIONS_DIR` — explicit per-operator override.
+///   1. `$LAND_USER_EXTENSIONS_DIR` - explicit per-operator override.
 ///      Leading `~/` expands against `$HOME`.
-///   2. `$HOME/.land/extensions` — VS Code-style user-scope default.
-///   3. `./extensions` — fallback when `$HOME` is unavailable (container,
+///   2. `$HOME/.land/extensions` - VS Code-style user-scope default.
+///   3. `./extensions` - fallback when `$HOME` is unavailable (container,
 ///      restricted environment). `fs::create_dir_all` runs on install so
 ///      this works even if the cwd is read-only at scan time.
 fn UserExtensionDirectory() -> PathBuf {

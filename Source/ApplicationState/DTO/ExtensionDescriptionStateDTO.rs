@@ -106,6 +106,82 @@ pub struct ExtensionDescriptionStateDTO {
 	/// Extension contributions (commands, views, etc.)
 	#[serde(default, skip_serializing_if = "Option::is_none")]
 	pub Contributes:Option<Value>,
+
+	// --- Discovery metadata ---
+	/// VS Code category tags ("Themes", "Programming Languages",
+	/// "Snippets", "Language Packs", "Debuggers", "Formatters",
+	/// "Keymaps", "SCM Providers", "Testing", "Education", "Other").
+	///
+	/// Atom TH1: Wind's Extensions sidebar filters `@builtin category:themes`
+	/// against this array. Without the field the filter never matches —
+	/// user reported theme extensions absent on @builtin search despite
+	/// being on disk. Scanner-passthrough surfaces the raw package.json
+	/// value; resolved NLS placeholders survive because the serde
+	/// deserialisation happens after the NLS rewrite.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Categories:Option<Vec<String>>,
+
+	/// Human-readable display name, usually a VS Code NLS placeholder like
+	/// `%displayName%` that the scanner resolves against `package.nls.json`.
+	/// Atom TH1: sidebar row rendering falls back to `name` when this is
+	/// absent; having the real value populates tooltips and the
+	/// details editor.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub DisplayName:Option<String>,
+
+	/// Short prose description. Same NLS-placeholder rules as DisplayName.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Description:Option<String>,
+
+	/// Extension keywords array — searched by the sidebar when the query
+	/// doesn't match `name`, `displayName`, or `description`.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Keywords:Option<Vec<String>>,
+
+	/// Repository info: Either a string URL or `{ type, url }` object.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Repository:Option<Value>,
+
+	/// Bug-tracker URL or object.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Bugs:Option<Value>,
+
+	/// Homepage URL.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Homepage:Option<String>,
+
+	/// License identifier (SPDX short code) or URL.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub License:Option<String>,
+
+	/// Icon path relative to the extension root (for sidebar thumbnails).
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Icon:Option<String>,
+
+	/// Marketplace API key placeholder — still present in some upstream
+	/// built-in manifests. `@vscode/extension-telemetry` reads its
+	/// length on construction; if missing the activate throws
+	/// `Cannot read properties of undefined (reading 'length')`.
+	#[serde(default, skip_serializing_if = "Option::is_none", rename = "aiKey")]
+	pub AiKey:Option<String>,
+
+	/// Marketplace-side extension kind (`["ui"]`, `["workspace"]`,
+	/// `["web"]`). Wind uses this to decide which host to run the
+	/// extension in. Missing → VS Code falls back to heuristics.
+	#[serde(default, skip_serializing_if = "Option::is_none", rename = "extensionKind")]
+	pub ExtensionKind:Option<Value>,
+
+	/// Capabilities descriptor — `untrustedWorkspaces`, `virtualWorkspaces`.
+	#[serde(default, skip_serializing_if = "Option::is_none")]
+	pub Capabilities:Option<Value>,
+
+	/// Dependency list — other extensions this one needs activated first.
+	#[serde(default, skip_serializing_if = "Option::is_none", rename = "extensionDependencies")]
+	pub ExtensionDependencies:Option<Vec<String>>,
+
+	/// Extension-pack children — extensions this one bundles by reference.
+	#[serde(default, skip_serializing_if = "Option::is_none", rename = "extensionPack")]
+	pub ExtensionPack:Option<Vec<String>>,
 }
 
 impl ExtensionDescriptionStateDTO {
@@ -167,6 +243,20 @@ impl ExtensionDescriptionStateDTO {
 			ExtensionLocation:serde_json::json!(null),
 			ActivationEvents:None,
 			Contributes:None,
+			Categories:None,
+			DisplayName:None,
+			Description:None,
+			Keywords:None,
+			Repository:None,
+			Bugs:None,
+			Homepage:None,
+			License:None,
+			Icon:None,
+			AiKey:None,
+			ExtensionKind:None,
+			Capabilities:None,
+			ExtensionDependencies:None,
+			ExtensionPack:None,
 		};
 
 		Description.Validate()?;

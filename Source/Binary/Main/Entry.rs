@@ -213,7 +213,7 @@ pub fn Fn() {
 	//
 	// Build.sh exports `Browser`/`Mountain`/`Electron`/`Bundle`/`Compiler`/
 	// `LAND_PROFILE` into the shell that invokes cargo. `build.rs` captures
-	// those into `cargo:rustc-env=LAND_*` so they're baked into the binary —
+	// those into `cargo:rustc-env=LAND_*` so they're baked into the binary -
 	// runtime env lookups don't survive launching the binary from Finder /
 	// another shell. `option_env!` falls back to "unknown" when the build
 	// ran outside Build.sh (e.g. plain `cargo build`).

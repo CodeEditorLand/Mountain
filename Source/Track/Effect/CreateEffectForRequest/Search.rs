@@ -32,10 +32,26 @@ pub fn CreateEffect<R:Runtime>(
 						};
 						let (Pattern, Options) = Args;
 						if MethodNameOwned == "findTextInFiles" {
-							provider.TextSearch(Pattern, Options).await.map_err(|e| e.to_string())
-						} else {
-							Ok(json!([]))
+							return provider.TextSearch(Pattern, Options).await.map_err(|e| e.to_string());
 						}
+						// Atom T3: route through the same glob-walker that
+						// powers `search:findFiles` via the Wind service IPC.
+						// Previously `findFiles` returned `[]` synthetically -
+						// extensions calling `vscode.workspace.findFiles(…)`
+						// got nothing even when matches existed on disk. The
+						// Wind handler takes `[pattern, maxResults]`; map the
+						// canonical vscode arg shape onto it.
+						let PatternString = Pattern.as_str().map(str::to_string).unwrap_or_default();
+						if PatternString.is_empty() {
+							return Ok(json!([]));
+						}
+						let MaxResults = Options
+							.get("maxResults")
+							.and_then(Value::as_u64)
+							.or_else(|| Options.as_u64())
+							.unwrap_or(500);
+						let Args = vec![json!(PatternString), json!(MaxResults)];
+						crate::IPC::WindServiceHandlers::handle_search_find_files(run_time.clone(), Args).await
 					})
 				};
 			Some(Ok(Box::new(effect)))

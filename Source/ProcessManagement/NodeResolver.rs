@@ -5,17 +5,17 @@
 //! Resolves the Node.js binary used to spawn the Cocoon sidecar. Checks, in
 //! order:
 //!
-//! 1. **Explicit override** — `LAND_NODE_BINARY` env var. Operators set this
+//! 1. **Explicit override** - `LAND_NODE_BINARY` env var. Operators set this
 //!    to pin to a specific Node install for reproducibility.
-//! 2. **Shipped runtime** — `Resources/Node/bin/node` relative to the Tauri
+//! 2. **Shipped runtime** - `Resources/Node/bin/node` relative to the Tauri
 //!    bundle (production) or `Target/<profile>/../Node/bin/node` relative to
 //!    the executable (dev). Ships alongside Mountain for hermetic builds.
-//! 3. **Version managers** — fnm, volta, asdf, nvm in their canonical
+//! 3. **Version managers** - fnm, volta, asdf, nvm in their canonical
 //!    locations. Preferred over system PATH because the user's selected
 //!    version tracks their workspace (`.nvmrc`, `.tool-versions`).
-//! 4. **Package managers** — Homebrew on macOS/Linux, the most common way
+//! 4. **Package managers** - Homebrew on macOS/Linux, the most common way
 //!    Node gets installed on developer machines.
-//! 5. **PATH fallback** — `which node`. Last resort — works, but version is
+//! 5. **PATH fallback** - `which node`. Last resort - works, but version is
 //!    whatever happens to be first in PATH.
 //!
 //! Every attempt is logged with its source so a log tells you exactly which
@@ -44,21 +44,21 @@ pub struct ResolvedNode {
 pub enum NodeSource {
 	/// `LAND_NODE_BINARY` environment variable.
 	Override,
-	/// Shipped with Mountain — `Resources/Node/bin/node` or dev-tree
+	/// Shipped with Mountain - `Resources/Node/bin/node` or dev-tree
 	/// equivalent.
 	Shipped,
 	/// fnm's `current/bin/node`.
 	Fnm,
 	/// Volta's `tools/image/node/<version>/bin/node`.
 	Volta,
-	/// asdf's `shims/node` — resolves via `.tool-versions`.
+	/// asdf's `shims/node` - resolves via `.tool-versions`.
 	Asdf,
 	/// nvm's `versions/node/<default>/bin/node`.
 	Nvm,
-	/// Homebrew — `/opt/homebrew/bin/node` (Apple Silicon) or
+	/// Homebrew - `/opt/homebrew/bin/node` (Apple Silicon) or
 	/// `/usr/local/bin/node` (Intel macOS / Linuxbrew).
 	Homebrew,
-	/// PATH-resolved `node` — last resort fallback.
+	/// PATH-resolved `node` - last resort fallback.
 	Path,
 }
 
@@ -81,7 +81,7 @@ static RESOLVED: OnceLock<ResolvedNode> = OnceLock::new();
 
 /// Resolve the Node binary to spawn Cocoon with. Caches the result for the
 /// life of the process. If all resolution fails, returns the string `"node"`
-/// so `Command::new` still tries a bare PATH lookup at spawn time — that
+/// so `Command::new` still tries a bare PATH lookup at spawn time - that
 /// matches the legacy behaviour while logging the chain of misses.
 pub fn ResolveNodeBinary<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode {
 	if let Some(Cached) = RESOLVED.get() {
@@ -90,18 +90,71 @@ pub fn ResolveNodeBinary<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> Resolved
 
 	let Resolved = ResolveUncached(ApplicationHandle);
 
-	dev_log!(
-		"cocoon",
-		"[NodeResolver] Using: {} (source={})",
-		Resolved.Path.display(),
-		Resolved.Source.AsLabel()
-	);
+	let Version = QueryNodeVersion(&Resolved.Path);
+	match &Version {
+		Some(Reported) => {
+			dev_log!(
+				"cocoon",
+				"[NodeResolver] Using: {} (source={}, version={})",
+				Resolved.Path.display(),
+				Resolved.Source.AsLabel(),
+				Reported
+			);
+			CheckMinMajor(Reported);
+		},
+		None => {
+			dev_log!(
+				"cocoon",
+				"[NodeResolver] Using: {} (source={}, version=unknown)",
+				Resolved.Path.display(),
+				Resolved.Source.AsLabel()
+			);
+		},
+	}
 
 	// OnceLock::set is infallible after the None check above, and a race is
-	// benign — both callers would resolve to the same result.
+	// benign - both callers would resolve to the same result.
 	let _ = RESOLVED.set(Resolved.clone());
 
 	Resolved
+}
+
+/// Run `node --version` on the resolved binary and return its reported
+/// version string (e.g. `v24.8.0`). Returns `None` when the binary can't be
+/// spawned (bare `node` fallback under a misconfigured PATH) or when it
+/// exits non-zero. Timeout isn't needed - `node --version` never blocks.
+fn QueryNodeVersion(NodePath:&Path) -> Option<String> {
+	let Output = std::process::Command::new(NodePath).arg("--version").output().ok()?;
+	if !Output.status.success() {
+		return None;
+	}
+	let Reported = String::from_utf8(Output.stdout).ok()?.trim().to_string();
+	if Reported.is_empty() { None } else { Some(Reported) }
+}
+
+/// Emit a warning log line when the resolved Node's major version is below
+/// `LAND_NODE_MIN_MAJOR`. Does NOT fail the spawn - Cocoon's bundled code
+/// mostly degrades gracefully on older engines, and operators should be
+/// free to experiment on unreleased Node without a hard gate.
+fn CheckMinMajor(VersionString:&str) {
+	let Trimmed = VersionString.trim_start_matches('v');
+	let MajorToken = Trimmed.split('.').next().unwrap_or("");
+	let Major:u32 = match MajorToken.parse() {
+		Ok(Value) => Value,
+		Err(_) => return,
+	};
+
+	let Required:u32 = std::env::var("LAND_NODE_MIN_MAJOR").ok().and_then(|Raw| Raw.parse().ok()).unwrap_or(20);
+
+	if Major < Required {
+		dev_log!(
+			"cocoon",
+			"warn: [NodeResolver] Node {} is below LAND_NODE_MIN_MAJOR={}; extension host may fail to boot. Override \
+			 via LAND_NODE_BINARY or upgrade Node.",
+			VersionString,
+			Required
+		);
+	}
 }
 
 fn ResolveUncached<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode {

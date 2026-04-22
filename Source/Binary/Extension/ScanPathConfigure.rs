@@ -45,7 +45,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// (`~/.land/extensions`) still scans so VSIX-installed extensions work.
 	//
 	// Atom U1: `.env.Land.Extensions` also exposes `LAND_DISABLE_BUILTIN_EXTENSIONS`
-	// — same effect, different name. Accept both so the skill-file env and
+	// - same effect, different name. Accept both so the skill-file env and
 	// the legacy SKIP flag don't diverge.
 	let SkipBuiltins = matches!(std::env::var("LAND_SKIP_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"))
 		|| matches!(std::env::var("LAND_DISABLE_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"));
@@ -189,7 +189,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		}
 	}
 
-	// Atom U1: development extensions path — the VS Code equivalent of
+	// Atom U1: development extensions path - the VS Code equivalent of
 	// `--extensionDevelopmentPath=<dir>`. Extensions here always load
 	// regardless of enablement state; kept separate from user-scope so a
 	// broken dev extension doesn't persist into the user's profile.

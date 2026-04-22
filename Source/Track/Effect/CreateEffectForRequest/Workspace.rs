@@ -16,15 +16,33 @@ pub fn CreateEffect<R:Runtime>(
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						use tauri::Emitter;
-						let AppHandle = run_time.Environment.ApplicationHandle.clone();
+						// Atom T1: round-trip via Mountain's request/reply plumbing so the
+						// extension's `await workspace.applyEdit(…)` resolves when Sky has
+						// actually applied the edit (or refused). Previously a synthetic
+						// `true` returned before the edit ran, racing listeners that
+						// expected post-apply state.
 						let Payload = if Parameters.is_array() {
 							Parameters.get(0).cloned().unwrap_or_default()
 						} else {
 							Parameters
 						};
-						let _ = AppHandle.emit("sky://workspace/applyEdit", Payload);
-						Ok(json!(true))
+						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+							&run_time.Environment,
+							"sky://workspace/applyEdit",
+							Payload,
+						)
+						.await
+						{
+							Ok(Value) => Ok(Value),
+							Err(Error) => {
+								dev_log!(
+									"ipc",
+									"warn: [applyEdit] Sky did not answer ({:?}); returning synthetic true",
+									Error
+								);
+								Ok(json!(true))
+							},
+						}
 					})
 				};
 			Some(Ok(Box::new(effect)))
@@ -34,10 +52,28 @@ pub fn CreateEffect<R:Runtime>(
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						use tauri::Emitter;
-						let AppHandle = run_time.Environment.ApplicationHandle.clone();
-						let _ = AppHandle.emit("sky://window/showTextDocument", &Parameters);
-						Ok(json!(null))
+						// Atom T1: same round-trip as applyEdit. The canonical vscode
+						// return shape is a `TextEditor` - today Sky resolves with a
+						// thin `{ uri, viewColumn }` stub. Extensions that chain
+						// editor ops may still see undefined properties; that's a
+						// Sky-side enrichment task (T2 follow-up).
+						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+							&run_time.Environment,
+							"sky://window/showTextDocument",
+							Parameters,
+						)
+						.await
+						{
+							Ok(Value) => Ok(Value),
+							Err(Error) => {
+								dev_log!(
+									"ipc",
+									"warn: [showTextDocument] Sky did not answer ({:?}); returning null",
+									Error
+								);
+								Ok(json!(null))
+							},
+						}
 					})
 				};
 			Some(Ok(Box::new(effect)))
