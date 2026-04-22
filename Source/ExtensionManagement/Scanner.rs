@@ -159,6 +159,49 @@ fn IsDeniedDirectory(Name:&str) -> bool { EXTENSION_SCAN_DENY_LIST.iter().any(|D
 
 fn IsTestOnlyExtension(Name:&str) -> bool { TEST_ONLY_EXTENSIONS.iter().any(|TestOnly| *TestOnly == Name) }
 
+/// Return `true` if the given scan path represents a user-writable extension
+/// directory (i.e. where `extensions:install` drops VSIX payloads), not a
+/// bundled "built-in" path that ships with the app.
+///
+/// VS Code's sidebar categorises installed extensions by `IsBuiltin`:
+/// `true` appears under **Built-in**, `false` under **Installed**
+/// (accessible via `@installed`). Previously this classifier was
+/// hardcoded to `true` for every scan path, so user-installed VSIXes
+/// showed up under Built-in and `@installed` was empty.
+///
+/// The canonical user extension root on macOS/Linux is `~/.land/extensions`
+/// (VS Code's equivalent is `~/.vscode/extensions`). We also honour a
+/// `LAND_USER_EXTENSION_DIRECTORY` override in case callers remap it.
+///
+/// Everything else - the Mountain build's own `Resources/extensions`,
+/// Sky's `Static/Application/extensions`, the VS Code submodule's
+/// `Dependency/…/extensions` - is treated as built-in.
+fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
+	let Normalised = match DirectoryPath.canonicalize() {
+		Ok(Canonical) => Canonical,
+		Err(_) => DirectoryPath.to_path_buf(),
+	};
+
+	// `${LAND_USER_EXTENSION_DIRECTORY}` explicit override takes priority.
+	if let Ok(Override) = std::env::var("LAND_USER_EXTENSION_DIRECTORY") {
+		if !Override.is_empty() && Normalised == std::path::PathBuf::from(&Override) {
+			return true;
+		}
+	}
+
+	// `${HOME}/.land/extensions` is the default user-scope root - used by
+	// `VsixInstaller::InstallVsix` for local VSIX drops and by the scan
+	// path list in `ScanPathConfigure`.
+	if let Ok(Home) = std::env::var("HOME") {
+		let UserRoot = std::path::PathBuf::from(Home).join(".land/extensions");
+		if Normalised == UserRoot {
+			return true;
+		}
+	}
+
+	false
+}
+
 /// Scans a single directory for valid extensions.
 ///
 /// This function iterates through a given directory, looking for subdirectories
@@ -169,6 +212,10 @@ pub async fn ScanDirectoryForExtensions(
 
 	DirectoryPath:PathBuf,
 ) -> Result<Vec<ExtensionDescriptionStateDTO>, CommonError> {
+	// Decide up-front whether this scan path contributes built-ins or user
+	// extensions. Built-ins are ones shipped inside the Mountain/Sky/VS Code
+	// bundle; the `~/.land/extensions` root is user-space.
+	let IsUserPath = IsUserExtensionScanPath(&DirectoryPath);
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 	let mut FoundExtensions = Vec::new();
@@ -309,8 +356,17 @@ pub async fn ScanDirectoryForExtensions(
 								Description.Identifier = serde_json::json!({ "value": Id });
 							}
 
-							// Mark as built-in extension
-							Description.IsBuiltin = true;
+							// Classify the extension by the scan path it came from.
+							// Built-in extensions ship in the Mountain/Sky/VS Code
+							// bundle; user extensions live under
+							// `~/.land/extensions` (written by
+							// `VsixInstaller::InstallVsix`). Hardcoding `true`
+							// here (the previous behaviour) made every VSIX
+							// install appear under **Built-in** in the
+							// Extensions sidebar and left `@installed` empty
+							// because the default query filters for User-scope
+							// extensions only.
+							Description.IsBuiltin = !IsUserPath;
 
 							FoundExtensions.push(Description);
 						},
