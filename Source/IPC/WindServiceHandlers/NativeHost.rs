@@ -266,11 +266,29 @@ pub async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -
 	Ok(Value::Null)
 }
 
-/// Show open dialog with file/folder picker
+/// Show open dialog with file/folder picker.
+///
+/// VS Code routes `IFileDialogService.showOpenDialog` (Install-from-VSIX,
+/// Open File, Open Folder, Open Workspace, Choose Restore Location, etc.)
+/// through `nativeHost.showOpenDialog`. The handler must:
+///
+///   1. Actually open the OS dialog via `tauri_plugin_dialog`.
+///   2. Respect Electron-style `properties` flags (`openDirectory`,
+///      `openFile`, `multiSelections`, `createDirectory`) so folder vs file
+///      vs multi-select modes match the caller's intent.
+///   3. Honour `filters` (the VSIX action sets `extensions: ["vsix"]` so
+///      the picker narrows to .vsix files).
+///   4. Honour `title`, `buttonLabel`, `defaultPath`.
+///   5. Return `{ canceled: bool, filePaths: string[] }`.
+///
+/// A single canonical implementation lives in the singular
+/// `WindServiceHandler::NativeHost` module - this shim delegates so the
+/// legacy dispatcher's `NativeHost::*` re-export surface doesn't drift from
+/// the new one. Previously this was a `canceled:true` stub, which is the
+/// precise reason "Install from VSIX…" did nothing: VS Code interpreted
+/// the stubbed cancel as "user dismissed the picker" and stopped.
 pub async fn handle_native_show_open_dialog(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
-	dev_log!("folder", "showOpenDialog: {:?}", args);
-	// Return canceled for now - real dialog integration needs tauri_plugin_dialog
-	Ok(json!({ "canceled": true, "filePaths": [] }))
+	crate::IPC::WindServiceHandler::NativeHost::handle_native_show_open_dialog(app_handle, args).await
 }
 
 /// Get OS properties - cross-platform (macOS, Windows, Linux)

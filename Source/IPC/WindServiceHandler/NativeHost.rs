@@ -111,24 +111,74 @@ pub async fn handle_native_pick_folder(AppHandle:AppHandle, _Args:Vec<Value>) ->
 	Ok(Value::Null)
 }
 
+/// Electron-style filter passed through `showOpenDialog({ filters: [...] })`.
+/// Shape: `{ name: "VSIX Extensions", extensions: ["vsix"] }`. The tauri
+/// dialog plugin's `add_filter(name, &[&str])` expects the same pair.
+#[derive(Debug, Clone)]
+struct DialogFilter {
+	Name:String,
+	Extensions:Vec<String>,
+}
+
+/// Parse `options.filters` into a vector of `DialogFilter`. Unknown / malformed
+/// entries are silently skipped rather than failing the whole dialog open -
+/// the user still gets the picker, just without the filter hint.
+fn ParseDialogFilters(Options:&Value) -> Vec<DialogFilter> {
+	Options
+		.get("filters")
+		.and_then(Value::as_array)
+		.map(|Array| {
+			Array
+				.iter()
+				.filter_map(|Entry| {
+					let Name =
+						Entry.get("name").and_then(Value::as_str).unwrap_or("Files").to_string();
+					let Extensions:Vec<String> = Entry
+						.get("extensions")
+						.and_then(Value::as_array)
+						.map(|List| {
+							List.iter().filter_map(|V| V.as_str().map(str::to_string)).collect()
+						})
+						.unwrap_or_default();
+					if Extensions.is_empty() { None } else { Some(DialogFilter { Name, Extensions }) }
+				})
+				.collect()
+		})
+		.unwrap_or_default()
+}
+
 /// Show open dialog with file/folder picker.
 ///
-/// VS Code calls this via `nativeHostService.showOpenDialog(options)` with
-/// Electron-style `properties: ["openDirectory" | "openFile" |
-/// "multiSelections" | "createDirectory"]`. The expected return shape is
-/// `{ canceled: bool, filePaths: string[] }`.
+/// VS Code calls this via `nativeHostService.showOpenDialog(options)` and
+/// expects the Electron contract:
 ///
-/// This handler was previously a stub returning "canceled: true" - that's
-/// why clicking the Explorer's "Open Folder" button (which goes through
-/// this method, not through `pickFolderAndOpen`) silently did nothing. We
-/// now drive the Tauri dialog plugin directly, honouring the `properties`
-/// flags so folder-mode is picked when requested.
+///   - `properties: ["openDirectory" | "openFile" | "multiSelections" |
+///      "createDirectory" | "showHiddenFiles"]`
+///   - `filters: [{ name, extensions: ["vsix", …] }, …]`
+///   - `title`, `buttonLabel`, `defaultPath`
+///   - returns `{ canceled: bool, filePaths: string[] }`.
+///
+/// The VSIX install flow (`Install from VSIX…`) relies on `filters` to narrow
+/// the picker to `.vsix` and on `openFile + multiSelections` so the user can
+/// pick several archives at once. Without either, the dialog either never
+/// opens (old stub) or opens unfiltered - both produced the "nothing happens"
+/// symptom in the field. This handler drives the Tauri dialog plugin
+/// end-to-end: every option in the VS Code contract maps to a builder call.
 pub async fn handle_native_show_open_dialog(AppHandle:AppHandle, Args:Vec<Value>) -> Result<Value, String> {
 	use tauri_plugin_dialog::DialogExt;
 
 	dev_log!("folder", "showOpenDialog: {:?}", Args);
 
-	let Options = Args.first().cloned().unwrap_or(Value::Null);
+	// Electron passes `(windowId, options)`; `options` is always the last
+	// element regardless of how the renderer was invoked. Searching by shape
+	// (`first object with a "properties" or "filters" field`) keeps us robust
+	// against VS Code versions that pass an extra prefix arg.
+	let Options = Args
+		.iter()
+		.rev()
+		.find(|V| V.is_object())
+		.cloned()
+		.unwrap_or(Value::Null);
 	let Properties:Vec<String> = Options
 		.get("properties")
 		.and_then(Value::as_array)
@@ -142,12 +192,25 @@ pub async fn handle_native_show_open_dialog(AppHandle:AppHandle, Args:Vec<Value>
 		.unwrap_or(if IsFolder { "Open Folder" } else { "Open File" })
 		.to_string();
 	let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
+	// `filters` only affects file pickers; Tauri's folder picker ignores them.
+	// Parsing unconditionally keeps the code branchless - the unused vector
+	// costs nothing and we avoid an extra branch in the hot path.
+	let Filters = ParseDialogFilters(&Options);
 
 	let Handle = AppHandle.clone();
+	let FiltersForThread = Filters.clone();
 	let Selected = tokio::task::spawn_blocking(move || -> Vec<String> {
 		let mut Builder = Handle.dialog().file().set_title(&Title);
 		if let Some(Path) = DefaultPath.as_deref() {
 			Builder = Builder.set_directory(Path);
+		}
+		// Apply filters only for file pickers - Tauri returns an error on
+		// folder pickers if filters are set on some platforms.
+		if !IsFolder {
+			for Filter in &FiltersForThread {
+				let ExtRefs:Vec<&str> = Filter.Extensions.iter().map(String::as_str).collect();
+				Builder = Builder.add_filter(&Filter.Name, &ExtRefs);
+			}
 		}
 		if IsFolder {
 			if IsMultiple {
@@ -178,7 +241,14 @@ pub async fn handle_native_show_open_dialog(AppHandle:AppHandle, Args:Vec<Value>
 		dev_log!("folder", "showOpenDialog cancelled by user");
 		Ok(json!({ "canceled": true, "filePaths": [] }))
 	} else {
-		dev_log!("folder", "showOpenDialog selected {} path(s)", Selected.len());
+		dev_log!(
+			"folder",
+			"showOpenDialog selected {} path(s) (folder={}, multi={}, filters={})",
+			Selected.len(),
+			IsFolder,
+			IsMultiple,
+			Filters.len()
+		);
 		Ok(json!({ "canceled": false, "filePaths": Selected }))
 	}
 }
