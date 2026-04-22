@@ -345,11 +345,13 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	".claude/agents",
 	".claude/settings.json",
 	".claude/settings.local.json",
+	".copilot/agents",
 	".github/copilot",
 	".github/agents",
 	".vscode/settings.json",
 	".vscode/launch.json",
 	".vscode/extensions.json",
+	".vscode/tasks.json",
 	"agentPlugins",
 	"agent-plugins",
 	"chatEditingSessions",
@@ -358,6 +360,17 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	"machineid",
 	"terminalSuggestGlobalsCacheV2.json",
 	"globalStorage",
+	// Optional user-level workbench config files. On fresh profiles these do
+	// not exist; the workbench probes them on every boot and creates on first
+	// write. These are the `$APP/User/<file>` forms emitted after
+	// `resolve_userdata`.
+	"/User/tasks.json",
+	"/User/mcp.json",
+	// Chat images cache directory is lazy-created on first chat attachment.
+	"vscode-chat-images",
+	// Per-window output channel log files probed lazily by the workbench
+	// before first write. Path shape: `$APP/logs/<SESSION>/window<N>/output_<TIMESTAMP>`.
+	"/output_20",
 	// Virtual scheme misses already covered by earlier batches.
 	"vscode://schemas-associations/",
 ];

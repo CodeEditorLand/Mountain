@@ -59,6 +59,7 @@
 //! - [ ] Add startup performance metrics
 
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use tauri::{App, Manager, RunEvent, Wry};
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
@@ -556,6 +557,18 @@ pub fn Fn() {
 				}
 
 				if let RunEvent::ExitRequested { api, .. } = event {
+					// Shutdown runs once. The graceful path ends with
+					// `app_handle.exit(0)`, which Tauri re-delivers as a
+					// second `ExitRequested { code: Some(0) }`. On re-entry
+					// we must NOT `prevent_exit` or spawn the shutdown task
+					// again - Cocoon has already been SIGKILLed and the
+					// second pass would log spurious "tcp connect error"
+					// warnings trying to notify a dead sidecar.
+					static SHUTTING_DOWN:AtomicBool = AtomicBool::new(false);
+					if SHUTTING_DOWN.swap(true, Ordering::SeqCst) {
+						return;
+					}
+
 					dev_log!(
 						"lifecycle",
 						"warn: [Lifecycle] [Shutdown] Exit requested. Starting graceful shutdown..."

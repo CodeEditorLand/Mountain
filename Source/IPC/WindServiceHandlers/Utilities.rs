@@ -135,13 +135,24 @@ fn resolve_userdata_path(Path:&str) -> String {
 
 /// Map paths starting with /Static/Application/ to the real Sky Target
 /// directory.
+///
+/// Also accepts the leading-slash-less form `Static/Application/...`: the
+/// webview's WASM loader (`vscode-oniguruma` → `onig.wasm`) resolves the
+/// asset URL relative to the current document, which strips the leading
+/// slash before the path reaches the `file:read` IPC handler. Without this
+/// branch, `tokio::fs::read` would be called with a relative path and fail
+/// with ENOENT, breaking TextMate syntax highlighting.
 fn resolve_static_application_path(Path:&str) -> String {
-	if !Path.starts_with("/Static/Application/") && Path != "/Static/Application" {
+	let Normalized = if Path.starts_with("/Static/Application/") || Path == "/Static/Application" {
+		Path.to_string()
+	} else if Path.starts_with("Static/Application/") || Path == "Static/Application" {
+		format!("/{}", Path)
+	} else {
 		return Path.to_string();
-	}
+	};
 
 	if let Some(Root) = STATIC_APPLICATION_ROOT.get() {
-		let Relative = Path.strip_prefix("/Static/Application").unwrap_or("");
+		let Relative = Normalized.strip_prefix("/Static/Application").unwrap_or("");
 		let Resolved = format!("{}/Static/Application{}", Root, Relative);
 		dev_log!("vfs", "resolve_static: {} -> {}", Path, Resolved);
 		Resolved
