@@ -4,7 +4,7 @@
 //! These are not public API - they are called by the main provider
 //! implementation.
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde_json::json;
 use tauri::Emitter;
 
@@ -54,7 +54,7 @@ pub(super) async fn append_to_channel(
 		let event_payload = json!({ "Id": channel_identifier, "AppendedText": value });
 
 		env.ApplicationHandle
-			.emit("sky://output/append", event_payload)
+			.emit(SkyEvent::OutputAppend.AsStr(), event_payload)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
 		dev_log!(
@@ -93,7 +93,7 @@ pub(super) async fn replace_channel_content(
 		let event_payload = json!({ "Id": channel_identifier, "Content": value });
 
 		env.ApplicationHandle
-			.emit("sky://output/replace", event_payload)
+			.emit(SkyEvent::OutputReplace.AsStr(), event_payload)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
 		dev_log!(
@@ -125,7 +125,7 @@ pub(super) async fn clear_channel(
 		channel_state.Buffer.clear();
 
 		env.ApplicationHandle
-			.emit("sky://output/clear", json!({ "Id": channel_identifier }))
+			.emit(SkyEvent::OutputClear.AsStr(), json!({ "Id": channel_identifier }))
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
 		dev_log!(

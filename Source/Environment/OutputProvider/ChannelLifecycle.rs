@@ -4,7 +4,7 @@
 //! These are not public API - they are called by the main provider
 //! implementation.
 
-use CommonLibrary::Error::CommonError::CommonError;
+use CommonLibrary::{Error::CommonError::CommonError, IPC::SkyEvent::SkyEvent};
 use serde_json::json;
 use tauri::Emitter;
 
@@ -65,7 +65,7 @@ pub(super) async fn register_channel(
 	let event_payload = json!({ "Id": channel_identifier, "Name": name, "LanguageId": language_identifier });
 
 	env.ApplicationHandle
-		.emit("sky://output/create", event_payload)
+		.emit(SkyEvent::OutputCreate.AsStr(), event_payload)
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
 	Ok(channel_identifier)
@@ -87,6 +87,6 @@ pub(super) async fn dispose_channel(
 		.remove(&channel_identifier);
 
 	env.ApplicationHandle
-		.emit("sky://output/dispose", json!({ "Id": channel_identifier }))
+		.emit(SkyEvent::OutputDispose.AsStr(), json!({ "Id": channel_identifier }))
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 }
