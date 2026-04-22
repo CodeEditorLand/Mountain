@@ -1,32 +1,29 @@
-// # CocoonServiceImpl Implementation
+#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+
+// # CocoonServiceImpl — thin-wrapper dispatcher
 //
-// This module implements the main gRPC service for Mountain-Cocoon
-// communication. It handles all requests from the Cocoon extension host
-// sidecar.
-//
-// ## Service Responsibilities
-//
-// - **Initialization**: Handshake and extension host initialization
-// - **Commands**: Register and execute extension commands
-// - **Language Features**: Hover, completion, definition, references, code
-// actions
-// - **File System**: Read, write, stat, and watch files
-// - **Terminal**: Manage terminal instances and I/O
-// - **Tree View**: Register providers and get tree children
-// - **SCM**: Source control management and git operations
-// - **Debug**: Debug adapter registration and session management
-// - **Save Participants**: Handle save events from extensions
-//
-// ## Architecture
-//
-// The service maintains references to:
-// - `MountainEnvironment`: Access to all Mountain services and providers
-// - `ActiveOperations`: Registry of cancellable operations
-//
-// ## Error Handling
-//
-// All methods return `tonic::Result<T>` and use proper error conversion
-// from internal errors to gRPC status codes.
+// Domain files hold all typed RPC implementations. This module keeps:
+// - CocoonServiceImpl struct + helper methods
+// - process_mountain_request (legacy generic router, ~600 lines)
+// - send_mountain_notification (push dispatcher, ~400 lines)
+// - One-line delegates for all 78 typed RPCs
+
+pub mod Auth;
+pub mod Command;
+pub mod Debug;
+pub mod Extension;
+pub mod FileSystem;
+pub mod Initialization;
+pub mod Output;
+pub mod Provider;
+pub mod Save;
+pub mod SCM;
+pub mod Secret;
+pub mod Task;
+pub mod Terminal;
+pub mod TreeView;
+pub mod Window;
+pub mod Workspace;
 
 #[allow(unused_imports)]
 use std::{
@@ -259,6 +256,7 @@ use crate::Vine::Generated::{
 
 	WorkspaceFolder,
 	WriteFileRequest,
+
 	cocoon_service_server::CocoonService,
 	on_did_receive_message_request,
 	post_webview_message_request,
@@ -376,6 +374,7 @@ impl CocoonServiceImpl {
 }
 
 #[async_trait]
+
 impl CocoonService for CocoonServiceImpl {
 	/// Process Mountain requests from Cocoon (generic request-response).
 	///
@@ -1410,2852 +1409,464 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	/// Cancel operations requested by Mountain
+
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
-		let cancel_request = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Cancel operation request: {}",
-			cancel_request.request_identifier_to_cancel
-		);
-
-		// ActiveOperations tracking and cancellation logic
-		if let Some(token) = self
-			.ActiveOperations
-			.read()
-			.await
-			.get(&cancel_request.request_identifier_to_cancel)
-		{
-			dev_log!(
-				"cocoon",
-				"[CocoonService] Triggering cancellation token for operation {}",
-				cancel_request.request_identifier_to_cancel
-			);
-			token.cancel();
-		} else {
-			dev_log!(
-				"cocoon",
-				"warn: [CocoonService] No active operation found for cancellation: {}",
-				cancel_request.request_identifier_to_cancel
-			);
-		}
-
-		Ok(Response::new(Empty {}))
+		Initialization::CancelOperation(self, request.into_inner()).await
 	}
 
-	// ==================== Initialization ====================
-
-	/// Handshake - Called by Cocoon to signal readiness
-	async fn initial_handshake(&self, _request:Request<Empty>) -> Result<Response<Empty>, Status> {
-		dev_log!("cocoon", "[CocoonService] Initial handshake received from Cocoon");
-		Ok(Response::new(Empty {}))
+	async fn initial_handshake(&self, request:Request<Empty>) -> Result<Response<Empty>, Status> {
+		Initialization::InitialHandshake(self, request.into_inner()).await
 	}
 
-	/// Initialize Extension Host - Mountain sends initialization data to Cocoon
 	async fn init_extension_host(&self, request:Request<InitExtensionHostRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Initializing extension host with {} workspace folders",
-			req.workspace_folders.len()
-		);
-
-		// Initialize workspace folders in MountainEnvironment
-		// This stub logs the workspace folders for debugging
-		for folder in &req.workspace_folders {
-			dev_log!(
-				"cocoon",
-				"[CocoonService] Workspace folder: {} ({})",
-				folder.name,
-				folder.uri.as_ref().map(|u| &u.value).unwrap_or(&String::new())
-			);
-		}
-
-		// Initialize configuration from request
-		dev_log!("cocoon", "[CocoonService] Configuration: {} keys", req.configuration.len());
-
-		// Store workspace folders from the init payload into ApplicationState
-		let Folders:Vec<WorkspaceFolderStateDTO> = req
-			.workspace_folders
-			.iter()
-			.enumerate()
-			.filter_map(|(Index, F)| {
-				let UriValue = F.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
-				url::Url::parse(UriValue)
-					.ok()
-					.and_then(|ParsedUrl| WorkspaceFolderStateDTO::New(ParsedUrl, F.name.clone(), Index).ok())
-			})
-			.collect();
-
-		if !Folders.is_empty() {
-			// Cocoon is the sender of this request, so we intentionally don't
-			// fan the delta back at it — just update local state. Extensions
-			// see the folders via the init payload they already have.
-			self.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
-			dev_log!(
-				"cocoon",
-				"[CocoonService] Workspace folders stored: {}",
-				req.workspace_folders.len()
-			);
-		}
-
-		Ok(Response::new(Empty {}))
+		Initialization::InitExtensionHost(self, request.into_inner()).await
 	}
 
-	// ==================== Commands ====================
-
-	/// Register Command - Cocoon registers an extension command
 	async fn register_command(&self, request:Request<RegisterCommandRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Registering command '{}' from extension '{}'",
-			req.command_id,
-			req.extension_id
-		);
-
-		// Wire to CommandExecutor::RegisterCommand which stores a Proxied handler
-		// pointing back to the Cocoon sidecar.
-		if let Err(Error) = self
-			.environment
-			.RegisterCommand(req.extension_id.clone(), req.command_id.clone())
-			.await
-		{
-			dev_log!(
-				"cocoon",
-				"warn: [CocoonService] Failed to register command '{}': {:?}",
-				req.command_id,
-				Error
-			);
-		} else {
-			dev_log!(
-				"cocoon",
-				"[CocoonService] Command registered: id={}, title={:?}",
-				req.command_id,
-				req.title
-			);
-		}
-
-		Ok(Response::new(Empty {}))
+		Command::RegisterCommand(self, request.into_inner()).await
 	}
 
-	/// Execute Contributed Command - Mountain executes an extension command
-	async fn execute_contributed_command(
-		&self,
-		request:Request<ExecuteCommandRequest>,
-	) -> Result<Response<ExecuteCommandResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Executing command '{}' with {} arguments",
-			req.command_id,
-			req.arguments.len()
-		);
-
-		// Look up command handler and execute with parameters
-		// This stub logs the command execution for debugging
-		for (i, arg) in req.arguments.iter().enumerate() {
-			dev_log!("cocoon", "[CocoonService] Argument {}: {:?}", i, arg);
-		}
-
-		// Convert the first Argument oneof value to a serde_json::Value
-		let Arg:serde_json::Value = req
-			.arguments
-			.first()
-			.and_then(|A| A.value.as_ref())
-			.map(|V| {
-				match V {
-					crate::Vine::Generated::argument::Value::StringValue(S) => json!(S),
-					crate::Vine::Generated::argument::Value::IntValue(I) => json!(I),
-					crate::Vine::Generated::argument::Value::BoolValue(B) => json!(B),
-					crate::Vine::Generated::argument::Value::BytesValue(Bytes) => {
-						serde_json::from_slice(Bytes).unwrap_or(serde_json::Value::Null)
-					},
-				}
-			})
-			.unwrap_or(serde_json::Value::Null);
-
-		match self.environment.ExecuteCommand(req.command_id, Arg).await {
-			Ok(Value) => {
-				let Bytes = serde_json::to_vec(&Value).unwrap_or_default();
-				Ok(Response::new(ExecuteCommandResponse {
-					result:Some(crate::Vine::Generated::execute_command_response::Result::Value(Bytes)),
-				}))
-			},
-			Err(Error) => {
-				let Bytes = serde_json::to_vec(&Error.to_string()).unwrap_or_default();
-				Ok(Response::new(ExecuteCommandResponse {
-					result:Some(crate::Vine::Generated::execute_command_response::Result::Error(
-						crate::Vine::Generated::RpcError { code:-32000, message:Error.to_string(), data:Bytes },
-					)),
-				}))
-			},
-		}
+	async fn execute_contributed_command(&self, request:Request<ExecuteCommandRequest>) -> Result<Response<ExecuteCommandResponse>, Status> {
+		Command::ExecuteContributedCommand(self, request.into_inner()).await
 	}
 
-	/// Unregister Command - Unregister a previously registered command
 	async fn unregister_command(&self, request:Request<UnregisterCommandRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Unregistering command '{}'", req.command_id);
-
-		// Wire to CommandExecutor::UnregisterCommand
-		if let Err(Error) = self.environment.UnregisterCommand(String::new(), req.command_id.clone()).await {
-			dev_log!(
-				"cocoon",
-				"warn: [CocoonService] Failed to unregister command '{}': {:?}",
-				req.command_id,
-				Error
-			);
-		} else {
-			dev_log!("cocoon", "[CocoonService] Command removed: {}", req.command_id);
-		}
-
-		Ok(Response::new(Empty {}))
+		Command::UnregisterCommand(self, request.into_inner()).await
 	}
 
-	// ==================== Language Features ====================
-
-	/// Register Hover Provider - Register a hover provider
-	async fn register_hover_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Registering hover provider for '{}' with handle {}",
-			req.language_selector,
-			req.handle
-		);
-		self.RegisterProvider(req.handle, ProviderType::Hover, &req.language_selector, &req.extension_id);
-		Ok(Response::new(Empty {}))
+	async fn register_hover_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterHoverProvider(self, request.into_inner()).await
 	}
 
-	/// Provide Hover - Request hover information
-	///
-	/// Delegates to LanguageFeatureProviderRegistry::ProvideHover which:
-	/// 1. Looks up the matching provider in ProviderRegistration by document
-	///    URI
-	/// 2. Forwards to Cocoon via generic gRPC ($provideHover)
-	/// 3. Cocoon's InvokeLanguageProvider calls the JS extension provider
-	/// 4. Result bubbles back through the chain
-	async fn provide_hover(
-		&self,
-		request:Request<ProvideHoverRequest>,
-	) -> Result<Response<ProvideHoverResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing hover for provider {}", req.provider_handle);
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-
-		match self.environment.ProvideHover(document_uri, position_dto).await {
-			Ok(Some(hover)) => {
-				let markdown = hover
-					.Contents
-					.iter()
-					.map(|c| c.Value.as_str())
-					.collect::<Vec<_>>()
-					.join("\n---\n");
-				let range = hover.Range.map(|r| {
-					Range {
-						start:Some(Position { line:r.StartLineNumber, character:r.StartColumn }),
-						end:Some(Position { line:r.EndLineNumber, character:r.EndColumn }),
-					}
-				});
-				Ok(Response::new(ProvideHoverResponse { markdown, range }))
-			},
-			Ok(None) => {
-				dev_log!("cocoon", "[CocoonService] No hover provider found for request");
-				Ok(Response::new(ProvideHoverResponse { markdown:String::new(), range:None }))
-			},
-			Err(e) => {
-				dev_log!("cocoon", "warn: [CocoonService] Hover failed: {}", e);
-				Err(Status::internal(format!("Hover failed: {}", e)))
-			},
-		}
+	async fn provide_hover(&self, request:Request<ProvideHoverRequest>) -> Result<Response<ProvideHoverResponse>, Status> {
+		Provider::ProvideHover(self, request.into_inner()).await
 	}
 
-	/// Register Completion Item Provider - Register a completion provider
-	async fn register_completion_item_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Registering completion provider for '{}' with handle {}",
-			req.language_selector,
-			req.handle
-		);
-		self.RegisterProvider(req.handle, ProviderType::Completion, &req.language_selector, &req.extension_id);
-		Ok(Response::new(Empty {}))
+	async fn register_completion_item_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterCompletionItemProvider(self, request.into_inner()).await
 	}
 
-	/// Provide Completion Items - delegates to LanguageFeatureProviderRegistry
-	async fn provide_completion_items(
-		&self,
-		request:Request<ProvideCompletionItemsRequest>,
-	) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Providing completions for provider {}",
-			req.provider_handle
-		);
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-		let context_dto = CommonLibrary::LanguageFeature::DTO::CompletionContextDTO::CompletionContextDTO {
-			TriggerKind:CommonLibrary::LanguageFeature::DTO::CompletionContextDTO::CompletionTriggerKindDTO::Invoke,
-			TriggerCharacter:if req.trigger_character.is_empty() {
-				None
-			} else {
-				Some(req.trigger_character.clone())
-			},
-		};
-
-		match self
-			.environment
-			.ProvideCompletions(document_uri, position_dto, context_dto, None)
-			.await
-		{
-			Ok(Some(list)) => {
-				let items = list
-					.Suggestions
-					.iter()
-					.map(|s| {
-						CompletionItem {
-							label:s.Label.as_str().map(|l| l.to_string()).unwrap_or_default(),
-							kind:format!("{}", s.Kind),
-							detail:s.Detail.clone().unwrap_or_default(),
-							documentation:Vec::new(),
-							insert_text:s.InsertText.as_ref().and_then(|v| v.as_str()).unwrap_or("").to_string(),
-						}
-					})
-					.collect();
-				Ok(Response::new(ProvideCompletionItemsResponse { items }))
-			},
-			Ok(None) => Ok(Response::new(ProvideCompletionItemsResponse { items:Vec::new() })),
-			Err(e) => Err(Status::internal(format!("Completions failed: {}", e))),
-		}
+	async fn provide_completion_items(&self, request:Request<ProvideCompletionItemsRequest>) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
+		Provider::ProvideCompletionItems(self, request.into_inner()).await
 	}
 
-	/// Register Definition Provider - Register a definition provider
-	async fn register_definition_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Registering definition provider for '{}' with handle {}",
-			req.language_selector,
-			req.handle
-		);
-		self.RegisterProvider(req.handle, ProviderType::Definition, &req.language_selector, &req.extension_id);
-		Ok(Response::new(Empty {}))
+	async fn register_definition_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterDefinitionProvider(self, request.into_inner()).await
 	}
 
-	/// Provide Definition - delegates to LanguageFeatureProviderRegistry
-	async fn provide_definition(
-		&self,
-		request:Request<ProvideDefinitionRequest>,
-	) -> Result<Response<ProvideDefinitionResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Providing definition for provider {}",
-			req.provider_handle
-		);
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-
-		match self.environment.ProvideDefinition(document_uri, position_dto).await {
-			Ok(Some(locations)) => {
-				let proto_locations = locations
-					.iter()
-					.map(|loc| {
-						Location {
-							uri:Some(Uri { value:loc.Uri.to_string() }),
-							range:Some(Range {
-								start:Some(Position {
-									line:loc.Range.StartLineNumber,
-									character:loc.Range.StartColumn,
-								}),
-								end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
-							}),
-						}
-					})
-					.collect();
-				Ok(Response::new(ProvideDefinitionResponse { locations:proto_locations }))
-			},
-			Ok(None) => Ok(Response::new(ProvideDefinitionResponse { locations:Vec::new() })),
-			Err(e) => Err(Status::internal(format!("Definition failed: {}", e))),
-		}
+	async fn provide_definition(&self, request:Request<ProvideDefinitionRequest>) -> Result<Response<ProvideDefinitionResponse>, Status> {
+		Provider::ProvideDefinition(self, request.into_inner()).await
 	}
 
-	/// Register Reference Provider - Register a reference provider
-	async fn register_reference_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Registering reference provider for '{}' with handle {}",
-			req.language_selector,
-			req.handle
-		);
-		self.RegisterProvider(req.handle, ProviderType::References, &req.language_selector, &req.extension_id);
-		Ok(Response::new(Empty {}))
+	async fn register_reference_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterReferenceProvider(self, request.into_inner()).await
 	}
 
-	/// Provide References - delegates to LanguageFeatureProviderRegistry
-	async fn provide_references(
-		&self,
-		request:Request<ProvideReferencesRequest>,
-	) -> Result<Response<ProvideReferencesResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Providing references for provider {}",
-			req.provider_handle
-		);
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-		let context_dto = json!({ "includeDeclaration": true });
-
-		match self
-			.environment
-			.ProvideReferences(document_uri, position_dto, context_dto)
-			.await
-		{
-			Ok(Some(locations)) => {
-				let proto_locations = locations
-					.iter()
-					.map(|loc| {
-						Location {
-							uri:Some(Uri { value:loc.Uri.to_string() }),
-							range:Some(Range {
-								start:Some(Position {
-									line:loc.Range.StartLineNumber,
-									character:loc.Range.StartColumn,
-								}),
-								end:Some(Position { line:loc.Range.EndLineNumber, character:loc.Range.EndColumn }),
-							}),
-						}
-					})
-					.collect();
-				Ok(Response::new(ProvideReferencesResponse { locations:proto_locations }))
-			},
-			Ok(None) => Ok(Response::new(ProvideReferencesResponse { locations:Vec::new() })),
-			Err(e) => Err(Status::internal(format!("References failed: {}", e))),
-		}
+	async fn provide_references(&self, request:Request<ProvideReferencesRequest>) -> Result<Response<ProvideReferencesResponse>, Status> {
+		Provider::ProvideReferences(self, request.into_inner()).await
 	}
 
-	/// Register Code Actions Provider - Register code actions provider
-	async fn register_code_actions_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Registering code actions provider for '{}' with handle {}",
-			req.language_selector,
-			req.handle
-		);
-		self.RegisterProvider(req.handle, ProviderType::CodeAction, &req.language_selector, &req.extension_id);
-		Ok(Response::new(Empty {}))
+	async fn register_code_actions_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterCodeActionsProvider(self, request.into_inner()).await
 	}
 
-	/// Provide Code Actions - delegates to LanguageFeatureProviderRegistry
-	async fn provide_code_actions(
-		&self,
-		request:Request<ProvideCodeActionsRequest>,
-	) -> Result<Response<ProvideCodeActionsResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Providing code actions for provider {}",
-			req.provider_handle
-		);
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let range = req.range.as_ref();
-		let range_dto = json!({
-			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
-			"StartColumn": range.and_then(|r| r.start.as_ref()).map(|p| p.character).unwrap_or(0),
-			"EndLineNumber": range.and_then(|r| r.end.as_ref()).map(|p| p.line).unwrap_or(0),
-			"EndColumn": range.and_then(|r| r.end.as_ref()).map(|p| p.character).unwrap_or(0),
-		});
-		let context_dto = json!({ "diagnostics": [], "only": null });
-
-		match self.environment.ProvideCodeActions(document_uri, range_dto, context_dto).await {
-			Ok(Some(value)) => {
-				// CodeActions returns raw Value — proto response has actions:Vec<CodeAction>
-				// For now, return empty if we can't parse. Full mapping requires matching
-				// the CodeAction proto fields to the VS Code code action format.
-				Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() }))
-			},
-			Ok(None) => Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() })),
-			Err(e) => Err(Status::internal(format!("Code actions failed: {}", e))),
-		}
+	async fn provide_code_actions(&self, request:Request<ProvideCodeActionsRequest>) -> Result<Response<ProvideCodeActionsResponse>, Status> {
+		Provider::ProvideCodeActions(self, request.into_inner()).await
 	}
 
-	// ==================== Window Operations ====================
-
-	/// Show Text Document - emit a Tauri event so Sky opens the document tab.
-	async fn show_text_document(
-		&self,
-		request:Request<ShowTextDocumentRequest>,
-	) -> Result<Response<ShowTextDocumentResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
-		dev_log!("cocoon", "[CocoonService] show_text_document: {}", Uri);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://editor/openDocument",
-			json!({ "uri": Uri, "viewColumn": req.view_column }),
-		);
-
-		Ok(Response::new(ShowTextDocumentResponse { success:true }))
+	async fn show_text_document(&self, request:Request<ShowTextDocumentRequest>) -> Result<Response<Empty>, Status> {
+		Window::ShowTextDocument(self, request.into_inner()).await
 	}
 
-	/// Show Information Message - delegate to
-	/// UserInterfaceProvider::ShowMessage.
-	async fn show_information_message(
-		&self,
-		request:Request<ShowMessageRequest>,
-	) -> Result<Response<ShowMessageResponse>, Status> {
-		use CommonLibrary::UserInterface::{
-			DTO::MessageSeverity::MessageSeverity,
-			UserInterfaceProvider::UserInterfaceProvider,
-		};
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] show_information_message: {}", req.message);
-
-		let _ = self.environment.ShowMessage(MessageSeverity::Info, req.message, None).await;
-
-		Ok(Response::new(ShowMessageResponse { success:true }))
+	async fn show_information_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<Empty>, Status> {
+		Window::ShowInformationMessage(self, request.into_inner()).await
 	}
 
-	/// Show Warning Message - delegate to UserInterfaceProvider::ShowMessage.
-	async fn show_warning_message(
-		&self,
-		request:Request<ShowMessageRequest>,
-	) -> Result<Response<ShowMessageResponse>, Status> {
-		use CommonLibrary::UserInterface::{
-			DTO::MessageSeverity::MessageSeverity,
-			UserInterfaceProvider::UserInterfaceProvider,
-		};
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "warn: [CocoonService] show_warning_message: {}", req.message);
-
-		let _ = self.environment.ShowMessage(MessageSeverity::Warning, req.message, None).await;
-
-		Ok(Response::new(ShowMessageResponse { success:true }))
+	async fn show_warning_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<Empty>, Status> {
+		Window::ShowWarningMessage(self, request.into_inner()).await
 	}
 
-	/// Show Error Message - delegate to UserInterfaceProvider::ShowMessage.
-	async fn show_error_message(
-		&self,
-		request:Request<ShowMessageRequest>,
-	) -> Result<Response<ShowMessageResponse>, Status> {
-		use CommonLibrary::UserInterface::{
-			DTO::MessageSeverity::MessageSeverity,
-			UserInterfaceProvider::UserInterfaceProvider,
-		};
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "error: [CocoonService] show_error_message: {}", req.message);
-
-		let _ = self.environment.ShowMessage(MessageSeverity::Error, req.message, None).await;
-
-		Ok(Response::new(ShowMessageResponse { success:true }))
+	async fn show_error_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<Empty>, Status> {
+		Window::ShowErrorMessage(self, request.into_inner()).await
 	}
 
-	/// Create Status Bar Item - emit Tauri event for Sky to render status bar
-	/// entry.
-	async fn create_status_bar_item(
-		&self,
-		request:Request<CreateStatusBarItemRequest>,
-	) -> Result<Response<CreateStatusBarItemResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] create_status_bar_item: {}", req.id);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://statusbar/create",
-			json!({ "id": req.id, "text": req.text, "tooltip": req.tooltip }),
-		);
-
-		Ok(Response::new(CreateStatusBarItemResponse { item_id:req.id.clone() }))
+	async fn create_status_bar_item(&self, request:Request<CreateStatusBarItemRequest>) -> Result<Response<CreateStatusBarItemResponse>, Status> {
+		Window::CreateStatusBarItem(self, request.into_inner()).await
 	}
 
-	/// Set Status Bar Text - emit Tauri event for Sky status bar update.
 	async fn set_status_bar_text(&self, request:Request<SetStatusBarTextRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] set_status_bar_text: id={} text={}",
-			req.item_id,
-			req.text
-		);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://statusbar/update", json!({ "id": req.item_id, "text": req.text }));
-
-		Ok(Response::new(Empty {}))
+		Window::SetStatusBarText(self, request.into_inner()).await
 	}
 
-	/// Create Webview Panel - Generate handle, emit creation event to Sky
-	async fn create_webview_panel(
-		&self,
-		request:Request<CreateWebviewPanelRequest>,
-	) -> Result<Response<CreateWebviewPanelResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		let Handle = SystemTime::now()
-			.duration_since(UNIX_EPOCH)
-			.map(|D| D.as_millis() as u32)
-			.unwrap_or(0);
-
-		dev_log!(
-			"cocoon",
-			"[CocoonService] create_webview_panel: handle={} view_type={} title={}",
-			Handle,
-			req.view_type,
-			req.title
-		);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://webview/create",
-			json!({
-				"handle": Handle,
-				"viewType": req.view_type,
-				"title": req.title,
-				"viewColumn": req.view_column,
-				"preserveFocus": req.preserve_focus,
-				"iconPath": req.icon_path,
-			}),
-		);
-
-		Ok(Response::new(CreateWebviewPanelResponse { handle:Handle }))
+	async fn create_webview_panel(&self, request:Request<CreateWebviewPanelRequest>) -> Result<Response<CreateWebviewPanelResponse>, Status> {
+		Window::CreateWebviewPanel(self, request.into_inner()).await
 	}
 
-	/// Set Webview HTML - Send HTML update to Sky via Tauri event
 	async fn set_webview_html(&self, request:Request<SetWebviewHtmlRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] set_webview_html: handle={} ({} bytes)",
-			req.handle,
-			req.html.len()
-		);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://webview/setHtml", json!({ "handle": req.handle, "html": req.html }));
-
-		Ok(Response::new(Empty {}))
+		Window::SetWebviewHtml(self, request.into_inner()).await
 	}
 
-	/// On Did Receive Message - Forward webview message to Cocoon via Tauri
-	/// event
-	async fn on_did_receive_message(
-		&self,
-		request:Request<OnDidReceiveMessageRequest>,
-	) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] on_did_receive_message: handle={}", req.handle);
-
-		let MessagePayload = match &req.message {
-			Some(on_did_receive_message_request::Message::StringMessage(S)) => json!(S),
-			Some(on_did_receive_message_request::Message::BytesMessage(B)) => json!(B),
-			None => serde_json::Value::Null,
-		};
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://webview/message",
-			json!({ "handle": req.handle, "message": MessagePayload }),
-		);
-
-		Ok(Response::new(Empty {}))
+	async fn on_did_receive_message(&self, request:Request<OnDidReceiveMessageRequest>) -> Result<Response<Empty>, Status> {
+		Window::OnDidReceiveMessage(self, request.into_inner()).await
 	}
 
-	// ==================== File System ====================
+	async fn post_webview_message(&self, request:Request<PostWebviewMessageRequest>) -> Result<Response<Empty>, Status> {
+		Window::PostWebviewMessage(self, request.into_inner()).await
+	}
 
-	/// Read File - Read file contents
+	async fn dispose_webview_panel(&self, request:Request<DisposeWebviewPanelRequest>) -> Result<Response<Empty>, Status> {
+		Window::DisposeWebviewPanel(self, request.into_inner()).await
+	}
+
 	async fn read_file(&self, request:Request<ReadFileRequest>) -> Result<Response<ReadFileResponse>, Status> {
-		let req = request.into_inner();
-		let Path = Self::UriToPath(req.uri.as_ref())
-			.ok_or_else(|| Status::invalid_argument("read_file: missing or empty URI"))?;
-
-		dev_log!("cocoon", "[CocoonService] Reading file: {:?}", Path);
-
-		let Content = tokio::fs::read(&Path).await.map_err(|Error| {
-			dev_log!("cocoon", "warn: [CocoonService] read_file failed for {:?}: {}", Path, Error);
-			Status::not_found(format!("read_file: {}: {}", Path.display(), Error))
-		})?;
-
-		Ok(Response::new(ReadFileResponse {
-			content:Content,
-			encoding:"utf-8".to_string(),
-		}))
+		FileSystem::ReadFile(self, request.into_inner()).await
 	}
 
-	/// Write File - Write file contents
 	async fn write_file(&self, request:Request<WriteFileRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		let Path = Self::UriToPath(req.uri.as_ref())
-			.ok_or_else(|| Status::invalid_argument("write_file: missing or empty URI"))?;
-
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Writing file: {:?} ({} bytes)",
-			Path,
-			req.content.len()
-		);
-
-		// Ensure parent directory exists
-		if let Some(Parent) = Path.parent() {
-			if !Parent.as_os_str().is_empty() {
-				tokio::fs::create_dir_all(Parent)
-					.await
-					.map_err(|Error| Status::internal(format!("write_file: create_dir_all {:?}: {}", Parent, Error)))?;
-			}
-		}
-
-		tokio::fs::write(&Path, &req.content).await.map_err(|Error| {
-			dev_log!("cocoon", "warn: [CocoonService] write_file failed for {:?}: {}", Path, Error);
-			Status::internal(format!("write_file: {}: {}", Path.display(), Error))
-		})?;
-
-		Ok(Response::new(Empty {}))
+		FileSystem::WriteFile(self, request.into_inner()).await
 	}
 
-	/// Stat - Get file metadata
 	async fn stat(&self, request:Request<StatRequest>) -> Result<Response<StatResponse>, Status> {
-		let req = request.into_inner();
-		let Path =
-			Self::UriToPath(req.uri.as_ref()).ok_or_else(|| Status::invalid_argument("stat: missing or empty URI"))?;
-
-		dev_log!("cocoon", "[CocoonService] Stat: {:?}", Path);
-
-		let Metadata = tokio::fs::metadata(&Path).await.map_err(|Error| {
-			dev_log!("cocoon", "warn: [CocoonService] stat failed for {:?}: {}", Path, Error);
-			Status::not_found(format!("stat: {}: {}", Path.display(), Error))
-		})?;
-
-		let Mtime = Metadata
-			.modified()
-			.ok()
-			.and_then(|T| T.duration_since(UNIX_EPOCH).ok())
-			.map(|D| D.as_millis() as u64)
-			.unwrap_or(0);
-
-		Ok(Response::new(StatResponse {
-			is_file:Metadata.is_file(),
-			is_directory:Metadata.is_dir(),
-			size:Metadata.len(),
-			mtime:Mtime,
-		}))
+		FileSystem::Stat(self, request.into_inner()).await
 	}
 
-	/// Read Directory - List directory contents
 	async fn readdir(&self, request:Request<ReaddirRequest>) -> Result<Response<ReaddirResponse>, Status> {
-		let req = request.into_inner();
-		let Path = Self::UriToPath(req.uri.as_ref())
-			.ok_or_else(|| Status::invalid_argument("readdir: missing or empty URI"))?;
-
-		dev_log!("cocoon", "[CocoonService] Readdir: {:?}", Path);
-
-		let mut ReadDir = tokio::fs::read_dir(&Path).await.map_err(|Error| {
-			dev_log!("cocoon", "warn: [CocoonService] readdir failed for {:?}: {}", Path, Error);
-			Status::not_found(format!("readdir: {}: {}", Path.display(), Error))
-		})?;
-
-		let mut Entries = Vec::new();
-		while let Ok(Some(Entry)) = ReadDir.next_entry().await {
-			if let Some(Name) = Entry.file_name().to_str() {
-				Entries.push(Name.to_string());
-			}
-		}
-
-		Ok(Response::new(ReaddirResponse { entries:Entries }))
+		FileSystem::Readdir(self, request.into_inner()).await
 	}
 
-	/// Watch File - Watch file for changes
-	///
-	/// Logs the watch request. Full inotify/FSEvents integration is a P1 task
-	/// requiring the `notify` crate wired into ApplicationState.
 	async fn watch_file(&self, request:Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		let Uri = req.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
-		dev_log!(
-			"cocoon",
-			"[CocoonService] watch_file registered (polling not yet active): {}",
-			Uri
-		);
-		// TODO(P1): Wire notify crate watcher; store WatcherHandle in
-		// ApplicationState.Feature.Watchers keyed by URI for cancellation on
-		// cancel_operation.
-		Ok(Response::new(Empty {}))
+		FileSystem::WatchFile(self, request.into_inner()).await
 	}
 
-	// ==================== Workspace Operations ====================
-
-	/// Find Files - Search for files using glob pattern across workspace
-	/// folders.
 	async fn find_files(&self, request:Request<FindFilesRequest>) -> Result<Response<FindFilesResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Finding files with pattern: {}", req.pattern);
-
-		use globset::{Glob, GlobSetBuilder};
-
-		// Build glob matcher
-		let GlobMatcher = Glob::new(&req.pattern)
-			.map_err(|Error| {
-				Status::invalid_argument(format!("find_files: invalid pattern '{}': {}", req.pattern, Error))
-			})?
-			.compile_matcher();
-
-		// Collect workspace root folders from ApplicationState
-		let Roots:Vec<std::path::PathBuf> = {
-			match self.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
-				Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.path())).collect(),
-				Err(_) => Vec::new(),
-			}
-		};
-
-		let SearchRoots = if Roots.is_empty() {
-			vec![std::env::current_dir().unwrap_or_default()]
-		} else {
-			Roots
-		};
-
-		// Walk each root and collect matching paths
-		let mut Uris = Vec::new();
-
-		fn WalkAndCollect(
-			Directory:&std::path::Path,
-			Root:&std::path::Path,
-			Matcher:&globset::GlobMatcher,
-			Results:&mut Vec<String>,
-		) {
-			if let Ok(Entries) = std::fs::read_dir(Directory) {
-				for Entry in Entries.flatten() {
-					let EntryPath = Entry.path();
-					if EntryPath.is_dir() {
-						WalkAndCollect(&EntryPath, Root, Matcher, Results);
-					} else if let Ok(Relative) = EntryPath.strip_prefix(Root) {
-						if Matcher.is_match(Relative) {
-							Results.push(format!("file://{}", EntryPath.display()));
-						}
-					}
-				}
-			}
-		}
-
-		for Root in &SearchRoots {
-			WalkAndCollect(Root, Root, &GlobMatcher, &mut Uris);
-		}
-
-		dev_log!(
-			"cocoon",
-			"[CocoonService] find_files: {} results for pattern '{}'",
-			Uris.len(),
-			req.pattern
-		);
-		Ok(Response::new(FindFilesResponse { uris:Uris }))
-	}
-
-	/// Find Text in Files - walk workspace and grep for pattern.
-	///
-	/// Uses a simple line-by-line scan (not indexed). Returns up to 1000
-	/// matches. Indexing integration is a P2 task.
-	async fn find_text_in_files(
-		&self,
-		request:Request<FindTextInFilesRequest>,
-	) -> Result<Response<FindTextInFilesResponse>, Status> {
-		let req = request.into_inner();
-		if req.pattern.is_empty() {
-			return Ok(Response::new(FindTextInFilesResponse::default()));
-		}
-		dev_log!("cocoon", "[CocoonService] find_text_in_files: pattern='{}'", req.pattern);
-
-		let Roots:Vec<std::path::PathBuf> = {
-			match self.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
-				Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.path())).collect(),
-				Err(_) => Vec::new(),
-			}
-		};
-		let SearchRoots = if Roots.is_empty() {
-			vec![std::env::current_dir().unwrap_or_default()]
-		} else {
-			Roots
-		};
-
-		let Pattern = req.pattern.clone();
-		let Matches = tokio::task::spawn_blocking(move || {
-			let mut Results:Vec<TextMatch> = Vec::new();
-			const MAX_MATCHES:usize = 1000;
-
-			fn WalkAndSearch(Dir:&std::path::Path, Pattern:&str, Results:&mut Vec<TextMatch>) {
-				if Results.len() >= 1000 {
-					return;
-				}
-				if let Ok(Entries) = std::fs::read_dir(Dir) {
-					for Entry in Entries.flatten() {
-						if Results.len() >= MAX_MATCHES {
-							break;
-						}
-						let Path = Entry.path();
-						if Path.is_dir() {
-							// Skip hidden dirs and common noise dirs
-							let DirName = Path.file_name().and_then(|N| N.to_str()).unwrap_or("");
-							if DirName.starts_with('.') || DirName == "node_modules" || DirName == "target" {
-								continue;
-							}
-							WalkAndSearch(&Path, Pattern, Results);
-						} else if Path.is_file() {
-							if let Ok(Content) = std::fs::read_to_string(&Path) {
-								for (LineIdx, Line) in Content.lines().enumerate() {
-									if Results.len() >= MAX_MATCHES {
-										break;
-									}
-									if let Some(ColIdx) = Line.find(Pattern) {
-										Results.push(TextMatch {
-											uri:Some(Uri { value:format!("file://{}", Path.display()) }),
-											range:Some(Range {
-												start:Some(Position { line:LineIdx as u32, character:ColIdx as u32 }),
-												end:Some(Position {
-													line:LineIdx as u32,
-													character:(ColIdx + Pattern.len()) as u32,
-												}),
-											}),
-											preview:Line.to_string(),
-										});
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			for Root in &SearchRoots {
-				WalkAndSearch(Root, &Pattern, &mut Results);
-				if Results.len() >= MAX_MATCHES {
-					break;
-				}
-			}
-			Results
-		})
-		.await
-		.unwrap_or_default();
-
-		dev_log!(
-			"cocoon",
-			"[CocoonService] find_text_in_files: {} matches for '{}'",
-			Matches.len(),
-			req.pattern
-		);
-		Ok(Response::new(FindTextInFilesResponse { matches:Matches }))
-	}
-
-	/// Open Document - emit Tauri event for Sky to open the editor tab.
-	async fn open_document(
-		&self,
-		request:Request<OpenDocumentRequest>,
-	) -> Result<Response<OpenDocumentResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
-		dev_log!("cocoon", "[CocoonService] open_document: {}", Uri);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://editor/openDocument",
-			json!({ "uri": Uri, "viewColumn": req.view_column }),
-		);
-
-		Ok(Response::new(OpenDocumentResponse { success:true }))
-	}
-
-	/// Save All - emit Tauri event for Sky to save all open documents.
-	async fn save_all(&self, request:Request<SaveAllRequest>) -> Result<Response<SaveAllResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] save_all: includeUntitled={}", req.include_untitled);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://editor/saveAll", json!({ "includeUntitled": req.include_untitled }));
-
-		Ok(Response::new(SaveAllResponse { success:true }))
-	}
-
-	/// Apply Edit - emit Tauri event for Sky to apply text edits in the editor.
-	async fn apply_edit(&self, request:Request<ApplyEditRequest>) -> Result<Response<ApplyEditResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		let Uri = req.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
-		dev_log!("cocoon", "[CocoonService] apply_edit: uri={} edits={}", Uri, req.edits.len());
-
-		let EditsJson:Vec<serde_json::Value> = req.edits.iter().map(|E| {
-			json!({
-				"range": {
-					"start": E.range.as_ref().and_then(|R| R.start.as_ref()).map(|P| json!({ "line": P.line, "character": P.character })),
-					"end": E.range.as_ref().and_then(|R| R.end.as_ref()).map(|P| json!({ "line": P.line, "character": P.character })),
-				},
-				"newText": E.new_text,
-			})
-		}).collect();
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://editor/applyEdits", json!({ "uri": Uri, "edits": EditsJson }));
-
-		Ok(Response::new(ApplyEditResponse { success:true }))
-	}
-
-	/// Update Configuration - Notify Sky of configuration changes via Tauri
-	/// event
-	async fn update_configuration(
-		&self,
-		request:Request<UpdateConfigurationRequest>,
-	) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] update_configuration: {} changed keys",
-			req.changed_keys.len()
-		);
-
-		// Forward configuration changes to Sky for workbench settings refresh
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://configuration/changed",
-			json!({
-				"changedKeys": req.changed_keys,
-			}),
-		);
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// Update Workspace Folders - Update workspace folders
-	async fn update_workspace_folders(
-		&self,
-		request:Request<UpdateWorkspaceFoldersRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Updating workspace: {} additions, {} removals",
-			req.additions.len(),
-			req.removals.len()
-		);
-
-		// Update WorkspaceState in MountainEnvironment
-		for addition in &req.additions {
-			dev_log!(
-				"cocoon",
-				"[CocoonService] Adding workspace folder: {} ({})",
-				addition.name,
-				addition.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
-			);
-		}
-		for removal in &req.removals {
-			dev_log!(
-				"cocoon",
-				"[CocoonService] Removing workspace folder: {}",
-				removal.uri.as_ref().map(|u| &u.value).unwrap_or(&"?".to_string())
-			);
-		}
-
-		// Apply additions and removals to ApplicationState.Workspace
-		{
-			let mut Folders = self.environment.ApplicationState.Workspace.GetWorkspaceFolders();
-
-			// Remove by URI
-			let RemovalUris:Vec<String> = req
-				.removals
-				.iter()
-				.filter_map(|F| F.uri.as_ref().map(|U| U.value.clone()))
-				.collect();
-			Folders.retain(|F| !RemovalUris.contains(&F.URI.to_string()));
-
-			// Append additions
-			let ExistingCount = Folders.len();
-			for (Idx, Addition) in req.additions.iter().enumerate() {
-				let UriValue = Addition.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
-				if let Ok(ParsedUrl) = url::Url::parse(UriValue) {
-					if let Ok(DTO) = WorkspaceFolderStateDTO::New(ParsedUrl, Addition.name.clone(), ExistingCount + Idx)
-					{
-						Folders.push(DTO);
-					}
-				}
-			}
-
-			crate::ApplicationState::State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndNotify(
-				&self.environment.ApplicationState.Workspace,
-				Folders,
-			);
-		}
-
-		Ok(Response::new(Empty {}))
-	}
-
-	// ==================== Terminal ====================
-
-	/// Open Terminal - create PTY via TerminalProvider and return the terminal
-	/// ID.
-	async fn open_terminal(&self, request:Request<OpenTerminalRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Opening terminal: {}", req.name);
-
-		// Build options JSON matching TerminalStateDTO::Create expectations
-		let Options = json!({
-			"name": req.name,
-			"shellPath": if req.shell_path.is_empty() { serde_json::Value::Null } else { json!(req.shell_path) },
-			"shellArgs": req.shell_args,
-			"cwd": if req.cwd.is_empty() { serde_json::Value::Null } else { json!(req.cwd) },
-		});
-
-		match self.environment.CreateTerminal(Options).await {
-			Ok(Info) => {
-				dev_log!("cocoon", "[CocoonService] Terminal created: {:?}", Info);
-				Ok(Response::new(Empty {}))
-			},
-			Err(Error) => {
-				dev_log!("cocoon", "error: [CocoonService] open_terminal failed: {}", Error);
-				Err(Status::internal(format!("open_terminal: {}", Error)))
-			},
-		}
-	}
-
-	/// Terminal Input - write bytes to PTY stdin via TerminalProvider.
-	async fn terminal_input(&self, request:Request<TerminalInputRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		let TerminalId = req.terminal_id as u64;
-		dev_log!(
-			"cocoon",
-			"[CocoonService] terminal_input: id={} bytes={}",
-			TerminalId,
-			req.data.len()
-		);
-
-		let Text = String::from_utf8_lossy(&req.data).into_owned();
-
-		match self.environment.SendTextToTerminal(TerminalId, Text).await {
-			Ok(()) => Ok(Response::new(Empty {})),
-			Err(Error) => {
-				dev_log!(
-					"cocoon",
-					"warn: [CocoonService] terminal_input failed id={}: {}",
-					TerminalId,
-					Error
-				);
-				Err(Status::not_found(format!("terminal_input: {}", Error)))
-			},
-		}
-	}
-
-	/// Close Terminal - dispose PTY and cleanup resources via TerminalProvider.
-	async fn close_terminal(&self, request:Request<CloseTerminalRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		let TerminalId = req.terminal_id as u64;
-		dev_log!("cocoon", "[CocoonService] close_terminal: id={}", TerminalId);
-
-		match self.environment.DisposeTerminal(TerminalId).await {
-			Ok(()) => Ok(Response::new(Empty {})),
-			Err(Error) => {
-				dev_log!(
-					"cocoon",
-					"warn: [CocoonService] close_terminal failed id={}: {}",
-					TerminalId,
-					Error
-				);
-				Err(Status::internal(format!("close_terminal: {}", Error)))
-			},
-		}
-	}
-
-	/// Accept Terminal Opened - Notification: Terminal opened
-	async fn accept_terminal_opened(
-		&self,
-		request:Request<TerminalOpenedNotification>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Terminal opened notification: {} (ID: {})",
-			req.name,
-			req.terminal_id
-		);
-
-		// Forward terminal opened event to Sky for UI update
-		use tauri::Emitter;
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://terminal/opened", json!({ "id": req.terminal_id, "name": req.name }));
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// Accept Terminal Closed - Forward close event to Sky
-	async fn accept_terminal_closed(
-		&self,
-		request:Request<TerminalClosedNotification>,
-	) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Terminal closed: {}", req.terminal_id);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://terminal/closed", json!({ "id": req.terminal_id }));
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// Accept Terminal Process ID - Forward PID to Sky
-	async fn accept_terminal_process_id(
-		&self,
-		request:Request<TerminalProcessIdNotification>,
-	) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Terminal PID: {} for terminal {}",
-			req.process_id,
-			req.terminal_id
-		);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://terminal/processId",
-			json!({ "id": req.terminal_id, "pid": req.process_id }),
-		);
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// Accept Terminal Process Data - Stream output to Sky via Tauri event
-	async fn accept_terminal_process_data(
-		&self,
-		request:Request<TerminalDataNotification>,
-	) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] Terminal data for {}: {} bytes",
-			req.terminal_id,
-			req.data.len()
-		);
-
-		let DataString = String::from_utf8_lossy(&req.data).to_string();
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://terminal/data", json!({ "id": req.terminal_id, "data": DataString }));
-
-		Ok(Response::new(Empty {}))
-	}
-
-	// ==================== Tree View ====================
-
-	/// Register Tree View Provider - Register a tree view provider
-	///
-	/// Note: this is the typed-RPC path (`RegisterTreeViewProviderRequest`
-	/// proto). Cocoon's observed 700 ms `tree.register` calls travel the
-	/// string-method path instead, entering Mountain at
-	/// `Vine/Server/MountainVinegRPCService.rs` and dispatching through
-	/// `Track/Effect/CreateEffectForRequest.rs::"$tree:register" |
-	/// "tree.register"`. BATCH-16 instrumentation lives on that path; this
-	/// typed path stays unchanged so uniform measurement requires no branch
-	/// logic.
-	async fn register_tree_view_provider(
-		&self,
-		request:Request<RegisterTreeViewProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering tree view provider: {}", req.view_id);
-
-		// Register tree view provider in ApplicationState and notify Sky
-		use tauri::Emitter;
-
-		let Handle = req
-			.view_id
-			.as_bytes()
-			.iter()
-			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
-		let dto = ProviderRegistrationDTO {
-			Handle,
-			ProviderType:ProviderType::TreeView,
-			Selector:json!([{ "viewId": req.view_id }]),
-			SideCarIdentifier:"cocoon-main".to_string(),
-			ExtensionIdentifier:json!(req.extension_id),
-			Options:Some(json!({ "viewId": req.view_id })),
-		};
-		self.environment
-			.ApplicationState
-			.Extension
-			.ProviderRegistration
-			.RegisterProvider(Handle, dto);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://treeView/register",
-			json!({ "viewId": req.view_id, "extensionId": req.extension_id }),
-		);
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// Get Tree Children - Request tree view children from registered provider
-	async fn get_tree_children(
-		&self,
-		request:Request<GetTreeChildrenRequest>,
-	) -> Result<Response<GetTreeChildrenResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] get_tree_children: view={}", req.view_id);
-
-		// Tree children are fetched by forwarding to Cocoon via the generic RPC path.
-		// The extension registers a TreeDataProvider; when Sky needs children,
-		// Mountain looks up the provider handle and invokes Cocoon.
-		// For now return empty — will be wired when Cocoon activation is complete.
-		Ok(Response::new(GetTreeChildrenResponse { items:Vec::new() }))
-	}
-
-	// ==================== SCM ====================
-
-	/// Register SCM Provider - Register source control provider
-	async fn register_scm_provider(
-		&self,
-		request:Request<RegisterScmProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering SCM provider: {}", req.scm_id);
-
-		// Register SCM provider in ApplicationState and notify Sky
-		use tauri::Emitter;
-
-		let Handle = req
-			.scm_id
-			.as_bytes()
-			.iter()
-			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
-		let dto = ProviderRegistrationDTO {
-			Handle,
-			ProviderType:ProviderType::SourceControl,
-			Selector:json!([{ "scmId": req.scm_id }]),
-			SideCarIdentifier:"cocoon-main".to_string(),
-			ExtensionIdentifier:json!(req.extension_id),
-			Options:Some(json!({ "scmId": req.scm_id })),
-		};
-		self.environment
-			.ApplicationState
-			.Extension
-			.ProviderRegistration
-			.RegisterProvider(Handle, dto);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://scm/register",
-			json!({ "scmId": req.scm_id, "extensionId": req.extension_id }),
-		);
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// Update SCM Group - Forward resource state changes to Sky
-	async fn update_scm_group(&self, request:Request<UpdateScmGroupRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] update_scm_group: provider={} group={}",
-			req.provider_id,
-			req.group_id
-		);
-
-		let ResourceStates:Vec<serde_json::Value> = req
-			.resource_states
-			.iter()
-			.map(|Rs| {
-				json!({
-					"uri": Rs.uri.as_ref().map(|U| U.value.as_str()).unwrap_or(""),
-					"decorations": Rs.decorations,
-				})
-			})
-			.collect();
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://scm/updateGroup",
-			json!({
-				"providerId": req.provider_id,
-				"groupId": req.group_id,
-				"resourceStates": ResourceStates,
-			}),
-		);
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// Execute Git - Spawn native `git` process with provided arguments.
-	///
-	/// Runs git in the repository directory supplied by the extension host,
-	/// captures stdout/stderr, and returns the raw bytes. Mirrors VS Code's
-	/// `$gitExec` IPC call used by the built-in Git extension.
-	async fn git_exec(&self, request:Request<GitExecRequest>) -> Result<Response<GitExecResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] git_exec: {}", req.args.join(" "));
-
-		let WorkingDir = if req.repository_path.is_empty() {
-			std::env::current_dir().unwrap_or_default()
-		} else {
-			std::path::PathBuf::from(&req.repository_path)
-		};
-
-		let Output = tokio::process::Command::new("git")
-			.args(&req.args)
-			.current_dir(&WorkingDir)
-			.output()
-			.await
-			.map_err(|Error| {
-				dev_log!("cocoon", "error: [CocoonService] git_exec failed to spawn: {}", Error);
-				Status::internal(format!("git_exec: failed to spawn git: {}", Error))
-			})?;
-
-		let ExitCode = Output.status.code().unwrap_or(-1);
-		dev_log!(
-			"cocoon",
-			"[CocoonService] git_exec exit={} stdout={} bytes stderr={} bytes",
-			ExitCode,
-			Output.stdout.len(),
-			Output.stderr.len()
-		);
-
-		// Combine stdout lines into repeated string output; prepend stderr lines
-		// with "stderr: " prefix so extension can differentiate them.
-		let StdoutStr = String::from_utf8_lossy(&Output.stdout);
-		let StderrStr = String::from_utf8_lossy(&Output.stderr);
-		let mut OutputLines:Vec<String> = StdoutStr.lines().map(|L| L.to_string()).collect();
-		for Line in StderrStr.lines() {
-			OutputLines.push(format!("stderr: {}", Line));
-		}
-
-		Ok(Response::new(GitExecResponse { output:OutputLines, exit_code:ExitCode }))
-	}
-
-	// ==================== Debug ====================
-
-	/// Register Debug Adapter - Register debug adapter
-	async fn register_debug_adapter(
-		&self,
-		request:Request<RegisterDebugAdapterRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering debug adapter: {}", req.debug_type);
-
-		// Register debug adapter in ApplicationState and notify Sky
-		use tauri::Emitter;
-
-		let Handle = req
-			.debug_type
-			.as_bytes()
-			.iter()
-			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
-		let dto = ProviderRegistrationDTO {
-			Handle,
-			ProviderType:ProviderType::DebugAdapter,
-			Selector:json!([{ "debugType": req.debug_type }]),
-			SideCarIdentifier:"cocoon-main".to_string(),
-			ExtensionIdentifier:json!(req.extension_id),
-			Options:Some(json!({ "debugType": req.debug_type })),
-		};
-		self.environment
-			.ApplicationState
-			.Extension
-			.ProviderRegistration
-			.RegisterProvider(Handle, dto);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://debug/register",
-			json!({ "debugType": req.debug_type, "extensionId": req.extension_id }),
-		);
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// Start Debugging - Emit debug start event to Sky, return session ID
-	async fn start_debugging(
-		&self,
-		request:Request<StartDebuggingRequest>,
-	) -> Result<Response<StartDebuggingResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] start_debugging: type={}", req.debug_type);
-
-		let SessionId = format!(
-			"debug-{}",
-			SystemTime::now().duration_since(UNIX_EPOCH).map(|D| D.as_millis()).unwrap_or(0)
-		);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://debug/start",
-			json!({
-				"sessionId": SessionId,
-				"debugType": req.debug_type,
-				"configuration": req.configuration.as_ref().map(|C| json!({
-					"name": C.name,
-					"type": C.r#type,
-					"request": C.request,
-				})),
-			}),
-		);
-
-		Ok(Response::new(StartDebuggingResponse { success:true }))
-	}
-
-	// ==================== Save Participants ====================
-
-	/// Participate in Save - Extension participates in save
-	async fn participate_in_save(
-		&self,
-		request:Request<ParticipateInSaveRequest>,
-	) -> Result<Response<ParticipateInSaveResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Participating in save for: {:?}", req.uri);
-
-		// Save participants are extension-registered onWillSaveTextDocument handlers.
-		// Cocoon invokes this when an extension wants to participate in a save.
-		// The extension has already computed its edits — they arrive via gRPC from
-		// the Cocoon extension host. For now, pass through with no edits since
-		// extension activation is not yet complete.
-		dev_log!("cocoon", "[CocoonService] Save reason: {:?}, uri: {:?}", req.reason, req.uri);
-
-		Ok(Response::new(ParticipateInSaveResponse { edits:Vec::new() }))
-	}
-
-	// ==================== Secret Storage ====================
-
-	/// Get Secret - retrieve from the OS keychain via SecretProvider.
-	async fn get_secret(&self, request:Request<GetSecretRequest>) -> Result<Response<GetSecretResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] get_secret: key={}", req.key);
-
-		// The gRPC proto only carries `key`; we use the app name as the
-		// extension identifier (keyring service scoping).
-		match self.environment.GetSecret(String::new(), req.key.clone()).await {
-			Ok(Some(Value)) => Ok(Response::new(GetSecretResponse { value:Value })),
-			Ok(None) => Ok(Response::new(GetSecretResponse { value:String::new() })),
-			Err(Error) => {
-				dev_log!("cocoon", "warn: [CocoonService] get_secret failed key={}: {}", req.key, Error);
-				Err(Status::internal(format!("get_secret: {}", Error)))
-			},
-		}
-	}
-
-	/// Store Secret - persist to the OS keychain via SecretProvider.
-	async fn store_secret(&self, request:Request<StoreSecretRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] store_secret: key={}", req.key);
-
-		match self.environment.StoreSecret(String::new(), req.key.clone(), req.value).await {
-			Ok(()) => Ok(Response::new(Empty {})),
-			Err(Error) => {
-				dev_log!("cocoon", "warn: [CocoonService] store_secret failed key={}: {}", req.key, Error);
-				Err(Status::internal(format!("store_secret: {}", Error)))
-			},
-		}
-	}
-
-	/// Delete Secret - remove from the OS keychain via SecretProvider.
-	async fn delete_secret(&self, request:Request<DeleteSecretRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] delete_secret: key={}", req.key);
-
-		match self.environment.DeleteSecret(String::new(), req.key.clone()).await {
-			Ok(()) => Ok(Response::new(Empty {})),
-			Err(Error) => {
-				dev_log!(
-					"cocoon",
-					"warn: [CocoonService] delete_secret failed key={}: {}",
-					req.key,
-					Error
-				);
-				Err(Status::internal(format!("delete_secret: {}", Error)))
-			},
-		}
+		FileSystem::FindFiles(self, request.into_inner()).await
 	}
-
-	// ==================== Extended Language Provider Handlers ====================
-
-	/// Document Highlight Provider - Register
-	async fn register_document_highlight_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Document Highlight Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::DocumentHighlight,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// document highlights - delegates to LanguageFeatureProviderRegistry
-	async fn provide_document_highlights(
-		&self,
-		request:Request<ProvideDocumentHighlightsRequest>,
-	) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing document highlights");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-
-		match self.environment.ProvideDocumentHighlights(document_uri, position_dto).await {
-			Ok(_result) => Ok(Response::new(ProvideDocumentHighlightsResponse::default())),
-			Err(e) => Err(Status::internal(format!("Document highlights failed: {}", e))),
-		}
-	}
-
-	/// Document Symbol Provider - Register
-	async fn register_document_symbol_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Document Symbol Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::DocumentSymbol,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// document symbols - delegates to LanguageFeatureProviderRegistry
-	async fn provide_document_symbols(
-		&self,
-		request:Request<ProvideDocumentSymbolsRequest>,
-	) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing document symbols");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-
-		match self.environment.ProvideDocumentSymbols(document_uri).await {
-			Ok(_result) => Ok(Response::new(ProvideDocumentSymbolsResponse::default())),
-			Err(e) => Err(Status::internal(format!("Document symbols failed: {}", e))),
-		}
-	}
-
-	/// Workspace Symbol Provider - Register
-	async fn register_workspace_symbol_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Workspace Symbol Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::WorkspaceSymbol,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// workspace symbols - delegates to LanguageFeatureProviderRegistry
-	async fn provide_workspace_symbols(
-		&self,
-		request:Request<ProvideWorkspaceSymbolsRequest>,
-	) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing workspace symbols for query: {}", req.query);
-
-		match self.environment.ProvideWorkspaceSymbols(req.query).await {
-			Ok(_result) => Ok(Response::new(ProvideWorkspaceSymbolsResponse::default())),
-			Err(e) => Err(Status::internal(format!("Workspace symbols failed: {}", e))),
-		}
-	}
-
-	/// Rename Provider - Register
-	async fn register_rename_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Rename Provider");
-		self.RegisterProvider(req.handle, ProviderType::Rename, &req.language_selector, &req.extension_id);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// rename edits - delegates to LanguageFeatureProviderRegistry
-	async fn provide_rename_edits(
-		&self,
-		request:Request<ProvideRenameEditsRequest>,
-	) -> Result<Response<ProvideRenameEditsResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing rename edits: new_name={}", req.new_name);
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-
-		match self
-			.environment
-			.ProvideRenameEdits(document_uri, position_dto, req.new_name)
-			.await
-		{
-			Ok(_result) => Ok(Response::new(ProvideRenameEditsResponse::default())),
-			Err(e) => Err(Status::internal(format!("Rename edits failed: {}", e))),
-		}
-	}
-
-	/// Document Formatting Provider - Register
-	async fn register_document_formatting_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Document Formatting Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::DocumentFormatting,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// document formatting - delegates to LanguageFeatureProviderRegistry
-	async fn provide_document_formatting(
-		&self,
-		request:Request<ProvideDocumentFormattingRequest>,
-	) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing document formatting");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
-
-		match self.environment.ProvideDocumentFormattingEdits(document_uri, options_dto).await {
-			Ok(_result) => Ok(Response::new(ProvideDocumentFormattingResponse::default())),
-			Err(e) => Err(Status::internal(format!("Document formatting failed: {}", e))),
-		}
-	}
-
-	/// Document Range Formatting Provider - Register
-	async fn register_document_range_formatting_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Document Range Formatting Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::DocumentRangeFormatting,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// document range formatting - delegates to LanguageFeatureProviderRegistry
-	async fn provide_document_range_formatting(
-		&self,
-		request:Request<ProvideDocumentRangeFormattingRequest>,
-	) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing document range formatting");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let range = req.range.as_ref();
-		let range_dto = json!({
-			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
-			"StartColumn": range.and_then(|r| r.start.as_ref()).map(|p| p.character).unwrap_or(0),
-			"EndLineNumber": range.and_then(|r| r.end.as_ref()).map(|p| p.line).unwrap_or(0),
-			"EndColumn": range.and_then(|r| r.end.as_ref()).map(|p| p.character).unwrap_or(0),
-		});
-		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
-
-		match self
-			.environment
-			.ProvideDocumentRangeFormattingEdits(document_uri, range_dto, options_dto)
-			.await
-		{
-			Ok(_result) => Ok(Response::new(ProvideDocumentRangeFormattingResponse::default())),
-			Err(e) => Err(Status::internal(format!("Document range formatting failed: {}", e))),
-		}
-	}
-
-	/// On Type Formatting Provider - Register
-	async fn register_on_type_formatting_provider(
-		&self,
-		request:Request<RegisterOnTypeFormattingProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering On Type Formatting Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::OnTypeFormatting,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// on-type formatting - delegates to LanguageFeatureProviderRegistry
-	async fn provide_on_type_formatting(
-		&self,
-		request:Request<ProvideOnTypeFormattingRequest>,
-	) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing on-type formatting");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-		let options_dto = json!({ "tabSize": 4, "insertSpaces": true });
-
-		match self
-			.environment
-			.ProvideOnTypeFormattingEdits(document_uri, position_dto, req.character, options_dto)
-			.await
-		{
-			Ok(_result) => Ok(Response::new(ProvideOnTypeFormattingResponse::default())),
-			Err(e) => Err(Status::internal(format!("On-type formatting failed: {}", e))),
-		}
-	}
-
-	/// Signature Help Provider - Register
-	async fn register_signature_help_provider(
-		&self,
-		request:Request<RegisterSignatureHelpProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Signature Help Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::SignatureHelp,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// signature help - delegates to LanguageFeatureProviderRegistry
-	async fn provide_signature_help(
-		&self,
-		request:Request<ProvideSignatureHelpRequest>,
-	) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing signature help");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-		let context_dto = json!({ "triggerKind": 1, "isRetrigger": false });
-
-		match self
-			.environment
-			.ProvideSignatureHelp(document_uri, position_dto, context_dto)
-			.await
-		{
-			Ok(_result) => Ok(Response::new(ProvideSignatureHelpResponse::default())),
-			Err(e) => Err(Status::internal(format!("Signature help failed: {}", e))),
-		}
-	}
-
-	/// Code Lens Provider - Register
-	async fn register_code_lens_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Code Lens Provider");
-		self.RegisterProvider(req.handle, ProviderType::CodeLens, &req.language_selector, &req.extension_id);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// code lenses - delegates to LanguageFeatureProviderRegistry
-	async fn provide_code_lenses(
-		&self,
-		request:Request<ProvideCodeLensesRequest>,
-	) -> Result<Response<ProvideCodeLensesResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing code lenses");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-
-		match self.environment.ProvideCodeLenses(document_uri).await {
-			Ok(_result) => Ok(Response::new(ProvideCodeLensesResponse::default())),
-			Err(e) => Err(Status::internal(format!("Code lenses failed: {}", e))),
-		}
-	}
-
-	/// Folding Range Provider - Register
-	async fn register_folding_range_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Folding Range Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::FoldingRange,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// folding ranges - delegates to LanguageFeatureProviderRegistry
-	async fn provide_folding_ranges(
-		&self,
-		request:Request<ProvideFoldingRangesRequest>,
-	) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing folding ranges");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-
-		match self.environment.ProvideFoldingRanges(document_uri).await {
-			Ok(_result) => Ok(Response::new(ProvideFoldingRangesResponse::default())),
-			Err(e) => Err(Status::internal(format!("Folding ranges failed: {}", e))),
-		}
-	}
-
-	/// Selection Range Provider - Register
-	async fn register_selection_range_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Selection Range Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::SelectionRange,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// selection ranges - delegates to LanguageFeatureProviderRegistry
-	async fn provide_selection_ranges(
-		&self,
-		request:Request<ProvideSelectionRangesRequest>,
-	) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing selection ranges");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let PositionDTOs:Vec<PositionDTO> = req
-			.positions
-			.iter()
-			.map(|P| PositionDTO { LineNumber:P.line, Column:P.character })
-			.collect();
-
-		match self.environment.ProvideSelectionRanges(document_uri, PositionDTOs).await {
-			Ok(_result) => Ok(Response::new(ProvideSelectionRangesResponse::default())),
-			Err(e) => Err(Status::internal(format!("Selection ranges failed: {}", e))),
-		}
-	}
-
-	/// Semantic Tokens Provider - Register
-	async fn register_semantic_tokens_provider(
-		&self,
-		request:Request<RegisterSemanticTokensProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Semantic Tokens Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::SemanticTokens,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// semantic tokens - delegates to LanguageFeatureProviderRegistry
-	async fn provide_semantic_tokens_full(
-		&self,
-		request:Request<ProvideSemanticTokensRequest>,
-	) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing semantic tokens");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-
-		match self.environment.ProvideSemanticTokensFull(document_uri).await {
-			Ok(_result) => Ok(Response::new(ProvideSemanticTokensResponse::default())),
-			Err(e) => Err(Status::internal(format!("Semantic tokens failed: {}", e))),
-		}
-	}
-
-	/// Inlay Hints Provider - Register
-	async fn register_inlay_hints_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Inlay Hints Provider");
-		self.RegisterProvider(req.handle, ProviderType::InlayHint, &req.language_selector, &req.extension_id);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// inlay hints - delegates to LanguageFeatureProviderRegistry
-	async fn provide_inlay_hints(
-		&self,
-		request:Request<ProvideInlayHintsRequest>,
-	) -> Result<Response<ProvideInlayHintsResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing inlay hints");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let range = req.range.as_ref();
-		let range_dto = json!({
-			"StartLineNumber": range.and_then(|r| r.start.as_ref()).map(|p| p.line).unwrap_or(0),
-			"StartColumn": range.and_then(|r| r.start.as_ref()).map(|p| p.character).unwrap_or(0),
-			"EndLineNumber": range.and_then(|r| r.end.as_ref()).map(|p| p.line).unwrap_or(0),
-			"EndColumn": range.and_then(|r| r.end.as_ref()).map(|p| p.character).unwrap_or(0),
-		});
-
-		match self.environment.ProvideInlayHints(document_uri, range_dto).await {
-			Ok(_result) => Ok(Response::new(ProvideInlayHintsResponse::default())),
-			Err(e) => Err(Status::internal(format!("Inlay hints failed: {}", e))),
-		}
-	}
-
-	/// Type Hierarchy Provider - Register
-	async fn register_type_hierarchy_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Type Hierarchy Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::TypeHierarchy,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// type hierarchy supertypes - delegates to LanguageFeatureProviderRegistry
-	async fn provide_type_hierarchy_supertypes(
-		&self,
-		request:Request<ProvideTypeHierarchyRequest>,
-	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing type hierarchy supertypes");
-
-		let item_dto = json!({
-			"name": req.item.as_ref().map(|i| i.name.as_str()).unwrap_or(""),
-			"uri": req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or(""),
-		});
-		match self.environment.ProvideTypeHierarchySupertypes(item_dto).await {
-			Ok(_result) => Ok(Response::new(ProvideTypeHierarchyResponse::default())),
-			Err(e) => Err(Status::internal(format!("Type hierarchy supertypes failed: {}", e))),
-		}
-	}
-
-	/// type hierarchy subtypes - delegates to LanguageFeatureProviderRegistry
-	async fn provide_type_hierarchy_subtypes(
-		&self,
-		request:Request<ProvideTypeHierarchyRequest>,
-	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing type hierarchy subtypes");
-
-		let item_dto = json!({
-			"name": req.item.as_ref().map(|i| i.name.as_str()).unwrap_or(""),
-			"uri": req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or(""),
-		});
-		match self.environment.ProvideTypeHierarchySubtypes(item_dto).await {
-			Ok(_result) => Ok(Response::new(ProvideTypeHierarchyResponse::default())),
-			Err(e) => Err(Status::internal(format!("Type hierarchy subtypes failed: {}", e))),
-		}
-	}
-
-	/// Call Hierarchy Provider - Register
-	async fn register_call_hierarchy_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Call Hierarchy Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::CallHierarchy,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// call hierarchy incoming - delegates to LanguageFeatureProviderRegistry
-	async fn provide_call_hierarchy_incoming_calls(
-		&self,
-		request:Request<ProvideCallHierarchyRequest>,
-	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing call hierarchy incoming");
-
-		let item_dto = json!({
-			"name": req.item.as_ref().map(|i| i.name.as_str()).unwrap_or(""),
-			"uri": req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or(""),
-		});
-		match self.environment.ProvideCallHierarchyIncomingCalls(item_dto).await {
-			Ok(_result) => Ok(Response::new(ProvideCallHierarchyResponse::default())),
-			Err(e) => Err(Status::internal(format!("Call hierarchy incoming failed: {}", e))),
-		}
-	}
-
-	/// call hierarchy outgoing - delegates to LanguageFeatureProviderRegistry
-	async fn provide_call_hierarchy_outgoing_calls(
-		&self,
-		request:Request<ProvideCallHierarchyRequest>,
-	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing call hierarchy outgoing");
-
-		let item_dto = json!({
-			"name": req.item.as_ref().map(|i| i.name.as_str()).unwrap_or(""),
-			"uri": req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or(""),
-		});
-		match self.environment.ProvideCallHierarchyOutgoingCalls(item_dto).await {
-			Ok(_result) => Ok(Response::new(ProvideCallHierarchyResponse::default())),
-			Err(e) => Err(Status::internal(format!("Call hierarchy outgoing failed: {}", e))),
-		}
-	}
-
-	/// Linked Editing Range Provider - Register
-	async fn register_linked_editing_range_provider(
-		&self,
-		request:Request<RegisterProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Linked Editing Range Provider");
-		self.RegisterProvider(
-			req.handle,
-			ProviderType::LinkedEditingRange,
-			&req.language_selector,
-			&req.extension_id,
-		);
-		Ok(Response::new(Empty {}))
-	}
-
-	/// linked editing ranges - delegates to LanguageFeatureProviderRegistry
-	async fn provide_linked_editing_ranges(
-		&self,
-		request:Request<ProvideLinkedEditingRangesRequest>,
-	) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Providing linked editing ranges");
-
-		let uri_string = req.uri.as_ref().map(|u| u.value.as_str()).unwrap_or("");
-		let document_uri =
-			Url::parse(uri_string).map_err(|e| Status::invalid_argument(format!("Invalid URI: {}", e)))?;
-		let position = req.position.as_ref();
-		let position_dto = PositionDTO {
-			LineNumber:position.map(|p| p.line).unwrap_or(0),
-			Column:position.map(|p| p.character).unwrap_or(0),
-		};
-
-		match self.environment.ProvideLinkedEditingRanges(document_uri, position_dto).await {
-			Ok(_result) => Ok(Response::new(ProvideLinkedEditingRangesResponse::default())),
-			Err(e) => Err(Status::internal(format!("Linked editing ranges failed: {}", e))),
-		}
-	}
-
-	/// Show Quick Pick - present a selection list via UserInterfaceProvider.
-	async fn show_quick_pick(
-		&self,
-		request:Request<ShowQuickPickRequest>,
-	) -> Result<Response<ShowQuickPickResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] show_quick_pick: {} items", req.items.len());
-
-		let Items:Vec<QuickPickItemDTO> = req
-			.items
-			.iter()
-			.map(|Item| {
-				QuickPickItemDTO {
-					Label:Item.label.clone(),
-					Description:if Item.description.is_empty() { None } else { Some(Item.description.clone()) },
-					Detail:None,
-					Picked:Some(Item.picked),
-					AlwaysShow:None,
-				}
-			})
-			.collect();
-
-		let Options = Some(QuickPickOptionsDTO {
-			Title:if req.title.is_empty() { None } else { Some(req.title) },
-			PlaceHolder:if req.placeholder.is_empty() { None } else { Some(req.placeholder) },
-			CanPickMany:Some(req.can_pick_many),
-			IgnoreFocusOut:None,
-		});
-
-		match self.environment.ShowQuickPick(Items, Options).await {
-			Ok(Some(Selected)) => {
-				// Map selected label strings back to indices via linear search
-				let SelectedIndices:Vec<u32> = Selected
-					.iter()
-					.filter_map(|Label| req.items.iter().position(|Item| &Item.label == Label).map(|Idx| Idx as u32))
-					.collect();
-				Ok(Response::new(ShowQuickPickResponse { selected_indices:SelectedIndices }))
-			},
-			Ok(None) => Ok(Response::new(ShowQuickPickResponse::default())),
-			Err(Error) => {
-				dev_log!("cocoon", "warn: [CocoonService] show_quick_pick failed: {}", Error);
-				Ok(Response::new(ShowQuickPickResponse::default()))
-			},
-		}
-	}
-
-	/// Show Input Box - present a text entry dialog via UserInterfaceProvider.
-	async fn show_input_box(
-		&self,
-		request:Request<ShowInputBoxRequest>,
-	) -> Result<Response<ShowInputBoxResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] show_input_box");
-
-		let Options = Some(InputBoxOptionsDTO {
-			Title:if req.title.is_empty() { None } else { Some(req.title) },
-			PlaceHolder:if req.placeholder.is_empty() { None } else { Some(req.placeholder) },
-			Value:if req.value.is_empty() { None } else { Some(req.value) },
-			Prompt:if req.prompt.is_empty() { None } else { Some(req.prompt) },
-			IsPassword:if req.password { Some(true) } else { None },
-			IgnoreFocusOut:None,
-		});
-
-		match self.environment.ShowInputBox(Options).await {
-			Ok(Some(Value)) => Ok(Response::new(ShowInputBoxResponse { value:Value, cancelled:false })),
-			Ok(None) => Ok(Response::new(ShowInputBoxResponse { value:String::new(), cancelled:true })),
-			Err(Error) => {
-				dev_log!("cocoon", "warn: [CocoonService] show_input_box failed: {}", Error);
-				Ok(Response::new(ShowInputBoxResponse { value:String::new(), cancelled:true }))
-			},
-		}
-	}
-
-	/// progress - emit start event to Sky for progress indicator
-	async fn show_progress(
-		&self,
-		request:Request<ShowProgressRequest>,
-	) -> Result<Response<ShowProgressResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] show_progress: title={}", req.title);
-
-		let Handle = SystemTime::now()
-			.duration_since(UNIX_EPOCH)
-			.map(|D| D.as_millis() as u32)
-			.unwrap_or(0);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://progress/start",
-			json!({
-				"handle": Handle,
-				"title": req.title,
-				"cancellable": req.cancellable,
-				"location": req.location,
-			}),
-		);
-
-		Ok(Response::new(ShowProgressResponse { handle:Handle }))
-	}
-
-	/// progress report - emit update event to Sky
-	async fn report_progress(&self, request:Request<ReportProgressRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] report_progress: handle={}", req.handle);
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://progress/update",
-			json!({
-				"handle": req.handle,
-				"message": req.message,
-				"increment": req.increment,
-			}),
-		);
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// webview message - forward to Sky for webview panel message delivery
-	async fn post_webview_message(
-		&self,
-		request:Request<PostWebviewMessageRequest>,
-	) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] post_webview_message: handle={}", req.handle);
-
-		let MessagePayload = match &req.message {
-			Some(post_webview_message_request::Message::StringMessage(S)) => json!(S),
-			Some(post_webview_message_request::Message::BytesMessage(B)) => json!(B),
-			None => serde_json::Value::Null,
-		};
-
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://webview/postMessage",
-			json!({
-				"handle": req.handle,
-				"message": MessagePayload,
-			}),
-		);
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// webview dispose - emit dispose event to Sky
-	async fn dispose_webview_panel(
-		&self,
-		request:Request<DisposeWebviewPanelRequest>,
-	) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] dispose_webview_panel: handle={}", req.handle);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://webview/dispose", json!({ "handle": req.handle }));
-
-		Ok(Response::new(Empty {}))
-	}
-
-	/// external URI - open URL via Tauri shell plugin
-	async fn open_external(&self, request:Request<OpenExternalRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] open_external: {}", req.uri);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://native/openExternal", json!({ "url": req.uri }));
 
-		Ok(Response::new(Empty {}))
+	async fn find_text_in_files(&self, request:Request<FindTextInFilesRequest>) -> Result<Response<FindTextInFilesResponse>, Status> {
+		FileSystem::FindTextInFiles(self, request.into_inner()).await
 	}
 
-	/// file delete
 	async fn delete_file(&self, request:Request<DeleteFileRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		let Path =
-			Self::UriToPath(req.uri.as_ref()).ok_or_else(|| Status::invalid_argument("delete_file: missing URI"))?;
-
-		dev_log!("cocoon", "[CocoonService] delete_file: {:?}", Path);
-
-		if Path.is_dir() {
-			tokio::fs::remove_dir_all(&Path).await
-		} else {
-			tokio::fs::remove_file(&Path).await
-		}
-		.map_err(|Error| Status::internal(format!("delete_file: {}: {}", Path.display(), Error)))?;
-
-		Ok(Response::new(Empty {}))
+		FileSystem::DeleteFile(self, request.into_inner()).await
 	}
 
-	/// file rename (move)
 	async fn rename_file(&self, request:Request<RenameFileRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		let OldPath = Self::UriToPath(req.source.as_ref())
-			.ok_or_else(|| Status::invalid_argument("rename_file: missing source URI"))?;
-		let NewPath = Self::UriToPath(req.target.as_ref())
-			.ok_or_else(|| Status::invalid_argument("rename_file: missing target URI"))?;
-
-		dev_log!("cocoon", "[CocoonService] rename_file: {:?} → {:?}", OldPath, NewPath);
-
-		if let Some(Parent) = NewPath.parent() {
-			if !Parent.as_os_str().is_empty() {
-				tokio::fs::create_dir_all(Parent)
-					.await
-					.map_err(|Error| Status::internal(format!("rename_file: create_dir_all failed: {}", Error)))?;
-			}
-		}
-
-		tokio::fs::rename(&OldPath, &NewPath)
-			.await
-			.map_err(|Error| Status::internal(format!("rename_file: {}: {}", OldPath.display(), Error)))?;
-
-		Ok(Response::new(Empty {}))
+		FileSystem::RenameFile(self, request.into_inner()).await
 	}
 
-	/// file copy
 	async fn copy_file(&self, request:Request<CopyFileRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		let SrcPath = Self::UriToPath(req.source.as_ref())
-			.ok_or_else(|| Status::invalid_argument("copy_file: missing source URI"))?;
-		let DstPath = Self::UriToPath(req.target.as_ref())
-			.ok_or_else(|| Status::invalid_argument("copy_file: missing target URI"))?;
-
-		dev_log!("cocoon", "[CocoonService] copy_file: {:?} → {:?}", SrcPath, DstPath);
-
-		if let Some(Parent) = DstPath.parent() {
-			if !Parent.as_os_str().is_empty() {
-				tokio::fs::create_dir_all(Parent)
-					.await
-					.map_err(|Error| Status::internal(format!("copy_file: create_dir_all failed: {}", Error)))?;
-			}
-		}
-
-		tokio::fs::copy(&SrcPath, &DstPath)
-			.await
-			.map_err(|Error| Status::internal(format!("copy_file: {}: {}", SrcPath.display(), Error)))?;
-
-		Ok(Response::new(Empty {}))
+		FileSystem::CopyFile(self, request.into_inner()).await
 	}
 
-	/// directory creation
 	async fn create_directory(&self, request:Request<CreateDirectoryRequest>) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		let Path = Self::UriToPath(req.uri.as_ref())
-			.ok_or_else(|| Status::invalid_argument("create_directory: missing URI"))?;
-
-		dev_log!("cocoon", "[CocoonService] create_directory: {:?}", Path);
-
-		tokio::fs::create_dir_all(&Path)
-			.await
-			.map_err(|Error| Status::internal(format!("create_directory: {}: {}", Path.display(), Error)))?;
-
-		Ok(Response::new(Empty {}))
+		FileSystem::CreateDirectory(self, request.into_inner()).await
 	}
 
-	/// Create output channel - notify Sky to create a named output panel.
-	async fn create_output_channel(
-		&self,
-		request:Request<CreateOutputChannelRequest>,
-	) -> Result<Response<CreateOutputChannelResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] create_output_channel: '{}'", req.name);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://output/create", json!({ "channel": req.name }));
-
-		Ok(Response::new(CreateOutputChannelResponse { channel_id:req.name.clone() }))
+	async fn open_document(&self, request:Request<OpenDocumentRequest>) -> Result<Response<OpenDocumentResponse>, Status> {
+		Workspace::OpenDocument(self, request.into_inner()).await
 	}
 
-	/// Append text to an output channel panel.
-	async fn append_output(&self, request:Request<AppendOutputRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://output/append", json!({ "channel": req.channel_id, "text": req.value }));
-		Ok(Response::new(Empty {}))
+	async fn save_all(&self, request:Request<SaveAllRequest>) -> Result<Response<SaveAllResponse>, Status> {
+		Workspace::SaveAll(self, request.into_inner()).await
 	}
 
-	/// Clear an output channel panel.
-	async fn clear_output(&self, request:Request<ClearOutputRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://output/clear", json!({ "channel": req.channel_id }));
-		Ok(Response::new(Empty {}))
+	async fn apply_edit(&self, request:Request<ApplyEditRequest>) -> Result<Response<ApplyEditResponse>, Status> {
+		Workspace::ApplyEdit(self, request.into_inner()).await
 	}
 
-	/// Show an output channel panel.
-	async fn show_output(&self, request:Request<ShowOutputRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://output/show", json!({ "channel": req.channel_id }));
-		Ok(Response::new(Empty {}))
+	async fn update_configuration(&self, request:Request<UpdateConfigurationRequest>) -> Result<Response<Empty>, Status> {
+		Workspace::UpdateConfiguration(self, request.into_inner()).await
 	}
 
-	/// Dispose an output channel (no cleanup needed; Sky removes the panel on
-	/// demand).
-	async fn dispose_output(&self, request:Request<DisposeOutputRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://output/dispose", json!({ "channel": req.channel_id }));
-		Ok(Response::new(Empty {}))
+	async fn update_workspace_folders(&self, request:Request<UpdateWorkspaceFoldersRequest>) -> Result<Response<Empty>, Status> {
+		Workspace::UpdateWorkspaceFolders(self, request.into_inner()).await
 	}
 
-	/// Task Provider - Register in ApplicationState for provider lookup
-	async fn register_task_provider(
-		&self,
-		request:Request<RegisterTaskProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Task Provider: type={}", req.r#type);
-
-		// Task providers don't have handles in proto — use a hash of the type string
-		let Handle = req
-			.r#type
-			.as_bytes()
-			.iter()
-			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
-		let dto = ProviderRegistrationDTO {
-			Handle,
-			ProviderType:ProviderType::Task,
-			Selector:json!([{ "language": "*" }]),
-			SideCarIdentifier:"cocoon-main".to_string(),
-			ExtensionIdentifier:json!(req.extension_id),
-			Options:None,
-		};
-		self.environment
-			.ApplicationState
-			.Extension
-			.ProviderRegistration
-			.RegisterProvider(Handle, dto);
-
-		Ok(Response::new(Empty {}))
+	async fn open_terminal(&self, request:Request<OpenTerminalRequest>) -> Result<Response<Empty>, Status> {
+		Terminal::OpenTerminal(self, request.into_inner()).await
 	}
 
-	/// task execution - forward to Sky via Tauri event
-	async fn execute_task(&self, request:Request<ExecuteTaskRequest>) -> Result<Response<ExecuteTaskResponse>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] execute_task: name={} source={}",
-			req.name,
-			req.source
-		);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://task/execute", json!({ "name": req.name, "source": req.source }));
-
-		Ok(Response::new(ExecuteTaskResponse { task_id:0, success:true }))
+	async fn terminal_input(&self, request:Request<TerminalInputRequest>) -> Result<Response<Empty>, Status> {
+		Terminal::TerminalInput(self, request.into_inner()).await
 	}
 
-	/// task termination - signal the running task to stop
-	async fn terminate_task(&self, request:Request<TerminateTaskRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] terminate_task: id={}", req.task_id);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://task/terminate", json!({ "id": req.task_id }));
-
-		Ok(Response::new(Empty {}))
+	async fn close_terminal(&self, request:Request<CloseTerminalRequest>) -> Result<Response<Empty>, Status> {
+		Terminal::CloseTerminal(self, request.into_inner()).await
 	}
 
-	/// authentication session - retrieve or create an auth session
-	async fn get_authentication_session(
-		&self,
-		request:Request<GetAuthenticationSessionRequest>,
-	) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] get_authentication_session: provider={}",
-			req.provider_id
-		);
-
-		// Return empty session — auth providers register themselves via
-		// register_authentication_provider and get stored in ApplicationState.
-		// The full OAuth flow requires Mountain to open a browser window.
-		Ok(Response::new(GetAuthenticationSessionResponse::default()))
+	async fn accept_terminal_opened(&self, request:Request<TerminalOpenedNotification>) -> Result<Response<Empty>, Status> {
+		Terminal::AcceptTerminalOpened(self, request.into_inner()).await
 	}
 
-	/// Authentication Provider - Register in ApplicationState
-	async fn register_authentication_provider(
-		&self,
-		request:Request<RegisterAuthenticationProviderRequest>,
-	) -> Result<Response<Empty>, Status> {
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] Registering Authentication Provider: id={}", req.id);
-
-		let Handle = req
-			.id
-			.as_bytes()
-			.iter()
-			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
-		let dto = ProviderRegistrationDTO {
-			Handle,
-			ProviderType:ProviderType::Authentication,
-			Selector:json!([{ "provider": req.id }]),
-			SideCarIdentifier:"cocoon-main".to_string(),
-			ExtensionIdentifier:json!(req.extension_id),
-			Options:Some(json!({ "label": req.label, "supportsMultipleAccounts": req.supports_multiple_accounts })),
-		};
-		self.environment
-			.ApplicationState
-			.Extension
-			.ProviderRegistration
-			.RegisterProvider(Handle, dto);
-
-		Ok(Response::new(Empty {}))
+	async fn accept_terminal_closed(&self, request:Request<TerminalClosedNotification>) -> Result<Response<Empty>, Status> {
+		Terminal::AcceptTerminalClosed(self, request.into_inner()).await
 	}
 
-	/// debug stop - signal the debug adapter to terminate
-	async fn stop_debugging(&self, request:Request<StopDebuggingRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] stop_debugging: session={}", req.session_id);
-
-		let _ = self
-			.environment
-			.ApplicationHandle
-			.emit("sky://debug/stop", json!({ "sessionId": req.session_id }));
-
-		Ok(Response::new(Empty {}))
+	async fn accept_terminal_process_id(&self, request:Request<TerminalProcessIdNotification>) -> Result<Response<Empty>, Status> {
+		Terminal::AcceptTerminalProcessId(self, request.into_inner()).await
 	}
 
-	/// extension info - look up a single extension by ID in ApplicationState
-	async fn get_extension(
-		&self,
-		request:Request<GetExtensionRequest>,
-	) -> Result<Response<GetExtensionResponse>, Status> {
-		use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
-
-		let req = request.into_inner();
-		dev_log!("cocoon", "[CocoonService] get_extension: {}", req.extension_id);
-
-		let ExtensionOption = self.environment.GetExtension(req.extension_id.clone()).await.ok().flatten();
-
-		let InfoOption = ExtensionOption.map(|Value| {
-			ExtensionInfo {
-				id:req.extension_id,
-				display_name:Value.get("Name").and_then(|V| V.as_str()).unwrap_or("").to_string(),
-				version:Value.get("Version").and_then(|V| V.as_str()).unwrap_or("").to_string(),
-				is_active:true, // scanned = considered active for now
-				extension_path:Value
-					.get("ExtensionLocation")
-					.and_then(|V| V.as_str())
-					.unwrap_or("")
-					.to_string(),
-			}
-		});
-
-		Ok(Response::new(GetExtensionResponse { extension:InfoOption }))
+	async fn accept_terminal_process_data(&self, request:Request<TerminalDataNotification>) -> Result<Response<Empty>, Status> {
+		Terminal::AcceptTerminalProcessData(self, request.into_inner()).await
 	}
 
-	/// all extensions - return all scanned extensions from ApplicationState
-	async fn get_all_extensions(&self, request:Request<Empty>) -> Result<Response<GetAllExtensionsResponse>, Status> {
-		use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
-
-		let _req = request.into_inner();
-
-		let Extensions = self.environment.GetExtensions().await.unwrap_or_default();
-
-		let ExtensionInfoList = Extensions
-			.iter()
-			.map(|Value| {
-				ExtensionInfo {
-					id:Value.get("Identifier").and_then(|V| V.as_str()).unwrap_or("").to_string(),
-					display_name:Value.get("Name").and_then(|V| V.as_str()).unwrap_or("").to_string(),
-					version:Value.get("Version").and_then(|V| V.as_str()).unwrap_or("").to_string(),
-					is_active:true,
-					extension_path:Value
-						.get("ExtensionLocation")
-						.and_then(|V| V.as_str())
-						.unwrap_or("")
-						.to_string(),
-				}
-			})
-			.collect();
-
-		Ok(Response::new(GetAllExtensionsResponse { extensions:ExtensionInfoList }))
-	}
-
-	/// Terminal Resize - emit a Tauri event so Sky can resize the xterm view.
-	///
-	/// PTY-level resize (via `portable_pty::MasterPty::resize`) is a P1 task
-	/// that requires storing the PTY master handle in `TerminalStateDTO`.
-	/// The Tauri event lets the UI immediately resize its canvas.
 	async fn resize_terminal(&self, request:Request<ResizeTerminalRequest>) -> Result<Response<Empty>, Status> {
-		use tauri::Emitter;
-
-		let req = request.into_inner();
-		dev_log!(
-			"cocoon",
-			"[CocoonService] resize_terminal: id={} cols={} rows={}",
-			req.terminal_id,
-			req.cols,
-			req.rows
-		);
-
-		// Notify Sky/Wind of the new dimensions for UI resize
-		let _ = self.environment.ApplicationHandle.emit(
-			"sky://terminal/resize",
-			json!({ "id": req.terminal_id, "cols": req.cols, "rows": req.rows }),
-		);
-
-		// TODO(P1): Call portable_pty::MasterPty::resize once PtyMaster handle
-		// is stored in TerminalStateDTO (requires wrapping MasterPty in Arc<Mutex>)
-
-		Ok(Response::new(Empty {}))
+		Terminal::ResizeTerminal(self, request.into_inner()).await
 	}
 
-	/// Get Configuration - retrieve a configuration value from
-	/// ConfigurationProvider.
-	async fn get_configuration(
-		&self,
-		request:Request<GetConfigurationRequest>,
-	) -> Result<Response<GetConfigurationResponse>, Status> {
-		use CommonLibrary::Configuration::{
-			ConfigurationProvider::ConfigurationProvider,
-			DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
-		};
+	async fn register_tree_view_provider(&self, request:Request<RegisterTreeViewProviderRequest>) -> Result<Response<Empty>, Status> {
+		TreeView::RegisterTreeViewProvider(self, request.into_inner()).await
+	}
 
-		let req = request.into_inner();
-		let Key = if req.section.is_empty() {
-			if req.key.is_empty() { None } else { Some(req.key.clone()) }
-		} else if req.key.is_empty() {
-			Some(req.section.clone())
-		} else {
-			Some(format!("{}.{}", req.section, req.key))
-		};
+	async fn get_tree_children(&self, request:Request<GetTreeChildrenRequest>) -> Result<Response<GetTreeChildrenResponse>, Status> {
+		TreeView::GetTreeChildren(self, request.into_inner()).await
+	}
 
-		dev_log!("cocoon", "[CocoonService] get_configuration: key={:?}", Key);
+	async fn register_scm_provider(&self, request:Request<RegisterScmProviderRequest>) -> Result<Response<Empty>, Status> {
+		SCM::RegisterScmProvider(self, request.into_inner()).await
+	}
 
-		match self
-			.environment
-			.GetConfigurationValue(Key, ConfigurationOverridesDTO::default())
-			.await
-		{
-			Ok(Value) => {
-				let Bytes = serde_json::to_vec(&Value).unwrap_or_default();
-				Ok(Response::new(GetConfigurationResponse { value:Bytes }))
-			},
-			Err(Error) => {
-				dev_log!("cocoon", "warn: [CocoonService] get_configuration failed: {}", Error);
-				Ok(Response::new(GetConfigurationResponse::default()))
-			},
-		}
+	async fn update_scm_group(&self, request:Request<UpdateScmGroupRequest>) -> Result<Response<Empty>, Status> {
+		SCM::UpdateScmGroup(self, request.into_inner()).await
+	}
+
+	async fn git_exec(&self, request:Request<GitExecRequest>) -> Result<Response<GitExecResponse>, Status> {
+		SCM::GitExec(self, request.into_inner()).await
+	}
+
+	async fn register_debug_adapter(&self, request:Request<RegisterDebugAdapterRequest>) -> Result<Response<Empty>, Status> {
+		Debug::RegisterDebugAdapter(self, request.into_inner()).await
+	}
+
+	async fn start_debugging(&self, request:Request<StartDebuggingRequest>) -> Result<Response<Empty>, Status> {
+		Debug::StartDebugging(self, request.into_inner()).await
+	}
+
+	async fn stop_debugging(&self, request:Request<StopDebuggingRequest>) -> Result<Response<Empty>, Status> {
+		Debug::StopDebugging(self, request.into_inner()).await
+	}
+
+	async fn participate_in_save(&self, request:Request<ParticipateInSaveRequest>) -> Result<Response<ParticipateInSaveResponse>, Status> {
+		Save::ParticipateInSave(self, request.into_inner()).await
+	}
+
+	async fn get_secret(&self, request:Request<GetSecretRequest>) -> Result<Response<GetSecretResponse>, Status> {
+		Secret::GetSecret(self, request.into_inner()).await
+	}
+
+	async fn store_secret(&self, request:Request<StoreSecretRequest>) -> Result<Response<Empty>, Status> {
+		Secret::StoreSecret(self, request.into_inner()).await
+	}
+
+	async fn delete_secret(&self, request:Request<DeleteSecretRequest>) -> Result<Response<Empty>, Status> {
+		Secret::DeleteSecret(self, request.into_inner()).await
+	}
+
+	async fn register_document_highlight_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterDocumentHighlightProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_document_highlights(&self, request:Request<ProvideDocumentHighlightsRequest>) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
+		Provider::ProvideDocumentHighlights(self, request.into_inner()).await
+	}
+
+	async fn register_document_symbol_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterDocumentSymbolProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_document_symbols(&self, request:Request<ProvideDocumentSymbolsRequest>) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
+		Provider::ProvideDocumentSymbols(self, request.into_inner()).await
+	}
+
+	async fn register_workspace_symbol_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterWorkspaceSymbolProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_workspace_symbols(&self, request:Request<ProvideWorkspaceSymbolsRequest>) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
+		Provider::ProvideWorkspaceSymbols(self, request.into_inner()).await
+	}
+
+	async fn register_rename_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterRenameProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_rename_edits(&self, request:Request<ProvideRenameEditsRequest>) -> Result<Response<ProvideRenameEditsResponse>, Status> {
+		Provider::ProvideRenameEdits(self, request.into_inner()).await
+	}
+
+	async fn register_document_formatting_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterDocumentFormattingProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_document_formatting(&self, request:Request<ProvideDocumentFormattingRequest>) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
+		Provider::ProvideDocumentFormatting(self, request.into_inner()).await
+	}
+
+	async fn register_document_range_formatting_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterDocumentRangeFormattingProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_document_range_formatting(&self, request:Request<ProvideDocumentRangeFormattingRequest>) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
+		Provider::ProvideDocumentRangeFormatting(self, request.into_inner()).await
+	}
+
+	async fn register_on_type_formatting_provider(&self, request:Request<RegisterOnTypeFormattingProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterOnTypeFormattingProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_on_type_formatting(&self, request:Request<ProvideOnTypeFormattingRequest>) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
+		Provider::ProvideOnTypeFormatting(self, request.into_inner()).await
+	}
+
+	async fn register_signature_help_provider(&self, request:Request<RegisterSignatureHelpProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterSignatureHelpProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_signature_help(&self, request:Request<ProvideSignatureHelpRequest>) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
+		Provider::ProvideSignatureHelp(self, request.into_inner()).await
+	}
+
+	async fn register_code_lens_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterCodeLensProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_code_lenses(&self, request:Request<ProvideCodeLensesRequest>) -> Result<Response<ProvideCodeLensesResponse>, Status> {
+		Provider::ProvideCodeLenses(self, request.into_inner()).await
+	}
+
+	async fn register_folding_range_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterFoldingRangeProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_folding_ranges(&self, request:Request<ProvideFoldingRangesRequest>) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
+		Provider::ProvideFoldingRanges(self, request.into_inner()).await
+	}
+
+	async fn register_selection_range_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterSelectionRangeProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_selection_ranges(&self, request:Request<ProvideSelectionRangesRequest>) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
+		Provider::ProvideSelectionRanges(self, request.into_inner()).await
+	}
+
+	async fn register_semantic_tokens_provider(&self, request:Request<RegisterSemanticTokensProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterSemanticTokensProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_semantic_tokens_full(&self, request:Request<ProvideSemanticTokensRequest>) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
+		Provider::ProvideSemanticTokensFull(self, request.into_inner()).await
+	}
+
+	async fn register_inlay_hints_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterInlayHintsProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_inlay_hints(&self, request:Request<ProvideInlayHintsRequest>) -> Result<Response<ProvideInlayHintsResponse>, Status> {
+		Provider::ProvideInlayHints(self, request.into_inner()).await
+	}
+
+	async fn register_type_hierarchy_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterTypeHierarchyProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_type_hierarchy_supertypes(&self, request:Request<ProvideTypeHierarchyRequest>) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+		Provider::ProvideTypeHierarchySupertypes(self, request.into_inner()).await
+	}
+
+	async fn provide_type_hierarchy_subtypes(&self, request:Request<ProvideTypeHierarchyRequest>) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+		Provider::ProvideTypeHierarchySubtypes(self, request.into_inner()).await
+	}
+
+	async fn register_call_hierarchy_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterCallHierarchyProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_call_hierarchy_incoming_calls(&self, request:Request<ProvideCallHierarchyRequest>) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
+		Provider::ProvideCallHierarchyIncomingCalls(self, request.into_inner()).await
+	}
+
+	async fn provide_call_hierarchy_outgoing_calls(&self, request:Request<ProvideCallHierarchyRequest>) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
+		Provider::ProvideCallHierarchyOutgoingCalls(self, request.into_inner()).await
+	}
+
+	async fn register_linked_editing_range_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+		Provider::RegisterLinkedEditingRangeProvider(self, request.into_inner()).await
+	}
+
+	async fn provide_linked_editing_ranges(&self, request:Request<ProvideLinkedEditingRangesRequest>) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
+		Provider::ProvideLinkedEditingRanges(self, request.into_inner()).await
+	}
+
+	async fn show_quick_pick(&self, request:Request<ShowQuickPickRequest>) -> Result<Response<ShowQuickPickResponse>, Status> {
+		Window::ShowQuickPick(self, request.into_inner()).await
+	}
+
+	async fn show_input_box(&self, request:Request<ShowInputBoxRequest>) -> Result<Response<ShowInputBoxResponse>, Status> {
+		Window::ShowInputBox(self, request.into_inner()).await
+	}
+
+	async fn show_progress(&self, request:Request<ShowProgressRequest>) -> Result<Response<ShowProgressResponse>, Status> {
+		Window::ShowProgress(self, request.into_inner()).await
+	}
+
+	async fn report_progress(&self, request:Request<ReportProgressRequest>) -> Result<Response<Empty>, Status> {
+		Window::ReportProgress(self, request.into_inner()).await
+	}
+
+	async fn open_external(&self, request:Request<OpenExternalRequest>) -> Result<Response<Empty>, Status> {
+		Window::OpenExternal(self, request.into_inner()).await
+	}
+
+	async fn create_output_channel(&self, request:Request<CreateOutputChannelRequest>) -> Result<Response<CreateOutputChannelResponse>, Status> {
+		Output::CreateOutputChannel(self, request.into_inner()).await
+	}
+
+	async fn append_output(&self, request:Request<AppendOutputRequest>) -> Result<Response<Empty>, Status> {
+		Output::AppendOutput(self, request.into_inner()).await
+	}
+
+	async fn clear_output(&self, request:Request<ClearOutputRequest>) -> Result<Response<Empty>, Status> {
+		Output::ClearOutput(self, request.into_inner()).await
+	}
+
+	async fn show_output(&self, request:Request<ShowOutputRequest>) -> Result<Response<Empty>, Status> {
+		Output::ShowOutput(self, request.into_inner()).await
+	}
+
+	async fn dispose_output(&self, request:Request<DisposeOutputRequest>) -> Result<Response<Empty>, Status> {
+		Output::DisposeOutput(self, request.into_inner()).await
+	}
+
+	async fn register_task_provider(&self, request:Request<RegisterTaskProviderRequest>) -> Result<Response<Empty>, Status> {
+		Task::RegisterTaskProvider(self, request.into_inner()).await
+	}
+
+	async fn execute_task(&self, request:Request<ExecuteTaskRequest>) -> Result<Response<ExecuteTaskResponse>, Status> {
+		Task::ExecuteTask(self, request.into_inner()).await
+	}
+
+	async fn terminate_task(&self, request:Request<TerminateTaskRequest>) -> Result<Response<Empty>, Status> {
+		Task::TerminateTask(self, request.into_inner()).await
+	}
+
+	async fn get_authentication_session(&self, request:Request<GetAuthenticationSessionRequest>) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
+		Auth::GetAuthenticationSession(self, request.into_inner()).await
+	}
+
+	async fn register_authentication_provider(&self, request:Request<RegisterAuthenticationProviderRequest>) -> Result<Response<Empty>, Status> {
+		Auth::RegisterAuthenticationProvider(self, request.into_inner()).await
+	}
+
+	async fn get_extension(&self, request:Request<GetExtensionRequest>) -> Result<Response<GetExtensionResponse>, Status> {
+		Extension::GetExtension(self, request.into_inner()).await
+	}
+
+	async fn get_all_extensions(&self, request:Request<Empty>) -> Result<Response<GetAllExtensionsResponse>, Status> {
+		Extension::GetAllExtensions(self, request.into_inner()).await
+	}
+
+	async fn get_configuration(&self, request:Request<GetConfigurationRequest>) -> Result<Response<GetConfigurationResponse>, Status> {
+		Extension::GetConfiguration(self, request.into_inner()).await
 	}
 }
