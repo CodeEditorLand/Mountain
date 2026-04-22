@@ -145,7 +145,7 @@ fn ResolveLogDirectory() -> PathBuf {
 /// builds, because VS Code's file service writes `window1/output/*.log`
 /// into the directory that handler returns - if DevLog and VS Code use
 /// different timezones, `Mountain.dev.log` and the `window1/` subtree
-/// land in two sibling directories 2–3 hours apart, which makes every
+/// land in two sibling directories 2-3 hours apart, which makes every
 /// post-mortem investigation start with "which folder has the real
 /// log?". Picking `chrono::Local::now()` matches the VS Code convention
 /// (Tauri's tauri-plugin-log also writes local-time `YYYYMMDDTHHMMSS`).

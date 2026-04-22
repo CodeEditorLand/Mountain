@@ -66,7 +66,22 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
-#[tauri::command]
+/// Internal dispatcher for the single front-end Tauri command
+/// `MountainIPCInvoke` (registered in `Binary/Main/Entry.rs::invoke_handler!`,
+/// implemented in `Binary/IPC/InvokeCommand.rs`). The outer Tauri command
+/// receives `(method: String, params: Value)`, unwraps `params` into a
+/// `Vec<Value>`, then delegates here.
+///
+/// This function is **not** a Tauri command itself - removing the previously
+/// present `#[tauri::command]` attribute avoids the false impression that
+/// `mountain_ipc_invoke` is reachable from the webview under its snake-case
+/// name. All front-end callers (Wind, Sky, Output) must `invoke(
+/// "MountainIPCInvoke", { method, params })` through `InvokeCommand::
+/// MountainIPCInvoke`; this inner function is pure Rust-side plumbing.
+///
+/// The local parameter names (`command` / `args`) are preserved for diff
+/// minimality; the frontend-facing contract (`method` / `params`) lives
+/// entirely in `InvokeCommand.rs`.
 pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<Value>) -> Result<Value, String> {
 	let OTLPStart = crate::IPC::DevLog::NowNano();
 	// Silence the per-call invoke log for high-frequency methods that are

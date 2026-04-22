@@ -588,7 +588,7 @@ pub async fn handle_workspaces_get_name(runtime:Arc<ApplicationRunTime>) -> Resu
 // Lifecycle handlers
 // ============================================================================
 
-/// Return the current application lifecycle phase (1–4).
+/// Return the current application lifecycle phase (1-4).
 pub async fn handle_lifecycle_get_phase(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Phase = runtime.Environment.ApplicationState.Feature.Lifecycle.GetPhase();
 	Ok(json!(Phase))

@@ -104,7 +104,7 @@ frontend and the `Cocoon` extension host.
 | **Declarative Logic**                  | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` - composable, testable, and robust.                                  | `RunTime/*`, `Track/EffectCreation.rs`, `Common`  |
 | **Centralized State**                  | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application.                      | `ApplicationState/*`                              |
 | **Secure & Performant IPC**            | Use `gRPC` for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                               | `Vine/*`                                          |
-| **UI–Backend Decoupling**               | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                                  | `Binary.rs` (invoke handler), `Command/*`         |
+| **UI-Backend Decoupling**               | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                                  | `Binary.rs` (invoke handler), `Command/*`         |
 
 ---
 

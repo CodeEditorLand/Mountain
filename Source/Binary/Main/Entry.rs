@@ -251,6 +251,13 @@ pub fn Fn() {
 
 	Runtime.block_on(async {
 		// ---------------------------------------------------------------------
+		// [Boot] [PostHog] Initialize telemetry client first so any
+		// error captured during the rest of boot lands in the project.
+		// No-op in release builds or when LAND_POSTHOG_MOUNTAIN_ENABLED=false.
+		// ---------------------------------------------------------------------
+		crate::Binary::Build::PostHogPlugin::Initialize().await;
+
+		// ---------------------------------------------------------------------
 		// [Boot] [Args] CLI parsing (using CliParse module)
 		// ---------------------------------------------------------------------
 		let _WorkspaceConfigurationPath = CliParseFn();
