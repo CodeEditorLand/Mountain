@@ -119,6 +119,12 @@ pub mod WindServiceAdapters;
 /// available.
 pub mod DevLog;
 
+/// Shared `UriComponents` emitter. Every handler that returns a URI to the
+/// renderer must route through this module so the `$mid: 1` marshalling
+/// marker is never forgotten (without it VS Code's IPC reviver skips the
+/// field and `uri.with is not a function` cascades through the sidebar).
+pub mod UriComponents;
+
 /// Legacy Wind Service Handlers.
 pub mod WindServiceHandlers;
 
