@@ -140,10 +140,28 @@ pub async fn handle_extensions_is_active(Runtime:Arc<ApplicationRunTime>, Args:V
 //     the sidebar,
 //   - logs one summary line under the `extensions` tag.
 
-/// `~/.land/extensions` - matches the user-scope scan path in
-/// `Binary/Extension/ScanPathConfigure.rs` so VSIX-installed extensions
-/// appear on the next Mountain boot without a separate sync step.
+/// User-scope install destination for VSIX unpacks. Matches the user-scope
+/// scan path in `Binary/Extension/ScanPathConfigure.rs` so VSIX-installed
+/// extensions are discovered on the next Mountain boot without a sync step.
+///
+/// Atom V1: honours `LAND_USER_EXTENSIONS_DIR` (from `.env.Land.Extensions`).
+/// Resolution order:
+///   1. `$LAND_USER_EXTENSIONS_DIR` — explicit per-operator override.
+///      Leading `~/` expands against `$HOME`.
+///   2. `$HOME/.land/extensions` — VS Code-style user-scope default.
+///   3. `./extensions` — fallback when `$HOME` is unavailable (container,
+///      restricted environment). `fs::create_dir_all` runs on install so
+///      this works even if the cwd is read-only at scan time.
 fn UserExtensionDirectory() -> PathBuf {
+	if let Ok(Override) = std::env::var("LAND_USER_EXTENSIONS_DIR") {
+		if let Some(Stripped) = Override.strip_prefix("~/") {
+			if let Some(HomeDirectory) = dirs::home_dir() {
+				return HomeDirectory.join(Stripped);
+			}
+		}
+		return PathBuf::from(Override);
+	}
+
 	if let Some(HomeDirectory) = dirs::home_dir() {
 		return HomeDirectory.join(".land/extensions");
 	}
