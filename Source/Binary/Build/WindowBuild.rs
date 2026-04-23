@@ -48,7 +48,19 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 			.expect("FATAL: Failed to parse initial webview URL"),
 	);
 
-	// Configure window builder with base settings
+	// Configure window builder with base settings.
+	//
+	// `visible(false)` is the hidden-until-ready pattern. Tauri's default
+	// is to show the window the instant it's built, which paints the native
+	// chrome + Base.astro's `#1e1e1e` inline background + VS Code theme CSS
+	// + workbench DOM in four separate repaints over the first ~200 ms -
+	// observed as the "purple/dark flash" and panel-pop flicker.
+	//
+	// Mountain shows the window explicitly when the frontend's
+	// `lifecycle:advancePhase(3)` (Restored) arrives, which fires after
+	// `.monaco-workbench` is attached and the first frame is ready. A 3 s
+	// safety timer in `AppLifecycle` guarantees the window appears even if
+	// Sky crashes before signalling phase 3.
 	let mut WindowBuilder = WebviewWindowBuilder::new(Application, "main", WindowUrl)
 		.use_https_scheme(false)
 		.initialization_script("")
@@ -57,7 +69,8 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 		.title("Mountain")
 		.resizable(true)
 		.inner_size(1400.0, 900.0)
-		.shadow(true);
+		.shadow(true)
+		.visible(false);
 
 	#[cfg(target_os = "macos")]
 	{

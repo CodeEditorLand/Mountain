@@ -300,6 +300,38 @@ impl CommandExecutor for MountainEnvironment {
 					return Ok(Value::Null);
 				}
 
+				// Workbench-internal commands that stock VS Code registers on
+				// the renderer side via `CommandsRegistry.registerCommand(…)`
+				// but that Land doesn't carry because the backing service
+				// doesn't exist:
+				//
+				// - `getTelemetrySenderObject` - `vs/platform/telemetry/**`
+				//   registers this so extensions can fetch a `TelemetrySender`
+				//   via `commands.executeCommand`. Land has no telemetry
+				//   backend, so returning null (no sender) matches the
+				//   "telemetry disabled" code path every extension already
+				//   defensively handles.
+				// - `testing.clearTestResults` - registered by
+				//   `vs/workbench/contrib/testing/browser/testExplorerActions.ts`.
+				//   No test-explorer UI in Land today; null is the correct
+				//   "nothing to clear" shape.
+				//
+				// Extensions that look these up defensively try/catch. The
+				// only observable effect of the prior error return was the
+				// red `error:` log line. Treat as silent no-ops until Land
+				// grows the corresponding services.
+				if matches!(
+					CommandIdentifier.as_str(),
+					"getTelemetrySenderObject" | "testing.clearTestResults"
+				) {
+					dev_log!(
+						"commands",
+						"[CommandProvider] Workbench-internal command '{}' not registered; treating as no-op (Land has no backing service).",
+						CommandIdentifier
+					);
+					return Ok(Value::Null);
+				}
+
 				dev_log!(
 					"commands",
 					"error: [CommandProvider] Command '{}' not found in registry.",

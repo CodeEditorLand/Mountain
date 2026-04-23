@@ -317,19 +317,33 @@ async fn LaunchAndManageCocoonSideCar(
 	// identity, and port configuration. Without this forwarding, the
 	// whitelist above drops them and Cocoon falls back to defaults,
 	// defeating the single-source-of-truth design.
+	//
+	// `LAND_*` prefix: covers `.env.Land.PostHog` (LAND_POSTHOG_*),
+	// `.env.Land.Node` (LAND_NODE_*), `.env.Land.Extensions`
+	// (LAND_USER_EXTENSIONS_DIR, LAND_EXTRA_EXTENSIONS_DIR,
+	// LAND_DEV_EXTENSIONS_DIR, LAND_BUILTIN_EXTENSIONS_DIR,
+	// LAND_AUTO_INSTALL_*, LAND_DISABLE_EXTENSIONS,
+	// LAND_SKIP_BUILTIN_EXTENSIONS), and the kernel / mountain-only
+	// gating flags (LAND_SPAWN_COCOON, LAND_ENABLE_WIND). Previously
+	// only Product/Tier/Network were forwarded and Cocoon's PostHog
+	// bridge fell back to the empty-string default - no telemetry
+	// reached the EU project even when `.env.Land.PostHog` was present.
 	for (Key, Value) in std::env::vars() {
-		if Key.starts_with("Product") || Key.starts_with("Tier") || Key.starts_with("Network") {
+		if Key.starts_with("Product")
+			|| Key.starts_with("Tier")
+			|| Key.starts_with("Network")
+			|| Key.starts_with("LAND_")
+		{
 			EnvironmentVariables.insert(Key, Value);
 		}
 	}
 
-	// Atom I11: forward NODE_ENV / LAND_DEV_LOG / TAURI_ENV_DEBUG so
-	// Cocoon's Bootstrap.ts stage2_configuration resolves real values.
-	// Without this, env_clear() above leaves Cocoon seeing NodeEnv=
-	// "production" / DevLog=<unset> / TauriDebug=false even on the
-	// debug-electron profile - silently disabling dev-only logging,
-	// stricter validation, and debug-only diagnostics in Cocoon.
-	for Key in ["NODE_ENV", "LAND_DEV_LOG", "TAURI_ENV_DEBUG"] {
+	// Atom I11: forward NODE_ENV / TAURI_ENV_DEBUG (LAND_DEV_LOG is
+	// already covered by the `LAND_` prefix sweep above). Without this,
+	// env_clear() leaves Cocoon seeing NodeEnv="production" /
+	// TauriDebug=false even on the debug-electron profile - silently
+	// disabling dev-only logging and debug-only diagnostics in Cocoon.
+	for Key in ["NODE_ENV", "TAURI_ENV_DEBUG"] {
 		if let Ok(Value) = std::env::var(Key) {
 			EnvironmentVariables.insert(Key.to_string(), Value);
 		}

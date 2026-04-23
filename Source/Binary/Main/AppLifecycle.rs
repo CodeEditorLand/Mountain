@@ -451,6 +451,30 @@ pub fn AppLifecycleSetup(
 			}
 		});
 
+		// Hidden-until-ready safety timer: `WindowBuild.rs` creates the main
+		// window with `.visible(false)` and the `lifecycle:advancePhase(3)`
+		// handler reveals it once Sky reports the workbench DOM is attached.
+		// If Sky crashes before phase 3 reaches Mountain, the window would
+		// stay invisible forever. Force-reveal after 3 s so the user always
+		// sees SOMETHING even on a completely broken Sky. 3 s matches the
+		// observed p95 of `[Lifecycle] [Phase] Advance Ready` on a cold
+		// M-series boot, so the timer rarely fires on a healthy path.
+		let AppHandleForEmergencyShow = PostSetupAppHandle.clone();
+		tauri::async_runtime::spawn(async move {
+			tokio::time::sleep(tokio::time::Duration::from_millis(3_000)).await;
+			if let Some(MainWindow) = AppHandleForEmergencyShow.get_webview_window("main") {
+				if let Ok(false) = MainWindow.is_visible() {
+					dev_log!(
+						"lifecycle",
+						"warn: [Lifecycle] [Fallback] main window hidden at +3s; force-revealing to avoid an \
+						 invisible-window lockup (Sky never reached phase 3)"
+					);
+					let _ = MainWindow.show();
+					let _ = MainWindow.set_focus();
+				}
+			}
+		});
+
 		crate::otel_span!("lifecycle:postsetup:complete", PostSetupStart);
 		dev_log!("lifecycle", "[Lifecycle] [PostSetup] Complete. System ready.");
 	});

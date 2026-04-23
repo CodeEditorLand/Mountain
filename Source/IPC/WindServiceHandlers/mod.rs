@@ -722,6 +722,42 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						.Feature
 						.Lifecycle
 						.AdvanceAndBroadcast(NewPhase, &app_handle);
+
+					// Hidden-until-ready: the main window is built with
+					// `.visible(false)` to suppress the four-repaint flash
+					// (native chrome → inline bg → theme CSS → workbench
+					// DOM). Phase 3 = Restored means `.monaco-workbench`
+					// is attached and the first frame is painted; show
+					// the window now so the user's first glimpse is the
+					// finished editor rather than the paint cascade.
+					//
+					// `set_focus()` follows `show()` so keyboard input
+					// routes to the editor immediately on reveal.
+					// Failures are logged but swallowed - if the window
+					// is already visible (phase 3 re-fired from another
+					// consumer) Tauri returns a benign error.
+					if NewPhase >= 3 {
+						if let Some(MainWindow) = app_handle.get_webview_window("main") {
+							if let Ok(false) = MainWindow.is_visible() {
+								if let Err(Error) = MainWindow.show() {
+									dev_log!(
+										"lifecycle",
+										"warn: [Lifecycle] main window show() failed on phase {}: {}",
+										NewPhase,
+										Error
+									);
+								} else {
+									dev_log!(
+										"lifecycle",
+										"[Lifecycle] main window revealed on phase {} (hidden-until-ready)",
+										NewPhase
+									);
+									let _ = MainWindow.set_focus();
+								}
+							}
+						}
+					}
+
 					Ok(json!(runtime.Environment.ApplicationState.Feature.Lifecycle.GetPhase()))
 				},
 

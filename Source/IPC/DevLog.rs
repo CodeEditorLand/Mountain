@@ -114,6 +114,22 @@
 //! | `preload-shim`     | Wind `Preload.ts` globals wiring, VS Code `ipcRenderer` polyfill install|
 //! | `tauri-invoke`     | Per-invoke method + duration (augments `ipc`'s paired invoke/done lines)|
 //! | `bootstrap-stage`  | Cocoon `Effect/Bootstrap.ts` stage timings (start/ok/fail per phase)    |
+//!
+//! ### Batch 4 diagnostic tags
+//!
+//! Added 2026-04-24 alongside the `workspace.fs` tier-split refactor.
+//! Cocoon's `WorkspaceNamespace/FileSystemRoute.ts` now chooses between
+//! Tier A (`node:fs/promises` in-process) and Tier C (Mountain `FileSystem.*`
+//! gRPC) per URI scheme + custom-provider claim. The tag surfaces every
+//! decision so empirical workload profiling confirms the split is paying
+//! off - `grep 'route=native'` / `grep 'route=mountain'` buckets per run.
+//! Emitted from Cocoon stdout, picked up by Mountain's `[DEV:COCOON]`
+//! stdout tail with the standard `[DEV:FS-ROUTE]` prefix.
+//!
+//! | Tag                | Scope                                                                   |
+//! |--------------------|-------------------------------------------------------------------------|
+//! | `fs-route`         | `workspace.fs.*` + `openTextDocument` native-vs-mountain routing        |
+//! | `cmd-route`        | `commands.executeCommand` local-vs-mountain routing                     |
 
 use std::{
 	fs::{File, OpenOptions, create_dir_all},
