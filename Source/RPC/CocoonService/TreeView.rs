@@ -59,6 +59,12 @@ pub async fn GetTreeChildren(
 	req:GetTreeChildrenRequest,
 ) -> Result<Response<GetTreeChildrenResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] get_tree_children: view={}", req.view_id);
+	dev_log!(
+		"tree-view",
+		"[TreeView] get-children view={} parent_handle={} - STUB returns empty (Mountain→Cocoon round-trip not wired)",
+		req.view_id,
+		req.tree_item_handle
+	);
 
 	// Tree children are fetched by forwarding to Cocoon via the generic RPC path.
 	// The extension registers a TreeDataProvider; when Sky needs children,

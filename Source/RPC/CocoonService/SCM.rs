@@ -82,6 +82,16 @@ pub async fn UpdateScmGroup(Service:&CocoonServiceImpl, req:UpdateScmGroupReques
 
 pub async fn GitExec(Service:&CocoonServiceImpl, req:GitExecRequest) -> Result<Response<GitExecResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] git_exec: {}", req.args.join(" "));
+	dev_log!(
+		"git",
+		"[Git] exec-begin cwd={} args=[{}]",
+		if req.repository_path.is_empty() {
+			"<cwd>".to_string()
+		} else {
+			req.repository_path.clone()
+		},
+		req.args.join(" ")
+	);
 
 	let WorkingDir = if req.repository_path.is_empty() {
 		std::env::current_dir().unwrap_or_default()
@@ -96,6 +106,13 @@ pub async fn GitExec(Service:&CocoonServiceImpl, req:GitExecRequest) -> Result<R
 		.await
 		.map_err(|Error| {
 			dev_log!("cocoon", "error: [CocoonService] git_exec failed to spawn: {}", Error);
+			dev_log!(
+				"git",
+				"[Git] exec-spawn-fail cwd={:?} args=[{}] error={}",
+				WorkingDir,
+				req.args.join(" "),
+				Error
+			);
 			Status::internal(format!("git_exec: failed to spawn git: {}", Error))
 		})?;
 
@@ -103,6 +120,14 @@ pub async fn GitExec(Service:&CocoonServiceImpl, req:GitExecRequest) -> Result<R
 	dev_log!(
 		"cocoon",
 		"[CocoonService] git_exec exit={} stdout={} bytes stderr={} bytes",
+		ExitCode,
+		Output.stdout.len(),
+		Output.stderr.len()
+	);
+	dev_log!(
+		"git",
+		"[Git] exec-done args=[{}] exit={} stdout={} stderr={}",
+		req.args.join(" "),
 		ExitCode,
 		Output.stdout.len(),
 		Output.stderr.len()

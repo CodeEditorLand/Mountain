@@ -64,6 +64,13 @@ pub fn CreateEffect<R:Runtime>(
 							DispatchAt.elapsed().as_millis(),
 							RegisteredNs
 						);
+						dev_log!(
+							"tree-view",
+							"[TreeView] register view={} result={} elapsed={}ms",
+							ViewIdForLog,
+							if Result.is_ok() { "ok" } else { "err" },
+							DispatchAt.elapsed().as_millis()
+						);
 
 						// Notify Wind/Sky that a data provider now exists for this
 						// view, so the renderer can set `treeView.dataProvider` on
@@ -86,6 +93,20 @@ pub fn CreateEffect<R:Runtime>(
 									SkyEvent::TreeViewCreate.AsStr(),
 									ViewIdForLog,
 									Error
+								);
+								dev_log!(
+									"tree-view",
+									"[TreeView] emit-fail channel={} view={} error={}",
+									SkyEvent::TreeViewCreate.AsStr(),
+									ViewIdForLog,
+									Error
+								);
+							} else {
+								dev_log!(
+									"tree-view",
+									"[TreeView] emit-ok channel={} view={}",
+									SkyEvent::TreeViewCreate.AsStr(),
+									ViewIdForLog
 								);
 							}
 						}

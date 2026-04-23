@@ -52,3 +52,4 @@ pub mod CacheStatsCommand;
 pub mod ProcessCommand;
 pub mod HealthCommand;
 pub mod WorkspaceFolderCommand;
+pub mod RenderDevLogCommand;

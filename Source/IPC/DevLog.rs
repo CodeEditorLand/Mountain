@@ -73,6 +73,21 @@
 //! | `cocoon`      | Cocoon sidecar: spawn, health, handshake             |
 //! | `bootstrap`   | Effect-TS bootstrap stages                           |
 //! | `preload`     | Preload: globals, polyfills, ipcRenderer             |
+//!
+//! ### Batch 1 diagnostic tags (Row 1-3 fix surfaces)
+//!
+//! Narrow tags added to isolate the architectural gaps surfaced by the
+//! analysis table. Enable selectively with e.g.
+//! `LAND_DEV_LOG=notif-drop,git,tree-view` to filter to just the
+//! subsystem under investigation.
+//!
+//! | Tag                 | Scope                                                                 |
+//! |---------------------|-----------------------------------------------------------------------|
+//! | `notif-drop`        | Notifications that hit the `_ => {}` default arm (dropped silently)   |
+//! | `provider-register` | Accepted `register_*_provider` notifications + handle + extension id  |
+//! | `channel-stub`      | Wind/Output `TauriMainProcessService.call` stub-hit vs route vs miss  |
+//! | `git`               | `localGit` channel, `GitExec` RPC, SCM provider group updates         |
+//! | `tree-view`         | `tree.register`, `GetTreeChildren`, `sky://tree-view/create` emit     |
 
 use std::{
 	fs::{File, OpenOptions, create_dir_all},

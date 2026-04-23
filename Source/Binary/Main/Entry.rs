@@ -553,6 +553,7 @@ pub fn Fn() {
 				crate::Binary::IPC::HealthCommand::cocoon_search_service_health,
 				crate::Binary::IPC::HealthCommand::cocoon_debug_service_health,
 				crate::Binary::IPC::HealthCommand::shared_process_service_health,
+				crate::Binary::IPC::RenderDevLogCommand::RenderDevLog,
 			])
 			.build(tauri::generate_context!())
 			.expect("FATAL: Error while building Mountain Tauri application")

@@ -838,6 +838,15 @@ impl MountainService for MountainVinegRPCService {
 					Handle,
 					Selector
 				);
+				dev_log!(
+					"provider-register",
+					"[ProviderRegister] accepted method={} type={} handle={} lang={} ext={}",
+					MethodName,
+					ProviderTypeName,
+					Handle,
+					Selector,
+					ExtId
+				);
 				// Provider registration happens in CocoonService.RegisterProvider via the typed
 				// RPC path. This notification path is a fallback for providers registered
 				// via the vscode API shim.
@@ -872,6 +881,22 @@ impl MountainService for MountainVinegRPCService {
 			},
 			_ => {
 				dev_log!("grpc", "[MountainVinegRPCService] Cocoon notification: {}", MethodName);
+				// No typed match arm exists for this notification - it hits
+				// the default path and becomes a `cocoon:<method>` Tauri
+				// event that Wind may or may not listen for. The
+				// `notif-drop` tag surfaces every fall-through so we can
+				// tell at a glance which notifications Cocoon emits that
+				// Mountain has no first-class handler for (register_*
+				// provider variants beyond the seven handled above,
+				// register_debug_adapter, register_task_provider,
+				// register_uri_handler, register_file_system_provider, …).
+				dev_log!(
+					"notif-drop",
+					"[NotifDrop] method={} payload_bytes={} (falls through to cocoon:{} event)",
+					MethodName,
+					NotificationData.parameter.len(),
+					MethodName
+				);
 				// Forward all unknown notifications as Tauri events so Wind
 				// can subscribe to any Cocoon-originated event.
 				let EventName = format!("cocoon:{}", MethodName);
