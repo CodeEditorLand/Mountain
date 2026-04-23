@@ -86,6 +86,21 @@ pub struct MountainVinegRPCService {
 }
 
 impl MountainVinegRPCService {
+	/// Accessor for Tauri `AppHandle` - used by the per-wire-method atoms
+	/// in `Vine::Server::Notification::*` that need to emit
+	/// `sky://` / `cocoon:*` events downstream. Kept as a thin read so the
+	/// struct's fields can stay private; atoms should never mutate the
+	/// handle, only `emit` through it.
+	pub fn ApplicationHandle(&self) -> &AppHandle { &self.ApplicationHandle }
+
+	/// Accessor for the shared `ApplicationRunTime`. Notification atoms
+	/// reach `Environment.ApplicationState.*` (provider registry, extension
+	/// registry, scheduler) through this. Clone from `Arc` when the atom
+	/// needs to keep it across an `.await` boundary.
+	pub fn RunTime(&self) -> &Arc<ApplicationRunTime> { &self.RunTime }
+}
+
+impl MountainVinegRPCService {
 	/// Creates a new instance of the Mountain gRPC service.
 	///
 	/// # Parameters
@@ -814,6 +829,111 @@ impl MountainService for MountainVinegRPCService {
 						dev_log!("grpc", "[MountainVinegRPCService] Cocoon unregistered command: {}", CommandId);
 					}
 				}
+			},
+
+			// Batch 8: provider unregister atoms. Each wire method lives in
+			// its own `Notification/<Name>.rs` atom - the arm is a pure
+			// delegation so adding a variant stays a one-line change here
+			// plus one new file.
+			"unregister_authentication_provider" => {
+				super::Notification::UnregisterAuthenticationProvider::UnregisterAuthenticationProvider(self, &Parameter).await;
+			},
+			"unregister_debug_adapter" => {
+				super::Notification::UnregisterDebugAdapter::UnregisterDebugAdapter(self, &Parameter).await;
+			},
+			"unregister_file_system_provider" => {
+				super::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(self, &Parameter).await;
+			},
+			"unregister_scm_provider" => {
+				super::Notification::UnregisterScmProvider::UnregisterScmProvider(self, &Parameter).await;
+			},
+			"unregister_task_provider" => {
+				super::Notification::UnregisterTaskProvider::UnregisterTaskProvider(self, &Parameter).await;
+			},
+			"unregister_uri_handler" => {
+				super::Notification::UnregisterUriHandler::UnregisterUriHandler(self, &Parameter).await;
+			},
+			"update_scm_group" => {
+				super::Notification::UpdateScmGroup::UpdateScmGroup(self, &Parameter).await;
+			},
+
+			// Batch 11: progress lifecycle name alignment.
+			"progress.update" => {
+				super::Notification::ProgressUpdate::ProgressUpdate(self, &Parameter).await;
+			},
+			"progress.complete" => {
+				super::Notification::ProgressComplete::ProgressComplete(self, &Parameter).await;
+			},
+
+			// Batch 10: status-bar text-only fast path + item disposal.
+			"setStatusBarText" => {
+				super::Notification::SetStatusBarText::SetStatusBarText(self, &Parameter).await;
+			},
+			"disposeStatusBarItem" => {
+				super::Notification::DisposeStatusBarItem::DisposeStatusBarItem(self, &Parameter).await;
+			},
+
+			// Batch 9: output channel lifecycle. Two parallel wire names
+			// (`output.*` via `MountainClient.sendNotification` and
+			// `outputChannel.*` via `SendToMountain`) both forward to the
+			// same `sky://output/*` channels until Cocoon consolidates.
+			"output.create" => {
+				super::Notification::OutputCreate::OutputCreate(self, &Parameter).await;
+			},
+			"output.append" => {
+				super::Notification::OutputAppend::OutputAppend(self, &Parameter).await;
+			},
+			"output.appendLine" => {
+				super::Notification::OutputAppendLine::OutputAppendLine(self, &Parameter).await;
+			},
+			"output.clear" => {
+				super::Notification::OutputClear::OutputClear(self, &Parameter).await;
+			},
+			"output.show" => {
+				super::Notification::OutputShow::OutputShow(self, &Parameter).await;
+			},
+			"output.dispose" => {
+				super::Notification::OutputDispose::OutputDispose(self, &Parameter).await;
+			},
+			"output.replace" => {
+				super::Notification::OutputReplace::OutputReplace(self, &Parameter).await;
+			},
+			"outputChannel.create" => {
+				super::Notification::OutputChannelCreate::OutputChannelCreate(self, &Parameter).await;
+			},
+			"outputChannel.append" => {
+				super::Notification::OutputChannelAppend::OutputChannelAppend(self, &Parameter).await;
+			},
+			"outputChannel.clear" => {
+				super::Notification::OutputChannelClear::OutputChannelClear(self, &Parameter).await;
+			},
+			"outputChannel.show" => {
+				super::Notification::OutputChannelShow::OutputChannelShow(self, &Parameter).await;
+			},
+			"outputChannel.hide" => {
+				super::Notification::OutputChannelHide::OutputChannelHide(self, &Parameter).await;
+			},
+			"outputChannel.dispose" => {
+				super::Notification::OutputChannelDispose::OutputChannelDispose(self, &Parameter).await;
+			},
+
+			// Batch 13: webview reverse-channel (Mountain → renderer).
+			"webview.postMessage" => {
+				super::Notification::WebviewPostMessage::WebviewPostMessage(self, &Parameter).await;
+			},
+			"webview.dispose" => {
+				super::Notification::WebviewDispose::WebviewDispose(self, &Parameter).await;
+			},
+
+			// Batch 14: grammar config, external-URI open, security alert.
+			"set_language_configuration" => {
+				super::Notification::SetLanguageConfiguration::SetLanguageConfiguration(self, &Parameter).await;
+			},
+			"openExternal" => {
+				super::Notification::OpenExternal::OpenExternal(self, &Parameter).await;
+			},
+			"security.incident" => {
+				super::Notification::SecurityIncident::SecurityIncident(self, &Parameter).await;
 			},
 
 			// Cocoon → Mountain: provider registration from extensions.

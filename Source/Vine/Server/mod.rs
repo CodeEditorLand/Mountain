@@ -84,3 +84,10 @@
 pub mod Initialize;
 
 pub mod MountainVinegRPCService;
+
+/// Cocoon → Mountain notification atoms. One handler per file so the
+/// dispatcher in `MountainVinegRPCService::send_cocoon_notification`
+/// stays a thin match; each wire method lives at
+/// `Vine::Server::Notification::<Atom>::<Atom>` for grep-friendly
+/// navigation. See `Notification/mod.rs` for the contract.
+pub mod Notification;

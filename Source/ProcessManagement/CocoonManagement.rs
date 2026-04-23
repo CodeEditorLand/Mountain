@@ -75,6 +75,7 @@ use super::{InitializationData, NodeResolver};
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	IPC::Common::HealthStatus::{HealthIssue, HealthMonitor},
+	ProcessManagement::ExtractDevTag::ExtractDevTag,
 	Vine,
 	dev_log,
 };
@@ -360,14 +361,38 @@ async fn LaunchAndManageCocoonSideCar(
 	dev_log!("cocoon", "[CocoonManagement] Cocoon process spawned [PID: {}]", ProcessId);
 	crate::dev_log!("cocoon", "spawned PID={}", ProcessId);
 
-	// Capture stdout for trace logging
+	// Capture stdout for trace logging. Two disposition classes:
+	//
+	// 1. Tagged lines produced by `Cocoon/Source/Services/DevLog.ts::
+	//    CocoonDevLog(Tag, Message)` arrive prefixed with
+	//    `[DEV:<UPPER_TAG>] <body>`. Re-emit under the matching Mountain
+	//    tag (lowercased) so `LAND_DEV_LOG=bootstrap-stage` on Mountain's
+	//    side surfaces Cocoon's `bootstrap-stage` lines without forcing
+	//    the user to also enable the broad `cocoon` tag.
+	//
+	// 2. Plain stdout (console.log, uncaught trace, etc.) stays under
+	//    the `cocoon` tag so it's silent unless explicitly requested.
 	if let Some(stdout) = ChildProcess.stdout.take() {
 		tokio::spawn(async move {
 			let Reader = BufReader::new(stdout);
 			let mut Lines = Reader.lines();
 
 			while let Ok(Some(Line)) = Lines.next_line().await {
-				dev_log!("cocoon", "[Cocoon stdout] {}", Line);
+				if let Some(ForwardedTag) = ExtractDevTag(&Line) {
+					// dev_log! macro requires a static string, so match on
+					// the known tag set and fall through to raw 'cocoon'
+					// for anything else. Keep the arms in sync with
+					// `CocoonDevLog` call sites.
+					match ForwardedTag.as_str() {
+						"bootstrap-stage" => dev_log!("bootstrap-stage", "[Cocoon stdout] {}", Line),
+						"ext-activate" => dev_log!("ext-activate", "[Cocoon stdout] {}", Line),
+						"config-prime" => dev_log!("config-prime", "[Cocoon stdout] {}", Line),
+						"breaker" => dev_log!("breaker", "[Cocoon stdout] {}", Line),
+						_ => dev_log!("cocoon", "[Cocoon stdout] {}", Line),
+					}
+				} else {
+					dev_log!("cocoon", "[Cocoon stdout] {}", Line);
+				}
 			}
 		});
 	}
