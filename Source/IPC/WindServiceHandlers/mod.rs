@@ -22,16 +22,23 @@ pub mod Utilities;
 
 // Local `use X::*;` (NOT `pub use`): brings the domain handler names into
 // this file's scope so the dispatch match arms below can call
-// `handle_foo(...)` unqualified. Per CLAUDE.md the `pub use` form is
-// banned because it forces every downstream file into the flattened
-// namespace. Local `use` is scoped to this file only; external callers
+// `handle_foo(...)` unqualified. Local `use` is scoped to this file only; external callers
 // must spell the full path (`WindServiceHandlers::Utilities::foo`).
 use Commands::*;
 use Configuration::*;
 use Extensions::*;
 use FileSystem::*;
 use Model::*;
-use NativeHost::*;
+use NativeHost::FindFreePort::*;
+use NativeHost::GetColorScheme::*;
+use NativeHost::IsFullscreen::*;
+use NativeHost::IsMaximized::*;
+use NativeHost::OSProperties::*;
+use NativeHost::OSStatistics::*;
+use NativeHost::OpenExternal::*;
+use NativeHost::PickFolder::*;
+use NativeHost::ShowItemInFolder::*;
+use NativeHost::ShowOpenDialog::*;
 use Navigation::*;
 use Output::*;
 use Search::*;

@@ -1,0 +1,17 @@
+#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+
+//! Wire method: `nativeHost:isFullscreen`.
+//! Returns true if the `main` webview window is fullscreen. Missing window
+//! returns false - this is a read-only probe and should not error.
+
+use serde_json::{Value, json};
+use tauri::{AppHandle, Manager};
+
+pub async fn handle_native_is_fullscreen(app_handle:AppHandle) -> Result<Value, String> {
+	let Window = app_handle.get_webview_window("main");
+	if let Some(W) = Window {
+		Ok(json!(W.is_fullscreen().unwrap_or(false)))
+	} else {
+		Ok(json!(false))
+	}
+}

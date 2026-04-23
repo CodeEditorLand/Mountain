@@ -14,10 +14,6 @@
 //!   - [`Workspace`]      - workspace folder lifecycle
 //!   - [`Lifecycle`]      - app-phase get/wait/shutdown
 //!   - [`WorkingCopy`]    - dirty-state tracking
-//!
-//! Callers spell the full path: `UI::Theme::handle_themes_get_active(...)`.
-//! No `pub use` re-exports - per CLAUDE.md, the reverse-hierarchical path
-//! is load-bearing: it tells the reader which file owns the handler.
 
 pub mod Decoration;
 pub mod Keybinding;
