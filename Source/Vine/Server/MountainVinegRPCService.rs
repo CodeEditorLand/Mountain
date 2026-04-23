@@ -828,47 +828,66 @@ impl MountainService for MountainVinegRPCService {
 			// Wire-method naming: the shim uses snake_case with two trailing
 			// shapes - plain verbs (`register_rename`) and `_provider` suffix
 			// (`register_hover_provider`). The map below strips both.
-			"register_hover_provider"
-			| "register_completion_item_provider"
-			| "register_definition_provider"
-			| "register_reference_provider"
+			// Full list mirrors Cocoon's `vscode` API shim wire strings - the
+			// authoritative set grep'd from `Cocoon/Source` is: most providers
+			// carry a `_provider` suffix; a handful (debug_adapter,
+			// uri_handler, external_uri_opener, notebook_serializer,
+			// remote_authority_resolver, resource_label_formatter,
+			// scm_resource_group) do not. Keep both the suffixed and
+			// non-suffixed variants listed explicitly so the OR-match stays
+			// readable at a glance; the strip-logic below normalises either
+			// form into `ProviderTypeName` for the enum lookup.
+			"register_authentication_provider"
+			| "register_call_hierarchy_provider"
 			| "register_code_actions_provider"
-			| "register_document_symbol_provider"
-			| "register_document_formatting_provider"
-			| "register_debug_configuration_provider"
-			| "register_text_document_content_provider"
-			| "register_folding_range"
-			| "register_document_link"
-			| "register_code_lens"
-			| "register_selection_range"
-			| "register_document_range_formatting"
-			| "register_debug_adapter"
-			| "register_rename"
-			| "register_file_system_provider"
-			| "register_uri_handler"
-			| "register_document_paste_edit"
-			| "register_task_provider"
-			| "register_signature_help"
-			| "register_semantic_tokens"
-			| "register_document_highlight"
-			| "register_workspace_symbol"
-			| "register_on_type_formatting"
-			| "register_inlay_hints"
-			| "register_document_drop_edit"
+			| "register_code_lens_provider"
 			| "register_color_provider"
-			| "register_type_hierarchy"
-			| "register_type_definition"
-			| "register_notebook_serializer"
-			| "register_linked_editing_range"
-			| "register_implementation"
-			| "register_terminal_profile"
-			| "register_terminal_link"
-			| "register_inline_values"
-			| "register_inline_completion_item"
-			| "register_file_decoration"
+			| "register_completion_item_provider"
+			| "register_debug_adapter"
+			| "register_debug_configuration_provider"
+			| "register_declaration_provider"
+			| "register_definition_provider"
+			| "register_document_drop_edit_provider"
+			| "register_document_formatting_provider"
+			| "register_document_highlight_provider"
+			| "register_document_link_provider"
+			| "register_document_paste_edit_provider"
+			| "register_document_range_formatting_provider"
+			| "register_document_symbol_provider"
+			| "register_evaluatable_expression_provider"
 			| "register_external_uri_opener"
-			| "register_declaration"
-			| "register_call_hierarchy" => {
+			| "register_file_decoration_provider"
+			| "register_file_system_provider"
+			| "register_folding_range_provider"
+			| "register_hover_provider"
+			| "register_implementation_provider"
+			| "register_inlay_hints_provider"
+			| "register_inline_completion_item_provider"
+			| "register_inline_edit_provider"
+			| "register_inline_values_provider"
+			| "register_linked_editing_range_provider"
+			| "register_mapped_edits_provider"
+			| "register_multi_document_highlight_provider"
+			| "register_notebook_content_provider"
+			| "register_notebook_serializer"
+			| "register_on_type_formatting_provider"
+			| "register_reference_provider"
+			| "register_remote_authority_resolver"
+			| "register_rename_provider"
+			| "register_resource_label_formatter"
+			| "register_scm_provider"
+			| "register_scm_resource_group"
+			| "register_selection_range_provider"
+			| "register_semantic_tokens_provider"
+			| "register_signature_help_provider"
+			| "register_task_provider"
+			| "register_terminal_link_provider"
+			| "register_terminal_profile_provider"
+			| "register_text_document_content_provider"
+			| "register_type_definition_provider"
+			| "register_type_hierarchy_provider"
+			| "register_uri_handler"
+			| "register_workspace_symbol_provider" => {
 				let Handle = Parameter.get("handle").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
 				let Selector = Parameter.get("language_selector").and_then(|s| s.as_str()).unwrap_or("*");
 				let ExtId = Parameter.get("extension_id").and_then(|e| e.as_str()).unwrap_or("");
@@ -898,47 +917,57 @@ impl MountainService for MountainVinegRPCService {
 				);
 				use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType as PT;
 				let ProvType = match ProviderTypeName {
-					"hover" => Some(PT::Hover),
-					"completion_item" => Some(PT::Completion),
-					"definition" => Some(PT::Definition),
-					"reference" => Some(PT::References),
-					"code_actions" => Some(PT::CodeAction),
-					"document_symbol" => Some(PT::DocumentSymbol),
-					"document_formatting" => Some(PT::DocumentFormatting),
-					"debug_configuration" => Some(PT::DebugConfiguration),
-					"text_document_content" => Some(PT::TextDocumentContent),
-					"folding_range" => Some(PT::FoldingRange),
-					"document_link" => Some(PT::DocumentLink),
-					"code_lens" => Some(PT::CodeLens),
-					"selection_range" => Some(PT::SelectionRange),
-					"document_range_formatting" => Some(PT::DocumentRangeFormatting),
-					"debug_adapter" => Some(PT::DebugAdapter),
-					"rename" => Some(PT::Rename),
-					"file_system" => Some(PT::FileSystem),
-					"uri_handler" => Some(PT::UriHandler),
-					"document_paste_edit" => Some(PT::DocumentPasteEdit),
-					"task" => Some(PT::Task),
-					"signature_help" => Some(PT::SignatureHelp),
-					"semantic_tokens" => Some(PT::SemanticTokens),
-					"document_highlight" => Some(PT::DocumentHighlight),
-					"workspace_symbol" => Some(PT::WorkspaceSymbol),
-					"on_type_formatting" => Some(PT::OnTypeFormatting),
-					"inlay_hints" => Some(PT::InlayHint),
-					"document_drop_edit" => Some(PT::DocumentDropEdit),
-					"color" => Some(PT::Color),
-					"type_hierarchy" => Some(PT::TypeHierarchy),
-					"type_definition" => Some(PT::TypeDefinition),
-					"notebook_serializer" => Some(PT::NotebookSerializer),
-					"linked_editing_range" => Some(PT::LinkedEditingRange),
-					"implementation" => Some(PT::Implementation),
-					"terminal_profile" => Some(PT::TerminalProfile),
-					"terminal_link" => Some(PT::TerminalLink),
-					"inline_values" => Some(PT::InlineValues),
-					"inline_completion_item" => Some(PT::InlineCompletion),
-					"file_decoration" => Some(PT::FileDecoration),
-					"external_uri_opener" => Some(PT::ExternalUriOpener),
-					"declaration" => Some(PT::Declaration),
+					"authentication" => Some(PT::Authentication),
 					"call_hierarchy" => Some(PT::CallHierarchy),
+					"code_actions" => Some(PT::CodeAction),
+					"code_lens" => Some(PT::CodeLens),
+					"color" => Some(PT::Color),
+					"completion_item" => Some(PT::Completion),
+					"debug_adapter" => Some(PT::DebugAdapter),
+					"debug_configuration" => Some(PT::DebugConfiguration),
+					"declaration" => Some(PT::Declaration),
+					"definition" => Some(PT::Definition),
+					"document_drop_edit" => Some(PT::DocumentDropEdit),
+					"document_formatting" => Some(PT::DocumentFormatting),
+					"document_highlight" => Some(PT::DocumentHighlight),
+					"document_link" => Some(PT::DocumentLink),
+					"document_paste_edit" => Some(PT::DocumentPasteEdit),
+					"document_range_formatting" => Some(PT::DocumentRangeFormatting),
+					"document_symbol" => Some(PT::DocumentSymbol),
+					"evaluatable_expression" => Some(PT::EvaluatableExpression),
+					"external_uri_opener" => Some(PT::ExternalUriOpener),
+					"file_decoration" => Some(PT::FileDecoration),
+					"file_system" => Some(PT::FileSystem),
+					"folding_range" => Some(PT::FoldingRange),
+					"hover" => Some(PT::Hover),
+					"implementation" => Some(PT::Implementation),
+					"inlay_hints" => Some(PT::InlayHint),
+					"inline_completion_item" => Some(PT::InlineCompletion),
+					"inline_edit" => Some(PT::InlineEdit),
+					"inline_values" => Some(PT::InlineValues),
+					"linked_editing_range" => Some(PT::LinkedEditingRange),
+					"mapped_edits" => Some(PT::MappedEdits),
+					"multi_document_highlight" => Some(PT::MultiDocumentHighlight),
+					"notebook_content" => Some(PT::NotebookContent),
+					"notebook_serializer" => Some(PT::NotebookSerializer),
+					"on_type_formatting" => Some(PT::OnTypeFormatting),
+					"reference" => Some(PT::References),
+					"remote_authority_resolver" => Some(PT::RemoteAuthorityResolver),
+					"rename" => Some(PT::Rename),
+					"resource_label_formatter" => Some(PT::ResourceLabelFormatter),
+					"scm" => Some(PT::SourceControl),
+					"scm_resource_group" => Some(PT::ScmResourceGroup),
+					"selection_range" => Some(PT::SelectionRange),
+					"semantic_tokens" => Some(PT::SemanticTokens),
+					"signature_help" => Some(PT::SignatureHelp),
+					"task" => Some(PT::Task),
+					"terminal_link" => Some(PT::TerminalLink),
+					"terminal_profile" => Some(PT::TerminalProfile),
+					"text_document_content" => Some(PT::TextDocumentContent),
+					"type_definition" => Some(PT::TypeDefinition),
+					"type_hierarchy" => Some(PT::TypeHierarchy),
+					"uri_handler" => Some(PT::UriHandler),
+					"workspace_symbol" => Some(PT::WorkspaceSymbol),
 					_ => None,
 				};
 				if let Some(ProviderType) = ProvType {
