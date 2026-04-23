@@ -259,6 +259,25 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 		let mut Output = File::create(&Target).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
 
 		io::copy(&mut Entry, &mut Output).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
+
+		// Preserve Unix executable bits recorded in the VSIX. Extensions
+		// that ship platform-native binaries (openai.chatgpt's `codex`,
+		// language-server launchers, etc.) rely on the `0o755` mode being
+		// carried through the zip. Without this, the child `spawn()`
+		// inside the extension fails with `EACCES` because the freshly
+		// written file has only the default `0o644` read/write mode.
+		#[cfg(unix)]
+		{
+			use std::os::unix::fs::PermissionsExt;
+			if let Some(Mode) = Entry.unix_mode() {
+				// Zip's unix_mode returns the full stat mode (type bits +
+				// permission bits). Mask to the permission bits only, then
+				// OR in `0o644` as a safety floor so we never drop read
+				// access. Respect the executable bit if the archive had it.
+				let Permissions = fs::Permissions::from_mode((Mode & 0o777) | 0o644);
+				let _ = fs::set_permissions(&Target, Permissions);
+			}
+		}
 	}
 
 	Ok(())
