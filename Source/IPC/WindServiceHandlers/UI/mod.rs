@@ -15,9 +15,9 @@
 //!   - [`Lifecycle`]      - app-phase get/wait/shutdown
 //!   - [`WorkingCopy`]    - dirty-state tracking
 //!
-//! Re-exports all handler fns flat so the parent `WindServiceHandlers`
-//! dispatcher can keep calling them by their unqualified names - no
-//! downstream rename needed.
+//! Callers spell the full path: `UI::Theme::handle_themes_get_active(...)`.
+//! No `pub use` re-exports - per CLAUDE.md, the reverse-hierarchical path
+//! is load-bearing: it tells the reader which file owns the handler.
 
 pub mod Decoration;
 pub mod Keybinding;
@@ -28,13 +28,3 @@ pub mod QuickInput;
 pub mod Theme;
 pub mod Workspace;
 pub mod WorkingCopy;
-
-pub use Decoration::*;
-pub use Keybinding::*;
-pub use Lifecycle::*;
-pub use Notification::*;
-pub use Progress::*;
-pub use QuickInput::*;
-pub use Theme::*;
-pub use Workspace::*;
-pub use WorkingCopy::*;

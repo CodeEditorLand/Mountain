@@ -29,5 +29,3 @@
 
 pub mod WorkspaceDelta;
 pub mod WorkspaceState;
-
-pub use WorkspaceState::*;

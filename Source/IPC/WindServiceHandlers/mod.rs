@@ -20,19 +20,33 @@ pub mod Terminal;
 pub mod UI;
 pub mod Utilities;
 
-pub use Commands::*;
-pub use Configuration::*;
-pub use Extensions::*;
-pub use FileSystem::*;
-pub use Model::*;
-pub use NativeHost::*;
-pub use Navigation::*;
-pub use Output::*;
-pub use Search::*;
-pub use Storage::*;
-pub use Terminal::*;
-pub use UI::*;
-pub use Utilities::*;
+// Local `use X::*;` (NOT `pub use`): brings the domain handler names into
+// this file's scope so the dispatch match arms below can call
+// `handle_foo(...)` unqualified. Per CLAUDE.md the `pub use` form is
+// banned because it forces every downstream file into the flattened
+// namespace. Local `use` is scoped to this file only; external callers
+// must spell the full path (`WindServiceHandlers::Utilities::foo`).
+use Commands::*;
+use Configuration::*;
+use Extensions::*;
+use FileSystem::*;
+use Model::*;
+use NativeHost::*;
+use Navigation::*;
+use Output::*;
+use Search::*;
+use Storage::*;
+use Terminal::*;
+use UI::Decoration::*;
+use UI::Keybinding::*;
+use UI::Lifecycle::*;
+use UI::Notification::*;
+use UI::Progress::*;
+use UI::QuickInput::*;
+use UI::Theme::*;
+use UI::Workspace::*;
+use UI::WorkingCopy::*;
+use Utilities::*;
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 

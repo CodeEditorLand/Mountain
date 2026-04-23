@@ -43,16 +43,9 @@
 //! - [ ] Implement incremental memento updates
 //! - [ ] Add concurrent extension scanning
 
-pub mod Persistence;
-pub mod PathResolution;
-pub mod Serialization;
 pub mod ExtensionScanner;
-pub mod TextProcessing;
+pub mod PathResolution;
+pub mod Persistence;
 pub mod Recovery;
-
-pub use Persistence::*;
-pub use PathResolution::*;
-pub use Serialization::*;
-pub use ExtensionScanner::*;
-pub use TextProcessing::*;
-pub use Recovery::*;
+pub mod Serialization;
+pub mod TextProcessing;

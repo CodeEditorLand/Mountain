@@ -51,7 +51,7 @@ pub fn CreateEffect<R:Runtime>(
 							.or_else(|| Options.as_u64())
 							.unwrap_or(500);
 						let Args = vec![json!(PatternString), json!(MaxResults)];
-						crate::IPC::WindServiceHandlers::handle_search_find_files(run_time.clone(), Args).await
+						crate::IPC::WindServiceHandlers::Search::handle_search_find_files(run_time.clone(), Args).await
 					})
 				};
 			Some(Ok(Box::new(effect)))

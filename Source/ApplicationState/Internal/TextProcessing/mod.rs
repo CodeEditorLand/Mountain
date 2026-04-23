@@ -27,5 +27,3 @@
 //! - [ ] Add performance metrics
 
 pub mod AnalyzeTextLinesAndEOL;
-
-pub use AnalyzeTextLinesAndEOL::*;

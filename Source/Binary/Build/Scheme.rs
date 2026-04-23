@@ -888,7 +888,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	}
 
 	// Fallback: read from filesystem (dev mode where assets aren't embedded)
-	let StaticRoot = crate::IPC::WindServiceHandlers::get_static_application_root();
+	let StaticRoot = crate::IPC::WindServiceHandlers::Utilities::get_static_application_root();
 
 	if let Some(Root) = StaticRoot {
 		let FilesystemPath = std::path::Path::new(&Root).join(&CleanPath);
