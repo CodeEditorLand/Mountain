@@ -722,21 +722,24 @@ impl MountainService for MountainVinegRPCService {
 			// `vscode.window.createStatusBarItem(...)` instance fires
 			// `statusBar.update` with its text/tooltip/alignment. Sky's
 			// workbench status-bar renderer subscribes to the downstream
-			// Tauri event.
+			// Tauri event. Canonical channel prefix is `sky://statusbar/`
+			// (no hyphen) to match the `sky://statusbar/*` family every
+			// other emit site uses.
 			"statusBar.update" | "statusBar.dispose" => {
-				let EventName = format!("sky://status-bar/{}", &MethodName["statusBar.".len()..]);
+				let EventName = format!("sky://statusbar/{}", &MethodName["statusBar.".len()..]);
 				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
 					dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 				}
 			},
 			// Cocoon → Mountain → Sky: status-bar messages from extensions.
-			// Fire as a `sky://status-bar/message` event so the workbench's
-			// status-bar component can render the text.
+			// Canonical channel is `sky://statusbar/set-message` (matching
+			// the rest of the `sky://statusbar/*` family); the legacy
+			// `sky://status-bar/message` fork has been retired.
 			"statusBar.message" => {
 				let Text = Parameter.get("text").and_then(|h| h.as_str()).unwrap_or("");
 				let HideAfter = Parameter.get("hideAfter").and_then(|h| h.as_u64());
 				if let Err(Error) = self.ApplicationHandle.emit(
-					"sky://status-bar/message",
+					"sky://statusbar/set-message",
 					json!({
 						"text": Text,
 						"hideAfter": HideAfter,
@@ -744,7 +747,7 @@ impl MountainService for MountainVinegRPCService {
 				) {
 					dev_log!(
 						"grpc",
-						"warn: [MountainVinegRPCService] sky://status-bar/message emit failed: {}",
+						"warn: [MountainVinegRPCService] sky://statusbar/set-message emit failed: {}",
 						Error
 					);
 				}

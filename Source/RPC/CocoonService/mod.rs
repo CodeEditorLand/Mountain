@@ -750,10 +750,11 @@ impl CocoonService for CocoonServiceImpl {
 				use tauri::Emitter;
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
 				let Html = Params.get("html").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				// Canonical kebab-case channel; `sky://webview/setHtml` retired.
 				let _ = self
 					.environment
 					.ApplicationHandle
-					.emit("sky://webview/setHtml", json!({ "handle": Handle, "html": Html }));
+					.emit("sky://webview/set-html", json!({ "handle": Handle, "html": Html }));
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
 			// ---- Workspace (Cocoon MountainGRPCClient format) ----

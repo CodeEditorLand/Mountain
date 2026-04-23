@@ -6,7 +6,7 @@
 use serde_json::json;
 use tauri::Emitter;
 use tonic::{Response, Status};
-use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+use CommonLibrary::{IPC::SkyEvent::SkyEvent, LanguageFeature::DTO::ProviderType::ProviderType};
 
 use super::CocoonServiceImpl;
 use crate::{
@@ -41,8 +41,13 @@ pub async fn RegisterTreeViewProvider(
 		.ProviderRegistration
 		.RegisterProvider(Handle, dto);
 
+	// Emit on the canonical `SkyEvent::TreeViewCreate` channel so the
+	// renderer's SkyBridge listener (and every downstream `cel:tree-view`
+	// consumer) picks it up via the same path used by the generic
+	// `tree.register` effect. The previous `sky://treeView/register`
+	// channel was a parallel fork that no listener ever subscribed to.
 	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://treeView/register",
+		SkyEvent::TreeViewCreate.AsStr(),
 		json!({ "viewId": req.view_id, "extensionId": req.extension_id }),
 	);
 

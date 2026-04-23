@@ -189,10 +189,11 @@ pub async fn SetWebviewHtml(Service:&CocoonServiceImpl, req:SetWebviewHtmlReques
 		req.html.len()
 	);
 
+	// Canonical kebab-case channel; `sky://webview/setHtml` has been retired.
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://webview/setHtml", json!({ "handle": req.handle, "html": req.html }));
+		.emit("sky://webview/set-html", json!({ "handle": req.handle, "html": req.html }));
 
 	Ok(Response::new(Empty {}))
 }
@@ -229,8 +230,9 @@ pub async fn PostWebviewMessage(
 		None => serde_json::Value::Null,
 	};
 
+	// Canonical kebab-case channel; `sky://webview/postMessage` has been retired.
 	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://webview/postMessage",
+		"sky://webview/post-message",
 		json!({
 			"handle": req.handle,
 			"message": MessagePayload,

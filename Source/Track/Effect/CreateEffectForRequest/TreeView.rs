@@ -2,9 +2,9 @@
 
 use std::{future::Future, pin::Pin, sync::Arc};
 
-use CommonLibrary::{Environment::Requires::Requires, TreeView::TreeViewProvider::TreeViewProvider};
+use CommonLibrary::{Environment::Requires::Requires, IPC::SkyEvent::SkyEvent, TreeView::TreeViewProvider::TreeViewProvider};
 use serde_json::{Value, json};
-use tauri::Runtime;
+use tauri::{Emitter, Runtime};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
@@ -52,7 +52,7 @@ pub fn CreateEffect<R:Runtime>(
 							ViewIdForLog,
 							BodyStartNs
 						);
-						let Result = provider.RegisterTreeDataProvider(view_id, options).await;
+						let Result = provider.RegisterTreeDataProvider(view_id.clone(), options.clone()).await;
 						let RegisteredNs = std::time::SystemTime::now()
 							.duration_since(std::time::UNIX_EPOCH)
 							.map(|D| D.as_nanos())
@@ -64,6 +64,32 @@ pub fn CreateEffect<R:Runtime>(
 							DispatchAt.elapsed().as_millis(),
 							RegisteredNs
 						);
+
+						// Notify Wind/Sky that a data provider now exists for this
+						// view, so the renderer can set `treeView.dataProvider` on
+						// the matching ITreeView instance and replace the default
+						// "no data provider registered" message. Without this
+						// emit, `vs/workbench/browser/parts/views/treeView.ts`
+						// keeps `_dataProvider === undefined` and every extension
+						// tree view stays empty (GitLens, debug, SCM, tasks, etc.).
+						if Result.is_ok() {
+							if let Err(Error) = run_time.Environment.ApplicationHandle.emit(
+								SkyEvent::TreeViewCreate.AsStr(),
+								json!({
+									"viewId": view_id,
+									"options": options,
+								}),
+							) {
+								dev_log!(
+									"grpc",
+									"warn: [LandFix:Tree] failed to emit {} for view={}: {}",
+									SkyEvent::TreeViewCreate.AsStr(),
+									ViewIdForLog,
+									Error
+								);
+							}
+						}
+
 						Result.map(|_| json!(null)).map_err(|e| e.to_string())
 					})
 				};
