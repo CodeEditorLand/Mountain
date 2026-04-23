@@ -1458,8 +1458,16 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					Ok(json!({ "id": "1" }))
 				},
 				"extensionHostStarter:start" => {
-					dev_log!("exthost", "extensionHostStarter:start pid={}", std::process::id());
-					Ok(json!({ "pid": std::process::id() }))
+					// The renderer uses this PID to correlate extension-host-side
+					// debug adapters with the actual Node.js process. That process
+					// is Cocoon, not Mountain - returning `std::process::id()`
+					// here would point the debugger at Mountain's Rust binary.
+					// Fall back to Mountain's PID only if Cocoon hasn't spawned
+					// yet (should not happen for a real extension-host start).
+					let Pid = crate::ProcessManagement::CocoonManagement::GetCocoonPid()
+						.unwrap_or_else(std::process::id);
+					dev_log!("exthost", "extensionHostStarter:start pid={}", Pid);
+					Ok(json!({ "pid": Pid }))
 				},
 				"extensionHostStarter:kill" => {
 					dev_log!("exthost", "extensionHostStarter:kill");

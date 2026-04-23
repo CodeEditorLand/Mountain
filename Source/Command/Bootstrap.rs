@@ -352,6 +352,26 @@ fn CommandSetContext(
 	})
 }
 
+/// Native no-op for `workbench.action.openWalkthrough`. VS Code's
+/// walkthrough UI lives in `workbench/contrib/welcomeGettingStarted` and is
+/// not wired through Land yet. Extensions (notably `claude-code`) invoke this
+/// at activation - returning null avoids a user-visible "command not found"
+/// error while the walkthrough system remains unimplemented.
+fn CommandOpenWalkthrough(
+	_ApplicationHandle:AppHandle<Wry>,
+
+	_Window:WebviewWindow<Wry>,
+
+	_RunTime:Arc<ApplicationRunTime>,
+
+	Argument:Value,
+) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+	Box::pin(async move {
+		dev_log!("commands", "[Native Command] openWalkthrough (no-op): {}", Argument);
+		Ok(Value::Null)
+	})
+}
+
 /// A native command for reloading the window.
 fn CommandReloadWindow(
 	_ApplicationHandle:AppHandle<Wry>,
@@ -515,6 +535,20 @@ pub fn RegisterNativeCommands(
 	// up as "command 'vscode.open' not found" in user-visible error toasts.
 	CommandRegistry.insert("vscode.open".to_string(), CommandHandler::Native(CommandVscodeOpen));
 	CommandRegistry.insert("vscode.openFolder".to_string(), CommandHandler::Native(CommandVscodeOpen));
+
+	// `workbench.action.openWalkthrough` is VS Code's welcome/getting-started
+	// walkthrough entry point; the `claude-code` extension wraps it with its
+	// own `claude-vscode.openWalkthrough` command and invokes both at
+	// activation. Land has no walkthrough UI yet - register both as no-ops so
+	// extension activation doesn't surface "command not found" errors.
+	CommandRegistry.insert(
+		"workbench.action.openWalkthrough".to_string(),
+		CommandHandler::Native(CommandOpenWalkthrough),
+	);
+	CommandRegistry.insert(
+		"claude-vscode.openWalkthrough".to_string(),
+		CommandHandler::Native(CommandOpenWalkthrough),
+	);
 
 	dev_log!("commands", "[Bootstrap] {} native commands registered.", CommandRegistry.len());
 

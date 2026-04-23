@@ -121,6 +121,21 @@ lazy_static::lazy_static! {
 		Arc::new(Mutex::new(HealthMonitor::new()));
 }
 
+/// Last-known PID of the Cocoon child process. Mirrored here so callers can
+/// read it without taking the async `COCOON_STATE` mutex (e.g. from IPC
+/// handlers such as `extensionHostStarter:start`). Set after spawn and
+/// cleared on shutdown. `0` means "not running".
+static COCOON_PID:std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
+
+/// Return the Cocoon child process's OS PID, or `None` if Cocoon has not
+/// been spawned (or has exited).
+pub fn GetCocoonPid() -> Option<u32> {
+	match COCOON_PID.load(std::sync::atomic::Ordering::Relaxed) {
+		0 => None,
+		Pid => Some(Pid),
+	}
+}
+
 /// The main entry point for initializing the Cocoon sidecar process manager.
 ///
 /// This orchestrates the complete initialization sequence including:
@@ -341,6 +356,7 @@ async fn LaunchAndManageCocoonSideCar(
 	})?;
 
 	let ProcessId = ChildProcess.id().unwrap_or(0);
+	COCOON_PID.store(ProcessId, std::sync::atomic::Ordering::Relaxed);
 	dev_log!("cocoon", "[CocoonManagement] Cocoon process spawned [PID: {}]", ProcessId);
 	crate::dev_log!("cocoon", "spawned PID={}", ProcessId);
 
@@ -571,6 +587,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					// Update state
 					state_guard.IsRunning = false;
 					state_guard.ChildProcess = None;
+					COCOON_PID.store(0, std::sync::atomic::Ordering::Relaxed);
 
 					// Report health issue
 					{
