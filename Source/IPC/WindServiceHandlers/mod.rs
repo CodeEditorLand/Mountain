@@ -5,10 +5,12 @@
 
 pub mod Commands;
 pub mod Configuration;
+pub mod Extension;
 pub mod Extensions;
 pub mod FileSystem;
 pub mod Git;
 pub mod Model;
+pub mod NativeDialog;
 pub mod NativeHost;
 pub mod Navigation;
 pub mod Output;
@@ -384,7 +386,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// it in ScannedExtensions, and return the ILocalExtension wrapper
 				// so the sidebar refreshes without a window reload.
 				"extensions:install" => {
-					super::WindServiceHandler::Extension::handle_extensions_install(
+					Extension::ExtensionInstall::ExtensionInstall(
 						app_handle.clone(),
 						runtime.clone(),
 						args,
@@ -392,7 +394,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					.await
 				},
 				"extensions:uninstall" => {
-					super::WindServiceHandler::Extension::handle_extensions_uninstall(
+					Extension::ExtensionUninstall::ExtensionUninstall(
 						app_handle.clone(),
 						runtime.clone(),
 						args,

@@ -281,14 +281,13 @@ pub async fn handle_native_pick_folder(app_handle:AppHandle, _args:Vec<Value>) -
 ///   4. Honour `title`, `buttonLabel`, `defaultPath`.
 ///   5. Return `{ canceled: bool, filePaths: string[] }`.
 ///
-/// A single canonical implementation lives in the singular
-/// `WindServiceHandler::NativeHost` module - this shim delegates so the
-/// legacy dispatcher's `NativeHost::*` re-export surface doesn't drift from
-/// the new one. Previously this was a `canceled:true` stub, which is the
+/// Real implementation lives in the `NativeDialog::ShowOpenDialog` atom
+/// so `showOpenDialog` + the filter / parse helpers each live in their
+/// own file. Previously this was a `canceled:true` stub, which is the
 /// precise reason "Install from VSIX…" did nothing: VS Code interpreted
 /// the stubbed cancel as "user dismissed the picker" and stopped.
 pub async fn handle_native_show_open_dialog(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
-	crate::IPC::WindServiceHandler::NativeHost::handle_native_show_open_dialog(app_handle, args).await
+	crate::IPC::WindServiceHandlers::NativeDialog::ShowOpenDialog::ShowOpenDialog(app_handle, args).await
 }
 
 /// Get OS properties - cross-platform (macOS, Windows, Linux)

@@ -130,11 +130,19 @@ pub mod SkyEmit;
 /// field and `uri.with is not a function` cascades through the sidebar).
 pub mod UriComponents;
 
-/// Legacy Wind Service Handlers.
+/// Wind Service Handlers - dispatcher for every `MountainIPCInvoke` Tauri
+/// call from Wind/Output/Sky. The `mod.rs` inside is the central `match`
+/// that routes wire strings to per-domain atoms or handler files. Atoms
+/// live under `WindServiceHandlers/<Domain>/<Atom>.rs` following the
+/// one-export-per-file convention.
+///
+/// The previous `WindServiceHandler` (singular) sibling was merged here
+/// on 2026-04-23: of its 24 files, only 3 functions were live
+/// (extensions install/uninstall, nativeHost showOpenDialog) and those
+/// now live as atoms under `WindServiceHandlers/Extension/` and
+/// `WindServiceHandlers/NativeDialog/`. The remaining 21 files were
+/// dead-code duplicates of plural-side implementations.
 pub mod WindServiceHandlers;
-
-/// Wind Service Handler - atomic domain modules split from WindServiceHandlers.
-pub mod WindServiceHandler;
 
 // --- Legacy Subdirectories ---
 

@@ -715,23 +715,14 @@ impl MountainService for MountainVinegRPCService {
 				}
 			},
 
-			// Cocoon → Mountain → Sky: extension-owned output-channel
-			// lifecycle. Each `vscode.window.createOutputChannel(...)` fires
-			// `outputChannel.create` with a handle + name; subsequent
-			// `append`/`clear`/`show`/`hide`/`dispose` reference the handle.
-			// Fan every arm to a matching `sky://output-channel/*` event so
-			// the workbench's Output panel can render the stream.
-			"outputChannel.create"
-			| "outputChannel.append"
-			| "outputChannel.clear"
-			| "outputChannel.show"
-			| "outputChannel.hide"
-			| "outputChannel.dispose" => {
-				let EventName = format!("sky://output-channel/{}", &MethodName["outputChannel.".len()..]);
-				if let Err(Error) = self.ApplicationHandle.emit(&EventName, &Parameter) {
-					dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
-				}
-			},
+			// NOTE: `outputChannel.*` variants are dispatched from the
+			// Batch 9 block further down this match (see
+			// `Vine::Server::Notification::OutputChannel*`). Previously a
+			// legacy OR-pattern lived here fanning to
+			// `sky://output-channel/*` (hyphenated) which no Sky listener
+			// subscribed to - every output-channel write silently dropped.
+			// Intentionally no arm here so the Batch 9 atoms win; do not
+			// re-add without removing the atom dispatch.
 
 			// Cocoon → Mountain → Sky: per-item status-bar updates. Each
 			// `vscode.window.createStatusBarItem(...)` instance fires
