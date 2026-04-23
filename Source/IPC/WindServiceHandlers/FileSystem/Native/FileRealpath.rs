@@ -8,7 +8,7 @@ use serde_json::Value;
 
 use crate::IPC::{
 	UriComponents::FromFilePath as UriFromFilePath,
-	WindServiceHandlers::Utilities::extract_path_from_arg,
+	WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg,
 };
 
 pub async fn handle_file_realpath(args:Vec<Value>) -> Result<Value, String> {

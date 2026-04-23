@@ -4,7 +4,7 @@
 
 use tauri::{App, WebviewUrl, WebviewWindowBuilder, Wry};
 
-use crate::IPC::WindServiceHandlers::Utilities::ReadRecentlyOpened;
+use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::ReadRecentlyOpened;
 
 /// Creates and configures the main application window.
 ///

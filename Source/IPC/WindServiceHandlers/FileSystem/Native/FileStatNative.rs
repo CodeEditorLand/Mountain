@@ -8,7 +8,10 @@
 
 use serde_json::Value;
 
-use crate::IPC::WindServiceHandlers::Utilities::{extract_path_from_arg, metadata_to_istat};
+use crate::IPC::WindServiceHandlers::Utilities::{
+	MetadataEncoding::metadata_to_istat,
+	PathExtraction::extract_path_from_arg,
+};
 use crate::{IPC::DevLog, dev_log};
 
 pub async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {

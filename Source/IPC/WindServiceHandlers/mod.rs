@@ -73,7 +73,13 @@ use UI::QuickInput::*;
 use UI::Theme::*;
 use UI::Workspace::*;
 use UI::WorkingCopy::*;
-use Utilities::*;
+use Utilities::ApplicationRoot::*;
+use Utilities::ChannelPriority::*;
+use Utilities::JsonValueHelpers::*;
+use Utilities::MetadataEncoding::*;
+use Utilities::PathExtraction::*;
+use Utilities::RecentlyOpened::*;
+use Utilities::UserdataDir::*;
 
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 

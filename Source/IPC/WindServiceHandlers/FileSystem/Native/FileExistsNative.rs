@@ -4,7 +4,7 @@
 
 use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Utilities::extract_path_from_arg;
+use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg;
 
 pub async fn handle_file_exists_native(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
