@@ -51,11 +51,11 @@ use std::sync::{Arc, Mutex as StandardMutex, PoisonError};
 use CommonLibrary::Error::CommonError::CommonError;
 
 use super::{
-	ConfigurationState::State as ConfigurationState,
+	ConfigurationState::ConfigurationState::State as ConfigurationState,
 	ExtensionState::State::State as ExtensionState,
 	FeatureState::State::State as FeatureState,
-	UIState::State as UIState,
-	WorkspaceState::State as WorkspaceState,
+	UIState::UIState::State as UIState,
+	WorkspaceState::WorkspaceState::State as WorkspaceState,
 };
 use crate::{Environment::TestProvider::TestProviderState, dev_log};
 

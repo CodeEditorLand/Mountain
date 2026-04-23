@@ -209,7 +209,7 @@ pub fn AppLifecycleSetup(
 				std::path::PathBuf::new()
 			}
 		});
-		crate::IPC::WindServiceHandlers::set_static_application_root(SkyTargetDir.to_string_lossy().to_string());
+		crate::IPC::WindServiceHandlers::Utilities::set_static_application_root(SkyTargetDir.to_string_lossy().to_string());
 		dev_log!(
 			"lifecycle",
 			"[Lifecycle] [Dirs] Static application root: {}",

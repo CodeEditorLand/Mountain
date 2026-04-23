@@ -79,7 +79,7 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 /// async scope just to reach Cocoon. If no runtime is available (very early
 /// boot, unit tests), the notification is dropped - the state still mutates.
 pub fn UpdateWorkspaceFoldersAndNotify(
-	State:&crate::ApplicationState::State::WorkspaceState::State,
+	State:&crate::ApplicationState::State::WorkspaceState::WorkspaceState::State,
 	Folders:Vec<WorkspaceFolderStateDTO>,
 ) {
 	let (Added, Removed) = State.SetWorkspaceFoldersReturnDelta(Folders);
@@ -106,7 +106,7 @@ pub fn UpdateWorkspaceFoldersAndNotify(
 /// whenever the caller already has an `AppHandle` in scope.
 pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	ApplicationHandle:&tauri::AppHandle<R>,
-	State:&crate::ApplicationState::State::WorkspaceState::State,
+	State:&crate::ApplicationState::State::WorkspaceState::WorkspaceState::State,
 	Folders:Vec<WorkspaceFolderStateDTO>,
 ) {
 	use tauri::Emitter;
