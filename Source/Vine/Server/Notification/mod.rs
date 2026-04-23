@@ -80,3 +80,17 @@ pub mod WebviewPostMessage;
 pub mod OpenExternal;
 pub mod SecurityIncident;
 pub mod SetLanguageConfiguration;
+
+// --- Batch 15: inline arms atomised from `MountainVinegRPCService` dispatcher.
+// These were previously ~300 lines of inline match-arm bodies; now each
+// wire method is a one-fn file that the dispatcher delegates into.
+pub mod ExtensionActivated;
+pub mod ExtensionDeactivated;
+pub mod ExtensionHostMessage;
+pub mod LanguagesSetDocumentLanguage;
+pub mod ProgressEnd;
+pub mod ProgressReport;
+pub mod ProgressStart;
+pub mod WebviewReady;
+pub mod WindowShowTextDocument;
+pub mod WorkspaceApplyEdit;
