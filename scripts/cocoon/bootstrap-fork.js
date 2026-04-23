@@ -35,7 +35,7 @@ Trace("bootstrap", "start");
 // PostHog - debug only, fire-and-forget via HTTP POST
 // ============================================================================
 
-const PostHogAPIKey = "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA";
+const PostHogAPIKey = "";
 const PostHogHost = "https://eu.i.posthog.com";
 const DistinctId = `land-dev-${process.env.USER || process.env.USERNAME || "unknown"}`;
 

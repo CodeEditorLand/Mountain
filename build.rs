@@ -155,7 +155,7 @@ fn PropagatePostHogSentinel() {
 		println!("cargo:rerun-if-env-changed={Key}");
 	}
 
-	let Key = std::env::var("LAND_POSTHOG_KEY").unwrap_or_else(|_| "phc_mCwHy7LgvbnEqh6a2DyMiLUJcaZvmmj7JNmmpQzvr7mA".into());
+	let Key = std::env::var("LAND_POSTHOG_KEY").unwrap_or_else(|_| "".into());
 
 	let Host = std::env::var("LAND_POSTHOG_HOST").unwrap_or_else(|_| "https://eu.i.posthog.com".into());
 
