@@ -32,12 +32,26 @@
 
 use crate::dev_log;
 
+/// Accept BOTH casings for the tag/message parameter names so the JS
+/// caller doesn't have to guess Tauri's param-case transform. In Tauri
+/// v2 default convention, Rust snake_case params get mapped to/from JS
+/// camelCase; Rust PascalCase params are passed through case-sensitive.
+/// Callers that send `{ Tag, Message }` (PascalCase) and callers that
+/// send `{ tag, message }` (snake_case) both work - the command
+/// coalesces whichever is populated. Empty → silent no-op.
 #[tauri::command]
-pub fn RenderDevLog(Tag:String, Message:String) {
-	// The `dev_log!` macro expands to a conditional on `IsEnabled(Tag)`
-	// - when the tag is off, the entire call is a no-op besides the
-	//   string allocation on the caller side. `$Tag:expr` in the macro
-	//   accepts `&str` / `&String` / `String` interchangeably.
-	let TagRef:&str = &Tag;
-	dev_log!(TagRef, "[RenderDevLog] {}", Message);
+pub async fn RenderDevLog(
+	Tag:Option<String>,
+	Message:Option<String>,
+	tag:Option<String>,
+	message:Option<String>,
+) -> Result<(), String> {
+	let ResolvedTag = Tag.or(tag).unwrap_or_default();
+	let ResolvedMessage = Message.or(message).unwrap_or_default();
+	if ResolvedTag.is_empty() {
+		return Ok(());
+	}
+	let TagRef:&str = &ResolvedTag;
+	dev_log!(TagRef, "[RenderDevLog] {}", ResolvedMessage);
+	Ok(())
 }

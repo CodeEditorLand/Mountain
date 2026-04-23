@@ -119,6 +119,11 @@ pub mod WindServiceAdapters;
 /// available.
 pub mod DevLog;
 
+/// Central `sky://` emit wrapper that logs under the `sky-emit` DevLog
+/// tag. Optional drop-in for any `ApplicationHandle::emit(channel, …)`
+/// call site; existing emits keep working unchanged.
+pub mod SkyEmit;
+
 /// Shared `UriComponents` emitter. Every handler that returns a URI to the
 /// renderer must route through this module so the `$mid: 1` marshalling
 /// marker is never forgotten (without it VS Code's IPC reviver skips the

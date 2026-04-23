@@ -88,6 +88,16 @@
 //! | `channel-stub`      | Wind/Output `TauriMainProcessService.call` stub-hit vs route vs miss  |
 //! | `git`               | `localGit` channel, `GitExec` RPC, SCM provider group updates         |
 //! | `tree-view`         | `tree.register`, `GetTreeChildren`, `sky://tree-view/create` emit     |
+//!
+//! ### Batch 2 diagnostic tags
+//!
+//! | Tag              | Scope                                                                  |
+//! |------------------|------------------------------------------------------------------------|
+//! | `sky-emit`       | Mountain → Wind/Sky `sky://` emits: channel, payload bytes, ok/fail    |
+//! | `config-prime`   | Configuration cache: manifest pre-populate, subtree synthesise         |
+//! | `ext-activate`   | Per-extension activate: start, outcome (ok/fail/skip), duration        |
+//! | `breaker`        | Cocoon `MountainClientService` circuit-breaker state transitions        |
+//! | `cel-dispatch`   | SkyBridge `cel:*` CustomEvent dispatch + consumer-present flag         |
 
 use std::{
 	fs::{File, OpenOptions, create_dir_all},

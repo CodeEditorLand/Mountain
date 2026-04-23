@@ -4,9 +4,9 @@ use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{Environment::Requires::Requires, IPC::SkyEvent::SkyEvent, TreeView::TreeViewProvider::TreeViewProvider};
 use serde_json::{Value, json};
-use tauri::{Emitter, Runtime};
+use tauri::Runtime;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{IPC::SkyEmit::LogSkyEmit, RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
 pub fn CreateEffect<R:Runtime>(
 	MethodName:&str,
@@ -80,34 +80,42 @@ pub fn CreateEffect<R:Runtime>(
 						// keeps `_dataProvider === undefined` and every extension
 						// tree view stays empty (GitLens, debug, SCM, tasks, etc.).
 						if Result.is_ok() {
-							if let Err(Error) = run_time.Environment.ApplicationHandle.emit(
+							// Routes through `LogSkyEmit` so every emit also
+							// surfaces under the `sky-emit` tag in addition to
+							// the existing `tree-view` diagnostic. Failure
+							// reason stays surfaced via both tags.
+							match LogSkyEmit(
+								&run_time.Environment.ApplicationHandle,
 								SkyEvent::TreeViewCreate.AsStr(),
 								json!({
 									"viewId": view_id,
 									"options": options,
 								}),
 							) {
-								dev_log!(
-									"grpc",
-									"warn: [LandFix:Tree] failed to emit {} for view={}: {}",
-									SkyEvent::TreeViewCreate.AsStr(),
-									ViewIdForLog,
-									Error
-								);
-								dev_log!(
-									"tree-view",
-									"[TreeView] emit-fail channel={} view={} error={}",
-									SkyEvent::TreeViewCreate.AsStr(),
-									ViewIdForLog,
-									Error
-								);
-							} else {
-								dev_log!(
-									"tree-view",
-									"[TreeView] emit-ok channel={} view={}",
-									SkyEvent::TreeViewCreate.AsStr(),
-									ViewIdForLog
-								);
+								Ok(()) => {
+									dev_log!(
+										"tree-view",
+										"[TreeView] emit-ok channel={} view={}",
+										SkyEvent::TreeViewCreate.AsStr(),
+										ViewIdForLog
+									);
+								},
+								Err(Error) => {
+									dev_log!(
+										"grpc",
+										"warn: [LandFix:Tree] failed to emit {} for view={}: {}",
+										SkyEvent::TreeViewCreate.AsStr(),
+										ViewIdForLog,
+										Error
+									);
+									dev_log!(
+										"tree-view",
+										"[TreeView] emit-fail channel={} view={} error={}",
+										SkyEvent::TreeViewCreate.AsStr(),
+										ViewIdForLog,
+										Error
+									);
+								},
 							}
 						}
 
