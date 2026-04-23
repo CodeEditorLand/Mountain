@@ -94,3 +94,20 @@ pub mod ProgressStart;
 pub mod WebviewReady;
 pub mod WindowShowTextDocument;
 pub mod WorkspaceApplyEdit;
+
+// --- Batch 16: the remaining inline arms - command register/unregister,
+// status-bar lifecycle / message, window show-message / create-terminal,
+// decoration / debug / webview / terminal fan-outs. A handful are
+// "group" atoms (`TerminalLifecycle` covers 4 wire methods that share a
+// relay + provider-drive pattern) - kept together where the handling
+// is truly identical and splitting would duplicate 5-line files.
+pub mod DebugLifecycle;
+pub mod DecorationTypeLifecycle;
+pub mod RegisterCommand;
+pub mod StatusBarLifecycle;
+pub mod StatusBarMessage;
+pub mod TerminalLifecycle;
+pub mod UnregisterCommand;
+pub mod WebviewLifecycle;
+pub mod WindowCreateTerminal;
+pub mod WindowShowMessage;
