@@ -740,6 +740,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 ) -> Response<Vec<u8>> {
 	let Uri = Request.uri().to_string();
 	dev_log!("lifecycle", "[LandFix:VscodeFile] Request: {}", Uri);
+	dev_log!("scheme-assets", "[SchemeAssets] request uri={}", Uri);
 
 	// Extract path from: vscode-file://vscode-app/path/to/file
 	// The authority is "vscode-app", the path starts after it
@@ -865,6 +866,13 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 		dev_log!(
 			"lifecycle",
 			"[LandFix:VscodeFile] Serving (embedded) {} ({}, {} bytes)",
+			CleanPath,
+			Mime,
+			Asset.bytes.len()
+		);
+		dev_log!(
+			"scheme-assets",
+			"[SchemeAssets] serve source=embedded path={} mime={} bytes={}",
 			CleanPath,
 			Mime,
 			Asset.bytes.len()

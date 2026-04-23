@@ -368,6 +368,19 @@ pub async fn ScanDirectoryForExtensions(
 							// extensions only.
 							Description.IsBuiltin = !IsUserPath;
 
+							dev_log!(
+								"ext-scan",
+								"[ExtScan] accept path={} is_user={} is_builtin={} id={}",
+								PotentialExtensionPath.display(),
+								IsUserPath,
+								Description.IsBuiltin,
+								Description
+									.Identifier
+									.get("value")
+									.and_then(|V| V.as_str())
+									.unwrap_or("<unknown>")
+							);
+
 							FoundExtensions.push(Description);
 						},
 
@@ -376,6 +389,12 @@ pub async fn ScanDirectoryForExtensions(
 							dev_log!(
 								"extensions",
 								"warn: [ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
+								PotentialExtensionPath.display(),
+								error
+							);
+							dev_log!(
+								"ext-scan",
+								"[ExtScan] skip path={} reason=parse-failure err={}",
 								PotentialExtensionPath.display(),
 								error
 							);
@@ -388,6 +407,12 @@ pub async fn ScanDirectoryForExtensions(
 						"extensions",
 						"warn: [ExtensionScanner] Could not read package.json at '{}': {}",
 						PackageJsonPath.display(),
+						error
+					);
+					dev_log!(
+						"ext-scan",
+						"[ExtScan] skip path={} reason=no-package-json err={}",
+						PotentialExtensionPath.display(),
 						error
 					);
 				},

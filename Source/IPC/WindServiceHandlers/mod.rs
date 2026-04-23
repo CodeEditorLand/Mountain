@@ -1698,6 +1698,60 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					Git::HandleIsAvailable(args).await
 				},
 
+				// Tree-view child lookup from the renderer side. Mirrors the
+				// Cocoon→Mountain `GetTreeChildren` gRPC path (see
+				// `RPC/CocoonService/TreeView.rs::GetTreeChildren`) but is
+				// invoked by the Wind/Sky tree-view bridge so the UI can
+				// request children directly without waiting for Cocoon to
+				// ask first. Payload: `[{ viewId, treeItemHandle? }]`.
+				"tree:getChildren" => {
+					let ViewId = args
+						.first()
+						.and_then(|V| V.get("viewId").or_else(|| V.get(0)))
+						.and_then(Value::as_str)
+						.unwrap_or("")
+						.to_string();
+					let ItemHandle = args
+						.first()
+						.and_then(|V| V.get("treeItemHandle").or_else(|| V.get(1)))
+						.and_then(Value::as_str)
+						.unwrap_or("")
+						.to_string();
+					dev_log!(
+						"tree-view",
+						"[TreeView] invoke:getChildren view={} parent={}",
+						ViewId,
+						ItemHandle
+					);
+					if ViewId.is_empty() {
+						Err("tree:getChildren requires viewId".to_string())
+					} else {
+						let Parameters = json!({
+							"viewId": ViewId,
+							"treeItemHandle": ItemHandle,
+						});
+						match crate::Vine::Client::SendRequest(
+							"cocoon-main",
+							"$provideTreeChildren".to_string(),
+							Parameters,
+							5000,
+						)
+						.await
+						{
+							Ok(Value_) => Ok(Value_),
+							Err(Error) => {
+								dev_log!(
+									"tree-view",
+									"[TreeView] invoke:getChildren error view={} err={:?}",
+									ViewId,
+									Error
+								);
+								Ok(json!({ "items": [] }))
+							},
+						}
+					}
+				},
+
 				// Atom L2: unknown-command fallback consults the Channel registry so
 				// the log distinguishes three states:
 				//   1. typo / never-registered wire string (registry::from_str Err)

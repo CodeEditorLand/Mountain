@@ -98,6 +98,22 @@
 //! | `ext-activate`   | Per-extension activate: start, outcome (ok/fail/skip), duration        |
 //! | `breaker`        | Cocoon `MountainClientService` circuit-breaker state transitions        |
 //! | `cel-dispatch`   | SkyBridge `cel:*` CustomEvent dispatch + consumer-present flag         |
+//!
+//! ### Batch 3 diagnostic tags
+//!
+//! Added 2026-04-23 late after Batches 3-6 wired notification handlers,
+//! git channel, tree-view dataProvider forwarding, and medium stub
+//! backfill. These tags catch the subsystems the new traffic passes
+//! through so regressions surface as silent tag counts going to zero
+//! (or, for `tauri-invoke`, per-invoke latency spikes).
+//!
+//! | Tag                | Scope                                                                   |
+//! |--------------------|-------------------------------------------------------------------------|
+//! | `ext-scan`         | Extension scanner decisions: is-builtin vs user, skip reasons, counts   |
+//! | `scheme-assets`    | `vscode-file://` / `vscode-resource://` request routing, MIME, bytes    |
+//! | `preload-shim`     | Wind `Preload.ts` globals wiring, VS Code `ipcRenderer` polyfill install|
+//! | `tauri-invoke`     | Per-invoke method + duration (augments `ipc`'s paired invoke/done lines)|
+//! | `bootstrap-stage`  | Cocoon `Effect/Bootstrap.ts` stage timings (start/ok/fail per phase)    |
 
 use std::{
 	fs::{File, OpenOptions, create_dir_all},
