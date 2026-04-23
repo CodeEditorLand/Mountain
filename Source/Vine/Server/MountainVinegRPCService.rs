@@ -463,105 +463,39 @@ impl MountainService for MountainVinegRPCService {
 		};
 
 		match MethodName.as_str() {
-			// Cocoon → Mountain → Wind: extension host binary protocol reply
+			// Batch 15: extension-host + progress + languages arms now live
+			// as atoms under `Vine::Server::Notification::*`. Each match arm
+			// is pure delegation - adding a new wire method is a one-line
+			// change here plus one new atom file.
 			"extensionHostMessage" => {
-				dev_log!(
-					"grpc",
-					"[MountainVinegRPCService] Extension host message from Cocoon, forwarding to Wind"
-				);
-				if let Err(Error) = self.ApplicationHandle.emit("cocoon:extensionHostReply", &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] Failed to emit cocoon:extensionHostReply: {}",
-						Error
-					);
-				}
+				super::Notification::ExtensionHostMessage::ExtensionHostMessage(self, &Parameter).await;
 			},
 			"ExtensionActivated" => {
-				dev_log!("grpc", "[MountainVinegRPCService] Extension activated notification received");
-				if let Err(Error) = self.ApplicationHandle.emit("cocoon:extensionActivated", &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] Failed to emit cocoon:extensionActivated: {}",
-						Error
-					);
-				}
+				super::Notification::ExtensionActivated::ExtensionActivated(self, &Parameter).await;
 			},
 			"ExtensionDeactivated" => {
-				dev_log!("grpc", "[MountainVinegRPCService] Extension deactivated notification received");
+				super::Notification::ExtensionDeactivated::ExtensionDeactivated(self, &Parameter).await;
 			},
 			"WebviewReady" => {
-				dev_log!("grpc", "[MountainVinegRPCService] Webview ready notification received");
+				super::Notification::WebviewReady::WebviewReady(self, &Parameter).await;
 			},
-			// Cocoon → Mountain → Sky: progress notifications emitted by
-			// `vscode.window.withProgress`. Each extension progress task fires
-			// `progress.start` / `progress.report` / `progress.end` with a
-			// unique handle. Mountain normalises them onto the existing
-			// `sky://notification/progress-*` channels so Sky's progress
-			// indicator renders identically whether the trigger came from an
-			// extension or a Mountain handler.
 			"progress.start" => {
-				let Handle = Parameter.get("handle").and_then(|h| h.as_str()).unwrap_or("");
-				let Title = Parameter.get("title").and_then(|h| h.as_str()).unwrap_or("");
-				let Cancellable = Parameter.get("cancellable").and_then(|h| h.as_bool()).unwrap_or(false);
-				if let Err(Error) = self.ApplicationHandle.emit(
-					"sky://notification/progress-begin",
-					json!({
-						"id": Handle,
-						"title": Title,
-						"cancellable": Cancellable,
-					}),
-				) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] sky://notification/progress-begin emit failed: {}",
-						Error
-					);
-				}
+				super::Notification::ProgressStart::ProgressStart(self, &Parameter).await;
 			},
 			"progress.report" => {
-				let Handle = Parameter.get("handle").and_then(|h| h.as_str()).unwrap_or("");
-				let Message = Parameter.get("message").and_then(|h| h.as_str()).unwrap_or("");
-				let Increment = Parameter.get("increment").and_then(|h| h.as_f64()).unwrap_or(0.0);
-				if let Err(Error) = self.ApplicationHandle.emit(
-					"sky://notification/progress-update",
-					json!({
-						"id": Handle,
-						"message": Message,
-						"increment": Increment,
-					}),
-				) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] sky://notification/progress-update emit failed: {}",
-						Error
-					);
-				}
+				super::Notification::ProgressReport::ProgressReport(self, &Parameter).await;
 			},
 			"progress.end" => {
-				let Handle = Parameter.get("handle").and_then(|h| h.as_str()).unwrap_or("");
-				if let Err(Error) = self
-					.ApplicationHandle
-					.emit("sky://notification/progress-end", json!({ "id": Handle }))
-				{
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] sky://notification/progress-end emit failed: {}",
-						Error
-					);
-				}
+				super::Notification::ProgressEnd::ProgressEnd(self, &Parameter).await;
 			},
-
-			// Cocoon → Mountain → Sky: `vscode.languages.setTextDocumentLanguage(document, languageId)`
-			// fires this so Monaco swaps the language mode on the editor.
 			"languages.setDocumentLanguage" => {
-				if let Err(Error) = self.ApplicationHandle.emit("sky://languages/setDocumentLanguage", &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] sky://languages/setDocumentLanguage emit failed: {}",
-						Error
-					);
-				}
+				super::Notification::LanguagesSetDocumentLanguage::LanguagesSetDocumentLanguage(self, &Parameter).await;
+			},
+			"workspace.applyEdit" => {
+				super::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
+			},
+			"window.showTextDocument" => {
+				super::Notification::WindowShowTextDocument::WindowShowTextDocument(self, &Parameter).await;
 			},
 
 			// Cocoon → Mountain → Sky: webview lifecycle notifications from
@@ -664,33 +598,11 @@ impl MountainService for MountainVinegRPCService {
 				}
 			},
 
-			// Cocoon → Mountain → Sky: `vscode.workspace.applyEdit(edit)`
-			// fires this when an extension wants to apply a multi-file
-			// WorkspaceEdit. The payload shape matches VS Code's `IWorkspaceEdit`
-			// - Sky delegates to its BulkEditService to apply the edits
-			// against the open models.
-			"workspace.applyEdit" => {
-				if let Err(Error) = self.ApplicationHandle.emit("sky://workspace/applyEdit", &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] sky://workspace/applyEdit emit failed: {}",
-						Error
-					);
-				}
-			},
-
-			// Cocoon → Mountain → Sky: `vscode.window.showTextDocument(uri, options)`
-			// asks the workbench to open and focus a file. Extension activation
-			// commonly uses this for "jump to definition" and "reveal config".
-			"window.showTextDocument" => {
-				if let Err(Error) = self.ApplicationHandle.emit("sky://window/showTextDocument", &Parameter) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] sky://window/showTextDocument emit failed: {}",
-						Error
-					);
-				}
-			},
+			// NOTE: `workspace.applyEdit` and `window.showTextDocument` are
+			// dispatched by atom delegations at the top of this match
+			// (Batch 15). The arm bodies that previously lived here were
+			// dead once Rust chose the first matching arm - removed to
+			// avoid the illusion of a second handler.
 
 			// Cocoon → Mountain → Sky: decoration-type lifecycle. Extensions
 			// create a decoration type (colour, gutter icon), then apply
