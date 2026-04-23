@@ -74,20 +74,7 @@ async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 	let WorkingDir = Cwd.map(ResolveCwd).unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
 
 	let mut Spawn = Command::new("git");
-	Spawn.args(Args).current_dir(&WorkingDir);
-	#[cfg(unix)]
-	{
-		// Keep the child in its own process group so a single SIGTERM
-		// targeted at the PID cleans up any pager the subprocess may have
-		// spawned.
-		use std::os::unix::process::CommandExt;
-		unsafe {
-			Spawn.pre_exec(|| {
-				libc::setsid();
-				Ok(())
-			});
-		}
-	}
+	Spawn.args(Args).current_dir(&WorkingDir).kill_on_drop(true);
 
 	let Child = Spawn.spawn().map_err(|Error| {
 		dev_log!(
@@ -310,9 +297,9 @@ pub async fn HandleCancel(args:Vec<Value>) -> Result<Value, String> {
 		dev_log!("git", "[Git] cancel op={} pid={}", OperationId, Pid);
 		#[cfg(unix)]
 		{
-			unsafe {
-				libc::kill(Pid as libc::pid_t, libc::SIGTERM);
-			}
+			let _ = std::process::Command::new("kill")
+				.args(["-TERM", &Pid.to_string()])
+				.output();
 		}
 		#[cfg(windows)]
 		{

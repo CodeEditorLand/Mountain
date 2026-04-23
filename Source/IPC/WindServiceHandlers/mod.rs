@@ -7,6 +7,7 @@ pub mod Commands;
 pub mod Configuration;
 pub mod Extensions;
 pub mod FileSystem;
+pub mod Git;
 pub mod Model;
 pub mod NativeHost;
 pub mod Navigation;
@@ -1655,6 +1656,47 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					}
 				},
 				"workspaces:getDirtyWorkspaces" => Ok(json!([])),
+
+				// Git (localGit channel) - implements stock VS Code's
+				// ILocalGitService surface plus `exec` / `isAvailable` for
+				// the built-in Git extension. Handlers spawn native `git`
+				// via tokio::process. See Batch 4 in HANDOFF §-10.
+				"git:exec" => {
+					dev_log!("git", "git:exec");
+					Git::HandleExec(args).await
+				},
+				"git:clone" => {
+					dev_log!("git", "git:clone");
+					Git::HandleClone(args).await
+				},
+				"git:pull" => {
+					dev_log!("git", "git:pull");
+					Git::HandlePull(args).await
+				},
+				"git:checkout" => {
+					dev_log!("git", "git:checkout");
+					Git::HandleCheckout(args).await
+				},
+				"git:revParse" => {
+					dev_log!("git", "git:revParse");
+					Git::HandleRevParse(args).await
+				},
+				"git:fetch" => {
+					dev_log!("git", "git:fetch");
+					Git::HandleFetch(args).await
+				},
+				"git:revListCount" => {
+					dev_log!("git", "git:revListCount");
+					Git::HandleRevListCount(args).await
+				},
+				"git:cancel" => {
+					dev_log!("git", "git:cancel");
+					Git::HandleCancel(args).await
+				},
+				"git:isAvailable" => {
+					dev_log!("git", "git:isAvailable");
+					Git::HandleIsAvailable(args).await
+				},
 
 				// Atom L2: unknown-command fallback consults the Channel registry so
 				// the log distinguishes three states:
