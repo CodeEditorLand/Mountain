@@ -120,12 +120,45 @@ pub async fn CreateStatusBarItem(
 	Service:&CocoonServiceImpl,
 	req:CreateStatusBarItemRequest,
 ) -> Result<Response<CreateStatusBarItemResponse>, Status> {
+	use CommonLibrary::{
+		StatusBar::{
+			DTO::StatusBarEntryDTO::StatusBarEntryDTO,
+			StatusBarProvider::StatusBarProvider,
+		},
+	};
 	dev_log!("cocoon", "[CocoonService] create_status_bar_item: {}", req.id);
 
-	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://statusbar/create",
-		json!({ "id": req.id, "text": req.text, "tooltip": req.tooltip }),
-	);
+	// Delegate to the StatusBarProvider trait. The trait impl inserts
+	// the entry into `ApplicationState::Feature::Markers::ActiveStatusBarItems`
+	// keyed on `EntryIdentifier`; without this registration the
+	// workbench has no memory of the entry and the first
+	// `set_status_bar_text` call with the same id rebroadcasts a
+	// fresh entry (leaking state). The trait emits
+	// `SkyEvent::StatusBarSetEntry` internally, so the UI still
+	// sees the new item.
+	let Entry = StatusBarEntryDTO {
+		EntryIdentifier:req.id.clone(),
+		ItemIdentifier:req.id.clone(),
+		ExtensionIdentifier:String::new(),
+		Name:None,
+		Text:req.text.clone(),
+		Tooltip:if req.tooltip.is_empty() { None } else { Some(json!(req.tooltip)) },
+		HasTooltipProvider:false,
+		Command:None,
+		Color:None,
+		BackgroundColor:None,
+		IsAlignedLeft:true,
+		Priority:None,
+		AccessibilityInformation:None,
+	};
+	if let Err(Error) = Service.environment.SetStatusBarEntry(Entry).await {
+		dev_log!("cocoon", "warn: [CocoonService] create_status_bar_item trait failed: {}", Error);
+		// Fallback to direct Sky emit so the UI still gets an update.
+		let _ = Service.environment.ApplicationHandle.emit(
+			"sky://statusbar/create",
+			json!({ "id": req.id, "text": req.text, "tooltip": req.tooltip }),
+		);
+	}
 
 	Ok(Response::new(CreateStatusBarItemResponse { item_id:req.id.clone() }))
 }
@@ -134,6 +167,12 @@ pub async fn SetStatusBarText(
 	Service:&CocoonServiceImpl,
 	req:SetStatusBarTextRequest,
 ) -> Result<Response<Empty>, Status> {
+	use CommonLibrary::{
+		StatusBar::{
+			DTO::StatusBarEntryDTO::StatusBarEntryDTO,
+			StatusBarProvider::StatusBarProvider,
+		},
+	};
 	dev_log!(
 		"cocoon",
 		"[CocoonService] set_status_bar_text: id={} text={}",
@@ -141,10 +180,32 @@ pub async fn SetStatusBarText(
 		req.text
 	);
 
-	let _ = Service
-		.environment
-		.ApplicationHandle
-		.emit("sky://statusbar/update", json!({ "id": req.item_id, "text": req.text }));
+	// Re-set via `SetStatusBarEntry` so the stored entry's Text
+	// field is actually updated in `ActiveStatusBarItems`, not just
+	// emitted to Sky and lost. The trait handles
+	// create-or-update semantics by HashMap insert.
+	let Entry = StatusBarEntryDTO {
+		EntryIdentifier:req.item_id.clone(),
+		ItemIdentifier:req.item_id.clone(),
+		ExtensionIdentifier:String::new(),
+		Name:None,
+		Text:req.text.clone(),
+		Tooltip:None,
+		HasTooltipProvider:false,
+		Command:None,
+		Color:None,
+		BackgroundColor:None,
+		IsAlignedLeft:true,
+		Priority:None,
+		AccessibilityInformation:None,
+	};
+	if let Err(Error) = Service.environment.SetStatusBarEntry(Entry).await {
+		dev_log!("cocoon", "warn: [CocoonService] set_status_bar_text trait failed: {}", Error);
+		let _ = Service
+			.environment
+			.ApplicationHandle
+			.emit("sky://statusbar/update", json!({ "id": req.item_id, "text": req.text }));
+	}
 
 	Ok(Response::new(Empty {}))
 }
@@ -153,35 +214,70 @@ pub async fn CreateWebviewPanel(
 	Service:&CocoonServiceImpl,
 	req:CreateWebviewPanelRequest,
 ) -> Result<Response<CreateWebviewPanelResponse>, Status> {
-	let Handle = SystemTime::now()
-		.duration_since(UNIX_EPOCH)
-		.map(|D| D.as_millis() as u32)
-		.unwrap_or(0);
-
+	use CommonLibrary::Webview::WebviewProvider::WebviewProvider;
 	dev_log!(
 		"cocoon",
-		"[CocoonService] create_webview_panel: handle={} view_type={} title={}",
-		Handle,
+		"[CocoonService] create_webview_panel: view_type={} title={}",
 		req.view_type,
 		req.title
 	);
 
-	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://webview/create",
-		json!({
-			"handle": Handle,
-			"viewType": req.view_type,
-			"title": req.title,
-			"viewColumn": req.view_column,
-			"preserveFocus": req.preserve_focus,
-			"iconPath": req.icon_path,
-		}),
-	);
+	// Delegate to the trait impl so the panel is registered in
+	// `ApplicationState::WebviewState`. Without this the extension
+	// gets a handle but Mountain never knows about the panel; the
+	// first `DisposeWebviewPanel` call then fails with "unknown
+	// handle" and webviews leak DOM into the workbench. The trait
+	// impl emits the `sky://webview/create` event internally.
+	let Handle = match Service
+		.environment
+		.CreateWebviewPanel(
+			json!({}),
+			req.view_type.clone(),
+			req.title.clone(),
+			json!({ "viewColumn": req.view_column, "preserveFocus": req.preserve_focus }),
+			json!({}),
+			json!({}),
+		)
+		.await
+	{
+		Ok(H) => H,
+		Err(Error) => {
+			dev_log!("cocoon", "warn: [CocoonService] create_webview_panel trait failed: {}", Error);
+			// Fallback to a millisecond handle so the extension gets
+			// *something* back. The legacy direct Sky emit preserves
+			// existing behaviour for callers that don't care about
+			// state tracking.
+			let Fallback = SystemTime::now()
+				.duration_since(UNIX_EPOCH)
+				.map(|D| D.as_millis() as u32)
+				.unwrap_or(0);
+			let _ = Service.environment.ApplicationHandle.emit(
+				"sky://webview/create",
+				json!({
+					"handle": Fallback,
+					"viewType": req.view_type,
+					"title": req.title,
+					"viewColumn": req.view_column,
+					"preserveFocus": req.preserve_focus,
+					"iconPath": req.icon_path,
+				}),
+			);
+			return Ok(Response::new(CreateWebviewPanelResponse { handle:Fallback }));
+		},
+	};
 
-	Ok(Response::new(CreateWebviewPanelResponse { handle:Handle }))
+	let HandleU32 = Handle.parse::<u32>().unwrap_or_else(|_| {
+		// The trait returns a numeric string; collapse to a hash if
+		// it isn't parseable so the proto field (u32) still gets a
+		// stable value.
+		Handle.chars().map(|C| C as u32).fold(0u32, |A, C| A.wrapping_add(C))
+	});
+
+	Ok(Response::new(CreateWebviewPanelResponse { handle:HandleU32 }))
 }
 
 pub async fn SetWebviewHtml(Service:&CocoonServiceImpl, req:SetWebviewHtmlRequest) -> Result<Response<Empty>, Status> {
+	use CommonLibrary::Webview::WebviewProvider::WebviewProvider;
 	dev_log!(
 		"cocoon",
 		"[CocoonService] set_webview_html: handle={} ({} bytes)",
@@ -189,11 +285,23 @@ pub async fn SetWebviewHtml(Service:&CocoonServiceImpl, req:SetWebviewHtmlReques
 		req.html.len()
 	);
 
-	// Canonical kebab-case channel; `sky://webview/setHtml` has been retired.
-	let _ = Service
+	// Delegate to trait so the HTML content is captured in
+	// `WebviewStateDTO` before the Sky emit. Subsequent reveal /
+	// restore operations can re-serve the content without a
+	// re-issue from the extension. Trait impl also emits
+	// `sky://webview/set-html` internally.
+	if let Err(Error) = Service
 		.environment
-		.ApplicationHandle
-		.emit("sky://webview/set-html", json!({ "handle": req.handle, "html": req.html }));
+		.SetWebviewHTML(req.handle.to_string(), req.html.clone())
+		.await
+	{
+		dev_log!("cocoon", "warn: [CocoonService] set_webview_html trait failed: {}", Error);
+		// Fallback: emit directly so the panel still sees the update.
+		let _ = Service
+			.environment
+			.ApplicationHandle
+			.emit("sky://webview/set-html", json!({ "handle": req.handle, "html": req.html }));
+	}
 
 	Ok(Response::new(Empty {}))
 }

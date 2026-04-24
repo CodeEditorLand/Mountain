@@ -758,107 +758,76 @@ impl CocoonService for CocoonServiceImpl {
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
 			// ---- Workspace (Cocoon MountainGRPCClient format) ----
+			// `findFiles` / `findTextInFiles` are called by Cocoon's
+			// `workspace.findFiles()` / `workspace.findTextInFiles()`
+			// API shims. Delegate to the real trait implementations
+			// (`WorkspaceProvider::FindFilesInWorkspace`,
+			// `SearchProvider::TextSearch`) which use `ignore::WalkBuilder`
+			// + `grep-searcher` - respecting `.gitignore`, doing parallel
+			// walks, and producing properly-constructed `Url` results.
+			// Prior inline implementations used naive dir-walks, hidden-
+			// dot skipping, and `format!("file://{}", path)` URI
+			// construction that mangled non-ASCII paths.
 			"findFiles" => {
-				use std::path::PathBuf;
-
-				use globset::GlobBuilder;
-				let Pattern = Params.get("pattern").and_then(|V| V.as_str()).unwrap_or("**").to_string();
-				let WorkspaceFolders = self.environment.ApplicationState.Workspace.GetWorkspaceFolders();
-				if WorkspaceFolders.is_empty() {
-					return Ok(OkResponse(RequestId, &json!({ "uris": Vec::<String>::new() })));
+				use CommonLibrary::Workspace::WorkspaceProvider::WorkspaceProvider;
+				let Include = Params
+					.get("pattern")
+					.cloned()
+					.or_else(|| Params.get("include").cloned())
+					.unwrap_or(serde_json::Value::String("**".into()));
+				let Exclude = Params
+					.get("exclude")
+					.cloned()
+					.filter(|V| !V.is_null());
+				let MaxResults = Params
+					.get("maxResults")
+					.and_then(|V| V.as_u64())
+					.map(|N| N as usize);
+				let UseIgnoreFiles = Params
+					.get("useIgnoreFiles")
+					.and_then(|V| V.as_bool())
+					.unwrap_or(true);
+				let FollowSymlinks = Params
+					.get("followSymlinks")
+					.and_then(|V| V.as_bool())
+					.unwrap_or(false);
+				match self
+					.environment
+					.FindFilesInWorkspace(Include, Exclude, MaxResults, UseIgnoreFiles, FollowSymlinks)
+					.await
+				{
+					Ok(Urls) => Ok(OkResponse(
+						RequestId,
+						&json!({ "uris": Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>() }),
+					)),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("findFiles: {}", Error))),
 				}
-				let RootPath = PathBuf::from(&WorkspaceFolders[0].URI.to_string().replace("file://", ""));
-				let Matcher = match GlobBuilder::new(&Pattern).literal_separator(false).build() {
-					Ok(G) => G.compile_matcher(),
-					Err(E) => return Ok(ErrResponse(RequestId, -32000, format!("Invalid glob: {}", E))),
-				};
-				let mut Files:Vec<String> = Vec::new();
-				let mut Stack = vec![RootPath.clone()];
-				'find_outer: while let Some(Dir) = Stack.pop() {
-					let mut Entries = match tokio::fs::read_dir(&Dir).await {
-						Ok(E) => E,
-						Err(_) => continue,
-					};
-					while let Ok(Some(Entry)) = Entries.next_entry().await {
-						let Path = Entry.path();
-						if Path.file_name().map(|N| N.to_string_lossy().starts_with('.')).unwrap_or(false) {
-							continue;
-						}
-						if Path.is_dir() {
-							Stack.push(Path);
-							continue;
-						}
-						let Rel = Path.strip_prefix(&RootPath).unwrap_or(&Path).to_string_lossy().to_string();
-						if Matcher.is_match(&Rel) {
-							Files.push(format!("file://{}", Path.to_string_lossy()));
-							if Files.len() >= 500 {
-								break 'find_outer;
-							}
-						}
-					}
-				}
-				Ok(OkResponse(RequestId, &json!({ "uris": Files })))
 			},
 			"findTextInFiles" => {
-				use std::path::PathBuf;
-
-				use globset::GlobBuilder;
-				let Pattern = Params.get("pattern").and_then(|V| V.as_str()).unwrap_or("").to_string();
-				let IncludeStr = Params
-					.get("include")
-					.and_then(|V| V.as_array())
-					.and_then(|A| A.first())
-					.and_then(|V| V.as_str())
-					.map(|S| S.to_string())
-					.unwrap_or_else(|| "**".to_string());
-				let WorkspaceFolders = self.environment.ApplicationState.Workspace.GetWorkspaceFolders();
-				if WorkspaceFolders.is_empty() {
-					return Ok(OkResponse(RequestId, &json!({ "matches": Vec::<serde_json::Value>::new() })));
+				use CommonLibrary::Search::SearchProvider::SearchProvider;
+				// VS Code's `workspace.findTextInFiles` takes a
+				// `TextSearchQuery` in field `pattern` (or passed flat
+				// at the top level). Accept both shapes.
+				let QueryValue = if Params.get("pattern").map(|V| V.is_object()).unwrap_or(false) {
+					Params.get("pattern").cloned().unwrap_or(serde_json::Value::Null)
+				} else if Params.get("pattern").map(|V| V.is_string()).unwrap_or(false) {
+					json!({
+						"pattern": Params.get("pattern").and_then(|V| V.as_str()).unwrap_or(""),
+						"isRegExp": Params.get("isRegExp").and_then(|V| V.as_bool()).unwrap_or(false),
+						"isCaseSensitive": Params.get("isCaseSensitive").and_then(|V| V.as_bool()).unwrap_or(false),
+						"isWordMatch": Params.get("isWordMatch").and_then(|V| V.as_bool()).unwrap_or(false),
+					})
+				} else {
+					Params.clone()
+				};
+				let OptionsValue = Params
+					.get("options")
+					.cloned()
+					.unwrap_or(serde_json::Value::Null);
+				match self.environment.TextSearch(QueryValue, OptionsValue).await {
+					Ok(Matches) => Ok(OkResponse(RequestId, &json!({ "matches": Matches }))),
+					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("findTextInFiles: {}", Error))),
 				}
-				let RootPath = PathBuf::from(&WorkspaceFolders[0].URI.to_string().replace("file://", ""));
-				let Matcher = GlobBuilder::new(&IncludeStr)
-					.literal_separator(false)
-					.build()
-					.map(|G| G.compile_matcher())
-					.ok();
-				let PatternLower = Pattern.to_lowercase();
-				let mut Matches:Vec<serde_json::Value> = Vec::new();
-				let mut Stack = vec![RootPath.clone()];
-				'text_outer: while let Some(Dir) = Stack.pop() {
-					let mut Entries = match tokio::fs::read_dir(&Dir).await {
-						Ok(E) => E,
-						Err(_) => continue,
-					};
-					while let Ok(Some(Entry)) = Entries.next_entry().await {
-						let Path = Entry.path();
-						if Path.file_name().map(|N| N.to_string_lossy().starts_with('.')).unwrap_or(false) {
-							continue;
-						}
-						if Path.is_dir() {
-							Stack.push(Path);
-							continue;
-						}
-						let Rel = Path.strip_prefix(&RootPath).unwrap_or(&Path).to_string_lossy().to_string();
-						if let Some(Ref) = &Matcher {
-							if !Ref.is_match(&Rel) {
-								continue;
-							}
-						}
-						let Content = match tokio::fs::read_to_string(&Path).await {
-							Ok(C) => C,
-							Err(_) => continue,
-						};
-						for (LineIdx, Line) in Content.lines().enumerate() {
-							if Line.to_lowercase().contains(&PatternLower) {
-								Matches.push(json!({ "uri": format!("file://{}", Path.to_string_lossy()), "lineNumber": LineIdx + 1, "preview": Line.trim() }));
-								if Matches.len() >= 1000 {
-									break 'text_outer;
-								}
-							}
-						}
-					}
-				}
-				Ok(OkResponse(RequestId, &json!({ "matches": Matches })))
 			},
 			"openDocument" => {
 				use tauri::Emitter;
