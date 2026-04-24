@@ -209,14 +209,36 @@ use serde_json::{Value, json};
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::dev_log;
 
-#[derive(Deserialize, Debug)]
+/// Mirrors VS Code's `ITextSearchQuery` shape (`vs/workbench/services/
+/// search/common/search.ts`). The workbench's Search view serialises
+/// the user's input into this struct and the ProxyChannel sends it as
+/// slot 0 of the `search:textSearch` call.
+///
+/// - `pattern`: the user's typed query
+/// - `isRegExp` (default `false`): when `false`, the pattern is
+///   `regex::escape`'d before compilation so a literal search for
+///   `obj.method(` doesn't blow up the regex parser.
+/// - `isCaseSensitive` (default `false`): controls the regex's
+///   case-insensitive flag.
+/// - `isWordMatch` (default `false`): wraps the pattern in `\b…\b`
+///   via `RegexMatcherBuilder::word(true)`.
+/// - `isMultiline` (default `false`): toggles `.` matching `\n`.
+#[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
 struct TextSearchQuery {
 	pattern:String,
 
+	#[serde(default)]
 	is_case_sensitive:Option<bool>,
 
+	#[serde(default)]
 	is_word_match:Option<bool>,
+
+	#[serde(default)]
+	is_reg_exp:Option<bool>,
+
+	#[serde(default)]
+	is_multiline:Option<bool>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -289,9 +311,21 @@ impl SearchProvider for MountainEnvironment {
 
 		Builder
 			.case_insensitive(!Query.is_case_sensitive.unwrap_or(false))
-			.word(Query.is_word_match.unwrap_or(false));
+			.word(Query.is_word_match.unwrap_or(false))
+			.multi_line(Query.is_multiline.unwrap_or(false));
 
-		let Matcher = Builder.build(&Query.pattern).map_err(|Error| {
+		// When `isRegExp` is false/missing (the default for the Search
+		// view's plain-text mode), escape the pattern so literal
+		// searches for strings containing regex metacharacters
+		// (`.`, `(`, `[`, `*`, `?`, etc.) don't crash the compiler
+		// or silently match the wrong thing.
+		let CompiledPattern = if Query.is_reg_exp.unwrap_or(false) {
+			Query.pattern.clone()
+		} else {
+			regex::escape(&Query.pattern)
+		};
+
+		let Matcher = Builder.build(&CompiledPattern).map_err(|Error| {
 			CommonError::InvalidArgument { ArgumentName:"pattern".into(), Reason:Error.to_string() }
 		})?;
 
