@@ -12,7 +12,11 @@
 //!    - Read `extension/package.json`, parse minimal fields (publisher, name,
 //!      version). These three determine the install directory.
 //!    - Compute target: `<InstallRoot>/<publisher>.<name>-<version>/`.
-//!    - If target already exists, refuse (caller decides whether to reinstall).
+//!    - If target already exists with a readable manifest, treat the install
+//!      as idempotent - return the existing outcome instead of re-extracting.
+//!      Matches VS Code's reinstall-is-a-no-op semantics and prevents the
+//!      renderer crash where `ExtensionsWorkbenchService` dereferences a
+//!      null result from a rejected install.
 //!    - Stream every entry whose path begins with `extension/` into the target,
 //!      stripping that prefix.
 //!    - Re-parse the extracted `package.json` as a full
@@ -91,9 +95,6 @@ pub enum InstallError {
 	#[error("VSIX manifest missing required field '{0}'")]
 	ManifestFieldMissing(&'static str),
 
-	#[error("Extension '{Identifier}' version {Version} is already installed at {InstalledAt}")]
-	AlreadyInstalled { Identifier:String, Version:String, InstalledAt:PathBuf },
-
 	#[error("Filesystem error during install: {0}")]
 	FilesystemIO(String),
 }
@@ -111,20 +112,45 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 
 	let Facts = ReadManifestFacts(VsixPath)?;
 	let InstalledAt = InstallRoot.join(format!("{}.{}-{}", Facts.Publisher, Facts.Name, Facts.Version));
+	let Identifier = format!("{}.{}", Facts.Publisher, Facts.Name);
 
+	// Idempotent reinstall: if the target directory already holds the same
+	// <publisher>.<name>-<version>, skip extraction and surface the existing
+	// install as a success. Reading the on-disk manifest handles the edge
+	// case where the directory was left in a half-written state by an earlier
+	// crash - BuildDescription will Err, and we fall through to re-extract.
 	if InstalledAt.exists() {
-		return Err(InstallError::AlreadyInstalled {
-			Identifier:format!("{}.{}", Facts.Publisher, Facts.Name),
-			Version:Facts.Version,
-			InstalledAt,
-		});
+		if let Ok(Description) = BuildDescription(&InstalledAt) {
+			dev_log!(
+				"extensions",
+				"[VsixInstaller] Reinstall no-op - '{}' v{} already present at {}",
+				Identifier,
+				Facts.Version,
+				InstalledAt.display()
+			);
+
+			return Ok(InstallOutcome {
+				Identifier,
+				Version:Facts.Version,
+				InstalledAt,
+				Description,
+			});
+		}
+
+		// Corrupt / partial previous install - wipe and re-extract below.
+		dev_log!(
+			"extensions",
+			"[VsixInstaller] Existing install at {} is unreadable - wiping and reinstalling",
+			InstalledAt.display()
+		);
+
+		fs::remove_dir_all(&InstalledAt).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
 	}
 
 	CreateParent(&InstalledAt)?;
 	ExtractPayload(VsixPath, &InstalledAt)?;
 
 	let Description = BuildDescription(&InstalledAt)?;
-	let Identifier = format!("{}.{}", Facts.Publisher, Facts.Name);
 
 	dev_log!(
 		"extensions",
