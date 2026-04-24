@@ -477,18 +477,47 @@ async fn LaunchAndManageCocoonSideCar(
 	//   Buffer()). Fixable only in upstream, not in Land.
 	// - `Use \`node --trace-deprecation\` to show where the warning was
 	//   created` - follow-up to the DEP line above.
+	// - `EntryNotFound (FileSystemError):` + follow-up stack frames -
+	//   extensions (svelte, copilot, etc.) probe paths that may not
+	//   exist and let the rejection bubble up. Node's unhandled
+	//   rejection printer splits the stack across stderr lines. The
+	//   classifier enters a stateful "suppress follow-up stack frames"
+	//   mode after the first EntryNotFound line and exits on a
+	//   non-frame line.
 	if let Some(stderr) = ChildProcess.stderr.take() {
 		tokio::spawn(async move {
 			let Reader = BufReader::new(stderr);
 			let mut Lines = Reader.lines();
+			let mut SuppressStackFrames = false;
 
 			while let Ok(Some(Line)) = Lines.next_line().await {
-				let IsBenign = Line.contains(": is already signed")
+				let Trimmed = Line.trim_start();
+				let IsStackFrame = Trimmed.starts_with("at ")
+					|| Trimmed.starts_with("code: '")
+					|| Trimmed == "}"
+					|| Trimmed.is_empty();
+				if SuppressStackFrames && IsStackFrame {
+					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
+					continue;
+				}
+				// Exited the suppression window. Reset and classify
+				// this line normally.
+				SuppressStackFrames = false;
+
+				let IsBenignSingleLine = Line.contains(": is already signed")
 					|| Line.contains(": replacing existing signature")
 					|| Line.contains("DeprecationWarning:")
 					|| Line.contains("--trace-deprecation")
 					|| Line.contains("--trace-warnings");
-				if IsBenign {
+				let IsBenignStackHead = Line.contains("EntryNotFound (FileSystemError):")
+					|| Line.contains("FileNotFound (FileSystemError):")
+					|| Line.contains("[LandFix:UnhandledRejection]")
+					|| Line.starts_with("[Patcher] unhandledRejection:")
+					|| Line.starts_with("[Patcher] uncaughtException:");
+				if IsBenignStackHead {
+					SuppressStackFrames = true;
+				}
+				if IsBenignSingleLine || IsBenignStackHead {
 					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
 				} else {
 					dev_log!("cocoon", "warn: [Cocoon stderr] {}", Line);

@@ -369,6 +369,104 @@ impl CommandExecutor for MountainEnvironment {
 					return Ok(Value::Null);
 				}
 
+				// Lazy activation: stock VS Code fires
+				// `$activateByEvent("onCommand:<cmd>")` whenever a
+				// command-not-found lookup matches an extension's
+				// declared activation events. The extension then
+				// registers its command during activation, and the
+				// second registry lookup succeeds. Without this flow,
+				// any extension that gates on `onCommand:<id>` (e.g.
+				// GitLens' primary commands, Roo-Cline's commands, Vim
+				// mode toggles) never activates in response to a user
+				// gesture - it just silently does nothing.
+				if LookupCommandContributingExtension(self, &CommandIdentifier) {
+					dev_log!(
+						"commands",
+						"[CommandProvider] Lazy activation for command '{}' - firing \
+						 onCommand:{0}",
+						CommandIdentifier
+					);
+					let Event = format!("onCommand:{}", CommandIdentifier);
+					let ActivationResult = Client::SendRequest(
+						&"cocoon-main".to_string(),
+						"$activateByEvent".to_string(),
+						json!({ "activationEvent": Event }),
+						30_000,
+					)
+					.await;
+					if let Err(Error) = ActivationResult {
+						dev_log!(
+							"commands",
+							"warn: [CommandProvider] onCommand:{} activation failed: {}",
+							CommandIdentifier,
+							Error
+						);
+					}
+					// Small yield so Cocoon's fire-and-forget
+					// `registerCommand` notification reaches Mountain's
+					// registry before the re-poll.
+					tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+					let PostActivationHandler = self
+						.ApplicationState
+						.Extension
+						.Registry
+						.CommandRegistry
+						.lock()
+						.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
+						.get(&CommandIdentifier)
+						.cloned();
+					if let Some(Handler) = PostActivationHandler {
+						match Handler {
+							CommandHandler::Native(Function) => {
+								let MainWindow = self
+									.ApplicationHandle
+									.get_webview_window("main")
+									.ok_or_else(|| CommonError::IPCError {
+										Description:"Could not find main window for \
+										 lazy-activated native command"
+											.to_string(),
+									})?;
+								let RunTime = self
+									.ApplicationHandle
+									.try_state::<Arc<ApplicationRunTime>>()
+									.ok_or_else(|| CommonError::IPCError {
+										Description:"ApplicationRunTime unavailable for \
+										 lazy-activated native command"
+											.to_string(),
+									})?;
+								return Function(
+									self.ApplicationHandle.clone(),
+									MainWindow,
+									(*RunTime).clone(),
+									Argument,
+								)
+								.await
+								.map_err(|Error| CommonError::CommandExecution {
+									CommandIdentifier,
+									Reason:Error,
+								});
+							},
+							CommandHandler::Proxied { SideCarIdentifier, CommandIdentifier: ProxiedId } => {
+								let RPCParameters = json!([ProxiedId, Argument]);
+								let RPCMethod = format!(
+									"{}$ExecuteContributedCommand",
+									ProxyTarget::ExtHostCommands.GetTargetPrefix()
+								);
+								return Client::SendRequest(
+									&SideCarIdentifier,
+									RPCMethod,
+									RPCParameters,
+									30_000,
+								)
+								.await
+								.map_err(|Error| CommonError::IPCError {
+									Description:Error.to_string(),
+								});
+							},
+						}
+					}
+				}
+
 				dev_log!(
 					"commands",
 					"error: [CommandProvider] Command '{}' not found in registry.",
@@ -435,3 +533,29 @@ impl CommandExecutor for MountainEnvironment {
 		Ok(Registry.keys().cloned().collect())
 	}
 }
+
+/// Return `true` when some scanned extension declares
+/// `onCommand:<CommandIdentifier>` as one of its activation events. Used
+/// by the lazy-activation fallback in `ExecuteCommand` - without this
+/// check we'd fire an `$activateByEvent("onCommand:X")` for every
+/// unknown command, which would cause Cocoon to log "no extension
+/// matching event" for every typo. Scans the cached registry; no IPC.
+fn LookupCommandContributingExtension(
+	Environment:&MountainEnvironment,
+	CommandIdentifier:&str,
+) -> bool {
+	let Event = format!("onCommand:{}", CommandIdentifier);
+	let Guard = match Environment.ApplicationState.Extension.ScannedExtensions.ScannedExtensions.lock() {
+		Ok(G) => G,
+		Err(_) => return false,
+	};
+	for Description in Guard.values() {
+		if let Some(Events) = &Description.ActivationEvents {
+			if Events.iter().any(|E| E == &Event) {
+				return true;
+			}
+		}
+	}
+	false
+}
+

@@ -549,6 +549,40 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	// first emit. Path shape:
 	// `<APP>/User/workspaceStorage/<wsId>/chatEditingSessions/<id>/state.json`.
 	"/chatEditingSessions/",
+	// User-level prompt and snippet folders - stock VS Code treats
+	// both as optional and lazily creates on first write. Already have
+	// `/User/snippets`; adding the prompt counterpart here.
+	"/User/prompts",
+	// Language-detection worker's seed file; absent on fresh profiles.
+	"languageDetectionWorkerCache.json",
+	// Editor-detection: VS Code's external-editor picker (and the vim
+	// + shell extensions) stat known editor app bundles to populate
+	// "Open With…" menus. Absent on a clean machine - expected.
+	"/Applications/Eclipse IDE.app",
+	"/Applications/Eclipse.app",
+	"/Applications/IntelliJ IDEA.app",
+	"/Applications/IntelliJ IDEA CE.app",
+	"/Applications/Sublime Text.app",
+	"/Applications/Notepad++.app",
+	"/Applications/Visual Studio Code.app",
+	"/Applications/Xcode.app",
+	// Vim migration path: vscodevim + others stat the user's Neovim /
+	// Vim config to offer an import wizard. Absent = "user has no
+	// existing Vim config", which is the default not an error.
+	"/.config/nvim/init.lua",
+	"/.config/nvim/init.vim",
+	"/.vimrc",
+	"/.gvimrc",
+	// SQLite state backing files workbench lazy-creates on first
+	// write. Present on subsequent runs; absent on first-ever launch
+	// of a profile.
+	"/state.vscdb",
+	"/state.vscdb-journal",
+	// Node module resolution often stats paths that don't exist as
+	// part of the resolution ladder. Already handled for
+	// `/User/globalStorage/`; add the companion workspaceStorage
+	// subtree too.
+	"/User/workspaceStorage/",
 ];
 
 /// Return true when the given path is a known-optional probe whose absence

@@ -226,15 +226,25 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			let args = DispatchArgs;
 
 			let MatchResult:Result<Value, String> = match command.as_str() {
-				// Configuration commands
-				"configuration:get" => {
-					dev_log!("config", "configuration:get");
+				// Configuration commands. VS Code's stock
+				// `ConfigurationService` channel calls `getValue` /
+				// `updateValue`; Mountain's native Effect-TS layer calls
+				// `get` / `update`. Alias both to the same handler so
+				// traffic from either rail lands in the same place.
+				"configuration:get" | "configuration:getValue" => {
+					dev_log!("config", "{}", command);
 					handle_configuration_get(runtime.clone(), args).await
 				},
-				"configuration:update" => {
-					dev_log!("config", "configuration:update");
+				"configuration:update" | "configuration:updateValue" => {
+					dev_log!("config", "{}", command);
 					handle_configuration_update(runtime.clone(), args).await
 				},
+				// `ConfigurationService` listens for `onDidChange` from
+				// the channel on the binary IPC rail. Mountain broadcasts
+				// config changes via a Tauri event directly; ack the
+				// channel-listen with Null so the ChannelClient doesn't
+				// leak a pending promise.
+				"configuration:onDidChange" => Ok(Value::Null),
 
 				// Logger commands - fire-and-forget from Wind, just acknowledge
 				"logger:log"
@@ -253,20 +263,45 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				| "logger:getRegisteredLoggers"
 				| "logger:setVisibility" => Ok(Value::Null),
 
-				// File system commands - use native handlers with URI support
-				"file:read" => handle_file_read_native(args).await,
-				"file:write" => handle_file_write_native(args).await,
+				// File system commands - use native handlers with URI support.
+				//
+				// The primary names (`file:read`, `file:write`, `file:move`)
+				// match Mountain's original dispatch table and are what
+				// Wind's Effect-TS layer calls. VS Code's
+				// `DiskFileSystemProviderClient` (reached through the
+				// binary IPC bridge in Output/IPCRendererShim) uses the
+				// stock channel-client method names `readFile`,
+				// `writeFile`, `rename`; aliasing them here keeps both
+				// rails pointing at the same handler without duplicating
+				// logic or introducing a per-caller translation table.
+				"file:read" | "file:readFile" => handle_file_read_native(args).await,
+				"file:write" | "file:writeFile" => handle_file_write_native(args).await,
 				"file:stat" => handle_file_stat_native(args).await,
 				"file:exists" => handle_file_exists_native(args).await,
 				"file:delete" => handle_file_delete_native(args).await,
 				"file:copy" => handle_file_clone_native(args).await,
-				"file:move" => handle_file_rename_native(args).await,
+				"file:move" | "file:rename" => handle_file_rename_native(args).await,
 				"file:mkdir" => handle_file_mkdir_native(args).await,
 				"file:readdir" => handle_file_readdir_native(args).await,
 				"file:readBinary" => handle_file_read_binary(runtime.clone(), args).await,
 				"file:writeBinary" => handle_file_write_binary(runtime.clone(), args).await,
+				// File watcher channel methods - `DiskFileSystemProvider`
+				// opens `watch` / `unwatch` channel calls to receive
+				// `onDidChangeFile` events. Until the Mountain-side
+				// filewatcher bridge is wired through the binary IPC we
+				// ack with Null so the workbench proceeds without a
+				// hanging promise.
+				"file:watch" | "file:unwatch" => {
+					dev_log!("fs-route", "{} (stub-ack)", command);
+					Ok(Value::Null)
+				},
 
-				// Storage commands
+				// Storage commands. VS Code's
+				// `ApplicationStorageDatabaseClient` channel methods are
+				// `getItems` / `updateItems` / `optimize` / `close` /
+				// `isUsed`; the shorter `storage:get` / `storage:set` are
+				// Mountain-native conveniences. All route through the
+				// same ApplicationState storage backing.
 				"storage:get" => handle_storage_get(runtime.clone(), args).await,
 				"storage:set" => handle_storage_set(runtime.clone(), args).await,
 				"storage:getItems" => {
@@ -290,6 +325,13 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				},
 				"storage:close" => {
 					dev_log!("storage", "storage:close");
+					Ok(Value::Null)
+				},
+				// Stock VS Code exposes `onDidChangeItems` as a channel
+				// event. Ack the listen-request; real change delivery is
+				// via Tauri event elsewhere.
+				"storage:onDidChangeItems" | "storage:logStorage" => {
+					dev_log!("storage-verbose", "{} (stub-ack)", command);
 					Ok(Value::Null)
 				},
 
@@ -331,12 +373,25 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					Ok(Value::Null)
 				},
 
-				// Command registry commands
-				"commands:execute" => handle_commands_execute(runtime.clone(), args).await,
-				"commands:getAll" => {
-					dev_log!("commands", "commands:getAll");
+				// Command registry commands. Stock VS Code
+				// `MainThreadCommands` / `CommandService` channel methods
+				// are `executeCommand` and `getCommands`; Mountain's
+				// Effect-TS rail uses `execute` / `getAll`. Alias both.
+				"commands:execute" | "commands:executeCommand" => {
+					handle_commands_execute(runtime.clone(), args).await
+				},
+				"commands:getAll" | "commands:getCommands" => {
+					dev_log!("commands", "{}", command);
 					handle_commands_get_all(runtime.clone()).await
 				},
+				// Register/unregister from a side-car channel perspective
+				// is a no-op: Cocoon sends `$registerCommand` via gRPC
+				// (handled elsewhere). Ack Null so the workbench side
+				// doesn't hang on a promise.
+				"commands:registerCommand"
+				| "commands:unregisterCommand"
+				| "commands:onDidRegisterCommand"
+				| "commands:onDidExecuteCommand" => Ok(Value::Null),
 
 				// Extension host commands
 				"extensions:getAll" => {
@@ -631,22 +686,36 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					handle_quick_input_show_input_box(runtime.clone(), args).await
 				},
 
-				// Workspaces commands
-				"workspaces:getFolders" => {
-					dev_log!("workspaces", "workspaces:getFolders");
+				// Workspaces commands. VS Code's `IWorkspacesService`
+				// channel uses `getWorkspaceFolders` /
+				// `addWorkspaceFolders`; Mountain's rail uses the
+				// shorter `getFolders` / `addFolder`. Alias both.
+				"workspaces:getFolders"
+				| "workspaces:getWorkspaceFolders"
+				| "workspaces:getWorkspace" => {
+					dev_log!("workspaces", "{}", command);
 					handle_workspaces_get_folders(runtime.clone()).await
 				},
-				"workspaces:addFolder" => {
-					dev_log!("workspaces", "workspaces:addFolder");
+				"workspaces:addFolder" | "workspaces:addWorkspaceFolders" => {
+					dev_log!("workspaces", "{}", command);
 					handle_workspaces_add_folder(runtime.clone(), args).await
 				},
-				"workspaces:removeFolder" => {
-					dev_log!("workspaces", "workspaces:removeFolder");
+				"workspaces:removeFolder" | "workspaces:removeWorkspaceFolders" => {
+					dev_log!("workspaces", "{}", command);
 					handle_workspaces_remove_folder(runtime.clone(), args).await
 				},
-				"workspaces:getName" => {
-					dev_log!("workspaces", "workspaces:getName");
+				"workspaces:getName" | "workspaces:getWorkspaceIdentifier" => {
+					dev_log!("workspaces", "{}", command);
 					handle_workspaces_get_name(runtime.clone()).await
+				},
+				// `onDidChangeWorkspaceFolders` channel-listen: Mountain
+				// broadcasts the change via Tauri event, so ack the
+				// listen request with Null (no-op on the binary rail).
+				"workspaces:onDidChangeWorkspaceFolders"
+				| "workspaces:onDidChangeWorkspaceName"
+				| "workspaces:enterWorkspace" => {
+					dev_log!("workspaces", "{} (stub-ack)", command);
+					Ok(Value::Null)
 				},
 
 				// Themes commands
@@ -663,14 +732,30 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					handle_themes_set(runtime.clone(), args).await
 				},
 
-				// Search commands
-				"search:findInFiles" => {
-					dev_log!("search", "search:findInFiles");
+				// Search commands. Stock VS Code `SearchService` channel
+				// uses `textSearch` / `fileSearch`; Mountain's Effect-TS
+				// rail uses `findInFiles` / `findFiles`. Alias both.
+				"search:findInFiles"
+				| "search:textSearch"
+				| "search:searchText" => {
+					dev_log!("search", "{}", command);
 					handle_search_find_in_files(runtime.clone(), args).await
 				},
-				"search:findFiles" => {
-					dev_log!("search", "search:findFiles");
+				"search:findFiles"
+				| "search:fileSearch"
+				| "search:searchFile" => {
+					dev_log!("search", "{}", command);
 					handle_search_find_files(runtime.clone(), args).await
+				},
+				// Cancellation / onProgress channel methods: workbench's
+				// SearchService listens for these. We have no streaming
+				// search yet, so ack with Null and let the workbench
+				// treat the call as a no-op.
+				"search:cancel"
+				| "search:clearCache"
+				| "search:onDidChangeResult" => {
+					dev_log!("search", "{} (stub-ack)", command);
+					Ok(Value::Null)
 				},
 
 				// Decorations commands
