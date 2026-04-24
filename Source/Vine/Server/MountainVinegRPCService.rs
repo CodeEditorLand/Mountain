@@ -253,8 +253,12 @@ impl MountainService for MountainVinegRPCService {
 		let RequestIdentifier = RequestData.request_identifier;
 		let ReceiveInstant = std::time::Instant::now();
 
+		// Per-call receive line is pure noise at the `grpc` tag - one line
+		// per request × thousands of requests. Move under `grpc-verbose`
+		// so the cheap default is quiet; failures are logged by the
+		// dispatch path regardless.
 		dev_log!(
-			"grpc",
+			"grpc-verbose",
 			"[MountainVinegRPCService] Received gRPC Request [ID: {}]: Method='{}'",
 			RequestIdentifier,
 			MethodName
@@ -277,8 +281,11 @@ impl MountainService for MountainVinegRPCService {
 				.duration_since(std::time::UNIX_EPOCH)
 				.map(|D| D.as_nanos())
 				.unwrap_or(0);
+			// Per-call receive timestamp for latency diagnosis - only
+			// useful when actively profiling. Gate under `rpc-latency`
+			// so `short` / `grpc` don't print it.
 			dev_log!(
-				"grpc",
+				"rpc-latency",
 				"[LandFix:RPC] grpc-recv method={} id={} size={} t_ns={}",
 				MethodName,
 				RequestIdentifier,
@@ -309,8 +316,13 @@ impl MountainService for MountainVinegRPCService {
 				// structures. Only log param size at the default dev-log
 				// level and let the DevLog `all` target surface the body if
 				// the caller opts in.
+				// One line per request with only the byte count (the body is
+				// too large / PII-risky to log unconditionally). The size
+				// alone is already in Cocoon's `Request metrics:` line under
+				// `grpc-verbose`, so duplicate here adds noise without
+				// signal. Route to `grpc-verbose`.
 				dev_log!(
-					"grpc",
+					"grpc-verbose",
 					"[MountainVinegRPCService] Params for [ID: {}] ({} bytes)",
 					RequestIdentifier,
 					RequestData.parameter.len()
@@ -332,7 +344,7 @@ impl MountainService for MountainVinegRPCService {
 		};
 
 		dev_log!(
-			"grpc",
+			"grpc-verbose",
 			"[MountainVinegRPCService] Dispatching request [ID: {}] to Track::DispatchLogic",
 			RequestIdentifier
 		);
@@ -351,16 +363,23 @@ impl MountainService for MountainVinegRPCService {
 		match DispatchResult {
 			Ok(SuccessfulResult) => {
 				if IsHotRpc {
+					// Hot-RPC dispatched latency line - already narrow
+					// (~50 tagged RPCs per session). Route to `rpc-latency`
+					// so the profiling context stays opt-in.
 					dev_log!(
-						"grpc",
+						"rpc-latency",
 						"[LandFix:RPC] dispatched method={} id={} elapsed={}ms",
 						MethodName,
 						RequestIdentifier,
 						ReceiveInstant.elapsed().as_millis()
 					);
 				}
+				// Success completion fires per request (14k+ in long sessions).
+				// Failures still log under the unconditional `error:` path
+				// below, so routing this to `grpc-verbose` doesn't hide real
+				// problems.
 				dev_log!(
-					"grpc",
+					"grpc-verbose",
 					"[MountainVinegRPCService] Request [ID: {}] completed successfully",
 					RequestIdentifier
 				);
@@ -369,20 +388,26 @@ impl MountainService for MountainVinegRPCService {
 			},
 
 			Err(ErrorString) => {
-				// `FileSystem.ReadFile` "Resource not found" is a routine
-				// occurrence - extensions probe for optional cache files on
-				// activate (terminal-suggest, json-language-features schema
-				// associations, etc.). Downgrade 404s to an info-level note
-				// so the error log reflects genuine failures only. The
-				// response itself is still returned with code -32000 so
-				// Cocoon's `readFile` shim can convert it into a proper
-				// `vscode.FileSystemError.FileNotFound`.
-				let LooksLike404 = MethodName == "FileSystem.ReadFile"
-					&& (ErrorString.to_lowercase().contains("resource not found")
-						|| ErrorString.to_lowercase().contains("not found"));
+				// Routine 404s - extensions probe for optional workspace
+				// files on activate:
+				//   - `FileSystem.ReadFile` → missing cache files
+				//     (terminal-suggest, JSON schema associations,
+				//     composer.json, Gemfile.lock, Drupal.php).
+				//   - `FileSystem.Stat` → optional config probes.
+				// Both surface as "resource not found" / "not found" /
+				// "ENOENT". Downgrade to `grpc-verbose` so the default
+				// log reflects genuine failures only. The response still
+				// returns -32000 so Cocoon's shim can convert it to a
+				// proper `vscode.FileSystemError.FileNotFound`.
+				let LowerError = ErrorString.to_lowercase();
+				let LooksLike404 = (MethodName == "FileSystem.ReadFile"
+					|| MethodName == "FileSystem.Stat")
+					&& (LowerError.contains("resource not found")
+						|| LowerError.contains("not found")
+						|| LowerError.contains("enoent"));
 				if LooksLike404 {
 					dev_log!(
-						"grpc",
+						"grpc-verbose",
 						"[LandFix:MountainVinegRPC] Request [ID: {}] {} 404 (benign): {}",
 						RequestIdentifier,
 						MethodName,
@@ -431,8 +456,11 @@ impl MountainService for MountainVinegRPCService {
 
 		let MethodName = NotificationData.method;
 
+		// Notifications are even higher-volume than requests
+		// (progress.report alone fires 2500+ times per long activation).
+		// Move under `grpc-verbose` alongside the request-side banner.
 		dev_log!(
-			"grpc",
+			"grpc-verbose",
 			"[MountainVinegRPCService] Received gRPC Notification: Method='{}'",
 			MethodName
 		);

@@ -19,7 +19,7 @@ pub fn CreateEffect<R:Runtime>(
 				.map(|D| D.as_nanos())
 				.unwrap_or(0);
 			dev_log!(
-				"grpc",
+				"tree-latency",
 				"[LandFix:Tree] dispatch-enter method={} t_ns={}",
 				MethodName,
 				DispatchEnterNs

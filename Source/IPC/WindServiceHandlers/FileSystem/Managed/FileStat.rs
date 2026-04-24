@@ -24,6 +24,6 @@ pub async fn handle_file_stat(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 		.await
 		.map_err(|e| format!("Failed to stat file: {}", e))?;
 
-	dev_log!("vfs", "legacy_stat: {}", path);
+	dev_log!("vfs-verbose", "legacy_stat: {}", path);
 	Ok(json!(stats))
 }

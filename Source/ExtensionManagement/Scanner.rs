@@ -329,7 +329,7 @@ pub async fn ScanDirectoryForExtensions(
 						let mut Unresolved = 0u32;
 						ResolveNLSPlaceholdersInner(&mut ManifestValue, &NLSMap, &mut Replaced, &mut Unresolved);
 						dev_log!(
-							"extensions",
+							"nls",
 							"[LandFix:NLS] {} → {} replaced, {} unresolved placeholders",
 							PotentialExtensionPath.display(),
 							Replaced,
@@ -486,14 +486,14 @@ async fn LoadNLSBundle(
 		Err(Error) => {
 			if PlaceholdersNeeded {
 				dev_log!(
-					"extensions",
+					"nls",
 					"[LandFix:NLS] no bundle for {} ({})",
 					ExtensionPath.display(),
 					Error
 				);
 			} else {
 				dev_log!(
-					"extensions",
+					"nls",
 					"[LandFix:NLS] {} has no placeholders, no bundle needed",
 					ExtensionPath.display()
 				);
@@ -505,7 +505,7 @@ async fn LoadNLSBundle(
 		Ok(V) => V,
 		Err(Error) => {
 			dev_log!(
-				"extensions",
+				"nls",
 				"warn: [LandFix:NLS] failed to parse {}: {}",
 				NLSPath.display(),
 				Error
@@ -528,7 +528,7 @@ async fn LoadNLSBundle(
 		}
 	}
 	dev_log!(
-		"extensions",
+		"nls",
 		"[LandFix:NLS] loaded {} keys for {}",
 		Resolved.len(),
 		ExtensionPath.display()

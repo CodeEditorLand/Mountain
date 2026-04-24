@@ -20,6 +20,6 @@ pub async fn handle_file_exists(runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 
 	let exists = provider.StatFile(&PathBuf::from(path)).await.is_ok();
 
-	dev_log!("vfs", "exists: {} = {}", path, exists);
+	dev_log!("vfs-verbose", "exists: {} = {}", path, exists);
 	Ok(json!(exists))
 }

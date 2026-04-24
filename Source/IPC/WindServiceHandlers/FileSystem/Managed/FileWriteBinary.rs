@@ -41,6 +41,6 @@ pub async fn handle_file_write_binary(
 		.await
 		.map_err(|e:CommonError| format!("Failed to write binary file: {}", e))?;
 
-	dev_log!("vfs", "writeBinary: {} ({} bytes)", path, content_len);
+	dev_log!("vfs-verbose", "writeBinary: {} ({} bytes)", path, content_len);
 	Ok(Value::Null)
 }

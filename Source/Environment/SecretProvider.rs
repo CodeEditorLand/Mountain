@@ -245,7 +245,7 @@ impl SecretProvider for MountainEnvironment {
 	#[allow(unused_mut, unused_variables)]
 	async fn GetSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<Option<String>, CommonError> {
 		dev_log!(
-			"storage",
+			"storage-verbose",
 			"[SecretProvider] Getting secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier,
 			Key
@@ -256,7 +256,7 @@ impl SecretProvider for MountainEnvironment {
 			if let Some(AirClient) = &self.AirClient {
 				if IsAirAvailable(AirClient).await {
 					dev_log!(
-						"storage",
+						"storage-verbose",
 						"[SecretProvider] Delegating GetSecret to Air service for key: '{}'",
 						Key
 					);
@@ -273,7 +273,7 @@ impl SecretProvider for MountainEnvironment {
 		}
 
 		dev_log!(
-			"storage",
+			"storage-verbose",
 			"[SecretProvider] Using local keyring for ext: '{}'",
 			ExtensionIdentifier
 		);
@@ -298,7 +298,7 @@ impl SecretProvider for MountainEnvironment {
 	#[allow(unused_mut, unused_variables)]
 	async fn StoreSecret(&self, ExtensionIdentifier:String, Key:String, Value:String) -> Result<(), CommonError> {
 		dev_log!(
-			"storage",
+			"storage-verbose",
 			"[SecretProvider] Storing secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier,
 			Key
@@ -309,7 +309,7 @@ impl SecretProvider for MountainEnvironment {
 			if let Some(AirClient) = &self.AirClient {
 				if IsAirAvailable(AirClient).await {
 					dev_log!(
-						"storage",
+						"storage-verbose",
 						"[SecretProvider] Delegating StoreSecret to Air service for key: '{}'",
 						Key
 					);
@@ -326,7 +326,7 @@ impl SecretProvider for MountainEnvironment {
 		}
 
 		dev_log!(
-			"storage",
+			"storage-verbose",
 			"[SecretProvider] Using local keyring for ext: '{}'",
 			ExtensionIdentifier
 		);
@@ -347,7 +347,7 @@ impl SecretProvider for MountainEnvironment {
 	#[allow(unused_mut, unused_variables)]
 	async fn DeleteSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<(), CommonError> {
 		dev_log!(
-			"storage",
+			"storage-verbose",
 			"[SecretProvider] Deleting secret for ext: '{}', key: '{}'",
 			ExtensionIdentifier,
 			Key
@@ -358,7 +358,7 @@ impl SecretProvider for MountainEnvironment {
 			if let Some(AirClient) = &self.AirClient {
 				if IsAirAvailable(AirClient).await {
 					dev_log!(
-						"storage",
+						"storage-verbose",
 						"[SecretProvider] Delegating DeleteSecret to Air service for key: '{}'",
 						Key
 					);
@@ -375,7 +375,7 @@ impl SecretProvider for MountainEnvironment {
 		}
 
 		dev_log!(
-			"storage",
+			"storage-verbose",
 			"[SecretProvider] Using local keyring for ext: '{}'",
 			ExtensionIdentifier
 		);

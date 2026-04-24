@@ -140,9 +140,37 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	// Code code becomes an IPC round-trip); keeping those lines only
 	// expands log volume without adding signal. The actual dispatch below
 	// still runs - this just skips the `[DEV:IPC] invoke:` line.
+	//
+	// Filesystem methods were driving 13k+ IPC lines per session
+	// (FileSystem.ReadFile alone fires thousands of times during svelte
+	// / language-server activation). Same for `storage:getItems`,
+	// `configuration:lookup`, `themes:getColorTheme` which workbench
+	// services poll on every re-render. Add them to the quiet list -
+	// the Cocoon gRPC layer + TauriInvoke still log errors, and the IPC
+	// `done:` line below also skips these so there's symmetric silence.
 	let IsHighFrequencyCommand = matches!(
 		command.as_str(),
-		"logger:log" | "logger:registerLogger" | "logger:createLogger" | "log:registerLogger" | "log:createLogger"
+		"logger:log"
+			| "logger:registerLogger"
+			| "logger:createLogger"
+			| "log:registerLogger"
+			| "log:createLogger"
+			| "file:stat"
+			| "file:readFile"
+			| "file:readdir"
+			| "file:writeFile"
+			| "file:delete"
+			| "file:rename"
+			| "file:realpath"
+			| "file:read"
+			| "file:write"
+			| "storage:getItems"
+			| "storage:updateItems"
+			| "configuration:lookup"
+			| "configuration:inspect"
+			| "themes:getColorTheme"
+			| "output:append"
+			| "progress:report"
 	);
 	if !IsHighFrequencyCommand {
 		dev_log!("ipc", "invoke: {} args_count={}", command, args.len());
@@ -242,11 +270,14 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				"storage:get" => handle_storage_get(runtime.clone(), args).await,
 				"storage:set" => handle_storage_set(runtime.clone(), args).await,
 				"storage:getItems" => {
-					dev_log!("storage", "storage:getItems");
+					// Workbench services poll this on every theme / scope
+					// change; suppress the bare banner and rely on the IPC
+					// `invoke:`/`done:` summary for volume + latency.
+					dev_log!("storage-verbose", "storage:getItems");
 					handle_storage_get_items(runtime.clone(), args).await
 				},
 				"storage:updateItems" => {
-					dev_log!("storage", "storage:updateItems");
+					dev_log!("storage-verbose", "storage:updateItems");
 					handle_storage_update_items(runtime.clone(), args).await
 				},
 				"storage:optimize" => {

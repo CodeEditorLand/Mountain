@@ -25,6 +25,6 @@ pub async fn handle_file_readdir(runtime:Arc<ApplicationRunTime>, args:Vec<Value
 		.await
 		.map_err(|e| format!("Failed to read directory: {}", e))?;
 
-	dev_log!("vfs", "readdir_legacy: {} ({} entries)", path, entries.len());
+	dev_log!("vfs-verbose", "readdir_legacy: {} ({} entries)", path, entries.len());
 	Ok(json!(entries))
 }

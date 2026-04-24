@@ -34,6 +34,6 @@ pub async fn handle_file_write(runtime:Arc<ApplicationRunTime>, args:Vec<Value>)
 		.await
 		.map_err(|e:CommonError| format!("Failed to write file: {}", e))?;
 
-	dev_log!("vfs", "written: {} ({} bytes)", path, content.len());
+	dev_log!("vfs-verbose", "written: {} ({} bytes)", path, content.len());
 	Ok(Value::Null)
 }

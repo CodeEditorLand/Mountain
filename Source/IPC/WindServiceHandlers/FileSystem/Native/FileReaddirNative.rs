@@ -12,7 +12,7 @@ use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_fr
 pub async fn handle_file_readdir_native(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing directory path")?)?;
 
-	dev_log!("vfs", "readdir: {}", Path);
+	dev_log!("vfs-verbose", "readdir: {}", Path);
 
 	let mut Entries = tokio::fs::read_dir(&Path)
 		.await

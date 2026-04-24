@@ -591,6 +591,33 @@ fn EnabledTags() -> &'static Vec<String> {
 /// Whether `LAND_DEV_LOG=short` is active.
 pub fn IsShort() -> bool { *SHORT_MODE.get_or_init(|| EnabledTags().iter().any(|T| T == "short")) }
 
+/// Tags explicitly muted by `short` mode. These are the per-call
+/// firehose tags (receive / dispatch / verify / forward banners) that
+/// add no diagnostic signal beyond the aggregate IPC round-trip timing
+/// already present in the `ipc` / `grpc` summary lines. Listing them
+/// here keeps `short` usable as a "quiet but informative" default - the
+/// failure path for each of these still logs a specific error tag
+/// (`grpc` for gRPC errors, `ipc` for IPC failures, etc.).
+///
+/// Anything in this list is reachable only via `LAND_DEV_LOG=all`, an
+/// explicit tag match (e.g. `LAND_DEV_LOG=grpc-verbose`), or the
+/// tag-specific env override.
+const SHORT_MODE_MUTED_TAGS:&[&str] = &[
+	"grpc-verbose",
+	"vfs-verbose",
+	"fs-route",
+	"tauri-invoke",
+	"rpc-latency",
+	"tree-latency",
+	"nls",
+	"fs-read",
+	"preflight",
+	"wsns",
+	"storage-verbose",
+	"config-prime",
+	"cel-dispatch",
+];
+
 /// Check if a tag is enabled.
 pub fn IsEnabled(Tag:&str) -> bool {
 	let Tags = EnabledTags();
@@ -598,7 +625,17 @@ pub fn IsEnabled(Tag:&str) -> bool {
 		return false;
 	}
 	let Lower = Tag.to_lowercase();
-	Tags.iter().any(|T| T == "all" || T == "short" || T == Lower.as_str())
+	// Explicit tag match always wins (even if `short` would normally mute it).
+	if Tags.iter().any(|T| T == Lower.as_str()) {
+		return true;
+	}
+	if Tags.iter().any(|T| T == "all") {
+		return true;
+	}
+	if Tags.iter().any(|T| T == "short") {
+		return !SHORT_MODE_MUTED_TAGS.iter().any(|Muted| *Muted == Lower.as_str());
+	}
+	false
 }
 
 /// Log a tagged dev message. Only prints if the tag is enabled via

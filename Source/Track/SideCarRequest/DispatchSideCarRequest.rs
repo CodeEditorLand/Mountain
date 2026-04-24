@@ -71,8 +71,13 @@ pub async fn DispatchSideCarRequest<R:Runtime>(
 
 	Parameters:Value,
 ) -> Result<Value, String> {
+	// Per-request dispatch line - fires for every FileSystem.ReadFile /
+	// FileSystem.Stat / Configuration.Inspect round-trip from Cocoon. The
+	// caller-side `[DEV:IPC] invoke:` and `done:` pair already carries the
+	// method + timing (when not in the high-frequency skip list), so this
+	// line adds nothing at the default log level. Route to `grpc-verbose`.
 	dev_log!(
-		"ipc",
+		"grpc-verbose",
 		"[Track/SideCarRequest] Dispatching sidecar request from '{}': {}",
 		SideCarIdentifier,
 		MethodName

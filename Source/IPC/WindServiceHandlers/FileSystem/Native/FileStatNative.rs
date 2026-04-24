@@ -17,8 +17,12 @@ use crate::{IPC::DevLog, dev_log};
 pub async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
 
+	// Per-path stat emits at very high volume during workbench boot
+	// (package.json / launch.json / settings.json probes from every
+	// extension). Gate to `vfs-verbose`; the ENOENT path retains the
+	// `vfs` tag so real misses still surface at the default level.
 	if !DevLog::IsBenignEnoent(&Path) {
-		dev_log!("vfs", "stat: {}", Path);
+		dev_log!("vfs-verbose", "stat: {}", Path);
 	}
 
 	let Metadata = tokio::fs::symlink_metadata(&Path).await.map_err(|E| {
@@ -35,7 +39,7 @@ pub async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {
 	})?;
 
 	if !DevLog::IsBenignEnoent(&Path) {
-		dev_log!("vfs", "stat OK: {} (dir={})", Path, Metadata.is_dir());
+		dev_log!("vfs-verbose", "stat OK: {} (dir={})", Path, Metadata.is_dir());
 	}
 	Ok(metadata_to_istat(&Metadata))
 }

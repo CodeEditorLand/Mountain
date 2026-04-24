@@ -30,7 +30,11 @@ use crate::{ApplicationState::ApplicationState, dev_log};
 /// user-installed VSIXes never reach the Extensions sidebar even though
 /// they are present on disk.
 pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&Path) -> Result<(), CommonError> {
-	dev_log!("vfs", "[EnvironmentSecurity] Verifying path: {}", PathToCheck.display());
+	// Per-call verification line is one of the highest-volume tags
+	// (~15k hits per long session). The failure path below logs its own
+	// line; the success path is auditable from IPC-side request logs.
+	// Keep under `vfs-verbose` for deep debugging only.
+	dev_log!("vfs-verbose", "[EnvironmentSecurity] Verifying path: {}", PathToCheck.display());
 
 	// Tier 1: trusted system paths bypass workspace gating. See
 	// `IsTrustedSystemPath` for the complete allow-list. Scanner reads,

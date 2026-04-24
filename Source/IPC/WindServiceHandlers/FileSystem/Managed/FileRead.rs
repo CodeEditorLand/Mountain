@@ -25,6 +25,6 @@ pub async fn handle_file_read(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 		.await
 		.map_err(|e| format!("Failed to read file: {}", e))?;
 
-	dev_log!("vfs", "read: {} ({} bytes)", path, content.len());
+	dev_log!("vfs-verbose", "read: {} ({} bytes)", path, content.len());
 	Ok(json!(content))
 }

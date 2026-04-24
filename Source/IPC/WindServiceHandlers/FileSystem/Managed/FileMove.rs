@@ -33,6 +33,6 @@ pub async fn handle_file_move(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 		.await
 		.map_err(|e:CommonError| format!("Failed to move file: {} -> {}", source, destination))?;
 
-	dev_log!("vfs", "moved: {} -> {}", source, destination);
+	dev_log!("vfs-verbose", "moved: {} -> {}", source, destination);
 	Ok(Value::Null)
 }

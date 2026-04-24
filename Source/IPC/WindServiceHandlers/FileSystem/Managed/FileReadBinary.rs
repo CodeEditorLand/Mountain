@@ -28,6 +28,6 @@ pub async fn handle_file_read_binary(
 		.await
 		.map_err(|e| format!("Failed to read binary file: {}", e))?;
 
-	dev_log!("vfs", "readBinary: {} ({} bytes)", path, content.len());
+	dev_log!("vfs-verbose", "readBinary: {} ({} bytes)", path, content.len());
 	Ok(json!(content))
 }

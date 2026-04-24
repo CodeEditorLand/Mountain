@@ -33,6 +33,6 @@ pub async fn handle_file_copy(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 		.await
 		.map_err(|e:CommonError| format!("Failed to copy file: {} -> {}", source, destination))?;
 
-	dev_log!("vfs", "copied: {} -> {}", source, destination);
+	dev_log!("vfs-verbose", "copied: {} -> {}", source, destination);
 	Ok(Value::Null)
 }

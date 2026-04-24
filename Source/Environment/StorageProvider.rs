@@ -264,11 +264,16 @@ impl StorageProvider for MountainEnvironment {
 	) -> Result<(), CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
+		// Per-key updates fire at every workbench state change (sidebar
+		// view state, panel layout, editor tab order, telemetry opt-ins).
+		// Short-form + long-form both emit under `storage-verbose` so the
+		// default log stays clean; `LAND_DEV_LOG=storage-verbose` restores
+		// the original verbose tracing.
 		if crate::IPC::DevLog::IsShort() {
-			crate::dev_log!("storage", "update {} {}", ScopeName, Key);
+			crate::dev_log!("storage-verbose", "update {} {}", ScopeName, Key);
 		} else {
 			dev_log!(
-				"storage",
+				"storage-verbose",
 				"[StorageProvider] Updating value in {} scope for key: {}",
 				ScopeName,
 				Key
@@ -353,7 +358,7 @@ impl StorageProvider for MountainEnvironment {
 	async fn GetAllStorage(&self, IsGlobalScope:bool) -> Result<Value, CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		dev_log!("storage", "[StorageProvider] Getting all values from {} scope.", ScopeName);
+		dev_log!("storage-verbose", "[StorageProvider] Getting all values from {} scope.", ScopeName);
 
 		let StorageMapMutex = if IsGlobalScope {
 			&self.ApplicationState.Configuration.MementoGlobalStorage
@@ -372,7 +377,7 @@ impl StorageProvider for MountainEnvironment {
 	async fn SetAllStorage(&self, IsGlobalScope:bool, FullState:Value) -> Result<(), CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		dev_log!("storage", "[StorageProvider] Setting all values for {} scope.", ScopeName);
+		dev_log!("storage-verbose", "[StorageProvider] Setting all values for {} scope.", ScopeName);
 
 		let DeserializedState:HashMap<String, Value> = serde_json::from_value(FullState)?;
 
@@ -419,7 +424,10 @@ impl StorageProvider for MountainEnvironment {
 /// An internal helper function to asynchronously write the storage map to a
 /// file.
 async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
-	dev_log!("storage", "[StorageProvider] Persisting storage to disk: {}", Path.display());
+	// Fires on every `storage:updateItems` that mutates the global map
+	// (~50 per session during workbench boot alone). The failure path
+	// below logs unconditionally; the success path is per-call noise.
+	dev_log!("storage-verbose", "[StorageProvider] Persisting storage to disk: {}", Path.display());
 
 	match serde_json::to_string_pretty(&Data) {
 		Ok(JSONString) => {
