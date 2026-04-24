@@ -16,7 +16,11 @@ use crate::{
 
 pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let CommandId = Parameter.get("commandId").and_then(Value::as_str).unwrap_or("");
-	dev_log!("grpc", "[MountainVinegRPCService] Cocoon registered command: {}", CommandId);
+	// Per-command registration (~100 commands / session). Useful for
+	// verifying extension command contributions but noisy at the `grpc`
+	// level. Route to `command-register` so it's opt-in alongside
+	// `provider-register`.
+	dev_log!("command-register", "[MountainVinegRPCService] Cocoon registered command: {}", CommandId);
 	if CommandId.is_empty() {
 		return;
 	}

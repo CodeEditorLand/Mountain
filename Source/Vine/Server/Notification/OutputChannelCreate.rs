@@ -13,7 +13,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 pub async fn OutputChannelCreate(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://output/create", Parameter);
 	dev_log!(
-		"grpc",
+		"output-verbose",
 		"[OutputChannel] create id={}",
 		Parameter.get("id").and_then(Value::as_str).unwrap_or("?")
 	);

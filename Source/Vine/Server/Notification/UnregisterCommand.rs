@@ -23,6 +23,6 @@ pub async fn UnregisterCommand(Service:&MountainVinegRPCService, Parameter:&Valu
 		.lock()
 	{
 		Registry.remove(CommandId);
-		dev_log!("grpc", "[MountainVinegRPCService] Cocoon unregistered command: {}", CommandId);
+		dev_log!("command-register", "[MountainVinegRPCService] Cocoon unregistered command: {}", CommandId);
 	}
 }

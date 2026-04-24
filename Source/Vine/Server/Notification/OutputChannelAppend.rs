@@ -10,8 +10,13 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://output/append", Parameter);
+	// Per-append fire - `roo-cline`, `TypeScript`, `dart-code` all stream
+	// stdout into their output channels which fires 200+ appends per
+	// boot. The Sky-side consumer already sees the data via
+	// `sky://output/append`; the tag line here adds no signal beyond
+	// volume. Route to `output-verbose`.
 	dev_log!(
-		"grpc",
+		"output-verbose",
 		"[OutputChannel] append channel={}",
 		Parameter.get("channel").and_then(Value::as_str).unwrap_or("?")
 	);

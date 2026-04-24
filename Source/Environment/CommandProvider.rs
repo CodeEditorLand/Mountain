@@ -240,8 +240,13 @@ impl CommandExecutor for MountainEnvironment {
 
 		match HandlerInfoOption {
 			Some(CommandHandler::Native(Function)) => {
+				// Per-execution line. The setContext dominator is already
+				// gated in Command/Bootstrap.rs; other native commands
+				// (openWalkthrough, etc.) fire rarely enough that the
+				// surviving tag volume is low, but `commands-verbose`
+				// keeps this opt-in for consistency.
 				dev_log!(
-					"commands",
+					"commands-verbose",
 					"[CommandProvider] Executing NATIVE command '{}'.",
 					CommandIdentifier
 				);
@@ -262,7 +267,7 @@ impl CommandExecutor for MountainEnvironment {
 
 			Some(CommandHandler::Proxied { SideCarIdentifier, CommandIdentifier: ProxiedCommandIdentifier }) => {
 				dev_log!(
-					"commands",
+					"commands-verbose",
 					"[CommandProvider] Executing PROXIED command '{}' on sidecar '{}'.",
 					CommandIdentifier,
 					SideCarIdentifier

@@ -616,6 +616,13 @@ const SHORT_MODE_MUTED_TAGS:&[&str] = &[
 	"storage-verbose",
 	"config-prime",
 	"cel-dispatch",
+	"output-verbose",
+	"command-register",
+	"provider-register",
+	"ext-scan-verbose",
+	"channel-stub",
+	"commands-verbose",
+	"scheme-assets",
 ];
 
 /// Check if a tag is enabled.

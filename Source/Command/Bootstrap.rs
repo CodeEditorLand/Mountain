@@ -347,7 +347,11 @@ fn CommandSetContext(
 	Argument:Value,
 ) -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 	Box::pin(async move {
-		dev_log!("commands", "[Native Command] setContext: {}", Argument);
+		// setContext fires on every UI state change (focus, view toggle,
+		// gitlens mode, SCM repo change). ~130 calls per session. Route
+		// to `commands-verbose` so per-keypress context changes don't
+		// flood the default log.
+		dev_log!("commands-verbose", "[Native Command] setContext: {}", Argument);
 		Ok(Value::Null)
 	})
 }

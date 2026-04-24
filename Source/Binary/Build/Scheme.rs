@@ -739,7 +739,12 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
 	let Uri = Request.uri().to_string();
-	dev_log!("lifecycle", "[LandFix:VscodeFile] Request: {}", Uri);
+	// Per-asset-request line - every `<img src="vscode-file://...">` +
+	// worker / wasm / font in the workbench fires through here. The
+	// `scheme-assets` line below (opt-in tag) already captures the
+	// same data; duplicating under `lifecycle` at the default level
+	// just floods the log.
+	dev_log!("scheme-assets", "[LandFix:VscodeFile] Request: {}", Uri);
 	dev_log!("scheme-assets", "[SchemeAssets] request uri={}", Uri);
 
 	// Extract path from: vscode-file://vscode-app/path/to/file
@@ -814,7 +819,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 		let AbsolutePath = format!("/{}", CleanPath);
 		let FilesystemPath = std::path::Path::new(&AbsolutePath);
 		dev_log!(
-			"lifecycle",
+			"scheme-assets",
 			"[LandFix:VscodeFile] os-abs candidate {} (exists={}, is_file={})",
 			AbsolutePath,
 			FilesystemPath.exists(),
@@ -825,7 +830,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 				Ok(Bytes) => {
 					let Mime = MimeFromExtension(&CleanPath);
 					dev_log!(
-						"lifecycle",
+						"scheme-assets",
 						"[LandFix:VscodeFile] os-abs served {} ({}, {} bytes)",
 						AbsolutePath,
 						Mime,

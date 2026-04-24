@@ -754,8 +754,14 @@ impl MountainService for MountainVinegRPCService {
 					.strip_prefix("register_")
 					.map(|Stripped| Stripped.strip_suffix("_provider").unwrap_or(Stripped))
 					.unwrap_or("");
+				// The second `provider-register` dev_log below carries the
+				// superset of fields (MethodName, scheme, extension id)
+				// that make the line useful. The `grpc`-tagged copy here
+				// was just the short form printed twice per register.
+				// Route to `grpc-verbose` so the `short` log only shows
+				// one line per provider registration.
 				dev_log!(
-					"grpc",
+					"grpc-verbose",
 					"[MountainVinegRPCService] Cocoon registered {} provider: handle={}, lang={}",
 					ProviderTypeName,
 					Handle,

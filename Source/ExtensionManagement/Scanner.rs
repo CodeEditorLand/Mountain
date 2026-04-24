@@ -288,8 +288,12 @@ pub async fn ScanDirectoryForExtensions(
 
 			let PackageJsonPath = PotentialExtensionPath.join("package.json");
 
+			// Per-candidate-directory probe, fires for every top-level
+			// entry the scanner inspects (203 lines per session). The
+			// accepted / rejected disposition is already covered by the
+			// `ext-scan` tag below.
 			dev_log!(
-				"extensions",
+				"ext-scan-verbose",
 				"[ExtensionScanner] Checking for package.json in: {}",
 				PotentialExtensionPath.display()
 			);
