@@ -1,192 +1,113 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
 //! Search handlers - find in files, find files by glob.
+//!
+//! **Both handlers now delegate to the properly-implemented trait
+//! methods on `MountainEnvironment`** instead of carrying their own
+//! inline fs-walk. The inline versions used naive `starts_with('.')`
+//! hidden-file skipping (doesn't honour `.gitignore`), no regex engine,
+//! a bogus `format!("file://{}", path)` URI constructor, and a single-
+//! threaded walker. The trait impls live in:
+//!
+//! - `Environment/SearchProvider.rs` (`TextSearch`) - `grep-searcher` +
+//!   `RegexMatcherBuilder` + `ignore::WalkBuilder::build_parallel()`
+//!   with `PerFileSink` collection.
+//! - `Environment/WorkspaceProvider.rs` (`FindFilesInWorkspace`) -
+//!   `ignore`-aware glob walker with `.gitignore` support, max-result
+//!   cap, symlink handling, and proper `Url::from_file_path` URI
+//!   construction.
+//!
+//! This wiring was the "lot of dead code that needs to be connected"
+//! the user flagged - the trait impls were reachable only through
+//! `Environment.Require<dyn SearchProvider>()` / `WorkspaceProvider`
+//! calls and no IPC handler ever issued those calls.
 
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 use serde_json::{Value, json};
+use CommonLibrary::{Search::SearchProvider::SearchProvider, Workspace::WorkspaceProvider::WorkspaceProvider};
 
 use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};
 
-/// Search text across all workspace files (line-by-line grep, max 1000 results).
+/// `search:findInFiles` / `search:textSearch` / `search:searchText`.
+///
+/// Wire contract (VS Code's `ProxyChannel.toService(search)` path):
+/// positional args = [TextSearchQuery, TextSearchOptions]. The trait
+/// method `SearchProvider::TextSearch` accepts the raw JSON and does
+/// its own `serde_json::from_value::<TextSearchQuery>` so callers can
+/// keep sending arbitrary shapes - we pass through directly.
 pub async fn handle_search_find_in_files(
 	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
+	mut args:Vec<Value>,
 ) -> Result<Value, String> {
-	use globset::GlobBuilder;
-	use tokio::fs;
-
-	let Pattern = args
-		.first()
-		.and_then(|V| V.as_str())
-		.ok_or("search:findInFiles requires pattern".to_string())?
-		.to_string();
-	let IsRegex = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
-	let IsCaseSensitive = args.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
-	let _IsWordMatch = args.get(3).and_then(|V| V.as_bool()).unwrap_or(false);
-	let IncludeGlob = args.get(4).and_then(|V| V.as_str()).unwrap_or("**").to_string();
-	let ExcludeGlob = args.get(5).and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let MaxResults = args.get(6).and_then(|V| V.as_u64()).unwrap_or(1000) as usize;
-
-	let WorkspaceFolders = runtime.Environment.ApplicationState.Workspace.GetWorkspaceFolders();
-
-	if WorkspaceFolders.is_empty() {
-		return Ok(json!([]));
-	}
-
-	let RootPath = PathBuf::from(&WorkspaceFolders[0].URI.to_string().replace("file://", ""));
-
-	// Build include matcher
-	let IncludeMatcher = GlobBuilder::new(&IncludeGlob)
-		.literal_separator(false)
-		.build()
-		.map(|G| G.compile_matcher())
-		.ok();
-
-	// Build exclude matcher
-	let ExcludeMatcher = if !ExcludeGlob.is_empty() {
-		GlobBuilder::new(&ExcludeGlob)
-			.literal_separator(false)
-			.build()
-			.map(|G| G.compile_matcher())
-			.ok()
+	// Positional → named translation. VS Code's SearchService sends the
+	// query object in slot 0; older Wind Effect callers passed flat
+	// positional args (pattern, isRegex, isCase, isWord, include,
+	// exclude, maxResults). Accept both by promoting flat args into a
+	// TextSearchQuery-shaped object.
+	let QueryValue = if args.first().map(|V| V.is_object()).unwrap_or(false) {
+		args.remove(0)
+	} else if let Some(Pattern) = args.first().and_then(|V| V.as_str()) {
+		let IsRegex = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsCase = args.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsWord = args.get(3).and_then(|V| V.as_bool()).unwrap_or(false);
+		json!({
+			"pattern": Pattern,
+			"isRegex": IsRegex,
+			"isCaseSensitive": IsCase,
+			"isWordMatch": IsWord,
+		})
 	} else {
-		None
+		return Err("search:findInFiles requires pattern or TextSearchQuery".to_string());
 	};
 
-	let SearchText = Pattern.clone();
-	let mut Matches = Vec::new();
+	let OptionsValue = args.into_iter().next().unwrap_or(Value::Null);
 
-	// Walk directory recursively
-	let mut Stack = vec![RootPath.clone()];
-	while let Some(Dir) = Stack.pop() {
-		let mut Entries = match fs::read_dir(&Dir).await {
-			Ok(E) => E,
-			Err(_) => continue,
-		};
+	dev_log!("search", "search:textSearch delegating to SearchProvider::TextSearch");
 
-		while let Ok(Some(Entry)) = Entries.next_entry().await {
-			let Path = Entry.path();
-			let RelPath = Path.strip_prefix(&RootPath).unwrap_or(&Path).to_string_lossy().to_string();
-
-			// Skip hidden dirs
-			if Path.file_name().map(|N| N.to_string_lossy().starts_with('.')).unwrap_or(false) {
-				continue;
-			}
-
-			if Path.is_dir() {
-				Stack.push(Path);
-				continue;
-			}
-
-			// Check include/exclude globs
-			if let Some(Ref) = &IncludeMatcher {
-				if !Ref.is_match(&RelPath) {
-					continue;
-				}
-			}
-			if let Some(Ref) = &ExcludeMatcher {
-				if Ref.is_match(&RelPath) {
-					continue;
-				}
-			}
-
-			// Read file and search line by line
-			let Content = match fs::read_to_string(&Path).await {
-				Ok(C) => C,
-				Err(_) => continue,
-			};
-
-			for (LineIndex, Line) in Content.lines().enumerate() {
-				let Hit = if IsRegex {
-					// Simple contains fallback (no regex crate available here)
-					Line.contains(&SearchText)
-				} else if IsCaseSensitive {
-					Line.contains(&SearchText)
-				} else {
-					Line.to_lowercase().contains(&SearchText.to_lowercase())
-				};
-
-				if Hit {
-					let Uri = format!("file://{}", Path.to_string_lossy());
-					Matches.push(json!({
-						"uri": Uri,
-						"lineNumber": LineIndex + 1,
-						"preview": Line.trim(),
-					}));
-
-					if Matches.len() >= MaxResults {
-						return Ok(json!(Matches));
-					}
-				}
-			}
-		}
-	}
-
-	Ok(json!(Matches))
+	runtime
+		.Environment
+		.TextSearch(QueryValue, OptionsValue)
+		.await
+		.map_err(|Error| Error.to_string())
 }
 
-/// Search file paths by glob pattern in workspace.
+/// `search:findFiles` / `search:fileSearch` / `search:searchFile`.
+///
+/// Wire contract: positional args = [includePattern, excludePattern?,
+/// maxResults?, useIgnoreFiles?, followSymlinks?]. Delegates to
+/// `WorkspaceProvider::FindFilesInWorkspace` which returns `Vec<Url>`;
+/// we reshape to `Vec<String>` for the renderer.
 pub async fn handle_search_find_files(
 	runtime:Arc<ApplicationRunTime>,
 	args:Vec<Value>,
 ) -> Result<Value, String> {
-	use globset::GlobBuilder;
-	use tokio::fs;
+	let IncludePattern = args.first().cloned().ok_or_else(|| {
+		"search:findFiles requires include pattern in slot 0".to_string()
+	})?;
+	let ExcludePattern = args.get(1).cloned().filter(|V| !V.is_null());
+	let MaxResults = args.get(2).and_then(|V| V.as_u64()).map(|N| N as usize);
+	let UseIgnoreFiles = args.get(3).and_then(|V| V.as_bool()).unwrap_or(true);
+	let FollowSymlinks = args.get(4).and_then(|V| V.as_bool()).unwrap_or(false);
 
-	let Pattern = args
-		.first()
-		.and_then(|V| V.as_str())
-		.ok_or("search:findFiles requires pattern".to_string())?
-		.to_string();
-	let MaxResults = args.get(1).and_then(|V| V.as_u64()).unwrap_or(500) as usize;
+	dev_log!(
+		"search",
+		"search:fileSearch delegating to WorkspaceProvider::FindFilesInWorkspace (ignore={}, symlinks={})",
+		UseIgnoreFiles,
+		FollowSymlinks
+	);
 
-	let WorkspaceFolders = runtime.Environment.ApplicationState.Workspace.GetWorkspaceFolders();
+	let Urls = runtime
+		.Environment
+		.FindFilesInWorkspace(
+			IncludePattern,
+			ExcludePattern,
+			MaxResults,
+			UseIgnoreFiles,
+			FollowSymlinks,
+		)
+		.await
+		.map_err(|Error| Error.to_string())?;
 
-	if WorkspaceFolders.is_empty() {
-		return Ok(json!([]));
-	}
-
-	let RootPath = PathBuf::from(&WorkspaceFolders[0].URI.to_string().replace("file://", ""));
-
-	let Matcher = GlobBuilder::new(&Pattern)
-		.literal_separator(false)
-		.build()
-		.map(|G| G.compile_matcher())
-		.map_err(|Error| format!("Invalid glob pattern: {}", Error))?;
-
-	let mut Files = Vec::new();
-	let mut Stack = vec![RootPath.clone()];
-
-	while let Some(Dir) = Stack.pop() {
-		let mut Entries = match fs::read_dir(&Dir).await {
-			Ok(E) => E,
-			Err(_) => continue,
-		};
-
-		while let Ok(Some(Entry)) = Entries.next_entry().await {
-			let Path = Entry.path();
-
-			if Path.file_name().map(|N| N.to_string_lossy().starts_with('.')).unwrap_or(false) {
-				continue;
-			}
-
-			if Path.is_dir() {
-				Stack.push(Path);
-				continue;
-			}
-
-			let RelPath = Path.strip_prefix(&RootPath).unwrap_or(&Path).to_string_lossy().to_string();
-
-			if Matcher.is_match(&RelPath) {
-				Files.push(format!("file://{}", Path.to_string_lossy()));
-
-				if Files.len() >= MaxResults {
-					return Ok(json!(Files));
-				}
-			}
-		}
-	}
-
-	Ok(json!(Files))
+	Ok(json!(Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>()))
 }

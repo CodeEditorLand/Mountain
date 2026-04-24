@@ -12,7 +12,12 @@ use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_fr
 pub async fn handle_file_readdir_native(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing directory path")?)?;
 
-	dev_log!("vfs-verbose", "readdir: {}", Path);
+	// Emit at the default-visible `vfs` level instead of
+	// `vfs-verbose`: readdir fires at most once per folder expand
+	// (unlike stat which fires per probe), and it is the primary
+	// observable for "is the Explorer view calling through to
+	// Mountain?" diagnostics. The handler itself stays cheap.
+	dev_log!("vfs", "readdir: {}", Path);
 
 	let mut Entries = tokio::fs::read_dir(&Path)
 		.await
