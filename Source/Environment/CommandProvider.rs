@@ -357,6 +357,9 @@ impl CommandExecutor for MountainEnvironment {
 				if CommandIdentifier.starts_with("_typescript.")
 					|| CommandIdentifier.starts_with("_extensionHost.")
 					|| CommandIdentifier.starts_with("_workbench.registerWebview")
+					|| CommandIdentifier.ends_with(".activationCompleted")
+					|| CommandIdentifier.ends_with(".activated")
+					|| CommandIdentifier.ends_with(".ready")
 				{
 					dev_log!(
 						"commands",

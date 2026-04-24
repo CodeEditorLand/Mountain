@@ -476,7 +476,12 @@ pub fn FlushDedup() {
 //      one place.
 
 const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
-	// VS Code / Claude / Copilot probe paths.
+	// VS Code / Claude / Copilot probe paths. Bare `/.claude` and `/.vscode`
+	// entries cover extension walk-ups that stat the directory itself before
+	// looking inside; the per-file variants below remain for self-documentation
+	// but are supersets of the bare directory match.
+	"/.claude",
+	"/.vscode",
 	".claude/agents",
 	".claude/settings.json",
 	".claude/settings.local.json",
@@ -623,6 +628,7 @@ const SHORT_MODE_MUTED_TAGS:&[&str] = &[
 	"channel-stub",
 	"commands-verbose",
 	"scheme-assets",
+	"cocoon-stderr-verbose",
 ];
 
 /// Check if a tag is enabled.

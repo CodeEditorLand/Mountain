@@ -461,14 +461,38 @@ async fn LaunchAndManageCocoonSideCar(
 		});
 	}
 
-	// Capture stderr for warn-level logging
+	// Capture stderr for warn-level logging.
+	//
+	// Node and macOS tooling write a stream of informational-only noise
+	// to stderr that is indistinguishable from fatal errors at the line
+	// level. Downgrade these to the verbose `cocoon-stderr-verbose` tag
+	// (silent under `LAND_DEV_LOG=short`) so the main cocoon channel only
+	// carries actionable Node errors:
+	//
+	// - `: is already signed` / `: replacing existing signature` - macOS
+	//   codesign informational output when Cocoon re-signs a just-rebuilt
+	//   extension binary. Not an error.
+	// - `DeprecationWarning:` / `(node:...) [DEP0...]` - Node deprecation
+	//   warnings from VS Code's upstream dependencies (punycode, url.parse,
+	//   Buffer()). Fixable only in upstream, not in Land.
+	// - `Use \`node --trace-deprecation\` to show where the warning was
+	//   created` - follow-up to the DEP line above.
 	if let Some(stderr) = ChildProcess.stderr.take() {
 		tokio::spawn(async move {
 			let Reader = BufReader::new(stderr);
 			let mut Lines = Reader.lines();
 
 			while let Ok(Some(Line)) = Lines.next_line().await {
-				dev_log!("cocoon", "warn: [Cocoon stderr] {}", Line);
+				let IsBenign = Line.contains(": is already signed")
+					|| Line.contains(": replacing existing signature")
+					|| Line.contains("DeprecationWarning:")
+					|| Line.contains("--trace-deprecation")
+					|| Line.contains("--trace-warnings");
+				if IsBenign {
+					dev_log!("cocoon-stderr-verbose", "[Cocoon stderr] {}", Line);
+				} else {
+					dev_log!("cocoon", "warn: [Cocoon stderr] {}", Line);
+				}
 			}
 		});
 	}
@@ -652,7 +676,20 @@ async fn LaunchAndManageCocoonSideCar(
 	// Trigger startup extension activation. Cocoon is fully reactive -
 	// it won't activate any extensions until Mountain tells it to.
 	// Fire-and-forget: don't block on activation, and don't fail init if it errors.
+	//
+	// Stock VS Code fires a cascade of activation events at boot:
+	//   1. `*` - unconditional "activate anything that contributes *"
+	//   2. `onStartupFinished` - queued extensions whose start may be
+	//      deferred until after the first frame renders
+	//   3. `workspaceContains:<pattern>` for each pattern any extension
+	//      contributes, fired per matching workspace folder
+	//
+	// Previously only `*` fired, which meant a large class of extensions
+	// that gate on `workspaceContains:package.json`, `onStartupFinished`,
+	// or similar events never activated without user interaction. The
+	// added bursts below bring startup coverage in line with stock.
 	let SideCarId = SideCarIdentifier.clone();
+	let EnvironmentForActivation = Environment.clone();
 	tokio::spawn(async move {
 		// Small delay to let Cocoon finish processing the init response
 		sleep(Duration::from_millis(500)).await;
@@ -668,8 +705,104 @@ async fn LaunchAndManageCocoonSideCar(
 		.await
 		{
 			dev_log!("cocoon", "warn: [CocoonManagement] $activateByEvent(\"*\") failed: {}", Error);
+			return;
+		}
+		dev_log!("cocoon", "[CocoonManagement] Startup extensions activation (*) triggered");
+
+		// Phase 2: workspaceContains: events. Iterate the scanned
+		// extension registry, collect every pattern contributed via the
+		// `workspaceContains:<pattern>` activation event, and fire the
+		// event if at least one workspace folder contains a path
+		// matching the pattern. Patterns are treated as filename globs
+		// relative to any workspace folder root; matching is done with
+		// a lightweight walk bounded by depth 3 and 2048 total visited
+		// entries per folder to cap worst-case cost on huge repos.
+		let WorkspacePatterns = {
+			let AppState = &EnvironmentForActivation.ApplicationState;
+			let Folders:Vec<std::path::PathBuf> = AppState
+				.Workspace
+				.WorkspaceFolders
+				.lock()
+				.ok()
+				.map(|Guard| {
+					Guard.iter()
+						.filter_map(|Folder| Folder.URI.to_file_path().ok())
+						.collect::<Vec<_>>()
+				})
+				.unwrap_or_default();
+
+			let Patterns:Vec<String> = AppState
+				.Extension
+				.ScannedExtensions
+				.ScannedExtensions
+				.lock()
+				.ok()
+				.map(|Guard| {
+					let mut Set:std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+					for Description in Guard.values() {
+						if let Some(Events) = &Description.ActivationEvents {
+							for Event in Events {
+								if let Some(Pattern) = Event.strip_prefix("workspaceContains:") {
+									Set.insert(Pattern.to_string());
+								}
+							}
+						}
+					}
+					Set.into_iter().collect()
+				})
+				.unwrap_or_default();
+
+			(Folders, Patterns)
+		};
+
+		let (WorkspaceFolders, Patterns):(Vec<std::path::PathBuf>, Vec<String>) = WorkspacePatterns;
+		if !WorkspaceFolders.is_empty() && !Patterns.is_empty() {
+			let Matched = FindMatchingWorkspaceContainsPatterns(&WorkspaceFolders, &Patterns);
+			dev_log!(
+				"exthost",
+				"[CocoonManagement] workspaceContains scan: {} pattern(s) matched across {} folder(s)",
+				Matched.len(),
+				WorkspaceFolders.len()
+			);
+			for Pattern in Matched {
+				let Event = format!("workspaceContains:{}", Pattern);
+				if let Err(Error) = Vine::Client::SendRequest(
+					&SideCarId,
+					"$activateByEvent".to_string(),
+					serde_json::json!({ "activationEvent": Event }),
+					30_000,
+				)
+				.await
+				{
+					dev_log!(
+						"cocoon",
+						"warn: [CocoonManagement] $activateByEvent({}) failed: {}",
+						Event,
+						Error
+					);
+				}
+			}
+		}
+
+		// Phase 3: onStartupFinished. Fire after the `*` burst has had a
+		// moment to complete so late-binding extensions layered on top
+		// of startup contributions resolve in the expected order.
+		sleep(Duration::from_millis(2_000)).await;
+		if let Err(Error) = Vine::Client::SendRequest(
+			&SideCarId,
+			"$activateByEvent".to_string(),
+			serde_json::json!({ "activationEvent": "onStartupFinished" }),
+			30_000,
+		)
+		.await
+		{
+			dev_log!(
+				"cocoon",
+				"warn: [CocoonManagement] $activateByEvent(onStartupFinished) failed: {}",
+				Error
+			);
 		} else {
-			dev_log!("cocoon", "[CocoonManagement] Startup extensions activation triggered");
+			dev_log!("cocoon", "[CocoonManagement] onStartupFinished activation triggered");
 		}
 	});
 
@@ -919,4 +1052,147 @@ fn SweepStaleCocoon(Port:u16) {
 		}
 		dev_log!("cocoon", "[CocoonSweep] PID {} reaped.", Pid);
 	}
+}
+
+/// Return the subset of `Patterns` for which at least one workspace folder
+/// contains a matching file or directory. Patterns are interpreted the same
+/// way VS Code does for `workspaceContains:<pattern>` activation events:
+///
+/// - A bare filename (no slash, no wildcards) matches an entry with that
+///   name at the workspace root (e.g. `package.json`).
+/// - A path with slashes but no wildcards matches a direct descendant
+///   relative to the root (e.g. `.vscode/launch.json`).
+/// - A glob with `**/` prefix matches any descendant up to a bounded depth.
+/// - Any other wildcard form is matched via a simple segment-by-segment
+///   walk honouring `*` (single segment) and `**` (any number of segments).
+///
+/// Matching is bounded to depth 3 and 4096 total directory entries per
+/// workspace root to keep the cost sub-100 ms on large monorepos. Anything
+/// deeper is rare for activation-event triggers; the trade-off is
+/// documented in VS Code's own `ExtensionService.scanExtensions`.
+fn FindMatchingWorkspaceContainsPatterns(
+	Folders:&[std::path::PathBuf],
+	Patterns:&[String],
+) -> Vec<String> {
+	use std::collections::HashSet;
+
+	const MAX_DEPTH:usize = 3;
+	const MAX_ENTRIES_PER_ROOT:usize = 4096;
+
+	let mut Matched:HashSet<String> = HashSet::new();
+	for Folder in Folders {
+		if !Folder.is_dir() {
+			continue;
+		}
+		// Collect up to MAX_ENTRIES_PER_ROOT paths relative to the folder.
+		let mut Entries:Vec<String> = Vec::new();
+		let mut Stack:Vec<(std::path::PathBuf, usize)> = vec![(Folder.clone(), 0)];
+		while let Some((Current, Depth)) = Stack.pop() {
+			if Entries.len() >= MAX_ENTRIES_PER_ROOT {
+				break;
+			}
+			let ReadDirResult = std::fs::read_dir(&Current);
+			let ReadDir = match ReadDirResult {
+				Ok(R) => R,
+				Err(_) => continue,
+			};
+			for Entry in ReadDir.flatten() {
+				if Entries.len() >= MAX_ENTRIES_PER_ROOT {
+					break;
+				}
+				let Path = Entry.path();
+				let Relative = match Path.strip_prefix(Folder) {
+					Ok(R) => R.to_string_lossy().replace('\\', "/"),
+					Err(_) => continue,
+				};
+				let IsDir = Entry.file_type().map(|T| T.is_dir()).unwrap_or(false);
+				Entries.push(Relative.clone());
+				if IsDir && Depth + 1 < MAX_DEPTH {
+					Stack.push((Path, Depth + 1));
+				}
+			}
+		}
+
+		for Pattern in Patterns {
+			if Matched.contains(Pattern) {
+				continue;
+			}
+			if PatternMatchesAnyEntry(Pattern, &Entries) {
+				Matched.insert(Pattern.clone());
+			}
+		}
+	}
+	Matched.into_iter().collect()
+}
+
+/// Very small glob-matcher scoped to VS Code `workspaceContains:` syntax.
+/// Supports literal paths, `*` (one path segment), and `**` (zero or more
+/// segments). Case-sensitive per the VS Code spec.
+fn PatternMatchesAnyEntry(Pattern:&str, Entries:&[String]) -> bool {
+	let HasWildcard = Pattern.contains('*') || Pattern.contains('?');
+	if !HasWildcard {
+		return Entries.iter().any(|E| E == Pattern);
+	}
+	let PatternSegments:Vec<&str> = Pattern.split('/').collect();
+	Entries.iter().any(|E| SegmentMatch(&PatternSegments, &E.split('/').collect::<Vec<_>>()))
+}
+
+fn SegmentMatch(Pattern:&[&str], Entry:&[&str]) -> bool {
+	if Pattern.is_empty() {
+		return Entry.is_empty();
+	}
+	let Head = Pattern[0];
+	if Head == "**" {
+		// `**` matches zero or more segments. Try consuming 0..=entry.len().
+		for Consumed in 0..=Entry.len() {
+			if SegmentMatch(&Pattern[1..], &Entry[Consumed..]) {
+				return true;
+			}
+		}
+		return false;
+	}
+	if Entry.is_empty() {
+		return false;
+	}
+	if SingleSegmentMatch(Head, Entry[0]) {
+		return SegmentMatch(&Pattern[1..], &Entry[1..]);
+	}
+	false
+}
+
+fn SingleSegmentMatch(Pattern:&str, Segment:&str) -> bool {
+	if Pattern == "*" {
+		return true;
+	}
+	if !Pattern.contains('*') && !Pattern.contains('?') {
+		return Pattern == Segment;
+	}
+	// Minimal star-glob on a single segment: split by '*' and check each
+	// fragment appears in order. Doesn't support `?` (rare in
+	// workspaceContains patterns); unsupported glob chars fall through to
+	// literal equality.
+	let Fragments:Vec<&str> = Pattern.split('*').collect();
+	let mut Cursor = 0usize;
+	for (Index, Fragment) in Fragments.iter().enumerate() {
+		if Fragment.is_empty() {
+			continue;
+		}
+		if Index == 0 {
+			if !Segment[Cursor..].starts_with(Fragment) {
+				return false;
+			}
+			Cursor += Fragment.len();
+			continue;
+		}
+		match Segment[Cursor..].find(Fragment) {
+			Some(Offset) => Cursor += Offset + Fragment.len(),
+			None => return false,
+		}
+	}
+	if let Some(Last) = Fragments.last()
+		&& !Last.is_empty()
+	{
+		return Segment.ends_with(Last);
+	}
+	true
 }
