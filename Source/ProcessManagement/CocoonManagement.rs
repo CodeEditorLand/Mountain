@@ -84,9 +84,30 @@ use crate::{
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
 const COCOON_GRPC_PORT:u16 = 50052;
 const MOUNTAIN_GRPC_PORT:u16 = 50051;
-const GRPC_CONNECT_RETRY_INTERVAL_MS:u64 = 1000;
-const GRPC_CONNECT_MAX_ATTEMPTS:u32 = 20;
 const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
+
+/// Exponential-backoff retry parameters for the Mountain → Cocoon gRPC
+/// handshake. Replaces the previous "20 × 1000 ms fixed poll" which
+/// under-probed the common race (Cocoon's stage2 binds the port at
+/// ~200 ms so attempts 1-2 fail and we sat idle through 18 more whole-
+/// second sleeps) and over-waited the real failure (when Cocoon is
+/// genuinely dead, we wasted 20 s before reporting).
+///
+/// Policy: start at 50 ms, double each attempt up to a 2 s ceiling,
+/// with a hard 20 s total-budget. Under healthy spawn timing (Cocoon
+/// up at 150-600 ms) this converges on attempts 3-5 in <~400 ms total;
+/// under a genuinely dead Cocoon the loop abandons at the budget.
+const GRPC_CONNECT_INITIAL_MS:u64 = 50;
+const GRPC_CONNECT_MAX_DELAY_MS:u64 = 2_000;
+const GRPC_CONNECT_BUDGET_MS:u64 = 20_000;
+
+/// Relative path from the resolved Cocoon package root to the bundled
+/// entry module. Used by the pre-flight guard below to fail fast with
+/// an actionable error when the bundle is missing (esbuild failure,
+/// partial rm -rf, freshly cloned checkout without `pnpm run
+/// prepublishOnly`, etc.) instead of spawning Node into a dying
+/// require() chain.
+const COCOON_BUNDLE_PROBE:&str = "../Cocoon/Target/Bootstrap/Implementation/CocoonMain.js";
 const HANDSHAKE_TIMEOUT_MS:u64 = 60000;
 const HEALTH_CHECK_INTERVAL_SECONDS:u64 = 5;
 const MAX_RESTART_ATTEMPTS:u32 = 3;
