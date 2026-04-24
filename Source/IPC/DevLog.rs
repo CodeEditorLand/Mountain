@@ -487,6 +487,8 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	".vscode/launch.json",
 	".vscode/extensions.json",
 	".vscode/tasks.json",
+	".vscode/mcp.json",
+	".mcp.json",
 	"agentPlugins",
 	"agent-plugins",
 	"chatEditingSessions",
@@ -501,6 +503,15 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	// `resolve_userdata`.
 	"/User/tasks.json",
 	"/User/mcp.json",
+	"/User/snippets",
+	"/User/keybindings.json",
+	// Workspace-storage sidecar files the workbench stats on every project
+	// open - absent until the AI-generated-workspace feature writes one.
+	"aiGeneratedWorkspaces.json",
+	// Git extension probes `.git/config` on every workspace folder to
+	// detect whether the folder is a git worktree; ENOENT is the
+	// normal "not a git repo" signal, not an error.
+	"/.git/config",
 	// Chat language-model registry is written on first chat interaction.
 	// Absent on fresh profiles; VS Code reads-before-first-write every boot.
 	"chatLanguageModels.json",

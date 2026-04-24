@@ -831,15 +831,25 @@ impl MountainService for MountainVinegRPCService {
 				// event that Wind may or may not listen for. The
 				// `notif-drop` tag surfaces every fall-through so we can
 				// tell at a glance which notifications Cocoon emits that
-				// Mountain has no first-class handler for (register_*
-				// provider variants beyond the seven handled above,
-				// register_debug_adapter, register_task_provider,
-				// register_uri_handler, register_file_system_provider, …).
+				// Mountain has no first-class handler for. The large OR
+				// match above covers every `register_*` / `register_*_provider`
+				// variant the Cocoon vscode-API shim is known to emit;
+				// anything reaching here is either a new upstream addition or
+				// an `unregister_*` / generic notification without a typed
+				// handler. Payload preview included so diagnosis doesn't need
+				// a second run.
+				let PayloadPreview = if NotificationData.parameter.len() <= 160 {
+					String::from_utf8_lossy(&NotificationData.parameter).into_owned()
+				} else {
+					let Slice = &NotificationData.parameter[..160];
+					format!("{}…", String::from_utf8_lossy(Slice))
+				};
 				dev_log!(
 					"notif-drop",
-					"[NotifDrop] method={} payload_bytes={} (falls through to cocoon:{} event)",
+					"[NotifDrop] method={} payload_bytes={} preview={:?} (falls through to cocoon:{} event)",
 					MethodName,
 					NotificationData.parameter.len(),
+					PayloadPreview,
 					MethodName
 				);
 				// Forward all unknown notifications as Tauri events so Wind
