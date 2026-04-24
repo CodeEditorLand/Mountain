@@ -91,11 +91,18 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 /// - `$APPDATA`-equivalents: Tauri's resolved app-data / app-config /
 ///   app-local directories (via `$XDG_DATA_HOME`, `$XDG_CONFIG_HOME` if
 ///   set; on macOS the `Library/Application Support/land.editor.*` tree).
-/// - `${TMPDIR}` - short-lived temp files the installer unpacks into.
+/// - `${TMPDIR}` + `/tmp`, `/private/tmp`, `/var/tmp` - scratch dirs
+///   language servers write their port-handoff / socket / lock files
+///   to. `TMPDIR` on macOS points at `/var/folders/.../T/` but
+///   extensions hardcode `/tmp/<tool>` directly.
+/// - Third-party tool state under `$HOME/{.gitkraken,.gk,.copilot,
+///   .config/git}` - probed by GitLens, copilot-chat, etc. Application
+///   state, not user content.
 ///
 /// Anything outside this list still flows through the workspace-folder
 /// check. The set is intentionally narrow: it unblocks Land's *own*
-/// bookkeeping reads without handing extensions an unbounded filesystem.
+/// bookkeeping reads + cooperating neighbour-tool probes without
+/// handing extensions an unbounded filesystem.
 fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	// Canonicalising is best-effort - when the path doesn't exist yet
 	// (e.g. first-boot probes for `globalStorage/<extension>/state.json`)
@@ -177,6 +184,67 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		if !TempPath.as_os_str().is_empty()
 			&& (Candidate.starts_with(&TempPath) || PathToCheck.starts_with(&TempPath))
 		{
+			return true;
+		}
+	}
+
+	// Platform-conventional scratch roots that don't show up in `TMPDIR`
+	// on macOS/Linux. Language servers (ruby-lsp, solargraph, jdtls,
+	// pyright, …) write port-handoff / reporter / socket files under
+	// `/tmp/<tool>/` as a matter of course. `/var/folders/.../T/` IS
+	// covered by `TMPDIR` on macOS, but `/tmp` and `/private/tmp` are
+	// the ones extensions actually target. Guarding these under the
+	// system-trust tier is safe: extensions run inside Cocoon's Node
+	// host, which already has unconstrained process-level filesystem
+	// access - the sandbox only gates IPC round-trips through Mountain,
+	// not the extension's own `fs.writeFileSync`.
+	for Root in ["/tmp", "/private/tmp", "/var/tmp"] {
+		let RootPath = PathBuf::from(Root);
+		if Candidate.starts_with(&RootPath) || PathToCheck.starts_with(&RootPath) {
+			return true;
+		}
+	}
+
+	// Third-party tool state directories extensions commonly probe.
+	// GitLens stats `~/.gitkraken/workspaces/workspaces.json` to offer a
+	// "Open in GitKraken" menu; copilot-chat stats `~/.copilot/` for
+	// cached completions. These live outside Land's namespace but are
+	// not user-content either - they're application state from another
+	// tool, safe to read/stat.
+	if let Ok(Home) = std::env::var("HOME") {
+		for Suffix in [".gitkraken", ".gk", ".copilot", ".config/git"] {
+			let ToolRoot = PathBuf::from(&Home).join(Suffix);
+			if Candidate.starts_with(&ToolRoot) || PathToCheck.starts_with(&ToolRoot) {
+				return true;
+			}
+		}
+	}
+
+	// Read-only POSIX OS-info files. Many extensions (csharp, ruby-lsp,
+	// rust-analyzer, debug adapters, telemetry SDKs) probe these to
+	// branch on distro / kernel for spawning the correct binary. They
+	// are world-readable system files - the workspace-folder check
+	// rejects them as "outside workspace" but there's no plausible
+	// abuse vector. Match by full equality to keep the carve-out tight.
+	for SystemFile in [
+		"/etc/os-release",
+		"/etc/lsb-release",
+		"/etc/system-release",
+		"/etc/redhat-release",
+		"/etc/SuSE-release",
+		"/etc/debian_version",
+		"/etc/alpine-release",
+		"/etc/machine-id",
+		"/etc/timezone",
+		"/etc/localtime",
+		"/proc/version",
+		"/proc/cpuinfo",
+		"/proc/meminfo",
+		"/proc/self/status",
+		"/proc/self/cgroup",
+	] {
+		let SysPath = PathBuf::from(SystemFile);
+		if Candidate == SysPath || PathToCheck == SysPath {
 			return true;
 		}
 	}

@@ -534,6 +534,16 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	"/notebook.rendering.log",
 	// Virtual scheme misses already covered by earlier batches.
 	"vscode://schemas-associations/",
+	// First-run state files extensions create on demand.
+	"vscodevim.vim/.registers",
+	// Per-extension globalStorage subdirectories the workbench probes
+	// before the extension creates them (clangd, midudev.better-svg,
+	// muhammad-sammy.csharp, etc.).
+	"/User/globalStorage/",
+	// Per-window output channel + chat session state - lazy-created on
+	// first emit. Path shape:
+	// `<APP>/User/workspaceStorage/<wsId>/chatEditingSessions/<id>/state.json`.
+	"/chatEditingSessions/",
 ];
 
 /// Return true when the given path is a known-optional probe whose absence

@@ -121,6 +121,18 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 	// crash - BuildDescription will Err, and we fall through to re-extract.
 	if InstalledAt.exists() {
 		if let Ok(Description) = BuildDescription(&InstalledAt) {
+			// Retroactively heal exec bits on existing installs. Older
+			// VSIX installs predating the magic-number / bin-path
+			// promotion left native binaries (rust-analyzer's
+			// `server/rust-analyzer`, openai.chatgpt's
+			// `bin/<triple>/codex`, etc.) at 0o644 - the extension's
+			// own `child_process.spawn(...)` then fails with EACCES
+			// even though the file is intact on disk. Walk the install
+			// tree once and chmod +x anything matching the same
+			// heuristic ExtractPayload uses for fresh installs.
+			#[cfg(unix)]
+			HealExecutableBits(&InstalledAt);
+
 			dev_log!(
 				"extensions",
 				"[VsixInstaller] Reinstall no-op - '{}' v{} already present at {}",
@@ -295,18 +307,171 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 		#[cfg(unix)]
 		{
 			use std::os::unix::fs::PermissionsExt;
-			if let Some(Mode) = Entry.unix_mode() {
-				// Zip's unix_mode returns the full stat mode (type bits +
-				// permission bits). Mask to the permission bits only, then
-				// OR in `0o644` as a safety floor so we never drop read
-				// access. Respect the executable bit if the archive had it.
-				let Permissions = fs::Permissions::from_mode((Mode & 0o777) | 0o644);
-				let _ = fs::set_permissions(&Target, Permissions);
-			}
+			let PermissionBits = Entry.unix_mode().map(|Mode| Mode & 0o777).unwrap_or(0);
+			// Promote executable bit whenever the payload is a native
+			// binary the extension will spawn. Heuristics, in order:
+			//   1. Zip already recorded any exec bit (user/group/other).
+			//   2. Path lives under a `bin/` segment (vscode convention
+			//      for shipped CLI tools: openai.chatgpt's
+			//      `bin/<triple>/codex`, rust-analyzer's `bin/ra_lsp`,
+			//      Dart-Code's `bin/dart`, …).
+			//   3. First two bytes match a known executable magic
+			//      number: Mach-O (`\xCF\xFA\xED\xFE` / `\xCE\xFA\xED\xFE`
+			//      / fat `\xCA\xFE\xBA\xBE`), ELF (`\x7FELF`), or
+			//      shebang (`#!`). Some zip creators drop all mode
+			//      bits; the magic-number probe is the only way to
+			//      tell before the extension tries to spawn the file.
+			// Directory segments that conventionally hold spawnable
+			// binaries: VS Code's `bin/`, language-server `server/`
+			// (rust-analyzer, ruby-lsp, jdt-ls, gopls), .NET's
+			// `tools/`, OmniSharp's `omnisharp/`, debug-adapter
+			// `adapter/`, native-host `native/`. Match any path
+			// segment, not just the leading one - many VSIXes nest
+			// like `out/server/...` or `dist/bin/...`.
+			let IsBinPath = Stripped.split('/').any(|Segment| {
+				matches!(Segment, "bin" | "server" | "tools" | "omnisharp" | "adapter" | "native")
+			});
+			let HasExecBit = PermissionBits & 0o111 != 0;
+			let LooksExecutable = if HasExecBit || IsBinPath {
+				true
+			} else {
+				let mut Probe = [0u8; 4];
+				match std::fs::File::open(&Target).and_then(|mut Handle| {
+					use std::io::Read as IoRead;
+					IoRead::read(&mut Handle, &mut Probe).map(|BytesRead| (BytesRead, Probe))
+				}) {
+					Ok((BytesRead, Bytes)) if BytesRead >= 2 => {
+						let Shebang = &Bytes[..2] == b"#!";
+						let ElfMagic = BytesRead >= 4 && &Bytes[..4] == b"\x7FELF";
+						let MachMagic = BytesRead >= 4
+							&& matches!(
+								&Bytes[..4],
+								b"\xCF\xFA\xED\xFE"
+									| b"\xCE\xFA\xED\xFE"
+									| b"\xFE\xED\xFA\xCF"
+									| b"\xFE\xED\xFA\xCE"
+									| b"\xCA\xFE\xBA\xBE"
+									| b"\xBE\xBA\xFE\xCA"
+							);
+						Shebang || ElfMagic || MachMagic
+					},
+					_ => false,
+				}
+			};
+			let FinalMode = if LooksExecutable {
+				(PermissionBits | 0o755) & 0o755
+			} else {
+				(PermissionBits | 0o644) & 0o755
+			};
+			let _ = fs::set_permissions(&Target, fs::Permissions::from_mode(FinalMode));
 		}
 	}
 
 	Ok(())
+}
+
+/// Walk an installed extension directory and chmod +x any file that
+/// matches the same executable heuristic as fresh installs. Used on the
+/// idempotent reinstall path so users who installed extensions before
+/// the exec-bit promotion landed don't need to manually `chmod` shipped
+/// binaries (`rust-analyzer/server/rust-analyzer`,
+/// `openai.chatgpt/bin/<triple>/codex`, `Dart-Code/bin/dart`, etc.).
+///
+/// Errors are swallowed - this is a best-effort heal, never the reason
+/// an install fails. A file we can't open or stat just keeps its
+/// existing mode and the extension's `spawn` will surface the same
+/// EACCES it would have anyway.
+#[cfg(unix)]
+pub fn HealExecutableBits(InstalledAt:&Path) {
+	use std::{io::Read, os::unix::fs::PermissionsExt};
+
+	fn IsBinSegment(Segment:&std::ffi::OsStr) -> bool {
+		let Some(Name) = Segment.to_str() else {
+			return false;
+		};
+		matches!(Name, "bin" | "server" | "tools" | "omnisharp" | "adapter" | "native")
+	}
+
+	fn LooksExecutable(Target:&Path, RelativeFromRoot:&Path) -> bool {
+		let IsBinPath = RelativeFromRoot.components().any(|Component| IsBinSegment(Component.as_os_str()));
+		if IsBinPath {
+			return true;
+		}
+		let Ok(mut Handle) = std::fs::File::open(Target) else {
+			return false;
+		};
+		let mut Probe = [0u8; 4];
+		let Ok(BytesRead) = Handle.read(&mut Probe) else {
+			return false;
+		};
+		if BytesRead < 2 {
+			return false;
+		}
+		let Shebang = &Probe[..2] == b"#!";
+		let ElfMagic = BytesRead >= 4 && &Probe[..4] == b"\x7FELF";
+		let MachMagic = BytesRead >= 4
+			&& matches!(
+				&Probe[..4],
+				b"\xCF\xFA\xED\xFE"
+					| b"\xCE\xFA\xED\xFE"
+					| b"\xFE\xED\xFA\xCF"
+					| b"\xFE\xED\xFA\xCE"
+					| b"\xCA\xFE\xBA\xBE"
+					| b"\xBE\xBA\xFE\xCA"
+			);
+		Shebang || ElfMagic || MachMagic
+	}
+
+	fn Walk(Dir:&Path, Root:&Path, Healed:&mut usize) {
+		let Ok(Entries) = std::fs::read_dir(Dir) else {
+			return;
+		};
+		for Entry in Entries.flatten() {
+			let Path = Entry.path();
+			let Ok(Metadata) = Entry.metadata() else {
+				continue;
+			};
+			if Metadata.is_dir() {
+				// Skip the bundled-deps tree by name - chmod-ing every
+				// file under node_modules is wasteful and chmod-ing
+				// `.bin` shims is what the npm install lifecycle
+				// already handles. If an extension genuinely needs a
+				// binary inside node_modules executable, its postinstall
+				// will mark it.
+				if Entry.file_name() == "node_modules" {
+					continue;
+				}
+				Walk(&Path, Root, Healed);
+				continue;
+			}
+			let Ok(Relative) = Path.strip_prefix(Root) else {
+				continue;
+			};
+			let Mode = Metadata.permissions().mode() & 0o777;
+			if Mode & 0o100 != 0 {
+				// Owner-exec already set; trust it.
+				continue;
+			}
+			if !LooksExecutable(&Path, Relative) {
+				continue;
+			}
+			let Promoted = (Mode | 0o755) & 0o755;
+			if std::fs::set_permissions(&Path, std::fs::Permissions::from_mode(Promoted)).is_ok() {
+				*Healed += 1;
+			}
+		}
+	}
+
+	let mut Healed:usize = 0;
+	Walk(InstalledAt, InstalledAt, &mut Healed);
+	if Healed > 0 {
+		dev_log!(
+			"extensions",
+			"[VsixInstaller] Healed {} executable bit(s) under {}",
+			Healed,
+			InstalledAt.display()
+		);
+	}
 }
 
 fn BuildDescription(InstalledAt:&Path) -> Result<ExtensionDescriptionStateDTO, InstallError> {

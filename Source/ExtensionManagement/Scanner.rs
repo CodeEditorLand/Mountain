@@ -368,6 +368,22 @@ pub async fn ScanDirectoryForExtensions(
 							// extensions only.
 							Description.IsBuiltin = !IsUserPath;
 
+							// Boot-time exec-bit heal for user-scope extensions.
+							// Runs only against `~/.land/extensions/<id>/` (built-in
+							// trees ship with correct modes from the bundle). Walks
+							// `bin/`, `server/`, `tools/`, etc., promotes 0o644 →
+							// 0o755 on files matching ELF / Mach-O / shebang magic.
+							// One-shot per boot - cheap (a couple stat + read(4) calls
+							// per file in those directories), and recovers extensions
+							// installed before the in-extractor exec-bit fix landed
+							// without forcing the user to reinstall.
+							#[cfg(unix)]
+							if IsUserPath {
+								crate::ExtensionManagement::VsixInstaller::HealExecutableBits(
+									&PotentialExtensionPath,
+								);
+							}
+
 							dev_log!(
 								"ext-scan",
 								"[ExtScan] accept path={} is_user={} is_builtin={} id={}",
