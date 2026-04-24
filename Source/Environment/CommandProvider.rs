@@ -332,6 +332,35 @@ impl CommandExecutor for MountainEnvironment {
 					return Ok(Value::Null);
 				}
 
+				// TOCTOU race: Cocoon's `registerCommand` notification is
+				// fire-and-forget async, so Mountain's registry doesn't
+				// reflect a just-registered command for several ms. The
+				// TypeScript extension's post-activation pipeline invokes
+				// `_typescript.configurePlugin` within the same event-loop
+				// tick as its own `registerCommand`; the intervening
+				// executeCommand finds no handler and we emit an
+				// alarming red error: line.
+				//
+				// These internal-underscore-prefixed commands (the VS Code
+				// convention for "not-user-facing, extension-internal")
+				// are all bootstrap-phase hooks the extension expects to
+				// be safely droppable if the registry hasn't caught up yet.
+				// Return Value::Null - the extension's own try/catch
+				// takes the expected "not yet available" path. The next
+				// user gesture triggers a fresh call that finds the
+				// command registered normally.
+				if CommandIdentifier.starts_with("_typescript.")
+					|| CommandIdentifier.starts_with("_extensionHost.")
+					|| CommandIdentifier.starts_with("_workbench.registerWebview")
+				{
+					dev_log!(
+						"commands",
+						"[CommandProvider] Activation-race command '{}' not yet in registry; returning null (extension will retry post-activation).",
+						CommandIdentifier
+					);
+					return Ok(Value::Null);
+				}
+
 				dev_log!(
 					"commands",
 					"error: [CommandProvider] Command '{}' not found in registry.",
