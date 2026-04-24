@@ -344,6 +344,27 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	let WorkspaceFoldersGuard = ApplicationState.Workspace.WorkspaceFolders.lock().unwrap();
 
+	// Cocoon's `WorkspaceNamespace/Index.ts` reads
+	// `ExtensionHostInitData.workspace.folders` at shim construction time,
+	// then mutates the same array in place on `$deltaWorkspaceFolders`. If
+	// `folders` is missing from the init payload, every
+	// `vscode.workspace.workspaceFolders` read returns `[]` until a delta
+	// fires - which means the git extension boots with zero folders to
+	// scan and never calls `createSourceControl`. Emit the folder list
+	// inline so extensions that read `workspaceFolders` synchronously in
+	// their `activate()` (vscode.git, eamodio.gitlens, typescript) see
+	// the real folders.
+	let FoldersWire:Vec<Value> = WorkspaceFoldersGuard
+		.iter()
+		.map(|Folder| {
+			json!({
+				"uri": Folder.URI.to_string(),
+				"name": Folder.GetDisplayName(),
+				"index": Folder.Index,
+			})
+		})
+		.collect();
+
 	let WorkspaceDTO = if WorkspaceFoldersGuard.is_empty() {
 		Value::Null
 	} else {
@@ -352,6 +373,8 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 			"id": ApplicationState.GetWorkspaceIdentifier()?,
 
 			"name": WorkspaceName,
+
+			"folders": FoldersWire,
 
 			"configuration": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
 

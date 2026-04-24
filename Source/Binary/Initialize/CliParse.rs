@@ -103,15 +103,24 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 	}
 
 	if Collected.is_empty() {
-		// CWD-autoload is OPT-IN (set `LAND_AUTOLOAD_CWD=1`). VS Code's UX
-		// convention is to open an empty window when no folder is given and
-		// let the user pick via File → Open Folder; silently seeding CWD
-		// caused the TypeScript extension's workspace scan to walk the
-		// entire monorepo (node_modules included) during boot, stalling
-		// the UI for minutes.
+		// CWD-autoload default: ON in debug builds, OFF in release. Debug
+		// iteration invariably needs a folder so `vscode.git` /
+		// `eamodio.gitlens` can scan repositories, extensions can surface
+		// tree-views, and `workspace.findFiles` returns something. Release
+		// builds keep the stock VS Code "File → Open Folder" UX so users
+		// don't get surprise filesystem scans. Either default is
+		// overridable: `LAND_AUTOLOAD_CWD=0` disables, `LAND_AUTOLOAD_CWD=1`
+		// enables.
+		//
+		// The earlier concern was that auto-seeding CWD from a mono-repo
+		// root walked `node_modules` during TypeScript workspace scan and
+		// stalled boot. That's still real in release but acceptable in
+		// debug: developers running from their project root actually want
+		// the scan.
+		let DefaultAutoload = cfg!(debug_assertions);
 		let AutoloadCwd = std::env::var("LAND_AUTOLOAD_CWD")
-			.map(|Value| Value == "1" || Value == "true")
-			.unwrap_or(false);
+			.map(|Value| matches!(Value.as_str(), "1" | "true" | "yes" | "on"))
+			.unwrap_or(DefaultAutoload);
 		if AutoloadCwd {
 			if let Ok(Cwd) = std::env::current_dir() {
 				Collected.push(Cwd);
