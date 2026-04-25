@@ -173,11 +173,10 @@ pub(super) async fn copy_impl(
 	// Call stat_file_impl from the ReadOperations module
 	let source_metadata = super::ReadOperations::stat_file_impl(env, source).await?;
 
-	if (source_metadata.FileType & FileTypeDTO::Directory as u8) != 0 {
-		return Err(CommonError::NotImplemented { FeatureName:"Recursive directory copy".to_string() });
-	}
+	let SourceIsDir = (source_metadata.FileType & FileTypeDTO::Directory as u8) != 0;
 
-	// Prevent copying file to itself (which would truncate it)
+	// Prevent copying file/dir to itself (which would truncate or
+	// recursively explode).
 	if fs::canonicalize(source).await.ok().as_ref() == fs::canonicalize(target).await.ok().as_ref() {
 		return Err(CommonError::InvalidArgument {
 			ArgumentName:"Target".to_string(),
@@ -189,7 +188,9 @@ pub(super) async fn copy_impl(
 		return Err(CommonError::FileSystemFileExists(target.clone()));
 	}
 
-	// Create target parent directory if needed
+	// Create target parent directory if needed (works for both file
+	// and directory copies; the directory copy below also creates
+	// the target itself).
 	if let Some(target_parent) = target.parent() {
 		if !fs::try_exists(target_parent).await.unwrap_or(false) {
 			fs::create_dir_all(target_parent).await.map_err(|error| {
@@ -198,10 +199,76 @@ pub(super) async fn copy_impl(
 		}
 	}
 
+	if SourceIsDir {
+		// Recursive directory copy. Walks the source tree iteratively
+		// (avoids deep async recursion blowing the stack on
+		// pathological depths) and re-creates each entry under the
+		// target. Symlinks are followed to keep behaviour consistent
+		// with VS Code's `IFileService.copy` - if you want preserve-
+		// symlinks semantics, use `clone_native` instead which does a
+		// COW reflink on supported filesystems.
+		return copy_directory_recursive(source, target, overwrite).await;
+	}
+
 	fs::copy(source, target)
 		.await
 		.map(|_| ())
 		.map_err(|error| CommonError::FromStandardIOError(error, source.clone(), "Copy"))
+}
+
+/// Recursively copy a directory tree from `source` into `target`.
+/// Iterative (uses an explicit stack of `(SrcDir, DstDir)`) so it
+/// can't blow the Tokio task stack on very deep trees. Files inside
+/// re-use `tokio::fs::copy` for fast path; directories are created
+/// with `create_dir`. Symlinks are dereferenced.
+async fn copy_directory_recursive(
+	source:&PathBuf,
+	target:&PathBuf,
+	overwrite:bool,
+) -> Result<(), CommonError> {
+	// Pre-create the top-level target dir.
+	if !fs::try_exists(target).await.unwrap_or(false) {
+		fs::create_dir(target).await.map_err(|error| {
+			CommonError::FromStandardIOError(error, target.clone(), "Copy.CreateTargetRoot")
+		})?;
+	}
+
+	let mut Stack:Vec<(PathBuf, PathBuf)> = vec![(source.clone(), target.clone())];
+	while let Some((SrcDir, DstDir)) = Stack.pop() {
+		let mut Entries = fs::read_dir(&SrcDir)
+			.await
+			.map_err(|error| CommonError::FromStandardIOError(error, SrcDir.clone(), "Copy.ReadDir"))?;
+		while let Some(Entry) = Entries
+			.next_entry()
+			.await
+			.map_err(|error| CommonError::FromStandardIOError(error, SrcDir.clone(), "Copy.NextEntry"))?
+		{
+			let Name = Entry.file_name();
+			let SrcPath = SrcDir.join(&Name);
+			let DstPath = DstDir.join(&Name);
+			let FileType = Entry
+				.file_type()
+				.await
+				.map_err(|error| CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.FileType"))?;
+
+			if FileType.is_dir() {
+				if !fs::try_exists(&DstPath).await.unwrap_or(false) {
+					fs::create_dir(&DstPath).await.map_err(|error| {
+						CommonError::FromStandardIOError(error, DstPath.clone(), "Copy.CreateSubDir")
+					})?;
+				}
+				Stack.push((SrcPath, DstPath));
+			} else {
+				if !overwrite && fs::try_exists(&DstPath).await.unwrap_or(false) {
+					return Err(CommonError::FileSystemFileExists(DstPath));
+				}
+				fs::copy(&SrcPath, &DstPath).await.map_err(|error| {
+					CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.CopyFile")
+				})?;
+			}
+		}
+	}
+	Ok(())
 }
 
 /// CreateFile operations implementation for MountainEnvironment

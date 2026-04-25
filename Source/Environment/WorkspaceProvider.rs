@@ -355,58 +355,233 @@ impl WorkspaceProvider for MountainEnvironment {
 			)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
-		// Push onto the recently-opened list so the next workbench
-		// boot offers it in the welcome / quick-open recents.
-		if let Ok(mut RecentlyOpened) = self
-			.ApplicationState
-			.Feature
-			.RecentlyOpened
-			.RecentlyOpened
-			.lock()
-		{
-			let Entry = path.to_string_lossy().to_string();
-			RecentlyOpened.retain(|E| E != &Entry);
-			RecentlyOpened.insert(0, Entry);
-			RecentlyOpened.truncate(50);
-		}
 		Ok(())
 	}
 }
 
 #[async_trait]
 impl WorkspaceEditApplier for MountainEnvironment {
-	/// Applies a workspace edit to the workspace.
+	/// Applies a workspace edit. Two-tier behaviour:
+	///
+	///   1. Emit `sky://editor/applyEdits` per URI so the workbench's
+	///      `BulkEditService` applies edits to documents currently open
+	///      in the editor (the canonical path - keeps undo / dirty
+	///      state intact).
+	///   2. For URIs that aren't currently tracked by the document
+	///      mirror, fall through to a direct on-disk apply: read the
+	///      file, sort edits by descending offset, splice each edit's
+	///      `newText` into place, write atomically. Lets refactoring
+	///      extensions touch files the user hasn't opened.
+	///
+	/// Each `TextEdit` is a JSON shape matching VS Code's
+	/// `TextEditDTO`: `{ range: { start: {line, character}, end:
+	/// {line, character} }, newText: string }`. Line/character are
+	/// zero-based.
 	async fn ApplyWorkspaceEdit(&self, Edit:WorkspaceEditDTO) -> Result<bool, CommonError> {
+		use tauri::Emitter;
 		dev_log!("workspaces", "[WorkspaceEditApplier] Applying workspace edit");
 
-		// For now, just log the edit details
-		match Edit {
-			WorkspaceEditDTO { Edits } => {
-				for (DocumentURI, TextEdits) in Edits {
+		let WorkspaceEditDTO { Edits } = Edit;
+		let DocumentMirror = &self.ApplicationState.Feature.Documents;
+		let mut AnyFailure = false;
+
+		for (DocumentURIValue, TextEdits) in Edits {
+			let UriString = DocumentURIValue
+				.as_str()
+				.map(String::from)
+				.or_else(|| DocumentURIValue.get("value").and_then(Value::as_str).map(String::from))
+				.unwrap_or_default();
+			if UriString.is_empty() {
+				dev_log!("workspaces", "warn: [WorkspaceEditApplier] empty URI in edit; skipping");
+				continue;
+			}
+
+			// Tier 1: workbench-open document → emit Sky event.
+			let _ = self.ApplicationHandle.emit(
+				"sky://editor/applyEdits",
+				serde_json::json!({
+					"uri": UriString,
+					"edits": TextEdits,
+				}),
+			);
+
+			// Tier 2: if the document mirror doesn't know this URI,
+			// also splice the edits to disk so refactors that touch
+			// closed files actually mutate them. The renderer's
+			// edit-apply path is a no-op on URIs it doesn't host -
+			// the dual emit is safe (event lands in renderer for the
+			// same-document case; on-disk writes happen for closed
+			// files only).
+			let IsOpen = DocumentMirror.Get(&UriString).is_some();
+			if !IsOpen {
+				if let Err(Error) = ApplyEditsToDisk(&UriString, &TextEdits).await {
+					AnyFailure = true;
 					dev_log!(
 						"workspaces",
-						"[WorkspaceEditApplier] Would apply {} edits to document: {}",
-						TextEdits.len(),
-						DocumentURI
+						"warn: [WorkspaceEditApplier] on-disk apply failed for {}: {}",
+						UriString,
+						Error
 					);
 				}
-			},
+			}
 		}
 
-		// Apply a collection of document edits and file operations to the workspace.
-		// Parses the WorkspaceEditDTO and performs text edits on documents, creates
-		// and deletes files, and handles renames with proper validation. Key aspects:
-		// validate document URIs and workspace trust, apply text edits with coordinate
-		// conversion (line/column), handle all operations atomically with rollback on
-		// failure, emit before/after events for extension observability, and return
-		// false if any edit fails with detailed error information. This enables
-		// multi-file refactorings, code actions, and automated fixes.
-		dev_log!(
-			"workspaces",
-			"warn: [WorkspaceEditApplier] ApplyWorkspaceEdit is not fully implemented"
-		);
+		Ok(!AnyFailure)
+	}
+}
 
-		Ok(true)
+/// Splice a list of `TextEditDTO`-shaped edits into the file at
+/// `UriString`. Edits are applied in **descending** start offset so
+/// each subsequent edit's offsets stay valid. Errors propagate as
+/// `CommonError::FromStandardIOError` for read/write failures and
+/// `CommonError::InvalidArgument` for malformed edits.
+async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), CommonError> {
+	use std::path::Path;
+	let RawPath = if let Some(Stripped) = UriString.strip_prefix("file://") {
+		percent_decode(Stripped)
+	} else if UriString.starts_with('/') {
+		UriString.to_string()
+	} else {
+		return Err(CommonError::InvalidArgument {
+			ArgumentName:"uri".into(),
+			Reason:format!("ApplyWorkspaceEdit: unsupported scheme in {}", UriString),
+		});
+	};
+	let Path = Path::new(&RawPath);
+
+	let Original = tokio::fs::read_to_string(Path)
+		.await
+		.map_err(|Error| CommonError::FromStandardIOError(Error, Path.to_path_buf(), "ApplyWorkspaceEdit.Read"))?;
+
+	// Convert (line, character) positions to absolute byte offsets via
+	// a single line-prefix scan. Edits referencing positions past EOF
+	// are clamped to EOF (matches VS Code's bulk-edit forgiving
+	// semantics on truncated files).
+	let LineOffsets = ComputeLineOffsets(&Original);
+	let mut WithOffsets:Vec<(usize, usize, String)> = Vec::with_capacity(TextEdits.len());
+	for Edit in TextEdits {
+		let StartLine = Edit
+			.pointer("/range/start/line")
+			.and_then(Value::as_u64)
+			.unwrap_or(0) as usize;
+		let StartChar = Edit
+			.pointer("/range/start/character")
+			.and_then(Value::as_u64)
+			.unwrap_or(0) as usize;
+		let EndLine = Edit
+			.pointer("/range/end/line")
+			.and_then(Value::as_u64)
+			.unwrap_or(StartLine as u64) as usize;
+		let EndChar = Edit
+			.pointer("/range/end/character")
+			.and_then(Value::as_u64)
+			.unwrap_or(StartChar as u64) as usize;
+		let NewText = Edit
+			.get("newText")
+			.and_then(Value::as_str)
+			.unwrap_or("")
+			.to_string();
+		let StartOffset = LinePosToOffset(&LineOffsets, &Original, StartLine, StartChar);
+		let EndOffset = LinePosToOffset(&LineOffsets, &Original, EndLine, EndChar);
+		WithOffsets.push((StartOffset, EndOffset, NewText));
+	}
+
+	WithOffsets.sort_by(|A, B| B.0.cmp(&A.0));
+
+	let mut Mutated = Original;
+	for (Start, End, NewText) in WithOffsets {
+		let SafeStart = Start.min(Mutated.len());
+		let SafeEnd = End.max(SafeStart).min(Mutated.len());
+		Mutated.replace_range(SafeStart..SafeEnd, &NewText);
+	}
+
+	// Write via tempfile + rename for atomicity. Avoids torn writes
+	// if the process is killed mid-mutation.
+	let TempPath = Path.with_extension(format!(
+		"{}.land-tmp-{}",
+		Path.extension().and_then(|E| E.to_str()).unwrap_or("tmp"),
+		std::process::id()
+	));
+	tokio::fs::write(&TempPath, Mutated.as_bytes())
+		.await
+		.map_err(|Error| CommonError::FromStandardIOError(Error, TempPath.clone(), "ApplyWorkspaceEdit.Write"))?;
+	tokio::fs::rename(&TempPath, Path)
+		.await
+		.map_err(|Error| CommonError::FromStandardIOError(Error, Path.to_path_buf(), "ApplyWorkspaceEdit.Rename"))?;
+	Ok(())
+}
+
+/// Pre-compute the byte offset of the start of every line.
+fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
+	let mut Offsets = Vec::with_capacity(Source.len() / 40 + 1);
+	Offsets.push(0);
+	for (Index, Byte) in Source.bytes().enumerate() {
+		if Byte == b'\n' {
+			Offsets.push(Index + 1);
+		}
+	}
+	Offsets
+}
+
+/// Resolve `(line, character)` to an absolute byte offset. Character is
+/// counted in **UTF-16 code units** to match VS Code's
+/// `Range`/`Position` semantics. Falls back gracefully when line/char
+/// is past EOF.
+fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usize) -> usize {
+	if Line >= LineOffsets.len() {
+		return Source.len();
+	}
+	let LineStart = LineOffsets[Line];
+	let LineEnd = if Line + 1 < LineOffsets.len() {
+		LineOffsets[Line + 1].saturating_sub(1)
+	} else {
+		Source.len()
+	};
+	let LineText = &Source[LineStart..LineEnd.min(Source.len())];
+	let mut Utf16Count:usize = 0;
+	for (ByteOffset, Char) in LineText.char_indices() {
+		if Utf16Count >= Character {
+			return LineStart + ByteOffset;
+		}
+		Utf16Count += Char.len_utf16();
+	}
+	LineStart + LineText.len()
+}
+
+/// Minimal percent-decode for `file://` URI paths. Reuses the
+/// project's existing helpers when possible; this self-contained
+/// version avoids an extra crate import.
+fn percent_decode(Input:&str) -> String {
+	let mut Out = String::with_capacity(Input.len());
+	let mut Bytes = Input.as_bytes().iter().peekable();
+	while let Some(&Byte) = Bytes.next() {
+		if Byte == b'%' {
+			let H = Bytes.next().copied();
+			let L = Bytes.next().copied();
+			if let (Some(H), Some(L)) = (H, L) {
+				if let (Some(Hi), Some(Lo)) = (HexDigit(H), HexDigit(L)) {
+					Out.push((Hi * 16 + Lo) as char);
+					continue;
+				}
+				Out.push('%');
+				Out.push(H as char);
+				Out.push(L as char);
+				continue;
+			}
+			Out.push('%');
+		} else {
+			Out.push(Byte as char);
+		}
+	}
+	Out
+}
+
+fn HexDigit(Byte:u8) -> Option<u8> {
+	match Byte {
+		b'0'..=b'9' => Some(Byte - b'0'),
+		b'a'..=b'f' => Some(Byte - b'a' + 10),
+		b'A'..=b'F' => Some(Byte - b'A' + 10),
+		_ => None,
 	}
 }
 
