@@ -35,7 +35,11 @@ pub(super) async fn update_configuration_value(
 	let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 	let config_path:PathBuf = match target {
-		ConfigurationTarget::User => {
+		// Land treats `UserLocal` and `User` as the same `settings.json`
+		// at the app-config dir. Stock VS Code differentiates them when
+		// settings sync is on (UserLocal stays per-machine, User syncs);
+		// Land has no sync backend, so the distinction is moot.
+		ConfigurationTarget::UserLocal | ConfigurationTarget::User => {
 			environment
 				.ApplicationHandle
 				.path()
@@ -61,15 +65,54 @@ pub(super) async fn update_configuration_value(
 				})?
 		},
 
-		_ => {
+		// `WorkspaceFolder` (multi-root) - write to
+		// `<folder>/.vscode/settings.json` of the first workspace
+		// folder. Multi-root extensions should pass the folder URI
+		// in `_overrides.resource`; until that's plumbed through the
+		// trait the first folder is the closest stable approximation.
+		ConfigurationTarget::WorkspaceFolder => {
+			let FoldersGuard = environment
+				.ApplicationState
+				.Workspace
+				.WorkspaceFolders
+				.lock()
+				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			let First = FoldersGuard.first().ok_or_else(|| {
+				CommonError::ConfigurationLoad {
+					Description:"No workspace folders open for WorkspaceFolder target".into(),
+				}
+			})?;
+			let FolderPath = First.URI.to_file_path().map_err(|_| {
+				CommonError::ConfigurationLoad {
+					Description:format!("Workspace folder URI is not a local path: {}", First.URI),
+				}
+			})?;
+			FolderPath.join(".vscode").join("settings.json")
+		},
+
+		// `Memory` target only updates the in-memory configuration
+		// state for the lifetime of the session - no disk write.
+		// `SetGlobalValue` writes into the merged-config DTO; the
+		// DTO is the same map `GetValue` reads from, so subsequent
+		// `Inspect` / `Get` calls reflect the override immediately.
+		ConfigurationTarget::Memory => {
+			environment
+				.ApplicationState
+				.Configuration
+				.SetGlobalValue(&key, value.clone());
 			dev_log!(
 				"config",
-				"warn: [ConfigurationProvider] Unsupported configuration target: {:?}",
-				target
+				"[ConfigurationProvider] Memory target: stored in-memory value for '{}'",
+				key
 			);
+			return Ok(());
+		},
 
-			return Err(CommonError::NotImplemented {
-				FeatureName:"This configuration target is not supported".into(),
+		// `Default` and `Policy` are read-only by spec.
+		ConfigurationTarget::Default | ConfigurationTarget::Policy => {
+			return Err(CommonError::InvalidArgument {
+				ArgumentName:"target".into(),
+				Reason:format!("Configuration target {:?} is read-only", target),
 			});
 		},
 	};
