@@ -708,12 +708,11 @@ pub fn IsEnabled(Tag:&str) -> bool {
 /// lines.
 ///
 /// **Release-mode behaviour:** the entire body is gated on
-/// `cfg!(debug_assertions)`. Compiled in release builds, that constant
-/// folds to `false`, and LLVM's dead-code-elimination removes the
-/// `format!`, `IsEnabled` lookup, file-sink write, and dedup-mutex
-/// lock. The macro becomes a literal no-op so the hundreds of `dev_log!`
-/// callsites scattered through the IPC hot path don't measurably tax
-/// release builds. Type-checking still runs against the format
+/// `cfg!(debug_assertions)`. Production builds get zero logging by
+/// design - LLVM's dead-code-elimination removes the `format!`,
+/// `IsEnabled` lookup, file-sink write, and dedup-mutex lock so the
+/// hundreds of `dev_log!` callsites in the IPC hot path don't tax
+/// release builds at all. Type-checking still runs against the format
 /// arguments, which catches `{}` placeholder mismatches without
 /// imposing runtime cost.
 #[macro_export]
