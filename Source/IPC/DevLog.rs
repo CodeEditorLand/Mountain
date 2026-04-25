@@ -706,10 +706,20 @@ pub fn IsEnabled(Tag:&str) -> bool {
 ///
 /// In `short` mode: aliases long paths, deduplicates consecutive identical
 /// lines.
+///
+/// **Release-mode behaviour:** the entire body is gated on
+/// `cfg!(debug_assertions)`. Compiled in release builds, that constant
+/// folds to `false`, and LLVM's dead-code-elimination removes the
+/// `format!`, `IsEnabled` lookup, file-sink write, and dedup-mutex
+/// lock. The macro becomes a literal no-op so the hundreds of `dev_log!`
+/// callsites scattered through the IPC hot path don't measurably tax
+/// release builds. Type-checking still runs against the format
+/// arguments, which catches `{}` placeholder mismatches without
+/// imposing runtime cost.
 #[macro_export]
 macro_rules! dev_log {
 	($Tag:expr, $($Arg:tt)*) => {
-		if $crate::IPC::DevLog::IsEnabled($Tag) {
+		if cfg!(debug_assertions) && $crate::IPC::DevLog::IsEnabled($Tag) {
 			let RawMessage = format!($($Arg)*);
 			let TagUpper = $Tag.to_uppercase();
 			if $crate::IPC::DevLog::IsShort() {

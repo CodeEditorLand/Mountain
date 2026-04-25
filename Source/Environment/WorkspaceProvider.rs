@@ -61,7 +61,12 @@
 //! - Data types: [`(Url, String, usize)`] tuple for folder info (URI, name,
 //!   index)
 
-use std::{path::PathBuf, sync::{Arc, Mutex}};
+use std::{
+	collections::HashMap,
+	path::PathBuf,
+	sync::{Arc, Mutex, OnceLock},
+	time::{Duration, Instant},
+};
 
 use CommonLibrary::{
 	DTO::WorkspaceEditDTO::WorkspaceEditDTO,
@@ -76,6 +81,81 @@ use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::dev_log;
+
+/// Process-wide LRU cache for `FindFilesInWorkspace`. Cache key folds
+/// every input that influences the walk; TTL is short so we never serve
+/// a stale result after a file-system mutation. Entry budget is small
+/// to bound memory across many workspace folders + glob shapes.
+///
+/// Why: the workbench's `ISearchService` fires `findFiles` per-keystroke
+/// during Cmd+P fuzzy match (typically 5-10 calls in 200 ms) AND per
+/// breadcrumb / quick-pick refresh. Each walk traverses tens of
+/// thousands of files; a 0.5-3 ms HashMap lookup short-circuits all
+/// but the first walk in a typing burst.
+const FIND_FILES_CACHE_TTL:Duration = Duration::from_millis(2500);
+const FIND_FILES_CACHE_CAPACITY:usize = 128;
+
+#[derive(Hash, Eq, PartialEq, Clone)]
+struct FindFilesCacheKey {
+	Folders:Vec<PathBuf>,
+	Include:String,
+	Exclude:Option<String>,
+	Cap:usize,
+	UseIgnoreFiles:bool,
+	FollowSymlinks:bool,
+	RestrictBase:Option<String>,
+}
+
+struct FindFilesCacheEntry {
+	Result:Vec<Url>,
+	StoredAt:Instant,
+}
+
+fn FindFilesCache() -> &'static Mutex<HashMap<FindFilesCacheKey, FindFilesCacheEntry>> {
+	static CACHE:OnceLock<Mutex<HashMap<FindFilesCacheKey, FindFilesCacheEntry>>> = OnceLock::new();
+	CACHE.get_or_init(|| Mutex::new(HashMap::with_capacity(FIND_FILES_CACHE_CAPACITY)))
+}
+
+/// Insert into the cache with simple bounded-size eviction. When the
+/// table reaches capacity we drop the oldest half in one pass; this
+/// avoids tracking access order per entry while still keeping memory
+/// bounded under sustained workbench traffic.
+fn FindFilesCachePut(Key:FindFilesCacheKey, Result:Vec<Url>) {
+	if let Ok(mut Guard) = FindFilesCache().lock() {
+		if Guard.len() >= FIND_FILES_CACHE_CAPACITY {
+			let Cutoff = Instant::now() - FIND_FILES_CACHE_TTL;
+			Guard.retain(|_, V| V.StoredAt > Cutoff);
+			if Guard.len() >= FIND_FILES_CACHE_CAPACITY {
+				let DropCount = Guard.len() / 2;
+				let StaleKeys:Vec<FindFilesCacheKey> = Guard.iter().take(DropCount).map(|(K, _)| K.clone()).collect();
+				for K in StaleKeys {
+					Guard.remove(&K);
+				}
+			}
+		}
+		Guard.insert(Key, FindFilesCacheEntry { Result, StoredAt:Instant::now() });
+	}
+}
+
+fn FindFilesCacheGet(Key:&FindFilesCacheKey) -> Option<Vec<Url>> {
+	let Guard = FindFilesCache().lock().ok()?;
+	let Entry = Guard.get(Key)?;
+	if Entry.StoredAt.elapsed() > FIND_FILES_CACHE_TTL {
+		return None;
+	}
+	Some(Entry.Result.clone())
+}
+
+/// Drop every cached find-files result. Callers: workspace folder
+/// add/remove (`UpdateWorkspaceFolders`), file system watcher events
+/// from Mountain's notifier, explicit refresh from the renderer.
+/// Cache holds for at most `FIND_FILES_CACHE_TTL` anyway, so missing
+/// an invalidation point here is bounded latency, not correctness.
+pub fn ClearFindFilesCache() {
+	if let Ok(mut Guard) = FindFilesCache().lock() {
+		Guard.clear();
+	}
+}
 
 #[async_trait]
 impl WorkspaceProvider for MountainEnvironment {
@@ -234,9 +314,9 @@ impl WorkspaceProvider for MountainEnvironment {
 			return Ok(Vec::new());
 		}
 
-		let WalkRoots:Vec<PathBuf> = match RestrictBase {
+		let WalkRoots:Vec<PathBuf> = match &RestrictBase {
 			Some(Base) => {
-				let BasePath = PathBuf::from(&Base);
+				let BasePath = PathBuf::from(Base);
 				if Folders.iter().any(|F| BasePath.starts_with(F) || F.starts_with(&BasePath)) {
 					vec![BasePath]
 				} else {
@@ -245,6 +325,26 @@ impl WorkspaceProvider for MountainEnvironment {
 			},
 			None => Folders.clone(),
 		};
+
+		// Cache lookup: return a clone of the stored result when the same
+		// (folders, include, exclude, cap, flags) tuple was walked within
+		// the TTL window. The workbench fires findFiles repeatedly during
+		// Cmd+P typing - serving the second-and-later calls from cache
+		// drops the per-keystroke latency from "walk the tree" to a
+		// HashMap lookup.
+		let CacheKey = FindFilesCacheKey {
+			Folders:WalkRoots.clone(),
+			Include:IncludePattern.clone(),
+			Exclude:ExcludePattern.clone(),
+			Cap,
+			UseIgnoreFiles,
+			FollowSymlinks,
+			RestrictBase:RestrictBase.clone(),
+		};
+		if let Some(Cached) = FindFilesCacheGet(&CacheKey) {
+			dev_log!("workspaces", "[FindFilesInWorkspace] cache hit → {} match(es)", Cached.len());
+			return Ok(Cached);
+		}
 
 		let Results:Arc<Mutex<Vec<Url>>> = Arc::new(Mutex::new(Vec::with_capacity(Cap.min(1024))));
 		let Cap = Cap;
@@ -320,6 +420,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.into_inner()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 		dev_log!("workspaces", "[FindFilesInWorkspace] returned {} match(es)", Final.len());
+		FindFilesCachePut(CacheKey, Final.clone());
 		Ok(Final)
 	}
 
