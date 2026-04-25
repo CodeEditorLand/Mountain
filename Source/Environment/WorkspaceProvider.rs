@@ -61,7 +61,7 @@
 //! - Data types: [`(Url, String, usize)`] tuple for folder info (URI, name,
 //!   index)
 
-use std::path::PathBuf;
+use std::{path::PathBuf, sync::{Arc, Mutex}};
 
 use CommonLibrary::{
 	DTO::WorkspaceEditDTO::WorkspaceEditDTO,
@@ -69,6 +69,8 @@ use CommonLibrary::{
 	Workspace::{WorkspaceEditApplier::WorkspaceEditApplier, WorkspaceProvider::WorkspaceProvider},
 };
 use async_trait::async_trait;
+use globset::GlobBuilder;
+use ignore::WalkBuilder;
 use serde_json::Value;
 use url::Url;
 
@@ -142,22 +144,183 @@ impl WorkspaceProvider for MountainEnvironment {
 	}
 
 	/// Finds files in the workspace matching the specified query.
+	///
+	/// Uses `ignore::WalkBuilder::build_parallel()` to walk every
+	/// registered workspace folder on OS threads, respecting
+	/// `.gitignore` / `.ignore` / `.git/info/exclude` when
+	/// `use_ignore_files` is true. Matches each entry's relative
+	/// path against `IncludePatternDTO` (glob), filters out hidden
+	/// dirs by default, drops to native symlink behaviour when
+	/// `follow_symlinks` is false. Returns deduplicated `file://`
+	/// URIs capped at `MaxResults` (default 10_000).
+	///
+	/// `IncludePatternDTO` accepts:
+	///   - String: bare glob (`"**/*.rs"`)
+	///   - `{ pattern: "..." }`: structured form
+	///   - `{ base, pattern }`: VS Code RelativePattern shape (base
+	///     restricts the walk to that subfolder; falls back to all
+	///     workspace folders if `base` doesn't resolve to a known
+	///     folder)
+	///
+	/// `ExcludePatternDTO` follows the same shapes; null/missing
+	/// disables the exclude phase. The `node_modules`, `target`,
+	/// `dist`, `.git` directories are auto-skipped via
+	/// `WalkBuilder::standard_filters` regardless of `use_ignore_files`
+	/// to keep walks bounded on monorepos that don't carry a
+	/// top-level `.gitignore`.
 	async fn FindFilesInWorkspace(
 		&self,
-		_query:Value,
-		_:Option<Value>,
-		_:Option<usize>,
-		_:bool,
-		_:bool,
+		IncludePatternDTO:Value,
+		ExcludePatternDTO:Option<Value>,
+		MaxResults:Option<usize>,
+		UseIgnoreFiles:bool,
+		FollowSymlinks:bool,
 	) -> Result<Vec<Url>, CommonError> {
 		dev_log!("workspaces", "[WorkspaceProvider] FindFilesInWorkspace called");
-		// Scan all workspace folders to find files matching the query pattern. This
-		// integrates with FileSystemReader to traverse directories, apply glob and
-		// exclude patterns, and return matching file URIs. Respect query parameters
-		// including maxResults, excludePatterns, and .gitignore rules. The result
-		// set supports fuzzy search, symbol search, and quick file open features.
-		// Currently returns an empty result set.
-		Ok(Vec::new())
+
+		let IncludePattern = ExtractGlobPattern(&IncludePatternDTO);
+		let IncludePattern = match IncludePattern {
+			Some(P) if !P.is_empty() => P,
+			_ => {
+				dev_log!("workspaces", "[FindFilesInWorkspace] empty include pattern → []");
+				return Ok(Vec::new());
+			},
+		};
+		let ExcludePattern = ExcludePatternDTO
+			.as_ref()
+			.and_then(ExtractGlobPattern)
+			.filter(|P| !P.is_empty());
+		let Cap = MaxResults.unwrap_or(10_000).max(1);
+
+		let IncludeMatcher = GlobBuilder::new(&IncludePattern)
+			.literal_separator(false)
+			.build()
+			.map(|G| G.compile_matcher())
+			.map_err(|Error| CommonError::InvalidArgument {
+				ArgumentName:"IncludePattern".into(),
+				Reason:Error.to_string(),
+			})?;
+		let ExcludeMatcher = match &ExcludePattern {
+			Some(P) => Some(
+				GlobBuilder::new(P)
+					.literal_separator(false)
+					.build()
+					.map(|G| G.compile_matcher())
+					.map_err(|Error| CommonError::InvalidArgument {
+						ArgumentName:"ExcludePattern".into(),
+						Reason:Error.to_string(),
+					})?,
+			),
+			None => None,
+		};
+
+		// Optional `base` from a RelativePattern restricts the walk to
+		// a subfolder. Resolved against any registered workspace
+		// folder; if it doesn't match, walk all folders (matches
+		// VS Code's behaviour).
+		let RestrictBase = ExtractRelativeBase(&IncludePatternDTO);
+
+		let Folders:Vec<PathBuf> = self
+			.ApplicationState
+			.Workspace
+			.WorkspaceFolders
+			.lock()
+			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.iter()
+			.filter_map(|Folder| Folder.URI.to_file_path().ok())
+			.collect();
+		if Folders.is_empty() {
+			dev_log!("workspaces", "[FindFilesInWorkspace] no workspace folders → []");
+			return Ok(Vec::new());
+		}
+
+		let WalkRoots:Vec<PathBuf> = match RestrictBase {
+			Some(Base) => {
+				let BasePath = PathBuf::from(&Base);
+				if Folders.iter().any(|F| BasePath.starts_with(F) || F.starts_with(&BasePath)) {
+					vec![BasePath]
+				} else {
+					Folders.clone()
+				}
+			},
+			None => Folders.clone(),
+		};
+
+		let Results:Arc<Mutex<Vec<Url>>> = Arc::new(Mutex::new(Vec::with_capacity(Cap.min(1024))));
+		let Cap = Cap;
+
+		for Root in WalkRoots {
+			if Results.lock().map(|G| G.len() >= Cap).unwrap_or(true) {
+				break;
+			}
+			let RootForRel = Root.clone();
+			let IncludeMatcher = IncludeMatcher.clone();
+			let ExcludeMatcher = ExcludeMatcher.clone();
+			let ResultsArc = Results.clone();
+
+			let mut Builder = WalkBuilder::new(&Root);
+			Builder
+				.standard_filters(UseIgnoreFiles)
+				.git_ignore(UseIgnoreFiles)
+				.git_global(UseIgnoreFiles)
+				.git_exclude(UseIgnoreFiles)
+				.ignore(UseIgnoreFiles)
+				.parents(UseIgnoreFiles)
+				.follow_links(FollowSymlinks)
+				.hidden(true);
+
+			Builder.build_parallel().run(|| {
+				let RootForRel = RootForRel.clone();
+				let IncludeMatcher = IncludeMatcher.clone();
+				let ExcludeMatcher = ExcludeMatcher.clone();
+				let ResultsArc = ResultsArc.clone();
+				Box::new(move |EntryResult| {
+					if ResultsArc.lock().map(|G| G.len() >= Cap).unwrap_or(true) {
+						return ignore::WalkState::Quit;
+					}
+					let Entry = match EntryResult {
+						Ok(E) => E,
+						Err(_) => return ignore::WalkState::Continue,
+					};
+					if !Entry.file_type().map(|T| T.is_file()).unwrap_or(false) {
+						return ignore::WalkState::Continue;
+					}
+					let Path = Entry.path();
+					let Relative = match Path.strip_prefix(&RootForRel) {
+						Ok(R) => R.to_string_lossy().replace('\\', "/"),
+						Err(_) => Path.to_string_lossy().to_string(),
+					};
+					if let Some(Excl) = &ExcludeMatcher {
+						if Excl.is_match(&Relative) {
+							return ignore::WalkState::Continue;
+						}
+					}
+					if !IncludeMatcher.is_match(&Relative) {
+						return ignore::WalkState::Continue;
+					}
+					if let Ok(FileUrl) = Url::from_file_path(Path) {
+						let mut Guard = match ResultsArc.lock() {
+							Ok(G) => G,
+							Err(_) => return ignore::WalkState::Quit,
+						};
+						if Guard.len() < Cap {
+							Guard.push(FileUrl);
+						}
+						if Guard.len() >= Cap {
+							return ignore::WalkState::Quit;
+						}
+					}
+					ignore::WalkState::Continue
+				})
+			});
+		}
+
+		let Final = Arc::try_unwrap(Results)
+			.map_err(|_| CommonError::Unknown { Description:"FindFilesInWorkspace: result Arc had outstanding refs".into() })?
+			.into_inner()
+			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+		dev_log!("workspaces", "[FindFilesInWorkspace] returned {} match(es)", Final.len());
+		Ok(Final)
 	}
 
 	/// Opens a file in the workspace.
@@ -208,4 +371,53 @@ impl WorkspaceEditApplier for MountainEnvironment {
 
 		Ok(true)
 	}
+}
+
+/// Extract a glob string from any of the shapes a caller can hand us:
+///   - Bare string: `"**/*.rs"` → returned as-is.
+///   - Object with `pattern`: `{ pattern: "..." }` (or
+///     `{ base, pattern }` for VS Code's `RelativePattern`).
+///   - Object whose `value` field is a string: legacy serialised form.
+fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
+	if let Some(S) = Pattern.as_str() {
+		return Some(S.to_string());
+	}
+	if let Some(Obj) = Pattern.as_object() {
+		if let Some(P) = Obj.get("pattern").and_then(Value::as_str) {
+			return Some(P.to_string());
+		}
+		if let Some(P) = Obj.get("value").and_then(Value::as_str) {
+			return Some(P.to_string());
+		}
+		if let Some(P) = Obj.get("Pattern").and_then(Value::as_str) {
+			return Some(P.to_string());
+		}
+	}
+	None
+}
+
+/// Extract a `base` directory from a `RelativePattern`-shaped value.
+/// VS Code's `RelativePattern` carries `{ base, pattern }` (or
+/// `{ baseUri, pattern }`); when present, the walk must be restricted
+/// to `base`. Returns `None` for plain glob strings.
+fn ExtractRelativeBase(Pattern:&Value) -> Option<String> {
+	let Obj = Pattern.as_object()?;
+	if let Some(B) = Obj.get("base").and_then(Value::as_str) {
+		return Some(B.to_string());
+	}
+	if let Some(B) = Obj.get("baseUri") {
+		if let Some(S) = B.as_str() {
+			if let Some(Stripped) = S.strip_prefix("file://") {
+				return Some(Stripped.to_string());
+			}
+			return Some(S.to_string());
+		}
+		if let Some(P) = B.as_object().and_then(|O| O.get("path")).and_then(Value::as_str) {
+			return Some(P.to_string());
+		}
+		if let Some(P) = B.as_object().and_then(|O| O.get("fsPath")).and_then(Value::as_str) {
+			return Some(P.to_string());
+		}
+	}
+	None
 }
