@@ -583,6 +583,22 @@ const BENIGN_ENOENT_SUBSTRINGS:&[&str] = &[
 	// `/User/globalStorage/`; add the companion workspaceStorage
 	// subtree too.
 	"/User/workspaceStorage/",
+	// gitlens probes `~/.land/globalStorage/<extId>/` before its first
+	// write, plus per-feature subdirs `gitlens/launchpad/`. Same lazy
+	// creation pattern as the other extension state files above; absent
+	// on every fresh profile boot.
+	"/globalStorage/eamodio.gitlens",
+	"/globalStorage/GitHub.copilot",
+	"/globalStorage/GitHub.copilot-chat",
+	"/globalStorage/Anthropic.claude-code",
+	"/globalStorage/RooVeterinaryInc.roo-cline",
+	// vim's per-mode register store: lazy-created on first Yank/Paste.
+	".registers",
+	// Sky / Output bundled `product.json` and friends are read by
+	// gitlens / copilot to detect host product metadata. Probed before
+	// they exist on first build.
+	"/Sky/Target/product.json",
+	"/Output/Target/product.json",
 ];
 
 /// Return true when the given path is a known-optional probe whose absence

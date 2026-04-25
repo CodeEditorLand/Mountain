@@ -111,3 +111,12 @@ pub mod UnregisterCommand;
 pub mod WebviewLifecycle;
 pub mod WindowCreateTerminal;
 pub mod WindowShowMessage;
+
+// --- Batch 17 (post-§14): SCM register pair pulled out of the
+// language-providers OR-block in `MountainVinegRPCService.rs`. The
+// catch-all fallthrough was registering SCM providers in the
+// language-feature provider registry, which the SCM viewlet never
+// reads. These atoms route through `SourceControlManagementProvider`
+// + emit the `sky://scm/*` events the renderer actually subscribes to.
+pub mod RegisterScmProvider;
+pub mod RegisterScmResourceGroup;

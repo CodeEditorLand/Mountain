@@ -183,6 +183,21 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 		return true;
 	}
 
+	// Sky's Target tree as a whole is build output Land controls (product.json,
+	// nls bundles, package.json, workbench bundle artifacts). gitlens reads
+	// `Sky/Target/product.json` to detect the host product; the workbench reads
+	// its own bundled metadata. None of these are user content - allowing the
+	// whole `Sky/Target/` subtree mirrors the bundled-extension carve-out
+	// above and keeps third-party probes from getting "outside workspace"
+	// rejections for files Land itself shipped.
+	if ContainsPathSegments(PathToCheck, &["Sky", "Target"])
+		|| ContainsPathSegments(PathToCheck, &["Output", "Target"])
+		|| ContainsPathSegments(PathToCheck, &["Dependency", "Microsoft", "Dependency", "Editor", "out"])
+		|| ContainsPathSegments(PathToCheck, &["Dependency", "Microsoft", "Dependency", "Editor", "product.json"])
+	{
+		return true;
+	}
+
 	if let Ok(TempDir) = std::env::var("TMPDIR") {
 		let TempPath = PathBuf::from(&TempDir);
 		if !TempPath.as_os_str().is_empty()

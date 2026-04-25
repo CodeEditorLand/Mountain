@@ -592,6 +592,22 @@ impl MountainService for MountainVinegRPCService {
 			"update_scm_group" => {
 				super::Notification::UpdateScmGroup::UpdateScmGroup(self, &Parameter).await;
 			},
+			// SCM register pair: explicit arms BEFORE the language-providers
+			// OR-block below. Without these, both `register_scm_provider` and
+			// `register_scm_resource_group` fell into the catch-all language-
+			// providers branch which only writes to
+			// `Extension::ProviderRegistration` - never to
+			// `ApplicationState::Feature::Markers::SourceControlManagement*`,
+			// so the SCM viewlet stayed empty even after vscode.git's
+			// `createSourceControl(...)` round-tripped successfully. The new
+			// atoms write the markers + emit the `sky://scm/*` events the
+			// renderer subscribes to.
+			"register_scm_provider" => {
+				super::Notification::RegisterScmProvider::RegisterScmProvider(self, &Parameter).await;
+			},
+			"register_scm_resource_group" => {
+				super::Notification::RegisterScmResourceGroup::RegisterScmResourceGroup(self, &Parameter).await;
+			},
 
 			// Batch 11: progress lifecycle name alignment.
 			"progress.update" => {
@@ -731,8 +747,12 @@ impl MountainService for MountainVinegRPCService {
 			| "register_remote_authority_resolver"
 			| "register_rename_provider"
 			| "register_resource_label_formatter"
-			| "register_scm_provider"
-			| "register_scm_resource_group"
+			// `register_scm_provider` / `register_scm_resource_group` were
+			// here pre-Batch-17. They now have their own explicit arms above
+			// because the SCM viewlet binds to
+			// `ApplicationState::Feature::Markers::SourceControlManagement*`,
+			// not to `Extension::ProviderRegistration` which this OR-block
+			// writes. See `Notification/RegisterScmProvider.rs`.
 			| "register_selection_range_provider"
 			| "register_semantic_tokens_provider"
 			| "register_signature_help_provider"

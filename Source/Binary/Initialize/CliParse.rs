@@ -32,7 +32,7 @@
 //! ### Considerations
 //! - CLI parsing is fast, minimal overhead
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Parse CLI arguments and extract workspace path.
 ///
@@ -123,7 +123,7 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 			.unwrap_or(DefaultAutoload);
 		if AutoloadCwd {
 			if let Ok(Cwd) = std::env::current_dir() {
-				Collected.push(Cwd);
+				Collected.push(WalkUpToProjectRoot(&Cwd));
 			}
 		}
 	}
@@ -138,4 +138,42 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 			Path.canonicalize().ok().or(Some(Path))
 		})
 		.collect()
+}
+
+/// Walk up from `Start` looking for a project-root marker (`Cargo.toml`,
+/// `package.json`, `.git`, `pyproject.toml`, `go.mod`, `pnpm-workspace.yaml`).
+/// Returns the first ancestor that owns one. Falls back to `Start` itself
+/// when nothing matches before the filesystem root.
+///
+/// Why: when a developer launches the binary from a `Target/debug/` build
+/// directory, `current_dir()` is the build folder, which has no source
+/// files. `vscode.workspace.findFiles('**/*')` walks it and returns
+/// nothing; the SCM panel can't find a repo; tree-views render empty.
+/// Walking up to the nearest project root mirrors what every
+/// `git`/`cargo`/`npm` CLI does and gives extensions a workspace folder
+/// they can actually scan.
+fn WalkUpToProjectRoot(Start:&Path) -> PathBuf {
+	const Markers:&[&str] = &[
+		"Cargo.toml",
+		"package.json",
+		".git",
+		"pyproject.toml",
+		"go.mod",
+		"pnpm-workspace.yaml",
+		"deno.json",
+		"deno.jsonc",
+	];
+	let mut Cursor:&Path = Start;
+	loop {
+		for Marker in Markers {
+			if Cursor.join(Marker).exists() {
+				return Cursor.to_path_buf();
+			}
+		}
+		match Cursor.parent() {
+			Some(Parent) if Parent != Cursor => Cursor = Parent,
+			_ => break,
+		}
+	}
+	Start.to_path_buf()
 }
