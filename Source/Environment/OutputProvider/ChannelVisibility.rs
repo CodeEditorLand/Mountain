@@ -45,12 +45,43 @@ pub(super) async fn reveal_channel(
 	Ok(())
 }
 
-/// Closes the view of an output channel in the UI.
+/// Closes the view of an output channel in the UI. Hides the channel
+/// (mutates `IsVisible` in `ApplicationState`) and emits a Sky event
+/// so the renderer can collapse the panel; the channel itself stays
+/// in state with its buffered lines so a later `reveal` can re-open
+/// it without losing content. To remove the channel entirely, use
+/// `dispose_channel` instead.
 pub(super) async fn close_channel(
-	_env:&crate::Environment::MountainEnvironment::MountainEnvironment,
-	_channel_identifier:String,
+	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+	channel_identifier:String,
 ) -> Result<(), CommonError> {
-	dev_log!("output", "warn: [OutputProvider] Close is not fully implemented.");
+	dev_log!("output", "[OutputProvider] Closing channel: '{}'", channel_identifier);
+
+	let mut channels_guard = env
+		.ApplicationState
+		.Feature
+		.OutputChannels
+		.OutputChannels
+		.lock()
+		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+
+	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
+		channel_state.IsVisible = false;
+		// Re-use OutputReveal with `PreserveFocus: false` to push the
+		// updated visibility state - SkyEvent doesn't yet have a
+		// dedicated Hide variant; the renderer's reveal handler is
+		// idempotent and reads the latest IsVisible from state.
+		let event_payload = json!({ "Id": channel_identifier, "PreserveFocus": true, "IsVisible": false });
+		env.ApplicationHandle
+			.emit(SkyEvent::OutputReveal.AsStr(), event_payload)
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
+	} else {
+		dev_log!(
+			"output",
+			"warn: [OutputProvider] Channel '{}' not found for close.",
+			channel_identifier
+		);
+	}
 
 	Ok(())
 }

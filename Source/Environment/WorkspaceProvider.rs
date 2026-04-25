@@ -323,15 +323,52 @@ impl WorkspaceProvider for MountainEnvironment {
 		Ok(Final)
 	}
 
-	/// Opens a file in the workspace.
+	/// Opens a file in the editor by emitting the same
+	/// `sky://editor/openDocument` event the workbench's
+	/// `IEditorService.openEditor(uri)` path produces. Sky's bridge
+	/// listens on this event and forwards through to the live
+	/// `__CEL_SERVICES__.Commands.executeCommand("vscode.open", …)`
+	/// inside the Output workbench bundle, which is what actually
+	/// surfaces the file in the editor area.
+	///
+	/// Path resolution: accepts an absolute path (already a `PathBuf`).
+	/// Constructs a `file://` URI via `Url::from_file_path` for
+	/// proper percent-encoding of unicode / special chars; falls
+	/// back to a manual prefix for relative paths (rare; Mountain
+	/// callers always pass absolute paths via the trait).
 	async fn OpenFile(&self, path:PathBuf) -> Result<(), CommonError> {
+		use tauri::Emitter;
 		dev_log!("workspaces", "[WorkspaceProvider] OpenFile called for: {:?}", path);
-		// Open a file in the editor by delegating to the Workbench or command system.
-		// Resolves the path relative to workspace roots, handles URI schemes (file://,
-		// untitled:), and triggers the 'workbench.action.files.open' command or
-		// equivalent. Creates a new document tab with the file contents, activating
-		// the editor and adding the file to the recently opened list. Currently a
-		// no-op.
+
+		let UriString = match Url::from_file_path(&path) {
+			Ok(U) => U.to_string(),
+			Err(_) => format!("file://{}", path.to_string_lossy()),
+		};
+
+		self.ApplicationHandle
+			.emit(
+				"sky://editor/openDocument",
+				serde_json::json!({
+					"uri": UriString,
+					"viewColumn": null,
+				}),
+			)
+			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
+
+		// Push onto the recently-opened list so the next workbench
+		// boot offers it in the welcome / quick-open recents.
+		if let Ok(mut RecentlyOpened) = self
+			.ApplicationState
+			.Feature
+			.RecentlyOpened
+			.RecentlyOpened
+			.lock()
+		{
+			let Entry = path.to_string_lossy().to_string();
+			RecentlyOpened.retain(|E| E != &Entry);
+			RecentlyOpened.insert(0, Entry);
+			RecentlyOpened.truncate(50);
+		}
 		Ok(())
 	}
 }
