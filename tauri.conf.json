@@ -70,6 +70,7 @@
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
 		"externalBin": [
+			"Binary/node",
 			"Binary/node"
 		],
 		"fileAssociations": [],
@@ -143,7 +144,7 @@
 			}
 		}
 	},
-	"identifier": "land.editor.binary",
-	"productName": "Mountain",
+	"identifier": "land.editor.binary.production.node.environment.microsoft.vscode.dependency.node.22.bundle.clean.compile.electron.profile.esbuild.compiler.mountain",
+	"productName": "ProductionNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Compile_ElectronProfile_EsbuildCompiler_Mountain",
 	"version": "0.0.1"
 }
