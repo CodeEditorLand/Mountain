@@ -200,8 +200,9 @@ use std::{
 
 use CommonLibrary::{Error::CommonError::CommonError, Search::SearchProvider::SearchProvider};
 use async_trait::async_trait;
-use grep_regex::RegexMatcherBuilder;
-use grep_searcher::{Searcher, Sink, SinkMatch};
+use grep_matcher::Matcher;
+use grep_regex::{RegexMatcher, RegexMatcherBuilder};
+use grep_searcher::{Searcher, SearcherBuilder, Sink, SinkMatch};
 use ignore::WalkBuilder;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -241,12 +242,39 @@ struct TextSearchQuery {
 	is_multiline:Option<bool>,
 }
 
+/// Per-match column range within the preview line.
+///
+/// `start` and `end` are 0-based UTF-8 character offsets, NOT byte
+/// offsets - VS Code's renderer measures columns in code units, so
+/// pre-converting bytes→chars here keeps the workbench from
+/// mis-highlighting multi-byte UTF-8 lines (the search panel underlines
+/// the wrong substring otherwise).
+///
+/// VS Code's `ISearchRange` is 1-based for line numbers but 0-based
+/// for columns; the SkyBridge consumer adds the +1 line offset there.
+#[derive(Serialize, Clone, Debug)]
+#[serde(rename_all = "camelCase")]
+struct ColumnRange {
+	start:u64,
+
+	end:u64,
+}
+
 #[derive(Serialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
 struct TextMatch {
 	preview:String,
 
+	/// 1-based line number (grep-searcher emits 1-based when
+	/// `line_number(true)` is configured on the SearcherBuilder).
 	line_number:u64,
+
+	/// Per-line ranges where the matcher actually matched. A single
+	/// line can contain multiple matches (e.g. `test test test`); each
+	/// gets its own range. Empty when match-position lookup failed -
+	/// in that case the renderer falls back to highlighting the whole
+	/// line.
+	columns:Vec<ColumnRange>,
 }
 
 #[derive(Serialize, Clone, Debug)]
@@ -264,35 +292,119 @@ struct PerFileSink {
 	path:PathBuf,
 
 	results:Arc<Mutex<Vec<FileMatch>>>,
+
+	/// Cloned per-thread so the sink can re-run the matcher against the
+	/// raw line bytes to recover column ranges. `SinkMatch::bytes()`
+	/// gives us the matched line but not where in the line the matcher
+	/// hit; calling `Matcher::find_at(...)` ourselves is the documented
+	/// pattern for recovering that information.
+	matcher:RegexMatcher,
 }
 
 impl Sink for PerFileSink {
 	type Error = io::Error;
 
 	fn matched(&mut self, _Searcher:&Searcher, Mat:&SinkMatch<'_>) -> Result<bool, Self::Error> {
-		let mut ResultsGuard = self
-			.results
-			.lock()
-			.map_err(|Error| io::Error::new(io::ErrorKind::Other, Error.to_string()))?;
+		let RawLine = Mat.bytes();
+		// Trim trailing newline so the preview text the renderer shows
+		// doesn't carry a stray empty line break.
+		let TrimmedLen = if RawLine.ends_with(b"\r\n") {
+			RawLine.len().saturating_sub(2)
+		} else if RawLine.last() == Some(&b'\n') {
+			RawLine.len().saturating_sub(1)
+		} else {
+			RawLine.len()
+		};
+		let LineBytes = &RawLine[..TrimmedLen];
+		// Cap preview length at 512 chars - super-long minified lines
+		// would otherwise force the renderer to layout massive rows
+		// AND make the byte→char map below grow proportionally.
+		const PREVIEW_BYTE_CAP:usize = 512;
+		let CapBytes = LineBytes.len().min(PREVIEW_BYTE_CAP);
+		// Round down to the nearest UTF-8 boundary so `from_utf8_lossy`
+		// doesn't replace half a multibyte char with U+FFFD.
+		let SafeCap = (0..=CapBytes).rev().find(|&I| {
+			I == 0 || I == LineBytes.len() || (LineBytes[I] & 0xC0) != 0x80
+		}).unwrap_or(0);
+		let Preview = String::from_utf8_lossy(&LineBytes[..SafeCap]).to_string();
 
-		let Preview = String::from_utf8_lossy(Mat.bytes()).to_string();
+		// `line_number(true)` was set on the SearcherBuilder so this
+		// returns Some(n) (1-based). Default to 1 if we somehow lose
+		// it - rendering "line 0" looked wrong even when the rest of
+		// the data was correct.
+		let LineNumber = Mat.line_number().unwrap_or(1);
 
-		let LineNumber = Mat.line_number().unwrap_or(0);
+		// Build a byte→char map ONCE per line so every column lookup
+		// is O(log n) (binary search) instead of O(n) (the previous
+		// `char_indices().position()` per call). On lines with many
+		// matches this collapses the per-line work from quadratic to
+		// linear, which is the difference between a 6 s search and a
+		// minutes-long hang on workspaces that contain match-dense
+		// minified bundles.
+		let mut CharBoundaries:Vec<usize> = Vec::with_capacity(Preview.len() / 2 + 1);
+		for (B, _) in Preview.char_indices() {
+			CharBoundaries.push(B);
+		}
+		CharBoundaries.push(Preview.len()); // Sentinel for end-of-string.
+		let ByteToChar = |Byte:usize| -> u64 {
+			match CharBoundaries.binary_search(&Byte) {
+				Ok(Index) => Index as u64,
+				Err(Index) => Index as u64,
+			}
+		};
+
+		// Walk the line bytes and collect every sub-line range the
+		// matcher hits. Multiple matches per line are common
+		// (e.g. searching for `test` in `test test`); each becomes its
+		// own ColumnRange so the renderer underlines them all. Cap at
+		// `MAX_COLUMNS_PER_LINE` to bound work on pathological lines
+		// where a regex matches every character (e.g. `.` or `\w`
+		// against a long minified line).
+		const MAX_COLUMNS_PER_LINE:usize = 100;
+		let mut Columns:Vec<ColumnRange> = Vec::new();
+		let mut StartByte = 0usize;
+		// Search within the truncated preview so columns line up with
+		// the preview text the renderer will display.
+		let SearchBytes = &LineBytes[..SafeCap];
+		while StartByte <= SearchBytes.len() && Columns.len() < MAX_COLUMNS_PER_LINE {
+			match self.matcher.find_at(SearchBytes, StartByte) {
+				Ok(Some(M)) => {
+					if M.start() >= SearchBytes.len() {
+						break;
+					}
+					Columns.push(ColumnRange {
+						start:ByteToChar(M.start()),
+						end:ByteToChar(M.end()),
+					});
+					// `M.end() == M.start()` happens for zero-width
+					// matches (e.g. `\b`); advance by one byte to
+					// avoid an infinite loop.
+					StartByte = if M.end() == M.start() { M.end() + 1 } else { M.end() };
+				},
+				_ => break,
+			}
+		}
 
 		// Since this sink is per-file, we know `self.path` is correct.
 		let FileURI = url::Url::from_file_path(&self.path)
 			.map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "Could not convert path to URL"))?
 			.to_string();
 
+		let NewMatch = TextMatch { preview:Preview, line_number:LineNumber, columns:Columns };
+
+		// Mutex acquired AFTER the column-range scan so contention
+		// doesn't serialise the per-line regex work across the
+		// `WalkBuilder::build_parallel()` workers.
+		let mut ResultsGuard = self
+			.results
+			.lock()
+			.map_err(|Error| io::Error::new(io::ErrorKind::Other, Error.to_string()))?;
+
 		// Find the entry for our file, or create it if it's the first match.
 		if let Some(FileMatch) = ResultsGuard.iter_mut().find(|fm| fm.resource == FileURI) {
-			FileMatch.matches.push(TextMatch { preview:Preview, line_number:LineNumber });
+			FileMatch.matches.push(NewMatch);
 		} else {
-			ResultsGuard.push(FileMatch {
-				resource:FileURI,
-
-				matches:vec![TextMatch { preview:Preview, line_number:LineNumber }],
-			});
+			ResultsGuard.push(FileMatch { resource:FileURI, matches:vec![NewMatch] });
 		}
 
 		// Continue searching
@@ -353,7 +465,16 @@ impl SearchProvider for MountainEnvironment {
 				// The `search_parallel` method is not available on `Searcher`. We must process
 				// entries from the walker and call `search_path` individually.
 				Walker.run(|| {
-					let mut Searcher = Searcher::new();
+					// `line_number(true)` is mandatory - without it,
+					// `SinkMatch::line_number()` returns None and every
+					// match lands at line 0, which the renderer treats
+					// as "no line info" and collapses into an
+					// uncategorised count-of-zero. The default
+					// `Searcher::new()` constructor disables line
+					// numbers for performance.
+					let mut Searcher = SearcherBuilder::new()
+						.line_number(true)
+						.build();
 
 					let Matcher = Matcher.clone();
 
@@ -363,7 +484,11 @@ impl SearchProvider for MountainEnvironment {
 						if let Ok(Entry) = EntryResult {
 							if Entry.file_type().map_or(false, |ft| ft.is_file()) {
 								// For each file, create a new sink that knows its path.
-								let Sink = PerFileSink { path:Entry.path().to_path_buf(), results:AllMatches.clone() };
+								let Sink = PerFileSink {
+									path:Entry.path().to_path_buf(),
+									results:AllMatches.clone(),
+									matcher:Matcher.clone(),
+								};
 
 								if let Err(Error) = Searcher.search_path(&Matcher, Entry.path(), Sink) {
 									dev_log!(
@@ -386,6 +511,15 @@ impl SearchProvider for MountainEnvironment {
 			.lock()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?
 			.clone();
+
+		let TotalLineMatches:usize = FinalMatches.iter().map(|F| F.matches.len()).sum();
+		dev_log!(
+			"search",
+			"[SearchProvider] returned {} files / {} line-matches for pattern={:?}",
+			FinalMatches.len(),
+			TotalLineMatches,
+			Query.pattern
+		);
 
 		Ok(json!(FinalMatches))
 	}

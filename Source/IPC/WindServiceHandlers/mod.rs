@@ -1941,11 +1941,27 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						{
 							Ok(Value_) => Ok(Value_),
 							Err(Error) => {
-								dev_log!(
+								// Common case: an extension's tree
+								// data-provider rejects (npm extension
+								// crashes on a malformed
+								// `package.json`, gitlens hits an
+								// expired pull-request fetch, etc.).
+								// First failure per view is logged so
+								// developers can see the cause; later
+								// failures of the same view-id are
+								// silenced via the file-sink-only
+								// path so the dev log doesn't fill
+				// with hundreds of identical lines
+								// while the user is browsing tree
+								// nodes that all hit the same
+								// extension bug.
+								crate::IPC::DevLog::DebugOnce(
 									"tree-view",
-									"[TreeView] invoke:getChildren error view={} err={:?}",
-									ViewId,
-									Error
+									&format!("get-children-error:{}", ViewId),
+									&format!(
+										"[TreeView] invoke:getChildren error view={} err={:?} (further occurrences silenced)",
+										ViewId, Error
+									),
 								);
 								Ok(json!({ "items": [] }))
 							},
