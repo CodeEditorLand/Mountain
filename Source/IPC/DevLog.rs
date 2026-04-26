@@ -680,6 +680,12 @@ const SHORT_MODE_MUTED_TAGS:&[&str] = &[
 	"commands-verbose",
 	"scheme-assets",
 	"cocoon-stderr-verbose",
+	// `[DEV:VSCODE-API-GAP]` (emitted from Cocoon's WrapNamespaceWithHeuristics
+	// every time an extension reaches for a vscode.<ns>.<method> we haven't
+	// formally shimmed) is a per-method audit trail. Useful when actively
+	// auditing the API gap, noisy in default short-mode runs - mute by default;
+	// reachable via `LAND_DEV_LOG=all` or `LAND_DEV_LOG=vscode-api-gap`.
+	"vscode-api-gap",
 ];
 
 /// Check if a tag is enabled.

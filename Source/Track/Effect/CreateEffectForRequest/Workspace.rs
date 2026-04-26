@@ -79,6 +79,29 @@ pub fn CreateEffect<R:Runtime>(
 			Some(Ok(Box::new(effect)))
 		},
 
+		// Workspace-trust family. vscode.git's `Model.openRepository` calls
+		// `await workspace.requestResourceTrust({uri, message})` and
+		// `await workspace.isResourceTrusted(uri)` before constructing the
+		// Repository. The Cocoon `WrapWorkspaceNamespace` Proxy fallback
+		// already returns a permissive `true` heuristic so vscode.git
+		// proceeds; routing the same method names through Mountain here
+		// gives the canonical handler a place to live (and makes
+		// `MountainMethods` see them via `GenerateRouteManifest.sh`'s grep,
+		// which switches the Cocoon shim from heuristic-default to
+		// gRPC-routed automatically on the next manifest regeneration). A
+		// future round can replace the unconditional `true` with a real
+		// per-OS trust query (Gatekeeper / SmartScreen / xattrs); single-
+		// window dev runtime stays trust-by-default.
+		"Workspace.RequestResourceTrust" | "Workspace.IsResourceTrusted" => {
+			let effect =
+				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						Ok(json!({ "trusted": true }))
+					})
+				};
+			Some(Ok(Box::new(effect)))
+		},
+
 		"$updateWorkspaceFolders" => {
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
