@@ -22,67 +22,79 @@ pub mod Utilities;
 
 // Local `use X::*;` (NOT `pub use`): brings the domain handler names into
 // this file's scope so the dispatch match arms below can call
-// `handle_foo(...)` unqualified. Local `use` is scoped to this file only; external callers
-// must spell the full path (`WindServiceHandlers::Utilities::foo`).
+// `handle_foo(...)` unqualified. Local `use` is scoped to this file only;
+// external callers must spell the full path
+// (`WindServiceHandlers::Utilities::foo`).
+use std::{collections::HashMap, path::PathBuf, sync::Arc};
+
 use Commands::*;
 use Configuration::*;
 use Extensions::*;
-use FileSystem::Managed::FileCopy::*;
-use FileSystem::Managed::FileDelete::*;
-use FileSystem::Managed::FileExists::*;
-use FileSystem::Managed::FileMkdir::*;
-use FileSystem::Managed::FileMove::*;
-use FileSystem::Managed::FileRead::*;
-use FileSystem::Managed::FileReadBinary::*;
-use FileSystem::Managed::FileReaddir::*;
-use FileSystem::Managed::FileStat::*;
-use FileSystem::Managed::FileWrite::*;
-use FileSystem::Managed::FileWriteBinary::*;
-use FileSystem::Native::FileCloneNative::*;
-use FileSystem::Native::FileDeleteNative::*;
-use FileSystem::Native::FileExistsNative::*;
-use FileSystem::Native::FileMkdirNative::*;
-use FileSystem::Native::FileReadNative::*;
-use FileSystem::Native::FileReaddirNative::*;
-use FileSystem::Native::FileRealpath::*;
-use FileSystem::Native::FileRenameNative::*;
-use FileSystem::Native::FileStatNative::*;
-use FileSystem::Native::FileWriteNative::*;
+use FileSystem::{
+	Managed::{
+		FileCopy::*,
+		FileDelete::*,
+		FileExists::*,
+		FileMkdir::*,
+		FileMove::*,
+		FileRead::*,
+		FileReadBinary::*,
+		FileReaddir::*,
+		FileStat::*,
+		FileWrite::*,
+		FileWriteBinary::*,
+	},
+	Native::{
+		FileCloneNative::*,
+		FileDeleteNative::*,
+		FileExistsNative::*,
+		FileMkdirNative::*,
+		FileReadNative::*,
+		FileReaddirNative::*,
+		FileRealpath::*,
+		FileRenameNative::*,
+		FileStatNative::*,
+		FileWriteNative::*,
+	},
+};
 use Model::*;
-use NativeHost::FindFreePort::*;
-use NativeHost::GetColorScheme::*;
-use NativeHost::IsFullscreen::*;
-use NativeHost::IsMaximized::*;
-use NativeHost::OSProperties::*;
-use NativeHost::OSStatistics::*;
-use NativeHost::OpenExternal::*;
-use NativeHost::PickFolder::*;
-use NativeHost::ShowItemInFolder::*;
-use NativeHost::ShowOpenDialog::*;
+use NativeHost::{
+	FindFreePort::*,
+	GetColorScheme::*,
+	IsFullscreen::*,
+	IsMaximized::*,
+	OSProperties::*,
+	OSStatistics::*,
+	OpenExternal::*,
+	PickFolder::*,
+	ShowItemInFolder::*,
+	ShowOpenDialog::*,
+};
 use Navigation::*;
 use Output::*;
 use Search::*;
 use Storage::*;
 use Terminal::*;
-use UI::Decoration::*;
-use UI::Keybinding::*;
-use UI::Lifecycle::*;
-use UI::Notification::*;
-use UI::Progress::*;
-use UI::QuickInput::*;
-use UI::Theme::*;
-use UI::Workspace::*;
-use UI::WorkingCopy::*;
-use Utilities::ApplicationRoot::*;
-use Utilities::ChannelPriority::*;
-use Utilities::JsonValueHelpers::*;
-use Utilities::MetadataEncoding::*;
-use Utilities::PathExtraction::*;
-use Utilities::RecentlyOpened::*;
-use Utilities::UserdataDir::*;
-
-use std::{collections::HashMap, path::PathBuf, sync::Arc};
-
+use UI::{
+	Decoration::*,
+	Keybinding::*,
+	Lifecycle::*,
+	Notification::*,
+	Progress::*,
+	QuickInput::*,
+	Theme::*,
+	WorkingCopy::*,
+	Workspace::*,
+};
+use Utilities::{
+	ApplicationRoot::*,
+	ChannelPriority::*,
+	JsonValueHelpers::*,
+	MetadataEncoding::*,
+	PathExtraction::*,
+	RecentlyOpened::*,
+	UserdataDir::*,
+};
 use Echo::Task::Priority::Priority as EchoPriority;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
@@ -377,9 +389,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// `MainThreadCommands` / `CommandService` channel methods
 				// are `executeCommand` and `getCommands`; Mountain's
 				// Effect-TS rail uses `execute` / `getAll`. Alias both.
-				"commands:execute" | "commands:executeCommand" => {
-					handle_commands_execute(runtime.clone(), args).await
-				},
+				"commands:execute" | "commands:executeCommand" => handle_commands_execute(runtime.clone(), args).await,
 				"commands:getAll" | "commands:getCommands" => {
 					dev_log!("commands", "{}", command);
 					handle_commands_get_all(runtime.clone()).await
@@ -519,20 +529,10 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// it in ScannedExtensions, and return the ILocalExtension wrapper
 				// so the sidebar refreshes without a window reload.
 				"extensions:install" => {
-					Extension::ExtensionInstall::ExtensionInstall(
-						app_handle.clone(),
-						runtime.clone(),
-						args,
-					)
-					.await
+					Extension::ExtensionInstall::ExtensionInstall(app_handle.clone(), runtime.clone(), args).await
 				},
 				"extensions:uninstall" => {
-					Extension::ExtensionUninstall::ExtensionUninstall(
-						app_handle.clone(),
-						runtime.clone(),
-						args,
-					)
-					.await
+					Extension::ExtensionUninstall::ExtensionUninstall(app_handle.clone(), runtime.clone(), args).await
 				},
 
 				// `ExtensionManagementChannelClient.getManifest(vsix: URI)` - reads
@@ -546,12 +546,13 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				"extensions:getManifest" => {
 					let VsixPath = match args.first() {
 						Some(serde_json::Value::String(Path)) => Path.clone(),
-						Some(Obj) => Obj
-							.get("fsPath")
-							.and_then(|V| V.as_str())
-							.map(str::to_owned)
-							.or_else(|| Obj.get("path").and_then(|V| V.as_str()).map(str::to_owned))
-							.unwrap_or_default(),
+						Some(Obj) => {
+							Obj.get("fsPath")
+								.and_then(|V| V.as_str())
+								.map(str::to_owned)
+								.or_else(|| Obj.get("path").and_then(|V| V.as_str()).map(str::to_owned))
+								.unwrap_or_default()
+						},
 						None => String::new(),
 					};
 					dev_log!("extensions", "extensions:getManifest vsix={}", VsixPath);
@@ -690,9 +691,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// channel uses `getWorkspaceFolders` /
 				// `addWorkspaceFolders`; Mountain's rail uses the
 				// shorter `getFolders` / `addFolder`. Alias both.
-				"workspaces:getFolders"
-				| "workspaces:getWorkspaceFolders"
-				| "workspaces:getWorkspace" => {
+				"workspaces:getFolders" | "workspaces:getWorkspaceFolders" | "workspaces:getWorkspace" => {
 					dev_log!("workspaces", "{}", command);
 					handle_workspaces_get_folders(runtime.clone()).await
 				},
@@ -735,15 +734,11 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Search commands. Stock VS Code `SearchService` channel
 				// uses `textSearch` / `fileSearch`; Mountain's Effect-TS
 				// rail uses `findInFiles` / `findFiles`. Alias both.
-				"search:findInFiles"
-				| "search:textSearch"
-				| "search:searchText" => {
+				"search:findInFiles" | "search:textSearch" | "search:searchText" => {
 					dev_log!("search", "{}", command);
 					handle_search_find_in_files(runtime.clone(), args).await
 				},
-				"search:findFiles"
-				| "search:fileSearch"
-				| "search:searchFile" => {
+				"search:findFiles" | "search:fileSearch" | "search:searchFile" => {
 					dev_log!("search", "{}", command);
 					handle_search_find_files(runtime.clone(), args).await
 				},
@@ -751,9 +746,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// SearchService listens for these. We have no streaming
 				// search yet, so ack with Null and let the workbench
 				// treat the call as a no-op.
-				"search:cancel"
-				| "search:clearCache"
-				| "search:onDidChangeResult" => {
+				"search:cancel" | "search:clearCache" | "search:onDidChangeResult" => {
 					dev_log!("search", "{} (stub-ack)", command);
 					Ok(Value::Null)
 				},
@@ -1297,57 +1290,57 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					} else {
 						dev_log!("nativehost", "nativeHost:moveItemToTrash path={}", Path);
 						let Moved = {
-						#[cfg(target_os = "macos")]
-						{
-							tokio::process::Command::new("osascript")
-								.args([
-									"-e",
-									&format!(
-										"tell application \"Finder\" to delete POSIX file \"{}\"",
-										Path.replace('"', "\\\"")
-									),
-								])
-								.status()
-								.await
-								.map(|S| S.success())
-								.unwrap_or(false)
-						}
-						#[cfg(target_os = "linux")]
-						{
-							let Gio = tokio::process::Command::new("gio")
-								.args(["trash", &Path])
-								.status()
-								.await
-								.map(|S| S.success())
-								.unwrap_or(false);
-							if Gio {
-								true
-							} else {
-								tokio::process::Command::new("trash")
-									.arg(&Path)
+							#[cfg(target_os = "macos")]
+							{
+								tokio::process::Command::new("osascript")
+									.args([
+										"-e",
+										&format!(
+											"tell application \"Finder\" to delete POSIX file \"{}\"",
+											Path.replace('"', "\\\"")
+										),
+									])
 									.status()
 									.await
 									.map(|S| S.success())
 									.unwrap_or(false)
 							}
-						}
-						#[cfg(target_os = "windows")]
-						{
-							let Script = format!(
-								"(new-object -comobject Shell.Application).NameSpace(0xA).MoveHere('{}')",
-								Path.replace('\'', "''")
-							);
-							tokio::process::Command::new("powershell.exe")
-								.args(["-NoProfile", "-Command", &Script])
-								.status()
-								.await
-								.map(|S| S.success())
-								.unwrap_or(false)
-						}
-						#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
-						{
-							false
-						}
+							#[cfg(target_os = "linux")]
+							{
+								let Gio = tokio::process::Command::new("gio")
+									.args(["trash", &Path])
+									.status()
+									.await
+									.map(|S| S.success())
+									.unwrap_or(false);
+								if Gio {
+									true
+								} else {
+									tokio::process::Command::new("trash")
+										.arg(&Path)
+										.status()
+										.await
+										.map(|S| S.success())
+										.unwrap_or(false)
+								}
+							}
+							#[cfg(target_os = "windows")]
+							{
+								let Script = format!(
+									"(new-object -comobject Shell.Application).NameSpace(0xA).MoveHere('{}')",
+									Path.replace('\'', "''")
+								);
+								tokio::process::Command::new("powershell.exe")
+									.args(["-NoProfile", "-Command", &Script])
+									.status()
+									.await
+									.map(|S| S.success())
+									.unwrap_or(false)
+							}
+							#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+							{
+								false
+							}
 						};
 						Ok(json!(Moved))
 					}
@@ -1666,8 +1659,8 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// here would point the debugger at Mountain's Rust binary.
 					// Fall back to Mountain's PID only if Cocoon hasn't spawned
 					// yet (should not happen for a real extension-host start).
-					let Pid = crate::ProcessManagement::CocoonManagement::GetCocoonPid()
-						.unwrap_or_else(std::process::id);
+					let Pid =
+						crate::ProcessManagement::CocoonManagement::GetCocoonPid().unwrap_or_else(std::process::id);
 					dev_log!("exthost", "extensionHostStarter:start pid={}", Pid);
 					Ok(json!({ "pid": Pid }))
 				},
@@ -1951,7 +1944,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 								// failures of the same view-id are
 								// silenced via the file-sink-only
 								// path so the dev log doesn't fill
-				// with hundreds of identical lines
+								// with hundreds of identical lines
 								// while the user is browsing tree
 								// nodes that all hit the same
 								// extension bug.
@@ -1959,7 +1952,8 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 									"tree-view",
 									&format!("get-children-error:{}", ViewId),
 									&format!(
-										"[TreeView] invoke:getChildren error view={} err={:?} (further occurrences silenced)",
+										"[TreeView] invoke:getChildren error view={} err={:?} (further occurrences \
+										 silenced)",
 										ViewId, Error
 									),
 								);
@@ -2036,18 +2030,11 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	// is individually accounted for.
 	if !IsHighFrequencyCommand {
 		let ElapsedNanos = crate::IPC::DevLog::NowNano().saturating_sub(OTLPStart);
-		dev_log!(
-			"ipc",
-			"done: {} ok={} t_ns={}",
-			command,
-			!IsErr,
-			ElapsedNanos
-		);
+		dev_log!("ipc", "done: {} ok={} t_ns={}", command, !IsErr, ElapsedNanos);
 	}
 
 	Result
 }
-
 
 pub fn register_wind_ipc_handlers(app_handle:&tauri::AppHandle) -> Result<(), String> {
 	dev_log!("lifecycle", "registering IPC handlers");
@@ -2057,5 +2044,3 @@ pub fn register_wind_ipc_handlers(app_handle:&tauri::AppHandle) -> Result<(), St
 
 	Ok(())
 }
-
-

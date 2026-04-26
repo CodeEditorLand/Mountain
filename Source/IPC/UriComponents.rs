@@ -30,7 +30,7 @@ pub fn StampMidUri(Input:Value) -> Value {
 		Value::Object(mut Map) => {
 			Map.entry("$mid".to_string()).or_insert(json!(MID_URI));
 			Value::Object(Map)
-		}
+		},
 		Other => Other,
 	}
 }
@@ -100,9 +100,7 @@ pub fn FromUrl(Url:&str) -> Value {
 /// with `$mid: 1` and the five URI fields.
 pub fn Normalize(Raw:Option<&Value>) -> Value {
 	match Raw {
-		Some(Value::Object(Map)) if Map.contains_key("scheme") => {
-			StampMidUri(Value::Object(Map.clone()))
-		}
+		Some(Value::Object(Map)) if Map.contains_key("scheme") => StampMidUri(Value::Object(Map.clone())),
 		Some(Value::String(Url)) => FromUrl(Url),
 		_ => FromFilePath("/extensions/unknown"),
 	}

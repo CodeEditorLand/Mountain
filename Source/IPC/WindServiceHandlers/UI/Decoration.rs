@@ -19,10 +19,7 @@ pub async fn handle_decorations_get(runtime:Arc<ApplicationRunTime>, args:Vec<Va
 	Ok(Decoration.unwrap_or(Value::Null))
 }
 
-pub async fn handle_decorations_get_many(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_decorations_get_many(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uris:Vec<String> = args
 		.first()
 		.and_then(|V| V.as_array())

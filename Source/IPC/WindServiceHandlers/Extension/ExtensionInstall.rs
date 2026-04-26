@@ -7,10 +7,10 @@
 //!   2. Reject non-`.vsix` files.
 //!   3. Unpack into the user-scope extension directory via
 //!      `VsixInstaller::InstallVsix`.
-//!   4. Register with `ScannedExtensions` so `GetExtensions()` reflects
-//!      the install on the next read.
-//!   5. Fire-and-forget `$deltaExtensions` + `$activateByEvent` to Cocoon
-//!      so the extension activates without a workbench reload.
+//!   4. Register with `ScannedExtensions` so `GetExtensions()` reflects the
+//!      install on the next read.
+//!   5. Fire-and-forget `$deltaExtensions` + `$activateByEvent` to Cocoon so
+//!      the extension activates without a workbench reload.
 //!   6. Emit `sky://extensions/installed` so Wind refreshes the sidebar.
 //!   7. Return an `ILocalExtension` envelope shaped for VS Code's
 //!      ExtensionEnablementService sidebar merge path.

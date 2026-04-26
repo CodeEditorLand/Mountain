@@ -46,7 +46,10 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// minimal profiles and the skill-file env stay in sync. User scan path
 	// still runs so VSIX-installed extensions remain visible.
 	let SkipBuiltins = matches!(std::env::var("LAND_SKIP_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"))
-		|| matches!(std::env::var("LAND_DISABLE_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"));
+		|| matches!(
+			std::env::var("LAND_DISABLE_BUILTIN_EXTENSIONS").as_deref(),
+			Ok("1") | Ok("true")
+		);
 
 	if SkipBuiltins {
 		dev_log!(

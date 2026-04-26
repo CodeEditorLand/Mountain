@@ -5,7 +5,6 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
 	ConfigurationTarget as ConfigurationTargetModule,
@@ -13,18 +12,12 @@ use CommonLibrary::Configuration::DTO::{
 type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationOverridesDTO;
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
-use CommonLibrary::{
-	Configuration::ConfigurationProvider::ConfigurationProvider,
-	Environment::Requires::Requires,
-};
+use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider, Environment::Requires::Requires};
 
-use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Handler for configuration get requests
-pub async fn handle_configuration_get(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_configuration_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let key = args
 		.get(0)
 		.ok_or("Missing configuration key".to_string())?
@@ -43,10 +36,7 @@ pub async fn handle_configuration_get(
 }
 
 /// Handler for configuration update requests
-pub async fn handle_configuration_update(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_configuration_update(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let key = args
 		.get(0)
 		.ok_or("Missing configuration key".to_string())?
@@ -89,10 +79,7 @@ pub async fn handle_workbench_configuration(
 }
 
 /// Handler for environment get requests
-pub async fn handle_environment_get(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_environment_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let key = args
 		.get(0)
 		.ok_or("Missing environment key".to_string())?

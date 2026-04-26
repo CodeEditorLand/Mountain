@@ -65,12 +65,7 @@ pub fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 			.await
 			{
 				Ok(Response) => {
-					dev_log!(
-						"extensions",
-						"$activateByEvent({}) post-delta applied: {}",
-						Event,
-						Response
-					);
+					dev_log!("extensions", "$activateByEvent({}) post-delta applied: {}", Event, Response);
 				},
 				Err(Error) => {
 					dev_log!(

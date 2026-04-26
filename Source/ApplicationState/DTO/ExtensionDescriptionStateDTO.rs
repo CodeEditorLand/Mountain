@@ -79,7 +79,8 @@ pub struct ExtensionDescriptionStateDTO {
 	/// every User-extension at workbench boot and executes
 	/// `extension.manifest.publisher.toLowerCase()`. If the key is omitted
 	/// the renderer crashes with
-	/// `TypeError: undefined is not an object (evaluating 'manifest.publisher')`.
+	/// `TypeError: undefined is not an object (evaluating
+	/// 'manifest.publisher')`.
 	#[serde(default)]
 	pub Publisher:String,
 
@@ -193,7 +194,11 @@ pub struct ExtensionDescriptionStateDTO {
 	pub Capabilities:Option<Value>,
 
 	/// Dependency list - other extensions this one needs activated first.
-	#[serde(default, skip_serializing_if = "Option::is_none", rename = "extensionDependencies")]
+	#[serde(
+		default,
+		skip_serializing_if = "Option::is_none",
+		rename = "extensionDependencies"
+	)]
 	pub ExtensionDependencies:Option<Vec<String>>,
 
 	/// Extension-pack children - extensions this one bundles by reference.

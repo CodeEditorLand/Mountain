@@ -15,6 +15,12 @@ pub async fn UnregisterAuthenticationProvider(Service:&MountainVinegRPCService, 
 		dev_log!("provider-register", "[ProviderUnregister] authentication skip: missing handle");
 		return;
 	}
-	Service.RunTime().Environment.ApplicationState.Extension.ProviderRegistration.UnregisterProvider(Handle);
+	Service
+		.RunTime()
+		.Environment
+		.ApplicationState
+		.Extension
+		.ProviderRegistration
+		.UnregisterProvider(Handle);
 	dev_log!("provider-register", "[ProviderUnregister] authentication handle={}", Handle);
 }

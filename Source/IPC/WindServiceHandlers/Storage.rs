@@ -5,10 +5,9 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
-
 use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
 
-use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Handler for storage get requests
 pub async fn handle_storage_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
@@ -81,10 +80,7 @@ pub async fn handle_storage_keys(runtime:Arc<ApplicationRunTime>) -> Result<Valu
 
 /// Get all storage items as [key, value] tuples.
 /// VS Code's NativeWorkbenchStorageService calls this on initialization.
-pub async fn handle_storage_get_items(
-	runtime:Arc<ApplicationRunTime>,
-	_args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_storage_get_items(runtime:Arc<ApplicationRunTime>, _args:Vec<Value>) -> Result<Value, String> {
 	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
 
 	match provider.GetAllStorage(true).await {
@@ -113,10 +109,7 @@ pub async fn handle_storage_get_items(
 /// Update storage items. VS Code sends { insert, delete } where:
 /// - insert: Array of [key, value] tuples or Map<string, string>
 /// - delete: Array of keys to remove
-pub async fn handle_storage_update_items(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_storage_update_items(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
 
 	if let Some(Updates) = args.get(0).and_then(|V| V.as_object()) {

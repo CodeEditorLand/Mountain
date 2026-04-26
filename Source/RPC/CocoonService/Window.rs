@@ -120,12 +120,7 @@ pub async fn CreateStatusBarItem(
 	Service:&CocoonServiceImpl,
 	req:CreateStatusBarItemRequest,
 ) -> Result<Response<CreateStatusBarItemResponse>, Status> {
-	use CommonLibrary::{
-		StatusBar::{
-			DTO::StatusBarEntryDTO::StatusBarEntryDTO,
-			StatusBarProvider::StatusBarProvider,
-		},
-	};
+	use CommonLibrary::StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider};
 	dev_log!("cocoon", "[CocoonService] create_status_bar_item: {}", req.id);
 
 	// Delegate to the StatusBarProvider trait. The trait impl inserts
@@ -167,12 +162,7 @@ pub async fn SetStatusBarText(
 	Service:&CocoonServiceImpl,
 	req:SetStatusBarTextRequest,
 ) -> Result<Response<Empty>, Status> {
-	use CommonLibrary::{
-		StatusBar::{
-			DTO::StatusBarEntryDTO::StatusBarEntryDTO,
-			StatusBarProvider::StatusBarProvider,
-		},
-	};
+	use CommonLibrary::StatusBar::{DTO::StatusBarEntryDTO::StatusBarEntryDTO, StatusBarProvider::StatusBarProvider};
 	dev_log!(
 		"cocoon",
 		"[CocoonService] set_status_bar_text: id={} text={}",

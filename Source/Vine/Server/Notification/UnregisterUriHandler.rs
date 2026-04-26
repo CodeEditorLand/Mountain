@@ -16,6 +16,17 @@ pub async fn UnregisterUriHandler(Service:&MountainVinegRPCService, Parameter:&V
 		dev_log!("provider-register", "[ProviderUnregister] uri_handler skip: missing handle");
 		return;
 	}
-	Service.RunTime().Environment.ApplicationState.Extension.ProviderRegistration.UnregisterProvider(Handle);
-	dev_log!("provider-register", "[ProviderUnregister] uri_handler handle={} scheme={}", Handle, Scheme);
+	Service
+		.RunTime()
+		.Environment
+		.ApplicationState
+		.Extension
+		.ProviderRegistration
+		.UnregisterProvider(Handle);
+	dev_log!(
+		"provider-register",
+		"[ProviderUnregister] uri_handler handle={} scheme={}",
+		Handle,
+		Scheme
+	);
 }

@@ -14,6 +14,12 @@ pub async fn UnregisterDebugAdapter(Service:&MountainVinegRPCService, Parameter:
 		dev_log!("provider-register", "[ProviderUnregister] debug_adapter skip: missing handle");
 		return;
 	}
-	Service.RunTime().Environment.ApplicationState.Extension.ProviderRegistration.UnregisterProvider(Handle);
+	Service
+		.RunTime()
+		.Environment
+		.ApplicationState
+		.Extension
+		.ProviderRegistration
+		.UnregisterProvider(Handle);
 	dev_log!("provider-register", "[ProviderUnregister] debug_adapter handle={}", Handle);
 }

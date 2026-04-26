@@ -206,7 +206,10 @@ impl TestController for MountainEnvironment {
 
 		// Notify the frontend about the new test controller
 		self.ApplicationHandle
-			.emit(SkyEvent::TestRegistered.AsStr(), json!({ "ControllerIdentifier": ControllerId }))
+			.emit(
+				SkyEvent::TestRegistered.AsStr(),
+				json!({ "ControllerIdentifier": ControllerId }),
+			)
 			.map_err(|Error| {
 				CommonError::IPCError { Description:format!("Failed to emit test registration event: {}", Error) }
 			})?;

@@ -13,7 +13,13 @@ use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	Vine::{
 		Client::SendRequest,
-		Generated::{Empty, GetTreeChildrenRequest, GetTreeChildrenResponse, RegisterTreeViewProviderRequest, TreeItem},
+		Generated::{
+			Empty,
+			GetTreeChildrenRequest,
+			GetTreeChildrenResponse,
+			RegisterTreeViewProviderRequest,
+			TreeItem,
+		},
 	},
 	dev_log,
 };

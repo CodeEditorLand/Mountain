@@ -23,12 +23,7 @@ pub async fn CancelOperation(
 		req.request_identifier_to_cancel
 	);
 
-	if let Some(Token) = Service
-		.ActiveOperations
-		.read()
-		.await
-		.get(&req.request_identifier_to_cancel)
-	{
+	if let Some(Token) = Service.ActiveOperations.read().await.get(&req.request_identifier_to_cancel) {
 		dev_log!(
 			"cocoon",
 			"[CocoonService] Triggering cancellation token for operation {}",
@@ -47,10 +42,7 @@ pub async fn CancelOperation(
 }
 
 /// Handshake - Called by Cocoon to signal readiness.
-pub async fn InitialHandshake(
-	_Service:&CocoonServiceImpl,
-	_req:Empty,
-) -> Result<Response<Empty>, Status> {
+pub async fn InitialHandshake(_Service:&CocoonServiceImpl, _req:Empty) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Initial handshake received from Cocoon");
 	Ok(Response::new(Empty {}))
 }

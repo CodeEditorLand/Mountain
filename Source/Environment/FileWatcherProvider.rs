@@ -116,7 +116,8 @@ impl WatcherState {
 						// Cocoon. Wind's `TauriChannel` subscribes to
 						// `sky://vfs/fileChange` under the localFilesystem
 						// channel.
-						if let Err(Error) = env_clone.ApplicationHandle.emit(SkyEvent::VFSFileChange.AsStr(), &payload) {
+						if let Err(Error) = env_clone.ApplicationHandle.emit(SkyEvent::VFSFileChange.AsStr(), &payload)
+						{
 							dev_log!(
 								"filewatcher",
 								"warn: [FileWatcherProvider] sky://vfs/fileChange emit failed: {}",

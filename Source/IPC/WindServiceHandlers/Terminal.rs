@@ -6,17 +6,14 @@ use std::{collections::HashMap, sync::Arc};
 
 use serde_json::{Value, json};
 
-use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 // ============================================================================
 // Terminal handlers
 // ============================================================================
 
 /// Create a new PTY terminal via TerminalProvider.
-pub async fn handle_terminal_create(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_terminal_create(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let Options = args.first().cloned().unwrap_or(Value::Null);
@@ -28,10 +25,7 @@ pub async fn handle_terminal_create(
 }
 
 /// Write text to PTY stdin via TerminalProvider.
-pub async fn handle_terminal_send_text(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_terminal_send_text(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let TerminalId = args
@@ -49,10 +43,7 @@ pub async fn handle_terminal_send_text(
 }
 
 /// Dispose a terminal via TerminalProvider.
-pub async fn handle_terminal_dispose(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_terminal_dispose(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let TerminalId = args
@@ -69,10 +60,7 @@ pub async fn handle_terminal_dispose(
 }
 
 /// Show a terminal in the UI.
-pub async fn handle_terminal_show(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_terminal_show(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let TerminalId = args.first().and_then(|V| V.as_u64()).unwrap_or(0);
@@ -87,10 +75,7 @@ pub async fn handle_terminal_show(
 }
 
 /// Hide a terminal.
-pub async fn handle_terminal_hide(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_terminal_hide(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let TerminalId = args.first().and_then(|V| V.as_u64()).unwrap_or(0);
@@ -157,8 +142,7 @@ pub async fn handle_local_pty_get_profiles() -> Result<Value, String> {
 			for Line in ShellsFile.lines() {
 				let Trimmed = Line.trim();
 				if Trimmed.starts_with('/') && !Trimmed.starts_with('#') {
-					let AlreadyAdded =
-						Profiles.iter().any(|P| P.get("path").and_then(|V| V.as_str()) == Some(Trimmed));
+					let AlreadyAdded = Profiles.iter().any(|P| P.get("path").and_then(|V| V.as_str()) == Some(Trimmed));
 					if !AlreadyAdded && std::path::Path::new(Trimmed).exists() {
 						let Name = std::path::Path::new(Trimmed)
 							.file_name()
@@ -253,8 +237,7 @@ pub async fn handle_local_pty_get_default_shell() -> Result<Value, String> {
 	{
 		let SystemRoot = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
 		// Check for PowerShell 7 first, then Windows PowerShell, then cmd
-		let PwshPath =
-			format!("{}\\PowerShell\\7\\pwsh.exe", std::env::var("ProgramFiles").unwrap_or_default());
+		let PwshPath = format!("{}\\PowerShell\\7\\pwsh.exe", std::env::var("ProgramFiles").unwrap_or_default());
 		if std::path::Path::new(&PwshPath).exists() {
 			return Ok(json!(PwshPath));
 		}

@@ -12,11 +12,11 @@
 //!    - Read `extension/package.json`, parse minimal fields (publisher, name,
 //!      version). These three determine the install directory.
 //!    - Compute target: `<InstallRoot>/<publisher>.<name>-<version>/`.
-//!    - If target already exists with a readable manifest, treat the install
-//!      as idempotent - return the existing outcome instead of re-extracting.
+//!    - If target already exists with a readable manifest, treat the install as
+//!      idempotent - return the existing outcome instead of re-extracting.
 //!      Matches VS Code's reinstall-is-a-no-op semantics and prevents the
-//!      renderer crash where `ExtensionsWorkbenchService` dereferences a
-//!      null result from a rejected install.
+//!      renderer crash where `ExtensionsWorkbenchService` dereferences a null
+//!      result from a rejected install.
 //!    - Stream every entry whose path begins with `extension/` into the target,
 //!      stripping that prefix.
 //!    - Re-parse the extracted `package.json` as a full
@@ -141,12 +141,7 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 				InstalledAt.display()
 			);
 
-			return Ok(InstallOutcome {
-				Identifier,
-				Version:Facts.Version,
-				InstalledAt,
-				Description,
-			});
+			return Ok(InstallOutcome { Identifier, Version:Facts.Version, InstalledAt, Description });
 		}
 
 		// Corrupt / partial previous install - wipe and re-extract below.
@@ -311,16 +306,14 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 			// Promote executable bit whenever the payload is a native
 			// binary the extension will spawn. Heuristics, in order:
 			//   1. Zip already recorded any exec bit (user/group/other).
-			//   2. Path lives under a `bin/` segment (vscode convention
-			//      for shipped CLI tools: openai.chatgpt's
-			//      `bin/<triple>/codex`, rust-analyzer's `bin/ra_lsp`,
-			//      Dart-Code's `bin/dart`, …).
-			//   3. First two bytes match a known executable magic
-			//      number: Mach-O (`\xCF\xFA\xED\xFE` / `\xCE\xFA\xED\xFE`
-			//      / fat `\xCA\xFE\xBA\xBE`), ELF (`\x7FELF`), or
-			//      shebang (`#!`). Some zip creators drop all mode
-			//      bits; the magic-number probe is the only way to
-			//      tell before the extension tries to spawn the file.
+			//   2. Path lives under a `bin/` segment (vscode convention for shipped CLI
+			//      tools: openai.chatgpt's `bin/<triple>/codex`, rust-analyzer's
+			//      `bin/ra_lsp`, Dart-Code's `bin/dart`, …).
+			//   3. First two bytes match a known executable magic number: Mach-O
+			//      (`\xCF\xFA\xED\xFE` / `\xCE\xFA\xED\xFE` / fat `\xCA\xFE\xBA\xBE`), ELF
+			//      (`\x7FELF`), or shebang (`#!`). Some zip creators drop all mode bits;
+			//      the magic-number probe is the only way to tell before the extension
+			//      tries to spawn the file.
 			// Directory segments that conventionally hold spawnable
 			// binaries: VS Code's `bin/`, language-server `server/`
 			// (rust-analyzer, ruby-lsp, jdt-ls, gopls), .NET's
@@ -328,9 +321,9 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 			// `adapter/`, native-host `native/`. Match any path
 			// segment, not just the leading one - many VSIXes nest
 			// like `out/server/...` or `dist/bin/...`.
-			let IsBinPath = Stripped.split('/').any(|Segment| {
-				matches!(Segment, "bin" | "server" | "tools" | "omnisharp" | "adapter" | "native")
-			});
+			let IsBinPath = Stripped
+				.split('/')
+				.any(|Segment| matches!(Segment, "bin" | "server" | "tools" | "omnisharp" | "adapter" | "native"));
 			let HasExecBit = PermissionBits & 0o111 != 0;
 			let LooksExecutable = if HasExecBit || IsBinPath {
 				true
@@ -347,10 +340,8 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 							&& matches!(
 								&Bytes[..4],
 								b"\xCF\xFA\xED\xFE"
-									| b"\xCE\xFA\xED\xFE"
-									| b"\xFE\xED\xFA\xCF"
-									| b"\xFE\xED\xFA\xCE"
-									| b"\xCA\xFE\xBA\xBE"
+									| b"\xCE\xFA\xED\xFE" | b"\xFE\xED\xFA\xCF"
+									| b"\xFE\xED\xFA\xCE" | b"\xCA\xFE\xBA\xBE"
 									| b"\xBE\xBA\xFE\xCA"
 							);
 						Shebang || ElfMagic || MachMagic
@@ -393,7 +384,9 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 	}
 
 	fn LooksExecutable(Target:&Path, RelativeFromRoot:&Path) -> bool {
-		let IsBinPath = RelativeFromRoot.components().any(|Component| IsBinSegment(Component.as_os_str()));
+		let IsBinPath = RelativeFromRoot
+			.components()
+			.any(|Component| IsBinSegment(Component.as_os_str()));
 		if IsBinPath {
 			return true;
 		}

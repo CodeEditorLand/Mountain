@@ -10,12 +10,11 @@
 //! threaded walker. The trait impls live in:
 //!
 //! - `Environment/SearchProvider.rs` (`TextSearch`) - `grep-searcher` +
-//!   `RegexMatcherBuilder` + `ignore::WalkBuilder::build_parallel()`
-//!   with `PerFileSink` collection.
+//!   `RegexMatcherBuilder` + `ignore::WalkBuilder::build_parallel()` with
+//!   `PerFileSink` collection.
 //! - `Environment/WorkspaceProvider.rs` (`FindFilesInWorkspace`) -
-//!   `ignore`-aware glob walker with `.gitignore` support, max-result
-//!   cap, symlink handling, and proper `Url::from_file_path` URI
-//!   construction.
+//!   `ignore`-aware glob walker with `.gitignore` support, max-result cap,
+//!   symlink handling, and proper `Url::from_file_path` URI construction.
 //!
 //! This wiring was the "lot of dead code that needs to be connected"
 //! the user flagged - the trait impls were reachable only through
@@ -27,7 +26,7 @@ use std::sync::Arc;
 use serde_json::{Value, json};
 use CommonLibrary::{Search::SearchProvider::SearchProvider, Workspace::WorkspaceProvider::WorkspaceProvider};
 
-use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// `search:findInFiles` / `search:textSearch` / `search:searchText`.
 ///
@@ -78,13 +77,11 @@ pub async fn handle_search_find_in_files(
 /// maxResults?, useIgnoreFiles?, followSymlinks?]. Delegates to
 /// `WorkspaceProvider::FindFilesInWorkspace` which returns `Vec<Url>`;
 /// we reshape to `Vec<String>` for the renderer.
-pub async fn handle_search_find_files(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
-	let IncludePattern = args.first().cloned().ok_or_else(|| {
-		"search:findFiles requires include pattern in slot 0".to_string()
-	})?;
+pub async fn handle_search_find_files(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+	let IncludePattern = args
+		.first()
+		.cloned()
+		.ok_or_else(|| "search:findFiles requires include pattern in slot 0".to_string())?;
 	let ExcludePattern = args.get(1).cloned().filter(|V| !V.is_null());
 	let MaxResults = args.get(2).and_then(|V| V.as_u64()).map(|N| N as usize);
 	let UseIgnoreFiles = args.get(3).and_then(|V| V.as_bool()).unwrap_or(true);
@@ -99,13 +96,7 @@ pub async fn handle_search_find_files(
 
 	let Urls = runtime
 		.Environment
-		.FindFilesInWorkspace(
-			IncludePattern,
-			ExcludePattern,
-			MaxResults,
-			UseIgnoreFiles,
-			FollowSymlinks,
-		)
+		.FindFilesInWorkspace(IncludePattern, ExcludePattern, MaxResults, UseIgnoreFiles, FollowSymlinks)
 		.await
 		.map_err(|Error| Error.to_string())?;
 

@@ -5,7 +5,7 @@
 //!
 //! Contract:
 //!   - `properties: ["openDirectory" | "openFile" | "multiSelections" |
-//!      "createDirectory" | "showHiddenFiles"]`
+//!     "createDirectory" | "showHiddenFiles"]`
 //!   - `filters: [{ name, extensions: ["vsix", …] }, …]`
 //!   - `title`, `buttonLabel`, `defaultPath`
 //!   - returns `{ canceled: bool, filePaths: string[] }`.
@@ -17,10 +17,7 @@
 use serde_json::{Value, json};
 use tauri::AppHandle;
 
-use crate::{
-	IPC::WindServiceHandlers::NativeDialog::ParseDialogFilters::ParseDialogFilters,
-	dev_log,
-};
+use crate::{IPC::WindServiceHandlers::NativeDialog::ParseDialogFilters::ParseDialogFilters, dev_log};
 
 pub async fn ShowOpenDialog(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Result<Value, String> {
 	use tauri_plugin_dialog::DialogExt;

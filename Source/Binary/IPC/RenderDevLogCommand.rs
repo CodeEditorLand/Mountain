@@ -18,15 +18,14 @@
 //!
 //! ## Contract
 //!
-//! - `Tag` is matched against `LAND_DEV_LOG` exactly as Rust tags are;
-//!   disabled tags produce no output (cheap no-op on the Mountain side).
-//! - `Message` is the fully-formatted log string - the caller has
-//!   already done any interpolation.
-//! - The command is fire-and-forget from the renderer's perspective
-//!   (returns `()` immediately); failures to write are swallowed.
-//! - Prefix `[RenderDevLog]` is added so grep can always separate
-//!   TS-originated lines from native `dev_log!` entries that share the
-//!   same tag.
+//! - `Tag` is matched against `LAND_DEV_LOG` exactly as Rust tags are; disabled
+//!   tags produce no output (cheap no-op on the Mountain side).
+//! - `Message` is the fully-formatted log string - the caller has already done
+//!   any interpolation.
+//! - The command is fire-and-forget from the renderer's perspective (returns
+//!   `()` immediately); failures to write are swallowed.
+//! - Prefix `[RenderDevLog]` is added so grep can always separate TS-originated
+//!   lines from native `dev_log!` entries that share the same tag.
 
 #![allow(non_snake_case)]
 

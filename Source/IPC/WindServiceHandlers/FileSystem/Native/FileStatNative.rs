@@ -8,11 +8,13 @@
 
 use serde_json::Value;
 
-use crate::IPC::WindServiceHandlers::Utilities::{
-	MetadataEncoding::metadata_to_istat,
-	PathExtraction::extract_path_from_arg,
+use crate::{
+	IPC::{
+		DevLog,
+		WindServiceHandlers::Utilities::{MetadataEncoding::metadata_to_istat, PathExtraction::extract_path_from_arg},
+	},
+	dev_log,
 };
-use crate::{IPC::DevLog, dev_log};
 
 pub async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;

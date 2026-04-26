@@ -24,7 +24,10 @@ pub(super) async fn set_status_bar_message_impl(
 	);
 
 	env.ApplicationHandle
-		.emit::<Value>(SkyEvent::StatusBarSetMessage.AsStr(), json!({ "id": message_identifier, "text": text }))
+		.emit::<Value>(
+			SkyEvent::StatusBarSetMessage.AsStr(),
+			json!({ "id": message_identifier, "text": text }),
+		)
 		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }
 

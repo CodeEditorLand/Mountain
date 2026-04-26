@@ -16,7 +16,10 @@ fn NewId(Prefix:&str) -> String {
 	format!(
 		"{}-{}",
 		Prefix,
-		std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|D| D.as_millis()).unwrap_or(0)
+		std::time::SystemTime::now()
+			.duration_since(std::time::UNIX_EPOCH)
+			.map(|D| D.as_millis())
+			.unwrap_or(0)
 	)
 }
 

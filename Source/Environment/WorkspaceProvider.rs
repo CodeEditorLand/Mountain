@@ -237,10 +237,9 @@ impl WorkspaceProvider for MountainEnvironment {
 	/// `IncludePatternDTO` accepts:
 	///   - String: bare glob (`"**/*.rs"`)
 	///   - `{ pattern: "..." }`: structured form
-	///   - `{ base, pattern }`: VS Code RelativePattern shape (base
-	///     restricts the walk to that subfolder; falls back to all
-	///     workspace folders if `base` doesn't resolve to a known
-	///     folder)
+	///   - `{ base, pattern }`: VS Code RelativePattern shape (base restricts
+	///     the walk to that subfolder; falls back to all workspace folders if
+	///     `base` doesn't resolve to a known folder)
 	///
 	/// `ExcludePatternDTO` follows the same shapes; null/missing
 	/// disables the exclude phase. The `node_modules`, `target`,
@@ -276,21 +275,24 @@ impl WorkspaceProvider for MountainEnvironment {
 			.literal_separator(false)
 			.build()
 			.map(|G| G.compile_matcher())
-			.map_err(|Error| CommonError::InvalidArgument {
-				ArgumentName:"IncludePattern".into(),
-				Reason:Error.to_string(),
+			.map_err(|Error| {
+				CommonError::InvalidArgument { ArgumentName:"IncludePattern".into(), Reason:Error.to_string() }
 			})?;
 		let ExcludeMatcher = match &ExcludePattern {
-			Some(P) => Some(
-				GlobBuilder::new(P)
-					.literal_separator(false)
-					.build()
-					.map(|G| G.compile_matcher())
-					.map_err(|Error| CommonError::InvalidArgument {
-						ArgumentName:"ExcludePattern".into(),
-						Reason:Error.to_string(),
-					})?,
-			),
+			Some(P) => {
+				Some(
+					GlobBuilder::new(P)
+						.literal_separator(false)
+						.build()
+						.map(|G| G.compile_matcher())
+						.map_err(|Error| {
+							CommonError::InvalidArgument {
+								ArgumentName:"ExcludePattern".into(),
+								Reason:Error.to_string(),
+							}
+						})?,
+				)
+			},
 			None => None,
 		};
 
@@ -416,7 +418,9 @@ impl WorkspaceProvider for MountainEnvironment {
 		}
 
 		let Final = Arc::try_unwrap(Results)
-			.map_err(|_| CommonError::Unknown { Description:"FindFilesInWorkspace: result Arc had outstanding refs".into() })?
+			.map_err(|_| {
+				CommonError::Unknown { Description:"FindFilesInWorkspace: result Arc had outstanding refs".into() }
+			})?
 			.into_inner()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 		dev_log!("workspaces", "[FindFilesInWorkspace] returned {} match(es)", Final.len());
@@ -465,14 +469,13 @@ impl WorkspaceEditApplier for MountainEnvironment {
 	/// Applies a workspace edit. Two-tier behaviour:
 	///
 	///   1. Emit `sky://editor/applyEdits` per URI so the workbench's
-	///      `BulkEditService` applies edits to documents currently open
-	///      in the editor (the canonical path - keeps undo / dirty
-	///      state intact).
-	///   2. For URIs that aren't currently tracked by the document
-	///      mirror, fall through to a direct on-disk apply: read the
-	///      file, sort edits by descending offset, splice each edit's
-	///      `newText` into place, write atomically. Lets refactoring
-	///      extensions touch files the user hasn't opened.
+	///      `BulkEditService` applies edits to documents currently open in the
+	///      editor (the canonical path - keeps undo / dirty state intact).
+	///   2. For URIs that aren't currently tracked by the document mirror, fall
+	///      through to a direct on-disk apply: read the file, sort edits by
+	///      descending offset, splice each edit's `newText` into place, write
+	///      atomically. Lets refactoring extensions touch files the user hasn't
+	///      opened.
 	///
 	/// Each `TextEdit` is a JSON shape matching VS Code's
 	/// `TextEditDTO`: `{ range: { start: {line, character}, end:
@@ -561,14 +564,8 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 	let LineOffsets = ComputeLineOffsets(&Original);
 	let mut WithOffsets:Vec<(usize, usize, String)> = Vec::with_capacity(TextEdits.len());
 	for Edit in TextEdits {
-		let StartLine = Edit
-			.pointer("/range/start/line")
-			.and_then(Value::as_u64)
-			.unwrap_or(0) as usize;
-		let StartChar = Edit
-			.pointer("/range/start/character")
-			.and_then(Value::as_u64)
-			.unwrap_or(0) as usize;
+		let StartLine = Edit.pointer("/range/start/line").and_then(Value::as_u64).unwrap_or(0) as usize;
+		let StartChar = Edit.pointer("/range/start/character").and_then(Value::as_u64).unwrap_or(0) as usize;
 		let EndLine = Edit
 			.pointer("/range/end/line")
 			.and_then(Value::as_u64)
@@ -577,11 +574,7 @@ async fn ApplyEditsToDisk(UriString:&str, TextEdits:&[Value]) -> Result<(), Comm
 			.pointer("/range/end/character")
 			.and_then(Value::as_u64)
 			.unwrap_or(StartChar as u64) as usize;
-		let NewText = Edit
-			.get("newText")
-			.and_then(Value::as_str)
-			.unwrap_or("")
-			.to_string();
+		let NewText = Edit.get("newText").and_then(Value::as_str).unwrap_or("").to_string();
 		let StartOffset = LinePosToOffset(&LineOffsets, &Original, StartLine, StartChar);
 		let EndOffset = LinePosToOffset(&LineOffsets, &Original, EndLine, EndChar);
 		WithOffsets.push((StartOffset, EndOffset, NewText));
@@ -688,8 +681,8 @@ fn HexDigit(Byte:u8) -> Option<u8> {
 
 /// Extract a glob string from any of the shapes a caller can hand us:
 ///   - Bare string: `"**/*.rs"` → returned as-is.
-///   - Object with `pattern`: `{ pattern: "..." }` (or
-///     `{ base, pattern }` for VS Code's `RelativePattern`).
+///   - Object with `pattern`: `{ pattern: "..." }` (or `{ base, pattern }` for
+///     VS Code's `RelativePattern`).
 ///   - Object whose `value` field is a string: legacy serialised form.
 fn ExtractGlobPattern(Pattern:&Value) -> Option<String> {
 	if let Some(S) = Pattern.as_str() {

@@ -11,7 +11,10 @@ use tauri::Emitter;
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn LanguagesSetDocumentLanguage(Service:&MountainVinegRPCService, Parameter:&Value) {
-	if let Err(Error) = Service.ApplicationHandle().emit("sky://languages/setDocumentLanguage", Parameter) {
+	if let Err(Error) = Service
+		.ApplicationHandle()
+		.emit("sky://languages/setDocumentLanguage", Parameter)
+	{
 		dev_log!(
 			"grpc",
 			"warn: [MountainVinegRPCService] sky://languages/setDocumentLanguage emit failed: {}",

@@ -390,9 +390,8 @@ impl MountainService for MountainVinegRPCService {
 			Err(ErrorString) => {
 				// Routine 404s - extensions probe for optional workspace
 				// files on activate:
-				//   - `FileSystem.ReadFile` → missing cache files
-				//     (terminal-suggest, JSON schema associations,
-				//     composer.json, Gemfile.lock, Drupal.php).
+				//   - `FileSystem.ReadFile` → missing cache files (terminal-suggest, JSON
+				//     schema associations, composer.json, Gemfile.lock, Drupal.php).
 				//   - `FileSystem.Stat` → optional config probes.
 				// Both surface as "resource not found" / "not found" /
 				// "ENOENT". Downgrade to `grpc-verbose` so the default
@@ -400,8 +399,7 @@ impl MountainService for MountainVinegRPCService {
 				// returns -32000 so Cocoon's shim can convert it to a
 				// proper `vscode.FileSystemError.FileNotFound`.
 				let LowerError = ErrorString.to_lowercase();
-				let LooksLike404 = (MethodName == "FileSystem.ReadFile"
-					|| MethodName == "FileSystem.Stat")
+				let LooksLike404 = (MethodName == "FileSystem.ReadFile" || MethodName == "FileSystem.Stat")
 					&& (LowerError.contains("resource not found")
 						|| LowerError.contains("not found")
 						|| LowerError.contains("enoent"));

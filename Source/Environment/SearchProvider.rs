@@ -217,12 +217,12 @@ use crate::dev_log;
 ///
 /// - `pattern`: the user's typed query
 /// - `isRegExp` (default `false`): when `false`, the pattern is
-///   `regex::escape`'d before compilation so a literal search for
-///   `obj.method(` doesn't blow up the regex parser.
-/// - `isCaseSensitive` (default `false`): controls the regex's
-///   case-insensitive flag.
-/// - `isWordMatch` (default `false`): wraps the pattern in `\b…\b`
-///   via `RegexMatcherBuilder::word(true)`.
+///   `regex::escape`'d before compilation so a literal search for `obj.method(`
+///   doesn't blow up the regex parser.
+/// - `isCaseSensitive` (default `false`): controls the regex's case-insensitive
+///   flag.
+/// - `isWordMatch` (default `false`): wraps the pattern in `\b…\b` via
+///   `RegexMatcherBuilder::word(true)`.
 /// - `isMultiline` (default `false`): toggles `.` matching `\n`.
 #[derive(Deserialize, Debug, Default)]
 #[serde(rename_all = "camelCase")]
@@ -323,9 +323,10 @@ impl Sink for PerFileSink {
 		let CapBytes = LineBytes.len().min(PREVIEW_BYTE_CAP);
 		// Round down to the nearest UTF-8 boundary so `from_utf8_lossy`
 		// doesn't replace half a multibyte char with U+FFFD.
-		let SafeCap = (0..=CapBytes).rev().find(|&I| {
-			I == 0 || I == LineBytes.len() || (LineBytes[I] & 0xC0) != 0x80
-		}).unwrap_or(0);
+		let SafeCap = (0..=CapBytes)
+			.rev()
+			.find(|&I| I == 0 || I == LineBytes.len() || (LineBytes[I] & 0xC0) != 0x80)
+			.unwrap_or(0);
 		let Preview = String::from_utf8_lossy(&LineBytes[..SafeCap]).to_string();
 
 		// `line_number(true)` was set on the SearcherBuilder so this
@@ -372,10 +373,7 @@ impl Sink for PerFileSink {
 					if M.start() >= SearchBytes.len() {
 						break;
 					}
-					Columns.push(ColumnRange {
-						start:ByteToChar(M.start()),
-						end:ByteToChar(M.end()),
-					});
+					Columns.push(ColumnRange { start:ByteToChar(M.start()), end:ByteToChar(M.end()) });
 					// `M.end() == M.start()` happens for zero-width
 					// matches (e.g. `\b`); advance by one byte to
 					// avoid an infinite loop.
@@ -472,9 +470,7 @@ impl SearchProvider for MountainEnvironment {
 					// uncategorised count-of-zero. The default
 					// `Searcher::new()` constructor disables line
 					// numbers for performance.
-					let mut Searcher = SearcherBuilder::new()
-						.line_number(true)
-						.build();
+					let mut Searcher = SearcherBuilder::new().line_number(true).build();
 
 					let Matcher = Matcher.clone();
 

@@ -22,7 +22,11 @@ pub fn ParseDialogFilters(Options:&Value) -> Vec<DialogFilter> {
 						.and_then(Value::as_array)
 						.map(|List| List.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 						.unwrap_or_default();
-					if Extensions.is_empty() { None } else { Some(DialogFilter { Name, Extensions }) }
+					if Extensions.is_empty() {
+						None
+					} else {
+						Some(DialogFilter { Name, Extensions })
+					}
 				})
 				.collect()
 		})

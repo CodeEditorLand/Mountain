@@ -80,6 +80,7 @@ use CommonLibrary::{
 };
 use async_trait::async_trait;
 use serde_json::{Value, json};
+use tauri::Emitter;
 use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;
@@ -238,6 +239,48 @@ impl DebugService for MountainEnvironment {
 		// - Handle adapter launch failures with descriptive error messages and proper
 		//   session state cleanup
 
+		// Notify Cocoon that the session has started so any
+		// `vscode.debug.onDidStartDebugSession` listeners (registered
+		// from extensions through `DebugNamespace.ts:124`) fire. The
+		// payload mirrors VS Code's wire shape - extensions read
+		// `id`, `type`, `name`, and `configuration` off the session
+		// object passed to the listener. Until full session tracking
+		// lands in ApplicationState we synthesise from the resolved
+		// configuration so extensions can observe activation even
+		// while the adapter spawn path is still a stub.
+		let StartedMethod = format!("{}$onDidStartDebugSession", ProxyTarget::ExtHostDebug.GetTargetPrefix());
+		let StartedSession = json!({
+			"id": SessionID.clone(),
+			"type": DebugType.clone(),
+			"name": ResolvedConfig.get("name").and_then(Value::as_str).unwrap_or(&DebugType),
+			"configuration": ResolvedConfig.clone(),
+		});
+		if let Err(error) = IPCProvider
+			.SendNotificationToSideCar(TargetSideCar.clone(), StartedMethod, json!([StartedSession]))
+			.await
+		{
+			dev_log!(
+				"exthost",
+				"warn: [DebugProvider] StartDebugging notification failed for '{}': {:?}",
+				SessionID,
+				error
+			);
+		}
+
+		// Sky-side debug viewlet observers consume this stream so the
+		// debug toolbar / call stack panel light up without waiting on
+		// the typed `DebugService::ActiveSessions` snapshot. Mirrors
+		// `WebviewLifecycle.rs`'s pattern of dual-emitting to Cocoon
+		// (typed RPC) and Sky (renderer event).
+		let _ = self.ApplicationHandle.emit(
+			"sky://debug/sessionStart",
+			json!({
+				"sessionId": SessionID.clone(),
+				"type": DebugType.clone(),
+				"configuration": ResolvedConfig.clone(),
+			}),
+		);
+
 		dev_log!("exthost", "[DebugProvider] Debug session '{}' started (simulation).", SessionID);
 		Ok(SessionID)
 	}
@@ -293,7 +336,7 @@ impl DebugService for MountainEnvironment {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 		let TerminateMethod = format!("{}$onDidTerminateDebugSession", ProxyTarget::ExtHostDebug.GetTargetPrefix());
 		if let Err(error) = IPCProvider
-			.SendNotificationToSideCar("cocoon-main".to_string(), TerminateMethod, json!([SessionID.clone()]))
+			.SendNotificationToSideCar("cocoon-main".to_string(), TerminateMethod, json!([{ "id": SessionID.clone() }]))
 			.await
 		{
 			dev_log!(
@@ -303,6 +346,9 @@ impl DebugService for MountainEnvironment {
 				error
 			);
 		}
+		let _ = self
+			.ApplicationHandle
+			.emit("sky://debug/sessionEnd", json!({ "sessionId": SessionID.clone() }));
 		Ok(())
 	}
 }

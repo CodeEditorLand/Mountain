@@ -8,9 +8,9 @@ use std::sync::OnceLock;
 
 use crate::dev_log;
 
-/// PostHog project token. Source of truth: `.env.Land.PostHog` LAND_POSTHOG_KEY;
-/// `build.rs` bakes the value via `cargo:rustc-env` so `env!` at compile
-/// time always resolves, even on a clean checkout.
+/// PostHog project token. Source of truth: `.env.Land.PostHog`
+/// LAND_POSTHOG_KEY; `build.rs` bakes the value via `cargo:rustc-env` so `env!`
+/// at compile time always resolves, even on a clean checkout.
 const POSTHOG_API_KEY:&str = env!("LAND_POSTHOG_KEY");
 
 /// PostHog region host (default EU Cloud; operators override via
@@ -29,8 +29,9 @@ const POSTHOG_DISTINCT_ID_SEED:&str = env!("LAND_POSTHOG_DISTINCT_ID");
 /// Global PostHog client instance.
 static CLIENT:OnceLock<posthog_rs::Client> = OnceLock::new();
 
-/// Machine-stable distinct ID for the dev session. When LAND_POSTHOG_DISTINCT_ID
-/// is set, it wins - same value across every process in the same dev run.
+/// Machine-stable distinct ID for the dev session. When
+/// LAND_POSTHOG_DISTINCT_ID is set, it wins - same value across every process
+/// in the same dev run.
 fn DistinctId() -> String {
 	if !POSTHOG_DISTINCT_ID_SEED.is_empty() {
 		return POSTHOG_DISTINCT_ID_SEED.to_string();

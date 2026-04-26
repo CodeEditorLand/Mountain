@@ -8,8 +8,8 @@
 //! Two concerns per invocation:
 //!   1. Notify Sky on `sky://terminal/<suffix>` so the xterm panel can
 //!      show/hide / print text / remove the panel.
-//!   2. Drive the underlying PTY via the `TerminalProvider` so the OS
-//!      process sees the text / receives SIGHUP on dispose.
+//!   2. Drive the underlying PTY via the `TerminalProvider` so the OS process
+//!      sees the text / receives SIGHUP on dispose.
 
 use std::sync::Arc;
 

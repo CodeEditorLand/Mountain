@@ -358,7 +358,11 @@ impl StorageProvider for MountainEnvironment {
 	async fn GetAllStorage(&self, IsGlobalScope:bool) -> Result<Value, CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		dev_log!("storage-verbose", "[StorageProvider] Getting all values from {} scope.", ScopeName);
+		dev_log!(
+			"storage-verbose",
+			"[StorageProvider] Getting all values from {} scope.",
+			ScopeName
+		);
 
 		let StorageMapMutex = if IsGlobalScope {
 			&self.ApplicationState.Configuration.MementoGlobalStorage
@@ -377,7 +381,11 @@ impl StorageProvider for MountainEnvironment {
 	async fn SetAllStorage(&self, IsGlobalScope:bool, FullState:Value) -> Result<(), CommonError> {
 		let ScopeName = if IsGlobalScope { "Global" } else { "Workspace" };
 
-		dev_log!("storage-verbose", "[StorageProvider] Setting all values for {} scope.", ScopeName);
+		dev_log!(
+			"storage-verbose",
+			"[StorageProvider] Setting all values for {} scope.",
+			ScopeName
+		);
 
 		let DeserializedState:HashMap<String, Value> = serde_json::from_value(FullState)?;
 
@@ -427,7 +435,11 @@ async fn SaveStorageToDisk(Path:PathBuf, Data:HashMap<String, Value>) {
 	// Fires on every `storage:updateItems` that mutates the global map
 	// (~50 per session during workbench boot alone). The failure path
 	// below logs unconditionally; the success path is per-call noise.
-	dev_log!("storage-verbose", "[StorageProvider] Persisting storage to disk: {}", Path.display());
+	dev_log!(
+		"storage-verbose",
+		"[StorageProvider] Persisting storage to disk: {}",
+		Path.display()
+	);
 
 	match serde_json::to_string_pretty(&Data) {
 		Ok(JSONString) => {

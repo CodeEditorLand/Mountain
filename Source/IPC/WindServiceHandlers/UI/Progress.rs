@@ -11,7 +11,10 @@ use CommonLibrary::IPC::SkyEvent::SkyEvent;
 fn NewProgressId() -> String {
 	format!(
 		"progress-{}",
-		std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|D| D.as_millis()).unwrap_or(0)
+		std::time::SystemTime::now()
+			.duration_since(std::time::UNIX_EPOCH)
+			.map(|D| D.as_millis())
+			.unwrap_or(0)
 	)
 }
 

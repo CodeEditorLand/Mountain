@@ -7,11 +7,7 @@ use std::sync::Arc;
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 use serde_json::{Value, json};
 
-use crate::{
-	IPC::UriComponents::Normalize as NormalizeUri,
-	RunTime::ApplicationRunTime::ApplicationRunTime,
-	dev_log,
-};
+use crate::{IPC::UriComponents::Normalize as NormalizeUri, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// VS Code's `ExtensionType` enum - mirror the numeric values used by the
 /// renderer's `getInstalled(type?)` IPC so the filter in `GetInstalledArgs`
@@ -41,14 +37,14 @@ const EXTENSION_TYPE_USER:u8 = 1;
 /// full list hardcoded as `type: 0, isBuiltin: true`. That produced three
 /// cascading symptoms:
 ///   1. VSIX-installed extensions (e.g. `Anthropic.claude-code`) showed up
-///      under "Built-in" in the Extensions sidebar and had no Uninstall
-///      action because the UI keys off `type === User`.
-///   2. The trusted-publishers boot migration iterated every extension as
-///      User and attempted `manifest.publisher.toLowerCase()` against
-///      System manifests.
-///   3. `extensions:scanUserExtensions` (which shares the user-only
-///      semantic) returned zero, making the "Install from VSIX…" refresh
-///      appear to do nothing even when the install itself succeeded.
+///      under "Built-in" in the Extensions sidebar and had no Uninstall action
+///      because the UI keys off `type === User`.
+///   2. The trusted-publishers boot migration iterated every extension as User
+///      and attempted `manifest.publisher.toLowerCase()` against System
+///      manifests.
+///   3. `extensions:scanUserExtensions` (which shares the user-only semantic)
+///      returned zero, making the "Install from VSIX…" refresh appear to do
+///      nothing even when the install itself succeeded.
 pub async fn handle_extensions_get_installed(
 	runtime:Arc<ApplicationRunTime>,
 	args:Vec<Value>,
@@ -204,10 +200,7 @@ pub async fn handle_extensions_get(runtime:Arc<ApplicationRunTime>, args:Vec<Val
 }
 
 /// Check whether an extension is currently active (scanned and present).
-pub async fn handle_extensions_is_active(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_extensions_is_active(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Id = args
 		.first()
 		.and_then(|V| V.as_str())

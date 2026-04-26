@@ -57,13 +57,7 @@ pub fn LogSkyEmit<R:tauri::Runtime, P:Serialize + Clone>(
 			Ok(())
 		},
 		Err(Error) => {
-			dev_log!(
-				"sky-emit",
-				"[SkyEmit] fail channel={} bytes={} error={}",
-				Channel,
-				Bytes,
-				Error
-			);
+			dev_log!("sky-emit", "[SkyEmit] fail channel={} bytes={} error={}", Channel, Bytes, Error);
 			Err(Error)
 		},
 	}

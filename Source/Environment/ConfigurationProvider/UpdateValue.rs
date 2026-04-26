@@ -96,10 +96,7 @@ pub(super) async fn update_configuration_value(
 		// DTO is the same map `GetValue` reads from, so subsequent
 		// `Inspect` / `Get` calls reflect the override immediately.
 		ConfigurationTarget::Memory => {
-			environment
-				.ApplicationState
-				.Configuration
-				.SetGlobalValue(&key, value.clone());
+			environment.ApplicationState.Configuration.SetGlobalValue(&key, value.clone());
 			dev_log!(
 				"config",
 				"[ConfigurationProvider] Memory target: stored in-memory value for '{}'",

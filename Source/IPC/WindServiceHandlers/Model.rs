@@ -7,7 +7,7 @@ use std::sync::Arc;
 
 use serde_json::{Value, json};
 
-use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 // ============================================================================
 // Model (Text Model Registry) Handlers
@@ -158,10 +158,7 @@ pub async fn handle_model_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Val
 }
 
 /// Update the content of an open text model, incrementing its version.
-pub async fn handle_model_update_content(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_model_update_content(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -205,10 +202,7 @@ pub async fn handle_model_update_content(
 // ============================================================================
 
 /// Read a text file from disk.
-pub async fn handle_textfile_read(
-	_runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_textfile_read(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Path = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -221,10 +215,7 @@ pub async fn handle_textfile_read(
 }
 
 /// Write text to a file on disk.
-pub async fn handle_textfile_write(
-	_runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_textfile_write(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Path = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -238,10 +229,7 @@ pub async fn handle_textfile_write(
 }
 
 /// Save a document - forward save intent to Sky frontend.
-pub async fn handle_textfile_save(
-	_runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_textfile_save(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	// Actual disk write happens via textFile:write; this is a UI-dirty-state hint.
 	let _Uri = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 	dev_log!("vfs", "textFile:save uri={:?}", _Uri);

@@ -29,13 +29,7 @@ pub async fn handle_quick_input_show_quick_pick(
 					let Description = Item.get("description").and_then(|D| D.as_str()).map(|S| S.to_string());
 					let Detail = Item.get("detail").and_then(|D| D.as_str()).map(|S| S.to_string());
 					let Picked = Item.get("picked").and_then(|P| P.as_bool()).unwrap_or(false);
-					Some(QuickPickItemDTO {
-						Label,
-						Description,
-						Detail,
-						Picked:Some(Picked),
-						AlwaysShow:Some(false),
-					})
+					Some(QuickPickItemDTO { Label, Description, Detail, Picked:Some(Picked), AlwaysShow:Some(false) })
 				})
 				.collect()
 		})
@@ -48,9 +42,16 @@ pub async fn handle_quick_input_show_quick_pick(
 			.and_then(|P| P.as_str())
 			.map(|S| S.to_string()),
 		CanPickMany:Some(
-			args.get(1).and_then(|V| V.get("canPickMany")).and_then(|B| B.as_bool()).unwrap_or(false),
+			args.get(1)
+				.and_then(|V| V.get("canPickMany"))
+				.and_then(|B| B.as_bool())
+				.unwrap_or(false),
 		),
-		Title:args.get(1).and_then(|V| V.get("title")).and_then(|T| T.as_str()).map(|S| S.to_string()),
+		Title:args
+			.get(1)
+			.and_then(|V| V.get("title"))
+			.and_then(|T| T.as_str())
+			.map(|S| S.to_string()),
 		..Default::default()
 	};
 
@@ -77,11 +78,23 @@ pub async fn handle_quick_input_show_input_box(
 
 	let Opts = args.first();
 	let Options = InputBoxOptionsDTO {
-		Prompt:Opts.and_then(|V| V.get("prompt")).and_then(|P| P.as_str()).map(|S| S.to_string()),
-		PlaceHolder:Opts.and_then(|V| V.get("placeholder")).and_then(|P| P.as_str()).map(|S| S.to_string()),
+		Prompt:Opts
+			.and_then(|V| V.get("prompt"))
+			.and_then(|P| P.as_str())
+			.map(|S| S.to_string()),
+		PlaceHolder:Opts
+			.and_then(|V| V.get("placeholder"))
+			.and_then(|P| P.as_str())
+			.map(|S| S.to_string()),
 		IsPassword:Some(Opts.and_then(|V| V.get("password")).and_then(|B| B.as_bool()).unwrap_or(false)),
-		Value:Opts.and_then(|V| V.get("value")).and_then(|V| V.as_str()).map(|S| S.to_string()),
-		Title:Opts.and_then(|V| V.get("title")).and_then(|T| T.as_str()).map(|S| S.to_string()),
+		Value:Opts
+			.and_then(|V| V.get("value"))
+			.and_then(|V| V.as_str())
+			.map(|S| S.to_string()),
+		Title:Opts
+			.and_then(|V| V.get("title"))
+			.and_then(|T| T.as_str())
+			.map(|S| S.to_string()),
 		IgnoreFocusOut:None,
 	};
 

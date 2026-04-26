@@ -20,7 +20,11 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 	// verifying extension command contributions but noisy at the `grpc`
 	// level. Route to `command-register` so it's opt-in alongside
 	// `provider-register`.
-	dev_log!("command-register", "[MountainVinegRPCService] Cocoon registered command: {}", CommandId);
+	dev_log!(
+		"command-register",
+		"[MountainVinegRPCService] Cocoon registered command: {}",
+		CommandId
+	);
 	if CommandId.is_empty() {
 		return;
 	}

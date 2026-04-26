@@ -109,11 +109,7 @@ pub async fn UpdateScmGroup(Service:&CocoonServiceImpl, req:UpdateScmGroupReques
 		"label": req.group_id,
 		"resourceStates": ResourceStates,
 	});
-	if let Err(Error) = Service
-		.environment
-		.UpdateSourceControlGroup(ProviderHandle, GroupData)
-		.await
-	{
+	if let Err(Error) = Service.environment.UpdateSourceControlGroup(ProviderHandle, GroupData).await {
 		dev_log!(
 			"cocoon",
 			"warn: [CocoonService] UpdateSourceControlGroup trait failed ({}); falling back to Sky emit",

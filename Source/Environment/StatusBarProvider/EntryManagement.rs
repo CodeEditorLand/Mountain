@@ -54,6 +54,9 @@ pub(super) async fn dispose_status_bar_entry_impl(
 		.remove(&entry_identifier);
 
 	env.ApplicationHandle
-		.emit(SkyEvent::StatusBarDisposeEntry.AsStr(), json!({ "EntryIdentifier": entry_identifier }))
+		.emit(
+			SkyEvent::StatusBarDisposeEntry.AsStr(),
+			json!({ "EntryIdentifier": entry_identifier }),
+		)
 		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }

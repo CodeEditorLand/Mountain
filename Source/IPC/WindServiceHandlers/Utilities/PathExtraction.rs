@@ -8,10 +8,7 @@
 
 use serde_json::Value;
 
-use super::{
-	ApplicationRoot::get_static_application_root,
-	UserdataDir::get_userdata_base_dir,
-};
+use super::{ApplicationRoot::get_static_application_root, UserdataDir::get_userdata_base_dir};
 use crate::dev_log;
 
 /// Extract a filesystem path from a VS Code argument.

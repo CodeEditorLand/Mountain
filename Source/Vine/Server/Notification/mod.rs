@@ -11,7 +11,8 @@
 //!
 //! - Wire string `outputChannel.create` → atom file `OutputChannelCreate.rs`
 //!   with `pub async fn OutputChannelCreate(...)`.
-//! - Wire string `unregister_scm_provider` → atom file `UnregisterScmProvider.rs`.
+//! - Wire string `unregister_scm_provider` → atom file
+//!   `UnregisterScmProvider.rs`.
 //! - Wire string `progress.update` → atom file `ProgressUpdate.rs`.
 //!
 //! Snake_case / dotted wire strings collapse to PascalCase file names.
@@ -29,14 +30,14 @@
 //! );
 //! ```
 //!
-//! - `Service` gives access to `ApplicationHandle` (for Tauri
-//!   `emit` / webview lookup) and `RunTime` (for `Environment`,
-//!   `ApplicationState`, provider registry, scheduler).
-//! - `Parameter` is the raw JSON payload Cocoon sent; each atom extracts
-//!   the fields it needs and validates locally.
-//! - Return `()` - atoms that need to fail just log via `dev_log!` on
-//!   the `notif-drop` / `grpc` tag; the caller always returns `Empty` to
-//!   Cocoon because notifications are fire-and-forget.
+//! - `Service` gives access to `ApplicationHandle` (for Tauri `emit` / webview
+//!   lookup) and `RunTime` (for `Environment`, `ApplicationState`, provider
+//!   registry, scheduler).
+//! - `Parameter` is the raw JSON payload Cocoon sent; each atom extracts the
+//!   fields it needs and validates locally.
+//! - Return `()` - atoms that need to fail just log via `dev_log!` on the
+//!   `notif-drop` / `grpc` tag; the caller always returns `Empty` to Cocoon
+//!   because notifications are fire-and-forget.
 
 #![allow(non_snake_case)]
 

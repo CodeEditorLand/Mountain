@@ -221,16 +221,12 @@ pub(super) async fn copy_impl(
 /// can't blow the Tokio task stack on very deep trees. Files inside
 /// re-use `tokio::fs::copy` for fast path; directories are created
 /// with `create_dir`. Symlinks are dereferenced.
-async fn copy_directory_recursive(
-	source:&PathBuf,
-	target:&PathBuf,
-	overwrite:bool,
-) -> Result<(), CommonError> {
+async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bool) -> Result<(), CommonError> {
 	// Pre-create the top-level target dir.
 	if !fs::try_exists(target).await.unwrap_or(false) {
-		fs::create_dir(target).await.map_err(|error| {
-			CommonError::FromStandardIOError(error, target.clone(), "Copy.CreateTargetRoot")
-		})?;
+		fs::create_dir(target)
+			.await
+			.map_err(|error| CommonError::FromStandardIOError(error, target.clone(), "Copy.CreateTargetRoot"))?;
 	}
 
 	let mut Stack:Vec<(PathBuf, PathBuf)> = vec![(source.clone(), target.clone())];
@@ -262,9 +258,9 @@ async fn copy_directory_recursive(
 				if !overwrite && fs::try_exists(&DstPath).await.unwrap_or(false) {
 					return Err(CommonError::FileSystemFileExists(DstPath));
 				}
-				fs::copy(&SrcPath, &DstPath).await.map_err(|error| {
-					CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.CopyFile")
-				})?;
+				fs::copy(&SrcPath, &DstPath)
+					.await
+					.map_err(|error| CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.CopyFile"))?;
 			}
 		}
 	}

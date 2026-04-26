@@ -185,7 +185,9 @@ pub fn AppLifecycleSetup(
 
 		// Set the canonical userdata base so WindServiceHandlers resolves
 		// /User/... paths to the real Tauri app_data_dir (not hardcoded "Land").
-		crate::IPC::WindServiceHandlers::Utilities::UserdataDir::set_userdata_base_dir(AppDataDir.to_string_lossy().to_string());
+		crate::IPC::WindServiceHandlers::Utilities::UserdataDir::set_userdata_base_dir(
+			AppDataDir.to_string_lossy().to_string(),
+		);
 
 		// Set the real filesystem root for /Static/Application/ path mapping.
 		// In dev mode, Tauri serves from ../Sky/Target relative to Mountain.
@@ -209,7 +211,9 @@ pub fn AppLifecycleSetup(
 				std::path::PathBuf::new()
 			}
 		});
-		crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::set_static_application_root(SkyTargetDir.to_string_lossy().to_string());
+		crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::set_static_application_root(
+			SkyTargetDir.to_string_lossy().to_string(),
+		);
 		dev_log!(
 			"lifecycle",
 			"[Lifecycle] [Dirs] Static application root: {}",
@@ -372,6 +376,17 @@ pub fn AppLifecycleSetup(
 		TraceStep!("[Lifecycle] [PostSetup] AppState cloned.");
 
 		// [Config]
+		// First-pass merge runs against the empty `ScannedExtensions`
+		// map (the scan happens later in this lifecycle). User /
+		// workspace `settings.json` overrides land here, but extension
+		// `contributes.configuration.properties[*].default` keys cannot
+		// be collected yet. Without a second pass after the scan,
+		// `getConfiguration('git').get('enabled')` returns undefined,
+		// vscode.git's `_activate` takes the `if (!enabled) return;`
+		// short-circuit, and the SCM viewlet stays empty even though
+		// Cocoon successfully activated the extension. The second pass
+		// below repairs this without disturbing the existing initial
+		// merge that the rest of bootstrap depends on.
 		let ConfigStart = crate::IPC::DevLog::NowNano();
 		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
 		crate::otel_span!("lifecycle:config:initialize", ConfigStart);
@@ -386,6 +401,20 @@ pub fn AppLifecycleSetup(
 		// [Extensions] [Scan]
 		let _ = ExtensionPopulateFn(PostSetupAppHandle.clone(), &AppStateForSetup).await;
 		crate::otel_span!("lifecycle:extensions:scan", ExtScanStart);
+
+		// [Config] [Re-merge] - now that ScannedExtensions is populated,
+		// run the merge a second time so `collect_default_configurations`
+		// can walk extension manifests and seed `git.enabled = true`,
+		// `git.path = null`, `git.autoRepositoryDetection = true`, plus
+		// every other `contributes.configuration.properties[*].default`
+		// the 113 scanned extensions declare. The first-pass merge logged
+		// "0 top-level keys"; this pass should log a much larger count.
+		// User / workspace overrides applied during the first pass are
+		// preserved because the merge order is Default → User → Workspace
+		// and the cached User/Workspace JSON files are re-read each call.
+		let ConfigRemergeStart = crate::IPC::DevLog::NowNano();
+		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
+		crate::otel_span!("lifecycle:config:remerge-after-extension-scan", ConfigRemergeStart);
 
 		// [Vine] [gRPC]
 		let VineStart = crate::IPC::DevLog::NowNano();

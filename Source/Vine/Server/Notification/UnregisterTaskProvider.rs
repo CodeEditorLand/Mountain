@@ -13,6 +13,12 @@ pub async fn UnregisterTaskProvider(Service:&MountainVinegRPCService, Parameter:
 		dev_log!("provider-register", "[ProviderUnregister] task skip: missing handle");
 		return;
 	}
-	Service.RunTime().Environment.ApplicationState.Extension.ProviderRegistration.UnregisterProvider(Handle);
+	Service
+		.RunTime()
+		.Environment
+		.ApplicationState
+		.Extension
+		.ProviderRegistration
+		.UnregisterProvider(Handle);
 	dev_log!("provider-register", "[ProviderUnregister] task handle={}", Handle);
 }

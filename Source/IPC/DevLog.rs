@@ -137,13 +137,14 @@
 //! Every Cocoon shim that wraps `TryMountainThenNode` logs one of four
 //! decisions per dispatch:
 //!
-//!   - `route=mountain`      Mountain handled it (Rust code path served the call)
+//!   - `route=mountain`      Mountain handled it (Rust code path served the
+//!     call)
 //!   - `route=node-fallback` Build-time manifest says no Mountain handler (or
-//!                           runtime confirmed "Unknown method: X"); Cocoon's
-//!                           Node / stock-VS-Code implementation served it
+//!     runtime confirmed "Unknown method: X"); Cocoon's Node / stock-VS-Code
+//!     implementation served it
 //!   - `route=unavailable`   Tier-4: no tier covers the method. Extension
-//!                           receives typed `NotImplementedError`; build
-//!                           surfaces this as a feature-gap
+//!     receives typed `NotImplementedError`; build surfaces this as a
+//!     feature-gap
 //!   - `route=error`         Tier failed unexpectedly; error propagated
 //!
 //! Grep the stream to see which `vscode.*` methods Mountain doesn't yet
@@ -378,8 +379,8 @@ fn SplitPascalCaseIntoWords(Segment:&str) -> Vec<String> {
 	for Ch in Segment.chars() {
 		let IsUpper = Ch.is_ascii_uppercase();
 		let IsDigit = Ch.is_ascii_digit();
-		let NeedBreak = !Current.is_empty()
-			&& ((IsUpper && !PrevWasUpper) || (IsDigit != PrevWasDigit && !Current.is_empty()));
+		let NeedBreak =
+			!Current.is_empty() && ((IsUpper && !PrevWasUpper) || (IsDigit != PrevWasDigit && !Current.is_empty()));
 		if NeedBreak {
 			Words.push(std::mem::take(&mut Current));
 		}

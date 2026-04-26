@@ -58,8 +58,10 @@
 //! - [ ] Implement proper error dialog for startup failures
 //! - [ ] Add startup performance metrics
 
-use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{
+	Arc,
+	atomic::{AtomicBool, Ordering},
+};
 
 use tauri::{App, Manager, RunEvent, Wry};
 use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};

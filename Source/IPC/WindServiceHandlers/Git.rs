@@ -71,7 +71,9 @@ async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 		Args.join(" ")
 	);
 
-	let WorkingDir = Cwd.map(ResolveCwd).unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+	let WorkingDir = Cwd
+		.map(ResolveCwd)
+		.unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
 
 	let mut Spawn = Command::new("git");
 	Spawn.args(Args).current_dir(&WorkingDir).kill_on_drop(true);
@@ -116,7 +118,8 @@ async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 }
 
 fn AsStringArray(Value:&Value) -> Vec<String> {
-	Value.as_array()
+	Value
+		.as_array()
 		.map(|Arr| Arr.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 		.unwrap_or_default()
 }
@@ -132,11 +135,7 @@ pub async fn HandleExec(args:Vec<Value>) -> Result<Value, String> {
 			let Obj = First.as_object().unwrap();
 			let Argv = Obj.get("args").map(AsStringArray).unwrap_or_default();
 			let Cwd = Obj.get("cwd").and_then(Value::as_str).unwrap_or("").to_string();
-			let OperationId = Obj
-				.get("operationId")
-				.and_then(Value::as_str)
-				.unwrap_or("")
-				.to_string();
+			let OperationId = Obj.get("operationId").and_then(Value::as_str).unwrap_or("").to_string();
 			(Argv, Cwd, OperationId)
 		},
 		Some(First) if First.is_array() => {
@@ -197,7 +196,8 @@ pub async fn HandlePull(args:Vec<Value>) -> Result<Value, String> {
 		return Err("git:pull requires repoPath".to_string());
 	}
 
-	let (BeforeExit, Before, _) = RunGit(&OperationId, &["rev-parse".to_string(), "HEAD".to_string()], Some(&RepoPath)).await?;
+	let (BeforeExit, Before, _) =
+		RunGit(&OperationId, &["rev-parse".to_string(), "HEAD".to_string()], Some(&RepoPath)).await?;
 	if BeforeExit != 0 {
 		return Err("git:pull: failed to read HEAD before pull".to_string());
 	}
@@ -208,7 +208,8 @@ pub async fn HandlePull(args:Vec<Value>) -> Result<Value, String> {
 		return Err(format!("git pull failed: {}", PullStderr));
 	}
 
-	let (AfterExit, After, _) = RunGit(&OperationId, &["rev-parse".to_string(), "HEAD".to_string()], Some(&RepoPath)).await?;
+	let (AfterExit, After, _) =
+		RunGit(&OperationId, &["rev-parse".to_string(), "HEAD".to_string()], Some(&RepoPath)).await?;
 	if AfterExit != 0 {
 		return Err("git:pull: failed to read HEAD after pull".to_string());
 	}
@@ -247,7 +248,8 @@ pub async fn HandleRevParse(args:Vec<Value>) -> Result<Value, String> {
 	if RepoPath.is_empty() {
 		return Err("git:revParse requires repoPath".to_string());
 	}
-	let (ExitCode, Stdout, Stderr) = RunGit(&Generated(), &["rev-parse".to_string(), Reference], Some(&RepoPath)).await?;
+	let (ExitCode, Stdout, Stderr) =
+		RunGit(&Generated(), &["rev-parse".to_string(), Reference], Some(&RepoPath)).await?;
 	if ExitCode != 0 {
 		return Err(format!("git rev-parse failed: {}", Stderr));
 	}
@@ -297,9 +299,7 @@ pub async fn HandleCancel(args:Vec<Value>) -> Result<Value, String> {
 		dev_log!("git", "[Git] cancel op={} pid={}", OperationId, Pid);
 		#[cfg(unix)]
 		{
-			let _ = std::process::Command::new("kill")
-				.args(["-TERM", &Pid.to_string()])
-				.output();
+			let _ = std::process::Command::new("kill").args(["-TERM", &Pid.to_string()]).output();
 		}
 		#[cfg(windows)]
 		{

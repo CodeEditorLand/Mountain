@@ -383,9 +383,7 @@ pub async fn ScanDirectoryForExtensions(
 							// without forcing the user to reinstall.
 							#[cfg(unix)]
 							if IsUserPath {
-								crate::ExtensionManagement::VsixInstaller::HealExecutableBits(
-									&PotentialExtensionPath,
-								);
+								crate::ExtensionManagement::VsixInstaller::HealExecutableBits(&PotentialExtensionPath);
 							}
 
 							dev_log!(
@@ -489,12 +487,7 @@ async fn LoadNLSBundle(
 		Ok(Bytes) => Bytes,
 		Err(Error) => {
 			if PlaceholdersNeeded {
-				dev_log!(
-					"nls",
-					"[LandFix:NLS] no bundle for {} ({})",
-					ExtensionPath.display(),
-					Error
-				);
+				dev_log!("nls", "[LandFix:NLS] no bundle for {} ({})", ExtensionPath.display(), Error);
 			} else {
 				dev_log!(
 					"nls",
@@ -508,12 +501,7 @@ async fn LoadNLSBundle(
 	let Parsed:Value = match serde_json::from_slice(&Content) {
 		Ok(V) => V,
 		Err(Error) => {
-			dev_log!(
-				"nls",
-				"warn: [LandFix:NLS] failed to parse {}: {}",
-				NLSPath.display(),
-				Error
-			);
+			dev_log!("nls", "warn: [LandFix:NLS] failed to parse {}: {}", NLSPath.display(), Error);
 			return None;
 		},
 	};

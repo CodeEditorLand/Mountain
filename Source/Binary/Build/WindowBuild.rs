@@ -21,14 +21,14 @@ use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::ReadRecentlyOpen
 ///
 /// - **macOS**: `TitleBarStyle::Overlay` + `hidden_title(true)` keeps the
 ///   traffic-light buttons at the top-left but hides the native title bar
-///   strip, so VS Code's custom titlebar (which has `-webkit-app-region:
-///   drag` baked into its CSS) lights up the entire top row as a drag
-///   region. The previous `maximized(true)` was the direct cause of "can't
-///   drag the editor around" - maximized macOS windows are pinned to the
-///   screen and refuse all drag events, regardless of `app-region` CSS.
-/// - **Windows / Linux**: `decorations(false)` keeps the window chrome-less
-///   so the workbench draws its own. We still start `resizable(true)` so
-///   the window can be moved by the drag region.
+///   strip, so VS Code's custom titlebar (which has `-webkit-app-region: drag`
+///   baked into its CSS) lights up the entire top row as a drag region. The
+///   previous `maximized(true)` was the direct cause of "can't drag the editor
+///   around" - maximized macOS windows are pinned to the screen and refuse all
+///   drag events, regardless of `app-region` CSS.
+/// - **Windows / Linux**: `decorations(false)` keeps the window chrome-less so
+///   the workbench draws its own. We still start `resizable(true)` so the
+///   window can be moved by the drag region.
 /// - **Debug builds**: DevTools auto-open.
 pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewWindow<Wry> {
 	// Restore the most-recently-opened folder so the webview boots
@@ -42,11 +42,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 	// to the first). Using `?folder=...` in the initial URL skips
 	// that destructive round-trip.
 	let InitialUrl = BuildInitialUrl(&LocalhostUrl);
-	let WindowUrl = WebviewUrl::External(
-		InitialUrl
-			.parse()
-			.expect("FATAL: Failed to parse initial webview URL"),
-	);
+	let WindowUrl = WebviewUrl::External(InitialUrl.parse().expect("FATAL: Failed to parse initial webview URL"));
 
 	// Configure window builder with base settings.
 	//
@@ -146,8 +142,11 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 		if let Some(Path) = Entry.get("folderUri").and_then(|V| V.get("path")).and_then(|V| V.as_str()) {
 			return Some(Path.to_string());
 		}
-		if let Some(Path) =
-			Entry.get("workspace").and_then(|V| V.get("configPath")).and_then(|V| V.get("path")).and_then(|V| V.as_str())
+		if let Some(Path) = Entry
+			.get("workspace")
+			.and_then(|V| V.get("configPath"))
+			.and_then(|V| V.get("path"))
+			.and_then(|V| V.as_str())
 		{
 			return Some(Path.to_string());
 		}
@@ -164,10 +163,7 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 	// the scheme in doubles up and breaks the URL-decode on the other
 	// side (observed as the second `?folder=` boot path appearing as
 	// `file:/Volumes/...` in `wb:boot`).
-	let Normalised = FolderPath
-		.strip_prefix("file://")
-		.unwrap_or(FolderPath.as_str())
-		.to_string();
+	let Normalised = FolderPath.strip_prefix("file://").unwrap_or(FolderPath.as_str()).to_string();
 	if !std::path::Path::new(&Normalised).is_dir() {
 		return Base;
 	}

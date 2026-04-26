@@ -17,6 +17,8 @@ pub async fn DisposeStatusBarItem(Service:&MountainVinegRPCService, Parameter:&V
 		dev_log!("grpc", "[StatusBar] dispose skip: missing id");
 		return;
 	}
-	let _ = Service.ApplicationHandle().emit("sky://statusbar/dispose-entry", json!({ "id": Id }));
+	let _ = Service
+		.ApplicationHandle()
+		.emit("sky://statusbar/dispose-entry", json!({ "id": Id }));
 	dev_log!("grpc", "[StatusBar] dispose id={}", Id);
 }

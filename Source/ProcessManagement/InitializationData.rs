@@ -365,6 +365,21 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 		})
 		.collect();
 
+	// Pair with the Cocoon-side PRE-ACTIVATE snapshot in
+	// ExtensionHostHandler.ts. If Cocoon prints `folders.length=0` while
+	// this log says `folders=1`, we have a wire-shape bug; if both say
+	// 0, ApplicationState was empty at InitData build time and we need
+	// to defer InitData construction past the workspace seeding.
+	dev_log!(
+		"cocoon",
+		"[InitializationData] FoldersWire count={} sample0={}",
+		FoldersWire.len(),
+		FoldersWire
+			.first()
+			.map(|F| F.to_string())
+			.unwrap_or_else(|| "<none>".into())
+	);
+
 	let WorkspaceDTO = if WorkspaceFoldersGuard.is_empty() {
 		Value::Null
 	} else {

@@ -13,17 +13,17 @@ use crate::{ApplicationState::ApplicationState, dev_log};
 ///
 /// The access model has two tiers:
 ///
-/// 1. **Trusted system paths** - directories Land itself owns (user
-///    extensions, agent plugins, app-support storage, bundled extension
-///    roots). These are never "user content" and the extension scanner,
-///    VSIX installer, and global-storage probes must be able to read/write
-///    them regardless of which workspace folder is open. They bypass the
-///    workspace-folder check entirely.
+/// 1. **Trusted system paths** - directories Land itself owns (user extensions,
+///    agent plugins, app-support storage, bundled extension roots). These are
+///    never "user content" and the extension scanner, VSIX installer, and
+///    global-storage probes must be able to read/write them regardless of which
+///    workspace folder is open. They bypass the workspace-folder check
+///    entirely.
 ///
 /// 2. **Workspace content** - everything else is only reachable when the
 ///    resolved path is a descendant of a currently registered, trusted
-///    workspace folder. That's the sandbox boundary that keeps extensions
-///    from rifling through `$HOME` via `vscode.workspace.fs`.
+///    workspace folder. That's the sandbox boundary that keeps extensions from
+///    rifling through `$HOME` via `vscode.workspace.fs`.
 ///
 /// Without tier 1, the scanner's read of `~/.land/extensions` is
 /// rejected as "Path is outside of the registered workspace folders", so
@@ -86,22 +86,22 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 /// Covered roots:
 ///
 /// - `${LAND_USER_EXTENSION_DIRECTORY}` (explicit override, if set).
-/// - `$HOME/.land/**` - the canonical namespace for user-installed
-///   extensions, agent plugins, global storage, and any other Land-owned
-///   state that lives outside the VS Code-style profile tree.
+/// - `$HOME/.land/**` - the canonical namespace for user-installed extensions,
+///   agent plugins, global storage, and any other Land-owned state that lives
+///   outside the VS Code-style profile tree.
 /// - The Mountain executable's own `extensions/`, `../Resources/extensions/`
-///   and `../Resources/app/extensions/` neighbours - built-in extension
-///   roots that ship inside the `.app` bundle.
-/// - `$APPDATA`-equivalents: Tauri's resolved app-data / app-config /
-///   app-local directories (via `$XDG_DATA_HOME`, `$XDG_CONFIG_HOME` if
-///   set; on macOS the `Library/Application Support/land.editor.*` tree).
-/// - `${TMPDIR}` + `/tmp`, `/private/tmp`, `/var/tmp` - scratch dirs
-///   language servers write their port-handoff / socket / lock files
-///   to. `TMPDIR` on macOS points at `/var/folders/.../T/` but
-///   extensions hardcode `/tmp/<tool>` directly.
+///   and `../Resources/app/extensions/` neighbours - built-in extension roots
+///   that ship inside the `.app` bundle.
+/// - `$APPDATA`-equivalents: Tauri's resolved app-data / app-config / app-local
+///   directories (via `$XDG_DATA_HOME`, `$XDG_CONFIG_HOME` if set; on macOS the
+///   `Library/Application Support/land.editor.*` tree).
+/// - `${TMPDIR}` + `/tmp`, `/private/tmp`, `/var/tmp` - scratch dirs language
+///   servers write their port-handoff / socket / lock files to. `TMPDIR` on
+///   macOS points at `/var/folders/.../T/` but extensions hardcode
+///   `/tmp/<tool>` directly.
 /// - Third-party tool state under `$HOME/{.gitkraken,.gk,.copilot,
-///   .config/git}` - probed by GitLens, copilot-chat, etc. Application
-///   state, not user content.
+///   .config/git}` - probed by GitLens, copilot-chat, etc. Application state,
+///   not user content.
 ///
 /// Anything outside this list still flows through the workspace-folder
 /// check. The set is intentionally narrow: it unblocks Land's *own*
@@ -137,14 +137,18 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 			return true;
 		}
 
-		let XdgConfig = std::env::var("XDG_CONFIG_HOME").map(PathBuf::from).unwrap_or_else(|_| PathBuf::from(&Home).join(".config"));
+		let XdgConfig = std::env::var("XDG_CONFIG_HOME")
+			.map(PathBuf::from)
+			.unwrap_or_else(|_| PathBuf::from(&Home).join(".config"));
 		if (Candidate.starts_with(&XdgConfig) || PathToCheck.starts_with(&XdgConfig))
 			&& ContainsLandEditorSegment(PathToCheck)
 		{
 			return true;
 		}
 
-		let XdgData = std::env::var("XDG_DATA_HOME").map(PathBuf::from).unwrap_or_else(|_| PathBuf::from(&Home).join(".local/share"));
+		let XdgData = std::env::var("XDG_DATA_HOME")
+			.map(PathBuf::from)
+			.unwrap_or_else(|_| PathBuf::from(&Home).join(".local/share"));
 		if (Candidate.starts_with(&XdgData) || PathToCheck.starts_with(&XdgData))
 			&& ContainsLandEditorSegment(PathToCheck)
 		{
@@ -193,15 +197,16 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	if ContainsPathSegments(PathToCheck, &["Sky", "Target"])
 		|| ContainsPathSegments(PathToCheck, &["Output", "Target"])
 		|| ContainsPathSegments(PathToCheck, &["Dependency", "Microsoft", "Dependency", "Editor", "out"])
-		|| ContainsPathSegments(PathToCheck, &["Dependency", "Microsoft", "Dependency", "Editor", "product.json"])
-	{
+		|| ContainsPathSegments(
+			PathToCheck,
+			&["Dependency", "Microsoft", "Dependency", "Editor", "product.json"],
+		) {
 		return true;
 	}
 
 	if let Ok(TempDir) = std::env::var("TMPDIR") {
 		let TempPath = PathBuf::from(&TempDir);
-		if !TempPath.as_os_str().is_empty()
-			&& (Candidate.starts_with(&TempPath) || PathToCheck.starts_with(&TempPath))
+		if !TempPath.as_os_str().is_empty() && (Candidate.starts_with(&TempPath) || PathToCheck.starts_with(&TempPath))
 		{
 			return true;
 		}
@@ -293,5 +298,7 @@ fn ContainsPathSegments(path:&Path, segments:&[&str]) -> bool {
 	if segments.is_empty() || Names.len() < segments.len() {
 		return false;
 	}
-	Names.windows(segments.len()).any(|Window| Window.iter().zip(segments.iter()).all(|(A, B)| A == B))
+	Names
+		.windows(segments.len())
+		.any(|Window| Window.iter().zip(segments.iter()).all(|(A, B)| A == B))
 }

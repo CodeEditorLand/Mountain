@@ -775,31 +775,21 @@ impl CocoonService for CocoonServiceImpl {
 					.cloned()
 					.or_else(|| Params.get("include").cloned())
 					.unwrap_or(serde_json::Value::String("**".into()));
-				let Exclude = Params
-					.get("exclude")
-					.cloned()
-					.filter(|V| !V.is_null());
-				let MaxResults = Params
-					.get("maxResults")
-					.and_then(|V| V.as_u64())
-					.map(|N| N as usize);
-				let UseIgnoreFiles = Params
-					.get("useIgnoreFiles")
-					.and_then(|V| V.as_bool())
-					.unwrap_or(true);
-				let FollowSymlinks = Params
-					.get("followSymlinks")
-					.and_then(|V| V.as_bool())
-					.unwrap_or(false);
+				let Exclude = Params.get("exclude").cloned().filter(|V| !V.is_null());
+				let MaxResults = Params.get("maxResults").and_then(|V| V.as_u64()).map(|N| N as usize);
+				let UseIgnoreFiles = Params.get("useIgnoreFiles").and_then(|V| V.as_bool()).unwrap_or(true);
+				let FollowSymlinks = Params.get("followSymlinks").and_then(|V| V.as_bool()).unwrap_or(false);
 				match self
 					.environment
 					.FindFilesInWorkspace(Include, Exclude, MaxResults, UseIgnoreFiles, FollowSymlinks)
 					.await
 				{
-					Ok(Urls) => Ok(OkResponse(
-						RequestId,
-						&json!({ "uris": Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>() }),
-					)),
+					Ok(Urls) => {
+						Ok(OkResponse(
+							RequestId,
+							&json!({ "uris": Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>() }),
+						))
+					},
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("findFiles: {}", Error))),
 				}
 			},
@@ -820,10 +810,7 @@ impl CocoonService for CocoonServiceImpl {
 				} else {
 					Params.clone()
 				};
-				let OptionsValue = Params
-					.get("options")
-					.cloned()
-					.unwrap_or(serde_json::Value::Null);
+				let OptionsValue = Params.get("options").cloned().unwrap_or(serde_json::Value::Null);
 				match self.environment.TextSearch(QueryValue, OptionsValue).await {
 					Ok(Matches) => Ok(OkResponse(RequestId, &json!({ "matches": Matches }))),
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("findTextInFiles: {}", Error))),
@@ -1396,7 +1383,10 @@ impl CocoonService for CocoonServiceImpl {
 		Command::RegisterCommand(self, request.into_inner()).await
 	}
 
-	async fn execute_contributed_command(&self, request:Request<ExecuteCommandRequest>) -> Result<Response<ExecuteCommandResponse>, Status> {
+	async fn execute_contributed_command(
+		&self,
+		request:Request<ExecuteCommandRequest>,
+	) -> Result<Response<ExecuteCommandResponse>, Status> {
 		Command::ExecuteContributedCommand(self, request.into_inner()).await
 	}
 
@@ -1404,63 +1394,108 @@ impl CocoonService for CocoonServiceImpl {
 		Command::UnregisterCommand(self, request.into_inner()).await
 	}
 
-	async fn register_hover_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_hover_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterHoverProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_hover(&self, request:Request<ProvideHoverRequest>) -> Result<Response<ProvideHoverResponse>, Status> {
+	async fn provide_hover(
+		&self,
+		request:Request<ProvideHoverRequest>,
+	) -> Result<Response<ProvideHoverResponse>, Status> {
 		Provider::ProvideHover(self, request.into_inner()).await
 	}
 
-	async fn register_completion_item_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_completion_item_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterCompletionItemProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_completion_items(&self, request:Request<ProvideCompletionItemsRequest>) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
+	async fn provide_completion_items(
+		&self,
+		request:Request<ProvideCompletionItemsRequest>,
+	) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
 		Provider::ProvideCompletionItems(self, request.into_inner()).await
 	}
 
-	async fn register_definition_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_definition_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDefinitionProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_definition(&self, request:Request<ProvideDefinitionRequest>) -> Result<Response<ProvideDefinitionResponse>, Status> {
+	async fn provide_definition(
+		&self,
+		request:Request<ProvideDefinitionRequest>,
+	) -> Result<Response<ProvideDefinitionResponse>, Status> {
 		Provider::ProvideDefinition(self, request.into_inner()).await
 	}
 
-	async fn register_reference_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_reference_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterReferenceProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_references(&self, request:Request<ProvideReferencesRequest>) -> Result<Response<ProvideReferencesResponse>, Status> {
+	async fn provide_references(
+		&self,
+		request:Request<ProvideReferencesRequest>,
+	) -> Result<Response<ProvideReferencesResponse>, Status> {
 		Provider::ProvideReferences(self, request.into_inner()).await
 	}
 
-	async fn register_code_actions_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_code_actions_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterCodeActionsProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_code_actions(&self, request:Request<ProvideCodeActionsRequest>) -> Result<Response<ProvideCodeActionsResponse>, Status> {
+	async fn provide_code_actions(
+		&self,
+		request:Request<ProvideCodeActionsRequest>,
+	) -> Result<Response<ProvideCodeActionsResponse>, Status> {
 		Provider::ProvideCodeActions(self, request.into_inner()).await
 	}
 
-	async fn show_text_document(&self, request:Request<ShowTextDocumentRequest>) -> Result<Response<ShowTextDocumentResponse>, Status> {
+	async fn show_text_document(
+		&self,
+		request:Request<ShowTextDocumentRequest>,
+	) -> Result<Response<ShowTextDocumentResponse>, Status> {
 		Window::ShowTextDocument(self, request.into_inner()).await
 	}
 
-	async fn show_information_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<ShowMessageResponse>, Status> {
+	async fn show_information_message(
+		&self,
+		request:Request<ShowMessageRequest>,
+	) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowInformationMessage(self, request.into_inner()).await
 	}
 
-	async fn show_warning_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<ShowMessageResponse>, Status> {
+	async fn show_warning_message(
+		&self,
+		request:Request<ShowMessageRequest>,
+	) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowWarningMessage(self, request.into_inner()).await
 	}
 
-	async fn show_error_message(&self, request:Request<ShowMessageRequest>) -> Result<Response<ShowMessageResponse>, Status> {
+	async fn show_error_message(
+		&self,
+		request:Request<ShowMessageRequest>,
+	) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowErrorMessage(self, request.into_inner()).await
 	}
 
-	async fn create_status_bar_item(&self, request:Request<CreateStatusBarItemRequest>) -> Result<Response<CreateStatusBarItemResponse>, Status> {
+	async fn create_status_bar_item(
+		&self,
+		request:Request<CreateStatusBarItemRequest>,
+	) -> Result<Response<CreateStatusBarItemResponse>, Status> {
 		Window::CreateStatusBarItem(self, request.into_inner()).await
 	}
 
@@ -1468,7 +1503,10 @@ impl CocoonService for CocoonServiceImpl {
 		Window::SetStatusBarText(self, request.into_inner()).await
 	}
 
-	async fn create_webview_panel(&self, request:Request<CreateWebviewPanelRequest>) -> Result<Response<CreateWebviewPanelResponse>, Status> {
+	async fn create_webview_panel(
+		&self,
+		request:Request<CreateWebviewPanelRequest>,
+	) -> Result<Response<CreateWebviewPanelResponse>, Status> {
 		Window::CreateWebviewPanel(self, request.into_inner()).await
 	}
 
@@ -1476,15 +1514,24 @@ impl CocoonService for CocoonServiceImpl {
 		Window::SetWebviewHtml(self, request.into_inner()).await
 	}
 
-	async fn on_did_receive_message(&self, request:Request<OnDidReceiveMessageRequest>) -> Result<Response<Empty>, Status> {
+	async fn on_did_receive_message(
+		&self,
+		request:Request<OnDidReceiveMessageRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Window::OnDidReceiveMessage(self, request.into_inner()).await
 	}
 
-	async fn post_webview_message(&self, request:Request<PostWebviewMessageRequest>) -> Result<Response<Empty>, Status> {
+	async fn post_webview_message(
+		&self,
+		request:Request<PostWebviewMessageRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Window::PostWebviewMessage(self, request.into_inner()).await
 	}
 
-	async fn dispose_webview_panel(&self, request:Request<DisposeWebviewPanelRequest>) -> Result<Response<Empty>, Status> {
+	async fn dispose_webview_panel(
+		&self,
+		request:Request<DisposeWebviewPanelRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Window::DisposeWebviewPanel(self, request.into_inner()).await
 	}
 
@@ -1512,7 +1559,10 @@ impl CocoonService for CocoonServiceImpl {
 		FileSystem::FindFiles(self, request.into_inner()).await
 	}
 
-	async fn find_text_in_files(&self, request:Request<FindTextInFilesRequest>) -> Result<Response<FindTextInFilesResponse>, Status> {
+	async fn find_text_in_files(
+		&self,
+		request:Request<FindTextInFilesRequest>,
+	) -> Result<Response<FindTextInFilesResponse>, Status> {
 		FileSystem::FindTextInFiles(self, request.into_inner()).await
 	}
 
@@ -1532,7 +1582,10 @@ impl CocoonService for CocoonServiceImpl {
 		FileSystem::CreateDirectory(self, request.into_inner()).await
 	}
 
-	async fn open_document(&self, request:Request<OpenDocumentRequest>) -> Result<Response<OpenDocumentResponse>, Status> {
+	async fn open_document(
+		&self,
+		request:Request<OpenDocumentRequest>,
+	) -> Result<Response<OpenDocumentResponse>, Status> {
 		Workspace::OpenDocument(self, request.into_inner()).await
 	}
 
@@ -1544,11 +1597,17 @@ impl CocoonService for CocoonServiceImpl {
 		Workspace::ApplyEdit(self, request.into_inner()).await
 	}
 
-	async fn update_configuration(&self, request:Request<UpdateConfigurationRequest>) -> Result<Response<Empty>, Status> {
+	async fn update_configuration(
+		&self,
+		request:Request<UpdateConfigurationRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Workspace::UpdateConfiguration(self, request.into_inner()).await
 	}
 
-	async fn update_workspace_folders(&self, request:Request<UpdateWorkspaceFoldersRequest>) -> Result<Response<Empty>, Status> {
+	async fn update_workspace_folders(
+		&self,
+		request:Request<UpdateWorkspaceFoldersRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Workspace::UpdateWorkspaceFolders(self, request.into_inner()).await
 	}
 
@@ -1564,19 +1623,31 @@ impl CocoonService for CocoonServiceImpl {
 		Terminal::CloseTerminal(self, request.into_inner()).await
 	}
 
-	async fn accept_terminal_opened(&self, request:Request<TerminalOpenedNotification>) -> Result<Response<Empty>, Status> {
+	async fn accept_terminal_opened(
+		&self,
+		request:Request<TerminalOpenedNotification>,
+	) -> Result<Response<Empty>, Status> {
 		Terminal::AcceptTerminalOpened(self, request.into_inner()).await
 	}
 
-	async fn accept_terminal_closed(&self, request:Request<TerminalClosedNotification>) -> Result<Response<Empty>, Status> {
+	async fn accept_terminal_closed(
+		&self,
+		request:Request<TerminalClosedNotification>,
+	) -> Result<Response<Empty>, Status> {
 		Terminal::AcceptTerminalClosed(self, request.into_inner()).await
 	}
 
-	async fn accept_terminal_process_id(&self, request:Request<TerminalProcessIdNotification>) -> Result<Response<Empty>, Status> {
+	async fn accept_terminal_process_id(
+		&self,
+		request:Request<TerminalProcessIdNotification>,
+	) -> Result<Response<Empty>, Status> {
 		Terminal::AcceptTerminalProcessId(self, request.into_inner()).await
 	}
 
-	async fn accept_terminal_process_data(&self, request:Request<TerminalDataNotification>) -> Result<Response<Empty>, Status> {
+	async fn accept_terminal_process_data(
+		&self,
+		request:Request<TerminalDataNotification>,
+	) -> Result<Response<Empty>, Status> {
 		Terminal::AcceptTerminalProcessData(self, request.into_inner()).await
 	}
 
@@ -1584,15 +1655,24 @@ impl CocoonService for CocoonServiceImpl {
 		Terminal::ResizeTerminal(self, request.into_inner()).await
 	}
 
-	async fn register_tree_view_provider(&self, request:Request<RegisterTreeViewProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_tree_view_provider(
+		&self,
+		request:Request<RegisterTreeViewProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		TreeView::RegisterTreeViewProvider(self, request.into_inner()).await
 	}
 
-	async fn get_tree_children(&self, request:Request<GetTreeChildrenRequest>) -> Result<Response<GetTreeChildrenResponse>, Status> {
+	async fn get_tree_children(
+		&self,
+		request:Request<GetTreeChildrenRequest>,
+	) -> Result<Response<GetTreeChildrenResponse>, Status> {
 		TreeView::GetTreeChildren(self, request.into_inner()).await
 	}
 
-	async fn register_scm_provider(&self, request:Request<RegisterScmProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_scm_provider(
+		&self,
+		request:Request<RegisterScmProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		SCM::RegisterScmProvider(self, request.into_inner()).await
 	}
 
@@ -1604,11 +1684,17 @@ impl CocoonService for CocoonServiceImpl {
 		SCM::GitExec(self, request.into_inner()).await
 	}
 
-	async fn register_debug_adapter(&self, request:Request<RegisterDebugAdapterRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_debug_adapter(
+		&self,
+		request:Request<RegisterDebugAdapterRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Debug::RegisterDebugAdapter(self, request.into_inner()).await
 	}
 
-	async fn start_debugging(&self, request:Request<StartDebuggingRequest>) -> Result<Response<StartDebuggingResponse>, Status> {
+	async fn start_debugging(
+		&self,
+		request:Request<StartDebuggingRequest>,
+	) -> Result<Response<StartDebuggingResponse>, Status> {
 		Debug::StartDebugging(self, request.into_inner()).await
 	}
 
@@ -1616,7 +1702,10 @@ impl CocoonService for CocoonServiceImpl {
 		Debug::StopDebugging(self, request.into_inner()).await
 	}
 
-	async fn participate_in_save(&self, request:Request<ParticipateInSaveRequest>) -> Result<Response<ParticipateInSaveResponse>, Status> {
+	async fn participate_in_save(
+		&self,
+		request:Request<ParticipateInSaveRequest>,
+	) -> Result<Response<ParticipateInSaveResponse>, Status> {
 		Save::ParticipateInSave(self, request.into_inner()).await
 	}
 
@@ -1632,151 +1721,262 @@ impl CocoonService for CocoonServiceImpl {
 		Secret::DeleteSecret(self, request.into_inner()).await
 	}
 
-	async fn register_document_highlight_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_document_highlight_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDocumentHighlightProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_document_highlights(&self, request:Request<ProvideDocumentHighlightsRequest>) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
+	async fn provide_document_highlights(
+		&self,
+		request:Request<ProvideDocumentHighlightsRequest>,
+	) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
 		Provider::ProvideDocumentHighlights(self, request.into_inner()).await
 	}
 
-	async fn register_document_symbol_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_document_symbol_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDocumentSymbolProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_document_symbols(&self, request:Request<ProvideDocumentSymbolsRequest>) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
+	async fn provide_document_symbols(
+		&self,
+		request:Request<ProvideDocumentSymbolsRequest>,
+	) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
 		Provider::ProvideDocumentSymbols(self, request.into_inner()).await
 	}
 
-	async fn register_workspace_symbol_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_workspace_symbol_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterWorkspaceSymbolProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_workspace_symbols(&self, request:Request<ProvideWorkspaceSymbolsRequest>) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
+	async fn provide_workspace_symbols(
+		&self,
+		request:Request<ProvideWorkspaceSymbolsRequest>,
+	) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
 		Provider::ProvideWorkspaceSymbols(self, request.into_inner()).await
 	}
 
-	async fn register_rename_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_rename_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterRenameProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_rename_edits(&self, request:Request<ProvideRenameEditsRequest>) -> Result<Response<ProvideRenameEditsResponse>, Status> {
+	async fn provide_rename_edits(
+		&self,
+		request:Request<ProvideRenameEditsRequest>,
+	) -> Result<Response<ProvideRenameEditsResponse>, Status> {
 		Provider::ProvideRenameEdits(self, request.into_inner()).await
 	}
 
-	async fn register_document_formatting_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_document_formatting_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDocumentFormattingProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_document_formatting(&self, request:Request<ProvideDocumentFormattingRequest>) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
+	async fn provide_document_formatting(
+		&self,
+		request:Request<ProvideDocumentFormattingRequest>,
+	) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
 		Provider::ProvideDocumentFormatting(self, request.into_inner()).await
 	}
 
-	async fn register_document_range_formatting_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_document_range_formatting_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDocumentRangeFormattingProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_document_range_formatting(&self, request:Request<ProvideDocumentRangeFormattingRequest>) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
+	async fn provide_document_range_formatting(
+		&self,
+		request:Request<ProvideDocumentRangeFormattingRequest>,
+	) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
 		Provider::ProvideDocumentRangeFormatting(self, request.into_inner()).await
 	}
 
-	async fn register_on_type_formatting_provider(&self, request:Request<RegisterOnTypeFormattingProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_on_type_formatting_provider(
+		&self,
+		request:Request<RegisterOnTypeFormattingProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterOnTypeFormattingProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_on_type_formatting(&self, request:Request<ProvideOnTypeFormattingRequest>) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
+	async fn provide_on_type_formatting(
+		&self,
+		request:Request<ProvideOnTypeFormattingRequest>,
+	) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
 		Provider::ProvideOnTypeFormatting(self, request.into_inner()).await
 	}
 
-	async fn register_signature_help_provider(&self, request:Request<RegisterSignatureHelpProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_signature_help_provider(
+		&self,
+		request:Request<RegisterSignatureHelpProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterSignatureHelpProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_signature_help(&self, request:Request<ProvideSignatureHelpRequest>) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
+	async fn provide_signature_help(
+		&self,
+		request:Request<ProvideSignatureHelpRequest>,
+	) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
 		Provider::ProvideSignatureHelp(self, request.into_inner()).await
 	}
 
-	async fn register_code_lens_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_code_lens_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterCodeLensProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_code_lenses(&self, request:Request<ProvideCodeLensesRequest>) -> Result<Response<ProvideCodeLensesResponse>, Status> {
+	async fn provide_code_lenses(
+		&self,
+		request:Request<ProvideCodeLensesRequest>,
+	) -> Result<Response<ProvideCodeLensesResponse>, Status> {
 		Provider::ProvideCodeLenses(self, request.into_inner()).await
 	}
 
-	async fn register_folding_range_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_folding_range_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterFoldingRangeProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_folding_ranges(&self, request:Request<ProvideFoldingRangesRequest>) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
+	async fn provide_folding_ranges(
+		&self,
+		request:Request<ProvideFoldingRangesRequest>,
+	) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
 		Provider::ProvideFoldingRanges(self, request.into_inner()).await
 	}
 
-	async fn register_selection_range_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_selection_range_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterSelectionRangeProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_selection_ranges(&self, request:Request<ProvideSelectionRangesRequest>) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
+	async fn provide_selection_ranges(
+		&self,
+		request:Request<ProvideSelectionRangesRequest>,
+	) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
 		Provider::ProvideSelectionRanges(self, request.into_inner()).await
 	}
 
-	async fn register_semantic_tokens_provider(&self, request:Request<RegisterSemanticTokensProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_semantic_tokens_provider(
+		&self,
+		request:Request<RegisterSemanticTokensProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterSemanticTokensProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_semantic_tokens_full(&self, request:Request<ProvideSemanticTokensRequest>) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
+	async fn provide_semantic_tokens_full(
+		&self,
+		request:Request<ProvideSemanticTokensRequest>,
+	) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
 		Provider::ProvideSemanticTokensFull(self, request.into_inner()).await
 	}
 
-	async fn register_inlay_hints_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_inlay_hints_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterInlayHintsProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_inlay_hints(&self, request:Request<ProvideInlayHintsRequest>) -> Result<Response<ProvideInlayHintsResponse>, Status> {
+	async fn provide_inlay_hints(
+		&self,
+		request:Request<ProvideInlayHintsRequest>,
+	) -> Result<Response<ProvideInlayHintsResponse>, Status> {
 		Provider::ProvideInlayHints(self, request.into_inner()).await
 	}
 
-	async fn register_type_hierarchy_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_type_hierarchy_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterTypeHierarchyProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_type_hierarchy_supertypes(&self, request:Request<ProvideTypeHierarchyRequest>) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+	async fn provide_type_hierarchy_supertypes(
+		&self,
+		request:Request<ProvideTypeHierarchyRequest>,
+	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
 		Provider::ProvideTypeHierarchySupertypes(self, request.into_inner()).await
 	}
 
-	async fn provide_type_hierarchy_subtypes(&self, request:Request<ProvideTypeHierarchyRequest>) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+	async fn provide_type_hierarchy_subtypes(
+		&self,
+		request:Request<ProvideTypeHierarchyRequest>,
+	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
 		Provider::ProvideTypeHierarchySubtypes(self, request.into_inner()).await
 	}
 
-	async fn register_call_hierarchy_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_call_hierarchy_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterCallHierarchyProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_call_hierarchy_incoming_calls(&self, request:Request<ProvideCallHierarchyRequest>) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
+	async fn provide_call_hierarchy_incoming_calls(
+		&self,
+		request:Request<ProvideCallHierarchyRequest>,
+	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
 		Provider::ProvideCallHierarchyIncomingCalls(self, request.into_inner()).await
 	}
 
-	async fn provide_call_hierarchy_outgoing_calls(&self, request:Request<ProvideCallHierarchyRequest>) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
+	async fn provide_call_hierarchy_outgoing_calls(
+		&self,
+		request:Request<ProvideCallHierarchyRequest>,
+	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
 		Provider::ProvideCallHierarchyOutgoingCalls(self, request.into_inner()).await
 	}
 
-	async fn register_linked_editing_range_provider(&self, request:Request<RegisterProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_linked_editing_range_provider(
+		&self,
+		request:Request<RegisterProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterLinkedEditingRangeProvider(self, request.into_inner()).await
 	}
 
-	async fn provide_linked_editing_ranges(&self, request:Request<ProvideLinkedEditingRangesRequest>) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
+	async fn provide_linked_editing_ranges(
+		&self,
+		request:Request<ProvideLinkedEditingRangesRequest>,
+	) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
 		Provider::ProvideLinkedEditingRanges(self, request.into_inner()).await
 	}
 
-	async fn show_quick_pick(&self, request:Request<ShowQuickPickRequest>) -> Result<Response<ShowQuickPickResponse>, Status> {
+	async fn show_quick_pick(
+		&self,
+		request:Request<ShowQuickPickRequest>,
+	) -> Result<Response<ShowQuickPickResponse>, Status> {
 		Window::ShowQuickPick(self, request.into_inner()).await
 	}
 
-	async fn show_input_box(&self, request:Request<ShowInputBoxRequest>) -> Result<Response<ShowInputBoxResponse>, Status> {
+	async fn show_input_box(
+		&self,
+		request:Request<ShowInputBoxRequest>,
+	) -> Result<Response<ShowInputBoxResponse>, Status> {
 		Window::ShowInputBox(self, request.into_inner()).await
 	}
 
-	async fn show_progress(&self, request:Request<ShowProgressRequest>) -> Result<Response<ShowProgressResponse>, Status> {
+	async fn show_progress(
+		&self,
+		request:Request<ShowProgressRequest>,
+	) -> Result<Response<ShowProgressResponse>, Status> {
 		Window::ShowProgress(self, request.into_inner()).await
 	}
 
@@ -1788,7 +1988,10 @@ impl CocoonService for CocoonServiceImpl {
 		Window::OpenExternal(self, request.into_inner()).await
 	}
 
-	async fn create_output_channel(&self, request:Request<CreateOutputChannelRequest>) -> Result<Response<CreateOutputChannelResponse>, Status> {
+	async fn create_output_channel(
+		&self,
+		request:Request<CreateOutputChannelRequest>,
+	) -> Result<Response<CreateOutputChannelResponse>, Status> {
 		Output::CreateOutputChannel(self, request.into_inner()).await
 	}
 
@@ -1808,7 +2011,10 @@ impl CocoonService for CocoonServiceImpl {
 		Output::DisposeOutput(self, request.into_inner()).await
 	}
 
-	async fn register_task_provider(&self, request:Request<RegisterTaskProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_task_provider(
+		&self,
+		request:Request<RegisterTaskProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Task::RegisterTaskProvider(self, request.into_inner()).await
 	}
 
@@ -1820,15 +2026,24 @@ impl CocoonService for CocoonServiceImpl {
 		Task::TerminateTask(self, request.into_inner()).await
 	}
 
-	async fn get_authentication_session(&self, request:Request<GetAuthenticationSessionRequest>) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
+	async fn get_authentication_session(
+		&self,
+		request:Request<GetAuthenticationSessionRequest>,
+	) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
 		Auth::GetAuthenticationSession(self, request.into_inner()).await
 	}
 
-	async fn register_authentication_provider(&self, request:Request<RegisterAuthenticationProviderRequest>) -> Result<Response<Empty>, Status> {
+	async fn register_authentication_provider(
+		&self,
+		request:Request<RegisterAuthenticationProviderRequest>,
+	) -> Result<Response<Empty>, Status> {
 		Auth::RegisterAuthenticationProvider(self, request.into_inner()).await
 	}
 
-	async fn get_extension(&self, request:Request<GetExtensionRequest>) -> Result<Response<GetExtensionResponse>, Status> {
+	async fn get_extension(
+		&self,
+		request:Request<GetExtensionRequest>,
+	) -> Result<Response<GetExtensionResponse>, Status> {
 		Extension::GetExtension(self, request.into_inner()).await
 	}
 
@@ -1836,7 +2051,10 @@ impl CocoonService for CocoonServiceImpl {
 		Extension::GetAllExtensions(self, request.into_inner()).await
 	}
 
-	async fn get_configuration(&self, request:Request<GetConfigurationRequest>) -> Result<Response<GetConfigurationResponse>, Status> {
+	async fn get_configuration(
+		&self,
+		request:Request<GetConfigurationRequest>,
+	) -> Result<Response<GetConfigurationResponse>, Status> {
 		Extension::GetConfiguration(self, request.into_inner()).await
 	}
 }

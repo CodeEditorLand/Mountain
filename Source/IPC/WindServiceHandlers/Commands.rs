@@ -7,13 +7,10 @@ use std::sync::Arc;
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
 use serde_json::{Value, json};
 
-use crate::{dev_log, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Execute a command by ID, dispatching to Mountain's CommandExecutor.
-pub async fn handle_commands_execute(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn handle_commands_execute(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let CommandId = args
 		.first()
 		.and_then(|V| V.as_str())
