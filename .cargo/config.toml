@@ -2,6 +2,9 @@
 target-dir = "Target"
 rustdocflags = ["-Zunstable-options", "--enable-index-page"]
 
+[env]
+MACOSX_DEPLOYMENT_TARGET = { value = "10.13", force = true }
+
 [net]
 git-fetch-with-cli = true
 

@@ -703,7 +703,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					dev_log!("workspaces", "{}", command);
 					handle_workspaces_remove_folder(runtime.clone(), args).await
 				},
-				"workspaces:getName" | "workspaces:getWorkspaceIdentifier" => {
+				"workspaces:getName" => {
 					dev_log!("workspaces", "{}", command);
 					handle_workspaces_get_name(runtime.clone()).await
 				},
@@ -711,8 +711,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// broadcasts the change via Tauri event, so ack the
 				// listen request with Null (no-op on the binary rail).
 				"workspaces:onDidChangeWorkspaceFolders"
-				| "workspaces:onDidChangeWorkspaceName"
-				| "workspaces:enterWorkspace" => {
+				| "workspaces:onDidChangeWorkspaceName" => {
 					dev_log!("workspaces", "{} (stub-ack)", command);
 					Ok(Value::Null)
 				},
@@ -972,18 +971,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// VS Code's DiskFileSystemProviderClient calls readFile/writeFile/rename
 				// but Mountain's original handlers use read/write/move.
 				// =====================================================================
-				"file:readFile" => handle_file_read_native(args).await,
-				"file:writeFile" => handle_file_write_native(args).await,
-				"file:rename" => handle_file_rename_native(args).await,
 				"file:realpath" => handle_file_realpath(args).await,
-				"file:watch" => {
-					dev_log!("vfs", "file:watch stub - no-op");
-					Ok(Value::Null)
-				},
-				"file:unwatch" => {
-					dev_log!("vfs", "file:unwatch stub - no-op");
-					Ok(Value::Null)
-				},
 				"file:open" => {
 					dev_log!("vfs", "file:open stub - no fd support yet");
 					Ok(json!(0))

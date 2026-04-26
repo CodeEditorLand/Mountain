@@ -31,6 +31,7 @@ use crate::dev_log;
 // ============ Feature Flags ============
 
 /// Scheduler configuration for different build profiles
+#[allow(dead_code)]
 #[derive(Debug)]
 pub struct SchedulerConfig {
 	worker_count:Option<usize>,

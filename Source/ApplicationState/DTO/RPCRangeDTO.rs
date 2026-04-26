@@ -22,7 +22,7 @@ const MAX_COLUMN_NUMBER:usize = 1_000_000;
 /// Represents a line and column-based range in a text document.
 /// Compatible with VS Code LSP position/range definitions.
 #[derive(Deserialize, Debug, Clone, PartialEq, Eq)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct RPCRangeDTO {
 	/// Start line number (0-based)
 	pub StartLineNumber:usize,

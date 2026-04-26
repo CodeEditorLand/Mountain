@@ -466,6 +466,7 @@ fn CommandVscodeOpen(
 }
 
 /// Validates command parameters before execution.
+#[allow(dead_code)]
 fn ValidateCommandParameters(CommandName:&str, Arguments:&Value) -> Result<(), String> {
 	match CommandName {
 		"mountain.openFile" | "workbench.action.files.openFile" => {

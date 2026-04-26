@@ -77,6 +77,7 @@ pub struct CertificateInfo {
 }
 
 /// Server certificate data including PEM formats and rustls configuration
+#[allow(dead_code)]
 #[derive(Clone)]
 struct ServerCertData {
 	/// Certificate in PEM format
@@ -568,6 +569,7 @@ impl CertificateManager {
 	}
 
 	/// Convert DER certificate to PEM format
+	#[allow(dead_code)]
 	fn cert_der_to_pem(der:&[u8]) -> Result<Vec<u8>> {
 		let pem = pem::Pem::new("CERTIFICATE".to_string(), der.to_vec());
 		let pem_str = pem::encode(&pem);
@@ -575,6 +577,7 @@ impl CertificateManager {
 	}
 
 	/// Convert DER private key to PEM format
+	#[allow(dead_code)]
 	fn private_key_der_to_pem(der:&[u8]) -> Result<Vec<u8>> {
 		let pem = pem::Pem::new("PRIVATE KEY".to_string(), der.to_vec());
 		let pem_str = pem::encode(&pem);
@@ -692,6 +695,7 @@ impl CertificateManager {
 }
 
 /// Certificate validity check result
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 struct CertValidityResult {
 	/// Whether the certificate is currently valid

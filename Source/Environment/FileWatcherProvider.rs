@@ -52,7 +52,7 @@ const DebounceWindow:Duration = Duration::from_millis(100);
 /// Internal entry tracked per registered watcher. The `Watcher` handle must
 /// be kept alive for the lifetime of the registration; dropping it releases
 /// the OS resources.
-struct WatcherEntry {
+pub struct WatcherEntry {
 	#[allow(dead_code)]
 	Watcher:RecommendedWatcher,
 	LastSeen:HashMap<(PathBuf, &'static str), Instant>,

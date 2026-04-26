@@ -32,10 +32,10 @@ const MAX_EDITS_PER_DOCUMENT:usize = 1000;
 /// editor. This is stored in `ApplicationState` to track the lifecycle of
 /// custom documents.
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct CustomDocumentStateDTO {
 	/// The URI of the document resource being edited.
-	#[serde(with = "URLSerializationHelper")]
+	#[serde(rename = "uri", with = "URLSerializationHelper")]
 	pub URI:Url,
 
 	/// The view type of the custom editor responsible for this document.

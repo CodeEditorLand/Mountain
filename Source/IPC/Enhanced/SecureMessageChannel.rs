@@ -49,7 +49,7 @@ impl Default for SecurityConfig {
 
 /// Encryption key with metadata
 #[derive(Debug, Clone)]
-struct EncryptionKey {
+pub struct EncryptionKey {
 	key:LessSafeKey,
 	created_at:SystemTime,
 	key_id:String,

@@ -39,10 +39,10 @@ const MAX_LANGUAGE_ID_LENGTH:usize = 128;
 
 /// Represents the complete in-memory state of a single text document.
 #[derive(Serialize, Deserialize, Clone, Debug)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct DocumentStateDTO {
 	/// The unique resource identifier for this document.
-	#[serde(with = "URLSerializationHelper")]
+	#[serde(rename = "uri", with = "URLSerializationHelper")]
 	pub URI:Url,
 
 	/// The VS Code language identifier (e.g., "rust", "typescript").
@@ -56,6 +56,7 @@ pub struct DocumentStateDTO {
 	pub Lines:Vec<String>,
 
 	/// The detected end-of-line sequence (e.g., `\n` or `\r\n`).
+	#[serde(rename = "eol")]
 	pub EOL:String,
 
 	/// A flag indicating if the in-memory version has unsaved changes.

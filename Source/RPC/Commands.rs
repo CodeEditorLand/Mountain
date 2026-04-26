@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// Command service
 pub struct CommandService {
+	#[allow(dead_code)]
 	commands:HashMap<String, String>,
 }
 

@@ -23,7 +23,7 @@ const DEFAULT_ZOOM_LEVEL:f64 = 0.0;
 /// Holds information about the state of the main application window, such as
 /// whether it is focused or fullscreen, and its current zoom level.
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct WindowStateDTO {
 	/// Whether the window currently has input focus
 	#[serde(default)]

@@ -27,7 +27,7 @@ const MAX_BUFFER_SIZE:usize = 10_000_000;
 /// Represents the complete state of a single output channel, including its
 /// buffered content and visibility status.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct OutputChannelStateDTO {
 	/// Channel display name
 	#[serde(skip_serializing_if = "String::is_empty")]

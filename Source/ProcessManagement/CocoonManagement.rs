@@ -110,10 +110,13 @@ const GRPC_CONNECT_BUDGET_MS:u64 = 20_000;
 const COCOON_BUNDLE_PROBE:&str = "../Cocoon/Target/Bootstrap/Implementation/CocoonMain.js";
 const HANDSHAKE_TIMEOUT_MS:u64 = 60000;
 const HEALTH_CHECK_INTERVAL_SECONDS:u64 = 5;
+#[allow(dead_code)]
 const MAX_RESTART_ATTEMPTS:u32 = 3;
+#[allow(dead_code)]
 const RESTART_WINDOW_SECONDS:u64 = 300;
 
 /// Global state for tracking Cocoon process lifecycle
+#[allow(dead_code)]
 struct CocoonProcessState {
 	ChildProcess:Option<Child>,
 	IsRunning:bool,

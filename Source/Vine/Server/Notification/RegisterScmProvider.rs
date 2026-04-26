@@ -127,10 +127,14 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 		},
 		_ => "file:///".to_string(),
 	};
+	// Field names must match `SourceControlCreateDTO`'s camelCase wire
+	// shape (post-DTO-audit): `id`, `label`, `rootUri`. Earlier revisions
+	// passed PascalCase keys here and the trait silently failed with
+	// `missing field "id"` because the DTO's serde rename uses camelCase.
 	let CreateData = json!({
-		"ID": &ScmId,
-		"Label": &Label,
-		"RootUri": RootUriString,
+		"id": &ScmId,
+		"label": &Label,
+		"rootUri": RootUriString,
 	});
 	if let Err(Error) = Service.RunTime().Environment.CreateSourceControl(CreateData).await {
 		dev_log!("grpc", "warn: [Scm] CreateSourceControl trait failed for {}: {}", ScmId, Error);

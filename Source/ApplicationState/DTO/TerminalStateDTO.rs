@@ -50,6 +50,7 @@ const MAX_SHELL_ARGUMENTS:usize = 100;
 const MAX_ARGUMENT_LENGTH:usize = 4096;
 
 /// Maximum number of environment variables
+#[allow(dead_code)]
 const MAX_ENV_VARS:usize = 1000;
 
 /// Holds the complete state and runtime resources for a single pseudo-terminal

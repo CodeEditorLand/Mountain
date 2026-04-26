@@ -39,7 +39,7 @@ const MAX_TITLE_LENGTH:usize = 256;
 /// This is stored in `ApplicationState` to track all active Webviews managed by
 /// the host.
 #[derive(Serialize, Deserialize, Debug, Clone)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct WebviewStateDTO {
 	/// A unique UUID handle for this Webview instance.
 	pub Handle:String,

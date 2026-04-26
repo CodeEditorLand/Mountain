@@ -653,6 +653,7 @@ pub fn land_scheme_handler_async<R:tauri::Runtime>(
 /// - Windows: <http://land.localhost/>
 ///
 /// Returns a comma-separated list of origins to support all platforms.
+#[allow(dead_code)]
 fn get_cors_origins() -> &'static str {
 	// Support both macOS/Linux (land://localhost) and Windows (http://land.localhost)
 	"land://localhost, http://land.localhost, land://code.editor.land"

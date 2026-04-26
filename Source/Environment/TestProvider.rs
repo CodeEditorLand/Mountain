@@ -98,7 +98,7 @@ use crate::dev_log;
 
 /// Represents a test controller's state
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct TestControllerState {
+pub struct TestControllerState {
 	pub ControllerIdentifier:String,
 
 	pub Label:String,
@@ -112,7 +112,7 @@ struct TestControllerState {
 
 /// Represents the status of a test run
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-enum TestRunStatus {
+pub enum TestRunStatus {
 	Queued,
 
 	Running,
@@ -128,7 +128,7 @@ enum TestRunStatus {
 
 /// Represents a test result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct TestResult {
+pub struct TestResult {
 	pub TestIdentifier:String,
 
 	pub FullName:String,
@@ -143,8 +143,9 @@ struct TestResult {
 }
 
 /// Represents an active test run
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
-struct TestRun {
+pub struct TestRun {
 	pub RunIdentifier:String,
 
 	pub ControllerIdentifier:String,
@@ -288,7 +289,7 @@ impl TestController for MountainEnvironment {
 				ControllerIdentifier
 			);
 
-			Self::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Skipped).await;
+			let _ = Self::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Skipped).await;
 		}
 
 		Ok(())
@@ -318,7 +319,7 @@ impl MountainEnvironment {
 		);
 
 		// Update test run status to running
-		Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Running).await;
+		let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Running).await;
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 
@@ -338,12 +339,12 @@ impl MountainEnvironment {
 			Ok(Response) => {
 				// Parse test results from response
 				if let Ok(Results) = serde_json::from_value::<Vec<TestResult>>(Response) {
-					Self::StoreTestResults(self, RunIdentifier, Results).await;
+					let _ = Self::StoreTestResults(self, RunIdentifier, Results).await;
 
 					// Determine final status based on results
 					let FinalStatus = Self::CalculateRunStatus(self, RunIdentifier).await;
 
-					Self::UpdateRunStatus(self, RunIdentifier, FinalStatus).await;
+					let _ = Self::UpdateRunStatus(self, RunIdentifier, FinalStatus).await;
 
 					dev_log!(
 						"extensions",
@@ -358,7 +359,7 @@ impl MountainEnvironment {
 						RunIdentifier
 					);
 
-					Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
+					let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
 				}
 				Ok(())
 			},

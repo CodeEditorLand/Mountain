@@ -106,9 +106,11 @@ use serde::{Deserialize, Serialize};
 
 /// Maximum number of events to store in the audit log
 /// bounded to prevent memory exhaustion
+#[allow(dead_code)]
 const MAX_LOG_SIZE:usize = 1000;
 
 /// Default timeout for log operations in milliseconds
+#[allow(dead_code)]
 const LOG_TIMEOUT_MS:u64 = 5000;
 
 /// Security event type categorization for audit trail classification

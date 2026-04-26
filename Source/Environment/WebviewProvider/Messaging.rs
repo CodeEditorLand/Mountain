@@ -26,6 +26,7 @@ pub struct WebviewMessage {
 }
 
 /// Webview message handler context
+#[allow(dead_code)]
 struct WebviewMessageContext {
 	Handle:String,
 	SideCarIdentifier:Option<String>,

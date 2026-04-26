@@ -22,10 +22,10 @@ const MAX_WORKSPACE_FOLDERS:usize = 100;
 /// Represents a single folder that is part of the current workspace.
 /// Compatible with VS Code's WorkspaceFolder interface.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct WorkspaceFolderStateDTO {
 	/// The URI of the folder.
-	#[serde(with = "URLSerializationHelper")]
+	#[serde(rename = "uri", with = "URLSerializationHelper")]
 	pub URI:Url,
 
 	/// The display name of the folder.

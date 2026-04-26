@@ -85,6 +85,7 @@ mod Config {
 	pub const HEALTH_CHECK_INTERVAL_MS:u64 = 30000;
 
 	/// Connection timeout (10 seconds)
+	#[allow(dead_code)]
 	pub const CONNECTION_TIMEOUT_MS:u64 = 10000;
 }
 

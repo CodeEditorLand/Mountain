@@ -18,7 +18,7 @@ use super::RPCRangeDTO::RPCRangeDTO;
 /// replaced and the new text to insert. This is part of a collection sent when
 /// a document is edited.
 #[derive(Deserialize, Debug, Clone)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct RPCModelContentChangeDTO {
 	/// The range of text to replace
 	pub Range:RPCRangeDTO,

@@ -57,6 +57,7 @@ use crate::{
 };
 
 /// Configuration for MountainService
+#[allow(dead_code)]
 mod ServiceConfig {
 	/// Maximum number of concurrent operations
 	pub const MAX_CONCURRENT_OPERATIONS:usize = 50;

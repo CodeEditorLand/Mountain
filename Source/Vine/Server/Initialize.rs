@@ -52,6 +52,7 @@ use crate::{
 };
 
 /// Server configuration constants
+#[allow(dead_code)]
 mod ServerConfig {
 	use std::time::Duration;
 

@@ -56,8 +56,11 @@ pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Paramete
 	// Seed the group through the trait so subsequent `update_scm_group`
 	// calls can locate it. UpdateSourceControlGroup is an upsert - it
 	// creates the entry on first call - so this primes state without
-	// requiring a separate "create-group" trait method.
+	// requiring a separate "create-group" trait method. Field names
+	// must match `SourceControlGroupUpdateDTO`'s camelCase wire shape
+	// (post-DTO-audit): `providerHandle`, `groupId`, `label`.
 	let GroupData = json!({
+		"providerHandle": ScmHandle,
 		"groupId": &GroupId,
 		"label": &Label,
 		"resourceStates": [],

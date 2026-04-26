@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// Workspace service
 pub struct WorkspaceService {
+	#[allow(dead_code)]
 	workspace_root:Option<PathBuf>,
 }
 

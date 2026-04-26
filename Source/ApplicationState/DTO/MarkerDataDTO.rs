@@ -31,7 +31,7 @@ const MAX_SOURCE_LENGTH:usize = 256;
 /// warning. This structure is compatible with VS Code's `IMarkerData`
 /// interface and is used by the Diagnostic service.
 #[derive(Serialize, Deserialize, Debug, Clone, Default)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct MarkerDataDTO {
 	/// Severity level of the marker
 	pub Severity:u32,

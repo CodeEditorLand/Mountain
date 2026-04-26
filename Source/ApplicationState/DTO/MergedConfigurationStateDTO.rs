@@ -21,7 +21,7 @@ const MAX_CONFIGURATION_DEPTH:usize = 50;
 /// all sources (default, user, workspace, folder). This merged view is what
 /// is queried by application features.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
-#[serde(rename_all = "PascalCase")]
+#[serde(rename_all = "camelCase")]
 pub struct MergedConfigurationStateDTO {
 	/// Merged configuration data from all sources
 	pub Data:Value,

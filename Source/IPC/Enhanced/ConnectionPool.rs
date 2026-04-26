@@ -476,7 +476,7 @@ impl Clone for ConnectionPool {
 }
 
 /// Connection health checker
-struct ConnectionHealthChecker {
+pub struct ConnectionHealthChecker {
 	ping_timeout:Duration,
 }
 
