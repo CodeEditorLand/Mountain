@@ -28,10 +28,28 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 		.or_else(|| Parameter.get("name"))
 		.and_then(Value::as_str)
 		.unwrap_or("?");
+	// Char-aware truncation. Slicing a `&str` at `&S[..200]` panics when
+	// byte 200 lands inside a multi-byte UTF-8 codepoint (vscode.git's
+	// progress messages contain `•` which is 3 bytes; if the message is
+	// >200 bytes and the bullet sits across the boundary, the slice
+	// crashes the tokio worker - observed live during SCM viewlet open).
+	// Walk char boundaries instead so the cut always lands between codepoints.
 	let TruncatedValue = Parameter
 		.get("value")
 		.and_then(Value::as_str)
-		.map(|S| if S.len() > 200 { format!("{}…", &S[..200]) } else { S.to_string() })
+		.map(|S| {
+			if S.len() > 200 {
+				let CutAt = S
+					.char_indices()
+					.map(|(Index, _)| Index)
+					.take_while(|Index| *Index <= 200)
+					.last()
+					.unwrap_or(0);
+				format!("{}…", &S[..CutAt])
+			} else {
+				S.to_string()
+			}
+		})
 		.unwrap_or_else(|| "<no-value>".to_string());
 	if ChannelName.eq_ignore_ascii_case("git")
 		|| ChannelName.eq_ignore_ascii_case("source control")

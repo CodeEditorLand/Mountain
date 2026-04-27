@@ -374,7 +374,22 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							.skip(2)
 							.map(|V| {
 								let S = serde_json::to_string(V).unwrap_or_default();
-								if S.len() > 240 { format!("{}…", &S[..240]) } else { S }
+								// Char-aware truncation - JSON-encoded values may
+								// embed multi-byte UTF-8 (extension names, repo
+								// paths with non-ASCII, debug payloads). Slicing
+								// at a fixed byte offset can land mid-codepoint
+								// and panic the tokio worker.
+								if S.len() > 240 {
+									let CutAt = S
+										.char_indices()
+										.map(|(Index, _)| Index)
+										.take_while(|Index| *Index <= 240)
+										.last()
+										.unwrap_or(0);
+									format!("{}…", &S[..CutAt])
+								} else {
+									S
+								}
 							})
 							.collect();
 						format!(" {}", Tail.join(" "))
@@ -440,7 +455,19 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						.enumerate()
 						.map(|(Idx, V)| {
 							let Preview = serde_json::to_string(V).unwrap_or_default();
-							let Trimmed = if Preview.len() > 180 { format!("{}…", &Preview[..180]) } else { Preview };
+							// Char-aware truncation - same UTF-8 hazard as
+							// the diagnostic-tag formatter above.
+							let Trimmed = if Preview.len() > 180 {
+								let CutAt = Preview
+									.char_indices()
+									.map(|(Index, _)| Index)
+									.take_while(|Index| *Index <= 180)
+									.last()
+									.unwrap_or(0);
+								format!("{}…", &Preview[..CutAt])
+							} else {
+								Preview
+							};
 							format!("[{}]={}", Idx, Trimmed)
 						})
 						.collect::<Vec<_>>()

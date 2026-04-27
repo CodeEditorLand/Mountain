@@ -18,7 +18,9 @@
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
 //! - ViewType validation: rejects empty view types with InvalidArgument error
-//! - Some operations are stubbed with logging/warning (OnSaveCustomDocument)
+//! - OnSaveCustomDocument now reverse-RPCs to the owning sidecar via
+//!   `$onSaveCustomDocument`; returns the sidecar's error verbatim on
+//!   failure so the workbench's save promise rejects with a real reason.
 //!
 //! PERFORMANCE:
 //! - Provider registration lookup should be O(1) via hash map in
@@ -48,7 +50,7 @@
 //! - [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider) implementation:
 //! - `RegisterCustomEditorProvider` - register extension provider
 //! - `UnregisterCustomEditorProvider` - unregister provider
-//! - `OnSaveCustomDocument` - save handler (stub)
+//! - `OnSaveCustomDocument` - workbench → extension save reverse-RPC
 //! - `ResolveCustomEditor` - resolve editor content via RPC
 
 use std::sync::Arc;
@@ -61,6 +63,7 @@ use CommonLibrary::{
 };
 use async_trait::async_trait;
 use serde_json::{Value, json};
+use tauri::Emitter;
 use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;
@@ -118,21 +121,66 @@ impl CustomEditorProvider for MountainEnvironment {
 			ResourceURI
 		);
 
-		// Implement the complete custom document save workflow. Send RPC request
-		// ($customDocument/save) to the extension sidecar responsible for this
-		// ViewType, including the ResourceURI. The extension retrieves edited content
-		// from its Webview via postMessage and returns the updated data (string or
-		// bytes). Mountain receives the content and writes it to the file system using
-		// FileSystemWriter with appropriate encoding and atomic write pattern. Emit
-		// a document saved notification to refresh UI and trigger post-save hooks
-		// (formatters, linters, extension notifications). This enables custom editors
-		// to participate in the standard save lifecycle.
-
-		dev_log!(
-			"extensions",
-			"warn: [CustomEditorProvider] OnSaveCustomDocument is not fully implemented."
-		);
-		Ok(())
+		// Workbench → extension save reverse-RPC. Cocoon's
+		// `NotificationHandler.ts:781-810` already routes
+		// `$onSaveCustomDocument` to the `customEditor.saveDocument`
+		// emitter channel which fans out to whichever provider Cocoon's
+		// `WindowNamespace.ts:188+` subscribed via `Subscribe(...)` at
+		// `registerCustomEditorProvider` time. The extension's
+		// `saveCustomDocument(document, cancellationToken)` callback
+		// runs inside Cocoon - retrieves the edited content from the
+		// webview, returns a `Thenable<void>` once the file has been
+		// written. Mountain doesn't need to write the bytes itself; the
+		// extension does that via its existing `vscode.workspace.fs`
+		// shim which Cocoon already routes back into Mountain's
+		// `FileSystem.WriteFile` IPC.
+		//
+		// Wire shape mirrors VS Code's
+		// `vs/workbench/api/common/extHostCustom.ts::ExtHostCustomEditors`
+		// `$onSaveCustomDocument` handler which expects positional args
+		// `[CustomDocumentIdentifier, CancellationTokenId]`. Mountain
+		// sends the resource URI as the document identifier (extension
+		// stored the document under this key when it returned its
+		// `CustomDocument` from `openCustomDocument`); the cancellation
+		// token id is unused by our shim path and we send `0`.
+		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+		let DocumentIdentifier = json!({
+			"viewType": ViewType,
+			"resource": { "external": ResourceURI.to_string() },
+		});
+		let RPCMethod = format!("{}$onSaveCustomDocument", ProxyTarget::ExtHostCustomEditors.GetTargetPrefix());
+		let RPCParameters = json!([DocumentIdentifier, 0]);
+		match IPCProvider
+			.SendRequestToSideCar("cocoon-main".to_string(), RPCMethod, RPCParameters, 30_000)
+			.await
+		{
+			Ok(_) => {
+				dev_log!(
+					"extensions",
+					"[CustomEditorProvider] OnSaveCustomDocument completed for '{}' at '{}'",
+					ViewType,
+					ResourceURI
+				);
+				let _ = self.ApplicationHandle.emit(
+					"sky://customEditor/saved",
+					json!({
+						"viewType": ViewType,
+						"resource": ResourceURI.to_string(),
+					}),
+				);
+				Ok(())
+			},
+			Err(Error) => {
+				dev_log!(
+					"extensions",
+					"warn: [CustomEditorProvider] OnSaveCustomDocument failed for '{}' at '{}': {:?}",
+					ViewType,
+					ResourceURI,
+					Error
+				);
+				Err(Error)
+			},
+		}
 	}
 
 	async fn ResolveCustomEditor(
