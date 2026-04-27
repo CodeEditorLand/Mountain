@@ -719,10 +719,16 @@ impl CocoonService for CocoonServiceImpl {
 				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
 				let Tooltip = Params.get("tooltip").and_then(|V| V.as_str()).unwrap_or("").to_string();
+				// Sky's `SetOrUpdateEntry` (`SkyBridge.ts:744`) listens on
+				// `sky://statusbar/set-entry` and `sky://statusbar/update`
+				// - both route through the same upsert. There is no
+				// `sky://statusbar/create` listener; emit the canonical
+				// `set-entry` channel so the entry materialises on first
+				// register.
 				let _ = self
 					.environment
 					.ApplicationHandle
-					.emit("sky://statusbar/create", json!({ "id": Id, "text": Text, "tooltip": Tooltip }));
+					.emit("sky://statusbar/set-entry", json!({ "id": Id, "text": Text, "tooltip": Tooltip }));
 				Ok(OkResponse(RequestId, &json!({ "itemId": Id })))
 			},
 			"setStatusBarText" => {
@@ -1184,7 +1190,7 @@ impl CocoonService for CocoonServiceImpl {
 				let _ = self
 					.environment
 					.ApplicationHandle
-					.emit("sky://webview/message", json!({ "handle": Handle, "message": Message }));
+					.emit("sky://webview/post-message", json!({ "handle": Handle, "message": Message }));
 			},
 			// ---- Secrets (fire-and-forget variants) ----
 			"storeSecret" => {

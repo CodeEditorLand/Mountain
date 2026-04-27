@@ -764,8 +764,22 @@ impl MountainService for MountainVinegRPCService {
 			| "register_uri_handler"
 			| "register_workspace_symbol_provider" => {
 				let Handle = Parameter.get("handle").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
-				let Selector = Parameter.get("language_selector").and_then(|s| s.as_str()).unwrap_or("*");
-				let ExtId = Parameter.get("extension_id").and_then(|e| e.as_str()).unwrap_or("");
+				// Wire-shape contract: producer (Cocoon's `*Namespace.ts`)
+				// emits camelCase keys (`languageSelector`, `extensionId`)
+				// to align with VS Code's API surface. We probe camelCase
+				// first and fall back to the legacy snake_case shape so a
+				// partial rebuild (Mountain ahead of Cocoon, or vice
+				// versa) doesn't silently drop traffic.
+				let Selector = Parameter
+					.get("languageSelector")
+					.or_else(|| Parameter.get("language_selector"))
+					.and_then(|s| s.as_str())
+					.unwrap_or("*");
+				let ExtId = Parameter
+					.get("extensionId")
+					.or_else(|| Parameter.get("extension_id"))
+					.and_then(|e| e.as_str())
+					.unwrap_or("");
 				// Extension-scoped scheme (for FileSystemProvider, TextDocumentContentProvider,
 				// UriHandler). Present only for schema-bound variants; `""` for others.
 				let Scheme = Parameter.get("scheme").and_then(|s| s.as_str()).unwrap_or("");

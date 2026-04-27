@@ -88,10 +88,14 @@ pub async fn StartDebugging(
 pub async fn StopDebugging(Service:&CocoonServiceImpl, req:StopDebuggingRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] stop_debugging: session={}", req.session_id);
 
+	// Sky listens on `sky://debug/sessionEnd` (`SkyBridge.ts:2234`),
+	// not `sky://debug/stop`. `DebugProvider.rs:351` also emits the
+	// same channel from the lifecycle path - keep both sites aligned
+	// so a stop from either path lands the same workbench event.
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://debug/stop", json!({ "sessionId": req.session_id }));
+		.emit("sky://debug/sessionEnd", json!({ "sessionId": req.session_id }));
 
 	Ok(Response::new(Empty {}))
 }

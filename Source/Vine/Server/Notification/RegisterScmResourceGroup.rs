@@ -25,20 +25,21 @@ use CommonLibrary::SourceControlManagement::SourceControlManagementProvider::Sou
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Parameter:&Value) {
+	// Producer (Cocoon `ScmNamespace.ts`) emits camelCase keys post-audit.
 	let ScmHandle = Parameter
-		.get("scm_handle")
-		.or_else(|| Parameter.get("scmHandle"))
+		.get("scmHandle")
+		.or_else(|| Parameter.get("scm_handle"))
 		.and_then(Value::as_u64)
 		.unwrap_or(0) as u32;
 	let GroupHandleStr = Parameter
-		.get("group_handle")
-		.or_else(|| Parameter.get("groupHandle"))
+		.get("groupHandle")
+		.or_else(|| Parameter.get("group_handle"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 	let GroupId = Parameter
-		.get("group_id")
-		.or_else(|| Parameter.get("groupId"))
+		.get("groupId")
+		.or_else(|| Parameter.get("group_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();

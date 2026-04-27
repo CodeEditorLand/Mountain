@@ -28,14 +28,16 @@ use tauri::Emitter;
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) {
+	// Producer (Cocoon `ScmNamespace.ts`) emits camelCase keys post-audit.
+	// snake_case probes retained as transitional fallback for one rebuild.
 	let ScmHandle = Parameter
-		.get("scm_handle")
-		.or_else(|| Parameter.get("scmHandle"))
+		.get("scmHandle")
+		.or_else(|| Parameter.get("scm_handle"))
 		.and_then(Value::as_u64)
 		.map(|H| H as u32);
 	let GroupHandle = Parameter
-		.get("group_handle")
-		.or_else(|| Parameter.get("groupHandle"))
+		.get("groupHandle")
+		.or_else(|| Parameter.get("group_handle"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
@@ -43,20 +45,20 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 	// `provider_id`/`group_id`. Keep parsing them so a downgrade of
 	// just one side does not silently drop traffic.
 	let LegacyProviderId = Parameter
-		.get("provider_id")
-		.or_else(|| Parameter.get("providerId"))
+		.get("providerId")
+		.or_else(|| Parameter.get("provider_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 	let LegacyGroupId = Parameter
-		.get("group_id")
-		.or_else(|| Parameter.get("groupId"))
+		.get("groupId")
+		.or_else(|| Parameter.get("group_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 	let ResourceStates = Parameter
-		.get("resource_states")
-		.or_else(|| Parameter.get("resourceStates"))
+		.get("resourceStates")
+		.or_else(|| Parameter.get("resource_states"))
 		.cloned()
 		.unwrap_or_else(|| Value::Array(Vec::new()));
 

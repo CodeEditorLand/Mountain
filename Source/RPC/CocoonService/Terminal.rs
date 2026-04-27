@@ -104,11 +104,20 @@ pub async fn AcceptTerminalOpened(
 		req.terminal_id
 	);
 
-	// Forward terminal opened event to Sky for UI update
+	// Forward terminal opened event to Sky for UI update.
+	// Sky listens on `sky://terminal/create` (`SkyBridge.ts:1736`) for
+	// `({ id, name, pid })`. Earlier emissions used `sky://terminal/opened`
+	// - a name no listener was registered against, so terminal panes
+	// silently failed to render in the workbench. Aligned to the
+	// consumer's channel name and added the `pid` field the destructure
+	// expects (best-effort: 0 when not yet known).
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://terminal/opened", json!({ "id": req.terminal_id, "name": req.name }));
+		.emit(
+			"sky://terminal/create",
+			json!({ "id": req.terminal_id, "name": req.name, "pid": 0 }),
+		);
 
 	Ok(Response::new(Empty {}))
 }
@@ -119,10 +128,12 @@ pub async fn AcceptTerminalClosed(
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Terminal closed: {}", req.terminal_id);
 
+	// Sky listens on `sky://terminal/exit` (`SkyBridge.ts:1752`).
+	// `sky://terminal/closed` had no consumer.
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://terminal/closed", json!({ "id": req.terminal_id }));
+		.emit("sky://terminal/exit", json!({ "id": req.terminal_id }));
 
 	Ok(Response::new(Empty {}))
 }

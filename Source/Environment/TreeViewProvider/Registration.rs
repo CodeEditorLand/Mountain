@@ -54,7 +54,7 @@ pub(super) async fn register_tree_data_provider(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewCreate.AsStr(),
-			json!({ "ViewIdentifier": view_identifier, "Options": options }),
+			json!({ "viewId": view_identifier, "options": options }),
 		)
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 
@@ -81,6 +81,6 @@ pub(super) async fn unregister_tree_data_provider(
 		.remove(&view_identifier);
 
 	env.ApplicationHandle
-		.emit(SkyEvent::TreeViewDispose.AsStr(), json!({ "ViewIdentifier": view_identifier }))
+		.emit(SkyEvent::TreeViewDispose.AsStr(), json!({ "viewId": view_identifier }))
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 }

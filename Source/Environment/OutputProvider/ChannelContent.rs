@@ -51,7 +51,7 @@ pub(super) async fn append_to_channel(
 
 		channel_state.Buffer.push_str(&value);
 
-		let event_payload = json!({ "Id": channel_identifier, "AppendedText": value });
+		let event_payload = json!({ "channel": channel_identifier, "text": value });
 
 		env.ApplicationHandle
 			.emit(SkyEvent::OutputAppend.AsStr(), event_payload)
@@ -90,7 +90,7 @@ pub(super) async fn replace_channel_content(
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.Buffer = value.clone();
 
-		let event_payload = json!({ "Id": channel_identifier, "Content": value });
+		let event_payload = json!({ "channel": channel_identifier, "content": value });
 
 		env.ApplicationHandle
 			.emit(SkyEvent::OutputReplace.AsStr(), event_payload)
@@ -125,7 +125,7 @@ pub(super) async fn clear_channel(
 		channel_state.Buffer.clear();
 
 		env.ApplicationHandle
-			.emit(SkyEvent::OutputClear.AsStr(), json!({ "Id": channel_identifier }))
+			.emit(SkyEvent::OutputClear.AsStr(), json!({ "channel": channel_identifier }))
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;
 	} else {
 		dev_log!(

@@ -62,7 +62,7 @@ pub(super) async fn register_channel(
 
 	drop(channels_guard);
 
-	let event_payload = json!({ "Id": channel_identifier, "Name": name, "LanguageId": language_identifier });
+	let event_payload = json!({ "id": channel_identifier, "name": name, "languageId": language_identifier });
 
 	env.ApplicationHandle
 		.emit(SkyEvent::OutputCreate.AsStr(), event_payload)
@@ -87,6 +87,6 @@ pub(super) async fn dispose_channel(
 		.remove(&channel_identifier);
 
 	env.ApplicationHandle
-		.emit(SkyEvent::OutputDispose.AsStr(), json!({ "Id": channel_identifier }))
+		.emit(SkyEvent::OutputDispose.AsStr(), json!({ "channel": channel_identifier }))
 		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 }

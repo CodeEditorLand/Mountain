@@ -33,8 +33,23 @@ pub(super) async fn set_status_bar_entry_impl(
 
 	drop(items_guard);
 
+	let payload = json!({
+		"id": entry.EntryIdentifier,
+		"itemId": entry.ItemIdentifier,
+		"extensionId": entry.ExtensionIdentifier,
+		"name": entry.Name,
+		"text": entry.Text,
+		"tooltip": entry.Tooltip,
+		"command": entry.Command,
+		"color": entry.Color,
+		"backgroundColor": entry.BackgroundColor,
+		"alignment": if entry.IsAlignedLeft { 0 } else { 1 },
+		"priority": entry.Priority,
+		"accessibilityInformation": entry.AccessibilityInformation,
+	});
+
 	env.ApplicationHandle
-		.emit(SkyEvent::StatusBarSetEntry.AsStr(), entry)
+		.emit(SkyEvent::StatusBarSetEntry.AsStr(), payload)
 		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }
 
@@ -56,7 +71,7 @@ pub(super) async fn dispose_status_bar_entry_impl(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::StatusBarDisposeEntry.AsStr(),
-			json!({ "EntryIdentifier": entry_identifier }),
+			json!({ "id": entry_identifier }),
 		)
 		.map_err(|error| CommonError::UserInterfaceInteraction { Reason:error.to_string() })
 }

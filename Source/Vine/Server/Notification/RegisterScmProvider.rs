@@ -43,23 +43,27 @@ use crate::{
 };
 
 pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
+	// Wire-shape contract: producer (`Cocoon/.../ScmNamespace.ts`) emits
+	// camelCase keys (`rootUri`, `extensionId`) post 2026-04-27 wire audit.
+	// Probe camelCase first; keep snake_case as a transitional fallback so
+	// a partial rebuild (Mountain ahead of Cocoon) doesn't silently drop.
 	let ScmId = Parameter
-		.get("scm_id")
-		.or_else(|| Parameter.get("id"))
+		.get("id")
 		.or_else(|| Parameter.get("scmId"))
+		.or_else(|| Parameter.get("scm_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 	let Label = Parameter.get("label").and_then(Value::as_str).unwrap_or(&ScmId).to_string();
 	let ExtensionId = Parameter
-		.get("extension_id")
-		.or_else(|| Parameter.get("extensionId"))
+		.get("extensionId")
+		.or_else(|| Parameter.get("extension_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
 	let RootUri = Parameter
-		.get("root_uri")
-		.or_else(|| Parameter.get("rootUri"))
+		.get("rootUri")
+		.or_else(|| Parameter.get("root_uri"))
 		.cloned()
 		.unwrap_or(Value::Null);
 
@@ -83,8 +87,8 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// shape without forcing a Cocoon upgrade.
 	let Handle = Parameter
 		.get("handle")
-		.or_else(|| Parameter.get("scm_handle"))
 		.or_else(|| Parameter.get("scmHandle"))
+		.or_else(|| Parameter.get("scm_handle"))
 		.and_then(Value::as_u64)
 		.map(|H| H as u32)
 		.unwrap_or_else(|| {
@@ -116,15 +120,51 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// expected to be a parseable URL string; when extensions pass null
 	// (rare - usually a workspace folder URI) we substitute the empty
 	// `file:///` so the trait still records the provider.
+	//
+	// vscode.git's `repository.ts:983` calls `Uri.file(repository.root)`
+	// which serialises to a UriComponents object: `{scheme:"file",
+	// authority:"", path:"/Volumes/...", query:"", fragment:""}`. The
+	// previous extractor read `O.get("path")` which is the **path
+	// component only** (no scheme prefix) and passed it through to
+	// `URLSerializationHelper`'s `Url::parse(...)`, which fails with
+	// "relative URL without a base" because `/Volumes/...` has no
+	// scheme. Rebuild a proper `<scheme>://<authority><path>` triple
+	// from the components first; only fall back to `external` (already
+	// a string URL) or `path` if the triple can't be assembled.
+	let BuildUrlFromComponents = |O:&serde_json::Map<String, Value>| -> Option<String> {
+		let Scheme = O.get("scheme").and_then(Value::as_str)?;
+		if Scheme.is_empty() {
+			return None;
+		}
+		let Authority = O.get("authority").and_then(Value::as_str).unwrap_or("");
+		let Path = O.get("path").and_then(Value::as_str).unwrap_or("");
+		let Query = O.get("query").and_then(Value::as_str).unwrap_or("");
+		let Fragment = O.get("fragment").and_then(Value::as_str).unwrap_or("");
+		let mut Url = format!("{}://{}{}", Scheme, Authority, Path);
+		if !Query.is_empty() {
+			Url.push('?');
+			Url.push_str(Query);
+		}
+		if !Fragment.is_empty() {
+			Url.push('#');
+			Url.push_str(Fragment);
+		}
+		Some(Url)
+	};
 	let RootUriString = match &RootUri {
 		Value::String(S) => S.clone(),
-		Value::Object(O) => {
-			O.get("external")
-				.or_else(|| O.get("path"))
-				.and_then(Value::as_str)
-				.map(str::to_string)
-				.unwrap_or_else(|| "file:///".to_string())
-		},
+		Value::Object(O) => BuildUrlFromComponents(O)
+			.or_else(|| O.get("external").and_then(Value::as_str).map(str::to_string))
+			.or_else(|| {
+				// Last-resort: prepend file:// to a bare path so
+				// URLSerializationHelper at least gets a parseable
+				// scheme. Never silently emit a relative URL.
+				O.get("path")
+					.and_then(Value::as_str)
+					.filter(|P| P.starts_with('/'))
+					.map(|P| format!("file://{}", P))
+			})
+			.unwrap_or_else(|| "file:///".to_string()),
 		_ => "file:///".to_string(),
 	};
 	// Field names must match `SourceControlCreateDTO`'s camelCase wire

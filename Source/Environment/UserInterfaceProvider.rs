@@ -159,7 +159,10 @@ impl UserInterfaceProvider for MountainEnvironment {
 	) -> Result<Option<String>, CommonError> {
 		dev_log!("window", "[UserInterfaceProvider] Showing interactive message: {}", Message);
 
-		let Payload = json!({ "Severity": Severity, "Message": Message, "Options": Options });
+		// camelCase wire shape per the project-wide audit. Sky's listener
+		// at `SkyBridge.ts:2444` already tolerates both casings via the
+		// `?? severity` fallbacks; emit camelCase as the canonical form.
+		let Payload = json!({ "severity": Severity, "message": Message, "options": Options });
 
 		let ResponseValue = SendUserInterfaceRequest(self, SkyEvent::UIShowMessageRequest.AsStr(), Payload).await?;
 
@@ -277,9 +280,14 @@ impl UserInterfaceProvider for MountainEnvironment {
 			Items.len()
 		);
 
-		let Payload = json!({ "Items": Items, "Options": Options });
+		// camelCase wire shape per project-wide audit.
+		let Payload = json!({ "items": Items, "options": Options });
 
-		let ResponseValue = SendUserInterfaceRequest(self, SkyEvent::UIShowQuickPickRequest.AsStr(), Payload).await?;
+		// Use the Sky-listener-aligned channel (`sky://quickpick/show`).
+		// The legacy `UIShowQuickPickRequest` channel
+		// (`sky://ui/show-quick-pick-request`) had no Sky listener and
+		// every emit silently disappeared.
+		let ResponseValue = SendUserInterfaceRequest(self, SkyEvent::QuickPickShow.AsStr(), Payload).await?;
 
 		serde_json::from_value(ResponseValue).map_err(|Error| {
 			CommonError::SerializationError {
@@ -292,7 +300,10 @@ impl UserInterfaceProvider for MountainEnvironment {
 	async fn ShowInputBox(&self, Options:Option<InputBoxOptionsDTO>) -> Result<Option<String>, CommonError> {
 		dev_log!("window", "[UserInterfaceProvider] Showing input box.");
 
-		let ResponseValue = SendUserInterfaceRequest(self, SkyEvent::UIShowInputBoxRequest.AsStr(), Options).await?;
+		// Use the Sky-listener-aligned channel (`sky://input-box/show`).
+		// The legacy `UIShowInputBoxRequest` channel
+		// (`sky://ui/show-input-box-request`) had no Sky listener.
+		let ResponseValue = SendUserInterfaceRequest(self, SkyEvent::InputBoxShow.AsStr(), Options).await?;
 
 		serde_json::from_value(ResponseValue).map_err(|Error| {
 			CommonError::SerializationError {

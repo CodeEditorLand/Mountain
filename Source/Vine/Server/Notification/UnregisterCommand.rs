@@ -4,7 +4,8 @@
 //! `CommandHandler` so subsequent `commands.executeCommand` no longer
 //! routes back to the extension.
 
-use serde_json::Value;
+use serde_json::{Value, json};
+use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
@@ -29,4 +30,12 @@ pub async fn UnregisterCommand(Service:&MountainVinegRPCService, Parameter:&Valu
 			CommandId
 		);
 	}
+	// Sky's `SkyBridge.ts:852` listens on `sky://command/unregister`.
+	// Pair with `RegisterCommand` so the workbench command-service view
+	// and Mountain's registry stay in sync when an extension disposes a
+	// command (deactivate, hot-swap, etc.).
+	let _ = Service.ApplicationHandle().emit(
+		"sky://command/unregister",
+		json!({ "id": CommandId, "commandId": CommandId }),
+	);
 }

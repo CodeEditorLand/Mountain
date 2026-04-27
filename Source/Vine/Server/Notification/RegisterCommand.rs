@@ -6,7 +6,8 @@
 //! sidecar identifier is hard-coded to `cocoon-main` because that is
 //! the sole extension-host Cocoon instance today.
 
-use serde_json::Value;
+use serde_json::{Value, json};
+use tauri::Emitter;
 
 use crate::{
 	Environment::CommandProvider::CommandHandler,
@@ -28,6 +29,11 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 	if CommandId.is_empty() {
 		return;
 	}
+	let Kind = Parameter
+		.get("kind")
+		.and_then(Value::as_str)
+		.unwrap_or("command")
+		.to_string();
 	if let Ok(mut Registry) = Service
 		.RunTime()
 		.Environment
@@ -45,4 +51,14 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 			},
 		);
 	}
+	// Sky's `SkyBridge.ts:824` listens on `sky://command/register` to
+	// surface the command in the workbench `ICommandService` registry -
+	// without this emit, every extension-contributed command was added
+	// to Mountain's registry but invisible to the command palette /
+	// keybinding-resolver. Payload shape matches the Sky destructure
+	// (`{ id }` or `{ commandId }` - both probed).
+	let _ = Service.ApplicationHandle().emit(
+		"sky://command/register",
+		json!({ "id": CommandId, "commandId": CommandId, "kind": Kind }),
+	);
 }

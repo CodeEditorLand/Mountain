@@ -83,8 +83,8 @@ pub(super) async fn restore_tree_view_state(
 			.emit(
 				SkyEvent::TreeViewRestoreState.AsStr(),
 				json!({
-					"ViewIdentifier": view_identifier,
-					"State": state_value
+					"viewId": view_identifier,
+					"state": state_value
 				}),
 			)
 			.map_err(|Error| {

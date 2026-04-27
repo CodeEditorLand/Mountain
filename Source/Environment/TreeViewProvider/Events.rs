@@ -32,9 +32,9 @@ pub(super) async fn on_tree_node_expanded(
 		.emit(
 			SkyEvent::TreeViewNodeExpanded.AsStr(),
 			json!({
-				"ViewIdentifier": view_identifier,
-				"ElementHandle": element_handle,
-				"IsExpanded": is_expanded
+				"viewId": view_identifier,
+				"elementHandle": element_handle,
+				"expanded": is_expanded
 			}),
 		)
 		.map_err(|Error| {
@@ -63,8 +63,8 @@ pub(super) async fn on_tree_selection_changed(
 		.emit(
 			SkyEvent::TreeViewSelectionChanged.AsStr(),
 			json!({
-				"ViewIdentifier": view_identifier,
-				"SelectedHandles": selected_handles
+				"viewId": view_identifier,
+				"selectedHandles": selected_handles
 			}),
 		)
 		.map_err(|Error| {

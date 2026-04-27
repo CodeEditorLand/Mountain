@@ -309,7 +309,7 @@ pub async fn OnDidReceiveMessage(
 	};
 
 	let _ = Service.environment.ApplicationHandle.emit(
-		"sky://webview/message",
+		"sky://webview/post-message",
 		json!({ "handle": req.handle, "message": MessagePayload }),
 	);
 
@@ -346,10 +346,14 @@ pub async fn DisposeWebviewPanel(
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] dispose_webview_panel: handle={}", req.handle);
 
+	// Sky listener (`SkyBridge.ts:2344`) destructures `{ panelId }`. The
+	// older sibling emitter at `RPC/CocoonService/mod.rs:1235` already
+	// uses `panelId`; keep this site aligned so a `dispose` from either
+	// path lands in the same DOM `cel:webview:dispose` CustomEvent.
 	let _ = Service
 		.environment
 		.ApplicationHandle
-		.emit("sky://webview/dispose", json!({ "handle": req.handle }));
+		.emit("sky://webview/dispose", json!({ "panelId": req.handle }));
 
 	Ok(Response::new(Empty {}))
 }

@@ -29,7 +29,7 @@ pub(super) async fn reveal_channel(
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.IsVisible = true;
 
-		let event_payload = json!({ "Id": channel_identifier, "PreserveFocus": preserve_focus });
+		let event_payload = json!({ "channel": channel_identifier, "preserveFocus": preserve_focus });
 
 		env.ApplicationHandle
 			.emit(SkyEvent::OutputReveal.AsStr(), event_payload)
@@ -71,7 +71,7 @@ pub(super) async fn close_channel(
 		// updated visibility state - SkyEvent doesn't yet have a
 		// dedicated Hide variant; the renderer's reveal handler is
 		// idempotent and reads the latest IsVisible from state.
-		let event_payload = json!({ "Id": channel_identifier, "PreserveFocus": true, "IsVisible": false });
+		let event_payload = json!({ "channel": channel_identifier, "preserveFocus": true, "visible": false });
 		env.ApplicationHandle
 			.emit(SkyEvent::OutputReveal.AsStr(), event_payload)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;

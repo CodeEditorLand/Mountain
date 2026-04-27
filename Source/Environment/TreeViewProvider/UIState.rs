@@ -39,7 +39,7 @@ pub(super) async fn set_tree_view_message(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewSetMessage.AsStr(),
-			json!({ "ViewIdentifier": view_identifier, "Message": message }),
+			json!({ "viewId": view_identifier, "message": message }),
 		)
 		.map_err(|Error| {
 			CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view message: {}", Error) }
@@ -80,9 +80,9 @@ pub(super) async fn set_tree_view_title(
 		.emit(
 			SkyEvent::TreeViewSetTitle.AsStr(),
 			json!({
-				"ViewIdentifier": view_identifier,
-				"Title": title,
-				"Description": description,
+				"viewId": view_identifier,
+				"title": title,
+				"description": description,
 			}),
 		)
 		.map_err(|Error| {
@@ -128,7 +128,7 @@ pub(super) async fn set_tree_view_badge(
 	env.ApplicationHandle
 		.emit(
 			SkyEvent::TreeViewSetBadge.AsStr(),
-			json!({ "ViewIdentifier": view_identifier, "Badge": badge }),
+			json!({ "viewId": view_identifier, "badge": badge }),
 		)
 		.map_err(|Error| {
 			CommonError::UserInterfaceInteraction { Reason:format!("Failed to emit tree view badge: {}", Error) }
