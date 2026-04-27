@@ -1495,6 +1495,34 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					handle_local_pty_get_environment().await
 				},
 
+				// `cocoon:request` - generic renderer→Cocoon RPC bridge.
+				// Used by Sky-side bridges that need to dispatch a request
+				// into the extension host (e.g. `webview.resolveView` to
+				// trigger an extension's `resolveWebviewView` callback).
+				// Wire shape: `params = [Method, Payload]`. Mountain
+				// forwards to Cocoon via `Vine::Client::SendRequest` and
+				// returns the response verbatim. Failure surfaces as a
+				// stringified error so the renderer can fall through to
+				// its alternative path (CustomEvent fan-out for legacy
+				// observers).
+				"cocoon:request" => {
+					dev_log!("ipc", "cocoon:request method={:?}", args.first());
+					let Method = args
+						.first()
+						.and_then(|V| V.as_str())
+						.ok_or_else(|| "cocoon:request requires method string in slot 0".to_string())?
+						.to_string();
+					let Payload = args.get(1).cloned().unwrap_or(Value::Null);
+					crate::Vine::Client::SendRequest(
+						"cocoon-main",
+						Method.clone(),
+						Payload,
+						30_000,
+					)
+					.await
+					.map_err(|Error| format!("cocoon:request {} failed: {:?}", Method, Error))
+				},
+
 				// BATCH-19 Part B: VS Code's `LocalPtyService` talks to Mountain via
 				// the `localPty:*` channel. The internal implementations reuse the
 				// Tauri-side `terminal:*` handlers so PTY lifecycle stays identical
