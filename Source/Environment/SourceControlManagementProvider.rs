@@ -254,7 +254,18 @@ impl SourceControlManagementProvider for MountainEnvironment {
 	async fn CreateSourceControl(&self, ProviderDataValue:Value) -> Result<u32, CommonError> {
 		let ProviderData:SourceControlCreateDTO = serde_json::from_value(ProviderDataValue)?;
 
-		let Handle = self.ApplicationState.GetNextSourceControlManagementProviderHandle();
+		// Honor caller-supplied handle when present so the marker maps
+		// (`SourceControlManagementProviders` / `SourceControlManagementGroups`)
+		// key under the SAME identifier Cocoon's `ScmNamespace.ts` uses
+		// for subsequent `register_scm_resource_group` and `update_scm_group`
+		// notifications. Without this, `UpdateSourceControlGroup` looks up
+		// Cocoon's handle in a map keyed by a Mountain-allocated handle,
+		// the entry isn't there, and every group update warns
+		// "Received group update for unknown provider handle: <H>" while
+		// the SCM viewlet stays empty.
+		let Handle = ProviderData
+			.Handle
+			.unwrap_or_else(|| self.ApplicationState.GetNextSourceControlManagementProviderHandle());
 
 		dev_log!(
 			"extensions",

@@ -102,6 +102,25 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 		}
 	}
 
+	// Recently-opened fallback. The webview's initial URL is built from
+	// `~/.land/workspaces/RecentlyOpened.json`'s top entry (see
+	// `Binary/Build/WindowBuild.rs::BuildInitialUrl`), so when the user
+	// picks a folder from the recent-list / "Open Folder" UI, the URL
+	// loads with `?folder=<their-pick>` but Mountain's boot-time seeder
+	// previously fell straight through to CWD walk-up. Result: webview
+	// title says "Mountain" but Cocoon's init payload ships "Land",
+	// vscode.git scans the wrong root, SCM panel reports zeros while
+	// `git status` in the actual folder shows uncommitted changes.
+	//
+	// Probe the same source of truth as `BuildInitialUrl` so the seeded
+	// workspace and the loaded URL agree. Slot this between env/CLI
+	// (explicit user intent) and CWD walk-up (last resort).
+	if Collected.is_empty() {
+		if let Some(Path) = ResolveRecentlyOpenedTopFolder() {
+			Collected.push(Path);
+		}
+	}
+
 	if Collected.is_empty() {
 		// CWD-autoload default: ON in debug builds, OFF in release. Debug
 		// iteration invariably needs a folder so `vscode.git` /
@@ -138,6 +157,51 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 			Path.canonicalize().ok().or(Some(Path))
 		})
 		.collect()
+}
+
+/// Read `~/.land/workspaces/RecentlyOpened.json`'s top workspace entry and
+/// resolve it to a directory path. Mirrors the probe used by
+/// `Binary/Build/WindowBuild.rs::BuildInitialUrl` so the boot-seeded
+/// workspace folder agrees with the URL the webview actually loads. Returns
+/// `None` when the file is missing/malformed, the entry has no resolvable
+/// path, the path doesn't exist on disk, or it isn't a directory.
+fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
+	use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::ReadRecentlyOpened;
+
+	let Recent = ReadRecentlyOpened().ok()?;
+	let Workspaces = Recent.get("workspaces").and_then(|V| V.as_array())?;
+
+	// Same priority order as BuildInitialUrl: own writer's `uri`,
+	// VS Code's `folderUri`/`folderUri.path`, then `workspace.configPath.path`.
+	let Probe = |Entry:&serde_json::Value| -> Option<String> {
+		if let Some(Uri) = Entry.get("uri").and_then(|V| V.as_str()) {
+			return Some(Uri.to_string());
+		}
+		if let Some(Uri) = Entry.get("folderUri").and_then(|V| V.as_str()) {
+			return Some(Uri.to_string());
+		}
+		if let Some(Path) = Entry.get("folderUri").and_then(|V| V.get("path")).and_then(|V| V.as_str()) {
+			return Some(Path.to_string());
+		}
+		if let Some(Path) = Entry
+			.get("workspace")
+			.and_then(|V| V.get("configPath"))
+			.and_then(|V| V.get("path"))
+			.and_then(|V| V.as_str())
+		{
+			return Some(Path.to_string());
+		}
+		None
+	};
+
+	let Raw = Workspaces.iter().find_map(Probe)?;
+	let Normalised = Raw.strip_prefix("file://").unwrap_or(Raw.as_str()).to_string();
+	let Candidate = PathBuf::from(&Normalised);
+	if Candidate.is_dir() {
+		Some(Candidate)
+	} else {
+		None
+	}
 }
 
 /// Walk up from `Start` looking for a project-root marker (`Cargo.toml`,

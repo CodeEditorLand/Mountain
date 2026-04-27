@@ -171,7 +171,17 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// shape (post-DTO-audit): `id`, `label`, `rootUri`. Earlier revisions
 	// passed PascalCase keys here and the trait silently failed with
 	// `missing field "id"` because the DTO's serde rename uses camelCase.
+	//
+	// `handle` is the Cocoon-allocated sequential provider handle (read
+	// above from the Parameter). Including it on the wire makes
+	// `MountainEnvironment::CreateSourceControl` key its marker maps
+	// under the SAME handle that subsequent `register_scm_resource_group`
+	// and `update_scm_group` notifications reference - without this,
+	// every group update warns "Received group update for unknown
+	// provider handle: <H>" because the marker map was keyed by a
+	// fresh Mountain-allocated handle Cocoon never sees.
 	let CreateData = json!({
+		"handle": Handle,
 		"id": &ScmId,
 		"label": &Label,
 		"rootUri": RootUriString,

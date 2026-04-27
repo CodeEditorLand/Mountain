@@ -52,7 +52,14 @@ pub async fn RegisterScmProvider(
 	// svn etc. never appeared in the SCM view until a
 	// `UpdateScmGroup` call landed - and even then the group-less
 	// header row never materialised.
+	// Pass the same `Handle` used by `ProviderRegistration` above so the
+	// trait keys its marker maps under the same identifier any later
+	// `UpdateScmGroup` lookup will use. See
+	// `SourceControlCreateDTO::Handle` for the wire-shape contract and
+	// `Notification/RegisterScmProvider.rs` for the parallel notification
+	// path that uses Cocoon's sequential handle.
 	let CreateData = json!({
+		"handle": Handle,
 		"id": req.scm_id,
 		"label": req.scm_id,
 		"rootUri": null,
