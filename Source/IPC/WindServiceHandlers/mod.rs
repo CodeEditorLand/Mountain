@@ -1507,20 +1507,64 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// observers).
 				"cocoon:request" => {
 					dev_log!("ipc", "cocoon:request method={:?}", args.first());
-					let Method = args
-						.first()
-						.and_then(|V| V.as_str())
-						.ok_or_else(|| "cocoon:request requires method string in slot 0".to_string())?
-						.to_string();
-					let Payload = args.get(1).cloned().unwrap_or(Value::Null);
-					crate::Vine::Client::SendRequest(
-						"cocoon-main",
-						Method.clone(),
-						Payload,
-						30_000,
-					)
-					.await
-					.map_err(|Error| format!("cocoon:request {} failed: {:?}", Method, Error))
+					let MethodOpt =
+						args.first().and_then(|V| V.as_str()).map(|S| S.to_string());
+					match MethodOpt {
+						None => {
+							Err("cocoon:request requires method string in slot 0".to_string())
+						},
+						Some(Method) => {
+							let Payload = args.get(1).cloned().unwrap_or(Value::Null);
+							crate::Vine::Client::SendRequest(
+								"cocoon-main",
+								Method.clone(),
+								Payload,
+								30_000,
+							)
+							.await
+							.map_err(|Error| {
+								format!("cocoon:request {} failed: {:?}", Method, Error)
+							})
+						},
+					}
+				},
+
+				// `cocoon:notify` - fire-and-forget renderer→Cocoon
+				// notification bridge. Companion to `cocoon:request` for
+				// one-way wire methods (`webview.message`,
+				// `webview.dispose`, `webview.viewState` etc.) where the
+				// extension doesn't reply. Avoids the 30s request
+				// timeout penalty when the renderer just wants to push
+				// data into the extension host. Wire shape:
+				// `params = [Method, Payload]`. Returns null
+				// immediately; the notification dispatches asynchronously.
+				"cocoon:notify" => {
+					dev_log!("ipc", "cocoon:notify method={:?}", args.first());
+					let MethodOpt =
+						args.first().and_then(|V| V.as_str()).map(|S| S.to_string());
+					match MethodOpt {
+						None => {
+							Err("cocoon:notify requires method string in slot 0".to_string())
+						},
+						Some(Method) => {
+							let Payload = args.get(1).cloned().unwrap_or(Value::Null);
+							if let Err(Error) = crate::Vine::Client::SendNotification(
+								"cocoon-main".to_string(),
+								Method.clone(),
+								Payload,
+							)
+							.await
+							{
+								dev_log!(
+									"ipc",
+									"warn: [cocoon:notify] {} failed: {:?}",
+									Method,
+									Error
+								);
+							}
+							Ok(Value::Null)
+						},
+					}
 				},
 
 				// BATCH-19 Part B: VS Code's `LocalPtyService` talks to Mountain via

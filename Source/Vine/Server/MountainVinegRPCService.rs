@@ -530,7 +530,11 @@ impl MountainService for MountainVinegRPCService {
 			// under `Vine::Server::Notification::*`. "Group atoms"
 			// (TerminalLifecycle, DebugLifecycle, WebviewLifecycle, etc.)
 			// handle 3-4 wire methods that share the same relay pattern.
-			"webview.setTitle" | "webview.setIconPath" | "webview.setHtml" => {
+			"webview.setTitle"
+			| "webview.setIconPath"
+			| "webview.setHtml"
+			| "webview.updateView"
+			| "webview.reveal" => {
 				super::Notification::WebviewLifecycle::WebviewLifecycle(self, &MethodName, &Parameter).await;
 			},
 			"window.createTerminal" => {
