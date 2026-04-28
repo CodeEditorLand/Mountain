@@ -13,6 +13,14 @@ use tauri::plugin::TauriPlugin;
 
 /// OTLP collector host:port. OTELBridge.ts sends to `/v1/traces` (same-origin),
 /// this proxy forwards to the real collector via raw TCP. Zero CORS issues.
+///
+/// Currently unused - the OTLP proxy path requires `Response::set_handled` /
+/// `set_status` / `Request::body()` from a patched fork of
+/// `tauri-plugin-localhost`. After resetting the vendored copy to upstream
+/// (`Dependency/Tauri/Dependency/PluginsWorkspace/plugins/localhost`),
+/// those methods are gone; restoration is tracked in
+/// `.claude/tauri/B4-Plugins.md`.
+#[allow(dead_code)]
 const OTLP_HOST:&str = "127.0.0.1:4318";
 
 /// Resolve the correct `Content-Type` for a request URL by its file extension.
@@ -47,6 +55,9 @@ fn MimeFromUrl(Url:&str) -> Option<&'static str> {
 
 /// Forward a JSON body to the OTLP collector via raw HTTP/1.1 POST.
 /// Returns true if the collector accepted (2xx), false otherwise.
+///
+/// See `OTLP_HOST` for why this is currently unused.
+#[allow(dead_code)]
 fn ProxyToOTLP(Body:&[u8]) -> bool {
 	let Ok(mut Stream) = TcpStream::connect_timeout(&OTLP_HOST.parse().unwrap(), Duration::from_millis(500)) else {
 		return false;
@@ -91,33 +102,35 @@ fn ProxyToOTLP(Body:&[u8]) -> bool {
 pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 	tauri_plugin_localhost::Builder::new(ServerPort)
 		.on_request(|Request, Response| {
-			// CORS headers for Service Workers and frontend integration
+			// CORS headers for Service Workers and frontend integration.
 			Response.add_header("Access-Control-Allow-Origin", "*");
 			Response.add_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD");
 			Response.add_header("Access-Control-Allow-Headers", "Content-Type, Authorization, Origin, Accept");
 
 			let Url = Request.url();
 
-			// OTLP proxy: forward /v1/traces to the local collector
-			if Url.contains("/v1/traces") {
-				Response.set_handled(true);
-				let Body = Request.body();
-				if ProxyToOTLP(Body) {
-					Response.set_status(200);
-					Response.add_header("Content-Type", "application/json");
-				} else {
-					// Collector not running - 204 silently.
-					// OTELBridge stops retrying after first failure.
-					Response.set_status(204);
-				}
-				return;
-			}
+			// LAND-PATCH B1.X: the upstream tauri-plugin-localhost `Response`
+			// only exposes `add_header` - no `set_handled` / `set_status`,
+			// and `Request` exposes only `url()` (no `body()`). Mountain's
+			// previous OTLP proxy + status override depended on a patched
+			// fork. After resetting the vendored copy to upstream those
+			// methods are gone. The OTLP proxy is moved to the dev OTEL
+			// collector (run separately from Tauri); the status override
+			// is no longer needed because the upstream plugin always emits
+			// 200 OK on a successful asset hit and the asset resolver's
+			// 404 path is sufficient for the un-mocked case.
+			//
+			// To restore the OTLP-proxy / status-override path, patch the
+			// vendored `tauri-plugin-localhost` (`Dependency/Tauri/
+			// Dependency/PluginsWorkspace/plugins/localhost/src/lib.rs`)
+			// to add `Response::set_handled(bool)`, `Response::set_status(
+			// u16)`, and `Request::body() -> &[u8]`. Track that work in
+			// `.claude/tauri/B4-Plugins.md`.
 
 			// Pre-set the correct `Content-Type` for known asset extensions.
-			// The patched localhost plugin only falls back to asset.mime_type
-			// when this header is absent, so setting it here makes our value
-			// authoritative. Fixes module-loading errors of the form
-			// `'text/html' is not a valid JavaScript MIME type`.
+			// The upstream plugin sets `Content-Type` from `asset.mime_type`
+			// before invoking the on_request callback, but the user-set
+			// value via `add_header` overrides it (HashMap insert).
 			if let Some(Mime) = MimeFromUrl(Url) {
 				Response.add_header("Content-Type", Mime);
 			}
