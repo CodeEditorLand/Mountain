@@ -789,6 +789,42 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 	}
 
+	// CSS-as-JS shim: when a `.css` URL is requested through
+	// `vscode-file://` (which happens for any unstripped raw `import
+	// "./foo.css"` that VS Code's bundle still contains after
+	// `workbench.js` switches `_VSCODE_FILE_ROOT` to the custom
+	// scheme), the browser would refuse the response with
+	// `'text/css' is not a valid JavaScript MIME type`. Service
+	// Workers can't intercept custom-scheme requests, so we inline
+	// the same JS shim the Worker SW emits on the localhost path:
+	// invoke `_LOAD_CSS_WORKER` against the localhost-form path and
+	// export an empty default. The SW + `<link>` fast-path then
+	// loads the actual CSS bytes from `/Static/Application/...`.
+	if CleanPath.ends_with(".css") {
+		let LocalPath = format!(
+			"/Static/Application/{}",
+			CleanPath.trim_start_matches("Static/Application/")
+		);
+		let Body = format!(
+			"globalThis._LOAD_CSS_WORKER?.({:?}); export default {{}};",
+			LocalPath
+		);
+		dev_log!(
+			"scheme-assets",
+			"[LandFix:VscodeFile] css-shim {} -> _LOAD_CSS_WORKER({})",
+			CleanPath,
+			LocalPath
+		);
+		return Builder::new()
+			.status(200)
+			.header("Content-Type", "application/javascript; charset=utf-8")
+			.header("Access-Control-Allow-Origin", "*")
+			.header("Cache-Control", "public, max-age=31536000, immutable")
+			.body(Body.into_bytes())
+			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
+	}
+
+
 	// Icon themes, grammars and other extension-contributed assets generate
 	// URIs like `vscode-file://vscode-app/Volumes/CORSAIR/.../seti.woff` after
 	// `FileAccess.uriToBrowserUri` rewrites a plain `file:///Volumes/...`
