@@ -748,11 +748,31 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	dev_log!("scheme-assets", "[LandFix:VscodeFile] Request: {}", Uri);
 	dev_log!("scheme-assets", "[SchemeAssets] request uri={}", Uri);
 
-	// Extract path from: vscode-file://vscode-app/path/to/file
-	// The authority is "vscode-app", the path starts after it
+	// Extract path from: vscode-file://<authority>/<path>
+	//
+	// The canonical workbench-side authority is `vscode-app` (used by
+	// `FileAccess.uriToBrowserUri` for ALL workbench resources). But
+	// `WebviewImplementation::asWebviewUri` rewrites local resource
+	// URIs to use the extension's identifier as the authority - e.g.
+	// `vscode-file://vscode.git/Volumes/.../extensions/git/media/icon.svg`.
+	// The strip-prefix chain below covers both:
+	//   1. Exact `vscode-app` authority (with or without trailing `/`)
+	//   2. ANY other authority - we treat the post-authority path as
+	//      the resource path and let the OS-absolute-root detection
+	//      below serve it straight from disk. Without this fallback
+	//      every extension-supplied webview asset (icons, scripts,
+	//      stylesheets, fonts) returned 404 because the strip yielded
+	//      `""` and the asset_resolver lookup ran with an empty key.
 	let FilePath = Uri
 		.strip_prefix("vscode-file://vscode-app/")
 		.or_else(|| Uri.strip_prefix("vscode-file://vscode-app"))
+		.or_else(|| {
+			// Generic `vscode-file://<authority>/<path>` - skip past the
+			// `vscode-file://` scheme + the authority's first `/`.
+			let After = Uri.strip_prefix("vscode-file://")?;
+			let SlashIdx = After.find('/')?;
+			Some(&After[SlashIdx + 1..])
+		})
 		.unwrap_or("");
 
 	// Strip /out/ prefix if present - our assets are at /Static/Application/vs/

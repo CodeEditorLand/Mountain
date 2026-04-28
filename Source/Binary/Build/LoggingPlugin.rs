@@ -78,6 +78,18 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		.level_for("mio", LevelFilter::Info)
 		.level_for("tao", LevelFilter::Info)
 		.level_for("tracing", LevelFilter::Info)
+		// `ignore` and `globset` (used by Mountain's extension scanner +
+		// `WorkspaceProvider::FindFiles` walk) emit a DEBUG line per
+		// `.gitignore` opened, per glob compiled, and per file
+		// whitelisted/ignored. A single `debug-electron-bundled` boot
+		// produces tens of thousands of these lines, drowning out every
+		// extension activation / SCM register / GIT-MARK / IPC trace
+		// the rest of Mountain emits at the same level. Cap to Warn so
+		// the extension-activation signal is readable.
+		.level_for("ignore", LevelFilter::Warn)
+		.level_for("ignore::walk", LevelFilter::Warn)
+		.level_for("ignore::gitignore", LevelFilter::Warn)
+		.level_for("globset", LevelFilter::Warn)
 		// Filter out extremely noisy targets
 		.filter(|Metadata| {
 			!Metadata.target().starts_with("polling")
