@@ -18,7 +18,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
 - **Post-install activation burst** (`Extension.rs`): After `$deltaExtensions`
   adds an extension to Cocoon's registry, `onStartupFinished` activation events
   are now fired. Without this burst, extensions with `onStartupFinished` (e.g.
-  `Anthropic.claude-code`) registered but never activated — sidebar
+  `Anthropic.claude-code`) registered but never activated - sidebar
   contributions and commands silently no-oped until the next full restart.
 - **Sidebar scan handlers** (`mod.rs`): `extensions:scanSystemExtensions` ->
   `getInstalled(type=0)` and `extensions:scanUserExtensions` ->
@@ -91,7 +91,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
   `$mid: 1` via the new UriComponents helper.
 - **DTO serialization** (`ExtensionDescriptionStateDTO`): Removed
   `skip_serializing_if = "String::is_empty"` from `Name`, `Version`,
-  `Publisher` — omitting the key crashed the renderer with
+  `Publisher` - omitting the key crashed the renderer with
   `TypeError: undefined is not an object`.
 - **Log file eager init** (`Entry.rs`, `DevLog.rs`): `InitEager()` called at
   binary startup. `BinarySignature()` fixed to correctly split PascalCase
