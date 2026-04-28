@@ -230,28 +230,55 @@ impl DiagnosticManager for MountainEnvironment {
 		let OwnerMap = DiagnosticsMapGuard.entry(Owner.clone()).or_default();
 
 		let mut ChangedURIKeys = Vec::new();
+		// `ChangedEntries` carries the post-update marker set per URI so the
+		// Sky-side `cel:diagnostics:changed` listener can call
+		// `IMarkerService.changeOne(owner, uri, markers)` without an extra
+		// IPC round-trip per change. URIs whose markers were cleared still
+		// appear here with an empty array, so the workbench replaces the
+		// previous owner-set rather than leaving stale red squiggles.
+		let mut ChangedEntries:Vec<serde_json::Value> = Vec::new();
 
 		for (URIComponentsValue, MarkersOption) in DeserializedEntries {
 			let URIKey = Utility::GetURLFromURIComponentsDTO(&URIComponentsValue)?.to_string();
 
 			ChangedURIKeys.push(URIKey.clone());
 
-			if let Some(Markers) = MarkersOption {
-				if Markers.is_empty() {
+			let MarkersForEvent = match MarkersOption {
+				Some(Markers) => {
+					if Markers.is_empty() {
+						OwnerMap.remove(&URIKey);
+						Vec::new()
+					} else {
+						let MarkersClone = Markers.clone();
+						OwnerMap.insert(URIKey.clone(), Markers);
+						MarkersClone
+					}
+				},
+				None => {
 					OwnerMap.remove(&URIKey);
-				} else {
-					OwnerMap.insert(URIKey, Markers);
-				}
-			} else {
-				OwnerMap.remove(&URIKey);
-			}
+					Vec::new()
+				},
+			};
+
+			ChangedEntries.push(json!({
+				"uri": URIKey,
+				"markers": MarkersForEvent,
+			}));
 		}
 
 		drop(DiagnosticsMapGuard);
 
-		// Notify the frontend that diagnostics have changed for specific URIs.
-		// Include both added/cleared URIs so UI can update accurately.
-		let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
+		// Notify the frontend that diagnostics have changed. Both keys are
+		// included for backward compatibility - older listeners read `Uris`
+		// (string-array) while the new SkyBridge marker bridge reads
+		// `changedURIs` (per-URI marker payload) to push directly into
+		// the workbench's `IMarkerService`.
+		let EventPayload = json!({
+			"Owner": Owner,
+			"owner": Owner,
+			"Uris": ChangedURIKeys,
+			"changedURIs": ChangedEntries,
+		});
 
 		if let Err(Error) = self.ApplicationHandle.emit(SkyEvent::DiagnosticsChanged.AsStr(), EventPayload) {
 			dev_log!(
@@ -304,7 +331,19 @@ impl DiagnosticManager for MountainEnvironment {
 				ChangedURIKeys.len()
 			);
 
-			let EventPayload = json!({ "Owner": Owner, "Uris": ChangedURIKeys });
+			// Clear path - every URI's marker set goes to empty so the
+			// SkyBridge listener can wipe them via
+			// `IMarkerService.changeOne(owner, uri, [])`.
+			let ChangedEntries:Vec<serde_json::Value> = ChangedURIKeys
+				.iter()
+				.map(|Uri| json!({ "uri": Uri, "markers": [] }))
+				.collect();
+			let EventPayload = json!({
+				"Owner": Owner,
+				"owner": Owner,
+				"Uris": ChangedURIKeys,
+				"changedURIs": ChangedEntries,
+			});
 
 			if let Err(Error) = self.ApplicationHandle.emit(SkyEvent::DiagnosticsChanged.AsStr(), EventPayload) {
 				dev_log!(

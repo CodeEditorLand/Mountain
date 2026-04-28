@@ -90,6 +90,13 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		.level_for("ignore::walk", LevelFilter::Warn)
 		.level_for("ignore::gitignore", LevelFilter::Warn)
 		.level_for("globset", LevelFilter::Warn)
+		// `keyring` (used by Mountain's secret-storage path on the
+		// `dev1phpTools.license.data` lookup chain) emits a 3-line
+		// DEBUG block per `get_password` call - "creating entry",
+		// "created entry", "get password from entry" - per refresh
+		// tick. After the workbench paints these fire indefinitely.
+		// Cap to Warn alongside the other dependency mutes.
+		.level_for("keyring", LevelFilter::Warn)
 		// Filter out extremely noisy targets
 		.filter(|Metadata| {
 			!Metadata.target().starts_with("polling")
