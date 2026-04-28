@@ -203,7 +203,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	// workspaces, themes, search, decorations, workingcopy, keybinding,
 	// lifecycle, label, model, history, commands, nativehost, window,
 	// exthost, encryption, menubar, update, url, grpc.
-	// Activate: LAND_DEV_LOG=all   or   LAND_DEV_LOG=vfs,ipc,config
+	// Activate: Trace=all   or   Trace=vfs,ipc,config
 	//
 	// Atom O1 + O3: every invoke flows through `SubmitToEcho` below so the
 	// Echo work-stealing scheduler picks a lane based on `Channel::Priority()`.
@@ -1100,7 +1100,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						SessionLogRoot.display(),
 						HomeDir.display()
 					);
-					let DevLogEnv = std::env::var("LAND_DEV_LOG").unwrap_or_default();
+					let DevLogEnv = std::env::var("Trace").unwrap_or_default();
 					Ok(json!({
 						"userDataDir": AppDataDir.to_string_lossy(),
 						"logsPath": SessionLogRoot.to_string_lossy(),

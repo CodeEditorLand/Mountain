@@ -267,7 +267,7 @@ impl StorageProvider for MountainEnvironment {
 		// Per-key updates fire at every workbench state change (sidebar
 		// view state, panel layout, editor tab order, telemetry opt-ins).
 		// Short-form + long-form both emit under `storage-verbose` so the
-		// default log stays clean; `LAND_DEV_LOG=storage-verbose` restores
+		// default log stays clean; `Trace=storage-verbose` restores
 		// the original verbose tracing.
 		if crate::IPC::DevLog::IsShort() {
 			crate::dev_log!("storage-verbose", "update {} {}", ScopeName, Key);

@@ -73,10 +73,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 // ===========================================================================
 // Profile sentinel: Build.sh exports `Browser=true` / `Mountain=true` /
-// `Electron=true` / `Bundle` / `Compiler` / `LAND_PROFILE` into the shell
+// `Electron=true` / `Bundle` / `Compiler` / `Profile` into the shell
 // that invokes cargo. These shell env vars don't survive to the resulting
 // binary; only `cargo:rustc-env` does. Bake a LAND_* set into the binary so
-// `option_env!("LAND_PROFILE")` resolves after launch without depending on
+// `option_env!("Profile")` resolves after launch without depending on
 // the shell the user runs the binary from.
 //
 // Follow-up to playbook item #3 - previously the sentinel logged
@@ -96,11 +96,11 @@ fn PropagateProfileSentinel() {
 
 	// rerun on any of these changing so incremental builds pick up a
 	// `Compiler=rest` flip without a clean.
-	for Key in ["Browser", "Mountain", "Electron", "Bundle", "Compiler", "LAND_PROFILE"] {
+	for Key in ["Browser", "Mountain", "Electron", "Bundle", "Compiler", "Profile"] {
 		println!("cargo:rerun-if-env-changed={Key}");
 	}
 
-	let Named = std::env::var("LAND_PROFILE").unwrap_or_else(|_| {
+	let Named = std::env::var("Profile").unwrap_or_else(|_| {
 		if Electron == "true" {
 			if Compiler.eq_ignore_ascii_case("rest") {
 				"debug-electron-rest".into()
@@ -128,18 +128,18 @@ fn PropagateProfileSentinel() {
 
 	let CompilerLabel = if Compiler.is_empty() { "default" } else { Compiler.as_str() };
 
-	println!("cargo:rustc-env=LAND_PROFILE={Named}");
+	println!("cargo:rustc-env=Profile={Named}");
 
-	println!("cargo:rustc-env=LAND_WORKBENCH={Workbench}");
+	println!("cargo:rustc-env=Pack={Workbench}");
 
-	println!("cargo:rustc-env=LAND_BUNDLE={Bundle}");
+	println!("cargo:rustc-env=Bundle={Bundle}");
 
-	println!("cargo:rustc-env=LAND_COMPILER={CompilerLabel}");
+	println!("cargo:rustc-env=Compiler={CompilerLabel}");
 }
 
 // ===========================================================================
-// PostHog sentinel: `.env.Land.PostHog` exposes LAND_POSTHOG_KEY /
-// LAND_POSTHOG_HOST / LAND_POSTHOG_MOUNTAIN_ENABLED / LAND_POSTHOG_DISTINCT_ID.
+// PostHog sentinel: `.env.Land.PostHog` exposes Authorize /
+// Beam / Report / Brand.
 // TierEnvironment.sh sources that overlay before cargo runs, so values are
 // available here. Bake them as `cargo:rustc-env` so Mountain reads a single
 // source of truth across every build profile without a hardcoded const.
@@ -147,29 +147,29 @@ fn PropagateProfileSentinel() {
 
 fn PropagatePostHogSentinel() {
 	for Key in [
-		"LAND_POSTHOG_KEY",
-		"LAND_POSTHOG_HOST",
-		"LAND_POSTHOG_MOUNTAIN_ENABLED",
-		"LAND_POSTHOG_DISTINCT_ID",
+		"Authorize",
+		"Beam",
+		"Report",
+		"Brand",
 	] {
 		println!("cargo:rerun-if-env-changed={Key}");
 	}
 
-	let Key = std::env::var("LAND_POSTHOG_KEY").unwrap_or_else(|_| "".into());
+	let Key = std::env::var("Authorize").unwrap_or_else(|_| "".into());
 
-	let Host = std::env::var("LAND_POSTHOG_HOST").unwrap_or_else(|_| "https://eu.i.posthog.com".into());
+	let Host = std::env::var("Beam").unwrap_or_else(|_| "https://eu.i.posthog.com".into());
 
-	let Enabled = std::env::var("LAND_POSTHOG_MOUNTAIN_ENABLED").unwrap_or_else(|_| "true".into());
+	let Enabled = std::env::var("Report").unwrap_or_else(|_| "true".into());
 
-	let DistinctId = std::env::var("LAND_POSTHOG_DISTINCT_ID").unwrap_or_default();
+	let DistinctId = std::env::var("Brand").unwrap_or_default();
 
-	println!("cargo:rustc-env=LAND_POSTHOG_KEY={Key}");
+	println!("cargo:rustc-env=Authorize={Key}");
 
-	println!("cargo:rustc-env=LAND_POSTHOG_HOST={Host}");
+	println!("cargo:rustc-env=Beam={Host}");
 
-	println!("cargo:rustc-env=LAND_POSTHOG_MOUNTAIN_ENABLED={Enabled}");
+	println!("cargo:rustc-env=Report={Enabled}");
 
-	println!("cargo:rustc-env=LAND_POSTHOG_DISTINCT_ID={DistinctId}");
+	println!("cargo:rustc-env=Brand={DistinctId}");
 }
 
 // ===========================================================================

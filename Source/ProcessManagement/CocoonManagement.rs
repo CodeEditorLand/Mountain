@@ -201,12 +201,12 @@ pub async fn InitializeCocoon(
 	dev_log!("cocoon", "[CocoonManagement] Initializing Cocoon sidecar manager...");
 
 	// Atom N1: `debug-mountain-only` / `release-mountain-only` profiles set
-	// LAND_SPAWN_COCOON=false so Mountain boots without the extension host.
+	// Spawn=false so Mountain boots without the extension host.
 	// Extension-related IPC returns the empty-state envelope; the workbench
 	// loads but no extension activates. Useful for integration tests that
 	// exercise Mountain in isolation and for the smallest shippable surface.
-	if matches!(std::env::var("LAND_SPAWN_COCOON").as_deref(), Ok("0") | Ok("false")) {
-		dev_log!("cocoon", "[CocoonManagement] Skipping spawn (LAND_SPAWN_COCOON=false)");
+	if matches!(std::env::var("Spawn").as_deref(), Ok("0") | Ok("false")) {
+		dev_log!("cocoon", "[CocoonManagement] Skipping spawn (Spawn=false)");
 		return Ok(());
 	}
 
@@ -339,7 +339,7 @@ async fn LaunchAndManageCocoonSideCar(
 
 	// Atom N1: resolve Node binary via NodeResolver (shipped → version
 	// managers → homebrew → PATH). Logs the pick + source for forensics.
-	// Overridable via `LAND_NODE_BINARY=/absolute/path/to/node`.
+	// Overridable via `Pick=/absolute/path/to/node`.
 	let ResolvedNodeBinary = NodeResolver::ResolveNodeBinary(&ApplicationHandle);
 
 	// Build Node.js command with comprehensive environment configuration
@@ -371,27 +371,37 @@ async fn LaunchAndManageCocoonSideCar(
 	// whitelist above drops them and Cocoon falls back to defaults,
 	// defeating the single-source-of-truth design.
 	//
-	// `LAND_*` prefix: covers `.env.Land.PostHog` (LAND_POSTHOG_*),
-	// `.env.Land.Node` (LAND_NODE_*), `.env.Land.Extensions`
-	// (LAND_USER_EXTENSIONS_DIR, LAND_EXTRA_EXTENSIONS_DIR,
-	// LAND_DEV_EXTENSIONS_DIR, LAND_BUILTIN_EXTENSIONS_DIR,
-	// LAND_AUTO_INSTALL_*, LAND_DISABLE_EXTENSIONS,
-	// LAND_SKIP_BUILTIN_EXTENSIONS), and the kernel / mountain-only
-	// gating flags (LAND_SPAWN_COCOON, LAND_ENABLE_WIND). Previously
-	// only Product/Tier/Network were forwarded and Cocoon's PostHog
-	// bridge fell back to the empty-string default - no telemetry
-	// reached the EU project even when `.env.Land.PostHog` was present.
+	// PascalCase single-word vars: covers `.env.Land.PostHog` (Authorize,
+	// Beam, Report, Brand, Replay, Ask, Throttle, Buffer, Batch, Cap),
+	// `.env.Land.Node` (Pick, Require), `.env.Land.Extensions` (Lodge,
+	// Extend, Probe, Ship, Wire, Install, Mute, Skip), and the
+	// kernel / Cocoon-spawn / preload gating flags (Spawn, Render).
+	// Each name is a single PascalCase action verb - no LAND_ prefix.
+	// Previously only Product/Tier/Network were forwarded and the
+	// PostHog bridge fell back to the empty-string default; the
+	// AllowList below now enumerates every Land-introduced env var by
+	// name so Cocoon sees the same values Mountain reads.
+	const LandEnvAllowList: &[&str] = &[
+		"Authorize", "Beam", "Report", "Brand", "Replay", "Ask",
+		"Throttle", "Buffer", "Batch", "Cap",
+		"Pick", "Require",
+		"Lodge", "Extend", "Probe", "Ship", "Wire", "Install",
+		"Mute", "Skip", "Spawn", "Render", "Walk",
+		"Trace", "Record", "Profile", "Diagnose", "Resolve",
+		"Open", "Warn", "Catch", "Source", "Track", "Defer",
+		"Boot", "Pack",
+	];
 	for (Key, Value) in std::env::vars() {
 		if Key.starts_with("Product")
 			|| Key.starts_with("Tier")
 			|| Key.starts_with("Network")
-			|| Key.starts_with("LAND_")
+			|| LandEnvAllowList.contains(&Key.as_str())
 		{
 			EnvironmentVariables.insert(Key, Value);
 		}
 	}
 
-	// Atom I11: forward NODE_ENV / TAURI_ENV_DEBUG (LAND_DEV_LOG is
+	// Atom I11: forward NODE_ENV / TAURI_ENV_DEBUG (Trace is
 	// already covered by the `LAND_` prefix sweep above). Without this,
 	// env_clear() leaves Cocoon seeing NodeEnv="production" /
 	// TauriDebug=false even on the debug-electron profile - silently
@@ -415,7 +425,7 @@ async fn LaunchAndManageCocoonSideCar(
 		CommonError::IPCError {
 			Description:format!(
 				"Failed to spawn Cocoon with node={} (source={}): {}. Override with \
-				 LAND_NODE_BINARY=/absolute/path or install Node.js.",
+				 Pick=/absolute/path or install Node.js.",
 				ResolvedNodeBinary.Path.display(),
 				ResolvedNodeBinary.Source.AsLabel(),
 				Error
@@ -433,7 +443,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// 1. Tagged lines produced by `Cocoon/Source/Services/DevLog.ts::
 	//    CocoonDevLog(Tag, Message)` arrive prefixed with
 	//    `[DEV:<UPPER_TAG>] <body>`. Re-emit under the matching Mountain
-	//    tag (lowercased) so `LAND_DEV_LOG=bootstrap-stage` on Mountain's
+	//    tag (lowercased) so `Trace=bootstrap-stage` on Mountain's
 	//    side surfaces Cocoon's `bootstrap-stage` lines without forcing
 	//    the user to also enable the broad `cocoon` tag.
 	//
@@ -469,7 +479,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// Node and macOS tooling write a stream of informational-only noise
 	// to stderr that is indistinguishable from fatal errors at the line
 	// level. Downgrade these to the verbose `cocoon-stderr-verbose` tag
-	// (silent under `LAND_DEV_LOG=short`) so the main cocoon channel only
+	// (silent under `Trace=short`) so the main cocoon channel only
 	// carries actionable Node errors:
 	//
 	// - `: is already signed` / `: replacing existing signature` - macOS

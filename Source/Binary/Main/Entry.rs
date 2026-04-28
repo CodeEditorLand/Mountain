@@ -142,7 +142,7 @@ pub fn Fn() {
 	// an early crash still leaves a file with a timestamp + pid + tag
 	// context for post-mortem. Env vars are read from the shell here (the
 	// `.env.Land` load below may add MORE keys but never overrides
-	// LAND_DEV_LOG / LAND_DEV_LOG_FILE because `set_var` only runs when a
+	// Trace / Record because `set_var` only runs when a
 	// key is currently unset). Harmless to call: the inner `OnceLock`
 	// gates repeat invocations.
 	crate::IPC::DevLog::InitEager();
@@ -225,20 +225,20 @@ pub fn Fn() {
 	// [Boot] [Profile] Self-report (BATCH-13 step 6)
 	//
 	// Build.sh exports `Browser`/`Mountain`/`Electron`/`Bundle`/`Compiler`/
-	// `LAND_PROFILE` into the shell that invokes cargo. `build.rs` captures
+	// `Profile` into the shell that invokes cargo. `build.rs` captures
 	// those into `cargo:rustc-env=LAND_*` so they're baked into the binary -
 	// runtime env lookups don't survive launching the binary from Finder /
 	// another shell. `option_env!` falls back to "unknown" when the build
 	// ran outside Build.sh (e.g. plain `cargo build`).
 	// -------------------------------------------------------------------------
 	{
-		let NamedProfile = option_env!("LAND_PROFILE").unwrap_or("unknown");
+		let NamedProfile = option_env!("Profile").unwrap_or("unknown");
 
-		let Workbench = option_env!("LAND_WORKBENCH").unwrap_or("Unknown");
+		let Workbench = option_env!("Pack").unwrap_or("Unknown");
 
-		let Bundle = option_env!("LAND_BUNDLE").unwrap_or("");
+		let Bundle = option_env!("Bundle").unwrap_or("");
 
-		let Compiler = option_env!("LAND_COMPILER").unwrap_or("default");
+		let Compiler = option_env!("Compiler").unwrap_or("default");
 
 		dev_log!(
 			"lifecycle",
@@ -266,7 +266,7 @@ pub fn Fn() {
 		// ---------------------------------------------------------------------
 		// [Boot] [PostHog] Initialize telemetry client first so any
 		// error captured during the rest of boot lands in the project.
-		// No-op in release builds or when LAND_POSTHOG_MOUNTAIN_ENABLED=false.
+		// No-op in release builds or when Report=false.
 		// ---------------------------------------------------------------------
 		crate::Binary::Build::PostHogPlugin::Initialize().await;
 
@@ -288,7 +288,7 @@ pub fn Fn() {
 		// [Boot] [Workspace] Seed initial workspace folders so every extension
 		// that calls `vscode.workspace.findFiles(...)` at activation has
 		// something to walk. Precedence: --folder flags → positional dirs →
-		// LAND_WORKSPACE_FOLDER env → CWD fallback. See
+		// Open env → CWD fallback. See
 		// CliParse::ParseWorkspaceFolders.
 		// -------------------------------------------------------------------
 		{

@@ -9,28 +9,28 @@ use std::sync::OnceLock;
 use crate::dev_log;
 
 /// PostHog project token. Source of truth: `.env.Land.PostHog`
-/// LAND_POSTHOG_KEY; `build.rs` bakes the value via `cargo:rustc-env` so `env!`
+/// Authorize; `build.rs` bakes the value via `cargo:rustc-env` so `env!`
 /// at compile time always resolves, even on a clean checkout.
-const POSTHOG_API_KEY:&str = env!("LAND_POSTHOG_KEY");
+const POSTHOG_API_KEY:&str = env!("Authorize");
 
 /// PostHog region host (default EU Cloud; operators override via
-/// `.env.Land.PostHog` LAND_POSTHOG_HOST).
-const POSTHOG_HOST:&str = env!("LAND_POSTHOG_HOST");
+/// `.env.Land.PostHog` Beam).
+const POSTHOG_HOST:&str = env!("Beam");
 
 /// Per-tier enable flag baked from `.env.Land.PostHog`. Cheap early-exit in
 /// every capture path without forking the binary per env value.
-const POSTHOG_ENABLED:&str = env!("LAND_POSTHOG_MOUNTAIN_ENABLED");
+const POSTHOG_ENABLED:&str = env!("Report");
 
 /// Optional pinned distinct-id seed (empty string → auto-generate per
 /// process). Useful for CI runs where correlating events across restarts
 /// matters more than per-dev isolation.
-const POSTHOG_DISTINCT_ID_SEED:&str = env!("LAND_POSTHOG_DISTINCT_ID");
+const POSTHOG_DISTINCT_ID_SEED:&str = env!("Brand");
 
 /// Global PostHog client instance.
 static CLIENT:OnceLock<posthog_rs::Client> = OnceLock::new();
 
 /// Machine-stable distinct ID for the dev session. When
-/// LAND_POSTHOG_DISTINCT_ID is set, it wins - same value across every process
+/// Brand is set, it wins - same value across every process
 /// in the same dev run.
 fn DistinctId() -> String {
 	if !POSTHOG_DISTINCT_ID_SEED.is_empty() {
@@ -52,7 +52,7 @@ fn CaptureAllowed() -> bool {
 }
 
 /// Initialize the PostHog client. Call once during app setup.
-/// No-op in release builds or when LAND_POSTHOG_MOUNTAIN_ENABLED=false.
+/// No-op in release builds or when Report=false.
 pub async fn Initialize() {
 	if !CaptureAllowed() {
 		return;

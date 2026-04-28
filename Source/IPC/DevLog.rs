@@ -1,27 +1,27 @@
 //! # DevLog - Tag-filtered development logging
 //!
-//! Controlled by `LAND_DEV_LOG` environment variable.
+//! Controlled by `Trace` environment variable.
 //! The same tags work in both Mountain (Rust) and Wind/Sky (TypeScript).
 //!
 //! ## Usage
 //! ```bash
-//! LAND_DEV_LOG=vfs,ipc ./Mountain          # only VFS + IPC
-//! LAND_DEV_LOG=all ./Mountain              # everything
-//! LAND_DEV_LOG=short ./Mountain            # everything, compressed + deduped
-//! LAND_DEV_LOG=terminal,exthost ./Mountain # terminal + extension host
+//! Trace=vfs,ipc ./Mountain          # only VFS + IPC
+//! Trace=all ./Mountain              # everything
+//! Trace=short ./Mountain            # everything, compressed + deduped
+//! Trace=terminal,exthost ./Mountain # terminal + extension host
 //! ./Mountain                               # nothing (only normal log!() output)
 //! ```
 //!
 //! ## Short Mode
 //!
-//! `LAND_DEV_LOG=short` enables all tags but compresses output:
+//! `Trace=short` enables all tags but compresses output:
 //! - Long app-data paths aliased to `$APP`
 //! - Consecutive duplicate messages counted (`(x14)` suffix)
 //! - Rust log targets compressed (`D::Binary::Main::Entry` → `Entry`)
 //!
 //! ## File sink
 //!
-//! When `LAND_DEV_LOG_FILE=1` (or, in debug builds, `LAND_DEV_LOG` is set),
+//! When `Record=1` (or, in debug builds, `Trace` is set),
 //! every emitted line is mirrored to:
 //!
 //! ```
@@ -30,7 +30,7 @@
 //!
 //! The timestamp directory follows Tauri's `tauri-plugin-log` format, so
 //! the dev log sits next to the plugin's own log file for the same boot
-//! (one directory per process start). Use `LAND_DEV_LOG_FILE=0` to force-
+//! (one directory per process start). Use `Record=0` to force-
 //! disable even in debug. File writes are flushed per line so `tail -f`
 //! shows live output.
 //!
@@ -78,7 +78,7 @@
 //!
 //! Narrow tags added to isolate the architectural gaps surfaced by the
 //! analysis table. Enable selectively with e.g.
-//! `LAND_DEV_LOG=notif-drop,git,tree-view` to filter to just the
+//! `Trace=notif-drop,git,tree-view` to filter to just the
 //! subsystem under investigation.
 //!
 //! | Tag                 | Scope                                                                 |
@@ -178,11 +178,11 @@ static SHORT_MODE:OnceLock<bool> = OnceLock::new();
 // `logs/<YYYYMMDDTHHMMSS>/` directory so long sessions can be inspected
 // post-mortem without scrolling terminal history. Enable with:
 //
-//     LAND_DEV_LOG_FILE=1     # explicit opt-in
-//     LAND_DEV_LOG_FILE=0     # explicit opt-out (wins over defaults)
+//     Record=1     # explicit opt-in
+//     Record=0     # explicit opt-out (wins over defaults)
 //
 // When unset, file logging is auto-enabled in debug builds iff
-// `LAND_DEV_LOG` itself is set to at least one tag. Release builds stay
+// `Trace` itself is set to at least one tag. Release builds stay
 // silent unless the opt-in flag is present, to avoid surprise writes in
 // shipped binaries.
 //
@@ -197,11 +197,11 @@ static LOG_FILE:OnceLock<Mutex<Option<BufWriter<File>>>> = OnceLock::new();
 fn FileSinkEnabled() -> bool {
 	static ENABLED:OnceLock<bool> = OnceLock::new();
 	*ENABLED.get_or_init(|| {
-		match std::env::var("LAND_DEV_LOG_FILE") {
+		match std::env::var("Record") {
 			Ok(Value) => matches!(Value.as_str(), "1" | "true" | "yes" | "on"),
 			Err(_) => {
-				// Auto-enable when LAND_DEV_LOG is set in a debug build.
-				cfg!(debug_assertions) && std::env::var("LAND_DEV_LOG").is_ok()
+				// Auto-enable when Trace is set in a debug build.
+				cfg!(debug_assertions) && std::env::var("Trace").is_ok()
 			},
 		}
 	})
@@ -301,7 +301,7 @@ fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 /// the post-mortem evidence is lost.
 ///
 /// Call this once at the top of `Binary::Main::Fn()` - as early as the
-/// binary can reach - so the header line + `LAND_DEV_LOG_FILE=1` opt-in
+/// binary can reach - so the header line + `Record=1` opt-in
 /// are honoured even when nothing else ever logs. Harmless to call
 /// multiple times; the `OnceLock` inside `InitFileSink` gates it.
 pub fn InitEager() { let _ = InitFileSink(); }
@@ -637,14 +637,14 @@ pub fn DebugOnce(Tag:&str, Key:&str, Line:&str) {
 
 fn EnabledTags() -> &'static Vec<String> {
 	ENABLED_TAGS.get_or_init(|| {
-		match std::env::var("LAND_DEV_LOG") {
+		match std::env::var("Trace") {
 			Ok(Val) => Val.split(',').map(|S| S.trim().to_lowercase()).collect(),
 			Err(_) => vec![],
 		}
 	})
 }
 
-/// Whether `LAND_DEV_LOG=short` is active.
+/// Whether `Trace=short` is active.
 pub fn IsShort() -> bool { *SHORT_MODE.get_or_init(|| EnabledTags().iter().any(|T| T == "short")) }
 
 /// Tags explicitly muted by `short` mode. These are the per-call
@@ -655,8 +655,8 @@ pub fn IsShort() -> bool { *SHORT_MODE.get_or_init(|| EnabledTags().iter().any(|
 /// failure path for each of these still logs a specific error tag
 /// (`grpc` for gRPC errors, `ipc` for IPC failures, etc.).
 ///
-/// Anything in this list is reachable only via `LAND_DEV_LOG=all`, an
-/// explicit tag match (e.g. `LAND_DEV_LOG=grpc-verbose`), or the
+/// Anything in this list is reachable only via `Trace=all`, an
+/// explicit tag match (e.g. `Trace=grpc-verbose`), or the
 /// tag-specific env override.
 const SHORT_MODE_MUTED_TAGS:&[&str] = &[
 	"grpc-verbose",
@@ -684,7 +684,7 @@ const SHORT_MODE_MUTED_TAGS:&[&str] = &[
 	// every time an extension reaches for a vscode.<ns>.<method> we haven't
 	// formally shimmed) is a per-method audit trail. Useful when actively
 	// auditing the API gap, noisy in default short-mode runs - mute by default;
-	// reachable via `LAND_DEV_LOG=all` or `LAND_DEV_LOG=vscode-api-gap`.
+	// reachable via `Trace=all` or `Trace=vscode-api-gap`.
 	"vscode-api-gap",
 ];
 
@@ -709,7 +709,7 @@ pub fn IsEnabled(Tag:&str) -> bool {
 }
 
 /// Log a tagged dev message. Only prints if the tag is enabled via
-/// LAND_DEV_LOG.
+/// Trace.
 ///
 /// In `short` mode: aliases long paths, deduplicates consecutive identical
 /// lines.

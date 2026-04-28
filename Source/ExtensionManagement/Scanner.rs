@@ -140,7 +140,7 @@ use crate::{
 const EXTENSION_SCAN_DENY_LIST:&[&str] = &["types", "out", "node_modules", "test", ".vscode-test", ".git"];
 
 /// Test-only extensions that only serve the upstream VS Code test harness.
-/// Excluded unless `LAND_INCLUDE_TEST_EXTENSIONS=1` is set, because they
+/// Excluded unless `Test=1` is set, because they
 /// pollute the registry with events nobody listens for and drag down boot
 /// time on every user session.
 const TEST_ONLY_EXTENSIONS:&[&str] = &[
@@ -152,7 +152,7 @@ const TEST_ONLY_EXTENSIONS:&[&str] = &[
 ];
 
 fn IncludeTestExtensions() -> bool {
-	matches!(std::env::var("LAND_INCLUDE_TEST_EXTENSIONS").as_deref(), Ok("1") | Ok("true"))
+	matches!(std::env::var("Test").as_deref(), Ok("1") | Ok("true"))
 }
 
 fn IsDeniedDirectory(Name:&str) -> bool { EXTENSION_SCAN_DENY_LIST.iter().any(|Denied| *Denied == Name) }
@@ -171,7 +171,7 @@ fn IsTestOnlyExtension(Name:&str) -> bool { TEST_ONLY_EXTENSIONS.iter().any(|Tes
 ///
 /// The canonical user extension root on macOS/Linux is `~/.land/extensions`
 /// (VS Code's equivalent is `~/.vscode/extensions`). We also honour a
-/// `LAND_USER_EXTENSION_DIRECTORY` override in case callers remap it.
+/// `Lodge` override in case callers remap it.
 ///
 /// Everything else - the Mountain build's own `Resources/extensions`,
 /// Sky's `Static/Application/extensions`, the VS Code submodule's
@@ -182,8 +182,8 @@ fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
 		Err(_) => DirectoryPath.to_path_buf(),
 	};
 
-	// `${LAND_USER_EXTENSION_DIRECTORY}` explicit override takes priority.
-	if let Ok(Override) = std::env::var("LAND_USER_EXTENSION_DIRECTORY") {
+	// `${Lodge}` explicit override takes priority.
+	if let Ok(Override) = std::env::var("Lodge") {
 		if !Override.is_empty() && Normalised == std::path::PathBuf::from(&Override) {
 			return true;
 		}
@@ -441,7 +441,7 @@ pub async fn ScanDirectoryForExtensions(
 	dev_log!(
 		"extensions",
 		"[ExtensionScanner] Directory '{}' scan done: {} parsed, {} parse-failures, {} missing package.json, {} \
-		 denied-dirs, {} test-extensions-skipped (LAND_INCLUDE_TEST_EXTENSIONS={})",
+		 denied-dirs, {} test-extensions-skipped (Test={})",
 		DirectoryPath.display(),
 		FoundExtensions.len(),
 		parse_failures,

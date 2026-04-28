@@ -34,7 +34,7 @@ fn CompressTarget(Target:&str) -> &str { Target.rsplit("::").next().unwrap_or(Ta
 ///
 /// # Short Mode
 ///
-/// When `LAND_DEV_LOG=short`:
+/// When `Trace=short`:
 /// - Module targets compressed to last segment
 /// - Long app-data paths aliased to `$APP`
 /// - Storage key-by-key logs suppressed (batch count only)

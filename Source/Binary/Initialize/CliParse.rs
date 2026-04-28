@@ -60,10 +60,10 @@ pub fn HasWorkspaceArgument() -> bool { Parse().is_some() }
 /// 1. Every `--folder <path>` pair on the command line (repeatable).
 /// 2. Any non-flag positional argument that resolves to an existing directory
 ///    (convention used when the user drags a folder onto the app).
-/// 3. `LAND_WORKSPACE_FOLDER` env var (colon-separated on POSIX, `;`-separated
+/// 3. `Open` env var (colon-separated on POSIX, `;`-separated
 ///    on Windows to match the platform's PATH delimiter).
 /// 4. The current working directory, if no other source is available AND
-///    `LAND_AUTOLOAD_CWD` isn't set to `false`.
+///    `Walk` isn't set to `false`.
 ///
 /// Returned paths are canonicalised; non-existent / non-directory entries
 /// are dropped with a warning.
@@ -90,7 +90,7 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 	}
 
 	if Collected.is_empty() {
-		if let Ok(EnvValue) = std::env::var("LAND_WORKSPACE_FOLDER") {
+		if let Ok(EnvValue) = std::env::var("Open") {
 			let Separator = if cfg!(windows) { ';' } else { ':' };
 			for Piece in EnvValue.split(Separator) {
 				let Piece = Piece.trim();
@@ -128,7 +128,7 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 		// tree-views, and `workspace.findFiles` returns something. Release
 		// builds keep the stock VS Code "File → Open Folder" UX so users
 		// don't get surprise filesystem scans. Either default is
-		// overridable: `LAND_AUTOLOAD_CWD=0` disables, `LAND_AUTOLOAD_CWD=1`
+		// overridable: `Walk=0` disables, `Walk=1`
 		// enables.
 		//
 		// The earlier concern was that auto-seeding CWD from a mono-repo
@@ -137,7 +137,7 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 		// debug: developers running from their project root actually want
 		// the scan.
 		let DefaultAutoload = cfg!(debug_assertions);
-		let AutoloadCwd = std::env::var("LAND_AUTOLOAD_CWD")
+		let AutoloadCwd = std::env::var("Walk")
 			.map(|Value| matches!(Value.as_str(), "1" | "true" | "yes" | "on"))
 			.unwrap_or(DefaultAutoload);
 		if AutoloadCwd {

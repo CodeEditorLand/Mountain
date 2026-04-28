@@ -27,7 +27,7 @@
 //!
 //! ## Tag filtering
 //!
-//! `LAND_DEV_LOG=sky-emit tail -f Mountain.dev.log` shows the stream on
+//! `Trace=sky-emit tail -f Mountain.dev.log` shows the stream on
 //! its own so you can audit exactly which channels are being emitted,
 //! in what order, and with what payload size - without re-running or
 //! adding ad-hoc prints.

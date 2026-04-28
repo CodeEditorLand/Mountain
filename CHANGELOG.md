@@ -40,7 +40,7 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
   `SendUserInterfaceRequest`.
 - **Node version checking - Atom N1** (`NodeResolver`): `ResolveNodeBinary`
   now queries `node --version` and logs the resolved version; emits a warning
-  when the major version falls below `LAND_NODE_MIN_MAJOR` (default 20).
+  when the major version falls below `Require` (default 20).
 - **Compile-time PostHog config - Atom P2** (`PostHogPlugin`): API key, host,
   and enable flag are now read from `env!()` baked in `build.rs` via
   `PropagatePostHogSentinel()`.
@@ -51,14 +51,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
   `~/.land/workspaces/RecentlyOpened.json` and passes `?folder=<path>` to the
   initial webview URL, skipping the destructive reload-on-Welcome.
 - **`NodeResolver` module - Atom N1**: Resolves Node.js binary in order:
-  `LAND_NODE_BINARY` env -> shipped runtime -> version managers (fnm, volta,
+  `Pick` env -> shipped runtime -> version managers (fnm, volta,
   asdf, nvm) -> Homebrew -> PATH fallback.
 - **Extension path environment variables - Atom U1**: Five new env vars:
-  `LAND_DISABLE_BUILTIN_EXTENSIONS`, `LAND_BUILTIN_EXTENSIONS_DIR`,
-  `LAND_USER_EXTENSIONS_DIR`, `LAND_EXTRA_EXTENSIONS_DIRS`,
-  `LAND_DEV_EXTENSIONS_DIR`.
+  `Skip`, `Ship`,
+  `Lodge`, `Extend`,
+  `Probe`.
 - **Profile sentinel fix** (`build.rs`): Replaced runtime
-  `std::env::var("LAND_PROFILE")` with compile-time `option_env!`.
+  `std::env::var("Profile")` with compile-time `option_env!`.
 - **`extensions:resetPinnedStateForAllUserExtensions` IPC handler** - Atom P1.
 - **Atomic shutdown guard** (`Entry.rs`): Prevents graceful shutdown sequence
   from running twice on Tauri re-delivery of `ExitRequested { code: Some(0) }`.
@@ -115,10 +115,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
   archives into `~/.land/extensions`. Two-pass extraction reads the manifest
   before writing files; includes zip-slip protection. Notifies Cocoon via
   `$deltaExtensions` for hot-activation without reload.
-- **Kernel/minimal profile** (`ScanPathConfigure`): `LAND_SKIP_BUILTIN_EXTENSIONS`
+- **Kernel/minimal profile** (`ScanPathConfigure`): `Skip`
   env var skips built-in extension scan paths.
-- **`LAND_SPAWN_COCOON=false` flag**: Skips extension host spawn entirely.
-- **Environment forwarding to Cocoon**: `NODE_ENV`, `LAND_DEV_LOG`,
+- **`Spawn=false` flag**: Skips extension host spawn entirely.
+- **Environment forwarding to Cocoon**: `NODE_ENV`, `Trace`,
   `TAURI_ENV_DEBUG` now propagate to the Cocoon subprocess.
 - **`.env.Land` bootstrap - Atom I5** (`AppLifecycle`): Loads environment from
   `.env.Land` probing cwd and repo-layout ancestors (up to 6 levels).
@@ -157,10 +157,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
   filtering, and IPC forwarding to Cocoon as `$fileWatcher:event`.
 - **Workspace folder runtime management**: CLI parsing via
   `ParseWorkspaceFolders` (`--folder` flags, positional dirs,
-  `LAND_WORKSPACE_FOLDER` env).
+  `Open` env).
 - **DevLog file sink**: Logs to
   `~/Library/Application Support/<bundle>/logs/<timestamp>/Mountain.dev.log`.
-  Enabled via `LAND_DEV_LOG_FILE=1`.
+  Enabled via `Record=1`.
 - **Completed previously-stubbed IPC handlers**: `Terminal.Resize`,
   `Clipboard.Read`/`Write`, `NativeHost.OpenExternal`, Webview operations,
   Tree operations, `Task.Fetch`/`Execute`, `Authentication.GetSession`,
@@ -283,8 +283,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/).
   `notification`, `progress`, `quickinput`, `workingcopy`, `workspaces`,
   `keybinding`, `label`, `history`, `decorations`, `textfile`, `update`,
   `encryption`, `menubar`, `url`, `grpc`, `cocoon`, `bootstrap`, `preload`.
-  Enables `LAND_DEV_LOG=terminal,exthost ./Mountain` filtering.
-- **Short mode for dev logging** (`2348f18a`): `LAND_DEV_LOG=short` compresses
+  Enables `Trace=terminal,exthost ./Mountain` filtering.
+- **Short mode for dev logging** (`2348f18a`): `Trace=short` compresses
   Rust module targets (`D::Binary::Main::Entry` -> `Entry`), aliases verbose
   app-data path to `$APP`, and deduplicates consecutive identical messages with
   `(xN)` suffix.

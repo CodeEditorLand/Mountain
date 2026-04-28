@@ -85,7 +85,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 ///
 /// Covered roots:
 ///
-/// - `${LAND_USER_EXTENSION_DIRECTORY}` (explicit override, if set).
+/// - `${Lodge}` (explicit override, if set).
 /// - `$HOME/.land/**` - the canonical namespace for user-installed extensions,
 ///   agent plugins, global storage, and any other Land-owned state that lives
 ///   outside the VS Code-style profile tree.
@@ -113,7 +113,7 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	// `canonicalize` returns Err and we compare against the raw path.
 	let Candidate = PathToCheck.canonicalize().unwrap_or_else(|_| PathToCheck.to_path_buf());
 
-	if let Ok(Override) = std::env::var("LAND_USER_EXTENSION_DIRECTORY") {
+	if let Ok(Override) = std::env::var("Lodge") {
 		if !Override.is_empty() {
 			let OverridePath = PathBuf::from(&Override);
 			if Candidate.starts_with(&OverridePath) || PathToCheck.starts_with(&OverridePath) {

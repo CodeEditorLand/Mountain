@@ -20,7 +20,7 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 	// `[Model][doInitialScan]`, `[main] Using git`, `[main] Failed to create
 	// model` etc. - these are critical for diagnosing the F6 silent-bail
 	// (vscode.git activates ok but never reaches createSourceControl).
-	// Surface those at the `grpc` tag so they appear in `LAND_DEV_LOG=short`
+	// Surface those at the `grpc` tag so they appear in `Trace=short`
 	// runs without forcing the user to enable `output-verbose` and drown
 	// in TypeScript / dart-code / roo-cline noise.
 	let ChannelName = Parameter

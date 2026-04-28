@@ -41,43 +41,43 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		.map_err(|e| format!("Failed to lock ExtensionScanPaths: {}", e))?;
 
 	// Skip all built-in extensions when either the legacy
-	// `LAND_SKIP_BUILTIN_EXTENSIONS` or the `.env.Land.Extensions` flag
-	// `LAND_DISABLE_BUILTIN_EXTENSIONS` is set. Both accepted so kernel /
+	// `Skip` or the `.env.Land.Extensions` flag
+	// `Skip` is set. Both accepted so kernel /
 	// minimal profiles and the skill-file env stay in sync. User scan path
 	// still runs so VSIX-installed extensions remain visible.
-	let SkipBuiltins = matches!(std::env::var("LAND_SKIP_BUILTIN_EXTENSIONS").as_deref(), Ok("1") | Ok("true"))
+	let SkipBuiltins = matches!(std::env::var("Skip").as_deref(), Ok("1") | Ok("true"))
 		|| matches!(
-			std::env::var("LAND_DISABLE_BUILTIN_EXTENSIONS").as_deref(),
+			std::env::var("Skip").as_deref(),
 			Ok("1") | Ok("true")
 		);
 
 	if SkipBuiltins {
 		dev_log!(
 			"extensions",
-			"[Extensions] [ScanPaths] LAND_SKIP_BUILTIN_EXTENSIONS=true - skipping all built-in paths, keeping user \
+			"[Extensions] [ScanPaths] Skip=true - skipping all built-in paths, keeping user \
 			 path"
 		);
 	} else {
 		dev_log!("extensions", "[Extensions] [ScanPaths] Adding default scan paths...");
 	}
 
-	// `LAND_BUILTIN_EXTENSIONS_DIR` takes precedence over the executable-
+	// `Ship` takes precedence over the executable-
 	// relative probing chain. Useful for CI builds where the bundle layout
 	// differs from both the `.app` convention and the repo layout.
 	if !SkipBuiltins {
-		if let Ok(Override) = std::env::var("LAND_BUILTIN_EXTENSIONS_DIR") {
+		if let Ok(Override) = std::env::var("Ship") {
 			let OverridePath = ExpandUserPath(&Override);
 			if OverridePath.exists() {
 				dev_log!(
 					"extensions",
-					"[Extensions] [ScanPaths] + {} (LAND_BUILTIN_EXTENSIONS_DIR)",
+					"[Extensions] [ScanPaths] + {} (Ship)",
 					OverridePath.display()
 				);
 				ScanPathsGuard.push(OverridePath);
 			} else {
 				dev_log!(
 					"extensions",
-					"warn: [Extensions] [ScanPaths] LAND_BUILTIN_EXTENSIONS_DIR={} does not exist; ignoring",
+					"warn: [Extensions] [ScanPaths] Ship={} does not exist; ignoring",
 					Override
 				);
 			}
@@ -147,15 +147,15 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// was launched from the repo, a `.app`, or a symlink on the Desktop.
 	// Mirrors VS Code's `~/.vscode-oss/extensions` convention.
 	//
-	// Atom U1: `LAND_USER_EXTENSIONS_DIR` overrides the default
+	// Atom U1: `Lodge` overrides the default
 	// `~/.land/extensions`. Useful for per-workspace sandboxes, shared
 	// caches on CI, or running against a test extensions set without
 	// polluting the user's real profile.
-	if let Ok(UserOverride) = std::env::var("LAND_USER_EXTENSIONS_DIR") {
+	if let Ok(UserOverride) = std::env::var("Lodge") {
 		let OverridePath = ExpandUserPath(&UserOverride);
 		dev_log!(
 			"extensions",
-			"[Extensions] [ScanPaths] + {} (LAND_USER_EXTENSIONS_DIR)",
+			"[Extensions] [ScanPaths] + {} (Lodge)",
 			OverridePath.display()
 		);
 		ScanPathsGuard.push(OverridePath);
@@ -169,10 +169,10 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		ScanPathsGuard.push(UserExtensionPath);
 	}
 
-	// Atom U1: additional paths via `LAND_EXTRA_EXTENSIONS_DIRS`. Mirrors
+	// Atom U1: additional paths via `Extend`. Mirrors
 	// VS Code's `--extensions-dir=<a>:<b>:<c>` CLI. Platform-separator:
 	// semicolon on Windows (matches PATHEXT), colon elsewhere.
-	if let Ok(Extras) = std::env::var("LAND_EXTRA_EXTENSIONS_DIRS") {
+	if let Ok(Extras) = std::env::var("Extend") {
 		let Separator = if cfg!(target_os = "windows") { ';' } else { ':' };
 		for Candidate in Extras.split(Separator) {
 			let Trimmed = Candidate.trim();
@@ -182,7 +182,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 			let ExtraPath = ExpandUserPath(Trimmed);
 			dev_log!(
 				"extensions",
-				"[Extensions] [ScanPaths] + {} (LAND_EXTRA_EXTENSIONS_DIRS)",
+				"[Extensions] [ScanPaths] + {} (Extend)",
 				ExtraPath.display()
 			);
 			ScanPathsGuard.push(ExtraPath);
@@ -193,11 +193,11 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// `--extensionDevelopmentPath=<dir>`. Extensions here always load
 	// regardless of enablement state; kept separate from user-scope so a
 	// broken dev extension doesn't persist into the user's profile.
-	if let Ok(DevExtensions) = std::env::var("LAND_DEV_EXTENSIONS_DIR") {
+	if let Ok(DevExtensions) = std::env::var("Probe") {
 		let DevPath = ExpandUserPath(&DevExtensions);
 		dev_log!(
 			"extensions",
-			"[Extensions] [ScanPaths] + {} (LAND_DEV_EXTENSIONS_DIR)",
+			"[Extensions] [ScanPaths] + {} (Probe)",
 			DevPath.display()
 		);
 		ScanPathsGuard.push(DevPath);

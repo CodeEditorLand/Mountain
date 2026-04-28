@@ -9,16 +9,16 @@
 //!
 //! Wind's `Function/DevLog.ts` prints to `console.log`, visible only in
 //! DevTools. Mountain's `dev_log!` writes to a timestamped
-//! `Mountain.dev.log` with `LAND_DEV_LOG` tag filtering. The two observe
+//! `Mountain.dev.log` with `Trace` tag filtering. The two observe
 //! the same boot but the outputs live in two places - reviewing a session
 //! means cross-referencing browser console + tail-f on the file. This
 //! command lets any TS caller mirror a tagged line into the file sink so
-//! `LAND_DEV_LOG=channel-stub,git tail -f Mountain.dev.log` captures both
+//! `Trace=channel-stub,git tail -f Mountain.dev.log` captures both
 //! sides filtered identically.
 //!
 //! ## Contract
 //!
-//! - `Tag` is matched against `LAND_DEV_LOG` exactly as Rust tags are; disabled
+//! - `Tag` is matched against `Trace` exactly as Rust tags are; disabled
 //!   tags produce no output (cheap no-op on the Mountain side).
 //! - `Message` is the fully-formatted log string - the caller has already done
 //!   any interpolation.

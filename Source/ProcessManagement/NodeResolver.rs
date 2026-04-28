@@ -3,7 +3,7 @@
 //! Resolves the Node.js binary used to spawn Cocoon.
 //!
 //! Ladder (first hit wins, cached in `OnceLock`):
-//! `LAND_NODE_BINARY` override → shipped (`Resources/Node/bin/node`) →
+//! `Pick` override → shipped (`Resources/Node/bin/node`) →
 //! fnm → volta → asdf → nvm → homebrew → PATH `node`.
 //!
 //! Each step logs its outcome so the resolved source is visible in the log.
@@ -28,7 +28,7 @@ pub struct ResolvedNode {
 /// Where the Node binary came from. Ordered by preference.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum NodeSource {
-	/// `LAND_NODE_BINARY` environment variable.
+	/// `Pick` environment variable.
 	Override,
 	/// Shipped with Mountain - `Resources/Node/bin/node` or dev-tree
 	/// equivalent.
@@ -119,7 +119,7 @@ fn QueryNodeVersion(NodePath:&Path) -> Option<String> {
 }
 
 /// Emit a warning log line when the resolved Node's major version is below
-/// `LAND_NODE_MIN_MAJOR`. Does NOT fail the spawn - Cocoon's bundled code
+/// `Require`. Does NOT fail the spawn - Cocoon's bundled code
 /// mostly degrades gracefully on older engines, and operators should be
 /// free to experiment on unreleased Node without a hard gate.
 fn CheckMinMajor(VersionString:&str) {
@@ -130,13 +130,13 @@ fn CheckMinMajor(VersionString:&str) {
 		Err(_) => return,
 	};
 
-	let Required:u32 = std::env::var("LAND_NODE_MIN_MAJOR").ok().and_then(|Raw| Raw.parse().ok()).unwrap_or(20);
+	let Required:u32 = std::env::var("Require").ok().and_then(|Raw| Raw.parse().ok()).unwrap_or(20);
 
 	if Major < Required {
 		dev_log!(
 			"cocoon",
-			"warn: [NodeResolver] Node {} is below LAND_NODE_MIN_MAJOR={}; extension host may fail to boot. Override \
-			 via LAND_NODE_BINARY or upgrade Node.",
+			"warn: [NodeResolver] Node {} is below Require={}; extension host may fail to boot. Override \
+			 via Pick or upgrade Node.",
 			VersionString,
 			Required
 		);
@@ -175,14 +175,14 @@ fn ResolveUncached<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode {
 }
 
 fn TryOverride() -> Option<ResolvedNode> {
-	let Raw = std::env::var("LAND_NODE_BINARY").ok()?;
+	let Raw = std::env::var("Pick").ok()?;
 	let Expanded = ExpandHome(&Raw);
 	if Expanded.exists() {
 		Some(ResolvedNode { Path:Expanded, Source:NodeSource::Override })
 	} else {
 		dev_log!(
 			"cocoon",
-			"warn: [NodeResolver] LAND_NODE_BINARY={} does not exist; ignoring",
+			"warn: [NodeResolver] Pick={} does not exist; ignoring",
 			Raw
 		);
 		None
@@ -279,7 +279,7 @@ fn TryNvm() -> Option<ResolvedNode> {
 	// Fallback: walk `$NVM_DIR/versions/node` / `~/.nvm/versions/node` and
 	// pick the lexicographically largest version (rough proxy for "latest
 	// installed"). Users who want a specific version should export
-	// `LAND_NODE_BINARY` instead.
+	// `Pick` instead.
 	let NvmDir = std::env::var("NVM_DIR").ok().or_else(|| {
 		std::env::var("HOME").ok().map(|H| PathBuf::from(H).join(".nvm").to_string_lossy().into_owned())
 	})?;

@@ -9,7 +9,7 @@
 //! single always-satisfied activation event (`onStartupFinished`) after
 //! delta so a VSIX with that trigger activates without a reload.
 //!
-//! Fire-and-forget: missing Cocoon (`LAND_SPAWN_COCOON=false`) or a
+//! Fire-and-forget: missing Cocoon (`Spawn=false`) or a
 //! transient RPC failure is logged and swallowed.
 
 use serde_json::{Value, json};
