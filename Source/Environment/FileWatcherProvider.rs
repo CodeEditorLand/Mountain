@@ -296,21 +296,57 @@ impl FileWatcherProvider for MountainEnvironment {
 		.map_err(|error| CommonError::Unknown { Description:format!("FileWatcher create failed: {}", error) })?;
 
 		let mode = if IsRecursive { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive };
-		watcher.watch(&Root, mode).map_err(|error| {
-			CommonError::Unknown {
-				Description:format!("FileWatcher watch failed for {}: {}", Root.display(), error),
-			}
-		})?;
-
+		// Watching a non-existent path is a common pattern: extensions
+		// register watchers on optional config dirs (`~/.roo/skills-*`,
+		// `.vscode/settings.json` in fresh workspaces, …) that may appear
+		// later. `notify` returns `Error::PathNotFound` / "No path was
+		// found"; failing the gRPC call counts against Cocoon's circuit
+		// breaker - 5 such probes at boot trip the breaker open and
+		// cascade into 60s of rejected reads. Record a "deferred" entry
+		// without a live OS watcher so Unregister still works; future
+		// events for that path won't fire, but the extension can re-
+		// register once the directory appears, just like in stock VS Code.
+		let WatchResult = watcher.watch(&Root, mode);
 		let mut guard = state
 			.Entries
 			.lock()
 			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
-		// CompiledPattern is held by the callback closure (captured in
-		// `pattern_for_callback`) - no need to store a second copy on the
-		// entry. The `Watcher` handle alone holds the OS watch alive.
 		let _ = CompiledPattern;
-		guard.insert(Handle.clone(), WatcherEntry { Watcher:watcher, LastSeen:HashMap::new() });
+		match WatchResult {
+			Ok(()) => {
+				guard.insert(Handle.clone(), WatcherEntry { Watcher:watcher, LastSeen:HashMap::new() });
+			},
+			Err(error) => {
+				let ErrorString = error.to_string().to_lowercase();
+				let IsBenignAbsent = ErrorString.contains("no path was found")
+					|| ErrorString.contains("no such file or directory")
+					|| ErrorString.contains("entity not found")
+					|| ErrorString.contains("path not found")
+					|| ErrorString.contains("os error 2")
+					|| !Root.exists();
+				if IsBenignAbsent {
+					dev_log!(
+						"filewatcher",
+						"[FileWatcherProvider] watch path absent (deferred) handle={} root={} err={}",
+						Handle,
+						Root.display(),
+						error
+					);
+					// Drop watcher (no live subscription); record handle so
+					// Unregister still finds something to remove. We do NOT
+					// reuse the closure's notify::Watcher here.
+					drop(watcher);
+				} else {
+					return Err(CommonError::Unknown {
+						Description:format!(
+							"FileWatcher watch failed for {}: {}",
+							Root.display(),
+							error
+						),
+					});
+				}
+			},
+		}
 
 		dev_log!(
 			"filewatcher",
