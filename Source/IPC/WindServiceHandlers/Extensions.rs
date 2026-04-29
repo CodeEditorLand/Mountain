@@ -62,12 +62,13 @@ pub async fn handle_extensions_get_installed(
 	// extension-contributed icons (no Roo, Claude, gitlens panels)
 	// even though 113 extensions are scanned.
 	//
-	// Poll the map up to ~3 seconds before returning empty. The
-	// workbench's first call blocks for ~250-500ms (scan duration);
-	// every subsequent call sees the populated map immediately.
-	// 3s is the same ceiling as Mountain's lifecycle phase fallback,
-	// so this won't extend the visible boot delay beyond what's
-	// already there.
+	// Poll the map up to ~5 seconds before returning empty. 3s was
+	// previously the ceiling but cold-cache runs over 113 extensions
+	// across 6 paths regularly land at ~2950ms - the previous limit
+	// hit the wall and returned `[]`, poisoning the workbench's
+	// `IExtensionService` cache. 5s gives slow I/O (cold NVM,
+	// network-mounted user dirs) headroom while keeping the visible
+	// worst case bounded.
 	let mut Extensions = runtime
 		.Environment
 		.GetExtensions()
@@ -75,7 +76,7 @@ pub async fn handle_extensions_get_installed(
 		.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
 	if Extensions.is_empty() {
 		const POLL_INTERVAL_MS:u64 = 50;
-		const MAX_WAIT_MS:u64 = 3000;
+		const MAX_WAIT_MS:u64 = 5000;
 		let mut Elapsed:u64 = 0;
 		while Extensions.is_empty() && Elapsed < MAX_WAIT_MS {
 			tokio::time::sleep(std::time::Duration::from_millis(POLL_INTERVAL_MS)).await;

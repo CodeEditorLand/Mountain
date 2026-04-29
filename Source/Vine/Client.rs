@@ -49,7 +49,10 @@
 
 use std::{
 	collections::HashMap,
-	sync::Arc,
+	sync::{
+		Arc,
+		atomic::{AtomicBool, Ordering},
+	},
 	time::{Duration, Instant},
 };
 
@@ -105,6 +108,29 @@ lazy_static! {
 
 	/// Thread-safe metadata for connection health tracking
 	static ref CONNECTION_METADATA: Arc<Mutex<HashMap<String, ConnectionMetadata>>> = Arc::new(Mutex::new(HashMap::new()));
+}
+
+/// Process-wide shutdown flag. Set to `true` once Mountain has issued
+/// `$shutdown` (or SIGKILL'd) the Cocoon sidecar. After this point any
+/// further `SendNotification` / `SendRequest` calls short-circuit
+/// instead of attempting a TCP connect to a dead socket and logging a
+/// false-positive error. Background tasks (PTY reader, file watcher,
+/// diagnostics emitter) drain naturally when the gRPC layer becomes a
+/// no-op.
+static SHUTDOWN_FLAG:AtomicBool = AtomicBool::new(false);
+
+/// Mark the gRPC client as shutting down. Called from
+/// `RunTime::Shutdown::ShutdownCocoonWithRetry` immediately before
+/// `HardKillCocoon` so any inflight notification attempted after the
+/// SIGKILL window returns silently with `Ok(())` instead of logging
+/// a `Connection refused` error.
+pub fn MarkShutdown() {
+	SHUTDOWN_FLAG.store(true, Ordering::Relaxed);
+}
+
+/// Whether the gRPC client has been marked shutting down.
+pub fn IsShuttingDown() -> bool {
+	SHUTDOWN_FLAG.load(Ordering::Relaxed)
 }
 
 /// Establishes a gRPC connection to a sidecar process with retry logic.
@@ -348,6 +374,12 @@ pub async fn SendRequest(
 	Parameters:Value,
 	TimeoutMilliseconds:u64,
 ) -> Result<Value, VineError> {
+	// Short-circuit when shutdown is in progress - the sidecar may
+	// already be SIGKILL'd, and pending requests should fail fast
+	// rather than block the shutdown sequence on a 5s tonic timeout.
+	if IsShuttingDown() {
+		return Err(VineError::ClientNotConnected(SideCarIdentifier.to_string()));
+	}
 	// Validate method name format
 	if Method.is_empty() || Method.len() > 128 {
 		return Err(VineError::RPCError(
@@ -447,6 +479,15 @@ pub async fn SendRequest(
 /// # }
 /// ```
 pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameters:Value) -> Result<(), VineError> {
+	// Short-circuit once shutdown has been initiated. Background tokio
+	// tasks (PTY reader, watchers, diagnostics emitter) keep producing
+	// notifications until they unwind; if Cocoon has already received
+	// `$shutdown` (or been SIGKILL'd) those attempts hit ECONNREFUSED
+	// and surface as `[VineClient] Failed to send notification` errors
+	// in the tail of every log. Drop them silently.
+	if IsShuttingDown() {
+		return Ok(());
+	}
 	// Validate method name format
 	if Method.is_empty() || Method.len() > 128 {
 		return Err(VineError::RPCError(

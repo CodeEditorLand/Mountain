@@ -199,6 +199,14 @@ impl ApplicationRunTime {
 			}
 		}
 
+		// Mark the Vine gRPC client shutting down BEFORE the SIGKILL.
+		// Any background tokio task (PTY reader loop, file watcher,
+		// diagnostics emitter) that fires `SendNotification` after this
+		// flips will short-circuit to `Ok(())` instead of attempting a
+		// TCP connect to the dead socket and logging a false-positive
+		// `Connection refused` error in the shutdown tail.
+		crate::Vine::Client::MarkShutdown();
+
 		// Atom I6: always reap the child process after the graceful
 		// attempt. No-op if the child already exited from $shutdown.
 		crate::ProcessManagement::CocoonManagement::HardKillCocoon().await;
