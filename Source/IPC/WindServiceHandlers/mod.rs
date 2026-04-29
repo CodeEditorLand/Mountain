@@ -2011,11 +2011,21 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							"viewId": ViewId,
 							"treeItemHandle": ItemHandle,
 						});
+						// Tree-view RPCs are user-interactive: a 5 second
+						// wait shows the user a spinner and silently fails
+						// the extension's Promise on timeout. 1500 ms is
+						// a reasonable upper bound for "extension is
+						// healthy and producing children" on this hardware
+						// class - real workloads (gitlens fileHistory,
+						// rust-analyzer typeHierarchy) finish in <500 ms.
+						// Slow producers fall through to the empty-array
+						// path and the workbench schedules its own retry
+						// when the view scrolls back into view.
 						match crate::Vine::Client::SendRequest(
 							"cocoon-main",
 							"$provideTreeChildren".to_string(),
 							Parameters,
-							5000,
+							1500,
 						)
 						.await
 						{
@@ -2065,6 +2075,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					use tauri::Emitter;
 					let mut TreeViewCount:usize = 0;
 					let mut ScmCount:usize = 0;
+					let mut CommandCount:usize = 0;
 					if let Ok(TreeViews) = runtime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock() {
 						for (ViewId, Dto) in TreeViews.iter() {
 							let Payload = serde_json::json!({
@@ -2080,13 +2091,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							}
 						}
 					}
-					// SCM provider DTO doesn't carry the original `scmId`
-					// string (state stores Handle/Label/RootURI only). Cocoon
-					// always uses `"git"` for the built-in vscode.git
-					// extension; that's the only SCM provider this build
-					// host exposes. If we ever ship an SCM provider with a
-					// different id, this needs the DTO extended to keep the
-					// id alongside Handle.
+					// SCM replay uses the stored `Identifier` field on the
+					// provider DTO ("git", "github", "hg", …) so any SCM
+					// provider Cocoon registers replays with its original
+					// id - not just the built-in `vscode.git` extension.
+					// Pre-DTO-Identifier-field DTOs default `Identifier` to
+					// "" (serde default); fall back to "git" in that case
+					// because the only SCM provider in production today is
+					// `vscode.git` and a stale state file with empty id is
+					// the realistic upgrade-path mismatch.
 					if let Ok(ScmProviders) = runtime
 						.Environment
 						.ApplicationState
@@ -2103,8 +2116,13 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 								.and_then(serde_json::Value::as_str)
 								.unwrap_or("")
 								.to_string();
+							let ScmId = if Dto.Identifier.is_empty() {
+								"git".to_string()
+							} else {
+								Dto.Identifier.clone()
+							};
 							let Payload = serde_json::json!({
-								"scmId": "git",
+								"scmId": ScmId,
 								"label": Dto.Label,
 								"rootUri": RootUriStr,
 								"extensionId": "",
@@ -2115,15 +2133,48 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							}
 						}
 					}
+					// Replay extension-registered commands so the workbench's
+					// `ICommandService` registry knows about them post-bridge-
+					// install. Every `vscode.commands.registerCommand(...)`
+					// in an extension fires `sky://command/register` from
+					// `Vine/Server/Notification/RegisterCommand.rs`. Native
+					// commands (Mountain's own Rust handlers) don't need
+					// replay - they're not exposed via this channel.
+					if let Ok(Commands) = runtime
+						.Environment
+						.ApplicationState
+						.Extension
+						.Registry
+						.CommandRegistry
+						.lock()
+					{
+						for (CommandId, Handler) in Commands.iter() {
+							use crate::Environment::CommandProvider::CommandHandler;
+							let Kind = match Handler {
+								CommandHandler::Native(_) => continue,
+								CommandHandler::Proxied { .. } => "extension",
+							};
+							let Payload = serde_json::json!({
+								"id": CommandId,
+								"commandId": CommandId,
+								"kind": Kind,
+							});
+							if app_handle.emit("sky://command/register", Payload).is_ok() {
+								CommandCount += 1;
+							}
+						}
+					}
 					dev_log!(
 						"sky-emit",
-						"[SkyEmit] replay-events tree-views={} scm={}",
+						"[SkyEmit] replay-events tree-views={} scm={} commands={}",
 						TreeViewCount,
-						ScmCount
+						ScmCount,
+						CommandCount
 					);
 					Ok(serde_json::json!({
 						"treeViews": TreeViewCount,
 						"scmProviders": ScmCount,
+						"commands": CommandCount,
 					}))
 				},
 
