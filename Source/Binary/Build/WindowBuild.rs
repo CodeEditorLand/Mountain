@@ -94,11 +94,12 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 	// Build the main window
 	let MainWindow = WindowBuilder.build().expect("FATAL: Main window build failed");
 
-	// Open DevTools in debug builds
-	#[cfg(debug_assertions)]
-	{
-		MainWindow.open_devtools();
-	}
+	// DevTools auto-open lives in `Binary/Main/AppLifecycle.rs:174`
+	// (gated on `cfg(debug_assertions)`, with a `[Window] Debug build:
+	// opening DevTools.` log line). Calling `open_devtools()` here as
+	// well opened a SECOND DevTools window on every debug launch -
+	// reported as "two DevTools" after the last rebuild. Single-source
+	// the call to AppLifecycle so the log line and the window match.
 
 	MainWindow
 }

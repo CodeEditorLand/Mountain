@@ -74,8 +74,11 @@
 //! Each diagnostic is a `MarkerDataDTO`:
 //! - `Severity`: Error(8), Warning(4), Information(2), Hint(1)
 //! - `Message`: Human-readable description
-//! - `StartLineNumber`/`StartColumn`: Start position (0-based)
-//! - `EndLineNumber`/`EndColumn`: End position
+//! - `StartLineNumber`/`StartColumn`: Start position (1-based, matches
+//!   workbench `IMarkerData` - Cocoon's `LanguagesNamespace.ts`
+//!   `NormaliseDiagnostic` adds the `+ 1` from vscode.Position 0-based
+//!   before sending to Mountain)
+//! - `EndLineNumber`/`EndColumn`: End position (1-based, same convention)
 //! - `Source`: Diagnostic source string (e.g., "tslint")
 //! - `Code`: Diagnostic code for quick fix lookup
 //! - `ModelVersionIdentifier`: Document version for tracking
