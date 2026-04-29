@@ -1494,6 +1494,21 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					dev_log!("terminal", "localPty:getEnvironment");
 					handle_local_pty_get_environment().await
 				},
+				// `IPtyService.getLatency` (per
+				// `vs/platform/terminal/common/terminal.ts:341`) returns
+				// `IPtyHostLatencyMeasurement[]`. The workbench polls this
+				// to drive its "renderer ↔ pty host" health UI. We have
+				// no separate pty host (Mountain spawns PTYs in-process),
+				// so latency is effectively zero - return an empty array
+				// matching the "no measurements available" branch the
+				// workbench already handles. Without this route the call
+				// surfaced as `Unknown IPC command: localPty:getLatency`
+				// every poll cycle, and the renderer logged a
+				// `TauriInvoke ok=false` line per attempt.
+				"localPty:getLatency" => {
+					dev_log!("terminal", "localPty:getLatency");
+					Ok(json!([]))
+				},
 
 				// `cocoon:request` - generic renderer→Cocoon RPC bridge.
 				// Used by Sky-side bridges that need to dispatch a request

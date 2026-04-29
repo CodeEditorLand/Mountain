@@ -51,11 +51,56 @@ pub async fn handle_extensions_get_installed(
 ) -> Result<Value, String> {
 	let TypeFilter:Option<u8> = args.first().and_then(|V| V.as_u64()).map(|N| N as u8);
 
-	let Extensions = runtime
+	// Boot-time race fix: the workbench's `IExtensionService` calls
+	// `extensions:getInstalled` ~13 times during the first second of
+	// boot - reading an empty list because `ExtensionPopulate` runs
+	// in a parallel async task and only writes to ScannedExtensions
+	// AFTER its multi-path scan completes (~250-500ms in). The
+	// workbench caches that empty list, runs `viewsContainersExtension
+	// Point.setHandler([])`, and never re-processes contributions
+	// when the scan finishes - so the activity bar has zero
+	// extension-contributed icons (no Roo, Claude, gitlens panels)
+	// even though 113 extensions are scanned.
+	//
+	// Poll the map up to ~3 seconds before returning empty. The
+	// workbench's first call blocks for ~250-500ms (scan duration);
+	// every subsequent call sees the populated map immediately.
+	// 3s is the same ceiling as Mountain's lifecycle phase fallback,
+	// so this won't extend the visible boot delay beyond what's
+	// already there.
+	let mut Extensions = runtime
 		.Environment
 		.GetExtensions()
 		.await
 		.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
+	if Extensions.is_empty() {
+		const POLL_INTERVAL_MS:u64 = 50;
+		const MAX_WAIT_MS:u64 = 3000;
+		let mut Elapsed:u64 = 0;
+		while Extensions.is_empty() && Elapsed < MAX_WAIT_MS {
+			tokio::time::sleep(std::time::Duration::from_millis(POLL_INTERVAL_MS)).await;
+			Elapsed += POLL_INTERVAL_MS;
+			Extensions = runtime
+				.Environment
+				.GetExtensions()
+				.await
+				.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
+		}
+		if !Extensions.is_empty() {
+			dev_log!(
+				"extensions",
+				"extensions:getInstalled awaited scan completion ({}ms) - now has {} entries",
+				Elapsed,
+				Extensions.len()
+			);
+		} else {
+			dev_log!(
+				"extensions",
+				"warn: extensions:getInstalled timed out after {}ms; returning empty list",
+				Elapsed
+			);
+		}
+	}
 
 	let Wrapped:Vec<Value> = Extensions
 		.into_iter()
