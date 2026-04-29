@@ -75,9 +75,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 // Profile sentinel: Build.sh exports `Browser=true` / `Mountain=true` /
 // `Electron=true` / `Bundle` / `Compiler` / `Profile` into the shell
 // that invokes cargo. These shell env vars don't survive to the resulting
-// binary; only `cargo:rustc-env` does. Bake a LAND_* set into the binary so
+// binary; only `cargo:rustc-env` does. Bake a PascalCase Land env set
+// (`Profile`, `Pack`, `Bundle`, `Compiler`) into the binary so
 // `option_env!("Profile")` resolves after launch without depending on
-// the shell the user runs the binary from.
+// the shell the user runs the binary from. Legacy `LAND_*` names were
+// retired in the 2026-04-29 PascalCase migration.
 //
 // Follow-up to playbook item #3 - previously the sentinel logged
 // `Active profile=unknown` because it ran `std::env::var` at runtime.
