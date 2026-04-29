@@ -7,7 +7,7 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 use url::Url;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{IPC::SkyEmit::LogSkyEmit, RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
 pub fn CreateEffect<R:Runtime>(
 	MethodName:&str,
@@ -25,12 +25,18 @@ pub fn CreateEffect<R:Runtime>(
 		| "webview.unregisterView"
 		| "webview.registerCustomEditor"
 		| "webview.unregisterCustomEditor" => {
+			// Per-dispatch entry line - parity with TreeView.rs's
+			// `tree-latency` log. Without this we cannot tell from
+			// `Mountain.dev.log` whether Cocoon's
+			// `MountainClient.sendRequest("webview.registerView", ...)`
+			// even reached `DispatchSideCarRequest` - silent gRPC drops
+			// look identical to "extension never called the shim".
+			dev_log!("ipc", "[WebviewEffect] dispatch-enter method={}", MethodName);
 			let Method = MethodName.to_string();
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					let Method = Method.clone();
 					Box::pin(async move {
-						use tauri::Emitter;
 						let Handle = Parameters.get(0).cloned().unwrap_or(Value::Null);
 						let Payload = json!({
 							"method": Method,
@@ -40,9 +46,18 @@ pub fn CreateEffect<R:Runtime>(
 						let Suffix =
 							Method.trim_start_matches("$webview:").trim_start_matches("webview.");
 						let EventName = format!("sky://webview/{}", Suffix);
-						if let Err(Error) =
-							run_time.Environment.ApplicationHandle.emit(&EventName, &Payload)
-						{
+						// `LogSkyEmit` wraps `.emit()` and tags every
+						// success/failure under `[DEV:SKY-EMIT]`, so
+						// the webview channel becomes visible in the
+						// SkyEmit histogram alongside SCM and tree-view.
+						// The bare `.emit()` was invisible, so a silent
+						// listener-side drop in Sky was indistinguishable
+						// from "Mountain never received the request".
+						if let Err(Error) = LogSkyEmit(
+							&run_time.Environment.ApplicationHandle,
+							&EventName,
+							&Payload,
+						) {
 							dev_log!(
 								"ipc",
 								"warn: [WebviewEffect] emit {} failed: {}",
