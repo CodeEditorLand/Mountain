@@ -63,16 +63,57 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 		return Ok(());
 	}
 
+	// Use canonical paths on both sides so that prefix-matching survives
+	// macOS's `/Volumes/<vol>/...` vs `/private/var/...` resolution and
+	// any symlinked submodule roots. Cocoon's URI strip yields the user-
+	// visible path (`/Volumes/CORSAIR/.../Land/Dependency/...`) while the
+	// workspace folder URL stays as built from `from_directory_path` -
+	// these can disagree on platforms where the resolved canonical path
+	// differs from the URI-derived one (encoded mount-point indirection,
+	// case-insensitive HFS+, etc.). Without this, a workspace with deep
+	// submodule trees rejects every read that walks past the first level
+	// even though the path is a literal descendant of the open folder.
+	let CanonicalPathToCheck = PathToCheck
+		.canonicalize()
+		.unwrap_or_else(|_| PathToCheck.to_path_buf());
 	let IsAllowed = FoldersGuard.iter().any(|Folder| {
-		match Folder.URI.to_file_path() {
-			Ok(FolderPath) => PathToCheck.starts_with(FolderPath),
-			Err(_) => false,
-		}
+		let FolderPath = match Folder.URI.to_file_path() {
+			Ok(P) => P,
+			Err(_) => return false,
+		};
+		let CanonicalFolderPath = FolderPath
+			.canonicalize()
+			.unwrap_or_else(|_| FolderPath.clone());
+		// Try both canonical-canonical AND raw-raw - either match wins.
+		PathToCheck.starts_with(&FolderPath)
+			|| PathToCheck.starts_with(&CanonicalFolderPath)
+			|| CanonicalPathToCheck.starts_with(&FolderPath)
+			|| CanonicalPathToCheck.starts_with(&CanonicalFolderPath)
 	});
 
 	if IsAllowed {
 		Ok(())
 	} else {
+		// Surface the comparison details so a workspace-mismatch bug
+		// (URL-to-path conversion, canonicalisation drift) is debuggable
+		// without rebuilding. Tag is `vfs` so it appears under the
+		// default `short` trace set.
+		let FolderPaths:Vec<String> = FoldersGuard
+			.iter()
+			.map(|F| {
+				F.URI
+					.to_file_path()
+					.map(|P| P.display().to_string())
+					.unwrap_or_else(|_| format!("<bad-uri:{}>", F.URI))
+			})
+			.collect();
+		dev_log!(
+			"vfs",
+			"[PathSecurity] reject path={} canonical={} folders=[{}]",
+			PathToCheck.display(),
+			CanonicalPathToCheck.display(),
+			FolderPaths.join(", ")
+		);
 		Err(CommonError::FileSystemPermissionDenied {
 			Path:PathToCheck.to_path_buf(),
 			Reason:"Path is outside of the registered workspace folders.".to_string(),

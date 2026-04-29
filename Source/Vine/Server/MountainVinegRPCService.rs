@@ -400,6 +400,17 @@ impl MountainService for MountainVinegRPCService {
 				// returns -32000 so Cocoon's shim can convert it to a
 				// proper `vscode.FileSystemError.FileNotFound`.
 				let LowerError = ErrorString.to_lowercase();
+				// "Path is outside of the registered workspace folders" /
+				// "Permission denied" responses come from the path-security
+				// guard in `Environment/Utility/PathSecurity.rs` when an
+				// extension probes a directory outside the open workspace
+				// (Svelte's `enableContextMenu` walks every `package.json`
+				// in the entire workspace tree, including out-of-root
+				// submodule dependencies). From the extension's perspective
+				// these are equivalent to "file not present" and must NOT
+				// count against Cocoon's circuit breaker - a workspace with
+				// many sibling submodules trips the breaker open within the
+				// first few hundred ms of activation otherwise.
 				let LooksLike404 = (MethodName == "FileSystem.ReadFile"
 					|| MethodName == "FileSystem.Stat"
 					|| MethodName == "FileSystem.ReadDirectory")
@@ -408,7 +419,10 @@ impl MountainService for MountainVinegRPCService {
 						|| LowerError.contains("enoent")
 						|| LowerError.contains("no such file or directory")
 						|| LowerError.contains("entity not found")
-						|| LowerError.contains("os error 2"));
+						|| LowerError.contains("os error 2")
+						|| LowerError.contains("path is outside of the registered workspace")
+						|| LowerError.contains("permission denied for operation")
+						|| LowerError.contains("workspace is not trusted"));
 				if LooksLike404 {
 					dev_log!(
 						"grpc-verbose",
