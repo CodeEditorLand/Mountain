@@ -13,12 +13,17 @@ use CommonLibrary::{
 	IPC::{IPCProvider::IPCProvider, SkyEvent::SkyEvent},
 };
 use serde_json::{Value, json};
-use tauri::{Emitter, Manager};
+// `Emitter` was previously imported here for the now-replaced
+// direct `.emit(...)` calls; emit is now done via `LogSkyEmit`
+// which carries the trait import internally. `Manager` remains
+// because `.state::<…>()` below depends on it.
+use tauri::Manager;
 use url::Url;
 
 use crate::{
 	ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO,
 	Environment::Utility,
+	IPC::SkyEmit::LogSkyEmit,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
@@ -50,7 +55,11 @@ pub(super) async fn open_document(
 
 		match existing_document.ToDTO() {
 			Ok(dto) => {
-				if let Err(error) = environment.ApplicationHandle.emit(SkyEvent::DocumentsOpen.AsStr(), dto) {
+				if let Err(error) = LogSkyEmit(
+					&environment.ApplicationHandle,
+					SkyEvent::DocumentsOpen.AsStr(),
+					dto,
+				) {
 					dev_log!(
 						"model",
 						"error: [DocumentProvider] Failed to emit document open event: {}",
@@ -128,10 +137,11 @@ pub(super) async fn open_document(
 		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
 		.insert(uri.to_string(), new_document);
 
-	if let Err(error) = environment
-		.ApplicationHandle
-		.emit(SkyEvent::DocumentsOpen.AsStr(), dto_for_notification.clone())
-	{
+	if let Err(error) = LogSkyEmit(
+		&environment.ApplicationHandle,
+		SkyEvent::DocumentsOpen.AsStr(),
+		dto_for_notification.clone(),
+	) {
 		dev_log!(
 			"model",
 			"error: [DocumentProvider] Failed to emit document open event: {}",

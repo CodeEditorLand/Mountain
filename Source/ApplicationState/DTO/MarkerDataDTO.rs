@@ -8,8 +8,14 @@
 //! # FIELDS
 //! - Severity: Marker severity level (Error, Warning, Info, Hint)
 //! - Message: Diagnostic message text
-//! - StartLineNumber/StartColumn: Position start (0-based)
-//! - EndLineNumber/EndColumn: Position end (0-based)
+//! - StartLineNumber/StartColumn: Position start (1-based, matches
+//!   workbench `IMarkerData` - Cocoon's `LanguagesNamespace.ts`
+//!   `NormaliseDiagnostic` adds the `+ 1` from vscode.Position 0-based
+//!   before sending to Mountain. The MarkerService sanitiser at
+//!   `markerService.ts:243` clamps `n > 0 ? n : 1`, so 0-based values
+//!   collapse line-0 entries onto line 1 and shift every other line
+//!   up by one - rendering squiggles on the wrong row.)
+//! - EndLineNumber/EndColumn: Position end (1-based, same convention)
 //! - Source: Diagnostic source (e.g., compiler, linter)
 //! - Code: Diagnostic code for quick fix lookup
 //! - ModelVersionIdentifier: Document version for tracking
@@ -40,16 +46,16 @@ pub struct MarkerDataDTO {
 	#[serde(skip_serializing_if = "String::is_empty")]
 	pub Message:String,
 
-	/// Start line number (0-based)
+	/// Start line number (1-based, mirrors workbench `IMarkerData`).
 	pub StartLineNumber:u32,
 
-	/// Start column number (0-based)
+	/// Start column number (1-based, mirrors workbench `IMarkerData`).
 	pub StartColumn:u32,
 
-	/// End line number (0-based)
+	/// End line number (1-based).
 	pub EndLineNumber:u32,
 
-	/// End column number (0-based)
+	/// End column number (1-based).
 	pub EndColumn:u32,
 
 	/// Diagnostic source (e.g., "typescript", "rustc")

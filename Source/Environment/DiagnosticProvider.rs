@@ -201,10 +201,13 @@ use CommonLibrary::{
 };
 use async_trait::async_trait;
 use serde_json::{Value, json};
-use tauri::Emitter;
+// `tauri::Emitter` is no longer used directly here - all emits
+// route through `LogSkyEmit` which carries the trait import. The
+// import was previously here for the direct `.emit()` calls now
+// replaced. Removed to keep the file warning-clean.
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, dev_log};
+use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, IPC::SkyEmit::LogSkyEmit, dev_log};
 
 #[async_trait]
 impl DiagnosticManager for MountainEnvironment {
@@ -242,7 +245,34 @@ impl DiagnosticManager for MountainEnvironment {
 		let mut ChangedEntries:Vec<serde_json::Value> = Vec::new();
 
 		for (URIComponentsValue, MarkersOption) in DeserializedEntries {
-			let URIKey = Utility::GetURLFromURIComponentsDTO(&URIComponentsValue)?.to_string();
+			// Per-entry tolerance: a single malformed URI (extension
+			// passed an empty `.path`, exotic scheme, or non-string
+			// authority) used to fail the entire batch via `?`-prop -
+			// dropping every well-formed diagnostic in the same call
+			// because of one bad sibling. Mirror VS Code's
+			// `MarkerService._toMarker` which returns `undefined` for
+			// bad entries instead of throwing: skip the offender, log
+			// once, keep going so the rest of the batch reaches the
+			// renderer.
+			let URIKey = match Utility::GetURLFromURIComponentsDTO(&URIComponentsValue) {
+				Ok(Url) => Url.to_string(),
+				Err(Error) => {
+					dev_log!(
+						"extensions",
+						"warn: [DiagnosticProvider] skipping diagnostic entry with bad URI: {} (raw={:?})",
+						Error,
+						URIComponentsValue
+					);
+					continue;
+				},
+			};
+			if URIKey.is_empty() {
+				dev_log!(
+					"extensions",
+					"warn: [DiagnosticProvider] skipping diagnostic entry with empty URI string"
+				);
+				continue;
+			}
 
 			ChangedURIKeys.push(URIKey.clone());
 
@@ -283,7 +313,17 @@ impl DiagnosticManager for MountainEnvironment {
 			"changedURIs": ChangedEntries,
 		});
 
-		if let Err(Error) = self.ApplicationHandle.emit(SkyEvent::DiagnosticsChanged.AsStr(), EventPayload) {
+		// Route through `LogSkyEmit` so the channel + payload size lands
+		// in the `[DEV:SKY-EMIT]` histogram alongside SCM / tree-view /
+		// terminal emits. Diagnostic emit volume is one of the easiest
+		// signals to over- or under-count when triaging "Problems panel
+		// shows count but no items"; without LogSkyEmit the channel was
+		// invisible.
+		if let Err(Error) = LogSkyEmit(
+			&self.ApplicationHandle,
+			SkyEvent::DiagnosticsChanged.AsStr(),
+			EventPayload,
+		) {
 			dev_log!(
 				"extensions",
 				"error: [DiagnosticProvider] Failed to emit 'diagnostics_changed': {}",
@@ -348,7 +388,11 @@ impl DiagnosticManager for MountainEnvironment {
 				"changedURIs": ChangedEntries,
 			});
 
-			if let Err(Error) = self.ApplicationHandle.emit(SkyEvent::DiagnosticsChanged.AsStr(), EventPayload) {
+			if let Err(Error) = LogSkyEmit(
+				&self.ApplicationHandle,
+				SkyEvent::DiagnosticsChanged.AsStr(),
+				EventPayload,
+			) {
 				dev_log!(
 					"extensions",
 					"error: [DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}",

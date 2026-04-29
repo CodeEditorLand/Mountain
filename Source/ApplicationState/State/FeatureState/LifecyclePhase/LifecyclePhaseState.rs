@@ -2,7 +2,7 @@ use std::sync::{Arc, Mutex as StandardMutex};
 
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
-use crate::dev_log;
+use crate::{IPC::SkyEmit::LogSkyEmit, dev_log};
 
 /// Application lifecycle phases (mirrors VS Code LifecyclePhase).
 /// 1 = Starting, 2 = Ready, 3 = Restored, 4 = Eventually
@@ -46,7 +46,8 @@ impl LifecyclePhaseState {
 	/// providers) until the editor is fully restored. Mirrors VS Code's
 	/// `ILifecycleService.onDidChangePhase` signal.
 	pub fn AdvanceAndBroadcast<R:tauri::Runtime>(&self, NewPhase:Phase, ApplicationHandle:&tauri::AppHandle<R>) {
-		use tauri::Emitter;
+		// Local `use tauri::Emitter` removed - now routed through
+		// `LogSkyEmit` which carries the trait import internally.
 		let Previous = self.GetPhase();
 		if NewPhase <= Previous {
 			return;
@@ -59,7 +60,8 @@ impl LifecyclePhaseState {
 			4 => "Eventually",
 			_ => "Unknown",
 		};
-		if let Err(Error) = ApplicationHandle.emit(
+		if let Err(Error) = LogSkyEmit(
+			ApplicationHandle,
 			SkyEvent::LifecyclePhaseChanged.AsStr(),
 			serde_json::json!({
 				"phase": NewPhase,

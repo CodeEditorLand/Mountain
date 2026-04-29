@@ -394,10 +394,11 @@ impl TerminalProvider for MountainEnvironment {
 			// create emit above. Without this, the UI keeps a ghost panel
 			// after the shell exits (user types `exit` and the pane still
 			// lingers until the next render cycle).
-			if let Err(Error) = EnvironmentClone
-				.ApplicationHandle
-				.emit(SkyEvent::TerminalExit.AsStr(), json!({ "id": TermIDForExit }))
-			{
+			if let Err(Error) = LogSkyEmit(
+				&EnvironmentClone.ApplicationHandle,
+				SkyEvent::TerminalExit.AsStr(),
+				json!({ "id": TermIDForExit }),
+			) {
 				dev_log!(
 					"terminal",
 					"warn: [TerminalProvider] sky://terminal/exit emit failed for ID {}: {}",
@@ -547,9 +548,14 @@ impl TerminalProvider for MountainEnvironment {
 	async fn HideTerminal(&self, TerminalId:u64) -> Result<(), CommonError> {
 		dev_log!("terminal", "[TerminalProvider] Hiding terminal ID: {}", TerminalId);
 
-		self.ApplicationHandle
-			.emit(SkyEvent::TerminalHide.AsStr(), json!({ "id": TerminalId }))
-			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
+		// Low-frequency lifecycle event - safe to route through
+		// `LogSkyEmit` for histogram visibility.
+		LogSkyEmit(
+			&self.ApplicationHandle,
+			SkyEvent::TerminalHide.AsStr(),
+			json!({ "id": TerminalId }),
+		)
+		.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })
 	}
 
 	async fn GetTerminalProcessId(&self, TerminalId:u64) -> Result<Option<u32>, CommonError> {

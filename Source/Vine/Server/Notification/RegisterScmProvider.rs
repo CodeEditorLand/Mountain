@@ -33,7 +33,9 @@
 //! Sky emit is fire-and-forget.
 
 use serde_json::{Value, json};
-use tauri::Emitter;
+// `tauri::Emitter` previously imported for direct `.emit()` calls;
+// emits now route through `LogSkyEmit` which carries the trait. No
+// remaining `.emit()` callsites in this file.
 use CommonLibrary::SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider;
 
 use crate::{

@@ -36,6 +36,20 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 	// Keep under `vfs-verbose` for deep debugging only.
 	dev_log!("vfs-verbose", "[EnvironmentSecurity] Verifying path: {}", PathToCheck.display());
 
+	// Defensive: empty path would slip through the trusted-system
+	// check (no allow-list segment matches) AND the workspace-
+	// descendant check (`Path::starts_with("")` returns true). Without
+	// this guard, an extension probing `vscode.workspace.fs.stat("")`
+	// would be authorised against ANY registered workspace folder.
+	// Reject up front so the caller falls through to its not-found
+	// handler.
+	if PathToCheck.as_os_str().is_empty() {
+		return Err(CommonError::FileSystemPermissionDenied {
+			Path:PathToCheck.to_path_buf(),
+			Reason:"Empty path: caller must supply an explicit filesystem path.".to_string(),
+		});
+	}
+
 	// Tier 1: trusted system paths bypass workspace gating. See
 	// `IsTrustedSystemPath` for the complete allow-list. Scanner reads,
 	// VSIX installs, agent-plugin probes, and per-extension global-storage

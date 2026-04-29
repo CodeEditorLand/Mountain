@@ -44,6 +44,19 @@ pub fn CreateEffect<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						// Empty-path guard: extensions occasionally
+						// pass `""` to `vscode.workspace.fs.readFile`
+						// when probing optional config files. Stock VS
+						// Code's FileSystemProvider would return
+						// `FileNotFound`; replicating that contract
+						// here avoids a panic in `PathBuf::from("")`-
+						// rooted FS calls (which can confuse Mountain's
+						// path-security guard into emitting a "path
+						// outside workspace" rejection that trips the
+						// breaker cascade).
+						if path_str.is_empty() {
+							return Err("FileSystem.ReadFile: empty path (resource not found)".to_string());
+						}
 						if path_str.starts_with("vscode://schemas-associations/") {
 							let payload = serde_json::to_vec(&json!({ "schemas": [] }))
 								.unwrap_or_else(|_| b"{\"schemas\":[]}".to_vec());
@@ -109,6 +122,15 @@ pub fn CreateEffect<R:Runtime>(
 					Box::pin(async move {
 						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						// Empty-path guard: same rationale as
+						// `FileSystem.ReadFile` above. Returning
+						// `not found` matches VS Code's
+						// `FileSystemProvider.stat()` contract for
+						// probes of paths the extension hasn't
+						// validated upstream.
+						if path_str.is_empty() {
+							return Err("FileSystem.Stat: empty path (resource not found)".to_string());
+						}
 						let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
 						fs_reader
 							.StatFile(&path)

@@ -7,10 +7,10 @@
 //! the sole extension-host Cocoon instance today.
 
 use serde_json::{Value, json};
-use tauri::Emitter;
 
 use crate::{
 	Environment::CommandProvider::CommandHandler,
+	IPC::SkyEmit::LogSkyEmit,
 	Vine::Server::MountainVinegRPCService::MountainVinegRPCService,
 	dev_log,
 };
@@ -57,7 +57,12 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 	// to Mountain's registry but invisible to the command palette /
 	// keybinding-resolver. Payload shape matches the Sky destructure
 	// (`{ id }` or `{ commandId }` - both probed).
-	let _ = Service.ApplicationHandle().emit(
+	// Convert to `LogSkyEmit` so command-register volume is observable
+	// in the `[DEV:SKY-EMIT]` histogram. Extension command registration
+	// is bursty - 100+ commands per session - so the channel count
+	// gives a quick read on whether contributions are landing.
+	let _ = LogSkyEmit(
+		Service.ApplicationHandle(),
 		"sky://command/register",
 		json!({ "id": CommandId, "commandId": CommandId, "kind": Kind }),
 	);

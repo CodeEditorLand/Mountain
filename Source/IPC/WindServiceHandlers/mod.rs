@@ -237,7 +237,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			let command = DispatchCommand;
 			let args = DispatchArgs;
 
-			let MatchResult:Result<Value, String> = match command.as_str() {
+			let MatchResult = match command.as_str() {
 				// Configuration commands. VS Code's stock
 				// `ConfigurationService` channel calls `getValue` /
 				// `updateValue`; Mountain's native Effect-TS layer calls
@@ -737,8 +737,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// `onDidChangeWorkspaceFolders` channel-listen: Mountain
 				// broadcasts the change via Tauri event, so ack the
 				// listen request with Null (no-op on the binary rail).
-				"workspaces:onDidChangeWorkspaceFolders"
-				| "workspaces:onDidChangeWorkspaceName" => {
+				"workspaces:onDidChangeWorkspaceFolders" | "workspaces:onDidChangeWorkspaceName" => {
 					dev_log!("workspaces", "{} (stub-ack)", command);
 					Ok(Value::Null)
 				},
@@ -1522,24 +1521,14 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// observers).
 				"cocoon:request" => {
 					dev_log!("ipc", "cocoon:request method={:?}", args.first());
-					let MethodOpt =
-						args.first().and_then(|V| V.as_str()).map(|S| S.to_string());
+					let MethodOpt = args.first().and_then(|V| V.as_str()).map(|S| S.to_string());
 					match MethodOpt {
-						None => {
-							Err("cocoon:request requires method string in slot 0".to_string())
-						},
+						None => Err("cocoon:request requires method string in slot 0".to_string()),
 						Some(Method) => {
 							let Payload = args.get(1).cloned().unwrap_or(Value::Null);
-							crate::Vine::Client::SendRequest(
-								"cocoon-main",
-								Method.clone(),
-								Payload,
-								30_000,
-							)
-							.await
-							.map_err(|Error| {
-								format!("cocoon:request {} failed: {:?}", Method, Error)
-							})
+							crate::Vine::Client::SendRequest("cocoon-main", Method.clone(), Payload, 30_000)
+								.await
+								.map_err(|Error| format!("cocoon:request {} failed: {:?}", Method, Error))
 						},
 					}
 				},
@@ -1555,12 +1544,9 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// immediately; the notification dispatches asynchronously.
 				"cocoon:notify" => {
 					dev_log!("ipc", "cocoon:notify method={:?}", args.first());
-					let MethodOpt =
-						args.first().and_then(|V| V.as_str()).map(|S| S.to_string());
+					let MethodOpt = args.first().and_then(|V| V.as_str()).map(|S| S.to_string());
 					match MethodOpt {
-						None => {
-							Err("cocoon:notify requires method string in slot 0".to_string())
-						},
+						None => Err("cocoon:notify requires method string in slot 0".to_string()),
 						Some(Method) => {
 							let Payload = args.get(1).cloned().unwrap_or(Value::Null);
 							if let Err(Error) = crate::Vine::Client::SendNotification(
@@ -1570,12 +1556,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							)
 							.await
 							{
-								dev_log!(
-									"ipc",
-									"warn: [cocoon:notify] {} failed: {:?}",
-									Method,
-									Error
-								);
+								dev_log!("ipc", "warn: [cocoon:notify] {} failed: {:?}", Method, Error);
 							}
 							Ok(Value::Null)
 						},
@@ -1613,11 +1594,32 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							// Extract the integer id - this is what
 							// `IPtyService.createProcess` is contractually
 							// required to return.
-							let TerminalId = Response
-								.get("id")
-								.and_then(serde_json::Value::as_u64)
-								.unwrap_or(0);
-							Ok(serde_json::json!(TerminalId))
+							let TerminalIdOption = Response.get("id").and_then(serde_json::Value::as_u64);
+							match TerminalIdOption {
+								Some(TerminalId) if TerminalId > 0 => Ok(serde_json::json!(TerminalId)),
+								Some(_) | None => {
+									// Defensive: if `CreateTerminal` returned
+									// without a usable id (shape drift or
+									// `GetNextTerminalIdentifier` regression),
+									// surface the error to the workbench
+									// instead of returning `0`. The workbench
+									// would otherwise bind `LocalPty(0, …)`
+									// and every subsequent `_proxy.input(0,
+									// data)` would fail silently because no
+									// PTY with id=0 exists - keystrokes get
+									// swallowed with no diagnostic.
+									dev_log!(
+										"terminal",
+										"error: [localPty:createProcess] CreateTerminal returned no usable id; \
+										 response={:?}",
+										Response
+									);
+									Err(format!(
+										"localPty:createProcess: CreateTerminal returned no terminal id (response={})",
+										Response
+									))
+								},
+							}
 						},
 						Err(Error) => Err(Error),
 					}
@@ -1651,6 +1653,14 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// Forward through the Terminal.Resize effect so the PTY master
 					// receives SIGWINCH. Arguments from VS Code arrive as either
 					// `[id, cols, rows]` or `{ id, cols, rows }`; accept both.
+					//
+					// Defensive clamping: portable-pty's `master.resize()`
+					// crashes the IO thread with "size out of range" on
+					// `cols=0` or `rows=0` (the workbench occasionally
+					// emits 0×0 during pane drag-storms before the
+					// `requestAnimationFrame` settle). Clamp to sane
+					// minimums so a transient micro-size never tears
+					// down the shell.
 					let (TerminalId, Columns, Rows) = {
 						let First = args.first().cloned().unwrap_or(Value::Null);
 						if First.is_object() {
@@ -1665,16 +1675,40 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							(Id, C, R)
 						}
 					};
-					use CommonLibrary::{
-						Environment::Requires::Requires,
-						Terminal::TerminalProvider::TerminalProvider,
-					};
-					let Provider:Arc<dyn TerminalProvider> = runtime.Environment.Require();
-					Provider
-						.ResizeTerminal(TerminalId, Columns, Rows)
-						.await
-						.map(|_| Value::Null)
-						.map_err(|Error| format!("localPty:resize: {}", Error))
+					if TerminalId == 0 {
+						Ok(Value::Null)
+					} else {
+						let Columns = if Columns == 0 { 1 } else { Columns };
+						let Rows = if Rows == 0 { 1 } else { Rows };
+						use CommonLibrary::{
+							Environment::Requires::Requires,
+							Terminal::TerminalProvider::TerminalProvider,
+						};
+						let Provider:Arc<dyn TerminalProvider> = runtime.Environment.Require();
+						match Provider.ResizeTerminal(TerminalId, Columns, Rows).await {
+							Ok(_) => Ok(Value::Null),
+							Err(Error) => {
+								// Resize on a disposed terminal is a common
+								// race during shutdown - the workbench layout
+								// pass fires after the user types `exit`, the
+								// PTY closes, and the resize call lands on a
+								// dropped master. Logging at warn instead of
+								// error keeps the noise down. Returning
+								// `Value::Null` (rather than a hard error)
+								// lets the workbench's resize loop continue
+								// instead of stalling on the failed promise.
+								dev_log!(
+									"terminal",
+									"warn: localPty:resize id={} cols={} rows={} failed: {}",
+									TerminalId,
+									Columns,
+									Rows,
+									Error
+								);
+								Ok(Value::Null)
+							},
+						}
+					}
 				},
 				"localPty:acknowledgeDataEvent" => {
 					// xterm flow-control heartbeat; no-op on Mountain side.
@@ -2091,7 +2125,22 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						)
 						.await
 						{
-							Ok(Value_) => Ok(Value_),
+							// Defensive shape check: the workbench's
+							// tree-view consumer expects either an
+							// `items` array or a top-level array.
+							// `null` / `undefined` from a misbehaving
+							// extension would be passed through and
+							// trigger `TypeError: Cannot read property
+							// 'length' of null` in the renderer. Force
+							// to `{items: []}` for any non-conforming
+							// shape so the renderer always has
+							// iterable data.
+							Ok(Value_) => {
+								match &Value_ {
+									Value::Object(_) | Value::Array(_) => Ok(Value_),
+									_ => Ok(json!({ "items": [] })),
+								}
+							},
 							Err(Error) => {
 								// Common case: an extension's tree
 								// data-provider rejects (npm extension
@@ -2140,7 +2189,8 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					let mut CommandCount:usize = 0;
 					let mut TerminalCount:usize = 0;
 					let mut TerminalDataBytes:usize = 0;
-					if let Ok(TreeViews) = runtime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock() {
+					if let Ok(TreeViews) = runtime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock()
+					{
 						for (ViewId, Dto) in TreeViews.iter() {
 							let Payload = serde_json::json!({
 								"viewId": ViewId,
@@ -2204,13 +2254,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// `Vine/Server/Notification/RegisterCommand.rs`. Native
 					// commands (Mountain's own Rust handlers) don't need
 					// replay - they're not exposed via this channel.
-					if let Ok(Commands) = runtime
-						.Environment
-						.ApplicationState
-						.Extension
-						.Registry
-						.CommandRegistry
-						.lock()
+					if let Ok(Commands) = runtime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock()
 					{
 						for (CommandId, Handler) in Commands.iter() {
 							use crate::Environment::CommandProvider::CommandHandler;
@@ -2235,13 +2279,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// (zsh's MOTD, fish greeting, `direnv export`, …) is
 					// silently dropped and the user sees an empty pane until
 					// they type.
-					if let Ok(Terminals) = runtime
-						.Environment
-						.ApplicationState
-						.Feature
-						.Terminals
-						.ActiveTerminals
-						.lock()
+					if let Ok(Terminals) = runtime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock()
 					{
 						for (TerminalId, Arc) in Terminals.iter() {
 							let (Name, Pid) = if let Ok(State) = Arc.lock() {
@@ -2259,9 +2297,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							}
 						}
 					}
-					for (TerminalId, Bytes) in
-						crate::Environment::TerminalProvider::DrainTerminalOutputBuffer()
-					{
+					for (TerminalId, Bytes) in crate::Environment::TerminalProvider::DrainTerminalOutputBuffer() {
 						let DataString = String::from_utf8_lossy(&Bytes).to_string();
 						TerminalDataBytes += Bytes.len();
 						let _ = app_handle.emit(
