@@ -113,7 +113,7 @@ use tauri::Emitter;
 use tokio::sync::mpsc as TokioMPSC;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
-use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
+use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, IPC::SkyEmit::LogSkyEmit, dev_log};
 
 // Per-terminal recent-output buffer. The PTY reader task races SkyBridge's
 // `listen("sky://terminal/data", ...)` install: in the bundled-electron
@@ -418,21 +418,59 @@ impl TerminalProvider for MountainEnvironment {
 		// BATCH-19 Part B: let Sky render the new terminal panel without
 		// waiting for Cocoon to round-trip a notification. The `sky://` event
 		// channel is already how ShowTerminal / HideTerminal talk to the UI.
-		if let Err(Error) = self.ApplicationHandle.emit(
-			SkyEvent::TerminalCreate.AsStr(),
-			json!({
-				"id": TerminalIdentifier,
-				"name": Name,
-				"pid": TerminalState.OSProcessIdentifier,
-			}),
-		) {
-			dev_log!(
-				"terminal",
-				"warn: [TerminalProvider] sky://terminal/create emit failed for ID {}: {}",
-				TerminalIdentifier,
-				Error
-			);
-		}
+		//
+		// RACE FIX: emit on a deferred tokio task (~120 ms) instead of
+		// synchronously. The workbench's `LocalTerminalBackend.createProcess`
+		// flow is:
+		//   1. await this._proxy.createProcess(...)   // RPC IN-FLIGHT
+		//   2. const pty = new LocalPty(id, …)        // POST-await
+		//   3. this._ptys.set(id, pty)                // POST-await
+		// The patched `_connectToDirectProxy` listener for
+		// `_localPtyService.onProcessReady` does
+		// `this._ptys.get(e.id)?.handleReady(e.event)`. If we emit
+		// synchronously while CreateTerminal is still inside step (1),
+		// the Tauri event fires before step (3) - `_ptys.get(id)` returns
+		// `undefined`, `handleReady` is skipped, `BasePty._onProcessReady`
+		// never fires, `processManager._onProcessReady` never fires,
+		// `ptyProcessReady` never resolves - and every `processManager.
+		// write(data)` call (which `terminalInstance._handleOnData`
+		// `await`s) hangs forever. The user sees the panel render but
+		// every keystroke is silently dropped because `LocalPty.input`
+		// is never reached. A 120 ms delay gives the RPC response
+		// roundtrip + `_ptys.set` plenty of headroom on real hardware.
+		// Same race applies to `sky://terminal/data` for the shell's
+		// first prompt - the existing `AppendTerminalOutput` replay
+		// buffer covers data, but the create event needs explicit
+		// deferral because there's no replay path for ready.
+		let CreateAppHandle = self.ApplicationHandle.clone();
+		let CreateTermId = TerminalIdentifier;
+		let CreateName = Name.clone();
+		let CreatePid = TerminalState.OSProcessIdentifier;
+		tokio::spawn(async move {
+			tokio::time::sleep(std::time::Duration::from_millis(120)).await;
+			let CreatePayload = json!({
+				"id": CreateTermId,
+				"name": CreateName,
+				"pid": CreatePid,
+			});
+			// `LogSkyEmit` makes the deferred emit visible under
+			// `[DEV:SKY-EMIT]` so the next log dissection can confirm
+			// the deferral landed (and how many `localPty:input` calls
+			// arrived afterwards). The bare `.emit()` we replaced was
+			// invisible to the histogram.
+			if let Err(Error) = LogSkyEmit(
+				&CreateAppHandle,
+				SkyEvent::TerminalCreate.AsStr(),
+				CreatePayload,
+			) {
+				dev_log!(
+					"terminal",
+					"warn: [TerminalProvider] sky://terminal/create emit failed for ID {}: {}",
+					CreateTermId,
+					Error
+				);
+			}
+		});
 
 		dev_log!(
 			"terminal",
