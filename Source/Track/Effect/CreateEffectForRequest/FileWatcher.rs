@@ -18,8 +18,14 @@ pub fn CreateEffect<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
-						let Handle =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						// Cocoon's `NextProviderHandle()` returns a number;
+						// older callers pass a string. Accept both shapes
+						// rather than silently collapsing numbers to "".
+						let Handle = match Parameters.get(0) {
+							Some(Value::String(S)) => S.clone(),
+							Some(Value::Number(N)) => N.to_string(),
+							_ => String::new(),
+						};
 						let Root =
 							Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 						let IsRecursive =
@@ -44,8 +50,11 @@ pub fn CreateEffect<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
-						let Handle =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let Handle = match Parameters.get(0) {
+							Some(Value::String(S)) => S.clone(),
+							Some(Value::Number(N)) => N.to_string(),
+							_ => String::new(),
+						};
 						provider
 							.UnregisterWatcher(Handle)
 							.await

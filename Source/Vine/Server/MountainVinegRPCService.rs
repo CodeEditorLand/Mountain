@@ -400,10 +400,15 @@ impl MountainService for MountainVinegRPCService {
 				// returns -32000 so Cocoon's shim can convert it to a
 				// proper `vscode.FileSystemError.FileNotFound`.
 				let LowerError = ErrorString.to_lowercase();
-				let LooksLike404 = (MethodName == "FileSystem.ReadFile" || MethodName == "FileSystem.Stat")
+				let LooksLike404 = (MethodName == "FileSystem.ReadFile"
+					|| MethodName == "FileSystem.Stat"
+					|| MethodName == "FileSystem.ReadDirectory")
 					&& (LowerError.contains("resource not found")
 						|| LowerError.contains("not found")
-						|| LowerError.contains("enoent"));
+						|| LowerError.contains("enoent")
+						|| LowerError.contains("no such file or directory")
+						|| LowerError.contains("entity not found")
+						|| LowerError.contains("os error 2"));
 				if LooksLike404 {
 					dev_log!(
 						"grpc-verbose",
@@ -421,9 +426,13 @@ impl MountainService for MountainVinegRPCService {
 					);
 				}
 
+				// Distinct code -32004 for benign 404s lets the Cocoon shim
+				// classify them without a string-regex round-trip. -32000
+				// stays the catch-all for genuine failures.
+				let ErrorCode = if LooksLike404 { -32004 } else { -32000 };
 				Ok(Response::new(Self::CreateErrorResponse(
 					RequestIdentifier,
-					-32000, // Server error
+					ErrorCode,
 					ErrorString,
 					None,
 				)))
