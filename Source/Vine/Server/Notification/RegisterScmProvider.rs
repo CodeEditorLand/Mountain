@@ -193,8 +193,13 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// Legacy listener channel kept active alongside the typed event so
 	// renderer code that hasn't migrated to the markers-backed view
 	// (gitlens-side custom panels, hand-rolled tests) still sees the
-	// register signal.
-	let _ = Service.ApplicationHandle().emit(
+	// register signal. Routed through `LogSkyEmit` so `sky-emit` /
+	// `grpc` dev-log tags surface delivery success/failure - the
+	// fire-and-forget path was previously invisible, making it
+	// impossible to tell whether Sky's `Register("sky://scm/register")`
+	// listener was hit when the SCM panel stayed empty.
+	if let Err(Error) = crate::IPC::SkyEmit::LogSkyEmit(
+		Service.ApplicationHandle(),
 		"sky://scm/register",
 		json!({
 			"scmId": &ScmId,
@@ -203,7 +208,14 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 			"extensionId": &ExtensionId,
 			"handle": Handle,
 		}),
-	);
+	) {
+		dev_log!(
+			"grpc",
+			"warn: [Scm] sky://scm/register emit failed for {}: {}",
+			ScmId,
+			Error
+		);
+	}
 
 	dev_log!(
 		"grpc",
