@@ -115,6 +115,55 @@ use tokio::sync::mpsc as TokioMPSC;
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::{ApplicationState::DTO::TerminalStateDTO::TerminalStateDTO, dev_log};
 
+// Per-terminal recent-output buffer. The PTY reader task races SkyBridge's
+// `listen("sky://terminal/data", ...)` install: in the bundled-electron
+// profile, the shell's first prompt + any startup chatter (zsh's MOTD,
+// `direnv` exports, fish's greeting, …) fires within ~50 ms of
+// `localPty:createProcess` while Sky's bundle is still parsing for ~1500 ms.
+// Without buffering, those bytes vanish and the user sees an empty pane
+// until they type something to coax fresh output. We buffer up to
+// `MAX_BUFFERED_BYTES` per terminal and replay on `sky:replay-events`.
+//
+// The buffer is bounded; on overflow we drop oldest bytes (keep the most
+// recent suffix). 64 KB is enough for ~600 lines of typical zsh/bash
+// startup; tail-cropping preserves the prompt the user actually needs to
+// see.
+const MAX_BUFFERED_BYTES:usize = 64 * 1024;
+
+static TERMINAL_OUTPUT_BUFFER:std::sync::OnceLock<std::sync::Mutex<std::collections::HashMap<u64, Vec<u8>>>> =
+	std::sync::OnceLock::new();
+
+fn TerminalOutputBuffer() -> &'static std::sync::Mutex<std::collections::HashMap<u64, Vec<u8>>> {
+	TERMINAL_OUTPUT_BUFFER.get_or_init(|| std::sync::Mutex::new(std::collections::HashMap::new()))
+}
+
+pub fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
+	if let Ok(mut Map) = TerminalOutputBuffer().lock() {
+		let Entry = Map.entry(TerminalId).or_insert_with(Vec::new);
+		Entry.extend_from_slice(Bytes);
+		// Drop oldest if over cap. Keep the trailing MAX_BUFFERED_BYTES so
+		// the prompt + most-recent context survive.
+		if Entry.len() > MAX_BUFFERED_BYTES {
+			let DropCount = Entry.len() - MAX_BUFFERED_BYTES;
+			Entry.drain(..DropCount);
+		}
+	}
+}
+
+pub fn DrainTerminalOutputBuffer() -> Vec<(u64, Vec<u8>)> {
+	if let Ok(Map) = TerminalOutputBuffer().lock() {
+		Map.iter().map(|(K, V)| (*K, V.clone())).collect()
+	} else {
+		Vec::new()
+	}
+}
+
+pub fn RemoveTerminalOutputBuffer(TerminalId:u64) {
+	if let Ok(mut Map) = TerminalOutputBuffer().lock() {
+		Map.remove(&TerminalId);
+	}
+}
+
 #[async_trait]
 impl TerminalProvider for MountainEnvironment {
 	/// Creates a new terminal instance, spawns a PTY, and manages its I/O.
@@ -220,6 +269,14 @@ impl TerminalProvider for MountainEnvironment {
 			loop {
 				match PTYReader.read(&mut Buffer) {
 					Ok(count) if count > 0 => {
+						// Buffer the bytes for replay-on-late-listener. The
+						// SkyBridge install completes ~1500 ms after Cocoon
+						// activates, and the shell's first prompt fires
+						// immediately after `spawn_command`. Without a
+						// buffer the prompt is silently lost and the user
+						// sees an empty terminal pane until they type.
+						AppendTerminalOutput(TermIDForOutput, &Buffer[..count]);
+
 						let DataString = String::from_utf8_lossy(&Buffer[..count]).to_string();
 
 						// Fan out in two directions so both consumers see
@@ -329,6 +386,9 @@ impl TerminalProvider for MountainEnvironment {
 			if let Ok(mut Guard) = EnvironmentClone.ApplicationState.Feature.Terminals.ActiveTerminals.lock() {
 				Guard.remove(&TermIDForExit);
 			}
+			// Drop the recent-output replay buffer; nothing left to replay
+			// after the shell has exited.
+			RemoveTerminalOutputBuffer(TermIDForExit);
 
 			// Tell Sky the xterm panel should drop - mirrors the `sky://`
 			// create emit above. Without this, the UI keeps a ghost panel

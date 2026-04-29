@@ -2076,6 +2076,8 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					let mut TreeViewCount:usize = 0;
 					let mut ScmCount:usize = 0;
 					let mut CommandCount:usize = 0;
+					let mut TerminalCount:usize = 0;
+					let mut TerminalDataBytes:usize = 0;
 					if let Ok(TreeViews) = runtime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock() {
 						for (ViewId, Dto) in TreeViews.iter() {
 							let Payload = serde_json::json!({
@@ -2164,17 +2166,62 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							}
 						}
 					}
+					// Replay terminals: each active terminal needs its `create`
+					// event AND any buffered stdout the PTY reader produced
+					// before SkyBridge's `listen("sky://terminal/*")` was
+					// installed. Without this, the shell's first prompt
+					// (zsh's MOTD, fish greeting, `direnv export`, …) is
+					// silently dropped and the user sees an empty pane until
+					// they type.
+					if let Ok(Terminals) = runtime
+						.Environment
+						.ApplicationState
+						.Feature
+						.Terminals
+						.ActiveTerminals
+						.lock()
+					{
+						for (TerminalId, Arc) in Terminals.iter() {
+							let (Name, Pid) = if let Ok(State) = Arc.lock() {
+								(State.Name.clone(), State.OSProcessIdentifier.unwrap_or(0))
+							} else {
+								(String::new(), 0)
+							};
+							let CreatePayload = serde_json::json!({
+								"id": *TerminalId,
+								"name": Name,
+								"pid": Pid,
+							});
+							if app_handle.emit("sky://terminal/create", CreatePayload).is_ok() {
+								TerminalCount += 1;
+							}
+						}
+					}
+					for (TerminalId, Bytes) in
+						crate::Environment::TerminalProvider::DrainTerminalOutputBuffer()
+					{
+						let DataString = String::from_utf8_lossy(&Bytes).to_string();
+						TerminalDataBytes += Bytes.len();
+						let _ = app_handle.emit(
+							"sky://terminal/data",
+							serde_json::json!({ "id": TerminalId, "data": DataString }),
+						);
+					}
 					dev_log!(
 						"sky-emit",
-						"[SkyEmit] replay-events tree-views={} scm={} commands={}",
+						"[SkyEmit] replay-events tree-views={} scm={} commands={} terminals={} terminal-bytes={}",
 						TreeViewCount,
 						ScmCount,
-						CommandCount
+						CommandCount,
+						TerminalCount,
+						TerminalDataBytes
 					);
 					Ok(serde_json::json!({
 						"treeViews": TreeViewCount,
 						"scmProviders": ScmCount,
 						"commands": CommandCount,
+						"terminals": TerminalCount,
+						"terminalDataBytes": TerminalDataBytes,
 					}))
 				},
 
