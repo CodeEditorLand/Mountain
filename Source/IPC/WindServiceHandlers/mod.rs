@@ -1572,9 +1572,56 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Tauri-side `terminal:*` handlers so PTY lifecycle stays identical
 				// regardless of whether the request came from Sky (Wind) or from an
 				// extension (Cocoon → Wind channel bridge).
-				"localPty:spawn" | "localPty:createProcess" | "localPty:start" => {
+				//
+				// CONTRACT NOTE: `IPtyService.createProcess` is typed
+				// `Promise<number>` (see `vs/platform/terminal/common/terminal.ts:
+				// 316`). The workbench then does `new LocalPty(id, ...)` and
+				// `this._ptys.set(id, pty)`. If we return the full
+				// `{id,name,pid}` object the renderer keys `_ptys` by that
+				// object, every `_ptys.get(<integer>)` lookup from
+				// `onProcessData`/`onProcessReady` returns `undefined`, and
+				// xterm receives zero bytes - the terminal panel renders
+				// blank even though Mountain's PTY reader emits data
+				// continuously. Strip down to the integer id here.
+				"localPty:spawn" => {
+					// `localPty:spawn` is Cocoon's Sky bridge path; preserve
+					// the full `{id, name, pid}` shape because the older Wind
+					// callers expect it. New `localPty:createProcess` and
+					// `localPty:start` follow VS Code's typed contract below.
 					dev_log!("terminal", "{}", command);
 					handle_terminal_create(runtime.clone(), args).await
+				},
+				"localPty:createProcess" => {
+					dev_log!("terminal", "{}", command);
+					match handle_terminal_create(runtime.clone(), args).await {
+						Ok(Response) => {
+							// Extract the integer id - this is what
+							// `IPtyService.createProcess` is contractually
+							// required to return.
+							let TerminalId = Response
+								.get("id")
+								.and_then(serde_json::Value::as_u64)
+								.unwrap_or(0);
+							Ok(serde_json::json!(TerminalId))
+						},
+						Err(Error) => Err(Error),
+					}
+				},
+				"localPty:start" => {
+					// Eager-spawn pattern: `TerminalProvider::CreateTerminal`
+					// already started the shell and reader task during
+					// `localPty:createProcess`. `start` is a no-op that just
+					// completes the workbench's launch promise. Returning
+					// `Value::Null` matches `IPtyService.start`'s
+					// `Promise<ITerminalLaunchError | ITerminalLaunchResult |
+					// undefined>` (`undefined` branch). Routing this back
+					// through `handle_terminal_create` would spawn a SECOND
+					// PTY for the same workbench terminal - the user-visible
+					// pane is bound to id=1 from `createProcess`, but a
+					// shadow PTY (id=2) starts and streams data nobody
+					// renders.
+					dev_log!("terminal", "{} no-op (eager-spawn)", command);
+					Ok(Value::Null)
 				},
 				"localPty:input" | "localPty:write" => {
 					dev_log!("terminal", "{}", command);
