@@ -2050,6 +2050,83 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					}
 				},
 
+				// SkyBridge calls this after installing every `sky://*` Tauri
+				// listener. Mountain → Sky `app.emit()` events are NOT
+				// buffered: any emit fired before the listener was installed
+				// is silently dropped. In the bundled-electron profile,
+				// extension activation (which triggers
+				// `register_scm_provider` and `$tree:register` notifications
+				// through Cocoon) starts ~580 log lines before the Sky
+				// bundle finishes booting (~1995 lines). Without this
+				// replay, all tree-view + SCM register events are lost and
+				// the Activity Bar / sidebar comes up empty even though
+				// state-side everything registered correctly.
+				"sky:replay-events" => {
+					use tauri::Emitter;
+					let mut TreeViewCount:usize = 0;
+					let mut ScmCount:usize = 0;
+					if let Ok(TreeViews) = runtime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock() {
+						for (ViewId, Dto) in TreeViews.iter() {
+							let Payload = serde_json::json!({
+								"viewId": ViewId,
+								"options": {
+									"canSelectMany": Dto.CanSelectMany,
+									"showCollapseAll": Dto.HasHandleDrag,
+									"title": Dto.Title.clone().unwrap_or_default(),
+								},
+							});
+							if app_handle.emit("sky://tree-view/create", Payload).is_ok() {
+								TreeViewCount += 1;
+							}
+						}
+					}
+					// SCM provider DTO doesn't carry the original `scmId`
+					// string (state stores Handle/Label/RootURI only). Cocoon
+					// always uses `"git"` for the built-in vscode.git
+					// extension; that's the only SCM provider this build
+					// host exposes. If we ever ship an SCM provider with a
+					// different id, this needs the DTO extended to keep the
+					// id alongside Handle.
+					if let Ok(ScmProviders) = runtime
+						.Environment
+						.ApplicationState
+						.Feature
+						.Markers
+						.SourceControlManagementProviders
+						.lock()
+					{
+						for (Handle, Dto) in ScmProviders.iter() {
+							let RootUriStr = Dto
+								.RootURI
+								.as_ref()
+								.and_then(|V| V.get("external").or_else(|| V.get("path")))
+								.and_then(serde_json::Value::as_str)
+								.unwrap_or("")
+								.to_string();
+							let Payload = serde_json::json!({
+								"scmId": "git",
+								"label": Dto.Label,
+								"rootUri": RootUriStr,
+								"extensionId": "",
+								"handle": *Handle,
+							});
+							if app_handle.emit("sky://scm/register", Payload).is_ok() {
+								ScmCount += 1;
+							}
+						}
+					}
+					dev_log!(
+						"sky-emit",
+						"[SkyEmit] replay-events tree-views={} scm={}",
+						TreeViewCount,
+						ScmCount
+					);
+					Ok(serde_json::json!({
+						"treeViews": TreeViewCount,
+						"scmProviders": ScmCount,
+					}))
+				},
+
 				// Atom L2: unknown-command fallback consults the Channel registry so
 				// the log distinguishes three states:
 				//   1. typo / never-registered wire string (registry::from_str Err)
