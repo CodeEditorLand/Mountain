@@ -9,10 +9,7 @@ use url::Url;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Document.Save" => {
 			let effect =
@@ -20,8 +17,7 @@ pub fn CreateEffect<R:Runtime>(
 					Box::pin(async move {
 						let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
 						let uri_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
-						let uri =
-							Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///tmp/test.txt").unwrap());
+						let uri = Url::parse(uri_str).unwrap_or_else(|_| Url::parse("file:///tmp/test.txt").unwrap());
 						document_provider
 							.SaveDocument(uri)
 							.await

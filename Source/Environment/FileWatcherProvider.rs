@@ -338,11 +338,7 @@ impl FileWatcherProvider for MountainEnvironment {
 					drop(watcher);
 				} else {
 					return Err(CommonError::Unknown {
-						Description:format!(
-							"FileWatcher watch failed for {}: {}",
-							Root.display(),
-							error
-						),
+						Description:format!("FileWatcher watch failed for {}: {}", Root.display(), error),
 					});
 				}
 			},

@@ -374,10 +374,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 		"cocoon",
 		"[InitializationData] FoldersWire count={} sample0={}",
 		FoldersWire.len(),
-		FoldersWire
-			.first()
-			.map(|F| F.to_string())
-			.unwrap_or_else(|| "<none>".into())
+		FoldersWire.first().map(|F| F.to_string()).unwrap_or_else(|| "<none>".into())
 	);
 
 	let WorkspaceDTO = if WorkspaceFoldersGuard.is_empty() {

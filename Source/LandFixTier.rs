@@ -20,7 +20,8 @@
 //!
 //! `LogResolvedTiers()` is called unconditionally from `Binary/Main/Entry::Fn`
 //! before the Tokio runtime begins spawning tasks. `dev_log!` is synchronous,
-//! so the banner is guaranteed to land in the log before any extension code runs.
+//! so the banner is guaranteed to land in the log before any extension code
+//! runs.
 //!
 //! Runtime overhead is zero - all `env!(...)` invocations become string
 //! literals at compile time and are inlined into a single write call.

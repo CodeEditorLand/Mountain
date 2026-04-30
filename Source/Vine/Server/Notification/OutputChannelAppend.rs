@@ -62,10 +62,6 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 			TruncatedValue.trim_end_matches('\n')
 		);
 	} else {
-		dev_log!(
-			"output-verbose",
-			"[OutputChannel] append channel={}",
-			ChannelName
-		);
+		dev_log!("output-verbose", "[OutputChannel] append channel={}", ChannelName);
 	}
 }

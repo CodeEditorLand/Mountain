@@ -24,10 +24,7 @@ pub async fn UnregisterScmProvider(Service:&MountainVinegRPCService, Parameter:&
 		.to_string();
 	let DirectHandle = Parameter.get("handle").and_then(Value::as_u64).map(|H| H as u32);
 	if ScmId.is_empty() && DirectHandle.is_none() {
-		dev_log!(
-			"provider-register",
-			"[ProviderUnregister] scm skip: missing handle / scmId"
-		);
+		dev_log!("provider-register", "[ProviderUnregister] scm skip: missing handle / scmId");
 		return;
 	}
 	let Handle = DirectHandle.unwrap_or_else(|| {

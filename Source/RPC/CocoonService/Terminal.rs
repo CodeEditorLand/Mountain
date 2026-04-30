@@ -111,13 +111,10 @@ pub async fn AcceptTerminalOpened(
 	// silently failed to render in the workbench. Aligned to the
 	// consumer's channel name and added the `pid` field the destructure
 	// expects (best-effort: 0 when not yet known).
-	let _ = Service
-		.environment
-		.ApplicationHandle
-		.emit(
-			"sky://terminal/create",
-			json!({ "id": req.terminal_id, "name": req.name, "pid": 0 }),
-		);
+	let _ = Service.environment.ApplicationHandle.emit(
+		"sky://terminal/create",
+		json!({ "id": req.terminal_id, "name": req.name, "pid": 0 }),
+	);
 
 	Ok(Response::new(Empty {}))
 }

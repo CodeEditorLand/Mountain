@@ -34,10 +34,7 @@ fn StripFileUriScheme(Input:&str) -> &str {
 	Input
 }
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileSystem.ReadFile" => {
 			let effect =

@@ -2,6 +2,49 @@
 /// Represents an empty message, typically used for RPCs that don't need to return data.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct Empty {}
+/// LAND-PATCH B7-S6 P2: streaming channel envelope.
+///
+/// One frame on the bidirectional `OpenChannelFromCocoon` /
+/// `OpenChannelFromMountain` streams. The sender chooses which
+/// `payload` arm to populate based on what the frame represents:
+///
+/// * Notification: fire-and-forget; no response expected.
+/// * Request:      paired with a Response carrying the same
+///   correlation_id; receiver reads the request,
+///   dispatches, sends the response back over the
+///   same stream.
+/// * Response:     replies to a previously received Request.
+///   Carries the request's correlation_id verbatim.
+/// * Cancel:       request the receiver to abort an in-flight
+///   request (best-effort; receiver chooses whether
+///   to honour).
+///
+/// Each side maintains a `HashMap<u64, oneshot::Sender>` of pending
+/// requests keyed by correlation_id; the multiplexer routes
+/// incoming Response frames into the matching sender.
+///
+/// Notifications fan out to a `tokio::sync::broadcast` channel so
+/// any number of subscribers (Effect-TS fibers, dev-log, telemetry,
+/// etc.) can observe the same flow concurrently.
+#[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
+pub struct Envelope {
+    #[prost(oneof = "envelope::Payload", tags = "1, 2, 3, 4")]
+    pub payload: ::core::option::Option<envelope::Payload>,
+}
+/// Nested message and enum types in `Envelope`.
+pub mod envelope {
+    #[derive(Clone, PartialEq, Eq, Hash, ::prost::Oneof)]
+    pub enum Payload {
+        #[prost(message, tag = "1")]
+        Notification(super::GenericNotification),
+        #[prost(message, tag = "2")]
+        Request(super::GenericRequest),
+        #[prost(message, tag = "3")]
+        Response(super::GenericResponse),
+        #[prost(message, tag = "4")]
+        Cancel(super::CancelOperationRequest),
+    }
+}
 /// A generic request message containing a method name and serialized parameters.
 #[derive(Clone, PartialEq, Eq, Hash, ::prost::Message)]
 pub struct GenericRequest {
@@ -1851,6 +1894,43 @@ pub mod mountain_service_client {
                 .insert(GrpcMethod::new("Vine.MountainService", "CancelOperation"));
             self.inner.unary(req, path, codec).await
         }
+        /// LAND-PATCH B7-S6 P2: bidirectional streaming channel.
+        ///
+        /// Multiplexes every notification, request, and response over a
+        /// single h2 stream. Each side reads frames asynchronously and
+        /// routes by `correlation_id` (request/response) or by
+        /// `channel` (notification fan-out).
+        ///
+        /// Replaces the unary methods above for any caller that needs
+        /// concurrent / parallel dispatch. The unary methods stay for
+        /// backward compatibility and for callers that explicitly want
+        /// a single round-trip.
+        pub async fn open_channel_from_cocoon(
+            &mut self,
+            request: impl tonic::IntoStreamingRequest<Message = super::Envelope>,
+        ) -> std::result::Result<
+            tonic::Response<tonic::codec::Streaming<super::Envelope>>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.MountainService/OpenChannelFromCocoon",
+            );
+            let mut req = request.into_streaming_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.MountainService", "OpenChannelFromCocoon"),
+                );
+            self.inner.streaming(req, path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -1881,6 +1961,30 @@ pub mod mountain_service_server {
             &self,
             request: tonic::Request<super::CancelOperationRequest>,
         ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Server streaming response type for the OpenChannelFromCocoon method.
+        type OpenChannelFromCocoonStream: tonic::codegen::tokio_stream::Stream<
+                Item = std::result::Result<super::Envelope, tonic::Status>,
+            >
+            + std::marker::Send
+            + 'static;
+        /// LAND-PATCH B7-S6 P2: bidirectional streaming channel.
+        ///
+        /// Multiplexes every notification, request, and response over a
+        /// single h2 stream. Each side reads frames asynchronously and
+        /// routes by `correlation_id` (request/response) or by
+        /// `channel` (notification fan-out).
+        ///
+        /// Replaces the unary methods above for any caller that needs
+        /// concurrent / parallel dispatch. The unary methods stay for
+        /// backward compatibility and for callers that explicitly want
+        /// a single round-trip.
+        async fn open_channel_from_cocoon(
+            &self,
+            request: tonic::Request<tonic::Streaming<super::Envelope>>,
+        ) -> std::result::Result<
+            tonic::Response<Self::OpenChannelFromCocoonStream>,
+            tonic::Status,
+        >;
     }
     /// Service running on the Mountain host, listening for requests from Cocoon.
     #[derive(Debug)]
@@ -2103,6 +2207,56 @@ pub mod mountain_service_server {
                     };
                     Box::pin(fut)
                 }
+                "/Vine.MountainService/OpenChannelFromCocoon" => {
+                    #[allow(non_camel_case_types)]
+                    struct OpenChannelFromCocoonSvc<T: MountainService>(pub Arc<T>);
+                    impl<
+                        T: MountainService,
+                    > tonic::server::StreamingService<super::Envelope>
+                    for OpenChannelFromCocoonSvc<T> {
+                        type Response = super::Envelope;
+                        type ResponseStream = T::OpenChannelFromCocoonStream;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::ResponseStream>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<tonic::Streaming<super::Envelope>>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as MountainService>::open_channel_from_cocoon(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = OpenChannelFromCocoonSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.streaming(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
                 _ => {
                     Box::pin(async move {
                         let mut response = http::Response::new(
@@ -2305,6 +2459,38 @@ pub mod cocoon_service_client {
             req.extensions_mut()
                 .insert(GrpcMethod::new("Vine.CocoonService", "CancelOperation"));
             self.inner.unary(req, path, codec).await
+        }
+        /// LAND-PATCH B7-S6 P2: bidirectional streaming channel (mirror of
+        /// MountainService::OpenChannelFromCocoon). Mountain opens this
+        /// stream once per Cocoon connection; all subsequent traffic
+        /// multiplexes over it. Reverses the call direction so Mountain is
+        /// the streaming initiator (which matches the typical "client
+        /// opens stream, server replies" gRPC idiom).
+        pub async fn open_channel_from_mountain(
+            &mut self,
+            request: impl tonic::IntoStreamingRequest<Message = super::Envelope>,
+        ) -> std::result::Result<
+            tonic::Response<tonic::codec::Streaming<super::Envelope>>,
+            tonic::Status,
+        > {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::unknown(
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic_prost::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/Vine.CocoonService/OpenChannelFromMountain",
+            );
+            let mut req = request.into_streaming_request();
+            req.extensions_mut()
+                .insert(
+                    GrpcMethod::new("Vine.CocoonService", "OpenChannelFromMountain"),
+                );
+            self.inner.streaming(req, path, codec).await
         }
         /// Handshake - Called by Cocoon to signal readiness
         pub async fn initial_handshake(
@@ -5128,6 +5314,25 @@ pub mod cocoon_service_server {
             &self,
             request: tonic::Request<super::CancelOperationRequest>,
         ) -> std::result::Result<tonic::Response<super::Empty>, tonic::Status>;
+        /// Server streaming response type for the OpenChannelFromMountain method.
+        type OpenChannelFromMountainStream: tonic::codegen::tokio_stream::Stream<
+                Item = std::result::Result<super::Envelope, tonic::Status>,
+            >
+            + std::marker::Send
+            + 'static;
+        /// LAND-PATCH B7-S6 P2: bidirectional streaming channel (mirror of
+        /// MountainService::OpenChannelFromCocoon). Mountain opens this
+        /// stream once per Cocoon connection; all subsequent traffic
+        /// multiplexes over it. Reverses the call direction so Mountain is
+        /// the streaming initiator (which matches the typical "client
+        /// opens stream, server replies" gRPC idiom).
+        async fn open_channel_from_mountain(
+            &self,
+            request: tonic::Request<tonic::Streaming<super::Envelope>>,
+        ) -> std::result::Result<
+            tonic::Response<Self::OpenChannelFromMountainStream>,
+            tonic::Status,
+        >;
         /// Handshake - Called by Cocoon to signal readiness
         async fn initial_handshake(
             &self,
@@ -6060,6 +6265,56 @@ pub mod cocoon_service_server {
                                 max_encoding_message_size,
                             );
                         let res = grpc.unary(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/Vine.CocoonService/OpenChannelFromMountain" => {
+                    #[allow(non_camel_case_types)]
+                    struct OpenChannelFromMountainSvc<T: CocoonService>(pub Arc<T>);
+                    impl<
+                        T: CocoonService,
+                    > tonic::server::StreamingService<super::Envelope>
+                    for OpenChannelFromMountainSvc<T> {
+                        type Response = super::Envelope;
+                        type ResponseStream = T::OpenChannelFromMountainStream;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::ResponseStream>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<tonic::Streaming<super::Envelope>>,
+                        ) -> Self::Future {
+                            let inner = Arc::clone(&self.0);
+                            let fut = async move {
+                                <T as CocoonService>::open_channel_from_mountain(
+                                        &inner,
+                                        request,
+                                    )
+                                    .await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let max_decoding_message_size = self.max_decoding_message_size;
+                    let max_encoding_message_size = self.max_encoding_message_size;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let method = OpenChannelFromMountainSvc(inner);
+                        let codec = tonic_prost::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            )
+                            .apply_max_message_size_config(
+                                max_decoding_message_size,
+                                max_encoding_message_size,
+                            );
+                        let res = grpc.streaming(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

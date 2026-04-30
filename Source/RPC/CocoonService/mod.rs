@@ -376,6 +376,28 @@ impl CocoonServiceImpl {
 #[async_trait]
 
 impl CocoonService for CocoonServiceImpl {
+	// LAND-PATCH B7-S6 P2: bidirectional streaming channel mirror.
+	// Stub matching MountainService::open_channel_from_cocoon. The
+	// multiplexer wiring lands with Patch 14; until then this
+	// returns `Unimplemented` and callers fall back to the unary
+	// methods.
+	type OpenChannelFromMountainStream = std::pin::Pin<
+		Box<
+			dyn tonic::codegen::tokio_stream::Stream<Item = Result<crate::Vine::Generated::Envelope, tonic::Status>>
+				+ Send
+				+ 'static,
+		>,
+	>;
+
+	async fn open_channel_from_mountain(
+		&self,
+		_request:tonic::Request<tonic::Streaming<crate::Vine::Generated::Envelope>>,
+	) -> Result<tonic::Response<Self::OpenChannelFromMountainStream>, tonic::Status> {
+		Err(tonic::Status::unimplemented(
+			"OpenChannelFromMountain: streaming multiplexer not yet wired (Patch 14); use unary endpoints",
+		))
+	}
+
 	/// Process Mountain requests from Cocoon (generic request-response).
 	///
 	/// Routes legacy `fs.*` / `commands.*` / `secrets.*` method names used by
@@ -725,10 +747,10 @@ impl CocoonService for CocoonServiceImpl {
 				// `sky://statusbar/create` listener; emit the canonical
 				// `set-entry` channel so the entry materialises on first
 				// register.
-				let _ = self
-					.environment
-					.ApplicationHandle
-					.emit("sky://statusbar/set-entry", json!({ "id": Id, "text": Text, "tooltip": Tooltip }));
+				let _ = self.environment.ApplicationHandle.emit(
+					"sky://statusbar/set-entry",
+					json!({ "id": Id, "text": Text, "tooltip": Tooltip }),
+				);
 				Ok(OkResponse(RequestId, &json!({ "itemId": Id })))
 			},
 			"setStatusBarText" => {

@@ -8,13 +8,12 @@
 //! # FIELDS
 //! - Severity: Marker severity level (Error, Warning, Info, Hint)
 //! - Message: Diagnostic message text
-//! - StartLineNumber/StartColumn: Position start (1-based, matches
-//!   workbench `IMarkerData` - Cocoon's `LanguagesNamespace.ts`
-//!   `NormaliseDiagnostic` adds the `+ 1` from vscode.Position 0-based
-//!   before sending to Mountain. The MarkerService sanitiser at
-//!   `markerService.ts:243` clamps `n > 0 ? n : 1`, so 0-based values
-//!   collapse line-0 entries onto line 1 and shift every other line
-//!   up by one - rendering squiggles on the wrong row.)
+//! - StartLineNumber/StartColumn: Position start (1-based, matches workbench
+//!   `IMarkerData` - Cocoon's `LanguagesNamespace.ts` `NormaliseDiagnostic`
+//!   adds the `+ 1` from vscode.Position 0-based before sending to Mountain.
+//!   The MarkerService sanitiser at `markerService.ts:243` clamps `n > 0 ? n :
+//!   1`, so 0-based values collapse line-0 entries onto line 1 and shift every
+//!   other line up by one - rendering squiggles on the wrong row.)
 //! - EndLineNumber/EndColumn: Position end (1-based, same convention)
 //! - Source: Diagnostic source (e.g., compiler, linter)
 //! - Code: Diagnostic code for quick fix lookup

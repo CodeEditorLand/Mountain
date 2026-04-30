@@ -12,6 +12,20 @@ service MountainService {
 
   // A method for Cocoon to request that Mountain cancel a long-running operation.
   rpc CancelOperation(CancelOperationRequest) returns (Empty);
+
+  // LAND-PATCH B7-S6 P2: bidirectional streaming channel.
+  //
+  // Multiplexes every notification, request, and response over a
+  // single h2 stream. Each side reads frames asynchronously and
+  // routes by `correlation_id` (request/response) or by
+  // `channel` (notification fan-out).
+  //
+  // Replaces the unary methods above for any caller that needs
+  // concurrent / parallel dispatch. The unary methods stay for
+  // backward compatibility and for callers that explicitly want
+  // a single round-trip.
+  //
+  rpc OpenChannelFromCocoon(stream Envelope) returns (stream Envelope);
 }
 
 // Service running on the Cocoon sidecar, listening for requests from Mountain.
@@ -24,6 +38,14 @@ service CocoonService {
 
   // A method for Mountain to request that Cocoon cancel a long-running operation.
   rpc CancelOperation(CancelOperationRequest) returns (Empty);
+
+  // LAND-PATCH B7-S6 P2: bidirectional streaming channel (mirror of
+  // MountainService::OpenChannelFromCocoon). Mountain opens this
+  // stream once per Cocoon connection; all subsequent traffic
+  // multiplexes over it. Reverses the call direction so Mountain is
+  // the streaming initiator (which matches the typical "client
+  // opens stream, server replies" gRPC idiom).
+  rpc OpenChannelFromMountain(stream Envelope) returns (stream Envelope);
 
   // ==================== Initialization ====================
 
@@ -414,6 +436,39 @@ service CocoonService {
 
 // Represents an empty message, typically used for RPCs that don't need to return data.
 message Empty {}
+
+// LAND-PATCH B7-S6 P2: streaming channel envelope.
+//
+// One frame on the bidirectional `OpenChannelFromCocoon` /
+// `OpenChannelFromMountain` streams. The sender chooses which
+// `payload` arm to populate based on what the frame represents:
+//
+//   - Notification: fire-and-forget; no response expected.
+//   - Request:      paired with a Response carrying the same
+//                   correlation_id; receiver reads the request,
+//                   dispatches, sends the response back over the
+//                   same stream.
+//   - Response:     replies to a previously received Request.
+//                   Carries the request's correlation_id verbatim.
+//   - Cancel:       request the receiver to abort an in-flight
+//                   request (best-effort; receiver chooses whether
+//                   to honour).
+//
+// Each side maintains a `HashMap<u64, oneshot::Sender>` of pending
+// requests keyed by correlation_id; the multiplexer routes
+// incoming Response frames into the matching sender.
+//
+// Notifications fan out to a `tokio::sync::broadcast` channel so
+// any number of subscribers (Effect-TS fibers, dev-log, telemetry,
+// etc.) can observe the same flow concurrently.
+message Envelope {
+  oneof payload {
+    GenericNotification notification = 1;
+    GenericRequest request = 2;
+    GenericResponse response = 3;
+    CancelOperationRequest cancel = 4;
+  }
+}
 
 // A generic request message containing a method name and serialized parameters.
 message GenericRequest {

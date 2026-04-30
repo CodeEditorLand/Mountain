@@ -10,8 +10,8 @@ use CommonLibrary::Error::CommonError::CommonError;
 /// object without the `external` convenience field.
 ///
 /// Cocoon's wire shapes vary by call site:
-///   - `Diagnostic.Set` and a few others send the URI as a plain string
-///     (the canonical form returned by `Uri.toString()`).
+///   - `Diagnostic.Set` and a few others send the URI as a plain string (the
+///     canonical form returned by `Uri.toString()`).
 ///   - `MainThread*` boundaries send the `{scheme, authority, path, query,
 ///     fragment, external}` object that vs/base/common/uri.ts emits via
 ///     `URI.toJSON()`.
@@ -24,17 +24,21 @@ use CommonLibrary::Error::CommonError::CommonError;
 pub fn GetURLFromURIComponentsDTO(URIDTO:&serde_json::Value) -> Result<Url, CommonError> {
 	// 1. Plain string: parse directly.
 	if let Some(URIString) = URIDTO.as_str() {
-		return Url::parse(URIString).map_err(|Error| CommonError::InvalidArgument {
-			ArgumentName:"URIDTO".to_string(),
-			Reason:format!("Failed to parse URI string '{}': {}", URIString, Error),
+		return Url::parse(URIString).map_err(|Error| {
+			CommonError::InvalidArgument {
+				ArgumentName:"URIDTO".to_string(),
+				Reason:format!("Failed to parse URI string '{}': {}", URIString, Error),
+			}
 		});
 	}
 
 	// 2. Object with `external` field (VS Code's UriComponents).
 	if let Some(URIString) = URIDTO.get("external").and_then(serde_json::Value::as_str) {
-		return Url::parse(URIString).map_err(|Error| CommonError::InvalidArgument {
-			ArgumentName:"URIDTO.external".to_string(),
-			Reason:format!("Failed to parse URI string '{}': {}", URIString, Error),
+		return Url::parse(URIString).map_err(|Error| {
+			CommonError::InvalidArgument {
+				ArgumentName:"URIDTO.external".to_string(),
+				Reason:format!("Failed to parse URI string '{}': {}", URIString, Error),
+			}
 		});
 	}
 
@@ -54,16 +58,16 @@ pub fn GetURLFromURIComponentsDTO(URIDTO:&serde_json::Value) -> Result<Url, Comm
 			Reconstructed.push('#');
 			Reconstructed.push_str(Fragment);
 		}
-		return Url::parse(&Reconstructed).map_err(|Error| CommonError::InvalidArgument {
-			ArgumentName:"URIDTO".to_string(),
-			Reason:format!("Failed to parse reconstructed URI '{}': {}", Reconstructed, Error),
+		return Url::parse(&Reconstructed).map_err(|Error| {
+			CommonError::InvalidArgument {
+				ArgumentName:"URIDTO".to_string(),
+				Reason:format!("Failed to parse reconstructed URI '{}': {}", Reconstructed, Error),
+			}
 		});
 	}
 
 	Err(CommonError::InvalidArgument {
 		ArgumentName:"URIDTO".to_string(),
-		Reason:"Expected a URI string, an object with 'external', or an object with \
-		        'scheme' + 'path'"
-			.to_string(),
+		Reason:"Expected a URI string, an object with 'external', or an object with 'scheme' + 'path'".to_string(),
 	})
 }

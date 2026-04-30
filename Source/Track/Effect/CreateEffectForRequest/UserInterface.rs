@@ -11,20 +11,15 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"UserInterface.ShowMessage" => {
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-						let severity_str =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("info");
-						let message =
-							Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+						let severity_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("info");
+						let message = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 						let options = Parameters.get(2).cloned();
 						let severity = match severity_str {
 							"warning" => MessageSeverity::Warning,
@@ -48,9 +43,7 @@ pub fn CreateEffect<R:Runtime>(
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 						let (items, options) = (
 							vec![],
-							None as Option<
-								CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO,
-							>,
+							None as Option<CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO>,
 						);
 						provider
 							.ShowQuickPick(items, options)

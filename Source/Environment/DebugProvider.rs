@@ -63,8 +63,8 @@
 //! - Reverse-RPC `$sendDAPRequest` Cocoon handler for inline-impl adapters
 //! - Per-session request_seq allocation (currently caller-supplied)
 //! - Adapter crash detection: when stdout EOFs unexpectedly, emit
-//!   `$onDidTerminateDebugSession` so the workbench tears down its
-//!   session view (today the user sees a stale session row)
+//!   `$onDidTerminateDebugSession` so the workbench tears down its session view
+//!   (today the user sees a stale session row)
 //! - Debug console / variable inspection integration
 //! - Telemetry for adapter spawn duration, session length, exit codes
 //!
@@ -230,10 +230,11 @@ impl DebugService for MountainEnvironment {
 
 		// Adapter-descriptor DTO shapes mirror VS Code's
 		// `vs/workbench/api/common/extHostDebugService.ts::convert*ToDto`:
-		//   executable  → { type: "executable", command, args, options: { env?, cwd? } }
-		//   server      → { type: "server", port, host? }
+		//   executable  → { type: "executable", command, args, options: { env?, cwd? }
+		// }   server      → { type: "server", port, host? }
 		//   pipeServer  → { type: "pipeServer", path }
-		//   implementation → { type: "implementation" }   (handled in-process by Cocoon)
+		//   implementation → { type: "implementation" }   (handled in-process by
+		// Cocoon)
 		//
 		// Phase 1 of DAP spawning supports `executable` only - that covers
 		// every JS/TS debug adapter (vscode-js-debug, node) and most
@@ -247,11 +248,7 @@ impl DebugService for MountainEnvironment {
 		// and Cocoon dispatches DAP frames internally; we still record
 		// the session so `vscode.debug.onDidStartDebugSession` listeners
 		// receive the activation event.
-		let DescriptorType = Descriptor
-			.get("type")
-			.and_then(Value::as_str)
-			.unwrap_or("")
-			.to_string();
+		let DescriptorType = Descriptor.get("type").and_then(Value::as_str).unwrap_or("").to_string();
 		let AdapterStdinSender:Option<tokio::sync::mpsc::UnboundedSender<Vec<u8>>>;
 		let AdapterChildPid:Option<u32>;
 		match DescriptorType.as_str() {
@@ -310,10 +307,14 @@ impl DebugService for MountainEnvironment {
 					CommonError::IPCError { Description:format!("Adapter for session {} had no stdin pipe", SessionID) }
 				})?;
 				let Stdout = Child.stdout.take().ok_or_else(|| {
-					CommonError::IPCError { Description:format!("Adapter for session {} had no stdout pipe", SessionID) }
+					CommonError::IPCError {
+						Description:format!("Adapter for session {} had no stdout pipe", SessionID),
+					}
 				})?;
 				let Stderr = Child.stderr.take().ok_or_else(|| {
-					CommonError::IPCError { Description:format!("Adapter for session {} had no stderr pipe", SessionID) }
+					CommonError::IPCError {
+						Description:format!("Adapter for session {} had no stderr pipe", SessionID),
+					}
 				})?;
 
 				let (Sender, mut Receiver) = tokio::sync::mpsc::unbounded_channel::<Vec<u8>>();
@@ -423,12 +424,7 @@ impl DebugService for MountainEnvironment {
 					use tokio::io::{AsyncBufReadExt, BufReader};
 					let mut Lines = BufReader::new(Stderr).lines();
 					while let Ok(Some(Line)) = Lines.next_line().await {
-						crate::dev_log!(
-							"exthost",
-							"[DebugAdapter] stderr session={}: {}",
-							StderrSessionId,
-							Line
-						);
+						crate::dev_log!("exthost", "[DebugAdapter] stderr session={}: {}", StderrSessionId, Line);
 					}
 				});
 
@@ -455,7 +451,8 @@ impl DebugService for MountainEnvironment {
 			"implementation" => {
 				dev_log!(
 					"exthost",
-					"[DebugProvider] Inline implementation adapter for session '{}' - DAP frames travel via Cocoon reverse-RPC.",
+					"[DebugProvider] Inline implementation adapter for session '{}' - DAP frames travel via Cocoon \
+					 reverse-RPC.",
 					SessionID
 				);
 				AdapterStdinSender = None;
@@ -464,7 +461,8 @@ impl DebugService for MountainEnvironment {
 			_ => {
 				dev_log!(
 					"exthost",
-					"warn: [DebugProvider] Unknown adapter descriptor type '{}' for session '{}' - registering session without spawn.",
+					"warn: [DebugProvider] Unknown adapter descriptor type '{}' for session '{}' - registering \
+					 session without spawn.",
 					DescriptorType,
 					SessionID
 				);

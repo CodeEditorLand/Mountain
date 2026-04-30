@@ -206,10 +206,7 @@ impl DebugState {
 	/// Resolves an active session by id. Returns a `Clone` so the caller
 	/// can drop the lock before doing IO with the entry's `StdinSender`.
 	pub fn GetDebugSession(&self, SessionId:&str) -> Option<DebugSessionEntry> {
-		self.DebugSessions
-			.lock()
-			.ok()
-			.and_then(|Guard| Guard.get(SessionId).cloned())
+		self.DebugSessions.lock().ok().and_then(|Guard| Guard.get(SessionId).cloned())
 	}
 
 	/// Removes a session from the registry. Dropping the returned entry's
@@ -223,10 +220,6 @@ impl DebugState {
 	/// Snapshot of all active sessions. Used by diagnostic dev_log surfaces
 	/// and the reverse-RPC dispatch when no session-id is supplied.
 	pub fn GetAllDebugSessions(&self) -> HashMap<String, DebugSessionEntry> {
-		self.DebugSessions
-			.lock()
-			.ok()
-			.map(|Guard| Guard.clone())
-			.unwrap_or_default()
+		self.DebugSessions.lock().ok().map(|Guard| Guard.clone()).unwrap_or_default()
 	}
 }

@@ -155,18 +155,20 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	};
 	let RootUriString = match &RootUri {
 		Value::String(S) => S.clone(),
-		Value::Object(O) => BuildUrlFromComponents(O)
-			.or_else(|| O.get("external").and_then(Value::as_str).map(str::to_string))
-			.or_else(|| {
-				// Last-resort: prepend file:// to a bare path so
-				// URLSerializationHelper at least gets a parseable
-				// scheme. Never silently emit a relative URL.
-				O.get("path")
-					.and_then(Value::as_str)
-					.filter(|P| P.starts_with('/'))
-					.map(|P| format!("file://{}", P))
-			})
-			.unwrap_or_else(|| "file:///".to_string()),
+		Value::Object(O) => {
+			BuildUrlFromComponents(O)
+				.or_else(|| O.get("external").and_then(Value::as_str).map(str::to_string))
+				.or_else(|| {
+					// Last-resort: prepend file:// to a bare path so
+					// URLSerializationHelper at least gets a parseable
+					// scheme. Never silently emit a relative URL.
+					O.get("path")
+						.and_then(Value::as_str)
+						.filter(|P| P.starts_with('/'))
+						.map(|P| format!("file://{}", P))
+				})
+				.unwrap_or_else(|| "file:///".to_string())
+		},
 		_ => "file:///".to_string(),
 	};
 	// Field names must match `SourceControlCreateDTO`'s camelCase wire
@@ -211,12 +213,7 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 			"handle": Handle,
 		}),
 	) {
-		dev_log!(
-			"grpc",
-			"warn: [Scm] sky://scm/register emit failed for {}: {}",
-			ScmId,
-			Error
-		);
+		dev_log!("grpc", "warn: [Scm] sky://scm/register emit failed for {}: {}", ScmId, Error);
 	}
 
 	dev_log!(

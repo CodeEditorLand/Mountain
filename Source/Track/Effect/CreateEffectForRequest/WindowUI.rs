@@ -10,10 +10,7 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Window.ShowMessage" => {
 			let effect =
@@ -33,10 +30,8 @@ pub fn CreateEffect<R:Runtime>(
 								.map(|D| D.as_millis())
 								.unwrap_or(0)
 						);
-						let Message =
-							Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
-						let Level =
-							Payload.get("level").and_then(Value::as_str).unwrap_or("info").to_string();
+						let Message = Payload.get("message").and_then(Value::as_str).unwrap_or("").to_string();
+						let Level = Payload.get("level").and_then(Value::as_str).unwrap_or("info").to_string();
 						let Items = Payload.get("items").cloned().unwrap_or(json!([]));
 						let Options = Payload.get("options").cloned().unwrap_or(json!({}));
 						if let Err(Error) = AppHandle.emit(
@@ -61,17 +56,13 @@ pub fn CreateEffect<R:Runtime>(
 			Some(Ok(Box::new(effect)))
 		},
 
-		"Window.ShowQuickPick"
-		| "Window.ShowInputBox"
-		| "Window.ShowOpenDialog"
-		| "Window.ShowSaveDialog" => {
+		"Window.ShowQuickPick" | "Window.ShowInputBox" | "Window.ShowOpenDialog" | "Window.ShowSaveDialog" => {
 			let MethodNameOwned = MethodName.to_string();
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						use tauri::Emitter;
-						let Args =
-							if Parameters.is_array() { Parameters } else { json!([Parameters]) };
+						let Args = if Parameters.is_array() { Parameters } else { json!([Parameters]) };
 						let Channel = match MethodNameOwned.as_str() {
 							"Window.ShowQuickPick" => "sky://quickpick/show",
 							"Window.ShowInputBox" => "sky://input-box/show",
@@ -87,16 +78,8 @@ pub fn CreateEffect<R:Runtime>(
 								.map(|D| D.as_nanos())
 								.unwrap_or(0)
 						);
-						if let Err(Error) =
-							AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args }))
-						{
-							dev_log!(
-								"ipc",
-								"warn: [{}] {} emit failed: {}",
-								MethodNameOwned,
-								Channel,
-								Error
-							);
+						if let Err(Error) = AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args })) {
+							dev_log!("ipc", "warn: [{}] {} emit failed: {}", MethodNameOwned, Channel, Error);
 						}
 						Ok(Value::Null)
 					})

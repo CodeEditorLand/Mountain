@@ -29,11 +29,7 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 	if CommandId.is_empty() {
 		return;
 	}
-	let Kind = Parameter
-		.get("kind")
-		.and_then(Value::as_str)
-		.unwrap_or("command")
-		.to_string();
+	let Kind = Parameter.get("kind").and_then(Value::as_str).unwrap_or("command").to_string();
 	if let Ok(mut Registry) = Service
 		.RunTime()
 		.Environment

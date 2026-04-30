@@ -76,8 +76,8 @@
 //! - `Message`: Human-readable description
 //! - `StartLineNumber`/`StartColumn`: Start position (1-based, matches
 //!   workbench `IMarkerData` - Cocoon's `LanguagesNamespace.ts`
-//!   `NormaliseDiagnostic` adds the `+ 1` from vscode.Position 0-based
-//!   before sending to Mountain)
+//!   `NormaliseDiagnostic` adds the `+ 1` from vscode.Position 0-based before
+//!   sending to Mountain)
 //! - `EndLineNumber`/`EndColumn`: End position (1-based, same convention)
 //! - `Source`: Diagnostic source string (e.g., "tslint")
 //! - `Code`: Diagnostic code for quick fix lookup
@@ -201,11 +201,11 @@ use CommonLibrary::{
 };
 use async_trait::async_trait;
 use serde_json::{Value, json};
+
 // `tauri::Emitter` is no longer used directly here - all emits
 // route through `LogSkyEmit` which carries the trait import. The
 // import was previously here for the direct `.emit()` calls now
 // replaced. Removed to keep the file warning-clean.
-
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::{ApplicationState::DTO::MarkerDataDTO::MarkerDataDTO, IPC::SkyEmit::LogSkyEmit, dev_log};
 
@@ -319,11 +319,7 @@ impl DiagnosticManager for MountainEnvironment {
 		// signals to over- or under-count when triaging "Problems panel
 		// shows count but no items"; without LogSkyEmit the channel was
 		// invisible.
-		if let Err(Error) = LogSkyEmit(
-			&self.ApplicationHandle,
-			SkyEvent::DiagnosticsChanged.AsStr(),
-			EventPayload,
-		) {
+		if let Err(Error) = LogSkyEmit(&self.ApplicationHandle, SkyEvent::DiagnosticsChanged.AsStr(), EventPayload) {
 			dev_log!(
 				"extensions",
 				"error: [DiagnosticProvider] Failed to emit 'diagnostics_changed': {}",
@@ -377,10 +373,8 @@ impl DiagnosticManager for MountainEnvironment {
 			// Clear path - every URI's marker set goes to empty so the
 			// SkyBridge listener can wipe them via
 			// `IMarkerService.changeOne(owner, uri, [])`.
-			let ChangedEntries:Vec<serde_json::Value> = ChangedURIKeys
-				.iter()
-				.map(|Uri| json!({ "uri": Uri, "markers": [] }))
-				.collect();
+			let ChangedEntries:Vec<serde_json::Value> =
+				ChangedURIKeys.iter().map(|Uri| json!({ "uri": Uri, "markers": [] })).collect();
 			let EventPayload = json!({
 				"Owner": Owner,
 				"owner": Owner,
@@ -388,11 +382,8 @@ impl DiagnosticManager for MountainEnvironment {
 				"changedURIs": ChangedEntries,
 			});
 
-			if let Err(Error) = LogSkyEmit(
-				&self.ApplicationHandle,
-				SkyEvent::DiagnosticsChanged.AsStr(),
-				EventPayload,
-			) {
+			if let Err(Error) = LogSkyEmit(&self.ApplicationHandle, SkyEvent::DiagnosticsChanged.AsStr(), EventPayload)
+			{
 				dev_log!(
 					"extensions",
 					"error: [DiagnosticProvider] Failed to emit 'diagnostics_changed' on clear: {}",

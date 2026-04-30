@@ -34,8 +34,7 @@ pub async fn UnregisterCommand(Service:&MountainVinegRPCService, Parameter:&Valu
 	// Pair with `RegisterCommand` so the workbench command-service view
 	// and Mountain's registry stay in sync when an extension disposes a
 	// command (deactivate, hot-swap, etc.).
-	let _ = Service.ApplicationHandle().emit(
-		"sky://command/unregister",
-		json!({ "id": CommandId, "commandId": CommandId }),
-	);
+	let _ = Service
+		.ApplicationHandle()
+		.emit("sky://command/unregister", json!({ "id": CommandId, "commandId": CommandId }));
 }

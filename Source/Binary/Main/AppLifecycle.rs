@@ -82,6 +82,7 @@ use crate::{
 	Binary::Register::IPCServerRegister::IPCServerRegister as IPCServerRegisterFn,
 	Binary::Register::StatusReporterRegister::StatusReporterRegister as StatusReporterRegisterFn,
 	Binary::Register::WindSyncRegister::WindSyncRegister as WindSyncRegisterFn,
+	Binary::Service::AirStart::AirStart as AirStartFn,
 	Binary::Service::CocoonStart::CocoonStart as CocoonStartFn,
 	Binary::Service::ConfigurationInitialize::ConfigurationInitialize as ConfigurationInitializeFn,
 	Binary::Service::VineStart::VineStart as VineStartFn,
@@ -430,6 +431,15 @@ pub fn AppLifecycleSetup(
 		let CocoonStart = crate::IPC::DevLog::NowNano();
 		let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
 		crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
+
+		// [Air] [Sidecar] - daemon for updates / downloads / signing /
+		// indexing / system monitoring. Spawn parallel to Cocoon; both
+		// are sidecars in the Vine pool. AirStart returns Ok(()) even
+		// on spawn failure (graceful degradation - workbench works
+		// without Air, just without those background capabilities).
+		let AirStartT0 = crate::IPC::DevLog::NowNano();
+		let _ = AirStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
+		crate::otel_span!("lifecycle:air:start", AirStartT0);
 
 		// [Lifecycle] [Phase] Advance Starting → Ready now that the gRPC
 		// server + Cocoon sidecar + extension scan have all finished. Wind's

@@ -469,6 +469,49 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 			// Clone body before using it
 			let body_bytes = body.clone();
 
+			// LAND-FIX B1.P1: MIME-honesty on 404. The localhost
+			// server (or Astro/Vite dev page underneath) returns an
+			// HTML body with `Content-Type: text/html` for any
+			// missing path. The webview asks for `.js`/`.json`/`.css`
+			// files; when it parses the HTML body as JS it crashes
+			// with `SyntaxError: Unexpected token '<'` at column N -
+			// the exact symptom reported in the release-electron-
+			// bundled run. Rewrite the response to text/plain empty
+			// body when the request was for a known asset extension
+			// AND upstream returned non-2xx.
+			let LowerPath = path.to_ascii_lowercase();
+			let IsAssetRequest = LowerPath.ends_with(".js")
+				|| LowerPath.ends_with(".mjs")
+				|| LowerPath.ends_with(".cjs")
+				|| LowerPath.ends_with(".json")
+				|| LowerPath.ends_with(".map")
+				|| LowerPath.ends_with(".css")
+				|| LowerPath.ends_with(".wasm")
+				|| LowerPath.ends_with(".svg")
+				|| LowerPath.ends_with(".png")
+				|| LowerPath.ends_with(".woff")
+				|| LowerPath.ends_with(".woff2")
+				|| LowerPath.ends_with(".ttf")
+				|| LowerPath.ends_with(".otf");
+			let UpstreamSaysHtml = headers
+				.get("content-type")
+				.map(|V| V.to_ascii_lowercase().contains("text/html"))
+				.unwrap_or(false);
+			if IsAssetRequest && (status == 404 || (status >= 400 && UpstreamSaysHtml)) {
+				dev_log!(
+					"scheme-assets",
+					"[LandFix:Mime] swap HTML 404 → text/plain empty for asset path={} status={}",
+					path,
+					status
+				);
+				return Builder::new()
+					.status(404)
+					.header("Content-Type", "text/plain; charset=utf-8")
+					.header("Access-Control-Allow-Origin", "land://code.editor.land")
+					.body(Vec::<u8>::new())
+					.unwrap_or_else(|_| build_error_response(500, "Failed to build 404 response"));
+			}
+
 			// Build response with CORS headers
 			let mut response_builder = Builder::new()
 				.status(status)
@@ -757,12 +800,11 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	// `vscode-file://vscode.git/Volumes/.../extensions/git/media/icon.svg`.
 	// The strip-prefix chain below covers both:
 	//   1. Exact `vscode-app` authority (with or without trailing `/`)
-	//   2. ANY other authority - we treat the post-authority path as
-	//      the resource path and let the OS-absolute-root detection
-	//      below serve it straight from disk. Without this fallback
-	//      every extension-supplied webview asset (icons, scripts,
-	//      stylesheets, fonts) returned 404 because the strip yielded
-	//      `""` and the asset_resolver lookup ran with an empty key.
+	//   2. ANY other authority - we treat the post-authority path as the resource
+	//      path and let the OS-absolute-root detection below serve it straight from
+	//      disk. Without this fallback every extension-supplied webview asset
+	//      (icons, scripts, stylesheets, fonts) returned 404 because the strip
+	//      yielded `""` and the asset_resolver lookup ran with an empty key.
 	let FilePath = Uri
 		.strip_prefix("vscode-file://vscode-app/")
 		.or_else(|| Uri.strip_prefix("vscode-file://vscode-app"))
@@ -821,14 +863,8 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	// export an empty default. The SW + `<link>` fast-path then
 	// loads the actual CSS bytes from `/Static/Application/...`.
 	if CleanPath.ends_with(".css") {
-		let LocalPath = format!(
-			"/Static/Application/{}",
-			CleanPath.trim_start_matches("Static/Application/")
-		);
-		let Body = format!(
-			"globalThis._LOAD_CSS_WORKER?.({:?}); export default {{}};",
-			LocalPath
-		);
+		let LocalPath = format!("/Static/Application/{}", CleanPath.trim_start_matches("Static/Application/"));
+		let Body = format!("globalThis._LOAD_CSS_WORKER?.({:?}); export default {{}};", LocalPath);
 		dev_log!(
 			"scheme-assets",
 			"[LandFix:VscodeFile] css-shim {} -> _LOAD_CSS_WORKER({})",
@@ -843,7 +879,6 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 			.body(Body.into_bytes())
 			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 	}
-
 
 	// Icon themes, grammars and other extension-contributed assets generate
 	// URIs like `vscode-file://vscode-app/Volumes/CORSAIR/.../seti.woff` after
@@ -883,28 +918,51 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 			FilesystemPath.is_file()
 		);
 		if FilesystemPath.exists() && FilesystemPath.is_file() {
-			match std::fs::read(FilesystemPath) {
-				Ok(Bytes) => {
-					let Mime = MimeFromExtension(&CleanPath);
+			// LAND-PATCH B7.P01: route through the mmap cache. First
+			// hit on a path mmaps the file; subsequent hits are
+			// wait-free DashMap reads. Brotli sibling (`<file>.br`)
+			// is auto-discovered and served when the request offers
+			// `Accept-Encoding: br`.
+			match crate::Cache::AssetMemoryMap::LoadOrInsert(FilesystemPath) {
+				Ok(Entry) => {
+					let AcceptsBrotli = Request
+						.headers()
+						.get("accept-encoding")
+						.and_then(|V| V.to_str().ok())
+						.map(|S| S.contains("br"))
+						.unwrap_or(false);
+					let (Body, Encoding):(Vec<u8>, Option<&str>) = if AcceptsBrotli {
+						match Entry.AsBrotliSlice() {
+							Some(Slice) => (Slice.to_vec(), Some("br")),
+							None => (Entry.AsSlice().to_vec(), None),
+						}
+					} else {
+						(Entry.AsSlice().to_vec(), None)
+					};
 					dev_log!(
 						"scheme-assets",
-						"[LandFix:VscodeFile] os-abs served {} ({}, {} bytes)",
+						"[LandFix:VscodeFile] os-abs served {} ({}, {} bytes, encoding={:?})",
 						AbsolutePath,
-						Mime,
-						Bytes.len()
+						Entry.Mime,
+						Body.len(),
+						Encoding
 					);
-					return Builder::new()
+					let mut B = Builder::new()
 						.status(200)
-						.header("Content-Type", Mime)
+						.header("Content-Type", Entry.Mime)
 						.header("Access-Control-Allow-Origin", "*")
-						.header("Cache-Control", "public, max-age=3600")
-						.body(Bytes)
+						.header("Cache-Control", "public, max-age=3600");
+					if let Some(Enc) = Encoding {
+						B = B.header("Content-Encoding", Enc);
+					}
+					return B
+						.body(Body)
 						.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 				},
 				Err(Error) => {
 					dev_log!(
 						"lifecycle",
-						"warn: [LandFix:VscodeFile] os-abs read failure {}: {}",
+						"warn: [LandFix:VscodeFile] os-abs mmap failure {}: {}",
 						AbsolutePath,
 						Error
 					);
@@ -956,24 +1014,43 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 		let FilesystemPath = std::path::Path::new(&Root).join(&CleanPath);
 
 		if FilesystemPath.exists() && FilesystemPath.is_file() {
-			match std::fs::read(&FilesystemPath) {
-				Ok(Bytes) => {
-					let Mime = MimeFromExtension(&CleanPath);
-
+			// LAND-PATCH B7.P01: mmap-cache the StaticRoot fallback
+			// path so dev-mode workbench reloads pay the syscall
+			// once per asset for the entire session.
+			match crate::Cache::AssetMemoryMap::LoadOrInsert(&FilesystemPath) {
+				Ok(Entry) => {
+					let AcceptsBrotli = Request
+						.headers()
+						.get("accept-encoding")
+						.and_then(|V| V.to_str().ok())
+						.map(|S| S.contains("br"))
+						.unwrap_or(false);
+					let (Body, Encoding):(Vec<u8>, Option<&str>) = if AcceptsBrotli {
+						match Entry.AsBrotliSlice() {
+							Some(Slice) => (Slice.to_vec(), Some("br")),
+							None => (Entry.AsSlice().to_vec(), None),
+						}
+					} else {
+						(Entry.AsSlice().to_vec(), None)
+					};
 					dev_log!(
 						"lifecycle",
-						"[LandFix:VscodeFile] Serving (fs) {} ({}, {} bytes)",
+						"[LandFix:VscodeFile] Serving (fs-mmap) {} ({}, {} bytes, encoding={:?})",
 						CleanPath,
-						Mime,
-						Bytes.len()
+						Entry.Mime,
+						Body.len(),
+						Encoding
 					);
-
-					return Builder::new()
+					let mut B = Builder::new()
 						.status(200)
-						.header("Content-Type", Mime)
+						.header("Content-Type", Entry.Mime)
 						.header("Access-Control-Allow-Origin", "*")
-						.header("Cache-Control", "public, max-age=3600")
-						.body(Bytes)
+						.header("Cache-Control", "public, max-age=3600");
+					if let Some(Enc) = Encoding {
+						B = B.header("Content-Encoding", Enc);
+					}
+					return B
+						.body(Body)
 						.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 				},
 				Err(Error) => {

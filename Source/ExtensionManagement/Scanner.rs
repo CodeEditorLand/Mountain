@@ -151,9 +151,7 @@ const TEST_ONLY_EXTENSIONS:&[&str] = &[
 	"vscode-notebook-tests",
 ];
 
-fn IncludeTestExtensions() -> bool {
-	matches!(std::env::var("Test").as_deref(), Ok("1") | Ok("true"))
-}
+fn IncludeTestExtensions() -> bool { matches!(std::env::var("Test").as_deref(), Ok("1") | Ok("true")) }
 
 fn IsDeniedDirectory(Name:&str) -> bool { EXTENSION_SCAN_DENY_LIST.iter().any(|Denied| *Denied == Name) }
 

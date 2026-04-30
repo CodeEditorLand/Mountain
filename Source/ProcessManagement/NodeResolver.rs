@@ -63,7 +63,7 @@ impl NodeSource {
 	}
 }
 
-static RESOLVED: OnceLock<ResolvedNode> = OnceLock::new();
+static RESOLVED:OnceLock<ResolvedNode> = OnceLock::new();
 
 /// Resolve the Node binary to spawn Cocoon with. Caches the result for the
 /// life of the process. If all resolution fails, returns the string `"node"`
@@ -135,8 +135,8 @@ fn CheckMinMajor(VersionString:&str) {
 	if Major < Required {
 		dev_log!(
 			"cocoon",
-			"warn: [NodeResolver] Node {} is below Require={}; extension host may fail to boot. Override \
-			 via Pick or upgrade Node.",
+			"warn: [NodeResolver] Node {} is below Require={}; extension host may fail to boot. Override via Pick or \
+			 upgrade Node.",
 			VersionString,
 			Required
 		);
@@ -180,11 +180,7 @@ fn TryOverride() -> Option<ResolvedNode> {
 	if Expanded.exists() {
 		Some(ResolvedNode { Path:Expanded, Source:NodeSource::Override })
 	} else {
-		dev_log!(
-			"cocoon",
-			"warn: [NodeResolver] Pick={} does not exist; ignoring",
-			Raw
-		);
+		dev_log!("cocoon", "warn: [NodeResolver] Pick={} does not exist; ignoring", Raw);
 		None
 	}
 }
@@ -192,11 +188,7 @@ fn TryOverride() -> Option<ResolvedNode> {
 fn TryShipped<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> Option<ResolvedNode> {
 	// Production: Tauri bundles the shipped Node under Resources/Node/bin/node
 	// (or Resources/Node/node.exe on Windows).
-	let RelativeToResource = if cfg!(target_os = "windows") {
-		"Node/node.exe"
-	} else {
-		"Node/bin/node"
-	};
+	let RelativeToResource = if cfg!(target_os = "windows") { "Node/node.exe" } else { "Node/bin/node" };
 
 	if let Ok(Resolved) = ApplicationHandle.path().resolve(RelativeToResource, BaseDirectory::Resource) {
 		if Resolved.exists() {
@@ -243,10 +235,13 @@ fn TryFnm() -> Option<ResolvedNode> {
 
 fn TryVolta() -> Option<ResolvedNode> {
 	let VoltaHome = std::env::var("VOLTA_HOME").ok().or_else(|| {
-		std::env::var("HOME").ok().map(|H| PathBuf::from(H).join(".volta").to_string_lossy().into_owned())
+		std::env::var("HOME")
+			.ok()
+			.map(|H| PathBuf::from(H).join(".volta").to_string_lossy().into_owned())
 	})?;
-	// Volta's default-version symlink: <VOLTA_HOME>/tools/image/node/current/bin/node
-	// but in practice Volta creates shim binaries under <VOLTA_HOME>/bin.
+	// Volta's default-version symlink:
+	// <VOLTA_HOME>/tools/image/node/current/bin/node but in practice Volta creates
+	// shim binaries under <VOLTA_HOME>/bin.
 	let ShimCandidate = PathBuf::from(&VoltaHome).join("bin").join(NodeExecutableName());
 	if ShimCandidate.exists() {
 		return Some(ResolvedNode { Path:ShimCandidate, Source:NodeSource::Volta });
@@ -256,7 +251,9 @@ fn TryVolta() -> Option<ResolvedNode> {
 
 fn TryAsdf() -> Option<ResolvedNode> {
 	let AsdfDataDir = std::env::var("ASDF_DATA_DIR").ok().or_else(|| {
-		std::env::var("HOME").ok().map(|H| PathBuf::from(H).join(".asdf").to_string_lossy().into_owned())
+		std::env::var("HOME")
+			.ok()
+			.map(|H| PathBuf::from(H).join(".asdf").to_string_lossy().into_owned())
 	})?;
 	// asdf shims resolve the active `.tool-versions` entry on every call.
 	let ShimCandidate = PathBuf::from(&AsdfDataDir).join("shims").join(NodeExecutableName());
@@ -281,7 +278,9 @@ fn TryNvm() -> Option<ResolvedNode> {
 	// installed"). Users who want a specific version should export
 	// `Pick` instead.
 	let NvmDir = std::env::var("NVM_DIR").ok().or_else(|| {
-		std::env::var("HOME").ok().map(|H| PathBuf::from(H).join(".nvm").to_string_lossy().into_owned())
+		std::env::var("HOME")
+			.ok()
+			.map(|H| PathBuf::from(H).join(".nvm").to_string_lossy().into_owned())
 	})?;
 
 	let VersionsDirectory = PathBuf::from(&NvmDir).join("versions").join("node");
@@ -303,7 +302,11 @@ fn TryNvm() -> Option<ResolvedNode> {
 }
 
 fn TryHomebrew() -> Option<ResolvedNode> {
-	for Candidate in ["/opt/homebrew/bin/node", "/usr/local/bin/node", "/home/linuxbrew/.linuxbrew/bin/node"] {
+	for Candidate in [
+		"/opt/homebrew/bin/node",
+		"/usr/local/bin/node",
+		"/home/linuxbrew/.linuxbrew/bin/node",
+	] {
 		let Path = PathBuf::from(Candidate);
 		if Path.exists() {
 			return Some(ResolvedNode { Path, Source:NodeSource::Homebrew });
@@ -312,9 +315,7 @@ fn TryHomebrew() -> Option<ResolvedNode> {
 	None
 }
 
-fn NodeExecutableName() -> &'static str {
-	if cfg!(target_os = "windows") { "node.exe" } else { "node" }
-}
+fn NodeExecutableName() -> &'static str { if cfg!(target_os = "windows") { "node.exe" } else { "node" } }
 
 fn ExpandHome(Raw:&str) -> PathBuf {
 	if let Some(Stripped) = Raw.strip_prefix("~/") {

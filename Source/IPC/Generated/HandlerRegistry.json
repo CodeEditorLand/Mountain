@@ -1,0 +1,561 @@
+{
+	"Generated": "2026-04-29T23:08:04.258Z",
+	"Total": 111,
+	"Handlers": [
+		{
+			"FunctionName": "handle_commands_execute",
+			"WireName": "commands:execute",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Commands.rs"
+		},
+		{
+			"FunctionName": "handle_commands_get_all",
+			"WireName": "commands:getAll",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Commands.rs"
+		},
+		{
+			"FunctionName": "handle_configuration_get",
+			"WireName": "configuration:get",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Configuration.rs"
+		},
+		{
+			"FunctionName": "handle_configuration_update",
+			"WireName": "configuration:update",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Configuration.rs"
+		},
+		{
+			"FunctionName": "handle_decorations_clear",
+			"WireName": "decorations:clear",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Decoration.rs"
+		},
+		{
+			"FunctionName": "handle_decorations_get",
+			"WireName": "decorations:get",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Decoration.rs"
+		},
+		{
+			"FunctionName": "handle_decorations_get_many",
+			"WireName": "decorations:getMany",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Decoration.rs"
+		},
+		{
+			"FunctionName": "handle_decorations_set",
+			"WireName": "decorations:set",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Decoration.rs"
+		},
+		{
+			"FunctionName": "handle_environment_get",
+			"WireName": "environment:get",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Configuration.rs"
+		},
+		{
+			"FunctionName": "handle_extensions_get",
+			"WireName": "extensions:get",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Extensions.rs"
+		},
+		{
+			"FunctionName": "handle_extensions_get_all",
+			"WireName": "extensions:getAll",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Extensions.rs"
+		},
+		{
+			"FunctionName": "handle_extensions_get_installed",
+			"WireName": "extensions:getInstalled",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Extensions.rs"
+		},
+		{
+			"FunctionName": "handle_extensions_is_active",
+			"WireName": "extensions:isActive",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Extensions.rs"
+		},
+		{
+			"FunctionName": "handle_file_clone_native",
+			"WireName": "file:cloneNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileCloneNative.rs"
+		},
+		{
+			"FunctionName": "handle_file_copy",
+			"WireName": "file:copy",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileCopy.rs"
+		},
+		{
+			"FunctionName": "handle_file_delete",
+			"WireName": "file:delete",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileDelete.rs"
+		},
+		{
+			"FunctionName": "handle_file_delete_native",
+			"WireName": "file:deleteNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileDeleteNative.rs"
+		},
+		{
+			"FunctionName": "handle_file_exists",
+			"WireName": "file:exists",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileExists.rs"
+		},
+		{
+			"FunctionName": "handle_file_exists_native",
+			"WireName": "file:existsNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileExistsNative.rs"
+		},
+		{
+			"FunctionName": "handle_file_mkdir",
+			"WireName": "file:mkdir",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileMkdir.rs"
+		},
+		{
+			"FunctionName": "handle_file_mkdir_native",
+			"WireName": "file:mkdirNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileMkdirNative.rs"
+		},
+		{
+			"FunctionName": "handle_file_move",
+			"WireName": "file:move",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileMove.rs"
+		},
+		{
+			"FunctionName": "handle_file_read",
+			"WireName": "file:read",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileRead.rs"
+		},
+		{
+			"FunctionName": "handle_file_read_binary",
+			"WireName": "file:readBinary",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileReadBinary.rs"
+		},
+		{
+			"FunctionName": "handle_file_readdir",
+			"WireName": "file:readdir",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileReaddir.rs"
+		},
+		{
+			"FunctionName": "handle_file_readdir_native",
+			"WireName": "file:readdirNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileReaddirNative.rs"
+		},
+		{
+			"FunctionName": "handle_file_read_native",
+			"WireName": "file:readNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileReadNative.rs"
+		},
+		{
+			"FunctionName": "handle_file_realpath",
+			"WireName": "file:realpath",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileRealpath.rs"
+		},
+		{
+			"FunctionName": "handle_file_rename_native",
+			"WireName": "file:renameNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileRenameNative.rs"
+		},
+		{
+			"FunctionName": "handle_file_stat",
+			"WireName": "file:stat",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileStat.rs"
+		},
+		{
+			"FunctionName": "handle_file_stat_native",
+			"WireName": "file:statNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileStatNative.rs"
+		},
+		{
+			"FunctionName": "handle_file_write",
+			"WireName": "file:write",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileWrite.rs"
+		},
+		{
+			"FunctionName": "handle_file_write_binary",
+			"WireName": "file:writeBinary",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Managed/FileWriteBinary.rs"
+		},
+		{
+			"FunctionName": "handle_file_write_native",
+			"WireName": "file:writeNative",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/FileSystem/Native/FileWriteNative.rs"
+		},
+		{
+			"FunctionName": "handle_history_can_go_back",
+			"WireName": "history:canGoBack",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_history_can_go_forward",
+			"WireName": "history:canGoForward",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_history_clear",
+			"WireName": "history:clear",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_history_get_stack",
+			"WireName": "history:getStack",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_history_go_back",
+			"WireName": "history:goBack",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_history_go_forward",
+			"WireName": "history:goForward",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_history_push",
+			"WireName": "history:push",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_keybinding_add",
+			"WireName": "keybinding:add",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Keybinding.rs"
+		},
+		{
+			"FunctionName": "handle_keybinding_get_all",
+			"WireName": "keybinding:getAll",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Keybinding.rs"
+		},
+		{
+			"FunctionName": "handle_keybinding_lookup",
+			"WireName": "keybinding:lookup",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Keybinding.rs"
+		},
+		{
+			"FunctionName": "handle_keybinding_remove",
+			"WireName": "keybinding:remove",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Keybinding.rs"
+		},
+		{
+			"FunctionName": "handle_label_get_base",
+			"WireName": "label:getBase",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_label_get_uri",
+			"WireName": "label:getUri",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_label_get_workspace",
+			"WireName": "label:getWorkspace",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Navigation.rs"
+		},
+		{
+			"FunctionName": "handle_lifecycle_get_phase",
+			"WireName": "lifecycle:getPhase",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Lifecycle.rs"
+		},
+		{
+			"FunctionName": "handle_lifecycle_request_shutdown",
+			"WireName": "lifecycle:requestShutdown",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Lifecycle.rs"
+		},
+		{
+			"FunctionName": "handle_lifecycle_when_phase",
+			"WireName": "lifecycle:whenPhase",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Lifecycle.rs"
+		},
+		{
+			"FunctionName": "handle_local_pty_get_default_shell",
+			"WireName": "local:ptyGetDefaultShell",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Terminal.rs"
+		},
+		{
+			"FunctionName": "handle_local_pty_get_environment",
+			"WireName": "local:ptyGetEnvironment",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Terminal.rs"
+		},
+		{
+			"FunctionName": "handle_local_pty_get_profiles",
+			"WireName": "local:ptyGetProfiles",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Terminal.rs"
+		},
+		{
+			"FunctionName": "handle_model_close",
+			"WireName": "model:close",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Model.rs"
+		},
+		{
+			"FunctionName": "handle_model_get",
+			"WireName": "model:get",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Model.rs"
+		},
+		{
+			"FunctionName": "handle_model_get_all",
+			"WireName": "model:getAll",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Model.rs"
+		},
+		{
+			"FunctionName": "handle_model_open",
+			"WireName": "model:open",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Model.rs"
+		},
+		{
+			"FunctionName": "handle_model_update_content",
+			"WireName": "model:updateContent",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Model.rs"
+		},
+		{
+			"FunctionName": "handle_native_find_free_port",
+			"WireName": "native:findFreePort",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/FindFreePort.rs"
+		},
+		{
+			"FunctionName": "handle_native_get_color_scheme",
+			"WireName": "native:getColorScheme",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/GetColorScheme.rs"
+		},
+		{
+			"FunctionName": "handle_native_is_fullscreen",
+			"WireName": "native:isFullscreen",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/IsFullscreen.rs"
+		},
+		{
+			"FunctionName": "handle_native_is_maximized",
+			"WireName": "native:isMaximized",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/IsMaximized.rs"
+		},
+		{
+			"FunctionName": "handle_native_os_properties",
+			"WireName": "native:osProperties",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/OSProperties.rs"
+		},
+		{
+			"FunctionName": "handle_native_os_statistics",
+			"WireName": "native:osStatistics",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/OSStatistics.rs"
+		},
+		{
+			"FunctionName": "handle_native_pick_folder",
+			"WireName": "native:pickFolder",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/PickFolder.rs"
+		},
+		{
+			"FunctionName": "handle_native_show_open_dialog",
+			"WireName": "native:showOpenDialog",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/ShowOpenDialog.rs"
+		},
+		{
+			"FunctionName": "handle_notification_end_progress",
+			"WireName": "notification:endProgress",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Notification.rs"
+		},
+		{
+			"FunctionName": "handle_notification_show",
+			"WireName": "notification:show",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Notification.rs"
+		},
+		{
+			"FunctionName": "handle_notification_show_progress",
+			"WireName": "notification:showProgress",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Notification.rs"
+		},
+		{
+			"FunctionName": "handle_notification_update_progress",
+			"WireName": "notification:updateProgress",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Notification.rs"
+		},
+		{
+			"FunctionName": "handle_open_external",
+			"WireName": "open:external",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/OpenExternal.rs"
+		},
+		{
+			"FunctionName": "handle_output_append",
+			"WireName": "output:append",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Output.rs"
+		},
+		{
+			"FunctionName": "handle_output_append_line",
+			"WireName": "output:appendLine",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Output.rs"
+		},
+		{
+			"FunctionName": "handle_output_clear",
+			"WireName": "output:clear",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Output.rs"
+		},
+		{
+			"FunctionName": "handle_output_create",
+			"WireName": "output:create",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Output.rs"
+		},
+		{
+			"FunctionName": "handle_output_show",
+			"WireName": "output:show",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Output.rs"
+		},
+		{
+			"FunctionName": "handle_progress_begin",
+			"WireName": "progress:begin",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Progress.rs"
+		},
+		{
+			"FunctionName": "handle_progress_end",
+			"WireName": "progress:end",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Progress.rs"
+		},
+		{
+			"FunctionName": "handle_progress_report",
+			"WireName": "progress:report",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Progress.rs"
+		},
+		{
+			"FunctionName": "handle_quick_input_show_input_box",
+			"WireName": "quick:inputShowInputBox",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/QuickInput.rs"
+		},
+		{
+			"FunctionName": "handle_quick_input_show_quick_pick",
+			"WireName": "quick:inputShowQuickPick",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/QuickInput.rs"
+		},
+		{
+			"FunctionName": "handle_search_find_files",
+			"WireName": "search:findFiles",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Search.rs"
+		},
+		{
+			"FunctionName": "handle_search_find_in_files",
+			"WireName": "search:findInFiles",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Search.rs"
+		},
+		{
+			"FunctionName": "handle_show_item_in_folder",
+			"WireName": "show:itemInFolder",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/NativeHost/ShowItemInFolder.rs"
+		},
+		{
+			"FunctionName": "handle_storage_delete",
+			"WireName": "storage:delete",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Storage.rs"
+		},
+		{
+			"FunctionName": "handle_storage_get",
+			"WireName": "storage:get",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Storage.rs"
+		},
+		{
+			"FunctionName": "handle_storage_get_items",
+			"WireName": "storage:getItems",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Storage.rs"
+		},
+		{
+			"FunctionName": "handle_storage_keys",
+			"WireName": "storage:keys",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Storage.rs"
+		},
+		{
+			"FunctionName": "handle_storage_set",
+			"WireName": "storage:set",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Storage.rs"
+		},
+		{
+			"FunctionName": "handle_storage_update_items",
+			"WireName": "storage:updateItems",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Storage.rs"
+		},
+		{
+			"FunctionName": "handle_terminal_create",
+			"WireName": "terminal:create",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Terminal.rs"
+		},
+		{
+			"FunctionName": "handle_terminal_dispose",
+			"WireName": "terminal:dispose",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Terminal.rs"
+		},
+		{
+			"FunctionName": "handle_terminal_hide",
+			"WireName": "terminal:hide",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Terminal.rs"
+		},
+		{
+			"FunctionName": "handle_terminal_send_text",
+			"WireName": "terminal:sendText",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Terminal.rs"
+		},
+		{
+			"FunctionName": "handle_terminal_show",
+			"WireName": "terminal:show",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Terminal.rs"
+		},
+		{
+			"FunctionName": "handle_textfile_read",
+			"WireName": "textfile:read",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Model.rs"
+		},
+		{
+			"FunctionName": "handle_textfile_save",
+			"WireName": "textfile:save",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Model.rs"
+		},
+		{
+			"FunctionName": "handle_textfile_write",
+			"WireName": "textfile:write",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Model.rs"
+		},
+		{
+			"FunctionName": "handle_themes_get_active",
+			"WireName": "themes:getActive",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Theme.rs"
+		},
+		{
+			"FunctionName": "handle_themes_list",
+			"WireName": "themes:list",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Theme.rs"
+		},
+		{
+			"FunctionName": "handle_themes_set",
+			"WireName": "themes:set",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Theme.rs"
+		},
+		{
+			"FunctionName": "handle_workbench_configuration",
+			"WireName": "workbench:configuration",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/Configuration.rs"
+		},
+		{
+			"FunctionName": "handle_working_copy_get_all_dirty",
+			"WireName": "working:copyGetAllDirty",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/WorkingCopy.rs"
+		},
+		{
+			"FunctionName": "handle_working_copy_get_dirty_count",
+			"WireName": "working:copyGetDirtyCount",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/WorkingCopy.rs"
+		},
+		{
+			"FunctionName": "handle_working_copy_is_dirty",
+			"WireName": "working:copyIsDirty",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/WorkingCopy.rs"
+		},
+		{
+			"FunctionName": "handle_working_copy_set_dirty",
+			"WireName": "working:copySetDirty",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/WorkingCopy.rs"
+		},
+		{
+			"FunctionName": "handle_workspaces_add_folder",
+			"WireName": "workspaces:addFolder",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Workspace.rs"
+		},
+		{
+			"FunctionName": "handle_workspaces_get_folders",
+			"WireName": "workspaces:getFolders",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Workspace.rs"
+		},
+		{
+			"FunctionName": "handle_workspaces_get_name",
+			"WireName": "workspaces:getName",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Workspace.rs"
+		},
+		{
+			"FunctionName": "handle_workspaces_remove_folder",
+			"WireName": "workspaces:removeFolder",
+			"File": "Element/Mountain/Source/IPC/WindServiceHandlers/UI/Workspace.rs"
+		}
+	]
+}

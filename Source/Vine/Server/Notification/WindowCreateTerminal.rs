@@ -18,7 +18,11 @@ pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&V
 	let Provider:Arc<dyn TerminalProvider> = Service.RunTime().Environment.Require();
 	let Name = Parameter.get("name").and_then(|V| V.as_str()).unwrap_or("terminal").to_string();
 	let Options = Parameter.get("options").cloned().unwrap_or_default();
-	let Handle = Parameter.get("handle").and_then(|V| V.as_str()).map(str::to_string).unwrap_or_default();
+	let Handle = Parameter
+		.get("handle")
+		.and_then(|V| V.as_str())
+		.map(str::to_string)
+		.unwrap_or_default();
 
 	let AppHandleForTask = Service.ApplicationHandle().clone();
 	let NameForTask = Name.clone();
@@ -40,7 +44,11 @@ pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&V
 					"name": Created.get("name").cloned().unwrap_or(Value::Null),
 				}),
 			) {
-				dev_log!("grpc", "warn: [WindowCreateTerminal] sky://terminal/create emit failed: {}", Error);
+				dev_log!(
+					"grpc",
+					"warn: [WindowCreateTerminal] sky://terminal/create emit failed: {}",
+					Error
+				);
 			}
 		}
 	});

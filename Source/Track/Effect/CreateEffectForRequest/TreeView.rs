@@ -2,16 +2,22 @@
 
 use std::{future::Future, pin::Pin, sync::Arc};
 
-use CommonLibrary::{Environment::Requires::Requires, IPC::SkyEvent::SkyEvent, TreeView::TreeViewProvider::TreeViewProvider};
+use CommonLibrary::{
+	Environment::Requires::Requires,
+	IPC::SkyEvent::SkyEvent,
+	TreeView::TreeViewProvider::TreeViewProvider,
+};
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::{IPC::SkyEmit::LogSkyEmit, RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{
+	IPC::SkyEmit::LogSkyEmit,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::MappedEffectType::MappedEffect,
+	dev_log,
+};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$tree:register" | "tree.register" => {
 			let DispatchEnterNs = std::time::SystemTime::now()
@@ -36,8 +42,7 @@ pub fn CreateEffect<R:Runtime>(
 						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
 						let first = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
 						let (view_id, options) = if Parameters.get(2).is_some() {
-							let vid =
-								Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();
+							let vid = Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();
 							let opts = Parameters.get(2).cloned().unwrap_or_default();
 							(vid, opts)
 						} else {
@@ -46,12 +51,7 @@ pub fn CreateEffect<R:Runtime>(
 							(vid, opts)
 						};
 						let ViewIdForLog = view_id.clone();
-						dev_log!(
-							"grpc",
-							"[LandFix:Tree] body-start view={} t_ns={}",
-							ViewIdForLog,
-							BodyStartNs
-						);
+						dev_log!("grpc", "[LandFix:Tree] body-start view={} t_ns={}", ViewIdForLog, BodyStartNs);
 						let Result = provider.RegisterTreeDataProvider(view_id.clone(), options.clone()).await;
 						let RegisteredNs = std::time::SystemTime::now()
 							.duration_since(std::time::UNIX_EPOCH)

@@ -8,10 +8,7 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$terminal:create" => {
 			let effect =
@@ -30,10 +27,8 @@ pub fn CreateEffect<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-						let terminal_id =
-							Parameters.get(0).and_then(Value::as_i64).map(|n| n as u64).unwrap_or(0);
-						let text =
-							Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+						let terminal_id = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u64).unwrap_or(0);
+						let text = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 						provider
 							.SendTextToTerminal(terminal_id, text)
 							.await
@@ -49,8 +44,7 @@ pub fn CreateEffect<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
-						let terminal_id =
-							Parameters.get(0).and_then(Value::as_i64).map(|n| n as u64).unwrap_or(0);
+						let terminal_id = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u64).unwrap_or(0);
 						provider
 							.DisposeTerminal(terminal_id)
 							.await
@@ -69,17 +63,12 @@ pub fn CreateEffect<R:Runtime>(
 						let terminal_id = match Parameters.get(0) {
 							Some(Value::Number(n)) => n.as_u64().unwrap_or(0),
 							Some(Value::String(s)) => {
-								s.rsplit(':')
-									.next()
-									.and_then(|token| token.parse::<u64>().ok())
-									.unwrap_or(0)
+								s.rsplit(':').next().and_then(|token| token.parse::<u64>().ok()).unwrap_or(0)
 							},
 							_ => 0,
 						};
-						let cols =
-							Parameters.get(1).and_then(Value::as_u64).map(|n| n as u16).unwrap_or(80);
-						let rows =
-							Parameters.get(2).and_then(Value::as_u64).map(|n| n as u16).unwrap_or(24);
+						let cols = Parameters.get(1).and_then(Value::as_u64).map(|n| n as u16).unwrap_or(80);
+						let rows = Parameters.get(2).and_then(Value::as_u64).map(|n| n as u16).unwrap_or(24);
 						provider
 							.ResizeTerminal(terminal_id, cols, rows)
 							.await

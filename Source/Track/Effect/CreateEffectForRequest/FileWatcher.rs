@@ -8,10 +8,7 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"FileWatcher.Register" => {
 			let effect =
@@ -26,10 +23,8 @@ pub fn CreateEffect<R:Runtime>(
 							Some(Value::Number(N)) => N.to_string(),
 							_ => String::new(),
 						};
-						let Root =
-							Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
-						let IsRecursive =
-							Parameters.get(2).and_then(Value::as_bool).unwrap_or(true);
+						let Root = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+						let IsRecursive = Parameters.get(2).and_then(Value::as_bool).unwrap_or(true);
 						let Pattern = Parameters
 							.get(3)
 							.and_then(Value::as_str)

@@ -9,27 +9,16 @@ use url::Url;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Debug.Start" => {
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
-						let folder_uri_str =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("");
-						let folder_uri = if folder_uri_str.is_empty() {
-							None
-						} else {
-							Url::parse(folder_uri_str).ok()
-						};
-						let configuration = Parameters
-							.get(1)
-							.cloned()
-							.unwrap_or_else(|| json!({ "type": "node" }));
+						let folder_uri_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						let folder_uri = if folder_uri_str.is_empty() { None } else { Url::parse(folder_uri_str).ok() };
+						let configuration = Parameters.get(1).cloned().unwrap_or_else(|| json!({ "type": "node" }));
 						provider
 							.StartDebugging(folder_uri, configuration)
 							.await
@@ -45,18 +34,9 @@ pub fn CreateEffect<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
-						let debug_type =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("node").to_string();
-						let provider_handle = Parameters
-							.get(1)
-							.and_then(Value::as_i64)
-							.map(|n| n as u32)
-							.unwrap_or(1);
-						let sidecar_id = Parameters
-							.get(2)
-							.and_then(Value::as_str)
-							.unwrap_or("cocoon-main")
-							.to_string();
+						let debug_type = Parameters.get(0).and_then(Value::as_str).unwrap_or("node").to_string();
+						let provider_handle = Parameters.get(1).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(1);
+						let sidecar_id = Parameters.get(2).and_then(Value::as_str).unwrap_or("cocoon-main").to_string();
 						provider
 							.RegisterDebugConfigurationProvider(debug_type, provider_handle, sidecar_id)
 							.await
@@ -72,8 +52,7 @@ pub fn CreateEffect<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
-						let SessionId =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let SessionId = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
 						provider
 							.StopDebugging(SessionId)
 							.await

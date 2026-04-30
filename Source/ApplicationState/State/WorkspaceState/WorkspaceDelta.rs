@@ -19,7 +19,12 @@
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 use serde_json::json;
 
-use crate::{ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO, IPC::SkyEmit::LogSkyEmit, Vine::Client, dev_log};
+use crate::{
+	ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
+	IPC::SkyEmit::LogSkyEmit,
+	Vine::Client,
+	dev_log,
+};
 
 /// Serialisation shape matching the Cocoon-side Workspace shim. Mirrors the
 /// camelCase DTO Sky already serialises for `workspaces:getFolders`, so the
@@ -128,11 +133,7 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 			.map(FolderToWire)
 			.collect::<Vec<_>>(),
 	});
-	if let Err(Error) = LogSkyEmit(
-		ApplicationHandle,
-		SkyEvent::WorkspacesChanged.AsStr(),
-		BroadcastPayload,
-	) {
+	if let Err(Error) = LogSkyEmit(ApplicationHandle, SkyEvent::WorkspacesChanged.AsStr(), BroadcastPayload) {
 		dev_log!(
 			"workspaces",
 			"warn: [LandFix:WsDelta] sky://workspaces/changed emit failed: {}",

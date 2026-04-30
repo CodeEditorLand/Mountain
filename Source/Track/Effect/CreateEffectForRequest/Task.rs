@@ -11,10 +11,7 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"Task.Fetch" => {
 			let effect =
@@ -22,15 +19,9 @@ pub fn CreateEffect<R:Runtime>(
 					Box::pin(async move {
 						let filter = Parameters.get(0).cloned().unwrap_or(Value::Null);
 						let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
-						let Method =
-							format!("{}$fetchTasks", ProxyTarget::ExtHostTaskService.GetTargetPrefix());
+						let Method = format!("{}$fetchTasks", ProxyTarget::ExtHostTaskService.GetTargetPrefix());
 						match IPCProvider
-							.SendRequestToSideCar(
-								"cocoon-main".to_string(),
-								Method,
-								json!([filter]),
-								5000,
-							)
+							.SendRequestToSideCar("cocoon-main".to_string(), Method, json!([filter]), 5000)
 							.await
 						{
 							Ok(value) => Ok(value),
@@ -54,17 +45,9 @@ pub fn CreateEffect<R:Runtime>(
 					Box::pin(async move {
 						let task = Parameters.get(0).cloned().unwrap_or(Value::Null);
 						let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
-						let Method = format!(
-							"{}$executeTask",
-							ProxyTarget::ExtHostTaskService.GetTargetPrefix()
-						);
+						let Method = format!("{}$executeTask", ProxyTarget::ExtHostTaskService.GetTargetPrefix());
 						match IPCProvider
-							.SendRequestToSideCar(
-								"cocoon-main".to_string(),
-								Method,
-								json!([task]),
-								30000,
-							)
+							.SendRequestToSideCar("cocoon-main".to_string(), Method, json!([task]), 30000)
 							.await
 						{
 							Ok(value) => Ok(value),

@@ -7,12 +7,14 @@ use serde_json::{Value, json};
 use tauri::Runtime;
 use url::Url;
 
-use crate::{IPC::SkyEmit::LogSkyEmit, RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{
+	IPC::SkyEmit::LogSkyEmit,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::MappedEffectType::MappedEffect,
+	dev_log,
+};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$webview:create"
 		| "webview.create"
@@ -43,8 +45,7 @@ pub fn CreateEffect<R:Runtime>(
 							"handle": Handle,
 							"args": Parameters,
 						});
-						let Suffix =
-							Method.trim_start_matches("$webview:").trim_start_matches("webview.");
+						let Suffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");
 						let EventName = format!("sky://webview/{}", Suffix);
 						// `LogSkyEmit` wraps `.emit()` and tags every
 						// success/failure under `[DEV:SKY-EMIT]`, so
@@ -53,17 +54,8 @@ pub fn CreateEffect<R:Runtime>(
 						// The bare `.emit()` was invisible, so a silent
 						// listener-side drop in Sky was indistinguishable
 						// from "Mountain never received the request".
-						if let Err(Error) = LogSkyEmit(
-							&run_time.Environment.ApplicationHandle,
-							&EventName,
-							&Payload,
-						) {
-							dev_log!(
-								"ipc",
-								"warn: [WebviewEffect] emit {} failed: {}",
-								EventName,
-								Error
-							);
+						if let Err(Error) = LogSkyEmit(&run_time.Environment.ApplicationHandle, &EventName, &Payload) {
+							dev_log!("ipc", "warn: [WebviewEffect] emit {} failed: {}", EventName, Error);
 						}
 						Ok(json!(null))
 					})
@@ -76,17 +68,12 @@ pub fn CreateEffect<R:Runtime>(
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
-						let view_type =
-							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						let resource_uri_str =
-							Parameters.get(1).and_then(Value::as_str).unwrap_or("");
+						let view_type = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let resource_uri_str = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
 						let resource_uri = Url::parse(resource_uri_str)
 							.unwrap_or_else(|_| Url::parse("file:///tmp/test.txt").unwrap());
-						let webview_handle = Parameters
-							.get(2)
-							.and_then(Value::as_str)
-							.unwrap_or("webview-123")
-							.to_string();
+						let webview_handle =
+							Parameters.get(2).and_then(Value::as_str).unwrap_or("webview-123").to_string();
 						provider
 							.ResolveCustomEditor(view_type, resource_uri, webview_handle)
 							.await

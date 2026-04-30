@@ -124,13 +124,97 @@ static SHUTDOWN_FLAG:AtomicBool = AtomicBool::new(false);
 /// `HardKillCocoon` so any inflight notification attempted after the
 /// SIGKILL window returns silently with `Ok(())` instead of logging
 /// a `Connection refused` error.
-pub fn MarkShutdown() {
-	SHUTDOWN_FLAG.store(true, Ordering::Relaxed);
-}
+pub fn MarkShutdown() { SHUTDOWN_FLAG.store(true, Ordering::Relaxed); }
 
 /// Whether the gRPC client has been marked shutting down.
-pub fn IsShuttingDown() -> bool {
-	SHUTDOWN_FLAG.load(Ordering::Relaxed)
+pub fn IsShuttingDown() -> bool { SHUTDOWN_FLAG.load(Ordering::Relaxed) }
+
+// ============================================================================
+// LAND-PATCH B7-S6: notification fan-out broadcast.
+//
+// Today every `SendNotification` is fire-and-forget; the caller
+// gets `Result<(), VineError>` and that's it. There is no way for
+// other parts of Mountain (Effect-TS supervisors, dev log, OTel
+// span emitter, future Mist WebSocket bridge) to *also* observe
+// the notification flow without each one wiring a parallel
+// callback at the call site.
+//
+// `tokio::sync::broadcast` solves this: every `SendNotification`
+// also publishes a `NotificationFrame` on a single shared channel.
+// Subscribers get a `Receiver<NotificationFrame>` and consume at
+// their own pace; lagging subscribers see `RecvError::Lagged(n)`
+// with `n` = dropped frames (drop-oldest semantics, capacity 4096).
+//
+// This is the structural foundation for the streaming-gRPC
+// migration (Patch 14): once the bidirectional `OpenChannel*`
+// streams land, the multiplexer's notification-frame reader feeds
+// THIS broadcast channel directly. Subscribers don't move.
+//
+// ============================================================================
+
+/// One observed notification frame fan-out from `SendNotification`
+/// or (future) the streaming-channel multiplexer.
+#[derive(Debug, Clone)]
+pub struct NotificationFrame {
+	pub SideCarIdentifier:String,
+	pub Method:String,
+	pub Parameters:Value,
+	/// Monotonic process-relative nanosecond timestamp at fan-out
+	/// time. Useful for OTel span correlation without burning a
+	/// `SystemTime::now()` per frame.
+	pub TimestampNanos:u64,
+}
+
+/// Broadcast capacity. Drop-oldest when full. 4096 covers the
+/// observed worst-case storms (sky://diagnostics/changed at
+/// 50-200/s during rust-analyzer cargo-check) with margin.
+const NOTIFICATION_BROADCAST_CAPACITY:usize = 4096;
+
+lazy_static! {
+	static ref NOTIFICATION_BROADCAST: tokio::sync::broadcast::Sender<NotificationFrame> = {
+		let (Sender, _) = tokio::sync::broadcast::channel(NOTIFICATION_BROADCAST_CAPACITY);
+		Sender
+	};
+}
+
+/// Subscribe to the global notification fan-out. Each call returns
+/// a fresh receiver that observes every notification fanned out
+/// AFTER subscribe time (broadcast semantics; no historical replay).
+///
+/// Use `tokio::sync::broadcast::Receiver::recv().await` to consume,
+/// or `BroadcastStream::new(rx)` to adapt to a `Stream`.
+///
+/// Drop the receiver to unsubscribe.
+pub fn SubscribeNotifications() -> tokio::sync::broadcast::Receiver<NotificationFrame> {
+	NOTIFICATION_BROADCAST.subscribe()
+}
+
+/// Number of currently-active subscribers. Diagnostic; useful for
+/// validating that subscribers haven't leaked.
+pub fn SubscriberCount() -> usize { NOTIFICATION_BROADCAST.receiver_count() }
+
+/// Public-crate alias for `PublishNotification` so `Vine::Multiplexer`
+/// can fan out notifications received over the streaming channel
+/// through the same broadcast subscribers consume from.
+pub(crate) fn PublishNotificationFromMux(SideCarIdentifier:&str, Method:&str, Parameters:&Value) {
+	PublishNotification(SideCarIdentifier, Method, Parameters)
+}
+
+/// Internal: publish a notification to the broadcast. Called from
+/// `SendNotification` after the wire send succeeds, and from the
+/// streaming multiplexer when it lands. `try_send` semantics -
+/// no awaiting, no failure surfaced (a slow subscriber must not
+/// stall the producer).
+fn PublishNotification(SideCarIdentifier:&str, Method:&str, Parameters:&Value) {
+	let Frame = NotificationFrame {
+		SideCarIdentifier:SideCarIdentifier.to_string(),
+		Method:Method.to_string(),
+		Parameters:Parameters.clone(),
+		TimestampNanos:crate::IPC::DevLog::NowNano(),
+	};
+	// `send` returns Err only when there are zero receivers;
+	// we don't care.
+	let _ = NOTIFICATION_BROADCAST.send(Frame);
 }
 
 /// Establishes a gRPC connection to a sidecar process with retry logic.
@@ -209,16 +293,67 @@ async fn try_connect_single(_SideCarIdentifier:&str, endpoint:&str) -> Result<()
 		format!("http://{}", endpoint)
 	};
 
-	let channel = tonic::transport::Channel::from_shared(endpoint_url)
-		.map_err(|e| VineError::RPCError(format!("Failed to create channel: {}", e)))?
+	// LAND-PATCH B3.P-tonic: tuned h2 transport for loopback gRPC.
+	//
+	// Stock tonic defaults are tuned for cross-machine traffic
+	// (64 KB stream window, no h2 keepalive). On loopback to Cocoon
+	// at 127.0.0.1:50052 the small windows force `WINDOW_UPDATE`
+	// frames on every diagnostic batch >64 KB; rust-analyzer's full
+	// diagnostic emit is regularly 200-500 KB. Bump windows to 4 MB
+	// stream / 16 MB connection so a single diagnostic storm fits
+	// without h2 ping-pong. Keepalive at 10s detects dead Cocoon
+	// faster than the 30s default.
+	let UseTuned = std::env::var("LAND_TONIC_TUNED").as_deref() != Ok("0");
+	let mut Endpoint = tonic::transport::Channel::from_shared(endpoint_url)
+		.map_err(|e| VineError::RPCError(format!("Failed to create channel: {}", e)))?;
+	if UseTuned {
+		Endpoint = Endpoint
+			.tcp_nodelay(true)
+			.http2_keep_alive_interval(std::time::Duration::from_secs(10))
+			.keep_alive_timeout(std::time::Duration::from_secs(20))
+			.http2_adaptive_window(true)
+			.initial_stream_window_size(4 * 1024 * 1024)
+			.initial_connection_window_size(16 * 1024 * 1024)
+			.concurrency_limit(1024)
+			.buffer_size(256 * 1024)
+			.timeout(std::time::Duration::from_secs(30))
+			.connect_timeout(std::time::Duration::from_secs(5));
+	}
+	let channel = Endpoint
 		.connect()
 		.await
 		.map_err(|e| VineError::RPCError(format!("Failed to connect: {}", e)))?;
 
 	let client = CocoonClient::new(channel);
 
-	let mut clients = SIDECAR_CLIENTS.lock();
-	clients.insert(_SideCarIdentifier.to_string(), client);
+	{
+		let mut clients = SIDECAR_CLIENTS.lock();
+		clients.insert(_SideCarIdentifier.to_string(), client.clone());
+	}
+
+	// LAND-PATCH B7-S6 P14.1: open the bidirectional streaming
+	// multiplexer alongside the unary client. Best-effort: if the
+	// streaming endpoint is unimplemented (Cocoon hasn't shipped its
+	// streaming handler tree yet) we log and continue. The unary
+	// path stays authoritative until `LAND_VINE_STREAMING=1` flips
+	// callers to the multiplexer in P14.2/P14.3.
+	let StreamingEnabled = std::env::var("LAND_VINE_STREAMING").as_deref() == Ok("1");
+	if StreamingEnabled {
+		let SideCarIdentifierForMux = _SideCarIdentifier.to_string();
+		match super::Multiplexer::Multiplexer::Open(SideCarIdentifierForMux.clone(), client).await {
+			Ok(_) => {
+				dev_log!("grpc", "[VineClient] streaming multiplexer opened for sidecar '{}'", _SideCarIdentifier);
+			},
+			Err(Error) => {
+				dev_log!(
+					"grpc",
+					"warn: [VineClient] streaming multiplexer open failed for '{}' ({}); falling back to unary",
+					_SideCarIdentifier,
+					Error
+				);
+			},
+		}
+	}
 
 	Ok(())
 }
@@ -504,6 +639,9 @@ pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameter
 	};
 
 	if let Some(ref mut client) = client {
+		// Snapshot for the broadcast publish below - `request` moves
+		// the owned `Method` into the protobuf message.
+		let MethodForPublish = Method.clone();
 		let request = GenericNotification { method:Method, parameter:parameter_bytes };
 
 		match client.send_mountain_notification(request).await {
@@ -514,6 +652,12 @@ pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameter
 					"[VineClient] Notification sent successfully to sidecar '{}'",
 					SideCarIdentifier
 				);
+				// LAND-PATCH B7-S6: fan out to the broadcast channel
+				// so any number of subscribers (Effect-TS fibers, OTel
+				// span emitters, future Mist-WS bridge, dev log) can
+				// observe the same flow concurrently. Slow subscribers
+				// drop oldest; producer never stalls.
+				PublishNotification(&SideCarIdentifier, &MethodForPublish, &Parameters);
 				Ok(())
 			},
 			Err(status) => {

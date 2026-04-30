@@ -19,8 +19,8 @@
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
 //! - ViewType validation: rejects empty view types with InvalidArgument error
 //! - OnSaveCustomDocument now reverse-RPCs to the owning sidecar via
-//!   `$onSaveCustomDocument`; returns the sidecar's error verbatim on
-//!   failure so the workbench's save promise rejects with a real reason.
+//!   `$onSaveCustomDocument`; returns the sidecar's error verbatim on failure
+//!   so the workbench's save promise rejects with a real reason.
 //!
 //! PERFORMANCE:
 //! - Provider registration lookup should be O(1) via hash map in

@@ -1144,6 +1144,24 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					dev_log!("window", "nativeHost:getActiveWindowId");
 					Ok(json!(1))
 				},
+				// LAND-FIX: workbench polls the cursor screen point for
+				// hover hint / context-menu placement. Stock VS Code
+				// returns the OS cursor location via Electron's
+				// `screen.getCursorScreenPoint()`. Tauri/Wry on macOS
+				// does not expose a stable equivalent (CGEvent location
+				// works but adds an Objective-C trampoline per call).
+				// Returning `{x:0, y:0}` is what stock VS Code itself
+				// returns when no display is active; this is also what
+				// Cocoon falls back to. Workbench uses the value only
+				// to bias overlay placement; (0,0) places overlays at
+				// the top-left of the active window which the layout
+				// engine then clips to a sane position. The cost of
+				// the unknown-IPC log spam outweighs the precision
+				// loss.
+				"nativeHost:getCursorScreenPoint" => {
+					dev_log!("window", "nativeHost:getCursorScreenPoint");
+					Ok(json!({ "x": 0, "y": 0 }))
+				},
 				"nativeHost:getWindows" => Ok(json!([{ "id": 1, "title": "Land", "filename": "" }])),
 				"nativeHost:getWindowCount" => Ok(json!(1)),
 

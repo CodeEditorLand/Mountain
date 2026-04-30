@@ -306,18 +306,14 @@ async fn LaunchAndManageCocoonSideCar(
 	// relative to the repo root. Compose the probe path by walking up
 	// from the bootstrap script to the `Element/` root, then descending.
 	if let Some(BootstrapDirectory) = ScriptPath.parent() {
-		let ProbePath =
-			BootstrapDirectory.join("../..").join(COCOON_BUNDLE_PROBE);
+		let ProbePath = BootstrapDirectory.join("../..").join(COCOON_BUNDLE_PROBE);
 		if !ProbePath.exists() {
 			return Err(CommonError::IPCError {
 				Description:format!(
-					"Cocoon bundle is missing at {}. Run `pnpm run prepublishOnly \
-					 --filter=@codeeditorland/cocoon` (or the full \
-					 `./Maintain/Debug/Build.sh --profile debug-electron`) \
-					 before launching - node will fail to import without it \
-					 and Mountain will fall into degraded mode with zero \
-					 extensions available. Root cause is typically an \
-					 esbuild failure in an upstream Cocoon source file or a \
+					"Cocoon bundle is missing at {}. Run `pnpm run prepublishOnly --filter=@codeeditorland/cocoon` \
+					 (or the full `./Maintain/Debug/Build.sh --profile debug-electron`) before launching - node will \
+					 fail to import without it and Mountain will fall into degraded mode with zero extensions \
+					 available. Root cause is typically an esbuild failure in an upstream Cocoon source file or a \
 					 stale `rm -rf Element/Cocoon/Target` without a rebuild.",
 					ProbePath.display()
 				),
@@ -381,15 +377,43 @@ async fn LaunchAndManageCocoonSideCar(
 	// PostHog bridge fell back to the empty-string default; the
 	// AllowList below now enumerates every Land-introduced env var by
 	// name so Cocoon sees the same values Mountain reads.
-	const LandEnvAllowList: &[&str] = &[
-		"Authorize", "Beam", "Report", "Brand", "Replay", "Ask",
-		"Throttle", "Buffer", "Batch", "Cap",
-		"Pick", "Require",
-		"Lodge", "Extend", "Probe", "Ship", "Wire", "Install",
-		"Mute", "Skip", "Spawn", "Render", "Walk",
-		"Trace", "Record", "Profile", "Diagnose", "Resolve",
-		"Open", "Warn", "Catch", "Source", "Track", "Defer",
-		"Boot", "Pack",
+	const LandEnvAllowList:&[&str] = &[
+		"Authorize",
+		"Beam",
+		"Report",
+		"Brand",
+		"Replay",
+		"Ask",
+		"Throttle",
+		"Buffer",
+		"Batch",
+		"Cap",
+		"Pick",
+		"Require",
+		"Lodge",
+		"Extend",
+		"Probe",
+		"Ship",
+		"Wire",
+		"Install",
+		"Mute",
+		"Skip",
+		"Spawn",
+		"Render",
+		"Walk",
+		"Trace",
+		"Record",
+		"Profile",
+		"Diagnose",
+		"Resolve",
+		"Open",
+		"Warn",
+		"Catch",
+		"Source",
+		"Track",
+		"Defer",
+		"Boot",
+		"Pack",
 	];
 	for (Key, Value) in std::env::vars() {
 		if Key.starts_with("Product")
@@ -424,8 +448,8 @@ async fn LaunchAndManageCocoonSideCar(
 	let mut ChildProcess = NodeCommand.spawn().map_err(|Error| {
 		CommonError::IPCError {
 			Description:format!(
-				"Failed to spawn Cocoon with node={} (source={}): {}. Override with \
-				 Pick=/absolute/path or install Node.js.",
+				"Failed to spawn Cocoon with node={} (source={}): {}. Override with Pick=/absolute/path or install \
+				 Node.js.",
 				ResolvedNodeBinary.Path.display(),
 				ResolvedNodeBinary.Source.AsLabel(),
 				Error
@@ -441,14 +465,14 @@ async fn LaunchAndManageCocoonSideCar(
 	// Capture stdout for trace logging. Two disposition classes:
 	//
 	// 1. Tagged lines produced by `Cocoon/Source/Services/DevLog.ts::
-	//    CocoonDevLog(Tag, Message)` arrive prefixed with
-	//    `[DEV:<UPPER_TAG>] <body>`. Re-emit under the matching Mountain
-	//    tag (lowercased) so `Trace=bootstrap-stage` on Mountain's
-	//    side surfaces Cocoon's `bootstrap-stage` lines without forcing
-	//    the user to also enable the broad `cocoon` tag.
+	//    CocoonDevLog(Tag, Message)` arrive prefixed with `[DEV:<UPPER_TAG>]
+	//    <body>`. Re-emit under the matching Mountain tag (lowercased) so
+	//    `Trace=bootstrap-stage` on Mountain's side surfaces Cocoon's
+	//    `bootstrap-stage` lines without forcing the user to also enable the broad
+	//    `cocoon` tag.
 	//
-	// 2. Plain stdout (console.log, uncaught trace, etc.) stays under
-	//    the `cocoon` tag so it's silent unless explicitly requested.
+	// 2. Plain stdout (console.log, uncaught trace, etc.) stays under the `cocoon`
+	//    tag so it's silent unless explicitly requested.
 	if let Some(stdout) = ChildProcess.stdout.take() {
 		tokio::spawn(async move {
 			let Reader = BufReader::new(stdout);
@@ -482,20 +506,19 @@ async fn LaunchAndManageCocoonSideCar(
 	// (silent under `Trace=short`) so the main cocoon channel only
 	// carries actionable Node errors:
 	//
-	// - `: is already signed` / `: replacing existing signature` - macOS
-	//   codesign informational output when Cocoon re-signs a just-rebuilt
-	//   extension binary. Not an error.
-	// - `DeprecationWarning:` / `(node:...) [DEP0...]` - Node deprecation
-	//   warnings from VS Code's upstream dependencies (punycode, url.parse,
-	//   Buffer()). Fixable only in upstream, not in Land.
-	// - `Use \`node --trace-deprecation\` to show where the warning was
-	//   created` - follow-up to the DEP line above.
-	// - `EntryNotFound (FileSystemError):` + follow-up stack frames -
-	//   extensions (svelte, copilot, etc.) probe paths that may not
-	//   exist and let the rejection bubble up. Node's unhandled
-	//   rejection printer splits the stack across stderr lines. The
-	//   classifier enters a stateful "suppress follow-up stack frames"
-	//   mode after the first EntryNotFound line and exits on a
+	// - `: is already signed` / `: replacing existing signature` - macOS codesign
+	//   informational output when Cocoon re-signs a just-rebuilt extension binary.
+	//   Not an error.
+	// - `DeprecationWarning:` / `(node:...) [DEP0...]` - Node deprecation warnings
+	//   from VS Code's upstream dependencies (punycode, url.parse, Buffer()).
+	//   Fixable only in upstream, not in Land.
+	// - `Use \`node --trace-deprecation\` to show where the warning was created` -
+	//   follow-up to the DEP line above.
+	// - `EntryNotFound (FileSystemError):` + follow-up stack frames - extensions
+	//   (svelte, copilot, etc.) probe paths that may not exist and let the
+	//   rejection bubble up. Node's unhandled rejection printer splits the stack
+	//   across stderr lines. The classifier enters a stateful "suppress follow-up
+	//   stack frames" mode after the first EntryNotFound line and exits on a
 	//   non-frame line.
 	if let Some(stderr) = ChildProcess.stderr.take() {
 		tokio::spawn(async move {
@@ -550,13 +573,13 @@ async fn LaunchAndManageCocoonSideCar(
 	//
 	// New policy:
 	//   - Initial 50 ms sleep, doubled per attempt up to a 2 s ceiling.
-	//   - Hard 20 s total-budget (unchanged) so the overall failure
-	//     ceiling doesn't regress for pathological slow-boot hardware.
-	//   - Before each sleep, poll `ChildProcess.try_wait()`: if Node
-	//     has exited, abandon the loop immediately with the exit
-	//     status embedded in the error - no point retrying against a
-	//     dead process, and the exit code usually reveals the import
-	//     failure (1 = unhandled exception, 13 = invalid module).
+	//   - Hard 20 s total-budget (unchanged) so the overall failure ceiling doesn't
+	//     regress for pathological slow-boot hardware.
+	//   - Before each sleep, poll `ChildProcess.try_wait()`: if Node has exited,
+	//     abandon the loop immediately with the exit status embedded in the error -
+	//     no point retrying against a dead process, and the exit code usually
+	//     reveals the import failure (1 = unhandled exception, 13 = invalid
+	//     module).
 	let GRPCAddress = format!("127.0.0.1:{}", COCOON_GRPC_PORT);
 	dev_log!(
 		"cocoon",
@@ -600,17 +623,18 @@ async fn LaunchAndManageCocoonSideCar(
 						let ExitCode = ExitStatus.code().unwrap_or(-1);
 						crate::dev_log!(
 							"grpc",
-							"attempt {} aborted: Cocoon Node process exited with code={} after {}ms - stderr above (if any) explains why",
+							"attempt {} aborted: Cocoon Node process exited with code={} after {}ms - stderr above \
+							 (if any) explains why",
 							ConnectAttempt,
 							ExitCode,
 							ConnectStart.elapsed().as_millis()
 						);
 						return Err(CommonError::IPCError {
 							Description:format!(
-								"Cocoon spawned but exited with code {} before Mountain could connect. \
-								 See `[DEV:COCOON] warn: [Cocoon stderr] …` lines above for the Node-side \
-								 error - typically a missing bundle (\"Cannot find module …\") or an \
-								 ESM/CJS import drift after a partial build.",
+								"Cocoon spawned but exited with code {} before Mountain could connect. See \
+								 `[DEV:COCOON] warn: [Cocoon stderr] …` lines above for the Node-side error - \
+								 typically a missing bundle (\"Cannot find module …\") or an ESM/CJS import drift \
+								 after a partial build.",
 								ExitCode
 							),
 						});
@@ -621,11 +645,7 @@ async fn LaunchAndManageCocoonSideCar(
 						// (would imply a kernel-level issue). Surface
 						// it but keep trying - the dial may still
 						// succeed on the next attempt.
-						crate::dev_log!(
-							"grpc",
-							"warn: try_wait on Cocoon child failed: {} (continuing)",
-							WaitErr
-						);
+						crate::dev_log!("grpc", "warn: try_wait on Cocoon child failed: {} (continuing)", WaitErr);
 					},
 				}
 
@@ -640,9 +660,9 @@ async fn LaunchAndManageCocoonSideCar(
 					);
 					return Err(CommonError::IPCError {
 						Description:format!(
-							"Failed to connect to Cocoon gRPC at {} after {} attempts over {}ms: {} \
-							 (is Cocoon running? check `[DEV:COCOON]` log lines for stderr, or \
-							 re-run with the debug-electron build profile if the bundle is stale)",
+							"Failed to connect to Cocoon gRPC at {} after {} attempts over {}ms: {} (is Cocoon \
+							 running? check `[DEV:COCOON]` log lines for stderr, or re-run with the debug-electron \
+							 build profile if the bundle is stale)",
 							GRPCAddress, ConnectAttempt, GRPC_CONNECT_BUDGET_MS, Error
 						),
 					});
@@ -721,8 +741,8 @@ async fn LaunchAndManageCocoonSideCar(
 	//
 	// Stock VS Code fires a cascade of activation events at boot:
 	//   1. `*` - unconditional "activate anything that contributes *"
-	//   2. `onStartupFinished` - queued extensions whose start may be
-	//      deferred until after the first frame renders
+	//   2. `onStartupFinished` - queued extensions whose start may be deferred
+	//      until after the first frame renders
 	//   3. `workspaceContains:<pattern>` for each pattern any extension
 	//      contributes, fired per matching workspace folder
 	//
@@ -767,7 +787,8 @@ async fn LaunchAndManageCocoonSideCar(
 				.lock()
 				.ok()
 				.map(|Guard| {
-					Guard.iter()
+					Guard
+						.iter()
 						.filter_map(|Folder| Folder.URI.to_file_path().ok())
 						.collect::<Vec<_>>()
 				})
@@ -1100,22 +1121,19 @@ fn SweepStaleCocoon(Port:u16) {
 /// contains a matching file or directory. Patterns are interpreted the same
 /// way VS Code does for `workspaceContains:<pattern>` activation events:
 ///
-/// - A bare filename (no slash, no wildcards) matches an entry with that
-///   name at the workspace root (e.g. `package.json`).
-/// - A path with slashes but no wildcards matches a direct descendant
-///   relative to the root (e.g. `.vscode/launch.json`).
+/// - A bare filename (no slash, no wildcards) matches an entry with that name
+///   at the workspace root (e.g. `package.json`).
+/// - A path with slashes but no wildcards matches a direct descendant relative
+///   to the root (e.g. `.vscode/launch.json`).
 /// - A glob with `**/` prefix matches any descendant up to a bounded depth.
-/// - Any other wildcard form is matched via a simple segment-by-segment
-///   walk honouring `*` (single segment) and `**` (any number of segments).
+/// - Any other wildcard form is matched via a simple segment-by-segment walk
+///   honouring `*` (single segment) and `**` (any number of segments).
 ///
 /// Matching is bounded to depth 3 and 4096 total directory entries per
 /// workspace root to keep the cost sub-100 ms on large monorepos. Anything
 /// deeper is rare for activation-event triggers; the trade-off is
 /// documented in VS Code's own `ExtensionService.scanExtensions`.
-fn FindMatchingWorkspaceContainsPatterns(
-	Folders:&[std::path::PathBuf],
-	Patterns:&[String],
-) -> Vec<String> {
+fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patterns:&[String]) -> Vec<String> {
 	use std::collections::HashSet;
 
 	const MAX_DEPTH:usize = 3;
@@ -1176,7 +1194,9 @@ fn PatternMatchesAnyEntry(Pattern:&str, Entries:&[String]) -> bool {
 		return Entries.iter().any(|E| E == Pattern);
 	}
 	let PatternSegments:Vec<&str> = Pattern.split('/').collect();
-	Entries.iter().any(|E| SegmentMatch(&PatternSegments, &E.split('/').collect::<Vec<_>>()))
+	Entries
+		.iter()
+		.any(|E| SegmentMatch(&PatternSegments, &E.split('/').collect::<Vec<_>>()))
 }
 
 fn SegmentMatch(Pattern:&[&str], Entry:&[&str]) -> bool {

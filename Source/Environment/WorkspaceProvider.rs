@@ -265,6 +265,30 @@ impl WorkspaceProvider for MountainEnvironment {
 				return Ok(Vec::new());
 			},
 		};
+		// Diagnostic: capture the actual include pattern + the input
+		// DTO shape so the log makes the "every findFiles returns 0"
+		// pattern debuggable. The pattern is the most common source
+		// of zero-results - VS Code's internal callers sometimes pass
+		// a `RelativePattern` whose `pattern` is `**/*.json` plus a
+		// `base` that doesn't intersect any workspace folder, which
+		// silently falls through to the all-folders walk but with a
+		// pattern like `/**/*.json` (leading slash) that globset
+		// then fails to match against the relative paths produced by
+		// `Path.strip_prefix(...)`.
+		dev_log!(
+			"workspaces",
+			"[FindFilesInWorkspace] include={} dto_shape={}",
+			IncludePattern,
+			if IncludePatternDTO.is_string() {
+				"string"
+			} else if IncludePatternDTO.is_object() {
+				"object"
+			} else if IncludePatternDTO.is_null() {
+				"null"
+			} else {
+				"other"
+			}
+		);
 		let ExcludePattern = ExcludePatternDTO
 			.as_ref()
 			.and_then(ExtractGlobPattern)
@@ -423,7 +447,14 @@ impl WorkspaceProvider for MountainEnvironment {
 			})?
 			.into_inner()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
-		dev_log!("workspaces", "[FindFilesInWorkspace] returned {} match(es)", Final.len());
+		dev_log!(
+			"workspaces",
+			"[FindFilesInWorkspace] returned {} match(es) include={} exclude={:?} roots={}",
+			Final.len(),
+			IncludePattern,
+			ExcludePattern,
+			CacheKey.Folders.len()
+		);
 		FindFilesCachePut(CacheKey, Final.clone());
 		Ok(Final)
 	}

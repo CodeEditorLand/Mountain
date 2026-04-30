@@ -89,6 +89,10 @@ pub mod Vine;
 
 pub mod RPC;
 
+// Caching primitives (mmap asset cache, path canonicalisation cache,
+// future entries). See `Cache/mod.rs` for the index.
+pub mod Cache;
+
 // Services
 pub mod ProcessManagement;
 

@@ -43,11 +43,7 @@ pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Paramete
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
-	let Label = Parameter
-		.get("label")
-		.and_then(Value::as_str)
-		.unwrap_or(&GroupId)
-		.to_string();
+	let Label = Parameter.get("label").and_then(Value::as_str).unwrap_or(&GroupId).to_string();
 
 	if GroupId.is_empty() {
 		dev_log!("provider-register", "[ProviderRegister] scm-group skip: missing group_id");
@@ -66,7 +62,12 @@ pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Paramete
 		"label": &Label,
 		"resourceStates": [],
 	});
-	if let Err(Error) = Service.RunTime().Environment.UpdateSourceControlGroup(ScmHandle, GroupData).await {
+	if let Err(Error) = Service
+		.RunTime()
+		.Environment
+		.UpdateSourceControlGroup(ScmHandle, GroupData)
+		.await
+	{
 		dev_log!(
 			"grpc",
 			"warn: [Scm] UpdateSourceControlGroup (seed) failed scm={} group={}: {}",

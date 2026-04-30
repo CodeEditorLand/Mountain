@@ -459,11 +459,7 @@ impl TerminalProvider for MountainEnvironment {
 			// the deferral landed (and how many `localPty:input` calls
 			// arrived afterwards). The bare `.emit()` we replaced was
 			// invisible to the histogram.
-			if let Err(Error) = LogSkyEmit(
-				&CreateAppHandle,
-				SkyEvent::TerminalCreate.AsStr(),
-				CreatePayload,
-			) {
+			if let Err(Error) = LogSkyEmit(&CreateAppHandle, SkyEvent::TerminalCreate.AsStr(), CreatePayload) {
 				dev_log!(
 					"terminal",
 					"warn: [TerminalProvider] sky://terminal/create emit failed for ID {}: {}",

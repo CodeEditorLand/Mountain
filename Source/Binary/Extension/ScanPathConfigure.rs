@@ -46,16 +46,12 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// minimal profiles and the skill-file env stay in sync. User scan path
 	// still runs so VSIX-installed extensions remain visible.
 	let SkipBuiltins = matches!(std::env::var("Skip").as_deref(), Ok("1") | Ok("true"))
-		|| matches!(
-			std::env::var("Skip").as_deref(),
-			Ok("1") | Ok("true")
-		);
+		|| matches!(std::env::var("Skip").as_deref(), Ok("1") | Ok("true"));
 
 	if SkipBuiltins {
 		dev_log!(
 			"extensions",
-			"[Extensions] [ScanPaths] Skip=true - skipping all built-in paths, keeping user \
-			 path"
+			"[Extensions] [ScanPaths] Skip=true - skipping all built-in paths, keeping user path"
 		);
 	} else {
 		dev_log!("extensions", "[Extensions] [ScanPaths] Adding default scan paths...");
@@ -68,11 +64,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 		if let Ok(Override) = std::env::var("Ship") {
 			let OverridePath = ExpandUserPath(&Override);
 			if OverridePath.exists() {
-				dev_log!(
-					"extensions",
-					"[Extensions] [ScanPaths] + {} (Ship)",
-					OverridePath.display()
-				);
+				dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Ship)", OverridePath.display());
 				ScanPathsGuard.push(OverridePath);
 			} else {
 				dev_log!(
@@ -153,11 +145,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// polluting the user's real profile.
 	if let Ok(UserOverride) = std::env::var("Lodge") {
 		let OverridePath = ExpandUserPath(&UserOverride);
-		dev_log!(
-			"extensions",
-			"[Extensions] [ScanPaths] + {} (Lodge)",
-			OverridePath.display()
-		);
+		dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Lodge)", OverridePath.display());
 		ScanPathsGuard.push(OverridePath);
 	} else if let Some(HomeDirectory) = dirs::home_dir() {
 		let UserExtensionPath = HomeDirectory.join(".land/extensions");
@@ -180,11 +168,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				continue;
 			}
 			let ExtraPath = ExpandUserPath(Trimmed);
-			dev_log!(
-				"extensions",
-				"[Extensions] [ScanPaths] + {} (Extend)",
-				ExtraPath.display()
-			);
+			dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Extend)", ExtraPath.display());
 			ScanPathsGuard.push(ExtraPath);
 		}
 	}
@@ -195,11 +179,7 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// broken dev extension doesn't persist into the user's profile.
 	if let Ok(DevExtensions) = std::env::var("Probe") {
 		let DevPath = ExpandUserPath(&DevExtensions);
-		dev_log!(
-			"extensions",
-			"[Extensions] [ScanPaths] + {} (Probe)",
-			DevPath.display()
-		);
+		dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Probe)", DevPath.display());
 		ScanPathsGuard.push(DevPath);
 	}
 

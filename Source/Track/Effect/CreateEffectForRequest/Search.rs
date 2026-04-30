@@ -8,10 +8,7 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"findFiles" | "findTextInFiles" => {
 			let MethodNameOwned = MethodName.to_string();
@@ -22,8 +19,7 @@ pub fn CreateEffect<R:Runtime>(
 						let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
 						// Accept three call shapes:
 						//   - `{pattern, options}` named form
-						//   - `[pattern, options]` positional from
-						//     `TryMountainThenNode` Cocoon path
+						//   - `[pattern, options]` positional from `TryMountainThenNode` Cocoon path
 						//   - `pattern` bare (legacy single-arg)
 						let Args = if let Some(Object) = Parameters.as_object() {
 							(
@@ -51,26 +47,15 @@ pub fn CreateEffect<R:Runtime>(
 							return Ok(json!([]));
 						}
 						let Exclude = Options.get("exclude").cloned().filter(|V| !V.is_null());
-						let MaxResults = Options
-							.get("maxResults")
-							.and_then(Value::as_u64)
-							.map(|N| N as usize);
-						let UseIgnoreFiles = Options
-							.get("useIgnoreFiles")
-							.and_then(Value::as_bool)
-							.unwrap_or(true);
-						let FollowSymlinks = Options
-							.get("followSymlinks")
-							.and_then(Value::as_bool)
-							.unwrap_or(false);
+						let MaxResults = Options.get("maxResults").and_then(Value::as_u64).map(|N| N as usize);
+						let UseIgnoreFiles = Options.get("useIgnoreFiles").and_then(Value::as_bool).unwrap_or(true);
+						let FollowSymlinks = Options.get("followSymlinks").and_then(Value::as_bool).unwrap_or(false);
 						let Urls = run_time
 							.Environment
 							.FindFilesInWorkspace(Pattern, Exclude, MaxResults, UseIgnoreFiles, FollowSymlinks)
 							.await
 							.map_err(|Error| Error.to_string())?;
-						Ok(json!(
-							Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>()
-						))
+						Ok(json!(Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>()))
 					})
 				};
 			Some(Ok(Box::new(effect)))

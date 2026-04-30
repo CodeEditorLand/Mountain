@@ -32,7 +32,9 @@ mod Tests {
 	}
 
 	#[test]
-	fn RejectsPlainText() { assert_eq!(ExtractDevTag("plain stdout line"), None); }
+	fn RejectsPlainText() {
+		assert_eq!(ExtractDevTag("plain stdout line"), None);
+	}
 
 	#[test]
 	fn RejectsMalformed() {

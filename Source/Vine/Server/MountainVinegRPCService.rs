@@ -229,6 +229,28 @@ impl MountainVinegRPCService {
 
 #[tonic::async_trait]
 impl MountainService for MountainVinegRPCService {
+	// LAND-PATCH B7-S6 P2: bidirectional streaming channel.
+	// Stub for now - the multiplexer that drains incoming Envelopes
+	// and dispatches to the unary handler tree is implemented in a
+	// follow-up patch (Patch 14). Until then this returns
+	// `Unimplemented` so callers fall back to the unary path.
+	type OpenChannelFromCocoonStream = std::pin::Pin<
+		Box<
+			dyn tonic::codegen::tokio_stream::Stream<Item = Result<crate::Vine::Generated::Envelope, tonic::Status>>
+				+ Send
+				+ 'static,
+		>,
+	>;
+
+	async fn open_channel_from_cocoon(
+		&self,
+		_request:tonic::Request<tonic::Streaming<crate::Vine::Generated::Envelope>>,
+	) -> Result<tonic::Response<Self::OpenChannelFromCocoonStream>, tonic::Status> {
+		Err(tonic::Status::unimplemented(
+			"OpenChannelFromCocoon: streaming multiplexer not yet wired (Patch 14); use unary endpoints",
+		))
+	}
+
 	/// Handles generic request-response RPCs from Cocoon.
 	///
 	/// This is the main entry point for Cocoon to request operations from

@@ -18,8 +18,8 @@
 //!
 //! ## Contract
 //!
-//! - `Tag` is matched against `Trace` exactly as Rust tags are; disabled
-//!   tags produce no output (cheap no-op on the Mountain side).
+//! - `Tag` is matched against `Trace` exactly as Rust tags are; disabled tags
+//!   produce no output (cheap no-op on the Mountain side).
 //! - `Message` is the fully-formatted log string - the caller has already done
 //!   any interpolation.
 //! - The command is fire-and-forget from the renderer's perspective (returns

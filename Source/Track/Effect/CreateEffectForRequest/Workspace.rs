@@ -7,10 +7,7 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
-pub fn CreateEffect<R:Runtime>(
-	MethodName:&str,
-	Parameters:Value,
-) -> Option<Result<MappedEffect, String>> {
+pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"applyEdit" => {
 			let effect =
@@ -120,17 +117,9 @@ pub fn CreateEffect<R:Runtime>(
 									.filter_map(|Entry| {
 										let Uri = Entry
 											.get("uri")
-											.and_then(|U| {
-												U.get("value")
-													.and_then(Value::as_str)
-													.or_else(|| U.as_str())
-											})
+											.and_then(|U| U.get("value").and_then(Value::as_str).or_else(|| U.as_str()))
 											.map(str::to_string)?;
-										let Name = Entry
-											.get("name")
-											.and_then(Value::as_str)
-											.unwrap_or("")
-											.to_string();
+										let Name = Entry.get("name").and_then(Value::as_str).unwrap_or("").to_string();
 										Some((Uri, Name))
 									})
 									.collect()
@@ -145,11 +134,7 @@ pub fn CreateEffect<R:Runtime>(
 									.filter_map(|Entry| {
 										Entry
 											.get("uri")
-											.and_then(|U| {
-												U.get("value")
-													.and_then(Value::as_str)
-													.or_else(|| U.as_str())
-											})
+											.and_then(|U| U.get("value").and_then(Value::as_str).or_else(|| U.as_str()))
 											.map(str::to_string)
 									})
 									.collect()
@@ -162,11 +147,12 @@ pub fn CreateEffect<R:Runtime>(
 						let Base = Folders.len();
 						for (Index, (UriStr, Name)) in Additions.iter().enumerate() {
 							if let Ok(Url) = url::Url::parse(UriStr) {
-								if let Ok(Dto) = crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO::New(
-									Url,
-									Name.clone(),
-									Base + Index,
-								) {
+								if let Ok(Dto) =
+									crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO::New(
+										Url,
+										Name.clone(),
+										Base + Index,
+									) {
 									Folders.push(Dto);
 								}
 							}

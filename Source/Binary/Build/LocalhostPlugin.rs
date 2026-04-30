@@ -18,8 +18,7 @@ use tauri::plugin::TauriPlugin;
 /// `set_status` / `Request::body()` from a patched fork of
 /// `tauri-plugin-localhost`. After resetting the vendored copy to upstream
 /// (`Dependency/Tauri/Dependency/PluginsWorkspace/plugins/localhost`),
-/// those methods are gone; restoration is tracked in
-/// `.claude/tauri/B4-Plugins.md`.
+/// those methods are gone;
 #[allow(dead_code)]
 const OTLP_HOST:&str = "127.0.0.1:4318";
 
@@ -124,8 +123,7 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 			// vendored `tauri-plugin-localhost` (`Dependency/Tauri/
 			// Dependency/PluginsWorkspace/plugins/localhost/src/lib.rs`)
 			// to add `Response::set_handled(bool)`, `Response::set_status(
-			// u16)`, and `Request::body() -> &[u8]`. Track that work in
-			// `.claude/tauri/B4-Plugins.md`.
+			// u16)`, and `Request::body() -> &[u8]`.
 
 			// Pre-set the correct `Content-Type` for known asset extensions.
 			// The upstream plugin sets `Content-Type` from `asset.mime_type`

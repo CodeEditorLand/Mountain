@@ -60,10 +60,10 @@ pub fn HasWorkspaceArgument() -> bool { Parse().is_some() }
 /// 1. Every `--folder <path>` pair on the command line (repeatable).
 /// 2. Any non-flag positional argument that resolves to an existing directory
 ///    (convention used when the user drags a folder onto the app).
-/// 3. `Open` env var (colon-separated on POSIX, `;`-separated
-///    on Windows to match the platform's PATH delimiter).
-/// 4. The current working directory, if no other source is available AND
-///    `Walk` isn't set to `false`.
+/// 3. `Open` env var (colon-separated on POSIX, `;`-separated on Windows to
+///    match the platform's PATH delimiter).
+/// 4. The current working directory, if no other source is available AND `Walk`
+///    isn't set to `false`.
 ///
 /// Returned paths are canonicalised; non-existent / non-directory entries
 /// are dropped with a warning.
@@ -197,11 +197,7 @@ fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
 	let Raw = Workspaces.iter().find_map(Probe)?;
 	let Normalised = Raw.strip_prefix("file://").unwrap_or(Raw.as_str()).to_string();
 	let Candidate = PathBuf::from(&Normalised);
-	if Candidate.is_dir() {
-		Some(Candidate)
-	} else {
-		None
-	}
+	if Candidate.is_dir() { Some(Candidate) } else { None }
 }
 
 /// Walk up from `Start` looking for a project-root marker (`Cargo.toml`,

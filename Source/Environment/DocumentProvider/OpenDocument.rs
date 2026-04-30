@@ -55,11 +55,7 @@ pub(super) async fn open_document(
 
 		match existing_document.ToDTO() {
 			Ok(dto) => {
-				if let Err(error) = LogSkyEmit(
-					&environment.ApplicationHandle,
-					SkyEvent::DocumentsOpen.AsStr(),
-					dto,
-				) {
+				if let Err(error) = LogSkyEmit(&environment.ApplicationHandle, SkyEvent::DocumentsOpen.AsStr(), dto) {
 					dev_log!(
 						"model",
 						"error: [DocumentProvider] Failed to emit document open event: {}",
