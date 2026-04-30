@@ -111,7 +111,38 @@ fn ProxyToOTLP(Body:&[u8]) -> bool {
 /// (Jaeger, OTEL Collector, etc.) so OTELBridge.ts can send telemetry
 /// without cross-origin issues. Uses raw TCP - no extra HTTP client dependency.
 pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
-	tauri_plugin_localhost::Builder::new(ServerPort)
+	// Resolve the user's home directory once at startup. Used to seed
+	// the vendored localhost plugin's `extension_root` allowlist for
+	// the `/Extension/<abs-fs-path>` URL prefix, which serves
+	// extension-contributed assets (icon fonts, webview resources,
+	// images) directly from the user's extension installation dirs.
+	//
+	// Without this, every workbench `@font-face` rule emitted by
+	// `iconsStyleSheet.js` for a sideloaded extension (GitLens,
+	// dart-code, ...) lands as a missing-glyph blank box - the
+	// upstream URL is `vscode-file://vscode-app/<absolute-fs-path>`
+	// which WKWebView cannot resolve under Tauri. Land's Output
+	// transform `RewriteIconsStyleSheetURLs` rewrites those to
+	// `<origin>/Extension/<absolute-fs-path>`; this allowlist is
+	// the receiving end.
+	let HomeDirectory = std::env::var_os("HOME")
+		.or_else(|| std::env::var_os("USERPROFILE"))
+		.map(std::path::PathBuf::from);
+
+	let LandExtensionsRoot =
+		HomeDirectory.as_ref().map(|Home| Home.join(".land/extensions"));
+	let VSCodeExtensionsRoot =
+		HomeDirectory.as_ref().map(|Home| Home.join(".vscode/extensions"));
+
+	let mut Builder = tauri_plugin_localhost::Builder::new(ServerPort);
+	if let Some(Root) = LandExtensionsRoot {
+		Builder = Builder.extension_root(Root);
+	}
+	if let Some(Root) = VSCodeExtensionsRoot {
+		Builder = Builder.extension_root(Root);
+	}
+
+	Builder
 		.on_request(|Request, Response| {
 			// CORS headers for Service Workers and frontend integration.
 			Response.add_header("Access-Control-Allow-Origin", "*");
