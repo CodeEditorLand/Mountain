@@ -528,6 +528,49 @@ pub async fn SendRequest(
 		Config::DEFAULT_TIMEOUT_MS
 	});
 
+	// LAND-PATCH B7-S6 P14.3: prefer the streaming multiplexer for
+	// requests when `LAND_VINE_STREAMING=1` and a multiplexer is
+	// open for this sidecar. Each Request acquires a unique
+	// `RequestIdentifier`, parks a `oneshot::Sender` in the mux's
+	// pending map, and h2-multiplexes the frame with every other
+	// concurrent request on the same stream. Cancellation, timeout,
+	// and disconnection drain the pending sender automatically. On
+	// any failure we fall through to the unary path (current state:
+	// Cocoon's bidi handler tree is unimplemented; this branch is a
+	// no-op until P14.4 lands).
+	if std::env::var("LAND_VINE_STREAMING").as_deref() == Ok("1") {
+		if let Some(Mux) = super::Multiplexer::Multiplexer::Lookup(SideCarIdentifier) {
+			if !Mux.IsClosed() {
+				match Mux.Request(Method.clone(), Parameters.clone(), timeout_duration).await {
+					Ok(Result) => {
+						UpdateSideCarActivity(SideCarIdentifier);
+						return Ok(Result);
+					},
+					Err(VineError::RequestTimeout { .. }) => {
+						// Timeout on the streaming path is authoritative -
+						// don't fall back to unary, the request DID dispatch
+						// and the sidecar is just slow. Surfaces as a
+						// retryable error to the Effect supervisor.
+						return Err(VineError::RequestTimeout {
+							SideCarIdentifier:SideCarIdentifier.to_string(),
+							MethodName:Method,
+							TimeoutMilliseconds:timeout_duration.as_millis() as u64,
+						});
+					},
+					Err(Error) => {
+						dev_log!(
+							"grpc",
+							"warn: [VineClient::SendRequest] streaming send failed for '{}::{}' ({}); falling back to unary",
+							SideCarIdentifier,
+							Method,
+							Error
+						);
+					},
+				}
+			}
+		}
+	}
+
 	// Validate message size
 	let parameter_bytes =
 		to_vec(&Parameters).map_err(|e| VineError::RPCError(format!("Failed to serialize parameters: {}", e)))?;
@@ -628,6 +671,39 @@ pub async fn SendNotification(SideCarIdentifier:String, Method:String, Parameter
 		return Err(VineError::RPCError(
 			"Method name must be between 1 and 128 characters".to_string(),
 		));
+	}
+
+	// LAND-PATCH B7-S6 P14.2: prefer the streaming multiplexer when
+	// `LAND_VINE_STREAMING=1` is set AND a multiplexer has been
+	// opened for this sidecar. The multiplexer's `Notify` writes
+	// onto a bounded `mpsc(1024)` Sink (non-blocking modulo
+	// backpressure) and h2-multiplexes with every other concurrent
+	// frame. Falls through to the unary path on any failure so the
+	// editor stays functional while Cocoon's streaming handler tree
+	// is still on its way (current state: Cocoon returns
+	// `Status::unimplemented`).
+	if std::env::var("LAND_VINE_STREAMING").as_deref() == Ok("1") {
+		if let Some(Mux) = super::Multiplexer::Multiplexer::Lookup(&SideCarIdentifier) {
+			if !Mux.IsClosed() {
+				let MethodForPublish = Method.clone();
+				let ParametersForPublish = Parameters.clone();
+				match Mux.Notify(Method.clone(), Parameters.clone()).await {
+					Ok(()) => {
+						UpdateSideCarActivity(&SideCarIdentifier);
+						PublishNotification(&SideCarIdentifier, &MethodForPublish, &ParametersForPublish);
+						return Ok(());
+					},
+					Err(Error) => {
+						dev_log!(
+							"grpc",
+							"warn: [VineClient::SendNotification] streaming send failed for '{}' ({}); falling back to unary",
+							SideCarIdentifier,
+							Error
+						);
+					},
+				}
+			}
+		}
 	}
 
 	let parameter_bytes = to_vec(&Parameters)?;

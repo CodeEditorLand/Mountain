@@ -556,6 +556,16 @@ pub fn Fn() {
 				crate::Binary::IPC::HealthCommand::cocoon_debug_service_health,
 				crate::Binary::IPC::HealthCommand::shared_process_service_health,
 				crate::Binary::IPC::RenderDevLogCommand::RenderDevLog,
+				// LAND-PATCH B7-S6 P14.5: Vine notification broadcast
+				// subscription. `vine_subscribe_notifications` opens a
+				// Tauri Channel that drains the process-wide
+				// `Vine::Client` broadcast into the webview; Effect-TS
+				// `VineNotificationsLive` Layer wraps it as a
+				// `Stream<NotificationFrame>`. `vine_subscriber_count`
+				// is a diagnostic for verifying registrations didn't
+				// leak across reloads.
+				crate::Binary::IPC::VineSubscribeCommand::vine_subscribe_notifications,
+				crate::Binary::IPC::VineSubscribeCommand::vine_subscriber_count,
 			])
 			.build(tauri::generate_context!())
 			.expect("FATAL: Error while building Mountain Tauri application")
