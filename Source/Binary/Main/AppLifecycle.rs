@@ -70,6 +70,23 @@ use tauri::Manager;
 use Echo::Scheduler::Scheduler::Scheduler;
 
 use crate::dev_log;
+
+/// Master "disable Land customisations" gate. Returns `true` when the
+/// `Disable=true` env var is set (PascalCase, single-word, matching
+/// the rest of Land's env surface in `.env.Land.Diagnostics`). When
+/// enabled, Mountain skips:
+///   - `WindowEvent::CloseRequested` intercept (Cmd+W routes natively)
+///   - Cocoon + Air sidecar spawn
+///   - The Wind / SkyBridge advanced-features registration
+///   - The smoke-test gating that would otherwise activate via Sky
+///
+/// Code paths are NOT removed - just skipped at runtime so a clean
+/// `Disable=` env var (or `Disable=false`) restores stock behaviour.
+fn IsLandDisabled() -> bool {
+	std::env::var("Disable")
+		.map(|Value| Value.eq_ignore_ascii_case("true"))
+		.unwrap_or(false)
+}
 use crate::{
 	// Crate root imports
 	ApplicationState::ApplicationState,
@@ -169,29 +186,34 @@ pub fn AppLifecycleSetup(
 	let MainWindow = WindowBuildFn(app, localhost_url.clone());
 	dev_log!("lifecycle", "[UI] [Window] Main window ready.");
 
-	// DevTools auto-open is opt-in via `LAND_OPEN_DEVTOOLS=1` (or any
-	// non-empty value). Auto-opening on every debug launch was the
-	// direct cause of "I can't type or fire keybindings": the DevTools
-	// window steals macOS keyboard focus the moment it appears, so the
-	// main webview never becomes first responder and every keystroke
-	// goes to DevTools (or the system menu) instead of the workbench.
-	// The keybinding shortcut `Cmd+Alt+I` (Tauri's default) and the
-	// right-click "Inspect" entry both still work when needed.
+	// DevTools auto-open is opt-in via the PascalCase env var
+	// `Inspect=1` (or any non-empty value other than `0`). Naming
+	// follows Land's single-word PascalCase verb convention -
+	// see `.env.Land.Diagnostics` for the documented set.
+	//
+	// Auto-opening DevTools on every debug launch was the direct
+	// cause of "I can't type or fire keybindings": the DevTools
+	// window steals macOS keyboard focus the moment it appears, so
+	// the main webview never becomes first responder and every
+	// keystroke goes to DevTools (or the system menu) instead of
+	// the workbench. The keybinding shortcut `Cmd+Alt+I` (Tauri's
+	// default) and the right-click "Inspect" entry both still
+	// work when needed.
 	#[cfg(debug_assertions)]
 	{
-		let WantDevTools = std::env::var("LAND_OPEN_DEVTOOLS")
+		let WantDevTools = std::env::var("Inspect")
 			.map(|Value| !Value.is_empty() && Value != "0")
 			.unwrap_or(false);
 		if WantDevTools {
 			dev_log!(
 				"lifecycle",
-				"[UI] [Window] LAND_OPEN_DEVTOOLS set: opening DevTools."
+				"[UI] [Window] Inspect=1 set: opening DevTools."
 			);
 			MainWindow.open_devtools();
 		} else {
 			dev_log!(
 				"lifecycle",
-				"[UI] [Window] Debug build: DevTools auto-open suppressed (set LAND_OPEN_DEVTOOLS=1 to override)."
+				"[UI] [Window] Debug build: DevTools auto-open suppressed (export Inspect=1 to override)."
 			);
 		}
 	}
@@ -213,7 +235,12 @@ pub fn AppLifecycleSetup(
 	//      there is no active editor (or the workbench refuses), Sky calls
 	//      `nativeHost:closeWindow`, which uses `WebviewWindow::destroy()`
 	//      to tear the window down without re-firing CloseRequested.
-	{
+	if IsLandDisabled() {
+		dev_log!(
+			"window",
+			"[UI] [Window] Disable=true: CloseRequested intercept SKIPPED (Cmd+W will close window natively)"
+		);
+	} else {
 		use tauri::Emitter;
 		let CloseEmitter = MainWindow.clone();
 		MainWindow.on_window_event(move |Event| {
@@ -480,19 +507,37 @@ pub fn AppLifecycleSetup(
 		.await;
 		crate::otel_span!("lifecycle:vine:start", VineStart);
 
-		// [Cocoon] [Sidecar]
-		let CocoonStart = crate::IPC::DevLog::NowNano();
-		let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
-		crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
+		// [Cocoon] [Sidecar] - skipped when Disable=true so the
+		// workbench loads without an extension host. Useful for
+		// bisecting whether typing-input regressions originate in
+		// Cocoon's gRPC handlers or upstream / Tauri / WKWebView.
+		if IsLandDisabled() {
+			dev_log!(
+				"cocoon",
+				"[Cocoon] [Start] Disable=true: Cocoon spawn SKIPPED (workbench will run without extensions)"
+			);
+		} else {
+			let CocoonStart = crate::IPC::DevLog::NowNano();
+			let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
+			crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
+		}
 
 		// [Air] [Sidecar] - daemon for updates / downloads / signing /
 		// indexing / system monitoring. Spawn parallel to Cocoon; both
 		// are sidecars in the Vine pool. AirStart returns Ok(()) even
 		// on spawn failure (graceful degradation - workbench works
 		// without Air, just without those background capabilities).
-		let AirStartT0 = crate::IPC::DevLog::NowNano();
-		let _ = AirStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
-		crate::otel_span!("lifecycle:air:start", AirStartT0);
+		// Skipped under `Disable=true` for parity with Cocoon.
+		if IsLandDisabled() {
+			dev_log!(
+				"grpc",
+				"[Air] [Start] Disable=true: Air spawn SKIPPED"
+			);
+		} else {
+			let AirStartT0 = crate::IPC::DevLog::NowNano();
+			let _ = AirStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
+			crate::otel_span!("lifecycle:air:start", AirStartT0);
+		}
 
 		// [Lifecycle] [Phase] Advance Starting → Ready now that the gRPC
 		// server + Cocoon sidecar + extension scan have all finished. Wind's

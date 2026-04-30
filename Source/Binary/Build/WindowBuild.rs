@@ -62,6 +62,18 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 		.initialization_script("")
 		.zoom_hotkeys_enabled(true)
 		.browser_extensions_enabled(false)
+		// macOS first-responder: by default WKWebView swallows the
+		// first click on an unfocused window as a "make me key"
+		// no-op and the click never reaches the inner content. With
+		// `Inspect=1` running DevTools alongside the main window
+		// every switch-back to the editor needed two clicks - first
+		// to focus the NSWindow, second to actually focus the
+		// Monaco textarea - which the user reports as "I clicked,
+		// I'm typing, nothing's happening". `accept_first_mouse`
+		// flips the responder chain so the first click already
+		// reaches WKWebView's content and the textarea picks up
+		// keyboard input immediately.
+		.accept_first_mouse(true)
 		.title("Mountain")
 		.resizable(true)
 		.inner_size(1400.0, 900.0)
