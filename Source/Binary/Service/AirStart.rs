@@ -20,9 +20,6 @@
 //!   - On failure: log a degraded-mode warning and return Ok(()) - the
 //!     workbench works without Air, just without update / index /
 //!     system-monitor capability.
-//!
-//! Backlink: user request 2026-04-30 ("Air isn't fully connected or
-//! launched now").
 
 use std::sync::Arc;
 
