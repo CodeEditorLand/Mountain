@@ -31,9 +31,16 @@ const OTLP_HOST:&str = "127.0.0.1:4318";
 /// `on_request`, we guarantee the right MIME for the extensions the workbench
 /// actually loads; the patched plugin keeps our value instead of overwriting.
 ///
+/// Fonts are listed explicitly. WKWebView is strict about font MIME types -
+/// when the asset resolver falls back to `application/octet-stream` for a
+/// `.ttf` (which `infer` does on some macOS versions because TrueType has
+/// no magic header), the browser silently refuses to use the font and the
+/// workbench renders icons as blank squares with no console error. The
+/// codicon font is the visible symptom; KaTeX and Seti fonts under
+/// `/Static/Application/extensions/...` follow the same path.
+///
 /// Returns `None` for unknown extensions so the plugin's `asset.mime_type`
-/// fallback still applies (e.g. images, fonts, WASM - the asset resolver
-/// handles those correctly).
+/// fallback still applies (images, WASM, etc.).
 fn MimeFromUrl(Url:&str) -> Option<&'static str> {
 	// Strip query string / fragment before extension match.
 	let Path = Url.split(['?', '#']).next().unwrap_or(Url);
@@ -48,6 +55,11 @@ fn MimeFromUrl(Url:&str) -> Option<&'static str> {
 		"svg" => Some("image/svg+xml"),
 		"wasm" => Some("application/wasm"),
 		"txt" => Some("text/plain; charset=utf-8"),
+		"ttf" => Some("font/ttf"),
+		"otf" => Some("font/otf"),
+		"woff" => Some("font/woff"),
+		"woff2" => Some("font/woff2"),
+		"eot" => Some("application/vnd.ms-fontobject"),
 		_ => None,
 	}
 }
