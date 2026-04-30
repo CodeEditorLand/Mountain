@@ -1220,8 +1220,13 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				},
 				"nativeHost:closeWindow" => {
 					dev_log!("window", "{}", command);
+					// `destroy()` tears the window down without firing
+					// `CloseRequested` again, which lets us safely exit the
+					// `prevent_close` intercept registered in AppLifecycle.
+					// `close()` re-enters the intercept and the window
+					// becomes unkillable.
 					if let Some(Window) = app_handle.get_webview_window("main") {
-						let _ = Window.close();
+						let _ = Window.destroy();
 					}
 					Ok(Value::Null)
 				},
@@ -1544,6 +1549,13 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						None => Err("cocoon:request requires method string in slot 0".to_string()),
 						Some(Method) => {
 							let Payload = args.get(1).cloned().unwrap_or(Value::Null);
+							// Same boot-race guard as `tree:getChildren`: the
+							// renderer can dispatch `cocoon:request` (e.g.
+							// `webview.resolveView`) before Cocoon's gRPC
+							// handshake completes. Wait briefly so the first
+							// few calls don't fail spuriously and poison
+							// renderer-side caches.
+							let _ = crate::Vine::Client::WaitForClientConnection("cocoon-main", 1500).await;
 							crate::Vine::Client::SendRequest("cocoon-main", Method.clone(), Payload, 30_000)
 								.await
 								.map_err(|Error| format!("cocoon:request {} failed: {:?}", Method, Error))
@@ -2125,6 +2137,18 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							"viewId": ViewId,
 							"treeItemHandle": ItemHandle,
 						});
+						// Boot-race: the workbench's Explorer view fires
+						// `tree:getChildren` ~700 log lines before
+						// Cocoon's gRPC client finishes handshaking.
+						// Without this wait the first call returns
+						// `ClientNotConnected`, the workbench caches an
+						// empty list, and the user sees an empty
+						// Explorer until they manually refresh. Wait up
+						// to 1500 ms for the connection to land before
+						// dispatching - this no-ops once Cocoon is
+						// connected (the typical case), so it only
+						// costs us latency on the very first call.
+						let _ = crate::Vine::Client::WaitForClientConnection("cocoon-main", 1500).await;
 						// Tree-view RPCs are user-interactive: a 5 second
 						// wait shows the user a spinner and silently fails
 						// the extension's Promise on timeout. 1500 ms is

@@ -169,10 +169,63 @@ pub fn AppLifecycleSetup(
 	let MainWindow = WindowBuildFn(app, localhost_url.clone());
 	dev_log!("lifecycle", "[UI] [Window] Main window ready.");
 
+	// DevTools auto-open is opt-in via `LAND_OPEN_DEVTOOLS=1` (or any
+	// non-empty value). Auto-opening on every debug launch was the
+	// direct cause of "I can't type or fire keybindings": the DevTools
+	// window steals macOS keyboard focus the moment it appears, so the
+	// main webview never becomes first responder and every keystroke
+	// goes to DevTools (or the system menu) instead of the workbench.
+	// The keybinding shortcut `Cmd+Alt+I` (Tauri's default) and the
+	// right-click "Inspect" entry both still work when needed.
 	#[cfg(debug_assertions)]
 	{
-		dev_log!("lifecycle", "[UI] [Window] Debug build: opening DevTools.");
-		MainWindow.open_devtools();
+		let WantDevTools = std::env::var("LAND_OPEN_DEVTOOLS")
+			.map(|Value| !Value.is_empty() && Value != "0")
+			.unwrap_or(false);
+		if WantDevTools {
+			dev_log!(
+				"lifecycle",
+				"[UI] [Window] LAND_OPEN_DEVTOOLS set: opening DevTools."
+			);
+			MainWindow.open_devtools();
+		} else {
+			dev_log!(
+				"lifecycle",
+				"[UI] [Window] Debug build: DevTools auto-open suppressed (set LAND_OPEN_DEVTOOLS=1 to override)."
+			);
+		}
+	}
+
+	// -------------------------------------------------------------------------
+	// [UI] [Window] Intercept CloseRequested so Cmd+W (and the macOS app
+	// menu's Window > Close item) routes through the workbench instead of
+	// killing the whole window.
+	//
+	// On macOS, Tauri 2.x installs a default app menu that maps Cmd+W to
+	// NSWindow's `performClose:`. The webview's keydown handler never gets
+	// the event because the menu wins the responder chain. The result the
+	// user sees: hitting Cmd+W to close a tab nukes the entire editor.
+	//
+	// The fix is the standard Electron-style handshake:
+	//   1. Mountain prevents the close.
+	//   2. Mountain emits `sky://window/close-requested` to the webview.
+	//   3. Sky listens, asks the workbench to close the active editor; if
+	//      there is no active editor (or the workbench refuses), Sky calls
+	//      `nativeHost:closeWindow`, which uses `WebviewWindow::destroy()`
+	//      to tear the window down without re-firing CloseRequested.
+	{
+		use tauri::Emitter;
+		let CloseEmitter = MainWindow.clone();
+		MainWindow.on_window_event(move |Event| {
+			if let tauri::WindowEvent::CloseRequested { api, .. } = Event {
+				api.prevent_close();
+				let _ = CloseEmitter.emit("sky://window/close-requested", ());
+				dev_log!(
+					"window",
+					"[UI] [Window] CloseRequested intercepted; forwarded to webview"
+				);
+			}
+		});
 	}
 
 	// -------------------------------------------------------------------------

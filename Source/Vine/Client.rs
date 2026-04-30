@@ -392,6 +392,49 @@ pub fn DisconnectFromSideCar(SideCarIdentifier:String) -> Result<(), VineError> 
 	}
 }
 
+/// Returns whether the named sidecar currently has a live entry in the
+/// connection pool. Cheap read of the shared map; no RPC issued.
+///
+/// Useful for boot-race callers (Wind tree-view requests during
+/// extension scan) that need to know whether a `SendRequest` would
+/// short-circuit with `ClientNotConnected` *before* paying the
+/// serialization + lock-acquire cost. Pair with
+/// [`WaitForClientConnection`] when the caller is willing to wait a
+/// short window for the sidecar handshake to complete.
+pub fn IsClientConnected(SideCarIdentifier:&str) -> bool {
+	if IsShuttingDown() {
+		return false;
+	}
+	let guard = SIDECAR_CLIENTS.lock();
+	guard.contains_key(SideCarIdentifier)
+}
+
+/// Polls [`IsClientConnected`] every 50 ms until the sidecar appears in
+/// the pool or the budget runs out. Returns immediately if the sidecar
+/// is already connected.
+///
+/// `BudgetMilliseconds` is a soft upper bound: callers in user-facing
+/// code paths (tree-view get-children, command execute) should keep it
+/// under ~1500 ms so the UI stays responsive even when Cocoon's
+/// handshake is unusually slow. Returns `true` on connect within the
+/// budget, `false` on timeout.
+pub async fn WaitForClientConnection(SideCarIdentifier:&str, BudgetMilliseconds:u64) -> bool {
+	if IsClientConnected(SideCarIdentifier) {
+		return true;
+	}
+	let Deadline = std::time::Instant::now() + Duration::from_millis(BudgetMilliseconds);
+	while std::time::Instant::now() < Deadline {
+		tokio::time::sleep(Duration::from_millis(50)).await;
+		if IsClientConnected(SideCarIdentifier) {
+			return true;
+		}
+		if IsShuttingDown() {
+			return false;
+		}
+	}
+	IsClientConnected(SideCarIdentifier)
+}
+
 /// Checks the health status of a connected sidecar.
 ///
 /// Health is determined by:
