@@ -499,6 +499,22 @@ pub fn Fn() {
 					responder.respond(response);
 				});
 			})
+			.register_asynchronous_uri_scheme_protocol("vscode-webview", |ctx, request, responder| {
+				// VS Code's `WebviewElement` wraps every extension webview in
+				// an iframe whose `src` is `vscode-webview://<authority>/index.html?...`.
+				// Without this handler the iframe stays blank and every
+				// extension that uses `webviewView` / `WebviewPanel` /
+				// `CustomEditor` (Roo Code, Claude, GitLens, custom editors)
+				// is dead. The handler serves the three-file `pre/`
+				// directory (`index.html`, `service-worker.js`, `fake.html`);
+				// extension HTML itself comes through later via the workbench's
+				// `swMessage` postMessage channel, not this scheme.
+				let AppHandle = ctx.app_handle().clone();
+				std::thread::spawn(move || {
+					let response = crate::Binary::Build::Scheme::VscodeWebviewSchemeHandler(&AppHandle, &request);
+					responder.respond(response);
+				});
+			})
 			.plugin(tauri_plugin_dialog::init())
 			.plugin(tauri_plugin_fs::init())
 			.invoke_handler(tauri::generate_handler![
