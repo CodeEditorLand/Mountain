@@ -1,5 +1,5 @@
 [[bin]]
-name = "ProductionNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Compile_ElectronProfile_EsbuildCompiler_Mountain"
+name = "Mountain"
 path = "Source/Library.rs"
 
 [build-dependencies]
@@ -156,7 +156,7 @@ TierOpenExternalLayer4 = []
 TierExtensionScanParallel = []
 
 [lib]
-name = "ProductionNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Compile_ElectronProfile_EsbuildCompiler_Mountain"
+name = "Mountain"
 path = "Source/Library.rs"
 crate-type = ["lib", "staticlib"]
 
@@ -166,11 +166,11 @@ autobenches = false
 autobins = false
 autoexamples = false
 autotests = false
-default-run = "ProductionNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Compile_ElectronProfile_EsbuildCompiler_Mountain"
+default-run = "Mountain"
 description = "Mountain ⛰️"
 edition = "2024"
 license-file = "LICENSE"
-name = "ProductionNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Compile_ElectronProfile_EsbuildCompiler_Mountain"
+name = "Mountain"
 publish = false
 include = [
 	"build.rs",
