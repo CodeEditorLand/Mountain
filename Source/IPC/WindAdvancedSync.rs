@@ -508,11 +508,18 @@ impl WindAdvancedSync {
 						// Update sync status
 						sync.sync_status = Self::calculate_sync_status(&sync.synchronized_documents);
 
-						// Emit sync event
-						let _ = runtime
-							.Environment
-							.ApplicationHandle
-							.emit("mountain_sync_status_update", sync.sync_status.clone());
+						// Emit sync event - off by default. The Sky
+						// renderer has no subscriber for this channel;
+						// every emit just queued behind keystrokes on
+						// the shared Tauri IPC pipe. Set
+						// `LAND_SYNC_STATUS_EMIT=1` to opt in for
+						// debugging / future Sky consumers.
+						if std::env::var("LAND_SYNC_STATUS_EMIT").is_ok() {
+							let _ = runtime
+								.Environment
+								.ApplicationHandle
+								.emit("mountain_sync_status_update", sync.sync_status.clone());
+						}
 					}
 				}
 			}
@@ -535,11 +542,16 @@ impl WindAdvancedSync {
 						SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
 					stats.connection_uptime += 10;
 
-					// Emit performance update
-					let _ = runtime
-						.Environment
-						.ApplicationHandle
-						.emit("mountain_performance_update", stats.clone());
+					// Emit performance update - off by default. Same
+					// reasoning as `mountain_sync_status_update`: no
+					// Sky subscriber, every emit cost shared channel
+					// bandwidth. Set `LAND_PERF_EMIT=1` to opt in.
+					if std::env::var("LAND_PERF_EMIT").is_ok() {
+						let _ = runtime
+							.Environment
+							.ApplicationHandle
+							.emit("mountain_performance_update", stats.clone());
+					}
 				}
 			}
 		});
@@ -680,6 +692,18 @@ impl WindAdvancedSync {
 
 		loop {
 			interval.tick().await;
+
+			// Fast-path: when no subscribers are registered the queue
+			// can never reach a consumer. Skip the lock-and-drain path
+			// entirely so the 100ms tick is a true no-op until Sky
+			// registers a subscriber. This keeps the shared Tauri IPC
+			// channel free for keystrokes during extension boot.
+			{
+				let rt = self.real_time_updates.lock().unwrap();
+				if rt.Subscribers.is_empty() {
+					continue;
+				}
+			}
 
 			let updates = self.get_pending_updates().await;
 
