@@ -9,7 +9,7 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn handle_working_copy_is_dirty(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn WorkingCopyIsDirty(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -18,7 +18,7 @@ pub async fn handle_working_copy_is_dirty(runtime:Arc<ApplicationRunTime>, args:
 	Ok(json!(IsDirty))
 }
 
-pub async fn handle_working_copy_set_dirty(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn WorkingCopySetDirty(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -28,12 +28,12 @@ pub async fn handle_working_copy_set_dirty(runtime:Arc<ApplicationRunTime>, args
 	Ok(Value::Null)
 }
 
-pub async fn handle_working_copy_get_all_dirty(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn WorkingCopyGetAllDirty(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Dirty = runtime.Environment.ApplicationState.Feature.WorkingCopy.GetAllDirty();
 	Ok(json!(Dirty))
 }
 
-pub async fn handle_working_copy_get_dirty_count(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn WorkingCopyGetDirtyCount(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Count = runtime.Environment.ApplicationState.Feature.WorkingCopy.GetDirtyCount();
 	Ok(json!(Count))
 }

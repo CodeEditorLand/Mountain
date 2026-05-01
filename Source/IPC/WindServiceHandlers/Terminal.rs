@@ -13,7 +13,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 // ============================================================================
 
 /// Create a new PTY terminal via TerminalProvider.
-pub async fn handle_terminal_create(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalCreate(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let Options = args.first().cloned().unwrap_or(Value::Null);
@@ -25,7 +25,7 @@ pub async fn handle_terminal_create(runtime:Arc<ApplicationRunTime>, args:Vec<Va
 }
 
 /// Write text to PTY stdin via TerminalProvider.
-pub async fn handle_terminal_send_text(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalSendText(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let TerminalId = args
@@ -43,7 +43,7 @@ pub async fn handle_terminal_send_text(runtime:Arc<ApplicationRunTime>, args:Vec
 }
 
 /// Dispose a terminal via TerminalProvider.
-pub async fn handle_terminal_dispose(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalDispose(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let TerminalId = args
@@ -60,7 +60,7 @@ pub async fn handle_terminal_dispose(runtime:Arc<ApplicationRunTime>, args:Vec<V
 }
 
 /// Show a terminal in the UI.
-pub async fn handle_terminal_show(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalShow(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let TerminalId = args.first().and_then(|V| V.as_u64()).unwrap_or(0);
@@ -75,7 +75,7 @@ pub async fn handle_terminal_show(runtime:Arc<ApplicationRunTime>, args:Vec<Valu
 }
 
 /// Hide a terminal.
-pub async fn handle_terminal_hide(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalHide(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 	let TerminalId = args.first().and_then(|V| V.as_u64()).unwrap_or(0);
@@ -93,7 +93,7 @@ pub async fn handle_terminal_hide(runtime:Arc<ApplicationRunTime>, args:Vec<Valu
 // ============================================================================
 
 /// Detect available terminal profiles - cross-platform.
-pub async fn handle_local_pty_get_profiles() -> Result<Value, String> {
+pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
 	let mut Profiles = Vec::new();
 
 	#[cfg(unix)]
@@ -218,7 +218,7 @@ pub async fn handle_local_pty_get_profiles() -> Result<Value, String> {
 }
 
 /// Get default system shell - cross-platform.
-pub async fn handle_local_pty_get_default_shell() -> Result<Value, String> {
+pub async fn LocalPTYGetDefaultShell() -> Result<Value, String> {
 	#[cfg(unix)]
 	{
 		let Shell = std::env::var("SHELL").unwrap_or_else(|_| {
@@ -254,7 +254,7 @@ pub async fn handle_local_pty_get_default_shell() -> Result<Value, String> {
 }
 
 /// Get terminal environment.
-pub async fn handle_local_pty_get_environment() -> Result<Value, String> {
+pub async fn LocalPTYGetEnvironment() -> Result<Value, String> {
 	let Env:HashMap<String, String> = std::env::vars().collect();
 	Ok(json!(Env))
 }

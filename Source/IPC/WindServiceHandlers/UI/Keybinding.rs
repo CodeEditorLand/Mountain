@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn handle_keybinding_add(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn KeybindingAdd(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let CommandId = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -31,7 +31,7 @@ pub async fn handle_keybinding_add(runtime:Arc<ApplicationRunTime>, args:Vec<Val
 	Ok(Value::Null)
 }
 
-pub async fn handle_keybinding_remove(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn KeybindingRemove(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let CommandId = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -45,7 +45,7 @@ pub async fn handle_keybinding_remove(runtime:Arc<ApplicationRunTime>, args:Vec<
 	Ok(Value::Null)
 }
 
-pub async fn handle_keybinding_lookup(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn KeybindingLookup(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let CommandId = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -59,7 +59,7 @@ pub async fn handle_keybinding_lookup(runtime:Arc<ApplicationRunTime>, args:Vec<
 	Ok(Binding.map(|B| json!(B)).unwrap_or(Value::Null))
 }
 
-pub async fn handle_keybinding_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn KeybindingGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let All = runtime.Environment.ApplicationState.Feature.Keybindings.GetAllKeybindings();
 	Ok(json!(All))
 }

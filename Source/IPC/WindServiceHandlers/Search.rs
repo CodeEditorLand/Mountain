@@ -35,7 +35,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 /// method `SearchProvider::TextSearch` accepts the raw JSON and does
 /// its own `serde_json::from_value::<TextSearchQuery>` so callers can
 /// keep sending arbitrary shapes - we pass through directly.
-pub async fn handle_search_find_in_files(
+pub async fn SearchFindInFiles(
 	runtime:Arc<ApplicationRunTime>,
 	mut args:Vec<Value>,
 ) -> Result<Value, String> {
@@ -77,7 +77,7 @@ pub async fn handle_search_find_in_files(
 /// maxResults?, useIgnoreFiles?, followSymlinks?]. Delegates to
 /// `WorkspaceProvider::FindFilesInWorkspace` which returns `Vec<Url>`;
 /// we reshape to `Vec<String>` for the renderer.
-pub async fn handle_search_find_files(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn SearchFindFiles(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let IncludePattern = args
 		.first()
 		.cloned()

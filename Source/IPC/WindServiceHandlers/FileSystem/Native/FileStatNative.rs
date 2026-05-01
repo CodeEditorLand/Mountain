@@ -16,7 +16,7 @@ use crate::{
 	dev_log,
 };
 
-pub async fn handle_file_stat_native(args:Vec<Value>) -> Result<Value, String> {
+pub async fn FileStatNative(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
 
 	// Per-path stat emits at very high volume during workbench boot

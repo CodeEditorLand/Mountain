@@ -7,7 +7,7 @@ use serde_json::Value;
 
 use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg;
 
-pub async fn handle_file_mkdir_native(args:Vec<Value>) -> Result<Value, String> {
+pub async fn FileMkdirNative(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing directory path")?)?;
 
 	tokio::fs::create_dir_all(&Path)

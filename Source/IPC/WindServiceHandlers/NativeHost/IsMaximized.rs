@@ -7,7 +7,7 @@
 use serde_json::{Value, json};
 use tauri::{AppHandle, Manager};
 
-pub async fn handle_native_is_maximized(app_handle:AppHandle) -> Result<Value, String> {
+pub async fn NativeIsMaximized(app_handle:AppHandle) -> Result<Value, String> {
 	let Window = app_handle.get_webview_window("main");
 	if let Some(W) = Window {
 		Ok(json!(W.is_maximized().unwrap_or(false)))

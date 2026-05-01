@@ -45,7 +45,7 @@ const EXTENSION_TYPE_USER:u8 = 1;
 ///   3. `extensions:scanUserExtensions` (which shares the user-only semantic)
 ///      returned zero, making the "Install from VSIX…" refresh appear to do
 ///      nothing even when the install itself succeeded.
-pub async fn handle_extensions_get_installed(
+pub async fn ExtensionsGetInstalled(
 	runtime:Arc<ApplicationRunTime>,
 	args:Vec<Value>,
 ) -> Result<Value, String> {
@@ -206,7 +206,7 @@ pub async fn handle_extensions_get_installed(
 }
 
 /// Return metadata for all scanned extensions.
-pub async fn handle_extensions_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn ExtensionsGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Extensions = runtime
 		.Environment
 		.GetExtensions()
@@ -229,7 +229,7 @@ pub async fn handle_extensions_get_all(runtime:Arc<ApplicationRunTime>) -> Resul
 }
 
 /// Return metadata for a single extension by ID.
-pub async fn handle_extensions_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ExtensionsGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Id = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -246,7 +246,7 @@ pub async fn handle_extensions_get(runtime:Arc<ApplicationRunTime>, args:Vec<Val
 }
 
 /// Check whether an extension is currently active (scanned and present).
-pub async fn handle_extensions_is_active(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ExtensionsIsActive(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Id = args
 		.first()
 		.and_then(|V| V.as_str())

@@ -9,7 +9,7 @@ use tauri::AppHandle;
 use crate::dev_log;
 
 /// Create a named output channel. Returns the channel name as its handle.
-pub async fn handle_output_create(_app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputCreate(_app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("Output").to_string();
 	dev_log!("ipc", "output:create channel='{}'", ChannelName);
 	// Sky/frontend creates the channel panel on the `sky://output/create` event
@@ -17,7 +17,7 @@ pub async fn handle_output_create(_app_handle:AppHandle, args:Vec<Value>) -> Res
 }
 
 /// Append text to an output channel.
-pub async fn handle_output_append(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputAppend(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -28,7 +28,7 @@ pub async fn handle_output_append(app_handle:AppHandle, args:Vec<Value>) -> Resu
 }
 
 /// Append a line to an output channel (text + newline).
-pub async fn handle_output_append_line(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputAppendLine(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -40,7 +40,7 @@ pub async fn handle_output_append_line(app_handle:AppHandle, args:Vec<Value>) ->
 }
 
 /// Clear an output channel.
-pub async fn handle_output_clear(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputClear(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -49,7 +49,7 @@ pub async fn handle_output_clear(app_handle:AppHandle, args:Vec<Value>) -> Resul
 }
 
 /// Show an output channel panel.
-pub async fn handle_output_show(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputShow(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();

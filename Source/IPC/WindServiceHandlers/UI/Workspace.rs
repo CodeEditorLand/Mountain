@@ -16,7 +16,7 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
-pub async fn handle_workspaces_get_folders(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn WorkspacesGetFolders(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Workspace = &runtime.Environment.ApplicationState.Workspace;
 	let Folders = Workspace.GetWorkspaceFolders();
 
@@ -35,7 +35,7 @@ pub async fn handle_workspaces_get_folders(runtime:Arc<ApplicationRunTime>) -> R
 	Ok(json!(FolderList))
 }
 
-pub async fn handle_workspaces_add_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn WorkspacesAddFolder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use url::Url;
 
 	let UriStr = args
@@ -58,7 +58,7 @@ pub async fn handle_workspaces_add_folder(runtime:Arc<ApplicationRunTime>, args:
 	Ok(Value::Null)
 }
 
-pub async fn handle_workspaces_remove_folder(
+pub async fn WorkspacesRemoveFolder(
 	runtime:Arc<ApplicationRunTime>,
 	args:Vec<Value>,
 ) -> Result<Value, String> {
@@ -79,7 +79,7 @@ pub async fn handle_workspaces_remove_folder(
 	Ok(Value::Null)
 }
 
-pub async fn handle_workspaces_get_name(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn WorkspacesGetName(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Name = runtime
 		.Environment
 		.ApplicationState

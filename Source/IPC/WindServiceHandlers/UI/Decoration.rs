@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn handle_decorations_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn DecorationsGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -19,7 +19,7 @@ pub async fn handle_decorations_get(runtime:Arc<ApplicationRunTime>, args:Vec<Va
 	Ok(Decoration.unwrap_or(Value::Null))
 }
 
-pub async fn handle_decorations_get_many(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn DecorationsGetMany(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uris:Vec<String> = args
 		.first()
 		.and_then(|V| V.as_array())
@@ -35,7 +35,7 @@ pub async fn handle_decorations_get_many(runtime:Arc<ApplicationRunTime>, args:V
 	Ok(Value::Object(Result))
 }
 
-pub async fn handle_decorations_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn DecorationsSet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -50,7 +50,7 @@ pub async fn handle_decorations_set(runtime:Arc<ApplicationRunTime>, args:Vec<Va
 	Ok(Value::Null)
 }
 
-pub async fn handle_decorations_clear(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn DecorationsClear(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())

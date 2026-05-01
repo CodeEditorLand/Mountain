@@ -13,7 +13,7 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn handle_file_move(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn FileMove(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let source = args
 		.get(0)
 		.ok_or("Missing source path".to_string())?

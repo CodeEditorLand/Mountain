@@ -13,7 +13,7 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn handle_themes_get_active(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn ThemesGetActive(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	use CommonLibrary::Configuration::{
 		ConfigurationProvider::ConfigurationProvider,
 		DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
@@ -41,7 +41,7 @@ pub async fn handle_themes_get_active(runtime:Arc<ApplicationRunTime>) -> Result
 	Ok(json!({ "id": Id, "label": Id, "kind": Kind }))
 }
 
-pub async fn handle_themes_list(_runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn ThemesList(_runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Themes = vec![
 		json!({ "id": "Default Dark Modern", "label": "Default Dark Modern", "kind": "dark" }),
 		json!({ "id": "Default Light Modern", "label": "Default Light Modern", "kind": "light" }),
@@ -53,7 +53,7 @@ pub async fn handle_themes_list(_runtime:Arc<ApplicationRunTime>) -> Result<Valu
 	Ok(json!(Themes))
 }
 
-pub async fn handle_themes_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ThemesSet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Configuration::{
 		ConfigurationProvider::ConfigurationProvider,
 		DTO::{ConfigurationOverridesDTO::ConfigurationOverridesDTO, ConfigurationTarget::ConfigurationTarget},

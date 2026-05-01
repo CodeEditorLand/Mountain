@@ -18,7 +18,7 @@ fn NewProgressId() -> String {
 	)
 }
 
-pub async fn handle_progress_begin(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ProgressBegin(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let Location = args.first().and_then(|V| V.as_str()).unwrap_or("notification").to_string();
@@ -39,7 +39,7 @@ pub async fn handle_progress_begin(app_handle:AppHandle, args:Vec<Value>) -> Res
 	Ok(json!(Id))
 }
 
-pub async fn handle_progress_report(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ProgressReport(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -58,7 +58,7 @@ pub async fn handle_progress_report(app_handle:AppHandle, args:Vec<Value>) -> Re
 	Ok(Value::Null)
 }
 
-pub async fn handle_progress_end(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ProgressEnd(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();

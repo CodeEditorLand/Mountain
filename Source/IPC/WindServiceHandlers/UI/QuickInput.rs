@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn handle_quick_input_show_quick_pick(
+pub async fn QuickInputShowQuickPick(
 	runtime:Arc<ApplicationRunTime>,
 	args:Vec<Value>,
 ) -> Result<Value, String> {
@@ -67,7 +67,7 @@ pub async fn handle_quick_input_show_quick_pick(
 	}
 }
 
-pub async fn handle_quick_input_show_input_box(
+pub async fn QuickInputShowInputBox(
 	runtime:Arc<ApplicationRunTime>,
 	args:Vec<Value>,
 ) -> Result<Value, String> {

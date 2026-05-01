@@ -43,7 +43,7 @@
 //!
 //! ```text
 //! # use Vine::Error::VineError;
-//! fn handle_error(error:VineError) {
+//! fn Error(error:VineError) {
 //! match error {
 //! VineError::RequestTimeout { SideCarIdentifier, MethodName, TimeoutMilliseconds } => {
 //! eprintln!(

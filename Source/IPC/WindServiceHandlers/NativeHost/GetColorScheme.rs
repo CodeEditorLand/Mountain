@@ -9,7 +9,7 @@
 
 use serde_json::{Value, json};
 
-pub async fn handle_native_get_color_scheme() -> Result<Value, String> {
+pub async fn NativeGetColorScheme() -> Result<Value, String> {
 	let Dark = detect_dark_mode();
 	let HighContrast = {
 		#[cfg(target_os = "windows")]

@@ -9,7 +9,7 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn handle_show_item_in_folder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ShowItemInFolder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let path_str = args
 		.get(0)
 		.ok_or("Missing file path".to_string())?

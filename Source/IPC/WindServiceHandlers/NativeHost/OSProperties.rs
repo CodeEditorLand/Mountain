@@ -6,7 +6,7 @@
 
 use serde_json::{Value, json};
 
-pub async fn handle_native_os_properties() -> Result<Value, String> {
+pub async fn NativeOSProperties() -> Result<Value, String> {
 	use sysinfo::System;
 
 	let OsType = match std::env::consts::OS {

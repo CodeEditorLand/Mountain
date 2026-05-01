@@ -10,7 +10,7 @@ use serde_json::{Value, json};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Execute a command by ID, dispatching to Mountain's CommandExecutor.
-pub async fn handle_commands_execute(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn CommandsExecute(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let CommandId = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -29,7 +29,7 @@ pub async fn handle_commands_execute(runtime:Arc<ApplicationRunTime>, args:Vec<V
 }
 
 /// Return all registered command IDs from Mountain's CommandRegistry.
-pub async fn handle_commands_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn CommandsGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Commands = runtime
 		.Environment
 		.GetAllCommands()

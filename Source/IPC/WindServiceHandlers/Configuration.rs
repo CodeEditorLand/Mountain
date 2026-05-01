@@ -17,7 +17,7 @@ use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider,
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Handler for configuration get requests
-pub async fn handle_configuration_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ConfigurationGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let key = args
 		.get(0)
 		.ok_or("Missing configuration key".to_string())?
@@ -36,7 +36,7 @@ pub async fn handle_configuration_get(runtime:Arc<ApplicationRunTime>, args:Vec<
 }
 
 /// Handler for configuration update requests
-pub async fn handle_configuration_update(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ConfigurationUpdate(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let key = args
 		.get(0)
 		.ok_or("Missing configuration key".to_string())?
@@ -63,7 +63,7 @@ pub async fn handle_configuration_update(runtime:Arc<ApplicationRunTime>, args:V
 }
 
 /// Handler for workbench configuration requests
-pub async fn handle_workbench_configuration(
+pub async fn WorkbenchConfiguration(
 	runtime:Arc<ApplicationRunTime>,
 	_args:Vec<Value>,
 ) -> Result<Value, String> {
@@ -79,7 +79,7 @@ pub async fn handle_workbench_configuration(
 }
 
 /// Handler for environment get requests
-pub async fn handle_environment_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn EnvironmentGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let key = args
 		.get(0)
 		.ok_or("Missing environment key".to_string())?

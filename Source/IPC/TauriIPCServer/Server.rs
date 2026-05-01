@@ -325,7 +325,7 @@ impl TauriIPCServer {
 	/// ## Returns
 	/// - `Ok(())`: Message handled successfully
 	/// - `Err(String)`: Error message if handling fails
-	pub async fn handle_incoming_message(&self, message: TauriIPCMessage) -> Result<(), String> {
+	pub async fn IncomingMessage(&self, message: TauriIPCMessage) -> Result<(), String> {
 		dev_log!("ipc", "[TauriIPCServer] Received message on channel: {}", message.channel);
 
 		let listeners = self
@@ -615,7 +615,7 @@ impl TauriIPCServer {
 	/// ## Returns
 	/// - `Ok(())`: Batch handled successfully
 	/// - `Err(String)`: Error message if handling fails
-	pub async fn handle_compressed_batch(&self, message: TauriIPCMessage) -> Result<(), String> {
+	pub async fn CompressedBatch(&self, message: TauriIPCMessage) -> Result<(), String> {
 		let compressed_data_base64 = message.data.as_str()
 			.ok_or("Compressed batch data must be a string")?;
 
@@ -629,7 +629,7 @@ impl TauriIPCServer {
 
 		// Process each message in the batch
 		for msg in messages {
-			self.handle_incoming_message(msg).await?;
+			self.IncomingMessage(msg).await?;
 		}
 
 		Ok(())
@@ -709,7 +709,7 @@ impl TauriIPCServer {
 	/// ## Returns
 	/// - `Ok(())`: Message handled successfully
 	/// - `Err(String)`: Error message if handling fails
-	pub async fn handle_secure_message(&self, encrypted_data: serde_json::Value) -> Result<(), String> {
+	pub async fn SecureMessage(&self, encrypted_data: serde_json::Value) -> Result<(), String> {
 		use serde::Deserialize;
 
 		#[derive(Deserialize)]
@@ -733,7 +733,7 @@ impl TauriIPCServer {
 			})
 			.map_err(|e| format!("Failed to decrypt message: {}", e))?;
 
-		self.handle_incoming_message(message).await
+		self.IncomingMessage(message).await
 	}
 
 	/// Handle message with permission validation
@@ -744,12 +744,12 @@ impl TauriIPCServer {
 	/// ## Returns
 	/// - `Ok(())`: Message handled successfully
 	/// - `Err(String)`: Error message if handling fails
-	pub async fn handle_message_with_permissions(&self, message: TauriIPCMessage) -> Result<(), String> {
+	pub async fn MessageWithPermissions(&self, message: TauriIPCMessage) -> Result<(), String> {
 		// Validate permission
 		self.validate_message_permissions(&message).await?;
 
 		// Process the message
-		self.handle_incoming_message(message).await
+		self.IncomingMessage(message).await
 	}
 }
 

@@ -6,7 +6,7 @@ use serde_json::{Value, json};
 
 use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg;
 
-pub async fn handle_file_exists_native(args:Vec<Value>) -> Result<Value, String> {
+pub async fn FileExistsNative(args:Vec<Value>) -> Result<Value, String> {
 	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
 
 	Ok(json!(tokio::fs::try_exists(&Path).await.unwrap_or(false)))

@@ -15,7 +15,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Open a text model: read content from disk and register in DocumentState.
 /// Returns { uri, content, version, languageId }.
-pub async fn handle_model_open(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ModelOpen(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -105,7 +105,7 @@ pub async fn handle_model_open(runtime:Arc<ApplicationRunTime>, args:Vec<Value>)
 }
 
 /// Close a text model and remove it from DocumentState.
-pub async fn handle_model_close(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ModelClose(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -116,7 +116,7 @@ pub async fn handle_model_close(runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 }
 
 /// Get the current snapshot of an open text model, or null if not open.
-pub async fn handle_model_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ModelGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -136,7 +136,7 @@ pub async fn handle_model_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 }
 
 /// Return all currently open text models.
-pub async fn handle_model_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn ModelGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let All = runtime
 		.Environment
 		.ApplicationState
@@ -158,7 +158,7 @@ pub async fn handle_model_get_all(runtime:Arc<ApplicationRunTime>) -> Result<Val
 }
 
 /// Update the content of an open text model, incrementing its version.
-pub async fn handle_model_update_content(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ModelUpdateContent(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -202,7 +202,7 @@ pub async fn handle_model_update_content(runtime:Arc<ApplicationRunTime>, args:V
 // ============================================================================
 
 /// Read a text file from disk.
-pub async fn handle_textfile_read(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TextfileRead(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Path = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -215,7 +215,7 @@ pub async fn handle_textfile_read(_runtime:Arc<ApplicationRunTime>, args:Vec<Val
 }
 
 /// Write text to a file on disk.
-pub async fn handle_textfile_write(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TextfileWrite(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Path = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -229,7 +229,7 @@ pub async fn handle_textfile_write(_runtime:Arc<ApplicationRunTime>, args:Vec<Va
 }
 
 /// Save a document - forward save intent to Sky frontend.
-pub async fn handle_textfile_save(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TextfileSave(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	// Actual disk write happens via textFile:write; this is a UI-dirty-state hint.
 	let _Uri = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 	dev_log!("vfs", "textFile:save uri={:?}", _Uri);

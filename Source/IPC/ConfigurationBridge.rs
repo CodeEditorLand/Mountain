@@ -44,7 +44,7 @@
 //! ```
 //! Wind Frontend (User Changes)
 //!       |
-//!       | handle_wind_configuration_change()
+//!       | WindConfigurationChange()
 //!       v
 //! ConfigurationBridge
 //!       |
@@ -456,7 +456,7 @@ impl ConfigurationBridge {
 	}
 
 	/// Handle configuration changes from Wind
-	pub async fn handle_wind_configuration_change(&self, new_config:serde_json::Value) -> Result<(), String> {
+	pub async fn WindConfigurationChange(&self, new_config:serde_json::Value) -> Result<(), String> {
 		dev_log!("config", "[ConfigurationBridge] Handling Wind configuration change");
 
 		// Parse Wind configuration
@@ -682,7 +682,7 @@ pub async fn mountain_update_configuration_from_wind(
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
-		bridge.handle_wind_configuration_change(config).await
+		bridge.WindConfigurationChange(config).await
 	} else {
 		Err("ApplicationRunTime not found".to_string())
 	}

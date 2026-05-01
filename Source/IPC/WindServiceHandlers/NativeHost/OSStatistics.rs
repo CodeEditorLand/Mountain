@@ -7,7 +7,7 @@
 
 use serde_json::{Value, json};
 
-pub async fn handle_native_os_statistics() -> Result<Value, String> {
+pub async fn NativeOSStatistics() -> Result<Value, String> {
 	use sysinfo::System;
 
 	let mut Sys = System::new();

@@ -13,33 +13,33 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 // ============================================================================
 
 /// Navigate backward in the editor history stack.
-pub async fn handle_history_go_back(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn HistoryGoBack(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Uri = runtime.Environment.ApplicationState.Feature.NavigationHistory.GoBack();
 	Ok(Uri.map(Value::String).unwrap_or(Value::Null))
 }
 
 /// Navigate forward in the editor history stack.
-pub async fn handle_history_go_forward(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn HistoryGoForward(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Uri = runtime.Environment.ApplicationState.Feature.NavigationHistory.GoForward();
 	Ok(Uri.map(Value::String).unwrap_or(Value::Null))
 }
 
 /// Return whether backward navigation is available.
-pub async fn handle_history_can_go_back(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn HistoryCanGoBack(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	Ok(Value::Bool(
 		runtime.Environment.ApplicationState.Feature.NavigationHistory.CanGoBack(),
 	))
 }
 
 /// Return whether forward navigation is available.
-pub async fn handle_history_can_go_forward(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn HistoryCanGoForward(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	Ok(Value::Bool(
 		runtime.Environment.ApplicationState.Feature.NavigationHistory.CanGoForward(),
 	))
 }
 
 /// Push a URI onto the navigation history stack.
-pub async fn handle_history_push(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn HistoryPush(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -51,13 +51,13 @@ pub async fn handle_history_push(runtime:Arc<ApplicationRunTime>, args:Vec<Value
 }
 
 /// Clear the entire navigation history stack.
-pub async fn handle_history_clear(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn HistoryClear(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	runtime.Environment.ApplicationState.Feature.NavigationHistory.Clear();
 	Ok(Value::Null)
 }
 
 /// Return the full navigation history stack as an array of URI strings.
-pub async fn handle_history_get_stack(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn HistoryGetStack(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Stack = runtime.Environment.ApplicationState.Feature.NavigationHistory.GetStack();
 	Ok(Value::Array(Stack.into_iter().map(Value::String).collect()))
 }
@@ -70,7 +70,7 @@ pub async fn handle_history_get_stack(runtime:Arc<ApplicationRunTime>) -> Result
 ///
 /// Args: [uri: string, relative: bool]
 /// Returns: string label
-pub async fn handle_label_get_uri(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn LabelGetURI(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -122,7 +122,7 @@ pub async fn handle_label_get_uri(runtime:Arc<ApplicationRunTime>, args:Vec<Valu
 }
 
 /// Return the display label for the current workspace root folder.
-pub async fn handle_label_get_workspace(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn LabelGetWorkspace(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Label = runtime
 		.Environment
 		.ApplicationState
@@ -147,7 +147,7 @@ pub async fn handle_label_get_workspace(runtime:Arc<ApplicationRunTime>) -> Resu
 }
 
 /// Return only the basename (filename + extension) of a URI.
-pub async fn handle_label_get_base(args:Vec<Value>) -> Result<Value, String> {
+pub async fn LabelGetBase(args:Vec<Value>) -> Result<Value, String> {
 	let Uri = args
 		.first()
 		.and_then(|V| V.as_str())

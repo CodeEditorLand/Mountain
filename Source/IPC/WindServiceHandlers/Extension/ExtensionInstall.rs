@@ -102,7 +102,7 @@ pub async fn ExtensionInstall(
 		]
 	);
 
-	// ILocalExtension envelope - matches `handle_extensions_get_installed`
+	// ILocalExtension envelope - matches `ExtensionsGetInstalled`
 	// so VS Code's ExtensionEnablementService merges it into the sidebar.
 	// `location` must carry `$mid: 1` so the renderer's `URI.revive()`
 	// runs; otherwise `resources.joinPath(local.location, …)` hits

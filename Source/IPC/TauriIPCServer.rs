@@ -346,7 +346,7 @@ impl TauriIPCServer {
 	}
 
 	/// Handle incoming messages from Wind
-	pub async fn handle_incoming_message(&self, message:TauriIPCMessage) -> Result<(), String> {
+	pub async fn IncomingMessage(&self, message:TauriIPCMessage) -> Result<(), String> {
 		dev_log!("ipc", "[TauriIPCServer] Received message on channel: {}", message.channel);
 
 		let listeners = self
@@ -543,7 +543,7 @@ impl TauriIPCServer {
 	}
 
 	/// Handle compressed batch message
-	pub async fn handle_compressed_batch(&self, message:TauriIPCMessage) -> Result<(), String> {
+	pub async fn CompressedBatch(&self, message:TauriIPCMessage) -> Result<(), String> {
 		let compressed_data_base64 = message.data.as_str().ok_or("Compressed batch data must be a string")?;
 
 		let compressed_data = general_purpose::STANDARD
@@ -557,7 +557,7 @@ impl TauriIPCServer {
 
 		// Process each message in the batch
 		for message in messages {
-			self.handle_incoming_message(message).await?;
+			self.IncomingMessage(message).await?;
 		}
 
 		Ok(())
@@ -611,7 +611,7 @@ impl TauriIPCServer {
 	}
 
 	/// Handle encrypted message
-	pub async fn handle_secure_message(&self, encrypted_data:serde_json::Value) -> Result<(), String> {
+	pub async fn SecureMessage(&self, encrypted_data:serde_json::Value) -> Result<(), String> {
 		let encrypted_message:EncryptedMessage = serde_json::from_value(encrypted_data)
 			.map_err(|e| format!("Failed to deserialize encrypted message: {}", e))?;
 
@@ -622,11 +622,11 @@ impl TauriIPCServer {
 			.decrypt_message(&encrypted_message)
 			.map_err(|e| format!("Failed to decrypt message: {}", e))?;
 
-		self.handle_incoming_message(message).await
+		self.IncomingMessage(message).await
 	}
 
 	/// Handle message with permission validation
-	pub async fn handle_message_with_permissions(&self, message:TauriIPCMessage) -> Result<(), String> {
+	pub async fn MessageWithPermissions(&self, message:TauriIPCMessage) -> Result<(), String> {
 		let permission_manager = PermissionManager::new();
 		let context = self.create_security_context(&message);
 
@@ -637,7 +637,7 @@ impl TauriIPCServer {
 		permission_manager.validate_permission(&operation, &context).await?;
 
 		// Process the message
-		self.handle_incoming_message(message).await
+		self.IncomingMessage(message).await
 	}
 }
 
@@ -973,7 +973,7 @@ pub async fn mountain_ipc_receive_message(app_handle:tauri::AppHandle, message:T
 
 		// Advanced monitoring: Track message processing time
 		let start_time = std::time::Instant::now();
-		let result = ipc_server.handle_incoming_message(message.clone()).await;
+		let result = ipc_server.IncomingMessage(message.clone()).await;
 		let duration = start_time.elapsed();
 
 		// Record performance metrics

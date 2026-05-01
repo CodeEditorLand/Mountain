@@ -7,7 +7,7 @@
 
 use serde_json::{Value, json};
 
-pub async fn handle_native_find_free_port(args:Vec<Value>) -> Result<Value, String> {
+pub async fn NativeFindFreePort(args:Vec<Value>) -> Result<Value, String> {
 	let StartPort = args.get(0).and_then(|V| V.as_u64()).unwrap_or(9000) as u16;
 
 	for Port in StartPort..StartPort + 100 {

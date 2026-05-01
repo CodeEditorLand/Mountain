@@ -10,7 +10,7 @@ use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::S
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Handler for storage get requests
-pub async fn handle_storage_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn StorageGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let key = args
 		.get(0)
 		.ok_or("Missing storage key".to_string())?
@@ -29,7 +29,7 @@ pub async fn handle_storage_get(runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 }
 
 /// Handler for storage set requests
-pub async fn handle_storage_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn StorageSet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let key = args
 		.get(0)
 		.ok_or("Missing storage key".to_string())?
@@ -50,7 +50,7 @@ pub async fn handle_storage_set(runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 }
 
 /// Delete a persistent storage key.
-pub async fn handle_storage_delete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn StorageDelete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let Key = args
 		.first()
 		.and_then(|V| V.as_str())
@@ -67,7 +67,7 @@ pub async fn handle_storage_delete(runtime:Arc<ApplicationRunTime>, args:Vec<Val
 }
 
 /// Return all storage keys.
-pub async fn handle_storage_keys(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn StorageKeys(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let Storage = runtime
 		.Environment
 		.GetAllStorage(true)
@@ -80,7 +80,7 @@ pub async fn handle_storage_keys(runtime:Arc<ApplicationRunTime>) -> Result<Valu
 
 /// Get all storage items as [key, value] tuples.
 /// VS Code's NativeWorkbenchStorageService calls this on initialization.
-pub async fn handle_storage_get_items(runtime:Arc<ApplicationRunTime>, _args:Vec<Value>) -> Result<Value, String> {
+pub async fn StorageGetItems(runtime:Arc<ApplicationRunTime>, _args:Vec<Value>) -> Result<Value, String> {
 	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
 
 	match provider.GetAllStorage(true).await {
@@ -109,7 +109,7 @@ pub async fn handle_storage_get_items(runtime:Arc<ApplicationRunTime>, _args:Vec
 /// Update storage items. VS Code sends { insert, delete } where:
 /// - insert: Array of [key, value] tuples or Map<string, string>
 /// - delete: Array of keys to remove
-pub async fn handle_storage_update_items(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn StorageUpdateItems(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
 
 	if let Some(Updates) = args.get(0).and_then(|V| V.as_object()) {

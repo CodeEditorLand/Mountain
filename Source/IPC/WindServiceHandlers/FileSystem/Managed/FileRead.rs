@@ -11,7 +11,7 @@ use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn handle_file_read(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn FileRead(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
 	let path = args
 		.get(0)
 		.ok_or("Missing file path".to_string())?

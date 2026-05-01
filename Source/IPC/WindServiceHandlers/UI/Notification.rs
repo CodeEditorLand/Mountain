@@ -23,7 +23,7 @@ fn NewId(Prefix:&str) -> String {
 	)
 }
 
-pub async fn handle_notification_show(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn NotificationShow(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let Message = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -44,7 +44,7 @@ pub async fn handle_notification_show(app_handle:AppHandle, args:Vec<Value>) -> 
 	Ok(json!(Id))
 }
 
-pub async fn handle_notification_show_progress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn NotificationShowProgress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let Title = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -63,7 +63,7 @@ pub async fn handle_notification_show_progress(app_handle:AppHandle, args:Vec<Va
 	Ok(json!(Id))
 }
 
-pub async fn handle_notification_update_progress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn NotificationUpdateProgress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -82,7 +82,7 @@ pub async fn handle_notification_update_progress(app_handle:AppHandle, args:Vec<
 	Ok(Value::Null)
 }
 
-pub async fn handle_notification_end_progress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn NotificationEndProgress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
 	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
