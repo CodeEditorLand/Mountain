@@ -8,10 +8,10 @@ use serde_json::Value;
 
 use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg;
 
-pub async fn FileDeleteNative(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(args.get(0).ok_or("Missing file path")?)?;
+pub async fn FileDeleteNative(Arguments:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
 
-	let Recursive = args
+	let Recursive = Arguments
 		.get(1)
 		.and_then(|V| V.as_object())
 		.and_then(|O| O.get("recursive"))

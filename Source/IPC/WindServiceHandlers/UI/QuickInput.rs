@@ -11,15 +11,15 @@ use serde_json::{Value, json};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn QuickInputShowQuickPick(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
+	RunTime:Arc<ApplicationRunTime>,
+	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
 	use CommonLibrary::UserInterface::{
 		DTO::{QuickPickItemDTO::QuickPickItemDTO, QuickPickOptionsDTO::QuickPickOptionsDTO},
 		UserInterfaceProvider::UserInterfaceProvider,
 	};
 
-	let Items:Vec<QuickPickItemDTO> = args
+	let Items:Vec<QuickPickItemDTO> = Arguments
 		.first()
 		.and_then(|V| V.as_array())
 		.map(|Arr| {
@@ -36,18 +36,18 @@ pub async fn QuickInputShowQuickPick(
 		.unwrap_or_default();
 
 	let Options = QuickPickOptionsDTO {
-		PlaceHolder:args
+		PlaceHolder:Arguments
 			.get(1)
 			.and_then(|V| V.get("placeholder"))
 			.and_then(|P| P.as_str())
 			.map(|S| S.to_string()),
 		CanPickMany:Some(
-			args.get(1)
+			Arguments.get(1)
 				.and_then(|V| V.get("canPickMany"))
 				.and_then(|B| B.as_bool())
 				.unwrap_or(false),
 		),
-		Title:args
+		Title:Arguments
 			.get(1)
 			.and_then(|V| V.get("title"))
 			.and_then(|T| T.as_str())
@@ -55,7 +55,7 @@ pub async fn QuickInputShowQuickPick(
 		..Default::default()
 	};
 
-	let Result = runtime
+	let Result = RunTime
 		.Environment
 		.ShowQuickPick(Items, Some(Options))
 		.await
@@ -68,15 +68,15 @@ pub async fn QuickInputShowQuickPick(
 }
 
 pub async fn QuickInputShowInputBox(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
+	RunTime:Arc<ApplicationRunTime>,
+	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
 	use CommonLibrary::UserInterface::{
 		DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
 		UserInterfaceProvider::UserInterfaceProvider,
 	};
 
-	let Opts = args.first();
+	let Opts = Arguments.first();
 	let Options = InputBoxOptionsDTO {
 		Prompt:Opts
 			.and_then(|V| V.get("prompt"))
@@ -98,7 +98,7 @@ pub async fn QuickInputShowInputBox(
 		IgnoreFocusOut:None,
 	};
 
-	let Result = runtime
+	let Result = RunTime
 		.Environment
 		.ShowInputBox(Some(Options))
 		.await

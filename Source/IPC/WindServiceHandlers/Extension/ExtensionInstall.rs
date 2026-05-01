@@ -3,7 +3,7 @@
 //! declined (Land has no marketplace backend) and return `null`.
 //!
 //! Sequence:
-//!   1. Resolve the VSIX path from `args[0]` (string or UriComponents).
+//!   1. Resolve the VSIX path from `Arguments[0]` (string or UriComponents).
 //!   2. Reject non-`.vsix` files.
 //!   3. Unpack into the user-scope extension directory via
 //!      `VsixInstaller::InstallVsix`.
@@ -44,7 +44,7 @@ pub async fn ExtensionInstall(
 	let VsixPath = match VsixPathFromArgs(&Args) {
 		Some(Path) => Path,
 		None => {
-			dev_log!("extensions", "extensions:install no-op: args[0] missing or non-file URI");
+			dev_log!("extensions", "extensions:install no-op: Arguments[0] missing or non-file URI");
 			crate::otel_span!("extensions:install:noop-missing-arg", OTELStart);
 			return Ok(Value::Null);
 		},

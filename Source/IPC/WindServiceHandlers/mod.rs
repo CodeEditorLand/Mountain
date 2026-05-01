@@ -141,10 +141,10 @@ use crate::{
 /// "MountainIPCInvoke", { method, params })` through `InvokeCommand::
 /// MountainIPCInvoke`; this inner function is pure Rust-side plumbing.
 ///
-/// The local parameter names (`command` / `args`) are preserved for diff
+/// The local parameter names (`command` / `Arguments`) are preserved for diff
 /// minimality; the frontend-facing contract (`method` / `params`) lives
 /// entirely in `InvokeCommand.rs`.
-pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<Value>) -> Result<Value, String> {
+pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Arguments:Vec<Value>) -> Result<Value, String> {
 	let OTLPStart = crate::IPC::DevLog::NowNano();
 	// Silence the per-call invoke log for high-frequency methods that are
 	// not useful in forensic review. The workbench emits thousands of
@@ -185,16 +185,16 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 			| "progress:report"
 	);
 	if !IsHighFrequencyCommand {
-		dev_log!("ipc", "invoke: {} args_count={}", command, args.len());
+		dev_log!("ipc", "invoke: {} args_count={}", command, Arguments.len());
 	}
 
 	// Ensure userdata directories exist on first IPC call
 	ensure_userdata_dirs();
 
-	// Get the application runtime - deref the Tauri State into an owned Arc
+	// Get the application RunTime - deref the Tauri State into an owned Arc
 	// so we can hand it to an Echo scheduler task below (State<T> isn't
 	// Send across task boundaries).
-	let runtime:Arc<ApplicationRunTime> = app_handle.state::<Arc<ApplicationRunTime>>().inner().clone();
+	let RunTime:Arc<ApplicationRunTime> = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 	// =========================================================================
 	// Route dispatch - every arm has a dev_log! with a granular tag.
@@ -218,24 +218,24 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	// so the Tauri caller still awaits a plain `Result<Value, String>`.
 	let CommandPriority = ResolveChannelPriority(&command);
 
-	let Scheduler = runtime.Scheduler.clone();
+	let Scheduler = RunTime.Scheduler.clone();
 
 	let (ResultSender, ResultReceiver) = tokio::sync::oneshot::channel::<Result<Value, String>>();
 
-	let DispatchAppHandle = app_handle.clone();
+	let DispatchAppHandle = ApplicationHandle.clone();
 
-	let DispatchRuntime = runtime.clone();
+	let DispatchRuntime = RunTime.clone();
 
 	let DispatchCommand = command.clone();
 
-	let DispatchArgs = args;
+	let DispatchArgs = Arguments;
 
 	Scheduler.Submit(
 		async move {
-			let app_handle = DispatchAppHandle;
-			let runtime = DispatchRuntime;
+			let ApplicationHandle = DispatchAppHandle;
+			let RunTime = DispatchRuntime;
 			let command = DispatchCommand;
-			let args = DispatchArgs;
+			let Arguments = DispatchArgs;
 
 			let MatchResult = match command.as_str() {
 				// Configuration commands. VS Code's stock
@@ -245,11 +245,11 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// traffic from either rail lands in the same place.
 				"configuration:get" | "configuration:getValue" => {
 					dev_log!("config", "{}", command);
-					ConfigurationGet(runtime.clone(), args).await
+					ConfigurationGet(RunTime.clone(), Arguments).await
 				},
 				"configuration:update" | "configuration:updateValue" => {
 					dev_log!("config", "{}", command);
-					ConfigurationUpdate(runtime.clone(), args).await
+					ConfigurationUpdate(RunTime.clone(), Arguments).await
 				},
 				// `ConfigurationService` listens for `onDidChange` from
 				// the channel on the binary IPC rail. Mountain broadcasts
@@ -286,17 +286,17 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// `writeFile`, `rename`; aliasing them here keeps both
 				// rails pointing at the same handler without duplicating
 				// logic or introducing a per-caller translation table.
-				"file:read" | "file:readFile" => FileReadNative(args).await,
-				"file:write" | "file:writeFile" => FileWriteNative(args).await,
-				"file:stat" => FileStatNative(args).await,
-				"file:exists" => FileExistsNative(args).await,
-				"file:delete" => FileDeleteNative(args).await,
-				"file:copy" => FileCloneNative(args).await,
-				"file:move" | "file:rename" => FileRenameNative(args).await,
-				"file:mkdir" => FileMkdirNative(args).await,
-				"file:readdir" => FileReaddirNative(args).await,
-				"file:readBinary" => FileReadBinary(runtime.clone(), args).await,
-				"file:writeBinary" => FileWriteBinary(runtime.clone(), args).await,
+				"file:read" | "file:readFile" => FileReadNative(Arguments).await,
+				"file:write" | "file:writeFile" => FileWriteNative(Arguments).await,
+				"file:stat" => FileStatNative(Arguments).await,
+				"file:exists" => FileExistsNative(Arguments).await,
+				"file:delete" => FileDeleteNative(Arguments).await,
+				"file:copy" => FileCloneNative(Arguments).await,
+				"file:move" | "file:rename" => FileRenameNative(Arguments).await,
+				"file:mkdir" => FileMkdirNative(Arguments).await,
+				"file:readdir" => FileReaddirNative(Arguments).await,
+				"file:readBinary" => FileReadBinary(RunTime.clone(), Arguments).await,
+				"file:writeBinary" => FileWriteBinary(RunTime.clone(), Arguments).await,
 				// File watcher channel methods - `DiskFileSystemProvider`
 				// opens `watch` / `unwatch` channel calls to receive
 				// `onDidChangeFile` events. Until the Mountain-side
@@ -314,18 +314,18 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// `isUsed`; the shorter `storage:get` / `storage:set` are
 				// Mountain-native conveniences. All route through the
 				// same ApplicationState storage backing.
-				"storage:get" => StorageGet(runtime.clone(), args).await,
-				"storage:set" => StorageSet(runtime.clone(), args).await,
+				"storage:get" => StorageGet(RunTime.clone(), Arguments).await,
+				"storage:set" => StorageSet(RunTime.clone(), Arguments).await,
 				"storage:getItems" => {
 					// Workbench services poll this on every theme / scope
 					// change; suppress the bare banner and rely on the IPC
 					// `invoke:`/`done:` summary for volume + latency.
 					dev_log!("storage-verbose", "storage:getItems");
-					StorageGetItems(runtime.clone(), args).await
+					StorageGetItems(RunTime.clone(), Arguments).await
 				},
 				"storage:updateItems" => {
 					dev_log!("storage-verbose", "storage:updateItems");
-					StorageUpdateItems(runtime.clone(), args).await
+					StorageUpdateItems(RunTime.clone(), Arguments).await
 				},
 				"storage:optimize" => {
 					dev_log!("storage", "storage:optimize");
@@ -350,15 +350,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Environment commands
 				"environment:get" => {
 					dev_log!("config", "environment:get");
-					EnvironmentGet(runtime.clone(), args).await
+					EnvironmentGet(RunTime.clone(), Arguments).await
 				},
 
 				// Native host commands
-				"native:showItemInFolder" => ShowItemInFolder(runtime.clone(), args).await,
-				"native:openExternal" => OpenExternal(runtime.clone(), args).await,
+				"native:showItemInFolder" => ShowItemInFolder(RunTime.clone(), Arguments).await,
+				"native:openExternal" => OpenExternal(RunTime.clone(), Arguments).await,
 
 				// Workbench commands
-				"workbench:getConfiguration" => WorkbenchConfiguration(runtime.clone(), args).await,
+				"workbench:getConfiguration" => WorkbenchConfiguration(RunTime.clone(), Arguments).await,
 
 				// Diagnostic: webview → Mountain dev-log bridge.
 				// First arg is a tag ("boot", "extService", …), second is the
@@ -366,10 +366,10 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Atom H1c: added so workbench.js can surface diagnostic state
 				// into the same Mountain.dev.log that carries Rust-side events.
 				"diagnostic:log" => {
-					let Tag = args.first().and_then(|V| V.as_str()).unwrap_or("webview").to_string();
-					let Message = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
-					let Extras = if args.len() > 2 {
-						let Tail:Vec<String> = args
+					let Tag = Arguments.first().and_then(|V| V.as_str()).unwrap_or("webview").to_string();
+					let Message = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Extras = if Arguments.len() > 2 {
+						let Tail:Vec<String> = Arguments
 							.iter()
 							.skip(2)
 							.map(|V| {
@@ -404,10 +404,10 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// `MainThreadCommands` / `CommandService` channel methods
 				// are `executeCommand` and `getCommands`; Mountain's
 				// Effect-TS rail uses `execute` / `getAll`. Alias both.
-				"commands:execute" | "commands:executeCommand" => CommandsExecute(runtime.clone(), args).await,
+				"commands:execute" | "commands:executeCommand" => CommandsExecute(RunTime.clone(), Arguments).await,
 				"commands:getAll" | "commands:getCommands" => {
 					dev_log!("commands", "{}", command);
-					CommandsGetAll(runtime.clone()).await
+					CommandsGetAll(RunTime.clone()).await
 				},
 				// Register/unregister from a side-car channel perspective
 				// is a no-op: Cocoon sends `$registerCommand` via gRPC
@@ -421,15 +421,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Extension host commands
 				"extensions:getAll" => {
 					dev_log!("extensions", "extensions:getAll");
-					ExtensionsGetAll(runtime.clone()).await
+					ExtensionsGetAll(RunTime.clone()).await
 				},
 				"extensions:get" => {
 					dev_log!("extensions", "extensions:get");
-					ExtensionsGet(runtime.clone(), args).await
+					ExtensionsGet(RunTime.clone(), Arguments).await
 				},
 				"extensions:isActive" => {
 					dev_log!("extensions", "extensions:isActive");
-					ExtensionsIsActive(runtime.clone(), args).await
+					ExtensionsIsActive(RunTime.clone(), Arguments).await
 				},
 
 				// VS Code's Extensions sidebar →
@@ -445,12 +445,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// callers (Cocoon, Wind Effect services) that want the flat
 				// shape. Do NOT alias these two - the payload shapes differ.
 				"extensions:getInstalled" | "extensions:scanSystemExtensions" => {
-					// Atom H1a: args[0]=type, args[1]=profileLocation URI,
-					// args[2]=productVersion, args[3]=??? (VS Code canonical is
+					// Atom H1a: Arguments[0]=type, Arguments[1]=profileLocation URI,
+					// Arguments[2]=productVersion, Arguments[3]=??? (VS Code canonical is
 					// 3; shim appears to add a 4th). Dump to find out what it
 					// contains on post-nav page reloads where the sidebar
 					// renders 0 entries despite Mountain returning 94.
-					let ArgsSummary = args
+					let ArgsSummary = Arguments
 						.iter()
 						.enumerate()
 						.map(|(Idx, V)| {
@@ -472,26 +472,26 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						})
 						.collect::<Vec<_>>()
 						.join(" ");
-					dev_log!("extensions", "{} args={}", command, ArgsSummary);
+					dev_log!("extensions", "{} Arguments={}", command, ArgsSummary);
 					// `scanSystemExtensions` is conceptually
 					// `getInstalled(type=ExtensionType.System)`, so override
-					// `args[0]` to `0` before forwarding. Without the override
+					// `Arguments[0]` to `0` before forwarding. Without the override
 					// a plain alias would inherit whatever the caller passed
-					// in args[0] (which for the VS Code channel client is
+					// in Arguments[0] (which for the VS Code channel client is
 					// usually `null`) and leak User extensions into the
 					// System list - the same bug we just fixed at the
 					// handler layer, one level up.
 					let EffectiveArgs = if command == "extensions:scanSystemExtensions" {
-						let mut Overridden = args.clone();
+						let mut Overridden = Arguments.clone();
 						if Overridden.is_empty() {
 							Overridden.push(Value::Null);
 						}
 						Overridden[0] = json!(0);
 						Overridden
 					} else {
-						args.clone()
+						Arguments.clone()
 					};
-					ExtensionsGetInstalled(runtime.clone(), EffectiveArgs).await
+					ExtensionsGetInstalled(RunTime.clone(), EffectiveArgs).await
 				},
 				"extensions:scanUserExtensions" => {
 					// User-scope scan. Forward to the unified handler with
@@ -503,12 +503,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// previously saw an empty list after every
 					// Install-from-VSIX).
 					dev_log!("extensions", "{} (forwarded to getInstalled with type=User)", command);
-					let mut UserArgs = args.clone();
+					let mut UserArgs = Arguments.clone();
 					if UserArgs.is_empty() {
 						UserArgs.push(Value::Null);
 					}
 					UserArgs[0] = json!(1);
-					ExtensionsGetInstalled(runtime.clone(), UserArgs).await
+					ExtensionsGetInstalled(RunTime.clone(), UserArgs).await
 				},
 				"extensions:getUninstalled" => {
 					// Uninstalled state (extensions soft-deleted but kept in
@@ -556,10 +556,10 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// it in ScannedExtensions, and return the ILocalExtension wrapper
 				// so the sidebar refreshes without a window reload.
 				"extensions:install" => {
-					Extension::ExtensionInstall::ExtensionInstall(app_handle.clone(), runtime.clone(), args).await
+					Extension::ExtensionInstall::ExtensionInstall(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
 				},
 				"extensions:uninstall" => {
-					Extension::ExtensionUninstall::ExtensionUninstall(app_handle.clone(), runtime.clone(), args).await
+					Extension::ExtensionUninstall::ExtensionUninstall(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
 				},
 
 				// `ExtensionManagementChannelClient.getManifest(vsix: URI)` - reads
@@ -571,7 +571,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// response crashes the webview with
 				// `TypeError: undefined is not an object (evaluating 'manifest.publisher')`.
 				"extensions:getManifest" => {
-					let VsixPath = match args.first() {
+					let VsixPath = match Arguments.first() {
 						Some(serde_json::Value::String(Path)) => Path.clone(),
 						Some(Obj) => {
 							Obj.get("fsPath")
@@ -613,105 +613,105 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Terminal commands
 				"terminal:create" => {
 					dev_log!("terminal", "terminal:create");
-					TerminalCreate(runtime.clone(), args).await
+					TerminalCreate(RunTime.clone(), Arguments).await
 				},
 				"terminal:sendText" => {
 					dev_log!("terminal", "terminal:sendText");
-					TerminalSendText(runtime.clone(), args).await
+					TerminalSendText(RunTime.clone(), Arguments).await
 				},
 				"terminal:dispose" => {
 					dev_log!("terminal", "terminal:dispose");
-					TerminalDispose(runtime.clone(), args).await
+					TerminalDispose(RunTime.clone(), Arguments).await
 				},
 				"terminal:show" => {
 					dev_log!("terminal", "terminal:show");
-					TerminalShow(runtime.clone(), args).await
+					TerminalShow(RunTime.clone(), Arguments).await
 				},
 				"terminal:hide" => {
 					dev_log!("terminal", "terminal:hide");
-					TerminalHide(runtime.clone(), args).await
+					TerminalHide(RunTime.clone(), Arguments).await
 				},
 
 				// Output channel commands
-				"output:create" => OutputCreate(app_handle.clone(), args).await,
+				"output:create" => OutputCreate(ApplicationHandle.clone(), Arguments).await,
 				"output:append" => {
 					dev_log!("output", "output:append");
-					OutputAppend(app_handle.clone(), args).await
+					OutputAppend(ApplicationHandle.clone(), Arguments).await
 				},
 				"output:appendLine" => {
 					dev_log!("output", "output:appendLine");
-					OutputAppendLine(app_handle.clone(), args).await
+					OutputAppendLine(ApplicationHandle.clone(), Arguments).await
 				},
 				"output:clear" => {
 					dev_log!("output", "output:clear");
-					OutputClear(app_handle.clone(), args).await
+					OutputClear(ApplicationHandle.clone(), Arguments).await
 				},
 				"output:show" => {
 					dev_log!("output", "output:show");
-					OutputShow(app_handle.clone(), args).await
+					OutputShow(ApplicationHandle.clone(), Arguments).await
 				},
 
 				// TextFile commands
 				"textFile:read" => {
 					dev_log!("textfile", "textFile:read");
-					TextfileRead(runtime.clone(), args).await
+					TextfileRead(RunTime.clone(), Arguments).await
 				},
 				"textFile:write" => {
 					dev_log!("textfile", "textFile:write");
-					TextfileWrite(runtime.clone(), args).await
+					TextfileWrite(RunTime.clone(), Arguments).await
 				},
-				"textFile:save" => TextfileSave(runtime.clone(), args).await,
+				"textFile:save" => TextfileSave(RunTime.clone(), Arguments).await,
 
 				// Storage commands (additional)
 				"storage:delete" => {
 					dev_log!("storage", "storage:delete");
-					StorageDelete(runtime.clone(), args).await
+					StorageDelete(RunTime.clone(), Arguments).await
 				},
 				"storage:keys" => {
 					dev_log!("storage", "storage:keys");
-					StorageKeys(runtime.clone()).await
+					StorageKeys(RunTime.clone()).await
 				},
 
 				// Notification commands (emit sky:// events for Sky to render)
 				"notification:show" => {
 					dev_log!("notification", "notification:show");
-					NotificationShow(app_handle.clone(), args).await
+					NotificationShow(ApplicationHandle.clone(), Arguments).await
 				},
 				"notification:showProgress" => {
 					dev_log!("notification", "notification:showProgress");
-					NotificationShowProgress(app_handle.clone(), args).await
+					NotificationShowProgress(ApplicationHandle.clone(), Arguments).await
 				},
 				"notification:updateProgress" => {
 					dev_log!("notification", "notification:updateProgress");
-					NotificationUpdateProgress(app_handle.clone(), args).await
+					NotificationUpdateProgress(ApplicationHandle.clone(), Arguments).await
 				},
 				"notification:endProgress" => {
 					dev_log!("notification", "notification:endProgress");
-					NotificationEndProgress(app_handle.clone(), args).await
+					NotificationEndProgress(ApplicationHandle.clone(), Arguments).await
 				},
 
 				// Progress commands
 				"progress:begin" => {
 					dev_log!("progress", "progress:begin");
-					ProgressBegin(app_handle.clone(), args).await
+					ProgressBegin(ApplicationHandle.clone(), Arguments).await
 				},
 				"progress:report" => {
 					dev_log!("progress", "progress:report");
-					ProgressReport(app_handle.clone(), args).await
+					ProgressReport(ApplicationHandle.clone(), Arguments).await
 				},
 				"progress:end" => {
 					dev_log!("progress", "progress:end");
-					ProgressEnd(app_handle.clone(), args).await
+					ProgressEnd(ApplicationHandle.clone(), Arguments).await
 				},
 
 				// QuickInput commands
 				"quickInput:showQuickPick" => {
 					dev_log!("quickinput", "quickInput:showQuickPick");
-					QuickInputShowQuickPick(runtime.clone(), args).await
+					QuickInputShowQuickPick(RunTime.clone(), Arguments).await
 				},
 				"quickInput:showInputBox" => {
 					dev_log!("quickinput", "quickInput:showInputBox");
-					QuickInputShowInputBox(runtime.clone(), args).await
+					QuickInputShowInputBox(RunTime.clone(), Arguments).await
 				},
 
 				// Workspaces commands. VS Code's `IWorkspacesService`
@@ -720,19 +720,19 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// shorter `getFolders` / `addFolder`. Alias both.
 				"workspaces:getFolders" | "workspaces:getWorkspaceFolders" | "workspaces:getWorkspace" => {
 					dev_log!("workspaces", "{}", command);
-					WorkspacesGetFolders(runtime.clone()).await
+					WorkspacesGetFolders(RunTime.clone()).await
 				},
 				"workspaces:addFolder" | "workspaces:addWorkspaceFolders" => {
 					dev_log!("workspaces", "{}", command);
-					WorkspacesAddFolder(runtime.clone(), args).await
+					WorkspacesAddFolder(RunTime.clone(), Arguments).await
 				},
 				"workspaces:removeFolder" | "workspaces:removeWorkspaceFolders" => {
 					dev_log!("workspaces", "{}", command);
-					WorkspacesRemoveFolder(runtime.clone(), args).await
+					WorkspacesRemoveFolder(RunTime.clone(), Arguments).await
 				},
 				"workspaces:getName" => {
 					dev_log!("workspaces", "{}", command);
-					WorkspacesGetName(runtime.clone()).await
+					WorkspacesGetName(RunTime.clone()).await
 				},
 				// `onDidChangeWorkspaceFolders` channel-listen: Mountain
 				// broadcasts the change via Tauri event, so ack the
@@ -745,15 +745,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Themes commands
 				"themes:getActive" => {
 					dev_log!("themes", "themes:getActive");
-					ThemesGetActive(runtime.clone()).await
+					ThemesGetActive(RunTime.clone()).await
 				},
 				"themes:list" => {
 					dev_log!("themes", "themes:list");
-					ThemesList(runtime.clone()).await
+					ThemesList(RunTime.clone()).await
 				},
 				"themes:set" => {
 					dev_log!("themes", "themes:set");
-					ThemesSet(runtime.clone(), args).await
+					ThemesSet(RunTime.clone(), Arguments).await
 				},
 
 				// Search commands. Stock VS Code `SearchService` channel
@@ -761,11 +761,11 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// rail uses `findInFiles` / `findFiles`. Alias both.
 				"search:findInFiles" | "search:textSearch" | "search:searchText" => {
 					dev_log!("search", "{}", command);
-					SearchFindInFiles(runtime.clone(), args).await
+					SearchFindInFiles(RunTime.clone(), Arguments).await
 				},
 				"search:findFiles" | "search:fileSearch" | "search:searchFile" => {
 					dev_log!("search", "{}", command);
-					SearchFindFiles(runtime.clone(), args).await
+					SearchFindFiles(RunTime.clone(), Arguments).await
 				},
 				// Cancellation / onProgress channel methods: workbench's
 				// SearchService listens for these. We have no streaming
@@ -779,69 +779,69 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Decorations commands
 				"decorations:get" => {
 					dev_log!("decorations", "decorations:get");
-					DecorationsGet(runtime.clone(), args).await
+					DecorationsGet(RunTime.clone(), Arguments).await
 				},
 				"decorations:getMany" => {
 					dev_log!("decorations", "decorations:getMany");
-					DecorationsGetMany(runtime.clone(), args).await
+					DecorationsGetMany(RunTime.clone(), Arguments).await
 				},
 				"decorations:set" => {
 					dev_log!("decorations", "decorations:set");
-					DecorationsSet(runtime.clone(), args).await
+					DecorationsSet(RunTime.clone(), Arguments).await
 				},
 				"decorations:clear" => {
 					dev_log!("decorations", "decorations:clear");
-					DecorationsClear(runtime.clone(), args).await
+					DecorationsClear(RunTime.clone(), Arguments).await
 				},
 
 				// WorkingCopy commands
 				"workingCopy:isDirty" => {
 					dev_log!("workingcopy", "workingCopy:isDirty");
-					WorkingCopyIsDirty(runtime.clone(), args).await
+					WorkingCopyIsDirty(RunTime.clone(), Arguments).await
 				},
 				"workingCopy:setDirty" => {
 					dev_log!("workingcopy", "workingCopy:setDirty");
-					WorkingCopySetDirty(runtime.clone(), args).await
+					WorkingCopySetDirty(RunTime.clone(), Arguments).await
 				},
 				"workingCopy:getAllDirty" => {
 					dev_log!("workingcopy", "workingCopy:getAllDirty");
-					WorkingCopyGetAllDirty(runtime.clone()).await
+					WorkingCopyGetAllDirty(RunTime.clone()).await
 				},
 				"workingCopy:getDirtyCount" => {
 					dev_log!("workingcopy", "workingCopy:getDirtyCount");
-					WorkingCopyGetDirtyCount(runtime.clone()).await
+					WorkingCopyGetDirtyCount(RunTime.clone()).await
 				},
 
 				// Keybinding commands
 				"keybinding:add" => {
 					dev_log!("keybinding", "keybinding:add");
-					KeybindingAdd(runtime.clone(), args).await
+					KeybindingAdd(RunTime.clone(), Arguments).await
 				},
 				"keybinding:remove" => {
 					dev_log!("keybinding", "keybinding:remove");
-					KeybindingRemove(runtime.clone(), args).await
+					KeybindingRemove(RunTime.clone(), Arguments).await
 				},
 				"keybinding:lookup" => {
 					dev_log!("keybinding", "keybinding:lookup");
-					KeybindingLookup(runtime.clone(), args).await
+					KeybindingLookup(RunTime.clone(), Arguments).await
 				},
 				"keybinding:getAll" => {
 					dev_log!("keybinding", "keybinding:getAll");
-					KeybindingGetAll(runtime.clone()).await
+					KeybindingGetAll(RunTime.clone()).await
 				},
 
 				// Lifecycle commands
 				"lifecycle:getPhase" => {
 					dev_log!("lifecycle", "lifecycle:getPhase");
-					LifecycleGetPhase(runtime.clone()).await
+					LifecycleGetPhase(RunTime.clone()).await
 				},
 				"lifecycle:whenPhase" => {
 					dev_log!("lifecycle", "lifecycle:whenPhase");
-					LifecycleWhenPhase(runtime.clone(), args).await
+					LifecycleWhenPhase(RunTime.clone(), Arguments).await
 				},
 				"lifecycle:requestShutdown" => {
 					dev_log!("lifecycle", "lifecycle:requestShutdown");
-					LifecycleRequestShutdown(app_handle.clone()).await
+					LifecycleRequestShutdown(ApplicationHandle.clone()).await
 				},
 				"lifecycle:advancePhase" | "lifecycle:setPhase" => {
 					dev_log!("lifecycle", "{}", command);
@@ -849,13 +849,13 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// the phase advances Starting → Ready → Restored → Eventually.
 					// Mountain emits `sky://lifecycle/phaseChanged` so any extension
 					// host or service waiting on a later phase wakes up.
-					let NewPhase = args.first().and_then(|V| V.as_u64()).unwrap_or(1) as u8;
-					runtime
+					let NewPhase = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(1) as u8;
+					RunTime
 						.Environment
 						.ApplicationState
 						.Feature
 						.Lifecycle
-						.AdvanceAndBroadcast(NewPhase, &app_handle);
+						.AdvanceAndBroadcast(NewPhase, &ApplicationHandle);
 
 					// Hidden-until-ready: the main window is built with
 					// `.visible(false)` to suppress the four-repaint flash
@@ -871,7 +871,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// is already visible (phase 3 re-fired from another
 					// consumer) Tauri returns a benign error.
 					if NewPhase >= 3 {
-						if let Some(MainWindow) = app_handle.get_webview_window("main") {
+						if let Some(MainWindow) = ApplicationHandle.get_webview_window("main") {
 							if let Ok(false) = MainWindow.is_visible() {
 								if let Err(Error) = MainWindow.show() {
 									dev_log!(
@@ -892,73 +892,73 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						}
 					}
 
-					Ok(json!(runtime.Environment.ApplicationState.Feature.Lifecycle.GetPhase()))
+					Ok(json!(RunTime.Environment.ApplicationState.Feature.Lifecycle.GetPhase()))
 				},
 
 				// Label commands
 				"label:getUri" => {
 					dev_log!("label", "label:getUri");
-					LabelGetURI(runtime.clone(), args).await
+					LabelGetURI(RunTime.clone(), Arguments).await
 				},
 				"label:getWorkspace" => {
 					dev_log!("label", "label:getWorkspace");
-					LabelGetWorkspace(runtime.clone()).await
+					LabelGetWorkspace(RunTime.clone()).await
 				},
 				"label:getBase" => {
 					dev_log!("label", "label:getBase");
-					LabelGetBase(args).await
+					LabelGetBase(Arguments).await
 				},
 
 				// Model (text model registry) commands
 				"model:open" => {
 					dev_log!("model", "model:open");
-					ModelOpen(runtime.clone(), args).await
+					ModelOpen(RunTime.clone(), Arguments).await
 				},
 				"model:close" => {
 					dev_log!("model", "model:close");
-					ModelClose(runtime.clone(), args).await
+					ModelClose(RunTime.clone(), Arguments).await
 				},
 				"model:get" => {
 					dev_log!("model", "model:get");
-					ModelGet(runtime.clone(), args).await
+					ModelGet(RunTime.clone(), Arguments).await
 				},
 				"model:getAll" => {
 					dev_log!("model", "model:getAll");
-					ModelGetAll(runtime.clone()).await
+					ModelGetAll(RunTime.clone()).await
 				},
 				"model:updateContent" => {
 					dev_log!("model", "model:updateContent");
-					ModelUpdateContent(runtime.clone(), args).await
+					ModelUpdateContent(RunTime.clone(), Arguments).await
 				},
 
 				// Navigation history commands
 				"history:goBack" => {
 					dev_log!("history", "history:goBack");
-					HistoryGoBack(runtime.clone()).await
+					HistoryGoBack(RunTime.clone()).await
 				},
 				"history:goForward" => {
 					dev_log!("history", "history:goForward");
-					HistoryGoForward(runtime.clone()).await
+					HistoryGoForward(RunTime.clone()).await
 				},
 				"history:canGoBack" => {
 					dev_log!("history", "history:canGoBack");
-					HistoryCanGoBack(runtime.clone()).await
+					HistoryCanGoBack(RunTime.clone()).await
 				},
 				"history:canGoForward" => {
 					dev_log!("history", "history:canGoForward");
-					HistoryCanGoForward(runtime.clone()).await
+					HistoryCanGoForward(RunTime.clone()).await
 				},
 				"history:push" => {
 					dev_log!("history", "history:push");
-					HistoryPush(runtime.clone(), args).await
+					HistoryPush(RunTime.clone(), Arguments).await
 				},
 				"history:clear" => {
 					dev_log!("history", "history:clear");
-					HistoryClear(runtime.clone()).await
+					HistoryClear(RunTime.clone()).await
 				},
 				"history:getStack" => {
 					dev_log!("history", "history:getStack");
-					HistoryGetStack(runtime.clone()).await
+					HistoryGetStack(RunTime.clone()).await
 				},
 
 				// IPC status commands
@@ -997,7 +997,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// VS Code's DiskFileSystemProviderClient calls readFile/writeFile/rename
 				// but Mountain's original handlers use read/write/move.
 				// =====================================================================
-				"file:realpath" => FileRealpath(args).await,
+				"file:realpath" => FileRealpath(Arguments).await,
 				"file:open" => {
 					dev_log!("vfs", "file:open stub - no fd support yet");
 					Ok(json!(0))
@@ -1006,24 +1006,24 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					dev_log!("vfs", "file:close stub");
 					Ok(Value::Null)
 				},
-				"file:cloneFile" => FileCloneNative(args).await,
+				"file:cloneFile" => FileCloneNative(Arguments).await,
 
 				// =====================================================================
 				// Native Host commands (INativeHostService)
 				// =====================================================================
 
 				// Dialogs
-				"nativeHost:pickFolderAndOpen" => NativePickFolder(app_handle.clone(), args).await,
-				"nativeHost:pickFileAndOpen" => NativePickFolder(app_handle.clone(), args).await,
-				"nativeHost:pickFileFolderAndOpen" => NativePickFolder(app_handle.clone(), args).await,
-				"nativeHost:pickWorkspaceAndOpen" => NativePickFolder(app_handle.clone(), args).await,
-				"nativeHost:showOpenDialog" => NativeShowOpenDialog(app_handle.clone(), args).await,
+				"nativeHost:pickFolderAndOpen" => NativePickFolder(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:pickFileAndOpen" => NativePickFolder(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:pickFileFolderAndOpen" => NativePickFolder(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:pickWorkspaceAndOpen" => NativePickFolder(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:showOpenDialog" => NativeShowOpenDialog(ApplicationHandle.clone(), Arguments).await,
 				"nativeHost:showSaveDialog" => {
 					use tauri_plugin_dialog::DialogExt;
-					let Options = args.first().cloned().unwrap_or(Value::Null);
+					let Options = Arguments.first().cloned().unwrap_or(Value::Null);
 					let Title = Options.get("title").and_then(Value::as_str).unwrap_or("Save").to_string();
 					let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
-					let Handle = app_handle.clone();
+					let Handle = ApplicationHandle.clone();
 					let Joined = tokio::task::spawn_blocking(move || -> Option<String> {
 						let mut Builder = Handle.dialog().file().set_title(&Title);
 						if let Some(Path) = DefaultPath.as_deref() {
@@ -1040,7 +1040,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				},
 				"nativeHost:showMessageBox" => {
 					use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-					let Options = args.first().cloned().unwrap_or(Value::Null);
+					let Options = Arguments.first().cloned().unwrap_or(Value::Null);
 					let Message = Options.get("message").and_then(Value::as_str).unwrap_or("").to_string();
 					let Detail = Options.get("detail").and_then(Value::as_str).map(str::to_string);
 					let DialogType = Options
@@ -1054,7 +1054,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						"error" => MessageDialogKind::Error,
 						_ => MessageDialogKind::Info,
 					};
-					let Handle = app_handle.clone();
+					let Handle = ApplicationHandle.clone();
 					let Joined = tokio::task::spawn_blocking(move || -> bool {
 						let mut Builder = Handle.dialog().message(&Message).kind(Kind);
 						if !Title.is_empty() {
@@ -1076,7 +1076,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Returns the session log directory (with timestamp + window1 subdir)
 				// so VS Code can immediately write output files without stat errors.
 				"nativeHost:getEnvironmentPaths" => {
-					let PathResolver = app_handle.path();
+					let PathResolver = ApplicationHandle.path();
 					let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
 					let HomeDir = PathResolver.home_dir().unwrap_or_default();
 					let TmpDir = std::env::temp_dir();
@@ -1134,11 +1134,11 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				},
 				"nativeHost:isFullScreen" => {
 					dev_log!("window", "nativeHost:isFullScreen");
-					NativeIsFullscreen(app_handle.clone()).await
+					NativeIsFullscreen(ApplicationHandle.clone()).await
 				},
 				"nativeHost:isMaximized" => {
 					dev_log!("window", "nativeHost:isMaximized");
-					NativeIsMaximized(app_handle.clone()).await
+					NativeIsMaximized(ApplicationHandle.clone()).await
 				},
 				"nativeHost:getActiveWindowId" => {
 					dev_log!("window", "nativeHost:getActiveWindowId");
@@ -1184,35 +1184,35 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// native window the same way VS Code's Electron path does.
 				"nativeHost:focusWindow" => {
 					dev_log!("window", "{}", command);
-					if let Some(Window) = app_handle.get_webview_window("main") {
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_focus();
 					}
 					Ok(Value::Null)
 				},
 				"nativeHost:maximizeWindow" => {
 					dev_log!("window", "{}", command);
-					if let Some(Window) = app_handle.get_webview_window("main") {
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.maximize();
 					}
 					Ok(Value::Null)
 				},
 				"nativeHost:unmaximizeWindow" => {
 					dev_log!("window", "{}", command);
-					if let Some(Window) = app_handle.get_webview_window("main") {
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.unmaximize();
 					}
 					Ok(Value::Null)
 				},
 				"nativeHost:minimizeWindow" => {
 					dev_log!("window", "{}", command);
-					if let Some(Window) = app_handle.get_webview_window("main") {
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.minimize();
 					}
 					Ok(Value::Null)
 				},
 				"nativeHost:toggleFullScreen" => {
 					dev_log!("window", "{}", command);
-					if let Some(Window) = app_handle.get_webview_window("main") {
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let IsFullscreen = Window.is_fullscreen().unwrap_or(false);
 						let _ = Window.set_fullscreen(!IsFullscreen);
 					}
@@ -1225,15 +1225,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// `prevent_close` intercept registered in AppLifecycle.
 					// `close()` re-enters the intercept and the window
 					// becomes unkillable.
-					if let Some(Window) = app_handle.get_webview_window("main") {
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.destroy();
 					}
 					Ok(Value::Null)
 				},
 				"nativeHost:setWindowAlwaysOnTop" => {
 					dev_log!("window", "{}", command);
-					let OnTop = args.first().and_then(|V| V.as_bool()).unwrap_or(false);
-					if let Some(Window) = app_handle.get_webview_window("main") {
+					let OnTop = Arguments.first().and_then(|V| V.as_bool()).unwrap_or(false);
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_always_on_top(OnTop);
 					}
 					Ok(Value::Null)
@@ -1245,7 +1245,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// prefix as a proxy. In practice the UI will call
 					// `setWindowAlwaysOnTop` with an explicit bool immediately after,
 					// so a best-effort flip is enough.
-					if let Some(Window) = app_handle.get_webview_window("main") {
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_always_on_top(true);
 					}
 					Ok(Value::Null)
@@ -1254,14 +1254,14 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					dev_log!("window", "{}", command);
 					#[cfg(target_os = "macos")]
 					{
-						let Path = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+						let Path = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 						if !Path.is_empty() {
-							if let Some(Window) = app_handle.get_webview_window("main") {
+							if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 								let _ = Window.set_title(&Path);
 							}
 						}
 					}
-					let _ = (&args, &app_handle);
+					let _ = (&Arguments, &ApplicationHandle);
 					Ok(Value::Null)
 				},
 
@@ -1313,15 +1313,15 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						Ok(json!(false))
 					}
 				},
-				"nativeHost:showItemInFolder" => ShowItemInFolder(runtime.clone(), args).await,
-				"nativeHost:openExternal" => OpenExternal(runtime.clone(), args).await,
+				"nativeHost:showItemInFolder" => ShowItemInFolder(RunTime.clone(), Arguments).await,
+				"nativeHost:openExternal" => OpenExternal(RunTime.clone(), Arguments).await,
 				// `workbench.files.action.deleteFile` and extensions that delete
 				// files both round-trip through here. Route to the platform's
 				// trash bin so deletions are recoverable. macOS uses AppleScript
 				// via `osascript`; Linux prefers `gio trash` then `trash` if
 				// installed; Windows uses PowerShell with Shell.NameSpace.
 				"nativeHost:moveItemToTrash" => {
-					let Path = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Path = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 					if Path.is_empty() {
 						Ok(json!(false))
 					} else {
@@ -1396,7 +1396,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				},
 				"nativeHost:writeClipboardText" => {
 					dev_log!("clipboard", "writeClipboardText");
-					let Text = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Text = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 					if let Ok(mut Cb) = arboard::Clipboard::new() {
 						let _ = Cb.set_text(Text);
 					}
@@ -1413,7 +1413,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				},
 				"nativeHost:writeClipboardFindText" => {
 					dev_log!("clipboard", "writeClipboardFindText");
-					let Text = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Text = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 					if let Ok(mut Cb) = arboard::Clipboard::new() {
 						let _ = Cb.set_text(Text);
 					}
@@ -1445,7 +1445,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				"nativeHost:killProcess" => Ok(Value::Null),
 
 				// Network
-				"nativeHost:findFreePort" => NativeFindFreePort(args).await,
+				"nativeHost:findFreePort" => NativeFindFreePort(Arguments).await,
 				"nativeHost:isPortFree" => Ok(json!(true)),
 				"nativeHost:resolveProxy" => Ok(Value::Null),
 				"nativeHost:lookupAuthorization" => Ok(Value::Null),
@@ -1543,12 +1543,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// its alternative path (CustomEvent fan-out for legacy
 				// observers).
 				"cocoon:request" => {
-					dev_log!("ipc", "cocoon:request method={:?}", args.first());
-					let MethodOpt = args.first().and_then(|V| V.as_str()).map(|S| S.to_string());
+					dev_log!("ipc", "cocoon:request method={:?}", Arguments.first());
+					let MethodOpt = Arguments.first().and_then(|V| V.as_str()).map(|S| S.to_string());
 					match MethodOpt {
 						None => Err("cocoon:request requires method string in slot 0".to_string()),
 						Some(Method) => {
-							let Payload = args.get(1).cloned().unwrap_or(Value::Null);
+							let Payload = Arguments.get(1).cloned().unwrap_or(Value::Null);
 							// Same boot-race guard as `tree:getChildren`: the
 							// renderer can dispatch `cocoon:request` (e.g.
 							// `webview.resolveView`) before Cocoon's gRPC
@@ -1573,12 +1573,12 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// `params = [Method, Payload]`. Returns null
 				// immediately; the notification dispatches asynchronously.
 				"cocoon:notify" => {
-					dev_log!("ipc", "cocoon:notify method={:?}", args.first());
-					let MethodOpt = args.first().and_then(|V| V.as_str()).map(|S| S.to_string());
+					dev_log!("ipc", "cocoon:notify method={:?}", Arguments.first());
+					let MethodOpt = Arguments.first().and_then(|V| V.as_str()).map(|S| S.to_string());
 					match MethodOpt {
 						None => Err("cocoon:notify requires method string in slot 0".to_string()),
 						Some(Method) => {
-							let Payload = args.get(1).cloned().unwrap_or(Value::Null);
+							let Payload = Arguments.get(1).cloned().unwrap_or(Value::Null);
 							if let Err(Error) = crate::Vine::Client::SendNotification(
 								"cocoon-main".to_string(),
 								Method.clone(),
@@ -1615,11 +1615,11 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// callers expect it. New `localPty:createProcess` and
 					// `localPty:start` follow VS Code's typed contract below.
 					dev_log!("terminal", "{}", command);
-					TerminalCreate(runtime.clone(), args).await
+					TerminalCreate(RunTime.clone(), Arguments).await
 				},
 				"localPty:createProcess" => {
 					dev_log!("terminal", "{}", command);
-					match TerminalCreate(runtime.clone(), args).await {
+					match TerminalCreate(RunTime.clone(), Arguments).await {
 						Ok(Response) => {
 							// Extract the integer id - this is what
 							// `IPtyService.createProcess` is contractually
@@ -1672,11 +1672,11 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				},
 				"localPty:input" | "localPty:write" => {
 					dev_log!("terminal", "{}", command);
-					TerminalSendText(runtime.clone(), args).await
+					TerminalSendText(RunTime.clone(), Arguments).await
 				},
 				"localPty:shutdown" | "localPty:dispose" => {
 					dev_log!("terminal", "{}", command);
-					TerminalDispose(runtime.clone(), args).await
+					TerminalDispose(RunTime.clone(), Arguments).await
 				},
 				"localPty:resize" => {
 					dev_log!("terminal", "localPty:resize");
@@ -1692,16 +1692,16 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// minimums so a transient micro-size never tears
 					// down the shell.
 					let (TerminalId, Columns, Rows) = {
-						let First = args.first().cloned().unwrap_or(Value::Null);
+						let First = Arguments.first().cloned().unwrap_or(Value::Null);
 						if First.is_object() {
 							let Id = First.get("id").and_then(|V| V.as_u64()).unwrap_or(0);
 							let C = First.get("cols").and_then(|V| V.as_u64()).unwrap_or(80) as u16;
 							let R = First.get("rows").and_then(|V| V.as_u64()).unwrap_or(24) as u16;
 							(Id, C, R)
 						} else {
-							let Id = args.get(0).and_then(|V| V.as_u64()).unwrap_or(0);
-							let C = args.get(1).and_then(|V| V.as_u64()).unwrap_or(80) as u16;
-							let R = args.get(2).and_then(|V| V.as_u64()).unwrap_or(24) as u16;
+							let Id = Arguments.get(0).and_then(|V| V.as_u64()).unwrap_or(0);
+							let C = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(80) as u16;
+							let R = Arguments.get(2).and_then(|V| V.as_u64()).unwrap_or(24) as u16;
 							(Id, C, R)
 						}
 					};
@@ -1714,7 +1714,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 							Environment::Requires::Requires,
 							Terminal::TerminalProvider::TerminalProvider,
 						};
-						let Provider:Arc<dyn TerminalProvider> = runtime.Environment.Require();
+						let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
 						match Provider.ResizeTerminal(TerminalId, Columns, Rows).await {
 							Ok(_) => Ok(Value::Null),
 							Err(Error) => {
@@ -1890,7 +1890,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// Extension host message relay (Wind → Mountain → Cocoon)
 				// =====================================================================
 				"cocoon:extensionHostMessage" => {
-					let ByteCount = args
+					let ByteCount = Arguments
 						.first()
 						.map(|P| P.get("data").and_then(|D| D.as_array()).map(|A| A.len()).unwrap_or(0))
 						.unwrap_or(0);
@@ -1898,7 +1898,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 
 					// Forward binary message to Cocoon via gRPC GenericNotification.
 					// Fire-and-forget - the extension host protocol is async.
-					let Payload = args.first().cloned().unwrap_or(Value::Null);
+					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
 					tokio::spawn(async move {
 						if let Err(Error) = crate::Vine::Client::SendNotification(
 							"cocoon-main".to_string(),
@@ -1923,7 +1923,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// the request for Wind so it can tear down caches, the actual
 					// spawn lives downstream.
 					use tauri::Emitter;
-					if let Err(Error) = app_handle.emit(SkyEvent::ExtHostDebugReload.AsStr(), json!({})) {
+					if let Err(Error) = ApplicationHandle.emit(SkyEvent::ExtHostDebugReload.AsStr(), json!({})) {
 						dev_log!("exthost", "warn: extensionhostdebugservice:reload emit failed: {}", Error);
 					}
 					Ok(Value::Null)
@@ -1931,7 +1931,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				"extensionhostdebugservice:close" => {
 					dev_log!("exthost", "extensionhostdebugservice:close");
 					use tauri::Emitter;
-					if let Err(Error) = app_handle.emit("sky://exthost/debug-close", json!({})) {
+					if let Err(Error) = ApplicationHandle.emit("sky://exthost/debug-close", json!({})) {
 						dev_log!("exthost", "warn: extensionhostdebugservice:close emit failed: {}", Error);
 					}
 					Ok(Value::Null)
@@ -1950,7 +1950,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				},
 				"workspaces:removeRecentlyOpened" => {
 					dev_log!("workspaces", "workspaces:removeRecentlyOpened");
-					let Uri = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					let Uri = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 					if !Uri.is_empty() {
 						MutateRecentlyOpened(|List| {
 							if let Some(Workspaces) = List.get_mut("workspaces").and_then(|V| V.as_array_mut()) {
@@ -1967,7 +1967,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				"workspaces:addRecentlyOpened" => {
 					dev_log!("workspaces", "workspaces:addRecentlyOpened");
 					// VS Code passes `[{ workspace?, folderUri?, fileUri?, label? }, …]`.
-					let Entries:Vec<Value> = args.first().and_then(|V| V.as_array()).cloned().unwrap_or_default();
+					let Entries:Vec<Value> = Arguments.first().and_then(|V| V.as_array()).cloned().unwrap_or_default();
 					if !Entries.is_empty() {
 						MutateRecentlyOpened(|List| {
 							let Workspaces = List
@@ -2043,7 +2043,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// rather than the "untitled" fallback. `{ id, configPath }` is
 					// VS Code's expected shape for a multi-root workspace identifier;
 					// we only use single-root so configPath stays null.
-					let Workspace = &runtime.Environment.ApplicationState.Workspace;
+					let Workspace = &RunTime.Environment.ApplicationState.Workspace;
 					let Folders = Workspace.GetWorkspaceFolders();
 					if let Some(First) = Folders.first() {
 						use std::{
@@ -2070,39 +2070,39 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// via tokio::process. See Batch 4 in HANDOFF §-10.
 				"git:exec" => {
 					dev_log!("git", "git:exec");
-					Git::HandleExec(args).await
+					Git::HandleExec(Arguments).await
 				},
 				"git:clone" => {
 					dev_log!("git", "git:clone");
-					Git::HandleClone(args).await
+					Git::HandleClone(Arguments).await
 				},
 				"git:pull" => {
 					dev_log!("git", "git:pull");
-					Git::HandlePull(args).await
+					Git::HandlePull(Arguments).await
 				},
 				"git:checkout" => {
 					dev_log!("git", "git:checkout");
-					Git::HandleCheckout(args).await
+					Git::HandleCheckout(Arguments).await
 				},
 				"git:revParse" => {
 					dev_log!("git", "git:revParse");
-					Git::HandleRevParse(args).await
+					Git::HandleRevParse(Arguments).await
 				},
 				"git:fetch" => {
 					dev_log!("git", "git:fetch");
-					Git::HandleFetch(args).await
+					Git::HandleFetch(Arguments).await
 				},
 				"git:revListCount" => {
 					dev_log!("git", "git:revListCount");
-					Git::HandleRevListCount(args).await
+					Git::HandleRevListCount(Arguments).await
 				},
 				"git:cancel" => {
 					dev_log!("git", "git:cancel");
-					Git::HandleCancel(args).await
+					Git::HandleCancel(Arguments).await
 				},
 				"git:isAvailable" => {
 					dev_log!("git", "git:isAvailable");
-					Git::HandleIsAvailable(args).await
+					Git::HandleIsAvailable(Arguments).await
 				},
 
 				// Tree-view child lookup from the renderer side. Mirrors the
@@ -2112,13 +2112,13 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 				// request children directly without waiting for Cocoon to
 				// ask first. Payload: `[{ viewId, treeItemHandle? }]`.
 				"tree:getChildren" => {
-					let ViewId = args
+					let ViewId = Arguments
 						.first()
 						.and_then(|V| V.get("viewId").or_else(|| V.get(0)))
 						.and_then(Value::as_str)
 						.unwrap_or("")
 						.to_string();
-					let ItemHandle = args
+					let ItemHandle = Arguments
 						.first()
 						.and_then(|V| V.get("treeItemHandle").or_else(|| V.get(1)))
 						.and_then(Value::as_str)
@@ -2231,7 +2231,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					let mut CommandCount:usize = 0;
 					let mut TerminalCount:usize = 0;
 					let mut TerminalDataBytes:usize = 0;
-					if let Ok(TreeViews) = runtime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock()
+					if let Ok(TreeViews) = RunTime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock()
 					{
 						for (ViewId, Dto) in TreeViews.iter() {
 							let Payload = serde_json::json!({
@@ -2242,7 +2242,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 									"title": Dto.Title.clone().unwrap_or_default(),
 								},
 							});
-							if app_handle.emit("sky://tree-view/create", Payload).is_ok() {
+							if ApplicationHandle.emit("sky://tree-view/create", Payload).is_ok() {
 								TreeViewCount += 1;
 							}
 						}
@@ -2256,7 +2256,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// because the only SCM provider in production today is
 					// `vscode.git` and a stale state file with empty id is
 					// the realistic upgrade-path mismatch.
-					if let Ok(ScmProviders) = runtime
+					if let Ok(ScmProviders) = RunTime
 						.Environment
 						.ApplicationState
 						.Feature
@@ -2284,7 +2284,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 								"extensionId": "",
 								"handle": *Handle,
 							});
-							if app_handle.emit("sky://scm/register", Payload).is_ok() {
+							if ApplicationHandle.emit("sky://scm/register", Payload).is_ok() {
 								ScmCount += 1;
 							}
 						}
@@ -2304,7 +2304,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// delivery. SkyBridge's `sky://command/register`
 					// listener accepts either `{ id, commandId, kind }`
 					// or `{ commands: [...] }` (see SkyBridge.ts).
-					if let Ok(Commands) = runtime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock()
+					if let Ok(Commands) = RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock()
 					{
 						let mut Batch: Vec<serde_json::Value> = Vec::new();
 						for (CommandId, Handler) in Commands.iter() {
@@ -2321,7 +2321,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 						}
 						if !Batch.is_empty() {
 							let Count = Batch.len();
-							if app_handle
+							if ApplicationHandle
 								.emit("sky://command/register", serde_json::json!({ "commands": Batch }))
 								.is_ok()
 							{
@@ -2336,7 +2336,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// (zsh's MOTD, fish greeting, `direnv export`, …) is
 					// silently dropped and the user sees an empty pane until
 					// they type.
-					if let Ok(Terminals) = runtime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock()
+					if let Ok(Terminals) = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock()
 					{
 						for (TerminalId, Arc) in Terminals.iter() {
 							let (Name, Pid) = if let Ok(State) = Arc.lock() {
@@ -2349,7 +2349,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 								"name": Name,
 								"pid": Pid,
 							});
-							if app_handle.emit("sky://terminal/create", CreatePayload).is_ok() {
+							if ApplicationHandle.emit("sky://terminal/create", CreatePayload).is_ok() {
 								TerminalCount += 1;
 							}
 						}
@@ -2357,7 +2357,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					for (TerminalId, Bytes) in crate::Environment::TerminalProvider::DrainTerminalOutputBuffer() {
 						let DataString = String::from_utf8_lossy(&Bytes).to_string();
 						TerminalDataBytes += Bytes.len();
-						let _ = app_handle.emit(
+						let _ = ApplicationHandle.emit(
 							"sky://terminal/data",
 							serde_json::json!({ "id": TerminalId, "data": DataString }),
 						);
@@ -2453,7 +2453,7 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 	Result
 }
 
-pub fn register_wind_ipc_handlers(app_handle:&tauri::AppHandle) -> Result<(), String> {
+pub fn register_wind_ipc_handlers(ApplicationHandle:&tauri::AppHandle) -> Result<(), String> {
 	dev_log!("lifecycle", "registering IPC handlers");
 
 	// Note: These handlers are automatically registered when included in the

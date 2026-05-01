@@ -9,50 +9,50 @@ use tauri::AppHandle;
 use crate::dev_log;
 
 /// Create a named output channel. Returns the channel name as its handle.
-pub async fn OutputCreate(_app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
-	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("Output").to_string();
+pub async fn OutputCreate(_ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
+	let ChannelName = Arguments.first().and_then(|V| V.as_str()).unwrap_or("Output").to_string();
 	dev_log!("ipc", "output:create channel='{}'", ChannelName);
 	// Sky/frontend creates the channel panel on the `sky://output/create` event
 	Ok(json!({ "channelName": ChannelName }))
 }
 
 /// Append text to an output channel.
-pub async fn OutputAppend(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputAppend(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let Text = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let ChannelName = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Text = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	let _ = app_handle.emit(SkyEvent::OutputAppend.AsStr(), json!({ "channel": ChannelName, "text": Text }));
+	let _ = ApplicationHandle.emit(SkyEvent::OutputAppend.AsStr(), json!({ "channel": ChannelName, "text": Text }));
 	Ok(Value::Null)
 }
 
 /// Append a line to an output channel (text + newline).
-pub async fn OutputAppendLine(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputAppendLine(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let Text = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let ChannelName = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Text = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Line = format!("{}\n", Text);
 
-	let _ = app_handle.emit(SkyEvent::OutputAppend.AsStr(), json!({ "channel": ChannelName, "text": Line }));
+	let _ = ApplicationHandle.emit(SkyEvent::OutputAppend.AsStr(), json!({ "channel": ChannelName, "text": Line }));
 	Ok(Value::Null)
 }
 
 /// Clear an output channel.
-pub async fn OutputClear(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputClear(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = app_handle.emit(SkyEvent::OutputClear.AsStr(), json!({ "channel": ChannelName }));
+	let ChannelName = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let _ = ApplicationHandle.emit(SkyEvent::OutputClear.AsStr(), json!({ "channel": ChannelName }));
 	Ok(Value::Null)
 }
 
 /// Show an output channel panel.
-pub async fn OutputShow(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn OutputShow(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let ChannelName = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = app_handle.emit(SkyEvent::OutputShow.AsStr(), json!({ "channel": ChannelName }));
+	let ChannelName = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let _ = ApplicationHandle.emit(SkyEvent::OutputShow.AsStr(), json!({ "channel": ChannelName }));
 	Ok(Value::Null)
 }

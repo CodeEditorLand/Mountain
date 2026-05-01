@@ -2,7 +2,7 @@
 
 //! FileSystem atoms - two tiers:
 //! - `Managed`: legacy handlers that route through
-//!   `FileSystemReader`/`FileSystemWriter` traits on the Application runtime.
+//!   `FileSystemReader`/`FileSystemWriter` traits on the Application RunTime.
 //!   Currently only the binary read/write variants are wired into dispatch; the
 //!   rest are preserved for future reuse.
 //! - `Native`: URI-aware direct `tokio::fs` handlers that Wind/Sky call via

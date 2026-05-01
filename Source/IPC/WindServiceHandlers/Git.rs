@@ -65,7 +65,7 @@ fn ResolveCwd(Raw:&str) -> PathBuf {
 async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i32, String, String), String> {
 	dev_log!(
 		"git",
-		"[Git] exec-begin op={} cwd={} args=[{}]",
+		"[Git] exec-begin op={} cwd={} Arguments=[{}]",
 		OperationId,
 		Cwd.unwrap_or("<inherit>"),
 		Args.join(" ")
@@ -81,7 +81,7 @@ async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 	let Child = Spawn.spawn().map_err(|Error| {
 		dev_log!(
 			"git",
-			"[Git] exec-spawn-fail op={} args=[{}] error={}",
+			"[Git] exec-spawn-fail op={} Arguments=[{}] error={}",
 			OperationId,
 			Args.join(" "),
 			Error
@@ -106,7 +106,7 @@ async fn RunGit(OperationId:&str, Args:&[String], Cwd:Option<&str>) -> Result<(i
 
 	dev_log!(
 		"git",
-		"[Git] exec-done op={} args=[{}] exit={} stdout={}B stderr={}B",
+		"[Git] exec-done op={} Arguments=[{}] exit={} stdout={}B stderr={}B",
 		OperationId,
 		Args.join(" "),
 		ExitCode,
@@ -126,28 +126,28 @@ fn AsStringArray(Value:&Value) -> Vec<String> {
 
 fn Generated() -> String { uuid::Uuid::new_v4().to_string() }
 
-/// `localGit:exec` - accept either `{ args, cwd?, operationId? }` or a
-/// legacy positional `(args: string[], cwd?: string)`. Returns
+/// `localGit:exec` - accept either `{ Arguments, cwd?, operationId? }` or a
+/// legacy positional `(Arguments: string[], cwd?: string)`. Returns
 /// `{ stdout, stderr, exitCode }`.
-pub async fn HandleExec(args:Vec<Value>) -> Result<Value, String> {
-	let (Argv, Cwd, OperationId) = match args.first() {
+pub async fn HandleExec(Arguments:Vec<Value>) -> Result<Value, String> {
+	let (Argv, Cwd, OperationId) = match Arguments.first() {
 		Some(First) if First.is_object() => {
 			let Obj = First.as_object().unwrap();
-			let Argv = Obj.get("args").map(AsStringArray).unwrap_or_default();
+			let Argv = Obj.get("Arguments").map(AsStringArray).unwrap_or_default();
 			let Cwd = Obj.get("cwd").and_then(Value::as_str).unwrap_or("").to_string();
 			let OperationId = Obj.get("operationId").and_then(Value::as_str).unwrap_or("").to_string();
 			(Argv, Cwd, OperationId)
 		},
 		Some(First) if First.is_array() => {
 			let Argv = AsStringArray(First);
-			let Cwd = args.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+			let Cwd = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 			(Argv, Cwd, String::new())
 		},
 		_ => (Vec::new(), String::new(), String::new()),
 	};
 
 	if Argv.is_empty() {
-		return Err("git:exec requires non-empty args".to_string());
+		return Err("git:exec requires non-empty Arguments".to_string());
 	}
 
 	let OperationIdRef = if OperationId.is_empty() { Generated() } else { OperationId };
@@ -162,11 +162,11 @@ pub async fn HandleExec(args:Vec<Value>) -> Result<Value, String> {
 }
 
 /// `localGit:clone(operationId, cloneUrl, targetPath, ref?)`
-pub async fn HandleClone(args:Vec<Value>) -> Result<Value, String> {
-	let OperationId = args.first().and_then(Value::as_str).unwrap_or("").to_string();
-	let CloneURL = args.get(1).and_then(Value::as_str).unwrap_or("").to_string();
-	let TargetPath = args.get(2).and_then(Value::as_str).unwrap_or("").to_string();
-	let Reference = args.get(3).and_then(Value::as_str).map(str::to_string);
+pub async fn HandleClone(Arguments:Vec<Value>) -> Result<Value, String> {
+	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let CloneURL = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+	let TargetPath = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
+	let Reference = Arguments.get(3).and_then(Value::as_str).map(str::to_string);
 
 	if CloneURL.is_empty() || TargetPath.is_empty() {
 		return Err("git:clone requires cloneUrl and targetPath".to_string());
@@ -189,9 +189,9 @@ pub async fn HandleClone(args:Vec<Value>) -> Result<Value, String> {
 }
 
 /// `localGit:pull(operationId, repoPath) -> boolean` (true = HEAD moved).
-pub async fn HandlePull(args:Vec<Value>) -> Result<Value, String> {
-	let OperationId = args.first().and_then(Value::as_str).unwrap_or("").to_string();
-	let RepoPath = args.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+pub async fn HandlePull(Arguments:Vec<Value>) -> Result<Value, String> {
+	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let RepoPath = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 	if RepoPath.is_empty() {
 		return Err("git:pull requires repoPath".to_string());
 	}
@@ -218,11 +218,11 @@ pub async fn HandlePull(args:Vec<Value>) -> Result<Value, String> {
 }
 
 /// `localGit:checkout(operationId, repoPath, treeish, detached?)`
-pub async fn HandleCheckout(args:Vec<Value>) -> Result<Value, String> {
-	let OperationId = args.first().and_then(Value::as_str).unwrap_or("").to_string();
-	let RepoPath = args.get(1).and_then(Value::as_str).unwrap_or("").to_string();
-	let Treeish = args.get(2).and_then(Value::as_str).unwrap_or("").to_string();
-	let Detached = args.get(3).and_then(Value::as_bool).unwrap_or(false);
+pub async fn HandleCheckout(Arguments:Vec<Value>) -> Result<Value, String> {
+	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let RepoPath = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+	let Treeish = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
+	let Detached = Arguments.get(3).and_then(Value::as_bool).unwrap_or(false);
 
 	if RepoPath.is_empty() || Treeish.is_empty() {
 		return Err("git:checkout requires repoPath and treeish".to_string());
@@ -242,9 +242,9 @@ pub async fn HandleCheckout(args:Vec<Value>) -> Result<Value, String> {
 }
 
 /// `localGit:revParse(repoPath, ref) -> string`
-pub async fn HandleRevParse(args:Vec<Value>) -> Result<Value, String> {
-	let RepoPath = args.first().and_then(Value::as_str).unwrap_or("").to_string();
-	let Reference = args.get(1).and_then(Value::as_str).unwrap_or("HEAD").to_string();
+pub async fn HandleRevParse(Arguments:Vec<Value>) -> Result<Value, String> {
+	let RepoPath = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let Reference = Arguments.get(1).and_then(Value::as_str).unwrap_or("HEAD").to_string();
 	if RepoPath.is_empty() {
 		return Err("git:revParse requires repoPath".to_string());
 	}
@@ -257,9 +257,9 @@ pub async fn HandleRevParse(args:Vec<Value>) -> Result<Value, String> {
 }
 
 /// `localGit:fetch(operationId, repoPath)`
-pub async fn HandleFetch(args:Vec<Value>) -> Result<Value, String> {
-	let OperationId = args.first().and_then(Value::as_str).unwrap_or("").to_string();
-	let RepoPath = args.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+pub async fn HandleFetch(Arguments:Vec<Value>) -> Result<Value, String> {
+	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let RepoPath = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 	if RepoPath.is_empty() {
 		return Err("git:fetch requires repoPath".to_string());
 	}
@@ -271,10 +271,10 @@ pub async fn HandleFetch(args:Vec<Value>) -> Result<Value, String> {
 }
 
 /// `localGit:revListCount(repoPath, fromRef, toRef) -> number`
-pub async fn HandleRevListCount(args:Vec<Value>) -> Result<Value, String> {
-	let RepoPath = args.first().and_then(Value::as_str).unwrap_or("").to_string();
-	let FromRef = args.get(1).and_then(Value::as_str).unwrap_or("").to_string();
-	let ToRef = args.get(2).and_then(Value::as_str).unwrap_or("").to_string();
+pub async fn HandleRevListCount(Arguments:Vec<Value>) -> Result<Value, String> {
+	let RepoPath = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
+	let FromRef = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+	let ToRef = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
 	if RepoPath.is_empty() || FromRef.is_empty() || ToRef.is_empty() {
 		return Err("git:revListCount requires repoPath, fromRef, toRef".to_string());
 	}
@@ -293,8 +293,8 @@ pub async fn HandleRevListCount(args:Vec<Value>) -> Result<Value, String> {
 
 /// `localGit:cancel(operationId)` - SIGTERM the pid we stashed for
 /// `operationId`. Silent no-op if unknown.
-pub async fn HandleCancel(args:Vec<Value>) -> Result<Value, String> {
-	let OperationId = args.first().and_then(Value::as_str).unwrap_or("").to_string();
+pub async fn HandleCancel(Arguments:Vec<Value>) -> Result<Value, String> {
+	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
 	if let Some(Pid) = TakePid(&OperationId) {
 		dev_log!("git", "[Git] cancel op={} pid={}", OperationId, Pid);
 		#[cfg(unix)]
@@ -315,7 +315,7 @@ pub async fn HandleCancel(args:Vec<Value>) -> Result<Value, String> {
 
 /// `localGit:isAvailable` - cheap `git --version` probe, cached for the
 /// process lifetime so UI polling doesn't re-exec git.
-pub async fn HandleIsAvailable(_args:Vec<Value>) -> Result<Value, String> {
+pub async fn HandleIsAvailable(_Arguments:Vec<Value>) -> Result<Value, String> {
 	static CACHE:OnceLock<bool> = OnceLock::new();
 	if let Some(Cached) = CACHE.get() {
 		return Ok(json!(*Cached));

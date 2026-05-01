@@ -13,11 +13,11 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 // ============================================================================
 
 /// Create a new PTY terminal via TerminalProvider.
-pub async fn TerminalCreate(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalCreate(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
-	let Options = args.first().cloned().unwrap_or(Value::Null);
-	runtime
+	let Options = Arguments.first().cloned().unwrap_or(Value::Null);
+	RunTime
 		.Environment
 		.CreateTerminal(Options)
 		.await
@@ -25,16 +25,16 @@ pub async fn TerminalCreate(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) ->
 }
 
 /// Write text to PTY stdin via TerminalProvider.
-pub async fn TerminalSendText(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalSendText(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
-	let TerminalId = args
+	let TerminalId = Arguments
 		.first()
 		.and_then(|V| V.as_u64())
 		.ok_or_else(|| "terminal:sendText requires terminal_id as first argument".to_string())?;
-	let Text = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Text = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	runtime
+	RunTime
 		.Environment
 		.SendTextToTerminal(TerminalId, Text)
 		.await
@@ -43,15 +43,15 @@ pub async fn TerminalSendText(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 }
 
 /// Dispose a terminal via TerminalProvider.
-pub async fn TerminalDispose(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalDispose(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
-	let TerminalId = args
+	let TerminalId = Arguments
 		.first()
 		.and_then(|V| V.as_u64())
 		.ok_or_else(|| "terminal:dispose requires terminal_id as first argument".to_string())?;
 
-	runtime
+	RunTime
 		.Environment
 		.DisposeTerminal(TerminalId)
 		.await
@@ -60,13 +60,13 @@ pub async fn TerminalDispose(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -
 }
 
 /// Show a terminal in the UI.
-pub async fn TerminalShow(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalShow(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
-	let TerminalId = args.first().and_then(|V| V.as_u64()).unwrap_or(0);
-	let PreserveFocus = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+	let TerminalId = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
+	let PreserveFocus = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
 
-	runtime
+	RunTime
 		.Environment
 		.ShowTerminal(TerminalId, PreserveFocus)
 		.await
@@ -75,12 +75,12 @@ pub async fn TerminalShow(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 }
 
 /// Hide a terminal.
-pub async fn TerminalHide(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TerminalHide(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
-	let TerminalId = args.first().and_then(|V| V.as_u64()).unwrap_or(0);
+	let TerminalId = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
 
-	runtime
+	RunTime
 		.Environment
 		.HideTerminal(TerminalId)
 		.await
@@ -130,7 +130,7 @@ pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
 					"profileName": Name,
 					"path": Shell,
 					"isDefault": *Shell == DefaultShell.as_str(),
-					"args": [],
+					"Arguments": [],
 					"env": {},
 					"icon": "terminal"
 				}));
@@ -153,7 +153,7 @@ pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
 							"profileName": Name,
 							"path": Trimmed,
 							"isDefault": Trimmed == DefaultShell.as_str(),
-							"args": [],
+							"Arguments": [],
 							"env": {},
 							"icon": "terminal"
 						}));
@@ -205,7 +205,7 @@ pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
 					"profileName": Name,
 					"path": Path,
 					"isDefault": IsFirstFound,
-					"args": Args,
+					"Arguments": Args,
 					"env": {},
 					"icon": "terminal"
 				}));

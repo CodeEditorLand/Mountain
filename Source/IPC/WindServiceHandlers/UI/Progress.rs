@@ -18,15 +18,15 @@ fn NewProgressId() -> String {
 	)
 }
 
-pub async fn ProgressBegin(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ProgressBegin(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let Location = args.first().and_then(|V| V.as_str()).unwrap_or("notification").to_string();
-	let Title = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let Cancellable = args.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+	let Location = Arguments.first().and_then(|V| V.as_str()).unwrap_or("notification").to_string();
+	let Title = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Cancellable = Arguments.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
 
 	let Id = NewProgressId();
-	let _ = app_handle.emit(
+	let _ = ApplicationHandle.emit(
 		SkyEvent::ProgressBegin.AsStr(),
 		json!({
 			"id": Id,
@@ -39,14 +39,14 @@ pub async fn ProgressBegin(app_handle:AppHandle, args:Vec<Value>) -> Result<Valu
 	Ok(json!(Id))
 }
 
-pub async fn ProgressReport(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ProgressReport(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let Increment = args.get(1).and_then(|V| V.as_f64()).unwrap_or(0.0);
-	let Message = args.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Increment = Arguments.get(1).and_then(|V| V.as_f64()).unwrap_or(0.0);
+	let Message = Arguments.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	let _ = app_handle.emit(
+	let _ = ApplicationHandle.emit(
 		SkyEvent::ProgressReport.AsStr(),
 		json!({
 			"id": Id,
@@ -58,10 +58,10 @@ pub async fn ProgressReport(app_handle:AppHandle, args:Vec<Value>) -> Result<Val
 	Ok(Value::Null)
 }
 
-pub async fn ProgressEnd(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ProgressEnd(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = app_handle.emit(SkyEvent::ProgressEnd.AsStr(), json!({ "id": Id }));
+	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let _ = ApplicationHandle.emit(SkyEvent::ProgressEnd.AsStr(), json!({ "id": Id }));
 	Ok(Value::Null)
 }

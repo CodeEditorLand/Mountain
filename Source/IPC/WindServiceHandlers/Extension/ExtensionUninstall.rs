@@ -30,7 +30,7 @@ pub async fn ExtensionUninstall(
 	}) {
 		Some(Value) => Value,
 		None => {
-			dev_log!("extensions", "extensions:uninstall no-op: args[0] missing identifier");
+			dev_log!("extensions", "extensions:uninstall no-op: Arguments[0] missing identifier");
 			crate::otel_span!("extensions:uninstall:noop-missing-id", OTELStart);
 			return Ok(Value::Null);
 		},

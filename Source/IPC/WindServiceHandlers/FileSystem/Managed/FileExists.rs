@@ -9,14 +9,14 @@ use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn FileExists(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let path = args
+pub async fn FileExists(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let path = Arguments
 		.get(0)
 		.ok_or("Missing file path".to_string())?
 		.as_str()
 		.ok_or("File path must be a string".to_string())?;
 
-	let provider:Arc<dyn FileSystemReader> = runtime.Environment.Require();
+	let provider:Arc<dyn FileSystemReader> = RunTime.Environment.Require();
 
 	let exists = provider.StatFile(&PathBuf::from(path)).await.is_ok();
 

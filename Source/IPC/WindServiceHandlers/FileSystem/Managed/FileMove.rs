@@ -13,20 +13,20 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn FileMove(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let source = args
+pub async fn FileMove(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let source = Arguments
 		.get(0)
 		.ok_or("Missing source path".to_string())?
 		.as_str()
 		.ok_or("Source path must be a string".to_string())?;
 
-	let destination = args
+	let destination = Arguments
 		.get(1)
 		.ok_or("Missing destination path".to_string())?
 		.as_str()
 		.ok_or("Destination path must be a string".to_string())?;
 
-	let provider:Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+	let provider:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
 
 	provider
 		.Rename(&PathBuf::from(source), &PathBuf::from(destination), false)

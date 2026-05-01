@@ -9,8 +9,8 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn OpenExternal(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let url_str = args
+pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let url_str = Arguments
 		.get(0)
 		.ok_or("Missing URL".to_string())?
 		.as_str()
@@ -29,7 +29,7 @@ pub async fn OpenExternal(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 		let result = Command::new("open")
 			.arg(url_str)
 			.output()
-			.map_err(|e| format!("Failed to execute open command: {}", e))?;
+			.map_err(|Error| format!("Failed to execute open command: {}", Error))?;
 
 		if !result.status.success() {
 			return Err(format!("Failed to open URL: {}", String::from_utf8_lossy(&result.stderr)));
@@ -45,7 +45,7 @@ pub async fn OpenExternal(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> R
 			.arg("start")
 			.arg(url_str)
 			.output()
-			.map_err(|e| format!("Failed to execute start command: {}", e))?;
+			.map_err(|Error| format!("Failed to execute start command: {}", Error))?;
 
 		if !result.status.success() {
 			return Err(format!("Failed to open URL: {}", String::from_utf8_lossy(&result.stderr)));

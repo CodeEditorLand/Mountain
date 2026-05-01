@@ -9,8 +9,8 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn ShowItemInFolder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let path_str = args
+pub async fn ShowItemInFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let path_str = Arguments
 		.get(0)
 		.ok_or("Missing file path".to_string())?
 		.as_str()
@@ -32,7 +32,7 @@ pub async fn ShowItemInFolder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 			.arg("-R")
 			.arg(&path)
 			.output()
-			.map_err(|e| format!("Failed to execute open command: {}", e))?;
+			.map_err(|Error| format!("Failed to execute open command: {}", Error))?;
 
 		if !result.status.success() {
 			return Err(format!(
@@ -50,7 +50,7 @@ pub async fn ShowItemInFolder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 			.arg("/select,")
 			.arg(&path)
 			.output()
-			.map_err(|e| format!("Failed to execute explorer command: {}", e))?;
+			.map_err(|Error| format!("Failed to execute explorer command: {}", Error))?;
 
 		if !result.status.success() {
 			return Err(format!(

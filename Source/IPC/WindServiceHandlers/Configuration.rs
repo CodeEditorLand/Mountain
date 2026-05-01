@@ -17,35 +17,35 @@ use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider,
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Handler for configuration get requests
-pub async fn ConfigurationGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let key = args
+pub async fn ConfigurationGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let key = Arguments
 		.get(0)
 		.ok_or("Missing configuration key".to_string())?
 		.as_str()
 		.ok_or("Configuration key must be a string".to_string())?;
 
-	let provider:Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
+	let provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
 
 	let value = provider
 		.GetConfigurationValue(Some(key.to_string()), ConfigurationOverridesDTO::default())
 		.await
-		.map_err(|e| format!("Failed to get configuration: {}", e))?;
+		.map_err(|Error| format!("Failed to get configuration: {}", Error))?;
 
 	dev_log!("config", "get: {} = {:?}", key, value);
 	Ok(value)
 }
 
 /// Handler for configuration update requests
-pub async fn ConfigurationUpdate(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let key = args
+pub async fn ConfigurationUpdate(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let key = Arguments
 		.get(0)
 		.ok_or("Missing configuration key".to_string())?
 		.as_str()
 		.ok_or("Configuration key must be a string".to_string())?;
 
-	let value = args.get(1).ok_or("Missing configuration value".to_string())?.clone();
+	let value = Arguments.get(1).ok_or("Missing configuration value".to_string())?.clone();
 
-	let provider:Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
+	let provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
 
 	provider
 		.UpdateConfigurationValue(
@@ -56,7 +56,7 @@ pub async fn ConfigurationUpdate(runtime:Arc<ApplicationRunTime>, args:Vec<Value
 			None,
 		)
 		.await
-		.map_err(|e| format!("Failed to update configuration: {}", e))?;
+		.map_err(|Error| format!("Failed to update configuration: {}", Error))?;
 
 	dev_log!("config", "updated: {}", key);
 	Ok(Value::Null)
@@ -64,29 +64,29 @@ pub async fn ConfigurationUpdate(runtime:Arc<ApplicationRunTime>, args:Vec<Value
 
 /// Handler for workbench configuration requests
 pub async fn WorkbenchConfiguration(
-	runtime:Arc<ApplicationRunTime>,
-	_args:Vec<Value>,
+	RunTime:Arc<ApplicationRunTime>,
+	_Arguments:Vec<Value>,
 ) -> Result<Value, String> {
-	let provider:Arc<dyn ConfigurationProvider> = runtime.Environment.Require();
+	let provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
 
 	let config = provider
 		.GetConfigurationValue(None, ConfigurationOverridesDTO::default())
 		.await
-		.map_err(|e| format!("Failed to get workbench configuration: {}", e))?;
+		.map_err(|Error| format!("Failed to get workbench configuration: {}", Error))?;
 
 	dev_log!("config", "workbench config retrieved");
 	Ok(config)
 }
 
 /// Handler for environment get requests
-pub async fn EnvironmentGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let key = args
+pub async fn EnvironmentGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let key = Arguments
 		.get(0)
 		.ok_or("Missing environment key".to_string())?
 		.as_str()
 		.ok_or("Environment key must be a string".to_string())?;
 
-	let value = std::env::var(key).map_err(|e| format!("Failed to get environment variable: {}", e))?;
+	let value = std::env::var(key).map_err(|Error| format!("Failed to get environment variable: {}", Error))?;
 
 	dev_log!("config", "env_get: {}", key);
 	Ok(json!(value))

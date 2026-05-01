@@ -15,8 +15,8 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Open a text model: read content from disk and register in DocumentState.
 /// Returns { uri, content, version, languageId }.
-pub async fn ModelOpen(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn ModelOpen(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("model:open requires uri".to_string())?
@@ -59,7 +59,7 @@ pub async fn ModelOpen(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Resu
 		.to_owned();
 
 	// Determine next version (1 if new, increment if exists)
-	let Version = runtime
+	let Version = RunTime
 		.Environment
 		.ApplicationState
 		.Feature
@@ -87,7 +87,7 @@ pub async fn ModelOpen(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Resu
 				VersionIdentifier:Version,
 			};
 
-			runtime
+			RunTime
 				.Environment
 				.ApplicationState
 				.Feature
@@ -105,24 +105,24 @@ pub async fn ModelOpen(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Resu
 }
 
 /// Close a text model and remove it from DocumentState.
-pub async fn ModelClose(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn ModelClose(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("model:close requires uri".to_string())?;
 
-	runtime.Environment.ApplicationState.Feature.Documents.Remove(Uri);
+	RunTime.Environment.ApplicationState.Feature.Documents.Remove(Uri);
 	Ok(Value::Null)
 }
 
 /// Get the current snapshot of an open text model, or null if not open.
-pub async fn ModelGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn ModelGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("model:get requires uri".to_string())?;
 
-	match runtime.Environment.ApplicationState.Feature.Documents.Get(Uri) {
+	match RunTime.Environment.ApplicationState.Feature.Documents.Get(Uri) {
 		None => Ok(Value::Null),
 		Some(Document) => {
 			Ok(json!({
@@ -136,8 +136,8 @@ pub async fn ModelGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Resul
 }
 
 /// Return all currently open text models.
-pub async fn ModelGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let All = runtime
+pub async fn ModelGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let All = RunTime
 		.Environment
 		.ApplicationState
 		.Feature
@@ -158,20 +158,20 @@ pub async fn ModelGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, Strin
 }
 
 /// Update the content of an open text model, incrementing its version.
-pub async fn ModelUpdateContent(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn ModelUpdateContent(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("model:updateContent requires uri".to_string())?
 		.to_owned();
 
-	let NewContent = args
+	let NewContent = Arguments
 		.get(1)
 		.and_then(|V| V.as_str())
 		.ok_or("model:updateContent requires content".to_string())?
 		.to_owned();
 
-	let (NewVersion, LanguageId) = match runtime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
+	let (NewVersion, LanguageId) = match RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
 		None => return Err(format!("model:updateContent - model not open: {}", Uri)),
 		Some(mut Document) => {
 			Document.Version += 1;
@@ -179,7 +179,7 @@ pub async fn ModelUpdateContent(runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 			Document.IsDirty = true;
 			let Version = Document.Version;
 			let LangId = Document.LanguageIdentifier.clone();
-			runtime
+			RunTime
 				.Environment
 				.ApplicationState
 				.Feature
@@ -202,8 +202,8 @@ pub async fn ModelUpdateContent(runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 // ============================================================================
 
 /// Read a text file from disk.
-pub async fn TextfileRead(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Path = args
+pub async fn TextfileRead(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Path = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or_else(|| "textFile:read requires path as first argument".to_string())?;
@@ -215,12 +215,12 @@ pub async fn TextfileRead(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 }
 
 /// Write text to a file on disk.
-pub async fn TextfileWrite(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Path = args
+pub async fn TextfileWrite(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Path = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or_else(|| "textFile:write requires path as first argument".to_string())?;
-	let Content = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Content = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	tokio::fs::write(Path, Content.as_bytes())
 		.await
@@ -229,9 +229,9 @@ pub async fn TextfileWrite(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) ->
 }
 
 /// Save a document - forward save intent to Sky frontend.
-pub async fn TextfileSave(_runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn TextfileSave(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	// Actual disk write happens via textFile:write; this is a UI-dirty-state hint.
-	let _Uri = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let _Uri = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 	dev_log!("vfs", "textFile:save uri={:?}", _Uri);
 	Ok(Value::Null)
 }

@@ -10,17 +10,17 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn DecorationsGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("decorations:get requires uri".to_string())?;
-	let Decoration = runtime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri);
+	let Decoration = RunTime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri);
 	Ok(Decoration.unwrap_or(Value::Null))
 }
 
-pub async fn DecorationsGetMany(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uris:Vec<String> = args
+pub async fn DecorationsGetMany(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uris:Vec<String> = Arguments
 		.first()
 		.and_then(|V| V.as_array())
 		.map(|Arr| Arr.iter().filter_map(|U| U.as_str().map(str::to_owned)).collect())
@@ -28,20 +28,20 @@ pub async fn DecorationsGetMany(runtime:Arc<ApplicationRunTime>, args:Vec<Value>
 
 	let mut Result = serde_json::Map::new();
 	for Uri in &Uris {
-		if let Some(Decoration) = runtime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri) {
+		if let Some(Decoration) = RunTime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri) {
 			Result.insert(Uri.clone(), Decoration);
 		}
 	}
 	Ok(Value::Object(Result))
 }
 
-pub async fn DecorationsSet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn DecorationsSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("decorations:set requires uri".to_string())?;
-	let Decoration = args.get(1).cloned().unwrap_or(Value::Null);
-	runtime
+	let Decoration = Arguments.get(1).cloned().unwrap_or(Value::Null);
+	RunTime
 		.Environment
 		.ApplicationState
 		.Feature
@@ -50,11 +50,11 @@ pub async fn DecorationsSet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) ->
 	Ok(Value::Null)
 }
 
-pub async fn DecorationsClear(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn DecorationsClear(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("decorations:clear requires uri".to_string())?;
-	runtime.Environment.ApplicationState.Feature.Decorations.ClearDecoration(Uri);
+	RunTime.Environment.ApplicationState.Feature.Decorations.ClearDecoration(Uri);
 	Ok(Value::Null)
 }

@@ -11,8 +11,8 @@ use crate::IPC::{
 	WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg,
 };
 
-pub async fn FileRealpath(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(args.get(0).ok_or("Missing path")?)?;
+pub async fn FileRealpath(Arguments:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing path")?)?;
 
 	let Canonical = tokio::fs::canonicalize(&Path)
 		.await

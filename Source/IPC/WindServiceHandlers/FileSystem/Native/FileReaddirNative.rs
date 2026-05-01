@@ -9,8 +9,8 @@ use serde_json::{Value, json};
 
 use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
 
-pub async fn FileReaddirNative(args:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(args.get(0).ok_or("Missing directory path")?)?;
+pub async fn FileReaddirNative(Arguments:Vec<Value>) -> Result<Value, String> {
+	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing directory path")?)?;
 
 	// Emit at the default-visible `vfs` level instead of
 	// `vfs-verbose`: readdir fires at most once per folder expand

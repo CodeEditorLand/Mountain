@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Managed FS atoms - route via Application runtime's
+//! Managed FS atoms - route via Application RunTime's
 //! `FileSystemReader`/`FileSystemWriter` trait objects.
 
 pub mod FileCopy;

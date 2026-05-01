@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Legacy wire method `file:write` (UTF-8 content). Routes via runtime's
+//! Legacy wire method `file:write` (UTF-8 content). Routes via RunTime's
 //! `FileSystemWriter` trait. Not currently wired into dispatch.
 
 use std::{path::PathBuf, sync::Arc};
@@ -14,20 +14,20 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn FileWrite(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let path = args
+pub async fn FileWrite(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let path = Arguments
 		.get(0)
 		.ok_or("Missing file path".to_string())?
 		.as_str()
 		.ok_or("File path must be a string".to_string())?;
 
-	let content = args
+	let content = Arguments
 		.get(1)
 		.ok_or("Missing file content".to_string())?
 		.as_str()
 		.ok_or("File content must be a string".to_string())?;
 
-	let provider:Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+	let provider:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
 
 	provider
 		.WriteFile(&PathBuf::from(path), content.as_bytes().to_vec(), true, true)

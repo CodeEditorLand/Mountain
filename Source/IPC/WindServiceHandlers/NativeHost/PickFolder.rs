@@ -21,14 +21,14 @@ use crate::{
 	dev_log,
 };
 
-pub async fn NativePickFolder(app_handle:AppHandle, _args:Vec<Value>) -> Result<Value, String> {
+pub async fn NativePickFolder(ApplicationHandle:AppHandle, _Arguments:Vec<Value>) -> Result<Value, String> {
 	use std::path::PathBuf;
 
 	use tauri_plugin_dialog::DialogExt;
 
 	dev_log!("folder", "pickFolderAndOpen requested");
 
-	let Handle = app_handle.clone();
+	let Handle = ApplicationHandle.clone();
 	tokio::task::spawn_blocking(move || {
 		let FolderPath = Handle.dialog().file().blocking_pick_folder();
 

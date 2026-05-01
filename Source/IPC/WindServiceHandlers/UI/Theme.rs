@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables)]
 //! Theme IPC handlers. `themes:getActive` / `themes:list` / `themes:set`
-//! drive the workbench's colour-theme picker and the runtime theme swap.
+//! drive the workbench's colour-theme picker and the RunTime theme swap.
 //!
 //! Source of truth: `workbench.colorTheme` inside `ConfigurationProvider`.
 //! A `themes:set` writes the key and emits `SkyEvent::ThemeChange` so
@@ -13,13 +13,13 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn ThemesGetActive(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+pub async fn ThemesGetActive(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	use CommonLibrary::Configuration::{
 		ConfigurationProvider::ConfigurationProvider,
 		DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
 	};
 
-	let ThemeId = runtime
+	let ThemeId = RunTime
 		.Environment
 		.GetConfigurationValue(Some("workbench.colorTheme".to_string()), ConfigurationOverridesDTO::default())
 		.await
@@ -53,20 +53,20 @@ pub async fn ThemesList(_runtime:Arc<ApplicationRunTime>) -> Result<Value, Strin
 	Ok(json!(Themes))
 }
 
-pub async fn ThemesSet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn ThemesSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::Configuration::{
 		ConfigurationProvider::ConfigurationProvider,
 		DTO::{ConfigurationOverridesDTO::ConfigurationOverridesDTO, ConfigurationTarget::ConfigurationTarget},
 	};
 	use tauri::Emitter;
 
-	let ThemeId = args
+	let ThemeId = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("themes:set requires themeId as first argument".to_string())?
 		.to_string();
 
-	runtime
+	RunTime
 		.Environment
 		.UpdateConfigurationValue(
 			"workbench.colorTheme".to_string(),
@@ -78,7 +78,7 @@ pub async fn ThemesSet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Resu
 		.await
 		.map_err(|Error| format!("themes:set failed: {}", Error))?;
 
-	let _ = runtime
+	let _ = RunTime
 		.Environment
 		.ApplicationHandle
 		.emit(SkyEvent::ThemeChange.AsStr(), json!({ "themeId": ThemeId }));

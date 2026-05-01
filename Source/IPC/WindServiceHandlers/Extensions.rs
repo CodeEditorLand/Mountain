@@ -28,7 +28,7 @@ const EXTENSION_TYPE_USER:u8 = 1;
 ///
 /// # Argument contract
 ///
-/// `args[0]` is the optional `ExtensionType` filter VS Code passes in:
+/// `Arguments[0]` is the optional `ExtensionType` filter VS Code passes in:
 /// - `0` (System) → only return built-in extensions.
 /// - `1` (User) → only return VSIX-installed extensions.
 /// - `null` / missing → return every known extension.
@@ -46,10 +46,10 @@ const EXTENSION_TYPE_USER:u8 = 1;
 ///      returned zero, making the "Install from VSIX…" refresh appear to do
 ///      nothing even when the install itself succeeded.
 pub async fn ExtensionsGetInstalled(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
+	RunTime:Arc<ApplicationRunTime>,
+	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
-	let TypeFilter:Option<u8> = args.first().and_then(|V| V.as_u64()).map(|N| N as u8);
+	let TypeFilter:Option<u8> = Arguments.first().and_then(|V| V.as_u64()).map(|N| N as u8);
 
 	// Boot-time race fix: the workbench's `IExtensionService` calls
 	// `extensions:getInstalled` ~13 times during the first second of
@@ -69,7 +69,7 @@ pub async fn ExtensionsGetInstalled(
 	// `IExtensionService` cache. 5s gives slow I/O (cold NVM,
 	// network-mounted user dirs) headroom while keeping the visible
 	// worst case bounded.
-	let mut Extensions = runtime
+	let mut Extensions = RunTime
 		.Environment
 		.GetExtensions()
 		.await
@@ -81,7 +81,7 @@ pub async fn ExtensionsGetInstalled(
 		while Extensions.is_empty() && Elapsed < MAX_WAIT_MS {
 			tokio::time::sleep(std::time::Duration::from_millis(POLL_INTERVAL_MS)).await;
 			Elapsed += POLL_INTERVAL_MS;
-			Extensions = runtime
+			Extensions = RunTime
 				.Environment
 				.GetExtensions()
 				.await
@@ -206,8 +206,8 @@ pub async fn ExtensionsGetInstalled(
 }
 
 /// Return metadata for all scanned extensions.
-pub async fn ExtensionsGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let Extensions = runtime
+pub async fn ExtensionsGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Extensions = RunTime
 		.Environment
 		.GetExtensions()
 		.await
@@ -229,14 +229,14 @@ pub async fn ExtensionsGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, 
 }
 
 /// Return metadata for a single extension by ID.
-pub async fn ExtensionsGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Id = args
+pub async fn ExtensionsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Id = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or_else(|| "extensions:get requires string id as first argument".to_string())?
 		.to_string();
 
-	let Extension = runtime
+	let Extension = RunTime
 		.Environment
 		.GetExtension(Id)
 		.await
@@ -246,14 +246,14 @@ pub async fn ExtensionsGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 }
 
 /// Check whether an extension is currently active (scanned and present).
-pub async fn ExtensionsIsActive(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Id = args
+pub async fn ExtensionsIsActive(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Id = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or_else(|| "extensions:isActive requires string id as first argument".to_string())?
 		.to_string();
 
-	let Extension = runtime
+	let Extension = RunTime
 		.Environment
 		.GetExtension(Id)
 		.await

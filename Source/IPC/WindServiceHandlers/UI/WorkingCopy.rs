@@ -9,31 +9,31 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn WorkingCopyIsDirty(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn WorkingCopyIsDirty(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("workingCopy:isDirty requires uri".to_string())?;
-	let IsDirty = runtime.Environment.ApplicationState.Feature.WorkingCopy.IsDirty(Uri);
+	let IsDirty = RunTime.Environment.ApplicationState.Feature.WorkingCopy.IsDirty(Uri);
 	Ok(json!(IsDirty))
 }
 
-pub async fn WorkingCopySetDirty(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Uri = args
+pub async fn WorkingCopySetDirty(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("workingCopy:setDirty requires uri".to_string())?;
-	let Dirty = args.get(1).and_then(|V| V.as_bool()).unwrap_or(true);
-	runtime.Environment.ApplicationState.Feature.WorkingCopy.SetDirty(Uri, Dirty);
+	let Dirty = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(true);
+	RunTime.Environment.ApplicationState.Feature.WorkingCopy.SetDirty(Uri, Dirty);
 	Ok(Value::Null)
 }
 
-pub async fn WorkingCopyGetAllDirty(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let Dirty = runtime.Environment.ApplicationState.Feature.WorkingCopy.GetAllDirty();
+pub async fn WorkingCopyGetAllDirty(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Dirty = RunTime.Environment.ApplicationState.Feature.WorkingCopy.GetAllDirty();
 	Ok(json!(Dirty))
 }
 
-pub async fn WorkingCopyGetDirtyCount(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let Count = runtime.Environment.ApplicationState.Feature.WorkingCopy.GetDirtyCount();
+pub async fn WorkingCopyGetDirtyCount(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Count = RunTime.Environment.ApplicationState.Feature.WorkingCopy.GetDirtyCount();
 	Ok(json!(Count))
 }

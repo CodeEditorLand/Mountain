@@ -1,7 +1,7 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
 //! Legacy wire method `file:readdir`. Returns raw entries from the
-//! runtime's `FileSystemReader`. Not currently wired into dispatch; the
+//! RunTime's `FileSystemReader`. Not currently wired into dispatch; the
 //! native variant serves `file:readdir`.
 
 use std::{path::PathBuf, sync::Arc};
@@ -11,19 +11,19 @@ use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn FileReaddir(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let path = args
+pub async fn FileReaddir(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let path = Arguments
 		.get(0)
 		.ok_or("Missing directory path".to_string())?
 		.as_str()
 		.ok_or("Directory path must be a string".to_string())?;
 
-	let provider:Arc<dyn FileSystemReader> = runtime.Environment.Require();
+	let provider:Arc<dyn FileSystemReader> = RunTime.Environment.Require();
 
 	let entries = provider
 		.ReadDirectory(&PathBuf::from(path))
 		.await
-		.map_err(|e| format!("Failed to read directory: {}", e))?;
+		.map_err(|Error| format!("Failed to read directory: {}", Error))?;
 
 	dev_log!("vfs-verbose", "readdir_legacy: {} ({} entries)", path, entries.len());
 	Ok(json!(entries))

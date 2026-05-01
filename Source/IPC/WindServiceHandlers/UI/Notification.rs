@@ -23,15 +23,15 @@ fn NewId(Prefix:&str) -> String {
 	)
 }
 
-pub async fn NotificationShow(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn NotificationShow(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let Message = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let Severity = args.get(1).and_then(|V| V.as_str()).unwrap_or("info").to_string();
-	let Actions = args.get(2).cloned().unwrap_or(json!([]));
+	let Message = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Severity = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("info").to_string();
+	let Actions = Arguments.get(2).cloned().unwrap_or(json!([]));
 
 	let Id = NewId("notification");
-	let _ = app_handle.emit(
+	let _ = ApplicationHandle.emit(
 		SkyEvent::NotificationShow.AsStr(),
 		json!({
 			"id": Id,
@@ -44,14 +44,14 @@ pub async fn NotificationShow(app_handle:AppHandle, args:Vec<Value>) -> Result<V
 	Ok(json!(Id))
 }
 
-pub async fn NotificationShowProgress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn NotificationShowProgress(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let Title = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let Cancellable = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+	let Title = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Cancellable = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
 
 	let Id = NewId("progress");
-	let _ = app_handle.emit(
+	let _ = ApplicationHandle.emit(
 		SkyEvent::NotificationProgressBegin.AsStr(),
 		json!({
 			"id": Id,
@@ -63,14 +63,14 @@ pub async fn NotificationShowProgress(app_handle:AppHandle, args:Vec<Value>) -> 
 	Ok(json!(Id))
 }
 
-pub async fn NotificationUpdateProgress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn NotificationUpdateProgress(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let Increment = args.get(1).and_then(|V| V.as_f64()).unwrap_or(0.0);
-	let Message = args.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Increment = Arguments.get(1).and_then(|V| V.as_f64()).unwrap_or(0.0);
+	let Message = Arguments.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	let _ = app_handle.emit(
+	let _ = ApplicationHandle.emit(
 		SkyEvent::NotificationProgressUpdate.AsStr(),
 		json!({
 			"id": Id,
@@ -82,10 +82,10 @@ pub async fn NotificationUpdateProgress(app_handle:AppHandle, args:Vec<Value>) -
 	Ok(Value::Null)
 }
 
-pub async fn NotificationEndProgress(app_handle:AppHandle, args:Vec<Value>) -> Result<Value, String> {
+pub async fn NotificationEndProgress(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	use tauri::Emitter;
 
-	let Id = args.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = app_handle.emit(SkyEvent::NotificationProgressEnd.AsStr(), json!({ "id": Id }));
+	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let _ = ApplicationHandle.emit(SkyEvent::NotificationProgressEnd.AsStr(), json!({ "id": Id }));
 	Ok(Value::Null)
 }

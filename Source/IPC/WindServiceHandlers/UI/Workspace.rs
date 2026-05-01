@@ -16,8 +16,8 @@ use crate::{
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
 
-pub async fn WorkspacesGetFolders(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let Workspace = &runtime.Environment.ApplicationState.Workspace;
+pub async fn WorkspacesGetFolders(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
 	let Folders = Workspace.GetWorkspaceFolders();
 
 	let FolderList:Vec<Value> = Folders
@@ -35,18 +35,18 @@ pub async fn WorkspacesGetFolders(runtime:Arc<ApplicationRunTime>) -> Result<Val
 	Ok(json!(FolderList))
 }
 
-pub async fn WorkspacesAddFolder(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
+pub async fn WorkspacesAddFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use url::Url;
 
-	let UriStr = args
+	let UriStr = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("workspaces:addFolder requires uri as first argument".to_string())?
 		.to_string();
 
-	let Name = args.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+	let Name = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
-	let Workspace = &runtime.Environment.ApplicationState.Workspace;
+	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
 	let mut Folders = Workspace.GetWorkspaceFolders();
 	let Index = Folders.len();
 	let URI = Url::parse(&UriStr).map_err(|E| format!("workspaces:addFolder invalid URI: {}", E))?;
@@ -59,16 +59,16 @@ pub async fn WorkspacesAddFolder(runtime:Arc<ApplicationRunTime>, args:Vec<Value
 }
 
 pub async fn WorkspacesRemoveFolder(
-	runtime:Arc<ApplicationRunTime>,
-	args:Vec<Value>,
+	RunTime:Arc<ApplicationRunTime>,
+	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
-	let UriStr = args
+	let UriStr = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("workspaces:removeFolder requires uri as first argument".to_string())?
 		.to_string();
 
-	let Workspace = &runtime.Environment.ApplicationState.Workspace;
+	let Workspace = &RunTime.Environment.ApplicationState.Workspace;
 	let mut Folders = Workspace.GetWorkspaceFolders();
 	Folders.retain(|F| F.URI.to_string() != UriStr);
 	for (I, F) in Folders.iter_mut().enumerate() {
@@ -79,8 +79,8 @@ pub async fn WorkspacesRemoveFolder(
 	Ok(Value::Null)
 }
 
-pub async fn WorkspacesGetName(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let Name = runtime
+pub async fn WorkspacesGetName(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Name = RunTime
 		.Environment
 		.ApplicationState
 		.Workspace

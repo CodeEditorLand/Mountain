@@ -10,54 +10,54 @@ use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::S
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Handler for storage get requests
-pub async fn StorageGet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let key = args
+pub async fn StorageGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let key = Arguments
 		.get(0)
 		.ok_or("Missing storage key".to_string())?
 		.as_str()
 		.ok_or("Storage key must be a string".to_string())?;
 
-	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
+	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
 	let value = provider
 		.GetStorageValue(false, key)
 		.await
-		.map_err(|e| format!("Failed to get storage item: {}", e))?;
+		.map_err(|Error| format!("Failed to get storage item: {}", Error))?;
 
 	dev_log!("storage", "get: {}", key);
 	Ok(value.unwrap_or(Value::Null))
 }
 
 /// Handler for storage set requests
-pub async fn StorageSet(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let key = args
+pub async fn StorageSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let key = Arguments
 		.get(0)
 		.ok_or("Missing storage key".to_string())?
 		.as_str()
 		.ok_or("Storage key must be a string".to_string())?;
 
-	let value = args.get(1).ok_or("Missing storage value".to_string())?.clone();
+	let value = Arguments.get(1).ok_or("Missing storage value".to_string())?.clone();
 
-	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
+	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
 	provider
 		.UpdateStorageValue(false, key.to_string(), Some(value))
 		.await
-		.map_err(|e| format!("Failed to set storage item: {}", e))?;
+		.map_err(|Error| format!("Failed to set storage item: {}", Error))?;
 
 	dev_log!("storage", "set: {}", key);
 	Ok(Value::Null)
 }
 
 /// Delete a persistent storage key.
-pub async fn StorageDelete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let Key = args
+pub async fn StorageDelete(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Key = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("storage:delete requires key as first argument".to_string())?
 		.to_string();
 
-	runtime
+	RunTime
 		.Environment
 		.UpdateStorageValue(true, Key, None)
 		.await
@@ -67,8 +67,8 @@ pub async fn StorageDelete(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 }
 
 /// Return all storage keys.
-pub async fn StorageKeys(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let Storage = runtime
+pub async fn StorageKeys(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let Storage = RunTime
 		.Environment
 		.GetAllStorage(true)
 		.await
@@ -80,8 +80,8 @@ pub async fn StorageKeys(runtime:Arc<ApplicationRunTime>) -> Result<Value, Strin
 
 /// Get all storage items as [key, value] tuples.
 /// VS Code's NativeWorkbenchStorageService calls this on initialization.
-pub async fn StorageGetItems(runtime:Arc<ApplicationRunTime>, _args:Vec<Value>) -> Result<Value, String> {
-	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
+pub async fn StorageGetItems(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Result<Value, String> {
+	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
 	match provider.GetAllStorage(true).await {
 		Ok(State) => {
@@ -109,10 +109,10 @@ pub async fn StorageGetItems(runtime:Arc<ApplicationRunTime>, _args:Vec<Value>) 
 /// Update storage items. VS Code sends { insert, delete } where:
 /// - insert: Array of [key, value] tuples or Map<string, string>
 /// - delete: Array of keys to remove
-pub async fn StorageUpdateItems(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let provider:Arc<dyn StorageProvider> = runtime.Environment.Require();
+pub async fn StorageUpdateItems(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
-	if let Some(Updates) = args.get(0).and_then(|V| V.as_object()) {
+	if let Some(Updates) = Arguments.get(0).and_then(|V| V.as_object()) {
 		// Handle inserts
 		if let Some(Inserts) = Updates.get("insert") {
 			if let Some(Arr) = Inserts.as_array() {

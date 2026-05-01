@@ -176,7 +176,20 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 	// the scheme in doubles up and breaks the URL-decode on the other
 	// side (observed as the second `?folder=` boot path appearing as
 	// `file:/Volumes/...` in `wb:boot`).
-	let Normalised = FolderPath.strip_prefix("file://").unwrap_or(FolderPath.as_str()).to_string();
+	let WithoutScheme = FolderPath.strip_prefix("file://").unwrap_or(FolderPath.as_str()).to_string();
+	// RecentlyOpened.json stores workspace URIs with a trailing slash
+	// (`file:///Volumes/.../Mountain/`). Drop it before encoding into
+	// the URL so the workbench-side `URI.revive({ scheme: "file",
+	// path: <param> })` produces a folder URI that matches the
+	// workbench's own `URI.from(<file>)` results - which never carry
+	// a trailing slash on the parent directory. The mismatch caused
+	// `IUriIdentityService.extUri.relativePath` to return absolute
+	// paths and breadcrumbs / quick-pick / Problems-panel labels to
+	// render `/Volumes/CORSAIR/...` instead of the workspace-relative
+	// short form. Preserve `/` itself when the path IS root (vanishing
+	// edge case but cheap to guard).
+	let TrailingTrimmed = WithoutScheme.trim_end_matches('/');
+	let Normalised = if TrailingTrimmed.is_empty() { "/".to_string() } else { TrailingTrimmed.to_string() };
 	if !std::path::Path::new(&Normalised).is_dir() {
 		return Base;
 	}

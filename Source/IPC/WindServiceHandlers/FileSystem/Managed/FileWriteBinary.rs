@@ -1,7 +1,7 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
 //! Wire method `file:writeBinary`. Active in dispatch. Mirrors the read
-//! path: runtime `FileSystemWriter` does the actual byte write with create
+//! path: RunTime `FileSystemWriter` does the actual byte write with create
 //! + overwrite flags on.
 
 use std::{path::PathBuf, sync::Arc};
@@ -15,14 +15,14 @@ use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
-pub async fn FileWriteBinary(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let path = args
+pub async fn FileWriteBinary(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let path = Arguments
 		.get(0)
 		.ok_or("Missing file path".to_string())?
 		.as_str()
 		.ok_or("File path must be a string".to_string())?;
 
-	let content = args
+	let content = Arguments
 		.get(1)
 		.ok_or("Missing file content".to_string())?
 		.as_str()
@@ -31,7 +31,7 @@ pub async fn FileWriteBinary(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -
 	let content_bytes = content.as_bytes().to_vec();
 	let content_len = content_bytes.len();
 
-	let provider:Arc<dyn FileSystemWriter> = runtime.Environment.Require();
+	let provider:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
 
 	provider
 		.WriteFile(&PathBuf::from(path), content_bytes.clone(), true, true)

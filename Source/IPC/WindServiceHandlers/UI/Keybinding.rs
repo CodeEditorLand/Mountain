@@ -2,7 +2,7 @@
 //! Dynamic keybinding handlers. Extensions' `package.json > contributes.
 //! keybindings` is a declarative registry; this surface is for the
 //! imperative `keybindings:add/remove/lookup/getAll` IPC path Wind uses
-//! for runtime registrations (e.g. palette-installed commands).
+//! for RunTime registrations (e.g. palette-installed commands).
 
 use std::sync::Arc;
 
@@ -10,19 +10,19 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn KeybindingAdd(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let CommandId = args
+pub async fn KeybindingAdd(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let CommandId = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("keybinding:add requires commandId".to_string())?
 		.to_owned();
-	let KeyExpression = args
+	let KeyExpression = Arguments
 		.get(1)
 		.and_then(|V| V.as_str())
 		.ok_or("keybinding:add requires keybinding".to_string())?
 		.to_owned();
-	let When = args.get(2).and_then(|V| V.as_str()).map(str::to_owned);
-	runtime
+	let When = Arguments.get(2).and_then(|V| V.as_str()).map(str::to_owned);
+	RunTime
 		.Environment
 		.ApplicationState
 		.Feature
@@ -31,12 +31,12 @@ pub async fn KeybindingAdd(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> 
 	Ok(Value::Null)
 }
 
-pub async fn KeybindingRemove(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let CommandId = args
+pub async fn KeybindingRemove(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let CommandId = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("keybinding:remove requires commandId".to_string())?;
-	runtime
+	RunTime
 		.Environment
 		.ApplicationState
 		.Feature
@@ -45,12 +45,12 @@ pub async fn KeybindingRemove(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 	Ok(Value::Null)
 }
 
-pub async fn KeybindingLookup(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let CommandId = args
+pub async fn KeybindingLookup(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let CommandId = Arguments
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or("keybinding:lookup requires commandId".to_string())?;
-	let Binding = runtime
+	let Binding = RunTime
 		.Environment
 		.ApplicationState
 		.Feature
@@ -59,7 +59,7 @@ pub async fn KeybindingLookup(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) 
 	Ok(Binding.map(|B| json!(B)).unwrap_or(Value::Null))
 }
 
-pub async fn KeybindingGetAll(runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-	let All = runtime.Environment.ApplicationState.Feature.Keybindings.GetAllKeybindings();
+pub async fn KeybindingGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+	let All = RunTime.Environment.ApplicationState.Feature.Keybindings.GetAllKeybindings();
 	Ok(json!(All))
 }

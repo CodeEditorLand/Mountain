@@ -31,25 +31,25 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 /// `search:findInFiles` / `search:textSearch` / `search:searchText`.
 ///
 /// Wire contract (VS Code's `ProxyChannel.toService(search)` path):
-/// positional args = [TextSearchQuery, TextSearchOptions]. The trait
+/// positional Arguments = [TextSearchQuery, TextSearchOptions]. The trait
 /// method `SearchProvider::TextSearch` accepts the raw JSON and does
 /// its own `serde_json::from_value::<TextSearchQuery>` so callers can
 /// keep sending arbitrary shapes - we pass through directly.
 pub async fn SearchFindInFiles(
-	runtime:Arc<ApplicationRunTime>,
-	mut args:Vec<Value>,
+	RunTime:Arc<ApplicationRunTime>,
+	mut Arguments:Vec<Value>,
 ) -> Result<Value, String> {
 	// Positional → named translation. VS Code's SearchService sends the
 	// query object in slot 0; older Wind Effect callers passed flat
-	// positional args (pattern, isRegex, isCase, isWord, include,
-	// exclude, maxResults). Accept both by promoting flat args into a
+	// positional Arguments (pattern, isRegex, isCase, isWord, include,
+	// exclude, maxResults). Accept both by promoting flat Arguments into a
 	// TextSearchQuery-shaped object.
-	let QueryValue = if args.first().map(|V| V.is_object()).unwrap_or(false) {
-		args.remove(0)
-	} else if let Some(Pattern) = args.first().and_then(|V| V.as_str()) {
-		let IsRegex = args.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
-		let IsCase = args.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
-		let IsWord = args.get(3).and_then(|V| V.as_bool()).unwrap_or(false);
+	let QueryValue = if Arguments.first().map(|V| V.is_object()).unwrap_or(false) {
+		Arguments.remove(0)
+	} else if let Some(Pattern) = Arguments.first().and_then(|V| V.as_str()) {
+		let IsRegex = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsCase = Arguments.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+		let IsWord = Arguments.get(3).and_then(|V| V.as_bool()).unwrap_or(false);
 		json!({
 			"pattern": Pattern,
 			"isRegex": IsRegex,
@@ -60,11 +60,11 @@ pub async fn SearchFindInFiles(
 		return Err("search:findInFiles requires pattern or TextSearchQuery".to_string());
 	};
 
-	let OptionsValue = args.into_iter().next().unwrap_or(Value::Null);
+	let OptionsValue = Arguments.into_iter().next().unwrap_or(Value::Null);
 
 	dev_log!("search", "search:textSearch delegating to SearchProvider::TextSearch");
 
-	runtime
+	RunTime
 		.Environment
 		.TextSearch(QueryValue, OptionsValue)
 		.await
@@ -73,19 +73,19 @@ pub async fn SearchFindInFiles(
 
 /// `search:findFiles` / `search:fileSearch` / `search:searchFile`.
 ///
-/// Wire contract: positional args = [includePattern, excludePattern?,
+/// Wire contract: positional Arguments = [includePattern, excludePattern?,
 /// maxResults?, useIgnoreFiles?, followSymlinks?]. Delegates to
 /// `WorkspaceProvider::FindFilesInWorkspace` which returns `Vec<Url>`;
 /// we reshape to `Vec<String>` for the renderer.
-pub async fn SearchFindFiles(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -> Result<Value, String> {
-	let IncludePattern = args
+pub async fn SearchFindFiles(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+	let IncludePattern = Arguments
 		.first()
 		.cloned()
 		.ok_or_else(|| "search:findFiles requires include pattern in slot 0".to_string())?;
-	let ExcludePattern = args.get(1).cloned().filter(|V| !V.is_null());
-	let MaxResults = args.get(2).and_then(|V| V.as_u64()).map(|N| N as usize);
-	let UseIgnoreFiles = args.get(3).and_then(|V| V.as_bool()).unwrap_or(true);
-	let FollowSymlinks = args.get(4).and_then(|V| V.as_bool()).unwrap_or(false);
+	let ExcludePattern = Arguments.get(1).cloned().filter(|V| !V.is_null());
+	let MaxResults = Arguments.get(2).and_then(|V| V.as_u64()).map(|N| N as usize);
+	let UseIgnoreFiles = Arguments.get(3).and_then(|V| V.as_bool()).unwrap_or(true);
+	let FollowSymlinks = Arguments.get(4).and_then(|V| V.as_bool()).unwrap_or(false);
 
 	dev_log!(
 		"search",
@@ -94,7 +94,7 @@ pub async fn SearchFindFiles(runtime:Arc<ApplicationRunTime>, args:Vec<Value>) -
 		FollowSymlinks
 	);
 
-	let Urls = runtime
+	let Urls = RunTime
 		.Environment
 		.FindFilesInWorkspace(IncludePattern, ExcludePattern, MaxResults, UseIgnoreFiles, FollowSymlinks)
 		.await
