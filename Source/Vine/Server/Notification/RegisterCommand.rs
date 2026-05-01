@@ -6,14 +6,73 @@
 //! sidecar identifier is hard-coded to `cocoon-main` because that is
 //! the sole extension-host Cocoon instance today.
 
+use std::{
+	sync::{
+		Arc, Mutex, OnceLock,
+		atomic::{AtomicBool, Ordering},
+	},
+	time::Duration,
+};
+
 use serde_json::{Value, json};
+use tauri::{AppHandle, Emitter};
 
 use crate::{
 	Environment::CommandProvider::CommandHandler,
-	IPC::SkyEmit::LogSkyEmit,
 	Vine::Server::MountainVinegRPCService::MountainVinegRPCService,
 	dev_log,
 };
+
+/// Coalesced Mountain → Sky emit buffer for `sky://command/register`.
+///
+/// Extension boot fires 1000+ `registerCommand` notifications in a
+/// tight burst (113 extensions × ~10 commands each). Emitting one
+/// Tauri event per command saturated the WKWebView IPC channel that
+/// also carries keystroke delivery; users could type for a split
+/// second before the burst hit, then nothing. Buffer for one frame
+/// (16 ms) and emit a single `{ commands: [...] }` batch instead.
+/// SkyBridge's listener accepts both shapes (single + batch).
+struct CommandEmitBatch {
+	Pending:Mutex<Vec<Value>>,
+	FlushScheduled:AtomicBool,
+}
+
+static COMMAND_EMIT_BATCH:OnceLock<Arc<CommandEmitBatch>> = OnceLock::new();
+
+fn EnqueueCommandEmit(Handle:&AppHandle, Payload:Value) {
+	let Batch = COMMAND_EMIT_BATCH
+		.get_or_init(|| Arc::new(CommandEmitBatch { Pending:Mutex::new(Vec::new()), FlushScheduled:AtomicBool::new(false) }));
+
+	{
+		let mut Pending = Batch.Pending.lock().unwrap();
+		Pending.push(Payload);
+	}
+
+	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
+		let BatchClone = Batch.clone();
+		let HandleClone = Handle.clone();
+		tokio::spawn(async move {
+			tokio::time::sleep(Duration::from_millis(16)).await;
+			let Drained:Vec<Value> = {
+				let mut Pending = BatchClone.Pending.lock().unwrap();
+				std::mem::take(&mut *Pending)
+			};
+			BatchClone.FlushScheduled.store(false, Ordering::Release);
+			if Drained.is_empty() {
+				return;
+			}
+			let Count = Drained.len();
+			match HandleClone.emit("sky://command/register", json!({ "commands": Drained })) {
+				Ok(()) => {
+					dev_log!("sky-emit", "[SkyEmit] ok channel=sky://command/register batch={}", Count);
+				},
+				Err(Error) => {
+					dev_log!("sky-emit", "[SkyEmit] fail channel=sky://command/register batch={} error={}", Count, Error);
+				},
+			}
+		});
+	}
+}
 
 pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let CommandId = Parameter.get("commandId").and_then(Value::as_str).unwrap_or("");
@@ -47,19 +106,13 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 			},
 		);
 	}
-	// Sky's `SkyBridge.ts:824` listens on `sky://command/register` to
-	// surface the command in the workbench `ICommandService` registry -
-	// without this emit, every extension-contributed command was added
-	// to Mountain's registry but invisible to the command palette /
-	// keybinding-resolver. Payload shape matches the Sky destructure
-	// (`{ id }` or `{ commandId }` - both probed).
-	// Convert to `LogSkyEmit` so command-register volume is observable
-	// in the `[DEV:SKY-EMIT]` histogram. Extension command registration
-	// is bursty - 100+ commands per session - so the channel count
-	// gives a quick read on whether contributions are landing.
-	let _ = LogSkyEmit(
+	// Coalesce the Sky emit. SkyBridge listens on `sky://command/register`
+	// and accepts either `{ id, commandId, kind }` (single) or
+	// `{ commands: [...] }` (batch). The batched flush happens 16 ms
+	// after the first command lands, so an extension-boot burst of 1000+
+	// registrations becomes a single Tauri emit instead of 1000.
+	EnqueueCommandEmit(
 		Service.ApplicationHandle(),
-		"sky://command/register",
 		json!({ "id": CommandId, "commandId": CommandId, "kind": Kind }),
 	);
 }

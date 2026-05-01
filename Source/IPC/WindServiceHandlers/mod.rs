@@ -2296,21 +2296,36 @@ pub async fn mountain_ipc_invoke(app_handle:AppHandle, command:String, args:Vec<
 					// `Vine/Server/Notification/RegisterCommand.rs`. Native
 					// commands (Mountain's own Rust handlers) don't need
 					// replay - they're not exposed via this channel.
+					//
+					// Emit ONE batched event with the whole array. Per-
+					// command emits (one per registered command, ~1000+
+					// during extension boot) saturated Tauri's shared
+					// WKWebView IPC channel and starved keystroke
+					// delivery. SkyBridge's `sky://command/register`
+					// listener accepts either `{ id, commandId, kind }`
+					// or `{ commands: [...] }` (see SkyBridge.ts).
 					if let Ok(Commands) = runtime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock()
 					{
+						let mut Batch: Vec<serde_json::Value> = Vec::new();
 						for (CommandId, Handler) in Commands.iter() {
 							use crate::Environment::CommandProvider::CommandHandler;
 							let Kind = match Handler {
 								CommandHandler::Native(_) => continue,
 								CommandHandler::Proxied { .. } => "extension",
 							};
-							let Payload = serde_json::json!({
+							Batch.push(serde_json::json!({
 								"id": CommandId,
 								"commandId": CommandId,
 								"kind": Kind,
-							});
-							if app_handle.emit("sky://command/register", Payload).is_ok() {
-								CommandCount += 1;
+							}));
+						}
+						if !Batch.is_empty() {
+							let Count = Batch.len();
+							if app_handle
+								.emit("sky://command/register", serde_json::json!({ "commands": Batch }))
+								.is_ok()
+							{
+								CommandCount = Count;
 							}
 						}
 					}
