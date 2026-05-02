@@ -1,37 +1,19 @@
-//! # HealthCommand
+#![allow(non_snake_case)]
+
+//! # HealthCommand - Wind SharedProcessProxy bridge
 //!
-//! Tauri commands for Wind's SharedProcessProxy health checks.
-//! These are invoked directly as Tauri commands from the frontend.
+//! Tauri commands invoked directly by Wind's `SharedProcessProxy`
+//! health-check pings. Each is a thin probe that maps the renderer's
+//! abstract service identifier onto Mountain's actual readiness state.
+//!
+//! Layout (one Tauri command per file, snake_case wire-bound names per
+//! the Naming-Convention exception):
+//! - `cocoon_extension_host_health::cocoon_extension_host_health`
+//! - `cocoon_search_service_health::cocoon_search_service_health`
+//! - `cocoon_debug_service_health::cocoon_debug_service_health`
+//! - `shared_process_service_health::shared_process_service_health`
 
-/// Check extension host (Cocoon) health.
-/// Returns true if Cocoon is connected via gRPC, false otherwise.
-#[tauri::command]
-pub async fn cocoon_extension_host_health() -> Result<bool, String> {
-	// TODO: Wire to real Cocoon gRPC health check when Cocoon is spawned
-	Ok(false)
-}
-
-/// Check search service health.
-#[tauri::command]
-pub async fn cocoon_search_service_health() -> Result<bool, String> {
-	// Search is available when file system is accessible
-	Ok(true)
-}
-
-/// Check debug service health.
-#[tauri::command]
-pub async fn cocoon_debug_service_health() -> Result<bool, String> {
-	// Debug adapter protocol - not yet wired
-	Ok(false)
-}
-
-/// Generic shared process service health check.
-#[tauri::command]
-pub async fn shared_process_service_health(service:String) -> Result<bool, String> {
-	match service.as_str() {
-		"storage" => Ok(true), // Storage is always available (file-backed)
-		"update" => Ok(true),  // Update service always reports idle
-		"search" => Ok(true),  // Search available via file system
-		_ => Ok(false),
-	}
-}
+pub mod cocoon_debug_service_health;
+pub mod cocoon_extension_host_health;
+pub mod cocoon_search_service_health;
+pub mod shared_process_service_health;
