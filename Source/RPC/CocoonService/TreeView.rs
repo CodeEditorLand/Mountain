@@ -3,8 +3,16 @@
 //!
 //! Typed gRPC RPCs: register_tree_view_provider, get_tree_children.
 
+use std::{
+	sync::{
+		Arc, Mutex, OnceLock,
+		atomic::{AtomicBool, Ordering},
+	},
+	time::Duration,
+};
+
 use serde_json::{Value, json};
-use tauri::Emitter;
+use tauri::{AppHandle, Emitter};
 use tonic::{Response, Status};
 use CommonLibrary::{IPC::SkyEvent::SkyEvent, LanguageFeature::DTO::ProviderType::ProviderType};
 
@@ -23,6 +31,56 @@ use crate::{
 	},
 	dev_log,
 };
+
+/// Coalesced Mountain → Sky emit buffer for `sky://tree-view/create`.
+///
+/// Each extension that contributes a tree view (Explorer, SCM, Debug,
+/// Run, Outline, plus extension-contributed views like Roo, Claude,
+/// gitlens) calls `RegisterTreeViewProvider` separately during
+/// activation. 30+ emits in a tight burst at boot saturate the Tauri
+/// channel that also delivers keystrokes. SkyBridge's listener
+/// already accepts both single `{ viewId, extensionId }` and batch
+/// `{ views: [{ viewId, extensionId }, ...] }` shapes (mirrors the
+/// command-batch pattern from `Vine/Server/Notification/RegisterCommand.rs`).
+struct TreeViewEmitBatch {
+	Pending:Mutex<Vec<Value>>,
+	FlushScheduled:AtomicBool,
+}
+
+static TREE_VIEW_EMIT_BATCH:OnceLock<Arc<TreeViewEmitBatch>> = OnceLock::new();
+
+fn EnqueueTreeViewEmit(Handle:&AppHandle, Payload:Value) {
+	let Batch = TREE_VIEW_EMIT_BATCH.get_or_init(|| {
+		Arc::new(TreeViewEmitBatch { Pending:Mutex::new(Vec::new()), FlushScheduled:AtomicBool::new(false) })
+	});
+
+	{
+		let mut Pending = Batch.Pending.lock().unwrap();
+		Pending.push(Payload);
+	}
+
+	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
+		let BatchClone = Batch.clone();
+		let HandleClone = Handle.clone();
+		let Channel = SkyEvent::TreeViewCreate.AsStr().to_string();
+		tokio::spawn(async move {
+			tokio::time::sleep(Duration::from_millis(16)).await;
+			let Drained:Vec<Value> = {
+				let mut Pending = BatchClone.Pending.lock().unwrap();
+				std::mem::take(&mut *Pending)
+			};
+			BatchClone.FlushScheduled.store(false, Ordering::Release);
+			if Drained.is_empty() {
+				return;
+			}
+			let Count = Drained.len();
+			match HandleClone.emit(&Channel, json!({ "views": Drained })) {
+				Ok(()) => dev_log!("sky-emit", "[SkyEmit] ok channel={} batch={}", Channel, Count),
+				Err(Error) => dev_log!("sky-emit", "[SkyEmit] fail channel={} batch={} error={}", Channel, Count, Error),
+			}
+		});
+	}
+}
 
 /// Matches the viewId-derived handle used by `RegisterTreeViewProvider`.
 fn ViewIdHandle(ViewId:&str) -> u32 {
@@ -58,13 +116,14 @@ pub async fn RegisterTreeViewProvider(
 		.ProviderRegistration
 		.RegisterProvider(Handle, dto);
 
-	// Emit on the canonical `SkyEvent::TreeViewCreate` channel so the
-	// renderer's SkyBridge listener (and every downstream `cel:tree-view`
-	// consumer) picks it up via the same path used by the generic
-	// `tree.register` effect. The previous `sky://treeView/register`
-	// channel was a parallel fork that no listener ever subscribed to.
-	let _ = Service.environment.ApplicationHandle.emit(
-		SkyEvent::TreeViewCreate.AsStr(),
+	// Coalesce the Sky emit. SkyBridge's `sky://tree-view/create`
+	// listener accepts either single `{ viewId, extensionId }`
+	// (legacy / runtime path) or batch `{ views: [{ viewId,
+	// extensionId }, ...] }` (extension-boot path). 30+ tree-view
+	// registrations during boot collapse to one Tauri emit per
+	// 16ms window.
+	EnqueueTreeViewEmit(
+		&Service.environment.ApplicationHandle,
 		json!({ "viewId": req.view_id, "extensionId": req.extension_id }),
 	);
 

@@ -39,13 +39,105 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					let Method = Method.clone();
 					Box::pin(async move {
-						let Handle = Parameters.get(0).cloned().unwrap_or(Value::Null);
-						let Payload = json!({
-							"method": Method,
-							"handle": Handle,
-							"args": Parameters,
-						});
-						let Suffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");
+						let RawSuffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");
+						// SkyBridge's webview listener registry uses
+						// kebab-case for `set-html` and `post-message`
+						// (canonical channel name in
+						// `Common/Source/IPC/SkyEvent.rs::WebviewSetHTML`),
+						// but the Cocoon-side wire method uses camelCase
+						// (`webview.setHtml`, `webview.postMessage`).
+						// Without this translation, Roo / claude-vscode /
+						// any extension that calls
+						// `webview.html = "<html>"` emitted on
+						// `sky://webview/setHtml` and Sky's listener
+						// (registered on `set-html`) silently dropped
+						// every payload - the panel rendered the chrome
+						// but the iframe stayed blank. Same fix the
+						// `Vine/Server/Notification/WebviewLifecycle.rs`
+						// path already applies; centralise here so both
+						// emit paths land on the same canonical channel.
+						// `postMessage` Sky has BOTH listeners (camel +
+						// kebab) so either works there, but normalise to
+						// kebab for consistency.
+						let Suffix:&str = match RawSuffix {
+							"setHtml" => "set-html",
+							"postMessage" => "post-message",
+							Other => Other,
+						};
+						// Payload-shape canonicalisation. Cocoon's
+						// `WindowNamespace.ts` calls
+						// `Context.SendToMountain("webview.setHtml",
+						// { handle, viewId, html })` for webview-views
+						// (Roo, claude-vscode sidebars) and
+						// `MountainClient.sendRequest("webview.setHtml",
+						// [Handle, Value])` for webview-panels (legacy).
+						// SkyBridge's `sky://webview/set-html` listener
+						// reads `Payload.viewId` and `Payload.html`
+						// directly, so we always emit the named-key
+						// shape. Three observed wire shapes:
+						//   1. `Parameters` IS the object directly
+						//      (modern named-arg sendRequest).
+						//   2. `Parameters` is `[ <object> ]` (array
+						//      wrap).
+						//   3. `Parameters` is `[ Handle, Value ]`
+						//      (positional, panel path).
+						// The previous code wrapped payloads in
+						// `{ method, handle, args }` which made
+						// `Payload.viewId === undefined`; the listener
+						// returned early and the iframe stayed blank.
+						// Add a `name`/`viewId` fallback step too so
+						// case-1 payloads that only carry `handle` still
+						// reach Sky's registry lookup (Sky maintains a
+						// handle→view map under
+						// `__CEL_WEBVIEW_VIEWS_BY_HANDLE__`).
+						let Payload:Value = if Parameters.is_object() {
+							// Case 1: object directly. Pass through.
+							Parameters.clone()
+						} else if let Some(First) = Parameters.get(0) {
+							if First.is_object() {
+								// Case 2: array-wrapped object. Unwrap.
+								First.clone()
+							} else if let Some(Second) = Parameters.get(1) {
+								// Case 3: positional [Handle, Value].
+								// `value` covers setHtml's html string,
+								// setOptions' options object,
+								// postMessage's message, etc. Also expose
+								// `html` and `message` aliases since
+								// SkyBridge's listeners read those keys
+								// directly (mirrors Cocoon's
+								// `webview.html = ...` / `webview.postMessage(msg)`
+								// invocation surface).
+								let MutableObject = match Method.as_str() {
+									"webview.setHtml" => json!({
+										"method": Method,
+										"handle": First,
+										"html": Second,
+									}),
+									"webview.postMessage" => json!({
+										"method": Method,
+										"handle": First,
+										"message": Second,
+									}),
+									_ => json!({
+										"method": Method,
+										"handle": First,
+										"value": Second,
+									}),
+								};
+								MutableObject
+							} else {
+								// Single positional arg (dispose, reveal).
+								json!({
+									"method": Method,
+									"handle": First,
+								})
+							}
+						} else {
+							json!({
+								"method": Method,
+								"handle": Parameters.clone(),
+							})
+						};
 						let EventName = format!("sky://webview/{}", Suffix);
 						// `LogSkyEmit` wraps `.emit()` and tags every
 						// success/failure under `[DEV:SKY-EMIT]`, so
