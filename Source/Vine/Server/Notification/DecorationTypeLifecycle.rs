@@ -17,7 +17,9 @@
 use std::{
 	collections::HashMap,
 	sync::{
-		Arc, Mutex, OnceLock,
+		Arc,
+		Mutex,
+		OnceLock,
 		atomic::{AtomicBool, Ordering},
 	},
 	time::Duration,
@@ -59,7 +61,15 @@ fn EnqueueDecorationEmit(Handle:&AppHandle, Channel:String, Payload:Value) {
 				let Count = Payloads.len();
 				match HandleClone.emit(&ChannelName, json!({ "batch": Payloads })) {
 					Ok(()) => dev_log!("sky-emit", "[SkyEmit] ok channel={} batch={}", ChannelName, Count),
-					Err(Error) => dev_log!("sky-emit", "[SkyEmit] fail channel={} batch={} error={}", ChannelName, Count, Error),
+					Err(Error) => {
+						dev_log!(
+							"sky-emit",
+							"[SkyEmit] fail channel={} batch={} error={}",
+							ChannelName,
+							Count,
+							Error
+						)
+					},
 				}
 			}
 		});

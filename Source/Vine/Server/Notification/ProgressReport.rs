@@ -13,7 +13,9 @@
 use std::{
 	collections::HashMap,
 	sync::{
-		Arc, Mutex, OnceLock,
+		Arc,
+		Mutex,
+		OnceLock,
 		atomic::{AtomicBool, Ordering},
 	},
 	time::Duration,

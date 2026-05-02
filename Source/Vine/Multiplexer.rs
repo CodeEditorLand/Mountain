@@ -197,7 +197,9 @@ impl Multiplexer {
 			return Ok(());
 		}
 		let Frame = Envelope {
-			payload:Some(Payload::Cancel(CancelOperationRequest { request_identifier_to_cancel:RequestIdentifier })),
+			payload:Some(Payload::Cancel(CancelOperationRequest {
+				request_identifier_to_cancel:RequestIdentifier,
+			})),
 		};
 		let _ = self.Sink.send(Frame).await;
 		Ok(())
@@ -219,7 +221,12 @@ async fn ReadPump(mut Stream:Streaming<Envelope>, State:Arc<Multiplexer>) {
 		let Frame = match FrameResult {
 			Ok(F) => F,
 			Err(Status) => {
-				dev_log!("grpc", "[Vine::Multiplexer] read err on {}: {}", State.SideCarIdentifier, Status);
+				dev_log!(
+					"grpc",
+					"[Vine::Multiplexer] read err on {}: {}",
+					State.SideCarIdentifier,
+					Status
+				);
 				break;
 			},
 		};
@@ -235,7 +242,7 @@ async fn ReadPump(mut Stream:Streaming<Envelope>, State:Arc<Multiplexer>) {
 				} else {
 					serde_json::from_slice(&N.parameter).unwrap_or(Value::Null)
 				};
-				super::Client::PublishNotificationFromMux(&State.SideCarIdentifier, &N.method, &Parameters);
+				super::Client::PublishNotificationFromMux::Fn(&State.SideCarIdentifier, &N.method, &Parameters);
 			},
 			Payload::Response(R) => {
 				let Identifier = R.request_identifier;

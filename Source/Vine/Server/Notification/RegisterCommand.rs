@@ -8,7 +8,9 @@
 
 use std::{
 	sync::{
-		Arc, Mutex, OnceLock,
+		Arc,
+		Mutex,
+		OnceLock,
 		atomic::{AtomicBool, Ordering},
 	},
 	time::Duration,
@@ -40,8 +42,9 @@ struct CommandEmitBatch {
 static COMMAND_EMIT_BATCH:OnceLock<Arc<CommandEmitBatch>> = OnceLock::new();
 
 fn EnqueueCommandEmit(Handle:&AppHandle, Payload:Value) {
-	let Batch = COMMAND_EMIT_BATCH
-		.get_or_init(|| Arc::new(CommandEmitBatch { Pending:Mutex::new(Vec::new()), FlushScheduled:AtomicBool::new(false) }));
+	let Batch = COMMAND_EMIT_BATCH.get_or_init(|| {
+		Arc::new(CommandEmitBatch { Pending:Mutex::new(Vec::new()), FlushScheduled:AtomicBool::new(false) })
+	});
 
 	{
 		let mut Pending = Batch.Pending.lock().unwrap();
@@ -67,7 +70,12 @@ fn EnqueueCommandEmit(Handle:&AppHandle, Payload:Value) {
 					dev_log!("sky-emit", "[SkyEmit] ok channel=sky://command/register batch={}", Count);
 				},
 				Err(Error) => {
-					dev_log!("sky-emit", "[SkyEmit] fail channel=sky://command/register batch={} error={}", Count, Error);
+					dev_log!(
+						"sky-emit",
+						"[SkyEmit] fail channel=sky://command/register batch={} error={}",
+						Count,
+						Error
+					);
 				},
 			}
 		});

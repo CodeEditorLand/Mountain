@@ -373,7 +373,7 @@ impl MountainService for MountainVinegRPCService {
 		);
 
 		// Dispatch request to Track module for processing
-		let DispatchResult = Track::SideCarRequest::DispatchSideCarRequest(
+		let DispatchResult = Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest(
 			self.ApplicationHandle.clone(),
 			self.RunTime.clone(),
 			// In the future, this could come from connection metadata
