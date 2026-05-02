@@ -112,30 +112,6 @@ pub mod Shutdown;
 /// Debug and trace logging utilities.
 pub mod Debug;
 
-// --- Re-exports from Main sub-module for backward compatibility and
-// convenience ---
-
-use Main::{AppLifecycle, Entry, IPCCommands};
-pub use Entry::Fn as Main;
-pub use AppLifecycle::*;
-// Note: IPCCommands is now a placeholder, commands are in Binary/IPC/*
-// Note: Tray is now a placeholder, commands are in Binary/Tray/*
-
-// --- Convenience re-exports from other sub-modules ---
-pub use Build::{LocalhostPlugin, LoggingPlugin, TauriBuild, WindowBuild};
-pub use Register::{
-	AdvancedFeaturesRegister,
-	CommandRegister,
-	IPCServerRegister,
-	StatusReporterRegister,
-	WindSyncRegister,
-};
-pub use Service::{CocoonStart, ConfigurationInitialize, VineStart};
-pub use Initialize::{CliParse, LogLevel, PortSelector, RuntimeBuild, StateBuild};
-pub use Shutdown::{RuntimeShutdown, SchedulerShutdown};
-
-// --- Tray re-exports from atomic modules ---
-
-pub mod TrayModule {
-	pub use super::Tray::{EnableTray::enable_tray as EnableTray, SwitchTrayIcon::SwitchTrayIcon};
-}
+// No `pub use` re-exports - callers spell the full reverse-hierarchical
+// path (`Binary::Main::Entry::Fn`, `Binary::Build::LocalhostPlugin::Fn`,
+// etc.). See `.claude/Naming-Convention.md` § Nameless Exports.
