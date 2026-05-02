@@ -129,7 +129,10 @@ use tauri::{AppHandle, WebviewWindow, Wry};
 use url::Url;
 
 use crate::{
-	ApplicationState::{ApplicationState, DTO::TreeViewStateDTO::TreeViewStateDTO, MapLockError},
+	ApplicationState::{
+		DTO::TreeViewStateDTO::TreeViewStateDTO,
+		State::ApplicationState::{ApplicationState, MapLockError},
+	},
 	Environment::CommandProvider::CommandHandler,
 	FileSystem::FileExplorerViewProvider::Struct as FileExplorerViewProvider,
 	RunTime::ApplicationRunTime::ApplicationRunTime,

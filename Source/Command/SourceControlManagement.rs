@@ -74,7 +74,7 @@ use serde_json::{Value, json};
 use tauri::{State, command};
 
 use crate::{
-	ApplicationState::{ApplicationState, MapLockError},
+	ApplicationState::State::ApplicationState::{ApplicationState, MapLockError},
 	dev_log,
 };
 
