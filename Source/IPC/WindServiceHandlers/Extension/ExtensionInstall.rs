@@ -23,7 +23,7 @@ use tauri::{AppHandle, Emitter};
 use crate::{
 	ExtensionManagement::VsixInstaller,
 	IPC::{
-		UriComponents::FromFilePath as UriFromFilePath,
+		UriComponents::FromFilePath::Fn as UriFromFilePath,
 		WindServiceHandlers::Extension::{
 			NotifyCocoonDeltaExtensions::NotifyCocoonDeltaExtensions,
 			UserExtensionDirectory::UserExtensionDirectory,
