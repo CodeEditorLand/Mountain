@@ -79,10 +79,7 @@ pub mod Webview;
 /// Effect creation and routing.
 pub mod Effect;
 
-// --- Re-exports for backward compatibility ---
-
-pub use FrontendCommand::DispatchFrontendCommand;
-pub use SideCarRequest::DispatchSideCarRequest;
-pub use UIRequest::ResolveUIRequest;
-pub use Webview::MountainWebviewPostMessageFromGuest;
-pub use Effect::{CreateEffectForRequest, MappedEffect};
+// No `pub use` re-exports - callers spell the full path
+// (`Track::UIRequest::ResolveUIRequest::ResolveUIRequest`, etc.). The
+// double-segment shape is required by `tauri::generate_handler!` so the
+// macro can find the `__cmd__<Name>` companion in the same file.
