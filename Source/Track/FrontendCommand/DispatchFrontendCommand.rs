@@ -56,7 +56,11 @@ use std::sync::Arc;
 use serde_json::Value;
 use tauri::{AppHandle, Manager, Runtime, State, command};
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::CreateEffectForRequest, dev_log};
+use crate::{
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::CreateEffectForRequest::Fn as CreateEffectForRequest,
+	dev_log,
+};
 
 /// The primary Tauri command handler for requests originating from the `Sky`
 /// frontend. This is the general-purpose entry point for commands that are
