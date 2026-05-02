@@ -1,21 +1,7 @@
-//! # Hover Module
-//!
-//! Atomic module for hover language feature command.
-//!
-//! ## Structure
-//!
-//! - `Interface.rs` - Types and traits for hover
-//! - `Fn.rs` - Implementation of hover functionality
-//!
-//! ## Usage
-//!
-//! ```rust
-//! use crate::Command::Hover::{Fn::Hover, Interface::HoverResponse};
-//! ```
+#![allow(non_snake_case)]
+
+//! Hover language-feature command. Single Tauri command handler in `Fn.rs`
+//! plus the request/response/position types in `Interface.rs`.
 
 pub mod Fn;
 pub mod Interface;
-
-// Re-export for convenience
-pub use Fn::Hover;
-pub use Interface::{HoverContent, HoverRequest, HoverResponse, Position, Range};
