@@ -6,9 +6,7 @@
 use std::sync::Arc;
 
 use CommonLibrary::{
-	Effect::{
-		ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait,
-	},
+	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 };

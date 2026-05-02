@@ -7,9 +7,7 @@
 use std::sync::Arc;
 
 use CommonLibrary::{
-	Effect::{
-		ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait,
-	},
+	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 };
@@ -53,9 +51,9 @@ impl ApplicationRunTime {
 			}
 		}
 
-		Err(CommonError::Unknown {
-			Description:format!("Effect execution failed after {} retries", MaximumRetries),
-		}
-		.into())
+		Err(
+			CommonError::Unknown { Description:format!("Effect execution failed after {} retries", MaximumRetries) }
+				.into(),
+		)
 	}
 }

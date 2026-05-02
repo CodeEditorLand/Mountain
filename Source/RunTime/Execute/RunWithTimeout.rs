@@ -7,9 +7,7 @@
 use std::sync::Arc;
 
 use CommonLibrary::{
-	Effect::{
-		ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait,
-	},
+	Effect::{ActionEffect::ActionEffect, ApplicationRunTime::ApplicationRunTime as ApplicationRunTimeTrait},
 	Environment::Requires::Requires,
 	Error::CommonError::CommonError,
 };
@@ -31,10 +29,7 @@ impl ApplicationRunTime {
 		tokio::time::timeout(Timeout, ApplicationRunTimeTrait::Run(self, Effect))
 			.await
 			.map_err(|_| {
-				CommonError::Unknown {
-					Description:format!("Effect execution timed out after {:?}", Timeout),
-				}
-				.into()
+				CommonError::Unknown { Description:format!("Effect execution timed out after {:?}", Timeout) }.into()
 			})?
 	}
 }
