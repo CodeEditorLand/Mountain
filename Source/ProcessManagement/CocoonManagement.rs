@@ -75,7 +75,7 @@ use super::{InitializationData, NodeResolver};
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
 	IPC::Common::HealthStatus::{HealthIssue, HealthMonitor},
-	ProcessManagement::ExtractDevTag::ExtractDevTag,
+	ProcessManagement::ExtractDevTag::Fn as ExtractDevTag,
 	Vine,
 	dev_log,
 };
@@ -336,7 +336,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// Atom N1: resolve Node binary via NodeResolver (shipped → version
 	// managers → homebrew → PATH). Logs the pick + source for forensics.
 	// Overridable via `Pick=/absolute/path/to/node`.
-	let ResolvedNodeBinary = NodeResolver::ResolveNodeBinary(&ApplicationHandle);
+	let ResolvedNodeBinary = NodeResolver::ResolveNodeBinary::Fn(&ApplicationHandle);
 
 	// Build Node.js command with comprehensive environment configuration
 	let mut NodeCommand = Command::new(&ResolvedNodeBinary.Path);

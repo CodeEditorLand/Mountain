@@ -1,11 +1,12 @@
 #![allow(non_snake_case)]
-//! Cocoon stdout line inspector: detects the `[DEV:<TAG>] <body>` prefix
-//! `Cocoon/Source/Services/DevLog.ts::CocoonDevLog` writes and returns
-//! the lowercased tag for dispatch into Mountain's per-tag `dev_log!`
-//! sinks. Returns `None` for bare stdout so the caller falls back to
-//! the catch-all `cocoon` tag.
 
-pub fn ExtractDevTag(Line:&str) -> Option<String> {
+//! Cocoon stdout-line inspector. Detects the `[DEV:<TAG>]` prefix written by
+//! `Cocoon/Source/Services/DevLog.ts::CocoonDevLog` and returns the lower-
+//! cased tag for dispatch into Mountain's per-tag `dev_log!` sinks. Returns
+//! `None` for bare stdout so the caller falls back to the catch-all `cocoon`
+//! tag.
+
+pub fn Fn(Line:&str) -> Option<String> {
 	let Stripped = Line.strip_prefix("[DEV:")?;
 	let (TagUpper, _Rest) = Stripped.split_once(']')?;
 	if TagUpper.is_empty() {
@@ -21,25 +22,25 @@ pub fn ExtractDevTag(Line:&str) -> Option<String> {
 
 #[cfg(test)]
 mod Tests {
-	use super::ExtractDevTag;
+	use super::Fn;
 
 	#[test]
 	fn StripsKnownTag() {
 		assert_eq!(
-			ExtractDevTag("[DEV:BOOTSTRAP-STAGE] [Bootstrap] stage=Environment event=start"),
+			Fn("[DEV:BOOTSTRAP-STAGE] [Bootstrap] stage=Environment event=start"),
 			Some("bootstrap-stage".to_string())
 		);
 	}
 
 	#[test]
 	fn RejectsPlainText() {
-		assert_eq!(ExtractDevTag("plain stdout line"), None);
+		assert_eq!(Fn("plain stdout line"), None);
 	}
 
 	#[test]
 	fn RejectsMalformed() {
-		assert_eq!(ExtractDevTag("[DEV: BOOT] x"), None);
-		assert_eq!(ExtractDevTag("[DEV:]"), None);
-		assert_eq!(ExtractDevTag("[DEV:BOOT"), None);
+		assert_eq!(Fn("[DEV: BOOT] x"), None);
+		assert_eq!(Fn("[DEV:]"), None);
+		assert_eq!(Fn("[DEV:BOOT"), None);
 	}
 }
