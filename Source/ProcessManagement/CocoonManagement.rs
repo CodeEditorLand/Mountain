@@ -74,7 +74,7 @@ use tokio::{
 use super::{InitializationData, NodeResolver};
 use crate::{
 	Environment::MountainEnvironment::MountainEnvironment,
-	IPC::Common::HealthStatus::{HealthIssue, HealthMonitor},
+	IPC::Common::HealthStatus::{HealthIssue::Enum as HealthIssue, HealthMonitor::Struct as HealthMonitor},
 	ProcessManagement::ExtractDevTag::Fn as ExtractDevTag,
 	Vine,
 	dev_log,
@@ -881,7 +881,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// Reset health monitor on successful initialization
 	{
 		let mut health = COCOON_HEALTH.lock().await;
-		health.clear_issues();
+		health.ClearIssues();
 		dev_log!("cocoon", "[CocoonManagement] Health monitor reset to active state");
 	}
 
@@ -937,8 +937,8 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					// Report health issue
 					{
 						let mut health = COCOON_HEALTH.lock().await;
-						health.add_issue(HealthIssue::Custom(format!("ProcessCrashed (Exit code: {})", exit_code_num)));
-						dev_log!("cocoon", "warn: [CocoonHealth] Health score: {}", health.health_score);
+						health.AddIssue(HealthIssue::Custom(format!("ProcessCrashed (Exit code: {})", exit_code_num)));
+						dev_log!("cocoon", "warn: [CocoonHealth] Health score: {}", health.HealthScore);
 					}
 
 					// Log that automatic restart would be needed
@@ -963,7 +963,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					// Report health issue
 					{
 						let mut health = COCOON_HEALTH.lock().await;
-						health.add_issue(HealthIssue::Custom(format!("ProcessCheckError: {}", e)));
+						health.AddIssue(HealthIssue::Custom(format!("ProcessCheckError: {}", e)));
 					}
 				},
 			}
