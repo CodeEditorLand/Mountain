@@ -69,7 +69,7 @@ use Echo::Scheduler::{Scheduler::Scheduler, SchedulerBuilder::SchedulerBuilder};
 use crate::dev_log;
 use crate::{
 	// Crate root imports
-	ApplicationState::ApplicationState,
+	ApplicationState::State::ApplicationState::ApplicationState,
 	Binary::Build::DnsCommands::init_dns_startup_time,
 	Binary::Build::DnsCommands::{
 		self,
@@ -527,9 +527,9 @@ pub fn Fn() {
 				Command::LanguageFeature::MountainProvideReferences,
 				Command::SourceControlManagement::GetAllSourceControlManagementState,
 				Command::Keybinding::GetResolvedKeybinding,
-				Track::FrontendCommand::DispatchFrontendCommand,
-				Track::UIRequest::ResolveUIRequest,
-				Track::Webview::MountainWebviewPostMessageFromGuest,
+				Track::FrontendCommand::DispatchFrontendCommand::DispatchFrontendCommand,
+				Track::UIRequest::ResolveUIRequest::ResolveUIRequest,
+				Track::Webview::MountainWebviewPostMessageFromGuest::MountainWebviewPostMessageFromGuest,
 				crate::Binary::IPC::MessageReceiveCommand::MountainIPCReceiveMessage,
 				crate::Binary::IPC::StatusGetCommand::MountainIPCGetStatus,
 				crate::Binary::IPC::InvokeCommand::MountainIPCInvoke,

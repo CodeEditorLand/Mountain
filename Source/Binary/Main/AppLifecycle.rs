@@ -89,7 +89,7 @@ fn IsLandDisabled() -> bool {
 }
 use crate::{
 	// Crate root imports
-	ApplicationState::ApplicationState,
+	ApplicationState::State::ApplicationState::ApplicationState,
 	// Binary submodule imports
 	Binary::Build::WindowBuild::WindowBuild as WindowBuildFn,
 	Binary::Extension::ExtensionPopulate::ExtensionPopulate as ExtensionPopulateFn,
@@ -205,10 +205,7 @@ pub fn AppLifecycleSetup(
 			.map(|Value| !Value.is_empty() && Value != "0")
 			.unwrap_or(false);
 		if WantDevTools {
-			dev_log!(
-				"lifecycle",
-				"[UI] [Window] Inspect=1 set: opening DevTools."
-			);
+			dev_log!("lifecycle", "[UI] [Window] Inspect=1 set: opening DevTools.");
 			MainWindow.open_devtools();
 		} else {
 			dev_log!(
@@ -231,10 +228,10 @@ pub fn AppLifecycleSetup(
 	// The fix is the standard Electron-style handshake:
 	//   1. Mountain prevents the close.
 	//   2. Mountain emits `sky://window/close-requested` to the webview.
-	//   3. Sky listens, asks the workbench to close the active editor; if
-	//      there is no active editor (or the workbench refuses), Sky calls
-	//      `nativeHost:closeWindow`, which uses `WebviewWindow::destroy()`
-	//      to tear the window down without re-firing CloseRequested.
+	//   3. Sky listens, asks the workbench to close the active editor; if there is
+	//      no active editor (or the workbench refuses), Sky calls
+	//      `nativeHost:closeWindow`, which uses `WebviewWindow::destroy()` to tear
+	//      the window down without re-firing CloseRequested.
 	if IsLandDisabled() {
 		dev_log!(
 			"window",
@@ -247,10 +244,7 @@ pub fn AppLifecycleSetup(
 			if let tauri::WindowEvent::CloseRequested { api, .. } = Event {
 				api.prevent_close();
 				let _ = CloseEmitter.emit("sky://window/close-requested", ());
-				dev_log!(
-					"window",
-					"[UI] [Window] CloseRequested intercepted; forwarded to webview"
-				);
+				dev_log!("window", "[UI] [Window] CloseRequested intercepted; forwarded to webview");
 			}
 		});
 	}
@@ -529,10 +523,7 @@ pub fn AppLifecycleSetup(
 		// without Air, just without those background capabilities).
 		// Skipped under `Disable=true` for parity with Cocoon.
 		if IsLandDisabled() {
-			dev_log!(
-				"grpc",
-				"[Air] [Start] Disable=true: Air spawn SKIPPED"
-			);
+			dev_log!("grpc", "[Air] [Start] Disable=true: Air spawn SKIPPED");
 		} else {
 			let AirStartT0 = crate::IPC::DevLog::NowNano();
 			let _ = AirStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;

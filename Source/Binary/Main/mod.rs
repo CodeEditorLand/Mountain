@@ -101,10 +101,5 @@ pub mod AppLifecycle;
 // icon based on the current theme (light/dark mode).
 pub mod Tray;
 
-// --- Re-exports ---
-
-/// Main application entry point.
-///
-/// Exported as `Binary::Main::Fn()` and can be called from main.rs
-/// to start the Mountain desktop application.
-pub use Entry::Fn as Main;
+// No `pub use` re-exports - call `Binary::Main::Entry::Fn()` directly from
+// `Library.rs::main`.
