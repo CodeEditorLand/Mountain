@@ -7,9 +7,7 @@
 use std::sync::Arc;
 
 #[cfg(feature = "AirIntegration")]
-use AirLibrary::Vine::Generated::air::{
-	air_service_client::AirServiceClient, air_service_server::UpdateCheckRequest,
-};
+use AirLibrary::Vine::Generated::air::{air_service_client::AirServiceClient, air_service_server::UpdateCheckRequest};
 #[cfg(feature = "AirIntegration")]
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,

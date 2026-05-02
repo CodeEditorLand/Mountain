@@ -19,18 +19,11 @@ use tauri_plugin_updater::UpdaterExt;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
-pub async fn Fn(
-	ApplicationHandle:AppHandle,
-	RunTime:Arc<Runtime>,
-	NotifyNoUpdate:bool,
-) -> Result<(), CommonError> {
+pub async fn Fn(ApplicationHandle:AppHandle, RunTime:Arc<Runtime>, NotifyNoUpdate:bool) -> Result<(), CommonError> {
 	dev_log!("update", "[UpdateService] Checking for updates...");
 
 	let Updater = ApplicationHandle.updater_builder().build().map_err(|Error| {
-		CommonError::ExternalServiceError {
-			ServiceName:"Updater".into(),
-			Description:Error.to_string(),
-		}
+		CommonError::ExternalServiceError { ServiceName:"Updater".into(), Description:Error.to_string() }
 	})?;
 
 	match Updater.check().await {
@@ -38,10 +31,7 @@ pub async fn Fn(
 			dev_log!("update", "Update available: v{} ({:?})", Update.version, Update.date);
 
 			let Notes = Update.body.clone().unwrap_or_else(|| "No release notes provided.".to_string());
-			let Message = format!(
-				"A new version of Mountain is available: v{}.\n\n{}",
-				Update.version, Notes
-			);
+			let Message = format!("A new version of Mountain is available: v{}.\n\n{}", Update.version, Notes);
 
 			let Response = RunTime
 				.Run(ShowMessage(

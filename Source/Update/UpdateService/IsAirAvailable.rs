@@ -7,9 +7,7 @@
 use std::sync::Arc;
 
 #[cfg(feature = "AirIntegration")]
-use AirLibrary::Vine::Generated::air::{
-	air_service_client::AirServiceClient, air_service_server::HealthCheckRequest,
-};
+use AirLibrary::Vine::Generated::air::{air_service_client::AirServiceClient, air_service_server::HealthCheckRequest};
 
 #[cfg(feature = "AirIntegration")]
 use crate::dev_log;

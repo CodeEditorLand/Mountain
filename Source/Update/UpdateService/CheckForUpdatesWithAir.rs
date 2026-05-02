@@ -19,7 +19,6 @@ use crate::{
 	Update::UpdateService::{CheckForUpdates, UpdateMode},
 	dev_log,
 };
-
 #[cfg(feature = "AirIntegration")]
 use crate::Update::UpdateService::{CheckForUpdatesViaAir, IsAirAvailable};
 
@@ -51,8 +50,8 @@ pub async fn Fn(
 ) -> Result<(), CommonError> {
 	match Mode {
 		UpdateMode::Enum::ForceAir => {
-			let AirRef = AirClient.as_ref().ok_or_else(|| CommonError::Configuration {
-				Message:"ForceAir mode requires a valid AirClient".to_string(),
+			let AirRef = AirClient.as_ref().ok_or_else(|| {
+				CommonError::Configuration { Message:"ForceAir mode requires a valid AirClient".to_string() }
 			})?;
 			CheckForUpdatesViaAir::Fn(ApplicationHandle, RunTime, NotifyNoUpdate, AirRef).await
 		},
