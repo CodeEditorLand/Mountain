@@ -1,56 +1,36 @@
-//! # ApplicationRunTime (RunTime)
-//!
-//! ## RESPONSIBILITIES
-//!
-//! Main runtime struct that provides effect execution and lifecycle management
-//! capabilities for the Mountain application. Acts as the central coordinator
-//! between the Echo scheduler and application services.
-//!
-//! ## ARCHITECTURAL ROLE
-//!
-//! Core execution engine in Mountain's architecture that bridges declarative
-//! effect system with high-performance task execution through Echo scheduler.
-//!
-//! ## KEY COMPONENTS
-//!
-//! - **ApplicationRunTime**: Main runtime struct holding Scheduler and
-//!   Environment
-//!
-//! ## ERROR HANDLING
-//!
-//! All errors are propagated through Result types with detailed context.
-//! Shutdown operations use error recovery to continue cleanup even when
-//! individual services fail.
-//!
-//! ## LOGGING
-//!
-//! Uses log crate with appropriate severity levels:
-//! - `info`: Initialization, successful completion
-//! - `debug`: Detailed operation steps
-//! - `warn`: Recoverable errors during shutdown
-//! - `error`: Failed operations
-//!
-//! ## PERFORMANCE CONSIDERATIONS
-//!
-//! - Uses Arc for shared state to minimize cloning
-//! - Scheduler handles parallel execution efficiently
-//! - Shutdown operations are optimized to complete quickly
-//!
-//! ## TODO
-//!
-//! Medium Priority:
-//! - [ ] Add effect execution metrics
-//! - [ ] Implement effect cancellation support
-//! - [ ] Add effect execution tracing
-//!
-//! Low Priority:
-//! - [ ] Add effect prioritization levels beyond Normal
-//! - [ ] Implement circuit breaker pattern for failing effects
+#![allow(non_snake_case)]
 
-// --- Main struct definition ---
+//! Echo-scheduler-powered runtime that executes `ActionEffect` pipelines.
+//! Method-per-file impls live as siblings under `RunTime/Execute/` and
+//! `RunTime/Shutdown/`. The struct stays here (no `pub use` indirection)
+//! so callers spell `RunTime::ApplicationRunTime::ApplicationRunTime`.
 
-/// Main runtime struct definition.
-pub mod RuntimeStruct;
+use std::sync::Arc;
 
-// --- Re-export main struct ---
-pub use RuntimeStruct::ApplicationRunTime;
+use CommonLibrary::Environment::{Environment::Environment, HasEnvironment::HasEnvironment};
+use Echo::Scheduler::Scheduler::Scheduler;
+
+use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
+
+#[derive(Clone)]
+pub struct ApplicationRunTime {
+	/// Shared handle to the application's central scheduler.
+	pub Scheduler:Arc<Scheduler>,
+	/// Shared handle to the `MountainEnvironment` capability provider.
+	pub Environment:Arc<MountainEnvironment>,
+}
+
+impl ApplicationRunTime {
+	pub fn Create(Scheduler:Arc<Scheduler>, Environment:Arc<MountainEnvironment>) -> Self {
+		dev_log!("lifecycle", "new Echo-based instance created");
+		Self { Scheduler, Environment }
+	}
+}
+
+impl HasEnvironment for ApplicationRunTime {
+	type EnvironmentType = MountainEnvironment;
+
+	fn GetEnvironment(&self) -> Arc<Self::EnvironmentType> { self.Environment.clone() }
+}
+
+impl Environment for ApplicationRunTime {}
