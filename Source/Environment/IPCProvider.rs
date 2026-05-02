@@ -74,7 +74,7 @@ impl IPCProvider for MountainEnvironment {
 
 		Parameters:Value,
 	) -> Result<(), CommonError> {
-		Client::SendNotification(SideCarIdentifier, Method, Parameters)
+		Client::SendNotification::Fn(SideCarIdentifier, Method, Parameters)
 			.await
 			.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
 	}
@@ -91,7 +91,7 @@ impl IPCProvider for MountainEnvironment {
 
 		TimeoutMilliseconds:u64,
 	) -> Result<Value, CommonError> {
-		Client::SendRequest(&SideCarIdentifier, Method, Parameters, TimeoutMilliseconds)
+		Client::SendRequest::Fn(&SideCarIdentifier, Method, Parameters, TimeoutMilliseconds)
 			.await
 			.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
 	}

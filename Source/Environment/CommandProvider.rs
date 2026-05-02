@@ -277,7 +277,7 @@ impl CommandExecutor for MountainEnvironment {
 
 				let RPCMethod = format!("{}$ExecuteContributedCommand", ProxyTarget::ExtHostCommands.GetTargetPrefix());
 
-				Client::SendRequest(&SideCarIdentifier, RPCMethod, RPCParameters, 30000)
+				Client::SendRequest::Fn(&SideCarIdentifier, RPCMethod, RPCParameters, 30000)
 					.await
 					.map_err(|Error| CommonError::IPCError { Description:Error.to_string() })
 			},
@@ -403,7 +403,7 @@ impl CommandExecutor for MountainEnvironment {
 						CommandIdentifier
 					);
 					let Event = format!("onCommand:{}", CommandIdentifier);
-					let ActivationResult = Client::SendRequest(
+					let ActivationResult = Client::SendRequest::Fn(
 						&"cocoon-main".to_string(),
 						"$activateByEvent".to_string(),
 						json!({ "activationEvent": Event }),
@@ -464,7 +464,7 @@ impl CommandExecutor for MountainEnvironment {
 									"{}$ExecuteContributedCommand",
 									ProxyTarget::ExtHostCommands.GetTargetPrefix()
 								);
-								return Client::SendRequest(&SideCarIdentifier, RPCMethod, RPCParameters, 30_000)
+								return Client::SendRequest::Fn(&SideCarIdentifier, RPCMethod, RPCParameters, 30_000)
 									.await
 									.map_err(|Error| CommonError::IPCError { Description:Error.to_string() });
 							},

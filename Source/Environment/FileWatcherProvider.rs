@@ -144,7 +144,8 @@ impl WatcherState {
 							{
 								dev_log!(
 									"filewatcher",
-									"warn: [FileWatcherProvider] Failed to forward event handle={} kind={} path={:?}: {:?}",
+									"warn: [FileWatcherProvider] Failed to forward event handle={} kind={} path={:?}: \
+									 {:?}",
 									RecipientHandle,
 									Kind.AsString(),
 									Path,
@@ -159,9 +160,8 @@ impl WatcherState {
 							// the localFilesystem channel. Aliased handles
 							// each get their own emit so per-handle
 							// listeners on the Sky side fire correctly.
-							if let Err(Error) = env_clone
-								.ApplicationHandle
-								.emit(SkyEvent::VFSFileChange.AsStr(), &payload)
+							if let Err(Error) =
+								env_clone.ApplicationHandle.emit(SkyEvent::VFSFileChange.AsStr(), &payload)
 							{
 								dev_log!(
 									"filewatcher",

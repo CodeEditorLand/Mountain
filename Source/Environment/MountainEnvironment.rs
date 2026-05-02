@@ -213,7 +213,10 @@ use serde_json::Value;
 use tauri::{AppHandle, Wry};
 
 use crate::{
-	ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO},
+	ApplicationState::{
+		DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
+		State::ApplicationState::ApplicationState,
+	},
 	dev_log,
 };
 // Import the macro for generating trait implementations

@@ -104,9 +104,6 @@ pub mod TreeViewProvider;
 
 pub mod UserInterfaceProvider;
 
-// Re-export UserInterface and DTO for convenience
-pub use CommonLibrary::UserInterface;
-
 pub mod WebviewProvider;
 
 pub mod WorkspaceProvider;
