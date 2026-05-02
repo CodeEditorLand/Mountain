@@ -6,6 +6,7 @@
 //! (`Environment::Utility::ErrorMapping::Fn`, etc.) - no `pub use`
 //! re-exports.
 
+pub mod EnhanceShellEnvironment;
 pub mod ErrorMapping;
 pub mod LanguageDetection;
 pub mod PathSecurity;
