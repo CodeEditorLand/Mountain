@@ -36,8 +36,8 @@ pub fn Fn(WorkspaceFilePath:&Path, FileContent:&str) -> Result<Vec<WorkspaceFold
 		.map(|(Index, Entry)| {
 			let FolderPath = WorkspaceFileDirectory.join(Entry.path);
 
-			let CanonicalPath = Canonicalize::Fn(&FolderPath)
-				.map_err(|_| CommonError::FileSystemNotFound(FolderPath.clone()))?;
+			let CanonicalPath =
+				Canonicalize::Fn(&FolderPath).map_err(|_| CommonError::FileSystemNotFound(FolderPath.clone()))?;
 
 			let FolderURI = Url::from_directory_path(&CanonicalPath).map_err(|_| {
 				CommonError::InvalidArgument {
