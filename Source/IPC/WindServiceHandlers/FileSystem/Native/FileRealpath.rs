@@ -7,7 +7,7 @@
 use serde_json::Value;
 
 use crate::IPC::{
-	UriComponents::FromFilePath as UriFromFilePath,
+	UriComponents::FromFilePath::Fn as UriFromFilePath,
 	WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg,
 };
 
