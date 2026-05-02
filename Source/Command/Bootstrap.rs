@@ -131,7 +131,7 @@ use url::Url;
 use crate::{
 	ApplicationState::{ApplicationState, DTO::TreeViewStateDTO::TreeViewStateDTO, MapLockError},
 	Environment::CommandProvider::CommandHandler,
-	FileSystem::FileExplorerViewProvider::FileExplorerViewProvider,
+	FileSystem::FileExplorerViewProvider::Struct as FileExplorerViewProvider,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
