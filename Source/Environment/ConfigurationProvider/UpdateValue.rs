@@ -14,7 +14,7 @@ use CommonLibrary::{
 use serde_json::{Map, Value};
 use tauri::Manager;
 
-use crate::{Environment::Utility, RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime, dev_log};
+use crate::{Environment::Utility, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 /// Updates a configuration value in the appropriate `settings.json` file.
 pub(super) async fn update_configuration_value(

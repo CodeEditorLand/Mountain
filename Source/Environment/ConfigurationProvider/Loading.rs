@@ -18,7 +18,7 @@ use tauri::Manager;
 use crate::{
 	ApplicationState::DTO::MergedConfigurationStateDTO::MergedConfigurationStateDTO,
 	Environment::Utility,
-	RunTime::ApplicationRunTime::RuntimeStruct::ApplicationRunTime,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
 
@@ -73,7 +73,10 @@ pub(super) async fn read_and_parse_configuration_file(
 		if let Ok(bytes) = runtime.Run(ReadFile(p.clone())).await {
 			let Parsed = serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new()));
 			if let Ok(mut Guard) = SettingsFileCache().lock() {
-				Guard.insert(p.clone(), CachedSettingsValue { StoredAt:Instant::now(), Parsed:Parsed.clone() });
+				Guard.insert(
+					p.clone(),
+					CachedSettingsValue { StoredAt:Instant::now(), Parsed:Parsed.clone() },
+				);
 			}
 			return Ok(Parsed);
 		}
@@ -208,7 +211,7 @@ pub async fn initialize_and_merge_configurations(
 /// `inspect_configuration_value`'s `path.split('.').try_fold(...)`
 /// land on the right node.
 pub(super) fn collect_default_configurations(
-	application_state:&crate::ApplicationState::ApplicationState,
+	application_state:&crate::ApplicationState::State::ApplicationState::ApplicationState,
 ) -> Result<Value, CommonError> {
 	let mut default_config = Map::new();
 
