@@ -20,12 +20,7 @@ pub fn Fn() {
 
 			let Snapshot = Stats::Fn();
 
-			dev_log!(
-				"path-canon",
-				"entries={} weighted={}",
-				Snapshot.Entries,
-				Snapshot.WeightedSize
-			);
+			dev_log!("path-canon", "entries={} weighted={}", Snapshot.Entries, Snapshot.WeightedSize);
 		}
 	});
 }

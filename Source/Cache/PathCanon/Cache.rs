@@ -2,10 +2,7 @@
 
 //! Process-global canonical-path cache backing store.
 
-use std::{
-	path::PathBuf,
-	time::Duration,
-};
+use std::{path::PathBuf, time::Duration};
 
 use moka::sync::Cache;
 use once_cell::sync::Lazy;
