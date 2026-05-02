@@ -419,7 +419,7 @@ pub(super) async fn provide_workspace_symbols(
 			.ProviderRegistration
 			.LanguageProviders
 			.lock()
-			.map_err(crate::Environment::Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(crate::Environment::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 		providers
 			.values()
 			.find(|p| p.ProviderType == ProviderType::WorkspaceSymbol)

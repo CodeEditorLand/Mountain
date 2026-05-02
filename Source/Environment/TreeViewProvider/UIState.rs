@@ -29,7 +29,7 @@ pub(super) async fn set_tree_view_message(
 			.TreeViews
 			.ActiveTreeViews
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
 			view_state.Message = message.clone();
@@ -68,7 +68,7 @@ pub(super) async fn set_tree_view_title(
 			.TreeViews
 			.ActiveTreeViews
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
 			view_state.Title = title.clone();
@@ -111,7 +111,7 @@ pub(super) async fn set_tree_view_badge(
 			.TreeViews
 			.ActiveTreeViews
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
 			// Store badge in ViewState

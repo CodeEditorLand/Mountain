@@ -106,7 +106,7 @@ pub async fn initialize_and_merge_configurations(
 		.Workspace
 		.WorkspaceConfigurationPath
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.clone();
 
 	let user_config = read_and_parse_configuration_file(environment, &user_settings_path).await?;
@@ -162,7 +162,7 @@ pub async fn initialize_and_merge_configurations(
 		.Configuration
 		.GlobalConfiguration
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = final_config.Data;
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)? = final_config.Data;
 
 	dev_log!(
 		"config",
@@ -217,7 +217,7 @@ pub(super) fn collect_default_configurations(
 		.ScannedExtensions
 		.ScannedExtensions
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.values()
 	{
 		let Some(contributes) = &extension.Contributes else {

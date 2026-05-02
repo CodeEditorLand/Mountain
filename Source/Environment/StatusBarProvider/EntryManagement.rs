@@ -27,7 +27,7 @@ pub(super) async fn set_status_bar_entry_impl(
 		.Markers
 		.ActiveStatusBarItems
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 	items_guard.insert(entry.EntryIdentifier.clone(), entry.clone());
 
@@ -65,7 +65,7 @@ pub(super) async fn dispose_status_bar_entry_impl(
 		.Markers
 		.ActiveStatusBarItems
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.remove(&entry_identifier);
 
 	env.ApplicationHandle

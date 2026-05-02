@@ -32,7 +32,7 @@ pub(super) async fn inspect_configuration_value(
 		.Workspace
 		.WorkspaceConfigurationPath
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.clone();
 
 	// Read each configuration layer individually.

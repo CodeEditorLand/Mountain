@@ -413,7 +413,7 @@ impl TerminalProvider for MountainEnvironment {
 			.Terminals
 			.ActiveTerminals
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.insert(TerminalIdentifier, Arc::new(std::sync::Mutex::new(TerminalState.clone())));
 
 		// BATCH-19 Part B: let Sky render the new terminal panel without
@@ -489,7 +489,7 @@ impl TerminalProvider for MountainEnvironment {
 				.Terminals
 				.ActiveTerminals
 				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 			TerminalsGuard
 				.get(&TerminalId)
@@ -518,7 +518,7 @@ impl TerminalProvider for MountainEnvironment {
 			.Terminals
 			.ActiveTerminals
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.remove(&TerminalId);
 
 		if let Some(TerminalArc) = TerminalArc {
@@ -561,7 +561,7 @@ impl TerminalProvider for MountainEnvironment {
 			.Terminals
 			.ActiveTerminals
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		Ok(TerminalsGuard
 			.get(&TerminalId)
@@ -585,7 +585,7 @@ impl TerminalProvider for MountainEnvironment {
 				.Terminals
 				.ActiveTerminals
 				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 			TerminalsGuard
 				.get(&TerminalId)
 				.and_then(|TerminalArc| TerminalArc.lock().ok())

@@ -32,14 +32,14 @@ pub(super) async fn get_matching_provider(
 		.ProviderRegistration
 		.LanguageProviders
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 	let document = environment
 		.ApplicationState
 		.Feature
 		.Documents
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.get(document_uri.as_str())
 		.cloned();
 

@@ -36,7 +36,7 @@ pub(super) async fn save_document(
 			.Documents
 			.OpenDocuments
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		if let Some(document) = open_documents_guard.get_mut(uri.as_str()) {
 			// For non-file URIs, use temporary file location
@@ -115,7 +115,7 @@ pub(super) async fn save_document_as(
 			.Documents
 			.OpenDocuments
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		guard
 			.get(original_uri.as_str())
@@ -134,7 +134,7 @@ pub(super) async fn save_document_as(
 			.Documents
 			.OpenDocuments
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		let old_document = guard.remove(original_uri.as_str());
 
@@ -184,7 +184,7 @@ pub(super) async fn save_all_documents(
 			.Documents
 			.OpenDocuments
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		open_documents_guard
 			.values()

@@ -245,7 +245,7 @@ impl StorageProvider for MountainEnvironment {
 
 		let StorageMapGuard = StorageMapMutex
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		Ok(StorageMapGuard.get(Key).cloned())
 	}
@@ -315,7 +315,7 @@ impl StorageProvider for MountainEnvironment {
 					self.ApplicationState
 						.GlobalMementoPath
 						.lock()
-						.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+						.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 						.clone(),
 				),
 			)
@@ -325,7 +325,7 @@ impl StorageProvider for MountainEnvironment {
 				self.ApplicationState
 					.WorkspaceMementoPath
 					.lock()
-					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+					.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 					.clone(),
 			)
 		};
@@ -334,7 +334,7 @@ impl StorageProvider for MountainEnvironment {
 		let DataToSave = {
 			let mut StorageMapGuard = StorageMapMutex
 				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 			if let Some(Value) = ValueToSet {
 				StorageMapGuard.insert(Key, Value);
@@ -372,7 +372,7 @@ impl StorageProvider for MountainEnvironment {
 
 		let StorageMapGuard = StorageMapMutex
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		Ok(serde_json::to_value(&*StorageMapGuard)?)
 	}
@@ -396,7 +396,7 @@ impl StorageProvider for MountainEnvironment {
 					self.ApplicationState
 						.GlobalMementoPath
 						.lock()
-						.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+						.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 						.clone(),
 				),
 			)
@@ -406,7 +406,7 @@ impl StorageProvider for MountainEnvironment {
 				self.ApplicationState
 					.WorkspaceMementoPath
 					.lock()
-					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+					.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 					.clone(),
 			)
 		};
@@ -414,7 +414,7 @@ impl StorageProvider for MountainEnvironment {
 		// Update in-memory state
 		*StorageMapMutex
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)? = DeserializedState.clone();
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)? = DeserializedState.clone();
 
 		// Persist to disk asynchronously
 		if let Some(StoragePath) = StoragePathOption {

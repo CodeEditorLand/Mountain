@@ -446,7 +446,7 @@ impl SearchProvider for MountainEnvironment {
 			.Workspace
 			.WorkspaceFolders
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.clone();
 
 		if Folders.is_empty() {

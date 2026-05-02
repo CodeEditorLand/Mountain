@@ -19,7 +19,7 @@
 //! ERROR HANDLING:
 //! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
 //! - Application state lock errors are mapped using
-//!   [`Utility::MapApplicationStateLockErrorToCommonError`]
+//!   [`Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError`]
 //! - Some operations are stubbed with logging (FindFilesInWorkspace, OpenFile,
 //!   ApplyWorkspaceEdit)
 //!
@@ -185,7 +185,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.Workspace
 			.WorkspaceFolders
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 		Ok(FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect())
 	}
 
@@ -197,7 +197,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.Workspace
 			.WorkspaceFolders
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 		for Folder in FoldersGuard.iter() {
 			if URIToMatch.as_str().starts_with(Folder.URI.as_str()) {
 				return Ok(Some((Folder.URI.clone(), Folder.Name.clone(), Folder.Index)));
@@ -219,7 +219,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.Workspace
 			.WorkspaceConfigurationPath
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.clone())
 	}
 
@@ -349,7 +349,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.Workspace
 			.WorkspaceFolders
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.iter()
 			.filter_map(|Folder| Folder.URI.to_file_path().ok())
 			.collect();

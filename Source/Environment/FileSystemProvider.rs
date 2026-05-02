@@ -14,7 +14,7 @@
 //!
 //! SECURITY MODEL:
 //! - Sandboxed filesystem access limited to registered workspace folders
-//! - All operations call `Utility::IsPathAllowedForAccess` first
+//! - All operations call `Utility::PathSecurity::IsPathAllowedForAccess` first
 //! - Requires workspace trust to be enabled for any file access
 //! - Path normalization prevents `../` attacks
 //! - Symbolic link detection avoids following untrusted links outside

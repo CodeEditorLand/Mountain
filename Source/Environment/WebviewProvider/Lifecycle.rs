@@ -66,7 +66,7 @@ pub(super) async fn create_webview_panel_impl(
 			.Webviews
 			.ActiveWebviews
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		webview_guard.insert(handle.clone(), state);
 	}
@@ -137,7 +137,7 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 		.Webviews
 		.ActiveWebviews
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.remove(&handle);
 
 	// Notify frontend about Webview disposal
@@ -175,7 +175,7 @@ pub(super) async fn reveal_webview_panel_impl(
 				.Webviews
 				.ActiveWebviews
 				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 			if let Some(state) = webview_guard.get_mut(&handle) {
 				state.IsVisible = true;

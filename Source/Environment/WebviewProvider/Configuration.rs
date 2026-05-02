@@ -41,7 +41,7 @@ pub(super) async fn set_webview_options_impl(
 					.Webviews
 					.ActiveWebviews
 					.lock()
-					.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+					.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 				if let Some(state) = webview_guard.get_mut(&handle) {
 					state.Title = title.to_string();

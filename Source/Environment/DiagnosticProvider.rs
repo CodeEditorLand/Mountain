@@ -231,7 +231,7 @@ impl DiagnosticManager for MountainEnvironment {
 			.Diagnostics
 			.DiagnosticsMap
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		let OwnerMap = DiagnosticsMapGuard.entry(Owner.clone()).or_default();
 
@@ -254,7 +254,7 @@ impl DiagnosticManager for MountainEnvironment {
 			// bad entries instead of throwing: skip the offender, log
 			// once, keep going so the rest of the batch reaches the
 			// renderer.
-			let URIKey = match Utility::GetURLFromURIComponentsDTO(&URIComponentsValue) {
+			let URIKey = match Utility::UriParsing::GetURLFromURIComponentsDTO(&URIComponentsValue) {
 				Ok(Url) => Url.to_string(),
 				Err(Error) => {
 					dev_log!(
@@ -351,7 +351,7 @@ impl DiagnosticManager for MountainEnvironment {
 				.Diagnostics
 				.DiagnosticsMap
 				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 			DiagnosticsMapGuard
 				.remove(&Owner)
@@ -411,12 +411,12 @@ impl DiagnosticManager for MountainEnvironment {
 			.Diagnostics
 			.DiagnosticsMap
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		let mut ResultMap:std::collections::HashMap<String, Vec<MarkerDataDTO>> = std::collections::HashMap::new();
 
 		if let Some(FilterURIValue) = ResourceURIFilterOption {
-			let FilterURIKey = Utility::GetURLFromURIComponentsDTO(&FilterURIValue)?.to_string();
+			let FilterURIKey = Utility::UriParsing::GetURLFromURIComponentsDTO(&FilterURIValue)?.to_string();
 
 			for OwnerMap in DiagnosticsMapGuard.values() {
 				if let Some(Markers) = OwnerMap.get(&FilterURIKey) {

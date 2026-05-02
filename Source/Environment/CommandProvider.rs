@@ -234,7 +234,7 @@ impl CommandExecutor for MountainEnvironment {
 			.Registry
 			.CommandRegistry
 			.lock()
-			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
+			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.get(&CommandIdentifier)
 			.cloned();
 
@@ -428,7 +428,7 @@ impl CommandExecutor for MountainEnvironment {
 						.Registry
 						.CommandRegistry
 						.lock()
-						.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
+						.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 						.get(&CommandIdentifier)
 						.cloned();
 					if let Some(Handler) = PostActivationHandler {
@@ -498,7 +498,7 @@ impl CommandExecutor for MountainEnvironment {
 			.Registry
 			.CommandRegistry
 			.lock()
-			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		Registry.insert(
 			CommandIdentifier.clone(),
@@ -517,7 +517,7 @@ impl CommandExecutor for MountainEnvironment {
 			.Registry
 			.CommandRegistry
 			.lock()
-			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?
+			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 			.remove(&CommandIdentifier);
 
 		Ok(())
@@ -533,7 +533,7 @@ impl CommandExecutor for MountainEnvironment {
 			.Registry
 			.CommandRegistry
 			.lock()
-			.map_err(super::Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(super::Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		Ok(Registry.keys().cloned().collect())
 	}

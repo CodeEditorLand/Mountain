@@ -37,7 +37,7 @@ pub(super) async fn open_document(
 	language_identifier:Option<String>,
 	content:Option<String>,
 ) -> Result<Url, CommonError> {
-	let uri = Utility::GetURLFromURIComponentsDTO(&uri_components_dto)?;
+	let uri = Utility::UriParsing::GetURLFromURIComponentsDTO(&uri_components_dto)?;
 
 	dev_log!("model", "[DocumentProvider] Opening document: {}", uri);
 
@@ -48,7 +48,7 @@ pub(super) async fn open_document(
 		.Documents
 		.OpenDocuments
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.get(uri.as_str())
 	{
 		dev_log!("model", "[DocumentProvider] Document {} is already open.", uri);
@@ -130,7 +130,7 @@ pub(super) async fn open_document(
 		.Documents
 		.OpenDocuments
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.insert(uri.to_string(), new_document);
 
 	if let Err(error) = LogSkyEmit(

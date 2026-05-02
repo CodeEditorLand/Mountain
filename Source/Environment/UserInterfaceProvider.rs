@@ -339,7 +339,7 @@ pub(crate) async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 			.UI
 			.PendingUserInterfaceRequest
 			.lock()
-			.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		PendingRequestsGuard.insert(RequestIdentifier.clone(), Sender);
 	}
@@ -376,7 +376,7 @@ pub(crate) async fn SendUserInterfaceRequest<TPayload:Serialize + Clone>(
 				.UI
 				.PendingUserInterfaceRequest
 				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 			Guard.remove(&RequestIdentifier);
 

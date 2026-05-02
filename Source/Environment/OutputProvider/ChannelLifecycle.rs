@@ -51,7 +51,7 @@ pub(super) async fn register_channel(
 		.OutputChannels
 		.OutputChannels
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 	channels_guard.entry(channel_identifier.clone()).or_insert_with(|| {
 		OutputChannelStateDTO::Create(&name, language_identifier.clone()).unwrap_or_else(|e| {
@@ -83,7 +83,7 @@ pub(super) async fn dispose_channel(
 		.OutputChannels
 		.OutputChannels
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.remove(&channel_identifier);
 
 	env.ApplicationHandle

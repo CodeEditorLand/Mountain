@@ -58,7 +58,7 @@ pub(super) async fn update_configuration_value(
 				.Workspace
 				.WorkspaceConfigurationPath
 				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 				.clone()
 				.ok_or_else(|| {
 					CommonError::ConfigurationLoad { Description:"No workspace configuration path set".into() }
@@ -76,7 +76,7 @@ pub(super) async fn update_configuration_value(
 				.Workspace
 				.WorkspaceFolders
 				.lock()
-				.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 			let First = FoldersGuard.first().ok_or_else(|| {
 				CommonError::ConfigurationLoad {
 					Description:"No workspace folders open for WorkspaceFolder target".into(),

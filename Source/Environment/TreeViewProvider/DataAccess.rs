@@ -33,7 +33,7 @@ pub(super) async fn get_children(
 		.TreeViews
 		.ActiveTreeViews
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.get(&view_identifier)
 		.cloned();
 
@@ -79,7 +79,7 @@ pub(super) async fn get_tree_item(
 		.TreeViews
 		.ActiveTreeViews
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
 		.get(&view_identifier)
 		.cloned();
 
