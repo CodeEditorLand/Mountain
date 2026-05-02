@@ -1,0 +1,13 @@
+#![allow(non_snake_case)]
+
+//! OTEL integration handle. Currently a placeholder.
+
+pub struct Struct;
+
+impl Struct {
+	pub fn new() -> Self { Self {} }
+}
+
+impl Default for Struct {
+	fn default() -> Self { Self::new() }
+}
