@@ -152,50 +152,37 @@
 //! - [`configuration.rs`](configuration.rs) - Options and HTML setting
 //! - [`messaging.rs`](messaging.rs) - Message passing and listeners
 
+#![allow(non_snake_case)]
+
 use std::collections::HashMap;
 
 use CommonLibrary::{Error::CommonError::CommonError, Webview::WebviewProvider::WebviewProvider};
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
 use super::MountainEnvironment::MountainEnvironment;
 
-/// Represents a Webview message
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WebviewMessage {
-	pub MessageIdentifier:String,
-	pub MessageType:String,
-	pub Payload:Value,
-	pub Source:Option<String>,
-}
+// Atomic public DTOs (one export per file).
+pub mod WebviewLifecycleState;
+pub mod WebviewMessage;
 
-/// Webview lifecycle state
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum WebviewLifecycleState {
-	Unloaded,
-	Loading,
-	Loaded,
-	Visible,
-	Hidden,
-	Disposed,
-}
+// Private submodules - implementation only, accessed through the
+// trait impl below.
+#[path = "WebviewProvider/Configuration.rs"]
+mod Configuration;
+#[path = "WebviewProvider/Lifecycle.rs"]
+mod Lifecycle;
+#[path = "WebviewProvider/Messaging.rs"]
+mod Messaging;
 
-/// Webview message handler context
+/// Webview message handler context. Private - only the dispatch
+/// machinery in `Messaging.rs` consumes it.
 #[allow(dead_code)]
 struct WebviewMessageContext {
 	Handle:String,
 	SideCarIdentifier:Option<String>,
 	PendingResponses:HashMap<String, tokio::sync::oneshot::Sender<Value>>,
 }
-
-// Private submodules containing the actual implementation
-#[path = "WebviewProvider/Lifecycle.rs"]
-mod Lifecycle;
-#[path = "WebviewProvider/Configuration.rs"]
-mod Configuration;
-#[path = "WebviewProvider/Messaging.rs"]
-mod Messaging;
 
 #[async_trait]
 impl WebviewProvider for MountainEnvironment {

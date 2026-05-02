@@ -1,85 +1,37 @@
+#![allow(non_snake_case)]
+
 //! # TestProvider (Environment)
 //!
-//! RESPONSIBILITIES:
-//! - Implements [`TestController`](CommonLibrary::Testing::TestController) for
-//!   [`MountainEnvironment`]
-//! - Manages test discovery, execution, and result reporting
-//! - Handles test controller registration and lifecycle
-//! - Tracks test run progress and aggregates results
-//! - Provides sidecar proxy for extension-provided test frameworks
+//! `TestController` impl for `MountainEnvironment`. Hosts the
+//! controller registry and routes test runs through proxied sidecars
+//! (extension-provided test frameworks). Native Rust controllers are
+//! not yet supported - they short-circuit to `Skipped`.
 //!
-//! ARCHITECTURAL ROLE:
-//! - Environment provider for testing functionality
-//! - Uses controller pattern: each extension can register its own test
-//!   controller
-//! - Controllers identified by unique `ControllerIdentifier` and scoped to
-//!   extensions
-//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
-//!   to test runners
-//! - Stores controller state in `ApplicationState`
+//! Layout (one export per file, file name = identity):
+//! - `TestControllerState::Struct` - per-controller registration.
+//! - `TestRunStatus::Enum` - Queued / Running / Passed / Failed / Skipped /
+//!   Errored.
+//! - `TestResult::Struct` - per-test outcome.
+//! - `TestRun::Struct` - active test run record.
+//! - `TestProviderState::Struct` - aggregate controller + active-runs map, held
+//!   inside `ApplicationState` behind a `RwLock`.
 //!
-//! TEST EXECUTION FLOW:
-//! 1. Extension registers test controller via `RegisterTestController`
-//! 2. Mountain calls `ResolveTests` to discover tests (async, emits
-//!    `TestItemAdded`)
-//! 3. Extension returns test tree structure with IDs, labels, children
-//! 4. UI requests to run tests via `RunTest` or `RunTests` with optional
-//!    `RunProfile`
-//! 5. Mountain forwards to extension's controller via RPC
-//! 6. Extension executes tests and reports progress via `TestRunStarted`,
-//!    `TestItemStarted`, `TestItemPassed`, `TestItemFailed`, `TestRunEnded`
-//!    events
-//! 7. Mountain aggregates results and emits to UI
+//! The trait impl `TestController for MountainEnvironment` and its
+//! private helpers stay in this parent file; they are dispatched via
+//! the trait, not directly addressable, so they don't need atomic
+//! split for navigability.
 //!
-//! ERROR HANDLING:
-//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
-//! - Validates controller identifiers and run profile names (non-empty)
-//! - Controller state tracked in RwLock for thread-safe mutation
-//! - Unknown controller ID errors return `TestControllerNotFound`
-//! - Duplicate registration returns `InvalidArgument` error
-//!
-//! PERFORMANCE:
-//! - Test discovery is async and can be cancelled (drop sender)
-//! - Test run progress is streamed via events, avoiding blocking
-//! - Controller state uses RwLock for concurrent read access during test runs
-//! - TODO: Consider test result caching for quick re-runs
-//!
-//! VS CODE REFERENCE:
-//! - `vs/workbench/contrib/testing/common/testService.ts` - test service
-//!   architecture
-//! - `vs/workbench/contrib/testing/common/testController.ts` - test controller
-//!   interface
-//! - `vs/workbench/contrib/testing/common/testTypes.ts` - test data models
-//! - `vs/workbench/contrib/testing/browser/testingView.ts` - testing UI panel
-//!
-//! TODO:
-//! - Implement test run cancellation and timeout handling
-//! - Add test result caching and quick re-run support
-//! - Implement test tree filtering and search
-//! - Add test run configuration persistence
-//! - Support test run peeking (inline results in editor)
-//! - Implement test coverage integration
-//! - Add test run duration metrics and profiling
-//! - Support parallel test execution (multiple workers)
-//! - Implement test run retry logic for flaky tests
-//! - Add test run export (JUnit, TAP, custom formats)
-//! - Integrate with CodeLens for in-source test run buttons
-//!
-//! MODULE CONTENTS:
-//! - [`TestController`](CommonLibrary::Testing::TestController) implementation:
-//! - `RegisterTestController` - register extension's controller
-//! - `UnregisterTestController` - remove controller
-//! - `ResolveTests` - discover tests (async with cancellation)
-//! - `RunTest` - run single test by ID
-//! - `RunTests` - run multiple tests (by ID or all in parent)
-//! - `StopTestRun` - cancel ongoing test run
-//! - `DidTestItemDiscoveryStart` - discovery progress event
-//!   - `TestRunStarted`/`TestItemStarted`/`TestItemPassed`/`TestItemFailed`/
-//!     `TestRunEnded` - events
-//! - Data types: `TestControllerState`, `TestItemState`, `TestRunProfile`,
-//!   `TestResultState`
+//! VS Code reference:
+//! - `vs/workbench/contrib/testing/common/testService.ts`,
+//! - `vs/workbench/contrib/testing/common/testTypes.ts`.
 
-use std::{collections::HashMap, sync::Arc};
+pub mod TestControllerState;
+pub mod TestProviderState;
+pub mod TestResult;
+pub mod TestRun;
+pub mod TestRunStatus;
+
+use std::sync::Arc;
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -88,7 +40,6 @@ use CommonLibrary::{
 	Testing::TestController::TestController,
 };
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use tauri::Emitter;
 use uuid::Uuid;
@@ -96,85 +47,8 @@ use uuid::Uuid;
 use super::MountainEnvironment::MountainEnvironment;
 use crate::dev_log;
 
-/// Represents a test controller's state
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TestControllerState {
-	pub ControllerIdentifier:String,
-
-	pub Label:String,
-
-	pub SideCarIdentifier:Option<String>,
-
-	pub IsActive:bool,
-
-	pub SupportedTestTypes:Vec<String>,
-}
-
-/// Represents the status of a test run
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum TestRunStatus {
-	Queued,
-
-	Running,
-
-	Passed,
-
-	Failed,
-
-	Skipped,
-
-	Errored,
-}
-
-/// Represents a test result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TestResult {
-	pub TestIdentifier:String,
-
-	pub FullName:String,
-
-	pub Status:TestRunStatus,
-
-	pub DurationMs:Option<u64>,
-
-	pub ErrorMessage:Option<String>,
-
-	pub StackTrace:Option<String>,
-}
-
-/// Represents an active test run
-#[allow(dead_code)]
-#[derive(Debug, Clone)]
-pub struct TestRun {
-	pub RunIdentifier:String,
-
-	pub ControllerIdentifier:String,
-
-	pub Status:TestRunStatus,
-
-	pub StartedAt:std::time::Instant,
-
-	pub Results:HashMap<String, TestResult>,
-}
-
-/// Stores test provider state
-#[derive(Debug)]
-pub struct TestProviderState {
-	pub Controllers:HashMap<String, TestControllerState>,
-
-	pub ActiveRuns:HashMap<String, TestRun>,
-}
-
-impl TestProviderState {
-	pub fn new() -> Self { Self { Controllers:HashMap::new(), ActiveRuns:HashMap::new() } }
-}
-
 #[async_trait]
 impl TestController for MountainEnvironment {
-	/// Registers a new test controller from an extension (e.g., Cocoon).
-	///
-	/// This method creates a TestControllerState entry and notifies the
-	/// frontend about the available test controller.
 	async fn RegisterTestController(&self, ControllerId:String, Label:String) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
@@ -183,29 +57,20 @@ impl TestController for MountainEnvironment {
 			Label
 		);
 
-		// For now, assume all extension providers come from the main sidecar
 		let SideCarIdentifier = Some("cocoon-main".to_string());
 
-		let ControllerState = TestControllerState {
+		let ControllerState = TestControllerState::Struct {
 			ControllerIdentifier:ControllerId.clone(),
-
 			Label,
-
 			SideCarIdentifier,
-
 			IsActive:true,
-
 			SupportedTestTypes:vec!["unit".to_string(), "integration".to_string()],
 		};
 
-		// Store the controller state
 		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
-
 		StateGuard.Controllers.insert(ControllerId.clone(), ControllerState);
-
 		drop(StateGuard);
 
-		// Notify the frontend about the new test controller
 		self.ApplicationHandle
 			.emit(
 				SkyEvent::TestRegistered.AsStr(),
@@ -220,15 +85,9 @@ impl TestController for MountainEnvironment {
 			"[TestProvider] Test controller '{}' registered successfully",
 			ControllerId
 		);
-
 		Ok(())
 	}
 
-	/// Runs tests based on the test run request.
-	///
-	/// This implementation supports both native (Rust) and proxied (extension)
-	/// test controllers, with proper test discovery, execution, and result
-	/// reporting.
 	async fn RunTests(&self, ControllerIdentifier:String, TestRunRequest:Value) -> Result<(), CommonError> {
 		dev_log!(
 			"extensions",
@@ -237,37 +96,27 @@ impl TestController for MountainEnvironment {
 			TestRunRequest
 		);
 
-		// Get controller state
 		let ControllerState = {
 			let StateGuard = self.ApplicationState.TestProviderState.read().await;
-
 			StateGuard.Controllers.get(&ControllerIdentifier).cloned().ok_or_else(|| {
 				CommonError::TestControllerNotFound { ControllerIdentifier:ControllerIdentifier.clone() }
 			})?
 		};
 
-		// Create a new test run
 		let RunIdentifier = Uuid::new_v4().to_string();
-
-		let TestRun = TestRun {
+		let TestRunRecord = TestRun::Struct {
 			RunIdentifier:RunIdentifier.clone(),
-
 			ControllerIdentifier:ControllerIdentifier.clone(),
-
-			Status:TestRunStatus::Queued,
-
+			Status:TestRunStatus::Enum::Queued,
 			StartedAt:std::time::Instant::now(),
-
-			Results:HashMap::new(),
+			Results:std::collections::HashMap::new(),
 		};
 
 		{
 			let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
-
-			StateGuard.ActiveRuns.insert(RunIdentifier.clone(), TestRun);
+			StateGuard.ActiveRuns.insert(RunIdentifier.clone(), TestRunRecord);
 		}
 
-		// Notify frontend about test run start
 		self.ApplicationHandle
 			.emit(
 				SkyEvent::TestRunStarted.AsStr(),
@@ -277,38 +126,26 @@ impl TestController for MountainEnvironment {
 				CommonError::IPCError { Description:format!("Failed to emit test run started event: {}", Error) }
 			})?;
 
-		// Execute tests based on controller type
 		if let Some(SideCarIdentifier) = &ControllerState.SideCarIdentifier {
-			// Proxied extension test controller
 			Self::RunProxiedTests(self, SideCarIdentifier, &RunIdentifier, TestRunRequest).await?;
 		} else {
-			// Native Rust test controller (currently not supported)
 			dev_log!(
 				"extensions",
 				"warn: [TestProvider] Native test controllers not yet implemented for '{}'",
 				ControllerIdentifier
 			);
-
-			let _ = Self::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Skipped).await;
+			let _ = Self::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Enum::Skipped).await;
 		}
 
 		Ok(())
 	}
 }
 
-// ============================================================================
-// Private Helper Methods
-// ============================================================================
-
 impl MountainEnvironment {
-	/// Runs tests via a proxied sidecar test controller.
 	async fn RunProxiedTests(
 		&self,
-
 		SideCarIdentifier:&str,
-
 		RunIdentifier:&str,
-
 		TestRunRequest:Value,
 	) -> Result<(), CommonError> {
 		dev_log!(
@@ -318,34 +155,21 @@ impl MountainEnvironment {
 			SideCarIdentifier
 		);
 
-		// Update test run status to running
-		let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Running).await;
+		let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Running).await;
 
-		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
-
+		let IPCProviderHandle:Arc<dyn IPCProvider> = self.Require();
 		let RPCMethod = format!("{}$runTests", ProxyTarget::ExtHostTesting.GetTargetPrefix());
+		let RPCParams = json!({ "RunIdentifier": RunIdentifier, "TestRunRequest": TestRunRequest });
 
-		let RPCParams = json!({
-			"RunIdentifier": RunIdentifier,
-
-			"TestRunRequest": TestRunRequest,
-
-		});
-
-		match IPCProvider
+		match IPCProviderHandle
 			.SendRequestToSideCar(SideCarIdentifier.to_string(), RPCMethod, RPCParams, 300000)
 			.await
 		{
 			Ok(Response) => {
-				// Parse test results from response
-				if let Ok(Results) = serde_json::from_value::<Vec<TestResult>>(Response) {
+				if let Ok(Results) = serde_json::from_value::<Vec<TestResult::Struct>>(Response) {
 					let _ = Self::StoreTestResults(self, RunIdentifier, Results).await;
-
-					// Determine final status based on results
 					let FinalStatus = Self::CalculateRunStatus(self, RunIdentifier).await;
-
 					let _ = Self::UpdateRunStatus(self, RunIdentifier, FinalStatus).await;
-
 					dev_log!(
 						"extensions",
 						"[TestProvider] Test run '{}' completed with status {:?}",
@@ -358,59 +182,42 @@ impl MountainEnvironment {
 						"error: [TestProvider] Failed to parse test results for run '{}'",
 						RunIdentifier
 					);
-
-					let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
+					let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
 				}
 				Ok(())
 			},
-
 			Err(Error) => {
 				dev_log!("extensions", "error: [TestProvider] Failed to run tests: {}", Error);
-
-				let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Errored).await;
-
+				let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
 				Err(Error)
 			},
 		}
 	}
 
-	/// Updates the status of a test run and notifies the frontend.
-	async fn UpdateRunStatus(&self, RunIdentifier:&str, Status:TestRunStatus) -> Result<(), CommonError> {
+	async fn UpdateRunStatus(&self, RunIdentifier:&str, Status:TestRunStatus::Enum) -> Result<(), CommonError> {
 		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
-
-		if let Some(TestRun) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
-			TestRun.Status = Status;
-
+		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
+			TestRunRecord.Status = Status;
 			drop(StateGuard);
-
-			// Notify frontend about status change
 			self.ApplicationHandle
 				.emit(
 					SkyEvent::TestRunStatusChanged.AsStr(),
-					json!({
-						"RunIdentifier": RunIdentifier,
-
-						"Status": Status,
-
-					}),
+					json!({ "RunIdentifier": RunIdentifier, "Status": Status }),
 				)
 				.map_err(|Error| {
 					CommonError::IPCError { Description:format!("Failed to emit test status change event: {}", Error) }
 				})?;
-
 			Ok(())
 		} else {
 			Err(CommonError::TestRunNotFound { RunIdentifier:RunIdentifier.to_string() })
 		}
 	}
 
-	/// Stores test results for a test run.
-	async fn StoreTestResults(&self, RunIdentifier:&str, Results:Vec<TestResult>) -> Result<(), CommonError> {
+	async fn StoreTestResults(&self, RunIdentifier:&str, Results:Vec<TestResult::Struct>) -> Result<(), CommonError> {
 		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
-
-		if let Some(TestRun) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
+		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			for Result in Results {
-				TestRun.Results.insert(Result.TestIdentifier.clone(), Result);
+				TestRunRecord.Results.insert(Result.TestIdentifier.clone(), Result);
 			}
 			Ok(())
 		} else {
@@ -418,28 +225,24 @@ impl MountainEnvironment {
 		}
 	}
 
-	/// Calculates the final status of a test run based on its results.
-	async fn CalculateRunStatus(&self, RunIdentifier:&str) -> TestRunStatus {
+	async fn CalculateRunStatus(&self, RunIdentifier:&str) -> TestRunStatus::Enum {
 		let StateGuard = self.ApplicationState.TestProviderState.read().await;
-
-		if let Some(TestRun) = StateGuard.ActiveRuns.get(RunIdentifier) {
-			if TestRun.Results.is_empty() {
-				TestRunStatus::Passed // No tests considered passed
+		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get(RunIdentifier) {
+			if TestRunRecord.Results.is_empty() {
+				TestRunStatus::Enum::Passed
 			} else {
-				let HasFailed = TestRun.Results.values().any(|r| r.Status == TestRunStatus::Failed);
-
-				let HasErrored = TestRun.Results.values().any(|r| r.Status == TestRunStatus::Errored);
-
+				let HasFailed = TestRunRecord.Results.values().any(|R| R.Status == TestRunStatus::Enum::Failed);
+				let HasErrored = TestRunRecord.Results.values().any(|R| R.Status == TestRunStatus::Enum::Errored);
 				if HasErrored {
-					TestRunStatus::Errored
+					TestRunStatus::Enum::Errored
 				} else if HasFailed {
-					TestRunStatus::Failed
+					TestRunStatus::Enum::Failed
 				} else {
-					TestRunStatus::Passed
+					TestRunStatus::Enum::Passed
 				}
 			}
 		} else {
-			TestRunStatus::Errored
+			TestRunStatus::Enum::Errored
 		}
 	}
 }
