@@ -439,7 +439,7 @@ impl ConfigurationBridge {
 			.runtime
 			.Environment
 			.ApplicationHandle
-			.try_state::<crate::IPC::TauriIPCServer::TauriIPCServer>()
+			.try_state::<crate::IPC::TauriIPCServer_Old::TauriIPCServer>()
 		{
 			let config_json =
 				serde_json::to_value(config).map_err(|e| format!("Failed to serialize configuration: {}", e))?;

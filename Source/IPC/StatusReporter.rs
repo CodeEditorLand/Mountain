@@ -329,7 +329,7 @@ pub struct ServiceRegistry {
 /// Status reporter for IPC communication
 pub struct StatusReporter {
 	runtime:Arc<ApplicationRunTime>,
-	ipc_server:Option<Arc<crate::IPC::TauriIPCServer::TauriIPCServer>>,
+	ipc_server:Option<Arc<crate::IPC::TauriIPCServer_Old::TauriIPCServer>>,
 	status_history:Arc<Mutex<Vec<IPCStatusReport>>>,
 	start_time:SystemTime,
 	error_count:Arc<Mutex<u32>>,
@@ -387,7 +387,7 @@ impl StatusReporter {
 	}
 
 	/// Set the IPC server instance
-	pub fn set_ipc_server(&mut self, ipc_server:Arc<crate::IPC::TauriIPCServer::TauriIPCServer>) {
+	pub fn set_ipc_server(&mut self, ipc_server:Arc<crate::IPC::TauriIPCServer_Old::TauriIPCServer>) {
 		self.ipc_server = Some(ipc_server);
 	}
 
@@ -790,7 +790,7 @@ impl StatusReporter {
 		2.5 // Example compression ratio
 	}
 
-	async fn calculate_pool_utilization(&self, stats:&crate::IPC::TauriIPCServer::ConnectionStats) -> f64 {
+	async fn calculate_pool_utilization(&self, stats:&crate::IPC::TauriIPCServer_Old::ConnectionStats) -> f64 {
 		if stats.total_connections == 0 {
 			return 0.0;
 		}

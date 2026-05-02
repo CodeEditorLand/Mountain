@@ -86,9 +86,9 @@ pub mod Security;
 
 // --- Feature Sub-modules ---
 
-/// Advanced experimental features.
-// Legacy AdvancedFeatures.rs for backward compatibility
-#[path = "AdvancedFeatures.rs"]
+/// Advanced experimental features (collaboration, intelligent caching,
+/// performance monitoring). TODO: atomize this 648-LOC single file into a
+/// directory; for now consumers spell `IPC::AdvancedFeatures::*` directly.
 pub mod AdvancedFeatures;
 
 /// Configuration synchronization bridge.
@@ -152,41 +152,11 @@ pub mod Enhanced;
 /// Legacy Permission subdirectory.
 pub mod Permission;
 
-// --- Re-exports for backward compatibility ---
-
-pub use Common::{ConnectionStatus, HealthStatus, MessageType, PerformanceMetrics, ServiceInfo};
-pub use Message::Types::{ListenerCallback, SimpleConnectionStatus, TauriIPCMessage};
-pub use TauriIPCServer_Old as TauriIPCServer;
-pub use Connection::{
-	Health::HealthChecker,
-	Manager::{ConnectionManager, ConnectionPool},
-	Types::{ConnectionHandle, ConnectionStats},
-};
-pub use Encryption::{
-	MessageCompressor::MessageCompressor,
-	SecureChannel::{EncryptedMessage, SecureMessageChannel},
-};
-pub use Security::{
-	PermissionManager::{PermissionManager, SecurityContext, SecurityEvent, SecurityEventType},
-	Role::Role,
-};
-pub use AdvancedFeatures::{
-	AdvancedFeatures as AdvancedFeatures_New,
-	CachedMessage,
-	CollaborationPermissions,
-	CollaborationSession,
-	MessageCache,
-	PerformanceStats,
-	initialize_advanced_features,
-};
-pub use ConfigurationBridge as ConfigurationBridge_New;
-pub use StatusReporter as StatusReporter_New;
-pub use WindAdvancedSync as WindAdvancedSync_New;
-// --- Legacy compatibility function re-exports ---
-
-// Note: initialize_advanced_features is already exported above
-pub use StatusReporter::initialize_status_reporter;
-pub use WindAdvancedSync::initialize_wind_advanced_sync;
+// No `pub use` re-exports - callers spell the full path
+// (`IPC::Connection::Manager::ConnectionManager`, etc.). The legacy single-
+// file modules `TauriIPCServer_Old`, `AdvancedFeatures`, `StatusReporter`,
+// `WindAdvancedSync`, `ConfigurationBridge` remain as roots for the
+// in-progress atomic migration.
 
 // --- Notes on Migration ---
 
