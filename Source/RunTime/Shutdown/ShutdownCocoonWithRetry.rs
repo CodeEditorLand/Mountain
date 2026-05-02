@@ -8,9 +8,7 @@
 
 use std::sync::Arc;
 
-use CommonLibrary::{
-	Environment::Requires::Requires, Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider,
-};
+use CommonLibrary::{Environment::Requires::Requires, Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
@@ -25,11 +23,7 @@ impl ApplicationRunTime {
 
 		while Attempts < MaximumAttempts {
 			match IPCProvider
-				.SendNotificationToSideCar(
-					"cocoon-main".to_string(),
-					"$shutdown".to_string(),
-					serde_json::Value::Null,
-				)
+				.SendNotificationToSideCar("cocoon-main".to_string(), "$shutdown".to_string(), serde_json::Value::Null)
 				.await
 			{
 				Ok(()) => {
@@ -57,7 +51,7 @@ impl ApplicationRunTime {
 		// background tokio task firing `SendNotification` after this flips
 		// short-circuits to `Ok(())` instead of attempting a TCP connect to
 		// the dead socket and logging a false-positive `Connection refused`.
-		crate::Vine::Client::MarkShutdown();
+		crate::Vine::Client::MarkShutdown::Fn();
 
 		// Atom I6: always reap the child after the graceful attempt. No-op if
 		// the child already exited from $shutdown.
@@ -67,9 +61,7 @@ impl ApplicationRunTime {
 			Ok(())
 		} else {
 			Err(LastError.unwrap_or_else(|| {
-				CommonError::Unknown {
-					Description:"Failed to shutdown Cocoon after maximum retries".to_string(),
-				}
+				CommonError::Unknown { Description:"Failed to shutdown Cocoon after maximum retries".to_string() }
 			}))
 		}
 	}

@@ -29,17 +29,15 @@ impl ApplicationRunTime {
 
 		if let Some(Parent) = GlobalMementoPath.parent() {
 			if !Parent.exists() {
-				std::fs::create_dir_all(Parent).map_err(|E| {
-					CommonError::FileSystemIO { Path:Parent.to_path_buf(), Description:E.to_string() }
-				})?;
+				std::fs::create_dir_all(Parent)
+					.map_err(|E| CommonError::FileSystemIO { Path:Parent.to_path_buf(), Description:E.to_string() })?;
 			}
 		}
 
 		let MementoJSON = serde_json::to_string_pretty(&*GlobalMementoGuard)
 			.map_err(|E| CommonError::SerializationError { Description:E.to_string() })?;
 
-		std::fs::write(&GlobalMementoPath, MementoJSON).map_err(|E| {
-			CommonError::FileSystemIO { Path:GlobalMementoPath.clone(), Description:E.to_string() }
-		})
+		std::fs::write(&GlobalMementoPath, MementoJSON)
+			.map_err(|E| CommonError::FileSystemIO { Path:GlobalMementoPath.clone(), Description:E.to_string() })
 	}
 }

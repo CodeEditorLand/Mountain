@@ -18,10 +18,7 @@ impl ApplicationRunTime {
 			Ok(()) => dev_log!("lifecycle", "[ApplicationRunTime] Cocoon shutdown successful"),
 			Err(Error) => {
 				ShutdownErrors.push(format!("Cocoon shutdown failed: {}", Error));
-				dev_log!(
-					"lifecycle",
-					"warn: [ApplicationRunTime] Cocoon shutdown failed, continuing..."
-				);
+				dev_log!("lifecycle", "warn: [ApplicationRunTime] Cocoon shutdown failed, continuing...");
 			},
 		}
 
@@ -51,11 +48,7 @@ impl ApplicationRunTime {
 
 		if !ShutdownErrors.is_empty() {
 			Err(CommonError::Unknown {
-				Description:format!(
-					"Shutdown completed with {} errors: {:?}",
-					ShutdownErrors.len(),
-					ShutdownErrors
-				),
+				Description:format!("Shutdown completed with {} errors: {:?}", ShutdownErrors.len(), ShutdownErrors),
 			})
 		} else {
 			Ok(())
