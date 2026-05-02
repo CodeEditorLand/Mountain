@@ -14,9 +14,11 @@ use tauri::{AppHandle, Manager};
 
 use crate::{
 	ApplicationState::{
-		ApplicationState,
 		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
-		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndBroadcast,
+		State::{
+			ApplicationState::ApplicationState,
+			WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndBroadcast,
+		},
 	},
 	dev_log,
 };
