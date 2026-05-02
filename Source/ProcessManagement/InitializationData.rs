@@ -404,25 +404,35 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 	let AppRoot = PathResolver
 		.resource_dir()
-		.or_else(|_| {
-			// Debug builds: resource_dir() fails because the binary runs
-			// outside a proper Tauri bundle. Fall back to the exe-relative
-			// Sky Target directory (same path used for STATIC_APPLICATION_ROOT).
+		.ok()
+		.filter(|P| !P.as_os_str().is_empty() && P.exists())
+		.or_else(|| {
+			// Tauri's `resource_dir()` returns Err (or an empty/missing
+			// path) for raw-binary launches outside the bundle. Probe two
+			// fallback layouts so both `.app` and dev launches resolve:
+			//
+			//   1. `.app/Contents/MacOS/<bin>` → `Contents/Resources/`
+			//      (shipped bundle, raw-binary launch from inside the
+			//      bundle tree).
+			//   2. `Element/Mountain/Target/<profile>/<bin>` →
+			//      `Element/Sky/Target/` (monorepo dev / raw release).
 			let ExeDir = std::env::current_exe()
 				.ok()
 				.and_then(|P| P.parent().map(|D| D.to_path_buf()))
 				.unwrap_or_default();
-			// Exe at Element/Mountain/Target/debug/ - ../../../ lands in
-			// Element/, so join "Sky/Target" (not "Element/Sky/Target"
-			// which would create a bogus Element/Element/Sky/ path).
+			let BundleResources = ExeDir.join("../Resources");
+			if BundleResources.exists() {
+				return Some(BundleResources.canonicalize().unwrap_or(BundleResources));
+			}
 			let SkyTarget = ExeDir.join("../../../Sky/Target");
 			if SkyTarget.exists() {
-				Ok(SkyTarget.canonicalize().unwrap_or(SkyTarget))
-			} else {
-				Err(tauri::Error::UnknownPath)
+				return Some(SkyTarget.canonicalize().unwrap_or(SkyTarget));
 			}
+			None
 		})
-		.map_err(|Error| CommonError::ConfigurationLoad { Description:Error.to_string() })?;
+		.ok_or_else(|| CommonError::ConfigurationLoad {
+			Description:"Could not resolve AppRoot from resource_dir, ../Resources, or ../../../Sky/Target".to_string(),
+		})?;
 
 	let AppData = PathResolver
 		.app_data_dir()
