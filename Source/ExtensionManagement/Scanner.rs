@@ -123,7 +123,10 @@ use serde_json::{Map, Value};
 use tauri::Manager;
 
 use crate::{
-	ApplicationState::{ApplicationState, DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO},
+	ApplicationState::{
+		DTO::ExtensionDescriptionStateDTO::ExtensionDescriptionStateDTO,
+		State::ApplicationState::ApplicationState,
+	},
 	Environment::Utility,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
