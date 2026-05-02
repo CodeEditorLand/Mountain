@@ -68,6 +68,3 @@ pub mod UIState;
 
 /// Main ApplicationState container for backward compatibility.
 pub mod ApplicationState;
-
-/// Re-export for backward compatibility
-pub use ApplicationState::*;
