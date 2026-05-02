@@ -1,8 +1,6 @@
-//! # SideCarRequest Module (Track)
-//!
-//! Contains the sidecar request dispatch functionality for the Track module.
+#![allow(non_snake_case)]
+
+//! Sidecar request dispatch. Callers spell
+//! `Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest`.
 
 pub mod DispatchSideCarRequest;
-
-// Re-export for backward compatibility
-pub use DispatchSideCarRequest::DispatchSideCarRequest;

@@ -56,7 +56,11 @@ use std::sync::Arc;
 use serde_json::Value;
 use tauri::{AppHandle, Runtime};
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::CreateEffectForRequest, dev_log};
+use crate::{
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::CreateEffectForRequest::Fn as CreateEffectForRequest,
+	dev_log,
+};
 
 /// The primary dispatcher for requests originating from a `Cocoon` sidecar via
 /// gRPC. This routes RPC calls to the correct effect-based implementation.
