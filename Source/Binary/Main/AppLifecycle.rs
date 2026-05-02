@@ -267,25 +267,43 @@ pub fn AppLifecycleSetup(
 		// Set the real filesystem root for /Static/Application/ path mapping.
 		// In dev mode, Tauri serves from ../Sky/Target relative to Mountain.
 		// Tauri's resource_dir gives us the frontendDist path.
-		let SkyTargetDir = PathResolver.resource_dir().unwrap_or_else(|_| {
-			// Fallback: dev-only path based on the monorepo layout. Release
-			// builds must rely on Tauri's bundled resource_dir() - if that
-			// fails in prod, something is wrong with the bundle. The cfg
-			// keeps the dev fallback out of release binaries so a broken
-			// bundle fails loudly instead of creating directories outside it.
-			#[cfg(debug_assertions)]
-			{
-				std::env::current_exe()
+		// Resolve Sky/Target via Tauri first; fall back to executable-
+		// relative bundle and monorepo layouts so raw-binary launches
+		// (e.g. running `Target/release/<bin>` directly from a terminal)
+		// still resolve `STATIC_APPLICATION_ROOT` correctly. Without this
+		// fallback, release binaries launched outside `.app` had an
+		// empty static root, causing extension-contributed icons served
+		// via `vscode-file://` to 404 (GitLens / Roo / Claude side bar
+		// icons missing).
+		let SkyTargetDir = PathResolver
+			.resource_dir()
+			.ok()
+			.filter(|P| !P.as_os_str().is_empty() && P.exists())
+			.unwrap_or_else(|| {
+				let ExeParent = std::env::current_exe()
 					.ok()
 					.and_then(|Exe| Exe.parent().map(|P| P.to_path_buf()))
-					.unwrap_or_default()
-					.join("../../../Sky/Target")
-			}
-			#[cfg(not(debug_assertions))]
-			{
-				std::path::PathBuf::new()
-			}
-		});
+					.unwrap_or_default();
+
+				// `.app/Contents/MacOS/<bin>` → `Contents/Resources/`
+				let BundleResources = ExeParent.join("../Resources");
+				if BundleResources.exists() {
+					return BundleResources;
+				}
+
+				// Monorepo layout: `Element/Mountain/Target/<profile>/<bin>` →
+				// `Element/Sky/Target/`. Used by both debug runs and raw-
+				// release launches from inside the repo.
+				let RepoSky = ExeParent.join("../../../Sky/Target");
+				if RepoSky.exists() {
+					return RepoSky;
+				}
+
+				// Last resort: alongside the binary. A broken bundle layout
+				// then surfaces as visible "asset not found" 404s instead of
+				// silent empty-string joins.
+				ExeParent
+			});
 		crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::set_static_application_root(
 			SkyTargetDir.to_string_lossy().to_string(),
 		);

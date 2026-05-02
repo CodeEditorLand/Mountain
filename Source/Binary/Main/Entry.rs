@@ -148,6 +148,20 @@ pub fn Fn() {
 	crate::IPC::DevLog::InitEager();
 
 	// -------------------------------------------------------------------------
+	// [Boot] [Env] Enhance the process environment with the user's
+	// interactive-shell PATH / NVM_DIR / HOMEBREW_PREFIX / JAVA_HOME / …
+	// before any child process is spawned. macOS GUI launches (Finder,
+	// Dock, Spotlight, `open <bundle>.app`) start the app with a minimal
+	// env where Homebrew, NVM, and similar are not on PATH; without this
+	// step the Cocoon node binary, language servers, and `git` calls
+	// from extensions all fall back to system defaults (or fail).
+	//
+	// No-op when launched from a TTY (terminal already has the right
+	// env) or when the shell probe fails / times out.
+	// -------------------------------------------------------------------------
+	crate::Environment::Utility::EnhanceShellEnvironment::Fn();
+
+	// -------------------------------------------------------------------------
 	// [Boot] [Env] Load .env.Land into process env so standalone binary
 	// invocations pick up Product*, Tier*, Network* vars without requiring
 	// the shell to pre-source the env file. Search order matches
@@ -268,7 +282,7 @@ pub fn Fn() {
 		// error captured during the rest of boot lands in the project.
 		// No-op in release builds or when Report=false.
 		// ---------------------------------------------------------------------
-		crate::Binary::Build::PostHogPlugin::Initialize().await;
+		crate::Binary::Build::PostHogPlugin::Initialize::Fn().await;
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Args] CLI parsing (using CliParse module)
@@ -521,12 +535,12 @@ pub fn Fn() {
 				crate::Binary::Tray::SwitchTrayIcon::SwitchTrayIcon,
 				crate::Binary::IPC::WorkbenchConfigurationCommand::MountainGetWorkbenchConfiguration,
 				Command::TreeView::GetTreeViewChildren,
-				Command::LanguageFeature::MountainProvideHover,
-				Command::LanguageFeature::MountainProvideCompletions,
-				Command::LanguageFeature::MountainProvideDefinition,
-				Command::LanguageFeature::MountainProvideReferences,
+				Command::LanguageFeature::MountainProvideHover::MountainProvideHover,
+				Command::LanguageFeature::MountainProvideCompletions::MountainProvideCompletions,
+				Command::LanguageFeature::MountainProvideDefinition::MountainProvideDefinition,
+				Command::LanguageFeature::MountainProvideReferences::MountainProvideReferences,
 				Command::SourceControlManagement::GetAllSourceControlManagementState,
-				Command::Keybinding::GetResolvedKeybinding,
+				Command::Keybinding::GetResolvedKeybinding::GetResolvedKeybinding,
 				Track::FrontendCommand::DispatchFrontendCommand::DispatchFrontendCommand,
 				Track::UIRequest::ResolveUIRequest::ResolveUIRequest,
 				Track::Webview::MountainWebviewPostMessageFromGuest::MountainWebviewPostMessageFromGuest,
@@ -560,17 +574,17 @@ pub fn Fn() {
 				crate::Binary::Build::DnsCommands::dns_test_resolution,
 				crate::Binary::Build::DnsCommands::dns_health_check,
 				// Process commands (direct Tauri invoke from ProcessPolyfill)
-				crate::Binary::IPC::ProcessCommand::process_get_exec_path,
-				crate::Binary::IPC::ProcessCommand::process_get_platform,
-				crate::Binary::IPC::ProcessCommand::process_get_arch,
-				crate::Binary::IPC::ProcessCommand::process_get_pid,
-				crate::Binary::IPC::ProcessCommand::process_get_shell_env,
-				crate::Binary::IPC::ProcessCommand::process_get_memory_info,
+				crate::Binary::IPC::ProcessCommand::process_get_exec_path::process_get_exec_path,
+				crate::Binary::IPC::ProcessCommand::process_get_platform::process_get_platform,
+				crate::Binary::IPC::ProcessCommand::process_get_arch::process_get_arch,
+				crate::Binary::IPC::ProcessCommand::process_get_pid::process_get_pid,
+				crate::Binary::IPC::ProcessCommand::process_get_shell_env::process_get_shell_env,
+				crate::Binary::IPC::ProcessCommand::process_get_memory_info::process_get_memory_info,
 				// Health check commands (direct Tauri invoke from SharedProcessProxy)
-				crate::Binary::IPC::HealthCommand::cocoon_extension_host_health,
-				crate::Binary::IPC::HealthCommand::cocoon_search_service_health,
-				crate::Binary::IPC::HealthCommand::cocoon_debug_service_health,
-				crate::Binary::IPC::HealthCommand::shared_process_service_health,
+				crate::Binary::IPC::HealthCommand::cocoon_extension_host_health::cocoon_extension_host_health,
+				crate::Binary::IPC::HealthCommand::cocoon_search_service_health::cocoon_search_service_health,
+				crate::Binary::IPC::HealthCommand::cocoon_debug_service_health::cocoon_debug_service_health,
+				crate::Binary::IPC::HealthCommand::shared_process_service_health::shared_process_service_health,
 				crate::Binary::IPC::RenderDevLogCommand::RenderDevLog,
 				// LAND-PATCH B7-S6 P14.5: Vine notification broadcast
 				// subscription. `vine_subscribe_notifications` opens a
