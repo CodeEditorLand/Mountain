@@ -59,7 +59,7 @@ use crate::{
 /// - Handles partial failures gracefully
 pub async fn ScanAndPopulateExtensions(
 	ApplicationHandle:AppHandle,
-	_State:&crate::ApplicationState::ExtensionState::State::State,
+	_State:&crate::ApplicationState::State::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[ExtensionScanner] Starting extension scan...");
 
@@ -177,7 +177,7 @@ pub async fn ScanAndPopulateExtensions(
 /// - Comprehensive error logging
 pub async fn ScanExtensionsWithRecovery(
 	ApplicationHandle:AppHandle,
-	State:&crate::ApplicationState::ExtensionState::State::State,
+	State:&crate::ApplicationState::State::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
 	dev_log!(
 		"extensions",
