@@ -1,40 +1,9 @@
-//! # Configuration RPC Service
-//!
-//! Configuration management service for read/write operations.
+#![allow(non_snake_case)]
 
-use std::collections::HashMap;
+//! Configuration RPC service. `ConfigurationService::Struct` owns the
+//! key/value store; `ConfigurationScope::Enum` and
+//! `ConfigurationUpdate::Struct` are the wire DTOs.
 
-use serde::{Deserialize, Serialize};
-
-/// Configuration service
-pub struct ConfigurationService {
-	config:HashMap<String, serde_json::Value>,
-}
-
-impl ConfigurationService {
-	pub fn new() -> Self { Self { config:HashMap::new() } }
-
-	pub fn get(&self, key:&str) -> Option<&serde_json::Value> { self.config.get(key) }
-
-	pub fn set(&mut self, key:String, value:serde_json::Value) { self.config.insert(key, value); }
-}
-
-impl Default for ConfigurationService {
-	fn default() -> Self { Self::new() }
-}
-
-/// Configuration scope
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ConfigurationScope {
-	Global,
-	Workspace,
-	Folder,
-}
-
-/// Configuration update
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConfigurationUpdate {
-	pub key:String,
-	pub value:serde_json::Value,
-	pub scope:ConfigurationScope,
-}
+pub mod ConfigurationScope;
+pub mod ConfigurationService;
+pub mod ConfigurationUpdate;

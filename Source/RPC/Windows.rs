@@ -1,45 +1,18 @@
-//! # Windows RPC Service
-//!
-//! ## ⚠️ Placeholder Module
-//!
-//! This module is planned for future implementation and will provide:
-//! - Window management services for Groove and Cocoon extension hosts
-//! - Document window creation and lifecycle management
-//! - Webview panel hosting and communication
-//!
-//! ## Feature Gate
-//!
-//! This module is enabled with the `grove` or `cocoon` features:
-//! ```toml
-//! [features]
-//! grove = []
-//! cocoon = []
-//! ```
-//!
-//! ## Planned API
-//!
-//! - `WindowService`: Main service struct for window operations
-//! - Window creation and destruction handlers
-//! - Window state management and serialization
-//!
-//! TODO: Implement window management RPC services
+#![allow(non_snake_case)]
 
-/// WindowService - Stub implementation for window management RPC services
-///
-/// This service will handle:
-/// - Window creation and destruction
-/// - Document window lifecycle management
-/// - Webview panel hosting
-#[cfg(any(feature = "grove", feature = "cocoon"))]
-pub struct WindowService;
+//! Window-management RPC service. Placeholder for the Grove + Cocoon
+//! extension-host roadmap (window/document/webview lifecycle).
+//! Cfg-gated `pub struct Struct`. TODO: zero callers as of 2026-05-02.
 
 #[cfg(any(feature = "grove", feature = "cocoon"))]
-impl WindowService {
-	/// Create a new WindowService instance
-	pub fn new() -> Self { WindowService }
+pub struct Struct;
+
+#[cfg(any(feature = "grove", feature = "cocoon"))]
+impl Struct {
+	pub fn new() -> Self { Struct }
 }
 
 #[cfg(any(feature = "grove", feature = "cocoon"))]
-impl Default for WindowService {
+impl Default for Struct {
 	fn default() -> Self { Self::new() }
 }

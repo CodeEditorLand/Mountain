@@ -1,46 +1,17 @@
-//! # Debug Protocol RPC Service
-//!
-//! ## ⚠️ Placeholder Module
-//!
-//! This module is planned for future implementation and will provide:
-//! - Debug Adapter Protocol (DAP) integration for Cocoon
-//! - Debug session management
-//! - Breakpoint, stack trace, and variable inspection
-//! - Debug configuration and launch profiles
-//!
-//! ## Feature Gate
-//!
-//! This module is enabled with the `debug-protocol` feature:
-//! ```toml
-//! [features]
-//! debug-protocol = []
-//! ```
-//!
-//! ## Planned API
-//!
-//! - `DebugService`: Main service struct for debug operations
-//! - DAP message handling and routing
-//! - Debug session lifecycle management
-//! - Breakpoint synchronization
-//!
-//! TODO: Implement debug protocol RPC services
+#![allow(non_snake_case)]
 
-/// DebugService - Stub implementation for debug protocol RPC services
-///
-/// This service will handle:
-/// - Debug Adapter Protocol (DAP) message handling
-/// - Debug session lifecycle management
-/// - Breakpoint synchronization
-#[cfg(feature = "debug-protocol")]
-pub struct DebugService;
+//! Debug-Adapter-Protocol RPC service. Placeholder for the Cocoon DAP
+//! roadmap. TODO: zero callers as of 2026-05-02.
 
 #[cfg(feature = "debug-protocol")]
-impl DebugService {
-	/// Create a new DebugService instance
-	pub fn new() -> Self { DebugService }
+pub struct Struct;
+
+#[cfg(feature = "debug-protocol")]
+impl Struct {
+	pub fn new() -> Self { Struct }
 }
 
 #[cfg(feature = "debug-protocol")]
-impl Default for DebugService {
+impl Default for Struct {
 	fn default() -> Self { Self::new() }
 }

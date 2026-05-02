@@ -1,46 +1,17 @@
-//! # Child Processes RPC Service
-//!
-//! ## ⚠️ Placeholder Module
-//!
-//! This module is planned for future implementation and will provide:
-//! - Child process execution services for Cocoon
-//! - Process spawning and lifecycle management
-//! - Standard input/output/error stream handling
-//! - Process monitoring and termination
-//!
-//! ## Feature Gate
-//!
-//! This module is enabled with the `child-processes` feature:
-//! ```toml
-//! [features]
-//! child-processes = []
-//! ```
-//!
-//! ## Planned API
-//!
-//! - `ProcessService`: Main service struct for process operations
-//! - Process spawning with configuration
-//! - Stream redirection and buffering
-//! - Process signaling and cleanup
-//!
-//! TODO: Implement child process RPC services
+#![allow(non_snake_case)]
 
-/// ProcessService - Stub implementation for child process RPC services
-///
-/// This service will handle:
-/// - Process spawning and lifecycle management
-/// - Standard I/O stream handling
-/// - Process signaling and cleanup
-#[cfg(feature = "child-processes")]
-pub struct ProcessService;
+//! Child-process RPC service. Placeholder for `spawn` + stdio + signal
+//! handling for Cocoon. TODO: zero callers as of 2026-05-02.
 
 #[cfg(feature = "child-processes")]
-impl ProcessService {
-	/// Create a new ProcessService instance
-	pub fn new() -> Self { ProcessService }
+pub struct Struct;
+
+#[cfg(feature = "child-processes")]
+impl Struct {
+	pub fn new() -> Self { Struct }
 }
 
 #[cfg(feature = "child-processes")]
-impl Default for ProcessService {
+impl Default for Struct {
 	fn default() -> Self { Self::new() }
 }

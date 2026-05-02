@@ -1,38 +1,9 @@
-//! # Workspace RPC Service
-//!
-//! Workspace service for file and workspace operations.
+#![allow(non_snake_case)]
 
-use std::path::PathBuf;
+//! Workspace RPC service. `WorkspaceService::Struct` is the impl handle;
+//! `WorkspaceFolder::Struct` and `TextDocumentInfo::Struct` are the DTOs
+//! returned over the wire.
 
-use serde::{Deserialize, Serialize};
-
-/// Workspace service
-pub struct WorkspaceService {
-	#[allow(dead_code)]
-	workspace_root:Option<PathBuf>,
-}
-
-impl WorkspaceService {
-	pub fn new() -> Self { Self { workspace_root:None } }
-
-	pub fn with_root(root:PathBuf) -> Self { Self { workspace_root:Some(root) } }
-}
-
-impl Default for WorkspaceService {
-	fn default() -> Self { Self::new() }
-}
-
-/// Workspace folder
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct WorkspaceFolder {
-	pub uri:String,
-	pub name:String,
-}
-
-/// Text document info
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TextDocumentInfo {
-	pub uri:String,
-	pub version:i32,
-	pub language_id:String,
-}
+pub mod TextDocumentInfo;
+pub mod WorkspaceFolder;
+pub mod WorkspaceService;

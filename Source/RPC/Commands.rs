@@ -1,40 +1,8 @@
-//! # Commands RPC Service
-//!
-//! Command registration and execution service.
+#![allow(non_snake_case)]
 
-use std::collections::HashMap;
+//! Command-registration RPC service. Three sub-files: `CommandService` (the
+//! impl handle), `CommandValidation` (input checks), `Command` (the DTO).
 
-use serde::{Deserialize, Serialize};
-
-/// Command service
-pub struct CommandService {
-	#[allow(dead_code)]
-	commands:HashMap<String, String>,
-}
-
-impl CommandService {
-	pub fn new() -> Self { Self { commands:HashMap::new() } }
-}
-
-impl Default for CommandService {
-	fn default() -> Self { Self::new() }
-}
-
-/// Command validation
-pub struct CommandValidation;
-
-impl CommandValidation {
-	pub fn new() -> Self { Self {} }
-}
-
-impl Default for CommandValidation {
-	fn default() -> Self { Self::new() }
-}
-
-/// Command definition
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Command {
-	pub id:String,
-	pub title:String,
-	pub description:Option<String>,
-}
+pub mod Command;
+pub mod CommandService;
+pub mod CommandValidation;
