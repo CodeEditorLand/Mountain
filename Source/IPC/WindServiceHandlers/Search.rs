@@ -35,10 +35,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 /// method `SearchProvider::TextSearch` accepts the raw JSON and does
 /// its own `serde_json::from_value::<TextSearchQuery>` so callers can
 /// keep sending arbitrary shapes - we pass through directly.
-pub async fn SearchFindInFiles(
-	RunTime:Arc<ApplicationRunTime>,
-	mut Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn SearchFindInFiles(RunTime:Arc<ApplicationRunTime>, mut Arguments:Vec<Value>) -> Result<Value, String> {
 	// Positional → named translation. VS Code's SearchService sends the
 	// query object in slot 0; older Wind Effect callers passed flat
 	// positional Arguments (pattern, isRegex, isCase, isWord, include,

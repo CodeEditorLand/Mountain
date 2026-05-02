@@ -45,10 +45,7 @@ const EXTENSION_TYPE_USER:u8 = 1;
 ///   3. `extensions:scanUserExtensions` (which shares the user-only semantic)
 ///      returned zero, making the "Install from VSIX…" refresh appear to do
 ///      nothing even when the install itself succeeded.
-pub async fn ExtensionsGetInstalled(
-	RunTime:Arc<ApplicationRunTime>,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TypeFilter:Option<u8> = Arguments.first().and_then(|V| V.as_u64()).map(|N| N as u8);
 
 	// Boot-time race fix: the workbench's `IExtensionService` calls

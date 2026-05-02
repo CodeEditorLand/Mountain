@@ -63,10 +63,7 @@ pub async fn ConfigurationUpdate(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<
 }
 
 /// Handler for workbench configuration requests
-pub async fn WorkbenchConfiguration(
-	RunTime:Arc<ApplicationRunTime>,
-	_Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn WorkbenchConfiguration(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Result<Value, String> {
 	let provider:Arc<dyn ConfigurationProvider> = RunTime.Environment.Require();
 
 	let config = provider

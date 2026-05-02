@@ -121,9 +121,11 @@ use CommonLibrary::{
 
 use crate::{
 	ApplicationState::{
-		ApplicationState,
 		DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO,
-		State::WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndBroadcast,
+		State::{
+			ApplicationState::ApplicationState,
+			WorkspaceState::WorkspaceDelta::UpdateWorkspaceFoldersAndBroadcast,
+		},
 	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 };
@@ -144,7 +146,11 @@ use crate::{
 /// The local parameter names (`command` / `Arguments`) are preserved for diff
 /// minimality; the frontend-facing contract (`method` / `params`) lives
 /// entirely in `InvokeCommand.rs`.
-pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Arguments:Vec<Value>) -> Result<Value, String> {
+pub async fn mountain_ipc_invoke(
+	ApplicationHandle:AppHandle,
+	command:String,
+	Arguments:Vec<Value>,
+) -> Result<Value, String> {
 	let OTLPStart = crate::IPC::DevLog::NowNano();
 	// Silence the per-call invoke log for high-frequency methods that are
 	// not useful in forensic review. The workbench emits thousands of
@@ -556,10 +562,16 @@ pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Ar
 				// it in ScannedExtensions, and return the ILocalExtension wrapper
 				// so the sidebar refreshes without a window reload.
 				"extensions:install" => {
-					Extension::ExtensionInstall::ExtensionInstall(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
+					Extension::ExtensionInstall::ExtensionInstall(ApplicationHandle.clone(), RunTime.clone(), Arguments)
+						.await
 				},
 				"extensions:uninstall" => {
-					Extension::ExtensionUninstall::ExtensionUninstall(ApplicationHandle.clone(), RunTime.clone(), Arguments).await
+					Extension::ExtensionUninstall::ExtensionUninstall(
+						ApplicationHandle.clone(),
+						RunTime.clone(),
+						Arguments,
+					)
+					.await
 				},
 
 				// `ExtensionManagementChannelClient.getManifest(vsix: URI)` - reads
@@ -1555,8 +1567,8 @@ pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Ar
 							// handshake completes. Wait briefly so the first
 							// few calls don't fail spuriously and poison
 							// renderer-side caches.
-							let _ = crate::Vine::Client::WaitForClientConnection("cocoon-main", 1500).await;
-							crate::Vine::Client::SendRequest("cocoon-main", Method.clone(), Payload, 30_000)
+							let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 1500).await;
+							crate::Vine::Client::SendRequest::Fn("cocoon-main", Method.clone(), Payload, 30_000)
 								.await
 								.map_err(|Error| format!("cocoon:request {} failed: {:?}", Method, Error))
 						},
@@ -1579,7 +1591,7 @@ pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Ar
 						None => Err("cocoon:notify requires method string in slot 0".to_string()),
 						Some(Method) => {
 							let Payload = Arguments.get(1).cloned().unwrap_or(Value::Null);
-							if let Err(Error) = crate::Vine::Client::SendNotification(
+							if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 								"cocoon-main".to_string(),
 								Method.clone(),
 								Payload,
@@ -1900,7 +1912,7 @@ pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Ar
 					// Fire-and-forget - the extension host protocol is async.
 					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
 					tokio::spawn(async move {
-						if let Err(Error) = crate::Vine::Client::SendNotification(
+						if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
 							"cocoon-main".to_string(),
 							"extensionHostMessage".to_string(),
 							Payload,
@@ -2148,7 +2160,7 @@ pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Ar
 						// dispatching - this no-ops once Cocoon is
 						// connected (the typical case), so it only
 						// costs us latency on the very first call.
-						let _ = crate::Vine::Client::WaitForClientConnection("cocoon-main", 1500).await;
+						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 1500).await;
 						// Tree-view RPCs are user-interactive: a 5 second
 						// wait shows the user a spinner and silently fails
 						// the extension's Promise on timeout. 1500 ms is
@@ -2159,7 +2171,7 @@ pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Ar
 						// Slow producers fall through to the empty-array
 						// path and the workbench schedules its own retry
 						// when the view scrolls back into view.
-						match crate::Vine::Client::SendRequest(
+						match crate::Vine::Client::SendRequest::Fn(
 							"cocoon-main",
 							"$provideTreeChildren".to_string(),
 							Parameters,
@@ -2306,7 +2318,7 @@ pub async fn mountain_ipc_invoke(ApplicationHandle:AppHandle, command:String, Ar
 					// or `{ commands: [...] }` (see SkyBridge.ts).
 					if let Ok(Commands) = RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock()
 					{
-						let mut Batch: Vec<serde_json::Value> = Vec::new();
+						let mut Batch:Vec<serde_json::Value> = Vec::new();
 						for (CommandId, Handler) in Commands.iter() {
 							use crate::Environment::CommandProvider::CommandHandler;
 							let Kind = match Handler {
