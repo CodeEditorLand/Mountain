@@ -568,7 +568,7 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 		.ScannedExtensions
 		.ScannedExtensions
 		.lock()
-		.map_err(Utility::MapApplicationStateLockErrorToCommonError)?;
+		.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 	for Extension in Extensions.values() {
 		if let Some(contributes) = Extension.Contributes.as_ref().and_then(|v| v.as_object()) {

@@ -39,7 +39,7 @@ use ring::{
 };
 use serde::{Deserialize, Serialize};
 
-use super::super::Message::TauriIPCMessage;
+use super::super::Message::Types::TauriIPCMessage;
 use crate::dev_log;
 
 /// Encrypted message structure

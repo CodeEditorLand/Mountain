@@ -155,9 +155,13 @@ pub mod Permission;
 // --- Re-exports for backward compatibility ---
 
 pub use Common::{ConnectionStatus, HealthStatus, MessageType, PerformanceMetrics, ServiceInfo};
-pub use Message::{ListenerCallback, SimpleConnectionStatus, TauriIPCMessage};
+pub use Message::Types::{ListenerCallback, SimpleConnectionStatus, TauriIPCMessage};
 pub use TauriIPCServer_Old as TauriIPCServer;
-pub use Connection::{ConnectionHandle, ConnectionManager, ConnectionStats, HealthChecker};
+pub use Connection::{
+	Health::HealthChecker,
+	Manager::{ConnectionManager, ConnectionPool},
+	Types::{ConnectionHandle, ConnectionStats},
+};
 pub use Encryption::{
 	MessageCompressor::MessageCompressor,
 	SecureChannel::{EncryptedMessage, SecureMessageChannel},

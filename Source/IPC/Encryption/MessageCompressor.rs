@@ -36,7 +36,7 @@ use std::io::{Read, Write};
 
 use flate2::{Compression, read::GzDecoder, write::GzEncoder};
 
-use super::super::Message::TauriIPCMessage;
+use super::super::Message::Types::TauriIPCMessage;
 use crate::dev_log;
 
 /// Message compression utility for optimizing IPC message transfer
