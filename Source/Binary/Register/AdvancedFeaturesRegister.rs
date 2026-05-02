@@ -4,7 +4,11 @@
 
 use std::sync::Arc;
 
-use crate::{IPC::initialize_advanced_features, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{
+	IPC::AdvancedFeatures::initialize_advanced_features,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
+};
 
 /// Initializes the IPC advanced features with the ApplicationRunTime.
 ///

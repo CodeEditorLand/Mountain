@@ -4,7 +4,11 @@
 
 use std::sync::Arc;
 
-use crate::{IPC::initialize_wind_advanced_sync, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{
+	IPC::WindAdvancedSync::initialize_wind_advanced_sync,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
+};
 
 /// Initializes the Wind advanced sync with the ApplicationRunTime.
 ///

@@ -4,7 +4,11 @@
 
 use std::sync::Arc;
 
-use crate::{IPC::initialize_status_reporter, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{
+	IPC::StatusReporter::initialize_status_reporter,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
+};
 
 /// Initializes the IPC status reporting with the ApplicationRunTime.
 ///

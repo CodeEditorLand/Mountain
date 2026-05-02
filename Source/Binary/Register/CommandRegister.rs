@@ -2,7 +2,7 @@
 //!
 //! Registers native commands with the Tauri application.
 
-use crate::{ApplicationState::ApplicationState, Command};
+use crate::{ApplicationState::State::ApplicationState::ApplicationState, Command};
 
 /// Registers all native commands with the Tauri application.
 ///

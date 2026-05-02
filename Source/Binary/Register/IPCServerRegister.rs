@@ -4,7 +4,7 @@
 
 use tauri::Manager;
 
-use crate::{IPC::TauriIPCServer::TauriIPCServer, dev_log};
+use crate::{IPC::TauriIPCServer_Old::TauriIPCServer, dev_log};
 
 /// Creates and initializes the Tauri IPC server, storing it in Tauri state.
 ///
