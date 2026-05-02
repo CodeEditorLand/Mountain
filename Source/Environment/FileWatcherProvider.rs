@@ -58,12 +58,35 @@ pub struct WatcherEntry {
 	LastSeen:HashMap<(PathBuf, &'static str), Instant>,
 }
 
+/// Composite key used to detect duplicate watcher registrations. Two
+/// extensions (or the same extension activated twice) frequently register
+/// the same `(root, recursive, pattern)` triple within milliseconds of
+/// each other - the typescript-language-features and git extensions are
+/// the worst offenders. Without dedup, each registration spawns its own
+/// notify::Watcher with its own kqueue/inotify subscription tree, doubling
+/// (or worse) FS-event traffic and burning kernel handles.
+type DedupKey = (PathBuf, bool, Option<String>);
+
 /// Lazily-initialised process-wide state for file watching. Instances of the
 /// event-forwarder task are singletons keyed on the MountainEnvironment
 /// handle. Access through `WatcherState::Get`.
 pub struct WatcherState {
 	pub Entries:Arc<StandardMutex<HashMap<String, WatcherEntry>>>,
 	pub EventSender:TokioMPSC::UnboundedSender<WatchEvent>,
+	/// Maps `(root, recursive, pattern)` to the primary handle that owns
+	/// the live OS watcher. Subsequent registrations matching the same
+	/// triple are aliased to the primary; only the primary creates a
+	/// notify::Watcher.
+	pub DedupIndex:Arc<StandardMutex<HashMap<DedupKey, String>>>,
+	/// Reverse index: primary handle → all aliased handles. When the
+	/// forwarder task gets an event for a primary, it fans the same
+	/// event out to every aliased handle so each extension's
+	/// `vscode.workspace.createFileSystemWatcher` callback fires once.
+	pub Aliases:Arc<StandardMutex<HashMap<String, Vec<String>>>>,
+	/// Reverse lookup for unregister: any handle (primary or alias) →
+	/// its primary. Lets `UnregisterWatcher` clean up alias entries
+	/// without scanning the entire `Aliases` map.
+	pub HandleToPrimary:Arc<StandardMutex<HashMap<String, String>>>,
 }
 
 impl WatcherState {
@@ -78,51 +101,74 @@ impl WatcherState {
 		GLOBAL
 			.get_or_init(|| {
 				let (tx, mut rx) = TokioMPSC::unbounded_channel::<WatchEvent>();
-				let state =
-					Arc::new(WatcherState { Entries:Arc::new(StandardMutex::new(HashMap::new())), EventSender:tx });
+				let state = Arc::new(WatcherState {
+					Entries:Arc::new(StandardMutex::new(HashMap::new())),
+					EventSender:tx,
+					DedupIndex:Arc::new(StandardMutex::new(HashMap::new())),
+					Aliases:Arc::new(StandardMutex::new(HashMap::new())),
+					HandleToPrimary:Arc::new(StandardMutex::new(HashMap::new())),
+				});
 
 				// The forwarder task holds a weak ref to the environment so
-				// it unwinds cleanly if the env is ever torn down.
+				// it unwinds cleanly if the env is ever torn down. State is
+				// captured by Arc clone for the alias fan-out lookup.
 				let env_clone = env.clone();
+				let state_clone = state.clone();
 				tokio::spawn(async move {
 					use tauri::Emitter;
 					while let Some(WatchEvent { Handle, Kind, Path }) = rx.recv().await {
 						let ipc_provider:Arc<dyn IPCProvider> = env_clone.Require();
-						let payload = json!({
-							"handle": Handle,
-							"kind": Kind.AsString(),
-							"path": Path.to_string_lossy().to_string(),
-						});
-						if let Err(error) = ipc_provider
-							.SendNotificationToSideCar(
-								"cocoon-main".to_string(),
-								"$fileWatcher:event".to_string(),
-								payload.clone(),
-							)
-							.await
-						{
-							dev_log!(
-								"filewatcher",
-								"warn: [FileWatcherProvider] Failed to forward event handle={} kind={} path={:?}: {:?}",
-								Handle,
-								Kind.AsString(),
-								Path,
-								error
-							);
+						// Fan events to the primary handle plus every alias
+						// registered against it. Without this, the second
+						// extension to register a duplicate watcher would
+						// silently miss every event.
+						let mut Recipients:Vec<String> = vec![Handle.clone()];
+						if let Ok(AliasGuard) = state_clone.Aliases.lock() {
+							if let Some(AliasList) = AliasGuard.get(&Handle) {
+								Recipients.extend(AliasList.iter().cloned());
+							}
 						}
-						// Dual-emit to Wind/Sky so the Explorer tree, the
-						// search index, and any other webview-side consumer
-						// can react to disk mutations without going through
-						// Cocoon. Wind's `TauriChannel` subscribes to
-						// `sky://vfs/fileChange` under the localFilesystem
-						// channel.
-						if let Err(Error) = env_clone.ApplicationHandle.emit(SkyEvent::VFSFileChange.AsStr(), &payload)
-						{
-							dev_log!(
-								"filewatcher",
-								"warn: [FileWatcherProvider] sky://vfs/fileChange emit failed: {}",
-								Error
-							);
+						for RecipientHandle in Recipients {
+							let payload = json!({
+								"handle": RecipientHandle,
+								"kind": Kind.AsString(),
+								"path": Path.to_string_lossy().to_string(),
+							});
+							if let Err(error) = ipc_provider
+								.SendNotificationToSideCar(
+									"cocoon-main".to_string(),
+									"$fileWatcher:event".to_string(),
+									payload.clone(),
+								)
+								.await
+							{
+								dev_log!(
+									"filewatcher",
+									"warn: [FileWatcherProvider] Failed to forward event handle={} kind={} path={:?}: {:?}",
+									RecipientHandle,
+									Kind.AsString(),
+									Path,
+									error
+								);
+							}
+							// Dual-emit to Wind/Sky so the Explorer tree,
+							// search index, and any other webview-side
+							// consumer can react to disk mutations without
+							// going through Cocoon. Wind's `TauriChannel`
+							// subscribes to `sky://vfs/fileChange` under
+							// the localFilesystem channel. Aliased handles
+							// each get their own emit so per-handle
+							// listeners on the Sky side fire correctly.
+							if let Err(Error) = env_clone
+								.ApplicationHandle
+								.emit(SkyEvent::VFSFileChange.AsStr(), &payload)
+							{
+								dev_log!(
+									"filewatcher",
+									"warn: [FileWatcherProvider] sky://vfs/fileChange emit failed: {}",
+									Error
+								);
+							}
 						}
 					}
 				});
@@ -211,11 +257,7 @@ impl FileWatcherProvider for MountainEnvironment {
 	) -> Result<(), CommonError> {
 		let state = WatcherState::Get(self);
 
-		// De-dup: the typescript-language-features extension alone registers
-		// ~10 watchers against the same workspace root during activation.
-		// If we already have a watcher on this exact (root, recursive)
-		// combination, reuse it and just record the handle - the forwarder
-		// task fans events out to every subscribed handle.
+		// De-dup pass 1: same handle re-registered (cheap idempotency).
 		{
 			let guard = state
 				.Entries
@@ -230,6 +272,50 @@ impl FileWatcherProvider for MountainEnvironment {
 				return Ok(());
 			}
 		}
+
+		// De-dup pass 2: same (root, recursive, pattern) triple already has
+		// a primary watcher. The git extension, typescript-language-features,
+		// and several `composer.*` extensions all hit this path during boot
+		// (observed: `**/composer.json`, `**/composer.lock`, `**/*.md`,
+		// `**/package.json` registered twice each within ~50ms). Aliasing
+		// avoids the duplicate notify::Watcher / kqueue subscription tree
+		// while still fanning events to every aliased handle.
+		let DedupKeyValue:DedupKey = (Root.clone(), IsRecursive, Pattern.clone());
+		{
+			let DedupGuard = state
+				.DedupIndex
+				.lock()
+				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+			if let Some(PrimaryHandle) = DedupGuard.get(&DedupKeyValue).cloned() {
+				drop(DedupGuard);
+				let mut AliasGuard = state
+					.Aliases
+					.lock()
+					.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+				AliasGuard
+					.entry(PrimaryHandle.clone())
+					.or_insert_with(Vec::new)
+					.push(Handle.clone());
+				let mut H2PGuard = state
+					.HandleToPrimary
+					.lock()
+					.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+				H2PGuard.insert(Handle.clone(), PrimaryHandle.clone());
+				dev_log!(
+					"filewatcher",
+					"[FileWatcherProvider] dedup hit; handle={} aliased to primary={} root={} pattern={:?}",
+					Handle,
+					PrimaryHandle,
+					Root.display(),
+					Pattern
+				);
+				return Ok(());
+			}
+		}
+		// First registration for this triple. The DedupIndex insert
+		// happens AFTER successful OS-watcher creation below so an
+		// errored or benign-absent registration doesn't leave a stale
+		// dedup entry pointing at a non-existent primary.
 
 		let CompiledPattern = Pattern.as_deref().and_then(CompileGlobToRegex);
 		let pattern_for_callback = CompiledPattern.clone();
@@ -315,6 +401,22 @@ impl FileWatcherProvider for MountainEnvironment {
 		match WatchResult {
 			Ok(()) => {
 				guard.insert(Handle.clone(), WatcherEntry { Watcher:watcher, LastSeen:HashMap::new() });
+				// Drop the Entries lock before grabbing DedupIndex to
+				// avoid lock-order divergence vs the alias path (which
+				// takes DedupIndex first). Re-acquire is cheap.
+				drop(guard);
+				if let Ok(mut DedupGuard) = state.DedupIndex.lock() {
+					DedupGuard.entry(DedupKeyValue.clone()).or_insert_with(|| Handle.clone());
+				}
+				dev_log!(
+					"filewatcher",
+					"[FileWatcherProvider] Registered watcher handle={} root={} recursive={} pattern={:?}",
+					Handle,
+					Root.display(),
+					IsRecursive,
+					Pattern
+				);
+				return Ok(());
 			},
 			Err(error) => {
 				let ErrorString = error.to_string().to_lowercase();
@@ -358,13 +460,59 @@ impl FileWatcherProvider for MountainEnvironment {
 
 	async fn UnregisterWatcher(&self, Handle:String) -> Result<(), CommonError> {
 		let state = WatcherState::Get(self);
-		let mut guard = state
+
+		// Step 1: alias removal. If the handle was aliased to a primary,
+		// just remove it from the alias list and the lookup map. The OS
+		// watcher stays alive because the primary still owns it.
+		let MaybePrimary = {
+			let mut H2PGuard = state
+				.HandleToPrimary
+				.lock()
+				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+			H2PGuard.remove(&Handle)
+		};
+		if let Some(PrimaryHandle) = MaybePrimary {
+			let mut AliasGuard = state
+				.Aliases
+				.lock()
+				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+			if let Some(AliasList) = AliasGuard.get_mut(&PrimaryHandle) {
+				AliasList.retain(|EntryHandle| EntryHandle != &Handle);
+				if AliasList.is_empty() {
+					AliasGuard.remove(&PrimaryHandle);
+				}
+			}
+			dev_log!(
+				"filewatcher",
+				"[FileWatcherProvider] Unregistered alias handle={} primary={}",
+				Handle,
+				PrimaryHandle
+			);
+			return Ok(());
+		}
+
+		// Step 2: primary removal. Drop the OS watcher and clear the
+		// dedup index entry. Any still-aliased handles are left dangling -
+		// callers requesting a primary unregister while aliases still
+		// exist is unusual but not fatal; the alias entries simply
+		// stop receiving events.
+		let mut Guard = state
 			.Entries
 			.lock()
 			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
-		if guard.remove(&Handle).is_some() {
+		if Guard.remove(&Handle).is_some() {
 			dev_log!("filewatcher", "[FileWatcherProvider] Unregistered watcher handle={}", Handle);
 		}
+		drop(Guard);
+
+		// Clear the dedup-index entry pointing at this primary so a
+		// future registration for the same triple opens a fresh OS
+		// watcher rather than aliasing to a removed handle.
+		let mut DedupGuard = state
+			.DedupIndex
+			.lock()
+			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+		DedupGuard.retain(|_, PrimaryHandle| PrimaryHandle != &Handle);
 		Ok(())
 	}
 }

@@ -135,6 +135,12 @@ pub(super) async fn update_configuration_value(
 		.Run(WriteFileBytes(config_path.clone(), content_bytes, true, true))
 		.await?;
 
+	// Invalidate the parsed-settings.json cache so the very next
+	// Inspect / merge re-reads from disk. Without this, the cached
+	// parse from before this update could stick around for up to
+	// 250 ms and feed stale values to the workbench until expiry.
+	crate::Environment::ConfigurationProvider::Loading::ClearSettingsFileCache();
+
 	// Re-merge all configurations to update the live state.
 	crate::Environment::ConfigurationProvider::Loading::initialize_and_merge_configurations(environment).await?;
 

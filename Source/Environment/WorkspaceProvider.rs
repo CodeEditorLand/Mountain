@@ -77,6 +77,7 @@ use async_trait::async_trait;
 use globset::GlobBuilder;
 use ignore::WalkBuilder;
 use serde_json::Value;
+use tokio::sync::Notify;
 use url::Url;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
@@ -155,6 +156,23 @@ pub fn ClearFindFilesCache() {
 	if let Ok(mut Guard) = FindFilesCache().lock() {
 		Guard.clear();
 	}
+}
+
+/// Single-flight registry: keys with a walk currently in progress
+/// share the same `Notify` so concurrent callers awaiting the same
+/// `(folders, include, exclude, cap, flags)` don't each kick off
+/// their own filesystem walk.
+///
+/// Why: log audit (`20260501T053137`) showed 1023 `findFiles` calls
+/// during one extension-boot session, with the cache hit rate
+/// at ~67% (687 hits, 333 misses). The 333 misses fired BEFORE
+/// the first walker for any given key populated the cache, so
+/// each one independently re-walked the same tree. With the
+/// single-flight guard the leader walks once, every concurrent
+/// follower awaits, then reads the freshly-populated cache.
+fn FindFilesInFlight() -> &'static Mutex<HashMap<FindFilesCacheKey, Arc<Notify>>> {
+	static IN_FLIGHT:OnceLock<Mutex<HashMap<FindFilesCacheKey, Arc<Notify>>>> = OnceLock::new();
+	IN_FLIGHT.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 #[async_trait]
@@ -372,6 +390,65 @@ impl WorkspaceProvider for MountainEnvironment {
 			return Ok(Cached);
 		}
 
+		// Single-flight: if another caller is already walking for this
+		// exact key, register as a follower and await the leader's
+		// completion notify, then read the freshly-populated cache.
+		// Otherwise we ARE the leader and proceed with the walk; on
+		// completion we wake all waiters.
+		// Lock-scope is restructured into an enum return so the
+		// std::sync::MutexGuard is fully dropped BEFORE any `.await`
+		// in either branch - otherwise the future is `!Send` and
+		// tokio refuses to spawn it across worker threads.
+		enum SingleFlightRole {
+			Follower(Arc<Notify>),
+			Leader(Arc<Notify>),
+		}
+		let RoleResolved:SingleFlightRole = {
+			let mut Guard = FindFilesInFlight()
+				.lock()
+				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+			match Guard.get(&CacheKey) {
+				Some(Existing) => SingleFlightRole::Follower(Existing.clone()),
+				None => {
+					let LeaderNotify = Arc::new(Notify::new());
+					Guard.insert(CacheKey.clone(), LeaderNotify.clone());
+					SingleFlightRole::Leader(LeaderNotify)
+				},
+			}
+		};
+		let LeaderNotify:Arc<Notify> = match RoleResolved {
+			SingleFlightRole::Follower(WaitNotify) => {
+				dev_log!(
+					"workspaces",
+					"[FindFilesInWorkspace] singleflight wait - leader walk in progress for include={}",
+					IncludePattern
+				);
+				WaitNotify.notified().await;
+				return Ok(FindFilesCacheGet(&CacheKey).unwrap_or_default());
+			},
+			SingleFlightRole::Leader(N) => N,
+		};
+
+		// Defensive: if anything between here and the cache-put panics
+		// or returns Err, waiters would block forever. Guard with a
+		// drop-time notify-and-remove via a small RAII helper.
+		struct LeaderGuard {
+			Key:FindFilesCacheKey,
+			Notify:Arc<Notify>,
+			Completed:bool,
+		}
+		impl Drop for LeaderGuard {
+			fn drop(&mut self) {
+				if !self.Completed {
+					if let Ok(mut Guard) = FindFilesInFlight().lock() {
+						Guard.remove(&self.Key);
+					}
+					self.Notify.notify_waiters();
+				}
+			}
+		}
+		let mut Leader = LeaderGuard { Key:CacheKey.clone(), Notify:LeaderNotify, Completed:false };
+
 		let Results:Arc<Mutex<Vec<Url>>> = Arc::new(Mutex::new(Vec::with_capacity(Cap.min(1024))));
 		let Cap = Cap;
 
@@ -455,7 +532,20 @@ impl WorkspaceProvider for MountainEnvironment {
 			ExcludePattern,
 			CacheKey.Folders.len()
 		);
-		FindFilesCachePut(CacheKey, Final.clone());
+		FindFilesCachePut(CacheKey.clone(), Final.clone());
+
+		// Successful walk + cache put: clear the in-flight entry and
+		// wake any followers BEFORE the LeaderGuard drop fires so
+		// followers see `Completed=true` and skip the drop-time
+		// fallback path.
+		{
+			if let Ok(mut Guard) = FindFilesInFlight().lock() {
+				Guard.remove(&CacheKey);
+			}
+			Leader.Notify.notify_waiters();
+			Leader.Completed = true;
+		}
+
 		Ok(Final)
 	}
 

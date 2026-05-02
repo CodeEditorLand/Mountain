@@ -1,6 +1,11 @@
 //! Configuration loading and merging utilities.
 
-use std::{path::PathBuf, sync::Arc};
+use std::{
+	collections::HashMap,
+	path::PathBuf,
+	sync::{Arc, Mutex, OnceLock},
+	time::{Duration, Instant},
+};
 
 use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
@@ -17,16 +22,60 @@ use crate::{
 	dev_log,
 };
 
+/// Short TTL cache for parsed `settings.json` reads. The
+/// `InspectConfigurationValue` handler reads BOTH the user
+/// settings.json and the workspace settings.json on every call;
+/// log audit `20260501T053137` shows ~57 Inspect calls per session
+/// = 114 disk reads of the same one or two files. With this cache,
+/// repeated reads within `TTL_MS` reuse the parsed `Value` and a
+/// burst of Inspects collapses to ~1 disk read per file. TTL is
+/// short enough (250ms) that user edits to settings.json show up
+/// within a quarter-second.
+const SETTINGS_FILE_CACHE_TTL_MS:u64 = 250;
+
+struct CachedSettingsValue {
+	StoredAt:Instant,
+	Parsed:Value,
+}
+
+fn SettingsFileCache() -> &'static Mutex<HashMap<PathBuf, CachedSettingsValue>> {
+	static CACHE:OnceLock<Mutex<HashMap<PathBuf, CachedSettingsValue>>> = OnceLock::new();
+	CACHE.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+/// Drop every cached settings.json parse. Caller: any code path
+/// that mutates settings (`UpdateConfigurationValue`,
+/// `initialize_and_merge_configurations`).
+pub fn ClearSettingsFileCache() {
+	if let Ok(mut Guard) = SettingsFileCache().lock() {
+		Guard.clear();
+	}
+}
+
 /// An internal helper to read and parse a single JSON configuration file.
 pub(super) async fn read_and_parse_configuration_file(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 	path:&Option<PathBuf>,
 ) -> Result<Value, CommonError> {
 	if let Some(p) = path {
+		// Cache check: return a clone of the parsed value if the same
+		// file was read within the TTL window.
+		if let Ok(Guard) = SettingsFileCache().lock() {
+			if let Some(Entry) = Guard.get(p) {
+				if Entry.StoredAt.elapsed() < Duration::from_millis(SETTINGS_FILE_CACHE_TTL_MS) {
+					return Ok(Entry.Parsed.clone());
+				}
+			}
+		}
+
 		let runtime = environment.ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 		if let Ok(bytes) = runtime.Run(ReadFile(p.clone())).await {
-			return Ok(serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new())));
+			let Parsed = serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new()));
+			if let Ok(mut Guard) = SettingsFileCache().lock() {
+				Guard.insert(p.clone(), CachedSettingsValue { StoredAt:Instant::now(), Parsed:Parsed.clone() });
+			}
+			return Ok(Parsed);
 		}
 	}
 
