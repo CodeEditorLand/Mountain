@@ -73,11 +73,7 @@ impl TreeViewProvider for Struct {
 		Ok(())
 	}
 
-	async fn RefreshTreeView(
-		&self,
-		_ViewIdentifier:String,
-		_ItemsToRefresh:Option<Value>,
-	) -> Result<(), CommonError> {
+	async fn RefreshTreeView(&self, _ViewIdentifier:String, _ItemsToRefresh:Option<Value>) -> Result<(), CommonError> {
 		Ok(())
 	}
 
