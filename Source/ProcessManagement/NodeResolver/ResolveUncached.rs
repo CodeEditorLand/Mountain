@@ -9,7 +9,15 @@ use tauri::{AppHandle, Runtime};
 
 use crate::{
 	ProcessManagement::NodeResolver::{
-		NodeSource, ResolvedNode, TryAsdf, TryFnm, TryHomebrew, TryNvm, TryOverride, TryShipped, TryVolta,
+		NodeSource,
+		ResolvedNode,
+		TryAsdf,
+		TryFnm,
+		TryHomebrew,
+		TryNvm,
+		TryOverride,
+		TryShipped,
+		TryVolta,
 	},
 	dev_log,
 };
