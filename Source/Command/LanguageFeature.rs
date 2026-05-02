@@ -1,194 +1,49 @@
-#![allow(unused_imports)]
+#![allow(non_snake_case)]
 
-//! # LanguageFeature (Command)
+//! # LanguageFeature (Tauri command surface)
 //!
-//! RESPONSIBILITIES:
-//! - Defines Tauri command handlers for language feature requests from Sky
-//! frontend
-//! - Bridges Monaco Editor language requests to
-//! `LanguageFeatureProviderRegistry`
-//! - Provides type-safe parameter handling and validation for LSP features
-//! - Implements hover, code actions, document highlights, completions,
-//! definition, references
-//! - Uses generic `InvokeProvider` helper to reduce boilerplate
+//! Bridges Monaco-Editor language requests from Sky into the Mountain
+//! `LanguageFeatureProvider` registry. Six wire-bound commands, each in
+//! its own file (file name = Tauri command identifier per the
+//! Naming-Convention exception):
 //!
-//! ARCHITECTURAL ROLE:
-//! - Command layer that exposes language features via Tauri IPC (`#[command]`)
-//! - Delegates to Environment's
-//! `LanguageFeatureProvider`
-//! via DI with `Require()` trait
-//! - Translates between frontend JSON parameters and Rust DTO types
-//! - Error strings returned directly to frontend for display
+//! - `MountainProvideHover::MountainProvideHover`
+//! - `MountainProvideCodeActions::MountainProvideCodeActions`
+//! - `MountainProvideDocumentHighlights::MountainProvideDocumentHighlights`
+//! - `MountainProvideCompletions::MountainProvideCompletions`
+//! - `MountainProvideDefinition::MountainProvideDefinition`
+//! - `MountainProvideReferences::MountainProvideReferences`
 //!
-//! COMMAND REFERENCE (Tauri IPC):
-//! - [`MountainProvideHover`]: Show hover information at cursor position
-//! - [`MountainProvideCodeActions`]: Get quick fixes and refactorings for a
-//!   code range
-//! - [`MountainProvideDocumentHighlights`]: Find symbol occurrences in document
-//! - [`MountainProvideCompletions`]: Get code completion suggestions with
-//!   context
-//! - [`MountainProvideDefinition`]: Jump to symbol definition location
-//! - [`MountainProvideReferences`]: Find all references to a symbol
+//! Each command is a thin shell that validates input and delegates to
+//! the matching `provide_*_impl` in the sibling `Hover` / `CodeActions`
+//! / … modules. Implementation files are `pub(crate)` because callers
+//! outside this directory should go through the wire-bound shells.
 //!
-//! ERROR HANDLING:
-//! - Returns `Result<Value, String>` where errors sent directly to frontend
-//! - Validates URI non-empty and position format (line/character numbers)
-//! - JSON serialization errors converted to strings
-//! - Provider errors (CommonError) converted to strings via `map_err(|Error|
-//!   Error.to_string())`
+//! Errors propagate as `Result<Value, String>` with the string sent
+//! straight to the frontend; provider errors (`CommonError`) are
+//! stringified at the boundary.
 //!
-//! PERFORMANCE:
-//! - Each command is async and non-blocking
-//! - Provider lookup is O(1) via `Require()` from DI container
-//! - URI parsing and DTO deserialization adds minimal overhead
+//! VS Code reference: `vs/workbench/api/common/extHostLanguageFeatures.ts`,
+//! `vs/workbench/services/languageFeatures/common/languageFeaturesService.ts`.
 //!
-//! VS CODE REFERENCE:
-//! - `vs/workbench/api/common/extHostLanguageFeatures.ts` - ext host language
-//!   features API
-//! - `vs/workbench/services/languageFeatures/common/languageFeaturesService.ts`
-//!   - service layer
-//! - `vs/workbench/contrib/hover/browser/hover.ts` - hover implementation
-//! - `vs/workbench/contrib/completion/browser/completion.ts` - completion
-//!   widget
-//! - `vs/workbench/contrib/definition/browser/definition.ts` - go to definition
-//! - `vs/workbench/contrib/references/browser/references.ts` - find references
-//!
-//! TODO:
-//! - Implement more language features: document symbols, formatting, rename,
-//!   signature help
-//! - Add cancellation token support for long-running operations
-//! - Implement request deduplication for identical concurrent requests
-//! - Add request caching for repeated symbol lookups
-//! - Support workspace symbol search
-//! - Add semantic tokens for syntax highlighting
-//! - Implement code lens provider
-//! - Add inlay hints support
-//! - Support linked editing range
-//! - Add call hierarchy and type hierarchy
-//! - Implement document color and color presentation
-//! - Add folding range provider
-//! - Support selection range provider
-//!
-//! MODULE STRUCTURE:
-//! - [`Validation.rs`](Validation.rs) - request validation helper
-//! - [`InvokeProvider.rs`](InvokeProvider.rs) - generic provider invoker
-//! - Individual command modules for each language feature (containing impls
-//!   only)
+//! TODO: document symbols, formatting, rename, signature help, semantic
+//! tokens, code lens, inlay hints, linked editing range, call/type
+//! hierarchy, document color, folding/selection range, request dedupe
+//! and cancellation tokens for long-running ops.
 
-use serde_json::Value;
-use tauri::{AppHandle, Wry, command};
-use url::Url;
+pub mod MountainProvideCodeActions;
+pub mod MountainProvideCompletions;
+pub mod MountainProvideDefinition;
+pub mod MountainProvideDocumentHighlights;
+pub mod MountainProvideHover;
+pub mod MountainProvideReferences;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+pub(crate) mod CodeActions;
+pub(crate) mod Completions;
+pub(crate) mod Definition;
+pub(crate) mod Highlights;
+pub(crate) mod Hover;
+pub(crate) mod References;
 
-// Private submodules containing implementation (without #[command] attributes)
-#[path = "LanguageFeature/Validation.rs"]
-mod Validation;
-#[path = "LanguageFeature/InvokeProvider.rs"]
-mod InvokeProvider;
-#[path = "LanguageFeature/Hover.rs"]
-mod Hover;
-#[path = "LanguageFeature/CodeActions.rs"]
-mod CodeActions;
-#[path = "LanguageFeature/Highlights.rs"]
-mod Highlights;
-#[path = "LanguageFeature/Completions.rs"]
-mod Completions;
-#[path = "LanguageFeature/Definition.rs"]
-mod Definition;
-#[path = "LanguageFeature/References.rs"]
-mod References;
-
-/// Provides hover information at cursor position
-#[command]
-pub async fn MountainProvideHover(
-	application_handle:AppHandle<Wry>,
-	uri:String,
-	position:Value,
-) -> Result<Value, String> {
-	dev_log!("commands", "[Language Feature] Providing hover for: {} at {:?}", uri, position);
-	Hover::provide_hover_impl(application_handle, uri, position).await
-}
-
-/// Provides code actions (quick fixes and refactorings) for a code range
-#[command]
-pub async fn MountainProvideCodeActions(
-	application_handle:AppHandle<Wry>,
-	uri:String,
-	position:Value,
-	context:Value,
-) -> Result<Value, String> {
-	dev_log!(
-		"commands",
-		"[Language Feature] Providing code actions for: {} at {:?}",
-		uri,
-		position
-	);
-	CodeActions::provide_code_actions_impl(application_handle, uri, position, context).await
-}
-
-/// Finds symbol occurrences (document highlights) in a document
-#[command]
-pub async fn MountainProvideDocumentHighlights(
-	application_handle:AppHandle<Wry>,
-	uri:String,
-	position:Value,
-) -> Result<Value, String> {
-	dev_log!(
-		"commands",
-		"[Language Feature] Providing document highlights for: {} at {:?}",
-		uri,
-		position
-	);
-	Highlights::provide_document_highlights_impl(application_handle, uri, position).await
-}
-
-/// Provides code completion suggestions
-#[command]
-pub async fn MountainProvideCompletions(
-	application_handle:AppHandle<Wry>,
-	uri:String,
-	position:Value,
-	context:Value,
-) -> Result<Value, String> {
-	dev_log!(
-		"commands",
-		"[Language Feature] Providing completions for: {} at {:?}",
-		uri,
-		position
-	);
-	Completions::provide_completions_impl(application_handle, uri, position, context).await
-}
-
-/// Provides go-to-definition functionality
-#[command]
-pub async fn MountainProvideDefinition(
-	application_handle:AppHandle<Wry>,
-	uri:String,
-	position:Value,
-) -> Result<Value, String> {
-	dev_log!(
-		"commands",
-		"[Language Feature] Providing definition for: {} at {:?}",
-		uri,
-		position
-	);
-	Definition::provide_definition_impl(application_handle, uri, position).await
-}
-
-/// Finds all references to a symbol
-#[command]
-pub async fn MountainProvideReferences(
-	application_handle:AppHandle<Wry>,
-	uri:String,
-	position:Value,
-	context:Value,
-) -> Result<Value, String> {
-	dev_log!(
-		"commands",
-		"[Language Feature] Providing references for: {} at {:?}",
-		uri,
-		position
-	);
-	References::provide_references_impl(application_handle, uri, position, context).await
-}
+pub(crate) mod InvokeProvider;
+pub(crate) mod Validation;
