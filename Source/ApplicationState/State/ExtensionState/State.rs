@@ -38,13 +38,13 @@ use crate::dev_log;
 #[derive(Clone)]
 pub struct State {
 	/// Extension registry containing command registry and provider state.
-	pub Registry:ExtensionRegistry::Registry,
+	pub Registry:ExtensionRegistry::ExtensionRegistry::Registry,
 
 	/// Language provider registration state.
-	pub ProviderRegistration:ProviderRegistration::Registration,
+	pub ProviderRegistration:ProviderRegistration::ProviderRegistration::Registration,
 
 	/// Scanned extensions containing discovered extensions.
-	pub ScannedExtensions:ScannedExtensions::ScannedExtensionCollection,
+	pub ScannedExtensions:ScannedExtensions::ScannedExtensions::ScannedExtensionCollection,
 }
 
 impl Default for State {
@@ -52,9 +52,9 @@ impl Default for State {
 		dev_log!("extensions", "[ExtensionState::State] Initializing default extension state...");
 
 		Self {
-			Registry:ExtensionRegistry::Registry::default(),
-			ProviderRegistration:ProviderRegistration::Registration::default(),
-			ScannedExtensions:ScannedExtensions::ScannedExtensionCollection::default(),
+			Registry:ExtensionRegistry::ExtensionRegistry::Registry::default(),
+			ProviderRegistration:ProviderRegistration::ProviderRegistration::Registration::default(),
+			ScannedExtensions:ScannedExtensions::ScannedExtensions::ScannedExtensionCollection::default(),
 		}
 	}
 }
