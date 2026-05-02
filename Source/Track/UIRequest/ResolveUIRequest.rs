@@ -54,7 +54,7 @@ use std::sync::Arc;
 use serde_json::Value;
 use tauri::{State, command};
 
-use crate::{ApplicationState::ApplicationState, dev_log};
+use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
 
 /// A specific Tauri command handler for the UI to send back the result of a
 /// request-response interaction (like a dialog or message box).
