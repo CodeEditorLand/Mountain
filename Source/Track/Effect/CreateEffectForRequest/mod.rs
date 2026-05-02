@@ -75,7 +75,7 @@ use crate::Track::Effect::MappedEffectType::MappedEffect;
 ///
 /// Delegates to domain modules in priority order. The first module that returns
 /// `Some(result)` wins; unknown methods fall through to an error.
-pub fn CreateEffectForRequest<R:Runtime>(
+pub fn Fn<R:Runtime>(
 	_ApplicationHandle:&AppHandle<R>,
 	MethodName:&str,
 	Parameters:Value,

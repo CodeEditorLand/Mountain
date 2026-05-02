@@ -1,10 +1,9 @@
-//! # Effect Module (Track)
-//!
-//! Contains the effect creation and routing functionality for the Track module.
+#![allow(non_snake_case)]
 
-mod CreateEffectForRequest;
-mod MappedEffectType;
+//! Effect creation and routing for `Track`. Two siblings:
+//! `CreateEffectForRequest::Fn` (the central router with one domain
+//! sub-module per file) and `MappedEffectType::MappedEffect` (the typed
+//! result alias). No `pub use` re-exports - callers spell the full path.
 
-// Re-export with both original name and Fn alias for backward compatibility
-pub use CreateEffectForRequest::{CreateEffectForRequest, CreateEffectForRequest as Fn};
-pub use MappedEffectType::MappedEffect;
+pub mod CreateEffectForRequest;
+pub mod MappedEffectType;

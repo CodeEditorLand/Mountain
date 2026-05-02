@@ -75,12 +75,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						// reads `Payload.viewId` and `Payload.html`
 						// directly, so we always emit the named-key
 						// shape. Three observed wire shapes:
-						//   1. `Parameters` IS the object directly
-						//      (modern named-arg sendRequest).
-						//   2. `Parameters` is `[ <object> ]` (array
-						//      wrap).
-						//   3. `Parameters` is `[ Handle, Value ]`
-						//      (positional, panel path).
+						//   1. `Parameters` IS the object directly (modern named-arg sendRequest).
+						//   2. `Parameters` is `[ <object> ]` (array wrap).
+						//   3. `Parameters` is `[ Handle, Value ]` (positional, panel path).
 						// The previous code wrapped payloads in
 						// `{ method, handle, args }` which made
 						// `Payload.viewId === undefined`; the listener
@@ -108,21 +105,27 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								// `webview.html = ...` / `webview.postMessage(msg)`
 								// invocation surface).
 								let MutableObject = match Method.as_str() {
-									"webview.setHtml" => json!({
-										"method": Method,
-										"handle": First,
-										"html": Second,
-									}),
-									"webview.postMessage" => json!({
-										"method": Method,
-										"handle": First,
-										"message": Second,
-									}),
-									_ => json!({
-										"method": Method,
-										"handle": First,
-										"value": Second,
-									}),
+									"webview.setHtml" => {
+										json!({
+											"method": Method,
+											"handle": First,
+											"html": Second,
+										})
+									},
+									"webview.postMessage" => {
+										json!({
+											"method": Method,
+											"handle": First,
+											"message": Second,
+										})
+									},
+									_ => {
+										json!({
+											"method": Method,
+											"handle": First,
+											"value": Second,
+										})
+									},
 								};
 								MutableObject
 							} else {
