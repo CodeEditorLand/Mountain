@@ -7,7 +7,11 @@ use std::sync::Arc;
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 use serde_json::{Value, json};
 
-use crate::{IPC::UriComponents::Normalize as NormalizeUri, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{
+	IPC::UriComponents::Normalize::Fn as NormalizeUri,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	dev_log,
+};
 
 /// VS Code's `ExtensionType` enum - mirror the numeric values used by the
 /// renderer's `getInstalled(type?)` IPC so the filter in `GetInstalledArgs`
