@@ -57,7 +57,7 @@ use super::{
 	UIState::UIState::State as UIState,
 	WorkspaceState::WorkspaceState::State as WorkspaceState,
 };
-use crate::{Environment::TestProvider::TestProviderState, dev_log};
+use crate::{Environment::TestProvider::TestProviderState::Struct as TestProviderState, dev_log};
 
 /// The central, shared, thread-safe state for the entire Mountain application.
 #[derive(Clone)]
