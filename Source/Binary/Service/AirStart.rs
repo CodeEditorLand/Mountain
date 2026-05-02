@@ -157,7 +157,7 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 	// listenable; ConnectToSideCar handles the retry loop.
 	let SideCarIdentifier = "air-main".to_string();
 	let Address = format!("http://{}", AIR_GRPC_ADDRESS);
-	match crate::Vine::Client::ConnectToSideCar(SideCarIdentifier.clone(), Address.clone()).await {
+	match crate::Vine::Client::ConnectToSideCar::Fn(SideCarIdentifier.clone(), Address.clone()).await {
 		Ok(()) => {
 			dev_log!("grpc", "[AirStart] Air gRPC connection established at {}", Address);
 		},
