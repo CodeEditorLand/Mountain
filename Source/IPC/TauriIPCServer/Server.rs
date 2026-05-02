@@ -39,7 +39,7 @@
 //!
 //! ## LOGGING
 //! Info-level logging for lifecycle events, debug for operations, trace for
-//! message details, error for failures.
+//! Message details, error for failures.
 //!
 //! ## PERFORMANCE CONSIDERATIONS
 //! - Message queuing for offline scenarios
@@ -48,9 +48,9 @@
 //! - Connection pooling for efficiency
 //!
 //! ## TODO
-//! - Add message priority queuing
+//! - Add Message priority queuing
 //! - Implement connection retry logic
-//! - Add message persistence for offline mode
+//! - Add Message persistence for offline mode
 //! - Support multiple transport protocols
 
 use std::collections::HashMap;
@@ -67,7 +67,7 @@ use crate::dev_log;
 /// Mountain's IPC Server counterpart to Wind's TauriIPCServer
 ///
 /// This is the main orchestrator for IPC communication between Wind (frontend)
-/// and Mountain (backend). It manages message routing, listener registration,
+/// and Mountain (backend). It manages Message routing, listener registration,
 /// and provides advanced features like encryption and compression.
 ///
 /// ## Core Responsibilities
@@ -91,18 +91,18 @@ use crate::dev_log;
 /// let ipc_server = TauriIPCServer::new(app_handle);
 /// ipc_server.initialize().await?;
 ///
-/// // Send a message
+/// // Send a Message
 /// ipc_server.send("channel", data).await?;
 ///
 /// // Register a listener
 /// ipc_server.on("channel", Box::new(|data| {
-///     // Handle message
+///     // Handle Message
 ///     Ok(())
 /// }))?;
 /// ```
 #[derive(Clone)]
 pub struct TauriIPCServer {
-	/// Tauri app handle for emitting events
+	/// Tauri app Handle for emitting events
 	app_handle: AppHandle,
 
 	/// Registered listeners by channel
@@ -122,7 +122,7 @@ impl TauriIPCServer {
 	/// Create a new Tauri IPC Server instance
 	///
 	/// ## Parameters
-	/// - `app_handle`: Tauri app handle for emitting events
+	/// - `app_handle`: Tauri app Handle for emitting events
 	///
 	/// ## Returns
 	/// New TauriIPCServer instance
@@ -151,7 +151,7 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(())`: Initialization successful
-	/// - `Err(String)`: Error message if initialization fails
+	/// - `Err(String)`: Error Message if initialization fails
 	///
 	/// ## Example
 	///
@@ -199,10 +199,10 @@ impl TauriIPCServer {
 		Ok(())
 	}
 
-	/// Send a message to the Wind frontend
+	/// Send a Message to the Wind frontend
 	///
-	/// This method sends a message to Wind. If the connection is not active,
-	/// the message is queued for later delivery.
+	/// This method sends a Message to Wind. If the connection is not active,
+	/// the Message is queued for later delivery.
 	///
 	/// ## Parameters
 	/// - `channel`: IPC channel name
@@ -210,7 +210,7 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(())`: Message sent or queued successfully
-	/// - `Err(String)`: Error message if sending fails
+	/// - `Err(String)`: Error Message if sending fails
 	///
 	/// ## Example
 	///
@@ -218,7 +218,7 @@ impl TauriIPCServer {
 	/// ipc_server.send("my-channel", serde_json::json!({"key": "value"})).await?;
 	/// ```
 	pub async fn send(&self, channel: &str, data: serde_json::Value) -> Result<(), String> {
-		let message = TauriIPCMessage {
+		let Message = TauriIPCMessage {
 			channel: channel.to_string(),
 			data,
 			sender: Some("mountain".to_string()),
@@ -237,12 +237,12 @@ impl TauriIPCServer {
 		};
 
 		if !is_connected {
-			// Queue the message for later delivery
+			// Queue the Message for later delivery
 			let mut queue = self
 				.message_queue
 				.lock()
-				.map_err(|e| format!("Failed to access message queue: {}", e))?;
-			queue.push(message);
+				.map_err(|e| format!("Failed to access Message queue: {}", e))?;
+			queue.push(Message);
 			dev_log!("ipc", 
 				"[TauriIPCServer] Message queued (channel: {}, queue size: {})",
 				channel,
@@ -252,18 +252,18 @@ impl TauriIPCServer {
 		}
 
 		// Send immediately
-		self.emit_message(&message).await
+		self.emit_message(&Message).await
 	}
 
 	/// Register a listener for incoming messages from Wind
 	///
 	/// ## Parameters
 	/// - `channel`: IPC channel name
-	/// - `callback`: Callback function to handle messages
+	/// - `callback`: Callback function to Handle messages
 	///
 	/// ## Returns
 	/// - `Ok(())`: Listener registered successfully
-	/// - `Err(String)`: Error message if registration fails
+	/// - `Err(String)`: Error Message if registration fails
 	///
 	/// ## Example
 	///
@@ -296,7 +296,7 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(())`: Listener removed successfully
-	/// - `Err(String)`: Error message if removal fails
+	/// - `Err(String)`: Error Message if removal fails
 	pub fn off(&self, channel: &str, callback: &ListenerCallback) -> Result<(), String> {
 		let mut listeners = self
 			.listeners
@@ -320,28 +320,28 @@ impl TauriIPCServer {
 	/// Handle incoming messages from Wind
 	///
 	/// ## Parameters
-	/// - `message`: Incoming message to handle
+	/// - `Message`: Incoming Message to Handle
 	///
 	/// ## Returns
 	/// - `Ok(())`: Message handled successfully
-	/// - `Err(String)`: Error message if handling fails
-	pub async fn IncomingMessage(&self, message: TauriIPCMessage) -> Result<(), String> {
-		dev_log!("ipc", "[TauriIPCServer] Received message on channel: {}", message.channel);
+	/// - `Err(String)`: Error Message if handling fails
+	pub async fn IncomingMessage(&self, Message: TauriIPCMessage) -> Result<(), String> {
+		dev_log!("ipc", "[TauriIPCServer] Received Message on channel: {}", Message.channel);
 
 		let listeners = self
 			.listeners
 			.lock()
 			.map_err(|e| format!("Failed to access listeners: {}", e))?;
 
-		if let Some(channel_listeners) = listeners.get(&message.channel) {
+		if let Some(channel_listeners) = listeners.get(&Message.channel) {
 			for callback in channel_listeners {
-				if let Err(e) = callback(message.data.clone()) {
+				if let Err(e) = callback(Message.data.clone()) {
 					dev_log!("ipc", "error: [TauriIPCServer] Error in listener for channel {}: {}",
-						message.channel, e);
+						Message.channel, e);
 				}
 			}
 		} else {
-			dev_log!("ipc", "[TauriIPCServer] No listeners found for channel: {}", message.channel);
+			dev_log!("ipc", "[TauriIPCServer] No listeners found for channel: {}", Message.channel);
 		}
 
 		Ok(())
@@ -354,7 +354,7 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(())`: Status sent successfully
-	/// - `Err(String)`: Error message if sending fails
+	/// - `Err(String)`: Error Message if sending fails
 	async fn send_connection_status(&self, connected: bool) -> Result<(), String> {
 		let status = ConnectionStatus::new(connected);
 
@@ -366,20 +366,20 @@ impl TauriIPCServer {
 		Ok(())
 	}
 
-	/// Emit a message to Wind
+	/// Emit a Message to Wind
 	///
 	/// ## Parameters
-	/// - `message`: Message to emit
+	/// - `Message`: Message to emit
 	///
 	/// ## Returns
 	/// - `Ok(())`: Message emitted successfully
-	/// - `Err(String)`: Error message if emission fails
-	async fn emit_message(&self, message: &TauriIPCMessage) -> Result<(), String> {
+	/// - `Err(String)`: Error Message if emission fails
+	async fn emit_message(&self, Message: &TauriIPCMessage) -> Result<(), String> {
 		self.app_handle
-			.emit("vscode-ipc-message", message)
-			.map_err(|e| format!("Failed to emit message: {}", e))?;
+			.emit("vscode-ipc-Message", Message)
+			.map_err(|e| format!("Failed to emit Message: {}", e))?;
 
-		dev_log!("ipc", "[TauriIPCServer] Message emitted on channel: {}", message.channel);
+		dev_log!("ipc", "[TauriIPCServer] Message emitted on channel: {}", Message.channel);
 		Ok(())
 	}
 
@@ -390,16 +390,16 @@ impl TauriIPCServer {
 		let mut queue = match self.message_queue.lock() {
 			Ok(queue) => queue,
 			Err(e) => {
-				dev_log!("ipc", "error: [TauriIPCServer] Failed to access message queue: {}", e);
+				dev_log!("ipc", "error: [TauriIPCServer] Failed to access Message queue: {}", e);
 				return;
 			}
 		};
 
-		while let Some(message) = queue.pop() {
-			if let Err(e) = self.emit_message(&message).await {
-				dev_log!("ipc", "error: [TauriIPCServer] Failed to send queued message: {}", e);
-				// Put the message back in the queue
-				queue.insert(0, message);
+		while let Some(Message) = queue.pop() {
+			if let Err(e) = self.emit_message(&Message).await {
+				dev_log!("ipc", "error: [TauriIPCServer] Failed to send queued Message: {}", e);
+				// Put the Message back in the queue
+				queue.insert(0, Message);
 				break;
 			}
 		}
@@ -414,7 +414,7 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(bool)`: Connection status
-	/// - `Err(String)`: Error message if status check fails
+	/// - `Err(String)`: Error Message if status check fails
 	pub fn get_connection_status(&self) -> Result<bool, String> {
 		let guard = self
 			.is_connected
@@ -423,11 +423,11 @@ impl TauriIPCServer {
 		Ok(*guard)
 	}
 
-	/// Get queued message count
+	/// Get queued Message count
 	///
 	/// ## Returns
 	/// - `Ok(usize)`: Number of queued messages
-	/// - `Err(String)`: Error message if count check fails
+	/// - `Err(String)`: Error Message if count check fails
 	pub fn get_queue_size(&self) -> Result<usize, String> {
 		let guard = self
 			.message_queue
@@ -440,7 +440,7 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(())`: Cleanup successful
-	/// - `Err(String)`: Error message if cleanup fails
+	/// - `Err(String)`: Error Message if cleanup fails
 	pub fn dispose(&self) -> Result<(), String> {
 		{
 			let mut listeners = self
@@ -454,7 +454,7 @@ impl TauriIPCServer {
 			let mut queue = self
 				.message_queue
 				.lock()
-				.map_err(|e| format!("Failed to access message queue: {}", e))?;
+				.map_err(|e| format!("Failed to access Message queue: {}", e))?;
 			queue.clear();
 		}
 
@@ -470,15 +470,15 @@ impl TauriIPCServer {
 		Ok(())
 	}
 
-	/// Validate message permissions
+	/// Validate Message permissions
 	///
 	/// ## Parameters
-	/// - `message`: Message to validate
+	/// - `Message`: Message to validate
 	///
 	/// ## Returns
 	/// - `Ok(())`: Permissions validated
-	/// - `Err(String)`: Error message if validation fails
-	pub async fn validate_message_permissions(&self, message: &TauriIPCMessage) -> Result<(), String> {
+	/// - `Err(String)`: Error Message if validation fails
+	pub async fn validate_message_permissions(&self, Message: &TauriIPCMessage) -> Result<(), String> {
 		let permission_manager_guard = self
 			.permission_manager
 			.lock()
@@ -487,32 +487,32 @@ impl TauriIPCServer {
 		let permission_manager = permission_manager_guard.as_ref()
 			.ok_or_else(|| "Permission manager not initialized".to_string())?;
 
-		let context = self.create_security_context(message);
+		let context = self.create_security_context(Message);
 
 		// Extract operation from channel name
-		let operation = message.channel.replace("mountain_", "");
+		let operation = Message.channel.replace("mountain_", "");
 
 		// Validate permission
 		permission_manager.validate_permission(&operation, &context).await
 	}
 
-	/// Create security context from message
+	/// Create security context from Message
 	///
 	/// ## Parameters
-	/// - `message`: Message to create context from
+	/// - `Message`: Message to create context from
 	///
 	/// ## Returns
-	/// SecurityContext for the message
-	fn create_security_context(&self, message: &TauriIPCMessage) -> SecurityContext {
+	/// SecurityContext for the Message
+	fn create_security_context(&self, Message: &TauriIPCMessage) -> SecurityContext {
 		SecurityContext {
-			user_id: message.sender.clone().unwrap_or("unknown".to_string()),
+			user_id: Message.sender.clone().unwrap_or("unknown".to_string()),
 			// Default role assigned to authenticated IPC connections
 			roles: vec!["user".to_string()],
 			permissions: vec![],
 			// IPC connections use loopback address for security (localhost only)
 			ip_address: "127.0.0.1".to_string(),
 			timestamp: std::time::SystemTime::UNIX_EPOCH
-				+ std::time::Duration::from_millis(message.timestamp),
+				+ std::time::Duration::from_millis(Message.timestamp),
 		}
 	}
 
@@ -572,7 +572,7 @@ impl TauriIPCServer {
 		Ok(permission_manager.get_audit_log(limit).await)
 	}
 
-	/// Send compressed message batch
+	/// Send compressed Message batch
 	///
 	/// ## Parameters
 	/// - `channel`: IPC channel
@@ -580,7 +580,7 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(())`: Batch sent successfully
-	/// - `Err(String)`: Error message if sending fails
+	/// - `Err(String)`: Error Message if sending fails
 	pub async fn send_compressed_batch(
 		&self,
 		channel: &str,
@@ -607,16 +607,16 @@ impl TauriIPCServer {
 			.await
 	}
 
-	/// Handle compressed batch message
+	/// Handle compressed batch Message
 	///
 	/// ## Parameters
-	/// - `message`: Compressed batch message
+	/// - `Message`: Compressed batch Message
 	///
 	/// ## Returns
 	/// - `Ok(())`: Batch handled successfully
-	/// - `Err(String)`: Error message if handling fails
-	pub async fn CompressedBatch(&self, message: TauriIPCMessage) -> Result<(), String> {
-		let compressed_data_base64 = message.data.as_str()
+	/// - `Err(String)`: Error Message if handling fails
+	pub async fn CompressedBatch(&self, Message: TauriIPCMessage) -> Result<(), String> {
+		let compressed_data_base64 = Message.data.as_str()
 			.ok_or("Compressed batch data must be a string")?;
 
 		let compressed_data = base64::decode(compressed_data_base64)
@@ -627,7 +627,7 @@ impl TauriIPCServer {
 			.decompress_messages(&compressed_data)
 			.map_err(|e| format!("Failed to decompress batch: {}", e))?;
 
-		// Process each message in the batch
+		// Process each Message in the batch
 		for msg in messages {
 			self.IncomingMessage(msg).await?;
 		}
@@ -635,7 +635,7 @@ impl TauriIPCServer {
 		Ok(())
 	}
 
-	/// Send message using connection pool
+	/// Send Message using connection pool
 	///
 	/// ## Parameters
 	/// - `channel`: IPC channel
@@ -643,18 +643,18 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(())`: Message sent successfully
-	/// - `Err(String)`: Error message if sending fails
+	/// - `Err(String)`: Error Message if sending fails
 	pub async fn send_with_pool(&self, channel: &str, data: serde_json::Value) -> Result<(), String> {
 		let pool = Arc::new(ConnectionManager::new(10, std::time::Duration::from_secs(30)));
 
-		let handle = pool
+		let Handle = pool
 			.GetConnection()
 			.await
 			.map_err(|e| format!("Failed to get connection: {}", e))?;
 
 		let result = self.send(channel, data).await;
 
-		pool.ReleaseConnection(handle).await;
+		pool.ReleaseConnection(Handle).await;
 
 		result
 	}
@@ -668,7 +668,7 @@ impl TauriIPCServer {
 		Ok(pool.GetStats().await)
 	}
 
-	/// Send encrypted message
+	/// Send encrypted Message
 	///
 	/// ## Parameters
 	/// - `channel`: IPC channel
@@ -676,12 +676,12 @@ impl TauriIPCServer {
 	///
 	/// ## Returns
 	/// - `Ok(())`: Message sent successfully
-	/// - `Err(String)`: Error message if sending fails
+	/// - `Err(String)`: Error Message if sending fails
 	pub async fn send_secure(&self, channel: &str, data: serde_json::Value) -> Result<(), String> {
 		let secure_channel = SecureMessageChannel::new()
 			.map_err(|e| format!("Failed to create secure channel: {}", e))?;
 
-		let message = TauriIPCMessage {
+		let Message = TauriIPCMessage {
 			channel: channel.to_string(),
 			data,
 			sender: Some("mountain".to_string()),
@@ -692,23 +692,23 @@ impl TauriIPCServer {
 		};
 
 		let encrypted_message = secure_channel
-			.encrypt_message(&message)
-			.map_err(|e| format!("Failed to encrypt message: {}", e))?;
+			.encrypt_message(&Message)
+			.map_err(|e| format!("Failed to encrypt Message: {}", e))?;
 
 		let encrypted_data = serde_json::to_value(encrypted_message)
-			.map_err(|e| format!("Failed to serialize encrypted message: {}", e))?;
+			.map_err(|e| format!("Failed to serialize encrypted Message: {}", e))?;
 
 		self.send("secure_message", encrypted_data).await
 	}
 
-	/// Handle encrypted message
+	/// Handle encrypted Message
 	///
 	/// ## Parameters
-	/// - `encrypted_data`: Encrypted message data
+	/// - `encrypted_data`: Encrypted Message data
 	///
 	/// ## Returns
 	/// - `Ok(())`: Message handled successfully
-	/// - `Err(String)`: Error message if handling fails
+	/// - `Err(String)`: Error Message if handling fails
 	pub async fn SecureMessage(&self, encrypted_data: serde_json::Value) -> Result<(), String> {
 		use serde::Deserialize;
 
@@ -720,36 +720,36 @@ impl TauriIPCServer {
 		}
 
 		let encrypted_message: EncryptedMessage = serde_json::from_value(encrypted_data)
-			.map_err(|e| format!("Failed to deserialize encrypted message: {}", e))?;
+			.map_err(|e| format!("Failed to deserialize encrypted Message: {}", e))?;
 
 		let secure_channel = SecureMessageChannel::new()
 			.map_err(|e| format!("Failed to create secure channel: {}", e))?;
 
-		let message = secure_channel
+		let Message = secure_channel
 			.decrypt_message(&super::super::Encryption::EncryptedMessage {
 				nonce: encrypted_message.nonce,
 				ciphertext: encrypted_message.ciphertext,
 				hmac_tag: encrypted_message.hmac_tag,
 			})
-			.map_err(|e| format!("Failed to decrypt message: {}", e))?;
+			.map_err(|e| format!("Failed to decrypt Message: {}", e))?;
 
-		self.IncomingMessage(message).await
+		self.IncomingMessage(Message).await
 	}
 
-	/// Handle message with permission validation
+	/// Handle Message with permission validation
 	///
 	/// ## Parameters
-	/// - `message`: Message to handle
+	/// - `Message`: Message to Handle
 	///
 	/// ## Returns
 	/// - `Ok(())`: Message handled successfully
-	/// - `Err(String)`: Error message if handling fails
-	pub async fn MessageWithPermissions(&self, message: TauriIPCMessage) -> Result<(), String> {
+	/// - `Err(String)`: Error Message if handling fails
+	pub async fn MessageWithPermissions(&self, Message: TauriIPCMessage) -> Result<(), String> {
 		// Validate permission
-		self.validate_message_permissions(&message).await?;
+		self.validate_message_permissions(&Message).await?;
 
-		// Process the message
-		self.IncomingMessage(message).await
+		// Process the Message
+		self.IncomingMessage(Message).await
 	}
 }
 

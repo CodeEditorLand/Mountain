@@ -57,12 +57,12 @@ pub type ConnectionManager = ConnectionPool;
 /// let pool = Arc::new(ConnectionPool::new(10, Duration::from_secs(30)));
 ///
 /// // Get a connection
-/// let handle = pool.GetConnection().await?;
+/// let Handle = pool.GetConnection().await?;
 ///
 /// // Use the connection...
 ///
 /// // Release the connection
-/// pool.ReleaseConnection(handle).await;
+/// pool.ReleaseConnection(Handle).await;
 ///
 /// // Get statistics
 /// let stats = pool.GetStats().await;
@@ -118,20 +118,20 @@ impl ConnectionPool {
 	/// Default settings: 10 max connections, 30s timeout
 	pub fn default() -> Self { Self::new(10, Duration::from_secs(30)) }
 
-	/// Get a connection handle from the pool with timeout
+	/// Get a connection Handle from the pool with timeout
 	///
 	/// This method acquires a semaphore permit and creates a new connection
-	/// handle. If the pool is at capacity, it will wait until a connection
+	/// Handle. If the pool is at capacity, it will wait until a connection
 	/// becomes available or the timeout is reached.
 	///
 	/// ## Returns
-	/// - `Ok(ConnectionHandle)`: New connection handle
-	/// - `Err(String)`: Error message if timeout or failure occurs
+	/// - `Ok(ConnectionHandle)`: New connection Handle
+	/// - `Err(String)`: Error Message if timeout or failure occurs
 	///
 	/// ## Example
 	///
 	/// ```rust,ignore
-	/// let handle = pool.GetConnection().await?;
+	/// let Handle = pool.GetConnection().await?;
 	/// ```
 	pub async fn GetConnection(&self) -> Result<ConnectionHandle, String> {
 		dev_log!("ipc", "[ConnectionPool] Acquiring connection permit");
@@ -142,52 +142,52 @@ impl ConnectionPool {
 			.map_err(|_| "Connection timeout - pool may be at capacity".to_string())?
 			.map_err(|e| format!("Failed to acquire connection permit: {}", e))?;
 
-		// Create new connection handle
-		let handle = ConnectionHandle::new();
+		// Create new connection Handle
+		let Handle = ConnectionHandle::new();
 
 		// Add to active connections
 		{
 			let mut connections = self.ActiveConnection.lock().await;
-			connections.insert(handle.id.clone(), handle.clone());
+			connections.insert(Handle.id.clone(), Handle.clone());
 		}
 
 		dev_log!(
 			"ipc",
 			"[ConnectionPool] Connection {} acquired (permit released on drop)",
-			handle.id
+			Handle.id
 		);
 
 		// Start health monitoring for this connection
-		self.StartHealthMonitoring(&handle.id).await;
+		self.StartHealthMonitoring(&Handle.id).await;
 
 		// The permit will be automatically released when dropped
 		drop(permit);
 
-		Ok(handle)
+		Ok(Handle)
 	}
 
-	/// Release a connection handle back to the pool
+	/// Release a connection Handle back to the pool
 	///
 	/// This method removes the connection from the active connections map,
 	/// allowing the semaphore permit to be reused.
 	///
 	/// ## Parameters
-	/// - `handle`: The connection handle to release
+	/// - `Handle`: The connection Handle to release
 	///
 	/// ## Example
 	///
 	/// ```rust,ignore
-	/// pool.ReleaseConnection(handle).await;
+	/// pool.ReleaseConnection(Handle).await;
 	/// ```
-	pub async fn ReleaseConnection(&self, handle:ConnectionHandle) {
-		dev_log!("ipc", "[ConnectionPool] Releasing connection {}", handle.id);
+	pub async fn ReleaseConnection(&self, Handle:ConnectionHandle) {
+		dev_log!("ipc", "[ConnectionPool] Releasing connection {}", Handle.id);
 
 		{
 			let mut connections = self.ActiveConnection.lock().await;
-			connections.remove(&handle.id);
+			connections.remove(&Handle.id);
 		}
 
-		dev_log!("ipc", "[ConnectionPool] Connection {} released", handle.id);
+		dev_log!("ipc", "[ConnectionPool] Connection {} released", Handle.id);
 	}
 
 	/// Get connection statistics for monitoring
@@ -243,13 +243,13 @@ impl ConnectionPool {
 
 		let stale_ids:Vec<String> = connections
 			.iter()
-			.filter(|(_, handle)| {
+			.filter(|(_, Handle)| {
 				// Check if connection is stale using SystemTime
-				let is_stale_by_time = match now.duration_since(handle.last_used) {
+				let is_stale_by_time = match now.duration_since(Handle.last_used) {
 					Ok(idle_time) => idle_time > stale_threshold,
 					Err(_) => true, // If time went backwards, consider it stale
 				};
-				is_stale_by_time || !handle.is_healthy()
+				is_stale_by_time || !Handle.is_healthy()
 			})
 			.map(|(id, _)| id.clone())
 			.collect();
@@ -291,17 +291,17 @@ impl ConnectionPool {
 					Err(_) => continue,
 				};
 
-				if let Some(handle) = connections.get_mut(&connection_id) {
-					let is_healthy = checker.check_connection_health(handle).await;
-					handle.update_health(is_healthy);
+				if let Some(Handle) = connections.get_mut(&connection_id) {
+					let is_healthy = checker.check_connection_health(Handle).await;
+					Handle.update_health(is_healthy);
 
-					if !handle.is_healthy() {
+					if !Handle.is_healthy() {
 						dev_log!(
 							"ipc",
 							"[ConnectionPool] Connection {} marked as unhealthy (score: {:.1}, errors: {})",
-							handle.id,
-							handle.health_score,
-							handle.error_count
+							Handle.id,
+							Handle.health_score,
+							Handle.error_count
 						);
 					}
 				} else {
@@ -358,12 +358,12 @@ mod tests {
 		let pool = Arc::new(ConnectionPool::new(5, Duration::from_secs(5)));
 
 		// Get a connection
-		let handle = pool.GetConnection().await.unwrap();
+		let Handle = pool.GetConnection().await.unwrap();
 		assert_eq!(pool.active_connections().await, 1);
 		assert_eq!(pool.available_permits(), 4); // One permit used
 
 		// Release the connection
-		pool.ReleaseConnection(handle).await;
+		pool.ReleaseConnection(Handle).await;
 		assert_eq!(pool.active_connections().await, 0);
 		assert_eq!(pool.available_permits(), 5); // Permit restored
 	}
@@ -390,14 +390,14 @@ mod tests {
 		assert_eq!(pool.available_permits(), 1);
 
 		// Now we can get another
-		let handle = pool.GetConnection().await.unwrap();
+		let Handle = pool.GetConnection().await.unwrap();
 		assert_eq!(pool.available_permits(), 0);
 
 		// Release all
-		for handle in handles {
-			pool.ReleaseConnection(handle).await;
+		for Handle in handles {
+			pool.ReleaseConnection(Handle).await;
 		}
-		pool.ReleaseConnection(handle).await;
+		pool.ReleaseConnection(Handle).await;
 	}
 
 	#[tokio::test]
@@ -426,11 +426,11 @@ mod tests {
 		let pool = Arc::new(ConnectionPool::new(5, Duration::from_secs(5)));
 
 		// Create a connection and make it stale
-		let mut handle = pool.GetConnection().await.unwrap();
+		let mut Handle = pool.GetConnection().await.unwrap();
 
 		// Manually make it stale by setting old last_used and degrading health
 		unsafe {
-			let ptr = &mut handle as *mut ConnectionHandle;
+			let ptr = &mut Handle as *mut ConnectionHandle;
 			// Set last_used to a time in the past for testing
 			(*ptr).last_used = std::time::SystemTime::now()
 				.checked_sub(Duration::from_secs(360))
@@ -439,7 +439,7 @@ mod tests {
 		}
 
 		// Release and try to clean up
-		pool.ReleaseConnection(handle).await;
+		pool.ReleaseConnection(Handle).await;
 
 		// Clean up (will have to adjust logic for testing or add a method to force
 		// cleanup) For now, we'll just verify the method exists and runs
