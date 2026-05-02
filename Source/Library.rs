@@ -115,4 +115,4 @@ pub mod Binary;
 
 /// Main entry point for both mobile and desktop builds.
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn main() { Binary::Main::Main(); }
+pub fn main() { Binary::Main::Entry::Fn(); }
