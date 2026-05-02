@@ -189,7 +189,11 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 	// short form. Preserve `/` itself when the path IS root (vanishing
 	// edge case but cheap to guard).
 	let TrailingTrimmed = WithoutScheme.trim_end_matches('/');
-	let Normalised = if TrailingTrimmed.is_empty() { "/".to_string() } else { TrailingTrimmed.to_string() };
+	let Normalised = if TrailingTrimmed.is_empty() {
+		"/".to_string()
+	} else {
+		TrailingTrimmed.to_string()
+	};
 	if !std::path::Path::new(&Normalised).is_dir() {
 		return Base;
 	}

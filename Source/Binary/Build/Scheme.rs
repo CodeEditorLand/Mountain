@@ -1087,22 +1087,20 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 ///
 /// In stock Electron VS Code, `app.protocol.registerStreamProtocol(
 /// 'vscode-webview', ...)` serves this directory. Under Tauri 2.x +
-/// WKWebView, `register_asynchronous_uri_scheme_protocol("vscode-webview", ...)`
-/// installs an equivalent `WKURLSchemeHandler`. Without this handler,
+/// WKWebView, `register_asynchronous_uri_scheme_protocol("vscode-webview",
+/// ...)` installs an equivalent `WKURLSchemeHandler`. Without this handler,
 /// every extension that uses `webviewView` / `WebviewPanel` /
 /// `CustomEditor` lands the inner iframe at a `vscode-webview://...`
 /// URL the WKWebView can't resolve, the iframe stays blank, and the
 /// extension surface is dead.
 ///
 /// Three resources live under `pre/`:
-///   - `index.html`        - the webview shell that bridges
-///                           `postMessage` between workbench host and
-///                           inner extension HTML
+///   - `index.html`        - the webview shell that bridges `postMessage`
+///     between workbench host and inner extension HTML
 ///   - `service-worker.js` - registered by `index.html` to intercept
-///                           `vscode-webview-resource` requests for
-///                           extension-shipped assets
+///     `vscode-webview-resource` requests for extension-shipped assets
 ///   - `fake.html`         - sandbox stub used as a placeholder before
-///                           extension HTML arrives via postMessage
+///     extension HTML arrives via postMessage
 ///
 /// Anything else (querystrings, extra path segments, GUID-like
 /// authorities) is silently dropped; the extension's actual content
@@ -1111,19 +1109,19 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 ///
 /// # Parameters
 ///
-/// - `AppHandle`: Tauri AppHandle for resolving the embedded asset
-///   resolver and the dev-mode `Static/Application/` filesystem
-///   fallback (same chain as `VscodeFileSchemeHandler`).
-/// - `Request`: The incoming request - typically a `GET` for one of
-///   the three pre-baked files.
+/// - `AppHandle`: Tauri AppHandle for resolving the embedded asset resolver and
+///   the dev-mode `Static/Application/` filesystem fallback (same chain as
+///   `VscodeFileSchemeHandler`).
+/// - `Request`: The incoming request - typically a `GET` for one of the three
+///   pre-baked files.
 ///
 /// # Returns
 ///
 /// A `Response<Vec<u8>>` carrying:
 ///   - `200 OK` with the file bytes + correct MIME (`text/html` /
 ///     `application/javascript`) when found, or
-///   - `404 Not Found` when the resolved path falls outside the
-///     `pre/` directory or the asset isn't shipped.
+///   - `404 Not Found` when the resolved path falls outside the `pre/`
+///     directory or the asset isn't shipped.
 ///
 /// CORS headers are permissive (`*`) to match the workbench host's
 /// `vscode-webview-resource:` traffic, which round-trips through the

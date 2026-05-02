@@ -129,10 +129,8 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 		.or_else(|| std::env::var_os("USERPROFILE"))
 		.map(std::path::PathBuf::from);
 
-	let LandExtensionsRoot =
-		HomeDirectory.as_ref().map(|Home| Home.join(".land/extensions"));
-	let VSCodeExtensionsRoot =
-		HomeDirectory.as_ref().map(|Home| Home.join(".vscode/extensions"));
+	let LandExtensionsRoot = HomeDirectory.as_ref().map(|Home| Home.join(".land/extensions"));
+	let VSCodeExtensionsRoot = HomeDirectory.as_ref().map(|Home| Home.join(".vscode/extensions"));
 
 	let mut Builder = tauri_plugin_localhost::Builder::new(ServerPort);
 	if let Some(Root) = LandExtensionsRoot {
