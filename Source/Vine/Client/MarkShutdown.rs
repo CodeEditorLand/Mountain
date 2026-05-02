@@ -1,0 +1,11 @@
+#![allow(non_snake_case)]
+
+//! Flip the global Vine-client shutdown flag. Called from
+//! `RunTime::Shutdown::ShutdownCocoonWithRetry` immediately before
+//! `HardKillCocoon` so any inflight notification attempted after the
+//! SIGKILL window returns silently with `Ok(())` instead of logging a
+//! `Connection refused` error.
+
+use crate::Vine::Client::Shared;
+
+pub fn Fn() { Shared::ShutdownFlagStore(true); }
