@@ -261,7 +261,7 @@ impl EnhancedIPCManager {
 	/// Integrate with Tauri IPCServer
 	pub async fn integrate_with_tauri_ipc(
 		&self,
-		_ipc_server:&crate::IPC::TauriIPCServer::TauriIPCServer,
+		_ipc_server:&crate::IPC::TauriIPCServer_Old::TauriIPCServer,
 	) -> Result<(), String> {
 		dev_log!("ipc", "[EnhancedIPCManager] Integrating with Tauri IPC server");
 
@@ -275,9 +275,9 @@ impl EnhancedIPCManager {
 	/// Create enhanced message handler
 	pub async fn create_enhanced_handler(
 		&self,
-	) -> impl Fn(crate::IPC::TauriIPCServer::TauriIPCMessage) -> Result<(), String> {
+	) -> impl Fn(crate::IPC::TauriIPCServer_Old::TauriIPCMessage) -> Result<(), String> {
 		// Return a closure that handles messages with enhanced features
-		|message:crate::IPC::TauriIPCServer::TauriIPCMessage| {
+		|message:crate::IPC::TauriIPCServer_Old::TauriIPCMessage| {
 			dev_log!("ipc", "[EnhancedIPCManager] Handling message on channel: {}", message.channel);
 			Ok(())
 		}
