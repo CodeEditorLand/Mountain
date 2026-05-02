@@ -1396,338 +1396,338 @@ impl CocoonService for CocoonServiceImpl {
 	/// Cancel operations requested by Mountain
 
 	async fn cancel_operation(&self, request:Request<CancelOperationRequest>) -> Result<Response<Empty>, Status> {
-		Initialization::CancelOperation(self, request.into_inner()).await
+		Initialization::CancelOperation::Fn(self, request.into_inner()).await
 	}
 
 	async fn initial_handshake(&self, request:Request<Empty>) -> Result<Response<Empty>, Status> {
-		Initialization::InitialHandshake(self, request.into_inner()).await
+		Initialization::InitialHandshake::Fn(self, request.into_inner()).await
 	}
 
 	async fn init_extension_host(&self, request:Request<InitExtensionHostRequest>) -> Result<Response<Empty>, Status> {
-		Initialization::InitExtensionHost(self, request.into_inner()).await
+		Initialization::InitExtensionHost::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_command(&self, request:Request<RegisterCommandRequest>) -> Result<Response<Empty>, Status> {
-		Command::RegisterCommand(self, request.into_inner()).await
+		Command::RegisterCommand::Fn(self, request.into_inner()).await
 	}
 
 	async fn execute_contributed_command(
 		&self,
 		request:Request<ExecuteCommandRequest>,
 	) -> Result<Response<ExecuteCommandResponse>, Status> {
-		Command::ExecuteContributedCommand(self, request.into_inner()).await
+		Command::ExecuteContributedCommand::Fn(self, request.into_inner()).await
 	}
 
 	async fn unregister_command(&self, request:Request<UnregisterCommandRequest>) -> Result<Response<Empty>, Status> {
-		Command::UnregisterCommand(self, request.into_inner()).await
+		Command::UnregisterCommand::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_hover_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterHoverProvider(self, request.into_inner()).await
+		Provider::RegisterHoverProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_hover(
 		&self,
 		request:Request<ProvideHoverRequest>,
 	) -> Result<Response<ProvideHoverResponse>, Status> {
-		Provider::ProvideHover(self, request.into_inner()).await
+		Provider::ProvideHover::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_completion_item_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterCompletionItemProvider(self, request.into_inner()).await
+		Provider::RegisterCompletionItemProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_completion_items(
 		&self,
 		request:Request<ProvideCompletionItemsRequest>,
 	) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
-		Provider::ProvideCompletionItems(self, request.into_inner()).await
+		Provider::ProvideCompletionItems::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_definition_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterDefinitionProvider(self, request.into_inner()).await
+		Provider::RegisterDefinitionProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_definition(
 		&self,
 		request:Request<ProvideDefinitionRequest>,
 	) -> Result<Response<ProvideDefinitionResponse>, Status> {
-		Provider::ProvideDefinition(self, request.into_inner()).await
+		Provider::ProvideDefinition::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_reference_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterReferenceProvider(self, request.into_inner()).await
+		Provider::RegisterReferenceProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_references(
 		&self,
 		request:Request<ProvideReferencesRequest>,
 	) -> Result<Response<ProvideReferencesResponse>, Status> {
-		Provider::ProvideReferences(self, request.into_inner()).await
+		Provider::ProvideReferences::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_code_actions_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterCodeActionsProvider(self, request.into_inner()).await
+		Provider::RegisterCodeActionsProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_code_actions(
 		&self,
 		request:Request<ProvideCodeActionsRequest>,
 	) -> Result<Response<ProvideCodeActionsResponse>, Status> {
-		Provider::ProvideCodeActions(self, request.into_inner()).await
+		Provider::ProvideCodeActions::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_text_document(
 		&self,
 		request:Request<ShowTextDocumentRequest>,
 	) -> Result<Response<ShowTextDocumentResponse>, Status> {
-		Window::ShowTextDocument(self, request.into_inner()).await
+		Window::ShowTextDocument::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_information_message(
 		&self,
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
-		Window::ShowInformationMessage(self, request.into_inner()).await
+		Window::ShowInformationMessage::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_warning_message(
 		&self,
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
-		Window::ShowWarningMessage(self, request.into_inner()).await
+		Window::ShowWarningMessage::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_error_message(
 		&self,
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
-		Window::ShowErrorMessage(self, request.into_inner()).await
+		Window::ShowErrorMessage::Fn(self, request.into_inner()).await
 	}
 
 	async fn create_status_bar_item(
 		&self,
 		request:Request<CreateStatusBarItemRequest>,
 	) -> Result<Response<CreateStatusBarItemResponse>, Status> {
-		Window::CreateStatusBarItem(self, request.into_inner()).await
+		Window::CreateStatusBarItem::Fn(self, request.into_inner()).await
 	}
 
 	async fn set_status_bar_text(&self, request:Request<SetStatusBarTextRequest>) -> Result<Response<Empty>, Status> {
-		Window::SetStatusBarText(self, request.into_inner()).await
+		Window::SetStatusBarText::Fn(self, request.into_inner()).await
 	}
 
 	async fn create_webview_panel(
 		&self,
 		request:Request<CreateWebviewPanelRequest>,
 	) -> Result<Response<CreateWebviewPanelResponse>, Status> {
-		Window::CreateWebviewPanel(self, request.into_inner()).await
+		Window::CreateWebviewPanel::Fn(self, request.into_inner()).await
 	}
 
 	async fn set_webview_html(&self, request:Request<SetWebviewHtmlRequest>) -> Result<Response<Empty>, Status> {
-		Window::SetWebviewHtml(self, request.into_inner()).await
+		Window::SetWebviewHtml::Fn(self, request.into_inner()).await
 	}
 
 	async fn on_did_receive_message(
 		&self,
 		request:Request<OnDidReceiveMessageRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Window::OnDidReceiveMessage(self, request.into_inner()).await
+		Window::OnDidReceiveMessage::Fn(self, request.into_inner()).await
 	}
 
 	async fn post_webview_message(
 		&self,
 		request:Request<PostWebviewMessageRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Window::PostWebviewMessage(self, request.into_inner()).await
+		Window::PostWebviewMessage::Fn(self, request.into_inner()).await
 	}
 
 	async fn dispose_webview_panel(
 		&self,
 		request:Request<DisposeWebviewPanelRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Window::DisposeWebviewPanel(self, request.into_inner()).await
+		Window::DisposeWebviewPanel::Fn(self, request.into_inner()).await
 	}
 
 	async fn read_file(&self, request:Request<ReadFileRequest>) -> Result<Response<ReadFileResponse>, Status> {
-		FileSystem::ReadFile(self, request.into_inner()).await
+		FileSystem::ReadFile::Fn(self, request.into_inner()).await
 	}
 
 	async fn write_file(&self, request:Request<WriteFileRequest>) -> Result<Response<Empty>, Status> {
-		FileSystem::WriteFile(self, request.into_inner()).await
+		FileSystem::WriteFile::Fn(self, request.into_inner()).await
 	}
 
 	async fn stat(&self, request:Request<StatRequest>) -> Result<Response<StatResponse>, Status> {
-		FileSystem::Stat(self, request.into_inner()).await
+		FileSystem::Stat::Fn(self, request.into_inner()).await
 	}
 
 	async fn readdir(&self, request:Request<ReaddirRequest>) -> Result<Response<ReaddirResponse>, Status> {
-		FileSystem::Readdir(self, request.into_inner()).await
+		FileSystem::Readdir::Fn(self, request.into_inner()).await
 	}
 
 	async fn watch_file(&self, request:Request<WatchFileRequest>) -> Result<Response<Empty>, Status> {
-		FileSystem::WatchFile(self, request.into_inner()).await
+		FileSystem::WatchFile::Fn(self, request.into_inner()).await
 	}
 
 	async fn find_files(&self, request:Request<FindFilesRequest>) -> Result<Response<FindFilesResponse>, Status> {
-		FileSystem::FindFiles(self, request.into_inner()).await
+		FileSystem::FindFiles::Fn(self, request.into_inner()).await
 	}
 
 	async fn find_text_in_files(
 		&self,
 		request:Request<FindTextInFilesRequest>,
 	) -> Result<Response<FindTextInFilesResponse>, Status> {
-		FileSystem::FindTextInFiles(self, request.into_inner()).await
+		FileSystem::FindTextInFiles::Fn(self, request.into_inner()).await
 	}
 
 	async fn delete_file(&self, request:Request<DeleteFileRequest>) -> Result<Response<Empty>, Status> {
-		FileSystem::DeleteFile(self, request.into_inner()).await
+		FileSystem::DeleteFile::Fn(self, request.into_inner()).await
 	}
 
 	async fn rename_file(&self, request:Request<RenameFileRequest>) -> Result<Response<Empty>, Status> {
-		FileSystem::RenameFile(self, request.into_inner()).await
+		FileSystem::RenameFile::Fn(self, request.into_inner()).await
 	}
 
 	async fn copy_file(&self, request:Request<CopyFileRequest>) -> Result<Response<Empty>, Status> {
-		FileSystem::CopyFile(self, request.into_inner()).await
+		FileSystem::CopyFile::Fn(self, request.into_inner()).await
 	}
 
 	async fn create_directory(&self, request:Request<CreateDirectoryRequest>) -> Result<Response<Empty>, Status> {
-		FileSystem::CreateDirectory(self, request.into_inner()).await
+		FileSystem::CreateDirectory::Fn(self, request.into_inner()).await
 	}
 
 	async fn open_document(
 		&self,
 		request:Request<OpenDocumentRequest>,
 	) -> Result<Response<OpenDocumentResponse>, Status> {
-		Workspace::OpenDocument(self, request.into_inner()).await
+		Workspace::OpenDocument::Fn(self, request.into_inner()).await
 	}
 
 	async fn save_all(&self, request:Request<SaveAllRequest>) -> Result<Response<SaveAllResponse>, Status> {
-		Workspace::SaveAll(self, request.into_inner()).await
+		Workspace::SaveAll::Fn(self, request.into_inner()).await
 	}
 
 	async fn apply_edit(&self, request:Request<ApplyEditRequest>) -> Result<Response<ApplyEditResponse>, Status> {
-		Workspace::ApplyEdit(self, request.into_inner()).await
+		Workspace::ApplyEdit::Fn(self, request.into_inner()).await
 	}
 
 	async fn update_configuration(
 		&self,
 		request:Request<UpdateConfigurationRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Workspace::UpdateConfiguration(self, request.into_inner()).await
+		Workspace::UpdateConfiguration::Fn(self, request.into_inner()).await
 	}
 
 	async fn update_workspace_folders(
 		&self,
 		request:Request<UpdateWorkspaceFoldersRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Workspace::UpdateWorkspaceFolders(self, request.into_inner()).await
+		Workspace::UpdateWorkspaceFolders::Fn(self, request.into_inner()).await
 	}
 
 	async fn open_terminal(&self, request:Request<OpenTerminalRequest>) -> Result<Response<Empty>, Status> {
-		Terminal::OpenTerminal(self, request.into_inner()).await
+		Terminal::OpenTerminal::Fn(self, request.into_inner()).await
 	}
 
 	async fn terminal_input(&self, request:Request<TerminalInputRequest>) -> Result<Response<Empty>, Status> {
-		Terminal::TerminalInput(self, request.into_inner()).await
+		Terminal::TerminalInput::Fn(self, request.into_inner()).await
 	}
 
 	async fn close_terminal(&self, request:Request<CloseTerminalRequest>) -> Result<Response<Empty>, Status> {
-		Terminal::CloseTerminal(self, request.into_inner()).await
+		Terminal::CloseTerminal::Fn(self, request.into_inner()).await
 	}
 
 	async fn accept_terminal_opened(
 		&self,
 		request:Request<TerminalOpenedNotification>,
 	) -> Result<Response<Empty>, Status> {
-		Terminal::AcceptTerminalOpened(self, request.into_inner()).await
+		Terminal::AcceptTerminalOpened::Fn(self, request.into_inner()).await
 	}
 
 	async fn accept_terminal_closed(
 		&self,
 		request:Request<TerminalClosedNotification>,
 	) -> Result<Response<Empty>, Status> {
-		Terminal::AcceptTerminalClosed(self, request.into_inner()).await
+		Terminal::AcceptTerminalClosed::Fn(self, request.into_inner()).await
 	}
 
 	async fn accept_terminal_process_id(
 		&self,
 		request:Request<TerminalProcessIdNotification>,
 	) -> Result<Response<Empty>, Status> {
-		Terminal::AcceptTerminalProcessId(self, request.into_inner()).await
+		Terminal::AcceptTerminalProcessId::Fn(self, request.into_inner()).await
 	}
 
 	async fn accept_terminal_process_data(
 		&self,
 		request:Request<TerminalDataNotification>,
 	) -> Result<Response<Empty>, Status> {
-		Terminal::AcceptTerminalProcessData(self, request.into_inner()).await
+		Terminal::AcceptTerminalProcessData::Fn(self, request.into_inner()).await
 	}
 
 	async fn resize_terminal(&self, request:Request<ResizeTerminalRequest>) -> Result<Response<Empty>, Status> {
-		Terminal::ResizeTerminal(self, request.into_inner()).await
+		Terminal::ResizeTerminal::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_tree_view_provider(
 		&self,
 		request:Request<RegisterTreeViewProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		TreeView::RegisterTreeViewProvider(self, request.into_inner()).await
+		TreeView::RegisterTreeViewProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn get_tree_children(
 		&self,
 		request:Request<GetTreeChildrenRequest>,
 	) -> Result<Response<GetTreeChildrenResponse>, Status> {
-		TreeView::GetTreeChildren(self, request.into_inner()).await
+		TreeView::GetTreeChildren::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_scm_provider(
 		&self,
 		request:Request<RegisterScmProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		SCM::RegisterScmProvider(self, request.into_inner()).await
+		SCM::RegisterScmProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn update_scm_group(&self, request:Request<UpdateScmGroupRequest>) -> Result<Response<Empty>, Status> {
-		SCM::UpdateScmGroup(self, request.into_inner()).await
+		SCM::UpdateScmGroup::Fn(self, request.into_inner()).await
 	}
 
 	async fn git_exec(&self, request:Request<GitExecRequest>) -> Result<Response<GitExecResponse>, Status> {
-		SCM::GitExec(self, request.into_inner()).await
+		SCM::GitExec::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_debug_adapter(
 		&self,
 		request:Request<RegisterDebugAdapterRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Debug::RegisterDebugAdapter(self, request.into_inner()).await
+		Debug::RegisterDebugAdapter::Fn(self, request.into_inner()).await
 	}
 
 	async fn start_debugging(
 		&self,
 		request:Request<StartDebuggingRequest>,
 	) -> Result<Response<StartDebuggingResponse>, Status> {
-		Debug::StartDebugging(self, request.into_inner()).await
+		Debug::StartDebugging::Fn(self, request.into_inner()).await
 	}
 
 	async fn stop_debugging(&self, request:Request<StopDebuggingRequest>) -> Result<Response<Empty>, Status> {
-		Debug::StopDebugging(self, request.into_inner()).await
+		Debug::StopDebugging::Fn(self, request.into_inner()).await
 	}
 
 	async fn participate_in_save(
@@ -1738,351 +1738,351 @@ impl CocoonService for CocoonServiceImpl {
 	}
 
 	async fn get_secret(&self, request:Request<GetSecretRequest>) -> Result<Response<GetSecretResponse>, Status> {
-		Secret::GetSecret(self, request.into_inner()).await
+		Secret::GetSecret::Fn(self, request.into_inner()).await
 	}
 
 	async fn store_secret(&self, request:Request<StoreSecretRequest>) -> Result<Response<Empty>, Status> {
-		Secret::StoreSecret(self, request.into_inner()).await
+		Secret::StoreSecret::Fn(self, request.into_inner()).await
 	}
 
 	async fn delete_secret(&self, request:Request<DeleteSecretRequest>) -> Result<Response<Empty>, Status> {
-		Secret::DeleteSecret(self, request.into_inner()).await
+		Secret::DeleteSecret::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_document_highlight_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterDocumentHighlightProvider(self, request.into_inner()).await
+		Provider::RegisterDocumentHighlightProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_document_highlights(
 		&self,
 		request:Request<ProvideDocumentHighlightsRequest>,
 	) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
-		Provider::ProvideDocumentHighlights(self, request.into_inner()).await
+		Provider::ProvideDocumentHighlights::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_document_symbol_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterDocumentSymbolProvider(self, request.into_inner()).await
+		Provider::RegisterDocumentSymbolProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_document_symbols(
 		&self,
 		request:Request<ProvideDocumentSymbolsRequest>,
 	) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
-		Provider::ProvideDocumentSymbols(self, request.into_inner()).await
+		Provider::ProvideDocumentSymbols::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_workspace_symbol_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterWorkspaceSymbolProvider(self, request.into_inner()).await
+		Provider::RegisterWorkspaceSymbolProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_workspace_symbols(
 		&self,
 		request:Request<ProvideWorkspaceSymbolsRequest>,
 	) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
-		Provider::ProvideWorkspaceSymbols(self, request.into_inner()).await
+		Provider::ProvideWorkspaceSymbols::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_rename_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterRenameProvider(self, request.into_inner()).await
+		Provider::RegisterRenameProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_rename_edits(
 		&self,
 		request:Request<ProvideRenameEditsRequest>,
 	) -> Result<Response<ProvideRenameEditsResponse>, Status> {
-		Provider::ProvideRenameEdits(self, request.into_inner()).await
+		Provider::ProvideRenameEdits::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_document_formatting_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterDocumentFormattingProvider(self, request.into_inner()).await
+		Provider::RegisterDocumentFormattingProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_document_formatting(
 		&self,
 		request:Request<ProvideDocumentFormattingRequest>,
 	) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
-		Provider::ProvideDocumentFormatting(self, request.into_inner()).await
+		Provider::ProvideDocumentFormatting::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_document_range_formatting_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterDocumentRangeFormattingProvider(self, request.into_inner()).await
+		Provider::RegisterDocumentRangeFormattingProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_document_range_formatting(
 		&self,
 		request:Request<ProvideDocumentRangeFormattingRequest>,
 	) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
-		Provider::ProvideDocumentRangeFormatting(self, request.into_inner()).await
+		Provider::ProvideDocumentRangeFormatting::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_on_type_formatting_provider(
 		&self,
 		request:Request<RegisterOnTypeFormattingProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterOnTypeFormattingProvider(self, request.into_inner()).await
+		Provider::RegisterOnTypeFormattingProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_on_type_formatting(
 		&self,
 		request:Request<ProvideOnTypeFormattingRequest>,
 	) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
-		Provider::ProvideOnTypeFormatting(self, request.into_inner()).await
+		Provider::ProvideOnTypeFormatting::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_signature_help_provider(
 		&self,
 		request:Request<RegisterSignatureHelpProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterSignatureHelpProvider(self, request.into_inner()).await
+		Provider::RegisterSignatureHelpProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_signature_help(
 		&self,
 		request:Request<ProvideSignatureHelpRequest>,
 	) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
-		Provider::ProvideSignatureHelp(self, request.into_inner()).await
+		Provider::ProvideSignatureHelp::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_code_lens_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterCodeLensProvider(self, request.into_inner()).await
+		Provider::RegisterCodeLensProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_code_lenses(
 		&self,
 		request:Request<ProvideCodeLensesRequest>,
 	) -> Result<Response<ProvideCodeLensesResponse>, Status> {
-		Provider::ProvideCodeLenses(self, request.into_inner()).await
+		Provider::ProvideCodeLenses::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_folding_range_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterFoldingRangeProvider(self, request.into_inner()).await
+		Provider::RegisterFoldingRangeProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_folding_ranges(
 		&self,
 		request:Request<ProvideFoldingRangesRequest>,
 	) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
-		Provider::ProvideFoldingRanges(self, request.into_inner()).await
+		Provider::ProvideFoldingRanges::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_selection_range_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterSelectionRangeProvider(self, request.into_inner()).await
+		Provider::RegisterSelectionRangeProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_selection_ranges(
 		&self,
 		request:Request<ProvideSelectionRangesRequest>,
 	) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
-		Provider::ProvideSelectionRanges(self, request.into_inner()).await
+		Provider::ProvideSelectionRanges::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_semantic_tokens_provider(
 		&self,
 		request:Request<RegisterSemanticTokensProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterSemanticTokensProvider(self, request.into_inner()).await
+		Provider::RegisterSemanticTokensProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_semantic_tokens_full(
 		&self,
 		request:Request<ProvideSemanticTokensRequest>,
 	) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
-		Provider::ProvideSemanticTokensFull(self, request.into_inner()).await
+		Provider::ProvideSemanticTokensFull::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_inlay_hints_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterInlayHintsProvider(self, request.into_inner()).await
+		Provider::RegisterInlayHintsProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_inlay_hints(
 		&self,
 		request:Request<ProvideInlayHintsRequest>,
 	) -> Result<Response<ProvideInlayHintsResponse>, Status> {
-		Provider::ProvideInlayHints(self, request.into_inner()).await
+		Provider::ProvideInlayHints::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_type_hierarchy_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterTypeHierarchyProvider(self, request.into_inner()).await
+		Provider::RegisterTypeHierarchyProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_type_hierarchy_supertypes(
 		&self,
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
-		Provider::ProvideTypeHierarchySupertypes(self, request.into_inner()).await
+		Provider::ProvideTypeHierarchySupertypes::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_type_hierarchy_subtypes(
 		&self,
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
-		Provider::ProvideTypeHierarchySubtypes(self, request.into_inner()).await
+		Provider::ProvideTypeHierarchySubtypes::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_call_hierarchy_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterCallHierarchyProvider(self, request.into_inner()).await
+		Provider::RegisterCallHierarchyProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_call_hierarchy_incoming_calls(
 		&self,
 		request:Request<ProvideCallHierarchyRequest>,
 	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-		Provider::ProvideCallHierarchyIncomingCalls(self, request.into_inner()).await
+		Provider::ProvideCallHierarchyIncomingCalls::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_call_hierarchy_outgoing_calls(
 		&self,
 		request:Request<ProvideCallHierarchyRequest>,
 	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-		Provider::ProvideCallHierarchyOutgoingCalls(self, request.into_inner()).await
+		Provider::ProvideCallHierarchyOutgoingCalls::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_linked_editing_range_provider(
 		&self,
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Provider::RegisterLinkedEditingRangeProvider(self, request.into_inner()).await
+		Provider::RegisterLinkedEditingRangeProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn provide_linked_editing_ranges(
 		&self,
 		request:Request<ProvideLinkedEditingRangesRequest>,
 	) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
-		Provider::ProvideLinkedEditingRanges(self, request.into_inner()).await
+		Provider::ProvideLinkedEditingRanges::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_quick_pick(
 		&self,
 		request:Request<ShowQuickPickRequest>,
 	) -> Result<Response<ShowQuickPickResponse>, Status> {
-		Window::ShowQuickPick(self, request.into_inner()).await
+		Window::ShowQuickPick::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_input_box(
 		&self,
 		request:Request<ShowInputBoxRequest>,
 	) -> Result<Response<ShowInputBoxResponse>, Status> {
-		Window::ShowInputBox(self, request.into_inner()).await
+		Window::ShowInputBox::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_progress(
 		&self,
 		request:Request<ShowProgressRequest>,
 	) -> Result<Response<ShowProgressResponse>, Status> {
-		Window::ShowProgress(self, request.into_inner()).await
+		Window::ShowProgress::Fn(self, request.into_inner()).await
 	}
 
 	async fn report_progress(&self, request:Request<ReportProgressRequest>) -> Result<Response<Empty>, Status> {
-		Window::ReportProgress(self, request.into_inner()).await
+		Window::ReportProgress::Fn(self, request.into_inner()).await
 	}
 
 	async fn open_external(&self, request:Request<OpenExternalRequest>) -> Result<Response<Empty>, Status> {
-		Window::OpenExternal(self, request.into_inner()).await
+		Window::OpenExternal::Fn(self, request.into_inner()).await
 	}
 
 	async fn create_output_channel(
 		&self,
 		request:Request<CreateOutputChannelRequest>,
 	) -> Result<Response<CreateOutputChannelResponse>, Status> {
-		Output::CreateOutputChannel(self, request.into_inner()).await
+		Output::CreateOutputChannel::Fn(self, request.into_inner()).await
 	}
 
 	async fn append_output(&self, request:Request<AppendOutputRequest>) -> Result<Response<Empty>, Status> {
-		Output::AppendOutput(self, request.into_inner()).await
+		Output::AppendOutput::Fn(self, request.into_inner()).await
 	}
 
 	async fn clear_output(&self, request:Request<ClearOutputRequest>) -> Result<Response<Empty>, Status> {
-		Output::ClearOutput(self, request.into_inner()).await
+		Output::ClearOutput::Fn(self, request.into_inner()).await
 	}
 
 	async fn show_output(&self, request:Request<ShowOutputRequest>) -> Result<Response<Empty>, Status> {
-		Output::ShowOutput(self, request.into_inner()).await
+		Output::ShowOutput::Fn(self, request.into_inner()).await
 	}
 
 	async fn dispose_output(&self, request:Request<DisposeOutputRequest>) -> Result<Response<Empty>, Status> {
-		Output::DisposeOutput(self, request.into_inner()).await
+		Output::DisposeOutput::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_task_provider(
 		&self,
 		request:Request<RegisterTaskProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Task::RegisterTaskProvider(self, request.into_inner()).await
+		Task::RegisterTaskProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn execute_task(&self, request:Request<ExecuteTaskRequest>) -> Result<Response<ExecuteTaskResponse>, Status> {
-		Task::ExecuteTask(self, request.into_inner()).await
+		Task::ExecuteTask::Fn(self, request.into_inner()).await
 	}
 
 	async fn terminate_task(&self, request:Request<TerminateTaskRequest>) -> Result<Response<Empty>, Status> {
-		Task::TerminateTask(self, request.into_inner()).await
+		Task::TerminateTask::Fn(self, request.into_inner()).await
 	}
 
 	async fn get_authentication_session(
 		&self,
 		request:Request<GetAuthenticationSessionRequest>,
 	) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
-		Auth::GetAuthenticationSession(self, request.into_inner()).await
+		Auth::GetAuthenticationSession::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_authentication_provider(
 		&self,
 		request:Request<RegisterAuthenticationProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
-		Auth::RegisterAuthenticationProvider(self, request.into_inner()).await
+		Auth::RegisterAuthenticationProvider::Fn(self, request.into_inner()).await
 	}
 
 	async fn get_extension(
 		&self,
 		request:Request<GetExtensionRequest>,
 	) -> Result<Response<GetExtensionResponse>, Status> {
-		Extension::GetExtension(self, request.into_inner()).await
+		Extension::GetExtension::Fn(self, request.into_inner()).await
 	}
 
 	async fn get_all_extensions(&self, request:Request<Empty>) -> Result<Response<GetAllExtensionsResponse>, Status> {
-		Extension::GetAllExtensions(self, request.into_inner()).await
+		Extension::GetAllExtensions::Fn(self, request.into_inner()).await
 	}
 
 	async fn get_configuration(
 		&self,
 		request:Request<GetConfigurationRequest>,
 	) -> Result<Response<GetConfigurationResponse>, Status> {
-		Extension::GetConfiguration(self, request.into_inner()).await
+		Extension::GetConfiguration::Fn(self, request.into_inner()).await
 	}
 }
