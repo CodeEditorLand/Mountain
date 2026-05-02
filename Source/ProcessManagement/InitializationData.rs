@@ -144,7 +144,11 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Manager, Wry};
 use uuid::Uuid;
 
-use crate::{ApplicationState::ApplicationState, Environment::MountainEnvironment::MountainEnvironment, dev_log};
+use crate::{
+	ApplicationState::State::ApplicationState::ApplicationState,
+	Environment::MountainEnvironment::MountainEnvironment,
+	dev_log,
+};
 
 /// Loads or generates a persistent machine ID.
 ///
