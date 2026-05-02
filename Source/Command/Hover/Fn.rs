@@ -25,7 +25,7 @@ use tauri::{AppHandle, Wry};
 use url::Url;
 
 use crate::{
-	Command::Hover::Interface::{HoverRequest, HoverResponse, Position},
+	Command::Hover::Interface::{HoverRequest::Struct as HoverRequest, HoverResponse::Struct as HoverResponse, Position::Struct as Position},
 	dev_log,
 };
 
@@ -142,7 +142,7 @@ mod tests {
 
 	#[test]
 	fn test_hover_response_with_contents() {
-		use crate::Command::Hover::Interface::HoverContent;
+		use crate::Command::Hover::Interface::HoverContent::Enum as HoverContent;
 
 		let contents = vec![HoverContent::PlainText("Test hover".to_string())];
 		let response = HoverResponse::new(contents);

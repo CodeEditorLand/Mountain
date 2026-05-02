@@ -132,11 +132,46 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 	let LandExtensionsRoot = HomeDirectory.as_ref().map(|Home| Home.join(".land/extensions"));
 	let VSCodeExtensionsRoot = HomeDirectory.as_ref().map(|Home| Home.join(".vscode/extensions"));
 
+	// Bundle-resident built-ins. When the app is shipped as a `.app`,
+	// the 93 built-in extensions live under
+	// `Contents/Resources/extensions/`. Without this entry their
+	// icon-stylesheet URLs (rewritten to `/Extension/<abs-path>`) are
+	// rejected by the localhost plugin's allowlist and render as blank
+	// boxes. Two probe paths cover both bundle conventions: the Tauri
+	// default (`Contents/Resources/extensions`) and the VS Code-style
+	// nested `Contents/Resources/app/extensions` some tooling produces.
+	// The repo-layout fallback covers raw `Target/release/<bin>`
+	// launches that resolve from inside the monorepo.
+	let ExeParent = std::env::current_exe()
+		.ok()
+		.and_then(|Exe| Exe.parent().map(|P| P.to_path_buf()));
+	let BundleExtensionsRoot = ExeParent.as_ref().and_then(|Parent| {
+		let Candidate = Parent.join("../Resources/extensions");
+		Candidate.canonicalize().ok().or(Some(Candidate))
+	});
+	let BundleExtensionsAppRoot = ExeParent.as_ref().and_then(|Parent| {
+		let Candidate = Parent.join("../Resources/app/extensions");
+		Candidate.canonicalize().ok().or(Some(Candidate))
+	});
+	let RepoExtensionsRoot = ExeParent.as_ref().and_then(|Parent| {
+		let Candidate = Parent.join("../../../Sky/Target/Static/Application/extensions");
+		Candidate.canonicalize().ok().or(Some(Candidate))
+	});
+
 	let mut Builder = tauri_plugin_localhost::Builder::new(ServerPort);
 	if let Some(Root) = LandExtensionsRoot {
 		Builder = Builder.extension_root(Root);
 	}
 	if let Some(Root) = VSCodeExtensionsRoot {
+		Builder = Builder.extension_root(Root);
+	}
+	if let Some(Root) = BundleExtensionsRoot {
+		Builder = Builder.extension_root(Root);
+	}
+	if let Some(Root) = BundleExtensionsAppRoot {
+		Builder = Builder.extension_root(Root);
+	}
+	if let Some(Root) = RepoExtensionsRoot {
 		Builder = Builder.extension_root(Root);
 	}
 
