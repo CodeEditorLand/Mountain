@@ -10,10 +10,7 @@ use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn QuickInputShowQuickPick(
-	RunTime:Arc<ApplicationRunTime>,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn QuickInputShowQuickPick(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::UserInterface::{
 		DTO::{QuickPickItemDTO::QuickPickItemDTO, QuickPickOptionsDTO::QuickPickOptionsDTO},
 		UserInterfaceProvider::UserInterfaceProvider,
@@ -42,7 +39,8 @@ pub async fn QuickInputShowQuickPick(
 			.and_then(|P| P.as_str())
 			.map(|S| S.to_string()),
 		CanPickMany:Some(
-			Arguments.get(1)
+			Arguments
+				.get(1)
 				.and_then(|V| V.get("canPickMany"))
 				.and_then(|B| B.as_bool())
 				.unwrap_or(false),
@@ -67,10 +65,7 @@ pub async fn QuickInputShowQuickPick(
 	}
 }
 
-pub async fn QuickInputShowInputBox(
-	RunTime:Arc<ApplicationRunTime>,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn QuickInputShowInputBox(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	use CommonLibrary::UserInterface::{
 		DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
 		UserInterfaceProvider::UserInterfaceProvider,

@@ -58,10 +58,7 @@ pub async fn WorkspacesAddFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<
 	Ok(Value::Null)
 }
 
-pub async fn WorkspacesRemoveFolder(
-	RunTime:Arc<ApplicationRunTime>,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn WorkspacesRemoveFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let UriStr = Arguments
 		.first()
 		.and_then(|V| V.as_str())
