@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use CommonLibrary::Error::CommonError::CommonError;
 
-use crate::{ApplicationState::ApplicationState, dev_log};
+use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log};
 
 /// A critical security helper that checks if a given filesystem path is
 /// allowed for access.
@@ -87,15 +87,15 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 	// case-insensitive HFS+, etc.). Without this, a workspace with deep
 	// submodule trees rejects every read that walks past the first level
 	// even though the path is a literal descendant of the open folder.
-	let CanonicalPathToCheck = crate::Cache::PathCanon::Canonicalize::Fn(PathToCheck)
-		.unwrap_or_else(|_| PathToCheck.to_path_buf());
+	let CanonicalPathToCheck =
+		crate::Cache::PathCanon::Canonicalize::Fn(PathToCheck).unwrap_or_else(|_| PathToCheck.to_path_buf());
 	let IsAllowed = FoldersGuard.iter().any(|Folder| {
 		let FolderPath = match Folder.URI.to_file_path() {
 			Ok(P) => P,
 			Err(_) => return false,
 		};
-		let CanonicalFolderPath = crate::Cache::PathCanon::Canonicalize::Fn(&FolderPath)
-			.unwrap_or_else(|_| FolderPath.clone());
+		let CanonicalFolderPath =
+			crate::Cache::PathCanon::Canonicalize::Fn(&FolderPath).unwrap_or_else(|_| FolderPath.clone());
 		// Try both canonical-canonical AND raw-raw - either match wins.
 		PathToCheck.starts_with(&FolderPath)
 			|| PathToCheck.starts_with(&CanonicalFolderPath)
@@ -164,8 +164,8 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	// Canonicalising is best-effort - when the path doesn't exist yet
 	// (e.g. first-boot probes for `globalStorage/<extension>/state.json`)
 	// `canonicalize` returns Err and we compare against the raw path.
-	let Candidate = crate::Cache::PathCanon::Canonicalize::Fn(PathToCheck)
-		.unwrap_or_else(|_| PathToCheck.to_path_buf());
+	let Candidate =
+		crate::Cache::PathCanon::Canonicalize::Fn(PathToCheck).unwrap_or_else(|_| PathToCheck.to_path_buf());
 
 	if let Ok(Override) = std::env::var("Lodge") {
 		if !Override.is_empty() {
