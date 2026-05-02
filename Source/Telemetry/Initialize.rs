@@ -8,9 +8,10 @@
 
 #[cfg(feature = "Telemetry")]
 pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
-	use crate::Telemetry::Tracing::{initialize_metrics, initialize_tracing};
-
-	initialize_tracing()?;
-	initialize_metrics()?;
+	crate::Telemetry::Tracing::InitializeTracing::Fn()?;
+	crate::Telemetry::Metrics::Initialize::Fn()?;
 	Ok(())
 }
+
+#[cfg(not(feature = "Telemetry"))]
+pub fn Fn() -> Result<(), Box<dyn std::error::Error>> { Ok(()) }
