@@ -1,82 +1,23 @@
+#![allow(non_snake_case)]
+
 //! # AirClient
 //!
-//! gRPC client wrapper for the Air daemon service, providing Mountain with
-//! access to cloud-based backend services including updates, authentication,
-//! file indexing, and system monitoring.
-//!
-//! IMPORTANT: The gRPC client is wrapped in Arc<Mutex<>> to enable safe
-//! concurrent access from multiple threads, as tonic's client methods require
-//! mutable access.
-//!
-//! ## RESPONSIBILITIES
-//!
-//! - **Connection Management**: Manage gRPC connection lifecycle to Air service
-//! - **Service Methods**: Implement all Air service RPC methods
-//! - **Error Translation**: Convert tonic/transport errors to CommonError
-//! - **Connection Retry**: (Optional) Provide automatic retry with backoff
-//! - **Health Checking**: Monitor Air service availability
-//!
-//! ## ARCHITECTURAL ROLE
-//!
-//! AirClient serves as the primary interface between Mountain and the Air
-//! backend service:
-//!
-//! ```text
-//! Mountain (Frontend) ──► AirClient ──► gRPC ──► Air Daemon (Backend)
-//! ```
-//!
-//! ### Position in Mountain
-//! - Communication module for Air integration
-//! - Part of the service management layer
-//! - Features-gated behind `AirIntegration` feature flag
-//!
-//! ## IMPLEMENTATION
-//!
-//! This implementation uses the generated gRPC client from the Air library:
-//! - `AirLibrary::Vine::Generated::air_service_client::AirServiceClient`
-//!
-//! ## CONFIGURATION
-//!
-//! - **Default Address**: `[::1]:50053` (configurable via constructor)
-//! - **Transport**: gRPC over TCP/IP with optional TLS
-//! - **Connection Pooling**: (TODO) Implement for multiple concurrent requests
-//!
-//! ## ERROR HANDLING
-//!
-//! All methods return `Result<T, CommonError>` with appropriate error types:
-//! - `IPCError`: gRPC communication failures
-//! - `SerializationError`: Message encoding/decoding failures
-//! - `Unknown`: Uncategorized errors
-//!
-//! ## THREAD SAFETY
-//!
-//! - `AirClient` is `Clone`able and can be shared across threads via
-//!   `Arc<AirClient>`
-//! - The underlying tonic client is thread-safe
-//! - All public methods are safe to call from multiple threads
-//!
-//! ## PERFORMANCE CONSIDERATIONS
-//!
-//! - Connection establishment is lazy (deferred until first use)
-//! - (TODO) Implement connection pooling for high-throughput scenarios
-//! - (TODO) Add request caching for frequently accessed data
-//! - (TODO) Implement request timeout configuration
-//!
-//! ## TODO
-//!
-//! High Priority:
-//! - [ ] Add connection retry with exponential backoff
-//! - [ ] Implement proper connection pooling
-//!
-//! Medium Priority:
-//! - [ ] Add request/response logging for debugging
-//! - [ ] Implement connection health monitoring
-//! - [ ] Add metrics collection for RPC calls
-//!
-//! ## MODULE CONTENTS
-//!
-//! - [`AirClient`]: Main client struct
-//! - [`DEFAULT_AIR_SERVER_ADDRESS`]: Default gRPC server address constant
+//! gRPC client wrapper for the Air daemon service. Mountain reaches Air
+//! through this façade for update management, authentication, file
+//! indexing, and system monitoring. Companion DTOs live in sibling
+//! files declared below; the streaming helper lives in
+//! `DownloadStream::Struct`.
+
+pub mod AirMetrics;
+pub mod AirStatus;
+pub mod DownloadStream;
+pub mod DownloadStreamChunk;
+pub mod ExtendedFileInfo;
+pub mod FileInfo;
+pub mod FileResult;
+pub mod IndexInfo;
+pub mod ResourceUsage;
+pub mod UpdateInfo;
 
 use std::{collections::HashMap, sync::Arc};
 
@@ -272,7 +213,7 @@ impl AirClient {
 		request_id:String,
 		current_version:String,
 		channel:String,
-	) -> Result<UpdateInfo, CommonError> {
+	) -> Result<UpdateInfo::Struct, CommonError> {
 		dev_log!("grpc", "[AirClient] Checking for updates for version '{}'", current_version);
 
 		#[cfg(feature = "AirIntegration")]
@@ -295,7 +236,7 @@ impl AirClient {
 						"[AirClient] Update check completed. Update available: {}",
 						response.update_available
 					);
-					Ok(UpdateInfo {
+					Ok(UpdateInfo::Struct {
 						update_available:response.update_available,
 						version:response.version,
 						download_url:response.download_url,
@@ -333,7 +274,7 @@ impl AirClient {
 		destination_path:String,
 		checksum:String,
 		headers:HashMap<String, String>,
-	) -> Result<FileInfo, CommonError> {
+	) -> Result<FileInfo::Struct, CommonError> {
 		dev_log!("grpc", "[AirClient] Downloading update from: {}", url);
 
 		#[cfg(feature = "AirIntegration")]
@@ -353,7 +294,7 @@ impl AirClient {
 					let response:AirLibrary::Vine::Generated::air::DownloadResponse = response.into_inner();
 					if response.success {
 						dev_log!("grpc", "[AirClient] Update downloaded successfully to: {}", response.file_path);
-						Ok(FileInfo {
+						Ok(FileInfo::Struct {
 							file_path:response.file_path,
 							file_size:response.file_size,
 							checksum:response.checksum,
@@ -446,7 +387,7 @@ impl AirClient {
 		destination_path:String,
 		checksum:String,
 		headers:HashMap<String, String>,
-	) -> Result<FileInfo, CommonError> {
+	) -> Result<FileInfo::Struct, CommonError> {
 		dev_log!("grpc", "[AirClient] Downloading file from: {}", url);
 
 		#[cfg(feature = "AirIntegration")]
@@ -466,7 +407,7 @@ impl AirClient {
 					let response:AirLibrary::Vine::Generated::air::DownloadResponse = response.into_inner();
 					if response.success {
 						dev_log!("grpc", "[AirClient] File downloaded successfully to: {}", response.file_path);
-						Ok(FileInfo {
+						Ok(FileInfo::Struct {
 							file_path:response.file_path,
 							file_size:response.file_size,
 							checksum:response.checksum,
@@ -547,7 +488,7 @@ impl AirClient {
 		request_id:String,
 		url:String,
 		headers:HashMap<String, String>,
-	) -> Result<DownloadStream, CommonError> {
+	) -> Result<DownloadStream::Struct, CommonError> {
 		dev_log!("grpc", "[AirClient] Starting stream download from: {}", url);
 
 		#[cfg(feature = "AirIntegration")]
@@ -565,7 +506,7 @@ impl AirClient {
 			match client_guard.download_stream(Request::new(request)).await {
 				Ok(response) => {
 					dev_log!("grpc", "[AirClient] Stream download initiated successfully");
-					Ok(DownloadStream::new(response.into_inner()))
+					Ok(DownloadStream::Struct::new(response.into_inner()))
 				},
 				Err(e) => {
 					dev_log!("grpc", "error: [AirClient] Download stream RPC error: {}", e);
@@ -602,7 +543,7 @@ impl AirClient {
 		patterns:Vec<String>,
 		exclude_patterns:Vec<String>,
 		max_depth:u32,
-	) -> Result<IndexInfo, CommonError> {
+	) -> Result<IndexInfo::Struct, CommonError> {
 		dev_log!("grpc", "[AirClient] Indexing files in: {}", path);
 
 		#[cfg(feature = "AirIntegration")]
@@ -627,7 +568,7 @@ impl AirClient {
 						response.files_indexed,
 						response.total_size
 					);
-					Ok(IndexInfo { files_indexed:response.files_indexed, total_size:response.total_size })
+					Ok(IndexInfo::Struct { files_indexed:response.files_indexed, total_size:response.total_size })
 				},
 				Err(e) => {
 					dev_log!("grpc", "error: [AirClient] Index files RPC error: {}", e);
@@ -658,7 +599,7 @@ impl AirClient {
 		query:String,
 		path:String,
 		max_results:u32,
-	) -> Result<Vec<FileResult>, CommonError> {
+	) -> Result<Vec<FileResult::Struct>, CommonError> {
 		dev_log!("grpc", "[AirClient] Searching for files with query: '{}' in: {}", query, path);
 
 		#[cfg(feature = "AirIntegration")]
@@ -700,7 +641,7 @@ impl AirClient {
 	/// # Returns
 	/// * `Ok(file_info)` - File information
 	/// * `Err(CommonError)` - Request failure
-	pub async fn get_file_info(&self, request_id:String, path:String) -> Result<ExtendedFileInfo, CommonError> {
+	pub async fn get_file_info(&self, request_id:String, path:String) -> Result<ExtendedFileInfo::Struct, CommonError> {
 		let path_display = path.clone();
 		dev_log!("grpc", "[AirClient] Getting file info for: {}", path);
 
@@ -725,7 +666,7 @@ impl AirClient {
 						path_display,
 						response.exists
 					);
-					Ok(ExtendedFileInfo {
+					Ok(ExtendedFileInfo::Struct {
 						exists:response.exists,
 						size:response.size,
 						mime_type:response.mime_type,
@@ -755,7 +696,7 @@ impl AirClient {
 	/// # Returns
 	/// * `Ok(status)` - Air daemon status
 	/// * `Err(CommonError)` - Request failure
-	pub async fn get_status(&self, request_id:String) -> Result<AirStatus, CommonError> {
+	pub async fn get_status(&self, request_id:String) -> Result<AirStatus::Struct, CommonError> {
 		dev_log!("grpc", "[AirClient] Getting Air daemon status");
 
 		#[cfg(feature = "AirIntegration")]
@@ -778,7 +719,7 @@ impl AirClient {
 						"[AirClient] Status retrieved. Active requests: {}",
 						response.active_requests
 					);
-					Ok(AirStatus {
+					Ok(AirStatus::Struct {
 						version:response.version,
 						uptime_seconds:response.uptime_seconds,
 						total_requests:response.total_requests,
@@ -853,7 +794,11 @@ impl AirClient {
 	/// # Returns
 	/// * `Ok(metrics)` - Metrics data
 	/// * `Err(CommonError)` - Request failure
-	pub async fn get_metrics(&self, request_id:String, metric_type:Option<String>) -> Result<AirMetrics, CommonError> {
+	pub async fn get_metrics(
+		&self,
+		request_id:String,
+		metric_type:Option<String>,
+	) -> Result<AirMetrics::Struct, CommonError> {
 		dev_log!("grpc", "[AirClient] Getting metrics (type: {:?})", metric_type.as_deref());
 
 		#[cfg(feature = "AirIntegration")]
@@ -873,7 +818,7 @@ impl AirClient {
 					let response:AirLibrary::Vine::Generated::air::MetricsResponse = response.into_inner();
 					dev_log!("grpc", "[AirClient] Metrics retrieved");
 					// Parse metrics from the string map - this is a simplified implementation
-					let metrics = AirMetrics {
+					let metrics = AirMetrics::Struct {
 						memory_usage_mb:response
 							.metrics
 							.get("memory_usage_mb")
@@ -927,7 +872,7 @@ impl AirClient {
 	/// # Returns
 	/// * `Ok(usage)` - Resource usage data
 	/// * `Err(CommonError)` - Request failure
-	pub async fn get_resource_usage(&self, request_id:String) -> Result<ResourceUsage, CommonError> {
+	pub async fn get_resource_usage(&self, request_id:String) -> Result<ResourceUsage::Struct, CommonError> {
 		dev_log!("grpc", "[AirClient] Getting resource usage");
 
 		#[cfg(feature = "AirIntegration")]
@@ -946,7 +891,7 @@ impl AirClient {
 				Ok(response) => {
 					let response:AirLibrary::Vine::Generated::air::ResourceUsageResponse = response.into_inner();
 					dev_log!("grpc", "[AirClient] Resource usage retrieved");
-					Ok(ResourceUsage {
+					Ok(ResourceUsage::Struct {
 						memory_usage_mb:response.memory_usage_mb,
 						cpu_usage_percent:response.cpu_usage_percent,
 						disk_usage_mb:response.disk_usage_mb,
@@ -1154,161 +1099,6 @@ impl AirClient {
 // ============================================================================
 // Response Types
 // ============================================================================
-
-/// Information about an available update.
-#[derive(Debug, Clone)]
-pub struct UpdateInfo {
-	pub update_available:bool,
-	pub version:String,
-	pub download_url:String,
-	pub release_notes:String,
-}
-
-/// Information about a downloaded file.
-#[derive(Debug, Clone)]
-pub struct FileInfo {
-	pub file_path:String,
-	pub file_size:u64,
-	pub checksum:String,
-}
-
-/// Information about file indexing.
-#[derive(Debug, Clone)]
-pub struct IndexInfo {
-	pub files_indexed:u32,
-	pub total_size:u64,
-}
-
-/// Result of a file search.
-#[derive(Debug, Clone)]
-pub struct FileResult {
-	pub path:String,
-	pub size:u64,
-	pub match_preview:String,
-	pub line_number:u32,
-}
-
-/// Extended file information.
-#[derive(Debug, Clone)]
-pub struct ExtendedFileInfo {
-	pub exists:bool,
-	pub size:u64,
-	pub mime_type:String,
-	pub checksum:String,
-	pub modified_time:u64,
-}
-
-/// Status of the Air daemon.
-#[derive(Debug, Clone)]
-pub struct AirStatus {
-	pub version:String,
-	pub uptime_seconds:u64,
-	pub total_requests:u64,
-	pub successful_requests:u64,
-	pub failed_requests:u64,
-	pub average_response_time:f64,
-	pub memory_usage_mb:f64,
-	pub cpu_usage_percent:f64,
-	pub active_requests:u32,
-}
-
-/// Metrics from the Air daemon.
-#[derive(Debug, Clone)]
-pub struct AirMetrics {
-	pub memory_usage_mb:f64,
-	pub cpu_usage_percent:f64,
-	pub network_usage_mbps:f64,
-	pub disk_usage_mb:f64,
-	pub average_response_time:f64,
-}
-
-/// Resource usage information.
-#[derive(Debug, Clone)]
-pub struct ResourceUsage {
-	pub memory_usage_mb:f64,
-	pub cpu_usage_percent:f64,
-	pub disk_usage_mb:f64,
-	pub network_usage_mbps:f64,
-	pub thread_count:u32,
-	pub open_file_handles:u32,
-}
-
-/// Chunk of data from a streaming download.
-///
-/// Each chunk represents a portion of the downloaded file with metadata
-/// about the download progress.
-#[derive(Debug, Clone)]
-pub struct DownloadStreamChunk {
-	/// Binary data chunk
-	pub data:Vec<u8>,
-	/// Total file size in bytes (0 if unknown)
-	pub total_size:u64,
-	/// Number of bytes downloaded so far
-	pub downloaded:u64,
-	/// Whether this is the final chunk
-	pub completed:bool,
-	/// Error message if download failed
-	pub error:String,
-}
-
-/// Wrapper for an asynchronous download stream.
-///
-/// This type wraps the tonic streaming API to provide a convenient
-/// interface for iterating over download chunks.
-///
-/// # Example
-///
-/// ```text
-/// use Mountain::Air::AirClient::DownloadStream;
-/// use CommonLibrary::Error::CommonError::CommonError;
-///
-/// # #[tokio::main]
-/// # async fn main() -> Result<(), CommonError> {
-/// # let mut stream = DownloadStream::new(/* tonic stream */);
-/// let mut buffer = Vec::new();
-/// while let Some(chunk) = stream.next().await {
-/// 	let chunk = chunk?;
-/// 	buffer.extend_from_slice(&chunk.data);
-/// 	if chunk.completed {
-/// 		break;
-/// 	}
-/// }
-/// # Ok(())
-/// # }
-/// ```
-pub struct DownloadStream {
-	inner:tonic::codec::Streaming<AirLibrary::Vine::Generated::air::DownloadStreamResponse>,
-}
-
-impl DownloadStream {
-	/// Creates a new DownloadStream from a tonic streaming response.
-	pub fn new(stream:tonic::codec::Streaming<AirLibrary::Vine::Generated::air::DownloadStreamResponse>) -> Self {
-		Self { inner:stream }
-	}
-
-	/// Returns the next chunk from the stream.
-	///
-	/// Returns `None` when the stream ends.
-	pub async fn next(&mut self) -> Option<Result<DownloadStreamChunk, CommonError>> {
-		match futures_util::stream::StreamExt::next(&mut self.inner).await {
-			Some(Ok(response)) => {
-				Some(Ok(DownloadStreamChunk {
-					data:response.chunk,
-					total_size:response.total_size,
-					downloaded:response.downloaded,
-					completed:response.completed,
-					error:response.error,
-				}))
-			},
-			Some(Err(e)) => {
-				dev_log!("grpc", "error: [DownloadStream] Stream error: {}", e);
-				Some(Err(CommonError::IPCError { Description:format!("Stream error: {}", e) }))
-			},
-			None => None,
-		}
-	}
-}
-
 // ============================================================================
 // Debug Implementation
 // ============================================================================

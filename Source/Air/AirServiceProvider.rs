@@ -85,7 +85,9 @@ use super::{
 		UpdateInfo,
 	},
 };
-use crate::dev_log;
+use crate::{Air::AirServiceProvider::GenerateRequestID::Fn as generate_request_id, dev_log};
+
+pub mod GenerateRequestID;
 
 // ============================================================================
 // AirServiceProvider - High-level API Implementation
@@ -297,7 +299,7 @@ impl AirServiceProvider {
 		&self,
 		current_version:String,
 		channel:String,
-	) -> Result<Option<UpdateInfo>, CommonError> {
+	) -> Result<Option<UpdateInfo::Struct>, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!("grpc", "[AirServiceProvider] check_for_updates (request_id: {})", request_id);
 
@@ -321,7 +323,7 @@ impl AirServiceProvider {
 		url:String,
 		destination_path:String,
 		checksum:String,
-	) -> Result<FileInfo, CommonError> {
+	) -> Result<FileInfo::Struct, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!("grpc", "[AirServiceProvider] download_update (request_id: {})", request_id);
 
@@ -365,7 +367,7 @@ impl AirServiceProvider {
 		url:String,
 		destination_path:String,
 		checksum:String,
-	) -> Result<FileInfo, CommonError> {
+	) -> Result<FileInfo::Struct, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!("grpc", "[AirServiceProvider] download_file (request_id: {})", request_id);
 
@@ -419,7 +421,7 @@ impl AirServiceProvider {
 		&self,
 		url:String,
 		headers:HashMap<String, String>,
-	) -> Result<DownloadStream, CommonError> {
+	) -> Result<DownloadStream::Struct, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!(
 			"grpc",
@@ -474,7 +476,7 @@ impl AirServiceProvider {
 		patterns:Vec<String>,
 		exclude_patterns:Vec<String>,
 		max_depth:u32,
-	) -> Result<IndexInfo, CommonError> {
+	) -> Result<IndexInfo::Struct, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!(
 			"grpc",
@@ -521,7 +523,7 @@ impl AirServiceProvider {
 		query:String,
 		path:String,
 		max_results:u32,
-	) -> Result<Vec<FileResult>, CommonError> {
+	) -> Result<Vec<FileResult::Struct>, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!(
 			"grpc",
@@ -541,7 +543,7 @@ impl AirServiceProvider {
 	/// # Returns
 	/// * `Ok(file_info)` - Extended file information
 	/// * `Err(CommonError)` - Request error
-	pub async fn get_file_info(&self, path:String) -> Result<ExtendedFileInfo, CommonError> {
+	pub async fn get_file_info(&self, path:String) -> Result<ExtendedFileInfo::Struct, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!(
 			"grpc",
@@ -562,7 +564,7 @@ impl AirServiceProvider {
 	/// # Returns
 	/// * `Ok(status)` - Air daemon status information
 	/// * `Err(CommonError)` - Request error
-	pub async fn get_status(&self) -> Result<AirStatus, CommonError> {
+	pub async fn get_status(&self) -> Result<AirStatus::Struct, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!("grpc", "[AirServiceProvider] get_status (request_id: {})", request_id);
 
@@ -603,7 +605,7 @@ impl AirServiceProvider {
 	/// # Returns
 	/// * `Ok(metrics)` - Metrics data
 	/// * `Err(CommonError)` - Request error
-	pub async fn get_metrics(&self, metric_type:Option<String>) -> Result<AirMetrics, CommonError> {
+	pub async fn get_metrics(&self, metric_type:Option<String>) -> Result<AirMetrics::Struct, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!("grpc", "[AirServiceProvider] get_metrics (request_id: {})", request_id);
 
@@ -619,7 +621,7 @@ impl AirServiceProvider {
 	/// # Returns
 	/// * `Ok(usage)` - Resource usage data
 	/// * `Err(CommonError)` - Request error
-	pub async fn get_resource_usage(&self) -> Result<ResourceUsage, CommonError> {
+	pub async fn get_resource_usage(&self) -> Result<ResourceUsage::Struct, CommonError> {
 		let request_id = generate_request_id();
 		dev_log!("grpc", "[AirServiceProvider] get_resource_usage (request_id: {})", request_id);
 
@@ -717,28 +719,9 @@ impl AirServiceProvider {
 	}
 }
 
-// ============================================================================
-// Helper Function - Request ID Generation
-// ============================================================================
-
-/// Generates a unique request ID for Air operations.
-///
-/// Uses UUID v4 to generate a cryptographically random unique identifier.
-/// This is used to correlate requests with responses and for tracing.
-///
-/// # Returns
-/// A UUID string in simple format (without dashes)
-///
-/// # Example
-///
-/// ```text
-/// use Mountain::Air::AirServiceProvider::generate_request_id;
-///
-/// let id = generate_request_id();
-/// println!("Request ID: {}", id);
-/// // Output example: Request ID: a1b2c3d4e5f67890...
-/// ```
-pub fn generate_request_id() -> String { Uuid::new_v4().simple().to_string() }
+// Request-id helper moved to `GenerateRequestID::Fn` in the sibling file
+// declared at the top of this module. Internal callers reach it via the
+// `use self::GenerateRequestID::Fn as generate_request_id;` shorthand.
 
 // ============================================================================
 // Tests
