@@ -122,29 +122,44 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 	}
 
 	if Collected.is_empty() {
-		// CWD-autoload default: ON in debug builds, OFF in release. Debug
-		// iteration invariably needs a folder so `vscode.git` /
-		// `eamodio.gitlens` can scan repositories, extensions can surface
-		// tree-views, and `workspace.findFiles` returns something. Release
-		// builds keep the stock VS Code "File → Open Folder" UX so users
-		// don't get surprise filesystem scans. Either default is
-		// overridable: `Walk=0` disables, `Walk=1`
-		// enables.
+		// CWD-autoload: ON in every profile. The earlier
+		// debug-only default left release `.app` launches via Finder /
+		// `open` with no workspace folder (cwd=`/` after `open`,
+		// `RecentlyOpened.json` may be empty/stale → tree-view empty,
+		// `vscode.workspace.findFiles` returns nothing, SCM panel can't
+		// find a repo). Override with `Walk=0` to keep the stock
+		// VS Code "File → Open Folder" UX.
 		//
-		// The earlier concern was that auto-seeding CWD from a mono-repo
-		// root walked `node_modules` during TypeScript workspace scan and
-		// stalled boot. That's still real in release but acceptable in
-		// debug: developers running from their project root actually want
-		// the scan.
-		let DefaultAutoload = cfg!(debug_assertions);
+		// Safety: when cwd is the filesystem root `/` (always the case
+		// when launched via `open` from Finder/Dock), the walk-up
+		// returns `/` itself which would scan the entire disk. Skip
+		// that and fall through to the HOME fallback below.
 		let AutoloadCwd = std::env::var("Walk")
 			.map(|Value| matches!(Value.as_str(), "1" | "true" | "yes" | "on"))
-			.unwrap_or(DefaultAutoload);
-		if AutoloadCwd {
-			if let Ok(Cwd) = std::env::current_dir() {
+			.unwrap_or(true);
+		if AutoloadCwd
+			&& let Ok(Cwd) = std::env::current_dir()
+		{
+			let IsFilesystemRoot = Cwd.parent().is_none();
+			if !IsFilesystemRoot {
 				Collected.push(WalkUpToProjectRoot(&Cwd));
 			}
 		}
+	}
+
+	// Final fallback: HOME directory. Reached when the binary was
+	// launched via Finder / `open` (cwd=`/`), there's no
+	// `RecentlyOpened.json` entry, and no `Open=` env. A workspace
+	// rooted at `$HOME` lets the tree view list the user's actual
+	// directories instead of showing an empty "no folder open" panel.
+	// The user can still pick a more specific folder via "File → Open
+	// Folder"; this just ensures something visible is there on first
+	// launch.
+	if Collected.is_empty()
+		&& let Some(Home) = dirs::home_dir()
+		&& Home.is_dir()
+	{
+		Collected.push(Home);
 	}
 
 	Collected
