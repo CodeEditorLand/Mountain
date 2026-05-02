@@ -67,7 +67,7 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 	});
 
 	if let Err(Error) =
-		Client::SendNotification("cocoon-main".to_string(), "$deltaWorkspaceFolders".to_string(), Payload).await
+		Client::SendNotification::Fn("cocoon-main".to_string(), "$deltaWorkspaceFolders".to_string(), Payload).await
 	{
 		dev_log!(
 			"workspaces",
