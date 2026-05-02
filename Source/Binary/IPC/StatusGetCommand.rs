@@ -17,7 +17,7 @@
 //! - Diagnostic endpoint for IPC health
 //!
 //! ### Dependencies
-//! - crate::IPC::TauriIPCServer: Status retrieval
+//! - crate::IPC::TauriIPCServer_Old: Status retrieval
 //! - tauri: IPC framework
 //! - serde_json: JSON serialization
 //!
@@ -62,7 +62,7 @@ use crate::dev_log;
 /// - Status cannot be retrieved from IPC server
 #[tauri::command]
 pub async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<Value, String> {
-	let Status = crate::IPC::TauriIPCServer::mountain_ipc_get_status(app_handle)
+	let Status = crate::IPC::TauriIPCServer_Old::mountain_ipc_get_status(app_handle)
 		.await
 		.map_err(|Error| {
 			dev_log!("ipc", "error: [IPC] [Command] Failed to get IPC status: {}", Error);

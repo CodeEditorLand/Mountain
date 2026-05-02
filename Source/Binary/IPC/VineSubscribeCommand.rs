@@ -25,7 +25,7 @@ use serde::Serialize;
 use serde_json::Value;
 use tauri::ipc::Channel;
 
-use crate::{Vine::Client::SubscribeNotifications, dev_log};
+use crate::{Vine::Client::SubscribeNotifications::Fn as SubscribeNotifications, dev_log};
 
 /// Webview-facing notification frame. Mirror of the Rust
 /// `Vine::Client::NotificationFrame` with camelCase field names per
@@ -51,7 +51,7 @@ pub struct NotificationFramePayload {
 #[tauri::command]
 pub async fn vine_subscribe_notifications(channel:Channel<NotificationFramePayload>) -> Result<usize, String> {
 	let mut Receiver = SubscribeNotifications();
-	let SubscriberCount = crate::Vine::Client::SubscriberCount();
+	let SubscriberCount = crate::Vine::Client::SubscriberCount::Fn();
 	dev_log!(
 		"grpc",
 		"[VineSubscribe] webview subscribed; total_subscribers={}",
@@ -96,4 +96,4 @@ pub async fn vine_subscribe_notifications(channel:Channel<NotificationFramePaylo
 /// Useful from the frontend for verifying that prior subscriptions
 /// haven't leaked across reloads.
 #[tauri::command]
-pub async fn vine_subscriber_count() -> Result<usize, String> { Ok(crate::Vine::Client::SubscriberCount()) }
+pub async fn vine_subscriber_count() -> Result<usize, String> { Ok(crate::Vine::Client::SubscriberCount::Fn()) }

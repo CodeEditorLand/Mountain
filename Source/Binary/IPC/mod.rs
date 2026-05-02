@@ -54,5 +54,5 @@ pub mod HealthCommand;
 pub mod WorkspaceFolderCommand;
 pub mod RenderDevLogCommand;
 // LAND-PATCH B7-S6 P14.5: Vine notification broadcast subscription
-// surface for Sky/Wind. 
+// surface for Sky/Wind.
 pub mod VineSubscribeCommand;

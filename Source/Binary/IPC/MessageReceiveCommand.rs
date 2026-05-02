@@ -17,7 +17,7 @@
 //! - Bridge between frontend and IPC server
 //!
 //! ### Dependencies
-//! - crate::IPC::TauriIPCServer: Message processing
+//! - crate::IPC::TauriIPCServer_Old: Message processing
 //! - tauri: IPC framework
 //! - serde_json: JSON parsing
 //!
@@ -64,7 +64,7 @@ use tauri::AppHandle;
 /// - TauriIPCServer processing fails
 #[tauri::command]
 pub async fn MountainIPCReceiveMessage(app_handle:AppHandle, message:Value) -> Result<Value, String> {
-	crate::IPC::TauriIPCServer::mountain_ipc_receive_message(
+	crate::IPC::TauriIPCServer_Old::mountain_ipc_receive_message(
 		app_handle,
 		serde_json::from_value(message).map_err(|e| e.to_string())?,
 	)
