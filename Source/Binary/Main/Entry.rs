@@ -70,16 +70,15 @@ use crate::dev_log;
 use crate::{
 	// Crate root imports
 	ApplicationState::State::ApplicationState::ApplicationState,
-	Binary::Build::DnsCommands::init_dns_startup_time,
 	Binary::Build::DnsCommands::{
-		self,
-		dns_get_forward_allowlist,
-		dns_get_health_status,
-		dns_get_server_info,
-		dns_get_zone_info,
-		dns_health_check,
-		dns_resolve,
-		dns_test_resolution,
+		StartupTime::init_dns_startup_time,
+		dns_get_forward_allowlist::dns_get_forward_allowlist,
+		dns_get_health_status::dns_get_health_status,
+		dns_get_server_info::dns_get_server_info,
+		dns_get_zone_info::dns_get_zone_info,
+		dns_health_check::dns_health_check,
+		dns_resolve::dns_resolve,
+		dns_test_resolution::dns_test_resolution,
 	},
 	// Binary submodule imports
 	Binary::Build::LocalhostPlugin::LocalhostPlugin as LocalhostPluginFn,
@@ -145,7 +144,7 @@ pub fn Fn() {
 	// Trace / Record because `set_var` only runs when a
 	// key is currently unset). Harmless to call: the inner `OnceLock`
 	// gates repeat invocations.
-	crate::IPC::DevLog::InitEager();
+	crate::IPC::DevLog::InitEager::Fn();
 
 	// -------------------------------------------------------------------------
 	// [Boot] [Env] Enhance the process environment with the user's
@@ -278,11 +277,32 @@ pub fn Fn() {
 
 	Runtime.block_on(async {
 		// ---------------------------------------------------------------------
+		// [Boot] [Telemetry] Hydrate runtime env from compile-baked
+		// Constants so spawned children (Cocoon Node, Sky webview)
+		// see the same telemetry config Mountain itself was built
+		// with - even when the user invokes the bare binary without
+		// sourcing `.env.Land.PostHog`. Idempotent + debug-only.
+		// Must run BEFORE PostHogPlugin::Initialize so the client
+		// reads the same effective env as the children.
+		// ---------------------------------------------------------------------
+		crate::Binary::Build::PostHogPlugin::HydrateRuntimeEnvironment::Fn();
+
+		// ---------------------------------------------------------------------
 		// [Boot] [PostHog] Initialize telemetry client first so any
 		// error captured during the rest of boot lands in the project.
 		// No-op in release builds or when Report=false.
 		// ---------------------------------------------------------------------
 		crate::Binary::Build::PostHogPlugin::Initialize::Fn().await;
+
+		// ---------------------------------------------------------------------
+		// [Boot] [Common::Telemetry] Initialize the shared dual-pipe
+		// stack so library crates linked into Mountain (Echo, Mist,
+		// Common) emit through the same client. The HydrateRuntime
+		// Environment step above populated the env so this picks up
+		// the same Authorize/Beam/Capture values Mountain's plugin
+		// already loaded. Idempotent.
+		// ---------------------------------------------------------------------
+		CommonLibrary::Telemetry::Initialize::Fn(CommonLibrary::Telemetry::Tier::Tier::Mountain).await;
 
 		// ---------------------------------------------------------------------
 		// [Boot] [Args] CLI parsing (using CliParse module)
@@ -472,7 +492,7 @@ pub fn Fn() {
 							dns_port
 						);
 						// Initialize DNS startup time for tracking
-						crate::Binary::Build::DnsCommands::init_dns_startup_time();
+						crate::Binary::Build::DnsCommands::StartupTime::init_dns_startup_time();
 					}
 
 					// Register DnsPort as managed state for Tauri commands
@@ -534,12 +554,12 @@ pub fn Fn() {
 			.invoke_handler(tauri::generate_handler![
 				crate::Binary::Tray::SwitchTrayIcon::SwitchTrayIcon,
 				crate::Binary::IPC::WorkbenchConfigurationCommand::MountainGetWorkbenchConfiguration,
-				Command::TreeView::GetTreeViewChildren,
+				Command::TreeView::GetTreeViewChildren::GetTreeViewChildren,
 				Command::LanguageFeature::MountainProvideHover::MountainProvideHover,
 				Command::LanguageFeature::MountainProvideCompletions::MountainProvideCompletions,
 				Command::LanguageFeature::MountainProvideDefinition::MountainProvideDefinition,
 				Command::LanguageFeature::MountainProvideReferences::MountainProvideReferences,
-				Command::SourceControlManagement::GetAllSourceControlManagementState,
+				Command::SourceControlManagement::GetAllSourceControlManagementState::GetAllSourceControlManagementState,
 				Command::Keybinding::GetResolvedKeybinding::GetResolvedKeybinding,
 				Track::FrontendCommand::DispatchFrontendCommand::DispatchFrontendCommand,
 				Track::UIRequest::ResolveUIRequest::ResolveUIRequest,
@@ -566,13 +586,13 @@ pub fn Fn() {
 				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceOpenFolder,
 				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceListFolders,
 				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceCloseAllFolders,
-				crate::Binary::Build::DnsCommands::dns_get_server_info,
-				crate::Binary::Build::DnsCommands::dns_get_zone_info,
-				crate::Binary::Build::DnsCommands::dns_get_forward_allowlist,
-				crate::Binary::Build::DnsCommands::dns_get_health_status,
-				crate::Binary::Build::DnsCommands::dns_resolve,
-				crate::Binary::Build::DnsCommands::dns_test_resolution,
-				crate::Binary::Build::DnsCommands::dns_health_check,
+				crate::Binary::Build::DnsCommands::dns_get_server_info::dns_get_server_info,
+				crate::Binary::Build::DnsCommands::dns_get_zone_info::dns_get_zone_info,
+				crate::Binary::Build::DnsCommands::dns_get_forward_allowlist::dns_get_forward_allowlist,
+				crate::Binary::Build::DnsCommands::dns_get_health_status::dns_get_health_status,
+				crate::Binary::Build::DnsCommands::dns_resolve::dns_resolve,
+				crate::Binary::Build::DnsCommands::dns_test_resolution::dns_test_resolution,
+				crate::Binary::Build::DnsCommands::dns_health_check::dns_health_check,
 				// Process commands (direct Tauri invoke from ProcessPolyfill)
 				crate::Binary::IPC::ProcessCommand::process_get_exec_path::process_get_exec_path,
 				crate::Binary::IPC::ProcessCommand::process_get_platform::process_get_platform,

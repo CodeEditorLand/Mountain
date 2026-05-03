@@ -464,7 +464,7 @@ pub fn AppLifecycleSetup(
 
 	tauri::async_runtime::spawn(async move {
 		dev_log!("lifecycle", "[Lifecycle] [PostSetup] Starting...");
-		let PostSetupStart = crate::IPC::DevLog::NowNano();
+		let PostSetupStart = crate::IPC::DevLog::NowNano::Fn();
 		let AppStateForSetup = PostSetupEnvironment.ApplicationState.clone();
 		TraceStep!("[Lifecycle] [PostSetup] AppState cloned.");
 
@@ -480,7 +480,7 @@ pub fn AppLifecycleSetup(
 		// Cocoon successfully activated the extension. The second pass
 		// below repairs this without disturbing the existing initial
 		// merge that the rest of bootstrap depends on.
-		let ConfigStart = crate::IPC::DevLog::NowNano();
+		let ConfigStart = crate::IPC::DevLog::NowNano::Fn();
 		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
 		crate::otel_span!("lifecycle:config:initialize", ConfigStart);
 
@@ -488,7 +488,7 @@ pub fn AppLifecycleSetup(
 		AppStateForSetup.Workspace.SetTrustStatus(true);
 
 		// [Extensions] [ScanPaths]
-		let ExtScanStart = crate::IPC::DevLog::NowNano();
+		let ExtScanStart = crate::IPC::DevLog::NowNano::Fn();
 		let _ = ScanPathConfigureFn(&AppStateForSetup);
 
 		// [Extensions] [Scan]
@@ -505,12 +505,12 @@ pub fn AppLifecycleSetup(
 		// User / workspace overrides applied during the first pass are
 		// preserved because the merge order is Default → User → Workspace
 		// and the cached User/Workspace JSON files are re-read each call.
-		let ConfigRemergeStart = crate::IPC::DevLog::NowNano();
+		let ConfigRemergeStart = crate::IPC::DevLog::NowNano::Fn();
 		let _ = ConfigurationInitializeFn(&PostSetupEnvironment).await;
 		crate::otel_span!("lifecycle:config:remerge-after-extension-scan", ConfigRemergeStart);
 
 		// [Vine] [gRPC]
-		let VineStart = crate::IPC::DevLog::NowNano();
+		let VineStart = crate::IPC::DevLog::NowNano::Fn();
 		let _ = VineStartFn(
 			PostSetupAppHandle.clone(),
 			"127.0.0.1:50051".to_string(),
@@ -529,7 +529,7 @@ pub fn AppLifecycleSetup(
 				"[Cocoon] [Start] Disable=true: Cocoon spawn SKIPPED (workbench will run without extensions)"
 			);
 		} else {
-			let CocoonStart = crate::IPC::DevLog::NowNano();
+			let CocoonStart = crate::IPC::DevLog::NowNano::Fn();
 			let _ = CocoonStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
 			crate::otel_span!("lifecycle:cocoon:start", CocoonStart);
 		}
@@ -543,7 +543,7 @@ pub fn AppLifecycleSetup(
 		if IsLandDisabled() {
 			dev_log!("grpc", "[Air] [Start] Disable=true: Air spawn SKIPPED");
 		} else {
-			let AirStartT0 = crate::IPC::DevLog::NowNano();
+			let AirStartT0 = crate::IPC::DevLog::NowNano::Fn();
 			let _ = AirStartFn(&PostSetupAppHandle, &PostSetupEnvironment).await;
 			crate::otel_span!("lifecycle:air:start", AirStartT0);
 		}
