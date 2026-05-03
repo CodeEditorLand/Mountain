@@ -185,7 +185,7 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 	// a trailing slash on the parent directory. The mismatch caused
 	// `IUriIdentityService.extUri.relativePath` to return absolute
 	// paths and breadcrumbs / quick-pick / Problems-panel labels to
-	// render `/Volumes/CORSAIR/...` instead of the workspace-relative
+	// render absolute `/Volumes/<vol>/...` paths instead of the workspace-relative
 	// short form. Preserve `/` itself when the path IS root (vanishing
 	// edge case but cheap to guard).
 	let TrailingTrimmed = WithoutScheme.trim_end_matches('/');

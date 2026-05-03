@@ -80,7 +80,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 	// Use canonical paths on both sides so that prefix-matching survives
 	// macOS's `/Volumes/<vol>/...` vs `/private/var/...` resolution and
 	// any symlinked submodule roots. Cocoon's URI strip yields the user-
-	// visible path (`/Volumes/CORSAIR/.../Land/Dependency/...`) while the
+	// visible path (`/Volumes/<vol>/.../Land/Dependency/...`) while the
 	// workspace folder URL stays as built from `from_directory_path` -
 	// these can disagree on platforms where the resolved canonical path
 	// differs from the URI-derived one (encoded mount-point indirection,

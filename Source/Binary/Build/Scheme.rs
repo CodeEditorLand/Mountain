@@ -881,7 +881,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	}
 
 	// Icon themes, grammars and other extension-contributed assets generate
-	// URIs like `vscode-file://vscode-app/Volumes/CORSAIR/.../seti.woff` after
+	// URIs like `vscode-file://vscode-app/Volumes/<vol>/.../seti.woff` after
 	// `FileAccess.uriToBrowserUri` rewrites a plain `file:///Volumes/...`
 	// extension path. The authority `vscode-app` is followed directly by the
 	// absolute filesystem path (sans leading `/`). Detect the well-known macOS /
