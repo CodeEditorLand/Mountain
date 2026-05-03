@@ -20,7 +20,7 @@ pub async fn ExtensionUninstall(
 	Runtime:Arc<ApplicationRunTime>,
 	Args:Vec<Value>,
 ) -> Result<Value, String> {
-	let OTELStart = crate::IPC::DevLog::NowNano();
+	let OTELStart = crate::IPC::DevLog::NowNano::Fn();
 
 	let Identifier = match Args.first().and_then(|Value| {
 		Value

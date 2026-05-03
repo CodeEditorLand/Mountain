@@ -39,7 +39,7 @@ pub async fn ExtensionInstall(
 	Runtime:Arc<ApplicationRunTime>,
 	Args:Vec<Value>,
 ) -> Result<Value, String> {
-	let OTELStart = crate::IPC::DevLog::NowNano();
+	let OTELStart = crate::IPC::DevLog::NowNano::Fn();
 
 	let VsixPath = match VsixPathFromArgs(&Args) {
 		Some(Path) => Path,
