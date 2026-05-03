@@ -43,7 +43,8 @@ The Bedrock of `Land`: Native Backend & Service Host.
 
 > **The RAM tax is not optional.** `VS Code` with a medium project: 500 MB to
 > 1.5 GB of RAM. Three open windows means three `Chromium` renderer processes,
-> each carrying a full heap. Every OS interaction crosses a serialized JSON IPC pipe.
+> each carrying a full heap. Every OS interaction crosses a serialized JSON IPC
+> pipe.
 
 _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 
@@ -54,23 +55,24 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 
 📖&#x2001;**[Rust API Documentation](https://Rust.Documentation.Editor.Land/Mountain/)**
 
-Welcome to **Mountain**&#x2001;⛰️! This element is the native `Rust` backend and `Tauri`
-application shell for the `Land` Code Editor. It serves as the foundational
-bedrock for the entire system, managing the application lifecycle, orchestrating
-native OS operations, and providing high-performance services to the `Wind`
-frontend and the `Cocoon` extension host.
+Welcome to **Mountain**&#x2001;⛰️! This element is the native `Rust` backend and
+`Tauri` application shell for the `Land` Code Editor. It serves as the
+foundational bedrock for the entire system, managing the application lifecycle,
+orchestrating native OS operations, and providing high-performance services to
+the `Wind` frontend and the `Cocoon` extension host.
 
 **Mountain**&#x2001;⛰️ is engineered to:
 
 1. **Be the Native Core:** Act as the primary `Rust` application, leveraging
    `Tauri` to create a lightweight, cross-platform windowing and `WebView` host.
-2. **Provide High-Performance Services:** Implement the abstract service `trait`s
-   defined in the `Common` crate, offering native-speed implementations for
-   filesystem I/O, process management, secure storage, and more.
+2. **Provide High-Performance Services:** Implement the abstract service
+   `trait`s defined in the `Common` crate, offering native-speed implementations
+   for filesystem I/O, process management, secure storage, and more.
 3. **Orchestrate Sidecars:** Reliably launch, manage, and communicate with the
    `Cocoon` (`Node.js`) extension host sidecar via a robust `gRPC` interface.
 4. **Power the User Interface:** Serve as the backend for the `Wind` layer,
-   responding to requests via `Tauri` commands and pushing state updates via `Tauri` events.
+   responding to requests via `Tauri` commands and pushing state updates via
+   `Tauri` events.
 
 ---
 
@@ -79,32 +81,33 @@ frontend and the `Cocoon` extension host.
 - **Declarative Effect System:** Built on a `Rust` `ActionEffect` system defined
   in the `Common` crate. Business logic is described as declarative, composable
   effects, executed by a central `ApplicationRunTime`.
-- **`gRPC`-Powered IPC:** Hosts a `tonic`-based `gRPC` server (`Vine`) to provide a
-  strongly-typed, high-performance communication channel for the `Cocoon` extension host.
+- **`gRPC`-Powered IPC:** Hosts a `tonic`-based `gRPC` server (`Vine`) to
+  provide a strongly-typed, high-performance communication channel for the
+  `Cocoon` extension host.
 - **Centralized State Management:** Utilizes a thread-safe, `Tauri`-managed
-  `ApplicationState` as the single source of truth for the entire application's state,
-  from open documents to provider registrations.
+  `ApplicationState` as the single source of truth for the entire application's
+  state, from open documents to provider registrations.
 - **Native PTY Management:** Implements a full-featured integrated terminal
   service by spawning and managing native pseudo-terminals (`PTY`) using the
   `portable-pty` crate.
 - **Secure Storage Integration:** Leverages the native OS keychain via the
   `keyring` crate to securely store sensitive data like authentication tokens.
 - **Robust Command Dispatching:** A central `Track` dispatcher intelligently
-  routes all incoming requests from `Wind` and `Cocoon` to the appropriate native
-  `Environment` provider or `ActionEffect`.
+  routes all incoming requests from `Wind` and `Cocoon` to the appropriate
+  native `Environment` provider or `ActionEffect`.
 
 ---
 
 ## Core Architecture Principles&#x2001;🏗️
 
-| Principle                              | Description                                                                                                                                          | Key Components                                    |
-| :------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------ |
-| **Implementation of Contracts**        | Implement the abstract service `trait`s from `Common`, providing concrete logic for the application's architecture.                                  | `Environment/*` providers                         |
-| **Separation of Concerns**             | Isolate service logic into distinct `Environment` provider modules, each responsible for a specific domain (e.g., `FileSystem`, `Documents`).        | `Environment/*`, `Command/*`                      |
-| **Declarative Logic**                  | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` - composable, testable, and robust.                                  | `RunTime/*`, `Track/EffectCreation.rs`, `Common`  |
-| **Centralized State**                  | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application.                      | `ApplicationState/*`                              |
-| **Secure & Performant IPC**            | Use `gRPC` for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                               | `Vine/*`                                          |
-| **UI-Backend Decoupling**               | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                                  | `Binary.rs` (invoke handler), `Command/*`         |
+| Principle                       | Description                                                                                                                                   | Key Components                                   |
+| :------------------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------- | :----------------------------------------------- |
+| **Implementation of Contracts** | Implement the abstract service `trait`s from `Common`, providing concrete logic for the application's architecture.                           | `Environment/*` providers                        |
+| **Separation of Concerns**      | Isolate service logic into distinct `Environment` provider modules, each responsible for a specific domain (e.g., `FileSystem`, `Documents`). | `Environment/*`, `Command/*`                     |
+| **Declarative Logic**           | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` - composable, testable, and robust.                           | `RunTime/*`, `Track/EffectCreation.rs`, `Common` |
+| **Centralized State**           | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application.               | `ApplicationState/*`                             |
+| **Secure & Performant IPC**     | Use `gRPC` for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                        | `Vine/*`                                         |
+| **UI-Backend Decoupling**       | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                           | `Binary.rs` (invoke handler), `Command/*`        |
 
 ---
 
@@ -192,22 +195,22 @@ Mountain/
 
 `Mountain` is a `Rust` crate and a core component of the main `Land` repository.
 It is not intended to be built or run standalone. Please follow the instructions
-in the main [`Land` Repository README](https://github.com/CodeEditorLand/Land) to
-set up, build, and run the entire application.
+in the main [`Land` Repository README](https://github.com/CodeEditorLand/Land)
+to set up, build, and run the entire application.
 
 **Key Dependencies:**
 
-| Crate / Package        | Purpose                                               |
-| :--------------------- | :---------------------------------------------------- |
-| `Common`               | Local path dependency - abstract traits & DTOs        |
-| `Echo`                 | Local path dependency - work-stealing scheduler       |
-| `keyring`              | Secure OS keychain access                             |
-| `log` & `env_logger`   | Structured logging                                    |
-| `portable-pty`         | Cross-platform native PTY for integrated terminal     |
-| `serde` & `serde_json` | Serialization / deserialization                       |
-| `tauri`                | `^2.x` - windowing, WebView, command dispatch         |
-| `tokio`                | Async runtime                                         |
-| `tonic`                | `gRPC` server implementation                          |
+| Crate / Package        | Purpose                                           |
+| :--------------------- | :------------------------------------------------ |
+| `Common`               | Local path dependency - abstract traits & DTOs    |
+| `Echo`                 | Local path dependency - work-stealing scheduler   |
+| `keyring`              | Secure OS keychain access                         |
+| `log` & `env_logger`   | Structured logging                                |
+| `portable-pty`         | Cross-platform native PTY for integrated terminal |
+| `serde` & `serde_json` | Serialization / deserialization                   |
+| `tauri`                | `^2.x` - windowing, WebView, command dispatch     |
+| `tokio`                | Async runtime                                     |
+| `tonic`                | `gRPC` server implementation                      |
 
 ---
 
@@ -229,24 +232,26 @@ set up, build, and run the entire application.
 This project is released into the public domain under the **Creative Commons CC0
 Universal** license. You are free to use, modify, distribute, and build upon
 this work for any purpose, without any restrictions. For the full legal text,
-see the [`LICENSE`](https://github.com/CodeEditorLand/Mountain/tree/Current/) file.
+see the [`LICENSE`](https://github.com/CodeEditorLand/Mountain/tree/Current/)
+file.
 
 ---
 
 ## Changelog&#x2001;📜
 
-See [`CHANGELOG.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/) for a
-history of changes specific to **Mountain**&#x2001;⛰️.
+See [`CHANGELOG.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/)
+for a history of changes specific to **Mountain**&#x2001;⛰️.
 
 ---
 
 ## Funding \& Acknowledgements&#x2001;🙏🏻
 
-**Mountain**&#x2001;⛰️ is a core element of the **Land**&#x2001;🏞️ ecosystem. This project is
-funded through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund
-established by [NLnet](https://NLnet.NL) with financial support from the
-European Commission's [Next Generation Internet](https://ngi.eu) program.
-Learn more at the [NLnet project page](https://NLnet.NL/project/Land).
+**Mountain**&#x2001;⛰️ is a core element of the **Land**&#x2001;🏞️ ecosystem.
+This project is funded through
+[NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund established by
+[NLnet](https://NLnet.NL) with financial support from the European Commission's
+[Next Generation Internet](https://ngi.eu) program. Learn more at the
+[NLnet project page](https://NLnet.NL/project/Land).
 
 The project is operated by PlayForm, based in Sofia, Bulgaria.
 

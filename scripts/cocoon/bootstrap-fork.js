@@ -26,7 +26,9 @@ const ParentPID = process.env.VSCODE_PARENT_PID;
 // ============================================================================
 
 const Trace = (Tag, Message) => {
-	try { performance.mark(`land:cocoon:${Tag}:${Message}`); } catch {}
+	try {
+		performance.mark(`land:cocoon:${Tag}:${Message}`);
+	} catch {}
 };
 
 Trace("bootstrap", "start");
@@ -65,7 +67,10 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 			port: 443,
 			path: URL.pathname,
 			method: "POST",
-			headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(Body) },
+			headers: {
+				"Content-Type": "application/json",
+				"Content-Length": Buffer.byteLength(Body),
+			},
 		});
 		Req.on("error", () => {}); // Swallow - fire and forget
 		Req.write(Body);
@@ -82,36 +87,71 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 const OTLPFlush = async () => {
 	if (process.env.NODE_ENV === "production") return;
 	try {
-		const Entries = performance.getEntriesByType("mark").filter(E => E.name.startsWith("land:"));
+		const Entries = performance
+			.getEntriesByType("mark")
+			.filter((E) => E.name.startsWith("land:"));
 		if (Entries.length === 0) return;
 
 		const TraceId = Array.from({ length: 16 }, () =>
-			Math.floor(Math.random() * 256).toString(16).padStart(2, "0"),
+			Math.floor(Math.random() * 256)
+				.toString(16)
+				.padStart(2, "0"),
 		).join("");
 
 		const Payload = {
-			resourceSpans: [{
-				resource: {
-					attributes: [
-						{ key: "service.name", value: { stringValue: "land-editor-cocoon" } },
-						{ key: "service.version", value: { stringValue: "0.0.1" } },
+			resourceSpans: [
+				{
+					resource: {
+						attributes: [
+							{
+								key: "service.name",
+								value: { stringValue: "land-editor-cocoon" },
+							},
+							{
+								key: "service.version",
+								value: { stringValue: "0.0.1" },
+							},
+						],
+					},
+					scopeSpans: [
+						{
+							scope: {
+								name: "land.cocoon.bootstrap",
+								version: "1.0.0",
+							},
+							spans: Entries.map((E) => ({
+								traceId: TraceId,
+								spanId: Array.from({ length: 8 }, () =>
+									Math.floor(Math.random() * 256)
+										.toString(16)
+										.padStart(2, "0"),
+								).join(""),
+								name: E.name,
+								kind: 1,
+								startTimeUnixNano: String(
+									BigInt(
+										Math.floor(
+											performance.timeOrigin +
+												E.startTime,
+										),
+									) * 1000000n,
+								),
+								endTimeUnixNano: String(
+									BigInt(
+										Math.floor(
+											performance.timeOrigin +
+												E.startTime,
+										),
+									) * 1000000n,
+								),
+								status: E.name.includes("error")
+									? { code: 2 }
+									: { code: 1 },
+							})),
+						},
 					],
 				},
-				scopeSpans: [{
-					scope: { name: "land.cocoon.bootstrap", version: "1.0.0" },
-					spans: Entries.map(E => ({
-						traceId: TraceId,
-						spanId: Array.from({ length: 8 }, () =>
-							Math.floor(Math.random() * 256).toString(16).padStart(2, "0"),
-						).join(""),
-						name: E.name,
-						kind: 1,
-						startTimeUnixNano: String(BigInt(Math.floor(performance.timeOrigin + E.startTime)) * 1000000n),
-						endTimeUnixNano: String(BigInt(Math.floor(performance.timeOrigin + E.startTime)) * 1000000n),
-						status: E.name.includes("error") ? { code: 2 } : { code: 1 },
-					})),
-				}],
-			}],
+			],
 		};
 
 		const { request } = await import("node:http");
@@ -121,7 +161,10 @@ const OTLPFlush = async () => {
 			port: 4318,
 			path: "/v1/traces",
 			method: "POST",
-			headers: { "Content-Type": "application/json", "Content-Length": Buffer.byteLength(Body) },
+			headers: {
+				"Content-Type": "application/json",
+				"Content-Length": Buffer.byteLength(Body),
+			},
 		});
 		Req.on("error", () => {});
 		Req.write(Body);
@@ -164,7 +207,10 @@ PostHogCapture("cocoon:session:start", {
 // ============================================================================
 
 const CocoonEntryPaths = [
-	new URL("../../../Cocoon/Target/Bootstrap/Implementation/CocoonMain.js", import.meta.url),
+	new URL(
+		"../../../Cocoon/Target/Bootstrap/Implementation/CocoonMain.js",
+		import.meta.url,
+	),
 	new URL("../../../Cocoon/Target/ESBuild/CocoonMain.js", import.meta.url),
 ];
 
@@ -197,7 +243,7 @@ if (!Loaded) {
 	Trace("bootstrap", "stub-mode");
 	PostHogCapture("cocoon:stub:active", {
 		reason: "no-compiled-entry-point",
-		searched: CocoonEntryPaths.map(P => P.pathname),
+		searched: CocoonEntryPaths.map((P) => P.pathname),
 	});
 
 	// Keep alive - Mountain health monitor checks every 5s

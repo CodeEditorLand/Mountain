@@ -140,8 +140,8 @@ fn PropagateProfileSentinel() {
 }
 
 // ===========================================================================
-// PostHog sentinel: `.env.Land.PostHog` exposes Authorize /
-// Beam / Report / Brand.
+// PostHog + OTLP sentinel: `.env.Land.PostHog` exposes Authorize /
+// Beam / Report / Brand and the OTLP / Disable / Trace overlay knobs.
 // TierEnvironment.sh sources that overlay before cargo runs, so values are
 // available here. Bake them as `cargo:rustc-env` so Mountain reads a single
 // source of truth across every build profile without a hardcoded const.
@@ -153,6 +153,10 @@ fn PropagatePostHogSentinel() {
 		"Beam",
 		"Report",
 		"Brand",
+		"OTLPEndpoint",
+		"OTLPEnabled",
+		"Capture",
+		"Trace",
 	] {
 		println!("cargo:rerun-if-env-changed={Key}");
 	}
@@ -165,6 +169,14 @@ fn PropagatePostHogSentinel() {
 
 	let DistinctId = std::env::var("Brand").unwrap_or_default();
 
+	let OTLPEndpoint = std::env::var("OTLPEndpoint").unwrap_or_else(|_| "http://127.0.0.1:4318".into());
+
+	let OTLPEnabled = std::env::var("OTLPEnabled").unwrap_or_else(|_| "true".into());
+
+	let TelemetryCapture = std::env::var("Capture").unwrap_or_else(|_| "true".into());
+
+	let TraceFilter = std::env::var("Trace").unwrap_or_else(|_| "all".into());
+
 	println!("cargo:rustc-env=Authorize={Key}");
 
 	println!("cargo:rustc-env=Beam={Host}");
@@ -172,6 +184,14 @@ fn PropagatePostHogSentinel() {
 	println!("cargo:rustc-env=Report={Enabled}");
 
 	println!("cargo:rustc-env=Brand={DistinctId}");
+
+	println!("cargo:rustc-env=OTLPEndpoint={OTLPEndpoint}");
+
+	println!("cargo:rustc-env=OTLPEnabled={OTLPEnabled}");
+
+	println!("cargo:rustc-env=Capture={TelemetryCapture}");
+
+	println!("cargo:rustc-env=Trace={TraceFilter}");
 }
 
 // ===========================================================================
@@ -257,7 +277,8 @@ fn ApplyEnvFile(Path:&std::path::Path, Contents:&str) {
 			// Cargo features - they are the compiled-in baseline. Silent.
 		} else {
 			println!(
-				"cargo:warning={}={} declared in {} but has no matching Cargo feature - update IsDeclaredTierFeature or Cargo.toml",
+				"cargo:warning={}={} declared in {} but has no matching Cargo feature - update IsDeclaredTierFeature \
+				 or Cargo.toml",
 				Key,
 				Value,
 				Path.display()
