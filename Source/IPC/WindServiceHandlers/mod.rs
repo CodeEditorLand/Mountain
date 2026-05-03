@@ -29,7 +29,12 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use Commands::*;
 use Configuration::*;
-use Extensions::*;
+use Extensions::{
+	ExtensionsGet::ExtensionsGet,
+	ExtensionsGetAll::ExtensionsGetAll,
+	ExtensionsGetInstalled::ExtensionsGetInstalled,
+	ExtensionsIsActive::ExtensionsIsActive,
+};
 use FileSystem::{
 	Managed::{
 		FileCopy::*,
@@ -57,7 +62,16 @@ use FileSystem::{
 		FileWriteNative::*,
 	},
 };
-use Model::*;
+use Model::{
+	ModelClose::ModelClose,
+	ModelGet::ModelGet,
+	ModelGetAll::ModelGetAll,
+	ModelOpen::ModelOpen,
+	ModelUpdateContent::ModelUpdateContent,
+	TextfileRead::TextfileRead,
+	TextfileSave::TextfileSave,
+	TextfileWrite::TextfileWrite,
+};
 use NativeHost::{
 	FindFreePort::*,
 	GetColorScheme::*,
@@ -70,11 +84,44 @@ use NativeHost::{
 	ShowItemInFolder::*,
 	ShowOpenDialog::*,
 };
-use Navigation::*;
-use Output::*;
+use Navigation::{
+	HistoryCanGoBack::HistoryCanGoBack,
+	HistoryCanGoForward::HistoryCanGoForward,
+	HistoryClear::HistoryClear,
+	HistoryGetStack::HistoryGetStack,
+	HistoryGoBack::HistoryGoBack,
+	HistoryGoForward::HistoryGoForward,
+	HistoryPush::HistoryPush,
+	LabelGetBase::LabelGetBase,
+	LabelGetURI::LabelGetURI,
+	LabelGetWorkspace::LabelGetWorkspace,
+};
+use Output::{
+	OutputAppend::OutputAppend,
+	OutputAppendLine::OutputAppendLine,
+	OutputClear::OutputClear,
+	OutputCreate::OutputCreate,
+	OutputShow::OutputShow,
+};
 use Search::*;
-use Storage::*;
-use Terminal::*;
+use Storage::{
+	StorageDelete::StorageDelete,
+	StorageGet::StorageGet,
+	StorageGetItems::StorageGetItems,
+	StorageKeys::StorageKeys,
+	StorageSet::StorageSet,
+	StorageUpdateItems::StorageUpdateItems,
+};
+use Terminal::{
+	LocalPTYGetDefaultShell::LocalPTYGetDefaultShell,
+	LocalPTYGetEnvironment::LocalPTYGetEnvironment,
+	LocalPTYGetProfiles::LocalPTYGetProfiles,
+	TerminalCreate::TerminalCreate,
+	TerminalDispose::TerminalDispose,
+	TerminalHide::TerminalHide,
+	TerminalSendText::TerminalSendText,
+	TerminalShow::TerminalShow,
+};
 use UI::{
 	Decoration::*,
 	Keybinding::*,
@@ -151,7 +198,7 @@ pub async fn mountain_ipc_invoke(
 	command:String,
 	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
-	let OTLPStart = crate::IPC::DevLog::NowNano();
+	let OTLPStart = crate::IPC::DevLog::NowNano::Fn();
 	// Silence the per-call invoke log for high-frequency methods that are
 	// not useful in forensic review. The workbench emits thousands of
 	// `logger:log` invocations per boot (every `console.*` call inside VS
@@ -1100,7 +1147,7 @@ pub async fn mountain_ipc_invoke(
 					// `Mountain.dev.log` (written by DevLog) and VS Code's
 					// `window1/output/*.log` files (written into `logsPath`) share one
 					// directory per session.
-					let SessionLogRoot = AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp());
+					let SessionLogRoot = AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp::Fn());
 					let SessionLogWindowDir = SessionLogRoot.join("window1");
 					let _ = std::fs::create_dir_all(&SessionLogWindowDir);
 
@@ -2082,39 +2129,39 @@ pub async fn mountain_ipc_invoke(
 				// via tokio::process. See Batch 4 in HANDOFF §-10.
 				"git:exec" => {
 					dev_log!("git", "git:exec");
-					Git::HandleExec(Arguments).await
+					Git::HandleExec::HandleExec(Arguments).await
 				},
 				"git:clone" => {
 					dev_log!("git", "git:clone");
-					Git::HandleClone(Arguments).await
+					Git::HandleClone::HandleClone(Arguments).await
 				},
 				"git:pull" => {
 					dev_log!("git", "git:pull");
-					Git::HandlePull(Arguments).await
+					Git::HandlePull::HandlePull(Arguments).await
 				},
 				"git:checkout" => {
 					dev_log!("git", "git:checkout");
-					Git::HandleCheckout(Arguments).await
+					Git::HandleCheckout::HandleCheckout(Arguments).await
 				},
 				"git:revParse" => {
 					dev_log!("git", "git:revParse");
-					Git::HandleRevParse(Arguments).await
+					Git::HandleRevParse::HandleRevParse(Arguments).await
 				},
 				"git:fetch" => {
 					dev_log!("git", "git:fetch");
-					Git::HandleFetch(Arguments).await
+					Git::HandleFetch::HandleFetch(Arguments).await
 				},
 				"git:revListCount" => {
 					dev_log!("git", "git:revListCount");
-					Git::HandleRevListCount(Arguments).await
+					Git::HandleRevListCount::HandleRevListCount(Arguments).await
 				},
 				"git:cancel" => {
 					dev_log!("git", "git:cancel");
-					Git::HandleCancel(Arguments).await
+					Git::HandleCancel::HandleCancel(Arguments).await
 				},
 				"git:isAvailable" => {
 					dev_log!("git", "git:isAvailable");
-					Git::HandleIsAvailable(Arguments).await
+					Git::HandleIsAvailable::HandleIsAvailable(Arguments).await
 				},
 
 				// Tree-view child lookup from the renderer side. Mirrors the
@@ -2210,7 +2257,7 @@ pub async fn mountain_ipc_invoke(
 								// while the user is browsing tree
 								// nodes that all hit the same
 								// extension bug.
-								crate::IPC::DevLog::DebugOnce(
+								crate::IPC::DevLog::DebugOnce::Fn(
 									"tree-view",
 									&format!("get-children-error:{}", ViewId),
 									&format!(
@@ -2443,11 +2490,19 @@ pub async fn mountain_ipc_invoke(
 	// Emit OTLP span for every IPC call - visible in Jaeger at localhost:16686
 	let IsErr = Result.is_err();
 	let SpanName = if IsErr {
-		format!("ipc:{}:error", command)
+		format!("land:mountain:ipc:{}:error", command)
 	} else {
-		format!("ipc:{}", command)
+		format!("land:mountain:ipc:{}", command)
 	};
 	crate::otel_span!(&SpanName, OTLPStart, &[("ipc.command", command.as_str())]);
+
+	// Emit `land:mountain:handler:complete` to PostHog for every dispatched IPC.
+	// Pairs with `land:cocoon:handler:complete` to populate the Feature
+	// Parity dashboard's Node-vs-Rust handler-latency comparison.
+	// `CaptureAllowed` short-circuits in release, so this is debug-only.
+	let HandlerElapsedNanos = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
+	let HandlerDurationMs = HandlerElapsedNanos / 1_000_000;
+	crate::Binary::Build::PostHogPlugin::CaptureHandler::Fn(&command, HandlerDurationMs, !IsErr);
 
 	// Atom I13: paired entry/exit line per invoke. `invoke: <cmd>` on the way
 	// in (emitted at the top of this fn); `done: <cmd> ok=… t_ns=…` on the
@@ -2458,7 +2513,7 @@ pub async fn mountain_ipc_invoke(
 	// entry line but DO emit an exit - frequencies still aggregate, but each
 	// is individually accounted for.
 	if !IsHighFrequencyCommand {
-		let ElapsedNanos = crate::IPC::DevLog::NowNano().saturating_sub(OTLPStart);
+		let ElapsedNanos = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
 		dev_log!("ipc", "done: {} ok={} t_ns={}", command, !IsErr, ElapsedNanos);
 	}
 
