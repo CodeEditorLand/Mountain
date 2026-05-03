@@ -10,8 +10,11 @@
 //! - `Initialize::Fn` - boot the global ingestion client.
 //! - `CaptureEvent::Fn` - generic event emitter with `$app` / `$component`
 //!   standard props.
-//! - `CaptureError::Fn` - emit under `mountain:error` with tag + message.
-//! - `CaptureIPC::Fn` - emit under `mountain:ipc:invoke` with method name.
+//! - `CaptureError::Fn` - emit under `land:mountain:error` with tag + message.
+//! - `CaptureIPC::Fn` - emit under `land:mountain:ipc:invoke` with method name.
+//! - `CaptureHandler::Fn` - emit under `land:mountain:handler:complete` with
+//!   `feature` + `duration_ms` + `ok`. Powers the Feature Parity dashboard's
+//!   Node-vs-Rust handler latency comparison.
 //!
 //! Module-private helpers:
 //! - `Constants` - `Authorize` / `Beam` / `Report` / `Brand` baked from
@@ -22,7 +25,9 @@
 
 pub mod CaptureError;
 pub mod CaptureEvent;
+pub mod CaptureHandler;
 pub mod CaptureIPC;
+pub mod HydrateRuntimeEnvironment;
 pub mod Initialize;
 
 pub(crate) mod CaptureAllowed;

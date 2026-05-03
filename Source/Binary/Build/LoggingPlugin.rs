@@ -105,10 +105,10 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		})
 		// Format logs with category-like structure: [LEVEL] [TARGET] message
 		.format(|out, message, record| {
-			if DevLog::IsShort() {
+			if DevLog::IsShort::Fn() {
 				let ShortTarget = CompressTarget(record.target());
 				let RawMessage = format!("{}", message);
-				let Aliased = DevLog::AliasPath(&RawMessage);
+				let Aliased = DevLog::AliasPath::Fn(&RawMessage);
 				out.finish(format_args!(
 					"[{:<5}] [{}] {}",
 					record.level(),

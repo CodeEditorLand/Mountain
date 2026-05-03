@@ -227,8 +227,9 @@ registry.register_with_options(
 
 ### HTTP vs HTTPS Routing
 
-The [`Scheme`](https://github.com/CodeEditorLand/Mountain/tree/Current/Source/Binary/Build/Scheme.rs) handler can be
-extended to support HTTPS:
+The
+[`Scheme`](https://github.com/CodeEditorLand/Mountain/tree/Current/Source/Binary/Build/Scheme.rs)
+handler can be extended to support HTTPS:
 
 ```rust
 // Check if service uses TLS
