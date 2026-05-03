@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use crate::{
-	IPC::AdvancedFeatures::initialize_advanced_features,
+	IPC::AdvancedFeatures::InitializeAdvancedFeatures::initialize_advanced_features,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };

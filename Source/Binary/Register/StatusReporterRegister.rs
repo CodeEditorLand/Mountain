@@ -5,7 +5,7 @@
 use std::sync::Arc;
 
 use crate::{
-	IPC::StatusReporter::initialize_status_reporter,
+	IPC::StatusReporter::InitializeStatusReporter::initialize_status_reporter,
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
