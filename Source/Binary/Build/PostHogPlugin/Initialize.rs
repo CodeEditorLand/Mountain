@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 //! Bring up the global PostHog client and emit
-//! `mountain:session:start`. Must be called once during boot;
+//! `land:mountain:session:start`. Must be called once during boot;
 //! re-entrancy is safe because the underlying `OnceLock::set` returns
 //! `Err` on subsequent attempts.
 //!
@@ -32,5 +32,12 @@ pub async fn Fn() {
 		"[PostHog] Initialized (host={}, debug mode)",
 		Constants::POSTHOG_HOST
 	);
-	CaptureEvent::Fn("mountain:session:start", None);
+	CaptureEvent::Fn(
+		"land:mountain:session:start",
+		Some(vec![
+			("pid", Box::leak(format!("{}", std::process::id()).into_boxed_str())),
+			("os", std::env::consts::OS),
+			("arch", std::env::consts::ARCH),
+		]),
+	);
 }
