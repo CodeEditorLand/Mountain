@@ -137,9 +137,7 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 		let AutoloadCwd = std::env::var("Walk")
 			.map(|Value| matches!(Value.as_str(), "1" | "true" | "yes" | "on"))
 			.unwrap_or(true);
-		if AutoloadCwd
-			&& let Ok(Cwd) = std::env::current_dir()
-		{
+		if AutoloadCwd && let Ok(Cwd) = std::env::current_dir() {
 			let IsFilesystemRoot = Cwd.parent().is_none();
 			if !IsFilesystemRoot {
 				Collected.push(WalkUpToProjectRoot(&Cwd));
