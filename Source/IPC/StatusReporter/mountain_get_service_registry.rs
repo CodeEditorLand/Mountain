@@ -1,0 +1,22 @@
+#![allow(non_snake_case)]
+
+//! `mountain_get_service_registry` Tauri command - returns
+//! the full `ServiceRegistry::Struct` snapshot.
+
+use tauri::Manager;
+
+use crate::{
+	IPC::StatusReporter::{Reporter::Struct as Reporter, ServiceRegistry::Struct as ServiceRegistry},
+	dev_log,
+};
+
+#[tauri::command]
+pub async fn mountain_get_service_registry(app_handle:tauri::AppHandle) -> Result<ServiceRegistry, String> {
+	dev_log!("lifecycle", "Tauri command: get_service_registry");
+
+	if let Some(reporter) = app_handle.try_state::<Reporter>() {
+		reporter.get_service_registry().await
+	} else {
+		Err("StatusReporter not found in application state".to_string())
+	}
+}
