@@ -7,13 +7,11 @@
 //! own file (file name = Tauri command identifier per the
 //! Naming-Convention exception):
 //!
-//! - `GetResolvedKeybinding::GetResolvedKeybinding` - final resolved
-//!   bindings after merging defaults + extension contributions + user.
+//! - `GetResolvedKeybinding::GetResolvedKeybinding` - final resolved bindings
+//!   after merging defaults + extension contributions + user.
 //! - `GetUserKeybindings::GetUserKeybindings` - user overrides (stub).
-//! - `RegisterExtensionKeybindings::RegisterExtensionKeybindings`
-//!   (stub).
-//! - `UnregisterExtensionKeybindings::UnregisterExtensionKeybindings`
-//!   (stub).
+//! - `RegisterExtensionKeybindings::RegisterExtensionKeybindings` (stub).
+//! - `UnregisterExtensionKeybindings::UnregisterExtensionKeybindings` (stub).
 //! - `CheckKeybindingConflicts::CheckKeybindingConflicts` - chord overlap
 //!   detection (stub).
 //!
