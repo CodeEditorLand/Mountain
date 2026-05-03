@@ -17,22 +17,34 @@ use std::collections::HashMap;
 use bincode::serde::encode_to_vec;
 
 // Import only the types, not the modules themselves (modules are already in scope via `pub mod`)
-use crate::IPC::Enhanced::MessageCompressor::{BatchConfig, CompressionAlgorithm, CompressionLevel};
+use crate::IPC::Enhanced::MessageCompressor::{
+	BatchConfig::Struct as BatchConfig,
+	CompressionAlgorithm::Enum as CompressionAlgorithm,
+	CompressionLevel::Enum as CompressionLevel,
+};
 use crate::{
 	IPC::Enhanced::{
-		ConnectionPool::{PoolConfig, PoolStats},
-		PerformanceDashboard::{DashboardConfig, DashboardStatistics, MetricType},
-		SecureMessageChannel::{EncryptedMessage, SecurityConfig, SecurityStats},
+		ConnectionPool::{PoolConfig::Struct as PoolConfig, PoolStats::Struct as PoolStats},
+		PerformanceDashboard::{
+			DashboardConfig::Struct as DashboardConfig,
+			DashboardStatistics::Struct as DashboardStatistics,
+			MetricType::Enum as MetricType,
+		},
+		SecureMessageChannel::{
+			EncryptedMessage::Struct as EncryptedMessage,
+			SecurityConfig::Struct as SecurityConfig,
+			SecurityStats::Struct as SecurityStats,
+		},
 	},
 	dev_log,
 };
 
 /// Enhanced IPC manager that combines all advanced features
 pub struct EnhancedIPCManager {
-	pub compressor:MessageCompressor::MessageCompressor,
-	pub connection_pool:ConnectionPool::ConnectionPool,
-	pub secure_channel:SecureMessageChannel::SecureMessageChannel,
-	pub performance_dashboard:PerformanceDashboard::PerformanceDashboard,
+	pub compressor:MessageCompressor::Compressor::Struct,
+	pub connection_pool:ConnectionPool::Pool::Struct,
+	pub secure_channel:SecureMessageChannel::Channel::Struct,
+	pub performance_dashboard:PerformanceDashboard::Dashboard::Struct,
 }
 
 impl EnhancedIPCManager {
@@ -44,10 +56,10 @@ impl EnhancedIPCManager {
 		let dashboard_config = DashboardConfig::default();
 
 		Ok(Self {
-			compressor:MessageCompressor::MessageCompressor::new(compressor_config),
-			connection_pool:ConnectionPool::ConnectionPool::new(pool_config),
-			secure_channel:SecureMessageChannel::SecureMessageChannel::new(security_config)?,
-			performance_dashboard:PerformanceDashboard::PerformanceDashboard::new(dashboard_config),
+			compressor:MessageCompressor::Compressor::Struct::new(compressor_config),
+			connection_pool:ConnectionPool::Pool::Struct::new(pool_config),
+			secure_channel:SecureMessageChannel::Channel::Struct::new(security_config)?,
+			performance_dashboard:PerformanceDashboard::Dashboard::Struct::new(dashboard_config),
 		})
 	}
 
@@ -102,7 +114,7 @@ impl EnhancedIPCManager {
 
 		// Record performance metrics
 		let duration = start_time.elapsed().as_millis() as f64;
-		let metric = PerformanceDashboard::PerformanceDashboard::create_metric(
+		let metric = PerformanceDashboard::Dashboard::Struct::create_metric(
 			MetricType::MessageProcessingTime,
 			duration,
 			Some(channel.to_string()),
@@ -207,10 +219,10 @@ impl EnhancedIPCManager {
 		};
 
 		Self {
-			compressor:MessageCompressor::MessageCompressor::new(compressor_config),
-			connection_pool:ConnectionPool::ConnectionPool::new(pool_config),
-			secure_channel:SecureMessageChannel::SecureMessageChannel::new(security_config).unwrap(),
-			performance_dashboard:PerformanceDashboard::PerformanceDashboard::new(dashboard_config),
+			compressor:MessageCompressor::Compressor::Struct::new(compressor_config),
+			connection_pool:ConnectionPool::Pool::Struct::new(pool_config),
+			secure_channel:SecureMessageChannel::Channel::Struct::new(security_config).unwrap(),
+			performance_dashboard:PerformanceDashboard::Dashboard::Struct::new(dashboard_config),
 		}
 	}
 
@@ -248,10 +260,10 @@ impl EnhancedIPCManager {
 		};
 
 		Self {
-			compressor:MessageCompressor::MessageCompressor::new(compressor_config),
-			connection_pool:ConnectionPool::ConnectionPool::new(pool_config),
-			secure_channel:SecureMessageChannel::SecureMessageChannel::new(security_config).unwrap(),
-			performance_dashboard:PerformanceDashboard::PerformanceDashboard::new(dashboard_config),
+			compressor:MessageCompressor::Compressor::Struct::new(compressor_config),
+			connection_pool:ConnectionPool::Pool::Struct::new(pool_config),
+			secure_channel:SecureMessageChannel::Channel::Struct::new(security_config).unwrap(),
+			performance_dashboard:PerformanceDashboard::Dashboard::Struct::new(dashboard_config),
 		}
 	}
 }
