@@ -23,13 +23,13 @@ pub async fn FileStatNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	// (package.json / launch.json / settings.json probes from every
 	// extension). Gate to `vfs-verbose`; the ENOENT path retains the
 	// `vfs` tag so real misses still surface at the default level.
-	if !DevLog::IsBenignEnoent(&Path) {
+	if !DevLog::IsBenignEnoent::Fn(&Path) {
 		dev_log!("vfs-verbose", "stat: {}", Path);
 	}
 
 	let Metadata = tokio::fs::symlink_metadata(&Path).await.map_err(|E| {
-		if DevLog::IsBenignEnoent(&Path) {
-			DevLog::DebugOnce(
+		if DevLog::IsBenignEnoent::Fn(&Path) {
+			DevLog::DebugOnce::Fn(
 				"vfs",
 				&format!("stat-enoent:{}", Path),
 				&format!("stat ENOENT (benign): {}", Path),
@@ -40,7 +40,7 @@ pub async fn FileStatNative(Arguments:Vec<Value>) -> Result<Value, String> {
 		format!("Failed to stat file: {} (path: {})", E, Path)
 	})?;
 
-	if !DevLog::IsBenignEnoent(&Path) {
+	if !DevLog::IsBenignEnoent::Fn(&Path) {
 		dev_log!("vfs-verbose", "stat OK: {} (dir={})", Path, Metadata.is_dir());
 	}
 	Ok(metadata_to_istat(&Metadata))
