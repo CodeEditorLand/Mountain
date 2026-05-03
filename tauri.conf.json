@@ -136,7 +136,7 @@
 		},
 		"publisher": "PlayForm",
 		"shortDescription": "",
-		"targets": ["app"],
+		"targets": ["app", "dmg"],
 		"windows": {
 			"allowDowngrades": true,
 			"certificateThumbprint": null,
