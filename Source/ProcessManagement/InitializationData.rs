@@ -411,11 +411,10 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 			// path) for raw-binary launches outside the bundle. Probe two
 			// fallback layouts so both `.app` and dev launches resolve:
 			//
-			//   1. `.app/Contents/MacOS/<bin>` → `Contents/Resources/`
-			//      (shipped bundle, raw-binary launch from inside the
-			//      bundle tree).
-			//   2. `Element/Mountain/Target/<profile>/<bin>` →
-			//      `Element/Sky/Target/` (monorepo dev / raw release).
+			//   1. `.app/Contents/MacOS/<bin>` → `Contents/Resources/` (shipped bundle,
+			//      raw-binary launch from inside the bundle tree).
+			//   2. `Element/Mountain/Target/<profile>/<bin>` → `Element/Sky/Target/`
+			//      (monorepo dev / raw release).
 			let ExeDir = std::env::current_exe()
 				.ok()
 				.and_then(|P| P.parent().map(|D| D.to_path_buf()))
@@ -430,8 +429,11 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 			}
 			None
 		})
-		.ok_or_else(|| CommonError::ConfigurationLoad {
-			Description:"Could not resolve AppRoot from resource_dir, ../Resources, or ../../../Sky/Target".to_string(),
+		.ok_or_else(|| {
+			CommonError::ConfigurationLoad {
+				Description:"Could not resolve AppRoot from resource_dir, ../Resources, or ../../../Sky/Target"
+					.to_string(),
+			}
 		})?;
 
 	let AppData = PathResolver

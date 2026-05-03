@@ -368,15 +368,15 @@ async fn LaunchAndManageCocoonSideCar(
 	// defeating the single-source-of-truth design.
 	//
 	// PascalCase single-word vars: covers `.env.Land.PostHog` (Authorize,
-	// Beam, Report, Brand, Replay, Ask, Throttle, Buffer, Batch, Cap),
-	// `.env.Land.Node` (Pick, Require), `.env.Land.Extensions` (Lodge,
-	// Extend, Probe, Ship, Wire, Install, Mute, Skip), and the
-	// kernel / Cocoon-spawn / preload gating flags (Spawn, Render).
-	// Each name is a single PascalCase action verb - no LAND_ prefix.
-	// Previously only Product/Tier/Network were forwarded and the
-	// PostHog bridge fell back to the empty-string default; the
-	// AllowList below now enumerates every Land-introduced env var by
-	// name so Cocoon sees the same values Mountain reads.
+	// Beam, Report, Brand, Replay, Ask, Throttle, Buffer, Batch, Cap,
+	// Capture, OTLPEndpoint, OTLPEnabled), `.env.Land.Node` (Pick,
+	// Require), `.env.Land.Extensions` (Lodge, Extend, Probe, Ship, Wire,
+	// Install, Mute, Skip), and the kernel / Cocoon-spawn / preload
+	// gating flags (Spawn, Render). Each name is a single PascalCase
+	// action verb - no LAND_ prefix. Previously only Product/Tier/Network
+	// were forwarded and the PostHog bridge fell back to the empty-string
+	// default; the AllowList below now enumerates every Land-introduced
+	// env var by name so Cocoon sees the same values Mountain reads.
 	const LandEnvAllowList:&[&str] = &[
 		"Authorize",
 		"Beam",
@@ -388,6 +388,9 @@ async fn LaunchAndManageCocoonSideCar(
 		"Buffer",
 		"Batch",
 		"Cap",
+		"Capture",
+		"OTLPEndpoint",
+		"OTLPEnabled",
 		"Pick",
 		"Require",
 		"Lodge",
