@@ -96,9 +96,7 @@ pub mod AdvancedFeatures;
 #[path = "ConfigurationBridge.rs"]
 pub mod ConfigurationBridge;
 
-/// Status and metrics reporting.
-// Legacy StatusReporter.rs for backward compatibility
-#[path = "StatusReporter.rs"]
+/// Status and metrics reporting (atomized; siblings live in `StatusReporter/`).
 pub mod StatusReporter;
 
 /// Wind UI framework synchronization.
@@ -123,6 +121,14 @@ pub mod DevLog;
 /// tag. Optional drop-in for any `ApplicationHandle::emit(channel, …)`
 /// call site; existing emits keep working unchanged.
 pub mod SkyEmit;
+
+/// Outbound emit wrapper that stamps a W3C `_traceparent` field onto
+/// every JSON payload before forwarding to `app_handle.emit(...)`.
+/// Sky's `Workbench/Electron/TraceparentBridge.ts` extracts the
+/// header at the receiving end so spans emitted inside the handler
+/// attach to the same Jaeger trace. Release builds short-circuit to
+/// a plain `emit(...)` via `cfg!(debug_assertions)`.
+pub mod EmitWithTraceparent;
 
 /// Shared `UriComponents` emitter. Every handler that returns a URI to the
 /// renderer must route through this module so the `$mid: 1` marshalling

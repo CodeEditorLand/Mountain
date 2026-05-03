@@ -234,7 +234,10 @@ use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider,
 use sha2::Digest;
 
 use crate::{
-	IPC::WindServiceAdapters::{WindDesktopConfiguration, WindServiceAdapter},
+	IPC::WindServiceAdapters::{
+		WindDesktopConfiguration::Struct as WindDesktopConfiguration,
+		WindServiceAdapter::Struct as WindServiceAdapter,
+	},
 	RunTime::ApplicationRunTime::ApplicationRunTime,
 	dev_log,
 };
