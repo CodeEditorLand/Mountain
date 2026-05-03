@@ -14,10 +14,7 @@ use tauri::{AppHandle, Manager, Wry, command};
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log};
 
 #[command]
-pub async fn CheckKeybindingConflicts(
-	ApplicationHandle:AppHandle<Wry>,
-	Keybinding:String,
-) -> Result<Value, String> {
+pub async fn CheckKeybindingConflicts(ApplicationHandle:AppHandle<Wry>, Keybinding:String) -> Result<Value, String> {
 	dev_log!("keybinding", "checking conflicts for keybinding: {}", Keybinding);
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
