@@ -18,7 +18,7 @@ pub fn Fn(SideCarIdentifier:&str, Method:&str, Parameters:&Value) {
 		SideCarIdentifier:SideCarIdentifier.to_string(),
 		Method:Method.to_string(),
 		Parameters:Parameters.clone(),
-		TimestampNanos:DevLog::NowNano(),
+		TimestampNanos:DevLog::NowNano::Fn(),
 	};
 	let _ = Shared::NOTIFICATION_BROADCAST.send(Frame);
 }
