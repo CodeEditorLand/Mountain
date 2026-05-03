@@ -59,7 +59,12 @@ use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, Manager};
 
 use super::super::Message::{TauriIPCMessage, ConnectionStatus, ListenerCallback};
-use super::super::Security::{PermissionManager, SecurityContext, SecurityEvent, SecurityEventType};
+use super::super::Security::PermissionManager::{
+	Manager::Struct as PermissionManager,
+	SecurityContext::Struct as SecurityContext,
+	SecurityEvent::Struct as SecurityEvent,
+	SecurityEventType::Enum as SecurityEventType,
+};
 use super::super::Encryption::{MessageCompressor, SecureMessageChannel};
 use super::super::Connection::{ConnectionManager, ConnectionStats};
 use crate::dev_log;
