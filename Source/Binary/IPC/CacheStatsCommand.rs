@@ -55,6 +55,6 @@ use tauri::AppHandle;
 /// Returns an error if stats cannot be collected.
 #[tauri::command]
 pub async fn MountainGetCacheStats(app_handle:AppHandle) -> Result<Value, String> {
-	let stats = crate::IPC::AdvancedFeatures::mountain_get_cache_stats(app_handle).await?;
+	let stats = crate::IPC::AdvancedFeatures::mountain_get_cache_stats::mountain_get_cache_stats(app_handle).await?;
 	to_value(&stats).map_err(|e| format!("Failed to serialize cache stats: {}", e))
 }

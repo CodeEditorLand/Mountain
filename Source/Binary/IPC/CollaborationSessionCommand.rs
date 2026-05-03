@@ -68,14 +68,19 @@ pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_da
 		.to_string();
 
 	// For now, use default permissions
-	let permissions = crate::IPC::AdvancedFeatures::CollaborationPermissions {
+	let permissions = crate::IPC::AdvancedFeatures::CollaborationPermissions::Struct {
 		can_edit:true,
 		can_view:true,
 		can_comment:true,
 		can_share:true,
 	};
 
-	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session(app_handle, session_id, permissions).await?;
+	crate::IPC::AdvancedFeatures::mountain_create_collaboration_session::mountain_create_collaboration_session(
+		app_handle,
+		session_id,
+		permissions,
+	)
+	.await?;
 	Ok(Value::Null)
 }
 
@@ -96,6 +101,10 @@ pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_da
 /// Returns an error if sessions cannot be retrieved.
 #[tauri::command]
 pub async fn MountainGetCollaborationSessions(app_handle:AppHandle) -> Result<Value, String> {
-	let sessions = crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions(app_handle).await;
+	let sessions =
+		crate::IPC::AdvancedFeatures::mountain_get_collaboration_sessions::mountain_get_collaboration_sessions(
+			app_handle,
+		)
+		.await;
 	serde_json::to_value(&sessions).map_err(|e| format!("Failed to serialize collaboration sessions: {}", e))
 }
