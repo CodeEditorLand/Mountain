@@ -269,7 +269,7 @@ impl StorageProvider for MountainEnvironment {
 		// Short-form + long-form both emit under `storage-verbose` so the
 		// default log stays clean; `Trace=storage-verbose` restores
 		// the original verbose tracing.
-		if crate::IPC::DevLog::IsShort() {
+		if crate::IPC::DevLog::IsShort::Fn() {
 			crate::dev_log!("storage-verbose", "update {} {}", ScopeName, Key);
 		} else {
 			dev_log!(

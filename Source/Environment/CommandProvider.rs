@@ -303,7 +303,7 @@ impl CommandExecutor for MountainEnvironment {
 					// first occurrence still fires (documents the probe
 					// shape); subsequent invocations of the same command
 					// are silent.
-					crate::IPC::DevLog::DebugOnce(
+					crate::IPC::DevLog::DebugOnce::Fn(
 						"commands",
 						&format!("view-action-noop:{}", CommandIdentifier),
 						&format!(
@@ -341,7 +341,7 @@ impl CommandExecutor for MountainEnvironment {
 					// activation (~30+ times per boot) - same once-per-id
 					// dedup as the view-action path so the log line
 					// documents the probe but doesn't trail.
-					crate::IPC::DevLog::DebugOnce(
+					crate::IPC::DevLog::DebugOnce::Fn(
 						"commands",
 						&format!("workbench-internal-noop:{}", CommandIdentifier),
 						&format!(
