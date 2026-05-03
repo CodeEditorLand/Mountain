@@ -9,8 +9,8 @@
 //! - `Range::Struct` - `start..end` `Position::Struct` pair.
 //! - `HoverRequest::Struct` - inbound request DTO.
 //! - `HoverContent::Enum` - `PlainText` / `Markdown` / `Markup` payload.
-//! - `HoverResponse::Struct` - outbound response DTO with `contents`
-//!   list and optional `Range::Struct`.
+//! - `HoverResponse::Struct` - outbound response DTO with `contents` list and
+//!   optional `Range::Struct`.
 
 pub mod HoverContent;
 pub mod HoverRequest;

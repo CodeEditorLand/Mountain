@@ -25,7 +25,11 @@ use tauri::{AppHandle, Wry};
 use url::Url;
 
 use crate::{
-	Command::Hover::Interface::{HoverRequest::Struct as HoverRequest, HoverResponse::Struct as HoverResponse, Position::Struct as Position},
+	Command::Hover::Interface::{
+		HoverRequest::Struct as HoverRequest,
+		HoverResponse::Struct as HoverResponse,
+		Position::Struct as Position,
+	},
 	dev_log,
 };
 
