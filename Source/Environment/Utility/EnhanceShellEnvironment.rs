@@ -6,20 +6,20 @@
 //! no `JAVA_HOME`, …
 //!
 //! That breaks every child process Mountain or its extensions spawn:
-//! - Cocoon's `node` binary can't find Homebrew installs
-//!   (`/opt/homebrew/bin`, `/usr/local/bin`).
-//! - Language servers (rust-analyzer, gopls, pyright) probe `PATH` and
-//!   fail to launch.
-//! - Git extensions invoking `git` fall back to `/usr/bin/git` (Apple's
-//!   ancient stock copy) instead of the Homebrew one.
+//! - Cocoon's `node` binary can't find Homebrew installs (`/opt/homebrew/bin`,
+//!   `/usr/local/bin`).
+//! - Language servers (rust-analyzer, gopls, pyright) probe `PATH` and fail to
+//!   launch.
+//! - Git extensions invoking `git` fall back to `/usr/bin/git` (Apple's ancient
+//!   stock copy) instead of the Homebrew one.
 //!
 //! VS Code, Atom, and most other Electron editors solve this by spawning
 //! the user's interactive shell with `-ilc env` once at boot and merging
 //! the result into the process environment. We do the same here.
 //!
 //! Skipped when:
-//! - The launcher is already a TTY (the user invoked from a terminal -
-//!   PATH is already correct).
+//! - The launcher is already a TTY (the user invoked from a terminal - PATH is
+//!   already correct).
 //! - `Walk=0` (matches the existing knob users may rely on).
 //! - The shell probe fails or times out (best-effort; never fatal).
 
