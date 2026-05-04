@@ -104,6 +104,20 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								// directly (mirrors Cocoon's
 								// `webview.html = ...` / `webview.postMessage(msg)`
 								// invocation surface).
+								// Webview methods that take `[Handle, ViewId]`
+								// positional args (`registerView`,
+								// `unregisterView`) MUST land on the `viewId`
+								// key. SkyBridge's `sky://webview/registerView`
+								// listener reads `Payload.args[1] ??
+								// Payload.viewId ?? ""` and bails when neither
+								// is populated; the fallback `"value": Second`
+								// shape silently dropped every Cocoon-side
+								// `vscode.window.registerWebviewViewProvider`
+								// call so the workbench's IWebviewViewService
+								// registry stayed empty and every extension
+								// sidebar (Roo, Codex, gitlens, claude-code,
+								// dashboard, ...) painted only the
+								// `pre/index.html` chrome with no host content.
 								let MutableObject = match Method.as_str() {
 									"webview.setHtml" => {
 										json!({
@@ -117,6 +131,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 											"method": Method,
 											"handle": First,
 											"message": Second,
+										})
+									},
+									"webview.registerView" | "webview.unregisterView" => {
+										json!({
+											"method": Method,
+											"handle": First,
+											"viewId": Second,
 										})
 									},
 									_ => {
