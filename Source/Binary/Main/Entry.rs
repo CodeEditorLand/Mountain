@@ -549,6 +549,74 @@ pub fn Fn() {
 					responder.respond(response);
 				});
 			})
+			.register_asynchronous_uri_scheme_protocol("vscode-webview-resource", |ctx, request, responder| {
+				// `vscode-webview-resource://<auth>/<path>` is the URI shape
+				// stock VS Code emits from `webview.asWebviewUri(...)`. The
+				// service worker inside `pre/index.html` would normally
+				// intercept these and proxy through the host. Land disables
+				// that SW (see Output `PatchWebviewIframeServiceWorker`)
+				// because WKWebView refuses SW registration on the
+				// `vscode-webview://` custom protocol; instead we register
+				// this scheme directly so any extension that hard-codes
+				// the URI form (or didn't go through Cocoon's `asWebviewUri`
+				// rewrite) still resolves. Strip the `<auth>` and forward
+				// the path to `VscodeFileSchemeHandler` by rewriting the
+				// URI to `vscode-file://vscode-app/<path>`.
+				let AppHandle = ctx.app_handle().clone();
+				std::thread::spawn(move || {
+					let Original = request.uri().to_string();
+					let RewrittenUri = match Original.strip_prefix("vscode-webview-resource://") {
+						Some(After) => {
+							let Rest = After.find('/').map(|I| &After[I..]).unwrap_or("/");
+							format!("vscode-file://vscode-app{}", Rest)
+						},
+						None => "vscode-file://vscode-app/".to_string(),
+					};
+					crate::dev_log!(
+						"scheme-assets",
+						"[LandFix:VscodeWebviewResource] {} -> {}",
+						Original,
+						RewrittenUri
+					);
+					let mut Builder = tauri::http::request::Request::builder().uri(&RewrittenUri);
+					for (Name, Value) in request.headers().iter() {
+						Builder = Builder.header(Name, Value);
+					}
+					let Forwarded = Builder
+						.method(request.method().clone())
+						.body(request.body().clone())
+						.unwrap_or_else(|_| request.clone());
+					let response = crate::Binary::Build::Scheme::VscodeFileSchemeHandler(&AppHandle, &Forwarded);
+					responder.respond(response);
+				});
+			})
+			.register_asynchronous_uri_scheme_protocol("vscode-resource", |ctx, request, responder| {
+				// Legacy stock-VS Code resource scheme. Same handling as
+				// `vscode-webview-resource` - rewrite to `vscode-file://`
+				// and dispatch through the existing file handler.
+				let AppHandle = ctx.app_handle().clone();
+				std::thread::spawn(move || {
+					let Original = request.uri().to_string();
+					let RewrittenUri = match Original.strip_prefix("vscode-resource://") {
+						Some(After) => {
+							let Rest = After.find('/').map(|I| &After[I..]).unwrap_or("/");
+							format!("vscode-file://vscode-app{}", Rest)
+						},
+						None => "vscode-file://vscode-app/".to_string(),
+					};
+					crate::dev_log!("scheme-assets", "[LandFix:VscodeResource] {} -> {}", Original, RewrittenUri);
+					let mut Builder = tauri::http::request::Request::builder().uri(&RewrittenUri);
+					for (Name, Value) in request.headers().iter() {
+						Builder = Builder.header(Name, Value);
+					}
+					let Forwarded = Builder
+						.method(request.method().clone())
+						.body(request.body().clone())
+						.unwrap_or_else(|_| request.clone());
+					let response = crate::Binary::Build::Scheme::VscodeFileSchemeHandler(&AppHandle, &Forwarded);
+					responder.respond(response);
+				});
+			})
 			.plugin(tauri_plugin_dialog::init())
 			.plugin(tauri_plugin_fs::init())
 			.invoke_handler(tauri::generate_handler![

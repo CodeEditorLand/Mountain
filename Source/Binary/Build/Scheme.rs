@@ -847,6 +847,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 		return Builder::new()
 			.status(204)
 			.header("Access-Control-Allow-Origin", "*")
+			.header("Cross-Origin-Resource-Policy", "cross-origin")
 			.body(Vec::new())
 			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
 	}
@@ -875,6 +876,8 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 			.status(200)
 			.header("Content-Type", "application/javascript; charset=utf-8")
 			.header("Access-Control-Allow-Origin", "*")
+			.header("Cross-Origin-Resource-Policy", "cross-origin")
+			.header("Cross-Origin-Embedder-Policy", "require-corp")
 			.header("Cache-Control", "public, max-age=31536000, immutable")
 			.body(Body.into_bytes())
 			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
@@ -947,10 +950,21 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 						Body.len(),
 						Encoding
 					);
+					// `Cross-Origin-Resource-Policy: cross-origin` lets the
+					// COEP-isolated webview iframe (which Mountain serves
+					// from the `vscode-webview://` scheme with
+					// `Cross-Origin-Embedder-Policy: require-corp`) load
+					// these assets via `<script src=…>` / `<link href=…>`.
+					// Without it WebKit refuses to expose the response to
+					// the embedder document and the extension's React
+					// bundle / CSS / fonts come up as cross-origin
+					// resource-policy blocks.
 					let mut B = Builder::new()
 						.status(200)
 						.header("Content-Type", Entry.Mime)
 						.header("Access-Control-Allow-Origin", "*")
+						.header("Cross-Origin-Resource-Policy", "cross-origin")
+						.header("Cross-Origin-Embedder-Policy", "require-corp")
 						.header("Cache-Control", "public, max-age=3600");
 					if let Some(Enc) = Encoding {
 						B = B.header("Content-Encoding", Enc);
@@ -1002,6 +1016,8 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 			.status(200)
 			.header("Content-Type", Mime)
 			.header("Access-Control-Allow-Origin", "*")
+			.header("Cross-Origin-Resource-Policy", "cross-origin")
+			.header("Cross-Origin-Embedder-Policy", "require-corp")
 			.header("Cache-Control", "public, max-age=31536000, immutable")
 			.body(Asset.bytes.to_vec())
 			.unwrap_or_else(|_| build_error_response(500, "Failed to build response"));
@@ -1041,10 +1057,21 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 						Body.len(),
 						Encoding
 					);
+					// `Cross-Origin-Resource-Policy: cross-origin` lets the
+					// COEP-isolated webview iframe (which Mountain serves
+					// from the `vscode-webview://` scheme with
+					// `Cross-Origin-Embedder-Policy: require-corp`) load
+					// these assets via `<script src=…>` / `<link href=…>`.
+					// Without it WebKit refuses to expose the response to
+					// the embedder document and the extension's React
+					// bundle / CSS / fonts come up as cross-origin
+					// resource-policy blocks.
 					let mut B = Builder::new()
 						.status(200)
 						.header("Content-Type", Entry.Mime)
 						.header("Access-Control-Allow-Origin", "*")
+						.header("Cross-Origin-Resource-Policy", "cross-origin")
+						.header("Cross-Origin-Embedder-Policy", "require-corp")
 						.header("Cache-Control", "public, max-age=3600");
 					if let Some(Enc) = Encoding {
 						B = B.header("Content-Encoding", Enc);
