@@ -99,16 +99,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								//
 								// SkyBridge's listeners are split between
 								// two reading idioms:
-								//   - Named keys: `Payload.viewId`,
-								//     `Payload.html`, `Payload.message`
-								//     (set-html, post-message,
-								//     register/unregisterView).
-								//   - Positional `Payload.args[N]`: create
-								//     (`[Handle, ViewType, Title,
-								//     ShowOptions, Options]`),
-								//     registerCustomEditor (`[Handle,
-								//     ViewType, Options]`), setOptions,
-								//     reveal, dispose.
+								//   - Named keys: `Payload.viewId`, `Payload.html`, `Payload.message`
+								//     (set-html, post-message, register/unregisterView).
+								//   - Positional `Payload.args[N]`: create (`[Handle, ViewType, Title,
+								//     ShowOptions, Options]`), registerCustomEditor (`[Handle, ViewType,
+								//     Options]`), setOptions, reveal, dispose.
 								//
 								// Always preserve the original args array AND
 								// add the per-method named alias so a
@@ -124,18 +119,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								// only the `pre/index.html` chrome with no
 								// host content.
 								let mut Object = serde_json::Map::new();
-								Object.insert(
-									"method".to_string(),
-									Value::String(Method.clone()),
-								);
+								Object.insert("method".to_string(), Value::String(Method.clone()));
 								Object.insert("handle".to_string(), First.clone());
 								Object.insert("args".to_string(), Parameters.clone());
 								if let Some(Second) = Parameters.get(1) {
 									let Alias = match Method.as_str() {
 										"webview.setHtml" => "html",
 										"webview.postMessage" => "message",
-										"webview.registerView"
-										| "webview.unregisterView" => "viewId",
+										"webview.registerView" | "webview.unregisterView" => "viewId",
 										"webview.registerCustomEditor"
 										| "webview.unregisterCustomEditor"
 										| "webview.create" => "viewType",
@@ -150,10 +141,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 									// idiom doesn't lag the positional one.
 									if Method.as_str() == "webview.create" {
 										if let Some(Third) = Parameters.get(2) {
-											Object.insert(
-												"title".to_string(),
-												Third.clone(),
-											);
+											Object.insert("title".to_string(), Third.clone());
 										}
 									}
 								}
