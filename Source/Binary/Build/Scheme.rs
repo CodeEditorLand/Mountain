@@ -836,6 +836,23 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 		CleanPath
 	};
 
+	// Strip `?<query>` and `#<fragment>` from the resolved path so
+	// filesystem / asset-resolver lookups operate on a clean path
+	// component. Roo's runtime sourcemap-probe (`vZt` in its bundle)
+	// fetches `<src>?source-map=true` which would otherwise hit the
+	// asset_resolver as a literal `index.js?source-map=true` filename
+	// and either 404 or fall through to the SPA-fallback `index.html`
+	// (5765 bytes served as `application/octet-stream`). With the
+	// strip, `index.js?source-map=true` → `index.js`, which exists on
+	// disk and serves correctly with the right MIME. Equivalent for
+	// `#<fragment>`. Sourcemap-probe URLs that point to non-existent
+	// suffixes (`index.map.json`, `index.sourcemap`) still 404
+	// silently; that is the intended behavior of `vZt`'s preload list.
+	let CleanPath = match CleanPath.split_once(['?', '#']) {
+		Some((Before, _)) => Before.to_string(),
+		None => CleanPath,
+	};
+
 	// P1.5 fix: DevTools fetches `*.js.map` for every bundled script it loads
 	// to render pretty stack traces. Our `Static/Application/` tree ships the
 	// JS files without their `.map` siblings (esbuild's `sourcemap:false` path)
@@ -863,7 +880,23 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	// invoke `_LOAD_CSS_WORKER` against the localhost-form path and
 	// export an empty default. The SW + `<link>` fast-path then
 	// loads the actual CSS bytes from `/Static/Application/...`.
-	if CleanPath.ends_with(".css") {
+	//
+	// CRITICAL gate: only apply the shim for paths under
+	// `Static/Application/` (i.e. workbench-internal CSS imports
+	// that survive bundling as `import "./foo.css"`). Extension-
+	// contributed CSS lives in absolute filesystem paths
+	// (`Users/...`, `Volumes/...`, `Library/...`, etc.) and reaches
+	// `vscode-file://` via `WebviewImplementation::asWebviewUri`.
+	// Those `.css` files MUST be served as real `text/css` from
+	// disk (the IsAbsoluteOSPath fallback below handles them) -
+	// returning the JS shim instead silently breaks every
+	// extension webview-ui that bundles its own stylesheet
+	// (Roo: `webview-ui/build/assets/index.css`, Claude, GitLens,
+	// Continue, etc. all use Vite/webpack and ship CSS bundles).
+	// Without this gate the iframe loads no styles and the panel
+	// renders as a transparent overlay over the workbench - the
+	// classic "blank webview" symptom.
+	if CleanPath.ends_with(".css") && CleanPath.starts_with("Static/Application/") {
 		let LocalPath = format!("/Static/Application/{}", CleanPath.trim_start_matches("Static/Application/"));
 		let Body = format!("globalThis._LOAD_CSS_WORKER?.({:?}); export default {{}};", LocalPath);
 		dev_log!(

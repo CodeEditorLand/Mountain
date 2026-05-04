@@ -107,7 +107,7 @@ const GRPC_CONNECT_BUDGET_MS:u64 = 20_000;
 /// partial rm -rf, freshly cloned checkout without `pnpm run
 /// prepublishOnly`, etc.) instead of spawning Node into a dying
 /// require() chain.
-const COCOON_BUNDLE_PROBE:&str = "../Cocoon/Target/Bootstrap/Implementation/CocoonMain.js";
+const COCOON_BUNDLE_PROBE:&str = "../Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js";
 const HANDSHAKE_TIMEOUT_MS:u64 = 60000;
 const HEALTH_CHECK_INTERVAL_SECONDS:u64 = 5;
 #[allow(dead_code)]
@@ -302,7 +302,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// seconds of `attempt N/M` retries with no diagnostic.
 	//
 	// bootstrap-fork.js is in `Mountain/scripts/cocoon/`. The Cocoon
-	// bundle is at `Cocoon/Target/Bootstrap/Implementation/CocoonMain.js`
+	// bundle is at `Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js`
 	// relative to the repo root. Compose the probe path by walking up
 	// from the bootstrap script to the `Element/` root, then descending.
 	if let Some(BootstrapDirectory) = ScriptPath.parent() {

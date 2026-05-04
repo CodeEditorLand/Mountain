@@ -1614,7 +1614,14 @@ pub async fn mountain_ipc_invoke(
 							// handshake completes. Wait briefly so the first
 							// few calls don't fail spuriously and poison
 							// renderer-side caches.
-							let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 1500).await;
+							// Bumped 1500 -> 5000 ms - bundled-electron boot trace
+							// shows Cocoon's `Successfully connected` lands ~620
+							// log lines AFTER the workbench's first request, so
+							// the 1.5 s wait routinely expired before Cocoon was
+							// up. Sky-side caches captured the empty fallback
+							// (Explorer empty, webview.resolveView=ClientNotConnected,
+							// etc.) and panes never recovered.
+							let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 5000).await;
 							crate::Vine::Client::SendRequest::Fn("cocoon-main", Method.clone(), Payload, 30_000)
 								.await
 								.map_err(|Error| format!("cocoon:request {} failed: {:?}", Method, Error))
@@ -2207,7 +2214,14 @@ pub async fn mountain_ipc_invoke(
 						// dispatching - this no-ops once Cocoon is
 						// connected (the typical case), so it only
 						// costs us latency on the very first call.
-						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 1500).await;
+						// Bumped 1500 -> 5000 ms - bundled-electron boot trace
+						// shows Cocoon's `Successfully connected` lands ~620
+						// log lines AFTER the workbench's first request, so
+						// the 1.5 s wait routinely expired before Cocoon was
+						// up. Sky-side caches captured the empty fallback
+						// (Explorer empty, webview.resolveView=ClientNotConnected,
+						// etc.) and panes never recovered.
+						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 5000).await;
 						// Tree-view RPCs are user-interactive: a 5 second
 						// wait shows the user a spinner and silently fails
 						// the extension's Promise on timeout. 1500 ms is
@@ -2222,7 +2236,12 @@ pub async fn mountain_ipc_invoke(
 							"cocoon-main",
 							"$provideTreeChildren".to_string(),
 							Parameters,
-							1500,
+							// Bumped 1500 -> 5000 ms - real cold-boot tree
+							// calls take 700-2200 ms ([DEV:TREE-LATENCY]
+							// clangd.ast=2181, gitlens.workspaces=1652,
+							// npm=1560). The previous cap dropped ~30% of
+							// tree results and the workbench cached empty.
+							5000,
 						)
 						.await
 						{
