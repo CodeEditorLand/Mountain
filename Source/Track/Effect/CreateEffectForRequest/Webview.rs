@@ -94,67 +94,70 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							if First.is_object() {
 								// Case 2: array-wrapped object. Unwrap.
 								First.clone()
-							} else if let Some(Second) = Parameters.get(1) {
-								// Case 3: positional [Handle, Value].
-								// `value` covers setHtml's html string,
-								// setOptions' options object,
-								// postMessage's message, etc. Also expose
-								// `html` and `message` aliases since
-								// SkyBridge's listeners read those keys
-								// directly (mirrors Cocoon's
-								// `webview.html = ...` / `webview.postMessage(msg)`
-								// invocation surface).
-								// Webview methods that take `[Handle, ViewId]`
-								// positional args (`registerView`,
-								// `unregisterView`) MUST land on the `viewId`
-								// key. SkyBridge's `sky://webview/registerView`
-								// listener reads `Payload.args[1] ??
-								// Payload.viewId ?? ""` and bails when neither
-								// is populated; the fallback `"value": Second`
-								// shape silently dropped every Cocoon-side
-								// `vscode.window.registerWebviewViewProvider`
-								// call so the workbench's IWebviewViewService
-								// registry stayed empty and every extension
-								// sidebar (Roo, Codex, gitlens, claude-code,
-								// dashboard, ...) painted only the
-								// `pre/index.html` chrome with no host content.
-								let MutableObject = match Method.as_str() {
-									"webview.setHtml" => {
-										json!({
-											"method": Method,
-											"handle": First,
-											"html": Second,
-										})
-									},
-									"webview.postMessage" => {
-										json!({
-											"method": Method,
-											"handle": First,
-											"message": Second,
-										})
-									},
-									"webview.registerView" | "webview.unregisterView" => {
-										json!({
-											"method": Method,
-											"handle": First,
-											"viewId": Second,
-										})
-									},
-									_ => {
-										json!({
-											"method": Method,
-											"handle": First,
-											"value": Second,
-										})
-									},
-								};
-								MutableObject
 							} else {
-								// Single positional arg (dispose, reveal).
-								json!({
-									"method": Method,
-									"handle": First,
-								})
+								// Case 3: positional `[Handle, Second?, ...]`.
+								//
+								// SkyBridge's listeners are split between
+								// two reading idioms:
+								//   - Named keys: `Payload.viewId`,
+								//     `Payload.html`, `Payload.message`
+								//     (set-html, post-message,
+								//     register/unregisterView).
+								//   - Positional `Payload.args[N]`: create
+								//     (`[Handle, ViewType, Title,
+								//     ShowOptions, Options]`),
+								//     registerCustomEditor (`[Handle,
+								//     ViewType, Options]`), setOptions,
+								//     reveal, dispose.
+								//
+								// Always preserve the original args array AND
+								// add the per-method named alias so a
+								// listener using either idiom finds its data.
+								// Without the alias every
+								// `registerWebviewViewProvider` call from
+								// Cocoon emitted a payload whose
+								// `viewId === undefined`, the listener
+								// early-returned, and the workbench's
+								// `IWebviewViewService` registry stayed empty
+								// - every extension sidebar (Roo, Codex,
+								// gitlens, claude-code, dashboard) painted
+								// only the `pre/index.html` chrome with no
+								// host content.
+								let mut Object = serde_json::Map::new();
+								Object.insert(
+									"method".to_string(),
+									Value::String(Method.clone()),
+								);
+								Object.insert("handle".to_string(), First.clone());
+								Object.insert("args".to_string(), Parameters.clone());
+								if let Some(Second) = Parameters.get(1) {
+									let Alias = match Method.as_str() {
+										"webview.setHtml" => "html",
+										"webview.postMessage" => "message",
+										"webview.registerView"
+										| "webview.unregisterView" => "viewId",
+										"webview.registerCustomEditor"
+										| "webview.unregisterCustomEditor"
+										| "webview.create" => "viewType",
+										_ => "value",
+									};
+									Object.insert(Alias.to_string(), Second.clone());
+									// `webview.create`'s args slot 2 is the
+									// extension-supplied panel title.
+									// SkyBridge's `first-create` diagnostic
+									// surfaces it under `Payload.title`;
+									// mirror that here so the named-key
+									// idiom doesn't lag the positional one.
+									if Method.as_str() == "webview.create" {
+										if let Some(Third) = Parameters.get(2) {
+											Object.insert(
+												"title".to_string(),
+												Third.clone(),
+											);
+										}
+									}
+								}
+								Value::Object(Object)
 							}
 						} else {
 							json!({
