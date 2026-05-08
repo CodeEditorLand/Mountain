@@ -16,8 +16,10 @@ pub fn Fn() -> bool {
 	if !cfg!(debug_assertions) {
 		return false;
 	}
+
 	if matches!(Constants::TELEMETRY_CAPTURE, "false" | "0" | "off") {
 		return false;
 	}
+
 	!matches!(Constants::POSTHOG_ENABLED, "false" | "0" | "off")
 }

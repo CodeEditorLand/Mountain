@@ -70,8 +70,11 @@ pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_da
 	// For now, use default permissions
 	let permissions = crate::IPC::AdvancedFeatures::CollaborationPermissions::Struct {
 		can_edit:true,
+
 		can_view:true,
+
 		can_comment:true,
+
 		can_share:true,
 	};
 
@@ -81,6 +84,7 @@ pub async fn MountainCreateCollaborationSession(app_handle:AppHandle, session_da
 		permissions,
 	)
 	.await?;
+
 	Ok(Value::Null)
 }
 
@@ -106,5 +110,6 @@ pub async fn MountainGetCollaborationSessions(app_handle:AppHandle) -> Result<Va
 			app_handle,
 		)
 		.await;
+
 	serde_json::to_value(&sessions).map_err(|e| format!("Failed to serialize collaboration sessions: {}", e))
 }

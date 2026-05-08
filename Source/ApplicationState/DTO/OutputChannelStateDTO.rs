@@ -85,11 +85,13 @@ impl OutputChannelStateDTO {
 	/// Result indicating success or error if buffer would exceed limit
 	pub fn Append(&mut self, Content:&str) -> Result<(), String> {
 		let NewSize = self.Buffer.len() + Content.len();
+
 		if NewSize > MAX_BUFFER_SIZE {
 			return Err(format!("Buffer would exceed maximum size of {} bytes", MAX_BUFFER_SIZE));
 		}
 
 		self.Buffer.push_str(Content);
+
 		Ok(())
 	}
 
@@ -118,10 +120,12 @@ fn FormatBytes(Bytes:usize) -> String {
 	}
 
 	let mut Size = Bytes as f64;
+
 	let mut MutIndex = 0usize;
 
 	while Size >= 1024.0 && MutIndex < UNITS.len() - 1 {
 		Size /= 1024.0;
+
 		MutIndex += 1;
 	}
 

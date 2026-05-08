@@ -21,6 +21,7 @@ impl Default for LifecyclePhaseState {
 			"lifecycle",
 			"[LifecyclePhaseState] Initializing default lifecycle state (phase 1: Starting)..."
 		);
+
 		Self { CurrentPhase:Arc::new(StandardMutex::new(1)) }
 	}
 }
@@ -34,6 +35,7 @@ impl LifecyclePhaseState {
 		if let Ok(mut Guard) = self.CurrentPhase.lock() {
 			if NewPhase > *Guard {
 				dev_log!("lifecycle", "[LifecyclePhaseState] Phase advanced: {} → {}", *Guard, NewPhase);
+
 				*Guard = NewPhase;
 			}
 		}
@@ -49,17 +51,25 @@ impl LifecyclePhaseState {
 		// Local `use tauri::Emitter` removed - now routed through
 		// `LogSkyEmit` which carries the trait import internally.
 		let Previous = self.GetPhase();
+
 		if NewPhase <= Previous {
 			return;
 		}
+
 		self.SetPhase(NewPhase);
+
 		let Label = match NewPhase {
 			1 => "Starting",
+
 			2 => "Ready",
+
 			3 => "Restored",
+
 			4 => "Eventually",
+
 			_ => "Unknown",
 		};
+
 		if let Err(Error) = LogSkyEmit(
 			ApplicationHandle,
 			SkyEvent::LifecyclePhaseChanged.AsStr(),

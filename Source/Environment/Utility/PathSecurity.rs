@@ -89,6 +89,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 	// even though the path is a literal descendant of the open folder.
 	let CanonicalPathToCheck =
 		crate::Cache::PathCanon::Canonicalize::Fn(PathToCheck).unwrap_or_else(|_| PathToCheck.to_path_buf());
+
 	let IsAllowed = FoldersGuard.iter().any(|Folder| {
 		let FolderPath = match Folder.URI.to_file_path() {
 			Ok(P) => P,
@@ -119,6 +120,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 					.unwrap_or_else(|_| format!("<bad-uri:{}>", F.URI))
 			})
 			.collect();
+
 		dev_log!(
 			"vfs",
 			"[PathSecurity] reject path={} canonical={} folders=[{}]",
@@ -126,6 +128,7 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 			CanonicalPathToCheck.display(),
 			FolderPaths.join(", ")
 		);
+
 		Err(CommonError::FileSystemPermissionDenied {
 			Path:PathToCheck.to_path_buf(),
 			Reason:"Path is outside of the registered workspace folders.".to_string(),

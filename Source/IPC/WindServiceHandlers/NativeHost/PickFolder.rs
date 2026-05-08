@@ -31,6 +31,7 @@ pub async fn NativePickFolder(ApplicationHandle:AppHandle, _Arguments:Vec<Value>
 	dev_log!("folder", "pickFolderAndOpen requested");
 
 	let Handle = ApplicationHandle.clone();
+
 	tokio::task::spawn_blocking(move || {
 		let FolderPath = Handle.dialog().file().blocking_pick_folder();
 

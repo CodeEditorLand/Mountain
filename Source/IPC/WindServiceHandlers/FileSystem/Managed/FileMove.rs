@@ -34,5 +34,6 @@ pub async fn FileMove(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> 
 		.map_err(|e:CommonError| format!("Failed to move file: {} -> {}", source, destination))?;
 
 	dev_log!("vfs-verbose", "moved: {} -> {}", source, destination);
+
 	Ok(Value::Null)
 }

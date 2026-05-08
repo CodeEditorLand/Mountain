@@ -95,52 +95,64 @@ async fn ProvideHover(_uri:Url, _position:Position) -> Result<HoverResponse, Str
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
 	fn test_validate_request_valid() {
 		let uri = "file:///test.rs";
+
 		let position = serde_json::json!({
 			"line": 10,
 			"character": 5
 		});
 
 		let result = ValidateRequest(uri, &position);
+
 		assert!(result.is_ok());
 
 		let request = result.unwrap();
+
 		assert_eq!(request.uri, uri);
+
 		assert_eq!(request.position.line, 10);
+
 		assert_eq!(request.position.character, 5);
 	}
 
 	#[test]
 	fn test_validate_request_invalid_uri() {
 		let uri = "not-a-valid-uri";
+
 		let position = serde_json::json!({
 			"line": 10,
 			"character": 5
 		});
 
 		let result = ValidateRequest(uri, &position);
+
 		assert!(result.is_err());
 	}
 
 	#[test]
 	fn test_validate_request_invalid_position() {
 		let uri = "file:///test.rs";
+
 		let position = serde_json::json!({
 			"not_a_position": true
 		});
 
 		let result = ValidateRequest(uri, &position);
+
 		assert!(result.is_err());
 	}
 
 	#[test]
 	fn test_hover_response_default() {
 		let response = HoverResponse::default();
+
 		assert!(response.contents.is_empty());
+
 		assert!(response.range.is_none());
 	}
 
@@ -149,9 +161,11 @@ mod tests {
 		use crate::Command::Hover::Interface::HoverContent::Enum as HoverContent;
 
 		let contents = vec![HoverContent::PlainText("Test hover".to_string())];
+
 		let response = HoverResponse::new(contents);
 
 		assert_eq!(response.contents.len(), 1);
+
 		assert!(response.range.is_none());
 	}
 }

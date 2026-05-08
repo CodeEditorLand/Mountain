@@ -45,8 +45,11 @@ pub async fn SearchFindInFiles(RunTime:Arc<ApplicationRunTime>, mut Arguments:Ve
 		Arguments.remove(0)
 	} else if let Some(Pattern) = Arguments.first().and_then(|V| V.as_str()) {
 		let IsRegex = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
+
 		let IsCase = Arguments.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
+
 		let IsWord = Arguments.get(3).and_then(|V| V.as_bool()).unwrap_or(false);
+
 		json!({
 			"pattern": Pattern,
 			"isRegex": IsRegex,
@@ -79,9 +82,13 @@ pub async fn SearchFindFiles(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Valu
 		.first()
 		.cloned()
 		.ok_or_else(|| "search:findFiles requires include pattern in slot 0".to_string())?;
+
 	let ExcludePattern = Arguments.get(1).cloned().filter(|V| !V.is_null());
+
 	let MaxResults = Arguments.get(2).and_then(|V| V.as_u64()).map(|N| N as usize);
+
 	let UseIgnoreFiles = Arguments.get(3).and_then(|V| V.as_bool()).unwrap_or(true);
+
 	let FollowSymlinks = Arguments.get(4).and_then(|V| V.as_bool()).unwrap_or(false);
 
 	dev_log!(

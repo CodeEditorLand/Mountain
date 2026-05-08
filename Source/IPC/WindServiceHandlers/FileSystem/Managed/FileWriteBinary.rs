@@ -29,6 +29,7 @@ pub async fn FileWriteBinary(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Valu
 		.ok_or("File content must be a string".to_string())?;
 
 	let content_bytes = content.as_bytes().to_vec();
+
 	let content_len = content_bytes.len();
 
 	let provider:Arc<dyn FileSystemWriter> = RunTime.Environment.Require();
@@ -39,5 +40,6 @@ pub async fn FileWriteBinary(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Valu
 		.map_err(|e:CommonError| format!("Failed to write binary file: {}", e))?;
 
 	dev_log!("vfs-verbose", "writeBinary: {} ({} bytes)", path, content_len);
+
 	Ok(Value::Null)
 }

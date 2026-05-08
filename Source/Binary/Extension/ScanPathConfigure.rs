@@ -63,8 +63,10 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	if !SkipBuiltins {
 		if let Ok(Override) = std::env::var("Ship") {
 			let OverridePath = ExpandUserPath(&Override);
+
 			if OverridePath.exists() {
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Ship)", OverridePath.display());
+
 				ScanPathsGuard.push(OverridePath);
 			} else {
 				dev_log!(
@@ -84,19 +86,25 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				// When launched from a `.app`, Parent is `Contents/MacOS/` and
 				// this resolves to `Contents/Resources/extensions`.
 				let ResourcesPath = Parent.join("../Resources/extensions");
+
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesPath.display());
+
 				ScanPathsGuard.push(ResourcesPath);
 
 				// VS Code-style bundle layout: `.app/Contents/Resources/app/extensions`.
 				// Some tooling copies built-ins here; probe both conventions so a
 				// single bundle works regardless of which copy step placed them.
 				let ResourcesAppPath = Parent.join("../Resources/app/extensions");
+
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesAppPath.display());
+
 				ScanPathsGuard.push(ResourcesAppPath);
 
 				// Debug/dev path: Target/debug/extensions
 				let LocalPath = Parent.join("extensions");
+
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", LocalPath.display());
+
 				ScanPathsGuard.push(LocalPath);
 
 				// Monorepo-layout fallback paths: resolved relative to
@@ -111,24 +119,28 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				// Sky Target path: where CopyVSCodeAssets copies built-in
 				// extensions during the Sky build.
 				let SkyTargetPath = Parent.join("../../../Sky/Target/Static/Application/extensions");
+
 				if SkyTargetPath.exists() {
 					dev_log!(
 						"extensions",
 						"[Extensions] [ScanPaths] + {} (Sky Target, repo-layout)",
 						SkyTargetPath.display()
 					);
+
 					ScanPathsGuard.push(SkyTargetPath);
 				}
 
 				// VS Code dependency path: built-in extensions from the VS
 				// Code source checkout - avoids requiring a copy step.
 				let DependencyPath = Parent.join("../../../../Dependency/Microsoft/Dependency/Editor/extensions");
+
 				if DependencyPath.exists() {
 					dev_log!(
 						"extensions",
 						"[Extensions] [ScanPaths] + {} (VS Code Dependency, repo-layout)",
 						DependencyPath.display()
 					);
+
 					ScanPathsGuard.push(DependencyPath);
 				}
 			}
@@ -145,15 +157,19 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// polluting the user's real profile.
 	if let Ok(UserOverride) = std::env::var("Lodge") {
 		let OverridePath = ExpandUserPath(&UserOverride);
+
 		dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Lodge)", OverridePath.display());
+
 		ScanPathsGuard.push(OverridePath);
 	} else if let Some(HomeDirectory) = dirs::home_dir() {
 		let UserExtensionPath = HomeDirectory.join(".land/extensions");
+
 		dev_log!(
 			"extensions",
 			"[Extensions] [ScanPaths] + {} (User)",
 			UserExtensionPath.display()
 		);
+
 		ScanPathsGuard.push(UserExtensionPath);
 	}
 
@@ -162,13 +178,18 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// semicolon on Windows (matches PATHEXT), colon elsewhere.
 	if let Ok(Extras) = std::env::var("Extend") {
 		let Separator = if cfg!(target_os = "windows") { ';' } else { ':' };
+
 		for Candidate in Extras.split(Separator) {
 			let Trimmed = Candidate.trim();
+
 			if Trimmed.is_empty() {
 				continue;
 			}
+
 			let ExtraPath = ExpandUserPath(Trimmed);
+
 			dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Extend)", ExtraPath.display());
+
 			ScanPathsGuard.push(ExtraPath);
 		}
 	}
@@ -179,7 +200,9 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// broken dev extension doesn't persist into the user's profile.
 	if let Ok(DevExtensions) = std::env::var("Probe") {
 		let DevPath = ExpandUserPath(&DevExtensions);
+
 		dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Probe)", DevPath.display());
+
 		ScanPathsGuard.push(DevPath);
 	}
 
@@ -200,5 +223,6 @@ fn ExpandUserPath(Raw:&str) -> PathBuf {
 			return Home.join(Stripped);
 		}
 	}
+
 	PathBuf::from(Raw)
 }

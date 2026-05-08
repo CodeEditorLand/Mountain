@@ -15,8 +15,10 @@ pub fn Fn() -> Option<ResolvedNode::Struct> {
 	})?;
 
 	let ShimCandidate = PathBuf::from(&AsdfDataDir).join("shims").join(NodeExecutableName::Fn());
+
 	if ShimCandidate.exists() {
 		return Some(ResolvedNode::Struct { Path:ShimCandidate, Source:NodeSource::Enum::Asdf });
 	}
+
 	None
 }

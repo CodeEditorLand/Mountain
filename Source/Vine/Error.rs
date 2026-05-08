@@ -193,17 +193,25 @@ impl VineError {
 	pub fn ToTonicStatus(&self) -> tonic::Status {
 		match self {
 			Self::RequestTimeout { .. } => tonic::Status::deadline_exceeded(self.to_string()),
+
 			Self::ClientNotConnected(_) | Self::ConnectionFailed { .. } => tonic::Status::unavailable(self.to_string()),
+
 			Self::SerializationError(_) | Self::InternalLockError(_) | Self::InvalidState(_) => {
 				tonic::Status::internal(self.to_string())
 			},
+
 			Self::MessageTooLarge { .. } => tonic::Status::resource_exhausted(self.to_string()),
+
 			Self::InvalidMessageFormat(_) | Self::InvalidUri(_) | Self::AddressParseError(_) => {
 				tonic::Status::invalid_argument(self.to_string())
 			},
+
 			Self::RequestCanceled { .. } => tonic::Status::cancelled(self.to_string()),
+
 			Self::RPCError(msg) => tonic::Status::unknown(msg.clone()),
+
 			Self::ConnectionLost(_) => tonic::Status::aborted(self.to_string()),
+
 			Self::TonicTransportError(_) => tonic::Status::unavailable(self.to_string()),
 		}
 	}
@@ -220,24 +228,33 @@ impl From<tonic::Status> for VineError {
 		// Map gRPC status codes to appropriate VineError variants
 		match status.code() {
 			tonic::Code::DeadlineExceeded => VineError::RPCError(format!("Timeout: {}", status.message())),
+
 			tonic::Code::NotFound => VineError::ClientNotConnected(status.message().to_string()),
+
 			tonic::Code::AlreadyExists | tonic::Code::InvalidArgument | tonic::Code::OutOfRange => {
 				VineError::InvalidMessageFormat(status.message().to_string())
 			},
+
 			tonic::Code::FailedPrecondition | tonic::Code::Aborted => {
 				VineError::ConnectionLost(status.message().to_string())
 			},
+
 			tonic::Code::ResourceExhausted => VineError::MessageTooLarge { ActualSize:0, MaxSize:4 * 1024 * 1024 },
+
 			tonic::Code::Cancelled => {
 				VineError::RequestCanceled { SideCarIdentifier:"unknown".to_string(), MethodName:"unknown".to_string() }
 			},
+
 			tonic::Code::Unavailable => {
 				VineError::ConnectionFailed {
 					SideCarIdentifier:"unknown".to_string(),
+
 					Address:"unknown".to_string(),
+
 					Reason:status.message().to_string(),
 				}
 			},
+
 			_ => VineError::RPCError(status.to_string()),
 		}
 	}

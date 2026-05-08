@@ -64,10 +64,13 @@ use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescri
 pub struct InstallOutcome {
 	/// `<publisher>.<name>` - the canonical identifier string.
 	pub Identifier:String,
+
 	/// Semver string from the manifest.
 	pub Version:String,
+
 	/// Extracted target directory on disk.
 	pub InstalledAt:PathBuf,
+
 	/// Fully-populated DTO, ready to `AddOrUpdate` in ScannedExtensions.
 	pub Description:ExtensionDescriptionStateDTO,
 }
@@ -75,7 +78,9 @@ pub struct InstallOutcome {
 /// Manifest facts we need before we start writing files.
 struct ManifestFacts {
 	Publisher:String,
+
 	Name:String,
+
 	Version:String,
 }
 
@@ -100,6 +105,7 @@ pub enum InstallError {
 }
 
 const MANIFEST_ENTRY:&str = "extension/package.json";
+
 const PAYLOAD_PREFIX:&str = "extension/";
 
 /// Open `VsixPath` and install its payload under `InstallRoot`. On success the
@@ -111,7 +117,9 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 	}
 
 	let Facts = ReadManifestFacts(VsixPath)?;
+
 	let InstalledAt = InstallRoot.join(format!("{}.{}-{}", Facts.Publisher, Facts.Name, Facts.Version));
+
 	let Identifier = format!("{}.{}", Facts.Publisher, Facts.Name);
 
 	// Idempotent reinstall: if the target directory already holds the same
@@ -155,6 +163,7 @@ pub fn InstallVsix(VsixPath:&Path, InstallRoot:&Path) -> Result<InstallOutcome, 
 	}
 
 	CreateParent(&InstalledAt)?;
+
 	ExtractPayload(VsixPath, &InstalledAt)?;
 
 	let Description = BuildDescription(&InstalledAt)?;
@@ -195,7 +204,9 @@ fn ReadManifestFacts(VsixPath:&Path) -> Result<ManifestFacts, InstallError> {
 	let Manifest = ReadFullManifest(VsixPath)?;
 
 	let Publisher = ReadStringField(&Manifest, "publisher")?;
+
 	let Name = ReadStringField(&Manifest, "name")?;
+
 	let Version = ReadStringField(&Manifest, "version")?;
 
 	Ok(ManifestFacts { Publisher, Name, Version })
@@ -213,6 +224,7 @@ fn ReadManifestFacts(VsixPath:&Path) -> Result<ManifestFacts, InstallError> {
 /// unpacking `package.nls.json` from the archive too).
 pub fn ReadFullManifest(VsixPath:&Path) -> Result<Value, InstallError> {
 	let Archive = File::open(VsixPath).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
+
 	let mut Archive = ZipArchive::new(Archive).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
 
 	let mut Entry = Archive
@@ -247,6 +259,7 @@ fn CreateParent(InstalledAt:&Path) -> Result<(), InstallError> {
 
 fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError> {
 	let Archive = File::open(VsixPath).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
+
 	let mut Archive = ZipArchive::new(Archive).map_err(|Error| InstallError::ArchiveRead(Error.to_string()))?;
 
 	fs::create_dir_all(InstalledAt).map_err(|Error| InstallError::FilesystemIO(Error.to_string()))?;
@@ -263,6 +276,7 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 		// etc.) are VSIX packaging metadata and are not needed at runtime.
 		let Stripped = match EntryName.strip_prefix(PAYLOAD_PREFIX) {
 			Some(Path) if !Path.is_empty() => Path,
+
 			_ => continue,
 		};
 
@@ -302,7 +316,9 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 		#[cfg(unix)]
 		{
 			use std::os::unix::fs::PermissionsExt;
+
 			let PermissionBits = Entry.unix_mode().map(|Mode| Mode & 0o777).unwrap_or(0);
+
 			// Promote executable bit whenever the payload is a native
 			// binary the extension will spawn. Heuristics, in order:
 			//   1. Zip already recorded any exec bit (user/group/other).
@@ -324,18 +340,23 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 			let IsBinPath = Stripped
 				.split('/')
 				.any(|Segment| matches!(Segment, "bin" | "server" | "tools" | "omnisharp" | "adapter" | "native"));
+
 			let HasExecBit = PermissionBits & 0o111 != 0;
+
 			let LooksExecutable = if HasExecBit || IsBinPath {
 				true
 			} else {
 				let mut Probe = [0u8; 4];
+
 				match std::fs::File::open(&Target).and_then(|mut Handle| {
 					use std::io::Read as IoRead;
 					IoRead::read(&mut Handle, &mut Probe).map(|BytesRead| (BytesRead, Probe))
 				}) {
 					Ok((BytesRead, Bytes)) if BytesRead >= 2 => {
 						let Shebang = &Bytes[..2] == b"#!";
+
 						let ElfMagic = BytesRead >= 4 && &Bytes[..4] == b"\x7FELF";
+
 						let MachMagic = BytesRead >= 4
 							&& matches!(
 								&Bytes[..4],
@@ -344,16 +365,20 @@ fn ExtractPayload(VsixPath:&Path, InstalledAt:&Path) -> Result<(), InstallError>
 									| b"\xFE\xED\xFA\xCE" | b"\xCA\xFE\xBA\xBE"
 									| b"\xBE\xBA\xFE\xCA"
 							);
+
 						Shebang || ElfMagic || MachMagic
 					},
+
 					_ => false,
 				}
 			};
+
 			let FinalMode = if LooksExecutable {
 				(PermissionBits | 0o755) & 0o755
 			} else {
 				(PermissionBits | 0o644) & 0o755
 			};
+
 			let _ = fs::set_permissions(&Target, fs::Permissions::from_mode(FinalMode));
 		}
 	}
@@ -380,6 +405,7 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 		let Some(Name) = Segment.to_str() else {
 			return false;
 		};
+
 		matches!(Name, "bin" | "server" | "tools" | "omnisharp" | "adapter" | "native")
 	}
 
@@ -387,21 +413,29 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 		let IsBinPath = RelativeFromRoot
 			.components()
 			.any(|Component| IsBinSegment(Component.as_os_str()));
+
 		if IsBinPath {
 			return true;
 		}
+
 		let Ok(mut Handle) = std::fs::File::open(Target) else {
 			return false;
 		};
+
 		let mut Probe = [0u8; 4];
+
 		let Ok(BytesRead) = Handle.read(&mut Probe) else {
 			return false;
 		};
+
 		if BytesRead < 2 {
 			return false;
 		}
+
 		let Shebang = &Probe[..2] == b"#!";
+
 		let ElfMagic = BytesRead >= 4 && &Probe[..4] == b"\x7FELF";
+
 		let MachMagic = BytesRead >= 4
 			&& matches!(
 				&Probe[..4],
@@ -412,6 +446,7 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 					| b"\xCA\xFE\xBA\xBE"
 					| b"\xBE\xBA\xFE\xCA"
 			);
+
 		Shebang || ElfMagic || MachMagic
 	}
 
@@ -419,11 +454,14 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 		let Ok(Entries) = std::fs::read_dir(Dir) else {
 			return;
 		};
+
 		for Entry in Entries.flatten() {
 			let Path = Entry.path();
+
 			let Ok(Metadata) = Entry.metadata() else {
 				continue;
 			};
+
 			if Metadata.is_dir() {
 				// Skip the bundled-deps tree by name - chmod-ing every
 				// file under node_modules is wasteful and chmod-ing
@@ -434,21 +472,29 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 				if Entry.file_name() == "node_modules" {
 					continue;
 				}
+
 				Walk(&Path, Root, Healed);
+
 				continue;
 			}
+
 			let Ok(Relative) = Path.strip_prefix(Root) else {
 				continue;
 			};
+
 			let Mode = Metadata.permissions().mode() & 0o777;
+
 			if Mode & 0o100 != 0 {
 				// Owner-exec already set; trust it.
 				continue;
 			}
+
 			if !LooksExecutable(&Path, Relative) {
 				continue;
 			}
+
 			let Promoted = (Mode | 0o755) & 0o755;
+
 			if std::fs::set_permissions(&Path, std::fs::Permissions::from_mode(Promoted)).is_ok() {
 				*Healed += 1;
 			}
@@ -456,7 +502,9 @@ pub fn HealExecutableBits(InstalledAt:&Path) {
 	}
 
 	let mut Healed:usize = 0;
+
 	Walk(InstalledAt, InstalledAt, &mut Healed);
+
 	if Healed > 0 {
 		dev_log!(
 			"extensions",

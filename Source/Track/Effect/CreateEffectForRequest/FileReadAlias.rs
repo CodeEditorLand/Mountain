@@ -17,6 +17,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => {
 			let MethodNameOwned = MethodName.to_string();
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
@@ -54,6 +55,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

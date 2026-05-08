@@ -13,7 +13,9 @@ use crate::dev_log;
 /// Message management operations implementation for MountainEnvironment
 pub(super) async fn set_status_bar_message_impl(
 	env:&MountainEnvironment,
+
 	message_identifier:String,
+
 	text:String,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -34,6 +36,7 @@ pub(super) async fn set_status_bar_message_impl(
 /// Disposes of a temporary status bar message.
 pub(super) async fn dispose_status_bar_message_impl(
 	env:&MountainEnvironment,
+
 	message_identifier:String,
 ) -> Result<(), CommonError> {
 	dev_log!(

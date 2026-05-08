@@ -11,7 +11,9 @@ use crate::{
 #[tauri::command]
 pub async fn SearchFiles(
 	query:String,
+
 	file_patterns:Vec<String>,
+
 	max_results:Option<u32>,
 ) -> Result<SearchResultsDTO::Struct, String> {
 	dev_log!(
@@ -22,9 +24,11 @@ pub async fn SearchFiles(
 	);
 
 	let air_address = GetAirAddress::Fn()?;
+
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
 	let request_id = uuid::Uuid::new_v4().to_string();
+
 	let max_results_count = max_results.unwrap_or(100);
 
 	let search_results = client
@@ -50,6 +54,7 @@ pub async fn SearchFiles(
 		.collect();
 
 	let total_results = results.len() as u32;
+
 	let result = SearchResultsDTO::Struct { results, total_results };
 
 	dev_log!(
@@ -57,5 +62,6 @@ pub async fn SearchFiles(
 		"[WindAirCommands] File search completed: {} results",
 		result.total_results
 	);
+
 	Ok(result)
 }

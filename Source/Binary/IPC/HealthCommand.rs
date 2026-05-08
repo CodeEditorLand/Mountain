@@ -14,6 +14,9 @@
 //! - `shared_process_service_health::shared_process_service_health`
 
 pub mod cocoon_debug_service_health;
+
 pub mod cocoon_extension_host_health;
+
 pub mod cocoon_search_service_health;
+
 pub mod shared_process_service_health;

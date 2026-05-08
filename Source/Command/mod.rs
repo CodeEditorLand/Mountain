@@ -81,8 +81,12 @@
 //! - [`SourceControlManagement`]: Git/SCM commands
 
 pub mod Bootstrap;
+
 pub mod Hover; // Atomic structure (new)
 pub mod Keybinding;
+
 pub mod LanguageFeature;
+
 pub mod SourceControlManagement;
+
 pub mod TreeView;

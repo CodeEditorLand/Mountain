@@ -4,4 +4,5 @@
 //! cross-service Vine wiring). Two DTOs for now.
 
 pub mod VineConnectionInfo;
+
 pub mod VineServiceStatus;

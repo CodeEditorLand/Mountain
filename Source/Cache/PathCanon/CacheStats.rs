@@ -5,5 +5,6 @@
 #[derive(Debug, Clone, Copy)]
 pub struct Struct {
 	pub Entries:usize,
+
 	pub WeightedSize:usize,
 }

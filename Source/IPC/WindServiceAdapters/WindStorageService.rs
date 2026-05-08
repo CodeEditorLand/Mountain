@@ -21,6 +21,7 @@ impl Struct {
 			.await
 			.map_err(|e:CommonError| e.to_string())?
 			.ok_or_else(|| "Storage key not found".to_string())?;
+
 		Ok(value)
 	}
 

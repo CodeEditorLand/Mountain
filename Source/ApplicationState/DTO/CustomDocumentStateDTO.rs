@@ -114,6 +114,7 @@ impl CustomDocumentStateDTO {
 		}
 
 		self.Edits.insert(EditID, EditData);
+
 		Ok(())
 	}
 
@@ -126,22 +127,29 @@ impl CustomDocumentStateDTO {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
 	fn test_creation_success() {
 		let URI = Url::parse("file:///test/document.md").unwrap();
+
 		let dto =
 			CustomDocumentStateDTO::New(URI.clone(), "markdown.editor".to_string(), "sidecar-123".to_string(), true);
+
 		assert!(dto.is_ok());
+
 		assert_eq!(dto.unwrap().ViewType, "markdown.editor");
 	}
 
 	#[test]
 	fn test_invalid_view_type_length() {
 		let URI = Url::parse("file:///test/document.md").unwrap();
+
 		let LongViewType = "a".repeat(257);
+
 		let dto = CustomDocumentStateDTO::New(URI, LongViewType, "sidecar-123".to_string(), true);
+
 		assert!(dto.is_err());
 	}
 }

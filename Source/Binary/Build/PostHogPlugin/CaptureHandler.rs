@@ -15,8 +15,11 @@ pub fn Fn(Feature:&str, DurationMs:u64, Successful:bool) {
 	if !CaptureAllowed::Fn() {
 		return;
 	}
+
 	let DurationString = format!("{}", DurationMs);
+
 	let OkString = if Successful { "true" } else { "false" };
+
 	CaptureEvent::Fn(
 		"land:mountain:handler:complete",
 		Some(vec![("feature", Feature), ("duration_ms", &DurationString), ("ok", OkString)]),

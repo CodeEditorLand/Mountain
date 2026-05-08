@@ -17,7 +17,9 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn SetStatusBarText(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Id = Parameter.get("id").and_then(Value::as_str).unwrap_or("");
+
 	let Text = Parameter.get("text").and_then(Value::as_str).unwrap_or("");
+
 	let Tooltip = Parameter.get("tooltip").and_then(Value::as_str).unwrap_or("");
 
 	let _ = Service.ApplicationHandle().emit(
@@ -28,5 +30,6 @@ pub async fn SetStatusBarText(Service:&MountainVinegRPCService, Parameter:&Value
 			"tooltip": Tooltip,
 		}),
 	);
+
 	dev_log!("grpc", "[StatusBar] set-text id={} len={}", Id, Text.len());
 }

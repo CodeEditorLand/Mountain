@@ -34,6 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 		let mut Tauri:Value = match json5::from_str(&Content) {
 			Ok(Value) => Value,
+
 			Err(_) => serde_json::from_str(&Content)?,
 		};
 
@@ -216,6 +217,7 @@ fn PropagateTierGating() {
 	EmitTierDefaults();
 
 	let Manifest = std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
+
 	let ManifestPath = std::path::PathBuf::from(Manifest);
 
 	// Mountain/Cargo.toml is at Land/Element/Mountain/Cargo.toml - three
@@ -226,18 +228,25 @@ fn PropagateTierGating() {
 	for Base in &Ancestors {
 		for Candidate in [".env.Land", ".env.Land.Sample"] {
 			let Full = Base.join(Candidate);
+
 			if !Full.exists() {
 				continue;
 			}
+
 			println!("cargo:rerun-if-changed={}", Full.display());
+
 			let Contents = match std::fs::read_to_string(&Full) {
 				Ok(text) => text,
+
 				Err(error) => {
 					println!("cargo:warning=Failed to read {}: {}", Full.display(), error);
+
 					return;
 				},
 			};
+
 			ApplyEnvFile(&Full, &Contents);
+
 			// Stop after the first env file we find - subsequent ones would
 			// duplicate directives (defaults are already emitted upstream).
 			return;
@@ -250,15 +259,21 @@ fn PropagateTierGating() {
 fn ApplyEnvFile(Path:&std::path::Path, Contents:&str) {
 	for Line in Contents.lines() {
 		let Trimmed = Line.trim();
+
 		if Trimmed.is_empty() || Trimmed.starts_with('#') {
 			continue;
 		}
+
 		let Pair = Trimmed.split_once('=');
+
 		let (Key, Value) = match Pair {
 			Some(pair) => pair,
+
 			None => continue,
 		};
+
 		let Key = Key.trim();
+
 		let Value = Value.trim().trim_matches('"');
 
 		if !Key.starts_with("Tier") {
@@ -270,9 +285,11 @@ fn ApplyEnvFile(Path:&std::path::Path, Contents:&str) {
 		println!("cargo:rustc-env={}={}", Key, Value);
 
 		let FeatureName = format!("{}{}", Key, Value);
+
 		if IsDeclaredTierFeature(&FeatureName) {
 			println!("cargo:rustc-cfg=feature=\"{}\"", FeatureName);
 		} else if IsDefaultTierValue(Key, Value) {
+
 			// Default-tier values (GRPC, Layer2, Standard, …) do not need
 			// Cargo features - they are the compiled-in baseline. Silent.
 		} else {

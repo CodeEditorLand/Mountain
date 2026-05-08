@@ -11,7 +11,10 @@ use crate::Telemetry::Metrics::MetricValue;
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub Name:String,
+
 	pub Value:MetricValue::Enum,
+
 	pub Timestamp:std::time::SystemTime,
+
 	pub Labels:HashMap<String, String>,
 }

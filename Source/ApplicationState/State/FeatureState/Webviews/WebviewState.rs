@@ -67,6 +67,7 @@ impl WebviewState {
 	pub fn AddOrUpdate(&self, id:String, webview:WebviewStateDTO) {
 		if let Ok(mut guard) = self.ActiveWebviews.lock() {
 			guard.insert(id, webview);
+
 			dev_log!("extensions", "[WebviewState] Webview added/updated");
 		}
 	}
@@ -75,6 +76,7 @@ impl WebviewState {
 	pub fn Remove(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveWebviews.lock() {
 			guard.remove(id);
+
 			dev_log!("extensions", "[WebviewState] Webview removed: {}", id);
 		}
 	}
@@ -83,6 +85,7 @@ impl WebviewState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.ActiveWebviews.lock() {
 			guard.clear();
+
 			dev_log!("extensions", "[WebviewState] All webviews cleared");
 		}
 	}

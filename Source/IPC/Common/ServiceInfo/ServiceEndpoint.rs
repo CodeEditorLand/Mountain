@@ -9,8 +9,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub Protocol:String,
+
 	pub Address:String,
+
 	pub Port:u16,
+
 	pub Path:Option<String>,
 }
 
@@ -22,8 +25,11 @@ impl Struct {
 	pub fn NewUnix(Path:impl Into<String>) -> Self {
 		Self {
 			Protocol:"unix".to_string(),
+
 			Address:String::new(),
+
 			Port:0,
+
 			Path:Some(Path.into()),
 		}
 	}

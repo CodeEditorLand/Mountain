@@ -16,6 +16,7 @@ pub async fn TextfileWrite(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 		.first()
 		.and_then(|V| V.as_str())
 		.ok_or_else(|| "textFile:write requires path as first argument".to_string())?;
+
 	let Content = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	tokio::fs::write(Path, Content.as_bytes())

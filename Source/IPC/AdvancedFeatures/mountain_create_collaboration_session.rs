@@ -17,7 +17,9 @@ use crate::{
 #[tauri::command]
 pub async fn mountain_create_collaboration_session(
 	app_handle:tauri::AppHandle,
+
 	session_id:String,
+
 	permissions:CollaborationPermissions,
 ) -> Result<(), String> {
 	dev_log!("lifecycle", "Tauri command: create_collaboration_session");

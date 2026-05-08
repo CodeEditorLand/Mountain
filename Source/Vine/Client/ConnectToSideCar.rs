@@ -53,6 +53,7 @@ pub async fn Fn(SideCarIdentifier:String, Address:String) -> Result<(), VineErro
 
 		if Attempt < MAX_RETRY_ATTEMPTS {
 			let DelayMilliseconds = RETRY_BASE_DELAY_MS * 2_u64.pow(Attempt as u32);
+
 			tokio::time::sleep(Duration::from_millis(DelayMilliseconds)).await;
 		}
 	}

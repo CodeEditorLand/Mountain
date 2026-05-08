@@ -17,11 +17,17 @@
 //! indefinitely while one-shot paths evict naturally.
 
 pub mod CacheStats;
+
 pub mod Canonicalize;
+
 pub mod CanonicalizeUncached;
+
 pub mod Clear;
+
 pub mod Invalidate;
+
 pub mod SpawnDiagnosticLogger;
+
 pub mod Stats;
 
 pub(crate) mod Cache;

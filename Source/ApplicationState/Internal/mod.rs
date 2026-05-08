@@ -44,8 +44,13 @@
 //! - [ ] Add concurrent extension scanning
 
 pub mod ExtensionScanner;
+
 pub mod PathResolution;
+
 pub mod Persistence;
+
 pub mod Recovery;
+
 pub mod Serialization;
+
 pub mod TextProcessing;

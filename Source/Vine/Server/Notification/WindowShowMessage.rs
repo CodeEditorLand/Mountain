@@ -20,6 +20,7 @@ pub async fn WindowShowMessage(Service:&MountainVinegRPCService, Parameter:&Valu
 		"[WindowShowMessage] message={:?}",
 		Parameter.get("message").and_then(Value::as_str).unwrap_or("")
 	);
+
 	if let Err(Error) = Service.ApplicationHandle().emit("sky://notification/show", Parameter) {
 		dev_log!(
 			"grpc",

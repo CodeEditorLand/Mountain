@@ -69,8 +69,11 @@ impl Default for State {
 
 		Self {
 			GlobalConfiguration:Arc::new(StandardMutex::new(serde_json::Value::Object(serde_json::Map::new()))),
+
 			WorkspaceConfiguration:Arc::new(StandardMutex::new(serde_json::Value::Object(serde_json::Map::new()))),
+
 			MementoGlobalStorage:Arc::new(StandardMutex::new(HashMap::new())),
+
 			MementoWorkspaceStorage:Arc::new(StandardMutex::new(HashMap::new())),
 		}
 	}
@@ -134,6 +137,7 @@ impl State {
 					path,
 					e
 				);
+
 				return;
 			}
 
@@ -174,6 +178,7 @@ impl State {
 	pub fn SetGlobalMementoValue(&self, key:String, value:serde_json::Value) {
 		if let Ok(mut guard) = self.MementoGlobalStorage.lock() {
 			guard.insert(key.clone(), value);
+
 			dev_log!("config", "[ConfigurationState] Global memento value updated for key: {}", key);
 		}
 	}
@@ -211,6 +216,7 @@ impl State {
 	pub fn SetWorkspaceMementoValue(&self, key:String, value:serde_json::Value) {
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
 			guard.insert(key.clone(), value);
+
 			dev_log!(
 				"config",
 				"[ConfigurationState] Workspace memento value updated for key: {}",
@@ -223,6 +229,7 @@ impl State {
 	pub fn ClearWorkspaceMementoValue(&self, key:&str) {
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
 			guard.remove(key);
+
 			dev_log!(
 				"config",
 				"[ConfigurationState] Workspace memento value removed for key: {}",
@@ -235,6 +242,7 @@ impl State {
 	pub fn ClearGlobalMemento(&self) {
 		if let Ok(mut guard) = self.MementoGlobalStorage.lock() {
 			guard.clear();
+
 			dev_log!("config", "[ConfigurationState] Global memento storage cleared");
 		}
 	}
@@ -243,6 +251,7 @@ impl State {
 	pub fn ClearWorkspaceMemento(&self) {
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
 			guard.clear();
+
 			dev_log!("config", "[ConfigurationState] Workspace memento storage cleared");
 		}
 	}

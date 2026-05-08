@@ -26,6 +26,7 @@ pub async fn Fn(SideCarIdentifier:String, Method:String, Parameters:Value) -> Re
 	if IsShuttingDown::Fn() {
 		return Ok(());
 	}
+
 	if Method.is_empty() || Method.len() > 128 {
 		return Err(VineError::RPCError(
 			"Method name must be between 1 and 128 characters".to_string(),
@@ -36,13 +37,18 @@ pub async fn Fn(SideCarIdentifier:String, Method:String, Parameters:Value) -> Re
 		if let Some(Mux) = crate::Vine::Multiplexer::Multiplexer::Lookup(&SideCarIdentifier) {
 			if !Mux.IsClosed() {
 				let MethodForPublish = Method.clone();
+
 				let ParametersForPublish = Parameters.clone();
+
 				match Mux.Notify(Method.clone(), Parameters.clone()).await {
 					Ok(()) => {
 						UpdateSideCarActivity(&SideCarIdentifier);
+
 						PublishNotification::Fn(&SideCarIdentifier, &MethodForPublish, &ParametersForPublish);
+
 						return Ok(());
 					},
+
 					Err(Error) => {
 						dev_log!(
 							"grpc",
@@ -58,36 +64,45 @@ pub async fn Fn(SideCarIdentifier:String, Method:String, Parameters:Value) -> Re
 	}
 
 	let ParameterBytes = to_vec(&Parameters)?;
+
 	ValidateMessageSize(&ParameterBytes)?;
 
 	let mut Client = {
 		let Pool = SIDECAR_CLIENTS.lock();
+
 		Pool.get(&SideCarIdentifier).cloned()
 	};
 
 	if let Some(ref mut Client) = Client {
 		let MethodForPublish = Method.clone();
+
 		let Request = GenericNotification { method:Method, parameter:ParameterBytes };
 
 		match Client.send_mountain_notification(Request).await {
 			Ok(_) => {
 				UpdateSideCarActivity(&SideCarIdentifier);
+
 				dev_log!(
 					"grpc",
 					"[VineClient] Notification sent successfully to sidecar '{}'",
 					SideCarIdentifier
 				);
+
 				PublishNotification::Fn(&SideCarIdentifier, &MethodForPublish, &Parameters);
+
 				Ok(())
 			},
+
 			Err(Status) => {
 				RecordSideCarFailure(&SideCarIdentifier);
+
 				dev_log!(
 					"grpc",
 					"error: [VineClient] Failed to send notification to sidecar '{}': {}",
 					SideCarIdentifier,
 					Status
 				);
+
 				Err(VineError::from(Status))
 			},
 		}

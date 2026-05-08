@@ -34,10 +34,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			// even reached `DispatchSideCarRequest` - silent gRPC drops
 			// look identical to "extension never called the shim".
 			dev_log!("ipc", "[WebviewEffect] dispatch-enter method={}", MethodName);
+
 			let Method = MethodName.to_string();
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					let Method = Method.clone();
+
 					Box::pin(async move {
 						let RawSuffix = Method.trim_start_matches("$webview:").trim_start_matches("webview.");
 						// SkyBridge's webview listener registry uses
@@ -167,6 +170,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(json!(null))
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -188,6 +192,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

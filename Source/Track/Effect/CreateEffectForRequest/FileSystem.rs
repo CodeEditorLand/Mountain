@@ -25,12 +25,14 @@ fn StripFileUriScheme(Input:&str) -> &str {
 		if Rest.starts_with('/') {
 			return Rest;
 		}
+
 		// `file://localhost/Users/...` - rarely used, but normalise by
 		// stripping host-up-to-first-slash. Fall through on failure.
 		if let Some(Idx) = Rest.find('/') {
 			return &Rest[Idx..];
 		}
 	}
+
 	Input
 }
 
@@ -68,6 +70,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -93,6 +96,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -110,6 +114,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -136,6 +141,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -153,6 +159,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -171,6 +178,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -192,6 +200,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -213,6 +222,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

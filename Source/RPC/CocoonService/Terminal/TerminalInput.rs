@@ -13,6 +13,7 @@ use crate::{
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalInputRequest) -> Result<Response<Empty>, Status> {
 	let TerminalIdentifier = Request.terminal_id as u64;
+
 	dev_log!(
 		"cocoon",
 		"[CocoonService] terminal_input: id={} bytes={}",
@@ -24,6 +25,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalInputRequest) -> Res
 
 	match Service.environment.SendTextToTerminal(TerminalIdentifier, Text).await {
 		Ok(()) => Ok(Response::new(Empty {})),
+
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
@@ -31,6 +33,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalInputRequest) -> Res
 				TerminalIdentifier,
 				Error
 			);
+
 			Err(Status::not_found(format!("terminal_input: {}", Error)))
 		},
 	}

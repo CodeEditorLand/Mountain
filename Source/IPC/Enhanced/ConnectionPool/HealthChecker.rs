@@ -18,8 +18,11 @@ impl Struct {
 
 	pub(super) async fn check_connection_health(&self, _handle:&mut ConnectionHandle::Struct) -> bool {
 		let start_time = Instant::now();
+
 		tokio::time::sleep(Duration::from_millis(10)).await;
+
 		let response_time = start_time.elapsed();
+
 		response_time < self.ping_timeout
 	}
 }

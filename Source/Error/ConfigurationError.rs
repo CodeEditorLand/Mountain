@@ -14,18 +14,25 @@ use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 pub enum ConfigurationError {
 	/// Configuration key not found
 	KeyNotFound { context:ErrorContext, key:String, section:Option<String> },
+
 	/// Invalid configuration value
 	InvalidValue { context:ErrorContext, key:String, expected_type:String },
+
 	/// Configuration validation failed
 	ValidationFailed { context:ErrorContext, errors:Vec<String> },
+
 	/// Configuration parse error
 	ParseError { context:ErrorContext, format:String, source:String },
+
 	/// Configuration file not found
 	FileNotFound { context:ErrorContext, path:String },
+
 	/// Configuration file read error
 	FileReadError { context:ErrorContext, path:String, source:String },
+
 	/// Configuration file write error
 	FileWriteError { context:ErrorContext, path:String, source:String },
+
 	/// Circular dependency detected
 	CircularDependency { context:ErrorContext, keys:Vec<String> },
 }
@@ -35,12 +42,19 @@ impl ConfigurationError {
 	pub fn context(&self) -> &ErrorContext {
 		match self {
 			ConfigurationError::KeyNotFound { context, .. } => context,
+
 			ConfigurationError::InvalidValue { context, .. } => context,
+
 			ConfigurationError::ValidationFailed { context, .. } => context,
+
 			ConfigurationError::ParseError { context, .. } => context,
+
 			ConfigurationError::FileNotFound { context, .. } => context,
+
 			ConfigurationError::FileReadError { context, .. } => context,
+
 			ConfigurationError::FileWriteError { context, .. } => context,
+
 			ConfigurationError::CircularDependency { context, .. } => context,
 		}
 	}
@@ -48,16 +62,20 @@ impl ConfigurationError {
 	/// Create a key not found error
 	pub fn key_not_found(key:impl Into<String>, section:Option<String>) -> Self {
 		let key = key.into();
+
 		let message = if let Some(section) = &section {
 			format!("Configuration key '{}' not found in section '{}'", key, section)
 		} else {
 			format!("Configuration key '{}' not found", key)
 		};
+
 		Self::KeyNotFound {
 			context:ErrorContext::new(message)
 				.with_kind(ErrorKind::Configuration)
 				.with_severity(ErrorSeverity::Error),
+
 			key,
+
 			section,
 		}
 	}
@@ -65,7 +83,9 @@ impl ConfigurationError {
 	/// Create an invalid value error
 	pub fn invalid_value(key:impl Into<String>, expected_type:impl Into<String>) -> Self {
 		let key_str = key.into();
+
 		let expected_type_str = expected_type.into();
+
 		Self::InvalidValue {
 			context:ErrorContext::new(format!(
 				"Invalid value for key '{}': expected type '{}'",
@@ -73,7 +93,9 @@ impl ConfigurationError {
 			))
 			.with_kind(ErrorKind::Configuration)
 			.with_severity(ErrorSeverity::Error),
+
 			key:key_str,
+
 			expected_type:expected_type_str,
 		}
 	}
@@ -84,6 +106,7 @@ impl ConfigurationError {
 			context:ErrorContext::new(format!("Configuration validation failed with {} error(s)", errors.len()))
 				.with_kind(ErrorKind::Configuration)
 				.with_severity(ErrorSeverity::Error),
+
 			errors,
 		}
 	}
@@ -94,7 +117,9 @@ impl ConfigurationError {
 			context:ErrorContext::new(message)
 				.with_kind(ErrorKind::Configuration)
 				.with_severity(ErrorSeverity::Error),
+
 			format:format.into(),
+
 			source:source.into(),
 		}
 	}
@@ -102,10 +127,12 @@ impl ConfigurationError {
 	/// Create a file not found error
 	pub fn file_not_found(path:impl Into<String>) -> Self {
 		let path_str = path.into();
+
 		Self::FileNotFound {
 			context:ErrorContext::new(format!("Configuration file not found: {}", path_str))
 				.with_kind(ErrorKind::Configuration)
 				.with_severity(ErrorSeverity::Error),
+
 			path:path_str,
 		}
 	}
@@ -116,6 +143,7 @@ impl ConfigurationError {
 			context:ErrorContext::new(format!("Circular dependency detected in configuration: {}", keys.join(" -> ")))
 				.with_kind(ErrorKind::Configuration)
 				.with_severity(ErrorSeverity::Critical),
+
 			keys,
 		}
 	}

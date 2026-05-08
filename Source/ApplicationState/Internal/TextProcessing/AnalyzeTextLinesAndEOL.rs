@@ -43,9 +43,11 @@
 pub fn AnalyzeTextLinesAndEOL(TextContent:&str) -> (Vec<String>, String) {
 	let detected_eol = if TextContent.contains("\r\n") {
 		dev_log!("model", "[AnalyzeTextLinesAndEOL] Detected CRLF line endings");
+
 		"\r\n"
 	} else {
 		dev_log!("model", "[AnalyzeTextLinesAndEOL] Detected LF line endings");
+
 		"\n"
 	};
 
@@ -60,4 +62,5 @@ pub fn AnalyzeTextLinesAndEOL(TextContent:&str) -> (Vec<String>, String) {
 
 	(lines, detected_eol.to_string())
 }
+
 use crate::dev_log;

@@ -20,6 +20,7 @@ pub async fn ModelGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> 
 
 	match RunTime.Environment.ApplicationState.Feature.Documents.Get(Uri) {
 		None => Ok(Value::Null),
+
 		Some(Document) => {
 			Ok(json!({
 				"uri": Uri,

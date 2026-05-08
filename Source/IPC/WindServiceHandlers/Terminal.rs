@@ -20,10 +20,17 @@
 //!   `LocalPTYGetEnvironment::LocalPTYGetEnvironment`.
 
 pub mod LocalPTYGetDefaultShell;
+
 pub mod LocalPTYGetEnvironment;
+
 pub mod LocalPTYGetProfiles;
+
 pub mod TerminalCreate;
+
 pub mod TerminalDispose;
+
 pub mod TerminalHide;
+
 pub mod TerminalSendText;
+
 pub mod TerminalShow;

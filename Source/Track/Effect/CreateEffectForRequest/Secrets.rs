@@ -14,16 +14,20 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::Mapp
 fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 	if let Some(Object) = Parameters.as_object() {
 		let Key = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
+
 		let ExtensionId = Object
 			.get("extension_id")
 			.or_else(|| Object.get("extensionId"))
 			.and_then(Value::as_str)
 			.unwrap_or("unknown")
 			.to_string();
+
 		(Key, ExtensionId)
 	} else {
 		let Key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+
 		let ExtensionId = Parameters.get(2).and_then(Value::as_str).unwrap_or("unknown").to_string();
+
 		(Key, ExtensionId)
 	}
 }
@@ -43,6 +47,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -64,6 +69,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -80,6 +86,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

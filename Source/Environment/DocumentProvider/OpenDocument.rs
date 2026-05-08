@@ -33,8 +33,11 @@ use crate::{
 /// (`TextDocumentContentProvider`).
 pub(super) async fn open_document(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	uri_components_dto:Value,
+
 	language_identifier:Option<String>,
+
 	content:Option<String>,
 ) -> Result<Url, CommonError> {
 	let uri = Utility::UriParsing::GetURLFromURIComponentsDTO(&uri_components_dto)?;
@@ -63,6 +66,7 @@ pub(super) async fn open_document(
 					);
 				}
 			},
+
 			Err(error) => {
 				dev_log!(
 					"model",

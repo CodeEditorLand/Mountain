@@ -19,18 +19,26 @@
 //! `Binary::Main` and the IPC fast paths.
 
 pub mod GetAllMetrics;
+
 pub mod Initialize;
+
 pub mod Metric;
+
 pub mod MetricValue;
+
 pub mod MetricsRegistry;
+
 pub mod RecordCounter;
+
 pub mod RecordGauge;
+
 pub mod Timer;
 
 pub(crate) mod GlobalRegistry;
 
 #[cfg(test)]
 mod tests {
+
 	use std::collections::HashMap;
 
 	use super::{MetricsRegistry, Timer};
@@ -38,32 +46,44 @@ mod tests {
 	#[test]
 	fn registry_creation() {
 		let Registry = MetricsRegistry::Struct::new(100);
+
 		assert!(Registry.GetAllMetrics().is_empty());
 	}
 
 	#[test]
 	fn counter_recording() {
 		let Registry = MetricsRegistry::Struct::new(100);
+
 		Registry.RecordCounter("test.counter", 42.0, HashMap::new());
+
 		let All = Registry.GetAllMetrics();
+
 		assert_eq!(All.len(), 1);
+
 		assert_eq!(All[0].Name, "test.counter");
 	}
 
 	#[test]
 	fn gauge_recording() {
 		let Registry = MetricsRegistry::Struct::new(100);
+
 		Registry.RecordGauge("test.gauge", 99.9, HashMap::new());
+
 		let All = Registry.GetAllMetrics();
+
 		assert_eq!(All.len(), 1);
+
 		assert_eq!(All[0].Name, "test.gauge");
 	}
 
 	#[test]
 	fn timer_records() {
 		let T = Timer::Struct::Start("test.timer");
+
 		std::thread::sleep(std::time::Duration::from_millis(10));
+
 		let Elapsed = T.StopAndRecord();
+
 		assert!(Elapsed.as_millis() >= 10);
 	}
 }

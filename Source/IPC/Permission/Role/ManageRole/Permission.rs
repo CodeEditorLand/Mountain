@@ -11,8 +11,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub Name:String,
+
 	pub Description:String,
+
 	pub Category:String,
+
 	pub IsSensitive:bool,
 }
 
@@ -27,6 +30,7 @@ impl Struct {
 
 	pub fn SetSensitive(mut self) -> Self {
 		self.IsSensitive = true;
+
 		self
 	}
 

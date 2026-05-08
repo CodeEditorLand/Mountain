@@ -10,22 +10,41 @@
 //! the live Air client is wired in.
 
 pub mod AirClientType;
+
 pub mod AirMetricsProtoDTO;
+
 pub mod ApplyUpdateRequest;
+
 pub mod ApplyUpdateResponse;
+
 pub mod AuthenticationRequest;
+
 pub mod AuthenticationResponse;
+
 pub mod DEFAULT_AIR_SERVER_ADDRESS;
+
 pub mod DownloadFileResponse;
+
 pub mod DownloadRequest;
+
 pub mod FileResultProtoDTO;
+
 pub mod IndexFilesResponse;
+
 pub mod IndexRequest;
+
 pub mod MetricsRequest;
+
 pub mod MetricsResponse;
+
 pub mod SearchFilesResponse;
+
 pub mod SearchRequest;
+
 pub mod StatusRequest;
+
 pub mod StatusResponse;
+
 pub mod UpdateCheckRequest;
+
 pub mod UpdateCheckResponse;

@@ -71,32 +71,43 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 	let mut Collected:Vec<PathBuf> = Vec::new();
 
 	let CliArgs:Vec<String> = std::env::args().skip(1).collect();
+
 	let mut Index = 0;
+
 	while Index < CliArgs.len() {
 		let Argument = &CliArgs[Index];
+
 		if (Argument == "--folder" || Argument == "-F") && Index + 1 < CliArgs.len() {
 			Collected.push(PathBuf::from(&CliArgs[Index + 1]));
+
 			Index += 2;
+
 			continue;
 		}
+
 		// Positional existing-directory argument. Skip flags + workspace files.
 		if !Argument.starts_with('-') && !Argument.ends_with(".code-workspace") {
 			let Candidate = PathBuf::from(Argument);
+
 			if Candidate.is_dir() {
 				Collected.push(Candidate);
 			}
 		}
+
 		Index += 1;
 	}
 
 	if Collected.is_empty() {
 		if let Ok(EnvValue) = std::env::var("Open") {
 			let Separator = if cfg!(windows) { ';' } else { ':' };
+
 			for Piece in EnvValue.split(Separator) {
 				let Piece = Piece.trim();
+
 				if Piece.is_empty() {
 					continue;
 				}
+
 				Collected.push(PathBuf::from(Piece));
 			}
 		}
@@ -137,8 +148,10 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 		let AutoloadCwd = std::env::var("Walk")
 			.map(|Value| matches!(Value.as_str(), "1" | "true" | "yes" | "on"))
 			.unwrap_or(true);
+
 		if AutoloadCwd && let Ok(Cwd) = std::env::current_dir() {
 			let IsFilesystemRoot = Cwd.parent().is_none();
+
 			if !IsFilesystemRoot {
 				Collected.push(WalkUpToProjectRoot(&Cwd));
 			}
@@ -182,6 +195,7 @@ fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
 	use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::ReadRecentlyOpened;
 
 	let Recent = ReadRecentlyOpened().ok()?;
+
 	let Workspaces = Recent.get("workspaces").and_then(|V| V.as_array())?;
 
 	// Same priority order as BuildInitialUrl: own writer's `uri`,
@@ -190,12 +204,15 @@ fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
 		if let Some(Uri) = Entry.get("uri").and_then(|V| V.as_str()) {
 			return Some(Uri.to_string());
 		}
+
 		if let Some(Uri) = Entry.get("folderUri").and_then(|V| V.as_str()) {
 			return Some(Uri.to_string());
 		}
+
 		if let Some(Path) = Entry.get("folderUri").and_then(|V| V.get("path")).and_then(|V| V.as_str()) {
 			return Some(Path.to_string());
 		}
+
 		if let Some(Path) = Entry
 			.get("workspace")
 			.and_then(|V| V.get("configPath"))
@@ -204,12 +221,16 @@ fn ResolveRecentlyOpenedTopFolder() -> Option<PathBuf> {
 		{
 			return Some(Path.to_string());
 		}
+
 		None
 	};
 
 	let Raw = Workspaces.iter().find_map(Probe)?;
+
 	let Normalised = Raw.strip_prefix("file://").unwrap_or(Raw.as_str()).to_string();
+
 	let Candidate = PathBuf::from(&Normalised);
+
 	if Candidate.is_dir() { Some(Candidate) } else { None }
 }
 
@@ -236,17 +257,22 @@ fn WalkUpToProjectRoot(Start:&Path) -> PathBuf {
 		"deno.json",
 		"deno.jsonc",
 	];
+
 	let mut Cursor:&Path = Start;
+
 	loop {
 		for Marker in Markers {
 			if Cursor.join(Marker).exists() {
 				return Cursor.to_path_buf();
 			}
 		}
+
 		match Cursor.parent() {
 			Some(Parent) if Parent != Cursor => Cursor = Parent,
+
 			_ => break,
 		}
 	}
+
 	Start.to_path_buf()
 }

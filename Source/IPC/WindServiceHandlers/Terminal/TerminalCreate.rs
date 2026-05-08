@@ -14,6 +14,7 @@ use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn TerminalCreate(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Options = Arguments.first().cloned().unwrap_or(Value::Null);
+
 	RunTime
 		.Environment
 		.CreateTerminal(Options)

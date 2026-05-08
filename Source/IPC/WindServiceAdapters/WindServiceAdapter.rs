@@ -38,11 +38,13 @@ pub struct Struct {
 impl Struct {
 	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
 		dev_log!("ipc", "[WindServiceAdapters] Creating Wind service adapter");
+
 		Self { runtime }
 	}
 
 	pub async fn convert_to_wind_configuration(
 		&self,
+
 		mountain_config:serde_json::Value,
 	) -> Result<WindDesktopConfiguration, String> {
 		dev_log!("ipc", "[WindServiceAdapters] Converting Mountain config to Wind config");
@@ -78,25 +80,33 @@ impl Struct {
 
 	pub async fn get_environment_service(&self) -> Result<WindEnvironmentService, String> {
 		dev_log!("ipc", "[WindServiceAdapters] Getting Wind environment service");
+
 		Ok(WindEnvironmentService::new())
 	}
 
 	pub async fn get_file_service(&self) -> Result<WindFileService, String> {
 		dev_log!("ipc", "[WindServiceAdapters] Getting Wind file service");
+
 		let file_system_reader:Arc<dyn FileSystemReader> = self.runtime.Environment.Require();
+
 		let file_system_writer:Arc<dyn FileSystemWriter> = self.runtime.Environment.Require();
+
 		Ok(WindFileService::new(file_system_reader, file_system_writer))
 	}
 
 	pub async fn get_storage_service(&self) -> Result<WindStorageService, String> {
 		dev_log!("ipc", "[WindServiceAdapters] Getting Wind storage service");
+
 		let storage:Arc<dyn StorageProvider> = self.runtime.Environment.Require();
+
 		Ok(WindStorageService::new(storage))
 	}
 
 	pub async fn get_configuration_service(&self) -> Result<WindConfigurationService, String> {
 		dev_log!("ipc", "[WindServiceAdapters] Getting Wind configuration service");
+
 		let config:Arc<dyn ConfigurationProvider> = self.runtime.Environment.Require();
+
 		Ok(WindConfigurationService::new(config))
 	}
 }

@@ -36,11 +36,13 @@ pub fn Fn() {
 		if Value.is_empty() {
 			continue;
 		}
+
 		// Already-set values win; this hydration is a fallback for the
 		// "user runs bare binary" path.
 		if std::env::var_os(Key).is_some() {
 			continue;
 		}
+
 		// SAFETY: set_var on a single-threaded boot path before any
 		// other thread spawns. Mountain calls this from the early boot
 		// section of Binary::Main::Entry::Fn before tokio / scheduler

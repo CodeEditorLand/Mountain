@@ -14,6 +14,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:CreateOutputChannelRequest,
 ) -> Result<Response<CreateOutputChannelResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] create_output_channel: '{}'", Request.name);

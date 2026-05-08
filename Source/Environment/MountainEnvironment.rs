@@ -260,7 +260,9 @@ impl MountainEnvironment {
 	#[cfg(feature = "AirIntegration")]
 	pub fn CreateWithAir(
 		ApplicationHandle:AppHandle<Wry>,
+
 		ApplicationState:Arc<ApplicationState>,
+
 		AirClient:Option<AirServiceClient<tonic::transport::Channel>>,
 	) -> Self {
 		dev_log!(
@@ -294,9 +296,11 @@ impl MountainEnvironment {
 				"lifecycle",
 				"[MountainEnvironment] Air client configured (health check disabled pending integration)"
 			);
+
 			true
 		} else {
 			dev_log!("lifecycle", "[MountainEnvironment] No Air client configured");
+
 			false
 		}
 	}
@@ -318,6 +322,7 @@ impl MountainEnvironment {
 				"warn: [ExtensionManagementService] Extension directory does not exist: {:?}",
 				path
 			);
+
 			return Ok(extensions);
 		}
 
@@ -338,9 +343,11 @@ impl MountainEnvironment {
 			})?;
 
 			let entry_path = entry.path();
+
 			if entry_path.is_dir() {
 				// Look for package.json in the extension directory
 				let package_json_path = entry_path.join("package.json");
+
 				if package_json_path.exists() {
 					match fs::read_to_string(&package_json_path) {
 						Ok(content) => {
@@ -353,13 +360,16 @@ impl MountainEnvironment {
 											Value::String(entry_path.to_string_lossy().to_string()),
 										);
 									}
+
 									extensions.push(package_json);
+
 									dev_log!(
 										"lifecycle",
 										"[ExtensionManagementService] Found extension at: {:?}",
 										entry_path
 									);
 								},
+
 								Err(error) => {
 									dev_log!(
 										"lifecycle",
@@ -370,6 +380,7 @@ impl MountainEnvironment {
 								},
 							}
 						},
+
 						Err(error) => {
 							dev_log!(
 								"lifecycle",
@@ -403,6 +414,7 @@ impl ExtensionManagementService for MountainEnvironment {
 				.ExtensionScanPaths
 				.lock()
 				.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
+
 			ScanPathsGuard.clone()
 		};
 
@@ -439,12 +451,15 @@ impl ExtensionManagementService for MountainEnvironment {
 						.and_then(|V| V.as_str())
 						.unwrap_or(&Dto.Name)
 						.to_string();
+
 					if !Key.is_empty() {
 						ScannedExtensionsGuard.insert(Key, Dto);
 					}
 				},
+
 				Err(Error) => {
 					let Name = extension.get("name").and_then(|V| V.as_str()).unwrap_or("?");
+
 					dev_log!(
 						"lifecycle",
 						"warn: [ExtensionManagementService] Failed to parse extension '{}': {}",
@@ -460,6 +475,7 @@ impl ExtensionManagementService for MountainEnvironment {
 			"[ExtensionManagementService] Found {} extensions",
 			ScannedExtensionsGuard.len()
 		);
+
 		Ok(())
 	}
 
@@ -503,10 +519,15 @@ impl ExtensionManagementService for MountainEnvironment {
 		if let Some(extension_dto) = ScannedExtensionsGuard.get(&id) {
 			// Convert ExtensionDescriptionStateDTO back to JSON Value
 			let mut extension_value = serde_json::Map::new();
+
 			extension_value.insert("Identifier".to_string(), extension_dto.Identifier.clone());
+
 			extension_value.insert("Name".to_string(), Value::String(extension_dto.Name.clone()));
+
 			extension_value.insert("Version".to_string(), Value::String(extension_dto.Version.clone()));
+
 			extension_value.insert("Publisher".to_string(), Value::String(extension_dto.Publisher.clone()));
+
 			extension_value.insert("Engines".to_string(), extension_dto.Engines.clone());
 
 			if let Some(main) = &extension_dto.Main {
@@ -522,11 +543,14 @@ impl ExtensionManagementService for MountainEnvironment {
 			}
 
 			extension_value.insert("IsBuiltin".to_string(), Value::Bool(extension_dto.IsBuiltin));
+
 			extension_value.insert("IsUnderDevelopment".to_string(), Value::Bool(extension_dto.IsUnderDevelopment));
+
 			extension_value.insert("ExtensionLocation".to_string(), extension_dto.ExtensionLocation.clone());
 
 			if let Some(activation_events) = &extension_dto.ActivationEvents {
 				let events:Vec<Value> = activation_events.iter().map(|e| Value::String(e.clone())).collect();
+
 				extension_value.insert("ActivationEvents".to_string(), Value::Array(events));
 			}
 
@@ -546,54 +570,69 @@ impl ExtensionManagementService for MountainEnvironment {
 
 // Command and Configuration
 impl_provider!(CommandExecutor);
+
 impl_provider!(ConfigurationProvider);
+
 impl_provider!(ConfigurationInspector);
 
 // Custom Editor and Debug
 impl_provider!(CustomEditorProvider);
+
 impl_provider!(DebugService);
 
 // Document and Diagnostic
 impl_provider!(DocumentProvider);
+
 impl_provider!(DiagnosticManager);
 
 // File System
 impl_provider!(FileSystemReader);
+
 impl_provider!(FileSystemWriter);
+
 impl_provider!(FileWatcherProvider);
 
 // IPC and Keybinding
 impl_provider!(IPCProvider);
+
 impl_provider!(KeybindingProvider);
 
 // Language Features and Output
 impl_provider!(LanguageFeatureProviderRegistry);
+
 impl_provider!(OutputChannelManager);
 
 // Secret and SCM
 impl_provider!(SecretProvider);
+
 impl_provider!(SourceControlManagementProvider);
 
 // Status Bar and Storage
 impl_provider!(StatusBarProvider);
+
 impl_provider!(StorageProvider);
 
 // Synchronization and Terminal
 impl_provider!(SynchronizationProvider);
+
 impl_provider!(TerminalProvider);
 
 // Test and Tree View
 impl_provider!(TestController);
+
 impl_provider!(TreeViewProvider);
 
 // UI and Webview
 impl_provider!(UserInterfaceProvider);
+
 impl_provider!(WebviewProvider);
 
 // Workspace
 impl_provider!(WorkspaceProvider);
+
 impl_provider!(WorkspaceEditApplier);
 
 // Extension Management and Search
 impl_provider!(ExtensionManagementService);
+
 impl_provider!(SearchProvider);

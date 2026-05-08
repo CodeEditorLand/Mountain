@@ -118,20 +118,28 @@ const LOG_TIMEOUT_MS:u64 = 5000;
 pub enum SecurityEventType {
 	/// Access was granted to a resource or operation
 	AccessGranted,
+
 	/// Access was denied due to insufficient permissions
 	PermissionDenied,
+
 	/// Authentication attempt failed
 	AuthenticationFailed,
+
 	/// Application configuration was modified
 	ConfigurationChange,
+
 	/// Security policy was violated
 	SecurityViolation,
+
 	/// Performance anomaly detected
 	PerformanceAnomaly,
+
 	/// User role was changed
 	RoleChange,
+
 	/// Permission was added, removed, or modified
 	PermissionChange,
+
 	/// Security policy was updated
 	PolicyChange,
 }
@@ -141,13 +149,21 @@ impl SecurityEventType {
 	pub fn DisplayName(&self) -> String {
 		match self {
 			SecurityEventType::AccessGranted => String::from("AccessGranted"),
+
 			SecurityEventType::PermissionDenied => String::from("PermissionDenied"),
+
 			SecurityEventType::AuthenticationFailed => String::from("AuthenticationFailed"),
+
 			SecurityEventType::ConfigurationChange => String::from("ConfigurationChange"),
+
 			SecurityEventType::SecurityViolation => String::from("SecurityViolation"),
+
 			SecurityEventType::PerformanceAnomaly => String::from("PerformanceAnomaly"),
+
 			SecurityEventType::RoleChange => String::from("RoleChange"),
+
 			SecurityEventType::PermissionChange => String::from("PermissionChange"),
+
 			SecurityEventType::PolicyChange => String::from("PolicyChange"),
 		}
 	}

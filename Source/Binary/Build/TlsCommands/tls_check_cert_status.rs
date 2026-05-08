@@ -21,6 +21,7 @@ pub async fn tls_check_cert_status(app_handle:AppHandle, hostname:String) -> Res
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
 		.ok_or("Certificate manager not found")?;
+
 	let cert_manager = state.clone();
 
 	let manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
@@ -31,7 +32,9 @@ pub async fn tls_check_cert_status(app_handle:AppHandle, hostname:String) -> Res
 			.with_timezone(&chrono::Utc);
 
 		let now = chrono::Utc::now();
+
 		let days_until_expiry = (valid_until - now).num_days();
+
 		let needs_renewal = days_until_expiry <= CertificateManager::RENEWAL_THRESHOLD_DAYS;
 
 		Ok(CertificateStatus {

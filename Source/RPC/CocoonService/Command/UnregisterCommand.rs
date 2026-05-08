@@ -13,6 +13,7 @@ use crate::{
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UnregisterCommandRequest) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Unregistering command '{}'", Request.command_id);
+
 	if let Err(Error) = Service
 		.environment
 		.UnregisterCommand(String::new(), Request.command_id.clone())
@@ -27,5 +28,6 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UnregisterCommandRequest) ->
 	} else {
 		dev_log!("cocoon", "[CocoonService] Command removed: {}", Request.command_id);
 	}
+
 	Ok(Response::new(Empty {}))
 }

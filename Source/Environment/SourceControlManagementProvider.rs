@@ -275,11 +275,17 @@ impl SourceControlManagementProvider for MountainEnvironment {
 
 		let ProviderState = SourceControlManagementProviderDTO {
 			Handle,
+
 			Identifier:ProviderData.ID.clone(),
+
 			Label:ProviderData.Label,
+
 			RootURI:Some(json!({ "external": ProviderData.RootUri.to_string() })),
+
 			CommitTemplate:None,
+
 			Count:None,
+
 			InputBox:None,
 		};
 

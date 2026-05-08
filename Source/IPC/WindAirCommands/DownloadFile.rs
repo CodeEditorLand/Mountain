@@ -13,6 +13,7 @@ pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResu
 	dev_log!("grpc", "[WindAirCommands] DownloadFile called: {} -> {}", url, destination);
 
 	let air_address = GetAirAddress::Fn()?;
+
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
 	let request_id = uuid::Uuid::new_v4().to_string();
@@ -24,11 +25,15 @@ pub async fn DownloadFile(url:String, destination:String) -> Result<DownloadResu
 
 	let result = DownloadResultDTO::Struct {
 		success:true,
+
 		file_path:file_info.file_path,
+
 		file_size:file_info.file_size,
+
 		checksum:file_info.checksum,
 	};
 
 	dev_log!("grpc", "[WindAirCommands] File download completed");
+
 	Ok(result)
 }

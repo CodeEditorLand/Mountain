@@ -77,6 +77,7 @@ use crate::{
 #[tauri::command]
 pub async fn MountainGetWorkbenchConfiguration(
 	ApplicationHandle:AppHandle,
+
 	State:State<'_, Arc<ApplicationState>>,
 ) -> Result<Value, String> {
 	dev_log!("ipc", "[IPC] [WorkbenchConfig] Request received.");

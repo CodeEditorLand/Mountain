@@ -13,7 +13,11 @@
 //!   optional `Range::Struct`.
 
 pub mod HoverContent;
+
 pub mod HoverRequest;
+
 pub mod HoverResponse;
+
 pub mod Position;
+
 pub mod Range;

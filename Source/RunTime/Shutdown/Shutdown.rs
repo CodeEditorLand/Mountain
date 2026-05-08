@@ -32,6 +32,7 @@ impl ApplicationRunTime {
 					"[ApplicationRunTime] Service shutdown tasks completed successfully."
 				)
 			},
+
 			Err(Error) => {
 				dev_log!(
 					"lifecycle",

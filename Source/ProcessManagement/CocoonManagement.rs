@@ -82,8 +82,11 @@ use crate::{
 
 /// Configuration constants for Cocoon process management
 const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
+
 const COCOON_GRPC_PORT:u16 = 50052;
+
 const MOUNTAIN_GRPC_PORT:u16 = 50051;
+
 const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
 
 /// Exponential-backoff retry parameters for the Mountain → Cocoon gRPC
@@ -98,7 +101,9 @@ const BOOTSTRAP_SCRIPT_PATH:&str = "scripts/cocoon/bootstrap-fork.js";
 /// up at 150-600 ms) this converges on attempts 3-5 in <~400 ms total;
 /// under a genuinely dead Cocoon the loop abandons at the budget.
 const GRPC_CONNECT_INITIAL_MS:u64 = 50;
+
 const GRPC_CONNECT_MAX_DELAY_MS:u64 = 2_000;
+
 const GRPC_CONNECT_BUDGET_MS:u64 = 20_000;
 
 /// Relative path from the resolved Cocoon package root to the bundled
@@ -108,10 +113,14 @@ const GRPC_CONNECT_BUDGET_MS:u64 = 20_000;
 /// prepublishOnly`, etc.) instead of spawning Node into a dying
 /// require() chain.
 const COCOON_BUNDLE_PROBE:&str = "../Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js";
+
 const HANDSHAKE_TIMEOUT_MS:u64 = 60000;
+
 const HEALTH_CHECK_INTERVAL_SECONDS:u64 = 5;
+
 #[allow(dead_code)]
 const MAX_RESTART_ATTEMPTS:u32 = 3;
+
 #[allow(dead_code)]
 const RESTART_WINDOW_SECONDS:u64 = 300;
 
@@ -119,9 +128,13 @@ const RESTART_WINDOW_SECONDS:u64 = 300;
 #[allow(dead_code)]
 struct CocoonProcessState {
 	ChildProcess:Option<Child>,
+
 	IsRunning:bool,
+
 	StartTime:Option<tokio::time::Instant>,
+
 	RestartCount:u32,
+
 	LastRestartTime:Option<tokio::time::Instant>,
 }
 
@@ -129,9 +142,13 @@ impl Default for CocoonProcessState {
 	fn default() -> Self {
 		Self {
 			ChildProcess:None,
+
 			IsRunning:false,
+
 			StartTime:None,
+
 			RestartCount:0,
+
 			LastRestartTime:None,
 		}
 	}
@@ -139,6 +156,7 @@ impl Default for CocoonProcessState {
 
 // Global state for Cocoon process management
 lazy_static::lazy_static! {
+
 	static ref COCOON_STATE: Arc<Mutex<CocoonProcessState>> =
 		Arc::new(Mutex::new(CocoonProcessState::default()));
 
@@ -157,6 +175,7 @@ static COCOON_PID:std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::n
 pub fn GetCocoonPid() -> Option<u32> {
 	match COCOON_PID.load(std::sync::atomic::Ordering::Relaxed) {
 		0 => None,
+
 		Pid => Some(Pid),
 	}
 }
@@ -196,6 +215,7 @@ pub fn GetCocoonPid() -> Option<u32> {
 /// ```
 pub async fn InitializeCocoon(
 	ApplicationHandle:&AppHandle,
+
 	Environment:&Arc<MountainEnvironment>,
 ) -> Result<(), CommonError> {
 	dev_log!("cocoon", "[CocoonManagement] Initializing Cocoon sidecar manager...");
@@ -207,6 +227,7 @@ pub async fn InitializeCocoon(
 	// exercise Mountain in isolation and for the smallest shippable surface.
 	if matches!(std::env::var("Spawn").as_deref(), Ok("0") | Ok("false")) {
 		dev_log!("cocoon", "[CocoonManagement] Skipping spawn (Spawn=false)");
+
 		return Ok(());
 	}
 
@@ -221,6 +242,7 @@ pub async fn InitializeCocoon(
 			"cocoon",
 			"[CocoonManagement] 'ExtensionHostCocoon' feature is disabled. Cocoon will not be launched."
 		);
+
 		Ok(())
 	}
 }
@@ -260,9 +282,11 @@ pub async fn InitializeCocoon(
 /// implement restart strategies based on their requirements).
 async fn LaunchAndManageCocoonSideCar(
 	ApplicationHandle:AppHandle,
+
 	Environment:Arc<MountainEnvironment>,
 ) -> Result<(), CommonError> {
 	let SideCarIdentifier = COCOON_SIDE_CAR_IDENTIFIER.to_string();
+
 	let path_resolver:PathResolver<Wry> = ApplicationHandle.path().clone();
 
 	// Resolve bootstrap script path.
@@ -295,6 +319,7 @@ async fn LaunchAndManageCocoonSideCar(
 		"[CocoonManagement] Found bootstrap script at: {}",
 		ScriptPath.display()
 	);
+
 	crate::dev_log!("cocoon", "bootstrap script: {}", ScriptPath.display());
 
 	// Pre-flight: Cocoon's bundle must exist or the spawned Node will
@@ -307,6 +332,7 @@ async fn LaunchAndManageCocoonSideCar(
 	// from the bootstrap script to the `Element/` root, then descending.
 	if let Some(BootstrapDirectory) = ScriptPath.parent() {
 		let ProbePath = BootstrapDirectory.join("../..").join(COCOON_BUNDLE_PROBE);
+
 		if !ProbePath.exists() {
 			return Err(CommonError::IPCError {
 				Description:format!(
@@ -319,6 +345,7 @@ async fn LaunchAndManageCocoonSideCar(
 				),
 			});
 		}
+
 		dev_log!("cocoon", "[CocoonManagement] pre-flight OK: bundle at {}", ProbePath.display());
 	}
 
@@ -345,17 +372,21 @@ async fn LaunchAndManageCocoonSideCar(
 
 	// VS Code protocol environment variables for extension host compatibility
 	EnvironmentVariables.insert("VSCODE_PIPE_LOGGING".to_string(), "true".to_string());
+
 	EnvironmentVariables.insert("VSCODE_VERBOSE_LOGGING".to_string(), "true".to_string());
+
 	EnvironmentVariables.insert("VSCODE_PARENT_PID".to_string(), std::process::id().to_string());
 
 	// gRPC port configuration for Vine communication
 	EnvironmentVariables.insert("MOUNTAIN_GRPC_PORT".to_string(), MOUNTAIN_GRPC_PORT.to_string());
+
 	EnvironmentVariables.insert("COCOON_GRPC_PORT".to_string(), COCOON_GRPC_PORT.to_string());
 
 	// Preserve PATH so `node` resolves. env_clear() was stripping it.
 	if let Ok(Path) = std::env::var("PATH") {
 		EnvironmentVariables.insert("PATH".to_string(), Path);
 	}
+
 	if let Ok(Home) = std::env::var("HOME") {
 		EnvironmentVariables.insert("HOME".to_string(), Home);
 	}
@@ -418,6 +449,7 @@ async fn LaunchAndManageCocoonSideCar(
 		"Boot",
 		"Pack",
 	];
+
 	for (Key, Value) in std::env::vars() {
 		if Key.starts_with("Product")
 			|| Key.starts_with("Tier")
@@ -461,8 +493,11 @@ async fn LaunchAndManageCocoonSideCar(
 	})?;
 
 	let ProcessId = ChildProcess.id().unwrap_or(0);
+
 	COCOON_PID.store(ProcessId, std::sync::atomic::Ordering::Relaxed);
+
 	dev_log!("cocoon", "[CocoonManagement] Cocoon process spawned [PID: {}]", ProcessId);
+
 	crate::dev_log!("cocoon", "spawned PID={}", ProcessId);
 
 	// Capture stdout for trace logging. Two disposition classes:
@@ -584,6 +619,7 @@ async fn LaunchAndManageCocoonSideCar(
 	//     reveals the import failure (1 = unhandled exception, 13 = invalid
 	//     module).
 	let GRPCAddress = format!("127.0.0.1:{}", COCOON_GRPC_PORT);
+
 	dev_log!(
 		"cocoon",
 		"[CocoonManagement] Connecting to Cocoon gRPC at {} (exponential backoff, budget={}ms)...",
@@ -592,11 +628,14 @@ async fn LaunchAndManageCocoonSideCar(
 	);
 
 	let ConnectStart = tokio::time::Instant::now();
+
 	let mut CurrentDelayMs:u64 = GRPC_CONNECT_INITIAL_MS;
+
 	let mut ConnectAttempt = 0u32;
 
 	loop {
 		ConnectAttempt += 1;
+
 		crate::dev_log!(
 			"grpc",
 			"connecting to Cocoon at {} (attempt {}, elapsed={}ms)",
@@ -613,8 +652,10 @@ async fn LaunchAndManageCocoonSideCar(
 					ConnectAttempt,
 					ConnectStart.elapsed().as_millis()
 				);
+
 				break;
 			},
+
 			Err(Error) => {
 				// Check if the Node child has already died. If yes,
 				// there is no point waiting any longer - report the
@@ -624,6 +665,7 @@ async fn LaunchAndManageCocoonSideCar(
 				match ChildProcess.try_wait() {
 					Ok(Some(ExitStatus)) => {
 						let ExitCode = ExitStatus.code().unwrap_or(-1);
+
 						crate::dev_log!(
 							"grpc",
 							"attempt {} aborted: Cocoon Node process exited with code={} after {}ms - stderr above \
@@ -632,6 +674,7 @@ async fn LaunchAndManageCocoonSideCar(
 							ExitCode,
 							ConnectStart.elapsed().as_millis()
 						);
+
 						return Err(CommonError::IPCError {
 							Description:format!(
 								"Cocoon spawned but exited with code {} before Mountain could connect. See \
@@ -642,7 +685,9 @@ async fn LaunchAndManageCocoonSideCar(
 							),
 						});
 					},
+
 					Ok(None) => { /* still running, keep trying */ },
+
 					Err(WaitErr) => {
 						// try_wait() itself failed; this is rare
 						// (would imply a kernel-level issue). Surface
@@ -653,6 +698,7 @@ async fn LaunchAndManageCocoonSideCar(
 				}
 
 				let Elapsed = ConnectStart.elapsed().as_millis() as u64;
+
 				if Elapsed >= GRPC_CONNECT_BUDGET_MS {
 					crate::dev_log!(
 						"grpc",
@@ -661,6 +707,7 @@ async fn LaunchAndManageCocoonSideCar(
 						GRPC_CONNECT_BUDGET_MS,
 						Error
 					);
+
 					return Err(CommonError::IPCError {
 						Description:format!(
 							"Failed to connect to Cocoon gRPC at {} after {} attempts over {}ms: {} (is Cocoon \
@@ -680,6 +727,7 @@ async fn LaunchAndManageCocoonSideCar(
 				);
 
 				sleep(Duration::from_millis(CurrentDelayMs)).await;
+
 				// Exponential ramp with a 2 s ceiling. Doubling keeps
 				// the common case fast (4 attempts cover the first
 				// 750 ms) and the cold-boot case bounded.
@@ -726,11 +774,13 @@ async fn LaunchAndManageCocoonSideCar(
 				"[CocoonManagement] Cocoon handshake complete. Extension host is ready."
 			);
 		},
+
 		Some(other) => {
 			return Err(CommonError::IPCError {
 				Description:format!("Cocoon initialization failed with unexpected response: {}", other),
 			});
 		},
+
 		None => {
 			return Err(CommonError::IPCError {
 				Description:"Cocoon initialization failed: no response received".to_string(),
@@ -754,7 +804,9 @@ async fn LaunchAndManageCocoonSideCar(
 	// or similar events never activated without user interaction. The
 	// added bursts below bring startup coverage in line with stock.
 	let SideCarId = SideCarIdentifier.clone();
+
 	let EnvironmentForActivation = Environment.clone();
+
 	tokio::spawn(async move {
 		// Small delay to let Cocoon finish processing the init response
 		sleep(Duration::from_millis(500)).await;
@@ -875,22 +927,30 @@ async fn LaunchAndManageCocoonSideCar(
 	// Store process handle for health monitoring and management
 	{
 		let mut state = COCOON_STATE.lock().await;
+
 		state.ChildProcess = Some(ChildProcess);
+
 		state.IsRunning = true;
+
 		state.StartTime = Some(tokio::time::Instant::now());
+
 		dev_log!("cocoon", "[CocoonManagement] Process state updated: Running");
 	}
 
 	// Reset health monitor on successful initialization
 	{
 		let mut health = COCOON_HEALTH.lock().await;
+
 		health.ClearIssues();
+
 		dev_log!("cocoon", "[CocoonManagement] Health monitor reset to active state");
 	}
 
 	// Start background health monitoring
 	let state_clone = Arc::clone(&COCOON_STATE);
+
 	tokio::spawn(monitor_cocoon_health_task(state_clone));
+
 	dev_log!("cocoon", "[CocoonManagement] Background health monitoring started");
 
 	Ok(())
@@ -916,6 +976,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 			// Check if process is still running
 			let exit_status = {
 				let child = state_guard.ChildProcess.as_mut().unwrap();
+
 				child.try_wait()
 			};
 
@@ -923,7 +984,9 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 				Ok(Some(exit_code)) => {
 					// Process has exited (crashed or terminated)
 					let uptime = state_guard.StartTime.map(|t| t.elapsed().as_secs()).unwrap_or(0);
+
 					let exit_code_num = exit_code.code().unwrap_or(-1);
+
 					dev_log!(
 						"cocoon",
 						"warn: [CocoonHealth] Cocoon process crashed [PID: {}] [Exit Code: {}] [Uptime: {}s]",
@@ -934,13 +997,17 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 
 					// Update state
 					state_guard.IsRunning = false;
+
 					state_guard.ChildProcess = None;
+
 					COCOON_PID.store(0, std::sync::atomic::Ordering::Relaxed);
 
 					// Report health issue
 					{
 						let mut health = COCOON_HEALTH.lock().await;
+
 						health.AddIssue(HealthIssue::Custom(format!("ProcessCrashed (Exit code: {})", exit_code_num)));
+
 						dev_log!("cocoon", "warn: [CocoonHealth] Health score: {}", health.HealthScore);
 					}
 
@@ -951,6 +1018,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 						 manually or via application reinitialization"
 					);
 				},
+
 				Ok(None) => {
 					// Process is still running
 					dev_log!(
@@ -959,6 +1027,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 						process_id.unwrap_or(0)
 					);
 				},
+
 				Err(e) => {
 					// Error checking process status
 					dev_log!("cocoon", "warn: [CocoonHealth] Error checking process status: {}", e);
@@ -966,6 +1035,7 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 					// Report health issue
 					{
 						let mut health = COCOON_HEALTH.lock().await;
+
 						health.AddIssue(HealthIssue::Custom(format!("ProcessCheckError: {}", e)));
 					}
 				},
@@ -977,7 +1047,9 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 			// crash, making the dev log unreadable. A future respawn will
 			// spawn a fresh monitor via `StartCocoon`.
 			dev_log!("cocoon", "[CocoonHealth] No Cocoon process to monitor - exiting monitor loop");
+
 			drop(state_guard);
+
 			return;
 		}
 	}
@@ -994,29 +1066,36 @@ async fn monitor_cocoon_health_task(state:Arc<Mutex<CocoonProcessState>>) {
 /// child's own cleanup. Safe to call with no stored child (no-op).
 pub async fn HardKillCocoon() {
 	let mut State = COCOON_STATE.lock().await;
+
 	if let Some(mut Child) = State.ChildProcess.take() {
 		let Pid = Child.id().unwrap_or(0);
+
 		match Child.try_wait() {
 			Ok(Some(_Status)) => {
 				dev_log!("cocoon", "[CocoonShutdown] Child PID {} already exited; clearing handle.", Pid);
 			},
+
 			Ok(None) => {
 				dev_log!(
 					"cocoon",
 					"[CocoonShutdown] Child PID {} still alive after $shutdown; sending SIGKILL.",
 					Pid
 				);
+
 				if let Err(Error) = Child.start_kill() {
 					dev_log!("cocoon", "warn: [CocoonShutdown] start_kill failed on PID {}: {}", Pid, Error);
 				}
+
 				// Best-effort wait so the OS reaps and frees the port.
 				let _ = tokio::time::timeout(std::time::Duration::from_secs(2), Child.wait()).await;
 			},
+
 			Err(Error) => {
 				dev_log!("cocoon", "warn: [CocoonShutdown] try_wait failed on PID {}: {}", Pid, Error);
 			},
 		}
 	}
+
 	State.IsRunning = false;
 }
 
@@ -1044,8 +1123,10 @@ fn SweepStaleCocoon(Port:u16) {
 	// immediately; a clean port is ECONNREFUSED and returns instantly.
 	let Probe =
 		TcpStream::connect_timeout(&Addr.parse().expect("valid socket addr literal"), Duration::from_millis(200));
+
 	if Probe.is_err() {
 		dev_log!("cocoon", "[CocoonSweep] Port {} is clean (no prior listener).", Port);
+
 		return;
 	}
 
@@ -1062,22 +1143,26 @@ fn SweepStaleCocoon(Port:u16) {
 
 	let Output = match LsofOutput {
 		Ok(O) => O,
+
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
 				"warn: [CocoonSweep] lsof unavailable ({}). Skipping sweep; Cocoon spawn may fail with EADDRINUSE.",
 				Error
 			);
+
 			return;
 		},
 	};
 
 	if !Output.status.success() {
 		dev_log!("cocoon", "warn: [CocoonSweep] lsof exited non-zero. Skipping sweep.");
+
 		return;
 	}
 
 	let Stdout = String::from_utf8_lossy(&Output.stdout);
+
 	let Pids:Vec<i32> = Stdout.lines().filter_map(|L| L.trim().parse::<i32>().ok()).collect();
 
 	if Pids.is_empty() {
@@ -1086,12 +1171,14 @@ fn SweepStaleCocoon(Port:u16) {
 			"warn: [CocoonSweep] Port {} answered but lsof found no LISTEN PID - giving up.",
 			Port
 		);
+
 		return;
 	}
 
 	// Guard against self-kill. Mountain currently binds 50051, not Cocoon's
 	// 50052, but belt-and-braces for future refactors.
 	let SelfPid = std::process::id() as i32;
+
 	for Pid in Pids {
 		if Pid == SelfPid {
 			dev_log!(
@@ -1100,22 +1187,31 @@ fn SweepStaleCocoon(Port:u16) {
 				Port,
 				Pid
 			);
+
 			continue;
 		}
+
 		dev_log!("cocoon", "[CocoonSweep] Killing stale PID {} (SIGTERM).", Pid);
+
 		let _ = std::process::Command::new("kill").arg(Pid.to_string()).status();
+
 		std::thread::sleep(Duration::from_millis(500));
+
 		// Recheck - if still alive, escalate.
 		let StillAlive = std::process::Command::new("kill")
 			.args(["-0", &Pid.to_string()])
 			.status()
 			.map(|S| S.success())
 			.unwrap_or(false);
+
 		if StillAlive {
 			dev_log!("cocoon", "warn: [CocoonSweep] PID {} survived SIGTERM; sending SIGKILL.", Pid);
+
 			let _ = std::process::Command::new("kill").args(["-9", &Pid.to_string()]).status();
+
 			std::thread::sleep(Duration::from_millis(200));
 		}
+
 		dev_log!("cocoon", "[CocoonSweep] PID {} reaped.", Pid);
 	}
 }
@@ -1140,36 +1236,51 @@ fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patterns
 	use std::collections::HashSet;
 
 	const MAX_DEPTH:usize = 3;
+
 	const MAX_ENTRIES_PER_ROOT:usize = 4096;
 
 	let mut Matched:HashSet<String> = HashSet::new();
+
 	for Folder in Folders {
 		if !Folder.is_dir() {
 			continue;
 		}
+
 		// Collect up to MAX_ENTRIES_PER_ROOT paths relative to the folder.
 		let mut Entries:Vec<String> = Vec::new();
+
 		let mut Stack:Vec<(std::path::PathBuf, usize)> = vec![(Folder.clone(), 0)];
+
 		while let Some((Current, Depth)) = Stack.pop() {
 			if Entries.len() >= MAX_ENTRIES_PER_ROOT {
 				break;
 			}
+
 			let ReadDirResult = std::fs::read_dir(&Current);
+
 			let ReadDir = match ReadDirResult {
 				Ok(R) => R,
+
 				Err(_) => continue,
 			};
+
 			for Entry in ReadDir.flatten() {
 				if Entries.len() >= MAX_ENTRIES_PER_ROOT {
 					break;
 				}
+
 				let Path = Entry.path();
+
 				let Relative = match Path.strip_prefix(Folder) {
 					Ok(R) => R.to_string_lossy().replace('\\', "/"),
+
 					Err(_) => continue,
 				};
+
 				let IsDir = Entry.file_type().map(|T| T.is_dir()).unwrap_or(false);
+
 				Entries.push(Relative.clone());
+
 				if IsDir && Depth + 1 < MAX_DEPTH {
 					Stack.push((Path, Depth + 1));
 				}
@@ -1180,11 +1291,13 @@ fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patterns
 			if Matched.contains(Pattern) {
 				continue;
 			}
+
 			if PatternMatchesAnyEntry(Pattern, &Entries) {
 				Matched.insert(Pattern.clone());
 			}
 		}
 	}
+
 	Matched.into_iter().collect()
 }
 
@@ -1193,10 +1306,13 @@ fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patterns
 /// segments). Case-sensitive per the VS Code spec.
 fn PatternMatchesAnyEntry(Pattern:&str, Entries:&[String]) -> bool {
 	let HasWildcard = Pattern.contains('*') || Pattern.contains('?');
+
 	if !HasWildcard {
 		return Entries.iter().any(|E| E == Pattern);
 	}
+
 	let PatternSegments:Vec<&str> = Pattern.split('/').collect();
+
 	Entries
 		.iter()
 		.any(|E| SegmentMatch(&PatternSegments, &E.split('/').collect::<Vec<_>>()))
@@ -1206,7 +1322,9 @@ fn SegmentMatch(Pattern:&[&str], Entry:&[&str]) -> bool {
 	if Pattern.is_empty() {
 		return Entry.is_empty();
 	}
+
 	let Head = Pattern[0];
+
 	if Head == "**" {
 		// `**` matches zero or more segments. Try consuming 0..=entry.len().
 		for Consumed in 0..=Entry.len() {
@@ -1214,14 +1332,18 @@ fn SegmentMatch(Pattern:&[&str], Entry:&[&str]) -> bool {
 				return true;
 			}
 		}
+
 		return false;
 	}
+
 	if Entry.is_empty() {
 		return false;
 	}
+
 	if SingleSegmentMatch(Head, Entry[0]) {
 		return SegmentMatch(&Pattern[1..], &Entry[1..]);
 	}
+
 	false
 }
 
@@ -1229,35 +1351,46 @@ fn SingleSegmentMatch(Pattern:&str, Segment:&str) -> bool {
 	if Pattern == "*" {
 		return true;
 	}
+
 	if !Pattern.contains('*') && !Pattern.contains('?') {
 		return Pattern == Segment;
 	}
+
 	// Minimal star-glob on a single segment: split by '*' and check each
 	// fragment appears in order. Doesn't support `?` (rare in
 	// workspaceContains patterns); unsupported glob chars fall through to
 	// literal equality.
 	let Fragments:Vec<&str> = Pattern.split('*').collect();
+
 	let mut Cursor = 0usize;
+
 	for (Index, Fragment) in Fragments.iter().enumerate() {
 		if Fragment.is_empty() {
 			continue;
 		}
+
 		if Index == 0 {
 			if !Segment[Cursor..].starts_with(Fragment) {
 				return false;
 			}
+
 			Cursor += Fragment.len();
+
 			continue;
 		}
+
 		match Segment[Cursor..].find(Fragment) {
 			Some(Offset) => Cursor += Offset + Fragment.len(),
+
 			None => return false,
 		}
 	}
+
 	if let Some(Last) = Fragments.last()
 		&& !Last.is_empty()
 	{
 		return Segment.ends_with(Last);
 	}
+
 	true
 }

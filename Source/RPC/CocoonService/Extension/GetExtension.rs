@@ -14,6 +14,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:GetExtensionRequest,
 ) -> Result<Response<GetExtensionResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] get_extension: {}", Request.extension_id);

@@ -84,6 +84,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(json!(result))
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

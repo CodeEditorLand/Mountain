@@ -11,8 +11,11 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 
 	let OsType = match std::env::consts::OS {
 		"macos" => "Darwin",
+
 		"windows" => "Windows_NT",
+
 		"linux" => "Linux",
+
 		_ => std::env::consts::OS,
 	};
 
@@ -26,6 +29,7 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 				.map(|O| String::from_utf8_lossy(&O.stdout).trim().to_string())
 				.unwrap_or_else(|| "14.0".to_string())
 		}
+
 		#[cfg(target_os = "windows")]
 		{
 			std::process::Command::new("cmd")
@@ -44,6 +48,7 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 				})
 				.unwrap_or_else(|| "10.0.0".to_string())
 		}
+
 		#[cfg(target_os = "linux")]
 		{
 			std::process::Command::new("uname")
@@ -53,6 +58,7 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 				.map(|O| String::from_utf8_lossy(&O.stdout).trim().to_string())
 				.unwrap_or_else(|| "6.1.0".to_string())
 		}
+
 		#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 		{
 			"0.0.0".to_string()
@@ -60,7 +66,9 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 	};
 
 	let mut Sys = System::new();
+
 	Sys.refresh_cpu_all();
+
 	let Cpus:Vec<Value> = Sys
 		.cpus()
 		.iter()

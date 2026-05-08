@@ -16,8 +16,11 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Provider:Arc<dyn TerminalProvider> = Service.RunTime().Environment.Require();
+
 	let Name = Parameter.get("name").and_then(|V| V.as_str()).unwrap_or("terminal").to_string();
+
 	let Options = Parameter.get("options").cloned().unwrap_or_default();
+
 	let Handle = Parameter
 		.get("handle")
 		.and_then(|V| V.as_str())
@@ -25,7 +28,9 @@ pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&V
 		.unwrap_or_default();
 
 	let AppHandleForTask = Service.ApplicationHandle().clone();
+
 	let NameForTask = Name.clone();
+
 	tokio::spawn(async move {
 		let OptionsPayload = if Options.is_object() {
 			let mut Map = Options.as_object().cloned().unwrap_or_default();

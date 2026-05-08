@@ -5,4 +5,5 @@
 //! `RegisterAuthenticationProvider::Fn`.
 
 pub mod GetAuthenticationSession;
+
 pub mod RegisterAuthenticationProvider;

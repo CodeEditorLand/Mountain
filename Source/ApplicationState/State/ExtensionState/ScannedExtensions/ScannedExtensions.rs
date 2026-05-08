@@ -86,6 +86,7 @@ impl ScannedExtensionCollection {
 	pub fn AddOrUpdate(&self, identifier:String, extension:ExtensionDescriptionStateDTO) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			guard.insert(identifier, extension);
+
 			dev_log!("extensions", "[ScannedExtensions] Extension added/updated");
 		}
 	}
@@ -94,6 +95,7 @@ impl ScannedExtensionCollection {
 	pub fn Remove(&self, identifier:&str) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			guard.remove(identifier);
+
 			dev_log!("extensions", "[ScannedExtensions] Extension removed: {}", identifier);
 		}
 	}
@@ -102,6 +104,7 @@ impl ScannedExtensionCollection {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
 			guard.clear();
+
 			dev_log!("extensions", "[ScannedExtensions] All extensions cleared");
 		}
 	}

@@ -25,7 +25,9 @@ pub async fn tls_generate_cert(app_handle:AppHandle, hostname:String) -> Result<
 		.ok_or("Certificate manager not found")?;
 
 	let cert_manager = state.clone();
+
 	let manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+
 	let hostname_clone = hostname.clone();
 
 	let _server_config = manager

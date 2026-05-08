@@ -236,6 +236,7 @@ impl DiagnosticManager for MountainEnvironment {
 		let OwnerMap = DiagnosticsMapGuard.entry(Owner.clone()).or_default();
 
 		let mut ChangedURIKeys = Vec::new();
+
 		// `ChangedEntries` carries the post-update marker set per URI so the
 		// Sky-side `cel:diagnostics:changed` listener can call
 		// `IMarkerService.changeOne(owner, uri, markers)` without an extra
@@ -256,6 +257,7 @@ impl DiagnosticManager for MountainEnvironment {
 			// renderer.
 			let URIKey = match Utility::UriParsing::GetURLFromURIComponentsDTO(&URIComponentsValue) {
 				Ok(Url) => Url.to_string(),
+
 				Err(Error) => {
 					dev_log!(
 						"extensions",
@@ -263,14 +265,17 @@ impl DiagnosticManager for MountainEnvironment {
 						Error,
 						URIComponentsValue
 					);
+
 					continue;
 				},
 			};
+
 			if URIKey.is_empty() {
 				dev_log!(
 					"extensions",
 					"warn: [DiagnosticProvider] skipping diagnostic entry with empty URI string"
 				);
+
 				continue;
 			}
 
@@ -280,15 +285,20 @@ impl DiagnosticManager for MountainEnvironment {
 				Some(Markers) => {
 					if Markers.is_empty() {
 						OwnerMap.remove(&URIKey);
+
 						Vec::new()
 					} else {
 						let MarkersClone = Markers.clone();
+
 						OwnerMap.insert(URIKey.clone(), Markers);
+
 						MarkersClone
 					}
 				},
+
 				None => {
 					OwnerMap.remove(&URIKey);
+
 					Vec::new()
 				},
 			};
@@ -375,6 +385,7 @@ impl DiagnosticManager for MountainEnvironment {
 			// `IMarkerService.changeOne(owner, uri, [])`.
 			let ChangedEntries:Vec<serde_json::Value> =
 				ChangedURIKeys.iter().map(|Uri| json!({ "uri": Uri, "markers": [] })).collect();
+
 			let EventPayload = json!({
 				"Owner": Owner,
 				"owner": Owner,

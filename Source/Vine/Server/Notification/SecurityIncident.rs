@@ -14,6 +14,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn SecurityIncident(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://security/incident", Parameter);
+
 	dev_log!(
 		"grpc",
 		"warn: [Security] incident type={} severity={} ext={}",

@@ -9,6 +9,7 @@ use std::sync::Mutex;
 
 pub struct Struct {
 	pub LastKey:String,
+
 	pub Count:u64,
 }
 

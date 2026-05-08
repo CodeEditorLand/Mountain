@@ -20,6 +20,7 @@ impl Struct {
 			.map_err(|e| format!("Failed to connect to Air daemon: {:?}", e))?;
 
 		dev_log!("grpc", "[WindAirCommands] Successfully connected to Air daemon");
+
 		Ok(Self { client })
 	}
 
@@ -31,7 +32,9 @@ impl Struct {
 			.map_err(|e| format!("Failed to reconnect to Air daemon: {:?}", e))?;
 
 		self.client = client;
+
 		dev_log!("grpc", "[WindAirCommands] Successfully reconnected to Air daemon");
+
 		Ok(())
 	}
 }

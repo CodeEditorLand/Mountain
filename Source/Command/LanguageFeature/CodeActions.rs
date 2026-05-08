@@ -18,8 +18,11 @@ use crate::dev_log;
 /// the parent module.
 pub(super) async fn provide_code_actions_impl(
 	application_handle:AppHandle<Wry>,
+
 	uri:String,
+
 	position:Value,
+
 	context:Value,
 ) -> Result<Value, String> {
 	dev_log!(

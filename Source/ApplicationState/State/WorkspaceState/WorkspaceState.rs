@@ -74,9 +74,13 @@ impl Default for State {
 
 		Self {
 			WorkspaceFolders:Arc::new(StandardMutex::new(Vec::new())),
+
 			WorkspaceConfigurationPath:Arc::new(StandardMutex::new(None)),
+
 			IsTrusted:Arc::new(AtomicBool::new(false)),
+
 			WindowState:Arc::new(StandardMutex::new(WindowStateDTO::default())),
+
 			ActiveDocumentURI:Arc::new(StandardMutex::new(None)),
 		}
 	}
@@ -89,6 +93,7 @@ impl State {
 	/// Sets the workspace trust status.
 	pub fn SetTrustStatus(&self, trusted:bool) {
 		self.IsTrusted.store(trusted, AtomicOrdering::Relaxed);
+
 		dev_log!("workspaces", "[WorkspaceState] Trust status set to: {}", trusted);
 	}
 
@@ -146,20 +151,26 @@ impl State {
 	/// listeners inside extensions.
 	pub fn SetWorkspaceFoldersReturnDelta(
 		&self,
+
 		folders:Vec<WorkspaceFolderStateDTO>,
 	) -> (Vec<WorkspaceFolderStateDTO>, Vec<WorkspaceFolderStateDTO>) {
 		match self.WorkspaceFolders.lock() {
 			Ok(mut guard) => {
 				let Old = guard.clone();
+
 				let OldUris:std::collections::HashSet<String> = Old.iter().map(|F| F.URI.to_string()).collect();
+
 				let NewUris:std::collections::HashSet<String> = folders.iter().map(|F| F.URI.to_string()).collect();
+
 				let Added:Vec<WorkspaceFolderStateDTO> = folders
 					.iter()
 					.filter(|F| !OldUris.contains(&F.URI.to_string()))
 					.cloned()
 					.collect();
+
 				let Removed:Vec<WorkspaceFolderStateDTO> =
 					Old.iter().filter(|F| !NewUris.contains(&F.URI.to_string())).cloned().collect();
+
 				*guard = folders;
 				dev_log!(
 					"workspaces",
@@ -168,8 +179,10 @@ impl State {
 					Added.len(),
 					Removed.len()
 				);
+
 				(Added, Removed)
 			},
+
 			Err(_) => (Vec::new(), Vec::new()),
 		}
 	}

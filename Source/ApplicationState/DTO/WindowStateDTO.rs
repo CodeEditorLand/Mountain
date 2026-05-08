@@ -76,6 +76,7 @@ impl WindowStateDTO {
 		}
 
 		self.ZoomLevel = ZoomLevel;
+
 		Ok(())
 	}
 
@@ -88,6 +89,7 @@ impl WindowStateDTO {
 	/// Result indicating success or error if would exceed range
 	pub fn ZoomIn(&mut self, Step:f64) -> Result<(), String> {
 		let NewZoom = self.ZoomLevel + Step;
+
 		self.SetZoomLevel(NewZoom)
 	}
 
@@ -100,6 +102,7 @@ impl WindowStateDTO {
 	/// Result indicating success or error if would exceed range
 	pub fn ZoomOut(&mut self, Step:f64) -> Result<(), String> {
 		let NewZoom = self.ZoomLevel - Step;
+
 		self.SetZoomLevel(NewZoom)
 	}
 

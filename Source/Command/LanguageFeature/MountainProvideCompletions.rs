@@ -11,8 +11,11 @@ use crate::{Command::LanguageFeature::Completions, dev_log};
 #[command]
 pub async fn MountainProvideCompletions(
 	application_handle:AppHandle<Wry>,
+
 	uri:String,
+
 	position:Value,
+
 	context:Value,
 ) -> Result<Value, String> {
 	dev_log!(
@@ -21,5 +24,6 @@ pub async fn MountainProvideCompletions(
 		uri,
 		position
 	);
+
 	Completions::provide_completions_impl(application_handle, uri, position, context).await
 }

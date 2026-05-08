@@ -164,14 +164,17 @@ use super::MountainEnvironment::MountainEnvironment;
 
 // Atomic public DTOs (one export per file).
 pub mod WebviewLifecycleState;
+
 pub mod WebviewMessage;
 
 // Private submodules - implementation only, accessed through the
 // trait impl below.
 #[path = "WebviewProvider/Configuration.rs"]
 mod Configuration;
+
 #[path = "WebviewProvider/Lifecycle.rs"]
 mod Lifecycle;
+
 #[path = "WebviewProvider/Messaging.rs"]
 mod Messaging;
 
@@ -180,7 +183,9 @@ mod Messaging;
 #[allow(dead_code)]
 struct WebviewMessageContext {
 	Handle:String,
+
 	SideCarIdentifier:Option<String>,
+
 	PendingResponses:HashMap<String, tokio::sync::oneshot::Sender<Value>>,
 }
 
@@ -189,11 +194,17 @@ impl WebviewProvider for MountainEnvironment {
 	/// Creates a new Webview panel with proper security isolation.
 	async fn CreateWebviewPanel(
 		&self,
+
 		extension_data_value:Value,
+
 		view_type:String,
+
 		title:String,
+
 		_show_options_value:Value,
+
 		panel_options_value:Value,
+
 		content_options_value:Value,
 	) -> Result<String, CommonError> {
 		Lifecycle::create_webview_panel_impl(

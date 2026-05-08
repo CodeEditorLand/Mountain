@@ -16,5 +16,6 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:AppendOutputRequest) -> Resu
 		"sky://output/append",
 		json!({ "channel": Request.channel_id, "text": Request.value }),
 	);
+
 	Ok(Response::new(Empty {}))
 }

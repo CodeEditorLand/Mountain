@@ -21,6 +21,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:CreateWebviewPanelRequest,
 ) -> Result<Response<CreateWebviewPanelResponse>, Status> {
 	dev_log!(
@@ -43,12 +44,15 @@ pub async fn Fn(
 		.await
 	{
 		Ok(H) => H,
+
 		Err(Error) => {
 			dev_log!("cocoon", "warn: [CocoonService] create_webview_panel trait failed: {}", Error);
+
 			let Fallback = SystemTime::now()
 				.duration_since(UNIX_EPOCH)
 				.map(|D| D.as_millis() as u32)
 				.unwrap_or(0);
+
 			let _ = Service.environment.ApplicationHandle.emit(
 				"sky://webview/create",
 				json!({
@@ -60,6 +64,7 @@ pub async fn Fn(
 					"iconPath": Request.icon_path,
 				}),
 			);
+
 			return Ok(Response::new(CreateWebviewPanelResponse { handle:Fallback }));
 		},
 	};

@@ -16,6 +16,7 @@ pub async fn TerminalSendText(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Val
 		.first()
 		.and_then(|V| V.as_u64())
 		.ok_or_else(|| "terminal:sendText requires terminal_id as first argument".to_string())?;
+
 	let Text = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	RunTime

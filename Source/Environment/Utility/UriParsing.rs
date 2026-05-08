@@ -44,20 +44,30 @@ pub fn GetURLFromURIComponentsDTO(URIDTO:&serde_json::Value) -> Result<Url, Comm
 
 	// 3. Object with scheme/authority/path - reconstruct the URI string.
 	let Scheme = URIDTO.get("scheme").and_then(serde_json::Value::as_str);
+
 	let Path = URIDTO.get("path").and_then(serde_json::Value::as_str);
+
 	if let (Some(Scheme), Some(Path)) = (Scheme, Path) {
 		let Authority = URIDTO.get("authority").and_then(serde_json::Value::as_str).unwrap_or("");
+
 		let Query = URIDTO.get("query").and_then(serde_json::Value::as_str).unwrap_or("");
+
 		let Fragment = URIDTO.get("fragment").and_then(serde_json::Value::as_str).unwrap_or("");
+
 		let mut Reconstructed = format!("{}://{}{}", Scheme, Authority, Path);
+
 		if !Query.is_empty() {
 			Reconstructed.push('?');
+
 			Reconstructed.push_str(Query);
 		}
+
 		if !Fragment.is_empty() {
 			Reconstructed.push('#');
+
 			Reconstructed.push_str(Fragment);
 		}
+
 		return Url::parse(&Reconstructed).map_err(|Error| {
 			CommonError::InvalidArgument {
 				ArgumentName:"URIDTO".to_string(),

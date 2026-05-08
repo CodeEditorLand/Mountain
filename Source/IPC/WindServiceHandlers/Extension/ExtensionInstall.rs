@@ -36,23 +36,30 @@ use crate::{
 
 pub async fn ExtensionInstall(
 	ApplicationHandle:AppHandle,
+
 	Runtime:Arc<ApplicationRunTime>,
+
 	Args:Vec<Value>,
 ) -> Result<Value, String> {
 	let OTELStart = crate::IPC::DevLog::NowNano::Fn();
 
 	let VsixPath = match VsixPathFromArgs(&Args) {
 		Some(Path) => Path,
+
 		None => {
 			dev_log!("extensions", "extensions:install no-op: Arguments[0] missing or non-file URI");
+
 			crate::otel_span!("extensions:install:noop-missing-arg", OTELStart);
+
 			return Ok(Value::Null);
 		},
 	};
 
 	if VsixPath.extension().and_then(|Value| Value.to_str()) != Some("vsix") {
 		dev_log!("extensions", "extensions:install no-op: {} is not a .vsix", VsixPath.display());
+
 		crate::otel_span!("extensions:install:noop-not-vsix", OTELStart);
+
 		return Ok(Value::Null);
 	}
 

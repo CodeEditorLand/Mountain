@@ -27,10 +27,13 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:OpenTerminalRequest) -> Resu
 	match Service.environment.CreateTerminal(Options).await {
 		Ok(Info) => {
 			dev_log!("cocoon", "[CocoonService] Terminal created: {:?}", Info);
+
 			Ok(Response::new(Empty {}))
 		},
+
 		Err(Error) => {
 			dev_log!("cocoon", "error: [CocoonService] open_terminal failed: {}", Error);
+
 			Err(Status::internal(format!("open_terminal: {}", Error)))
 		},
 	}

@@ -12,8 +12,13 @@
 //! sibling.
 
 pub mod Channel;
+
 pub mod EncryptedMessage;
+
 pub mod EncryptionKey;
+
 pub mod SecureMessage;
+
 pub mod SecurityConfig;
+
 pub mod SecurityStats;

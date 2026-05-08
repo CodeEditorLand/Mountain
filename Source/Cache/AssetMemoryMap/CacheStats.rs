@@ -6,7 +6,10 @@
 #[derive(Debug, Clone, Copy)]
 pub struct Struct {
 	pub Entries:usize,
+
 	pub BrotliEntries:usize,
+
 	pub Bytes:usize,
+
 	pub BrotliBytes:usize,
 }

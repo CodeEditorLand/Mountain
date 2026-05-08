@@ -35,11 +35,15 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 	// suffixes pass through camelCase (Sky listeners use camel for
 	// `setTitle` / `setIconPath`).
 	let RawSuffix = &MethodName["webview.".len()..];
+
 	let Suffix = match RawSuffix {
 		"setHtml" => "set-html",
+
 		"postMessage" => "post-message",
+
 		Other => Other,
 	};
+
 	let EventName = format!("sky://webview/{}", Suffix);
 
 	// Canonicalise payload shapes to the same named-key form the request
@@ -58,24 +62,35 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 			First.clone()
 		} else {
 			let mut Object = Map::new();
+
 			Object.insert("method".to_string(), Value::String(MethodName.to_string()));
+
 			Object.insert("handle".to_string(), First.clone());
+
 			Object.insert("args".to_string(), Parameter.clone());
+
 			if let Some(Second) = Parameter.get(1) {
 				let Alias = match MethodName {
 					"webview.setHtml" => "html",
+
 					"webview.postMessage" => "message",
+
 					"webview.registerView" | "webview.unregisterView" => "viewId",
+
 					"webview.registerCustomEditor" | "webview.unregisterCustomEditor" | "webview.create" => "viewType",
+
 					_ => "value",
 				};
+
 				Object.insert(Alias.to_string(), Second.clone());
+
 				if MethodName == "webview.create" {
 					if let Some(Third) = Parameter.get(2) {
 						Object.insert("title".to_string(), Third.clone());
 					}
 				}
 			}
+
 			Value::Object(Object)
 		}
 	} else {

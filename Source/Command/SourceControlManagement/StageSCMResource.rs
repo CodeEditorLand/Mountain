@@ -17,9 +17,12 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 #[command]
 pub async fn StageSCMResource(
 	_State:State<'_, Arc<ApplicationState>>,
+
 	ResourceURI:String,
+
 	Staged:bool,
 ) -> Result<Value, String> {
 	dev_log!("commands", "staging resource: {}, staged: {}", ResourceURI, Staged);
+
 	Ok(json!({ "success": true }))
 }

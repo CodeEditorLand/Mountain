@@ -25,10 +25,13 @@ pub async fn ConfigurationInitialize(Environment:&std::sync::Arc<MountainEnviron
 				"config",
 				"[Config] [Initialize] Configuration initialized and merged successfully."
 			);
+
 			Ok(())
 		},
+
 		Err(e) => {
 			dev_log!("config", "error: [Config] [Initialize] Failed: {}", e);
+
 			Err(format!("Failed to initialize and merge configurations: {}", e))
 		},
 	}

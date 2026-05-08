@@ -18,10 +18,17 @@
 //!   `TextfileSave::TextfileSave`.
 
 pub mod ModelClose;
+
 pub mod ModelGet;
+
 pub mod ModelGetAll;
+
 pub mod ModelOpen;
+
 pub mod ModelUpdateContent;
+
 pub mod TextfileRead;
+
 pub mod TextfileSave;
+
 pub mod TextfileWrite;

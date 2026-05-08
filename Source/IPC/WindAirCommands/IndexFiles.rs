@@ -12,8 +12,11 @@ use crate::{
 #[tauri::command]
 pub async fn IndexFiles(
 	path:String,
+
 	patterns:Vec<String>,
+
 	exclude_patterns:Option<Vec<String>>,
+
 	max_depth:Option<u32>,
 ) -> Result<IndexResultDTO::Struct, String> {
 	dev_log!(
@@ -24,6 +27,7 @@ pub async fn IndexFiles(
 	);
 
 	let air_address = GetAirAddress::Fn()?;
+
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
 	let request_id = uuid::Uuid::new_v4().to_string();
@@ -41,7 +45,9 @@ pub async fn IndexFiles(
 
 	let result = IndexResultDTO::Struct {
 		success:true,
+
 		files_indexed:index_info.files_indexed,
+
 		total_size:index_info.total_size,
 	};
 
@@ -50,5 +56,6 @@ pub async fn IndexFiles(
 		"[WindAirCommands] File indexing completed: {} files",
 		result.files_indexed
 	);
+
 	Ok(result)
 }

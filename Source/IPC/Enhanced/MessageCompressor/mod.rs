@@ -8,9 +8,15 @@
 //! their own siblings.
 
 pub mod BatchConfig;
+
 pub mod BatchStats;
+
 pub mod CompressedBatch;
+
 pub mod CompressionAlgorithm;
+
 pub mod CompressionInfo;
+
 pub mod CompressionLevel;
+
 pub mod Compressor;

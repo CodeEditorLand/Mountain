@@ -41,13 +41,21 @@ use crate::{
 
 pub struct Struct {
 	pub(super) runtime:Arc<ApplicationRunTime>,
+
 	pub(super) ipc_server:Option<Arc<crate::IPC::TauriIPCServer_Old::TauriIPCServer>>,
+
 	pub(super) status_history:Arc<Mutex<Vec<IPCStatusReport>>>,
+
 	pub(super) start_time:SystemTime,
+
 	pub(super) error_count:Arc<Mutex<u32>>,
+
 	pub(super) performance_metrics:Arc<Mutex<PerformanceMetrics>>,
+
 	pub(super) health_monitor:Arc<Mutex<HealthMonitor>>,
+
 	pub(super) service_registry:Arc<RwLock<ServiceRegistry>>,
+
 	pub(super) discovered_services:Arc<RwLock<HashSet<String>>>,
 }
 
@@ -57,10 +65,15 @@ impl Struct {
 
 		Self {
 			runtime,
+
 			ipc_server:None,
+
 			status_history:Arc::new(Mutex::new(Vec::new())),
+
 			start_time:SystemTime::now(),
+
 			error_count:Arc::new(Mutex::new(0)),
+
 			performance_metrics:Arc::new(Mutex::new(PerformanceMetrics {
 				messages_per_second:0.0,
 				average_latency_ms:0.0,
@@ -74,6 +87,7 @@ impl Struct {
 					.unwrap_or_default()
 					.as_millis() as u64,
 			})),
+
 			health_monitor:Arc::new(Mutex::new(HealthMonitor {
 				health_score:100.0,
 				last_health_check:SystemTime::now()
@@ -83,6 +97,7 @@ impl Struct {
 				issues_detected:Vec::new(),
 				recovery_attempts:0,
 			})),
+
 			service_registry:Arc::new(RwLock::new(ServiceRegistry {
 				services:HashMap::new(),
 				last_discovery:SystemTime::now()
@@ -91,6 +106,7 @@ impl Struct {
 					.as_millis() as u64,
 				discovery_interval:30000,
 			})),
+
 			discovered_services:Arc::new(RwLock::new(HashSet::new())),
 		}
 	}
@@ -106,10 +122,12 @@ impl Struct {
 
 		let connection_status = ConnectionStatus {
 			is_connected:ipc_server.get_connection_status()?,
+
 			last_heartbeat:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_secs(),
+
 			connection_duration:SystemTime::now().duration_since(self.start_time).unwrap_or_default().as_secs(),
 		};
 
@@ -120,20 +138,26 @@ impl Struct {
 		let recent_messages = vec![
 			MessageStats {
 				channel:"configuration".to_string(),
+
 				message_count:10,
+
 				last_message_time:SystemTime::now()
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
 					.as_secs(),
+
 				average_processing_time_ms:5.0,
 			},
 			MessageStats {
 				channel:"file".to_string(),
+
 				message_count:5,
+
 				last_message_time:SystemTime::now()
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
 					.as_secs() - 10,
+
 				average_processing_time_ms:15.0,
 			},
 		];
@@ -143,6 +167,7 @@ impl Struct {
 				.error_count
 				.lock()
 				.map_err(|e| format!("Failed to get error count: {}", e))?;
+
 			*guard
 		};
 
@@ -153,11 +178,17 @@ impl Struct {
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_millis() as u64,
+
 			connection_status,
+
 			message_queue_size,
+
 			active_listeners,
+
 			recent_messages,
+
 			error_count,
+
 			uptime_seconds,
 		};
 
@@ -166,6 +197,7 @@ impl Struct {
 				.status_history
 				.lock()
 				.map_err(|e| format!("Failed to access status history: {}", e))?;
+
 			history.push(report.clone());
 
 			if history.len() > 100 {
@@ -182,15 +214,20 @@ impl Struct {
 		let report = self.generate_status_report().await?;
 
 		self.update_performance_metrics().await?;
+
 		self.perform_health_check().await?;
 
 		let performance_metrics = self.get_performance_metrics()?;
+
 		let health_status = self.get_health_status()?;
 
 		let comprehensive_report = ComprehensiveStatusReport {
 			basic_status:report.clone(),
+
 			performance_metrics:performance_metrics.clone(),
+
 			health_status:health_status.clone(),
+
 			timestamp:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -208,6 +245,7 @@ impl Struct {
 				"error: [StatusReporter] Failed to emit status report to Sky: {}",
 				e
 			);
+
 			return Err(format!("Failed to emit status report: {}", e));
 		}
 
@@ -230,6 +268,7 @@ impl Struct {
 		}
 
 		dev_log!("lifecycle", "Comprehensive status report sent to Sky");
+
 		Ok(())
 	}
 
@@ -268,6 +307,7 @@ impl Struct {
 			.status_history
 			.lock()
 			.map_err(|e| format!("Failed to access status history: {}", e))?;
+
 		Ok(history.clone())
 	}
 
@@ -279,12 +319,19 @@ impl Struct {
 		let connection_stats = ipc_server.get_connection_stats().await.unwrap_or_default();
 
 		let messages_per_second = self.calculate_message_rate().await;
+
 		let average_latency_ms = self.calculate_average_latency().await;
+
 		let peak_latency_ms = self.calculate_peak_latency().await;
+
 		let compression_ratio = self.calculate_compression_ratio().await;
+
 		let connection_pool_utilization = self.calculate_pool_utilization(&connection_stats).await;
+
 		let memory_usage_mb = self.get_memory_usage().await;
+
 		let cpu_usage_percent = self.get_cpu_usage().await;
+
 		let last_update = SystemTime::now()
 			.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap_or_default()
@@ -296,12 +343,19 @@ impl Struct {
 			.map_err(|e| format!("Failed to access performance metrics: {}", e))?;
 
 		metrics.messages_per_second = messages_per_second;
+
 		metrics.average_latency_ms = average_latency_ms;
+
 		metrics.peak_latency_ms = peak_latency_ms;
+
 		metrics.compression_ratio = compression_ratio;
+
 		metrics.connection_pool_utilization = connection_pool_utilization;
+
 		metrics.memory_usage_mb = memory_usage_mb;
+
 		metrics.cpu_usage_percent = cpu_usage_percent;
+
 		metrics.last_update = last_update;
 
 		dev_log!(
@@ -321,11 +375,13 @@ impl Struct {
 			.map_err(|e| format!("Failed to access health monitor: {}", e))?;
 
 		let mut health_score:f64 = 100.0;
+
 		let mut issues = Vec::new();
 
 		if let Some(ipc_server) = &self.ipc_server {
 			if !ipc_server.get_connection_status()? {
 				health_score -= 25.0;
+
 				issues.push(HealthIssue {
 					issue_type:HealthIssueType::ConnectionLoss,
 					severity:SeverityLevel::Critical,
@@ -341,8 +397,10 @@ impl Struct {
 
 		if let Some(ipc_server) = &self.ipc_server {
 			let queue_size = ipc_server.get_queue_size()?;
+
 			if queue_size > 100 {
 				health_score -= 15.0;
+
 				issues.push(HealthIssue {
 					issue_type:HealthIssueType::QueueOverflow,
 					severity:SeverityLevel::High,
@@ -363,6 +421,7 @@ impl Struct {
 
 		if metrics.average_latency_ms > 100.0 {
 			health_score -= 20.0;
+
 			issues.push(HealthIssue {
 				issue_type:HealthIssueType::HighLatency,
 				severity:SeverityLevel::High,
@@ -376,7 +435,9 @@ impl Struct {
 		}
 
 		health_monitor.health_score = health_score.max(0.0);
+
 		health_monitor.issues_detected = issues;
+
 		health_monitor.last_health_check = SystemTime::now()
 			.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap_or_default()
@@ -418,7 +479,9 @@ impl Struct {
 
 		let time_span = if recent_reports.len() > 1 {
 			let first_time = recent_reports.first().unwrap().timestamp;
+
 			let last_time = recent_reports.last().unwrap().timestamp;
+
 			(last_time - first_time) as f64 / 1000.0
 		} else {
 			1.0
@@ -475,6 +538,7 @@ impl Struct {
 		dev_log!("lifecycle", "Starting service discovery");
 
 		let mut registry = self.service_registry.write().await;
+
 		let mut discovered = self.discovered_services.write().await;
 
 		let mut services = Vec::new();
@@ -490,31 +554,46 @@ impl Struct {
 		for (name, version, status) in core_services {
 			let service_info = ServiceInfo {
 				name:name.to_string(),
+
 				version:version.to_string(),
+
 				status:status.clone(),
+
 				last_heartbeat:SystemTime::now()
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
 					.as_millis() as u64,
+
 				uptime:SystemTime::now().duration_since(self.start_time).unwrap_or_default().as_secs(),
+
 				dependencies:self.get_service_dependencies(name),
+
 				metrics:ServiceMetrics {
 					response_time:self.calculate_service_response_time(name).await,
+
 					error_rate:self.calculate_service_error_rate(name).await,
+
 					throughput:self.calculate_service_throughput(name).await,
+
 					memory_usage:self.get_service_memory_usage(name).await,
+
 					cpu_usage:self.get_service_cpu_usage(name).await,
+
 					last_updated:SystemTime::now()
 						.duration_since(SystemTime::UNIX_EPOCH)
 						.unwrap_or_default()
 						.as_millis() as u64,
 				},
+
 				endpoint:Some(format!("localhost:{}", 50050 + services.len() as u16)),
+
 				port:Some(50050 + services.len() as u16),
 			};
 
 			registry.services.insert(name.to_string(), service_info.clone());
+
 			discovered.insert(name.to_string());
+
 			services.push(service_info);
 		}
 
@@ -548,8 +627,11 @@ impl Struct {
 	fn get_service_dependencies(&self, service_name:&str) -> Vec<String> {
 		match service_name {
 			"ExtensionHostService" => vec!["ConfigurationService".to_string()],
+
 			"FileService" => vec!["StorageService".to_string()],
+
 			"StorageService" => vec!["ConfigurationService".to_string()],
+
 			_ => Vec::new(),
 		}
 	}
@@ -557,10 +639,15 @@ impl Struct {
 	async fn calculate_service_response_time(&self, service_name:&str) -> f64 {
 		match service_name {
 			"EditorService" => 5.0,
+
 			"ExtensionHostService" => 15.0,
+
 			"ConfigurationService" => 2.0,
+
 			"FileService" => 8.0,
+
 			"StorageService" => 3.0,
+
 			_ => 10.0,
 		}
 	}
@@ -568,10 +655,15 @@ impl Struct {
 	async fn calculate_service_error_rate(&self, service_name:&str) -> f64 {
 		match service_name {
 			"EditorService" => 0.1,
+
 			"ExtensionHostService" => 2.5,
+
 			"ConfigurationService" => 0.5,
+
 			"FileService" => 1.2,
+
 			"StorageService" => 0.8,
+
 			_ => 5.0,
 		}
 	}
@@ -579,10 +671,15 @@ impl Struct {
 	async fn calculate_service_throughput(&self, service_name:&str) -> f64 {
 		match service_name {
 			"EditorService" => 1000.0,
+
 			"ExtensionHostService" => 500.0,
+
 			"ConfigurationService" => 2000.0,
+
 			"FileService" => 800.0,
+
 			"StorageService" => 1500.0,
+
 			_ => 100.0,
 		}
 	}
@@ -590,10 +687,15 @@ impl Struct {
 	async fn get_service_memory_usage(&self, service_name:&str) -> f64 {
 		match service_name {
 			"EditorService" => 256.0,
+
 			"ExtensionHostService" => 512.0,
+
 			"ConfigurationService" => 128.0,
+
 			"FileService" => 192.0,
+
 			"StorageService" => 64.0,
+
 			_ => 100.0,
 		}
 	}
@@ -601,10 +703,15 @@ impl Struct {
 	async fn get_service_cpu_usage(&self, service_name:&str) -> f64 {
 		match service_name {
 			"EditorService" => 15.0,
+
 			"ExtensionHostService" => 25.0,
+
 			"ConfigurationService" => 5.0,
+
 			"FileService" => 10.0,
+
 			"StorageService" => 8.0,
+
 			_ => 20.0,
 		}
 	}
@@ -613,7 +720,9 @@ impl Struct {
 		dev_log!("lifecycle", "Starting periodic service discovery");
 
 		let registry = self.service_registry.read().await;
+
 		let interval = registry.discovery_interval;
+
 		drop(registry);
 
 		let reporter = self.clone_reporter();
@@ -635,11 +744,13 @@ impl Struct {
 
 	pub async fn get_service_registry(&self) -> Result<ServiceRegistry, String> {
 		let registry = self.service_registry.read().await;
+
 		Ok(registry.clone())
 	}
 
 	pub async fn get_service_info(&self, service_name:&str) -> Result<Option<ServiceInfo>, String> {
 		let registry = self.service_registry.read().await;
+
 		Ok(registry.services.get(service_name).cloned())
 	}
 
@@ -670,6 +781,7 @@ impl Struct {
 			"[StatusReporter] Recovery attempt {} completed",
 			health_monitor.recovery_attempts
 		);
+
 		Ok(())
 	}
 
@@ -678,6 +790,7 @@ impl Struct {
 			.performance_metrics
 			.lock()
 			.map_err(|e| format!("Failed to access performance metrics: {}", e))?;
+
 		Ok(metrics.clone())
 	}
 
@@ -686,19 +799,28 @@ impl Struct {
 			.health_monitor
 			.lock()
 			.map_err(|e| format!("Failed to access health monitor: {}", e))?;
+
 		Ok(health_monitor.clone())
 	}
 
 	pub(super) fn clone_reporter(&self) -> Struct {
 		Struct {
 			runtime:self.runtime.clone(),
+
 			ipc_server:self.ipc_server.clone(),
+
 			status_history:self.status_history.clone(),
+
 			start_time:self.start_time,
+
 			error_count:self.error_count.clone(),
+
 			performance_metrics:self.performance_metrics.clone(),
+
 			health_monitor:self.health_monitor.clone(),
+
 			service_registry:self.service_registry.clone(),
+
 			discovered_services:self.discovered_services.clone(),
 		}
 	}

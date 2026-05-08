@@ -29,8 +29,10 @@ pub async fn Fn(SideCarIdentifier:&str, Endpoint:&str) -> Result<(), VineError> 
 	};
 
 	let UseTuned = std::env::var("LAND_TONIC_TUNED").as_deref() != Ok("0");
+
 	let mut Channel = tonic::transport::Channel::from_shared(EndpointURL)
 		.map_err(|E| VineError::RPCError(format!("Failed to create channel: {}", E)))?;
+
 	if UseTuned {
 		Channel = Channel
 			.tcp_nodelay(true)
@@ -44,6 +46,7 @@ pub async fn Fn(SideCarIdentifier:&str, Endpoint:&str) -> Result<(), VineError> 
 			.timeout(Duration::from_secs(30))
 			.connect_timeout(Duration::from_secs(5));
 	}
+
 	let Connected = Channel
 		.connect()
 		.await
@@ -53,11 +56,13 @@ pub async fn Fn(SideCarIdentifier:&str, Endpoint:&str) -> Result<(), VineError> 
 
 	{
 		let mut Pool = SIDECAR_CLIENTS.lock();
+
 		Pool.insert(SideCarIdentifier.to_string(), Client.clone());
 	}
 
 	if std::env::var("LAND_VINE_STREAMING").as_deref() == Ok("1") {
 		let SideCarForMux = SideCarIdentifier.to_string();
+
 		match crate::Vine::Multiplexer::Multiplexer::Open(SideCarForMux, Client).await {
 			Ok(_) => {
 				dev_log!(
@@ -66,6 +71,7 @@ pub async fn Fn(SideCarIdentifier:&str, Endpoint:&str) -> Result<(), VineError> 
 					SideCarIdentifier
 				);
 			},
+
 			Err(Error) => {
 				dev_log!(
 					"grpc",

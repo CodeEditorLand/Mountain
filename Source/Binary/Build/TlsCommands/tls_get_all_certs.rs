@@ -22,8 +22,10 @@ pub async fn tls_get_all_certs(app_handle:AppHandle) -> Result<HashMap<String, C
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
 		.ok_or("Certificate manager not found")?;
+
 	let cert_manager = state.clone();
 
 	let manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+
 	Ok(manager.get_all_certs())
 }

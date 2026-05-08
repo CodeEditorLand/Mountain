@@ -10,6 +10,9 @@
 //! IPC arriving during the burst.
 
 pub mod EchoActionServer;
+
 pub mod ExtensionHostRegistry;
+
 pub mod ExtensionRouter;
+
 pub mod ResolveMethodPriority;

@@ -44,6 +44,7 @@ pub async fn AirStart(_ApplicationHandle:&AppHandle, _Environment:&Arc<MountainE
 	// Mountain-only profile.
 	if matches!(std::env::var("Spawn").as_deref(), Ok("0") | Ok("false")) {
 		dev_log!("grpc", "[AirStart] Skipping Air spawn (Spawn=false)");
+
 		return Ok(());
 	}
 
@@ -58,6 +59,7 @@ pub async fn AirStart(_ApplicationHandle:&AppHandle, _Environment:&Arc<MountainE
 			"grpc",
 			"[AirStart] AirIntegration feature disabled; skipping spawn (workbench runs without Air)"
 		);
+
 		Ok(())
 	}
 }
@@ -87,11 +89,13 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 
 	let BinaryPath = match BinaryPath {
 		Some(P) => P,
+
 		None => {
 			dev_log!(
 				"grpc",
 				"warn: [AirStart] Air binary not found in resources or target/debug; running without Air"
 			);
+
 			return Ok(());
 		},
 	};
@@ -114,13 +118,16 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 
 	let mut Child = match SpawnResult {
 		Ok(C) => C,
+
 		Err(Error) => {
 			dev_log!("grpc", "warn: [AirStart] Failed to spawn Air ({}); running without Air", Error);
+
 			return Ok(());
 		},
 	};
 
 	let AirPid = Child.id();
+
 	dev_log!("grpc", "[AirStart] Air spawned successfully (pid={:?})", AirPid);
 
 	// Drain Air's stdout/stderr into Mountain's dev log so the user
@@ -134,6 +141,7 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 			}
 		});
 	}
+
 	if let Some(Stderr) = Child.stderr.take() {
 		tokio::spawn(async move {
 			use tokio::io::{AsyncBufReadExt, BufReader};
@@ -156,11 +164,14 @@ async fn LaunchAndConnectAir(ApplicationHandle:AppHandle, _Environment:Arc<Mount
 	// Connect via Vine. Air's gRPC server takes ~150 ms to become
 	// listenable; ConnectToSideCar handles the retry loop.
 	let SideCarIdentifier = "air-main".to_string();
+
 	let Address = format!("http://{}", AIR_GRPC_ADDRESS);
+
 	match crate::Vine::Client::ConnectToSideCar::Fn(SideCarIdentifier.clone(), Address.clone()).await {
 		Ok(()) => {
 			dev_log!("grpc", "[AirStart] Air gRPC connection established at {}", Address);
 		},
+
 		Err(Error) => {
 			dev_log!(
 				"grpc",

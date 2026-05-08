@@ -42,6 +42,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 	// to the first). Using `?folder=...` in the initial URL skips
 	// that destructive round-trip.
 	let InitialUrl = BuildInitialUrl(&LocalhostUrl);
+
 	let WindowUrl = WebviewUrl::External(InitialUrl.parse().expect("FATAL: Failed to parse initial webview URL"));
 
 	// Configure window builder with base settings.
@@ -128,10 +129,13 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 
 	let Recent = match ReadRecentlyOpened() {
 		Ok(Value) => Value,
+
 		Err(_) => return Base,
 	};
+
 	let Workspaces = match Recent.get("workspaces").and_then(|V| V.as_array()) {
 		Some(Array) if !Array.is_empty() => Array,
+
 		_ => return Base,
 	};
 
@@ -149,12 +153,15 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 		if let Some(Uri) = Entry.get("uri").and_then(|V| V.as_str()) {
 			return Some(Uri.to_string());
 		}
+
 		if let Some(Uri) = Entry.get("folderUri").and_then(|V| V.as_str()) {
 			return Some(Uri.to_string());
 		}
+
 		if let Some(Path) = Entry.get("folderUri").and_then(|V| V.get("path")).and_then(|V| V.as_str()) {
 			return Some(Path.to_string());
 		}
+
 		if let Some(Path) = Entry
 			.get("workspace")
 			.and_then(|V| V.get("configPath"))
@@ -163,11 +170,13 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 		{
 			return Some(Path.to_string());
 		}
+
 		None
 	};
 
 	let FolderPath = match Workspaces.iter().find_map(Probe) {
 		Some(Path) => Path,
+
 		None => return Base,
 	};
 
@@ -177,6 +186,7 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 	// side (observed as the second `?folder=` boot path appearing as
 	// `file:/Volumes/...` in `wb:boot`).
 	let WithoutScheme = FolderPath.strip_prefix("file://").unwrap_or(FolderPath.as_str()).to_string();
+
 	// RecentlyOpened.json stores workspace URIs with a trailing slash
 	// (`file:///Volumes/.../Mountain/`). Drop it before encoding into
 	// the URL so the workbench-side `URI.revive({ scheme: "file",
@@ -189,11 +199,13 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 	// short form. Preserve `/` itself when the path IS root (vanishing
 	// edge case but cheap to guard).
 	let TrailingTrimmed = WithoutScheme.trim_end_matches('/');
+
 	let Normalised = if TrailingTrimmed.is_empty() {
 		"/".to_string()
 	} else {
 		TrailingTrimmed.to_string()
 	};
+
 	if !std::path::Path::new(&Normalised).is_dir() {
 		return Base;
 	}
@@ -201,5 +213,6 @@ fn BuildInitialUrl(LocalhostUrl:&str) -> String {
 	let Encoded = url::form_urlencoded::Serializer::new(String::new())
 		.append_pair("folder", &Normalised)
 		.finish();
+
 	format!("{}/?{}", LocalhostUrl, Encoded)
 }

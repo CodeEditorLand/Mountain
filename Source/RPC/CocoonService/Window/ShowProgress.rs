@@ -17,6 +17,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:ShowProgressRequest,
 ) -> Result<Response<ShowProgressResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] show_progress: title={}", Request.title);

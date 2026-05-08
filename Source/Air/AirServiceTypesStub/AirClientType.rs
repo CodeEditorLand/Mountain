@@ -34,6 +34,7 @@ impl Struct {
 
 	pub async fn CheckForUpdates(
 		&self,
+
 		_Request:UpdateCheckRequest::Struct,
 	) -> Result<UpdateCheckResponse::Struct, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
@@ -45,6 +46,7 @@ impl Struct {
 
 	pub async fn ApplyUpdate(
 		&self,
+
 		_Request:ApplyUpdateRequest::Struct,
 	) -> Result<ApplyUpdateResponse::Struct, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())
@@ -52,6 +54,7 @@ impl Struct {
 
 	pub async fn AuthenticateUser(
 		&self,
+
 		_Request:AuthenticationRequest::Struct,
 	) -> Result<AuthenticationResponse::Struct, String> {
 		Err("AirIntegration feature is not implemented yet".to_string())

@@ -31,6 +31,7 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, Command
 /// Returns an error if command registration fails.
 pub fn CommandRegister(
 	ApplicationHandle:&tauri::AppHandle,
+
 	AppState:&std::sync::Arc<ApplicationState>,
 ) -> Result<(), String> {
 	Command::Bootstrap::RegisterNativeCommands(ApplicationHandle, AppState)

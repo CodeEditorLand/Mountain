@@ -151,22 +151,36 @@ impl DocumentStateDTO {
 	/// This should only be called with trusted data sources.
 	pub fn CreateUnsafe(
 		URI:Url,
+
 		LanguageIdentifier:String,
+
 		Lines:Vec<String>,
+
 		EOL:String,
+
 		IsDirty:bool,
+
 		Encoding:String,
+
 		Version:i64,
+
 		VersionIdentifier:i64,
 	) -> Self {
 		Self {
 			URI,
+
 			LanguageIdentifier,
+
 			Version,
+
 			Lines,
+
 			EOL,
+
 			IsDirty,
+
 			Encoding,
+
 			VersionIdentifier,
 		}
 	}
@@ -250,12 +264,14 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 	// When applying multiple changes, earlier changes shift positions for later
 	// changes. By applying from end to beginning, all offsets remain valid.
 	let mut SortedChanges:Vec<&RPCModelContentChangeDTO> = RPCChange.iter().collect();
+
 	SortedChanges.sort_by(|a, b| CMP_Range_Position(&b.Range, &a.Range));
 
 	// Apply each change to the text
 	for Change in SortedChanges {
 		// Convert (line, column) to byte offset
 		let StartOffset = PositionToOffset(&ResultText, EOL, &Change.Range.StartLineNumber, &Change.Range.StartColumn);
+
 		let EndOffset = PositionToOffset(&ResultText, EOL, &Change.Range.EndLineNumber, &Change.Range.EndColumn);
 
 		// Validate offsets
@@ -267,10 +283,12 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 				EndOffset,
 				ResultText.len()
 			);
+
 			continue;
 		}
 
 		let TextLength = ResultText.len();
+
 		if StartOffset > TextLength || EndOffset > TextLength {
 			dev_log!(
 				"model",
@@ -279,12 +297,14 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 				EndOffset,
 				TextLength
 			);
+
 			continue;
 		}
 
 		// Remove old text and insert new text
 		// Safe slice operation: validated offsets above
 		let OldText = ResultText.as_bytes();
+
 		ResultText =
 			String::from_utf8_lossy(&[&OldText[..StartOffset], Change.Text.as_bytes(), &OldText[EndOffset..]].concat())
 				.into_owned();
@@ -300,6 +320,7 @@ fn ApplyDeltaChanges(Lines:&[String], EOL:&str, RPCChange:&[RPCModelContentChang
 /// This function matches that convention.
 fn PositionToOffset(Text:&str, EOL:&str, LineNumber:&usize, Column:&usize) -> usize {
 	let Lines:Vec<&str> = Text.split(EOL).collect();
+
 	let EOLLength = EOL.len();
 
 	let mut Offset = 0;
@@ -315,10 +336,12 @@ fn PositionToOffset(Text:&str, EOL:&str, LineNumber:&usize, Column:&usize) -> us
 	if *LineNumber < Lines.len() {
 		// Column is in character positions, convert to byte offset
 		let CurrentLine = Lines[*LineNumber];
+
 		let CharOffset = CurrentLine
 			.char_indices()
 			.nth(*Column)
 			.map_or(CurrentLine.len(), |(offset, _)| offset);
+
 		Offset += CharOffset;
 	}
 

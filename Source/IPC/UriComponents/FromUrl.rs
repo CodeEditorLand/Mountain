@@ -16,9 +16,12 @@ pub fn Fn(Url:&str) -> Value {
 	if let Some(Rest) = Url.strip_prefix("file://") {
 		let (Authority, Path) = match Rest.find('/') {
 			Some(0) => ("", Rest),
+
 			Some(Index) => (&Rest[..Index], &Rest[Index..]),
+
 			None => ("", ""),
 		};
+
 		return StampMidUri::Fn(json!({
 			"scheme": "file",
 			"authority": Authority,
@@ -27,13 +30,18 @@ pub fn Fn(Url:&str) -> Value {
 			"fragment": "",
 		}));
 	}
+
 	if let Some((Scheme, PathPart)) = Url.split_once(':') {
 		let Trimmed = PathPart.trim_start_matches("//");
+
 		let (Authority, Path) = match Trimmed.find('/') {
 			Some(0) => ("", Trimmed),
+
 			Some(Index) => (&Trimmed[..Index], &Trimmed[Index..]),
+
 			None => ("", Trimmed),
 		};
+
 		return StampMidUri::Fn(json!({
 			"scheme": Scheme,
 			"authority": Authority,
@@ -42,6 +50,7 @@ pub fn Fn(Url:&str) -> Value {
 			"fragment": "",
 		}));
 	}
+
 	StampMidUri::Fn(json!({
 		"scheme": "file",
 		"authority": "",

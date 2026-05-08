@@ -67,6 +67,7 @@ impl OutputChannelState {
 	pub fn AddOrUpdate(&self, id:String, channel:OutputChannelStateDTO) {
 		if let Ok(mut guard) = self.OutputChannels.lock() {
 			guard.insert(id, channel);
+
 			dev_log!("output", "[OutputChannelState] Output channel added/updated");
 		}
 	}
@@ -75,6 +76,7 @@ impl OutputChannelState {
 	pub fn Remove(&self, id:&str) {
 		if let Ok(mut guard) = self.OutputChannels.lock() {
 			guard.remove(id);
+
 			dev_log!("output", "[OutputChannelState] Output channel removed: {}", id);
 		}
 	}
@@ -83,6 +85,7 @@ impl OutputChannelState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.OutputChannels.lock() {
 			guard.clear();
+
 			dev_log!("output", "[OutputChannelState] All output channels cleared");
 		}
 	}

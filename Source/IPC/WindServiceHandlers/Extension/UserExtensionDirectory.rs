@@ -18,6 +18,7 @@ pub fn UserExtensionDirectory() -> PathBuf {
 				return HomeDirectory.join(Stripped);
 			}
 		}
+
 		return PathBuf::from(Override);
 	}
 

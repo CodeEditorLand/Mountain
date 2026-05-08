@@ -23,7 +23,9 @@ use crate::{
 /// Finds the best provider for a given feature and document.
 pub(super) async fn get_matching_provider(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	document_uri:&Url,
+
 	feature_type:ProviderType,
 ) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
 	let providers = environment
@@ -57,6 +59,7 @@ pub(super) async fn get_matching_provider(
 									provider.Handle,
 									document_uri
 								);
+
 								return Ok(Some(provider.clone()));
 							}
 						}
@@ -65,6 +68,7 @@ pub(super) async fn get_matching_provider(
 			}
 		}
 	}
+
 	dev_log!(
 		"extensions",
 		"warn: No provider found for {:?} on document {}",
@@ -79,8 +83,11 @@ pub(super) async fn get_matching_provider(
 /// deserialize the result.
 pub(super) async fn invoke_provider<TResponse:serde::de::DeserializeOwned>(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	provider_type:ProviderType,
+
 	document_uri:&Url,
+
 	mut provider_arguments:Value,
 ) -> Result<Option<TResponse>, CommonError> {
 	if let Some(provider) = get_matching_provider(environment, document_uri, provider_type).await? {
@@ -96,6 +103,7 @@ pub(super) async fn invoke_provider<TResponse:serde::de::DeserializeOwned>(
 		})?;
 
 		let mut final_arguments_vector = vec![json!(provider.Handle), uri_components];
+
 		final_arguments_vector.append(arguments_vector);
 
 		let final_arguments = json!(final_arguments_vector);
@@ -109,6 +117,7 @@ pub(super) async fn invoke_provider<TResponse:serde::de::DeserializeOwned>(
 		if response.is_null() {
 			return Ok(None);
 		}
+
 		serde_json::from_value(response).map_err(|error| {
 			CommonError::SerializationError {
 				description:format!("Failed to deserialize response for {:?}: {}", provider_type, error),

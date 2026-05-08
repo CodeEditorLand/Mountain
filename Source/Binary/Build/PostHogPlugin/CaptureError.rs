@@ -11,6 +11,7 @@ pub fn Fn(Tag:&str, Message:&str) {
 	if !CaptureAllowed::Fn() {
 		return;
 	}
+
 	CaptureEvent::Fn(
 		"land:mountain:error",
 		Some(vec![("error_tag", Tag), ("error_message", Message)]),

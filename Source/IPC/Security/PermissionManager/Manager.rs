@@ -25,7 +25,9 @@ use crate::{
 
 pub struct Struct {
 	pub(super) roles:Arc<RwLock<HashMap<String, Role>>>,
+
 	pub(super) permissions:Arc<RwLock<HashMap<String, Permission>>>,
+
 	pub(super) audit_log:Arc<RwLock<Vec<SecurityEvent>>>,
 }
 
@@ -35,7 +37,9 @@ impl Struct {
 
 		Self {
 			roles:Arc::new(RwLock::new(HashMap::new())),
+
 			permissions:Arc::new(RwLock::new(HashMap::new())),
+
 			audit_log:Arc::new(RwLock::new(Vec::new())),
 		}
 	}
@@ -49,6 +53,7 @@ impl Struct {
 				"[PermissionManager] Operation '{}' requires no special permissions",
 				operation
 			);
+
 			return Ok(());
 		}
 
@@ -56,12 +61,14 @@ impl Struct {
 
 		for role in context.roles.iter() {
 			let role_perms = self.get_role_permissions(role).await;
+
 			user_permissions.extend(role_perms);
 		}
 
 		for required in &required_permissions {
 			if !user_permissions.contains(required) {
 				let error = format!("Missing permission: {}", required);
+
 				dev_log!(
 					"ipc",
 					"[PermissionManager] Permission denied for user '{}' on operation '{}': {}",
@@ -105,20 +112,26 @@ impl Struct {
 	async fn get_required_permissions(&self, operation:&str) -> Vec<String> {
 		match operation {
 			"file:write" | "file:delete" => vec!["file.write".to_string()],
+
 			"configuration:update" => vec!["config.update".to_string()],
+
 			"storage:set" => vec!["storage.write".to_string()],
+
 			"native:openExternal" => vec!["system.external".to_string()],
+
 			_ => Vec::new(),
 		}
 	}
 
 	async fn get_role_permissions(&self, role_name:&str) -> Vec<String> {
 		let roles = self.roles.read().await;
+
 		roles.get(role_name).map(|role| role.permissions.clone()).unwrap_or_default()
 	}
 
 	pub async fn log_security_event(&self, event:SecurityEvent) {
 		let mut audit_log = self.audit_log.write().await;
+
 		audit_log.push(event.clone());
 
 		if audit_log.len() > 1000 {
@@ -135,6 +148,7 @@ impl Struct {
 					event.details
 				);
 			},
+
 			SecurityEventType::SecurityViolation => {
 				dev_log!(
 					"ipc",
@@ -144,6 +158,7 @@ impl Struct {
 					event.details
 				);
 			},
+
 			SecurityEventType::AccessGranted => {
 				dev_log!(
 					"ipc",
@@ -152,6 +167,7 @@ impl Struct {
 					event.operation
 				);
 			},
+
 			_ => {
 				dev_log!(
 					"ipc",
@@ -166,6 +182,7 @@ impl Struct {
 
 	pub async fn get_audit_log(&self, limit:usize) -> Vec<SecurityEvent> {
 		let audit_log = self.audit_log.read().await;
+
 		audit_log.iter().rev().take(limit).cloned().collect()
 	}
 
@@ -173,6 +190,7 @@ impl Struct {
 		dev_log!("ipc", "[PermissionManager] Initializing default roles and permissions");
 
 		let mut permissions = self.permissions.write().await;
+
 		let mut roles = self.roles.write().await;
 
 		let standard_permissions = vec![
@@ -237,21 +255,29 @@ impl Struct {
 
 	pub async fn add_role(&self, role:Role) {
 		let role_name = role.name.clone();
+
 		let mut roles = self.roles.write().await;
+
 		roles.insert(role_name.clone(), role);
+
 		dev_log!("ipc", "[PermissionManager] Added role: {}", role_name);
 	}
 
 	pub async fn add_permission(&self, permission:Permission) {
 		let permission_name = permission.name.clone();
+
 		let mut permissions = self.permissions.write().await;
+
 		permissions.insert(permission_name.clone(), permission);
+
 		dev_log!("ipc", "[PermissionManager] Added permission: {}", permission_name);
 	}
 
 	pub async fn clear_audit_log(&self) {
 		let mut audit_log = self.audit_log.write().await;
+
 		audit_log.clear();
+
 		dev_log!("ipc", "[PermissionManager] Audit log cleared");
 	}
 
@@ -269,11 +295,16 @@ impl Struct {
 		for event in audit_log.iter() {
 			let type_name = match event.event_type {
 				SecurityEventType::PermissionDenied => "PermissionDenied",
+
 				SecurityEventType::AccessGranted => "AccessGranted",
+
 				SecurityEventType::ConfigurationChange => "ConfigurationChange",
+
 				SecurityEventType::SecurityViolation => "SecurityViolation",
+
 				SecurityEventType::PerformanceAnomaly => "PerformanceAnomaly",
 			};
+
 			if let Some((_, count)) = type_counts.iter_mut().find(|(name, _)| *name == type_name) {
 				*count += 1;
 			}

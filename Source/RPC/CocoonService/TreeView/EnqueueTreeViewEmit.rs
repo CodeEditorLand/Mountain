@@ -24,6 +24,7 @@ use crate::dev_log;
 
 struct Batch {
 	Pending:Mutex<Vec<Value>>,
+
 	FlushScheduled:AtomicBool,
 }
 
@@ -35,13 +36,17 @@ pub fn Fn(Handle:&AppHandle, Payload:Value) {
 
 	{
 		let mut Pending = Batch.Pending.lock().unwrap();
+
 		Pending.push(Payload);
 	}
 
 	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
 		let Cloned = Batch.clone();
+
 		let HandleCloned = Handle.clone();
+
 		let Channel = SkyEvent::TreeViewCreate.AsStr().to_string();
+
 		tokio::spawn(async move {
 			tokio::time::sleep(Duration::from_millis(16)).await;
 			let Drained:Vec<Value> = {

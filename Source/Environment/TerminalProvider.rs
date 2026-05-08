@@ -140,11 +140,14 @@ fn TerminalOutputBuffer() -> &'static std::sync::Mutex<std::collections::HashMap
 pub fn AppendTerminalOutput(TerminalId:u64, Bytes:&[u8]) {
 	if let Ok(mut Map) = TerminalOutputBuffer().lock() {
 		let Entry = Map.entry(TerminalId).or_insert_with(Vec::new);
+
 		Entry.extend_from_slice(Bytes);
+
 		// Drop oldest if over cap. Keep the trailing MAX_BUFFERED_BYTES so
 		// the prompt + most-recent context survive.
 		if Entry.len() > MAX_BUFFERED_BYTES {
 			let DropCount = Entry.len() - MAX_BUFFERED_BYTES;
+
 			Entry.drain(..DropCount);
 		}
 	}
@@ -256,11 +259,13 @@ impl TerminalProvider for MountainEnvironment {
 		// tears the shell down cleanly.
 		let PTYMasterHandle:crate::ApplicationState::DTO::TerminalStateDTO::PtyMasterHandle =
 			Arc::new(std::sync::Mutex::new(PtyPair.master));
+
 		TerminalState.PTYMaster = Some(PTYMasterHandle);
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
 
 		let TermIDForOutput = TerminalIdentifier;
+
 		let AppHandleForOutput = self.ApplicationHandle.clone();
 
 		tokio::spawn(async move {
@@ -444,9 +449,13 @@ impl TerminalProvider for MountainEnvironment {
 		// buffer covers data, but the create event needs explicit
 		// deferral because there's no replay path for ready.
 		let CreateAppHandle = self.ApplicationHandle.clone();
+
 		let CreateTermId = TerminalIdentifier;
+
 		let CreateName = Name.clone();
+
 		let CreatePid = TerminalState.OSProcessIdentifier;
+
 		tokio::spawn(async move {
 			tokio::time::sleep(std::time::Duration::from_millis(120)).await;
 			let CreatePayload = json!({
@@ -586,6 +595,7 @@ impl TerminalProvider for MountainEnvironment {
 				.ActiveTerminals
 				.lock()
 				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+
 			TerminalsGuard
 				.get(&TerminalId)
 				.and_then(|TerminalArc| TerminalArc.lock().ok())

@@ -13,6 +13,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn ProgressComplete(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://progress/complete", Parameter);
+
 	dev_log!(
 		"grpc",
 		"[Progress] complete id={}",

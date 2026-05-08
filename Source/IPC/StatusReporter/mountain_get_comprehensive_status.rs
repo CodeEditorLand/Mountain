@@ -24,7 +24,9 @@ pub async fn mountain_get_comprehensive_status(
 
 	if let Some(reporter) = app_handle.try_state::<Reporter>() {
 		let basic_status = reporter.generate_status_report().await?;
+
 		let performance_metrics = reporter.get_performance_metrics()?;
+
 		let health_status = reporter.get_health_status()?;
 
 		Ok(ComprehensiveStatusReport {

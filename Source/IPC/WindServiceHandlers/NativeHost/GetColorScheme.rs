@@ -11,6 +11,7 @@ use serde_json::{Value, json};
 
 pub async fn NativeGetColorScheme() -> Result<Value, String> {
 	let Dark = detect_dark_mode();
+
 	let HighContrast = {
 		#[cfg(target_os = "windows")]
 		{
@@ -24,6 +25,7 @@ pub async fn NativeGetColorScheme() -> Result<Value, String> {
 				})
 				.unwrap_or(false)
 		}
+
 		#[cfg(not(target_os = "windows"))]
 		{
 			#[cfg(target_os = "linux")]
@@ -35,6 +37,7 @@ pub async fn NativeGetColorScheme() -> Result<Value, String> {
 					.map(|O| String::from_utf8_lossy(&O.stdout).trim() == "true")
 					.unwrap_or(false)
 			}
+
 			#[cfg(not(target_os = "linux"))]
 			{
 				false

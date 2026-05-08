@@ -20,8 +20,13 @@
 //!   private, shared, residentSet }` triple.
 
 pub mod process_get_arch;
+
 pub mod process_get_exec_path;
+
 pub mod process_get_memory_info;
+
 pub mod process_get_pid;
+
 pub mod process_get_platform;
+
 pub mod process_get_shell_env;

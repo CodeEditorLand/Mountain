@@ -17,7 +17,9 @@ use crate::{Environment::Utility, dev_log};
 /// Acts as a dispatcher to native or extension providers.
 pub(super) async fn get_children(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	element_handle:Option<String>,
 ) -> Result<Vec<Value>, CommonError> {
 	dev_log!(
@@ -56,6 +58,7 @@ pub(super) async fn get_children(
 			return serde_json::from_value::<Vec<Value>>(response).map_err(CommonError::from);
 		}
 	}
+
 	Err(CommonError::TreeViewProviderNotFound { ViewIdentifier:view_identifier })
 }
 
@@ -63,7 +66,9 @@ pub(super) async fn get_children(
 /// Acts as a dispatcher to native or extension providers.
 pub(super) async fn get_tree_item(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	element_handle:String,
 ) -> Result<Value, CommonError> {
 	dev_log!(
@@ -98,5 +103,6 @@ pub(super) async fn get_tree_item(
 				.await;
 		}
 	}
+
 	Err(CommonError::TreeViewProviderNotFound { ViewIdentifier:view_identifier })
 }

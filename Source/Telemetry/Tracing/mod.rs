@@ -19,13 +19,18 @@
 //! the IPC dispatch hot path.
 
 pub mod CreateSpan;
+
 pub mod InitializeTracing;
+
 pub mod InstrumentCommand;
+
 pub mod InstrumentRPC;
+
 pub mod MeasureTime;
 
 #[cfg(test)]
 mod tests {
+
 	use super::InitializeTracing;
 
 	#[test]

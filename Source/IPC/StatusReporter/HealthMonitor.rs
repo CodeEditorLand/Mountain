@@ -11,7 +11,10 @@ use crate::IPC::StatusReporter::HealthIssue;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub health_score:f64,
+
 	pub last_health_check:u64,
+
 	pub issues_detected:Vec<HealthIssue::Struct>,
+
 	pub recovery_attempts:u32,
 }

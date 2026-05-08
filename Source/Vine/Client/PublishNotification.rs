@@ -16,9 +16,13 @@ use crate::{
 pub fn Fn(SideCarIdentifier:&str, Method:&str, Parameters:&Value) {
 	let Frame = NotificationFrame::Struct {
 		SideCarIdentifier:SideCarIdentifier.to_string(),
+
 		Method:Method.to_string(),
+
 		Parameters:Parameters.clone(),
+
 		TimestampNanos:DevLog::NowNano::Fn(),
 	};
+
 	let _ = Shared::NOTIFICATION_BROADCAST.send(Frame);
 }

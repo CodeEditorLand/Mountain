@@ -56,13 +56,16 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	let Label = Parameter.get("label").and_then(Value::as_str).unwrap_or(&ScmId).to_string();
+
 	let ExtensionId = Parameter
 		.get("extensionId")
 		.or_else(|| Parameter.get("extension_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	let RootUri = Parameter
 		.get("rootUri")
 		.or_else(|| Parameter.get("root_uri"))
@@ -71,6 +74,7 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 
 	if ScmId.is_empty() {
 		dev_log!("provider-register", "[ProviderRegister] scm skip: missing scm_id");
+
 		return;
 	}
 
@@ -101,14 +105,21 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 		});
 
 	use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
+
 	let RegistrationDto = ProviderRegistrationDTO {
 		Handle,
+
 		ProviderType:ProviderType::SourceControl,
+
 		Selector:json!([{ "scmId": &ScmId }]),
+
 		SideCarIdentifier:"cocoon-main".to_string(),
+
 		ExtensionIdentifier:json!(&ExtensionId),
+
 		Options:Some(json!({ "scmId": &ScmId, "label": &Label })),
 	};
+
 	Service
 		.RunTime()
 		.Environment
@@ -135,26 +146,39 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// a string URL) or `path` if the triple can't be assembled.
 	let BuildUrlFromComponents = |O:&serde_json::Map<String, Value>| -> Option<String> {
 		let Scheme = O.get("scheme").and_then(Value::as_str)?;
+
 		if Scheme.is_empty() {
 			return None;
 		}
+
 		let Authority = O.get("authority").and_then(Value::as_str).unwrap_or("");
+
 		let Path = O.get("path").and_then(Value::as_str).unwrap_or("");
+
 		let Query = O.get("query").and_then(Value::as_str).unwrap_or("");
+
 		let Fragment = O.get("fragment").and_then(Value::as_str).unwrap_or("");
+
 		let mut Url = format!("{}://{}{}", Scheme, Authority, Path);
+
 		if !Query.is_empty() {
 			Url.push('?');
+
 			Url.push_str(Query);
 		}
+
 		if !Fragment.is_empty() {
 			Url.push('#');
+
 			Url.push_str(Fragment);
 		}
+
 		Some(Url)
 	};
+
 	let RootUriString = match &RootUri {
 		Value::String(S) => S.clone(),
+
 		Value::Object(O) => {
 			BuildUrlFromComponents(O)
 				.or_else(|| O.get("external").and_then(Value::as_str).map(str::to_string))
@@ -169,8 +193,10 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 				})
 				.unwrap_or_else(|| "file:///".to_string())
 		},
+
 		_ => "file:///".to_string(),
 	};
+
 	// Field names must match `SourceControlCreateDTO`'s camelCase wire
 	// shape (post-DTO-audit): `id`, `label`, `rootUri`. Earlier revisions
 	// passed PascalCase keys here and the trait silently failed with
@@ -190,6 +216,7 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 		"label": &Label,
 		"rootUri": RootUriString,
 	});
+
 	if let Err(Error) = Service.RunTime().Environment.CreateSourceControl(CreateData).await {
 		dev_log!("grpc", "warn: [Scm] CreateSourceControl trait failed for {}: {}", ScmId, Error);
 	}

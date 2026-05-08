@@ -11,7 +11,9 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn StatusBarMessage(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Text = Parameter.get("text").and_then(Value::as_str).unwrap_or("");
+
 	let HideAfter = Parameter.get("hideAfter").and_then(Value::as_u64);
+
 	if let Err(Error) = Service.ApplicationHandle().emit(
 		"sky://statusbar/set-message",
 		json!({

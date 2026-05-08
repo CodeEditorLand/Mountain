@@ -25,8 +25,11 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ErrorSeverity {
 	Info = 0,
+
 	Warning = 1,
+
 	Error = 2,
+
 	Critical = 3,
 }
 
@@ -34,8 +37,11 @@ impl fmt::Display for ErrorSeverity {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			ErrorSeverity::Info => write!(f, "Info"),
+
 			ErrorSeverity::Warning => write!(f, "Warning"),
+
 			ErrorSeverity::Error => write!(f, "Error"),
+
 			ErrorSeverity::Critical => write!(f, "Critical"),
 		}
 	}
@@ -45,10 +51,15 @@ impl fmt::Display for ErrorSeverity {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ErrorKind {
 	IPC,
+
 	FileSystem,
+
 	Configuration,
+
 	Service,
+
 	Provider,
+
 	Other,
 }
 
@@ -56,10 +67,15 @@ impl fmt::Display for ErrorKind {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		match self {
 			ErrorKind::IPC => write!(f, "IPC"),
+
 			ErrorKind::FileSystem => write!(f, "FileSystem"),
+
 			ErrorKind::Configuration => write!(f, "Configuration"),
+
 			ErrorKind::Service => write!(f, "Service"),
+
 			ErrorKind::Provider => write!(f, "Provider"),
+
 			ErrorKind::Other => write!(f, "Other"),
 		}
 	}
@@ -69,9 +85,13 @@ impl fmt::Display for ErrorKind {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorContext {
 	pub message:String,
+
 	pub kind:ErrorKind,
+
 	pub severity:ErrorSeverity,
+
 	pub operation:Option<String>,
+
 	pub component:Option<String>,
 }
 
@@ -79,30 +99,38 @@ impl ErrorContext {
 	pub fn new(message:impl Into<String>) -> Self {
 		Self {
 			message:message.into(),
+
 			kind:ErrorKind::Other,
+
 			severity:ErrorSeverity::Error,
+
 			operation:None,
+
 			component:None,
 		}
 	}
 
 	pub fn with_kind(mut self, kind:ErrorKind) -> Self {
 		self.kind = kind;
+
 		self
 	}
 
 	pub fn with_severity(mut self, severity:ErrorSeverity) -> Self {
 		self.severity = severity;
+
 		self
 	}
 
 	pub fn with_operation(mut self, operation:impl Into<String>) -> Self {
 		self.operation = Some(operation.into());
+
 		self
 	}
 
 	pub fn with_component(mut self, component:impl Into<String>) -> Self {
 		self.component = Some(component.into());
+
 		self
 	}
 }
@@ -117,7 +145,9 @@ impl fmt::Display for ErrorContext {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MountainError {
 	pub context:ErrorContext,
+
 	pub source:Option<String>,
+
 	pub stack_trace:Option<String>,
 }
 
@@ -126,11 +156,13 @@ impl MountainError {
 
 	pub fn with_source(mut self, source:impl Into<String>) -> Self {
 		self.source = Some(source.into());
+
 		self
 	}
 
 	pub fn with_stack_trace(mut self, stack_trace:impl Into<String>) -> Self {
 		self.stack_trace = Some(stack_trace.into());
+
 		self
 	}
 
@@ -146,9 +178,11 @@ impl MountainError {
 impl fmt::Display for MountainError {
 	fn fmt(&self, f:&mut fmt::Formatter<'_>) -> fmt::Result {
 		write!(f, "{}", self.context)?;
+
 		if let Some(source) = &self.source {
 			write!(f, " ({})", source)?;
 		}
+
 		Ok(())
 	}
 }

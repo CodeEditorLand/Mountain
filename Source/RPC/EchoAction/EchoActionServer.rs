@@ -33,7 +33,9 @@ impl Struct {
 		F: std::future::Future<Output = T> + Send + 'static,
 		T: Send + 'static, {
 		let Priority = ResolveMethodPriority::Fn(Method);
+
 		let (Sender, Receiver) = oneshot::channel::<T>();
+
 		Scheduler.Submit(
 			async move {
 				let Output = Task.await;
@@ -41,6 +43,7 @@ impl Struct {
 			},
 			Priority,
 		);
+
 		Receiver
 			.await
 			.map_err(|_| "EchoAction task cancelled before completion".to_string())

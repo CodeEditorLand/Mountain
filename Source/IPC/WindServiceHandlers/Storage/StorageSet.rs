@@ -21,11 +21,13 @@ pub async fn StorageSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -
 	let value = Arguments.get(1).ok_or("Missing storage value".to_string())?.clone();
 
 	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+
 	provider
 		.UpdateStorageValue(false, key.to_string(), Some(value))
 		.await
 		.map_err(|Error| format!("Failed to set storage item: {}", Error))?;
 
 	dev_log!("storage", "set: {}", key);
+
 	Ok(Value::Null)
 }

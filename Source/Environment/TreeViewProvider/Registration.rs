@@ -15,7 +15,9 @@ use crate::{ApplicationState::DTO::TreeViewStateDTO::TreeViewStateDTO, Environme
 /// Registers a new tree data provider.
 pub(super) async fn register_tree_data_provider(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	options:serde_json::Value,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -32,14 +34,23 @@ pub(super) async fn register_tree_data_provider(
 
 	let new_state = TreeViewStateDTO {
 		ViewIdentifier:view_identifier.clone(),
+
 		Provider:None,
+
 		SideCarIdentifier:Some(side_car_identifier),
+
 		CanSelectMany:options_dto.CanSelectMany,
+
 		HasHandleDrag:options_dto.HasHandleDrag,
+
 		HasHandleDrop:options_dto.HasHandleDrop,
+
 		Message:None,
+
 		Title:None,
+
 		Description:None,
+
 		Badge:None,
 	};
 
@@ -64,6 +75,7 @@ pub(super) async fn register_tree_data_provider(
 /// Unregisters a tree data provider.
 pub(super) async fn unregister_tree_data_provider(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
 ) -> Result<(), CommonError> {
 	dev_log!(

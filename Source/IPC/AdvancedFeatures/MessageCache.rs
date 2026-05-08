@@ -12,7 +12,10 @@ use crate::IPC::AdvancedFeatures::CachedMessage;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub cached_messages:HashMap<String, CachedMessage::Struct>,
+
 	pub cache_hits:u64,
+
 	pub cache_misses:u64,
+
 	pub cache_size:usize,
 }

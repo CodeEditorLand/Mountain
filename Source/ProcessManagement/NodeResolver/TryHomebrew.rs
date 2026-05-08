@@ -13,9 +13,11 @@ pub fn Fn() -> Option<ResolvedNode::Struct> {
 		"/home/linuxbrew/.linuxbrew/bin/node",
 	] {
 		let Path = PathBuf::from(Candidate);
+
 		if Path.exists() {
 			return Some(ResolvedNode::Struct { Path, Source:NodeSource::Enum::Homebrew });
 		}
 	}
+
 	None
 }

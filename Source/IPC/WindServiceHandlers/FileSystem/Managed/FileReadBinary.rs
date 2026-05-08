@@ -26,5 +26,6 @@ pub async fn FileReadBinary(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 		.map_err(|Error| format!("Failed to read binary file: {}", Error))?;
 
 	dev_log!("vfs-verbose", "readBinary: {} ({} bytes)", path, content.len());
+
 	Ok(json!(content))
 }

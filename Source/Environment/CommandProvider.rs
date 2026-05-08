@@ -312,6 +312,7 @@ impl CommandExecutor for MountainEnvironment {
 							CommandIdentifier
 						),
 					);
+
 					return Ok(Value::Null);
 				}
 

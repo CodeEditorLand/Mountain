@@ -16,6 +16,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:RegisterTreeViewProviderRequest,
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering tree view provider: {}", Request.view_id);
@@ -25,14 +26,21 @@ pub async fn Fn(
 		.as_bytes()
 		.iter()
 		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+
 	let DTO = ProviderRegistrationDTO {
 		Handle,
+
 		ProviderType:ProviderType::TreeView,
+
 		Selector:json!([{ "viewId": Request.view_id }]),
+
 		SideCarIdentifier:"cocoon-main".to_string(),
+
 		ExtensionIdentifier:json!(Request.extension_id),
+
 		Options:Some(json!({ "viewId": Request.view_id })),
 	};
+
 	Service
 		.environment
 		.ApplicationState

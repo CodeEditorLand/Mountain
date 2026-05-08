@@ -34,6 +34,7 @@ use crate::{
 /// Returns an error if advanced features initialization fails.
 pub fn AdvancedFeaturesRegister(
 	ApplicationHandle:&tauri::AppHandle,
+
 	RunTime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
 	match initialize_advanced_features(ApplicationHandle, RunTime) {
@@ -42,10 +43,13 @@ pub fn AdvancedFeaturesRegister(
 				"lifecycle",
 				"[IPC] [AdvancedFeatures] Advanced features initialized successfully."
 			);
+
 			Ok(())
 		},
+
 		Err(e) => {
 			dev_log!("lifecycle", "error: [IPC] [AdvancedFeatures] Failed to initialize: {}", e);
+
 			Err(format!("Failed to initialize advanced features: {}", e))
 		},
 	}

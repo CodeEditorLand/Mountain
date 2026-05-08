@@ -17,6 +17,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:RegisterAuthenticationProviderRequest,
 ) -> Result<Response<Empty>, Status> {
 	dev_log!(
@@ -30,17 +31,24 @@ pub async fn Fn(
 		.as_bytes()
 		.iter()
 		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+
 	let DTO = ProviderRegistrationDTO {
 		Handle,
+
 		ProviderType:ProviderType::Authentication,
+
 		Selector:json!([{ "provider": Request.id }]),
+
 		SideCarIdentifier:"cocoon-main".to_string(),
+
 		ExtensionIdentifier:json!(Request.extension_id),
+
 		Options:Some(json!({
 			"label": Request.label,
 			"supportsMultipleAccounts": Request.supports_multiple_accounts,
 		})),
 	};
+
 	Service
 		.environment
 		.ApplicationState

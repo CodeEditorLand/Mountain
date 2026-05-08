@@ -36,6 +36,7 @@ use crate::dev_log;
 pub struct DebugConfigurationProviderRegistration {
 	/// The provider handle
 	pub ProviderHandle:u32,
+
 	/// The sidecar identifier hosting this provider
 	pub SideCarIdentifier:String,
 }
@@ -45,6 +46,7 @@ pub struct DebugConfigurationProviderRegistration {
 pub struct DebugAdapterDescriptorFactoryRegistration {
 	/// The factory handle
 	pub FactoryHandle:u32,
+
 	/// The sidecar identifier hosting this factory
 	pub SideCarIdentifier:String,
 }
@@ -63,16 +65,20 @@ pub struct DebugAdapterDescriptorFactoryRegistration {
 pub struct DebugSessionEntry {
 	/// Session ID assigned at `StartDebugging` time.
 	pub SessionId:String,
+
 	/// Debug type (e.g. `"node"`, `"chrome"`) - mirrors the configuration
 	/// `type` field, used for diagnostics and routing.
 	pub DebugType:String,
+
 	/// Sidecar that owns the configuration-provider / adapter-descriptor
 	/// factory. Used for reverse-RPC dispatch when the adapter is not a
 	/// spawned executable.
 	pub SideCarIdentifier:String,
+
 	/// Channel that writes raw DAP frame bytes to the adapter's stdin.
 	/// `None` for non-executable adapter kinds.
 	pub StdinSender:Option<tokio::sync::mpsc::UnboundedSender<Vec<u8>>>,
+
 	/// PID of the spawned adapter process (when applicable). `None` for
 	/// non-executable kinds. Mountain doesn't keep a live `Child` handle
 	/// here because `Child` isn't `Clone`; the process termination is
@@ -86,8 +92,10 @@ pub struct DebugSessionEntry {
 pub struct DebugState {
 	/// Debug configuration providers organized by debug type.
 	pub DebugConfigurationProviders:Arc<StandardMutex<HashMap<String, DebugConfigurationProviderRegistration>>>,
+
 	/// Debug adapter descriptor factories organized by debug type.
 	pub DebugAdapterDescriptorFactories:Arc<StandardMutex<HashMap<String, DebugAdapterDescriptorFactoryRegistration>>>,
+
 	/// Active debug sessions indexed by session-id. Populated by
 	/// `DebugProvider::StartDebugging` after the adapter is resolved
 	/// (and optionally spawned); removed by `DebugProvider::StopDebugging`
@@ -102,7 +110,9 @@ impl Default for DebugState {
 
 		Self {
 			DebugConfigurationProviders:Arc::new(StandardMutex::new(HashMap::new())),
+
 			DebugAdapterDescriptorFactories:Arc::new(StandardMutex::new(HashMap::new())),
+
 			DebugSessions:Arc::new(StandardMutex::new(HashMap::new())),
 		}
 	}
@@ -112,8 +122,11 @@ impl DebugState {
 	/// Registers a debug configuration provider.
 	pub fn RegisterDebugConfigurationProvider(
 		&self,
+
 		debug_type:String,
+
 		provider_handle:u32,
+
 		sidecar_identifier:String,
 	) -> Result<(), String> {
 		let mut guard = self
@@ -143,8 +156,11 @@ impl DebugState {
 	/// Registers a debug adapter descriptor factory.
 	pub fn RegisterDebugAdapterDescriptorFactory(
 		&self,
+
 		debug_type:String,
+
 		factory_handle:u32,
+
 		sidecar_identifier:String,
 	) -> Result<(), String> {
 		let mut guard = self
@@ -166,6 +182,7 @@ impl DebugState {
 	/// Gets a debug adapter descriptor factory registration by debug type.
 	pub fn GetDebugAdapterDescriptorFactory(
 		&self,
+
 		debug_type:&str,
 	) -> Option<DebugAdapterDescriptorFactoryRegistration> {
 		self.DebugAdapterDescriptorFactories
@@ -199,7 +216,9 @@ impl DebugState {
 			.DebugSessions
 			.lock()
 			.map_err(|Error| format!("Failed to lock DebugSessions: {}", Error))?;
+
 		Guard.insert(Entry.SessionId.clone(), Entry);
+
 		Ok(())
 	}
 

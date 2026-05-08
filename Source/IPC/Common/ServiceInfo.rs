@@ -21,7 +21,11 @@
 //! gRPC and Tauri IPC dispatch hot paths.
 
 pub mod ServiceEndpoint;
+
 pub mod ServiceInfo;
+
 pub mod ServicePerformance;
+
 pub mod ServiceRegistry;
+
 pub mod ServiceState;

@@ -12,8 +12,10 @@ pub fn Fn(Input:Value) -> Value {
 	match Input {
 		Value::Object(mut Map) => {
 			Map.entry("$mid".to_string()).or_insert(json!(MID_URI::VALUE));
+
 			Value::Object(Map)
 		},
+
 		Other => Other,
 	}
 }

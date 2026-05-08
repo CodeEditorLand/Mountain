@@ -25,9 +25,13 @@ use crate::Update::UpdateService::{CheckForUpdatesViaAir, IsAirAvailable};
 #[cfg(not(feature = "AirIntegration"))]
 pub async fn Fn(
 	ApplicationHandle:AppHandle,
+
 	RunTime:Arc<Runtime>,
+
 	NotifyNoUpdate:bool,
+
 	_AirClient:Option<()>,
+
 	Mode:UpdateMode::Enum,
 ) -> Result<(), CommonError> {
 	if matches!(Mode, UpdateMode::Enum::ForceAir) {
@@ -36,16 +40,22 @@ pub async fn Fn(
 				.to_string(),
 		});
 	}
+
 	dev_log!("update", "[UpdateService] Using Tauri updater (Air integration disabled)");
+
 	CheckForUpdates::Fn(ApplicationHandle, RunTime, NotifyNoUpdate).await
 }
 
 #[cfg(feature = "AirIntegration")]
 pub async fn Fn(
 	ApplicationHandle:AppHandle,
+
 	RunTime:Arc<Runtime>,
+
 	NotifyNoUpdate:bool,
+
 	AirClient:Option<Arc<AirServiceClient<tonic::transport::Channel>>>,
+
 	Mode:UpdateMode::Enum,
 ) -> Result<(), CommonError> {
 	match Mode {
@@ -53,19 +63,24 @@ pub async fn Fn(
 			let AirRef = AirClient.as_ref().ok_or_else(|| {
 				CommonError::Configuration { Message:"ForceAir mode requires a valid AirClient".to_string() }
 			})?;
+
 			CheckForUpdatesViaAir::Fn(ApplicationHandle, RunTime, NotifyNoUpdate, AirRef).await
 		},
+
 		UpdateMode::Enum::ForceTauri => CheckForUpdates::Fn(ApplicationHandle, RunTime, NotifyNoUpdate).await,
+
 		UpdateMode::Enum::AutoDetect => {
 			if let Some(AirRef) = &AirClient {
 				if IsAirAvailable::Fn(AirRef).await {
 					return CheckForUpdatesViaAir::Fn(ApplicationHandle, RunTime, NotifyNoUpdate, AirRef).await;
 				}
+
 				dev_log!(
 					"update",
 					"warn: [UpdateService] Air client provided but unhealthy - falling back to Tauri"
 				);
 			}
+
 			CheckForUpdates::Fn(ApplicationHandle, RunTime, NotifyNoUpdate).await
 		},
 	}

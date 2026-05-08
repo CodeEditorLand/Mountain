@@ -5,10 +5,17 @@
 //! processId), and resize.
 
 pub mod AcceptTerminalClosed;
+
 pub mod AcceptTerminalOpened;
+
 pub mod AcceptTerminalProcessData;
+
 pub mod AcceptTerminalProcessId;
+
 pub mod CloseTerminal;
+
 pub mod OpenTerminal;
+
 pub mod ResizeTerminal;
+
 pub mod TerminalInput;

@@ -11,5 +11,6 @@ pub fn Fn(Method:&str) {
 	if !CaptureAllowed::Fn() {
 		return;
 	}
+
 	CaptureEvent::Fn("land:mountain:ipc:invoke", Some(vec![("method", Method)]));
 }

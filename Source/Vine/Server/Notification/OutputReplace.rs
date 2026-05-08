@@ -13,9 +13,14 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn OutputReplace(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Channel = Parameter.get("channel").and_then(Value::as_str).unwrap_or("");
+
 	let Text = Parameter.get("text").and_then(Value::as_str).unwrap_or("");
+
 	let Handle = Service.ApplicationHandle();
+
 	let _ = Handle.emit("sky://output/clear", json!({ "channel": Channel }));
+
 	let _ = Handle.emit("sky://output/append", json!({ "channel": Channel, "text": Text }));
+
 	dev_log!("grpc", "[Output] replace channel={} bytes={}", Channel, Text.len());
 }

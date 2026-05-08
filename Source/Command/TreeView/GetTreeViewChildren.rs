@@ -23,8 +23,11 @@ use crate::{
 #[command]
 pub async fn GetTreeViewChildren(
 	ApplicationHandle:AppHandle<Wry>,
+
 	_State:State<'_, Arc<ApplicationState>>,
+
 	ViewId:String,
+
 	ElementHandle:Option<String>,
 ) -> Result<Value, String> {
 	dev_log!(
@@ -35,14 +38,19 @@ pub async fn GetTreeViewChildren(
 	);
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
+
 	let Environment:Arc<MountainEnvironment> = RunTime.Environment.clone();
+
 	let TreeProvider:Arc<dyn CommonTreeViewProvider> = Environment.Require();
 
 	match TreeProvider.GetChildren(ViewId.clone(), ElementHandle).await {
 		Ok(Children) => Ok(json!(Children)),
+
 		Err(Error) => {
 			let ErrorMessage = format!("Failed to get children for tree view '{}': {}", ViewId, Error);
+
 			dev_log!("commands", "error: {}", ErrorMessage);
+
 			Err(ErrorMessage)
 		},
 	}

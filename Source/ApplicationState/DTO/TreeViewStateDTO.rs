@@ -98,10 +98,15 @@ impl TreeViewStateDTO {
 	/// Result containing the DTO or validation error
 	pub fn New(
 		ViewIdentifier:String,
+
 		Provider:Option<Arc<dyn TreeViewProvider + Send + Sync>>,
+
 		SideCarIdentifier:Option<String>,
+
 		CanSelectMany:bool,
+
 		HasHandleDrag:bool,
+
 		HasHandleDrop:bool,
 	) -> Result<Self, String> {
 		// Validate view identifier length
@@ -149,6 +154,7 @@ impl TreeViewStateDTO {
 		}
 
 		self.Message = Some(Message);
+
 		Ok(())
 	}
 
@@ -165,6 +171,7 @@ impl TreeViewStateDTO {
 		}
 
 		self.Title = Some(Title);
+
 		Ok(())
 	}
 
@@ -184,6 +191,7 @@ impl TreeViewStateDTO {
 		}
 
 		self.Description = Some(Description);
+
 		Ok(())
 	}
 
@@ -200,6 +208,7 @@ impl TreeViewStateDTO {
 		}
 
 		self.Badge = Some(Badge);
+
 		Ok(())
 	}
 

@@ -25,11 +25,17 @@
 //! lock. No eviction today - bundle is bounded by ~80 MB.
 
 pub mod CacheStats;
+
 pub mod Clear;
+
 pub mod Entry;
+
 pub mod Invalidate;
+
 pub mod LoadOrInsert;
+
 pub mod Stats;
 
 pub(crate) mod Map;
+
 pub(crate) mod MimeFromExtension;

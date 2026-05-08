@@ -17,9 +17,12 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 #[command]
 pub async fn PersistTreeView(
 	_ApplicationHandle:AppHandle<Wry>,
+
 	_State:State<'_, Arc<ApplicationState>>,
+
 	_ViewId:String,
 ) -> Result<Value, String> {
 	dev_log!("commands", "warn: PersistTreeView not implemented");
+
 	Ok(json!({ "success": false, "error": "PersistTreeViewState method not implemented" }))
 }

@@ -144,12 +144,16 @@ impl CustomEditorProvider for MountainEnvironment {
 		// `CustomDocument` from `openCustomDocument`); the cancellation
 		// token id is unused by our shim path and we send `0`.
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+
 		let DocumentIdentifier = json!({
 			"viewType": ViewType,
 			"resource": { "external": ResourceURI.to_string() },
 		});
+
 		let RPCMethod = format!("{}$onSaveCustomDocument", ProxyTarget::ExtHostCustomEditors.GetTargetPrefix());
+
 		let RPCParameters = json!([DocumentIdentifier, 0]);
+
 		match IPCProvider
 			.SendRequestToSideCar("cocoon-main".to_string(), RPCMethod, RPCParameters, 30_000)
 			.await
@@ -161,6 +165,7 @@ impl CustomEditorProvider for MountainEnvironment {
 					ViewType,
 					ResourceURI
 				);
+
 				let _ = self.ApplicationHandle.emit(
 					"sky://customEditor/saved",
 					json!({
@@ -168,8 +173,10 @@ impl CustomEditorProvider for MountainEnvironment {
 						"resource": ResourceURI.to_string(),
 					}),
 				);
+
 				Ok(())
 			},
+
 			Err(Error) => {
 				dev_log!(
 					"extensions",
@@ -178,6 +185,7 @@ impl CustomEditorProvider for MountainEnvironment {
 					ResourceURI,
 					Error
 				);
+
 				Err(Error)
 			},
 		}
@@ -185,8 +193,11 @@ impl CustomEditorProvider for MountainEnvironment {
 
 	async fn ResolveCustomEditor(
 		&self,
+
 		ViewType:String,
+
 		ResourceURI:Url,
+
 		WebviewPanelHandle:String,
 	) -> Result<(), CommonError> {
 		dev_log!(
@@ -205,8 +216,11 @@ impl CustomEditorProvider for MountainEnvironment {
 		//    etc. to populate the webview associated with the `WebviewPanelHandle`.
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+
 		let ResourceURIComponents = json!({ "external": ResourceURI.to_string() });
+
 		let RPCMethod = format!("{}$resolveCustomEditor", ProxyTarget::ExtHostCustomEditors.GetTargetPrefix());
+
 		let RPCParameters = json!([ResourceURIComponents, ViewType, WebviewPanelHandle]);
 
 		// This is a fire-and-forget notification. The sidecar is expected to

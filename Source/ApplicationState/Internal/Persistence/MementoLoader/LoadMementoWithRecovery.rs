@@ -21,6 +21,7 @@ pub fn Fn(StorageFilePath:&Path) -> Result<HashMap<String, Value>, CommonError> 
 			"[MementoLoader] Memento file does not exist: {}",
 			StorageFilePath.display()
 		);
+
 		return Ok(HashMap::new());
 	}
 

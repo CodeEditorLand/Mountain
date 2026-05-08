@@ -74,6 +74,7 @@ impl Registration {
 	pub fn RegisterProvider(&self, handle:u32, provider:ProviderRegistrationDTO) {
 		if let Ok(mut guard) = self.LanguageProviders.lock() {
 			guard.insert(handle, provider);
+
 			// Duplicate of the `provider-register` log line emitted by
 			// `MountainVinegRPCService`'s OR match - both fire per
 			// provider registration. Route this one to
@@ -92,6 +93,7 @@ impl Registration {
 	pub fn UnregisterProvider(&self, handle:u32) {
 		if let Ok(mut guard) = self.LanguageProviders.lock() {
 			guard.remove(&handle);
+
 			dev_log!(
 				"extensions",
 				"[ProviderRegistration] Provider unregistered with handle: {}",

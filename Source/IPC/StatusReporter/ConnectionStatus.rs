@@ -9,6 +9,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub is_connected:bool,
+
 	pub last_heartbeat:u64,
+
 	pub connection_duration:u64,
 }

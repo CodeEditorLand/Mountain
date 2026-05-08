@@ -35,16 +35,29 @@
 //! - [ ] Add feature metrics
 
 pub mod Debug;
+
 pub mod Decorations;
+
 pub mod Diagnostics;
+
 pub mod Documents;
+
 pub mod Keybindings;
+
 pub mod LifecyclePhase;
+
 pub mod Markers;
+
 pub mod NavigationHistory;
+
 pub mod OutputChannels;
+
 pub mod State;
+
 pub mod Terminals;
+
 pub mod TreeViews;
+
 pub mod Webviews;
+
 pub mod WorkingCopy;

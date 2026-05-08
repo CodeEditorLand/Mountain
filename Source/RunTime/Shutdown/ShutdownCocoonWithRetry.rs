@@ -17,8 +17,11 @@ impl ApplicationRunTime {
 		let IPCProvider:Arc<dyn IPCProvider> = self.Environment.Require();
 
 		let MaximumAttempts = 3;
+
 		let mut Attempts = 0;
+
 		let mut GracefulOk = false;
+
 		let mut LastError:Option<CommonError> = None;
 
 		while Attempts < MaximumAttempts {
@@ -28,12 +31,17 @@ impl ApplicationRunTime {
 			{
 				Ok(()) => {
 					tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
+
 					GracefulOk = true;
+
 					break;
 				},
+
 				Err(Error) => {
 					Attempts += 1;
+
 					LastError = Some(Error.clone());
+
 					if Attempts < MaximumAttempts {
 						dev_log!(
 							"lifecycle",
@@ -41,6 +49,7 @@ impl ApplicationRunTime {
 							Attempts,
 							Error
 						);
+
 						tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
 					}
 				},

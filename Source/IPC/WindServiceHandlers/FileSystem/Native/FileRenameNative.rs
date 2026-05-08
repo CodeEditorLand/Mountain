@@ -8,6 +8,7 @@ use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_fro
 
 pub async fn FileRenameNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Source = extract_path_from_arg(Arguments.get(0).ok_or("Missing source path")?)?;
+
 	let Target = extract_path_from_arg(Arguments.get(1).ok_or("Missing target path")?)?;
 
 	tokio::fs::rename(&Source, &Target)

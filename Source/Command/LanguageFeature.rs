@@ -32,18 +32,29 @@
 //! and cancellation tokens for long-running ops.
 
 pub mod MountainProvideCodeActions;
+
 pub mod MountainProvideCompletions;
+
 pub mod MountainProvideDefinition;
+
 pub mod MountainProvideDocumentHighlights;
+
 pub mod MountainProvideHover;
+
 pub mod MountainProvideReferences;
 
 pub(crate) mod CodeActions;
+
 pub(crate) mod Completions;
+
 pub(crate) mod Definition;
+
 pub(crate) mod Highlights;
+
 pub(crate) mod Hover;
+
 pub(crate) mod References;
 
 pub(crate) mod InvokeProvider;
+
 pub(crate) mod Validation;

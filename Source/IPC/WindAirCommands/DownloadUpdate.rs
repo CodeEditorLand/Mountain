@@ -11,12 +11,15 @@ use crate::{
 #[tauri::command]
 pub async fn DownloadUpdate(
 	url:String,
+
 	destination:String,
+
 	checksum:Option<String>,
 ) -> Result<DownloadResultDTO::Struct, String> {
 	dev_log!("grpc", "[WindAirCommands] DownloadUpdate called: {} -> {}", url, destination);
 
 	let air_address = GetAirAddress::Fn()?;
+
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
 	let request_id = uuid::Uuid::new_v4().to_string();
@@ -34,8 +37,11 @@ pub async fn DownloadUpdate(
 
 	let result = DownloadResultDTO::Struct {
 		success:true,
+
 		file_path:file_info.file_path,
+
 		file_size:file_info.file_size,
+
 		checksum:file_info.checksum,
 	};
 
@@ -44,5 +50,6 @@ pub async fn DownloadUpdate(
 		"[WindAirCommands] Update download completed: success={}",
 		result.success
 	);
+
 	Ok(result)
 }

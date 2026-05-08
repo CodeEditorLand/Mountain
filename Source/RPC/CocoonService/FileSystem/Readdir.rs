@@ -22,6 +22,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:ReaddirRequest) -> Result<R
 	})?;
 
 	let mut Entries = Vec::new();
+
 	while let Ok(Some(Entry)) = ReadDir.next_entry().await {
 		if let Some(Name) = Entry.file_name().to_str() {
 			Entries.push(Name.to_string());

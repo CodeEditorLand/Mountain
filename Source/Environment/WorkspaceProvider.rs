@@ -94,26 +94,35 @@ use crate::dev_log;
 /// thousands of files; a 0.5-3 ms HashMap lookup short-circuits all
 /// but the first walk in a typing burst.
 const FIND_FILES_CACHE_TTL:Duration = Duration::from_millis(2500);
+
 const FIND_FILES_CACHE_CAPACITY:usize = 128;
 
 #[derive(Hash, Eq, PartialEq, Clone)]
 struct FindFilesCacheKey {
 	Folders:Vec<PathBuf>,
+
 	Include:String,
+
 	Exclude:Option<String>,
+
 	Cap:usize,
+
 	UseIgnoreFiles:bool,
+
 	FollowSymlinks:bool,
+
 	RestrictBase:Option<String>,
 }
 
 struct FindFilesCacheEntry {
 	Result:Vec<Url>,
+
 	StoredAt:Instant,
 }
 
 fn FindFilesCache() -> &'static Mutex<HashMap<FindFilesCacheKey, FindFilesCacheEntry>> {
 	static CACHE:OnceLock<Mutex<HashMap<FindFilesCacheKey, FindFilesCacheEntry>>> = OnceLock::new();
+
 	CACHE.get_or_init(|| Mutex::new(HashMap::with_capacity(FIND_FILES_CACHE_CAPACITY)))
 }
 
@@ -125,25 +134,33 @@ fn FindFilesCachePut(Key:FindFilesCacheKey, Result:Vec<Url>) {
 	if let Ok(mut Guard) = FindFilesCache().lock() {
 		if Guard.len() >= FIND_FILES_CACHE_CAPACITY {
 			let Cutoff = Instant::now() - FIND_FILES_CACHE_TTL;
+
 			Guard.retain(|_, V| V.StoredAt > Cutoff);
+
 			if Guard.len() >= FIND_FILES_CACHE_CAPACITY {
 				let DropCount = Guard.len() / 2;
+
 				let StaleKeys:Vec<FindFilesCacheKey> = Guard.iter().take(DropCount).map(|(K, _)| K.clone()).collect();
+
 				for K in StaleKeys {
 					Guard.remove(&K);
 				}
 			}
 		}
+
 		Guard.insert(Key, FindFilesCacheEntry { Result, StoredAt:Instant::now() });
 	}
 }
 
 fn FindFilesCacheGet(Key:&FindFilesCacheKey) -> Option<Vec<Url>> {
 	let Guard = FindFilesCache().lock().ok()?;
+
 	let Entry = Guard.get(Key)?;
+
 	if Entry.StoredAt.elapsed() > FIND_FILES_CACHE_TTL {
 		return None;
 	}
+
 	Some(Entry.Result.clone())
 }
 
@@ -172,6 +189,7 @@ pub fn ClearFindFilesCache() {
 /// follower awaits, then reads the freshly-populated cache.
 fn FindFilesInFlight() -> &'static Mutex<HashMap<FindFilesCacheKey, Arc<Notify>>> {
 	static IN_FLIGHT:OnceLock<Mutex<HashMap<FindFilesCacheKey, Arc<Notify>>>> = OnceLock::new();
+
 	IN_FLIGHT.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
@@ -180,12 +198,14 @@ impl WorkspaceProvider for MountainEnvironment {
 	/// Retrieves information about all currently open workspace folders.
 	async fn GetWorkspaceFoldersInfo(&self) -> Result<Vec<(Url, String, usize)>, CommonError> {
 		dev_log!("workspaces", "[WorkspaceProvider] Getting workspace folders info.");
+
 		let FoldersGuard = self
 			.ApplicationState
 			.Workspace
 			.WorkspaceFolders
 			.lock()
 			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+
 		Ok(FoldersGuard.iter().map(|f| (f.URI.clone(), f.Name.clone(), f.Index)).collect())
 	}
 
@@ -198,6 +218,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			.WorkspaceFolders
 			.lock()
 			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+
 		for Folder in FoldersGuard.iter() {
 			if URIToMatch.as_str().starts_with(Folder.URI.as_str()) {
 				return Ok(Some((Folder.URI.clone(), Folder.Name.clone(), Folder.Index)));
@@ -238,6 +259,7 @@ impl WorkspaceProvider for MountainEnvironment {
 			"workspaces",
 			"warn: [WorkspaceProvider] RequestWorkspaceTrust is not implemented; defaulting to trusted."
 		);
+
 		Ok(true)
 	}
 
@@ -267,22 +289,31 @@ impl WorkspaceProvider for MountainEnvironment {
 	/// top-level `.gitignore`.
 	async fn FindFilesInWorkspace(
 		&self,
+
 		IncludePatternDTO:Value,
+
 		ExcludePatternDTO:Option<Value>,
+
 		MaxResults:Option<usize>,
+
 		UseIgnoreFiles:bool,
+
 		FollowSymlinks:bool,
 	) -> Result<Vec<Url>, CommonError> {
 		dev_log!("workspaces", "[WorkspaceProvider] FindFilesInWorkspace called");
 
 		let IncludePattern = ExtractGlobPattern(&IncludePatternDTO);
+
 		let IncludePattern = match IncludePattern {
 			Some(P) if !P.is_empty() => P,
+
 			_ => {
 				dev_log!("workspaces", "[FindFilesInWorkspace] empty include pattern → []");
+
 				return Ok(Vec::new());
 			},
 		};
+
 		// Diagnostic: capture the actual include pattern + the input
 		// DTO shape so the log makes the "every findFiles returns 0"
 		// pattern debuggable. The pattern is the most common source

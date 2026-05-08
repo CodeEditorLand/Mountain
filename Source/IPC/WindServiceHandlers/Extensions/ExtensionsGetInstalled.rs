@@ -49,6 +49,7 @@ use crate::{
 };
 
 const EXTENSION_TYPE_SYSTEM:u8 = 0;
+
 const EXTENSION_TYPE_USER:u8 = 1;
 
 pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
@@ -62,17 +63,23 @@ pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:V
 
 	if Extensions.is_empty() {
 		const POLL_INTERVAL_MS:u64 = 50;
+
 		const MAX_WAIT_MS:u64 = 5000;
+
 		let mut Elapsed:u64 = 0;
+
 		while Extensions.is_empty() && Elapsed < MAX_WAIT_MS {
 			tokio::time::sleep(std::time::Duration::from_millis(POLL_INTERVAL_MS)).await;
+
 			Elapsed += POLL_INTERVAL_MS;
+
 			Extensions = RunTime
 				.Environment
 				.GetExtensions()
 				.await
 				.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
 		}
+
 		if !Extensions.is_empty() {
 			dev_log!(
 				"extensions",

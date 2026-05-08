@@ -25,7 +25,9 @@ pub fn Fn(Method:&str) -> EchoPriority {
 		| "ShowErrorMessage"
 		| "ExecuteContributedCommand"
 		| "ShowTextDocument" => EchoPriority::High,
+
 		"FindFiles" | "FindTextInFiles" | "GitExec" | "WatchFile" => EchoPriority::Low,
+
 		_ => EchoPriority::Normal,
 	}
 }

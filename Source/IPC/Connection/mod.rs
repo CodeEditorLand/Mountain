@@ -5,5 +5,7 @@
 //! `Health` (background checker). Callers spell the full path; no `pub use`.
 
 pub mod Health;
+
 pub mod Manager;
+
 pub mod Types;

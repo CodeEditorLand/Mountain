@@ -24,13 +24,21 @@
 //! - `CaptureAllowed::Fn` - `debug_assertions` && `Report != off`.
 
 pub mod CaptureError;
+
 pub mod CaptureEvent;
+
 pub mod CaptureHandler;
+
 pub mod CaptureIPC;
+
 pub mod HydrateRuntimeEnvironment;
+
 pub mod Initialize;
 
 pub(crate) mod CaptureAllowed;
+
 pub(crate) mod Client;
+
 pub(crate) mod Constants;
+
 pub(crate) mod DistinctId;

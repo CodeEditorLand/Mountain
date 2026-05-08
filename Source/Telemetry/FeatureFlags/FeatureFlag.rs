@@ -8,8 +8,12 @@ use crate::Telemetry::FeatureFlags::FlagCategory;
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub Name:String,
+
 	pub Enabled:bool,
+
 	pub Description:String,
+
 	pub Category:FlagCategory::Enum,
+
 	pub Reason:String,
 }

@@ -71,6 +71,7 @@
 
 // Module sub-modules
 pub mod AirClient;
+
 pub mod AirServiceProvider;
 
 // Stub types for Air integration when AirLibrary is not available (legacy)

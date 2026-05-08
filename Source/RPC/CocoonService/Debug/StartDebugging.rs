@@ -17,6 +17,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:StartDebuggingRequest,
 ) -> Result<Response<StartDebuggingResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] start_debugging: type={}", Request.debug_type);

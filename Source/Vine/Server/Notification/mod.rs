@@ -43,57 +43,89 @@
 
 // --- Batch 8: provider-unregister cleanup ---
 pub mod UnregisterAuthenticationProvider;
+
 pub mod UnregisterDebugAdapter;
+
 pub mod UnregisterFileSystemProvider;
+
 pub mod UnregisterScmProvider;
+
 pub mod UnregisterTaskProvider;
+
 pub mod UnregisterUriHandler;
+
 pub mod UpdateScmGroup;
 
 // --- Batch 11: progress lifecycle name alignment ---
 pub mod ProgressComplete;
+
 pub mod ProgressUpdate;
 
 // --- Batch 10: status-bar text + disposal ---
 pub mod DisposeStatusBarItem;
+
 pub mod SetStatusBarText;
 
 // --- Batch 9: output channel lifecycle (`output.*` + `outputChannel.*`) ---
 pub mod OutputAppend;
+
 pub mod OutputAppendLine;
+
 pub mod OutputChannelAppend;
+
 pub mod OutputChannelClear;
+
 pub mod OutputChannelCreate;
+
 pub mod OutputChannelDispose;
+
 pub mod OutputChannelHide;
+
 pub mod OutputChannelShow;
+
 pub mod OutputClear;
+
 pub mod OutputCreate;
+
 pub mod OutputDispose;
+
 pub mod OutputReplace;
+
 pub mod OutputShow;
 
 // --- Batch 13: webview reverse messaging ---
 pub mod WebviewDispose;
+
 pub mod WebviewPostMessage;
 
 // --- Batch 14: grammar, security, external ---
 pub mod OpenExternal;
+
 pub mod SecurityIncident;
+
 pub mod SetLanguageConfiguration;
 
 // --- Batch 15: inline arms atomised from `MountainVinegRPCService` dispatcher.
 // These were previously ~300 lines of inline match-arm bodies; now each
 // wire method is a one-fn file that the dispatcher delegates into.
 pub mod ExtensionActivated;
+
 pub mod ExtensionDeactivated;
+
 pub mod ExtensionHostMessage;
+
 pub mod LanguagesSetDocumentLanguage;
+
 pub mod ProgressEnd;
+
 pub mod ProgressReport;
+
 pub mod ProgressStart;
+
 pub mod WebviewReady;
+
 pub mod WindowShowTextDocument;
+
 pub mod WorkspaceApplyEdit;
 
 // --- Batch 16: the remaining inline arms - command register/unregister,
@@ -103,14 +135,23 @@ pub mod WorkspaceApplyEdit;
 // relay + provider-drive pattern) - kept together where the handling
 // is truly identical and splitting would duplicate 5-line files.
 pub mod DebugLifecycle;
+
 pub mod DecorationTypeLifecycle;
+
 pub mod RegisterCommand;
+
 pub mod StatusBarLifecycle;
+
 pub mod StatusBarMessage;
+
 pub mod TerminalLifecycle;
+
 pub mod UnregisterCommand;
+
 pub mod WebviewLifecycle;
+
 pub mod WindowCreateTerminal;
+
 pub mod WindowShowMessage;
 
 // --- Batch 17 (post-§14): SCM register pair pulled out of the

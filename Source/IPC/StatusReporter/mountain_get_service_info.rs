@@ -13,6 +13,7 @@ use crate::{
 #[tauri::command]
 pub async fn mountain_get_service_info(
 	app_handle:tauri::AppHandle,
+
 	service_name:String,
 ) -> Result<Option<ServiceInfo>, String> {
 	dev_log!("lifecycle", "Tauri command: get_service_info");

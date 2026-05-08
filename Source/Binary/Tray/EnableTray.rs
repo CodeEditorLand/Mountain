@@ -35,5 +35,6 @@ pub fn enable_tray(_app:&App) -> Result<(), String> {
 	// operations like updates or sync status.
 
 	dev_log!("window", "[Tray] System tray enabled");
+
 	Ok(())
 }

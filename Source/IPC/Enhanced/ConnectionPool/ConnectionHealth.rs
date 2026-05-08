@@ -7,6 +7,8 @@
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Enum {
 	Healthy,
+
 	Unhealthy,
+
 	Degraded,
 }

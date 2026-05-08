@@ -45,6 +45,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:InitExtensionHostRequest) ->
 
 	if !Folders.is_empty() {
 		Service.environment.ApplicationState.Workspace.SetWorkspaceFolders(Folders);
+
 		dev_log!(
 			"cocoon",
 			"[CocoonService] Workspace folders stored: {}",

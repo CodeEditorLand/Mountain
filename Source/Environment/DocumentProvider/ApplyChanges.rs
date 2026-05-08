@@ -12,11 +12,17 @@ use crate::{Environment::Utility, dev_log};
 /// Applies a collection of content changes to a document.
 pub(super) async fn apply_document_changes(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	uri:Url,
+
 	new_version_identifier:i64,
+
 	changes_dto_collection:Value,
+
 	_is_dirty_after_change:bool,
+
 	_is_undoing:bool,
+
 	_is_redoing:bool,
 ) -> Result<(), CommonError> {
 	dev_log!("model", "[DocumentProvider] Applying changes to document: {}", uri);

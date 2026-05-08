@@ -20,8 +20,11 @@ use crate::dev_log;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WebviewMessage {
 	pub MessageIdentifier:String,
+
 	pub MessageType:String,
+
 	pub Payload:Value,
+
 	pub Source:Option<String>,
 }
 
@@ -29,14 +32,18 @@ pub struct WebviewMessage {
 #[allow(dead_code)]
 struct WebviewMessageContext {
 	Handle:String,
+
 	SideCarIdentifier:Option<String>,
+
 	PendingResponses:HashMap<String, tokio::sync::oneshot::Sender<Value>>,
 }
 
 /// Messaging operations implementation for MountainEnvironment
 pub(super) async fn post_message_to_webview_impl(
 	env:&MountainEnvironment,
+
 	handle:String,
+
 	message:Value,
 ) -> Result<bool, CommonError> {
 	dev_log!("extensions", "[WebviewProvider] Posting message to Webview: {}", handle);
@@ -44,8 +51,11 @@ pub(super) async fn post_message_to_webview_impl(
 	if let Some(webview_window) = env.ApplicationHandle.get_webview_window(&handle) {
 		let webview_message = WebviewMessage {
 			MessageIdentifier:Uuid::new_v4().to_string(),
+
 			MessageType:"request".to_string(),
+
 			Payload:message,
+
 			Source:Some("host".to_string()),
 		};
 
@@ -60,6 +70,7 @@ pub(super) async fn post_message_to_webview_impl(
 			"[WebviewProvider] Message sent successfully to Webview: {}",
 			handle
 		);
+
 		Ok(true)
 	} else {
 		dev_log!(
@@ -67,6 +78,7 @@ pub(super) async fn post_message_to_webview_impl(
 			"warn: [WebviewProvider] Webview not found for message: {}",
 			handle
 		);
+
 		Ok(false)
 	}
 }
@@ -74,6 +86,7 @@ pub(super) async fn post_message_to_webview_impl(
 /// Sets up a message listener for a specific Webview.
 pub(super) async fn setup_webview_message_listener_impl(
 	env:&MountainEnvironment,
+
 	handle:String,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -91,6 +104,7 @@ pub(super) async fn setup_webview_message_listener_impl(
 
 /// Removes a message listener for a specific Webview.
 pub(super) async fn remove_webview_message_listener_impl(_env:&MountainEnvironment, _handle:&str) {
+
 	// In a full implementation, this would remove the event listener
 	// that forwards Webview messages.
 }

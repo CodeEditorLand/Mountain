@@ -12,6 +12,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn OutputAppend(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://output/append", Parameter);
+
 	dev_log!(
 		"grpc",
 		"[Output] append channel={} bytes={}",

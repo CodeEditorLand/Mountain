@@ -14,6 +14,7 @@ pub async fn GetAirStatus() -> Result<AirServiceStatusDTO::Struct, String> {
 	dev_log!("grpc", "[WindAirCommands] GetAirStatus called");
 
 	let air_address = GetAirAddress::Fn()?;
+
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
 	let request_id = uuid::Uuid::new_v4().to_string();
@@ -27,14 +28,21 @@ pub async fn GetAirStatus() -> Result<AirServiceStatusDTO::Struct, String> {
 
 	let result = AirServiceStatusDTO::Struct {
 		version:status.version,
+
 		uptime_seconds:status.uptime_seconds,
+
 		total_requests:status.total_requests,
+
 		successful_requests:status.successful_requests,
+
 		failed_requests:status.failed_requests,
+
 		active_requests:status.active_requests,
+
 		healthy,
 	};
 
 	dev_log!("grpc", "[WindAirCommands] Air status retrieved: healthy={}", result.healthy);
+
 	Ok(result)
 }

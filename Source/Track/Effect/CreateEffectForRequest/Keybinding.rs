@@ -18,6 +18,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						provider.GetResolvedKeybinding().await.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

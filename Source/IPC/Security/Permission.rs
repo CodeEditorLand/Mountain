@@ -80,6 +80,7 @@ impl Permission {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
@@ -88,7 +89,9 @@ mod tests {
 			Permission::new("file.read".to_string(), "Read file operations".to_string(), "file".to_string());
 
 		assert_eq!(permission.name, "file.read");
+
 		assert_eq!(permission.description, "Read file operations");
+
 		assert_eq!(permission.category, "file");
 	}
 
@@ -98,6 +101,7 @@ mod tests {
 			Permission::new("file.read".to_string(), "Read file operations".to_string(), "file".to_string());
 
 		assert!(permission.is_in_category("file"));
+
 		assert!(!permission.is_in_category("config"));
 	}
 
@@ -123,6 +127,7 @@ mod tests {
 
 		// Should return None for invalid format
 		assert_eq!(permission.resource(), Some("invalid"));
+
 		assert_eq!(permission.action(), None);
 	}
 }

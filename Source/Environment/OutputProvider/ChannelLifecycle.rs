@@ -13,7 +13,9 @@ use crate::{ApplicationState::DTO::OutputChannelStateDTO::OutputChannelStateDTO,
 /// Registers a new output channel.
 pub(super) async fn register_channel(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	name:String,
+
 	language_identifier:Option<String>,
 ) -> Result<String, CommonError> {
 	dev_log!("output", "[OutputProvider] Registering channel: '{}'", name);
@@ -74,6 +76,7 @@ pub(super) async fn register_channel(
 /// Disposes of an output channel permanently.
 pub(super) async fn dispose_channel(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	channel_identifier:String,
 ) -> Result<(), CommonError> {
 	dev_log!("output", "[OutputProvider] Disposing channel: '{}'", channel_identifier);

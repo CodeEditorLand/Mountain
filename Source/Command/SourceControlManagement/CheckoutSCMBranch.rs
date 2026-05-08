@@ -17,5 +17,6 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 #[command]
 pub async fn CheckoutSCMBranch(_State:State<'_, Arc<ApplicationState>>, BranchName:String) -> Result<Value, String> {
 	dev_log!("commands", "checking out branch: {}", BranchName);
+
 	Ok(json!({ "success": true, "message": format!("Checked out branch: {}", BranchName) }))
 }

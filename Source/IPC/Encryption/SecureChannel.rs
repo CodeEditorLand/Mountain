@@ -183,6 +183,7 @@ impl SecureMessageChannel {
 
 		// Generate 256-bit (32-byte) encryption key
 		let mut encryption_key_bytes = vec![0u8; 32];
+
 		rng.fill(&mut encryption_key_bytes)
 			.map_err(|e| format!("Failed to generate encryption key: {}", e))?;
 
@@ -193,6 +194,7 @@ impl SecureMessageChannel {
 
 		// Generate 256-bit HMAC key
 		let mut hmac_key = vec![0u8; 32];
+
 		rng.fill(&mut hmac_key)
 			.map_err(|e| format!("Failed to generate HMAC key: {}", e))?;
 
@@ -231,18 +233,21 @@ impl SecureMessageChannel {
 
 		// Generate unique 12-byte nonce (required for AES-256-GCM)
 		let mut nonce = [0u8; 12];
+
 		SystemRandom::new()
 			.fill(&mut nonce)
 			.map_err(|e| format!("Failed to generate nonce: {}", e))?;
 
 		// Encrypt with AES-256-GCM (authenticated encryption)
 		let mut in_out = serialized_message.clone();
+
 		self.encryption_key
 			.seal_in_place_append_tag(aead::Nonce::assume_unique_for_key(nonce), aead::Aad::empty(), &mut in_out)
 			.map_err(|e| format!("Encryption failed: {}", e))?;
 
 		// Generate HMAC for additional authentication
 		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
+
 		let hmac_tag = hmac::sign(&hmac_key, &in_out);
 
 		let encrypted_message =
@@ -280,11 +285,13 @@ impl SecureMessageChannel {
 
 		// Verify HMAC first (detect tampering)
 		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
+
 		hmac::verify(&hmac_key, &encrypted.ciphertext, &encrypted.hmac_tag)
 			.map_err(|_| "HMAC verification failed - message may be tampered".to_string())?;
 
 		// Convert nonce slice to array
 		let nonce_slice:&[u8] = &encrypted.nonce;
+
 		let nonce_array:[u8; 12] = nonce_slice
 			.try_into()
 			.map_err(|_| "Invalid nonce length - must be 12 bytes".to_string())?;
@@ -293,12 +300,14 @@ impl SecureMessageChannel {
 
 		// Decrypt with AES-256-GCM
 		let mut in_out = encrypted.ciphertext.clone();
+
 		self.encryption_key
 			.open_in_place(nonce, aead::Aad::empty(), &mut in_out)
 			.map_err(|e| format!("Decryption failed: {}", e))?;
 
 		// Remove the authentication tag (last 16 bytes for AES-256-GCM)
 		let plaintext_len = in_out.len() - AES_256_GCM.tag_len();
+
 		in_out.truncate(plaintext_len);
 
 		// Deserialize message
@@ -360,6 +369,7 @@ impl SecureMessageChannel {
 #[cfg(test)]
 #[allow(unused_imports)]
 mod tests {
+
 	use super::*;
 
 	fn create_test_message() -> TauriIPCMessage {
@@ -376,16 +386,19 @@ mod tests {
 	#[test]
 	fn test_secure_channel_creation() {
 		let channel = SecureMessageChannel::new();
+
 		assert!(channel.is_ok());
 	}
 
 	#[test]
 	fn test_encrypt_and_decrypt() {
 		let channel = SecureMessageChannel::new().unwrap();
+
 		let original_message = create_test_message();
 
 		// Encrypt
 		let encrypted = channel.encrypt_message(&original_message).unwrap();
+
 		assert!(encrypted.is_valid());
 
 		// Decrypt
@@ -393,26 +406,32 @@ mod tests {
 
 		// Verify content
 		assert_eq!(decrypted.channel, original_message.channel);
+
 		assert_eq!(decrypted.data, original_message.data);
+
 		assert_eq!(decrypted.sender, original_message.sender);
 	}
 
 	#[test]
 	fn test_encryption_produces_different_outputs() {
 		let channel = SecureMessageChannel::new().unwrap();
+
 		let message = create_test_message();
 
 		let encrypted1 = channel.encrypt_message(&message).unwrap();
+
 		let encrypted2 = channel.encrypt_message(&message).unwrap();
 
 		// Each encryption should produce different output (due to unique nonces)
 		assert_ne!(encrypted1.nonce, encrypted2.nonce);
+
 		assert_ne!(encrypted1.ciphertext, encrypted2.ciphertext);
 	}
 
 	#[test]
 	fn test_tampered_message_fails_hmac_verification() {
 		let channel = SecureMessageChannel::new().unwrap();
+
 		let message = create_test_message();
 
 		let mut encrypted = channel.encrypt_message(&message).unwrap();
@@ -424,13 +443,16 @@ mod tests {
 
 		// Should fail HMAC verification
 		let result = channel.decrypt_message(&encrypted);
+
 		assert!(result.is_err());
+
 		assert!(result.unwrap_err().contains("HMAC verification failed"));
 	}
 
 	#[test]
 	fn test_invalid_nonce_length() {
 		let channel = SecureMessageChannel::new().unwrap();
+
 		let message = create_test_message();
 
 		let mut encrypted = channel.encrypt_message(&message).unwrap();
@@ -439,7 +461,9 @@ mod tests {
 		encrypted.nonce = vec![0u8; 16]; // Wrong length
 
 		let result = channel.decrypt_message(&encrypted);
+
 		assert!(result.is_err());
+
 		assert!(result.unwrap_err().contains("Invalid nonce length"));
 	}
 
@@ -448,7 +472,9 @@ mod tests {
 		let channel = SecureMessageChannel::new().unwrap();
 
 		assert_eq!(channel.key_length(), 32);
+
 		assert_eq!(channel.nonce_length(), 12);
+
 		assert_eq!(channel.auth_tag_length(), 16); // AES-256-GCM
 		assert_eq!(channel.hmac_tag_length(), 32); // HMAC-SHA256
 	}
@@ -456,6 +482,7 @@ mod tests {
 	#[test]
 	fn test_key_rotation() {
 		let mut channel = SecureMessageChannel::new().unwrap();
+
 		let message = create_test_message();
 
 		// Encrypt with original keys
@@ -463,15 +490,19 @@ mod tests {
 
 		// Rotate keys
 		let result = channel.rotate_keys();
+
 		assert!(result.is_ok());
 
 		// Old encrypted message should still decode successfully
 		let decrypted1 = channel.decrypt_message(&encrypted1).unwrap();
+
 		assert_eq!(decrypted1.channel, message.channel);
 
 		// New encryption should work with new keys
 		let encrypted2 = channel.encrypt_message(&message).unwrap();
+
 		let decrypted2 = channel.decrypt_message(&encrypted2).unwrap();
+
 		assert_eq!(decrypted2.channel, message.channel);
 
 		// Encrypted versions should be different
@@ -481,9 +512,11 @@ mod tests {
 	#[test]
 	fn test_empty_message() {
 		let channel = SecureMessageChannel::new().unwrap();
+
 		let message = TauriIPCMessage::new("test".to_string(), serde_json::json!(null), None);
 
 		let encrypted = channel.encrypt_message(&message).unwrap();
+
 		let decrypted = channel.decrypt_message(&encrypted).unwrap();
 
 		assert_eq!(decrypted.channel, "test");

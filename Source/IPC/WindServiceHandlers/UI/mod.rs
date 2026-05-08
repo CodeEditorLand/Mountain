@@ -16,11 +16,19 @@
 //!   - [`WorkingCopy`]    - dirty-state tracking
 
 pub mod Decoration;
+
 pub mod Keybinding;
+
 pub mod Lifecycle;
+
 pub mod Notification;
+
 pub mod Progress;
+
 pub mod QuickInput;
+
 pub mod Theme;
+
 pub mod Workspace;
+
 pub mod WorkingCopy;

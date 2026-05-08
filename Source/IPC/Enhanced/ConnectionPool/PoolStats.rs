@@ -10,14 +10,24 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub total_connections:usize,
+
 	pub active_connections:usize,
+
 	pub idle_connections:usize,
+
 	pub healthy_connections:usize,
+
 	pub max_connections:usize,
+
 	pub min_connections:usize,
+
 	pub wait_queue_size:usize,
+
 	pub average_wait_time_ms:f64,
+
 	pub total_operations:u64,
+
 	pub successful_operations:u64,
+
 	pub error_rate:f64,
 }

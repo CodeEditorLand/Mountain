@@ -10,6 +10,7 @@ use std::sync::OnceLock;
 
 pub fn Fn() -> String {
 	static STAMP:OnceLock<String> = OnceLock::new();
+
 	STAMP
 		.get_or_init(|| chrono::Local::now().format("%Y%m%dT%H%M%S").to_string())
 		.clone()

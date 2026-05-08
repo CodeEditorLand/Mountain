@@ -14,18 +14,25 @@ use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 pub enum IPCError {
 	/// Connection failed
 	ConnectionFailed { context:ErrorContext, source:Option<String> },
+
 	/// Message send failed
 	MessageSendFailed { context:ErrorContext, message_id:Option<String> },
+
 	/// Message receive failed
 	MessageReceiveFailed { context:ErrorContext, source:Option<String> },
+
 	/// Invalid message format
 	InvalidMessageFormat { context:ErrorContext, raw_message:Option<String> },
+
 	/// Timeout occurred
 	Timeout { context:ErrorContext, operation:Option<String>, timeout_ms:u64 },
+
 	/// Permission denied
 	PermissionDenied { context:ErrorContext, required_permission:Option<String> },
+
 	/// Service unavailable
 	ServiceUnavailable { context:ErrorContext, service_name:Option<String> },
+
 	/// Queue overflow
 	QueueOverflow { context:ErrorContext, queue_size:usize },
 }
@@ -35,12 +42,19 @@ impl IPCError {
 	pub fn context(&self) -> &ErrorContext {
 		match self {
 			IPCError::ConnectionFailed { context, .. } => context,
+
 			IPCError::MessageSendFailed { context, .. } => context,
+
 			IPCError::MessageReceiveFailed { context, .. } => context,
+
 			IPCError::InvalidMessageFormat { context, .. } => context,
+
 			IPCError::Timeout { context, .. } => context,
+
 			IPCError::PermissionDenied { context, .. } => context,
+
 			IPCError::ServiceUnavailable { context, .. } => context,
+
 			IPCError::QueueOverflow { context, .. } => context,
 		}
 	}
@@ -51,6 +65,7 @@ impl IPCError {
 			context:ErrorContext::new(message)
 				.with_kind(ErrorKind::IPC)
 				.with_severity(ErrorSeverity::Error),
+
 			source:None,
 		}
 	}
@@ -61,6 +76,7 @@ impl IPCError {
 			context:ErrorContext::new(message)
 				.with_kind(ErrorKind::IPC)
 				.with_severity(ErrorSeverity::Error),
+
 			message_id,
 		}
 	}
@@ -68,12 +84,15 @@ impl IPCError {
 	/// Create a timeout error
 	pub fn timeout(operation:impl Into<String>, timeout_ms:u64) -> Self {
 		let operation_str = operation.into();
+
 		Self::Timeout {
 			context:ErrorContext::new(format!("Operation timed out after {}ms", timeout_ms))
 				.with_kind(ErrorKind::IPC)
 				.with_severity(ErrorSeverity::Error)
 				.with_operation(operation_str.clone()),
+
 			operation:Some(operation_str),
+
 			timeout_ms,
 		}
 	}
@@ -84,6 +103,7 @@ impl IPCError {
 			context:ErrorContext::new(message)
 				.with_kind(ErrorKind::IPC)
 				.with_severity(ErrorSeverity::Critical),
+
 			required_permission,
 		}
 	}
@@ -94,6 +114,7 @@ impl IPCError {
 			context:ErrorContext::new(message)
 				.with_kind(ErrorKind::IPC)
 				.with_severity(ErrorSeverity::Error),
+
 			service_name,
 		}
 	}

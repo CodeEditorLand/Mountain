@@ -27,6 +27,7 @@ pub async fn FileReaddirNative(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	while let Some(Entry) = Entries.next_entry().await.map_err(|E| E.to_string())? {
 		let Name = Entry.file_name().to_string_lossy().to_string();
+
 		let FileType = Entry.file_type().await.map_err(|E| E.to_string())?;
 
 		let TypeValue = if FileType.is_symlink() {

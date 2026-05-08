@@ -14,10 +14,13 @@ pub fn ResolveChannelPriority(Command:&str) -> EchoPriority {
 		Ok(Channel) => {
 			match Channel.Priority() {
 				CommonLibrary::IPC::Channel::ChannelPriority::High => EchoPriority::High,
+
 				CommonLibrary::IPC::Channel::ChannelPriority::Normal => EchoPriority::Normal,
+
 				CommonLibrary::IPC::Channel::ChannelPriority::Low => EchoPriority::Low,
 			}
 		},
+
 		Err(_) => EchoPriority::Normal,
 	}
 }

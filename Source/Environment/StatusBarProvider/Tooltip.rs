@@ -18,6 +18,7 @@ use crate::dev_log;
 /// Tooltip resolution operations implementation for MountainEnvironment
 pub(super) async fn provide_tooltip_impl(
 	env:&MountainEnvironment,
+
 	entry_identifier:String,
 ) -> Result<Option<Value>, CommonError> {
 	dev_log!(

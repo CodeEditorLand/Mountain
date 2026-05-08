@@ -18,6 +18,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:ShowQuickPickRequest,
 ) -> Result<Response<ShowQuickPickResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] show_quick_pick: {} items", Request.items.len());
@@ -59,11 +60,15 @@ pub async fn Fn(
 						.map(|Index| Index as u32)
 				})
 				.collect();
+
 			Ok(Response::new(ShowQuickPickResponse { selected_indices:SelectedIndices }))
 		},
+
 		Ok(None) => Ok(Response::new(ShowQuickPickResponse::default())),
+
 		Err(Error) => {
 			dev_log!("cocoon", "warn: [CocoonService] show_quick_pick failed: {}", Error);
+
 			Ok(Response::new(ShowQuickPickResponse::default()))
 		},
 	}

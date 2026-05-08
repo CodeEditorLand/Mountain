@@ -16,6 +16,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:ShowMessageRequest,
 ) -> Result<Response<ShowMessageResponse>, Status> {
 	dev_log!("cocoon", "warn: [CocoonService] show_warning_message: {}", Request.message);

@@ -26,6 +26,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -44,6 +45,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -60,6 +62,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

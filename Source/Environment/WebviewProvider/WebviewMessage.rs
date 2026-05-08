@@ -10,7 +10,10 @@ use serde_json::Value;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub MessageIdentifier:String,
+
 	pub MessageType:String,
+
 	pub Payload:Value,
+
 	pub Source:Option<String>,
 }

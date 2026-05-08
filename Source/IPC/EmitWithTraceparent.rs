@@ -27,26 +27,35 @@ pub fn Fn<R:tauri::Runtime>(ApplicationHandle:&AppHandle<R>, EventName:&str, Pay
 	}
 
 	let Header = CommonLibrary::Telemetry::Traceparent::Build();
+
 	let Stamped = match Payload {
 		Value::Object(mut Map) => {
 			Map.insert("_traceparent".to_string(), Value::String(Header));
+
 			Value::Object(Map)
 		},
+
 		Value::Null => json!({ "_traceparent": Header }),
+
 		Other => Other,
 	};
+
 	ApplicationHandle.emit(EventName, Stamped)
 }
 
 /// Variant for callers that already serialise into a `serde_json::Map`.
 pub fn FnMap<R:tauri::Runtime>(
 	ApplicationHandle:&AppHandle<R>,
+
 	EventName:&str,
+
 	mut Map:serde_json::Map<String, Value>,
 ) -> tauri::Result<()> {
 	if cfg!(debug_assertions) {
 		let Header = CommonLibrary::Telemetry::Traceparent::Build();
+
 		Map.insert("_traceparent".to_string(), Value::String(Header));
 	}
+
 	ApplicationHandle.emit(EventName, Value::Object(Map))
 }

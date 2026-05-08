@@ -24,5 +24,6 @@ pub async fn FileReadNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	dev_log!("vfs-verbose", "readFile OK: {} ({} bytes)", Path, Bytes.len());
 
 	let ByteArray:Vec<Value> = Bytes.iter().map(|B| json!(*B)).collect();
+
 	Ok(json!({ "buffer": ByteArray }))
 }

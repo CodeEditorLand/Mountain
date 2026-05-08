@@ -12,14 +12,23 @@ use serde::Serialize;
 #[derive(Debug, Clone, Serialize)]
 pub struct Struct {
 	pub MessagesPerSecond:f64,
+
 	pub AverageLatencyMs:f64,
+
 	pub PeakLatencyMs:f64,
+
 	pub CompressionRatio:f64,
+
 	pub PoolUtilization:f64,
+
 	pub MemoryUsageBytes:u64,
+
 	pub CpuUsagePercent:f64,
+
 	pub TotalMessages:u64,
+
 	pub FailedMessages:u64,
+
 	#[serde(skip)]
 	pub LastUpdated:Instant,
 }
@@ -28,35 +37,49 @@ impl Struct {
 	pub fn new() -> Self {
 		Self {
 			MessagesPerSecond:0.0,
+
 			AverageLatencyMs:0.0,
+
 			PeakLatencyMs:0.0,
+
 			CompressionRatio:1.0,
+
 			PoolUtilization:0.0,
+
 			MemoryUsageBytes:0,
+
 			CpuUsagePercent:0.0,
+
 			TotalMessages:0,
+
 			FailedMessages:0,
+
 			LastUpdated:Instant::now(),
 		}
 	}
 
 	pub fn RecordMessage(&mut self, Latency:Duration) {
 		let LatencyMs = Latency.as_millis() as f64;
+
 		if self.TotalMessages > 0 {
 			self.AverageLatencyMs =
 				(self.AverageLatencyMs * self.TotalMessages as f64 + LatencyMs) / (self.TotalMessages + 1) as f64;
 		} else {
 			self.AverageLatencyMs = LatencyMs;
 		}
+
 		if LatencyMs > self.PeakLatencyMs {
 			self.PeakLatencyMs = LatencyMs;
 		}
+
 		self.TotalMessages += 1;
+
 		self.LastUpdated = Instant::now();
 	}
 
 	pub fn RecordFailure(&mut self) {
 		self.FailedMessages += 1;
+
 		self.LastUpdated = Instant::now();
 	}
 
@@ -64,6 +87,7 @@ impl Struct {
 		if self.TotalMessages == 0 {
 			return 1.0;
 		}
+
 		1.0 - (self.FailedMessages as f64 / self.TotalMessages as f64)
 	}
 

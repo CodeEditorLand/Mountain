@@ -20,6 +20,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:StoreSecretRequest) -> Resul
 		.await
 	{
 		Ok(()) => Ok(Response::new(Empty {})),
+
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
@@ -27,6 +28,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:StoreSecretRequest) -> Resul
 				Request.key,
 				Error
 			);
+
 			Err(Status::internal(format!("store_secret: {}", Error)))
 		},
 	}

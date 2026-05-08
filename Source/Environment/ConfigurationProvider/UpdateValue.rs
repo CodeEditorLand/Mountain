@@ -19,10 +19,15 @@ use crate::{Environment::Utility, RunTime::ApplicationRunTime::ApplicationRunTim
 /// Updates a configuration value in the appropriate `settings.json` file.
 pub(super) async fn update_configuration_value(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	key:String,
+
 	value:Value,
+
 	target:ConfigurationTarget,
+
 	_overrides:ConfigurationOverridesDTO,
+
 	_scope_to_language:Option<bool>,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -77,16 +82,19 @@ pub(super) async fn update_configuration_value(
 				.WorkspaceFolders
 				.lock()
 				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+
 			let First = FoldersGuard.first().ok_or_else(|| {
 				CommonError::ConfigurationLoad {
 					Description:"No workspace folders open for WorkspaceFolder target".into(),
 				}
 			})?;
+
 			let FolderPath = First.URI.to_file_path().map_err(|_| {
 				CommonError::ConfigurationLoad {
 					Description:format!("Workspace folder URI is not a local path: {}", First.URI),
 				}
 			})?;
+
 			FolderPath.join(".vscode").join("settings.json")
 		},
 
@@ -97,11 +105,13 @@ pub(super) async fn update_configuration_value(
 		// `Inspect` / `Get` calls reflect the override immediately.
 		ConfigurationTarget::Memory => {
 			environment.ApplicationState.Configuration.SetGlobalValue(&key, value.clone());
+
 			dev_log!(
 				"config",
 				"[ConfigurationProvider] Memory target: stored in-memory value for '{}'",
 				key
 			);
+
 			return Ok(());
 		},
 
@@ -122,9 +132,11 @@ pub(super) async fn update_configuration_value(
 	if let Value::Object(map) = &mut current_config {
 		if value.is_null() {
 			map.remove(&key);
+
 			dev_log!("config", "[ConfigurationProvider] Removed configuration key '{}'", key);
 		} else {
 			map.insert(key.clone(), value.clone());
+
 			dev_log!("config", "[ConfigurationProvider] Updated configuration key '{}'", key);
 		}
 	}

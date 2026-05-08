@@ -10,7 +10,11 @@
 //! same code without the transitive-import ballooning a parent file.
 
 pub mod ExtensionInstall;
+
 pub mod ExtensionUninstall;
+
 pub mod NotifyCocoonDeltaExtensions;
+
 pub mod UserExtensionDirectory;
+
 pub mod VsixPathFromArgs;

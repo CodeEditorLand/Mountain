@@ -19,7 +19,9 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:OnDidReceiveMessageRequest) 
 
 	let Payload = match &Request.message {
 		Some(on_did_receive_message_request::Message::StringMessage(S)) => json!(S),
+
 		Some(on_did_receive_message_request::Message::BytesMessage(B)) => json!(B),
+
 		None => serde_json::Value::Null,
 	};
 

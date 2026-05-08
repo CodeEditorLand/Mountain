@@ -50,6 +50,7 @@ pub async fn ThemesList(_runtime:Arc<ApplicationRunTime>) -> Result<Value, Strin
 		json!({ "id": "High Contrast", "label": "High Contrast", "kind": "highContrast" }),
 		json!({ "id": "High Contrast Light", "label": "High Contrast Light", "kind": "highContrastLight" }),
 	];
+
 	Ok(json!(Themes))
 }
 

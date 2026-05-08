@@ -33,8 +33,11 @@ use crate::{
 #[derive(Clone)]
 pub struct Struct {
 	pub(super) runtime:Arc<ApplicationRunTime>,
+
 	pub(super) performance_stats:Arc<Mutex<PerformanceStats>>,
+
 	pub(super) collaboration_sessions:Arc<Mutex<HashMap<String, CollaborationSession>>>,
+
 	pub(super) message_cache:Arc<Mutex<MessageCache>>,
 }
 
@@ -44,6 +47,7 @@ impl Struct {
 
 		Self {
 			runtime,
+
 			performance_stats:Arc::new(Mutex::new(PerformanceStats {
 				total_messages_sent:0,
 				total_messages_received:0,
@@ -56,7 +60,9 @@ impl Struct {
 					.as_secs(),
 				connection_uptime:0,
 			})),
+
 			collaboration_sessions:Arc::new(Mutex::new(HashMap::new())),
+
 			message_cache:Arc::new(Mutex::new(MessageCache {
 				cached_messages:HashMap::new(),
 				cache_hits:0,
@@ -70,15 +76,19 @@ impl Struct {
 		dev_log!("lifecycle", "Starting advanced monitoring");
 
 		let features1 = self.clone_features();
+
 		let features2 = self.clone_features();
+
 		let features3 = self.clone_features();
 
 		tokio::spawn(async move {
 			features1.monitor_performance().await;
 		});
+
 		tokio::spawn(async move {
 			features2.cleanup_cache().await;
 		});
+
 		tokio::spawn(async move {
 			features3.monitor_collaboration_sessions().await;
 		});
@@ -180,17 +190,21 @@ impl Struct {
 
 		let cached_message = CachedMessage {
 			data,
+
 			timestamp:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_secs(),
+
 			ttl,
 		};
 
 		cache.cached_messages.insert(message_id.clone(), cached_message);
+
 		cache.cache_size = cache.cached_messages.len();
 
 		dev_log!("lifecycle", "Message cached: {}, TTL: {}s", message_id, ttl);
+
 		Ok(())
 	}
 
@@ -213,7 +227,9 @@ impl Struct {
 
 	pub async fn create_collaboration_session(
 		&self,
+
 		session_id:String,
+
 		permissions:CollaborationPermissions,
 	) -> Result<(), String> {
 		let mut sessions = self
@@ -223,18 +239,23 @@ impl Struct {
 
 		let session = CollaborationSession {
 			session_id:session_id.clone(),
+
 			participants:Vec::new(),
+
 			active_documents:Vec::new(),
+
 			last_activity:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_secs(),
+
 			permissions,
 		};
 
 		sessions.insert(session_id, session);
 
 		dev_log!("lifecycle", "Collaboration session created");
+
 		Ok(())
 	}
 
@@ -247,6 +268,7 @@ impl Struct {
 		if let Some(session) = sessions.get_mut(session_id) {
 			if !session.participants.contains(&participant) {
 				session.participants.push(participant);
+
 				session.last_activity = SystemTime::now()
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
@@ -271,6 +293,7 @@ impl Struct {
 		}
 
 		let total_messages = stats.total_messages_sent + stats.total_messages_received;
+
 		stats.average_processing_time_ms = (stats.average_processing_time_ms * (total_messages - 1) as f64
 			+ processing_time_ms as f64)
 			/ total_messages as f64;
@@ -278,6 +301,7 @@ impl Struct {
 
 	pub async fn record_error(&self) {
 		let mut stats = self.performance_stats.lock().unwrap();
+
 		stats.error_count += 1;
 	}
 
@@ -287,19 +311,24 @@ impl Struct {
 
 	pub async fn get_cache_stats(&self) -> Result<MessageCache, String> {
 		let cache = self.message_cache.lock().unwrap();
+
 		Ok(cache.clone())
 	}
 
 	pub async fn get_collaboration_sessions(&self) -> Vec<CollaborationSession> {
 		let sessions = self.collaboration_sessions.lock().unwrap();
+
 		sessions.values().cloned().collect()
 	}
 
 	pub(super) fn clone_features(&self) -> Self {
 		Self {
 			runtime:self.runtime.clone(),
+
 			performance_stats:self.performance_stats.clone(),
+
 			collaboration_sessions:self.collaboration_sessions.clone(),
+
 			message_cache:self.message_cache.clone(),
 		}
 	}

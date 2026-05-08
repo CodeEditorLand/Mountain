@@ -11,7 +11,9 @@ use crate::dev_log;
 /// Retrieves a configuration value from the cached, merged configuration.
 pub(super) async fn get_configuration_value(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	section:Option<String>,
+
 	_overrides:ConfigurationOverridesDTO,
 ) -> Result<Value, CommonError> {
 	dev_log!(
@@ -29,12 +31,15 @@ pub(super) async fn get_configuration_value(
 
 	let configuration_value = match section.as_deref() {
 		None => (*configuration_guard).clone(),
+
 		Some(section_path) => {
 			// Navigate through the configuration using dot notation
 			let mut current = &*configuration_guard;
+
 			for key in section_path.split('.') {
 				current = match current.get(key) {
 					Some(value) => value,
+
 					None => {
 						dev_log!(
 							"config",
@@ -42,10 +47,12 @@ pub(super) async fn get_configuration_value(
 							key,
 							section_path
 						);
+
 						return Ok(Value::Null);
 					},
 				};
 			}
+
 			current.clone()
 		},
 	};

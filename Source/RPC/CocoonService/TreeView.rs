@@ -6,7 +6,9 @@
 //! (viewId → registration u32).
 
 pub mod GetTreeChildren;
+
 pub mod RegisterTreeViewProvider;
 
 pub(crate) mod EnqueueTreeViewEmit;
+
 pub(crate) mod ViewIdHandle;

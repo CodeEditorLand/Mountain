@@ -44,20 +44,26 @@ use crate::dev_log;
 /// `let _ = …` / `?` / `if let Err(e) = …` keep their existing shape.
 pub fn LogSkyEmit<R:tauri::Runtime, P:Serialize + Clone>(
 	Handle:&impl Emitter<R>,
+
 	Channel:&str,
+
 	Payload:P,
 ) -> tauri::Result<()> {
 	// Measure the serialized payload size for traffic-volume diagnostics.
 	// Silently falls back to 0 on (very unusual) serialize failures -
 	// never blocks the emit itself.
 	let Bytes = serde_json::to_vec(&Payload).map(|V| V.len()).unwrap_or(0);
+
 	match Handle.emit(Channel, Payload) {
 		Ok(()) => {
 			dev_log!("sky-emit", "[SkyEmit] ok channel={} bytes={}", Channel, Bytes);
+
 			Ok(())
 		},
+
 		Err(Error) => {
 			dev_log!("sky-emit", "[SkyEmit] fail channel={} bytes={} error={}", Channel, Bytes, Error);
+
 			Err(Error)
 		},
 	}

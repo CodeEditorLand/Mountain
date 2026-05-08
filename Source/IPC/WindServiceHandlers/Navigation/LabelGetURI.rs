@@ -28,6 +28,7 @@ pub async fn LabelGetURI(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) 
 		} else {
 			Uri.clone()
 		};
+
 		return Ok(Value::String(Label));
 	}
 

@@ -16,5 +16,6 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:ClearOutputRequest) -> Resul
 		.environment
 		.ApplicationHandle
 		.emit("sky://output/clear", json!({ "channel": Request.channel_id }));
+
 	Ok(Response::new(Empty {}))
 }

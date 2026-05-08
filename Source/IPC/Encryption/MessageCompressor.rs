@@ -131,6 +131,7 @@ impl MessageCompressor {
 			CompressionLevel,
 			BatchSize
 		);
+
 		Self { CompressionLevel, BatchSize }
 	}
 
@@ -163,6 +164,7 @@ impl MessageCompressor {
 
 		// Compress using Gzip
 		let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.CompressionLevel));
+
 		encoder
 			.write_all(&SerializedMessages)
 			.map_err(|e| format!("Failed to compress messages: {}", e))?;
@@ -170,6 +172,7 @@ impl MessageCompressor {
 		let compressed_data = encoder.finish().map_err(|e| format!("Failed to finish compression: {}", e))?;
 
 		let compressed_size = compressed_data.len();
+
 		let ratio = if original_size > 0 {
 			(compressed_size as f64 / original_size as f64) * 100.0
 		} else {
@@ -211,7 +214,9 @@ impl MessageCompressor {
 
 		// Decompress using Gzip
 		let mut decoder = GzDecoder::new(CompressedData);
+
 		let mut DecompressedData = Vec::new();
+
 		decoder
 			.read_to_end(&mut DecompressedData)
 			.map_err(|e| format!("Failed to decompress data: {}", e))?;
@@ -256,6 +261,7 @@ impl MessageCompressor {
 	/// ```
 	pub fn should_batch(&self, MessagesCount:usize) -> bool {
 		let should_batch = MessagesCount >= self.BatchSize;
+
 		dev_log!(
 			"encryption",
 			"[MessageCompressor] Batch check: {} >= {} = {}",
@@ -263,6 +269,7 @@ impl MessageCompressor {
 			self.BatchSize,
 			should_batch
 		);
+
 		should_batch
 	}
 
@@ -285,6 +292,7 @@ impl MessageCompressor {
 #[cfg(test)]
 #[allow(unused_imports)]
 mod tests {
+
 	use super::*;
 
 	fn create_test_message(id:u32) -> TauriIPCMessage {
@@ -301,50 +309,64 @@ mod tests {
 	#[test]
 	fn test_compressor_creation() {
 		let compressor = MessageCompressor::new(6, 10);
+
 		assert_eq!(compressor.compression_level(), 6);
+
 		assert_eq!(compressor.batch_size(), 10);
 	}
 
 	#[test]
 	fn test_default_compressor() {
 		let compressor = MessageCompressor::default();
+
 		assert_eq!(compressor.compression_level(), 6);
+
 		assert_eq!(compressor.batch_size(), 10);
 	}
 
 	#[test]
 	fn test_fast_compressor() {
 		let compressor = MessageCompressor::fast();
+
 		assert_eq!(compressor.compression_level(), 3);
+
 		assert_eq!(compressor.batch_size(), 5);
 	}
 
 	#[test]
 	fn test_max_compressor() {
 		let compressor = MessageCompressor::max();
+
 		assert_eq!(compressor.compression_level(), 9);
+
 		assert_eq!(compressor.batch_size(), 20);
 	}
 
 	#[test]
 	fn test_should_batch() {
 		let compressor = MessageCompressor::new(6, 10);
+
 		assert!(!compressor.should_batch(5));
+
 		assert!(compressor.should_batch(10));
+
 		assert!(compressor.should_batch(15));
 	}
 
 	#[test]
 	fn test_compress_and_decompress() {
 		let compressor = MessageCompressor::default();
+
 		let original_messages = vec![create_test_message(1), create_test_message(2), create_test_message(3)];
 
 		// Compress
 		let compressed = compressor.compress_messages(original_messages.clone()).unwrap();
+
 		assert!(!compressed.is_empty());
 
 		// Decompress
 		let decompressed = compressor.decompress_messages(&compressed).unwrap();
+
 		assert_eq!(decompressed.len(), original_messages.len());
 
 		// Verify content
@@ -364,15 +386,18 @@ mod tests {
 
 		// Compressed size should be significantly smaller
 		let original_data = serde_json::to_vec(&messages).unwrap();
+
 		assert!(compressed.len() < original_data.len());
 	}
 
 	#[test]
 	fn test_empty_messages() {
 		let compressor = MessageCompressor::default();
+
 		let messages = vec![];
 
 		let compressed = compressor.compress_messages(messages).unwrap();
+
 		let decompressed = compressor.decompress_messages(&compressed).unwrap();
 
 		assert!(decompressed.is_empty());
@@ -381,12 +406,15 @@ mod tests {
 	#[test]
 	fn test_single_message() {
 		let compressor = MessageCompressor::default();
+
 		let messages = vec![create_test_message(1)];
 
 		let compressed = compressor.compress_messages(messages.clone()).unwrap();
+
 		let decompressed = compressor.decompress_messages(&compressed).unwrap();
 
 		assert_eq!(decompressed.len(), 1);
+
 		assert_eq!(decompressed[0].channel, messages[0].channel);
 	}
 }

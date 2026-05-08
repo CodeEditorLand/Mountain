@@ -19,7 +19,9 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:PostWebviewMessageRequest) -
 
 	let Payload = match &Request.message {
 		Some(post_webview_message_request::Message::StringMessage(S)) => json!(S),
+
 		Some(post_webview_message_request::Message::BytesMessage(B)) => json!(B),
+
 		None => serde_json::Value::Null,
 	};
 

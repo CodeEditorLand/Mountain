@@ -20,11 +20,17 @@ use crate::{ApplicationState::DTO::WebviewStateDTO::WebviewStateDTO, dev_log};
 /// Lifecycle operations implementation for MountainEnvironment
 pub(super) async fn create_webview_panel_impl(
 	env:&MountainEnvironment,
+
 	extension_data_value:Value,
+
 	view_type:String,
+
 	title:String,
+
 	_show_options_value:Value,
+
 	panel_options_value:Value,
+
 	content_options_value:Value,
 ) -> Result<String, CommonError> {
 	let handle = Uuid::new_v4().to_string();
@@ -44,17 +50,25 @@ pub(super) async fn create_webview_panel_impl(
 
 	let state = WebviewStateDTO {
 		Handle:handle.clone(),
+
 		ViewType:view_type.clone(),
+
 		Title:title.clone(),
+
 		ContentOptions:content_options,
+
 		PanelOptions:panel_options_value.clone(),
+
 		SideCarIdentifier:"cocoon-main".to_string(),
+
 		ExtensionIdentifier:extension_data_value
 			.get("id")
 			.and_then(|v| v.as_str())
 			.unwrap_or_default()
 			.to_string(),
+
 		IsActive:true,
+
 		IsVisible:true,
 	};
 
@@ -73,6 +87,7 @@ pub(super) async fn create_webview_panel_impl(
 
 	// Create a new Tauri window for this webview with security settings
 	let title_clone = title.clone();
+
 	let _webview_window = WebviewWindowBuilder::new(
 		&env.ApplicationHandle,
 		&handle,
@@ -153,7 +168,9 @@ pub(super) async fn dispose_webview_panel_impl(env:&MountainEnvironment, handle:
 /// Reveals (shows and focuses) a Webview panel.
 pub(super) async fn reveal_webview_panel_impl(
 	env:&MountainEnvironment,
+
 	handle:String,
+
 	_show_options_value:Value,
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[WebviewProvider] Revealing WebviewPanel: {}", handle);

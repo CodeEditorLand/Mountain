@@ -12,8 +12,11 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn ProgressStart(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Handle = Parameter.get("handle").and_then(Value::as_str).unwrap_or("");
+
 	let Title = Parameter.get("title").and_then(Value::as_str).unwrap_or("");
+
 	let Cancellable = Parameter.get("cancellable").and_then(Value::as_bool).unwrap_or(false);
+
 	if let Err(Error) = Service.ApplicationHandle().emit(
 		"sky://notification/progress-begin",
 		json!({

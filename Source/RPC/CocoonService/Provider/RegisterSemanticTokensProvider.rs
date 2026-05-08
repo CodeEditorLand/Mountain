@@ -14,14 +14,17 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:RegisterSemanticTokensProviderRequest,
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering Semantic Tokens Provider");
+
 	Service.RegisterProvider(
 		Request.handle,
 		ProviderType::SemanticTokens,
 		&Request.language_selector,
 		&Request.extension_id,
 	);
+
 	Ok(Response::new(Empty {}))
 }

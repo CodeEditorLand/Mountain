@@ -11,6 +11,7 @@ use crate::{IPC::StatusReporter::Reporter::Struct as Reporter, dev_log};
 #[tauri::command]
 pub async fn mountain_start_ipc_status_reporting(
 	app_handle:tauri::AppHandle,
+
 	interval_seconds:u64,
 ) -> Result<serde_json::Value, String> {
 	dev_log!("lifecycle", "Tauri command: start_ipc_status_reporting");

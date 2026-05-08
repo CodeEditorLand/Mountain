@@ -12,8 +12,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub UserId:String,
+
 	pub Roles:Vec<String>,
+
 	pub Permissions:Vec<String>,
+
 	pub IpAddress:String,
+
 	pub Timestamp:SystemTime,
 }

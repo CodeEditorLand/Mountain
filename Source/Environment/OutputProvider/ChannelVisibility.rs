@@ -13,7 +13,9 @@ use crate::{Environment::Utility, dev_log};
 /// Reveals an output channel in the UI.
 pub(super) async fn reveal_channel(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	channel_identifier:String,
+
 	preserve_focus:bool,
 ) -> Result<(), CommonError> {
 	dev_log!("output", "[OutputProvider] Revealing channel: '{}'", channel_identifier);
@@ -53,6 +55,7 @@ pub(super) async fn reveal_channel(
 /// `dispose_channel` instead.
 pub(super) async fn close_channel(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	channel_identifier:String,
 ) -> Result<(), CommonError> {
 	dev_log!("output", "[OutputProvider] Closing channel: '{}'", channel_identifier);
@@ -67,11 +70,13 @@ pub(super) async fn close_channel(
 
 	if let Some(channel_state) = channels_guard.get_mut(&channel_identifier) {
 		channel_state.IsVisible = false;
+
 		// Re-use OutputReveal with `PreserveFocus: false` to push the
 		// updated visibility state - SkyEvent doesn't yet have a
 		// dedicated Hide variant; the renderer's reveal handler is
 		// idempotent and reads the latest IsVisible from state.
 		let event_payload = json!({ "channel": channel_identifier, "preserveFocus": true, "visible": false });
+
 		env.ApplicationHandle
 			.emit(SkyEvent::OutputReveal.AsStr(), event_payload)
 			.map_err(|Error| CommonError::UserInterfaceInteraction { Reason:Error.to_string() })?;

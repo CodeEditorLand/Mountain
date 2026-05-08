@@ -9,6 +9,7 @@ use tauri::{AppHandle, Manager};
 
 pub async fn NativeIsFullscreen(ApplicationHandle:AppHandle) -> Result<Value, String> {
 	let Window = ApplicationHandle.get_webview_window("main");
+
 	if let Some(W) = Window {
 		Ok(json!(W.is_fullscreen().unwrap_or(false)))
 	} else {

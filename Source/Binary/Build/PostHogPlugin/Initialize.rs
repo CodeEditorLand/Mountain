@@ -26,12 +26,15 @@ pub async fn Fn() {
 		.expect("PostHog client options");
 
 	let PostHogClient = posthog_rs::client(Options).await;
+
 	let _ = Client::CLIENT.set(PostHogClient);
+
 	dev_log!(
 		"lifecycle",
 		"[PostHog] Initialized (host={}, debug mode)",
 		Constants::POSTHOG_HOST
 	);
+
 	CaptureEvent::Fn(
 		"land:mountain:session:start",
 		Some(vec![

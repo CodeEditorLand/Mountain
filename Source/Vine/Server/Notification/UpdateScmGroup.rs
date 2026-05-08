@@ -35,12 +35,14 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 		.or_else(|| Parameter.get("scm_handle"))
 		.and_then(Value::as_u64)
 		.map(|H| H as u32);
+
 	let GroupHandle = Parameter
 		.get("groupHandle")
 		.or_else(|| Parameter.get("group_handle"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	// Legacy fallbacks: pre-2026-04 Cocoon revisions used flat
 	// `provider_id`/`group_id`. Keep parsing them so a downgrade of
 	// just one side does not silently drop traffic.
@@ -50,12 +52,14 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	let LegacyGroupId = Parameter
 		.get("groupId")
 		.or_else(|| Parameter.get("group_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	let ResourceStates = Parameter
 		.get("resourceStates")
 		.or_else(|| Parameter.get("resource_states"))
@@ -68,9 +72,12 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 	// keep working without forcing them to re-parse.
 	let (HandleFromString, GroupIdFromHandle) = match GroupHandle.split_once('/') {
 		Some((H, G)) => (H.parse::<u32>().ok(), G.to_string()),
+
 		None => (None, String::new()),
 	};
+
 	let ResolvedScmHandle = ScmHandle.or(HandleFromString);
+
 	let ResolvedGroupId = if !GroupIdFromHandle.is_empty() {
 		GroupIdFromHandle
 	} else if !LegacyGroupId.is_empty() {
@@ -86,8 +93,10 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 			GroupHandle,
 			ResolvedGroupId
 		);
+
 		return;
 	}
+
 	if ResolvedGroupId.is_empty() {
 		dev_log!(
 			"grpc",
@@ -95,6 +104,7 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 			ResolvedScmHandle,
 			GroupHandle
 		);
+
 		return;
 	}
 
@@ -108,6 +118,7 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 			"resourceStates": ResourceStates,
 		}),
 	);
+
 	dev_log!(
 		"grpc",
 		"[ScmGroup] scm_handle={:?} group={} resources={}",

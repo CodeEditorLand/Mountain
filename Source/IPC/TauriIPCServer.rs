@@ -173,8 +173,11 @@ use crate::dev_log;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TauriIPCMessage {
 	pub channel:String,
+
 	pub data:serde_json::Value,
+
 	pub sender:Option<String>,
+
 	pub timestamp:u64,
 }
 
@@ -191,14 +194,18 @@ type ListenerCallback = Box<dyn Fn(serde_json::Value) -> Result<(), String> + Se
 #[derive(Clone)]
 pub struct TauriIPCServer {
 	app_handle:AppHandle,
+
 	listeners:Arc<Mutex<HashMap<String, Vec<ListenerCallback>>>>,
+
 	is_connected:Arc<Mutex<bool>>,
+
 	message_queue:Arc<Mutex<Vec<TauriIPCMessage>>>,
 }
 
 /// Message compression utility for optimizing IPC Message transfer
 pub struct MessageCompressor {
 	CompressionLevel:u32,
+
 	BatchSize:usize,
 }
 
@@ -212,6 +219,7 @@ impl MessageCompressor {
 			serde_json::to_vec(&Messages).map_err(|e| format!("Failed to serialize messages: {}", e))?;
 
 		let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.CompressionLevel));
+
 		encoder
 			.write_all(&SerializedMessages)
 			.map_err(|e| format!("Failed to compress messages: {}", e))?;
@@ -222,7 +230,9 @@ impl MessageCompressor {
 	/// Decompress messages from compressed data
 	pub fn decompress_messages(&self, CompressedData:&[u8]) -> Result<Vec<TauriIPCMessage>, String> {
 		let mut decoder = GzDecoder::new(CompressedData);
+
 		let mut DecompressedData = Vec::new();
+
 		decoder
 			.read_to_end(&mut DecompressedData)
 			.map_err(|e| format!("Failed to decompress data: {}", e))?;
@@ -241,8 +251,11 @@ impl TauriIPCServer {
 
 		Self {
 			app_handle,
+
 			listeners:Arc::new(Mutex::new(HashMap::new())),
+
 			is_connected:Arc::new(Mutex::new(false)),
+
 			message_queue:Arc::new(Mutex::new(Vec::new())),
 		}
 	}
@@ -257,6 +270,7 @@ impl TauriIPCServer {
 				.is_connected
 				.lock()
 				.map_err(|e| format!("Failed to lock connection status: {}", e))?;
+
 			*is_connected = true;
 		}
 
@@ -277,8 +291,11 @@ impl TauriIPCServer {
 	pub async fn send(&self, channel:&str, data:serde_json::Value) -> Result<(), String> {
 		let Message = TauriIPCMessage {
 			channel:channel.to_string(),
+
 			data,
+
 			sender:Some("mountain".to_string()),
+
 			timestamp:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -290,6 +307,7 @@ impl TauriIPCServer {
 				.is_connected
 				.lock()
 				.map_err(|e| format!("Failed to check connection status: {}", e))?;
+
 			*guard
 		};
 
@@ -299,13 +317,16 @@ impl TauriIPCServer {
 				.message_queue
 				.lock()
 				.map_err(|e| format!("Failed to access Message queue: {}", e))?;
+
 			queue.push(Message);
+
 			dev_log!(
 				"ipc",
 				"[TauriIPCServer] Message queued (channel: {}, queue size: {})",
 				channel,
 				queue.len()
 			);
+
 			return Ok(());
 		}
 
@@ -323,6 +344,7 @@ impl TauriIPCServer {
 		listeners.entry(channel.to_string()).or_insert_with(Vec::new).push(callback);
 
 		dev_log!("ipc", "[TauriIPCServer] Listener registered for channel: {}", channel);
+
 		Ok(())
 	}
 
@@ -342,6 +364,7 @@ impl TauriIPCServer {
 		}
 
 		dev_log!("ipc", "[TauriIPCServer] Listener removed from channel: {}", channel);
+
 		Ok(())
 	}
 
@@ -381,6 +404,7 @@ impl TauriIPCServer {
 			.map_err(|e| format!("Failed to emit connection status: {}", e))?;
 
 		dev_log!("ipc", "[TauriIPCServer] Connection status sent: {}", connected);
+
 		Ok(())
 	}
 
@@ -391,6 +415,7 @@ impl TauriIPCServer {
 			.map_err(|e| format!("Failed to emit Message: {}", e))?;
 
 		dev_log!("ipc", "[TauriIPCServer] Message emitted on channel: {}", Message.channel);
+
 		Ok(())
 	}
 
@@ -398,8 +423,10 @@ impl TauriIPCServer {
 	async fn process_message_queue(&self) {
 		let mut queue = match self.message_queue.lock() {
 			Ok(queue) => queue,
+
 			Err(e) => {
 				dev_log!("ipc", "error: [TauriIPCServer] Failed to access Message queue: {}", e);
+
 				return;
 			},
 		};
@@ -407,8 +434,10 @@ impl TauriIPCServer {
 		while let Some(Message) = queue.pop() {
 			if let Err(e) = self.emit_message(&Message).await {
 				dev_log!("ipc", "error: [TauriIPCServer] Failed to send queued Message: {}", e);
+
 				// Put the Message back in the queue
 				queue.insert(0, Message);
+
 				break;
 			}
 		}
@@ -426,6 +455,7 @@ impl TauriIPCServer {
 			.is_connected
 			.lock()
 			.map_err(|e| format!("Failed to get connection status: {}", e))?;
+
 		Ok(*guard)
 	}
 
@@ -435,6 +465,7 @@ impl TauriIPCServer {
 			.message_queue
 			.lock()
 			.map_err(|e| format!("Failed to get queue size: {}", e))?;
+
 		Ok(guard.len())
 	}
 
@@ -445,6 +476,7 @@ impl TauriIPCServer {
 				.listeners
 				.lock()
 				.map_err(|e| format!("Failed to access listeners: {}", e))?;
+
 			listeners.clear();
 		}
 
@@ -453,6 +485,7 @@ impl TauriIPCServer {
 				.message_queue
 				.lock()
 				.map_err(|e| format!("Failed to access Message queue: {}", e))?;
+
 			queue.clear();
 		}
 
@@ -461,16 +494,19 @@ impl TauriIPCServer {
 				.is_connected
 				.lock()
 				.map_err(|e| format!("Failed to access connection status: {}", e))?;
+
 			*is_connected = false;
 		}
 
 		dev_log!("ipc", "[TauriIPCServer] IPC Server disposed");
+
 		Ok(())
 	}
 
 	/// Advanced: Validate Message permissions
 	pub async fn validate_message_permissions(&self, Message:&TauriIPCMessage) -> Result<(), String> {
 		let permission_manager = PermissionManager::new();
+
 		permission_manager.initialize_defaults().await;
 
 		let context = self.create_security_context(Message);
@@ -486,11 +522,15 @@ impl TauriIPCServer {
 	fn create_security_context(&self, Message:&TauriIPCMessage) -> SecurityContext {
 		SecurityContext {
 			user_id:Message.sender.clone().unwrap_or("unknown".to_string()),
+
 			// Default role assigned to authenticated IPC connections
 			roles:vec!["user".to_string()],
+
 			permissions:vec![],
+
 			// IPC connections use loopback address for security (localhost only)
 			ip_address:"127.0.0.1".to_string(),
+
 			timestamp:std::time::SystemTime::UNIX_EPOCH + std::time::Duration::from_millis(Message.timestamp),
 		}
 	}
@@ -498,6 +538,7 @@ impl TauriIPCServer {
 	/// Advanced: Log security event
 	pub async fn log_security_event(&self, event:SecurityEvent) {
 		let permission_manager = PermissionManager::new();
+
 		permission_manager.log_security_event(event).await;
 	}
 
@@ -516,6 +557,7 @@ impl TauriIPCServer {
 	/// Advanced: Get security audit log
 	pub async fn get_security_audit_log(&self, limit:usize) -> Result<Vec<SecurityEvent>, String> {
 		let permission_manager = PermissionManager::new();
+
 		Ok(permission_manager.get_audit_log(limit).await)
 	}
 
@@ -531,8 +573,11 @@ impl TauriIPCServer {
 
 		let batch_message = TauriIPCMessage {
 			channel:"compressed_batch".to_string(),
+
 			data:serde_json::Value::String(general_purpose::STANDARD.encode(&compressed_data)),
+
 			sender:Some("mountain".to_string()),
+
 			timestamp:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -551,6 +596,7 @@ impl TauriIPCServer {
 			.map_err(|e| format!("Failed to decode base64: {}", e))?;
 
 		let compressor = MessageCompressor::new(6, 10);
+
 		let messages = compressor
 			.decompress_messages(&compressed_data)
 			.map_err(|e| format!("Failed to decompress batch: {}", e))?;
@@ -582,6 +628,7 @@ impl TauriIPCServer {
 	/// Get connection pool statistics
 	pub async fn get_connection_stats(&self) -> Result<ConnectionStats, String> {
 		let pool = Arc::new(ConnectionPool::new(10, Duration::from_secs(30)));
+
 		Ok(pool.GetStats().await)
 	}
 
@@ -592,8 +639,11 @@ impl TauriIPCServer {
 
 		let Message = TauriIPCMessage {
 			channel:channel.to_string(),
+
 			data,
+
 			sender:Some("mountain".to_string()),
+
 			timestamp:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -628,6 +678,7 @@ impl TauriIPCServer {
 	/// Handle Message with permission validation
 	pub async fn MessageWithPermissions(&self, Message:TauriIPCMessage) -> Result<(), String> {
 		let permission_manager = PermissionManager::new();
+
 		let context = self.create_security_context(&Message);
 
 		// Extract operation from channel name
@@ -649,9 +700,13 @@ impl TauriIPCServer {
 /// configurable timeouts
 pub struct ConnectionPool {
 	MaxConnections:usize,
+
 	ConnectionTimeout:Duration,
+
 	Semaphore:Arc<Semaphore>,
+
 	ActiveConnection:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
+
 	HealthChecker:Arc<AsyncMutex<ConnectionHealthChecker>>,
 }
 
@@ -659,9 +714,13 @@ pub struct ConnectionPool {
 #[derive(Clone)]
 pub struct ConnectionHandle {
 	pub id:String,
+
 	pub created_at:std::time::Instant,
+
 	pub last_used:std::time::Instant,
+
 	pub health_score:f64,
+
 	pub error_count:usize,
 }
 
@@ -670,9 +729,13 @@ impl ConnectionHandle {
 	pub fn new() -> Self {
 		Self {
 			id:uuid::Uuid::new_v4().to_string(),
+
 			created_at:std::time::Instant::now(),
+
 			last_used:std::time::Instant::now(),
+
 			health_score:100.0,
+
 			error_count:0,
 		}
 	}
@@ -681,11 +744,14 @@ impl ConnectionHandle {
 	pub fn update_health(&mut self, success:bool) {
 		if success {
 			self.health_score = (self.health_score + 10.0).min(100.0);
+
 			self.error_count = 0;
 		} else {
 			self.health_score = (self.health_score - 25.0).max(0.0);
+
 			self.error_count += 1;
 		}
+
 		self.last_used = std::time::Instant::now();
 	}
 
@@ -698,9 +764,13 @@ impl ConnectionPool {
 	pub fn new(MaxConnections:usize, ConnectionTimeout:Duration) -> Self {
 		Self {
 			MaxConnections,
+
 			ConnectionTimeout,
+
 			Semaphore:Arc::new(Semaphore::new(MaxConnections)),
+
 			ActiveConnection:Arc::new(AsyncMutex::new(HashMap::new())),
+
 			HealthChecker:Arc::new(AsyncMutex::new(ConnectionHealthChecker::new())),
 		}
 	}
@@ -716,6 +786,7 @@ impl ConnectionPool {
 
 		{
 			let mut connections = self.ActiveConnection.lock().await;
+
 			connections.insert(Handle.id.clone(), Handle.clone());
 		}
 
@@ -729,6 +800,7 @@ impl ConnectionPool {
 	pub async fn ReleaseConnection(&self, Handle:ConnectionHandle) {
 		{
 			let mut connections = self.ActiveConnection.lock().await;
+
 			connections.remove(&Handle.id);
 		}
 
@@ -738,13 +810,18 @@ impl ConnectionPool {
 	/// Get connection statistics for monitoring
 	pub async fn GetStats(&self) -> ConnectionStats {
 		let connections = self.ActiveConnection.lock().await;
+
 		let healthy_connections = connections.values().filter(|h| h.is_healthy()).count();
 
 		ConnectionStats {
 			total_connections:connections.len(),
+
 			healthy_connections,
+
 			max_connections:self.MaxConnections,
+
 			available_permits:self.Semaphore.available_permits(),
+
 			connection_timeout:self.ConnectionTimeout,
 		}
 	}
@@ -752,7 +829,9 @@ impl ConnectionPool {
 	/// Clean up stale connections
 	pub async fn CleanUpStaleConnections(&self) -> usize {
 		let mut connections = self.ActiveConnection.lock().await;
+
 		let now = std::time::Instant::now();
+
 		// Stale connections are those unused for 5 minutes (300 seconds)
 		let stale_threshold = Duration::from_secs(300);
 
@@ -763,6 +842,7 @@ impl ConnectionPool {
 			.collect();
 
 		let stale_count = stale_ids.len();
+
 		for id in stale_ids {
 			connections.remove(&id);
 		}
@@ -773,7 +853,9 @@ impl ConnectionPool {
 	/// Start health monitoring for a connection
 	async fn StartHealthMonitoring(&self, connection_id:&str) {
 		let health_checker = self.HealthChecker.clone();
+
 		let active_connection = self.ActiveConnection.clone();
+
 		let connection_id = connection_id.to_string();
 
 		tokio::spawn(async move {
@@ -837,15 +919,20 @@ impl ConnectionHealthChecker {
 #[derive(Debug, Clone, Default)]
 pub struct ConnectionStats {
 	pub total_connections:usize,
+
 	pub healthy_connections:usize,
+
 	pub max_connections:usize,
+
 	pub available_permits:usize,
+
 	pub connection_timeout:Duration,
 }
 
 /// Secure Message channel with encryption and authentication
 pub struct SecureMessageChannel {
 	encryption_key:LessSafeKey,
+
 	hmac_key:Vec<u8>,
 }
 
@@ -856,6 +943,7 @@ impl SecureMessageChannel {
 
 		// Generate encryption key
 		let mut encryption_key_bytes = vec![0u8; 32];
+
 		rng.fill(&mut encryption_key_bytes)
 			.map_err(|e| format!("Failed to generate encryption key: {}", e))?;
 
@@ -866,6 +954,7 @@ impl SecureMessageChannel {
 
 		// Generate HMAC key
 		let mut hmac_key = vec![0u8; 32];
+
 		rng.fill(&mut hmac_key)
 			.map_err(|e| format!("Failed to generate HMAC key: {}", e))?;
 
@@ -879,18 +968,21 @@ impl SecureMessageChannel {
 
 		// Generate nonce
 		let mut nonce = [0u8; 12];
+
 		SystemRandom::new()
 			.fill(&mut nonce)
 			.map_err(|e| format!("Failed to generate nonce: {}", e))?;
 
 		// Encrypt Message
 		let mut in_out = serialized_message.clone();
+
 		self.encryption_key
 			.seal_in_place_append_tag(aead::Nonce::assume_unique_for_key(nonce), aead::Aad::empty(), &mut in_out)
 			.map_err(|e| format!("Encryption failed: {}", e))?;
 
 		// Create HMAC
 		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
+
 		let hmac_tag = hmac::sign(&hmac_key, &in_out);
 
 		Ok(EncryptedMessage { nonce:nonce.to_vec(), ciphertext:in_out, hmac_tag:hmac_tag.as_ref().to_vec() })
@@ -900,12 +992,15 @@ impl SecureMessageChannel {
 	pub fn decrypt_message(&self, encrypted:&EncryptedMessage) -> Result<TauriIPCMessage, String> {
 		// Verify HMAC
 		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
+
 		hmac::verify(&hmac_key, &encrypted.ciphertext, &encrypted.hmac_tag)
 			.map_err(|_| "HMAC verification failed".to_string())?;
 
 		// Decrypt Message
 		let mut in_out = encrypted.ciphertext.clone();
+
 		let nonce_slice:&[u8] = &encrypted.nonce;
+
 		let nonce_array:[u8; 12] = nonce_slice.try_into().map_err(|_| "Invalid nonce length".to_string())?;
 
 		let nonce = aead::Nonce::assume_unique_for_key(nonce_array);
@@ -916,6 +1011,7 @@ impl SecureMessageChannel {
 
 		// Remove authentication tag
 		let plaintext_len = in_out.len() - AES_256_GCM.tag_len();
+
 		in_out.truncate(plaintext_len);
 
 		// Deserialize Message
@@ -933,7 +1029,9 @@ impl SecureMessageChannel {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedMessage {
 	nonce:Vec<u8>,
+
 	ciphertext:Vec<u8>,
+
 	hmac_tag:Vec<u8>,
 }
 
@@ -973,7 +1071,9 @@ pub async fn mountain_ipc_receive_message(app_handle:tauri::AppHandle, Message:T
 
 		// Advanced monitoring: Track Message processing time
 		let start_time = std::time::Instant::now();
+
 		let result = ipc_server.IncomingMessage(Message.clone()).await;
+
 		let duration = start_time.elapsed();
 
 		// Record performance metrics
@@ -1015,16 +1115,22 @@ pub async fn mountain_ipc_get_status(app_handle:tauri::AppHandle) -> Result<Conn
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityContext {
 	pub user_id:String,
+
 	pub roles:Vec<String>,
+
 	pub permissions:Vec<String>,
+
 	pub ip_address:String,
+
 	pub timestamp:std::time::SystemTime,
 }
 
 /// Permission manager for IPC operations
 pub struct PermissionManager {
 	roles:Arc<RwLock<HashMap<String, Role>>>,
+
 	permissions:Arc<RwLock<HashMap<String, Permission>>>,
+
 	audit_log:Arc<RwLock<Vec<SecurityEvent>>>,
 }
 
@@ -1032,18 +1138,26 @@ pub struct PermissionManager {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SecurityEvent {
 	pub event_type:SecurityEventType,
+
 	pub user_id:String,
+
 	pub operation:String,
+
 	pub timestamp:std::time::SystemTime,
+
 	pub details:Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum SecurityEventType {
 	PermissionDenied,
+
 	AccessGranted,
+
 	ConfigurationChange,
+
 	SecurityViolation,
+
 	PerformanceAnomaly,
 }
 
@@ -1051,7 +1165,9 @@ pub enum SecurityEventType {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Role {
 	pub name:String,
+
 	pub permissions:Vec<String>,
+
 	pub description:String,
 }
 
@@ -1059,7 +1175,9 @@ pub struct Role {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Permission {
 	pub name:String,
+
 	pub description:String,
+
 	pub category:String,
 }
 
@@ -1067,7 +1185,9 @@ impl PermissionManager {
 	pub fn new() -> Self {
 		Self {
 			roles:Arc::new(RwLock::new(HashMap::new())),
+
 			permissions:Arc::new(RwLock::new(HashMap::new())),
+
 			audit_log:Arc::new(RwLock::new(Vec::new())),
 		}
 	}
@@ -1083,8 +1203,10 @@ impl PermissionManager {
 
 		// Check if user has required permissions
 		let mut user_permissions:Vec<String> = context.permissions.iter().cloned().collect();
+
 		for role in context.roles.iter() {
 			let role_perms = self.get_role_permissions(role).await;
+
 			user_permissions.extend(role_perms);
 		}
 
@@ -1112,9 +1234,13 @@ impl PermissionManager {
 		// Define operation-to-permission mapping
 		match operation {
 			"file:write" | "file:delete" => vec!["file.write".to_string()],
+
 			"configuration:update" => vec!["config.update".to_string()],
+
 			"storage:set" => vec!["storage.write".to_string()],
+
 			"native:openExternal" => vec!["system.external".to_string()],
+
 			// Operations not in the mapping require no special permissions by default
 			_ => Vec::new(),
 		}
@@ -1123,12 +1249,14 @@ impl PermissionManager {
 	/// Get permissions for a role
 	async fn get_role_permissions(&self, role_name:&str) -> Vec<String> {
 		let roles = self.roles.read().await;
+
 		roles.get(role_name).map(|role| role.permissions.clone()).unwrap_or_default()
 	}
 
 	/// Log security event
 	pub async fn log_security_event(&self, event:SecurityEvent) {
 		let mut audit_log = self.audit_log.write().await;
+
 		audit_log.push(event);
 
 		// Keep only last 1000 events
@@ -1140,12 +1268,14 @@ impl PermissionManager {
 	/// Get security audit log
 	pub async fn get_audit_log(&self, limit:usize) -> Vec<SecurityEvent> {
 		let audit_log = self.audit_log.read().await;
+
 		audit_log.iter().rev().take(limit).cloned().collect()
 	}
 
 	/// Initialize default roles and permissions
 	pub async fn initialize_defaults(&self) {
 		let mut permissions = self.permissions.write().await;
+
 		let mut roles = self.roles.write().await;
 
 		// Define standard permissions

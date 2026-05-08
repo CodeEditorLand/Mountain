@@ -16,8 +16,11 @@ use ring::{
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub(super) key:LessSafeKey,
+
 	pub(super) created_at:SystemTime,
+
 	pub(super) key_id:String,
+
 	pub(super) usage_count:usize,
 }
 
@@ -36,8 +39,11 @@ impl Struct {
 
 	fn generate_key_id() -> String {
 		let rng = SystemRandom::new();
+
 		let mut id_bytes = [0u8; 8];
+
 		rng.fill(&mut id_bytes).unwrap();
+
 		hex::encode(id_bytes)
 	}
 

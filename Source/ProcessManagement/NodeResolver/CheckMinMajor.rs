@@ -9,9 +9,12 @@ use crate::dev_log;
 
 pub fn Fn(VersionString:&str) {
 	let Trimmed = VersionString.trim_start_matches('v');
+
 	let MajorToken = Trimmed.split('.').next().unwrap_or("");
+
 	let Major:u32 = match MajorToken.parse() {
 		Ok(Value) => Value,
+
 		Err(_) => return,
 	};
 

@@ -11,5 +11,6 @@ pub fn Fn(Raw:&str) -> PathBuf {
 			return PathBuf::from(Home).join(Stripped);
 		}
 	}
+
 	PathBuf::from(Raw)
 }

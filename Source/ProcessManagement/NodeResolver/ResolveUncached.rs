@@ -26,21 +26,27 @@ pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode::Struct {
 	if let Some(Found) = TryOverride::Fn() {
 		return Found;
 	}
+
 	if let Some(Found) = TryShipped::Fn(ApplicationHandle) {
 		return Found;
 	}
+
 	if let Some(Found) = TryFnm::Fn() {
 		return Found;
 	}
+
 	if let Some(Found) = TryVolta::Fn() {
 		return Found;
 	}
+
 	if let Some(Found) = TryAsdf::Fn() {
 		return Found;
 	}
+
 	if let Some(Found) = TryNvm::Fn() {
 		return Found;
 	}
+
 	if let Some(Found) = TryHomebrew::Fn() {
 		return Found;
 	}

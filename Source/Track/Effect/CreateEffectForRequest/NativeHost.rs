@@ -12,6 +12,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"NativeHost.OpenExternal" => {
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let uri = Parameters
 							.get(0)
@@ -25,12 +26,16 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							if lower.starts_with(scheme) {
 								dev_log!(
 									"ipc",
+
 									"warn: [NativeHost.OpenExternal] rejected scheme '{}': {}",
+
 									scheme,
+
 									uri
 								);
 								return Err(format!(
 									"NativeHost.OpenExternal: scheme '{}' is not allowed",
+
 									scheme
 								));
 							}
@@ -51,8 +56,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							Err(e) => {
 								dev_log!(
 									"ipc",
+
 									"warn: [NativeHost.OpenExternal] failed uri={} error={}",
+
 									uri,
+
 									e
 								);
 								Err(e.to_string())
@@ -60,6 +68,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

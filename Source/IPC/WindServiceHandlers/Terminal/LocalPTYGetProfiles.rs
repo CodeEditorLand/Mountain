@@ -58,8 +58,10 @@ pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
 		if let Ok(ShellsFile) = std::fs::read_to_string("/etc/shells") {
 			for Line in ShellsFile.lines() {
 				let Trimmed = Line.trim();
+
 				if Trimmed.starts_with('/') && !Trimmed.starts_with('#') {
 					let AlreadyAdded = Profiles.iter().any(|P| P.get("path").and_then(|V| V.as_str()) == Some(Trimmed));
+
 					if !AlreadyAdded && std::path::Path::new(Trimmed).exists() {
 						let Name = std::path::Path::new(Trimmed)
 							.file_name()
@@ -83,7 +85,9 @@ pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
 	#[cfg(target_os = "windows")]
 	{
 		let SystemRoot = std::env::var("SystemRoot").unwrap_or_else(|_| "C:\\Windows".to_string());
+
 		let ProgramFiles = std::env::var("ProgramFiles").unwrap_or_else(|_| "C:\\Program Files".to_string());
+
 		let LocalAppData =
 			std::env::var("LOCALAPPDATA").unwrap_or_else(|_| "C:\\Users\\User\\AppData\\Local".to_string());
 
@@ -115,6 +119,7 @@ pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
 		];
 
 		let mut IsFirstFound = true;
+
 		for (Name, Path, Args) in &WindowsShells {
 			if std::path::Path::new(Path).exists() {
 				Profiles.push(json!({
@@ -125,6 +130,7 @@ pub async fn LocalPTYGetProfiles() -> Result<Value, String> {
 					"env": {},
 					"icon": "terminal"
 				}));
+
 				IsFirstFound = false;
 			}
 		}

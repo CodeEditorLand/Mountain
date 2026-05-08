@@ -18,6 +18,7 @@ pub async fn CheckKeybindingConflicts(ApplicationHandle:AppHandle<Wry>, Keybindi
 	dev_log!("keybinding", "checking conflicts for keybinding: {}", Keybinding);
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
+
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
 	Ok(json!({ "conflicts": [] }))

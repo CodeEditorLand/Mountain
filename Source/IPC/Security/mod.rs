@@ -36,7 +36,9 @@
 //! - Implement group-based permissions
 
 pub mod PermissionManager;
+
 pub mod Role;
+
 pub mod Permission;
 
 // Note: Consumers should use Security::PermissionManager::PermissionManager

@@ -9,17 +9,31 @@
 //! Each step logs its outcome so the resolved source is visible in the log.
 
 pub mod CheckMinMajor;
+
 pub mod ExpandHome;
+
 pub mod NodeExecutableName;
+
 pub mod NodeSource;
+
 pub mod QueryNodeVersion;
+
 pub mod ResolveNodeBinary;
+
 pub mod ResolveUncached;
+
 pub mod ResolvedNode;
+
 pub mod TryAsdf;
+
 pub mod TryFnm;
+
 pub mod TryHomebrew;
+
 pub mod TryNvm;
+
 pub mod TryOverride;
+
 pub mod TryShipped;
+
 pub mod TryVolta;

@@ -20,27 +20,42 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:CreateStatusBarItemRequest,
 ) -> Result<Response<CreateStatusBarItemResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] create_status_bar_item: {}", Request.id);
 
 	let Entry = StatusBarEntryDTO {
 		EntryIdentifier:Request.id.clone(),
+
 		ItemIdentifier:Request.id.clone(),
+
 		ExtensionIdentifier:String::new(),
+
 		Name:None,
+
 		Text:Request.text.clone(),
+
 		Tooltip:if Request.tooltip.is_empty() { None } else { Some(json!(Request.tooltip)) },
+
 		HasTooltipProvider:false,
+
 		Command:None,
+
 		Color:None,
+
 		BackgroundColor:None,
+
 		IsAlignedLeft:true,
+
 		Priority:None,
+
 		AccessibilityInformation:None,
 	};
+
 	if let Err(Error) = Service.environment.SetStatusBarEntry(Entry).await {
 		dev_log!("cocoon", "warn: [CocoonService] create_status_bar_item trait failed: {}", Error);
+
 		let _ = Service.environment.ApplicationHandle.emit(
 			"sky://statusbar/create",
 			json!({ "id": Request.id, "text": Request.text, "tooltip": Request.tooltip }),

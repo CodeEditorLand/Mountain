@@ -10,12 +10,16 @@ use std::time::Duration;
 pub enum Enum {
 	/// A single numerical value that can go up or down
 	Counter(f64),
+
 	/// A single numerical value (gauge)
 	Gauge(f64),
+
 	/// A duration measurement
 	Histogram(Duration),
+
 	/// A boolean value
 	Boolean(bool),
+
 	/// A string value
 	Text(String),
 }

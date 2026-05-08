@@ -10,11 +10,14 @@ use crate::{
 
 pub fn Fn() -> Option<ResolvedNode::Struct> {
 	let Raw = std::env::var("Pick").ok()?;
+
 	let Expanded = ExpandHome::Fn(&Raw);
+
 	if Expanded.exists() {
 		Some(ResolvedNode::Struct { Path:Expanded, Source:NodeSource::Enum::Override })
 	} else {
 		dev_log!("cocoon", "warn: [NodeResolver] Pick={} does not exist; ignoring", Raw);
+
 		None
 	}
 }

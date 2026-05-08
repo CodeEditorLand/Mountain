@@ -10,9 +10,12 @@ use tauri::{AppHandle, Emitter};
 
 pub async fn OutputAppendLine(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ChannelName = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	let Text = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	let Line = format!("{}\n", Text);
 
 	let _ = ApplicationHandle.emit(SkyEvent::OutputAppend.AsStr(), json!({ "channel": ChannelName, "text": Line }));
+
 	Ok(Value::Null)
 }

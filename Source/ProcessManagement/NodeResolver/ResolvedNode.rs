@@ -10,5 +10,6 @@ use crate::ProcessManagement::NodeResolver::NodeSource;
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub Path:PathBuf,
+
 	pub Source:NodeSource::Enum,
 }

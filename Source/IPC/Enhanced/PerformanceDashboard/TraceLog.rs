@@ -12,7 +12,10 @@ use crate::IPC::Enhanced::PerformanceDashboard::LogLevel;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub timestamp:u64,
+
 	pub message:String,
+
 	pub level:LogLevel::Enum,
+
 	pub fields:HashMap<String, String>,
 }

@@ -16,7 +16,9 @@ pub fn Fn(SideCarIdentifier:String) -> Result<(), VineError> {
 
 	if Pool.remove(&SideCarIdentifier).is_some() {
 		CONNECTION_METADATA.lock().remove(&SideCarIdentifier);
+
 		dev_log!("grpc", "[VineClient] Disconnected from sidecar '{}'", SideCarIdentifier);
+
 		Ok(())
 	} else {
 		Err(VineError::ClientNotConnected(SideCarIdentifier))

@@ -27,4 +27,5 @@
 //! - [ ] Add performance metrics
 
 pub mod URLSerializer;
+
 pub mod URLDeserializer;

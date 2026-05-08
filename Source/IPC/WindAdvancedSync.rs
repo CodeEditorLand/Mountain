@@ -298,9 +298,13 @@ use crate::{
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct SyncStatus {
 	pub total_documents:u32,
+
 	pub synced_documents:u32,
+
 	pub conflicted_documents:u32,
+
 	pub offline_documents:u32,
+
 	pub last_sync_duration_ms:u64,
 }
 
@@ -308,8 +312,11 @@ pub struct SyncStatus {
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum SyncState {
 	Modified,
+
 	Synced,
+
 	Conflicted,
+
 	Offline,
 }
 
@@ -317,9 +324,13 @@ pub enum SyncState {
 #[derive(Clone, Copy, Debug)]
 pub enum ChangeType {
 	Update,
+
 	Insert,
+
 	Delete,
+
 	Move,
+
 	Other,
 }
 
@@ -327,10 +338,15 @@ pub enum ChangeType {
 #[derive(Clone, Debug)]
 pub struct SynchronizedDocument {
 	pub document_id:String,
+
 	pub file_path:String,
+
 	pub last_modified:u64,
+
 	pub content_hash:String,
+
 	pub sync_state:SyncState,
+
 	pub version:u32,
 }
 
@@ -338,17 +354,24 @@ pub struct SynchronizedDocument {
 #[derive(Clone, Debug)]
 pub struct DocumentChange {
 	pub change_id:String,
+
 	pub document_id:String,
+
 	pub change_type:ChangeType,
+
 	pub content:Option<String>,
+
 	pub applied:bool,
 }
 
 /// Document synchronization state
 pub struct DocumentSynchronization {
 	pub synchronized_documents:HashMap<String, SynchronizedDocument>,
+
 	pub pending_changes:HashMap<String, Vec<DocumentChange>>,
+
 	pub last_sync_time:u64,
+
 	pub sync_status:SyncStatus,
 }
 
@@ -356,14 +379,18 @@ pub struct DocumentSynchronization {
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct RealTimeUpdate {
 	pub target:String,
+
 	pub data:String,
 }
 
 /// Real-time updates manager
 pub struct RealTimeUpdateManager {
 	pub Updates:Vec<RealTimeUpdate>,
+
 	pub Subscribers:HashMap<String, Vec<String>>,
+
 	pub UpdateQueue:Vec<RealTimeUpdate>,
+
 	pub LastBroadcast:u64,
 }
 
@@ -371,8 +398,11 @@ pub struct RealTimeUpdateManager {
 #[derive(Clone, Debug)]
 pub struct ViewState {
 	pub zoom_level:f32,
+
 	pub sidebar_visible:bool,
+
 	pub panel_visible:bool,
+
 	pub status_bar_visible:bool,
 }
 
@@ -380,8 +410,11 @@ pub struct ViewState {
 #[derive(Clone, Debug)]
 pub struct GridLayout {
 	pub rows:u32,
+
 	pub columns:u32,
+
 	pub cell_width:u32,
+
 	pub cell_height:u32,
 }
 
@@ -389,7 +422,9 @@ pub struct GridLayout {
 #[derive(Clone, Debug)]
 pub struct LayoutState {
 	pub editor_groups:Vec<String>,
+
 	pub active_group:u32,
+
 	pub grid_layout:GridLayout,
 }
 
@@ -397,10 +432,15 @@ pub struct LayoutState {
 #[derive(Clone, Debug)]
 pub struct UIStateSynchronization {
 	pub active_editor:Option<String>,
+
 	pub cursor_positions:HashMap<String, (u32, u32)>,
+
 	pub selection_ranges:HashMap<String, (u32, u32)>,
+
 	pub view_state:ViewState,
+
 	pub theme:String,
+
 	pub layout:LayoutState,
 }
 
@@ -408,9 +448,13 @@ pub struct UIStateSynchronization {
 #[derive(Clone)]
 pub struct WindAdvancedSync {
 	runtime:Arc<ApplicationRunTime>,
+
 	document_sync:Arc<Mutex<DocumentSynchronization>>,
+
 	ui_state_sync:Arc<Mutex<UIStateSynchronization>>,
+
 	real_time_updates:Arc<Mutex<RealTimeUpdateManager>>,
+
 	performance_stats:Arc<Mutex<PerformanceStats>>,
 	// mountain_ipc: Arc<MountainIPC>, // Module doesn't exist
 }
@@ -420,6 +464,7 @@ impl WindAdvancedSync {
 	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
 		Self {
 			runtime:runtime.clone(),
+
 			document_sync:Arc::new(Mutex::new(DocumentSynchronization {
 				synchronized_documents:HashMap::new(),
 				pending_changes:HashMap::new(),
@@ -432,6 +477,7 @@ impl WindAdvancedSync {
 					last_sync_duration_ms:0,
 				},
 			})),
+
 			ui_state_sync:Arc::new(Mutex::new(UIStateSynchronization {
 				active_editor:None,
 				cursor_positions:HashMap::new(),
@@ -449,12 +495,14 @@ impl WindAdvancedSync {
 					grid_layout:GridLayout { rows:1, columns:1, cell_width:100, cell_height:100 },
 				},
 			})),
+
 			real_time_updates:Arc::new(Mutex::new(RealTimeUpdateManager {
 				Updates:Vec::new(),
 				Subscribers:HashMap::new(),
 				UpdateQueue:Vec::new(),
 				LastBroadcast:0,
 			})),
+
 			performance_stats:Arc::new(Mutex::new(PerformanceStats {
 				total_messages_sent:0,
 				total_messages_received:0,
@@ -479,12 +527,14 @@ impl WindAdvancedSync {
 		self.start_performance_monitoring().await;
 
 		dev_log!("ipc", "Wind Advanced Sync service initialized successfully");
+
 		Ok(())
 	}
 
 	/// Start background synchronization task
 	async fn start_sync_task(&self) {
 		let document_sync = self.document_sync.clone();
+
 		let runtime = self.runtime.clone();
 
 		tokio::spawn(async move {
@@ -533,6 +583,7 @@ impl WindAdvancedSync {
 	/// Start performance monitoring
 	async fn start_performance_monitoring(&self) {
 		let performance_stats = self.performance_stats.clone();
+
 		let runtime = self.runtime.clone();
 
 		tokio::spawn(async move {
@@ -564,15 +615,22 @@ impl WindAdvancedSync {
 	/// Calculate synchronization status
 	fn calculate_sync_status(documents:&HashMap<String, SynchronizedDocument>) -> SyncStatus {
 		let total = documents.len() as u32;
+
 		let synced = documents.values().filter(|d| d.sync_state == SyncState::Synced).count() as u32;
+
 		let conflicted = documents.values().filter(|d| d.sync_state == SyncState::Conflicted).count() as u32;
+
 		let offline = documents.values().filter(|d| d.sync_state == SyncState::Offline).count() as u32;
 
 		SyncStatus {
 			total_documents:total,
+
 			synced_documents:synced,
+
 			conflicted_documents:conflicted,
+
 			offline_documents:offline,
+
 			last_sync_duration_ms:0,
 		}
 	}
@@ -580,6 +638,7 @@ impl WindAdvancedSync {
 	/// Register IPC commands
 	pub fn register_commands(_app:&mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 		dev_log!("ipc", "Registering Wind Advanced Sync IPC commands");
+
 		Ok(())
 	}
 }
@@ -591,18 +650,21 @@ impl WindAdvancedSync {
 
 		// Start document synchronization
 		let sync1 = self.clone();
+
 		tokio::spawn(async move {
 			sync1.synchronize_documents().await;
 		});
 
 		// Start UI state synchronization
 		let sync2 = self.clone();
+
 		tokio::spawn(async move {
 			sync2.synchronize_ui_state().await;
 		});
 
 		// Start real-time updates
 		let sync3 = self.clone();
+
 		tokio::spawn(async move {
 			sync3.broadcast_real_time_updates().await;
 		});
@@ -613,7 +675,9 @@ impl WindAdvancedSync {
 	/// Synchronize documents between Wind and Mountain
 	async fn synchronize_documents(&self) {
 		let mut interval = interval(Duration::from_secs(5));
+
 		let mut consecutive_failures = 0;
+
 		let max_consecutive_failures = 3;
 
 		loop {
@@ -623,7 +687,9 @@ impl WindAdvancedSync {
 
 			// ERROR RECOVERY: Microsoft-inspired circuit breaker pattern
 			let sync_start = std::time::Instant::now();
+
 			let mut success_count = 0;
+
 			let mut error_count = 0;
 
 			// Get document changes from Wind
@@ -633,14 +699,18 @@ impl WindAdvancedSync {
 			for change in changes {
 				match self.apply_document_change(change).await {
 					Ok(_) => success_count += 1,
+
 					Err(e) => {
 						error_count += 1;
+
 						dev_log!("ipc", "error: [WindAdvancedSync] Failed to apply document change: {}", e);
 
 						// ERROR HANDLING: Exponential backoff on consecutive failures
 						consecutive_failures += 1;
+
 						if consecutive_failures >= max_consecutive_failures {
 							dev_log!("lifecycle", "Too many consecutive failures, slowing sync interval");
+
 							// Reduce sync frequency to 30-second interval to prevent system overload
 							// during persistent error conditions (circuit breaker pattern).
 							interval = tokio::time::interval(Duration::from_secs(30));
@@ -652,6 +722,7 @@ impl WindAdvancedSync {
 			// Reset failure counter on successful operations
 			if success_count > 0 {
 				consecutive_failures = 0;
+
 				// Restore normal sync frequency to 5-second interval after successful recovery.
 				interval = tokio::time::interval(Duration::from_secs(5));
 			}
@@ -661,6 +732,7 @@ impl WindAdvancedSync {
 
 			// PERFORMANCE MONITORING: Microsoft-inspired metrics collection
 			let sync_duration = sync_start.elapsed();
+
 			dev_log!(
 				"ipc",
 				"[WindAdvancedSync] Document sync completed: {} success, {} errors, {:.2}ms",
@@ -704,6 +776,7 @@ impl WindAdvancedSync {
 			// channel free for keystrokes during extension boot.
 			{
 				let rt = self.real_time_updates.lock().unwrap();
+
 				if rt.Subscribers.is_empty() {
 					continue;
 				}
@@ -723,6 +796,7 @@ impl WindAdvancedSync {
 	/// Get pending document changes
 	async fn get_pending_changes(&self) -> Vec<DocumentChange> {
 		let sync = self.document_sync.lock().unwrap();
+
 		sync.pending_changes.values().flatten().cloned().collect()
 	}
 
@@ -736,6 +810,7 @@ impl WindAdvancedSync {
 		// Check for conflicts before applying changes
 		if let Err(conflict) = self.check_for_conflicts(&change).await {
 			dev_log!("lifecycle", "Conflict detected: {}", conflict);
+
 			return Err(format!("Conflict detected: {}", conflict));
 		}
 
@@ -744,6 +819,7 @@ impl WindAdvancedSync {
 			ChangeType::Update => {
 				// Update file content via Mountain IPC
 				if let Some(_content) = &change.content {
+
 					// self.mountain_ipc.update_document(
 					//     &change.document_id,
 					//     content,
@@ -754,9 +830,11 @@ impl WindAdvancedSync {
 					// Mountain IPC: {}", e))?;
 				}
 			},
+
 			ChangeType::Insert => {
 				// Create new file via Mountain IPC
 				if let Some(_content) = &change.content {
+
 					// self.mountain_ipc.create_document(
 					//     &change.document_id,
 					//     content.as_str(),
@@ -767,7 +845,9 @@ impl WindAdvancedSync {
 					// Mountain IPC: {}", e))?;
 				}
 			},
+
 			ChangeType::Delete => {
+
 				// Delete file via Mountain IPC
 				// self.mountain_ipc.delete_document(
 				//     &change.document_id,
@@ -777,6 +857,7 @@ impl WindAdvancedSync {
 				// .map_err(|e| format!("Failed to delete document via Mountain
 				// IPC: {}", e))?;
 			},
+
 			_ => {
 				dev_log!("lifecycle", "Unsupported change type: {:?}", change.change_type);
 			},
@@ -784,6 +865,7 @@ impl WindAdvancedSync {
 
 		// Mark change as applied
 		let mut sync = self.document_sync.lock().unwrap();
+
 		if let Some(changes) = sync.pending_changes.get_mut(&change.document_id) {
 			if let Some(change_idx) = changes.iter().position(|c| c.change_id == change.change_id) {
 				changes[change_idx].applied = true;
@@ -792,6 +874,7 @@ impl WindAdvancedSync {
 
 		// PERFORMANCE TRACKING: Microsoft-inspired operation metrics
 		let change_duration = change_start.elapsed();
+
 		dev_log!(
 			"ipc",
 			"[WindAdvancedSync] Change applied successfully in {:.2}ms: {}",
@@ -837,16 +920,19 @@ impl WindAdvancedSync {
 		let mut sync = self.document_sync.lock().unwrap();
 
 		sync.sync_status.total_documents = sync.synchronized_documents.len() as u32;
+
 		sync.sync_status.synced_documents = sync
 			.synchronized_documents
 			.values()
 			.filter(|doc| matches!(doc.sync_state, SyncState::Synced))
 			.count() as u32;
+
 		sync.sync_status.conflicted_documents = sync
 			.synchronized_documents
 			.values()
 			.filter(|doc| matches!(doc.sync_state, SyncState::Conflicted))
 			.count() as u32;
+
 		sync.sync_status.offline_documents = sync
 			.synchronized_documents
 			.values()
@@ -862,12 +948,14 @@ impl WindAdvancedSync {
 	/// Get UI state
 	async fn get_ui_state(&self) -> UIStateSynchronization {
 		let sync = self.ui_state_sync.lock().unwrap();
+
 		sync.clone()
 	}
 
 	/// Update UI state
 	async fn update_ui_state(&self, ui_state:UIStateSynchronization) -> Result<(), String> {
 		let mut sync = self.ui_state_sync.lock().unwrap();
+
 		*sync = ui_state;
 
 		// Emit UI state update via Mountain IPC
@@ -881,8 +969,11 @@ impl WindAdvancedSync {
 	/// Get pending updates
 	async fn get_pending_updates(&self) -> Vec<RealTimeUpdate> {
 		let mut updates = self.real_time_updates.lock().unwrap();
+
 		let pending = updates.UpdateQueue.clone();
+
 		updates.UpdateQueue.clear();
+
 		pending
 	}
 
@@ -892,6 +983,7 @@ impl WindAdvancedSync {
 			// Get subscribers for this target
 			let subscribers = {
 				let rt = self.real_time_updates.lock().unwrap();
+
 				rt.Subscribers.get(&update.target).cloned()
 			};
 
@@ -919,19 +1011,25 @@ impl WindAdvancedSync {
 
 		let document = SynchronizedDocument {
 			document_id:document_id.clone(),
+
 			file_path,
+
 			last_modified:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_secs(),
+
 			content_hash:"".to_string(),
+
 			sync_state:SyncState::Synced,
+
 			version:1,
 		};
 
 		sync.synchronized_documents.insert(document_id, document);
 
 		dev_log!("lifecycle", "Document added for synchronization");
+
 		Ok(())
 	}
 
@@ -940,6 +1038,7 @@ impl WindAdvancedSync {
 		let mut updates = self.real_time_updates.lock().unwrap();
 
 		let target_clone = target.clone();
+
 		updates
 			.Subscribers
 			.entry(target_clone.clone())
@@ -947,6 +1046,7 @@ impl WindAdvancedSync {
 			.push(subscriber);
 
 		dev_log!("lifecycle", "Subscriber added for target: {}", target_clone);
+
 		Ok(())
 	}
 
@@ -955,18 +1055,21 @@ impl WindAdvancedSync {
 		let mut updates = self.real_time_updates.lock().unwrap();
 
 		updates.UpdateQueue.push(update);
+
 		updates.LastBroadcast = SystemTime::now()
 			.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap_or_default()
 			.as_secs();
 
 		dev_log!("ipc", "[WindAdvancedSync] Update queued");
+
 		Ok(())
 	}
 
 	/// Get sync status
 	pub async fn get_sync_status(&self) -> SyncStatus {
 		let sync = self.document_sync.lock().unwrap();
+
 		sync.sync_status.clone()
 	}
 
@@ -978,9 +1081,13 @@ impl WindAdvancedSync {
 	fn clone_sync(&self) -> WindAdvancedSync {
 		WindAdvancedSync {
 			runtime:self.runtime.clone(),
+
 			document_sync:self.document_sync.clone(),
+
 			ui_state_sync:self.ui_state_sync.clone(),
+
 			real_time_updates:self.real_time_updates.clone(),
+
 			performance_stats:self.performance_stats.clone(),
 			// mountain_ipc: self.mountain_ipc.clone(),
 		}
@@ -991,7 +1098,9 @@ impl WindAdvancedSync {
 #[tauri::command]
 pub async fn mountain_add_document_for_sync(
 	app_handle:tauri::AppHandle,
+
 	document_id:String,
+
 	file_path:String,
 ) -> Result<(), String> {
 	dev_log!("lifecycle", "Tauri command: add_document_for_sync");
@@ -1019,7 +1128,9 @@ pub async fn mountain_get_sync_status(app_handle:tauri::AppHandle) -> Result<Syn
 #[tauri::command]
 pub async fn mountain_subscribe_to_updates(
 	app_handle:tauri::AppHandle,
+
 	target:String,
+
 	subscriber:String,
 ) -> Result<(), String> {
 	dev_log!("lifecycle", "Tauri command: subscribe_to_updates");
@@ -1034,6 +1145,7 @@ pub async fn mountain_subscribe_to_updates(
 /// Initialize Wind advanced synchronization
 pub fn initialize_wind_advanced_sync(
 	app_handle:&tauri::AppHandle,
+
 	runtime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
 	dev_log!("lifecycle", "Initializing Wind advanced synchronization");
@@ -1045,6 +1157,7 @@ pub fn initialize_wind_advanced_sync(
 
 	// Start synchronization
 	let sync_clone = sync.clone();
+
 	tokio::spawn(async move {
 		if let Err(e) = sync_clone.start_synchronization().await {
 			dev_log!("ipc", "error: [WindAdvancedSync] Failed to start synchronization: {}", e);

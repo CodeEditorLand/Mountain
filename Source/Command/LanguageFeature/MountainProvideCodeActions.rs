@@ -11,8 +11,11 @@ use crate::{Command::LanguageFeature::CodeActions, dev_log};
 #[command]
 pub async fn MountainProvideCodeActions(
 	application_handle:AppHandle<Wry>,
+
 	uri:String,
+
 	position:Value,
+
 	context:Value,
 ) -> Result<Value, String> {
 	dev_log!(
@@ -21,5 +24,6 @@ pub async fn MountainProvideCodeActions(
 		uri,
 		position
 	);
+
 	CodeActions::provide_code_actions_impl(application_handle, uri, position, context).await
 }

@@ -17,9 +17,11 @@ pub async fn tls_get_ca_cert(app_handle:AppHandle) -> Result<String, String> {
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
 		.ok_or("Certificate manager not found")?;
+
 	let cert_manager = state.clone();
 
 	let manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+
 	let cert_pem = manager.get_ca_cert_pem().ok_or("CA certificate not initialized")?;
 
 	String::from_utf8(cert_pem).map_err(|e| format!("Invalid certificate UTF-8: {}", e))

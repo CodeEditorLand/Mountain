@@ -51,6 +51,7 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 	}
 
 	let AddedWire:Vec<serde_json::Value> = Added.iter().map(FolderToWire).collect();
+
 	let RemovedWire:Vec<serde_json::Value> = Removed.iter().map(FolderToWire).collect();
 
 	dev_log!(
@@ -85,12 +86,15 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 /// boot, unit tests), the notification is dropped - the state still mutates.
 pub fn UpdateWorkspaceFoldersAndNotify(
 	State:&crate::ApplicationState::State::WorkspaceState::WorkspaceState::State,
+
 	Folders:Vec<WorkspaceFolderStateDTO>,
 ) {
 	let (Added, Removed) = State.SetWorkspaceFoldersReturnDelta(Folders);
+
 	if Added.is_empty() && Removed.is_empty() {
 		return;
 	}
+
 	if let Ok(Handle) = tokio::runtime::Handle::try_current() {
 		Handle.spawn(async move {
 			DispatchDeltaWorkspaceFolders(Added, Removed).await;
@@ -111,7 +115,9 @@ pub fn UpdateWorkspaceFoldersAndNotify(
 /// whenever the caller already has an `AppHandle` in scope.
 pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	ApplicationHandle:&tauri::AppHandle<R>,
+
 	State:&crate::ApplicationState::State::WorkspaceState::WorkspaceState::State,
+
 	Folders:Vec<WorkspaceFolderStateDTO>,
 ) {
 	// `tauri::Emitter` was previously imported here because the body
@@ -119,11 +125,15 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	// (which imports `Emitter` itself), so the local import would be
 	// dead code - removed to keep the file warning-clean.
 	let (Added, Removed) = State.SetWorkspaceFoldersReturnDelta(Folders);
+
 	if Added.is_empty() && Removed.is_empty() {
 		return;
 	}
+
 	let AddedWire:Vec<serde_json::Value> = Added.iter().map(FolderToWire).collect();
+
 	let RemovedWire:Vec<serde_json::Value> = Removed.iter().map(FolderToWire).collect();
+
 	let BroadcastPayload = serde_json::json!({
 		"added": AddedWire.clone(),
 		"removed": RemovedWire.clone(),
@@ -133,6 +143,7 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 			.map(FolderToWire)
 			.collect::<Vec<_>>(),
 	});
+
 	if let Err(Error) = LogSkyEmit(ApplicationHandle, SkyEvent::WorkspacesChanged.AsStr(), BroadcastPayload) {
 		dev_log!(
 			"workspaces",
@@ -160,29 +171,37 @@ fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 	if Added.is_empty() {
 		return;
 	}
+
 	let Home = std::env::var("HOME")
 		.or_else(|_| std::env::var("USERPROFILE"))
 		.unwrap_or_default();
+
 	if Home.is_empty() {
 		return;
 	}
+
 	let Path = std::path::PathBuf::from(Home)
 		.join(".land")
 		.join("workspaces")
 		.join("RecentlyOpened.json");
+
 	let mut Current:serde_json::Map<String, serde_json::Value> = std::fs::read_to_string(&Path)
 		.ok()
 		.and_then(|Contents| serde_json::from_str::<serde_json::Value>(&Contents).ok())
 		.and_then(|V| V.as_object().cloned())
 		.unwrap_or_default();
+
 	let mut Workspaces = Current
 		.get("workspaces")
 		.and_then(|V| V.as_array())
 		.cloned()
 		.unwrap_or_default();
+
 	for Folder in Added {
 		let Uri = Folder.URI.to_string();
+
 		Workspaces.retain(|Entry| Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri);
+
 		Workspaces.insert(
 			0,
 			serde_json::json!({
@@ -191,14 +210,19 @@ fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 			}),
 		);
 	}
+
 	Workspaces.truncate(50);
+
 	Current.insert("workspaces".into(), serde_json::Value::Array(Workspaces));
+
 	if !Current.contains_key("files") {
 		Current.insert("files".into(), serde_json::json!([]));
 	}
+
 	if let Some(Parent) = Path.parent() {
 		let _ = std::fs::create_dir_all(Parent);
 	}
+
 	if let Ok(Serialised) = serde_json::to_vec_pretty(&serde_json::Value::Object(Current)) {
 		let _ = std::fs::write(&Path, Serialised);
 	}

@@ -10,5 +10,6 @@ use crate::IPC::WindServiceAdapters::FileToOpenOrCreate;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub wait_marker_file_uri:String,
+
 	pub paths:Vec<FileToOpenOrCreate::Struct>,
 }

@@ -15,14 +15,23 @@ use crate::IPC::Enhanced::ConnectionPool::ConnectionHealth;
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub id:String,
+
 	pub created_at:Instant,
+
 	pub last_used:Instant,
+
 	pub health_score:f64,
+
 	pub error_count:usize,
+
 	pub successful_operations:usize,
+
 	pub total_operations:usize,
+
 	pub is_active:bool,
+
 	pub reuse_count:u32,
+
 	pub health:ConnectionHealth::Enum,
 }
 
@@ -30,28 +39,41 @@ impl Struct {
 	pub fn new() -> Self {
 		Self {
 			id:Uuid::new_v4().to_string(),
+
 			created_at:Instant::now(),
+
 			last_used:Instant::now(),
+
 			health_score:100.0,
+
 			error_count:0,
+
 			successful_operations:0,
+
 			total_operations:0,
+
 			is_active:true,
+
 			reuse_count:0,
+
 			health:ConnectionHealth::Enum::Healthy,
 		}
 	}
 
 	pub fn update_health(&mut self, success:bool) {
 		self.last_used = Instant::now();
+
 		self.total_operations += 1;
 
 		if success {
 			self.successful_operations += 1;
+
 			self.health_score = (self.health_score + 2.0).min(100.0);
+
 			self.error_count = 0;
 		} else {
 			self.error_count += 1;
+
 			self.health_score = (self.health_score - 10.0).max(0.0);
 		}
 

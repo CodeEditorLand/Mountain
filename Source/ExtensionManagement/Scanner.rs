@@ -180,6 +180,7 @@ fn IsTestOnlyExtension(Name:&str) -> bool { TEST_ONLY_EXTENSIONS.iter().any(|Tes
 fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
 	let Normalised = match DirectoryPath.canonicalize() {
 		Ok(Canonical) => Canonical,
+
 		Err(_) => DirectoryPath.to_path_buf(),
 	};
 
@@ -195,6 +196,7 @@ fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
 	// path list in `ScanPathConfigure`.
 	if let Ok(Home) = std::env::var("HOME") {
 		let UserRoot = std::path::PathBuf::from(Home).join(".land/extensions");
+
 		if Normalised == UserRoot {
 			return true;
 		}
@@ -217,6 +219,7 @@ pub async fn ScanDirectoryForExtensions(
 	// extensions. Built-ins are ones shipped inside the Mountain/Sky/VS Code
 	// bundle; the `~/.land/extensions` root is user-space.
 	let IsUserPath = IsUserExtensionScanPath(&DirectoryPath);
+
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
 	let mut FoundExtensions = Vec::new();
@@ -231,8 +234,10 @@ pub async fn ScanDirectoryForExtensions(
 				"[ExtensionScanner] Extension path '{}' does not exist, skipping (no extensions installed here)",
 				DirectoryPath.display()
 			);
+
 			return Ok(Vec::new());
 		},
+
 		Err(error) => {
 			dev_log!(
 				"extensions",
@@ -240,8 +245,10 @@ pub async fn ScanDirectoryForExtensions(
 				DirectoryPath.display(),
 				error
 			);
+
 			return Ok(Vec::new());
 		},
+
 		Ok(true) => {},
 	}
 
@@ -268,9 +275,13 @@ pub async fn ScanDirectoryForExtensions(
 	);
 
 	let mut parse_failures = 0usize;
+
 	let mut missing_package_json = 0usize;
+
 	let mut denied_directory_count = 0usize;
+
 	let mut test_extension_skips = 0usize;
+
 	let AllowTestExtensions = IncludeTestExtensions();
 
 	for (EntryName, FileType) in TopLevelEntries {
@@ -279,12 +290,16 @@ pub async fn ScanDirectoryForExtensions(
 			// build output / shared deps, not extensions.
 			if IsDeniedDirectory(&EntryName) {
 				denied_directory_count += 1;
+
 				continue;
 			}
+
 			if !AllowTestExtensions && IsTestOnlyExtension(&EntryName) {
 				test_extension_skips += 1;
+
 				continue;
 			}
+
 			let PotentialExtensionPath = DirectoryPath.join(EntryName);
 
 			let PackageJsonPath = PotentialExtensionPath.join("package.json");
@@ -308,14 +323,17 @@ pub async fn ScanDirectoryForExtensions(
 					// `%displayName%`, etc. in the Command Palette and menus.
 					let mut ManifestValue:Value = match serde_json::from_slice::<Value>(&PackageJsonContent) {
 						Ok(v) => v,
+
 						Err(error) => {
 							parse_failures += 1;
+
 							dev_log!(
 								"extensions",
 								"warn: [ExtensionScanner] Failed to parse package.json at '{}': {}",
 								PotentialExtensionPath.display(),
 								error
 							);
+
 							continue;
 						},
 					};
@@ -327,12 +345,16 @@ pub async fn ScanDirectoryForExtensions(
 					// placeholders - surfacing a warning there is misleading
 					// because the UI renders correctly with the raw fields.
 					let ManifestUsesPlaceholders = ManifestContainsNLSPlaceholders(&ManifestValue);
+
 					if let Some(NLSMap) =
 						LoadNLSBundle(&RunTime, &PotentialExtensionPath, ManifestUsesPlaceholders).await
 					{
 						let mut Replaced = 0u32;
+
 						let mut Unresolved = 0u32;
+
 						ResolveNLSPlaceholdersInner(&mut ManifestValue, &NLSMap, &mut Replaced, &mut Unresolved);
+
 						dev_log!(
 							"nls",
 							"[LandFix:NLS] {} → {} replaced, {} unresolved placeholders",
@@ -358,6 +380,7 @@ pub async fn ScanDirectoryForExtensions(
 								} else {
 									format!("{}.{}", Description.Publisher, Description.Name)
 								};
+
 								Description.Identifier = serde_json::json!({ "value": Id });
 							}
 
@@ -405,12 +428,14 @@ pub async fn ScanDirectoryForExtensions(
 
 						Err(error) => {
 							parse_failures += 1;
+
 							dev_log!(
 								"extensions",
 								"warn: [ExtensionScanner] Failed to parse package.json for extension at '{}': {}",
 								PotentialExtensionPath.display(),
 								error
 							);
+
 							dev_log!(
 								"ext-scan",
 								"[ExtScan] skip path={} reason=parse-failure err={}",
@@ -420,14 +445,17 @@ pub async fn ScanDirectoryForExtensions(
 						},
 					}
 				},
+
 				Err(error) => {
 					missing_package_json += 1;
+
 					dev_log!(
 						"extensions",
 						"warn: [ExtensionScanner] Could not read package.json at '{}': {}",
 						PackageJsonPath.display(),
 						error
 					);
+
 					dev_log!(
 						"ext-scan",
 						"[ExtScan] skip path={} reason=no-package-json err={}",
@@ -463,8 +491,11 @@ fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
 		serde_json::Value::String(Text) => {
 			Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') && !Text[1..Text.len() - 1].contains('%')
 		},
+
 		serde_json::Value::Array(Items) => Items.iter().any(ManifestContainsNLSPlaceholders),
+
 		serde_json::Value::Object(Object) => Object.values().any(ManifestContainsNLSPlaceholders),
+
 		_ => false,
 	}
 }
@@ -480,12 +511,16 @@ fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
 /// (BATCH-18).
 async fn LoadNLSBundle(
 	RunTime:&Arc<ApplicationRunTime>,
+
 	ExtensionPath:&PathBuf,
+
 	PlaceholdersNeeded:bool,
 ) -> Option<Map<String, Value>> {
 	let NLSPath = ExtensionPath.join("package.nls.json");
+
 	let Content = match RunTime.Run(ReadFile(NLSPath.clone())).await {
 		Ok(Bytes) => Bytes,
+
 		Err(Error) => {
 			if PlaceholdersNeeded {
 				dev_log!("nls", "[LandFix:NLS] no bundle for {} ({})", ExtensionPath.display(), Error);
@@ -496,18 +531,25 @@ async fn LoadNLSBundle(
 					ExtensionPath.display()
 				);
 			}
+
 			return None;
 		},
 	};
+
 	let Parsed:Value = match serde_json::from_slice(&Content) {
 		Ok(V) => V,
+
 		Err(Error) => {
 			dev_log!("nls", "warn: [LandFix:NLS] failed to parse {}: {}", NLSPath.display(), Error);
+
 			return None;
 		},
 	};
+
 	let Object = Parsed.as_object()?;
+
 	let mut Resolved = Map::with_capacity(Object.len());
+
 	for (Key, RawValue) in Object {
 		let Text = if let Some(s) = RawValue.as_str() {
 			Some(s.to_string())
@@ -516,16 +558,19 @@ async fn LoadNLSBundle(
 		} else {
 			None
 		};
+
 		if let Some(t) = Text {
 			Resolved.insert(Key.clone(), Value::String(t));
 		}
 	}
+
 	dev_log!(
 		"nls",
 		"[LandFix:NLS] loaded {} keys for {}",
 		Resolved.len(),
 		ExtensionPath.display()
 	);
+
 	Some(Resolved)
 }
 
@@ -537,6 +582,7 @@ fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Replac
 		serde_json::Value::String(Text) => {
 			if Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') {
 				let Key = &Text[1..Text.len() - 1];
+
 				if !Key.is_empty() && !Key.contains('%') {
 					if let Some(Replacement) = NLS.get(Key).and_then(|v| v.as_str()) {
 						*Text = Replacement.to_string();
@@ -547,16 +593,19 @@ fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Replac
 				}
 			}
 		},
+
 		serde_json::Value::Array(Items) => {
 			for Item in Items {
 				ResolveNLSPlaceholdersInner(Item, NLS, Replaced, Unresolved);
 			}
 		},
+
 		serde_json::Value::Object(Map) => {
 			for (_, FieldValue) in Map {
 				ResolveNLSPlaceholdersInner(FieldValue, NLS, Replaced, Unresolved);
 			}
 		},
+
 		_ => {},
 	}
 }
@@ -590,8 +639,11 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 /// RECURSIVE CONFIGURATION PROCESSING: Handle nested object structures
 fn process_configuration_properties(
 	merged_defaults:&mut serde_json::Map<String, Value>,
+
 	current_path:&str,
+
 	properties:&serde_json::Map<String, Value>,
+
 	visited_keys:&mut Vec<String>,
 ) -> Result<(), CommonError> {
 	for (key, value) in properties {

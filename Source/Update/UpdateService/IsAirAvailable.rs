@@ -19,13 +19,17 @@ pub async fn Fn(AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool 
 	match AirClient.health_check(Request::new(HealthCheckRequest {})).await {
 		Ok(Response) => {
 			let IsHealthy = Response.into_inner().healthy;
+
 			if !IsHealthy {
 				dev_log!("update", "warn: [UpdateService] Air health check returned unhealthy");
 			}
+
 			IsHealthy
 		},
+
 		Err(Error) => {
 			dev_log!("update", "warn: [UpdateService] Air health check failed: {}", Error);
+
 			false
 		},
 	}

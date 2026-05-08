@@ -55,6 +55,7 @@ const DebounceWindow:Duration = Duration::from_millis(100);
 pub struct WatcherEntry {
 	#[allow(dead_code)]
 	Watcher:RecommendedWatcher,
+
 	LastSeen:HashMap<(PathBuf, &'static str), Instant>,
 }
 
@@ -72,17 +73,21 @@ type DedupKey = (PathBuf, bool, Option<String>);
 /// handle. Access through `WatcherState::Get`.
 pub struct WatcherState {
 	pub Entries:Arc<StandardMutex<HashMap<String, WatcherEntry>>>,
+
 	pub EventSender:TokioMPSC::UnboundedSender<WatchEvent>,
+
 	/// Maps `(root, recursive, pattern)` to the primary handle that owns
 	/// the live OS watcher. Subsequent registrations matching the same
 	/// triple are aliased to the primary; only the primary creates a
 	/// notify::Watcher.
 	pub DedupIndex:Arc<StandardMutex<HashMap<DedupKey, String>>>,
+
 	/// Reverse index: primary handle → all aliased handles. When the
 	/// forwarder task gets an event for a primary, it fans the same
 	/// event out to every aliased handle so each extension's
 	/// `vscode.workspace.createFileSystemWatcher` callback fires once.
 	pub Aliases:Arc<StandardMutex<HashMap<String, Vec<String>>>>,
+
 	/// Reverse lookup for unregister: any handle (primary or alias) →
 	/// its primary. Lets `UnregisterWatcher` clean up alias entries
 	/// without scanning the entire `Aliases` map.
@@ -98,6 +103,7 @@ impl WatcherState {
 		// One WatcherState per process - the backing notify watchers are
 		// cheap and multiplex fine, and we want a single forwarder task.
 		static GLOBAL:OnceLock<Arc<WatcherState>> = OnceLock::new();
+
 		GLOBAL
 			.get_or_init(|| {
 				let (tx, mut rx) = TokioMPSC::unbounded_channel::<WatchEvent>();
@@ -182,8 +188,11 @@ impl WatcherState {
 fn MapEventKind(raw:&EventKind) -> Option<WatchEventKind> {
 	match raw {
 		EventKind::Create(_) => Some(WatchEventKind::Create),
+
 		EventKind::Modify(_) => Some(WatchEventKind::Change),
+
 		EventKind::Remove(_) => Some(WatchEventKind::Delete),
+
 		// Access / Any / Other events are not exposed to extensions.
 		_ => None,
 	}
@@ -196,29 +205,39 @@ fn MapEventKind(raw:&EventKind) -> Option<WatchEventKind> {
 /// the other ship-time extensions rely on.
 fn CompileGlobToRegex(Pattern:&str) -> Option<regex::Regex> {
 	let mut Regex = String::with_capacity(Pattern.len() * 2 + 4);
+
 	// Case-insensitive on macOS + Windows where the OS is typically
 	// case-insensitive; on case-sensitive Linux filesystems extensions commonly
 	// still use lowercase patterns, so the flag is safe across all three targets.
 	if cfg!(any(target_os = "macos", target_os = "windows")) {
 		Regex.push_str("(?i)");
 	}
+
 	Regex.push('^');
+
 	let mut Chars = Pattern.chars().peekable();
+
 	let mut InClass = false;
+
 	while let Some(C) = Chars.next() {
 		if InClass {
 			if C == ']' {
 				InClass = false;
 			}
+
 			Regex.push(C);
+
 			continue;
 		}
+
 		match C {
 			'*' => {
 				if Chars.peek() == Some(&'*') {
 					Chars.next();
+
 					if Chars.peek() == Some(&'/') {
 						Chars.next();
+
 						Regex.push_str("(?:.*/)?");
 					} else {
 						Regex.push_str(".*");
@@ -227,22 +246,33 @@ fn CompileGlobToRegex(Pattern:&str) -> Option<regex::Regex> {
 					Regex.push_str("[^/]*");
 				}
 			},
+
 			'?' => Regex.push_str("[^/]"),
+
 			'[' => {
 				Regex.push('[');
+
 				InClass = true;
 			},
+
 			'{' => Regex.push_str("(?:"),
+
 			'}' => Regex.push(')'),
+
 			',' => Regex.push('|'),
+
 			'.' | '+' | '(' | ')' | '^' | '$' | '|' | '\\' => {
 				Regex.push('\\');
+
 				Regex.push(C);
 			},
+
 			_ => Regex.push(C),
 		}
 	}
+
 	Regex.push('$');
+
 	regex::Regex::new(&Regex).ok()
 }
 
@@ -250,9 +280,13 @@ fn CompileGlobToRegex(Pattern:&str) -> Option<regex::Regex> {
 impl FileWatcherProvider for MountainEnvironment {
 	async fn RegisterWatcher(
 		&self,
+
 		Handle:String,
+
 		Root:PathBuf,
+
 		IsRecursive:bool,
+
 		Pattern:Option<String>,
 	) -> Result<(), CommonError> {
 		let state = WatcherState::Get(self);
@@ -263,12 +297,14 @@ impl FileWatcherProvider for MountainEnvironment {
 				.Entries
 				.lock()
 				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 			if guard.contains_key(&Handle) {
 				dev_log!(
 					"filewatcher",
 					"[FileWatcherProvider] handle={} already registered; skipping duplicate",
 					Handle
 				);
+
 				return Ok(());
 			}
 		}
@@ -281,26 +317,33 @@ impl FileWatcherProvider for MountainEnvironment {
 		// avoids the duplicate notify::Watcher / kqueue subscription tree
 		// while still fanning events to every aliased handle.
 		let DedupKeyValue:DedupKey = (Root.clone(), IsRecursive, Pattern.clone());
+
 		{
 			let DedupGuard = state
 				.DedupIndex
 				.lock()
 				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 			if let Some(PrimaryHandle) = DedupGuard.get(&DedupKeyValue).cloned() {
 				drop(DedupGuard);
+
 				let mut AliasGuard = state
 					.Aliases
 					.lock()
 					.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 				AliasGuard
 					.entry(PrimaryHandle.clone())
 					.or_insert_with(Vec::new)
 					.push(Handle.clone());
+
 				let mut H2PGuard = state
 					.HandleToPrimary
 					.lock()
 					.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 				H2PGuard.insert(Handle.clone(), PrimaryHandle.clone());
+
 				dev_log!(
 					"filewatcher",
 					"[FileWatcherProvider] dedup hit; handle={} aliased to primary={} root={} pattern={:?}",
@@ -309,23 +352,29 @@ impl FileWatcherProvider for MountainEnvironment {
 					Root.display(),
 					Pattern
 				);
+
 				return Ok(());
 			}
 		}
+
 		// First registration for this triple. The DedupIndex insert
 		// happens AFTER successful OS-watcher creation below so an
 		// errored or benign-absent registration doesn't leave a stale
 		// dedup entry pointing at a non-existent primary.
 
 		let CompiledPattern = Pattern.as_deref().and_then(CompileGlobToRegex);
+
 		let pattern_for_callback = CompiledPattern.clone();
 
 		// Prepare the per-event callback. It owns clones of the handle and
 		// the forwarder channel; debouncing state lives in the entry under
 		// the global mutex (fine - the callback is not hot).
 		let handle_for_callback = Handle.clone();
+
 		let sender = state.EventSender.clone();
+
 		let entries = state.Entries.clone();
+
 		let mut watcher = notify::recommended_watcher(move |event_result:notify::Result<notify::Event>| {
 			let Ok(event) = event_result else { return };
 			let Some(kind) = MapEventKind(&event.kind) else { return };
@@ -382,6 +431,7 @@ impl FileWatcherProvider for MountainEnvironment {
 		.map_err(|error| CommonError::Unknown { Description:format!("FileWatcher create failed: {}", error) })?;
 
 		let mode = if IsRecursive { RecursiveMode::Recursive } else { RecursiveMode::NonRecursive };
+
 		// Watching a non-existent path is a common pattern: extensions
 		// register watchers on optional config dirs (`~/.roo/skills-*`,
 		// `.vscode/settings.json` in fresh workspaces, …) that may appear
@@ -393,21 +443,27 @@ impl FileWatcherProvider for MountainEnvironment {
 		// events for that path won't fire, but the extension can re-
 		// register once the directory appears, just like in stock VS Code.
 		let WatchResult = watcher.watch(&Root, mode);
+
 		let mut guard = state
 			.Entries
 			.lock()
 			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 		let _ = CompiledPattern;
+
 		match WatchResult {
 			Ok(()) => {
 				guard.insert(Handle.clone(), WatcherEntry { Watcher:watcher, LastSeen:HashMap::new() });
+
 				// Drop the Entries lock before grabbing DedupIndex to
 				// avoid lock-order divergence vs the alias path (which
 				// takes DedupIndex first). Re-acquire is cheap.
 				drop(guard);
+
 				if let Ok(mut DedupGuard) = state.DedupIndex.lock() {
 					DedupGuard.entry(DedupKeyValue.clone()).or_insert_with(|| Handle.clone());
 				}
+
 				dev_log!(
 					"filewatcher",
 					"[FileWatcherProvider] Registered watcher handle={} root={} recursive={} pattern={:?}",
@@ -416,16 +472,20 @@ impl FileWatcherProvider for MountainEnvironment {
 					IsRecursive,
 					Pattern
 				);
+
 				return Ok(());
 			},
+
 			Err(error) => {
 				let ErrorString = error.to_string().to_lowercase();
+
 				let IsBenignAbsent = ErrorString.contains("no path was found")
 					|| ErrorString.contains("no such file or directory")
 					|| ErrorString.contains("entity not found")
 					|| ErrorString.contains("path not found")
 					|| ErrorString.contains("os error 2")
 					|| !Root.exists();
+
 				if IsBenignAbsent {
 					dev_log!(
 						"filewatcher",
@@ -434,6 +494,7 @@ impl FileWatcherProvider for MountainEnvironment {
 						Root.display(),
 						error
 					);
+
 					// Drop watcher (no live subscription); record handle so
 					// Unregister still finds something to remove. We do NOT
 					// reuse the closure's notify::Watcher here.
@@ -469,25 +530,31 @@ impl FileWatcherProvider for MountainEnvironment {
 				.HandleToPrimary
 				.lock()
 				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 			H2PGuard.remove(&Handle)
 		};
+
 		if let Some(PrimaryHandle) = MaybePrimary {
 			let mut AliasGuard = state
 				.Aliases
 				.lock()
 				.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 			if let Some(AliasList) = AliasGuard.get_mut(&PrimaryHandle) {
 				AliasList.retain(|EntryHandle| EntryHandle != &Handle);
+
 				if AliasList.is_empty() {
 					AliasGuard.remove(&PrimaryHandle);
 				}
 			}
+
 			dev_log!(
 				"filewatcher",
 				"[FileWatcherProvider] Unregistered alias handle={} primary={}",
 				Handle,
 				PrimaryHandle
 			);
+
 			return Ok(());
 		}
 
@@ -500,9 +567,11 @@ impl FileWatcherProvider for MountainEnvironment {
 			.Entries
 			.lock()
 			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 		if Guard.remove(&Handle).is_some() {
 			dev_log!("filewatcher", "[FileWatcherProvider] Unregistered watcher handle={}", Handle);
 		}
+
 		drop(Guard);
 
 		// Clear the dedup-index entry pointing at this primary so a
@@ -512,7 +581,9 @@ impl FileWatcherProvider for MountainEnvironment {
 			.DedupIndex
 			.lock()
 			.map_err(|error| CommonError::StateLockPoisoned { Context:error.to_string() })?;
+
 		DedupGuard.retain(|_, PrimaryHandle| PrimaryHandle != &Handle);
+
 		Ok(())
 	}
 }

@@ -17,6 +17,7 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 #[command]
 pub async fn GetSCMBranches(
 	_State:State<'_, Arc<ApplicationState>>,
+
 	ProviderIdentifier:String,
 ) -> Result<Value, String> {
 	dev_log!("commands", "getting branches for provider: {}", ProviderIdentifier);

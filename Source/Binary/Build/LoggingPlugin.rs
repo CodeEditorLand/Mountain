@@ -63,9 +63,11 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 		// Configure output targets
 		.targets([
 			Target::new(TargetKind::Stdout),
+
 			Target::new(TargetKind::LogDir {
 				file_name: Some("Mountain.log".into()),
 			}),
+
 			Target::new(TargetKind::Webview),
 		])
 		// Configure file rotation and timezone
@@ -111,15 +113,21 @@ pub fn LoggingPlugin<R:tauri::Runtime>(LogLevel:LevelFilter) -> TauriPlugin<R> {
 				let Aliased = DevLog::AliasPath::Fn(&RawMessage);
 				out.finish(format_args!(
 					"[{:<5}] [{}] {}",
+
 					record.level(),
+
 					ShortTarget,
+
 					Aliased
 				))
 			} else {
 				out.finish(format_args!(
 					"[{:<5}] [{}] {}",
+
 					record.level(),
+
 					record.target(),
+
 					message
 				))
 			}

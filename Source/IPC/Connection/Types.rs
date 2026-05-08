@@ -64,8 +64,11 @@ impl ConnectionStatus {
 	pub fn description(&self) -> &'static str {
 		match self {
 			ConnectionStatus::Connected => "Connected and healthy",
+
 			ConnectionStatus::Disconnected => "Disconnected",
+
 			ConnectionStatus::Degraded => "Degraded - experiencing issues",
+
 			ConnectionStatus::Failed => "Failed - connection lost",
 		}
 	}
@@ -74,8 +77,11 @@ impl ConnectionStatus {
 	pub fn level(&self) -> u8 {
 		match self {
 			ConnectionStatus::Failed => 0,
+
 			ConnectionStatus::Degraded => 1,
+
 			ConnectionStatus::Disconnected => 2,
+
 			ConnectionStatus::Connected => 3,
 		}
 	}
@@ -144,11 +150,16 @@ impl ConnectionHandle {
 	/// Create a new connection handle with health monitoring
 	pub fn new() -> Self {
 		let now = std::time::SystemTime::now();
+
 		Self {
 			id:uuid::Uuid::new_v4().to_string(),
+
 			created_at:now,
+
 			last_used:now,
+
 			health_score:100.0,
+
 			error_count:0,
 		}
 	}
@@ -164,11 +175,14 @@ impl ConnectionHandle {
 	pub fn update_health(&mut self, success:bool) {
 		if success {
 			self.health_score = (self.health_score + 10.0).min(100.0);
+
 			self.error_count = 0;
 		} else {
 			self.health_score = (self.health_score - 25.0).max(0.0);
+
 			self.error_count += 1;
 		}
+
 		self.last_used = std::time::SystemTime::now();
 	}
 
@@ -216,7 +230,9 @@ impl ConnectionHandle {
 	/// Reset health score to perfect
 	pub fn reset_health(&mut self) {
 		self.health_score = 100.0;
+
 		self.error_count = 0;
+
 		self.last_used = std::time::SystemTime::now();
 	}
 }
@@ -241,6 +257,7 @@ impl std::fmt::Debug for ConnectionHandle {
 			.duration_since(std::time::UNIX_EPOCH)
 			.map(|d| d.as_secs())
 			.unwrap_or(0);
+
 		let last_used_age = self
 			.last_used
 			.duration_since(std::time::UNIX_EPOCH)
@@ -301,6 +318,7 @@ impl ConnectionStats {
 		}
 
 		let used = self.max_connections - self.available_permits;
+
 		(used as f64 / self.max_connections as f64) * 100.0
 	}
 
@@ -342,36 +360,48 @@ impl ConnectionStats {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
 	fn test_connection_status_from_bool() {
 		assert!(matches!(ConnectionStatus::from(true), ConnectionStatus::Connected));
+
 		assert!(matches!(ConnectionStatus::from(false), ConnectionStatus::Disconnected));
 	}
 
 	#[test]
 	fn test_connection_status_description() {
 		assert_eq!(ConnectionStatus::Connected.description(), "Connected and healthy");
+
 		assert_eq!(ConnectionStatus::Disconnected.description(), "Disconnected");
+
 		assert_eq!(ConnectionStatus::Degraded.description(), "Degraded - experiencing issues");
+
 		assert_eq!(ConnectionStatus::Failed.description(), "Failed - connection lost");
 	}
 
 	#[test]
 	fn test_connection_status_level() {
 		assert_eq!(ConnectionStatus::Failed.level(), 0);
+
 		assert_eq!(ConnectionStatus::Degraded.level(), 1);
+
 		assert_eq!(ConnectionStatus::Disconnected.level(), 2);
+
 		assert_eq!(ConnectionStatus::Connected.level(), 3);
 	}
 
 	#[test]
 	fn test_connection_handle_creation() {
 		let handle = ConnectionHandle::new();
+
 		assert!(!handle.id.is_empty());
+
 		assert_eq!(handle.health_score, 100.0);
+
 		assert_eq!(handle.error_count, 0);
+
 		assert!(handle.is_healthy());
 	}
 
@@ -381,29 +411,41 @@ mod tests {
 
 		// Initially healthy
 		assert_eq!(handle.health_score, 100.0);
+
 		assert!(handle.is_healthy());
 
 		// Simulate success (already at 100, should stay at 100)
 		handle.update_health(true);
+
 		assert_eq!(handle.health_score, 100.0);
+
 		assert_eq!(handle.error_count, 0);
 
 		// Simulate failure
 		handle.update_health(false);
+
 		assert_eq!(handle.health_score, 75.0);
+
 		assert_eq!(handle.error_count, 1);
+
 		assert!(handle.is_healthy());
 
 		// More failures
 		handle.update_health(false);
+
 		assert_eq!(handle.health_score, 50.0);
+
 		assert_eq!(handle.error_count, 2);
+
 		assert!(!handle.is_healthy()); // Health <= 50
 
 		// Recovery
 		handle.update_health(true);
+
 		assert_eq!(handle.health_score, 60.0);
+
 		assert_eq!(handle.error_count, 0);
+
 		assert!(handle.is_healthy());
 	}
 
@@ -415,6 +457,7 @@ mod tests {
 		for _ in 0..20 {
 			handle.update_health(true);
 		}
+
 		assert_eq!(handle.health_score, 100.0);
 
 		// Reset
@@ -424,6 +467,7 @@ mod tests {
 		for _ in 0..10 {
 			handle.update_health(false);
 		}
+
 		assert_eq!(handle.health_score, 0.0);
 	}
 
@@ -435,27 +479,35 @@ mod tests {
 
 		// Make unhealthy via health score
 		handle.health_score = 50.0;
+
 		handle.error_count = 0;
+
 		assert!(!handle.is_healthy()); // Health <= 50
 
 		// Make unhealthy via error count
 		handle.health_score = 60.0;
+
 		handle.error_count = 5;
+
 		assert!(!handle.is_healthy()); // Errors >= 5
 	}
 
 	#[test]
 	fn test_connection_handle_status() {
 		let mut handle = ConnectionHandle::new();
+
 		assert!(matches!(handle.status(), ConnectionStatus::Connected));
 
 		handle.health_score = 75.0;
+
 		assert!(matches!(handle.status(), ConnectionStatus::Connected));
 
 		handle.health_score = 50.0;
+
 		assert!(matches!(handle.status(), ConnectionStatus::Degraded));
 
 		handle.health_score = 25.0;
+
 		assert!(matches!(handle.status(), ConnectionStatus::Failed));
 	}
 
@@ -467,11 +519,14 @@ mod tests {
 		for _ in 0..3 {
 			handle.update_health(false);
 		}
+
 		assert!(handle.health_score < 100.0);
 
 		// Reset
 		handle.reset_health();
+
 		assert_eq!(handle.health_score, 100.0);
+
 		assert_eq!(handle.error_count, 0);
 	}
 
@@ -479,9 +534,13 @@ mod tests {
 	fn test_connection_stats_utilization() {
 		let stats = ConnectionStats {
 			total_connections:50,
+
 			healthy_connections:45,
+
 			max_connections:100,
+
 			available_permits:50,
+
 			connection_timeout:std::time::Duration::from_secs(30),
 		};
 
@@ -493,9 +552,13 @@ mod tests {
 	fn test_connection_stats_health_percentage() {
 		let stats = ConnectionStats {
 			total_connections:50,
+
 			healthy_connections:45,
+
 			max_connections:100,
+
 			available_permits:50,
+
 			connection_timeout:std::time::Duration::from_secs(30),
 		};
 
@@ -507,9 +570,13 @@ mod tests {
 	fn test_connection_stats_is_under_stress() {
 		let mut stats = ConnectionStats {
 			total_connections:50,
+
 			healthy_connections:45,
+
 			max_connections:100,
+
 			available_permits:50,
+
 			connection_timeout:std::time::Duration::from_secs(30),
 		};
 
@@ -518,10 +585,12 @@ mod tests {
 
 		// High utilization (90%)
 		stats.available_permits = 10;
+
 		assert!(stats.is_under_stress());
 
 		// Low health percentage
 		stats.available_permits = 50;
+
 		stats.healthy_connections = 30; // 60%
 		assert!(stats.is_under_stress());
 	}
@@ -530,13 +599,18 @@ mod tests {
 	fn test_connection_stats_empty_pool() {
 		let stats = ConnectionStats {
 			total_connections:0,
+
 			healthy_connections:0,
+
 			max_connections:100,
+
 			available_permits:100,
+
 			connection_timeout:std::time::Duration::from_secs(30),
 		};
 
 		assert_eq!(stats.utilization(), 0.0);
+
 		assert_eq!(stats.health_percentage(), 100.0); // Empty pool is healthy
 		assert!(!stats.is_under_stress());
 	}

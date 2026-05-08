@@ -29,11 +29,13 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 #[derive(Default)]
 struct ProgressAccumulator {
 	Message:String,
+
 	Increment:f64,
 }
 
 struct ProgressEmitBatch {
 	Pending:Mutex<HashMap<String, ProgressAccumulator>>,
+
 	FlushScheduled:AtomicBool,
 }
 
@@ -46,19 +48,24 @@ fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String,
 
 	{
 		let mut Guard = Batch.Pending.lock().unwrap();
+
 		let Entry = Guard.entry(ProgressHandle).or_default();
+
 		// VS Code semantics: `message` replaces (latest wins); empty
 		// message means "keep previous". `increment` is per-call delta;
 		// accumulate so the final emit carries the same total movement.
 		if !Message.is_empty() {
 			Entry.Message = Message;
 		}
+
 		Entry.Increment += Increment;
 	}
 
 	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
 		let BatchClone = Batch.clone();
+
 		let HandleClone = Handle.clone();
+
 		tokio::spawn(async move {
 			tokio::time::sleep(Duration::from_millis(16)).await;
 			let Drained:HashMap<String, ProgressAccumulator> = {
@@ -88,7 +95,10 @@ fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String,
 
 pub async fn ProgressReport(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let ProgressHandle = Parameter.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
+
 	let Message = Parameter.get("message").and_then(Value::as_str).unwrap_or("").to_string();
+
 	let Increment = Parameter.get("increment").and_then(Value::as_f64).unwrap_or(0.0);
+
 	EnqueueProgressEmit(Service.ApplicationHandle(), ProgressHandle, Message, Increment);
 }

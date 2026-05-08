@@ -83,6 +83,7 @@ impl DiagnosticsState {
 	pub fn SetByOwner(&self, owner:String, diagnostics:HashMap<String, Vec<MarkerDataDTO>>) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.insert(owner, diagnostics);
+
 			dev_log!("extensions", "[DiagnosticsState] Diagnostics updated for owner");
 		}
 	}
@@ -91,6 +92,7 @@ impl DiagnosticsState {
 	pub fn SetByOwnerAndResource(&self, owner:String, resource:String, markers:Vec<MarkerDataDTO>) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.entry(owner).or_insert_with(HashMap::new).insert(resource, markers);
+
 			dev_log!("extensions", "[DiagnosticsState] Diagnostics updated for owner and resource");
 		}
 	}
@@ -99,6 +101,7 @@ impl DiagnosticsState {
 	pub fn ClearByOwner(&self, owner:&str) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.remove(owner);
+
 			dev_log!("extensions", "[DiagnosticsState] Diagnostics cleared for owner: {}", owner);
 		}
 	}
@@ -108,6 +111,7 @@ impl DiagnosticsState {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			if let Some(resources) = guard.get_mut(owner) {
 				resources.remove(resource);
+
 				dev_log!("extensions", "[DiagnosticsState] Diagnostics cleared for owner and resource");
 			}
 		}
@@ -117,6 +121,7 @@ impl DiagnosticsState {
 	pub fn ClearAll(&self) {
 		if let Ok(mut guard) = self.DiagnosticsMap.lock() {
 			guard.clear();
+
 			dev_log!("extensions", "[DiagnosticsState] All diagnostics cleared");
 		}
 	}

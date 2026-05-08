@@ -11,6 +11,7 @@ use crate::dev_log;
 /// Notifies Cocoon that a new document model has been added.
 pub(super) async fn notify_model_added(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	document_state_dto:&serde_json::Value,
 ) {
 	let uri_string = document_state_dto
@@ -40,8 +41,11 @@ pub(super) async fn notify_model_added(
 /// Notifies Cocoon that a document's content has changed.
 pub(super) async fn notify_model_changed(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	uri:&Url,
+
 	new_version:i64,
+
 	changes:serde_json::Value,
 ) {
 	dev_log!("model", "[DocumentProvider] Notifying ModelChanged for: {}", uri);
@@ -70,6 +74,7 @@ pub(super) async fn notify_model_changed(
 /// Notifies Cocoon that a document has been saved to disk.
 pub(super) async fn notify_model_saved(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	uri:&Url,
 ) {
 	dev_log!("model", "[DocumentProvider] Notifying ModelSaved for: {}", uri);
@@ -96,6 +101,7 @@ pub(super) async fn notify_model_saved(
 /// Notifies Cocoon that a document has been closed or renamed.
 pub(super) async fn notify_model_removed(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	uri:&Url,
 ) {
 	dev_log!("model", "[DocumentProvider] Notifying ModelRemoved for: {}", uri);

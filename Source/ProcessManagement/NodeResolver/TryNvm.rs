@@ -11,6 +11,7 @@ use crate::ProcessManagement::NodeResolver::{NodeExecutableName, NodeSource, Res
 pub fn Fn() -> Option<ResolvedNode::Struct> {
 	if let Ok(NvmBin) = std::env::var("NVM_BIN") {
 		let Candidate = PathBuf::from(NvmBin).join(NodeExecutableName::Fn());
+
 		if Candidate.exists() {
 			return Some(ResolvedNode::Struct { Path:Candidate, Source:NodeSource::Enum::Nvm });
 		}
@@ -23,16 +24,21 @@ pub fn Fn() -> Option<ResolvedNode::Struct> {
 	})?;
 
 	let VersionsDirectory = PathBuf::from(&NvmDir).join("versions").join("node");
+
 	let Entries = std::fs::read_dir(&VersionsDirectory).ok()?;
 
 	let mut BestCandidate:Option<PathBuf> = None;
+
 	for Entry in Entries.flatten() {
 		let NodePath = Entry.path().join("bin").join(NodeExecutableName::Fn());
+
 		if !NodePath.exists() {
 			continue;
 		}
+
 		BestCandidate = match BestCandidate {
 			Some(Existing) if Existing > NodePath => Some(Existing),
+
 			_ => Some(NodePath),
 		};
 	}

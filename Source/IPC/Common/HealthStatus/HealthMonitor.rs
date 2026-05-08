@@ -16,8 +16,11 @@ use crate::IPC::Common::HealthStatus::{HealthIssue, SeverityLevel};
 #[derive(Debug, Clone, Serialize)]
 pub struct Struct {
 	pub HealthScore:u8,
+
 	pub Issues:Vec<(HealthIssue::Enum, SeverityLevel::Enum)>,
+
 	pub RecoveryAttempts:u32,
+
 	#[serde(skip)]
 	pub LastCheck:Instant,
 }
@@ -31,32 +34,43 @@ impl Struct {
 
 	pub fn AddIssue(&mut self, Issue:HealthIssue::Enum) {
 		let Severity = Issue.Severity();
+
 		self.Issues.push((Issue, Severity));
+
 		self.Recalculate();
 	}
 
 	pub fn RemoveIssue(&mut self, Issue:&HealthIssue::Enum) {
 		self.Issues.retain(|(I, _)| I != Issue);
+
 		self.Recalculate();
 	}
 
 	pub fn ClearIssues(&mut self) {
 		self.Issues.clear();
+
 		self.HealthScore = 100;
+
 		self.LastCheck = Instant::now();
 	}
 
 	fn Recalculate(&mut self) {
 		let mut Score:i32 = 100;
+
 		for (_, Severity) in &self.Issues {
 			Score -= match Severity {
 				SeverityLevel::Enum::Low => 5,
+
 				SeverityLevel::Enum::Medium => 15,
+
 				SeverityLevel::Enum::High => 25,
+
 				SeverityLevel::Enum::Critical => 40,
 			};
 		}
+
 		self.HealthScore = Score.max(0).min(100) as u8;
+
 		self.LastCheck = Instant::now();
 	}
 

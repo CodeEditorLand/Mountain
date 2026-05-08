@@ -14,14 +14,17 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:RegisterOnTypeFormattingProviderRequest,
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering On Type Formatting Provider");
+
 	Service.RegisterProvider(
 		Request.handle,
 		ProviderType::OnTypeFormatting,
 		&Request.language_selector,
 		&Request.extension_id,
 	);
+
 	Ok(Response::new(Empty {}))
 }

@@ -19,11 +19,13 @@ pub async fn StorageGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -
 		.ok_or("Storage key must be a string".to_string())?;
 
 	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+
 	let value = provider
 		.GetStorageValue(false, key)
 		.await
 		.map_err(|Error| format!("Failed to get storage item: {}", Error))?;
 
 	dev_log!("storage", "get: {}", key);
+
 	Ok(value.unwrap_or(Value::Null))
 }

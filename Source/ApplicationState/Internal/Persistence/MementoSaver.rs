@@ -67,6 +67,7 @@ pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<Strin
 					Description:format!("Failed to create directory: {}", e),
 				}
 			})?;
+
 			dev_log!("storage", "[MementoSaver] Created directory: {}", parent.display());
 		}
 	}
@@ -79,6 +80,7 @@ pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<Strin
 
 	// Write to temporary file first, then rename for atomic write
 	let temp_path = StorageFilePath.with_extension("json.tmp");
+
 	fs::write(&temp_path, json_content).map_err(|e| {
 		dev_log!(
 			"storage",

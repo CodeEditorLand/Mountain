@@ -10,6 +10,7 @@ use std::sync::Arc;
 use crate::Telemetry::FeatureFlags::FeatureFlagRegistry;
 
 lazy_static::lazy_static! {
+
 	pub(crate) static ref REGISTRY: Arc<FeatureFlagRegistry::Struct> =
 		Arc::new(FeatureFlagRegistry::Struct::new());
 }

@@ -20,12 +20,15 @@ pub fn get_userdata_base_dir() -> String {
 	if let Some(Dir) = USERDATA_BASE_DIR.get() {
 		return Dir.clone();
 	}
+
 	if let Ok(Home) = std::env::var("HOME") {
 		#[cfg(target_os = "macos")]
 		return format!("{}/Library/Application Support/Land", Home);
+
 		#[cfg(target_os = "linux")]
 		return format!("{}/.local/share/Land", Home);
 	}
+
 	"/tmp/Land".to_string()
 }
 
@@ -35,6 +38,7 @@ pub fn ensure_userdata_dirs() {
 	}
 
 	let Base = get_userdata_base_dir();
+
 	let Dirs = [
 		format!("{}/User", Base),
 		format!("{}/User/globalStorage", Base),

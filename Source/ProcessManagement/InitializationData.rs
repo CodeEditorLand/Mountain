@@ -166,8 +166,10 @@ fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 	// Try to load existing machine ID
 	if let Ok(content) = fs::read_to_string(&machine_id_path) {
 		let trimmed = content.trim();
+
 		if !trimmed.is_empty() {
 			dev_log!("cocoon", "[InitializationData] Loaded existing machine ID from disk");
+
 			return trimmed.to_string();
 		}
 	}

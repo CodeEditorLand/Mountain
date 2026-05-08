@@ -18,6 +18,7 @@ pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, S
 	);
 
 	let air_address = GetAirAddress::Fn()?;
+
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
 	let request_id = uuid::Uuid::new_v4().to_string();
@@ -28,5 +29,6 @@ pub async fn ApplyUpdate(update_id:String, update_path:String) -> Result<bool, S
 		.map_err(|e| format!("Update application failed: {:?}", e))?;
 
 	dev_log!("grpc", "[WindAirCommands] Update applied successfully");
+
 	Ok(true)
 }

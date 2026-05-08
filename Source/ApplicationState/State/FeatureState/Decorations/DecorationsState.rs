@@ -12,11 +12,14 @@ use crate::dev_log;
 pub struct DecorationData {
 	/// Single character badge shown in the explorer (e.g. "M" for modified).
 	pub Badge:Option<String>,
+
 	/// Tooltip text displayed on hover.
 	pub Tooltip:Option<String>,
+
 	/// Color hint for the item label (theme color ID, e.g.
 	/// "gitDecoration.modifiedResourceForeground").
 	pub Color:Option<String>,
+
 	/// Whether to propagate the badge to parent folders.
 	pub Propagate:Option<bool>,
 }
@@ -31,6 +34,7 @@ pub struct DecorationsState {
 impl Default for DecorationsState {
 	fn default() -> Self {
 		dev_log!("decorations", "[DecorationsState] Initializing default decorations state...");
+
 		Self { Entries:Arc::new(StandardMutex::new(HashMap::new())) }
 	}
 }
@@ -45,6 +49,7 @@ impl DecorationsState {
 	pub fn SetDecoration(&self, Uri:&str, Decoration:Value) {
 		if let Ok(mut Guard) = self.Entries.lock() {
 			Guard.insert(Uri.to_owned(), Decoration);
+
 			dev_log!("decorations", "[DecorationsState] Decoration set for: {}", Uri);
 		}
 	}
@@ -53,6 +58,7 @@ impl DecorationsState {
 	pub fn ClearDecoration(&self, Uri:&str) {
 		if let Ok(mut Guard) = self.Entries.lock() {
 			Guard.remove(Uri);
+
 			dev_log!("decorations", "[DecorationsState] Decoration cleared for: {}", Uri);
 		}
 	}

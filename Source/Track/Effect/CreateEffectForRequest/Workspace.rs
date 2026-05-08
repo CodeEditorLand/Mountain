@@ -42,6 +42,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -73,6 +74,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -92,10 +94,12 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Workspace.RequestResourceTrust" | "Workspace.IsResourceTrusted" => {
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						Ok(json!({ "trusted": true }))
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -163,6 +167,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(json!(null))
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

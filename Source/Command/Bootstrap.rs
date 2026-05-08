@@ -476,10 +476,12 @@ fn ValidateCommandParameters(CommandName:&str, Arguments:&Value) -> Result<(), S
 			// No specific validation needed for open file
 			Ok(())
 		},
+
 		"editor.action.formatDocument" => {
 			// Ensure there's an active document
 			Ok(())
 		},
+
 		_ => Ok(()),
 	}
 }
@@ -542,6 +544,7 @@ pub fn RegisterNativeCommands(
 	// guarding on whether we've registered it; a missing registration shows
 	// up as "command 'vscode.open' not found" in user-visible error toasts.
 	CommandRegistry.insert("vscode.open".to_string(), CommandHandler::Native(CommandVscodeOpen));
+
 	CommandRegistry.insert("vscode.openFolder".to_string(), CommandHandler::Native(CommandVscodeOpen));
 
 	// `workbench.action.openWalkthrough` is VS Code's welcome/getting-started
@@ -553,6 +556,7 @@ pub fn RegisterNativeCommands(
 		"workbench.action.openWalkthrough".to_string(),
 		CommandHandler::Native(CommandOpenWalkthrough),
 	);
+
 	CommandRegistry.insert(
 		"claude-vscode.openWalkthrough".to_string(),
 		CommandHandler::Native(CommandOpenWalkthrough),
@@ -564,6 +568,7 @@ pub fn RegisterNativeCommands(
 
 	// --- Command Validation ---
 	dev_log!("commands", "[Bootstrap] Validating registered commands...");
+
 	// Validate all registered commands at startup to catch configuration errors
 	// early. Verification includes command signature correctness, parameter type
 	// matching, required permissions and capabilities, and extension metadata

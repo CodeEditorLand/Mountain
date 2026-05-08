@@ -17,6 +17,7 @@ pub fn Fn(Config:SchedulerConfig::Struct) -> Arc<Scheduler> {
 	dev_log!("lifecycle", "[RuntimeBuild] Initializing scheduler with config: {:?}", Config);
 
 	let Builder = CreateBuilder::Fn(Config);
+
 	let SchedulerInstance = Builder.Build();
 
 	#[cfg(feature = "Telemetry")]
@@ -26,5 +27,6 @@ pub fn Fn(Config:SchedulerConfig::Struct) -> Arc<Scheduler> {
 	dev_log!("lifecycle", "[RuntimeBuild] Scheduler debugging enabled");
 
 	dev_log!("lifecycle", "[RuntimeBuild] Scheduler initialized successfully");
+
 	Arc::new(SchedulerInstance)
 }

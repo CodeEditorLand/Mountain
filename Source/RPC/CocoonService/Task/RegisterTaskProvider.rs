@@ -23,14 +23,21 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterTaskProviderRequest)
 		.as_bytes()
 		.iter()
 		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+
 	let DTO = ProviderRegistrationDTO {
 		Handle,
+
 		ProviderType:ProviderType::Task,
+
 		Selector:json!([{ "language": "*" }]),
+
 		SideCarIdentifier:"cocoon-main".to_string(),
+
 		ExtensionIdentifier:json!(Request.extension_id),
+
 		Options:None,
 	};
+
 	Service
 		.environment
 		.ApplicationState

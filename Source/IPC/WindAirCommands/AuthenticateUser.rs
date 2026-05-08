@@ -12,7 +12,9 @@ use crate::{
 #[tauri::command]
 pub async fn AuthenticateUser(
 	username:String,
+
 	password:String,
+
 	provider:String,
 ) -> Result<AuthResponseDTO::Struct, String> {
 	dev_log!(
@@ -23,6 +25,7 @@ pub async fn AuthenticateUser(
 	);
 
 	let air_address = GetAirAddress::Fn()?;
+
 	let client = GetOrCreateAirClient::Fn(air_address).await?;
 
 	let request_id = uuid::Uuid::new_v4().to_string();
@@ -35,5 +38,6 @@ pub async fn AuthenticateUser(
 	let result = AuthResponseDTO::Struct { success:true, token, error:None };
 
 	dev_log!("grpc", "[WindAirCommands] Authentication completed: success={}", result.success);
+
 	Ok(result)
 }

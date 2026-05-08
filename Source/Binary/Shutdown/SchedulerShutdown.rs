@@ -36,9 +36,12 @@ pub async fn SchedulerShutdown(SchedulerForShutdown:Arc<Scheduler>) -> Result<()
 	match Arc::try_unwrap(SchedulerForShutdown) {
 		Ok(mut Scheduler) => {
 			Scheduler.Stop().await;
+
 			dev_log!("lifecycle", "[Shutdown] [Scheduler] Echo scheduler stopped successfully.");
+
 			Ok(())
 		},
+
 		Err(_) => Err("Scheduler not exclusively owned".to_string()),
 	}
 }

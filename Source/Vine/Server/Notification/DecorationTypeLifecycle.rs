@@ -32,6 +32,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 struct DecorationEmitBatch {
 	Pending:Mutex<HashMap<String, Vec<Value>>>,
+
 	FlushScheduled:AtomicBool,
 }
 
@@ -44,12 +45,15 @@ fn EnqueueDecorationEmit(Handle:&AppHandle, Channel:String, Payload:Value) {
 
 	{
 		let mut Guard = Batch.Pending.lock().unwrap();
+
 		Guard.entry(Channel).or_insert_with(Vec::new).push(Payload);
 	}
 
 	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
 		let BatchClone = Batch.clone();
+
 		let HandleClone = Handle.clone();
+
 		tokio::spawn(async move {
 			tokio::time::sleep(Duration::from_millis(16)).await;
 			let Drained:HashMap<String, Vec<Value>> = {
@@ -78,5 +82,6 @@ fn EnqueueDecorationEmit(Handle:&AppHandle, Channel:String, Payload:Value) {
 
 pub async fn DecorationTypeLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let EventName = format!("sky://decoration/{}", &MethodName["window.".len()..]);
+
 	EnqueueDecorationEmit(Service.ApplicationHandle(), EventName, Parameter.clone());
 }

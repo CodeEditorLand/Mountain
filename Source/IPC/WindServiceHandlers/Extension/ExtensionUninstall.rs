@@ -17,7 +17,9 @@ use crate::{
 
 pub async fn ExtensionUninstall(
 	ApplicationHandle:AppHandle,
+
 	Runtime:Arc<ApplicationRunTime>,
+
 	Args:Vec<Value>,
 ) -> Result<Value, String> {
 	let OTELStart = crate::IPC::DevLog::NowNano::Fn();
@@ -29,9 +31,12 @@ pub async fn ExtensionUninstall(
 			.or_else(|| Value.get("id").and_then(|Inner| Inner.as_str()).map(str::to_owned))
 	}) {
 		Some(Value) => Value,
+
 		None => {
 			dev_log!("extensions", "extensions:uninstall no-op: Arguments[0] missing identifier");
+
 			crate::otel_span!("extensions:uninstall:noop-missing-id", OTELStart);
+
 			return Ok(Value::Null);
 		},
 	};

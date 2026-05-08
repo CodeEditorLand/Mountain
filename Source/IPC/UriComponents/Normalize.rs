@@ -12,7 +12,9 @@ use crate::IPC::UriComponents::{FromFilePath, FromUrl, StampMidUri};
 pub fn Fn(Raw:Option<&Value>) -> Value {
 	match Raw {
 		Some(Value::Object(Map)) if Map.contains_key("scheme") => StampMidUri::Fn(Value::Object(Map.clone())),
+
 		Some(Value::String(Url)) => FromUrl::Fn(Url),
+
 		_ => FromFilePath::Fn("/extensions/unknown"),
 	}
 }

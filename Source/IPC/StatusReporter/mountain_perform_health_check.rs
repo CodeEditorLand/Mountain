@@ -17,6 +17,7 @@ pub async fn mountain_perform_health_check(app_handle:tauri::AppHandle) -> Resul
 
 	if let Some(reporter) = app_handle.try_state::<Reporter>() {
 		reporter.perform_health_check().await?;
+
 		reporter.get_health_status()
 	} else {
 		Err("StatusReporter not found in application state".to_string())

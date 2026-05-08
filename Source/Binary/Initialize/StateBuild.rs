@@ -38,8 +38,10 @@ use crate::{
 pub struct StateBuildConfig {
 	/// Enable comprehensive validation
 	pub strict_validation:bool,
+
 	/// Enable state snapshotting
 	pub enable_snapshots:bool,
+
 	/// Log state initialization
 	pub verbose_logging:bool,
 }
@@ -49,11 +51,15 @@ impl Default for StateBuildConfig {
 		Self {
 			#[cfg(feature = "Debug")]
 			strict_validation:true,
+
 			#[cfg(not(feature = "Debug"))]
 			strict_validation:false,
+
 			enable_snapshots:false,
+
 			#[cfg(feature = "Debug")]
 			verbose_logging:true,
+
 			#[cfg(not(feature = "Debug"))]
 			verbose_logging:false,
 		}
@@ -107,10 +113,13 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 
 		if let Err(err) = ValidateCapabilities(&environment) {
 			dev_log!("lifecycle", "error: [StateBuild] Capability validation failed: {}", err);
+
 			#[cfg(feature = "Telemetry")]
 			span.set_attribute(KeyValue::new("error", err.clone()));
+
 			return Err(format!("Capability validation failed: {}", err));
 		}
+
 		dev_log!("lifecycle", "[StateBuild] All required capabilities validated");
 	}
 
@@ -120,10 +129,12 @@ pub fn BuildWithConfig(environment:MountainEnvironment, config:StateBuildConfig)
 	#[cfg(feature = "Telemetry")]
 	{
 		span.add_event("state_initialized", vec![]);
+
 		span.end();
 	}
 
 	dev_log!("lifecycle", "[StateBuild] Application state initialized successfully");
+
 	Ok(state)
 }
 
@@ -138,14 +149,17 @@ fn ValidateCapabilities(_environment:&MountainEnvironment) -> Result<(), String>
 #[cfg(any(test, feature = "Test"))]
 pub fn BuildMinimal(_app_handle:tauri::AppHandle) -> Result<ApplicationState, String> {
 	dev_log!("lifecycle", "[StateBuild] Creating minimal test state");
+
 	// Create minimal ApplicationState for tests (no environment needed)
 	// The environment is created later in the actual application lifecycle
 	let app_state = ApplicationState::default();
+
 	Ok(app_state)
 }
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	// Note: These tests are disabled because MountainEnvironment::Create()

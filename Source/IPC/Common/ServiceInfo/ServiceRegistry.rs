@@ -15,7 +15,9 @@ use crate::IPC::Common::ServiceInfo::ServiceInfo;
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub Services:HashMap<String, ServiceInfo::Struct>,
+
 	pub LastDiscovery:Instant,
+
 	pub DiscoveryInterval:Duration,
 }
 
@@ -26,6 +28,7 @@ impl Struct {
 
 	pub fn Register(&mut self, Service:ServiceInfo::Struct) {
 		self.Services.insert(Service.Name.clone(), Service);
+
 		self.LastDiscovery = Instant::now();
 	}
 

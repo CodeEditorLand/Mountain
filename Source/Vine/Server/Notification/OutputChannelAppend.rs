@@ -10,6 +10,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://output/append", Parameter);
+
 	// Per-append fire - `roo-cline`, `TypeScript`, `dart-code` all stream
 	// stdout into their output channels which fires 200+ appends per
 	// boot. The Sky-side consumer already sees the data via
@@ -28,6 +29,7 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 		.or_else(|| Parameter.get("name"))
 		.and_then(Value::as_str)
 		.unwrap_or("?");
+
 	// Char-aware truncation. Slicing a `&str` at `&S[..200]` panics when
 	// byte 200 lands inside a multi-byte UTF-8 codepoint (vscode.git's
 	// progress messages contain `•` which is 3 bytes; if the message is
@@ -51,6 +53,7 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 			}
 		})
 		.unwrap_or_else(|| "<no-value>".to_string());
+
 	if ChannelName.eq_ignore_ascii_case("git")
 		|| ChannelName.eq_ignore_ascii_case("source control")
 		|| ChannelName.eq_ignore_ascii_case("scm")

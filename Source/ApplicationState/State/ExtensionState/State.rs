@@ -53,7 +53,9 @@ impl Default for State {
 
 		Self {
 			Registry:ExtensionRegistry::ExtensionRegistry::Registry::default(),
+
 			ProviderRegistration:ProviderRegistration::ProviderRegistration::Registration::default(),
+
 			ScannedExtensions:ScannedExtensions::ScannedExtensions::ScannedExtensionCollection::default(),
 		}
 	}

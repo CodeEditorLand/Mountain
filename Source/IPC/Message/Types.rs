@@ -102,8 +102,11 @@ impl TauriIPCMessage {
 	pub fn new(channel:String, data:serde_json::Value, sender:Option<String>) -> Self {
 		Self {
 			channel,
+
 			data,
+
 			sender,
+
 			timestamp:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -120,6 +123,7 @@ impl TauriIPCMessage {
 			.duration_since(std::time::UNIX_EPOCH)
 			.unwrap_or_default()
 			.as_millis() as u64;
+
 		now.saturating_sub(self.timestamp)
 	}
 }
@@ -194,6 +198,7 @@ pub type ListenerCallback = Box<dyn Fn(serde_json::Value) -> Result<(), String> 
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
@@ -205,6 +210,7 @@ mod tests {
 		);
 
 		assert_eq!(message.channel, "test_channel");
+
 		assert!(message.is_from("test_sender"));
 	}
 
@@ -219,11 +225,15 @@ mod tests {
 	#[test]
 	fn test_connection_status() {
 		let status = SimpleConnectionStatus::new(true);
+
 		assert!(status.connected);
+
 		assert_eq!(status.description(), "Connected to Mountain");
 
 		let status = SimpleConnectionStatus::new(false);
+
 		assert!(!status.connected);
+
 		assert_eq!(status.description(), "Disconnected from Mountain");
 	}
 }

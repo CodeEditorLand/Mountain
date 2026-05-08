@@ -29,13 +29,21 @@
 //! and small parsers.
 
 pub mod HandleCancel;
+
 pub mod HandleCheckout;
+
 pub mod HandleClone;
+
 pub mod HandleExec;
+
 pub mod HandleFetch;
+
 pub mod HandleIsAvailable;
+
 pub mod HandlePull;
+
 pub mod HandleRevListCount;
+
 pub mod HandleRevParse;
 
 pub(crate) mod Shared;

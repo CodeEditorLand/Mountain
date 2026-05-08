@@ -8,20 +8,25 @@
 
 pub fn Fn(Line:&str) -> Option<String> {
 	let Stripped = Line.strip_prefix("[DEV:")?;
+
 	let (TagUpper, _Rest) = Stripped.split_once(']')?;
+
 	if TagUpper.is_empty() {
 		return None;
 	}
+
 	// Reject anything that isn't a simple tag ident - prevents stray
 	// `[DEV: something with space]` headers from being treated as tags.
 	if !TagUpper.chars().all(|C| C.is_ascii_uppercase() || C == '-' || C == '_') {
 		return None;
 	}
+
 	Some(TagUpper.to_ascii_lowercase())
 }
 
 #[cfg(test)]
 mod Tests {
+
 	use super::Fn;
 
 	#[test]
@@ -40,7 +45,9 @@ mod Tests {
 	#[test]
 	fn RejectsMalformed() {
 		assert_eq!(Fn("[DEV: BOOT] x"), None);
+
 		assert_eq!(Fn("[DEV:]"), None);
+
 		assert_eq!(Fn("[DEV:BOOT"), None);
 	}
 }

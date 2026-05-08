@@ -9,7 +9,9 @@ use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
 	ConfigurationTarget as ConfigurationTargetModule,
 };
+
 type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationOverridesDTO;
+
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
 use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider, Environment::Requires::Requires};
@@ -32,6 +34,7 @@ pub async fn ConfigurationGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Val
 		.map_err(|Error| format!("Failed to get configuration: {}", Error))?;
 
 	dev_log!("config", "get: {} = {:?}", key, value);
+
 	Ok(value)
 }
 
@@ -59,6 +62,7 @@ pub async fn ConfigurationUpdate(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<
 		.map_err(|Error| format!("Failed to update configuration: {}", Error))?;
 
 	dev_log!("config", "updated: {}", key);
+
 	Ok(Value::Null)
 }
 
@@ -72,6 +76,7 @@ pub async fn WorkbenchConfiguration(RunTime:Arc<ApplicationRunTime>, _Arguments:
 		.map_err(|Error| format!("Failed to get workbench configuration: {}", Error))?;
 
 	dev_log!("config", "workbench config retrieved");
+
 	Ok(config)
 }
 
@@ -86,5 +91,6 @@ pub async fn EnvironmentGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 	let value = std::env::var(key).map_err(|Error| format!("Failed to get environment variable: {}", Error))?;
 
 	dev_log!("config", "env_get: {}", key);
+
 	Ok(json!(value))
 }

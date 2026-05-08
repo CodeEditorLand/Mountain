@@ -12,14 +12,19 @@ use serde::{Deserialize, Serialize};
 pub enum ConnectionState {
 	/// Connection is active and healthy
 	Connected,
+
 	/// Connection is being established
 	Connecting,
+
 	/// Connection is temporarily unavailable
 	Disconnected,
+
 	/// Connection has failed and needs recovery
 	Failed,
+
 	/// Connection is being closed gracefully
 	Closing,
+
 	/// Connection is closed and will not reopen
 	Closed,
 }
@@ -29,22 +34,28 @@ pub enum ConnectionState {
 pub struct ConnectionStatus {
 	/// Current connection state
 	pub state:ConnectionState,
+
 	/// When the connection entered its current state (skipped for serialization
 	/// as Instant is not serializable)
 	#[serde(skip)]
 	pub state_since:Instant,
+
 	/// Count of connection attempts
 	pub connection_attempts:u32,
+
 	/// Timestamp of last successful connection (skipped for serialization as
 	/// Instant is not serializable)
 	#[serde(skip)]
 	pub last_connected:Option<Instant>,
+
 	/// Timestamp of last disconnection (skipped for serialization as Instant is
 	/// not serializable)
 	#[serde(skip)]
 	pub last_disconnected:Option<Instant>,
+
 	/// Total uptime duration
 	pub total_uptime:Duration,
+
 	/// Reason for last disconnection (if any)
 	pub last_error:Option<String>,
 }
@@ -53,11 +64,17 @@ impl Default for ConnectionStatus {
 	fn default() -> Self {
 		Self {
 			state:ConnectionState::Disconnected,
+
 			state_since:Instant::now(),
+
 			connection_attempts:0,
+
 			last_connected:None,
+
 			last_disconnected:None,
+
 			total_uptime:Duration::ZERO,
+
 			last_error:None,
 		}
 	}
@@ -81,16 +98,21 @@ impl ConnectionStatus {
 			match new_state {
 				ConnectionState::Connected => {
 					self.last_connected = Some(Instant::now());
+
 					self.connection_attempts += 1;
 				},
+
 				ConnectionState::Disconnected | ConnectionState::Failed => {
 					self.last_disconnected = Some(Instant::now());
 				},
+
 				_ => {},
 			}
 
 			self.state = new_state;
+
 			self.state_since = Instant::now();
+
 			self.last_error = error;
 		}
 	}

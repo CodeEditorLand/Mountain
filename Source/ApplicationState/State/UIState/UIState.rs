@@ -73,11 +73,14 @@ impl State {
 	/// Adds a pending user interface request.
 	pub fn AddPendingRequest(
 		&self,
+
 		id:String,
+
 		sender:tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>,
 	) {
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
 			guard.insert(id, sender);
+
 			dev_log!("window", "[UIState] Pending UI request added");
 		}
 	}
@@ -85,11 +88,14 @@ impl State {
 	/// Removes a pending user interface request by its ID.
 	pub fn RemovePendingRequest(
 		&self,
+
 		id:&str,
 	) -> Option<tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>> {
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
 			let sender = guard.remove(id);
+
 			dev_log!("window", "[UIState] Pending UI request removed: {}", id);
+
 			sender
 		} else {
 			None
@@ -100,6 +106,7 @@ impl State {
 	pub fn ClearAll(&self) {
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
 			guard.clear();
+
 			dev_log!("window", "[UIState] All pending UI requests cleared");
 		}
 	}

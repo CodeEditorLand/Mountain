@@ -24,6 +24,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:CancelOperationRequest) -> R
 			"[CocoonService] Triggering cancellation token for operation {}",
 			Request.request_identifier_to_cancel
 		);
+
 		Token.cancel();
 	} else {
 		dev_log!(

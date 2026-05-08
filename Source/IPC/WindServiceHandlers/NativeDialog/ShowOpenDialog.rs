@@ -29,23 +29,31 @@ pub async fn ShowOpenDialog(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Res
 	// shape (`first object with a 'properties' or 'filters' field`) keeps
 	// us robust against VS Code versions that pass an extra prefix arg.
 	let Options = Args.iter().rev().find(|V| V.is_object()).cloned().unwrap_or(Value::Null);
+
 	let Properties:Vec<String> = Options
 		.get("properties")
 		.and_then(Value::as_array)
 		.map(|Array| Array.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 		.unwrap_or_default();
+
 	let IsFolder = Properties.iter().any(|P| P == "openDirectory");
+
 	let IsMultiple = Properties.iter().any(|P| P == "multiSelections");
+
 	let Title = Options
 		.get("title")
 		.and_then(Value::as_str)
 		.unwrap_or(if IsFolder { "Open Folder" } else { "Open File" })
 		.to_string();
+
 	let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
+
 	let Filters = ParseDialogFilters(&Options);
 
 	let Handle = ApplicationHandle.clone();
+
 	let FiltersForThread = Filters.clone();
+
 	let Selected = tokio::task::spawn_blocking(move || -> Vec<String> {
 		let mut Builder = Handle.dialog().file().set_title(&Title);
 		if let Some(Path) = DefaultPath.as_deref() {
@@ -86,6 +94,7 @@ pub async fn ShowOpenDialog(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Res
 
 	if Selected.is_empty() {
 		dev_log!("folder", "showOpenDialog cancelled by user");
+
 		Ok(json!({ "canceled": true, "filePaths": [] }))
 	} else {
 		dev_log!(
@@ -96,6 +105,7 @@ pub async fn ShowOpenDialog(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Res
 			IsMultiple,
 			Filters.len()
 		);
+
 		Ok(json!({ "canceled": false, "filePaths": Selected }))
 	}
 }

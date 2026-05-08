@@ -16,6 +16,7 @@ use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
 pub struct ApplicationRunTime {
 	/// Shared handle to the application's central scheduler.
 	pub Scheduler:Arc<Scheduler>,
+
 	/// Shared handle to the `MountainEnvironment` capability provider.
 	pub Environment:Arc<MountainEnvironment>,
 }
@@ -23,6 +24,7 @@ pub struct ApplicationRunTime {
 impl ApplicationRunTime {
 	pub fn Create(Scheduler:Arc<Scheduler>, Environment:Arc<MountainEnvironment>) -> Self {
 		dev_log!("lifecycle", "new Echo-based instance created");
+
 		Self { Scheduler, Environment }
 	}
 }

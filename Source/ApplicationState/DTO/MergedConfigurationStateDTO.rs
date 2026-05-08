@@ -48,6 +48,7 @@ impl MergedConfigurationStateDTO {
 	pub fn GetValue(&self, Section:Option<&str>) -> Value {
 		if let Some(Path) = Section {
 			let Depth = Path.matches('.').count();
+
 			if Depth > MAX_CONFIGURATION_DEPTH {
 				dev_log!(
 					"config",
@@ -55,6 +56,7 @@ impl MergedConfigurationStateDTO {
 					Depth,
 					MAX_CONFIGURATION_DEPTH
 				);
+
 				return Value::Null;
 			}
 
@@ -78,6 +80,7 @@ impl MergedConfigurationStateDTO {
 	/// Result indicating success or error if path too deep
 	pub fn SetValue(&mut self, Section:&str, Value:Value) -> Result<(), String> {
 		let Depth = Section.matches('.').count();
+
 		if Depth > MAX_CONFIGURATION_DEPTH {
 			return Err(format!(
 				"Configuration path depth {} exceeds maximum of {}",
@@ -93,7 +96,9 @@ impl MergedConfigurationStateDTO {
 
 		// Navigate or create nested structure
 		let MutData = &mut self.Data;
+
 		Self::SetValueRecursive(MutData, &Keys, 0, Value);
+
 		Ok(())
 	}
 
@@ -105,6 +110,7 @@ impl MergedConfigurationStateDTO {
 		} else if let Some(Map) = Data.as_object_mut() {
 			// Get or create nested object
 			Map.entry(Keys[Index]).or_insert_with(|| Value::Object(serde_json::Map::new()));
+
 			if let Some(Nested) = Map.get_mut(Keys[Index]) {
 				Self::SetValueRecursive(Nested, Keys, Index + 1, Value);
 			}

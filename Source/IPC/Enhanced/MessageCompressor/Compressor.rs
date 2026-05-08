@@ -30,8 +30,11 @@ use crate::IPC::Enhanced::MessageCompressor::{
 
 pub struct Struct {
 	pub(super) Config:BatchConfig,
+
 	pub(super) CurrentBatch:VecDeque<Vec<u8>>,
+
 	pub(super) BatchStartTime:Option<Instant>,
+
 	pub(super) BatchSizeBytes:usize,
 }
 
@@ -39,14 +42,18 @@ impl Struct {
 	pub fn new(config:BatchConfig) -> Self {
 		Self {
 			Config:config,
+
 			CurrentBatch:VecDeque::new(),
+
 			BatchStartTime:None,
+
 			BatchSizeBytes:0,
 		}
 	}
 
 	pub fn add_message(&mut self, MessageData:&[u8]) -> bool {
 		let MessageSize = MessageData.len();
+
 		let _should_compress = MessageSize >= self.Config.CompressionThresholdBytes;
 
 		if self.BatchSizeBytes + MessageSize > self.Config.MaxBatchSize * 1024 {
@@ -54,6 +61,7 @@ impl Struct {
 		}
 
 		self.CurrentBatch.push_back(MessageData.to_vec());
+
 		self.BatchSizeBytes += MessageSize;
 
 		if self.BatchStartTime.is_none() {
@@ -74,6 +82,7 @@ impl Struct {
 
 		if let Some(start_time) = self.BatchStartTime {
 			let elapsed = start_time.elapsed();
+
 			if elapsed.as_millis() >= self.Config.MaxBatchDelayMs as u128 {
 				return true;
 			}
@@ -88,12 +97,15 @@ impl Struct {
 		}
 
 		let BatchMessages:Vec<Vec<u8>> = self.CurrentBatch.drain(..).collect();
+
 		let total_size = self.BatchSizeBytes;
 
 		self.BatchStartTime = None;
+
 		self.BatchSizeBytes = 0;
 
 		let config = bincode::config::standard();
+
 		let serialized_batch =
 			encode_to_vec(&BatchMessages, config).map_err(|e| format!("Failed to serialize batch: {}", e))?;
 
@@ -119,19 +131,25 @@ impl Struct {
 	fn compress_data(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
 		match self.Config.Algorithm {
 			CompressionAlgorithm::Brotli => self.compress_brotli(data),
+
 			CompressionAlgorithm::Gzip => self.compress_gzip(data),
+
 			CompressionAlgorithm::Zlib => self.compress_zlib(data),
 		}
 	}
 
 	fn compress_brotli(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
 		let mut params = BrotliEncoderParams::default();
+
 		params.quality = self.Config.CompressionLevel as i32;
 
 		let mut compressed = Vec::new();
+
 		{
 			let mut writer = CompressorWriter::with_params(&mut compressed, data.len().try_into().unwrap(), &params);
+
 			std::io::Write::write_all(&mut writer, data).map_err(|e| format!("Brotli compression failed: {}", e))?;
+
 			writer.flush().map_err(|e| format!("Brotli flush failed: {}", e))?;
 		}
 
@@ -145,6 +163,7 @@ impl Struct {
 
 	fn compress_gzip(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
 		let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.Config.CompressionLevel as u32));
+
 		encoder.write_all(data).map_err(|e| format!("Gzip compression failed: {}", e))?;
 
 		let compressed = encoder.finish().map_err(|e| format!("Gzip finish failed: {}", e))?;
@@ -159,6 +178,7 @@ impl Struct {
 
 	fn compress_zlib(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
 		let mut encoder = ZlibEncoder::new(Vec::new(), Compression::new(self.Config.CompressionLevel as u32));
+
 		encoder.write_all(data).map_err(|e| format!("Zlib compression failed: {}", e))?;
 
 		let compressed = encoder.finish().map_err(|e| format!("Zlib finish failed: {}", e))?;
@@ -180,20 +200,25 @@ impl Struct {
 
 		let (decoded, _) = decode_from_slice::<Vec<Vec<u8>>, _>(&data, bincode::config::standard())
 			.map_err(|e| format!("Failed to deserialize batch: {}", e))?;
+
 		Ok(decoded)
 	}
 
 	fn decompress_data(&self, data:&[u8], algorithm:&str) -> Result<Vec<u8>, String> {
 		match algorithm {
 			"brotli" => self.decompress_brotli(data),
+
 			"gzip" => self.decompress_gzip(data),
+
 			"zlib" => self.decompress_zlib(data),
+
 			_ => Err(format!("Unsupported compression algorithm: {}", algorithm)),
 		}
 	}
 
 	fn decompress_brotli(&self, data:&[u8]) -> Result<Vec<u8>, String> {
 		let mut decompressed = Vec::new();
+
 		let mut reader = CompressorReader::new(data, 0, data.len().try_into().unwrap(), data.len().try_into().unwrap());
 
 		std::io::Read::read_to_end(&mut reader, &mut decompressed)
@@ -206,7 +231,9 @@ impl Struct {
 		use flate2::read::GzDecoder;
 
 		let mut decoder = GzDecoder::new(data);
+
 		let mut decompressed = Vec::new();
+
 		decoder
 			.read_to_end(&mut decompressed)
 			.map_err(|e| format!("Gzip decompression failed: {}", e))?;
@@ -218,7 +245,9 @@ impl Struct {
 		use flate2::read::ZlibDecoder;
 
 		let mut decoder = ZlibDecoder::new(data);
+
 		let mut decompressed = Vec::new();
+
 		decoder
 			.read_to_end(&mut decompressed)
 			.map_err(|e| format!("Zlib decompression failed: {}", e))?;
@@ -229,25 +258,32 @@ impl Struct {
 	pub fn get_batch_stats(&self) -> BatchStats {
 		BatchStats {
 			messages_count:self.CurrentBatch.len(),
+
 			total_size_bytes:self.BatchSizeBytes,
+
 			batch_age_ms:self.BatchStartTime.map(|t| t.elapsed().as_millis() as u64).unwrap_or(0),
 		}
 	}
 
 	pub fn clear_batch(&mut self) {
 		self.CurrentBatch.clear();
+
 		self.BatchStartTime = None;
+
 		self.BatchSizeBytes = 0;
 	}
 
 	pub fn compress_single_message(
 		message_data:&[u8],
+
 		algorithm:CompressionAlgorithm,
+
 		level:CompressionLevel,
 	) -> Result<(Vec<u8>, CompressionInfo), String> {
 		let config = BatchConfig { Algorithm:algorithm, CompressionLevel:level, ..Default::default() };
 
 		let compressor = Self::new(config);
+
 		compressor.compress_data(message_data)
 	}
 
@@ -255,6 +291,7 @@ impl Struct {
 		if compressed_size == 0 {
 			return 0.0;
 		}
+
 		original_size as f64 / compressed_size as f64
 	}
 

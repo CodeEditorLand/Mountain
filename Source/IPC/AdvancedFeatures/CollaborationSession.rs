@@ -11,8 +11,12 @@ use crate::IPC::AdvancedFeatures::CollaborationPermissions;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub session_id:String,
+
 	pub participants:Vec<String>,
+
 	pub active_documents:Vec<String>,
+
 	pub last_activity:u64,
+
 	pub permissions:CollaborationPermissions::Struct,
 }

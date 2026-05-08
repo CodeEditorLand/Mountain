@@ -18,5 +18,6 @@ pub async fn HistoryPush(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) 
 		.to_owned();
 
 	RunTime.Environment.ApplicationState.Feature.NavigationHistory.Push(Uri);
+
 	Ok(Value::Null)
 }

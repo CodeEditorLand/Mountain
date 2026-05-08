@@ -17,7 +17,9 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:GetSecretRequest) -> Result<
 
 	match Service.environment.GetSecret(String::new(), Request.key.clone()).await {
 		Ok(Some(Value)) => Ok(Response::new(GetSecretResponse { value:Value })),
+
 		Ok(None) => Ok(Response::new(GetSecretResponse { value:String::new() })),
+
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
@@ -25,6 +27,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:GetSecretRequest) -> Result<
 				Request.key,
 				Error
 			);
+
 			Err(Status::internal(format!("get_secret: {}", Error)))
 		},
 	}

@@ -33,26 +33,47 @@
 //! - Async commands don't block main thread
 
 pub mod WorkbenchConfigurationCommand;
+
 pub mod MessageReceiveCommand;
+
 pub mod StatusGetCommand;
+
 pub mod InvokeCommand;
+
 pub mod WindConfigurationCommand;
+
 pub mod ConfigurationUpdateCommand;
+
 pub mod ConfigurationSyncCommand;
+
 pub mod ConfigurationStatusCommand;
+
 pub mod ConfigurationDataCommand;
+
 pub mod IPCStatusCommand;
+
 pub mod IPCStatusHistoryCommand;
+
 pub mod IPCStatusReportingStartCommand;
+
 pub mod PerformanceStatsCommand;
+
 pub mod CollaborationSessionCommand;
+
 pub mod DocumentSyncCommand;
+
 pub mod UpdateSubscriptionCommand;
+
 pub mod CacheStatsCommand;
+
 pub mod ProcessCommand;
+
 pub mod HealthCommand;
+
 pub mod WorkspaceFolderCommand;
+
 pub mod RenderDevLogCommand;
+
 // LAND-PATCH B7-S6 P14.5: Vine notification broadcast subscription
 // surface for Sky/Wind.
 pub mod VineSubscribeCommand;

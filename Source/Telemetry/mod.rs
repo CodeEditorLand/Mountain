@@ -9,14 +9,19 @@
 //! Telemetry feature ships.
 
 pub mod Gates;
+
 pub mod IsDebugBuild;
+
 pub mod IsDevelopmentBuild;
+
 pub mod IsEnabled;
 
 #[cfg(feature = "Telemetry")]
 pub mod Initialize;
+
 #[cfg(feature = "Telemetry")]
 pub mod Metrics;
+
 #[cfg(feature = "Telemetry")]
 pub mod Tracing;
 

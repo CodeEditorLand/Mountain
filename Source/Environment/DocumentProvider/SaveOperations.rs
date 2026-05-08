@@ -25,6 +25,7 @@ use crate::{
 /// Saves the document at the given URI.
 pub(super) async fn save_document(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	uri:Url,
 ) -> Result<bool, CommonError> {
 	dev_log!("model", "[DocumentProvider] Saving document: {}", uri);
@@ -87,7 +88,9 @@ pub(super) async fn save_document(
 /// Saves a document to a new location.
 pub(super) async fn save_document_as(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	original_uri:Url,
+
 	new_target_uri:Option<Url>,
 ) -> Result<Option<Url>, CommonError> {
 	dev_log!("model", "[DocumentProvider] Saving document as: {}", original_uri);
@@ -96,6 +99,7 @@ pub(super) async fn save_document_as(
 
 	let new_file_path = match new_target_uri {
 		Some(uri) => uri.to_file_path().ok(),
+
 		None => runtime.Run(ShowSaveDialog(Some(SaveDialogOptionsDTO::default()))).await?,
 	};
 
@@ -169,6 +173,7 @@ pub(super) async fn save_document_as(
 /// Saves all currently dirty documents.
 pub(super) async fn save_all_documents(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	include_untitled:bool,
 ) -> Result<Vec<bool>, CommonError> {
 	dev_log!(
@@ -216,6 +221,7 @@ pub(super) async fn save_all_documents(
 			Ok(_) => {
 				dev_log!("model", "[DocumentProvider] Successfully saved {}", uri);
 			},
+
 			Err(error) => {
 				dev_log!("model", "error: [DocumentProvider] Failed to save {}: {}", uri, error);
 			},

@@ -59,6 +59,7 @@ use crate::{
 /// Configuration for MountainService
 #[allow(dead_code)]
 mod ServiceConfig {
+
 	/// Maximum number of concurrent operations
 	pub const MAX_CONCURRENT_OPERATIONS:usize = 50;
 
@@ -115,7 +116,9 @@ impl MountainVinegRPCService {
 
 		Self {
 			ApplicationHandle,
+
 			RunTime,
+
 			ActiveOperations:Arc::new(RwLock::new(HashMap::new())),
 		}
 	}
@@ -129,12 +132,15 @@ impl MountainVinegRPCService {
 	/// A cancellation token that can be used to cancel the operation
 	pub async fn RegisterOperation(&self, request_id:u64) -> tokio_util::sync::CancellationToken {
 		let token = tokio_util::sync::CancellationToken::new();
+
 		self.ActiveOperations.write().await.insert(request_id, token.clone());
+
 		dev_log!(
 			"grpc",
 			"[MountainVinegRPCService] Registered operation {} for cancellation",
 			request_id
 		);
+
 		token
 	}
 
@@ -144,6 +150,7 @@ impl MountainVinegRPCService {
 	/// - `request_id`: The request identifier to unregister
 	pub async fn UnregisterOperation(&self, request_id:u64) {
 		self.ActiveOperations.write().await.remove(&request_id);
+
 		dev_log!("grpc", "[MountainVinegRPCService] Unregistered operation {}", request_id);
 	}
 
@@ -194,7 +201,9 @@ impl MountainVinegRPCService {
 	fn CreateErrorResponse(RequestIdentifier:u64, code:i32, message:String, data:Option<Vec<u8>>) -> GenericResponse {
 		GenericResponse {
 			request_identifier:RequestIdentifier,
+
 			result:vec![],
+
 			error:Some(RPCError { code, message, data:data.unwrap_or_default() }),
 		}
 	}
@@ -210,6 +219,7 @@ impl MountainVinegRPCService {
 	fn CreateSuccessResponse(RequestIdentifier:u64, result:&Value) -> GenericResponse {
 		let result_bytes = match serde_json::to_vec(result) {
 			Ok(bytes) => bytes,
+
 			Err(e) => {
 				dev_log!("grpc", "error: [MountainVinegRPCService] Failed to serialize result: {}", e);
 
@@ -244,6 +254,7 @@ impl MountainService for MountainVinegRPCService {
 
 	async fn open_channel_from_cocoon(
 		&self,
+
 		_request:tonic::Request<tonic::Streaming<crate::Vine::Generated::Envelope>>,
 	) -> Result<tonic::Response<Self::OpenChannelFromCocoonStream>, tonic::Status> {
 		Err(tonic::Status::unimplemented(
@@ -267,6 +278,7 @@ impl MountainService for MountainVinegRPCService {
 	/// - `Err(Status)`: gRPC status error (only for critical failures)
 	async fn process_cocoon_request(
 		&self,
+
 		request:Request<GenericRequest>,
 	) -> Result<Response<GenericResponse>, Status> {
 		let RequestData = request.into_inner();
@@ -274,6 +286,7 @@ impl MountainService for MountainVinegRPCService {
 		let MethodName = RequestData.method.clone();
 
 		let RequestIdentifier = RequestData.request_identifier;
+
 		let ReceiveInstant = std::time::Instant::now();
 
 		// Per-call receive line is pure noise at the `grpc` tag - one line
@@ -299,11 +312,13 @@ impl MountainService for MountainVinegRPCService {
 			MethodName.as_str(),
 			"$tree:register" | "tree.register" | "Configuration.Inspect" | "Command.Execute"
 		);
+
 		if IsHotRpc {
 			let InstrumentRecvNs = std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.map(|D| D.as_nanos())
 				.unwrap_or(0);
+
 			// Per-call receive timestamp for latency diagnosis - only
 			// useful when actively profiling. Gate under `rpc-latency`
 			// so `short` / `grpc` don't print it.
@@ -350,8 +365,10 @@ impl MountainService for MountainVinegRPCService {
 					RequestIdentifier,
 					RequestData.parameter.len()
 				);
+
 				v
 			},
+
 			Err(e) => {
 				let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
 
@@ -397,6 +414,7 @@ impl MountainService for MountainVinegRPCService {
 						ReceiveInstant.elapsed().as_millis()
 					);
 				}
+
 				// Success completion fires per request (14k+ in long sessions).
 				// Failures still log under the unconditional `error:` path
 				// below, so routing this to `grpc-verbose` doesn't hide real
@@ -422,6 +440,7 @@ impl MountainService for MountainVinegRPCService {
 				// returns -32000 so Cocoon's shim can convert it to a
 				// proper `vscode.FileSystemError.FileNotFound`.
 				let LowerError = ErrorString.to_lowercase();
+
 				// "Path is outside of the registered workspace folders" /
 				// "Permission denied" responses come from the path-security
 				// guard in `Environment/Utility/PathSecurity.rs` when an
@@ -445,6 +464,7 @@ impl MountainService for MountainVinegRPCService {
 						|| LowerError.contains("path is outside of the registered workspace")
 						|| LowerError.contains("permission denied for operation")
 						|| LowerError.contains("workspace is not trusted"));
+
 				if LooksLike404 {
 					dev_log!(
 						"grpc-verbose",
@@ -466,6 +486,7 @@ impl MountainService for MountainVinegRPCService {
 				// classify them without a string-regex round-trip. -32000
 				// stays the catch-all for genuine failures.
 				let ErrorCode = if LooksLike404 { -32004 } else { -32000 };
+
 				Ok(Response::new(Self::CreateErrorResponse(
 					RequestIdentifier,
 					ErrorCode,
@@ -515,6 +536,7 @@ impl MountainService for MountainVinegRPCService {
 				"grpc",
 				"warn: [MountainVinegRPCService] Received notification with empty method name"
 			);
+
 			return Err(Status::invalid_argument("Method name cannot be empty"));
 		}
 
@@ -535,38 +557,58 @@ impl MountainService for MountainVinegRPCService {
 		};
 
 		match MethodName.as_str() {
+
 			// Batch 15: extension-host + progress + languages arms now live
 			// as atoms under `Vine::Server::Notification::*`. Each match arm
 			// is pure delegation - adding a new wire method is a one-line
 			// change here plus one new atom file.
 			"extensionHostMessage" => {
+
 				super::Notification::ExtensionHostMessage::ExtensionHostMessage(self, &Parameter).await;
 			},
+
 			"ExtensionActivated" => {
+
 				super::Notification::ExtensionActivated::ExtensionActivated(self, &Parameter).await;
 			},
+
 			"ExtensionDeactivated" => {
+
 				super::Notification::ExtensionDeactivated::ExtensionDeactivated(self, &Parameter).await;
 			},
+
 			"WebviewReady" => {
+
 				super::Notification::WebviewReady::WebviewReady(self, &Parameter).await;
 			},
+
 			"progress.start" => {
+
 				super::Notification::ProgressStart::ProgressStart(self, &Parameter).await;
 			},
+
 			"progress.report" => {
+
 				super::Notification::ProgressReport::ProgressReport(self, &Parameter).await;
 			},
+
 			"progress.end" => {
+
 				super::Notification::ProgressEnd::ProgressEnd(self, &Parameter).await;
 			},
+
 			"languages.setDocumentLanguage" => {
+
 				super::Notification::LanguagesSetDocumentLanguage::LanguagesSetDocumentLanguage(self, &Parameter).await;
 			},
+
 			"workspace.applyEdit" => {
+
 				super::Notification::WorkspaceApplyEdit::WorkspaceApplyEdit(self, &Parameter).await;
 			},
+
 			"window.showTextDocument" => {
+
 				super::Notification::WindowShowTextDocument::WindowShowTextDocument(self, &Parameter).await;
 			},
 
@@ -580,33 +622,52 @@ impl MountainService for MountainVinegRPCService {
 			| "webview.setHtml"
 			| "webview.updateView"
 			| "webview.reveal" => {
+
 				super::Notification::WebviewLifecycle::WebviewLifecycle(self, &MethodName, &Parameter).await;
 			},
+
 			"window.createTerminal" => {
+
 				super::Notification::WindowCreateTerminal::WindowCreateTerminal(self, &Parameter).await;
 			},
+
 			"terminal.sendText" | "terminal.show" | "terminal.hide" | "terminal.dispose" => {
+
 				super::Notification::TerminalLifecycle::TerminalLifecycle(self, &MethodName, &Parameter).await;
 			},
+
 			"window.createTextEditorDecorationType" | "window.disposeTextEditorDecorationType" => {
+
 				super::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(self, &MethodName, &Parameter).await;
 			},
+
 			"debug.addBreakpoints" | "debug.removeBreakpoints" | "debug.consoleAppend" => {
+
 				super::Notification::DebugLifecycle::DebugLifecycle(self, &MethodName, &Parameter).await;
 			},
+
 			"statusBar.update" | "statusBar.dispose" => {
+
 				super::Notification::StatusBarLifecycle::StatusBarLifecycle(self, &MethodName, &Parameter).await;
 			},
+
 			"statusBar.message" => {
+
 				super::Notification::StatusBarMessage::StatusBarMessage(self, &Parameter).await;
 			},
+
 			"window.showMessage" => {
+
 				super::Notification::WindowShowMessage::WindowShowMessage(self, &Parameter).await;
 			},
+
 			"registerCommand" => {
+
 				super::Notification::RegisterCommand::RegisterCommand(self, &Parameter).await;
 			},
+
 			"unregisterCommand" => {
+
 				super::Notification::UnregisterCommand::UnregisterCommand(self, &Parameter).await;
 			},
 

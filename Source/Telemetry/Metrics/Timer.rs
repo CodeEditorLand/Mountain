@@ -12,7 +12,9 @@ use crate::Telemetry::Metrics::GlobalRegistry;
 
 pub struct Struct {
 	Name:String,
+
 	Labels:HashMap<String, String>,
+
 	Start:Instant,
 }
 
@@ -21,12 +23,15 @@ impl Struct {
 
 	pub fn WithLabel(mut self, Key:&str, Value:&str) -> Self {
 		self.Labels.insert(Key.to_string(), Value.to_string());
+
 		self
 	}
 
 	pub fn StopAndRecord(self) -> Duration {
 		let Elapsed = self.Start.elapsed();
+
 		GlobalRegistry::REGISTRY.RecordHistogram(&self.Name, Elapsed, self.Labels);
+
 		Elapsed
 	}
 }

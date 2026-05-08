@@ -46,6 +46,8 @@ pub fn SerializeURL<S>(URLInstance:&Url, SerializerInstance:S) -> Result<S::Ok, 
 where
 	S: Serializer, {
 	let url_string = URLInstance.as_str();
+
 	dev_log!("ipc", "[URLSerializer] Serializing URL: {}", url_string);
+
 	SerializerInstance.serialize_str(url_string)
 }

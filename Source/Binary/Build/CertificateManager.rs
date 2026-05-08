@@ -64,14 +64,19 @@ use crate::dev_log;
 pub struct CertificateInfo {
 	/// Subject Common Name (e.g., "CN=localhost")
 	pub subject:String,
+
 	/// Issuer Common Name (for self-signed, same as subject)
 	pub issuer:String,
+
 	/// Validity start time (ISO 8601)
 	pub valid_from:String,
+
 	/// Validity end time (ISO 8601)
 	pub valid_until:String,
+
 	/// Whether this is a self-signed certificate
 	pub is_self_signed:bool,
+
 	/// Subject Alternative Names
 	pub sans:Vec<String>,
 }
@@ -82,12 +87,16 @@ pub struct CertificateInfo {
 struct ServerCertData {
 	/// Certificate in PEM format
 	cert_pem:Vec<u8>,
+
 	/// Private key in PEM format
 	key_pem:Vec<u8>,
+
 	/// rustls ServerConfig for serving TLS
 	server_config:Arc<ServerConfig>,
+
 	/// Certificate info
 	info:CertificateInfo,
+
 	/// Validity end time
 	valid_until:DateTime<Utc>,
 }
@@ -99,10 +108,13 @@ struct ServerCertData {
 pub struct CertificateManager {
 	/// Application identifier for keyring storage
 	app_id:String,
+
 	/// CA certificate PEM (cached from keyring)
 	ca_cert:Option<Vec<u8>>,
+
 	/// CA private key PEM (cached from keyring)
 	ca_key:Option<Vec<u8>>,
+
 	/// Cached server certificates (hostname -> cert data)
 	server_certs:Arc<RwLock<HashMap<String, ServerCertData>>>,
 }
@@ -110,14 +122,19 @@ pub struct CertificateManager {
 impl CertificateManager {
 	/// Keyring service name for certificate storage
 	const KEYRING_SERVICE:&'static str = "CodeEditorLand-TLS";
+
 	/// Keyring entry name for CA certificate
 	const KEYRING_CA_CERT:&'static str = "ca_certificate";
+
 	/// Keyring entry name for CA private key
 	const KEYRING_CA_KEY:&'static str = "ca_private_key";
+
 	/// Certificate validity period for CA (10 years)
 	const CA_VALIDITY_DAYS:i64 = 365 * 10;
+
 	/// Certificate validity period for server certs (1 year)
 	const SERVER_VALIDITY_DAYS:i64 = 365;
+
 	/// Renewal threshold (renew if expiring within 30 days)
 	pub const RENEWAL_THRESHOLD_DAYS:i64 = 30;
 
@@ -163,17 +180,22 @@ impl CertificateManager {
 	pub async fn initialize_ca(&mut self) -> Result<()> {
 		if let Some((cert, key)) = self.load_ca_from_keyring()? {
 			dev_log!("security", "loading CA certificate from keyring");
+
 			self.ca_cert = Some(cert.clone());
+
 			self.ca_key = Some(key.clone());
+
 			dev_log!("security", "CA certificate loaded successfully");
 		} else {
 			dev_log!("security", "CA certificate not found in keyring, generating new CA");
+
 			let (cert, key) = self.generate_ca_cert()?;
 
 			// Store in keyring
 			self.save_ca_to_keyring(&cert, &key)?;
 
 			self.ca_cert = Some(cert.clone());
+
 			self.ca_key = Some(key);
 
 			dev_log!("security", "new CA certificate generated and stored");
@@ -202,15 +224,22 @@ impl CertificateManager {
 
 		// Build certificate using rcgen API
 		let mut params = rcgen::CertificateParams::default();
+
 		params.is_ca = rcgen::IsCa::Ca(rcgen::BasicConstraints::Unconstrained);
+
 		params.distinguished_name = rcgen::DistinguishedName::new();
 
 		// Set validity period
 		let not_before = rcgen::date_time_ymd(2024, 1, 1);
+
 		params.not_before = not_before;
+
 		let expiry_year:i32 = (2024 + Self::CA_VALIDITY_DAYS / 365) as i32;
+
 		let not_after = rcgen::date_time_ymd(expiry_year, 1, 1);
+
 		params.not_after = not_after;
+
 		params.key_usages = vec![
 			rcgen::KeyUsagePurpose::DigitalSignature,
 			rcgen::KeyUsagePurpose::KeyCertSign,
@@ -222,6 +251,7 @@ impl CertificateManager {
 
 		// We want PEM format for the certificate manager
 		let cert_pem = cert.pem();
+
 		let key_pem = key_pair.serialize_pem();
 
 		dev_log!("security", "CA certificate generated successfully");
@@ -254,12 +284,15 @@ impl CertificateManager {
 		// Check cache first
 		{
 			let certs = self.server_certs.read();
+
 			if let Some(cert_data) = certs.get(hostname) {
 				// Check if certificate is still valid
 				if !self.should_renew(&cert_data.cert_pem) {
 					dev_log!("security", "using cached server certificate for {}", hostname);
+
 					return Ok(cert_data.server_config.clone());
 				}
+
 				// Certificate needs renewal, drop lock and continue
 				drop(certs);
 			}
@@ -267,11 +300,13 @@ impl CertificateManager {
 
 		// Generate or renew certificate
 		dev_log!("security", "generating server certificate for {}", hostname);
+
 		let cert_data = self.generate_server_cert(hostname)?;
 
 		// Cache the certificate
 		{
 			let mut certs = self.server_certs.write();
+
 			certs.insert(hostname.to_string(), cert_data.clone());
 		}
 
@@ -288,18 +323,23 @@ impl CertificateManager {
 	fn generate_server_cert(&self, hostname:&str) -> Result<ServerCertData> {
 		// Build server certificate
 		let mut params = rcgen::CertificateParams::default();
+
 		params.distinguished_name.push(rcgen::DnType::CommonName, hostname);
 
 		// Get current time for certificate validity - TODO: Fix chrono API usage
 		let now = chrono::Utc::now();
+
 		let current_year = 2024; // Use fixed year for now
 		let current_month = 1;
+
 		let current_day = 1;
 
 		let not_before = rcgen::date_time_ymd(current_year, current_month, current_day);
+
 		params.not_before = not_before;
 
 		let not_after = rcgen::date_time_ymd(current_year + 1, current_month, current_day);
+
 		params.not_after = not_after;
 
 		// NOTE: Skipping SAN setup - using default subject alternative names
@@ -310,6 +350,7 @@ impl CertificateManager {
 			rcgen::KeyUsagePurpose::DigitalSignature,
 			rcgen::KeyUsagePurpose::KeyEncipherment,
 		];
+
 		params.extended_key_usages = vec![
 			rcgen::ExtendedKeyUsagePurpose::ServerAuth,
 			rcgen::ExtendedKeyUsagePurpose::ClientAuth,
@@ -317,16 +358,19 @@ impl CertificateManager {
 
 		// Generate self-signed certificate - TODO: Update rcgen API usage
 		let key_pair = rcgen::KeyPair::generate()?;
+
 		// Generate self-signed certificate using the params and key pair
 		let cert = params.self_signed(&key_pair)?;
 
 		// Get DER bytes for rustls
 		// Using serialized_der() for rcgen 0.14.7 API
 		let server_cert_der = cert.der();
+
 		let server_key_der = key_pair.serialized_der();
 
 		// Store DER bytes directly (PEM not needed for rustls)
 		let cert_der:Vec<u8> = server_cert_der.to_vec();
+
 		let key_der:Vec<u8> = server_key_der.to_vec();
 
 		// Clone for cert info extraction
@@ -338,10 +382,12 @@ impl CertificateManager {
 		// Parse private key - owned data
 		let private_key_der =
 			PrivatePkcs8KeyDer::try_from(key_der).map_err(|e| anyhow::anyhow!("Failed to parse private key: {}", e))?;
+
 		let private_key = PrivateKeyDer::Pkcs8(private_key_der);
 
 		// Store empty PEM for now - TODO: Create proper PEM format later
 		let cert_pem:Vec<u8> = Vec::new();
+
 		let key_pem:Vec<u8> = Vec::new();
 
 		let mut server_config = ServerConfig::builder()
@@ -354,6 +400,7 @@ impl CertificateManager {
 
 		// Calculate certificate info - use cloned DER bytes
 		let info = self.extract_cert_info(&cert_der_for_info, hostname, true)?;
+
 		let valid_until = Utc::now() + chrono::Duration::days(Self::SERVER_VALIDITY_DAYS);
 
 		dev_log!(
@@ -379,7 +426,9 @@ impl CertificateManager {
 
 		let cert = match keyring_entry_cert.get_password() {
 			Ok(s) => s.into_bytes(),
+
 			Err(keyring::Error::NoEntry) => return Ok(None),
+
 			Err(e) => return Err(e.into()),
 		};
 
@@ -389,6 +438,7 @@ impl CertificateManager {
 			.into_bytes();
 
 		dev_log!("security", "CA certificate loaded from keyring");
+
 		Ok(Some((cert, key)))
 	}
 
@@ -403,6 +453,7 @@ impl CertificateManager {
 
 		// Store as PEM strings
 		let cert_str = String::from_utf8(cert.to_vec()).map_err(|e| anyhow::anyhow!("Invalid CA cert UTF-8: {}", e))?;
+
 		let key_str = String::from_utf8(key.to_vec()).map_err(|e| anyhow::anyhow!("Invalid CA key UTF-8: {}", e))?;
 
 		keyring_entry_cert
@@ -414,6 +465,7 @@ impl CertificateManager {
 			.map_err(|e| anyhow::anyhow!("Failed to save CA key to keyring: {}", e))?;
 
 		dev_log!("security", "CA certificate saved to keyring");
+
 		Ok(())
 	}
 
@@ -427,6 +479,7 @@ impl CertificateManager {
 		} else {
 			// If we can't parse validity, err on the side of renewal
 			dev_log!("security", "warn: could not parse certificate validity, forcing renewal");
+
 			true
 		}
 	}
@@ -453,7 +506,9 @@ impl CertificateManager {
 
 		// Remove from cache
 		let mut certs = self.server_certs.write();
+
 		certs.remove(hostname);
+
 		drop(certs);
 
 		// Generate new certificate
@@ -461,9 +516,11 @@ impl CertificateManager {
 
 		// Cache the new certificate
 		let mut certs = self.server_certs.write();
+
 		certs.insert(hostname.to_string(), cert_data);
 
 		dev_log!("security", "certificate renewed for {}", hostname);
+
 		Ok(())
 	}
 
@@ -538,6 +595,7 @@ impl CertificateManager {
 	/// ```
 	pub fn get_server_cert_info(&self, hostname:&str) -> Option<CertificateInfo> {
 		let certs = self.server_certs.read();
+
 		certs.get(hostname).map(|d| d.info.clone())
 	}
 
@@ -565,6 +623,7 @@ impl CertificateManager {
 	/// ```
 	pub fn get_all_certs(&self) -> HashMap<String, CertificateInfo> {
 		let certs = self.server_certs.read();
+
 		certs.iter().map(|(k, v)| (k.clone(), v.info.clone())).collect()
 	}
 
@@ -572,7 +631,9 @@ impl CertificateManager {
 	#[allow(dead_code)]
 	fn cert_der_to_pem(der:&[u8]) -> Result<Vec<u8>> {
 		let pem = pem::Pem::new("CERTIFICATE".to_string(), der.to_vec());
+
 		let pem_str = pem::encode(&pem);
+
 		Ok(pem_str.into_bytes())
 	}
 
@@ -580,7 +641,9 @@ impl CertificateManager {
 	#[allow(dead_code)]
 	fn private_key_der_to_pem(der:&[u8]) -> Result<Vec<u8>> {
 		let pem = pem::Pem::new("PRIVATE KEY".to_string(), der.to_vec());
+
 		let pem_str = pem::encode(&pem);
+
 		Ok(pem_str.into_bytes())
 	}
 
@@ -605,13 +668,16 @@ impl CertificateManager {
 			.1;
 
 		let subject = cert.subject().to_string();
+
 		let issuer = cert.issuer().to_string();
 
 		let valid_from = cert.validity().not_before.to_string();
+
 		let valid_until = cert.validity().not_after.to_string();
 
 		// Extract Subject Alternative Names
 		let mut sans = vec![hostname.to_string(), "127.0.0.1".to_string(), "::1".to_string()];
+
 		if let Some(ext) = cert
 			.extensions()
 			.iter()
@@ -657,10 +723,13 @@ impl CertificateManager {
 			.1;
 
 		let not_after_chrono = Self::parse_not_after(&cert.validity().not_after)?;
+
 		let now = chrono::Utc::now();
 
 		let is_valid = now <= not_after_chrono;
+
 		let days_until_expiry = (not_after_chrono - now).num_days();
+
 		let should_renew = days_until_expiry <= Self::RENEWAL_THRESHOLD_DAYS;
 
 		Ok(CertValidityResult { is_valid, days_until_expiry, should_renew, not_after:not_after_chrono })
@@ -700,37 +769,49 @@ impl CertificateManager {
 struct CertValidityResult {
 	/// Whether the certificate is currently valid
 	is_valid:bool,
+
 	/// Days until expiry (negative if expired)
 	days_until_expiry:i64,
+
 	/// Whether renewal is recommended
 	should_renew:bool,
+
 	/// Certificate expiry time
 	not_after:DateTime<Utc>,
 }
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
 	fn test_pem_encoding() {
 		let test_data = b"test certificate data";
+
 		let pem = CertificateManager::cert_der_to_pem(test_data).unwrap();
+
 		assert!(String::from_utf8_lossy(&pem).contains("-----BEGIN CERTIFICATE-----"));
+
 		assert!(String::from_utf8_lossy(&pem).contains("-----END CERTIFICATE-----"));
 
 		let recovered = CertificateManager::pem_to_der(&pem, "CERTIFICATE").unwrap();
+
 		assert_eq!(recovered, test_data);
 	}
 
 	#[test]
 	fn test_private_key_pem_encoding() {
 		let test_data = b"test private key data";
+
 		let pem = CertificateManager::private_key_der_to_pem(test_data).unwrap();
+
 		assert!(String::from_utf8_lossy(&pem).contains("-----BEGIN PRIVATE KEY-----"));
+
 		assert!(String::from_utf8_lossy(&pem).contains("-----END PRIVATE KEY-----"));
 
 		let recovered = CertificateManager::pem_to_der(&pem, "PRIVATE KEY").unwrap();
+
 		assert_eq!(recovered, test_data);
 	}
 }

@@ -22,6 +22,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:TerminalDataNotification) ->
 	);
 
 	let DataString = String::from_utf8_lossy(&Request.data).to_string();
+
 	let _ = Service
 		.environment
 		.ApplicationHandle

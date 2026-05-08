@@ -22,19 +22,33 @@
 //!   - `Shared` - module-private state (statics, helpers, constants).
 
 pub mod CheckSideCarHealth;
+
 pub mod ConnectToSideCar;
+
 pub mod DisconnectFromSideCar;
+
 pub mod IsClientConnected;
+
 pub mod IsShuttingDown;
+
 pub mod MarkShutdown;
+
 pub mod NotificationFrame;
+
 pub mod PublishNotificationFromMux;
+
 pub mod SendNotification;
+
 pub mod SendRequest;
+
 pub mod SubscribeNotifications;
+
 pub mod SubscriberCount;
+
 pub mod WaitForClientConnection;
 
 pub(crate) mod PublishNotification;
+
 pub(crate) mod Shared;
+
 pub(crate) mod TryConnectSingle;

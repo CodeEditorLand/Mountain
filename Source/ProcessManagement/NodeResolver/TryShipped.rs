@@ -21,12 +21,16 @@ pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> Option<ResolvedNode::St
 	}
 
 	let ExecutablePath = std::env::current_exe().ok()?;
+
 	let ExecutableDirectory = ExecutablePath.parent()?;
+
 	let SiblingNode = ExecutableDirectory.join(RelativeToResource);
+
 	if SiblingNode.exists() {
 		return Some(ResolvedNode::Struct { Path:SiblingNode, Source:NodeSource::Enum::Shipped });
 	}
 
 	let _ = PathBuf::new();
+
 	None
 }

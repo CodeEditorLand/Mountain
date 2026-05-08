@@ -196,6 +196,7 @@ impl AirServiceProvider {
 	/// * `Self` - The new provider
 	pub fn from_client(client:Arc<AirClient>) -> Self {
 		dev_log!("grpc", "[AirServiceProvider] Creating AirServiceProvider from existing client");
+
 		Self { client }
 	}
 
@@ -256,6 +257,7 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn authenticate(&self, username:String, password:String, provider:String) -> Result<String, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] authenticate (request_id: {})", request_id);
 
 		self.client.authenticate(request_id, username, password, provider).await
@@ -296,10 +298,13 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn check_for_updates(
 		&self,
+
 		current_version:String,
+
 		channel:String,
 	) -> Result<Option<UpdateInfo::Struct>, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] check_for_updates (request_id: {})", request_id);
 
 		let info = self.client.check_for_updates(request_id, current_version, channel).await?;
@@ -319,11 +324,15 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Download error
 	pub async fn download_update(
 		&self,
+
 		url:String,
+
 		destination_path:String,
+
 		checksum:String,
 	) -> Result<FileInfo::Struct, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] download_update (request_id: {})", request_id);
 
 		self.client
@@ -342,6 +351,7 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Application error
 	pub async fn apply_update(&self, version:String, update_path:String) -> Result<(), CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] apply_update (request_id: {})", request_id);
 
 		self.client.apply_update(request_id, version, update_path).await
@@ -363,11 +373,15 @@ impl AirServiceProvider {
 	/// * `Err(CommonError)` - Download error
 	pub async fn download_file(
 		&self,
+
 		url:String,
+
 		destination_path:String,
+
 		checksum:String,
 	) -> Result<FileInfo::Struct, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!("grpc", "[AirServiceProvider] download_file (request_id: {})", request_id);
 
 		self.client
@@ -418,10 +432,13 @@ impl AirServiceProvider {
 	/// ```
 	pub async fn download_stream(
 		&self,
+
 		url:String,
+
 		headers:HashMap<String, String>,
 	) -> Result<DownloadStream::Struct, CommonError> {
 		let request_id = generate_request_id();
+
 		dev_log!(
 			"grpc",
 			"[AirServiceProvider] download_stream (request_id: {}, url: {})",

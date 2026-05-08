@@ -55,13 +55,18 @@ const SINK_CAPACITY:usize = 1024;
 /// flag.
 pub struct Multiplexer {
 	SideCarIdentifier:String,
+
 	Sink:mpsc::Sender<Envelope>,
+
 	Pending:Arc<DashMap<u64, oneshot::Sender<GenericResponse>>>,
+
 	NextRequestIdentifier:AtomicU64,
+
 	Closed:AtomicBool,
 }
 
 lazy_static! {
+
 	/// Process-wide registry, one entry per sidecar identifier.
 	/// Lookup site for `SendNotification` / `SendRequest` to consult
 	/// when `LAND_VINE_STREAMING=1`.
@@ -75,9 +80,11 @@ impl Multiplexer {
 	/// registry. Returns once the stream is established.
 	pub async fn Open(
 		SideCarIdentifier:String,
+
 		mut Client:CocoonServiceClient<tonic::transport::Channel>,
 	) -> Result<Arc<Self>, VineError> {
 		let (Sink, OutboundReceiver) = mpsc::channel::<Envelope>(SINK_CAPACITY);
+
 		let OutboundStream = ReceiverStream::new(OutboundReceiver);
 
 		let Response = Client
@@ -97,6 +104,7 @@ impl Multiplexer {
 
 		// Spawn the read pump.
 		let SelfForReadPump = SelfReference.clone();
+
 		tokio::spawn(async move {
 			ReadPump(InboundStream, SelfForReadPump).await;
 		});
@@ -122,10 +130,13 @@ impl Multiplexer {
 		if self.Closed.load(Ordering::Relaxed) {
 			return Err(VineError::ClientNotConnected(self.SideCarIdentifier.clone()));
 		}
+
 		let Bytes = serde_json::to_vec(&Parameters)?;
+
 		let Frame = Envelope {
 			payload:Some(Payload::Notification(GenericNotification { method:Method, parameter:Bytes })),
 		};
+
 		self.Sink
 			.send(Frame)
 			.await
@@ -140,12 +151,17 @@ impl Multiplexer {
 		if self.Closed.load(Ordering::Relaxed) {
 			return Err(VineError::ClientNotConnected(self.SideCarIdentifier.clone()));
 		}
+
 		let Identifier = self.NextRequestIdentifier.fetch_add(1, Ordering::Relaxed);
+
 		let (Tx, Rx) = oneshot::channel();
+
 		self.Pending.insert(Identifier, Tx);
 
 		let Bytes = serde_json::to_vec(&Parameters)?;
+
 		let MethodForError = Method.clone();
+
 		let Frame = Envelope {
 			payload:Some(Payload::Request(GenericRequest {
 				request_identifier:Identifier,
@@ -156,6 +172,7 @@ impl Multiplexer {
 
 		if self.Sink.send(Frame).await.is_err() {
 			self.Pending.remove(&Identifier);
+
 			return Err(VineError::RPCError(format!(
 				"Sink closed for sidecar {}",
 				self.SideCarIdentifier
@@ -167,19 +184,25 @@ impl Multiplexer {
 				if let Some(Error) = Response.error {
 					return Err(VineError::RPCError(format!("code={} message={}", Error.code, Error.message)));
 				}
+
 				if Response.result.is_empty() {
 					return Ok(Value::Null);
 				}
+
 				serde_json::from_slice::<Value>(&Response.result).map_err(|E| VineError::SerializationError(E))
 			},
+
 			Ok(Err(_)) => {
 				self.Pending.remove(&Identifier);
+
 				Err(VineError::RPCError(
 					"response sender closed (peer disconnect mid-request)".into(),
 				))
 			},
+
 			Err(_) => {
 				self.Pending.remove(&Identifier);
+
 				Err(VineError::RequestTimeout {
 					SideCarIdentifier:self.SideCarIdentifier.clone(),
 					MethodName:MethodForError,
@@ -196,12 +219,15 @@ impl Multiplexer {
 		if self.Closed.load(Ordering::Relaxed) {
 			return Ok(());
 		}
+
 		let Frame = Envelope {
 			payload:Some(Payload::Cancel(CancelOperationRequest {
 				request_identifier_to_cancel:RequestIdentifier,
 			})),
 		};
+
 		let _ = self.Sink.send(Frame).await;
+
 		Ok(())
 	}
 
@@ -220,6 +246,7 @@ async fn ReadPump(mut Stream:Streaming<Envelope>, State:Arc<Multiplexer>) {
 	while let Some(FrameResult) = Stream.next().await {
 		let Frame = match FrameResult {
 			Ok(F) => F,
+
 			Err(Status) => {
 				dev_log!(
 					"grpc",
@@ -227,11 +254,14 @@ async fn ReadPump(mut Stream:Streaming<Envelope>, State:Arc<Multiplexer>) {
 					State.SideCarIdentifier,
 					Status
 				);
+
 				break;
 			},
 		};
+
 		let Payload = match Frame.payload {
 			Some(P) => P,
+
 			None => continue,
 		};
 
@@ -242,17 +272,23 @@ async fn ReadPump(mut Stream:Streaming<Envelope>, State:Arc<Multiplexer>) {
 				} else {
 					serde_json::from_slice(&N.parameter).unwrap_or(Value::Null)
 				};
+
 				super::Client::PublishNotificationFromMux::Fn(&State.SideCarIdentifier, &N.method, &Parameters);
 			},
+
 			Payload::Response(R) => {
 				let Identifier = R.request_identifier;
+
 				if let Some((_, Sender)) = State.Pending.remove(&Identifier) {
 					let _ = Sender.send(R);
 				}
+
 				// A Response with no matching pending entry is a
 				// duplicate or post-cancel arrival; drop silently.
 			},
+
 			Payload::Request(_) => {
+
 				// TODO P14.1.1: dispatch the inbound (reverse-RPC)
 				// request to the same handler tree the unary path
 				// uses, then enqueue the GenericResponse onto Sink.
@@ -260,7 +296,9 @@ async fn ReadPump(mut Stream:Streaming<Envelope>, State:Arc<Multiplexer>) {
 				// still authoritative until phase P14.4 lands the
 				// streaming handler tree on Cocoon side.
 			},
+
 			Payload::Cancel(_) => {
+
 				// TODO P14.1.2: signal abort for the in-flight
 				// handler. For now no-op (the unary path doesn't
 				// support cancel either).
@@ -273,6 +311,7 @@ async fn ReadPump(mut Stream:Streaming<Envelope>, State:Arc<Multiplexer>) {
 	// Drain pending senders with disconnect errors so awaiting
 	// fibers don't hang forever.
 	let Keys:Vec<u64> = State.Pending.iter().map(|R| *R.key()).collect();
+
 	for Key in Keys {
 		if let Some((_, Sender)) = State.Pending.remove(&Key) {
 			let _ = Sender.send(GenericResponse {
@@ -284,5 +323,6 @@ async fn ReadPump(mut Stream:Streaming<Envelope>, State:Arc<Multiplexer>) {
 	}
 
 	Multiplexer::Deregister(&State.SideCarIdentifier);
+
 	dev_log!("grpc", "[Vine::Multiplexer] closed sidecar={}", State.SideCarIdentifier);
 }

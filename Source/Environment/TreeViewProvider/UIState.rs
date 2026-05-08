@@ -12,7 +12,9 @@ use crate::{Environment::Utility, dev_log};
 /// Updates the tree view message displayed in the UI.
 pub(super) async fn set_tree_view_message(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	message:Option<String>,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -49,8 +51,11 @@ pub(super) async fn set_tree_view_message(
 /// Updates the tree view's title and description.
 pub(super) async fn set_tree_view_title(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	title:Option<String>,
+
 	description:Option<String>,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -72,6 +77,7 @@ pub(super) async fn set_tree_view_title(
 
 		if let Some(view_state) = tree_view_guard.get_mut(&view_identifier) {
 			view_state.Title = title.clone();
+
 			view_state.Description = description.clone();
 		}
 	}
@@ -93,7 +99,9 @@ pub(super) async fn set_tree_view_title(
 /// Sets a badge on the tree view.
 pub(super) async fn set_tree_view_badge(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	badge:Option<serde_json::Value>,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -117,6 +125,7 @@ pub(super) async fn set_tree_view_badge(
 			// Store badge in ViewState
 			if let Some(badge_value) = &badge {
 				let badge_str = badge_value.to_string();
+
 				if let Err(e) = view_state.SetBadge(badge_str) {
 					dev_log!("extensions", "warn: Failed to set badge for view '{}': {}", view_identifier, e);
 				}

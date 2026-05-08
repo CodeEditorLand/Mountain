@@ -18,12 +18,15 @@ static LOG_FILE:OnceLock<Mutex<Option<BufWriter<File>>>> = OnceLock::new();
 
 pub fn Fn(Line:&str) {
 	let Sink = InitFileSink();
+
 	if let Ok(mut Guard) = Sink.lock() {
 		if let Some(Writer) = Guard.as_mut() {
 			let _ = Writer.write_all(Line.as_bytes());
+
 			if !Line.ends_with('\n') {
 				let _ = Writer.write_all(b"\n");
 			}
+
 			let _ = Writer.flush();
 		}
 	}
@@ -65,6 +68,7 @@ pub(super) fn InitFileSink() -> &'static Mutex<Option<BufWriter<File>>> {
 
 fn FileSinkEnabled() -> bool {
 	static ENABLED:OnceLock<bool> = OnceLock::new();
+
 	*ENABLED.get_or_init(|| {
 		match std::env::var("Record") {
 			Ok(Value) => matches!(Value.as_str(), "1" | "true" | "yes" | "on"),
@@ -75,9 +79,12 @@ fn FileSinkEnabled() -> bool {
 
 fn ResolveLogDirectory() -> PathBuf {
 	let Stamp = SessionTimestamp::Fn();
+
 	let Base = match AppDataPrefix::Fn() {
 		Some(Prefix) => PathBuf::from(Prefix).join("logs"),
+
 		None => std::env::temp_dir().join("land-editor-logs"),
 	};
+
 	Base.join(Stamp)
 }

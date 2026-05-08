@@ -34,15 +34,19 @@ use crate::{
 /// Returns an error if status reporter initialization fails.
 pub fn StatusReporterRegister(
 	ApplicationHandle:&tauri::AppHandle,
+
 	RunTime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
 	match initialize_status_reporter(ApplicationHandle, RunTime) {
 		Ok(()) => {
 			dev_log!("lifecycle", "[IPC] [StatusReporter] Status reporter initialized successfully.");
+
 			Ok(())
 		},
+
 		Err(e) => {
 			dev_log!("lifecycle", "error: [IPC] [StatusReporter] Failed to initialize: {}", e);
+
 			Err(format!("Failed to initialize status reporter: {}", e))
 		},
 	}

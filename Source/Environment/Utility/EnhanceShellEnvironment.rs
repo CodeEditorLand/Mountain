@@ -51,6 +51,7 @@ pub fn Fn() {
 
 	let mut Child = match Output {
 		Ok(C) => C,
+
 		Err(_) => return,
 	};
 
@@ -58,42 +59,55 @@ pub fn Fn() {
 	// blocking `read`) doesn't stall boot. 2 s is well above the
 	// observed worst-case shells in the wild.
 	let Deadline = std::time::Instant::now() + Duration::from_secs(2);
+
 	loop {
 		match Child.try_wait() {
 			Ok(Some(_)) => break,
+
 			Ok(None) => {
 				if std::time::Instant::now() >= Deadline {
 					let _ = Child.kill();
+
 					let _ = Child.wait();
+
 					return;
 				}
+
 				std::thread::sleep(Duration::from_millis(20));
 			},
+
 			Err(_) => return,
 		}
 	}
 
 	let StdoutBytes = match Child.wait_with_output() {
 		Ok(O) => O.stdout,
+
 		Err(_) => return,
 	};
+
 	let Text = match String::from_utf8(StdoutBytes) {
 		Ok(S) => S,
+
 		Err(_) => return,
 	};
 
 	for Line in Text.lines() {
 		let Some((Key, Value)) = Line.split_once('=') else { continue };
+
 		let Key = Key.trim();
+
 		if Key.is_empty() || !IsPortableEnvName(Key) {
 			continue;
 		}
+
 		// Don't overwrite explicitly-set values from the parent process
 		// - preserves any deliberate override the user set with
 		// `Walk=… Foo=bar /Applications/X.app/.../bin`.
 		if std::env::var_os(Key).is_some() {
 			continue;
 		}
+
 		// SAFETY: pre-window, single-threaded boot path. set_var is
 		// safe at this point. Mountain's other modules read env
 		// through `std::env::var` snapshots after this returns.
@@ -107,6 +121,7 @@ fn IsTty() -> bool {
 	// Mountain redirects stdout/stderr to its own logger, so those
 	// always look "non-tty" even from a real terminal.
 	use std::io::IsTerminal;
+
 	std::io::stdin().is_terminal()
 }
 
@@ -116,9 +131,12 @@ fn IsTty() -> bool {
 /// `[A-Za-z_][A-Za-z0-9_]*`; anything else is dropped silently.
 fn IsPortableEnvName(Name:&str) -> bool {
 	let mut Chars = Name.chars();
+
 	match Chars.next() {
 		Some(C) if C.is_ascii_alphabetic() || C == '_' => {},
+
 		_ => return false,
 	}
+
 	Chars.all(|C| C.is_ascii_alphanumeric() || C == '_')
 }

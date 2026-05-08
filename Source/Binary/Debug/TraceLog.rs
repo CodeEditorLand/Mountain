@@ -15,7 +15,9 @@
 /// ```
 #[macro_export]
 macro_rules! TraceStep {
+
 	($($arg:tt)*) => {{
+
 		dev_log!("lifecycle", $($arg)*);
 	}};
 }

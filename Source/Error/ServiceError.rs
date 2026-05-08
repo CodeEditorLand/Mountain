@@ -14,18 +14,25 @@ use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 pub enum ServiceError {
 	/// Service not found
 	ServiceNotFound { context:ErrorContext, service_name:String },
+
 	/// Service initialization failed
 	InitializationFailed { context:ErrorContext, service_name:String, source:Option<String> },
+
 	/// Service already running
 	AlreadyRunning { context:ErrorContext, service_name:String },
+
 	/// Service not running
 	NotRunning { context:ErrorContext, service_name:String },
+
 	/// Service start failed
 	StartFailed { context:ErrorContext, service_name:String, source:Option<String> },
+
 	/// Service stop failed
 	StopFailed { context:ErrorContext, service_name:String, source:Option<String> },
+
 	/// Service timeout
 	Timeout { context:ErrorContext, service_name:String, operation:String, timeout_ms:u64 },
+
 	/// Service dependency error
 	DependencyError { context:ErrorContext, service_name:String, dependency:String },
 }
@@ -35,12 +42,19 @@ impl ServiceError {
 	pub fn context(&self) -> &ErrorContext {
 		match self {
 			ServiceError::ServiceNotFound { context, .. } => context,
+
 			ServiceError::InitializationFailed { context, .. } => context,
+
 			ServiceError::AlreadyRunning { context, .. } => context,
+
 			ServiceError::NotRunning { context, .. } => context,
+
 			ServiceError::StartFailed { context, .. } => context,
+
 			ServiceError::StopFailed { context, .. } => context,
+
 			ServiceError::Timeout { context, .. } => context,
+
 			ServiceError::DependencyError { context, .. } => context,
 		}
 	}
@@ -48,10 +62,12 @@ impl ServiceError {
 	/// Create a service not found error
 	pub fn service_not_found(service_name:impl Into<String>) -> Self {
 		let service_name_str = service_name.into();
+
 		Self::ServiceNotFound {
 			context:ErrorContext::new(format!("Service not found: {}", service_name_str))
 				.with_kind(ErrorKind::Service)
 				.with_severity(ErrorSeverity::Error),
+
 			service_name:service_name_str,
 		}
 	}
@@ -59,11 +75,14 @@ impl ServiceError {
 	/// Create an initialization failed error
 	pub fn initialization_failed(service_name:impl Into<String>, source:Option<String>) -> Self {
 		let service_name_str = service_name.into();
+
 		Self::InitializationFailed {
 			context:ErrorContext::new(format!("Service initialization failed: {}", service_name_str))
 				.with_kind(ErrorKind::Service)
 				.with_severity(ErrorSeverity::Critical),
+
 			service_name:service_name_str,
+
 			source,
 		}
 	}
@@ -71,10 +90,12 @@ impl ServiceError {
 	/// Create an already running error
 	pub fn already_running(service_name:impl Into<String>) -> Self {
 		let service_name_str = service_name.into();
+
 		Self::AlreadyRunning {
 			context:ErrorContext::new(format!("Service already running: {}", service_name_str))
 				.with_kind(ErrorKind::Service)
 				.with_severity(ErrorSeverity::Warning),
+
 			service_name:service_name_str,
 		}
 	}
@@ -82,10 +103,12 @@ impl ServiceError {
 	/// Create a not running error
 	pub fn not_running(service_name:impl Into<String>) -> Self {
 		let service_name_str = service_name.into();
+
 		Self::NotRunning {
 			context:ErrorContext::new(format!("Service not running: {}", service_name_str))
 				.with_kind(ErrorKind::Service)
 				.with_severity(ErrorSeverity::Error),
+
 			service_name:service_name_str,
 		}
 	}
@@ -93,11 +116,14 @@ impl ServiceError {
 	/// Create a start failed error
 	pub fn start_failed(service_name:impl Into<String>, source:Option<String>) -> Self {
 		let service_name_str = service_name.into();
+
 		Self::StartFailed {
 			context:ErrorContext::new(format!("Service start failed: {}", service_name_str))
 				.with_kind(ErrorKind::Service)
 				.with_severity(ErrorSeverity::Error),
+
 			service_name:service_name_str,
+
 			source,
 		}
 	}
@@ -105,7 +131,9 @@ impl ServiceError {
 	/// Create a timeout error
 	pub fn timeout(service_name:impl Into<String>, operation:impl Into<String>, timeout_ms:u64) -> Self {
 		let service_name_str = service_name.into();
+
 		let operation_str = operation.into();
+
 		Self::Timeout {
 			context:ErrorContext::new(format!(
 				"Service timeout: {} operation timed out after {}ms",
@@ -114,8 +142,11 @@ impl ServiceError {
 			.with_kind(ErrorKind::Service)
 			.with_severity(ErrorSeverity::Error)
 			.with_operation(operation_str.clone()),
+
 			service_name:service_name_str,
+
 			operation:operation_str,
+
 			timeout_ms,
 		}
 	}
@@ -123,7 +154,9 @@ impl ServiceError {
 	/// Create a dependency error
 	pub fn dependency_error(service_name:impl Into<String>, dependency:impl Into<String>) -> Self {
 		let service_name_str = service_name.into();
+
 		let dependency_str = dependency.into();
+
 		Self::DependencyError {
 			context:ErrorContext::new(format!(
 				"Service dependency error: {} depends on {}",
@@ -131,7 +164,9 @@ impl ServiceError {
 			))
 			.with_kind(ErrorKind::Service)
 			.with_severity(ErrorSeverity::Critical),
+
 			service_name:service_name_str,
+
 			dependency:dependency_str,
 		}
 	}

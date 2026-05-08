@@ -165,6 +165,7 @@ impl DebugService for MountainEnvironment {
 
 	async fn StartDebugging(&self, _FolderURI:Option<Url>, Configuration:Value) -> Result<String, CommonError> {
 		let SessionID = uuid::Uuid::new_v4().to_string();
+
 		dev_log!(
 			"exthost",
 			"[DebugProvider] Starting debug session '{}' with config: {:?}",
@@ -173,6 +174,7 @@ impl DebugService for MountainEnvironment {
 		);
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+
 		let DebugType = Configuration
 			.get("type")
 			.and_then(Value::as_str)
@@ -197,8 +199,11 @@ impl DebugService for MountainEnvironment {
 			"[DebugProvider] Resolving debug configuration for type '{}'",
 			DebugType
 		);
+
 		dev_log!("exthost", "[DebugProvider] Resolving debug configuration...");
+
 		let ResolveConfigMethod = format!("{}$resolveDebugConfiguration", ProxyTarget::ExtHostDebug.GetTargetPrefix());
+
 		let ResolvedConfig = IPCProvider
 			.SendRequestToSideCar(
 				TargetSideCar.clone(),
@@ -210,8 +215,10 @@ impl DebugService for MountainEnvironment {
 
 		// 2. Get the Debug Adapter Descriptor (Reverse-RPC to Cocoon)
 		dev_log!("exthost", "[DebugProvider] Creating debug adapter descriptor...");
+
 		let CreateDescriptorMethod =
 			format!("{}$createDebugAdapterDescriptor", ProxyTarget::ExtHostDebug.GetTargetPrefix());
+
 		let Descriptor = IPCProvider
 			.SendRequestToSideCar(
 				TargetSideCar.clone(),
@@ -249,8 +256,11 @@ impl DebugService for MountainEnvironment {
 		// the session so `vscode.debug.onDidStartDebugSession` listeners
 		// receive the activation event.
 		let DescriptorType = Descriptor.get("type").and_then(Value::as_str).unwrap_or("").to_string();
+
 		let AdapterStdinSender:Option<tokio::sync::mpsc::UnboundedSender<Vec<u8>>>;
+
 		let AdapterChildPid:Option<u32>;
+
 		match DescriptorType.as_str() {
 			"executable" => {
 				let Command = Descriptor
@@ -263,13 +273,17 @@ impl DebugService for MountainEnvironment {
 						}
 					})?
 					.to_string();
+
 				let Args:Vec<String> = Descriptor
 					.get("args")
 					.and_then(Value::as_array)
 					.map(|A| A.iter().filter_map(|V| V.as_str().map(str::to_string)).collect())
 					.unwrap_or_default();
+
 				let OptionsValue = Descriptor.get("options").cloned().unwrap_or(Value::Null);
+
 				let Cwd = OptionsValue.get("cwd").and_then(Value::as_str).map(str::to_string);
+
 				let EnvOverrides:Vec<(String, String)> = OptionsValue
 					.get("env")
 					.and_then(Value::as_object)
@@ -281,14 +295,17 @@ impl DebugService for MountainEnvironment {
 					.unwrap_or_default();
 
 				let mut Builder = tokio::process::Command::new(&Command);
+
 				Builder
 					.args(&Args)
 					.stdin(std::process::Stdio::piped())
 					.stdout(std::process::Stdio::piped())
 					.stderr(std::process::Stdio::piped());
+
 				if let Some(CwdPath) = &Cwd {
 					Builder.current_dir(CwdPath);
 				}
+
 				for (Key, Value) in &EnvOverrides {
 					Builder.env(Key, Value);
 				}
@@ -303,14 +320,17 @@ impl DebugService for MountainEnvironment {
 				})?;
 
 				let Pid = Child.id();
+
 				let Stdin = Child.stdin.take().ok_or_else(|| {
 					CommonError::IPCError { Description:format!("Adapter for session {} had no stdin pipe", SessionID) }
 				})?;
+
 				let Stdout = Child.stdout.take().ok_or_else(|| {
 					CommonError::IPCError {
 						Description:format!("Adapter for session {} had no stdout pipe", SessionID),
 					}
 				})?;
+
 				let Stderr = Child.stderr.take().ok_or_else(|| {
 					CommonError::IPCError {
 						Description:format!("Adapter for session {} had no stderr pipe", SessionID),
@@ -324,6 +344,7 @@ impl DebugService for MountainEnvironment {
 				// dropped (UnregisterDebugSession) which propagates EOF
 				// to the adapter and triggers its shutdown.
 				let StdinSessionId = SessionID.clone();
+
 				tokio::spawn(async move {
 					use tokio::io::AsyncWriteExt;
 					let mut Pipe = Stdin;
@@ -357,8 +378,11 @@ impl DebugService for MountainEnvironment {
 				// originating session listener. Errors break the read
 				// loop and trigger session cleanup.
 				let StdoutSessionId = SessionID.clone();
+
 				let StdoutHandle = self.ApplicationHandle.clone();
+
 				let StdoutSidecar = TargetSideCar.clone();
+
 				tokio::spawn(async move {
 					use tokio::io::{AsyncBufReadExt, AsyncReadExt, BufReader};
 					let mut Reader = BufReader::new(Stdout);
@@ -420,6 +444,7 @@ impl DebugService for MountainEnvironment {
 				// dev_log line so adapter crash reasons surface alongside
 				// other Mountain logs.
 				let StderrSessionId = SessionID.clone();
+
 				tokio::spawn(async move {
 					use tokio::io::{AsyncBufReadExt, BufReader};
 					let mut Lines = BufReader::new(Stderr).lines();
@@ -429,7 +454,9 @@ impl DebugService for MountainEnvironment {
 				});
 
 				AdapterStdinSender = Some(Sender);
+
 				AdapterChildPid = Pid;
+
 				dev_log!(
 					"exthost",
 					"[DebugProvider] Spawned executable adapter for session '{}' pid={:?} command={:?}",
@@ -438,6 +465,7 @@ impl DebugService for MountainEnvironment {
 					Command
 				);
 			},
+
 			"server" | "pipeServer" => {
 				dev_log!(
 					"exthost",
@@ -445,9 +473,12 @@ impl DebugService for MountainEnvironment {
 					DescriptorType,
 					SessionID
 				);
+
 				AdapterStdinSender = None;
+
 				AdapterChildPid = None;
 			},
+
 			"implementation" => {
 				dev_log!(
 					"exthost",
@@ -455,9 +486,12 @@ impl DebugService for MountainEnvironment {
 					 reverse-RPC.",
 					SessionID
 				);
+
 				AdapterStdinSender = None;
+
 				AdapterChildPid = None;
 			},
+
 			_ => {
 				dev_log!(
 					"exthost",
@@ -466,7 +500,9 @@ impl DebugService for MountainEnvironment {
 					DescriptorType,
 					SessionID
 				);
+
 				AdapterStdinSender = None;
+
 				AdapterChildPid = None;
 			},
 		}
@@ -502,12 +538,14 @@ impl DebugService for MountainEnvironment {
 		// configuration so extensions can observe activation even
 		// while the adapter spawn path is still a stub.
 		let StartedMethod = format!("{}$onDidStartDebugSession", ProxyTarget::ExtHostDebug.GetTargetPrefix());
+
 		let StartedSession = json!({
 			"id": SessionID.clone(),
 			"type": DebugType.clone(),
 			"name": ResolvedConfig.get("name").and_then(Value::as_str).unwrap_or(&DebugType),
 			"configuration": ResolvedConfig.clone(),
 		});
+
 		if let Err(error) = IPCProvider
 			.SendNotificationToSideCar(TargetSideCar.clone(), StartedMethod, json!([StartedSession]))
 			.await
@@ -535,6 +573,7 @@ impl DebugService for MountainEnvironment {
 		);
 
 		dev_log!("exthost", "[DebugProvider] Debug session '{}' started (simulation).", SessionID);
+
 		Ok(SessionID)
 	}
 
@@ -564,7 +603,9 @@ impl DebugService for MountainEnvironment {
 		// just forward verbatim - so we emit `0` here as a placeholder
 		// when the caller hasn't supplied one in `Arguments.seq`.
 		let RequestSeq = Arguments.get("seq").and_then(Value::as_u64).unwrap_or(0);
+
 		let RequestArguments = Arguments.get("arguments").cloned().unwrap_or(Arguments.clone());
+
 		let DapRequest = json!({
 			"seq": RequestSeq,
 			"type": "request",
@@ -579,15 +620,21 @@ impl DebugService for MountainEnvironment {
 						Description:format!("Failed to serialize DAP request for session {}: {}", SessionID, Error),
 					}
 				})?;
+
 				let Header = format!("Content-Length: {}\r\n\r\n", Body.len());
+
 				let mut Frame = Vec::with_capacity(Header.len() + Body.len());
+
 				Frame.extend_from_slice(Header.as_bytes());
+
 				Frame.extend_from_slice(&Body);
+
 				Sender.send(Frame).map_err(|Error| {
 					CommonError::IPCError {
 						Description:format!("Adapter stdin channel for session {} closed: {}", SessionID, Error),
 					}
 				})?;
+
 				// stdio adapters reply asynchronously through the
 				// stdout reader task, which fans the response out via
 				// `sky://debug/dap-message`. Returning an ack now lets
@@ -615,8 +662,11 @@ impl DebugService for MountainEnvironment {
 			.as_ref()
 			.map(|E| E.SideCarIdentifier.clone())
 			.unwrap_or_else(|| "cocoon-main".to_string());
+
 		let SendDapMethod = format!("{}$sendDAPRequest", ProxyTarget::ExtHostDebug.GetTargetPrefix());
+
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+
 		match IPCProvider
 			.SendRequestToSideCar(
 				TargetSidecar,
@@ -627,6 +677,7 @@ impl DebugService for MountainEnvironment {
 			.await
 		{
 			Ok(Response) => Ok(Response),
+
 			Err(Error) => {
 				dev_log!(
 					"exthost",
@@ -634,6 +685,7 @@ impl DebugService for MountainEnvironment {
 					SessionID,
 					Error
 				);
+
 				Err(Error)
 			},
 		}
@@ -654,15 +706,21 @@ impl DebugService for MountainEnvironment {
 					"command": "disconnect",
 					"arguments": { "restart": false, "terminateDebuggee": true },
 				});
+
 				if let Ok(Body) = serde_json::to_vec(&DisconnectRequest) {
 					let Header = format!("Content-Length: {}\r\n\r\n", Body.len());
+
 					let mut Frame = Vec::with_capacity(Header.len() + Body.len());
+
 					Frame.extend_from_slice(Header.as_bytes());
+
 					Frame.extend_from_slice(&Body);
+
 					let _ = Sender.send(Frame);
 				}
 			}
 		}
+
 		// Drop the entry. The drained `Sender` clone in the in-flight
 		// stdin writer task will see the channel close on its next `recv`
 		// and shut the adapter's stdin, which most adapters interpret
@@ -670,7 +728,9 @@ impl DebugService for MountainEnvironment {
 		let _ = self.ApplicationState.Feature.Debug.UnregisterDebugSession(&SessionID);
 
 		let IPCProvider:Arc<dyn IPCProvider> = self.Require();
+
 		let TerminateMethod = format!("{}$onDidTerminateDebugSession", ProxyTarget::ExtHostDebug.GetTargetPrefix());
+
 		if let Err(error) = IPCProvider
 			.SendNotificationToSideCar("cocoon-main".to_string(), TerminateMethod, json!([{ "id": SessionID.clone() }]))
 			.await
@@ -682,9 +742,11 @@ impl DebugService for MountainEnvironment {
 				error
 			);
 		}
+
 		let _ = self
 			.ApplicationHandle
 			.emit("sky://debug/sessionEnd", json!({ "sessionId": SessionID.clone() }));
+
 		Ok(())
 	}
 }

@@ -14,6 +14,7 @@ use crate::{
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<Response<GitExecResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] git_exec: {}", Request.args.join(" "));
+
 	dev_log!(
 		"git",
 		"[Git] exec-begin cwd={} args=[{}]",
@@ -49,6 +50,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 		})?;
 
 	let ExitCode = Output.status.code().unwrap_or(-1);
+
 	dev_log!(
 		"cocoon",
 		"[CocoonService] git_exec exit={} stdout={} bytes stderr={} bytes",
@@ -56,6 +58,7 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 		Output.stdout.len(),
 		Output.stderr.len()
 	);
+
 	dev_log!(
 		"git",
 		"[Git] exec-done args=[{}] exit={} stdout={} stderr={}",
@@ -66,8 +69,11 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:GitExecRequest) -> Result<R
 	);
 
 	let StdoutString = String::from_utf8_lossy(&Output.stdout);
+
 	let StderrString = String::from_utf8_lossy(&Output.stderr);
+
 	let mut OutputLines:Vec<String> = StdoutString.lines().map(|L| L.to_string()).collect();
+
 	for Line in StderrString.lines() {
 		OutputLines.push(format!("stderr: {}", Line));
 	}

@@ -29,18 +29,25 @@ pub async fn ModelUpdateContent(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<V
 
 	let (NewVersion, LanguageId) = match RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
 		None => return Err(format!("model:updateContent - model not open: {}", Uri)),
+
 		Some(mut Document) => {
 			Document.Version += 1;
+
 			Document.Lines = NewContent.lines().map(|L| L.to_owned()).collect();
+
 			Document.IsDirty = true;
+
 			let Version = Document.Version;
+
 			let LangId = Document.LanguageIdentifier.clone();
+
 			RunTime
 				.Environment
 				.ApplicationState
 				.Feature
 				.Documents
 				.AddOrUpdate(Uri.clone(), Document);
+
 			(Version, LangId)
 		},
 	};

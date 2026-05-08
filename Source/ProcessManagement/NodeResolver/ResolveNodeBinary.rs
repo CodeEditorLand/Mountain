@@ -24,6 +24,7 @@ pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode::Struct {
 	let Resolved = ResolveUncached::Fn(ApplicationHandle);
 
 	let Version = QueryNodeVersion::Fn(&Resolved.Path);
+
 	match &Version {
 		Some(Reported) => {
 			dev_log!(
@@ -33,8 +34,10 @@ pub fn Fn<R:Runtime>(ApplicationHandle:&AppHandle<R>) -> ResolvedNode::Struct {
 				Resolved.Source.AsLabel(),
 				Reported
 			);
+
 			CheckMinMajor::Fn(Reported);
 		},
+
 		None => {
 			dev_log!(
 				"cocoon",

@@ -7,9 +7,11 @@
 #[cfg(feature = "Telemetry")]
 pub fn Fn(Name:&str, Attributes:&[(&str, &str)]) -> tracing::Span {
 	let mut Span = tracing::span!(tracing::Level::INFO, Name);
+
 	for (Key, Value) in Attributes {
 		Span.record(*Key, *Value);
 	}
+
 	Span
 }
 

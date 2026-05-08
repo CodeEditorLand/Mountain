@@ -26,9 +26,13 @@
 //! - `vs/workbench/contrib/testing/common/testTypes.ts`.
 
 pub mod TestControllerState;
+
 pub mod TestProviderState;
+
 pub mod TestResult;
+
 pub mod TestRun;
+
 pub mod TestRunStatus;
 
 use std::sync::Arc;
@@ -61,14 +65,20 @@ impl TestController for MountainEnvironment {
 
 		let ControllerState = TestControllerState::Struct {
 			ControllerIdentifier:ControllerId.clone(),
+
 			Label,
+
 			SideCarIdentifier,
+
 			IsActive:true,
+
 			SupportedTestTypes:vec!["unit".to_string(), "integration".to_string()],
 		};
 
 		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
+
 		StateGuard.Controllers.insert(ControllerId.clone(), ControllerState);
+
 		drop(StateGuard);
 
 		self.ApplicationHandle
@@ -85,6 +95,7 @@ impl TestController for MountainEnvironment {
 			"[TestProvider] Test controller '{}' registered successfully",
 			ControllerId
 		);
+
 		Ok(())
 	}
 
@@ -98,22 +109,29 @@ impl TestController for MountainEnvironment {
 
 		let ControllerState = {
 			let StateGuard = self.ApplicationState.TestProviderState.read().await;
+
 			StateGuard.Controllers.get(&ControllerIdentifier).cloned().ok_or_else(|| {
 				CommonError::TestControllerNotFound { ControllerIdentifier:ControllerIdentifier.clone() }
 			})?
 		};
 
 		let RunIdentifier = Uuid::new_v4().to_string();
+
 		let TestRunRecord = TestRun::Struct {
 			RunIdentifier:RunIdentifier.clone(),
+
 			ControllerIdentifier:ControllerIdentifier.clone(),
+
 			Status:TestRunStatus::Enum::Queued,
+
 			StartedAt:std::time::Instant::now(),
+
 			Results:std::collections::HashMap::new(),
 		};
 
 		{
 			let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
+
 			StateGuard.ActiveRuns.insert(RunIdentifier.clone(), TestRunRecord);
 		}
 
@@ -134,6 +152,7 @@ impl TestController for MountainEnvironment {
 				"warn: [TestProvider] Native test controllers not yet implemented for '{}'",
 				ControllerIdentifier
 			);
+
 			let _ = Self::UpdateRunStatus(self, &RunIdentifier, TestRunStatus::Enum::Skipped).await;
 		}
 
@@ -144,8 +163,11 @@ impl TestController for MountainEnvironment {
 impl MountainEnvironment {
 	async fn RunProxiedTests(
 		&self,
+
 		SideCarIdentifier:&str,
+
 		RunIdentifier:&str,
+
 		TestRunRequest:Value,
 	) -> Result<(), CommonError> {
 		dev_log!(
@@ -158,7 +180,9 @@ impl MountainEnvironment {
 		let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Running).await;
 
 		let IPCProviderHandle:Arc<dyn IPCProvider> = self.Require();
+
 		let RPCMethod = format!("{}$runTests", ProxyTarget::ExtHostTesting.GetTargetPrefix());
+
 		let RPCParams = json!({ "RunIdentifier": RunIdentifier, "TestRunRequest": TestRunRequest });
 
 		match IPCProviderHandle
@@ -168,8 +192,11 @@ impl MountainEnvironment {
 			Ok(Response) => {
 				if let Ok(Results) = serde_json::from_value::<Vec<TestResult::Struct>>(Response) {
 					let _ = Self::StoreTestResults(self, RunIdentifier, Results).await;
+
 					let FinalStatus = Self::CalculateRunStatus(self, RunIdentifier).await;
+
 					let _ = Self::UpdateRunStatus(self, RunIdentifier, FinalStatus).await;
+
 					dev_log!(
 						"extensions",
 						"[TestProvider] Test run '{}' completed with status {:?}",
@@ -182,13 +209,18 @@ impl MountainEnvironment {
 						"error: [TestProvider] Failed to parse test results for run '{}'",
 						RunIdentifier
 					);
+
 					let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
 				}
+
 				Ok(())
 			},
+
 			Err(Error) => {
 				dev_log!("extensions", "error: [TestProvider] Failed to run tests: {}", Error);
+
 				let _ = Self::UpdateRunStatus(self, RunIdentifier, TestRunStatus::Enum::Errored).await;
+
 				Err(Error)
 			},
 		}
@@ -196,9 +228,12 @@ impl MountainEnvironment {
 
 	async fn UpdateRunStatus(&self, RunIdentifier:&str, Status:TestRunStatus::Enum) -> Result<(), CommonError> {
 		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
+
 		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			TestRunRecord.Status = Status;
+
 			drop(StateGuard);
+
 			self.ApplicationHandle
 				.emit(
 					SkyEvent::TestRunStatusChanged.AsStr(),
@@ -207,6 +242,7 @@ impl MountainEnvironment {
 				.map_err(|Error| {
 					CommonError::IPCError { Description:format!("Failed to emit test status change event: {}", Error) }
 				})?;
+
 			Ok(())
 		} else {
 			Err(CommonError::TestRunNotFound { RunIdentifier:RunIdentifier.to_string() })
@@ -215,10 +251,12 @@ impl MountainEnvironment {
 
 	async fn StoreTestResults(&self, RunIdentifier:&str, Results:Vec<TestResult::Struct>) -> Result<(), CommonError> {
 		let mut StateGuard = self.ApplicationState.TestProviderState.write().await;
+
 		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get_mut(RunIdentifier) {
 			for Result in Results {
 				TestRunRecord.Results.insert(Result.TestIdentifier.clone(), Result);
 			}
+
 			Ok(())
 		} else {
 			Err(CommonError::TestRunNotFound { RunIdentifier:RunIdentifier.to_string() })
@@ -227,12 +265,15 @@ impl MountainEnvironment {
 
 	async fn CalculateRunStatus(&self, RunIdentifier:&str) -> TestRunStatus::Enum {
 		let StateGuard = self.ApplicationState.TestProviderState.read().await;
+
 		if let Some(TestRunRecord) = StateGuard.ActiveRuns.get(RunIdentifier) {
 			if TestRunRecord.Results.is_empty() {
 				TestRunStatus::Enum::Passed
 			} else {
 				let HasFailed = TestRunRecord.Results.values().any(|R| R.Status == TestRunStatus::Enum::Failed);
+
 				let HasErrored = TestRunRecord.Results.values().any(|R| R.Status == TestRunStatus::Enum::Errored);
+
 				if HasErrored {
 					TestRunStatus::Enum::Errored
 				} else if HasFailed {

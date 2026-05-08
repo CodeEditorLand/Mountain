@@ -36,6 +36,7 @@ use crate::{
 /// SkyBridge's listener accepts both shapes (single + batch).
 struct CommandEmitBatch {
 	Pending:Mutex<Vec<Value>>,
+
 	FlushScheduled:AtomicBool,
 }
 
@@ -48,12 +49,15 @@ fn EnqueueCommandEmit(Handle:&AppHandle, Payload:Value) {
 
 	{
 		let mut Pending = Batch.Pending.lock().unwrap();
+
 		Pending.push(Payload);
 	}
 
 	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
 		let BatchClone = Batch.clone();
+
 		let HandleClone = Handle.clone();
+
 		tokio::spawn(async move {
 			tokio::time::sleep(Duration::from_millis(16)).await;
 			let Drained:Vec<Value> = {
@@ -84,6 +88,7 @@ fn EnqueueCommandEmit(Handle:&AppHandle, Payload:Value) {
 
 pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let CommandId = Parameter.get("commandId").and_then(Value::as_str).unwrap_or("");
+
 	// Per-command registration (~100 commands / session). Useful for
 	// verifying extension command contributions but noisy at the `grpc`
 	// level. Route to `command-register` so it's opt-in alongside
@@ -93,10 +98,13 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 		"[MountainVinegRPCService] Cocoon registered command: {}",
 		CommandId
 	);
+
 	if CommandId.is_empty() {
 		return;
 	}
+
 	let Kind = Parameter.get("kind").and_then(Value::as_str).unwrap_or("command").to_string();
+
 	if let Ok(mut Registry) = Service
 		.RunTime()
 		.Environment
@@ -114,6 +122,7 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 			},
 		);
 	}
+
 	// Coalesce the Sky emit. SkyBridge listens on `sky://command/register`
 	// and accepts either `{ id, commandId, kind }` (single) or
 	// `{ commands: [...] }` (batch). The batched flush happens 16 ms

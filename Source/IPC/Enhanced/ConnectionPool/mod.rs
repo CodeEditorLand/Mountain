@@ -10,8 +10,13 @@
 //! background health checker each live in their own sibling.
 
 pub mod ConnectionHandle;
+
 pub mod ConnectionHealth;
+
 pub mod HealthChecker;
+
 pub mod Pool;
+
 pub mod PoolConfig;
+
 pub mod PoolStats;

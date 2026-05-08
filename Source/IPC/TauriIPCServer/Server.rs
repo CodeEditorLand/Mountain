@@ -54,19 +54,24 @@
 //! - Support multiple transport protocols
 
 use std::collections::HashMap;
+
 use std::sync::{Arc, Mutex};
 
 use tauri::{AppHandle, Emitter, Manager};
 
 use super::super::Message::{TauriIPCMessage, ConnectionStatus, ListenerCallback};
+
 use super::super::Security::PermissionManager::{
 	Manager::Struct as PermissionManager,
 	SecurityContext::Struct as SecurityContext,
 	SecurityEvent::Struct as SecurityEvent,
 	SecurityEventType::Enum as SecurityEventType,
 };
+
 use super::super::Encryption::{MessageCompressor, SecureMessageChannel};
+
 use super::super::Connection::{ConnectionManager, ConnectionStats};
+
 use crate::dev_log;
 
 /// Mountain's IPC Server counterpart to Wind's TauriIPCServer
@@ -107,6 +112,7 @@ use crate::dev_log;
 /// ```
 #[derive(Clone)]
 pub struct TauriIPCServer {
+
 	/// Tauri app Handle for emitting events
 	app_handle: AppHandle,
 
@@ -124,6 +130,7 @@ pub struct TauriIPCServer {
 }
 
 impl TauriIPCServer {
+
 	/// Create a new Tauri IPC Server instance
 	///
 	/// ## Parameters
@@ -138,13 +145,19 @@ impl TauriIPCServer {
 	/// let ipc_server = TauriIPCServer::new(app_handle);
 	/// ```
 	pub fn new(app_handle: AppHandle) -> Self {
+
 		dev_log!("ipc", "[TauriIPCServer] Initializing Mountain IPC Server");
 
 		Self {
+
 			app_handle,
+
 			listeners: Arc::new(Mutex::new(HashMap::new())),
+
 			is_connected: Arc::new(Mutex::new(false)),
+
 			message_queue: Arc::new(Mutex::new(Vec::new())),
+
 			permission_manager: Arc::new(Mutex::new(None)),
 		}
 	}
@@ -164,29 +177,38 @@ impl TauriIPCServer {
 	/// ipc_server.initialize().await?;
 	/// ```
 	pub async fn initialize(&self) -> Result<(), String> {
+
 		dev_log!("ipc", "[TauriIPCServer] Setting up IPC listeners");
 
 		// Set up connection status
 		{
+
 			let mut is_connected = self
 				.is_connected
 				.lock()
 				.map_err(|e| format!("Failed to lock connection status: {}", e))?;
+
 			*is_connected = true;
 		}
 
 		// Initialize permission manager
 		{
+
 			let mut permission_manager = self
 				.permission_manager
 				.lock()
 				.map_err(|e| format!("Failed to lock permission manager: {}", e))?;
+
 			if permission_manager.is_none() {
+
 				let pm = PermissionManager::new();
+
 				let pm_clone = pm.clone();
+
 				tokio::spawn(async move {
 					pm_clone.initialize_defaults().await;
 				});
+
 				*permission_manager = Some(pm);
 			}
 		}
@@ -223,10 +245,15 @@ impl TauriIPCServer {
 	/// ipc_server.send("my-channel", serde_json::json!({"key": "value"})).await?;
 	/// ```
 	pub async fn send(&self, channel: &str, data: serde_json::Value) -> Result<(), String> {
+
 		let Message = TauriIPCMessage {
+
 			channel: channel.to_string(),
+
 			data,
+
 			sender: Some("mountain".to_string()),
+
 			timestamp: std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -234,25 +261,34 @@ impl TauriIPCServer {
 		};
 
 		let is_connected = {
+
 			let guard = self
 				.is_connected
 				.lock()
 				.map_err(|e| format!("Failed to check connection status: {}", e))?;
+
 			*guard
 		};
 
 		if !is_connected {
+
 			// Queue the Message for later delivery
 			let mut queue = self
 				.message_queue
 				.lock()
 				.map_err(|e| format!("Failed to access Message queue: {}", e))?;
+
 			queue.push(Message);
+
 			dev_log!("ipc", 
+
 				"[TauriIPCServer] Message queued (channel: {}, queue size: {})",
+
 				channel,
+
 				queue.len()
 			);
+
 			return Ok(());
 		}
 
@@ -279,6 +315,7 @@ impl TauriIPCServer {
 	/// }))?;
 	/// ```
 	pub fn on(&self, channel: &str, callback: ListenerCallback) -> Result<(), String> {
+
 		let mut listeners = self
 			.listeners
 			.lock()
@@ -290,6 +327,7 @@ impl TauriIPCServer {
 			.push(callback);
 
 		dev_log!("ipc", "[TauriIPCServer] Listener registered for channel: {}", channel);
+
 		Ok(())
 	}
 
@@ -303,22 +341,26 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Listener removed successfully
 	/// - `Err(String)`: Error Message if removal fails
 	pub fn off(&self, channel: &str, callback: &ListenerCallback) -> Result<(), String> {
+
 		let mut listeners = self
 			.listeners
 			.lock()
 			.map_err(|e| format!("Failed to access listeners: {}", e))?;
 
 		if let Some(channel_listeners) = listeners.get_mut(channel) {
+
 			channel_listeners.retain(|cb| {
 				!std::ptr::eq(cb as *const _ as *const (), callback as *const _ as *const ())
 			});
 
 			if channel_listeners.is_empty() {
+
 				listeners.remove(channel);
 			}
 		}
 
 		dev_log!("ipc", "[TauriIPCServer] Listener removed from channel: {}", channel);
+
 		Ok(())
 	}
 
@@ -331,6 +373,7 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Message handled successfully
 	/// - `Err(String)`: Error Message if handling fails
 	pub async fn IncomingMessage(&self, Message: TauriIPCMessage) -> Result<(), String> {
+
 		dev_log!("ipc", "[TauriIPCServer] Received Message on channel: {}", Message.channel);
 
 		let listeners = self
@@ -339,13 +382,18 @@ impl TauriIPCServer {
 			.map_err(|e| format!("Failed to access listeners: {}", e))?;
 
 		if let Some(channel_listeners) = listeners.get(&Message.channel) {
+
 			for callback in channel_listeners {
+
 				if let Err(e) = callback(Message.data.clone()) {
+
 					dev_log!("ipc", "error: [TauriIPCServer] Error in listener for channel {}: {}",
+
 						Message.channel, e);
 				}
 			}
 		} else {
+
 			dev_log!("ipc", "[TauriIPCServer] No listeners found for channel: {}", Message.channel);
 		}
 
@@ -361,6 +409,7 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Status sent successfully
 	/// - `Err(String)`: Error Message if sending fails
 	async fn send_connection_status(&self, connected: bool) -> Result<(), String> {
+
 		let status = ConnectionStatus::new(connected);
 
 		self.app_handle
@@ -368,6 +417,7 @@ impl TauriIPCServer {
 			.map_err(|e| format!("Failed to emit connection status: {}", e))?;
 
 		dev_log!("ipc", "[TauriIPCServer] Connection status sent: {}", connected);
+
 		Ok(())
 	}
 
@@ -380,11 +430,13 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Message emitted successfully
 	/// - `Err(String)`: Error Message if emission fails
 	async fn emit_message(&self, Message: &TauriIPCMessage) -> Result<(), String> {
+
 		self.app_handle
 			.emit("vscode-ipc-Message", Message)
 			.map_err(|e| format!("Failed to emit Message: {}", e))?;
 
 		dev_log!("ipc", "[TauriIPCServer] Message emitted on channel: {}", Message.channel);
+
 		Ok(())
 	}
 
@@ -392,25 +444,36 @@ impl TauriIPCServer {
 	///
 	/// This method processes any queued messages from offline periods.
 	async fn process_message_queue(&self) {
+
 		let mut queue = match self.message_queue.lock() {
+
 			Ok(queue) => queue,
+
 			Err(e) => {
+
 				dev_log!("ipc", "error: [TauriIPCServer] Failed to access Message queue: {}", e);
+
 				return;
 			}
 		};
 
 		while let Some(Message) = queue.pop() {
+
 			if let Err(e) = self.emit_message(&Message).await {
+
 				dev_log!("ipc", "error: [TauriIPCServer] Failed to send queued Message: {}", e);
+
 				// Put the Message back in the queue
 				queue.insert(0, Message);
+
 				break;
 			}
 		}
 
 		dev_log!("ipc", 
+
 			"[TauriIPCServer] Message queue processed, {} messages remaining",
+
 			queue.len()
 		);
 	}
@@ -421,10 +484,12 @@ impl TauriIPCServer {
 	/// - `Ok(bool)`: Connection status
 	/// - `Err(String)`: Error Message if status check fails
 	pub fn get_connection_status(&self) -> Result<bool, String> {
+
 		let guard = self
 			.is_connected
 			.lock()
 			.map_err(|e| format!("Failed to get connection status: {}", e))?;
+
 		Ok(*guard)
 	}
 
@@ -434,10 +499,12 @@ impl TauriIPCServer {
 	/// - `Ok(usize)`: Number of queued messages
 	/// - `Err(String)`: Error Message if count check fails
 	pub fn get_queue_size(&self) -> Result<usize, String> {
+
 		let guard = self
 			.message_queue
 			.lock()
 			.map_err(|e| format!("Failed to get queue size: {}", e))?;
+
 		Ok(guard.len())
 	}
 
@@ -447,31 +514,39 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Cleanup successful
 	/// - `Err(String)`: Error Message if cleanup fails
 	pub fn dispose(&self) -> Result<(), String> {
+
 		{
+
 			let mut listeners = self
 				.listeners
 				.lock()
 				.map_err(|e| format!("Failed to access listeners: {}", e))?;
+
 			listeners.clear();
 		}
 
 		{
+
 			let mut queue = self
 				.message_queue
 				.lock()
 				.map_err(|e| format!("Failed to access Message queue: {}", e))?;
+
 			queue.clear();
 		}
 
 		{
+
 			let mut is_connected = self
 				.is_connected
 				.lock()
 				.map_err(|e| format!("Failed to access connection status: {}", e))?;
+
 			*is_connected = false;
 		}
 
 		dev_log!("ipc", "[TauriIPCServer] IPC Server disposed");
+
 		Ok(())
 	}
 
@@ -484,6 +559,7 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Permissions validated
 	/// - `Err(String)`: Error Message if validation fails
 	pub async fn validate_message_permissions(&self, Message: &TauriIPCMessage) -> Result<(), String> {
+
 		let permission_manager_guard = self
 			.permission_manager
 			.lock()
@@ -509,13 +585,19 @@ impl TauriIPCServer {
 	/// ## Returns
 	/// SecurityContext for the Message
 	fn create_security_context(&self, Message: &TauriIPCMessage) -> SecurityContext {
+
 		SecurityContext {
+
 			user_id: Message.sender.clone().unwrap_or("unknown".to_string()),
+
 			// Default role assigned to authenticated IPC connections
 			roles: vec!["user".to_string()],
+
 			permissions: vec![],
+
 			// IPC connections use loopback address for security (localhost only)
 			ip_address: "127.0.0.1".to_string(),
+
 			timestamp: std::time::SystemTime::UNIX_EPOCH
 				+ std::time::Duration::from_millis(Message.timestamp),
 		}
@@ -526,15 +608,21 @@ impl TauriIPCServer {
 	/// ## Parameters
 	/// - `event`: Security event to log
 	pub async fn log_security_event(&self, event: SecurityEvent) {
+
 		let permission_manager_guard = match self.permission_manager.lock() {
+
 			Ok(guard) => guard,
+
 			Err(e) => {
+
 				dev_log!("ipc", "error: [TauriIPCServer] Failed to access permission manager: {}", e);
+
 				return;
 			}
 		};
 
 		if let Some(permission_manager) = permission_manager_guard.as_ref() {
+
 			permission_manager.log_security_event(event).await;
 		}
 	}
@@ -547,14 +635,21 @@ impl TauriIPCServer {
 	/// - `success`: Whether operation succeeded
 	pub async fn record_performance_metrics(
 		&self,
+
 		channel: String,
+
 		duration: std::time::Duration,
+
 		success: bool,
 	) {
+
 		dev_log!("ipc", 
+
 			"[TauriIPCServer] Performance recorded - Channel: {}, Duration: {:?}, Success: {}",
+
 			channel, duration, success
 		);
+
 		// This would integrate with PerformanceDashboard in the future
 	}
 
@@ -566,6 +661,7 @@ impl TauriIPCServer {
 	/// ## Returns
 	/// Vector of security events
 	pub async fn get_security_audit_log(&self, limit: usize) -> Result<Vec<SecurityEvent>, String> {
+
 		let permission_manager_guard = self
 			.permission_manager
 			.lock()
@@ -588,9 +684,12 @@ impl TauriIPCServer {
 	/// - `Err(String)`: Error Message if sending fails
 	pub async fn send_compressed_batch(
 		&self,
+
 		channel: &str,
+
 		messages: Vec<TauriIPCMessage>,
 	) -> Result<(), String> {
+
 		// Configure compressor with balanced settings
 		let compressor = MessageCompressor::new(6, 10);
 
@@ -599,9 +698,13 @@ impl TauriIPCServer {
 			.map_err(|e| format!("Failed to compress batch: {}", e))?;
 
 		let batch_message = TauriIPCMessage {
+
 			channel: "compressed_batch".to_string(),
+
 			data: serde_json::Value::String(base64::encode(&compressed_data)),
+
 			sender: Some("mountain".to_string()),
+
 			timestamp: std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -621,6 +724,7 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Batch handled successfully
 	/// - `Err(String)`: Error Message if handling fails
 	pub async fn CompressedBatch(&self, Message: TauriIPCMessage) -> Result<(), String> {
+
 		let compressed_data_base64 = Message.data.as_str()
 			.ok_or("Compressed batch data must be a string")?;
 
@@ -628,12 +732,14 @@ impl TauriIPCServer {
 			.map_err(|e| format!("Failed to decode base64: {}", e))?;
 
 		let compressor = MessageCompressor::new(6, 10);
+
 		let messages = compressor
 			.decompress_messages(&compressed_data)
 			.map_err(|e| format!("Failed to decompress batch: {}", e))?;
 
 		// Process each Message in the batch
 		for msg in messages {
+
 			self.IncomingMessage(msg).await?;
 		}
 
@@ -650,6 +756,7 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Message sent successfully
 	/// - `Err(String)`: Error Message if sending fails
 	pub async fn send_with_pool(&self, channel: &str, data: serde_json::Value) -> Result<(), String> {
+
 		let pool = Arc::new(ConnectionManager::new(10, std::time::Duration::from_secs(30)));
 
 		let Handle = pool
@@ -669,7 +776,9 @@ impl TauriIPCServer {
 	/// ## Returns
 	/// Connection statistics
 	pub async fn get_connection_stats(&self) -> Result<ConnectionStats, String> {
+
 		let pool = Arc::new(ConnectionManager::new(10, std::time::Duration::from_secs(30)));
+
 		Ok(pool.GetStats().await)
 	}
 
@@ -683,13 +792,18 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Message sent successfully
 	/// - `Err(String)`: Error Message if sending fails
 	pub async fn send_secure(&self, channel: &str, data: serde_json::Value) -> Result<(), String> {
+
 		let secure_channel = SecureMessageChannel::new()
 			.map_err(|e| format!("Failed to create secure channel: {}", e))?;
 
 		let Message = TauriIPCMessage {
+
 			channel: channel.to_string(),
+
 			data,
+
 			sender: Some("mountain".to_string()),
+
 			timestamp: std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -715,12 +829,16 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Message handled successfully
 	/// - `Err(String)`: Error Message if handling fails
 	pub async fn SecureMessage(&self, encrypted_data: serde_json::Value) -> Result<(), String> {
+
 		use serde::Deserialize;
 
 		#[derive(Deserialize)]
 		struct EncryptedMessage {
+
 			nonce: Vec<u8>,
+
 			ciphertext: Vec<u8>,
+
 			hmac_tag: Vec<u8>,
 		}
 
@@ -750,6 +868,7 @@ impl TauriIPCServer {
 	/// - `Ok(())`: Message handled successfully
 	/// - `Err(String)`: Error Message if handling fails
 	pub async fn MessageWithPermissions(&self, Message: TauriIPCMessage) -> Result<(), String> {
+
 		// Validate permission
 		self.validate_message_permissions(&Message).await?;
 
@@ -760,6 +879,7 @@ impl TauriIPCServer {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	// Note: These tests would require mocking the Tauri AppHandle

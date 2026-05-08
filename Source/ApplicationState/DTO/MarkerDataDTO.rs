@@ -93,10 +93,15 @@ impl MarkerDataDTO {
 	/// Result containing the DTO or validation error
 	pub fn New(
 		Severity:u32,
+
 		Message:String,
+
 		StartLineNumber:u32,
+
 		StartColumn:u32,
+
 		EndLineNumber:u32,
+
 		EndColumn:u32,
 	) -> Result<Self, String> {
 		// Validate severity range
@@ -163,6 +168,7 @@ impl MarkerDataDTO {
 		}
 
 		self.Source = Some(Source);
+
 		Ok(())
 	}
 
@@ -173,9 +179,13 @@ impl MarkerDataDTO {
 	pub fn GetSeverity(&self) -> Option<MarkerSeverity> {
 		match self.Severity {
 			8 => Some(MarkerSeverity::Error),
+
 			4 => Some(MarkerSeverity::Warning),
+
 			2 => Some(MarkerSeverity::Information),
+
 			1 => Some(MarkerSeverity::Hint),
+
 			_ => None,
 		}
 	}
@@ -192,10 +202,15 @@ impl MarkerDataDTO {
 	pub fn Error(Message:String, LineNumber:u32, Column:u32) -> Self {
 		Self {
 			Severity:MarkerSeverity::Error as u32,
+
 			Message,
+
 			StartLineNumber:LineNumber,
+
 			StartColumn:Column,
+
 			EndLineNumber:LineNumber,
+
 			EndColumn:Column,
 			..Default::default()
 		}
@@ -213,10 +228,15 @@ impl MarkerDataDTO {
 	pub fn Warning(Message:String, LineNumber:u32, Column:u32) -> Self {
 		Self {
 			Severity:MarkerSeverity::Warning as u32,
+
 			Message,
+
 			StartLineNumber:LineNumber,
+
 			StartColumn:Column,
+
 			EndLineNumber:LineNumber,
+
 			EndColumn:Column,
 			..Default::default()
 		}

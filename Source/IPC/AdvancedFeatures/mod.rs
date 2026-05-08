@@ -9,13 +9,23 @@
 //! and Tauri commands live in their own siblings.
 
 pub mod CachedMessage;
+
 pub mod CollaborationPermissions;
+
 pub mod CollaborationSession;
+
 pub mod Features;
+
 pub mod InitializeAdvancedFeatures;
+
 pub mod MessageCache;
+
 pub mod PerformanceStats;
+
 pub mod mountain_create_collaboration_session;
+
 pub mod mountain_get_cache_stats;
+
 pub mod mountain_get_collaboration_sessions;
+
 pub mod mountain_get_performance_stats;

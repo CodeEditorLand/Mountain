@@ -18,10 +18,12 @@ pub async fn tls_delete_cert(app_handle:AppHandle, hostname:String) -> Result<St
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
 		.ok_or("Certificate manager not found")?;
+
 	let cert_manager = state.clone();
 
 	{
 		let mut manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+
 		let _result = manager.renew_certificate(&hostname);
 	}
 

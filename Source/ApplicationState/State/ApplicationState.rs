@@ -83,6 +83,7 @@ pub struct ApplicationState {
 
 	/// Memento storage paths.
 	pub GlobalMementoPath:Arc<StandardMutex<std::path::PathBuf>>,
+
 	pub WorkspaceMementoPath:Arc<StandardMutex<Option<std::path::PathBuf>>>,
 }
 
@@ -92,12 +93,19 @@ impl Default for ApplicationState {
 
 		Self {
 			Workspace:Default::default(),
+
 			Configuration:Default::default(),
+
 			Extension:Default::default(),
+
 			Feature:Default::default(),
+
 			UI:Default::default(),
+
 			TestProviderState:Arc::new(tokio::sync::RwLock::new(TestProviderState::new())),
+
 			GlobalMementoPath:Arc::new(StandardMutex::new(Default::default())),
+
 			WorkspaceMementoPath:Arc::new(StandardMutex::new(None)),
 		}
 	}
@@ -143,6 +151,7 @@ pub fn MapLockErrorWithRecovery<T>(Error:PoisonError<T>, RecoveryContext:&str) -
 		"warn: [ApplicationState] Attempting recovery from poisoned lock in context: {}",
 		RecoveryContext
 	);
+
 	CommonError::StateLockPoisoned {
 		Context:format!("{} - Recovery attempted: {}", Error.to_string(), RecoveryContext),
 	}
@@ -152,6 +161,8 @@ pub fn MapLockErrorWithRecovery<T>(Error:PoisonError<T>, RecoveryContext:&str) -
 #[derive(Debug)]
 pub struct StateOperationResult<T> {
 	pub result:Result<T, CommonError>,
+
 	pub recovery_attempted:bool,
+
 	pub recovery_successful:bool,
 }

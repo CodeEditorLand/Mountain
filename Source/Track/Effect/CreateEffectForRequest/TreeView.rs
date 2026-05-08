@@ -24,6 +24,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				.duration_since(std::time::UNIX_EPOCH)
 				.map(|D| D.as_nanos())
 				.unwrap_or(0);
+
 			dev_log!(
 				"tree-latency",
 				"[LandFix:Tree] dispatch-enter method={} t_ns={}",
@@ -122,18 +123,21 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Result.map(|_| json!(null)).map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
 		"tree.unregister" | "tree.dispose" => {
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let handle = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
 						dev_log!("ipc", "[tree.unregister] handle={}", handle);
 						Ok(json!(null))
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

@@ -15,7 +15,9 @@ use crate::{Environment::Utility, dev_log};
 /// Inspects a configuration key to get its value from all relevant scopes.
 pub(super) async fn inspect_configuration_value(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	key:String,
+
 	_overrides:ConfigurationOverridesDTO,
 ) -> Result<Option<InspectResultDataDTO>, CommonError> {
 	dev_log!("config", "[ConfigurationProvider] Inspecting key: {}", key);

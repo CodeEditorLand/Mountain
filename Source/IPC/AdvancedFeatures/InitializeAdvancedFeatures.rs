@@ -16,6 +16,7 @@ use crate::{
 
 pub fn initialize_advanced_features(
 	app_handle:&tauri::AppHandle,
+
 	runtime:Arc<ApplicationRunTime>,
 ) -> Result<(), String> {
 	dev_log!("lifecycle", "Initializing advanced IPC features");
@@ -25,6 +26,7 @@ pub fn initialize_advanced_features(
 	app_handle.manage(features.clone());
 
 	let features_clone = features.clone();
+
 	tokio::spawn(async move {
 		if let Err(e) = features_clone.start_monitoring().await {
 			dev_log!("ipc", "error: [AdvancedFeatures] Failed to start monitoring: {}", e);

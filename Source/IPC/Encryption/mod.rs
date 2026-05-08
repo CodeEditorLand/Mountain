@@ -34,6 +34,7 @@
 //! - Implement message authentication codes
 
 pub mod MessageCompressor;
+
 pub mod SecureChannel;
 
 // Note: Consumers should use Encryption::MessageCompressor::Compressor::Struct

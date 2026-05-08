@@ -13,6 +13,7 @@ use crate::{
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:CopyFileRequest) -> Result<Response<Empty>, Status> {
 	let SourcePath = CocoonServiceImpl::UriToPath(Request.source.as_ref())
 		.ok_or_else(|| Status::invalid_argument("copy_file: missing source URI"))?;
+
 	let DestinationPath = CocoonServiceImpl::UriToPath(Request.target.as_ref())
 		.ok_or_else(|| Status::invalid_argument("copy_file: missing target URI"))?;
 

@@ -20,49 +20,71 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 	let mut records = vec![
 		ZoneRecord {
 			name:"editor.land.".to_string(),
+
 			record_type:"SOA".to_string(),
+
 			ttl:3600,
+
 			data:"ns1.editor.land. admin.editor.land. 1 3600 600 604800 86400".to_string(),
 		},
 		ZoneRecord {
 			name:"editor.land.".to_string(),
+
 			record_type:"NS".to_string(),
+
 			ttl:3600,
+
 			data:"ns1.editor.land.".to_string(),
 		},
 		ZoneRecord {
 			name:"editor.land.".to_string(),
+
 			record_type:"DNSKEY".to_string(),
+
 			ttl:432000,
+
 			data:"256 3 13 (ECDSA P-256 Zone Signing Key)".to_string(),
 		},
 		ZoneRecord {
 			name:"ns1.editor.land.".to_string(),
+
 			record_type:"A".to_string(),
+
 			ttl:3600,
+
 			data:"127.0.0.1".to_string(),
 		},
 		ZoneRecord {
 			name:"code.editor.land.".to_string(),
+
 			record_type:"A".to_string(),
+
 			ttl:3600,
+
 			data:"127.0.0.1".to_string(),
 		},
 		ZoneRecord {
 			name:"api.editor.land.".to_string(),
+
 			record_type:"A".to_string(),
+
 			ttl:3600,
+
 			data:"127.0.0.1".to_string(),
 		},
 		ZoneRecord {
 			name:"*.editor.land.".to_string(),
+
 			record_type:"A".to_string(),
+
 			ttl:3600,
+
 			data:"127.0.0.1".to_string(),
 		},
 	];
 
 	let rrsig_types = vec!["SOA", "NS", "DNSKEY", "A"];
+
 	for rtype in rrsig_types {
 		records.push(ZoneRecord {
 			name:"editor.land.".to_string(),

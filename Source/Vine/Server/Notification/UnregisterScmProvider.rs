@@ -22,17 +22,22 @@ pub async fn UnregisterScmProvider(Service:&MountainVinegRPCService, Parameter:&
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	let DirectHandle = Parameter.get("handle").and_then(Value::as_u64).map(|H| H as u32);
+
 	if ScmId.is_empty() && DirectHandle.is_none() {
 		dev_log!("provider-register", "[ProviderUnregister] scm skip: missing handle / scmId");
+
 		return;
 	}
+
 	let Handle = DirectHandle.unwrap_or_else(|| {
 		ScmId
 			.as_bytes()
 			.iter()
 			.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32))
 	});
+
 	Service
 		.RunTime()
 		.Environment
@@ -40,9 +45,11 @@ pub async fn UnregisterScmProvider(Service:&MountainVinegRPCService, Parameter:&
 		.Extension
 		.ProviderRegistration
 		.UnregisterProvider(Handle);
+
 	let _ = Service
 		.ApplicationHandle()
 		.emit("sky://scm/unregister", serde_json::json!({ "scmId": ScmId }));
+
 	dev_log!(
 		"provider-register",
 		"[ProviderUnregister] scm scm_id={} handle={}",

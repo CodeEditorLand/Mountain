@@ -71,6 +71,7 @@ pub async fn MountainAddDocumentForSync(app_handle:AppHandle, document_data:Valu
 			"Missing document_id"
 		})?
 		.to_string();
+
 	let FilePath = document_data["file_path"]
 		.as_str()
 		.ok_or_else(|| {

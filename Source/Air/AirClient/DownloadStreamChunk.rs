@@ -6,8 +6,12 @@
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub data:Vec<u8>,
+
 	pub total_size:u64,
+
 	pub downloaded:u64,
+
 	pub completed:bool,
+
 	pub error:String,
 }

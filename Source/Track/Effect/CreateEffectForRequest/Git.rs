@@ -12,6 +12,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"$gitExec" => {
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let (Args, WorkingDir) = if let Some(Object) = Parameters.as_object() {
 							let ArgsVec:Vec<String> = Object
@@ -56,8 +57,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						};
 						dev_log!(
 							"grpc",
+
 							"[$gitExec] Received gRPC Request: Method='$gitExec' args={:?} cwd={}",
+
 							Args,
+
 							Cwd.display()
 						);
 						let StartAt = std::time::Instant::now();
@@ -72,10 +76,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						let Stderr = String::from_utf8_lossy(&Output.stderr).to_string();
 						dev_log!(
 							"grpc",
+
 							"[$gitExec] exit={} elapsed={}ms stdout={}B stderr={}B",
+
 							ExitCode,
+
 							StartAt.elapsed().as_millis(),
+
 							Stdout.len(),
+
 							Stderr.len()
 						);
 						Ok(json!({
@@ -85,6 +94,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}))
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

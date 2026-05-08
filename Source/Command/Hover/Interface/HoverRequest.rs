@@ -9,5 +9,6 @@ use crate::Command::Hover::Interface::Position;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub uri:String,
+
 	pub position:Position::Struct,
 }

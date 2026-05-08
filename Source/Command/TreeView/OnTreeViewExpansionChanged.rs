@@ -18,11 +18,16 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 #[command]
 pub async fn OnTreeViewExpansionChanged(
 	_ApplicationHandle:AppHandle<Wry>,
+
 	_State:State<'_, Arc<ApplicationState>>,
+
 	_ViewId:String,
+
 	_ElementHandle:String,
+
 	_IsExpanded:bool,
 ) -> Result<Value, String> {
 	dev_log!("commands", "warn: OnTreeViewExpansionChanged not implemented");
+
 	Ok(json!({ "success": false, "error": "OnTreeNodeExpanded method not implemented" }))
 }

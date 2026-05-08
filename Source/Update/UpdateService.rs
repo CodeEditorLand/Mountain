@@ -8,10 +8,13 @@
 //! Check for Updates) or remove if Air becomes the canonical path.
 
 pub mod CheckForUpdates;
+
 pub mod CheckForUpdatesWithAir;
+
 pub mod UpdateMode;
 
 #[cfg(feature = "AirIntegration")]
 pub mod CheckForUpdatesViaAir;
+
 #[cfg(feature = "AirIntegration")]
 pub(crate) mod IsAirAvailable;

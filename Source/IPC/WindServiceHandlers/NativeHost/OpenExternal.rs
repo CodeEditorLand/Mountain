@@ -57,6 +57,7 @@ pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>)
 		use std::process::Command;
 
 		let handlers = ["xdg-open", "gnome-open", "kde-open", "x-www-browser"];
+
 		let mut last_error = String::new();
 
 		for handler in handlers.iter() {
@@ -65,12 +66,16 @@ pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>)
 			match result {
 				Ok(output) if output.status.success() => {
 					dev_log!("lifecycle", "opened with {}", handler);
+
 					break;
 				},
+
 				Err(e) => {
 					last_error = e.to_string();
+
 					continue;
 				},
+
 				_ => continue,
 			}
 		}
@@ -81,5 +86,6 @@ pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>)
 	}
 
 	dev_log!("lifecycle", "opened URL: {}", url_str);
+
 	Ok(Value::Bool(true))
 }

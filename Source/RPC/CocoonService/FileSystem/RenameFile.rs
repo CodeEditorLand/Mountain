@@ -13,6 +13,7 @@ use crate::{
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:RenameFileRequest) -> Result<Response<Empty>, Status> {
 	let OldPath = CocoonServiceImpl::UriToPath(Request.source.as_ref())
 		.ok_or_else(|| Status::invalid_argument("rename_file: missing source URI"))?;
+
 	let NewPath = CocoonServiceImpl::UriToPath(Request.target.as_ref())
 		.ok_or_else(|| Status::invalid_argument("rename_file: missing target URI"))?;
 

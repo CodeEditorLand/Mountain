@@ -41,16 +41,24 @@ use crate::dev_log;
 #[tauri::command]
 pub async fn RenderDevLog(
 	Tag:Option<String>,
+
 	Message:Option<String>,
+
 	tag:Option<String>,
+
 	message:Option<String>,
 ) -> Result<(), String> {
 	let ResolvedTag = Tag.or(tag).unwrap_or_default();
+
 	let ResolvedMessage = Message.or(message).unwrap_or_default();
+
 	if ResolvedTag.is_empty() {
 		return Ok(());
 	}
+
 	let TagRef:&str = &ResolvedTag;
+
 	dev_log!(TagRef, "[RenderDevLog] {}", ResolvedMessage);
+
 	Ok(())
 }

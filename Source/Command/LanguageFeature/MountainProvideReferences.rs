@@ -11,8 +11,11 @@ use crate::{Command::LanguageFeature::References, dev_log};
 #[command]
 pub async fn MountainProvideReferences(
 	application_handle:AppHandle<Wry>,
+
 	uri:String,
+
 	position:Value,
+
 	context:Value,
 ) -> Result<Value, String> {
 	dev_log!(
@@ -21,5 +24,6 @@ pub async fn MountainProvideReferences(
 		uri,
 		position
 	);
+
 	References::provide_references_impl(application_handle, uri, position, context).await
 }

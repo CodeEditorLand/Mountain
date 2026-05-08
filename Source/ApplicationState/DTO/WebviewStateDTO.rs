@@ -90,11 +90,17 @@ impl WebviewStateDTO {
 	/// Result containing the DTO or validation error
 	pub fn New(
 		Handle:String,
+
 		ViewType:String,
+
 		Title:String,
+
 		ContentOptions:WebviewContentOptionsDTO,
+
 		PanelOptions:Value,
+
 		SideCarIdentifier:String,
+
 		ExtensionIdentifier:String,
 	) -> Result<Self, String> {
 		// Validate handle length
@@ -166,6 +172,7 @@ impl WebviewStateDTO {
 		}
 
 		self.Title = Title;
+
 		Ok(())
 	}
 

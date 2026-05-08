@@ -11,6 +11,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn ProgressEnd(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Handle = Parameter.get("handle").and_then(Value::as_str).unwrap_or("");
+
 	if let Err(Error) = Service
 		.ApplicationHandle()
 		.emit("sky://notification/progress-end", json!({ "id": Handle }))

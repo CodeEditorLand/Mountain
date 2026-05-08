@@ -10,9 +10,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub user_id:String,
+
 	pub roles:Vec<String>,
+
 	pub permissions:Vec<String>,
+
 	pub ip_address:String,
+
 	pub timestamp:std::time::SystemTime,
 }
 
@@ -28,9 +32,13 @@ impl Struct {
 	pub fn ipc_default() -> Self {
 		Self {
 			user_id:"ipc-connection".to_string(),
+
 			roles:vec!["user".to_string()],
+
 			permissions:vec![],
+
 			ip_address:"127.0.0.1".to_string(),
+
 			timestamp:std::time::SystemTime::now(),
 		}
 	}

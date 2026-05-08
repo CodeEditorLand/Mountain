@@ -17,8 +17,10 @@ use super::MountainEnvironment::MountainEnvironment;
 // Private submodules containing the actual implementation
 #[path = "StatusBarProvider/EntryManagement.rs"]
 mod EntryManagement;
+
 #[path = "StatusBarProvider/MessageManagement.rs"]
 mod MessageManagement;
+
 #[path = "StatusBarProvider/Tooltip.rs"]
 mod Tooltip;
 

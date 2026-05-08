@@ -31,22 +31,26 @@ pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Paramete
 		.or_else(|| Parameter.get("scm_handle"))
 		.and_then(Value::as_u64)
 		.unwrap_or(0) as u32;
+
 	let GroupHandleStr = Parameter
 		.get("groupHandle")
 		.or_else(|| Parameter.get("group_handle"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	let GroupId = Parameter
 		.get("groupId")
 		.or_else(|| Parameter.get("group_id"))
 		.and_then(Value::as_str)
 		.unwrap_or("")
 		.to_string();
+
 	let Label = Parameter.get("label").and_then(Value::as_str).unwrap_or(&GroupId).to_string();
 
 	if GroupId.is_empty() {
 		dev_log!("provider-register", "[ProviderRegister] scm-group skip: missing group_id");
+
 		return;
 	}
 
@@ -62,6 +66,7 @@ pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Paramete
 		"label": &Label,
 		"resourceStates": [],
 	});
+
 	if let Err(Error) = Service
 		.RunTime()
 		.Environment

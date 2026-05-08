@@ -13,8 +13,11 @@ use crate::dev_log;
 /// Called when a user expands or collapses a node in the tree view.
 pub(super) async fn on_tree_node_expanded(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	element_handle:String,
+
 	is_expanded:bool,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -46,7 +49,9 @@ pub(super) async fn on_tree_node_expanded(
 /// Called when the user selects or deselects items in the tree view.
 pub(super) async fn on_tree_selection_changed(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	selected_handles:Vec<String>,
 ) -> Result<(), CommonError> {
 	dev_log!(

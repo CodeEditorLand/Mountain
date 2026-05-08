@@ -27,14 +27,18 @@ use async_trait::async_trait;
 
 // Private helper modules (not re-exported)
 mod ChannelLifecycle;
+
 mod ChannelContent;
+
 mod ChannelVisibility;
 
 #[async_trait]
 impl OutputChannelManager for crate::Environment::MountainEnvironment::MountainEnvironment {
 	async fn RegisterChannel(
 		&self,
+
 		name:String,
+
 		language_identifier:Option<String>,
 	) -> Result<String, CommonLibrary::Error::CommonError::CommonError> {
 		ChannelLifecycle::register_channel(self, name, language_identifier).await
@@ -42,7 +46,9 @@ impl OutputChannelManager for crate::Environment::MountainEnvironment::MountainE
 
 	async fn Append(
 		&self,
+
 		channel_identifier:String,
+
 		value:String,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		ChannelContent::append_to_channel(self, channel_identifier, value).await
@@ -50,7 +56,9 @@ impl OutputChannelManager for crate::Environment::MountainEnvironment::MountainE
 
 	async fn Replace(
 		&self,
+
 		channel_identifier:String,
+
 		value:String,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		ChannelContent::replace_channel_content(self, channel_identifier, value).await
@@ -62,7 +70,9 @@ impl OutputChannelManager for crate::Environment::MountainEnvironment::MountainE
 
 	async fn Reveal(
 		&self,
+
 		channel_identifier:String,
+
 		preserve_focus:bool,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		ChannelVisibility::reveal_channel(self, channel_identifier, preserve_focus).await

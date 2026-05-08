@@ -28,5 +28,6 @@ pub async fn FileDelete(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -
 		.map_err(|e:CommonError| format!("Failed to delete file: {}", e))?;
 
 	dev_log!("vfs-verbose", "deleted: {}", path);
+
 	Ok(Value::Null)
 }

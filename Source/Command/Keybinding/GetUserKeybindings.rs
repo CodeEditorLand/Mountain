@@ -21,6 +21,7 @@ pub async fn GetUserKeybindings(ApplicationHandle:AppHandle<Wry>) -> Result<Valu
 	dev_log!("keybinding", "getting user keybindings for UI");
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
+
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
 	Ok(json!({ "keybindings": [] }))

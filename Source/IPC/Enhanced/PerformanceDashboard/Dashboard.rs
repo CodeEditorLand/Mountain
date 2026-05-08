@@ -34,21 +34,31 @@ use crate::{
 
 pub struct Struct {
 	pub(super) config:DashboardConfig,
+
 	pub(super) metrics:Arc<RwLock<VecDeque<PerformanceMetric>>>,
+
 	pub(super) traces:Arc<RwLock<HashMap<String, TraceSpan>>>,
+
 	pub(super) alerts:Arc<RwLock<VecDeque<PerformanceAlert>>>,
+
 	pub(super) statistics:Arc<RwLock<DashboardStatistics>>,
+
 	pub(super) is_running:Arc<AsyncMutex<bool>>,
 }
 
 impl Struct {
 	pub fn new(config:DashboardConfig) -> Self {
 		let config_clone = config.clone();
+
 		let dashboard = Self {
 			config,
+
 			metrics:Arc::new(RwLock::new(VecDeque::new())),
+
 			traces:Arc::new(RwLock::new(HashMap::new())),
+
 			alerts:Arc::new(RwLock::new(VecDeque::new())),
+
 			statistics:Arc::new(RwLock::new(DashboardStatistics {
 				total_metrics_collected:0,
 				total_traces_collected:0,
@@ -63,6 +73,7 @@ impl Struct {
 					.unwrap_or_default()
 					.as_secs(),
 			})),
+
 			is_running:Arc::new(AsyncMutex::new(false)),
 		};
 
@@ -78,55 +89,68 @@ impl Struct {
 	pub async fn start(&self) -> Result<(), String> {
 		{
 			let mut running = self.is_running.lock().await;
+
 			if *running {
 				return Ok(());
 			}
+
 			*running = true;
 		}
 
 		self.start_metrics_collection().await;
+
 		self.start_alert_monitoring().await;
+
 		self.start_data_cleanup().await;
 
 		dev_log!("ipc", "[PerformanceDashboard] Performance dashboard started");
+
 		Ok(())
 	}
 
 	pub async fn stop(&self) -> Result<(), String> {
 		{
 			let mut running = self.is_running.lock().await;
+
 			if !*running {
 				return Ok(());
 			}
+
 			*running = false;
 		}
 
 		{
 			let mut metrics = self.metrics.write().await;
+
 			metrics.clear();
 		}
 
 		{
 			let mut traces = self.traces.write().await;
+
 			traces.clear();
 		}
 
 		{
 			let mut alerts = self.alerts.write().await;
+
 			alerts.clear();
 		}
 
 		dev_log!("ipc", "[PerformanceDashboard] Performance dashboard stopped");
+
 		Ok(())
 	}
 
 	pub async fn record_metric(&self, metric:PerformanceMetric) {
 		let mut metrics = self.metrics.write().await;
+
 		metrics.push_back(metric.clone());
 
 		drop(metrics);
 
 		self.update_statistics().await;
+
 		self.check_alerts(&metric).await;
 
 		dev_log!("ipc", "[PerformanceDashboard] Recorded metric: {:?}", metric.metric_type);
@@ -134,30 +158,41 @@ impl Struct {
 
 	pub async fn start_trace_span(&self, operation_name:String) -> TraceSpan {
 		let trace_id = Self::generate_trace_id();
+
 		let span_id = Self::generate_span_id();
 
 		let span = TraceSpan {
 			trace_id:trace_id.clone(),
+
 			span_id:span_id.clone(),
+
 			parent_span_id:None,
+
 			operation_name,
+
 			start_time:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_millis() as u64,
+
 			end_time:None,
+
 			duration_ms:None,
+
 			tags:HashMap::new(),
+
 			logs:Vec::new(),
 		};
 
 		{
 			let mut traces = self.traces.write().await;
+
 			traces.insert(span_id.clone(), span.clone());
 		}
 
 		{
 			let mut stats = self.statistics.write().await;
+
 			stats.total_traces_collected += 1;
 		}
 
@@ -174,6 +209,7 @@ impl Struct {
 				.as_millis() as u64;
 
 			span.end_time = Some(end_time);
+
 			span.duration_ms = Some(end_time.saturating_sub(span.start_time));
 
 			dev_log!(
@@ -194,6 +230,7 @@ impl Struct {
 
 		if let Some(span) = traces.get_mut(span_id) {
 			span.logs.push(log);
+
 			Ok(())
 		} else {
 			Err(format!("Trace span not found: {}", span_id))
@@ -244,34 +281,45 @@ impl Struct {
 		if let Ok(memory_usage) = Self::get_memory_usage() {
 			let metric = PerformanceMetric {
 				metric_type:MetricType::MemoryUsage,
+
 				value:memory_usage,
+
 				timestamp:SystemTime::now()
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
 					.as_millis() as u64,
+
 				channel:None,
+
 				tags:HashMap::new(),
 			};
+
 			self.record_metric(metric).await;
 		}
 
 		if let Ok(cpu_usage) = Self::get_cpu_usage() {
 			let metric = PerformanceMetric {
 				metric_type:MetricType::CpuUsage,
+
 				value:cpu_usage,
+
 				timestamp:SystemTime::now()
 					.duration_since(SystemTime::UNIX_EPOCH)
 					.unwrap_or_default()
 					.as_millis() as u64,
+
 				channel:None,
+
 				tags:HashMap::new(),
 			};
+
 			self.record_metric(metric).await;
 		}
 	}
 
 	async fn update_statistics(&self) {
 		let metrics = self.metrics.read().await;
+
 		let mut stats = self.statistics.write().await;
 
 		let processing_metrics:Vec<&PerformanceMetric> = metrics
@@ -281,7 +329,9 @@ impl Struct {
 
 		if !processing_metrics.is_empty() {
 			let total_time:f64 = processing_metrics.iter().map(|m| m.value).sum();
+
 			stats.average_processing_time_ms = total_time / processing_metrics.len() as f64;
+
 			stats.peak_processing_time_ms = processing_metrics.iter().map(|m| m.value as u64).max().unwrap_or(0);
 		}
 
@@ -292,6 +342,7 @@ impl Struct {
 
 		if !error_metrics.is_empty() {
 			let total_errors:f64 = error_metrics.iter().map(|m| m.value).sum();
+
 			stats.error_rate_percentage = total_errors / error_metrics.len() as f64;
 		}
 
@@ -302,6 +353,7 @@ impl Struct {
 
 		if !throughput_metrics.is_empty() {
 			let total_throughput:f64 = throughput_metrics.iter().map(|m| m.value).sum();
+
 			stats.throughput_messages_per_second = total_throughput / throughput_metrics.len() as f64;
 		}
 
@@ -312,6 +364,7 @@ impl Struct {
 
 		if !memory_metrics.is_empty() {
 			let total_memory:f64 = memory_metrics.iter().map(|m| m.value).sum();
+
 			stats.memory_usage_mb = total_memory / memory_metrics.len() as f64;
 		}
 
@@ -324,28 +377,42 @@ impl Struct {
 	async fn check_alerts(&self, metric:&PerformanceMetric) {
 		let threshold = match metric.metric_type {
 			MetricType::MessageProcessingTime => self.config.alert_threshold_ms as f64,
+
 			MetricType::ErrorRate => 5.0,
+
 			MetricType::MemoryUsage => 1024.0,
+
 			MetricType::CpuUsage => 90.0,
+
 			_ => return,
 		};
 
 		if metric.value > threshold {
 			let severity = match metric.value / threshold {
 				ratio if ratio > 5.0 => AlertSeverity::Critical,
+
 				ratio if ratio > 3.0 => AlertSeverity::High,
+
 				ratio if ratio > 2.0 => AlertSeverity::Medium,
+
 				_ => AlertSeverity::Low,
 			};
 
 			let alert = PerformanceAlert {
 				alert_id:Self::generate_alert_id(),
+
 				metric_type:metric.metric_type.clone(),
+
 				threshold,
+
 				current_value:metric.value,
+
 				timestamp:metric.timestamp,
+
 				channel:metric.channel.clone(),
+
 				severity,
+
 				message:format!(
 					"{} exceeded threshold: {} > {}",
 					Self::metric_type_name(&metric.metric_type),
@@ -356,11 +423,13 @@ impl Struct {
 
 			{
 				let mut alerts = self.alerts.write().await;
+
 				alerts.push_back(alert.clone());
 			}
 
 			{
 				let mut stats = self.statistics.write().await;
+
 				stats.total_alerts_triggered += 1;
 			}
 
@@ -381,15 +450,18 @@ impl Struct {
 
 		{
 			let mut metrics = self.metrics.write().await;
+
 			metrics.retain(|m| m.timestamp >= retention_threshold);
 		}
 
 		{
 			let mut traces = self.traces.write().await;
+
 			traces.retain(|_, span| span.start_time >= retention_threshold);
 
 			if traces.len() > self.config.max_traces_stored {
 				let excess = traces.len() - self.config.max_traces_stored;
+
 				let keys_to_remove:Vec<String> = traces.keys().take(excess).cloned().collect();
 
 				for key in keys_to_remove {
@@ -400,6 +472,7 @@ impl Struct {
 
 		{
 			let mut alerts = self.alerts.write().await;
+
 			alerts.retain(|a| a.timestamp >= retention_threshold);
 		}
 
@@ -419,11 +492,17 @@ impl Struct {
 	fn metric_type_name(metric_type:&MetricType) -> &'static str {
 		match metric_type {
 			MetricType::MessageProcessingTime => "Message Processing Time",
+
 			MetricType::ConnectionLatency => "Connection Latency",
+
 			MetricType::MemoryUsage => "Memory Usage",
+
 			MetricType::CpuUsage => "CPU Usage",
+
 			MetricType::NetworkThroughput => "Network Throughput",
+
 			MetricType::ErrorRate => "Error Rate",
+
 			MetricType::QueueSize => "Queue Size",
 		}
 	}
@@ -432,16 +511,19 @@ impl Struct {
 
 	pub async fn get_recent_metrics(&self, limit:usize) -> Vec<PerformanceMetric> {
 		let metrics = self.metrics.read().await;
+
 		metrics.iter().rev().take(limit).cloned().collect()
 	}
 
 	pub async fn get_active_alerts(&self) -> Vec<PerformanceAlert> {
 		let alerts = self.alerts.read().await;
+
 		alerts.iter().rev().cloned().collect()
 	}
 
 	pub async fn get_trace(&self, trace_id:&str) -> Option<TraceSpan> {
 		let traces = self.traces.read().await;
+
 		traces.values().find(|span| span.trace_id == trace_id).cloned()
 	}
 
@@ -459,18 +541,25 @@ impl Struct {
 
 	pub fn create_metric(
 		metric_type:MetricType,
+
 		value:f64,
+
 		channel:Option<String>,
+
 		tags:HashMap<String, String>,
 	) -> PerformanceMetric {
 		PerformanceMetric {
 			metric_type,
+
 			value,
+
 			timestamp:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_millis() as u64,
+
 			channel,
+
 			tags,
 		}
 	}
@@ -481,15 +570,20 @@ impl Struct {
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_millis() as u64,
+
 			message,
+
 			level,
+
 			fields,
 		}
 	}
 
 	pub fn calculate_performance_score(average_processing_time:f64, error_rate:f64, throughput:f64) -> f64 {
 		let time_score = 100.0 / (1.0 + average_processing_time / 100.0);
+
 		let error_score = 100.0 * (1.0 - error_rate / 100.0);
+
 		let throughput_score = throughput / 1000.0;
 
 		(time_score * 0.4 + error_score * 0.4 + throughput_score * 0.2)
@@ -500,11 +594,17 @@ impl Struct {
 	pub fn format_metric_value(metric_type:&MetricType, value:f64) -> String {
 		match metric_type {
 			MetricType::MessageProcessingTime => format!("{:.2}ms", value),
+
 			MetricType::ConnectionLatency => format!("{:.2}ms", value),
+
 			MetricType::MemoryUsage => format!("{:.2}MB", value),
+
 			MetricType::CpuUsage => format!("{:.2}%", value),
+
 			MetricType::NetworkThroughput => format!("{:.2} msg/s", value),
+
 			MetricType::ErrorRate => format!("{:.2}%", value),
+
 			MetricType::QueueSize => format!("{:.0}", value),
 		}
 	}
@@ -514,10 +614,15 @@ impl Clone for Struct {
 	fn clone(&self) -> Self {
 		Self {
 			config:self.config.clone(),
+
 			metrics:self.metrics.clone(),
+
 			traces:self.traces.clone(),
+
 			alerts:self.alerts.clone(),
+
 			statistics:self.statistics.clone(),
+
 			is_running:Arc::new(AsyncMutex::new(false)),
 		}
 	}

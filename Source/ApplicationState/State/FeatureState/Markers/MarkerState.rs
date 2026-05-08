@@ -85,10 +85,15 @@ impl Default for MarkerState {
 
 		Self {
 			ActiveCustomDocuments:Arc::new(StandardMutex::new(HashMap::new())),
+
 			ActiveStatusBarItems:Arc::new(StandardMutex::new(HashMap::new())),
+
 			SourceControlManagementProviders:Arc::new(StandardMutex::new(HashMap::new())),
+
 			SourceControlManagementGroups:Arc::new(StandardMutex::new(HashMap::new())),
+
 			SourceControlManagementResources:Arc::new(StandardMutex::new(HashMap::new())),
+
 			NextSourceControlManagementProviderHandle:Arc::new(AtomicU32::new(1)),
 		}
 	}
@@ -114,6 +119,7 @@ impl MarkerState {
 	pub fn AddOrUpdateCustomDocument(&self, id:String, document:CustomDocumentStateDTO) {
 		if let Ok(mut guard) = self.ActiveCustomDocuments.lock() {
 			guard.insert(id, document);
+
 			dev_log!("extensions", "[MarkerState] Custom document added/updated");
 		}
 	}
@@ -122,6 +128,7 @@ impl MarkerState {
 	pub fn RemoveCustomDocument(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveCustomDocuments.lock() {
 			guard.remove(id);
+
 			dev_log!("extensions", "[MarkerState] Custom document removed: {}", id);
 		}
 	}
@@ -139,6 +146,7 @@ impl MarkerState {
 	pub fn AddOrUpdateStatusBarItem(&self, id:String, item:StatusBarEntryDTO) {
 		if let Ok(mut guard) = self.ActiveStatusBarItems.lock() {
 			guard.insert(id, item);
+
 			dev_log!("extensions", "[MarkerState] Status bar item added/updated");
 		}
 	}
@@ -147,6 +155,7 @@ impl MarkerState {
 	pub fn RemoveStatusBarItem(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveStatusBarItems.lock() {
 			guard.remove(id);
+
 			dev_log!("extensions", "[MarkerState] Status bar item removed: {}", id);
 		}
 	}

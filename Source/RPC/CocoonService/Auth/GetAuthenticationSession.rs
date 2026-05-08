@@ -15,6 +15,7 @@ use crate::{
 
 pub async fn Fn(
 	_Service:&CocoonServiceImpl,
+
 	Request:GetAuthenticationSessionRequest,
 ) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
 	dev_log!(
@@ -22,5 +23,6 @@ pub async fn Fn(
 		"[CocoonService] get_authentication_session: provider={}",
 		Request.provider_id
 	);
+
 	Ok(Response::new(GetAuthenticationSessionResponse::default()))
 }

@@ -59,6 +59,7 @@ impl Default for TerminalState {
 
 		Self {
 			ActiveTerminals:Arc::new(StandardMutex::new(HashMap::new())),
+
 			NextTerminalIdentifier:Arc::new(AtomicU64::new(1)),
 		}
 	}
@@ -99,6 +100,7 @@ impl TerminalState {
 	pub fn AddOrUpdate(&self, id:u64, terminal:TerminalStateDTO) {
 		if let Ok(mut guard) = self.ActiveTerminals.lock() {
 			guard.insert(id, Arc::new(StandardMutex::new(terminal)));
+
 			dev_log!("terminal", "[TerminalState] Terminal added/updated with ID: {}", id);
 		}
 	}
@@ -107,6 +109,7 @@ impl TerminalState {
 	pub fn Remove(&self, id:u64) {
 		if let Ok(mut guard) = self.ActiveTerminals.lock() {
 			guard.remove(&id);
+
 			dev_log!("terminal", "[TerminalState] Terminal removed with ID: {}", id);
 		}
 	}
@@ -115,6 +118,7 @@ impl TerminalState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.ActiveTerminals.lock() {
 			guard.clear();
+
 			dev_log!("terminal", "[TerminalState] All terminals cleared");
 		}
 	}

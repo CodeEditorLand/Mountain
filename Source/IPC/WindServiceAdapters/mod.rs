@@ -12,15 +12,27 @@
 //! handle and produces the per-domain wrappers on demand.
 
 pub mod FileToDiff;
+
 pub mod FileToOpenOrCreate;
+
 pub mod FilesToWait;
+
 pub mod Logger;
+
 pub mod MountainSandboxConfiguration;
+
 pub mod OsInfo;
+
 pub mod Profiles;
+
 pub mod WindConfigurationService;
+
 pub mod WindDesktopConfiguration;
+
 pub mod WindEnvironmentService;
+
 pub mod WindFileService;
+
 pub mod WindServiceAdapter;
+
 pub mod WindStorageService;

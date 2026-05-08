@@ -43,5 +43,6 @@ pub async fn FileStatNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	if !DevLog::IsBenignEnoent::Fn(&Path) {
 		dev_log!("vfs-verbose", "stat OK: {} (dir={})", Path, Metadata.is_dir());
 	}
+
 	Ok(metadata_to_istat(&Metadata))
 }

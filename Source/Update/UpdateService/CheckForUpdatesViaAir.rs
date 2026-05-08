@@ -25,14 +25,19 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log}
 #[cfg(feature = "AirIntegration")]
 pub async fn Fn(
 	ApplicationHandle:AppHandle,
+
 	RunTime:Arc<Runtime>,
+
 	NotifyNoUpdate:bool,
+
 	AirClient:&Arc<AirServiceClient<tonic::transport::Channel>>,
 ) -> Result<(), CommonError> {
 	dev_log!("update", "[UpdateService] Checking via Air...");
 
 	let CurrentVersion = env!("CARGO_PKG_VERSION").to_string();
+
 	let RequestID = uuid::Uuid::new_v4().to_string();
+
 	let GrpcRequest = tonic::Request::new(UpdateCheckRequest {
 		request_id:RequestID,
 		current_version:CurrentVersion,
@@ -42,12 +47,15 @@ pub async fn Fn(
 	match AirClient.check_for_updates(GrpcRequest).await {
 		Ok(Response) => {
 			let Reply = Response.into_inner();
+
 			if Reply.update_available {
 				dev_log!("update", "[UpdateService] Air reports v{}", Reply.version);
+
 				let Message = format!(
 					"A new version of Mountain is available: v{}.\n\n{}",
 					Reply.version, Reply.release_notes
 				);
+
 				let UserResponse = RunTime
 					.Run(ShowMessage(
 						MessageSeverity::Info,
@@ -55,6 +63,7 @@ pub async fn Fn(
 						json!({ "modal": true, "actions": ["Install", "Later"] }),
 					))
 					.await?;
+
 				if UserResponse == Some("Install".to_string()) {
 					// TODO: call Air's download_update endpoint, track progress, install.
 					RunTime
@@ -74,10 +83,13 @@ pub async fn Fn(
 					))
 					.await?;
 			}
+
 			Ok(())
 		},
+
 		Err(Status) => {
 			dev_log!("update", "error: [UpdateService] Air update check failed: {}", Status);
+
 			if NotifyNoUpdate {
 				RunTime
 					.Run(ShowMessage(
@@ -87,6 +99,7 @@ pub async fn Fn(
 					))
 					.await?;
 			}
+
 			Err(CommonError::ExternalServiceError {
 				ServiceName:"Air Update Service".to_string(),
 				Description:Status.to_string(),

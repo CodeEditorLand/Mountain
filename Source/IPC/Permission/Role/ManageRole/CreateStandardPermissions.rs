@@ -9,6 +9,7 @@ use crate::{IPC::Permission::Role::ManageRole::Permission, dev_log};
 
 pub fn Fn() -> Vec<Permission::Struct> {
 	dev_log!("ipc", "[ManageRole] Creating standard permissions");
+
 	vec![
 		Permission::Struct::New("file.read".to_string(), "Read file operations".to_string(), "file".to_string()),
 		Permission::Struct::New(

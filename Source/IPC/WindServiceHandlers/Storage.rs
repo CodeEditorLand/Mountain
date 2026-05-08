@@ -19,8 +19,13 @@
 //!   `IndexedDBStorageDatabase`'s wire shape.
 
 pub mod StorageDelete;
+
 pub mod StorageGet;
+
 pub mod StorageGetItems;
+
 pub mod StorageKeys;
+
 pub mod StorageSet;
+
 pub mod StorageUpdateItems;

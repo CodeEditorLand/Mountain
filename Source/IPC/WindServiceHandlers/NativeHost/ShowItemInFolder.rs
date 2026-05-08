@@ -65,6 +65,7 @@ pub async fn ShowItemInFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Val
 		use std::process::Command;
 
 		let file_managers = ["nautilus", "dolphin", "thunar", "pcmanfm", "nemo"];
+
 		let mut last_error = String::new();
 
 		for manager in file_managers.iter() {
@@ -73,12 +74,16 @@ pub async fn ShowItemInFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Val
 			match result {
 				Ok(output) if output.status.success() => {
 					dev_log!("lifecycle", "opened with {}", manager);
+
 					break;
 				},
+
 				Err(e) => {
 					last_error = e.to_string();
+
 					continue;
 				},
+
 				_ => continue,
 			}
 		}
@@ -89,5 +94,6 @@ pub async fn ShowItemInFolder(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Val
 	}
 
 	dev_log!("vfs", "showed in folder: {}", path_str);
+
 	Ok(Value::Bool(true))
 }

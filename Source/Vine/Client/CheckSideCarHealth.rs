@@ -16,7 +16,9 @@ pub fn Fn(SideCarIdentifier:&str) -> Result<bool, VineError> {
 
 	if let Some(Connection) = Metadata.get(SideCarIdentifier) {
 		let IsStale = Connection.LastActivity.elapsed() > Duration::from_millis(HEALTH_CHECK_INTERVAL_MS);
+
 		let HasManyFailures = Connection.FailureCount > MAX_RETRY_ATTEMPTS;
+
 		Ok(Connection.IsHealthy && !IsStale && !HasManyFailures)
 	} else {
 		Err(VineError::ClientNotConnected(SideCarIdentifier.to_string()))

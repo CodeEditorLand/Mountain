@@ -22,10 +22,13 @@ pub async fn ProgressBegin(ApplicationHandle:AppHandle, Arguments:Vec<Value>) ->
 	use tauri::Emitter;
 
 	let Location = Arguments.first().and_then(|V| V.as_str()).unwrap_or("notification").to_string();
+
 	let Title = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	let Cancellable = Arguments.get(2).and_then(|V| V.as_bool()).unwrap_or(false);
 
 	let Id = NewProgressId();
+
 	let _ = ApplicationHandle.emit(
 		SkyEvent::ProgressBegin.AsStr(),
 		json!({
@@ -43,7 +46,9 @@ pub async fn ProgressReport(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -
 	use tauri::Emitter;
 
 	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	let Increment = Arguments.get(1).and_then(|V| V.as_f64()).unwrap_or(0.0);
+
 	let Message = Arguments.get(2).and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	let _ = ApplicationHandle.emit(
@@ -62,6 +67,8 @@ pub async fn ProgressEnd(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> R
 	use tauri::Emitter;
 
 	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 	let _ = ApplicationHandle.emit(SkyEvent::ProgressEnd.AsStr(), json!({ "id": Id }));
+
 	Ok(Value::Null)
 }

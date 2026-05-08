@@ -10,7 +10,9 @@ use crate::dev_log;
 
 pub fn Fn<T>(StateData:&mut HashMap<String, T>, Validator:impl Fn(&T) -> bool) {
 	let OriginalLen = StateData.len();
+
 	StateData.retain(|_, Value| Validator(Value));
+
 	let RemovedCount = OriginalLen - StateData.len();
 
 	if RemovedCount > 0 {

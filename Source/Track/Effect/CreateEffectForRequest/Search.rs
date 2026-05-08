@@ -12,6 +12,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 	match MethodName {
 		"findFiles" | "findTextInFiles" => {
 			let MethodNameOwned = MethodName.to_string();
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
@@ -58,6 +59,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(json!(Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>()))
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -71,6 +73,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						provider.TextSearch(query, options).await.map_err(|e| e.to_string())
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

@@ -17,6 +17,7 @@ pub async fn tls_initialize(app_handle:AppHandle) -> Result<String, String> {
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
 		.ok_or("Certificate manager not initialized in app state")?;
+
 	let cert_manager = state.clone();
 
 	let mut manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
@@ -27,5 +28,6 @@ pub async fn tls_initialize(app_handle:AppHandle) -> Result<String, String> {
 		.map_err(|e| format!("Failed to initialize CA: {}", e))?;
 
 	dev_log!("security", "TLS certificate manager initialized");
+
 	Ok("TLS certificate manager initialized".to_string())
 }

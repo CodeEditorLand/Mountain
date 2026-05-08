@@ -17,6 +17,7 @@ pub async fn GetResolvedKeybinding(ApplicationHandle:AppHandle<Wry>) -> Result<V
 	dev_log!("keybinding", "getting resolved keybindings for UI");
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
+
 	let Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
 	Provider.GetResolvedKeybinding().await.map_err(|Error| Error.to_string())

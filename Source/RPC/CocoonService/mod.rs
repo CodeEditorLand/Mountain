@@ -9,20 +9,35 @@
 // - One-line delegates for all 78 typed RPCs
 
 pub mod Auth;
+
 pub mod Command;
+
 pub mod Debug;
+
 pub mod Extension;
+
 pub mod FileSystem;
+
 pub mod Initialization;
+
 pub mod Output;
+
 pub mod Provider;
+
 pub mod Save;
+
 pub mod SCM;
+
 pub mod Secret;
+
 pub mod Task;
+
 pub mod Terminal;
+
 pub mod TreeView;
+
 pub mod Window;
+
 pub mod Workspace;
 
 #[allow(unused_imports)]
@@ -299,8 +314,11 @@ impl CocoonServiceImpl {
 	/// A cancellation token that can be used to cancel the operation
 	pub async fn RegisterOperation(&self, request_id:u64) -> tokio_util::sync::CancellationToken {
 		let token = tokio_util::sync::CancellationToken::new();
+
 		self.ActiveOperations.write().await.insert(request_id, token.clone());
+
 		dev_log!("cocoon", "[CocoonService] Registered operation {} for cancellation", request_id);
+
 		token
 	}
 
@@ -310,6 +328,7 @@ impl CocoonServiceImpl {
 	/// - `request_id`: The request identifier to unregister
 	pub async fn UnregisterOperation(&self, request_id:u64) {
 		self.ActiveOperations.write().await.remove(&request_id);
+
 		dev_log!("cocoon", "[CocoonService] Unregistered operation {}", request_id);
 	}
 
@@ -330,17 +349,24 @@ impl CocoonServiceImpl {
 		// `.as_array()` call finds the language entry: [{ "language": "typescript" }].
 		let dto = ProviderRegistrationDTO {
 			Handle:handle,
+
 			ProviderType:provider_type,
+
 			Selector:json!([{ "language": language_selector }]),
+
 			SideCarIdentifier:"cocoon-main".to_string(),
+
 			ExtensionIdentifier:json!(extension_id),
+
 			Options:None,
 		};
+
 		self.environment
 			.ApplicationState
 			.Extension
 			.ProviderRegistration
 			.RegisterProvider(handle, dto);
+
 		dev_log!(
 			"cocoon",
 			"[CocoonService] Provider {:?} registered: handle={}, language={}",
@@ -356,9 +382,11 @@ impl CocoonServiceImpl {
 	/// is absent or the path cannot be extracted.
 	fn UriToPath(uri_opt:Option<&Uri>) -> Option<std::path::PathBuf> {
 		let value = uri_opt?.value.as_str();
+
 		if value.is_empty() {
 			return None;
 		}
+
 		// Strip file:// prefix if present
 		let path_str = if let Some(Stripped) = value.strip_prefix("file://") {
 			Stripped
@@ -369,6 +397,7 @@ impl CocoonServiceImpl {
 			// Unknown scheme - return as-is
 			value
 		};
+
 		Some(std::path::PathBuf::from(path_str))
 	}
 }
@@ -391,6 +420,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn open_channel_from_mountain(
 		&self,
+
 		_request:tonic::Request<tonic::Streaming<crate::Vine::Generated::Envelope>>,
 	) -> Result<tonic::Response<Self::OpenChannelFromMountainStream>, tonic::Status> {
 		Err(tonic::Status::unimplemented(
@@ -408,9 +438,11 @@ impl CocoonService for CocoonServiceImpl {
 	/// JSON-encoded bytes in `response.result`.
 	async fn process_mountain_request(
 		&self,
+
 		request:Request<GenericRequest>,
 	) -> Result<Response<GenericResponse>, Status> {
 		let Req = request.into_inner();
+
 		let RequestId = Req.request_identifier;
 
 		dev_log!(
@@ -423,6 +455,7 @@ impl CocoonService for CocoonServiceImpl {
 		/// Serialise a value into the `result` bytes of a GenericResponse.
 		fn OkResponse(RequestId:u64, Value:&impl serde::Serialize) -> Response<GenericResponse> {
 			let Bytes = serde_json::to_vec(Value).unwrap_or_default();
+
 			Response::new(GenericResponse { request_identifier:RequestId, result:Bytes, error:None })
 		}
 
@@ -449,28 +482,36 @@ impl CocoonService for CocoonServiceImpl {
 					.as_str()
 					.or_else(|| Params.get("path").and_then(|V| V.as_str()))
 					.unwrap_or("");
+
 				match tokio::fs::read(Path).await {
 					Ok(Content) => Ok(OkResponse(RequestId, &Content)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.readFile: {}", Error))),
 				}
 			},
+
 			"fs.writeFile" | "file:write" => {
 				let Path = Params.get("path").and_then(|V| V.as_str()).unwrap_or("");
+
 				let Content:Vec<u8> = Params
 					.get("content")
 					.and_then(|V| V.as_array())
 					.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
 					.unwrap_or_default();
+
 				match tokio::fs::write(Path, &Content).await {
 					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.writeFile: {}", Error))),
 				}
 			},
+
 			"fs.stat" | "file:stat" => {
 				let Path = Params
 					.as_str()
 					.or_else(|| Params.get("path").and_then(|V| V.as_str()))
 					.unwrap_or("");
+
 				match tokio::fs::metadata(Path).await {
 					Ok(Meta) => {
 						let Mtime = Meta
@@ -479,6 +520,7 @@ impl CocoonService for CocoonServiceImpl {
 							.and_then(|T| T.duration_since(UNIX_EPOCH).ok())
 							.map(|D| D.as_millis() as u64)
 							.unwrap_or(0);
+
 						Ok(OkResponse(
 							RequestId,
 							&json!({
@@ -490,104 +532,137 @@ impl CocoonService for CocoonServiceImpl {
 							}),
 						))
 					},
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.stat: {}", Error))),
 				}
 			},
+
 			"fs.listDir" | "fs.readdir" | "file:readdir" => {
 				let Path = Params
 					.as_str()
 					.or_else(|| Params.get("path").and_then(|V| V.as_str()))
 					.unwrap_or("");
+
 				match tokio::fs::read_dir(Path).await {
 					Ok(mut Entries) => {
 						// Return [{name, type}] where type 1=File 2=Directory
 						let mut Items:Vec<serde_json::Value> = Vec::new();
+
 						while let Ok(Some(Entry)) = Entries.next_entry().await {
 							if let Some(Name) = Entry.file_name().to_str() {
 								let IsDir = Entry.file_type().await.map(|T| T.is_dir()).unwrap_or(false);
+
 								Items.push(json!({ "name": Name, "type": if IsDir { 2u32 } else { 1u32 } }));
 							}
 						}
+
 						Ok(OkResponse(RequestId, &Items))
 					},
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.listDir: {}", Error))),
 				}
 			},
+
 			"fs.createDir" | "file:mkdir" => {
 				let Path = Params
 					.as_str()
 					.or_else(|| Params.get("path").and_then(|V| V.as_str()))
 					.unwrap_or("");
+
 				match tokio::fs::create_dir_all(Path).await {
 					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.createDir: {}", Error))),
 				}
 			},
+
 			"fs.delete" | "file:delete" => {
 				let Path = Params
 					.as_str()
 					.or_else(|| Params.get("path").and_then(|V| V.as_str()))
 					.unwrap_or("");
+
 				let Result = if std::path::Path::new(Path).is_dir() {
 					tokio::fs::remove_dir_all(Path).await
 				} else {
 					tokio::fs::remove_file(Path).await
 				};
+
 				match Result {
 					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.delete: {}", Error))),
 				}
 			},
+
 			"fs.rename" | "file:move" => {
 				let From = Params.get("from").and_then(|V| V.as_str()).unwrap_or("");
+
 				let To = Params.get("to").and_then(|V| V.as_str()).unwrap_or("");
+
 				match tokio::fs::rename(From, To).await {
 					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("fs.rename: {}", Error))),
 				}
 			},
+
 			// ---- Commands ----
 			"commands.execute" => {
 				let CommandId = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Arg = Params.get("arg").cloned().unwrap_or(serde_json::Value::Null);
+
 				match self.environment.ExecuteCommand(CommandId, Arg).await {
 					Ok(Value) => Ok(OkResponse(RequestId, &Value)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			// ---- Commands (Cocoon MountainGRPCClient format) ----
 			"executeCommand" => {
 				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Arg = Params
 					.get("arguments")
 					.and_then(|A| A.as_array())
 					.and_then(|A| A.first())
 					.cloned()
 					.unwrap_or(serde_json::Value::Null);
+
 				match self.environment.ExecuteCommand(CommandId, Arg).await {
 					Ok(Value) => Ok(OkResponse(RequestId, &json!({ "result": Value }))),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			"unregisterCommand" => {
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				match self.environment.UnregisterCommand(ExtensionId, CommandId).await {
 					Ok(()) => Ok(OkResponse(RequestId, &json!({ "success": true }))),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			// ---- Window dialogs (Window.ts method names) ----
 			"UserInterface.ShowOpenDialog" => {
 				use CommonLibrary::UserInterface::{
 					DTO::OpenDialogOptionsDTO::OpenDialogOptionsDTO,
 					UserInterfaceProvider::UserInterfaceProvider,
 				};
+
 				let Title = Params
 					.get(0)
 					.and_then(|V| V.get("title"))
 					.and_then(|T| T.as_str())
 					.map(|S| S.to_string());
+
 				let Options = OpenDialogOptionsDTO {
 					Base:CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO {
 						Title,
@@ -595,25 +670,32 @@ impl CocoonService for CocoonServiceImpl {
 					},
 					..OpenDialogOptionsDTO::default()
 				};
+
 				match self.environment.ShowOpenDialog(Some(Options)).await {
 					Ok(Some(Paths)) => {
 						let Uris:Vec<String> = Paths.iter().map(|P| format!("file://{}", P.display())).collect();
+
 						Ok(OkResponse(RequestId, &json!(Uris)))
 					},
+
 					Ok(None) => Ok(OkResponse(RequestId, &json!(serde_json::Value::Array(vec![])))),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			"UserInterface.ShowSaveDialog" => {
 				use CommonLibrary::UserInterface::{
 					DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO,
 					UserInterfaceProvider::UserInterfaceProvider,
 				};
+
 				let Title = Params
 					.get(0)
 					.and_then(|V| V.get("title"))
 					.and_then(|T| T.as_str())
 					.map(|S| S.to_string());
+
 				let Options = SaveDialogOptionsDTO {
 					Base:CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO {
 						Title,
@@ -621,126 +703,173 @@ impl CocoonService for CocoonServiceImpl {
 					},
 					..SaveDialogOptionsDTO::default()
 				};
+
 				match self.environment.ShowSaveDialog(Some(Options)).await {
 					Ok(Some(Path)) => Ok(OkResponse(RequestId, &json!(format!("file://{}", Path.display())))),
+
 					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			"UserInterface.ShowInputBox" => {
 				use CommonLibrary::UserInterface::{
 					DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
 					UserInterfaceProvider::UserInterfaceProvider,
 				};
+
 				let Opts = Params.get(0);
+
 				let Options = InputBoxOptionsDTO {
 					Prompt:Opts
 						.and_then(|V| V.get("prompt"))
 						.and_then(|P| P.as_str())
 						.map(|S| S.to_string()),
+
 					PlaceHolder:Opts
 						.and_then(|V| V.get("placeHolder"))
 						.and_then(|P| P.as_str())
 						.map(|S| S.to_string()),
+
 					IsPassword:Some(Opts.and_then(|V| V.get("password")).and_then(|B| B.as_bool()).unwrap_or(false)),
+
 					Value:Opts
 						.and_then(|V| V.get("value"))
 						.and_then(|V| V.as_str())
 						.map(|S| S.to_string()),
+
 					Title:None,
+
 					IgnoreFocusOut:None,
 				};
+
 				match self.environment.ShowInputBox(Some(Options)).await {
 					Ok(Some(Text)) => Ok(OkResponse(RequestId, &json!(Text))),
+
 					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			// ---- Native shell operations ----
 			"openExternal" => {
 				use tauri::Emitter;
+
 				let Url = Params
 					.as_str()
 					.or_else(|| Params.get("url").and_then(|V| V.as_str()))
 					.unwrap_or("")
 					.to_string();
+
 				// Emit to Sky - Sky uses Tauri shell plugin to open the URL
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://native/openExternal", json!({ "url": Url }));
+
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
+
 			// ---- Window (Cocoon MountainGRPCClient format) ----
 			"showTextDocument" => {
 				use tauri::Emitter;
+
 				let Uri = Params
 					.get("uri")
 					.and_then(|V| V.get("value").or(Some(V)))
 					.and_then(|V| V.as_str())
 					.unwrap_or("")
 					.to_string();
+
 				let ViewColumn = Params.get("viewColumn").and_then(|V| V.as_i64()).map(|N| N + 2);
+
 				let PreserveFocus = Params.get("preserveFocus").and_then(|V| V.as_bool()).unwrap_or(false);
+
 				let _ = self.environment.ApplicationHandle.emit(
 					"sky://editor/openDocument",
 					json!({ "uri": Uri, "viewColumn": ViewColumn, "preserveFocus": PreserveFocus }),
 				);
+
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
+
 			"showInformation" => {
 				use CommonLibrary::UserInterface::{
 					DTO::MessageSeverity::MessageSeverity,
 					UserInterfaceProvider::UserInterfaceProvider,
 				};
+
 				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Items:Option<serde_json::Value> = Params
 					.get("items")
 					.cloned()
 					.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
+
 				match self.environment.ShowMessage(MessageSeverity::Info, Message, Items).await {
 					Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
+
 					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			"showWarning" => {
 				use CommonLibrary::UserInterface::{
 					DTO::MessageSeverity::MessageSeverity,
 					UserInterfaceProvider::UserInterfaceProvider,
 				};
+
 				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Items:Option<serde_json::Value> = Params
 					.get("items")
 					.cloned()
 					.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
+
 				match self.environment.ShowMessage(MessageSeverity::Warning, Message, Items).await {
 					Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
+
 					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			"showError" => {
 				use CommonLibrary::UserInterface::{
 					DTO::MessageSeverity::MessageSeverity,
 					UserInterfaceProvider::UserInterfaceProvider,
 				};
+
 				let Message = Params.get("message").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Items:Option<serde_json::Value> = Params
 					.get("items")
 					.cloned()
 					.filter(|V| V.is_array() && !V.as_array().unwrap().is_empty());
+
 				match self.environment.ShowMessage(MessageSeverity::Error, Message, Items).await {
 					Ok(Some(Selected)) => Ok(OkResponse(RequestId, &json!({ "selectedItem": Selected }))),
+
 					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			"createStatusBarItem" => {
 				use tauri::Emitter;
+
 				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Tooltip = Params.get("tooltip").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				// Sky's `SetOrUpdateEntry` (`SkyBridge.ts:744`) listens on
 				// `sky://statusbar/set-entry` and `sky://statusbar/update`
 				// - both route through the same upsert. There is no
@@ -751,40 +880,58 @@ impl CocoonService for CocoonServiceImpl {
 					"sky://statusbar/set-entry",
 					json!({ "id": Id, "text": Text, "tooltip": Tooltip }),
 				);
+
 				Ok(OkResponse(RequestId, &json!({ "itemId": Id })))
 			},
+
 			"setStatusBarText" => {
 				use tauri::Emitter;
+
 				let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://statusbar/update", json!({ "id": ItemId, "text": Text }));
+
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
+
 			"createWebviewPanel" => {
 				use tauri::Emitter;
+
 				let ViewType = Params.get("viewType").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Title = Params.get("title").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Handle = std::time::SystemTime::now()
 					.duration_since(std::time::UNIX_EPOCH)
 					.map(|D| D.as_millis() as u64)
 					.unwrap_or(0);
+
 				let _ = self.environment.ApplicationHandle.emit("sky://webview/create", json!({ "handle": Handle, "viewType": ViewType, "title": Title, "viewColumn": Params.get("viewColumn"), "preserveFocus": Params.get("preserveFocus").and_then(|V| V.as_bool()).unwrap_or(false) }));
+
 				Ok(OkResponse(RequestId, &json!({ "handle": Handle })))
 			},
+
 			"setWebviewHtml" => {
 				use tauri::Emitter;
+
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
+
 				let Html = Params.get("html").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				// Canonical kebab-case channel; `sky://webview/setHtml` retired.
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://webview/set-html", json!({ "handle": Handle, "html": Html }));
+
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
+
 			// ---- Workspace (Cocoon MountainGRPCClient format) ----
 			// `findFiles` / `findTextInFiles` are called by Cocoon's
 			// `workspace.findFiles()` / `workspace.findTextInFiles()`
@@ -798,15 +945,21 @@ impl CocoonService for CocoonServiceImpl {
 			// construction that mangled non-ASCII paths.
 			"findFiles" => {
 				use CommonLibrary::Workspace::WorkspaceProvider::WorkspaceProvider;
+
 				let Include = Params
 					.get("pattern")
 					.cloned()
 					.or_else(|| Params.get("include").cloned())
 					.unwrap_or(serde_json::Value::String("**".into()));
+
 				let Exclude = Params.get("exclude").cloned().filter(|V| !V.is_null());
+
 				let MaxResults = Params.get("maxResults").and_then(|V| V.as_u64()).map(|N| N as usize);
+
 				let UseIgnoreFiles = Params.get("useIgnoreFiles").and_then(|V| V.as_bool()).unwrap_or(true);
+
 				let FollowSymlinks = Params.get("followSymlinks").and_then(|V| V.as_bool()).unwrap_or(false);
+
 				match self
 					.environment
 					.FindFilesInWorkspace(Include, Exclude, MaxResults, UseIgnoreFiles, FollowSymlinks)
@@ -818,11 +971,14 @@ impl CocoonService for CocoonServiceImpl {
 							&json!({ "uris": Urls.into_iter().map(|U| U.to_string()).collect::<Vec<_>>() }),
 						))
 					},
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("findFiles: {}", Error))),
 				}
 			},
+
 			"findTextInFiles" => {
 				use CommonLibrary::Search::SearchProvider::SearchProvider;
+
 				// VS Code's `workspace.findTextInFiles` takes a
 				// `TextSearchQuery` in field `pattern` (or passed flat
 				// at the top level). Accept both shapes.
@@ -838,81 +994,116 @@ impl CocoonService for CocoonServiceImpl {
 				} else {
 					Params.clone()
 				};
+
 				let OptionsValue = Params.get("options").cloned().unwrap_or(serde_json::Value::Null);
+
 				match self.environment.TextSearch(QueryValue, OptionsValue).await {
 					Ok(Matches) => Ok(OkResponse(RequestId, &json!({ "matches": Matches }))),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("findTextInFiles: {}", Error))),
 				}
 			},
+
 			"openDocument" => {
 				use tauri::Emitter;
+
 				let Uri = Params
 					.get("uri")
 					.and_then(|V| V.get("value").or(Some(V)))
 					.and_then(|V| V.as_str())
 					.unwrap_or("")
 					.to_string();
+
 				let ViewColumn = Params.get("viewColumn").and_then(|V| V.as_i64());
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://editor/openDocument", json!({ "uri": Uri, "viewColumn": ViewColumn }));
+
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
+
 			"saveAll" => {
 				use tauri::Emitter;
+
 				let IncludeUntitled = Params.get("includeUntitled").and_then(|V| V.as_bool()).unwrap_or(false);
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://editor/saveAll", json!({ "includeUntitled": IncludeUntitled }));
+
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
+
 			"applyEdit" => {
 				use tauri::Emitter;
+
 				let Uri = Params
 					.get("uri")
 					.and_then(|V| V.get("value").or(Some(V)))
 					.and_then(|V| V.as_str())
 					.unwrap_or("")
 					.to_string();
+
 				let Edits = Params.get("edits").cloned().unwrap_or(json!([]));
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://editor/applyEdits", json!({ "uri": Uri, "edits": Edits }));
+
 				Ok(OkResponse(RequestId, &json!({ "success": true })))
 			},
+
 			// ---- Secret Storage (Cocoon MountainGRPCClient format) ----
 			"getSecret" => {
 				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				match self.environment.GetSecret(ExtensionId, Key).await {
 					Ok(Some(Value)) => Ok(OkResponse(RequestId, &json!({ "value": Value }))),
+
 					Ok(None) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			"storeSecret" => {
 				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Value = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				match self.environment.StoreSecret(ExtensionId, Key, Value).await {
 					Ok(()) => Ok(OkResponse(RequestId, &json!({ "success": true }))),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			"deleteSecret" => {
 				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				match self.environment.DeleteSecret(ExtensionId, Key).await {
 					Ok(()) => Ok(OkResponse(RequestId, &json!({ "success": true }))),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, Error.to_string())),
 				}
 			},
+
 			// ---- FS aliases (Cocoon MountainGRPCClient uses different key names) ----
 			"readFile" => {
 				let Uri = Params
@@ -921,23 +1112,30 @@ impl CocoonService for CocoonServiceImpl {
 					.or_else(|| Params.as_str())
 					.unwrap_or("")
 					.replace("file://", "");
+
 				match tokio::fs::read(&Uri).await {
 					Ok(Content) => Ok(OkResponse(RequestId, &Content)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("readFile: {}", Error))),
 				}
 			},
+
 			"writeFile" => {
 				let Uri = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("").replace("file://", "");
+
 				let Content:Vec<u8> = Params
 					.get("content")
 					.and_then(|V| V.as_array())
 					.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
 					.unwrap_or_default();
+
 				match tokio::fs::write(&Uri, &Content).await {
 					Ok(()) => Ok(OkResponse(RequestId, &serde_json::Value::Null)),
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("writeFile: {}", Error))),
 				}
 			},
+
 			"stat" => {
 				let Uri = Params
 					.get("uri")
@@ -945,6 +1143,7 @@ impl CocoonService for CocoonServiceImpl {
 					.or_else(|| Params.as_str())
 					.unwrap_or("")
 					.replace("file://", "");
+
 				match tokio::fs::metadata(&Uri).await {
 					Ok(Meta) => {
 						let Mtime = Meta
@@ -953,14 +1152,17 @@ impl CocoonService for CocoonServiceImpl {
 							.and_then(|T| T.duration_since(UNIX_EPOCH).ok())
 							.map(|D| D.as_millis() as u64)
 							.unwrap_or(0);
+
 						Ok(OkResponse(
 							RequestId,
 							&json!({ "type": if Meta.is_dir() { 2 } else { 1 }, "is_file": Meta.is_file(), "is_directory": Meta.is_dir(), "size": Meta.len(), "mtime": Mtime }),
 						))
 					},
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("stat: {}", Error))),
 				}
 			},
+
 			"readdir" => {
 				let Uri = Params
 					.get("uri")
@@ -968,22 +1170,28 @@ impl CocoonService for CocoonServiceImpl {
 					.or_else(|| Params.as_str())
 					.unwrap_or("")
 					.replace("file://", "");
+
 				match tokio::fs::read_dir(&Uri).await {
 					Ok(mut Entries) => {
 						let mut Names:Vec<String> = Vec::new();
+
 						while let Ok(Some(Entry)) = Entries.next_entry().await {
 							if let Some(Name) = Entry.file_name().to_str() {
 								Names.push(Name.to_string());
 							}
 						}
+
 						Ok(OkResponse(RequestId, &Names))
 					},
+
 					Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("readdir: {}", Error))),
 				}
 			},
+
 			// ---- Unknown ----
 			_ => {
 				dev_log!("cocoon", "warn: [CocoonService] Unknown generic method: {}", Req.method);
+
 				Ok(ErrResponse(RequestId, -32601, format!("Method '{}' not found", Req.method)))
 			},
 		}
@@ -995,9 +1203,11 @@ impl CocoonService for CocoonServiceImpl {
 	/// `MountainGRPCClient.sendNotification(method, params)`.
 	async fn send_mountain_notification(
 		&self,
+
 		request:Request<GenericNotification>,
 	) -> Result<Response<Empty>, Status> {
 		let notification = request.into_inner();
+
 		dev_log!(
 			"cocoon",
 			"[CocoonService] Notification router: method='{}'",
@@ -1015,7 +1225,9 @@ impl CocoonService for CocoonServiceImpl {
 			// ---- Commands ----
 			"registerCommand" => {
 				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				if let Err(Error) = self.environment.RegisterCommand(ExtensionId, CommandId.clone()).await {
 					dev_log!(
 						"cocoon",
@@ -1025,209 +1237,338 @@ impl CocoonService for CocoonServiceImpl {
 					);
 				}
 			},
+
 			"unregisterCommand" => {
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self.environment.UnregisterCommand(ExtensionId, CommandId).await;
 			},
+
 			// ---- Language Providers (APIFactoryService.ts register_*_provider strings) ----
 			"register_hover_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::Hover, Selector, ExtId);
 			},
+
 			"register_completion_item_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::Completion, Selector, ExtId);
 			},
+
 			"register_definition_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::Definition, Selector, ExtId);
 			},
+
 			"register_reference_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::References, Selector, ExtId);
 			},
+
 			"register_code_actions_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::CodeAction, Selector, ExtId);
 			},
+
 			"register_document_highlight_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::DocumentHighlight, Selector, ExtId);
 			},
+
 			"register_document_symbol_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::DocumentSymbol, Selector, ExtId);
 			},
+
 			"register_workspace_symbol_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::WorkspaceSymbol, Selector, ExtId);
 			},
+
 			"register_rename_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::Rename, Selector, ExtId);
 			},
+
 			"register_document_formatting_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::DocumentFormatting, Selector, ExtId);
 			},
+
 			"register_document_range_formatting_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::DocumentRangeFormatting, Selector, ExtId);
 			},
+
 			"register_on_type_formatting_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::OnTypeFormatting, Selector, ExtId);
 			},
+
 			"register_signature_help_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::SignatureHelp, Selector, ExtId);
 			},
+
 			"register_code_lens_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::CodeLens, Selector, ExtId);
 			},
+
 			"register_folding_range_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::FoldingRange, Selector, ExtId);
 			},
+
 			"register_selection_range_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::SelectionRange, Selector, ExtId);
 			},
+
 			"register_semantic_tokens_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::SemanticTokens, Selector, ExtId);
 			},
+
 			"register_inlay_hints_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::InlayHint, Selector, ExtId);
 			},
+
 			"register_type_hierarchy_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::TypeHierarchy, Selector, ExtId);
 			},
+
 			"register_call_hierarchy_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::CallHierarchy, Selector, ExtId);
 			},
+
 			"register_linked_editing_range_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::LinkedEditingRange, Selector, ExtId);
 			},
+
 			"register_document_link_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::DocumentLink, Selector, ExtId);
 			},
+
 			"register_color_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::Color, Selector, ExtId);
 			},
+
 			"register_implementation_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::Implementation, Selector, ExtId);
 			},
+
 			"register_type_definition_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::TypeDefinition, Selector, ExtId);
 			},
+
 			"register_declaration_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::Declaration, Selector, ExtId);
 			},
+
 			"register_evaluatable_expression_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::EvaluatableExpression, Selector, ExtId);
 			},
+
 			"register_inline_values_provider" => {
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+
 				let Selector = Params.get("language_selector").and_then(|V| V.as_str()).unwrap_or("*");
+
 				let ExtId = Params.get("extension_id").and_then(|V| V.as_str()).unwrap_or("");
+
 				self.RegisterProvider(Handle, ProviderType::InlineValues, Selector, ExtId);
 			},
+
 			// ---- Webview ----
 			"onDidReceiveMessage" => {
 				use tauri::Emitter;
+
 				let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
+
 				let Message = Params
 					.get("stringMessage")
 					.and_then(|V| V.as_str())
 					.map(|S| S.to_string())
 					.or_else(|| Params.get("bytesMessage").map(|_| "[binary]".to_string()))
 					.unwrap_or_default();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://webview/post-message", json!({ "handle": Handle, "message": Message }));
 			},
+
 			// ---- Secrets (fire-and-forget variants) ----
 			"storeSecret" => {
 				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Value = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self.environment.StoreSecret(ExtensionId, Key, Value).await;
 			},
+
 			"deleteSecret" => {
 				use CommonLibrary::Secret::SecretProvider::SecretProvider;
+
 				let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self.environment.DeleteSecret(ExtensionId, Key).await;
 			},
+
 			// ---- File system (fire-and-forget write) ----
 			"writeFile" => {
 				let Uri = Params
@@ -1236,151 +1577,210 @@ impl CocoonService for CocoonServiceImpl {
 					.and_then(|V| V.as_str())
 					.unwrap_or("")
 					.replace("file://", "");
+
 				let Content:Vec<u8> = Params
 					.get("content")
 					.and_then(|V| V.as_array())
 					.map(|A| A.iter().filter_map(|B| B.as_u64().map(|N| N as u8)).collect())
 					.unwrap_or_default();
+
 				let _ = tokio::fs::write(&Uri, &Content).await;
 			},
+
 			// ---- Webview panel ----
 			"webview.postMessage" => {
 				use tauri::Emitter;
+
 				let PanelId = Params.get("panelId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Method = Params.get("method").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let MsgParams = Params.get("params").cloned().unwrap_or(serde_json::Value::Null);
+
 				let _ = self.environment.ApplicationHandle.emit(
 					"sky://webview/message",
 					json!({ "panelId": PanelId, "method": Method, "params": MsgParams }),
 				);
 			},
+
 			"webview.dispose" => {
 				use tauri::Emitter;
+
 				let PanelId = Params.get("panelId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://webview/dispose", json!({ "panelId": PanelId }));
 			},
+
 			// ---- Progress indicator ----
 			"progress.start" => {
 				use tauri::Emitter;
+
 				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Title = Params.get("title").and_then(|V| V.as_str()).map(|S| S.to_string());
+
 				let Location = Params.get("location").cloned();
+
 				let Cancellable = Params.get("cancellable").and_then(|V| V.as_bool()).unwrap_or(false);
+
 				let _ = self.environment.ApplicationHandle.emit(
 					"sky://progress/start",
 					json!({ "id": Id, "title": Title, "location": Location, "cancellable": Cancellable }),
 				);
 			},
+
 			"progress.update" => {
 				use tauri::Emitter;
+
 				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Message = Params.get("message").and_then(|V| V.as_str()).map(|S| S.to_string());
+
 				let Increment = Params.get("increment").and_then(|V| V.as_f64());
+
 				let _ = self.environment.ApplicationHandle.emit(
 					"sky://progress/update",
 					json!({ "id": Id, "message": Message, "increment": Increment }),
 				);
 			},
+
 			"progress.complete" => {
 				use tauri::Emitter;
+
 				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://progress/complete", json!({ "id": Id }));
 			},
+
 			// ---- Native shell ----
 			"openExternal" => {
 				use tauri::Emitter;
+
 				let Url = Params.get("url").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://native/openExternal", json!({ "url": Url }));
 			},
+
 			// ---- StatusBar updates (fire-and-forget from Window.ts setters) ----
 			"setStatusBarText" | "statusBar.setText" => {
 				use tauri::Emitter;
+
 				let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://statusbar/update", json!({ "id": ItemId, "text": Text }));
 			},
+
 			"disposeStatusBarItem" | "statusBar.dispose" => {
 				use tauri::Emitter;
+
 				let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://statusbar/dispose", json!({ "id": ItemId }));
 			},
+
 			// ---- Output channel (fire-and-forget from Window.ts OutputChannel proxy) ----
 			"output.create" => {
 				use tauri::Emitter;
+
 				let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Name = Params.get("name").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://output/create", json!({ "id": Id, "name": Name }));
 			},
+
 			"output.append" => {
 				use tauri::Emitter;
+
 				let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Text = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://output/append", json!({ "channel": Channel, "text": Text }));
 			},
+
 			"output.appendLine" => {
 				use tauri::Emitter;
+
 				let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let Line = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self.environment.ApplicationHandle.emit(
 					"sky://output/append",
 					json!({ "channel": Channel, "text": format!("{}\n", Line) }),
 				);
 			},
+
 			"output.clear" => {
 				use tauri::Emitter;
+
 				let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://output/clear", json!({ "channel": Channel }));
 			},
+
 			"output.show" => {
 				use tauri::Emitter;
+
 				let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://output/show", json!({ "channel": Channel }));
 			},
+
 			"output.dispose" => {
 				use tauri::Emitter;
+
 				let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://output/dispose", json!({ "channel": Channel }));
 			},
+
 			// ---- Language configuration ----
 			"set_language_configuration" => {
 				// Language configuration is consumed by Sky - emit for workbench to pick up
 				use tauri::Emitter;
+
 				let Language = Params.get("language").and_then(|V| V.as_str()).unwrap_or("").to_string();
+
 				let _ = self
 					.environment
 					.ApplicationHandle
 					.emit("sky://language/configure", json!({ "language": Language }));
 			},
+
 			_ => {
 				dev_log!(
 					"cocoon",
@@ -1413,6 +1813,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn execute_contributed_command(
 		&self,
+
 		request:Request<ExecuteCommandRequest>,
 	) -> Result<Response<ExecuteCommandResponse>, Status> {
 		Command::ExecuteContributedCommand::Fn(self, request.into_inner()).await
@@ -1424,6 +1825,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_hover_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterHoverProvider::Fn(self, request.into_inner()).await
@@ -1431,6 +1833,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_hover(
 		&self,
+
 		request:Request<ProvideHoverRequest>,
 	) -> Result<Response<ProvideHoverResponse>, Status> {
 		Provider::ProvideHover::Fn(self, request.into_inner()).await
@@ -1438,6 +1841,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_completion_item_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterCompletionItemProvider::Fn(self, request.into_inner()).await
@@ -1445,6 +1849,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_completion_items(
 		&self,
+
 		request:Request<ProvideCompletionItemsRequest>,
 	) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
 		Provider::ProvideCompletionItems::Fn(self, request.into_inner()).await
@@ -1452,6 +1857,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_definition_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDefinitionProvider::Fn(self, request.into_inner()).await
@@ -1459,6 +1865,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_definition(
 		&self,
+
 		request:Request<ProvideDefinitionRequest>,
 	) -> Result<Response<ProvideDefinitionResponse>, Status> {
 		Provider::ProvideDefinition::Fn(self, request.into_inner()).await
@@ -1466,6 +1873,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_reference_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterReferenceProvider::Fn(self, request.into_inner()).await
@@ -1473,6 +1881,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_references(
 		&self,
+
 		request:Request<ProvideReferencesRequest>,
 	) -> Result<Response<ProvideReferencesResponse>, Status> {
 		Provider::ProvideReferences::Fn(self, request.into_inner()).await
@@ -1480,6 +1889,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_code_actions_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterCodeActionsProvider::Fn(self, request.into_inner()).await
@@ -1487,6 +1897,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_code_actions(
 		&self,
+
 		request:Request<ProvideCodeActionsRequest>,
 	) -> Result<Response<ProvideCodeActionsResponse>, Status> {
 		Provider::ProvideCodeActions::Fn(self, request.into_inner()).await
@@ -1494,6 +1905,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn show_text_document(
 		&self,
+
 		request:Request<ShowTextDocumentRequest>,
 	) -> Result<Response<ShowTextDocumentResponse>, Status> {
 		Window::ShowTextDocument::Fn(self, request.into_inner()).await
@@ -1501,6 +1913,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn show_information_message(
 		&self,
+
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowInformationMessage::Fn(self, request.into_inner()).await
@@ -1508,6 +1921,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn show_warning_message(
 		&self,
+
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowWarningMessage::Fn(self, request.into_inner()).await
@@ -1515,6 +1929,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn show_error_message(
 		&self,
+
 		request:Request<ShowMessageRequest>,
 	) -> Result<Response<ShowMessageResponse>, Status> {
 		Window::ShowErrorMessage::Fn(self, request.into_inner()).await
@@ -1522,6 +1937,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn create_status_bar_item(
 		&self,
+
 		request:Request<CreateStatusBarItemRequest>,
 	) -> Result<Response<CreateStatusBarItemResponse>, Status> {
 		Window::CreateStatusBarItem::Fn(self, request.into_inner()).await
@@ -1533,6 +1949,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn create_webview_panel(
 		&self,
+
 		request:Request<CreateWebviewPanelRequest>,
 	) -> Result<Response<CreateWebviewPanelResponse>, Status> {
 		Window::CreateWebviewPanel::Fn(self, request.into_inner()).await
@@ -1544,6 +1961,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn on_did_receive_message(
 		&self,
+
 		request:Request<OnDidReceiveMessageRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Window::OnDidReceiveMessage::Fn(self, request.into_inner()).await
@@ -1551,6 +1969,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn post_webview_message(
 		&self,
+
 		request:Request<PostWebviewMessageRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Window::PostWebviewMessage::Fn(self, request.into_inner()).await
@@ -1558,6 +1977,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn dispose_webview_panel(
 		&self,
+
 		request:Request<DisposeWebviewPanelRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Window::DisposeWebviewPanel::Fn(self, request.into_inner()).await
@@ -1589,6 +2009,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn find_text_in_files(
 		&self,
+
 		request:Request<FindTextInFilesRequest>,
 	) -> Result<Response<FindTextInFilesResponse>, Status> {
 		FileSystem::FindTextInFiles::Fn(self, request.into_inner()).await
@@ -1612,6 +2033,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn open_document(
 		&self,
+
 		request:Request<OpenDocumentRequest>,
 	) -> Result<Response<OpenDocumentResponse>, Status> {
 		Workspace::OpenDocument::Fn(self, request.into_inner()).await
@@ -1627,6 +2049,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn update_configuration(
 		&self,
+
 		request:Request<UpdateConfigurationRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Workspace::UpdateConfiguration::Fn(self, request.into_inner()).await
@@ -1634,6 +2057,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn update_workspace_folders(
 		&self,
+
 		request:Request<UpdateWorkspaceFoldersRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Workspace::UpdateWorkspaceFolders::Fn(self, request.into_inner()).await
@@ -1653,6 +2077,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn accept_terminal_opened(
 		&self,
+
 		request:Request<TerminalOpenedNotification>,
 	) -> Result<Response<Empty>, Status> {
 		Terminal::AcceptTerminalOpened::Fn(self, request.into_inner()).await
@@ -1660,6 +2085,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn accept_terminal_closed(
 		&self,
+
 		request:Request<TerminalClosedNotification>,
 	) -> Result<Response<Empty>, Status> {
 		Terminal::AcceptTerminalClosed::Fn(self, request.into_inner()).await
@@ -1667,6 +2093,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn accept_terminal_process_id(
 		&self,
+
 		request:Request<TerminalProcessIdNotification>,
 	) -> Result<Response<Empty>, Status> {
 		Terminal::AcceptTerminalProcessId::Fn(self, request.into_inner()).await
@@ -1674,6 +2101,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn accept_terminal_process_data(
 		&self,
+
 		request:Request<TerminalDataNotification>,
 	) -> Result<Response<Empty>, Status> {
 		Terminal::AcceptTerminalProcessData::Fn(self, request.into_inner()).await
@@ -1685,6 +2113,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_tree_view_provider(
 		&self,
+
 		request:Request<RegisterTreeViewProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		TreeView::RegisterTreeViewProvider::Fn(self, request.into_inner()).await
@@ -1692,6 +2121,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn get_tree_children(
 		&self,
+
 		request:Request<GetTreeChildrenRequest>,
 	) -> Result<Response<GetTreeChildrenResponse>, Status> {
 		TreeView::GetTreeChildren::Fn(self, request.into_inner()).await
@@ -1699,6 +2129,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_scm_provider(
 		&self,
+
 		request:Request<RegisterScmProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		SCM::RegisterScmProvider::Fn(self, request.into_inner()).await
@@ -1714,6 +2145,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_debug_adapter(
 		&self,
+
 		request:Request<RegisterDebugAdapterRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Debug::RegisterDebugAdapter::Fn(self, request.into_inner()).await
@@ -1721,6 +2153,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn start_debugging(
 		&self,
+
 		request:Request<StartDebuggingRequest>,
 	) -> Result<Response<StartDebuggingResponse>, Status> {
 		Debug::StartDebugging::Fn(self, request.into_inner()).await
@@ -1732,6 +2165,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn participate_in_save(
 		&self,
+
 		request:Request<ParticipateInSaveRequest>,
 	) -> Result<Response<ParticipateInSaveResponse>, Status> {
 		Save::ParticipateInSave(self, request.into_inner()).await
@@ -1751,6 +2185,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_document_highlight_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDocumentHighlightProvider::Fn(self, request.into_inner()).await
@@ -1758,6 +2193,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_document_highlights(
 		&self,
+
 		request:Request<ProvideDocumentHighlightsRequest>,
 	) -> Result<Response<ProvideDocumentHighlightsResponse>, Status> {
 		Provider::ProvideDocumentHighlights::Fn(self, request.into_inner()).await
@@ -1765,6 +2201,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_document_symbol_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDocumentSymbolProvider::Fn(self, request.into_inner()).await
@@ -1772,6 +2209,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_document_symbols(
 		&self,
+
 		request:Request<ProvideDocumentSymbolsRequest>,
 	) -> Result<Response<ProvideDocumentSymbolsResponse>, Status> {
 		Provider::ProvideDocumentSymbols::Fn(self, request.into_inner()).await
@@ -1779,6 +2217,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_workspace_symbol_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterWorkspaceSymbolProvider::Fn(self, request.into_inner()).await
@@ -1786,6 +2225,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_workspace_symbols(
 		&self,
+
 		request:Request<ProvideWorkspaceSymbolsRequest>,
 	) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
 		Provider::ProvideWorkspaceSymbols::Fn(self, request.into_inner()).await
@@ -1793,6 +2233,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_rename_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterRenameProvider::Fn(self, request.into_inner()).await
@@ -1800,6 +2241,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_rename_edits(
 		&self,
+
 		request:Request<ProvideRenameEditsRequest>,
 	) -> Result<Response<ProvideRenameEditsResponse>, Status> {
 		Provider::ProvideRenameEdits::Fn(self, request.into_inner()).await
@@ -1807,6 +2249,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_document_formatting_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDocumentFormattingProvider::Fn(self, request.into_inner()).await
@@ -1814,6 +2257,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_document_formatting(
 		&self,
+
 		request:Request<ProvideDocumentFormattingRequest>,
 	) -> Result<Response<ProvideDocumentFormattingResponse>, Status> {
 		Provider::ProvideDocumentFormatting::Fn(self, request.into_inner()).await
@@ -1821,6 +2265,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_document_range_formatting_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterDocumentRangeFormattingProvider::Fn(self, request.into_inner()).await
@@ -1828,6 +2273,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_document_range_formatting(
 		&self,
+
 		request:Request<ProvideDocumentRangeFormattingRequest>,
 	) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
 		Provider::ProvideDocumentRangeFormatting::Fn(self, request.into_inner()).await
@@ -1835,6 +2281,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_on_type_formatting_provider(
 		&self,
+
 		request:Request<RegisterOnTypeFormattingProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterOnTypeFormattingProvider::Fn(self, request.into_inner()).await
@@ -1842,6 +2289,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_on_type_formatting(
 		&self,
+
 		request:Request<ProvideOnTypeFormattingRequest>,
 	) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
 		Provider::ProvideOnTypeFormatting::Fn(self, request.into_inner()).await
@@ -1849,6 +2297,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_signature_help_provider(
 		&self,
+
 		request:Request<RegisterSignatureHelpProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterSignatureHelpProvider::Fn(self, request.into_inner()).await
@@ -1856,6 +2305,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_signature_help(
 		&self,
+
 		request:Request<ProvideSignatureHelpRequest>,
 	) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
 		Provider::ProvideSignatureHelp::Fn(self, request.into_inner()).await
@@ -1863,6 +2313,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_code_lens_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterCodeLensProvider::Fn(self, request.into_inner()).await
@@ -1870,6 +2321,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_code_lenses(
 		&self,
+
 		request:Request<ProvideCodeLensesRequest>,
 	) -> Result<Response<ProvideCodeLensesResponse>, Status> {
 		Provider::ProvideCodeLenses::Fn(self, request.into_inner()).await
@@ -1877,6 +2329,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_folding_range_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterFoldingRangeProvider::Fn(self, request.into_inner()).await
@@ -1884,6 +2337,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_folding_ranges(
 		&self,
+
 		request:Request<ProvideFoldingRangesRequest>,
 	) -> Result<Response<ProvideFoldingRangesResponse>, Status> {
 		Provider::ProvideFoldingRanges::Fn(self, request.into_inner()).await
@@ -1891,6 +2345,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_selection_range_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterSelectionRangeProvider::Fn(self, request.into_inner()).await
@@ -1898,6 +2353,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_selection_ranges(
 		&self,
+
 		request:Request<ProvideSelectionRangesRequest>,
 	) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
 		Provider::ProvideSelectionRanges::Fn(self, request.into_inner()).await
@@ -1905,6 +2361,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_semantic_tokens_provider(
 		&self,
+
 		request:Request<RegisterSemanticTokensProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterSemanticTokensProvider::Fn(self, request.into_inner()).await
@@ -1912,6 +2369,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_semantic_tokens_full(
 		&self,
+
 		request:Request<ProvideSemanticTokensRequest>,
 	) -> Result<Response<ProvideSemanticTokensResponse>, Status> {
 		Provider::ProvideSemanticTokensFull::Fn(self, request.into_inner()).await
@@ -1919,6 +2377,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_inlay_hints_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterInlayHintsProvider::Fn(self, request.into_inner()).await
@@ -1926,6 +2385,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_inlay_hints(
 		&self,
+
 		request:Request<ProvideInlayHintsRequest>,
 	) -> Result<Response<ProvideInlayHintsResponse>, Status> {
 		Provider::ProvideInlayHints::Fn(self, request.into_inner()).await
@@ -1933,6 +2393,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_type_hierarchy_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterTypeHierarchyProvider::Fn(self, request.into_inner()).await
@@ -1940,6 +2401,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_type_hierarchy_supertypes(
 		&self,
+
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
 		Provider::ProvideTypeHierarchySupertypes::Fn(self, request.into_inner()).await
@@ -1947,6 +2409,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_type_hierarchy_subtypes(
 		&self,
+
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
 		Provider::ProvideTypeHierarchySubtypes::Fn(self, request.into_inner()).await
@@ -1954,6 +2417,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_call_hierarchy_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterCallHierarchyProvider::Fn(self, request.into_inner()).await
@@ -1961,6 +2425,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_call_hierarchy_incoming_calls(
 		&self,
+
 		request:Request<ProvideCallHierarchyRequest>,
 	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
 		Provider::ProvideCallHierarchyIncomingCalls::Fn(self, request.into_inner()).await
@@ -1968,6 +2433,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_call_hierarchy_outgoing_calls(
 		&self,
+
 		request:Request<ProvideCallHierarchyRequest>,
 	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
 		Provider::ProvideCallHierarchyOutgoingCalls::Fn(self, request.into_inner()).await
@@ -1975,6 +2441,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_linked_editing_range_provider(
 		&self,
+
 		request:Request<RegisterProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Provider::RegisterLinkedEditingRangeProvider::Fn(self, request.into_inner()).await
@@ -1982,6 +2449,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn provide_linked_editing_ranges(
 		&self,
+
 		request:Request<ProvideLinkedEditingRangesRequest>,
 	) -> Result<Response<ProvideLinkedEditingRangesResponse>, Status> {
 		Provider::ProvideLinkedEditingRanges::Fn(self, request.into_inner()).await
@@ -1989,6 +2457,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn show_quick_pick(
 		&self,
+
 		request:Request<ShowQuickPickRequest>,
 	) -> Result<Response<ShowQuickPickResponse>, Status> {
 		Window::ShowQuickPick::Fn(self, request.into_inner()).await
@@ -1996,6 +2465,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn show_input_box(
 		&self,
+
 		request:Request<ShowInputBoxRequest>,
 	) -> Result<Response<ShowInputBoxResponse>, Status> {
 		Window::ShowInputBox::Fn(self, request.into_inner()).await
@@ -2003,6 +2473,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn show_progress(
 		&self,
+
 		request:Request<ShowProgressRequest>,
 	) -> Result<Response<ShowProgressResponse>, Status> {
 		Window::ShowProgress::Fn(self, request.into_inner()).await
@@ -2018,6 +2489,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn create_output_channel(
 		&self,
+
 		request:Request<CreateOutputChannelRequest>,
 	) -> Result<Response<CreateOutputChannelResponse>, Status> {
 		Output::CreateOutputChannel::Fn(self, request.into_inner()).await
@@ -2041,6 +2513,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_task_provider(
 		&self,
+
 		request:Request<RegisterTaskProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Task::RegisterTaskProvider::Fn(self, request.into_inner()).await
@@ -2056,6 +2529,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn get_authentication_session(
 		&self,
+
 		request:Request<GetAuthenticationSessionRequest>,
 	) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
 		Auth::GetAuthenticationSession::Fn(self, request.into_inner()).await
@@ -2063,6 +2537,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn register_authentication_provider(
 		&self,
+
 		request:Request<RegisterAuthenticationProviderRequest>,
 	) -> Result<Response<Empty>, Status> {
 		Auth::RegisterAuthenticationProvider::Fn(self, request.into_inner()).await
@@ -2070,6 +2545,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn get_extension(
 		&self,
+
 		request:Request<GetExtensionRequest>,
 	) -> Result<Response<GetExtensionResponse>, Status> {
 		Extension::GetExtension::Fn(self, request.into_inner()).await
@@ -2081,6 +2557,7 @@ impl CocoonService for CocoonServiceImpl {
 
 	async fn get_configuration(
 		&self,
+
 		request:Request<GetConfigurationRequest>,
 	) -> Result<Response<GetConfigurationResponse>, Status> {
 		Extension::GetConfiguration::Fn(self, request.into_inner()).await

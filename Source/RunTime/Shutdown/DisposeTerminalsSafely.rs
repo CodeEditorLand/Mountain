@@ -26,6 +26,7 @@ impl ApplicationRunTime {
 				.ActiveTerminals
 				.lock()
 				.map_err(|E| CommonError::StateLockPoisoned { Context:E.to_string() })?;
+
 			TerminalsGuard.keys().cloned().collect()
 		};
 
@@ -40,8 +41,10 @@ impl ApplicationRunTime {
 						Identifier
 					)
 				},
+
 				Err(Error) => {
 					DisposalErrors.push(format!("Terminal {}: {}", Identifier, Error));
+
 					dev_log!(
 						"lifecycle",
 						"warn: [ApplicationRunTime] Failed to dispose terminal {}: {}",

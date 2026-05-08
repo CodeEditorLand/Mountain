@@ -14,16 +14,24 @@ pub async fn HandleExec(Arguments:Vec<Value>) -> Result<Value, String> {
 	let (Argv, Cwd, OperationId) = match Arguments.first() {
 		Some(First) if First.is_object() => {
 			let Obj = First.as_object().unwrap();
+
 			let Argv = Obj.get("Arguments").map(AsStringArray).unwrap_or_default();
+
 			let Cwd = Obj.get("cwd").and_then(Value::as_str).unwrap_or("").to_string();
+
 			let OperationId = Obj.get("operationId").and_then(Value::as_str).unwrap_or("").to_string();
+
 			(Argv, Cwd, OperationId)
 		},
+
 		Some(First) if First.is_array() => {
 			let Argv = AsStringArray(First);
+
 			let Cwd = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
+
 			(Argv, Cwd, String::new())
 		},
+
 		_ => (Vec::new(), String::new(), String::new()),
 	};
 
@@ -32,7 +40,9 @@ pub async fn HandleExec(Arguments:Vec<Value>) -> Result<Value, String> {
 	}
 
 	let OperationIdRef = if OperationId.is_empty() { Generated() } else { OperationId };
+
 	let CwdOpt = if Cwd.is_empty() { None } else { Some(Cwd.as_str()) };
+
 	let (ExitCode, Stdout, Stderr) = RunGit(&OperationIdRef, &Argv, CwdOpt).await?;
 
 	Ok(json!({

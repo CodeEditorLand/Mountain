@@ -15,6 +15,7 @@ pub struct WorkingCopyState {
 impl Default for WorkingCopyState {
 	fn default() -> Self {
 		dev_log!("workingcopy", "[WorkingCopyState] Initializing default working-copy state...");
+
 		Self { DirtyUris:Arc::new(StandardMutex::new(HashSet::new())) }
 	}
 }
@@ -30,9 +31,11 @@ impl WorkingCopyState {
 		if let Ok(mut Guard) = self.DirtyUris.lock() {
 			if Dirty {
 				Guard.insert(Uri.to_owned());
+
 				dev_log!("workingcopy", "[WorkingCopyState] URI marked dirty: {}", Uri);
 			} else {
 				Guard.remove(Uri);
+
 				dev_log!("workingcopy", "[WorkingCopyState] URI marked clean: {}", Uri);
 			}
 		}

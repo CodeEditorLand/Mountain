@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 #[serde(tag = "kind", content = "value")]
 pub enum Enum {
 	PlainText(String),
+
 	Markdown(String),
+
 	Markup { value:String, language:Option<String> },
 }

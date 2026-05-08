@@ -5,5 +5,7 @@
 //! `ConfigurationUpdate::Struct` are the wire DTOs.
 
 pub mod ConfigurationScope;
+
 pub mod ConfigurationService;
+
 pub mod ConfigurationUpdate;

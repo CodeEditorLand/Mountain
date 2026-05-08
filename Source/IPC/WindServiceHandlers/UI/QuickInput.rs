@@ -38,6 +38,7 @@ pub async fn QuickInputShowQuickPick(RunTime:Arc<ApplicationRunTime>, Arguments:
 			.and_then(|V| V.get("placeholder"))
 			.and_then(|P| P.as_str())
 			.map(|S| S.to_string()),
+
 		CanPickMany:Some(
 			Arguments
 				.get(1)
@@ -45,6 +46,7 @@ pub async fn QuickInputShowQuickPick(RunTime:Arc<ApplicationRunTime>, Arguments:
 				.and_then(|B| B.as_bool())
 				.unwrap_or(false),
 		),
+
 		Title:Arguments
 			.get(1)
 			.and_then(|V| V.get("title"))
@@ -61,6 +63,7 @@ pub async fn QuickInputShowQuickPick(RunTime:Arc<ApplicationRunTime>, Arguments:
 
 	match Result {
 		Some(Labels) => Ok(Labels.into_iter().next().map(|S| json!(S)).unwrap_or(Value::Null)),
+
 		None => Ok(Value::Null),
 	}
 }
@@ -72,24 +75,30 @@ pub async fn QuickInputShowInputBox(RunTime:Arc<ApplicationRunTime>, Arguments:V
 	};
 
 	let Opts = Arguments.first();
+
 	let Options = InputBoxOptionsDTO {
 		Prompt:Opts
 			.and_then(|V| V.get("prompt"))
 			.and_then(|P| P.as_str())
 			.map(|S| S.to_string()),
+
 		PlaceHolder:Opts
 			.and_then(|V| V.get("placeholder"))
 			.and_then(|P| P.as_str())
 			.map(|S| S.to_string()),
+
 		IsPassword:Some(Opts.and_then(|V| V.get("password")).and_then(|B| B.as_bool()).unwrap_or(false)),
+
 		Value:Opts
 			.and_then(|V| V.get("value"))
 			.and_then(|V| V.as_str())
 			.map(|S| S.to_string()),
+
 		Title:Opts
 			.and_then(|V| V.get("title"))
 			.and_then(|T| T.as_str())
 			.map(|S| S.to_string()),
+
 		IgnoreFocusOut:None,
 	};
 

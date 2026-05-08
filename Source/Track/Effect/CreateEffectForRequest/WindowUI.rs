@@ -53,11 +53,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(Value::Null)
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
 		"Window.ShowQuickPick" | "Window.ShowInputBox" | "Window.ShowOpenDialog" | "Window.ShowSaveDialog" => {
 			let MethodNameOwned = MethodName.to_string();
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
@@ -84,6 +86,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						Ok(Value::Null)
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

@@ -36,6 +36,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
@@ -62,6 +63,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

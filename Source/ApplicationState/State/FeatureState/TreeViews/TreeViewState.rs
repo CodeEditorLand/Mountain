@@ -67,6 +67,7 @@ impl TreeViewState {
 	pub fn AddOrUpdate(&self, id:String, tree_view:TreeViewStateDTO) {
 		if let Ok(mut guard) = self.ActiveTreeViews.lock() {
 			guard.insert(id, tree_view);
+
 			dev_log!("extensions", "[TreeViewState] Tree view added/updated");
 		}
 	}
@@ -75,6 +76,7 @@ impl TreeViewState {
 	pub fn Remove(&self, id:&str) {
 		if let Ok(mut guard) = self.ActiveTreeViews.lock() {
 			guard.remove(id);
+
 			dev_log!("extensions", "[TreeViewState] Tree view removed: {}", id);
 		}
 	}
@@ -83,6 +85,7 @@ impl TreeViewState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.ActiveTreeViews.lock() {
 			guard.clear();
+
 			dev_log!("extensions", "[TreeViewState] All tree views cleared");
 		}
 	}

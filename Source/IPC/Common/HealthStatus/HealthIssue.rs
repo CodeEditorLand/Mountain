@@ -12,11 +12,17 @@ use crate::IPC::Common::HealthStatus::SeverityLevel;
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum Enum {
 	HighLatency(String),
+
 	MemoryPressure(String),
+
 	ConnectionLoss(String),
+
 	QueueOverflow(String),
+
 	SecurityViolation(String),
+
 	PerformanceDegradation(String),
+
 	Custom(String),
 }
 
@@ -24,11 +30,17 @@ impl Enum {
 	pub fn Severity(&self) -> SeverityLevel::Enum {
 		match self {
 			Enum::HighLatency(_) => SeverityLevel::Enum::Medium,
+
 			Enum::MemoryPressure(_) => SeverityLevel::Enum::Medium,
+
 			Enum::ConnectionLoss(_) => SeverityLevel::Enum::High,
+
 			Enum::QueueOverflow(_) => SeverityLevel::Enum::High,
+
 			Enum::SecurityViolation(_) => SeverityLevel::Enum::Critical,
+
 			Enum::PerformanceDegradation(_) => SeverityLevel::Enum::Medium,
+
 			Enum::Custom(_) => SeverityLevel::Enum::Low,
 		}
 	}

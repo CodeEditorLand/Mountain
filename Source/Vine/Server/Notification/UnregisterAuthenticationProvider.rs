@@ -11,10 +11,13 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn UnregisterAuthenticationProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let Handle = Parameter.get("handle").and_then(Value::as_u64).unwrap_or(0) as u32;
+
 	if Handle == 0 {
 		dev_log!("provider-register", "[ProviderUnregister] authentication skip: missing handle");
+
 		return;
 	}
+
 	Service
 		.RunTime()
 		.Environment
@@ -22,5 +25,6 @@ pub async fn UnregisterAuthenticationProvider(Service:&MountainVinegRPCService, 
 		.Extension
 		.ProviderRegistration
 		.UnregisterProvider(Handle);
+
 	dev_log!("provider-register", "[ProviderUnregister] authentication handle={}", Handle);
 }

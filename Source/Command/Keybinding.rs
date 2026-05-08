@@ -27,7 +27,11 @@
 //! sequences, platform-specific bindings, conflict-resolution UI.
 
 pub mod CheckKeybindingConflicts;
+
 pub mod GetResolvedKeybinding;
+
 pub mod GetUserKeybindings;
+
 pub mod RegisterExtensionKeybindings;
+
 pub mod UnregisterExtensionKeybindings;

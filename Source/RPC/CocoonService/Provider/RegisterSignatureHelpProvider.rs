@@ -14,14 +14,17 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:RegisterSignatureHelpProviderRequest,
 ) -> Result<Response<Empty>, Status> {
 	dev_log!("cocoon", "[CocoonService] Registering Signature Help Provider");
+
 	Service.RegisterProvider(
 		Request.handle,
 		ProviderType::SignatureHelp,
 		&Request.language_selector,
 		&Request.extension_id,
 	);
+
 	Ok(Response::new(Empty {}))
 }

@@ -32,13 +32,17 @@ use crate::{
 
 pub async fn Fn(
 	SideCarIdentifier:&str,
+
 	Method:String,
+
 	Parameters:Value,
+
 	TimeoutMilliseconds:u64,
 ) -> Result<Value, VineError> {
 	if IsShuttingDown::Fn() {
 		return Err(VineError::ClientNotConnected(SideCarIdentifier.to_string()));
 	}
+
 	if Method.is_empty() || Method.len() > 128 {
 		return Err(VineError::RPCError(
 			"Method name must be between 1 and 128 characters".to_string(),
@@ -54,8 +58,10 @@ pub async fn Fn(
 				match Mux.Request(Method.clone(), Parameters.clone(), TimeoutDuration).await {
 					Ok(Result_) => {
 						UpdateSideCarActivity(SideCarIdentifier);
+
 						return Ok(Result_);
 					},
+
 					Err(VineError::RequestTimeout { .. }) => {
 						return Err(VineError::RequestTimeout {
 							SideCarIdentifier:SideCarIdentifier.to_string(),
@@ -63,6 +69,7 @@ pub async fn Fn(
 							TimeoutMilliseconds:TimeoutDuration.as_millis() as u64,
 						});
 					},
+
 					Err(Error) => {
 						dev_log!(
 							"grpc",
@@ -80,10 +87,12 @@ pub async fn Fn(
 
 	let ParameterBytes =
 		to_vec(&Parameters).map_err(|E| VineError::RPCError(format!("Failed to serialize parameters: {}", E)))?;
+
 	ValidateMessageSize(&ParameterBytes)?;
 
 	let Client = {
 		let Pool = SIDECAR_CLIENTS.lock();
+
 		Pool.get(SideCarIdentifier).cloned()
 	};
 
@@ -95,7 +104,9 @@ pub async fn Fn(
 		.duration_since(std::time::UNIX_EPOCH)
 		.unwrap()
 		.as_nanos() as u64;
+
 	let MethodForLog = Method.clone();
+
 	let Request = GenericRequest { request_identifier:RequestIdentifier, method:Method, parameter:ParameterBytes };
 
 	let Result_ = timeout(TimeoutDuration, Client.process_mountain_request(Request)).await;
@@ -103,6 +114,7 @@ pub async fn Fn(
 	match Result_ {
 		Ok(Ok(Response)) => {
 			UpdateSideCarActivity(SideCarIdentifier);
+
 			dev_log!(
 				"grpc",
 				"[VineClient] Request sent successfully to sidecar '{}': method='{}'",
@@ -111,7 +123,9 @@ pub async fn Fn(
 			);
 
 			let InnerResponse = Response.into_inner();
+
 			let ResultBytes = InnerResponse.result;
+
 			let ResultValue:Value = from_slice(&ResultBytes)
 				.map_err(|E| VineError::RPCError(format!("Failed to deserialize response: {}", E)))?;
 
@@ -124,12 +138,16 @@ pub async fn Fn(
 
 			Ok(ResultValue)
 		},
+
 		Ok(Err(Status)) => {
 			RecordSideCarFailure(SideCarIdentifier);
+
 			Err(VineError::RPCError(format!("gRPC error: {}", Status)))
 		},
+
 		Err(_) => {
 			RecordSideCarFailure(SideCarIdentifier);
+
 			Err(VineError::RequestTimeout {
 				SideCarIdentifier:SideCarIdentifier.to_string(),
 				MethodName:MethodForLog,

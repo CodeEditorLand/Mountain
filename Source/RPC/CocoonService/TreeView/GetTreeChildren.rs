@@ -18,11 +18,13 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:GetTreeChildrenRequest,
 ) -> Result<Response<GetTreeChildrenResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] get_tree_children: view={}", Request.view_id);
 
 	let Handle = ViewIdHandle::Fn(&Request.view_id);
+
 	let Provider = Service
 		.environment
 		.ApplicationState
@@ -37,6 +39,7 @@ pub async fn Fn(
 			Request.view_id,
 			Request.tree_item_handle
 		);
+
 		return Ok(Response::new(GetTreeChildrenResponse { items:Vec::new() }));
 	}
 
@@ -55,6 +58,7 @@ pub async fn Fn(
 
 	let Reply = match SendRequest("cocoon-main", "$provideTreeChildren".to_string(), Parameters, 5000).await {
 		Ok(Value_) => Value_,
+
 		Err(Error) => {
 			dev_log!(
 				"tree-view",
@@ -62,6 +66,7 @@ pub async fn Fn(
 				Request.view_id,
 				Error
 			);
+
 			return Ok(Response::new(GetTreeChildrenResponse { items:Vec::new() }));
 		},
 	};

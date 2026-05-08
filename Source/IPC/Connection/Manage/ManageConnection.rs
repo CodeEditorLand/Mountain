@@ -53,7 +53,9 @@ pub struct ConnectionState {
 #[derive(Debug, Clone, Serialize)]
 pub struct ConnectionStatusEvent {
 	pub connection_id:String,
+
 	pub connected:bool,
+
 	pub timestamp:u64,
 }
 
@@ -69,9 +71,13 @@ impl ConnectionState {
 	pub fn New(ConnectionId:String, TimeoutSeconds:u64) -> Self {
 		Self {
 			Connected:AtomicBool::new(false),
+
 			AppHandle:Mutex::new(None),
+
 			LastActivity:Mutex::new(0),
+
 			ConnectionId,
+
 			TimeoutSeconds,
 		}
 	}
@@ -88,9 +94,12 @@ impl ConnectionState {
 			Ok(mut handle) => {
 				*handle = Some(Handle);
 				self.Connected.store(true, Ordering::Release);
+
 				self.UpdateActivity();
+
 				Ok(())
 			},
+
 			Err(e) => Err(format!("Failed to acquire app handle lock: {}", e)),
 		}
 	}
@@ -107,6 +116,7 @@ impl ConnectionState {
 				*activity = now;
 				now
 			},
+
 			Err(_) => now,
 		}
 	}
@@ -127,8 +137,10 @@ impl ConnectionState {
 		match self.LastActivity.lock() {
 			Ok(activity) => {
 				let elapsed = now.saturating_sub(*activity);
+
 				elapsed > self.TimeoutSeconds
 			},
+
 			Err(_) => false,
 		}
 	}
@@ -143,17 +155,21 @@ impl ConnectionState {
 	pub async fn SendStatus(&self, Connected:bool) -> Result<(), String> {
 		let handle = match self.AppHandle.lock() {
 			Ok(h) => h.clone(),
+
 			Err(e) => return Err(format!("Failed to acquire app handle lock: {}", e)),
 		};
 
 		let handle = match handle {
 			Some(h) => h,
+
 			None => return Err("App handle not initialized".to_string()),
 		};
 
 		let event = ConnectionStatusEvent {
 			connection_id:self.ConnectionId.clone(),
+
 			connected:Connected,
+
 			timestamp:self.UpdateActivity(),
 		};
 
@@ -176,6 +192,7 @@ impl ConnectionState {
 			Ok(mut handle) => {
 				*handle = None;
 			},
+
 			Err(e) => return Err(format!("Failed to clear app handle: {}", e)),
 		}
 
@@ -188,9 +205,12 @@ impl ConnectionState {
 	/// Connection statistics as a string
 	pub fn GetStatistics(&self) -> String {
 		let connected = self.IsConnected();
+
 		let timed_out = self.IsTimedOut();
+
 		let last_activity = match self.LastActivity.lock() {
 			Ok(activity) => *activity,
+
 			Err(_) => 0,
 		};
 
@@ -203,12 +223,15 @@ impl ConnectionState {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
 	fn test_connection_state_new() {
 		let State = ConnectionState::New("test-connection-1".to_string(), 300);
+
 		assert!(!State.IsConnected());
+
 		assert!(!State.IsTimedOut());
 	}
 
@@ -219,12 +242,14 @@ mod tests {
 		// Cannot test actual initialization without Tauri AppHandle
 		// This test verifies the structure is correct
 		assert_eq!(State.ConnectionId, "test-connection-2");
+
 		assert_eq!(State.TimeoutSeconds, 300);
 	}
 
 	#[test]
 	fn test_connection_state_not_timed_out() {
 		let State = ConnectionState::New("test-connection-3".to_string(), 300);
+
 		State.UpdateActivity();
 
 		// Should not be timed out immediately
@@ -234,17 +259,22 @@ mod tests {
 	#[test]
 	fn test_connection_state_close() {
 		let State = ConnectionState::New("test-connection-4".to_string(), 300);
+
 		assert!(State.Close().is_ok());
+
 		assert!(!State.IsConnected());
 	}
 
 	#[test]
 	fn test_connection_state_statistics() {
 		let State = ConnectionState::New("test-connection-5".to_string(), 300);
+
 		let Stats = State.GetStatistics();
 
 		assert!(Stats.contains("test-connection-5"));
+
 		assert!(Stats.contains("connected: false"));
+
 		assert!(Stats.contains("timeout: 300s"));
 	}
 }

@@ -95,6 +95,7 @@ impl Role {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
@@ -106,6 +107,7 @@ mod tests {
 		);
 
 		assert_eq!(role.name, "test");
+
 		assert_eq!(role.permission_count(), 2);
 	}
 
@@ -118,6 +120,7 @@ mod tests {
 		);
 
 		assert!(role.has_permission("permission1"));
+
 		assert!(!role.has_permission("permission3"));
 	}
 
@@ -126,10 +129,12 @@ mod tests {
 		let mut role = Role::new("test".to_string(), vec!["permission1".to_string()], "Test role".to_string());
 
 		role.add_permission("permission2".to_string());
+
 		assert_eq!(role.permission_count(), 2);
 
 		// Adding duplicate should not increase count
 		role.add_permission("permission1".to_string());
+
 		assert_eq!(role.permission_count(), 2);
 	}
 
@@ -142,11 +147,14 @@ mod tests {
 		);
 
 		role.remove_permission("permission1");
+
 		assert_eq!(role.permission_count(), 1);
+
 		assert!(!role.has_permission("permission1"));
 
 		// Removing non-existent permission should not cause issues
 		role.remove_permission("permission3");
+
 		assert_eq!(role.permission_count(), 1);
 	}
 }

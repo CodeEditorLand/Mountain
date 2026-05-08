@@ -35,11 +35,13 @@ const SETTINGS_FILE_CACHE_TTL_MS:u64 = 250;
 
 struct CachedSettingsValue {
 	StoredAt:Instant,
+
 	Parsed:Value,
 }
 
 fn SettingsFileCache() -> &'static Mutex<HashMap<PathBuf, CachedSettingsValue>> {
 	static CACHE:OnceLock<Mutex<HashMap<PathBuf, CachedSettingsValue>>> = OnceLock::new();
+
 	CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
@@ -55,6 +57,7 @@ pub fn ClearSettingsFileCache() {
 /// An internal helper to read and parse a single JSON configuration file.
 pub(super) async fn read_and_parse_configuration_file(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	path:&Option<PathBuf>,
 ) -> Result<Value, CommonError> {
 	if let Some(p) = path {
@@ -72,12 +75,14 @@ pub(super) async fn read_and_parse_configuration_file(
 
 		if let Ok(bytes) = runtime.Run(ReadFile(p.clone())).await {
 			let Parsed = serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new()));
+
 			if let Ok(mut Guard) = SettingsFileCache().lock() {
 				Guard.insert(
 					p.clone(),
 					CachedSettingsValue { StoredAt:Instant::now(), Parsed:Parsed.clone() },
 				);
 			}
+
 			return Ok(Parsed);
 		}
 	}
@@ -158,6 +163,7 @@ pub async fn initialize_and_merge_configurations(
 	}
 
 	let configuration_size = merged.len();
+
 	let final_config = MergedConfigurationStateDTO::Create(Value::Object(merged));
 
 	*environment
@@ -226,6 +232,7 @@ pub(super) fn collect_default_configurations(
 		let Some(contributes) = &extension.Contributes else {
 			continue;
 		};
+
 		let Some(configuration) = contributes.get("configuration") else {
 			continue;
 		};
@@ -241,10 +248,12 @@ pub(super) fn collect_default_configurations(
 			let Some(properties) = block.get("properties").and_then(|p| p.as_object()) else {
 				continue;
 			};
+
 			for (DottedKey, schema) in properties {
 				let Some(default) = schema.get("default") else {
 					continue;
 				};
+
 				InsertDottedDefault(&mut default_config, DottedKey, default.clone());
 			}
 		}
@@ -259,15 +268,21 @@ pub(super) fn collect_default_configurations(
 /// for `git.enabled` finds `target["git"]["enabled"]`.
 fn InsertDottedDefault(target:&mut Map<String, Value>, dotted:&str, value:Value) {
 	let parts:Vec<&str> = dotted.split('.').collect();
+
 	if parts.is_empty() {
 		return;
 	}
+
 	if parts.len() == 1 {
 		target.insert(parts[0].to_string(), value);
+
 		return;
 	}
+
 	let head = parts[0];
+
 	let entry = target.entry(head.to_string()).or_insert_with(|| Value::Object(Map::new()));
+
 	if !entry.is_object() {
 		// Conflicting prior insert (e.g. another extension declared
 		// `git` as a non-object). Replace with a fresh map so we don't
@@ -275,14 +290,18 @@ fn InsertDottedDefault(target:&mut Map<String, Value>, dotted:&str, value:Value)
 		// merge precedence in `initialize_and_merge_configurations`.
 		*entry = Value::Object(Map::new());
 	}
+
 	if let Some(child) = entry.as_object_mut() {
 		// Walk the rest of the dotted path recursively. Re-build a
 		// `Map<String, Value>` and insert from there, then move it
 		// back. (Borrow-checker-friendly variant of in-place
 		// recursion.)
 		let mut sub = std::mem::take(child);
+
 		let RemainingDotted = parts[1..].join(".");
+
 		InsertDottedDefault(&mut sub, &RemainingDotted, value);
+
 		*child = sub;
 	}
 }

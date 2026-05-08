@@ -227,7 +227,9 @@ use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
 	ConfigurationTarget as ConfigurationTargetModule,
 };
+
 type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationOverridesDTO;
+
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
 use CommonLibrary::{Configuration::ConfigurationProvider::ConfigurationProvider, Environment::Requires::Requires};
@@ -251,6 +253,7 @@ impl ConfigurationBridge {
 	/// Create a new configuration bridge
 	pub fn new(runtime:Arc<ApplicationRunTime>) -> Self {
 		dev_log!("config", "[ConfigurationBridge] Creating configuration bridge");
+
 		Self { runtime }
 	}
 
@@ -263,9 +266,11 @@ impl ConfigurationBridge {
 
 		// Convert to Wind format using the service adapter
 		let service_adapter = WindServiceAdapter::new(self.runtime.clone());
+
 		let wind_config = service_adapter.convert_to_wind_configuration(mountain_config).await?;
 
 		dev_log!("config", "[ConfigurationBridge] Wind configuration ready");
+
 		Ok(wind_config)
 	}
 
@@ -280,6 +285,7 @@ impl ConfigurationBridge {
 		self.update_mountain_configuration(mountain_config).await?;
 
 		dev_log!("config", "[ConfigurationBridge] Configuration updated successfully");
+
 		Ok(())
 	}
 
@@ -349,6 +355,7 @@ impl ConfigurationBridge {
 							if key == "zoom_level" && (num < -8.0 || num > 9.0) {
 								return false;
 							}
+
 							if key == "font_size" && (num < 6.0 || num > 100.0) {
 								return false;
 							}
@@ -356,16 +363,19 @@ impl ConfigurationBridge {
 							return false;
 						}
 					},
+
 					"is_packaged" | "enable_feature" => {
 						if !value.is_boolean() {
 							return false;
 						}
 					},
+
 					"theme" | "platform" | "arch" => {
 						if !value.is_string() || value.as_str().unwrap().trim().is_empty() {
 							return false;
 						}
 					},
+
 					_ => {
 						// Default validation: value must not be null
 						if value.is_null() {
@@ -382,6 +392,7 @@ impl ConfigurationBridge {
 	/// Convert Wind configuration to Mountain format
 	async fn convert_to_mountain_configuration(
 		&self,
+
 		wind_config:WindDesktopConfiguration,
 	) -> Result<serde_json::Value, String> {
 		dev_log!("config", "[ConfigurationBridge] Converting Wind config to Mountain format");
@@ -424,12 +435,14 @@ impl ConfigurationBridge {
 
 		// Convert to Wind format
 		let service_adapter = WindServiceAdapter::new(self.runtime.clone());
+
 		let wind_config = service_adapter.convert_to_wind_configuration(mountain_config).await?;
 
 		// Send configuration to Wind via IPC
 		self.send_configuration_to_wind(wind_config).await?;
 
 		dev_log!("config", "[ConfigurationBridge] Configuration synchronized");
+
 		Ok(())
 	}
 
@@ -470,6 +483,7 @@ impl ConfigurationBridge {
 		self.update_configuration_from_wind(wind_config).await?;
 
 		dev_log!("config", "[ConfigurationBridge] Wind configuration change handled");
+
 		Ok(())
 	}
 
@@ -478,14 +492,17 @@ impl ConfigurationBridge {
 		dev_log!("config", "[ConfigurationBridge] Getting configuration status");
 
 		let mountain_config = self.get_mountain_configuration().await?;
+
 		let is_valid = !mountain_config.is_null();
 
 		let status = ConfigurationStatus {
 			is_valid,
+
 			last_sync:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
 				.as_millis() as u64,
+
 			configuration_keys:if let Some(obj) = mountain_config.as_object() {
 				obj.keys().map(|k| k.clone()).collect()
 			} else {
@@ -512,6 +529,7 @@ impl ConfigurationBridge {
 
 			if result.status.success() {
 				let output_str = String::from_utf8_lossy(&result.stdout);
+
 				if let Ok(json) = serde_json::from_str::<serde_json::Value>(&output_str) {
 					if let Some(serial) = json["SPHardwareDataType"][0]["serial_number"].as_str() {
 						return Ok(format!("mac-{}", serial));
@@ -534,9 +552,12 @@ impl ConfigurationBridge {
 
 			if result.status.success() {
 				let output_str = String::from_utf8_lossy(&result.stdout);
+
 				let lines:Vec<&str> = output_str.lines().collect();
+
 				if lines.len() > 1 {
 					let uuid = lines[1].trim();
+
 					if !uuid.is_empty() {
 						return Ok(format!("win-{}", uuid));
 					}
@@ -551,6 +572,7 @@ impl ConfigurationBridge {
 			// Try to read machine-id from /etc/machine-id
 			if let Ok(content) = fs::read_to_string("/etc/machine-id") {
 				let machine_id = content.trim();
+
 				if !machine_id.is_empty() {
 					return Ok(format!("linux-{}", machine_id));
 				}
@@ -559,6 +581,7 @@ impl ConfigurationBridge {
 			// Fallback to /var/lib/dbus/machine-id
 			if let Ok(content) = fs::read_to_string("/var/lib/dbus/machine-id") {
 				let machine_id = content.trim();
+
 				if !machine_id.is_empty() {
 					return Ok(format!("linux-{}", machine_id));
 				}
@@ -593,8 +616,11 @@ impl ConfigurationBridge {
 
 		// Create a hash-based session ID
 		let session_data = format!("{}:{}:{}", timestamp, random_part, process_id);
+
 		let mut hasher = sha2::Sha256::new();
+
 		hasher.update(session_data.as_bytes());
+
 		let result = hasher.finalize();
 
 		// Convert to hex string and take first 16 characters. sha2 0.11
@@ -602,9 +628,11 @@ impl ConfigurationBridge {
 		// (now `hybrid_array::Array`); `hex::encode` produces the same
 		// lowercase-hex string the old `format!("{:x}", …)` emitted.
 		let hex_string = hex::encode(result);
+
 		let session_id = hex_string.chars().take(16).collect::<String>();
 
 		dev_log!("config", "[ConfigurationBridge] Generated session ID: {}", session_id);
+
 		Ok(format!("session-{}", session_id))
 	}
 }
@@ -613,7 +641,9 @@ impl ConfigurationBridge {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ConfigurationStatus {
 	pub is_valid:bool,
+
 	pub last_sync:u64,
+
 	pub configuration_keys:Vec<String>,
 }
 
@@ -626,6 +656,7 @@ pub async fn mountain_get_wind_desktop_configuration(
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
+
 		bridge.get_wind_desktop_configuration().await
 	} else {
 		Err("ApplicationRunTime not found".to_string())
@@ -651,6 +682,7 @@ pub async fn get_configuration_data(app_handle:tauri::AppHandle) -> Result<serde
 		});
 
 		dev_log!("config", "[ConfigurationBridge] Configuration data retrieved successfully");
+
 		Ok(config_data)
 	} else {
 		Err("ApplicationRunTime not found".to_string())
@@ -669,6 +701,7 @@ pub async fn save_configuration_data(app_handle:tauri::AppHandle, config_data:se
 		bridge.update_mountain_configuration(config_data).await?;
 
 		dev_log!("config", "[ConfigurationBridge] Configuration data saved successfully");
+
 		Ok(())
 	} else {
 		Err("ApplicationRunTime not found".to_string())
@@ -679,12 +712,14 @@ pub async fn save_configuration_data(app_handle:tauri::AppHandle, config_data:se
 #[tauri::command]
 pub async fn mountain_update_configuration_from_wind(
 	app_handle:tauri::AppHandle,
+
 	config:serde_json::Value,
 ) -> Result<(), String> {
 	dev_log!("config", "[ConfigurationBridge] Tauri command: update_configuration_from_wind");
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
+
 		bridge.WindConfigurationChange(config).await
 	} else {
 		Err("ApplicationRunTime not found".to_string())
@@ -698,6 +733,7 @@ pub async fn mountain_synchronize_configuration(app_handle:tauri::AppHandle) -> 
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
+
 		bridge
 			.synchronize_configuration()
 			.await
@@ -714,6 +750,7 @@ pub async fn mountain_get_configuration_status(app_handle:tauri::AppHandle) -> R
 
 	if let Some(runtime) = app_handle.try_state::<Arc<ApplicationRunTime>>() {
 		let bridge = ConfigurationBridge::new(runtime.inner().clone());
+
 		bridge
 			.get_configuration_status()
 			.await

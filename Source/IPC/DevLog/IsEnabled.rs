@@ -49,18 +49,24 @@ pub(super) fn EnabledTags() -> &'static Vec<String> {
 
 pub fn Fn(Tag:&str) -> bool {
 	let Tags = EnabledTags();
+
 	if Tags.is_empty() {
 		return false;
 	}
+
 	let Lower = Tag.to_lowercase();
+
 	if Tags.iter().any(|T| T == Lower.as_str()) {
 		return true;
 	}
+
 	if Tags.iter().any(|T| T == "all") {
 		return true;
 	}
+
 	if Tags.iter().any(|T| T == "short") {
 		return !SHORT_MODE_MUTED_TAGS.iter().any(|Muted| *Muted == Lower.as_str());
 	}
+
 	false
 }

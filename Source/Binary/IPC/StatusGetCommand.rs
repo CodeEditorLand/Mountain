@@ -68,5 +68,6 @@ pub async fn MountainIPCGetStatus(app_handle:AppHandle) -> Result<Value, String>
 			dev_log!("ipc", "error: [IPC] [Command] Failed to get IPC status: {}", Error);
 			Error.to_string()
 		})?;
+
 	Ok(serde_json::to_value(Status).map_err(|e| e.to_string())?)
 }

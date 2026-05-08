@@ -11,7 +11,9 @@ use crate::{
 
 pub(super) async fn get_matching_provider(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	document_uri:&Url,
+
 	feature_type:ProviderType,
 ) -> Result<Option<ProviderRegistrationDTO>, CommonError> {
 	let providers = environment
@@ -21,6 +23,7 @@ pub(super) async fn get_matching_provider(
 		.LanguageProviders
 		.lock()
 		.map_err(MapApplicationStateLockErrorToCommonError)?;
+
 	let open_documents = environment
 		.ApplicationState
 		.Feature
@@ -62,6 +65,7 @@ pub(super) async fn get_matching_provider(
 		if Provider.ProviderType != feature_type {
 			continue;
 		}
+
 		// Selector shapes (all stored as JSON from CocoonService.RegisterProvider):
 		//   Canonical: [{ "language": "typescript" }]
 		//   Wildcard:  [{ "language": "*" }]
@@ -111,5 +115,6 @@ pub(super) async fn get_matching_provider(
 		LanguageId,
 		document_uri
 	);
+
 	Ok(None)
 }

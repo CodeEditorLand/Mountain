@@ -10,6 +10,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn OutputClear(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://output/clear", Parameter);
+
 	dev_log!(
 		"grpc",
 		"[Output] clear channel={}",

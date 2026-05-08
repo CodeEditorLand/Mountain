@@ -18,6 +18,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:GetConfigurationRequest,
 ) -> Result<Response<GetConfigurationResponse>, Status> {
 	let Key = if Request.section.is_empty() {
@@ -37,10 +38,13 @@ pub async fn Fn(
 	{
 		Ok(Value) => {
 			let Bytes = serde_json::to_vec(&Value).unwrap_or_default();
+
 			Ok(Response::new(GetConfigurationResponse { value:Bytes }))
 		},
+
 		Err(Error) => {
 			dev_log!("cocoon", "warn: [CocoonService] get_configuration failed: {}", Error);
+
 			Ok(Response::new(GetConfigurationResponse::default()))
 		},
 	}

@@ -67,8 +67,11 @@ impl Default for Registry {
 
 		Self {
 			CommandRegistry:Arc::new(StandardMutex::new(HashMap::new())),
+
 			NextProviderHandle:Arc::new(AtomicU32::new(1)),
+
 			ExtensionScanPaths:Arc::new(StandardMutex::new(Vec::new())),
+
 			EnabledProposedAPIs:Arc::new(StandardMutex::new(HashMap::new())),
 		}
 	}
@@ -87,6 +90,7 @@ impl Registry {
 	pub fn RegisterCommand(&self, name:String, handler:CommandHandler<Wry>) {
 		if let Ok(mut guard) = self.CommandRegistry.lock() {
 			guard.insert(name, handler);
+
 			dev_log!("extensions", "[ExtensionRegistry] Command registered");
 		}
 	}
@@ -95,6 +99,7 @@ impl Registry {
 	pub fn UnregisterCommand(&self, name:&str) {
 		if let Ok(mut guard) = self.CommandRegistry.lock() {
 			guard.remove(name);
+
 			dev_log!("extensions", "[ExtensionRegistry] Command unregistered: {}", name);
 		}
 	}
@@ -124,6 +129,7 @@ impl Registry {
 	pub fn AddExtensionScanPath(&self, path:PathBuf) {
 		if let Ok(mut guard) = self.ExtensionScanPaths.lock() {
 			guard.push(path.clone());
+
 			dev_log!("extensions", "[ExtensionRegistry] Extension scan path added: {:?}", path);
 		}
 	}
@@ -153,6 +159,7 @@ impl Registry {
 	pub fn EnableProposedAPI(&self, extension_id:String, api_name:String) {
 		if let Ok(mut guard) = self.EnabledProposedAPIs.lock() {
 			guard.entry(extension_id).or_insert_with(Vec::new).push(api_name);
+
 			dev_log!("extensions", "[ExtensionRegistry] Proposed API enabled");
 		}
 	}

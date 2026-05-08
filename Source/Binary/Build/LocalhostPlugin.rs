@@ -49,17 +49,29 @@ fn MimeFromUrl(Url:&str) -> Option<&'static str> {
 
 	match Extension.as_str() {
 		"js" | "mjs" | "cjs" => Some("application/javascript; charset=utf-8"),
+
 		"css" => Some("text/css; charset=utf-8"),
+
 		"json" | "map" => Some("application/json; charset=utf-8"),
+
 		"html" | "htm" => Some("text/html; charset=utf-8"),
+
 		"svg" => Some("image/svg+xml"),
+
 		"wasm" => Some("application/wasm"),
+
 		"txt" => Some("text/plain; charset=utf-8"),
+
 		"ttf" => Some("font/ttf"),
+
 		"otf" => Some("font/otf"),
+
 		"woff" => Some("font/woff"),
+
 		"woff2" => Some("font/woff2"),
+
 		"eot" => Some("application/vnd.ms-fontobject"),
+
 		_ => None,
 	}
 }
@@ -75,6 +87,7 @@ fn ProxyToOTLP(Body:&[u8]) -> bool {
 	};
 
 	let _ = Stream.set_write_timeout(Some(Duration::from_millis(500)));
+
 	let _ = Stream.set_read_timeout(Some(Duration::from_millis(500)));
 
 	let Request = format!(
@@ -87,12 +100,15 @@ fn ProxyToOTLP(Body:&[u8]) -> bool {
 	if Stream.write_all(Request.as_bytes()).is_err() {
 		return false;
 	}
+
 	if Stream.write_all(Body).is_err() {
 		return false;
 	}
 
 	let mut ResponseBuffer = [0u8; 32];
+
 	let _ = Stream.read(&mut ResponseBuffer);
+
 	// Check for "HTTP/1.1 2" - any 2xx status
 	ResponseBuffer.starts_with(b"HTTP/1.1 2") || ResponseBuffer.starts_with(b"HTTP/1.0 2")
 }
@@ -130,6 +146,7 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 		.map(std::path::PathBuf::from);
 
 	let LandExtensionsRoot = HomeDirectory.as_ref().map(|Home| Home.join(".land/extensions"));
+
 	let VSCodeExtensionsRoot = HomeDirectory.as_ref().map(|Home| Home.join(".vscode/extensions"));
 
 	// Bundle-resident built-ins. When the app is shipped as a `.app`,
@@ -145,32 +162,40 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 	let ExeParent = std::env::current_exe()
 		.ok()
 		.and_then(|Exe| Exe.parent().map(|P| P.to_path_buf()));
+
 	let BundleExtensionsRoot = ExeParent.as_ref().and_then(|Parent| {
 		let Candidate = Parent.join("../Resources/extensions");
 		Candidate.canonicalize().ok().or(Some(Candidate))
 	});
+
 	let BundleExtensionsAppRoot = ExeParent.as_ref().and_then(|Parent| {
 		let Candidate = Parent.join("../Resources/app/extensions");
 		Candidate.canonicalize().ok().or(Some(Candidate))
 	});
+
 	let RepoExtensionsRoot = ExeParent.as_ref().and_then(|Parent| {
 		let Candidate = Parent.join("../../../Sky/Target/Static/Application/extensions");
 		Candidate.canonicalize().ok().or(Some(Candidate))
 	});
 
 	let mut Builder = tauri_plugin_localhost::Builder::new(ServerPort);
+
 	if let Some(Root) = LandExtensionsRoot {
 		Builder = Builder.extension_root(Root);
 	}
+
 	if let Some(Root) = VSCodeExtensionsRoot {
 		Builder = Builder.extension_root(Root);
 	}
+
 	if let Some(Root) = BundleExtensionsRoot {
 		Builder = Builder.extension_root(Root);
 	}
+
 	if let Some(Root) = BundleExtensionsAppRoot {
 		Builder = Builder.extension_root(Root);
 	}
+
 	if let Some(Root) = RepoExtensionsRoot {
 		Builder = Builder.extension_root(Root);
 	}

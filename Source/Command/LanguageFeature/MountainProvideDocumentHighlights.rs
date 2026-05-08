@@ -11,7 +11,9 @@ use crate::{Command::LanguageFeature::Highlights, dev_log};
 #[command]
 pub async fn MountainProvideDocumentHighlights(
 	application_handle:AppHandle<Wry>,
+
 	uri:String,
+
 	position:Value,
 ) -> Result<Value, String> {
 	dev_log!(
@@ -20,5 +22,6 @@ pub async fn MountainProvideDocumentHighlights(
 		uri,
 		position
 	);
+
 	Highlights::provide_document_highlights_impl(application_handle, uri, position).await
 }

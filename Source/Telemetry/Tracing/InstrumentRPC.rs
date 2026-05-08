@@ -14,14 +14,20 @@ where
 	E: std::fmt::Display, {
 	let Span = tracing::span!(
 		tracing::Level::INFO,
+
 		"rpc_call",
+
 		service = %ServiceName,
+
 		method = %MethodName
 	);
+
 	let _Enter = Span.enter();
 
 	dev_log!("lifecycle", "RPC call started: {}.{}", ServiceName, MethodName);
+
 	let Start = std::time::Instant::now();
+
 	match Operation.await {
 		Ok(Result) => {
 			dev_log!(
@@ -31,8 +37,10 @@ where
 				MethodName,
 				Start.elapsed()
 			);
+
 			Ok(Result)
 		},
+
 		Err(Err) => {
 			dev_log!(
 				"lifecycle",
@@ -42,6 +50,7 @@ where
 				Start.elapsed(),
 				Err
 			);
+
 			Err(Err)
 		},
 	}

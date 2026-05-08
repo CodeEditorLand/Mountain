@@ -29,17 +29,24 @@ use async_trait::async_trait;
 
 // Private helper modules (not re-exported)
 mod Registration;
+
 mod DataAccess;
+
 mod UIState;
+
 mod Events;
+
 mod StatePersistence;
+
 mod Visibility;
 
 #[async_trait]
 impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvironment {
 	async fn RegisterTreeDataProvider(
 		&self,
+
 		view_identifier:String,
+
 		options:serde_json::Value,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		Registration::register_tree_data_provider(self, view_identifier, options).await
@@ -47,6 +54,7 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn UnregisterTreeDataProvider(
 		&self,
+
 		view_identifier:String,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		Registration::unregister_tree_data_provider(self, view_identifier).await
@@ -54,7 +62,9 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn GetChildren(
 		&self,
+
 		view_identifier:String,
+
 		element_handle:Option<String>,
 	) -> Result<Vec<serde_json::Value>, CommonLibrary::Error::CommonError::CommonError> {
 		DataAccess::get_children(self, view_identifier, element_handle).await
@@ -62,7 +72,9 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn GetTreeItem(
 		&self,
+
 		view_identifier:String,
+
 		element_handle:String,
 	) -> Result<serde_json::Value, CommonLibrary::Error::CommonError::CommonError> {
 		DataAccess::get_tree_item(self, view_identifier, element_handle).await
@@ -70,7 +82,9 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn SetTreeViewMessage(
 		&self,
+
 		view_identifier:String,
+
 		message:Option<String>,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		UIState::set_tree_view_message(self, view_identifier, message).await
@@ -78,8 +92,11 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn SetTreeViewTitle(
 		&self,
+
 		view_identifier:String,
+
 		title:Option<String>,
+
 		description:Option<String>,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		UIState::set_tree_view_title(self, view_identifier, title, description).await
@@ -87,7 +104,9 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn SetTreeViewBadge(
 		&self,
+
 		view_identifier:String,
+
 		badge:Option<serde_json::Value>,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		UIState::set_tree_view_badge(self, view_identifier, badge).await
@@ -95,8 +114,11 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn OnTreeNodeExpanded(
 		&self,
+
 		view_identifier:String,
+
 		element_handle:String,
+
 		is_expanded:bool,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		Events::on_tree_node_expanded(self, view_identifier, element_handle, is_expanded).await
@@ -104,7 +126,9 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn OnTreeSelectionChanged(
 		&self,
+
 		view_identifier:String,
+
 		selected_handles:Vec<String>,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		Events::on_tree_selection_changed(self, view_identifier, selected_handles).await
@@ -112,6 +136,7 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn PersistTreeViewState(
 		&self,
+
 		view_identifier:String,
 	) -> Result<serde_json::Value, CommonLibrary::Error::CommonError::CommonError> {
 		StatePersistence::persist_tree_view_state(self, view_identifier).await
@@ -119,7 +144,9 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn RestoreTreeViewState(
 		&self,
+
 		view_identifier:String,
+
 		state_value:serde_json::Value,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		StatePersistence::restore_tree_view_state(self, view_identifier, state_value).await
@@ -127,8 +154,11 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn RevealTreeItem(
 		&self,
+
 		view_identifier:String,
+
 		item_handle:String,
+
 		options:serde_json::Value,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		Visibility::reveal_tree_item(self, view_identifier, item_handle, options).await
@@ -136,7 +166,9 @@ impl TreeViewProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn RefreshTreeView(
 		&self,
+
 		view_identifier:String,
+
 		items_to_refresh:Option<serde_json::Value>,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		Visibility::refresh_tree_view(self, view_identifier, items_to_refresh).await

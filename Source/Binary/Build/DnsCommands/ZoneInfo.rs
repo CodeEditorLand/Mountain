@@ -11,7 +11,10 @@ use crate::Binary::Build::DnsCommands::ZoneRecord::ZoneRecord;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ZoneInfo {
 	pub origin:String,
+
 	pub record_count:usize,
+
 	pub records:Vec<ZoneRecord>,
+
 	pub has_dnssec:bool,
 }

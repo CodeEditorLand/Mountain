@@ -59,5 +59,6 @@ pub async fn MountainGetPerformanceStats(app_handle:AppHandle) -> Result<Value, 
 	let stats =
 		crate::IPC::AdvancedFeatures::mountain_get_performance_stats::mountain_get_performance_stats(app_handle)
 			.await?;
+
 	to_value(&stats).map_err(|e| format!("Failed to serialize performance stats: {}", e))
 }

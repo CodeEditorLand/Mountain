@@ -67,6 +67,7 @@ impl DocumentState {
 	pub fn AddOrUpdate(&self, uri:String, document:DocumentStateDTO) {
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
 			guard.insert(uri, document);
+
 			dev_log!("model", "[DocumentState] Document added/updated");
 		}
 	}
@@ -75,6 +76,7 @@ impl DocumentState {
 	pub fn Remove(&self, uri:&str) {
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
 			guard.remove(uri);
+
 			dev_log!("model", "[DocumentState] Document removed: {}", uri);
 		}
 	}
@@ -83,6 +85,7 @@ impl DocumentState {
 	pub fn Clear(&self) {
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
 			guard.clear();
+
 			dev_log!("model", "[DocumentState] All documents cleared");
 		}
 	}

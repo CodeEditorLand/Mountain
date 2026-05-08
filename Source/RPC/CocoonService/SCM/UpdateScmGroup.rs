@@ -39,17 +39,20 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateScmGroupRequest) -> Re
 		.as_bytes()
 		.iter()
 		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+
 	let GroupData = json!({
 		"groupId": Request.group_id,
 		"label": Request.group_id,
 		"resourceStates": ResourceStates,
 	});
+
 	if let Err(Error) = Service.environment.UpdateSourceControlGroup(ProviderHandle, GroupData).await {
 		dev_log!(
 			"cocoon",
 			"warn: [CocoonService] UpdateSourceControlGroup trait failed ({}); falling back to Sky emit",
 			Error
 		);
+
 		let _ = Service.environment.ApplicationHandle.emit(
 			"sky://scm/updateGroup",
 			json!({

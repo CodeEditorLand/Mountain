@@ -72,9 +72,12 @@ impl Struct {
 
 	pub fn Enable(&self, FlagName:&str, Reason:&str) -> Result<(), FeatureFlagError::Enum> {
 		let mut Flags = self.Flags.write();
+
 		if let Some(Flag) = Flags.get_mut(FlagName) {
 			Flag.Enabled = true;
+
 			Flag.Reason = Reason.to_string();
+
 			Ok(())
 		} else {
 			Err(FeatureFlagError::Enum::NotFound(FlagName.to_string()))
@@ -83,9 +86,12 @@ impl Struct {
 
 	pub fn Disable(&self, FlagName:&str, Reason:&str) -> Result<(), FeatureFlagError::Enum> {
 		let mut Flags = self.Flags.write();
+
 		if let Some(Flag) = Flags.get_mut(FlagName) {
 			Flag.Enabled = false;
+
 			Flag.Reason = Reason.to_string();
+
 			Ok(())
 		} else {
 			Err(FeatureFlagError::Enum::NotFound(FlagName.to_string()))

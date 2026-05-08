@@ -95,8 +95,10 @@ use serde::{Deserialize, Serialize};
 pub struct EncryptedMessage {
 	/// Unique nonce for GCM (12 bytes)
 	pub nonce:Vec<u8>,
+
 	/// Ciphertext with authentication tag appended
 	pub ciphertext:Vec<u8>,
+
 	/// HMAC-SHA256 signature for integrity verification
 	pub hmac_tag:Vec<u8>,
 }
@@ -111,6 +113,7 @@ impl EncryptedMessage {
 
 		// Ensure ciphertext exists and has at least tag
 		const TAG_LEN:usize = 16;
+
 		if self.ciphertext.len() < TAG_LEN {
 			return Err(format!("Ciphertext too short: {} (must include tag)", self.ciphertext.len()));
 		}
@@ -132,6 +135,7 @@ impl EncryptedMessage {
 pub struct SecureMessageChannel {
 	/// AES-GCM encryption key
 	encryption_key:aead::LessSafeKey,
+
 	/// HMAC-SHA256 key
 	hmac_key:Vec<u8>,
 }
@@ -147,7 +151,9 @@ impl SecureMessageChannel {
 	/// - 256-bit keys for both encryption and HMAC
 	pub fn new() -> Result<Self, String> {
 		let rng = SystemRandom::new();
+
 		let mut encryption_key_bytes = vec![0u8; 32];
+
 		let mut hmac_key = vec![0u8; 32];
 
 		// Generate encryption key
@@ -182,6 +188,7 @@ impl SecureMessageChannel {
 				encryption_key_bytes.len()
 			));
 		}
+
 		if hmac_key.len() != 32 {
 			return Err(format!("Invalid HMAC key length: {} (expected 32)", hmac_key.len()));
 		}
@@ -211,18 +218,21 @@ impl SecureMessageChannel {
 
 		// Generate unique nonce (12 bytes for GCM)
 		let mut nonce = [0u8; 12];
+
 		SystemRandom::new()
 			.fill(&mut nonce)
 			.map_err(|e| format!("Failed to generate nonce: {}", e))?;
 
 		// Encrypt with AES-256-GCM
 		let mut in_out = serialized_message.clone();
+
 		self.encryption_key
 			.seal_in_place_append_tag(aead::Nonce::assume_unique_for_key(nonce), aead::Aad::empty(), &mut in_out)
 			.map_err(|e| format!("Encryption failed: {}", e))?;
 
 		// Create HMAC for integrity verification
 		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
+
 		let hmac_tag = hmac::sign(&hmac_key, &in_out);
 
 		Ok(EncryptedMessage { nonce:nonce.to_vec(), ciphertext:in_out, hmac_tag:hmac_tag.as_ref().to_vec() })
@@ -246,11 +256,13 @@ impl SecureMessageChannel {
 
 		// Verify HMAC first (fast-fail)
 		let hmac_key = hmac::Key::new(hmac::HMAC_SHA256, &self.hmac_key);
+
 		hmac::verify(&hmac_key, &Encrypted.ciphertext, &Encrypted.hmac_tag)
 			.map_err(|_| "HMAC verification failed - message may be tampered".to_string())?;
 
 		// Decrypt with AES-256-GCM
 		let mut in_out = Encrypted.ciphertext.clone();
+
 		let nonce_slice:&[u8] = &Encrypted.nonce;
 
 		let nonce_array:[u8; 12] = nonce_slice
@@ -265,7 +277,9 @@ impl SecureMessageChannel {
 
 		// Remove authentication tag
 		const TAG_LEN:usize = 16;
+
 		let plaintext_len = in_out.len() - TAG_LEN;
+
 		in_out.truncate(plaintext_len);
 
 		// Deserialize message
@@ -297,7 +311,9 @@ impl SecureMessageChannel {
 	pub fn get_key_identifier(&self) -> String {
 		// Create a simple identifier from HMAC key (not the key itself)
 		use ring::digest;
+
 		let digest = digest::digest(&digest::SHA256, &self.hmac_key);
+
 		general_purpose::STANDARD.encode(digest.as_ref())[..32].to_string()
 	}
 }
@@ -307,6 +323,7 @@ use super::super::Define::DefineMessage::TauriIPCMessage;
 
 #[cfg(test)]
 mod tests {
+
 	use serde_json::json;
 
 	use super::*;
@@ -315,41 +332,52 @@ mod tests {
 	fn test_encrypted_message_validation() {
 		// Valid message
 		let valid = EncryptedMessage { nonce:vec![0u8; 12], ciphertext:vec![0u8; 32], hmac_tag:vec![0u8; 32] };
+
 		assert!(valid.validate().is_ok());
 
 		// Invalid nonce length
 		let invalid_nonce = EncryptedMessage { nonce:vec![0u8; 11], ciphertext:vec![0u8; 32], hmac_tag:vec![0u8; 32] };
+
 		assert!(invalid_nonce.validate().is_err());
 
 		// Too short ciphertext
 		let too_short = EncryptedMessage { nonce:vec![0u8; 12], ciphertext:vec![0u8; 15], hmac_tag:vec![0u8; 32] };
+
 		assert!(too_short.validate().is_err());
 	}
 
 	#[test]
 	fn test_encrypt_decrypt() {
 		let channel = SecureMessageChannel::new().expect("Failed to create channel");
+
 		let message = TauriIPCMessage::new("test-channel", json!({"secret": "data"}), Some("sender".to_string()));
 
 		let encrypted = channel.encrypt_message(&message).expect("Encryption failed");
+
 		assert!(encrypted.validate().is_ok());
 
 		let decrypted = channel.decrypt_message(&encrypted).expect("Decryption failed");
+
 		assert_eq!(decrypted.channel, "test-channel");
+
 		assert_eq!(decrypted.data, json!({"secret": "data"}));
+
 		assert_eq!(decrypted.sender, Some("sender".to_string()));
 	}
 
 	#[test]
 	fn test_key_rotation() {
 		let mut channel = SecureMessageChannel::new().expect("Failed to create channel");
+
 		let message = TauriIPCMessage::new("test", json!({}), None);
 
 		let encrypted_before = channel.encrypt_message(&message).unwrap();
+
 		channel.rotate_keys().expect("Rotation failed");
 
 		// Old encrypted message should still decrypt (GCM with correct nonce works)
 		let decrypted_after_rotation = channel.decrypt_message(&encrypted_before);
+
 		// This will fail because we generated a new key - new key cannot decrypt old
 		// messages That's expected behavior - key rotation means old messages become
 		// undecryptable by design
@@ -357,7 +385,9 @@ mod tests {
 
 		// New messages work with new key
 		let encrypted_after = channel.encrypt_message(&message).unwrap();
+
 		let decrypted = channel.decrypt_message(&encrypted_after).unwrap();
+
 		assert_eq!(decrypted.channel, "test");
 	}
 }

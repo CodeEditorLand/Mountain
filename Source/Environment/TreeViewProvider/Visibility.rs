@@ -11,8 +11,11 @@ use crate::dev_log;
 /// Reveals a specific item in the tree view by notifying the UI.
 pub(super) async fn reveal_tree_item(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	item_handle:String,
+
 	options:serde_json::Value,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -33,7 +36,9 @@ pub(super) async fn reveal_tree_item(
 /// Refreshes the tree view by notifying the UI.
 pub(super) async fn refresh_tree_view(
 	env:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
 	view_identifier:String,
+
 	items_to_refresh:Option<serde_json::Value>,
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[TreeViewProvider] Refreshing view '{}'", view_identifier);

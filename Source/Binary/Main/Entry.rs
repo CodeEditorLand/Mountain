@@ -117,7 +117,9 @@ use super::AppLifecycle::AppLifecycleSetup;
 
 /// Logs a checkpoint message at TRACE level.
 macro_rules! TraceStep {
+
 	($($arg:tt)*) => {{
+
 		dev_log!("lifecycle", $($arg)*);
 	}};
 }
@@ -174,14 +176,19 @@ pub fn Fn() {
 			let Ok(Content) = std::fs::read_to_string(Path) else {
 				return false;
 			};
+
 			for Line in Content.lines() {
 				let Trimmed = Line.trim();
+
 				if Trimmed.is_empty() || Trimmed.starts_with('#') {
 					continue;
 				}
+
 				if let Some((Key, Value)) = Trimmed.split_once('=') {
 					let CleanKey = Key.trim();
+
 					let CleanValue = Value.trim().trim_matches('"').trim_matches('\'');
+
 					if std::env::var_os(CleanKey).is_none() {
 						// SAFETY: set_var is called once per key during bootstrap
 						// before any threads read env (Tokio runtime starts later
@@ -190,37 +197,49 @@ pub fn Fn() {
 					}
 				}
 			}
+
 			true
 		}
 
 		let mut Candidates:Vec<std::path::PathBuf> = Vec::new();
+
 		if let Ok(Cwd) = std::env::current_dir() {
 			Candidates.push(Cwd.join(".env.Land"));
+
 			if let Some(Parent) = Cwd.parent() {
 				Candidates.push(Parent.join(".env.Land"));
 			}
+
 			Candidates.push(Cwd.join(".env.Land.Sample"));
+
 			if let Some(Parent) = Cwd.parent() {
 				Candidates.push(Parent.join(".env.Land.Sample"));
 			}
 		}
+
 		// Repo-layout probe: Target/debug/<bin> → four hops up lands at Land/.
 		if let Ok(Exe) = std::env::current_exe() {
 			let Ancestors:Vec<&std::path::Path> = Exe.ancestors().collect();
+
 			for Candidate in Ancestors.iter().take(6) {
 				Candidates.push(Candidate.join(".env.Land"));
+
 				Candidates.push(Candidate.join(".env.Land.Sample"));
 			}
 		}
 
 		let mut Loaded = false;
+
 		for Candidate in Candidates {
 			if Candidate.exists() && LoadEnvFile(&Candidate) {
 				crate::dev_log!("lifecycle", "[Boot] [Env] Loaded env from {}", Candidate.display());
+
 				Loaded = true;
+
 				break;
 			}
 		}
+
 		if !Loaded {
 			crate::dev_log!(
 				"lifecycle",
@@ -621,59 +640,111 @@ pub fn Fn() {
 			.plugin(tauri_plugin_fs::init())
 			.invoke_handler(tauri::generate_handler![
 				crate::Binary::Tray::SwitchTrayIcon::SwitchTrayIcon,
+
 				crate::Binary::IPC::WorkbenchConfigurationCommand::MountainGetWorkbenchConfiguration,
+
 				Command::TreeView::GetTreeViewChildren::GetTreeViewChildren,
+
 				Command::LanguageFeature::MountainProvideHover::MountainProvideHover,
+
 				Command::LanguageFeature::MountainProvideCompletions::MountainProvideCompletions,
+
 				Command::LanguageFeature::MountainProvideDefinition::MountainProvideDefinition,
+
 				Command::LanguageFeature::MountainProvideReferences::MountainProvideReferences,
+
 				Command::SourceControlManagement::GetAllSourceControlManagementState::GetAllSourceControlManagementState,
+
 				Command::Keybinding::GetResolvedKeybinding::GetResolvedKeybinding,
+
 				Track::FrontendCommand::DispatchFrontendCommand::DispatchFrontendCommand,
+
 				Track::UIRequest::ResolveUIRequest::ResolveUIRequest,
+
 				Track::Webview::MountainWebviewPostMessageFromGuest::MountainWebviewPostMessageFromGuest,
+
 				crate::Binary::IPC::MessageReceiveCommand::MountainIPCReceiveMessage,
+
 				crate::Binary::IPC::StatusGetCommand::MountainIPCGetStatus,
+
 				crate::Binary::IPC::InvokeCommand::MountainIPCInvoke,
+
 				crate::Binary::IPC::WindConfigurationCommand::MountainGetWindDesktopConfiguration,
+
 				crate::Binary::IPC::ConfigurationUpdateCommand::MountainUpdateConfigurationFromWind,
+
 				crate::Binary::IPC::ConfigurationSyncCommand::MountainSynchronizeConfiguration,
+
 				crate::Binary::IPC::ConfigurationStatusCommand::MountainGetConfigurationStatus,
+
 				crate::Binary::IPC::IPCStatusCommand::MountainGetIPCStatus,
+
 				crate::Binary::IPC::IPCStatusHistoryCommand::MountainGetIPCStatusHistory,
+
 				crate::Binary::IPC::IPCStatusReportingStartCommand::MountainStartIPCStatusReporting,
+
 				crate::Binary::IPC::PerformanceStatsCommand::MountainGetPerformanceStats,
+
 				crate::Binary::IPC::CacheStatsCommand::MountainGetCacheStats,
+
 				crate::Binary::IPC::CollaborationSessionCommand::MountainCreateCollaborationSession,
+
 				crate::Binary::IPC::CollaborationSessionCommand::MountainGetCollaborationSessions,
+
 				crate::Binary::IPC::DocumentSyncCommand::MountainAddDocumentForSync,
+
 				crate::Binary::IPC::DocumentSyncCommand::MountainGetSyncStatus,
+
 				crate::Binary::IPC::UpdateSubscriptionCommand::MountainSubscribeToUpdates,
+
 				crate::Binary::IPC::ConfigurationDataCommand::GetConfigurationData,
+
 				crate::Binary::IPC::ConfigurationDataCommand::SaveConfigurationData,
+
 				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceOpenFolder,
+
 				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceListFolders,
+
 				crate::Binary::IPC::WorkspaceFolderCommand::MountainWorkspaceCloseAllFolders,
+
 				crate::Binary::Build::DnsCommands::dns_get_server_info::dns_get_server_info,
+
 				crate::Binary::Build::DnsCommands::dns_get_zone_info::dns_get_zone_info,
+
 				crate::Binary::Build::DnsCommands::dns_get_forward_allowlist::dns_get_forward_allowlist,
+
 				crate::Binary::Build::DnsCommands::dns_get_health_status::dns_get_health_status,
+
 				crate::Binary::Build::DnsCommands::dns_resolve::dns_resolve,
+
 				crate::Binary::Build::DnsCommands::dns_test_resolution::dns_test_resolution,
+
 				crate::Binary::Build::DnsCommands::dns_health_check::dns_health_check,
+
 				// Process commands (direct Tauri invoke from ProcessPolyfill)
 				crate::Binary::IPC::ProcessCommand::process_get_exec_path::process_get_exec_path,
+
 				crate::Binary::IPC::ProcessCommand::process_get_platform::process_get_platform,
+
 				crate::Binary::IPC::ProcessCommand::process_get_arch::process_get_arch,
+
 				crate::Binary::IPC::ProcessCommand::process_get_pid::process_get_pid,
+
 				crate::Binary::IPC::ProcessCommand::process_get_shell_env::process_get_shell_env,
+
 				crate::Binary::IPC::ProcessCommand::process_get_memory_info::process_get_memory_info,
+
 				// Health check commands (direct Tauri invoke from SharedProcessProxy)
 				crate::Binary::IPC::HealthCommand::cocoon_extension_host_health::cocoon_extension_host_health,
+
 				crate::Binary::IPC::HealthCommand::cocoon_search_service_health::cocoon_search_service_health,
+
 				crate::Binary::IPC::HealthCommand::cocoon_debug_service_health::cocoon_debug_service_health,
+
 				crate::Binary::IPC::HealthCommand::shared_process_service_health::shared_process_service_health,
+
 				crate::Binary::IPC::RenderDevLogCommand::RenderDevLog,
+
 				// LAND-PATCH B7-S6 P14.5: Vine notification broadcast
 				// subscription. `vine_subscribe_notifications` opens a
 				// Tauri Channel that drains the process-wide
@@ -683,6 +754,7 @@ pub fn Fn() {
 				// is a diagnostic for verifying registrations didn't
 				// leak across reloads.
 				crate::Binary::IPC::VineSubscribeCommand::vine_subscribe_notifications,
+
 				crate::Binary::IPC::VineSubscribeCommand::vine_subscriber_count,
 			])
 			.build(tauri::generate_context!())

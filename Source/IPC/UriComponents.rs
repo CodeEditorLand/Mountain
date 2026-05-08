@@ -19,7 +19,11 @@
 //!   bag.
 
 pub mod FromFilePath;
+
 pub mod FromUrl;
+
 pub mod MID_URI;
+
 pub mod Normalize;
+
 pub mod StampMidUri;

@@ -5,6 +5,9 @@
 //! struct. Callers spell the full sub-path.
 
 pub mod ExtensionRegistry;
+
 pub mod ProviderRegistration;
+
 pub mod ScannedExtensions;
+
 pub mod State;

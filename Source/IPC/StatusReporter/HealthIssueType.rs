@@ -8,9 +8,14 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Enum {
 	HighLatency,
+
 	MemoryPressure,
+
 	ConnectionLoss,
+
 	QueueOverflow,
+
 	SecurityViolation,
+
 	PerformanceDegradation,
 }

@@ -102,17 +102,29 @@ impl Default for State {
 
 		Self {
 			Debug:Default::default(),
+
 			Decorations:Default::default(),
+
 			Diagnostics:Default::default(),
+
 			Documents:Default::default(),
+
 			Keybindings:Default::default(),
+
 			Lifecycle:Default::default(),
+
 			Markers:Default::default(),
+
 			NavigationHistory:Default::default(),
+
 			OutputChannels:Default::default(),
+
 			Terminals:Default::default(),
+
 			TreeViews:Default::default(),
+
 			Webviews:Default::default(),
+
 			WorkingCopy:Default::default(),
 		}
 	}

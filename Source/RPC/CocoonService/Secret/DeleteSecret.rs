@@ -16,6 +16,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:DeleteSecretRequest) -> Resu
 
 	match Service.environment.DeleteSecret(String::new(), Request.key.clone()).await {
 		Ok(()) => Ok(Response::new(Empty {})),
+
 		Err(Error) => {
 			dev_log!(
 				"cocoon",
@@ -23,6 +24,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:DeleteSecretRequest) -> Resu
 				Request.key,
 				Error
 			);
+
 			Err(Status::internal(format!("delete_secret: {}", Error)))
 		},
 	}

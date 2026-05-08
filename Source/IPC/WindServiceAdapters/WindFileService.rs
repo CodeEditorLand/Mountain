@@ -13,6 +13,7 @@ use serde_json::json;
 
 pub struct Struct {
 	pub(super) reader:Arc<dyn FileSystemReader>,
+
 	pub(super) writer:Arc<dyn FileSystemWriter>,
 }
 
@@ -36,6 +37,7 @@ impl Struct {
 			.StatFile(&PathBuf::from(path))
 			.await
 			.map_err(|e:CommonError| e.to_string())?;
+
 		Ok(json!(stat_dto))
 	}
 }

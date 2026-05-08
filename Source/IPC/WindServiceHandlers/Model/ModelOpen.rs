@@ -69,16 +69,24 @@ pub async fn ModelOpen(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) ->
 
 	if let Ok(ParsedUri) = url::Url::parse(&Uri) {
 		let Lines:Vec<String> = Content.lines().map(|L| L.to_owned()).collect();
+
 		let Eol = if Content.contains("\r\n") { "\r\n" } else { "\n" }.to_owned();
 
 		let Document = DocumentStateDTO {
 			URI:ParsedUri,
+
 			LanguageIdentifier:LanguageId.clone(),
+
 			Version,
+
 			Lines,
+
 			EOL:Eol,
+
 			IsDirty:false,
+
 			Encoding:"utf-8".to_owned(),
+
 			VersionIdentifier:Version,
 		};
 

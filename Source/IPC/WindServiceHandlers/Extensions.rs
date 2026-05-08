@@ -20,6 +20,9 @@
 //!   predicate; TODO: consult Cocoon's activation table for a real answer.
 
 pub mod ExtensionsGet;
+
 pub mod ExtensionsGetAll;
+
 pub mod ExtensionsGetInstalled;
+
 pub mod ExtensionsIsActive;

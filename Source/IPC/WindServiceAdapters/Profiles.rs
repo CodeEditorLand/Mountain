@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub all:Vec<serde_json::Value>,
+
 	pub home:String,
+
 	pub profile:serde_json::Value,
 }

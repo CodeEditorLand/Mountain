@@ -31,10 +31,17 @@
 //! tree-item validation are deferred.
 
 pub mod GetTreeViewChildren;
+
 pub mod GetTreeViewItem;
+
 pub mod OnTreeViewExpansionChanged;
+
 pub mod OnTreeViewSelectionChanged;
+
 pub mod PersistTreeView;
+
 pub mod RefreshTreeView;
+
 pub mod RestoreTreeView;
+
 pub mod RevealTreeViewItem;

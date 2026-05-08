@@ -19,5 +19,6 @@ pub async fn StorageKeys(RunTime:Arc<ApplicationRunTime>) -> Result<Value, Strin
 		.map_err(|Error| format!("storage:keys failed: {}", Error))?;
 
 	let Keys:Vec<String> = Storage.as_object().map(|O| O.keys().cloned().collect()).unwrap_or_default();
+
 	Ok(json!(Keys))
 }

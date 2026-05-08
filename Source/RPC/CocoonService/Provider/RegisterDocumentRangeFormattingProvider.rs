@@ -18,11 +18,13 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterProviderRequest) -> 
 		Request.language_selector,
 		Request.handle
 	);
+
 	Service.RegisterProvider(
 		Request.handle,
 		ProviderType::DocumentRangeFormatting,
 		&Request.language_selector,
 		&Request.extension_id,
 	);
+
 	Ok(Response::new(Empty {}))
 }

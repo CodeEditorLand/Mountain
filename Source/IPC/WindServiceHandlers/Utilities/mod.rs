@@ -10,9 +10,15 @@
 //! `Utilities::<Domain>::<Function>`.
 
 pub mod ApplicationRoot;
+
 pub mod ChannelPriority;
+
 pub mod JsonValueHelpers;
+
 pub mod MetadataEncoding;
+
 pub mod PathExtraction;
+
 pub mod RecentlyOpened;
+
 pub mod UserdataDir;

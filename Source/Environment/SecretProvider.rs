@@ -401,7 +401,9 @@ impl SecretProvider for MountainEnvironment {
 #[cfg(feature = "AirIntegration")]
 async fn GetSecretFromAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
+
 	ExtensionIdentifier:String,
+
 	Key:String,
 ) -> Result<Option<String>, CommonError> {
 	dev_log!(
@@ -426,8 +428,11 @@ async fn GetSecretFromAir(
 #[cfg(feature = "AirIntegration")]
 async fn StoreSecretToAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
+
 	ExtensionIdentifier:String,
+
 	Key:String,
+
 	_Value:String,
 ) -> Result<(), CommonError> {
 	dev_log!(
@@ -452,7 +457,9 @@ async fn StoreSecretToAir(
 #[cfg(feature = "AirIntegration")]
 async fn DeleteSecretFromAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
+
 	ExtensionIdentifier:String,
+
 	Key:String,
 ) -> Result<(), CommonError> {
 	dev_log!(

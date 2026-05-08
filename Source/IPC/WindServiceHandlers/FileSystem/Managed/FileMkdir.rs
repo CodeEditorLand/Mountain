@@ -31,5 +31,6 @@ pub async fn FileMkdir(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) ->
 		.map_err(|e:CommonError| format!("Failed to create directory: {}", e))?;
 
 	dev_log!("vfs-verbose", "mkdir: {} (recursive: {})", path, recursive);
+
 	Ok(Value::Null)
 }

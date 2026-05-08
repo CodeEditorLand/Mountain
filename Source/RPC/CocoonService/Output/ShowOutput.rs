@@ -17,5 +17,6 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:ShowOutputRequest) -> Result
 		.environment
 		.ApplicationHandle
 		.emit("sky://output/show", json!({ "channel": Request.channel_id }));
+
 	Ok(Response::new(Empty {}))
 }

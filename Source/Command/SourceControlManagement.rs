@@ -31,9 +31,15 @@
 //! deferred.
 
 pub mod CheckoutSCMBranch;
+
 pub mod ExecuteSCMCommand;
+
 pub mod GetAllSourceControlManagementState;
+
 pub mod GetSCMBranches;
+
 pub mod GetSCMCommitHistory;
+
 pub mod GetSCMResourceChanges;
+
 pub mod StageSCMResource;

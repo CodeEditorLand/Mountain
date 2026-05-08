@@ -27,6 +27,7 @@ pub fn Fn() -> Result<(), Box<dyn std::error::Error>> {
 		.init();
 
 	dev_log!("lifecycle", "OpenTelemetry tracing initialized");
+
 	Ok(())
 }
 

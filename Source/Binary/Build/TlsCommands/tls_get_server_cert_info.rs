@@ -15,6 +15,7 @@ use crate::{
 #[tauri::command]
 pub async fn tls_get_server_cert_info(
 	app_handle:AppHandle,
+
 	hostname:String,
 ) -> Result<Option<CertificateInfo>, String> {
 	dev_log!("security", "getting server cert info for {}", hostname);
@@ -22,8 +23,10 @@ pub async fn tls_get_server_cert_info(
 	let state = app_handle
 		.try_state::<Arc<Mutex<CertificateManager>>>()
 		.ok_or("Certificate manager not found")?;
+
 	let cert_manager = state.clone();
 
 	let manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
+
 	Ok(manager.get_server_cert_info(&hostname))
 }

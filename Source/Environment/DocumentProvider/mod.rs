@@ -26,16 +26,22 @@ use async_trait::async_trait;
 
 // Private helper modules (not re-exported)
 mod OpenDocument;
+
 mod SaveOperations;
+
 mod ApplyChanges;
+
 mod Notifications;
 
 #[async_trait]
 impl DocumentProvider for crate::Environment::MountainEnvironment::MountainEnvironment {
 	async fn OpenDocument(
 		&self,
+
 		URIComponentsDTO:serde_json::Value,
+
 		LanguageIdentifier:Option<String>,
+
 		Content:Option<String>,
 	) -> Result<url::Url, CommonLibrary::Error::CommonError::CommonError> {
 		OpenDocument::open_document(self, URIComponentsDTO, LanguageIdentifier, Content).await
@@ -47,7 +53,9 @@ impl DocumentProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn SaveDocumentAs(
 		&self,
+
 		OriginalURI:url::Url,
+
 		NewTargetURI:Option<url::Url>,
 	) -> Result<Option<url::Url>, CommonLibrary::Error::CommonError::CommonError> {
 		SaveOperations::save_document_as(self, OriginalURI, NewTargetURI).await
@@ -55,6 +63,7 @@ impl DocumentProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn SaveAllDocuments(
 		&self,
+
 		IncludeUntitled:bool,
 	) -> Result<Vec<bool>, CommonLibrary::Error::CommonError::CommonError> {
 		SaveOperations::save_all_documents(self, IncludeUntitled).await
@@ -62,11 +71,17 @@ impl DocumentProvider for crate::Environment::MountainEnvironment::MountainEnvir
 
 	async fn ApplyDocumentChanges(
 		&self,
+
 		URI:url::Url,
+
 		NewVersionIdentifier:i64,
+
 		ChangesDTOCollection:serde_json::Value,
+
 		_IsDirtyAfterChange:bool,
+
 		_IsUndoing:bool,
+
 		_IsRedoing:bool,
 	) -> Result<(), CommonLibrary::Error::CommonError::CommonError> {
 		ApplyChanges::apply_document_changes(

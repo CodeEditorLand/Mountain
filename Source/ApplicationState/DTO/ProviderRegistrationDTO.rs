@@ -61,9 +61,13 @@ impl ProviderRegistrationDTO {
 	/// Result containing the DTO or validation error
 	pub fn New(
 		Handle:u32,
+
 		ProviderType:ProviderType,
+
 		Selector:Value,
+
 		SideCarIdentifier:String,
+
 		ExtensionIdentifier:Value,
 	) -> Result<Self, String> {
 		// Validate sidecar identifier length
@@ -108,6 +112,7 @@ impl ProviderRegistrationDTO {
 					.any(|Lang| Lang.as_str().map_or(false, |L| L == LanguageIdentifier));
 			}
 		}
+
 		false
 	}
 }

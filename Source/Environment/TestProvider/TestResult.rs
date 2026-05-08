@@ -11,9 +11,14 @@ use crate::Environment::TestProvider::TestRunStatus;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub TestIdentifier:String,
+
 	pub FullName:String,
+
 	pub Status:TestRunStatus::Enum,
+
 	pub DurationMs:Option<u64>,
+
 	pub ErrorMessage:Option<String>,
+
 	pub StackTrace:Option<String>,
 }

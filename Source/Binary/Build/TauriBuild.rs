@@ -24,6 +24,7 @@ pub fn TauriBuild() -> tauri::Builder<Wry> {
 	#[cfg(any(windows, target_os = "linux"))]
 	{
 		let Builder = Builder.any_thread();
+
 		return Builder;
 	}
 

@@ -21,7 +21,9 @@ use crate::dev_log;
 /// parent module.
 pub(super) async fn provide_definition_impl(
 	application_handle:AppHandle<Wry>,
+
 	uri:String,
+
 	position:Value,
 ) -> Result<Value, String> {
 	dev_log!(

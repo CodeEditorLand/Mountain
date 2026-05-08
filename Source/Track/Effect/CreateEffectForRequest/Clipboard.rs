@@ -12,6 +12,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"Clipboard.Read" => {
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let result = tokio::task::spawn_blocking(|| -> Result<String, String> {
 							let mut Clipboard = arboard::Clipboard::new().map_err(|e| e.to_string())?;
@@ -32,12 +33,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						}
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 
 		"Clipboard.Write" => {
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let text =
 							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
@@ -55,6 +58,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						})
 					})
 				};
+
 			Some(Ok(Box::new(effect)))
 		},
 

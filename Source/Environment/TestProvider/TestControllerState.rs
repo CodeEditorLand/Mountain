@@ -10,8 +10,12 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub ControllerIdentifier:String,
+
 	pub Label:String,
+
 	pub SideCarIdentifier:Option<String>,
+
 	pub IsActive:bool,
+
 	pub SupportedTestTypes:Vec<String>,
 }

@@ -11,6 +11,8 @@ pub fn Fn(SideCarIdentifier:&str) -> bool {
 	if IsShuttingDown::Fn() {
 		return false;
 	}
+
 	let Pool = SIDECAR_CLIENTS.lock();
+
 	Pool.contains_key(SideCarIdentifier)
 }

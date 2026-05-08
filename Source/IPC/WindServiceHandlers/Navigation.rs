@@ -20,12 +20,21 @@
 //!   `LabelGetBase::LabelGetBase`.
 
 pub mod HistoryCanGoBack;
+
 pub mod HistoryCanGoForward;
+
 pub mod HistoryClear;
+
 pub mod HistoryGetStack;
+
 pub mod HistoryGoBack;
+
 pub mod HistoryGoForward;
+
 pub mod HistoryPush;
+
 pub mod LabelGetBase;
+
 pub mod LabelGetURI;
+
 pub mod LabelGetWorkspace;

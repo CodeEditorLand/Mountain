@@ -17,5 +17,6 @@ pub async fn ModelClose(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -
 		.ok_or("model:close requires uri".to_string())?;
 
 	RunTime.Environment.ApplicationState.Feature.Documents.Remove(Uri);
+
 	Ok(Value::Null)
 }

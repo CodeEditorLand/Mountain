@@ -18,6 +18,7 @@ pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 			"[MementoLoader] Memento file does not exist: {}",
 			StorageFilePath.display()
 		);
+
 		return HashMap::new();
 	}
 
@@ -34,6 +35,7 @@ pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 				HashMap::new()
 			})
 		},
+
 		Err(Error) => {
 			dev_log!(
 				"storage",
@@ -41,6 +43,7 @@ pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 				StorageFilePath.display(),
 				Error
 			);
+
 			if let Some(Parent) = StorageFilePath.parent()
 				&& !Parent.exists()
 				&& let Err(DirError) = fs::create_dir_all(Parent)
@@ -52,6 +55,7 @@ pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 					DirError
 				);
 			}
+
 			HashMap::new()
 		},
 	}

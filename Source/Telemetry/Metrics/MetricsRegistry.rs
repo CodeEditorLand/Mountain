@@ -13,6 +13,7 @@ use crate::Telemetry::Metrics::{Metric, MetricValue};
 #[derive(Debug)]
 pub struct Struct {
 	Metrics:Arc<RwLock<Vec<Metric::Struct>>>,
+
 	MaxEntries:usize,
 }
 
@@ -50,9 +51,11 @@ impl Struct {
 
 	fn Push(&self, Item:Metric::Struct) {
 		let mut Metrics = self.Metrics.write();
+
 		if Metrics.len() >= self.MaxEntries {
 			Metrics.remove(0);
 		}
+
 		Metrics.push(Item);
 	}
 

@@ -96,10 +96,13 @@ use serde::{Deserialize, Serialize};
 pub struct TauriIPCMessage {
 	/// Channel name for message routing (e.g., "configuration", "file-system")
 	pub channel:String,
+
 	/// Message payload in JSON format
 	pub data:serde_json::Value,
+
 	/// Optional sender identifier for source tracking
 	pub sender:Option<String>,
+
 	/// Unix timestamp in milliseconds for ordering and replay prevention
 	pub timestamp:u64,
 }
@@ -117,8 +120,11 @@ impl TauriIPCMessage {
 	pub fn new(channel:impl Into<String>, data:serde_json::Value, sender:Option<String>) -> Self {
 		Self {
 			channel:channel.into(),
+
 			data,
+
 			sender,
+
 			timestamp:std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -154,6 +160,7 @@ impl TauriIPCMessage {
 		// Maximum allowed clock skew: messages may be at most 5 seconds in the future
 		// to account for minor clock desynchronization between Wind and Mountain.
 		const MAX_FUTURE_MS:u64 = 5_000;
+
 		// Maximum message age: reject messages older than 1 hour to prevent
 		// replay attacks using captured old messages.
 		const MAX_AGE_MS:u64 = 3600_000;

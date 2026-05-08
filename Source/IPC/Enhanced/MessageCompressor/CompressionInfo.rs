@@ -9,7 +9,9 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub algorithm:String,
+
 	pub level:u32,
+
 	pub ratio:f64,
 }
 

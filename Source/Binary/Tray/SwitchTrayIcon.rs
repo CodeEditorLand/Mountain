@@ -88,6 +88,7 @@ pub fn SwitchTrayIcon(App:AppHandle, IsDarkMode:bool) {
 					dev_log!("window", "error: [UI] [Tray] Failed to set icon: {}", e);
 				}
 			},
+
 			Err(e) => dev_log!("window", "error: [UI] [Tray] Failed to load icon bytes: {}", e),
 		}
 	} else {

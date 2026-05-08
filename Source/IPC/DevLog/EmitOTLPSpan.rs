@@ -21,6 +21,7 @@ use std::{
 use crate::{Binary::Build::PostHogPlugin::Constants, IPC::DevLog::NowNano};
 
 static OTLP_AVAILABLE:AtomicBool = AtomicBool::new(true);
+
 static OTLP_TRACE_ID:OnceLock<String> = OnceLock::new();
 
 fn GetTraceId() -> &'static str {
@@ -34,8 +35,11 @@ fn GetTraceId() -> &'static str {
 
 fn RandU64() -> u64 {
 	let mut H = DefaultHasher::new();
+
 	std::thread::current().id().hash(&mut H);
+
 	NowNano::Fn().hash(&mut H);
+
 	H.finish()
 }
 
@@ -43,18 +47,23 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 	if !cfg!(debug_assertions) {
 		return;
 	}
+
 	if matches!(Constants::TELEMETRY_CAPTURE, "false" | "0" | "off") {
 		return;
 	}
+
 	if matches!(Constants::OTLP_ENABLED, "false" | "0" | "off") {
 		return;
 	}
+
 	if !OTLP_AVAILABLE.load(Ordering::Relaxed) {
 		return;
 	}
 
 	let SpanId = format!("{:016x}", RandU64());
+
 	let TraceId = GetTraceId().to_string();
+
 	let SpanName = Name.to_string();
 
 	let AttributesJson:Vec<String> = Attributes
@@ -69,7 +78,9 @@ pub fn Fn(Name:&str, StartNano:u64, EndNano:u64, Attributes:&[(&str, &str)]) {
 		.collect();
 
 	let IsError = SpanName.contains("error");
+
 	let StatusCode = if IsError { 2 } else { 1 };
+
 	let Payload = format!(
 		concat!(
 			r#"{{"resourceSpans":[{{"resource":{{"attributes":["#,
@@ -141,10 +152,14 @@ fn ParseEndpoint(Endpoint:&str) -> (String, String) {
 		.strip_prefix("http://")
 		.or_else(|| Endpoint.strip_prefix("https://"))
 		.unwrap_or(Endpoint);
+
 	let (HostPort, Path) = match WithoutScheme.split_once('/') {
 		Some((HP, Rest)) => (HP.to_string(), format!("/{}", Rest.trim_start_matches('/'))),
+
 		None => (WithoutScheme.to_string(), "/v1/traces".to_string()),
 	};
+
 	let PathFinal = if Path == "/" { "/v1/traces".to_string() } else { Path };
+
 	(HostPort, PathFinal)
 }

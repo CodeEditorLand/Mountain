@@ -9,6 +9,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn OutputChannelDispose(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://output/dispose", Parameter);
+
 	dev_log!(
 		"grpc",
 		"[OutputChannel] dispose channel={}",

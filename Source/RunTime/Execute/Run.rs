@@ -19,6 +19,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 impl ApplicationRunTimeTrait for ApplicationRunTime {
 	async fn Run<TCapabilityProvider, TError, TOutput>(
 		&self,
+
 		Effect:ActionEffect<Arc<TCapabilityProvider>, TError, TOutput>,
 	) -> Result<TOutput, TError>
 	where
@@ -33,6 +34,7 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 
 		let Task = async move {
 			let Result = Effect.Apply(CapabilityProvider).await;
+
 			if ResultSender.send(Result).is_err() {
 				dev_log!(
 					"lifecycle",
@@ -45,9 +47,12 @@ impl ApplicationRunTimeTrait for ApplicationRunTime {
 
 		match ResultReceiver.await {
 			Ok(Result) => Result,
+
 			Err(_) => {
 				let Message = "Effect execution canceled; oneshot channel closed.".to_string();
+
 				dev_log!("lifecycle", "error: {}", Message);
+
 				Err(CommonError::IPCError { Description:Message }.into())
 			},
 		}

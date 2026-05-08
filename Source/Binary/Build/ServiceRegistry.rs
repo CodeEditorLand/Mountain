@@ -59,9 +59,13 @@ use crate::dev_log;
 #[derive(Debug, Clone)]
 pub struct LocalService {
 	pub name:String,
+
 	pub port:u16,
+
 	pub tls_port:Option<u16>,
+
 	pub use_tls:bool,
+
 	pub health_check_path:Option<String>,
 }
 
@@ -85,6 +89,7 @@ impl LocalService {
 pub struct ServiceRegistry {
 	/// Inner storage using `Arc<RwLock>` for thread-safe concurrent access
 	services:Arc<RwLock<HashMap<String, LocalService>>>,
+
 	/// Optional certificate manager for HTTPS support
 	cert_manager:Option<std::sync::Arc<std::sync::Mutex<super::CertificateManager::CertificateManager>>>,
 }
@@ -95,6 +100,7 @@ impl ServiceRegistry {
 	/// Returns an empty registry ready to accept service registrations.
 	pub fn new() -> Self {
 		dev_log!("lifecycle", "[ServiceRegistry] Creating new ServiceRegistry");
+
 		Self { services:Arc::new(RwLock::new(HashMap::new())), cert_manager:None }
 	}
 
@@ -110,6 +116,7 @@ impl ServiceRegistry {
 		cert_manager:std::sync::Arc<std::sync::Mutex<super::CertificateManager::CertificateManager>>,
 	) -> Self {
 		dev_log!("lifecycle", "[ServiceRegistry] Creating new ServiceRegistry with TLS support");
+
 		Self { services:Arc::new(RwLock::new(HashMap::new())), cert_manager:Some(cert_manager) }
 	}
 
@@ -155,10 +162,15 @@ impl ServiceRegistry {
 	/// ```
 	pub fn register_with_options(
 		&self,
+
 		name:String,
+
 		port:u16,
+
 		tls_port:Option<u16>,
+
 		use_tls:bool,
+
 		health_check_path:Option<String>,
 	) {
 		dev_log!(
@@ -195,7 +207,9 @@ impl ServiceRegistry {
 					name
 				);
 			}
+
 			services.insert(name.clone(), service);
+
 			dev_log!("lifecycle", "[ServiceRegistry] Service {} registered successfully", name);
 		} else {
 			dev_log!(
@@ -229,14 +243,17 @@ impl ServiceRegistry {
 
 		if let Ok(services) = self.services.read() {
 			let service = services.get(name).cloned();
+
 			if service.is_some() {
 				dev_log!("lifecycle", "[ServiceRegistry] Service {} found", name);
 			} else {
 				dev_log!("lifecycle", "[ServiceRegistry] Service {} not found", name);
 			}
+
 			service
 		} else {
 			dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire read lock for lookup");
+
 			None
 		}
 	}
@@ -254,6 +271,7 @@ impl ServiceRegistry {
 				"lifecycle",
 				"error: [ServiceRegistry] Failed to acquire read lock for all_services"
 			);
+
 			Vec::new()
 		}
 	}
@@ -273,6 +291,7 @@ impl ServiceRegistry {
 		let service = self.lookup(name).ok_or_else(|| format!("Service {} not found", name))?;
 
 		let health_path = service.health_check_path.as_deref().unwrap_or("/health");
+
 		let addr = format!("127.0.0.1:{}", service.port);
 
 		dev_log!(
@@ -293,10 +312,13 @@ impl ServiceRegistry {
 					Ok(_) => {
 						// Try to read response
 						let mut buffer = [0u8; 1024];
+
 						match stream.read(&mut buffer).await {
 							Ok(n) => {
 								let response = String::from_utf8_lossy(&buffer[..n]);
+
 								let is_healthy = response.contains("HTTP/1.1 200") || response.contains("HTTP/1.0 200");
+
 								if is_healthy {
 									dev_log!("lifecycle", "[ServiceRegistry] Service {} is healthy", name);
 								} else {
@@ -306,8 +328,10 @@ impl ServiceRegistry {
 										name
 									);
 								}
+
 								Ok(is_healthy)
 							},
+
 							Err(e) => {
 								dev_log!(
 									"lifecycle",
@@ -315,10 +339,12 @@ impl ServiceRegistry {
 									name,
 									e
 								);
+
 								Ok(false)
 							},
 						}
 					},
+
 					Err(e) => {
 						dev_log!(
 							"lifecycle",
@@ -326,10 +352,12 @@ impl ServiceRegistry {
 							name,
 							e
 						);
+
 						Ok(false)
 					},
 				}
 			},
+
 			Err(e) => {
 				dev_log!(
 					"lifecycle",
@@ -337,6 +365,7 @@ impl ServiceRegistry {
 					name,
 					e
 				);
+
 				Ok(false)
 			},
 		}
@@ -362,6 +391,7 @@ impl ServiceRegistry {
 				"lifecycle",
 				"error: [ServiceRegistry] Failed to acquire write lock for unregistration"
 			);
+
 			None
 		}
 	}
@@ -386,12 +416,14 @@ impl ServiceRegistry {
 		}
 
 		let cert_manager = self.cert_manager.as_ref()?;
+
 		let manager = cert_manager
 			.lock()
 			.map_err(|e| {
 				dev_log!("lifecycle", "error: [ServiceRegistry] Failed to acquire lock: {}", e);
 			})
 			.ok()?;
+
 		manager.build_server_config(name).await.ok()
 	}
 
@@ -413,6 +445,7 @@ impl Default for ServiceRegistry {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
@@ -422,8 +455,11 @@ mod tests {
 		registry.register("test.service.land".to_string(), 8080, Some("/health".to_string()));
 
 		let service = registry.lookup("test.service.land").unwrap();
+
 		assert_eq!(service.name, "test.service.land");
+
 		assert_eq!(service.port, 8080);
+
 		assert_eq!(service.health_check_path, Some("/health".to_string()));
 	}
 
@@ -432,6 +468,7 @@ mod tests {
 		let registry = ServiceRegistry::new();
 
 		let service = registry.lookup("nonexistent.service.land");
+
 		assert!(service.is_none());
 	}
 
@@ -440,9 +477,11 @@ mod tests {
 		let registry = ServiceRegistry::new();
 
 		registry.register("service1.land".to_string(), 8080, None);
+
 		registry.register("service2.land".to_string(), 8081, None);
 
 		let services = registry.all_services();
+
 		assert_eq!(services.len(), 2);
 	}
 
@@ -451,9 +490,11 @@ mod tests {
 		let registry = ServiceRegistry::new();
 
 		registry.register("test.service.land".to_string(), 8080, None);
+
 		assert!(registry.lookup("test.service.land").is_some());
 
 		registry.unregister("test.service.land");
+
 		assert!(registry.lookup("test.service.land").is_none());
 	}
 
@@ -462,9 +503,11 @@ mod tests {
 		let registry = ServiceRegistry::new();
 
 		registry.register("test.service.land".to_string(), 8080, None);
+
 		registry.register("test.service.land".to_string(), 9090, None);
 
 		let service = registry.lookup("test.service.land").unwrap();
+
 		assert_eq!(service.port, 9090);
 	}
 
@@ -481,10 +524,15 @@ mod tests {
 		);
 
 		let service = registry.lookup("secure.service.land").unwrap();
+
 		assert_eq!(service.name, "secure.service.land");
+
 		assert_eq!(service.port, 8080);
+
 		assert_eq!(service.tls_port, Some(8443));
+
 		assert_eq!(service.use_tls, true);
+
 		assert_eq!(service.get_port(), 8443);
 	}
 
@@ -501,6 +549,7 @@ mod tests {
 		);
 
 		let service = registry.lookup("secure.service.land").unwrap();
+
 		assert_eq!(service.tls_port, None); // Explicitly None
 		assert_eq!(service.get_port(), 9080); // But get_port() returns default
 	}

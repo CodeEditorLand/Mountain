@@ -16,5 +16,6 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:DisposeOutputRequest) -> Res
 		.environment
 		.ApplicationHandle
 		.emit("sky://output/dispose", json!({ "channel": Request.channel_id }));
+
 	Ok(Response::new(Empty {}))
 }

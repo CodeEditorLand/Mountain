@@ -17,9 +17,13 @@ use super::super::{MountainEnvironment::MountainEnvironment, Utility};
 /// Write operations implementation for MountainEnvironment
 pub(super) async fn write_file_impl(
 	env:&MountainEnvironment,
+
 	path:&PathBuf,
+
 	content:Vec<u8>,
+
 	create:bool,
+
 	overwrite:bool,
 ) -> Result<(), CommonError> {
 	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, path)?;
@@ -72,7 +76,9 @@ pub(super) async fn write_file_impl(
 /// CreateDirectory operations implementation for MountainEnvironment
 pub(super) async fn create_directory_impl(
 	env:&MountainEnvironment,
+
 	path:&PathBuf,
+
 	recursive:bool,
 ) -> Result<(), CommonError> {
 	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, path)?;
@@ -105,8 +111,11 @@ pub(super) async fn create_directory_impl(
 /// Delete operations implementation for MountainEnvironment
 pub(super) async fn delete_impl(
 	env:&MountainEnvironment,
+
 	path:&PathBuf,
+
 	recursive:bool,
+
 	_use_trash:bool,
 ) -> Result<(), CommonError> {
 	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, path)?;
@@ -137,8 +146,11 @@ pub(super) async fn delete_impl(
 /// Rename operations implementation for MountainEnvironment
 pub(super) async fn rename_impl(
 	env:&MountainEnvironment,
+
 	source:&PathBuf,
+
 	target:&PathBuf,
+
 	overwrite:bool,
 ) -> Result<(), CommonError> {
 	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, source)?;
@@ -157,8 +169,11 @@ pub(super) async fn rename_impl(
 /// Copy operations implementation for MountainEnvironment
 pub(super) async fn copy_impl(
 	env:&MountainEnvironment,
+
 	source:&PathBuf,
+
 	target:&PathBuf,
+
 	overwrite:bool,
 ) -> Result<(), CommonError> {
 	Utility::PathSecurity::IsPathAllowedForAccess(&env.ApplicationState, source)?;
@@ -230,18 +245,23 @@ async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bo
 	}
 
 	let mut Stack:Vec<(PathBuf, PathBuf)> = vec![(source.clone(), target.clone())];
+
 	while let Some((SrcDir, DstDir)) = Stack.pop() {
 		let mut Entries = fs::read_dir(&SrcDir)
 			.await
 			.map_err(|error| CommonError::FromStandardIOError(error, SrcDir.clone(), "Copy.ReadDir"))?;
+
 		while let Some(Entry) = Entries
 			.next_entry()
 			.await
 			.map_err(|error| CommonError::FromStandardIOError(error, SrcDir.clone(), "Copy.NextEntry"))?
 		{
 			let Name = Entry.file_name();
+
 			let SrcPath = SrcDir.join(&Name);
+
 			let DstPath = DstDir.join(&Name);
+
 			let FileType = Entry
 				.file_type()
 				.await
@@ -253,17 +273,20 @@ async fn copy_directory_recursive(source:&PathBuf, target:&PathBuf, overwrite:bo
 						CommonError::FromStandardIOError(error, DstPath.clone(), "Copy.CreateSubDir")
 					})?;
 				}
+
 				Stack.push((SrcPath, DstPath));
 			} else {
 				if !overwrite && fs::try_exists(&DstPath).await.unwrap_or(false) {
 					return Err(CommonError::FileSystemFileExists(DstPath));
 				}
+
 				fs::copy(&SrcPath, &DstPath)
 					.await
 					.map_err(|error| CommonError::FromStandardIOError(error, SrcPath.clone(), "Copy.CopyFile"))?;
 			}
 		}
 	}
+
 	Ok(())
 }
 

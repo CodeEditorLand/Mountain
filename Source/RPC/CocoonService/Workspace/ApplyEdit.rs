@@ -16,6 +16,7 @@ use crate::{
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ApplyEditRequest) -> Result<Response<ApplyEditResponse>, Status> {
 	let URI = Request.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
+
 	dev_log!(
 		"cocoon",
 		"[CocoonService] apply_edit: uri={} edits={}",

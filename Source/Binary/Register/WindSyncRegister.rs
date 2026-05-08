@@ -36,10 +36,13 @@ pub fn WindSyncRegister(ApplicationHandle:&tauri::AppHandle, RunTime:Arc<Applica
 	match initialize_wind_advanced_sync(ApplicationHandle, RunTime) {
 		Ok(()) => {
 			dev_log!("lifecycle", "[IPC] [WindSync] Wind advanced sync initialized successfully.");
+
 			Ok(())
 		},
+
 		Err(e) => {
 			dev_log!("lifecycle", "error: [IPC] [WindSync] Failed to initialize: {}", e);
+
 			Err(format!("Failed to initialize Wind advanced sync: {}", e))
 		},
 	}

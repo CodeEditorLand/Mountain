@@ -106,9 +106,13 @@ impl ConnectionPool {
 
 		Self {
 			MaxConnections,
+
 			ConnectionTimeout,
+
 			Semaphore:Arc::new(Semaphore::new(MaxConnections)),
+
 			ActiveConnection:Arc::new(AsyncMutex::new(HashMap::new())),
+
 			HealthChecker:Arc::new(AsyncMutex::new(HealthChecker::new())),
 		}
 	}
@@ -148,6 +152,7 @@ impl ConnectionPool {
 		// Add to active connections
 		{
 			let mut connections = self.ActiveConnection.lock().await;
+
 			connections.insert(Handle.id.clone(), Handle.clone());
 		}
 
@@ -184,6 +189,7 @@ impl ConnectionPool {
 
 		{
 			let mut connections = self.ActiveConnection.lock().await;
+
 			connections.remove(&Handle.id);
 		}
 
@@ -207,13 +213,18 @@ impl ConnectionPool {
 	/// ```
 	pub async fn GetStats(&self) -> ConnectionStats {
 		let connections = self.ActiveConnection.lock().await;
+
 		let healthy_connections = connections.values().filter(|h| h.is_healthy()).count();
 
 		ConnectionStats {
 			total_connections:connections.len(),
+
 			healthy_connections,
+
 			max_connections:self.MaxConnections,
+
 			available_permits:self.Semaphore.available_permits(),
+
 			connection_timeout:self.ConnectionTimeout,
 		}
 	}
@@ -238,7 +249,9 @@ impl ConnectionPool {
 	/// ```
 	pub async fn CleanUpStaleConnections(&self) -> usize {
 		let mut connections = self.ActiveConnection.lock().await;
+
 		let now = std::time::SystemTime::now();
+
 		let stale_threshold = Duration::from_secs(300); // 5 minutes
 
 		let stale_ids:Vec<String> = connections
@@ -255,8 +268,10 @@ impl ConnectionPool {
 			.collect();
 
 		let stale_count = stale_ids.len();
+
 		for id in stale_ids {
 			dev_log!("ipc", "[ConnectionPool] Removing stale connection {}", id);
+
 			connections.remove(&id);
 		}
 
@@ -276,7 +291,9 @@ impl ConnectionPool {
 	/// - `connection_id`: The ID of the connection to monitor
 	async fn StartHealthMonitoring(&self, connection_id:&str) {
 		let health_checker = self.HealthChecker.clone();
+
 		let active_connection = self.ActiveConnection.clone();
+
 		let connection_id = connection_id.to_string();
 
 		tokio::spawn(async move {
@@ -329,27 +346,35 @@ impl ConnectionPool {
 	/// Get the number of active connections
 	pub async fn active_connection(&self) -> usize {
 		let connections = self.ActiveConnection.lock().await;
+
 		connections.len()
 	}
 }
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[tokio::test]
 	async fn test_connection_pool_creation() {
 		let pool = ConnectionPool::new(10, Duration::from_secs(30));
+
 		assert_eq!(pool.max_connections(), 10);
+
 		assert_eq!(pool.connection_timeout(), Duration::from_secs(30));
+
 		assert_eq!(pool.available_permits(), 10);
+
 		assert_eq!(pool.active_connections().await, 0);
 	}
 
 	#[tokio::test]
 	async fn test_default_connection_pool() {
 		let pool = ConnectionPool::default();
+
 		assert_eq!(pool.max_connections(), 10);
+
 		assert_eq!(pool.connection_timeout(), Duration::from_secs(30));
 	}
 
@@ -359,12 +384,16 @@ mod tests {
 
 		// Get a connection
 		let Handle = pool.GetConnection().await.unwrap();
+
 		assert_eq!(pool.active_connections().await, 1);
+
 		assert_eq!(pool.available_permits(), 4); // One permit used
 
 		// Release the connection
 		pool.ReleaseConnection(Handle).await;
+
 		assert_eq!(pool.active_connections().await, 0);
+
 		assert_eq!(pool.available_permits(), 5); // Permit restored
 	}
 
@@ -374,29 +403,35 @@ mod tests {
 
 		// Collect handles properly without await in sync closure
 		let mut handles = Vec::new();
+
 		for _ in 0..3 {
 			handles.push(pool.GetConnection().await.unwrap());
 		}
 
 		assert_eq!(pool.active_connections().await, 3);
+
 		assert_eq!(pool.available_permits(), 0);
 
 		// Try to get one more - should timeout
 		let result = timeout(Duration::from_secs(1), pool.GetConnection()).await;
+
 		assert!(result.is_err()); // Timeout
 
 		// Release one connection
 		pool.ReleaseConnection(handles[0].clone()).await;
+
 		assert_eq!(pool.available_permits(), 1);
 
 		// Now we can get another
 		let Handle = pool.GetConnection().await.unwrap();
+
 		assert_eq!(pool.available_permits(), 0);
 
 		// Release all
 		for Handle in handles {
 			pool.ReleaseConnection(Handle).await;
 		}
+
 		pool.ReleaseConnection(Handle).await;
 	}
 
@@ -405,9 +440,13 @@ mod tests {
 		let pool = Arc::new(ConnectionPool::new(5, Duration::from_secs(30)));
 
 		let stats = pool.GetStats().await;
+
 		assert_eq!(stats.total_connections, 0);
+
 		assert_eq!(stats.healthy_connections, 0);
+
 		assert_eq!(stats.max_connections, 5);
+
 		assert_eq!(stats.utilization(), 0.0);
 
 		// Add some connections
@@ -416,8 +455,11 @@ mod tests {
 		}
 
 		let stats = pool.GetStats().await;
+
 		assert_eq!(stats.total_connections, 3);
+
 		assert!(stats.healthy_connections > 0);
+
 		assert!(stats.utilization() > 0.0);
 	}
 
@@ -431,10 +473,12 @@ mod tests {
 		// Manually make it stale by setting old last_used and degrading health
 		unsafe {
 			let ptr = &mut Handle as *mut ConnectionHandle;
+
 			// Set last_used to a time in the past for testing
 			(*ptr).last_used = std::time::SystemTime::now()
 				.checked_sub(Duration::from_secs(360))
 				.unwrap_or((*ptr).last_used);
+
 			(*ptr).health_score = 25.0; // Unhealthy
 		}
 
@@ -444,6 +488,7 @@ mod tests {
 		// Clean up (will have to adjust logic for testing or add a method to force
 		// cleanup) For now, we'll just verify the method exists and runs
 		let cleaned = pool.CleanUpStaleConnections().await;
+
 		assert!(cleaned >= 0);
 	}
 
@@ -459,6 +504,7 @@ mod tests {
 		}
 
 		let stats = pool.GetStats().await;
+
 		assert_eq!(stats.utilization(), 50.0);
 	}
 }

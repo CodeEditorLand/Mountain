@@ -12,9 +12,13 @@
 macro_rules! measure_time {
 	($name:expr, $block:block) => {{
 		let __Start = std::time::Instant::now();
+
 		let __Result = $block;
+
 		let __Duration = __Start.elapsed();
+
 		$crate::dev_log!("lifecycle", "{} took {:?}", $name, __Duration);
+
 		__Result
 	}};
 }

@@ -4,5 +4,7 @@
 //! `RegisterScmProvider::Fn`, `UpdateScmGroup::Fn`, `GitExec::Fn`.
 
 pub mod GitExec;
+
 pub mod RegisterScmProvider;
+
 pub mod UpdateScmGroup;

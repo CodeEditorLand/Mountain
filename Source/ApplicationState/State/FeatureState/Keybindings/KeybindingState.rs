@@ -9,8 +9,10 @@ use crate::dev_log;
 pub struct KeybindingEntry {
 	/// Command identifier (e.g. "workbench.action.files.save").
 	pub CommandId:String,
+
 	/// Key expression (e.g. "ctrl+s", "cmd+shift+p").
 	pub Keybinding:String,
+
 	/// Optional when-clause (e.g. "editorFocus && !editorReadonly").
 	pub When:Option<String>,
 }
@@ -24,6 +26,7 @@ pub struct KeybindingState {
 impl Default for KeybindingState {
 	fn default() -> Self {
 		dev_log!("keybinding", "[KeybindingState] Initializing default keybinding state...");
+
 		Self { Entries:Arc::new(StandardMutex::new(Vec::new())) }
 	}
 }
@@ -34,7 +37,9 @@ impl KeybindingState {
 	pub fn AddKeybinding(&self, CommandId:String, Keybinding:String, When:Option<String>) {
 		if let Ok(mut Guard) = self.Entries.lock() {
 			Guard.retain(|E| E.CommandId != CommandId);
+
 			Guard.push(KeybindingEntry { CommandId:CommandId.clone(), Keybinding, When });
+
 			dev_log!("keybinding", "[KeybindingState] Keybinding added for: {}", CommandId);
 		}
 	}
@@ -43,6 +48,7 @@ impl KeybindingState {
 	pub fn RemoveKeybinding(&self, CommandId:&str) {
 		if let Ok(mut Guard) = self.Entries.lock() {
 			Guard.retain(|E| E.CommandId != CommandId);
+
 			dev_log!("keybinding", "[KeybindingState] Keybinding removed for: {}", CommandId);
 		}
 	}

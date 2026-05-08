@@ -5,5 +5,7 @@
 //! returned over the wire.
 
 pub mod TextDocumentInfo;
+
 pub mod WorkspaceFolder;
+
 pub mod WorkspaceService;

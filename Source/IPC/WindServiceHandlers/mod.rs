@@ -4,20 +4,35 @@
 //! Domain files handle the individual handler implementations.
 
 pub mod Commands;
+
 pub mod Configuration;
+
 pub mod Extension;
+
 pub mod Extensions;
+
 pub mod FileSystem;
+
 pub mod Git;
+
 pub mod Model;
+
 pub mod NativeDialog;
+
 pub mod NativeHost;
+
 pub mod Navigation;
+
 pub mod Output;
+
 pub mod Search;
+
 pub mod Storage;
+
 pub mod Terminal;
+
 pub mod UI;
+
 pub mod Utilities;
 
 // Local `use X::*;` (NOT `pub use`): brings the domain handler names into
@@ -28,13 +43,16 @@ pub mod Utilities;
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use Commands::*;
+
 use Configuration::*;
+
 use Extensions::{
 	ExtensionsGet::ExtensionsGet,
 	ExtensionsGetAll::ExtensionsGetAll,
 	ExtensionsGetInstalled::ExtensionsGetInstalled,
 	ExtensionsIsActive::ExtensionsIsActive,
 };
+
 use FileSystem::{
 	Managed::{
 		FileCopy::*,
@@ -62,6 +80,7 @@ use FileSystem::{
 		FileWriteNative::*,
 	},
 };
+
 use Model::{
 	ModelClose::ModelClose,
 	ModelGet::ModelGet,
@@ -72,6 +91,7 @@ use Model::{
 	TextfileSave::TextfileSave,
 	TextfileWrite::TextfileWrite,
 };
+
 use NativeHost::{
 	FindFreePort::*,
 	GetColorScheme::*,
@@ -84,6 +104,7 @@ use NativeHost::{
 	ShowItemInFolder::*,
 	ShowOpenDialog::*,
 };
+
 use Navigation::{
 	HistoryCanGoBack::HistoryCanGoBack,
 	HistoryCanGoForward::HistoryCanGoForward,
@@ -96,6 +117,7 @@ use Navigation::{
 	LabelGetURI::LabelGetURI,
 	LabelGetWorkspace::LabelGetWorkspace,
 };
+
 use Output::{
 	OutputAppend::OutputAppend,
 	OutputAppendLine::OutputAppendLine,
@@ -103,7 +125,9 @@ use Output::{
 	OutputCreate::OutputCreate,
 	OutputShow::OutputShow,
 };
+
 use Search::*;
+
 use Storage::{
 	StorageDelete::StorageDelete,
 	StorageGet::StorageGet,
@@ -112,6 +136,7 @@ use Storage::{
 	StorageSet::StorageSet,
 	StorageUpdateItems::StorageUpdateItems,
 };
+
 use Terminal::{
 	LocalPTYGetDefaultShell::LocalPTYGetDefaultShell,
 	LocalPTYGetEnvironment::LocalPTYGetEnvironment,
@@ -122,6 +147,7 @@ use Terminal::{
 	TerminalSendText::TerminalSendText,
 	TerminalShow::TerminalShow,
 };
+
 use UI::{
 	Decoration::*,
 	Keybinding::*,
@@ -133,6 +159,7 @@ use UI::{
 	WorkingCopy::*,
 	Workspace::*,
 };
+
 use Utilities::{
 	ApplicationRoot::*,
 	ChannelPriority::*,
@@ -142,9 +169,13 @@ use Utilities::{
 	RecentlyOpened::*,
 	UserdataDir::*,
 };
+
 use Echo::Task::Priority::Priority as EchoPriority;
+
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Manager};
+
 // Type aliases for Configuration DTOs to simplify usage
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
@@ -152,7 +183,9 @@ use CommonLibrary::Configuration::DTO::{
 };
 
 use crate::dev_log;
+
 type ConfigurationOverridesDTO = ConfigurationOverridesDTOModule::ConfigurationOverridesDTO;
+
 type ConfigurationTarget = ConfigurationTargetModule::ConfigurationTarget;
 
 use CommonLibrary::{
@@ -195,10 +228,14 @@ use crate::{
 /// entirely in `InvokeCommand.rs`.
 pub async fn mountain_ipc_invoke(
 	ApplicationHandle:AppHandle,
+
 	command:String,
+
 	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
+
 	let OTLPStart = crate::IPC::DevLog::NowNano::Fn();
+
 	// Silence the per-call invoke log for high-frequency methods that are
 	// not useful in forensic review. The workbench emits thousands of
 	// `logger:log` invocations per boot (every `console.*` call inside VS
@@ -215,6 +252,7 @@ pub async fn mountain_ipc_invoke(
 	// `done:` line below also skips these so there's symmetric silence.
 	let IsHighFrequencyCommand = matches!(
 		command.as_str(),
+
 		"logger:log"
 			| "logger:registerLogger"
 			| "logger:createLogger"
@@ -237,7 +275,9 @@ pub async fn mountain_ipc_invoke(
 			| "output:append"
 			| "progress:report"
 	);
+
 	if !IsHighFrequencyCommand {
+
 		dev_log!("ipc", "invoke: {} args_count={}", command, Arguments.len());
 	}
 

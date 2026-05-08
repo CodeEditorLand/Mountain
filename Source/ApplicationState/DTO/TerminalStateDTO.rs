@@ -208,8 +208,11 @@ impl TerminalStateDTO {
 	/// Clears the runtime handles (useful when terminating terminal).
 	pub fn ClearHandles(&mut self) {
 		self.PTYInputTransmitter = None;
+
 		self.ReaderTaskHandle = None;
+
 		self.ProcessWaitHandle = None;
+
 		self.PTYMaster = None;
 	}
 }

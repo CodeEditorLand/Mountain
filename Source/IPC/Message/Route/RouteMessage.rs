@@ -155,6 +155,7 @@ impl Router {
 
 		if let Some(channel_listeners) = listeners.get_mut(Channel) {
 			let initial_count = channel_listeners.len();
+
 			channel_listeners.retain(|cb| !std::ptr::eq(cb as *const _, Callback as *const _));
 
 			let removed_count = initial_count - channel_listeners.len();
@@ -162,6 +163,7 @@ impl Router {
 			// Clean up empty channels
 			if channel_listeners.is_empty() {
 				listeners.remove(Channel);
+
 				dev_log!(
 					"ipc",
 					"[Router] Channel cleaned up: {} (removed {} listeners)",
@@ -204,11 +206,14 @@ impl Router {
 			.map_err(|e| format!("Failed to access listeners: {}", e))?;
 
 		let listeners_map = &*listeners;
+
 		let channel_listeners = listeners_map.get(&Message.channel);
 
 		if let Some(channel_listeners) = channel_listeners {
 			let listener_count = channel_listeners.len();
+
 			let mut success_count = 0;
+
 			let mut error_count = 0;
 
 			for (index, callback) in channel_listeners.iter().enumerate() {
@@ -216,6 +221,7 @@ impl Router {
 
 				match callback(message_data) {
 					Ok(_) => success_count += 1,
+
 					Err(e) => {
 						dev_log!(
 							"ipc",
@@ -224,6 +230,7 @@ impl Router {
 							Message.channel,
 							e
 						);
+
 						error_count += 1;
 					},
 				}
@@ -297,6 +304,7 @@ impl Router {
 			.map_err(|e| format!("Failed to access listeners: {}", e))?;
 
 		let count = listeners.get(Channel).map_or(0, |l| l.len());
+
 		listeners.remove(Channel);
 
 		dev_log!("ipc", "[Router] Cleared {} listeners from channel: {}", count, Channel);
@@ -315,6 +323,7 @@ impl Router {
 			.map_err(|e| format!("Failed to access listeners: {}", e))?;
 
 		let total_listeners:usize = listeners.values().map(|l| l.len()).sum();
+
 		listeners.clear();
 
 		dev_log!(
@@ -358,29 +367,34 @@ impl Router {
 
 #[cfg(test)]
 mod tests {
+
 	use serde_json::json;
 
 	use super::*;
 
 	fn create_test_callback(response:&str) -> ListenerCallback {
 		let response = response.to_string();
+
 		Box::new(move |_:serde_json::Value| Ok::<(), String>(response.clone()))
 	}
 
 	#[test]
 	fn test_register_and_route() {
 		let router = Router::new();
+
 		let callback = create_test_callback("received");
 
 		router.Register("test-channel", callback).expect("Registration failed");
 
 		let message = TauriIPCMessage::new("test-channel", json!({"test": true}), None);
+
 		router.RouteMessage(&message).expect("Routing failed");
 	}
 
 	#[test]
 	fn test_channel_validation() {
 		let router = Router::new();
+
 		let callback = create_test_callback("ok");
 
 		// Empty channel
@@ -391,18 +405,22 @@ mod tests {
 
 		// Valid channels
 		assert!(router.Register("test-channel", callback).is_ok());
+
 		assert!(router.Register("test_channel", callback).is_ok());
+
 		assert!(router.Register("test:channel", callback).is_ok());
 	}
 
 	#[test]
 	fn test_listener_limit() {
 		let router = Router::new();
+
 		let callback = create_test_callback("ok");
 
 		// Register up to limit
 		for i in 0..MAX_LISTENERS_PER_CHANNEL {
 			let cb = create_test_callback(&format!("listener{}", i));
+
 			assert!(router.Register("test", cb.clone()).is_ok());
 		}
 
@@ -413,27 +431,34 @@ mod tests {
 	#[test]
 	fn test_get_listener_count() {
 		let router = Router::new();
+
 		let callback = create_test_callback("ok");
 
 		assert_eq!(router.GetListenerCount("test").unwrap(), 0);
 
 		router.Register("test", callback).unwrap();
+
 		assert_eq!(router.GetListenerCount("test").unwrap(), 1);
 
 		router.Register("test", create_test_callback("ok")).unwrap();
+
 		assert_eq!(router.GetListenerCount("test").unwrap(), 2);
 	}
 
 	#[test]
 	fn test_clear_channel() {
 		let router = Router::new();
+
 		let callback = create_test_callback("ok");
 
 		router.Register("test", callback).unwrap();
+
 		router.Register("test", create_test_callback("ok")).unwrap();
+
 		assert_eq!(router.GetListenerCount("test").unwrap(), 2);
 
 		router.ClearChannel("test").unwrap();
+
 		assert_eq!(router.GetListenerCount("test").unwrap(), 0);
 	}
 }

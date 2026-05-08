@@ -34,10 +34,13 @@ impl Struct {
 					error:Response.error,
 				}))
 			},
+
 			Some(Err(Error)) => {
 				dev_log!("grpc", "error: [DownloadStream] Stream error: {}", Error);
+
 				Some(Err(CommonError::IPCError { Description:format!("Stream error: {}", Error) }))
 			},
+
 			None => None,
 		}
 	}

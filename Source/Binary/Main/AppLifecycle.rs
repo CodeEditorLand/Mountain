@@ -87,6 +87,7 @@ fn IsLandDisabled() -> bool {
 		.map(|Value| Value.eq_ignore_ascii_case("true"))
 		.unwrap_or(false)
 }
+
 use crate::{
 	// Crate root imports
 	ApplicationState::State::ApplicationState::ApplicationState,
@@ -110,7 +111,9 @@ use crate::{
 
 /// Logs a checkpoint message at TRACE level.
 macro_rules! TraceStep {
+
 	($($arg:tt)*) => {{
+
 		dev_log!("lifecycle", $($arg)*);
 	}};
 }
@@ -143,21 +146,28 @@ macro_rules! TraceStep {
 /// failure
 pub fn AppLifecycleSetup(
 	app:&mut tauri::App,
+
 	app_handle:tauri::AppHandle,
+
 	localhost_url:String,
+
 	scheduler:Arc<Scheduler>,
+
 	app_state:Arc<ApplicationState>,
 ) -> Result<(), Box<dyn std::error::Error>> {
 	dev_log!("lifecycle", "[Lifecycle] [Setup] Setup hook started.");
+
 	dev_log!("lifecycle", "[Lifecycle] [Setup] LocalhostUrl={}", localhost_url);
 
 	let app_handle_for_setup = app_handle.clone();
+
 	TraceStep!("[Lifecycle] [Setup] AppHandle acquired.");
 
 	// -------------------------------------------------------------------------
 	// [UI] [Tray] Initialize System Tray
 	// -------------------------------------------------------------------------
 	dev_log!("lifecycle", "[UI] [Tray] Initializing system tray...");
+
 	if let Err(Error) = EnableTrayFn::enable_tray(app) {
 		dev_log!("lifecycle", "error: [UI] [Tray] Failed to enable tray: {}", Error);
 	}
@@ -166,15 +176,18 @@ pub fn AppLifecycleSetup(
 	// [Lifecycle] [Commands] Register native commands
 	// -------------------------------------------------------------------------
 	dev_log!("lifecycle", "[Lifecycle] [Commands] Registering native commands...");
+
 	if let Err(e) = CommandRegisterFn(&app_handle_for_setup, &app_state) {
 		dev_log!("lifecycle", "error: [Lifecycle] [Commands] Failed to register commands: {}", e);
 	}
+
 	dev_log!("lifecycle", "[Lifecycle] [Commands] Native commands registered.");
 
 	// -------------------------------------------------------------------------
 	// [Lifecycle] [IPC] Initialize IPC Server
 	// -------------------------------------------------------------------------
 	dev_log!("lifecycle", "[Lifecycle] [IPC] Initializing Mountain IPC Server...");
+
 	if let Err(e) = IPCServerRegisterFn(&app_handle_for_setup) {
 		dev_log!("lifecycle", "error: [Lifecycle] [IPC] Failed to register IPC server: {}", e);
 	}
@@ -183,7 +196,9 @@ pub fn AppLifecycleSetup(
 	// [UI] [Window] Build main window
 	// -------------------------------------------------------------------------
 	dev_log!("lifecycle", "[UI] [Window] Building main window...");
+
 	let MainWindow = WindowBuildFn(app, localhost_url.clone());
+
 	dev_log!("lifecycle", "[UI] [Window] Main window ready.");
 
 	// DevTools auto-open is opt-in via the PascalCase env var
@@ -204,8 +219,10 @@ pub fn AppLifecycleSetup(
 		let WantDevTools = std::env::var("Inspect")
 			.map(|Value| !Value.is_empty() && Value != "0")
 			.unwrap_or(false);
+
 		if WantDevTools {
 			dev_log!("lifecycle", "[UI] [Window] Inspect=1 set: opening DevTools.");
+
 			MainWindow.open_devtools();
 		} else {
 			dev_log!(
@@ -239,7 +256,9 @@ pub fn AppLifecycleSetup(
 		);
 	} else {
 		use tauri::Emitter;
+
 		let CloseEmitter = MainWindow.clone();
+
 		MainWindow.on_window_event(move |Event| {
 			if let tauri::WindowEvent::CloseRequested { api, .. } = Event {
 				api.prevent_close();
@@ -254,8 +273,11 @@ pub fn AppLifecycleSetup(
 	// -------------------------------------------------------------------------
 	{
 		let PathResolver = app.path();
+
 		let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
+
 		let LogDir = PathResolver.app_log_dir().unwrap_or_default();
+
 		let HomeDir = PathResolver.home_dir().unwrap_or_default();
 
 		// Set the canonical userdata base so WindServiceHandlers resolves
@@ -304,9 +326,11 @@ pub fn AppLifecycleSetup(
 				// silent empty-string joins.
 				ExeParent
 			});
+
 		crate::IPC::WindServiceHandlers::Utilities::ApplicationRoot::set_static_application_root(
 			SkyTargetDir.to_string_lossy().to_string(),
 		);
+
 		dev_log!(
 			"lifecycle",
 			"[Lifecycle] [Dirs] Static application root: {}",
@@ -336,6 +360,7 @@ pub fn AppLifecycleSetup(
 			HomeDir.join(".claude/agents"),
 			HomeDir.join(".copilot/agents"),
 		];
+
 		for Dir in &Dirs {
 			if let Err(Error) = std::fs::create_dir_all(Dir) {
 				dev_log!(
@@ -355,6 +380,7 @@ pub fn AppLifecycleSetup(
 			(&AppDataDir.join("User/extensions.json"), "[]"),
 			(&AppDataDir.join("User/mcp.json"), "{}"),
 		];
+
 		for (FilePath, DefaultContent) in DefaultFiles {
 			if !FilePath.exists() {
 				let _ = std::fs::write(FilePath, DefaultContent);
@@ -375,17 +401,22 @@ pub fn AppLifecycleSetup(
 		// back in by flipping this key in their User/settings.json.
 		{
 			let SettingsPath = AppDataDir.join("User/settings.json");
+
 			let Current = std::fs::read_to_string(&SettingsPath).unwrap_or_else(|_| "{}".to_string());
+
 			if !Current.contains("\"security.workspace.trust.enabled\"") {
 				if let Ok(mut Parsed) = serde_json::from_str::<serde_json::Value>(&Current) {
 					if !Parsed.is_object() {
 						Parsed = serde_json::json!({});
 					}
+
 					if let Some(Obj) = Parsed.as_object_mut() {
 						Obj.insert("security.workspace.trust.enabled".to_string(), serde_json::Value::Bool(false));
 					}
+
 					if let Ok(Serialized) = serde_json::to_string_pretty(&Parsed) {
 						let _ = std::fs::write(&SettingsPath, Serialized);
+
 						dev_log!(
 							"lifecycle",
 							"[Lifecycle] [Dirs] Injected default 'security.workspace.trust.enabled=false' into {}",
@@ -401,6 +432,7 @@ pub fn AppLifecycleSetup(
 			*Path = AppDataDir.join("User/globalStorage/global.json");
 			dev_log!("lifecycle", "[Lifecycle] [Dirs] GlobalMementoPath: {}", Path.display());
 		}
+
 		dev_log!(
 			"lifecycle",
 			"[Lifecycle] [Dirs] Userdata directories ensured at {}",
@@ -412,15 +444,20 @@ pub fn AppLifecycleSetup(
 	// [Backend] [Env] Mountain environment
 	// -------------------------------------------------------------------------
 	dev_log!("lifecycle", "[Backend] [Env] Creating MountainEnvironment...");
+
 	let Environment = Arc::new(MountainEnvironment::Create(app_handle_for_setup.clone(), app_state.clone()));
+
 	dev_log!("lifecycle", "[Backend] [Env] MountainEnvironment ready.");
 
 	// -------------------------------------------------------------------------
 	// [Backend] [Runtime] ApplicationRunTime
 	// -------------------------------------------------------------------------
 	dev_log!("lifecycle", "[Backend] [Runtime] Creating ApplicationRunTime...");
+
 	let Runtime = Arc::new(ApplicationRunTime::Create(scheduler.clone(), Environment.clone()));
+
 	app_handle_for_setup.manage(Runtime.clone());
+
 	dev_log!("lifecycle", "[Backend] [Runtime] ApplicationRunTime managed.");
 
 	// -------------------------------------------------------------------------
@@ -460,6 +497,7 @@ pub fn AppLifecycleSetup(
 	// [Lifecycle] [PostSetup] Async initialization work
 	// -------------------------------------------------------------------------
 	let PostSetupAppHandle = app_handle_for_setup.clone();
+
 	let PostSetupEnvironment = Environment.clone();
 
 	tauri::async_runtime::spawn(async move {

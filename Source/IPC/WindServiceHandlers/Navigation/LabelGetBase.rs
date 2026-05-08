@@ -13,5 +13,6 @@ pub async fn LabelGetBase(Arguments:Vec<Value>) -> Result<Value, String> {
 		.ok_or("label:getBase requires uri".to_string())?;
 
 	let Base = Uri.split('/').next_back().unwrap_or(Uri);
+
 	Ok(Value::String(Base.to_owned()))
 }

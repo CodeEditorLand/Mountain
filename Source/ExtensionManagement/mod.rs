@@ -5,4 +5,5 @@
 //! discovery surface; activation runs in Cocoon over gRPC.
 
 pub mod Scanner;
+
 pub mod VsixInstaller;

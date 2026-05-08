@@ -13,6 +13,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:ProvideWorkspaceSymbolsRequest,
 ) -> Result<Response<ProvideWorkspaceSymbolsResponse>, Status> {
 	dev_log!(
@@ -20,8 +21,10 @@ pub async fn Fn(
 		"[CocoonService] Providing workspace symbols for query: {}",
 		Request.query
 	);
+
 	match Service.environment.ProvideWorkspaceSymbols(Request.query).await {
 		Ok(_) => Ok(Response::new(ProvideWorkspaceSymbolsResponse::default())),
+
 		Err(Error) => Err(Status::internal(format!("Workspace symbols failed: {}", Error))),
 	}
 }

@@ -11,12 +11,20 @@ use crate::IPC::StatusReporter::{ServiceMetrics, ServiceStatus};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub name:String,
+
 	pub version:String,
+
 	pub status:ServiceStatus::Enum,
+
 	pub last_heartbeat:u64,
+
 	pub uptime:u64,
+
 	pub dependencies:Vec<String>,
+
 	pub metrics:ServiceMetrics::Struct,
+
 	pub endpoint:Option<String>,
+
 	pub port:Option<u16>,
 }

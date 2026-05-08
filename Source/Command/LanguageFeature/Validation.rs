@@ -7,7 +7,9 @@ use serde_json;
 /// Validates language feature request parameters.
 pub(super) fn validate_language_feature_request(
 	request_type:&str,
+
 	uri:&str,
+
 	position:&serde_json::Value,
 ) -> Result<(), String> {
 	if uri.is_empty() {

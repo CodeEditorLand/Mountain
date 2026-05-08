@@ -17,6 +17,7 @@ use crate::dev_log;
 /// Entry management operations implementation for MountainEnvironment
 pub(super) async fn set_status_bar_entry_impl(
 	env:&MountainEnvironment,
+
 	entry:StatusBarEntryDTO,
 ) -> Result<(), CommonError> {
 	dev_log!("lifecycle", "[StatusBarProvider] Setting entry: {}", entry.EntryIdentifier);
@@ -56,6 +57,7 @@ pub(super) async fn set_status_bar_entry_impl(
 /// Removes a status bar item from the UI.
 pub(super) async fn dispose_status_bar_entry_impl(
 	env:&MountainEnvironment,
+
 	entry_identifier:String,
 ) -> Result<(), CommonError> {
 	dev_log!("lifecycle", "[StatusBarProvider] Disposing entry: {}", entry_identifier);

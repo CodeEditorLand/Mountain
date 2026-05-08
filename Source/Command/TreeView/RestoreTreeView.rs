@@ -17,10 +17,14 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 #[command]
 pub async fn RestoreTreeView(
 	_ApplicationHandle:AppHandle<Wry>,
+
 	_State:State<'_, Arc<ApplicationState>>,
+
 	_ViewId:String,
+
 	_StateValue:Value,
 ) -> Result<Value, String> {
 	dev_log!("commands", "warn: RestoreTreeView not implemented");
+
 	Ok(json!({ "success": false, "error": "RestoreTreeViewState method not implemented" }))
 }

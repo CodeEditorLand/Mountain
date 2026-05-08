@@ -22,6 +22,7 @@ pub async fn ExtensionsGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, 
 		.map_err(|Error| format!("extensions:getAll failed: {}", Error))?;
 
 	dev_log!("extensions", "extensions:getAll returning {} extensions", Extensions.len());
+
 	if let Some(First) = Extensions.first() {
 		dev_log!(
 			"extensions",
@@ -33,5 +34,6 @@ pub async fn ExtensionsGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, 
 				.collect::<String>()
 		);
 	}
+
 	Ok(json!(Extensions))
 }

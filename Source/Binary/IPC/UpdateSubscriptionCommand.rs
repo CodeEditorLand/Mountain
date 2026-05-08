@@ -70,6 +70,7 @@ pub async fn MountainSubscribeToUpdates(app_handle:AppHandle, subscription_data:
 			"Missing target"
 		})?
 		.to_string();
+
 	let Subscriber = subscription_data["subscriber"]
 		.as_str()
 		.ok_or_else(|| {

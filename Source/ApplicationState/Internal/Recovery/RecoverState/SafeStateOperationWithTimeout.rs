@@ -21,6 +21,7 @@ where
 
 	match Receiver.recv_timeout(std::time::Duration::from_millis(TimeoutMs)) {
 		Ok(Result) => Result,
+
 		Err(_) => {
 			dev_log!(
 				"lifecycle",
@@ -28,6 +29,7 @@ where
 				OperationName,
 				TimeoutMs
 			);
+
 			Err(CommonError::Unknown { Description:format!("Operation '{}' timed out", OperationName) })
 		},
 	}

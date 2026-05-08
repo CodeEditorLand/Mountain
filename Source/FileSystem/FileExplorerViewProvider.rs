@@ -66,8 +66,11 @@ impl TreeViewProvider for Struct {
 
 	async fn RevealTreeItem(
 		&self,
+
 		_ViewIdentifier:String,
+
 		_ItemHandle:String,
+
 		_Options:Value,
 	) -> Result<(), CommonError> {
 		Ok(())
@@ -83,8 +86,11 @@ impl TreeViewProvider for Struct {
 
 	async fn SetTreeViewTitle(
 		&self,
+
 		_ViewIdentifier:String,
+
 		_Title:Option<String>,
+
 		_Description:Option<String>,
 	) -> Result<(), CommonError> {
 		Ok(())
@@ -96,20 +102,27 @@ impl TreeViewProvider for Struct {
 
 	async fn OnTreeNodeExpanded(
 		&self,
+
 		_ViewIdentifier:String,
+
 		_ElementHandle:String,
+
 		_IsExpanded:bool,
 	) -> Result<(), CommonError> {
 		dev_log!("vfs", "[FileExplorer] OnTreeNodeExpanded - native provider no-op");
+
 		Ok(())
 	}
 
 	async fn OnTreeSelectionChanged(
 		&self,
+
 		_ViewIdentifier:String,
+
 		_SelectedHandles:Vec<String>,
 	) -> Result<(), CommonError> {
 		dev_log!("vfs", "[FileExplorer] OnTreeSelectionChanged - native provider no-op");
+
 		Ok(())
 	}
 
@@ -125,10 +138,13 @@ impl TreeViewProvider for Struct {
 
 	async fn GetChildren(
 		&self,
+
 		_ViewIdentifier:String,
+
 		ElementHandle:Option<String>,
 	) -> Result<Vec<Value>, CommonError> {
 		let RunTime = self.AppicationHandle.state::<Arc<Runtime>>().inner().clone();
+
 		let AppState = RunTime.Environment.ApplicationState.clone();
 
 		let PathToRead = if let Some(Handle) = ElementHandle {
@@ -148,10 +164,12 @@ impl TreeViewProvider for Struct {
 				})?
 		} else {
 			let Folders = AppState.Workspace.WorkspaceFolders.lock().unwrap();
+
 			let RootItems:Vec<Value> = Folders
 				.iter()
 				.map(|Folder| self.CreateTreeItemDTO(&Folder.Name, &Folder.URI, FileTypeDTO::Directory))
 				.collect();
+
 			return Ok(RootItems);
 		};
 

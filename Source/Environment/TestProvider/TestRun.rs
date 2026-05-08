@@ -13,8 +13,12 @@ use crate::Environment::TestProvider::{TestResult, TestRunStatus};
 #[derive(Debug, Clone)]
 pub struct Struct {
 	pub RunIdentifier:String,
+
 	pub ControllerIdentifier:String,
+
 	pub Status:TestRunStatus::Enum,
+
 	pub StartedAt:std::time::Instant,
+
 	pub Results:HashMap<String, TestResult::Struct>,
 }

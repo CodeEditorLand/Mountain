@@ -9,6 +9,7 @@ use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_
 
 pub async fn OutputShow(Service:&MountainVinegRPCService, Parameter:&Value) {
 	let _ = Service.ApplicationHandle().emit("sky://output/show", Parameter);
+
 	dev_log!(
 		"grpc",
 		"[Output] show channel={}",

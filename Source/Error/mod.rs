@@ -10,8 +10,13 @@
 //! these richer per-domain types.
 
 pub mod ConfigurationError;
+
 pub mod CoreError;
+
 pub mod FileSystemError;
+
 pub mod IPCError;
+
 pub mod ProviderError;
+
 pub mod ServiceError;

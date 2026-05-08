@@ -17,6 +17,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:ShowInputBoxRequest,
 ) -> Result<Response<ShowInputBoxResponse>, Status> {
 	dev_log!("cocoon", "[CocoonService] show_input_box");
@@ -32,9 +33,12 @@ pub async fn Fn(
 
 	match Service.environment.ShowInputBox(Options).await {
 		Ok(Some(Value)) => Ok(Response::new(ShowInputBoxResponse { value:Value, cancelled:false })),
+
 		Ok(None) => Ok(Response::new(ShowInputBoxResponse { value:String::new(), cancelled:true })),
+
 		Err(Error) => {
 			dev_log!("cocoon", "warn: [CocoonService] show_input_box failed: {}", Error);
+
 			Ok(Response::new(ShowInputBoxResponse { value:String::new(), cancelled:true }))
 		},
 	}

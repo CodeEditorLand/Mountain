@@ -15,13 +15,18 @@ where
 	F: std::future::Future<Output = Result<T, CommonError>>, {
 	let Span = tracing::span!(
 		tracing::Level::INFO,
+
 		"command_execute",
+
 		command = %CommandName
 	);
+
 	let _Enter = Span.enter();
 
 	dev_log!("lifecycle", "Executing command: {}", CommandName);
+
 	let Start = std::time::Instant::now();
+
 	match Operation.await {
 		Ok(Result) => {
 			dev_log!(
@@ -30,8 +35,10 @@ where
 				CommandName,
 				Start.elapsed()
 			);
+
 			Ok(Result)
 		},
+
 		Err(Err) => {
 			dev_log!(
 				"lifecycle",
@@ -40,6 +47,7 @@ where
 				Start.elapsed(),
 				Err
 			);
+
 			Err(Err)
 		},
 	}

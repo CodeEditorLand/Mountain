@@ -14,19 +14,23 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:FindTextInFilesRequest,
 ) -> Result<Response<FindTextInFilesResponse>, Status> {
 	if Request.pattern.is_empty() {
 		return Ok(Response::new(FindTextInFilesResponse::default()));
 	}
+
 	dev_log!("cocoon", "[CocoonService] find_text_in_files: pattern='{}'", Request.pattern);
 
 	let Roots:Vec<std::path::PathBuf> = {
 		match Service.environment.ApplicationState.Workspace.WorkspaceFolders.lock() {
 			Ok(Guard) => Guard.iter().map(|F| std::path::PathBuf::from(F.URI.path())).collect(),
+
 			Err(_) => Vec::new(),
 		}
 	};
+
 	let SearchRoots = if Roots.is_empty() {
 		vec![std::env::current_dir().unwrap_or_default()]
 	} else {
@@ -34,6 +38,7 @@ pub async fn Fn(
 	};
 
 	let Pattern = Request.pattern.clone();
+
 	let Matches = tokio::task::spawn_blocking(move || {
 		let mut Results:Vec<TextMatch> = Vec::new();
 		const MAX_MATCHES:usize = 1000;
@@ -100,5 +105,6 @@ pub async fn Fn(
 		Matches.len(),
 		Request.pattern
 	);
+
 	Ok(Response::new(FindTextInFilesResponse { matches:Matches }))
 }

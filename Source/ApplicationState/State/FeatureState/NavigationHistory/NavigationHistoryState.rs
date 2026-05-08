@@ -11,6 +11,7 @@ use crate::dev_log;
 pub struct NavigationHistoryState {
 	/// The ordered list of visited URIs (oldest first).
 	Stack:Arc<StandardMutex<Vec<String>>>,
+
 	/// Current position in the stack (0-based). Points to the active entry.
 	Index:Arc<StandardMutex<usize>>,
 }
@@ -21,8 +22,10 @@ impl Default for NavigationHistoryState {
 			"history",
 			"[NavigationHistoryState] Initializing default navigation history state..."
 		);
+
 		Self {
 			Stack:Arc::new(StandardMutex::new(Vec::new())),
+
 			Index:Arc::new(StandardMutex::new(0)),
 		}
 	}
@@ -32,6 +35,7 @@ impl NavigationHistoryState {
 	/// Returns `true` if there is a previous location to navigate to.
 	pub fn CanGoBack(&self) -> bool {
 		let Stack = self.Stack.lock().ok().map(|G| G.len()).unwrap_or(0);
+
 		let Index = self.Index.lock().ok().as_deref().copied().unwrap_or(0);
 
 		Stack > 0 && Index > 0
@@ -40,6 +44,7 @@ impl NavigationHistoryState {
 	/// Returns `true` if there is a next location to navigate to.
 	pub fn CanGoForward(&self) -> bool {
 		let Stack = self.Stack.lock().ok().map(|G| G.len()).unwrap_or(0);
+
 		let Index = self.Index.lock().ok().as_deref().copied().unwrap_or(0);
 
 		Stack > 0 && Index + 1 < Stack
@@ -62,6 +67,7 @@ impl NavigationHistoryState {
 
 		*Index -= 1;
 		let Uri = Stack.get(*Index).cloned();
+
 		dev_log!("history", "[NavigationHistoryState] GoBack → index={} uri={:?}", *Index, Uri);
 
 		Uri
@@ -84,6 +90,7 @@ impl NavigationHistoryState {
 
 		*Index += 1;
 		let Uri = Stack.get(*Index).cloned();
+
 		dev_log!("history", "[NavigationHistoryState] GoForward → index={} uri={:?}", *Index, Uri);
 
 		Uri
@@ -95,8 +102,11 @@ impl NavigationHistoryState {
 		if let (Ok(mut Stack), Ok(mut Index)) = (self.Stack.lock(), self.Index.lock()) {
 			// Truncate forward history
 			let NewIndex = if Stack.is_empty() { 0 } else { *Index + 1 };
+
 			Stack.truncate(NewIndex);
+
 			Stack.push(Uri.clone());
+
 			*Index = Stack.len() - 1;
 			dev_log!("history", "[NavigationHistoryState] Push uri={} index={}", Uri, *Index);
 		}
@@ -106,6 +116,7 @@ impl NavigationHistoryState {
 	pub fn Clear(&self) {
 		if let (Ok(mut Stack), Ok(mut Index)) = (self.Stack.lock(), self.Index.lock()) {
 			Stack.clear();
+
 			*Index = 0;
 			dev_log!("history", "[NavigationHistoryState] Stack cleared");
 		}

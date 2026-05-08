@@ -13,7 +13,9 @@ pub fn Fn(Config:SchedulerConfig::Struct) -> SchedulerBuilder {
 
 	if let Some(Count) = Config.WorkerCount {
 		let Count = Count.clamp(1, 256);
+
 		Builder = Builder.WithWorkerCount(Count);
+
 		dev_log!("lifecycle", "[RuntimeBuild] Configuring {} worker threads", Count);
 	}
 

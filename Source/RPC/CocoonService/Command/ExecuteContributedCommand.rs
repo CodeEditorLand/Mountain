@@ -15,6 +15,7 @@ use crate::{
 
 pub async fn Fn(
 	Service:&CocoonServiceImpl,
+
 	Request:ExecuteCommandRequest,
 ) -> Result<Response<ExecuteCommandResponse>, Status> {
 	dev_log!(
@@ -23,6 +24,7 @@ pub async fn Fn(
 		Request.command_id,
 		Request.arguments.len()
 	);
+
 	for (Index, Argument) in Request.arguments.iter().enumerate() {
 		dev_log!("cocoon", "[CocoonService] Argument {}: {:?}", Index, Argument);
 	}
@@ -44,12 +46,15 @@ pub async fn Fn(
 	match Service.environment.ExecuteCommand(Request.command_id, Arg).await {
 		Ok(Value) => {
 			let Bytes = serde_json::to_vec(&Value).unwrap_or_default();
+
 			Ok(Response::new(ExecuteCommandResponse {
 				result:Some(execute_command_response::Result::Value(Bytes)),
 			}))
 		},
+
 		Err(Error) => {
 			let Bytes = serde_json::to_vec(&Error.to_string()).unwrap_or_default();
+
 			Ok(Response::new(ExecuteCommandResponse {
 				result:Some(execute_command_response::Result::Error(RpcError {
 					code:-32000,

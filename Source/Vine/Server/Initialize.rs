@@ -54,6 +54,7 @@ use crate::{
 /// Server configuration constants
 #[allow(dead_code)]
 mod ServerConfig {
+
 	use std::time::Duration;
 
 	/// Default port for MountainService server
@@ -110,6 +111,7 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 
 			Ok(addr)
 		},
+
 		Err(e) => Err(VineError::AddressParseError(e)),
 	}
 }
@@ -159,22 +161,28 @@ fn ValidateSocketAddress(AddressString:&str, ServerName:&str) -> Result<SocketAd
 /// - Use `Default` addresses for development (localhost with default ports)
 pub fn Initialize(
 	ApplicationHandle:AppHandle,
+
 	MountainAddressString:String,
+
 	CocoonAddressString:String,
 ) -> Result<(), VineError> {
 	dev_log!("grpc", "[VineServer] Initializing Vine gRPC servers...");
+
 	crate::dev_log!("grpc", "initializing Vine gRPC servers");
 
 	// Validate and parse socket addresses
 	let MountainAddress = ValidateSocketAddress(&MountainAddressString, "MountainService")?;
+
 	let CocoonAddress = ValidateSocketAddress(&CocoonAddressString, "CocoonService")?;
 
 	dev_log!("grpc", "[VineServer] MountainService will bind to: {}", MountainAddress);
+
 	dev_log!(
 		"grpc",
 		"[VineServer] Cocoon expected on: {} (started by Cocoon process)",
 		CocoonAddress
 	);
+
 	crate::dev_log!("grpc", "Mountain={} Cocoon(remote)={}", MountainAddress, CocoonAddress);
 
 	// Retrieve ApplicationRunTime from Tauri managed state
@@ -202,6 +210,7 @@ pub fn Initialize(
 
 	// Spawn Mountain server to run in the background
 	let MountainServerName = MountainAddress.to_string();
+
 	tokio::spawn(async move {
 		dev_log!(
 			"grpc",

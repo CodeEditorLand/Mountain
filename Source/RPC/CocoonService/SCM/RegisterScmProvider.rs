@@ -30,14 +30,21 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterScmProviderRequest) 
 		.as_bytes()
 		.iter()
 		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
+
 	let DTO = ProviderRegistrationDTO {
 		Handle,
+
 		ProviderType:ProviderType::SourceControl,
+
 		Selector:json!([{ "scmId": Request.scm_id }]),
+
 		SideCarIdentifier:"cocoon-main".to_string(),
+
 		ExtensionIdentifier:json!(Request.extension_id),
+
 		Options:Some(json!({ "scmId": Request.scm_id })),
 	};
+
 	Service
 		.environment
 		.ApplicationState
@@ -52,12 +59,14 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:RegisterScmProviderRequest) 
 		"rootUri": null,
 		"extensionId": Request.extension_id,
 	});
+
 	if let Err(Error) = Service.environment.CreateSourceControl(CreateData).await {
 		dev_log!(
 			"cocoon",
 			"warn: [CocoonService] CreateSourceControl trait failed ({}); falling back to Sky emit",
 			Error
 		);
+
 		let _ = Service.environment.ApplicationHandle.emit(
 			"sky://scm/register",
 			json!({ "scmId": Request.scm_id, "extensionId": Request.extension_id }),

@@ -15,9 +15,13 @@ use crate::dev_log;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
 	pub Name:String,
+
 	pub Permissions:Vec<String>,
+
 	pub Description:String,
+
 	pub ParentRole:Option<String>,
+
 	pub Priority:u32,
 }
 
@@ -30,18 +34,26 @@ impl Struct {
 
 	pub fn NewWithParent(
 		Name:String,
+
 		Permissions:Vec<String>,
+
 		Description:String,
+
 		ParentRole:String,
+
 		Priority:u32,
 	) -> Self {
 		let UniquePermissions:Vec<String> = Permissions.into_iter().collect::<HashSet<String>>().into_iter().collect();
 
 		Self {
 			Name,
+
 			Permissions:UniquePermissions,
+
 			Description,
+
 			ParentRole:Some(ParentRole),
+
 			Priority,
 		}
 	}
@@ -49,8 +61,10 @@ impl Struct {
 	pub fn AddPermission(mut self, Permission:String) -> Self {
 		if !self.Permissions.contains(&Permission) {
 			self.Permissions.push(Permission.clone());
+
 			dev_log!("ipc", "[Role] Added permission '{}' to role '{}'", Permission, self.Name);
 		}
+
 		self
 	}
 
@@ -58,9 +72,11 @@ impl Struct {
 		for Permission in Permissions {
 			if !self.Permissions.contains(&Permission) {
 				self.Permissions.push(Permission.clone());
+
 				dev_log!("ipc", "[Role] Added permission '{}' to role '{}'", Permission, self.Name);
 			}
 		}
+
 		self
 	}
 

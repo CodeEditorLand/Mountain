@@ -77,6 +77,7 @@ impl HealthChecker {
 	/// Default ping timeout is 5 seconds.
 	pub fn new() -> Self {
 		dev_log!("ipc", "[HealthChecker] Creating health checker with 5s timeout");
+
 		Self { ping_timeout:std::time::Duration::from_secs(5) }
 	}
 
@@ -86,6 +87,7 @@ impl HealthChecker {
 	/// - `ping_timeout`: Maximum allowed response time
 	pub fn with_timeout(ping_timeout:std::time::Duration) -> Self {
 		dev_log!("ipc", "[HealthChecker] Creating health checker with {:?} timeout", ping_timeout);
+
 		Self { ping_timeout }
 	}
 
@@ -146,6 +148,7 @@ impl HealthChecker {
 	/// Set a new ping timeout
 	pub fn set_ping_timeout(&mut self, timeout:std::time::Duration) {
 		self.ping_timeout = timeout;
+
 		dev_log!("ipc", "[HealthChecker] Ping timeout updated to {:?}", timeout);
 	}
 }
@@ -156,27 +159,33 @@ impl Default for HealthChecker {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[tokio::test]
 	async fn test_health_checker_creation() {
 		let checker = HealthChecker::new();
+
 		assert_eq!(checker.ping_timeout, std::time::Duration::from_secs(5));
 	}
 
 	#[tokio::test]
 	async fn test_health_checker_custom_timeout() {
 		let timeout = std::time::Duration::from_secs(10);
+
 		let checker = HealthChecker::with_timeout(timeout);
+
 		assert_eq!(checker.ping_timeout, timeout);
 	}
 
 	#[tokio::test]
 	async fn test_check_connection_health_healthy() {
 		let checker = HealthChecker::new();
+
 		let mut handle = ConnectionHandle::new();
 
 		let is_healthy = checker.check_connection_health(&mut handle).await;
+
 		assert!(is_healthy);
 	}
 
@@ -184,27 +193,34 @@ mod tests {
 	async fn test_check_connection_health_unhealthy() {
 		// Create a checker with very short timeout
 		let timeout = std::time::Duration::from_millis(1);
+
 		let checker = HealthChecker::with_timeout(timeout);
+
 		let mut handle = ConnectionHandle::new();
 
 		// The simulated latency (10ms) should exceed the timeout (1ms)
 		let is_healthy = checker.check_connection_health(&mut handle).await;
+
 		assert!(!is_healthy);
 	}
 
 	#[test]
 	fn test_default_health_checker() {
 		let checker = HealthChecker::default();
+
 		assert_eq!(checker.ping_timeout, std::time::Duration::from_secs(5));
 	}
 
 	#[test]
 	fn test_set_ping_timeout() {
 		let mut checker = HealthChecker::new();
+
 		assert_eq!(checker.ping_timeout, std::time::Duration::from_secs(5));
 
 		let new_timeout = std::time::Duration::from_secs(15);
+
 		checker.set_ping_timeout(new_timeout);
+
 		assert_eq!(checker.ping_timeout, new_timeout);
 	}
 }

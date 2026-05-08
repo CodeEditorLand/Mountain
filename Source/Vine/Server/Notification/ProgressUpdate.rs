@@ -17,6 +17,7 @@ pub async fn ProgressUpdate(Service:&MountainVinegRPCService, Parameter:&Value) 
 	let _ = Service
 		.ApplicationHandle()
 		.emit("sky://notification/progress-update", Parameter);
+
 	dev_log!(
 		"grpc",
 		"[Progress] update id={}",

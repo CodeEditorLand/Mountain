@@ -87,6 +87,7 @@ impl WorkspaceFolderStateDTO {
 		}
 
 		self.Name = Name;
+
 		Ok(())
 	}
 
@@ -144,28 +145,37 @@ impl WorkspaceFolderStateDTO {
 
 #[cfg(test)]
 mod tests {
+
 	use super::*;
 
 	#[test]
 	fn test_creation_success() {
 		let URI = Url::parse("file:///workspace/project").unwrap();
+
 		let dto = WorkspaceFolderStateDTO::New(URI.clone(), "project".to_string(), 0);
+
 		assert!(dto.is_ok());
+
 		assert_eq!(dto.unwrap().Name, "project");
 	}
 
 	#[test]
 	fn test_invalid_name_length() {
 		let URI = Url::parse("file:///workspace/project").unwrap();
+
 		let LongName = "a".repeat(257);
+
 		let dto = WorkspaceFolderStateDTO::New(URI, LongName, 0);
+
 		assert!(dto.is_err());
 	}
 
 	#[test]
 	fn test_invalid_index() {
 		let URI = Url::parse("file:///workspace/project").unwrap();
+
 		let dto = WorkspaceFolderStateDTO::New(URI, "project".to_string(), 100);
+
 		assert!(dto.is_err());
 	}
 }

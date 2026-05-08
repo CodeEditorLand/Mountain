@@ -31,15 +31,19 @@ use crate::{
 /// Returns an error if Cocoon initialization fails.
 pub async fn CocoonStart(
 	ApplicationHandle:&tauri::AppHandle,
+
 	Environment:&std::sync::Arc<MountainEnvironment>,
 ) -> Result<(), String> {
 	match InitializeCocoon(ApplicationHandle, Environment).await {
 		Ok(()) => {
 			dev_log!("cocoon", "[Cocoon] [Start] Cocoon sidecar started successfully.");
+
 			Ok(())
 		},
+
 		Err(e) => {
 			dev_log!("cocoon", "warn: [Cocoon] [Start] Cocoon unavailable (degraded mode): {}", e);
+
 			Ok(()) // Graceful degradation - workbench works without Cocoon
 		},
 	}

@@ -7,6 +7,7 @@
 
 #[cfg(test)]
 mod tests {
+
 	use std::{path::PathBuf, sync::Arc};
 
 	use CommonLibrary::{
@@ -34,9 +35,11 @@ mod tests {
 	// FileSystemReader or our mock one.
 	async fn LogicThatReadsAFile(
 		Reader:Arc<dyn TestFileSystemReader + Send + Sync>,
+
 		Path:PathBuf,
 	) -> Result<String, CommonError> {
 		let Bytes = Reader.ReadFile(&Path).await?;
+
 		Ok(String::from_utf8(Bytes).unwrap_or_default())
 	}
 
@@ -59,6 +62,7 @@ mod tests {
 
 		// 4. Assert: Check that the result is what we expect.
 		assert!(result.is_ok());
+
 		assert_eq!(result.unwrap(), "hello");
 	}
 
@@ -76,12 +80,15 @@ mod tests {
 
 		// 3. Act: Call our handler function.
 		let path = PathBuf::from("/not/found.txt");
+
 		let result = LogicThatReadsAFile(Arc::new(MockReader), path.clone()).await;
 
 		// 4. Assert: Check that the result is the correct error.
 		assert!(result.is_err());
+
 		match result.unwrap_err() {
 			CommonError::FileSystemNotFound(p) => assert_eq!(p, path),
+
 			_ => panic!("Expected FileSystemNotFound error"),
 		}
 	}

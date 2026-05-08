@@ -17,7 +17,9 @@ use crate::dev_log;
 /// Configuration operations implementation for MountainEnvironment
 pub(super) async fn set_webview_options_impl(
 	env:&MountainEnvironment,
+
 	handle:String,
+
 	options_value:Value,
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[WebviewProvider] Setting options for Webview: {}", handle);
@@ -74,7 +76,9 @@ pub(super) async fn set_webview_options_impl(
 /// Sets the HTML content of a Webview.
 pub(super) async fn set_webview_html_impl(
 	env:&MountainEnvironment,
+
 	handle:String,
+
 	html:String,
 ) -> Result<(), CommonError> {
 	dev_log!(

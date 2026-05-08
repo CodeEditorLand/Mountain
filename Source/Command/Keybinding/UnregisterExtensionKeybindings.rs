@@ -15,11 +15,13 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime as Runtime, dev_log}
 #[command]
 pub async fn UnregisterExtensionKeybindings(
 	ApplicationHandle:AppHandle<Wry>,
+
 	ExtensionIdentifier:String,
 ) -> Result<Value, String> {
 	dev_log!("keybinding", "unregistering keybindings for extension: {}", ExtensionIdentifier);
 
 	let RunTime = ApplicationHandle.state::<Arc<Runtime>>().inner().clone();
+
 	let _Provider:Arc<dyn KeybindingProvider> = RunTime.Environment.Require();
 
 	Ok(json!({ "success": true }))

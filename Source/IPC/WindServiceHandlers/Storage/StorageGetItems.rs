@@ -29,11 +29,13 @@ pub async fn StorageGetItems(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Val
 						json!([K, ValStr])
 					})
 					.collect();
+
 				Ok(json!(Tuples))
 			} else {
 				Ok(json!([]))
 			}
 		},
+
 		Err(_) => Ok(json!([])),
 	}
 }
