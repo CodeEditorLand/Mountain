@@ -11,6 +11,7 @@ use std::collections::HashMap;
 use serde_json::{Value, json};
 
 pub async fn LocalPTYGetEnvironment() -> Result<Value, String> {
+
 	let Env:HashMap<String, String> = std::env::vars().collect();
 
 	Ok(json!(Env))

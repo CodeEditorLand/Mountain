@@ -3,7 +3,9 @@
 //! Clear an output channel via `sky://output/clear`.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -12,6 +14,7 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ClearOutputRequest) -> Result<Response<Empty>, Status> {
+
 	let _ = Service
 		.environment
 		.ApplicationHandle

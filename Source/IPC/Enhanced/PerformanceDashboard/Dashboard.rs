@@ -33,6 +33,7 @@ use crate::{
 };
 
 pub struct Struct {
+
 	pub(super) config:DashboardConfig,
 
 	pub(super) metrics:Arc<RwLock<VecDeque<PerformanceMetric>>>,
@@ -47,10 +48,13 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn new(config:DashboardConfig) -> Self {
+
 		let config_clone = config.clone();
 
 		let dashboard = Self {
+
 			config,
 
 			metrics:Arc::new(RwLock::new(VecDeque::new())),
@@ -79,7 +83,9 @@ impl Struct {
 
 		dev_log!(
 			"ipc",
+
 			"[PerformanceDashboard] Created dashboard with {}ms update interval",
+
 			config_clone.update_interval_ms
 		);
 
@@ -87,10 +93,13 @@ impl Struct {
 	}
 
 	pub async fn start(&self) -> Result<(), String> {
+
 		{
+
 			let mut running = self.is_running.lock().await;
 
 			if *running {
+
 				return Ok(());
 			}
 
@@ -109,10 +118,13 @@ impl Struct {
 	}
 
 	pub async fn stop(&self) -> Result<(), String> {
+
 		{
+
 			let mut running = self.is_running.lock().await;
 
 			if !*running {
+
 				return Ok(());
 			}
 
@@ -120,18 +132,21 @@ impl Struct {
 		}
 
 		{
+
 			let mut metrics = self.metrics.write().await;
 
 			metrics.clear();
 		}
 
 		{
+
 			let mut traces = self.traces.write().await;
 
 			traces.clear();
 		}
 
 		{
+
 			let mut alerts = self.alerts.write().await;
 
 			alerts.clear();
@@ -143,6 +158,7 @@ impl Struct {
 	}
 
 	pub async fn record_metric(&self, metric:PerformanceMetric) {
+
 		let mut metrics = self.metrics.write().await;
 
 		metrics.push_back(metric.clone());
@@ -157,11 +173,13 @@ impl Struct {
 	}
 
 	pub async fn start_trace_span(&self, operation_name:String) -> TraceSpan {
+
 		let trace_id = Self::generate_trace_id();
 
 		let span_id = Self::generate_span_id();
 
 		let span = TraceSpan {
+
 			trace_id:trace_id.clone(),
 
 			span_id:span_id.clone(),
@@ -185,12 +203,14 @@ impl Struct {
 		};
 
 		{
+
 			let mut traces = self.traces.write().await;
 
 			traces.insert(span_id.clone(), span.clone());
 		}
 
 		{
+
 			let mut stats = self.statistics.write().await;
 
 			stats.total_traces_collected += 1;
@@ -200,9 +220,11 @@ impl Struct {
 	}
 
 	pub async fn end_trace_span(&self, span_id:&str) -> Result<(), String> {
+
 		let mut traces = self.traces.write().await;
 
 		if let Some(span) = traces.get_mut(span_id) {
+
 			let end_time = SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -214,30 +236,38 @@ impl Struct {
 
 			dev_log!(
 				"ipc",
+
 				"[PerformanceDashboard] Ended trace span: {} (duration: {}ms)",
+
 				span.operation_name,
+
 				span.duration_ms.unwrap_or(0)
 			);
 
 			Ok(())
 		} else {
+
 			Err(format!("Trace span not found: {}", span_id))
 		}
 	}
 
 	pub async fn add_trace_log(&self, span_id:&str, log:TraceLog) -> Result<(), String> {
+
 		let mut traces = self.traces.write().await;
 
 		if let Some(span) = traces.get_mut(span_id) {
+
 			span.logs.push(log);
 
 			Ok(())
 		} else {
+
 			Err(format!("Trace span not found: {}", span_id))
 		}
 	}
 
 	async fn start_metrics_collection(&self) {
+
 		let dashboard = Arc::new(self.clone());
 
 		tokio::spawn(async move {
@@ -252,6 +282,7 @@ impl Struct {
 	}
 
 	async fn start_alert_monitoring(&self) {
+
 		let dashboard = Arc::new(self.clone());
 
 		tokio::spawn(async move {
@@ -265,6 +296,7 @@ impl Struct {
 	}
 
 	async fn start_data_cleanup(&self) {
+
 		let dashboard = Arc::new(self.clone());
 
 		tokio::spawn(async move {
@@ -278,8 +310,11 @@ impl Struct {
 	}
 
 	async fn collect_system_metrics(&self) {
+
 		if let Ok(memory_usage) = Self::get_memory_usage() {
+
 			let metric = PerformanceMetric {
+
 				metric_type:MetricType::MemoryUsage,
 
 				value:memory_usage,
@@ -298,7 +333,9 @@ impl Struct {
 		}
 
 		if let Ok(cpu_usage) = Self::get_cpu_usage() {
+
 			let metric = PerformanceMetric {
+
 				metric_type:MetricType::CpuUsage,
 
 				value:cpu_usage,
@@ -318,6 +355,7 @@ impl Struct {
 	}
 
 	async fn update_statistics(&self) {
+
 		let metrics = self.metrics.read().await;
 
 		let mut stats = self.statistics.write().await;
@@ -328,6 +366,7 @@ impl Struct {
 			.collect();
 
 		if !processing_metrics.is_empty() {
+
 			let total_time:f64 = processing_metrics.iter().map(|m| m.value).sum();
 
 			stats.average_processing_time_ms = total_time / processing_metrics.len() as f64;
@@ -341,6 +380,7 @@ impl Struct {
 			.collect();
 
 		if !error_metrics.is_empty() {
+
 			let total_errors:f64 = error_metrics.iter().map(|m| m.value).sum();
 
 			stats.error_rate_percentage = total_errors / error_metrics.len() as f64;
@@ -352,6 +392,7 @@ impl Struct {
 			.collect();
 
 		if !throughput_metrics.is_empty() {
+
 			let total_throughput:f64 = throughput_metrics.iter().map(|m| m.value).sum();
 
 			stats.throughput_messages_per_second = total_throughput / throughput_metrics.len() as f64;
@@ -363,6 +404,7 @@ impl Struct {
 			.collect();
 
 		if !memory_metrics.is_empty() {
+
 			let total_memory:f64 = memory_metrics.iter().map(|m| m.value).sum();
 
 			stats.memory_usage_mb = total_memory / memory_metrics.len() as f64;
@@ -375,7 +417,9 @@ impl Struct {
 	}
 
 	async fn check_alerts(&self, metric:&PerformanceMetric) {
+
 		let threshold = match metric.metric_type {
+
 			MetricType::MessageProcessingTime => self.config.alert_threshold_ms as f64,
 
 			MetricType::ErrorRate => 5.0,
@@ -388,7 +432,9 @@ impl Struct {
 		};
 
 		if metric.value > threshold {
+
 			let severity = match metric.value / threshold {
+
 				ratio if ratio > 5.0 => AlertSeverity::Critical,
 
 				ratio if ratio > 3.0 => AlertSeverity::High,
@@ -399,6 +445,7 @@ impl Struct {
 			};
 
 			let alert = PerformanceAlert {
+
 				alert_id:Self::generate_alert_id(),
 
 				metric_type:metric.metric_type.clone(),
@@ -415,19 +462,24 @@ impl Struct {
 
 				message:format!(
 					"{} exceeded threshold: {} > {}",
+
 					Self::metric_type_name(&metric.metric_type),
+
 					metric.value,
+
 					threshold
 				),
 			};
 
 			{
+
 				let mut alerts = self.alerts.write().await;
 
 				alerts.push_back(alert.clone());
 			}
 
 			{
+
 				let mut stats = self.statistics.write().await;
 
 				stats.total_alerts_triggered += 1;
@@ -438,10 +490,12 @@ impl Struct {
 	}
 
 	async fn check_performance_alerts(&self) {
+
 		dev_log!("ipc", "[PerformanceDashboard] Checking performance alerts");
 	}
 
 	async fn cleanup_old_data(&self) {
+
 		let retention_threshold = SystemTime::now()
 			.duration_since(SystemTime::UNIX_EPOCH)
 			.unwrap_or_default()
@@ -449,28 +503,33 @@ impl Struct {
 			- (self.config.metrics_retention_hours * 3600);
 
 		{
+
 			let mut metrics = self.metrics.write().await;
 
 			metrics.retain(|m| m.timestamp >= retention_threshold);
 		}
 
 		{
+
 			let mut traces = self.traces.write().await;
 
 			traces.retain(|_, span| span.start_time >= retention_threshold);
 
 			if traces.len() > self.config.max_traces_stored {
+
 				let excess = traces.len() - self.config.max_traces_stored;
 
 				let keys_to_remove:Vec<String> = traces.keys().take(excess).cloned().collect();
 
 				for key in keys_to_remove {
+
 					traces.remove(&key);
 				}
 			}
 		}
 
 		{
+
 			let mut alerts = self.alerts.write().await;
 
 			alerts.retain(|a| a.timestamp >= retention_threshold);
@@ -490,7 +549,9 @@ impl Struct {
 	fn generate_alert_id() -> String { uuid::Uuid::new_v4().to_string() }
 
 	fn metric_type_name(metric_type:&MetricType) -> &'static str {
+
 		match metric_type {
+
 			MetricType::MessageProcessingTime => "Message Processing Time",
 
 			MetricType::ConnectionLatency => "Connection Latency",
@@ -510,18 +571,21 @@ impl Struct {
 	pub async fn get_statistics(&self) -> DashboardStatistics { self.statistics.read().await.clone() }
 
 	pub async fn get_recent_metrics(&self, limit:usize) -> Vec<PerformanceMetric> {
+
 		let metrics = self.metrics.read().await;
 
 		metrics.iter().rev().take(limit).cloned().collect()
 	}
 
 	pub async fn get_active_alerts(&self) -> Vec<PerformanceAlert> {
+
 		let alerts = self.alerts.read().await;
 
 		alerts.iter().rev().cloned().collect()
 	}
 
 	pub async fn get_trace(&self, trace_id:&str) -> Option<TraceSpan> {
+
 		let traces = self.traces.read().await;
 
 		traces.values().find(|span| span.trace_id == trace_id).cloned()
@@ -530,6 +594,7 @@ impl Struct {
 	pub fn default_dashboard() -> Self { Self::new(DashboardConfig::default()) }
 
 	pub fn high_frequency_dashboard() -> Self {
+
 		Self::new(DashboardConfig {
 			update_interval_ms:1000,
 			metrics_retention_hours:1,
@@ -548,7 +613,9 @@ impl Struct {
 
 		tags:HashMap<String, String>,
 	) -> PerformanceMetric {
+
 		PerformanceMetric {
+
 			metric_type,
 
 			value,
@@ -565,7 +632,9 @@ impl Struct {
 	}
 
 	pub fn create_trace_log(message:String, level:LogLevel, fields:HashMap<String, String>) -> TraceLog {
+
 		TraceLog {
+
 			timestamp:SystemTime::now()
 				.duration_since(SystemTime::UNIX_EPOCH)
 				.unwrap_or_default()
@@ -580,6 +649,7 @@ impl Struct {
 	}
 
 	pub fn calculate_performance_score(average_processing_time:f64, error_rate:f64, throughput:f64) -> f64 {
+
 		let time_score = 100.0 / (1.0 + average_processing_time / 100.0);
 
 		let error_score = 100.0 * (1.0 - error_rate / 100.0);
@@ -592,7 +662,9 @@ impl Struct {
 	}
 
 	pub fn format_metric_value(metric_type:&MetricType, value:f64) -> String {
+
 		match metric_type {
+
 			MetricType::MessageProcessingTime => format!("{:.2}ms", value),
 
 			MetricType::ConnectionLatency => format!("{:.2}ms", value),
@@ -611,8 +683,11 @@ impl Struct {
 }
 
 impl Clone for Struct {
+
 	fn clone(&self) -> Self {
+
 		Self {
+
 			config:self.config.clone(),
 
 			metrics:self.metrics.clone(),

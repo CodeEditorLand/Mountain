@@ -10,22 +10,31 @@ use std::{fs, path::Path};
 use crate::dev_log;
 
 pub fn Fn(FilePath:&Path, CorruptedContent:&str) {
+
 	let BackupPath = FilePath.with_extension("json.backup");
 
 	match fs::write(&BackupPath, CorruptedContent) {
+
 		Ok(()) => {
+
 			dev_log!(
 				"storage",
+
 				"warn: [MementoLoader] Created backup of corrupted memento at: {}",
+
 				BackupPath.display()
 			)
 		},
 
 		Err(E) => {
+
 			dev_log!(
 				"storage",
+
 				"error: [MementoLoader] Failed to create backup of corrupted memento at '{}': {}",
+
 				BackupPath.display(),
+
 				E
 			)
 		},

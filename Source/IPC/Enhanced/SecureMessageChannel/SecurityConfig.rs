@@ -5,10 +5,12 @@
 //! and the maximum allowed message size (DOS guard).
 
 use ring::aead::{AES_256_GCM, NONCE_LEN};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub encryption_algorithm:String,
 
 	pub key_rotation_interval_hours:u64,
@@ -23,8 +25,11 @@ pub struct Struct {
 }
 
 impl Default for Struct {
+
 	fn default() -> Self {
+
 		Self {
+
 			encryption_algorithm:"AES-256-GCM".to_string(),
 
 			key_rotation_interval_hours:24,

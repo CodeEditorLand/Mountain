@@ -10,6 +10,7 @@ use serde_json::{Value, json};
 use crate::IPC::WindServiceHandlers::Git::Shared::{Generated, RunGit};
 
 pub async fn HandleRevListCount(Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let RepoPath = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
 
 	let FromRef = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
@@ -17,6 +18,7 @@ pub async fn HandleRevListCount(Arguments:Vec<Value>) -> Result<Value, String> {
 	let ToRef = Arguments.get(2).and_then(Value::as_str).unwrap_or("").to_string();
 
 	if RepoPath.is_empty() || FromRef.is_empty() || ToRef.is_empty() {
+
 		return Err("git:revListCount requires repoPath, fromRef, toRef".to_string());
 	}
 
@@ -24,12 +26,15 @@ pub async fn HandleRevListCount(Arguments:Vec<Value>) -> Result<Value, String> {
 
 	let (ExitCode, Stdout, Stderr) = RunGit(
 		&Generated(),
+
 		&["rev-list".to_string(), "--count".to_string(), Range],
+
 		Some(&RepoPath),
 	)
 	.await?;
 
 	if ExitCode != 0 {
+
 		return Err(format!("git rev-list failed: {}", Stderr));
 	}
 

@@ -9,6 +9,7 @@ use serde_json::Value;
 use crate::IPC::WindServiceHandlers::Git::Shared::RunGit;
 
 pub async fn HandleCheckout(Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
 
 	let RepoPath = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
@@ -18,18 +19,22 @@ pub async fn HandleCheckout(Arguments:Vec<Value>) -> Result<Value, String> {
 	let Detached = Arguments.get(3).and_then(Value::as_bool).unwrap_or(false);
 
 	if RepoPath.is_empty() || Treeish.is_empty() {
+
 		return Err("git:checkout requires repoPath and treeish".to_string());
 	}
 
 	let Argv:Vec<String> = if Detached {
+
 		vec!["checkout".to_string(), "--detach".to_string(), Treeish]
 	} else {
+
 		vec!["checkout".to_string(), Treeish]
 	};
 
 	let (ExitCode, _, Stderr) = RunGit(&OperationId, &Argv, Some(&RepoPath)).await?;
 
 	if ExitCode != 0 {
+
 		return Err(format!("git checkout failed: {}", Stderr));
 	}
 

@@ -4,7 +4,9 @@
 //! result location into the gRPC `Location` shape.
 
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
@@ -21,9 +23,12 @@ pub async fn Fn(
 
 	Request:ProvideDefinitionRequest,
 ) -> Result<Response<ProvideDefinitionResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Providing definition for provider {}",
+
 		Request.provider_handle
 	);
 
@@ -34,13 +39,16 @@ pub async fn Fn(
 	let Position_ = Request.position.as_ref();
 
 	let PositionDTO_ = PositionDTO {
+
 		LineNumber:Position_.map(|P| P.line).unwrap_or(0),
 
 		Column:Position_.map(|P| P.character).unwrap_or(0),
 	};
 
 	match Service.environment.ProvideDefinition(DocumentURI, PositionDTO_).await {
+
 		Ok(Some(Locations)) => {
+
 			let Mapped = Locations
 				.iter()
 				.map(|Loc| {

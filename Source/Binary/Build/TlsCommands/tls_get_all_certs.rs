@@ -17,6 +17,7 @@ use crate::{
 
 #[tauri::command]
 pub async fn tls_get_all_certs(app_handle:AppHandle) -> Result<HashMap<String, CertificateInfo>, String> {
+
 	dev_log!("security", "getting all server certificates");
 
 	let state = app_handle

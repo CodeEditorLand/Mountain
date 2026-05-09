@@ -10,25 +10,34 @@ use std::path::PathBuf;
 use serde_json::Value;
 
 pub fn VsixPathFromArgs(Args:&[Value]) -> Option<PathBuf> {
+
 	let Raw = Args.first()?;
 
 	let RawString = if let Some(AsStr) = Raw.as_str() {
+
 		AsStr.to_string()
 	} else if let Some(AsObject) = Raw.as_object() {
+
 		// Wind can pass a UriComponents object; pull the conventional fields.
 		if let Some(External) = AsObject.get("external").and_then(|V| V.as_str()) {
+
 			External.to_string()
 		} else if let Some(Path) = AsObject.get("path").and_then(|V| V.as_str()) {
+
 			Path.to_string()
 		} else {
+
 			return None;
 		}
 	} else {
+
 		return None;
 	};
 
 	if let Ok(Parsed) = url::Url::parse(&RawString) {
+
 		if Parsed.scheme() == "file" {
+
 			return Some(Parsed.to_file_path().unwrap_or_else(|_| PathBuf::from(Parsed.path())));
 		}
 	}

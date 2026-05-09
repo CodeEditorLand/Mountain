@@ -11,8 +11,11 @@ use serde_json::{Value, json};
 use crate::IPC::WindServiceHandlers::Git::Shared::{AsStringArray, Generated, RunGit};
 
 pub async fn HandleExec(Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let (Argv, Cwd, OperationId) = match Arguments.first() {
+
 		Some(First) if First.is_object() => {
+
 			let Obj = First.as_object().unwrap();
 
 			let Argv = Obj.get("Arguments").map(AsStringArray).unwrap_or_default();
@@ -25,6 +28,7 @@ pub async fn HandleExec(Arguments:Vec<Value>) -> Result<Value, String> {
 		},
 
 		Some(First) if First.is_array() => {
+
 			let Argv = AsStringArray(First);
 
 			let Cwd = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
@@ -36,6 +40,7 @@ pub async fn HandleExec(Arguments:Vec<Value>) -> Result<Value, String> {
 	};
 
 	if Argv.is_empty() {
+
 		return Err("git:exec requires non-empty Arguments".to_string());
 	}
 

@@ -3,7 +3,9 @@
 //! Forward a rename-edits request to the registered provider.
 
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
@@ -20,9 +22,12 @@ pub async fn Fn(
 
 	Request:ProvideRenameEditsRequest,
 ) -> Result<Response<ProvideRenameEditsResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Providing rename edits: new_name={}",
+
 		Request.new_name
 	);
 
@@ -33,6 +38,7 @@ pub async fn Fn(
 	let Position_ = Request.position.as_ref();
 
 	let PositionDTO_ = PositionDTO {
+
 		LineNumber:Position_.map(|P| P.line).unwrap_or(0),
 
 		Column:Position_.map(|P| P.character).unwrap_or(0),
@@ -43,6 +49,7 @@ pub async fn Fn(
 		.ProvideRenameEdits(DocumentURI, PositionDTO_, Request.new_name)
 		.await
 	{
+
 		Ok(_) => Ok(Response::new(ProvideRenameEditsResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Rename edits failed: {}", Error))),

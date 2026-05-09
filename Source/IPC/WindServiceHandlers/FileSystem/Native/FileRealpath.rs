@@ -12,6 +12,7 @@ use crate::IPC::{
 };
 
 pub async fn FileRealpath(Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing path")?)?;
 
 	let Canonical = tokio::fs::canonicalize(&Path)

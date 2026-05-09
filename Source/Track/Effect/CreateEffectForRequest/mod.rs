@@ -91,6 +91,7 @@ pub mod WindowUI;
 pub mod Workspace;
 
 use serde_json::Value;
+
 use tauri::{AppHandle, Runtime};
 
 use crate::Track::Effect::MappedEffectType::MappedEffect;
@@ -108,9 +109,13 @@ pub fn Fn<R:Runtime>(
 
 	Parameters:Value,
 ) -> Result<MappedEffect, String> {
+
 	macro_rules! Try {
+
 		($Module:ident) => {
+
 			if let Some(Result) = $Module::CreateEffect::<R>(MethodName, Parameters.clone()) {
+
 				return Result;
 			}
 		};

@@ -29,10 +29,12 @@ use std::{
 };
 
 use tauri::{AppHandle, Emitter};
+
 use serde::Serialize;
 
 /// Connection state tracker for IPC server
 pub struct ConnectionState {
+
 	/// Current connection status (thread-safe atomic)
 	pub Connected:AtomicBool,
 
@@ -52,6 +54,7 @@ pub struct ConnectionState {
 /// Connection status event published to frontend
 #[derive(Debug, Clone, Serialize)]
 pub struct ConnectionStatusEvent {
+
 	pub connection_id:String,
 
 	pub connected:bool,
@@ -60,6 +63,7 @@ pub struct ConnectionStatusEvent {
 }
 
 impl ConnectionState {
+
 	/// Create a new connection state tracker
 	///
 	/// ## Parameters
@@ -69,7 +73,9 @@ impl ConnectionState {
 	/// ## Returns
 	/// New ConnectionState instance
 	pub fn New(ConnectionId:String, TimeoutSeconds:u64) -> Self {
+
 		Self {
+
 			Connected:AtomicBool::new(false),
 
 			AppHandle:Mutex::new(None),
@@ -90,8 +96,11 @@ impl ConnectionState {
 	/// ## Returns
 	/// Result indicating success or error message
 	pub fn Initialize(&self, Handle:AppHandle) -> Result<(), String> {
+
 		match self.AppHandle.lock() {
+
 			Ok(mut handle) => {
+
 				*handle = Some(Handle);
 				self.Connected.store(true, Ordering::Release);
 
@@ -109,10 +118,13 @@ impl ConnectionState {
 	/// ## Returns
 	/// Current timestamp as seconds since Unix epoch
 	pub fn UpdateActivity(&self) -> u64 {
+
 		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
 
 		match self.LastActivity.lock() {
+
 			Ok(mut activity) => {
+
 				*activity = now;
 				now
 			},
@@ -132,10 +144,13 @@ impl ConnectionState {
 	/// ## Returns
 	/// True if connection has exceeded timeout, false otherwise
 	pub fn IsTimedOut(&self) -> bool {
+
 		let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default().as_secs();
 
 		match self.LastActivity.lock() {
+
 			Ok(activity) => {
+
 				let elapsed = now.saturating_sub(*activity);
 
 				elapsed > self.TimeoutSeconds
@@ -153,19 +168,23 @@ impl ConnectionState {
 	/// ## Returns
 	/// Result indicating success or error message
 	pub async fn SendStatus(&self, Connected:bool) -> Result<(), String> {
+
 		let handle = match self.AppHandle.lock() {
+
 			Ok(h) => h.clone(),
 
 			Err(e) => return Err(format!("Failed to acquire app handle lock: {}", e)),
 		};
 
 		let handle = match handle {
+
 			Some(h) => h,
 
 			None => return Err("App handle not initialized".to_string()),
 		};
 
 		let event = ConnectionStatusEvent {
+
 			connection_id:self.ConnectionId.clone(),
 
 			connected:Connected,
@@ -185,11 +204,14 @@ impl ConnectionState {
 	/// ## Returns
 	/// Result indicating success or error message
 	pub fn Close(&self) -> Result<(), String> {
+
 		self.Connected.store(false, Ordering::Release);
 
 		// Clear app handle to prevent further use
 		match self.AppHandle.lock() {
+
 			Ok(mut handle) => {
+
 				*handle = None;
 			},
 
@@ -204,11 +226,13 @@ impl ConnectionState {
 	/// ## Returns
 	/// Connection statistics as a string
 	pub fn GetStatistics(&self) -> String {
+
 		let connected = self.IsConnected();
 
 		let timed_out = self.IsTimedOut();
 
 		let last_activity = match self.LastActivity.lock() {
+
 			Ok(activity) => *activity,
 
 			Err(_) => 0,
@@ -216,6 +240,7 @@ impl ConnectionState {
 
 		format!(
 			"Connection[id: {}, connected: {}, timed_out: {}, last_activity: {}, timeout: {}s]",
+
 			self.ConnectionId, connected, timed_out, last_activity, self.TimeoutSeconds
 		)
 	}
@@ -228,6 +253,7 @@ mod tests {
 
 	#[test]
 	fn test_connection_state_new() {
+
 		let State = ConnectionState::New("test-connection-1".to_string(), 300);
 
 		assert!(!State.IsConnected());
@@ -237,6 +263,7 @@ mod tests {
 
 	#[test]
 	fn test_connection_state_initialization() {
+
 		let State = ConnectionState::New("test-connection-2".to_string(), 300);
 
 		// Cannot test actual initialization without Tauri AppHandle
@@ -248,6 +275,7 @@ mod tests {
 
 	#[test]
 	fn test_connection_state_not_timed_out() {
+
 		let State = ConnectionState::New("test-connection-3".to_string(), 300);
 
 		State.UpdateActivity();
@@ -258,6 +286,7 @@ mod tests {
 
 	#[test]
 	fn test_connection_state_close() {
+
 		let State = ConnectionState::New("test-connection-4".to_string(), 300);
 
 		assert!(State.Close().is_ok());
@@ -267,6 +296,7 @@ mod tests {
 
 	#[test]
 	fn test_connection_state_statistics() {
+
 		let State = ConnectionState::New("test-connection-5".to_string(), 300);
 
 		let Stats = State.GetStatistics();

@@ -4,7 +4,9 @@
 //! the registered provider.
 
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
@@ -21,6 +23,7 @@ pub async fn Fn(
 
 	Request:ProvideSelectionRangesRequest,
 ) -> Result<Response<ProvideSelectionRangesResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Providing selection ranges");
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
@@ -34,6 +37,7 @@ pub async fn Fn(
 		.collect();
 
 	match Service.environment.ProvideSelectionRanges(DocumentURI, PositionDTOs).await {
+
 		Ok(_) => Ok(Response::new(ProvideSelectionRangesResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Selection ranges failed: {}", Error))),

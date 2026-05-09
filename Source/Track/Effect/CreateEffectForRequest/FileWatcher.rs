@@ -3,16 +3,22 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{Environment::Requires::Requires, FileSystem::FileWatcherProvider::FileWatcherProvider};
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
+
 		"FileWatcher.Register" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
 						// Cocoon's `NextProviderHandle()` returns a number;
@@ -42,8 +48,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"FileWatcher.Unregister" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn FileWatcherProvider> = run_time.Environment.Require();
 						let Handle = match Parameters.get(0) {

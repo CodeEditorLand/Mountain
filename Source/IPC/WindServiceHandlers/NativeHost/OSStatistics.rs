@@ -8,6 +8,7 @@
 use serde_json::{Value, json};
 
 pub async fn NativeOSStatistics() -> Result<Value, String> {
+
 	use sysinfo::System;
 
 	let mut Sys = System::new();
@@ -19,8 +20,10 @@ pub async fn NativeOSStatistics() -> Result<Value, String> {
 	let FreeMem = Sys.available_memory();
 
 	let LoadAvg = {
+
 		#[cfg(unix)]
 		{
+
 			let Load = System::load_average();
 
 			vec![Load.one, Load.five, Load.fifteen]
@@ -28,6 +31,7 @@ pub async fn NativeOSStatistics() -> Result<Value, String> {
 
 		#[cfg(not(unix))]
 		{
+
 			vec![0.0, 0.0, 0.0]
 		}
 	};

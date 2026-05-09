@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub max_connections:usize,
 
 	pub min_connections:usize,
@@ -22,8 +23,11 @@ pub struct Struct {
 }
 
 impl Default for Struct {
+
 	fn default() -> Self {
+
 		Self {
+
 			max_connections:10,
 
 			min_connections:2,

@@ -44,6 +44,7 @@ use crate::dev_log;
 /// User interface request state containing pending UI interactions.
 #[derive(Clone)]
 pub struct State {
+
 	/// Pending user interface request organized by request ID.
 	///
 	/// Each request has a oneshot sender for sending the response back.
@@ -52,7 +53,9 @@ pub struct State {
 }
 
 impl Default for State {
+
 	fn default() -> Self {
+
 		dev_log!("window", "[UIState] Initializing default UI state...");
 
 		Self { PendingUserInterfaceRequest:Arc::new(StandardMutex::new(HashMap::new())) }
@@ -60,9 +63,11 @@ impl Default for State {
 }
 
 impl State {
+
 	/// Gets all pending user interface request IDs.
 	/// Note: Returns only the IDs since oneshot::Sender cannot be cloned.
 	pub fn GetPendingRequests(&self) -> Vec<String> {
+
 		self.PendingUserInterfaceRequest
 			.lock()
 			.ok()
@@ -78,7 +83,9 @@ impl State {
 
 		sender:tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>,
 	) {
+
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
+
 			guard.insert(id, sender);
 
 			dev_log!("window", "[UIState] Pending UI request added");
@@ -91,20 +98,25 @@ impl State {
 
 		id:&str,
 	) -> Option<tokio::sync::oneshot::Sender<Result<serde_json::Value, CommonError>>> {
+
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
+
 			let sender = guard.remove(id);
 
 			dev_log!("window", "[UIState] Pending UI request removed: {}", id);
 
 			sender
 		} else {
+
 			None
 		}
 	}
 
 	/// Clears all pending user interface requests.
 	pub fn ClearAll(&self) {
+
 		if let Ok(mut guard) = self.PendingUserInterfaceRequest.lock() {
+
 			guard.clear();
 
 			dev_log!("window", "[UIState] All pending UI requests cleared");
@@ -113,6 +125,7 @@ impl State {
 
 	/// Gets the count of pending user interface requests.
 	pub fn Count(&self) -> usize {
+
 		self.PendingUserInterfaceRequest
 			.lock()
 			.ok()
@@ -122,6 +135,7 @@ impl State {
 
 	/// Checks if a pending user interface request exists.
 	pub fn Contains(&self, id:&str) -> bool {
+
 		self.PendingUserInterfaceRequest
 			.lock()
 			.ok()

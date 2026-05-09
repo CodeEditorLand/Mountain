@@ -52,6 +52,7 @@ use crate::{
 /// Workspace state containing all workspace-related fields.
 #[derive(Clone)]
 pub struct State {
+
 	/// Currently open workspace folders.
 	pub WorkspaceFolders:Arc<StandardMutex<Vec<WorkspaceFolderStateDTO>>>,
 
@@ -69,10 +70,13 @@ pub struct State {
 }
 
 impl Default for State {
+
 	fn default() -> Self {
+
 		dev_log!("workspaces", "[WorkspaceState] Initializing default workspace state...");
 
 		Self {
+
 			WorkspaceFolders:Arc::new(StandardMutex::new(Vec::new())),
 
 			WorkspaceConfigurationPath:Arc::new(StandardMutex::new(None)),
@@ -87,11 +91,13 @@ impl Default for State {
 }
 
 impl State {
+
 	/// Gets the current workspace trust status.
 	pub fn GetTrustStatus(&self) -> bool { self.IsTrusted.load(AtomicOrdering::Relaxed) }
 
 	/// Sets the workspace trust status.
 	pub fn SetTrustStatus(&self, trusted:bool) {
+
 		self.IsTrusted.store(trusted, AtomicOrdering::Relaxed);
 
 		dev_log!("workspaces", "[WorkspaceState] Trust status set to: {}", trusted);
@@ -99,12 +105,15 @@ impl State {
 
 	/// Gets the workspace configuration path.
 	pub fn GetConfigurationPath(&self) -> Option<std::path::PathBuf> {
+
 		self.WorkspaceConfigurationPath.lock().ok().and_then(|guard| guard.clone())
 	}
 
 	/// Sets the workspace configuration path.
 	pub fn SetConfigurationPath(&self, path:Option<std::path::PathBuf>) {
+
 		if let Ok(mut guard) = self.WorkspaceConfigurationPath.lock() {
+
 			*guard = path.clone();
 			dev_log!("workspaces", "[WorkspaceState] Configuration path updated to: {:?}", path);
 		}
@@ -112,12 +121,15 @@ impl State {
 
 	/// Gets the currently active document URI.
 	pub fn GetActiveDocumentURI(&self) -> Option<String> {
+
 		self.ActiveDocumentURI.lock().ok().and_then(|guard| guard.clone())
 	}
 
 	/// Sets the currently active document URI.
 	pub fn SetActiveDocumentURI(&self, uri:Option<String>) {
+
 		if let Ok(mut guard) = self.ActiveDocumentURI.lock() {
+
 			*guard = uri.clone();
 			dev_log!("workspaces", "[WorkspaceState] Active document URI updated to: {:?}", uri);
 		}
@@ -125,16 +137,21 @@ impl State {
 
 	/// Gets all workspace folders.
 	pub fn GetWorkspaceFolders(&self) -> Vec<WorkspaceFolderStateDTO> {
+
 		self.WorkspaceFolders.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
 	}
 
 	/// Sets the workspace folders.
 	pub fn SetWorkspaceFolders(&self, folders:Vec<WorkspaceFolderStateDTO>) {
+
 		if let Ok(mut guard) = self.WorkspaceFolders.lock() {
+
 			*guard = folders;
 			dev_log!(
 				"workspaces",
+
 				"[WorkspaceState] Workspace folders updated ({} folders)",
+
 				guard.len()
 			);
 		}
@@ -154,8 +171,11 @@ impl State {
 
 		folders:Vec<WorkspaceFolderStateDTO>,
 	) -> (Vec<WorkspaceFolderStateDTO>, Vec<WorkspaceFolderStateDTO>) {
+
 		match self.WorkspaceFolders.lock() {
+
 			Ok(mut guard) => {
+
 				let Old = guard.clone();
 
 				let OldUris:std::collections::HashSet<String> = Old.iter().map(|F| F.URI.to_string()).collect();
@@ -174,9 +194,13 @@ impl State {
 				*guard = folders;
 				dev_log!(
 					"workspaces",
+
 					"[WorkspaceState] Workspace folders updated ({} folders, +{} -{})",
+
 					guard.len(),
+
 					Added.len(),
+
 					Removed.len()
 				);
 
@@ -189,6 +213,7 @@ impl State {
 
 	/// Gets the window state.
 	pub fn GetWindowState(&self) -> WindowStateDTO {
+
 		self.WorkspaceFolders
 			.lock()
 			.ok()
@@ -198,7 +223,9 @@ impl State {
 
 	/// Sets the window state.
 	pub fn SetWindowState(&self, state:WindowStateDTO) {
+
 		if let Ok(mut guard) = self.WindowState.lock() {
+
 			*guard = state;
 			dev_log!("workspaces", "[WorkspaceState] Window state updated");
 		}

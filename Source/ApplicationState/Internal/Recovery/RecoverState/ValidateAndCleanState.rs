@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use crate::dev_log;
 
 pub fn Fn<T>(StateData:&mut HashMap<String, T>, Validator:impl Fn(&T) -> bool) {
+
 	let OriginalLen = StateData.len();
 
 	StateData.retain(|_, Value| Validator(Value));
@@ -16,10 +17,14 @@ pub fn Fn<T>(StateData:&mut HashMap<String, T>, Validator:impl Fn(&T) -> bool) {
 	let RemovedCount = OriginalLen - StateData.len();
 
 	if RemovedCount > 0 {
+
 		dev_log!(
 			"lifecycle",
+
 			"warn: [RecoverState] Removed {} invalid state entries ({} remaining)",
+
 			RemovedCount,
+
 			StateData.len()
 		);
 	}

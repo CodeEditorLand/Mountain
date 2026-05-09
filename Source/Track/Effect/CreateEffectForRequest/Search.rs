@@ -3,18 +3,24 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{Environment::Requires::Requires, Search::SearchProvider::SearchProvider};
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
+
 		"findFiles" | "findTextInFiles" => {
+
 			let MethodNameOwned = MethodName.to_string();
 
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						use CommonLibrary::Workspace::WorkspaceProvider::WorkspaceProvider;
 						let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
@@ -25,11 +31,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						let Args = if let Some(Object) = Parameters.as_object() {
 							(
 								Object.get("pattern").cloned().unwrap_or_default(),
+
 								Object.get("options").cloned().unwrap_or_default(),
 							)
 						} else if Parameters.is_array() {
 							(
 								Parameters.get(0).cloned().unwrap_or_default(),
+
 								Parameters.get(1).cloned().unwrap_or_default(),
 							)
 						} else {
@@ -64,8 +72,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Search.TextSearch" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
 						let query = Parameters.get(0).cloned().unwrap_or_default();

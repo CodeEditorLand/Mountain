@@ -11,15 +11,18 @@ use serde_json::Value;
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn OpenExternal(_Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	let Uri = Parameter.get("uri").and_then(Value::as_str).unwrap_or("");
 
 	if Uri.is_empty() {
+
 		dev_log!("grpc", "[OpenExternal] skip: missing uri");
 
 		return;
 	}
 
 	match open::that(Uri) {
+
 		Ok(()) => dev_log!("grpc", "[OpenExternal] uri={} ok", Uri),
 
 		Err(Error) => dev_log!("grpc", "[OpenExternal] uri={} err={}", Uri, Error),

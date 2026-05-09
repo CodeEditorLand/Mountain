@@ -10,21 +10,28 @@
 //! selection; this one is the fire-and-forget notification form.
 
 use serde_json::Value;
+
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn WindowShowMessage(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	dev_log!(
 		"grpc",
+
 		"[WindowShowMessage] message={:?}",
+
 		Parameter.get("message").and_then(Value::as_str).unwrap_or("")
 	);
 
 	if let Err(Error) = Service.ApplicationHandle().emit("sky://notification/show", Parameter) {
+
 		dev_log!(
 			"grpc",
+
 			"warn: [MountainVinegRPCService] Failed to emit sky://notification/show: {}",
+
 			Error
 		);
 	}

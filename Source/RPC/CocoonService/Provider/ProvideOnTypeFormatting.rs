@@ -3,8 +3,11 @@
 //! Forward an on-type-formatting request to the registered provider.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
@@ -21,6 +24,7 @@ pub async fn Fn(
 
 	Request:ProvideOnTypeFormattingRequest,
 ) -> Result<Response<ProvideOnTypeFormattingResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Providing on-type formatting");
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
@@ -30,6 +34,7 @@ pub async fn Fn(
 	let Position_ = Request.position.as_ref();
 
 	let PositionDTO_ = PositionDTO {
+
 		LineNumber:Position_.map(|P| P.line).unwrap_or(0),
 
 		Column:Position_.map(|P| P.character).unwrap_or(0),
@@ -42,6 +47,7 @@ pub async fn Fn(
 		.ProvideOnTypeFormattingEdits(DocumentURI, PositionDTO_, Request.character, OptionsDTO)
 		.await
 	{
+
 		Ok(_) => Ok(Response::new(ProvideOnTypeFormattingResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("On-type formatting failed: {}", Error))),

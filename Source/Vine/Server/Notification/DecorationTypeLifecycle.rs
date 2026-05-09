@@ -26,11 +26,13 @@ use std::{
 };
 
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Emitter};
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 struct DecorationEmitBatch {
+
 	Pending:Mutex<HashMap<String, Vec<Value>>>,
 
 	FlushScheduled:AtomicBool,
@@ -39,17 +41,20 @@ struct DecorationEmitBatch {
 static DECORATION_EMIT_BATCH:OnceLock<Arc<DecorationEmitBatch>> = OnceLock::new();
 
 fn EnqueueDecorationEmit(Handle:&AppHandle, Channel:String, Payload:Value) {
+
 	let Batch = DECORATION_EMIT_BATCH.get_or_init(|| {
 		Arc::new(DecorationEmitBatch { Pending:Mutex::new(HashMap::new()), FlushScheduled:AtomicBool::new(false) })
 	});
 
 	{
+
 		let mut Guard = Batch.Pending.lock().unwrap();
 
 		Guard.entry(Channel).or_insert_with(Vec::new).push(Payload);
 	}
 
 	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
+
 		let BatchClone = Batch.clone();
 
 		let HandleClone = Handle.clone();
@@ -68,9 +73,13 @@ fn EnqueueDecorationEmit(Handle:&AppHandle, Channel:String, Payload:Value) {
 					Err(Error) => {
 						dev_log!(
 							"sky-emit",
+
 							"[SkyEmit] fail channel={} batch={} error={}",
+
 							ChannelName,
+
 							Count,
+
 							Error
 						)
 					},
@@ -81,6 +90,7 @@ fn EnqueueDecorationEmit(Handle:&AppHandle, Channel:String, Payload:Value) {
 }
 
 pub async fn DecorationTypeLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
+
 	let EventName = format!("sky://decoration/{}", &MethodName["window.".len()..]);
 
 	EnqueueDecorationEmit(Service.ApplicationHandle(), EventName, Parameter.clone());

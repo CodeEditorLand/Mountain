@@ -10,6 +10,7 @@ use crate::IPC::Enhanced::PerformanceDashboard::{AlertSeverity, MetricType};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub alert_id:String,
 
 	pub metric_type:MetricType::Enum,

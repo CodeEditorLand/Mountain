@@ -11,6 +11,7 @@ use crate::{
 };
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:CopyFileRequest) -> Result<Response<Empty>, Status> {
+
 	let SourcePath = CocoonServiceImpl::UriToPath(Request.source.as_ref())
 		.ok_or_else(|| Status::invalid_argument("copy_file: missing source URI"))?;
 
@@ -20,7 +21,9 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:CopyFileRequest) -> Result<
 	dev_log!("cocoon", "[CocoonService] copy_file: {:?} → {:?}", SourcePath, DestinationPath);
 
 	if let Some(Parent) = DestinationPath.parent() {
+
 		if !Parent.as_os_str().is_empty() {
+
 			tokio::fs::create_dir_all(Parent)
 				.await
 				.map_err(|Error| Status::internal(format!("copy_file: create_dir_all failed: {}", Error)))?;

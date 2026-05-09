@@ -48,6 +48,7 @@ use crate::{Environment::CommandProvider::CommandHandler, dev_log};
 /// Extension registry containing command registry and provider handle state.
 #[derive(Clone)]
 pub struct Registry {
+
 	/// Registered CLI commands.
 	pub CommandRegistry:Arc<StandardMutex<HashMap<String, CommandHandler<Wry>>>>,
 
@@ -62,10 +63,13 @@ pub struct Registry {
 }
 
 impl Default for Registry {
+
 	fn default() -> Self {
+
 		dev_log!("extensions", "[ExtensionRegistry] Initializing default extension registry...");
 
 		Self {
+
 			CommandRegistry:Arc::new(StandardMutex::new(HashMap::new())),
 
 			NextProviderHandle:Arc::new(AtomicU32::new(1)),
@@ -78,17 +82,21 @@ impl Default for Registry {
 }
 
 impl Registry {
+
 	/// Gets the next available unique identifier for a provider registration.
 	pub fn GetNextProviderHandle(&self) -> u32 { self.NextProviderHandle.fetch_add(1, AtomicOrdering::Relaxed) }
 
 	/// Gets all registered commands.
 	pub fn GetCommands(&self) -> HashMap<String, CommandHandler<Wry>> {
+
 		self.CommandRegistry.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
 	}
 
 	/// Registers a command.
 	pub fn RegisterCommand(&self, name:String, handler:CommandHandler<Wry>) {
+
 		if let Ok(mut guard) = self.CommandRegistry.lock() {
+
 			guard.insert(name, handler);
 
 			dev_log!("extensions", "[ExtensionRegistry] Command registered");
@@ -97,7 +105,9 @@ impl Registry {
 
 	/// Unregisters a command.
 	pub fn UnregisterCommand(&self, name:&str) {
+
 		if let Ok(mut guard) = self.CommandRegistry.lock() {
+
 			guard.remove(name);
 
 			dev_log!("extensions", "[ExtensionRegistry] Command unregistered: {}", name);
@@ -106,6 +116,7 @@ impl Registry {
 
 	/// Gets all extension scan paths.
 	pub fn GetExtensionScanPaths(&self) -> Vec<PathBuf> {
+
 		self.ExtensionScanPaths
 			.lock()
 			.ok()
@@ -115,11 +126,15 @@ impl Registry {
 
 	/// Sets the extension scan paths.
 	pub fn SetExtensionScanPaths(&self, paths:Vec<PathBuf>) {
+
 		if let Ok(mut guard) = self.ExtensionScanPaths.lock() {
+
 			*guard = paths;
 			dev_log!(
 				"extensions",
+
 				"[ExtensionRegistry] Extension scan paths updated ({} paths)",
+
 				guard.len()
 			);
 		}
@@ -127,7 +142,9 @@ impl Registry {
 
 	/// Adds an extension scan path.
 	pub fn AddExtensionScanPath(&self, path:PathBuf) {
+
 		if let Ok(mut guard) = self.ExtensionScanPaths.lock() {
+
 			guard.push(path.clone());
 
 			dev_log!("extensions", "[ExtensionRegistry] Extension scan path added: {:?}", path);
@@ -136,6 +153,7 @@ impl Registry {
 
 	/// Gets all enabled proposed APIs.
 	pub fn GetEnabledProposedAPIs(&self) -> HashMap<String, Vec<String>> {
+
 		self.EnabledProposedAPIs
 			.lock()
 			.ok()
@@ -145,11 +163,15 @@ impl Registry {
 
 	/// Sets the enabled proposed APIs.
 	pub fn SetEnabledProposedAPIs(&self, apis:HashMap<String, Vec<String>>) {
+
 		if let Ok(mut guard) = self.EnabledProposedAPIs.lock() {
+
 			*guard = apis;
 			dev_log!(
 				"extensions",
+
 				"[ExtensionRegistry] Enabled proposed APIs updated ({} entries)",
+
 				guard.len()
 			);
 		}
@@ -157,7 +179,9 @@ impl Registry {
 
 	/// Enables a proposed API for an extension.
 	pub fn EnableProposedAPI(&self, extension_id:String, api_name:String) {
+
 		if let Ok(mut guard) = self.EnabledProposedAPIs.lock() {
+
 			guard.entry(extension_id).or_insert_with(Vec::new).push(api_name);
 
 			dev_log!("extensions", "[ExtensionRegistry] Proposed API enabled");

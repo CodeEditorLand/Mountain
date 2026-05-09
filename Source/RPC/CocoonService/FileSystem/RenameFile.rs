@@ -11,6 +11,7 @@ use crate::{
 };
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:RenameFileRequest) -> Result<Response<Empty>, Status> {
+
 	let OldPath = CocoonServiceImpl::UriToPath(Request.source.as_ref())
 		.ok_or_else(|| Status::invalid_argument("rename_file: missing source URI"))?;
 
@@ -20,7 +21,9 @@ pub async fn Fn(_Service:&CocoonServiceImpl, Request:RenameFileRequest) -> Resul
 	dev_log!("cocoon", "[CocoonService] rename_file: {:?} → {:?}", OldPath, NewPath);
 
 	if let Some(Parent) = NewPath.parent() {
+
 		if !Parent.as_os_str().is_empty() {
+
 			tokio::fs::create_dir_all(Parent)
 				.await
 				.map_err(|Error| Status::internal(format!("rename_file: create_dir_all failed: {}", Error)))?;

@@ -9,12 +9,15 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
+
 use tauri::Emitter;
+
 use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	let Provider:Arc<dyn TerminalProvider> = Service.RunTime().Environment.Require();
 
 	let Name = Parameter.get("name").and_then(|V| V.as_str()).unwrap_or("terminal").to_string();
@@ -42,6 +45,7 @@ pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&V
 		if let Ok(Created) = Provider.CreateTerminal(OptionsPayload).await {
 			if let Err(Error) = AppHandleForTask.emit(
 				"sky://terminal/create",
+
 				json!({
 					"handle": Handle,
 					"id": Created.get("id").cloned().unwrap_or(Value::Null),
@@ -51,7 +55,9 @@ pub async fn WindowCreateTerminal(Service:&MountainVinegRPCService, Parameter:&V
 			) {
 				dev_log!(
 					"grpc",
+
 					"warn: [WindowCreateTerminal] sky://terminal/create emit failed: {}",
+
 					Error
 				);
 			}

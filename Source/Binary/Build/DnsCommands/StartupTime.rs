@@ -17,6 +17,7 @@ static DNS_STARTUP_TIME:OnceCell<String> = OnceCell::new();
 /// Records the moment the DNS server starts. Idempotent - the
 /// `OnceCell` swallows subsequent calls.
 pub fn init_dns_startup_time() {
+
 	let now_iso = SystemTime::now()
 		.duration_since(UNIX_EPOCH)
 		.map(|d| {

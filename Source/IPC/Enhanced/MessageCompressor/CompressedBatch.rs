@@ -11,6 +11,7 @@ use crate::IPC::Enhanced::MessageCompressor::CompressionInfo;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub messages_count:usize,
 
 	pub original_size:usize,

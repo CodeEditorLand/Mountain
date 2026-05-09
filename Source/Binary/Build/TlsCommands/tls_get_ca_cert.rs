@@ -12,6 +12,7 @@ use crate::{Binary::Build::CertificateManager::CertificateManager, dev_log};
 
 #[tauri::command]
 pub async fn tls_get_ca_cert(app_handle:AppHandle) -> Result<String, String> {
+
 	dev_log!("security", "getting CA certificate");
 
 	let state = app_handle

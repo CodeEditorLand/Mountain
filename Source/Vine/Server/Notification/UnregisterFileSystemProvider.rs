@@ -10,14 +10,18 @@ use serde_json::Value;
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn UnregisterFileSystemProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	let Handle = Parameter.get("handle").and_then(Value::as_u64).unwrap_or(0) as u32;
 
 	let Scheme = Parameter.get("scheme").and_then(Value::as_str).unwrap_or("");
 
 	if Handle == 0 {
+
 		dev_log!(
 			"provider-register",
+
 			"[ProviderUnregister] file_system skip: missing handle (scheme={})",
+
 			Scheme
 		);
 
@@ -34,8 +38,11 @@ pub async fn UnregisterFileSystemProvider(Service:&MountainVinegRPCService, Para
 
 	dev_log!(
 		"provider-register",
+
 		"[ProviderUnregister] file_system handle={} scheme={}",
+
 		Handle,
+
 		Scheme
 	);
 }

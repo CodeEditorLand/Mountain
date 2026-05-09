@@ -7,11 +7,15 @@
 use serde_json::{Value, json};
 
 pub fn metadata_to_istat(Metadata:&std::fs::Metadata) -> Value {
+
 	let FileType = if Metadata.is_symlink() {
+
 		64
 	} else if Metadata.is_dir() {
+
 		2
 	} else {
+
 		1
 	};
 

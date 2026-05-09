@@ -4,7 +4,9 @@
 //! the suggestions into the gRPC `CompletionItem` shape.
 
 use tonic::{Response, Status};
+
 use url::Url;
+
 use CommonLibrary::LanguageFeature::{
 	DTO::{
 		CompletionContextDTO::{CompletionContextDTO, CompletionTriggerKindDTO},
@@ -24,9 +26,12 @@ pub async fn Fn(
 
 	Request:ProvideCompletionItemsRequest,
 ) -> Result<Response<ProvideCompletionItemsResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Providing completions for provider {}",
+
 		Request.provider_handle
 	);
 
@@ -37,17 +42,21 @@ pub async fn Fn(
 	let Position_ = Request.position.as_ref();
 
 	let PositionDTO_ = PositionDTO {
+
 		LineNumber:Position_.map(|P| P.line).unwrap_or(0),
 
 		Column:Position_.map(|P| P.character).unwrap_or(0),
 	};
 
 	let ContextDTO = CompletionContextDTO {
+
 		TriggerKind:CompletionTriggerKindDTO::Invoke,
 
 		TriggerCharacter:if Request.trigger_character.is_empty() {
+
 			None
 		} else {
+
 			Some(Request.trigger_character.clone())
 		},
 	};
@@ -57,7 +66,9 @@ pub async fn Fn(
 		.ProvideCompletions(DocumentURI, PositionDTO_, ContextDTO, None)
 		.await
 	{
+
 		Ok(Some(List)) => {
+
 			let Items = List
 				.Suggestions
 				.iter()

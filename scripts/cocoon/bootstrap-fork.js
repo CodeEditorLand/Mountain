@@ -18,7 +18,9 @@
 import { performance } from "node:perf_hooks";
 
 const MountainGRPCPort = process.env.MOUNTAIN_GRPC_PORT || "50051";
+
 const CocoonGRPCPort = process.env.COCOON_GRPC_PORT || "50052";
+
 const ParentPID = process.env.VSCODE_PARENT_PID;
 
 // ============================================================================
@@ -38,13 +40,17 @@ Trace("bootstrap", "start");
 // ============================================================================
 
 const PostHogAPIKey = "";
+
 const PostHogHost = "https://eu.i.posthog.com";
+
 const DistinctId = `land-dev-${process.env.USER || process.env.USERNAME || "unknown"}`;
 
 const PostHogCapture = async (EventName, Properties = {}) => {
 	if (process.env.NODE_ENV === "production") return;
+
 	try {
 		const { request } = await import("node:https");
+
 		const Body = JSON.stringify({
 			api_key: PostHogAPIKey,
 			event: EventName,
@@ -61,7 +67,9 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 			},
 			timestamp: new Date().toISOString(),
 		});
+
 		const URL = new globalThis.URL(`${PostHogHost}/capture/`);
+
 		const Req = request({
 			hostname: URL.hostname,
 			port: 443,
@@ -72,8 +80,10 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 				"Content-Length": Buffer.byteLength(Body),
 			},
 		});
+
 		Req.on("error", () => {}); // Swallow - fire and forget
 		Req.write(Body);
+
 		Req.end();
 	} catch {
 		// PostHog unavailable - no-op
@@ -86,10 +96,12 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 
 const OTLPFlush = async () => {
 	if (process.env.NODE_ENV === "production") return;
+
 	try {
 		const Entries = performance
 			.getEntriesByType("mark")
 			.filter((E) => E.name.startsWith("land:"));
+
 		if (Entries.length === 0) return;
 
 		const TraceId = Array.from({ length: 16 }, () =>
@@ -105,20 +117,26 @@ const OTLPFlush = async () => {
 						attributes: [
 							{
 								key: "service.name",
+
 								value: { stringValue: "land-editor-cocoon" },
 							},
+
 							{
 								key: "service.version",
+
 								value: { stringValue: "0.0.1" },
 							},
 						],
 					},
+
 					scopeSpans: [
 						{
 							scope: {
 								name: "land.cocoon.bootstrap",
+
 								version: "1.0.0",
 							},
+
 							spans: Entries.map((E) => ({
 								traceId: TraceId,
 								spanId: Array.from({ length: 8 }, () =>
@@ -155,7 +173,9 @@ const OTLPFlush = async () => {
 		};
 
 		const { request } = await import("node:http");
+
 		const Body = JSON.stringify(Payload);
+
 		const Req = request({
 			hostname: "127.0.0.1",
 			port: 4318,
@@ -166,8 +186,11 @@ const OTLPFlush = async () => {
 				"Content-Length": Buffer.byteLength(Body),
 			},
 		});
+
 		Req.on("error", () => {});
+
 		Req.write(Body);
+
 		Req.end();
 
 		performance.clearMarks();
@@ -198,6 +221,7 @@ if (ParentPID) {
 // ============================================================================
 
 Trace("bootstrap", "session-start");
+
 PostHogCapture("cocoon:session:start", {
 	parent_pid: ParentPID,
 });
@@ -209,8 +233,10 @@ PostHogCapture("cocoon:session:start", {
 const CocoonEntryPaths = [
 	new URL(
 		"../../../Cocoon/Target/Bootstrap/Implementation/Cocoon/Main.js",
+
 		import.meta.url,
 	),
+
 	new URL("../../../Cocoon/Target/ESBuild/Cocoon/Main.js", import.meta.url),
 ];
 
@@ -219,19 +245,27 @@ let Loaded = false;
 for (const EntryPath of CocoonEntryPaths) {
 	try {
 		const { pathname } = EntryPath;
+
 		const { existsSync } = await import("node:fs");
 
 		if (existsSync(pathname)) {
 			Trace("bootstrap", "loading-entry");
+
 			PostHogCapture("cocoon:entry:load", { path: pathname });
+
 			await import(EntryPath.href);
+
 			Loaded = true;
+
 			Trace("bootstrap", "entry-loaded");
+
 			PostHogCapture("cocoon:entry:loaded", { path: pathname });
+
 			break;
 		}
 	} catch (Error) {
 		Trace("bootstrap", `error:${String(Error).slice(0, 80)}`);
+
 		PostHogCapture("cocoon:error", {
 			error_tag: "entry-load",
 			error_message: String(Error).slice(0, 200),
@@ -241,6 +275,7 @@ for (const EntryPath of CocoonEntryPaths) {
 
 if (!Loaded) {
 	Trace("bootstrap", "stub-mode");
+
 	PostHogCapture("cocoon:stub:active", {
 		reason: "no-compiled-entry-point",
 		searched: CocoonEntryPaths.map((P) => P.pathname),

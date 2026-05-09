@@ -7,9 +7,11 @@
 use serde_json::{Value, json};
 
 pub async fn NativeOSProperties() -> Result<Value, String> {
+
 	use sysinfo::System;
 
 	let OsType = match std::env::consts::OS {
+
 		"macos" => "Darwin",
 
 		"windows" => "Windows_NT",
@@ -20,8 +22,10 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 	};
 
 	let Release = {
+
 		#[cfg(target_os = "macos")]
 		{
+
 			std::process::Command::new("sw_vers")
 				.arg("-productVersion")
 				.output()
@@ -32,6 +36,7 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 
 		#[cfg(target_os = "windows")]
 		{
+
 			std::process::Command::new("cmd")
 				.args(["/c", "ver"])
 				.output()
@@ -51,6 +56,7 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 
 		#[cfg(target_os = "linux")]
 		{
+
 			std::process::Command::new("uname")
 				.arg("-r")
 				.output()
@@ -61,6 +67,7 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 
 		#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 		{
+
 			"0.0.0".to_string()
 		}
 	};

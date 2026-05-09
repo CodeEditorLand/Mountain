@@ -6,15 +6,20 @@
 //! against open models.
 
 use serde_json::Value;
+
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn WorkspaceApplyEdit(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	if let Err(Error) = Service.ApplicationHandle().emit("sky://workspace/applyEdit", Parameter) {
+
 		dev_log!(
 			"grpc",
+
 			"warn: [MountainVinegRPCService] sky://workspace/applyEdit emit failed: {}",
+
 			Error
 		);
 	}

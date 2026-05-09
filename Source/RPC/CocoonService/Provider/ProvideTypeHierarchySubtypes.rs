@@ -3,7 +3,9 @@
 //! Forward a type hierarchy subtypes request to the registered provider.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
 
 use crate::{
@@ -17,6 +19,7 @@ pub async fn Fn(
 
 	Request:ProvideTypeHierarchyRequest,
 ) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Providing type hierarchy subtypes");
 
 	let ItemDTO = json!({
@@ -25,6 +28,7 @@ pub async fn Fn(
 	});
 
 	match Service.environment.ProvideTypeHierarchySubtypes(ItemDTO).await {
+
 		Ok(_) => Ok(Response::new(<ProvideTypeHierarchyResponse>::default())),
 
 		Err(Error) => Err(Status::internal(format!("type hierarchy subtypes failed: {}", Error))),

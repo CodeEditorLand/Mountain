@@ -9,9 +9,11 @@ use Echo::Scheduler::SchedulerBuilder::SchedulerBuilder;
 use crate::{Binary::Initialize::RuntimeBuild::SchedulerConfig, dev_log};
 
 pub fn Fn(Config:SchedulerConfig::Struct) -> SchedulerBuilder {
+
 	let mut Builder = SchedulerBuilder::Create();
 
 	if let Some(Count) = Config.WorkerCount {
+
 		let Count = Count.clamp(1, 256);
 
 		Builder = Builder.WithWorkerCount(Count);

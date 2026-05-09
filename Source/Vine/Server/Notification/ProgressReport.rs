@@ -22,18 +22,21 @@ use std::{
 };
 
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Emitter};
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 #[derive(Default)]
 struct ProgressAccumulator {
+
 	Message:String,
 
 	Increment:f64,
 }
 
 struct ProgressEmitBatch {
+
 	Pending:Mutex<HashMap<String, ProgressAccumulator>>,
 
 	FlushScheduled:AtomicBool,
@@ -42,11 +45,13 @@ struct ProgressEmitBatch {
 static PROGRESS_EMIT_BATCH:OnceLock<Arc<ProgressEmitBatch>> = OnceLock::new();
 
 fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String, Increment:f64) {
+
 	let Batch = PROGRESS_EMIT_BATCH.get_or_init(|| {
 		Arc::new(ProgressEmitBatch { Pending:Mutex::new(HashMap::new()), FlushScheduled:AtomicBool::new(false) })
 	});
 
 	{
+
 		let mut Guard = Batch.Pending.lock().unwrap();
 
 		let Entry = Guard.entry(ProgressHandle).or_default();
@@ -55,6 +60,7 @@ fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String,
 		// message means "keep previous". `increment` is per-call delta;
 		// accumulate so the final emit carries the same total movement.
 		if !Message.is_empty() {
+
 			Entry.Message = Message;
 		}
 
@@ -62,6 +68,7 @@ fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String,
 	}
 
 	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
+
 		let BatchClone = Batch.clone();
 
 		let HandleClone = Handle.clone();
@@ -76,6 +83,7 @@ fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String,
 			for (ProgressHandleId, Accumulator) in Drained {
 				if let Err(Error) = HandleClone.emit(
 					"sky://notification/progress-update",
+
 					json!({
 						"id": ProgressHandleId,
 						"message": Accumulator.Message,
@@ -84,7 +92,9 @@ fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String,
 				) {
 					dev_log!(
 						"grpc",
+
 						"warn: [MountainVinegRPCService] sky://notification/progress-update emit failed: {}",
+
 						Error
 					);
 				}
@@ -94,6 +104,7 @@ fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String,
 }
 
 pub async fn ProgressReport(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	let ProgressHandle = Parameter.get("handle").and_then(Value::as_str).unwrap_or("").to_string();
 
 	let Message = Parameter.get("message").and_then(Value::as_str).unwrap_or("").to_string();

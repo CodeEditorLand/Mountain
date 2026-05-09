@@ -11,14 +11,17 @@ use crate::{
 };
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:DeleteFileRequest) -> Result<Response<Empty>, Status> {
+
 	let Path = CocoonServiceImpl::UriToPath(Request.uri.as_ref())
 		.ok_or_else(|| Status::invalid_argument("delete_file: missing URI"))?;
 
 	dev_log!("cocoon", "[CocoonService] delete_file: {:?}", Path);
 
 	if Path.is_dir() {
+
 		tokio::fs::remove_dir_all(&Path).await
 	} else {
+
 		tokio::fs::remove_file(&Path).await
 	}
 	.map_err(|Error| Status::internal(format!("delete_file: {}: {}", Path.display(), Error)))?;

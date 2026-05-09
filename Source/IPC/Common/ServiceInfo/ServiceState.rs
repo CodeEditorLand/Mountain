@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Enum {
+
 	Running,
 
 	Degraded,
@@ -22,5 +23,6 @@ pub enum Enum {
 }
 
 impl Enum {
+
 	pub fn IsOperational(&self) -> bool { matches!(self, Enum::Running | Enum::Degraded | Enum::Starting) }
 }

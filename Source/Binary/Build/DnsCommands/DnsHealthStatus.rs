@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DnsHealthStatus {
+
 	pub server_status:String,
 
 	pub zone_status:String,

@@ -3,6 +3,7 @@
 //! Display an info-severity message via the `UserInterfaceProvider`.
 
 use tonic::{Response, Status};
+
 use CommonLibrary::UserInterface::{
 	DTO::MessageSeverity::MessageSeverity,
 	UserInterfaceProvider::UserInterfaceProvider,
@@ -19,6 +20,7 @@ pub async fn Fn(
 
 	Request:ShowMessageRequest,
 ) -> Result<Response<ShowMessageResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] show_information_message: {}", Request.message);
 
 	let _ = Service

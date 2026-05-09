@@ -5,6 +5,7 @@
 //! so the proto response can carry stable `selected_indices`.
 
 use tonic::{Response, Status};
+
 use CommonLibrary::UserInterface::{
 	DTO::{QuickPickItemDTO::QuickPickItemDTO, QuickPickOptionsDTO::QuickPickOptionsDTO},
 	UserInterfaceProvider::UserInterfaceProvider,
@@ -21,6 +22,7 @@ pub async fn Fn(
 
 	Request:ShowQuickPickRequest,
 ) -> Result<Response<ShowQuickPickResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] show_quick_pick: {} items", Request.items.len());
 
 	let Items:Vec<QuickPickItemDTO> = Request
@@ -49,7 +51,9 @@ pub async fn Fn(
 	});
 
 	match Service.environment.ShowQuickPick(Items, Options).await {
+
 		Ok(Some(Selected)) => {
+
 			let SelectedIndices:Vec<u32> = Selected
 				.iter()
 				.filter_map(|Label| {
@@ -67,6 +71,7 @@ pub async fn Fn(
 		Ok(None) => Ok(Response::new(ShowQuickPickResponse::default())),
 
 		Err(Error) => {
+
 			dev_log!("cocoon", "warn: [CocoonService] show_quick_pick failed: {}", Error);
 
 			Ok(Response::new(ShowQuickPickResponse::default()))

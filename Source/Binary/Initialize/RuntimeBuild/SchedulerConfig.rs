@@ -6,6 +6,7 @@
 
 #[derive(Debug)]
 pub struct Struct {
+
 	pub WorkerCount:Option<usize>,
 
 	pub EnableMetrics:bool,
@@ -14,8 +15,11 @@ pub struct Struct {
 }
 
 impl Default for Struct {
+
 	fn default() -> Self {
+
 		Self {
+
 			WorkerCount:None,
 
 			#[cfg(feature = "Telemetry")]

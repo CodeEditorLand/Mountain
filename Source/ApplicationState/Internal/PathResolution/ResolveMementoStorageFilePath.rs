@@ -54,19 +54,24 @@ pub fn ResolveMementoStorageFilePath(
 
 	WorkspaceIdentifier:&str,
 ) -> std::path::PathBuf {
+
 	let user_storage_base_path = ApplicationDataDirectory.join("User");
 
 	if IsGlobalScope {
+
 		let path = user_storage_base_path.join("globalStorage.json");
 
 		dev_log!(
 			"storage",
+
 			"[ResolveMementoStorageFilePath] Resolved global memento path: {}",
+
 			path.display()
 		);
 
 		path
 	} else {
+
 		// Sanitize the workspace identifier to be a safe directory name
 		let segment = WorkspaceIdentifier.replace(|c:char| !c.is_alphanumeric() && c != '-' && c != '_', "_");
 
@@ -77,7 +82,9 @@ pub fn ResolveMementoStorageFilePath(
 
 		dev_log!(
 			"storage",
+
 			"[ResolveMementoStorageFilePath] Resolved workspace memento path: {}",
+
 			path.display()
 		);
 

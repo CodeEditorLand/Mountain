@@ -6,17 +6,22 @@
 //! the in-memory `OutputChannels` map and VS Code's logger sink.
 
 use serde_json::Value;
+
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn OutputAppend(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	let _ = Service.ApplicationHandle().emit("sky://output/append", Parameter);
 
 	dev_log!(
 		"grpc",
+
 		"[Output] append channel={} bytes={}",
+
 		Parameter.get("channel").and_then(Value::as_str).unwrap_or("?"),
+
 		Parameter.get("text").and_then(Value::as_str).map(str::len).unwrap_or(0)
 	);
 }

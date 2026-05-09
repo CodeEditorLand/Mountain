@@ -10,11 +10,13 @@
 use std::sync::Arc;
 
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
+
 use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn ExtensionsGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
+
 	let Extensions = RunTime
 		.Environment
 		.GetExtensions()
@@ -24,9 +26,12 @@ pub async fn ExtensionsGetAll(RunTime:Arc<ApplicationRunTime>) -> Result<Value, 
 	dev_log!("extensions", "extensions:getAll returning {} extensions", Extensions.len());
 
 	if let Some(First) = Extensions.first() {
+
 		dev_log!(
 			"extensions",
+
 			"extensions:getAll sample: {}",
+
 			serde_json::to_string(First)
 				.unwrap_or_default()
 				.chars()

@@ -9,18 +9,22 @@
 //! into the renderer contract.
 
 use serde_json::Value;
+
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn ProgressUpdate(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	let _ = Service
 		.ApplicationHandle()
 		.emit("sky://notification/progress-update", Parameter);
 
 	dev_log!(
 		"grpc",
+
 		"[Progress] update id={}",
+
 		Parameter.get("id").and_then(Value::as_str).unwrap_or("?")
 	);
 }

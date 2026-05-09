@@ -18,9 +18,12 @@ pub async fn Fn(
 
 	Request:GetAuthenticationSessionRequest,
 ) -> Result<Response<GetAuthenticationSessionResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] get_authentication_session: provider={}",
+
 		Request.provider_id
 	);
 

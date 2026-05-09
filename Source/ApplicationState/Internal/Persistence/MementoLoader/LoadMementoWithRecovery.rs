@@ -10,15 +10,20 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use CommonLibrary::Error::CommonError::CommonError;
+
 use serde_json::Value;
 
 use crate::{ApplicationState::Internal::Persistence::MementoLoader::CreateCorruptedBackup, dev_log};
 
 pub fn Fn(StorageFilePath:&Path) -> Result<HashMap<String, Value>, CommonError> {
+
 	if !StorageFilePath.exists() {
+
 		dev_log!(
 			"storage",
+
 			"[MementoLoader] Memento file does not exist: {}",
+
 			StorageFilePath.display()
 		);
 

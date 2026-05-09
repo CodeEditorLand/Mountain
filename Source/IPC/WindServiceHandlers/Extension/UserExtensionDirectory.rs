@@ -12,9 +12,13 @@
 use std::path::PathBuf;
 
 pub fn UserExtensionDirectory() -> PathBuf {
+
 	if let Ok(Override) = std::env::var("Lodge") {
+
 		if let Some(Stripped) = Override.strip_prefix("~/") {
+
 			if let Some(HomeDirectory) = dirs::home_dir() {
+
 				return HomeDirectory.join(Stripped);
 			}
 		}
@@ -23,6 +27,7 @@ pub fn UserExtensionDirectory() -> PathBuf {
 	}
 
 	if let Some(HomeDirectory) = dirs::home_dir() {
+
 		return HomeDirectory.join(".land/extensions");
 	}
 

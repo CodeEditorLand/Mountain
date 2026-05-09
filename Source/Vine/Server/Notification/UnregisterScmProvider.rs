@@ -8,11 +8,13 @@
 //! stored without needing Cocoon to hand the u32 back over the wire.
 
 use serde_json::Value;
+
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn UnregisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	// Cocoon's `ScmNamespace.ts:dispose` sends only `{ handle }` (number).
 	// `scmId` (camelCase) and `scm_id` (legacy snake_case) are also
 	// probed for callers that send the string identifier instead.
@@ -26,6 +28,7 @@ pub async fn UnregisterScmProvider(Service:&MountainVinegRPCService, Parameter:&
 	let DirectHandle = Parameter.get("handle").and_then(Value::as_u64).map(|H| H as u32);
 
 	if ScmId.is_empty() && DirectHandle.is_none() {
+
 		dev_log!("provider-register", "[ProviderUnregister] scm skip: missing handle / scmId");
 
 		return;
@@ -52,8 +55,11 @@ pub async fn UnregisterScmProvider(Service:&MountainVinegRPCService, Parameter:&
 
 	dev_log!(
 		"provider-register",
+
 		"[ProviderUnregister] scm scm_id={} handle={}",
+
 		ScmId,
+
 		Handle
 	);
 }

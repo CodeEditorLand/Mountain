@@ -3,7 +3,9 @@
 //! Forward a call hierarchy outgoing request to the registered provider.
 
 use serde_json::json;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
 
 use crate::{
@@ -17,6 +19,7 @@ pub async fn Fn(
 
 	Request:ProvideCallHierarchyRequest,
 ) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] Providing call hierarchy outgoing");
 
 	let ItemDTO = json!({
@@ -25,6 +28,7 @@ pub async fn Fn(
 	});
 
 	match Service.environment.ProvideCallHierarchyOutgoingCalls(ItemDTO).await {
+
 		Ok(_) => Ok(Response::new(<ProvideCallHierarchyResponse>::default())),
 
 		Err(Error) => Err(Status::internal(format!("call hierarchy outgoing failed: {}", Error))),

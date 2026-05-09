@@ -5,7 +5,9 @@
 //! a JSON value (string or bytes).
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -15,9 +17,11 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:OnDidReceiveMessageRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] on_did_receive_message: handle={}", Request.handle);
 
 	let Payload = match &Request.message {
+
 		Some(on_did_receive_message_request::Message::StringMessage(S)) => json!(S),
 
 		Some(on_did_receive_message_request::Message::BytesMessage(B)) => json!(B),
@@ -27,6 +31,7 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:OnDidReceiveMessageRequest) 
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://webview/post-message",
+
 		json!({ "handle": Request.handle, "message": Payload }),
 	);
 

@@ -15,6 +15,7 @@ use crate::IPC::Common::HealthStatus::{HealthIssue, SeverityLevel};
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Struct {
+
 	pub HealthScore:u8,
 
 	pub Issues:Vec<(HealthIssue::Enum, SeverityLevel::Enum)>,
@@ -26,13 +27,16 @@ pub struct Struct {
 }
 
 impl Default for Struct {
+
 	fn default() -> Self { Self { HealthScore:100, Issues:Vec::new(), RecoveryAttempts:0, LastCheck:Instant::now() } }
 }
 
 impl Struct {
+
 	pub fn new() -> Self { Self::default() }
 
 	pub fn AddIssue(&mut self, Issue:HealthIssue::Enum) {
+
 		let Severity = Issue.Severity();
 
 		self.Issues.push((Issue, Severity));
@@ -41,12 +45,14 @@ impl Struct {
 	}
 
 	pub fn RemoveIssue(&mut self, Issue:&HealthIssue::Enum) {
+
 		self.Issues.retain(|(I, _)| I != Issue);
 
 		self.Recalculate();
 	}
 
 	pub fn ClearIssues(&mut self) {
+
 		self.Issues.clear();
 
 		self.HealthScore = 100;
@@ -55,10 +61,13 @@ impl Struct {
 	}
 
 	fn Recalculate(&mut self) {
+
 		let mut Score:i32 = 100;
 
 		for (_, Severity) in &self.Issues {
+
 			Score -= match Severity {
+
 				SeverityLevel::Enum::Low => 5,
 
 				SeverityLevel::Enum::Medium => 15,
@@ -79,6 +88,7 @@ impl Struct {
 	pub fn IsCritical(&self) -> bool { self.HealthScore < 50 }
 
 	pub fn IssuesBySeverity(&self, Severity:SeverityLevel::Enum) -> Vec<&HealthIssue::Enum> {
+
 		self.Issues.iter().filter(|(_, S)| *S == Severity).map(|(I, _)| I).collect()
 	}
 

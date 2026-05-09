@@ -5,8 +5,11 @@
 //! to a direct Sky emit if the trait wiring is unavailable.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
+
 use CommonLibrary::SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider;
 
 use crate::{
@@ -16,10 +19,14 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateScmGroupRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] update_scm_group: provider={} group={}",
+
 		Request.provider_id,
+
 		Request.group_id
 	);
 
@@ -47,14 +54,18 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateScmGroupRequest) -> Re
 	});
 
 	if let Err(Error) = Service.environment.UpdateSourceControlGroup(ProviderHandle, GroupData).await {
+
 		dev_log!(
 			"cocoon",
+
 			"warn: [CocoonService] UpdateSourceControlGroup trait failed ({}); falling back to Sky emit",
+
 			Error
 		);
 
 		let _ = Service.environment.ApplicationHandle.emit(
 			"sky://scm/updateGroup",
+
 			json!({
 				"providerId": Request.provider_id,
 				"groupId": Request.group_id,

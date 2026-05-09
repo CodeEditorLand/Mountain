@@ -3,8 +3,11 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{CustomEditor::CustomEditorProvider::CustomEditorProvider, Environment::Requires::Requires};
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
+
 use url::Url;
 
 use crate::{
@@ -15,7 +18,9 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
+
 		"$webview:create"
 		| "webview.create"
 		| "webview.setHtml"
@@ -27,6 +32,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		| "webview.unregisterView"
 		| "webview.registerCustomEditor"
 		| "webview.unregisterCustomEditor" => {
+
 			// Per-dispatch entry line - parity with TreeView.rs's
 			// `tree-latency` log. Without this we cannot tell from
 			// `Mountain.dev.log` whether Cocoon's
@@ -39,6 +45,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					let Method = Method.clone();
 
 					Box::pin(async move {
@@ -175,8 +182,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"$resolveCustomEditor" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
 						let view_type = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();

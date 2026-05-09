@@ -20,11 +20,13 @@
 //! the divergence is worth it.
 
 use serde_json::{Map, Value, json};
+
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
+
 	// Suffix mapping: stock VS Code wire methods are camelCase
 	// (`webview.setHtml`, `webview.setIconPath`), but Sky's canonical
 	// channel registry (`Common/Source/IPC/SkyEvent.rs`) standardises
@@ -37,6 +39,7 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 	let RawSuffix = &MethodName["webview.".len()..];
 
 	let Suffix = match RawSuffix {
+
 		"setHtml" => "set-html",
 
 		"postMessage" => "post-message",
@@ -56,11 +59,15 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 	//      `Payload.html` / `Payload.viewId` / `Payload.message` etc. stay
 	//      decoupled from the wire shape.
 	let CanonicalPayload:Value = if Parameter.is_object() {
+
 		Parameter.clone()
 	} else if let Some(First) = Parameter.get(0) {
+
 		if First.is_object() {
+
 			First.clone()
 		} else {
+
 			let mut Object = Map::new();
 
 			Object.insert("method".to_string(), Value::String(MethodName.to_string()));
@@ -70,7 +77,9 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 			Object.insert("args".to_string(), Parameter.clone());
 
 			if let Some(Second) = Parameter.get(1) {
+
 				let Alias = match MethodName {
+
 					"webview.setHtml" => "html",
 
 					"webview.postMessage" => "message",
@@ -85,7 +94,9 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 				Object.insert(Alias.to_string(), Second.clone());
 
 				if MethodName == "webview.create" {
+
 					if let Some(Third) = Parameter.get(2) {
+
 						Object.insert("title".to_string(), Third.clone());
 					}
 				}
@@ -94,6 +105,7 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 			Value::Object(Object)
 		}
 	} else {
+
 		json!({
 			"method": MethodName,
 			"handle": Parameter.clone(),
@@ -101,6 +113,7 @@ pub async fn WebviewLifecycle(Service:&MountainVinegRPCService, MethodName:&str,
 	};
 
 	if let Err(Error) = Service.ApplicationHandle().emit(&EventName, &CanonicalPayload) {
+
 		dev_log!("grpc", "warn: [MountainVinegRPCService] {} emit failed: {}", EventName, Error);
 	}
 }

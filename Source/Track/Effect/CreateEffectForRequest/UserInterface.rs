@@ -6,16 +6,22 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	UserInterface::{DTO::MessageSeverity::MessageSeverity, UserInterfaceProvider::UserInterfaceProvider},
 };
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
+
 		"UserInterface.ShowMessage" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 						let severity_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("info");
@@ -38,12 +44,15 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"UserInterface.ShowQuickPick" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 						let (items, options) = (
 							vec![],
+
 							None as Option<CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO>,
 						);
 						provider
@@ -58,8 +67,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"UserInterface.ShowInputBox" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 						let options = if let Some(Value::Object(obj)) = Parameters.get(0) {
@@ -90,8 +101,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"UserInterface.ShowOpenDialog" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 						let options = if let Some(Value::Object(obj)) = Parameters.get(0) {
@@ -120,8 +133,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"UserInterface.ShowSaveDialog" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
 						let options = if let Some(Value::Object(obj)) = Parameters.get(0) {

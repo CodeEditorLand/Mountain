@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub CorrelationId:String,
 
 	pub Data:serde_json::Value,
@@ -20,8 +21,11 @@ pub struct Struct {
 }
 
 impl Struct {
+
 	pub fn Success(CorrelationId:impl Into<String>, Data:serde_json::Value) -> Self {
+
 		Self {
+
 			CorrelationId:CorrelationId.into(),
 
 			Data,
@@ -35,7 +39,9 @@ impl Struct {
 	}
 
 	pub fn Error(CorrelationId:impl Into<String>, Error:impl Into<String>) -> Self {
+
 		Self {
+
 			CorrelationId:CorrelationId.into(),
 
 			Data:serde_json::Value::Null,

@@ -11,6 +11,7 @@ use serde_json::{Value, json};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
@@ -22,6 +23,7 @@ pub async fn DecorationsGet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 }
 
 pub async fn DecorationsGetMany(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uris:Vec<String> = Arguments
 		.first()
 		.and_then(|V| V.as_array())
@@ -31,7 +33,9 @@ pub async fn DecorationsGetMany(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<V
 	let mut Result = serde_json::Map::new();
 
 	for Uri in &Uris {
+
 		if let Some(Decoration) = RunTime.Environment.ApplicationState.Feature.Decorations.GetDecoration(Uri) {
+
 			Result.insert(Uri.clone(), Decoration);
 		}
 	}
@@ -40,6 +44,7 @@ pub async fn DecorationsGetMany(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<V
 }
 
 pub async fn DecorationsSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
@@ -58,6 +63,7 @@ pub async fn DecorationsSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value
 }
 
 pub async fn DecorationsClear(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())

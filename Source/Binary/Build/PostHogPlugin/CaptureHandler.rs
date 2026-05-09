@@ -12,7 +12,9 @@
 use crate::Binary::Build::PostHogPlugin::{CaptureAllowed, CaptureEvent};
 
 pub fn Fn(Feature:&str, DurationMs:u64, Successful:bool) {
+
 	if !CaptureAllowed::Fn() {
+
 		return;
 	}
 
@@ -22,6 +24,7 @@ pub fn Fn(Feature:&str, DurationMs:u64, Successful:bool) {
 
 	CaptureEvent::Fn(
 		"land:mountain:handler:complete",
+
 		Some(vec![("feature", Feature), ("duration_ms", &DurationString), ("ok", OkString)]),
 	);
 }

@@ -6,7 +6,9 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -20,6 +22,7 @@ pub async fn Fn(
 
 	Request:ShowProgressRequest,
 ) -> Result<Response<ShowProgressResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] show_progress: title={}", Request.title);
 
 	let Handle = SystemTime::now()
@@ -29,6 +32,7 @@ pub async fn Fn(
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://progress/start",
+
 		json!({
 			"handle": Handle,
 			"title": Request.title,

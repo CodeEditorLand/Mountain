@@ -9,6 +9,7 @@ use serde_json::Value;
 use crate::IPC::WindServiceHandlers::NativeDialog::DialogFilter::DialogFilter;
 
 pub fn ParseDialogFilters(Options:&Value) -> Vec<DialogFilter> {
+
 	Options
 		.get("filters")
 		.and_then(Value::as_array)

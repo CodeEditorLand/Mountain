@@ -4,7 +4,9 @@
 //! settings refresh.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -14,9 +16,12 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateConfigurationRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] update_configuration: {} changed keys",
+
 		Request.changed_keys.len()
 	);
 

@@ -83,16 +83,19 @@
 use std::array::TryFromSliceError;
 
 use base64::{Engine, engine::general_purpose};
+
 use ring::{
 	aead,
 	hmac,
 	rand::{SecureRandom, SystemRandom},
 };
+
 use serde::{Deserialize, Serialize};
 
 /// Encrypted message structure containing ciphertext and authentication data
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EncryptedMessage {
+
 	/// Unique nonce for GCM (12 bytes)
 	pub nonce:Vec<u8>,
 
@@ -104,10 +107,13 @@ pub struct EncryptedMessage {
 }
 
 impl EncryptedMessage {
+
 	/// Validate encrypted message structure
 	pub fn validate(&self) -> Result<(), String> {
+
 		// Validate nonce length (must be 12 bytes for GCM)
 		if self.nonce.len() != 12 {
+
 			return Err(format!("Invalid nonce length: {} (expected 12)", self.nonce.len()));
 		}
 
@@ -115,11 +121,13 @@ impl EncryptedMessage {
 		const TAG_LEN:usize = 16;
 
 		if self.ciphertext.len() < TAG_LEN {
+
 			return Err(format!("Ciphertext too short: {} (must include tag)", self.ciphertext.len()));
 		}
 
 		// Validate HMAC length (SHA256 outputs 32 bytes)
 		if self.hmac_tag.len() != 32 {
+
 			return Err(format!("Invalid HMAC length: {} (expected 32)", self.hmac_tag.len()));
 		}
 
@@ -133,6 +141,7 @@ impl EncryptedMessage {
 /// using AES-256-GCM along with HMAC-SHA256 for additional integrity
 /// verification.
 pub struct SecureMessageChannel {
+
 	/// AES-GCM encryption key
 	encryption_key:aead::LessSafeKey,
 
@@ -141,6 +150,7 @@ pub struct SecureMessageChannel {
 }
 
 impl SecureMessageChannel {
+
 	/// Create a new secure channel with randomly generated keys
 	///
 	/// # Returns
@@ -150,6 +160,7 @@ impl SecureMessageChannel {
 	/// - Keys generated using SystemRandom (cryptographically secure)
 	/// - 256-bit keys for both encryption and HMAC
 	pub fn new() -> Result<Self, String> {
+
 		let rng = SystemRandom::new();
 
 		let mut encryption_key_bytes = vec![0u8; 32];
@@ -182,14 +193,18 @@ impl SecureMessageChannel {
 	/// # Security
 	/// - Validates key lengths (must be 32 bytes each)
 	pub fn from_keys(encryption_key_bytes:&[u8], hmac_key:&[u8]) -> Result<Self, String> {
+
 		if encryption_key_bytes.len() != 32 {
+
 			return Err(format!(
 				"Invalid encryption key length: {} (expected 32)",
+
 				encryption_key_bytes.len()
 			));
 		}
 
 		if hmac_key.len() != 32 {
+
 			return Err(format!("Invalid HMAC key length: {} (expected 32)", hmac_key.len()));
 		}
 
@@ -212,6 +227,7 @@ impl SecureMessageChannel {
 	/// - GCM provides integrity verification via authentication tag
 	/// - HMAC provides additional integrity layer
 	pub fn encrypt_message(&self, Message:&TauriIPCMessage) -> Result<EncryptedMessage, String> {
+
 		// Serialize message
 		let serialized_message =
 			serde_json::to_vec(Message).map_err(|e| format!("Failed to serialize message: {}", e))?;
@@ -251,6 +267,7 @@ impl SecureMessageChannel {
 	/// - GCM verifies integrity during decryption
 	/// - Invalid HMAC or invalid auth tag causes failure
 	pub fn decrypt_message(&self, Encrypted:&EncryptedMessage) -> Result<TauriIPCMessage, String> {
+
 		// Validate structure
 		Encrypted.validate()?;
 
@@ -295,6 +312,7 @@ impl SecureMessageChannel {
 	/// - Generates new random keys
 	/// - Old keys are securely replaced
 	pub fn rotate_keys(&mut self) -> Result<(), String> {
+
 		*self = Self::new()?;
 		Ok(())
 	}
@@ -309,6 +327,7 @@ impl SecureMessageChannel {
 	/// - Does not expose actual keys
 	/// - Returns hash-like identifier only
 	pub fn get_key_identifier(&self) -> String {
+
 		// Create a simple identifier from HMAC key (not the key itself)
 		use ring::digest;
 
@@ -330,6 +349,7 @@ mod tests {
 
 	#[test]
 	fn test_encrypted_message_validation() {
+
 		// Valid message
 		let valid = EncryptedMessage { nonce:vec![0u8; 12], ciphertext:vec![0u8; 32], hmac_tag:vec![0u8; 32] };
 
@@ -348,6 +368,7 @@ mod tests {
 
 	#[test]
 	fn test_encrypt_decrypt() {
+
 		let channel = SecureMessageChannel::new().expect("Failed to create channel");
 
 		let message = TauriIPCMessage::new("test-channel", json!({"secret": "data"}), Some("sender".to_string()));
@@ -367,6 +388,7 @@ mod tests {
 
 	#[test]
 	fn test_key_rotation() {
+
 		let mut channel = SecureMessageChannel::new().expect("Failed to create channel");
 
 		let message = TauriIPCMessage::new("test", json!({}), None);

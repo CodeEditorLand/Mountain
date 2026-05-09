@@ -5,6 +5,7 @@
 //! whichever side is non-empty.
 
 use tonic::{Response, Status};
+
 use CommonLibrary::Configuration::{
 	ConfigurationProvider::ConfigurationProvider,
 	DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
@@ -21,11 +22,15 @@ pub async fn Fn(
 
 	Request:GetConfigurationRequest,
 ) -> Result<Response<GetConfigurationResponse>, Status> {
+
 	let Key = if Request.section.is_empty() {
+
 		if Request.key.is_empty() { None } else { Some(Request.key.clone()) }
 	} else if Request.key.is_empty() {
+
 		Some(Request.section.clone())
 	} else {
+
 		Some(format!("{}.{}", Request.section, Request.key))
 	};
 
@@ -36,13 +41,16 @@ pub async fn Fn(
 		.GetConfigurationValue(Key, ConfigurationOverridesDTO::default())
 		.await
 	{
+
 		Ok(Value) => {
+
 			let Bytes = serde_json::to_vec(&Value).unwrap_or_default();
 
 			Ok(Response::new(GetConfigurationResponse { value:Bytes }))
 		},
 
 		Err(Error) => {
+
 			dev_log!("cocoon", "warn: [CocoonService] get_configuration failed: {}", Error);
 
 			Ok(Response::new(GetConfigurationResponse::default()))

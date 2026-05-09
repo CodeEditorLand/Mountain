@@ -23,11 +23,13 @@
 //! that hasn't migrated yet.
 
 use serde_json::{Value, json};
+
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	// Producer (Cocoon `ScmNamespace.ts`) emits camelCase keys post-audit.
 	// snake_case probes retained as transitional fallback for one rebuild.
 	let ScmHandle = Parameter
@@ -71,6 +73,7 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 	// `cel:scm:updateGroup` listeners (which expect a flat `groupId`)
 	// keep working without forcing them to re-parse.
 	let (HandleFromString, GroupIdFromHandle) = match GroupHandle.split_once('/') {
+
 		Some((H, G)) => (H.parse::<u32>().ok(), G.to_string()),
 
 		None => (None, String::new()),
@@ -79,18 +82,25 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 	let ResolvedScmHandle = ScmHandle.or(HandleFromString);
 
 	let ResolvedGroupId = if !GroupIdFromHandle.is_empty() {
+
 		GroupIdFromHandle
 	} else if !LegacyGroupId.is_empty() {
+
 		LegacyGroupId
 	} else {
+
 		String::new()
 	};
 
 	if ResolvedScmHandle.is_none() && LegacyProviderId.is_empty() {
+
 		dev_log!(
 			"grpc",
+
 			"[ScmGroup] skip: missing scm_handle / provider_id (group_handle={:?} legacy_group={:?})",
+
 			GroupHandle,
+
 			ResolvedGroupId
 		);
 
@@ -98,10 +108,14 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 	}
 
 	if ResolvedGroupId.is_empty() {
+
 		dev_log!(
 			"grpc",
+
 			"[ScmGroup] skip: missing group_id (scm_handle={:?} group_handle={:?})",
+
 			ResolvedScmHandle,
+
 			GroupHandle
 		);
 
@@ -110,6 +124,7 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 
 	let _ = Service.ApplicationHandle().emit(
 		"sky://scm/updateGroup",
+
 		json!({
 			"scmHandle": ResolvedScmHandle,
 			"providerId": &LegacyProviderId,
@@ -121,9 +136,13 @@ pub async fn UpdateScmGroup(Service:&MountainVinegRPCService, Parameter:&Value) 
 
 	dev_log!(
 		"grpc",
+
 		"[ScmGroup] scm_handle={:?} group={} resources={}",
+
 		ResolvedScmHandle,
+
 		ResolvedGroupId,
+
 		ResourceStates.as_array().map(Vec::len).unwrap_or(0)
 	);
 }

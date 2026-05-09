@@ -12,10 +12,14 @@ use serde_json::Value;
 use crate::{ApplicationState::Internal::Persistence::MementoLoader::AttemptMementoRecovery, dev_log};
 
 pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
+
 	if !StorageFilePath.exists() {
+
 		dev_log!(
 			"storage",
+
 			"[MementoLoader] Memento file does not exist: {}",
+
 			StorageFilePath.display()
 		);
 
@@ -23,12 +27,17 @@ pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 	}
 
 	match fs::read_to_string(StorageFilePath) {
+
 		Ok(Content) => {
+
 			serde_json::from_str(&Content).unwrap_or_else(|Error| {
 				dev_log!(
 					"storage",
+
 					"error: [MementoLoader] Failed to parse JSON from '{}': {}. Attempting recovery.",
+
 					StorageFilePath.display(),
+
 					Error
 				);
 				AttemptMementoRecovery::Fn(StorageFilePath, &Content);
@@ -37,10 +46,14 @@ pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 		},
 
 		Err(Error) => {
+
 			dev_log!(
 				"storage",
+
 				"error: [MementoLoader] Failed to read '{}': {}. Attempting recovery.",
+
 				StorageFilePath.display(),
+
 				Error
 			);
 
@@ -48,10 +61,14 @@ pub fn Fn(StorageFilePath:&Path) -> HashMap<String, Value> {
 				&& !Parent.exists()
 				&& let Err(DirError) = fs::create_dir_all(Parent)
 			{
+
 				dev_log!(
 					"storage",
+
 					"warn: [MementoLoader] Failed to create directory '{}': {}",
+
 					Parent.display(),
+
 					DirError
 				);
 			}

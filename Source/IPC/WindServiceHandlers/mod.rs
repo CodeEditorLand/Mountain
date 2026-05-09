@@ -43,16 +43,13 @@ pub mod Utilities;
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use Commands::*;
-
 use Configuration::*;
-
 use Extensions::{
 	ExtensionsGet::ExtensionsGet,
 	ExtensionsGetAll::ExtensionsGetAll,
 	ExtensionsGetInstalled::ExtensionsGetInstalled,
 	ExtensionsIsActive::ExtensionsIsActive,
 };
-
 use FileSystem::{
 	Managed::{
 		FileCopy::*,
@@ -80,7 +77,6 @@ use FileSystem::{
 		FileWriteNative::*,
 	},
 };
-
 use Model::{
 	ModelClose::ModelClose,
 	ModelGet::ModelGet,
@@ -91,7 +87,6 @@ use Model::{
 	TextfileSave::TextfileSave,
 	TextfileWrite::TextfileWrite,
 };
-
 use NativeHost::{
 	FindFreePort::*,
 	GetColorScheme::*,
@@ -104,7 +99,6 @@ use NativeHost::{
 	ShowItemInFolder::*,
 	ShowOpenDialog::*,
 };
-
 use Navigation::{
 	HistoryCanGoBack::HistoryCanGoBack,
 	HistoryCanGoForward::HistoryCanGoForward,
@@ -117,7 +111,6 @@ use Navigation::{
 	LabelGetURI::LabelGetURI,
 	LabelGetWorkspace::LabelGetWorkspace,
 };
-
 use Output::{
 	OutputAppend::OutputAppend,
 	OutputAppendLine::OutputAppendLine,
@@ -125,9 +118,7 @@ use Output::{
 	OutputCreate::OutputCreate,
 	OutputShow::OutputShow,
 };
-
 use Search::*;
-
 use Storage::{
 	StorageDelete::StorageDelete,
 	StorageGet::StorageGet,
@@ -136,7 +127,6 @@ use Storage::{
 	StorageSet::StorageSet,
 	StorageUpdateItems::StorageUpdateItems,
 };
-
 use Terminal::{
 	LocalPTYGetDefaultShell::LocalPTYGetDefaultShell,
 	LocalPTYGetEnvironment::LocalPTYGetEnvironment,
@@ -147,7 +137,6 @@ use Terminal::{
 	TerminalSendText::TerminalSendText,
 	TerminalShow::TerminalShow,
 };
-
 use UI::{
 	Decoration::*,
 	Keybinding::*,
@@ -159,7 +148,6 @@ use UI::{
 	WorkingCopy::*,
 	Workspace::*,
 };
-
 use Utilities::{
 	ApplicationRoot::*,
 	ChannelPriority::*,
@@ -169,13 +157,9 @@ use Utilities::{
 	RecentlyOpened::*,
 	UserdataDir::*,
 };
-
 use Echo::Task::Priority::Priority as EchoPriority;
-
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Manager};
-
 // Type aliases for Configuration DTOs to simplify usage
 use CommonLibrary::Configuration::DTO::{
 	ConfigurationOverridesDTO as ConfigurationOverridesDTOModule,
@@ -233,7 +217,6 @@ pub async fn mountain_ipc_invoke(
 
 	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
-
 	let OTLPStart = crate::IPC::DevLog::NowNano::Fn();
 
 	// Silence the per-call invoke log for high-frequency methods that are
@@ -252,7 +235,6 @@ pub async fn mountain_ipc_invoke(
 	// `done:` line below also skips these so there's symmetric silence.
 	let IsHighFrequencyCommand = matches!(
 		command.as_str(),
-
 		"logger:log"
 			| "logger:registerLogger"
 			| "logger:createLogger"
@@ -277,7 +259,6 @@ pub async fn mountain_ipc_invoke(
 	);
 
 	if !IsHighFrequencyCommand {
-
 		dev_log!("ipc", "invoke: {} args_count={}", command, Arguments.len());
 	}
 

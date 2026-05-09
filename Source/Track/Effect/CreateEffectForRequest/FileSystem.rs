@@ -3,11 +3,14 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
+
 use CommonLibrary::{
 	Environment::Requires::Requires,
 	FileSystem::{FileSystemReader::FileSystemReader, FileSystemWriter::FileSystemWriter},
 };
+
 use serde_json::{Value, json};
+
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
@@ -20,15 +23,19 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::Mapp
 /// gRPC fs.readFile path for its own package.json) fails with "Resource not
 /// found: file:///...".
 fn StripFileUriScheme(Input:&str) -> &str {
+
 	if let Some(Rest) = Input.strip_prefix("file://") {
+
 		// `file:///Users/...` - the third slash is part of the path, keep it.
 		if Rest.starts_with('/') {
+
 			return Rest;
 		}
 
 		// `file://localhost/Users/...` - rarely used, but normalise by
 		// stripping host-up-to-first-slash. Fall through on failure.
 		if let Some(Idx) = Rest.find('/') {
+
 			return &Rest[Idx..];
 		}
 	}
@@ -37,10 +44,14 @@ fn StripFileUriScheme(Input:&str) -> &str {
 }
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
+
 	match MethodName {
+
 		"FileSystem.ReadFile" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
 						// Empty-path guard: extensions occasionally
@@ -75,8 +86,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"FileSystem.WriteFile" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -101,8 +114,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"FileSystem.ReadDirectory" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -119,8 +134,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"FileSystem.Stat" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -146,8 +163,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"FileSystem.CreateDirectory" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -164,8 +183,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"FileSystem.Delete" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -183,8 +204,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"FileSystem.Rename" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 						let source = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -192,7 +215,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						fs_writer
 							.Rename(
 								&std::path::PathBuf::from(StripFileUriScheme(source)),
+
 								&std::path::PathBuf::from(StripFileUriScheme(target)),
+
 								true,
 							)
 							.await
@@ -205,8 +230,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"FileSystem.Copy" => {
+
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+
 					Box::pin(async move {
 						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 						let source = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -214,7 +241,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						fs_writer
 							.Copy(
 								&std::path::PathBuf::from(StripFileUriScheme(source)),
+
 								&std::path::PathBuf::from(StripFileUriScheme(target)),
+
 								true,
 							)
 							.await

@@ -4,7 +4,9 @@
 //! protobuf `argument` oneof into `serde_json::Value` for the executor.
 
 use CommonLibrary::Command::CommandExecutor::CommandExecutor;
+
 use serde_json::json;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -18,14 +20,19 @@ pub async fn Fn(
 
 	Request:ExecuteCommandRequest,
 ) -> Result<Response<ExecuteCommandResponse>, Status> {
+
 	dev_log!(
 		"cocoon",
+
 		"[CocoonService] Executing command '{}' with {} arguments",
+
 		Request.command_id,
+
 		Request.arguments.len()
 	);
 
 	for (Index, Argument) in Request.arguments.iter().enumerate() {
+
 		dev_log!("cocoon", "[CocoonService] Argument {}: {:?}", Index, Argument);
 	}
 
@@ -44,7 +51,9 @@ pub async fn Fn(
 		.unwrap_or(serde_json::Value::Null);
 
 	match Service.environment.ExecuteCommand(Request.command_id, Arg).await {
+
 		Ok(Value) => {
+
 			let Bytes = serde_json::to_vec(&Value).unwrap_or_default();
 
 			Ok(Response::new(ExecuteCommandResponse {
@@ -53,6 +62,7 @@ pub async fn Fn(
 		},
 
 		Err(Error) => {
+
 			let Bytes = serde_json::to_vec(&Error.to_string()).unwrap_or_default();
 
 			Ok(Response::new(ExecuteCommandResponse {

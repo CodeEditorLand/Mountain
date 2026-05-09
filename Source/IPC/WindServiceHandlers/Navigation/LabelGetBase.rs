@@ -7,6 +7,7 @@
 use serde_json::Value;
 
 pub async fn LabelGetBase(Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())

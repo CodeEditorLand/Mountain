@@ -7,7 +7,9 @@
 use crate::Binary::Build::PostHogPlugin::Constants;
 
 pub fn Fn() -> String {
+
 	if !Constants::POSTHOG_DISTINCT_ID_SEED.is_empty() {
+
 		return Constants::POSTHOG_DISTINCT_ID_SEED.to_string();
 	}
 

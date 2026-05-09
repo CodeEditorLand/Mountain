@@ -78,9 +78,11 @@
 use std::io::{Read, Write};
 
 use flate2::{Compression, read::GzDecoder, write::GzEncoder};
+
 use serde::Serialize;
 
 use super::super::Define::DefineMessage::TauriIPCMessage;
+
 use crate::dev_log;
 
 /// Maximum decompressed size to prevent compression bomb attacks (10MB)
@@ -92,6 +94,7 @@ const MAX_DECOMPRESSED_SIZE:usize = 10 * 1024 * 1024;
 /// compression level based on payload size and providing graceful fallback on
 /// errors.
 pub struct Compressor {
+
 	/// Compression level (0-9), higher = better ratio but slower
 	/// 0 = no compression, 1 = fastest, 6 = balanced, 9 = best
 	CompressionLevel:u32,
@@ -104,6 +107,7 @@ pub struct Compressor {
 }
 
 impl Compressor {
+
 	/// Create a new message compressor with specified parameters
 	///
 	/// # Arguments
@@ -119,6 +123,7 @@ impl Compressor {
 	/// - BatchSize: 10 messages
 	/// - SingleMessageThreshold: 1024 bytes (1KB)
 	pub fn new(CompressionLevel:u32, BatchSize:usize, SingleMessageThreshold:usize) -> Self {
+
 		Self { CompressionLevel, BatchSize, SingleMessageThreshold }
 	}
 
@@ -137,12 +142,15 @@ impl Compressor {
 	/// - Validates input size before compression
 	/// - Prevents memory exhaustion via oversized inputs
 	pub fn compress_messages(&self, Messages:&[TauriIPCMessage]) -> Result<Vec<u8>, String> {
+
 		// Validate input size to prevent memory exhaustion
 		let total_size = std::mem::size_of_val(Messages);
 
 		if total_size > MAX_DECOMPRESSED_SIZE {
+
 			return Err(format!(
 				"Input too large: {} bytes (max: {})",
+
 				total_size, MAX_DECOMPRESSED_SIZE
 			));
 		}
@@ -153,19 +161,26 @@ impl Compressor {
 
 		// Validate serialized size
 		if SerializedMessages.len() > MAX_DECOMPRESSED_SIZE {
+
 			return Err(format!(
 				"Serialized data too large: {} bytes (max: {})",
+
 				SerializedMessages.len(),
+
 				MAX_DECOMPRESSED_SIZE
 			));
 		}
 
 		// Check if compression is beneficial (only compress if size exceeds threshold)
 		if SerializedMessages.len() < self.SingleMessageThreshold {
+
 			dev_log!(
 				"ipc",
+
 				"[Compress] Skipping compression: data size {} < threshold {}",
+
 				SerializedMessages.len(),
+
 				self.SingleMessageThreshold
 			);
 
@@ -185,11 +200,16 @@ impl Compressor {
 		let compression_ratio = (compressed_data.len() as f64 / SerializedMessages.len() as f64) * 100.0;
 
 		if compressed_data.len() >= SerializedMessages.len() {
+
 			dev_log!(
 				"ipc",
+
 				"[Compress] Compression not beneficial: {}% ({} bytes vs {})",
+
 				compression_ratio,
+
 				compressed_data.len(),
+
 				SerializedMessages.len()
 			);
 
@@ -198,10 +218,15 @@ impl Compressor {
 
 		dev_log!(
 			"ipc",
+
 			"[Compress] Compressed {} messages: {} -> {} bytes ({:.1}%)",
+
 			Messages.len(),
+
 			SerializedMessages.len(),
+
 			compressed_data.len(),
+
 			compression_ratio
 		);
 
@@ -220,6 +245,7 @@ impl Compressor {
 	/// - Enforces MAX_DECOMPRESSED_SIZE limit to prevent decompression bomb
 	/// - Validates decompressed data structure before returning
 	pub fn decompress_messages(&self, CompressedData:&[u8]) -> Result<Vec<TauriIPCMessage>, String> {
+
 		validate_decompression_input(CompressedData.len())?;
 
 		let mut decoder = GzDecoder::new(CompressedData);
@@ -256,6 +282,7 @@ impl Compressor {
 	/// # Returns
 	/// true if compression should be applied, false otherwise
 	pub fn should_compress_single(&self, Message:&TauriIPCMessage) -> Result<bool, String> {
+
 		// Serialize to JSON to check size
 		let serialized = serde_json::to_vec(Message).map_err(|e| format!("Failed to serialize message: {}", e))?;
 
@@ -265,14 +292,17 @@ impl Compressor {
 
 /// Validate decompression input size
 fn validate_decompression_input(CompressedSize:usize) -> Result<(), String> {
+
 	// Reject unreasonably large compressed inputs (even though decompression has
 	// limit)
 	// Maximum compressed input size: 5MB to prevent decompression bomb attacks
 	const MAX_COMPRESSED_INPUT:usize = 5 * 1024 * 1024;
 
 	if CompressedSize > MAX_COMPRESSED_INPUT {
+
 		return Err(format!(
 			"Compressed input too large: {} bytes (max: {})",
+
 			CompressedSize, MAX_COMPRESSED_INPUT
 		));
 	}
@@ -282,9 +312,12 @@ fn validate_decompression_input(CompressedSize:usize) -> Result<(), String> {
 
 /// Validate decompressed size
 fn validate_decompressed_size(DecompressedSize:usize) -> Result<(), String> {
+
 	if DecompressedSize > MAX_DECOMPRESSED_SIZE {
+
 		return Err(format!(
 			"Decompressed data too large: {} bytes (max: {})",
+
 			DecompressedSize, MAX_DECOMPRESSED_SIZE
 		));
 	}
@@ -295,6 +328,7 @@ fn validate_decompressed_size(DecompressedSize:usize) -> Result<(), String> {
 /// Compression error type for better error handling
 #[derive(Debug, thiserror::Error)]
 pub enum CompressionError {
+
 	#[error("Serialization failed: {0}")]
 	SerializationFailed(String),
 
@@ -312,6 +346,7 @@ pub enum CompressionError {
 }
 
 impl From<CompressionError> for String {
+
 	fn from(error:CompressionError) -> Self { error.to_string() }
 }
 
@@ -324,6 +359,7 @@ mod tests {
 
 	#[test]
 	fn test_message_validation() {
+
 		let message = TauriIPCMessage::new("test-channel", json!({"test": "data"}), Some("test-sender".to_string()));
 
 		assert!(message.validate().is_ok());
@@ -341,6 +377,7 @@ mod tests {
 
 	#[test]
 	fn test_compressor_defaults() {
+
 		let compressor = Compressor::defaults();
 
 		assert_eq!(compressor.CompressionLevel, 6);
@@ -352,6 +389,7 @@ mod tests {
 
 	#[test]
 	fn test_should_batch() {
+
 		let compressor = Compressor::defaults();
 
 		assert!(!compressor.should_batch(5));
@@ -363,11 +401,14 @@ mod tests {
 
 	#[test]
 	fn test_compress_decompress() {
+
 		let compressor = Compressor::defaults();
 
 		let messages = vec![
 			TauriIPCMessage::new("channel1", json!({"d": 1}), None),
+
 			TauriIPCMessage::new("channel2", json!({"d": 2}), None),
+
 			TauriIPCMessage::new("channel3", json!({"d": 3}), None),
 		];
 

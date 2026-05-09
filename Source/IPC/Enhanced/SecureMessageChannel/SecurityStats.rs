@@ -9,6 +9,7 @@ use crate::IPC::Enhanced::SecureMessageChannel::SecurityConfig;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
+
 	pub current_key_id:String,
 
 	pub current_key_age_seconds:u64,

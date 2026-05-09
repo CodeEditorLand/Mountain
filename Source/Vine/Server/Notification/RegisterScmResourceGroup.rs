@@ -19,12 +19,15 @@
 //! that follows.
 
 use serde_json::{Value, json};
+
 use tauri::Emitter;
+
 use CommonLibrary::SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	// Producer (Cocoon `ScmNamespace.ts`) emits camelCase keys post-audit.
 	let ScmHandle = Parameter
 		.get("scmHandle")
@@ -49,6 +52,7 @@ pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Paramete
 	let Label = Parameter.get("label").and_then(Value::as_str).unwrap_or(&GroupId).to_string();
 
 	if GroupId.is_empty() {
+
 		dev_log!("provider-register", "[ProviderRegister] scm-group skip: missing group_id");
 
 		return;
@@ -73,17 +77,23 @@ pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Paramete
 		.UpdateSourceControlGroup(ScmHandle, GroupData)
 		.await
 	{
+
 		dev_log!(
 			"grpc",
+
 			"warn: [Scm] UpdateSourceControlGroup (seed) failed scm={} group={}: {}",
+
 			ScmHandle,
+
 			GroupId,
+
 			Error
 		);
 	}
 
 	let _ = Service.ApplicationHandle().emit(
 		"sky://scm/registerGroup",
+
 		json!({
 			"scmHandle": ScmHandle,
 			"groupHandle": &GroupHandleStr,
@@ -94,9 +104,13 @@ pub async fn RegisterScmResourceGroup(Service:&MountainVinegRPCService, Paramete
 
 	dev_log!(
 		"grpc",
+
 		"[Scm] register group scm_handle={} group_id={} label={}",
+
 		ScmHandle,
+
 		GroupId,
+
 		Label
 	);
 }

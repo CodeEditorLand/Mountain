@@ -18,6 +18,7 @@
 use std::sync::Arc;
 
 use serde_json::{Value, json};
+
 use tauri::{AppHandle, Emitter};
 
 use crate::{
@@ -41,12 +42,15 @@ pub async fn ExtensionInstall(
 
 	Args:Vec<Value>,
 ) -> Result<Value, String> {
+
 	let OTELStart = crate::IPC::DevLog::NowNano::Fn();
 
 	let VsixPath = match VsixPathFromArgs(&Args) {
+
 		Some(Path) => Path,
 
 		None => {
+
 			dev_log!("extensions", "extensions:install no-op: Arguments[0] missing or non-file URI");
 
 			crate::otel_span!("extensions:install:noop-missing-arg", OTELStart);
@@ -56,6 +60,7 @@ pub async fn ExtensionInstall(
 	};
 
 	if VsixPath.extension().and_then(|Value| Value.to_str()) != Some("vsix") {
+
 		dev_log!("extensions", "extensions:install no-op: {} is not a .vsix", VsixPath.display());
 
 		crate::otel_span!("extensions:install:noop-not-vsix", OTELStart);
@@ -83,28 +88,37 @@ pub async fn ExtensionInstall(
 
 	if let Err(Error) = ApplicationHandle.emit(
 		"sky://extensions/installed",
+
 		json!({
 			"identifier": Outcome.Identifier,
 			"version": Outcome.Version,
 			"location": Outcome.InstalledAt.to_string_lossy(),
 		}),
 	) {
+
 		dev_log!("extensions", "warn: failed to emit sky://extensions/installed: {}", Error);
 	}
 
 	dev_log!(
 		"extensions",
+
 		"extensions:install succeeded: {} v{} at {}",
+
 		Outcome.Identifier,
+
 		Outcome.Version,
+
 		Outcome.InstalledAt.display()
 	);
 
 	crate::otel_span!(
 		"extensions:install:ok",
+
 		OTELStart,
+
 		&[
 			("extension.identifier", Outcome.Identifier.as_str()),
+
 			("extension.version", Outcome.Version.as_str()),
 		]
 	);

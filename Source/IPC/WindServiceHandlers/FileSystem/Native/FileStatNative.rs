@@ -17,6 +17,7 @@ use crate::{
 };
 
 pub async fn FileStatNative(Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
 
 	// Per-path stat emits at very high volume during workbench boot
@@ -24,6 +25,7 @@ pub async fn FileStatNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	// extension). Gate to `vfs-verbose`; the ENOENT path retains the
 	// `vfs` tag so real misses still surface at the default level.
 	if !DevLog::IsBenignEnoent::Fn(&Path) {
+
 		dev_log!("vfs-verbose", "stat: {}", Path);
 	}
 
@@ -31,7 +33,9 @@ pub async fn FileStatNative(Arguments:Vec<Value>) -> Result<Value, String> {
 		if DevLog::IsBenignEnoent::Fn(&Path) {
 			DevLog::DebugOnce::Fn(
 				"vfs",
+
 				&format!("stat-enoent:{}", Path),
+
 				&format!("stat ENOENT (benign): {}", Path),
 			);
 		} else {
@@ -41,6 +45,7 @@ pub async fn FileStatNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	})?;
 
 	if !DevLog::IsBenignEnoent::Fn(&Path) {
+
 		dev_log!("vfs-verbose", "stat OK: {} (dir={})", Path, Metadata.is_dir());
 	}
 

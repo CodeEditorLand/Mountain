@@ -3,7 +3,9 @@
 //! Create a new output channel and notify Sky over `sky://output/create`.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -17,6 +19,7 @@ pub async fn Fn(
 
 	Request:CreateOutputChannelRequest,
 ) -> Result<Response<CreateOutputChannelResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] create_output_channel: '{}'", Request.name);
 
 	let _ = Service

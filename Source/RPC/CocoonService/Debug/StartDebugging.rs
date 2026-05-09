@@ -6,7 +6,9 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -20,15 +22,18 @@ pub async fn Fn(
 
 	Request:StartDebuggingRequest,
 ) -> Result<Response<StartDebuggingResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] start_debugging: type={}", Request.debug_type);
 
 	let SessionIdentifier = format!(
 		"debug-{}",
+
 		SystemTime::now().duration_since(UNIX_EPOCH).map(|D| D.as_millis()).unwrap_or(0)
 	);
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://debug/start",
+
 		json!({
 			"sessionId": SessionIdentifier,
 			"debugType": Request.debug_type,

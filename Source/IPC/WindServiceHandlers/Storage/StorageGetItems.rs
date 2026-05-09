@@ -9,16 +9,21 @@
 use std::sync::Arc;
 
 use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
+
 use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn StorageGetItems(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let provider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 
 	match provider.GetAllStorage(true).await {
+
 		Ok(State) => {
+
 			if let Some(Obj) = State.as_object() {
+
 				let Tuples:Vec<Value> = Obj
 					.iter()
 					.map(|(K, V)| {
@@ -32,6 +37,7 @@ pub async fn StorageGetItems(RunTime:Arc<ApplicationRunTime>, _Arguments:Vec<Val
 
 				Ok(json!(Tuples))
 			} else {
+
 				Ok(json!([]))
 			}
 		},

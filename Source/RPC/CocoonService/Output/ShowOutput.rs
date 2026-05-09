@@ -4,7 +4,9 @@
 //! `sky://output/show`.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -13,6 +15,7 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ShowOutputRequest) -> Result<Response<Empty>, Status> {
+
 	let _ = Service
 		.environment
 		.ApplicationHandle

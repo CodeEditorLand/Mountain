@@ -5,6 +5,7 @@
 //! is registered or the sidecar call times out (5 s default).
 
 use serde_json::{Value, json};
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -21,6 +22,7 @@ pub async fn Fn(
 
 	Request:GetTreeChildrenRequest,
 ) -> Result<Response<GetTreeChildrenResponse>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] get_tree_children: view={}", Request.view_id);
 
 	let Handle = ViewIdHandle::Fn(&Request.view_id);
@@ -33,10 +35,14 @@ pub async fn Fn(
 		.GetProvider(Handle);
 
 	if Provider.is_none() {
+
 		dev_log!(
 			"tree-view",
+
 			"[TreeView] get-children view={} parent_handle={} - no provider registered",
+
 			Request.view_id,
+
 			Request.tree_item_handle
 		);
 
@@ -45,8 +51,11 @@ pub async fn Fn(
 
 	dev_log!(
 		"tree-view",
+
 		"[TreeView] get-children view={} parent_handle={} - forwarding to Cocoon $provideTreeChildren",
+
 		Request.view_id,
+
 		Request.tree_item_handle
 	);
 
@@ -57,13 +66,18 @@ pub async fn Fn(
 	});
 
 	let Reply = match SendRequest("cocoon-main", "$provideTreeChildren".to_string(), Parameters, 5000).await {
+
 		Ok(Value_) => Value_,
 
 		Err(Error) => {
+
 			dev_log!(
 				"tree-view",
+
 				"[TreeView] get-children view={} error forwarding to Cocoon: {:?}",
+
 				Request.view_id,
+
 				Error
 			);
 
@@ -88,9 +102,13 @@ pub async fn Fn(
 
 	dev_log!(
 		"tree-view",
+
 		"[TreeView] get-children view={} parent_handle={} children={}",
+
 		Request.view_id,
+
 		Request.tree_item_handle,
+
 		Items.len()
 	);
 

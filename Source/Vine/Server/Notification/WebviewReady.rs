@@ -10,9 +10,12 @@ use serde_json::Value;
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn WebviewReady(_Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	dev_log!(
 		"grpc",
+
 		"[MountainVinegRPCService] Webview ready: handle={}",
+
 		Parameter.get("handle").and_then(Value::as_str).unwrap_or("?")
 	);
 }

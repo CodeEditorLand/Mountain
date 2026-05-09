@@ -5,7 +5,9 @@
 //! system browser/handler.
 
 use serde_json::json;
+
 use tauri::Emitter;
+
 use tonic::{Response, Status};
 
 use crate::{
@@ -15,6 +17,7 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:OpenExternalRequest) -> Result<Response<Empty>, Status> {
+
 	dev_log!("cocoon", "[CocoonService] open_external: {}", Request.uri);
 
 	let _ = Service

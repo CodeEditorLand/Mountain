@@ -7,7 +7,9 @@
 use crate::Binary::Build::PostHogPlugin::{CaptureAllowed, Client, DistinctId};
 
 pub fn Fn(EventName:&str, Properties:Option<Vec<(&str, &str)>>) {
+
 	if !CaptureAllowed::Fn() {
+
 		return;
 	}
 
@@ -24,7 +26,9 @@ pub fn Fn(EventName:&str, Properties:Option<Vec<(&str, &str)>>) {
 	let _ = Event.insert_prop("$component", "mountain");
 
 	if let Some(Props) = Properties {
+
 		for (Key, Value) in Props {
+
 			let _ = Event.insert_prop(Key, Value);
 		}
 	}

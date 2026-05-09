@@ -11,11 +11,13 @@ use CommonLibrary::{
 	Error::CommonError::CommonError,
 	FileSystem::FileSystemWriter::FileSystemWriter,
 };
+
 use serde_json::Value;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn FileWriteBinary(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let path = Arguments
 		.get(0)
 		.ok_or("Missing file path".to_string())?

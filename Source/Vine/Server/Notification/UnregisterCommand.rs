@@ -5,14 +5,17 @@
 //! routes back to the extension.
 
 use serde_json::{Value, json};
+
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn UnregisterCommand(Service:&MountainVinegRPCService, Parameter:&Value) {
+
 	let CommandId = Parameter.get("commandId").and_then(Value::as_str).unwrap_or("");
 
 	if CommandId.is_empty() {
+
 		return;
 	}
 
@@ -25,11 +28,14 @@ pub async fn UnregisterCommand(Service:&MountainVinegRPCService, Parameter:&Valu
 		.CommandRegistry
 		.lock()
 	{
+
 		Registry.remove(CommandId);
 
 		dev_log!(
 			"command-register",
+
 			"[MountainVinegRPCService] Cocoon unregistered command: {}",
+
 			CommandId
 		);
 	}

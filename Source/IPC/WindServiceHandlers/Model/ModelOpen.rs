@@ -19,6 +19,7 @@ use crate::{
 };
 
 pub async fn ModelOpen(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
+
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
@@ -26,8 +27,10 @@ pub async fn ModelOpen(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) ->
 		.to_owned();
 
 	let FilePath = if let Some(stripped) = Uri.strip_prefix("file://") {
+
 		stripped.to_owned()
 	} else {
+
 		Uri.clone()
 	};
 
@@ -68,11 +71,13 @@ pub async fn ModelOpen(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) ->
 		.unwrap_or(1);
 
 	if let Ok(ParsedUri) = url::Url::parse(&Uri) {
+
 		let Lines:Vec<String> = Content.lines().map(|L| L.to_owned()).collect();
 
 		let Eol = if Content.contains("\r\n") { "\r\n" } else { "\n" }.to_owned();
 
 		let Document = DocumentStateDTO {
+
 			URI:ParsedUri,
 
 			LanguageIdentifier:LanguageId.clone(),
