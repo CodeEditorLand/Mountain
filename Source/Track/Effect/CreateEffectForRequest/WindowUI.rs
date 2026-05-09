@@ -6,20 +6,15 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
-
 		"Window.ShowMessage" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						use tauri::Emitter;
 						let AppHandle = run_time.Environment.ApplicationHandle.clone();
@@ -30,7 +25,6 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						};
 						let Id = format!(
 							"notification-{}",
-
 							std::time::SystemTime::now()
 								.duration_since(std::time::UNIX_EPOCH)
 								.map(|D| D.as_millis())
@@ -42,7 +36,6 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						let Options = Payload.get("options").cloned().unwrap_or(json!({}));
 						if let Err(Error) = AppHandle.emit(
 							"sky://notification/show",
-
 							json!({
 								"id": Id,
 								"message": Message,
@@ -53,9 +46,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						) {
 							dev_log!(
 								"notification",
-
 								"warn: [Window.ShowMessage] sky://notification/show emit failed: {}",
-
 								Error
 							);
 						}
@@ -67,12 +58,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Window.ShowQuickPick" | "Window.ShowInputBox" | "Window.ShowOpenDialog" | "Window.ShowSaveDialog" => {
-
 			let MethodNameOwned = MethodName.to_string();
 
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						use tauri::Emitter;
 						let Args = if Parameters.is_array() { Parameters } else { json!([Parameters]) };
@@ -86,7 +75,6 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						let AppHandle = run_time.Environment.ApplicationHandle.clone();
 						let Nonce = format!(
 							"ui-{}",
-
 							std::time::SystemTime::now()
 								.duration_since(std::time::UNIX_EPOCH)
 								.map(|D| D.as_nanos())

@@ -10,18 +10,14 @@ use serde_json::{Value, json};
 
 #[tauri::command]
 pub async fn process_get_memory_info() -> Result<Value, String> {
-
 	#[cfg(target_os = "macos")]
 	{
-
 		let Output = std::process::Command::new("ps")
 			.args(["-o", "rss=,vsz=", "-p", &std::process::id().to_string()])
 			.output();
 
 		match Output {
-
 			Ok(Out) => {
-
 				let Text = String::from_utf8_lossy(&Out.stdout);
 
 				let Parts:Vec<&str> = Text.split_whitespace().collect();
@@ -39,15 +35,12 @@ pub async fn process_get_memory_info() -> Result<Value, String> {
 
 	#[cfg(target_os = "windows")]
 	{
-
 		let Output = std::process::Command::new("tasklist")
 			.args(["/FI", &format!("PID eq {}", std::process::id()), "/FO", "CSV", "/NH"])
 			.output();
 
 		match Output {
-
 			Ok(Out) => {
-
 				let Text = String::from_utf8_lossy(&Out.stdout);
 
 				let MemStr = Text.split(',').nth(4).unwrap_or("\"0 K\"");
@@ -70,11 +63,8 @@ pub async fn process_get_memory_info() -> Result<Value, String> {
 
 	#[cfg(target_os = "linux")]
 	{
-
 		match tokio::fs::read_to_string("/proc/self/statm").await {
-
 			Ok(Content) => {
-
 				let Parts:Vec<&str> = Content.split_whitespace().collect();
 
 				let PageSize:u64 = 4096;
@@ -98,7 +88,6 @@ pub async fn process_get_memory_info() -> Result<Value, String> {
 
 	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 	{
-
 		Ok(json!({ "private": 0, "shared": 0, "residentSet": 0 }))
 	}
 }

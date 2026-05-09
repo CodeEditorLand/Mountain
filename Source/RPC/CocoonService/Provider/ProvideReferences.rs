@@ -4,11 +4,8 @@
 //! result into the gRPC `Location` shape.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
@@ -25,12 +22,9 @@ pub async fn Fn(
 
 	Request:ProvideReferencesRequest,
 ) -> Result<Response<ProvideReferencesResponse>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Providing references for provider {}",
-
 		Request.provider_handle
 	);
 
@@ -41,7 +35,6 @@ pub async fn Fn(
 	let Position_ = Request.position.as_ref();
 
 	let PositionDTO_ = PositionDTO {
-
 		LineNumber:Position_.map(|P| P.line).unwrap_or(0),
 
 		Column:Position_.map(|P| P.character).unwrap_or(0),
@@ -54,9 +47,7 @@ pub async fn Fn(
 		.ProvideReferences(DocumentURI, PositionDTO_, ContextDTO)
 		.await
 	{
-
 		Ok(Some(Locations)) => {
-
 			let Mapped = Locations
 				.iter()
 				.map(|Loc| {

@@ -8,21 +8,16 @@
 use serde_json::Value;
 
 pub fn v_str(Value:&Value) -> Option<String> {
-
 	if let Some(s) = Value.as_str() {
-
 		return Some(s.to_string());
 	}
 
 	if let Some(Object) = Value.as_object() {
-
 		if let Some(s) = Object.get("external").and_then(|V| V.as_str()) {
-
 			return Some(s.to_string());
 		}
 
 		if let Some(s) = Object.get("path").and_then(|V| V.as_str()) {
-
 			return Some(s.to_string());
 		}
 	}

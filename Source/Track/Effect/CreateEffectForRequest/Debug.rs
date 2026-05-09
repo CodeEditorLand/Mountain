@@ -3,24 +3,17 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{Debug::DebugService::DebugService, Environment::Requires::Requires};
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
-
 use url::Url;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
-
 		"Debug.Start" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
 						let folder_uri_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -38,10 +31,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Debug.RegisterConfigurationProvider" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
 						let debug_type = Parameters.get(0).and_then(Value::as_str).unwrap_or("node").to_string();
@@ -59,10 +50,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Debug.Stop" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn DebugService> = run_time.Environment.Require();
 						let SessionId = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();

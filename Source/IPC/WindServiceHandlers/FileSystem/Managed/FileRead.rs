@@ -7,13 +7,11 @@
 use std::{path::PathBuf, sync::Arc};
 
 use CommonLibrary::{Environment::Requires::Requires, FileSystem::FileSystemReader::FileSystemReader};
-
 use serde_json::{Value, json};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn FileRead(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let path = Arguments
 		.get(0)
 		.ok_or("Missing file path".to_string())?

@@ -5,9 +5,7 @@
 //! window-namespace alias).
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
 
 use crate::{
@@ -21,14 +19,12 @@ pub async fn Fn(
 
 	Request:ShowTextDocumentRequest,
 ) -> Result<Response<ShowTextDocumentResponse>, Status> {
-
 	let URI = Request.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
 
 	dev_log!("cocoon", "[CocoonService] show_text_document: {}", URI);
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://editor/openDocument",
-
 		json!({ "uri": URI, "viewColumn": Request.view_column }),
 	);
 

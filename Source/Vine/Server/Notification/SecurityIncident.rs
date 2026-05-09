@@ -8,24 +8,18 @@
 //! `sky://security/incident` for any future Sky listener.
 
 use serde_json::Value;
-
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn SecurityIncident(Service:&MountainVinegRPCService, Parameter:&Value) {
-
 	let _ = Service.ApplicationHandle().emit("sky://security/incident", Parameter);
 
 	dev_log!(
 		"grpc",
-
 		"warn: [Security] incident type={} severity={} ext={}",
-
 		Parameter.get("type").and_then(Value::as_str).unwrap_or("?"),
-
 		Parameter.get("severity").and_then(Value::as_str).unwrap_or("?"),
-
 		Parameter.get("extensionId").and_then(Value::as_str).unwrap_or("?")
 	);
 }

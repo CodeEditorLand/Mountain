@@ -5,9 +5,7 @@
 //! position) plus the replacement `newText`.
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
 
 use crate::{
@@ -17,16 +15,12 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ApplyEditRequest) -> Result<Response<ApplyEditResponse>, Status> {
-
 	let URI = Request.uri.as_ref().map(|U| U.value.clone()).unwrap_or_default();
 
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] apply_edit: uri={} edits={}",
-
 		URI,
-
 		Request.edits.len()
 	);
 

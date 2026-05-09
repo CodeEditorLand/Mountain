@@ -12,13 +12,11 @@ use serde_json::{Value, json};
 use crate::IPC::WindServiceHandlers::Git::Shared::RunGit;
 
 pub async fn HandlePull(Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let OperationId = Arguments.first().and_then(Value::as_str).unwrap_or("").to_string();
 
 	let RepoPath = Arguments.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 
 	if RepoPath.is_empty() {
-
 		return Err("git:pull requires repoPath".to_string());
 	}
 
@@ -26,7 +24,6 @@ pub async fn HandlePull(Arguments:Vec<Value>) -> Result<Value, String> {
 		RunGit(&OperationId, &["rev-parse".to_string(), "HEAD".to_string()], Some(&RepoPath)).await?;
 
 	if BeforeExit != 0 {
-
 		return Err("git:pull: failed to read HEAD before pull".to_string());
 	}
 
@@ -34,7 +31,6 @@ pub async fn HandlePull(Arguments:Vec<Value>) -> Result<Value, String> {
 		RunGit(&OperationId, &["pull".to_string(), "--ff-only".to_string()], Some(&RepoPath)).await?;
 
 	if PullExit != 0 {
-
 		return Err(format!("git pull failed: {}", PullStderr));
 	}
 
@@ -42,7 +38,6 @@ pub async fn HandlePull(Arguments:Vec<Value>) -> Result<Value, String> {
 		RunGit(&OperationId, &["rev-parse".to_string(), "HEAD".to_string()], Some(&RepoPath)).await?;
 
 	if AfterExit != 0 {
-
 		return Err("git:pull: failed to read HEAD after pull".to_string());
 	}
 

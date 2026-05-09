@@ -3,9 +3,7 @@
 //! Dispose an output channel via `sky://output/dispose`.
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
 
 use crate::{
@@ -14,7 +12,6 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:DisposeOutputRequest) -> Result<Response<Empty>, Status> {
-
 	let _ = Service
 		.environment
 		.ApplicationHandle

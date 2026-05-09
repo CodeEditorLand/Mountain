@@ -50,7 +50,6 @@ use crate::{ApplicationState::DTO::MergedConfigurationStateDTO::MergedConfigurat
 /// Configuration and storage state.
 #[derive(Clone)]
 pub struct State {
-
 	/// Merged global configuration from all sources.
 	pub GlobalConfiguration:Arc<StandardMutex<serde_json::Value>>,
 
@@ -65,13 +64,10 @@ pub struct State {
 }
 
 impl Default for State {
-
 	fn default() -> Self {
-
 		dev_log!("config", "[ConfigurationState] Initializing default configuration state...");
 
 		Self {
-
 			GlobalConfiguration:Arc::new(StandardMutex::new(serde_json::Value::Object(serde_json::Map::new()))),
 
 			WorkspaceConfiguration:Arc::new(StandardMutex::new(serde_json::Value::Object(serde_json::Map::new()))),
@@ -84,10 +80,8 @@ impl Default for State {
 }
 
 impl State {
-
 	/// Gets the global configuration.
 	pub fn GetGlobalConfiguration(&self) -> serde_json::Value {
-
 		self.GlobalConfiguration
 			.lock()
 			.map(|g| g.clone())
@@ -96,9 +90,7 @@ impl State {
 
 	/// Sets the global configuration.
 	pub fn SetGlobalConfiguration(&self, config:serde_json::Value) {
-
 		if let Ok(mut guard) = self.GlobalConfiguration.lock() {
-
 			*guard = config;
 			dev_log!("config", "[ConfigurationState] Global configuration updated");
 		}
@@ -106,7 +98,6 @@ impl State {
 
 	/// Gets the workspace configuration.
 	pub fn GetWorkspaceConfiguration(&self) -> serde_json::Value {
-
 		self.WorkspaceConfiguration
 			.lock()
 			.map(|g| g.clone())
@@ -115,9 +106,7 @@ impl State {
 
 	/// Sets the workspace configuration.
 	pub fn SetWorkspaceConfiguration(&self, config:serde_json::Value) {
-
 		if let Ok(mut guard) = self.WorkspaceConfiguration.lock() {
-
 			*guard = config;
 			dev_log!("config", "[ConfigurationState] Workspace configuration updated");
 		}
@@ -125,7 +114,6 @@ impl State {
 
 	/// Gets a value from global configuration at a specific path.
 	pub fn GetGlobalValue(&self, path:&str) -> Option<serde_json::Value> {
-
 		self.GetGlobalConfiguration().get(path).cloned()
 	}
 
@@ -134,9 +122,7 @@ impl State {
 	/// method which properly handles nested object creation and value
 	/// assignment.
 	pub fn SetGlobalValue(&self, path:&str, value:serde_json::Value) {
-
 		if let Ok(mut config_guard) = self.GlobalConfiguration.lock() {
-
 			// Clone the current config for manipulation
 			let current_config = (*config_guard).clone();
 
@@ -145,14 +131,10 @@ impl State {
 
 			// Use the DTO's SetValue method which handles nested paths properly
 			if let Err(e) = dto.SetValue(path, value) {
-
 				dev_log!(
 					"config",
-
 					"warn: [ConfigurationState] Failed to set value at path '{}': {}",
-
 					path,
-
 					e
 				);
 
@@ -168,7 +150,6 @@ impl State {
 
 	/// Gets all global memento storage.
 	pub fn GetGlobalMemento(&self) -> HashMap<String, serde_json::Value> {
-
 		self.MementoGlobalStorage
 			.lock()
 			.ok()
@@ -178,15 +159,11 @@ impl State {
 
 	/// Sets all global memento storage.
 	pub fn SetGlobalMemento(&self, storage:HashMap<String, serde_json::Value>) {
-
 		if let Ok(mut guard) = self.MementoGlobalStorage.lock() {
-
 			*guard = storage;
 			dev_log!(
 				"config",
-
 				"[ConfigurationState] Global memento storage updated ({} keys)",
-
 				guard.len()
 			);
 		}
@@ -194,15 +171,12 @@ impl State {
 
 	/// Gets a value from global memento storage.
 	pub fn GetGlobalMementoValue(&self, key:&str) -> Option<serde_json::Value> {
-
 		self.MementoGlobalStorage.lock().ok().and_then(|guard| guard.get(key).cloned())
 	}
 
 	/// Sets a value in global memento storage.
 	pub fn SetGlobalMementoValue(&self, key:String, value:serde_json::Value) {
-
 		if let Ok(mut guard) = self.MementoGlobalStorage.lock() {
-
 			guard.insert(key.clone(), value);
 
 			dev_log!("config", "[ConfigurationState] Global memento value updated for key: {}", key);
@@ -211,7 +185,6 @@ impl State {
 
 	/// Gets all workspace memento storage.
 	pub fn GetWorkspaceMemento(&self) -> HashMap<String, serde_json::Value> {
-
 		self.MementoWorkspaceStorage
 			.lock()
 			.ok()
@@ -221,15 +194,11 @@ impl State {
 
 	/// Sets all workspace memento storage.
 	pub fn SetWorkspaceMemento(&self, storage:HashMap<String, serde_json::Value>) {
-
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
-
 			*guard = storage;
 			dev_log!(
 				"config",
-
 				"[ConfigurationState] Workspace memento storage updated ({} keys)",
-
 				guard.len()
 			);
 		}
@@ -237,7 +206,6 @@ impl State {
 
 	/// Gets a value from workspace memento storage.
 	pub fn GetWorkspaceMementoValue(&self, key:&str) -> Option<serde_json::Value> {
-
 		self.MementoWorkspaceStorage
 			.lock()
 			.ok()
@@ -246,16 +214,12 @@ impl State {
 
 	/// Sets a value in workspace memento storage.
 	pub fn SetWorkspaceMementoValue(&self, key:String, value:serde_json::Value) {
-
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
-
 			guard.insert(key.clone(), value);
 
 			dev_log!(
 				"config",
-
 				"[ConfigurationState] Workspace memento value updated for key: {}",
-
 				key
 			);
 		}
@@ -263,16 +227,12 @@ impl State {
 
 	/// Clears a value from workspace memento storage.
 	pub fn ClearWorkspaceMementoValue(&self, key:&str) {
-
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
-
 			guard.remove(key);
 
 			dev_log!(
 				"config",
-
 				"[ConfigurationState] Workspace memento value removed for key: {}",
-
 				key
 			);
 		}
@@ -280,9 +240,7 @@ impl State {
 
 	/// Clears global memento storage.
 	pub fn ClearGlobalMemento(&self) {
-
 		if let Ok(mut guard) = self.MementoGlobalStorage.lock() {
-
 			guard.clear();
 
 			dev_log!("config", "[ConfigurationState] Global memento storage cleared");
@@ -291,9 +249,7 @@ impl State {
 
 	/// Clears workspace memento storage.
 	pub fn ClearWorkspaceMemento(&self) {
-
 		if let Ok(mut guard) = self.MementoWorkspaceStorage.lock() {
-
 			guard.clear();
 
 			dev_log!("config", "[ConfigurationState] Workspace memento storage cleared");

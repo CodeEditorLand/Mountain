@@ -33,7 +33,6 @@
 //! Sky emit is fire-and-forget.
 
 use serde_json::{Value, json};
-
 // `tauri::Emitter` previously imported for direct `.emit()` calls;
 // emits now route through `LogSkyEmit` which carries the trait. No
 // remaining `.emit()` callsites in this file.
@@ -46,7 +45,6 @@ use crate::{
 };
 
 pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Value) {
-
 	// Wire-shape contract: producer (`Cocoon/.../ScmNamespace.ts`) emits
 	// camelCase keys (`rootUri`, `extensionId`) post 2026-04-27 wire audit.
 	// Probe camelCase first; keep snake_case as a transitional fallback so
@@ -75,7 +73,6 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 		.unwrap_or(Value::Null);
 
 	if ScmId.is_empty() {
-
 		dev_log!("provider-register", "[ProviderRegister] scm skip: missing scm_id");
 
 		return;
@@ -110,7 +107,6 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 	let RegistrationDto = ProviderRegistrationDTO {
-
 		Handle,
 
 		ProviderType:ProviderType::SourceControl,
@@ -149,11 +145,9 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// from the components first; only fall back to `external` (already
 	// a string URL) or `path` if the triple can't be assembled.
 	let BuildUrlFromComponents = |O:&serde_json::Map<String, Value>| -> Option<String> {
-
 		let Scheme = O.get("scheme").and_then(Value::as_str)?;
 
 		if Scheme.is_empty() {
-
 			return None;
 		}
 
@@ -168,14 +162,12 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 		let mut Url = format!("{}://{}{}", Scheme, Authority, Path);
 
 		if !Query.is_empty() {
-
 			Url.push('?');
 
 			Url.push_str(Query);
 		}
 
 		if !Fragment.is_empty() {
-
 			Url.push('#');
 
 			Url.push_str(Fragment);
@@ -185,11 +177,9 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	};
 
 	let RootUriString = match &RootUri {
-
 		Value::String(S) => S.clone(),
 
 		Value::Object(O) => {
-
 			BuildUrlFromComponents(O)
 				.or_else(|| O.get("external").and_then(Value::as_str).map(str::to_string))
 				.or_else(|| {
@@ -228,7 +218,6 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	});
 
 	if let Err(Error) = Service.RunTime().Environment.CreateSourceControl(CreateData).await {
-
 		dev_log!("grpc", "warn: [Scm] CreateSourceControl trait failed for {}: {}", ScmId, Error);
 	}
 
@@ -242,9 +231,7 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 	// listener was hit when the SCM panel stayed empty.
 	if let Err(Error) = crate::IPC::SkyEmit::LogSkyEmit(
 		Service.ApplicationHandle(),
-
 		"sky://scm/register",
-
 		json!({
 			"scmId": &ScmId,
 			"label": &Label,
@@ -253,21 +240,15 @@ pub async fn RegisterScmProvider(Service:&MountainVinegRPCService, Parameter:&Va
 			"handle": Handle,
 		}),
 	) {
-
 		dev_log!("grpc", "warn: [Scm] sky://scm/register emit failed for {}: {}", ScmId, Error);
 	}
 
 	dev_log!(
 		"grpc",
-
 		"[Scm] register provider scmId={} label={} ext={} handle={}",
-
 		ScmId,
-
 		Label,
-
 		ExtensionId,
-
 		Handle
 	);
 }

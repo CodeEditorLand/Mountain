@@ -3,20 +3,15 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
-
 		"applyEdit" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						// Atom T1: round-trip via Mountain's request/reply plumbing so the
 						// extension's `await workspace.applyEdit(…)` resolves when Sky has
@@ -30,9 +25,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						};
 						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 							&run_time.Environment,
-
 							"sky://workspace/applyEdit",
-
 							Payload,
 						)
 						.await
@@ -41,9 +34,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							Err(Error) => {
 								dev_log!(
 									"ipc",
-
 									"warn: [applyEdit] Sky did not answer ({:?}); returning synthetic true",
-
 									Error
 								);
 								Ok(json!(true))
@@ -56,10 +47,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"showTextDocument" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						// Atom T1: same round-trip as applyEdit. The canonical vscode
 						// return shape is a `TextEditor` - today Sky resolves with a
@@ -68,9 +57,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						// Sky-side enrichment task (T2 follow-up).
 						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 							&run_time.Environment,
-
 							"sky://window/showTextDocument",
-
 							Parameters,
 						)
 						.await
@@ -79,9 +66,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							Err(Error) => {
 								dev_log!(
 									"ipc",
-
 									"warn: [showTextDocument] Sky did not answer ({:?}); returning null",
-
 									Error
 								);
 								Ok(json!(null))
@@ -107,7 +92,6 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// per-OS trust query (Gatekeeper / SmartScreen / xattrs); single-
 		// window dev runtime stays trust-by-default.
 		"Workspace.RequestResourceTrust" | "Workspace.IsResourceTrusted" => {
-
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 
@@ -120,10 +104,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"$updateWorkspaceFolders" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let Payload = if Parameters.is_array() {
 							Parameters.get(0).cloned().unwrap_or_default()
@@ -172,9 +154,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								if let Ok(Dto) =
 									crate::ApplicationState::DTO::WorkspaceFolderStateDTO::WorkspaceFolderStateDTO::New(
 										Url,
-
 										Name.clone(),
-
 										Base + Index,
 									) {
 									Folders.push(Dto);

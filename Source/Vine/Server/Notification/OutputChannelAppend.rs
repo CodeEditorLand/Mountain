@@ -4,13 +4,11 @@
 //! rationale.
 
 use serde_json::Value;
-
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Value) {
-
 	let _ = Service.ApplicationHandle().emit("sky://output/append", Parameter);
 
 	// Per-append fire - `roo-cline`, `TypeScript`, `dart-code` all stream
@@ -60,18 +58,13 @@ pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Va
 		|| ChannelName.eq_ignore_ascii_case("source control")
 		|| ChannelName.eq_ignore_ascii_case("scm")
 	{
-
 		dev_log!(
 			"grpc",
-
 			"[OutputChannel:{}] {}",
-
 			ChannelName,
-
 			TruncatedValue.trim_end_matches('\n')
 		);
 	} else {
-
 		dev_log!("output-verbose", "[OutputChannel] append channel={}", ChannelName);
 	}
 }

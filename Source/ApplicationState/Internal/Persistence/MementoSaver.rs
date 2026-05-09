@@ -31,7 +31,6 @@
 use std::{collections::HashMap, fs, path::Path};
 
 use serde_json::Value;
-
 use CommonLibrary::Error::CommonError::CommonError;
 
 use crate::dev_log;
@@ -53,20 +52,14 @@ use crate::dev_log;
 /// - Serializes data to JSON
 /// - Writes to file atomically (creates temp file then renames)
 pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<String, Value>) -> Result<(), CommonError> {
-
 	// Ensure parent directory exists
 	if let Some(parent) = StorageFilePath.parent() {
-
 		if !parent.exists() {
-
 			fs::create_dir_all(parent).map_err(|e| {
 				dev_log!(
 					"storage",
-
 					"error: [MementoSaver] Failed to create directory '{}': {}",
-
 					parent.display(),
-
 					e
 				);
 				CommonError::FileSystemIO {
@@ -91,11 +84,8 @@ pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<Strin
 	fs::write(&temp_path, json_content).map_err(|e| {
 		dev_log!(
 			"storage",
-
 			"error: [MementoSaver] Failed to write memento to temp file '{}': {}",
-
 			temp_path.display(),
-
 			e
 		);
 		CommonError::FileSystemIO { Path:temp_path.clone(), Description:format!("Failed to write memento: {}", e) }
@@ -105,11 +95,8 @@ pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<Strin
 	fs::rename(&temp_path, StorageFilePath).map_err(|e| {
 		dev_log!(
 			"storage",
-
 			"error: [MementoSaver] Failed to rename temp file to '{}': {}",
-
 			StorageFilePath.display(),
-
 			e
 		);
 		// Clean up temp file if rename fails
@@ -122,9 +109,7 @@ pub async fn SaveMementoToDisk(StorageFilePath:&Path, MementoData:&HashMap<Strin
 
 	dev_log!(
 		"storage",
-
 		"[MementoSaver] Successfully saved memento to: {}",
-
 		StorageFilePath.display()
 	);
 

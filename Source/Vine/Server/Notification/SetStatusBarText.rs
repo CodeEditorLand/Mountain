@@ -11,13 +11,11 @@
 //! shim's existing fan-out listener picks it up without a new channel.
 
 use serde_json::{Value, json};
-
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn SetStatusBarText(Service:&MountainVinegRPCService, Parameter:&Value) {
-
 	let Id = Parameter.get("id").and_then(Value::as_str).unwrap_or("");
 
 	let Text = Parameter.get("text").and_then(Value::as_str).unwrap_or("");
@@ -26,7 +24,6 @@ pub async fn SetStatusBarText(Service:&MountainVinegRPCService, Parameter:&Value
 
 	let _ = Service.ApplicationHandle().emit(
 		"sky://statusbar/set-entry",
-
 		json!({
 			"id": Id,
 			"text": Text,

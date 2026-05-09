@@ -11,7 +11,6 @@ use crate::IPC::Common::MessageType::MessagePriority;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub Id:String,
 
 	pub Command:String,
@@ -26,11 +25,8 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new(Command:impl Into<String>) -> Self {
-
 		Self {
-
 			Id:uuid::Uuid::new_v4().to_string(),
 
 			Command:Command.into(),
@@ -46,21 +42,18 @@ impl Struct {
 	}
 
 	pub fn WithPayload(mut self, Payload:serde_json::Value) -> Self {
-
 		self.Payload = Payload;
 
 		self
 	}
 
 	pub fn WithCorrelationId(mut self, CorrelationId:impl Into<String>) -> Self {
-
 		self.CorrelationId = Some(CorrelationId.into());
 
 		self
 	}
 
 	pub fn WithPriority(mut self, Priority:MessagePriority::Enum) -> Self {
-
 		self.Priority = Priority;
 
 		self

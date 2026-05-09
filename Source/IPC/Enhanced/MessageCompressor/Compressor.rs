@@ -12,14 +12,11 @@ use std::{
 };
 
 use bincode::serde::{decode_from_slice, encode_to_vec};
-
 use brotli::{CompressorReader, CompressorWriter, enc::BrotliEncoderParams};
-
 use flate2::{
 	Compression,
 	write::{GzEncoder, ZlibEncoder},
 };
-
 use tokio::time::Instant;
 
 use crate::IPC::Enhanced::MessageCompressor::{
@@ -32,7 +29,6 @@ use crate::IPC::Enhanced::MessageCompressor::{
 };
 
 pub struct Struct {
-
 	pub(super) Config:BatchConfig,
 
 	pub(super) CurrentBatch:VecDeque<Vec<u8>>,
@@ -43,11 +39,8 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new(config:BatchConfig) -> Self {
-
 		Self {
-
 			Config:config,
 
 			CurrentBatch:VecDeque::new(),
@@ -59,13 +52,11 @@ impl Struct {
 	}
 
 	pub fn add_message(&mut self, MessageData:&[u8]) -> bool {
-
 		let MessageSize = MessageData.len();
 
 		let _should_compress = MessageSize >= self.Config.CompressionThresholdBytes;
 
 		if self.BatchSizeBytes + MessageSize > self.Config.MaxBatchSize * 1024 {
-
 			return false;
 		}
 
@@ -74,7 +65,6 @@ impl Struct {
 		self.BatchSizeBytes += MessageSize;
 
 		if self.BatchStartTime.is_none() {
-
 			self.BatchStartTime = Some(Instant::now());
 		}
 
@@ -82,23 +72,18 @@ impl Struct {
 	}
 
 	pub fn should_flush(&self) -> bool {
-
 		if self.CurrentBatch.is_empty() {
-
 			return false;
 		}
 
 		if self.CurrentBatch.len() >= self.Config.MaxBatchSize {
-
 			return true;
 		}
 
 		if let Some(start_time) = self.BatchStartTime {
-
 			let elapsed = start_time.elapsed();
 
 			if elapsed.as_millis() >= self.Config.MaxBatchDelayMs as u128 {
-
 				return true;
 			}
 		}
@@ -107,9 +92,7 @@ impl Struct {
 	}
 
 	pub fn flush_batch(&mut self) -> Result<CompressedBatch, String> {
-
 		if self.CurrentBatch.is_empty() {
-
 			return Err("No messages in batch to flush".to_string());
 		}
 
@@ -127,10 +110,8 @@ impl Struct {
 			encode_to_vec(&BatchMessages, config).map_err(|e| format!("Failed to serialize batch: {}", e))?;
 
 		let (CompressedData, compression_info) = if total_size >= self.Config.CompressionThresholdBytes {
-
 			self.compress_data(&serialized_batch).map(|(data, info)| (Some(data), info))
 		} else {
-
 			Ok((None, CompressionInfo::none()))
 		}?;
 
@@ -148,9 +129,7 @@ impl Struct {
 	}
 
 	fn compress_data(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
-
 		match self.Config.Algorithm {
-
 			CompressionAlgorithm::Brotli => self.compress_brotli(data),
 
 			CompressionAlgorithm::Gzip => self.compress_gzip(data),
@@ -160,7 +139,6 @@ impl Struct {
 	}
 
 	fn compress_brotli(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
-
 		let mut params = BrotliEncoderParams::default();
 
 		params.quality = self.Config.CompressionLevel as i32;
@@ -168,7 +146,6 @@ impl Struct {
 		let mut compressed = Vec::new();
 
 		{
-
 			let mut writer = CompressorWriter::with_params(&mut compressed, data.len().try_into().unwrap(), &params);
 
 			std::io::Write::write_all(&mut writer, data).map_err(|e| format!("Brotli compression failed: {}", e))?;
@@ -180,13 +157,11 @@ impl Struct {
 
 		Ok((
 			compressed,
-
 			CompressionInfo { algorithm:"brotli".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}
 
 	fn compress_gzip(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
-
 		let mut encoder = GzEncoder::new(Vec::new(), Compression::new(self.Config.CompressionLevel as u32));
 
 		encoder.write_all(data).map_err(|e| format!("Gzip compression failed: {}", e))?;
@@ -197,13 +172,11 @@ impl Struct {
 
 		Ok((
 			compressed,
-
 			CompressionInfo { algorithm:"gzip".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}
 
 	fn compress_zlib(&self, data:&[u8]) -> Result<(Vec<u8>, CompressionInfo), String> {
-
 		let mut encoder = ZlibEncoder::new(Vec::new(), Compression::new(self.Config.CompressionLevel as u32));
 
 		encoder.write_all(data).map_err(|e| format!("Zlib compression failed: {}", e))?;
@@ -214,18 +187,14 @@ impl Struct {
 
 		Ok((
 			compressed,
-
 			CompressionInfo { algorithm:"zlib".to_string(), level:self.Config.CompressionLevel as u32, ratio },
 		))
 	}
 
 	pub fn decompress_batch(&self, batch:&CompressedBatch) -> Result<Vec<Vec<u8>>, String> {
-
 		let data = if let Some(ref compressed_data) = batch.compressed_data {
-
 			self.decompress_data(compressed_data, &batch.compression_info.algorithm)?
 		} else {
-
 			encode_to_vec(&batch, bincode::config::standard()).map_err(|e| format!("Serialization failed: {}", e))?
 		};
 
@@ -236,9 +205,7 @@ impl Struct {
 	}
 
 	fn decompress_data(&self, data:&[u8], algorithm:&str) -> Result<Vec<u8>, String> {
-
 		match algorithm {
-
 			"brotli" => self.decompress_brotli(data),
 
 			"gzip" => self.decompress_gzip(data),
@@ -250,7 +217,6 @@ impl Struct {
 	}
 
 	fn decompress_brotli(&self, data:&[u8]) -> Result<Vec<u8>, String> {
-
 		let mut decompressed = Vec::new();
 
 		let mut reader = CompressorReader::new(data, 0, data.len().try_into().unwrap(), data.len().try_into().unwrap());
@@ -262,7 +228,6 @@ impl Struct {
 	}
 
 	fn decompress_gzip(&self, data:&[u8]) -> Result<Vec<u8>, String> {
-
 		use flate2::read::GzDecoder;
 
 		let mut decoder = GzDecoder::new(data);
@@ -277,7 +242,6 @@ impl Struct {
 	}
 
 	fn decompress_zlib(&self, data:&[u8]) -> Result<Vec<u8>, String> {
-
 		use flate2::read::ZlibDecoder;
 
 		let mut decoder = ZlibDecoder::new(data);
@@ -292,9 +256,7 @@ impl Struct {
 	}
 
 	pub fn get_batch_stats(&self) -> BatchStats {
-
 		BatchStats {
-
 			messages_count:self.CurrentBatch.len(),
 
 			total_size_bytes:self.BatchSizeBytes,
@@ -304,7 +266,6 @@ impl Struct {
 	}
 
 	pub fn clear_batch(&mut self) {
-
 		self.CurrentBatch.clear();
 
 		self.BatchStartTime = None;
@@ -319,7 +280,6 @@ impl Struct {
 
 		level:CompressionLevel,
 	) -> Result<(Vec<u8>, CompressionInfo), String> {
-
 		let config = BatchConfig { Algorithm:algorithm, CompressionLevel:level, ..Default::default() };
 
 		let compressor = Self::new(config);
@@ -328,9 +288,7 @@ impl Struct {
 	}
 
 	pub fn calculate_compression_ratio(original_size:usize, compressed_size:usize) -> f64 {
-
 		if compressed_size == 0 {
-
 			return 0.0;
 		}
 
@@ -338,7 +296,6 @@ impl Struct {
 	}
 
 	pub fn estimate_savings(original_size:usize, expected_ratio:f64) -> usize {
-
 		(original_size as f64 * (1.0 - 1.0 / expected_ratio)) as usize
 	}
 }

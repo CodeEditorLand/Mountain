@@ -14,7 +14,6 @@ use crate::IPC::Common::ServiceInfo::ServiceInfo;
 
 #[derive(Debug, Clone)]
 pub struct Struct {
-
 	pub Services:HashMap<String, ServiceInfo::Struct>,
 
 	pub LastDiscovery:Instant,
@@ -23,21 +22,17 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new(DiscoveryInterval:Duration) -> Self {
-
 		Self { Services:HashMap::new(), LastDiscovery:Instant::now(), DiscoveryInterval }
 	}
 
 	pub fn Register(&mut self, Service:ServiceInfo::Struct) {
-
 		self.Services.insert(Service.Name.clone(), Service);
 
 		self.LastDiscovery = Instant::now();
 	}
 
 	pub fn Unregister(&mut self, Name:&str) -> Option<ServiceInfo::Struct> {
-
 		self.Services.remove(Name).map(|Service| {
 			self.LastDiscovery = Instant::now();
 			Service
@@ -51,12 +46,10 @@ impl Struct {
 	pub fn ShouldDiscover(&self) -> bool { self.LastDiscovery.elapsed() >= self.DiscoveryInterval }
 
 	pub fn HealthyServices(&self) -> Vec<&ServiceInfo::Struct> {
-
 		self.Services.values().filter(|S| S.IsHealthy()).collect()
 	}
 
 	pub fn UnhealthyServices(&self) -> Vec<&ServiceInfo::Struct> {
-
 		self.Services.values().filter(|S| !S.IsHealthy()).collect()
 	}
 
@@ -64,6 +57,5 @@ impl Struct {
 }
 
 impl Default for Struct {
-
 	fn default() -> Self { Self::new(Duration::from_secs(60)) }
 }

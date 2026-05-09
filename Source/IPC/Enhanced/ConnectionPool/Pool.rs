@@ -29,7 +29,6 @@ use crate::{
 };
 
 pub struct Struct {
-
 	pub config:PoolConfig,
 
 	pub connections:Arc<AsyncMutex<HashMap<String, ConnectionHandle>>>,
@@ -46,15 +45,12 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new(config:PoolConfig) -> Self {
-
 		let max_connections = config.max_connections;
 
 		let min_connections = config.min_connections;
 
 		let pool = Self {
-
 			config:config.clone(),
 
 			connections:Arc::new(AsyncMutex::new(HashMap::new())),
@@ -88,13 +84,10 @@ impl Struct {
 	}
 
 	pub async fn start(&self) -> Result<(), String> {
-
 		{
-
 			let mut running = self.is_running.lock().await;
 
 			if *running {
-
 				return Ok(());
 			}
 
@@ -113,13 +106,10 @@ impl Struct {
 	}
 
 	pub async fn stop(&self) -> Result<(), String> {
-
 		{
-
 			let mut running = self.is_running.lock().await;
 
 			if !*running {
-
 				return Ok(());
 			}
 
@@ -127,18 +117,15 @@ impl Struct {
 		}
 
 		{
-
 			let mut connections = self.connections.lock().await;
 
 			connections.clear();
 		}
 
 		{
-
 			let mut wait_queue = self.wait_queue.lock().await;
 
 			for notifier in wait_queue.drain(..) {
-
 				notifier.notify_one();
 			}
 		}
@@ -149,12 +136,10 @@ impl Struct {
 	}
 
 	pub async fn get_connection(&self) -> Result<ConnectionHandle, String> {
-
 		let start_time = Instant::now();
 
 		let _permit = timeout(
 			Duration::from_millis(self.config.connection_timeout_ms),
-
 			self.semaphore.acquire(),
 		)
 		.await
@@ -164,7 +149,6 @@ impl Struct {
 		let wait_time = start_time.elapsed().as_millis() as f64;
 
 		{
-
 			let mut stats = self.stats.write().await;
 
 			stats.average_wait_time_ms = (stats.average_wait_time_ms * stats.total_operations as f64 + wait_time)
@@ -174,7 +158,6 @@ impl Struct {
 		let connection = self.find_or_create_connection().await?;
 
 		{
-
 			let mut stats = self.stats.write().await;
 
 			stats.active_connections += 1;
@@ -188,20 +171,17 @@ impl Struct {
 	}
 
 	pub async fn release_connection(&self, mut handle:ConnectionHandle) {
-
 		let connection_id = handle.id.clone();
 
 		handle.last_used = Instant::now();
 
 		{
-
 			let mut connections = self.connections.lock().await;
 
 			connections.insert(handle.id.clone(), handle.clone());
 		}
 
 		{
-
 			let mut stats = self.stats.write().await;
 
 			stats.active_connections = stats.active_connections.saturating_sub(1);
@@ -215,13 +195,10 @@ impl Struct {
 	}
 
 	async fn find_or_create_connection(&self) -> Result<ConnectionHandle, String> {
-
 		let mut connections = self.connections.lock().await;
 
 		for (_id, handle) in connections.iter_mut() {
-
 			if handle.is_healthy() && handle.idle_time().as_millis() < self.config.idle_timeout_ms as u128 {
-
 				handle.last_used = Instant::now();
 
 				return Ok(handle.clone());
@@ -233,7 +210,6 @@ impl Struct {
 		connections.insert(new_handle.id.clone(), new_handle.clone());
 
 		{
-
 			let mut stats = self.stats.write().await;
 
 			stats.total_connections += 1;
@@ -245,7 +221,6 @@ impl Struct {
 	}
 
 	async fn start_health_monitoring(&self) {
-
 		let pool = Arc::new(self.clone());
 
 		tokio::spawn(async move {
@@ -262,7 +237,6 @@ impl Struct {
 	}
 
 	async fn start_connection_cleanup(&self) {
-
 		let pool = Arc::new(self.clone());
 
 		tokio::spawn(async move {
@@ -280,15 +254,12 @@ impl Struct {
 	}
 
 	async fn initialize_min_connections(&self) {
-
 		let current_count = self.connections.lock().await.len();
 
 		if current_count < self.config.min_connections {
-
 			let needed = self.config.min_connections - current_count;
 
 			for _ in 0..needed {
-
 				let handle = ConnectionHandle::new();
 
 				let mut connections = self.connections.lock().await;
@@ -301,7 +272,6 @@ impl Struct {
 	}
 
 	async fn check_connection_health(&self) -> Result<(), String> {
-
 		let mut connections = self.connections.lock().await;
 
 		let mut _health_checker = self.health_checker.lock().await;
@@ -309,19 +279,16 @@ impl Struct {
 		let mut healthy_count = 0;
 
 		for (_id, handle) in connections.iter_mut() {
-
 			let is_healthy = _health_checker.check_connection_health(handle).await;
 
 			handle.update_health(is_healthy);
 
 			if handle.is_healthy() {
-
 				healthy_count += 1;
 			}
 		}
 
 		{
-
 			let mut stats = self.stats.write().await;
 
 			stats.healthy_connections = healthy_count;
@@ -329,7 +296,6 @@ impl Struct {
 			stats.idle_connections = connections.len().saturating_sub(stats.active_connections);
 
 			if stats.total_operations > 0 {
-
 				stats.error_rate = 1.0 - (stats.successful_operations as f64 / stats.total_operations as f64);
 			}
 		}
@@ -338,7 +304,6 @@ impl Struct {
 	}
 
 	pub async fn cleanup_stale_connections(&self) -> usize {
-
 		let mut connections = self.connections.lock().await;
 
 		let stale_ids:Vec<String> = connections
@@ -352,12 +317,10 @@ impl Struct {
 			.collect();
 
 		for id in &stale_ids {
-
 			connections.remove(id);
 		}
 
 		{
-
 			let mut stats = self.stats.write().await;
 
 			stats.total_connections = connections.len();
@@ -379,7 +342,6 @@ impl Struct {
 	pub fn default_pool() -> Self { Self::new(PoolConfig::default()) }
 
 	pub fn high_performance_pool() -> Self {
-
 		Self::new(PoolConfig {
 			max_connections:50,
 			min_connections:10,
@@ -391,7 +353,6 @@ impl Struct {
 	}
 
 	pub fn conservative_pool() -> Self {
-
 		Self::new(PoolConfig {
 			max_connections:5,
 			min_connections:1,
@@ -403,7 +364,6 @@ impl Struct {
 	}
 
 	pub fn calculate_optimal_pool_size() -> usize {
-
 		let num_cpus = num_cpus::get();
 
 		(num_cpus * 2).max(4).min(50)
@@ -411,11 +371,8 @@ impl Struct {
 }
 
 impl Clone for Struct {
-
 	fn clone(&self) -> Self {
-
 		Self {
-
 			config:self.config.clone(),
 
 			connections:self.connections.clone(),

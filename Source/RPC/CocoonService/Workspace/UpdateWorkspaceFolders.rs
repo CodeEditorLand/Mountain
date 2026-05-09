@@ -17,43 +17,31 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateWorkspaceFoldersRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Updating workspace: {} additions, {} removals",
-
 		Request.additions.len(),
-
 		Request.removals.len()
 	);
 
 	for Addition in &Request.additions {
-
 		dev_log!(
 			"cocoon",
-
 			"[CocoonService] Adding workspace folder: {} ({})",
-
 			Addition.name,
-
 			Addition.uri.as_ref().map(|U| &U.value).unwrap_or(&"?".to_string())
 		);
 	}
 
 	for Removal in &Request.removals {
-
 		dev_log!(
 			"cocoon",
-
 			"[CocoonService] Removing workspace folder: {}",
-
 			Removal.uri.as_ref().map(|U| &U.value).unwrap_or(&"?".to_string())
 		);
 	}
 
 	{
-
 		let mut Folders = Service.environment.ApplicationState.Workspace.GetWorkspaceFolders();
 
 		let RemovalURIs:Vec<String> = Request
@@ -67,13 +55,10 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:UpdateWorkspaceFoldersReques
 		let ExistingCount = Folders.len();
 
 		for (Index, Addition) in Request.additions.iter().enumerate() {
-
 			let URI = Addition.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
 
 			if let Ok(Parsed) = url::Url::parse(URI) {
-
 				if let Ok(DTO) = WorkspaceFolderStateDTO::New(Parsed, Addition.name.clone(), ExistingCount + Index) {
-
 					Folders.push(DTO);
 				}
 			}

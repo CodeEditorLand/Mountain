@@ -3,7 +3,6 @@
 //! Persist a value to the OS keychain.
 
 use tonic::{Response, Status};
-
 use CommonLibrary::Secret::SecretProvider::SecretProvider;
 
 use crate::{
@@ -13,7 +12,6 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:StoreSecretRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] store_secret: key={}", Request.key);
 
 	match Service
@@ -21,18 +19,13 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:StoreSecretRequest) -> Resul
 		.StoreSecret(String::new(), Request.key.clone(), Request.value)
 		.await
 	{
-
 		Ok(()) => Ok(Response::new(Empty {})),
 
 		Err(Error) => {
-
 			dev_log!(
 				"cocoon",
-
 				"warn: [CocoonService] store_secret failed key={}: {}",
-
 				Request.key,
-
 				Error
 			);
 

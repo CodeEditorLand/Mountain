@@ -17,7 +17,6 @@
 //! synchronous reads.
 
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
-
 use serde_json::json;
 
 use crate::{
@@ -32,7 +31,6 @@ use crate::{
 /// Cocoon handler can pass the payload through to extension listeners without
 /// renaming fields.
 fn FolderToWire(Folder:&WorkspaceFolderStateDTO) -> serde_json::Value {
-
 	json!({
 		"uri": Folder.URI.to_string(),
 		"name": Folder.GetDisplayName(),
@@ -48,9 +46,7 @@ fn FolderToWire(Folder:&WorkspaceFolderStateDTO) -> serde_json::Value {
 /// log tag `[LandFix:WsDelta]` keeps the event grep-able in dev logs and is
 /// deliberately consistent with `[LandFix:WsNs]` on the Cocoon side.
 pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, Removed:Vec<WorkspaceFolderStateDTO>) {
-
 	if Added.is_empty() && Removed.is_empty() {
-
 		return;
 	}
 
@@ -60,13 +56,9 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 
 	dev_log!(
 		"workspaces",
-
 		"[LandFix:WsDelta] $deltaWorkspaceFolders +{} -{} (first added={})",
-
 		AddedWire.len(),
-
 		RemovedWire.len(),
-
 		Added.first().map(|F| F.URI.as_str()).unwrap_or("<none>")
 	);
 
@@ -78,12 +70,9 @@ pub async fn DispatchDeltaWorkspaceFolders(Added:Vec<WorkspaceFolderStateDTO>, R
 	if let Err(Error) =
 		Client::SendNotification::Fn("cocoon-main".to_string(), "$deltaWorkspaceFolders".to_string(), Payload).await
 	{
-
 		dev_log!(
 			"workspaces",
-
 			"warn: [LandFix:WsDelta] $deltaWorkspaceFolders notification failed: {}",
-
 			Error
 		);
 	}
@@ -100,28 +89,21 @@ pub fn UpdateWorkspaceFoldersAndNotify(
 
 	Folders:Vec<WorkspaceFolderStateDTO>,
 ) {
-
 	let (Added, Removed) = State.SetWorkspaceFoldersReturnDelta(Folders);
 
 	if Added.is_empty() && Removed.is_empty() {
-
 		return;
 	}
 
 	if let Ok(Handle) = tokio::runtime::Handle::try_current() {
-
 		Handle.spawn(async move {
 			DispatchDeltaWorkspaceFolders(Added, Removed).await;
 		});
 	} else {
-
 		dev_log!(
 			"workspaces",
-
 			"warn: [LandFix:WsDelta] No tokio runtime available - delta dropped ({} added, {} removed)",
-
 			Added.len(),
-
 			Removed.len()
 		);
 	}
@@ -138,7 +120,6 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 
 	Folders:Vec<WorkspaceFolderStateDTO>,
 ) {
-
 	// `tauri::Emitter` was previously imported here because the body
 	// called `.emit(...)` directly. Now routed through `LogSkyEmit`
 	// (which imports `Emitter` itself), so the local import would be
@@ -146,7 +127,6 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	let (Added, Removed) = State.SetWorkspaceFoldersReturnDelta(Folders);
 
 	if Added.is_empty() && Removed.is_empty() {
-
 		return;
 	}
 
@@ -165,12 +145,9 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	});
 
 	if let Err(Error) = LogSkyEmit(ApplicationHandle, SkyEvent::WorkspacesChanged.AsStr(), BroadcastPayload) {
-
 		dev_log!(
 			"workspaces",
-
 			"warn: [LandFix:WsDelta] sky://workspaces/changed emit failed: {}",
-
 			Error
 		);
 	}
@@ -181,7 +158,6 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	PersistRecentlyOpened(&Added);
 
 	if let Ok(Handle) = tokio::runtime::Handle::try_current() {
-
 		Handle.spawn(async move {
 			DispatchDeltaWorkspaceFolders(Added, Removed).await;
 		});
@@ -192,9 +168,7 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 /// deduping by URI and capping at 50 entries (the VS Code default). Swallows
 /// every error - a failed write must not prevent the workspace change.
 fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
-
 	if Added.is_empty() {
-
 		return;
 	}
 
@@ -203,7 +177,6 @@ fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 		.unwrap_or_default();
 
 	if Home.is_empty() {
-
 		return;
 	}
 
@@ -225,14 +198,12 @@ fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 		.unwrap_or_default();
 
 	for Folder in Added {
-
 		let Uri = Folder.URI.to_string();
 
 		Workspaces.retain(|Entry| Entry.get("uri").and_then(|V| V.as_str()).unwrap_or("") != Uri);
 
 		Workspaces.insert(
 			0,
-
 			serde_json::json!({
 				"uri": Uri,
 				"label": Folder.GetDisplayName(),
@@ -245,17 +216,14 @@ fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 	Current.insert("workspaces".into(), serde_json::Value::Array(Workspaces));
 
 	if !Current.contains_key("files") {
-
 		Current.insert("files".into(), serde_json::json!([]));
 	}
 
 	if let Some(Parent) = Path.parent() {
-
 		let _ = std::fs::create_dir_all(Parent);
 	}
 
 	if let Ok(Serialised) = serde_json::to_vec_pretty(&serde_json::Value::Object(Current)) {
-
 		let _ = std::fs::write(&Path, Serialised);
 	}
 }

@@ -13,7 +13,6 @@ use crate::IPC::Common::ServiceInfo::{ServiceEndpoint, ServicePerformance, Servi
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Struct {
-
 	pub Name:String,
 
 	pub Version:String,
@@ -36,11 +35,8 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new(Name:impl Into<String>, Version:impl Into<String>) -> Self {
-
 		Self {
-
 			Name:Name.into(),
 
 			Version:Version.into(),
@@ -62,38 +58,31 @@ impl Struct {
 	}
 
 	pub fn UpdateState(&mut self, NewState:ServiceState::Enum) {
-
 		self.State = NewState;
 
 		self.StateSince = Instant::now();
 	}
 
 	pub fn RecordHeartbeat(&mut self) {
-
 		self.LastHeartbeat = Some(Instant::now());
 
 		if self.State == ServiceState::Enum::Running {
-
 			self.Uptime = self.StateSince.elapsed();
 		}
 	}
 
 	pub fn IsHealthy(&self) -> bool {
-
 		if !self.State.IsOperational() {
-
 			return false;
 		}
 
 		if let Some(Heartbeat) = self.LastHeartbeat
 			&& Heartbeat.elapsed() > Duration::from_secs(30)
 		{
-
 			return false;
 		}
 
 		if self.Performance.ErrorRate() > 0.1 {
-
 			return false;
 		}
 

@@ -4,9 +4,7 @@
 //! `sky://editor/saveAll`.
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
 
 use crate::{
@@ -16,12 +14,9 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:SaveAllRequest) -> Result<Response<SaveAllResponse>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] save_all: includeUntitled={}",
-
 		Request.include_untitled
 	);
 

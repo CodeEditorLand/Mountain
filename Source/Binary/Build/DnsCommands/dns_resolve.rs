@@ -13,14 +13,11 @@ use crate::Binary::Build::{DnsCommands::DnsResolutionResult::DnsResolutionResult
 
 #[tauri::command]
 pub fn dns_resolve(domain:String, dns_port:State<DnsPort>) -> Result<DnsResolutionResult, String> {
-
 	if dns_port.0 == 0 {
-
 		return Err("DNS server is not running".to_string());
 	}
 
 	if domain.ends_with("editor.land") || domain.ends_with("editor.land.") {
-
 		return Ok(DnsResolutionResult {
 			domain:domain.clone(),
 			record_type:"A".to_string(),
@@ -39,7 +36,6 @@ pub fn dns_resolve(domain:String, dns_port:State<DnsPort>) -> Result<DnsResoluti
 	});
 
 	if !is_allowed {
-
 		return Ok(DnsResolutionResult {
 			domain:domain.clone(),
 			record_type:"A".to_string(),

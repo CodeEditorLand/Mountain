@@ -15,9 +15,7 @@ use crate::{
 };
 
 pub async fn Fn() {
-
 	if !CaptureAllowed::Fn() {
-
 		return;
 	}
 
@@ -33,20 +31,15 @@ pub async fn Fn() {
 
 	dev_log!(
 		"lifecycle",
-
 		"[PostHog] Initialized (host={}, debug mode)",
-
 		Constants::POSTHOG_HOST
 	);
 
 	CaptureEvent::Fn(
 		"land:mountain:session:start",
-
 		Some(vec![
 			("pid", Box::leak(format!("{}", std::process::id()).into_boxed_str())),
-
 			("os", std::env::consts::OS),
-
 			("arch", std::env::consts::ARCH),
 		]),
 	);

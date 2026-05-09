@@ -10,14 +10,11 @@
 use serde_json::{Value, json};
 
 pub async fn NativeGetColorScheme() -> Result<Value, String> {
-
 	let Dark = detect_dark_mode();
 
 	let HighContrast = {
-
 		#[cfg(target_os = "windows")]
 		{
-
 			std::process::Command::new("reg")
 				.args(["query", "HKCU\\Control Panel\\Accessibility\\HighContrast", "/v", "Flags"])
 				.output()
@@ -31,10 +28,8 @@ pub async fn NativeGetColorScheme() -> Result<Value, String> {
 
 		#[cfg(not(target_os = "windows"))]
 		{
-
 			#[cfg(target_os = "linux")]
 			{
-
 				std::process::Command::new("gsettings")
 					.args(["get", "org.gnome.desktop.a11y.interface", "high-contrast"])
 					.output()
@@ -45,7 +40,6 @@ pub async fn NativeGetColorScheme() -> Result<Value, String> {
 
 			#[cfg(not(target_os = "linux"))]
 			{
-
 				false
 			}
 		}
@@ -55,10 +49,8 @@ pub async fn NativeGetColorScheme() -> Result<Value, String> {
 }
 
 fn detect_dark_mode() -> bool {
-
 	#[cfg(target_os = "macos")]
 	{
-
 		std::process::Command::new("defaults")
 			.args(["read", "-g", "AppleInterfaceStyle"])
 			.output()
@@ -69,15 +61,11 @@ fn detect_dark_mode() -> bool {
 
 	#[cfg(target_os = "windows")]
 	{
-
 		std::process::Command::new("reg")
 			.args([
 				"query",
-
 				"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize",
-
 				"/v",
-
 				"AppsUseLightTheme",
 			])
 			.output()
@@ -91,7 +79,6 @@ fn detect_dark_mode() -> bool {
 
 	#[cfg(target_os = "linux")]
 	{
-
 		let GtkDark = std::process::Command::new("gsettings")
 			.args(["get", "org.gnome.desktop.interface", "color-scheme"])
 			.output()
@@ -100,7 +87,6 @@ fn detect_dark_mode() -> bool {
 			.unwrap_or(false);
 
 		if GtkDark {
-
 			return true;
 		}
 
@@ -112,7 +98,6 @@ fn detect_dark_mode() -> bool {
 			.unwrap_or(false);
 
 		if GtkTheme {
-
 			return true;
 		}
 
@@ -122,7 +107,6 @@ fn detect_dark_mode() -> bool {
 			.unwrap_or(false);
 
 		if KdeDark {
-
 			return true;
 		}
 
@@ -138,7 +122,6 @@ fn detect_dark_mode() -> bool {
 
 	#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "linux")))]
 	{
-
 		false
 	}
 }

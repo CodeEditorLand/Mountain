@@ -13,7 +13,6 @@ use serde_json::{Value, json};
 use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
 
 pub async fn FileReadNative(Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
 
 	dev_log!("vfs-verbose", "readFile: {}", Path);

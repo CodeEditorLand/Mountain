@@ -10,7 +10,6 @@ use crate::IPC::Security::PermissionManager::SecurityEventType;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub event_type:SecurityEventType::Enum,
 
 	pub user_id:String,
@@ -23,9 +22,7 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new(event_type:SecurityEventType::Enum, user_id:String, operation:String, details:Option<String>) -> Self {
-
 		Self { event_type, user_id, operation, timestamp:std::time::SystemTime::now(), details }
 	}
 }

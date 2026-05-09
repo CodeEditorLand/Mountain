@@ -11,7 +11,6 @@ use serde_json::Value;
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn HistoryGoBack(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-
 	let Uri = RunTime.Environment.ApplicationState.Feature.NavigationHistory.GoBack();
 
 	Ok(Uri.map(Value::String).unwrap_or(Value::Null))

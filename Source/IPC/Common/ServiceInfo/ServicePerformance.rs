@@ -11,7 +11,6 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Struct {
-
 	pub RequestCount:u64,
 
 	pub ErrorCount:u64,
@@ -23,11 +22,8 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new() -> Self {
-
 		Self {
-
 			RequestCount:0,
 
 			ErrorCount:0,
@@ -39,14 +35,11 @@ impl Struct {
 	}
 
 	pub fn RecordRequest(&mut self, ResponseTimeMs:f64) {
-
 		self.RequestCount += 1;
 
 		if self.AverageResponseTimeMs == 0.0 {
-
 			self.AverageResponseTimeMs = ResponseTimeMs;
 		} else {
-
 			self.AverageResponseTimeMs = (self.AverageResponseTimeMs * (self.RequestCount - 1) as f64 + ResponseTimeMs)
 				/ self.RequestCount as f64;
 		}
@@ -55,16 +48,13 @@ impl Struct {
 	}
 
 	pub fn RecordError(&mut self) {
-
 		self.ErrorCount += 1;
 
 		self.LastUpdated = Instant::now();
 	}
 
 	pub fn ErrorRate(&self) -> f64 {
-
 		if self.RequestCount == 0 {
-
 			return 0.0;
 		}
 
@@ -73,6 +63,5 @@ impl Struct {
 }
 
 impl Default for Struct {
-
 	fn default() -> Self { Self::new() }
 }

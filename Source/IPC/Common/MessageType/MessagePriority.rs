@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Enum {
-
 	Low = 0,
 
 	Normal = 1,
@@ -18,6 +17,5 @@ pub enum Enum {
 }
 
 impl Default for Enum {
-
 	fn default() -> Self { Self::Normal }
 }

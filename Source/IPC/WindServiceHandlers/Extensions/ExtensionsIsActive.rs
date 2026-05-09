@@ -9,13 +9,11 @@
 use std::sync::Arc;
 
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
-
 use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn ExtensionsIsActive(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Id = Arguments
 		.first()
 		.and_then(|V| V.as_str())

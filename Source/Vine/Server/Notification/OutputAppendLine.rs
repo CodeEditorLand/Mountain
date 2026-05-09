@@ -7,20 +7,17 @@
 //! append code path (no `appendLine` listener in Sky).
 
 use serde_json::{Value, json};
-
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn OutputAppendLine(Service:&MountainVinegRPCService, Parameter:&Value) {
-
 	let Channel = Parameter.get("channel").and_then(Value::as_str).unwrap_or("");
 
 	let Text = Parameter.get("text").and_then(Value::as_str).unwrap_or("");
 
 	let _ = Service.ApplicationHandle().emit(
 		"sky://output/append",
-
 		json!({
 			"channel": Channel,
 			"text": format!("{}\n", Text),

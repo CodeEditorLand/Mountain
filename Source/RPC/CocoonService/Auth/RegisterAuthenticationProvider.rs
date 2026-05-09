@@ -5,9 +5,7 @@
 //! `GetAuthenticationSession` calls look up the registered handle.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType;
 
 use crate::{
@@ -22,12 +20,9 @@ pub async fn Fn(
 
 	Request:RegisterAuthenticationProviderRequest,
 ) -> Result<Response<Empty>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Registering Authentication Provider: id={}",
-
 		Request.id
 	);
 
@@ -38,7 +33,6 @@ pub async fn Fn(
 		.fold(0u32, |Acc, B| Acc.wrapping_mul(31).wrapping_add(*B as u32));
 
 	let DTO = ProviderRegistrationDTO {
-
 		Handle,
 
 		ProviderType:ProviderType::Authentication,

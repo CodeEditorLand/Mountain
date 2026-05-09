@@ -15,7 +15,6 @@ use crate::{Binary::Build::CertificateManager::CertificateManager, dev_log};
 
 #[tauri::command]
 pub async fn tls_renew_certificate(app_handle:AppHandle, hostname:String) -> Result<String, String> {
-
 	dev_log!("security", "renewing certificate for {}", hostname);
 
 	let state = app_handle
@@ -25,7 +24,6 @@ pub async fn tls_renew_certificate(app_handle:AppHandle, hostname:String) -> Res
 	let cert_manager = state.clone();
 
 	{
-
 		let mut manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
 
 		let _result = manager.renew_certificate(&hostname);

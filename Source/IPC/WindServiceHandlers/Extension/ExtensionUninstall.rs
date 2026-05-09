@@ -6,7 +6,6 @@
 use std::{path::PathBuf, sync::Arc};
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Emitter};
 
 use crate::{
@@ -23,7 +22,6 @@ pub async fn ExtensionUninstall(
 
 	Args:Vec<Value>,
 ) -> Result<Value, String> {
-
 	let OTELStart = crate::IPC::DevLog::NowNano::Fn();
 
 	let Identifier = match Args.first().and_then(|Value| {
@@ -32,11 +30,9 @@ pub async fn ExtensionUninstall(
 			.map(str::to_owned)
 			.or_else(|| Value.get("id").and_then(|Inner| Inner.as_str()).map(str::to_owned))
 	}) {
-
 		Some(Value) => Value,
 
 		None => {
-
 			dev_log!("extensions", "extensions:uninstall no-op: Arguments[0] missing identifier");
 
 			crate::otel_span!("extensions:uninstall:noop-missing-id", OTELStart);
@@ -58,7 +54,6 @@ pub async fn ExtensionUninstall(
 		.map(PathBuf::from);
 
 	if let Some(Directory) = InstallDirectory.clone() {
-
 		let DirectoryForBlocking = Directory.clone();
 
 		tokio::task::spawn_blocking(move || VsixInstaller::UninstallExtension(&DirectoryForBlocking))
@@ -80,19 +75,16 @@ pub async fn ExtensionUninstall(
 		.Remove(&Identifier);
 
 	if !RemovedDescriptor.is_null() {
-
 		NotifyCocoonDeltaExtensions(Vec::new(), vec![RemovedDescriptor]);
 	}
 
 	if let Err(Error) = ApplicationHandle.emit(
 		"sky://extensions/uninstalled",
-
 		json!({
 			"identifier": Identifier,
 			"location": InstallDirectory.as_ref().map(|Value| Value.to_string_lossy().to_string()),
 		}),
 	) {
-
 		dev_log!("extensions", "warn: failed to emit sky://extensions/uninstalled: {}", Error);
 	}
 
@@ -100,9 +92,7 @@ pub async fn ExtensionUninstall(
 
 	crate::otel_span!(
 		"extensions:uninstall:ok",
-
 		OTELStart,
-
 		&[("extension.identifier", Identifier.as_str())]
 	);
 

@@ -17,7 +17,6 @@ use std::{
 };
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Emitter};
 
 use crate::{
@@ -36,7 +35,6 @@ use crate::{
 /// (16 ms) and emit a single `{ commands: [...] }` batch instead.
 /// SkyBridge's listener accepts both shapes (single + batch).
 struct CommandEmitBatch {
-
 	Pending:Mutex<Vec<Value>>,
 
 	FlushScheduled:AtomicBool,
@@ -45,20 +43,17 @@ struct CommandEmitBatch {
 static COMMAND_EMIT_BATCH:OnceLock<Arc<CommandEmitBatch>> = OnceLock::new();
 
 fn EnqueueCommandEmit(Handle:&AppHandle, Payload:Value) {
-
 	let Batch = COMMAND_EMIT_BATCH.get_or_init(|| {
 		Arc::new(CommandEmitBatch { Pending:Mutex::new(Vec::new()), FlushScheduled:AtomicBool::new(false) })
 	});
 
 	{
-
 		let mut Pending = Batch.Pending.lock().unwrap();
 
 		Pending.push(Payload);
 	}
 
 	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
-
 		let BatchClone = Batch.clone();
 
 		let HandleClone = Handle.clone();
@@ -81,11 +76,8 @@ fn EnqueueCommandEmit(Handle:&AppHandle, Payload:Value) {
 				Err(Error) => {
 					dev_log!(
 						"sky-emit",
-
 						"[SkyEmit] fail channel=sky://command/register batch={} error={}",
-
 						Count,
-
 						Error
 					);
 				},
@@ -95,7 +87,6 @@ fn EnqueueCommandEmit(Handle:&AppHandle, Payload:Value) {
 }
 
 pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value) {
-
 	let CommandId = Parameter.get("commandId").and_then(Value::as_str).unwrap_or("");
 
 	// Per-command registration (~100 commands / session). Useful for
@@ -104,14 +95,11 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 	// `provider-register`.
 	dev_log!(
 		"command-register",
-
 		"[MountainVinegRPCService] Cocoon registered command: {}",
-
 		CommandId
 	);
 
 	if CommandId.is_empty() {
-
 		return;
 	}
 
@@ -126,10 +114,8 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 		.CommandRegistry
 		.lock()
 	{
-
 		Registry.insert(
 			CommandId.to_string(),
-
 			CommandHandler::Proxied {
 				SideCarIdentifier:"cocoon-main".to_string(),
 				CommandIdentifier:CommandId.to_string(),
@@ -144,7 +130,6 @@ pub async fn RegisterCommand(Service:&MountainVinegRPCService, Parameter:&Value)
 	// registrations becomes a single Tauri emit instead of 1000.
 	EnqueueCommandEmit(
 		Service.ApplicationHandle(),
-
 		json!({ "id": CommandId, "commandId": CommandId, "kind": Kind }),
 	);
 }

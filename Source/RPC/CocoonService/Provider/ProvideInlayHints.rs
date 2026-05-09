@@ -3,11 +3,8 @@
 //! Forward an inlay-hints request to the registered provider.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
 
 use crate::{
@@ -21,7 +18,6 @@ pub async fn Fn(
 
 	Request:ProvideInlayHintsRequest,
 ) -> Result<Response<ProvideInlayHintsResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Providing inlay hints");
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
@@ -38,7 +34,6 @@ pub async fn Fn(
 	});
 
 	match Service.environment.ProvideInlayHints(DocumentURI, RangeDTO).await {
-
 		Ok(_) => Ok(Response::new(ProvideInlayHintsResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Inlay hints failed: {}", Error))),

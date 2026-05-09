@@ -9,7 +9,6 @@ use serde_json::Value;
 use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg;
 
 pub async fn FileDeleteNative(Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
 
 	let Recursive = Arguments
@@ -22,16 +21,12 @@ pub async fn FileDeleteNative(Arguments:Vec<Value>) -> Result<Value, String> {
 	let PathBuf = std::path::Path::new(&Path);
 
 	if PathBuf.is_dir() {
-
 		if Recursive {
-
 			tokio::fs::remove_dir_all(&Path).await
 		} else {
-
 			tokio::fs::remove_dir(&Path).await
 		}
 	} else {
-
 		tokio::fs::remove_file(&Path).await
 	}
 	.map_err(|E| format!("Failed to delete: {} ({})", Path, E))?;

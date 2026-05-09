@@ -9,7 +9,6 @@
 
 #[derive(Debug, Clone)]
 pub struct DialogFilter {
-
 	pub Name:String,
 
 	pub Extensions:Vec<String>,

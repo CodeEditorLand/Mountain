@@ -58,7 +58,6 @@ use crate::{ApplicationState::DTO::CustomDocumentStateDTO::CustomDocumentStateDT
 /// Marker-related state containing custom documents, status bar, and SCM state.
 #[derive(Clone)]
 pub struct MarkerState {
-
 	/// Active custom documents organized by ID.
 	pub ActiveCustomDocuments:Arc<StandardMutex<HashMap<String, CustomDocumentStateDTO>>>,
 
@@ -81,13 +80,10 @@ pub struct MarkerState {
 }
 
 impl Default for MarkerState {
-
 	fn default() -> Self {
-
 		dev_log!("extensions", "[MarkerState] Initializing default marker state...");
 
 		Self {
-
 			ActiveCustomDocuments:Arc::new(StandardMutex::new(HashMap::new())),
 
 			ActiveStatusBarItems:Arc::new(StandardMutex::new(HashMap::new())),
@@ -104,17 +100,14 @@ impl Default for MarkerState {
 }
 
 impl MarkerState {
-
 	/// Gets the next available unique identifier for an SCM provider.
 	pub fn GetNextSourceControlManagementProviderHandle(&self) -> u32 {
-
 		self.NextSourceControlManagementProviderHandle
 			.fetch_add(1, AtomicOrdering::Relaxed)
 	}
 
 	/// Gets all active custom documents.
 	pub fn GetCustomDocuments(&self) -> HashMap<String, CustomDocumentStateDTO> {
-
 		self.ActiveCustomDocuments
 			.lock()
 			.ok()
@@ -124,9 +117,7 @@ impl MarkerState {
 
 	/// Adds or updates a custom document.
 	pub fn AddOrUpdateCustomDocument(&self, id:String, document:CustomDocumentStateDTO) {
-
 		if let Ok(mut guard) = self.ActiveCustomDocuments.lock() {
-
 			guard.insert(id, document);
 
 			dev_log!("extensions", "[MarkerState] Custom document added/updated");
@@ -135,9 +126,7 @@ impl MarkerState {
 
 	/// Removes a custom document by its ID.
 	pub fn RemoveCustomDocument(&self, id:&str) {
-
 		if let Ok(mut guard) = self.ActiveCustomDocuments.lock() {
-
 			guard.remove(id);
 
 			dev_log!("extensions", "[MarkerState] Custom document removed: {}", id);
@@ -146,7 +135,6 @@ impl MarkerState {
 
 	/// Gets all active status bar items.
 	pub fn GetStatusBarItems(&self) -> HashMap<String, StatusBarEntryDTO> {
-
 		self.ActiveStatusBarItems
 			.lock()
 			.ok()
@@ -156,9 +144,7 @@ impl MarkerState {
 
 	/// Adds or updates a status bar item.
 	pub fn AddOrUpdateStatusBarItem(&self, id:String, item:StatusBarEntryDTO) {
-
 		if let Ok(mut guard) = self.ActiveStatusBarItems.lock() {
-
 			guard.insert(id, item);
 
 			dev_log!("extensions", "[MarkerState] Status bar item added/updated");
@@ -167,9 +153,7 @@ impl MarkerState {
 
 	/// Removes a status bar item by its ID.
 	pub fn RemoveStatusBarItem(&self, id:&str) {
-
 		if let Ok(mut guard) = self.ActiveStatusBarItems.lock() {
-
 			guard.remove(id);
 
 			dev_log!("extensions", "[MarkerState] Status bar item removed: {}", id);

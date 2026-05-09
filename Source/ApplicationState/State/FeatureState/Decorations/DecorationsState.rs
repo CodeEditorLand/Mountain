@@ -10,7 +10,6 @@ use crate::dev_log;
 /// A single file/folder decoration: badge letter, tooltip, color hint.
 #[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
 pub struct DecorationData {
-
 	/// Single character badge shown in the explorer (e.g. "M" for modified).
 	pub Badge:Option<String>,
 
@@ -29,14 +28,11 @@ pub struct DecorationData {
 /// badges).
 #[derive(Clone)]
 pub struct DecorationsState {
-
 	Entries:Arc<StandardMutex<HashMap<String, Value>>>,
 }
 
 impl Default for DecorationsState {
-
 	fn default() -> Self {
-
 		dev_log!("decorations", "[DecorationsState] Initializing default decorations state...");
 
 		Self { Entries:Arc::new(StandardMutex::new(HashMap::new())) }
@@ -44,18 +40,14 @@ impl Default for DecorationsState {
 }
 
 impl DecorationsState {
-
 	/// Return the JSON decoration value for a URI, or `None` when not set.
 	pub fn GetDecoration(&self, Uri:&str) -> Option<Value> {
-
 		self.Entries.lock().ok().and_then(|Guard| Guard.get(Uri).cloned())
 	}
 
 	/// Store or overwrite the decoration for a URI.
 	pub fn SetDecoration(&self, Uri:&str, Decoration:Value) {
-
 		if let Ok(mut Guard) = self.Entries.lock() {
-
 			Guard.insert(Uri.to_owned(), Decoration);
 
 			dev_log!("decorations", "[DecorationsState] Decoration set for: {}", Uri);
@@ -64,9 +56,7 @@ impl DecorationsState {
 
 	/// Remove the decoration for a URI.
 	pub fn ClearDecoration(&self, Uri:&str) {
-
 		if let Ok(mut Guard) = self.Entries.lock() {
-
 			Guard.remove(Uri);
 
 			dev_log!("decorations", "[DecorationsState] Decoration cleared for: {}", Uri);
@@ -75,7 +65,6 @@ impl DecorationsState {
 
 	/// Return all stored decorations as a cloned map.
 	pub fn GetAll(&self) -> HashMap<String, Value> {
-
 		self.Entries.lock().ok().map(|Guard| Guard.clone()).unwrap_or_default()
 	}
 }

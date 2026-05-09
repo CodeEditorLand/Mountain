@@ -3,24 +3,17 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{Document::DocumentProvider::DocumentProvider, Environment::Requires::Requires};
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
-
 use url::Url;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
-
 		"Document.Save" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
 						let uri_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
@@ -37,10 +30,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Document.SaveAs" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let document_provider:Arc<dyn DocumentProvider> = run_time.Environment.Require();
 						let original_uri_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");

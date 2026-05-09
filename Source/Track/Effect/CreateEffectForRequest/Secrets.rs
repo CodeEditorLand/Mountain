@@ -3,9 +3,7 @@
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{Environment::Requires::Requires, Secret::SecretProvider::SecretProvider};
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
@@ -14,9 +12,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::Mapp
 /// `{ key, extension_id?, extensionId? }`, returning `(Key,
 /// ExtensionIdentifier)`.
 fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
-
 	if let Some(Object) = Parameters.as_object() {
-
 		let Key = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
 
 		let ExtensionId = Object
@@ -28,7 +24,6 @@ fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 
 		(Key, ExtensionId)
 	} else {
-
 		let Key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
 
 		let ExtensionId = Parameters.get(2).and_then(Value::as_str).unwrap_or("unknown").to_string();
@@ -38,14 +33,10 @@ fn ExtractSecretKey(Parameters:&Value) -> (String, String) {
 }
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
-
 		"secrets.get" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
 						let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
@@ -61,10 +52,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"secrets.store" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
 						let (Key, ExtensionId) = ExtractSecretKey(&Parameters);
@@ -85,10 +74,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"secrets.delete" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn SecretProvider> = run_time.Environment.Require();
 						let (Key, ExtensionId) = ExtractSecretKey(&Parameters);

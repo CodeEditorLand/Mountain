@@ -6,22 +6,16 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	SourceControlManagement::SourceControlManagementProvider::SourceControlManagementProvider,
 };
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
-
 		"$scm:createSourceControl" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
 						let resource = Parameters.get(0).cloned().unwrap_or_default();
@@ -37,10 +31,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"$scm:updateSourceControl" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
 						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
@@ -57,10 +49,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"$scm:updateGroup" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
 						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);
@@ -77,10 +67,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"$scm:registerInputBox" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn SourceControlManagementProvider> = run_time.Environment.Require();
 						let handle = Parameters.get(0).and_then(Value::as_i64).map(|n| n as u32).unwrap_or(0);

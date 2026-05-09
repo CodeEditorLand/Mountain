@@ -16,7 +16,6 @@ use crate::{
 
 #[tauri::command]
 pub async fn tls_check_cert_status(app_handle:AppHandle, hostname:String) -> Result<CertificateStatus, String> {
-
 	dev_log!("security", "checking certificate status for {}", hostname);
 
 	let state = app_handle
@@ -28,7 +27,6 @@ pub async fn tls_check_cert_status(app_handle:AppHandle, hostname:String) -> Res
 	let manager = cert_manager.lock().map_err(|e| format!("Failed to acquire lock: {}", e))?;
 
 	if let Some(cert_info) = manager.get_server_cert_info(&hostname) {
-
 		let valid_until = chrono::DateTime::parse_from_rfc3339(&cert_info.valid_until)
 			.map_err(|e| format!("Invalid certificate expiry time: {}", e))?
 			.with_timezone(&chrono::Utc);
@@ -47,7 +45,6 @@ pub async fn tls_check_cert_status(app_handle:AppHandle, hostname:String) -> Res
 			valid_until:cert_info.valid_until,
 		})
 	} else {
-
 		Ok(CertificateStatus {
 			exists:false,
 			is_valid:false,

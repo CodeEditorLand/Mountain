@@ -11,22 +11,16 @@ use CommonLibrary::{
 	Environment::Requires::Requires,
 	IPC::IPCProvider::IPCProvider as IPCProviderTrait,
 };
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
-
 		"config.get" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
 						let Key = if let Some(Object) = Parameters.as_object() {
@@ -45,10 +39,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"config.update" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						use tauri::Emitter;
 						let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
@@ -86,9 +78,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							let _ = IPCProvider
 								.SendNotificationToSideCar(
 									"cocoon-main".to_string(),
-
 									"configuration.change".to_string(),
-
 									Payload,
 								)
 								.await;
@@ -101,10 +91,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Configuration.Inspect" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let provider:Arc<dyn ConfigurationInspector> = run_time.Environment.Require();
 						let section = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
@@ -119,10 +107,8 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"Configuration.Update" => {
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						use tauri::Emitter;
 						let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
@@ -146,9 +132,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
 								dev_log!(
 									"config",
-
 									"warn: [Configuration.Update] sky://configuration/changed emit failed: {}",
-
 									Error
 								);
 							}
@@ -156,18 +140,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							if let Err(Error) = IPCProvider
 								.SendNotificationToSideCar(
 									"cocoon-main".to_string(),
-
 									"configuration.change".to_string(),
-
 									Payload,
 								)
 								.await
 							{
 								dev_log!(
 									"config",
-
 									"warn: [Configuration.Update] Cocoon configuration.change notification failed: {}",
-
 									Error
 								);
 							}

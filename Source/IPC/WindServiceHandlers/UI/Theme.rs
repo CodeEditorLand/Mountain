@@ -9,13 +9,11 @@
 use std::sync::Arc;
 
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
-
 use serde_json::{Value, json};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn ThemesGetActive(RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-
 	use CommonLibrary::Configuration::{
 		ConfigurationProvider::ConfigurationProvider,
 		DTO::ConfigurationOverridesDTO::ConfigurationOverridesDTO,
@@ -31,16 +29,12 @@ pub async fn ThemesGetActive(RunTime:Arc<ApplicationRunTime>) -> Result<Value, S
 
 	// Infer kind from id string.
 	let Kind = if Id.to_lowercase().contains("light") {
-
 		"light"
 	} else if Id.to_lowercase().contains("high contrast light") {
-
 		"highContrastLight"
 	} else if Id.to_lowercase().contains("high contrast") {
-
 		"highContrast"
 	} else {
-
 		"dark"
 	};
 
@@ -48,18 +42,12 @@ pub async fn ThemesGetActive(RunTime:Arc<ApplicationRunTime>) -> Result<Value, S
 }
 
 pub async fn ThemesList(_runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {
-
 	let Themes = vec![
 		json!({ "id": "Default Dark Modern", "label": "Default Dark Modern", "kind": "dark" }),
-
 		json!({ "id": "Default Light Modern", "label": "Default Light Modern", "kind": "light" }),
-
 		json!({ "id": "Default Dark+", "label": "Default Dark+", "kind": "dark" }),
-
 		json!({ "id": "Default Light+", "label": "Default Light+", "kind": "light" }),
-
 		json!({ "id": "High Contrast", "label": "High Contrast", "kind": "highContrast" }),
-
 		json!({ "id": "High Contrast Light", "label": "High Contrast Light", "kind": "highContrastLight" }),
 	];
 
@@ -67,12 +55,10 @@ pub async fn ThemesList(_runtime:Arc<ApplicationRunTime>) -> Result<Value, Strin
 }
 
 pub async fn ThemesSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	use CommonLibrary::Configuration::{
 		ConfigurationProvider::ConfigurationProvider,
 		DTO::{ConfigurationOverridesDTO::ConfigurationOverridesDTO, ConfigurationTarget::ConfigurationTarget},
 	};
-
 	use tauri::Emitter;
 
 	let ThemeId = Arguments
@@ -85,13 +71,9 @@ pub async fn ThemesSet(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) ->
 		.Environment
 		.UpdateConfigurationValue(
 			"workbench.colorTheme".to_string(),
-
 			json!(ThemeId),
-
 			ConfigurationTarget::User,
-
 			ConfigurationOverridesDTO::default(),
-
 			None,
 		)
 		.await

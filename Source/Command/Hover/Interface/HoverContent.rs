@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "value")]
 pub enum Enum {
-
 	PlainText(String),
 
 	Markdown(String),

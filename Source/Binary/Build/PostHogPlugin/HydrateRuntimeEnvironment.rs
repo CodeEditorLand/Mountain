@@ -20,37 +20,26 @@
 use crate::{Binary::Build::PostHogPlugin::Constants, dev_log};
 
 pub fn Fn() {
-
 	if !cfg!(debug_assertions) {
-
 		return;
 	}
 
 	for (Key, Value) in [
 		("Authorize", Constants::POSTHOG_API_KEY),
-
 		("Beam", Constants::POSTHOG_HOST),
-
 		("Report", Constants::POSTHOG_ENABLED),
-
 		("Brand", Constants::POSTHOG_DISTINCT_ID_SEED),
-
 		("OTLPEndpoint", Constants::OTLP_ENDPOINT),
-
 		("OTLPEnabled", Constants::OTLP_ENABLED),
-
 		("Capture", Constants::TELEMETRY_CAPTURE),
 	] {
-
 		if Value.is_empty() {
-
 			continue;
 		}
 
 		// Already-set values win; this hydration is a fallback for the
 		// "user runs bare binary" path.
 		if std::env::var_os(Key).is_some() {
-
 			continue;
 		}
 
@@ -63,15 +52,10 @@ pub fn Fn() {
 
 	dev_log!(
 		"lifecycle",
-
 		"[PostHog] Hydrated runtime env from baked Constants (Authorize={}, Beam={}, Capture={}, OTLPEnabled={})",
-
 		if Constants::POSTHOG_API_KEY.is_empty() { "<unset>" } else { "<set>" },
-
 		Constants::POSTHOG_HOST,
-
 		Constants::TELEMETRY_CAPTURE,
-
 		Constants::OTLP_ENABLED,
 	);
 }

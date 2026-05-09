@@ -5,13 +5,11 @@
 //! and instantiates the channel panel; we just acknowledge.
 
 use serde_json::{Value, json};
-
 use tauri::AppHandle;
 
 use crate::dev_log;
 
 pub async fn OutputCreate(_ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let ChannelName = Arguments.first().and_then(|V| V.as_str()).unwrap_or("Output").to_string();
 
 	dev_log!("ipc", "output:create channel='{}'", ChannelName);

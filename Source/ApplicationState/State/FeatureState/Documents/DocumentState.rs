@@ -40,15 +40,12 @@ use crate::{ApplicationState::DTO::DocumentStateDTO::DocumentStateDTO, dev_log};
 /// Open documents state containing documents by URI.
 #[derive(Clone)]
 pub struct DocumentState {
-
 	/// Open documents organized by URI.
 	pub OpenDocuments:Arc<StandardMutex<HashMap<String, DocumentStateDTO>>>,
 }
 
 impl Default for DocumentState {
-
 	fn default() -> Self {
-
 		dev_log!("model", "[DocumentState] Initializing default document state...");
 
 		Self { OpenDocuments:Arc::new(StandardMutex::new(HashMap::new())) }
@@ -56,24 +53,19 @@ impl Default for DocumentState {
 }
 
 impl DocumentState {
-
 	/// Gets all open documents.
 	pub fn GetAll(&self) -> HashMap<String, DocumentStateDTO> {
-
 		self.OpenDocuments.lock().ok().map(|guard| guard.clone()).unwrap_or_default()
 	}
 
 	/// Gets a document by its URI.
 	pub fn Get(&self, uri:&str) -> Option<DocumentStateDTO> {
-
 		self.OpenDocuments.lock().ok().and_then(|guard| guard.get(uri).cloned())
 	}
 
 	/// Adds or updates a document.
 	pub fn AddOrUpdate(&self, uri:String, document:DocumentStateDTO) {
-
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
-
 			guard.insert(uri, document);
 
 			dev_log!("model", "[DocumentState] Document added/updated");
@@ -82,9 +74,7 @@ impl DocumentState {
 
 	/// Removes a document by its URI.
 	pub fn Remove(&self, uri:&str) {
-
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
-
 			guard.remove(uri);
 
 			dev_log!("model", "[DocumentState] Document removed: {}", uri);
@@ -93,9 +83,7 @@ impl DocumentState {
 
 	/// Clears all open documents.
 	pub fn Clear(&self) {
-
 		if let Ok(mut guard) = self.OpenDocuments.lock() {
-
 			guard.clear();
 
 			dev_log!("model", "[DocumentState] All documents cleared");
@@ -107,7 +95,6 @@ impl DocumentState {
 
 	/// Checks if a document exists.
 	pub fn Contains(&self, uri:&str) -> bool {
-
 		self.OpenDocuments
 			.lock()
 			.ok()
@@ -117,7 +104,6 @@ impl DocumentState {
 
 	/// Gets all document URIs.
 	pub fn GetURIs(&self) -> Vec<String> {
-
 		self.OpenDocuments
 			.lock()
 			.ok()

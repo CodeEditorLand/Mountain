@@ -7,9 +7,7 @@ use CommonLibrary::{
 	IPC::SkyEvent::SkyEvent,
 	TreeView::TreeViewProvider::TreeViewProvider,
 };
-
 use serde_json::{Value, json};
-
 use tauri::Runtime;
 
 use crate::{
@@ -20,11 +18,8 @@ use crate::{
 };
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
-
 	match MethodName {
-
 		"$tree:register" | "tree.register" => {
-
 			let DispatchEnterNs = std::time::SystemTime::now()
 				.duration_since(std::time::UNIX_EPOCH)
 				.map(|D| D.as_nanos())
@@ -32,17 +27,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 			dev_log!(
 				"tree-latency",
-
 				"[LandFix:Tree] dispatch-enter method={} t_ns={}",
-
 				MethodName,
-
 				DispatchEnterNs
 			);
 
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
 					Box::pin(async move {
 						let DispatchAt = std::time::Instant::now();
 						let BodyStartNs = std::time::SystemTime::now()
@@ -69,24 +60,16 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.unwrap_or(0);
 						dev_log!(
 							"grpc",
-
 							"[LandFix:Tree] registered view={} elapsed={}ms t_ns={}",
-
 							ViewIdForLog,
-
 							DispatchAt.elapsed().as_millis(),
-
 							RegisteredNs
 						);
 						dev_log!(
 							"tree-view",
-
 							"[TreeView] register view={} result={} elapsed={}ms",
-
 							ViewIdForLog,
-
 							if Result.is_ok() { "ok" } else { "err" },
-
 							DispatchAt.elapsed().as_millis()
 						);
 
@@ -104,9 +87,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							// reason stays surfaced via both tags.
 							match LogSkyEmit(
 								&run_time.Environment.ApplicationHandle,
-
 								SkyEvent::TreeViewCreate.AsStr(),
-
 								json!({
 									"viewId": view_id,
 									"options": options,
@@ -115,35 +96,24 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								Ok(()) => {
 									dev_log!(
 										"tree-view",
-
 										"[TreeView] emit-ok channel={} view={}",
-
 										SkyEvent::TreeViewCreate.AsStr(),
-
 										ViewIdForLog
 									);
 								},
 								Err(Error) => {
 									dev_log!(
 										"grpc",
-
 										"warn: [LandFix:Tree] failed to emit {} for view={}: {}",
-
 										SkyEvent::TreeViewCreate.AsStr(),
-
 										ViewIdForLog,
-
 										Error
 									);
 									dev_log!(
 										"tree-view",
-
 										"[TreeView] emit-fail channel={} view={} error={}",
-
 										SkyEvent::TreeViewCreate.AsStr(),
-
 										ViewIdForLog,
-
 										Error
 									);
 								},
@@ -158,7 +128,6 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		},
 
 		"tree.unregister" | "tree.dispose" => {
-
 			let effect =
 				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 

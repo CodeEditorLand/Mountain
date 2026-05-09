@@ -3,11 +3,8 @@
 //! Forward a signature-help request to the registered provider.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::{
 	DTO::PositionDTO::PositionDTO,
 	LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry,
@@ -24,7 +21,6 @@ pub async fn Fn(
 
 	Request:ProvideSignatureHelpRequest,
 ) -> Result<Response<ProvideSignatureHelpResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Providing signature help");
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
@@ -34,7 +30,6 @@ pub async fn Fn(
 	let Position_ = Request.position.as_ref();
 
 	let PositionDTO_ = PositionDTO {
-
 		LineNumber:Position_.map(|P| P.line).unwrap_or(0),
 
 		Column:Position_.map(|P| P.character).unwrap_or(0),
@@ -47,7 +42,6 @@ pub async fn Fn(
 		.ProvideSignatureHelp(DocumentURI, PositionDTO_, ContextDTO)
 		.await
 	{
-
 		Ok(_) => Ok(Response::new(ProvideSignatureHelpResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Signature help failed: {}", Error))),

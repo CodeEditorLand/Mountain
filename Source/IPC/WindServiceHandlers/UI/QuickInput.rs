@@ -11,7 +11,6 @@ use serde_json::{Value, json};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn QuickInputShowQuickPick(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	use CommonLibrary::UserInterface::{
 		DTO::{QuickPickItemDTO::QuickPickItemDTO, QuickPickOptionsDTO::QuickPickOptionsDTO},
 		UserInterfaceProvider::UserInterfaceProvider,
@@ -34,7 +33,6 @@ pub async fn QuickInputShowQuickPick(RunTime:Arc<ApplicationRunTime>, Arguments:
 		.unwrap_or_default();
 
 	let Options = QuickPickOptionsDTO {
-
 		PlaceHolder:Arguments
 			.get(1)
 			.and_then(|V| V.get("placeholder"))
@@ -64,7 +62,6 @@ pub async fn QuickInputShowQuickPick(RunTime:Arc<ApplicationRunTime>, Arguments:
 		.map_err(|Error| format!("quickInput:showQuickPick failed: {}", Error))?;
 
 	match Result {
-
 		Some(Labels) => Ok(Labels.into_iter().next().map(|S| json!(S)).unwrap_or(Value::Null)),
 
 		None => Ok(Value::Null),
@@ -72,7 +69,6 @@ pub async fn QuickInputShowQuickPick(RunTime:Arc<ApplicationRunTime>, Arguments:
 }
 
 pub async fn QuickInputShowInputBox(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	use CommonLibrary::UserInterface::{
 		DTO::InputBoxOptionsDTO::InputBoxOptionsDTO,
 		UserInterfaceProvider::UserInterfaceProvider,
@@ -81,7 +77,6 @@ pub async fn QuickInputShowInputBox(RunTime:Arc<ApplicationRunTime>, Arguments:V
 	let Opts = Arguments.first();
 
 	let Options = InputBoxOptionsDTO {
-
 		Prompt:Opts
 			.and_then(|V| V.get("prompt"))
 			.and_then(|P| P.as_str())

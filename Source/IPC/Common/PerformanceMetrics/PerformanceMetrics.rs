@@ -11,7 +11,6 @@ use serde::Serialize;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Struct {
-
 	pub MessagesPerSecond:f64,
 
 	pub AverageLatencyMs:f64,
@@ -35,11 +34,8 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new() -> Self {
-
 		Self {
-
 			MessagesPerSecond:0.0,
 
 			AverageLatencyMs:0.0,
@@ -63,20 +59,16 @@ impl Struct {
 	}
 
 	pub fn RecordMessage(&mut self, Latency:Duration) {
-
 		let LatencyMs = Latency.as_millis() as f64;
 
 		if self.TotalMessages > 0 {
-
 			self.AverageLatencyMs =
 				(self.AverageLatencyMs * self.TotalMessages as f64 + LatencyMs) / (self.TotalMessages + 1) as f64;
 		} else {
-
 			self.AverageLatencyMs = LatencyMs;
 		}
 
 		if LatencyMs > self.PeakLatencyMs {
-
 			self.PeakLatencyMs = LatencyMs;
 		}
 
@@ -86,16 +78,13 @@ impl Struct {
 	}
 
 	pub fn RecordFailure(&mut self) {
-
 		self.FailedMessages += 1;
 
 		self.LastUpdated = Instant::now();
 	}
 
 	pub fn SuccessRate(&self) -> f64 {
-
 		if self.TotalMessages == 0 {
-
 			return 1.0;
 		}
 
@@ -103,7 +92,6 @@ impl Struct {
 	}
 
 	pub fn IsLatencyAcceptable(&self, ThresholdMs:f64) -> bool {
-
 		self.AverageLatencyMs <= ThresholdMs && self.PeakLatencyMs <= ThresholdMs * 2.0
 	}
 
@@ -111,6 +99,5 @@ impl Struct {
 }
 
 impl Default for Struct {
-
 	fn default() -> Self { Self::new() }
 }

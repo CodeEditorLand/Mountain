@@ -15,13 +15,11 @@
 //! multiple archives at once.
 
 use serde_json::{Value, json};
-
 use tauri::AppHandle;
 
 use crate::{IPC::WindServiceHandlers::NativeDialog::ParseDialogFilters::ParseDialogFilters, dev_log};
 
 pub async fn ShowOpenDialog(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Result<Value, String> {
-
 	use tauri_plugin_dialog::DialogExt;
 
 	dev_log!("folder", "showOpenDialog: {:?}", Args);
@@ -95,23 +93,16 @@ pub async fn ShowOpenDialog(ApplicationHandle:AppHandle, Args:Vec<Value>) -> Res
 	.map_err(|Error| format!("showOpenDialog join error: {}", Error))?;
 
 	if Selected.is_empty() {
-
 		dev_log!("folder", "showOpenDialog cancelled by user");
 
 		Ok(json!({ "canceled": true, "filePaths": [] }))
 	} else {
-
 		dev_log!(
 			"folder",
-
 			"showOpenDialog selected {} path(s) (folder={}, multi={}, filters={})",
-
 			Selected.len(),
-
 			IsFolder,
-
 			IsMultiple,
-
 			Filters.len()
 		);
 

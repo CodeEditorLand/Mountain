@@ -6,7 +6,6 @@
 //! caller passing the handle through the wire.
 
 pub fn Fn(ViewIdentifier:&str) -> u32 {
-
 	ViewIdentifier
 		.as_bytes()
 		.iter()

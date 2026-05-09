@@ -18,7 +18,6 @@ pub async fn tls_get_server_cert_info(
 
 	hostname:String,
 ) -> Result<Option<CertificateInfo>, String> {
-
 	dev_log!("security", "getting server cert info for {}", hostname);
 
 	let state = app_handle

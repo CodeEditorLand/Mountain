@@ -26,7 +26,6 @@ const COCOON_SIDE_CAR_IDENTIFIER:&str = "cocoon-main";
 const COCOON_DELTA_TIMEOUT_MS:u64 = 10_000;
 
 pub fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
-
 	tokio::spawn(async move {
 		let Parameters = json!({
 			"toAdd": ToAdd,
@@ -35,11 +34,8 @@ pub fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 
 		match Vine::Client::SendRequest::Fn(
 			&COCOON_SIDE_CAR_IDENTIFIER.to_string(),
-
 			"$deltaExtensions".to_string(),
-
 			Parameters,
-
 			COCOON_DELTA_TIMEOUT_MS,
 		)
 		.await
@@ -62,11 +58,8 @@ pub fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 			let ActivationParameters = json!({ "activationEvent": Event });
 			match Vine::Client::SendRequest::Fn(
 				&COCOON_SIDE_CAR_IDENTIFIER.to_string(),
-
 				"$activateByEvent".to_string(),
-
 				ActivationParameters,
-
 				COCOON_DELTA_TIMEOUT_MS,
 			)
 			.await
@@ -77,11 +70,8 @@ pub fn NotifyCocoonDeltaExtensions(ToAdd:Vec<Value>, ToRemove:Vec<Value>) {
 				Err(Error) => {
 					dev_log!(
 						"extensions",
-
 						"warn: $activateByEvent({}) post-delta failed (non-fatal): {}",
-
 						Event,
-
 						Error
 					);
 				},

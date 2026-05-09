@@ -8,13 +8,11 @@
 use std::sync::Arc;
 
 use CommonLibrary::Storage::StorageProvider::StorageProvider;
-
 use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn StorageDelete(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Key = Arguments
 		.first()
 		.and_then(|V| V.as_str())

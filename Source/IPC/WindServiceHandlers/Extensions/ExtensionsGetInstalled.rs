@@ -40,7 +40,6 @@
 use std::sync::Arc;
 
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
-
 use serde_json::{Value, json};
 
 use crate::{
@@ -54,7 +53,6 @@ const EXTENSION_TYPE_SYSTEM:u8 = 0;
 const EXTENSION_TYPE_USER:u8 = 1;
 
 pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let TypeFilter:Option<u8> = Arguments.first().and_then(|V| V.as_u64()).map(|N| N as u8);
 
 	let mut Extensions = RunTime
@@ -64,7 +62,6 @@ pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:V
 		.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
 
 	if Extensions.is_empty() {
-
 		const POLL_INTERVAL_MS:u64 = 50;
 
 		const MAX_WAIT_MS:u64 = 5000;
@@ -72,7 +69,6 @@ pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:V
 		let mut Elapsed:u64 = 0;
 
 		while Extensions.is_empty() && Elapsed < MAX_WAIT_MS {
-
 			tokio::time::sleep(std::time::Duration::from_millis(POLL_INTERVAL_MS)).await;
 
 			Elapsed += POLL_INTERVAL_MS;
@@ -85,23 +81,16 @@ pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:V
 		}
 
 		if !Extensions.is_empty() {
-
 			dev_log!(
 				"extensions",
-
 				"extensions:getInstalled awaited scan completion ({}ms) - now has {} entries",
-
 				Elapsed,
-
 				Extensions.len()
 			);
 		} else {
-
 			dev_log!(
 				"extensions",
-
 				"warn: extensions:getInstalled timed out after {}ms; returning empty list",
-
 				Elapsed
 			);
 		}
@@ -174,11 +163,8 @@ pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:V
 
 	dev_log!(
 		"extensions",
-
 		"extensions:getInstalled type={:?} returning {} ILocalExtension-shaped entries",
-
 		TypeFilter,
-
 		Wrapped.len()
 	);
 

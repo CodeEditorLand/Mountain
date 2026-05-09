@@ -7,17 +7,14 @@
 //! fan-out listener removes the DOM node.
 
 use serde_json::{Value, json};
-
 use tauri::Emitter;
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn DisposeStatusBarItem(Service:&MountainVinegRPCService, Parameter:&Value) {
-
 	let Id = Parameter.get("id").and_then(Value::as_str).unwrap_or("");
 
 	if Id.is_empty() {
-
 		dev_log!("grpc", "[StatusBar] dispose skip: missing id");
 
 		return;

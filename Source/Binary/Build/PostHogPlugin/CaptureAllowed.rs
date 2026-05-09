@@ -13,14 +13,11 @@
 use crate::Binary::Build::PostHogPlugin::Constants;
 
 pub fn Fn() -> bool {
-
 	if !cfg!(debug_assertions) {
-
 		return false;
 	}
 
 	if matches!(Constants::TELEMETRY_CAPTURE, "false" | "0" | "off") {
-
 		return false;
 	}
 

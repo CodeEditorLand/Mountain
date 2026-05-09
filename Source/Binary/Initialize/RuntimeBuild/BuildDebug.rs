@@ -18,7 +18,6 @@ use crate::{
 
 #[cfg(feature = "Debug")]
 pub fn Fn() -> Arc<Scheduler> {
-
 	dev_log!("lifecycle", "[RuntimeBuild] Creating debug scheduler (single-threaded)");
 
 	BuildWithConfig::Fn(SchedulerConfig::Struct { WorkerCount:Some(1), ..Default::default() })

@@ -40,18 +40,14 @@ use crate::{ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistration
 /// Language provider registration state.
 #[derive(Clone)]
 pub struct Registration {
-
 	/// Registered language providers by handle.
 	pub LanguageProviders:Arc<StandardMutex<HashMap<u32, ProviderRegistrationDTO>>>,
 }
 
 impl Default for Registration {
-
 	fn default() -> Self {
-
 		dev_log!(
 			"extensions",
-
 			"[ProviderRegistration] Initializing default provider registration..."
 		);
 
@@ -60,10 +56,8 @@ impl Default for Registration {
 }
 
 impl Registration {
-
 	/// Gets all registered language providers.
 	pub fn GetProviders(&self) -> HashMap<u32, ProviderRegistrationDTO> {
-
 		self.LanguageProviders
 			.lock()
 			.ok()
@@ -73,15 +67,12 @@ impl Registration {
 
 	/// Gets a provider by its handle.
 	pub fn GetProvider(&self, handle:u32) -> Option<ProviderRegistrationDTO> {
-
 		self.LanguageProviders.lock().ok().and_then(|guard| guard.get(&handle).cloned())
 	}
 
 	/// Registers a language provider.
 	pub fn RegisterProvider(&self, handle:u32, provider:ProviderRegistrationDTO) {
-
 		if let Ok(mut guard) = self.LanguageProviders.lock() {
-
 			guard.insert(handle, provider);
 
 			// Duplicate of the `provider-register` log line emitted by
@@ -92,9 +83,7 @@ impl Registration {
 			// classification changes, install events).
 			dev_log!(
 				"provider-register",
-
 				"[ProviderRegistration] Provider registered with handle: {}",
-
 				handle
 			);
 		}
@@ -102,16 +91,12 @@ impl Registration {
 
 	/// Unregisters a language provider.
 	pub fn UnregisterProvider(&self, handle:u32) {
-
 		if let Ok(mut guard) = self.LanguageProviders.lock() {
-
 			guard.remove(&handle);
 
 			dev_log!(
 				"extensions",
-
 				"[ProviderRegistration] Provider unregistered with handle: {}",
-
 				handle
 			);
 		}
@@ -119,7 +104,6 @@ impl Registration {
 
 	/// Gets all providers for a specific language.
 	pub fn GetProvidersForLanguage(&self, language:&str) -> Vec<ProviderRegistrationDTO> {
-
 		self.LanguageProviders
 			.lock()
 			.ok()

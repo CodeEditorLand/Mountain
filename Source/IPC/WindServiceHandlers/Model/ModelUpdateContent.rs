@@ -15,7 +15,6 @@ use serde_json::{Value, json};
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn ModelUpdateContent(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
@@ -29,11 +28,9 @@ pub async fn ModelUpdateContent(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<V
 		.to_owned();
 
 	let (NewVersion, LanguageId) = match RunTime.Environment.ApplicationState.Feature.Documents.Get(&Uri) {
-
 		None => return Err(format!("model:updateContent - model not open: {}", Uri)),
 
 		Some(mut Document) => {
-
 			Document.Version += 1;
 
 			Document.Lines = NewContent.lines().map(|L| L.to_owned()).collect();

@@ -11,12 +11,9 @@ use serde_json::Value;
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn OutputChannelHide(_Service:&MountainVinegRPCService, Parameter:&Value) {
-
 	dev_log!(
 		"grpc",
-
 		"[OutputChannel] hide channel={} (no-op - panel dismiss not wired)",
-
 		Parameter.get("channel").and_then(Value::as_str).unwrap_or("?")
 	);
 }

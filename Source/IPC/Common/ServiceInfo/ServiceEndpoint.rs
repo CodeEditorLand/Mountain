@@ -8,7 +8,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Struct {
-
 	pub Protocol:String,
 
 	pub Address:String,
@@ -19,16 +18,12 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub fn new(Protocol:impl Into<String>, Address:impl Into<String>, Port:u16) -> Self {
-
 		Self { Protocol:Protocol.into(), Address:Address.into(), Port, Path:None }
 	}
 
 	pub fn NewUnix(Path:impl Into<String>) -> Self {
-
 		Self {
-
 			Protocol:"unix".to_string(),
 
 			Address:String::new(),

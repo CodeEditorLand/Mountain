@@ -13,14 +13,11 @@ use crate::{
 };
 
 pub async fn Fn(_Service:&CocoonServiceImpl, Request:WatchFileRequest) -> Result<Response<Empty>, Status> {
-
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
 
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] watch_file registered (polling not yet active): {}",
-
 		URI
 	);
 

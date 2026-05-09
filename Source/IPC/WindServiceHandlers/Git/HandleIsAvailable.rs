@@ -7,17 +7,14 @@
 use std::sync::OnceLock;
 
 use serde_json::{Value, json};
-
 use tokio::process::Command;
 
 use crate::dev_log;
 
 pub async fn HandleIsAvailable(_Arguments:Vec<Value>) -> Result<Value, String> {
-
 	static CACHE:OnceLock<bool> = OnceLock::new();
 
 	if let Some(Cached) = CACHE.get() {
-
 		return Ok(json!(*Cached));
 	}
 

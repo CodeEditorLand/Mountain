@@ -15,7 +15,6 @@ use ring::{
 
 #[derive(Debug, Clone)]
 pub struct Struct {
-
 	pub(super) key:LessSafeKey,
 
 	pub(super) created_at:SystemTime,
@@ -26,9 +25,7 @@ pub struct Struct {
 }
 
 impl Struct {
-
 	pub(super) fn new(key_bytes:&[u8]) -> Result<Self, String> {
-
 		let unbound_key =
 			UnboundKey::new(&AES_256_GCM, key_bytes).map_err(|e| format!("Failed to create unbound key: {}", e))?;
 
@@ -41,7 +38,6 @@ impl Struct {
 	}
 
 	fn generate_key_id() -> String {
-
 		let rng = SystemRandom::new();
 
 		let mut id_bytes = [0u8; 8];
@@ -52,7 +48,6 @@ impl Struct {
 	}
 
 	pub(super) fn is_expired(&self, rotation_interval:Duration) -> bool {
-
 		self.created_at.elapsed().unwrap_or_default() > rotation_interval
 	}
 

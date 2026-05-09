@@ -40,15 +40,12 @@ use crate::{ApplicationState::DTO::ExtensionDescriptionStateDTO::ExtensionDescri
 /// Scanned extensions containing discovered extension metadata.
 #[derive(Clone)]
 pub struct ScannedExtensionCollection {
-
 	/// Scanned extensions by identifier.
 	pub ScannedExtensions:Arc<StandardMutex<HashMap<String, ExtensionDescriptionStateDTO>>>,
 }
 
 impl Default for ScannedExtensionCollection {
-
 	fn default() -> Self {
-
 		dev_log!("extensions", "[ScannedExtensions] Initializing default scanned extensions...");
 
 		Self { ScannedExtensions:Arc::new(StandardMutex::new(HashMap::new())) }
@@ -56,10 +53,8 @@ impl Default for ScannedExtensionCollection {
 }
 
 impl ScannedExtensionCollection {
-
 	/// Gets all scanned extensions.
 	pub fn GetAll(&self) -> HashMap<String, ExtensionDescriptionStateDTO> {
-
 		self.ScannedExtensions
 			.lock()
 			.ok()
@@ -69,7 +64,6 @@ impl ScannedExtensionCollection {
 
 	/// Gets an extension by its identifier.
 	pub fn Get(&self, identifier:&str) -> Option<ExtensionDescriptionStateDTO> {
-
 		self.ScannedExtensions
 			.lock()
 			.ok()
@@ -78,15 +72,11 @@ impl ScannedExtensionCollection {
 
 	/// Sets all scanned extensions.
 	pub fn SetAll(&self, extensions:HashMap<String, ExtensionDescriptionStateDTO>) {
-
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
-
 			*guard = extensions;
 			dev_log!(
 				"extensions",
-
 				"[ScannedExtensions] Scanned extensions updated ({} extensions)",
-
 				guard.len()
 			);
 		}
@@ -94,9 +84,7 @@ impl ScannedExtensionCollection {
 
 	/// Adds or updates an extension.
 	pub fn AddOrUpdate(&self, identifier:String, extension:ExtensionDescriptionStateDTO) {
-
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
-
 			guard.insert(identifier, extension);
 
 			dev_log!("extensions", "[ScannedExtensions] Extension added/updated");
@@ -105,9 +93,7 @@ impl ScannedExtensionCollection {
 
 	/// Removes an extension by its identifier.
 	pub fn Remove(&self, identifier:&str) {
-
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
-
 			guard.remove(identifier);
 
 			dev_log!("extensions", "[ScannedExtensions] Extension removed: {}", identifier);
@@ -116,9 +102,7 @@ impl ScannedExtensionCollection {
 
 	/// Clears all scanned extensions.
 	pub fn Clear(&self) {
-
 		if let Ok(mut guard) = self.ScannedExtensions.lock() {
-
 			guard.clear();
 
 			dev_log!("extensions", "[ScannedExtensions] All extensions cleared");
@@ -130,7 +114,6 @@ impl ScannedExtensionCollection {
 
 	/// Checks if an extension exists.
 	pub fn Contains(&self, identifier:&str) -> bool {
-
 		self.ScannedExtensions
 			.lock()
 			.ok()

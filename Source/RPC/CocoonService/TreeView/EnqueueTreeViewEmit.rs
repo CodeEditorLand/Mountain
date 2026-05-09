@@ -17,15 +17,12 @@ use std::{
 };
 
 use serde_json::{Value, json};
-
 use tauri::{AppHandle, Emitter};
-
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 use crate::dev_log;
 
 struct Batch {
-
 	Pending:Mutex<Vec<Value>>,
 
 	FlushScheduled:AtomicBool,
@@ -34,19 +31,16 @@ struct Batch {
 static BATCH:OnceLock<Arc<Batch>> = OnceLock::new();
 
 pub fn Fn(Handle:&AppHandle, Payload:Value) {
-
 	let Batch =
 		BATCH.get_or_init(|| Arc::new(Batch { Pending:Mutex::new(Vec::new()), FlushScheduled:AtomicBool::new(false) }));
 
 	{
-
 		let mut Pending = Batch.Pending.lock().unwrap();
 
 		Pending.push(Payload);
 	}
 
 	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
-
 		let Cloned = Batch.clone();
 
 		let HandleCloned = Handle.clone();

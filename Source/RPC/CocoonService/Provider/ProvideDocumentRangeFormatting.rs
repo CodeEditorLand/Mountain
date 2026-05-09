@@ -3,11 +3,8 @@
 //! Forward a document-range-formatting request to the registered provider.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
 
 use crate::{
@@ -21,7 +18,6 @@ pub async fn Fn(
 
 	Request:ProvideDocumentRangeFormattingRequest,
 ) -> Result<Response<ProvideDocumentRangeFormattingResponse>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Providing document range formatting");
 
 	let URI = Request.uri.as_ref().map(|U| U.value.as_str()).unwrap_or("");
@@ -44,7 +40,6 @@ pub async fn Fn(
 		.ProvideDocumentRangeFormattingEdits(DocumentURI, RangeDTO, OptionsDTO)
 		.await
 	{
-
 		Ok(_) => Ok(Response::new(ProvideDocumentRangeFormattingResponse::default())),
 
 		Err(Error) => Err(Status::internal(format!("Document range formatting failed: {}", Error))),

@@ -5,9 +5,7 @@
 //! shellArgs + cwd) and forwards through.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use CommonLibrary::Terminal::TerminalProvider::TerminalProvider;
 
 use crate::{
@@ -17,7 +15,6 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:OpenTerminalRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] Opening terminal: {}", Request.name);
 
 	let Options = json!({
@@ -28,16 +25,13 @@ pub async fn Fn(Service:&CocoonServiceImpl, Request:OpenTerminalRequest) -> Resu
 	});
 
 	match Service.environment.CreateTerminal(Options).await {
-
 		Ok(Info) => {
-
 			dev_log!("cocoon", "[CocoonService] Terminal created: {:?}", Info);
 
 			Ok(Response::new(Empty {}))
 		},
 
 		Err(Error) => {
-
 			dev_log!("cocoon", "error: [CocoonService] open_terminal failed: {}", Error);
 
 			Err(Status::internal(format!("open_terminal: {}", Error)))

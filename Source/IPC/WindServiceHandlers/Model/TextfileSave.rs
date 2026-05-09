@@ -12,7 +12,6 @@ use serde_json::Value;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn TextfileSave(_runtime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Uri = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
 
 	dev_log!("vfs", "textFile:save uri={:?}", Uri);

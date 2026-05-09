@@ -5,16 +5,12 @@
 //! via `SkyEvent::Progress*`.
 
 use serde_json::{Value, json};
-
 use tauri::AppHandle;
-
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 fn NewProgressId() -> String {
-
 	format!(
 		"progress-{}",
-
 		std::time::SystemTime::now()
 			.duration_since(std::time::UNIX_EPOCH)
 			.map(|D| D.as_millis())
@@ -23,7 +19,6 @@ fn NewProgressId() -> String {
 }
 
 pub async fn ProgressBegin(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	use tauri::Emitter;
 
 	let Location = Arguments.first().and_then(|V| V.as_str()).unwrap_or("notification").to_string();
@@ -36,7 +31,6 @@ pub async fn ProgressBegin(ApplicationHandle:AppHandle, Arguments:Vec<Value>) ->
 
 	let _ = ApplicationHandle.emit(
 		SkyEvent::ProgressBegin.AsStr(),
-
 		json!({
 			"id": Id,
 			"location": Location,
@@ -49,7 +43,6 @@ pub async fn ProgressBegin(ApplicationHandle:AppHandle, Arguments:Vec<Value>) ->
 }
 
 pub async fn ProgressReport(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	use tauri::Emitter;
 
 	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -60,7 +53,6 @@ pub async fn ProgressReport(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -
 
 	let _ = ApplicationHandle.emit(
 		SkyEvent::ProgressReport.AsStr(),
-
 		json!({
 			"id": Id,
 			"increment": Increment,
@@ -72,7 +64,6 @@ pub async fn ProgressReport(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -
 }
 
 pub async fn ProgressEnd(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	use tauri::Emitter;
 
 	let Id = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();

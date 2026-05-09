@@ -4,11 +4,8 @@
 //! returns an empty list pending the action-DTO mapping.
 
 use serde_json::json;
-
 use tonic::{Response, Status};
-
 use url::Url;
-
 use CommonLibrary::LanguageFeature::LanguageFeatureProviderRegistry::LanguageFeatureProviderRegistry;
 
 use crate::{
@@ -22,12 +19,9 @@ pub async fn Fn(
 
 	Request:ProvideCodeActionsRequest,
 ) -> Result<Response<ProvideCodeActionsResponse>, Status> {
-
 	dev_log!(
 		"cocoon",
-
 		"[CocoonService] Providing code actions for provider {}",
-
 		Request.provider_handle
 	);
 
@@ -47,7 +41,6 @@ pub async fn Fn(
 	let ContextDTO = json!({ "diagnostics": [], "only": null });
 
 	match Service.environment.ProvideCodeActions(DocumentURI, RangeDTO, ContextDTO).await {
-
 		Ok(_) => Ok(Response::new(ProvideCodeActionsResponse { actions:Vec::new() })),
 
 		Err(Error) => Err(Status::internal(format!("Code actions failed: {}", Error))),

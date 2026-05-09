@@ -3,9 +3,7 @@
 //! Update a progress notification with a new message + increment.
 
 use serde_json::json;
-
 use tauri::Emitter;
-
 use tonic::{Response, Status};
 
 use crate::{
@@ -15,12 +13,10 @@ use crate::{
 };
 
 pub async fn Fn(Service:&CocoonServiceImpl, Request:ReportProgressRequest) -> Result<Response<Empty>, Status> {
-
 	dev_log!("cocoon", "[CocoonService] report_progress: handle={}", Request.handle);
 
 	let _ = Service.environment.ApplicationHandle.emit(
 		"sky://progress/update",
-
 		json!({
 			"handle": Request.handle,
 			"message": Request.message,

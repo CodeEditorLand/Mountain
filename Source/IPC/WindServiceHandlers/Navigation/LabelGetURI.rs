@@ -14,7 +14,6 @@ use serde_json::Value;
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
 pub async fn LabelGetURI(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-
 	let Uri = Arguments
 		.first()
 		.and_then(|V| V.as_str())
@@ -24,12 +23,9 @@ pub async fn LabelGetURI(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) 
 	let Relative = Arguments.get(1).and_then(|V| V.as_bool()).unwrap_or(false);
 
 	if !Relative {
-
 		let Label = if let Some(stripped) = Uri.strip_prefix("file://") {
-
 			stripped.to_owned()
 		} else {
-
 			Uri.clone()
 		};
 
@@ -47,26 +43,20 @@ pub async fn LabelGetURI(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) 
 		.unwrap_or_default();
 
 	let RawPath = if let Some(stripped) = Uri.strip_prefix("file://") {
-
 		stripped.to_owned()
 	} else {
-
 		Uri.clone()
 	};
 
 	let RootPath = if let Some(stripped) = WorkspaceRoot.strip_prefix("file://") {
-
 		stripped.to_owned()
 	} else {
-
 		WorkspaceRoot
 	};
 
 	let Label = if !RootPath.is_empty() && RawPath.starts_with(&RootPath) {
-
 		RawPath[RootPath.len()..].trim_start_matches('/').to_owned()
 	} else {
-
 		RawPath
 	};
 
