@@ -1,196 +1,44 @@
 //! # SearchProvider (Environment)
 //!
-//! Implements the `SearchProvider` trait for `MountainEnvironment`, providing
-//! text search capabilities across files and content within the workspace.
+//! Implements the `SearchProvider` trait using the `grep-searcher` crate
+//! (the ripgrep library) for `MountainEnvironment`.
 //!
-//! ## RESPONSIBILITIES
-//!
-//! ### 1. Search Execution
-//! - Search for text patterns in files using glob patterns
-//! - Support regular expression search
-//! - Search file contents and/or file names
-//! - Handle large result sets efficiently
-//!
-//! ### 2. Search Results
-//! - Return structured search results with matches
-//! - Include file URI, line number, column, and matching text
-//! - Support paging and result limiting
-//! - Sort results by relevance or file order
-//!
-//! ### 3. Search Configuration
-//! - Respect workspace file exclusion patterns (.gitignore)
-//! - Honor file size limits for search
-//! - Support case-sensitive and whole-word matching
-//! - Handle symbolic links appropriately
-//!
-//! ### 4. Search Cancellation
-//! - Support cancellation of long-running searches
-//! - Clean up resources on cancellation
-//! - Provide progress feedback (optional)
-//!
-//! ## ARCHITECTURAL ROLE
-//!
-//! SearchProvider is the **workspace search engine**:
-//!
-//! ```text
-//! Search Request ──► SearchProvider ──► FileSystem Scan ──► Results
-//! ```
-//!
-//! ### Position in Mountain
-//! - `Environment` module: Search capability provider
-//! - Implements `CommonLibrary::Search::SearchProvider` trait
-//! - Accessible via `Environment.Require<dyn SearchProvider>()`
-//!
-//! ### Search Types Supported
-//! - **Text search**: Find files containing text pattern
-//! - **File search**: Find files by name/glob pattern
-//! - **Replace**: (Future) Search and replace operations
-//! - **Context search**: (Future) Search with surrounding context
-//!
-//! ### Dependencies
-//! - `FileSystemReader`: Read file contents for searching
-//! - `WorkspaceProvider`: Get workspace folders to search
-//! - `Log`: Search progress and errors
-//!
-//! ### Dependents
-//! - Search UI panel: User-initiated searches
-//! - Find/Replace dialogs: In-editor search
-//! - Grep-like command-line operations
-//! - Code navigation (symbol search)
-//!
-//! ## SEARCH PROCESS
-//!
-//! 1. **File Discovery**: Walk workspace directories, respecting exclusions
-//! 2. **File Filtering**: Match filenames against include/exclude patterns
-//! 3. **Content Search**: For each file, search for pattern in content
-//! 4. **Match Collection**: Record matches with position information
-//! 5. **Result Formatting**: Return structured search results
-//!
-//! ## PERFORMANCE CONSIDERATIONS
-//!
-//! - Search is I/O bound; consider async and parallel processing
-//! - Large workspaces may have thousands of files
-//! - Use file size limits to prevent memory exhaustion
-//! - Implement result paging for UI responsiveness
-//! - Consider background search indexing for faster repeated searches
-//!
-//! ## ERROR HANDLING
-//!
-//! - Permission denied: Skip file, log warning
-//! - File not found: Skip file (may have been deleted)
-//! - Encoding errors: Try default encoding, skip on failure
-//! - Search cancelled: Stop immediately, return partial results
-//!
-//! ## VS CODE REFERENCE
-//!
-//! Patterns from VS Code:
-//! - `vs/workbench/contrib/search/browser/searchWidget.ts` - Search UI
-//! - `vs/platform/search/common/search.ts` - Search service API
-//! - `vs/platform/search/common/fileSearch.ts` - File system search
-//!
-//! ## TODO
-//!
-//! - [ ] Implement file content indexing for faster searches
-//! - [ ] Add regular expression support with PCRE or regex engine
-//! - [ ] Support search result paging and streaming
-//! - [ ] Add search cancellation with proper cleanup
-//! - [ ] Implement search result highlighting in UI
-//! - [ ] Support search in compressed/archive files
-//! - [ ] Add search across multiple workspaces
-//! - [ ] Implement search history and persistence
-//! - [ ] Add search filters (by language, by file size, etc.)
-//! - [ ] Support search templates and saved searches
-//! - [ ] Implement search result grouping (by folder, by file)
-//! - [ ] Add search performance metrics and logging
-//! - [ ] Support search result export (to file, clipboard)
-//!
-//! ## MODULE CONTENTS
-//!
-//! - [`SearchProvider`]: Main struct implementing the trait
-//! - Search execution methods
-//! - File walking and filtering logic
-//! - Match extraction and formatting
-//! - Search cancellation support
-
-// Responsibilities:
-//   - Perform workspace-wide text searches using `grep-searcher` (the `ripgrep` library).
-//   - Respect workspace folders and standard ignore files (`.gitignore`).
-//   - Collect and format search results into a DTO suitable for the frontend.
-//   - Support regex patterns and case-sensitive/insensitive searches.
-//   - Implement word-boundary matching.
-//   - Optimize for performance with parallel file walking.
-//   - Handle large files efficiently with memory-efficient streaming.
-//   - Support incremental search with result pagination.
-//   - Provide search statistics (matches count, files searched).
-//   - Handle search cancellation gracefully.
-//
-// TODOs:
-//   - Implement result pagination for large result sets
-//   - Add search cancellation via CancellationToken
-//   - Support include/exclude file patterns
-//   - Implement context lines for matches (before/after)
-//   - Add file type filtering (e.g., search only in certain extensions)
-//   - Implement replacement/match highlighting in results
-//   - Add search progress reporting
-//   - Support search across multiple workspace folders independently
-//   - Implement search caching for repeated searches
-//   - Add regex capture groups support
-//   - Implement search history and recent searches
-//   - Support search result export
-//   - Add search performance metrics and optimization
-//   - Implement search result deduplication
-//   - Support glob patterns for file matching
-//   - Add search result ranking and sorting
-//   - Implement binary file handling (skip or search)
-//   - Support symbolic link following
-//   - Add max file size limit to avoid memory issues
-//   - Implement search timeout
-//   - Support search in hidden files
-//   - Add line and column number precision
-//   - Implement multi-line regex search
-//
-// Inspired by VSCode's search service which:
-// - Uses ripgrep for high-performance text search
-// - Supports complex regex patterns and modifiers
-// - Provides context lines for matches
-// - Handles large directories efficiently
-// - Supports file and directory exclusions
-// - Provides incremental search results
-// - Handles search cancellation gracefully
-//! # SearchProvider Implementation
-//!
-//! Implements the `SearchProvider` trait using the `grep-searcher` crate, which
-//! is a library for the `ripgrep` search tool.
-//!
-//! ## Search Architecture
+//! ## Search architecture
 //!
 //! The search implementation uses a multi-threaded approach:
 //!
-//! 1. **Pattern Compilation**: Regex pattern is compiled with modifiers
-//! 2. **Parallel Walking**: Files in workspace are walked in parallel
-//! 3. **Per-File Search**: Each file is searched individually using a sink
-//!    pattern
-//! 4. **Result Aggregation**: Matches are collected in a shared thread-safe
-//!    vector
+//! 1. **Pattern compilation** — regex is compiled with case/word/multiline
+//!    modifiers; plain-text queries are `regex::escape`d first.
+//! 2. **Parallel walking** — workspace files are walked via
+//!    `WalkBuilder::build_parallel()`, respecting `.gitignore` and
+//!    `.ignore` files automatically.
+//! 3. **Per-file search** — each file is searched individually using a
+//!    `Sink` pattern (`PerFileSink`).
+//! 4. **Result aggregation** — matches are collected in a shared
+//!    `Arc<Mutex<Vec<FileMatch>>>`.
 //!
-//! ## Search Features
+//! ## Search features
 //!
-//! - **Case Sensitivity**: Controlled by `is_case_sensitive` option
-//! - **Word Matching**: Controlled by `is_word_match` option
-//! - **Regex Support**: Full regex pattern matching via `grep-regex`
-//! - **Ignore Files**: Respects `.gitignore`, `.ignore`, and other ignore files
-//! - **Parallel Search**: Uses `WalkBuilder::build_parallel()` for performance
-//! - **Memory Efficient**: Streams results to avoid loading entire files
+//! - **Case sensitivity** — controlled by `isCaseSensitive` option
+//! - **Word matching** — controlled by `isWordMatch` option
+//! - **Regex support** — full regex via `grep-regex`
+//! - **Ignore files** — respects `.gitignore`, `.ignore`, and siblings
+//! - **Memory efficient** — streams results; never loads entire files
 //!
-//! ## Search Result Format
+//! ## Search result format
 //!
 //! Each match includes:
-//! - **File URI**: Valid URL pointing to the file
-//! - **Line Number**: Zero-indexed line number of the match
-//! - **Preview**: The matched text line
+//! - `resource` — file URI
+//! - `lineNumber` — 1-based line number
+//! - `preview` — matched text line (capped at 512 bytes)
+//! - `columns` — per-match `{start, end}` char-offset ranges (0-based,
+//!   UTF-8 code units to match VS Code's `ISearchRange`)
 //!
-//! Results are grouped by file, with each file containing multiple matches.
-//
+//! ## VS Code reference
+//!
+//! - `vs/workbench/contrib/search/browser/searchWidget.ts`
+//! - `vs/platform/search/common/search.ts`
+//! - `vs/platform/search/common/fileSearch.ts`
 
 use std::{
 	io,
@@ -209,6 +57,14 @@ use serde_json::{Value, json};
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::dev_log;
+
+// TODO: result pagination, cancellation via CancellationToken, include/exclude
+// patterns, context lines (before/after), file-type filtering, replacement
+// highlighting, progress reporting, multi-folder independent search, caching,
+// regex capture groups, search history, result export, performance metrics,
+// deduplication, glob file matching, result ranking, binary file handling,
+// symlink following, max file size limit, search timeout, hidden files,
+// multi-line regex.
 
 /// Mirrors VS Code's `ITextSearchQuery` shape (`vs/workbench/services/
 /// search/common/search.ts`). The workbench's Search view serialises
