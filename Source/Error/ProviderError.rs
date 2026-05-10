@@ -1,8 +1,10 @@
 //! # Provider Error Types
 //!
-//! Provides provider-specific error types for Mountain.
-//! Used for all provider related errors (DocumentProvider, FileSystemProvider,
-//! etc.).
+//! Provider-specific error types for Mountain.
+//! Covers provider registration, initialization, method dispatch,
+//! configuration validation, operation timeout, and availability
+//! for capability providers such as `DocumentProvider` and
+//! `FileSystemProvider`.
 
 use std::{error::Error as StdError, fmt};
 
@@ -10,30 +12,30 @@ use serde::{Deserialize, Serialize};
 
 use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 
-/// Provider operation error types
+/// Provider operation error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ProviderError {
-	/// Provider not registered
+	/// Provider not registered.
 	ProviderNotRegistered { context:ErrorContext, provider_name:String },
 
-	/// Provider initialization failed
+	/// Provider initialization failed.
 	InitializationFailed { context:ErrorContext, provider_name:String, source:Option<String> },
 
-	/// Provider method not implemented
+	/// Provider method not implemented.
 	MethodNotImplemented { context:ErrorContext, provider_name:String, method_name:String },
 
-	/// Invalid provider configuration
+	/// Invalid provider configuration.
 	InvalidConfiguration { context:ErrorContext, provider_name:String, errors:Vec<String> },
 
-	/// Provider timeout
+	/// Provider timeout.
 	Timeout { context:ErrorContext, provider_name:String, operation:String, timeout_ms:u64 },
 
-	/// Provider unavailable
+	/// Provider unavailable.
 	Unavailable { context:ErrorContext, provider_name:String, reason:String },
 }
 
 impl ProviderError {
-	/// Get the error context
+	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
 			ProviderError::ProviderNotRegistered { context, .. } => context,
@@ -50,7 +52,7 @@ impl ProviderError {
 		}
 	}
 
-	/// Create a provider not registered error
+	/// Create a provider not registered error.
 	pub fn provider_not_registered(provider_name:impl Into<String>) -> Self {
 		let provider_name_str = provider_name.into();
 
@@ -63,7 +65,7 @@ impl ProviderError {
 		}
 	}
 
-	/// Create an initialization failed error
+	/// Create an initialization failed error.
 	pub fn initialization_failed(provider_name:impl Into<String>, source:Option<String>) -> Self {
 		let provider_name_str = provider_name.into();
 
@@ -78,7 +80,7 @@ impl ProviderError {
 		}
 	}
 
-	/// Create a method not implemented error
+	/// Create a method not implemented error.
 	pub fn method_not_implemented(provider_name:impl Into<String>, method_name:impl Into<String>) -> Self {
 		let provider_name_str = provider_name.into();
 
@@ -98,7 +100,7 @@ impl ProviderError {
 		}
 	}
 
-	/// Create an invalid configuration error
+	/// Create an invalid configuration error.
 	pub fn invalid_configuration(provider_name:impl Into<String>, errors:Vec<String>) -> Self {
 		let provider_name_str = provider_name.into();
 
@@ -117,7 +119,7 @@ impl ProviderError {
 		}
 	}
 
-	/// Create a timeout error
+	/// Create a timeout error.
 	pub fn timeout(provider_name:impl Into<String>, operation:impl Into<String>, timeout_ms:u64) -> Self {
 		let provider_name_str = provider_name.into();
 
@@ -140,7 +142,7 @@ impl ProviderError {
 		}
 	}
 
-	/// Create an unavailable error
+	/// Create an unavailable error.
 	pub fn unavailable(provider_name:impl Into<String>, reason:impl Into<String>) -> Self {
 		let provider_name_str = provider_name.into();
 
