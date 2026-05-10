@@ -1,117 +1,79 @@
-//! # Binary Module
-//!
-//! ## RESPONSIBILITIES
-
+#![allow(non_snake_case)]
 #![allow(unused_imports, unused_variables)]
-//! Main entry point and initialization for the Mountain desktop application.
-//! This module handles application startup, Tauri command registration,
-//! configuration, and lifecycle management.
+
+//! # Binary
 //!
-//! ### Core Functions:
-//! - **Application Entry**: Main application entry point
-//! - **Tauri Setup**: Configure Tauri application builder
-//! - **Command Registration**: Register all Tauri commands
-//! - **IPC Bridge**: Set up IPC communication with frontend
-//! - **Service Initialization**: Start Vine and Cocoon services
-//! - **Tray Management**: Configure system tray
-//! - **Lifecycle**: Handle application lifecycle events
+//! Main entry point and initialization for the Mountain desktop application.
+//! Handles application startup, Tauri command registration, configuration,
+//! and lifecycle management.
+//!
+//! ## Module Layout
+//!
+//! - [`Main`]: Application entry point and orchestration
+//! - [`Build`]: Tauri application builder configuration
+//! - [`Register`]: Command and service registration
+//! - [`Service`]: Service initialization (Vine, Cocoon, Configuration)
+//! - [`Initialize`]: Application state initialization
+//! - [`IPC`]: IPC command handlers bridging the frontend invoke calls to Rust
+//! - [`Tray`]: System tray integration
+//! - [`Extension`]: Extension startup and management
+//! - [`Shutdown`]: Graceful shutdown handling
+//! - [`Debug`]: Debug and trace logging utilities
 //!
 //! ## Architectural Role
 //!
-//! The Binary module is the **entry point** in Mountain's architecture:
-//!
 //! ```text
-//! main.rs ──► Binary::Main (Entry) ──► Build ──► Register ──► Initialize ──► Services
-//!                                    │            │             │             │
-//!                                    ▼            ▼             ▼             ▼
-//!                                AppLifecycle   Commands    Services    Vine/Cocoon
-//!                                         │            │             │
-//!                                   IPCCommands  IPCBridge   ProcessMgmt
+//! main.rs --> Binary::Main (Entry) --> Build --> Register --> Initialize --> Services
+//!                                    |           |            |             |
+//!                                    v           v            v             v
+//!                               AppLifecycle  Commands    Services    Vine/Cocoon
+//!                                        |            |            |
+//!                                  IPCCommands  IPCBridge  ProcessMgmt
 //! ```
 //!
-//! ### Design Principles:
-//! 1. **Single Entry Point**: One clear entry point for the application
-//! 2. **Lazy Initialization**: Services started only when needed
-//! 3. **Graceful Shutdown**: Clean shutdown of all services
-//! 4. **Error Resilience**: Graceful degradation on failures
+//! ## Design Principles
 //!
-//! ## Key Components
+//! 1. **Single Entry Point**: One clear entry point for the application.
+//! 2. **Lazy Initialization**: Services started only when needed.
+//! 3. **Graceful Shutdown**: Clean shutdown of all services.
+//! 4. **Error Resilience**: Graceful degradation on startup failures.
 //!
-//! - **Main**: Application entry point and orchestration
-//! - **Build**: Tauri builder configuration
-//! - **Register**: Command and service registration
-//! - **Service**: Service initialization (Vine, Cocoon)
-//! - **Initialize**: Application state initialization
-//! - **IPC**: IPC command handlers (14 commands)
-//! - **Tray**: System tray integration
-//! - **Extension**: Extension startup
-//!
-//! ## TODOs
-//! High Priority:
-//! - [x] Atomize Main.rs into submodules
-//! - [ ] Add crash recovery mechanism
-//! - [ ] Implement proper error dialog for startup failures
-//!
-//! Medium Priority:
-//! - [ ] Add startup performance metrics
-//! - [ ] Implement incremental service startup
-//! - [ ] Add service health checks during startup
-//!
-//! Low Priority:
-//! - [ ] Add startup progress indicator
-//! - [ ] Implement startup animation
-//! - [ ] Add startup sound
+//! No `pub use` re-exports - callers spell the full reverse-hierarchical
+//! path (`Binary::Main::Entry::Fn`, `Binary::Build::LocalhostPlugin::Fn`,
+//! etc.).
 
-// --- Main Sub-module ---
+// TODO: add crash recovery mechanism
+// TODO: implement proper error dialog for startup failures
+// TODO: add startup performance metrics
+// TODO: implement incremental service startup
+// TODO: add service health checks during startup
 
 /// Main application entry point and orchestration.
 pub mod Main;
 
-// --- Builder Sub-module ---
-
 /// Tauri application builder configuration.
 pub mod Build;
-
-// --- Register Sub-module ---
 
 /// Command and service registration.
 pub mod Register;
 
-// --- Service Sub-module ---
-
 /// Service initialization (Vine, Cocoon, Configuration).
 pub mod Service;
-
-// --- Initialize Sub-module ---
 
 /// Application state initialization.
 pub mod Initialize;
 
-// --- IPC Commands Sub-module ---
-
-/// IPC command handlers (14 commands).
+/// IPC command handlers bridging the frontend invoke calls to Rust.
 pub mod IPC;
-
-// --- Tray Sub-module ---
 
 /// System tray integration.
 pub mod Tray;
 
-// --- Extension Sub-module ---
-
 /// Extension startup and management.
 pub mod Extension;
-
-// --- Shutdown Sub-module ---
 
 /// Graceful shutdown handling.
 pub mod Shutdown;
 
-// --- Debug Sub-module ---
-
 /// Debug and trace logging utilities.
 pub mod Debug;
-
-// No `pub use` re-exports - callers spell the full reverse-hierarchical
-// path (`Binary::Main::Entry::Fn`, `Binary::Build::LocalhostPlugin::Fn`,
-// etc.). See `.claude/Naming-Convention.md` § Nameless Exports.
