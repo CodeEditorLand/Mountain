@@ -1,4 +1,23 @@
 //! Configuration value update and persistence.
+//!
+//! Implements `UpdateConfigurationValue` for `MountainEnvironment`.
+//! Resolves the write target to a concrete `settings.json` path,
+//! performs a read-modify-write, then invalidates the parse cache and
+//! triggers a full re-merge so subsequent reads reflect the change.
+//!
+//! ## Target resolution
+//!
+//! | `ConfigurationTarget` | Write destination |
+//! |---|---|
+//! | `User` / `UserLocal` | `<app-config>/settings.json` |
+//! | `Workspace` | workspace `settings.json` |
+//! | `WorkspaceFolder` | `<first-folder>/.vscode/settings.json` |
+//! | `Memory` | in-memory merged map only; no disk write |
+//! | `Default` / `Policy` | error — read-only by spec |
+//!
+//! Passing `Value::Null` as the new value removes the key from the
+//! target file rather than writing a `null` literal, matching
+//! VS Code's "reset to default" behaviour.
 
 use std::{path::PathBuf, sync::Arc};
 

@@ -1,4 +1,20 @@
-//! Configuration value introspection.
+//! Configuration value introspection across all scopes.
+//!
+//! Implements `InspectConfigurationValue` for `MountainEnvironment`.
+//! Unlike `GetValue` (which reads the merged cache), this function
+//! re-reads each configuration layer individually so callers can see
+//! exactly which scope provides a value:
+//!
+//! | Field | Source |
+//! |---|---|
+//! | `DefaultValue` | Extension `contributes.configuration` defaults |
+//! | `UserValue` | `<app-config>/settings.json` |
+//! | `WorkspaceValue` | workspace `settings.json` |
+//! | `EffectiveValue` | Workspace → User → Default (first non-`None`) |
+//!
+//! Returns `None` when the key is not present in any scope. Dot-notation
+//! keys (e.g. `"git.enabled"`) are resolved by splitting on `.` and
+//! walking the nested JSON tree, matching `GetValue`'s traversal.
 
 use CommonLibrary::{
 	Configuration::DTO::{

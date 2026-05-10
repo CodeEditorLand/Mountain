@@ -1,4 +1,19 @@
-//! Configuration loading and merging utilities.
+//! Configuration loading, caching, and merging.
+//!
+//! Provides the three public entry points consumed by the rest of the
+//! `ConfigurationProvider` module:
+//!
+//! - `read_and_parse_configuration_file` — reads a single `settings.json`
+//!   from disk via the async `ApplicationRunTime`, with a 250 ms TTL
+//!   parse cache to avoid redundant disk reads during burst `Inspect` calls.
+//! - `initialize_and_merge_configurations` — rebuilds the merged
+//!   `GlobalConfiguration` by layering Default → User → Workspace in
+//!   precedence order (deep-merge for nested objects, shallow for root keys).
+//! - `collect_default_configurations` — walks every scanned extension's
+//!   `contributes.configuration.properties` map and extracts `default`
+//!   values, inserting them into a nested map keyed by dotted path.
+//! - `ClearSettingsFileCache` — invalidates the parse cache; called by
+//!   `UpdateValue` after any write so the next read sees fresh content.
 
 use std::{
 	collections::HashMap,
