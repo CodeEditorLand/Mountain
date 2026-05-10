@@ -1,102 +1,50 @@
-//! File: Mountain/Source/Environment/TerminalProvider.rs
-//! Role: Implements the `TerminalProvider` trait for the `MountainEnvironment`.
-//! Responsibilities:
-//!   - Core logic for managing integrated terminal instances.
-//!   - Creating native pseudo-terminals (PTYs) and handling their I/O.
-//!   - Spawning and managing the lifecycle of the underlying shell processes.
-//!   - Handle terminal show/hide UI state.
-//!   - Send text input to terminal processes.
-//!   - Manage terminal environment variables.
-//!   - Handle terminal resizing and dimension management.
-//!   -Support terminal profiles and configuration.
-//!   - Handle terminal process exit detection.
-//!   - Manage terminal input/output channels.
-//!   - Support terminal color schemes and themes.
-//!   - Handle terminal bell/notification support.
-//!   - Implement terminal buffer management.
-//!   - Support terminal search and navigation.
-//!   - Handle terminal clipboard operations.
-//!   - Implement terminal tab support.
-//!   - Support custom shell integration.
+//! # TerminalProvider (Environment)
 //!
-//! TODOs:
-//!   - Implement terminal profile management
-//!   - Add terminal environment variable management
-//!   - Implement terminal resize handling (PtySize updates)
-//!   - Support terminal color scheme configuration
-//!   - Add terminal bell handling and visual notifications
-//!   - Implement terminal buffer scrolling and history
-//!   - Support terminal search within output
-//!   - Add terminal reconnection for crashed processes
-//!   - Implement terminal tab management
-//!   - Support terminal split view
-//!   - Add terminal decoration support (e.g., cwd indicator)
-//!   - Implement terminal command history
-//!   - Support terminal shell integration (e.g., fish, zsh, bash)
-//!   - Add terminal ANSI escape sequence handling
-//!   - Implement terminal clipboard operations
-//!   - Support terminal link detection and navigation
-//!   - Add terminal performance optimizations for large output
-//!   - Implement terminal process tree (parent/child processes)
-//!   - Support terminal environment injection
-//!   - Add terminal keyboard mapping customization
-//!   - Implement terminal logging for debugging
-//!   - Support terminal font size and font family
-//!   - Add terminal UTF-8 and Unicode support
-//!   - Implement terminal timeout and idle detection
-//!   - Support terminal command execution automation
-//!   - Add terminal multi-instance management
-//!
-//! Inspired by VSCode's integrated terminal which:
-//! - Uses native PTY for process isolation
-//! - Streams I/O to avoid blocking the main thread
-//! - Supports multiple terminal instances
-//! - Handles terminal show/hide state
-//! - Manages terminal process lifecycle
-//! - Supports terminal profiles and custom shells
-//! - Provides shell integration features
-//! # TerminalProvider Implementation
-//!
-//! Implements the `TerminalProvider` trait for the `MountainEnvironment`. This
-//! provider contains the core logic for managing integrated terminal instances,
+//! Implements the `TerminalProvider` trait for the `MountainEnvironment`.
+//! Contains the core logic for managing integrated terminal instances,
 //! including creating native pseudo-terminals (PTYs) and handling their I/O.
 //!
-//! ## Terminal Architecture
+//! ## Terminal architecture
 //!
-//! The terminal implementation uses the following architecture:
+//! 1. **PTY creation** — `portable-pty` opens a native PTY pair.
+//! 2. **Process spawning** — shell spawned as child of PTY slave.
+//! 3. **I/O streaming** — dedicated `tokio::spawn` tasks for input, output,
+//!    and process exit; each terminal gets its own tasks.
+//! 4. **IPC fan-out** — PTY output is sent in two directions:
+//!    - Cocoon extension host via `$acceptTerminalProcessData` (gRPC)
+//!    - Sky webview via `SkyEvent::TerminalData` (Tauri emit)
+//! 5. **State management** — `ApplicationState.Feature.Terminals.ActiveTerminals`
+//!    keyed by `u64` terminal ID.
 //!
-//! 1. **PTY Creation**: Use `portable-pty` to create native PTY pairs
-//! 2. **Process Spawning**: Spawn shell process as child of PTY slave
-//! 3. **I/O Streaming**: Spawn async tasks for input and output streaming
-//! 4. **IPC Communication**: Forward output to Cocoon sidecar via IPC
-//! 5. **State Management**: Track terminal state in ApplicationState
+//! ## Terminal lifecycle
 //!
-//! ## Terminal Lifecycle
+//! 1. `CreateTerminal` — create PTY, spawn shell, start I/O tasks, emit
+//!    `TerminalCreate` (deferred 120 ms to avoid a race with `_ptys.set`).
+//! 2. `SendTextToTerminal` — write user input to PTY via mpsc channel.
+//! 3. `ResizeTerminal` — call `MasterPty::resize` via `spawn_blocking`.
+//! 4. `ShowTerminal` / `HideTerminal` — emit UI events to Sky.
+//! 5. `GetTerminalProcessId` — read OS PID from `TerminalStateDTO`.
+//! 6. `DisposeTerminal` — drop `Arc<TerminalStateDTO>`; PTY close kills shell.
 //!
-//! 1. **Create**: Create PTY, spawn shell, start I/O tasks
-//! 2. **SendText**: Write user input to PTY master
-//! 3. **ReceiveData**: Read output from PTY and forward to sidecar
-//! 4. **Show/Hide**: Emit UI events to show/hide terminal
-//! 5. **ProcessExit**: Detect shell exit and notify sidecar
-//! 6. **Dispose**: Close PTY, kill process, cleanup state
+//! ## Shell detection
 //!
-//! ## Shell Detection
-//!
-//! Default shell selection by platform:
 //! - **Windows**: `powershell.exe`
-//! - **macOS/Linux**: `$SHELL` environment variable, fallback to `sh`
+//! - **macOS / Linux**: `$SHELL`, fallback to `sh`
 //!
 //! Custom shell paths can be provided via terminal options.
 //!
-//! ## I/O Streaming
+//! ## Output replay buffer
 //!
-//! Terminal I/O is handled by background tokio tasks:
+//! Each terminal keeps a ring buffer of up to 64 KB of recent PTY output
+//! (`TERMINAL_OUTPUT_BUFFER`). On `sky:replay-events` the buffered bytes are
+//! replayed to Sky, covering the ~1 500 ms gap between shell spawn and
+//! SkyBridge listener install during workbench boot.
 //!
-//! - **Input Task**: Receives text from channel and writes to PTY master
-//! - **Output Task**: Reads from PTY master and forwards to sidecar
-//! - **Exit Task**: Waits for process exit and notifies sidecar
+//! ## VS Code reference
 //!
-//! Each terminal gets its own I/O tasks to prevent blocking each other.
+//! Patterns from VS Code's integrated terminal:
+//! - `vs/workbench/contrib/terminal/node/terminalProcess.ts`
+//! - `vs/platform/terminal/node/ptyService.ts`
 
 use std::{env, io::Write, sync::Arc};
 
@@ -167,6 +115,12 @@ pub fn RemoveTerminalOutputBuffer(TerminalId:u64) {
 	}
 }
 
+// TODO: terminal profiles + env var management, resize handling (PtySize),
+// colour schemes, bell / visual notifications, buffer scroll + history,
+// in-pane search, reconnect for crashed processes, tab + split-view,
+// decoration (cwd indicator), shell integration (fish/zsh/bash), ANSI escape
+// handling, clipboard ops, link detection + navigation, process tree, font
+// config, UTF-8 / Unicode, timeout + idle detection, multi-instance mgmt.
 #[async_trait]
 impl TerminalProvider for MountainEnvironment {
 	/// Creates a new terminal instance, spawns a PTY, and manages its I/O.
