@@ -1,72 +1,34 @@
-//! # ProviderTraitImplMacro (Environment)
+//! # ProviderTraitImplMacro
 //!
-//! ## RESPONSIBILITIES
-//! Provides a declarative macro to generate `Requires<T>` trait implementations
-//! for MountainEnvironment, significantly reducing boilerplate code.
+//! Declarative macro that generates `Requires<dyn T>` implementations for
+//! `MountainEnvironment`, eliminating the boilerplate of writing an identical
+//! `impl` block for each of the 25+ provider traits.
 //!
-//! ## ARCHITECTURAL ROLE
-//! This macro is part of the Environment module's Dependency Injection (DI)
-//! system, which enables components to request capabilities through traits.
-//! MountainEnvironment implements `Requires<T>` for all 25+ provider traits,
-//! and this macro automates the generation of those implementations.
-//!
-//! ## USAGE
-//!
-//! The macro is invoked at the module level to generate trait implementations:
+//! Each invocation of `impl_provider!(TraitName)` expands to:
 //!
 //! ```rust,ignore
-//! impl_provider!(CommandExecutor);
-//! impl_provider!(ConfigurationProvider);
-//! impl_provider!(FileSystemReader);
-//! ```
-//!
-//! This generates:
-//!
-//! ```rust,ignore
-//! impl Requires<dyn CommandExecutor> for MountainEnvironment {
-//!     fn Require(&self) -> Arc<dyn CommandExecutor> {
-//!         Arc::new(self.clone())
-//!     }
-//! }
-//!
-//! impl Requires<dyn ConfigurationProvider> for MountainEnvironment {
-//!     fn Require(&self) -> Arc<dyn ConfigurationProvider> {
+//! impl Requires<dyn TraitName> for MountainEnvironment {
+//!     fn Require(&self) -> Arc<dyn TraitName> {
 //!         Arc::new(self.clone())
 //!     }
 //! }
 //! ```
 //!
-//! ## KEY FEATURES
+//! This is correct because `MountainEnvironment` directly implements every
+//! provider trait, so cloning self and wrapping in `Arc` satisfies the
+//! `Requires<dyn T>` contract. The generated code is identical to a
+//! hand-written implementation - zero runtime overhead.
 //!
-//! - **Type Safety**: Generates type-safe implementations at compile time
-//! - **Zero Overhead**: Generated code is identical to hand-written
-//!   implementations
-//! - **Maintainability**: Adding new providers requires only one macro
-//!   invocation
-//! - **Consistency**: Ensures all implementations follow the same pattern
-//!
-//! ## PERFORMANCE CONSIDERATIONS
-//!
-//! The macro generates code with zero runtime overhead compared to hand-written
-//! implementations. The macro expansion happens at compile time, and the
-//! generated code is identical to what would be written manually.
-//!
-//! ## ERROR HANDLING
-//!
-//! The macro itself does not handle errors - any type checking or compilation
-//! errors will be reported by the Rust compiler on the generated code.
+//! Type safety and compilation errors for missing trait implementations are
+//! reported by the Rust compiler on the generated `impl` block, not on the
+//! macro call site.
 
-/// Macro to generate `Requires<T>` trait implementations for
-/// MountainEnvironment.
-///
-/// This macro takes a trait name and generates an implementation of
-/// `Requires<dyn Trait>` for `MountainEnvironment`. The implementation returns
-/// `Arc::new(self.clone())`, which is the standard pattern for the DI
-/// container.
+/// Macro to generate `Requires<dyn T>` trait implementations for
+/// `MountainEnvironment`.
 ///
 /// # Arguments
 ///
-/// * `$trait_name` - The name of the trait (without `dyn` prefix)
+/// * `$trait_name` - The name of the trait (without `dyn` prefix).
 ///
 /// # Example
 ///
@@ -83,12 +45,6 @@
 ///     }
 /// }
 /// ```
-///
-/// # Note
-///
-/// This macro is intended to be used within `MountainEnvironment.rs` after the
-/// `MountainEnvironment` struct definition. The macro assumes that
-/// `MountainEnvironment` implements all the traits that are being requested.
 #[macro_export]
 macro_rules! impl_provider {
 	($trait_name:ident) => {
