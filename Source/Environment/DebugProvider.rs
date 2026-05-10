@@ -1,79 +1,42 @@
 //! # DebugProvider (Environment)
 //!
-//! RESPONSIBILITIES:
-//! - Implements [`DebugService`](CommonLibrary::Debug::DebugService) for
-//!   [`MountainEnvironment`]
-//! - Manages complete debugging session lifecycle from configuration to
-//!   termination
-//! - Orchestrates between extension host (Cocoon), debug adapter, and UI
-//! - Handles DAP (Debug Adapter Protocol) message mediation
+//! Implements [`DebugService`](CommonLibrary::Debug::DebugService) for
+//! `MountainEnvironment`, managing the complete debugging session lifecycle
+//! from configuration to termination. Orchestrates between the extension host
+//! (Cocoon), the debug adapter, and the UI, including DAP (Debug Adapter
+//! Protocol) message mediation.
 //!
-//! ARCHITECTURAL ROLE:
-//! - Core provider for debugging functionality, analogous to VSCode's debug
-//!   service
-//! - Uses two-stage registration: configuration providers and adapter
-//!   descriptor factories
-//! - Each debug type (node, java, rust) can have its own configuration and
-//!   adapter
-//! - Integrates with [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
-//!   to Cocoon
+//! Uses two-stage registration: configuration providers and adapter descriptor
+//! factories. Each debug type (node, java, rust) can have its own configuration
+//! and adapter. Integrates with
+//! [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC to Cocoon.
 //!
-//! DEBUG SESSION FLOW:
-//! 1. UI calls `StartDebugging` with folder URI and configuration
+//! ## Debug session flow
+//!
+//! 1. UI calls `StartDebugging` with folder URI and configuration.
 //! 2. Mountain RPCs to Cocoon to resolve debug configuration (variable
-//!    substitution)
-//! 3. Mountain RPCs to Cocoon to create debug adapter descriptor
-//! 4. Mountain spawns debug adapter process or connects to TCP server
-//! 5. Mountain mediates DAP messages between UI and debug adapter
-//! 6. UI sends DAP commands via `SendCommand` which forwards to adapter
-//! 7. Debug adapter sends DAP events/notifications back through Mountain to UI
-//! 8. Session ends on stop request or adapter process exit
+//!    substitution).
+//! 3. Mountain RPCs to Cocoon to create debug adapter descriptor.
+//! 4. Mountain spawns debug adapter process or connects to TCP server.
+//! 5. Mountain mediates DAP messages between UI and debug adapter.
+//! 6. UI sends DAP commands via `SendCommand` which forwards to adapter.
+//! 7. Debug adapter sends DAP events/notifications back through Mountain to UI.
+//! 8. Session ends on stop request or adapter process exit.
 //!
-//! ERROR HANDLING:
-//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
-//! - Validates debug type is non-empty (InvalidArgument error)
-//! - TODO: Implement proper session lookup, timeout handling, and error
-//!   recovery
+//! ## Methods
 //!
-//! PERFORMANCE:
-//! - Debug adapter spawning should be async with timeout protection (5000ms in
-//!   current RPC)
-//! - DAP message routing needs efficient session lookup (TODO: O(1) hash map)
-//! - Multiple simultaneous debug sessions require careful resource management
+//! - `RegisterDebugConfigurationProvider` — register config resolver
+//! - `RegisterDebugAdapterDescriptorFactory` — register adapter factory
+//! - `StartDebugging` — start debug session
+//! - `SendCommand` — send DAP command to adapter
+//! - `StopDebugging` — graceful DAP disconnect then session unregister
 //!
-//! VS CODE REFERENCE:
-//! - `vs/workbench/contrib/debug/browser/debugService.ts` - debug service main
-//!   logic
-//! - `vs/workbench/contrib/debug/common/debug.ts` - debug interfaces and models
-//! - `vs/workbench/contrib/debug/browser/adapter/descriptorFactory.ts` -
-//!   adapter descriptor factories
-//! - `vs/debugAdapter/common/debugProtocol.ts` - DAP protocol specification
+//! ## VS Code reference
 //!
-//! IMPLEMENTED:
-//! - Provider/factory registrations stored in ApplicationState (DebugState)
-//! - Active session tracking via DebugState::DebugSessions map
-//! - Executable adapter spawning with stdin/stdout/stderr pipes
-//! - DAP frame parsing (Content-Length header + JSON body) on adapter stdout
-//! - Stdout messages emitted on `sky://debug/dap-message` for renderer pickup
-//! - SendCommand serialises DAP request → writes framed bytes to stdin
-//! - StopDebugging sends DAP `disconnect` request then unregisters session
-//!
-//! FOLLOWUP:
-//! - `server` / `pipeServer` adapter connection (TCP / named-pipe)
-//! - Reverse-RPC `$sendDAPRequest` Cocoon handler for inline-impl adapters
-//! - Per-session request_seq allocation (currently caller-supplied)
-//! - Adapter crash detection: when stdout EOFs unexpectedly, emit
-//!   `$onDidTerminateDebugSession` so the workbench tears down its session view
-//!   (today the user sees a stale session row)
-//! - Debug console / variable inspection integration
-//! - Telemetry for adapter spawn duration, session length, exit codes
-//!
-//! MODULE CONTENTS:
-//! - [`DebugService`](CommonLibrary::Debug::DebugService) implementation:
-//! - `RegisterDebugConfigurationProvider` - register config resolver
-//! - `RegisterDebugAdapterDescriptorFactory` - register adapter factory
-//! - `StartDebugging` - start debug session (partial)
-//! - `SendCommand` - send DAP command to adapter (stub)
+//! - `vs/workbench/contrib/debug/browser/debugService.ts`
+//! - `vs/workbench/contrib/debug/common/debug.ts`
+//! - `vs/workbench/contrib/debug/browser/adapter/descriptorFactory.ts`
+//! - `vs/debugAdapter/common/debugProtocol.ts`
 
 use std::sync::Arc;
 
@@ -187,10 +150,9 @@ impl DebugService for MountainEnvironment {
 			})?
 			.to_string();
 
-		// TODO: Look up which sidecar (extension) handles this debug type using
-		// the registration stored in ApplicationState. The mapping should be based
-		// on previous RegisterDebugConfigurationProvider calls. Initial stub uses
-		// hardcoded "cocoon-main" until proper registration tracking is implemented.
+		// TODO: Look up which sidecar handles this debug type using
+		// RegisterDebugConfigurationProvider registrations in ApplicationState.
+		// Hardcoded "cocoon-main" until proper registration tracking is implemented.
 		let TargetSideCar = "cocoon-main".to_string();
 
 		// 1. Resolve configuration (Reverse-RPC to Cocoon)
@@ -237,24 +199,18 @@ impl DebugService for MountainEnvironment {
 
 		// Adapter-descriptor DTO shapes mirror VS Code's
 		// `vs/workbench/api/common/extHostDebugService.ts::convert*ToDto`:
-		//   executable  → { type: "executable", command, args, options: { env?, cwd? }
-		// }   server      → { type: "server", port, host? }
+		//   executable  → { type: "executable", command, args, options: { env?, cwd? } }
+		//   server      → { type: "server", port, host? }
 		//   pipeServer  → { type: "pipeServer", path }
-		//   implementation → { type: "implementation" }   (handled in-process by
-		// Cocoon)
+		//   implementation → { type: "implementation" }   (handled in-process by Cocoon)
 		//
-		// Phase 1 of DAP spawning supports `executable` only - that covers
-		// every JS/TS debug adapter (vscode-js-debug, node) and most
-		// language-server-driven adapters that ship as a CLI binary.
-		// Server / pipeServer connections are stubbed with a warn-log + a
-		// session-registry entry without an `StdinSender`, so SendCommand
-		// can still resolve the session and surface "adapter type
-		// unsupported" instead of a silent no-op. Inline implementations
-		// are handled entirely in the extension host - Cocoon's
-		// `$createDebugAdapterDescriptor` returns `{type:"implementation"}`
-		// and Cocoon dispatches DAP frames internally; we still record
-		// the session so `vscode.debug.onDidStartDebugSession` listeners
-		// receive the activation event.
+		// Phase 1 supports `executable` only — covers every JS/TS debug adapter
+		// (vscode-js-debug, node) and most language-server-driven adapters that
+		// ship as a CLI binary. Server/pipeServer connections are stubbed with a
+		// warn-log + a session-registry entry without a StdinSender, so SendCommand
+		// can surface "adapter type unsupported" instead of a silent no-op.
+		// TODO: Wire server / pipeServer adapter connection (TCP / named-pipe).
+		// TODO: Wire reverse-RPC `$sendDAPRequest` Cocoon handler for inline-impl adapters.
 		let DescriptorType = Descriptor.get("type").and_then(Value::as_str).unwrap_or("").to_string();
 
 		let AdapterStdinSender:Option<tokio::sync::mpsc::UnboundedSender<Vec<u8>>>;
@@ -440,9 +396,8 @@ impl DebugService for MountainEnvironment {
 					}
 				});
 
-				// Stderr drain: emit each line as a `[DebugAdapter] stderr`
-				// dev_log line so adapter crash reasons surface alongside
-				// other Mountain logs.
+				// Stderr drain: emit each line as a dev_log line so adapter
+				// crash reasons surface alongside other Mountain logs.
 				let StderrSessionId = SessionID.clone();
 
 				tokio::spawn(async move {
