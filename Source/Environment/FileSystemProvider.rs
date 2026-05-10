@@ -1,61 +1,29 @@
 //! # FileSystemProvider (Environment)
 //!
-//! RESPONSIBILITIES:
-//! - Implements
-//!   [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) and
-//!   [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for
-//! `MountainEnvironment`
-//! - Provides secure, validated filesystem access with workspace trust
-//!   enforcement
-//! - Handles file operations: read, write, stat, delete, rename, copy,
-//!   directory traversal
-//! - Detects and handles symbolic links properly
-//! - Enforces path validation to prevent directory traversal attacks
+//! Implements [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader)
+//! and [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter) for
+//! `MountainEnvironment`, providing secure, validated filesystem access with
+//! workspace trust enforcement. Handles read, write, stat, delete, rename,
+//! copy, and directory traversal; detects symbolic links.
 //!
-//! SECURITY MODEL:
-//! - Sandboxed filesystem access limited to registered workspace folders
-//! - All operations call `Utility::PathSecurity::IsPathAllowedForAccess` first
-//! - Requires workspace trust to be enabled for any file access
-//! - Path normalization prevents `../` attacks
-//! - Symbolic link detection avoids following untrusted links outside
-//!   workspaces
+//! ## Security model
 //!
-//! ERROR HANDLING:
-//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
-//! - File operation errors are mapped via `CommonError::FromStandardIOError`
-//! - Validates paths are within workspace boundaries (IsPathAllowedForAccess)
-//! - Rejects directory reads when file expected (ReadFile)
+//! All operations call `Utility::PathSecurity::IsPathAllowedForAccess` before
+//! touching the filesystem. Access is sandboxed to registered workspace
+//! folders, path normalization blocks `../` traversal, and symbolic links
+//! outside the workspace are not followed.
 //!
-//! PERFORMANCE:
-//! - Uses async tokio::fs for non-blocking I/O operations
-//! - Symbolic link detection uses `symlink_metadata` in addition to `metadata`
-//! - TODO: Consider caching file metadata for frequently accessed files
+//! ## Implementation
 //!
-//! VS CODE REFERENCE:
-//! - `vs/workbench/services/files/electron-browser/diskFileSystemProvider.ts` -
-//!   secure FS access
-//! - `vs/platform/files/common/files.ts` - file system interfaces
-//! - `vs/base/common/network.ts` - URI and path handling
+//! The trait impl is split across two sub-modules loaded via `#[path]`:
+//! - `FileSystemProvider/ReadOperations.rs` — `FileSystemReader` impl
+//! - `FileSystemProvider/WriteOperations.rs` — `FileSystemWriter` impl
 //!
-//! TODO:
-//! - Implement filesystem change watching (notify, inotify, FSEvents)
-//! - Add path normalization to prevent directory traversal
-//! - Implement proper symbolic link resolution with security checks
-//! - Add support for file permissions and ownership metadata
-//! - Implement atomic file writes using temp file + rename pattern
-//! - Add filesystem usage statistics (disk space, file counts)
-//! - Implement file attribute querying (hidden, readonly, executable)
-//! - Add support for extended file attributes on Unix/macOS
-//! - Consider adding filesystem cache for metadata
-//! - Implement trash operation using platform trash API (not delete)
-//! - Add support for file system encoding detection
-//! - Implement case sensitivity handling based on filesystem type
+//! ## VS Code reference
 //!
-//! MODULE STRUCTURE:
-//! - [`ReadOperations.rs`](ReadOperations.rs) - `FileSystemReader`
-//!   implementation
-//! - [`WriteOperations.rs`](WriteOperations.rs) - `FileSystemWriter`
-//!   implementation
+//! - `vs/workbench/services/files/electron-browser/diskFileSystemProvider.ts`
+//! - `vs/platform/files/common/files.ts`
+//! - `vs/base/common/network.ts`
 
 use std::path::PathBuf;
 
@@ -78,6 +46,10 @@ mod ReadOperations;
 #[path = "FileSystemProvider/WriteOperations.rs"]
 mod WriteOperations;
 
+// TODO: filesystem change watching, path normalization, atomic writes via
+// temp+rename, file permissions/ownership metadata, extended attributes,
+// trash API (not delete), encoding detection, case-sensitivity handling,
+// filesystem usage statistics, metadata caching.
 #[async_trait]
 impl FileSystemReader for MountainEnvironment {
 	/// Delegates to ReadOperations module
