@@ -71,46 +71,63 @@
 //! Full setup: <https://github.com/CodeEditorLand/Land>
 
 // Core Infrastructure
-/// Centralized error handling system
+
+/// Local error taxonomy (superseded; zero callers — see `CommonLibrary::Error::CommonError`).
 pub mod Error;
 
+/// Centralized, thread-safe application state managed by Tauri.
 pub mod ApplicationState;
 
+/// Capability providers: file system, process, terminal, and extension host.
 pub mod Environment;
 
+/// Effect execution engine that drives `ActionEffect` pipelines.
 pub mod RunTime;
 
 // Communication
+
+/// Inter-process communication primitives.
 pub mod IPC;
 
+/// Client for the Air background daemon (updates and crypto signing).
 pub mod Air;
 
+/// gRPC server and client for Cocoon extension host communication.
 pub mod Vine;
 
+/// Remote procedure call service implementations.
 pub mod RPC;
 
-// Caching primitives (mmap asset cache, path canonicalisation cache,
-// future entries). See `Cache/mod.rs` for the index.
+/// MemoryMap asset cache, path-canonicalisation cache, and future entries.
+/// See `Cache` module index for the full entry list.
 pub mod Cache;
 
 // Services
+
+/// Sidecar process lifecycle: launch, monitor, and restart.
 pub mod ProcessManagement;
 
+/// Native TreeView provider for the File Explorer.
 pub mod FileSystem;
 
+/// Extension discovery, scanning, and activation.
 pub mod ExtensionManagement;
 
 // Commands
+
+/// Native command handlers for file, edit, view, and terminal operations.
 pub mod Command;
 
+/// Central command dispatcher routing UI requests to the correct provider.
 pub mod Track;
 
+/// `.code-workspace` file parsing and multi-root workspace support.
 pub mod Workspace;
 
-// Tier-gating runtime banner
+/// Emits a single ISO-timestamped boot banner listing all compiled-in tier values.
 pub mod LandFixTier;
 
-// Entry Point
+/// Binary entry points for desktop and mobile builds.
 pub mod Binary;
 
 /// Main entry point for both mobile and desktop builds.
