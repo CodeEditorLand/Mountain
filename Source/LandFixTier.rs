@@ -18,7 +18,7 @@
 //!
 //! ## Call Site
 //!
-//! `LogResolvedTiers()` is called unconditionally from `Binary/Main/Entry::Fn`
+//! `LogResolvedTiers()` is called unconditionally from `Binary::Main::Entry::Fn`
 //! before the Tokio runtime begins spawning tasks. `dev_log!` is synchronous,
 //! so the banner is guaranteed to land in the log before any extension code
 //! runs.
@@ -37,7 +37,7 @@ use crate::dev_log;
 
 /// Emits one ISO-timestamped line at boot listing the compiled-in value of all
 /// 17 tier variables (`TierRemoteProcedureCall` … `TierTelemetry`). Call once,
-/// from `Binary/Main/Entry::Fn`, after the logging infrastructure is ready and
+/// from `Binary::Main::Entry::Fn`, after the logging infrastructure is ready and
 /// before the Tokio runtime spawns any tasks.
 pub fn LogResolvedTiers() {
 	dev_log!(
