@@ -4,7 +4,7 @@
 //! static-disk asset served via `vscode-file://`, `tauri://`, or `land://`
 //! scheme handlers).
 //!
-//! ## Why mmap and not `Vec<u8>`
+//! ## Why MemoryMap and not Vec<u8>
 //!
 //! The bundled workbench under `Element/Sky/Target/Static/Application/` ships
 //! ~80 MB of `.js`, `.css`, `.svg`, and font assets. Per-request `fs::read`

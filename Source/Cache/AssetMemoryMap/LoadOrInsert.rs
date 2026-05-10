@@ -2,8 +2,8 @@
 
 //! Load `Path` into the cache (or return the existing entry).
 //!
-//! Returns `Err` only if the file cannot be opened or mmap'd; missing brotli
-//! siblings are silently ignored (best-effort optimisation).
+//! Returns `Err` only if the file cannot be opened or memory-mapped; missing
+//! brotli siblings are silently ignored (best-effort optimisation).
 
 use std::{
 	path::{Path, PathBuf},
@@ -27,7 +27,7 @@ pub fn Fn(Path:&Path) -> std::io::Result<Arc<Entry::Struct>> {
 	let Length = File.metadata()?.len() as usize;
 
 	// SAFETY: caller agrees the file is not truncated underneath us for the
-	// lifetime of the mmap. The bundle directory is read-only at runtime;
+	// lifetime of the MemoryMap. The bundle directory is read-only at runtime;
 	// mutations happen at build time and require a binary restart.
 	let Mapping = unsafe { Mmap::map(&File)? };
 

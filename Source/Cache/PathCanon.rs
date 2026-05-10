@@ -12,7 +12,7 @@
 //! `vscode-file://` request - so collapsing repeats to a hash lookup saves
 //! ~150 ms cumulative on the boot path.
 //!
-//! TTL = 60 s to bound staleness against external `mv`/rename. moka's
+//! TimeToLive = 60 s to bound staleness against external `mv`/rename. moka's
 //! `time_to_idle` resets on each access, so hot paths stay cached
 //! indefinitely while one-shot paths evict naturally.
 

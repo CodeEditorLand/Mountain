@@ -1,19 +1,20 @@
 #![allow(non_snake_case)]
 
-//! Single mmap-backed asset cache entry. Holds the file-backed mapping plus
-//! metadata computed once at load time.
+//! Single MemoryMap-backed asset cache entry. Holds the file-backed mapping
+//! plus metadata computed once at load time.
 
 use memmap2::Mmap;
 
 pub struct Struct {
-	/// The mmap itself. Keep alive as long as any webview body references it.
+	/// The MemoryMap mapping itself. Keep alive as long as any webview body
+	/// references it.
 	pub Mapping:Mmap,
 
 	/// Cached MIME from the file extension. Avoids the match arm on the hot
 	/// path.
 	pub Mime:&'static str,
 
-	/// File size at mmap time. Used for `Content-Length`.
+	/// File size at MemoryMap time. Used for `Content-Length`.
 	pub Length:usize,
 
 	/// Optional pre-brotli-compressed sibling (path with `.br` suffix). `None`
