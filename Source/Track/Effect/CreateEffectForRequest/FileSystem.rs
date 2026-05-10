@@ -80,6 +80,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					Box::pin(async move {
 						let fs_writer:Arc<dyn FileSystemWriter> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						if path_str.is_empty() {
+							return Err("FileSystem.WriteFile: empty path (resource not found)".to_string());
+						}
 						let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
 						let content = Parameters.get(1).cloned();
 						let content_bytes = match content {
@@ -104,8 +107,18 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 						let path_str = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
+						// Empty-path guard: same contract as ReadFile and
+						// Stat. An empty string from an extension probe
+						// must return "resource not found" so the
+						// LooksLike404 classifier in
+						// MountainVinegRPCService downgrades the log level
+						// and uses error code -32004 instead of tripping
+						// the circuit breaker with a -32000.
+						if path_str.is_empty() {
+							return Err("FileSystem.ReadDirectory: empty path (resource not found)".to_string());
+						}
+						let fs_reader:Arc<dyn FileSystemReader> = run_time.Environment.Require();
 						let path = std::path::PathBuf::from(StripFileUriScheme(path_str));
 						fs_reader
 							.ReadDirectory(&path)
