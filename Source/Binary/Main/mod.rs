@@ -1,105 +1,64 @@
-//! # Main Module (Binary)
+#![allow(non_snake_case)]
+
+//! # Binary::Main
 //!
-//! ## RESPONSIBILITIES
+//! Application orchestration layer providing entry point, IPC command
+//! handlers, lifecycle management, and tray integration for the Mountain
+//! desktop application.
 //!
-//! Main application orchestration providing entry point, command handlers,
-//! lifecycle management, and tray integration for the Mountain desktop
-//! application.
-//!
-//! This module serves as the primary entry point for the application and
-//! coordinates all initialization, execution, and shutdown operations.
-//!
-//! ## ARCHITECTURAL ROLE
-//!
-//! The Main module is the **orchestration layer** in Mountain's architecture:
+//! ## Module Layout
 //!
 //! ```text
-//! main.rs ──► Binary::Main (Entry::Fn)
-//!                      │
-//!                      ├─► Entry::Fn() (Main entry point)
-//!                      ├─► IPCCommands (Tauri command handlers)
-//!                      ├─► AppLifecycle (Setup and initialization)
-//!                      └─► Tray (System tray icon management)
+//! main.rs --> Binary::Main::Entry::Fn()
+//!                      |
+//!                      +-> Entry       (Tokio runtime creation, Tauri builder)
+//!                      +-> IPCCommands (all #[tauri::command] handlers)
+//!                      +-> AppLifecycle(setup hook: tray, IPC server, window)
+//!                      +-> Tray        (SwitchTrayIcon Tauri command)
 //! ```
 //!
-//! ## KEY COMPONENTS
+//! ## Error Handling
 //!
-//! - **Entry** (`Entry::Fn`): Main application entry point exported as
-//!   `Binary::Main::Fn()`
-//! - **IPCCommands**: All Tauri command handlers for frontend-backend
-//!   communication
-//!   - Workbench configuration commands
-//!   - IPC messaging commands
-//!   - Wind desktop configuration commands
-//!   - Configuration management commands
-//!   - Status reporting commands
-//!   - Performance monitoring commands
-//!   - Collaboration commands
-//!   - Document sync commands
-//! - **AppLifecycle**: Application lifecycle management and setup
-//! - **Tray**: System tray icon switching based on theme
+//! - `Entry::Fn` panics on fatal errors (Tokio runtime failure, Tauri build).
+//! - IPC commands return `Result<serde_json::Value, String>`.
+//! - Lifecycle setup returns `Result<(), Box<dyn std::error::Error>>`.
+//! - Non-critical failures are logged but do not prevent operation.
 //!
-//! ## EXPORTS
+//! ## Logging
 //!
-//! - `pub use Entry::Fn as Main`: Main entry point
-//! - All IPC command functions are exported from IPCCommands
-//! - `AppLifecycleSetup`: Application setup function from AppLifecycle
-//! - `SwitchTrayIcon`: Tray icon switching command from Tray
+//! Log prefixes used throughout: `[Boot]`, `[Lifecycle]`, `[IPC]`, `[UI]`.
 //!
-//! ## ERROR HANDLING
-//!
-//! - Entry point panics on fatal errors (Tokio runtime, Tauri build)
-//! - IPC commands return `Result<serde_json::Value, String>`
-//! - Lifecycle setup returns `Result<(), Box<dyn std::error::Error>>`
-//! - Non-critical failures are logged but don't prevent operation
-//!
-//! ## LOGGING
-//!
-//! Comprehensive logging throughout with checkpoints at key stages.
-//! Logs use standardized prefixes: `[Boot]`, `[Lifecycle]`, `[IPC]`, `[UI]`.
-//!
-//! ## PERFORMANCE CONSIDERATIONS
-//!
-//! - Async initialization spawned after main setup
-//! - Compile-time resource embedding for tray icons
-//! - Minimal allocation overhead with efficient error handling
-//!
-//! ## TODO
-//! - [ ] Add comprehensive error recovery mechanism
-//! - [ ] Implement startup progress indicator
-//! - [ ] Add graceful degradation for service failures
-//! - [ ] Implement performance metrics collection
+//! No `pub use` re-exports - callers use the full path
+//! `Binary::Main::Entry::Fn()` directly.
 
-/// Main application entry point and orchestration.
+// TODO: add comprehensive error recovery mechanism
+// TODO: implement startup progress indicator
+// TODO: add graceful degradation for service failures
+// TODO: implement performance metrics collection
+
+/// Main application entry point.
 ///
-/// Contains the `Fn()` function which is the primary entry point for the
-/// Mountain
-// desktop application. This function creates the Tokio runtime, initializes
-// application state, sets up the Tauri builder, and runs the application.
+/// Exports `Fn()` which creates the Tokio runtime, initializes application
+/// state, constructs the Tauri builder, and runs the event loop.
 pub mod Entry;
 
 /// IPC command handlers.
 ///
-/// Contains all Tauri command handlers that provide the frontend-backend
-/// communication bridge. Commands include workbench configuration, IPC
-/// messaging,
-// Wind desktop integration, configuration management, status reporting,
-// performance monitoring, collaboration, and document synchronization.
+/// All `#[tauri::command]` functions providing the frontend-to-backend
+/// invoke bridge: workbench configuration, IPC messaging, Wind desktop
+/// integration, configuration management, status reporting, performance
+/// monitoring, collaboration, and document synchronization.
 pub mod IPCCommands;
 
 /// Application lifecycle management.
 ///
-/// Contains the `AppLifecycleSetup()` function which handles all initialization
-// during the Tauri setup hook, including tray initialization, command
-// registration, IPC server setup, window creation, environment configuration,
-// and async service initialization.
+/// Exports `AppLifecycleSetup()` which runs inside the Tauri setup hook:
+/// tray initialization, command registration, IPC server setup, window
+/// creation, environment configuration, and async service startup.
 pub mod AppLifecycle;
 
 /// System tray commands.
 ///
-/// Contains the `SwitchTrayIcon()` Tauri command for switching the system tray
-// icon based on the current theme (light/dark mode).
+/// Exports the `SwitchTrayIcon()` Tauri command for switching the system
+/// tray icon based on the active theme (light or dark mode).
 pub mod Tray;
-
-// No `pub use` re-exports - call `Binary::Main::Entry::Fn()` directly from
-// `Library.rs::main`.
