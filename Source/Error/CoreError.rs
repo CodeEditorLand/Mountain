@@ -4,24 +4,23 @@
 //! per-domain sibling modules (`IPCError`, `FileSystemError`,
 //! `ConfigurationError`, `ProviderError`, `ServiceError`) wrap an
 //! `ErrorContext` and converge on `MountainError` via a `From` impl.
-//!
-//! TODO atomic split: this file is **NOT** atomized into one-symbol-per-
-//! file because the five sibling modules each construct
-//! `ErrorContext { context: ..., severity: ..., kind: ... }` literally,
-//! and call `.with_kind` / `.with_severity` / `.with_operation`. Splitting
-//! `ErrorContext`/`MountainError` into `Struct`-renamed atoms would
-//! require renaming every field+method across ~700 lines of dead code.
-//! Defer until the whole stack is either deleted or migrated to
-//! `CommonLibrary::Error::CommonError`.
-//!
-//! TODO: zero callers as of 2026-05-02 - superseded by
-//! `CommonLibrary::Error::CommonError`.
+
+// TODO: this file is NOT atomized into one-symbol-per-file because the five
+// sibling modules each construct `ErrorContext { context: ..., severity: ...,
+// kind: ... }` literally, and call `.with_kind` / `.with_severity` /
+// `.with_operation`. Splitting `ErrorContext`/`MountainError` into
+// `Struct`-renamed atoms would require renaming every field+method across
+// ~700 lines of dead code. Defer until the whole stack is either deleted or
+// migrated to `CommonLibrary::Error::CommonError`.
+//
+// TODO: zero callers as of 2026-05-02 - superseded by
+// `CommonLibrary::Error::CommonError`.
 
 use std::{error::Error as StdError, fmt};
 
 use serde::{Deserialize, Serialize};
 
-/// Severity level of an error
+/// Severity level of an error.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ErrorSeverity {
 	Info = 0,
