@@ -1,67 +1,22 @@
-// =============================================================================
-// Binary / Tray
-// =============================================================================
-//
-//! # Binary Tray Module
+#![allow(non_snake_case)]
+
+//! # Binary::Tray
 //!
 //! System tray integration for the Mountain application.
-//!
-//! ## RESPONSIBILITIES
-//!
-//! ### Tray Icon Management
-//! - Create and configure system tray icon
-//! - Handle dynamic icon switching based on theme (Light/Dark)
-//! - Manage tray icon loading and rendering
-//!
-//! ### Tray Menu
-//! - Build and configure tray menu with menu items
-//! - Handle menu item clicks (Open, Hide, Quit)
-//! - Display tooltips and context information
-//!
-//! ### Tray Event Handling
-//! - Handle system tray icon events (click, double-click)
-//! - Toggle window visibility on left click
-//! - Manually show/hide main window through tray menu
-//!
-//! ## ARCHITECTURAL ROLE
-//!
-//! ### Position in Mountain
-//! - Subsystem of the Binary entry point
-//! - Provides system tray functionality to the Tauri application
-//! - Manages desktop integration and background operation
-//!
-//! ### Dependencies
-//! - Tauri: Desktop framework for tray API
-//! - log: Logging infrastructure
-//!
-//! ### Dependents
-//! - Binary/EntryPoint: Initializes tray on application startup
-//!
-//! ### VSCode Patterns Borrowed
-//! - System tray integration with menu structure
-//! - Window visibility toggle on tray icon click
-//! - Theme-aware icon switching
-//! - Graceful degradation when tray initialization fails
-//!
-//! ## TODO
-//!
-//! ### Immediate Improvements
-//! - Add support for tray notification badges
-//! - Implement tray icon animation for activity indication
-//! - Add context menu customization based on application state
-//!
-//! ### Future Work
-//! - Support for custom tray icon sets (third-party themes)
-//! - Implement tray icon tooltips with dynamic status
-//! - Add multiple tray instance support for multi-window scenarios
-//! - Implement tray menu item state (enabled/disabled, checked/unchecked)
-//!
-//! ### Missing Functionality to Probe
-//! - Optimal icon size for different DPI settings
-//! - Platform-specific tray behavior differences (macOS, Windows, Linux)
-//! - Tray menu item localization support
-//! - Notification click-through behavior
+//! Manages tray icon lifecycle: initial creation (`EnableTray`),
+//! theme-aware icon switching (`SwitchTrayIcon`), menu construction
+//! (Open / Hide / Quit items), and window-visibility toggling on
+//! left-click. Degrades gracefully if the desktop environment has no
+//! tray support.
 
-pub mod SwitchTrayIcon;
+// TODO: add tray notification badge support
+// TODO: implement tray icon animation for background activity indication
+// TODO: add context-menu state (enabled/disabled, checked/unchecked) per item
+// TODO: investigate optimal icon sizes for HiDPI settings across platforms
+// TODO: investigate platform-specific tray behavior differences (macOS, Windows, Linux)
 
+/// Create and register the initial system tray icon and menu.
 pub mod EnableTray;
+
+/// `#[tauri::command]` that switches the tray icon between light and dark variants.
+pub mod SwitchTrayIcon;

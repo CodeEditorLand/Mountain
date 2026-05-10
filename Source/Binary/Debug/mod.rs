@@ -1,32 +1,11 @@
-//! # Debug
+#![allow(non_snake_case)]
+
+//! # Binary::Debug
 //!
 //! Debug tracing infrastructure for the Mountain binary.
-//!
-//! ## RESPONSIBILITIES
-//!
-//! ### Module Organization
-//! - Export all debug-related modules
-//! - Provide TraceStep macro for execution tracking
-//!
-//! ## ARCHITECTURAL ROLE
-//!
-//! ### Position in Mountain
-//! - Top-level debug module in Binary subsystem
-//!
-//! ### Dependencies
-//! - log: Logging framework
-//!
-//! ### Dependents
-//! - All Binary subsystem modules requiring debug tracing
-//!
-//! ## SECURITY
-//!
-//! ### Considerations
-//! - All debug output is filtered by log level
-//!
-//! ## PERFORMANCE
-//!
-//! ### Considerations
-//! - Zero-cost when debug logging disabled
+//! Exports the `TraceLog` module which provides the `TraceStep!` macro
+//! for annotated execution-path logging; all output is gated behind the
+//! active log level and compiles to a no-op in release builds.
 
+/// Execution-path trace logging macro and supporting utilities.
 pub mod TraceLog;
