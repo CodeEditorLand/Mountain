@@ -1,7 +1,9 @@
 //! # Service Error Types
 //!
-//! Provides service-related error types for Mountain.
-//! Used for all service operation errors.
+//! Service-related error types for Mountain.
+//! Covers service discovery, lifecycle transitions (start, stop,
+//! already-running, not-running), operation timeout, and dependency
+//! resolution failures.
 
 use std::{error::Error as StdError, fmt};
 
@@ -9,36 +11,36 @@ use serde::{Deserialize, Serialize};
 
 use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 
-/// Service operation error types
+/// Service operation error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ServiceError {
-	/// Service not found
+	/// Service not found.
 	ServiceNotFound { context:ErrorContext, service_name:String },
 
-	/// Service initialization failed
+	/// Service initialization failed.
 	InitializationFailed { context:ErrorContext, service_name:String, source:Option<String> },
 
-	/// Service already running
+	/// Service already running.
 	AlreadyRunning { context:ErrorContext, service_name:String },
 
-	/// Service not running
+	/// Service not running.
 	NotRunning { context:ErrorContext, service_name:String },
 
-	/// Service start failed
+	/// Service start failed.
 	StartFailed { context:ErrorContext, service_name:String, source:Option<String> },
 
-	/// Service stop failed
+	/// Service stop failed.
 	StopFailed { context:ErrorContext, service_name:String, source:Option<String> },
 
-	/// Service timeout
+	/// Service timeout.
 	Timeout { context:ErrorContext, service_name:String, operation:String, timeout_ms:u64 },
 
-	/// Service dependency error
+	/// Service dependency error.
 	DependencyError { context:ErrorContext, service_name:String, dependency:String },
 }
 
 impl ServiceError {
-	/// Get the error context
+	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
 			ServiceError::ServiceNotFound { context, .. } => context,
@@ -59,7 +61,7 @@ impl ServiceError {
 		}
 	}
 
-	/// Create a service not found error
+	/// Create a service not found error.
 	pub fn service_not_found(service_name:impl Into<String>) -> Self {
 		let service_name_str = service_name.into();
 
@@ -72,7 +74,7 @@ impl ServiceError {
 		}
 	}
 
-	/// Create an initialization failed error
+	/// Create an initialization failed error.
 	pub fn initialization_failed(service_name:impl Into<String>, source:Option<String>) -> Self {
 		let service_name_str = service_name.into();
 
@@ -87,7 +89,7 @@ impl ServiceError {
 		}
 	}
 
-	/// Create an already running error
+	/// Create an already running error.
 	pub fn already_running(service_name:impl Into<String>) -> Self {
 		let service_name_str = service_name.into();
 
@@ -100,7 +102,7 @@ impl ServiceError {
 		}
 	}
 
-	/// Create a not running error
+	/// Create a not running error.
 	pub fn not_running(service_name:impl Into<String>) -> Self {
 		let service_name_str = service_name.into();
 
@@ -113,7 +115,7 @@ impl ServiceError {
 		}
 	}
 
-	/// Create a start failed error
+	/// Create a start failed error.
 	pub fn start_failed(service_name:impl Into<String>, source:Option<String>) -> Self {
 		let service_name_str = service_name.into();
 
@@ -128,7 +130,7 @@ impl ServiceError {
 		}
 	}
 
-	/// Create a timeout error
+	/// Create a timeout error.
 	pub fn timeout(service_name:impl Into<String>, operation:impl Into<String>, timeout_ms:u64) -> Self {
 		let service_name_str = service_name.into();
 
@@ -151,7 +153,7 @@ impl ServiceError {
 		}
 	}
 
-	/// Create a dependency error
+	/// Create a dependency error.
 	pub fn dependency_error(service_name:impl Into<String>, dependency:impl Into<String>) -> Self {
 		let service_name_str = service_name.into();
 
