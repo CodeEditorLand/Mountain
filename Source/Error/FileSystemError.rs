@@ -1,7 +1,9 @@
 //! # File System Error Types
 //!
-//! Provides file system operation error types for Mountain.
-//! Used for all file system related errors.
+//! File system operation error types for Mountain.
+//! Covers not-found, permission denial, raw I/O failures, invalid
+//! paths, directory-state violations, and file/directory type
+//! mismatches.
 
 use std::{error::Error as StdError, fmt, path::PathBuf};
 
@@ -9,36 +11,36 @@ use serde::{Deserialize, Serialize};
 
 use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 
-/// File system operation error types
+/// File system operation error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum FileSystemError {
-	/// File not found
+	/// File not found.
 	FileNotFound { context:ErrorContext, path:PathBuf },
 
-	/// Permission denied
+	/// Permission denied.
 	PermissionDenied { context:ErrorContext, path:PathBuf },
 
-	/// I/O error occurred
+	/// I/O error occurred.
 	IOError { context:ErrorContext, path:Option<PathBuf>, operation:String },
 
-	/// Invalid path
+	/// Invalid path.
 	InvalidPath { context:ErrorContext, path:PathBuf },
 
-	/// Directory not empty
+	/// Directory not empty.
 	DirectoryNotEmpty { context:ErrorContext, path:PathBuf },
 
-	/// File already exists
+	/// File already exists.
 	FileAlreadyExists { context:ErrorContext, path:PathBuf },
 
-	/// Not a directory
+	/// Not a directory.
 	NotADirectory { context:ErrorContext, path:PathBuf },
 
-	/// Not a file
+	/// Not a file.
 	NotAFile { context:ErrorContext, path:PathBuf },
 }
 
 impl FileSystemError {
-	/// Get the error context
+	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
 			FileSystemError::FileNotFound { context, .. } => context,
@@ -59,7 +61,7 @@ impl FileSystemError {
 		}
 	}
 
-	/// Create a file not found error
+	/// Create a file not found error.
 	pub fn file_not_found(path:impl Into<PathBuf>) -> Self {
 		let path = path.into();
 
@@ -72,7 +74,7 @@ impl FileSystemError {
 		}
 	}
 
-	/// Create a permission denied error
+	/// Create a permission denied error.
 	pub fn permission_denied(path:impl Into<PathBuf>) -> Self {
 		let path = path.into();
 
@@ -85,7 +87,7 @@ impl FileSystemError {
 		}
 	}
 
-	/// Create an I/O error
+	/// Create an I/O error.
 	pub fn io_error(operation:impl Into<String>, path:Option<PathBuf>, message:impl Into<String>) -> Self {
 		let operation_str = operation.into();
 
@@ -101,7 +103,7 @@ impl FileSystemError {
 		}
 	}
 
-	/// Create an invalid path error
+	/// Create an invalid path error.
 	pub fn invalid_path(path:impl Into<PathBuf>) -> Self {
 		let path = path.into();
 
@@ -114,7 +116,7 @@ impl FileSystemError {
 		}
 	}
 
-	/// Get the affected path
+	/// Get the affected path.
 	pub fn path(&self) -> Option<&PathBuf> {
 		match self {
 			FileSystemError::FileNotFound { path, .. } => Some(path),
