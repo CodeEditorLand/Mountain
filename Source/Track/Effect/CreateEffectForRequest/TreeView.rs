@@ -129,12 +129,65 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 		"tree.unregister" | "tree.dispose" => {
 			let effect =
-				move |_run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let handle = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
-						dev_log!("ipc", "[tree.unregister] handle={}", handle);
-						Ok(json!(null))
+						let view_id = Parameters
+							.get(0)
+							.and_then(Value::as_str)
+							.unwrap_or("")
+							.to_string();
+						dev_log!(
+							"tree-view",
+							"[TreeView] unregister view={}",
+							view_id
+						);
+						if view_id.is_empty() {
+							dev_log!(
+								"tree-view",
+								"[TreeView] unregister skipped: empty view_id"
+							);
+							return Ok(json!(null));
+						}
+						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
+						let Result = provider.UnregisterTreeDataProvider(view_id.clone()).await;
+						dev_log!(
+							"tree-view",
+							"[TreeView] unregister result={} view={}",
+							if Result.is_ok() { "ok" } else { "err" },
+							view_id
+						);
+						// Emit TreeViewDispose so Sky's
+						// `_dataProvider` slot is cleared on the
+						// renderer side. Without this emit, Sky keeps
+						// the stale provider reference alive and
+						// `getChildren` continues to hit it after
+						// the extension has disposed the registration.
+						if Result.is_ok() {
+							match LogSkyEmit(
+								&run_time.Environment.ApplicationHandle,
+								SkyEvent::TreeViewDispose.AsStr(),
+								json!({ "viewId": view_id }),
+							) {
+								Ok(()) => {
+									dev_log!(
+										"tree-view",
+										"[TreeView] dispose-emit-ok channel={} view={}",
+										SkyEvent::TreeViewDispose.AsStr(),
+										view_id
+									);
+								},
+								Err(Error) => {
+									dev_log!(
+										"grpc",
+										"warn: [LandFix:Tree] failed to emit {} for view={}: {}",
+										SkyEvent::TreeViewDispose.AsStr(),
+										view_id,
+										Error
+									);
+								},
+							}
+						}
+						Result.map(|_| json!(null)).map_err(|e| e.to_string())
 					})
 				};
 
