@@ -1,57 +1,27 @@
 //! # CustomEditorProvider (Environment)
 //!
-//! RESPONSIBILITIES:
-//! - Implements
-//!   [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider)
-//!   for [`MountainEnvironment`]
-//! - Manages registration and lifecycle of custom non-text editors
-//! - Coordinates Webview-based editing experiences (SVG editors, diff viewers,
-//!   etc.)
-//! - Handles editor resolution, save operations, and provider unregistration
+//! Implements [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider)
+//! for `MountainEnvironment`, managing registration and lifecycle of custom
+//! non-text editors. Coordinates Webview-based editing experiences (SVG
+//! editors, diff viewers, etc.) and handles editor resolution, save
+//! operations, and provider unregistration.
 //!
-//! ARCHITECTURAL ROLE:
-//! - Environment provider that enables extension-contributed custom editors
-//! - Uses [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC
-//!   communication with Cocoon
-//! - Integrates with `ApplicationState` for provider registration persistence
+//! Uses [`IPCProvider`](CommonLibrary::IPC::IPCProvider) for RPC communication
+//! with Cocoon and integrates with `ApplicationState` for provider registration
+//! persistence.
 //!
-//! ERROR HANDLING:
-//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
-//! - ViewType validation: rejects empty view types with InvalidArgument error
-//! - OnSaveCustomDocument now reverse-RPCs to the owning sidecar via
+//! ## Methods
+//!
+//! - `RegisterCustomEditorProvider` — register extension provider by view type
+//! - `UnregisterCustomEditorProvider` — unregister provider
+//! - `OnSaveCustomDocument` — workbench → extension save reverse-RPC via
 //!   `$onSaveCustomDocument`; returns the sidecar's error verbatim on failure
-//!   so the workbench's save promise rejects with a real reason.
+//! - `ResolveCustomEditor` — fire-and-forget RPC to populate the webview
 //!
-//! PERFORMANCE:
-//! - Provider registration lookup should be O(1) via hash map in
-//!   ApplicationState (TODO)
-//! - ResolveCustomEditor uses fire-and-forget RPC pattern to avoid waiting
+//! ## VS Code reference
 //!
-//! VS CODE REFERENCE:
-//! - `vs/workbench/contrib/customEditor/browser/customEditorService.ts` -
-//!   custom editor service
-//! - `vs/workbench/contrib/customEditor/common/customEditor.ts` - custom editor
-//!   interfaces
-//! - `vs/platform/workspace/common/workspace.ts` - resource URI handling
-//!
-//! TODO:
-//! - Store provider registrations in ApplicationState with capability metadata
-//! - Implement custom editor backup/restore mechanism
-//! - Add support for multiple active instances of the same viewType
-//! - Implement custom editor move and rename handling
-//! - Add proper validation of viewType and resource URI
-//! - Implement editor-specific command registration
-//! - Add support for custom editor dispose/cleanup
-//! - Consider adding editor state persistence across reloads
-//! - Implement proper error recovery for Webview crashes
-//! - Add telemetry for custom editor usage metrics
-//!
-//! MODULE CONTENTS:
-//! - [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider) implementation:
-//! - `RegisterCustomEditorProvider` - register extension provider
-//! - `UnregisterCustomEditorProvider` - unregister provider
-//! - `OnSaveCustomDocument` - workbench → extension save reverse-RPC
-//! - `ResolveCustomEditor` - resolve editor content via RPC
+//! - `vs/workbench/contrib/customEditor/browser/customEditorService.ts`
+//! - `vs/workbench/contrib/customEditor/common/customEditor.ts`
 
 use std::sync::Arc;
 
@@ -86,12 +56,10 @@ impl CustomEditorProvider for MountainEnvironment {
 			});
 		}
 
-		// Register custom editor provider in ApplicationState for lifecycle management
-		// and resolution. Should associate ViewType with the sidecar identifier for
-		// RPC routing, store provider capabilities (supportsMultipleEditors,
-		// serialization support), store custom options (mime types, file extensions),
-		// validate that the ViewType is not already registered to prevent conflicts,
-		// and track registration timestamp and extension origin for debugging.
+		// TODO: Store in ApplicationState associating ViewType with the sidecar
+		// identifier for RPC routing, record provider capabilities
+		// (supportsMultipleEditors, serialization), validate no duplicate
+		// ViewType, and track registration timestamp and extension origin.
 
 		Ok(())
 	}
@@ -103,12 +71,9 @@ impl CustomEditorProvider for MountainEnvironment {
 			ViewType
 		);
 
-		// Remove custom editor provider registration from ApplicationState. Should
-		// check if any active editors are currently using this ViewType and either
-		// force close with unsaved changes warning or prevent unregistration, remove
-		// all stored configuration, capabilities, and sidecar association, notify the
-		// sidecar extension to clean up its internal state, and remove any cached
-		// resolution entries for this ViewType.
+		// TODO: Check for active editors using this ViewType, force close or
+		// block, remove config/capabilities/sidecar association, notify sidecar
+		// to clean up, and remove cached resolution entries.
 
 		Ok(())
 	}
