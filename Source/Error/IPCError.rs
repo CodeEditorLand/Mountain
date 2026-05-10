@@ -1,7 +1,9 @@
 //! # IPC Error Types
 //!
-//! Provides IPC-specific error types for Mountain.
-//! Used for all IPC communication errors.
+//! IPC-specific error types for Mountain.
+//! Covers connection establishment, message send and receive,
+//! format validation, operation timeout, permission checks,
+//! service availability, and queue capacity.
 
 use std::{error::Error as StdError, fmt};
 
@@ -9,36 +11,36 @@ use serde::{Deserialize, Serialize};
 
 use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 
-/// IPC-specific error types
+/// IPC-specific error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum IPCError {
-	/// Connection failed
+	/// Connection failed.
 	ConnectionFailed { context:ErrorContext, source:Option<String> },
 
-	/// Message send failed
+	/// Message send failed.
 	MessageSendFailed { context:ErrorContext, message_id:Option<String> },
 
-	/// Message receive failed
+	/// Message receive failed.
 	MessageReceiveFailed { context:ErrorContext, source:Option<String> },
 
-	/// Invalid message format
+	/// Invalid message format.
 	InvalidMessageFormat { context:ErrorContext, raw_message:Option<String> },
 
-	/// Timeout occurred
+	/// Timeout occurred.
 	Timeout { context:ErrorContext, operation:Option<String>, timeout_ms:u64 },
 
-	/// Permission denied
+	/// Permission denied.
 	PermissionDenied { context:ErrorContext, required_permission:Option<String> },
 
-	/// Service unavailable
+	/// Service unavailable.
 	ServiceUnavailable { context:ErrorContext, service_name:Option<String> },
 
-	/// Queue overflow
+	/// Queue overflow.
 	QueueOverflow { context:ErrorContext, queue_size:usize },
 }
 
 impl IPCError {
-	/// Get the error context
+	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
 			IPCError::ConnectionFailed { context, .. } => context,
@@ -59,7 +61,7 @@ impl IPCError {
 		}
 	}
 
-	/// Create a connection failed error
+	/// Create a connection failed error.
 	pub fn connection_failed(message:impl Into<String>) -> Self {
 		Self::ConnectionFailed {
 			context:ErrorContext::new(message)
@@ -70,7 +72,7 @@ impl IPCError {
 		}
 	}
 
-	/// Create a message send failed error
+	/// Create a message send failed error.
 	pub fn message_send_failed(message:impl Into<String>, message_id:Option<String>) -> Self {
 		Self::MessageSendFailed {
 			context:ErrorContext::new(message)
@@ -81,7 +83,7 @@ impl IPCError {
 		}
 	}
 
-	/// Create a timeout error
+	/// Create a timeout error.
 	pub fn timeout(operation:impl Into<String>, timeout_ms:u64) -> Self {
 		let operation_str = operation.into();
 
@@ -97,7 +99,7 @@ impl IPCError {
 		}
 	}
 
-	/// Create a permission denied error
+	/// Create a permission denied error.
 	pub fn permission_denied(message:impl Into<String>, required_permission:Option<String>) -> Self {
 		Self::PermissionDenied {
 			context:ErrorContext::new(message)
@@ -108,7 +110,7 @@ impl IPCError {
 		}
 	}
 
-	/// Create a service unavailable error
+	/// Create a service unavailable error.
 	pub fn service_unavailable(message:impl Into<String>, service_name:Option<String>) -> Self {
 		Self::ServiceUnavailable {
 			context:ErrorContext::new(message)
