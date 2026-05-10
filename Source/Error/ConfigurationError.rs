@@ -1,7 +1,8 @@
 //! # Configuration Error Types
 //!
 //! Provides configuration management error types for Mountain.
-//! Used for all configuration related errors.
+//! Covers key lookup, value validation, parse failures, file I/O,
+//! and circular-dependency detection in configuration graphs.
 
 use std::{error::Error as StdError, fmt};
 
@@ -9,36 +10,36 @@ use serde::{Deserialize, Serialize};
 
 use super::CoreError::{ErrorContext, ErrorKind, ErrorSeverity, MountainError};
 
-/// Configuration operation error types
+/// Configuration operation error types.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConfigurationError {
-	/// Configuration key not found
+	/// Configuration key not found.
 	KeyNotFound { context:ErrorContext, key:String, section:Option<String> },
 
-	/// Invalid configuration value
+	/// Invalid configuration value.
 	InvalidValue { context:ErrorContext, key:String, expected_type:String },
 
-	/// Configuration validation failed
+	/// Configuration validation failed.
 	ValidationFailed { context:ErrorContext, errors:Vec<String> },
 
-	/// Configuration parse error
+	/// Configuration parse error.
 	ParseError { context:ErrorContext, format:String, source:String },
 
-	/// Configuration file not found
+	/// Configuration file not found.
 	FileNotFound { context:ErrorContext, path:String },
 
-	/// Configuration file read error
+	/// Configuration file read error.
 	FileReadError { context:ErrorContext, path:String, source:String },
 
-	/// Configuration file write error
+	/// Configuration file write error.
 	FileWriteError { context:ErrorContext, path:String, source:String },
 
-	/// Circular dependency detected
+	/// Circular dependency detected.
 	CircularDependency { context:ErrorContext, keys:Vec<String> },
 }
 
 impl ConfigurationError {
-	/// Get the error context
+	/// Get the error context.
 	pub fn context(&self) -> &ErrorContext {
 		match self {
 			ConfigurationError::KeyNotFound { context, .. } => context,
@@ -59,7 +60,7 @@ impl ConfigurationError {
 		}
 	}
 
-	/// Create a key not found error
+	/// Create a key not found error.
 	pub fn key_not_found(key:impl Into<String>, section:Option<String>) -> Self {
 		let key = key.into();
 
@@ -80,7 +81,7 @@ impl ConfigurationError {
 		}
 	}
 
-	/// Create an invalid value error
+	/// Create an invalid value error.
 	pub fn invalid_value(key:impl Into<String>, expected_type:impl Into<String>) -> Self {
 		let key_str = key.into();
 
@@ -100,7 +101,7 @@ impl ConfigurationError {
 		}
 	}
 
-	/// Create a validation failed error
+	/// Create a validation failed error.
 	pub fn validation_failed(errors:Vec<String>) -> Self {
 		Self::ValidationFailed {
 			context:ErrorContext::new(format!("Configuration validation failed with {} error(s)", errors.len()))
@@ -111,7 +112,7 @@ impl ConfigurationError {
 		}
 	}
 
-	/// Create a parse error
+	/// Create a parse error.
 	pub fn parse_error(format:impl Into<String>, source:impl Into<String>, message:impl Into<String>) -> Self {
 		Self::ParseError {
 			context:ErrorContext::new(message)
@@ -124,7 +125,7 @@ impl ConfigurationError {
 		}
 	}
 
-	/// Create a file not found error
+	/// Create a file not found error.
 	pub fn file_not_found(path:impl Into<String>) -> Self {
 		let path_str = path.into();
 
@@ -137,7 +138,7 @@ impl ConfigurationError {
 		}
 	}
 
-	/// Create a circular dependency error
+	/// Create a circular dependency error.
 	pub fn circular_dependency(keys:Vec<String>) -> Self {
 		Self::CircularDependency {
 			context:ErrorContext::new(format!("Circular dependency detected in configuration: {}", keys.join(" -> ")))
