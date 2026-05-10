@@ -31,18 +31,15 @@
 //! `$activateByEvent` to Cocoon, yields 50 ms for the fire-and-forget
 //! `registerCommand` notification to arrive, then retries the lookup.
 //!
+//! ## Backlog
+//!
+//! - Contribution points from extensions; enablement/disable state
+//! - Categories, grouping, aliases, deprecation
+//! - History and undo/redo stack; keyboard shortcut resolution
+//! - Permission validation; batching for related operations; telemetry
+//!
 //! VS Code reference: `vs/platform/commands/common/commands.ts`,
 //! `vs/workbench/services/commands/common/commandService.ts`.
-
-// TODO: implement command contribution points from extensions
-// TODO: add command enablement/disable state management
-// TODO: support command categories and grouping
-// TODO: add command history and undo/redo stack
-// TODO: implement command keyboard shortcut resolution
-// TODO: add command telemetry (usage metrics)
-// TODO: support command aliases and deprecation
-// TODO: add command permission validation
-// TODO: implement command batching for related operations
 
 use std::{future::Future, pin::Pin, sync::Arc};
 
