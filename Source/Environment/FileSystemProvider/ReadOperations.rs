@@ -1,11 +1,24 @@
-//! # FileSystemProvider - Read Operations
+//! # FileSystemProvider — Read Operations
 //!
-//! Implementation of
-//! [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader) for
-//! [`MountainEnvironment`]
+//! Implements [`FileSystemReader`](CommonLibrary::FileSystem::FileSystemReader)
+//! for [`MountainEnvironment`]. All three functions call
+//! `Utility::PathSecurity::IsPathAllowedForAccess` first, which enforces
+//! workspace-trust rules and prevents path-traversal escapes.
 //!
-//! Provides secure, validated filesystem read access with workspace trust
-//! enforcement.
+//! ## Functions
+//!
+//! - `read_file_impl` — validates the path is a regular file (not a
+//!   directory), then reads bytes via `tokio::fs::read`.
+//! - `stat_file_impl` — returns a `FileSystemStatDTO` with file type flags
+//!   (File / Directory / SymbolicLink bitmask), mtime, ctime, and size.
+//!   Symlink detection uses a second `symlink_metadata` call because
+//!   `metadata` follows links. `Permissions` is currently `None`;
+//!   see the inline comment for the Windows / Unix implementation plan.
+//!   `CreationTime` falls back to `0` on platforms that don't expose it
+//!   (e.g. Linux).
+//! - `read_directory_impl` — validates the path is a directory, streams
+//!   entries via `tokio::fs::read_dir`, and classifies each entry as
+//!   `File`, `Directory`, `SymbolicLink`, or `Unknown`.
 
 use std::path::PathBuf;
 
