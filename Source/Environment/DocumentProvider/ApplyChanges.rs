@@ -1,7 +1,16 @@
 //! Document change application logic.
 //!
-//! Handles applying incremental text edits to documents via LSP-style
-//! DidChangeTextDocument notifications.
+//! Implements `ApplyDocumentChanges` for `MountainEnvironment`. Receives an
+//! LSP-style `DidChangeTextDocument` payload (a JSON array of range-based
+//! text edits), applies it to the in-memory `DocumentStateDTO` stored in
+//! `ApplicationState::Feature::Documents::OpenDocuments`, then forwards the
+//! same payload to Cocoon via `notify_model_changed` so the extension host's
+//! model mirrors the workbench state.
+//!
+//! Unknown URIs (document not in `OpenDocuments`) are silently ignored with
+//! a `warn:` log — this can legitimately happen during the brief window
+//! between a document being closed on the Sky side and the last in-flight
+//! change notification arriving from Cocoon.
 
 use CommonLibrary::Error::CommonError::CommonError;
 use serde_json::Value;

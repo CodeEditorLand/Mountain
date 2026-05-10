@@ -1,7 +1,20 @@
 //! Document opening and content resolution logic.
 //!
-//! Handles opening documents from file:// URIs, custom scheme URIs (via sidecar
-//! providers), and already-open documents.
+//! Implements `OpenDocument` for `MountainEnvironment`. Resolution order:
+//!
+//! 1. **Already open** — if the URI is already in `OpenDocuments`, re-emits
+//!    `sky://documents/open` so the Sky workbench focuses the existing tab
+//!    and returns immediately without a disk read.
+//! 2. **Caller-supplied content** — if the `content` argument is `Some`,
+//!    it is used verbatim (used by untitled / virtual documents).
+//! 3. **`file://` URI** — content is read from disk via `ApplicationRunTime`.
+//! 4. **Custom scheme** — content is fetched from the Cocoon sidecar via
+//!    `$provideTextDocumentContent` RPC (10 s timeout). This covers schemes
+//!    like `git:`, `output:`, `vscode-notebook-cell:`, etc.
+//!
+//! On success, a new `DocumentStateDTO` is inserted into `OpenDocuments`,
+//! `sky://documents/open` is emitted to the Sky workbench, and
+//! `$acceptModelAdded` is sent to Cocoon.
 
 use std::sync::Arc;
 

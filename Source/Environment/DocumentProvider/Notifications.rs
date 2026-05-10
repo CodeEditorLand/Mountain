@@ -1,4 +1,17 @@
-//! Notification helpers for sending document lifecycle events to Cocoon.
+//! Document lifecycle notification helpers.
+//!
+//! Sends LSP-style RPC notifications to the Cocoon extension-host sidecar
+//! so its `ExtHostDocuments` model stays in sync with Mountain's
+//! `OpenDocuments` state. All four helpers follow the same pattern:
+//! serialize a payload, call `IPCProvider::SendNotificationToSideCar`, and
+//! log any emit error without propagating it (notifications are fire-and-forget).
+//!
+//! | Helper | Cocoon RPC method | Trigger |
+//! |---|---|---|
+//! | `notify_model_added` | `$acceptModelAdded` | document opened / created |
+//! | `notify_model_changed` | `$acceptModelChanged` | incremental text edit applied |
+//! | `notify_model_saved` | `$acceptModelSaved` | document written to disk |
+//! | `notify_model_removed` | `$acceptModelRemoved` | document closed or renamed |
 
 use std::sync::Arc;
 

@@ -1,6 +1,30 @@
 //! Document save operations.
 //!
-//! Handles SaveDocument, SaveDocumentAs, and SaveAllDocuments.
+//! Implements `SaveDocument`, `SaveDocumentAs`, and `SaveAllDocuments` for
+//! `MountainEnvironment`.
+//!
+//! ## `save_document`
+//!
+//! Looks up the document in `OpenDocuments`, clears `IsDirty`, writes the
+//! current text to disk via `ApplicationRunTime`, emits
+//! `sky://documents/saved` to the Sky workbench, and sends
+//! `$acceptModelSaved` to Cocoon. Returns `Err` if the URI is not
+//! in `OpenDocuments` or cannot be converted to a file path.
+//!
+//! ## `save_document_as`
+//!
+//! If `new_target_uri` is `None`, shows a native save dialog via
+//! `ShowSaveDialog`. On confirmation, writes the original document's text
+//! to the new path, re-keys `OpenDocuments` from the old URI to the new one,
+//! sends `$acceptModelRemoved` + `$acceptModelAdded` to Cocoon, and emits
+//! `sky://documents/renamed`.
+//!
+//! ## `save_all_documents`
+//!
+//! Collects all dirty `file://` documents (plus untitled ones when
+//! `include_untitled` is `true`), calls `save_document` for each, and
+//! returns a `Vec<bool>` result per URI. Individual save failures are
+//! logged but do not abort the remaining saves.
 
 use std::{path::PathBuf, sync::Arc};
 
