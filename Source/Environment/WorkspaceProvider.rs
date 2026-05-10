@@ -1,65 +1,22 @@
 //! # WorkspaceProvider (Environment)
 //!
-//! RESPONSIBILITIES:
-//! - Implements
-//!   [`WorkspaceProvider`](CommonLibrary::Workspace::WorkspaceProvider) and
-//!   [`WorkspaceEditApplier`](CommonLibrary::Workspace::WorkspaceEditApplier)
-//!   traits for [`MountainEnvironment`]
-//! - Manages multi-root workspace folder operations and configuration
-//! - Provides workspace trust management and file discovery capabilities
-//! - Handles workspace edit application and custom editor routing
+//! Implements [`WorkspaceProvider`] and [`WorkspaceEditApplier`] traits for
+//! [`MountainEnvironment`], exposing workspace-level functionality to the
+//! frontend via gRPC through `AirService`.
 //!
-//! ARCHITECTURAL ROLE:
-//! - Core provider in the Environment system, exposing workspace-level
-//!   functionality to frontend via gRPC through the `AirService`
-//! - Workspace provider is one of the foundational services alongside Document,
-//!   Configuration, and Diagnostic providers
-//! - Integrates with `ApplicationState` for persistent workspace folder storage
+//! ## Responsibilities
 //!
-//! ERROR HANDLING:
-//! - Uses [`CommonError`](CommonLibrary::Error::CommonError) for all operations
-//! - Application state lock errors are mapped using
-//!   [`Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError`]
-//! - Some operations are stubbed with logging (FindFilesInWorkspace, OpenFile,
-//!   ApplyWorkspaceEdit)
+//! - Multi-root workspace folder enumeration and URI matching
+//! - Workspace trust management (`IsWorkspaceTrusted` / `RequestWorkspaceTrust`)
+//! - File discovery (`FindFilesInWorkspace`) with LRU cache + single-flight
+//!   dedup (see inline doc on that method)
+//! - Workspace edit application — two-tier: emit Sky event for open documents;
+//!   atomic on-disk splice for closed files
 //!
-//! PERFORMANCE:
-//! - Workspace folder lookup uses O(n) linear search through folder list
-//! - Lock contention on `ApplicationState.Workspace.WorkspaceFolders` should be
-//!   minimized
-//! - File discovery and workspace edit application are not yet optimized
+//! ## VS Code reference
 //!
-//! VS CODE REFERENCE:
-//! - `vs/workbench/services/workspace/browser/workspaceService.ts` - workspace
-//!   service implementation
-//! - `vs/workbench/contrib/files/common/editors/textFileEditor.ts` - file
-//!   editor integration
-//! - `vs/platform/workspace/common/workspace.ts` - workspace types and
-//!   interfaces
-//!
-//! TODO:
-//! - Implement actual file search with glob pattern matching
-//! - Implement file opening with workspace-relative paths
-//! - Complete workspace edit application logic
-//! - Add workspace event propagation to subscribers
-//! - Implement custom editor routing by view type
-//!
-//! MODULE CONTENTS:
-//! - [`WorkspaceProvider`](CommonLibrary::Workspace::WorkspaceProvider)
-//!   implementation:
-//! - `GetWorkspaceFoldersInfo` - enumerate all workspace folders
-//! - `GetWorkspaceFolderInfo` - find folder containing a URI
-//! - `GetWorkspaceName` - workspace identifier from state
-//! - `GetWorkspaceConfigurationPath` - .code-workspace path
-//! - `IsWorkspaceTrusted` - trust status check
-//! - `RequestWorkspaceTrust` - trust acquisition (stub)
-//! - `FindFilesInWorkspace` - file discovery (stub)
-//! - `OpenFile` - file opening (stub)
-//! - [`WorkspaceEditApplier`](CommonLibrary::Workspace::WorkspaceEditApplier)
-//!   implementation:
-//! - `ApplyWorkspaceEdit` - edit application (stub)
-//! - Data types: [`(Url, String, usize)`] tuple for folder info (URI, name,
-//!   index)
+//! - `vs/workbench/services/workspace/browser/workspaceService.ts`
+//! - `vs/platform/workspace/common/workspace.ts`
 
 use std::{
 	collections::HashMap,

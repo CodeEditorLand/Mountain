@@ -1,113 +1,36 @@
 //! # UserInterfaceProvider (Environment)
 //!
 //! Implements the `UserInterfaceProvider` trait for `MountainEnvironment`,
-//! orchestrating all modal UI interactions like dialogs, messages, and quick
-//! picks by communicating with the `Sky` frontend.
+//! orchestrating all modal UI interactions (dialogs, messages, quick picks)
+//! by communicating with the `Sky` frontend.
 //!
-//! ## RESPONSIBILITIES
+//! ## Request-response pattern
 //!
-//! ### 1. Modal Dialogs
-//! - Open file/folder selection dialogs (`OpenDialog`)
-//! - Save file dialogs (`SaveDialog`)
-//! - Message boxes (`ShowMessage`, `ShowErrorMessage`)
-//! - Input boxes for text entry (`InputBox`)
-//! - Quick pick lists for selection (`QuickPick`)
+//! Every blocking UI operation follows the same flow:
+//! 1. Generate a UUID request ID.
+//! 2. Insert a `tokio::sync::oneshot::Sender` in
+//!    `ApplicationState.UI.PendingUserInterfaceRequest`.
+//! 3. Emit a Tauri event to Sky with the ID and payload.
+//! 4. Await the oneshot (timeout: 300 s); `DispatchLogic::ResolveUIRequest`
+//!    resolves it when the user responds.
 //!
-//! ### 2. Request-Response Pattern
-//! - Send UI requests to Sky frontend via IPC
-//! - Track pending requests with unique IDs
-//! - Wait for responses with timeout handling
-//! - Resolve results via `ResolveUIRequest` callback
+//! The shared helper `SendUserInterfaceRequest` (pub-crate) is also used by
+//! effect creators (`applyEdit`, `showTextDocument`, `Task.Execute`) that need
+//! the same request-ID / oneshot pattern instead of fire-and-forget emits.
 //!
-//! ### 3. Thread Safety
-//! - All methods are async and safe for concurrent access
-//! - Pending requests stored in
-//! `ApplicationState.UI.PendingUserInterfaceRequest`
-//! - Uses `tokio::sync::oneshot` for request-response coordination
+//! ## Operations
 //!
-//! ## ARCHITECTURAL ROLE
+//! - `ShowMessage` — modal message box (`Info` / `Warning` / `Error`)
+//! - `ShowOpenDialog` — native file/folder picker (via `tauri-plugin-dialog`;
+//!   supports multi-select, folder-only, and file-type filters)
+//! - `ShowSaveDialog` — native save-file picker
+//! - `ShowQuickPick` — Sky `sky://quickpick/show` (camelCase wire shape)
+//! - `ShowInputBox` — Sky `sky://input-box/show` (camelCase wire shape)
 //!
-//! UserInterfaceProvider is the **UI bridge** for Mountain:
+//! ## VS Code reference
 //!
-//! ```text
-//! Provider ──► UI Request ──► Sky Frontend ──► User Interaction ──► ResolveUIRequest
-//! ```
-//!
-//! ### Position in Mountain
-//! - `Environment` module: UI capability provider
-//! - Implements `CommonLibrary::UserInterface::UserInterfaceProvider` trait
-//! - Accessible via `Environment.Require<dyn UserInterfaceProvider>()`
-//!
-//! ### Dependencies
-//! - `ApplicationState`: Pending request tracking
-//! - `IPCProvider`: For sending messages to Sky
-//! - `tauri::AppHandle`: For window/parent references
-//!
-//! ### Dependents
-//! - Any command that needs to show UI dialogs
-//! - `DispatchLogic::ResolveUIRequest`: Completes the request-response cycle
-//! - Error handlers: Show error messages to users
-//!
-//! ## DTO STRUCTURES
-//!
-//! All UI operations use DTOs for type-safe options:
-//! - `OpenDialogOptionsDTO`: File/folder selection options
-//! - `SaveDialogOptionsDTO`: Save file dialog options
-//! - `QuickPickOptionsDTO`: Quick pick list configuration
-//! - `InputBoxOptionsDTO`: Input box configuration
-//! - `MessageSeverity`: Info, Warning, Error levels
-//!
-//! ## REQUEST FLOW
-//!
-//! 1. Provider method called (e.g., `ShowMessage`)
-//! 2. Generate unique request ID
-//! 3. Store `oneshot::Sender` in `PendingUserInterfaceRequest` map
-//! 4. Send IPC message to Sky with request ID and options
-//! 5. Sky shows UI and waits for user action
-//! 6. User responds → Sky calls `ResolveUIRequest` Tauri command
-//! 7. `ResolveUIRequest` looks up sender by ID and sends result
-//! 8. Provider method returns result to caller
-//!
-//! ## ERROR HANDLING
-//!
-//! - IPC failures: `CommonError::IPCError`
-//! - Timeout: `CommonError::RequestTimeout`
-//! - User cancellation: `None` result (not error)
-//! - Invalid arguments: `CommonError::InvalidArgument`
-//!
-//! ## PERFORMANCE
-//!
-//! - Requests are async and non-blocking
-//! - Timeouts prevent indefinite waiting (default ~30s)
-//! - Request IDs are time-based for uniqueness
-//! - Pending request map uses `Arc<Mutex<>>` for thread safety
-//!
-//! ## VS CODE REFERENCE
-//!
-//! Borrowed from VS Code's UI system:
-//! - `vs/platform/dialogs/common/dialogs.ts` - Dialog service API
-//! - `vs/platform/prompt/common/prompt.ts` - Input and quick pick
-//! - `vs/workbench/services/decorator/common/decorator.ts` - Message service
-//!
-//! ## TODO
-//!
-//! - [ ] Add support for custom dialog buttons and layouts
-//! - [ ] Implement file/folder filters with glob patterns
-//! - [ ] Add dialog position and sizing controls
-//! - [ ] Support modal vs non-modal dialogs
-//! - [ ] Add accessibility features (screen reader support)
-//! - [ ] Implement dialog theming (dark/light mode)
-//! - [ ] Add file type/extension selection in save dialog
-//! - [ ] Support multi-select in quick pick and file dialogs
-//! - [ ] Add async progress reporting during long operations
-//! - [ ] Implement custom input validation (regex, etc.)
-//!
-//! ## MODULE CONTENTS
-//!
-//! - [`UserInterfaceProvider`]: Main struct implementing the trait
-//! - Dialog-specific methods: `ShowMessage`, `OpenDialog`, `SaveDialog`
-//! - Selection methods: `QuickPick`, `InputBox`
-//! - Request-response coordination logic
+//! - `vs/platform/dialogs/common/dialogs.ts`
+//! - `vs/platform/prompt/common/prompt.ts`
 
 use std::path::PathBuf;
 
@@ -136,6 +59,12 @@ use uuid::Uuid;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::dev_log;
+
+// TODO: custom dialog buttons/layouts, glob-pattern file-type filters,
+// dialog position + sizing, modal vs non-modal, accessibility (screen reader),
+// theming (dark/light auto), file-extension selection in save dialog,
+// multi-select in quick pick + file dialogs, async progress reporting,
+// custom input validation (regex).
 
 #[derive(Serialize, Clone)]
 struct UserInterfaceRequest<TPayload:Serialize + Clone> {

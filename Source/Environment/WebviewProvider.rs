@@ -1,158 +1,44 @@
+#![allow(non_snake_case)]
+
 //! # WebviewProvider (Environment)
 //!
 //! Implements the `WebviewProvider` trait for `MountainEnvironment`, providing
-//! the core logic for creating, managing, and securing Webview panels - the
-//! embedded browser-based UI components that power many extension features.
+//! the core logic for creating, managing, and securing Webview panels.
 //!
-//! ## RESPONSIBILITIES
-//!
-//! ### 1. Webview Panel Creation
-//! - Create webview windows with proper configuration
-//! - Set up webview content (HTML, CSS, JavaScript)
-//! - Configure webview security (CSP, sandbox, permissions)
-//! - Initialize webview lifecycle and event handlers
-//!
-//! ### 2. Webview Management
-//! - Track active webview instances in `ApplicationState.Feature.Webviews`
-//! - Handle webview focus and visibility changes
-//! - Support webview window positioning and sizing
-//! - Manage webview disposal and cleanup
-//!
-//! ### 3. Secure Message Passing
-//! - Establish bidirectional IPC between host and webview
-//! - Validate and route messages between webview and extension sidecar
-//! - Implement message authentication and authorization
-//! - Prevent cross-origin security vulnerabilities
-//!
-//! ### 4. State Persistence
-//! - Save webview state (position, size, content) to `ApplicationState`
-//! - Restore webview state when reopening
-//! - Persist webview settings across sessions
-//! - Handle webview state serialization/deserialization
-//!
-//! ### 5. Content Security
-//! - Enforce content security policy (CSP)
-//! - Sandbox webview content to prevent escape
-//! - Validate webview URLs and origins
-//! - Protect against XSS and injection attacks
-//!
-//! ## ARCHITECTURAL ROLE
-//!
-//! WebviewProvider is the **webview lifecycle manager**:
+//! ## Architecture
 //!
 //! ```text
-//! Extension ──► CreateWebview ──► WebviewProvider ──► Tauri WebviewWindow
+//! Extension → CreateWebviewPanel → WebviewProvider → Tauri WebviewWindow
 //!                     │                              │
-//!                     └─► IPC ──► Cocoon ◄───────────┘
+//!                     └→ IPC → Cocoon ◄───────────┘
 //! ```
 //!
-//! ### Position in Mountain
-//! - `Environment` module: Web content capability provider
-//! - Implements `CommonLibrary::Webview::WebviewProvider` trait
-//! - Accessible via `Environment.Require<dyn WebviewProvider>()`
+//! ## Webview types
 //!
-//! ### Webview Types
-//! - **Panel**: Sidebar or panel webview (non-floating)
-//! - **Editor**: Webview as custom editor (full editor area)
-//! - **Modal**: Modal dialog webview (centered, blocks interaction)
-//! - **Widget**: Small embedded webview (e.g., diff viewer)
+//! - **Panel** — sidebar or panel webview (non-floating)
+//! - **Editor** — webview as custom editor (full editor area)
+//! - **Modal** — modal dialog webview (blocks interaction)
+//! - **Widget** — small embedded webview (e.g., diff viewer)
 //!
-//! ### Webview Lifecycle
-//! 1. **Create**: Extension calls `CreateWebview` with options
-//! 2. **Initialize**: Provider builds webview window, sets up event handlers
-//! 3. **Load Content**: HTML loaded, scripts execute
-//! 4. **Ready**: `onDidBecomeVisible` / `onDidBecomeHidden` events
-//! 5. **Dispose**: When closed, cleanup state and resources
+//! ## Lifecycle
 //!
-//! ### Dependencies
-//! - `Tauri`: `WebviewWindowBuilder` for webview creation
-//! - `ApplicationState`: Webview state tracking
-//! - `IPCProvider`: For extension-side communication
-//! - `Log`: Webview lifecycle logging
+//! 1. `CreateWebviewPanel` — build Tauri `WebviewWindow`, set up event
+//!    handlers, record in `ApplicationState.Feature.Webviews`.
+//! 2. `SetWebviewHTML` / `SetWebviewOptions` — configure content and title.
+//! 3. `RevealWebviewPanel` — show and focus.
+//! 4. `PostMessageToWebview` — bidirectional IPC between host and webview.
+//! 5. `DisposeWebviewPanel` — close window and clean up state.
 //!
-//! ### Dependents
-//! - Extensions: Create webviews via `registerWebviewPanelProvider`
-//! - `Binary::Main`: Webview window creation during startup
-//! - `DispatchLogic::MountainWebviewPostMessageFromGuest`: Webview → host
-//!   messages
-//! - UI components: Webview panel management
+//! ## Security
 //!
-//! ## WEBVIEW OPTIONS
+//! Webview runs in a sandboxed process (no Node.js). All `postMessage` calls
+//! are validated; origins are checked to prevent XSS.
+//! Memory footprint is ~50–100 MB per webview — reuse panels when possible.
 //!
-//! `WebviewContentOptionsDTO` controls webview behavior:
-//! - `Handle`: Unique UUID for this webview
-//! - `ViewType`: Extension-defined type identifier
-//! - `Title`: Panel title
-//! - `ContentOptions`: HTML, base URL, scripts, styles
-//! - `PanelOptions`: Size, position, enable/disable features
-//! - `SideCarIdentifier`: Host extension sidecar
-//! - `ExtensionIdentifier`: Owning extension ID
-//! - `IsActive`, `IsVisible`: State flags
+//! ## VS Code reference
 //!
-//! ## SECURITY CONSIDERATIONS
-//!
-//! - **Content Security Policy**: Default CSP restricts external resources
-//! - **Sandbox**: Webview runs in sandboxed process (no Node.js)
-//! - **Message Validation**: All postMessage() calls validated
-//! - **Origin Checking**: Verify message source matches expected webview
-//! - **Permission Management**: Granular permissions for APIs (geolocation,
-//!   etc.)
-//!
-//! ## MESSAGE FLOW
-//!
-//! 1. Extension → Host: `webview.postMessage({ command: "..." })`
-//! 2. Provider receives via `MountainWebviewPostMessageFromGuest` command
-//! 3. Provider forwards to extension via IPC (`SendNotificationToSideCar`)
-//! 4. Extension processes and responds
-//! 5. Host → Extension: `ipc.postMessage({ command: "..." })`
-//! 6. Extension receives via `onDidReceiveMessage` event
-//!
-//! ## PERFORMANCE
-//!
-//! - Webview creation is relatively expensive (new browser context)
-//! - Reuse webviews when possible instead of creating new ones
-//! - Consider lazy loading for rarely used webviews
-//! - Memory usage: ~50-100MB per webview (depending on content)
-//! - Use `Dispose` promptly when webview no longer needed
-//!
-//! ## ERROR HANDLING
-//!
-//! - Webview creation failure: `CommonError::WebviewCreationFailed`
-//! - IPC communication failure: `CommonError::IPCError`
-//! - Invalid webview options: `CommonError::InvalidArgument`
-//! - Webview already exists: `CommonError::DuplicateWebview`
-//!
-//! ## VS CODE REFERENCE
-//!
-//! Patterns from VS Code:
-//! - `vs/workbench/contrib/webview/browser/webviewService.ts` - Webview service
-//! - `vs/workbench/contrib/webview/common/webview.ts` - Webview data model
-//! - `vs/workbench/api/browser/mainThreadWebview.ts` - Extension API
-//!
-//! ## TODO
-//!
-//! - [ ] Implement webview content caching for faster reloads
-//! - [ ] Add webview theming support (dark/light mode auto)
-//! - [ ] Support webview extensions/plugins (custom protocols)
-//! - [ ] Implement webview screenshot and thumbnail generation
-//! - [ ] Add webview performance monitoring (CPU, memory)
-//! - [ ] Support webview clustering for related views
-//! - [ ] Implement webview state snapshots for debugging
-//! - [ ] Add webview accessibility audit and reporting
-//! - [ ] Support webview pausing (suspend when not visible)
-//! - [ ] Implement webview resource preloading strategies
-//! - [ ] Add webview telemetry for usage and performance
-//! - [ ] Support webview offline mode with service workers
-//! - [ ] Implement webview migration across sessions
-//! - [ ] Add webview debugging tools integration
-//!
-//! ## MODULE STRUCTURE
-//!
-//! - [`lifecycle.rs`](lifecycle.rs) - Webview creation, disposal, reveal
-//! - [`configuration.rs`](configuration.rs) - Options and HTML setting
-//! - [`messaging.rs`](messaging.rs) - Message passing and listeners
-
-#![allow(non_snake_case)]
+//! - `vs/workbench/contrib/webview/browser/webviewService.ts`
+//! - `vs/workbench/api/browser/mainThreadWebview.ts`
 
 use std::collections::HashMap;
 
@@ -177,6 +63,12 @@ mod Lifecycle;
 
 #[path = "WebviewProvider/Messaging.rs"]
 mod Messaging;
+
+// TODO: content caching for faster reloads, theming (dark/light auto),
+// custom protocols, screenshot/thumbnail generation, performance monitoring
+// (CPU/memory), webview clustering, state snapshots for debugging,
+// accessibility audit, pause-when-hidden, resource preloading, telemetry,
+// offline mode (service workers), session migration, debugging tools.
 
 /// Webview message handler context. Private - only the dispatch
 /// machinery in `Messaging.rs` consumes it.
