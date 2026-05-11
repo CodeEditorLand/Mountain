@@ -21,7 +21,7 @@
 //! | FileSystem        | `FileSystem.*`, `FileWatcher.*`, `openDocument` aliases  |
 //! | Git               | `$gitExec`                                               |
 //! | Keybinding        | `Keybinding.GetResolved`                                 |
-//! | LanguageFeatures  | `$languageFeatures:registerProvider`                     |
+//! | LanguageFeatures  | `register_*_provider` (one arm per provider type)        |
 //! | Languages         | `Languages.GetAll`                                       |
 //! | NativeHost        | `NativeHost.OpenExternal`                                |
 //! | SCM               | `$scm:*`                                                 |
