@@ -73,15 +73,28 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								"affected": [KeyForEvents.clone()],
 							});
 							let AppHandle = run_time.Environment.ApplicationHandle.clone();
-							let _ = AppHandle.emit("sky://configuration/changed", Payload.clone());
+							if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
+								dev_log!(
+									"config",
+									"warn: [config.update] sky://configuration/changed emit failed: {}",
+									Error
+								);
+							}
 							let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
-							let _ = IPCProvider
+							if let Err(Error) = IPCProvider
 								.SendNotificationToSideCar(
 									"cocoon-main".to_string(),
 									"configuration.change".to_string(),
 									Payload,
 								)
-								.await;
+								.await
+							{
+								dev_log!(
+									"config",
+									"warn: [config.update] Cocoon configuration.change notification failed: {}",
+									Error
+								);
+							}
 						}
 						result.map(|_| json!(null)).map_err(|e| e.to_string())
 					})
