@@ -42,10 +42,29 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn UserInterfaceProvider> = run_time.Environment.Require();
-						let (items, options) = (
-							vec![],
-							None as Option<CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO>,
-						);
+						let items = Parameters
+							.get(0)
+							.and_then(Value::as_array)
+							.cloned()
+							.unwrap_or_default();
+						let options = Parameters
+							.get(1)
+							.and_then(|V| {
+								if V.is_object() {
+									match serde_json::from_value::<
+										CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO,
+									>(V.clone())
+									{
+										Ok(dto) => Some(dto),
+										Err(e) => {
+											dev_log!("ipc", "warn: Failed to deserialize QuickPickOptionsDTO: {}", e);
+											Some(Default::default())
+										},
+									}
+								} else {
+									None
+								}
+							});
 						provider
 							.ShowQuickPick(items, options)
 							.await
