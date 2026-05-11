@@ -23,23 +23,20 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						} else {
 							Parameters
 						};
-						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+						crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 							&run_time.Environment,
 							"sky://workspace/applyEdit",
 							Payload,
 						)
 						.await
-						{
-							Ok(Value) => Ok(Value),
-							Err(Error) => {
-								dev_log!(
-									"ipc",
-									"warn: [applyEdit] Sky did not answer ({:?}); returning synthetic true",
-									Error
-								);
-								Ok(json!(true))
-							},
-						}
+						.map_err(|Error| {
+							dev_log!(
+								"ipc",
+								"error: [applyEdit] Sky did not answer ({:?})",
+								Error
+							);
+							Error.to_string()
+						})
 					})
 				};
 
