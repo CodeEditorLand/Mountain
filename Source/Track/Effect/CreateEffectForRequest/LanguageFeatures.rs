@@ -14,28 +14,91 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
+fn CreateProviderEffect(
+	Parameters:Value,
+	ProviderKind:ProviderType,
+) -> Option<Result<MappedEffect, String>> {
+	let effect =
+		move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+			Box::pin(async move {
+				let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
+				let id = Parameters
+					.get("handle")
+					.and_then(Value::as_str)
+					.unwrap_or("")
+					.to_string();
+				let selector = Parameters.get("language_selector").cloned().unwrap_or_default();
+				let extension_id = Parameters.get("extension_id").cloned().unwrap_or_default();
+				let options = Parameters.get("options").cloned();
+				provider
+					.RegisterProvider(id, ProviderKind, selector, extension_id, options)
+					.await
+					.map(|handle| json!(handle))
+					.map_err(|e| e.to_string())
+			})
+		};
+
+	Some(Ok(Box::new(effect)))
+}
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
-		"$languageFeatures:registerProvider" => {
-			let effect =
-				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
-					Box::pin(async move {
-						let provider:Arc<dyn LanguageFeatureProviderRegistry> = run_time.Environment.Require();
-						let id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						let selector = Parameters.get(1).cloned().unwrap_or_default();
-						let extension_id = Parameters.get(2).cloned().unwrap_or_default();
-						let options = Parameters.get(3).cloned();
-						provider
-							.RegisterProvider(id, ProviderType::Hover, selector, extension_id, options)
-							.await
-							.map(|handle| json!(handle))
-							.map_err(|e| e.to_string())
-					})
-				};
-
-			Some(Ok(Box::new(effect)))
-		},
-
+		"register_hover_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::Hover),
+		"register_completion_item_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::Completion),
+		"register_definition_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::Definition),
+		"register_reference_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::References),
+		"register_code_actions_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::CodeActions),
+		"register_document_highlight_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::DocumentHighlight),
+		"register_document_symbol_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::DocumentSymbol),
+		"register_workspace_symbol_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::WorkspaceSymbol),
+		"register_rename_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::Rename),
+		"register_document_formatting_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::DocumentFormatting),
+		"register_document_range_formatting_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::DocumentRangeFormatting),
+		"register_on_type_formatting_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::OnTypeFormatting),
+		"register_signature_help_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::SignatureHelp),
+		"register_code_lens_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::CodeLens),
+		"register_folding_range_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::FoldingRange),
+		"register_selection_range_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::SelectionRange),
+		"register_semantic_tokens_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::SemanticTokens),
+		"register_inlay_hints_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::InlayHints),
+		"register_type_hierarchy_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::TypeHierarchy),
+		"register_call_hierarchy_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::CallHierarchy),
+		"register_linked_editing_range_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::LinkedEditingRange),
+		"register_document_link_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::DocumentLink),
+		"register_color_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::Color),
+		"register_implementation_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::Implementation),
+		"register_type_definition_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::TypeDefinition),
+		"register_declaration_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::Declaration),
+		"register_evaluatable_expression_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::EvaluatableExpression),
+		"register_inline_values_provider" =>
+			CreateProviderEffect(Parameters, ProviderType::InlineValues),
 		_ => None,
 	}
 }
