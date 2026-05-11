@@ -1,14 +1,21 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! Window-namespace UI commands from Cocoon's window shim. These emit Tauri
-//! events to Sky and return immediately (no reply channel wired yet).
+//! Window-namespace UI commands from Cocoon's window shim.
+//! ShowMessage is fire-and-forget (no selection reply needed).
+//! ShowQuickPick / ShowInputBox / ShowOpenDialog / ShowSaveDialog block on
+//! a oneshot channel that is resolved by the frontend via ResolveUIRequest.
 
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use serde_json::{Value, json};
 use tauri::Runtime;
 
-use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
+use crate::{
+	ApplicationState::State::ApplicationState::ApplicationState,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+	Track::Effect::MappedEffectType::MappedEffect,
+	dev_log,
+};
 
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
@@ -64,7 +71,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						use tauri::Emitter;
+
 						let Args = if Parameters.is_array() { Parameters } else { json!([Parameters]) };
+
 						let Channel = match MethodNameOwned.as_str() {
 							"Window.ShowQuickPick" => "sky://quickpick/show",
 							"Window.ShowInputBox" => "sky://input-box/show",
@@ -72,7 +81,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							"Window.ShowSaveDialog" => "sky://dialog/save",
 							_ => "sky://quickpick/show",
 						};
-						let AppHandle = run_time.Environment.ApplicationHandle.clone();
+
 						let Nonce = format!(
 							"ui-{}",
 							std::time::SystemTime::now()
@@ -80,10 +89,36 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								.map(|D| D.as_nanos())
 								.unwrap_or(0)
 						);
+
+						// Register the reply channel before emitting so the
+						// frontend can never race-resolve before we are waiting.
+						let (tx, rx) = tokio::sync::oneshot::channel();
+						run_time.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
+
+						let AppHandle = run_time.Environment.ApplicationHandle.clone();
 						if let Err(Error) = AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args })) {
+							// Emit failed — remove the dangling sender so the map
+							// does not grow unboundedly on repeated failures.
+							run_time.ApplicationState.UI.RemovePendingRequest(&Nonce.clone());
 							dev_log!("ipc", "warn: [{}] {} emit failed: {}", MethodNameOwned, Channel, Error);
+							return Err(format!("[{}] emit failed: {}", MethodNameOwned, Error));
 						}
-						Ok(Value::Null)
+
+						// Block until the frontend calls ResolveUIRequest with
+						// the same nonce, or the sender is dropped (dialog
+						// dismissed / window closed).
+						match rx.await {
+							Ok(Ok(Value)) => Ok(Value),
+							Ok(Err(CommonError)) => Err(CommonError.to_string()),
+							Err(_RecvError) => {
+								// Sender was dropped without a reply — the user
+								// dismissed the dialog.  Return null so the extension
+								// host sees `undefined` (VS Code contract for cancelled
+								// quick-pick / input-box).
+								dev_log!("ipc", "[{}] dialog dismissed (nonce dropped)", MethodNameOwned);
+								Ok(Value::Null)
+							},
+						}
 					})
 				};
 
