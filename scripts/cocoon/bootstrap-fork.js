@@ -17,11 +17,11 @@
 
 import { performance } from "node:perf_hooks";
 
-const MountainGRPCPort = process.env.MOUNTAIN_GRPC_PORT || "50051";
+const MountainGRPCPort = process.env["MOUNTAIN_GRPC_PORT"] || "50051";
 
-const CocoonGRPCPort = process.env.COCOON_GRPC_PORT || "50052";
+const CocoonGRPCPort = process.env["COCOON_GRPC_PORT"] || "50052";
 
-const ParentPID = process.env.VSCODE_PARENT_PID;
+const ParentPID = process.env["VSCODE_PARENT_PID"];
 
 // ============================================================================
 // Trace - performance.mark only, zero console.log in normal operation
@@ -43,10 +43,10 @@ const PostHogAPIKey = "";
 
 const PostHogHost = "https://eu.i.posthog.com";
 
-const DistinctId = `land-dev-${process.env.USER || process.env.USERNAME || "unknown"}`;
+const DistinctId = `land-dev-${process.env["USER"] || process.env["USERNAME"] || "unknown"}`;
 
 const PostHogCapture = async (EventName, Properties = {}) => {
-	if (process.env.NODE_ENV === "production") return;
+	if (process.env["NODE_ENV"] === "production") return;
 
 	try {
 		const { request } = await import("node:https");
@@ -95,7 +95,7 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 // ============================================================================
 
 const OTLPFlush = async () => {
-	if (process.env.NODE_ENV === "production") return;
+	if (process.env["NODE_ENV"] === "production") return;
 
 	try {
 		const Entries = performance
