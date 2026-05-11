@@ -13,6 +13,24 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
+/// Strip a leading `file://` (or `file:///`) scheme from the incoming path.
+/// Mirrors the helper in `FileSystem.rs`; inlined here to avoid a cross-module
+/// dependency on a private function in a sibling module.
+/// Cocoon sends full URIs like `file:///<home>/.land/extensions/...` through
+/// the legacy `openDocument`/`readFile`/`stat` routes; without stripping,
+/// `PathBuf` roots at the literal scheme string and every read 404s.
+fn StripFileUriScheme(Input:&str) -> &str {
+	if let Some(Rest) = Input.strip_prefix("file://") {
+		if Rest.starts_with('/') {
+			return Rest;
+		}
+		if let Some(Idx) = Rest.find('/') {
+			return &Rest[Idx..];
+		}
+	}
+	Input
+}
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"openDocument" | "readFile" | "stat" => {
@@ -32,7 +50,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						} else {
 							Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string()
 						};
-						let PathBuf_ = std::path::PathBuf::from(&Path);
+						// Empty-path guard: matches the FileSystem.* contract so that
+						// the LooksLike404 classifier in MountainVinegRPCService
+						// downgrades the log level and uses error code -32004 rather
+						// than tripping the circuit breaker with a -32000.
+						if Path.is_empty() {
+							return Err(format!("{}: empty path (resource not found)", MethodNameOwned));
+						}
+						let PathBuf_ = std::path::PathBuf::from(StripFileUriScheme(&Path));
 						match MethodNameOwned.as_str() {
 							"stat" => {
 								fs_reader
