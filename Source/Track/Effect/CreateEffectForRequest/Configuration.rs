@@ -16,6 +16,53 @@ use tauri::Runtime;
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect, dev_log};
 
+async fn UpdateConfigurationValueAndNotify(
+	run_time:Arc<ApplicationRunTime>,
+	key:String,
+	value:Value,
+	target:ConfigurationTarget,
+	log_prefix:&str,
+) -> Result<Value, String> {
+	use tauri::Emitter;
+	let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
+	let KeyForEvents = key.clone();
+	let result = provider
+		.UpdateConfigurationValue(key, value, target, Default::default(), None)
+		.await;
+	if result.is_ok() {
+		let Payload = json!({
+			"keys": [KeyForEvents.clone()],
+			"affected": [KeyForEvents.clone()],
+		});
+		let AppHandle = run_time.Environment.ApplicationHandle.clone();
+		if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
+			dev_log!(
+				"config",
+				"warn: [{}] sky://configuration/changed emit failed: {}",
+				log_prefix,
+				Error
+			);
+		}
+		let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
+		if let Err(Error) = IPCProvider
+			.SendNotificationToSideCar(
+				"cocoon-main".to_string(),
+				"configuration.change".to_string(),
+				Payload,
+			)
+			.await
+		{
+			dev_log!(
+				"config",
+				"warn: [{}] Cocoon configuration.change notification failed: {}",
+				log_prefix,
+				Error
+			);
+		}
+	}
+	result.map(|_| json!(null)).map_err(|e| e.to_string())
+}
+
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"config.get" => {
@@ -42,8 +89,6 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						use tauri::Emitter;
-						let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
 						let (Key, Value_, Target) = if let Some(Object) = Parameters.as_object() {
 							let K = Object.get("key").and_then(Value::as_str).unwrap_or("").to_string();
 							let V = Object.get("value").cloned().unwrap_or_default();
@@ -63,40 +108,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							};
 							(K, V, T)
 						};
-						let KeyForEvents = Key.clone();
-						let result = provider
-							.UpdateConfigurationValue(Key, Value_, Target, Default::default(), None)
-							.await;
-						if result.is_ok() {
-							let Payload = json!({
-								"keys": [KeyForEvents.clone()],
-								"affected": [KeyForEvents.clone()],
-							});
-							let AppHandle = run_time.Environment.ApplicationHandle.clone();
-							if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
-								dev_log!(
-									"config",
-									"warn: [config.update] sky://configuration/changed emit failed: {}",
-									Error
-								);
-							}
-							let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
-							if let Err(Error) = IPCProvider
-								.SendNotificationToSideCar(
-									"cocoon-main".to_string(),
-									"configuration.change".to_string(),
-									Payload,
-								)
-								.await
-							{
-								dev_log!(
-									"config",
-									"warn: [config.update] Cocoon configuration.change notification failed: {}",
-									Error
-								);
-							}
-						}
-						result.map(|_| json!(null)).map_err(|e| e.to_string())
+						UpdateConfigurationValueAndNotify(run_time, Key, Value_, Target, "config.update").await
 					})
 				};
 
@@ -123,8 +135,6 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						use tauri::Emitter;
-						let provider:Arc<dyn ConfigurationProvider> = run_time.Environment.Require();
 						let key = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
 						let value = Parameters.get(1).cloned().unwrap_or_default();
 						let target = match Parameters.get(2).and_then(Value::as_u64) {
@@ -132,40 +142,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							Some(1) => ConfigurationTarget::Workspace,
 							_ => ConfigurationTarget::User,
 						};
-						let KeyForEvents = key.clone();
-						let result = provider
-							.UpdateConfigurationValue(key, value, target, Default::default(), None)
-							.await;
-						if result.is_ok() {
-							let Payload = json!({
-								"keys": [KeyForEvents.clone()],
-								"affected": [KeyForEvents.clone()],
-							});
-							let AppHandle = run_time.Environment.ApplicationHandle.clone();
-							if let Err(Error) = AppHandle.emit("sky://configuration/changed", Payload.clone()) {
-								dev_log!(
-									"config",
-									"warn: [Configuration.Update] sky://configuration/changed emit failed: {}",
-									Error
-								);
-							}
-							let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
-							if let Err(Error) = IPCProvider
-								.SendNotificationToSideCar(
-									"cocoon-main".to_string(),
-									"configuration.change".to_string(),
-									Payload,
-								)
-								.await
-							{
-								dev_log!(
-									"config",
-									"warn: [Configuration.Update] Cocoon configuration.change notification failed: {}",
-									Error
-								);
-							}
-						}
-						result.map(|_| json!(null)).map_err(|e| e.to_string())
+						UpdateConfigurationValueAndNotify(run_time, key, value, target, "Configuration.Update").await
 					})
 				};
 
