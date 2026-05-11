@@ -20,15 +20,19 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.ScannedExtensions
 							.ScannedExtensions
 							.clone();
-						let Guard = match scanned.lock() {
-							Ok(g) => g,
-							Err(error) => {
-								return Err(format!("Languages.GetAll: scanned-extensions lock poisoned: {}", error));
-							},
+
+						let Snapshot = {
+							let Guard = match scanned.lock() {
+								Ok(g) => g,
+								Err(error) => {
+									return Err(format!("Languages.GetAll: scanned-extensions lock poisoned: {}", error));
+								},
+							};
+							Guard.clone()
 						};
 
 						let mut merged:HashMap<String, serde_json::Map<String, Value>> = HashMap::new();
-						for Dto in Guard.values() {
+						for Dto in Snapshot.values() {
 							let Contributes = match Dto.Contributes.as_ref() {
 								Some(c) => c,
 								None => continue,
@@ -77,7 +81,6 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								}
 							}
 						}
-						drop(Guard);
 
 						let result:Vec<Value> = merged.into_values().map(Value::Object).collect();
 						dev_log!("ipc", "[Languages.GetAll] returning {} languages", result.len());
