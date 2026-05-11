@@ -55,7 +55,8 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 use rustls::ServerConfig;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
-use keyring::Entry;
+use keyring_core::Entry;
+use keyring_core::Error as KeyringError;
 
 use crate::dev_log;
 
@@ -427,7 +428,7 @@ impl CertificateManager {
 		let cert = match keyring_entry_cert.get_password() {
 			Ok(s) => s.into_bytes(),
 
-			Err(keyring::Error::NoEntry) => return Ok(None),
+			Err(KeyringError::NoEntry) => return Ok(None),
 
 			Err(e) => return Err(e.into()),
 		};

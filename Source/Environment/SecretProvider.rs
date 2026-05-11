@@ -38,7 +38,7 @@
 
 use CommonLibrary::{Error::CommonError::CommonError, Secret::SecretProvider::SecretProvider};
 use async_trait::async_trait;
-use keyring::Entry;
+use keyring_core::{Entry, Error as KeyringError};
 // Import Air client types when Air is available in the workspace
 #[cfg(feature = "AirIntegration")]
 use AirLibrary::Vine::Generated::air::air_service_client::AirServiceClient;
@@ -111,7 +111,7 @@ impl SecretProvider for MountainEnvironment {
 		match Entry.get_password() {
 			Ok(Password) => Ok(Some(Password)),
 
-			Err(keyring::Error::NoEntry) => Ok(None),
+			Err(KeyringError::NoEntry) => Ok(None),
 
 			Err(Error) => Err(CommonError::SecretsAccess { Key, Reason:Error.to_string() }),
 		}
@@ -211,7 +211,7 @@ impl SecretProvider for MountainEnvironment {
 			.map_err(|Error| CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() })?;
 
 		match Entry.delete_credential() {
-			Ok(_) | Err(keyring::Error::NoEntry) => Ok(()),
+			Ok(_) | Err(KeyringError::NoEntry) => Ok(()),
 
 			Err(Error) => Err(CommonError::SecretsAccess { Key, Reason:Error.to_string() }),
 		}

@@ -53,6 +53,7 @@ grep-searcher = { workspace = true }
 http = { workspace = true }
 ignore = { workspace = true }
 keyring = { workspace = true }
+keyring-core = { workspace = true }
 lazy_static = { workspace = true }
 log = { workspace = true }
 md5 = { workspace = true }
