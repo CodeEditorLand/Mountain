@@ -1,6 +1,6 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-use std::{future::Future, pin::Pin, sync::Arc};
+use std::{future::Future, pin::Pin, sync::Arc, time::Duration};
 
 use serde_json::{Value, json};
 use tauri::Runtime;
@@ -65,15 +65,25 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							Cwd.display()
 						);
 						let StartAt = std::time::Instant::now();
-						let Output = tokio::process::Command::new("git")
-							.args(&Args)
-							.current_dir(&Cwd)
-							.output()
-							.await
-							.map_err(|Error| format!("$gitExec failed to spawn git: {}", Error))?;
-						let ExitCode = Output.status.code().unwrap_or(-1);
-						let Stdout = String::from_utf8_lossy(&Output.stdout).to_string();
-						let Stderr = String::from_utf8_lossy(&Output.stderr).to_string();
+						let OutputResult = tokio::time::timeout(
+							Duration::from_secs(30),
+							tokio::process::Command::new("git")
+								.args(&Args)
+								.current_dir(&Cwd)
+								.output(),
+						)
+						.await
+						.map_err(|_| {
+							format!(
+								"$gitExec timed out after 30s: args={:?} cwd={}",
+								Args,
+								Cwd.display()
+							)
+						})?
+						.map_err(|Error| format!("$gitExec failed to spawn git: {}", Error))?;
+						let ExitCode = OutputResult.status.code().unwrap_or(-1);
+						let Stdout = String::from_utf8_lossy(&OutputResult.stdout).to_string();
+						let Stderr = String::from_utf8_lossy(&OutputResult.stderr).to_string();
 						dev_log!(
 							"grpc",
 
