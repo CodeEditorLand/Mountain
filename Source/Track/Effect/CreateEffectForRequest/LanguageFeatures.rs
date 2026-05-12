@@ -52,7 +52,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"register_reference_provider" =>
 			CreateProviderEffect(Parameters, ProviderType::References),
 		"register_code_actions_provider" =>
-			CreateProviderEffect(Parameters, ProviderType::CodeActions),
+			CreateProviderEffect(Parameters, ProviderType::CodeAction),
 		"register_document_highlight_provider" =>
 			CreateProviderEffect(Parameters, ProviderType::DocumentHighlight),
 		"register_document_symbol_provider" =>
@@ -78,7 +78,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		"register_semantic_tokens_provider" =>
 			CreateProviderEffect(Parameters, ProviderType::SemanticTokens),
 		"register_inlay_hints_provider" =>
-			CreateProviderEffect(Parameters, ProviderType::InlayHints),
+			CreateProviderEffect(Parameters, ProviderType::InlayHint),
 		"register_type_hierarchy_provider" =>
 			CreateProviderEffect(Parameters, ProviderType::TypeHierarchy),
 		"register_call_hierarchy_provider" =>
