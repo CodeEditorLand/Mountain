@@ -46,7 +46,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.get(0)
 							.and_then(Value::as_array)
 							.cloned()
-							.unwrap_or_default();
+							.unwrap_or_default()
+							.into_iter()
+							.filter_map(|v| serde_json::from_value::<CommonLibrary::UserInterface::DTO::QuickPickItemDTO::QuickPickItemDTO>(v).ok())
+							.collect::<Vec<_>>();
 						let options = Parameters
 							.get(1)
 							.and_then(|V| {
