@@ -93,13 +93,13 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						// Register the reply channel before emitting so the
 						// frontend can never race-resolve before we are waiting.
 						let (tx, rx) = tokio::sync::oneshot::channel();
-						run_time.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
+						run_time.Environment.ApplicationState.UI.AddPendingRequest(Nonce.clone(), tx);
 
 						let AppHandle = run_time.Environment.ApplicationHandle.clone();
 						if let Err(Error) = AppHandle.emit(Channel, json!({ "nonce": Nonce, "args": Args })) {
-							// Emit failed — remove the dangling sender so the map
+							// Emit failed -- remove the dangling sender so the map
 							// does not grow unboundedly on repeated failures.
-							run_time.ApplicationState.UI.RemovePendingRequest(&Nonce.clone());
+							run_time.Environment.ApplicationState.UI.RemovePendingRequest(&Nonce.clone());
 							dev_log!("ipc", "warn: [{}] {} emit failed: {}", MethodNameOwned, Channel, Error);
 							return Err(format!("[{}] emit failed: {}", MethodNameOwned, Error));
 						}
@@ -111,7 +111,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							Ok(Ok(Value)) => Ok(Value),
 							Ok(Err(CommonError)) => Err(CommonError.to_string()),
 							Err(_RecvError) => {
-								// Sender was dropped without a reply — the user
+								// Sender was dropped without a reply -- the user
 								// dismissed the dialog.  Return null so the extension
 								// host sees `undefined` (VS Code contract for cancelled
 								// quick-pick / input-box).

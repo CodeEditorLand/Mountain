@@ -65,7 +65,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 
 						let priority = Parameters
 							.get("priority")
-							.cloned();
+							.and_then(Value::as_f64);
 
 						let accessibility = Parameters
 							.get("accessibilityInformation")
