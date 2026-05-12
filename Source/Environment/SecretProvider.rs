@@ -105,8 +105,18 @@ impl SecretProvider for MountainEnvironment {
 
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
-		let Entry = Entry::new(&ServiceName, &Key)
-			.map_err(|Error| CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() })?;
+		let Entry = match Entry::new(&ServiceName, &Key) {
+			Ok(e) => e,
+			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
+				dev_log!(
+					"storage",
+					"warn: [SecretProvider] Keyring unavailable for key '{}', returning None",
+					Key
+				);
+				return Ok(None);
+			},
+			Err(Error) => return Err(CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() }),
+		};
 
 		match Entry.get_password() {
 			Ok(Password) => Ok(Some(Password)),
@@ -158,8 +168,18 @@ impl SecretProvider for MountainEnvironment {
 
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
-		let Entry = Entry::new(&ServiceName, &Key)
-			.map_err(|Error| CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() })?;
+		let Entry = match Entry::new(&ServiceName, &Key) {
+			Ok(e) => e,
+			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
+				dev_log!(
+					"storage",
+					"warn: [SecretProvider] Keyring unavailable for key '{}', cannot store",
+					Key
+				);
+				return Ok(());
+			},
+			Err(Error) => return Err(CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() }),
+		};
 
 		Entry
 			.set_password(&Value)
@@ -207,8 +227,18 @@ impl SecretProvider for MountainEnvironment {
 
 		let ServiceName = GetKeyringServiceName(self, &ExtensionIdentifier);
 
-		let Entry = Entry::new(&ServiceName, &Key)
-			.map_err(|Error| CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() })?;
+		let Entry = match Entry::new(&ServiceName, &Key) {
+			Ok(e) => e,
+			Err(KeyringError::NoStorageAccess(_)) | Err(KeyringError::PlatformFailure(_)) => {
+				dev_log!(
+					"storage",
+					"warn: [SecretProvider] Keyring unavailable for key '{}', cannot delete",
+					Key
+				);
+				return Ok(());
+			},
+			Err(Error) => return Err(CommonError::SecretsAccess { Key:Key.clone(), Reason:Error.to_string() }),
+		};
 
 		match Entry.delete_credential() {
 			Ok(_) | Err(KeyringError::NoEntry) => Ok(()),
