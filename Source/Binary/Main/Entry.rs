@@ -138,6 +138,28 @@ macro_rules! TraceStep {
 /// 9. Runs the Tauri application
 /// 10. Handles graceful shutdown
 pub fn Fn() {
+	// Initialize the native keyring store (Keychain on macOS) before any
+	// code path that calls SecretProvider. keyring-core 1.0 requires an
+	// explicit store set via set_default_store() before Entry::new() can
+	// create or look up credentials. omitting this causes "No default
+	// store has been set, so cannot search or create entries" on every
+	// secrets.get call, which in turn prevents extensions (e.g. Roo Code)
+	// from completing their webview initialisation.
+	//
+	// The `not_keyutils` parameter only matters on Linux - macOS ignores
+	// it and always routes to the native Keychain.
+	match keyring::use_native_store(false) {
+		Ok(()) => dev_log!(
+			"lifecycle",
+			"[Boot] [Keyring] Native store initialized for secret management"
+		),
+		Err(E) => dev_log!(
+			"lifecycle",
+			"warn: [Boot] [Keyring] Failed to initialize native store ({}); secret operations will fall back to no-op",
+			E
+		),
+	}
+
 	// Open `Mountain.dev.log` up front. Forces `InitFileSink` to create
 	// the session log header on disk before any other code can panic, so
 	// an early crash still leaves a file with a timestamp + pid + tag
