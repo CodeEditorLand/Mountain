@@ -93,23 +93,14 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
 						let provider:Arc<dyn CustomEditorProvider> = run_time.Environment.Require();
-						let view_type = Parameters
-							.get(0)
-							.and_then(Value::as_str)
-							.unwrap_or("")
-							.to_string();
-						let resource_uri_str = Parameters
-							.get(1)
-							.and_then(Value::as_str)
-							.unwrap_or("");
+						let view_type = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						let resource_uri_str = Parameters.get(1).and_then(Value::as_str).unwrap_or("");
 						// Do not substitute a fallback path for a missing
 						// or malformed URI. A silent swap to
 						// `file:///tmp/test.txt` would:
 						//   - create that file on disk on every bad call,
-						//   - return success to Cocoon so the extension
-						//     never receives an error,
-						//   - make the log undiagnosable (every failure
-						//     shows the same sentinel path).
+						//   - return success to Cocoon so the extension never receives an error,
+						//   - make the log undiagnosable (every failure shows the same sentinel path).
 						// Return Err instead so the grpc layer logs the
 						// real caller input.
 						if resource_uri_str.is_empty() {
@@ -139,11 +130,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 								));
 							},
 						};
-						let webview_handle = Parameters
-							.get(2)
-							.and_then(Value::as_str)
-							.unwrap_or("")
-							.to_string();
+						let webview_handle = Parameters.get(2).and_then(Value::as_str).unwrap_or("").to_string();
 						if webview_handle.is_empty() {
 							dev_log!(
 								"grpc",

@@ -8,13 +8,14 @@
 //!
 //! 1. **PTY creation** - `portable-pty` opens a native PTY pair.
 //! 2. **Process spawning** - shell spawned as child of PTY slave.
-//! 3. **I/O streaming** - dedicated `tokio::spawn` tasks for input, output,
-//!    and process exit; each terminal gets its own tasks.
+//! 3. **I/O streaming** - dedicated `tokio::spawn` tasks for input, output, and
+//!    process exit; each terminal gets its own tasks.
 //! 4. **IPC fan-out** - PTY output is sent in two directions:
 //!    - Cocoon extension host via `$acceptTerminalProcessData` (gRPC)
 //!    - Sky webview via `SkyEvent::TerminalData` (Tauri emit)
-//! 5. **State management** - `ApplicationState.Feature.Terminals.ActiveTerminals`
-//!    keyed by `u64` terminal ID.
+//! 5. **State management** -
+//!    `ApplicationState.Feature.Terminals.ActiveTerminals` keyed by `u64`
+//!    terminal ID.
 //!
 //! ## Terminal lifecycle
 //!

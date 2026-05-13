@@ -10,10 +10,10 @@
 //! 1. **Pattern compilation** - regex is compiled with case/word/multiline
 //!    modifiers; plain-text queries are `regex::escape`d first.
 //! 2. **Parallel walking** - workspace files are walked via
-//!    `WalkBuilder::build_parallel()`, respecting `.gitignore` and
-//!    `.ignore` files automatically.
-//! 3. **Per-file search** - each file is searched individually using a
-//!    `Sink` pattern (`PerFileSink`).
+//!    `WalkBuilder::build_parallel()`, respecting `.gitignore` and `.ignore`
+//!    files automatically.
+//! 3. **Per-file search** - each file is searched individually using a `Sink`
+//!    pattern (`PerFileSink`).
 //! 4. **Result aggregation** - matches are collected in a shared
 //!    `Arc<Mutex<Vec<FileMatch>>>`.
 //!
@@ -31,8 +31,8 @@
 //! - `resource` - file URI
 //! - `lineNumber` - 1-based line number
 //! - `preview` - matched text line (capped at 512 bytes)
-//! - `columns` - per-match `{start, end}` char-offset ranges (0-based,
-//!   UTF-8 code units to match VS Code's `ISearchRange`)
+//! - `columns` - per-match `{start, end}` char-offset ranges (0-based, UTF-8
+//!   code units to match VS Code's `ISearchRange`)
 //!
 //! ## VS Code reference
 //!

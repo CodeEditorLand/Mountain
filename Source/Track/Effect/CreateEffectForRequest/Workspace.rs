@@ -30,11 +30,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						)
 						.await
 						.map_err(|Error| {
-							dev_log!(
-								"ipc",
-								"error: [applyEdit] Sky did not answer ({:?})",
-								Error
-							);
+							dev_log!("ipc", "error: [applyEdit] Sky did not answer ({:?})", Error);
 							Error.to_string()
 						})
 					})

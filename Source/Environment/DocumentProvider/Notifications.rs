@@ -4,7 +4,8 @@
 //! so its `ExtHostDocuments` model stays in sync with Mountain's
 //! `OpenDocuments` state. All four helpers follow the same pattern:
 //! serialize a payload, call `IPCProvider::SendNotificationToSideCar`, and
-//! log any emit error without propagating it (notifications are fire-and-forget).
+//! log any emit error without propagating it (notifications are
+//! fire-and-forget).
 //!
 //! | Helper | Cocoon RPC method | Trigger |
 //! |---|---|---|

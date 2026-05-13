@@ -10,9 +10,9 @@
 //! - **Request/response** (`SendRequestToSideCar`) - synchronous RPC with
 //!   caller-specified timeout; used for config resolution, URI lookup, and
 //!   content retrieval.
-//! - **Notification** (`SendNotificationToSideCar`) - fire-and-forget; used
-//!   for document changes, diagnostics, and UI events. Returns
-//!   `Result<(), CommonError>` indicating send success only.
+//! - **Notification** (`SendNotificationToSideCar`) - fire-and-forget; used for
+//!   document changes, diagnostics, and UI events. Returns `Result<(),
+//!   CommonError>` indicating send success only.
 //!
 //! ## VS Code reference
 //!

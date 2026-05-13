@@ -6,9 +6,9 @@
 //! ## SCM provider architecture
 //!
 //! Each SCM provider maintains:
-//! - **Handle** - unique `u32` identifier; callers may supply their own so
-//!   the same handle key used in `ScmNamespace.ts` maps correctly on both
-//!   sides of the IPC boundary.
+//! - **Handle** - unique `u32` identifier; callers may supply their own so the
+//!   same handle key used in `ScmNamespace.ts` maps correctly on both sides of
+//!   the IPC boundary.
 //! - **Label** - user-friendly name (e.g., "Git")
 //! - **Root URI** - URI of the repository root
 //! - **Groups** - resource groups organizing changed resources
@@ -29,8 +29,7 @@
 //! 1. **CreateSourceControl** - register provider, emit `SCMProviderAdded`
 //! 2. **UpdateSourceControl** - update badge/input-box, emit
 //!    `SCMProviderChanged`
-//! 3. **UpdateSourceControlGroup** - upsert group entry, emit
-//!    `SCMGroupChanged`
+//! 3. **UpdateSourceControlGroup** - upsert group entry, emit `SCMGroupChanged`
 //! 4. **RegisterInputBox** - attach input-box DTO to provider
 //! 5. **DisposeSourceControl** - remove provider + groups, emit
 //!    `SCMProviderRemoved`
@@ -281,8 +280,7 @@ impl SourceControlManagementProvider for MountainEnvironment {
 			.Markers
 			.SourceControlManagementProviders
 			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?
-		;
+			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
 
 		if let Some(Provider) = ProvidersGuard.get_mut(&ProviderHandle) {
 			Provider.InputBox = Some(InputBoxData);

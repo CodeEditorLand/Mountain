@@ -1,6 +1,7 @@
 //! # CustomEditorProvider (Environment)
 //!
-//! Implements [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider)
+//! Implements
+//! [`CustomEditorProvider`](CommonLibrary::CustomEditor::CustomEditorProvider)
 //! for `MountainEnvironment`, managing registration and lifecycle of custom
 //! non-text editors. Coordinates Webview-based editing experiences (SVG
 //! editors, diff viewers, etc.) and handles editor resolution, save

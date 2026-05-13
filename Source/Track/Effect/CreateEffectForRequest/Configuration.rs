@@ -45,11 +45,7 @@ async fn UpdateConfigurationValueAndNotify(
 		}
 		let IPCProvider:Arc<dyn IPCProviderTrait> = run_time.Environment.Require();
 		if let Err(Error) = IPCProvider
-			.SendNotificationToSideCar(
-				"cocoon-main".to_string(),
-				"configuration.change".to_string(),
-				Payload,
-			)
+			.SendNotificationToSideCar("cocoon-main".to_string(), "configuration.change".to_string(), Payload)
 			.await
 		{
 			dev_log!(

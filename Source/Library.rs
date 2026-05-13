@@ -72,7 +72,8 @@
 
 // Core Infrastructure
 
-/// Local error taxonomy (superseded; zero callers - see `CommonLibrary::Error::CommonError`).
+/// Local error taxonomy (superseded; zero callers - see
+/// `CommonLibrary::Error::CommonError`).
 pub mod Error;
 
 /// Centralized, thread-safe application state managed by Tauri.
@@ -124,7 +125,8 @@ pub mod Track;
 /// `.code-workspace` file parsing and multi-root workspace support.
 pub mod Workspace;
 
-/// Emits a single ISO-timestamped boot banner listing all compiled-in tier values.
+/// Emits a single ISO-timestamped boot banner listing all compiled-in tier
+/// values.
 pub mod LandFixTier;
 
 /// Binary entry points for desktop and mobile builds.

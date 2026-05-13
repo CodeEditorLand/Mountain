@@ -131,21 +131,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let view_id = Parameters
-							.get(0)
-							.and_then(Value::as_str)
-							.unwrap_or("")
-							.to_string();
-						dev_log!(
-							"tree-view",
-							"[TreeView] unregister view={}",
-							view_id
-						);
+						let view_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+						dev_log!("tree-view", "[TreeView] unregister view={}", view_id);
 						if view_id.is_empty() {
-							dev_log!(
-								"tree-view",
-								"[TreeView] unregister skipped: empty view_id"
-							);
+							dev_log!("tree-view", "[TreeView] unregister skipped: empty view_id");
 							return Ok(json!(null));
 						}
 						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();

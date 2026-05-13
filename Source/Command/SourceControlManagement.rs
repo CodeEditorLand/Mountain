@@ -26,8 +26,8 @@
 //!
 //! ## Planned Work
 //!
-//! - Route every stub through the trait for progress reporting,
-//!   cancellation, and proper error surfacing
+//! - Route every stub through the trait for progress reporting, cancellation,
+//!   and proper error surfacing
 //! - Stash / merge / rebase operations
 //! - Multi-provider concurrency
 //! - Diff viewing and resource decoration

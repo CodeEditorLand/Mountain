@@ -71,10 +71,7 @@ impl SecretProvider for MountainEnvironment {
 	/// When `AirIntegration` is enabled, attempts to delegate to the Air
 	/// service first and falls back to the local keyring on failure.
 	/// Returns `Ok(None)` if the keychain entry does not exist.
-	#[cfg_attr(
-		not(feature = "AirIntegration"),
-		allow(unused_mut)
-	)]
+	#[cfg_attr(not(feature = "AirIntegration"), allow(unused_mut))]
 	async fn GetSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<Option<String>, CommonError> {
 		dev_log!(
 			"storage-verbose",
@@ -138,10 +135,7 @@ impl SecretProvider for MountainEnvironment {
 	///
 	/// When `AirIntegration` is enabled, attempts to delegate to the Air
 	/// service first and falls back to the local keyring on failure.
-	#[cfg_attr(
-		not(feature = "AirIntegration"),
-		allow(unused_mut)
-	)]
+	#[cfg_attr(not(feature = "AirIntegration"), allow(unused_mut))]
 	async fn StoreSecret(&self, ExtensionIdentifier:String, Key:String, Value:String) -> Result<(), CommonError> {
 		dev_log!(
 			"storage-verbose",

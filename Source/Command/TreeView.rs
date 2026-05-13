@@ -27,8 +27,8 @@
 //!
 //! ## Planned Work
 //!
-//! - Trait additions on `CommonTreeViewProvider` for the four
-//!   stubs (expansion, selection, persist, restore)
+//! - Trait additions on `CommonTreeViewProvider` for the four stubs (expansion,
+//!   selection, persist, restore)
 //! - Drag-and-drop, multi-column, badge / tooltip / icon-theming support
 //! - Tree-item validation
 

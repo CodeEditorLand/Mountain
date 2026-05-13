@@ -20,5 +20,6 @@
 /// Create and register the initial system tray icon and menu.
 pub mod EnableTray;
 
-/// `#[tauri::command]` that switches the tray icon between light and dark variants.
+/// `#[tauri::command]` that switches the tray icon between light and dark
+/// variants.
 pub mod SwitchTrayIcon;

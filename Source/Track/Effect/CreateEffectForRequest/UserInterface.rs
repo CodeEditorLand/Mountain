@@ -48,26 +48,29 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.cloned()
 							.unwrap_or_default()
 							.into_iter()
-							.filter_map(|v| serde_json::from_value::<CommonLibrary::UserInterface::DTO::QuickPickItemDTO::QuickPickItemDTO>(v).ok())
+							.filter_map(|v| {
+								serde_json::from_value::<
+									CommonLibrary::UserInterface::DTO::QuickPickItemDTO::QuickPickItemDTO,
+								>(v)
+								.ok()
+							})
 							.collect::<Vec<_>>();
-						let options = Parameters
-							.get(1)
-							.and_then(|V| {
-								if V.is_object() {
-									match serde_json::from_value::<
-										CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO,
-									>(V.clone())
-									{
-										Ok(dto) => Some(dto),
-										Err(e) => {
-											dev_log!("ipc", "warn: Failed to deserialize QuickPickOptionsDTO: {}", e);
-											Some(Default::default())
-										},
-									}
-								} else {
-									None
+						let options = Parameters.get(1).and_then(|V| {
+							if V.is_object() {
+								match serde_json::from_value::<
+									CommonLibrary::UserInterface::DTO::QuickPickOptionsDTO::QuickPickOptionsDTO,
+								>(V.clone())
+								{
+									Ok(dto) => Some(dto),
+									Err(e) => {
+										dev_log!("ipc", "warn: Failed to deserialize QuickPickOptionsDTO: {}", e);
+										Some(Default::default())
+									},
 								}
-							});
+							} else {
+								None
+							}
+						});
 						provider
 							.ShowQuickPick(items, options)
 							.await

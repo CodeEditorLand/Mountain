@@ -55,8 +55,7 @@ use anyhow::Result;
 use chrono::{DateTime, Utc};
 use rustls::ServerConfig;
 use rustls_pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
-use keyring_core::Entry;
-use keyring_core::Error as KeyringError;
+use keyring_core::{Entry, Error as KeyringError};
 
 use crate::dev_log;
 

@@ -12,8 +12,8 @@
 //! - `PushUserData` - upload local settings/keybindings/extensions/snippets
 //!   snapshot to remote; detect conflicts via version vectors; queue when
 //!   offline.
-//! - `PullUserData` - download latest remote snapshot; apply changes or
-//!   surface conflict UI in Sky via notifications.
+//! - `PullUserData` - download latest remote snapshot; apply changes or surface
+//!   conflict UI in Sky via notifications.
 //!
 //! ## Conflict resolution strategies (planned)
 //!

@@ -7,7 +7,8 @@
 //! ## Responsibilities
 //!
 //! - Multi-root workspace folder enumeration and URI matching
-//! - Workspace trust management (`IsWorkspaceTrusted` / `RequestWorkspaceTrust`)
+//! - Workspace trust management (`IsWorkspaceTrusted` /
+//!   `RequestWorkspaceTrust`)
 //! - File discovery (`FindFilesInWorkspace`) with LRU cache + single-flight
 //!   dedup (see inline doc on that method)
 //! - Workspace edit application - two-tier: emit Sky event for open documents;

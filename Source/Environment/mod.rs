@@ -60,7 +60,8 @@ pub mod DocumentProvider;
 /// `FileSystemReader`/`Writer`: async file-system read and write operations.
 pub mod FileSystemProvider;
 
-/// `FileWatcher`: registers file-system watch patterns and delivers change events.
+/// `FileWatcher`: registers file-system watch patterns and delivers change
+/// events.
 pub mod FileWatcherProvider;
 
 /// `IPCProvider`: routes IPC messages between the frontend and backend.
@@ -78,7 +79,8 @@ pub mod OutputProvider;
 /// `SearchProvider`: runs workspace-wide text and symbol searches.
 pub mod SearchProvider;
 
-/// `SecretProvider`: reads and writes secrets from the platform credential store.
+/// `SecretProvider`: reads and writes secrets from the platform credential
+/// store.
 pub mod SecretProvider;
 
 /// `SourceControlManagementProvider`: exposes SCM repository state and actions.

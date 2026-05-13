@@ -14,7 +14,8 @@
 //! Each `MarkerDataDTO` carries:
 //! - `Severity` - Error(8), Warning(4), Information(2), Hint(1)
 //! - `Message` - human-readable description
-//! - `StartLineNumber` / `StartColumn` - 1-based (Cocoon's `NormaliseDiagnostic` adds `+1`)
+//! - `StartLineNumber` / `StartColumn` - 1-based (Cocoon's
+//!   `NormaliseDiagnostic` adds `+1`)
 //! - `EndLineNumber` / `EndColumn` - 1-based, same convention
 //! - `Source` - diagnostic source string (e.g. `"tslint"`)
 //! - `Code` - diagnostic code for quick-fix lookup

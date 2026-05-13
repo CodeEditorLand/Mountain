@@ -25,7 +25,10 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							let Guard = match scanned.lock() {
 								Ok(g) => g,
 								Err(error) => {
-									return Err(format!("Languages.GetAll: scanned-extensions lock poisoned: {}", error));
+									return Err(format!(
+										"Languages.GetAll: scanned-extensions lock poisoned: {}",
+										error
+									));
 								},
 							};
 							Guard.clone()

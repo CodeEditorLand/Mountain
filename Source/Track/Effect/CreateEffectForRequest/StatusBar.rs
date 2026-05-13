@@ -26,65 +26,40 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.and_then(Value::as_str)
 							.ok_or_else(|| "$statusBar:set: missing 'id' field".to_string())?;
 
-						let item_id = Parameters
-							.get("itemId")
-							.and_then(Value::as_str)
-							.unwrap_or(entry_id);
+						let item_id = Parameters.get("itemId").and_then(Value::as_str).unwrap_or(entry_id);
 
-						let ext_id = Parameters
-							.get("extensionId")
-							.and_then(Value::as_str)
-							.unwrap_or("");
+						let ext_id = Parameters.get("extensionId").and_then(Value::as_str).unwrap_or("");
 
-						let text = Parameters
-							.get("text")
-							.and_then(Value::as_str)
-							.unwrap_or("")
-							.to_string();
+						let text = Parameters.get("text").and_then(Value::as_str).unwrap_or("").to_string();
 
-						let tooltip = Parameters
-							.get("tooltip")
-							.cloned();
+						let tooltip = Parameters.get("tooltip").cloned();
 
-						let command = Parameters
-							.get("command")
-							.cloned();
+						let command = Parameters.get("command").cloned();
 
-						let color = Parameters
-							.get("color")
-							.cloned();
+						let color = Parameters.get("color").cloned();
 
-						let background_color = Parameters
-							.get("backgroundColor")
-							.cloned();
+						let background_color = Parameters.get("backgroundColor").cloned();
 
-						let is_aligned_left = Parameters
-							.get("alignLeft")
-							.and_then(Value::as_bool)
-							.unwrap_or(false);
+						let is_aligned_left = Parameters.get("alignLeft").and_then(Value::as_bool).unwrap_or(false);
 
-						let priority = Parameters
-							.get("priority")
-							.and_then(Value::as_f64);
+						let priority = Parameters.get("priority").and_then(Value::as_f64);
 
-						let accessibility = Parameters
-							.get("accessibilityInformation")
-							.cloned();
+						let accessibility = Parameters.get("accessibilityInformation").cloned();
 
 						let entry = StatusBarEntryDTO {
-							EntryIdentifier: entry_id.to_string(),
-							ItemIdentifier: item_id.to_string(),
-							ExtensionIdentifier: ext_id.to_string(),
-							Name: None,
-							Text: text,
-							Tooltip: tooltip,
-							HasTooltipProvider: false,
-							Command: command,
-							Color: color,
-							BackgroundColor: background_color,
-							IsAlignedLeft: is_aligned_left,
-							Priority: priority,
-							AccessibilityInformation: accessibility,
+							EntryIdentifier:entry_id.to_string(),
+							ItemIdentifier:item_id.to_string(),
+							ExtensionIdentifier:ext_id.to_string(),
+							Name:None,
+							Text:text,
+							Tooltip:tooltip,
+							HasTooltipProvider:false,
+							Command:command,
+							Color:color,
+							BackgroundColor:background_color,
+							IsAlignedLeft:is_aligned_left,
+							Priority:priority,
+							AccessibilityInformation:accessibility,
 						};
 
 						provider
@@ -135,11 +110,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							.filter(|s| !s.is_empty())
 							.ok_or_else(|| "$setStatusBarMessage: missing or empty message id".to_string())?;
 
-						let text = Parameters
-							.get(1)
-							.and_then(Value::as_str)
-							.unwrap_or("")
-							.to_string();
+						let text = Parameters.get(1).and_then(Value::as_str).unwrap_or("").to_string();
 
 						provider
 							.SetStatusBarMessage(message_id.to_string(), text)

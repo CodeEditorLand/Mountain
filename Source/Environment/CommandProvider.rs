@@ -11,8 +11,8 @@
 //! 2. Provider looks up `id` in `ApplicationState::CommandRegistry`.
 //! 3. **Native handler**: calls the Rust function pointer directly with
 //!    `AppHandle`, the main `WebviewWindow`, `ApplicationRunTime`, and `args`.
-//! 4. **Proxied handler**: sends an RPC request to the owning extension
-//!    sidecar via the Vine IPC client.
+//! 4. **Proxied handler**: sends an RPC request to the owning extension sidecar
+//!    via the Vine IPC client.
 //! 5. Returns a serialized `serde_json::Value` result or a `CommonError`.
 //!
 //! ## Special-case no-ops

@@ -149,15 +149,15 @@ pub fn Fn() {
 	// The `not_keyutils` parameter only matters on Linux - macOS ignores
 	// it and always routes to the native Keychain.
 	match keyring::use_native_store(false) {
-		Ok(()) => dev_log!(
-			"lifecycle",
-			"[Boot] [Keyring] Native store initialized for secret management"
-		),
-		Err(E) => dev_log!(
-			"lifecycle",
-			"warn: [Boot] [Keyring] Failed to initialize native store ({}); secret operations will fall back to no-op",
-			E
-		),
+		Ok(()) => dev_log!("lifecycle", "[Boot] [Keyring] Native store initialized for secret management"),
+		Err(E) => {
+			dev_log!(
+				"lifecycle",
+				"warn: [Boot] [Keyring] Failed to initialize native store ({}); secret operations will fall back to \
+				 no-op",
+				E
+			)
+		},
 	}
 
 	// Open `Mountain.dev.log` up front. Forces `InitFileSink` to create

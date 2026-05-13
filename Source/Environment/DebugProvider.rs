@@ -199,10 +199,11 @@ impl DebugService for MountainEnvironment {
 
 		// Adapter-descriptor DTO shapes mirror VS Code's
 		// `vs/workbench/api/common/extHostDebugService.ts::convert*ToDto`:
-		//   executable  → { type: "executable", command, args, options: { env?, cwd? } }
-		//   server      → { type: "server", port, host? }
+		//   executable  → { type: "executable", command, args, options: { env?, cwd? }
+		// }   server      → { type: "server", port, host? }
 		//   pipeServer  → { type: "pipeServer", path }
-		//   implementation → { type: "implementation" }   (handled in-process by Cocoon)
+		//   implementation → { type: "implementation" }   (handled in-process by
+		// Cocoon)
 		//
 		// Phase 1 supports `executable` only - covers every JS/TS debug adapter
 		// (vscode-js-debug, node) and most language-server-driven adapters that
@@ -210,7 +211,8 @@ impl DebugService for MountainEnvironment {
 		// warn-log + a session-registry entry without a StdinSender, so SendCommand
 		// can surface "adapter type unsupported" instead of a silent no-op.
 		// TODO: Wire server / pipeServer adapter connection (TCP / named-pipe).
-		// TODO: Wire reverse-RPC `$sendDAPRequest` Cocoon handler for inline-impl adapters.
+		// TODO: Wire reverse-RPC `$sendDAPRequest` Cocoon handler for inline-impl
+		// adapters.
 		let DescriptorType = Descriptor.get("type").and_then(Value::as_str).unwrap_or("").to_string();
 
 		let AdapterStdinSender:Option<tokio::sync::mpsc::UnboundedSender<Vec<u8>>>;
