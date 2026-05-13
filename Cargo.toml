@@ -102,7 +102,16 @@ posthog-rs = { workspace = true }
 zip = { workspace = true }
 
 [features]
-default = ["ExtensionHostCocoon", "MistNative", "AirIntegration"]
+default = [
+	"ExtensionHostCocoon",
+	"MistNative",
+	"AirIntegration",
+	"terminals",
+	"debug-protocol",
+	"scm-support",
+	"child-processes",
+	"Development",
+]
 
 ExtensionHostCocoon = []
 
@@ -113,14 +122,18 @@ Debug = []
 AirIntegration = ["Air"]
 
 # Feature flags for conditional compilation
-grove = []
-cocoon = []
 terminals = []
+
 debug-protocol = []
+
 scm-support = []
+
 child-processes = []
+
 Telemetry = []
+
 Development = []
+
 Test = []
 
 # ===========================================================================
