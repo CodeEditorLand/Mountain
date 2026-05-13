@@ -290,7 +290,7 @@ fn ApplyEnvFile(Path:&std::path::Path, Contents:&str) {
 			println!("cargo:rustc-cfg=feature=\"{}\"", FeatureName);
 		} else if IsDefaultTierValue(Key, Value) {
 
-			// Default-tier values (GRPC, Layer2, Standard, …) do not need
+			// Default-tier values (gRPC, Layer2, Standard, …) do not need
 			// Cargo features - they are the compiled-in baseline. Silent.
 		} else {
 			println!(
@@ -309,7 +309,7 @@ fn ApplyEnvFile(Path:&std::path::Path, Contents:&str) {
 /// `.env.Land` file.
 fn EmitTierDefaults() {
 	for (Key, Default) in [
-		("TierRemoteProcedureCall", "GRPC"),
+		("TierRemoteProcedureCall", "gRPC"),
 		("TierHTTPProxy", "HandRolled"),
 		("TierLogger", "Standard"),
 		("TierFileSystem", "Layer2"),
@@ -360,7 +360,7 @@ fn IsDeclaredTierFeature(Name:&str) -> bool {
 fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 	matches!(
 		(Key, Value),
-		("TierRemoteProcedureCall", "GRPC")
+		("TierRemoteProcedureCall", "gRPC")
 			| ("TierHTTPProxy", "HandRolled")
 			| ("TierLogger", "Standard")
 			| ("TierFileSystem", "Layer2" | "Layer3")
