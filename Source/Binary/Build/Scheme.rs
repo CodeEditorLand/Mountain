@@ -32,7 +32,11 @@
 //! - CORS headers set appropriately for cross-origin requests
 //! - Request validation and sanitization
 
-use std::{collections::HashMap, panic::catch_unwind, sync::RwLock, thread};
+use std::{
+	collections::HashMap,
+	panic::{AssertUnwindSafe, catch_unwind},
+	sync::RwLock,
+};
 
 use tauri::http::{
 	Method,
@@ -832,9 +836,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 	// that cannot unwind — the process aborts immediately. Catch the
 	// panic so a bad mmap or MIME bug returns a 500 instead of taking
 	// the whole editor down.
-	let Result = catch_unwind(|| {
-		_VscodeFileSchemeHandler(AppHandle, Request)
-	});
+	let Result = catch_unwind(AssertUnwindSafe(|| _VscodeFileSchemeHandler(AppHandle, Request)));
 
 	match Result {
 		Ok(Response) => Response,
@@ -1298,9 +1300,7 @@ pub fn VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
-	let Result = catch_unwind(|| {
-		_VscodeWebviewSchemeHandler(AppHandle, Request)
-	});
+	let Result = catch_unwind(|| _VscodeWebviewSchemeHandler(AppHandle, Request));
 
 	match Result {
 		Ok(Response) => Response,
@@ -1457,33 +1457,4 @@ fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 	);
 
 	build_error_response(404, &format!("Not Found: {}", ResolvedPath))
-	});
-
-	// Unwrap the catch_unwind result — panic returns a descriptive 500
-	match Result {
-		Ok(Response) => Response,
-
-		Err(Panic) => {
-			let Info = if let Some(Text) = Panic.downcast_ref::<&str>() {
-				Text.to_string()
-			} else if let Some(Text) = Panic.downcast_ref::<String>() {
-				Text.clone()
-			} else {
-				"unknown panic".to_string()
-			};
-
-			let Location = thread::current()
-				.backtrace()
-				.to_string();
-
-			dev_log!(
-				"lifecycle",
-				"error: [LandFix:VscodeFile] caught panic in scheme handler: {}\n{}",
-				Location,
-				Info
-			);
-
-			build_error_response(500, &format!("Internal Server Error (caught panic: {})", Info))
-		},
-	}
 }
