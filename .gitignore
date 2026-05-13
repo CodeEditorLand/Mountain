@@ -46,6 +46,9 @@ Target/debug/bundle/dmg
 # Ignore macOS .app bundles - they contain 105MB node binary
 Target/debug/bundle/macos
 
+# Ignore create-dmg support templates (build artifacts)
+/Target/debug/bundle/share/
+
 # ------------------------------ Executables (typically small enough for LFS) ------------------------------
 # Main Mountain binary - check size, should be under 100MB
 !/Target/debug/*.exe
@@ -76,6 +79,9 @@ Target/release/bundle/dmg
 
 # Ignore release .app bundles - may contain large binaries
 Target/release/bundle/macos
+
+# Ignore create-dmg support templates (build artifacts)
+/Target/release/bundle/share/
 
 # Allow executables
 !/Target/release/*.exe
