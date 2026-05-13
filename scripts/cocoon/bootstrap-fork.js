@@ -46,7 +46,14 @@ const PostHogHost = "https://eu.i.posthog.com";
 const DistinctId = `land-dev-${process.env["USER"] || process.env["USERNAME"] || "unknown"}`;
 
 const PostHogCapture = async (EventName, Properties = {}) => {
+	// Gate 1: production builds never send
 	if (process.env["NODE_ENV"] === "production") return;
+
+	// Gate 2: explicit capture consent required (Report=true)
+	if (process.env["Report"] !== "true") return;
+
+	// Gate 3: master kill switch (Capture=true)
+	if (process.env["Capture"] !== "true") return;
 
 	try {
 		const { request } = await import("node:https");
@@ -96,6 +103,10 @@ const PostHogCapture = async (EventName, Properties = {}) => {
 
 const OTLPFlush = async () => {
 	if (process.env["NODE_ENV"] === "production") return;
+
+	if (process.env["Capture"] !== "true") return;
+
+	if (process.env["OTLPEnabled"] !== "true") return;
 
 	try {
 		const Entries = performance
