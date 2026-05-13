@@ -1300,7 +1300,7 @@ pub fn VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
-	let Result = catch_unwind(|| _VscodeWebviewSchemeHandler(AppHandle, Request));
+	let Result = catch_unwind(AssertUnwindSafe(|| _VscodeWebviewSchemeHandler(AppHandle, Request)));
 
 	match Result {
 		Ok(Response) => Response,
