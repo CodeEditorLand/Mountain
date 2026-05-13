@@ -13,9 +13,9 @@
 //!
 //! "When" clauses are boolean expressions over context keys that control
 //! whether a keybinding is active. Examples:
-//! - `"editorTextFocus && !inQuickOpen"` — only when editor has focus
-//! - `"debugState != 'inactive'"` — only when debugging
-//! - `"resourceLangId == python"` — only for Python files
+//! - `"editorTextFocus && !inQuickOpen"` - only when editor has focus
+//! - `"debugState != 'inactive'"` - only when debugging
+//! - `"resourceLangId == python"` - only for Python files
 //!
 //! Current implementation stores when clauses but only partially evaluates
 //! them. Full expression parsing and evaluation is pending.

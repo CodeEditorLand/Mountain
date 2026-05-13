@@ -20,12 +20,12 @@
 //!
 //! ## Operations
 //!
-//! - `ShowMessage` — modal message box (`Info` / `Warning` / `Error`)
-//! - `ShowOpenDialog` — native file/folder picker (via `tauri-plugin-dialog`;
+//! - `ShowMessage` - modal message box (`Info` / `Warning` / `Error`)
+//! - `ShowOpenDialog` - native file/folder picker (via `tauri-plugin-dialog`;
 //!   supports multi-select, folder-only, and file-type filters)
-//! - `ShowSaveDialog` — native save-file picker
-//! - `ShowQuickPick` — Sky `sky://quickpick/show` (camelCase wire shape)
-//! - `ShowInputBox` — Sky `sky://input-box/show` (camelCase wire shape)
+//! - `ShowSaveDialog` - native save-file picker
+//! - `ShowQuickPick` - Sky `sky://quickpick/show` (camelCase wire shape)
+//! - `ShowInputBox` - Sky `sky://input-box/show` (camelCase wire shape)
 //!
 //! ## VS Code reference
 //!

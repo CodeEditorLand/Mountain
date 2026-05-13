@@ -2,7 +2,7 @@
 //!
 //! Implements `GetConfigurationValue` for `MountainEnvironment`. Reads
 //! from the pre-merged `ApplicationState::Configuration::GlobalConfiguration`
-//! cache — no disk I/O on the hot path.
+//! cache - no disk I/O on the hot path.
 //!
 //! If `section` is `None`, the entire merged object is returned. If it
 //! is `Some("a.b.c")`, the key is split on `.` and the function walks

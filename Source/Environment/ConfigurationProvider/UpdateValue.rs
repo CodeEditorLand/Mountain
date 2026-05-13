@@ -13,7 +13,7 @@
 //! | `Workspace` | workspace `settings.json` |
 //! | `WorkspaceFolder` | `<first-folder>/.vscode/settings.json` |
 //! | `Memory` | in-memory merged map only; no disk write |
-//! | `Default` / `Policy` | error — read-only by spec |
+//! | `Default` / `Policy` | error - read-only by spec |
 //!
 //! Passing `Value::Null` as the new value removes the key from the
 //! target file rather than writing a `null` literal, matching

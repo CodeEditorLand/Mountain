@@ -6,22 +6,22 @@
 //!
 //! ## Storage scopes
 //!
-//! - **Global** (`IsGlobalScope = true`) — application-level key-value store
+//! - **Global** (`IsGlobalScope = true`) - application-level key-value store
 //!   shared across all workspaces; persisted to `GlobalMementoPath`.
 //!   Used for user preferences, extension state.
-//! - **Workspace** (`IsGlobalScope = false`) — workspace-specific state;
+//! - **Workspace** (`IsGlobalScope = false`) - workspace-specific state;
 //!   persisted to `WorkspaceMementoPath` (reloaded on workspace change via
 //!   `UpdateWorkspaceMementoPathAndReload`). Used for workspace configs.
 //!
 //! ## Storage operations
 //!
-//! - `GetStorageValue(scope, key)` — reads from in-memory `HashMap`; returns
+//! - `GetStorageValue(scope, key)` - reads from in-memory `HashMap`; returns
 //!   `None` for missing or empty keys; rejects keys > 1 024 chars.
-//! - `UpdateStorageValue(scope, key, value)` — inserts or removes key;
+//! - `UpdateStorageValue(scope, key, value)` - inserts or removes key;
 //!   rejects values > 10 MB; spawns async `SaveStorageToDisk` after each
 //!   mutation.
-//! - `GetAllStorage(scope)` — returns the full in-memory map as JSON.
-//! - `SetAllStorage(scope, state)` — overwrites the full map and persists.
+//! - `GetAllStorage(scope)` - returns the full in-memory map as JSON.
+//! - `SetAllStorage(scope, state)` - overwrites the full map and persists.
 //!
 //! ## Async persistence
 //!

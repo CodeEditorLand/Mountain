@@ -10,7 +10,7 @@
 //! - Workspace trust management (`IsWorkspaceTrusted` / `RequestWorkspaceTrust`)
 //! - File discovery (`FindFilesInWorkspace`) with LRU cache + single-flight
 //!   dedup (see inline doc on that method)
-//! - Workspace edit application — two-tier: emit Sky event for open documents;
+//! - Workspace edit application - two-tier: emit Sky event for open documents;
 //!   atomic on-disk splice for closed files
 //!
 //! ## VS Code reference

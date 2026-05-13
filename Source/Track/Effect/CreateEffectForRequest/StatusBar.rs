@@ -104,7 +104,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 					Box::pin(async move {
 						let provider:Arc<dyn StatusBarProvider> = run_time.Environment.Require();
 
-						// Require a non-empty id — a missing id would silently target the
+						// Require a non-empty id - a missing id would silently target the
 						// wrong entry (previously fell back to the literal string "id").
 						let id = Parameters
 							.get(0)

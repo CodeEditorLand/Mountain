@@ -7,31 +7,31 @@
 //!
 //! The search implementation uses a multi-threaded approach:
 //!
-//! 1. **Pattern compilation** — regex is compiled with case/word/multiline
+//! 1. **Pattern compilation** - regex is compiled with case/word/multiline
 //!    modifiers; plain-text queries are `regex::escape`d first.
-//! 2. **Parallel walking** — workspace files are walked via
+//! 2. **Parallel walking** - workspace files are walked via
 //!    `WalkBuilder::build_parallel()`, respecting `.gitignore` and
 //!    `.ignore` files automatically.
-//! 3. **Per-file search** — each file is searched individually using a
+//! 3. **Per-file search** - each file is searched individually using a
 //!    `Sink` pattern (`PerFileSink`).
-//! 4. **Result aggregation** — matches are collected in a shared
+//! 4. **Result aggregation** - matches are collected in a shared
 //!    `Arc<Mutex<Vec<FileMatch>>>`.
 //!
 //! ## Search features
 //!
-//! - **Case sensitivity** — controlled by `isCaseSensitive` option
-//! - **Word matching** — controlled by `isWordMatch` option
-//! - **Regex support** — full regex via `grep-regex`
-//! - **Ignore files** — respects `.gitignore`, `.ignore`, and siblings
-//! - **Memory efficient** — streams results; never loads entire files
+//! - **Case sensitivity** - controlled by `isCaseSensitive` option
+//! - **Word matching** - controlled by `isWordMatch` option
+//! - **Regex support** - full regex via `grep-regex`
+//! - **Ignore files** - respects `.gitignore`, `.ignore`, and siblings
+//! - **Memory efficient** - streams results; never loads entire files
 //!
 //! ## Search result format
 //!
 //! Each match includes:
-//! - `resource` — file URI
-//! - `lineNumber` — 1-based line number
-//! - `preview` — matched text line (capped at 512 bytes)
-//! - `columns` — per-match `{start, end}` char-offset ranges (0-based,
+//! - `resource` - file URI
+//! - `lineNumber` - 1-based line number
+//! - `preview` - matched text line (capped at 512 bytes)
+//! - `columns` - per-match `{start, end}` char-offset ranges (0-based,
 //!   UTF-8 code units to match VS Code's `ISearchRange`)
 //!
 //! ## VS Code reference

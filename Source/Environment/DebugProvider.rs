@@ -25,11 +25,11 @@
 //!
 //! ## Methods
 //!
-//! - `RegisterDebugConfigurationProvider` — register config resolver
-//! - `RegisterDebugAdapterDescriptorFactory` — register adapter factory
-//! - `StartDebugging` — start debug session
-//! - `SendCommand` — send DAP command to adapter
-//! - `StopDebugging` — graceful DAP disconnect then session unregister
+//! - `RegisterDebugConfigurationProvider` - register config resolver
+//! - `RegisterDebugAdapterDescriptorFactory` - register adapter factory
+//! - `StartDebugging` - start debug session
+//! - `SendCommand` - send DAP command to adapter
+//! - `StopDebugging` - graceful DAP disconnect then session unregister
 //!
 //! ## VS Code reference
 //!
@@ -204,7 +204,7 @@ impl DebugService for MountainEnvironment {
 		//   pipeServer  → { type: "pipeServer", path }
 		//   implementation → { type: "implementation" }   (handled in-process by Cocoon)
 		//
-		// Phase 1 supports `executable` only — covers every JS/TS debug adapter
+		// Phase 1 supports `executable` only - covers every JS/TS debug adapter
 		// (vscode-js-debug, node) and most language-server-driven adapters that
 		// ship as a CLI binary. Server/pipeServer connections are stubbed with a
 		// warn-log + a session-registry entry without a StdinSender, so SendCommand

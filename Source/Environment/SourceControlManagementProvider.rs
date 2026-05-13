@@ -6,33 +6,33 @@
 //! ## SCM provider architecture
 //!
 //! Each SCM provider maintains:
-//! - **Handle** — unique `u32` identifier; callers may supply their own so
+//! - **Handle** - unique `u32` identifier; callers may supply their own so
 //!   the same handle key used in `ScmNamespace.ts` maps correctly on both
 //!   sides of the IPC boundary.
-//! - **Label** — user-friendly name (e.g., "Git")
-//! - **Root URI** — URI of the repository root
-//! - **Groups** — resource groups organizing changed resources
-//! - **Input box** — user input widget (e.g., commit messages)
-//! - **Count** — badge count for changed items
+//! - **Label** - user-friendly name (e.g., "Git")
+//! - **Root URI** - URI of the repository root
+//! - **Groups** - resource groups organizing changed resources
+//! - **Input box** - user input widget (e.g., commit messages)
+//! - **Count** - badge count for changed items
 //!
 //! ## Resource groups
 //!
 //! Groups organize resources by their state:
-//! - **Changes** — modified files ready to commit
-//! - **Untracked** — new files not yet tracked
-//! - **Staged** — files staged for commit
-//! - **Merge changes** — files with merge conflicts
-//! - **Conflict unresolved** — unresolved conflict markers
+//! - **Changes** - modified files ready to commit
+//! - **Untracked** - new files not yet tracked
+//! - **Staged** - files staged for commit
+//! - **Merge changes** - files with merge conflicts
+//! - **Conflict unresolved** - unresolved conflict markers
 //!
 //! ## SCM lifecycle
 //!
-//! 1. **CreateSourceControl** — register provider, emit `SCMProviderAdded`
-//! 2. **UpdateSourceControl** — update badge/input-box, emit
+//! 1. **CreateSourceControl** - register provider, emit `SCMProviderAdded`
+//! 2. **UpdateSourceControl** - update badge/input-box, emit
 //!    `SCMProviderChanged`
-//! 3. **UpdateSourceControlGroup** — upsert group entry, emit
+//! 3. **UpdateSourceControlGroup** - upsert group entry, emit
 //!    `SCMGroupChanged`
-//! 4. **RegisterInputBox** — attach input-box DTO to provider
-//! 5. **DisposeSourceControl** — remove provider + groups, emit
+//! 4. **RegisterInputBox** - attach input-box DTO to provider
+//! 5. **DisposeSourceControl** - remove provider + groups, emit
 //!    `SCMProviderRemoved`
 //!
 //! ## Git integration patterns

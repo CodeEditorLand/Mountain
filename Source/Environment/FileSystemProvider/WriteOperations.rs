@@ -1,4 +1,4 @@
-//! # FileSystemProvider — Write Operations
+//! # FileSystemProvider - Write Operations
 //!
 //! Implements [`FileSystemWriter`](CommonLibrary::FileSystem::FileSystemWriter)
 //! for [`MountainEnvironment`]. Every function calls
@@ -6,24 +6,24 @@
 //!
 //! ## Functions
 //!
-//! - `write_file_impl` — writes bytes to a path. Enforces a 1 GB content
+//! - `write_file_impl` - writes bytes to a path. Enforces a 1 GB content
 //!   guard, `create` / `overwrite` flag semantics (mirroring
 //!   `vscode.workspace.fs.writeFile`), and auto-creates missing parent
 //!   directories. Note: currently writes directly; the inline comment
 //!   documents the planned atomic-rename pattern (`write-to-temp → fsync
 //!   → rename`).
-//! - `create_directory_impl` — creates a directory, optionally recursively.
+//! - `create_directory_impl` - creates a directory, optionally recursively.
 //!   Validates that the parent is not a regular file.
-//! - `delete_impl` — removes a file or directory. `recursive` controls
+//! - `delete_impl` - removes a file or directory. `recursive` controls
 //!   `remove_dir_all` vs `remove_dir`. `_use_trash` is stubbed; the
 //!   `trash` crate integration is planned. Idempotent: `NotFound` is
 //!   treated as success.
-//! - `rename_impl` — calls `tokio::fs::rename` (POSIX-atomic within a
+//! - `rename_impl` - calls `tokio::fs::rename` (POSIX-atomic within a
 //!   filesystem). Both source and target are path-security checked.
-//! - `copy_impl` — copies a file or directory tree. Directories use the
+//! - `copy_impl` - copies a file or directory tree. Directories use the
 //!   private `copy_directory_recursive` helper, which walks an explicit
 //!   stack to avoid deep async-recursion stack overflows.
-//! - `create_file_impl` — thin wrapper over `write_file_impl` with
+//! - `create_file_impl` - thin wrapper over `write_file_impl` with
 //!   empty content, `create=true`, `overwrite=false`.
 
 use std::path::PathBuf;

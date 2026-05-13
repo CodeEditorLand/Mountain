@@ -15,25 +15,25 @@
 //!
 //! ## Webview types
 //!
-//! - **Panel** — sidebar or panel webview (non-floating)
-//! - **Editor** — webview as custom editor (full editor area)
-//! - **Modal** — modal dialog webview (blocks interaction)
-//! - **Widget** — small embedded webview (e.g., diff viewer)
+//! - **Panel** - sidebar or panel webview (non-floating)
+//! - **Editor** - webview as custom editor (full editor area)
+//! - **Modal** - modal dialog webview (blocks interaction)
+//! - **Widget** - small embedded webview (e.g., diff viewer)
 //!
 //! ## Lifecycle
 //!
-//! 1. `CreateWebviewPanel` — build Tauri `WebviewWindow`, set up event
+//! 1. `CreateWebviewPanel` - build Tauri `WebviewWindow`, set up event
 //!    handlers, record in `ApplicationState.Feature.Webviews`.
-//! 2. `SetWebviewHTML` / `SetWebviewOptions` — configure content and title.
-//! 3. `RevealWebviewPanel` — show and focus.
-//! 4. `PostMessageToWebview` — bidirectional IPC between host and webview.
-//! 5. `DisposeWebviewPanel` — close window and clean up state.
+//! 2. `SetWebviewHTML` / `SetWebviewOptions` - configure content and title.
+//! 3. `RevealWebviewPanel` - show and focus.
+//! 4. `PostMessageToWebview` - bidirectional IPC between host and webview.
+//! 5. `DisposeWebviewPanel` - close window and clean up state.
 //!
 //! ## Security
 //!
 //! Webview runs in a sandboxed process (no Node.js). All `postMessage` calls
 //! are validated; origins are checked to prevent XSS.
-//! Memory footprint is ~50–100 MB per webview — reuse panels when possible.
+//! Memory footprint is ~50-100 MB per webview - reuse panels when possible.
 //!
 //! ## VS Code reference
 //!

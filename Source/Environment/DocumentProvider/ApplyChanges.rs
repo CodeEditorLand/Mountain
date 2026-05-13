@@ -8,7 +8,7 @@
 //! model mirrors the workbench state.
 //!
 //! Unknown URIs (document not in `OpenDocuments`) are silently ignored with
-//! a `warn:` log — this can legitimately happen during the brief window
+//! a `warn:` log - this can legitimately happen during the brief window
 //! between a document being closed on the Sky side and the last in-flight
 //! change notification arriving from Cocoon.
 

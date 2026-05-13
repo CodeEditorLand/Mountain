@@ -6,25 +6,25 @@
 //!
 //! ## Terminal architecture
 //!
-//! 1. **PTY creation** — `portable-pty` opens a native PTY pair.
-//! 2. **Process spawning** — shell spawned as child of PTY slave.
-//! 3. **I/O streaming** — dedicated `tokio::spawn` tasks for input, output,
+//! 1. **PTY creation** - `portable-pty` opens a native PTY pair.
+//! 2. **Process spawning** - shell spawned as child of PTY slave.
+//! 3. **I/O streaming** - dedicated `tokio::spawn` tasks for input, output,
 //!    and process exit; each terminal gets its own tasks.
-//! 4. **IPC fan-out** — PTY output is sent in two directions:
+//! 4. **IPC fan-out** - PTY output is sent in two directions:
 //!    - Cocoon extension host via `$acceptTerminalProcessData` (gRPC)
 //!    - Sky webview via `SkyEvent::TerminalData` (Tauri emit)
-//! 5. **State management** — `ApplicationState.Feature.Terminals.ActiveTerminals`
+//! 5. **State management** - `ApplicationState.Feature.Terminals.ActiveTerminals`
 //!    keyed by `u64` terminal ID.
 //!
 //! ## Terminal lifecycle
 //!
-//! 1. `CreateTerminal` — create PTY, spawn shell, start I/O tasks, emit
+//! 1. `CreateTerminal` - create PTY, spawn shell, start I/O tasks, emit
 //!    `TerminalCreate` (deferred 120 ms to avoid a race with `_ptys.set`).
-//! 2. `SendTextToTerminal` — write user input to PTY via mpsc channel.
-//! 3. `ResizeTerminal` — call `MasterPty::resize` via `spawn_blocking`.
-//! 4. `ShowTerminal` / `HideTerminal` — emit UI events to Sky.
-//! 5. `GetTerminalProcessId` — read OS PID from `TerminalStateDTO`.
-//! 6. `DisposeTerminal` — drop `Arc<TerminalStateDTO>`; PTY close kills shell.
+//! 2. `SendTextToTerminal` - write user input to PTY via mpsc channel.
+//! 3. `ResizeTerminal` - call `MasterPty::resize` via `spawn_blocking`.
+//! 4. `ShowTerminal` / `HideTerminal` - emit UI events to Sky.
+//! 5. `GetTerminalProcessId` - read OS PID from `TerminalStateDTO`.
+//! 6. `DisposeTerminal` - drop `Arc<TerminalStateDTO>`; PTY close kills shell.
 //!
 //! ## Shell detection
 //!
