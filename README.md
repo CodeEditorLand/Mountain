@@ -55,13 +55,13 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 
 📖&#x2001;**[Rust API Documentation](https://Rust.Documentation.Editor.Land/Mountain/)**
 
-Welcome to **Mountain**&#x2001;⛰️! This element is the native `Rust` backend and
-`Tauri` application shell for the `Land` Code Editor. It serves as the
-foundational bedrock for the entire system, managing the application lifecycle,
-orchestrating native OS operations, and providing high-performance services to
-the `Wind` frontend and the `Cocoon` extension host.
+**Mountain**⛰️ is the native `Rust` backend and `Tauri` application shell for
+the `Land` Code Editor. It serves as the foundational bedrock for the entire
+system, managing the application lifecycle, orchestrating native OS operations,
+and providing high-performance services to the `Wind` frontend and the `Cocoon`
+extension host.
 
-**Mountain**&#x2001;⛰️ is engineered to:
+**Mountain**⛰️ is engineered to:
 
 1. **Be the Native Core:** Act as the primary `Rust` application, leveraging
    `Tauri` to create a lightweight, cross-platform windowing and `WebView` host.
@@ -107,7 +107,7 @@ the `Wind` frontend and the `Cocoon` extension host.
 | **Declarative Logic**           | Express complex operations as `ActionEffect`s, executed by `ApplicationRunTime` - composable, testable, and robust.                           | `RunTime/*`, `Track/EffectCreation.rs`, `Common` |
 | **Centralized State**           | Maintain a single, thread-safe `ApplicationState` struct managed by `Tauri` for data consistency across the entire application.               | `ApplicationState/*`                             |
 | **Secure & Performant IPC**     | Use `gRPC` for all communication with the `Cocoon` sidecar, ensuring a well-defined and high-performance API boundary.                        | `Vine/*`                                         |
-| **UI-Backend Decoupling**       | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                           | `Binary.rs` (invoke handler), `Command/*`        |
+| **UI-Backend Decoupling**       | Interact with `Wind` exclusively through asynchronous `Tauri` commands and events, keeping the backend UI-agnostic.                           | `Binary/*` (invoke handler), `Command/*`         |
 
 ---
 
@@ -142,11 +142,6 @@ graph LR
         VinegRPC["🌿 Vine - gRPC Server"]:::ipc
         EnvironmentProviders["⚙️ Environment Providers"]:::mountain
         CommonCrate["📐 Common Crate - Traits & DTOs"]:::common
-
-        TauriRuntime --> ApplicationState
-        TauriRuntime --> ApplicationRunTime
-        ApplicationRunTime --> EnvironmentProviders
-        TrackDispatcher --> ApplicationRunTime
     end
 
     subgraph "🖥️ Clients"
@@ -172,21 +167,33 @@ the architectural patterns defined in `Common`.
 ```
 Mountain/
 ├── Source/
-│   ├── Binary.rs                    # Tauri application entry point and setup.
-│   ├── ApplicationState/            # Central, thread-safe state store and DTOs.
-│   ├── Command/                     # Tauri command handlers for UI-specific requests.
-│   ├── Environment/                 # Concrete implementations of Common provider traits.
-│   ├── ExtensionManagement/         # Logic for scanning and parsing extensions.
-│   ├── FileSystem/                  # Native TreeView provider for the File Explorer.
-│   ├── ProcessManagement/           # Logic for managing the Cocoon sidecar process.
-│   ├── RunTime/                     # The ApplicationRunTime engine that executes effects.
-│   ├── Track/                       # The central request dispatcher (EffectCreation).
-│   ├── Update/                      # Application self-updating logic.
-│   ├── Vine/                        # The gRPC server and client implementation (tonic).
-│   └── Workspace/                   # Logic for handling .code-workspace files.
+│   ├── Library.rs                     # Library entry point, Tauri setup.
+│   ├── LandFixTier.rs                 # Compile-time tier variable boot banner.
+│   ├── Air/                           # gRPC client for the Air daemon (updates, auth, indexing, search, metrics).
+│   ├── ApplicationState/              # Thread-safe state machine with DTOs, persistence, recovery, and feature state.
+│   ├── Binary/                        # Application lifecycle, Tauri command registration, initialization, shutdown.
+│   ├── Cache/                         # Asset memory-mapped cache and process-wide path canonicalization cache.
+│   ├── Command/                       # Tauri command handlers grouped by domain (Keybinding, LanguageFeature, TreeView, etc.).
+│   ├── Environment/                   # Concrete implementations of Common provider traits (filesystem, documents, terminal, etc.).
+│   ├── Error/                         # Local error taxonomy (currently superseded by Common::CommonError).
+│   ├── ExtensionManagement/           # Extension discovery, manifest parsing, and VSIX installation.
+│   ├── FileSystem/                    # Native file-explorer tree-view provider for the workspace sidebar.
+│   ├── IPC/                           # Inter-process communication: Tauri IPC server, Wind service handlers, encryption, permissions, status reporting.
+│   ├── ProcessManagement/             # Sidecar process lifecycle, Node.js binary resolution (nvm, fnm, asdf, volta, homebrew, shipped).
+│   ├── RPC/                           # gRPC service implementations (CocoonService) and scaffolding for multi-extension-host roadmap.
+│   ├── RunTime/                       # Effect execution engine (ApplicationRunTime, Execute, graceful Shutdown).
+│   ├── Telemetry/                     # Feature-gated observability: tracing, metrics, feature flags, and runtime gates.
+│   ├── Track/                         # Central request dispatcher routing frontend and sidecar commands into ActionEffects.
+│   ├── Update/                        # Application self-updating via Tauri bundled updater and optional Air gRPC delegation.
+│   ├── Vine/                          # gRPC IPC layer: server, client, multiplexer, and generated protobuf bindings.
+│   └── Workspace/                     # Workspace file (.code-workspace) parsing and multi-root folder resolution.
 ├── Proto/
-│   └── Vine.proto                   # The gRPC contract definition file.
-└── build.rs                         # Build script to compile .proto into Rust code.
+│   └── Vine.proto                     # The gRPC contract definition file.
+├── Documentation/
+│   ├── GitHub/                        # DeepDive.md, NamingConventions.md
+│   └── Rust/                          # Generated rustdoc output.
+├── build.rs                           # Build script: proto compilation and tier propagation.
+└── Cargo.toml
 ```
 
 ---
@@ -240,18 +247,17 @@ file.
 ## Changelog&#x2001;📜
 
 See [`CHANGELOG.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/)
-for a history of changes specific to **Mountain**&#x2001;⛰️.
+for a history of changes specific to **Mountain**⛰️.
 
 ---
 
 ## Funding \& Acknowledgements&#x2001;🙏🏻
 
-**Mountain**&#x2001;⛰️ is a core element of the **Land**&#x2001;🏞️ ecosystem.
-This project is funded through
-[NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund established by
-[NLnet](https://NLnet.NL) with financial support from the European Commission's
-[Next Generation Internet](https://ngi.eu) program. Learn more at the
-[NLnet project page](https://NLnet.NL/project/Land).
+**Mountain**⛰️ is a core element of the **Land**🏞️ ecosystem. This project is
+funded through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund
+established by [NLnet](https://NLnet.NL) with financial support from the
+European Commission's [Next Generation Internet](https://ngi.eu) program. Learn
+more at the [NLnet project page](https://NLnet.NL/project/Land).
 
 The project is operated by PlayForm, based in Sofia, Bulgaria.
 
