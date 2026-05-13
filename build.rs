@@ -166,15 +166,15 @@ fn PropagatePostHogSentinel() {
 
 	let Host = std::env::var("Beam").unwrap_or_else(|_| "https://eu.i.posthog.com".into());
 
-	let Enabled = std::env::var("Report").unwrap_or_else(|_| "true".into());
+	let Enabled = std::env::var("Report").unwrap_or_else(|_| "false".into());
 
 	let DistinctId = std::env::var("Brand").unwrap_or_default();
 
 	let OTLPEndpoint = std::env::var("OTLPEndpoint").unwrap_or_else(|_| "http://127.0.0.1:4318".into());
 
-	let OTLPEnabled = std::env::var("OTLPEnabled").unwrap_or_else(|_| "true".into());
+	let OTLPEnabled = std::env::var("OTLPEnabled").unwrap_or_else(|_| "false".into());
 
-	let TelemetryCapture = std::env::var("Capture").unwrap_or_else(|_| "true".into());
+	let TelemetryCapture = std::env::var("Capture").unwrap_or_else(|_| "false".into());
 
 	let TraceFilter = std::env::var("Trace").unwrap_or_else(|_| "all".into());
 
