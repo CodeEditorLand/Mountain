@@ -89,10 +89,15 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 		// `decorations(true)` is REQUIRED for the traffic lights to
 		// render - turning decorations off also removes the buttons and
 		// breaks the native drag + resize handles entirely on macOS.
+		// `content_protected(true)` tells macOS to reserve a safe zone
+		// around the traffic-light cluster so WKWebView content doesn't
+		// render underneath them, preventing click-through and visual
+		// overlap with the workbench titlebar.
 		WindowBuilder = WindowBuilder
 			.title_bar_style(tauri::TitleBarStyle::Overlay)
 			.hidden_title(true)
-			.decorations(true);
+			.decorations(true)
+			.content_protected(true);
 	}
 
 	#[cfg(any(target_os = "windows", target_os = "linux"))]
