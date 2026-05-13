@@ -1298,6 +1298,38 @@ pub fn VscodeWebviewSchemeHandler<R:tauri::Runtime>(
 
 	Request:&tauri::http::request::Request<Vec<u8>>,
 ) -> Response<Vec<u8>> {
+	let Result = catch_unwind(|| {
+		_VscodeWebviewSchemeHandler(AppHandle, Request)
+	});
+
+	match Result {
+		Ok(Response) => Response,
+
+		Err(Panic) => {
+			let Info = if let Some(Text) = Panic.downcast_ref::<&str>() {
+				Text.to_string()
+			} else if let Some(Text) = Panic.downcast_ref::<String>() {
+				Text.clone()
+			} else {
+				"unknown panic".to_string()
+			};
+
+			dev_log!(
+				"lifecycle",
+				"error: [LandFix:VscodeWebview] caught panic in scheme handler: {}",
+				Info
+			);
+
+			build_error_response(500, &format!("Internal Server Error (caught panic: {})", Info))
+		},
+	}
+}
+
+fn _VscodeWebviewSchemeHandler<R:tauri::Runtime>(
+	AppHandle:&tauri::AppHandle<R>,
+
+	Request:&tauri::http::request::Request<Vec<u8>>,
+) -> Response<Vec<u8>> {
 	let Uri = Request.uri().to_string();
 
 	dev_log!("scheme-assets", "[LandFix:VscodeWebview] Request: {}", Uri);
