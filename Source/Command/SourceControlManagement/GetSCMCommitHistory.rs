@@ -3,9 +3,10 @@
 //! Tauri command - paginated commit log for the SCM viewlet's
 //! Timeline panel.
 //!
-//! TODO: stub. Wire to `SourceControlManagementProvider::GetHistory`;
-//! return structured commits with hash, author, date, message,
-//! parents.
+//! ## Stub
+//!
+//! Wire to `SourceControlManagementProvider::GetHistory`; return
+//! structured commits with hash, author, date, message, parents.
 
 use std::sync::Arc;
 

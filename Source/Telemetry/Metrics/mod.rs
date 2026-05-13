@@ -15,7 +15,9 @@
 //! - `Initialize::Fn` - no-op bring-up hook.
 //! - `GlobalRegistry::REGISTRY` - module-private singleton.
 //!
-//! TODO: zero callers as of 2026-05-02. Pending wire-up from
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. Pending wire-up from
 //! `Binary::Main` and the IPC fast paths.
 
 pub mod GetAllMetrics;

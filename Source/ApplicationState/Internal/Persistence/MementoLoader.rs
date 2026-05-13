@@ -17,7 +17,9 @@
 //! - `CreateCorruptedBackup::Fn` (internal) - write a timestamped
 //!   `.json.corrupted.<ts>` sibling.
 //!
-//! TODO: zero callers as of 2026-05-02 - pending wire-up from
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02 - pending wire-up from
 //! `Environment::StorageProvider` boot path.
 
 pub mod AttemptMementoRecovery;

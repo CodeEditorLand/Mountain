@@ -3,7 +3,9 @@
 //! Stub `AirClient` type used while the `AirIntegration` feature is off.
 //! Every method returns the same "feature not implemented" error.
 //!
-//! TODO: replace with the real `AirLibrary` client when the feature lands.
+//! ## Planned
+//!
+//! Replace with the real `AirLibrary` client when the feature lands.
 
 use crate::Air::AirServiceTypesStub::{
 	ApplyUpdateRequest,

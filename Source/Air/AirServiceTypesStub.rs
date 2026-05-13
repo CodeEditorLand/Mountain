@@ -6,7 +6,9 @@
 //! `AirClientType::Struct` method returns "feature not implemented" until
 //! the real `AirLibrary` client lands behind `--features AirIntegration`.
 //!
-//! TODO: zero callers as of 2026-05-02; remove this entire module when
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. Remove this entire module when
 //! the live Air client is wired in.
 
 pub mod AirClientType;

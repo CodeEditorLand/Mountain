@@ -4,7 +4,9 @@
 //! returns an empty array; pending persistence layer wired through
 //! `KeybindingProvider`.
 //!
-//! TODO: hydrate from ApplicationState, include command id, chord, when
+//! ## Planned
+//!
+//! Hydrate from ApplicationState, including command id, chord, when
 //! clause, source extension, and conflict information for the keyboard
 //! shortcuts UI.
 

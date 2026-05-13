@@ -30,11 +30,13 @@
 //!
 //! No `pub use` re-exports - callers use the full path
 //! `Binary::Main::Entry::Fn()` directly.
-
-// TODO: add comprehensive error recovery mechanism
-// TODO: implement startup progress indicator
-// TODO: add graceful degradation for service failures
-// TODO: implement performance metrics collection
+//!
+//! ## Planned Work
+//!
+//! - Comprehensive error recovery mechanism
+//! - Startup progress indicator
+//! - Graceful degradation for service failures
+//! - Performance metrics collection
 
 /// Main application entry point.
 ///

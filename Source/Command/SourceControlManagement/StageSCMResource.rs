@@ -3,9 +3,11 @@
 //! Tauri command - stage / unstage a single resource. The standard
 //! `git add` / `git restore --staged` flow.
 //!
-//! TODO: stub. Wire to `SourceControlManagementProvider::Stage` /
-//! `Unstage`. Validate `ResourceURI` exists; support files and
-//! whole-directory operations.
+//! ## Stub
+//!
+//! Wire to `SourceControlManagementProvider::Stage` / `Unstage`.
+//! Validate `ResourceURI` exists; support files and whole-directory
+//! operations.
 
 use std::sync::Arc;
 

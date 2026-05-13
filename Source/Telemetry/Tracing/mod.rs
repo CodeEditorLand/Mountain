@@ -14,7 +14,9 @@
 //!   `CommonError`.
 //! - `MeasureTime` (macro file) - `measure_time!` block timer.
 //!
-//! TODO: zero callers as of 2026-05-02. The Telemetry feature is not yet
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. The Telemetry feature is not yet
 //! enabled in any profile; once it ships, wire from `Binary::Main` and
 //! the IPC dispatch hot path.
 

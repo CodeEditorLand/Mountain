@@ -2,9 +2,10 @@
 
 //! Tauri command - switch the working tree to a different branch.
 //!
-//! TODO: stub. Real impl through
-//! `SourceControlManagementProvider::Checkout` should handle
-//! uncommitted-changes prompts (stash / abort), branch creation
+//! ## Stub
+//!
+//! Real implementation through `SourceControlManagementProvider::Checkout`
+//! should handle uncommitted-changes prompts (stash / abort), branch creation
 //! when missing, and upstream-tracking setup.
 
 use std::sync::Arc;

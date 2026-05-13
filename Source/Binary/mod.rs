@@ -41,12 +41,14 @@
 //! No `pub use` re-exports - callers spell the full reverse-hierarchical
 //! path (`Binary::Main::Entry::Fn`, `Binary::Build::LocalhostPlugin::Fn`,
 //! etc.).
-
-// TODO: add crash recovery mechanism
-// TODO: implement proper error dialog for startup failures
-// TODO: add startup performance metrics
-// TODO: implement incremental service startup
-// TODO: add service health checks during startup
+//!
+//! ## Planned Work
+//!
+//! - Crash recovery mechanism
+//! - Error dialog for startup failures
+//! - Startup performance metrics
+//! - Incremental service startup
+//! - Service health checks during startup
 
 /// Main application entry point and orchestration.
 pub mod Main;

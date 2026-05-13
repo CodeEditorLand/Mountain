@@ -3,9 +3,11 @@
 //! Tauri command - list branches for an SCM provider. Drives the
 //! branch picker UI.
 //!
-//! TODO: stub. Wire to `SourceControlManagementProvider::GetBranches`
-//! so local + remote branches with tracking relationships and
-//! current-branch indicator are returned.
+//! ## Stub
+//!
+//! Wire to `SourceControlManagementProvider::GetBranches` so local
+//! and remote branches with tracking relationships and current-branch
+//! indicator are returned.
 
 use std::sync::Arc;
 

@@ -3,7 +3,9 @@
 //! Check for updates using Tauri's bundled updater. Notifies the user, asks
 //! for install consent, and runs `download_and_install` on accept.
 //!
-//! TODO: zero call sites as of 2026-05-02. Wire from `Binary::Main` (Help →
+//! ## Status
+//!
+//! Zero call sites as of 2026-05-02. Wire from `Binary::Main` (Help
 //! Check for Updates) or remove entirely if Air is the canonical path.
 
 use std::sync::Arc;

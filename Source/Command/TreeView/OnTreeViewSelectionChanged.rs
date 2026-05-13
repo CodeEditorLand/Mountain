@@ -3,9 +3,10 @@
 //! Tauri command - notify the provider when tree-item selection
 //! changes (multi-select supported via `SelectedHandles`).
 //!
-//! TODO: stub. Wire `OnTreeSelectionChanged` into
-//! `CommonTreeViewProvider` so providers can drive context-specific
-//! actions or detail-view updates.
+//! ## Stub
+//!
+//! Wire `OnTreeSelectionChanged` into `CommonTreeViewProvider` so
+//! providers can drive context-specific actions or detail-view updates.
 
 use std::sync::Arc;
 

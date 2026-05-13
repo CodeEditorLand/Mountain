@@ -17,7 +17,9 @@
 //! - `ServiceRegistry::Struct` - discovery-cadence-aware map keyed by service
 //!   name.
 //!
-//! TODO: zero callers as of 2026-05-02. Pending wire-up from the
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. Pending wire-up from the
 //! gRPC and Tauri IPC dispatch hot paths.
 
 pub mod ServiceEndpoint;

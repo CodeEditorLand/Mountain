@@ -12,9 +12,11 @@
 //! - `IPCResponse::Struct` - success/error response keyed by correlation id.
 //! - `MessagePriority::Enum` - Low / Normal / High / Critical.
 //!
-//! TODO: zero callers as of 2026-05-02. Used to be the planned shape
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. Used to be the planned shape
 //! for the Tauri-IPC envelope; superseded by the gRPC channel and
-//! direct Tauri events. Kept atomic so a future router can adopt it
+//! direct Tauri events. Kept in place so a future router can adopt it
 //! without re-deriving fields.
 
 pub mod IPCCommand;

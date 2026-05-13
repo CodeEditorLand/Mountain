@@ -1,23 +1,21 @@
-#![allow(non_snake_case)]
-
-//! Centralised, thread-safe state for the Mountain application. Held inside
-//! `MountainEnvironment` and accessed via `Arc<...>` clones from every
-//! provider. Sub-modules:
+//! # ApplicationState
 //!
-//! - `State::ApplicationState::ApplicationState` - the root container struct +
-//!   its `MapLockError`/`MapLockErrorWithRecovery`/ `StateOperationResult`
-//!   helpers.
-//! - `State::{Workspace,Configuration,Extension,Feature,UI}State` - domain
-//!   sub-state.
-//! - `Internal::{ExtensionScanner,PathResolution,Persistence,Recovery,
-//!   Serialization,TextProcessing}` - utilities consumed by the state layer.
-//! - `DTO` - serializable types crossing the IPC boundary.
+//! Thread-safe state machine shared across all Mountain subsystems.
+//! Organized into three tiers: DTOs (serializable data transfer objects),
+//! Internal services (persistence, recovery, scanning), and State
+//! (extension, feature, UI, and workspace state).
 //!
-//! No `pub use` re-exports; callers spell the full
-//! `ApplicationState::State::…` path.
+//! ## Structure
+//!
+//! The state is wrapped in Arc and mutated via poisoned-lock guard patterns.
+//! Every subsystem operates through the same ApplicationState instance,
+//! ensuring consistency.
 
+/// Serializable data transfer objects used for state persistence.
 pub mod DTO;
 
-pub mod Internal;
-
 pub mod State;
+
+/// Internal services: extension scanning, path resolution, persistence,
+/// recovery, serialization, and text processing.
+pub mod Internal;

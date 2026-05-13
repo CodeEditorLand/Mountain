@@ -12,7 +12,9 @@
 //!   accessors.
 //! - `HealthMonitor::Struct` - score + issue list + recovery counter.
 //!
-//! TODO: zero callers as of 2026-05-02. `IPC::StatusReporter` defines
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. `IPC::StatusReporter` defines
 //! its own `HealthMonitor` / `HealthIssue` with different shapes; the
 //! two should converge in a future batch.
 

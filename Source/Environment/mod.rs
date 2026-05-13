@@ -7,7 +7,7 @@
 //! all Mountain providers through trait-based lookups via the `Requires` trait.
 //!
 //! ```text
-//! Component ──► Requires<T> ──► MountainEnvironment ──► Arc<dyn T>
+//! Component -> Requires<T> -> MountainEnvironment -> Arc<dyn T>
 //! ```
 //!
 //! `MountainEnvironment` implements the `Environment` and `Requires` traits
@@ -31,14 +31,12 @@
 //! Providers use `CommonError` for error reporting. Trait resolution is
 //! compile-time, ensuring type safety with zero runtime overhead.
 
-// TODO: consider async initialization for providers
-// TODO: add provider health checking
-// TODO: implement provider dependency validation on startup
-
 /// Main dependency injection container struct implementing all provider traits.
 pub mod MountainEnvironment;
 
-/// Macro for generating `Requires<T>` trait implementations for each provider.
+/// Declarative macro that generates `Requires<dyn T>` impl blocks
+/// for each provider trait on `MountainEnvironment`. Invoked as
+/// `impl_provider!(CommandExecutor)` from the parent file.
 pub mod ProviderTraitImplMacro;
 
 /// `CommandExecutor` provider: runs shell commands in a managed subprocess.

@@ -17,9 +17,11 @@
 //! - **Development**: CPU count workers, info logs.
 //! - **Release**: CPU count workers, warn logs, telemetry.
 //!
-//! TODO: zero callers as of 2026-05-02 - `Binary::Main` currently
-//! creates the scheduler inline. Wire through this module when the
-//! profile-aware build sites land.
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. `Binary::Main` currently creates the
+//! scheduler inline. Wire through this module when the profile-aware
+//! build sites land.
 
 pub mod Build;
 

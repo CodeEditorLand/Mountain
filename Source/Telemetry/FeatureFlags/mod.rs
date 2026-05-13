@@ -16,8 +16,10 @@
 //! - `IsEnabled::Fn`, `Enable::Fn`, `Disable::Fn`, `GetAllFlags::Fn`,
 //!   `Initialize::Fn` - convenience accessors for the global registry.
 //!
-//! TODO: zero callers as of 2026-05-02. Module is wired up but unused.
-//! Hydrate from `MountainEnvironment` and gate flag-driven code paths.
+//! ## Status
+//!
+//! Wired up but unused as of 2026-05-02. Hydrate from `MountainEnvironment`
+//! and gate flag-driven code paths.
 
 pub mod Disable;
 

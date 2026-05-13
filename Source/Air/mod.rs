@@ -52,19 +52,19 @@
 //! - `vs/workbench/services/search/common/search.ts` - search service
 //!   architecture
 //!
-//! TODO:
-//! - Implement connection retry with exponential backoff
-//! - Add connection pooling for multiple concurrent requests
-//! - Implement request caching for frequently accessed data (auth tokens, etc.)
-//! - Add metrics collection for Air service calls (latency, success rate,
-//!   errors)
-//! - Implement fallback strategies when Air unavailable (local search, etc.)
-//! - Support for multiple Air daemons (load balancing/failover)
-//! - Add request timeout configuration (configurable per operation type)
-//! - Implement request/response logging for debugging
-//! - Add telemetry for Air service health and usage
-//! - Implement bidirectional streaming for real-time updates
+//! ## Planned Work
 //!
+//! - Connection retry with exponential backoff
+//! - Connection pooling for concurrent requests
+//! - Request caching for frequently accessed data (auth tokens)
+//! - Metrics collection for Air service calls (latency, success rate, errors)
+//! - Fallback strategies when Air is unavailable (local search)
+//! - Support for multiple Air daemons (load balancing/failover)
+//! - Configurable request timeouts per operation type
+//! - Request/response logging for debugging
+//! - Telemetry for Air service health and usage
+//! - Bidirectional streaming for real-time updates
+
 //! MODULE CONTENTS:
 //! - Re-exports: `AirClient`, `AirServiceProvider`, response types, and helper
 //!   functions

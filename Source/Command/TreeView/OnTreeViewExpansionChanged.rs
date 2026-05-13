@@ -3,10 +3,11 @@
 //! Tauri command - notify the provider when a tree node is
 //! expanded / collapsed.
 //!
-//! TODO: stub. Wire `OnTreeNodeExpanded` into
-//! `CommonTreeViewProvider` and dispatch here so providers can
-//! lazily load child items or persist expansion state across
-//! sessions.
+//! ## Stub
+//!
+//! Wire `OnTreeNodeExpanded` into `CommonTreeViewProvider` and
+//! dispatch here so providers can lazily load child items or persist
+//! expansion state across sessions.
 
 use std::sync::Arc;
 

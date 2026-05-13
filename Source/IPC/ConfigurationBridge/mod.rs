@@ -1,35 +1,14 @@
-//! # Configuration Bridge Module (IPC)
+//! Bidirectional configuration synchronization between Mountain's Rust backend
+//! and Wind's TypeScript frontend.
 //!
-//! ## RESPONSIBILITIES
-//! This module provides bidirectional configuration synchronization between
-//! Mountain's Rust backend and Wind's TypeScript frontend.
+//! This module re-exports types from the parent `ConfigurationBridge.rs` for
+//! backward compatibility. The actual `ConfigurationBridge` struct and its
+//! methods live one level up.
 //!
-//! ## ARCHITECTURAL ROLE
-//! This module is the synchronization layer that maintains configuration
-//! consistency across the Wind-Mountain bridge.
+//! ## Planned Work
 //!
-//! ## KEY COMPONENTS
-//!
-//! - **Bridge**: Main ConfigurationBridge orchestrator
-//!
-//! ## ERROR HANDLING
-//! All operations return Result types with descriptive error messages.
-//!
-//! ## LOGGING
-//! Info-level for sync events, debug for operations, error for failures.
-//!
-//! ## PERFORMANCE CONSIDERATIONS
-//! - Efficient conflict resolution
-//! - Batched updates for performance
-//! - Caching for frequently accessed config
-//!
-//! ## TODO
-//! - Add three-way merge support
-//! - Implement conflict UI in Wind
-//! - Add configuration validation schemas
-//! - Support configuration versioning
+//! In a future refactoring, split `ConfigurationBridge.rs` into atomic
+//! structure definitions and move those into `Bridge.rs` within this
+//! directory, leaving this `mod.rs` as a clean re-export layer.
 
 // Re-export the original ConfigurationBridge types for backward compatibility
-// The actual implementation is in the parent directory ConfigurationBridge.rs
-// TODO: In future refactoring, split ConfigurationBridge.rs into atomic
-// structure and move that structure into Bridge.rs file within this directory.

@@ -1,34 +1,38 @@
-//! # Core Error Types (local, dead-code stack)
+//! # Core Error Types (local, superseded)
 //!
-//! Base building blocks of Mountain's local error taxonomy. Five
+//! Base building blocks of Mountain's error taxonomy. Defines five
+//! core types: [`ErrorSeverity`], [`ErrorKind`], [`ErrorContext`],
+//! [`MountainError`], and a generic `Result<T>` alias. The five
 //! per-domain sibling modules (`IPCError`, `FileSystemError`,
 //! `ConfigurationError`, `ProviderError`, `ServiceError`) wrap an
 //! `ErrorContext` and converge on `MountainError` via a `From` impl.
-
-// TODO: this file is NOT atomized into one-symbol-per-file because the five
-// sibling modules each construct `ErrorContext { context: ..., severity: ...,
-// kind: ... }` literally, and call `.with_kind` / `.with_severity` /
-// `.with_operation`. Splitting `ErrorContext`/`MountainError` into
-// `Struct`-renamed atoms would require renaming every field+method across
-// ~700 lines of dead code. Defer until the whole stack is either deleted or
-// migrated to `CommonLibrary::Error::CommonError`.
-//
-// TODO: zero callers as of 2026-05-02 - superseded by
-// `CommonLibrary::Error::CommonError`.
+//!
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. These types are superseded by
+//! `CommonLibrary::Error::CommonError`. The module remains in place
+//! so that a future migration back to per-domain error types can
+//! pick up the existing constructors without rebuilding them. Do not
+//! add new callers - use `CommonError` directly.
 
 use std::{error::Error as StdError, fmt};
 
 use serde::{Deserialize, Serialize};
 
-/// Severity level of an error.
+/// Severity level of an error, used to categorize the impact of
+/// an error from informational to critical.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum ErrorSeverity {
+	/// Informational: no action required.
 	Info = 0,
 
+	/// Warning: something unexpected but non-blocking.
 	Warning = 1,
 
+	/// Error: operation failed and requires attention.
 	Error = 2,
 
+	/// Critical: system-level failure, immediate action needed.
 	Critical = 3,
 }
 
@@ -46,19 +50,26 @@ impl fmt::Display for ErrorSeverity {
 	}
 }
 
-/// Top-level error category.
+/// Top-level error category assigned to every error at construction
+/// time. Used for routing, filtering, and aggregation in log sinks.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum ErrorKind {
+	/// Inter-process or inter-service communication failure.
 	IPC,
 
+	/// File or directory operation failure.
 	FileSystem,
 
+	/// Configuration read/write/validation failure.
 	Configuration,
 
+	/// Sidecar or long-running service lifecycle failure.
 	Service,
 
+	/// Capability provider (file, terminal, document, etc.) failure.
 	Provider,
 
+	/// Unclassified error.
 	Other,
 }
 
@@ -80,21 +91,30 @@ impl fmt::Display for ErrorKind {
 	}
 }
 
-/// Companion metadata attached to every `MountainError`.
+/// Companion metadata attached to every [`MountainError`]. Carries
+/// the human-readable message, categorization via [`ErrorKind`] and
+/// [`ErrorSeverity`], and optional operation/component context for
+/// log aggregation.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorContext {
+	/// Human-readable description of what went wrong.
 	pub message:String,
 
+	/// Category of the failure (e.g. `IPC`, `FileSystem`).
 	pub kind:ErrorKind,
 
+	/// Impact level (Info through Critical).
 	pub severity:ErrorSeverity,
 
+	/// Operation that was in progress when the error occurred, if known.
 	pub operation:Option<String>,
 
+	/// Component or module that raised the error, if known.
 	pub component:Option<String>,
 }
 
 impl ErrorContext {
+	/// Creates a new context with default kind and severity.
 	pub fn new(message:impl Into<String>) -> Self {
 		Self {
 			message:message.into(),
@@ -140,37 +160,49 @@ impl fmt::Display for ErrorContext {
 	}
 }
 
-/// Base Mountain error type.
+/// Base error type for Mountain, wrapping an [`ErrorContext`] with
+/// optional raw source text and an optional stack trace snapshot.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MountainError {
+	/// Categorization, severity, and human-readable message.
 	pub context:ErrorContext,
 
+	/// Raw source text or underlying cause, if available.
 	pub source:Option<String>,
 
+	/// Stack trace captured at the error site, if available.
 	pub stack_trace:Option<String>,
 }
 
 impl MountainError {
+	/// Creates a new error from the given context.
 	pub fn new(context:ErrorContext) -> Self { Self { context, source:None, stack_trace:None } }
 
+	/// Attaches a raw source string (e.g. the underlying error's display
+	/// output).
 	pub fn with_source(mut self, source:impl Into<String>) -> Self {
 		self.source = Some(source.into());
 
 		self
 	}
 
+	/// Attaches a stack trace snapshot for post-mortem debugging.
 	pub fn with_stack_trace(mut self, stack_trace:impl Into<String>) -> Self {
 		self.stack_trace = Some(stack_trace.into());
 
 		self
 	}
 
+	/// Returns the human-readable message.
 	pub fn message(&self) -> &str { &self.context.message }
 
+	/// Returns the error kind.
 	pub fn kind(&self) -> ErrorKind { self.context.kind }
 
+	/// Returns the severity level.
 	pub fn severity(&self) -> ErrorSeverity { self.context.severity }
 
+	/// Returns `true` when the severity is `Critical`.
 	pub fn is_critical(&self) -> bool { self.context.severity == ErrorSeverity::Critical }
 }
 

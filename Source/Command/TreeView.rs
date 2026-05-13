@@ -25,10 +25,12 @@
 //! `vs/workbench/api/browser/mainThreadTreeViews.ts`,
 //! `vs/workbench/api/common/extHostTreeViews.ts`.
 //!
-//! TODO: trait additions on `CommonTreeViewProvider` for the four
-//! stubs above (expansion, selection, persist, restore). Drag-and-
-//! drop, multi-column, badge / tooltip / icon-theming support, and
-//! tree-item validation are deferred.
+//! ## Planned Work
+//!
+//! - Trait additions on `CommonTreeViewProvider` for the four
+//!   stubs (expansion, selection, persist, restore)
+//! - Drag-and-drop, multi-column, badge / tooltip / icon-theming support
+//! - Tree-item validation
 
 pub mod GetTreeViewChildren;
 

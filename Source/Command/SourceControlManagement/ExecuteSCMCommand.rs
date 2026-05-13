@@ -2,7 +2,9 @@
 
 //! Tauri command - dispatch SCM operations (commit / push / pull).
 //!
-//! TODO: route through the `SourceControlManagementProvider` trait
+//! ## Stub
+//!
+//! Route through the `SourceControlManagementProvider` trait
 //! instead of the inline match. Real provider invocation gives us
 //! progress reporting, cancellation, and proper error surfacing.
 //! Current shape returns mocked success.

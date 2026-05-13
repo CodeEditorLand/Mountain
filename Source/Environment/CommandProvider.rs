@@ -56,6 +56,9 @@ use super::MountainEnvironment::MountainEnvironment;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Vine::Client, dev_log};
 
 /// An enum representing the different ways a command can be handled.
+///
+/// Commands are either implemented as native Rust functions or
+/// delegated to extension sidecar processes via RPC.
 pub enum CommandHandler<R:Runtime + 'static> {
 	/// A command handled by a native, asynchronous Rust function.
 	Native(

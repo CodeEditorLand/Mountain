@@ -16,14 +16,27 @@
 //! ## Implementation
 //!
 //! The trait impl is split across two sub-modules loaded via `#[path]`:
-//! - `FileSystemProvider/ReadOperations.rs` — `FileSystemReader` impl
-//! - `FileSystemProvider/WriteOperations.rs` — `FileSystemWriter` impl
+//! - `FileSystemProvider/ReadOperations.rs` - `FileSystemReader` impl
+//! - `FileSystemProvider/WriteOperations.rs` - `FileSystemWriter` impl
 //!
 //! ## VS Code reference
 //!
 //! - `vs/workbench/services/files/electron-browser/diskFileSystemProvider.ts`
 //! - `vs/platform/files/common/files.ts`
 //! - `vs/base/common/network.ts`
+//!
+//! ## Planned Work
+//!
+//! - Filesystem change watching
+//! - Path normalization enforcement
+//! - Atomic writes via temp+rename
+//! - File permissions/ownership metadata
+//! - Extended attributes
+//! - Trash API (not delete)
+//! - Encoding detection
+//! - Case-sensitivity handling
+//! - Filesystem usage statistics
+//! - Metadata caching
 
 use std::path::PathBuf;
 
@@ -46,10 +59,6 @@ mod ReadOperations;
 #[path = "FileSystemProvider/WriteOperations.rs"]
 mod WriteOperations;
 
-// TODO: filesystem change watching, path normalization, atomic writes via
-// temp+rename, file permissions/ownership metadata, extended attributes,
-// trash API (not delete), encoding detection, case-sensitivity handling,
-// filesystem usage statistics, metadata caching.
 #[async_trait]
 impl FileSystemReader for MountainEnvironment {
 	/// Delegates to ReadOperations module

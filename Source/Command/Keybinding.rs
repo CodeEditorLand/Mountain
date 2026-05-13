@@ -22,9 +22,14 @@
 //! `vs/workbench/services/keybinding/browser/keybindingService.ts`,
 //! `vs/platform/keybinding/common/keybindingResolver.ts`.
 //!
-//! TODO: weighted resolution (user > extension > default), persistence
-//! to ApplicationState, when-clause contexts, chord (multi-stroke)
-//! sequences, platform-specific bindings, conflict-resolution UI.
+//! ## Planned Work
+//!
+//! - Weighted resolution (user > extension > default)
+//! - Persistence to ApplicationState
+//! - When-clause context evaluation
+//! - Chord (multi-stroke) sequences
+//! - Platform-specific bindings
+//! - Conflict-resolution UI
 
 pub mod CheckKeybindingConflicts;
 

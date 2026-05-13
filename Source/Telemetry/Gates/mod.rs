@@ -15,7 +15,9 @@
 //!   `OnceLock<HashSet>` to `RwLock<HashSet>`.
 //! - `RuntimeGates::GATES` - module-private singleton + initialiser.
 //!
-//! TODO: zero callers as of 2026-05-02. Wire into IPC dispatch and
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. Wire into IPC dispatch and
 //! command execution once the gates are read from runtime config.
 
 pub mod EnableRuntimeGate;

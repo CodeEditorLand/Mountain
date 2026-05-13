@@ -5,7 +5,9 @@
 //! (`IsEnabled`, `IsDebugBuild`, `IsDevelopmentBuild`) are always available
 //! so callers can gate cheap diagnostic paths without an `#[cfg]` block.
 //!
-//! TODO: zero external call sites today; wire from `Binary::Main` when the
+//! ## Status
+//!
+//! Zero external call sites today. Wire from `Binary::Main` when the
 //! Telemetry feature ships.
 
 pub mod Gates;

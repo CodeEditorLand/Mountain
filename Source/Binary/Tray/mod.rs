@@ -8,12 +8,14 @@
 //! (Open / Hide / Quit items), and window-visibility toggling on
 //! left-click. Degrades gracefully if the desktop environment has no
 //! tray support.
-
-// TODO: add tray notification badge support
-// TODO: implement tray icon animation for background activity indication
-// TODO: add context-menu state (enabled/disabled, checked/unchecked) per item
-// TODO: investigate optimal icon sizes for HiDPI settings across platforms
-// TODO: investigate platform-specific tray behavior differences (macOS, Windows, Linux)
+//!
+//! ## Planned Work
+//!
+//! - Tray notification badge support
+//! - Tray icon animation for background activity indication
+//! - Context-menu state (enabled/disabled, checked/unchecked) per item
+//! - Optimal icon sizes for HiDPI settings across platforms
+//! - Platform-specific tray behavior investigation (macOS, Windows, Linux)
 
 /// Create and register the initial system tray icon and menu.
 pub mod EnableTray;

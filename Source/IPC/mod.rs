@@ -1,66 +1,8 @@
-//! # IPC Module
-//!
-//! ## RESPONSIBILITIES
+//! Inter-process communication for the Mountain application, handling
+//! communication between the Tauri frontend and the Rust backend through
+//! Tauri commands, WebSocket, and custom message formats.
 
 #![allow(unused_imports, unused_variables)]
-//! Inter-process communication (IPC) for the Mountain application, handling
-//! communication between the Tauri frontend and the Rust backend through
-//! various protocols including Tauri commands, WebSocket, and custom message
-//! formats.
-//!
-//! ### Core Functions:
-//! - **Message Routing**: Route IPC messages to appropriate handlers
-//! - **Connection Management**: Manage IPC connections with health monitoring
-//! - **Security**: Implement permission system for IPC access control
-//! - **Encryption**: Provide secure message channels and compression
-//! - **Status Reporting**: Report IPC system status and metrics
-//! - **Configuration Bridge**: Bridge configuration across IPC boundaries
-//! - **Wind Sync**: Advanced synchronization with Wind UI framework
-//! - **Advanced Features**: Experimental/advanced IPC features
-//!
-//! ## Architectural Role
-//!
-//! The IPC module is the **communication layer** in Mountain's architecture:
-//!
-//! ```text
-//! Sky (Frontend) ──► IPC (Communication) ──► Track (Dispatch) ──► Services
-//! Wind (UI) ───────────────────────────────────────────────────────────────┘
-//! Cocoon (Sidecar) ──► Vine (gRPC) ────────────────────────────┘
-//! ```
-//!
-//! ### Design Principles:
-//! 1. **Protocol Agnostic**: Support multiple IPC protocols
-//! 2. **Security First**: All communications are secured and permission-gated
-//! 3. **High Performance**: Optimized for low-latency communication
-//! 4. **Observable**: Comprehensive logging and metrics
-//!
-//! ## Key Components
-//!
-//! - **TauriIPCServer**: Main IPC server orchestrator
-//! - **Message**: Message types and routing
-//! - **Connection**: Connection management and health
-//! - **Encryption**: Message compression and secure channels
-//! - **Security**: Permission system
-//! - **ConfigurationBridge**: Configuration synchronization
-//! - **StatusReporter**: Status and metrics reporting
-//! - **WindAdvancedSync**: Wind framework integration
-//! - **AdvancedFeatures**: Advanced/experimental features
-//!
-//! ## TODOs
-//! High Priority:
-//! - [ ] Add comprehensive unit tests for all modules
-//! - [ ] Implement connection pooling optimizations
-//! - [ ] Add connection timeout handling
-//!
-//! Medium Priority:
-//! - [ ] Add message batching for efficiency
-//! - [ ] Implement keep-alive packets
-//! - [ ] Add connection retry logic
-//!
-//! Low Priority:
-//! - [ ] Add message persistence for offline mode
-//! - [ ] Implement message compression ratio optimization
-//! - [ ] Add connection encryption rotation
 
 // --- Main Sub-modules ---
 

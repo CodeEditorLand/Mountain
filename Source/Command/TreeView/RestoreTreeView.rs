@@ -4,8 +4,9 @@
 //! `PersistTreeView` (sibling). Called when a tree view is recreated
 //! or the workspace is reloaded.
 //!
-//! TODO: stub. Wire `RestoreTreeViewState` into the
-//! `CommonTreeViewProvider` trait.
+//! ## Stub
+//!
+//! Wire `RestoreTreeViewState` into the `CommonTreeViewProvider` trait.
 
 use std::sync::Arc;
 

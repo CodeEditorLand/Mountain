@@ -12,11 +12,11 @@
 //!
 //! ## Methods
 //!
-//! - `RegisterCustomEditorProvider` — register extension provider by view type
-//! - `UnregisterCustomEditorProvider` — unregister provider
-//! - `OnSaveCustomDocument` — workbench → extension save reverse-RPC via
+//! - `RegisterCustomEditorProvider` - register extension provider by view type
+//! - `UnregisterCustomEditorProvider` - unregister provider
+//! - `OnSaveCustomDocument` - workbench → extension save reverse-RPC via
 //!   `$onSaveCustomDocument`; returns the sidecar's error verbatim on failure
-//! - `ResolveCustomEditor` — fire-and-forget RPC to populate the webview
+//! - `ResolveCustomEditor` - fire-and-forget RPC to populate the webview
 //!
 //! ## VS Code reference
 //!

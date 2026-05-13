@@ -7,10 +7,10 @@
 //!
 //! ## Communication patterns
 //!
-//! - **Request/response** (`SendRequestToSideCar`) — synchronous RPC with
+//! - **Request/response** (`SendRequestToSideCar`) - synchronous RPC with
 //!   caller-specified timeout; used for config resolution, URI lookup, and
 //!   content retrieval.
-//! - **Notification** (`SendNotificationToSideCar`) — fire-and-forget; used
+//! - **Notification** (`SendNotificationToSideCar`) - fire-and-forget; used
 //!   for document changes, diagnostics, and UI events. Returns
 //!   `Result<(), CommonError>` indicating send success only.
 //!
@@ -19,6 +19,18 @@
 //! - `vs/workbench/services/extensions/common/extensionHostProtocol.ts`
 //! - `vs/base/parts/ipc/common/ipc.net.ts`
 //! - `vs/workbench/services/extensions/common/rpcProtocol.ts`
+//!
+//! ## Planned Work
+//!
+//! - Message queuing for offline scenarios
+//! - Bidirectional request handling (sidecar → main)
+//! - Streaming support
+//! - Request cancellation
+//! - Priority queue and batch operations
+//! - Request deduplication
+//! - Connection health checking
+//! - Unix domain socket support
+//! - Latency/success-rate telemetry
 
 use CommonLibrary::{Error::CommonError::CommonError, IPC::IPCProvider::IPCProvider};
 use async_trait::async_trait;

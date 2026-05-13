@@ -24,11 +24,14 @@
 //! `vs/workbench/contrib/scm/browser/scmView.ts`,
 //! `vs/workbench/services/scm/common/scmService.ts`.
 //!
-//! TODO: route every stub through the trait so we get progress
-//! reporting, cancellation, and proper error surfacing. Stash /
-//! merge / rebase, multi-provider concurrency, diff viewing,
-//! resource decoration, and SCM-input-box interactions are
-//! deferred.
+//! ## Planned Work
+//!
+//! - Route every stub through the trait for progress reporting,
+//!   cancellation, and proper error surfacing
+//! - Stash / merge / rebase operations
+//! - Multi-provider concurrency
+//! - Diff viewing and resource decoration
+//! - SCM input-box interactions
 
 pub mod CheckoutSCMBranch;
 

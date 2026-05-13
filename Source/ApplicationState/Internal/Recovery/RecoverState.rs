@@ -14,7 +14,9 @@
 //! - `RecoverStateWithBackoff::Fn` - async retry with exponential backoff (100
 //!   ms, doubled per failure).
 //!
-//! TODO: zero callers as of 2026-05-02. Wire into the
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. Wire into the
 //! `ApplicationState/Internal/Recovery` flow once the recovery
 //! triggers are formalised.
 

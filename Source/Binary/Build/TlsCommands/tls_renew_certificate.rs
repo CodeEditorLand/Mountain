@@ -1,11 +1,10 @@
 #![allow(non_snake_case)]
 
 //! `tls_renew_certificate` Tauri command - regenerates the
-//! cached server cert for `hostname`.
-//!
-//! TODO: the inner `Mutex` should become `tokio::sync::Mutex`
-//! so the lock can be held across `await`; the renewal call is
-//! currently fire-and-forget.
+//! cached server cert for `hostname`. The renewal fires inside a
+//! `std::sync::Mutex` so the lock must not be held across an await
+//! point today. A future migration to `tokio::sync::Mutex` will let
+//! this function await the renewal directly.
 
 use std::sync::{Arc, Mutex};
 

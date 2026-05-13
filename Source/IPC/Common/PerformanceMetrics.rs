@@ -15,7 +15,9 @@
 //! reverse-hierarchical path:
 //! `IPC::Common::PerformanceMetrics::PerformanceMetrics::Struct`.
 //!
-//! TODO: zero callers as of 2026-05-02. `IPC::StatusReporter` defines
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. `IPC::StatusReporter` defines
 //! its own `PerformanceMetrics` struct with a different shape; the two
 //! should converge in a future batch.
 

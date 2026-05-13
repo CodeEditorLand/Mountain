@@ -4,7 +4,9 @@
 //! and Air-delegated updates (feature-gated). `CheckForUpdatesWithAir::Fn`
 //! routes by `UpdateMode::Enum`.
 //!
-//! TODO: zero call sites as of 2026-05-02. Wire from `Binary::Main` (Help →
+//! ## Status
+//!
+//! Zero call sites as of 2026-05-02. Wire from `Binary::Main` (Help
 //! Check for Updates) or remove if Air becomes the canonical path.
 
 pub mod CheckForUpdates;

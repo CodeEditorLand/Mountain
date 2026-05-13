@@ -1,7 +1,8 @@
 #![allow(non_snake_case)]
 
 //! Debug-Adapter-Protocol RPC service. Placeholder for the Cocoon DAP
-//! roadmap. TODO: zero callers as of 2026-05-02.
+//! roadmap. Status: not yet wired; all exports are cfg-gated behind the
+//! `debug-protocol` feature.
 
 #[cfg(feature = "debug-protocol")]
 pub struct Struct;

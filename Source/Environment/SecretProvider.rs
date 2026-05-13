@@ -7,9 +7,9 @@
 //! ## Keyring integration
 //!
 //! The `keyring` crate provides cross-platform secure storage:
-//! - **macOS** — Native Keychain (OSXKeychain)
-//! - **Windows** — Windows Credential Manager (WinCredential)
-//! - **Linux** — Secret Service API (dbus-secret-service) or GNOME Keyring
+//! - **macOS**: Native Keychain (OSXKeychain)
+//! - **Windows**: Windows Credential Manager (WinCredential)
+//! - **Linux**: Secret Service API (dbus-secret-service) or GNOME Keyring
 //!
 //! Each secret is identified by a service name
 //! (`<app>.<ExtensionIdentifier>`) and a key string.
@@ -51,23 +51,30 @@ fn GetKeyringServiceName(Environment:&MountainEnvironment, ExtensionIdentifier:&
 	format!("{}.{}", Environment.ApplicationHandle.package_info().name, ExtensionIdentifier)
 }
 
-/// Helper to check if Air client is available and healthy.
+/// Helper to check if the Air gRPC client is available without a
+/// proper health check. The raw client requires `&mut self` for
+/// `health_check`, but `MountainEnvironment` holds an immutable
+/// reference. This returns `true` whenever a client is attached.
+/// Blocked on proper wrapper integration.
 #[cfg(feature = "AirIntegration")]
 async fn IsAirAvailable(_AirClient:&AirServiceClient<tonic::transport::Channel>) -> bool {
-	// TODO: Implement proper health check when AirClient wrapper is available
-	// The raw gRPC client requires &mut self for health_check, but
-	// MountainEnvironment stores an immutable reference. This will be fixed when
-	// the AirClient wrapper is properly integrated.
-	// For now, assume Air is available if the client exists
+	// TODO: implement proper health check when AirClient wrapper supports
+	// &mut self for health_check RPC. MountainEnvironment stores an
+	// immutable reference, so this is blocked on wrapper integration.
 	true
 }
 
 #[async_trait]
 impl SecretProvider for MountainEnvironment {
 	/// Retrieves a secret by reading from the OS keychain.
-	/// If Air is available and healthy, delegates to Air service.
-	/// Falls back to local keyring if Air is unavailable.
-	#[allow(unused_mut, unused_variables)]
+	///
+	/// When `AirIntegration` is enabled, attempts to delegate to the Air
+	/// service first and falls back to the local keyring on failure.
+	/// Returns `Ok(None)` if the keychain entry does not exist.
+	#[cfg_attr(
+		not(feature = "AirIntegration"),
+		allow(unused_mut)
+	)]
 	async fn GetSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<Option<String>, CommonError> {
 		dev_log!(
 			"storage-verbose",
@@ -128,9 +135,13 @@ impl SecretProvider for MountainEnvironment {
 	}
 
 	/// Stores a secret by writing to the OS keychain.
-	/// If Air is available and healthy, delegates to Air service.
-	/// Falls back to local keyring if Air is unavailable.
-	#[allow(unused_mut, unused_variables)]
+	///
+	/// When `AirIntegration` is enabled, attempts to delegate to the Air
+	/// service first and falls back to the local keyring on failure.
+	#[cfg_attr(
+		not(feature = "AirIntegration"),
+		allow(unused_mut)
+	)]
 	async fn StoreSecret(&self, ExtensionIdentifier:String, Key:String, Value:String) -> Result<(), CommonError> {
 		dev_log!(
 			"storage-verbose",
@@ -187,9 +198,11 @@ impl SecretProvider for MountainEnvironment {
 	}
 
 	/// Deletes a secret by removing it from the OS keychain.
-	/// If Air is available and healthy, delegates to Air service.
-	/// Falls back to local keyring if Air is unavailable.
-	#[allow(unused_mut, unused_variables)]
+	///
+	/// When `AirIntegration` is enabled, attempts to delegate to the Air
+	/// service first and falls back to the local keyring on failure.
+	/// Idempotent: removing a non-existent entry is treated as success.
+	#[cfg_attr(not(feature = "AirIntegration"), allow(unused_mut))]
 	async fn DeleteSecret(&self, ExtensionIdentifier:String, Key:String) -> Result<(), CommonError> {
 		dev_log!(
 			"storage-verbose",
@@ -252,7 +265,11 @@ impl SecretProvider for MountainEnvironment {
 // Air Integration Functions
 // ============================================================================
 
-/// Retrieves a secret from the Air service.
+/// Air stub: retrieves a secret from the remote Air service.
+///
+/// TODO: construct GetSecretRequest with ExtensionIdentifier + Key, call
+/// AirClient.get_secret with timeout, map errors to CommonError, return
+/// Ok(Some(secret)) if found or Ok(None) if not found.
 #[cfg(feature = "AirIntegration")]
 async fn GetSecretFromAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,
@@ -274,7 +291,10 @@ async fn GetSecretFromAir(
 	Err(CommonError::NotImplemented { FeatureName:"GetSecretFromAir".to_string() })
 }
 
-/// Stores a secret in the Air service.
+/// Air stub: stores a secret in the remote Air service.
+///
+/// TODO: construct StoreSecretRequest with ExtensionIdentifier, Key, Value;
+/// handle encryption and secure transmission; map errors to CommonError.
 #[cfg(feature = "AirIntegration")]
 async fn StoreSecretToAir(
 	_AirClient:&AirServiceClient<tonic::transport::Channel>,

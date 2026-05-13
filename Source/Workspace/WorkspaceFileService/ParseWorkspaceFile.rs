@@ -3,7 +3,9 @@
 //! Parse a `.code-workspace` file's content and resolve every folder path to a
 //! `file://` URI.
 //!
-//! TODO: zero callers as of 2026-05-02. The parser exists in case Mountain
+//! ## Status
+//!
+//! Zero callers as of 2026-05-02. The parser exists in case Mountain
 //! ever owns `.code-workspace` ingestion (currently delegated through Wind).
 //! Remove if the boundary stays on the Wind side.
 

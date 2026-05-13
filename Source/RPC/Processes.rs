@@ -1,7 +1,8 @@
 #![allow(non_snake_case)]
 
-//! Child-process RPC service. Placeholder for `spawn` + stdio + signal
-//! handling for Cocoon. TODO: zero callers as of 2026-05-02.
+//! Child-process RPC service. Placeholder for spawn + stdio + signal
+//! handling for Cocoon. Status: not yet wired; all exports are cfg-gated
+//! behind the `child-processes` feature.
 
 #[cfg(feature = "child-processes")]
 pub struct Struct;

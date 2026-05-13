@@ -1,55 +1,14 @@
-//! # State Module (ApplicationState)
+//! # State
 //!
-//! ## RESPONSIBILITIES
-//! Contains all state management sub-modules for the Mountain application.
-//! Each submodule represents a distinct domain-specific state area.
+//! Domain-specific state groups for the Mountain application.
+//! Each sub-module holds a slice of the overall application state,
+//! organized by concern:
 //!
-//! ## KEY COMPONENTS
-//! - WorkspaceState: Workspace folders, trust, active document
-//! - ConfigurationState: Configuration, memento storage
-//! - ExtensionState: Extension registry, providers, scanned extensions
-//! - FeatureState: Diagnostics, documents, terminals, webviews, etc.
-//! - UIState: Pending UI requests
-//! - ApplicationState: Main state container (for backward compatibility)
-//!
-//! ## ARCHITECTURAL ROLE
-//! The State module is the **state organization layer** that groups related
-//! state components into logical domains:
-//!
-//! ```text
-//! ApplicationState
-//! │
-//! ├── WorkspaceState      - Workspace folders, trust, active document
-//! ├── ConfigurationState  - Configuration, memento storage
-//! ├── ExtensionState      - Extension registry, providers, scanned extensions
-//! ├── FeatureState        - Diagnostics, documents, terminals, webviews, etc.
-//! └── UIState             - Pending UI requests
-//! ```
-//!
-//! ## KEY COMPONENTS
-//! - **WorkspaceState**: Workspace-related state
-//! - **ConfigurationState**: Configuration and storage state
-//! - **ExtensionState**: Extension management state (composite)
-//! - **FeatureState**: Feature-specific state (composite)
-//! - **UIState**: User interface request state
-//!
-//! ## ERROR HANDLING
-//! All state operations use `Arc<Mutex<...>>` for thread-safety with proper
-//! error handling via `MapLockError` helpers.
-//!
-//! ## LOGGING
-//! State operations are logged at appropriate levels (debug, info, warn,
-//! error).
-//!
-//! ## PERFORMANCE CONSIDERATIONS
-//! - Lock mutexes briefly and release immediately
-//! -Avoid nested locks to prevent deadlocks
-//! - Use `Arc` for shared ownership across threads
-//!
-//! ## TODO
-//! - [ ] Add state validation invariants
-//! - [ ] Implement state metrics collection
-//! - [ ] Add state diffing for debugging
+//! - WorkspaceState: folders, trust, active document
+//! - ConfigurationState: settings and memento storage
+//! - ExtensionState: registry, providers, scanned extensions
+//! - FeatureState: diagnostics, documents, terminals, webviews, etc.
+//! - UIState: pending UI requests and state
 
 //! Workspace state management.
 pub mod WorkspaceState;

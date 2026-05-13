@@ -26,10 +26,13 @@
 //! VS Code reference: `vs/workbench/api/common/extHostLanguageFeatures.ts`,
 //! `vs/workbench/services/languageFeatures/common/languageFeaturesService.ts`.
 //!
-//! TODO: document symbols, formatting, rename, signature help, semantic
-//! tokens, code lens, inlay hints, linked editing range, call/type
-//! hierarchy, document color, folding/selection range, request dedupe
-//! and cancellation tokens for long-running ops.
+//! ## Planned Work
+//!
+//! - Document symbols, formatting, rename, signature help
+//! - Semantic tokens, code lens, inlay hints
+//! - Linked editing range, call/type hierarchy
+//! - Document color, folding/selection range
+//! - Request dedupe and cancellation tokens for long-running ops
 
 pub mod MountainProvideCodeActions;
 

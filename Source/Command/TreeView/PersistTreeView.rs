@@ -3,9 +3,11 @@
 //! Tauri command - serialise tree-view state (expansion, selection,
 //! scroll position) for cross-session restore.
 //!
-//! TODO: stub. Wire `PersistTreeViewState` into the
-//! `CommonTreeViewProvider` trait; persist to workspace storage or
-//! `ApplicationState` so `RestoreTreeView` (sibling) can reapply.
+//! ## Stub
+//!
+//! Wire `PersistTreeViewState` into the `CommonTreeViewProvider`
+//! trait; persist to workspace storage or `ApplicationState` so
+//! `RestoreTreeView` (sibling) can reapply.
 
 use std::sync::Arc;
 
