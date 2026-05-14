@@ -200,10 +200,9 @@ Mountain/
 
 ## Development Setup&#x2001;🛠️
 
-`Mountain` is a `Rust` crate and a core component of the main `Land` repository.
-It is not intended to be built or run standalone. Please follow the instructions
-in the main [`Land` Repository README](https://github.com/CodeEditorLand/Land)
-to set up, build, and run the entire application.
+`Mountain` is a `Rust` crate and a core component of the **Land** repository. It
+is built as part of the monorepo. For detailed build instructions, see
+[`Documentation/GitHub/Building.md`](https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/Building.md).
 
 **Key Dependencies:**
 

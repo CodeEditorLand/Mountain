@@ -71,18 +71,6 @@
 		"createUpdaterArtifacts": false,
 		"externalBin": ["Binary/node"],
 		"fileAssociations": [],
-		"resources": {
-			"../Sky/Target/Static/Application/extensions": "extensions",
-			"../Sky/Target/Static/Application/node_modules": "node_modules",
-			"../Sky/Target/Static/Application/nls.keys.json": "nls.keys.json",
-			"../Sky/Target/Static/Application/nls.messages.js": "nls.messages.js",
-			"../Sky/Target/Static/Application/nls.messages.json": "nls.messages.json",
-			"../Sky/Target/Static/Application/nls.metadata.json": "nls.metadata.json",
-			"../Sky/Target/Static/Application/bootstrap-esm.js": "bootstrap-esm.js",
-			"../Sky/Target/Static/Application/bootstrap-import.js": "bootstrap-import.js",
-			"../Sky/Target/Static/Application/bootstrap-meta.js": "bootstrap-meta.js",
-			"../Sky/Target/product.json": "product.json"
-		},
 		"homepage": "https://Editor.Land",
 		"iOS": {
 			"developmentTeam": "Land",
@@ -135,6 +123,18 @@
 			"minimumSystemVersion": "10.15"
 		},
 		"publisher": "PlayForm",
+		"resources": {
+			"../Sky/Target/Static/Application/bootstrap-esm.js": "bootstrap-esm.js",
+			"../Sky/Target/Static/Application/bootstrap-import.js": "bootstrap-import.js",
+			"../Sky/Target/Static/Application/bootstrap-meta.js": "bootstrap-meta.js",
+			"../Sky/Target/Static/Application/extensions": "extensions",
+			"../Sky/Target/Static/Application/nls.keys.json": "nls.keys.json",
+			"../Sky/Target/Static/Application/nls.messages.js": "nls.messages.js",
+			"../Sky/Target/Static/Application/nls.messages.json": "nls.messages.json",
+			"../Sky/Target/Static/Application/nls.metadata.json": "nls.metadata.json",
+			"../Sky/Target/Static/Application/node_modules": "node_modules",
+			"../Sky/Target/product.json": "product.json"
+		},
 		"shortDescription": "",
 		"targets": ["app", "dmg"],
 		"windows": {

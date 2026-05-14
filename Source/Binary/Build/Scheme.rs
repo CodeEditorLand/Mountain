@@ -833,7 +833,7 @@ pub fn VscodeFileSchemeHandler<R:tauri::Runtime>(
 ) -> Response<Vec<u8>> {
 	// The scheme handler runs inside the wkwebview URL loading code
 	// (Objective-C FFI). A panic here crosses an `extern "C"` boundary
-	// that cannot unwind — the process aborts immediately. Catch the
+	// that cannot unwind - the process aborts immediately. Catch the
 	// panic so a bad mmap or MIME bug returns a 500 instead of taking
 	// the whole editor down.
 	let Result = catch_unwind(AssertUnwindSafe(|| _VscodeFileSchemeHandler(AppHandle, Request)));
