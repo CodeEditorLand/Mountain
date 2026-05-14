@@ -2,81 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 	<dict>
+		<key>CFBundleIconFile</key>
+		<string>icon.icns</string>
 		<key>CSResourcesFileMapped</key>
 		<false />
 		<key>LSRequiresCarbon</key>
 		<false />
-		<key>CFBundleIconFile</key>
-		<string>icon.icns</string>
-				<key>LSEnvironment</key>
-	<dict>
-		<key>Disable</key>
-		<string>false</string>
-		<key>NetworkCocoonPort</key>
-		<string>50052</string>
-		<key>NetworkMountainPort</key>
-		<string>50051</string>
-		<key>ProductApplicationName</key>
-		<string>land</string>
-		<key>ProductCommit</key>
-		<string>dev</string>
-		<key>ProductDataFolderName</key>
-		<string>.land</string>
-		<key>ProductEmbedderIdentifier</key>
-		<string>land-desktop</string>
-		<key>ProductNameLong</key>
-		<string>Land Editor</string>
-		<key>ProductNameShort</key>
-		<string>Land</string>
-		<key>ProductQuality</key>
-		<string>development</string>
-		<key>ProductServerApplicationName</key>
-		<string>land-server</string>
-		<key>ProductUrlProtocol</key>
-		<string>land</string>
-		<key>ProductVersion</key>
-		<string>1.118.0</string>
-		<key>Record</key>
-		<string>0</string>
-		<key>TierClipboard</key>
-		<string>Layer3</string>
-		<key>TierConfiguration</key>
-		<string>Cache</string>
-		<key>TierDiagnostics</key>
-		<string>Full</string>
-		<key>TierDocumentMirror</key>
-		<string>Full</string>
-		<key>TierExtensionActivation</key>
-		<string>Parallel8</string>
-		<key>TierExtensionScan</key>
-		<string>Sequential</string>
-		<key>TierFileSystem</key>
-		<string>Layer2</string>
-		<key>TierFileWatcher</key>
-		<string>Layer4</string>
-		<key>TierFindFiles</key>
-		<string>Layer3</string>
-		<key>TierGlob</key>
-		<string>JavaScript</string>
-		<key>TierHTTPProxy</key>
-		<string>HandRolled</string>
-		<key>TierLogger</key>
-		<string>Standard</string>
-		<key>TierModuleCache</key>
-		<string>Simple</string>
-		<key>TierOpenExternal</key>
-		<string>Layer3</string>
-		<key>TierRemoteProcedureCall</key>
-		<string>GRPC</string>
-		<key>TierSchemeAssets</key>
-		<string>Embedded</string>
-		<key>TierTelemetry</key>
-		<string>Synchronous</string>
-		<key>Trace</key>
-		<string>all</string>
-</dict>
-
-
-
-</dict>
+	</dict>
 </plist>
