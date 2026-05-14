@@ -102,11 +102,18 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 
 	#[cfg(any(target_os = "windows", target_os = "linux"))]
 	{
-		// Keep chrome-less on non-macOS - the workbench provides its
-		// own window controls via the WindowsTitleBar / LinuxTitleBar
-		// components. Drag works via `-webkit-app-region: drag` on the
-		// titlebar element.
 		WindowBuilder = WindowBuilder.decorations(false);
+	}
+
+	// Enable WKWebView inspection when InDebug mode + Inspect=1.
+	// This sets WKWebView.isInspectable via Wry's devtools flag so that
+	// external inspectors (Safari/Web Inspector, MCP) can attach.
+	#[cfg(debug_assertions)]
+	{
+		let enable_debugtools = std::env::var("Inspect").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
+		if enable_debugtools {
+			WindowBuilder = WindowBuilder.devtools(true);
+		}
 	}
 
 	// Build the main window
