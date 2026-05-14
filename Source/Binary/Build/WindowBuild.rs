@@ -2,7 +2,7 @@
 //!
 //! Creates and configures the main application window.
 
-use tauri::{App, WebviewUrl, WebviewWindowBuilder, Wry};
+use tauri::{App, WebviewUrl, WebviewWindow, WebviewWindowBuilder, Wry};
 
 use crate::IPC::WindServiceHandlers::Utilities::RecentlyOpened::ReadRecentlyOpened;
 
@@ -107,12 +107,53 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 
 	// Enable WKWebView inspection when InDebug mode + Inspect=1.
 	// This sets WKWebView.isInspectable via Wry's devtools flag so that
-	// external inspectors (Safari/Web Inspector, MCP) can attach.
+	// external inspectors (Safari/Web Inspector) can attach.
 	#[cfg(debug_assertions)]
 	{
 		let enable_debugtools = std::env::var("Inspect").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
 		if enable_debugtools {
 			WindowBuilder = WindowBuilder.devtools(true);
+		}
+	}
+
+	#[cfg(debug_assertions)]
+	{
+		let enable_debug_server = std::env::var("DEBUG_SERVER")
+			.map(|v| v != "0" && !v.is_empty())
+			.unwrap_or(false);
+		if enable_debug_server {
+			WindowBuilder = WindowBuilder.on_page_load(|window, _payload| {
+				let _ = window.eval(
+					r#"(function() {
+					if (!window.__MOUNTAIN_DEBUG_CONSOLE) {
+						window.__MOUNTAIN_DEBUG_CONSOLE = [];
+						const origLog = console.log;
+						const origError = console.error;
+						const origWarn = console.warn;
+						const origInfo = console.info;
+						const origDebug = console.debug;
+						function pushLog(level, args) {
+							const argStrings = args.map(arg => {
+								if (typeof arg === 'object') {
+									try { return JSON.stringify(arg); } catch { return String(arg); }
+								} else {
+									return String(arg);
+								}
+							});
+							window.__MOUNTAIN_DEBUG_CONSOLE.push({ level, messages: argStrings, timestamp: Date.now() });
+							if (window.__MOUNTAIN_DEBUG_CONSOLE.length > 1000) {
+								window.__MOUNTAIN_DEBUG_CONSOLE = window.__MOUNTAIN_DEBUG_CONSOLE.slice(-1000);
+							}
+						}
+						console.log = function(...args) { pushLog('log', args); origLog.apply(console, args); };
+						console.error = function(...args) { pushLog('error', args); origError.apply(console, args); };
+						console.warn = function(...args) { pushLog('warn', args); origWarn.apply(console, args); };
+						console.info = function(...args) { pushLog('info', args); origInfo.apply(console, args); };
+						console.debug = function(...args) { pushLog('debug', args); origDebug.apply(console, args); };
+					}
+				})()"#,
+				);
+			});
 		}
 	}
 

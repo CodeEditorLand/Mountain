@@ -70,6 +70,7 @@ use tauri::Manager;
 use Echo::Scheduler::Scheduler::Scheduler;
 
 use crate::dev_log;
+#[cfg(debug_assertions)]
 use crate::Binary::Debug::WebkitServer;
 
 /// Master "disable Land customisations" gate. Returns `true` when the
@@ -230,6 +231,24 @@ pub fn AppLifecycleSetup(
 				"lifecycle",
 				"[UI] [Window] Debug build: DevTools auto-open suppressed (export Inspect=1 to override)."
 			);
+		}
+	}
+
+	#[cfg(debug_assertions)]
+	{
+		let enable_debug_server = std::env::var("DEBUG_SERVER")
+			.map(|v| v != "0" && !v.is_empty())
+			.unwrap_or(false);
+		if enable_debug_server {
+			dev_log!(
+				"lifecycle",
+				"[Debug] [Webkit] Debug server starting on port {}...",
+				std::env::var("DEBUG_SERVER_PORT")
+					.ok()
+					.and_then(|p| p.parse().ok())
+					.unwrap_or(9933)
+			);
+			WebkitServer::install(&MainWindow);
 		}
 	}
 

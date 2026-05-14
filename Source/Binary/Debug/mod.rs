@@ -9,4 +9,5 @@
 
 /// Execution-path trace logging macro and supporting utilities.
 pub mod TraceLog;
+#[cfg(debug_assertions)]
 pub mod WebkitServer;
