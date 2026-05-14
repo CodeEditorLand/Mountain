@@ -1,19 +1,14 @@
 //! # MountainEnvironment
 //!
-//! The top-level dependency injection container. Wraps the application
-//! state, application runtime, and optional Air service client.
+//! Top-level dependency injection container wrapping application state,
+//! runtime, and optional Air service client.
 //!
 //! Constructed once during startup and shared as `Arc<MountainEnvironment>`
-//! across all subsystems. Implements the `Environment` and `Requires` traits
-//! from the Common crate, plus `ExtensionManagementService` for extension
-//! discovery.
+//! across all subsystems. Implements `Environment`, `Requires`, and
+//! `ExtensionManagementService` traits from the Common crate.
 //!
-//! ## Design
-//!
-//! Each component declares its provider requirements via the `Requires<T>`
-//! trait. `MountainEnvironment` resolves these at compile time through
-//! the `impl_provider!` macro, which generates `Requires<dyn T>` impl
-//! blocks that return the appropriate typed reference from the container.
+//! Components declare provider requirements via `Requires<T>`. Resolution
+//! happens at compile time through `impl_provider!`.
 
 use std::sync::Arc;
 

@@ -1,5 +1,30 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
+//! # FileSystem Effect (CreateEffectForRequest)
+//!
+//! Effect constructors for the `FileSystem.*` RPC family. Each handler
+//! delegates to the `FileSystemReader` or `FileSystemWriter` provider trait on
+//! `MountainEnvironment`. All methods accept `file://` URIs from Cocoon and
+//! strip the scheme before passing a native `PathBuf` to the provider.
+//!
+//! ## Methods handled
+//!
+//! | Method | Provider | Description |
+//! |---|---|---|
+//! | `FileSystem.ReadFile` | `FileSystemReader` | Read raw bytes from a file |
+//! | `FileSystem.WriteFile` | `FileSystemWriter` | Write bytes to a file |
+//! | `FileSystem.ReadDirectory` | `FileSystemReader` | List directory entries |
+//! | `FileSystem.Stat` | `FileSystemReader` | Get file metadata |
+//! | `FileSystem.CreateDirectory` | `FileSystemWriter` | Create a directory (optionally recursive) |
+//! | `FileSystem.Delete` | `FileSystemWriter` | Delete a file or directory |
+//! | `FileSystem.Rename` | `FileSystemWriter` | Rename/move a file or directory |
+//! | `FileSystem.Copy` | `FileSystemWriter` | Copy a file or directory tree |
+//!
+//! ## VS Code reference
+//!
+//! `vs/platform/files/common/fileService.ts`,
+//! `vs/base/parts/ipc/common/ipc.net.ts`
+
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};

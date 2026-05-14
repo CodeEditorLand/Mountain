@@ -1,10 +1,31 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
+//! # Search Effect (CreateEffectForRequest)
+//!
+//! Effect constructors for workspace search RPC methods. Handles file and
+//! text search by delegating to `SearchProvider` and `WorkspaceProvider`
+//! traits on `MountainEnvironment`.
+//!
+//! ## Methods handled
+//!
+//! | Method | Description |
+//! |---|---|
+//! | `findFiles` | Glob-based file search using `ignore`-aware walker |
+//! | `findTextInFiles` | Full-text search delegating to `SearchProvider::TextSearch` |
+//! | `Search.TextSearch` | Alternative text search RPC (separate method name) |
+//!
+//! `findFiles` reuses `WorkspaceProvider::FindFilesInWorkspace` to get the
+//! same `ignore`-aware glob walker used by `search:fileSearch`.
+
 use std::{future::Future, pin::Pin, sync::Arc};
 
-use CommonLibrary::{Environment::Requires::Requires, Search::SearchProvider::SearchProvider};
 use serde_json::{Value, json};
 use tauri::Runtime;
+use CommonLibrary::{
+	Environment::Requires::Requires,
+	Search::SearchProvider::SearchProvider,
+	Workspace::WorkspaceProvider::WorkspaceProvider,
+};
 
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
@@ -16,7 +37,7 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						use CommonLibrary::Workspace::WorkspaceProvider::WorkspaceProvider;
+						let _workspace:Arc<dyn WorkspaceProvider> = run_time.Environment.Require();
 						let provider:Arc<dyn SearchProvider> = run_time.Environment.Require();
 						// Accept three call shapes:
 						//   - `{pattern, options}` named form

@@ -1,5 +1,28 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
+//! # Webview Effect (CreateEffectForRequest)
+//!
+//! Effect constructors for webview-related RPC methods from the Cocoon
+//! extension host. Maps webview method names (e.g. `webview.create`,
+//! `$webview:setHtml`) to Sky event channels (e.g. `sky://webview/create`,
+//! `sky://webview/set-html`).
+//!
+//! ## Methods handled
+//!
+//! | Method | Sky Event Channel |
+//! |---|---|
+//! | `$webview:create` / `webview.create` | `sky://webview/create` |
+//! | `webview.setHtml` | `sky://webview/set-html` |
+//! | `webview.setOptions` | `sky://webview/set-options` |
+//! | `webview.postMessage` | `sky://webview/post-message` |
+//! | `webview.reveal` | `sky://webview/reveal` |
+//! | `webview.dispose` | `sky://webview/dispose` |
+//! | `webview.registerView` | `sky://webview/register-view` |
+//! | `webview.unregisterView` | `sky://webview/unregister-view` |
+//! | `webview.registerCustomEditor` | `sky://webview/register-custom-editor` |
+//! | `webview.unregisterCustomEditor` | `sky://webview/unregister-custom-editor` |
+//! | `$resolveCustomEditor` | Direct call to `CustomEditorProvider` trait |
+
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{CustomEditor::CustomEditorProvider::CustomEditorProvider, Environment::Requires::Requires};

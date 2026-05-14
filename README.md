@@ -221,7 +221,7 @@ to set up, build, and run the entire application.
 
 ---
 
-## See Also&#x2001;🔗
+## See Also
 
 - [Mountain Documentation](https://editor.land/Doc/mountain)
 - [Architecture Overview](https://editor.land/Doc/architecture)

@@ -1,5 +1,21 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
+//! # UserInterface Effect (CreateEffectForRequest)
+//!
+//! Effect constructors for user-interface dialog methods. Delegates to the
+//! `UserInterfaceProvider` trait on `MountainEnvironment` for all UI
+//! interactions.
+//!
+//! ## Methods handled
+//!
+//! | Method | Description |
+//! |---|---|
+//! | `UserInterface.ShowMessage` | Show a notification with optional severity |
+//! | `UserInterface.ShowQuickPick` | Display a quick-pick selection list |
+//! | `UserInterface.ShowInputBox` | Display a text input dialog |
+//! | `UserInterface.ShowOpenDialog` | Display a file/folder picker dialog |
+//! | `UserInterface.ShowSaveDialog` | Display a save file dialog |
+
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{

@@ -1,5 +1,20 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
+//! # LanguageFeatures Effect (CreateEffectForRequest)
+//!
+//! Effect constructors for LSP-like language feature provider registration.
+//! Each method maps to a `ProviderType` variant and delegates to the
+//! `LanguageFeatureProviderRegistry::RegisterProvider` trait method.
+//!
+//! ## Provider types covered
+//!
+//! Hover, Completion, Definition, References, CodeAction, DocumentHighlight,
+//! DocumentSymbol, WorkspaceSymbol, Rename, DocumentFormatting,
+//! DocumentRangeFormatting, OnTypeFormatting, SignatureHelp, CodeLens,
+//! FoldingRange, SelectionRange, SemanticTokens, InlayHint, TypeHierarchy,
+//! CallHierarchy, LinkedEditingRange, DocumentLink, Color, Implementation,
+//! TypeDefinition, Declaration, EvaluatableExpression, InlineValues.
+
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{

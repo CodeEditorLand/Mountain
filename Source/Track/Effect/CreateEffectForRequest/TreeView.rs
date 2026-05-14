@@ -1,5 +1,23 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
+//! # TreeView Effect (CreateEffectForRequest)
+//!
+//! Effect constructors for tree-view registration and disposal from the
+//! Cocoon extension host. Delegates to `TreeViewProvider` on
+//! `MountainEnvironment` and emits `SkyEvent` notifications to keep the
+//! Sky workbench's `ITreeView` instances in sync.
+//!
+//! ## Methods handled
+//!
+//! | Method | Description |
+//! |---|---|
+//! | `$tree:register` / `tree.register` | Register a tree data provider for a view ID |
+//! | `tree.unregister` / `tree.dispose` | Unregister and dispose a tree data provider |
+//!
+//! After a successful registration, a `TreeViewCreate` event is emitted so
+//! Sky can wire the new data provider. After disposal, a `TreeViewDispose`
+//! event clears the stale provider reference.
+
 use std::{future::Future, pin::Pin, sync::Arc};
 
 use CommonLibrary::{

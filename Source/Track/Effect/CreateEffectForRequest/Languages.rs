@@ -1,5 +1,21 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
+//! # Languages Effect (CreateEffectForRequest)
+//!
+//! Effect constructor for the `Languages.GetAll` RPC method. Aggregates
+//! language contribution metadata from all scanned extensions (from
+//! `ApplicationState.Extension.ScannedExtensions`) and merges duplicate
+//! language IDs by unioning their aliases, extensions, filenames, filename
+//! patterns, and mimetypes. The result is returned as a flat JSON array
+//! matching the shape expected by Cocoon's `languages.getAll` API.
+//!
+//! ## Aggregation behavior
+//!
+//! - Each extension's `contributes.languages` array is scanned.
+//! - Languages with the same `id` are merged (first-wins for `configuration`).
+//! - Array fields (aliases, extensions, filenames, filenamePatterns, mimetypes)
+//!   are deduplicated across all contributing extensions.
+
 use std::{collections::HashMap, future::Future, pin::Pin, sync::Arc};
 
 use serde_json::{Value, json};

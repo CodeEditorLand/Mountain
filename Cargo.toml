@@ -136,6 +136,10 @@ Development = []
 
 Test = []
 
+grove = []
+
+cocoon = []
+
 # ===========================================================================
 # Tier-gating (Plan A §Rust feature flags). Every name here is mirrored by
 # `build.rs::IsDeclaredTierFeature`. Adding a new tier requires editing
