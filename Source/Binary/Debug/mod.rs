@@ -9,3 +9,4 @@
 
 /// Execution-path trace logging macro and supporting utilities.
 pub mod TraceLog;
+pub mod WebkitServer;

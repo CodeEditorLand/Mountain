@@ -70,6 +70,7 @@ use tauri::Manager;
 use Echo::Scheduler::Scheduler::Scheduler;
 
 use crate::dev_log;
+use crate::Binary::Debug::WebkitServer;
 
 /// Master "disable Land customisations" gate. Returns `true` when the
 /// `Disable=true` env var is set (PascalCase, single-word, matching
