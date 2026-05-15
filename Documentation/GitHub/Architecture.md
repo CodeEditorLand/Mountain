@@ -1,9 +1,13 @@
-# Mountain: Native Backend Application
+# Mountain: Native Backend Application 🏔️
 
-This document describes Mountain, the primary Tauri application and native Rust
-backend for the Land code editor. Mountain implements every abstract trait from
-Common, hosts the gRPC server, manages application state, dispatches Tauri
-commands, and orchestrates sidecar processes.
+This document describes `Mountain`, the primary `Tauri` application and native
+`Rust` backend for the `Land` code editor. `Mountain`:
+
+- Implements every abstract trait from `Common`
+- Hosts the `gRPC` server
+- Manages application state
+- Dispatches `Tauri` commands
+- Orchestrates sidecar processes
 
 ---
 
@@ -54,26 +58,27 @@ sequenceDiagram
     Note over M,AIR: System ready for user interaction
 ```
 
-## Overview
+## Overview 📋
 
-Mountain is a Rust binary built with Tauri v2 and tonic gRPC. It is the single
-native process that owns all OS-level capabilities (file system, terminal PTY,
-clipboard, dialogs) and coordinates the Cocoon extension host and Air background
-daemon.
+`Mountain` is a `Rust` binary built with `Tauri` v2 and `tonic` `gRPC`:
 
-| Attribute    | Value                                                                                                       |
-| ------------ | ----------------------------------------------------------------------------------------------------------- |
-| Language     | Rust (edition 2024)                                                                                         |
-| Framework    | Tauri v2                                                                                                    |
-| gRPC         | tonic + prost                                                                                               |
-| Dependencies | Common, Echo, Mist, tauri, tauri-plugin-dialog, tauri-plugin-fs, tonic, prost, keyring, portable-pty, tokio |
-| Sidecars     | Cocoon (Node.js), Air (Rust daemon)                                                                         |
+- It is the single native process that owns all OS-level capabilities (file
+  system, terminal PTY, clipboard, dialogs)
+- It coordinates the `Cocoon` extension host and `Air` background daemon
+
+| Attribute    | Value                                                                                                                             |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------- |
+| Language     | `Rust` (edition 2024)                                                                                                             |
+| Framework    | `Tauri` v2                                                                                                                        |
+| gRPC         | `tonic` + `prost`                                                                                                                 |
+| Dependencies | `Common`, `Echo`, `Mist`, `tauri`, `tauri-plugin-dialog`, `tauri-plugin-fs`, `tonic`, `prost`, `keyring`, `portable-pty`, `tokio` |
+| Sidecars     | `Cocoon` (`Node.js`), `Air` (`Rust` daemon)                                                                                       |
 
 ---
 
-## Application Lifecycle
+## Application Lifecycle 🔄
 
-### Startup Sequence
+### Startup Sequence 🚀
 
 ```
 fn main()
@@ -114,7 +119,7 @@ fn main()
 4. System ready for user interaction
 ```
 
-### Shutdown Sequence
+### Shutdown Sequence 🛑
 
 ```
 1. Tauri window close requested
@@ -129,7 +134,7 @@ fn main()
 
 ---
 
-## Module Architecture
+## Module Architecture 🗺️
 
 ```
 Element/Mountain/Source/
@@ -144,12 +149,12 @@ Element/Mountain/Source/
 |   |   +-- Initialize/       - Startup initialization
 |   |   +-- Debug/            - Debug build utilities
 |   |   +-- Service/          - Service layer initialization
-|
+
 +-- ApplicationState/
 |   +-- State.rs              - Central state struct
 |   +-- Internal/             - Internal state management
 |   +-- DTO/                  - State transfer objects
-|
+
 +-- Environment/
 |   +-- MountainEnvironment.rs - Common trait implementations
 |   +-- CommandProvider.rs     - Command execution provider
@@ -157,19 +162,19 @@ Element/Mountain/Source/
 |   +-- FileSystemProvider/    - File system provider
 |   +-- TerminalProvider.rs    - Terminal PTY provider
 |   +-- ... (24+ providers)
-|
+
 +-- Vine/ (gRPC)
 |   +-- Server/               - gRPC server (tonic)
 |   +-- Client/               - gRPC client (tonic)
 |   +-- Multiplexer.rs         - Connection multiplexing
 |   +-- Generated/             - Prost-generated code
-|
+
 +-- ProcessManagement/
 |   +-- CocoonManagement.rs    - Cocoon sidecar lifecycle
 |   +-- AirManagement.rs       - Air sidecar lifecycle
 |   +-- InitializationData.rs  - Startup payload construction
 |   +-- NodeResolver/          - Node.js binary resolution
-|
+
 +-- IPC/ (Tauri)
 |   +-- TauriIPCServer.rs      - Tauri IPC server
 |   +-- WindServiceHandlers/   - Wind-specific handlers
@@ -177,19 +182,19 @@ Element/Mountain/Source/
 |   +-- WindAdvancedSync/      - Sync handlers
 |   +-- DevLog/                - Developer logging
 |   +-- Connection/            - Connection management
-|
+
 +-- RPC/ (Internal dispatch)
 |   +-- Commands/              - Command dispatch
 |   +-- Configuration/         - Configuration dispatch
 |   +-- Vine/                  - Vine protocol dispatch
 |   +-- Types/                 - RPC type definitions
 |   +-- Telemetry/             - Telemetry dispatch
-|
+
 +-- RunTime/
 |   +-- ApplicationRunTime/    - Effect execution engine
 |   +-- Execute/               - Effect execution
 |   +-- Shutdown/              - Runtime shutdown
-|
+
 +-- Command/                   - Command implementation
 +-- Track/                     - Request tracking
 +-- Cache/                     - Asset caching
@@ -206,9 +211,9 @@ Element/Mountain/Source/
 
 ---
 
-## ApplicationState
+## ApplicationState 📦
 
-The central state container managed by Tauri:
+The central state container managed by `Tauri`:
 
 ```rust
 pub struct AppState {
@@ -226,15 +231,15 @@ pub struct AppState {
 | Workspaces     | `RwLock<Vec<Workspace>>`            | Window state on shutdown |
 | Active editors | `RwLock<HashMap<URI, EditorState>>` | Transient                |
 
-State is accessed through Tauri's `State<AppState>` managed type, available in
-every command handler.
+- State is accessed through `Tauri`'s `State<AppState>` managed type
+- Available in every command handler
 
 ---
 
-## Environment and Providers
+## Environment and Providers 🧩
 
-MountainEnvironment implements every trait from Common. Each capability has a
-dedicated Provider:
+`MountainEnvironment` implements every trait from `Common`. Each capability has
+a dedicated Provider:
 
 | Provider                     | Common Trait                 | Implementation                  |
 | ---------------------------- | ---------------------------- | ------------------------------- |
@@ -251,7 +256,7 @@ dedicated Provider:
 | `WorkspaceProvider`          | `Workspace`                  | Folder management               |
 | `IPCProvider`                | `IPC`                        | gRPC proxy to Cocoon            |
 
-### Provider Registration
+### Provider Registration 📝
 
 ```rust
 impl MountainEnvironment {
@@ -268,9 +273,9 @@ impl MountainEnvironment {
 
 ---
 
-## Tauri Command System
+## Tauri Command System ⌨️
 
-Mountain registers Tauri commands as typed Rust handlers:
+`Mountain` registers `Tauri` commands as typed `Rust` handlers:
 
 ```rust
 #[tauri::command]
@@ -301,11 +306,11 @@ async fn read_file(
 
 ---
 
-## gRPC Service (Vine)
+## gRPC Service (Vine) 🌐
 
-Mountain hosts the Vine gRPC server for Cocoon and Air communication.
+`Mountain` hosts the `Vine` `gRPC` server for `Cocoon` and `Air` communication.
 
-### Server Configuration
+### Server Configuration ⚙️
 
 ```rust
 // Server listens on NetworkMountainPort (default: 50051)
@@ -320,7 +325,7 @@ Server::builder()
     .await?;
 ```
 
-### Service Handlers
+### Service Handlers 📋
 
 | Service            | RPC                | Handler Module                            |
 | ------------------ | ------------------ | ----------------------------------------- |
@@ -333,34 +338,34 @@ Server::builder()
 
 ---
 
-## Process Management
+## Process Management ⚙️
 
-### Cocoon Management
+### Cocoon Management 🔄
 
-The `CocoonManagement` module handles the Cocoon sidecar lifecycle:
+The `CocoonManagement` module handles the `Cocoon` sidecar lifecycle:
 
-1. **Environment construction**: Sets PATH, VSCODE_PARENT_PID, tier env vars
+1. **Environment construction**: Sets `PATH`, `VSCODE_PARENT_PID`, tier env vars
 2. **Process spawn**: `std::process::Command` spawns `node bootstrap-fork.js`
-3. **Health monitoring**: gRPC heartbeat (5s interval, 3 miss timeout)
+3. **Health monitoring**: `gRPC` heartbeat (5s interval, 3 miss timeout)
 4. **Crash recovery**: Up to 3 automatic restarts with exponential backoff
-5. **Graceful shutdown**: SIGTERM, 5s timeout, SIGKILL on timeout
+5. **Graceful shutdown**: `SIGTERM`, 5s timeout, `SIGKILL` on timeout
 
-### Air Management
+### Air Management 🔄
 
-The `AirManagement` module handles Air sidecar lifecycle:
+The `AirManagement` module handles `Air` sidecar lifecycle:
 
-1. **Process spawn**: Spawns Air binary with configured data directory
-2. **gRPC connection**: Connects to Air on port 50053
-3. **Service registration**: Air reports available services (updater, indexer,
+1. **Process spawn**: Spawns `Air` binary with configured data directory
+2. **gRPC connection**: Connects to `Air` on port 50053
+3. **Service registration**: `Air` reports available services (updater, indexer,
    etc.)
 4. **Health monitoring**: Bidirectional heartbeat
-5. **Coordination**: Mountain dispatches background work via PerformAction
+5. **Coordination**: `Mountain` dispatches background work via `PerformAction`
 
 ---
 
-## IPC and Event System
+## IPC and Event System 📡
 
-Mountain pushes events to Wind/Sky via Tauri's event system:
+`Mountain` pushes events to `Wind`/`Sky` via `Tauri`'s event system:
 
 ```rust
 // Emit configuration change event
@@ -382,9 +387,9 @@ app_handle.emit("configuration-changed", serde_json::json!({
 
 ---
 
-## Cache System
+## Cache System 💾
 
-Mountain implements two caching subsystems:
+`Mountain` implements two caching subsystems:
 
 | Cache            | Purpose                     | Implementation                        |
 | ---------------- | --------------------------- | ------------------------------------- |
@@ -393,30 +398,32 @@ Mountain implements two caching subsystems:
 
 ---
 
-## Extension Management
+## Extension Management 🧩
 
-| Operation | Implementation                                           |
-| --------- | -------------------------------------------------------- |
-| Scan      | Walk extension directories, parse package.json manifests |
-| Install   | VSIX extraction to extension directory                   |
-| Uninstall | Remove extension directory                               |
-| List      | Read extension registry from AppState                    |
+| Operation | Implementation                                             |
+| --------- | ---------------------------------------------------------- |
+| Scan      | Walk extension directories, parse `package.json` manifests |
+| Install   | VSIX extraction to extension directory                     |
+| Uninstall | Remove extension directory                                 |
+| List      | Read extension registry from `AppState`                    |
 
 ---
 
-## Related Documentation
+## Related Documentation 📚
 
-- [Common](../Common/Documentation/GitHub/Architecture.md) - Abstract trait
-  definitions
-- [Echo](../Echo/Documentation/GitHub/Architecture.md) - Task scheduler
-  integration
-- [Mist](../Mist/Documentation/GitHub/Architecture.md) - DNS isolation
-- [Air](../Air/Documentation/GitHub/Architecture.md) - Background daemon
-- [Vine](../Vine/Documentation/GitHub/Architecture.md) - gRPC protocol
-  definitions
-- [BuildPipeline](../../../Documentation/GitHub/BuildPipeline.md) - Build
-  pipeline
-- [InterComponentProtocol](../../../Documentation/GitHub/InterComponentProtocol.md) -
+- [Common](https://github.com/CodeEditorLand/Common/tree/Current/Documentation/GitHub/Architecture.md) -
+  Abstract trait definitions
+- [Echo](https://github.com/CodeEditorLand/Echo/tree/Current/Documentation/GitHub/Architecture.md) -
+  Task scheduler integration
+- [Mist](https://github.com/CodeEditorLand/Mist/tree/Current/Documentation/GitHub/Architecture.md) -
+  DNS isolation
+- [Air](https://github.com/CodeEditorLand/Air/tree/Current/Documentation/GitHub/Architecture.md) -
+  Background daemon
+- [Vine](https://github.com/CodeEditorLand/Vine/tree/Current/Documentation/GitHub/Architecture.md) -
+  `gRPC` protocol definitions
+- [BuildPipeline](https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/BuildPipeline.md) -
+  Build pipeline
+- [InterComponentProtocol](https://github.com/CodeEditorLand/Land/tree/Current/Documentation/GitHub/InterComponentProtocol.md) -
   Protocol specification
 
 ---
