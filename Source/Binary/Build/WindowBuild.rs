@@ -118,9 +118,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 
 	#[cfg(debug_assertions)]
 	{
-		let enable_debug_server = std::env::var("DEBUG_SERVER")
-			.map(|v| v != "0" && !v.is_empty())
-			.unwrap_or(false);
+		let enable_debug_server = std::env::var("DebugServer").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
 		if enable_debug_server {
 			WindowBuilder = WindowBuilder.on_page_load(|window, _payload| {
 				let _ = window.eval(

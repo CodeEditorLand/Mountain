@@ -236,14 +236,12 @@ pub fn AppLifecycleSetup(
 
 	#[cfg(debug_assertions)]
 	{
-		let enable_debug_server = std::env::var("DEBUG_SERVER")
-			.map(|v| v != "0" && !v.is_empty())
-			.unwrap_or(false);
+		let enable_debug_server = std::env::var("DebugServer").map(|v| v != "0" && !v.is_empty()).unwrap_or(false);
 		if enable_debug_server {
 			dev_log!(
 				"lifecycle",
 				"[Debug] [Webkit] Debug server starting on port {}...",
-				std::env::var("DEBUG_SERVER_PORT")
+				std::env::var("DebugServerPort")
 					.ok()
 					.and_then(|p| p.parse().ok())
 					.unwrap_or(9933)

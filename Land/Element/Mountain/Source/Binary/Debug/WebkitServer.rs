@@ -24,7 +24,7 @@ pub fn install(window: &WebviewWindow<Wry>) {
     *guard = Some(Arc::new(window.clone()));
 
     // Start the HTTP server in a background thread if enabled
-    let enable = std::env::var("DEBUG_SERVER")
+    let enable = std::env::var("DebugServer")
         .map(|v| !v.is_empty() && v != "0")
         .unwrap_or(false);
     if enable {
@@ -36,7 +36,7 @@ pub fn install(window: &WebviewWindow<Wry>) {
 
 /// Main server loop listening for TCP connections.
 fn start_server() {
-    let port = std::env::var("DEBUG_SERVER_PORT")
+    let port = std::env::var("DebugServerPort")
         .ok()
         .and_then(|p| p.parse().ok())
         .unwrap_or(9933);
