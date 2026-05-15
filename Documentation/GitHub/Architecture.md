@@ -24,6 +24,36 @@ commands, and orchestrates sidecar processes.
 
 ---
 
+```mermaid
+sequenceDiagram
+    participant M as Mountain main()
+    participant TB as Tauri Builder
+    participant AS as AppState
+    participant ME as MountainEnvironment
+    participant ART as AppRuntime (Echo)
+    participant BK as Background Task
+    participant GRPC as gRPC Server (Vine)
+    participant COCOON as Cocoon (Node.js)
+    participant AIR as Air Daemon
+
+    M->>TB: Tauri::Builder::default()
+    TB->>AS: Create AppState (RwLock state)
+    TB->>ME: Create MountainEnvironment (24+ providers)
+    TB->>ART: Create AppRuntime (Echo scheduler)
+    TB->>BK: Spawn background init task
+
+    Note over BK: Post-setup initialization
+    BK->>BK: InitializeConfiguration()
+    BK->>BK: ExtensionManagement::scan()
+    BK->>GRPC: Start gRPC server on port 50051
+    BK->>COCOON: Spawn bootstrap-fork.js
+    COCOON-->>BK: $initialHandshake gRPC notification
+    BK->>COCOON: Send InitData payload
+    BK->>AIR: Spawn Air daemon (optional)
+    AIR-->>BK: Connect gRPC notification
+    Note over M,AIR: System ready for user interaction
+```
+
 ## Overview
 
 Mountain is a Rust binary built with Tauri v2 and tonic gRPC. It is the single
