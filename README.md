@@ -53,15 +53,15 @@ _"Where `Electron` takes 200 ms to open a dialog, `Mountain` takes 2."_
 [<img src="https://editor.land/Image/Tauri.svg" width="14" alt="Tauri" />](https://tauri.app/)&#x2001;[![Tauri Version](https://img.shields.io/badge/Tauri-v2-blue.svg)](https://tauri.app/)
 [![Tonic gRPC Version](https://img.shields.io/badge/Tonic-v0.11-blueviolet.svg)](https://github.com/hyperium/tonic)
 
-📖&#x2001;**[Rust API Documentation](https://Rust.Documentation.Editor.Land/Mountain/)**
+**[Rust API Documentation](https://Rust.Documentation.Editor.Land/Mountain/)**&#x2001;📖
 
-**Mountain**⛰️ is the native `Rust` backend and `Tauri` application shell for
-the `Land` Code Editor. It serves as the foundational bedrock for the entire
-system, managing the application lifecycle, orchestrating native OS operations,
-and providing high-performance services to the `Wind` frontend and the `Cocoon`
-extension host.
+**Mountain**&#x2001;⛰️ is the native `Rust` backend and `Tauri` application
+shell for the `Land` Code Editor. It serves as the foundational bedrock for the
+entire system, managing the application lifecycle, orchestrating native OS
+operations, and providing high-performance services to the `Wind` frontend and
+the `Cocoon` extension host.
 
-**Mountain**⛰️ is engineered to:
+**Mountain**&#x2001;⛰️ is engineered to:
 
 1. **Be the Native Core:** Act as the primary `Rust` application, leveraging
    `Tauri` to create a lightweight, cross-platform windowing and `WebView` host.
@@ -134,19 +134,19 @@ graph LR
     classDef common   fill:#d4f5d4,stroke:#27ae60,stroke-width:1px,stroke-dasharray:5 5,color:#0a3a0a;
     classDef ipc      fill:#fff3c0,stroke:#f39c12,stroke-width:1px,stroke-dasharray:5 5,color:#5a3e00;
 
-    subgraph "⛰️ Mountain - Native Rust/Tauri Backend"
-        TauriRuntime["🚀 Tauri App & Window"]:::mountain
-        ApplicationRunTime["⚡ ApplicationRunTime Engine"]:::mountain
-        ApplicationState["🗄️ ApplicationState - Shared State"]:::mountain
-        TrackDispatcher["🔀 Track Dispatcher"]:::mountain
-        VinegRPC["🌿 Vine - gRPC Server"]:::ipc
-        EnvironmentProviders["⚙️ Environment Providers"]:::mountain
-        CommonCrate["📐 Common Crate - Traits & DTOs"]:::common
+    subgraph "Mountain - Native Rust/Tauri Backend&#x2001;⛰️"
+        TauriRuntime["Tauri App & Window&#x2001;🚀"]:::mountain
+        ApplicationRunTime["ApplicationRunTime Engine&#x2001;⚡"]:::mountain
+        ApplicationState["ApplicationState - Shared State&#x2001;🗄️"]:::mountain
+        TrackDispatcher["Track Dispatcher&#x2001;🔀"]:::mountain
+        VinegRPC["Vine - gRPC Server&#x2001;🌿"]:::ipc
+        EnvironmentProviders["Environment Providers&#x2001;⚙️"]:::mountain
+        CommonCrate["Common Crate - Traits & DTOs&#x2001;📐"]:::common
     end
 
-    subgraph "🖥️ Clients"
-        WindUI["🍃 Wind / Sky - UI WebView"]:::wind
-        CocoonSideCar["🦋 Cocoon - Extension Host (Node.js)"]:::cocoon
+    subgraph "Clients&#x2001;🖥️"
+        WindUI["Wind / Sky - UI WebView&#x2001;🍃"]:::wind
+        CocoonSideCar["Cocoon - Extension Host (Node.js)&#x2001;🦋"]:::cocoon
     end
 
     TauriRuntime -- hosts --> WindUI
@@ -246,17 +246,18 @@ file.
 ## Changelog&#x2001;📜
 
 See [`CHANGELOG.md`](https://github.com/CodeEditorLand/Mountain/tree/Current/)
-for a history of changes specific to **Mountain**⛰️.
+for a history of changes specific to **Mountain**&#x2001;⛰️.
 
 ---
 
-## Funding \& Acknowledgements&#x2001;🙏🏻
+## Funding \\& Acknowledgements&#x2001;🙏🏻
 
-**Mountain**⛰️ is a core element of the **Land**🏞️ ecosystem. This project is
-funded through [NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund
-established by [NLnet](https://NLnet.NL) with financial support from the
-European Commission's [Next Generation Internet](https://ngi.eu) program. Learn
-more at the [NLnet project page](https://NLnet.NL/project/Land).
+**Mountain**&#x2001;⛰️ is a core element of the **Land**&#x2001;🏞️ ecosystem.
+This project is funded through
+[NGI0 Commons Fund](https://NLnet.NL/commonsfund), a fund established by
+[NLnet](https://NLnet.NL) with financial support from the European Commission's
+[Next Generation Internet](https://ngi.eu) program. Learn more at the
+[NLnet project page](https://NLnet.NL/project/Land).
 
 The project is operated by PlayForm, based in Sofia, Bulgaria.
 
