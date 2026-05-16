@@ -217,22 +217,8 @@ pub async fn mountain_ipc_invoke(
 
 	Arguments:Vec<Value>,
 ) -> Result<Value, String> {
-	let OTLPStart = crate::IPC::DevLog::NowNano::Fn();
-
-	// Silence the per-call invoke log for high-frequency methods that are
-	// not useful in forensic review. The workbench emits thousands of
-	// `logger:log` invocations per boot (every `console.*` call inside VS
-	// Code code becomes an IPC round-trip); keeping those lines only
-	// expands log volume without adding signal. The actual dispatch below
-	// still runs - this just skips the `[DEV:IPC] invoke:` line.
-	//
-	// Filesystem methods were driving 13k+ IPC lines per session
-	// (FileSystem.ReadFile alone fires thousands of times during svelte
-	// / language-server activation). Same for `storage:getItems`,
-	// `configuration:lookup`, `themes:getColorTheme` which workbench
-	// services poll on every re-render. Add them to the quiet list -
-	// the Cocoon gRPC layer + TauriInvoke still log errors, and the IPC
-	// `done:` line below also skips these so there's symmetric silence.
+	// Determine high-frequency status first - used to skip OTLP timing,
+	// dev-logs, span emission, and PostHog capture for noisy calls.
 	let IsHighFrequencyCommand = matches!(
 		command.as_str(),
 		"logger:log"
@@ -258,6 +244,15 @@ pub async fn mountain_ipc_invoke(
 			| "progress:report"
 	);
 
+	let OTLPStart = if IsHighFrequencyCommand { 0 } else { crate::IPC::DevLog::NowNano::Fn() };
+
+	// Silence the per-call invoke log for high-frequency methods that are
+	// not useful in forensic review. The workbench emits thousands of
+	// `logger:log` invocations per boot (every `console.*` call inside VS
+	// Code code becomes an IPC round-trip); keeping those lines only
+	// expands log volume without adding signal. The actual dispatch below
+	// still runs - this just skips the `[DEV:IPC] invoke:` line.
+
 	if !IsHighFrequencyCommand {
 		dev_log!("ipc", "invoke: {} args_count={}", command, Arguments.len());
 	}
@@ -270,8 +265,40 @@ pub async fn mountain_ipc_invoke(
 	// Send across task boundaries).
 	let RunTime:Arc<ApplicationRunTime> = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
 
-	// =========================================================================
-	// Route dispatch - every arm has a dev_log! with a granular tag.
+	// Short-circuit known no-op commands BEFORE Echo scheduler submission
+	// to avoid oneshot channel allocation, String clone, and scheduler
+	// overhead for calls that return Ok(Value::Null) unconditionally.
+	// These account for the bulk of high-frequency IPC traffic (logger,
+	// file watch, storage events, command registration).
+	if IsHighFrequencyCommand {
+		match command.as_str() {
+			// Logger: fire-and-forget, no side effects needed
+			"logger:log" | "logger:warn" | "logger:error" | "logger:info"
+			| "logger:debug" | "logger:trace" | "logger:critical"
+			| "logger:flush" | "logger:setLevel" | "logger:getLevel"
+			| "logger:createLogger" | "logger:registerLogger"
+			| "logger:deregisterLogger" | "logger:getRegisteredLoggers"
+			| "logger:setVisibility"
+			// File watch stubs: unpiped in current architecture
+			| "file:watch" | "file:unwatch"
+			// Storage event stubs: change delivery via Tauri events
+			| "storage:onDidChangeItems" | "storage:logStorage"
+			// Command registry stubs: side effects handled via gRPC
+			| "commands:registerCommand" | "commands:unregisterCommand"
+			| "commands:onDidRegisterCommand" | "commands:onDidExecuteCommand"
+			// Configuration event stub
+			| "configuration:onDidChange"
+			// Storage lifecycle stubs
+			| "storage:optimize" | "storage:isUsed" | "storage:close" => {
+				let Elapsed = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
+				dev_log!("ipc", "done: {} ok=true t_ns={}", command, Elapsed);
+				return Ok(Value::Null);
+			},
+			_ => {}, // fall through to Echo dispatch for real work
+		}
+	}
+
+	// Tag the pending IPC with its priority lane and submit the entire
 	// Tags match the route prefix: vfs, config, storage, extensions,
 	// terminal, output, textfile, notification, progress, quickinput,
 	// workspaces, themes, search, decorations, workingcopy, keybinding,
@@ -2528,21 +2555,24 @@ pub async fn mountain_ipc_invoke(
 	};
 
 	// Emit OTLP span for every IPC call - visible in Jaeger at localhost:16686
-	let IsErr = Result.is_err();
-	let SpanName = if IsErr {
-		format!("land:mountain:ipc:{}:error", command)
-	} else {
-		format!("land:mountain:ipc:{}", command)
-	};
-	crate::otel_span!(&SpanName, OTLPStart, &[("ipc.command", command.as_str())]);
+	// Skip for high-frequency silenced calls to avoid thousands of spans
+	// per session (logger, file I/O, storage polling).
+	if !IsHighFrequencyCommand {
+		let IsErr = Result.is_err();
+		let SpanName = if IsErr {
+			format!("land:mountain:ipc:{}:error", command)
+		} else {
+			format!("land:mountain:ipc:{}", command)
+		};
+		crate::otel_span!(&SpanName, OTLPStart, &[("ipc.command", command.as_str())]);
 
-	// Emit `land:mountain:handler:complete` to PostHog for every dispatched IPC.
-	// Pairs with `land:cocoon:handler:complete` to populate the Feature
-	// Parity dashboard's Node-vs-Rust handler-latency comparison.
-	// `CaptureAllowed` short-circuits in release, so this is debug-only.
-	let HandlerElapsedNanos = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
-	let HandlerDurationMs = HandlerElapsedNanos / 1_000_000;
-	crate::Binary::Build::PostHogPlugin::CaptureHandler::Fn(&command, HandlerDurationMs, !IsErr);
+		// Emit `land:mountain:handler:complete` to PostHog for every dispatched IPC.
+		// Pairs with `land:cocoon:handler:complete` to populate the Feature
+		// Parity dashboard's Node-vs-Rust handler-latency comparison.
+		let HandlerElapsedNanos = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
+		let HandlerDurationMs = HandlerElapsedNanos / 1_000_000;
+		crate::Binary::Build::PostHogPlugin::CaptureHandler::Fn(&command, HandlerDurationMs, !IsErr);
+	}
 
 	// Atom I13: paired entry/exit line per invoke. `invoke: <cmd>` on the way
 	// in (emitted at the top of this fn); `done: <cmd> ok=… t_ns=…` on the
@@ -2554,7 +2584,7 @@ pub async fn mountain_ipc_invoke(
 	// is individually accounted for.
 	if !IsHighFrequencyCommand {
 		let ElapsedNanos = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
-		dev_log!("ipc", "done: {} ok={} t_ns={}", command, !IsErr, ElapsedNanos);
+		dev_log!("ipc", "done: {} ok={} t_ns={}", command, !Result.is_err(), ElapsedNanos);
 	}
 
 	Result

@@ -179,94 +179,102 @@ pub fn Fn() {
 	// step the Cocoon node binary, language servers, and `git` calls
 	// from extensions all fall back to system defaults (or fail).
 	//
-	// No-op when launched from a TTY (terminal already has the right
-	// env) or when the shell probe fails / times out.
+	// Skip entirely when launched from a TTY (terminal already has the
+	// right env). On macOS, `std::io::stdin().is_terminal()` is the
+	// canonical check - waits for is-terminal 0.5; in the interim,
+	// probe `TERM_PROGRAM` env var which macOS Terminal.app and iTerm2
+	// both set. `TERM=xterm-256color` alone is unreliable (pipelines
+	// set it too). No-op when skip or the shell probe fails/times out.
 	// -------------------------------------------------------------------------
-	crate::Environment::Utility::EnhanceShellEnvironment::Fn();
+	let IsTtyLaunch =
+		std::env::var("TERM_PROGRAM").is_ok() || std::env::var("TERM").map_or(false, |V| V != "dumb" && V != "unknown");
+
+	if !IsTtyLaunch {
+		crate::Environment::Utility::EnhanceShellEnvironment::Fn();
+	}
 
 	// -------------------------------------------------------------------------
 	// [Boot] [Env] Load .env.Land into process env so standalone binary
 	// invocations pick up Product*, Tier*, Network* vars without requiring
-	// the shell to pre-source the env file. Search order matches
-	// TierEnvironment.sh: cwd .env.Land → parent .env.Land → cwd
-	// .env.Land.Sample → parent .env.Land.Sample → repo-layout probe from
-	// the binary's canonical path (for `target/debug/...` launches where
-	// cwd is arbitrary).
+	// the shell to pre-source the env file. Skip when launched from a TTY
+	// (terminal already has the right env).
 	// -------------------------------------------------------------------------
-	{
-		fn LoadEnvFile(Path:&std::path::Path) -> bool {
-			let Ok(Content) = std::fs::read_to_string(Path) else {
-				return false;
-			};
+	if !IsTtyLaunch {
+		{
+			fn LoadEnvFile(Path:&std::path::Path) -> bool {
+				let Ok(Content) = std::fs::read_to_string(Path) else {
+					return false;
+				};
 
-			for Line in Content.lines() {
-				let Trimmed = Line.trim();
+				for Line in Content.lines() {
+					let Trimmed = Line.trim();
 
-				if Trimmed.is_empty() || Trimmed.starts_with('#') {
-					continue;
-				}
+					if Trimmed.is_empty() || Trimmed.starts_with('#') {
+						continue;
+					}
 
-				if let Some((Key, Value)) = Trimmed.split_once('=') {
-					let CleanKey = Key.trim();
+					if let Some((Key, Value)) = Trimmed.split_once('=') {
+						let CleanKey = Key.trim();
 
-					let CleanValue = Value.trim().trim_matches('"').trim_matches('\'');
+						let CleanValue = Value.trim().trim_matches('"').trim_matches('\'');
 
-					if std::env::var_os(CleanKey).is_none() {
-						// SAFETY: set_var is called once per key during bootstrap
-						// before any threads read env (Tokio runtime starts later
-						// in this function).
-						unsafe { std::env::set_var(CleanKey, CleanValue) };
+						if std::env::var_os(CleanKey).is_none() {
+							// SAFETY: set_var is called once per key during bootstrap
+							// before any threads read env (Tokio runtime starts later
+							// in this function).
+							unsafe { std::env::set_var(CleanKey, CleanValue) };
+						}
 					}
 				}
+
+				true
 			}
 
-			true
-		}
+			let mut Candidates:Vec<std::path::PathBuf> = Vec::new();
 
-		let mut Candidates:Vec<std::path::PathBuf> = Vec::new();
+			if let Ok(Cwd) = std::env::current_dir() {
+				Candidates.push(Cwd.join(".env.Land"));
 
-		if let Ok(Cwd) = std::env::current_dir() {
-			Candidates.push(Cwd.join(".env.Land"));
+				if let Some(Parent) = Cwd.parent() {
+					Candidates.push(Parent.join(".env.Land"));
+				}
 
-			if let Some(Parent) = Cwd.parent() {
-				Candidates.push(Parent.join(".env.Land"));
+				Candidates.push(Cwd.join(".env.Land.Sample"));
+
+				if let Some(Parent) = Cwd.parent() {
+					Candidates.push(Parent.join(".env.Land.Sample"));
+				}
 			}
 
-			Candidates.push(Cwd.join(".env.Land.Sample"));
+			// Repo-layout probe: Target/debug/<bin> → four hops up lands at Land/.
+			if let Ok(Exe) = std::env::current_exe() {
+				let Ancestors:Vec<&std::path::Path> = Exe.ancestors().collect();
 
-			if let Some(Parent) = Cwd.parent() {
-				Candidates.push(Parent.join(".env.Land.Sample"));
+				for Candidate in Ancestors.iter().take(6) {
+					Candidates.push(Candidate.join(".env.Land"));
+
+					Candidates.push(Candidate.join(".env.Land.Sample"));
+				}
 			}
-		}
 
-		// Repo-layout probe: Target/debug/<bin> → four hops up lands at Land/.
-		if let Ok(Exe) = std::env::current_exe() {
-			let Ancestors:Vec<&std::path::Path> = Exe.ancestors().collect();
+			let mut Loaded = false;
 
-			for Candidate in Ancestors.iter().take(6) {
-				Candidates.push(Candidate.join(".env.Land"));
+			for Candidate in Candidates {
+				if Candidate.exists() && LoadEnvFile(&Candidate) {
+					crate::dev_log!("lifecycle", "[Boot] [Env] Loaded env from {}", Candidate.display());
 
-				Candidates.push(Candidate.join(".env.Land.Sample"));
+					Loaded = true;
+
+					break;
+				}
 			}
-		}
 
-		let mut Loaded = false;
-
-		for Candidate in Candidates {
-			if Candidate.exists() && LoadEnvFile(&Candidate) {
-				crate::dev_log!("lifecycle", "[Boot] [Env] Loaded env from {}", Candidate.display());
-
-				Loaded = true;
-
-				break;
+			if !Loaded {
+				crate::dev_log!(
+					"lifecycle",
+					"[Boot] [Env] No .env.Land / .env.Land.Sample found - using defaults"
+				);
 			}
-		}
-
-		if !Loaded {
-			crate::dev_log!(
-				"lifecycle",
-				"[Boot] [Env] No .env.Land / .env.Land.Sample found - using defaults"
-			);
 		}
 	}
 

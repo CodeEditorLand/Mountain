@@ -75,7 +75,7 @@
 		<key>TierTelemetry</key>
 		<string>Synchronous</string>
 		<key>Trace</key>
-		<string></string>
+		<string>all</string>
 	</dict>
 </dict>
 </plist>
