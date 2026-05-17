@@ -18,7 +18,7 @@
 //! webviews:
 //!
 //! ```text
-//! land://code.editor.land/path ──► ServiceRegistry ──► http://127.0.0.1:PORT/path
+//! land://code.land.playform.cloud/path ──► ServiceRegistry ──► http://127.0.0.1:PORT/path
 //!                                       │                        │
 //!                                       ▼                        ▼
 //!                               CORS Headers Set          Local Service
@@ -27,7 +27,8 @@
 //!
 //! ## SECURITY
 //!
-//! - All responses include Access-Control-Allow-Origin: land://code.editor.land
+//! - All responses include Access-Control-Allow-Origin:
+//!   land://code.land.playform.cloud
 //! - Content-Type preserved from local service response
 //! - CORS headers set appropriately for cross-origin requests
 //! - Request validation and sanitization
@@ -161,19 +162,20 @@ fn should_cache(path:&str) -> bool {
 ///
 /// # Parameters
 ///
-/// - `uri`: The land:// URI (e.g., "land://code.editor.land/path/to/resource")
+/// - `uri`: The land:// URI (e.g.,
+///   "land://code.land.playform.cloud/path/to/resource")
 ///
 /// # Returns
 ///
 /// A tuple of (domain, path) where:
-/// - domain: "code.editor.land"
+/// - domain: "code.land.playform.cloud"
 /// - path: "/path/to/resource"
 ///
 /// # Example
 ///
 /// ```rust
-/// let (domain, path) = parse_land_uri("land://code.editor.land/api/status");
-/// assert_eq!(domain, "code.editor.land");
+/// let (domain, path) = parse_land_uri("land://code.land.playform.cloud/api/status");
+/// assert_eq!(domain, "code.land.playform.cloud");
 /// assert_eq!(path, "/api/status");
 /// ```
 fn parse_land_uri(uri:&str) -> Result<(String, String), String> {
@@ -543,7 +545,7 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 				return Builder::new()
 					.status(404)
 					.header("Content-Type", "text/plain; charset=utf-8")
-					.header("Access-Control-Allow-Origin", "land://code.editor.land")
+					.header("Access-Control-Allow-Origin", "land://code.land.playform.cloud")
 					.body(Vec::<u8>::new())
 					.unwrap_or_else(|_| build_error_response(500, "Failed to build 404 response"));
 			}
@@ -551,7 +553,7 @@ pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 			// Build response with CORS headers
 			let mut response_builder = Builder::new()
 				.status(status)
-				.header("Access-Control-Allow-Origin", "land://code.editor.land")
+				.header("Access-Control-Allow-Origin", "land://code.land.playform.cloud")
 				.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
 				.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
 
@@ -620,7 +622,7 @@ fn build_error_response(status:u16, message:&str) -> Response<Vec<u8>> {
 	Builder::new()
 		.status(status)
 		.header("Content-Type", "application/json")
-		.header("Access-Control-Allow-Origin", "land://code.editor.land")
+		.header("Access-Control-Allow-Origin", "land://code.land.playform.cloud")
 		.body(serde_json::to_vec(&body).unwrap_or_default())
 		.unwrap_or_else(|_| Builder::new().status(500).body(Vec::new()).unwrap())
 }
@@ -629,7 +631,7 @@ fn build_error_response(status:u16, message:&str) -> Response<Vec<u8>> {
 fn build_cors_preflight_response() -> Response<Vec<u8>> {
 	Builder::new()
 		.status(204)
-		.header("Access-Control-Allow-Origin", "land://code.editor.land")
+		.header("Access-Control-Allow-Origin", "land://code.land.playform.cloud")
 		.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
 		.header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With")
 		.header("Access-Control-Max-Age", "86400")
@@ -642,7 +644,7 @@ fn build_cached_response(entry:CacheEntry) -> Response<Vec<u8>> {
 	let mut builder = Builder::new()
 		.status(200)
 		.header("Content-Type", &entry.content_type)
-		.header("Access-Control-Allow-Origin", "land://code.editor.land")
+		.header("Access-Control-Allow-Origin", "land://code.land.playform.cloud")
 		.header("Cache-Control", &entry.cache_control);
 
 	if let Some(etag) = &entry.etag {
@@ -664,7 +666,7 @@ fn build_cached_response(entry:CacheEntry) -> Response<Vec<u8>> {
 ///
 /// # Parameters
 ///
-/// - `name`: Domain name (e.g., "code.editor.land")
+/// - `name`: Domain name (e.g., "code.land.playform.cloud")
 /// - `port`: Local port where the service is listening
 pub fn register_land_service(name:&str, port:u16) {
 	let registry = get_service_registry().expect("Service registry not initialized. Call init_service_registry first.");
@@ -747,7 +749,7 @@ pub fn land_scheme_handler_async<R:tauri::Runtime>(
 #[allow(dead_code)]
 fn get_cors_origins() -> &'static str {
 	// Support both macOS/Linux (land://localhost) and Windows (http://land.localhost)
-	"land://localhost, http://land.localhost, land://code.editor.land"
+	"land://localhost, http://land.localhost, land://code.land.playform.cloud"
 }
 
 /// Initializes the scheme handler module

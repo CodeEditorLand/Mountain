@@ -487,16 +487,16 @@ pub fn Fn() {
 					// Register the main code editor service
 					dev_log!(
 						"lifecycle",
-						"[Lifecycle] [Setup] Registering code.editor.land service on port {}",
+						"[Lifecycle] [Setup] Registering code.land.playform.cloud service on port {}",
 						ServerPortForClosure
 					);
-					register_land_service("code.editor.land", ServerPortForClosure);
+					register_land_service("code.land.playform.cloud", ServerPortForClosure);
 
 					// Register API editor service (same port for now, can be separate later)
-					register_land_service("api.editor.land", ServerPortForClosure);
+					register_land_service("api.land.playform.cloud", ServerPortForClosure);
 
 					// Register assets editor service (same port for now, can be separate later)
-					register_land_service("assets.editor.land", ServerPortForClosure);
+					register_land_service("assets.land.playform.cloud", ServerPortForClosure);
 
 					// Make the registry available as managed state for Tauri commands
 					app.manage(service_registry);

@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
 
 //! `dns_get_zone_info` Tauri command - returns the static
-//! `editor.land` zone snapshot (records + DNSSEC flag) used by
+//! `land.playform.cloud` zone snapshot (records + DNSSEC flag) used by
 //! the diagnostic panel.
 
 use tauri::State;
@@ -19,25 +19,25 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 
 	let mut records = vec![
 		ZoneRecord {
-			name:"editor.land.".to_string(),
+			name:"land.playform.cloud.".to_string(),
 
 			record_type:"SOA".to_string(),
 
 			ttl:3600,
 
-			data:"ns1.editor.land. admin.editor.land. 1 3600 600 604800 86400".to_string(),
+			data:"ns1.land.playform.cloud. admin.land.playform.cloud. 1 3600 600 604800 86400".to_string(),
 		},
 		ZoneRecord {
-			name:"editor.land.".to_string(),
+			name:"land.playform.cloud.".to_string(),
 
 			record_type:"NS".to_string(),
 
 			ttl:3600,
 
-			data:"ns1.editor.land.".to_string(),
+			data:"ns1.land.playform.cloud.".to_string(),
 		},
 		ZoneRecord {
-			name:"editor.land.".to_string(),
+			name:"land.playform.cloud.".to_string(),
 
 			record_type:"DNSKEY".to_string(),
 
@@ -46,7 +46,7 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 			data:"256 3 13 (ECDSA P-256 Zone Signing Key)".to_string(),
 		},
 		ZoneRecord {
-			name:"ns1.editor.land.".to_string(),
+			name:"ns1.land.playform.cloud.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -55,7 +55,7 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 			data:"127.0.0.1".to_string(),
 		},
 		ZoneRecord {
-			name:"code.editor.land.".to_string(),
+			name:"code.land.playform.cloud.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -64,7 +64,7 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 			data:"127.0.0.1".to_string(),
 		},
 		ZoneRecord {
-			name:"api.editor.land.".to_string(),
+			name:"api.land.playform.cloud.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -73,7 +73,7 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 			data:"127.0.0.1".to_string(),
 		},
 		ZoneRecord {
-			name:"*.editor.land.".to_string(),
+			name:"*.land.playform.cloud.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -87,14 +87,19 @@ pub fn dns_get_zone_info(dns_port:State<DnsPort>) -> Result<ZoneInfo, String> {
 
 	for rtype in rrsig_types {
 		records.push(ZoneRecord {
-			name:"editor.land.".to_string(),
+			name:"land.playform.cloud.".to_string(),
 			record_type:"RRSIG".to_string(),
 			ttl:432000,
-			data:format!("{} 13 2 432000 {} {} {} editor.land.", rtype, 0, 0, 0),
+			data:format!("{} 13 2 432000 {} {} {} land.playform.cloud.", rtype, 0, 0, 0),
 		});
 	}
 
 	let record_count = records.len();
 
-	Ok(ZoneInfo { origin:"editor.land.".to_string(), record_count, records, has_dnssec:true })
+	Ok(ZoneInfo {
+		origin:"land.playform.cloud.".to_string(),
+		record_count,
+		records,
+		has_dnssec:true,
+	})
 }

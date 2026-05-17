@@ -66,7 +66,7 @@ mod tests {
 	#[test]
 	fn ZoneRecordSerialization() {
 		let record = ZoneRecord {
-			name:"code.editor.land.".to_string(),
+			name:"code.land.playform.cloud.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -79,7 +79,7 @@ mod tests {
 
 		let deserialized:ZoneRecord = serde_json::from_str(&json).unwrap();
 
-		assert_eq!(deserialized.name, "code.editor.land.");
+		assert_eq!(deserialized.name, "code.land.playform.cloud.");
 
 		assert_eq!(deserialized.record_type, "A");
 
@@ -90,7 +90,7 @@ mod tests {
 
 	#[test]
 	fn ForwardAllowListSerialization() {
-		let allowlist = ForwardAllowList { domains:vec!["update.editor.land.".to_string()] };
+		let allowlist = ForwardAllowList { domains:vec!["update.land.playform.cloud.".to_string()] };
 
 		let json = serde_json::to_string(&allowlist).unwrap();
 
@@ -98,7 +98,7 @@ mod tests {
 
 		assert_eq!(deserialized.domains.len(), 1);
 
-		assert_eq!(deserialized.domains[0], "update.editor.land.");
+		assert_eq!(deserialized.domains[0], "update.land.playform.cloud.");
 	}
 
 	#[test]
@@ -129,7 +129,7 @@ mod tests {
 	#[test]
 	fn DnsResolutionResultSerialization() {
 		let result = DnsResolutionResult {
-			domain:"code.editor.land.".to_string(),
+			domain:"code.land.playform.cloud.".to_string(),
 
 			record_type:"A".to_string(),
 
@@ -146,7 +146,7 @@ mod tests {
 
 		let deserialized:DnsResolutionResult = serde_json::from_str(&json).unwrap();
 
-		assert_eq!(deserialized.domain, "code.editor.land.");
+		assert_eq!(deserialized.domain, "code.land.playform.cloud.");
 
 		assert_eq!(deserialized.record_type, "A");
 

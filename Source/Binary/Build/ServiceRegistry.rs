@@ -13,7 +13,7 @@
 //! services:
 //!
 //! ```text
-//! land://code.editor.land/path ──► ServiceRegistry ──► http://127.0.0.1:PORT/path
+//! land://code.land.playform.cloud/path ──► ServiceRegistry ──► http://127.0.0.1:PORT/path
 //! ```
 //!
 //! ## THREAD SAFETY
@@ -26,9 +26,9 @@
 //!
 //! ```rust
 //! let registry = ServiceRegistry::new();
-//! registry.register("code.editor.land".to_string(), 8080, Some("/health".to_string()));
+//! registry.register("code.land.playform.cloud".to_string(), 8080, Some("/health".to_string()));
 //!
-//! let service = registry.lookup("code.editor.land").unwrap();
+//! let service = registry.lookup("code.land.playform.cloud").unwrap();
 //! assert_eq!(service.port, 8080);
 //! ```
 
@@ -50,7 +50,7 @@ use crate::dev_log;
 ///
 /// # Fields
 ///
-/// - `name`: Domain name (e.g., "code.editor.land")
+/// - `name`: Domain name (e.g., "code.land.playform.cloud")
 /// - `port`: Local port where the service is listening
 /// - `tls_port`: Optional TLS port for HTTPS (defaults to port + 1000 if not
 ///   specified)
@@ -124,7 +124,7 @@ impl ServiceRegistry {
 	///
 	/// # Parameters
 	///
-	/// - `name`: Domain name (e.g., "code.editor.land")
+	/// - `name`: Domain name (e.g., "code.land.playform.cloud")
 	/// - `port`: Local port where the service is listening
 	/// - `health_check_path`: Optional path for health check endpoint (e.g.,
 	///   "/health")
@@ -132,7 +132,7 @@ impl ServiceRegistry {
 	/// # Example
 	///
 	/// ```rust
-	/// registry.register("code.editor.land".to_string(), 8080, Some("/health".to_string())); 
+	/// registry.register("code.land.playform.cloud".to_string(), 8080, Some("/health".to_string()));
 	/// ```
 	pub fn register(&self, name:String, port:u16, health_check_path:Option<String>) {
 		self.register_with_options(name, port, None, false, health_check_path);
@@ -142,7 +142,7 @@ impl ServiceRegistry {
 	///
 	/// # Parameters
 	///
-	/// - `name`: Domain name (e.g., "code.editor.land")
+	/// - `name`: Domain name (e.g., "code.land.playform.cloud")
 	/// - `port`: Local HTTP port
 	/// - `tls_port`: Optional TLS port (defaults to port + 1000)
 	/// - `use_tls`: Whether to enable HTTPS
@@ -153,7 +153,7 @@ impl ServiceRegistry {
 	/// ```rust
 	/// // Register with TLS enabled
 	/// registry.register_with_options(
-	/// 	"code.editor.land".to_string(),
+	/// 	"code.land.playform.cloud".to_string(),
 	/// 	8080,
 	/// 	None, // Use default TLS port (9080)
 	/// 	true,
@@ -233,7 +233,7 @@ impl ServiceRegistry {
 	/// # Example
 	///
 	/// ```rust
-	/// let service = registry.lookup("code.editor.land");
+	/// let service = registry.lookup("code.land.playform.cloud");
 	/// if let Some(svc) = service {
 	/// 	println!("Service running on port {}", svc.port);
 	/// }

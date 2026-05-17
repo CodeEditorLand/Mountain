@@ -20,13 +20,13 @@ fn test_service_registration() {
 
 	let registry = ServiceRegistry::new();
 
-	registry.register("code.editor.land".to_string(), 8080, Some("/health".to_string()));
+	registry.register("code.land.playform.cloud".to_string(), 8080, Some("/health".to_string()));
 
-	let service = registry.lookup("code.editor.land").expect("Service not found");
+	let service = registry.lookup("code.land.playform.cloud").expect("Service not found");
 
 	assert_eq!(service.port, 8080);
 
-	assert_eq!(service.name, "code.editor.land");
+	assert_eq!(service.name, "code.land.playform.cloud");
 
 	assert_eq!(service.health_check_path, Some("/health".to_string()));
 }
@@ -458,14 +458,14 @@ fn test_large_number_of_services() {
 
 	// Register 100 services
 	for i in 0..100 {
-		let name = format!("service{}.editor.land", i);
+		let name = format!("service{}.land.playform.cloud", i);
 
 		registry.register(name, 8080 + i, None);
 	}
 
 	// Verify all services are registered
 	for i in 0..100 {
-		let name = format!("service{}.editor.land", i);
+		let name = format!("service{}.land.playform.cloud", i);
 
 		assert!(registry.lookup(&name).is_some(), "{} should be registered", name);
 	}
