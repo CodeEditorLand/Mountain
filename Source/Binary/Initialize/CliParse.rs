@@ -119,7 +119,7 @@ pub fn ParseWorkspaceFolders() -> Vec<PathBuf> {
 	// picks a folder from the recent-list / "Open Folder" UI, the URL
 	// loads with `?folder=<their-pick>` but Mountain's boot-time seeder
 	// previously fell straight through to CWD walk-up. Result: webview
-	// title says "Mountain" but Cocoon's init payload ships "Land",
+	// title says "Mountain" but Cocoon's init payload ships "FIDDEE",
 	// vscode.git scans the wrong root, SCM panel reports zeros while
 	// `git status` in the actual folder shows uncommitted changes.
 	//

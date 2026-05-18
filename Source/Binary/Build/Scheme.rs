@@ -425,7 +425,7 @@ fn parse_http_response(response:&str) -> Result<(u16, Vec<u8>, HashMap<String, S
 ///
 /// ```rust
 /// tauri::Builder::default()
-/// 	.register_uri_scheme_protocol("land", |_app, request| land_scheme_handler(request))
+/// 	.register_uri_scheme_protocol("fiddee", |_app, request| fiddee_scheme_handler(request))
 /// ```
 pub fn land_scheme_handler(request:&Request<Vec<u8>>) -> Response<Vec<u8>> {
 	// Initialize cache on first request
@@ -716,7 +716,7 @@ pub fn get_land_port(name:&str) -> Option<u16> {
 ///
 /// ```rust
 /// tauri::Builder::default()
-/// 	.register_asynchronous_uri_scheme_protocol("land", |_ctx, request, responder| {
+/// 	.register_asynchronous_uri_scheme_protocol("fiddee", |_ctx, request, responder| {
 /// 		land_scheme_handler_async(_ctx, request, responder)
 /// 	})
 /// ```

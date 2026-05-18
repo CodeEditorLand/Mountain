@@ -73,7 +73,7 @@
 		"fileAssociations": [],
 		"homepage": "https://Land.PlayForm.Cloud",
 		"iOS": {
-			"developmentTeam": "Land",
+			"developmentTeam": "FIDDEE",
 			"frameworks": [],
 			"minimumSystemVersion": "13.0",
 			"template": ""
@@ -150,7 +150,7 @@
 			}
 		}
 	},
-	"identifier": "land.editor.binary",
+	"identifier": "fiddee.editor.binary",
 	"productName": "Mountain",
 	"version": "0.0.1"
 }

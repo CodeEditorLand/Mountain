@@ -299,7 +299,7 @@ pub fn AppLifecycleSetup(
 		let HomeDir = PathResolver.home_dir().unwrap_or_default();
 
 		// Set the canonical userdata base so WindServiceHandlers resolves
-		// /User/... paths to the real Tauri app_data_dir (not hardcoded "Land").
+		// /User/... paths to the real Tauri app_data_dir (not hardcoded "FIDDEE").
 		crate::IPC::WindServiceHandlers::Utilities::UserdataDir::set_userdata_base_dir(
 			AppDataDir.to_string_lossy().to_string(),
 		);

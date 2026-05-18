@@ -19,23 +19,23 @@
 		<key>NetworkMountainPort</key>
 		<string>50051</string>
 		<key>ProductApplicationName</key>
-		<string>land</string>
+		<string>fiddee</string>
 		<key>ProductCommit</key>
 		<string>dev</string>
 		<key>ProductDataFolderName</key>
-		<string>.land</string>
+		<string>.fiddee</string>
 		<key>ProductEmbedderIdentifier</key>
-		<string>land-desktop</string>
+		<string>fiddee-desktop</string>
 		<key>ProductNameLong</key>
-		<string>Land Editor</string>
+		<string>FIDDEE</string>
 		<key>ProductNameShort</key>
-		<string>Land</string>
+		<string>FIDDEE</string>
 		<key>ProductQuality</key>
 		<string>development</string>
 		<key>ProductServerApplicationName</key>
-		<string>land-server</string>
+		<string>fiddee-server</string>
 		<key>ProductUrlProtocol</key>
-		<string>land</string>
+		<string>fiddee</string>
 		<key>ProductVersion</key>
 		<string>1.118.0</string>
 		<key>Record</key>

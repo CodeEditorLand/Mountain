@@ -1269,7 +1269,7 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("window", "nativeHost:getCursorScreenPoint");
 					Ok(json!({ "x": 0, "y": 0 }))
 				},
-				"nativeHost:getWindows" => Ok(json!([{ "id": 1, "title": "Land", "filename": "" }])),
+				"nativeHost:getWindows" => Ok(json!([{ "id": 1, "title": "FIDDEE", "filename": "" }])),
 				"nativeHost:getWindowCount" => Ok(json!(1)),
 
 				// Auxiliary window spawners. VS Code's `nativeHostMainService.ts`

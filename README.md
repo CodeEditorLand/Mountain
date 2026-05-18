@@ -250,7 +250,7 @@ for a history of changes specific to **Mountain**&#x2001;⛰️.
 
 ---
 
-## Funding \\& Acknowledgements&#x2001;🙏🏻
+## Funding & Acknowledgements&#x2001;🙏🏻
 
 **Mountain**&#x2001;⛰️ is a core element of the **Land**&#x2001;🏞️ ecosystem.
 This project is funded through

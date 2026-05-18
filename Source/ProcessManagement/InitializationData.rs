@@ -311,16 +311,13 @@ pub async fn ConstructSandboxConfiguration(
 
 		"productConfiguration": {
 
-			// Atom I5: read from process env (populated from .env.Land at
-			// Mountain startup). Fallback strings keep a sensible identity
-			// if the env file is absent at a release-profile launch.
-			"nameShort": std::env::var("ProductNameShort").unwrap_or_else(|_| "Land".into()),
-
-			"nameLong": std::env::var("ProductNameLong").unwrap_or_else(|_| "Land Editor".into()),
-
-			"applicationName": std::env::var("ProductApplicationName").unwrap_or_else(|_| "land".into()),
-
-			"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "land-desktop".into())
+		// Atom I5: read from process env (populated from .env.Land at
+		// Mountain startup). Fallback strings keep a sensible identity
+		// if the env file is absent at a release-profile launch.
+		"nameShort": std::env::var("ProductNameShort").unwrap_or_else(|_| "FIDDEE".into()),
+		"nameLong": std::env::var("ProductNameLong").unwrap_or_else(|_| "FIDDEE".into()),
+		"applicationName": std::env::var("ProductApplicationName").unwrap_or_else(|_| "fiddee".into()),
+		"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "fiddee-desktop".into())
 		},
 
 		"resourcesPath": PathResolver.resource_dir().unwrap_or_default().to_string_lossy(),
