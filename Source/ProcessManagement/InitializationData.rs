@@ -316,6 +316,23 @@ pub async fn ConstructSandboxConfiguration(
 
 		"logsPath": LogsPath.to_string_lossy(),
 
+		// Required non-optional fields in INativeWindowConfiguration.
+		// Missing these causes crashes in NativeWorkbenchEnvironmentService getters
+		// that access them without null-checks.
+		"perfMarks": [],
+
+		"colorScheme": { "dark": false, "highContrast": false },
+
+		"loggers": [],
+
+		"mainPid": std::process::id(),
+
+		"os": {
+			"release": "22.0.0",
+			"hostname": "land",
+			"arch": env::consts::ARCH,
+		},
+
 		"nls": { "messages": {}, "language": "en", "availableLanguages": { "en": "English" } },
 
 		"productConfiguration": {
@@ -326,7 +343,20 @@ pub async fn ConstructSandboxConfiguration(
 		"nameShort": std::env::var("ProductNameShort").unwrap_or_else(|_| "FIDDEE".into()),
 		"nameLong": std::env::var("ProductNameLong").unwrap_or_else(|_| "FIDDEE".into()),
 		"applicationName": std::env::var("ProductApplicationName").unwrap_or_else(|_| "fiddee".into()),
-		"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "fiddee-desktop".into())
+		"embedderIdentifier": std::env::var("ProductEmbedderIdentifier").unwrap_or_else(|_| "fiddee-desktop".into()),
+
+		// `dataFolderName` is used by VS Code's `AbstractNativeEnvironmentService
+		// .extensionsPath` via `URI.joinPath(userHome, dataFolderName, "extensions")`.
+		// Without it, `path.posix.join("...", undefined, "extensions")` throws
+		// "The path argument must be of type string. Received type undefined".
+		"dataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fiddee".into()),
+
+		// `sharedDataFolderName` is used by `appSharedDataHome` in the same way.
+		// Provide the same value to avoid a second undefined-path crash if accessed.
+		"sharedDataFolderName": std::env::var("ProductDataFolderName").unwrap_or_else(|_| ".fiddee".into()),
+
+		// `version` is used in extension compatibility checks and telemetry.
+		"version": std::env::var("ProductVersion").unwrap_or_else(|_| "1.0.0".into()),
 		},
 
 		"resourcesPath": PathResolver.resource_dir().unwrap_or_default().to_string_lossy(),
