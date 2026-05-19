@@ -370,15 +370,32 @@ pub async fn mountain_ipc_invoke(
 				// leak a pending promise.
 				"configuration:onDidChange" => Ok(Value::Null),
 
-				// Logger commands - fire-and-forget from Wind, just acknowledge
-				"logger:log"
-				| "logger:warn"
-				| "logger:error"
-				| "logger:info"
-				| "logger:debug"
-				| "logger:trace"
-				| "logger:critical"
-				| "logger:flush"
+			// Logger commands - VS Code's ILogService channel. Forward
+				// messages into Mountain's dev_log so Wind/Cocoon log lines
+				// appear in the unified Mountain.dev.log stream.
+				"logger:log" | "logger:warn" | "logger:error" | "logger:info"
+				| "logger:debug" | "logger:trace" | "logger:critical" => {
+					let Level = command.trim_start_matches("logger:");
+					let Msg = if Arguments.len() >= 2 {
+						let Tail:Vec<String> = Arguments
+							.iter()
+							.skip(1)
+							.filter_map(|V| V.as_str().map(str::to_owned).or_else(|| serde_json::to_string(V).ok()))
+							.collect();
+						Tail.join(" ")
+					} else {
+						Arguments.first().and_then(|V| V.as_str().map(str::to_owned)).unwrap_or_default()
+					};
+					if !Msg.is_empty() {
+						match Level {
+							"error" | "critical" => dev_log!("vscode-log", "[ERROR] {}", Msg),
+							"warn" => dev_log!("vscode-log", "[WARN] {}", Msg),
+							_ => dev_log!("vscode-log", "{}", Msg),
+						}
+					}
+					Ok(Value::Null)
+				},
+				"logger:flush"
 				| "logger:setLevel"
 				| "logger:getLevel"
 				| "logger:createLogger"
@@ -1556,10 +1573,38 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:getProcessId" => Ok(json!(std::process::id())),
 				"nativeHost:killProcess" => KillProcess(Arguments).await,
 
-				// Network
+			// Network
 				"nativeHost:findFreePort" => NativeFindFreePort(Arguments).await,
-				"nativeHost:isPortFree" => Ok(json!(true)),
-				"nativeHost:resolveProxy" => Ok(Value::Null),
+				"nativeHost:isPortFree" => {
+					// Actually attempt to bind the port; TcpListener::bind returns Ok
+					// if and only if no process holds it.
+					let Port = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0) as u16;
+					if Port == 0 {
+						return Ok(json!(false));
+					}
+					let Free = tokio::net::TcpListener::bind(
+						std::net::SocketAddr::from(([127, 0, 0, 1], Port)),
+					)
+					.await
+					.is_ok();
+					Ok(json!(Free))
+				},
+				// `IProxyService.resolveProxy` - return `DIRECT` when no proxy
+				// env var is set, or the var's value when one is configured.
+				// VS Code uses this before every authenticated HTTP request so
+				// extensions that call `fetch` route through the right gateway.
+				"nativeHost:resolveProxy" => {
+					let Url = Arguments.first().and_then(|V| V.as_str()).unwrap_or("");
+					let Scheme = if Url.starts_with("https") { "HTTPS" } else { "HTTP" };
+					let ProxyEnv = std::env::var(format!("{}_PROXY", Scheme))
+						.or_else(|_| std::env::var(format!("{}_proxy", Scheme.to_lowercase())))
+						.or_else(|_| std::env::var("ALL_PROXY"))
+						.or_else(|_| std::env::var("all_proxy"));
+					match ProxyEnv {
+						Ok(P) if !P.is_empty() => Ok(json!(format!("PROXY {}", P.trim_start_matches("http://").trim_start_matches("https://")))),
+						_ => Ok(json!("DIRECT")),
+					}
+				},
 				"nativeHost:lookupAuthorization" => Ok(Value::Null),
 				"nativeHost:lookupKerberosAuthorization" => Ok(Value::Null),
 				"nativeHost:loadCertificates" => Ok(json!([])),
@@ -1863,22 +1908,89 @@ pub async fn mountain_ipc_invoke(
 					// xterm flow-control heartbeat; no-op on Mountain side.
 					Ok(Value::Null)
 				},
-				// The remaining `localPty:*` endpoints declared by VS Code's
-				// `ILocalPtyService` are lifecycle-/title-style hooks the extension
-				// host calls even when there is no terminal running. They become
-				// no-ops here so the workbench doesn't deadlock on a missing route.
+			// `ILocalPtyService.getBackendOS` - VS Code uses this to decide
+				// which profile list to show (Windows/Linux/macOS). Returns the
+				// `OperatingSystem` enum value from
+				// `vs/base/common/platform.ts`: 1 = Macintosh, 2 = Linux, 3 = Windows.
+				"localPty:getBackendOS" => {
+					#[cfg(target_os = "macos")]
+					{ Ok(json!(1)) }
+					#[cfg(target_os = "linux")]
+					{ Ok(json!(2)) }
+					#[cfg(target_os = "windows")]
+					{ Ok(json!(3)) }
+					#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
+					{ Ok(json!(2)) }
+				},
+
+				// `ILocalPtyService.refreshProperty` - returns the current value
+				// of a PTY property. VS Code calls this for `ProcessId` (to show
+				// PID in the terminal tab tooltip) and `Cwd` (for smart basename).
+				// Property enum: 0=Cwd, 1=ProcessId, 2=Title, 3=OverrideName,
+				// 4=ResolvedShellLaunchConfig, 5=ShellType
+			// `ILocalPtyService.refreshProperty` - returns the current value
+				// of a PTY property. VS Code calls this for `ProcessId` (tooltip)
+				// and `Cwd` (smart basename).
+				// Property enum: 0=Cwd, 1=ProcessId, 2=Title…
+				"localPty:refreshProperty" => {
+					use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
+					let TerminalId = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
+					let PropId = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(0);
+					if TerminalId == 0 {
+						return Ok(Value::Null);
+					}
+					let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
+					// ProcessId (1)
+					if PropId == 1 {
+						match Provider.GetTerminalProcessId(TerminalId).await {
+							Ok(Some(Pid)) => return Ok(json!(Pid)),
+							_ => return Ok(Value::Null),
+						}
+					}
+					Ok(Value::Null)
+				},
+
+				// `ILocalPtyService.updateProperty` - workbench sets icon/title
+				// on a running PTY; acknowledged, no Mountain-side state change.
+				"localPty:updateProperty" => Ok(Value::Null),
+
+				// `ILocalPtyService.freePortKillProcess` - kill whatever process
+				// is listening on a port so a new terminal can bind it.
+				"localPty:freePortKillProcess" => {
+					let Port = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0) as u16;
+					if Port > 0 {
+						// Find and kill the process holding the port via lsof.
+						#[cfg(unix)]
+						{
+							let Out = tokio::process::Command::new("lsof")
+								.args(["-t", "-i", &format!(":{}", Port)])
+								.output()
+								.await;
+							if let Ok(O) = Out {
+								let Pids = String::from_utf8_lossy(&O.stdout);
+								for Pid in Pids.split_whitespace() {
+									if let Ok(P) = Pid.parse::<u32>() {
+										let _ = tokio::process::Command::new("kill")
+											.args(["-9", &P.to_string()])
+											.status()
+											.await;
+									}
+								}
+							}
+						}
+					}
+					Ok(Value::Null)
+				},
+
+				// Remaining `localPty:*` - lifecycle/title hooks; no-op.
 				"localPty:processBinary"
 				| "localPty:attachToProcess"
 				| "localPty:detachFromProcess"
 				| "localPty:orphanQuestionReply"
 				| "localPty:updateTitle"
 				| "localPty:updateIcon"
-				| "localPty:refreshProperty"
-				| "localPty:updateProperty"
 				| "localPty:getRevivedPtyNewId"
-				| "localPty:freePortKillProcess"
 				| "localPty:reviveTerminalProcesses"
-				| "localPty:getBackendOS"
 				| "localPty:installAutoReply"
 				| "localPty:uninstallAllAutoReplies"
 				| "localPty:serializeTerminalState" => Ok(Value::Null),
