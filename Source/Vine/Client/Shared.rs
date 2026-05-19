@@ -8,6 +8,7 @@ use std::{
 	collections::HashMap,
 	sync::{
 		Arc,
+		OnceLock,
 		atomic::{AtomicBool, Ordering},
 	},
 	time::Instant,
@@ -15,6 +16,7 @@ use std::{
 
 use lazy_static::lazy_static;
 use parking_lot::Mutex;
+use tokio::sync::Notify;
 
 use crate::Vine::{Client::NotificationFrame, Error::VineError, Generated::cocoon_service_client::CocoonServiceClient};
 
@@ -63,6 +65,41 @@ lazy_static! {
 
 		Sender
 	};
+}
+
+/// Per-sidecar connection-ready notifiers. Keyed by the sidecar identifier
+/// (e.g. `"cocoon-main"`). Callers that need the connection before issuing an
+/// RPC can `await` the `Notify` instead of polling `IsClientConnected`.
+/// The `Notify` is created lazily on first `GetConnectionNotify` call and
+/// fired (`notify_waiters`) once in `ConnectToSideCar` after a successful
+/// handshake. Subsequent calls see a pre-fired notifier and wake immediately.
+static CONNECTION_NOTIFIERS:OnceLock<Arc<parking_lot::RwLock<HashMap<String, Arc<Notify>>>>> = OnceLock::new();
+
+pub fn GetConnectionNotify(SideCarIdentifier:&str) -> Arc<Notify> {
+	let Map = CONNECTION_NOTIFIERS.get_or_init(|| Arc::new(parking_lot::RwLock::new(HashMap::new())));
+
+	{
+		let Read = Map.read();
+
+		if let Some(Notify) = Read.get(SideCarIdentifier) {
+			return Notify.clone();
+		}
+	}
+
+	let mut Write = Map.write();
+
+	Write
+		.entry(SideCarIdentifier.to_string())
+		.or_insert_with(|| Arc::new(Notify::new()))
+		.clone()
+}
+
+pub fn FireConnectionNotify(SideCarIdentifier:&str) {
+	if let Some(Map) = CONNECTION_NOTIFIERS.get() {
+		if let Some(Notifier) = Map.read().get(SideCarIdentifier) {
+			Notifier.notify_waiters();
+		}
+	}
 }
 
 /// Process-wide shutdown flag. Set to `true` once Mountain has issued

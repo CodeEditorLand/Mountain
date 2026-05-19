@@ -1,87 +1,99 @@
 #![allow(non_snake_case)]
-//! Cocoon → Mountain `window.createTextEditorDecorationType` /
-//! `window.disposeTextEditorDecorationType` notifications. Forwards
-//! the payload on `sky://decoration/<suffix>`; Sky's editor renderer
-//! owns the Monaco-side decoration lifecycle so Mountain is a pure
-//! relay.
-//!
-//! Per session log audit `20260501T053137`: ~337 create + 317
-//! dispose calls, mostly from extension activation registering
-//! syntax-highlight decorations for new file types. Each emit hit
-//! Tauri's serialised WebKit channel that also delivers keystrokes.
-//! 16ms coalescer per method name buffers payloads and emits a
-//! single `{ batch: [...] }` per channel per frame; SkyBridge's
-//! listener demultiplexes back to per-decoration `cel:decoration:*`
-//! CustomEvents.
 
-use std::{
-	collections::HashMap,
-	sync::{
-		Arc,
-		Mutex,
-		OnceLock,
-		atomic::{AtomicBool, Ordering},
-	},
-	time::Duration,
-};
+//! Cocoon → Mountain `window.createTextEditorDecorationType` /
+//! `window.disposeTextEditorDecorationType` notifications. Forwards the
+//! payload on `sky://decoration/<suffix>` as a batch; Sky demultiplexes
+//! back to per-decoration `cel:decoration:*` CustomEvents.
+//!
+//! ~337 create + 317 dispose calls per session. Channel-drain pattern:
+//! a single long-lived flusher wakes on first item, drains, sleeps one
+//! frame (16 ms), drains stragglers, then emits one batched Tauri event
+//! per channel name. Zero spawns per call.
+
+use std::sync::OnceLock;
 
 use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
+use tokio::sync::mpsc::{UnboundedSender, unbounded_channel};
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-struct DecorationEmitBatch {
-	Pending:Mutex<HashMap<String, Vec<Value>>>,
+struct DecorationItem {
+	Handle:AppHandle,
 
-	FlushScheduled:AtomicBool,
+	Channel:String,
+
+	Payload:Value,
 }
 
-static DECORATION_EMIT_BATCH:OnceLock<Arc<DecorationEmitBatch>> = OnceLock::new();
+struct DecorationChannel {
+	Sender:UnboundedSender<DecorationItem>,
+}
 
-fn EnqueueDecorationEmit(Handle:&AppHandle, Channel:String, Payload:Value) {
-	let Batch = DECORATION_EMIT_BATCH.get_or_init(|| {
-		Arc::new(DecorationEmitBatch { Pending:Mutex::new(HashMap::new()), FlushScheduled:AtomicBool::new(false) })
-	});
+static DECO_CH:OnceLock<DecorationChannel> = OnceLock::new();
 
-	{
-		let mut Guard = Batch.Pending.lock().unwrap();
-
-		Guard.entry(Channel).or_insert_with(Vec::new).push(Payload);
-	}
-
-	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
-		let BatchClone = Batch.clone();
-
-		let HandleClone = Handle.clone();
+fn GetOrInitChannel(Handle:&AppHandle) -> &'static DecorationChannel {
+	DECO_CH.get_or_init(|| {
+		let (Tx, mut Rx) = unbounded_channel::<DecorationItem>();
 
 		tokio::spawn(async move {
-			tokio::time::sleep(Duration::from_millis(16)).await;
-			let Drained:HashMap<String, Vec<Value>> = {
-				let mut Guard = BatchClone.Pending.lock().unwrap();
-				std::mem::take(&mut *Guard)
-			};
-			BatchClone.FlushScheduled.store(false, Ordering::Release);
-			for (ChannelName, Payloads) in Drained {
-				let Count = Payloads.len();
-				match HandleClone.emit(&ChannelName, json!({ "batch": Payloads })) {
-					Ok(()) => dev_log!("sky-emit", "[SkyEmit] ok channel={} batch={}", ChannelName, Count),
-					Err(Error) => {
-						dev_log!(
+			let mut Buf:Vec<DecorationItem> = Vec::with_capacity(64);
+
+			loop {
+				match Rx.recv().await {
+					None => break,
+					Some(Item) => Buf.push(Item),
+				}
+
+				Rx.recv_many(&mut Buf, 4096).await;
+
+				tokio::time::sleep(std::time::Duration::from_millis(16)).await;
+
+				Rx.recv_many(&mut Buf, 4096).await;
+
+				if Buf.is_empty() {
+					continue;
+				}
+
+				// Group by channel name; all items share the same AppHandle.
+				let Handle = Buf[0].Handle.clone();
+
+				let mut ByChannel:std::collections::HashMap<String, Vec<Value>> =
+					std::collections::HashMap::new();
+
+				for Item in Buf.drain(..) {
+					ByChannel.entry(Item.Channel).or_default().push(Item.Payload);
+				}
+
+				for (ChannelName, Payloads) in ByChannel {
+					let Count = Payloads.len();
+
+					match Handle.emit(&ChannelName, json!({ "batch": Payloads })) {
+						Ok(()) => dev_log!("sky-emit", "[SkyEmit] ok channel={} batch={}", ChannelName, Count),
+						Err(E) => dev_log!(
 							"sky-emit",
 							"[SkyEmit] fail channel={} batch={} error={}",
 							ChannelName,
 							Count,
-							Error
-						)
-					},
+							E
+						),
+					}
 				}
 			}
 		});
-	}
+
+		DecorationChannel { Sender:Tx }
+	})
 }
 
 pub async fn DecorationTypeLifecycle(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) {
 	let EventName = format!("sky://decoration/{}", &MethodName["window.".len()..]);
 
-	EnqueueDecorationEmit(Service.ApplicationHandle(), EventName, Parameter.clone());
+	let Ch = GetOrInitChannel(Service.ApplicationHandle());
+
+	let _ = Ch.Sender.send(DecorationItem {
+		Handle:Service.ApplicationHandle().clone(),
+		Channel:EventName,
+		Payload:Parameter.clone(),
+	});
 }

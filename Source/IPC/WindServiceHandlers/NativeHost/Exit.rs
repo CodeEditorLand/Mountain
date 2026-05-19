@@ -1,0 +1,21 @@
+#![allow(non_snake_case)]
+
+//! `nativeHost:exit` - exit with an explicit code.
+//! VS Code calls this from `NativeHostMainService.exit(code)` when an
+//! extension or the workbench requests a non-zero exit (crash reporter,
+//! restart-on-crash sentinel, etc.).
+
+use serde_json::Value;
+use tauri::AppHandle;
+
+use crate::dev_log;
+
+pub async fn Exit(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
+	let Code = Arguments.first().and_then(Value::as_i64).unwrap_or(0) as i32;
+
+	dev_log!("lifecycle", "nativeHost:exit code={}", Code);
+
+	ApplicationHandle.exit(Code);
+
+	Ok(Value::Null)
+}

@@ -1,43 +1,37 @@
 #![allow(non_snake_case)]
 
-//! `extensions:getInstalled(type?)` - return scanned extensions
-//! reshaped as VS Code's `ILocalExtension[]` so
-//! `ExtensionManagementChannelClient.getInstalled` can
-//! destructure `extension.identifier.id`,
-//! `extension.manifest.*`, and `extension.location` without
-//! blowing up.
+//! `extensions:getInstalled(type?)` - return scanned extensions reshaped as
+//! VS Code's `ILocalExtension[]` so `ExtensionManagementChannelClient
+//! .getInstalled` can destructure `extension.identifier.id`,
+//! `extension.manifest.*`, and `extension.location` without blowing up.
 //!
 //! ## Argument contract
 //!
-//! `Arguments[0]` is the optional `ExtensionType` filter VS
-//! Code passes:
-//!
+//! `Arguments[0]` is the optional `ExtensionType` filter VS Code passes:
 //! - `0` (System) → only built-ins.
 //! - `1` (User) → only VSIX-installed.
 //! - `null` / missing → every known extension.
 //!
-//! Without the filter the trusted-publishers boot migration
-//! iterates User-typed extensions over System manifests and
-//! crashes on `manifest.publisher.toLowerCase()`.
+//! Without the filter the trusted-publishers boot migration iterates
+//! User-typed extensions over System manifests and crashes on
+//! `manifest.publisher.toLowerCase()`.
 //!
 //! ## Boot-time race
 //!
-//! The workbench fires `getInstalled` ~13 times within the
-//! first second. `ExtensionPopulate` runs in parallel and only
-//! writes to ScannedExtensions ~250-500 ms in. If we returned
-//! `[]` early, the workbench cached it forever and the activity
-//! bar lost every extension-contributed icon. We poll for ≤5 s
-//! before returning empty.
+//! The workbench fires `getInstalled` ~13 times within the first second.
+//! `ExtensionPopulate` runs in parallel and writes to `ScannedExtensions`
+//! 250-500 ms in. We await `ExtensionState.ScanReady` (a `tokio::sync::Notify`
+//! fired once the scan commits its results) with a 5 s hard cap, then return
+//! whatever is available. No 50 ms polling loop - we wake exactly when data
+//! arrives.
 //!
 //! ## Manifest skeleton
 //!
-//! VS Code unconditionally calls
-//! `manifest.publisher.toLowerCase()`. A `null` or non-object
-//! manifest crashes the webview before its first paint. We
-//! coerce to `{}` and inject `publisher`/`name`/`version`
-//! defaults so the renderer always has shape.
+//! VS Code unconditionally calls `manifest.publisher.toLowerCase()`. A `null`
+//! or non-object manifest crashes the webview before its first paint. We
+//! coerce to `{}` and inject `publisher`/`name`/`version` defaults.
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use CommonLibrary::ExtensionManagement::ExtensionManagementService::ExtensionManagementService;
 use serde_json::{Value, json};
@@ -52,6 +46,8 @@ const EXTENSION_TYPE_SYSTEM:u8 = 0;
 
 const EXTENSION_TYPE_USER:u8 = 1;
 
+const SCAN_WAIT_CAP_MS:u64 = 5000;
+
 pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let TypeFilter:Option<u8> = Arguments.first().and_then(|V| V.as_u64()).map(|N| N as u8);
 
@@ -62,37 +58,32 @@ pub async fn ExtensionsGetInstalled(RunTime:Arc<ApplicationRunTime>, Arguments:V
 		.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
 
 	if Extensions.is_empty() {
-		const POLL_INTERVAL_MS:u64 = 50;
+		let ScanReady = RunTime.Environment.ApplicationState.Extension.ScanReady.clone();
 
-		const MAX_WAIT_MS:u64 = 5000;
+		let Notified = tokio::time::timeout(Duration::from_millis(SCAN_WAIT_CAP_MS), ScanReady.notified()).await;
 
-		let mut Elapsed:u64 = 0;
+		Extensions = RunTime
+			.Environment
+			.GetExtensions()
+			.await
+			.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
 
-		while Extensions.is_empty() && Elapsed < MAX_WAIT_MS {
-			tokio::time::sleep(std::time::Duration::from_millis(POLL_INTERVAL_MS)).await;
-
-			Elapsed += POLL_INTERVAL_MS;
-
-			Extensions = RunTime
-				.Environment
-				.GetExtensions()
-				.await
-				.map_err(|Error| format!("extensions:getInstalled failed: {}", Error))?;
-		}
-
-		if !Extensions.is_empty() {
-			dev_log!(
-				"extensions",
-				"extensions:getInstalled awaited scan completion ({}ms) - now has {} entries",
-				Elapsed,
-				Extensions.len()
-			);
-		} else {
-			dev_log!(
-				"extensions",
-				"warn: extensions:getInstalled timed out after {}ms; returning empty list",
-				Elapsed
-			);
+		match Notified {
+			Ok(()) => {
+				dev_log!(
+					"extensions",
+					"extensions:getInstalled: scan-ready signal received, {} entries available",
+					Extensions.len()
+				);
+			},
+			Err(_) => {
+				dev_log!(
+					"extensions",
+					"warn: extensions:getInstalled: scan-ready timed out after {}ms; {} entries available",
+					SCAN_WAIT_CAP_MS,
+					Extensions.len()
+				);
+			},
 		}
 	}
 

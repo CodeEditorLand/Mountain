@@ -1,96 +1,99 @@
 #![allow(non_snake_case)]
-//! Cocoon → Mountain `progress.report` notification.
-//! Fires on every `Progress.report({ message, increment })` callback
-//! within a `vscode.window.withProgress(...)` run. The git extension
-//! alone fires 6000+ of these per session during repository scans;
-//! emitting one Tauri event per call saturates the WKWebView IPC
-//! channel that also delivers keystrokes. Each event is coalesced
-//! into a 16ms (one frame) window per Progress handle, accumulating
-//! `increment` deltas and keeping the most recent non-empty
-//! `message`. Sky sees one update per frame per progress operation
-//! instead of dozens, with the same final cumulative state.
 
-use std::{
-	collections::HashMap,
-	sync::{
-		Arc,
-		Mutex,
-		OnceLock,
-		atomic::{AtomicBool, Ordering},
-	},
-	time::Duration,
-};
+//! Cocoon → Mountain `progress.report` notification.
+//!
+//! The git extension alone fires 6000+ of these per session. We push into
+//! an `mpsc::unbounded_channel`; a single long-lived flusher task wakes on
+//! the first item, drains everything queued, sleeps 16 ms (one frame), drains
+//! again, then emits one batched Tauri event per progress handle with the
+//! accumulated `increment` and latest non-empty `message`. Zero spawns per
+//! call; sub-millisecond first-wake; single event per handle per frame.
+
+use std::sync::OnceLock;
 
 use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
+use tokio::sync::mpsc::{UnboundedSender, unbounded_channel};
 
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
-#[derive(Default)]
-struct ProgressAccumulator {
+struct ProgressItem {
+	Handle:AppHandle,
+
+	ProgressHandle:String,
+
 	Message:String,
 
 	Increment:f64,
 }
 
-struct ProgressEmitBatch {
-	Pending:Mutex<HashMap<String, ProgressAccumulator>>,
-
-	FlushScheduled:AtomicBool,
+struct ProgressChannel {
+	Sender:UnboundedSender<ProgressItem>,
 }
 
-static PROGRESS_EMIT_BATCH:OnceLock<Arc<ProgressEmitBatch>> = OnceLock::new();
+static PROGRESS_CH:OnceLock<ProgressChannel> = OnceLock::new();
 
-fn EnqueueProgressEmit(Handle:&AppHandle, ProgressHandle:String, Message:String, Increment:f64) {
-	let Batch = PROGRESS_EMIT_BATCH.get_or_init(|| {
-		Arc::new(ProgressEmitBatch { Pending:Mutex::new(HashMap::new()), FlushScheduled:AtomicBool::new(false) })
-	});
-
-	{
-		let mut Guard = Batch.Pending.lock().unwrap();
-
-		let Entry = Guard.entry(ProgressHandle).or_default();
-
-		// VS Code semantics: `message` replaces (latest wins); empty
-		// message means "keep previous". `increment` is per-call delta;
-		// accumulate so the final emit carries the same total movement.
-		if !Message.is_empty() {
-			Entry.Message = Message;
-		}
-
-		Entry.Increment += Increment;
-	}
-
-	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
-		let BatchClone = Batch.clone();
-
-		let HandleClone = Handle.clone();
+fn GetOrInitChannel(Handle:&AppHandle) -> &'static ProgressChannel {
+	PROGRESS_CH.get_or_init(|| {
+		let (Tx, mut Rx) = unbounded_channel::<ProgressItem>();
 
 		tokio::spawn(async move {
-			tokio::time::sleep(Duration::from_millis(16)).await;
-			let Drained:HashMap<String, ProgressAccumulator> = {
-				let mut Guard = BatchClone.Pending.lock().unwrap();
-				std::mem::take(&mut *Guard)
-			};
-			BatchClone.FlushScheduled.store(false, Ordering::Release);
-			for (ProgressHandleId, Accumulator) in Drained {
-				if let Err(Error) = HandleClone.emit(
-					"sky://notification/progress-update",
-					json!({
-						"id": ProgressHandleId,
-						"message": Accumulator.Message,
-						"increment": Accumulator.Increment,
-					}),
-				) {
-					dev_log!(
-						"grpc",
-						"warn: [MountainVinegRPCService] sky://notification/progress-update emit failed: {}",
-						Error
-					);
+			let mut Buf:Vec<ProgressItem> = Vec::with_capacity(64);
+
+			loop {
+				match Rx.recv().await {
+					None => break,
+					Some(Item) => Buf.push(Item),
+				}
+
+				Rx.recv_many(&mut Buf, 4096).await;
+
+				tokio::time::sleep(std::time::Duration::from_millis(16)).await;
+
+				Rx.recv_many(&mut Buf, 4096).await;
+
+				if Buf.is_empty() {
+					continue;
+				}
+
+				// Merge per-handle: latest non-empty message, summed increments.
+				let mut ByHandle:std::collections::HashMap<String, (AppHandle, String, f64)> =
+					std::collections::HashMap::new();
+
+				for Item in Buf.drain(..) {
+					let Entry = ByHandle
+						.entry(Item.ProgressHandle.clone())
+						.or_insert_with(|| (Item.Handle.clone(), String::new(), 0.0));
+
+					if !Item.Message.is_empty() {
+						Entry.1 = Item.Message;
+					}
+
+					Entry.2 += Item.Increment;
+				}
+
+				for (ProgressHandleId, (AppHandle, Message, Increment)) in ByHandle {
+					if let Err(E) = AppHandle.emit(
+						"sky://notification/progress-update",
+						json!({
+							"id": ProgressHandleId,
+							"message": Message,
+							"increment": Increment,
+						}),
+					) {
+						dev_log!(
+							"grpc",
+							"warn: [ProgressReport] emit failed handle={} error={}",
+							ProgressHandleId,
+							E
+						);
+					}
 				}
 			}
 		});
-	}
+
+		ProgressChannel { Sender:Tx }
+	})
 }
 
 pub async fn ProgressReport(Service:&MountainVinegRPCService, Parameter:&Value) {
@@ -100,5 +103,9 @@ pub async fn ProgressReport(Service:&MountainVinegRPCService, Parameter:&Value) 
 
 	let Increment = Parameter.get("increment").and_then(Value::as_f64).unwrap_or(0.0);
 
-	EnqueueProgressEmit(Service.ApplicationHandle(), ProgressHandle, Message, Increment);
+	let Ch = GetOrInitChannel(Service.ApplicationHandle());
+
+	let _ =
+		Ch.Sender
+			.send(ProgressItem { Handle:Service.ApplicationHandle().clone(), ProgressHandle, Message, Increment });
 }

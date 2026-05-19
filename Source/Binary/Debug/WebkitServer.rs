@@ -54,7 +54,7 @@ use tauri::{WebviewWindow, Wry};
 use url::Url;
 
 /// Global storage for the webview window used by the debug server.
-static WINDOW: Lazy<Mutex<Option<Arc<WebviewWindow<Wry>>>>> = Lazy::new(|| Mutex::new(None));
+static WINDOW:Lazy<Mutex<Option<Arc<WebviewWindow<Wry>>>>> = Lazy::new(|| Mutex::new(None));
 
 /// Parsed Mountain-layer activation mode. See module docs for the matrix.
 #[derive(Copy, Clone, Debug)]
@@ -78,17 +78,13 @@ fn parse_mode() -> LayerMode {
 				"1" | "true" | "on" | "yes" => LayerMode::Mountain,
 				_ => LayerMode::Off,
 			}
-		}
+		},
 	}
 }
 
-fn mountain_enabled(m: LayerMode) -> bool {
-	matches!(m, LayerMode::Mountain | LayerMode::Both)
-}
+fn mountain_enabled(m:LayerMode) -> bool { matches!(m, LayerMode::Mountain | LayerMode::Both) }
 
-fn cocoon_enabled(m: LayerMode) -> bool {
-	matches!(m, LayerMode::Cocoon | LayerMode::Both)
-}
+fn cocoon_enabled(m:LayerMode) -> bool { matches!(m, LayerMode::Cocoon | LayerMode::Both) }
 
 fn mountain_port() -> u16 {
 	std::env::var("DebugServerPortMountain")
@@ -112,7 +108,7 @@ fn cocoon_port() -> u16 {
 /// docs). When `cocoon`/`both` is selected, this function still installs
 /// the window handle (so `/eval` keeps working for proxy requests) but
 /// skips starting the Mountain HTTP listener.
-pub fn install(window: &WebviewWindow<Wry>) {
+pub fn install(window:&WebviewWindow<Wry>) {
 	// Always store the window: even in cocoon-only mode the eval pipeline
 	// stays useful for tests that imported this module directly.
 	let mut guard = WINDOW.lock().unwrap();
@@ -140,7 +136,7 @@ fn start_server() {
 		Err(e) => {
 			eprintln!("[WebkitDebug] Failed to bind to 127.0.0.1:{}: {}", port, e);
 			return;
-		}
+		},
 	};
 	eprintln!(
 		"[WebkitDebug] Mountain layer listening on http://127.0.0.1:{} (mode={:?})",
@@ -157,17 +153,14 @@ fn start_server() {
 						eprintln!("[WebkitDebug] Connection error: {}", e);
 					}
 				});
-			}
+			},
 			Err(e) => eprintln!("[WebkitDebug] Accept error: {}", e),
 		}
 	}
 }
 
 /// Handles a single HTTP connection, dispatches based on method and path.
-fn handle_connection(
-	window_opt: &Option<Arc<WebviewWindow<Wry>>>,
-	stream: &mut std::net::TcpStream,
-) -> io::Result<()> {
+fn handle_connection(window_opt:&Option<Arc<WebviewWindow<Wry>>>, stream:&mut std::net::TcpStream) -> io::Result<()> {
 	// Early check for window initialization
 	if window_opt.is_none() {
 		send_json(stream, 503, &json!({"error": "debug server not initialized"}))?;
@@ -180,7 +173,7 @@ fn handle_connection(
 		let mut request_line = String::new();
 		reader.read_line(&mut request_line)?;
 		let request_line = request_line.trim_end();
-		let parts: Vec<&str> = request_line.split_whitespace().collect();
+		let parts:Vec<&str> = request_line.split_whitespace().collect();
 		if parts.len() != 3 {
 			return Err(io::Error::new(io::ErrorKind::InvalidInput, "bad request line"));
 		}
@@ -195,7 +188,7 @@ fn handle_connection(
 			if n == 0 || line == "\r\n" {
 				break;
 			}
-			if let Some(idx) = line.find(:) {
+			if let Some(idx) = line.find(':') {
 				let name = line[..idx].trim().to_uppercase();
 				let value = line[idx + 1..].trim().to_string();
 				headers.insert(name, value);
@@ -204,7 +197,7 @@ fn handle_connection(
 
 		// Read body if Content-Length present
 		let body = if let Some(len_str) = headers.get("CONTENT-LENGTH") {
-			let len: usize = len_str.parse().unwrap_or(0);
+			let len:usize = len_str.parse().unwrap_or(0);
 			let mut body_bytes = vec![0; len];
 			reader.read_exact(&mut body_bytes)?;
 			String::from_utf8_lossy(&body_bytes).to_string()
@@ -217,35 +210,38 @@ fn handle_connection(
 
 	// Parse URL to get path and query
 	let full_url = format!("http://localhost{}", path_and_query);
-	let parsed =
-		Url::parse(&full_url).map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid URL"))?;
+	let parsed = Url::parse(&full_url).map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "invalid URL"))?;
 	let path = parsed.path();
 	let mut query_pairs = parsed.query_pairs();
 
 	// Dispatch request
 	let (status, response_json) = match (method.as_str(), path) {
 		// ---------- Layer discovery -------------------------------------
-		("GET", "/health") => (
-			200,
-			json!({
-				"layer": "mountain",
-				"version": env!("CARGO_PKG_VERSION"),
-				"pid": std::process::id(),
-				"mode": format!("{:?}", parse_mode()),
-				"capabilities": [
-					"eval","execute","iframes","console","commands",
-					"command","vscode/diff","extensions(proxy)","layers"
-				],
-			}),
-		),
-		("GET", "/layers") => (
-			200,
-			json!({
-				"mountain": { "enabled": mountain_enabled(parse_mode()), "port": mountain_port() },
-				"cocoon":   { "enabled": cocoon_enabled(parse_mode()),   "port": cocoon_port()   },
-				"mode": format!("{:?}", parse_mode()),
-			}),
-		),
+		("GET", "/health") => {
+			(
+				200,
+				json!({
+					"layer": "mountain",
+					"version": env!("CARGO_PKG_VERSION"),
+					"pid": std::process::id(),
+					"mode": format!("{:?}", parse_mode()),
+					"capabilities": [
+						"eval","execute","iframes","console","commands",
+						"command","vscode/diff","extensions(proxy)","layers"
+					],
+				}),
+			)
+		},
+		("GET", "/layers") => {
+			(
+				200,
+				json!({
+					"mountain": { "enabled": mountain_enabled(parse_mode()), "port": mountain_port() },
+					"cocoon":   { "enabled": cocoon_enabled(parse_mode()),   "port": cocoon_port()   },
+					"mode": format!("{:?}", parse_mode()),
+				}),
+			)
+		},
 
 		// ---------- Renderer-side primitives ---------------------------
 		("GET", "/console") => {
@@ -258,7 +254,7 @@ fn handle_connection(
 				Ok(value) => (200, json!({"logs": value})),
 				Err(e) => (500, json!({"error": e})),
 			}
-		}
+		},
 		("GET", "/eval") => {
 			let js = query_pairs
 				.find(|(k, _)| k == "js")
@@ -268,10 +264,10 @@ fn handle_connection(
 				Ok(value) => (200, json!({"result": value})),
 				Err(e) => (500, json!({"error": e})),
 			}
-		}
+		},
 		("POST", "/execute") => {
-			let parsed_body: Value = serde_json::from_str(&body)
-				.map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+			let parsed_body:Value =
+				serde_json::from_str(&body).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
 			let js = parsed_body["js"]
 				.as_str()
 				.ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "missing js field"))?;
@@ -295,7 +291,7 @@ fn handle_connection(
 						Ok(v) => (200, json!({"result": v})),
 						Err(e) => (500, json!({"error": e})),
 					}
-				}
+				},
 				_ => {
 					if js.is_empty() {
 						(400, json!({"error": "empty js"}))
@@ -305,9 +301,9 @@ fn handle_connection(
 							Err(e) => (500, json!({"error": e})),
 						}
 					}
-				}
+				},
 			}
-		}
+		},
 		("GET", "/iframes") => {
 			let js = r#"(function() {
                 const frames = document.querySelectorAll(iframe);
@@ -324,7 +320,7 @@ fn handle_connection(
 				Ok(value) => (200, json!({"iframes": value})),
 				Err(e) => (500, json!({"error": e})),
 			}
-		}
+		},
 
 		// ---------- Workbench command surface ---------------------------
 		("GET", "/commands") => {
@@ -339,10 +335,10 @@ fn handle_connection(
 				Ok(v) => (200, json!({"commands": v})),
 				Err(e) => (500, json!({"error": e})),
 			}
-		}
+		},
 		("POST", "/command") => {
-			let parsed_body: Value = serde_json::from_str(&body)
-				.map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+			let parsed_body:Value =
+				serde_json::from_str(&body).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
 			let id = parsed_body["id"]
 				.as_str()
 				.ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "missing id"))?;
@@ -362,16 +358,17 @@ fn handle_connection(
                       return JSON.stringify({{ ok: true, result: result ?? null }});
                     }} catch (e) {{ return JSON.stringify({{ ok:false, error: String(e?.stack||e) }}); }}
                 }})()"#,
-				args, json!(id)
+				args,
+				json!(id)
 			);
 			match eval_js(window_opt, &js) {
 				Ok(v) => (200, v),
 				Err(e) => (500, json!({"error": e})),
 			}
-		}
+		},
 		("POST", "/vscode/diff") => {
-			let parsed_body: Value = serde_json::from_str(&body)
-				.map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
+			let parsed_body:Value =
+				serde_json::from_str(&body).map_err(|e| io::Error::new(io::ErrorKind::InvalidInput, e))?;
 			let left = parsed_body["left"].as_str().unwrap_or("");
 			let right = parsed_body["right"].as_str().unwrap_or("");
 			let title = parsed_body["title"].as_str().unwrap_or("Diff");
@@ -388,14 +385,16 @@ fn handle_connection(
                           return JSON.stringify({{ok:true}});
                         }} catch (e) {{ return JSON.stringify({{ok:false,error:String(e?.stack||e)}}); }}
                     }})()"#,
-					json!(left), json!(right), json!(title)
+					json!(left),
+					json!(right),
+					json!(title)
 				);
 				match eval_js(window_opt, &js) {
 					Ok(v) => (200, v),
 					Err(e) => (500, json!({"error": e})),
 				}
 			}
-		}
+		},
 
 		// ---------- Cocoon proxy ---------------------------------------
 		("GET", "/extensions") => proxy_to_cocoon("GET", "/extensions", ""),
@@ -408,7 +407,7 @@ fn handle_connection(
 
 /// Evaluates JavaScript in the webview and returns the result as a
 /// serde_json::Value.
-fn eval_js(window_opt: &Option<Arc<WebviewWindow<Wry>>>, js: &str) -> Result<Value, String> {
+fn eval_js(window_opt:&Option<Arc<WebviewWindow<Wry>>>, js:&str) -> Result<Value, String> {
 	let window = window_opt.as_ref().ok_or("debug server not initialized")?;
 	let (tx, rx) = std::sync::mpsc::sync_channel(1);
 	window
@@ -424,25 +423,23 @@ fn eval_js(window_opt: &Option<Arc<WebviewWindow<Wry>>>, js: &str) -> Result<Val
 
 /// Best-effort forward to the Cocoon DebugServer over loopback.
 /// Returns (status, json). If Cocoon is unreachable, returns 502.
-fn proxy_to_cocoon(method: &str, path: &str, body: &str) -> (u16, Value) {
+fn proxy_to_cocoon(method:&str, path:&str, body:&str) -> (u16, Value) {
 	use std::net::TcpStream;
 	let port = cocoon_port();
 	let addr = format!("127.0.0.1:{}", port);
-	let mut stream = match TcpStream::connect_timeout(
-		&addr.parse().unwrap(),
-		Duration::from_millis(300),
-	) {
+	let mut stream = match TcpStream::connect_timeout(&addr.parse().unwrap(), Duration::from_millis(300)) {
 		Ok(s) => s,
 		Err(e) => {
 			return (
 				502,
 				json!({"error":"cocoon layer unreachable","detail":e.to_string(),"port":port}),
-			)
-		}
+			);
+		},
 	};
 	let _ = stream.set_read_timeout(Some(Duration::from_secs(5)));
 	let req = format!(
-		"{} {} HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{}",
+		"{} {} HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: \
+		 close\r\n\r\n{}",
 		method,
 		path,
 		body.len(),
@@ -458,14 +455,14 @@ fn proxy_to_cocoon(method: &str, path: &str, body: &str) -> (u16, Value) {
 	// Split headers/body.
 	let body_idx = buf.find("\r\n\r\n").map(|i| i + 4).unwrap_or(buf.len());
 	let body_str = &buf[body_idx..];
-	let parsed: Value = serde_json::from_str(body_str).unwrap_or_else(|_| json!({"raw": body_str}));
+	let parsed:Value = serde_json::from_str(body_str).unwrap_or_else(|_| json!({"raw": body_str}));
 	(200, parsed)
 }
 
 /// Sends a JSON response with the given status code.
-fn send_json(stream: &mut std::net::TcpStream, status: u16, value: &Value) -> io::Result<()> {
-	let body = serde_json::to_string(value)
-		.map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "serialization error"))?;
+fn send_json(stream:&mut std::net::TcpStream, status:u16, value:&Value) -> io::Result<()> {
+	let body =
+		serde_json::to_string(value).map_err(|_| io::Error::new(io::ErrorKind::InvalidInput, "serialization error"))?;
 	let status_text = match status {
 		200 => "OK",
 		400 => "Bad Request",

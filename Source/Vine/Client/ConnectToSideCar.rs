@@ -9,7 +9,13 @@ use std::time::{Duration, Instant};
 use crate::{
 	Vine::{
 		Client::{
-			Shared::{CONNECTION_METADATA, ConnectionMetadata, MAX_RETRY_ATTEMPTS, RETRY_BASE_DELAY_MS},
+			Shared::{
+				CONNECTION_METADATA,
+				ConnectionMetadata,
+				FireConnectionNotify,
+				MAX_RETRY_ATTEMPTS,
+				RETRY_BASE_DELAY_MS,
+			},
 			TryConnectSingle,
 		},
 		Error::VineError,
@@ -45,6 +51,9 @@ pub async fn Fn(SideCarIdentifier:String, Address:String) -> Result<(), VineErro
 			);
 
 			dev_log!("grpc", "[VineClient] Successfully connected to sidecar '{}'", SideCarIdentifier);
+
+			// Unblock any `WaitForClientConnection` callers immediately.
+			FireConnectionNotify(&SideCarIdentifier);
 
 			return Result;
 		}

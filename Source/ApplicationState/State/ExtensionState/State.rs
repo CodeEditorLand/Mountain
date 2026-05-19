@@ -31,6 +31,10 @@
 //! - [ ] Implement extension lifecycle events
 //! - [ ] Add extension state metrics collection
 
+use std::sync::Arc;
+
+use tokio::sync::Notify;
+
 use super::{ExtensionRegistry, ProviderRegistration, ScannedExtensions};
 use crate::dev_log;
 
@@ -45,6 +49,12 @@ pub struct State {
 
 	/// Scanned extensions containing discovered extensions.
 	pub ScannedExtensions:ScannedExtensions::ScannedExtensions::ScannedExtensionCollection,
+
+	/// Fires once when the initial extension scan has written at least one
+	/// extension into `ScannedExtensions`. Callers that need extensions
+	/// on the first request (e.g. `extensions:getInstalled` during boot)
+	/// can `await` this instead of polling.
+	pub ScanReady:Arc<Notify>,
 }
 
 impl Default for State {
@@ -57,6 +67,8 @@ impl Default for State {
 			ProviderRegistration:ProviderRegistration::ProviderRegistration::Registration::default(),
 
 			ScannedExtensions:ScannedExtensions::ScannedExtensions::ScannedExtensionCollection::default(),
+
+			ScanReady:Arc::new(Notify::new()),
 		}
 	}
 }

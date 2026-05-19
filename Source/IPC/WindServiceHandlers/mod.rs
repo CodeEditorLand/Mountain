@@ -74,6 +74,8 @@ use FileSystem::{
 		FileRealpath::*,
 		FileRenameNative::*,
 		FileStatNative::*,
+		FileUnwatch::FileUnwatch,
+		FileWatch::FileWatch,
 		FileWriteNative::*,
 	},
 };
@@ -88,16 +90,25 @@ use Model::{
 	TextfileWrite::TextfileWrite,
 };
 use NativeHost::{
+	Exit::Exit,
 	FindFreePort::*,
 	GetColorScheme::*,
+	InstallShellCommand::InstallShellCommand,
 	IsFullscreen::*,
 	IsMaximized::*,
+	KillProcess::KillProcess,
 	OSProperties::*,
 	OSStatistics::*,
+	OpenDevTools::OpenDevTools,
 	OpenExternal::*,
 	PickFolder::*,
+	Quit::Quit,
+	Relaunch::Relaunch,
+	Reload::Reload,
 	ShowItemInFolder::*,
 	ShowOpenDialog::*,
+	ToggleDevTools::ToggleDevTools,
+	UninstallShellCommand::UninstallShellCommand,
 };
 use Navigation::{
 	HistoryCanGoBack::HistoryCanGoBack,
@@ -400,14 +411,8 @@ pub async fn mountain_ipc_invoke(
 				"file:writeBinary" => FileWriteBinary(RunTime.clone(), Arguments).await,
 				// File watcher channel methods - `DiskFileSystemProvider`
 				// opens `watch` / `unwatch` channel calls to receive
-				// `onDidChangeFile` events. Until the Mountain-side
-				// filewatcher bridge is wired through the binary IPC we
-				// ack with Null so the workbench proceeds without a
-				// hanging promise.
-				"file:watch" | "file:unwatch" => {
-					dev_log!("fs-route", "{} (stub-ack)", command);
-					Ok(Value::Null)
-				},
+				"file:watch" => FileWatch(RunTime.clone(), Arguments).await,
+				"file:unwatch" => FileUnwatch(RunTime.clone(), Arguments).await,
 
 				// Storage commands. VS Code's
 				// `ApplicationStorageDatabaseClient` channel methods are
@@ -1549,7 +1554,7 @@ pub async fn mountain_ipc_invoke(
 
 				// Process
 				"nativeHost:getProcessId" => Ok(json!(std::process::id())),
-				"nativeHost:killProcess" => Ok(Value::Null),
+				"nativeHost:killProcess" => KillProcess(Arguments).await,
 
 				// Network
 				"nativeHost:findFreePort" => NativeFindFreePort(Arguments).await,
@@ -1560,14 +1565,14 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:loadCertificates" => Ok(json!([])),
 
 				// Lifecycle
-				"nativeHost:relaunch" => Ok(Value::Null),
-				"nativeHost:reload" => Ok(Value::Null),
-				"nativeHost:quit" => Ok(Value::Null),
-				"nativeHost:exit" => Ok(Value::Null),
+				"nativeHost:relaunch" => Relaunch(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:reload" => Reload(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:quit" => Quit(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:exit" => Exit(ApplicationHandle.clone(), Arguments).await,
 
 				// Dev tools
-				"nativeHost:openDevTools" => Ok(Value::Null),
-				"nativeHost:toggleDevTools" => Ok(Value::Null),
+				"nativeHost:openDevTools" => OpenDevTools(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:toggleDevTools" => ToggleDevTools(ApplicationHandle.clone(), Arguments).await,
 
 				// Power
 				"nativeHost:getSystemIdleState" => Ok(json!("active")),
@@ -1585,8 +1590,8 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:moveWindowTabToNewWindow" => Ok(Value::Null),
 				"nativeHost:mergeAllWindowTabs" => Ok(Value::Null),
 				"nativeHost:toggleWindowTabsBar" => Ok(Value::Null),
-				"nativeHost:installShellCommand" => Ok(Value::Null),
-				"nativeHost:uninstallShellCommand" => Ok(Value::Null),
+				"nativeHost:installShellCommand" => InstallShellCommand(Arguments).await,
+				"nativeHost:uninstallShellCommand" => UninstallShellCommand(Arguments).await,
 
 				// =====================================================================
 				// Local PTY (terminal) commands
@@ -1910,45 +1915,23 @@ pub async fn mountain_ipc_invoke(
 				// Menubar
 				// =====================================================================
 				//
-				// VS Code emits `updateMenubar` every time a relevant state flips:
-				// active editor, dirty marker, selection. A cold boot fires the call
-				// ~20× in the first few seconds, and every one triggers an AppKit
-				// re-render on macOS (≈ 200 ms each). We coalesce adjacent calls
-				// through a 50 ms debouncer so only the last pending state actually
-				// hits the native menu. Semantics match VS Code's
-				// `ElectronMenubarControl._updateMenu` scheduler.
+				// VS Code fires `updateMenubar` on every active-editor / dirty /
+				// selection change - typically 20+ times during cold boot. The
+				// webview renders the menu bar (not native AppKit), so no
+				// platform rebuild is needed; we just acknowledge the call.
+				// A per-100-call counter keeps the log scannable without
+				// hiding the signal entirely.
 				"menubar:updateMenubar" => {
-					use std::{
-						sync::{Arc, Mutex as StandardMutex, OnceLock},
-						time::Duration,
-					};
+					use std::sync::atomic::{AtomicU64, Ordering as AO};
 
-					use tokio::task::JoinHandle;
-					type MenubarCell = StandardMutex<(Option<JoinHandle<()>>, u64)>;
-					static MENUBAR_DEBOUNCE:OnceLock<Arc<MenubarCell>> = OnceLock::new();
-					let Cell = MENUBAR_DEBOUNCE.get_or_init(|| Arc::new(StandardMutex::new((None, 0)))).clone();
+					static MENUBAR_CALLS:AtomicU64 = AtomicU64::new(0);
 
-					if let Ok(mut Guard) = Cell.lock() {
-						if let Some(Pending) = Guard.0.take() {
-							Pending.abort();
-						}
-						Guard.1 = Guard.1.saturating_add(1);
-						let CellForTask = Cell.clone();
-						Guard.0 = Some(tokio::spawn(async move {
-							tokio::time::sleep(Duration::from_millis(50)).await;
-							let Coalesced = if let Ok(mut Post) = CellForTask.lock() {
-								let N = Post.1;
-								Post.1 = 0;
-								Post.0 = None;
-								N
-							} else {
-								0
-							};
-							dev_log!("menubar", "menubar:updateMenubar (applied, coalesced {} pending)", Coalesced);
-						}));
-					} else {
-						dev_log!("menubar", "menubar:updateMenubar (debouncer lock poisoned)");
+					let N = MENUBAR_CALLS.fetch_add(1, AO::Relaxed) + 1;
+
+					if N == 1 || N % 100 == 0 {
+						dev_log!("menubar", "menubar:updateMenubar (call #{})", N);
 					}
+
 					Ok(Value::Null)
 				},
 

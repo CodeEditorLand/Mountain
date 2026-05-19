@@ -1,35 +1,3 @@
-//! # ScanAndPopulateExtensions Module (Internal)
-//!
-//! ## RESPONSIBILITIES
-//! Scans all registered extension paths for valid extensions and populates the
-//! state with discovered extensions.
-//!
-//! ## ARCHITECTURAL ROLE
-//! ScanAndPopulateExtensions is part of the **Internal::ExtensionScanner**
-//! module, handling extension discovery and population.
-//!
-//! ## KEY COMPONENTS
-//! - ScanAndPopulateExtensions: Main function for scanning extensions
-//! - ScanExtensionsWithRecovery: Robust scanning with recovery
-//!
-//! ## ERROR HANDLING
-//! - Returns Result with CommonError on failure
-//! - Handles partial failures gracefully
-//! - Comprehensive error logging
-//!
-//! ## LOGGING
-//! Operations are logged at appropriate levels (info, debug, warn, error).
-//!
-//! ## PERFORMANCE CONSIDERATIONS
-//! - Async operations for scanning
-//! - Handles multiple scan paths
-//! - Partial failure handling
-//!
-//! ## TODO
-//! - [ ] Add concurrent scanning
-//! - [ ] Implement extension caching
-//! - [ ] Add extension validation rules
-
 use std::{collections::HashMap, path::PathBuf};
 
 use CommonLibrary::Error::CommonError::CommonError;
@@ -42,21 +10,6 @@ use crate::{
 	dev_log,
 };
 
-/// Scans all registered extension paths for valid extensions and populates the
-/// state.
-///
-/// # Arguments
-/// * `ApplicationHandle` - Tauri application handle for extension management
-/// * `State` - Reference to the application state
-///
-/// # Returns
-/// Result indicating success or CommonError on failure
-///
-/// # Behavior
-/// - Scans all registered extension paths
-/// - Populates state with discovered extensions
-/// - Returns comprehensive scan statistics
-/// - Handles partial failures gracefully
 pub async fn ScanAndPopulateExtensions(
 	ApplicationHandle:AppHandle,
 
@@ -64,82 +17,81 @@ pub async fn ScanAndPopulateExtensions(
 ) -> Result<(), CommonError> {
 	dev_log!("extensions", "[ExtensionScanner] Starting extension scan...");
 
-	let mut all_found_extensions:HashMap<String, ExtensionDescriptionStateDTO> = HashMap::new();
+	let ScanPaths:Vec<PathBuf> = _State.Registry.GetExtensionScanPaths();
 
-	// Note: This would need to be adapted to the new state structure
-	// For now, this is a placeholder showing the structure
-	let scan_paths:Vec<PathBuf> = _State.Registry.GetExtensionScanPaths();
+	dev_log!(
+		"extensions",
+		"[ExtensionScanner] Scanning {} paths in parallel",
+		ScanPaths.len()
+	);
 
-	dev_log!("extensions", "[ExtensionScanner] Scanning paths: {:?}", scan_paths);
+	// Scan all paths concurrently; each spawns its own tokio task so slow
+	// directories (e.g. a network-mounted extensions folder) don't stall the
+	// others.
+	let Futures:Vec<_> = ScanPaths
+		.into_iter()
+		.map(|Path| {
+			let Handle = ApplicationHandle.clone();
 
-	let mut successful_scans = 0;
+			async move {
+				let Display = Path.display().to_string();
 
-	let mut failed_scans = 0;
+				match ExtensionManagement::Scanner::ScanDirectoryForExtensions(Handle, Path).await {
+					Ok(Found) => {
+						dev_log!(
+							"extensions",
+							"[ExtensionScanner] Path '{}' → {} extensions",
+							Display,
+							Found.len()
+						);
 
-	for path in scan_paths {
-		let path_clone = path.clone();
+						(Display, Ok(Found))
+					},
 
-		match ExtensionManagement::Scanner::ScanDirectoryForExtensions(ApplicationHandle.clone(), path_clone).await {
-			Ok(found_in_path) => {
-				successful_scans += 1;
+					Err(E) => {
+						dev_log!("extensions", "warn: [ExtensionScanner] Path '{}' failed: {}", Display, E);
 
-				let path_count = found_in_path.len();
+						(Display, Err(E))
+					},
+				}
+			}
+		})
+		.collect();
 
-				let mut inserted_from_path = 0;
+	let Results = futures::future::join_all(Futures).await;
 
-				let mut rejected_empty_identifier = 0;
+	let mut All:HashMap<String, ExtensionDescriptionStateDTO> = HashMap::new();
 
-				for extension in found_in_path {
-					let identifier = extension
+	let mut SuccessfulScans = 0usize;
+
+	let mut FailedScans = 0usize;
+
+	for (_Path, Result) in Results {
+		match Result {
+			Ok(Found) => {
+				SuccessfulScans += 1;
+
+				for Extension in Found {
+					let Identifier = Extension
 						.Identifier
 						.get("value")
 						.and_then(Value::as_str)
 						.unwrap_or_default()
 						.to_string();
 
-					if !identifier.is_empty() {
-						all_found_extensions.insert(identifier, extension);
-
-						inserted_from_path += 1;
-					} else {
-						rejected_empty_identifier += 1;
-
-						dev_log!(
-							"extensions",
-							"warn: [ExtensionScanner] Rejected extension '{}' - empty identifier (publisher='{}', \
-							 Identifier={:?})",
-							extension.Name,
-							extension.Publisher,
-							extension.Identifier
-						);
+					if !Identifier.is_empty() {
+						All.insert(Identifier, Extension);
 					}
 				}
-
-				dev_log!(
-					"extensions",
-					"[ExtensionScanner] Path '{}' yielded {} parsed, {} inserted, {} rejected",
-					path.display(),
-					path_count,
-					inserted_from_path,
-					rejected_empty_identifier
-				);
 			},
 
-			Err(error) => {
-				failed_scans += 1;
-
-				dev_log!(
-					"extensions",
-					"warn: [ExtensionScanner] Failed to scan extension path '{}': {}",
-					path.display(),
-					error
-				);
+			Err(_) => {
+				FailedScans += 1;
 			},
 		}
 	}
 
-	// Store discovered extensions into ApplicationState
-	let post_write_count = {
+	let PostWriteCount = {
 		let mut Guard = _State
 			.ScannedExtensions
 			.ScannedExtensions
@@ -148,7 +100,7 @@ pub async fn ScanAndPopulateExtensions(
 
 		Guard.clear();
 
-		for (Key, Dto) in &all_found_extensions {
+		for (Key, Dto) in &All {
 			Guard.insert(Key.clone(), Dto.clone());
 		}
 
@@ -157,80 +109,38 @@ pub async fn ScanAndPopulateExtensions(
 
 	dev_log!(
 		"extensions",
-		"[ExtensionScanner] Extension scan complete. Found {} extensions ({} successful scans, {} failed scans). \
-		 ScannedExtensions map now has {} entries.",
-		all_found_extensions.len(),
-		successful_scans,
-		failed_scans,
-		post_write_count
+		"[ExtensionScanner] Complete: {} extensions ({} paths ok, {} failed). State has {} entries.",
+		All.len(),
+		SuccessfulScans,
+		FailedScans,
+		PostWriteCount
 	);
 
-	if failed_scans > 0 {
-		dev_log!(
-			"extensions",
-			"warn: [ExtensionScanner] {} extension paths failed to scan",
-			failed_scans
-		);
-	}
+	// Unblock any callers waiting for the first scan result.
+	_State.ScanReady.notify_waiters();
 
 	Ok(())
 }
 
-/// Robust extension scanning with comprehensive error handling.
-///
-/// # Arguments
-/// * `ApplicationHandle` - Tauri application handle for extension management
-/// * `State` - Reference to the application state
-///
-/// # Returns
-/// Result indicating success or CommonError on failure
-///
-/// # Behavior
-/// - Clears potentially corrupted extension state first
-/// - Performs the scan
-/// - Retries once on failure
-/// - Comprehensive error logging
+/// Robust extension scanning - clears state first, retries once on failure.
 pub async fn ScanExtensionsWithRecovery(
 	ApplicationHandle:AppHandle,
 
 	State:&crate::ApplicationState::State::ExtensionState::State::State,
 ) -> Result<(), CommonError> {
-	dev_log!(
-		"extensions",
-		"[ExtensionScanner] Starting robust extension scan with recovery..."
-	);
+	dev_log!("extensions", "[ExtensionScanner] Starting robust extension scan...");
 
-	// Clear potentially corrupted extension state first
-	// Note: Would clear
-	// State.Extension.ScannedExtensions.Extension.ScannedExtensions
-
-	// Perform the scan
 	match ScanAndPopulateExtensions(ApplicationHandle.clone(), State).await {
 		Ok(()) => {
-			dev_log!("extensions", "[ExtensionScanner] Robust extension scan completed successfully");
+			dev_log!("extensions", "[ExtensionScanner] Robust scan completed successfully");
 
 			Ok(())
 		},
 
-		Err(error) => {
-			dev_log!(
-				"extensions",
-				"error: [ExtensionScanner] Robust extension scan failed: {}",
-				error
-			);
+		Err(Error) => {
+			dev_log!("extensions", "error: [ExtensionScanner] Scan failed: {}; retrying once", Error);
 
-			// Attempt recovery by clearing state and retrying once
-			dev_log!(
-				"extensions",
-				"warn: [ExtensionScanner] Attempting recovery from extension scan failure..."
-			);
-
-			// Clear state again
-			// Note: Would clear
-			// State.Extension.ScannedExtensions.Extension.ScannedExtensions
-
-			// Retry the scan with a cloned handle
-			ScanAndPopulateExtensions(ApplicationHandle.clone(), State).await
+			ScanAndPopulateExtensions(ApplicationHandle, State).await
 		},
 	}
 }

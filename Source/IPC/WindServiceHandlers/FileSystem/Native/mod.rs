@@ -21,4 +21,8 @@ pub mod FileRenameNative;
 
 pub mod FileStatNative;
 
+pub mod FileUnwatch;
+
+pub mod FileWatch;
+
 pub mod FileWriteNative;

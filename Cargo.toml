@@ -14,7 +14,6 @@ tonic-prost-build = { workspace = true }
 
 [dev-dependencies]
 tokio-test = { workspace = true }
-futures = { workspace = true }
 
 [dependencies]
 tauri = { workspace = true, features = [
@@ -45,6 +44,7 @@ Echo = { workspace = true }
 Air = { workspace = true, optional = true }
 Mist = { workspace = true }
 env_logger = { workspace = true }
+futures = { workspace = true }
 futures-util = { workspace = true, features = ["sink", "std"] }
 globset = { workspace = true }
 grep-matcher = { workspace = true }

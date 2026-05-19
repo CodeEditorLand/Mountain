@@ -1,48 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+	App Sandbox is OFF - Mountain is a code editor that must read/write files
+	anywhere the user picks. Hardened-runtime exemptions:
+	  allow-jit + allow-unsigned-executable-memory  : Cocoon (Node.js) V8 JIT
+	  allow-dyld-environment-variables              : extension helper binaries (DYLD_*)
+	  disable-library-validation                    : unsigned npm-native dylibs (esbuild, sharp)
+	  automation.apple-events                       : `osascript` from extensions (Reveal in Finder)
+	NOTE: codesign / AMFIUnserializeXML rejects XML comments inside <dict>.
+	Keep all comments in this outer wrapper only.
+-->
 <plist version="1.0">
-	<dict>
-		<!--
-			App Sandbox is OFF. Mountain is a code editor: it must read
-			and write files anywhere the user picks. With sandbox=true the
-			app only sees its own ~/Library/Containers/<bundle-id>/Data/
-			directory plus files explicitly handed to it by NSOpenPanel,
-			which breaks opening folders from the Desktop, the Recently
-			Opened list, drag-and-drop, and `open <bundle>.app` flows.
-		-->
-		<key>com.apple.security.app-sandbox</key>
-		<false />
-
-		<!--
-			Hardened-runtime exemptions Mountain needs to ship signed and
-			notarised:
-
-			- allow-jit / allow-unsigned-executable-memory - Cocoon
-			  (Node.js sidecar) JIT-compiles JS via V8; without these the
-			  child process crashes on first method invoke.
-			- allow-dyld-environment-variables - extension hosts spawn
-			  helper binaries with DYLD_* env vars (linkers, language
-			  servers, debug adapters).
-			- disable-library-validation - Tauri ships unsigned dylibs
-			  pulled in by npm-installed deps (sharp, esbuild, native
-			  node addons); with library-validation on, the host refuses
-			  to load them.
-		-->
-		<key>com.apple.security.cs.allow-jit</key>
-		<true />
-		<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
-		<true />
-		<key>com.apple.security.cs.allow-dyld-environment-variables</key>
-		<true />
-		<key>com.apple.security.cs.disable-library-validation</key>
-		<true />
-
-		<!--
-			Apple Events: extensions invoke `osascript` (e.g. for
-			"Reveal in Finder", external-tool launchers). Without this
-			entitlement the call is silently dropped on macOS 10.14+.
-		-->
-		<key>com.apple.security.automation.apple-events</key>
-		<true />
-	</dict>
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<false/>
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+	<key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+	<true/>
+	<key>com.apple.security.cs.allow-dyld-environment-variables</key>
+	<true/>
+	<key>com.apple.security.cs.disable-library-validation</key>
+	<true/>
+	<key>com.apple.security.automation.apple-events</key>
+	<true/>
+</dict>
 </plist>
