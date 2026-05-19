@@ -24,7 +24,7 @@
 //! | LanguageFeatures  | `register_*_provider` (one arm per provider type)        |
 //! | Languages         | `Languages.GetAll`                                       |
 //! | NativeHost        | `NativeHost.OpenExternal`                                |
-//! | SCM               | `$scm:*`                                                 |
+//! | SCM               | `$scm:*`, `vscode.diff`, `$scm:openDiff`                 |
 //! | Search            | `findFiles`, `findTextInFiles`, `Search.TextSearch`      |
 //! | Secrets           | `secrets.get`, `secrets.store`, `secrets.delete`        |
 //! | StatusBar         | `$statusBar:*`, `$setStatusBarMessage`, `$disposeStatusBarMessage` |
