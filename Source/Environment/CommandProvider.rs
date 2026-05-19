@@ -289,10 +289,10 @@ impl CommandExecutor for MountainEnvironment {
 							Error
 						);
 					}
-					// Small yield so Cocoon's fire-and-forget
-					// `registerCommand` notification reaches Mountain's
-					// registry before the re-poll.
-					tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+					// The registerCommand channel-drain delivers within ~16 ms.
+					// Yield for one frame so the batch flush lands before
+					// the registry re-read below.
+					tokio::time::sleep(std::time::Duration::from_millis(20)).await;
 					let PostActivationHandler = self
 						.ApplicationState
 						.Extension
