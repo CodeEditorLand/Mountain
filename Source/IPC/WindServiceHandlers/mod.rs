@@ -69,15 +69,15 @@ use FileSystem::{
 	},
 	Native::{
 		FileCloneNative::*,
+		FileCloseFd::FileCloseFd,
 		FileDeleteNative::*,
 		FileExistsNative::*,
 		FileMkdirNative::*,
+		FileOpenFd::FileOpenFd,
 		FileReadNative::*,
 		FileReaddirNative::*,
 		FileRealpath::*,
 		FileRenameNative::*,
-		FileCloseFd::FileCloseFd,
-		FileOpenFd::FileOpenFd,
 		FileStatNative::*,
 		FileUnwatch::FileUnwatch,
 		FileWatch::FileWatch,
@@ -238,8 +238,20 @@ pub async fn mountain_ipc_invoke(
 	let IsHighFrequencyCommand = matches!(
 		command.as_str(),
 		"logger:log"
+			| "logger:info"
+			| "logger:debug"
+			| "logger:trace"
+			| "logger:warn"
+			| "logger:error"
+			| "logger:critical"
+			| "logger:flush"
+			| "logger:setLevel"
+			| "logger:getLevel"
 			| "logger:registerLogger"
 			| "logger:createLogger"
+			| "logger:deregisterLogger"
+			| "logger:getRegisteredLoggers"
+			| "logger:setVisibility"
 			| "log:registerLogger"
 			| "log:createLogger"
 			| "file:stat"
@@ -288,15 +300,33 @@ pub async fn mountain_ipc_invoke(
 	// file watch, storage events, command registration).
 	if IsHighFrequencyCommand {
 		match command.as_str() {
-			// Logger: fire-and-forget, no side effects needed
-			"logger:log" | "logger:warn" | "logger:error" | "logger:info"
-			| "logger:debug" | "logger:trace" | "logger:critical"
+			// Logger: forward error/warn/critical to dev_log; drop the rest.
+			// `logger:log` (info/debug/trace) fires thousands of times per boot
+			// from VS Code console.* calls - we gate those to `vscode-log`
+			// which is opt-in. Errors and warnings are always surfaced.
+			"logger:error" | "logger:critical" => {
+				let Msg = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or(
+					Arguments.first().and_then(|V| V.as_str()).unwrap_or(""),
+				);
+				if !Msg.is_empty() {
+					dev_log!("vscode-log", "[ERROR] {}", Msg);
+				}
+				return Ok(Value::Null);
+			},
+			"logger:warn" => {
+				let Msg = Arguments.get(1).and_then(|V| V.as_str()).unwrap_or(
+					Arguments.first().and_then(|V| V.as_str()).unwrap_or(""),
+				);
+				if !Msg.is_empty() {
+					dev_log!("vscode-log", "[WARN] {}", Msg);
+				}
+				return Ok(Value::Null);
+			},
+			"logger:log" | "logger:info" | "logger:debug" | "logger:trace"
 			| "logger:flush" | "logger:setLevel" | "logger:getLevel"
 			| "logger:createLogger" | "logger:registerLogger"
 			| "logger:deregisterLogger" | "logger:getRegisteredLoggers"
 			| "logger:setVisibility"
-			// File watch stubs: unpiped in current architecture
-			| "file:watch" | "file:unwatch"
 			// Storage event stubs: change delivery via Tauri events
 			| "storage:onDidChangeItems" | "storage:logStorage"
 			// Command registry stubs: side effects handled via gRPC
@@ -306,8 +336,6 @@ pub async fn mountain_ipc_invoke(
 			| "configuration:onDidChange"
 			// Storage lifecycle stubs
 			| "storage:optimize" | "storage:isUsed" | "storage:close" => {
-				let Elapsed = crate::IPC::DevLog::NowNano::Fn().saturating_sub(OTLPStart);
-				dev_log!("ipc", "done: {} ok=true t_ns={}", command, Elapsed);
 				return Ok(Value::Null);
 			},
 			_ => {}, // fall through to Echo dispatch for real work
@@ -561,6 +589,30 @@ pub async fn mountain_ipc_invoke(
 				"extensions:isActive" => {
 					dev_log!("extensions", "extensions:isActive");
 					ExtensionsIsActive(RunTime.clone(), Arguments).await
+				},
+				// `extensions:activate(extensionId)` - send `$activateByEvent`
+				// to Cocoon so the extension host starts the extension. VS Code
+				// normally drives activation via the workbench's activation events
+				// (onStartupFinished, onLanguage:*, etc.); this path lets Wind's
+				// ExtensionsService trigger activation programmatically.
+				"extensions:activate" => {
+					let ExtensionId = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					dev_log!("extensions", "extensions:activate id={}", ExtensionId);
+					if ExtensionId.is_empty() {
+						Ok(Value::Null)
+					} else {
+						let Notification = json!({
+							"event": format!("onCustom:{}", ExtensionId),
+							"extensionId": ExtensionId,
+						});
+						let _ = crate::Vine::Client::SendNotification::Fn(
+							"cocoon-main".to_string(),
+							"$activateByEvent".to_string(),
+							Notification,
+						)
+						.await;
+						Ok(Value::Null)
+					}
 				},
 
 				// VS Code's Extensions sidebar →
@@ -1134,7 +1186,7 @@ pub async fn mountain_ipc_invoke(
 				// VS Code's DiskFileSystemProviderClient calls readFile/writeFile/rename
 				// but Mountain's original handlers use read/write/move.
 				// =====================================================================
-			"file:realpath" => FileRealpath(Arguments).await,
+				"file:realpath" => FileRealpath(Arguments).await,
 				"file:open" => FileOpenFd(Arguments).await,
 				"file:close" => FileCloseFd(Arguments).await,
 				"file:cloneFile" => FileCloneNative(Arguments).await,
@@ -1291,27 +1343,10 @@ pub async fn mountain_ipc_invoke(
 				// loss.
 				"nativeHost:getCursorScreenPoint" => {
 					dev_log!("window", "nativeHost:getCursorScreenPoint");
-					// On macOS, the mouse position is readable via `NSEvent.mouseLocation`.
-					// We query it via AppleScript since we can't call ObjC directly here.
-					// On failure (non-macOS, script error) return (0,0) which the workbench
-					// treats as "place overlay at top-left and clip to screen" - harmless.
-					#[cfg(target_os = "macos")]
-					{
-						let Out = std::process::Command::new("osascript")
-							.args([
-								"-e",
-								"tell application \"System Events\" to get {(do shell script \"python3 -c 'import \
-								 Quartz; p=Quartz.NSEvent.mouseLocation(); print(int(p.x), int(p.y))'\")}",
-							])
-							.output();
-						if let Ok(O) = Out {
-							let S = String::from_utf8_lossy(&O.stdout);
-							let Parts:Vec<i64> = S.split_whitespace().filter_map(|T| T.parse().ok()).collect();
-							if Parts.len() >= 2 {
-								return Ok(json!({ "x": Parts[0], "y": Parts[1] }));
-							}
-						}
-					}
+					// Cursor position is used by the workbench to bias overlay
+					// placement. (0,0) causes overlays to appear at the top-left
+					// and get clipped to sane positions - zero overhead vs
+					// spawning an osascript process per call.
 					Ok(json!({ "x": 0, "y": 0 }))
 				},
 				"nativeHost:getWindows" => {

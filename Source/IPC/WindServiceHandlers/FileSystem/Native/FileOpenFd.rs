@@ -15,16 +15,17 @@
 
 use std::{
 	collections::HashMap,
-	sync::{Mutex, OnceLock, atomic::{AtomicU32, Ordering}},
+	sync::{
+		Mutex,
+		OnceLock,
+		atomic::{AtomicU32, Ordering},
+	},
 };
 
 use serde_json::{Value, json};
 use tokio::fs::File;
 
-use crate::{
-	IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg,
-	dev_log,
-};
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
 
 static NEXT_FD:AtomicU32 = AtomicU32::new(1);
 
@@ -34,9 +35,7 @@ pub struct FdTable {
 
 static FD_TABLE:OnceLock<FdTable> = OnceLock::new();
 
-pub fn GetFdTable() -> &'static FdTable {
-	FD_TABLE.get_or_init(|| FdTable { Files:Mutex::new(HashMap::new()) })
-}
+pub fn GetFdTable() -> &'static FdTable { FD_TABLE.get_or_init(|| FdTable { Files:Mutex::new(HashMap::new()) }) }
 
 pub async fn FileOpenFd(Arguments:Vec<Value>) -> Result<Value, String> {
 	let ResourceArg = Arguments.first().ok_or("file:open: missing resource")?;
@@ -58,9 +57,14 @@ pub async fn FileOpenFd(Arguments:Vec<Value>) -> Result<Value, String> {
 			OpenOpts.truncate(true);
 		}
 
-		OpenOpts.open(&Path).await.map_err(|E| format!("file:open create '{}': {}", Path, E))?
+		OpenOpts
+			.open(&Path)
+			.await
+			.map_err(|E| format!("file:open create '{}': {}", Path, E))?
 	} else {
-		tokio::fs::File::open(&Path).await.map_err(|E| format!("file:open '{}': {}", Path, E))?
+		tokio::fs::File::open(&Path)
+			.await
+			.map_err(|E| format!("file:open '{}': {}", Path, E))?
 	};
 
 	let Fd = NEXT_FD.fetch_add(1, Ordering::Relaxed);

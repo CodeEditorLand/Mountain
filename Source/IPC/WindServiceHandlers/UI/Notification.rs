@@ -13,14 +13,11 @@ use tauri::AppHandle;
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 fn NewId(Prefix:&str) -> String {
-	format!(
-		"{}-{}",
-		Prefix,
-		std::time::SystemTime::now()
-			.duration_since(std::time::UNIX_EPOCH)
-			.map(|D| D.as_millis())
-			.unwrap_or(0)
-	)
+	use std::sync::atomic::{AtomicU64, Ordering};
+
+	static SEQ:AtomicU64 = AtomicU64::new(1);
+
+	format!("{}-{}", Prefix, SEQ.fetch_add(1, Ordering::Relaxed))
 }
 
 pub async fn NotificationShow(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {

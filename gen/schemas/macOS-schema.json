@@ -2703,10 +2703,10 @@
           "markdownDescription": "Denies the close command without any pre-configured scope."
         },
         {
-          "description": "Default permissions for the plugin, which enables all commands.\n#### This default permission set includes:\n\n- `allow-new`\n- `allow-get-by-id`\n- `allow-remove-by-id`\n- `allow-set-icon`\n- `allow-set-menu`\n- `allow-set-tooltip`\n- `allow-set-title`\n- `allow-set-visible`\n- `allow-set-temp-dir-path`\n- `allow-set-icon-as-template`\n- `allow-set-show-menu-on-left-click`",
+          "description": "Default permissions for the plugin, which enables all commands.\n#### This default permission set includes:\n\n- `allow-new`\n- `allow-get-by-id`\n- `allow-remove-by-id`\n- `allow-set-icon`\n- `allow-set-menu`\n- `allow-set-tooltip`\n- `allow-set-title`\n- `allow-set-visible`\n- `allow-set-temp-dir-path`\n- `allow-set-icon-as-template`\n- `allow-set-icon-with-as-template`\n- `allow-set-show-menu-on-left-click`",
           "type": "string",
           "const": "core:tray:default",
-          "markdownDescription": "Default permissions for the plugin, which enables all commands.\n#### This default permission set includes:\n\n- `allow-new`\n- `allow-get-by-id`\n- `allow-remove-by-id`\n- `allow-set-icon`\n- `allow-set-menu`\n- `allow-set-tooltip`\n- `allow-set-title`\n- `allow-set-visible`\n- `allow-set-temp-dir-path`\n- `allow-set-icon-as-template`\n- `allow-set-show-menu-on-left-click`"
+          "markdownDescription": "Default permissions for the plugin, which enables all commands.\n#### This default permission set includes:\n\n- `allow-new`\n- `allow-get-by-id`\n- `allow-remove-by-id`\n- `allow-set-icon`\n- `allow-set-menu`\n- `allow-set-tooltip`\n- `allow-set-title`\n- `allow-set-visible`\n- `allow-set-temp-dir-path`\n- `allow-set-icon-as-template`\n- `allow-set-icon-with-as-template`\n- `allow-set-show-menu-on-left-click`"
         },
         {
           "description": "Enables the get_by_id command without any pre-configured scope.",
@@ -2737,6 +2737,12 @@
           "type": "string",
           "const": "core:tray:allow-set-icon-as-template",
           "markdownDescription": "Enables the set_icon_as_template command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the set_icon_with_as_template command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:tray:allow-set-icon-with-as-template",
+          "markdownDescription": "Enables the set_icon_with_as_template command without any pre-configured scope."
         },
         {
           "description": "Enables the set_menu command without any pre-configured scope.",
@@ -2803,6 +2809,12 @@
           "type": "string",
           "const": "core:tray:deny-set-icon-as-template",
           "markdownDescription": "Denies the set_icon_as_template command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the set_icon_with_as_template command without any pre-configured scope.",
+          "type": "string",
+          "const": "core:tray:deny-set-icon-with-as-template",
+          "markdownDescription": "Denies the set_icon_with_as_template command without any pre-configured scope."
         },
         {
           "description": "Denies the set_menu command without any pre-configured scope.",

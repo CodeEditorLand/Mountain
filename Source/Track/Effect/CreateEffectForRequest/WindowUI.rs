@@ -82,13 +82,11 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							_ => "sky://quickpick/show",
 						};
 
-						let Nonce = format!(
-							"ui-{}",
-							std::time::SystemTime::now()
-								.duration_since(std::time::UNIX_EPOCH)
-								.map(|D| D.as_nanos())
-								.unwrap_or(0)
-						);
+						use std::sync::atomic::{AtomicU64, Ordering as AO};
+
+						static UI_SEQ:AtomicU64 = AtomicU64::new(1);
+
+						let Nonce = format!("ui-{}", UI_SEQ.fetch_add(1, AO::Relaxed));
 
 						// Register the reply channel before emitting so the
 						// frontend can never race-resolve before we are waiting.

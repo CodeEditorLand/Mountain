@@ -35,7 +35,16 @@
 //! - `vs/platform/storage/common/storageService.ts`
 //! - `vs/platform/storage/common/memento.ts`
 
-use std::{collections::HashMap, path::PathBuf};
+use std::{
+	collections::HashMap,
+	path::PathBuf,
+	sync::{
+		Arc,
+		Mutex,
+		OnceLock,
+		atomic::{AtomicBool, Ordering},
+	},
+};
 
 use CommonLibrary::{Error::CommonError::CommonError, Storage::StorageProvider::StorageProvider};
 use async_trait::async_trait;
@@ -44,6 +53,55 @@ use tokio::fs;
 
 use super::{MountainEnvironment::MountainEnvironment, Utility};
 use crate::dev_log;
+
+/// Write-coalescing debouncer for storage scope.
+/// Accumulates the latest data snapshot and schedules a single
+/// disk write 100 ms after the first queued mutation in a burst.
+struct StorageWriteDebouncer {
+	Pending:Mutex<Option<(PathBuf, HashMap<String, Value>)>>,
+
+	FlushScheduled:AtomicBool,
+}
+
+impl StorageWriteDebouncer {
+	fn new() -> Arc<Self> { Arc::new(Self { Pending:Mutex::new(None), FlushScheduled:AtomicBool::new(false) }) }
+
+	fn Queue(&self, Path:PathBuf, Data:HashMap<String, Value>, Debouncer:Arc<Self>) {
+		if let Ok(mut Guard) = self.Pending.lock() {
+			*Guard = Some((Path, Data));
+		}
+
+		if !self.FlushScheduled.swap(true, Ordering::AcqRel) {
+			tokio::spawn(async move {
+				tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+				let Item = {
+					let mut Guard = Debouncer.Pending.lock().unwrap();
+
+					Debouncer.FlushScheduled.store(false, Ordering::Release);
+
+					Guard.take()
+				};
+
+				if let Some((StoragePath, StorageData)) = Item {
+					SaveStorageToDisk(StoragePath, StorageData).await;
+				}
+			});
+		}
+	}
+}
+
+static GLOBAL_DEBOUNCER:OnceLock<Arc<StorageWriteDebouncer>> = OnceLock::new();
+
+static WORKSPACE_DEBOUNCER:OnceLock<Arc<StorageWriteDebouncer>> = OnceLock::new();
+
+fn GetGlobalDebouncer() -> Arc<StorageWriteDebouncer> {
+	GLOBAL_DEBOUNCER.get_or_init(StorageWriteDebouncer::new).clone()
+}
+
+fn GetWorkspaceDebouncer() -> Arc<StorageWriteDebouncer> {
+	WORKSPACE_DEBOUNCER.get_or_init(StorageWriteDebouncer::new).clone()
+}
 
 // TODO: storage quotas per extension, encryption for sensitive values,
 // compression for large datasets, migration/versioning, atomic writes
@@ -184,9 +242,11 @@ impl StorageProvider for MountainEnvironment {
 		};
 
 		if let Some(StoragePath) = StoragePathOption {
-			tokio::spawn(async move {
-				SaveStorageToDisk(StoragePath, DataToSave).await;
-			});
+			// Coalesce rapid writes: queue the latest snapshot and let the
+			// debouncer emit a single disk write 100 ms after the burst ends.
+			let Debouncer = if IsGlobalScope { GetGlobalDebouncer() } else { GetWorkspaceDebouncer() };
+
+			Debouncer.Queue(StoragePath, DataToSave, Debouncer.clone());
 		}
 
 		Ok(())
@@ -254,11 +314,11 @@ impl StorageProvider for MountainEnvironment {
 			.lock()
 			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)? = DeserializedState.clone();
 
-		// Persist to disk asynchronously
+		// Persist to disk via debouncer (coalesces rapid calls).
 		if let Some(StoragePath) = StoragePathOption {
-			tokio::spawn(async move {
-				SaveStorageToDisk(StoragePath, DeserializedState).await;
-			});
+			let Debouncer = GetGlobalDebouncer();
+
+			Debouncer.Queue(StoragePath, DeserializedState, Debouncer.clone());
 		}
 
 		Ok(())

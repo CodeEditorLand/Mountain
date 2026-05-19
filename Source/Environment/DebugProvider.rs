@@ -150,10 +150,16 @@ impl DebugService for MountainEnvironment {
 			})?
 			.to_string();
 
-		// TODO: Look up which sidecar handles this debug type using
-		// RegisterDebugConfigurationProvider registrations in ApplicationState.
-		// Hardcoded "cocoon-main" until proper registration tracking is implemented.
-		let TargetSideCar = "cocoon-main".to_string();
+		// Look up the registered debug configuration provider to get the
+		// sidecar that handles this debug type. Falls back to "cocoon-main"
+		// (the only extension host today; Grove multi-host will need routing).
+		let TargetSideCar = self
+			.ApplicationState
+			.Feature
+			.Debug
+			.GetDebugConfigurationProvider(&DebugType)
+			.map(|R| R.SideCarIdentifier.clone())
+			.unwrap_or_else(|| "cocoon-main".to_string());
 
 		// 1. Resolve configuration (Reverse-RPC to Cocoon)
 		dev_log!(

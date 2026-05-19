@@ -24,7 +24,10 @@
 //! - `vs/workbench/contrib/customEditor/browser/customEditorService.ts`
 //! - `vs/workbench/contrib/customEditor/common/customEditor.ts`
 
-use std::sync::Arc;
+use std::{
+	collections::HashMap,
+	sync::{Arc, Mutex, OnceLock},
+};
 
 use CommonLibrary::{
 	CustomEditor::CustomEditorProvider::CustomEditorProvider,
@@ -39,6 +42,26 @@ use url::Url;
 
 use super::MountainEnvironment::MountainEnvironment;
 use crate::dev_log;
+
+/// Process-global custom editor registry: ViewType → SidecarId.
+/// Populated by `RegisterCustomEditorProvider`, consumed by
+/// `ResolveCustomEditor` to route the save/resolve RPC to the
+/// correct extension host sidecar.
+static CUSTOM_EDITOR_REGISTRY:OnceLock<Mutex<HashMap<String, String>>> = OnceLock::new();
+
+fn GetRegistry() -> &'static Mutex<HashMap<String, String>> {
+	CUSTOM_EDITOR_REGISTRY.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+/// Return the sidecar identifier for a registered ViewType, or
+/// `"cocoon-main"` as the canonical fallback.
+pub fn LookupSidecarForViewType(ViewType:&str) -> String {
+	GetRegistry()
+		.lock()
+		.ok()
+		.and_then(|G| G.get(ViewType).cloned())
+		.unwrap_or_else(|| "cocoon-main".to_string())
+}
 
 #[async_trait]
 impl CustomEditorProvider for MountainEnvironment {
@@ -57,10 +80,28 @@ impl CustomEditorProvider for MountainEnvironment {
 			});
 		}
 
-		// TODO: Store in ApplicationState associating ViewType with the sidecar
-		// identifier for RPC routing, record provider capabilities
-		// (supportsMultipleEditors, serialization), validate no duplicate
-		// ViewType, and track registration timestamp and extension origin.
+		// Store ViewType → "cocoon-main" (the only extension host sidecar
+		// today). When Grove multi-extension-host lands, the sidecar id will
+		// come from the Options payload.
+		let SidecarId = _Options
+			.get("sidecarId")
+			.and_then(Value::as_str)
+			.unwrap_or("cocoon-main")
+			.to_string();
+
+		if let Ok(mut Registry) = GetRegistry().lock() {
+			let IsNew = !Registry.contains_key(&ViewType);
+
+			Registry.insert(ViewType.clone(), SidecarId.clone());
+
+			dev_log!(
+				"extensions",
+				"[CustomEditorProvider] {} provider registered: viewType={} sidecar={}",
+				if IsNew { "New" } else { "Updated" },
+				ViewType,
+				SidecarId
+			);
+		}
 
 		Ok(())
 	}
@@ -72,9 +113,16 @@ impl CustomEditorProvider for MountainEnvironment {
 			ViewType
 		);
 
-		// TODO: Check for active editors using this ViewType, force close or
-		// block, remove config/capabilities/sidecar association, notify sidecar
-		// to clean up, and remove cached resolution entries.
+		if let Ok(mut Registry) = GetRegistry().lock() {
+			let Removed = Registry.remove(&ViewType).is_some();
+
+			dev_log!(
+				"extensions",
+				"[CustomEditorProvider] Provider unregistered: viewType={} (was_present={})",
+				ViewType,
+				Removed
+			);
+		}
 
 		Ok(())
 	}

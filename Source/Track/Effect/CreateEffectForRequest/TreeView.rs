@@ -1,22 +1,9 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
-//! # TreeView Effect (CreateEffectForRequest)
-//!
 //! Effect constructors for tree-view registration and disposal from the
 //! Cocoon extension host. Delegates to `TreeViewProvider` on
 //! `MountainEnvironment` and emits `SkyEvent` notifications to keep the
 //! Sky workbench's `ITreeView` instances in sync.
-//!
-//! ## Methods handled
-//!
-//! | Method | Description |
-//! |---|---|
-//! | `$tree:register` / `tree.register` | Register a tree data provider for a view ID |
-//! | `tree.unregister` / `tree.dispose` | Unregister and dispose a tree data provider |
-//!
-//! After a successful registration, a `TreeViewCreate` event is emitted so
-//! Sky can wire the new data provider. After disposal, a `TreeViewDispose`
-//! event clears the stale provider reference.
 
 use std::{future::Future, pin::Pin, sync::Arc};
 
@@ -38,29 +25,14 @@ use crate::{
 pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Result<MappedEffect, String>> {
 	match MethodName {
 		"$tree:register" | "tree.register" => {
-			let DispatchEnterNs = std::time::SystemTime::now()
-				.duration_since(std::time::UNIX_EPOCH)
-				.map(|D| D.as_nanos())
-				.unwrap_or(0);
-
-			dev_log!(
-				"tree-latency",
-				"[LandFix:Tree] dispatch-enter method={} t_ns={}",
-				MethodName,
-				DispatchEnterNs
-			);
-
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let DispatchAt = std::time::Instant::now();
-						let BodyStartNs = std::time::SystemTime::now()
-							.duration_since(std::time::UNIX_EPOCH)
-							.map(|D| D.as_nanos())
-							.unwrap_or(0);
 						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
+
 						let first = Parameters.get(0).and_then(Value::as_str).unwrap_or("");
-						let (view_id, options) = if Parameters.get(2).is_some() {
+
+						let (ViewId, Options) = if Parameters.get(2).is_some() {
 							let vid = Parameters.get(1).and_then(Value::as_str).unwrap_or(first).to_string();
 							let opts = Parameters.get(2).cloned().unwrap_or_default();
 							(vid, opts)
@@ -69,76 +41,29 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 							let opts = Parameters.get(1).cloned().unwrap_or_default();
 							(vid, opts)
 						};
-						let ViewIdForLog = view_id.clone();
-						dev_log!("grpc", "[LandFix:Tree] body-start view={} t_ns={}", ViewIdForLog, BodyStartNs);
-						let Result = provider.RegisterTreeDataProvider(view_id.clone(), options.clone()).await;
-						let RegisteredNs = std::time::SystemTime::now()
-							.duration_since(std::time::UNIX_EPOCH)
-							.map(|D| D.as_nanos())
-							.unwrap_or(0);
-						dev_log!(
-							"grpc",
-							"[LandFix:Tree] registered view={} elapsed={}ms t_ns={}",
-							ViewIdForLog,
-							DispatchAt.elapsed().as_millis(),
-							RegisteredNs
-						);
+
+						dev_log!("tree-view", "[TreeView] register view={}", ViewId);
+
+						let Result = provider.RegisterTreeDataProvider(ViewId.clone(), Options.clone()).await;
+
 						dev_log!(
 							"tree-view",
-							"[TreeView] register view={} result={} elapsed={}ms",
-							ViewIdForLog,
-							if Result.is_ok() { "ok" } else { "err" },
-							DispatchAt.elapsed().as_millis()
+							"[TreeView] register view={} result={}",
+							ViewId,
+							if Result.is_ok() { "ok" } else { "err" }
 						);
 
-						// Notify Wind/Sky that a data provider now exists for this
-						// view, so the renderer can set `treeView.dataProvider` on
-						// the matching ITreeView instance and replace the default
-						// "no data provider registered" message. Without this
-						// emit, `vs/workbench/browser/parts/views/treeView.ts`
-						// keeps `_dataProvider === undefined` and every extension
-						// tree view stays empty (GitLens, debug, SCM, tasks, etc.).
 						if Result.is_ok() {
-							// Routes through `LogSkyEmit` so every emit also
-							// surfaces under the `sky-emit` tag in addition to
-							// the existing `tree-view` diagnostic. Failure
-							// reason stays surfaced via both tags.
-							match LogSkyEmit(
+							if let Err(Error) = LogSkyEmit(
 								&run_time.Environment.ApplicationHandle,
 								SkyEvent::TreeViewCreate.AsStr(),
-								json!({
-									"viewId": view_id,
-									"options": options,
-								}),
+								json!({ "viewId": ViewId, "options": Options }),
 							) {
-								Ok(()) => {
-									dev_log!(
-										"tree-view",
-										"[TreeView] emit-ok channel={} view={}",
-										SkyEvent::TreeViewCreate.AsStr(),
-										ViewIdForLog
-									);
-								},
-								Err(Error) => {
-									dev_log!(
-										"grpc",
-										"warn: [LandFix:Tree] failed to emit {} for view={}: {}",
-										SkyEvent::TreeViewCreate.AsStr(),
-										ViewIdForLog,
-										Error
-									);
-									dev_log!(
-										"tree-view",
-										"[TreeView] emit-fail channel={} view={} error={}",
-										SkyEvent::TreeViewCreate.AsStr(),
-										ViewIdForLog,
-										Error
-									);
-								},
+								dev_log!("tree-view", "warn: [TreeView] emit failed view={}: {}", ViewId, Error);
 							}
 						}
 
-						Result.map(|_| json!(null)).map_err(|e| e.to_string())
+						Result.map(|_| json!(null)).map_err(|E| E.to_string())
 					})
 				};
 
@@ -149,52 +74,34 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			let effect =
 				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
 					Box::pin(async move {
-						let view_id = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
-						dev_log!("tree-view", "[TreeView] unregister view={}", view_id);
-						if view_id.is_empty() {
-							dev_log!("tree-view", "[TreeView] unregister skipped: empty view_id");
+						let ViewId = Parameters.get(0).and_then(Value::as_str).unwrap_or("").to_string();
+
+						if ViewId.is_empty() {
 							return Ok(json!(null));
 						}
+
+						dev_log!("tree-view", "[TreeView] unregister view={}", ViewId);
+
 						let provider:Arc<dyn TreeViewProvider> = run_time.Environment.Require();
-						let Result = provider.UnregisterTreeDataProvider(view_id.clone()).await;
-						dev_log!(
-							"tree-view",
-							"[TreeView] unregister result={} view={}",
-							if Result.is_ok() { "ok" } else { "err" },
-							view_id
-						);
-						// Emit TreeViewDispose so Sky's
-						// `_dataProvider` slot is cleared on the
-						// renderer side. Without this emit, Sky keeps
-						// the stale provider reference alive and
-						// `getChildren` continues to hit it after
-						// the extension has disposed the registration.
+
+						let Result = provider.UnregisterTreeDataProvider(ViewId.clone()).await;
+
 						if Result.is_ok() {
-							match LogSkyEmit(
+							if let Err(Error) = LogSkyEmit(
 								&run_time.Environment.ApplicationHandle,
 								SkyEvent::TreeViewDispose.AsStr(),
-								json!({ "viewId": view_id }),
+								json!({ "viewId": ViewId }),
 							) {
-								Ok(()) => {
-									dev_log!(
-										"tree-view",
-										"[TreeView] dispose-emit-ok channel={} view={}",
-										SkyEvent::TreeViewDispose.AsStr(),
-										view_id
-									);
-								},
-								Err(Error) => {
-									dev_log!(
-										"grpc",
-										"warn: [LandFix:Tree] failed to emit {} for view={}: {}",
-										SkyEvent::TreeViewDispose.AsStr(),
-										view_id,
-										Error
-									);
-								},
+								dev_log!(
+									"tree-view",
+									"warn: [TreeView] dispose emit failed view={}: {}",
+									ViewId,
+									Error
+								);
 							}
 						}
-						Result.map(|_| json!(null)).map_err(|e| e.to_string())
+
+						Result.map(|_| json!(null)).map_err(|E| E.to_string())
 					})
 				};
 
