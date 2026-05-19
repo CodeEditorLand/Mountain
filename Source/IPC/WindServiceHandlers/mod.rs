@@ -1294,10 +1294,36 @@ pub async fn mountain_ipc_invoke(
 				// the unknown-IPC log spam outweighs the precision
 				// loss.
 				"nativeHost:getCursorScreenPoint" => {
-					dev_log!("window", "nativeHost:getCursorScreenPoint");
+				dev_log!("window", "nativeHost:getCursorScreenPoint");
+					// On macOS, the mouse position is readable via `NSEvent.mouseLocation`.
+					// We query it via AppleScript since we can't call ObjC directly here.
+					// On failure (non-macOS, script error) return (0,0) which the workbench
+					// treats as "place overlay at top-left and clip to screen" - harmless.
+					#[cfg(target_os = "macos")]
+					{
+						let Out = std::process::Command::new("osascript")
+							.args(["-e", "tell application \"System Events\" to get {(do shell script \"python3 -c 'import Quartz; p=Quartz.NSEvent.mouseLocation(); print(int(p.x), int(p.y))'\")}"])
+							.output();
+						if let Ok(O) = Out {
+							let S = String::from_utf8_lossy(&O.stdout);
+							let Parts:Vec<i64> = S.split_whitespace().filter_map(|T| T.parse().ok()).collect();
+							if Parts.len() >= 2 {
+								return Ok(json!({ "x": Parts[0], "y": Parts[1] }));
+							}
+						}
+					}
 					Ok(json!({ "x": 0, "y": 0 }))
 				},
-				"nativeHost:getWindows" => Ok(json!([{ "id": 1, "title": "FIDDEE", "filename": "" }])),
+			"nativeHost:getWindows" => {
+					let Title = std::env::var("ProductNameShort").unwrap_or_else(|_| "Land".into());
+					let ActiveDoc = RunTime
+						.Environment
+						.ApplicationState
+						.Workspace
+						.GetActiveDocumentURI()
+						.unwrap_or_default();
+					Ok(json!([{ "id": 1, "title": Title, "filename": ActiveDoc }]))
+				},
 				"nativeHost:getWindowCount" => Ok(json!(1)),
 
 				// Auxiliary window spawners. VS Code's `nativeHostMainService.ts`
