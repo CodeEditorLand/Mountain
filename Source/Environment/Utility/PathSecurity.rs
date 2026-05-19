@@ -25,7 +25,7 @@ use crate::{ApplicationState::State::ApplicationState::ApplicationState, dev_log
 ///    workspace folder. That's the sandbox boundary that keeps extensions from
 ///    rifling through `$HOME` via `vscode.workspace.fs`.
 ///
-/// Without tier 1, the scanner's read of `~/.land/extensions` is
+/// Without tier 1, the scanner's read of `~/.fiddee/extensions` is
 /// rejected as "Path is outside of the registered workspace folders", so
 /// user-installed VSIXes never reach the Extensions sidebar even though
 /// they are present on disk.
@@ -142,9 +142,13 @@ pub fn IsPathAllowedForAccess(ApplicationState:&ApplicationState, PathToCheck:&P
 /// Covered roots:
 ///
 /// - `${Lodge}` (explicit override, if set).
-/// - `$HOME/.land/**` - the canonical namespace for user-installed extensions,
-///   agent plugins, global storage, and any other Land-owned state that lives
-///   outside the VS Code-style profile tree.
+/// - `$HOME/.fiddee/**` - the canonical namespace for user-installed
+///   extensions, agent plugins, global storage, and any other FIDDEE-owned
+///   state that lives outside the VS Code-style profile tree. Resolved through
+///   the `Utilities::FiddeeRoot` atom.
+/// - `$HOME/.land/**` - legacy alias kept for forward-compat reads of
+///   pre-rename install trees so existing user data stays reachable until the
+///   next install migrates it.
 /// - The Mountain executable's own `extensions/`, `../Resources/extensions/`
 ///   and `../Resources/app/extensions/` neighbours - built-in extension roots
 ///   that ship inside the `.app` bundle.
@@ -180,6 +184,17 @@ fn IsTrustedSystemPath(PathToCheck:&Path) -> bool {
 	}
 
 	if let Ok(Home) = std::env::var("HOME") {
+		// Primary user-scope root post-rename. Resolved through the
+		// `FiddeeRoot` atom so any future rename touches a single file.
+		let FiddeeRoot = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot();
+		if Candidate.starts_with(&FiddeeRoot) || PathToCheck.starts_with(&FiddeeRoot) {
+			return true;
+		}
+
+		// Legacy alias - pre-rename installs still hold extensions and
+		// recently-opened state under `~/.land`. Reads stay allow-listed
+		// so existing data remains visible until the user reinstalls or
+		// migrates to `~/.fiddee`.
 		let LandRoot = PathBuf::from(&Home).join(".land");
 		if Candidate.starts_with(&LandRoot) || PathToCheck.starts_with(&LandRoot) {
 			return true;

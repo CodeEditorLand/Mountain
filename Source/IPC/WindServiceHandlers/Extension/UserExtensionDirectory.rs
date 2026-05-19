@@ -6,10 +6,13 @@
 //! Resolution order (honours Atom V1 `Lodge`):
 //!   1. `$Lodge` - explicit per-operator override. Leading `~/` expands against
 //!      `$HOME`.
-//!   2. `$HOME/.land/extensions` - VS Code-style user-scope default.
+//!   2. `$HOME/.fiddee/extensions` - VS Code-style user-scope default, resolved
+//!      through `Utilities::FiddeeRoot`.
 //!   3. `./extensions` - fallback when `$HOME` is unavailable.
 
 use std::path::PathBuf;
+
+use crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot;
 
 pub fn UserExtensionDirectory() -> PathBuf {
 	if let Ok(Override) = std::env::var("Lodge") {
@@ -22,9 +25,5 @@ pub fn UserExtensionDirectory() -> PathBuf {
 		return PathBuf::from(Override);
 	}
 
-	if let Some(HomeDirectory) = dirs::home_dir() {
-		return HomeDirectory.join(".land/extensions");
-	}
-
-	PathBuf::from("extensions")
+	FiddeeRoot().join("extensions")
 }

@@ -64,6 +64,10 @@ pub mod FileSystemProvider;
 /// events.
 pub mod FileWatcherProvider;
 
+/// Server-side path ignore filter applied before file-watcher events
+/// cross the Mountain→Cocoon IPC boundary.
+pub mod FileWatcherIgnore;
+
 /// `IPCProvider`: routes IPC messages between the frontend and backend.
 pub mod IPCProvider;
 

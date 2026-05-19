@@ -38,7 +38,7 @@ use tauri::Runtime;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::MappedEffectType::MappedEffect};
 
 /// Strip a leading `file://` (or `file:///`) scheme from the incoming path.
-/// Cocoon sends full URIs like `file:///<home>/.land/extensions/...`
+/// Cocoon sends full URIs like `file:///<home>/.fiddee/extensions/...`
 /// through `FileSystem.ReadFile`/`WriteFile`/`ReadDirectory`; `PathBuf` from
 /// such a string treats the scheme literally and every read 404s. Without
 /// this the redhat.java activation (and any other extension that uses the

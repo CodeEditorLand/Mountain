@@ -16,7 +16,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, Track::Effect::Mapp
 /// Strip a leading `file://` (or `file:///`) scheme from the incoming path.
 /// Mirrors the helper in `FileSystem.rs`; inlined here to avoid a cross-module
 /// dependency on a private function in a sibling module.
-/// Cocoon sends full URIs like `file:///<home>/.land/extensions/...` through
+/// Cocoon sends full URIs like `file:///<home>/.fiddee/extensions/...` through
 /// the legacy `openDocument`/`readFile`/`stat` routes; without stripping,
 /// `PathBuf` roots at the literal scheme string and every read 404s.
 fn StripFileUriScheme(Input:&str) -> &str {

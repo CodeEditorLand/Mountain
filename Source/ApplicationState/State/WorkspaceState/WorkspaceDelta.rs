@@ -164,24 +164,17 @@ pub fn UpdateWorkspaceFoldersAndBroadcast<R:tauri::Runtime>(
 	}
 }
 
-/// Append every folder in `Added` to `~/.land/workspaces/RecentlyOpened.json`,
-/// deduping by URI and capping at 50 entries (the VS Code default). Swallows
-/// every error - a failed write must not prevent the workspace change.
+/// Append every folder in `Added` to
+/// `~/.fiddee/workspaces/RecentlyOpened.json`, deduping by URI and capping at
+/// 50 entries (the VS Code default). Swallows every error - a failed write
+/// must not prevent the workspace change. The dotfile root is resolved
+/// through the `FiddeeRoot` atom so a future rename touches a single file.
 fn PersistRecentlyOpened(Added:&[WorkspaceFolderStateDTO]) {
 	if Added.is_empty() {
 		return;
 	}
 
-	let Home = std::env::var("HOME")
-		.or_else(|_| std::env::var("USERPROFILE"))
-		.unwrap_or_default();
-
-	if Home.is_empty() {
-		return;
-	}
-
-	let Path = std::path::PathBuf::from(Home)
-		.join(".land")
+	let Path = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot()
 		.join("workspaces")
 		.join("RecentlyOpened.json");
 

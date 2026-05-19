@@ -170,7 +170,7 @@ fn IsTestOnlyExtension(Name:&str) -> bool { TEST_ONLY_EXTENSIONS.iter().any(|Tes
 /// hardcoded to `true` for every scan path, so user-installed VSIXes
 /// showed up under Built-in and `@installed` was empty.
 ///
-/// The canonical user extension root on macOS/Linux is `~/.land/extensions`
+/// The canonical user extension root on macOS/Linux is `~/.fiddee/extensions`
 /// (VS Code's equivalent is `~/.vscode/extensions`). We also honour a
 /// `Lodge` override in case callers remap it.
 ///
@@ -191,15 +191,14 @@ fn IsUserExtensionScanPath(DirectoryPath:&std::path::Path) -> bool {
 		}
 	}
 
-	// `${HOME}/.land/extensions` is the default user-scope root - used by
+	// `${HOME}/.fiddee/extensions` is the default user-scope root - used by
 	// `VsixInstaller::InstallVsix` for local VSIX drops and by the scan
-	// path list in `ScanPathConfigure`.
-	if let Ok(Home) = std::env::var("HOME") {
-		let UserRoot = std::path::PathBuf::from(Home).join(".land/extensions");
+	// path list in `ScanPathConfigure`. Resolved through the
+	// `Utilities::FiddeeRoot` atom so the dotfile name lives in one place.
+	let UserRoot = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot().join("extensions");
 
-		if Normalised == UserRoot {
-			return true;
-		}
+	if Normalised == UserRoot {
+		return true;
 	}
 
 	false
@@ -217,7 +216,7 @@ pub async fn ScanDirectoryForExtensions(
 ) -> Result<Vec<ExtensionDescriptionStateDTO>, CommonError> {
 	// Decide up-front whether this scan path contributes built-ins or user
 	// extensions. Built-ins are ones shipped inside the Mountain/Sky/VS Code
-	// bundle; the `~/.land/extensions` root is user-space.
+	// bundle; the `~/.fiddee/extensions` root is user-space.
 	let IsUserPath = IsUserExtensionScanPath(&DirectoryPath);
 
 	let RunTime = ApplicationHandle.state::<Arc<ApplicationRunTime>>().inner().clone();
@@ -387,7 +386,7 @@ pub async fn ScanDirectoryForExtensions(
 							// Classify the extension by the scan path it came from.
 							// Built-in extensions ship in the Mountain/Sky/VS Code
 							// bundle; user extensions live under
-							// `~/.land/extensions` (written by
+							// `~/.fiddee/extensions` (written by
 							// `VsixInstaller::InstallVsix`). Hardcoding `true`
 							// here (the previous behaviour) made every VSIX
 							// install appear under **Built-in** in the
@@ -397,7 +396,7 @@ pub async fn ScanDirectoryForExtensions(
 							Description.IsBuiltin = !IsUserPath;
 
 							// Boot-time exec-bit heal for user-scope extensions.
-							// Runs only against `~/.land/extensions/<id>/` (built-in
+							// Runs only against `~/.fiddee/extensions/<id>/` (built-in
 							// trees ship with correct modes from the bundle). Walks
 							// `bin/`, `server/`, `tools/`, etc., promotes 0o644 →
 							// 0o755 on files matching ELF / Mach-O / shebang magic.

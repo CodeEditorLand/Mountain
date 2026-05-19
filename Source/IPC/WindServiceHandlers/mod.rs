@@ -719,7 +719,7 @@ pub async fn mountain_ipc_invoke(
 				"extensions:scanUserExtensions" => {
 					// User-scope scan. Forward to the unified handler with
 					// `type=ExtensionType.User (1)` so VSIX-installed
-					// extensions under `~/.land/extensions/*` come back
+					// extensions under `~/.fiddee/extensions/*` come back
 					// even when the caller didn't pass an explicit type
 					// filter (VS Code's channel client does that on
 					// scan-user-extensions, which is why the sidebar

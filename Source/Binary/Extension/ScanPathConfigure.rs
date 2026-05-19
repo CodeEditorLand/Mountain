@@ -152,17 +152,19 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	// Mirrors VS Code's `~/.vscode-oss/extensions` convention.
 	//
 	// Atom U1: `Lodge` overrides the default
-	// `~/.land/extensions`. Useful for per-workspace sandboxes, shared
+	// `~/.fiddee/extensions`. Useful for per-workspace sandboxes, shared
 	// caches on CI, or running against a test extensions set without
-	// polluting the user's real profile.
+	// polluting the user's real profile. The default root is resolved
+	// through the `Utilities::FiddeeRoot` atom so the dotfile name lives
+	// in one place.
 	if let Ok(UserOverride) = std::env::var("Lodge") {
 		let OverridePath = ExpandUserPath(&UserOverride);
 
 		dev_log!("extensions", "[Extensions] [ScanPaths] + {} (Lodge)", OverridePath.display());
 
 		ScanPathsGuard.push(OverridePath);
-	} else if let Some(HomeDirectory) = dirs::home_dir() {
-		let UserExtensionPath = HomeDirectory.join(".land/extensions");
+	} else {
+		let UserExtensionPath = crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot().join("extensions");
 
 		dev_log!(
 			"extensions",

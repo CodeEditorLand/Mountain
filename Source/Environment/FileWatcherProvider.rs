@@ -380,13 +380,25 @@ impl FileWatcherProvider for MountainEnvironment {
 			let Some(kind) = MapEventKind(&event.kind) else { return };
 			let kind_tag = kind.AsString();
 
-			// Pattern filter - reject early so the event never crosses IPC.
+			// Pattern filter + server-side ignore list - reject early so the
+			// event never crosses IPC. The ignore list catches `Target/`,
+			// `node_modules/`, `.git/objects/`, `dist/`, etc. - paths that
+			// produce thousands of events per cargo / pnpm build but whose
+			// contents the editor never surfaces to the user. See
+			// `FileWatcherIgnore.rs` for the full list and override hook
+			// (`WatchIgnore` env var).
 			let matched_paths:Vec<PathBuf> = event
 				.paths
 				.into_iter()
 				.filter(|path| {
+					let PathString = path.to_string_lossy();
+
+					if super::FileWatcherIgnore::ShouldIgnore(&PathString) {
+						return false;
+					}
+
 					match &pattern_for_callback {
-						Some(re) => re.is_match(&path.to_string_lossy()),
+						Some(re) => re.is_match(&PathString),
 						None => true,
 					}
 				})

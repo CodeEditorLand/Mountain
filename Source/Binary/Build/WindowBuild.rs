@@ -169,7 +169,7 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 }
 
 /// Build the initial webview URL, optionally appending `?folder=<path>`
-/// when `~/.land/workspaces/RecentlyOpened.json` has an entry for the
+/// when `~/.fiddee/workspaces/RecentlyOpened.json` has an entry for the
 /// previous session's workspace. Falls back to plain `index.html` if
 /// the file is missing, malformed, or has no resolvable path.
 ///

@@ -1,22 +1,15 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
 //! Recently-opened workspaces/files persistence.
-//! File lives at `~/.land/workspaces/RecentlyOpened.json`. Parse failures
-//! degrade to an empty `{workspaces, files}` envelope so the UI never
-//! sees a missing field.
+//! File lives at `~/.fiddee/workspaces/RecentlyOpened.json` (resolved
+//! through the `FiddeeRoot` atom). Parse failures degrade to an empty
+//! `{workspaces, files}` envelope so the UI never sees a missing field.
 
 use serde_json::{Value, json};
 
-pub fn RecentlyOpenedPath() -> std::path::PathBuf {
-	let Home = std::env::var("HOME")
-		.or_else(|_| std::env::var("USERPROFILE"))
-		.unwrap_or_default();
+use crate::IPC::WindServiceHandlers::Utilities::FiddeeRoot::FiddeeRoot;
 
-	std::path::PathBuf::from(Home)
-		.join(".land")
-		.join("workspaces")
-		.join("RecentlyOpened.json")
-}
+pub fn RecentlyOpenedPath() -> std::path::PathBuf { FiddeeRoot().join("workspaces").join("RecentlyOpened.json") }
 
 pub fn ReadRecentlyOpened() -> Result<Value, String> {
 	let Path = RecentlyOpenedPath();

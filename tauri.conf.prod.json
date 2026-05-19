@@ -184,7 +184,8 @@
 					".vscode",
 					".workspace",
 					".txt",
-					".land"
+					".land",
+					".fiddee"
 				],
 				"mimeType": "",
 				"name": "Direct",
