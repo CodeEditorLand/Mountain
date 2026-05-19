@@ -757,6 +757,9 @@ impl ConnectionHandle {
 
 	/// Check if connection is healthy
 	pub fn is_healthy(&self) -> bool { self.health_score > 50.0 && self.error_count < 5 }
+
+	/// Check if connection is alive (non-degraded, not expired).
+	pub fn is_alive(&self) -> bool { self.health_score > 0.0 && self.error_count < 10 }
 }
 
 impl ConnectionPool {
@@ -899,20 +902,10 @@ struct ConnectionHealthChecker {
 impl ConnectionHealthChecker {
 	fn new() -> Self { Self { ping_timeout:Duration::from_secs(5) } }
 
-	/// Check connection health by sending a ping
-	async fn check_connection_health(&self, _handle:&mut ConnectionHandle) -> bool {
-		// Simulate health check by ensuring connection can Handle basic operations
-		// In a real implementation, this would send an actual ping Message
-		let start_time = std::time::Instant::now();
-
-		// Simulate network latency
-		tokio::time::sleep(Duration::from_millis(10)).await;
-
-		let response_time = start_time.elapsed();
-
-		// Connection is healthy if response time is reasonable
-		response_time < self.ping_timeout
-	}
+	/// Check connection health - returns true if the connection handle has a
+	/// live channel. No artificial sleep; this is called from an idle
+	/// background task so latency doesn't matter.
+	async fn check_connection_health(&self, Handle:&mut ConnectionHandle) -> bool { Handle.is_alive() }
 }
 
 /// Connection statistics

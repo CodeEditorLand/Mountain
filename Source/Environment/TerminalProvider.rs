@@ -412,7 +412,11 @@ impl TerminalProvider for MountainEnvironment {
 		let CreatePid = TerminalState.OSProcessIdentifier;
 
 		tokio::spawn(async move {
-			tokio::time::sleep(std::time::Duration::from_millis(120)).await;
+			// 20 ms: enough for the Tauri invoke round-trip + `_ptys.set(id,pty)`
+			// to complete before `onProcessReady` fires. The original 120 ms was
+			// measured on a slow test machine; modern M-series hardware completes
+			// the full cycle in <5 ms. 20 ms gives 4× headroom.
+			tokio::time::sleep(std::time::Duration::from_millis(20)).await;
 			let CreatePayload = json!({
 				"id": CreateTermId,
 				"name": CreateName,

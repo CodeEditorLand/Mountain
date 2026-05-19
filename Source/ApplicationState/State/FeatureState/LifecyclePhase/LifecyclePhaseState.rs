@@ -1,7 +1,6 @@
 use std::sync::{Arc, Mutex as StandardMutex};
 
 use tokio::sync::Notify;
-
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 use crate::{IPC::SkyEmit::LogSkyEmit, dev_log};
@@ -28,7 +27,10 @@ impl Default for LifecyclePhaseState {
 			"[LifecyclePhaseState] Initializing default lifecycle state (phase 1: Starting)..."
 		);
 
-		Self { CurrentPhase:Arc::new(StandardMutex::new(1)), PhaseNotify:Arc::new(Notify::new()) }
+		Self {
+			CurrentPhase:Arc::new(StandardMutex::new(1)),
+			PhaseNotify:Arc::new(Notify::new()),
+		}
 	}
 }
 

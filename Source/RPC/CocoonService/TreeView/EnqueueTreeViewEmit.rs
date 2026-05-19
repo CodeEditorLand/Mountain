@@ -1,69 +1,72 @@
 #![allow(non_snake_case)]
 
 //! Coalesce 30+ Mountain → Sky `tree-view/create` emits at boot into a
-//! single batched payload per 16 ms window. SkyBridge's listener accepts
-//! both single `{ viewId, extensionId }` and batch `{ views: [...] }`
-//! shapes (mirrors the command-batch pattern from
-//! `Vine/Server/Notification/RegisterCommand.rs`).
+//! single batched payload per frame. Uses the channel-drain pattern: a
+//! long-lived flusher wakes on first item, drains immediately, sleeps one
+//! frame (16 ms), drains stragglers, then emits one `{ views: [...] }` batch.
+//! Zero spawns per call; sub-millisecond wake latency.
 
-use std::{
-	sync::{
-		Arc,
-		Mutex,
-		OnceLock,
-		atomic::{AtomicBool, Ordering},
-	},
-	time::Duration,
-};
+use std::sync::OnceLock;
 
 use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter};
+use tokio::sync::mpsc::{UnboundedSender, unbounded_channel};
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 use crate::dev_log;
 
-struct Batch {
-	Pending:Mutex<Vec<Value>>,
-
-	FlushScheduled:AtomicBool,
+struct TreeViewChannel {
+	Sender:UnboundedSender<(AppHandle, Value)>,
 }
 
-static BATCH:OnceLock<Arc<Batch>> = OnceLock::new();
+static TV_CH:OnceLock<TreeViewChannel> = OnceLock::new();
 
-pub fn Fn(Handle:&AppHandle, Payload:Value) {
-	let Batch =
-		BATCH.get_or_init(|| Arc::new(Batch { Pending:Mutex::new(Vec::new()), FlushScheduled:AtomicBool::new(false) }));
-
-	{
-		let mut Pending = Batch.Pending.lock().unwrap();
-
-		Pending.push(Payload);
-	}
-
-	if !Batch.FlushScheduled.swap(true, Ordering::AcqRel) {
-		let Cloned = Batch.clone();
-
-		let HandleCloned = Handle.clone();
+fn GetOrInitChannel(Handle:&AppHandle) -> &'static TreeViewChannel {
+	TV_CH.get_or_init(|| {
+		let (Tx, mut Rx) = unbounded_channel::<(AppHandle, Value)>();
 
 		let Channel = SkyEvent::TreeViewCreate.AsStr().to_string();
 
 		tokio::spawn(async move {
-			tokio::time::sleep(Duration::from_millis(16)).await;
-			let Drained:Vec<Value> = {
-				let mut Pending = Cloned.Pending.lock().unwrap();
-				std::mem::take(&mut *Pending)
-			};
-			Cloned.FlushScheduled.store(false, Ordering::Release);
-			if Drained.is_empty() {
-				return;
-			}
-			let Count = Drained.len();
-			match HandleCloned.emit(&Channel, json!({ "views": Drained })) {
-				Ok(()) => dev_log!("sky-emit", "[SkyEmit] ok channel={} batch={}", Channel, Count),
-				Err(Error) => {
-					dev_log!("sky-emit", "[SkyEmit] fail channel={} batch={} error={}", Channel, Count, Error)
-				},
+			let mut Buf:Vec<(AppHandle, Value)> = Vec::with_capacity(64);
+
+			loop {
+				match Rx.recv().await {
+					None => break,
+					Some(Item) => Buf.push(Item),
+				}
+
+				Rx.recv_many(&mut Buf, 4096).await;
+
+				tokio::time::sleep(std::time::Duration::from_millis(16)).await;
+
+				Rx.recv_many(&mut Buf, 4096).await;
+
+				if Buf.is_empty() {
+					continue;
+				}
+
+				let Handle = Buf[0].0.clone();
+
+				let Views:Vec<Value> = Buf.drain(..).map(|(_, V)| V).collect();
+
+				let Count = Views.len();
+
+				match Handle.emit(&Channel, json!({ "views": Views })) {
+					Ok(()) => dev_log!("sky-emit", "[SkyEmit] ok channel={} batch={}", Channel, Count),
+					Err(E) => {
+						dev_log!("sky-emit", "[SkyEmit] fail channel={} batch={} error={}", Channel, Count, E)
+					},
+				}
 			}
 		});
-	}
+
+		TreeViewChannel { Sender:Tx }
+	})
+}
+
+pub fn Fn(Handle:&AppHandle, Payload:Value) {
+	let Ch = GetOrInitChannel(Handle);
+
+	let _ = Ch.Sender.send((Handle.clone(), Payload));
 }

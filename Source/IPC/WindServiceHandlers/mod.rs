@@ -1294,7 +1294,7 @@ pub async fn mountain_ipc_invoke(
 				// the unknown-IPC log spam outweighs the precision
 				// loss.
 				"nativeHost:getCursorScreenPoint" => {
-				dev_log!("window", "nativeHost:getCursorScreenPoint");
+					dev_log!("window", "nativeHost:getCursorScreenPoint");
 					// On macOS, the mouse position is readable via `NSEvent.mouseLocation`.
 					// We query it via AppleScript since we can't call ObjC directly here.
 					// On failure (non-macOS, script error) return (0,0) which the workbench
@@ -1302,7 +1302,11 @@ pub async fn mountain_ipc_invoke(
 					#[cfg(target_os = "macos")]
 					{
 						let Out = std::process::Command::new("osascript")
-							.args(["-e", "tell application \"System Events\" to get {(do shell script \"python3 -c 'import Quartz; p=Quartz.NSEvent.mouseLocation(); print(int(p.x), int(p.y))'\")}"])
+							.args([
+								"-e",
+								"tell application \"System Events\" to get {(do shell script \"python3 -c 'import \
+								 Quartz; p=Quartz.NSEvent.mouseLocation(); print(int(p.x), int(p.y))'\")}",
+							])
 							.output();
 						if let Ok(O) = Out {
 							let S = String::from_utf8_lossy(&O.stdout);
@@ -1314,7 +1318,7 @@ pub async fn mountain_ipc_invoke(
 					}
 					Ok(json!({ "x": 0, "y": 0 }))
 				},
-			"nativeHost:getWindows" => {
+				"nativeHost:getWindows" => {
 					let Title = std::env::var("ProductNameShort").unwrap_or_else(|_| "Land".into());
 					let ActiveDoc = RunTime
 						.Environment
@@ -1411,33 +1415,78 @@ pub async fn mountain_ipc_invoke(
 					}
 					Ok(Value::Null)
 				},
+				// `NSWindow.representedFilename` - sets the proxy icon in the
+				// macOS title bar. Tauri doesn't expose this directly; use
+				// Window.set_title as a best-effort (shows path in title).
 				"nativeHost:setRepresentedFilename" => {
 					dev_log!("window", "{}", command);
-					#[cfg(target_os = "macos")]
-					{
-						let Path = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-						if !Path.is_empty() {
-							if let Some(Window) = ApplicationHandle.get_webview_window("main") {
-								let _ = Window.set_title(&Path);
-							}
+					let Path = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
+					if !Path.is_empty() {
+						if let Some(Window) = ApplicationHandle.get_webview_window("main") {
+							// Show just the filename component as the title; the
+							// full path would overflow the title bar on deep trees.
+							let Filename = std::path::Path::new(&Path)
+								.file_name()
+								.and_then(|N| N.to_str())
+								.unwrap_or(&Path);
+							let _ = Window.set_title(Filename);
 						}
 					}
-					let _ = (&Arguments, &ApplicationHandle);
 					Ok(Value::Null)
 				},
 
-				// Pure no-op arms - pure lifecycle signals VS Code fires regardless
-				// of the backing host (Electron, Mountain, Browser) but we don't
-				// need to do anything about. Kept named so the `Unknown IPC command`
-				// default branch never fires for them.
+				// `NSWindow.isDocumentEdited` - the ● dirty dot in the macOS
+				// title bar. Tauri exposes this as `set_document_edited`.
+				"nativeHost:setDocumentEdited" => {
+					let Dirty = Arguments.first().and_then(|V| V.as_bool()).unwrap_or(false);
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
+						#[cfg(target_os = "macos")]
+						let _ = Window.set_document_edited(Dirty);
+						let _ = Dirty;
+					}
+					Ok(Value::Null)
+				},
+
+				// `nativeHost:setMinimumSize` - enforce a minimum window size so
+				// the workbench never collapses to a 1×1 pixel frame.
+				"nativeHost:setMinimumSize" => {
+					let Width = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(400) as u32;
+					let Height = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(300) as u32;
+					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
+						let _ = Window.set_min_size(Some(tauri::Size::Physical(tauri::PhysicalSize {
+							width:Width,
+							height:Height,
+						})));
+					}
+					Ok(Value::Null)
+				},
+
+				// `nativeHost:positionWindow` - move the window to an explicit
+				// screen position (used by multi-window restore).
+				"nativeHost:positionWindow" => {
+					if let Some(Rect) = Arguments.first() {
+						let X = Rect.get("x").and_then(|V| V.as_i64()).unwrap_or(0) as i32;
+						let Y = Rect.get("y").and_then(|V| V.as_i64()).unwrap_or(0) as i32;
+						let W = Rect.get("width").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+						let H = Rect.get("height").and_then(|V| V.as_u64()).unwrap_or(0) as u32;
+						if let Some(Window) = ApplicationHandle.get_webview_window("main") {
+							let _ =
+								Window.set_position(tauri::Position::Physical(tauri::PhysicalPosition { x:X, y:Y }));
+							if W > 0 && H > 0 {
+								let _ =
+									Window.set_size(tauri::Size::Physical(tauri::PhysicalSize { width:W, height:H }));
+							}
+						}
+					}
+					Ok(Value::Null)
+				},
+
+				// Pure lifecycle/cosmetic signals - no Mountain-side action needed.
 				"nativeHost:updateWindowControls"
-				| "nativeHost:setMinimumSize"
 				| "nativeHost:notifyReady"
 				| "nativeHost:saveWindowSplash"
 				| "nativeHost:updateTouchBar"
 				| "nativeHost:moveWindowTop"
-				| "nativeHost:positionWindow"
-				| "nativeHost:setDocumentEdited"
 				| "nativeHost:setBackgroundThrottling"
 				| "nativeHost:updateWindowAccentColor" => {
 					dev_log!("window", "{}", command);
