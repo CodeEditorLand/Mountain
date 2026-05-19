@@ -1,18 +1,8 @@
 #![allow(non_snake_case)]
-//! Cocoon → Mountain `outputChannel.clear` notification (twin of
-//! `output.clear`).
-
 use serde_json::Value;
-use tauri::Emitter;
 
-use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
-
+use super::Support::RelayToSky::RelayToSky;
+use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
 pub async fn OutputChannelClear(Service:&MountainVinegRPCService, Parameter:&Value) {
-	let _ = Service.ApplicationHandle().emit("sky://output/clear", Parameter);
-
-	dev_log!(
-		"grpc",
-		"[OutputChannel] clear channel={}",
-		Parameter.get("channel").and_then(Value::as_str).unwrap_or("?")
-	);
+	RelayToSky(Service, "sky://output/clear", Parameter, "grpc", "[OutputChannel] clear");
 }

@@ -41,6 +41,9 @@
 
 #![allow(non_snake_case)]
 
+// --- Shared support utilities ---
+pub mod Support;
+
 // --- Batch 8: provider-unregister cleanup ---
 pub mod UnregisterAuthenticationProvider;
 

@@ -1,18 +1,8 @@
 #![allow(non_snake_case)]
-//! Cocoon → Mountain `outputChannel.show` notification (twin of
-//! `output.show`).
-
 use serde_json::Value;
-use tauri::Emitter;
 
-use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
-
+use super::Support::RelayToSky::RelayToSky;
+use crate::Vine::Server::MountainVinegRPCService::MountainVinegRPCService;
 pub async fn OutputChannelShow(Service:&MountainVinegRPCService, Parameter:&Value) {
-	let _ = Service.ApplicationHandle().emit("sky://output/show", Parameter);
-
-	dev_log!(
-		"grpc",
-		"[OutputChannel] show channel={}",
-		Parameter.get("channel").and_then(Value::as_str).unwrap_or("?")
-	);
+	RelayToSky(Service, "sky://output/show", Parameter, "grpc", "[OutputChannel] show");
 }
