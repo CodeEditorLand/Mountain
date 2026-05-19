@@ -78,6 +78,8 @@ pub mod OutputAppendLine;
 
 pub mod OutputChannelAppend;
 
+pub mod OutputChannelCoalesce;
+
 pub mod OutputChannelClear;
 
 pub mod OutputChannelCreate;

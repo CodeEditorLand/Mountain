@@ -9,26 +9,45 @@ use tauri::Emitter;
 use crate::{Vine::Server::MountainVinegRPCService::MountainVinegRPCService, dev_log};
 
 pub async fn OutputChannelAppend(Service:&MountainVinegRPCService, Parameter:&Value) {
-	let _ = Service.ApplicationHandle().emit("sky://output/append", Parameter);
-
-	// Per-append fire - `roo-cline`, `TypeScript`, `dart-code` all stream
-	// stdout into their output channels which fires 200+ appends per
-	// boot. The Sky-side consumer already sees the data via
-	// `sky://output/append`; the tag line here adds no signal beyond
-	// volume for THOSE channels. Route to `output-verbose`.
-	//
-	// Exception: vscode.git's "Git" channel logs activation flow at
-	// `[Model][doInitialScan]`, `[main] Using git`, `[main] Failed to create
-	// model` etc. - these are critical for diagnosing the F6 silent-bail
-	// (vscode.git activates ok but never reaches createSourceControl).
-	// Surface those at the `grpc` tag so they appear in `Trace=short`
-	// runs without forcing the user to enable `output-verbose` and drown
-	// in TypeScript / dart-code / roo-cline noise.
 	let ChannelName = Parameter
 		.get("channel")
 		.or_else(|| Parameter.get("name"))
 		.and_then(Value::as_str)
 		.unwrap_or("?");
+
+	// Try the per-channel coalescer first. The git extension's
+	// `[OperationManager]` traces and the typescript-language-features
+	// `[Info  - …]` lines arrive in tight 30+/100ms bursts; coalescing
+	// at a 50ms window collapses the IPC + Sky emit count without
+	// reordering text within a channel.
+	//
+	// Falls through to the legacy per-append path when:
+	//   - `OutputCoalesce=0` is set (debug escape hatch).
+	//   - The payload has no `value` field to buffer.
+	let TextValue = Parameter.get("value").and_then(Value::as_str);
+
+	let CoalesceEnqueued = match TextValue {
+		Some(Text) => {
+			super::OutputChannelCoalesce::TryEnqueue(
+				Service.ApplicationHandle(),
+				ChannelName.to_string(),
+				Text.to_string(),
+			)
+		},
+		None => false,
+	};
+
+	if CoalesceEnqueued {
+		return;
+	}
+
+	let _ = Service.ApplicationHandle().emit("sky://output/append", Parameter);
+
+	// Legacy per-append fire path - only reached under the disable hook
+	// or when the payload is missing a `value` field. The coalescer
+	// above is the steady-state path. Tags below preserve the previous
+	// channel-aware routing (Git/SCM at `grpc`, everything else at
+	// `output-verbose`).
 
 	// Char-aware truncation. Slicing a `&str` at `&S[..200]` panics when
 	// byte 200 lands inside a multi-byte UTF-8 codepoint (vscode.git's

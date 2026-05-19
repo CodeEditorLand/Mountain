@@ -289,15 +289,20 @@ impl MountainService for MountainVinegRPCService {
 
 		let ReceiveInstant = std::time::Instant::now();
 
-		// Per-call receive line is pure noise at the `grpc` tag - one line
-		// per request × thousands of requests. Move under `grpc-verbose`
-		// so the cheap default is quiet; failures are logged by the
-		// dispatch path regardless.
+		// Single consolidated receive line - replaces the previous
+		// three-line burst (`Received…` + `Params for…` + `Dispatching…`)
+		// that fired per RPC × thousands of RPCs per session. One log
+		// statement is enough to reconstruct the request lifecycle from
+		// the file: method, id, payload size in bytes. Gated under
+		// `grpc-verbose` so the default `short` trace stays quiet;
+		// failures still flow through the `grpc` (non-verbose) tag in
+		// the validate / dispatch error paths below.
 		dev_log!(
 			"grpc-verbose",
-			"[MountainVinegRPCService] Received gRPC Request [ID: {}]: Method='{}'",
+			"[MountainVinegRPCService] recv id={} method={} size={}B",
 			RequestIdentifier,
-			MethodName
+			MethodName,
+			RequestData.parameter.len()
 		);
 
 		// Hot-path instrumentation (BATCH-16). Every RPC that shows up with
@@ -344,30 +349,11 @@ impl MountainService for MountainVinegRPCService {
 			)));
 		}
 
-		// Deserialize JSON parameters
+		// Deserialize JSON parameters. The byte-count + method are
+		// already captured in the consolidated `recv id=…` line above;
+		// no additional `Params for [ID: …]` emit is needed.
 		let ParametersValue:Value = match serde_json::from_slice(&RequestData.parameter) {
-			Ok(v) => {
-				// The previous `{:?}` Debug format serialised the full
-				// `Value` on every request - cheap for small payloads
-				// (`Diagnostic.Clear`), catastrophic for `tree.register` and
-				// `Configuration.Inspect` whose options blobs walk recursive
-				// structures. Only log param size at the default dev-log
-				// level and let the DevLog `all` target surface the body if
-				// the caller opts in.
-				// One line per request with only the byte count (the body is
-				// too large / PII-risky to log unconditionally). The size
-				// alone is already in Cocoon's `Request metrics:` line under
-				// `grpc-verbose`, so duplicate here adds noise without
-				// signal. Route to `grpc-verbose`.
-				dev_log!(
-					"grpc-verbose",
-					"[MountainVinegRPCService] Params for [ID: {}] ({} bytes)",
-					RequestIdentifier,
-					RequestData.parameter.len()
-				);
-
-				v
-			},
+			Ok(v) => v,
 
 			Err(e) => {
 				let msg = format!("Failed to deserialize parameters for method '{}': {}", MethodName, e);
@@ -383,11 +369,9 @@ impl MountainService for MountainVinegRPCService {
 			},
 		};
 
-		dev_log!(
-			"grpc-verbose",
-			"[MountainVinegRPCService] Dispatching request [ID: {}] to Track::DispatchLogic",
-			RequestIdentifier
-		);
+		// Dispatch line removed - the `recv id=… method=…` line above
+		// is the single source of truth for "this RPC started"; the
+		// completion path emits its own line on success / error.
 
 		// Dispatch request to Track module for processing
 		let DispatchResult = Track::SideCarRequest::DispatchSideCarRequest::DispatchSideCarRequest(

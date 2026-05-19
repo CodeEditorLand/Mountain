@@ -73,6 +73,15 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static CommandBatchChannel {
 				match Handle.emit("sky://command/register", json!({ "commands": Commands })) {
 					Ok(()) => {
 						dev_log!("sky-emit", "[SkyEmit] ok channel=sky://command/register batch={}", Count);
+
+						// Summary line at the default-visible `commands` tag
+						// so `Trace=short` still surfaces the boot burst as
+						// `RegisterCommand batch=N` per 16ms window instead
+						// of N hidden per-command lines under
+						// `command-register`. One line per batch is the
+						// natural granularity - matches the rate of the
+						// downstream Sky emit.
+						dev_log!("commands", "[RegisterCommand] batch={}", Count);
 					},
 					Err(E) => {
 						dev_log!(
