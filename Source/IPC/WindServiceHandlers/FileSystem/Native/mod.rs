@@ -5,6 +5,10 @@
 
 pub mod FileCloneNative;
 
+pub mod FileCloseFd;
+
+pub mod FileOpenFd;
+
 pub mod FileDeleteNative;
 
 pub mod FileExistsNative;

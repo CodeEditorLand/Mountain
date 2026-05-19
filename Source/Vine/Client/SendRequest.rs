@@ -100,10 +100,11 @@ pub async fn Fn(
 		return Err(VineError::ClientNotConnected(SideCarIdentifier.to_string()));
 	};
 
-	let RequestIdentifier = std::time::SystemTime::now()
-		.duration_since(std::time::UNIX_EPOCH)
-		.unwrap()
-		.as_nanos() as u64;
+	use std::sync::atomic::{AtomicU64, Ordering as AO};
+
+	static REQ_SEQ:AtomicU64 = AtomicU64::new(1);
+
+	let RequestIdentifier = REQ_SEQ.fetch_add(1, AO::Relaxed);
 
 	let MethodForLog = Method.clone();
 

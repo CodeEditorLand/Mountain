@@ -76,6 +76,8 @@ use FileSystem::{
 		FileReaddirNative::*,
 		FileRealpath::*,
 		FileRenameNative::*,
+		FileCloseFd::FileCloseFd,
+		FileOpenFd::FileOpenFd,
 		FileStatNative::*,
 		FileUnwatch::FileUnwatch,
 		FileWatch::FileWatch,
@@ -1132,15 +1134,9 @@ pub async fn mountain_ipc_invoke(
 				// VS Code's DiskFileSystemProviderClient calls readFile/writeFile/rename
 				// but Mountain's original handlers use read/write/move.
 				// =====================================================================
-				"file:realpath" => FileRealpath(Arguments).await,
-				"file:open" => {
-					dev_log!("vfs", "file:open stub - no fd support yet");
-					Ok(json!(0))
-				},
-				"file:close" => {
-					dev_log!("vfs", "file:close stub");
-					Ok(Value::Null)
-				},
+			"file:realpath" => FileRealpath(Arguments).await,
+				"file:open" => FileOpenFd(Arguments).await,
+				"file:close" => FileCloseFd(Arguments).await,
 				"file:cloneFile" => FileCloneNative(Arguments).await,
 
 				// =====================================================================
