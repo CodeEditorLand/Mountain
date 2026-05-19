@@ -2001,6 +2001,18 @@
       "description": "Permission identifier",
       "oneOf": [
         {
+          "description": "Allow every Mountain app-defined Tauri command from any window served by the localhost plugin.\n#### This default permission set includes:\n\n- `allow-mountain-commands`",
+          "type": "string",
+          "const": "default",
+          "markdownDescription": "Allow every Mountain app-defined Tauri command from any window served by the localhost plugin.\n#### This default permission set includes:\n\n- `allow-mountain-commands`"
+        },
+        {
+          "description": "Aggregate allow-list for every #[tauri::command] in Mountain. See Source/Binary/Main/Entry.rs `invoke_handler` block for the source of truth.",
+          "type": "string",
+          "const": "allow-mountain-commands",
+          "markdownDescription": "Aggregate allow-list for every #[tauri::command] in Mountain. See Source/Binary/Main/Entry.rs `invoke_handler` block for the source of truth."
+        },
+        {
           "description": "Default core plugins set.\n#### This default permission set includes:\n\n- `core:path:default`\n- `core:event:default`\n- `core:window:default`\n- `core:webview:default`\n- `core:app:default`\n- `core:image:default`\n- `core:resources:default`\n- `core:menu:default`\n- `core:tray:default`",
           "type": "string",
           "const": "core:default",
