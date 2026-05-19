@@ -288,7 +288,13 @@ pub async fn ConstructSandboxConfiguration(
 
 		"userEnv": env::vars().collect::<HashMap<_,_>>(),
 
-		"appRoot": url::Url::from_directory_path(AppRootUri).unwrap().to_string(),
+		// `INativeWindowConfiguration.appRoot` - plain OS filesystem path.
+		// VS Code's `AbstractNativeEnvironmentService.appRoot` returns this
+		// string directly and passes it to `path.join(appRoot, ...)`.
+		// Previously sent as a `file://` URL which caused `URI.file(fileUrl)`
+		// to construct a URI with path `/file:///…` (double-scheme), making
+		// every downstream `path.join` operate on a malformed base.
+		"appRoot": AppRootUri.to_string_lossy(),
 
 		"appName": ApplicationHandle.package_info().name.clone(),
 
@@ -306,13 +312,16 @@ pub async fn ConstructSandboxConfiguration(
 
 		"execPath": env::current_exe().unwrap_or_default().to_string_lossy(),
 
-		"homeDir": url::Url::from_directory_path(HomeDir).unwrap().to_string(),
+		// Plain OS paths for all home/data/tmp/backup.
+		// VS Code wraps these in `URI.file(path)` and `path.join(path, …)`;
+		// both require a real filesystem path, not a `file://` URL string.
+		"homeDir": HomeDir.to_string_lossy(),
 
-		"tmpDir": url::Url::from_directory_path(TmpDir).unwrap().to_string(),
+		"tmpDir": TmpDir.to_string_lossy(),
 
-		"userDataDir": url::Url::from_directory_path(AppDataDir).unwrap().to_string(),
+		"userDataDir": AppDataDir.to_string_lossy(),
 
-		"backupPath": url::Url::from_directory_path(BackupPath).unwrap().to_string(),
+		"backupPath": BackupPath.to_string_lossy(),
 
 		"logsPath": LogsPath.to_string_lossy(),
 

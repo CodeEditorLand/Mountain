@@ -46,6 +46,8 @@ pub mod UnregisterAuthenticationProvider;
 
 pub mod UnregisterDebugAdapter;
 
+pub mod UnregisterDebugConfigurationProvider;
+
 pub mod UnregisterFileSystemProvider;
 
 pub mod UnregisterScmProvider;

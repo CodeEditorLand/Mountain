@@ -87,9 +87,9 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 		// `vscode.diff` is the canonical command the vscode.git extension
 		// calls when the user clicks a staged or unstaged file in the SCM
 		// sidebar. It receives three positional args:
-		//   [0] leftUri   – the "before" URI  (e.g. git://…?HEAD)
-		//   [1] rightUri  – the "after"  URI  (e.g. the working-tree file)
-		//   [2] title     – string label shown in the editor tab
+		//   [0] leftUri   - the "before" URI  (e.g. git://…?HEAD)
+		//   [1] rightUri  - the "after"  URI  (e.g. the working-tree file)
+		//   [2] title     - string label shown in the editor tab
 		//
 		// Without this arm the command falls through to the Unknown-method
 		// error branch, Mountain logs a warn, the extension's awaited

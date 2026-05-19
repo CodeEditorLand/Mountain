@@ -686,6 +686,13 @@ impl MountainService for MountainVinegRPCService {
 			"unregister_debug_adapter" => {
 				super::Notification::UnregisterDebugAdapter::UnregisterDebugAdapter(self, &Parameter).await;
 			},
+			"unregister_debug_configuration_provider" => {
+				super::Notification::UnregisterDebugConfigurationProvider::UnregisterDebugConfigurationProvider(
+					self,
+					&Parameter,
+				)
+				.await;
+			},
 			"unregister_file_system_provider" => {
 				super::Notification::UnregisterFileSystemProvider::UnregisterFileSystemProvider(self, &Parameter).await;
 			},

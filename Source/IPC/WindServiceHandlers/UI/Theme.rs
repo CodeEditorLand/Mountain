@@ -28,17 +28,31 @@ pub async fn ThemesGetActive(RunTime:Arc<ApplicationRunTime>) -> Result<Value, S
 	let Id = ThemeId.as_str().unwrap_or("Default Dark Modern").to_string();
 
 	// Infer kind from id string.
-	let Kind = if Id.to_lowercase().contains("light") {
-		"light"
-	} else if Id.to_lowercase().contains("high contrast light") {
-		"highContrastLight"
+	// `ColorThemeKind` numeric values from VS Code:
+	//   Light = 1, Dark = 2, HighContrast = 3, HighContrastLight = 4
+	let (Kind, TypeNum) = if Id.to_lowercase().contains("high contrast light") {
+		("highContrastLight", 4u8)
 	} else if Id.to_lowercase().contains("high contrast") {
-		"highContrast"
+		("highContrast", 3u8)
+	} else if Id.to_lowercase().contains("light") {
+		("light", 1u8)
 	} else {
-		"dark"
+		("dark", 2u8)
 	};
 
-	Ok(json!({ "id": Id, "label": Id, "kind": Kind }))
+	Ok(json!({
+		"id": Id,
+		"label": Id,
+		// `kind` is the string variant used by Land's own UI layer.
+		"kind": Kind,
+		// `type` is the numeric `ColorThemeKind` enum that VS Code's
+		// workbench (`ThemeService`, `TokenizationRegistry`) reads to decide
+		// syntax highlighting colour sets.
+		"type": TypeNum,
+		// Minimal tokenization / color fields; workbench falls back to
+		// built-in defaults for missing entries.
+		"semanticHighlighting": false,
+	}))
 }
 
 pub async fn ThemesList(_runtime:Arc<ApplicationRunTime>) -> Result<Value, String> {

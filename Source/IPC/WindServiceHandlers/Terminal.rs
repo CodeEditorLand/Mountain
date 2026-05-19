@@ -18,12 +18,20 @@
 //! - `LocalPTYGetProfiles::LocalPTYGetProfiles`,
 //!   `LocalPTYGetDefaultShell::LocalPTYGetDefaultShell`,
 //!   `LocalPTYGetEnvironment::LocalPTYGetEnvironment`.
+//! - `SerializeTerminalState::SerializeTerminalState` - snapshot all active
+//!   terminals to `ISerializedTerminalState[]` for window-reload restoration.
+//! - `ReviveTerminalProcesses::ReviveTerminalProcesses` - respawn terminals
+//!   from a previously serialised snapshot.
 
 pub mod LocalPTYGetDefaultShell;
 
 pub mod LocalPTYGetEnvironment;
 
 pub mod LocalPTYGetProfiles;
+
+pub mod ReviveTerminalProcesses;
+
+pub mod SerializeTerminalState;
 
 pub mod TerminalCreate;
 

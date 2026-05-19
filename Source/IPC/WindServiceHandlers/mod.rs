@@ -147,6 +147,8 @@ use Terminal::{
 	LocalPTYGetDefaultShell::LocalPTYGetDefaultShell,
 	LocalPTYGetEnvironment::LocalPTYGetEnvironment,
 	LocalPTYGetProfiles::LocalPTYGetProfiles,
+	ReviveTerminalProcesses::ReviveTerminalProcesses,
+	SerializeTerminalState::SerializeTerminalState,
 	TerminalCreate::TerminalCreate,
 	TerminalDispose::TerminalDispose,
 	TerminalHide::TerminalHide,
@@ -327,6 +329,12 @@ pub async fn mountain_ipc_invoke(
 			| "logger:createLogger" | "logger:registerLogger"
 			| "logger:deregisterLogger" | "logger:getRegisteredLoggers"
 			| "logger:setVisibility"
+			// Legacy log-service stubs: VS Code 1.87+ calls `log:registerLogger`
+			// / `log:createLogger` (short prefix) in addition to the `logger:*`
+			// family. Both are registered in Channel.rs so the "registered but no
+			// dispatch arm" error fired on every boot. Stub-ack here alongside the
+			// logger:* group.
+			| "log:registerLogger" | "log:createLogger"
 			// Storage event stubs: change delivery via Tauri events
 			| "storage:onDidChangeItems" | "storage:logStorage"
 			// Command registry stubs: side effects handled via gRPC
@@ -402,6 +410,38 @@ pub async fn mountain_ipc_invoke(
 				// channel-listen with Null so the ChannelClient doesn't
 				// leak a pending promise.
 				"configuration:onDidChange" => Ok(Value::Null),
+
+				// `configuration:lookup` is VS Code's
+				// `IConfigurationService.getValue(key)` called from the
+				// workbench's `ConfigurationService` singleton. Wire shape is
+				// identical to `configuration:get`; alias so both rails resolve
+				// the same underlying value.
+				"configuration:lookup" => {
+					dev_log!("config", "configuration:lookup (→ get)");
+					ConfigurationGet(RunTime.clone(), Arguments).await
+				},
+
+				// `configuration:inspect` is `IConfigurationService.inspect(key)`.
+				// The workbench destructures `{ value, default, user, workspace,
+				// workspaceFolder }` from the result unconditionally; returning a
+				// plain value or null crashes the Settings UI. We surface the
+				// current effective value in both `value` and `default` (since
+				// Mountain has no per-scope override layer yet) and null for the
+				// remaining scopes. VS Code treats null scopes as "not set",
+				// which is correct for Land where no user/workspace JSON overrides
+				// exist.
+				"configuration:inspect" => {
+					dev_log!("config", "configuration:inspect");
+					let CurrentValue = ConfigurationGet(RunTime.clone(), Arguments).await.unwrap_or(Value::Null);
+					Ok(json!({
+						"value": CurrentValue,
+						"default": CurrentValue,
+						"user": Value::Null,
+						"workspace": Value::Null,
+						"workspaceFolder": Value::Null,
+						"memory": Value::Null,
+					}))
+				},
 
 				// Logger commands - VS Code's ILogService channel. Forward
 				// messages into Mountain's dev_log so Wind/Cocoon log lines
@@ -944,6 +984,14 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("themes", "themes:set");
 					ThemesSet(RunTime.clone(), Arguments).await
 				},
+				// `IThemeService.getColorTheme()` - workbench channel method used
+				// by tokenization, decoration, and the colour-picker to read the
+				// active theme object. Wire shape differs from `themes:getActive`
+				// only in name; alias to the same handler.
+				"themes:getColorTheme" => {
+					dev_log!("themes", "themes:getColorTheme (→ getActive)");
+					ThemesGetActive(RunTime.clone()).await
+				},
 
 				// Search commands. Stock VS Code `SearchService` channel
 				// uses `textSearch` / `fileSearch`; Mountain's Effect-TS
@@ -1201,6 +1249,25 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:pickFileFolderAndOpen" => NativePickFolder(ApplicationHandle.clone(), Arguments).await,
 				"nativeHost:pickWorkspaceAndOpen" => NativePickFolder(ApplicationHandle.clone(), Arguments).await,
 				"nativeHost:showOpenDialog" => NativeShowOpenDialog(ApplicationHandle.clone(), Arguments).await,
+
+				// Wind's `Files/Live.ts` calls `UserInterface.ShowOpenDialog` via
+				// IPC and expects a bare `string[]` (file paths). The
+				// `NativeShowOpenDialog` handler returns `{ canceled, filePaths }`.
+				// Unwrap here so Wind's `Array.isArray(Result) ? Result : []`
+				// finds the array rather than silently falling back to `[]`.
+				"UserInterface.ShowOpenDialog" => {
+					match NativeShowOpenDialog(ApplicationHandle.clone(), Arguments).await {
+						Ok(Response) => {
+							let Paths = Response
+								.get("filePaths")
+								.and_then(|V| V.as_array())
+								.cloned()
+								.unwrap_or_default();
+							Ok(Value::Array(Paths))
+						},
+						Err(Error) => Err(Error),
+					}
+				},
 				"nativeHost:showSaveDialog" => {
 					use tauri_plugin_dialog::DialogExt;
 					let Options = Arguments.first().cloned().unwrap_or(Value::Null);
@@ -1219,6 +1286,32 @@ pub async fn mountain_ipc_invoke(
 						Ok(Some(Path)) => Ok(json!({ "canceled": false, "filePath": Path })),
 						Ok(None) => Ok(json!({ "canceled": true })),
 						Err(Error) => Err(format!("showSaveDialog join error: {}", Error)),
+					}
+				},
+				// Wind's `Files/Live.ts` calls `UserInterface.ShowSaveDialog` via
+				// IPC and expects a bare path string (or undefined). Unwrap from the
+				// `{ canceled, filePath }` shape so Wind's
+				// `typeof Result === "string" ? Result : undefined` sees the string.
+				"UserInterface.ShowSaveDialog" => {
+					use tauri_plugin_dialog::DialogExt;
+					let Options = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Title = Options.get("title").and_then(Value::as_str).unwrap_or("Save").to_string();
+					let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
+					let Handle = ApplicationHandle.clone();
+					let Joined = tokio::task::spawn_blocking(move || -> Option<String> {
+						let mut Builder = Handle.dialog().file().set_title(&Title);
+						if let Some(Path) = DefaultPath.as_deref() {
+							Builder = Builder.set_directory(Path);
+						}
+						Builder.blocking_save_file().map(|P| P.to_string())
+					})
+					.await;
+					// Return just the path string (not the {canceled,filePath} envelope)
+					// so Wind's `typeof Result === "string"` guard finds a string value.
+					match Joined {
+						Ok(Some(Path)) => Ok(json!(Path)),
+						Ok(None) => Ok(Value::Null),
+						Err(Error) => Err(format!("UserInterface.ShowSaveDialog join error: {}", Error)),
 					}
 				},
 				"nativeHost:showMessageBox" => {
@@ -2102,18 +2195,54 @@ pub async fn mountain_ipc_invoke(
 					Ok(Value::Null)
 				},
 
-				// Remaining `localPty:*` - lifecycle/title hooks; no-op.
+				// `ILocalPtyService.serializeTerminalProcesses` - snapshot all
+				// active terminals so the workbench can persist them to storage
+				// and restore them across a window reload. Returns
+				// `ISerializedTerminalState[]`.
+				"localPty:serializeTerminalState" => {
+					dev_log!("terminal", "localPty:serializeTerminalState");
+					SerializeTerminalState(RunTime.clone()).await
+				},
+
+				// `ILocalPtyService.reviveTerminalProcesses` - respawn shells from
+				// a snapshot produced by `serializeTerminalState`. Accepts
+				// `(ISerializedTerminalState[], dateTimeFormatLocale)`.
+				"localPty:reviveTerminalProcesses" => {
+					dev_log!(
+						"terminal",
+						"localPty:reviveTerminalProcesses count={}",
+						Arguments.first().and_then(|V| V.as_array()).map(|A| A.len()).unwrap_or(0)
+					);
+					ReviveTerminalProcesses(RunTime.clone(), Arguments).await
+				},
+
+				// `ILocalPtyService.getRevivedPtyNewId` - allocate a fresh
+				// terminal ID for a revived PTY. The workbench calls this before
+				// `reviveTerminalProcesses` to pre-assign an integer it can use
+				// to key into `_ptys`. Returning the next atomic counter value
+				// keeps IDs unique and collision-free across reloads.
+				"localPty:getRevivedPtyNewId" => {
+					let NewId = RunTime.Environment.ApplicationState.GetNextTerminalIdentifier();
+					dev_log!("terminal", "localPty:getRevivedPtyNewId id={}", NewId);
+					Ok(json!(NewId))
+				},
+
+				// Remaining `localPty:*` - lifecycle/title hooks that have no
+				// Mountain-side state; acknowledged as no-ops.
+				// `attachToProcess` / `detachFromProcess`: session reconnect to an
+				// existing PTY host - not applicable since Mountain runs PTYs
+				// in-process with no separate host.
+				// `installAutoReply` / `uninstallAllAutoReplies`: shell-integration
+				// auto-reply triggers (e.g. sudo password prompts) - not
+				// implemented.
 				"localPty:processBinary"
 				| "localPty:attachToProcess"
 				| "localPty:detachFromProcess"
 				| "localPty:orphanQuestionReply"
 				| "localPty:updateTitle"
 				| "localPty:updateIcon"
-				| "localPty:getRevivedPtyNewId"
-				| "localPty:reviveTerminalProcesses"
 				| "localPty:installAutoReply"
-				| "localPty:uninstallAllAutoReplies"
-				| "localPty:serializeTerminalState" => Ok(Value::Null),
+				| "localPty:uninstallAllAutoReplies" => Ok(Value::Null),
 
 				// =====================================================================
 				// Update service

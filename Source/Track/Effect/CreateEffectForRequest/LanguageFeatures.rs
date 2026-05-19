@@ -83,6 +83,17 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			CreateProviderEffect(Parameters, ProviderType::EvaluatableExpression)
 		},
 		"register_inline_values_provider" => CreateProviderEffect(Parameters, ProviderType::InlineValues),
+		// Providers added in VS Code ≥1.87 - registration wires the handle into
+		// the ProviderRegistration map so the Language Feature dispatch layer
+		// can proxy back to Cocoon for `$provideXxx` requests.
+		"register_inline_completion_item_provider" => CreateProviderEffect(Parameters, ProviderType::InlineCompletion),
+		"register_inline_edit_provider" => CreateProviderEffect(Parameters, ProviderType::InlineEdit),
+		"register_multi_document_highlight_provider" => {
+			CreateProviderEffect(Parameters, ProviderType::MultiDocumentHighlight)
+		},
+		"register_mapped_edits_provider" => CreateProviderEffect(Parameters, ProviderType::MappedEdits),
+		"register_document_paste_edit_provider" => CreateProviderEffect(Parameters, ProviderType::DocumentPasteEdit),
+		"register_document_drop_edit_provider" => CreateProviderEffect(Parameters, ProviderType::DocumentDropEdit),
 		_ => None,
 	}
 }

@@ -111,6 +111,46 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			Some(Ok(Box::new(effect)))
 		},
 
+		// `$terminal:show` / `$terminal:hide` - Cocoon's window namespace shim
+		// calls these when extensions invoke `terminal.show(preserveFocus)` or
+		// `terminal.hide()`. Wire through the same `ShowTerminal` / `HideTerminal`
+		// provider path that the `terminal:show` / `terminal:hide` IPC handlers
+		// use so both call sites share one implementation.
+		"$terminal:show" | "Terminal.Show" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+						let terminal_id = Parameters.get(0).and_then(Value::as_u64).unwrap_or(0);
+						let preserve_focus = Parameters.get(1).and_then(Value::as_bool).unwrap_or(false);
+						provider
+							.ShowTerminal(terminal_id, preserve_focus)
+							.await
+							.map(|()| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
+		"$terminal:hide" | "Terminal.Hide" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let provider:Arc<dyn TerminalProvider> = run_time.Environment.Require();
+						let terminal_id = Parameters.get(0).and_then(Value::as_u64).unwrap_or(0);
+						provider
+							.HideTerminal(terminal_id)
+							.await
+							.map(|()| json!(null))
+							.map_err(|e| e.to_string())
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
 		_ => None,
 	}
 }

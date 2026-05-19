@@ -18,7 +18,7 @@
 //! | `both`, `all`                  | on             | on           |
 //!
 //! Ports: `DebugServerPort` (legacy alias `DebugServerPortMountain`,
-//! default `9933`) — Mountain. Cocoon uses `DebugServerPortCocoon`
+//! default `9933`) - Mountain. Cocoon uses `DebugServerPortCocoon`
 //! (default `9934`).
 //!
 //! ## Endpoints
@@ -32,8 +32,8 @@
 //! | GET    | `/iframes`       | Walk DOM iframes (src/id/name)                     |
 //! | GET    | `/console`       | Drain the renderer console mirror buffer          |
 //! | GET    | `/commands`      | Enumerate registered workbench commands           |
-//! | POST   | `/command`       | Body `{id,args?}` — invoke a workbench command    |
-//! | POST   | `/vscode/diff`   | Body `{left,right,title?}` — open diff editor      |
+//! | POST   | `/command`       | Body `{id,args?}` - invoke a workbench command    |
+//! | POST   | `/vscode/diff`   | Body `{left,right,title?}` - open diff editor      |
 //! | GET    | `/extensions`    | Proxies Cocoon `/extensions` if reachable          |
 //!
 //! All responses are JSON. Mountain-layer endpoints execute in the renderer
