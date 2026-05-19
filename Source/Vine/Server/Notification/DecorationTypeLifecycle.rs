@@ -58,8 +58,7 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static DecorationChannel {
 				// Group by channel name; all items share the same AppHandle.
 				let Handle = Buf[0].Handle.clone();
 
-				let mut ByChannel:std::collections::HashMap<String, Vec<Value>> =
-					std::collections::HashMap::new();
+				let mut ByChannel:std::collections::HashMap<String, Vec<Value>> = std::collections::HashMap::new();
 
 				for Item in Buf.drain(..) {
 					ByChannel.entry(Item.Channel).or_default().push(Item.Payload);
@@ -70,13 +69,9 @@ fn GetOrInitChannel(Handle:&AppHandle) -> &'static DecorationChannel {
 
 					match Handle.emit(&ChannelName, json!({ "batch": Payloads })) {
 						Ok(()) => dev_log!("sky-emit", "[SkyEmit] ok channel={} batch={}", ChannelName, Count),
-						Err(E) => dev_log!(
-							"sky-emit",
-							"[SkyEmit] fail channel={} batch={} error={}",
-							ChannelName,
-							Count,
-							E
-						),
+						Err(E) => {
+							dev_log!("sky-emit", "[SkyEmit] fail channel={} batch={} error={}", ChannelName, Count, E)
+						},
 					}
 				}
 			}

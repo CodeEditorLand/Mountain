@@ -1,5 +1,7 @@
 use std::sync::{Arc, Mutex as StandardMutex};
 
+use tokio::sync::Notify;
+
 use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 use crate::{IPC::SkyEmit::LogSkyEmit, dev_log};
@@ -9,10 +11,14 @@ use crate::{IPC::SkyEmit::LogSkyEmit, dev_log};
 pub type Phase = u8;
 
 /// Tracks the current application lifecycle phase.
-/// Components poll this to defer work until the editor is fully initialised.
+/// `PhaseNotify` fires every time the phase advances so `LifecycleWhenPhase`
+/// can await it instead of polling at 100 ms intervals.
 #[derive(Clone)]
 pub struct LifecyclePhaseState {
 	CurrentPhase:Arc<StandardMutex<Phase>>,
+
+	/// Fired (notify_waiters) on every forward phase transition.
+	pub PhaseNotify:Arc<Notify>,
 }
 
 impl Default for LifecyclePhaseState {
@@ -22,7 +28,7 @@ impl Default for LifecyclePhaseState {
 			"[LifecyclePhaseState] Initializing default lifecycle state (phase 1: Starting)..."
 		);
 
-		Self { CurrentPhase:Arc::new(StandardMutex::new(1)) }
+		Self { CurrentPhase:Arc::new(StandardMutex::new(1)), PhaseNotify:Arc::new(Notify::new()) }
 	}
 }
 
@@ -37,6 +43,9 @@ impl LifecyclePhaseState {
 				dev_log!("lifecycle", "[LifecyclePhaseState] Phase advanced: {} → {}", *Guard, NewPhase);
 
 				*Guard = NewPhase;
+
+				// Wake all `LifecycleWhenPhase` waiters immediately.
+				self.PhaseNotify.notify_waiters();
 			}
 		}
 	}

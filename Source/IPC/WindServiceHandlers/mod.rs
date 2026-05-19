@@ -7,6 +7,8 @@ pub mod Commands;
 
 pub mod Configuration;
 
+pub mod Encryption;
+
 pub mod Extension;
 
 pub mod Extensions;
@@ -44,6 +46,7 @@ use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
 use Commands::*;
 use Configuration::*;
+use Encryption::{Decrypt::Decrypt, Encrypt::Encrypt};
 use Extensions::{
 	ExtensionsGet::ExtensionsGet,
 	ExtensionsGetAll::ExtensionsGetAll,
@@ -370,11 +373,11 @@ pub async fn mountain_ipc_invoke(
 				// leak a pending promise.
 				"configuration:onDidChange" => Ok(Value::Null),
 
-			// Logger commands - VS Code's ILogService channel. Forward
+				// Logger commands - VS Code's ILogService channel. Forward
 				// messages into Mountain's dev_log so Wind/Cocoon log lines
 				// appear in the unified Mountain.dev.log stream.
-				"logger:log" | "logger:warn" | "logger:error" | "logger:info"
-				| "logger:debug" | "logger:trace" | "logger:critical" => {
+				"logger:log" | "logger:warn" | "logger:error" | "logger:info" | "logger:debug" | "logger:trace"
+				| "logger:critical" => {
 					let Level = command.trim_start_matches("logger:");
 					let Msg = if Arguments.len() >= 2 {
 						let Tail:Vec<String> = Arguments
@@ -384,7 +387,10 @@ pub async fn mountain_ipc_invoke(
 							.collect();
 						Tail.join(" ")
 					} else {
-						Arguments.first().and_then(|V| V.as_str().map(str::to_owned)).unwrap_or_default()
+						Arguments
+							.first()
+							.and_then(|V| V.as_str().map(str::to_owned))
+							.unwrap_or_default()
 					};
 					if !Msg.is_empty() {
 						match Level {
@@ -1573,7 +1579,7 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:getProcessId" => Ok(json!(std::process::id())),
 				"nativeHost:killProcess" => KillProcess(Arguments).await,
 
-			// Network
+				// Network
 				"nativeHost:findFreePort" => NativeFindFreePort(Arguments).await,
 				"nativeHost:isPortFree" => {
 					// Actually attempt to bind the port; TcpListener::bind returns Ok
@@ -1582,11 +1588,9 @@ pub async fn mountain_ipc_invoke(
 					if Port == 0 {
 						return Ok(json!(false));
 					}
-					let Free = tokio::net::TcpListener::bind(
-						std::net::SocketAddr::from(([127, 0, 0, 1], Port)),
-					)
-					.await
-					.is_ok();
+					let Free = tokio::net::TcpListener::bind(std::net::SocketAddr::from(([127, 0, 0, 1], Port)))
+						.await
+						.is_ok();
 					Ok(json!(Free))
 				},
 				// `IProxyService.resolveProxy` - return `DIRECT` when no proxy
@@ -1601,7 +1605,12 @@ pub async fn mountain_ipc_invoke(
 						.or_else(|_| std::env::var("ALL_PROXY"))
 						.or_else(|_| std::env::var("all_proxy"));
 					match ProxyEnv {
-						Ok(P) if !P.is_empty() => Ok(json!(format!("PROXY {}", P.trim_start_matches("http://").trim_start_matches("https://")))),
+						Ok(P) if !P.is_empty() => {
+							Ok(json!(format!(
+								"PROXY {}",
+								P.trim_start_matches("http://").trim_start_matches("https://")
+							)))
+						},
 						_ => Ok(json!("DIRECT")),
 					}
 				},
@@ -1908,19 +1917,27 @@ pub async fn mountain_ipc_invoke(
 					// xterm flow-control heartbeat; no-op on Mountain side.
 					Ok(Value::Null)
 				},
-			// `ILocalPtyService.getBackendOS` - VS Code uses this to decide
+				// `ILocalPtyService.getBackendOS` - VS Code uses this to decide
 				// which profile list to show (Windows/Linux/macOS). Returns the
 				// `OperatingSystem` enum value from
 				// `vs/base/common/platform.ts`: 1 = Macintosh, 2 = Linux, 3 = Windows.
 				"localPty:getBackendOS" => {
 					#[cfg(target_os = "macos")]
-					{ Ok(json!(1)) }
+					{
+						Ok(json!(1))
+					}
 					#[cfg(target_os = "linux")]
-					{ Ok(json!(2)) }
+					{
+						Ok(json!(2))
+					}
 					#[cfg(target_os = "windows")]
-					{ Ok(json!(3)) }
+					{
+						Ok(json!(3))
+					}
 					#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
-					{ Ok(json!(2)) }
+					{
+						Ok(json!(2))
+					}
 				},
 
 				// `ILocalPtyService.refreshProperty` - returns the current value
@@ -1928,12 +1945,15 @@ pub async fn mountain_ipc_invoke(
 				// PID in the terminal tab tooltip) and `Cwd` (for smart basename).
 				// Property enum: 0=Cwd, 1=ProcessId, 2=Title, 3=OverrideName,
 				// 4=ResolvedShellLaunchConfig, 5=ShellType
-			// `ILocalPtyService.refreshProperty` - returns the current value
+				// `ILocalPtyService.refreshProperty` - returns the current value
 				// of a PTY property. VS Code calls this for `ProcessId` (tooltip)
 				// and `Cwd` (smart basename).
 				// Property enum: 0=Cwd, 1=ProcessId, 2=Title…
 				"localPty:refreshProperty" => {
-					use CommonLibrary::{Environment::Requires::Requires, Terminal::TerminalProvider::TerminalProvider};
+					use CommonLibrary::{
+						Environment::Requires::Requires,
+						Terminal::TerminalProvider::TerminalProvider,
+					};
 					let TerminalId = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
 					let PropId = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(0);
 					if TerminalId == 0 {
@@ -2058,14 +2078,8 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				// Encryption
 				// =====================================================================
-				"encryption:encrypt" => {
-					dev_log!("encryption", "encryption:encrypt");
-					Ok(json!(""))
-				},
-				"encryption:decrypt" => {
-					dev_log!("encryption", "encryption:decrypt");
-					Ok(json!(""))
-				},
+				"encryption:encrypt" => Encrypt(Arguments).await,
+				"encryption:decrypt" => Decrypt(Arguments).await,
 
 				// =====================================================================
 				// Extension host starter

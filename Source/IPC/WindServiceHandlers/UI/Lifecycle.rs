@@ -1,11 +1,10 @@
 #![allow(non_snake_case, unused_variables)]
-//! Lifecycle handlers: phase get / wait / shutdown. Tracks Mountain's
-//! four-phase startup (Starting / Ready / Restored / Eventually) so Sky
-//! can gate UI installation on lifecycle progress.
+
+//! Lifecycle handlers: phase get / wait / shutdown.
 //!
-//! `LifecycleWhenPhase` currently polls at 100 ms intervals up
-//! to 5 s; TODO to replace with a `tokio::sync::Notify` when the
-//! lifecycle service grows real broadcast semantics.
+//! `LifecycleWhenPhase` awaits `LifecyclePhaseState::PhaseNotify` instead
+//! of polling at 100 ms intervals. Each forward phase transition calls
+//! `notify_waiters()`, so callers wake exactly when the target phase arrives.
 
 use std::sync::Arc;
 
@@ -23,25 +22,26 @@ pub async fn LifecycleGetPhase(RunTime:Arc<ApplicationRunTime>) -> Result<Value,
 pub async fn LifecycleWhenPhase(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let RequestedPhase = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(1) as u8;
 
-	let CurrentPhase = RunTime.Environment.ApplicationState.Feature.Lifecycle.GetPhase();
+	let Lifecycle = &RunTime.Environment.ApplicationState.Feature.Lifecycle;
 
-	if CurrentPhase >= RequestedPhase {
+	// Fast path: already at or past the requested phase.
+	if Lifecycle.GetPhase() >= RequestedPhase {
 		return Ok(Value::Null);
 	}
 
-	let mut Retries = 0u8;
+	let Notify = Lifecycle.PhaseNotify.clone();
 
-	loop {
-		tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+	// Hard cap at 30 s so a stalled phase never deadlocks the workbench.
+	let _ = tokio::time::timeout(std::time::Duration::from_secs(30), async {
+		loop {
+			Notify.notified().await;
 
-		let Phase = RunTime.Environment.ApplicationState.Feature.Lifecycle.GetPhase();
-
-		if Phase >= RequestedPhase || Retries >= 50 {
-			break;
+			if Lifecycle.GetPhase() >= RequestedPhase {
+				break;
+			}
 		}
-
-		Retries += 1;
-	}
+	})
+	.await;
 
 	Ok(Value::Null)
 }
