@@ -230,6 +230,13 @@ pub async fn ConstructSandboxConfiguration(
 
 	let BackupPath = AppDataDir.join("Backups").join(ApplicationState.GetWorkspaceIdentifier()?);
 
+	// `logsPath` is a required field of `ISandboxConfiguration`. VS Code reads
+	// it via `NativeWorkbenchEnvironmentService.logsHome` → `URI.file(logsPath)`.
+	// Missing it leaves logsPath=undefined → URI.file(undefined).fsPath=undefined
+	// → path.join(undefined,"…") → "The path argument must be of type string".
+	let LogsPath = AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp::Fn());
+	let _ = std::fs::create_dir_all(&LogsPath);
+
 	let Platform = match env::consts::OS {
 		"windows" => "win32",
 
@@ -306,6 +313,8 @@ pub async fn ConstructSandboxConfiguration(
 		"userDataDir": url::Url::from_directory_path(AppDataDir).unwrap().to_string(),
 
 		"backupPath": url::Url::from_directory_path(BackupPath).unwrap().to_string(),
+
+		"logsPath": LogsPath.to_string_lossy(),
 
 		"nls": { "messages": {}, "language": "en", "availableLanguages": { "en": "English" } },
 

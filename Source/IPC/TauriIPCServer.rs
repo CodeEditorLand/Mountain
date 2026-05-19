@@ -895,12 +895,10 @@ impl ConnectionPool {
 }
 
 /// Connection health checker
-struct ConnectionHealthChecker {
-	ping_timeout:Duration,
-}
+struct ConnectionHealthChecker {}
 
 impl ConnectionHealthChecker {
-	fn new() -> Self { Self { ping_timeout:Duration::from_secs(5) } }
+	fn new() -> Self { Self {} }
 
 	/// Check connection health - returns true if the connection handle has a
 	/// live channel. No artificial sleep; this is called from an idle

@@ -1467,14 +1467,10 @@ pub async fn mountain_ipc_invoke(
 				},
 
 				// `NSWindow.isDocumentEdited` - the ● dirty dot in the macOS
-				// title bar. Tauri exposes this as `set_document_edited`.
+				// title bar. NSWindow::setDocumentEdited is not exposed by
+				// Tauri 2.x's WebviewWindow API; acknowledged as no-op.
 				"nativeHost:setDocumentEdited" => {
-					let Dirty = Arguments.first().and_then(|V| V.as_bool()).unwrap_or(false);
-					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
-						#[cfg(target_os = "macos")]
-						let _ = Window.set_document_edited(Dirty);
-						let _ = Dirty;
-					}
+					let _ = Arguments;
 					Ok(Value::Null)
 				},
 
@@ -1688,16 +1684,15 @@ pub async fn mountain_ipc_invoke(
 				// Network
 				"nativeHost:findFreePort" => NativeFindFreePort(Arguments).await,
 				"nativeHost:isPortFree" => {
-					// Actually attempt to bind the port; TcpListener::bind returns Ok
-					// if and only if no process holds it.
 					let Port = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0) as u16;
 					if Port == 0 {
-						return Ok(json!(false));
+						Ok(json!(false))
+					} else {
+						let Free = tokio::net::TcpListener::bind(std::net::SocketAddr::from(([127, 0, 0, 1], Port)))
+							.await
+							.is_ok();
+						Ok(json!(Free))
 					}
-					let Free = tokio::net::TcpListener::bind(std::net::SocketAddr::from(([127, 0, 0, 1], Port)))
-						.await
-						.is_ok();
-					Ok(json!(Free))
 				},
 				// `IProxyService.resolveProxy` - return `DIRECT` when no proxy
 				// env var is set, or the var's value when one is configured.
@@ -2063,17 +2058,16 @@ pub async fn mountain_ipc_invoke(
 					let TerminalId = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0);
 					let PropId = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(0);
 					if TerminalId == 0 {
-						return Ok(Value::Null);
-					}
-					let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
-					// ProcessId (1)
-					if PropId == 1 {
+						Ok(Value::Null)
+					} else if PropId == 1 {
+						let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
 						match Provider.GetTerminalProcessId(TerminalId).await {
-							Ok(Some(Pid)) => return Ok(json!(Pid)),
-							_ => return Ok(Value::Null),
+							Ok(Some(Pid)) => Ok(json!(Pid)),
+							_ => Ok(Value::Null),
 						}
+					} else {
+						Ok(Value::Null)
 					}
-					Ok(Value::Null)
 				},
 
 				// `ILocalPtyService.updateProperty` - workbench sets icon/title

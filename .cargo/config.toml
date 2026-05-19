@@ -4,6 +4,9 @@ rustdocflags = ["-Zunstable-options", "--enable-index-page"]
 
 [env]
 MACOSX_DEPLOYMENT_TARGET = { value = "10.13", force = true }
+# Miri: disable OS-call isolation so Tauri's `_NSGetExecutablePath` /
+# `std::env::current_exe()` calls succeed in the test runner.
+MIRIFLAGS = { value = "-Zmiri-disable-isolation", force = false }
 
 [net]
 git-fetch-with-cli = true

@@ -133,28 +133,58 @@ graph LR
     classDef wind     fill:#cce8ff,stroke:#2980b9,stroke-width:2px,color:#00304a;
     classDef common   fill:#d4f5d4,stroke:#27ae60,stroke-width:1px,stroke-dasharray:5 5,color:#0a3a0a;
     classDef ipc      fill:#fff3c0,stroke:#f39c12,stroke-width:1px,stroke-dasharray:5 5,color:#5a3e00;
+    classDef air      fill:#e0f4ff,stroke:#2471a3,stroke-width:1px,stroke-dasharray:5 5,color:#001a30;
 
-    subgraph "Mountain - Native Rust/Tauri Backend&#x2001;⛰️"
-        TauriRuntime["Tauri App & Window&#x2001;🚀"]:::mountain
-        ApplicationRunTime["ApplicationRunTime Engine&#x2001;⚡"]:::mountain
-        ApplicationState["ApplicationState - Shared State&#x2001;🗄️"]:::mountain
-        TrackDispatcher["Track Dispatcher&#x2001;🔀"]:::mountain
-        VinegRPC["Vine - gRPC Server&#x2001;🌿"]:::ipc
-        EnvironmentProviders["Environment Providers&#x2001;⚙️"]:::mountain
-        CommonCrate["Common Crate - Traits & DTOs&#x2001;📐"]:::common
+    subgraph MOUNTAIN["Mountain ⛰️ - Native Rust/Tauri Backend"]
+        direction TB
+        subgraph INIT["Binary/ - App Lifecycle"]
+            TauriRuntime["Tauri Window &amp; WebView 🚀"]:::mountain
+            AppState["ApplicationState 🗄️"]:::mountain
+        end
+        subgraph DISPATCH["Track/ - Request Dispatcher"]
+            TrackDispatcher["Track Dispatcher 🔀"]:::mountain
+            EchoScheduler["Echo Work-Stealing Scheduler ⚡"]:::mountain
+        end
+        subgraph RUNTIME["RunTime/ - Effect Engine"]
+            AppRunTime["ApplicationRunTime ⚙️"]:::mountain
+            EnvProviders["Environment/ Providers\n(FS · Terminal · SCM · UI · Storage…)"]:::mountain
+        end
+        subgraph IPC_LAYER["IPC/ - Tauri IPC Server"]
+            WindHandlers["WindServiceHandlers mod.rs"]:::ipc
+            Encryption["Encryption / Permissions"]:::ipc
+        end
+        subgraph VINE_LAYER["Vine/ - gRPC Layer"]
+            VineServer["Vine gRPC Server (tonic) 🌿"]:::ipc
+            VineMux["Multiplexer"]:::ipc
+        end
+        subgraph RPC_LAYER["RPC/ - gRPC Handlers"]
+            CocoonRPC["CocoonService handlers"]:::mountain
+        end
+        CommonCrate["Common - Traits &amp; DTOs 📐"]:::common
+
+        TauriRuntime --> WindHandlers
+        WindHandlers --> TrackDispatcher
+        TrackDispatcher --> AppRunTime
+        AppRunTime --> EnvProviders
+        EnvProviders -.implements.-> CommonCrate
+        AppState --- AppRunTime
+        VineServer --> VineMux
+        VineMux --> CocoonRPC
+        CocoonRPC --> TrackDispatcher
+        EchoScheduler --- AppRunTime
     end
 
-    subgraph "Clients&#x2001;🖥️"
-        WindUI["Wind / Sky - UI WebView&#x2001;🍃"]:::wind
-        CocoonSideCar["Cocoon - Extension Host (Node.js)&#x2001;🦋"]:::cocoon
+    subgraph CLIENTS["Clients"]
+        SkyWind["Sky / Wind - UI WebView 🍃🌌"]:::wind
+        CocoonHost["Cocoon - Node.js Extension Host 🦋"]:::cocoon
+        AirDaemon["Air - Background Daemon 🪁"]:::air
     end
 
-    TauriRuntime -- hosts --> WindUI
-    WindUI -- Tauri Command --> TrackDispatcher
-    TrackDispatcher -- Tauri Events --> WindUI
-    VinegRPC <-- gRPC --> CocoonSideCar
-    VinegRPC -- forwards --> TrackDispatcher
-    EnvironmentProviders -. implements traits .-> CommonCrate
+    TauriRuntime -- hosts --> SkyWind
+    SkyWind -- tauri::invoke --> WindHandlers
+    WindHandlers -- sky:// events --> SkyWind
+    VineServer <-- gRPC :50052 --> CocoonHost
+    VineServer <-- gRPC :50053 --> AirDaemon
 ```
 
 ---
