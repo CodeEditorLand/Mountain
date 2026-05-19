@@ -7,10 +7,20 @@
 //! High-contrast probe is Windows `HighContrast/Flags` and the GNOME a11y
 //! `high-contrast` key; other OSes return false.
 
+use std::sync::OnceLock;
+
 use serde_json::{Value, json};
 
+// Cache dark-mode result for the process lifetime. The system colour scheme
+// is queried by spawning `defaults`/`reg`/`gsettings` which adds ~5-15 ms
+// on cold start. The workbench calls `getOSColorScheme` during boot and again
+// on window focus; caching turns the second+ call into a sub-microsecond read.
+// If the user switches dark/light mode while editing, they are expected to
+// restart the editor (same behaviour as stock VS Code on Electron).
+static DARK_MODE_CACHE:OnceLock<bool> = OnceLock::new();
+
 pub async fn NativeGetColorScheme() -> Result<Value, String> {
-	let Dark = detect_dark_mode();
+	let Dark = *DARK_MODE_CACHE.get_or_init(detect_dark_mode);
 
 	let HighContrast = {
 		#[cfg(target_os = "windows")]
@@ -48,7 +58,7 @@ pub async fn NativeGetColorScheme() -> Result<Value, String> {
 	Ok(json!({ "dark": Dark, "highContrast": HighContrast }))
 }
 
-fn detect_dark_mode() -> bool {
+fn detect_dark_mode() -> bool { // runs once then cached via OnceLock
 	#[cfg(target_os = "macos")]
 	{
 		std::process::Command::new("defaults")

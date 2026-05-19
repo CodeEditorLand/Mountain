@@ -1852,12 +1852,37 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("terminal", "localPty:getDefaultSystemShell");
 					LocalPTYGetDefaultShell().await
 				},
+				// `ILocalPtyService.getTerminalLayoutInfo` - return the last
+				// layout snapshot so the workbench restores the terminal panel
+				// (active tab, dimensions) across window reloads.
+				// Key: "terminal:layoutInfo" in Mountain's `StorageProvider`.
 				"localPty:getTerminalLayoutInfo" => {
 					dev_log!("terminal", "localPty:getTerminalLayoutInfo");
-					Ok(Value::Null)
+					use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
+					let StorageProvider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+					let Stored = StorageProvider
+						.GetStorage("terminal:layoutInfo".to_string())
+						.await
+						.ok()
+						.flatten();
+					match Stored {
+						Some(Raw) => {
+							serde_json::from_str(&Raw).map_err(|E| format!("getTerminalLayoutInfo parse: {}", E))
+						},
+						None => Ok(Value::Null),
+					}
 				},
+				// `ILocalPtyService.setTerminalLayoutInfo` - persist the layout
+				// snapshot so `getTerminalLayoutInfo` can replay it on next boot.
 				"localPty:setTerminalLayoutInfo" => {
 					dev_log!("terminal", "localPty:setTerminalLayoutInfo");
+					use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
+					let StorageProvider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
+					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Serialized = serde_json::to_string(&Payload).unwrap_or_default();
+					let _ = StorageProvider
+						.SetStorage("terminal:layoutInfo".to_string(), Serialized)
+						.await;
 					Ok(Value::Null)
 				},
 				"localPty:getPerformanceMarks" => {
