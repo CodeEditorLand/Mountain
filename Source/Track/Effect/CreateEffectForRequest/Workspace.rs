@@ -176,6 +176,93 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			Some(Ok(Box::new(effect)))
 		},
 
+		// `workspace.save(uri)` - Cocoon's shim calls this when an extension
+		// calls `vscode.workspace.save(uri)`. Route through Sky so the workbench's
+		// `ITextFileService.save(uri)` can flush the dirty working copy to disk.
+		// Returns the URI on success so the caller can confirm the file was saved.
+		"Workspace.Save" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let UriVal = if Parameters.is_array() {
+							Parameters.get(0).cloned().unwrap_or_default()
+						} else {
+							Parameters.get("uri").cloned().unwrap_or(Parameters)
+						};
+						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+							&run_time.Environment,
+							"sky://workspace/save",
+							UriVal.clone(),
+						)
+						.await
+						{
+							Ok(Result) => Ok(if Result.is_null() { UriVal } else { Result }),
+							Err(Error) => {
+								dev_log!("ipc", "warn: [Workspace.Save] Sky did not answer ({:?}); ok", Error);
+								Ok(UriVal)
+							},
+						}
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
+		// `workspace.saveAs(uri)` - same as Save but opens a Save-As dialog.
+		// Currently delegates to the same Save path; a future Sky-side handler
+		// can drive the dialog independently.
+		"Workspace.SaveAs" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						let UriVal = if Parameters.is_array() {
+							Parameters.get(0).cloned().unwrap_or_default()
+						} else {
+							Parameters.get("uri").cloned().unwrap_or(Parameters)
+						};
+						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+							&run_time.Environment,
+							"sky://workspace/saveAs",
+							UriVal.clone(),
+						)
+						.await
+						{
+							Ok(Result) => Ok(if Result.is_null() { UriVal } else { Result }),
+							Err(_) => Ok(UriVal),
+						}
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
+		// `saveAll` - Cocoon's older API surface calls this from `gRPC/Client.ts`
+		// when the workbench wants to flush all dirty working copies. Routes to
+		// Sky's `sky://workspace/saveAll` handler which delegates to VS Code's
+		// `ITextFileService.save({ saveReason: AutoSave })` for all dirty models.
+		"saveAll" | "Workspace.SaveAll" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+							&run_time.Environment,
+							"sky://workspace/saveAll",
+							serde_json::json!({}),
+						)
+						.await
+						{
+							Ok(Result) => Ok(Result),
+							Err(Error) => {
+								dev_log!("ipc", "warn: [saveAll] Sky did not answer ({:?}); ok", Error);
+								Ok(serde_json::json!(null))
+							},
+						}
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
 		_ => None,
 	}
 }
