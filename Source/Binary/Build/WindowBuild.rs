@@ -58,9 +58,40 @@ pub fn WindowBuild(Application:&mut App, LocalhostUrl:String) -> tauri::WebviewW
 	// `.monaco-workbench` is attached and the first frame is ready. A 3 s
 	// safety timer in `AppLifecycle` guarantees the window appears even if
 	// Sky crashes before signalling phase 3.
+	// Diagnostic initialization script. Runs at `document_start`, BEFORE any
+	// page <script> tag executes. Captures the state of Tauri's IPC bridge
+	// at the earliest possible point so a missing injection (forked Tauri
+	// runtime, mis-scoped capability, race condition) is detectable from
+	// the captured DevTools console + `window.__MOUNTAIN_TAURI_DIAG`
+	// snapshot - without depending on the rest of the bundle loading.
+	let TauriDiagnosticScript = r#"(function() {
+		if (window.__MOUNTAIN_TAURI_DIAG) { return; }
+		const Stamp = (Reason) => ({
+			at: Date.now(),
+			reason: Reason,
+			hasTAURI_INTERNALS: typeof window.__TAURI_INTERNALS__ === 'object' && window.__TAURI_INTERNALS__ !== null,
+			invokeOnInternals: typeof window.__TAURI_INTERNALS__?.invoke === 'function',
+			hasTAURI: typeof window.__TAURI__ === 'object' && window.__TAURI__ !== null,
+			invokeOnTauriCore: typeof window.__TAURI__?.core?.invoke === 'function',
+			invokeOnTauriDirect: typeof window.__TAURI__?.invoke === 'function',
+			hasIPCPostMessage: typeof window.ipc?.postMessage === 'function',
+			origin: window.location.origin,
+			url: window.location.href,
+		});
+		window.__MOUNTAIN_TAURI_DIAG = { initial: Stamp('initialization_script') };
+		try {
+			window.addEventListener('DOMContentLoaded', () => {
+				window.__MOUNTAIN_TAURI_DIAG.dom_content_loaded = Stamp('DOMContentLoaded');
+			});
+			window.addEventListener('load', () => {
+				window.__MOUNTAIN_TAURI_DIAG.load = Stamp('load');
+			});
+		} catch {}
+	})();"#;
+
 	let mut WindowBuilder = WebviewWindowBuilder::new(Application, "main", WindowUrl)
 		.use_https_scheme(false)
-		.initialization_script("")
+		.initialization_script(TauriDiagnosticScript)
 		.zoom_hotkeys_enabled(true)
 		.browser_extensions_enabled(false)
 		// macOS first-responder: by default WKWebView swallows the
