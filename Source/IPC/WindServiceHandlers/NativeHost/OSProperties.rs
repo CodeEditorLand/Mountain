@@ -1,12 +1,26 @@
 #![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
 
 //! Wire method: `nativeHost:getOSProperties` (cross-platform).
-//! Returns Electron-shaped `{ type, release, arch, platform, cpus }` tuple
-//! so VS Code's `os` polyfill can continue using the same surface.
+//! Returns Electron-shaped `{ type, release, arch, platform, cpus }` tuple.
+//! Cached for the process lifetime - OS type, version, arch, and CPU topology
+//! are stable; spawning `sw_vers`/`uname` on every call wastes ~10 ms each.
+
+use std::sync::OnceLock;
 
 use serde_json::{Value, json};
 
+static OS_PROPERTIES_CACHE:OnceLock<Value> = OnceLock::new();
+
 pub async fn NativeOSProperties() -> Result<Value, String> {
+	if let Some(Cached) = OS_PROPERTIES_CACHE.get() {
+		return Ok(Cached.clone());
+	}
+	let Result = compute_os_properties();
+	let _ = OS_PROPERTIES_CACHE.set(Result.clone());
+	Ok(Result)
+}
+
+fn compute_os_properties() -> Value {
 	use sysinfo::System;
 
 	let OsType = match std::env::consts::OS {
@@ -80,11 +94,11 @@ pub async fn NativeOSProperties() -> Result<Value, String> {
 		})
 		.collect();
 
-	Ok(json!({
+	json!({
 		"type": OsType,
 		"release": Release,
 		"arch": std::env::consts::ARCH,
 		"platform": std::env::consts::OS,
 		"cpus": Cpus
-	}))
+	})
 }

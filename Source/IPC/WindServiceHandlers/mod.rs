@@ -1618,14 +1618,17 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:isRunningUnderARM64Translation" => {
 					#[cfg(target_os = "macos")]
 					{
-						// macOS: check if running under Rosetta 2
-						let Output = std::process::Command::new("sysctl")
-							.args(["-n", "sysctl.proc_translated"])
-							.output();
-						let IsTranslated = Output
-							.ok()
-							.map(|O| String::from_utf8_lossy(&O.stdout).trim() == "1")
-							.unwrap_or(false);
+						// Cache: a process either runs under Rosetta 2 or it doesn't;
+						// sysctl.proc_translated is stable for the process lifetime.
+						static ROSETTA:std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+						let IsTranslated = *ROSETTA.get_or_init(|| {
+							std::process::Command::new("sysctl")
+								.args(["-n", "sysctl.proc_translated"])
+								.output()
+								.ok()
+								.map(|O| String::from_utf8_lossy(&O.stdout).trim() == "1")
+								.unwrap_or(false)
+						});
 						Ok(json!(IsTranslated))
 					}
 					#[cfg(not(target_os = "macos"))]
@@ -1856,20 +1859,20 @@ pub async fn mountain_ipc_invoke(
 				// layout snapshot so the workbench restores the terminal panel
 				// (active tab, dimensions) across window reloads.
 				// Key: "terminal:layoutInfo" in Mountain's `StorageProvider`.
+				// `ILocalPtyService.getTerminalLayoutInfo` - return the persisted
+				// layout snapshot so the workbench restores the terminal panel
+				// (active tab, split dimensions) across window reloads.
 				"localPty:getTerminalLayoutInfo" => {
 					dev_log!("terminal", "localPty:getTerminalLayoutInfo");
 					use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
 					let StorageProvider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
-					let Stored = StorageProvider
-						.GetStorage("terminal:layoutInfo".to_string())
-						.await
-						.ok()
-						.flatten();
-					match Stored {
-						Some(Raw) => {
-							serde_json::from_str(&Raw).map_err(|E| format!("getTerminalLayoutInfo parse: {}", E))
+					match StorageProvider.GetStorageValue(true, "terminal:layoutInfo").await {
+						Ok(Some(Stored)) => Ok(Stored),
+						Ok(None) => Ok(Value::Null),
+						Err(Error) => {
+							dev_log!("terminal", "warn: [getTerminalLayoutInfo] storage read failed: {}", Error);
+							Ok(Value::Null)
 						},
-						None => Ok(Value::Null),
 					}
 				},
 				// `ILocalPtyService.setTerminalLayoutInfo` - persist the layout
@@ -1879,9 +1882,8 @@ pub async fn mountain_ipc_invoke(
 					use CommonLibrary::{Environment::Requires::Requires, Storage::StorageProvider::StorageProvider};
 					let StorageProvider:Arc<dyn StorageProvider> = RunTime.Environment.Require();
 					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
-					let Serialized = serde_json::to_string(&Payload).unwrap_or_default();
 					let _ = StorageProvider
-						.SetStorage("terminal:layoutInfo".to_string(), Serialized)
+						.UpdateStorageValue(true, "terminal:layoutInfo".to_string(), Some(Payload))
 						.await;
 					Ok(Value::Null)
 				},

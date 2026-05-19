@@ -98,6 +98,29 @@ pub async fn ModelOpen(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) ->
 			.AddOrUpdate(Uri.clone(), Document);
 	}
 
+	// Track the active document so `nativeHost:getWindows` and the Cocoon
+	// `vscode.window.activeTextEditor` shim stay in sync.
+	RunTime
+		.Environment
+		.ApplicationState
+		.Workspace
+		.SetActiveDocumentURI(Some(Uri.clone()));
+
+	// Fire-and-forget: notify Cocoon so its `window.activeTextEditor` shim
+	// updates. The notification is cheap (~gRPC framing + 1 JSON field); if
+	// Cocoon isn't connected yet the `SendNotification` error is swallowed.
+	let NotifyUri = Uri.clone();
+	let NotifyLang = LanguageId.clone();
+	let NotifyVer = Version;
+	tokio::spawn(async move {
+		let _ = crate::Vine::Client::SendNotification::Fn(
+			"cocoon-main".to_string(),
+			"window.didChangeActiveTextEditor".to_string(),
+			serde_json::json!({ "uri": NotifyUri, "languageId": NotifyLang, "version": NotifyVer }),
+		)
+		.await;
+	});
+
 	Ok(json!({
 		"uri": Uri,
 		"content": Content,

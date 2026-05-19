@@ -58,7 +58,8 @@ pub async fn NativeGetColorScheme() -> Result<Value, String> {
 	Ok(json!({ "dark": Dark, "highContrast": HighContrast }))
 }
 
-fn detect_dark_mode() -> bool { // runs once then cached via OnceLock
+fn detect_dark_mode() -> bool {
+	// runs once then cached via OnceLock
 	#[cfg(target_os = "macos")]
 	{
 		std::process::Command::new("defaults")
