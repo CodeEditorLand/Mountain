@@ -150,7 +150,7 @@
 			}
 		}
 	},
-	"identifier": "land.editor.binary.development.node.environment.microsoft.vscode.dependency.node.22.bundle.clean.debug.electron.profile.esbuild.compiler.mountain",
-	"productName": "DevelopmentNodeEnvironment_MicrosoftVSCodeDependency_22NodeVersion_Bundle_Clean_Debug_ElectronProfile_EsbuildCompiler_Mountain",
+	"identifier": "fiddee.editor.binary",
+	"productName": "Mountain",
 	"version": "0.0.1"
 }

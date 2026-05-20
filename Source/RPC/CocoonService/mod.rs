@@ -440,7 +440,6 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<GenericRequestMsg>,
 	) -> Result<Response<GenericResponse>, Status> {
 		return GenericRequest::Dispatcher::Fn(self, request).await;
-
 	}
 	/// Send Mountain notifications to Cocoon (generic fire-and-forget).
 	/// Implementation in `GenericNotification::Dispatcher`.
