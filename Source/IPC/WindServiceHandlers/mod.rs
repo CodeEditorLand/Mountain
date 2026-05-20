@@ -1511,8 +1511,7 @@ pub async fn mountain_ipc_invoke(
 				},
 				"nativeHost:toggleWindowAlwaysOnTop" => {
 					dev_log!("window", "{}", command);
-					static ALWAYS_ON_TOP:std::sync::atomic::AtomicBool =
-						std::sync::atomic::AtomicBool::new(false);
+					static ALWAYS_ON_TOP:std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 					let Next = !ALWAYS_ON_TOP.fetch_xor(true, std::sync::atomic::Ordering::Relaxed);
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
 						let _ = Window.set_always_on_top(Next);
@@ -1694,9 +1693,7 @@ pub async fn mountain_ipc_invoke(
 
 								("SOCKS", H)
 							} else {
-								let H = P
-									.trim_start_matches("http://")
-									.trim_start_matches("https://");
+								let H = P.trim_start_matches("http://").trim_start_matches("https://");
 
 								("PROXY", H)
 							};

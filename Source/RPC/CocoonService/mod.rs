@@ -1200,8 +1200,16 @@ impl CocoonService for CocoonServiceImpl {
 			// Params shape: `{ uri, position: { line, character } }`.
 			"$provideCallHierarchyItems" | "prepareCallHierarchy" => {
 				let URI_Raw = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("");
-				let Line = Params.get("position").and_then(|P| P.get("line")).and_then(|V| V.as_u64()).unwrap_or(0);
-				let Char = Params.get("position").and_then(|P| P.get("character")).and_then(|V| V.as_u64()).unwrap_or(0);
+				let Line = Params
+					.get("position")
+					.and_then(|P| P.get("line"))
+					.and_then(|V| V.as_u64())
+					.unwrap_or(0);
+				let Char = Params
+					.get("position")
+					.and_then(|P| P.get("character"))
+					.and_then(|V| V.as_u64())
+					.unwrap_or(0);
 
 				match Url::parse(URI_Raw) {
 					Ok(DocURI) => {
@@ -1209,7 +1217,9 @@ impl CocoonService for CocoonServiceImpl {
 
 						match self.environment.PrepareCallHierarchy(DocURI, Pos).await {
 							Ok(Result) => Ok(OkResponse(RequestId, &Result)),
-							Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("prepareCallHierarchy: {}", Error))),
+							Err(Error) => {
+								Ok(ErrResponse(RequestId, -32000, format!("prepareCallHierarchy: {}", Error)))
+							},
 						}
 					},
 
@@ -1219,8 +1229,16 @@ impl CocoonService for CocoonServiceImpl {
 
 			"$provideTypeHierarchyItems" | "prepareTypeHierarchy" => {
 				let URI_Raw = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("");
-				let Line = Params.get("position").and_then(|P| P.get("line")).and_then(|V| V.as_u64()).unwrap_or(0);
-				let Char = Params.get("position").and_then(|P| P.get("character")).and_then(|V| V.as_u64()).unwrap_or(0);
+				let Line = Params
+					.get("position")
+					.and_then(|P| P.get("line"))
+					.and_then(|V| V.as_u64())
+					.unwrap_or(0);
+				let Char = Params
+					.get("position")
+					.and_then(|P| P.get("character"))
+					.and_then(|V| V.as_u64())
+					.unwrap_or(0);
 
 				match Url::parse(URI_Raw) {
 					Ok(DocURI) => {
@@ -1228,7 +1246,9 @@ impl CocoonService for CocoonServiceImpl {
 
 						match self.environment.PrepareTypeHierarchy(DocURI, Pos).await {
 							Ok(Result) => Ok(OkResponse(RequestId, &Result)),
-							Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("prepareTypeHierarchy: {}", Error))),
+							Err(Error) => {
+								Ok(ErrResponse(RequestId, -32000, format!("prepareTypeHierarchy: {}", Error)))
+							},
 						}
 					},
 
