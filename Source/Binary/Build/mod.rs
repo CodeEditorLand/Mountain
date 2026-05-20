@@ -36,3 +36,6 @@ pub mod TlsCommands;
 
 /// PostHog analytics plugin (opt-in telemetry event forwarding).
 pub mod PostHogPlugin;
+
+/// macOS app menu override - removes Undo/Redo so Cmd+Z reaches Monaco.
+pub mod AppMenu;

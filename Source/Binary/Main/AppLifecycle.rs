@@ -94,6 +94,7 @@ use crate::{
 	// Crate root imports
 	ApplicationState::State::ApplicationState::ApplicationState,
 	// Binary submodule imports
+	Binary::Build::AppMenu::SetAppMenu,
 	Binary::Build::WindowBuild::WindowBuild as WindowBuildFn,
 	Binary::Extension::ExtensionPopulate::ExtensionPopulate as ExtensionPopulateFn,
 	Binary::Extension::ScanPathConfigure::ScanPathConfigure as ScanPathConfigureFn,
@@ -202,6 +203,11 @@ pub fn AppLifecycleSetup(
 	let MainWindow = WindowBuildFn(app, localhost_url.clone());
 
 	dev_log!("lifecycle", "[UI] [Window] Main window ready.");
+
+	// Remove Undo/Redo from the native macOS Edit menu so Cmd+Z routes to
+	// VS Code's Monaco keybinding handler instead of WKWebView's native
+	// text-buffer undo. No-op on Windows/Linux.
+	SetAppMenu(app);
 
 	// DevTools auto-open is opt-in via the PascalCase env var
 	// `Inspect=1` (or any non-empty value other than `0`). Naming

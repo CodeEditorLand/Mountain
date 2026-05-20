@@ -2,14 +2,26 @@
 
 //! Wire method `file:write` / `file:writeFile`. Accepts either a plain
 //! string body or a `{ buffer: number[] | base64 }` VSBuffer. Parent
-//! directory is created best-effort.
+//! directory is created best-effort. After a successful write, fires
+//! `$acceptModelSaved` to Cocoon so `onDidSaveTextDocument` reaches
+//! extensions (T1.4 save notification).
 
-use serde_json::Value;
+use serde_json::{Value, json};
 
-use crate::IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg;
+use crate::{IPC::WindServiceHandlers::Utilities::PathExtraction::extract_path_from_arg, dev_log};
 
 pub async fn FileWriteNative(Arguments:Vec<Value>) -> Result<Value, String> {
-	let Path = extract_path_from_arg(Arguments.get(0).ok_or("Missing file path")?)?;
+	let ResourceArg = Arguments.get(0).ok_or("Missing file path")?;
+
+	// Capture the `external` field (full file:// URI) from the URI object
+	// for the $acceptModelSaved notification before we consume the path.
+	let ExternalUri = ResourceArg
+		.as_object()
+		.and_then(|O| O.get("external"))
+		.and_then(|V| V.as_str())
+		.map(|S| S.to_string());
+
+	let Path = extract_path_from_arg(ResourceArg)?;
 
 	let Content = Arguments.get(1).ok_or("Missing file content")?;
 
@@ -35,9 +47,32 @@ pub async fn FileWriteNative(Arguments:Vec<Value>) -> Result<Value, String> {
 		tokio::fs::create_dir_all(Parent).await.ok();
 	}
 
+	let Start = std::time::Instant::now();
+
 	tokio::fs::write(&Path, &Bytes)
 		.await
 		.map_err(|E| format!("Failed to write file: {} (path: {})", E, Path))?;
+
+	let ElapsedMs = Start.elapsed().as_millis();
+
+	dev_log!("vfs", "file:write ok path={} bytes={} ms={}", Path, Bytes.len(), ElapsedMs);
+
+	// T1.4 - notify Cocoon that the model on disk now matches the editor
+	// buffer so `onDidSaveTextDocument` fires for subscribed extensions.
+	// Build a file:// URI from `external` (preferred) or the path string.
+	let FileUri = ExternalUri.unwrap_or_else(|| format!("file://{}", Path));
+
+	tokio::spawn(async move {
+		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
+			"cocoon-main".to_string(),
+			"$acceptModelSaved".to_string(),
+			json!({ "uri": FileUri }),
+		)
+		.await
+		{
+			dev_log!("vfs", "warn: [FileWriteNative] $acceptModelSaved notify failed: {:?}", Error);
+		}
+	});
 
 	Ok(Value::Null)
 }
