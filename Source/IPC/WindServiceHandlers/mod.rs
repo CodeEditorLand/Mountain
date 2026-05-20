@@ -317,6 +317,11 @@ pub async fn mountain_ipc_invoke(
 			| "file:realpath"
 			| "file:read"
 			| "file:write"
+			// fd-table ops - called per-file during project open cascades
+			| "file:open"
+			| "file:close"
+			// Auto-save intent - fires once/second per dirty file
+			| "textFile:save"
 			// Storage - polled constantly by VS Code services
 			| "storage:getItems"
 			| "storage:updateItems"
@@ -2319,7 +2324,15 @@ pub async fn mountain_ipc_invoke(
 				"languages:getAll" | "languages:getEncodedLanguageId" => {
 					dev_log!("extensions", "languages: {} (→ Cocoon)", command);
 					let Payload = Arguments.into_iter().next().unwrap_or(Value::Null);
-					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+					// Skip the 3-second blocking wait at boot. If Cocoon isn't
+					// connected yet, return the empty fallback immediately - the
+					// workbench retries on next keystroke. The old wait caused the
+					// first-open latency spike (tokenizer calls getEncodedLanguageId
+					// synchronously on first editor open, stalling the worker for
+					// up to 3 s before Cocoon is available).
+					if !crate::Vine::Client::IsClientConnected::Fn("cocoon-main") {
+						return Ok(Value::Array(Vec::new()));
+					}
 					Ok(
 						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
 							.await

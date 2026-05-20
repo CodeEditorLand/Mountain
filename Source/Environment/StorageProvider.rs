@@ -78,9 +78,15 @@ impl StorageWriteDebouncer {
 				let Item = {
 					let mut Guard = Debouncer.Pending.lock().unwrap();
 
+					let Item = Guard.take();
+
+					// Clear the flag AFTER taking the data so a concurrent
+					// Queue() call can't sneak in between store(false) and
+					// take(), see the item as "already taken", and schedule
+					// a second flush that writes nothing.
 					Debouncer.FlushScheduled.store(false, Ordering::Release);
 
-					Guard.take()
+					Item
 				};
 
 				if let Some((StoragePath, StorageData)) = Item {
@@ -314,9 +320,10 @@ impl StorageProvider for MountainEnvironment {
 			.lock()
 			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)? = DeserializedState.clone();
 
-		// Persist to disk via debouncer (coalesces rapid calls).
+		// Persist to disk via the scope-correct debouncer so a workspace
+		// bulk-save and a global bulk-save never share the same Pending slot.
 		if let Some(StoragePath) = StoragePathOption {
-			let Debouncer = GetGlobalDebouncer();
+			let Debouncer = if IsGlobalScope { GetGlobalDebouncer() } else { GetWorkspaceDebouncer() };
 
 			Debouncer.Queue(StoragePath, DeserializedState, Debouncer.clone());
 		}
