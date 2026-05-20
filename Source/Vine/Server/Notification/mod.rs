@@ -169,3 +169,9 @@ pub mod WindowShowMessage;
 // + emit the `sky://scm/*` events the renderer actually subscribes to.
 pub mod RegisterScmProvider;
 pub mod RegisterScmResourceGroup;
+
+// --- Batch 18: language-provider OR-block extracted from the inline match
+// in `MountainVinegRPCService::send_cocoon_notification`. All 46+
+// `register_*` / `register_*_provider` variants now delegate here via a
+// single `RegisterLanguageProvider(service, method, params).await` call.
+pub mod RegisterLanguageProvider;
