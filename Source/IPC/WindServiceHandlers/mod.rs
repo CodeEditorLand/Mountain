@@ -534,11 +534,11 @@ pub async fn mountain_ipc_invoke(
 					}))
 				},
 
-				// Logger commands - VS Code's ILogService channel. Forward
-				// messages into Mountain's dev_log so Wind/Cocoon log lines
-				// appear in the unified Mountain.dev.log stream.
-				"logger:log" | "logger:warn" | "logger:error" | "logger:info" | "logger:debug" | "logger:trace"
-				| "logger:critical" => {
+				// Logger commands - all logger:* are high-frequency and handled in the
+				// fast-path short-circuit above. These Echo arms are only reached
+				// if IS_HIGH_FREQUENCY detection changes; they provide the same
+				// dev_log output as the fast-path for safety.
+				"logger:log" | "logger:warn" | "logger:error" | "logger:info" | "logger:debug" | "logger:trace" => {
 					let Level = command.trim_start_matches("logger:");
 					let Msg = if Arguments.len() >= 2 {
 						let Tail:Vec<String> = Arguments
