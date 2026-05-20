@@ -19,7 +19,7 @@ use serde_json::{Value, json};
 
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
-	Vine::Server::MountainVinegRPCService,
+	Vine::Server::MountainVinegRPCService::MountainVinegRPCService,
 	dev_log,
 };
 
@@ -140,7 +140,7 @@ pub async fn RegisterLanguageProvider(Service:&MountainVinegRPCService, MethodNa
 	};
 
 	Service
-		.RunTime
+		.RunTime()
 		.Environment
 		.ApplicationState
 		.Extension

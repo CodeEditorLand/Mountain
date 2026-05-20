@@ -67,7 +67,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 	PropagatePostHogSentinel();
 
-	tauri_build::build();
+	// Skip resource-path validation when generating docs. tauri_build::build()
+	// checks that every [[bundle.resources]] path exists, but Sky assets
+	// (bootstrap-meta.js etc.) are only present after a full Astro build.
+	// Package.sh sets CARGO_BUILDING_DOCS=1 to signal this context.
+	if std::env::var("CARGO_BUILDING_DOCS").is_err() {
+		tauri_build::build();
+	}
 
 	Ok(())
 }

@@ -101,10 +101,14 @@ pub fn Fn() {
 			continue;
 		}
 
-		// Don't overwrite explicitly-set values from the parent process
-		// - preserves any deliberate override the user set with
-		// `Walk=… Foo=bar /Applications/X.app/.../bin`.
-		if std::env::var_os(Key).is_some() {
+		// PATH is special: we only reach this point because IsTty() was
+		// false, meaning the process was launched from Finder/Dock/launchd
+		// with PATH=/usr/bin:/bin:/usr/sbin:/sbin.  That minimal value
+		// is NOT the user's intentional PATH - always let the shell
+		// replace it so git, node, language servers, etc. are all found.
+		// For every other var, preserve any explicit value the user set
+		// (e.g. `FOO=bar open /Applications/X.app`).
+		if Key != "PATH" && std::env::var_os(Key).is_some() {
 			continue;
 		}
 

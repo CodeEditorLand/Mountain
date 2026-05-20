@@ -12,10 +12,14 @@ use tokio::process::Command;
 use crate::dev_log;
 
 pub async fn HandleIsAvailable(_Arguments:Vec<Value>) -> Result<Value, String> {
+	// Cache only a `true` result - once git is confirmed available it stays
+	// available for the process lifetime.  A `false` result is NOT cached:
+	// the first probe may run before EnhanceShellEnvironment has extended
+	// PATH, so a transient miss must not permanently disable the SCM UI.
 	static CACHE:OnceLock<bool> = OnceLock::new();
 
-	if let Some(Cached) = CACHE.get() {
-		return Ok(json!(*Cached));
+	if CACHE.get() == Some(&true) {
+		return Ok(json!(true));
 	}
 
 	let Available = Command::new("git")
@@ -25,7 +29,9 @@ pub async fn HandleIsAvailable(_Arguments:Vec<Value>) -> Result<Value, String> {
 		.map(|O| O.status.success())
 		.unwrap_or(false);
 
-	let _ = CACHE.set(Available);
+	if Available {
+		let _ = CACHE.set(true);
+	}
 
 	dev_log!("git", "[Git] isAvailable={}", Available);
 

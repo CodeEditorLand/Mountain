@@ -122,9 +122,9 @@ use crate::Vine::Generated::{
 	FindFilesResponse,
 	FindTextInFilesRequest,
 	FindTextInFilesResponse,
-	GenericNotification,
+	GenericNotification as GenericNotificationMsg,
 	// Common generic types
-	GenericRequest,
+	GenericRequest as GenericRequestMsg,
 	GenericResponse,
 	GetAllExtensionsResponse,
 	GetAuthenticationSessionRequest,
@@ -443,7 +443,7 @@ impl CocoonService for CocoonServiceImpl {
 	async fn process_mountain_request(
 		&self,
 
-		request:Request<GenericRequest>,
+		request:Request<GenericRequestMsg>,
 	) -> Result<Response<GenericResponse>, Status> {
 		let Req = request.into_inner();
 
@@ -1208,7 +1208,7 @@ impl CocoonService for CocoonServiceImpl {
 	async fn send_mountain_notification(
 		&self,
 
-		request:Request<GenericNotification>,
+		request:Request<GenericNotificationMsg>,
 	) -> Result<Response<Empty>, Status> {
 		let notification = request.into_inner();
 
@@ -2417,24 +2417,6 @@ impl CocoonService for CocoonServiceImpl {
 		request:Request<ProvideTypeHierarchyRequest>,
 	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
 		Provider::ProvideTypeHierarchySubtypes::Fn(self, request.into_inner()).await
-	}
-
-	// --- Hierarchy prepare entry-points ---
-
-	async fn prepare_call_hierarchy(
-		&self,
-
-		request:Request<ProvideCallHierarchyRequest>,
-	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
-		Provider::PrepareCallHierarchy::Fn(self, request.into_inner()).await
-	}
-
-	async fn prepare_type_hierarchy(
-		&self,
-
-		request:Request<ProvideTypeHierarchyRequest>,
-	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
-		Provider::PrepareTypeHierarchy::Fn(self, request.into_inner()).await
 	}
 
 	async fn register_call_hierarchy_provider(

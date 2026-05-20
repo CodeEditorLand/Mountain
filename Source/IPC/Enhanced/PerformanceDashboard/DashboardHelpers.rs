@@ -5,7 +5,7 @@
 //! All functions are deterministic and side-effect-free, making them
 //! straightforward to unit-test and reuse outside the dashboard impl.
 
-use super::MetricType::MetricType;
+use super::MetricType::Enum as MetricType;
 
 /// Current process memory usage in MB (stub: returns 100.0 until real
 /// platform metrics are wired).
