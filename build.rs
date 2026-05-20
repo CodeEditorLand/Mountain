@@ -42,6 +42,85 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 			*Entry = Value::String(Version.clone());
 		}
 
+		// ---------------------------------------------------------------
+		// TierSchemeAssets gate: mutate tauri.conf.json so that the right
+		// frontendDist + bundle.resources are active at build time.
+		//
+		//  Embedded   → frontendDist: "../Sky/Target"
+		//               resources: original small list (only Cocoon-needed
+		//               files; everything else baked into the binary via
+		//               EmbeddedAssets / asset_resolver).
+		//
+		//  FileSystem → frontendDist: null
+		//               resources: full disk layout (vs/, _astro/, etc.)
+		//               so Contents/Resources/ holds the complete tree and
+		//               the localhost plugin / vscode-file scheme serve
+		//               from disk via the static_root fallback.
+		// ---------------------------------------------------------------
+		let TierSchemeAssets = std::env::var("TierSchemeAssets").unwrap_or_else(|_| "Embedded".into());
+
+		// Patch build.frontendDist
+		if let Some(Build) = Tauri.get_mut("build") {
+			let FrontendDist = if TierSchemeAssets == "FileSystem" {
+				Value::Null
+			} else {
+				Value::String("../Sky/Target".into())
+			};
+			if let Some(B) = Build.as_object_mut() {
+				B.insert("frontendDist".into(), FrontendDist);
+			}
+		}
+
+		// Patch bundle.resources
+		if let Some(Bundle) = Tauri.get_mut("bundle") {
+			let Resources = if TierSchemeAssets == "FileSystem" {
+				// Full disk layout - every file served from Contents/Resources/.
+				serde_json::json!({
+					"../Sky/Target/Browser": "Browser",
+					"../Sky/Target/BrowserProxy": "BrowserProxy",
+					"../Sky/Target/Bundled": "Bundled",
+					"../Sky/Target/Electron": "Electron",
+					"../Sky/Target/Favicon": "Favicon",
+					"../Sky/Target/Isolation": "Isolation",
+					"../Sky/Target/Manifest.json": "Manifest.json",
+					"../Sky/Target/Mountain": "Mountain",
+					"../Sky/Target/Static/Application/bootstrap-esm.js": "Static/Application/bootstrap-esm.js",
+					"../Sky/Target/Static/Application/bootstrap-import.js": "Static/Application/bootstrap-import.js",
+					"../Sky/Target/Static/Application/bootstrap-meta.js": "Static/Application/bootstrap-meta.js",
+					"../Sky/Target/Static/Application/extensions": "Static/Application/extensions",
+					"../Sky/Target/Static/Application/nls.keys.json": "Static/Application/nls.keys.json",
+					"../Sky/Target/Static/Application/nls.messages.js": "Static/Application/nls.messages.js",
+					"../Sky/Target/Static/Application/nls.messages.json": "Static/Application/nls.messages.json",
+					"../Sky/Target/Static/Application/nls.metadata.json": "Static/Application/nls.metadata.json",
+					"../Sky/Target/Static/Application/node_modules": "Static/Application/node_modules",
+					"../Sky/Target/Static/Application/vs": "Static/Application/vs",
+					"../Sky/Target/Worker.js": "Worker.js",
+					"../Sky/Target/_astro": "_astro",
+					"../Sky/Target/index.html": "index.html",
+					"../Sky/Target/product.json": "product.json",
+					"../Sky/Target/robots.txt": "robots.txt"
+				})
+			} else {
+				// Embedded layout - only Cocoon-needed files on disk; all
+				// workbench JS is Brotli-compressed into the binary.
+				serde_json::json!({
+					"../Sky/Target/Static/Application/bootstrap-esm.js": "bootstrap-esm.js",
+					"../Sky/Target/Static/Application/bootstrap-import.js": "bootstrap-import.js",
+					"../Sky/Target/Static/Application/bootstrap-meta.js": "bootstrap-meta.js",
+					"../Sky/Target/Static/Application/extensions": "extensions",
+					"../Sky/Target/Static/Application/nls.keys.json": "nls.keys.json",
+					"../Sky/Target/Static/Application/nls.messages.js": "nls.messages.js",
+					"../Sky/Target/Static/Application/nls.messages.json": "nls.messages.json",
+					"../Sky/Target/Static/Application/nls.metadata.json": "nls.metadata.json",
+					"../Sky/Target/Static/Application/node_modules": "node_modules",
+					"../Sky/Target/product.json": "product.json"
+				})
+			};
+			if let Some(B) = Bundle.as_object_mut() {
+				B.insert("resources".into(), Resources);
+			}
+		}
+
 		let mut Serializer =
 			serde_json::Serializer::with_formatter(Vec::new(), serde_json::ser::PrettyFormatter::with_indent(b"	"));
 
@@ -349,6 +428,11 @@ fn IsDeclaredTierFeature(Name:&str) -> bool {
 			| "TierFindFilesLayer4"
 			| "TierGlobNative"
 			| "TierFileWatcherLayer4"
+			// TierSchemeAssets non-default values:
+			//   FileSystem → assets served from disk via static_root fallback;
+			//                LocalhostPlugin.rs gates static_root on this feature.
+			//   Hybrid     → reserved for future mixed embedding strategies.
+			| "TierSchemeAssetsFileSystem"
 			| "TierSchemeAssetsHybrid"
 			| "TierConfigurationEager"
 			| "TierDiagnosticsDelta"
@@ -373,7 +457,8 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			| ("TierFindFiles", "Layer3")
 			| ("TierGlob", "JavaScript")
 			| ("TierFileWatcher", "Stub")
-			| ("TierSchemeAssets", "Embedded" | "FileSystem")
+			// Only Embedded is the silent default; FileSystem emits a cfg feature.
+			| ("TierSchemeAssets", "Embedded")
 			| ("TierConfiguration", "Cache")
 			| ("TierDiagnostics", "Full")
 			| ("TierClipboard", "Layer3" | "Layer5")

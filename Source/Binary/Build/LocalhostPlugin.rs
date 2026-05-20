@@ -190,8 +190,13 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 	});
 
 	// Resolve the static_root used as a disk fallback when asset_resolver
-	// returns None (i.e. when frontendDist is null in tauri.conf.json).
+	// returns None (TierSchemeAssets=FileSystem / frontendDist: null).
 	// Production: Contents/Resources/   Dev: Element/Sky/Target/
+	//
+	// Only wired into the Builder when TierSchemeAssetsFileSystem is active.
+	// With TierSchemeAssets=Embedded the asset_resolver handles everything and
+	// static_root is never set, so the plugin behaves exactly as before.
+	#[cfg(feature = "TierSchemeAssetsFileSystem")]
 	let StaticRoot = ExeParent.as_ref().and_then(|Parent| {
 		// Production bundle: MacOS/<bin> → ../Resources/
 		let Bundle = Parent.join("../Resources");
@@ -228,6 +233,7 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 		Builder = Builder.extension_root(Root);
 	}
 
+	#[cfg(feature = "TierSchemeAssetsFileSystem")]
 	if let Some(Root) = StaticRoot {
 		Builder = Builder.static_root(Root);
 	}
