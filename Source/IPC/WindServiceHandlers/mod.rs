@@ -1291,26 +1291,30 @@ pub async fn mountain_ipc_invoke(
 					Ok(status)
 				},
 				"mountain_get_configuration" => {
-					let config = json!({
-						"editor": { "theme": "dark" },
-						"extensions": { "installed": [] }
-					});
-					Ok(config)
+					// Return the live merged configuration object.
+					let Config = RunTime.Environment.ApplicationState.Configuration.GetGlobalConfiguration();
+					Ok(Config)
 				},
 				"mountain_get_services_status" => {
-					let services = json!({
-						"editor": { "status": "running" },
-						"extensionHost": { "status": "running" }
-					});
-					Ok(services)
+					let CocoonConnected = crate::Vine::Client::IsClientConnected::Fn("cocoon-main");
+					Ok(json!({
+						"cocoon": { "connected": CocoonConnected },
+						"vine": { "running": true }
+					}))
 				},
 				"mountain_get_state" => {
-					let state = json!({
-						"ui": {},
-						"editor": {},
-						"workspace": {}
-					});
-					Ok(state)
+					let FolderCount = RunTime
+						.Environment
+						.ApplicationState
+						.Workspace
+						.WorkspaceFolders
+						.lock()
+						.map(|G| G.len())
+						.unwrap_or(0);
+					Ok(json!({
+						"workspace": { "folderCount": FolderCount },
+						"activeDocument": RunTime.Environment.ApplicationState.Workspace.GetActiveDocumentURI()
+					}))
 				},
 
 				// =====================================================================
@@ -1507,13 +1511,11 @@ pub async fn mountain_ipc_invoke(
 				},
 				"nativeHost:toggleWindowAlwaysOnTop" => {
 					dev_log!("window", "{}", command);
-					// Tauri doesn't expose a "get always on top" accessor on all
-					// platforms, so toggle by tracking state via the webview title
-					// prefix as a proxy. In practice the UI will call
-					// `setWindowAlwaysOnTop` with an explicit bool immediately after,
-					// so a best-effort flip is enough.
+					static ALWAYS_ON_TOP:std::sync::atomic::AtomicBool =
+						std::sync::atomic::AtomicBool::new(false);
+					let Next = !ALWAYS_ON_TOP.fetch_xor(true, std::sync::atomic::Ordering::Relaxed);
 					if let Some(Window) = ApplicationHandle.get_webview_window("main") {
-						let _ = Window.set_always_on_top(true);
+						let _ = Window.set_always_on_top(Next);
 					}
 					Ok(Value::Null)
 				},
@@ -1680,10 +1682,26 @@ pub async fn mountain_ipc_invoke(
 						.or_else(|_| std::env::var("all_proxy"));
 					match ProxyEnv {
 						Ok(P) if !P.is_empty() => {
-							Ok(json!(format!(
-								"PROXY {}",
-								P.trim_start_matches("http://").trim_start_matches("https://")
-							)))
+							// Strip scheme and emit the correct PAC keyword.
+							// socks/socks4/socks5 → "SOCKS host:port" (RFC 3513)
+							// http/https          → "PROXY host:port"
+							let Lower = P.to_lowercase();
+							let (Keyword, Host) = if Lower.starts_with("socks") {
+								let H = P
+									.trim_start_matches("socks5://")
+									.trim_start_matches("socks4://")
+									.trim_start_matches("socks://");
+
+								("SOCKS", H)
+							} else {
+								let H = P
+									.trim_start_matches("http://")
+									.trim_start_matches("https://");
+
+								("PROXY", H)
+							};
+
+							Ok(json!(format!("{} {}", Keyword, Host)))
 						},
 						_ => Ok(json!("DIRECT")),
 					}
@@ -2283,8 +2301,15 @@ pub async fn mountain_ipc_invoke(
 							.Workspace
 							.SetActiveDocumentURI(Some(Uri.clone()));
 					}
-					// Forward to Cocoon
-					let Payload = json!({ "uri": Uri, "selections": Selections });
+					let ViewColumn = Arguments
+						.first()
+						.and_then(|V| V.get("viewColumn"))
+						.and_then(|V| V.as_u64())
+						.unwrap_or(1);
+					// Forward to Cocoon - include viewColumn so extensions
+					// calling `activeTextEditor.viewColumn` see the correct
+					// pane number in split-editor layouts.
+					let Payload = json!({ "uri": Uri, "selections": Selections, "viewColumn": ViewColumn });
 					let _ = crate::Vine::Client::SendNotification::Fn(
 						"cocoon-main".to_string(),
 						"window.didChangeTextEditorSelection".to_string(),

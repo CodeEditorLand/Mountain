@@ -46,7 +46,7 @@ pub(super) async fn update_configuration_value(
 
 	target:ConfigurationTarget,
 
-	_overrides:ConfigurationOverridesDTO,
+	overrides:ConfigurationOverridesDTO,
 
 	_scope_to_language:Option<bool>,
 ) -> Result<(), CommonError> {
@@ -149,15 +149,42 @@ pub(super) async fn update_configuration_value(
 
 	let mut current_config:Value = serde_json::from_slice(&bytes).unwrap_or_else(|_| Value::Object(Map::new()));
 
-	if let Value::Object(map) = &mut current_config {
-		if value.is_null() {
-			map.remove(&key);
+	if let Value::Object(ref mut RootMap) = current_config {
+		if let Some(LangId) = overrides.OverrideIdentifier.as_deref().filter(|S| !S.is_empty()) {
+			// Language-scoped override: write into `"[<langId>]": { key: value }`.
+			// This is how VS Code stores per-language defaults:
+			//   `prettier-vscode` sets `"[typescript]": { "editor.defaultFormatter": "..." }`
+			//   `vscode-eslint` sets `"[javascript]": { "editor.codeActionsOnSave": {...} }`
+			let ScopeKey = format!("[{}]", LangId);
 
-			dev_log!("config", "[ConfigurationProvider] Removed configuration key '{}'", key);
+			let LangScope = RootMap.entry(ScopeKey.clone()).or_insert_with(|| Value::Object(Map::new()));
+
+			if let Value::Object(LangMap) = LangScope {
+				if value.is_null() {
+					LangMap.remove(&key);
+
+					if LangMap.is_empty() {
+						RootMap.remove(&ScopeKey);
+					}
+
+					dev_log!("config", "[ConfigurationProvider] Removed '[{}]' key '{}'", LangId, key);
+				} else {
+					LangMap.insert(key.clone(), value.clone());
+
+					dev_log!("config", "[ConfigurationProvider] Updated '[{}]' key '{}'", LangId, key);
+				}
+			}
 		} else {
-			map.insert(key.clone(), value.clone());
+			// Top-level key - standard behaviour.
+			if value.is_null() {
+				RootMap.remove(&key);
 
-			dev_log!("config", "[ConfigurationProvider] Updated configuration key '{}'", key);
+				dev_log!("config", "[ConfigurationProvider] Removed configuration key '{}'", key);
+			} else {
+				RootMap.insert(key.clone(), value.clone());
+
+				dev_log!("config", "[ConfigurationProvider] Updated configuration key '{}'", key);
+			}
 		}
 	}
 

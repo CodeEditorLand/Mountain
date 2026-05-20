@@ -132,7 +132,23 @@
 //! - [`ConstructExtensionHostInitializationData`]: Build IExtensionHostInitData
 //!   for Cocoon
 
-use std::{collections::HashMap, env, fs, path::PathBuf, sync::Arc};
+use std::{
+	collections::HashMap,
+	env,
+	fs,
+	path::PathBuf,
+	sync::{Arc, OnceLock},
+};
+
+/// Stable session ID for the lifetime of this process. Generated once on
+/// first access and reused by every call to `ConstructSandboxConfiguration`
+/// and `ConstructExtensionHostInitializationData` so extensions comparing
+/// `telemetryInfo.sessionId` across calls see the same value.
+static SESSION_ID:OnceLock<String> = OnceLock::new();
+
+fn SessionId() -> &'static str {
+	SESSION_ID.get_or_init(|| Uuid::new_v4().to_string())
+}
 
 use CommonLibrary::{
 	Environment::Requires::Requires,
@@ -283,7 +299,7 @@ pub async fn ConstructSandboxConfiguration(
 		// Now implemented with persistent storage in app data directory.
 		"machineId": machine_id,
 
-		"sessionId": Uuid::new_v4().to_string(),
+		"sessionId": SessionId(),
 
 		"logLevel": log::max_level() as i32,
 
@@ -561,7 +577,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 		"telemetryInfo": {
 
-			"sessionId": Uuid::new_v4().to_string(),
+			"sessionId": SessionId(),
 
 			"machineId": get_or_generate_machine_id(&AppData).await,
 

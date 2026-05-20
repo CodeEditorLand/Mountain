@@ -1192,6 +1192,50 @@ impl CocoonService for CocoonServiceImpl {
 				}
 			},
 
+			// ---- Call Hierarchy / Type Hierarchy (T1.5 Approach A) ----
+			// These method names come from Cocoon's language provider when the
+			// user triggers F12 / Go to References / Call Hierarchy. They use
+			// the generic JSON request channel instead of typed proto methods
+			// because `PrepareCallHierarchy` was never added to Vine.proto.
+			// Params shape: `{ uri, position: { line, character } }`.
+			"$provideCallHierarchyItems" | "prepareCallHierarchy" => {
+				let URI_Raw = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("");
+				let Line = Params.get("position").and_then(|P| P.get("line")).and_then(|V| V.as_u64()).unwrap_or(0);
+				let Char = Params.get("position").and_then(|P| P.get("character")).and_then(|V| V.as_u64()).unwrap_or(0);
+
+				match Url::parse(URI_Raw) {
+					Ok(DocURI) => {
+						let Pos = PositionDTO { LineNumber:Line as u32, Column:Char as u32 };
+
+						match self.environment.PrepareCallHierarchy(DocURI, Pos).await {
+							Ok(Result) => Ok(OkResponse(RequestId, &Result)),
+							Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("prepareCallHierarchy: {}", Error))),
+						}
+					},
+
+					Err(_) => Ok(OkResponse(RequestId, &serde_json::Value::Array(Vec::new()))),
+				}
+			},
+
+			"$provideTypeHierarchyItems" | "prepareTypeHierarchy" => {
+				let URI_Raw = Params.get("uri").and_then(|V| V.as_str()).unwrap_or("");
+				let Line = Params.get("position").and_then(|P| P.get("line")).and_then(|V| V.as_u64()).unwrap_or(0);
+				let Char = Params.get("position").and_then(|P| P.get("character")).and_then(|V| V.as_u64()).unwrap_or(0);
+
+				match Url::parse(URI_Raw) {
+					Ok(DocURI) => {
+						let Pos = PositionDTO { LineNumber:Line as u32, Column:Char as u32 };
+
+						match self.environment.PrepareTypeHierarchy(DocURI, Pos).await {
+							Ok(Result) => Ok(OkResponse(RequestId, &Result)),
+							Err(Error) => Ok(ErrResponse(RequestId, -32000, format!("prepareTypeHierarchy: {}", Error))),
+						}
+					},
+
+					Err(_) => Ok(OkResponse(RequestId, &serde_json::Value::Array(Vec::new()))),
+				}
+			},
+
 			// ---- Unknown ----
 			_ => {
 				dev_log!("cocoon", "warn: [CocoonService] Unknown generic method: {}", Req.method);

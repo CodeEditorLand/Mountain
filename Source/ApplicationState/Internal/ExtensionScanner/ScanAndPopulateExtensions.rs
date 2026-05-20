@@ -95,6 +95,8 @@ pub async fn ScanAndPopulateExtensions(
 	// lock once for a pointer-swap so concurrent GetExtensions calls are not
 	// blocked during the N-insert loop (which was previously holding the lock
 	// for 100-500 ms on a cold filesystem with 94+ extensions).
+	let AllLen = All.len();
+
 	let PostWriteCount = {
 		let mut Guard = _State
 			.ScannedExtensions
@@ -102,7 +104,7 @@ pub async fn ScanAndPopulateExtensions(
 			.lock()
 			.map_err(|Error| CommonError::StateLockPoisoned { Context:Error.to_string() })?;
 
-		*Guard = All.clone();
+		*Guard = All; // move - no clone needed
 
 		Guard.len()
 	};
@@ -110,7 +112,7 @@ pub async fn ScanAndPopulateExtensions(
 	dev_log!(
 		"extensions",
 		"[ExtensionScanner] Complete: {} extensions ({} paths ok, {} failed). State has {} entries.",
-		All.len(),
+		AllLen,
 		SuccessfulScans,
 		FailedScans,
 		PostWriteCount
