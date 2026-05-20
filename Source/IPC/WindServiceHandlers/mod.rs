@@ -1813,60 +1813,11 @@ pub async fn mountain_ipc_invoke(
 				// observers).
 				"cocoon:request" => {
 					dev_log!("ipc", "cocoon:request method={:?}", Arguments.first());
-					let MethodOpt = Arguments.first().and_then(|V| V.as_str()).map(|S| S.to_string());
-					match MethodOpt {
-						None => Err("cocoon:request requires method string in slot 0".to_string()),
-						Some(Method) => {
-							let Payload = Arguments.get(1).cloned().unwrap_or(Value::Null);
-							// Same boot-race guard as `tree:getChildren`: the
-							// renderer can dispatch `cocoon:request` (e.g.
-							// `webview.resolveView`) before Cocoon's gRPC
-							// handshake completes. Wait briefly so the first
-							// few calls don't fail spuriously and poison
-							// renderer-side caches.
-							// Bumped 1500 -> 5000 ms - bundled-electron boot trace
-							// shows Cocoon's `Successfully connected` lands ~620
-							// log lines AFTER the workbench's first request, so
-							// the 1.5 s wait routinely expired before Cocoon was
-							// up. Sky-side caches captured the empty fallback
-							// (Explorer empty, webview.resolveView=ClientNotConnected,
-							// etc.) and panes never recovered.
-							let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 5000).await;
-							crate::Vine::Client::SendRequest::Fn("cocoon-main", Method.clone(), Payload, 30_000)
-								.await
-								.map_err(|Error| format!("cocoon:request {} failed: {:?}", Method, Error))
-						},
-					}
+					CocoonRequest(Arguments).await
 				},
-
-				// `cocoon:notify` - fire-and-forget renderer→Cocoon
-				// notification bridge. Companion to `cocoon:request` for
-				// one-way wire methods (`webview.message`,
-				// `webview.dispose`, `webview.viewState` etc.) where the
-				// extension doesn't reply. Avoids the 30s request
-				// timeout penalty when the renderer just wants to push
-				// data into the extension host. Wire shape:
-				// `params = [Method, Payload]`. Returns null
-				// immediately; the notification dispatches asynchronously.
 				"cocoon:notify" => {
 					dev_log!("ipc", "cocoon:notify method={:?}", Arguments.first());
-					let MethodOpt = Arguments.first().and_then(|V| V.as_str()).map(|S| S.to_string());
-					match MethodOpt {
-						None => Err("cocoon:notify requires method string in slot 0".to_string()),
-						Some(Method) => {
-							let Payload = Arguments.get(1).cloned().unwrap_or(Value::Null);
-							if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
-								"cocoon-main".to_string(),
-								Method.clone(),
-								Payload,
-							)
-							.await
-							{
-								dev_log!("ipc", "warn: [cocoon:notify] {} failed: {:?}", Method, Error);
-							}
-							Ok(Value::Null)
-						},
-					}
+					CocoonNotify(Arguments).await
 				},
 
 				// BATCH-19 Part B: VS Code's `LocalPtyService` talks to Mountain via
@@ -2115,82 +2066,43 @@ pub async fn mountain_ipc_invoke(
 				"encryption:decrypt" => Decrypt(Arguments).await,
 
 				// =====================================================================
-				// Extension host starter
+				// Extension host starter - atomic handlers
 				// =====================================================================
 				"extensionHostStarter:createExtensionHost" => {
 					dev_log!("exthost", "extensionHostStarter:createExtensionHost");
-					Ok(json!({ "id": "1" }))
+					ExtensionHostStarterCreate(Arguments).await
 				},
 				"extensionHostStarter:start" => {
-					// The renderer uses this PID to correlate extension-host-side
-					// debug adapters with the actual Node.js process. That process
-					// is Cocoon, not Mountain - returning `std::process::id()`
-					// here would point the debugger at Mountain's Rust binary.
-					// Fall back to Mountain's PID only if Cocoon hasn't spawned
-					// yet (should not happen for a real extension-host start).
-					let Pid =
-						crate::ProcessManagement::CocoonManagement::GetCocoonPid().unwrap_or_else(std::process::id);
-					dev_log!("exthost", "extensionHostStarter:start pid={}", Pid);
-					Ok(json!({ "pid": Pid }))
+					dev_log!("exthost", "extensionHostStarter:start");
+					ExtensionHostStarterStart(Arguments).await
 				},
 				"extensionHostStarter:kill" => {
 					dev_log!("exthost", "extensionHostStarter:kill");
-					Ok(Value::Null)
+					ExtensionHostStarterKill(Arguments).await
 				},
 				"extensionHostStarter:getExitInfo" => {
 					dev_log!("exthost", "extensionHostStarter:getExitInfo");
-					Ok(json!({ "code": null, "signal": null }))
+					ExtensionHostStarterGetExitInfo(Arguments).await
 				},
 
 				// =====================================================================
-				// Extension host message relay (Wind → Mountain → Cocoon)
+				// Extension host message relay (Wind → Mountain → Cocoon) - atomic
 				// =====================================================================
 				"cocoon:extensionHostMessage" => {
-					let ByteCount = Arguments
-						.first()
-						.map(|P| P.get("data").and_then(|D| D.as_array()).map(|A| A.len()).unwrap_or(0))
-						.unwrap_or(0);
-					dev_log!("exthost", "cocoon:extensionHostMessage bytes={}", ByteCount);
-
-					// Forward binary message to Cocoon via gRPC GenericNotification.
-					// Fire-and-forget - the extension host protocol is async.
-					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
-					tokio::spawn(async move {
-						if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
-							"cocoon-main".to_string(),
-							"extensionHostMessage".to_string(),
-							Payload,
-						)
-						.await
-						{
-							dev_log!("exthost", "cocoon:extensionHostMessage forward failed: {}", Error);
-						}
-					});
-					Ok(Value::Null)
+					dev_log!("exthost", "cocoon:extensionHostMessage");
+					CocoonExtensionHostMessage(ApplicationHandle.clone(), Arguments).await
 				},
 
 				// =====================================================================
-				// Extension host debug service
+				// Extension host debug service - atomic handlers
 				// =====================================================================
 				"extensionhostdebugservice:reload" => {
 					dev_log!("exthost", "extensionhostdebugservice:reload");
-					// Trigger a real Cocoon restart via the shutdown notification
-					// followed by a fresh bootstrap. For the current sprint we emit
-					// the request for Wind so it can tear down caches, the actual
-					// spawn lives downstream.
-					use tauri::Emitter;
-					if let Err(Error) = ApplicationHandle.emit(SkyEvent::ExtHostDebugReload.AsStr(), json!({})) {
-						dev_log!("exthost", "warn: extensionhostdebugservice:reload emit failed: {}", Error);
-					}
-					Ok(Value::Null)
+					ExtensionHostDebugReload(ApplicationHandle.clone()).await
 				},
 				"extensionhostdebugservice:close" => {
 					dev_log!("exthost", "extensionhostdebugservice:close");
-					use tauri::Emitter;
-					if let Err(Error) = ApplicationHandle.emit("sky://exthost/debug-close", json!({})) {
-						dev_log!("exthost", "warn: extensionhostdebugservice:close emit failed: {}", Error);
-					}
-					Ok(Value::Null)
+					ExtensionHostDebugClose(ApplicationHandle.clone()).await
 				},
 				"extensionhostdebugservice:attachSession" | "extensionhostdebugservice:terminateSession" => {
 					dev_log!("exthost", "{}", command);

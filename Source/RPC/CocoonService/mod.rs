@@ -10,6 +10,10 @@
 
 pub mod Auth;
 
+pub mod GenericNotification;
+
+pub mod GenericRequest;
+
 pub mod Command;
 
 pub mod Debug;
