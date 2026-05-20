@@ -69,7 +69,9 @@
 		"category": "DeveloperTool",
 		"copyright": "PlayForm",
 		"createUpdaterArtifacts": false,
-		"externalBin": ["Binary/node"],
+		"externalBin": [
+			"Binary/node"
+		],
 		"fileAssociations": [],
 		"homepage": "https://Land.PlayForm.Cloud",
 		"iOS": {
@@ -136,7 +138,10 @@
 			"../Sky/Target/product.json": "product.json"
 		},
 		"shortDescription": "",
-		"targets": ["app", "dmg"],
+		"targets": [
+			"app",
+			"dmg"
+		],
 		"windows": {
 			"allowDowngrades": true,
 			"certificateThumbprint": null,
