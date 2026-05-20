@@ -33,7 +33,8 @@ use CommonLibrary::{
 use serde_json::{Map, Value};
 use tauri::Manager;
 
-use crate::{Environment::Utility, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use crate::{Environment::Utility, IPC::SkyEmit::LogSkyEmit, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
+use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 /// Updates a configuration value in the appropriate `settings.json` file.
 pub(super) async fn update_configuration_value(
@@ -174,6 +175,19 @@ pub(super) async fn update_configuration_value(
 
 	// Re-merge all configurations to update the live state.
 	crate::Environment::ConfigurationProvider::Loading::initialize_and_merge_configurations(environment).await?;
+
+	// Notify Sky (the VS Code workbench) so its ConfigurationService rebuilds
+	// its cached model. Without this the Settings UI and workspace inspectors
+	// don't reflect extension-triggered writes until a window reload.
+	let EmitPayload = serde_json::json!({ "keys": [key] });
+
+	if let Err(Error) = LogSkyEmit(
+		&environment.ApplicationHandle,
+		SkyEvent::ConfigurationChanged.AsStr(),
+		EmitPayload,
+	) {
+		dev_log!("config", "warn: [ConfigurationProvider] sky://configuration/changed emit failed: {}", Error);
+	}
 
 	Ok(())
 }

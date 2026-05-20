@@ -74,5 +74,14 @@ pub async fn FileWriteNative(Arguments:Vec<Value>) -> Result<Value, String> {
 		}
 	});
 
-	Ok(Value::Null)
+	// Return mtime/size so VS Code's DiskFileSystemProvider can update its
+	// FileStatWithMetadata cache - prevents a spurious "file changed on disk"
+	// conflict caused by the pre-write etag being stale after the write.
+	match tokio::fs::metadata(&Path).await {
+		Ok(Meta) => {
+			Ok(crate::IPC::WindServiceHandlers::Utilities::MetadataEncoding::metadata_to_istat(&Meta))
+		},
+
+		Err(_) => Ok(Value::Null),
+	}
 }
