@@ -42,3 +42,15 @@ pub mod ShowOpenDialog;
 pub mod ToggleDevTools;
 
 pub mod UninstallShellCommand;
+
+pub mod Clipboard;
+
+pub mod GetEnvironmentPaths;
+
+pub mod IsRunningUnderARM64Translation;
+
+pub mod MoveItemToTrash;
+
+pub mod ShowMessageBox;
+
+pub mod ShowSaveDialog;

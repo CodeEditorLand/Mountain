@@ -10,16 +10,39 @@ use serde_json::Value;
 use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 
 pub async fn OpenExternal(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
-	let url_str = Arguments
-		.get(0)
-		.ok_or("Missing URL".to_string())?
-		.as_str()
-		.ok_or("URL must be a string".to_string())?;
+	// Accept both a plain URI string and the object shape
+	// `{ uri: "..." }` that some VS Code callers emit.
+	let url_str = match Arguments.first() {
+		Some(Value::String(S)) => S.as_str(),
+		Some(Value::Object(Obj)) => {
+			Obj.get("uri")
+				.or_else(|| Obj.get("url"))
+				.and_then(|V| V.as_str())
+				.unwrap_or("")
+		},
+		_ => return Ok(Value::Bool(false)),
+	};
+
+	if url_str.is_empty() {
+		return Ok(Value::Bool(false));
+	}
 
 	dev_log!("lifecycle", "openExternal: {}", url_str);
 
-	if !url_str.starts_with("http://") && !url_str.starts_with("https://") {
-		return Err(format!("Invalid URL format. Must start with http:// or https://: {}", url_str));
+	// Allowlist of safe protocols. Block `file://` (arbitrary filesystem
+	// access) and bare shell commands. Everything else that parses as a
+	// valid URI scheme is forwarded to the OS default handler.
+	let Scheme = url_str.splitn(2, ':').next().unwrap_or("").to_lowercase();
+	let AllowedSchemes = ["http", "https", "mailto", "ftp", "vscode", "fiddee",
+		"ssh", "git", "x-github-client", "github-windows", "slack", "teams",
+		"zoommtg", "tel", "callto"];
+	if Scheme == "file" || Scheme.is_empty() || !url_str.contains(':') {
+		dev_log!("lifecycle", "warn: [OpenExternal] blocked scheme '{}' for uri '{}'", Scheme, url_str);
+		return Ok(Value::Bool(false));
+	}
+	let IsKnownScheme = AllowedSchemes.contains(&Scheme.as_str());
+	if !IsKnownScheme {
+		dev_log!("lifecycle", "[OpenExternal] unknown scheme '{}' - forwarding to OS anyway", Scheme);
 	}
 
 	#[cfg(target_os = "macos")]

@@ -1,0 +1,33 @@
+#![allow(non_snake_case, unused_variables, dead_code, unused_imports)]
+
+//! Wire method: `localPty:freePortKillProcess`.
+//! Kills whatever process is holding a TCP port so a new terminal can bind it.
+//! On Unix, uses `lsof -t -i :<port>` to list PIDs then `kill -9` each one.
+//! No-op on unknown port (0) or non-Unix platforms.
+
+use serde_json::{Value, json};
+
+pub async fn LocalPTYFreePortKillProcess(Arguments:Vec<Value>) -> Result<Value, String> {
+	let Port = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0) as u16;
+	if Port > 0 {
+		#[cfg(unix)]
+		{
+			let Out = tokio::process::Command::new("lsof")
+				.args(["-t", "-i", &format!(":{}", Port)])
+				.output()
+				.await;
+			if let Ok(O) = Out {
+				let Pids = String::from_utf8_lossy(&O.stdout);
+				for Pid in Pids.split_whitespace() {
+					if let Ok(P) = Pid.parse::<u32>() {
+						let _ = tokio::process::Command::new("kill")
+							.args(["-9", &P.to_string()])
+							.status()
+							.await;
+					}
+				}
+			}
+		}
+	}
+	Ok(Value::Null)
+}

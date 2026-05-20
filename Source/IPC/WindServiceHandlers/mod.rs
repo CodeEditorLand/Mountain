@@ -3,6 +3,8 @@
 //! Wind Service Handlers - dispatcher and sub-module aggregator.
 //! Domain files handle the individual handler implementations.
 
+pub mod Cocoon;
+
 pub mod Commands;
 
 pub mod Configuration;
@@ -10,6 +12,8 @@ pub mod Configuration;
 pub mod Encryption;
 
 pub mod Extension;
+
+pub mod ExtensionHost;
 
 pub mod Extensions;
 
@@ -29,11 +33,17 @@ pub mod Output;
 
 pub mod Search;
 
+pub mod Sky;
+
 pub mod Storage;
 
 pub mod Terminal;
 
 pub mod UI;
+
+pub mod TreeView;
+
+pub mod Update;
 
 pub mod Utilities;
 
@@ -144,9 +154,14 @@ use Storage::{
 	StorageUpdateItems::StorageUpdateItems,
 };
 use Terminal::{
+	AttachToProcess::AttachToProcess,
+	DetachFromProcess::DetachFromProcess,
+	LocalPTYCreateProcess::LocalPTYCreateProcess,
+	LocalPTYFreePortKillProcess::LocalPTYFreePortKillProcess,
 	LocalPTYGetDefaultShell::LocalPTYGetDefaultShell,
 	LocalPTYGetEnvironment::LocalPTYGetEnvironment,
 	LocalPTYGetProfiles::LocalPTYGetProfiles,
+	LocalPTYResize::LocalPTYResize,
 	ReviveTerminalProcesses::ReviveTerminalProcesses,
 	SerializeTerminalState::SerializeTerminalState,
 	TerminalCreate::TerminalCreate,
@@ -256,6 +271,7 @@ pub async fn mountain_ipc_invoke(
 			| "logger:setVisibility"
 			| "log:registerLogger"
 			| "log:createLogger"
+			// File system - high-frequency VS Code workbench calls
 			| "file:stat"
 			| "file:readFile"
 			| "file:readdir"
@@ -265,13 +281,30 @@ pub async fn mountain_ipc_invoke(
 			| "file:realpath"
 			| "file:read"
 			| "file:write"
+			// Storage - polled constantly by VS Code services
 			| "storage:getItems"
 			| "storage:updateItems"
+			// Configuration - scoped-lookup hot path
 			| "configuration:lookup"
 			| "configuration:inspect"
+			// Themes - queried on every decoration/token change
 			| "themes:getColorTheme"
+			// Output/Progress - emitted in tight loops
 			| "output:append"
 			| "progress:report"
+			// Menubar - updated on every editor/selection change
+			| "menubar:updateMenubar"
+			// Ack-only event stubs - zero-cost dispatch
+			| "storage:onDidChangeItems"
+			| "storage:logStorage"
+			| "configuration:onDidChange"
+			| "workspaces:onDidChangeWorkspaceFolders"
+			| "workspaces:onDidChangeWorkspaceName"
+			// Command registry stubs
+			| "commands:registerCommand"
+			| "commands:unregisterCommand"
+			| "commands:onDidRegisterCommand"
+			| "commands:onDidExecuteCommand"
 	);
 
 	let OTLPStart = if IsHighFrequencyCommand { 0 } else { crate::IPC::DevLog::NowNano::Fn() };
@@ -343,7 +376,25 @@ pub async fn mountain_ipc_invoke(
 			// Configuration event stub
 			| "configuration:onDidChange"
 			// Storage lifecycle stubs
-			| "storage:optimize" | "storage:isUsed" | "storage:close" => {
+			| "storage:optimize" | "storage:isUsed" | "storage:close"
+			// Workspace event stubs: change delivery via Tauri events
+			| "workspaces:onDidChangeWorkspaceFolders"
+			| "workspaces:onDidChangeWorkspaceName" => {
+				return Ok(Value::Null);
+			},
+			// Menubar: acknowledged with atomic counter in the Echo path,
+			// but fast-path here to save scheduler overhead per call.
+			"menubar:updateMenubar" => {
+				use std::sync::atomic::{AtomicU64, Ordering as AO};
+
+				static MENUBAR_CALLS_FAST:AtomicU64 = AtomicU64::new(0);
+
+				let N = MENUBAR_CALLS_FAST.fetch_add(1, AO::Relaxed) + 1;
+
+				if N == 1 || N % 100 == 0 {
+					dev_log!("menubar", "menubar:updateMenubar (fast-path call #{})", N);
+				}
+
 				return Ok(Value::Null);
 			},
 			_ => {}, // fall through to Echo dispatch for real work
@@ -2013,40 +2064,7 @@ pub async fn mountain_ipc_invoke(
 				},
 				"localPty:createProcess" => {
 					dev_log!("terminal", "{}", command);
-					match TerminalCreate(RunTime.clone(), Arguments).await {
-						Ok(Response) => {
-							// Extract the integer id - this is what
-							// `IPtyService.createProcess` is contractually
-							// required to return.
-							let TerminalIdOption = Response.get("id").and_then(serde_json::Value::as_u64);
-							match TerminalIdOption {
-								Some(TerminalId) if TerminalId > 0 => Ok(serde_json::json!(TerminalId)),
-								Some(_) | None => {
-									// Defensive: if `CreateTerminal` returned
-									// without a usable id (shape drift or
-									// `GetNextTerminalIdentifier` regression),
-									// surface the error to the workbench
-									// instead of returning `0`. The workbench
-									// would otherwise bind `LocalPty(0, …)`
-									// and every subsequent `_proxy.input(0,
-									// data)` would fail silently because no
-									// PTY with id=0 exists - keystrokes get
-									// swallowed with no diagnostic.
-									dev_log!(
-										"terminal",
-										"error: [localPty:createProcess] CreateTerminal returned no usable id; \
-										 response={:?}",
-										Response
-									);
-									Err(format!(
-										"localPty:createProcess: CreateTerminal returned no terminal id (response={})",
-										Response
-									))
-								},
-							}
-						},
-						Err(Error) => Err(Error),
-					}
+					LocalPTYCreateProcess(RunTime.clone(), Arguments).await
 				},
 				"localPty:start" => {
 					// Eager-spawn pattern: `TerminalProvider::CreateTerminal`
@@ -2254,17 +2272,24 @@ pub async fn mountain_ipc_invoke(
 					Ok(json!(NewId))
 				},
 
-				// Remaining `localPty:*` - lifecycle/title hooks that have no
-				// Mountain-side state; acknowledged as no-ops.
-				// `attachToProcess` / `detachFromProcess`: session reconnect to an
-				// existing PTY host - not applicable since Mountain runs PTYs
-				// in-process with no separate host.
+				// Session reconnect: reattach the workbench to a live Mountain
+				// PTY after a window reload. The provider looks up the terminal
+				// by id and returns its PID. DetachFromProcess is the inverse -
+				// Mountain keeps the PTY running; output buffer accumulates for
+				// the next attach or sky:replay-events drain.
+				"localPty:attachToProcess" => {
+					dev_log!("terminal", "localPty:attachToProcess");
+					AttachToProcess(RunTime.clone(), Arguments).await
+				},
+				"localPty:detachFromProcess" => {
+					dev_log!("terminal", "localPty:detachFromProcess");
+					DetachFromProcess(RunTime.clone(), Arguments).await
+				},
+
+				// Remaining `localPty:*` - no Mountain-side state needed.
 				// `installAutoReply` / `uninstallAllAutoReplies`: shell-integration
-				// auto-reply triggers (e.g. sudo password prompts) - not
-				// implemented.
+				// auto-reply triggers (e.g. sudo password prompts) - not implemented.
 				"localPty:processBinary"
-				| "localPty:attachToProcess"
-				| "localPty:detachFromProcess"
 				| "localPty:orphanQuestionReply"
 				| "localPty:updateTitle"
 				| "localPty:updateIcon"
@@ -2871,29 +2896,168 @@ pub async fn mountain_ipc_invoke(
 					}))
 				},
 
-				// Atom L2: unknown-command fallback consults the Channel registry so
-				// the log distinguishes three states:
-				//   1. typo / never-registered wire string (registry::from_str Err)
-				//   2. registered but dispatch missing (registry OK but arm absent)
-				//   3. legitimately unknown
-				// Case (2) is the shape of the VSIX stub bug before K2 landed - an
-				// entry present in the registry with no handler. Making it visible
-				// turns silent drift into a loud dev-log line.
+				// =====================================================================
+				// Language features (forward to Cocoon Node.js runtime)
+				// =====================================================================
+				// These are VS Code language-intelligence channels. Mountain has no
+				// native implementation - Cocoon's extension host processes them via
+				// the LanguageProviderRegistry. All go through cocoon:request bridge.
+				"languages:getAll" | "languages:getEncodedLanguageId" => {
+					dev_log!("extensions", "languages: {} (→ Cocoon)", command);
+					let Payload = Arguments.into_iter().next().unwrap_or(Value::Null);
+					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
+						.await
+						.unwrap_or(Value::Array(Vec::new())))
+				},
+
+				// =====================================================================
+				// SCM - forward to Cocoon's vscode.scm namespace
+				// =====================================================================
+				"scm:createSourceControl"
+				| "scm:getSourceControls"
+				| "scm:setActiveProvider" => {
+					dev_log!("ipc", "scm: {} (→ Cocoon)", command);
+					let Payload = if Arguments.is_empty() {
+						Value::Null
+					} else if Arguments.len() == 1 {
+						Arguments.into_iter().next().unwrap()
+					} else {
+						Value::Array(Arguments)
+					};
+					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
+						.await
+						.unwrap_or(Value::Null))
+				},
+
+				// =====================================================================
+				// Debug - forward to Cocoon's vscode.debug namespace
+				// =====================================================================
+				"debug:startDebugging"
+				| "debug:stopDebugging"
+				| "debug:getSessions"
+				| "debug:getBreakpoints"
+				| "debug:addBreakpoints"
+				| "debug:removeBreakpoints" => {
+					dev_log!("ipc", "debug: {} (→ Cocoon)", command);
+					let Payload = if Arguments.is_empty() {
+						Value::Null
+					} else if Arguments.len() == 1 {
+						Arguments.into_iter().next().unwrap()
+					} else {
+						Value::Array(Arguments)
+					};
+					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
+						.await
+						.unwrap_or(Value::Null))
+				},
+
+				// =====================================================================
+				// Tasks - forward to Cocoon's vscode.tasks namespace
+				// =====================================================================
+				"tasks:executeTask"
+				| "tasks:getTasks"
+				| "tasks:getTaskExecution" => {
+					dev_log!("ipc", "tasks: {} (→ Cocoon)", command);
+					let Payload = if Arguments.is_empty() {
+						Value::Null
+					} else if Arguments.len() == 1 {
+						Arguments.into_iter().next().unwrap()
+					} else {
+						Value::Array(Arguments)
+					};
+					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
+						.await
+						.unwrap_or(Value::Null))
+				},
+
+				// =====================================================================
+				// Authentication - forward to Cocoon's vscode.authentication namespace
+				// =====================================================================
+				"auth:getSessions"
+				| "auth:createSession"
+				| "auth:removeSession" => {
+					dev_log!("ipc", "auth: {} (→ Cocoon)", command);
+					let Payload = if Arguments.is_empty() {
+						Value::Null
+					} else if Arguments.len() == 1 {
+						Arguments.into_iter().next().unwrap()
+					} else {
+						Value::Array(Arguments)
+					};
+					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
+						.await
+						.unwrap_or(Value::Null))
+				},
+
+				// Atom L2 + NodeDeferred: unknown-command fallback.
+				// First consults the Channel registry (three states):
+				//   1. typo / never-registered → log + defer to Cocoon
+				//   2. registered but no dispatch arm → log + defer to Cocoon
+				//   3. Cocoon returns error → surface as IPC error
+				//
+				// When `TierIPC=NodeDeferred` or `TierIPC=Node` (set in
+				// .env.Land) unknown commands are forwarded to Cocoon's
+				// Node.js runtime via gRPC instead of returning an error.
+				// This lets VS Code API surfaces that live in the extension
+				// host (language features, SCM, debug, tasks, etc.) resolve
+				// without requiring a Mountain dispatch arm.
 				_ => {
 					use std::str::FromStr;
-					match CommonLibrary::IPC::Channel::Channel::from_str(&command) {
-						Ok(KnownChannel) => {
-							dev_log!(
-								"ipc",
-								"error: [WindServiceHandlers] Channel {:?} is registered but has no dispatch arm",
-								KnownChannel
-							);
-							Err(format!("IPC channel registered but unimplemented: {}", command))
-						},
-						Err(_) => {
-							dev_log!("ipc", "error: [WindServiceHandlers] Unknown IPC command: {}", command);
-							Err(format!("Unknown IPC command: {}", command))
-						},
+
+					// Check if command should defer to Cocoon's Node.js runtime.
+					// The env var is baked in at build time via rustc-env from
+					// build.rs; at runtime we also accept it via process env for
+					// debug overrides.
+					let TierIPC = std::env::var("TierIPC").unwrap_or_else(|_| "Mountain".into());
+					let ShouldDefer = TierIPC == "NodeDeferred" || TierIPC == "Node";
+
+					if ShouldDefer {
+						// Forward to Cocoon via cocoon:request bridge.
+						// Cocoon's RequestRoutingHandler + extension namespaces
+						// cover language:*, scm:*, debug:*, tasks:*, auth:*, etc.
+						let Payload = if Arguments.is_empty() {
+							Value::Null
+						} else if Arguments.len() == 1 {
+							Arguments.into_iter().next().unwrap()
+						} else {
+							Value::Array(Arguments)
+						};
+						dev_log!("ipc", "deferred → Cocoon: {}", command);
+						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
+						match crate::Vine::Client::SendRequest::Fn(
+							"cocoon-main",
+							command.clone(),
+							Payload,
+							15_000,
+						)
+						.await
+						{
+							Ok(Response) => Ok(Response),
+							Err(CocoonError) => {
+								dev_log!("ipc", "warn: [NodeDeferred] {} deferred but Cocoon rejected: {:?}", command, CocoonError);
+								Ok(Value::Null)
+							},
+						}
+					} else {
+						match CommonLibrary::IPC::Channel::Channel::from_str(&command) {
+							Ok(KnownChannel) => {
+								dev_log!(
+									"ipc",
+									"error: [WindServiceHandlers] Channel {:?} is registered but has no dispatch arm",
+									KnownChannel
+								);
+								Err(format!("IPC channel registered but unimplemented: {}", command))
+							},
+							Err(_) => {
+								dev_log!("ipc", "error: [WindServiceHandlers] Unknown IPC command: {}", command);
+								Err(format!("Unknown IPC command: {}", command))
+							},
+						}
 					}
 				},
 			};

@@ -22,6 +22,20 @@
 //!   terminals to `ISerializedTerminalState[]` for window-reload restoration.
 //! - `ReviveTerminalProcesses::ReviveTerminalProcesses` - respawn terminals
 //!   from a previously serialised snapshot.
+//! - `AttachToProcess::AttachToProcess` - reconnect the workbench to an
+//!   existing Mountain PTY after a window reload.
+//! - `DetachFromProcess::DetachFromProcess` - detach the workbench; PTY stays
+//!   alive with output buffering for the next attach.
+
+pub mod AttachToProcess;
+
+pub mod LocalPTYCreateProcess;
+
+pub mod LocalPTYFreePortKillProcess;
+
+pub mod LocalPTYResize;
+
+pub mod DetachFromProcess;
 
 pub mod LocalPTYGetDefaultShell;
 
