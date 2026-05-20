@@ -160,11 +160,12 @@ use crate::{
 ///
 /// # Returns
 /// The machine ID as a String
-fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
+async fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 	let machine_id_path = app_data_dir.join("machine-id.txt");
 
-	// Try to load existing machine ID
-	if let Ok(content) = fs::read_to_string(&machine_id_path) {
+	// Try to load existing machine ID using async I/O so the Tokio
+	// worker thread is not parked during the disk read at boot.
+	if let Ok(content) = tokio::fs::read_to_string(&machine_id_path).await {
 		let trimmed = content.trim();
 
 		if !trimmed.is_empty() {
@@ -179,7 +180,7 @@ fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 
 	// Ensure directory exists
 	if let Some(parent) = machine_id_path.parent() {
-		if let Err(e) = fs::create_dir_all(parent) {
+		if let Err(e) = tokio::fs::create_dir_all(parent).await {
 			dev_log!(
 				"cocoon",
 				"warn: [InitializationData] Failed to create machine ID directory: {}",
@@ -189,7 +190,7 @@ fn get_or_generate_machine_id(app_data_dir:&PathBuf) -> String {
 	}
 
 	// Save to disk
-	if let Err(e) = fs::write(&machine_id_path, &new_machine_id) {
+	if let Err(e) = tokio::fs::write(&machine_id_path, &new_machine_id).await {
 		dev_log!(
 			"cocoon",
 			"warn: [InitializationData] Failed to persist machine ID to disk: {}",
@@ -271,7 +272,7 @@ pub async fn ConstructSandboxConfiguration(
 	});
 
 	// Load or generate persistent machine ID
-	let machine_id = get_or_generate_machine_id(&AppDataDir);
+	let machine_id = get_or_generate_machine_id(&AppDataDir).await;
 
 	Ok(json!({
 		"windowId": ApplicationHandle.get_webview_window("main").unwrap().label(),
@@ -562,7 +563,7 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 
 			"sessionId": Uuid::new_v4().to_string(),
 
-			"machineId": get_or_generate_machine_id(&AppData),
+			"machineId": get_or_generate_machine_id(&AppData).await,
 
 			"firstSessionDate": "2024-01-01T00:00:00.000Z",
 
