@@ -59,3 +59,5 @@ pub mod ExtractDevTag;
 pub mod InitializationData;
 
 pub mod NodeResolver;
+
+pub mod WorkspaceContainsGlob;

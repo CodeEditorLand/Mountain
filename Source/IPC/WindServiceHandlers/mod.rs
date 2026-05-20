@@ -105,13 +105,27 @@ use Model::{
 	TextfileWrite::TextfileWrite,
 };
 use NativeHost::{
+	Clipboard::{
+		NativeReadClipboardText,
+		NativeReadClipboardFindText,
+		NativeWriteClipboardText,
+		NativeWriteClipboardFindText,
+		NativeReadClipboardBuffer,
+		NativeWriteClipboardBuffer,
+		NativeHasClipboard,
+		NativeTriggerPaste,
+		NativeReadImage,
+	},
 	Exit::Exit,
 	FindFreePort::*,
 	GetColorScheme::*,
+	GetEnvironmentPaths::NativeGetEnvironmentPaths,
 	InstallShellCommand::InstallShellCommand,
 	IsFullscreen::*,
 	IsMaximized::*,
+	IsRunningUnderARM64Translation::NativeIsRunningUnderARM64Translation,
 	KillProcess::KillProcess,
+	MoveItemToTrash::NativeMoveItemToTrash,
 	OSProperties::*,
 	OSStatistics::*,
 	OpenDevTools::OpenDevTools,
@@ -121,7 +135,9 @@ use NativeHost::{
 	Relaunch::Relaunch,
 	Reload::Reload,
 	ShowItemInFolder::*,
+	ShowMessageBox::NativeShowMessageBox,
 	ShowOpenDialog::*,
+	ShowSaveDialog::{NativeShowSaveDialog, UserInterfaceShowSaveDialog},
 	ToggleDevTools::ToggleDevTools,
 	UninstallShellCommand::UninstallShellCommand,
 };
@@ -1319,122 +1335,14 @@ pub async fn mountain_ipc_invoke(
 						Err(Error) => Err(Error),
 					}
 				},
-				"nativeHost:showSaveDialog" => {
-					use tauri_plugin_dialog::DialogExt;
-					let Options = Arguments.first().cloned().unwrap_or(Value::Null);
-					let Title = Options.get("title").and_then(Value::as_str).unwrap_or("Save").to_string();
-					let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
-					let Handle = ApplicationHandle.clone();
-					let Joined = tokio::task::spawn_blocking(move || -> Option<String> {
-						let mut Builder = Handle.dialog().file().set_title(&Title);
-						if let Some(Path) = DefaultPath.as_deref() {
-							Builder = Builder.set_directory(Path);
-						}
-						Builder.blocking_save_file().map(|P| P.to_string())
-					})
-					.await;
-					match Joined {
-						Ok(Some(Path)) => Ok(json!({ "canceled": false, "filePath": Path })),
-						Ok(None) => Ok(json!({ "canceled": true })),
-						Err(Error) => Err(format!("showSaveDialog join error: {}", Error)),
-					}
-				},
+				"nativeHost:showSaveDialog" => NativeShowSaveDialog(ApplicationHandle.clone(), Arguments).await,
 				// Wind's `Files/Live.ts` calls `UserInterface.ShowSaveDialog` via
-				// IPC and expects a bare path string (or undefined). Unwrap from the
-				// `{ canceled, filePath }` shape so Wind's
-				// `typeof Result === "string" ? Result : undefined` sees the string.
-				"UserInterface.ShowSaveDialog" => {
-					use tauri_plugin_dialog::DialogExt;
-					let Options = Arguments.first().cloned().unwrap_or(Value::Null);
-					let Title = Options.get("title").and_then(Value::as_str).unwrap_or("Save").to_string();
-					let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
-					let Handle = ApplicationHandle.clone();
-					let Joined = tokio::task::spawn_blocking(move || -> Option<String> {
-						let mut Builder = Handle.dialog().file().set_title(&Title);
-						if let Some(Path) = DefaultPath.as_deref() {
-							Builder = Builder.set_directory(Path);
-						}
-						Builder.blocking_save_file().map(|P| P.to_string())
-					})
-					.await;
-					// Return just the path string (not the {canceled,filePath} envelope)
-					// so Wind's `typeof Result === "string"` guard finds a string value.
-					match Joined {
-						Ok(Some(Path)) => Ok(json!(Path)),
-						Ok(None) => Ok(Value::Null),
-						Err(Error) => Err(format!("UserInterface.ShowSaveDialog join error: {}", Error)),
-					}
-				},
-				"nativeHost:showMessageBox" => {
-					use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
-					let Options = Arguments.first().cloned().unwrap_or(Value::Null);
-					let Message = Options.get("message").and_then(Value::as_str).unwrap_or("").to_string();
-					let Detail = Options.get("detail").and_then(Value::as_str).map(str::to_string);
-					let DialogType = Options
-						.get("type")
-						.and_then(Value::as_str)
-						.map(|S| S.to_lowercase())
-						.unwrap_or_default();
-					let Title = Options.get("title").and_then(Value::as_str).unwrap_or("").to_string();
-					let Kind = match DialogType.as_str() {
-						"warning" | "warn" => MessageDialogKind::Warning,
-						"error" => MessageDialogKind::Error,
-						_ => MessageDialogKind::Info,
-					};
-					let Handle = ApplicationHandle.clone();
-					let Joined = tokio::task::spawn_blocking(move || -> bool {
-						let mut Builder = Handle.dialog().message(&Message).kind(Kind);
-						if !Title.is_empty() {
-							Builder = Builder.title(&Title);
-						}
-						if let Some(DetailText) = Detail.as_deref() {
-							Builder = Builder.title(DetailText);
-						}
-						Builder.blocking_show()
-					})
-					.await;
-					match Joined {
-						Ok(Answered) => Ok(json!({ "response": if Answered { 0 } else { 1 } })),
-						Err(Error) => Err(format!("showMessageBox join error: {}", Error)),
-					}
-				},
+				// IPC and expects a bare path string (or undefined).
+				"UserInterface.ShowSaveDialog" => UserInterfaceShowSaveDialog(ApplicationHandle.clone(), Arguments).await,
+				"nativeHost:showMessageBox" => NativeShowMessageBox(ApplicationHandle.clone(), Arguments).await,
 
-				// Environment paths - called by ResolveConfiguration to get real Tauri paths.
-				// Returns the session log directory (with timestamp + window1 subdir)
-				// so VS Code can immediately write output files without stat errors.
-				"nativeHost:getEnvironmentPaths" => {
-					let PathResolver = ApplicationHandle.path();
-					let AppDataDir = PathResolver.app_data_dir().unwrap_or_default();
-					let HomeDir = PathResolver.home_dir().unwrap_or_default();
-					let TmpDir = std::env::temp_dir();
-
-					// Logs go under {appDataDir}/logs/{sessionTimestamp}/ - same tree as
-					// all other VS Code data, not Tauri's separate app_log_dir().
-					// VS Code requires a session-timestamped subdir for log rotation.
-					// `DevLog::SessionTimestamp` is the single source of truth so that
-					// `Mountain.dev.log` (written by DevLog) and VS Code's
-					// `window1/output/*.log` files (written into `logsPath`) share one
-					// directory per session.
-					let SessionLogRoot = AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp::Fn());
-					let SessionLogWindowDir = SessionLogRoot.join("window1");
-					let _ = std::fs::create_dir_all(&SessionLogWindowDir);
-
-					dev_log!(
-						"config",
-						"getEnvironmentPaths: userDataDir={} logsPath={} homeDir={}",
-						AppDataDir.display(),
-						SessionLogRoot.display(),
-						HomeDir.display()
-					);
-					let DevLogEnv = std::env::var("Trace").unwrap_or_default();
-					Ok(json!({
-						"userDataDir": AppDataDir.to_string_lossy(),
-						"logsPath": SessionLogRoot.to_string_lossy(),
-						"homeDir": HomeDir.to_string_lossy(),
-						"tmpDir": TmpDir.to_string_lossy(),
-						"devLog": if DevLogEnv.is_empty() { Value::Null } else { json!(DevLogEnv) },
-					}))
-				},
+				// Environment paths - delegated to atomic handler.
+				"nativeHost:getEnvironmentPaths" => NativeGetEnvironmentPaths(ApplicationHandle.clone()).await,
 
 				// OS info
 				"nativeHost:getOSColorScheme" => {
@@ -2092,65 +2000,7 @@ pub async fn mountain_ipc_invoke(
 				},
 				"localPty:resize" => {
 					dev_log!("terminal", "localPty:resize");
-					// Forward through the Terminal.Resize effect so the PTY master
-					// receives SIGWINCH. Arguments from VS Code arrive as either
-					// `[id, cols, rows]` or `{ id, cols, rows }`; accept both.
-					//
-					// Defensive clamping: portable-pty's `master.resize()`
-					// crashes the IO thread with "size out of range" on
-					// `cols=0` or `rows=0` (the workbench occasionally
-					// emits 0×0 during pane drag-storms before the
-					// `requestAnimationFrame` settle). Clamp to sane
-					// minimums so a transient micro-size never tears
-					// down the shell.
-					let (TerminalId, Columns, Rows) = {
-						let First = Arguments.first().cloned().unwrap_or(Value::Null);
-						if First.is_object() {
-							let Id = First.get("id").and_then(|V| V.as_u64()).unwrap_or(0);
-							let C = First.get("cols").and_then(|V| V.as_u64()).unwrap_or(80) as u16;
-							let R = First.get("rows").and_then(|V| V.as_u64()).unwrap_or(24) as u16;
-							(Id, C, R)
-						} else {
-							let Id = Arguments.get(0).and_then(|V| V.as_u64()).unwrap_or(0);
-							let C = Arguments.get(1).and_then(|V| V.as_u64()).unwrap_or(80) as u16;
-							let R = Arguments.get(2).and_then(|V| V.as_u64()).unwrap_or(24) as u16;
-							(Id, C, R)
-						}
-					};
-					if TerminalId == 0 {
-						Ok(Value::Null)
-					} else {
-						let Columns = if Columns == 0 { 1 } else { Columns };
-						let Rows = if Rows == 0 { 1 } else { Rows };
-						use CommonLibrary::{
-							Environment::Requires::Requires,
-							Terminal::TerminalProvider::TerminalProvider,
-						};
-						let Provider:Arc<dyn TerminalProvider> = RunTime.Environment.Require();
-						match Provider.ResizeTerminal(TerminalId, Columns, Rows).await {
-							Ok(_) => Ok(Value::Null),
-							Err(Error) => {
-								// Resize on a disposed terminal is a common
-								// race during shutdown - the workbench layout
-								// pass fires after the user types `exit`, the
-								// PTY closes, and the resize call lands on a
-								// dropped master. Logging at warn instead of
-								// error keeps the noise down. Returning
-								// `Value::Null` (rather than a hard error)
-								// lets the workbench's resize loop continue
-								// instead of stalling on the failed promise.
-								dev_log!(
-									"terminal",
-									"warn: localPty:resize id={} cols={} rows={} failed: {}",
-									TerminalId,
-									Columns,
-									Rows,
-									Error
-								);
-								Ok(Value::Null)
-							},
-						}
-					}
+					LocalPTYResize(RunTime.clone(), Arguments).await
 				},
 				"localPty:acknowledgeDataEvent" => {
 					// xterm flow-control heartbeat; no-op on Mountain side.
@@ -2215,29 +2065,8 @@ pub async fn mountain_ipc_invoke(
 				// `ILocalPtyService.freePortKillProcess` - kill whatever process
 				// is listening on a port so a new terminal can bind it.
 				"localPty:freePortKillProcess" => {
-					let Port = Arguments.first().and_then(|V| V.as_u64()).unwrap_or(0) as u16;
-					if Port > 0 {
-						// Find and kill the process holding the port via lsof.
-						#[cfg(unix)]
-						{
-							let Out = tokio::process::Command::new("lsof")
-								.args(["-t", "-i", &format!(":{}", Port)])
-								.output()
-								.await;
-							if let Ok(O) = Out {
-								let Pids = String::from_utf8_lossy(&O.stdout);
-								for Pid in Pids.split_whitespace() {
-									if let Ok(P) = Pid.parse::<u32>() {
-										let _ = tokio::process::Command::new("kill")
-											.args(["-9", &P.to_string()])
-											.status()
-											.await;
-									}
-								}
-							}
-						}
-					}
-					Ok(Value::Null)
+					dev_log!("terminal", "localPty:freePortKillProcess");
+					LocalPTYFreePortKillProcess(Arguments).await
 				},
 
 				// `ILocalPtyService.serializeTerminalProcesses` - snapshot all
