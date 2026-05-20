@@ -39,26 +39,16 @@ pub async fn NativeWriteClipboardFindText(Arguments:Vec<Value>) -> Result<Value,
 	Ok(Value::Null)
 }
 
-pub async fn NativeReadClipboardBuffer(_Arguments:Vec<Value>) -> Result<Value, String> {
-	Ok(json!([]))
-}
+pub async fn NativeReadClipboardBuffer(_Arguments:Vec<Value>) -> Result<Value, String> { Ok(json!([])) }
 
-pub async fn NativeWriteClipboardBuffer(_Arguments:Vec<Value>) -> Result<Value, String> {
-	Ok(Value::Null)
-}
+pub async fn NativeWriteClipboardBuffer(_Arguments:Vec<Value>) -> Result<Value, String> { Ok(Value::Null) }
 
-pub async fn NativeHasClipboard(_Arguments:Vec<Value>) -> Result<Value, String> {
-	Ok(json!(false))
-}
+pub async fn NativeHasClipboard(_Arguments:Vec<Value>) -> Result<Value, String> { Ok(json!(false)) }
 
 /// Trigger a paste operation. On Tauri 2.x there is no direct `paste` API;
 /// return false so callers fall through to the OS's native paste shortcut.
-pub async fn NativeTriggerPaste(_Arguments:Vec<Value>) -> Result<Value, String> {
-	Ok(json!(false))
-}
+pub async fn NativeTriggerPaste(_Arguments:Vec<Value>) -> Result<Value, String> { Ok(json!(false)) }
 
 /// Read an image from the clipboard. Binary clipboard is not yet
 /// implemented - return an empty array so callers get a safe fallback.
-pub async fn NativeReadImage(_Arguments:Vec<Value>) -> Result<Value, String> {
-	Ok(json!([]))
-}
+pub async fn NativeReadImage(_Arguments:Vec<Value>) -> Result<Value, String> { Ok(json!([])) }

@@ -5,8 +5,7 @@
 
 use serde_json::Value;
 
-use crate::Environment::MountainEnvironment::MountainEnvironment;
-use crate::dev_log;
+use crate::{Environment::MountainEnvironment::MountainEnvironment, dev_log};
 
 pub async fn HandleRegisterCommand(Params:Value, Env:&MountainEnvironment) {
 	let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();

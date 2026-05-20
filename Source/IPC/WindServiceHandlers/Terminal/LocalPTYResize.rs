@@ -16,10 +16,7 @@ use serde_json::Value;
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn LocalPTYResize(
-	RunTime:Arc<ApplicationRunTime>,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn LocalPTYResize(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	let (TerminalId, Columns, Rows) = {
 		let First = Arguments.first().cloned().unwrap_or(Value::Null);
 		if First.is_object() {

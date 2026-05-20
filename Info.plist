@@ -62,6 +62,8 @@
 		<string>JavaScript</string>
 		<key>TierHTTPProxy</key>
 		<string>HandRolled</string>
+		<key>TierIPC</key>
+		<string>Mountain</string>
 		<key>TierLogger</key>
 		<string>Standard</string>
 		<key>TierModuleCache</key>

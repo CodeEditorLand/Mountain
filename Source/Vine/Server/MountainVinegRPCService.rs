@@ -625,6 +625,22 @@ impl MountainService for MountainVinegRPCService {
 				super::Notification::DecorationTypeLifecycle::DecorationTypeLifecycle(self, &MethodName, &Parameter).await;
 			},
 
+			// Extension called `editor.setDecorations(type, ranges)`.
+			// Batched and emitted as `sky://decoration/set-ranges` so Sky can
+			// apply the ranges to the Monaco editor for the matching URI.
+			"window.setTextEditorDecorations" => {
+
+				super::Notification::SetTextEditorDecorations::SetTextEditorDecorations(self, &Parameter).await;
+			},
+
+			// Extension called `editor.edit(cb)` - an in-place text mutation.
+			// Payload: `{ uri, edits: [{range, text}] }`.
+			// Sky applies via `ICodeEditorService` → `editor.executeEdits`.
+			"window.applyTextEdits" => {
+
+				super::Notification::ApplyTextEdits::ApplyTextEdits(self, &Parameter).await;
+			},
+
 			"debug.addBreakpoints" | "debug.removeBreakpoints" | "debug.consoleAppend" => {
 
 				super::Notification::DebugLifecycle::DebugLifecycle(self, &MethodName, &Parameter).await;

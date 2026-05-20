@@ -53,9 +53,7 @@ pub fn HandleSetStatusBarText(Params:Value, Env:&MountainEnvironment) {
 
 pub fn HandleDisposeStatusBarItem(Params:Value, Env:&MountainEnvironment) {
 	let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = Env
-		.ApplicationHandle
-		.emit("sky://statusbar/dispose", json!({ "id": ItemId }));
+	let _ = Env.ApplicationHandle.emit("sky://statusbar/dispose", json!({ "id": ItemId }));
 }
 
 // ── Output channels ───────────────────────────────────────────────────────
@@ -63,7 +61,9 @@ pub fn HandleDisposeStatusBarItem(Params:Value, Env:&MountainEnvironment) {
 pub fn HandleOutputCreate(Params:Value, Env:&MountainEnvironment) {
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Name = Params.get("name").and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = Env.ApplicationHandle.emit("sky://output/create", json!({ "id": Id, "name": Name }));
+	let _ = Env
+		.ApplicationHandle
+		.emit("sky://output/create", json!({ "id": Id, "name": Name }));
 }
 
 pub fn HandleOutputAppend(Params:Value, Env:&MountainEnvironment) {
@@ -95,7 +95,9 @@ pub fn HandleOutputShow(Params:Value, Env:&MountainEnvironment) {
 
 pub fn HandleOutputDispose(Params:Value, Env:&MountainEnvironment) {
 	let Channel = Params.get("channel").and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = Env.ApplicationHandle.emit("sky://output/dispose", json!({ "channel": Channel }));
+	let _ = Env
+		.ApplicationHandle
+		.emit("sky://output/dispose", json!({ "channel": Channel }));
 }
 
 // ── Progress ──────────────────────────────────────────────────────────────
@@ -123,18 +125,14 @@ pub fn HandleProgressUpdate(Params:Value, Env:&MountainEnvironment) {
 
 pub fn HandleProgressComplete(Params:Value, Env:&MountainEnvironment) {
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = Env
-		.ApplicationHandle
-		.emit("sky://progress/complete", json!({ "id": Id }));
+	let _ = Env.ApplicationHandle.emit("sky://progress/complete", json!({ "id": Id }));
 }
 
 // ── Misc ──────────────────────────────────────────────────────────────────
 
 pub fn HandleOpenExternal(Params:Value, Env:&MountainEnvironment) {
 	let Url = Params.get("url").and_then(|V| V.as_str()).unwrap_or("").to_string();
-	let _ = Env
-		.ApplicationHandle
-		.emit("sky://native/openExternal", json!({ "url": Url }));
+	let _ = Env.ApplicationHandle.emit("sky://native/openExternal", json!({ "url": Url }));
 }
 
 pub fn HandleSetLanguageConfiguration(Params:Value, Env:&MountainEnvironment) {

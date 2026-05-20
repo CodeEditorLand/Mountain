@@ -704,6 +704,69 @@ pub(super) async fn provide_type_hierarchy_subtypes(
 	}
 }
 
+/// Prepare call hierarchy - establish the root `CallHierarchyItem` at the
+/// given document position. Extensions implement `prepareCallHierarchy(doc,
+/// pos, token)`. Without this step the incoming/outgoing calls views are always
+/// empty.
+pub(super) async fn prepare_call_hierarchy(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
+	document_uri:Url,
+
+	position_dto:PositionDTO,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::CallHierarchy).await?;
+
+	match provider {
+		Some(registration) => {
+			let uri_json = json!({ "external": document_uri.to_string(), "$mid": 1 });
+			let pos_json = json!({ "Line": position_dto.LineNumber, "Character": position_dto.Column });
+			let response = invoke_provider_method(
+				environment,
+				&registration,
+				"$prepareCallHierarchyItems",
+				vec![json!(registration.Handle), uri_json, pos_json],
+			)
+			.await?;
+
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+
+		None => Ok(None),
+	}
+}
+
+/// Prepare type hierarchy - establish the root `TypeHierarchyItem`.
+pub(super) async fn prepare_type_hierarchy(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
+	document_uri:Url,
+
+	position_dto:PositionDTO,
+) -> Result<Option<Value>, CommonError> {
+	let provider =
+		super::ProviderLookup::get_matching_provider(environment, &document_uri, ProviderType::TypeHierarchy).await?;
+
+	match provider {
+		Some(registration) => {
+			let uri_json = json!({ "external": document_uri.to_string(), "$mid": 1 });
+			let pos_json = json!({ "Line": position_dto.LineNumber, "Character": position_dto.Column });
+			let response = invoke_provider_method(
+				environment,
+				&registration,
+				"$prepareTypeHierarchyItems",
+				vec![json!(registration.Handle), uri_json, pos_json],
+			)
+			.await?;
+
+			if response.is_null() { Ok(None) } else { Ok(Some(response)) }
+		},
+
+		None => Ok(None),
+	}
+}
+
 pub(super) async fn provide_call_hierarchy_incoming_calls(
 	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
 
@@ -841,5 +904,30 @@ async fn invoke_provider(
 
 	ipc_provider
 		.SendRequestToSideCar(registration.SideCarIdentifier.clone(), rpc_method, json!(arguments), 5000)
+		.await
+}
+
+/// Like `invoke_provider` but uses an explicit method name instead of
+/// the `$provide{ProviderType}` convention. Used for prepare steps
+/// (`$prepareCallHierarchyItems`, `$prepareTypeHierarchyItems`) where
+/// the method prefix differs from the provider type string.
+async fn invoke_provider_method(
+	environment:&crate::Environment::MountainEnvironment::MountainEnvironment,
+
+	registration:&ProviderRegistrationDTO,
+
+	method:&str,
+
+	arguments:Vec<Value>,
+) -> Result<Value, CommonError> {
+	let ipc_provider:Arc<dyn IPCProvider> = environment.Require();
+
+	ipc_provider
+		.SendRequestToSideCar(
+			registration.SideCarIdentifier.clone(),
+			method.to_string(),
+			json!(arguments),
+			5000,
+		)
 		.await
 }

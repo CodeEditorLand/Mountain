@@ -18,10 +18,7 @@ use tauri::{AppHandle, Emitter};
 
 use crate::RunTime::ApplicationRunTime::ApplicationRunTime;
 
-pub async fn SkyReplayEvents(
-	ApplicationHandle:AppHandle,
-	RunTime:Arc<ApplicationRunTime>,
-) -> Result<Value, String> {
+pub async fn SkyReplayEvents(ApplicationHandle:AppHandle, RunTime:Arc<ApplicationRunTime>) -> Result<Value, String> {
 	let mut TreeViewCount:usize = 0;
 	let mut ScmCount:usize = 0;
 	let mut CommandCount:usize = 0;
@@ -29,9 +26,7 @@ pub async fn SkyReplayEvents(
 	let mut TerminalDataBytes:usize = 0;
 
 	// ── Tree views ────────────────────────────────────────────────────────
-	if let Ok(TreeViews) =
-		RunTime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock()
-	{
+	if let Ok(TreeViews) = RunTime.Environment.ApplicationState.Feature.TreeViews.ActiveTreeViews.lock() {
 		for (ViewId, Dto) in TreeViews.iter() {
 			let Payload = serde_json::json!({
 				"viewId": ViewId,
@@ -91,9 +86,7 @@ pub async fn SkyReplayEvents(
 	// (one per registered command, ~1000+ during extension boot) saturate
 	// Tauri's shared WKWebView IPC channel and starve keystroke delivery.
 	// SkyBridge accepts `{ commands: [...] }` or `{ id, commandId, kind }`.
-	if let Ok(Commands) =
-		RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock()
-	{
+	if let Ok(Commands) = RunTime.Environment.ApplicationState.Extension.Registry.CommandRegistry.lock() {
 		let mut Batch:Vec<serde_json::Value> = Vec::new();
 		for (CommandId, Handler) in Commands.iter() {
 			use crate::Environment::CommandProvider::CommandHandler;
@@ -123,9 +116,7 @@ pub async fn SkyReplayEvents(
 	// the PTY reader produced before SkyBridge was up. Without this, the
 	// shell's first prompt is silently dropped and the user sees an empty
 	// terminal pane until they type.
-	if let Ok(Terminals) =
-		RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock()
-	{
+	if let Ok(Terminals) = RunTime.Environment.ApplicationState.Feature.Terminals.ActiveTerminals.lock() {
 		for (TerminalId, Arc) in Terminals.iter() {
 			let (Name, Pid) = if let Ok(State) = Arc.lock() {
 				(State.Name.clone(), State.OSProcessIdentifier.unwrap_or(0))

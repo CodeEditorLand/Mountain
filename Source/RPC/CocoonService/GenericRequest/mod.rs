@@ -9,8 +9,8 @@
 //!
 //! Groups:
 //! - `Commands`    - `commands.execute`, `executeCommand`, `unregisterCommand`
-//! - `FileSystem`  - `fs.*`, `readFile`, `writeFile`, `stat`, `readdir`, …
-//!   Also exports `OkResponse` / `ErrResponse` helpers used by other groups.
+//! - `FileSystem`  - `fs.*`, `readFile`, `writeFile`, `stat`, `readdir`, … Also
+//!   exports `OkResponse` / `ErrResponse` helpers used by other groups.
 //! - `Secrets`     - `getSecret`, `storeSecret`, `deleteSecret`
 //! - `WindowDialogs` - dialogs, messages, status bar, webview, workspace ops
 

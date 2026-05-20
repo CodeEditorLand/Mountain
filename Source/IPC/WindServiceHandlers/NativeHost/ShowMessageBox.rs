@@ -9,10 +9,7 @@ use serde_json::{Value, json};
 use tauri::AppHandle;
 use tauri_plugin_dialog::{DialogExt, MessageDialogKind};
 
-pub async fn NativeShowMessageBox(
-	ApplicationHandle:AppHandle,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn NativeShowMessageBox(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Options = Arguments.first().cloned().unwrap_or(Value::Null);
 	let Message = Options.get("message").and_then(Value::as_str).unwrap_or("").to_string();
 	let Detail = Options.get("detail").and_then(Value::as_str).map(str::to_string);

@@ -7,18 +7,10 @@
 use serde_json::{Value, json};
 use tonic::Response;
 
-use crate::{
-	Environment::MountainEnvironment::MountainEnvironment,
-	Vine::Generated::GenericResponse,
-};
-
+use crate::{Environment::MountainEnvironment::MountainEnvironment, Vine::Generated::GenericResponse};
 use super::FileSystem::{ErrResponse, OkResponse};
 
-pub async fn HandleCommandsExecute(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub async fn HandleCommandsExecute(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let CommandId = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Arg = Params.get("arg").cloned().unwrap_or(Value::Null);
 	match Env.ExecuteCommand(CommandId, Arg).await {
@@ -27,11 +19,7 @@ pub async fn HandleCommandsExecute(
 	}
 }
 
-pub async fn HandleExecuteCommand(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub async fn HandleExecuteCommand(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let CommandId = Params.get("commandId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Arg = Params
 		.get("arguments")

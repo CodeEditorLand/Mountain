@@ -11,12 +11,12 @@ use std::sync::Arc;
 
 use serde_json::Value;
 
-use crate::{IPC::WindServiceHandlers::Terminal::TerminalCreate::TerminalCreate, RunTime::ApplicationRunTime::ApplicationRunTime};
+use crate::{
+	IPC::WindServiceHandlers::Terminal::TerminalCreate::TerminalCreate,
+	RunTime::ApplicationRunTime::ApplicationRunTime,
+};
 
-pub async fn LocalPTYCreateProcess(
-	RunTime:Arc<ApplicationRunTime>,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn LocalPTYCreateProcess(RunTime:Arc<ApplicationRunTime>, Arguments:Vec<Value>) -> Result<Value, String> {
 	match TerminalCreate(RunTime, Arguments).await {
 		Ok(Response) => {
 			let TerminalIdOption = Response.get("id").and_then(serde_json::Value::as_u64);
@@ -29,13 +29,11 @@ pub async fn LocalPTYCreateProcess(
 					// and every subsequent `_proxy.input(0, data)` fails loudly.
 					crate::dev_log!(
 						"terminal",
-						"error: [localPty:createProcess] CreateTerminal returned no usable id; \
-						 response={:?}",
+						"error: [localPty:createProcess] CreateTerminal returned no usable id; response={:?}",
 						Response
 					);
 					Err(format!(
-						"localPty:createProcess: CreateTerminal returned no terminal id \
-						 (response={})",
+						"localPty:createProcess: CreateTerminal returned no terminal id (response={})",
 						Response
 					))
 				},

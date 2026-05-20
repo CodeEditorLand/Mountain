@@ -83,6 +83,30 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 			Some(Ok(Box::new(effect)))
 		},
 
+		// `editor.revealRange(range, revealType)` - scroll the Monaco editor to
+		// bring a range into view. Extensions use this for go-to-definition
+		// "reveal cursor", reference highlights, error navigation, etc.
+		// Routes to Sky's ICodeEditorService so Monaco scrolls its viewport.
+		"window.revealRange" => {
+			let effect =
+				move |run_time:Arc<ApplicationRunTime>| -> Pin<Box<dyn Future<Output = Result<Value, String>> + Send>> {
+					Box::pin(async move {
+						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
+							&run_time.Environment,
+							"sky://editor/revealRange",
+							Parameters,
+						)
+						.await
+						{
+							Ok(V) => Ok(V),
+							Err(_) => Ok(json!(null)),
+						}
+					})
+				};
+
+			Some(Ok(Box::new(effect)))
+		},
+
 		// Workspace-trust family. vscode.git's `Model.openRepository` calls
 		// `await workspace.requestResourceTrust({uri, message})` and
 		// `await workspace.isResourceTrusted(uri)` before constructing the
@@ -189,6 +213,27 @@ pub fn CreateEffect<R:Runtime>(MethodName:&str, Parameters:Value) -> Option<Resu
 						} else {
 							Parameters.get("uri").cloned().unwrap_or(Parameters)
 						};
+
+						// Fire `document.willSave` to Cocoon BEFORE writing to disk.
+						// This gives `onWillSaveTextDocument` listeners a chance to
+						// apply last-minute edits (format-on-save, organize-imports,
+						// trailing-whitespace strippers, etc.).
+						// Fire-and-forget with a short grace period so slow listeners
+						// don't stall the save for more than 1.5 s.
+						let WillSavePayload = serde_json::json!({
+							"uri": UriVal,
+							"reason": 1, // TextDocumentSaveReason.Manual
+						});
+						let _ = tokio::time::timeout(
+							std::time::Duration::from_millis(1500),
+							crate::Vine::Client::SendNotification::Fn(
+								"cocoon-main".to_string(),
+								"document.willSave".to_string(),
+								WillSavePayload,
+							),
+						)
+						.await;
+
 						match crate::Environment::UserInterfaceProvider::SendUserInterfaceRequest(
 							&run_time.Environment,
 							"sky://workspace/save",

@@ -8,26 +8,24 @@
 //!
 //! Wire-method naming uses snake_case with two trailing shapes:
 //! - plain verbs:     `register_rename`, `register_debug_adapter`
-//! - `_provider` suffix: `register_hover_provider`, `register_code_lens_provider`
+//! - `_provider` suffix: `register_hover_provider`,
+//!   `register_code_lens_provider`
 //!
 //! Both forms are normalised by stripping `register_` prefix and optional
 //! `_provider` suffix before the enum lookup.
+
+use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType as PT;
+use serde_json::{Value, json};
 
 use crate::{
 	ApplicationState::DTO::ProviderRegistrationDTO::ProviderRegistrationDTO,
 	Vine::Server::MountainVinegRPCService,
 	dev_log,
 };
-use CommonLibrary::LanguageFeature::DTO::ProviderType::ProviderType as PT;
-use serde_json::{Value, json};
 
 /// Dispatch a `register_*` notification. Returns `true` if the method was
 /// recognised and a `ProviderRegistrationDTO` was inserted.
-pub async fn RegisterLanguageProvider(
-	Service:&MountainVinegRPCService,
-	MethodName:&str,
-	Parameter:&Value,
-) -> bool {
+pub async fn RegisterLanguageProvider(Service:&MountainVinegRPCService, MethodName:&str, Parameter:&Value) -> bool {
 	let Handle = Parameter.get("handle").and_then(|h| h.as_u64()).unwrap_or(0) as u32;
 
 	// Accept camelCase (current Cocoon shape) with snake_case fallback for

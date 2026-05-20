@@ -12,18 +12,10 @@ use serde_json::{Value, json};
 use tauri::Emitter;
 use tonic::Response;
 
-use crate::{
-	Environment::MountainEnvironment::MountainEnvironment,
-	Vine::Generated::GenericResponse,
-};
-
+use crate::{Environment::MountainEnvironment::MountainEnvironment, Vine::Generated::GenericResponse};
 use super::FileSystem::{ErrResponse, OkResponse};
 
-pub async fn HandleShowOpenDialog(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub async fn HandleShowOpenDialog(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	use CommonLibrary::UserInterface::DTO::OpenDialogOptionsDTO::OpenDialogOptionsDTO;
 
 	let Title = Params
@@ -32,16 +24,12 @@ pub async fn HandleShowOpenDialog(
 		.and_then(|T| T.as_str())
 		.map(|S| S.to_string());
 	let Options = OpenDialogOptionsDTO {
-		Base:CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO {
-			Title,
-			..Default::default()
-		},
+		Base:CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO { Title, ..Default::default() },
 		..OpenDialogOptionsDTO::default()
 	};
 	match Env.ShowOpenDialog(Some(Options)).await {
 		Ok(Some(Paths)) => {
-			let Uris:Vec<String> =
-				Paths.iter().map(|P| format!("file://{}", P.display())).collect();
+			let Uris:Vec<String> = Paths.iter().map(|P| format!("file://{}", P.display())).collect();
 			OkResponse(RequestId, &json!(Uris))
 		},
 		Ok(None) => OkResponse(RequestId, &json!(serde_json::Value::Array(vec![]))),
@@ -49,11 +37,7 @@ pub async fn HandleShowOpenDialog(
 	}
 }
 
-pub async fn HandleShowSaveDialog(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub async fn HandleShowSaveDialog(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	use CommonLibrary::UserInterface::DTO::SaveDialogOptionsDTO::SaveDialogOptionsDTO;
 
 	let Title = Params
@@ -62,10 +46,7 @@ pub async fn HandleShowSaveDialog(
 		.and_then(|T| T.as_str())
 		.map(|S| S.to_string());
 	let Options = SaveDialogOptionsDTO {
-		Base:CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO {
-			Title,
-			..Default::default()
-		},
+		Base:CommonLibrary::UserInterface::DTO::DialogOptionsDTO::DialogOptionsDTO { Title, ..Default::default() },
 		..SaveDialogOptionsDTO::default()
 	};
 	match Env.ShowSaveDialog(Some(Options)).await {
@@ -75,11 +56,7 @@ pub async fn HandleShowSaveDialog(
 	}
 }
 
-pub async fn HandleShowInputBox(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub async fn HandleShowInputBox(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	use CommonLibrary::UserInterface::DTO::InputBoxOptionsDTO::InputBoxOptionsDTO;
 
 	let Opts = Params.get(0);
@@ -92,11 +69,7 @@ pub async fn HandleShowInputBox(
 			.and_then(|V| V.get("placeHolder"))
 			.and_then(|P| P.as_str())
 			.map(|S| S.to_string()),
-		IsPassword:Some(
-			Opts.and_then(|V| V.get("password"))
-				.and_then(|B| B.as_bool())
-				.unwrap_or(false),
-		),
+		IsPassword:Some(Opts.and_then(|V| V.get("password")).and_then(|B| B.as_bool()).unwrap_or(false)),
 		Value:Opts
 			.and_then(|V| V.get("value"))
 			.and_then(|V| V.as_str())
@@ -160,8 +133,7 @@ pub fn HandleOpenDocument(RequestId:u64, Params:Value, Env:&MountainEnvironment)
 }
 
 pub fn HandleSaveAll(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
-	let IncludeUntitled =
-		Params.get("includeUntitled").and_then(|V| V.as_bool()).unwrap_or(false);
+	let IncludeUntitled = Params.get("includeUntitled").and_then(|V| V.as_bool()).unwrap_or(false);
 	let _ = Env
 		.ApplicationHandle
 		.emit("sky://editor/saveAll", json!({ "includeUntitled": IncludeUntitled }));
@@ -192,11 +164,7 @@ pub fn HandleOpenExternal(RequestId:u64, Params:Value, Env:&MountainEnvironment)
 	OkResponse(RequestId, &json!({ "success": true }))
 }
 
-pub fn HandleCreateStatusBarItem(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub fn HandleCreateStatusBarItem(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let Id = Params.get("id").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Tooltip = Params.get("tooltip").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -207,11 +175,7 @@ pub fn HandleCreateStatusBarItem(
 	OkResponse(RequestId, &json!({ "itemId": Id }))
 }
 
-pub fn HandleSetStatusBarText(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub fn HandleSetStatusBarText(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let ItemId = Params.get("itemId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Text = Params.get("text").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let _ = Env
@@ -220,11 +184,7 @@ pub fn HandleSetStatusBarText(
 	OkResponse(RequestId, &json!({ "success": true }))
 }
 
-pub fn HandleCreateWebviewPanel(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub fn HandleCreateWebviewPanel(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let ViewType = Params.get("viewType").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Title = Params.get("title").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Handle = std::time::SystemTime::now()
@@ -244,11 +204,7 @@ pub fn HandleCreateWebviewPanel(
 	OkResponse(RequestId, &json!({ "handle": Handle }))
 }
 
-pub fn HandleSetWebviewHtml(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub fn HandleSetWebviewHtml(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let Handle = Params.get("handle").and_then(|V| V.as_u64()).unwrap_or(0);
 	let Html = Params.get("html").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let _ = Env

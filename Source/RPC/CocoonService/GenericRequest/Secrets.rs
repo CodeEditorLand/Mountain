@@ -8,18 +8,10 @@ use CommonLibrary::Secret::SecretProvider::SecretProvider;
 use serde_json::{Value, json};
 use tonic::Response;
 
-use crate::{
-	Environment::MountainEnvironment::MountainEnvironment,
-	Vine::Generated::GenericResponse,
-};
-
+use crate::{Environment::MountainEnvironment::MountainEnvironment, Vine::Generated::GenericResponse};
 use super::FileSystem::{ErrResponse, OkResponse};
 
-pub async fn HandleGetSecret(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub async fn HandleGetSecret(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	match Env.GetSecret(ExtensionId, Key).await {
@@ -29,11 +21,7 @@ pub async fn HandleGetSecret(
 	}
 }
 
-pub async fn HandleStoreSecret(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub async fn HandleStoreSecret(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let V = Params.get("value").and_then(|V| V.as_str()).unwrap_or("").to_string();
@@ -43,11 +31,7 @@ pub async fn HandleStoreSecret(
 	}
 }
 
-pub async fn HandleDeleteSecret(
-	RequestId:u64,
-	Params:Value,
-	Env:&MountainEnvironment,
-) -> Response<GenericResponse> {
+pub async fn HandleDeleteSecret(RequestId:u64, Params:Value, Env:&MountainEnvironment) -> Response<GenericResponse> {
 	let ExtensionId = Params.get("extensionId").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	let Key = Params.get("key").and_then(|V| V.as_str()).unwrap_or("").to_string();
 	match Env.DeleteSecret(ExtensionId, Key).await {

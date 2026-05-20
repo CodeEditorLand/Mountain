@@ -16,8 +16,8 @@ pub fn HandleRegisterProvider(Params:Value, Service:&CocoonServiceImpl, ProvType
 	Service.RegisterProvider(Handle, ProvType, Selector, ExtId);
 }
 
-/// Dispatch a `register_*_provider` method string to the correct `ProviderType`.
-/// Returns `true` if the method was recognised and dispatched.
+/// Dispatch a `register_*_provider` method string to the correct
+/// `ProviderType`. Returns `true` if the method was recognised and dispatched.
 pub fn DispatchRegisterProvider(Method:&str, Params:Value, Service:&CocoonServiceImpl) -> bool {
 	let ProvType = match Method {
 		"register_hover_provider" => ProviderType::Hover,

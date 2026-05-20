@@ -229,6 +229,22 @@ impl LanguageFeatureProviderRegistry for MountainEnvironment {
 		FeatureMethods::provide_inlay_hints(self, DocumentURI, RangeDTO).await
 	}
 
+	async fn PrepareCallHierarchy(
+		&self,
+		DocumentURI:Url,
+		PositionDTO:PositionDTO,
+	) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::prepare_call_hierarchy(self, DocumentURI, PositionDTO).await
+	}
+
+	async fn PrepareTypeHierarchy(
+		&self,
+		DocumentURI:Url,
+		PositionDTO:PositionDTO,
+	) -> Result<Option<Value>, CommonError> {
+		FeatureMethods::prepare_type_hierarchy(self, DocumentURI, PositionDTO).await
+	}
+
 	async fn ProvideTypeHierarchySupertypes(&self, ItemDTO:Value) -> Result<Option<Value>, CommonError> {
 		FeatureMethods::provide_type_hierarchy_supertypes(self, ItemDTO).await
 	}

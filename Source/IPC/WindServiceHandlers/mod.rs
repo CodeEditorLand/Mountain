@@ -54,11 +54,7 @@ pub mod Utilities;
 // (`WindServiceHandlers::Utilities::foo`).
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
-use Cocoon::{
-	ExtensionHostMessage::CocoonExtensionHostMessage,
-	Notify::CocoonNotify,
-	Request::CocoonRequest,
-};
+use Cocoon::{ExtensionHostMessage::CocoonExtensionHostMessage, Notify::CocoonNotify, Request::CocoonRequest};
 use ExtensionHost::{
 	DebugService::{ExtensionHostDebugClose, ExtensionHostDebugReload},
 	Starter::{
@@ -130,15 +126,15 @@ use Model::{
 };
 use NativeHost::{
 	Clipboard::{
-		NativeReadClipboardText,
-		NativeReadClipboardFindText,
-		NativeWriteClipboardText,
-		NativeWriteClipboardFindText,
-		NativeReadClipboardBuffer,
-		NativeWriteClipboardBuffer,
 		NativeHasClipboard,
-		NativeTriggerPaste,
+		NativeReadClipboardBuffer,
+		NativeReadClipboardFindText,
+		NativeReadClipboardText,
 		NativeReadImage,
+		NativeTriggerPaste,
+		NativeWriteClipboardBuffer,
+		NativeWriteClipboardFindText,
+		NativeWriteClipboardText,
 	},
 	Exit::Exit,
 	FindFreePort::*,
@@ -1354,7 +1350,9 @@ pub async fn mountain_ipc_invoke(
 				"nativeHost:showSaveDialog" => NativeShowSaveDialog(ApplicationHandle.clone(), Arguments).await,
 				// Wind's `Files/Live.ts` calls `UserInterface.ShowSaveDialog` via
 				// IPC and expects a bare path string (or undefined).
-				"UserInterface.ShowSaveDialog" => UserInterfaceShowSaveDialog(ApplicationHandle.clone(), Arguments).await,
+				"UserInterface.ShowSaveDialog" => {
+					UserInterfaceShowSaveDialog(ApplicationHandle.clone(), Arguments).await
+				},
 				"nativeHost:showMessageBox" => NativeShowMessageBox(ApplicationHandle.clone(), Arguments).await,
 
 				// Environment paths - delegated to atomic handler.
@@ -2242,6 +2240,75 @@ pub async fn mountain_ipc_invoke(
 				// SkyBridge event replay - delegated to atomic handler.
 				"sky:replay-events" => SkyReplayEvents(ApplicationHandle.clone(), RunTime.clone()).await,
 
+				// `editor.revealRange` - sky-side shortcut to scroll Monaco to a range.
+				// Extensions can also call this via `Context.SendToMountain` (gRPC Track
+				// Effect path). This IPC arm lets Wind call it directly without gRPC.
+				"editor:revealRange" | "window:revealRange" => {
+					use tauri::Emitter;
+					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let _ = ApplicationHandle.emit("sky://editor/revealRange", &Payload);
+					Ok(Value::Null)
+				},
+
+				// =====================================================================
+				// Sky → Mountain editor state pushes
+				// =====================================================================
+
+				// Sky pushes current selection whenever the user changes cursor position.
+				// Mountain stores it and forwards to Cocoon so `activeTextEditor.selection`
+				// and `onDidChangeTextEditorSelection` stay live.
+				"sky:editor:selectionChanged" => {
+					let Uri = Arguments
+						.first()
+						.and_then(|V| V.get("uri"))
+						.and_then(|V| V.as_str())
+						.unwrap_or("")
+						.to_string();
+					let Selections = Arguments
+						.first()
+						.and_then(|V| V.get("selections"))
+						.cloned()
+						.unwrap_or(Value::Array(Vec::new()));
+					dev_log!("model", "[SelectionChanged] uri={}", Uri);
+					// Store on workspace state
+					if !Uri.is_empty() {
+						RunTime
+							.Environment
+							.ApplicationState
+							.Workspace
+							.SetActiveDocumentURI(Some(Uri.clone()));
+					}
+					// Forward to Cocoon
+					let Payload = json!({ "uri": Uri, "selections": Selections });
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"window.didChangeTextEditorSelection".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
+
+				// Sky pushes active editor info when user switches tabs.
+				"sky:editor:activeChanged" => {
+					let Payload = Arguments.first().cloned().unwrap_or(Value::Null);
+					let Uri = Payload.get("uri").and_then(Value::as_str).unwrap_or("").to_string();
+					dev_log!("model", "[ActiveEditorChanged] uri={}", Uri);
+					if !Uri.is_empty() {
+						RunTime
+							.Environment
+							.ApplicationState
+							.Workspace
+							.SetActiveDocumentURI(Some(Uri.clone()));
+					}
+					let _ = crate::Vine::Client::SendNotification::Fn(
+						"cocoon-main".to_string(),
+						"window.didChangeActiveTextEditor".to_string(),
+						Payload,
+					)
+					.await;
+					Ok(Value::Null)
+				},
 
 				// =====================================================================
 				// Language features (forward to Cocoon Node.js runtime)
@@ -2253,17 +2320,17 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("extensions", "languages: {} (→ Cocoon)", command);
 					let Payload = Arguments.into_iter().next().unwrap_or(Value::Null);
 					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
-						.await
-						.unwrap_or(Value::Array(Vec::new())))
+					Ok(
+						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
+							.await
+							.unwrap_or(Value::Array(Vec::new())),
+					)
 				},
 
 				// =====================================================================
 				// SCM - forward to Cocoon's vscode.scm namespace
 				// =====================================================================
-				"scm:createSourceControl"
-				| "scm:getSourceControls"
-				| "scm:setActiveProvider" => {
+				"scm:createSourceControl" | "scm:getSourceControls" | "scm:setActiveProvider" => {
 					dev_log!("ipc", "scm: {} (→ Cocoon)", command);
 					let Payload = if Arguments.is_empty() {
 						Value::Null
@@ -2273,9 +2340,11 @@ pub async fn mountain_ipc_invoke(
 						Value::Array(Arguments)
 					};
 					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
-						.await
-						.unwrap_or(Value::Null))
+					Ok(
+						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
+							.await
+							.unwrap_or(Value::Null),
+					)
 				},
 
 				// =====================================================================
@@ -2296,17 +2365,17 @@ pub async fn mountain_ipc_invoke(
 						Value::Array(Arguments)
 					};
 					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
-						.await
-						.unwrap_or(Value::Null))
+					Ok(
+						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
+							.await
+							.unwrap_or(Value::Null),
+					)
 				},
 
 				// =====================================================================
 				// Tasks - forward to Cocoon's vscode.tasks namespace
 				// =====================================================================
-				"tasks:executeTask"
-				| "tasks:getTasks"
-				| "tasks:getTaskExecution" => {
+				"tasks:executeTask" | "tasks:getTasks" | "tasks:getTaskExecution" => {
 					dev_log!("ipc", "tasks: {} (→ Cocoon)", command);
 					let Payload = if Arguments.is_empty() {
 						Value::Null
@@ -2316,17 +2385,17 @@ pub async fn mountain_ipc_invoke(
 						Value::Array(Arguments)
 					};
 					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
-						.await
-						.unwrap_or(Value::Null))
+					Ok(
+						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
+							.await
+							.unwrap_or(Value::Null),
+					)
 				},
 
 				// =====================================================================
 				// Authentication - forward to Cocoon's vscode.authentication namespace
 				// =====================================================================
-				"auth:getSessions"
-				| "auth:createSession"
-				| "auth:removeSession" => {
+				"auth:getSessions" | "auth:createSession" | "auth:removeSession" => {
 					dev_log!("ipc", "auth: {} (→ Cocoon)", command);
 					let Payload = if Arguments.is_empty() {
 						Value::Null
@@ -2336,9 +2405,11 @@ pub async fn mountain_ipc_invoke(
 						Value::Array(Arguments)
 					};
 					let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-					Ok(crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
-						.await
-						.unwrap_or(Value::Null))
+					Ok(
+						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 10_000)
+							.await
+							.unwrap_or(Value::Null),
+					)
 				},
 
 				// Atom L2 + NodeDeferred: unknown-command fallback.
@@ -2376,17 +2447,17 @@ pub async fn mountain_ipc_invoke(
 						};
 						dev_log!("ipc", "deferred → Cocoon: {}", command);
 						let _ = crate::Vine::Client::WaitForClientConnection::Fn("cocoon-main", 3000).await;
-						match crate::Vine::Client::SendRequest::Fn(
-							"cocoon-main",
-							command.clone(),
-							Payload,
-							15_000,
-						)
-						.await
+						match crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 15_000)
+							.await
 						{
 							Ok(Response) => Ok(Response),
 							Err(CocoonError) => {
-								dev_log!("ipc", "warn: [NodeDeferred] {} deferred but Cocoon rejected: {:?}", command, CocoonError);
+								dev_log!(
+									"ipc",
+									"warn: [NodeDeferred] {} deferred but Cocoon rejected: {:?}",
+									command,
+									CocoonError
+								);
 								Ok(Value::Null)
 							},
 						}

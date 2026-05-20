@@ -21,10 +21,7 @@ use crate::{RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
 pub fn ManifestContainsNLSPlaceholders(Value:&Value) -> bool {
 	match Value {
 		serde_json::Value::String(Text) => {
-			Text.len() >= 2
-				&& Text.starts_with('%')
-				&& Text.ends_with('%')
-				&& !Text[1..Text.len() - 1].contains('%')
+			Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') && !Text[1..Text.len() - 1].contains('%')
 		},
 		serde_json::Value::Array(Items) => Items.iter().any(ManifestContainsNLSPlaceholders),
 		serde_json::Value::Object(Object) => Object.values().any(ManifestContainsNLSPlaceholders),
@@ -91,12 +88,7 @@ pub async fn LoadNLSBundle(
 /// In-place recursive substitution of `%key%` tokens using the NLS map.
 /// `Replaced` and `Unresolved` accumulate counts for the outer scanner's
 /// one-line summary log.
-pub fn ResolveNLSPlaceholdersInner(
-	Value:&mut Value,
-	NLS:&Map<String, Value>,
-	Replaced:&mut u32,
-	Unresolved:&mut u32,
-) {
+pub fn ResolveNLSPlaceholdersInner(Value:&mut Value, NLS:&Map<String, Value>, Replaced:&mut u32, Unresolved:&mut u32) {
 	match Value {
 		serde_json::Value::String(Text) => {
 			if Text.len() >= 2 && Text.starts_with('%') && Text.ends_with('%') {

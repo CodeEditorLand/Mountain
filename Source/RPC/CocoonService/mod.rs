@@ -2419,6 +2419,24 @@ impl CocoonService for CocoonServiceImpl {
 		Provider::ProvideTypeHierarchySubtypes::Fn(self, request.into_inner()).await
 	}
 
+	// --- Hierarchy prepare entry-points ---
+
+	async fn prepare_call_hierarchy(
+		&self,
+
+		request:Request<ProvideCallHierarchyRequest>,
+	) -> Result<Response<ProvideCallHierarchyResponse>, Status> {
+		Provider::PrepareCallHierarchy::Fn(self, request.into_inner()).await
+	}
+
+	async fn prepare_type_hierarchy(
+		&self,
+
+		request:Request<ProvideTypeHierarchyRequest>,
+	) -> Result<Response<ProvideTypeHierarchyResponse>, Status> {
+		Provider::PrepareTypeHierarchy::Fn(self, request.into_inner()).await
+	}
+
 	async fn register_call_hierarchy_provider(
 		&self,
 

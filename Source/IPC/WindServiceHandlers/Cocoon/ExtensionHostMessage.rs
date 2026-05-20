@@ -8,10 +8,7 @@
 use serde_json::Value;
 use tauri::AppHandle;
 
-pub async fn CocoonExtensionHostMessage(
-	_ApplicationHandle:AppHandle,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn CocoonExtensionHostMessage(_ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	let ByteCount = Arguments
 		.first()
 		.map(|P| P.get("data").and_then(|D| D.as_array()).map(|A| A.len()).unwrap_or(0))

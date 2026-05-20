@@ -20,8 +20,7 @@ pub async fn NativeGetEnvironmentPaths(ApplicationHandle:AppHandle) -> Result<Va
 	// is the single source of truth so that `Mountain.dev.log` (written by
 	// DevLog) and VS Code's `window1/output/*.log` files (written into
 	// `logsPath`) share one directory per session.
-	let SessionLogRoot =
-		AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp::Fn());
+	let SessionLogRoot = AppDataDir.join("logs").join(crate::IPC::DevLog::SessionTimestamp::Fn());
 	let SessionLogWindowDir = SessionLogRoot.join("window1");
 	let _ = std::fs::create_dir_all(&SessionLogWindowDir);
 

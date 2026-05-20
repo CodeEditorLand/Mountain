@@ -29,15 +29,8 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 	for Extension in Extensions.values() {
 		if let Some(contributes) = Extension.Contributes.as_ref().and_then(|v| v.as_object()) {
 			if let Some(configuration) = contributes.get("configuration").and_then(|v| v.as_object()) {
-				if let Some(properties) =
-					configuration.get("properties").and_then(|v| v.as_object())
-				{
-					process_configuration_properties(
-						&mut MergedDefaults,
-						"",
-						properties,
-						&mut Vec::new(),
-					)?;
+				if let Some(properties) = configuration.get("properties").and_then(|v| v.as_object()) {
+					process_configuration_properties(&mut MergedDefaults, "", properties, &mut Vec::new())?;
 				}
 			}
 		}
@@ -48,8 +41,8 @@ pub fn CollectDefaultConfigurations(State:&ApplicationState) -> Result<Value, Co
 
 /// Recursively process `contributes.configuration.properties` nodes.
 /// - Leaf nodes with a `"default"` field contribute their value directly.
-/// - Inner nodes with a `"properties"` field are recursed with the
-///   accumulated dot-notation path.
+/// - Inner nodes with a `"properties"` field are recursed with the accumulated
+///   dot-notation path.
 /// - `visited_keys` guards against circular references.
 pub fn process_configuration_properties(
 	merged_defaults:&mut Map<String, Value>,
@@ -66,25 +59,15 @@ pub fn process_configuration_properties(
 
 		if visited_keys.contains(&full_path) {
 			return Err(CommonError::Unknown {
-				Description:format!(
-					"Circular reference detected in configuration properties: {}",
-					full_path
-				),
+				Description:format!("Circular reference detected in configuration properties: {}", full_path),
 			});
 		}
 
 		visited_keys.push(full_path.clone());
 
 		if let Some(prop_details) = value.as_object() {
-			if let Some(nested_properties) =
-				prop_details.get("properties").and_then(|v| v.as_object())
-			{
-				process_configuration_properties(
-					merged_defaults,
-					&full_path,
-					nested_properties,
-					visited_keys,
-				)?;
+			if let Some(nested_properties) = prop_details.get("properties").and_then(|v| v.as_object()) {
+				process_configuration_properties(merged_defaults, &full_path, nested_properties, visited_keys)?;
 			} else if let Some(default_value) = prop_details.get("default") {
 				merged_defaults.insert(full_path.clone(), default_value.clone());
 			}

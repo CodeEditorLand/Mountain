@@ -7,6 +7,12 @@
 //! the typed gRPC requests to the corresponding
 //! `LanguageFeatureProviderRegistry` methods on the environment).
 
+// --- Hierarchy prepare entry-points ---
+// These establish the root item before incoming/outgoing/sub/supertypes.
+pub mod PrepareCallHierarchy;
+
+pub mod PrepareTypeHierarchy;
+
 pub mod ProvideCallHierarchyIncomingCalls;
 
 pub mod ProvideCallHierarchyOutgoingCalls;

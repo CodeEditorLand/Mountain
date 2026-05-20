@@ -64,11 +64,13 @@ pub async fn TreeGetChildren(
 	)
 	.await
 	{
-		Ok(Value_) => match &Value_ {
-			Value::Object(_) | Value::Array(_) => Ok(Value_),
-			// Non-conforming shape: force to {items:[]} so the renderer
-			// always has iterable data and avoids TypeError crashes.
-			_ => Ok(json!({ "items": [] })),
+		Ok(Value_) => {
+			match &Value_ {
+				Value::Object(_) | Value::Array(_) => Ok(Value_),
+				// Non-conforming shape: force to {items:[]} so the renderer
+				// always has iterable data and avoids TypeError crashes.
+				_ => Ok(json!({ "items": [] })),
+			}
 		},
 		Err(Error) => {
 			// Log first failure per view; silence repeats so the dev log
@@ -78,8 +80,7 @@ pub async fn TreeGetChildren(
 				"tree-view",
 				&format!("get-children-error:{}", ViewId),
 				&format!(
-					"[TreeView] invoke:getChildren error view={} err={:?} (further occurrences \
-					 silenced)",
+					"[TreeView] invoke:getChildren error view={} err={:?} (further occurrences silenced)",
 					ViewId, Error
 				),
 			);

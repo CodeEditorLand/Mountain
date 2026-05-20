@@ -18,8 +18,7 @@ pub async fn ExtensionHostStarterStart(_Arguments:Vec<Value>) -> Result<Value, S
 	// returning `std::process::id()` here would point the debugger at
 	// Mountain's Rust binary. Fall back to Mountain's PID only if Cocoon
 	// hasn't spawned yet (should not happen for a real extension-host start).
-	let Pid =
-		crate::ProcessManagement::CocoonManagement::GetCocoonPid().unwrap_or_else(std::process::id);
+	let Pid = crate::ProcessManagement::CocoonManagement::GetCocoonPid().unwrap_or_else(std::process::id);
 	crate::dev_log!("exthost", "extensionHostStarter:start pid={}", Pid);
 	Ok(json!({ "pid": Pid }))
 }

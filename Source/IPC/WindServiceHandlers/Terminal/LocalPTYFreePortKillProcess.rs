@@ -20,10 +20,7 @@ pub async fn LocalPTYFreePortKillProcess(Arguments:Vec<Value>) -> Result<Value, 
 				let Pids = String::from_utf8_lossy(&O.stdout);
 				for Pid in Pids.split_whitespace() {
 					if let Ok(P) = Pid.parse::<u32>() {
-						let _ = tokio::process::Command::new("kill")
-							.args(["-9", &P.to_string()])
-							.status()
-							.await;
+						let _ = tokio::process::Command::new("kill").args(["-9", &P.to_string()]).status().await;
 					}
 				}
 			}

@@ -13,10 +13,7 @@ use tauri::AppHandle;
 use tauri_plugin_dialog::DialogExt;
 
 /// `nativeHost:showSaveDialog` - returns `{ canceled, filePath }`.
-pub async fn NativeShowSaveDialog(
-	ApplicationHandle:AppHandle,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn NativeShowSaveDialog(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Options = Arguments.first().cloned().unwrap_or(Value::Null);
 	let Title = Options.get("title").and_then(Value::as_str).unwrap_or("Save").to_string();
 	let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);
@@ -38,10 +35,7 @@ pub async fn NativeShowSaveDialog(
 
 /// `UserInterface.ShowSaveDialog` - returns bare path string or null.
 /// Wind's `Files/Live.ts` calls this and checks `typeof Result === "string"`.
-pub async fn UserInterfaceShowSaveDialog(
-	ApplicationHandle:AppHandle,
-	Arguments:Vec<Value>,
-) -> Result<Value, String> {
+pub async fn UserInterfaceShowSaveDialog(ApplicationHandle:AppHandle, Arguments:Vec<Value>) -> Result<Value, String> {
 	let Options = Arguments.first().cloned().unwrap_or(Value::Null);
 	let Title = Options.get("title").and_then(Value::as_str).unwrap_or("Save").to_string();
 	let DefaultPath = Options.get("defaultPath").and_then(Value::as_str).map(str::to_string);

@@ -14,10 +14,7 @@
 
 /// Return the subset of `Patterns` for which at least one workspace folder
 /// contains a matching file or directory.
-pub fn FindMatchingWorkspaceContainsPatterns(
-	Folders:&[std::path::PathBuf],
-	Patterns:&[String],
-) -> Vec<String> {
+pub fn FindMatchingWorkspaceContainsPatterns(Folders:&[std::path::PathBuf], Patterns:&[String]) -> Vec<String> {
 	use std::collections::HashSet;
 
 	const MAX_DEPTH:usize = 3;

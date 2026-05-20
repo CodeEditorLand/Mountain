@@ -23,12 +23,7 @@ pub fn ComputeLineOffsets(Source:&str) -> Vec<usize> {
 /// `character` is counted in **UTF-16 code units** to match VS Code's
 /// `Range`/`Position` semantics. Falls back to EOF when line/character
 /// exceeds the source length.
-pub fn LinePosToOffset(
-	LineOffsets:&[usize],
-	Source:&str,
-	Line:usize,
-	Character:usize,
-) -> usize {
+pub fn LinePosToOffset(LineOffsets:&[usize], Source:&str, Line:usize, Character:usize) -> usize {
 	if Line >= LineOffsets.len() {
 		return Source.len();
 	}

@@ -175,3 +175,11 @@ pub mod RegisterScmResourceGroup;
 // `register_*` / `register_*_provider` variants now delegate here via a
 // single `RegisterLanguageProvider(service, method, params).await` call.
 pub mod RegisterLanguageProvider;
+
+// --- Text editor API ---
+// Atoms for `editor.setDecorations(type, ranges)` and `editor.edit(cb)`.
+// These complete the decoration pipeline and enable in-place text mutations
+// from extensions (formatters, code actions, vim-mode, Error Lens, etc.).
+pub mod SetTextEditorDecorations;
+
+pub mod ApplyTextEdits;
