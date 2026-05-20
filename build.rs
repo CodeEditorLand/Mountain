@@ -379,5 +379,9 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			) | ("TierExtensionScan", "Sequential")
 			| ("TierModuleCache", "Off" | "Simple" | "Shared")
 			| ("TierTelemetry", "Synchronous" | "Batched" | "Off")
+			// TierIPC is a runtime-only TS tier (read via std::env::var at runtime,
+			// not compiled into Cargo features). All values are defaults from
+			// Mountain's perspective - no Cargo feature needed.
+			| ("TierIPC", "Mountain" | "NodeDeferred" | "Node")
 	)
 }

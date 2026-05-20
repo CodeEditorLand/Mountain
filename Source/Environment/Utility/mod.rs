@@ -8,6 +8,10 @@
 
 pub mod EnhanceShellEnvironment;
 
+pub mod GlobPattern;
+
+pub mod TextEdit;
+
 pub mod ErrorMapping;
 
 pub mod LanguageDetection;

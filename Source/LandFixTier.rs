@@ -36,10 +36,11 @@
 use crate::dev_log;
 
 /// Emits one ISO-timestamped line at boot listing the compiled-in value of all
-/// 17 tier variables (`TierRemoteProcedureCall` … `TierTelemetry`). Call once,
-/// from `Binary::Main::Entry::Fn`, after the logging infrastructure is ready
+/// 17 build-baked tier variables + 1 runtime tier. Call once from
+/// `Binary::Main::Entry::Fn`, after the logging infrastructure is ready
 /// and before the Tokio runtime spawns any tasks.
 pub fn LogResolvedTiers() {
+	// Build-baked tiers use env!() - values are baked from .env.Land at build time.
 	dev_log!(
 		"lifecycle",
 		"[LandFix:Tier] Mountain tiers: RemoteProcedureCall={} HTTPProxy={} Logger={} FileSystem={} FindFiles={} \
@@ -63,4 +64,7 @@ pub fn LogResolvedTiers() {
 		env!("TierModuleCache"),
 		env!("TierTelemetry"),
 	);
+	// Runtime-only tiers use std::env::var - readable without a rebuild.
+	let IPC = std::env::var("TierIPC").unwrap_or_else(|_| "Mountain".into());
+	dev_log!("lifecycle", "[LandFix:Tier] Runtime: IPC={}", IPC);
 }
