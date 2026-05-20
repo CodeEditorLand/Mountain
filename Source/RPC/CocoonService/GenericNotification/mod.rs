@@ -12,6 +12,8 @@
 
 pub mod Commands;
 
+pub mod Dispatcher;
+
 pub mod LanguageProviders;
 
 pub mod SkyEmit;

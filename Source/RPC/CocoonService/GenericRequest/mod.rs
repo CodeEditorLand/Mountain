@@ -16,6 +16,8 @@
 
 pub mod Commands;
 
+pub mod Dispatcher;
+
 pub mod FileSystem;
 
 pub mod Secrets;

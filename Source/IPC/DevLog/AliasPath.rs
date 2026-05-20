@@ -7,7 +7,7 @@ use crate::IPC::DevLog::AppDataPrefix;
 
 pub fn Fn(Input:&str) -> String {
 	if let Some(Prefix) = AppDataPrefix::Fn() {
-		Input.replace(Prefix.as_str(), "$APP")
+		Input.replace(Prefix, "$APP")
 	} else {
 		Input.to_string()
 	}

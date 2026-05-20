@@ -2347,19 +2347,23 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("extensions", "languages: {} (→ Cocoon)", command);
 					let Payload = Arguments.into_iter().next().unwrap_or(Value::Null);
 					// Skip the 3-second blocking wait at boot. If Cocoon isn't
-					// connected yet, return the empty fallback immediately - the
-					// workbench retries on next keystroke. The old wait caused the
-					// first-open latency spike (tokenizer calls getEncodedLanguageId
-					// synchronously on first editor open, stalling the worker for
-					// up to 3 s before Cocoon is available).
+					// connected yet, return an empty fallback immediately so the
+					// tokenizer doesn't stall the worker for up to 3 s on first
+					// editor open. The workbench retries on the next keystroke.
+					// NOTE: must be an if/else expression, not `return Ok(...)`.
+					// A bare `return` inside this match arm exits the enclosing
+					// async block (not just the arm), changing the block's inferred
+					// return type from `()` to `Result<Value, _>` and breaking
+					// Scheduler::Submit's Output = () bound.
 					if !crate::Vine::Client::IsClientConnected::Fn("cocoon-main") {
-						return Ok(Value::Array(Vec::new()));
+						Ok(Value::Array(Vec::new()))
+					} else {
+						Ok(
+							crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
+								.await
+								.unwrap_or(Value::Array(Vec::new())),
+						)
 					}
-					Ok(
-						crate::Vine::Client::SendRequest::Fn("cocoon-main", command.clone(), Payload, 5_000)
-							.await
-							.unwrap_or(Value::Array(Vec::new())),
-					)
 				},
 
 				// =====================================================================

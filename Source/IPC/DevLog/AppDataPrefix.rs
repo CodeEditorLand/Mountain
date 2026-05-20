@@ -8,11 +8,40 @@
 //! `*.mountain` candidate so a mismatch still produces a
 //! usable path.
 
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
-static APP_DATA_PREFIX:OnceLock<Option<String>> = OnceLock::new();
+// Two-phase resolution:
+// • `RESOLVED` is set permanently once we find a real prefix.
+// • `FAILED_ONCE` records whether the first attempt returned None so
+//   subsequent writes can retry after Tauri has created the directory,
+//   rather than caching None forever and routing all logs to /tmp.
+static RESOLVED:OnceLock<String> = OnceLock::new();
+static RETRY:Mutex<bool> = Mutex::new(true);
 
-pub fn Fn() -> &'static Option<String> { APP_DATA_PREFIX.get_or_init(DetectAppDataPrefix) }
+pub fn Fn() -> Option<&'static str> {
+	if let Some(S) = RESOLVED.get() {
+		return Some(S.as_str());
+	}
+
+	// Fast-path: guard without taking the mutex if we already have a result.
+	let Ok(mut Guard) = RETRY.try_lock() else {
+		return None;
+	};
+
+	if !*Guard {
+		return None;
+	}
+
+	if let Some(Prefix) = DetectAppDataPrefix() {
+		// RESOLVED may already be set by a concurrent caller - that's fine.
+		let _ = RESOLVED.set(Prefix);
+		*Guard = false;
+		return RESOLVED.get().map(String::as_str);
+	}
+
+	// Not found yet - leave RETRY=true so the next write retries.
+	None
+}
 
 fn BinarySignature() -> String {
 	let PackageName = env!("CARGO_PKG_NAME");

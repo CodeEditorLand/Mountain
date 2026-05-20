@@ -408,58 +408,60 @@ pub async fn ConstructExtensionHostInitializationData(Environment:&MountainEnvir
 		.await?
 		.unwrap_or_else(|| "Mountain Workspace".to_string());
 
-	let WorkspaceFoldersGuard = ApplicationState.Workspace.WorkspaceFolders.lock().unwrap();
+	// Scope the MutexGuard so it is dropped before any `.await` below.
+	// `MutexGuard<T>` is not `Send`; holding it across an await makes the
+	// future non-Send, breaking `tauri::async_runtime::spawn`. Extract the
+	// two scalars needed for logging before moving `FoldersWire` into
+	// `WorkspaceDTO` - no clone required.
+	let WorkspaceDTO = {
+		let Guard = ApplicationState.Workspace.WorkspaceFolders.lock().unwrap();
 
-	// Cocoon's `WorkspaceNamespace/Index.ts` reads
-	// `ExtensionHostInitData.workspace.folders` at shim construction time,
-	// then mutates the same array in place on `$deltaWorkspaceFolders`. If
-	// `folders` is missing from the init payload, every
-	// `vscode.workspace.workspaceFolders` read returns `[]` until a delta
-	// fires - which means the git extension boots with zero folders to
-	// scan and never calls `createSourceControl`. Emit the folder list
-	// inline so extensions that read `workspaceFolders` synchronously in
-	// their `activate()` (vscode.git, eamodio.gitlens, typescript) see
-	// the real folders.
-	let FoldersWire:Vec<Value> = WorkspaceFoldersGuard
-		.iter()
-		.map(|Folder| {
-			json!({
-				"uri": Folder.URI.to_string(),
-				"name": Folder.GetDisplayName(),
-				"index": Folder.Index,
+		// Cocoon's `WorkspaceNamespace/Index.ts` reads
+		// `ExtensionHostInitData.workspace.folders` at shim construction time,
+		// then mutates the same array in place on `$deltaWorkspaceFolders`. If
+		// `folders` is missing from the init payload, every
+		// `vscode.workspace.workspaceFolders` read returns `[]` until a delta
+		// fires - which means the git extension boots with zero folders to
+		// scan and never calls `createSourceControl`. Emit the folder list
+		// inline so extensions that read `workspaceFolders` synchronously in
+		// their `activate()` (vscode.git, eamodio.gitlens, typescript) see
+		// the real folders.
+		let FoldersWire:Vec<Value> = Guard
+			.iter()
+			.map(|Folder| {
+				json!({
+					"uri": Folder.URI.to_string(),
+					"name": Folder.GetDisplayName(),
+					"index": Folder.Index,
+				})
 			})
-		})
-		.collect();
+			.collect();
 
-	// Pair with the Cocoon-side PRE-ACTIVATE snapshot in
-	// ExtensionHostHandler.ts. If Cocoon prints `folders.length=0` while
-	// this log says `folders=1`, we have a wire-shape bug; if both say
-	// 0, ApplicationState was empty at InitData build time and we need
-	// to defer InitData construction past the workspace seeding.
-	dev_log!(
-		"cocoon",
-		"[InitializationData] FoldersWire count={} sample0={}",
-		FoldersWire.len(),
-		FoldersWire.first().map(|F| F.to_string()).unwrap_or_else(|| "<none>".into())
-	);
+		// Extract logging scalars before FoldersWire is moved - avoids clone.
+		let FolderCount = FoldersWire.len();
+		let FolderSample = FoldersWire.first().map(|F| F.to_string()).unwrap_or_else(|| "<none>".into());
+		let IsEmpty = Guard.is_empty();
+		drop(Guard); // guard released; no await points follow inside this block
 
-	let WorkspaceDTO = if WorkspaceFoldersGuard.is_empty() {
-		Value::Null
-	} else {
-		json!({
+		dev_log!(
+			"cocoon",
+			"[InitializationData] FoldersWire count={} sample0={}",
+			FolderCount,
+			FolderSample
+		);
 
-			"id": ApplicationState.GetWorkspaceIdentifier()?,
-
-			"name": WorkspaceName,
-
-			"folders": FoldersWire,
-
-			"configuration": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
-
-			"isUntitled": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().is_none(),
-
-			"transient": false
-		})
+		if IsEmpty {
+			Value::Null
+		} else {
+			json!({
+				"id": ApplicationState.GetWorkspaceIdentifier()?,
+				"name": WorkspaceName,
+				"folders": FoldersWire, // moved in - zero extra allocation
+				"configuration": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().as_ref().map(|p| p.to_string_lossy()),
+				"isUntitled": ApplicationState.Workspace.WorkspaceConfigurationPath.lock().unwrap().is_none(),
+				"transient": false
+			})
+		}
 	};
 
 	let PathResolver = ApplicationHandle.path();
