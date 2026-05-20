@@ -82,9 +82,23 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 	if !SkipBuiltins {
 		if let Ok(ExecutableDirectory) = std::env::current_exe() {
 			if let Some(Parent) = ExecutableDirectory.parent() {
-				// Standard Tauri bundle path: ../Resources/extensions.
-				// When launched from a `.app`, Parent is `Contents/MacOS/` and
-				// this resolves to `Contents/Resources/extensions`.
+				// New canonical path: ../Resources/Static/Application/extensions.
+				// Extensions land here when tauri.conf.json bundle.resources maps
+				// them to "Static/Application/extensions" (single source layout).
+				let StaticAppExtPath = Parent.join("../Resources/Static/Application/extensions");
+
+				if StaticAppExtPath.exists() {
+					dev_log!(
+						"extensions",
+						"[Extensions] [ScanPaths] + {} (Static/Application canonical)",
+						StaticAppExtPath.display()
+					);
+
+					ScanPathsGuard.push(StaticAppExtPath);
+				}
+
+				// Legacy flat path: ../Resources/extensions (kept for backward
+				// compat while the tauri.conf.json resources remap takes effect).
 				let ResourcesPath = Parent.join("../Resources/extensions");
 
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesPath.display());
@@ -92,8 +106,6 @@ pub fn ScanPathConfigure(AppState:&std::sync::Arc<ApplicationState>) -> Result<V
 				ScanPathsGuard.push(ResourcesPath);
 
 				// VS Code-style bundle layout: `.app/Contents/Resources/app/extensions`.
-				// Some tooling copies built-ins here; probe both conventions so a
-				// single bundle works regardless of which copy step placed them.
 				let ResourcesAppPath = Parent.join("../Resources/app/extensions");
 
 				dev_log!("extensions", "[Extensions] [ScanPaths] + {}", ResourcesAppPath.display());

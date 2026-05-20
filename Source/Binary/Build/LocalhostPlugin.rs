@@ -163,9 +163,20 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 		.ok()
 		.and_then(|Exe| Exe.parent().map(|P| P.to_path_buf()));
 
+	// Extensions now live under Static/Application/extensions/ in both
+	// the bundle (Contents/Resources/Static/Application/extensions/) and
+	// the monorepo (Sky/Target/Static/Application/extensions/). Keep the
+	// legacy flat paths as fallbacks so existing dev runs still work
+	// while the tauri.conf.json resources remap takes effect.
 	let BundleExtensionsRoot = ExeParent.as_ref().and_then(|Parent| {
-		let Candidate = Parent.join("../Resources/extensions");
-		Candidate.canonicalize().ok().or(Some(Candidate))
+		// New canonical location under Static/Application/
+		let Candidate = Parent.join("../Resources/Static/Application/extensions");
+		if Candidate.exists() {
+			return Candidate.canonicalize().ok().or(Some(Candidate));
+		}
+		// Legacy flat location - kept for backward compat during transition
+		let Legacy = Parent.join("../Resources/extensions");
+		Legacy.canonicalize().ok().or(Some(Legacy))
 	});
 
 	let BundleExtensionsAppRoot = ExeParent.as_ref().and_then(|Parent| {
@@ -176,6 +187,23 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 	let RepoExtensionsRoot = ExeParent.as_ref().and_then(|Parent| {
 		let Candidate = Parent.join("../../../Sky/Target/Static/Application/extensions");
 		Candidate.canonicalize().ok().or(Some(Candidate))
+	});
+
+	// Resolve the static_root used as a disk fallback when asset_resolver
+	// returns None (i.e. when frontendDist is null in tauri.conf.json).
+	// Production: Contents/Resources/   Dev: Element/Sky/Target/
+	let StaticRoot = ExeParent.as_ref().and_then(|Parent| {
+		// Production bundle: MacOS/<bin> → ../Resources/
+		let Bundle = Parent.join("../Resources");
+		if Bundle.exists() {
+			return Bundle.canonicalize().ok().or(Some(Bundle));
+		}
+		// Monorepo dev: Target/<profile>/<bin> → ../../../Sky/Target/
+		let Repo = Parent.join("../../../Sky/Target");
+		if Repo.exists() {
+			return Repo.canonicalize().ok().or(Some(Repo));
+		}
+		None
 	});
 
 	let mut Builder = tauri_plugin_localhost::Builder::new(ServerPort);
@@ -198,6 +226,10 @@ pub fn LocalhostPlugin<R:tauri::Runtime>(ServerPort:u16) -> TauriPlugin<R> {
 
 	if let Some(Root) = RepoExtensionsRoot {
 		Builder = Builder.extension_root(Root);
+	}
+
+	if let Some(Root) = StaticRoot {
+		Builder = Builder.static_root(Root);
 	}
 
 	Builder
