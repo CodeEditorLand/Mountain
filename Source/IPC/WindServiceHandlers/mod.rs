@@ -1054,14 +1054,6 @@ pub async fn mountain_ipc_invoke(
 					dev_log!("workspaces", "{}", command);
 					WorkspacesGetName(RunTime.clone()).await
 				},
-				// `onDidChangeWorkspaceFolders` channel-listen: Mountain
-				// broadcasts the change via Tauri event, so ack the
-				// listen request with Null (no-op on the binary rail).
-				"workspaces:onDidChangeWorkspaceFolders" | "workspaces:onDidChangeWorkspaceName" => {
-					dev_log!("workspaces", "{} (stub-ack)", command);
-					Ok(Value::Null)
-				},
-
 				// Themes commands
 				"themes:getActive" => {
 					dev_log!("themes", "themes:getActive");
