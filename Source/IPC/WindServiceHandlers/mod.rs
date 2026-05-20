@@ -2000,32 +2000,14 @@ pub async fn mountain_ipc_invoke(
 				| "localPty:uninstallAllAutoReplies" => Ok(Value::Null),
 
 				// =====================================================================
-				// Update service
+				// Update service - all stubs, no update server
 				// =====================================================================
-				"update:_getInitialState" => {
-					dev_log!("update", "update:_getInitialState");
-					Ok(json!({ "type": "idle", "updateType": 0 }))
-				},
-				"update:isLatestVersion" => {
-					dev_log!("update", "update:isLatestVersion");
-					Ok(json!(true))
-				},
-				"update:checkForUpdates" => {
-					dev_log!("update", "update:checkForUpdates");
-					Ok(Value::Null)
-				},
-				"update:downloadUpdate" => {
-					dev_log!("update", "update:downloadUpdate");
-					Ok(Value::Null)
-				},
-				"update:applyUpdate" => {
-					dev_log!("update", "update:applyUpdate");
-					Ok(Value::Null)
-				},
-				"update:quitAndInstall" => {
-					dev_log!("update", "update:quitAndInstall");
-					Ok(Value::Null)
-				},
+				"update:_getInitialState" => UpdateGetInitialState().await,
+				"update:isLatestVersion" => UpdateIsLatestVersion().await,
+				"update:checkForUpdates" => UpdateCheckForUpdates().await,
+				"update:downloadUpdate" => UpdateDownloadUpdate().await,
+				"update:applyUpdate" => UpdateApplyUpdate().await,
+				"update:quitAndInstall" => UpdateQuitAndInstall().await,
 
 				// =====================================================================
 				// Menubar
