@@ -2004,26 +2004,10 @@ pub async fn mountain_ipc_invoke(
 				// =====================================================================
 				// Menubar
 				// =====================================================================
-				//
 				// VS Code fires `updateMenubar` on every active-editor / dirty /
-				// selection change - typically 20+ times during cold boot. The
-				// webview renders the menu bar (not native AppKit), so no
-				// platform rebuild is needed; we just acknowledge the call.
-				// A per-100-call counter keeps the log scannable without
-				// hiding the signal entirely.
-				"menubar:updateMenubar" => {
-					use std::sync::atomic::{AtomicU64, Ordering as AO};
-
-					static MENUBAR_CALLS:AtomicU64 = AtomicU64::new(0);
-
-					let N = MENUBAR_CALLS.fetch_add(1, AO::Relaxed) + 1;
-
-					if N == 1 || N % 100 == 0 {
-						dev_log!("menubar", "menubar:updateMenubar (call #{})", N);
-					}
-
-					Ok(Value::Null)
-				},
+				// selection change - now handled in the high-frequency fast-path
+				// (see the `if IsHighFrequencyCommand` block above). This fallback
+				// only fires if the command somehow bypasses the fast-path.
 
 				// =====================================================================
 				// URL handler
