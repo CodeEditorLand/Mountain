@@ -25,7 +25,7 @@ use crate::dev_log;
 /// is built. A failure here is non-fatal (logs a warning and skips the
 /// override so the default menu remains).
 #[cfg(target_os = "macos")]
-pub fn SetAppMenu(App: &tauri::App) {
+pub fn SetAppMenu(App:&tauri::App) {
 	use tauri::menu::{MenuBuilder, SubmenuBuilder};
 
 	let Result = (|| -> Result<(), Box<dyn std::error::Error>> {
@@ -50,7 +50,10 @@ pub fn SetAppMenu(App: &tauri::App) {
 
 		App.set_menu(Menu)?;
 
-		dev_log!("lifecycle", "[UI] [Menu] macOS Edit menu set (Undo/Redo removed; Cmd+Z routes to Monaco).");
+		dev_log!(
+			"lifecycle",
+			"[UI] [Menu] macOS Edit menu set (Undo/Redo removed; Cmd+Z routes to Monaco)."
+		);
 
 		Ok(())
 	})();
@@ -67,4 +70,4 @@ pub fn SetAppMenu(App: &tauri::App) {
 
 /// No-op on non-macOS platforms - the Edit menu interception is macOS-specific.
 #[cfg(not(target_os = "macos"))]
-pub fn SetAppMenu(_App: &tauri::App) {}
+pub fn SetAppMenu(_App:&tauri::App) {}

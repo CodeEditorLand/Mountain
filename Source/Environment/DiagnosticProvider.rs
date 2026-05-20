@@ -262,27 +262,36 @@ impl DiagnosticManager for MountainEnvironment {
 			ResourceURIFilterOption
 		);
 
-		let DiagnosticsMapGuard = self
-			.ApplicationState
-			.Feature
-			.Diagnostics
-			.DiagnosticsMap
-			.lock()
-			.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+		// Clone only the data needed for aggregation, then release the lock
+		// immediately so concurrent SetDiagnostics/ClearDiagnostics calls
+		// are not blocked during the (potentially large) serialize step.
+		let FilterURIKey = ResourceURIFilterOption
+			.as_ref()
+			.map(|V| Utility::UriParsing::GetURLFromURIComponentsDTO(V).map(|U| U.to_string()))
+			.transpose()?;
+
+		let Snapshot:Vec<std::collections::HashMap<String, Vec<MarkerDataDTO>>> = {
+			let DiagnosticsMapGuard = self
+				.ApplicationState
+				.Feature
+				.Diagnostics
+				.DiagnosticsMap
+				.lock()
+				.map_err(Utility::ErrorMapping::MapApplicationStateLockErrorToCommonError)?;
+
+			DiagnosticsMapGuard.values().cloned().collect()
+		};
 
 		let mut ResultMap:std::collections::HashMap<String, Vec<MarkerDataDTO>> = std::collections::HashMap::new();
 
-		if let Some(FilterURIValue) = ResourceURIFilterOption {
-			let FilterURIKey = Utility::UriParsing::GetURLFromURIComponentsDTO(&FilterURIValue)?.to_string();
-
-			for OwnerMap in DiagnosticsMapGuard.values() {
-				if let Some(Markers) = OwnerMap.get(&FilterURIKey) {
-					ResultMap.entry(FilterURIKey.clone()).or_default().extend(Markers.clone());
+		if let Some(FilterKey) = FilterURIKey {
+			for OwnerMap in &Snapshot {
+				if let Some(Markers) = OwnerMap.get(&FilterKey) {
+					ResultMap.entry(FilterKey.clone()).or_default().extend(Markers.clone());
 				}
 			}
 		} else {
-			// Aggregate all diagnostics from all owners for all files.
-			for OwnerMap in DiagnosticsMapGuard.values() {
+			for OwnerMap in &Snapshot {
 				for (URIKey, Markers) in OwnerMap.iter() {
 					ResultMap.entry(URIKey.clone()).or_default().extend(Markers.clone());
 				}

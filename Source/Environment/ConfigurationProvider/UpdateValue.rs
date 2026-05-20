@@ -29,12 +29,12 @@ use CommonLibrary::{
 	Effect::ApplicationRunTime::ApplicationRunTime as _,
 	Error::CommonError::CommonError,
 	FileSystem::{ReadFile::ReadFile, WriteFileBytes::WriteFileBytes},
+	IPC::SkyEvent::SkyEvent,
 };
 use serde_json::{Map, Value};
 use tauri::Manager;
 
 use crate::{Environment::Utility, IPC::SkyEmit::LogSkyEmit, RunTime::ApplicationRunTime::ApplicationRunTime, dev_log};
-use CommonLibrary::IPC::SkyEvent::SkyEvent;
 
 /// Updates a configuration value in the appropriate `settings.json` file.
 pub(super) async fn update_configuration_value(
@@ -186,8 +186,36 @@ pub(super) async fn update_configuration_value(
 		SkyEvent::ConfigurationChanged.AsStr(),
 		EmitPayload,
 	) {
-		dev_log!("config", "warn: [ConfigurationProvider] sky://configuration/changed emit failed: {}", Error);
+		dev_log!(
+			"config",
+			"warn: [ConfigurationProvider] sky://configuration/changed emit failed: {}",
+			Error
+		);
 	}
+
+	// Also notify Cocoon's extension host so its ConfigCache invalidates the
+	// affected key and re-primes. Without this, extensions calling
+	// `workspace.getConfiguration().get(key)` after an update continue reading
+	// the stale cached value until the next full re-merge notification.
+	// Using fire-and-forget: the write is already durable; a Vine failure here
+	// must not roll back the successful disk write.
+	let NotifyKey = key.clone();
+
+	tokio::spawn(async move {
+		if let Err(Error) = crate::Vine::Client::SendNotification::Fn(
+			"cocoon-main".to_string(),
+			"configuration.change".to_string(),
+			serde_json::json!({ "keys": [NotifyKey] }),
+		)
+		.await
+		{
+			crate::dev_log!(
+				"config",
+				"warn: [ConfigurationProvider] configuration.change Cocoon notify failed: {:?}",
+				Error
+			);
+		}
+	});
 
 	Ok(())
 }
