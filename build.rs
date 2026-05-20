@@ -458,7 +458,7 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			| ("TierGlob", "JavaScript")
 			| ("TierFileWatcher", "Stub")
 			// Only Embedded is the silent default; FileSystem emits a cfg feature.
-			| ("TierSchemeAssets", "Embedded")
+			| ("TierSchemeAssets", "Embedded" | "FileSystem")
 			| ("TierConfiguration", "Cache")
 			| ("TierDiagnostics", "Full")
 			| ("TierClipboard", "Layer3" | "Layer5")
