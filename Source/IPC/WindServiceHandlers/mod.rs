@@ -54,6 +54,30 @@ pub mod Utilities;
 // (`WindServiceHandlers::Utilities::foo`).
 use std::{collections::HashMap, path::PathBuf, sync::Arc};
 
+use Cocoon::{
+	ExtensionHostMessage::CocoonExtensionHostMessage,
+	Notify::CocoonNotify,
+	Request::CocoonRequest,
+};
+use ExtensionHost::{
+	DebugService::{ExtensionHostDebugClose, ExtensionHostDebugReload},
+	Starter::{
+		ExtensionHostStarterCreate,
+		ExtensionHostStarterGetExitInfo,
+		ExtensionHostStarterKill,
+		ExtensionHostStarterStart,
+	},
+};
+use Sky::ReplayEvents::SkyReplayEvents;
+use TreeView::GetChildren::TreeGetChildren;
+use Update::UpdateService::{
+	UpdateApplyUpdate,
+	UpdateCheckForUpdates,
+	UpdateDownloadUpdate,
+	UpdateGetInitialState,
+	UpdateIsLatestVersion,
+	UpdateQuitAndInstall,
+};
 use Commands::*;
 use Configuration::*;
 use Encryption::{Decrypt::Decrypt, Encrypt::Encrypt};
@@ -1574,27 +1598,7 @@ pub async fn mountain_ipc_invoke(
 
 				// OS operations
 				"nativeHost:isAdmin" => Ok(json!(false)),
-				"nativeHost:isRunningUnderARM64Translation" => {
-					#[cfg(target_os = "macos")]
-					{
-						// Cache: a process either runs under Rosetta 2 or it doesn't;
-						// sysctl.proc_translated is stable for the process lifetime.
-						static ROSETTA:std::sync::OnceLock<bool> = std::sync::OnceLock::new();
-						let IsTranslated = *ROSETTA.get_or_init(|| {
-							std::process::Command::new("sysctl")
-								.args(["-n", "sysctl.proc_translated"])
-								.output()
-								.ok()
-								.map(|O| String::from_utf8_lossy(&O.stdout).trim() == "1")
-								.unwrap_or(false)
-						});
-						Ok(json!(IsTranslated))
-					}
-					#[cfg(not(target_os = "macos"))]
-					{
-						Ok(json!(false))
-					}
-				},
+				"nativeHost:isRunningUnderARM64Translation" => NativeIsRunningUnderARM64Translation().await,
 				"nativeHost:hasWSLFeatureInstalled" => {
 					#[cfg(target_os = "windows")]
 					{
@@ -1607,129 +1611,48 @@ pub async fn mountain_ipc_invoke(
 				},
 				"nativeHost:showItemInFolder" => ShowItemInFolder(RunTime.clone(), Arguments).await,
 				"nativeHost:openExternal" => OpenExternal(RunTime.clone(), Arguments).await,
-				// `workbench.files.action.deleteFile` and extensions that delete
-				// files both round-trip through here. Route to the platform's
-				// trash bin so deletions are recoverable. macOS uses AppleScript
-				// via `osascript`; Linux prefers `gio trash` then `trash` if
-				// installed; Windows uses PowerShell with Shell.NameSpace.
+				// Trash bin - atomic handler handles all platform variants.
 				"nativeHost:moveItemToTrash" => {
-					let Path = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-					if Path.is_empty() {
-						Ok(json!(false))
-					} else {
-						dev_log!("nativehost", "nativeHost:moveItemToTrash path={}", Path);
-						let Moved = {
-							#[cfg(target_os = "macos")]
-							{
-								tokio::process::Command::new("osascript")
-									.args([
-										"-e",
-										&format!(
-											"tell application \"Finder\" to delete POSIX file \"{}\"",
-											Path.replace('"', "\\\"")
-										),
-									])
-									.status()
-									.await
-									.map(|S| S.success())
-									.unwrap_or(false)
-							}
-							#[cfg(target_os = "linux")]
-							{
-								let Gio = tokio::process::Command::new("gio")
-									.args(["trash", &Path])
-									.status()
-									.await
-									.map(|S| S.success())
-									.unwrap_or(false);
-								if Gio {
-									true
-								} else {
-									tokio::process::Command::new("trash")
-										.arg(&Path)
-										.status()
-										.await
-										.map(|S| S.success())
-										.unwrap_or(false)
-								}
-							}
-							#[cfg(target_os = "windows")]
-							{
-								let Script = format!(
-									"(new-object -comobject Shell.Application).NameSpace(0xA).MoveHere('{}')",
-									Path.replace('\'', "''")
-								);
-								tokio::process::Command::new("powershell.exe")
-									.args(["-NoProfile", "-Command", &Script])
-									.status()
-									.await
-									.map(|S| S.success())
-									.unwrap_or(false)
-							}
-							#[cfg(not(any(target_os = "macos", target_os = "linux", target_os = "windows")))]
-							{
-								false
-							}
-						};
-						Ok(json!(Moved))
-					}
+					dev_log!("nativehost", "nativeHost:moveItemToTrash");
+					NativeMoveItemToTrash(Arguments).await
 				},
 
-				// Clipboard - backed by `arboard` so read/writeText round-trip the
-				// OS clipboard. `readClipboardBuffer` is kept empty (binary
-				// clipboard is rarely used by VS Code core; extensions that need
-				// it invoke the platform-specific path instead).
+				// Clipboard - atomic handlers backed by `arboard`.
 				"nativeHost:readClipboardText" => {
 					dev_log!("clipboard", "readClipboardText");
-					match arboard::Clipboard::new() {
-						Ok(mut Cb) => Ok(json!(Cb.get_text().unwrap_or_default())),
-						Err(_) => Ok(json!("")),
-					}
+					NativeReadClipboardText(Arguments).await
 				},
 				"nativeHost:writeClipboardText" => {
 					dev_log!("clipboard", "writeClipboardText");
-					let Text = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-					if let Ok(mut Cb) = arboard::Clipboard::new() {
-						let _ = Cb.set_text(Text);
-					}
-					Ok(Value::Null)
+					NativeWriteClipboardText(Arguments).await
 				},
 				"nativeHost:readClipboardFindText" => {
 					dev_log!("clipboard", "readClipboardFindText");
-					// macOS has a separate find pasteboard; reuse the general
-					// clipboard for parity with VS Code on Linux/Windows.
-					match arboard::Clipboard::new() {
-						Ok(mut Cb) => Ok(json!(Cb.get_text().unwrap_or_default())),
-						Err(_) => Ok(json!("")),
-					}
+					NativeReadClipboardFindText(Arguments).await
 				},
 				"nativeHost:writeClipboardFindText" => {
 					dev_log!("clipboard", "writeClipboardFindText");
-					let Text = Arguments.first().and_then(|V| V.as_str()).unwrap_or("").to_string();
-					if let Ok(mut Cb) = arboard::Clipboard::new() {
-						let _ = Cb.set_text(Text);
-					}
-					Ok(Value::Null)
+					NativeWriteClipboardFindText(Arguments).await
 				},
 				"nativeHost:readClipboardBuffer" => {
 					dev_log!("clipboard", "readClipboardBuffer");
-					Ok(json!([]))
+					NativeReadClipboardBuffer(Arguments).await
 				},
 				"nativeHost:writeClipboardBuffer" => {
 					dev_log!("clipboard", "writeClipboardBuffer");
-					Ok(Value::Null)
+					NativeWriteClipboardBuffer(Arguments).await
 				},
 				"nativeHost:hasClipboard" => {
 					dev_log!("clipboard", "hasClipboard");
-					Ok(json!(false))
+					NativeHasClipboard(Arguments).await
 				},
 				"nativeHost:readImage" => {
 					dev_log!("clipboard", "readImage");
-					Ok(json!([]))
+					NativeReadImage(Arguments).await
 				},
 				"nativeHost:triggerPaste" => {
 					dev_log!("clipboard", "triggerPaste");
-					Ok(Value::Null)
+					NativeTriggerPaste(Arguments).await
 				},
 
 				// Process
