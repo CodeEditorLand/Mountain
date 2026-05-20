@@ -57,7 +57,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 		//               the localhost plugin / vscode-file scheme serve
 		//               from disk via the static_root fallback.
 		// ---------------------------------------------------------------
-		let TierSchemeAssets = std::env::var("TierSchemeAssets").unwrap_or_else(|_| "Embedded".into());
+		// Priority: process env → .env.Land file → default "Embedded".
+		// Reading the file directly guards against a stale shell env (e.g.
+		// the previous tier was exported but .env.Land was since updated).
+		// This matches the logic in PropagateTierGating which also walks up
+		// from CARGO_MANIFEST_DIR to find the env file.
+		let TierSchemeAssets = std::env::var("TierSchemeAssets").unwrap_or_else(|_| {
+			ReadTierValueFromEnvFile("TierSchemeAssets").unwrap_or_else(|| "Embedded".into())
+		});
 
 		// Patch build.frontendDist
 		if let Some(Build) = Tauri.get_mut("build") {
@@ -475,4 +482,46 @@ fn IsDefaultTierValue(Key:&str, Value:&str) -> bool {
 			// Mountain's perspective - no Cargo feature needed.
 			| ("TierIPC", "Mountain" | "NodeDeferred" | "Node")
 	)
+}
+
+/// Read a single tier key from the `.env.Land` file by walking up from
+/// `CARGO_MANIFEST_DIR`. Used to keep the `tauri.conf.json` mutation in
+/// sync with `PropagateTierGating` even when the process env is stale.
+///
+/// Returns `None` when the env file is absent or the key is not found.
+fn ReadTierValueFromEnvFile(Key:&str) -> Option<String> {
+	let Manifest = std::env::var("CARGO_MANIFEST_DIR").ok()?;
+
+	let ManifestPath = std::path::PathBuf::from(Manifest);
+
+	for Base in ManifestPath.ancestors().take(5) {
+		for Candidate in [".env.Land", ".env.Land.Sample"] {
+			let Full = Base.join(Candidate);
+
+			if !Full.exists() {
+				continue;
+			}
+
+			let Contents = std::fs::read_to_string(&Full).ok()?;
+
+			for Line in Contents.lines() {
+				let Trimmed = Line.trim();
+
+				if Trimmed.is_empty() || Trimmed.starts_with('#') {
+					continue;
+				}
+
+				if let Some((K, V)) = Trimmed.split_once('=') {
+					if K.trim() == Key {
+						return Some(V.trim().trim_matches('"').to_string());
+					}
+				}
+			}
+
+			// File found but key absent - stop here, don't search parents.
+			return None;
+		}
+	}
+
+	None
 }
