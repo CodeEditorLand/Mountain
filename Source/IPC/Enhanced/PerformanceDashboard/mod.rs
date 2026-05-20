@@ -14,6 +14,8 @@
 
 pub mod AlertSeverity;
 
+pub mod DashboardHelpers;
+
 pub mod Dashboard;
 
 pub mod DashboardConfig;
